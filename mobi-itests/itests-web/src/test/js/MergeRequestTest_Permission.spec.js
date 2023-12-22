@@ -284,13 +284,15 @@ module.exports = {
     'Step 30: Validate Permissions': function(browser) {
         mergeRequestPage.selectRequest(browser, branchTitle);
     
-        browser.useXpath()
-           .waitForElementVisible('//button//span[contains(text(), "Delete")]/parent::button')
-           .assert.attributeEquals('//button//span[contains(text(), "Delete")]/parent::button', 'disabled', 'true');
+        browser
+            .useXpath()
+            .waitForElementVisible('//button//span[contains(text(), "Delete")]/parent::button')
+            .assert.attributeEquals('//button//span[contains(text(), "Delete")]/parent::button', 'disabled', 'true');
     },
 
     'Step 31: The user clicks logout' : function(browser) {
         browser
+            .useXpath()
             .click("//li/a[@class='nav-link']/span[text()[contains(.,'Logout')]]")
             .waitForElementVisible('//div[@class="form-group"]//input[@id="username"]');
     },
@@ -306,9 +308,10 @@ module.exports = {
     'Step 34: Validate Permissions (admin everything rule)': function(browser) {
         mergeRequestPage.selectRequest(browser, branchTitle);
     
-        browser.useXpath()
-           .waitForElementVisible('//button//span[contains(text(), "Delete")]/parent::button')
-           .assert.attributeEquals('//button//span[contains(text(), "Delete")]/parent::button', 'disabled', null);
+        browser
+            .useXpath()
+            .waitForElementVisible('//button//span[contains(text(), "Delete")]/parent::button')
+            .assert.attributeEquals('//button//span[contains(text(), "Delete")]/parent::button', 'disabled', null);
     },
 
    'Step 35: Give user002 manage permission for ontology': function(browser) {
@@ -319,11 +322,47 @@ module.exports = {
         catalogPage.openRecordItem(browser, ontologyMrPermission_title);
 
         browser
+            .useXpath()
             .waitForElementVisible('//button//span[contains(text(), "Manage")]/parent::button')
             .click('//button//span[contains(text(), "Manage")]/parent::button');
         
         browser
-            .waitForElementVisible('//div//h4[contains(text(), "Manage Record")]/parent::div');
-   }
+            .useXpath()
+            .waitForElementVisible('//div//h4[contains(text(), "Manage Record")]/parent::div//mat-slide-toggle')
+            .click('//div//h4[contains(text(), "Manage Record")]/parent::div//mat-slide-toggle');
+
+        browser
+            .useXpath()
+            .waitForElementVisible('//div[@class="save-container"]//button')
+            .click('//div[@class="save-container"]//button');
+        
+        browser
+            .useCss()
+            .waitForElementNotPresent('div.mat-horizontal-stepper-content.ng-animating');
+   },
+
+   'Step 36: The user clicks logout' : function(browser) {
+        browser
+            .useXpath()
+            .click("//li/a[@class='nav-link']/span[text()[contains(.,'Logout')]]")
+            .waitForElementVisible('//div[@class="form-group"]//input[@id="username"]');
+    },
+
+    'Step 37: Test logins as the newly created user' : function(browser) {
+        administrationPage.login(browser, user02.username, user02.password);
+    },
+
+    'Step 38: Navigate to Merge Request Page' : function (browser) {
+        mergeRequestPage.goToPage(browser);
+    },
+
+    'Step 39: Validate Permissions': function(browser) {
+        mergeRequestPage.selectRequest(browser, branchTitle);
+
+        browser.useXpath()
+            .waitForElementVisible('//button//span[contains(text(), "Delete")]/parent::button')
+            .assert.attributeEquals('//button//span[contains(text(), "Delete")]/parent::button', 'disabled', null);
+    }
+
 
 }
