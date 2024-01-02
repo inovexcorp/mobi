@@ -21,13 +21,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-var adminUsername = 'admin';
-var adminPassword = 'admin';
-
 var ontologyEditorPage = require('./zOntologyEditorPage').ontologyEditorPage;
 var mergeRequestPage = require('./zMergeRequestsPage').mergeRequestsPage;
 var administrationPage = require('./zAdministrationPage').administrationPage;
 var catalogPage = require('./zCatalogPage').catalogPage;
+
+var adminUser = {
+    'username': 'admin', 
+    'password': 'admin',
+};
 
 // User to create Ontology/MR with
 var user01 = { 
@@ -76,7 +78,7 @@ module.exports = {
 
     'Step 1: Initial Setup' : function(browser) {
         browser.url('https://localhost:' + browser.globals.globalPort + '/mobi/index.html#/home');
-        administrationPage.login(browser, adminUsername, adminPassword);
+        administrationPage.login(browser, adminUser.username, adminUser.password);
     },
 
     'Step 2: The user clicks on the Administration sidebar link' : function(browser) {
@@ -141,8 +143,6 @@ module.exports = {
     'Step 11: Verify new ontology properties' : function(browser) {
         ontologyEditorPage.verifyProjectTab(browser, ontologyMrPermission_title, ontologyMrPermission_desc, ontologyMrPermission_staticIri)
     },
-
-    //////////////
 
     'Step 12: Create a new branches' : function(browser) {
         ontologyEditorPage.openNewBranchOverlay(browser);
@@ -298,7 +298,7 @@ module.exports = {
     },
 
     'Step 32: Test logins as the admin' : function(browser) {
-        administrationPage.login(browser, adminUsername, adminUsername);
+        administrationPage.login(browser, adminUser.username, adminUser.password);
     },
 
     'Step 33: Navigate to Merge Request Page' : function (browser) {
