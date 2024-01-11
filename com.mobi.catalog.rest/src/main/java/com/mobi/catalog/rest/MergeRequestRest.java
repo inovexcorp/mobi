@@ -608,7 +608,7 @@ public class MergeRequestRest {
         Resource requestIdResource = createIRI(requestId, vf);
         User activeUser = getActiveUser(servletRequest, engineManager);
         try {
-            if (checkMergeRequestPermissions(requestIdResource, activeUser)) {
+            if (checkMergeRequestModifyPermissions(requestIdResource, activeUser)) {
                 return Response.status(Response.Status.UNAUTHORIZED).build();
             }
             manager.updateMergeRequest(requestIdResource, jsonToMergeRequest(requestIdResource, newMergeRequest));
@@ -692,7 +692,7 @@ public class MergeRequestRest {
         Resource requestIdResource = createIRI(requestId, vf);
         User activeUser = getActiveUser(servletRequest, engineManager);
         try {
-            if (checkMergeRequestPermissions(requestIdResource, activeUser)) {
+            if (checkMergeRequestModifyPermissions(requestIdResource, activeUser)) {
                 return Response.status(Response.Status.UNAUTHORIZED).build();
             }
 
@@ -706,7 +706,16 @@ public class MergeRequestRest {
         }
     }
 
-    protected boolean checkMergeRequestPermissions(Resource requestId, User activeUser) {
+    /**
+     * Checks Modify Permission for MergeRequests
+     *
+     * @param requestId MergeRequest IRI
+     * @param activeUser Request User
+     * @return
+     *  True if user is creator or has manage permission of associated RDF record,
+     *  False if user is not a creator or has manage permission of associated RDF record
+     */
+    protected boolean checkMergeRequestModifyPermissions(Resource requestId, User activeUser) {
         MergeRequest mergeRequest = manager.getMergeRequest(requestId).orElseThrow(() ->
                 ErrorUtils.sendError("Merge Request " + requestId + " could not be found",
                         Response.Status.NOT_FOUND));
@@ -716,7 +725,7 @@ public class MergeRequestRest {
         if (creator.isPresent() && creator.get().stringValue().equals(activeUser.getResource().stringValue())) {
             accessDenied = false;
         }
-
+        // If user is not the creator then check to see if user has manage permission
         Optional<Resource> onRecord = mergeRequest.getOnRecord_resource();
         if (accessDenied && onRecord.isPresent()) {
             Request request = pdp.createRequest(asList((IRI) activeUser.getResource()), new HashMap<>(),
@@ -731,11 +740,7 @@ public class MergeRequestRest {
                 accessDenied = false;
             }
         }
-
-        if (accessDenied) {
-            return true;
-        }
-        return false;
+        return accessDenied;
     }
 
     /**
