@@ -52,7 +52,7 @@ import { UserManagerService } from '../../../shared/services/userManager.service
 import { LoginManagerService } from '../../../shared/services/loginManager.service';
 import { PolicyEnforcementService } from '../../../shared/services/policyEnforcement.service';
 import { User } from '../../../shared/models/user.interface';
-import { CATALOG, DCTERMS, MERGEREQ } from '../../../prefixes';
+import { CATALOG, DCTERMS, MERGEREQ, POLICY } from '../../../prefixes';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { MergeRequestViewComponent } from './mergeRequestView.component';
@@ -249,7 +249,7 @@ describe('Merge Request View component', function() {
         it('resolves permission denied', fakeAsync(function() {
             policyEnforcementStub.evaluateRequest.and.callFake((jsonRequest: XACMLRequest) => {
                 const resourceId = jsonRequest.resourceId;
-                if (resourceId === recordId) {
+                if (resourceId === recordId && jsonRequest.actionId === `${CATALOG}Modify`) {
                     return of('Permit');
                 }
                 return of('Deny');

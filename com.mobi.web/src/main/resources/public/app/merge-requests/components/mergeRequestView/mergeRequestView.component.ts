@@ -138,6 +138,9 @@ export class MergeRequestViewComponent implements OnInit, OnDestroy {
                 }, error => this.toast.createErrorToast(error));
             }, 
             error: () => {
+                this.isDeleteDisabled = true;
+                this.isEditDisabled = true;
+                this.isSubmitDisabled = true;
                 this.toast.createWarningToast('The request you had selected no longer exists');
                 this.back();
             }});
