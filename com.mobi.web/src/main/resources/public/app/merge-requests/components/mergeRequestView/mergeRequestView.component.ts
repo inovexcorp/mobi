@@ -35,7 +35,7 @@ import { MergeRequestsStateService } from '../../../shared/services/mergeRequest
 import { EditRequestOverlayComponent } from '../editRequestOverlay/editRequestOverlay.component';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { ToastService } from '../../../shared/services/toast.service';
-import { CATALOG, MERGEREQ, POLICY } from '../../../prefixes';
+import { CATALOG, DCTERMS, MERGEREQ, POLICY } from '../../../prefixes';
 import { PolicyEnforcementService } from '../../../shared/services/policyEnforcement.service';
 import { LoginManagerService } from '../../../shared/services/loginManager.service';
 import { UserManagerService } from '../../../shared/services/userManager.service';
@@ -63,10 +63,10 @@ export class MergeRequestViewComponent implements OnInit, OnDestroy {
     resolveError = false;
     isAccepted = false;
     buttonTitle = '';
-    isSubmitDisabled = false;
     userAccessMsg = 'You do not have permission to perform this merge';
     private isAdminUser: boolean;
     currentAssignees: string[] = [];
+    isSubmitDisabled = true;
     isDeleteDisabled = true;
     isEditDisabled = true;
 
@@ -84,21 +84,45 @@ export class MergeRequestViewComponent implements OnInit, OnDestroy {
 
     ngOnInit(): void {
         this.isAdminUser = this.um.isAdminUser(this.lm.currentUserIRI);
-        if (!this.isAdminUser) {
+        if (this.isAdminUser) {
+            this.isDeleteDisabled = false;
+            this.isEditDisabled = false;
+            this.isSubmitDisabled = false;
+        } else {
+            const creatorIRIs: string[] = this.state.selected.jsonld[`${DCTERMS}creator`].map(r => r['@id']);
+            const isCreator: boolean  = creatorIRIs.includes(this.lm.currentUserIRI);
+            if (isCreator) {
+                this.isDeleteDisabled = false;
+                this.isEditDisabled = false;
+            } else {
+                // Check if user has managed permission on MergeRequest#OnRecord
+                const managePermissionOnRecord = {
+                    resourceId: this.state.selected.recordIri,
+                    actionId: `${POLICY}Update`,
+                };
+                this.pep.evaluateRequest(managePermissionOnRecord).pipe(takeUntil(this._destroySub$)).subscribe(decision => {
+                    const isPermit = decision === this.pep.permit;
+                    this.isDeleteDisabled = !isPermit
+                    this.isEditDisabled = !isPermit
+                }, () => {
+                    this.isDeleteDisabled = true;
+                    this.isEditDisabled = true;
+                });
+            }
+            // Check if user can modify targetBranch
             const targetBranchId = getPropertyId(this.state.selected.jsonld, `${MERGEREQ}targetBranch`);
-            const managePermissionRequest = {
+            const manageTargetBranchPermissionRequest = {
                 resourceId: this.state.selected.recordIri,
                 actionId: `${CATALOG}Modify`,
                 actionAttrs: {
                     [`${CATALOG}branch`]: targetBranchId
                 }
             };
-            this.pep.evaluateRequest(managePermissionRequest).pipe(takeUntil(this._destroySub$)).subscribe(decision => {
+            this.pep.evaluateRequest(manageTargetBranchPermissionRequest).pipe(takeUntil(this._destroySub$)).subscribe(decision => {
                 this.isSubmitDisabled = decision === this.pep.deny;
                 if (!this.isSubmitDisabled) {
                     this.isSubmitDisabled = !this._isUserAssigned();
                 }
-
                 this.buttonTitle = this.isSubmitDisabled ?  this.userAccessMsg : '';
             }, () => {
                 this.isSubmitDisabled = false;
@@ -106,37 +130,12 @@ export class MergeRequestViewComponent implements OnInit, OnDestroy {
         }
 
         this.mm.getRequest(this.state.selected.jsonld['@id']).pipe(
-            takeUntil(this._destroySub$),
-            map(data => {
-                return data;
-            }))
-            .subscribe({next: jsonld => {
-                const creatorIRIs = jsonld['http://purl.org/dc/terms/creator'].map(r => r['@id']);
-                const isCreator  = creatorIRIs.includes(this.lm.currentUserIRI);
-                console.log(isCreator)
-                if (isCreator) {
-                    this.isDeleteDisabled = false;
-                    this.isEditDisabled = false;
-                } else {
-                    const mrOnRecord = get(jsonld, ['http://mobi.com/ontologies/merge-requests#onRecord','0', '@id'], '');
-                    const managePermissionOnRecord = {
-                        resourceId: mrOnRecord,
-                        actionId: `${POLICY}Update`,
-                    };
-                    this.pep.evaluateRequest(managePermissionOnRecord).pipe(takeUntil(this._destroySub$)).subscribe(decision => {
-                        const isPermit = decision === this.pep.permit;
-                        this.isDeleteDisabled = !isPermit
-                        this.isEditDisabled = !isPermit
-                    }, () => {
-                        this.isDeleteDisabled = true;
-                        this.isEditDisabled = true;
-                    });
-                }
+            takeUntil(this._destroySub$)).subscribe({next: jsonld => {
                 this.state.selected.jsonld = jsonld;
                 this.isAccepted = this.mm.isAccepted(this.state.selected.jsonld);
-                this.state.setRequestDetails(this.state.selected)
-                  .subscribe(() => {}, error => this.toast.createErrorToast(error));
-                this.currentAssignees = this.state.selected.assignees.slice();
+                this.state.setRequestDetails(this.state.selected).subscribe(() => {
+                    this.currentAssignees = this.state.selected.assignees.slice();
+                }, error => this.toast.createErrorToast(error));
             }, 
             error: () => {
                 this.toast.createWarningToast('The request you had selected no longer exists');
