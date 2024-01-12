@@ -30,16 +30,16 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { cloneDeep } from 'lodash';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 
 import { cleanStylesFromDOM } from '../../../../../public/test/ts/Shared';
-import { FOAF } from '../../../prefixes';
+import { FOAF, USER } from '../../../prefixes';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
 import { UserManagerService } from '../../../shared/services/userManager.service';
 import { UserStateService } from '../../../shared/services/userState.service';
 import { ToastService } from '../../../shared/services/toast.service';
+import { User } from '../../../shared/models/user.class';
 import { EditUserProfileOverlayComponent } from './editUserProfileOverlay.component';
 
 describe('Edit User Profile Overlay component', function() {
@@ -77,18 +77,14 @@ describe('Edit User Profile Overlay component', function() {
         userManagerStub = TestBed.inject(UserManagerService) as jasmine.SpyObj<UserManagerService>;
         matDialogRef = TestBed.inject(MatDialogRef) as  jasmine.SpyObj<MatDialogRef<EditUserProfileOverlayComponent>>;
         toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
-        userStateStub.selectedUser = {
-            username: 'batman',
-            firstName: 'BATMAN',
-            lastName: 'DUH',
-            email: 'mailto:iambatman@test.com',
-            roles: [],
-            external: false,
-            jsonld: {
-                '@id': 'id',
-                '@type': []
-            }
-        };
+        userStateStub.selectedUser = new User({
+          '@id': 'batman',
+          '@type': [`${USER}User`],
+          [`${USER}username`]: [{ '@value': 'batman' }],
+          [`${FOAF}firstName`]: [{ '@value': 'BATMAN' }],
+          [`${FOAF}lastName`]: [{ '@value': 'user' }],
+          [`${FOAF}email`]: [{ '@id': 'mailto:iambatman@test.com' }],
+        });
         fixture = TestBed.createComponent(EditUserProfileOverlayComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
@@ -114,13 +110,10 @@ describe('Edit User Profile Overlay component', function() {
         describe('should save changes to the user profile', function() {
             beforeEach(function() {
                 userManagerStub.users = [userStateStub.selectedUser];
-                this.newUser = cloneDeep(userStateStub.selectedUser);
+                this.newUser = new User(userStateStub.selectedUser.jsonld);
                 this.newUser.firstName = 'Bruce';
                 this.newUser.lastName = 'Wayne';
                 this.newUser.email = 'mailto:test@test.com';
-                this.newUser.jsonld[`${FOAF}firstName`] = [{ '@value': 'Bruce' }];
-                this.newUser.jsonld[`${FOAF}lastName`] = [{ '@value': 'Wayne' }];
-                this.newUser.jsonld[`${FOAF}mbox`] = [{ '@id': 'mailto:test@test.com' }];
                 component.editProfileForm.controls.firstName.setValue(this.newUser.firstName);
                 component.editProfileForm.controls.lastName.setValue(this.newUser.lastName);
                 component.editProfileForm.controls.email.setValue(this.newUser.email.replace('mailto:', ''));

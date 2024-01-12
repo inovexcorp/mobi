@@ -24,7 +24,7 @@
 import { Injectable } from '@angular/core';
 
 import { Group } from '../models/group.interface';
-import { User } from '../models/user.interface';
+import { User } from '../models/user.class';
 
 /**
  * @class shared.UserStateService

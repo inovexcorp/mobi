@@ -28,14 +28,34 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTableModule } from '@angular/material/table';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { MockProvider } from 'ng-mocks';
 
 import { cleanStylesFromDOM } from '../../../../../public/test/ts/Shared';
+import { UserManagerService } from '../../../shared/services/userManager.service';
+import { User } from '../../../shared/models/user.class';
+import { FOAF, USER } from '../../../prefixes';
 import { MemberTableComponent } from './memberTable.component';
 
 describe('Member Table component', function() {
     let component: MemberTableComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<MemberTableComponent>;
+    let userManagerStub: jasmine.SpyObj<UserManagerService>;
+
+    const user1: User = new User({
+        '@id': 'user1',
+        '@type': [`${USER}User`],
+        [`${USER}username`]: [{ '@value': 'user1' }],
+        [`${FOAF}firstName`]: [{ '@value': 'John' }],
+        [`${FOAF}lastName`]: [{ '@value': 'Doe' }],
+    });
+    const user2: User = new User({
+      '@id': 'user2',
+      '@type': [`${USER}User`],
+      [`${USER}username`]: [{ '@value': 'test2' }],
+      [`${FOAF}firstName`]: [{ '@value': 'Jane' }],
+      [`${FOAF}lastName`]: [{ '@value': 'Doe' }],
+  });
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -47,12 +67,17 @@ describe('Member Table component', function() {
             ],
             declarations: [
                 MemberTableComponent
+            ],
+            providers: [
+              MockProvider(UserManagerService)
             ]
         }).compileComponents();
 
         fixture = TestBed.createComponent(MemberTableComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
+        userManagerStub = TestBed.inject(UserManagerService) as jasmine.SpyObj<UserManagerService>;
+        userManagerStub.users = [user1];
     });
 
     afterEach(function() {
@@ -70,9 +95,9 @@ describe('Member Table component', function() {
         });
         it('should change updates to the list of members', function() {
             expect(component.dataSource).toEqual([]);
-            component.members = ['test'];
+            component.members = ['user1'];
             component.ngOnChanges();
-            expect(component.dataSource).toEqual(['test']);
+            expect(component.dataSource).toEqual([user1]);
         });
     });
     describe('contains with the correct html', function() {
@@ -80,17 +105,17 @@ describe('Member Table component', function() {
             expect(element.queryAll(By.css('.member-table')).length).toEqual(1);
         });
         it('with the correct number of rows for members', function() {
-            component.dataSource = ['test1', 'test2'];
+            component.dataSource = [user1, user2];
             fixture.detectChanges();
             expect(element.queryAll(By.css('mat-row')).length).toEqual(component.dataSource.length);
         });
         it('with delete buttons per member', function() {
-            component.dataSource = ['test1', 'test2'];
+            component.dataSource = [user1, user2];
             fixture.detectChanges();
             expect(element.queryAll(By.css('button.mat-icon-button')).length).toEqual(component.dataSource.length);
         });
         it('depending on whether the table is read only', function() {
-            component.dataSource = ['test'];
+            component.dataSource = [user1];
             component.readOnly = true;
             fixture.detectChanges();
             const removeButton = element.query(By.css('button.mat-icon-button'));
@@ -98,12 +123,12 @@ describe('Member Table component', function() {
         });
     });
     it('should call emitRemoveMember when a delete button is clicked', function() {
-        component.dataSource = ['test'];
+        component.dataSource = [user1];
         fixture.detectChanges();
         spyOn(component, 'emitRemoveMember');
         
         const button = element.query(By.css('button.mat-icon-button'));
         button.triggerEventHandler('click', null);
-        expect(component.emitRemoveMember).toHaveBeenCalledWith('test');
+        expect(component.emitRemoveMember).toHaveBeenCalledWith('user1');
     });
 });

@@ -443,7 +443,7 @@ export class MergeRequestsStateService {
             creator: this._getCreator(jsonld),
             recordIri: getPropertyId(jsonld, `${MERGEREQ}onRecord`),
             assignees: get(jsonld, `['${MERGEREQ}assignee']`, [])
-                .map(obj => get(find(this.um.users, {iri: obj['@id']}), 'username'))
+                .map(obj => this.um.users.find(user => user.iri === obj['@id']))
                 .filter(obj => !!obj)
         };
     }

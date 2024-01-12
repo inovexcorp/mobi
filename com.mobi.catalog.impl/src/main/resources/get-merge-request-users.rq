@@ -29,6 +29,6 @@ WHERE {
     BIND(IF(BOUND(?searchText), CONTAINS(?option5, LCASE(?searchText)), true) as ?s5)
     BIND(IF(BOUND(?firstName) && BOUND(?lastName), CONCAT(LCASE(?lastName), ", ", LCASE(?firstName)), "") as ?option6)
     BIND(IF(BOUND(?searchText), CONTAINS(?option6, LCASE(?searchText)), true) as ?s6)
-    BIND(IF(?option4 != "", ?option4, ?username) as ?name)
+    BIND(IF(?option4 != "", ?option4, IF(BOUND(?firstName), ?firstName, ?username)) as ?name)
     FILTER(?s1 || ?s2 || ?s3 || ?s4 || ?s5 || ?s6)
 } GROUP BY ?user ?name ORDER BY ?name

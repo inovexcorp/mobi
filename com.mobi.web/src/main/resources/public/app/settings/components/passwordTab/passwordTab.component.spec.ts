@@ -30,6 +30,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { of, throwError } from 'rxjs';
+import { cloneDeep } from 'lodash';
 
 import {
     cleanStylesFromDOM
@@ -39,6 +40,8 @@ import { UnmaskPasswordComponent } from '../../../shared/components/unmaskPasswo
 import { UserManagerService } from '../../../shared/services/userManager.service';
 import { ToastService } from '../../../shared/services/toast.service';
 import { LoginManagerService } from '../../../shared/services/loginManager.service';
+import { User } from '../../../shared/models/user.class';
+import { FOAF, USER } from '../../../prefixes';
 import { PasswordTabComponent } from './passwordTab.component';
 
 describe('Password Tab component', function() {
@@ -78,7 +81,14 @@ describe('Password Tab component', function() {
         toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
 
         loginManagerStub.currentUser = 'user';
-        userManagerStub.users = [{ external: false, firstName: 'John', lastName: 'Doe', email: '', roles: [], username: 'user' }];
+        userManagerStub.users = [new User({
+            '@id': 'user',
+            '@type': [`${USER}User`],
+            [`${USER}username`]: [{'@value': 'user'}],
+            [`${FOAF}firstName`]: [{'@value': 'John'}],
+            [`${FOAF}lastName`]: [{'@value': 'Doe'}],
+            [`${FOAF}mbox`]: [{'@id': 'mailto:john.doe@test.com'}]
+        })];
     });
 
     afterEach(function() {
@@ -99,7 +109,9 @@ describe('Password Tab component', function() {
             expect(component.passwordForm.controls.unmaskPassword).toBeTruthy();
         });
         it('if user is external', function() {
-            userManagerStub.users[0].external = true;
+            const copyUser = cloneDeep(userManagerStub.users[0].jsonld);
+            copyUser['@type'].push(`${USER}ExternalUser`);
+            userManagerStub.users[0] = new User(copyUser);
             component.ngOnInit();
             expect(component.passwordForm.controls.currentPassword.disabled).toEqual(true);
             expect(component.passwordForm.controls.unmaskPassword.disabled).toEqual(true);

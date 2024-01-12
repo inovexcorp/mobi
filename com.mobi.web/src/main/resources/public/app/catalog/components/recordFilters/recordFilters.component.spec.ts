@@ -41,9 +41,9 @@ import { CatalogManagerService } from '../../../shared/services/catalogManager.s
 import { CatalogStateService } from '../../../shared/services/catalogState.service';
 import { ToastService } from '../../../shared/services/toast.service';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
-import { DCTERMS } from '../../../prefixes';
+import { DCTERMS, FOAF, USER } from '../../../prefixes';
 import { UserManagerService } from '../../../shared/services/userManager.service';
-import { User } from '../../../shared/models/user.interface';
+import { User } from '../../../shared/models/user.class';
 import { RecordFiltersComponent } from './recordFilters.component';
 
 describe('Record Filters component', function() {
@@ -55,12 +55,13 @@ describe('Record Filters component', function() {
 
     const catalogId = 'catalogId';
     const keyword = 'keyword1';
-    const user: User = {
-      iri: 'urn:userA',
-      username: 'userA',
-      firstName: 'Joe',
-      lastName: 'Davis'
-    };
+    const user: User = new User({
+      '@id': 'urn:userA',
+      '@type': [`${USER}User`],
+      [`${USER}username`]: [{ '@value': 'userA' }],
+      [`${FOAF}firstName`]: [{ '@value': 'Joe' }],
+      [`${FOAF}lastName`]: [{ '@value': 'Davis' }]
+    });
     const keywordObject = function(keyword, count): KeywordCount {
         return { ['http://mobi.com/ontologies/catalog#keyword']: keyword, 'count': count };
     };
@@ -106,7 +107,6 @@ describe('Record Filters component', function() {
         catalogManagerStub.getKeywords.and.returnValue(of(new HttpResponse<KeywordCount[]>({body: keywords, headers: new HttpHeaders(headers)})));
         
         userManagerStub.users = [user];
-        userManagerStub.getUserDisplay.and.callFake(user => user.username);
         userManagerStub.filterUsers.and.callFake((users) => users);
 
         component.catalogId = catalogId;
@@ -162,7 +162,17 @@ describe('Record Filters component', function() {
             this.recordTypeFilter.filterItems = [this.firstRecordFilterItem, this.secondRecordFilterItem];
 
             this.firstCreatorFilterItem = {value: {user, count: 1}, checked: true};
-            this.secondCreatorFilterItem = {value: {user: {iri: 'urn:userB', username: 'userB', firstName: 'Jane', lastName: 'Davis'}, count: 10}, checked: true};
+            this.secondCreatorFilterItem = {value: {user: 
+              new User({
+                  '@id': 'urn:userB',
+                  '@type': [`${USER}User`],
+                  [`${USER}username`]: [{ '@value': 'userB' }],
+                  [`${FOAF}firstName`]: [{ '@value': 'Jane' }],
+                  [`${FOAF}lastName`]: [{ '@value': 'Davis' }],
+              }),
+              count: 10},
+              checked: true
+            };
             this.creatorTypeFilter = component.filters[1];
             this.creatorTypeFilter.filterItems = [this.firstCreatorFilterItem, this.secondCreatorFilterItem];
 
@@ -202,7 +212,7 @@ describe('Record Filters component', function() {
           });
       });
       it('creatorTypeFilter filter text method returns correctly', function() {
-          expect(this.creatorTypeFilter.getItemText(this.firstCreatorFilterItem)).toEqual('userA (1)');
+          expect(this.creatorTypeFilter.getItemText(this.firstCreatorFilterItem)).toEqual('Joe Davis (1)');
       });
         describe('keywordsFilter should filter records', function() {
             it('if the keyword filter has been checked', function() {
@@ -238,7 +248,7 @@ describe('Record Filters component', function() {
             component.ngOnInit();
             fixture.detectChanges();
             expect(element.queryAll(By.css('.record-filters')).length).toEqual(1);
-            const expectedHtmlResults = [[ 'Record Type', 'Test 1,Test 2', 0, 0 ], [ 'Creators', `${user.username} (1)`, 1, 0 ], [ 'Keywords', `${keyword} (6)`, 1, 1 ]];
+            const expectedHtmlResults = [[ 'Record Type', 'Test 1,Test 2', 0, 0 ], [ 'Creators', `${user.firstName} ${user.lastName} (1)`, 1, 0 ], [ 'Keywords', `${keyword} (6)`, 1, 1 ]];
             expect(this.getHtmlResults(this)).toEqual(expectedHtmlResults);
         });
     });

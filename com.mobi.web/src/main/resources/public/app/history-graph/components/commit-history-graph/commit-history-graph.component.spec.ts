@@ -106,30 +106,30 @@ describe('CommitHistoryGraphComponent', () => {
       commitIri: commitId,
       title: 'tag1',
       description: ''
-    } as Tag;
+    };
     tag2 = {
       tagIri: 'urn:tag2',
       commitIri: commitId,
       title: 'tag2',
       description: ''
-    } as Tag;
+    };
     gitActions = [
       {
-        'action': 'create-branch',
-        'branch': 'HEAD'
+        action: 'create-branch',
+        branch: 'HEAD'
       },
       {
-        'action': 'commit',
-        'branch': 'HEAD',
-        'commit': commit,
+        action: 'commit',
+        branch: 'HEAD',
+        commit: commit,
       },
       {
-        'action': 'create-branch',
-        'branch': 'BRANCH-0001'
+        action: 'create-branch',
+        branch: 'BRANCH-0001'
       },
       {
-        'action': 'create-branch',
-        'branch': 'BRANCH-0002'
+        action: 'create-branch',
+        branch: 'BRANCH-0002'
       },
     ];
     component.tags = [tag1, tag2];
@@ -323,7 +323,7 @@ describe('CommitHistoryGraphComponent', () => {
         expect(gitgraphCommitOptions).toEqual({
           subject: 'message',
           hash: '1234567890',
-          author: 'user',
+          author: 'firstName lastName',
           tag: `${tag1.title} | ${tag2.title}`,
           renderDot: jasmine.any(Function),
           renderMessage: jasmine.any(Function),

@@ -22,7 +22,6 @@
  */
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
-import { get, find } from 'lodash';
 
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
@@ -52,6 +51,7 @@ import { getDctermsId, getDctermsValue } from '../../../shared/utility';
 export class CommentDisplayComponent {
     commentText = '';
     creatorIRI = '';
+    creatorUsername = '';
     creator = '';
     isCreator: boolean;
     issued = '';
@@ -64,7 +64,9 @@ export class CommentDisplayComponent {
         this._comment = value;
         this.commentText = getDctermsValue(value, 'description');
         this.creatorIRI = getDctermsId(value, 'creator');
-        this.creator = get(find(this.um.users, {iri: this.creatorIRI}), 'username', '(Unknown)');
+        const user = this.um.users.find(user => user.iri === this.creatorIRI);
+        this.creatorUsername = user ? user.username : '[Not Available]';
+        this.creator = user ? user.displayName : '[Not Available]';
         this.isCreator = this.lm.currentUserIRI === this.creatorIRI;
         this.issued = getDctermsValue(value, 'issued');
     }

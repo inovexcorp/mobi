@@ -32,6 +32,7 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
+import { cloneDeep } from 'lodash';
 
 import {
     cleanStylesFromDOM,
@@ -51,15 +52,14 @@ import { OntologyListItem } from '../../../shared/models/ontologyListItem.class'
 import { UserManagerService } from '../../../shared/services/userManager.service';
 import { LoginManagerService } from '../../../shared/services/loginManager.service';
 import { PolicyEnforcementService } from '../../../shared/services/policyEnforcement.service';
-import { User } from '../../../shared/models/user.interface';
-import { CATALOG, DCTERMS, MERGEREQ } from '../../../prefixes';
+import { User } from '../../../shared/models/user.class';
+import { CATALOG, DCTERMS, FOAF, MERGEREQ, USER } from '../../../prefixes';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
-import { MergeRequestViewComponent } from './mergeRequestView.component';
 import { RecordIconComponent } from '../../../shared/components/recordIcon/recordIcon.component';
-import { cloneDeep } from 'lodash';
 import { MergeRequest } from '../../../shared/models/mergeRequest.interface';
 import { XACMLRequest } from '../../../shared/models/XACMLRequest.interface';
+import { MergeRequestViewComponent } from './mergeRequestView.component';
 
 describe('Merge Request View component', function() {
     let component: MergeRequestViewComponent;
@@ -116,17 +116,17 @@ describe('Merge Request View component', function() {
       [`${DCTERMS}title`]: [{'@value': 'a'}]
       
     };
-    const assignees = ['bruce', 'clark'];
-
-    const user: User = {
-        iri: userIri,
-        firstName: 'Bruce',
-        external: false,
-        username: 'bruce',
-        lastName: '',
-        email: '',
-        roles: []
-    };
+    const user: User = new User({
+      '@id': userIri,
+      '@type': [`${USER}User`],
+      [`${FOAF}firstName`]: [{ '@value': 'Bruce' }],
+      [`${USER}username`]: [{ '@value': 'bruce' }],
+    });
+    const assignees = [user, new User({
+      '@id': 'urn:superman',
+      '@type': [`${USER}User`],
+      [`${USER}username`]: [{ '@value': 'clark' }],
+    })];
 
     const conflict: Conflict = {iri: 'iri', left: new Difference(), right: new Difference()};
     const catalogId = 'catalog';
@@ -199,7 +199,7 @@ describe('Merge Request View component', function() {
             assignees: [],
             jsonld: mergeRequestJsonLd
         };
-        mergeRequest = cloneDeep(mergeRequestsStateStub.selected)
+        mergeRequest = cloneDeep(mergeRequestsStateStub.selected);
         loginManagerStub.currentUserIRI = userIri;
         userManagerStub.users = [user];
         userManagerStub.isAdminUser.and.returnValue(false);
@@ -731,7 +731,7 @@ describe('Merge Request View component', function() {
             expect(listItems.length).toEqual(1);
             expect(listItems[0].nativeElement.innerHTML).toContain('None specified');
 
-            mergeRequestsStateStub.selected.assignees = ['user1', 'user2'];
+            mergeRequestsStateStub.selected.assignees = assignees;
             fixture.detectChanges();
             expect(element.queryAll(By.css('.assignees li')).length).toEqual(1);
         });
@@ -762,8 +762,8 @@ describe('Merge Request View component', function() {
             expect(indicator.classes['mat-primary']).toBeTruthy();
             expect(indicator.nativeElement.innerHTML).toContain('Accepted');
         });
-        it('depending on whether the user is not authorize', async function() {
-            mergeRequestsStateStub.selected.assignees = ['user1', 'user2'];
+        it('depending on whether the user is not authorized', async function() {
+            mergeRequestsStateStub.selected.assignees = [];
             fixture.detectChanges();
             component.ngOnInit();
             await fixture.whenStable();

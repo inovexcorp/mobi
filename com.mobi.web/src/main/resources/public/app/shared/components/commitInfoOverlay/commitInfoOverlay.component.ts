@@ -29,7 +29,6 @@ import { map, switchMap } from 'rxjs/operators';
 import { of, Observable } from 'rxjs';
 
 import { CommitDifference } from '../../models/commitDifference.interface';
-import { UserManagerService } from '../../services/userManager.service';
 import { CatalogManagerService } from '../../services/catalogManager.service';
 import { JSONLDObject } from '../../models/JSONLDObject.interface';
 import { OntologyManagerService } from '../../services/ontologyManager.service';
@@ -38,6 +37,7 @@ import { EntityNames } from '../../models/entityNames.interface';
 import { Commit } from '../../models/commit.interface';
 import { ONTOLOGYEDITOR } from '../../../prefixes';
 import { getBeautifulIRI, getDate, getObjIrisFromDifference } from '../../utility';
+import { User } from '../../models/user.class';
 
 /**
  * @class shared.CommitInfoOverlayComponent
@@ -64,14 +64,16 @@ export class CommitInfoOverlayComponent implements OnInit {
     tempAdditions: JSONLDObject[] = [];
     tempDeletions: JSONLDObject[] = [];
     date = '';
+    userDisplay: string;
 
     constructor(private dialogRef: MatDialogRef<CommitInfoOverlayComponent>, 
                 @Inject(MAT_DIALOG_DATA) public data: {ontRecordId: string, commit: Commit, type: string},
-                private toast: ToastService, public um: UserManagerService, private cm: CatalogManagerService,
+                private toast: ToastService, private cm: CatalogManagerService,
                 private om: OntologyManagerService) {
     }
 
     ngOnInit(): void {
+        this.userDisplay = User.getDisplayName(this.data.commit.creator);
         this.date = getDate(this.data.commit.date, 'short');
         this.retrieveMoreResults(100, 0);
     }

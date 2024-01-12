@@ -41,9 +41,10 @@ import { AddMemberButtonComponent } from '../addMemberButton/addMemberButton.com
 import { MemberTableComponent } from '../memberTable/memberTable.component';
 import { UserManagerService } from '../../../shared/services/userManager.service';
 import { Group } from '../../../shared/models/group.interface';
-import { User } from '../../../shared/models/user.interface';
+import { User } from '../../../shared/models/user.class';
 import { ToastService } from '../../../shared/services/toast.service';
 import { LoginManagerService } from '../../../shared/services/loginManager.service';
+import { FOAF, USER } from '../../../prefixes';
 import { CreateGroupOverlayComponent } from './createGroupOverlay.component';
 
 describe('Create Group Overlay component', function() {
@@ -89,14 +90,14 @@ describe('Create Group Overlay component', function() {
         matDialogRef = TestBed.inject(MatDialogRef) as jasmine.SpyObj<MatDialogRef<CreateGroupOverlayComponent>>;
 
         loginManagerStub.currentUser = 'admin';
-        user = {
-            username: 'batman',
-            firstName: 'BATMAN',
-            lastName: 'DUH',
-            email: 'iambatman@test.com',
-            external: false,
-            roles: []
-        };
+        user = new User({
+            '@id': 'batman',
+            '@type': [`${USER}User`],
+            [`${USER}username`]: [{ '@value': 'batman' }],
+            [`${FOAF}firstName`]: [{ '@value': 'BATMAN' }],
+            [`${FOAF}lastName`]: [{ '@value': 'user' }],
+            [`${FOAF}email`]: [{ '@id': 'mailto:iambatman@test.com' }],
+        });
         newGroup = {
             title: 'Superheroes',
             description: 'Wow',

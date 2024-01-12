@@ -39,7 +39,7 @@ import { of } from 'rxjs';
 import {
     cleanStylesFromDOM
 } from '../../../../../public/test/ts/Shared';
-import { DCTERMS } from '../../../prefixes';
+import { DCTERMS, USER } from '../../../prefixes';
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
 import { InfoMessageComponent } from '../../../shared/components/infoMessage/infoMessage.component';
 import { MergeRequest } from '../../../shared/models/mergeRequest.interface';
@@ -49,8 +49,9 @@ import { MergeRequestFilterComponent } from '../merge-request-filter/merge-reque
 import { MergeRequestManagerService } from '../../../shared/services/mergeRequestManager.service';
 import { SortOption } from '../../../shared/models/sortOption.interface';
 import { ToastService } from '../../../shared/services/toast.service';
-import { MergeRequestListComponent } from './mergeRequestList.component';
 import { RecordIconComponent } from '../../../shared/components/recordIcon/recordIcon.component';
+import { User } from '../../../shared/models/user.class';
+import { MergeRequestListComponent } from './mergeRequestList.component';
 
 describe('Merge Request List component', function() {
     let component: MergeRequestListComponent;
@@ -246,7 +247,18 @@ describe('Merge Request List component', function() {
             expect(listItems.length).toEqual(1);
             expect(listItems[0].nativeElement.innerHTML).toContain('None specified');
 
-            copyRequest.assignees = ['userA', 'userB'];
+            copyRequest.assignees = [
+                new User({
+                    '@id': 'userA',
+                    '@type': [`${USER}User`],
+                    [`${USER}username`]: [{ '@value': 'userA' }]
+                }),
+                new User({
+                    '@id': 'userB',
+                    '@type': [`${USER}User`],
+                    [`${USER}username`]: [{ '@value': 'userB' }]
+                })
+            ];
             fixture.detectChanges();
             expect(element.queryAll(By.css('.request .assignees li')).length).toEqual(copyRequest.assignees.length);
         });

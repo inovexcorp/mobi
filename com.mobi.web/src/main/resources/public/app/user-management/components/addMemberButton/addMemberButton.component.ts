@@ -22,11 +22,10 @@
  */
 import { Component, EventEmitter, Input, Output, ViewChild } from '@angular/core';
 import { MatMenuTrigger } from '@angular/material/menu';
-import { filter, includes } from 'lodash';
+import { includes } from 'lodash';
 
-import { User } from '../../../shared/models/user.interface';
+import { User } from '../../../shared/models/user.class';
 import { UserManagerService } from '../../../shared/services/userManager.service';
-import { UserStateService } from '../../../shared/services/userState.service';
 
 /**
  * @class user-management.AddMemberButtonComponent
@@ -58,7 +57,7 @@ export class AddMemberButtonComponent {
     filteredAvailableUsers: User[] = [];
     selectedMember: User;
 
-    constructor(private state: UserStateService, private um: UserManagerService) {}
+    constructor(public um: UserManagerService) {}
 
     emitAddMember(member: User): void {
         this.addMember.emit(member);
@@ -66,7 +65,7 @@ export class AddMemberButtonComponent {
         this.trigger.closeMenu();
     }
     setAvailableUsers(): void {
-        this.availableUsers = filter(this.um.users, (user: User) => !includes(this.existingMembers, user.username));
+        this.availableUsers = this.um.users.filter((user: User) => !includes(this.existingMembers, user.username));
         this.setFilteredUsers();
     }
     setFilteredUsers(): void {
@@ -83,7 +82,7 @@ export class AddMemberButtonComponent {
         this.selectedMember = undefined;
         this.userFilter = undefined;
     }
-    getName(user: User): string {
-        return (user ? (user.firstName || user.lastName) ? (`${user.firstName} ${user.lastName}`) : user.username : '').trim();
+    getName = (user: User): string => {  // arrow syntax used to preserve `this` keyword
+        return user ? user.displayName : '';
     }
 }

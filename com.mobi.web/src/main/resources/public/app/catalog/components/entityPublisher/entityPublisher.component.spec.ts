@@ -30,7 +30,8 @@ import {
 } from '../../../../../public/test/ts/Shared';
 import { UserManagerService } from '../../../shared/services/userManager.service';
 import { SharedModule } from '../../../shared/shared.module';
-import { DCTERMS } from '../../../prefixes';
+import { DCTERMS, FOAF, USER } from '../../../prefixes';
+import { User } from '../../../shared/models/user.class';
 import { EntityPublisherComponent } from './entityPublisher.component';
 
 describe('Entity Publisher component', function() {
@@ -59,7 +60,12 @@ describe('Entity Publisher component', function() {
         
         userManagerStub = TestBed.inject(UserManagerService) as jasmine.SpyObj<UserManagerService>;
         
-        userManagerStub.users = [{iri: userId, username, external: false, firstName: '', lastName: '', email: '', roles: []}];
+        userManagerStub.users = [new User({
+          '@id': userId,
+          '@type': [`${USER}User`],
+          [`${USER}username`]: [{ '@value': username }],
+          [`${FOAF}firstName`]: [{ '@value': 'Bruce' }]
+        })];
     });
 
     afterEach(function() {
@@ -73,16 +79,19 @@ describe('Entity Publisher component', function() {
     describe('initializes correctly on entity change', function() {
         it('if the user can be found', function() {
             component.entity = { '@id': '', '@type': [], [`${DCTERMS}publisher`]: [{ '@id': userId }] };
-            expect(component.publisherName).toEqual(username);
+            expect(component.publisherUsername).toEqual(username);
+            expect(component.publisherName).toEqual('Bruce');
         });
         it('if the entity does not have a publisher', function() {
             component.entity = {'@id': '', '@type': []};
-            expect(component.publisherName).toEqual('(None)');
+            expect(component.publisherUsername).toEqual('[Not Available]');
+            expect(component.publisherName).toEqual('[Not Available]');
         });
         it('if the user cannot be found', function() {
             userManagerStub.users = [];
             component.entity = {'@id': '', '@type': []};
-            expect(component.publisherName).toEqual('(None)');
+            expect(component.publisherUsername).toEqual('[Not Available]');
+            expect(component.publisherName).toEqual('[Not Available]');
         });
     });
     describe('contains the correct html', function() {

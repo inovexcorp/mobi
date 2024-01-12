@@ -28,13 +28,14 @@ import { Observable } from 'rxjs';
 import {
     cleanStylesFromDOM,
 } from '../../../test/ts/Shared';
-import { MERGEREQ } from '../../prefixes';
+import { MERGEREQ, USER } from '../../prefixes';
 import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
 import { JSONLDObject } from '../models/JSONLDObject.interface';
 import { MergeRequestPaginatedConfig } from '../models/mergeRequestPaginatedConfig.interface';
-import { MergeRequestManagerService } from './mergeRequestManager.service';
 import { MergeRequest } from '../models/mergeRequest.interface';
 import { EventWithPayload } from '../models/eventWithPayload.interface';
+import { User } from '../models/user.class';
+import { MergeRequestManagerService } from './mergeRequestManager.service';
 
 describe('Merge Request Manager service', function() {
     let service: MergeRequestManagerService;
@@ -147,7 +148,18 @@ describe('Merge Request Manager service', function() {
                 recordId: 'recordId',
                 sourceBranchId: 'branch1',
                 targetBranchId: 'branch2',
-                assignees: ['user1', 'user2'],
+                assignees: [
+                    new User({
+                        '@id': 'userA',
+                        '@type': [`${USER}User`],
+                        [`${USER}username`]: [{ '@value': 'userA' }]
+                    }),
+                    new User({
+                        '@id': 'userB',
+                        '@type': [`${USER}User`],
+                        [`${USER}username`]: [{ '@value': 'userB' }]
+                    })
+                ],
                 removeSource: true
             };
         });
@@ -173,7 +185,7 @@ describe('Merge Request Manager service', function() {
             expect((request.request.body as FormData).get('sourceBranchId').toString()).toEqual(this.requestConfig.sourceBranchId);
             expect((request.request.body as FormData).get('targetBranchId').toString()).toEqual(this.requestConfig.targetBranchId);
             expect((request.request.body as FormData).get('removeSource').toString()).toEqual('' + this.requestConfig.removeSource);
-            expect((request.request.body as FormData).getAll('assignees')).toEqual(this.requestConfig.assignees);
+            expect((request.request.body as FormData).getAll('assignees')).toEqual(this.requestConfig.assignees.map(user => user.username));
             request.flush(requestId);
         });
         it('without a description or assignees', function() {
@@ -251,21 +263,21 @@ describe('Merge Request Manager service', function() {
         });
         it('successfully', function() {
             const event: EventWithPayload = {
-                'eventType':'EVENT_MERGE_REQUEST_ACCEPTED',
-                'payload':{
-                    'recordId':'RECORDIRI',
-                    'targetBranchId':'targetBranchId',
-                    'requestToAccept':{
-                        'title':'title',
-                        'date':'01/01/2020',
-                        'creator':'string',
-                        'recordIri':'RECORDIRI',
-                        'assignees':[],
-                        'jsonld':{
-                            '@id':'requestId'
+                'eventType': 'EVENT_MERGE_REQUEST_ACCEPTED',
+                'payload': {
+                    'recordId': 'RECORDIRI',
+                    'targetBranchId': 'targetBranchId',
+                    'requestToAccept': {
+                        'title': 'title',
+                        'date': '01/01/2020',
+                        'creator': 'string',
+                        'recordIri': 'RECORDIRI',
+                        'assignees': [],
+                        'jsonld': {
+                            '@id': 'requestId'
                         },
-                        'targetBranch':{
-                            '@id':'targetBranchId'
+                        'targetBranch': {
+                            '@id': 'targetBranchId'
                         }
                     }
                 }
@@ -635,4 +647,3 @@ describe('Merge Request Manager service', function() {
 function spy(service: MergeRequestManagerService, arg1: string) {
     throw new Error('Function not implemented.');
 }
-

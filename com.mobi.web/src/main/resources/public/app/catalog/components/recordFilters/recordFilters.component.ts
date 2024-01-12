@@ -23,6 +23,8 @@
 import { HttpResponse } from '@angular/common/http';
 import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { forEach, map, filter, includes} from 'lodash';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 import { CATALOG, DCTERMS } from '../../../prefixes';
 import { KeywordCount } from '../../../shared/models/keywordCount.interface';
@@ -34,8 +36,6 @@ import { RecordFilter } from '../../../shared/models/recordFilter.interface';
 import { SearchableRecordFilter } from '../../../shared/models/searchableRecordFilter.interface';
 import { UserManagerService } from '../../../shared/services/userManager.service';
 import { getBeautifulIRI } from '../../../shared/utility';
-import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
 
 /**
  * @class catalog.RecordFiltersComponent
@@ -145,7 +145,7 @@ export class RecordFiltersComponent implements OnInit, OnDestroy {
                 this.pagingData['hasNextPage'] = filtered.length > this.filterItems.length;
             },
             getItemText: function(filterItem: FilterItem) {
-                const userDisplay = componentContext._um.getUserDisplay(filterItem.value['user']);
+                const userDisplay = filterItem.value['user'].displayName;
                 const count = filterItem.value['count'];
                 return `${userDisplay} (${count})`;
             },

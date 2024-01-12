@@ -22,7 +22,7 @@
   -->
 <div class="comment-display" [ngClass]="{'reply': isReply}">
     <p class="comment-title mb-1 pb-1 border-bottom">
-        <strong class="text-truncate">{{creator}}</strong> <span class="text-muted"> {{isReply ? 'replied' : 'commented'}} on {{issued | date:'short'}}</span>
+        <strong class="text-truncate" title="Username: {{creatorUsername}}">{{creator}}</strong> <span class="text-muted"> {{isReply ? 'replied' : 'commented'}} on {{issued | date:'short'}}</span>
     </p>
     <div class="comment-body d-flex p-1">
         <showdown class="markdown comment-body-text flex-1 remove-min-width break-word" [value]="commentText" sanitize></showdown>

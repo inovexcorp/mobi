@@ -25,26 +25,36 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 import { of, throwError } from 'rxjs';
 import { HttpErrorResponse } from '@angular/common/http';
 import { MockProvider } from 'ng-mocks';
+import { cloneDeep } from 'lodash';
 
 import {
     cleanStylesFromDOM
 } from '../../../test/ts/Shared';
 import { Group } from '../models/group.interface';
 import { JSONLDObject } from '../models/JSONLDObject.interface';
-import { User } from '../models/user.interface';
+import { User } from '../models/user.class';
 import { ADMIN_USER_IRI } from '../../constants';
 import { DCTERMS, FOAF, ROLES, USER } from '../../prefixes';
 import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
+import { NewUserConfig } from '../models/new-user-config';
 import { UserManagerService } from './userManager.service';
 
 describe('User Manager service', function() {
     let service: UserManagerService;
     let progressSpinnerStub: jasmine.SpyObj<ProgressSpinnerService>;
     let httpMock: HttpTestingController;
-    let user: User;
-    let group: Group;
-    let userRdf: JSONLDObject;
+    const userRdf: JSONLDObject = {
+        '@id': 'urn:userIri',
+        '@type': [`${USER}User`],
+        [`${USER}username`]: [{'@value': 'username'}],
+        [`${FOAF}firstName`]: [{'@value': 'John'}],
+        [`${FOAF}lastName`]: [{'@value': 'Doe'}],
+        [`${FOAF}mbox`]: [{'@id': 'john.doe@gmail.com'}],
+        [`${USER}hasUserRole`]: [{'@id': `${ROLES}user`}]
+    };
+    const user: User = new User(userRdf);
     let groupRdf: JSONLDObject;
+    let group: Group;
 
     const error = 'Error Message';
 
@@ -62,26 +72,6 @@ describe('User Manager service', function() {
         httpMock = TestBed.inject(HttpTestingController) as jasmine.SpyObj<HttpTestingController>;
 
         progressSpinnerStub.track.and.callFake(ob => ob);
-
-        user = {
-            external: false,
-            iri: 'urn:userIri',
-            username: 'username',
-            firstName: 'John',
-            lastName: 'Doe',
-            email: 'john.doe@gmail.com',
-            roles: ['user']
-        };
-        userRdf = {
-            '@id': user.iri,
-            '@type': [],
-            [`${USER}username`]: [{'@value': user.username}],
-            [`${FOAF}firstName`]: [{'@value': user.firstName}],
-            [`${FOAF}lastName`]: [{'@value': user.lastName}],
-            [`${FOAF}mbox`]: [{'@id': user.email}],
-            [`${USER}hasUserRole`]: [{'@id': ROLES + user.roles[0]}]
-        };
-        user.jsonld = userRdf;
         
         group = {
             external: false,
@@ -106,9 +96,7 @@ describe('User Manager service', function() {
         cleanStylesFromDOM();
         service = null;
         httpMock = null;
-        user = null;
         group = null;
-        userRdf = null;
         groupRdf = null;
     });
 
@@ -125,7 +113,6 @@ describe('User Manager service', function() {
     });
     describe('should set the correct initial state for users and groups', function() {
         beforeEach(function() {
-            spyOn(service, 'getUserObj').and.returnValue(user);
             spyOn(service, 'getGroupObj').and.returnValue(group);
         });
         it('successfully', fakeAsync(function() {
@@ -135,7 +122,6 @@ describe('User Manager service', function() {
             tick();
             expect(service.getUsers).toHaveBeenCalledWith();
             expect(service.getGroups).toHaveBeenCalledWith();
-            expect(service.getUserObj).toHaveBeenCalledWith(userRdf);
             expect(service.getGroupObj).toHaveBeenCalledWith(groupRdf);
             expect(service.users).toEqual([user]);
             expect(service.groups).toEqual([group]);
@@ -185,12 +171,14 @@ describe('User Manager service', function() {
     describe('should get the username of the user with the passed iri', function() {
         beforeEach(function() {
             this.params = { iri: 'iri' };
+            spyOn(service, 'getUser').and.returnValue(of(user));
         });
         it('if it has been found before', fakeAsync(function() {
             service.users = [user];
             service.getUsername(user.iri)
                 .subscribe(response => expect(response).toEqual(user.username), () => fail('Promise should have resolved'));
             tick();
+            expect(service.getUser).not.toHaveBeenCalled();
         }));
         describe('if it has not been found before', function() {
             it('unless an error occurs', function() {
@@ -201,42 +189,60 @@ describe('User Manager service', function() {
                 const request = httpMock.expectOne(req => req.url === `${service.userPrefix}/username` && req.method === 'GET');
                 expect(request.request.params.get('iri')).toEqual('iri');
                 request.flush('flush', { status: 400, statusText: error });
-            });
+                expect(service.getUser).not.toHaveBeenCalled();
+              });
             it('successfully', function() {
-                const iri = user.iri;
-                delete user.iri;
-                service.users = [user];
-                service.getUsername(iri)
+                service.getUsername('iri')
                     .subscribe(response => {
                         expect(response).toEqual(user.username);
-                        expect(user.iri).toEqual(iri);
                     }, () => fail('Promise should have resolved'));
                 const request = httpMock.expectOne(req => req.url === `${service.userPrefix}/username` && req.method === 'GET');
-                expect(request.request.params.get('iri')).toEqual(iri);
+                expect(request.request.params.get('iri')).toEqual('iri');
                 request.flush(user.username);
+                expect(service.getUser).toHaveBeenCalledWith(user.username);
             });
         });
     });
     describe('should add a user', function() {
+        const config: NewUserConfig = {
+            username: user.username,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            email: user.email,
+            password: 'pw',
+            roles: ['user']
+        };
         beforeEach(function() {
             spyOn(service, 'getUser').and.returnValue(of(user));
         });
         it('unless an error occurs', function() {
-            service.addUser(user, 'pw')
+            service.addUser(config)
                 .subscribe(() => fail('Promise should have rejected'), response => {
                     expect(response).toEqual(error);
                 });
             const request = httpMock.expectOne({url: service.userPrefix, method: 'POST'});
             expect(request.request.body instanceof FormData).toBeTrue();
+            expect((request.request.body as FormData).get('username').toString()).toEqual(config.username);
+            expect((request.request.body as FormData).get('password').toString()).toEqual(config.password);
+            expect((request.request.body as FormData).get('firstName').toString()).toEqual(config.firstName);
+            expect((request.request.body as FormData).get('lastName').toString()).toEqual(config.lastName);
+            expect((request.request.body as FormData).get('email').toString()).toEqual(config.email);
+            expect((request.request.body as FormData).getAll('roles')).toEqual(config.roles);
             request.flush('flush', { status: 400, statusText: error });
         });
         it('successfully', function() {
-            service.addUser(user, 'pw')
+            service.addUser(config)
                 .subscribe(() => {
                     expect(service.getUser).toHaveBeenCalledWith(user.username);
                 }, () => fail('Promise should have resolved'));
             const request = httpMock.expectOne({url: service.userPrefix, method: 'POST'});
             expect(request.request.body instanceof FormData).toBeTrue();
+            expect((request.request.body as FormData).get('username').toString()).toEqual(config.username);
+            expect((request.request.body as FormData).get('password').toString()).toEqual(config.password);
+            expect((request.request.body as FormData).get('firstName').toString()).toEqual(config.firstName);
+            expect((request.request.body as FormData).get('lastName').toString()).toEqual(config.lastName);
+            expect((request.request.body as FormData).get('email').toString()).toEqual(config.email);
+            expect((request.request.body as FormData).getAll('roles')).toEqual(config.roles);
             request.flush(200);
         });
     });
@@ -250,13 +256,10 @@ describe('User Manager service', function() {
             request.flush('flush', { status: 400, statusText: error });
         });
         describe('successfully and update the users list if', function() {
-            beforeEach(function() {
-                spyOn(service, 'getUserObj').and.returnValue(user);
-            });
             it('the user was already retrieved', function() {
-                const copyUser = Object.assign({}, user);
-                delete copyUser.firstName;
-                service.users = [copyUser];
+                const copyUser = cloneDeep(userRdf);
+                delete copyUser[`${FOAF}firstName`];
+                service.users = [new User(copyUser)];
                 service.getUser(user.username)
                     .subscribe(response => {
                         expect(response.iri).toEqual(user.iri);
@@ -279,27 +282,28 @@ describe('User Manager service', function() {
         });
     });
     describe('should update a user', function() {
+        const newUserRdf: JSONLDObject = cloneDeep(userRdf);
+        newUserRdf[`${FOAF}firstName`] = [{ '@value': 'NEW' }];
+        const newUser: User = new User(newUserRdf);
         beforeEach(function() {
             service.users = [user];
-            this.newUser = Object.assign({}, user);
-            this.newUser.firstName = 'NEW';
         });
         it('unless an error occurs', function() {
-            service.updateUser(user.username, this.newUser)
+            service.updateUser(user.username, newUser)
                 .subscribe(() => fail('Promise should have rejected'), response => {
                     expect(response).toEqual(error);
                 });
             const request = httpMock.expectOne({url: `${service.userPrefix}/${user.username}`, method: 'PUT'});
-            expect(request.request.body).toEqual(this.newUser.jsonld);
+            expect(request.request.body).toEqual(newUserRdf);
             request.flush('flush', { status: 400, statusText: error });
         });
         it('successfully', function() {
-            service.updateUser(user.username, this.newUser)
+            service.updateUser(user.username, newUser)
                 .subscribe(() => {
-                    expect(service.users).toContain(this.newUser);
+                    expect(service.users).toContain(newUser);
                 }, () => fail('Promise should have resolved'));
             const request = httpMock.expectOne({url: `${service.userPrefix}/${user.username}`, method: 'PUT'});
-            expect(request.request.body).toEqual(this.newUser.jsonld);
+            expect(request.request.body).toEqual(newUserRdf);
             request.flush(200);
         });
     });
@@ -395,25 +399,24 @@ describe('User Manager service', function() {
     });
     describe('should remove a role from a user', function() {
         beforeEach(function() {
-            user.roles = ['role'];
             service.users = [user];
         });
         it('unless an error occurs', function() {
-            service.deleteUserRole(user.username, 'role')
+            service.deleteUserRole(user.username, 'user')
                 .subscribe(() => fail('Promise should have rejected'), response => {
                     expect(response).toEqual(error);
                 });
             const request = httpMock.expectOne(req => req.url === `${service.userPrefix}/${user.username}/roles` && req.method === 'DELETE');
-            expect(request.request.params.get('role')).toEqual('role');
+            expect(request.request.params.get('role')).toEqual('user');
             request.flush('flush', { status: 400, statusText: error });
         });
         it('using the passed parameters', function() {
-            service.deleteUserRole(user.username, 'role')
+            service.deleteUserRole(user.username, 'user')
                 .subscribe(() => {
                     expect(user.roles).toEqual([]);
                 }, () => fail('Promise should have resolved'));
             const request = httpMock.expectOne(req => req.url === `${service.userPrefix}/${user.username}/roles` && req.method === 'DELETE');
-            expect(request.request.params.get('role')).toEqual('role');
+            expect(request.request.params.get('role')).toEqual('user');
             request.flush(200);
         });
     });
@@ -690,12 +693,12 @@ describe('User Manager service', function() {
     });
     describe('should test whether a user is an admin', function() {
         it('based on user roles', function() {
-            user.roles.push('admin');
-            service.users = [user];
-            expect(service.isAdmin(user.username)).toBeTrue();
-
-            user.roles = [];
             expect(service.isAdmin(user.username)).toBeFalse();
+            
+            const copyUser = cloneDeep(user.jsonld);
+            copyUser[`${USER}hasUserRole`] = [{ '@id': `${ROLES}user` }, {'@id': `${ROLES}admin`}];
+            service.users = [new User(copyUser)];
+            expect(service.isAdmin(user.username)).toBeTrue();
         });
         it('based on group roles', function() {
             service.users = [user];
@@ -711,15 +714,6 @@ describe('User Manager service', function() {
         expect(service.isAdminUser(user.iri)).toBeFalse();
         expect(service.isAdminUser(ADMIN_USER_IRI)).toBeTrue();
     });
-    it('should determine whether a user is external', function() {
-        expect(service.isExternalUser(userRdf)).toBeFalse();
-        userRdf['@type'] = [`${USER}User`, `${USER}ExternalUser`];
-        expect(service.isExternalUser(userRdf)).toBeTrue();
-        userRdf['@type'] = [`${USER}User`];
-        expect(service.isExternalUser(userRdf)).toBeFalse();
-        userRdf['@type'] = [`${USER}Group`];
-        expect(service.isExternalUser(userRdf)).toBeFalse();
-    });
     it('should determine whether a group is external', function() {
         expect(service.isExternalGroup(groupRdf)).toBeFalse();
         groupRdf['@type'] = [`${USER}Group`, `${USER}ExternalGroup`];
@@ -728,35 +722,6 @@ describe('User Manager service', function() {
         expect(service.isExternalGroup(groupRdf)).toBeFalse();
         groupRdf['@type'] = [`${USER}User`];
         expect(service.isExternalGroup(groupRdf)).toBeFalse();
-    });
-    describe('getUserDisplay should return the correct value', function() {
-        it('when there is a first and last', function() {
-            expect(service.getUserDisplay(user)).toEqual(`${user.firstName} ${user.lastName}`);
-        });
-        it('when there is not a first or last but there is a username', function() {
-            user.firstName = '';
-            user.lastName = '';
-            expect(service.getUserDisplay(user)).toEqual(user.username);
-        });
-        it('when there is not a first, last, or username', function() {
-            user.username = '';
-            user.firstName = '';
-            user.lastName = '';
-            expect(service.getUserDisplay(user)).toEqual('[Not Available]');
-        });
-    });
-    it('should create a user object', function() {
-        spyOn(service, 'isExternalUser').and.returnValue(false);
-        userRdf[`${USER}hasUserRole`] = [{'@id': 'role'}];
-        const result = service.getUserObj(userRdf);
-        expect(result.jsonld).toEqual(userRdf);
-        expect(result.external).toEqual(false);
-        expect(result.iri).toEqual(userRdf['@id']);
-        expect(result.username).toEqual('username');
-        expect(result.firstName).toEqual('John');
-        expect(result.lastName).toEqual('Doe');
-        expect(result.email).toEqual('john.doe@gmail.com');
-        expect(result.roles).toEqual(['role']);
     });
     it('should create a group object', function() {
         spyOn(service, 'isExternalGroup').and.returnValue(false);

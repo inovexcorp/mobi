@@ -48,6 +48,7 @@ import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { BranchNames } from '../../models/branch-names.interface';
 import { Tag } from '../../../shared/models/tag.interface';
 import { condenseCommitId, getDate, getDctermsValue } from '../../../shared/utility';
+import { User } from '../../../shared/models/user.class';
 
 /**
  * @class history-graph.CommitHistoryGraphComponent
@@ -243,7 +244,7 @@ export class CommitHistoryGraphComponent implements OnChanges, AfterViewInit, Do
     return {
       subject: gitAction.commit.message,
       hash: condenseCommitId(commitId),
-      author: gitAction.commit.creator.username,
+      author: User.getDisplayName(gitAction.commit.creator),
       tag: this.getTags(commitId),
       renderDot: (svgCommit: GitGraphCommit) => {
         return this.svgElementHelperService.renderCommitDot(svgCommit, this.componentUuidId, this.commitDotClickable); 

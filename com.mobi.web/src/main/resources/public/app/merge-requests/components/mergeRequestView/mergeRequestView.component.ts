@@ -22,7 +22,7 @@
  */
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
-import { forEach, concat, some, get, find, isEmpty } from 'lodash';
+import { forEach, concat, some, get, isEmpty } from 'lodash';
 import { Subject, of } from 'rxjs';
 import { switchMap, takeUntil } from 'rxjs/operators';
 
@@ -41,6 +41,7 @@ import { LoginManagerService } from '../../../shared/services/loginManager.servi
 import { UserManagerService } from '../../../shared/services/userManager.service';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { getPropertyId } from '../../../shared/utility';
+import { User } from '../../../shared/models/user.class';
 
 /**
  * @class merge-requests.MergeRequestViewComponent
@@ -68,7 +69,7 @@ export class MergeRequestViewComponent implements OnInit, OnDestroy {
     isAccepted = false;
     buttonTitle = '';
     private isAdminUser: boolean;
-    currentAssignees: string[] = [];
+    currentAssignees: User[] = [];
 
     // controls for view-buttons (Accept, Close, Delete)
     isSubmitDisabled = true;
@@ -280,7 +281,7 @@ export class MergeRequestViewComponent implements OnInit, OnDestroy {
         }
     }
     private _isUserAssigned() {
-        const userInfo = find(this.um.users, { iri: this.lm.currentUserIRI });
-        return this.state.selected.assignees.find((item) => item === userInfo.username) ? true : false;
+        const userInfo = this.um.users.find(user => user.iri === this.lm.currentUserIRI );
+        return this.state.selected.assignees.find((item) => item.username === userInfo.username) ? true : false;
     }
 }

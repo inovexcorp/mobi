@@ -20,18 +20,18 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<h1 mat-dialog-title>Incompatible Mapping - {{this.data.mappingRecord['title']}}</h1>
+<h1 mat-dialog-title>Incompatible Mapping - {{data.mappingRecord['title']}}</h1>
 <div mat-dialog-content>
-    <info-message>{{this.infoMessage}}</info-message>
+    <info-message>{{infoMessage}}</info-message>
     <mat-list>
-        <mat-list-item *ngFor="let mapping of this.data.incomMappings">
-            <div class="col-10 remove-min-width text-truncate" title="{{mapping[this.titleIRI][0]['@value']}}">
-                <span>{{mapping[this.titleIRI][0]["@value"]}} </span>
-                <small *ngIf="mapping[this.idIRI]" class="ontology-iri text-muted"
-                       title="{{mapping[this.idIRI][0]['@id']}}">{{mapping[this.idIRI][0]['@id']}}
+        <mat-list-item *ngFor="let mapping of data.incomMappings">
+            <div class="col-10 remove-min-width text-truncate" title="{{mapping[titleIRI][0]['@value']}}">
+                <span>{{mapping[titleIRI][0]["@value"]}} </span>
+                <small *ngIf="mapping[idIRI]" class="ontology-iri text-muted"
+                       title="{{mapping[idIRI][0]['@id']}}">{{mapping[idIRI][0]['@id']}}
                 </small>
-                <small *ngIf="mapping[this.propIRI]" class="ontology-iri text-muted"
-                       title="{{mapping[this.propIRI][0]['@id']}}">{{mapping[this.propIRI][0]['@id']}}
+                <small *ngIf="mapping[propIRI]" class="ontology-iri text-muted"
+                       title="{{mapping[propIRI][0]['@id']}}">{{mapping[propIRI][0]['@id']}}
                 </small>
             </div>
         </mat-list-item>
