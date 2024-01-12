@@ -284,7 +284,6 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
     public void resetMocks() throws Exception {
         closeable.close();
         reset(requestManager, engineManager, configProvider, pdp, rest);
-
     }
 
     /* GET merge-requests */

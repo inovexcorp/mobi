@@ -52,7 +52,7 @@ import { UserManagerService } from '../../../shared/services/userManager.service
 import { LoginManagerService } from '../../../shared/services/loginManager.service';
 import { PolicyEnforcementService } from '../../../shared/services/policyEnforcement.service';
 import { User } from '../../../shared/models/user.interface';
-import { CATALOG, DCTERMS, MERGEREQ, POLICY } from '../../../prefixes';
+import { CATALOG, DCTERMS, MERGEREQ } from '../../../prefixes';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { MergeRequestViewComponent } from './mergeRequestView.component';
@@ -285,7 +285,7 @@ describe('Merge Request View component', function() {
             tick();
             expect(component.isAccepted).toBeTrue();
             expect(component.isSubmitDisabled).toBeFalsy();
-            expect(component.isDeleteDisabled).toBeFalsy(); // TODO
+            expect(component.isDeleteDisabled).toBeFalsy();
             expect(component.isEditDisabled).toBeFalsy();
             expect(mergeRequestManagerStub.getRequest).toHaveBeenCalledWith(requestId);
             expect(mergeRequestsStateStub.selected.jsonld).toEqual(mergeRequestJsonLd);

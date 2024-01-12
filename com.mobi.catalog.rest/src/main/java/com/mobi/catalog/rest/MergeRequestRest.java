@@ -129,7 +129,6 @@ public class MergeRequestRest {
     private CommentFactory commentFactory;
     private PDP pdp;
 
-
     @Reference
     void setManager(MergeRequestManager manager) {
         this.manager = manager;
@@ -695,7 +694,6 @@ public class MergeRequestRest {
             if (checkMergeRequestModifyPermissions(requestIdResource, activeUser)) {
                 return Response.status(Response.Status.UNAUTHORIZED).build();
             }
-
             manager.deleteMergeRequest(requestIdResource);
             return Response.ok().build();
         } catch (IllegalArgumentException ex) {

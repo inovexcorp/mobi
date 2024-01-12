@@ -153,7 +153,7 @@ export class MergeRequestViewComponent implements OnInit, OnDestroy {
     ngOnDestroy(): void {
         this.state.clearDifference();
     }
-    setModifyButtons(isPermit: boolean){
+    setModifyButtons(isPermit: boolean): void {
         this.isDeleteDisabled = !isPermit;
         this.isEditDisabled = !isPermit;
         this.deleteButtonTitle = this.isDeleteDisabled ?  this.deleteAccessMsg : '';
