@@ -24,7 +24,7 @@
 <div mat-dialog-content name="form">
     <h5><span [copy-clipboard]="data.commit.id" matTooltip="Copy Commit IRI" matTooltipPosition="above">{{data.commit.condensedId}}</span></h5>
     <div><span class="field-name">Date: </span>{{date}}</div>
-    <div><span class="field-name">Creator: </span>{{um.getUserDisplay(data.commit.creator)}}</div>
+    <div><span class="field-name">Creator: </span>{{userDisplay}}</div>
     <p>{{data.commit.message}}</p>
 
     <div class="changes-container">

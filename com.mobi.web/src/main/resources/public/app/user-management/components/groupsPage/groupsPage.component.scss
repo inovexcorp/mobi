@@ -29,7 +29,14 @@
             word-break: break-word;
         }
     }
-    .add-member-button {
-        float: right;
+    .section-header {
+        overflow: hidden;
+        
+        h5 {
+          display: inline-block;
+        }
+        add-member-button {
+            float: right;
+        }
     }
 }

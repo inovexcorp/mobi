@@ -48,7 +48,7 @@
                         <span class="field-label">Assignee(s)</span>
                         <ul class="assignees">
                             <li *ngIf="currentAssignees.length === 0" class="last">(None specified)</li>
-                            <li *ngFor="let assignee of currentAssignees; last as last" [ngClass]="{'last': last}">{{assignee}}</li>
+                            <li *ngFor="let assignee of currentAssignees; last as last" [ngClass]="{'last': last}" title="Username: {{assignee.username}}">{{assignee.displayName}}</li>
                         </ul>
                     </div>
                     <mat-checkbox *ngIf="state.selected.sourceTitle !== 'MASTER' && !isAccepted" [(ngModel)]="state.selected.removeSource" [disabled]="true">{{'Remove ' + state.selected.sourceTitle + ' after merge.'}}</mat-checkbox>
@@ -82,7 +82,7 @@
             <button mat-raised-button (click)="back()">Back</button>
             <button mat-raised-button class="float-right button-accept" color="primary"
                     *ngIf="!isAccepted"
-                    [disabled]="state.selected.conflicts?.length > 0|| !state.selected.targetTitle||  isSubmitDisabled"
+                    [disabled]="state.selected.conflicts?.length > 0|| !state.selected.targetTitle || isSubmitDisabled"
                     [title]="buttonTitle"
                     (click)="showAccept()">Accept</button>
             <button mat-raised-button class="float-right" color="warn" (click)="showDelete()">Delete</button>

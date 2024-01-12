@@ -31,13 +31,14 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { MatMenuModule } from '@angular/material/menu';
 import { FormsModule } from '@angular/forms';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 
 import { cleanStylesFromDOM } from '../../../../../public/test/ts/Shared';
 import { UserManagerService } from '../../../shared/services/userManager.service';
 import { UserStateService } from '../../../shared/services/userState.service';
+import { User } from '../../../shared/models/user.class';
+import { FOAF, USER } from '../../../prefixes';
 import { AddMemberButtonComponent } from './addMemberButton.component';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { User } from '../../../shared/models/user.interface';
 
 describe('Add Member Button Component', function() {
     let component: AddMemberButtonComponent;
@@ -70,15 +71,14 @@ describe('Add Member Button Component', function() {
         component = fixture.componentInstance;
         element = fixture.debugElement;
         userManagerStub = TestBed.inject(UserManagerService) as jasmine.SpyObj<UserManagerService>;
-
-        testUser = {
-            external: false,
-            roles: [],
-            username: 'username',
-            firstName: 'John',
-            lastName: 'Doe',
-            email: ''
-        };
+        userManagerStub.users = [];
+        testUser = new User({
+            '@id': 'user',
+            '@type': [`${USER}User`],
+            [`${USER}username`]: [{ '@value': 'username' }],
+            [`${FOAF}firstName`]: [{ '@value': 'John' }],
+            [`${FOAF}lastName`]: [{ '@value': 'Doe' }],
+        });
     });
 
     afterEach(function() {
@@ -102,14 +102,14 @@ describe('Add Member Button Component', function() {
         });
         it('should set available members to choose from', function() {
             spyOn(component, 'setFilteredUsers');
-            const batman = {
-                external: true,
-                username: 'batman',
-                firstName: 'BATMAN',
-                lastName: 'DUH',
-                email: 'iambatman@test.com',
-                roles: []
-            };
+            const batman: User = new User({
+                '@id': 'batman',
+                '@type': [`${USER}User`, `${USER}ExternalUser`],
+                [`${USER}username`]: [{ '@value': 'batman' }],
+                [`${FOAF}firstName`]: [{ '@value': 'BATMAN' }],
+                [`${FOAF}lastName`]: [{ '@value': 'DUH' }],
+                [`${FOAF}mbox`]: [{ '@id': 'mailto:iambatman@test.com' }],
+            });
             userManagerStub.users = [testUser, batman];
             component.existingMembers = [testUser.username];
             component.setAvailableUsers();
@@ -159,17 +159,6 @@ describe('Add Member Button Component', function() {
         });
         it('should retrieve the display name of a user', function() {
             expect(component.getName(testUser)).toEqual('John Doe');
-           
-            testUser.firstName = '';
-            expect(component.getName(testUser)).toEqual('Doe');
-
-            testUser.firstName = 'John';
-            testUser.lastName = '';
-            expect(component.getName(testUser)).toEqual('John');
-
-            testUser.firstName = '';
-            expect(component.getName(testUser)).toEqual('username');
-
             expect(component.getName(undefined)).toEqual('');
         });
     });

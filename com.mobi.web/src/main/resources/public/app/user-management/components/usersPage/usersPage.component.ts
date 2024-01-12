@@ -32,7 +32,7 @@ import { CreateUserOverlayComponent } from '../createUserOverlay/createUserOverl
 import { EditUserProfileOverlayComponent } from '../editUserProfileOverlay/editUserProfileOverlay.component';
 import { ResetPasswordOverlayComponent } from '../resetPasswordOverlay/resetPasswordOverlay.component';
 import { Group } from '../../../shared/models/group.interface';
-import { User } from '../../../shared/models/user.interface';
+import { User } from '../../../shared/models/user.class';
 import { ToastService } from '../../../shared/services/toast.service';
 import { LoginManagerService } from '../../../shared/services/loginManager.service';
 

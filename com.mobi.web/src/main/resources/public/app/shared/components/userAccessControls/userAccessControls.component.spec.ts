@@ -33,10 +33,10 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MockProvider } from 'ng-mocks';
 
 import { cleanStylesFromDOM } from '../../../../../public/test/ts/Shared';
-import { USER, XSD } from '../../../prefixes';
+import { FOAF, ROLES, USER, XSD } from '../../../prefixes';
 import { Group } from '../../models/group.interface';
 import { Policy } from '../../models/policy.interface';
-import { User } from '../../models/user.interface';
+import { User } from '../../models/user.class';
 import { LoginManagerService } from '../../services/loginManager.service';
 import { PolicyManagerService } from '../../services/policyManager.service';
 import { UserManagerService } from '../../services/userManager.service';
@@ -77,11 +77,13 @@ describe('User Access Controls component', function() {
             ]
         }).compileComponents();
 
+        userManagerStub = TestBed.inject(UserManagerService) as jasmine.SpyObj<UserManagerService>;
+        userManagerStub.filterUsers.and.returnValue([]);
+        userManagerStub.filterGroups.and.returnValue([]);
         fixture = TestBed.createComponent(UserAccessControlsComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
         policyManagerStub = TestBed.inject(PolicyManagerService) as jasmine.SpyObj<PolicyManagerService>;
-        userManagerStub = TestBed.inject(UserManagerService) as jasmine.SpyObj<UserManagerService>;
         loginManagerStub = TestBed.inject(LoginManagerService) as jasmine.SpyObj<LoginManagerService>;
 
         everyoneMatch = {
@@ -92,7 +94,7 @@ describe('User Access Controls component', function() {
                 MustBePresent: true
             },
             AttributeValue: {
-                content: ['http://mobi.com/roles/user'],
+                content: [`${ROLES}user`],
                 otherAttributes: {},
                 DataType: `${XSD}string`
             },
@@ -127,15 +129,13 @@ describe('User Access Controls component', function() {
             MatchId: policyManagerStub.stringEqual
         };
 
-        user = {
-            iri: 'user1',
-            username: 'user1',
-            firstName: 'User',
-            lastName: '1',
-            email: '',
-            roles: [],
-            external: false
-        };
+        user = new User({
+            '@id': 'user1',
+            '@type': [`${USER}User`],
+            [`${USER}username`]: [{ '@value': 'user1' }],
+            [`${FOAF}firstName`]: [{ '@value': 'User' }],
+            [`${FOAF}lastName`]: [{ '@value': '1' }],
+        });
         userManagerStub.users = [user];
         group = {
             iri: 'group1',
@@ -216,14 +216,13 @@ describe('User Access Controls component', function() {
         it('should set the users list', function() {
             policy.selectedUsers = [user];
             component.item = policy;
-            const batman: User = {
-                username: 'batman',
-                firstName: 'Bruce',
-                lastName: 'Wayne',
-                email: '',
-                roles: [],
-                external: false
-            };
+            const batman: User = new User({
+                '@id': 'batman',
+                '@type': [`${USER}User`],
+                [`${USER}username`]: [{ '@value': 'batman' }],
+                [`${FOAF}firstName`]: [{ '@value': 'Bruce' }],
+                [`${FOAF}lastName`]: [{ '@value': 'Wayne' }],
+            });
             userManagerStub.users.push(batman);
             component.setUsers();
             expect(component.availableUsers).toEqual([batman]);
@@ -466,10 +465,8 @@ describe('User Access Controls component', function() {
             expect(component.getTitle(undefined)).toEqual('');
         });
         it('should get the name of a user to display with', function() {
-            userManagerStub.getUserDisplay.and.returnValue('test');
-            expect(component.getName(user)).toEqual('test');
-            userManagerStub.getUserDisplay.and.returnValue('[Not Available]');
-            expect(component.getName(user)).toEqual('');
+            expect(component.getName(user)).toEqual('User 1');
+            expect(component.getName(undefined)).toEqual('');
         });
     });
     describe('should set the filtered list of users', function() {

@@ -21,6 +21,7 @@
  * #L%
  */
 import { JSONLDObject } from './JSONLDObject.interface';
+import { User } from './user.class';
 
 /**
  * Configuration to create a new Merge Request
@@ -33,6 +34,6 @@ export interface MergeRequestConfig {
     sourceBranch?: JSONLDObject,
     targetBranchId: string,
     targetBranch?: JSONLDObject,
-    assignees?: string[], // List of assignee usernames
+    assignees?: User[], // List of assignee Users
     removeSource: boolean
 }

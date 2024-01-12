@@ -25,7 +25,7 @@ import { Injectable } from '@angular/core';
 
 import { Observable, Subject } from 'rxjs';
 import { catchError, map, tap } from 'rxjs/operators';
-import { cloneDeep, forEach, get, has, includes } from 'lodash';
+import { cloneDeep, get, has, includes } from 'lodash';
 
 import { DCTERMS, MERGEREQ  } from '../../prefixes';
 import { EventTypeConstants, EventWithPayload } from '../models/eventWithPayload.interface';
@@ -134,7 +134,7 @@ export class MergeRequestManagerService {
         if (has(requestConfig, 'description')) {
             fd.append('description', requestConfig.description);
         }
-        forEach(get(requestConfig, 'assignees', []), username => fd.append('assignees', username));
+        get(requestConfig, 'assignees', []).forEach(user => fd.append('assignees', user.username));
         if (has(requestConfig, 'removeSource')) {
             fd.append('removeSource', `${requestConfig.removeSource}`);
         }

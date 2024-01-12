@@ -33,11 +33,12 @@ import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
+import { cloneDeep } from 'lodash';
 
 import { cleanStylesFromDOM } from '../../../../../public/test/ts/Shared';
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
 import { Group } from '../../../shared/models/group.interface';
-import { User } from '../../../shared/models/user.interface';
+import { User } from '../../../shared/models/user.class';
 import { LoginManagerService } from '../../../shared/services/loginManager.service';
 import { UserManagerService } from '../../../shared/services/userManager.service';
 import { UserStateService } from '../../../shared/services/userState.service';
@@ -46,6 +47,7 @@ import { CreateUserOverlayComponent } from '../createUserOverlay/createUserOverl
 import { EditUserProfileOverlayComponent } from '../editUserProfileOverlay/editUserProfileOverlay.component';
 import { ResetPasswordOverlayComponent } from '../resetPasswordOverlay/resetPasswordOverlay.component';
 import { UsersListComponent } from '../usersList/usersList.component';
+import { FOAF, USER } from '../../../prefixes';
 import { UsersPageComponent } from './usersPage.component';
 
 describe('Users Page component', function() {
@@ -94,14 +96,14 @@ describe('Users Page component', function() {
         loginManagerStub = TestBed.inject(LoginManagerService) as jasmine.SpyObj<LoginManagerService>;
         toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
 
-        user = {
-            username: 'batman',
-            firstName: 'BATMAN',
-            lastName: 'user',
-            email: 'iambatman@test.com',
-            external: false,
-            roles: []
-        };
+        user = new User({
+          '@id': 'batman',
+          '@type': [`${USER}User`],
+          [`${USER}username`]: [{ '@value': 'batman' }],
+          [`${FOAF}firstName`]: [{ '@value': 'BATMAN' }],
+          [`${FOAF}lastName`]: [{ '@value': 'user' }],
+          [`${FOAF}email`]: [{ '@id': 'mailto:iambatman@test.com' }],
+        });
         loginManagerStub.currentUserIRI = 'iri';
         loginManagerStub.currentUser = 'test';
     });
@@ -334,7 +336,7 @@ describe('Users Page component', function() {
             component.setAdmin();
             expect(component.selectedAdmin).toBeFalse();
 
-            userStateStub.selectedUser.roles = ['admin'];
+            userStateStub.selectedUser.addRole('admin');
             component.setAdmin();
             expect(component.selectedAdmin).toBeTrue();
         });
@@ -463,7 +465,9 @@ describe('Users Page component', function() {
             expect(resetButton.properties['disabled']).toBeFalsy();
             expect(editButton.properties['disabled']).toBeFalsy();
 
-            userStateStub.selectedUser.external = true;
+            const userCopy = cloneDeep(userStateStub.selectedUser.jsonld);
+            userCopy['@type'].push(`${USER}ExternalUser`);
+            userStateStub.selectedUser = new User(userCopy);
             fixture.detectChanges();
             expect(deleteButton.properties['disabled']).toBeTruthy();
             expect(resetButton.properties['disabled']).toBeTruthy();

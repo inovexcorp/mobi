@@ -24,7 +24,7 @@
     <mat-form-field class="w-100">
         <mat-chip-list #assigneeChips>
             <mat-chip *ngFor="let assignee of selected" [removable]="true" (removed)="removeAssignee(assignee)">
-                <span class="text-truncate">{{assignee}}</span>
+                <span class="text-truncate" title="Username: {{assignee.username}}">{{assignee.displayName}}</span>
                 <mat-icon matChipRemove>cancel</mat-icon>
             </mat-chip>
             <input #assigneeInput matInput type="text" placeholder="Assignees" formControlName="assignees" [matChipInputFor]="assigneeChips" [matAutocomplete]="auto"
@@ -33,8 +33,8 @@
                 (matChipInputTokenEnd)="add($event)"/>
         </mat-chip-list>
         <mat-autocomplete #auto="matAutocomplete" (optionSelected)="select($event)">
-            <mat-option *ngFor="let user of filteredUsers | async" [value]="user.username">
-              {{user.username}}
+            <mat-option *ngFor="let user of filteredUsers | async" [value]="user" title="Username: {{user.username}}">
+              {{user.displayName}}
             </mat-option>
           </mat-autocomplete>
     </mat-form-field>

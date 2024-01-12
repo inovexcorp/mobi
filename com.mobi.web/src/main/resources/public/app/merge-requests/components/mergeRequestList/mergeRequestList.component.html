@@ -55,7 +55,7 @@
                             <dt class="text-muted">Assignee(s)</dt>
                             <dd><ul class="assignees">
                                 <li *ngIf="request.assignees.length === 0" class="last">(None specified)</li>
-                                <li *ngFor="let assignee of request.assignees; last as lastAssignee" [ngClass]="{'last': lastAssignee}">{{assignee}}</li>
+                                <li *ngFor="let assignee of request.assignees; last as lastAssignee" [ngClass]="{'last': lastAssignee}" title="Username: {{assignee.username}}">{{assignee.displayName}}</li>
                             </ul></dd>
                         </dl>
                     </div>

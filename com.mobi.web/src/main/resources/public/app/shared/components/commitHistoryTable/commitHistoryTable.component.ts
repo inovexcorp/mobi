@@ -51,6 +51,7 @@ import { JSONLDObject } from '../../models/JSONLDObject.interface';
 import { Tag } from '../../models/tag.interface';
 import { CATALOG } from '../../../prefixes';
 import { getDctermsValue, getPropertyId } from '../../utility';
+import { User } from '../../models/user.class';
 
 /**
  * @class shared.CommitHistoryTableComponent
@@ -105,6 +106,8 @@ export class CommitHistoryTableComponent implements OnInit, OnChanges, OnDestroy
     showGraph: boolean;
     commitDotClickable: boolean;
     tagDiffer: IterableDiffer<JSONLDObject>;
+
+    getUserDisplay: (obj: { firstName: string, lastName: string, username: string}) => string = User.getDisplayName;
 
     ngOnInit(): void {
         this.tagDiffer = this.iterableDiffers.find([]).create(null);

@@ -21,7 +21,7 @@
  * #L%
  */
 import { Group } from './group.interface';
-import { User } from './user.interface';
+import { User } from './user.class';
 
 /**
  * Represents an XACML Policy from the backend with some details extracted out.

@@ -29,7 +29,7 @@
                 <input matInput [matAutocomplete]="memberAutocomplete" [(ngModel)]="userFilter" (ngModelChange)="setFilteredUsers()">
                 <mat-autocomplete #memberAutocomplete="matAutocomplete" (optionSelected)="selectMember($event)" [displayWith]="getName">
                     <mat-option *ngFor="let user of filteredAvailableUsers" [value]="user">
-                        {{getName(user)}}
+                        {{user.displayName}}
                     </mat-option>
                 </mat-autocomplete>
             </mat-form-field>

@@ -31,8 +31,9 @@ import {
 } from '../../../../test/ts/Shared'; 
 import { UserManagerService } from '../../services/userManager.service';
 import { ProvManagerService } from '../../services/provManager.service';
+import { DCTERMS, FOAF, USER } from '../../../prefixes';
+import { User } from '../../models/user.class';
 import { ActivityTitleComponent } from './activityTitle.component';
-import { DCTERMS } from '../../../prefixes';
 
 describe('Activity Title component', function() {
     let component: ActivityTitleComponent;
@@ -50,10 +51,8 @@ describe('Activity Title component', function() {
                 MockProvider(ProvManagerService),
                 MockProvider(UserManagerService)
             ]
-        });
-    });
+        }).compileComponents();
 
-    beforeEach(function() {
         fixture = TestBed.createComponent(ActivityTitleComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
@@ -78,22 +77,27 @@ describe('Activity Title component', function() {
     });
 
     describe('should initialize with the correct value for', function() {
-        describe('username', function() {
+        describe('userDisplay and username', function() {
             it('if the activity does not have the wasAssociatedWith property', function() {
-                expect(component.username).toEqual('(None)');
+                expect(component.username).toEqual('[Not Available]');
+                expect(component.userDisplay).toEqual('[Not Available]');
             });
             describe('if the activity has the wasAssociatedWith property', function() {
-                let iri: string;
-                beforeEach(function() {
-                    iri = 'iri';
-                });
                 it('and the user was not found', function() {
-                    expect(component.username).toEqual('(None)');
+                    expect(component.username).toEqual('[Not Available]');
+                    expect(component.userDisplay).toEqual('[Not Available]');
                 });
                 it('and the user was found', function() {
-                    userManagerStub.users = [{iri: 'iri', username: 'username', external: false, roles: [], firstName: 'John', lastName: 'Doe', email: ''}];
-                    component.setUsername(iri);
+                    userManagerStub.users = [new User({
+                        '@id': 'iri',
+                        '@type': [`${USER}User`],
+                        [`${USER}username`]: [{ '@value': 'username' }], 
+                        [`${FOAF}firstName`]: [{ '@value': 'John' }],
+                        [`${FOAF}lastName`]: [{ '@value': 'Doe' }]
+                    })];
+                    component.setUserDisplay('iri');
                     expect(component.username).toEqual('username');
+                    expect(component.userDisplay).toEqual('John Doe');
                 });
             });
         });
@@ -139,10 +143,10 @@ describe('Activity Title component', function() {
             expect(content.nativeElement.innerHTML).toContain(component.word);
         });
         it('with the user for the activity', function() {
-            component.username = 'user';
+            component.userDisplay = 'user';
             fixture.detectChanges();
-            const content = element.queryAll(By.css('.username'))[0];
-            expect(content.nativeElement.innerHTML).toContain(component.username);
+            const content = element.queryAll(By.css('.user-display'))[0];
+            expect(content.nativeElement.innerHTML).toContain(component.userDisplay);
         });
         it('with the entities for the activity', function() {
             component.entitiesStr = '';

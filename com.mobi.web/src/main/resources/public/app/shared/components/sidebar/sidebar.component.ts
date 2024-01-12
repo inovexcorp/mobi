@@ -22,7 +22,6 @@
  */
 
 import { Component, Input, EventEmitter, Output, Inject } from '@angular/core';
-import { find, get } from 'lodash';
 import { Router } from '@angular/router';
 
 import { LoginManagerService } from '../../services/loginManager.service';
@@ -59,7 +58,7 @@ export class SidebarComponent {
         this.collapsedNavChange.emit(this.collapsedNav);
     }
     getUserDisplay(): string {
-        const user = find(this.um.users, {iri: this.lm.currentUserIRI});
-        return get(user, 'firstName', '') || get(user, 'username', '');
+        const user = this.um.users.find(user => user.iri === this.lm.currentUserIRI);
+        return user ? user.firstName || user.username : '';
     }
 }

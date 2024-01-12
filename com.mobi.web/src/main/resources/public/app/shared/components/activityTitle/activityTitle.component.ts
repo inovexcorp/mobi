@@ -24,7 +24,7 @@ import { get } from 'lodash';
 import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 
 import { UserManagerService } from '../../services/userManager.service';
-import { User } from '../../models/user.interface';
+import { User } from '../../models/user.class';
 import { PROV } from '../../../prefixes';
 import { ProvManagerService } from '../../services/provManager.service';
 import { JSONLDObject } from '../../models/JSONLDObject.interface';
@@ -34,7 +34,7 @@ import { getDctermsValue, getPropertyId } from '../../utility';
  * @class home.ActivityTitleComponent
  *
  * `activity-title` is a component which creates a `div` containing a title for the provided `Activity` using
- * the username of the associated user, the word associated with the type of Activity, and the titles of the
+ * the display name of the associated user, the word associated with the type of Activity, and the titles of the
  * main associated `Entities`. The word and the predicate to retrieve `Entities` with are collected from the
  * {@link shared.provManagerService provManagerService}.
  *
@@ -50,20 +50,21 @@ export class ActivityTitleComponent implements OnInit, OnChanges {
     @Input() activity;
     @Input() entities;
 
-    public username = '(None)';
+    public username = '[Not Available]';
+    public userDisplay = '[Not Available]';
     public word = 'affected';
     public entitiesStr = '(None)';
 
     constructor(private pm: ProvManagerService, private um: UserManagerService) {}
     
     ngOnInit(): void {
-        this.setUsername(getPropertyId(this.activity, `${PROV}wasAssociatedWith`));
+        this.setUserDisplay(getPropertyId(this.activity, `${PROV}wasAssociatedWith`));
         this.setWord(this.activity);
         this.setEntities(this.activity);
     }
     ngOnChanges(changes: SimpleChanges): void {
         if (changes.activity) {
-            this.setUsername(getPropertyId(changes.activity.currentValue, `${PROV}wasAssociatedWith`));
+            this.setUserDisplay(getPropertyId(changes.activity.currentValue, `${PROV}wasAssociatedWith`));
             this.setWord(changes.activity.currentValue);
             this.setEntities(changes.activity.currentValue);
         }
@@ -83,11 +84,14 @@ export class ActivityTitleComponent implements OnInit, OnChanges {
         });
         this.entitiesStr = entityTitles.join(', ').replace(/,(?!.*,)/gmi, ' and') || '(None)';
     }
-    setUsername(iri: string): void {
+    setUserDisplay(iri: string): void {
         if (iri) {
-            this.username = get(this.um.users.find((user: User) => user.iri === iri), 'username', '(None)');
+            const user = this.um.users.find((user: User) => user.iri === iri);
+            this.username = user ? user.username : '[Not Available]';
+            this.userDisplay = user ? user.displayName : '[Not Available]';
         } else {
-            this.username = '(None)';
+            this.username = '[Not Available]';
+            this.userDisplay = '[Not Available]';
         }
     }
     setWord(activity: JSONLDObject): void {

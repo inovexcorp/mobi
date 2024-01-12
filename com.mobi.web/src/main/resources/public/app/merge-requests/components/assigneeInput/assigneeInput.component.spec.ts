@@ -35,6 +35,8 @@ import { MockComponent, MockProvider } from 'ng-mocks';
 
 import { cleanStylesFromDOM } from '../../../../../public/test/ts/Shared';
 import { UserManagerService } from '../../../shared/services/userManager.service';
+import { USER } from '../../../prefixes';
+import { User } from '../../../shared/models/user.class';
 import { AssigneeInputComponent } from './assigneeInput.component';
 
 describe('Assignee Input component', function() {
@@ -42,6 +44,28 @@ describe('Assignee Input component', function() {
     let element: DebugElement;
     let fixture: ComponentFixture<AssigneeInputComponent>;
     let userManagerStub: jasmine.SpyObj<UserManagerService>;
+
+    const userA: User = new User({
+        '@id': 'userA',
+        '@type': [`${USER}User`],
+        [`${USER}username`]: [{ '@value': 'userA' }],
+        [`${USER}firstName`]: [{ '@value': 'User' }],
+        [`${USER}lastName`]: [{ '@value': 'A' }]
+    });
+    const userB: User = new User({ 
+        '@id': 'userB',
+        '@type': [`${USER}User`],
+        [`${USER}username`]: [{ '@value': 'userB' }],
+        [`${USER}firstName`]: [{ '@value': 'User' }],
+        [`${USER}lastName`]: [{ '@value': 'B' }]
+    });
+    const testUser: User = new User({ 
+        '@id': 'TestUser',
+        '@type': [`${USER}User`],
+        [`${USER}username`]: [{ '@value': 'TestUser' }],
+        [`${USER}firstName`]: [{ '@value': 'Test' }],
+        [`${USER}lastName`]: [{ '@value': 'User' }]
+    });
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -69,10 +93,7 @@ describe('Assignee Input component', function() {
         component = fixture.componentInstance;
         element = fixture.debugElement;
         userManagerStub = TestBed.inject(UserManagerService) as jasmine.SpyObj<UserManagerService>;
-        userManagerStub.users = [
-            { username: 'userA', firstName: 'User', lastName: 'A' },
-            { username: 'userB', firstName: 'User', lastName: 'B' },
-        ];
+        userManagerStub.users = [userA, userB];
         userManagerStub.filterUsers.and.callFake(arr => arr);
 
         component.parentForm = new UntypedFormGroup({
@@ -93,51 +114,43 @@ describe('Assignee Input component', function() {
 
     describe('controller methods', function() {
         it('should handle adding a chip', function() {
-            component.availableUsers = [
-                { username: 'User1', firstName: 'User', lastName: '1' },
-                { username: 'User2', firstName: 'User', lastName: '2' },
-                { username: 'TestUser', firstName: 'Test', lastName: 'User' }
-            ];
+            component.availableUsers = [userA, userB, testUser];
             const event = {
                 value: 'TestUser',
             } as MatChipInputEvent;
 
             component.add(event);
-            expect(component.selected).toEqual(['TestUser']);
-            expect(component.selectedChange.emit).toHaveBeenCalledWith(['TestUser']);
+            expect(component.selected).toEqual([testUser]);
+            expect(component.selectedChange.emit).toHaveBeenCalledWith([testUser]);
             expect(component.parentForm.controls.assignees.value).toEqual(null);
         });
         it('should handle removing a user', function() {
             component.add({chipInput: null, input: null, value: 'user'});
-            component.removeAssignee('user');
+            component.removeAssignee(userA);
             expect(component.selected).toEqual([]);
             expect(component.selectedChange.emit).not.toHaveBeenCalled();
 
-            component.selected = ['user'];
-            component.removeAssignee('user');
+            component.selected = [userA];
+            component.removeAssignee(userA);
             expect(component.selected).toEqual([]);
             expect(component.selectedChange.emit).toHaveBeenCalledWith([]);
         });
         it('should handle selecting an option in the autocomplete', function() {
             const event: MatAutocompleteSelectedEvent = {
                 option: {
-                    value: 'user'
+                    value: userA
                 }
             } as MatAutocompleteSelectedEvent;
             component.select(event);
-            expect(component.selected).toEqual(['user']);
-            expect(component.selectedChange.emit).toHaveBeenCalledWith(['user']);
+            expect(component.selected).toEqual([userA]);
+            expect(component.selectedChange.emit).toHaveBeenCalledWith([userA]);
             expect(component.assigneeInput.nativeElement.value).toEqual('');
             expect(component.parentForm.controls.assignees.value).toEqual(null);
         });
         it('should not add duplicates', () => {
-            component.availableUsers = [
-                { username: 'User1', firstName: 'User', lastName: '1' },
-                { username: 'User2', firstName: 'User', lastName: '2' },
-                { username: 'TestUser', firstName: 'Test', lastName: 'User' }
-            ];
+            component.availableUsers = [userA, userB, testUser];
             const event = {
-                value: 'TestUser',
+                value: testUser.username,
             } as MatChipInputEvent;
 
             component.add(event);
@@ -156,7 +169,7 @@ describe('Assignee Input component', function() {
             });
         });
         it('depending on how many users are selected', function() {
-            component.selected = ['userA', 'userB'];
+            component.selected = [userA, userB];
             fixture.detectChanges();
             expect(element.queryAll(By.css('mat-chip')).length).toEqual(component.selected.length);
         });

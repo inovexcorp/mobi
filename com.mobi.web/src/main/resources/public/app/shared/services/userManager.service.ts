@@ -22,7 +22,7 @@
  */
 import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { get, find, filter, set, forEach, has, merge, remove, pull, assign, union, includes, flatten, without, some } from 'lodash';
+import { get, find, filter, forEach, has, merge, remove, pull, assign, union, includes, flatten, without, some } from 'lodash';
 import { Observable, of } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
 
@@ -31,8 +31,9 @@ import { FOAF, USER } from '../../prefixes';
 import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
 import { Group } from '../models/group.interface';
 import { JSONLDObject } from '../models/JSONLDObject.interface';
-import { User } from '../models/user.interface';
-import { createHttpParams, getBeautifulIRI, getDctermsValue, getPropertyId, getPropertyValue, handleError, handleErrorObject } from '../utility';
+import { User } from '../models/user.class';
+import { createHttpParams, getBeautifulIRI, getDctermsValue, handleError, handleErrorObject } from '../utility';
+import { NewUserConfig } from '../models/new-user-config';
 
 /**
  * @class shared.UserManagerService
@@ -76,7 +77,7 @@ export class UserManagerService {
         return this.getUsers()
             .pipe(
                 switchMap(data => {
-                    this.users = data.map((jsonld: JSONLDObject) => this.getUserObj(jsonld));
+                    this.users = data.map((jsonld: JSONLDObject) => new User(jsonld));
                     return this.getGroups();
                 }),
                 map(data => {
@@ -118,7 +119,7 @@ export class UserManagerService {
      * message otherwise
      */
     getUsername(iri: string): Observable<string> {
-        const user = find(this.users, { iri });
+        const user = this.users.find(user => user.iri === iri);
         if (user) {
             return of(user.username);
         } else {
@@ -127,9 +128,11 @@ export class UserManagerService {
               responseType: 'text'
             })).pipe(
                 catchError(handleError),
-                map((response: string) => {
-                    set(find(this.users, {username: response}), 'iri', iri);
-                    return response;
+                switchMap((response: string) => {
+                    return this.getUser(response);
+                }),
+                map((user: User) => {
+                    return user.username;
                 })
             );
         }
@@ -145,26 +148,26 @@ export class UserManagerService {
      * @returns {Observable} An Observable that resolves if the request was successful; rejects with an error message
      * otherwise
      */
-    addUser(newUser: User, password: string): Observable<void> {
+    addUser(newUserConfig: NewUserConfig): Observable<void> {
         const fd = new FormData();
-        fd.append('username', newUser.username);
-        fd.append('password', password);
-        forEach(get(newUser, 'roles', []), role => fd.append('roles', role));
-        if (newUser.firstName) {
-            fd.append('firstName', newUser.firstName);
+        fd.append('username', newUserConfig.username);
+        fd.append('password', newUserConfig.password);
+        forEach(get(newUserConfig, 'roles', []), role => fd.append('roles', role));
+        if (newUserConfig.firstName) {
+            fd.append('firstName', newUserConfig.firstName);
         }
-        if (newUser.lastName) {
-            fd.append('lastName', newUser.lastName);
+        if (newUserConfig.lastName) {
+            fd.append('lastName', newUserConfig.lastName);
         }
-        if (newUser.email) {
-            fd.append('email', newUser.email);
+        if (newUserConfig.email) {
+            fd.append('email', newUserConfig.email);
         }
 
         return this.spinnerSvc.track(this.http.post(this.userPrefix, fd, {responseType: 'text'}))
             .pipe(
                 catchError(handleError),
                 switchMap(() => {
-                    return this.getUser(newUser.username);
+                    return this.getUser(newUserConfig.username);
                 }),
                 map(() => {})
             );
@@ -183,10 +186,10 @@ export class UserManagerService {
             .pipe(
                 catchError(handleError),
                 map((response: JSONLDObject) => {
-                    const userObj: User = this.getUserObj(response);
-                    const existing: User = find(this.users, {iri: userObj.iri});
-                    if (existing) {
-                        merge(existing, userObj);
+                    const userObj: User = new User(response);
+                    const existingIdx: number = this.users.findIndex(user => user.iri === userObj.iri);
+                    if (existingIdx >= 0) {
+                        this.users[existingIdx] = userObj;
                     } else {
                         this.users.push(userObj);
                     }
@@ -210,7 +213,12 @@ export class UserManagerService {
             .pipe(
                 catchError(handleError),
                 map(() => {
-                    assign(find(this.users, {username}), newUser);
+                    const idx: number = this.users.findIndex(user => user.username === username);
+                    if (idx >= 0) {
+                      this.users[idx] = newUser;
+                    } else {
+                      this.users.push(newUser);
+                    }
                 })
             );
     }
@@ -267,7 +275,7 @@ export class UserManagerService {
             .pipe(
                 catchError(handleError),
                 map(() => {
-                    remove(this.users, {username});
+                    remove(this.users, user => user.username === username);
                     forEach(this.groups, group => pull(group.members, username));
                 })
             );
@@ -284,13 +292,19 @@ export class UserManagerService {
      */
     addUserRoles(username: string, roles: string[]): Observable<void> {
         return this.spinnerSvc.track(this.http.put(`${this.userPrefix}/${encodeURIComponent(username)}/roles`, null, 
-          {params: createHttpParams({ roles })}))
+          { params: createHttpParams({ roles }) }))
             .pipe(
                 catchError(handleError),
-                map(() => {
-                    const user: User = find(this.users, {username});
-                    user.roles = union(get(user, 'roles', []), roles);
-                })
+                switchMap(() => {
+                    const user: User = this.users.find(user => user.username === username);
+                    if (user) {
+                      roles.forEach(role => user.addRole(role));
+                      return of();
+                    } else {
+                      return this.getUser(username);
+                    }
+                }),
+                map(() => {})
             );
     }
     /**
@@ -308,9 +322,16 @@ export class UserManagerService {
           { params: createHttpParams({ role })}))
             .pipe(
                 catchError(handleError),
-                map(() => {
-                    pull(get(find(this.users, {username}), 'roles'), role);
-                })
+                switchMap(() => {
+                    const user: User = this.users.find(user => user.username === username);
+                    if (user) {
+                      user.removeRole(role);
+                      return of();
+                    } else {
+                      return this.getUser(username);
+                    }
+                }),
+                map(() => {})
             );
     }
     /**
@@ -552,7 +573,8 @@ export class UserManagerService {
      * @returns {boolean} true if the user is an admin; false otherwise
      */
     isAdmin(username: string): boolean {
-        if (includes(get(find(this.users, {username}), 'roles', []), 'admin')) {
+        const user: User = this.users.find(user => user.username === username);
+        if (user && user.roles.includes('admin')) {
             return true;
         } else {
             const userGroups: Group[] = filter(this.groups, group => {
@@ -571,15 +593,6 @@ export class UserManagerService {
         return userIri === ADMIN_USER_IRI;
     }
     /**
-     * Determines whether the provided JSON-LD object is an ExternalUser or not.
-     *
-     * @param {JSONLDObject} jsonld a JSON-LD object
-     * @returns {boolean} true if the JSON-LD object is an ExternalUser; false otherwise
-     */
-    isExternalUser(jsonld: JSONLDObject): boolean {
-        return get(jsonld, '@type', []).includes(`${USER}ExternalUser`);
-    }
-    /**
      * Determines whether the provided JSON-LD object is an ExternalGroup or not.
      *
      * @param {JSONLDObject} jsonld a JSON-LD object
@@ -587,35 +600,6 @@ export class UserManagerService {
      */
     isExternalGroup(jsonld: JSONLDObject): boolean {
         return get(jsonld, '@type', []).includes(`${USER}ExternalGroup`);
-    }
-    /**
-     * Returns a human readable form of a user. It will default to the "firstName lastName". If both of those
-     * properties are not present, it will return the "username". If the username is not present, it will return
-     * "[Not Available]".
-     *
-     * @param {User} userObject the object which represents a user.
-     * @returns {string} a string to identify for the provided user.
-     */
-    getUserDisplay(userObject: User): string {
-        return (!!get(userObject, 'firstName') && !!get(userObject, 'lastName')) ? `${userObject.firstName} ${userObject.lastName}` : get(userObject, 'username') ? userObject.username : '[Not Available]';
-    }
-    /**
-     * Returns a user object from the provided JSON-LD. 
-     * 
-     * @param {JSONLDObject} jsonld The JSON-LD representation of a User
-     * @returns {User} An object representing a user
-     */
-    getUserObj(jsonld: JSONLDObject): User {
-        return {
-            jsonld,
-            external: this.isExternalUser(jsonld),
-            iri: jsonld['@id'],
-            username: getPropertyValue(jsonld, `${USER}username`),
-            firstName: getPropertyValue(jsonld, `${FOAF}firstName`),
-            lastName: getPropertyValue(jsonld, `${FOAF}lastName`),
-            email: getPropertyId(jsonld, `${FOAF}mbox`),
-            roles: (jsonld[`${USER}hasUserRole`] || []).map(role => getBeautifulIRI(role['@id']).toLowerCase())
-        };
     }
     /**
      * Returns a group object from the provided JSON-LD. 
@@ -631,7 +615,7 @@ export class UserManagerService {
             title: getDctermsValue(jsonld, 'title'),
             description: getDctermsValue(jsonld, 'description'),
             members: (jsonld[`${FOAF}member`] || []).map(member => {
-                const user = find(this.users, {'iri': member['@id']});
+                const user = this.users.find(user => user.iri === member['@id']);
                 if (user !== undefined) {
                     return user.username;
                 }

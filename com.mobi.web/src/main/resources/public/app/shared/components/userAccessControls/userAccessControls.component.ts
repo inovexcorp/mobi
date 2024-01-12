@@ -31,7 +31,7 @@ import { FOAF, USER, XSD } from '../../../prefixes';
 
 import { Group } from '../../models/group.interface';
 import { Policy } from '../../models/policy.interface';
-import { User } from '../../models/user.interface';
+import { User } from '../../models/user.class';
 import { LoginManagerService } from '../../services/loginManager.service';
 import { PolicyManagerService } from '../../services/policyManager.service';
 import { UserManagerService } from '../../services/userManager.service';
@@ -78,8 +78,8 @@ export class UserAccessControlsComponent implements OnInit {
     availableGroups: Group[] = [];
     filteredAvailableGroups: Observable<Group[]>;
 
-    constructor(private pm: PolicyManagerService, private lm: LoginManagerService,
-        public um: UserManagerService) { }
+    constructor(private _pm: PolicyManagerService, public lm: LoginManagerService,
+        private _um: UserManagerService) { }
 
     ngOnInit(): void {
         if (this.item && this.item.everyone) {
@@ -98,7 +98,8 @@ export class UserAccessControlsComponent implements OnInit {
                     val ? 
                         val.username :
                         undefined;
-                return this.um.filterUsers(this.availableUsers, searchText);
+                return this._um.filterUsers(this.availableUsers, searchText)
+                    .filter(user => !this.item.selectedUsers.includes(user));
             })
         );
         this.filteredAvailableGroups = this.groupSearchControl.valueChanges.pipe(
@@ -109,15 +110,16 @@ export class UserAccessControlsComponent implements OnInit {
                     val ? 
                         val.title :
                         undefined;
-                return this.um.filterGroups(this.availableGroups, searchText);
+                return this._um.filterGroups(this.availableGroups, searchText)
+                    .filter(group => !this.item.selectedGroups.includes(group));
             })
         );
     }
     setUsers(): void {
-        this.availableUsers = filter(this.um.users, user => !find(this.item.selectedUsers, { iri: user.iri }));
+        this.availableUsers = this._um.users.filter(user => this.item.selectedUsers.findIndex(selectedUser => selectedUser.iri === user.iri) < 0);
     }
     setGroups(): void {
-        this.availableGroups = filter(this.um.groups, group => !find(this.item.selectedGroups, { iri: group.iri }));
+        this.availableGroups = filter(this._um.groups, group => !find(this.item.selectedGroups, { iri: group.iri }));
     }
     selectUser(event: MatAutocompleteSelectedEvent, auto: MatAutocomplete): void {
         this.addUser(event.option.value);
@@ -193,7 +195,7 @@ export class UserAccessControlsComponent implements OnInit {
             if (!this.ruleId) {
                 this.removeMatch(this.userRole, this.item.policy);
             }
-            this.addUser(find(this.um.users, { iri: this.lm.currentUserIRI }));
+            this.addUser(find(this._um.users, { iri: this.lm.currentUserIRI }));
             this.setUsers();
             this.setGroups();
             this.userSearchControl.reset('');
@@ -207,15 +209,14 @@ export class UserAccessControlsComponent implements OnInit {
         return group && group.title ? group.title : '';
     }
     getName = (user: User): string => { // arrow syntax used to preserve `this` keyword
-        const userDisplay = this.um.getUserDisplay(user);
-        return userDisplay === '[Not Available]' ? '' : userDisplay;
+        return user ? user.displayName : '';
     }
 
     private removeMatch(value: string, policy: any): void {
         remove(get(policy, 'Rule[0].Target.AnyOf[0].AllOf', []), ['Match[0].AttributeValue.content[0]', value]);
     }
     private addUserMatch(value: string, policy: any) {
-        this.addMatch(value, this.pm.subjectId, policy);
+        this.addMatch(value, this._pm.subjectId, policy);
     }
     private addGroupMatch(value: string, policy: any) {
         this.addMatch(value, this.groupAttributeId, policy);
@@ -229,12 +230,12 @@ export class UserAccessControlsComponent implements OnInit {
                     DataType: `${XSD}string`
                 },
                 AttributeDesignator: {
-                    Category: this.pm.subjectCategory,
+                    Category: this._pm.subjectCategory,
                     AttributeId: id,
                     DataType: `${XSD}string`,
                     MustBePresent: true
                 },
-                MatchId: this.pm.stringEqual
+                MatchId: this._pm.stringEqual
             }]
         };
         get(policy, 'Rule[0].Target.AnyOf[0].AllOf', []).push(newMatch);

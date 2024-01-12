@@ -31,7 +31,7 @@ import { ConfirmModalComponent } from '../../../shared/components/confirmModal/c
 import { CreateGroupOverlayComponent } from '../createGroupOverlay/createGroupOverlay.component';
 import { EditGroupInfoOverlayComponent } from '../editGroupInfoOverlay/editGroupInfoOverlay.component';
 import { Group } from '../../../shared/models/group.interface';
-import { User } from '../../../shared/models/user.interface';
+import { User } from '../../../shared/models/user.class';
 import { ToastService } from '../../../shared/services/toast.service';
 import { LoginManagerService } from '../../../shared/services/loginManager.service';
 
