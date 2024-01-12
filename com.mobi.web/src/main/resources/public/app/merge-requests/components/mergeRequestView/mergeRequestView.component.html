@@ -54,7 +54,7 @@
                     <mat-checkbox *ngIf="state.selected.sourceTitle !== 'MASTER' && !isAccepted" [(ngModel)]="state.selected.removeSource" [disabled]="true">{{'Remove ' + state.selected.sourceTitle + ' after merge.'}}</mat-checkbox>
                 </div>
                 <div *ngIf="!isAccepted" class="edit-button-container text-center">
-                    <button mat-icon-button color="primary" (click)="editRequest()" [disabled]="isEditDisabled"><i class="fa fa-pencil fa-fw"></i></button>
+                    <button mat-icon-button color="primary" (click)="editRequest()" [title]="editButtonTitle" [disabled]="isEditDisabled"><i class="fa fa-pencil fa-fw"></i></button>
                 </div>
             </div>
         </div>
@@ -85,7 +85,7 @@
                     [disabled]="state.selected.conflicts?.length > 0|| !state.selected.targetTitle||  isSubmitDisabled"
                     [title]="buttonTitle"
                     (click)="showAccept()">Accept</button>
-            <button mat-raised-button class="float-right" color="warn" [disabled]="isDeleteDisabled" (click)="showDelete()">Delete</button>
+            <button mat-raised-button class="float-right" color="warn" [title]="deleteButtonTitle" [disabled]="isDeleteDisabled" (click)="showDelete()">Delete</button>
         </div>
         <div class="conflicts-buttons" *ngIf="resolveConflicts">
             <button mat-raised-button (click)="cancelResolve()">Cancel</button>

@@ -24,7 +24,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { forEach, concat, some, get, find, isEmpty } from 'lodash';
 import { Subject, of } from 'rxjs';
-import { map, switchMap, takeUntil } from 'rxjs/operators';
+import { switchMap, takeUntil } from 'rxjs/operators';
 
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
 import { Conflict } from '../../../shared/models/conflict.interface';
@@ -58,17 +58,26 @@ import { getPropertyId } from '../../../shared/utility';
     styleUrls: ['./mergeRequestView.component.scss']
 })
 export class MergeRequestViewComponent implements OnInit, OnDestroy {
+    userAccessMsg = 'You do not have permission to perform this merge';
+    deleteAccessMsg = 'You do not have permission to delete this merge request';
+    canNotEditMsg = 'You can not edit the metadata of this merge request';
+
     resolveConflicts = false;
     copiedConflicts: Conflict[] = [];
     resolveError = false;
     isAccepted = false;
     buttonTitle = '';
-    userAccessMsg = 'You do not have permission to perform this merge';
     private isAdminUser: boolean;
     currentAssignees: string[] = [];
+
+    // controls for view-buttons (Accept, Close, Delete)
     isSubmitDisabled = true;
     isDeleteDisabled = true;
+    acceptButtonTitle = '';
+    deleteButtonTitle = '';
+    // control for editing metadata
     isEditDisabled = true;
+    editButtonTitle = '';
 
     private _destroySub$ = new Subject<void>();
     
@@ -92,8 +101,7 @@ export class MergeRequestViewComponent implements OnInit, OnDestroy {
             const creatorIRIs: string[] = this.state.selected.jsonld[`${DCTERMS}creator`].map(r => r['@id']);
             const isCreator: boolean  = creatorIRIs.includes(this.lm.currentUserIRI);
             if (isCreator) {
-                this.isDeleteDisabled = false;
-                this.isEditDisabled = false;
+                this.setModifyButtons(true);
             } else {
                 // Check if user has managed permission on MergeRequest#OnRecord
                 const managePermissionOnRecord = {
@@ -102,11 +110,9 @@ export class MergeRequestViewComponent implements OnInit, OnDestroy {
                 };
                 this.pep.evaluateRequest(managePermissionOnRecord).pipe(takeUntil(this._destroySub$)).subscribe(decision => {
                     const isPermit = decision === this.pep.permit;
-                    this.isDeleteDisabled = !isPermit
-                    this.isEditDisabled = !isPermit
+                    this.setModifyButtons(isPermit);
                 }, () => {
-                    this.isDeleteDisabled = true;
-                    this.isEditDisabled = true;
+                    this.setModifyButtons(false);
                 });
             }
             // Check if user can modify targetBranch
@@ -138,8 +144,7 @@ export class MergeRequestViewComponent implements OnInit, OnDestroy {
                 }, error => this.toast.createErrorToast(error));
             }, 
             error: () => {
-                this.isDeleteDisabled = true;
-                this.isEditDisabled = true;
+                this.setModifyButtons(false);
                 this.isSubmitDisabled = true;
                 this.toast.createWarningToast('The request you had selected no longer exists');
                 this.back();
@@ -147,6 +152,12 @@ export class MergeRequestViewComponent implements OnInit, OnDestroy {
     }
     ngOnDestroy(): void {
         this.state.clearDifference();
+    }
+    setModifyButtons(isPermit: boolean){
+        this.isDeleteDisabled = !isPermit;
+        this.isEditDisabled = !isPermit;
+        this.deleteButtonTitle = this.isDeleteDisabled ?  this.deleteAccessMsg : '';
+        this.editButtonTitle = this.isEditDisabled ?  this.canNotEditMsg : '';
     }
     back(): void {
         this.state.selected = undefined;
