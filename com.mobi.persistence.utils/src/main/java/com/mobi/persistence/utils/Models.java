@@ -60,11 +60,19 @@ import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.vocabulary.RDF;
+import org.eclipse.rdf4j.model.Value;
+import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
 
 public class Models {
     protected static final Map<String, List<RDFParser>> preferredExtensionParsers;
     protected static final List<RDFParser> rdfParsers;
     public static final String ERROR_OBJECT_DELIMITER = ";;;";
+    public static ValueFactory vf = new ValidatingValueFactory();
+    private static ModelFactory mf = new DynamicModelFactory();
 
     static {
         // RDFFormat Parsers
@@ -394,5 +402,31 @@ public class Models {
         byte[] data = bao.toByteArray();
 
         return new ByteArrayInputStream(data);
+    }
+
+    /**
+     * Takes a list of values, and returns a model with linked values
+     * 
+     * @param valueList the list to construct the model from
+     * @return A model of linked values
+     */
+    public static Model createList(List<Value> valueList){
+        Model model = mf.createEmptyModel();
+        Resource listHead = vf.createBNode();
+        Resource current = listHead;
+        for (int i = 0; i < valueList.size(); i++) {
+            Value value = valueList.get(i);
+            model.add(current, RDF.FIRST, value);
+
+            // Check if we need to add another node, if so, set up next node, else add the last node
+            if (i < valueList.size() - 1) {
+                Resource next = vf.createBNode();
+                model.add(current, RDF.REST, next);
+                current = next;
+            } else {
+                model.add(current, RDF.REST, RDF.NIL);
+            }
+        }
+        return model;
     }
 }

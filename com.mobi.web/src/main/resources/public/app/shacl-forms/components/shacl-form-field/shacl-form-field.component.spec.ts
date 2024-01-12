@@ -36,6 +36,7 @@ import { RDF, SHACL, SHACL_FORM, XSD } from '../../../prefixes';
 import { SHACLFormFieldConfig } from '../../models/shacl-form-field-config';
 import { cleanStylesFromDOM } from '../../../../test/ts/Shared';
 import { SHACLFormFieldComponent } from './shacl-form-field.component';
+import { MatSelectModule } from '@angular/material/select';
 
 describe('SHACLFormFieldComponent', () => {
   let component: SHACLFormFieldComponent;
@@ -57,6 +58,7 @@ describe('SHACLFormFieldComponent', () => {
         MatRadioModule,
         MatCheckboxModule,
         MatSlideToggleModule,
+        MatSelectModule
       ],
       declarations: [ SHACLFormFieldComponent ]
     })
@@ -198,6 +200,53 @@ describe('SHACLFormFieldComponent', () => {
       expect(component).toBeTruthy();
       expect(component.fieldFormControl.value).toEqual(true);
       expect(element.queryAll(By.css('.toggle-field')).length).toEqual(1);
+    });
+  });
+
+  describe('should create for a Dropdown', () => {
+    const propertyShape: JSONLDObject = {
+      '@id': propertyShapeId,
+      '@type': [ `${SHACL}PropertyShape` ],
+      [`${SHACL_FORM}usesFormField`]: [{ '@id': `${SHACL_FORM}DropdownInput` }],
+      [`${SHACL}path`]: [{ '@id': propertyName }],
+      [`${SHACL}in`]: [{ '@id': '_:b1' }]
+    };
+    const bnode1: JSONLDObject = {
+      '@id': '_:b1',
+      [`${RDF}first`]: [{ '@value': 'A' }],
+      [`${RDF}rest`]: [{ '@id': '_:b2' }],
+    };
+    const bnode2: JSONLDObject = {
+      '@id': '_:b2',
+      [`${RDF}first`]: [{ '@value': 'B' }],
+      [`${RDF}rest`]: [{ '@id': '_:b3' }],
+    };
+    const bnode3: JSONLDObject = {
+      '@id': '_:b3',
+      [`${RDF}first`]: [{ '@value': 'C' }],
+      [`${RDF}rest`]: [{ '@id': `${RDF}nil` }],
+    };
+    it('with a value already set', () => {
+      component.formFieldConfig = new SHACLFormFieldConfig(nodeShape, propertyShapeId, [propertyShape, bnode1, bnode2, bnode3]);
+      component.parentFormGroup = new UntypedFormGroup({
+        [propertyName]: new UntypedFormControl('A')
+      });
+      fixture.detectChanges();
+      expect(component).toBeTruthy();
+      expect(component.fieldFormControl.value).toEqual('A');
+      expect(element.queryAll(By.css('.dropdown-field')).length).toEqual(1);
+      expect(component.dropdown.length).toEqual(3);
+    });
+    it('with no value set', () => {
+      component.formFieldConfig = new SHACLFormFieldConfig(nodeShape, propertyShapeId, [propertyShape, bnode1, bnode2, bnode3]);
+      component.parentFormGroup = new UntypedFormGroup({
+        [propertyName]: new UntypedFormControl('')
+      });
+      fixture.detectChanges();
+      expect(component).toBeTruthy();
+      expect(component.fieldFormControl.value).toEqual('');
+      expect(element.queryAll(By.css('.dropdown-field')).length).toEqual(1);
+      expect(component.dropdown.length).toEqual(3);
     });
   });
   describe('should create for a RadioInput', () => {

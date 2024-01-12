@@ -31,6 +31,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatRadioModule } from '@angular/material/radio';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatSelectModule } from '@angular/material/select';
 
 import { SHACLFormComponent } from './components/shacl-form/shacl-form.component';
 import { SHACLFormFieldComponent } from './components/shacl-form-field/shacl-form-field.component';
@@ -47,6 +48,7 @@ import { SHACLFormFieldComponent } from './components/shacl-form-field/shacl-for
     MatInputModule,
     MatRadioModule,
     MatSlideToggleModule,
+    MatSelectModule,
     ReactiveFormsModule
   ],
   declarations: [
