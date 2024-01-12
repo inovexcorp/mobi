@@ -1,5 +1,4 @@
 @prefix owl: <http://www.w3.org/2002/07/owl#>.
-@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
 @prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
 @prefix foaf: <http://xmlns.com/foaf/0.1/>.
 @prefix dct: <http://purl.org/dc/terms/>.
@@ -17,7 +16,12 @@
 
 :RadioInput a :FormField .
 
+:DropdownInput a :FormField .
+
 :usesFormField a owl:ObjectProperty;
    rdfs:label "For User"@en;
    rdfs:domain sh:PropertyShape;
    rdfs:range :FormField.
+
+:sparqlSelectQuery a owl:AnnotationProperty;
+   rdfs:domain sh:PropertyShape .
