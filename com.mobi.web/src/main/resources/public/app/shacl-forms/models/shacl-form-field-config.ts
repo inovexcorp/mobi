@@ -64,6 +64,9 @@ export class SHACLFormFieldConfig {
         case `${SHACL_FORM}CheckboxInput`:
           this._fieldType = 'checkbox';
           break;
+        case `${SHACL_FORM}DropdownInput`:
+          this._fieldType = 'dropdown';
+          break;
         case '':
           throw new Error('Form field type not configured');
         default:

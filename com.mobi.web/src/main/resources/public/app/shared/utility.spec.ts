@@ -25,8 +25,9 @@ import { fakeAsync, tick } from '@angular/core/testing';
 import { formatDate } from '@angular/common';
 
 import { DCTERMS, XSD } from '../prefixes';
-import { condenseCommitId, createHttpParams, createJson, getBeautifulIRI, getDate, getDctermsId, getDctermsValue, getErrorDataObject, getIRILocalName, getIRINamespace, getInputType, getObjIrisFromDifference, getPattern, getPropertyId, getPropertyValue, getSkolemizedIRI, handleError, handleErrorObject, hasPropertyId, hasPropertyValue, isBlankNode, isBlankNodeId, mergingArrays, paginatedConfigToHttpParams, removeDctermsValue, removePropertyId, removePropertyValue, replacePropertyId, replacePropertyValue, setDctermsValue, setPropertyId, setPropertyValue, updateDctermsValue } from './utility';
+import { condenseCommitId, createHttpParams, createJson, getBeautifulIRI, getDate, getDctermsId, getDctermsValue, getErrorDataObject, getIRILocalName, getIRINamespace, getInputType, getObjIrisFromDifference, getPattern, getPropertyId, getPropertyIds, getPropertyValue, getSkolemizedIRI, handleError, handleErrorObject, hasPropertyId, hasPropertyValue, isBlankNode, isBlankNodeId, mergingArrays, paginatedConfigToHttpParams, removeDctermsValue, removePropertyId, removePropertyValue, replacePropertyId, replacePropertyValue, setDctermsValue, setPropertyId, setPropertyValue, updateDctermsValue } from './utility';
 import { REGEX } from '../constants';
+import { JSONLDObject } from './models/JSONLDObject.interface';
 
 describe('Utility method', () => {
   const properties = [
@@ -133,6 +134,47 @@ describe('Utility method', () => {
     });
     it('if it does not contain the property', () => {
       expect(getPropertyId({'@id': ''}, 'property')).toBe('');
+    });
+  });
+  describe('should get a property ids from an entity', () => {
+    it('should return a set of property IDs', () => {
+      const entity: JSONLDObject = {
+        '@id': 'http://example.com/entity',
+        'http://example.com/property': [
+          { '@id': 'http://example.com/value1' },
+          { '@id': 'http://example.com/value2' },
+          { '@id': 'http://example.com/value3' }
+        ]
+      };
+      const propertyIRI = 'http://example.com/property';
+        const result = getPropertyIds(entity, propertyIRI);
+  
+      expect(result).toBeDefined();
+      expect(result.size).toBe(3);
+      expect(result.has('http://example.com/value1')).toBeTrue();
+      expect(result.has('http://example.com/value2')).toBeTrue();
+      expect(result.has('http://example.com/value3')).toBeTrue();
+    });
+    it('should handle empty property values', () => {
+      const entity: JSONLDObject = {
+        '@id': 'http://example.com/entity',
+        'http://example.com/property': []
+      };
+      const propertyIRI = 'http://example.com/property';
+      const result = getPropertyIds(entity, propertyIRI);
+  
+      expect(result).toBeDefined();
+      expect(result.size).toBe(0);
+    });
+    it('should handle missing property in the entity', () => {
+      const entity: JSONLDObject = {
+        '@id': 'http://example.com/entity'
+      };
+      const propertyIRI = 'http://example.com/property';
+      const result = getPropertyIds(entity, propertyIRI);
+  
+      expect(result).toBeDefined();
+      expect(result.size).toBe(0);
     });
   });
   describe('should set a property id value for an entity', () => {

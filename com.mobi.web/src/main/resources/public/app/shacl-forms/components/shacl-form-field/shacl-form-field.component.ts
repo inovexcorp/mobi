@@ -58,6 +58,8 @@ export class SHACLFormFieldComponent implements OnInit {
 
   disableCheckboxes = false;
   checkboxes: { value: string, checked: boolean }[] = [];
+  dropdown: string[];
+  label = '';
 
   constructor() { }
 
@@ -65,6 +67,7 @@ export class SHACLFormFieldComponent implements OnInit {
     if (this.formFieldConfig.fieldType) {
       const defaultValue = this.formFieldConfig.defaultValue;
       const validators = this.formFieldConfig.validators;
+      this.label = this.formFieldConfig.label;
       // If the field is a checkbox, create the checkbox map and handle initialization of checked states
       if (this.formFieldConfig.fieldType === 'checkbox') {
         this.checkboxes = this.formFieldConfig.values.map(value => ({ value, checked: false }));
@@ -82,6 +85,13 @@ export class SHACLFormFieldComponent implements OnInit {
         }
         this.fieldFormArray.setValidators(validators);
         this.fieldFormArray.updateValueAndValidity({ emitEvent: false });
+      } else if (this.formFieldConfig.fieldType === 'dropdown') {
+        this.dropdown = this.formFieldConfig.values;
+        this.fieldFormArray.setValidators(validators);
+        this.fieldFormArray.updateValueAndValidity({ emitEvent: false });
+        if (this.dropdown.length === 1) {
+          this.fieldFormControl.setValue(this.dropdown[0]);
+        }
       } else {
         if (this.formFieldConfig.datatype === `${XSD}boolean`) {
           this.setFormValueToBoolean(defaultValue);

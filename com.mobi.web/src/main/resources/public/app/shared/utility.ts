@@ -166,6 +166,28 @@ export function getPropertyId(entity: JSONLDObject, propertyIRI: string): string
 }
 
 /**
+ * Retrieves all ID values associated with the specified property from the given entity.
+ * Returns a set of strings containing these ID values. If no IDs are found, an empty set is returned.
+ *
+ * @param entity       The JSONLDObject representing the entity to retrieve the property IDs from
+ * @param propertyIRI  The IRI of the property
+ * @return A Set of strings containing all ID values associated with the property; an empty set if none are found
+ */
+export function getPropertyIds(entity: JSONLDObject, propertyIRI: string): Set<string> {
+  const propertyValues = get(entity, `['${propertyIRI}']`, []) as JSONLDObject[];
+  const ids: Set<string> = new Set();
+
+  propertyValues.forEach(value => {
+    const id = get(value, '[\'@id\']', '');
+    if (id) {
+      ids.add(id);
+    }
+  });
+
+  return ids;
+}
+
+/**
 * Sets the first or appends to the existing id of the specified property of the passed entity to the passed
 * id.
 *
