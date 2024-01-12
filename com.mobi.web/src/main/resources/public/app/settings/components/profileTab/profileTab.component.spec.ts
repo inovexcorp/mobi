@@ -30,14 +30,16 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
 import { ReactiveFormsModule } from '@angular/forms';
 import { of, throwError } from 'rxjs';
+import { cloneDeep } from 'lodash';
 
 import {
     cleanStylesFromDOM
 } from '../../../../../public/test/ts/Shared';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
 import { UserManagerService } from '../../../shared/services/userManager.service';
-import { FOAF } from '../../../prefixes';
+import { FOAF, USER } from '../../../prefixes';
 import { LoginManagerService } from '../../../shared/services/loginManager.service';
+import { User } from '../../../shared/models/user.class';
 import { ProfileTabComponent } from './profileTab.component';
 
 describe('Profile Tab component', function() {
@@ -73,21 +75,14 @@ describe('Profile Tab component', function() {
         userManagerStub = TestBed.inject(UserManagerService) as jasmine.SpyObj<UserManagerService>;
 
         loginManagerStub.currentUser = 'user';
-        userManagerStub.users = [{
-            jsonld: {
-                '@id': 'user',
-                '@type': [],
-                [`${FOAF}firstName`]: [{'@value': 'John'}],
-                [`${FOAF}lastName`]: [{'@value': 'Doe'}],
-                [`${FOAF}mbox`]: [{'@id': 'mailto:john.doe@test.com'}]
-            },
-            username: 'user',
-            firstName: 'John',
-            lastName: 'Doe',
-            roles: [],
-            external: false,
-            email: 'mailto:john.doe@test.com'
-        }];
+        userManagerStub.users = [new User({
+            '@id': 'user',
+            '@type': [`${USER}User`],
+            [`${USER}username`]: [{'@value': 'user'}],
+            [`${FOAF}firstName`]: [{'@value': 'John'}],
+            [`${FOAF}lastName`]: [{'@value': 'Doe'}],
+            [`${FOAF}mbox`]: [{'@id': 'mailto:john.doe@test.com'}]
+        })];
     });
 
     afterEach(function() {
@@ -109,7 +104,9 @@ describe('Profile Tab component', function() {
             expect(component.profileForm.controls.email.value).toEqual(userManagerStub.users[0].email.replace('mailto:', ''));
         });
         it('if user is external', function() {
-            userManagerStub.users[0].external = true;
+            const copyUser = cloneDeep(userManagerStub.users[0].jsonld);
+            copyUser['@type'].push(`${USER}ExternalUser`);
+            userManagerStub.users[0] = new User(copyUser);
             component.ngOnInit();
             expect(component.profileForm.controls.firstName.disabled).toEqual(true);
             expect(component.profileForm.controls.lastName.disabled).toEqual(true);
@@ -166,7 +163,11 @@ describe('Profile Tab component', function() {
                 userManagerStub.updateUser.and.returnValue(of(null));
                 component.save();
                 tick();
-                expect(component.currentUser.jsonld).toEqual({'@id': 'user', '@type': []});
+                expect(component.currentUser.jsonld).toEqual({
+                    '@id': 'user',
+                    '@type': [`${USER}User`],
+                    [`${USER}username`]: [{'@value': 'user'}],
+                });
                 expect(userManagerStub.updateUser).toHaveBeenCalledWith(loginManagerStub.currentUser, userManagerStub.users[0]);
                 expect(component.success).toEqual(true);
                 expect(component.errorMessage).toEqual('');
@@ -211,7 +212,9 @@ describe('Profile Tab component', function() {
             fixture.detectChanges();
             expect(element.query(By.css('button[type="submit"]')).properties.disabled).toBeFalsy();
 
-            component.currentUser.external = true;
+            const copyUser = cloneDeep(component.currentUser.jsonld);
+            copyUser['@type'].push(`${USER}ExternalUser`);
+            component.currentUser = new User(copyUser);
             fixture.detectChanges();
             expect(element.query(By.css('button[type="submit"]')).properties.disabled).toBeTruthy();
         });

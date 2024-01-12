@@ -38,6 +38,8 @@ import { RequestDetailsFormComponent } from '../requestDetailsForm/requestDetail
 import { RequestRecordSelectComponent } from '../requestRecordSelect/requestRecordSelect.component';
 import { Commit } from '../../../shared/models/commit.interface';
 import { ToastService } from '../../../shared/services/toast.service';
+import { User } from '../../../shared/models/user.class';
+import { USER } from '../../../prefixes';
 import { CreateRequestComponent } from './createRequest.component';
 
 describe('Create Request component', function() {
@@ -68,10 +70,7 @@ describe('Create Request component', function() {
                 MockProvider(MergeRequestsStateService),
                 MockProvider(ToastService),
             ],
-        });
-    });
-
-    beforeEach(function() {
+        }).compileComponents();
         fixture = TestBed.createComponent(CreateRequestComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
@@ -162,7 +161,10 @@ describe('Create Request component', function() {
         it('should reset the request details form', function() {
             mergeRequestsStateStub.requestConfig.title = 'title';
             mergeRequestsStateStub.requestConfig.description = 'description';
-            mergeRequestsStateStub.requestConfig.assignees = ['userA', 'userB'];
+            mergeRequestsStateStub.requestConfig.assignees = [new User({
+                '@id': 'userA',
+                '@type': [`${USER}User`]
+            })];
             mergeRequestsStateStub.requestConfig.removeSource = true;
             component.resetDetailsForm();
             expect(mergeRequestsStateStub.requestConfig.title).toEqual('');

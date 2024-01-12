@@ -31,7 +31,7 @@ import {
     SHORTDATE_DATE_STR,
     cleanStylesFromDOM,
 } from '../../../test/ts/Shared';
-import { CATALOG, DCTERMS, MERGEREQ, ONTOLOGYEDITOR, OWL } from '../../prefixes';
+import { CATALOG, DCTERMS, MERGEREQ, ONTOLOGYEDITOR, OWL, USER } from '../../prefixes';
 import { CommitDifference } from '../models/commitDifference.interface';
 import { Difference } from '../models/difference.class';
 import { Conflict } from '../models/conflict.interface';
@@ -42,6 +42,7 @@ import { MergeRequestManagerService } from './mergeRequestManager.service';
 import { UserManagerService } from './userManager.service';
 import { OntologyManagerService } from './ontologyManager.service';
 import { ToastService } from './toast.service';
+import { User } from '../models/user.class';
 import { MergeRequestsStateService } from './mergeRequestsState.service';
 
 describe('Merge Requests State service', function() {
@@ -60,6 +61,11 @@ describe('Merge Requests State service', function() {
     const recordId = 'recordId';
     const creatorId = 'creator';
     const assigneeId = 'assignee';
+    const assignee: User = new User({
+      '@id': assigneeId,
+      '@type': [`${USER}User`],
+      [`${USER}username`]: [{ '@value': assigneeId }]
+    });
     const request: JSONLDObject = {
       '@id': requestId,
       [`${DCTERMS}creator`]: [{'@id': creatorId}],
@@ -92,7 +98,7 @@ describe('Merge Requests State service', function() {
         date: 'date',
         creator: creatorId,
         recordIri: recordId,
-        assignees: [assigneeId],
+        assignees: [assignee],
         jsonld: request,
         recordType: `${ONTOLOGYEDITOR}OntologyRecord`
     };
@@ -151,7 +157,7 @@ describe('Merge Requests State service', function() {
             sourceBranchId: 'id',
             targetBranchId: 'id',
             recordId: 'id',
-            assignees: ['user'],
+            assignees: [assignee],
             removeSource: true
         };
         service.createRequestStep = 1;
@@ -718,24 +724,16 @@ describe('Merge Requests State service', function() {
     });
     it('should get the MergeRequest object from a JSON-LD object', function() {
         userManagerStub.users = [
-            {
-                username: 'creatorU',
-                iri: 'newcreator',
-                firstName: '',
-                lastName: '',
-                external: false,
-                roles: [],
-                email: ''
-            },
-            {
-                username: 'assigneeU',
-                iri: 'newassignee',
-                firstName: '',
-                lastName: '',
-                external: false,
-                roles: [],
-                email: ''
-            }
+            new User({
+                '@id': 'newcreator',
+                '@type': [`${USER}User`],
+                [`${USER}username`]: [{ '@value': 'creatorU'}]
+            }),
+            new User({
+                '@id': 'newassignee',
+                '@type': [`${USER}User`],
+                [`${USER}username`]: [{ '@value': 'assigneeU'}]
+            }),
         ];
         const jsonld = Object.assign({}, request);
         jsonld[`${DCTERMS}title`] = [{ '@value': 'title' }];
@@ -751,7 +749,7 @@ describe('Merge Requests State service', function() {
             date: SHORTDATE_DATE_STR,
             creator: 'creatorU',
             recordIri: recordId,
-            assignees: ['assigneeU']
+            assignees: [userManagerStub.users[1]]
         });
         expect(service.getRequestObj(request)).toEqual({
             jsonld: request,

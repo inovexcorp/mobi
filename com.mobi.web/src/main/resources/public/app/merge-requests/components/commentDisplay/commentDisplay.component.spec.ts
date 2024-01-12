@@ -37,8 +37,9 @@ import { ConfirmModalComponent } from '../../../shared/components/confirmModal/c
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { LoginManagerService } from '../../../shared/services/loginManager.service';
 import { UserManagerService } from '../../../shared/services/userManager.service';
+import { DCTERMS, USER } from '../../../prefixes';
+import { User } from '../../../shared/models/user.class';
 import { CommentDisplayComponent } from './commentDisplay.component';
-import { DCTERMS } from '../../../prefixes';
 
 describe('Comment Display component', function() {
     let component: CommentDisplayComponent;
@@ -74,25 +75,18 @@ describe('Comment Display component', function() {
                     open: { afterClosed: () => of(true)}
                 }) }
             ],
-        });
-    });
-
-    beforeEach(function() {
+        }).compileComponents();
         fixture = TestBed.createComponent(CommentDisplayComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
         userManagerStub = TestBed.inject(UserManagerService) as jasmine.SpyObj<UserManagerService>;
         matDialog = TestBed.inject(MatDialog) as jasmine.SpyObj<MatDialog>;
         
-        userManagerStub.users = [{
-            iri: userId,
-            username,
-            external: false,
-            firstName: '',
-            lastName: '',
-            email: '',
-            roles: []
-        }];
+        userManagerStub.users = [new User({
+            '@id': userId,
+            '@type': [`${USER}User`],
+            [`${USER}username`]: [{ '@value': username }],
+        })];
     });
 
     afterEach(function() {

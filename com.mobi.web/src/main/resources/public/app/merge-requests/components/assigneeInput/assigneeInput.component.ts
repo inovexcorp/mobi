@@ -28,7 +28,7 @@ import { MatChipInputEvent } from '@angular/material/chips';
 import { Observable } from 'rxjs';
 import { map, startWith } from 'rxjs/operators';
 
-import { User } from '../../../shared/models/user.interface';
+import { User } from '../../../shared/models/user.class';
 import { UserManagerService } from '../../../shared/services/userManager.service';
 
 @Component({
@@ -41,9 +41,9 @@ export class AssigneeInputComponent implements OnInit {
     availableUsers: User[] = [];
    
     @Input() parentForm: UntypedFormGroup;
-    @Input() selected: string[];
+    @Input() selected: User[];
 
-    @Output() selectedChange = new EventEmitter<string[]>();
+    @Output() selectedChange = new EventEmitter<User[]>();
 
     @ViewChild('assigneeInput', { static: true }) assigneeInput: ElementRef;
 
@@ -58,9 +58,9 @@ export class AssigneeInputComponent implements OnInit {
                     val ? 
                         val.username :
                         undefined;
-                        this.availableUsers = this.um.filterUsers(this.um.users, searchText)
-                        .filter(user => !this.selected.includes(user.username));
-                    return this.availableUsers;
+                this.availableUsers = this.um.filterUsers(this.um.users, searchText)
+                    .filter(user => this.selected.findIndex(selectedUser => selectedUser.username === user.username) < 0);
+                return this.availableUsers;
             }));
     }
 
@@ -68,10 +68,13 @@ export class AssigneeInputComponent implements OnInit {
         const input = event.input;
         const value = event.value;
     
-        if (value && this.availableUsers.some(user => user.username === value)) {
-            this.selected.push(value);
-            this.selectedChange.emit(this.selected);
-            this.availableUsers = this.availableUsers.filter(user => user.username !== value);
+        if (value) {
+            const user = this.availableUsers.find(user => user.username === value);
+            if (user) {
+              this.selected.push(user);
+              this.selectedChange.emit(this.selected);
+              this.availableUsers = this.availableUsers.filter(user => user.username !== value);
+            }
         }
     
         // Reset the input value
@@ -81,13 +84,13 @@ export class AssigneeInputComponent implements OnInit {
     
         this.parentForm.controls.assignees.setValue(null);
     }
-    removeAssignee(user: string): void {
+    removeAssignee(user: User): void {
         const index = this.selected.indexOf(user);
     
         if (index >= 0) {
             this.selected.splice(index, 1);
             this.selectedChange.emit(this.selected);
-            const removedUser = this.um.users.find(u => u.username === user);
+            const removedUser = this.um.users.find(u => u.username === user.username);
             if (removedUser) {
                 this.availableUsers.push(removedUser);
             }
@@ -100,5 +103,5 @@ export class AssigneeInputComponent implements OnInit {
         this.assigneeInput.nativeElement.value = '';
         this.parentForm.controls.assignees.setValue(null);
         this.availableUsers = this.availableUsers.filter(user => user.username !== selectedUser);
-      }
+    }
 }

@@ -22,7 +22,7 @@
  */
 import { Component, Input, Output, EventEmitter } from '@angular/core';
 
-import { User } from '../../../shared/models/user.interface';
+import { User } from '../../../shared/models/user.class';
 import { UserManagerService } from '../../../shared/services/userManager.service';
 
 /**
@@ -67,7 +67,7 @@ export class UsersListComponent {
      */
     @Output() clickEvent = new EventEmitter();
     
-    constructor(private um: UserManagerService) {}
+    constructor(public um: UserManagerService) {}
     
     trackByFn(_index: number, item: User): string {
         return item.username;

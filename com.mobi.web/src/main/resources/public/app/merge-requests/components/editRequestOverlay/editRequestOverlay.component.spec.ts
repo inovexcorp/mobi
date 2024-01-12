@@ -37,7 +37,7 @@ import { of, throwError } from 'rxjs';
 import {
     cleanStylesFromDOM,
 } from '../../../../../public/test/ts/Shared';
-import { DCTERMS, MERGEREQ, XSD } from '../../../prefixes';
+import { DCTERMS, MERGEREQ, USER, XSD } from '../../../prefixes';
 import { BranchSelectComponent } from '../../../shared/components/branchSelect/branchSelect.component';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
@@ -48,6 +48,7 @@ import { MergeRequestsStateService } from '../../../shared/services/mergeRequest
 import { UserManagerService } from '../../../shared/services/userManager.service';
 import { ToastService } from '../../../shared/services/toast.service';
 import { AssigneeInputComponent } from '../assigneeInput/assigneeInput.component';
+import { User } from '../../../shared/models/user.class';
 import { EditRequestOverlayComponent } from './editRequestOverlay.component';
 
 describe('Edit Request Overlay Component', function() {
@@ -67,6 +68,12 @@ describe('Edit Request Overlay Component', function() {
     const branches = [{'@id': 'branch'}];
     const userId = 'urn://test/user/user-1';
     const username = 'username';
+    const user: User = new User({
+        '@id': userId,
+        '@type': [`${USER}User`],
+        [`${USER}username`]: [{ '@value': username }],
+        [`${USER}hasUserRole`]: [],
+    });
     const requestTitle = 'Merge Request 1';
     const error = 'error';
     const sourceBranch: JSONLDObject = {'@id': 'urn://test/branch/source'};
@@ -138,19 +145,11 @@ describe('Edit Request Overlay Component', function() {
             removeSource: true,
             date: '',
             creator: '',
-            assignees: [username]
+            assignees: [user]
         };
         catalogManagerStub.localCatalog = {'@id': catalogId};
         catalogManagerStub.getRecordBranches.and.returnValue(of(new HttpResponse<JSONLDObject[]>({body: branches})));
-        userManagerStub.users = [{
-            username,
-            iri: userId,
-            firstName: '',
-            lastName: '',
-            email: '',
-            roles: [],
-            external: false
-        }];
+        userManagerStub.users = [user];
         mergeRequestsStateStub.setRequestDetails.and.returnValue(of(null));
         mergeRequestsStateStub.getRequestObj.and.returnValue(emptyRequest);
     });

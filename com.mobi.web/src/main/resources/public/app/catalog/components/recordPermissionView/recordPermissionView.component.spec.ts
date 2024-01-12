@@ -37,7 +37,9 @@ import { UserAccessControlsComponent } from '../../../shared/components/userAcce
 import { ToastService } from '../../../shared/services/toast.service';
 import { RecordPermissionsManagerService } from '../../../shared/services/recordPermissionsManager.service';
 import { Policy } from '../../../shared/models/policy.interface';
-import { DCTERMS } from '../../../prefixes';
+import { DCTERMS, USER } from '../../../prefixes';
+import { User } from '../../../shared/models/user.class';
+import { Group } from '../../../shared/models/group.interface';
 import { RecordPermissionViewComponent } from './recordPermissionView.component';
 
 describe('Record Permission View component', () => {
@@ -52,6 +54,20 @@ describe('Record Permission View component', () => {
     let policyItemsArray: Policy[] = [];
     let policyRecordId;
     let typePolicy;
+
+    const user: User = new User({
+        '@id': 'http://mobi.com/users/admin',
+        '@type': [`${USER}User`],
+        [`${USER}username`]: [{ '@value': 'batman' }],
+    });
+    const group: Group = {
+        iri: 'http://mobi.com/groups/admin',
+        title: 'Superheroes',
+        description: '',
+        roles: [],
+        members: [],
+        external: false
+    };
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -80,147 +96,88 @@ describe('Record Permission View component', () => {
         toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
         recordPermissionsStub = TestBed.inject(RecordPermissionsManagerService) as jasmine.SpyObj<RecordPermissionsManagerService>;
 
-        userManagerStub.users = [
-            {
-                iri: 'http://mobi.com/users/admin',
-                username: 'batman',
-                firstName: '',
-                lastName: '',
-                email: '',
-                roles: [],
-                external: false
-            }
-        ];
-        userManagerStub.groups = [
-            {
-                iri: 'http://mobi.com/groups/admin',
-                title: 'Superheroes',
-                description: '',
-                roles: [],
-                members: [],
-                external: false
-            }
-        ];
+        userManagerStub.users = [user];
+        userManagerStub.groups = [group];
         typePolicy = {
             'urn:read': {
-                'everyone': true,
-                'users': [],
-                'groups': []
+                everyone: true,
+                users: [],
+                groups: []
             },
             'urn:delete': {
-                'everyone': false,
-                'users': [
+                everyone: false,
+                users: [
                     'http://mobi.com/users/admin',
                 ],
-                'groups': [
+                groups: [
                     'http://mobi.com/groups/admin'
                 ]
             },
             'urn:update': {
-                'everyone': false,
-                'users': [
+                everyone: false,
+                users: [
                     'http://mobi.com/users/admin'
                 ],
-                'groups': []
+                groups: []
             },
             'urn:modify': {
-                'everyone': true,
-                'users': [],
-                'groups': []
+                everyone: true,
+                users: [],
+                groups: []
             },
             'urn:modifyMaster': {
-                'everyone': false,
-                'users': [
+                everyone: false,
+                users: [
                     'http://mobi.com/users/admin'
                 ],
-                'groups': []
+                groups: []
             }
         };
         policyItemsArray = [
             {
-                'policy': {},
-                'id': 'urn:read',
-                'changed': false,
-                'everyone': true,
-                'selectedUsers': [],
-                'selectedGroups': [],
-                'title': 'View Record'
+                policy: {},
+                id: 'urn:read',
+                changed: false,
+                everyone: true,
+                selectedUsers: [],
+                selectedGroups: [],
+                title: 'View Record'
             },
             {
-                'policy': {},
-                'id': 'urn:delete',
-                'changed': false,
-                'everyone': false,
-                'selectedUsers': [
-                    {
-                        'iri': 'http://mobi.com/users/admin',
-                        'username': 'batman',
-                        'firstName': '',
-                        'lastName': '',
-                        'email': '',
-                        'roles': [],
-                        'external': false
-                    }
-                ],
-                'selectedGroups': [
-                    {
-                        'iri': 'http://mobi.com/groups/admin',
-                        'title': 'Superheroes',
-                        'description': '',
-                        'roles': [],
-                        'members': [],
-                        'external': false
-                    }
-                ],
-                'title': 'Delete Record'
+                policy: {},
+                id: 'urn:delete',
+                changed: false,
+                everyone: false,
+                selectedUsers: [user],
+                selectedGroups: [group],
+                title: 'Delete Record'
             },
             {
-                'policy': {},
-                'id': 'urn:update',
-                'changed': false,
-                'everyone': false,
-                'selectedUsers': [
-                    {
-                        'iri': 'http://mobi.com/users/admin',
-                        'username': 'batman',
-                        'firstName': '',
-                        'lastName': '',
-                        'email': '',
-                        'roles': [],
-                        'external': false
-                    }
-                ],
-                'selectedGroups': [],
-                'title': 'Manage Record',
-
+                policy: {},
+                id: 'urn:update',
+                changed: false,
+                everyone: false,
+                selectedUsers: [user],
+                selectedGroups: [],
+                title: 'Manage Record',
             },
             {
-                'policy': {},
-                'id': 'urn:modify',
-                'changed': false,
-                'everyone': true,
-                'selectedUsers': [],
-                'selectedGroups': [],
-                'title': 'Modify Record'
+                policy: {},
+                id: 'urn:modify',
+                changed: false,
+                everyone: true,
+                selectedUsers: [],
+                selectedGroups: [],
+                title: 'Modify Record'
             },
             {
-                'policy': {},
-                'id': 'urn:modifyMaster',
-                'changed': false,
-                'everyone': false,
-                'selectedUsers': [
-                    {
-                        'iri': 'http://mobi.com/users/admin',
-                        'username': 'batman',
-                        'firstName': '',
-                        'lastName': '',
-                        'email': '',
-                        'roles': [],
-                        'external': false
-                    }
-                ],
-                'selectedGroups': [],
-                'title': 'Modify Master Branch'
+                policy: {},
+                id: 'urn:modifyMaster',
+                changed: false,
+                everyone: false,
+                selectedUsers: [user],
+                selectedGroups: [],
+                title: 'Modify Master Branch'
             }
         ];
         policyRecordId= 'urn:resource';

@@ -24,13 +24,14 @@
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-
 import { MockPipe, MockProvider } from 'ng-mocks';
+import { cloneDeep } from 'lodash';
 
 import { cleanStylesFromDOM } from '../../../../../public/test/ts/Shared';
-import { User } from '../../../shared/models/user.interface';
+import { User } from '../../../shared/models/user.class';
 import { HighlightTextPipe } from '../../../shared/pipes/highlightText.pipe';
 import { UserManagerService } from '../../../shared/services/userManager.service';
+import { FOAF, USER } from '../../../prefixes';
 import { UsersListComponent } from './usersList.component';
 
 describe('Users List component', function() {
@@ -56,14 +57,14 @@ describe('Users List component', function() {
         element = fixture.debugElement;
         userManagerStub = TestBed.inject(UserManagerService) as jasmine.SpyObj<UserManagerService>;
 
-        user = {
-            username: 'batman',
-            firstName: 'BATMAN',
-            lastName: 'DUH',
-            email: 'iambatman@test.com',
-            external: false,
-            roles: []
-        };
+        user = new User({
+            '@id': 'batman',
+            '@type': [`${USER}User`],
+            [`${USER}username`]: [{ '@value': 'batman' }],
+            [`${FOAF}firstName`]: [{ '@value': 'BATMAN' }],
+            [`${FOAF}lastName`]: [{ '@value': 'DUH' }],
+            [`${FOAF}mbox`]: [{ '@id': 'mailto:iambatman@test.com' }],
+        });
     });
 
     afterEach(function() {
@@ -116,8 +117,9 @@ describe('Users List component', function() {
             expect(element.queryAll(By.css('li .admin')).length).toBe(1);
         });
         it('depending on whether a user is external', function() {
-            user.external = true;
-            component.users = [user];
+            const copyUser = cloneDeep(user.jsonld);
+            copyUser['@type'].push(`${USER}ExternalUser`);
+            component.users = [new User(copyUser)];
             fixture.detectChanges();
             const item = element.query(By.css('li'));
             expect(item.classes.external).toEqual(true);

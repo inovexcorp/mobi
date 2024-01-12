@@ -34,6 +34,7 @@ import { MergeRequestsStateService } from '../../../shared/services/mergeRequest
 import { UserManagerService } from '../../../shared/services/userManager.service';
 import { ToastService } from '../../../shared/services/toast.service';
 import { updateDctermsValue } from '../../../shared/utility';
+import { User } from '../../../shared/models/user.class';
 
 /**
  * @name merge-requests.EditRequestOverlayComponent
@@ -51,7 +52,7 @@ import { updateDctermsValue } from '../../../shared/utility';
 export class EditRequestOverlayComponent implements OnInit {
     branches = [];
     errorMessage = '';
-    assignees: string[] = [];
+    assignees: User[] = [];
     targetBranch: JSONLDObject;
     editRequestForm: UntypedFormGroup;
 
@@ -108,11 +109,8 @@ export class EditRequestOverlayComponent implements OnInit {
         jsonld[`${MERGEREQ}removeSource`] = [{'@type': `${XSD}boolean`, '@value': this.editRequestForm.controls.removeSource.value.toString()}];
 
         jsonld[`${MERGEREQ}assignee`] = [];
-        this.assignees.forEach(username => {
-            const user = this.um.users.find(user => user.username === username);
-            if (user) {
-                jsonld[`${MERGEREQ}assignee`].push({'@id': user.iri});
-            }
+        this.assignees.forEach(user => {
+            jsonld[`${MERGEREQ}assignee`].push({'@id': user.iri});
         });
         return jsonld;
     }

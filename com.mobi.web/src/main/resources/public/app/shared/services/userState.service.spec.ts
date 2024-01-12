@@ -24,6 +24,8 @@
 import { TestBed } from '@angular/core/testing';
 
 import { cleanStylesFromDOM } from '../../../test/ts/Shared';
+import { User } from '../models/user.class';
+import { USER } from '../../prefixes';
 import { UserStateService } from './userState.service';
 
 describe('User State service', function() {
@@ -55,14 +57,10 @@ describe('User State service', function() {
             members: [],
             external: false
         };
-        service.selectedUser = {
-            username: '',
-            firstName: '',
-            lastName: '',
-            email: '',
-            roles: [],
-            external: false
-        };
+        service.selectedUser = new User({
+            '@id': '',
+            '@type': [`${USER}User`]
+        });
         service.reset();
         expect(service.userSearchString).toEqual('');
         expect(service.groupSearchString).toEqual('');

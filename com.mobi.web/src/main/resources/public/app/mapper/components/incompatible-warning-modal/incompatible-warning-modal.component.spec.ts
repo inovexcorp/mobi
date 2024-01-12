@@ -21,12 +21,18 @@
  * #L%
  */
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-
-import { IncompatibleWarningModalComponent } from './incompatible-warning-modal.component';
+import { DebugElement } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { By } from '@angular/platform-browser';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { MatListModule } from '@angular/material/list';
+import { MatButtonModule } from '@angular/material/button';
+import { MockComponent } from 'ng-mocks';
+
 import { cleanStylesFromDOM } from '../../../../test/ts/Shared';
-import { DebugElement } from '@angular/core';
+import { InfoMessageComponent } from '../../../shared/components/infoMessage/infoMessage.component';
+import { DCTERMS, DELIM } from '../../../prefixes';
+import { IncompatibleWarningModalComponent } from './incompatible-warning-modal.component';
 
 describe('IncompatibleWarningModalComponent', () => {
     let component: IncompatibleWarningModalComponent;
@@ -37,9 +43,9 @@ describe('IncompatibleWarningModalComponent', () => {
     const incomMappings = [{
       '@id': 'http://mobi.com/mappings/UHTCTest/68e4e867-f899-4c48-85e9-263ed3342bfa',
       '@type': [
-        'http://mobi.com/ontologies/delimited#ClassMapping'
+        `${DELIM}ClassMapping`,
       ],
-      'http://mobi.com/ontologies/delimited#dataProperty': [
+      [`${DELIM}dataProperty`]: [
         {
           '@id': 'http://mobi.com/mappings/UHTCTest/bfedad28-c67f-47f1-8729-313bee8c783d'
         },
@@ -50,22 +56,22 @@ describe('IncompatibleWarningModalComponent', () => {
           '@id': 'http://mobi.com/mappings/UHTCTest/e417bbc6-efd0-4e2d-b1ab-b96dc772e0d4'
         }
       ],
-      'http://mobi.com/ontologies/delimited#hasPrefix': [
+      [`${DELIM}hasPrefix`]: [
         {
           '@value': 'http://mobi.com/data/uhtc/element/'
         }
       ],
-      'http://mobi.com/ontologies/delimited#localName': [
+      [`${DELIM}localName`]: [
         {
           '@value': '${UUID}'
         }
       ],
-      'http://mobi.com/ontologies/delimited#mapsTo': [
+      [`${DELIM}mapsTo`]: [
         {
           '@id': 'http://matonto.org/ontologies/uhtc#Element'
         }
       ],
-      'http://purl.org/dc/terms/title': [
+      [`${DCTERMS}title`]: [
         {
           '@value': 'Element'
         }
@@ -74,25 +80,25 @@ describe('IncompatibleWarningModalComponent', () => {
     {
       '@id': 'http://mobi.com/mappings/UHTCTest/bfedad28-c67f-47f1-8729-313bee8c783d',
       '@type': [
-        'http://mobi.com/ontologies/delimited#DataMapping',
-        'http://mobi.com/ontologies/delimited#PropertyMapping'
+        `${DELIM}PropertyMapping`,
+        `${DELIM}DataMapping`
       ],
-      'http://mobi.com/ontologies/delimited#columnIndex': [
+      [`${DELIM}columnIndex`]: [
         {
           '@value': '1'
         }
       ],
-      'http://mobi.com/ontologies/delimited#datatypeSpec': [
+      [`${DELIM}datatypeSpec`]: [
         {
           '@id': 'http://www.w3.org/2001/XMLSchema#string'
         }
       ],
-      'http://mobi.com/ontologies/delimited#hasProperty': [
+      [`${DELIM}hasProperty`]: [
         {
           '@id': 'http://matonto.org/ontologies/uhtc#symbol'
         }
       ],
-      'http://purl.org/dc/terms/title': [
+      [`${DCTERMS}title`]: [
         {
           '@value': 'Symbol'
         }
@@ -101,20 +107,20 @@ describe('IncompatibleWarningModalComponent', () => {
     {
       '@id': 'http://mobi.com/mappings/UHTCTest/28ffeba5-e540-4d55-a477-0073ba8fbef5',
       '@type': [
-        'http://mobi.com/ontologies/delimited#PropertyMapping',
-        'http://mobi.com/ontologies/delimited#ObjectMapping'
+        `${DELIM}PropertyMapping`,
+        `${DELIM}ObjectMapping`
       ],
-      'http://mobi.com/ontologies/delimited#classMapping': [
+      [`${DELIM}classMapping`]: [
         {
           '@id': 'http://mobi.com/mappings/UHTCTest/68e4e867-f899-4c48-85e9-263ed3342bfa'
         }
       ],
-      'http://mobi.com/ontologies/delimited#hasProperty': [
+      [`${DELIM}hasProperty`]: [
         {
           '@id': 'http://matonto.org/ontologies/uhtc#element'
         }
       ],
-      'http://purl.org/dc/terms/title': [
+      [`${DCTERMS}title`]: [
         {
           '@value': 'Element'
         }
@@ -132,8 +138,16 @@ describe('IncompatibleWarningModalComponent', () => {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ MatDialogModule ],
-            declarations: [ IncompatibleWarningModalComponent ],
+            imports: [
+              NoopAnimationsModule,
+              MatDialogModule,
+              MatListModule,
+              MatButtonModule
+            ],
+            declarations: [
+              IncompatibleWarningModalComponent,
+              MockComponent(InfoMessageComponent)
+            ],
             providers: [
                 {provide: MAT_DIALOG_DATA, useValue: {'mappingRecord': mappingRecord, 'incomMappings': incomMappings}},
                 {provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close'])}

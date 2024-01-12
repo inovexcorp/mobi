@@ -21,7 +21,10 @@
  * #L%
  */
 import { Component, EventEmitter, Input, OnChanges, Output } from '@angular/core';
- 
+
+import { UserManagerService } from '../../../shared/services/userManager.service';
+import { User } from '../../../shared/models/user.class';
+
 /**
  * @class user-management.MemberTableComponent
  * 
@@ -54,15 +57,15 @@ export class MemberTableComponent implements OnChanges {
      * A method to be run when a member is removed. Takes the member to remove as an argument in the form of the user's
      * username.
      */
-    @Output() removeMember = new EventEmitter();
+    @Output() removeMember = new EventEmitter<string>();
 
-    displayedColumns: string[] = ['username', 'delete'];
-    dataSource: string[] = [];
+    displayedColumns: string[] = ['user', 'delete'];
+    dataSource: User[] = [];
 
-    constructor() {}
+    constructor(private _um: UserManagerService) {}
 
     ngOnChanges(): void {
-        this.dataSource = this.members;
+        this.dataSource = this.members.map(username => this._um.users.find(user => user.username === username));
     }
     emitRemoveMember(user: string): void {
         this.removeMember.emit(user);

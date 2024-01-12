@@ -36,6 +36,8 @@ import { UnmaskPasswordComponent } from '../../../shared/components/unmaskPasswo
 import { UserManagerService } from '../../../shared/services/userManager.service';
 import { UserStateService } from '../../../shared/services/userState.service';
 import { ToastService } from '../../../shared/services/toast.service';
+import { User } from '../../../shared/models/user.class';
+import { USER } from '../../../prefixes';
 import { ResetPasswordOverlayComponent } from './resetPasswordOverlay.component';
 
 describe('Reset Password Overlay component', function() {
@@ -74,14 +76,11 @@ describe('Reset Password Overlay component', function() {
         userStateStub = TestBed.inject(UserStateService) as jasmine.SpyObj<UserStateService>;
         matDialogRef = TestBed.inject(MatDialogRef) as jasmine.SpyObj<MatDialogRef<ResetPasswordOverlayComponent>>;
 
-        userStateStub.selectedUser = {
-            username: 'user',
-            firstName: '',
-            lastName: '',
-            email: '',
-            roles: [],
-            external: false
-        };
+        userStateStub.selectedUser = new User({
+            '@id': 'user',
+            '@type': [`${USER}User`],
+            [`${USER}username`]: [{'@value': 'user'}],
+        });
     });
 
     afterEach(function() {

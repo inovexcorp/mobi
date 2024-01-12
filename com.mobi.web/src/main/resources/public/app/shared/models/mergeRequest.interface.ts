@@ -22,6 +22,7 @@
  */
 import { Conflict } from './conflict.interface';
 import { JSONLDObject } from './JSONLDObject.interface';
+import { User } from './user.class';
 
 export interface MergeRequest {
     title: string,
@@ -31,7 +32,7 @@ export interface MergeRequest {
     recordIri: string,
     recordTitle?: string,
     recordType?: string,
-    assignees: string[],
+    assignees: User[],
     sourceTitle?: string,
     targetTitle?: string,
     sourceBranch?: JSONLDObject,

@@ -24,7 +24,7 @@
     <ul>
         <li *ngFor="let user of users; trackBy : trackByFn" [ngClass]="{'external': user.external}">
             <a (click)="clickUser(user)" class="d-flex align-items-center" [ngClass]="{'active': selectedUser && selectedUser.username === user.username}">
-                <span class="user-title text-truncate" [innerHTML]="(user.firstName || user.lastName) ? (user.firstName + ' ' + user.lastName) : user.username | highlightText: searchText"></span>
+                <span class="user-title text-truncate" title="Username: {{user.username}}" [innerHTML]="user.displayName | highlightText: searchText"></span>
                 <small class="admin pl-1" *ngIf="um.isAdmin(user.username)">(Admin)</small>
             </a>
         </li>

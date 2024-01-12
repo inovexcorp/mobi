@@ -22,6 +22,7 @@
  */
 import { Component, Inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+
 import { Mapping } from '../../../shared/models/mapping.class';
 import { DCTERMS, DELIM } from '../../../prefixes';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
@@ -31,10 +32,10 @@ import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
   templateUrl: './incompatible-warning-modal.component.html'
 })
 export class IncompatibleWarningModalComponent {
-  titleIRI: string = DCTERMS + 'title';
-  idIRI: string = DELIM + 'mapsTo';
-  propIRI: string = DELIM + 'hasProperty';
-  propertyIRI: string = DELIM + 'dataProperty';
+  titleIRI = `${DCTERMS}title`;
+  idIRI = `${DELIM}mapsTo`;
+  propIRI = `${DELIM}hasProperty`;
+  propertyIRI = `${DELIM}dataProperty`;
   infoMessage = 'The source ontology for the mapping and/or its imported ontologies have been changed' +
       ' and are no longer compatible. Incompatible mappings will be removed upon continuing.';
 
@@ -46,6 +47,6 @@ export class IncompatibleWarningModalComponent {
   }
 
   cancel(): void {
-    this.dialog.close('closed')
+    this.dialog.close('closed');
   }
 }

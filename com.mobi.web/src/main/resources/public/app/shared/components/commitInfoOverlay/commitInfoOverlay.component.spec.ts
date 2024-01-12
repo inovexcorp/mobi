@@ -39,8 +39,8 @@ import { OntologyManagerService } from '../../services/ontologyManager.service';
 import { JSONLDObject } from '../../models/JSONLDObject.interface';
 import { ToastService } from '../../services/toast.service';
 import { Commit } from '../../models/commit.interface';
-import { CommitInfoOverlayComponent } from './commitInfoOverlay.component';
 import { ONTOLOGYEDITOR } from '../../../prefixes';
+import { CommitInfoOverlayComponent } from './commitInfoOverlay.component';
 
 describe('Commit Info Overlay component', function() {
     let component: CommitInfoOverlayComponent;
@@ -67,7 +67,7 @@ describe('Commit Info Overlay component', function() {
             auxiliary: ''
         },
         ontRecordId,
-        type: ONTOLOGYEDITOR + 'OntologyRecord'
+        type: `${ONTOLOGYEDITOR}OntologyRecord`
     };
 
     beforeEach(async () => {

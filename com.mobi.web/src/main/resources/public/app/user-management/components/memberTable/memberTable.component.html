@@ -21,14 +21,14 @@
   #L%
   -->
 <mat-table #table [dataSource]="dataSource" class="member-table">
-    <ng-container matColumnDef="username">
-        <mat-header-cell *matHeaderCellDef>Username</mat-header-cell>
-        <mat-cell class="username-column" *matCellDef="let user">{{user}}</mat-cell>
+    <ng-container matColumnDef="user">
+        <mat-header-cell *matHeaderCellDef>User</mat-header-cell>
+        <mat-cell class="user-column" *matCellDef="let user" title="Username: {{user.username}}">{{user.displayName}}</mat-cell>
     </ng-container>
     <ng-container matColumnDef="delete">
         <mat-header-cell *matHeaderCellDef>Delete</mat-header-cell>
         <mat-cell *matCellDef="let user" class="delete-column">
-            <button mat-icon-button color="primary" aria-label="Remove member" (click)="emitRemoveMember(user)" [disabled]="readOnly">
+            <button mat-icon-button color="primary" aria-label="Remove member" (click)="emitRemoveMember(user.username)" [disabled]="readOnly">
                 <mat-icon>delete</mat-icon>
             </button>
         </mat-cell>

@@ -20,19 +20,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { JSONLDObject } from './JSONLDObject.interface';
-
 /**
- * Represents a user in the system. The `jsonld` and `iri` properties are optional as the interface is utilized for new
- * users as well.
+ * Configuration to create a new local User.
  */
-export interface User {
-    jsonld?: JSONLDObject,
-    external?: boolean,
-    iri?: string,
-    username: string,
-    firstName: string,
-    lastName: string,
-    email?: string,
-    roles?: string[]
+export interface NewUserConfig {
+  username: string,
+  firstName: string,
+  lastName: string,
+  email: string,
+  roles: string[],
+  password: string
 }

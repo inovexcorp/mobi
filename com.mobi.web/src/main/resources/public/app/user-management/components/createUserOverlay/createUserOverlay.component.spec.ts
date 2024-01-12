@@ -36,12 +36,14 @@ import { of, throwError } from 'rxjs';
 import {
     cleanStylesFromDOM,
 } from '../../../../../public/test/ts/Shared';
-import { User } from '../../../shared/models/user.interface';
+import { User } from '../../../shared/models/user.class';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
 import { UnmaskPasswordComponent } from '../../../shared/components/unmaskPassword/unmaskPassword.component';
 import { UserManagerService } from '../../../shared/services/userManager.service';
 import { UserStateService } from '../../../shared/services/userState.service';
 import { ToastService } from '../../../shared/services/toast.service';
+import { FOAF, USER } from '../../../prefixes';
+import { NewUserConfig } from '../../../shared/models/new-user-config';
 import { CreateUserOverlayComponent } from './createUserOverlay.component';
 
 describe('Create User Overlay component', function() {
@@ -81,7 +83,14 @@ describe('Create User Overlay component', function() {
         userManagerStub = TestBed.inject(UserManagerService) as jasmine.SpyObj<UserManagerService>;
         matDialogRef = TestBed.inject(MatDialogRef) as jasmine.SpyObj<MatDialogRef<CreateUserOverlayComponent>>;
    
-        userManagerStub.users = [{ username: 'user', external: false, roles: [], firstName: 'John', lastName: 'Doe', email: '' }];
+        userManagerStub.users = [new User({
+            '@id': 'user',
+            '@type': [`${USER}User`],
+            [`${USER}username`]: [{'@value': 'user'}],
+            [`${FOAF}firstName`]: [{'@value': 'John'}],
+            [`${FOAF}lastName`]: [{'@value': 'Doe'}],
+            [`${FOAF}mbox`]: [{'@id': 'mailto:john.doe@test.com'}]
+        })];
     });
 
     afterEach(function() {
@@ -115,22 +124,21 @@ describe('Create User Overlay component', function() {
             expect(component.getUsernameErrorMessage()).toEqual('Invalid username');
         });
         describe('should add a user with the entered information', function() {
+            const newUser: NewUserConfig = {
+                username: 'username',
+                firstName: 'John',
+                lastName: 'Doe',
+                email: 'example@example.com',
+                roles: ['user', 'admin'],
+                password: 'pw'
+            };
             beforeEach(function() {
-                const newUser: User = {
-                    username: 'username',
-                    firstName: 'John',
-                    lastName: 'Doe',
-                    email: 'example@example.com',
-                    external: false,
-                    roles: ['user', 'admin']
-                };
-                this.newUser = newUser;
                 component.createUserForm.setValue({
-                    username: 'username',
+                    username: newUser.username,
                     firstName: newUser.firstName,
                     lastName: newUser.lastName,
                     email: newUser.email,
-                    unmaskPassword: 'pw',
+                    unmaskPassword: newUser.password,
                     admin: true
                 });
             });
@@ -138,7 +146,7 @@ describe('Create User Overlay component', function() {
                 userManagerStub.addUser.and.returnValue(throwError('Error Message'));
                 component.add();
                 tick();
-                expect(userManagerStub.addUser).toHaveBeenCalledWith(this.newUser, component.createUserForm.controls.unmaskPassword.value);
+                expect(userManagerStub.addUser).toHaveBeenCalledWith(newUser);
                 expect(component.errorMessage).toEqual('Error Message');
                 expect(matDialogRef.close).not.toHaveBeenCalled();
             }));
@@ -146,7 +154,7 @@ describe('Create User Overlay component', function() {
                 userManagerStub.addUser.and.returnValue(of(null));
                 component.add();
                 tick();
-                expect(userManagerStub.addUser).toHaveBeenCalledWith(this.newUser, component.createUserForm.controls.unmaskPassword.value);
+                expect(userManagerStub.addUser).toHaveBeenCalledWith(newUser);
                 expect(component.errorMessage).toEqual('');
                 expect(matDialogRef.close).toHaveBeenCalledWith();
             }));

@@ -28,8 +28,9 @@ import { MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 
 import { cleanStylesFromDOM } from '../../../test/ts/Shared';
+import { FOAF, USER } from '../../prefixes';
 import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
-import { User } from '../models/user.interface';
+import { User } from '../models/user.class';
 import { CatalogManagerService } from './catalogManager.service';
 import { CatalogStateService } from './catalogState.service';
 import { DatasetManagerService } from './datasetManager.service';
@@ -46,8 +47,8 @@ import { UserManagerService } from './userManager.service';
 import { UserStateService } from './userState.service';
 import { ToastService } from './toast.service';
 import { YasguiService } from './yasgui.service';
-import { LoginManagerService } from './loginManager.service';
 import { ProvManagerService } from './provManager.service';
+import { LoginManagerService } from './loginManager.service';
 
 describe('Login Manager service', function() {
     let service: LoginManagerService;
@@ -72,15 +73,14 @@ describe('Login Manager service', function() {
     let provManagerStub: jasmine.SpyObj<ProvManagerService>;
 
     const error = 'Error Message';
-    const user: User = {
-        iri: 'userIRI',
-        username: 'user',
-        external: false,
-        firstName: 'User',
-        lastName: 'User',
-        email: 'email@email.com',
-        roles: []
-    };
+    const user: User = new User({
+        '@id': 'userIRI',
+        '@type': [`${USER}User`],
+        [`${USER}username`]: [{ '@value': 'user' }],
+        [`${FOAF}firstName`]: [{ '@value': 'User' }],
+        [`${FOAF}lastName`]: [{ '@value': 'User' }],
+        [`${FOAF}mbox`]: [{ '@id': 'email@email.com' }],
+    });
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({

@@ -35,9 +35,10 @@ import { MockProvider } from 'ng-mocks';
 
 import { cleanStylesFromDOM } from '../../../../../public/test/ts/Shared';
 import { PERSPECTIVES, RoutePerspective } from '../../models/routePerspective.interface';
-import { User } from '../../models/user.interface';
+import { User } from '../../models/user.class';
 import { LoginManagerService } from '../../services/loginManager.service';
 import { UserManagerService } from '../../services/userManager.service';
+import { FOAF, USER } from '../../../prefixes';
 import { SidebarComponent } from './sidebar.component';
 
 describe('Sidebar component', function() {
@@ -79,6 +80,7 @@ describe('Sidebar component', function() {
         userManagerStub = TestBed.inject(UserManagerService) as jasmine.SpyObj<UserManagerService>;
         router = TestBed.inject(Router) as jasmine.SpyObj<Router>;
         spyOn(router, 'navigate');
+        userManagerStub.users = [];
     });
 
     afterEach(function() {
@@ -101,20 +103,15 @@ describe('Sidebar component', function() {
         });
         it('should get the display of the current user', function() {
             loginManagerStub.currentUserIRI = 'urn:test';
-            const user: User = {
-                iri: loginManagerStub.currentUserIRI,
-                firstName: 'Bruce',
-                external: false,
-                username: '',
-                lastName: '',
-                email: '',
-                roles: []
-            };
+            const user: User = new User({
+                '@id': loginManagerStub.currentUserIRI,
+                '@type': [`${USER}User`],
+                [`${USER}username`]: [{ '@value': 'batman' }],
+                [`${FOAF}firstName`]: [{ '@value': 'Bruce' }]
+            });
             userManagerStub.users = [user];
             expect(component.getUserDisplay()).toEqual('Bruce');
-            user.username = 'batman';
-            expect(component.getUserDisplay()).toEqual('Bruce');
-            delete user.firstName;
+            user.firstName = '';
             expect(component.getUserDisplay()).toEqual('batman');
             userManagerStub.users = [];
             expect(component.getUserDisplay()).toEqual('');            
@@ -125,7 +122,7 @@ describe('Sidebar component', function() {
             expect(element.queryAll(By.css('.sidebar')).length).toEqual(1);
         });
         ['.image-container', '.current-user-box', '.main-nav', '.hover-box', '.version'].forEach(test => {
-            it('with a ' + test, function() {
+            it(`with a ${test}`, function() {
                 expect(element.queryAll(By.css(test)).length).toEqual(1);
             });
         });
