@@ -21,6 +21,27 @@
  * #L%
  */
 
+/**
+ * Admin page used to change users/groups/global permissions/applications settings
+ * 
+ * Links:
+ * https://material.angular.io/components/tabs/overview
+ * 
+ * Hierarchy:
+ *  - user-management-page
+ *    - mat-tab-group (Lazy Loading)
+ *      - mat-tab > user-page
+ *        - column
+ *          - create user buttom > opens CreateUserOverlayComponent
+ *          - search bar
+ *          - users-list
+ *        - column 
+ *          - user infomation
+ *      - mat-tab > groups-page
+ *      - mat-tab > permissions-page
+ *        - [Create Workflow Record, Create Shapes Graph Record, Create Dataset Record, Create Ontology Record, Query System Repository]
+ *      - mat-tab > setting-edit-page
+ */
 var AdministrationPage = function() {
     
 };

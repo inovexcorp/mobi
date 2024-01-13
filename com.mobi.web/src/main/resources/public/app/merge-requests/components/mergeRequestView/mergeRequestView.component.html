@@ -33,8 +33,8 @@
                 </h2>
                 <div><small class="ml-1">Created on {{state.selected.date}} by {{state.selected.creator}}</small></div>
             </div>
-            <div class="details d-flex">
-                <div class="details flex-1 remove-min-width">
+            <div [ngClass]="{'details-read-only ': isEditDisabled, 'details-hover': !isEditDisabled, 'd-flex': true}">
+                <div [ngClass]="{'details-read-only ': isEditDisabled, 'details-hover': !isEditDisabled, 'flex-1': true, 'remove-min-width': true}">
                     <div class="description">{{state.selected.description}}</div>
                     <dl>
                         <dt class="text-muted">Branch</dt>
@@ -54,7 +54,7 @@
                     <mat-checkbox *ngIf="state.selected.sourceTitle !== 'MASTER' && !isAccepted" [(ngModel)]="state.selected.removeSource" [disabled]="true">{{'Remove ' + state.selected.sourceTitle + ' after merge.'}}</mat-checkbox>
                 </div>
                 <div *ngIf="!isAccepted" class="edit-button-container text-center">
-                    <button mat-icon-button color="primary" (click)="editRequest()"><i class="fa fa-pencil fa-fw"></i></button>
+                    <button mat-icon-button color="primary" (click)="editRequest()" [title]="editButtonTitle" [disabled]="isEditDisabled"><i class="fa fa-pencil fa-fw"></i></button>
                 </div>
             </div>
         </div>
@@ -85,7 +85,7 @@
                     [disabled]="state.selected.conflicts?.length > 0|| !state.selected.targetTitle || isSubmitDisabled"
                     [title]="buttonTitle"
                     (click)="showAccept()">Accept</button>
-            <button mat-raised-button class="float-right" color="warn" (click)="showDelete()">Delete</button>
+            <button mat-raised-button class="float-right" color="warn" [title]="deleteButtonTitle" [disabled]="isDeleteDisabled" (click)="showDelete()">Delete</button>
         </div>
         <div class="conflicts-buttons" *ngIf="resolveConflicts">
             <button mat-raised-button (click)="cancelResolve()">Cancel</button>

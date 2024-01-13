@@ -33,6 +33,8 @@ import static com.mobi.rest.util.RestUtils.getRDFFormat;
 import static com.mobi.rest.util.RestUtils.groupedModelToString;
 import static com.mobi.rest.util.RestUtils.jsonldToModel;
 import static com.mobi.rest.util.RestUtils.modelToJsonld;
+import static com.mobi.security.policy.api.xacml.XACML.POLICY_PERMIT_OVERRIDES;
+import static java.util.Arrays.asList;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -65,6 +67,10 @@ import com.mobi.rest.security.annotations.ValueType;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.LinksUtils;
 import com.mobi.rest.util.RestUtils;
+import com.mobi.security.policy.api.Decision;
+import com.mobi.security.policy.api.PDP;
+import com.mobi.security.policy.api.Request;
+import com.mobi.security.policy.api.ontologies.policy.Update;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
@@ -72,6 +78,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.apache.commons.lang3.StringUtils;
+import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
@@ -81,7 +88,10 @@ import org.eclipse.rdf4j.sail.SailException;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.jaxrs.whiteboard.propertytypes.JaxrsResource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -108,6 +118,7 @@ import javax.ws.rs.core.UriInfo;
 @JaxrsResource
 @Path("/merge-requests")
 public class MergeRequestRest {
+    private final Logger log = LoggerFactory.getLogger(MergeRequestRest.class);
     private final ValueFactory vf = new ValidatingValueFactory();
     private static final ObjectMapper mapper = new ObjectMapper();
 
@@ -116,6 +127,7 @@ public class MergeRequestRest {
     private EngineManager engineManager;
     private MergeRequestFactory mergeRequestFactory;
     private CommentFactory commentFactory;
+    private PDP pdp;
 
     @Reference
     void setManager(MergeRequestManager manager) {
@@ -140,6 +152,11 @@ public class MergeRequestRest {
     @Reference
     void setCommentFactory(CommentFactory commentFactory) {
         this.commentFactory = commentFactory;
+    }
+
+    @Reference
+    void setPdp(PDP pdp) {
+        this.pdp = pdp;
     }
 
     /**
@@ -581,13 +598,18 @@ public class MergeRequestRest {
             }
     )
     public Response updateMergeRequest(
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the MergeRequest ID", required = true)
             @PathParam("requestId") String requestId,
             @Parameter(description = "String representing the JSONLD representation of the updated MergeRequest",
                     required = true)
                     String newMergeRequest) {
         Resource requestIdResource = createIRI(requestId, vf);
+        User activeUser = getActiveUser(servletRequest, engineManager);
         try {
+            if (checkMergeRequestModifyPermissions(requestIdResource, activeUser)) {
+                return Response.status(Response.Status.UNAUTHORIZED).build();
+            }
             manager.updateMergeRequest(requestIdResource, jsonToMergeRequest(requestIdResource, newMergeRequest));
             return Response.ok().build();
         } catch (IllegalStateException | MobiException ex) {
@@ -663,10 +685,15 @@ public class MergeRequestRest {
             }
     )
     public Response deleteMergeRequest(
+            @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the MergeRequest ID to delete", required = true)
             @PathParam("requestId") String requestId) {
         Resource requestIdResource = createIRI(requestId, vf);
+        User activeUser = getActiveUser(servletRequest, engineManager);
         try {
+            if (checkMergeRequestModifyPermissions(requestIdResource, activeUser)) {
+                return Response.status(Response.Status.UNAUTHORIZED).build();
+            }
             manager.deleteMergeRequest(requestIdResource);
             return Response.ok().build();
         } catch (IllegalArgumentException ex) {
@@ -675,6 +702,43 @@ public class MergeRequestRest {
         } catch (IllegalStateException | MobiException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    /**
+     * Checks Modify Permission for MergeRequests
+     *
+     * @param requestId MergeRequest IRI
+     * @param activeUser Request User
+     * @return
+     *  True if user is creator or has manage permission of associated RDF record,
+     *  False if user is not a creator or has manage permission of associated RDF record
+     */
+    protected boolean checkMergeRequestModifyPermissions(Resource requestId, User activeUser) {
+        MergeRequest mergeRequest = manager.getMergeRequest(requestId).orElseThrow(() ->
+                ErrorUtils.sendError("Merge Request " + requestId + " could not be found",
+                        Response.Status.NOT_FOUND));
+        boolean accessDenied = true;
+
+        Optional<org.eclipse.rdf4j.model.Value> creator = mergeRequest.getProperty(vf.createIRI(_Thing.creator_IRI));
+        if (creator.isPresent() && creator.get().stringValue().equals(activeUser.getResource().stringValue())) {
+            accessDenied = false;
+        }
+        // If user is not the creator then check to see if user has manage permission
+        Optional<Resource> onRecord = mergeRequest.getOnRecord_resource();
+        if (accessDenied && onRecord.isPresent()) {
+            Request request = pdp.createRequest(asList((IRI) activeUser.getResource()), new HashMap<>(),
+                    asList((IRI)onRecord.get()), new HashMap<>(),
+                    asList(vf.createIRI(Update.TYPE)), new HashMap<>());
+            log.debug(request.toString());
+            com.mobi.security.policy.api.Response response = pdp.evaluate(request,
+                    vf.createIRI(POLICY_PERMIT_OVERRIDES));
+            log.debug(response.toString());
+
+            if (response.getDecision().equals(Decision.PERMIT)) {
+                accessDenied = false;
+            }
+        }
+        return accessDenied;
     }
 
     /**

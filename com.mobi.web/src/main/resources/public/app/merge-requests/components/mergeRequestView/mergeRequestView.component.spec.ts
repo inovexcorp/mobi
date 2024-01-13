@@ -58,6 +58,7 @@ import { CatalogManagerService } from '../../../shared/services/catalogManager.s
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { RecordIconComponent } from '../../../shared/components/recordIcon/recordIcon.component';
 import { MergeRequest } from '../../../shared/models/mergeRequest.interface';
+import { XACMLRequest } from '../../../shared/models/XACMLRequest.interface';
 import { MergeRequestViewComponent } from './mergeRequestView.component';
 
 describe('Merge Request View component', function() {
@@ -78,12 +79,43 @@ describe('Merge Request View component', function() {
     const error = 'Error Message';
     const requestId = 'requestId';
     const recordId = 'recordId';
-    const branchId = 'branchId';
-    const jsonld = {
-      '@id': requestId,
-      [`${MERGEREQ}`]: [{ '@id': branchId }]
-    };
+    const sourceBranchId = 'sourceBranchId';
+    const targetBranchId = 'targetBranchId';
     const userIri = 'urn:test';
+    const creatorIri = 'urn:creator';
+    const mergeRequestJsonLd: JSONLDObject = {
+      '@id': requestId,
+      '@type': [
+        'http://www.w3.org/2002/07/owl#Thing',
+        'http://mobi.com/ontologies/merge-requests#MergeRequest'
+      ],
+      [`${MERGEREQ}onRecord`]: [{'@id': 'https://mobi.com/records#bc470b85-ecb4-4428-9dc4-1e64ff2863d6'}],
+      [`${MERGEREQ}assignee`]: [{"@id": "http://mobi.com/users/12dea96fec20593566ab75692c9949596833adc9"}],
+      [`${MERGEREQ}removeSource`]: [
+          {
+              '@type': 'http://www.w3.org/2001/XMLSchema#boolean',
+              '@value': 'false'
+          }
+      ],
+      [`${MERGEREQ}sourceBranch`]: [{'@id': sourceBranchId}],
+      [`${MERGEREQ}targetBranch`]: [{'@id': targetBranchId}],
+      [`${DCTERMS}creator`]: [{'@id': creatorIri}],
+      [`${DCTERMS}description`]: [{'@value': ''}],
+      [`${DCTERMS}issued`]: [
+          {
+              '@type': 'http://www.w3.org/2001/XMLSchema#dateTime',
+              '@value': '2023-12-18T15:39:50.706952-05:00'
+          }
+      ],
+      [`${DCTERMS}modified`]: [
+          {
+              '@type': 'http://www.w3.org/2001/XMLSchema#dateTime',
+              '@value': '2023-12-18T15:39:50.706952-05:00'
+          }
+      ],
+      [`${DCTERMS}title`]: [{'@value': 'a'}]
+      
+    };
     const user: User = new User({
       '@id': userIri,
       '@type': [`${USER}User`],
@@ -98,7 +130,7 @@ describe('Merge Request View component', function() {
 
     const conflict: Conflict = {iri: 'iri', left: new Difference(), right: new Difference()};
     const catalogId = 'catalog';
-    const branch = {
+    const branch: JSONLDObject = {
         '@id': 'branch123',
         [`${CATALOG}head`]: [{'@id': 'commit123'}],
         [`${DCTERMS}title`]: [{'@value': 'MASTER'}]
@@ -154,26 +186,26 @@ describe('Merge Request View component', function() {
         catalogManagerStub.localCatalog = {'@id': catalogId, '@type': []};
         catalogManagerStub.getRecordBranches.and.returnValue(of(new HttpResponse<JSONLDObject[]>({body: [{'@id': catalogId, data: branches}]})));
         catalogManagerStub.getRecordVersions.and.returnValue(of(new HttpResponse<JSONLDObject[]>({body: [{'@id': 'urn:tag'}]})));
-        mergeRequestManagerStub.getRequest.and.returnValue(of(jsonld));
+        mergeRequestManagerStub.getRequest.and.returnValue(of(mergeRequestJsonLd));
         mergeRequestsStateStub.setRequestDetails.and.returnValue(of(null));
         mergeRequestsStateStub.selected = {
             title: 'title',
             date: '',
             creator: '',
             recordIri: recordId,
-            sourceBranch: {'@id': branchId},
-            targetBranch: {'@id': branchId},
+            sourceBranch: {'@id': sourceBranchId},
+            targetBranch: {'@id': targetBranchId},
             removeSource: true,
             assignees: [],
-            jsonld
+            jsonld: mergeRequestJsonLd
         };
         mergeRequest = cloneDeep(mergeRequestsStateStub.selected);
         loginManagerStub.currentUserIRI = userIri;
         userManagerStub.users = [user];
+        userManagerStub.isAdminUser.and.returnValue(false);
         policyEnforcementStub.evaluateRequest.and.returnValue(of('Permit'));
         policyEnforcementStub.deny = 'Deny';
         policyEnforcementStub.permit = 'Permit';
-        userManagerStub.isAdminUser.and.returnValue(false);
     });
 
     afterEach(function() {
@@ -193,11 +225,9 @@ describe('Merge Request View component', function() {
 
     describe('should initialize correctly if getRequest', function() {
         beforeEach(function() {
-            mergeRequestsStateStub.selected.jsonld = {
-              '@id': requestId,
-              '@type': [],
-              [`${MERGEREQ}`]: [{ '@id': branchId }]
-            };
+            policyEnforcementStub.evaluateRequest.and.returnValue(of('Permit'));
+            userManagerStub.isAdminUser.and.returnValue(false);
+            mergeRequestsStateStub.selected.jsonld = cloneDeep(mergeRequestJsonLd);
             mergeRequestManagerStub.isAccepted.and.returnValue(true);
         });
         it('resolves', fakeAsync(function() {
@@ -205,27 +235,79 @@ describe('Merge Request View component', function() {
             fixture.detectChanges();
             component.ngOnInit();
             tick();
-            expect(mergeRequestManagerStub.getRequest).toHaveBeenCalledWith(requestId);
-            expect(mergeRequestsStateStub.selected.jsonld).toEqual(jsonld);
-            expect(mergeRequestManagerStub.isAccepted).toHaveBeenCalledWith(jsonld);
             expect(component.isAccepted).toBeTrue();
             expect(component.isSubmitDisabled).toBeFalsy();
+            expect(component.isDeleteDisabled).toBeFalsy();
+            expect(component.isEditDisabled).toBeFalsy();
+            expect(mergeRequestManagerStub.getRequest).toHaveBeenCalledWith(requestId);
+            expect(mergeRequestsStateStub.selected.jsonld).toEqual(mergeRequestJsonLd);
+            expect(mergeRequestManagerStub.isAccepted).toHaveBeenCalledWith(mergeRequestJsonLd);
+            expect(mergeRequestsStateStub.setRequestDetails).toHaveBeenCalledWith(mergeRequestsStateStub.selected);
+            expect(toastStub.createWarningToast).not.toHaveBeenCalled();
+            expect(mergeRequestsStateStub.selected).toBeDefined();
+        }));
+        it('resolves permission denied', fakeAsync(function() {
+            policyEnforcementStub.evaluateRequest.and.callFake((jsonRequest: XACMLRequest) => {
+                const resourceId = jsonRequest.resourceId;
+                if (resourceId === recordId && jsonRequest.actionId === `${CATALOG}Modify`) {
+                    return of('Permit');
+                }
+                return of('Deny');
+            });
+            mergeRequestsStateStub.selected.assignees = assignees;
+            fixture.detectChanges();
+            component.ngOnInit();
+            tick();
+            expect(component.isAccepted).toBeTrue();
+            expect(component.isSubmitDisabled).toBeFalsy();
+            expect(component.isDeleteDisabled).toBeTrue();
+            expect(component.isEditDisabled).toBeTrue();
+            expect(mergeRequestManagerStub.getRequest).toHaveBeenCalledWith(requestId);
+            expect(mergeRequestsStateStub.selected.jsonld).toEqual(mergeRequestJsonLd);
+            expect(mergeRequestManagerStub.isAccepted).toHaveBeenCalledWith(mergeRequestJsonLd);
+            expect(mergeRequestsStateStub.setRequestDetails).toHaveBeenCalledWith(mergeRequestsStateStub.selected);
+            expect(toastStub.createWarningToast).not.toHaveBeenCalled();
+            expect(mergeRequestsStateStub.selected).toBeDefined();
+        }));
+        it('resolves same user permissions', fakeAsync(function() {
+            userManagerStub.isAdminUser.and.returnValue(true);
+            loginManagerStub.currentUserIRI = 'http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997';
+            policyEnforcementStub.evaluateRequest.and.callFake((jsonRequest: XACMLRequest) => {
+                const resourceId = jsonRequest.resourceId;
+                if (resourceId === recordId) {
+                    return of('Permit');
+                }
+                return of('Permit');
+            });
+            mergeRequestsStateStub.selected.assignees = assignees;
+            fixture.detectChanges();
+            component.ngOnInit();
+            tick();
+            expect(component.isAccepted).toBeTrue();
+            expect(component.isSubmitDisabled).toBeFalsy();
+            expect(component.isDeleteDisabled).toBeFalsy();
+            expect(component.isEditDisabled).toBeFalsy();
+            expect(mergeRequestManagerStub.getRequest).toHaveBeenCalledWith(requestId);
+            expect(mergeRequestsStateStub.selected.jsonld).toEqual(mergeRequestJsonLd);
+            expect(mergeRequestManagerStub.isAccepted).toHaveBeenCalledWith(mergeRequestJsonLd);
             expect(mergeRequestsStateStub.setRequestDetails).toHaveBeenCalledWith(mergeRequestsStateStub.selected);
             expect(toastStub.createWarningToast).not.toHaveBeenCalled();
             expect(mergeRequestsStateStub.selected).toBeDefined();
         }));
         it('rejects', fakeAsync(function() {
-            spyOn(component, 'back');
+            spyOn(component, 'back').and.callThrough();
             mergeRequestManagerStub.getRequest.and.returnValue(throwError(error));
             component.ngOnInit();
             tick();
             expect(mergeRequestManagerStub.getRequest).toHaveBeenCalledWith(requestId);
             expect(mergeRequestManagerStub.isAccepted).not.toHaveBeenCalled();
             expect(component.isAccepted).toBeFalse();
-            expect(mergeRequestsStateStub.selected.jsonld).not.toEqual(jsonld);
+            expect(component.isSubmitDisabled).toBeTrue();
+            expect(component.isDeleteDisabled).toBeTrue();
             expect(mergeRequestsStateStub.setRequestDetails).not.toHaveBeenCalled();
             expect(toastStub.createWarningToast).toHaveBeenCalledWith(jasmine.any(String));
             expect(component.back).toHaveBeenCalledWith();
+            expect(mergeRequestsStateStub.selected).toEqual(undefined);
         }));
     });
     it('should clean up on destroy', function() {
@@ -275,9 +357,9 @@ describe('Merge Request View component', function() {
                                     expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
                                     expect(component.isAccepted).toBeTrue();
                                     expect(mergeRequestManagerStub.getRequest).toHaveBeenCalledWith(requestId);
-                                    expect(mergeRequestsStateStub.selected.jsonld).toEqual(jsonld);
+                                    expect(mergeRequestsStateStub.selected.jsonld).toEqual(mergeRequestJsonLd);
                                     expect(mergeRequestsStateStub.setRequestDetails).toHaveBeenCalledWith(mergeRequestsStateStub.selected);
-                                    expect(catalogManagerStub.deleteRecordBranch).toHaveBeenCalledWith(recordId, branchId, catalogId);
+                                    expect(catalogManagerStub.deleteRecordBranch).toHaveBeenCalledWith(recordId, sourceBranchId, catalogId);
                                     expect(toastStub.createWarningToast).not.toHaveBeenCalled();
                                     expect(toastStub.createErrorToast).not.toHaveBeenCalled();
                                 }));
@@ -285,7 +367,7 @@ describe('Merge Request View component', function() {
                                     beforeEach(function() {
                                         ontologyStateStub.listItem = new OntologyListItem();
                                         ontologyStateStub.listItem.versionedRdfRecord.recordId = recordId;
-                                        ontologyStateStub.listItem.versionedRdfRecord.branchId = branchId;
+                                        ontologyStateStub.listItem.versionedRdfRecord.branchId = targetBranchId;
                                         ontologyStateStub.listItem.upToDate = true;
                                         ontologyStateStub.list = [ontologyStateStub.listItem];
                                     });
@@ -296,9 +378,9 @@ describe('Merge Request View component', function() {
                                         expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
                                         expect(component.isAccepted).toBeTrue();
                                         expect(mergeRequestManagerStub.getRequest).toHaveBeenCalledWith(requestId);
-                                        expect(mergeRequestsStateStub.selected.jsonld).toEqual(jsonld);
+                                        expect(mergeRequestsStateStub.selected.jsonld).toEqual(mergeRequestJsonLd);
                                         expect(mergeRequestsStateStub.setRequestDetails).toHaveBeenCalledWith(mergeRequestsStateStub.selected);
-                                        expect(catalogManagerStub.deleteRecordBranch).toHaveBeenCalledWith(recordId, branchId, catalogId);
+                                        expect(catalogManagerStub.deleteRecordBranch).toHaveBeenCalledWith(recordId, sourceBranchId, catalogId);
                                         expect(ontologyStateStub.listItem.upToDate).toBeFalse();
                                         expect(toastStub.createWarningToast).not.toHaveBeenCalled();
                                         expect(toastStub.createErrorToast).not.toHaveBeenCalled();
@@ -311,9 +393,9 @@ describe('Merge Request View component', function() {
                                         expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
                                         expect(component.isAccepted).toBeTrue();
                                         expect(mergeRequestManagerStub.getRequest).toHaveBeenCalledWith(requestId);
-                                        expect(mergeRequestsStateStub.selected.jsonld).toEqual(jsonld);
+                                        expect(mergeRequestsStateStub.selected.jsonld).toEqual(mergeRequestJsonLd);
                                         expect(mergeRequestsStateStub.setRequestDetails).toHaveBeenCalledWith(mergeRequestsStateStub.selected);
-                                        expect(catalogManagerStub.deleteRecordBranch).toHaveBeenCalledWith(recordId, branchId, catalogId);
+                                        expect(catalogManagerStub.deleteRecordBranch).toHaveBeenCalledWith(recordId, sourceBranchId, catalogId);
                                         expect(ontologyStateStub.listItem.upToDate).toBeFalse();
                                         expect(toastStub.createWarningToast).toHaveBeenCalledWith(jasmine.any(String), {timeOut: 5000});
                                         expect(toastStub.createErrorToast).not.toHaveBeenCalled();
@@ -323,7 +405,7 @@ describe('Merge Request View component', function() {
                                     ontologyStateStub.listItem = new OntologyListItem();
                                     ontologyStateStub.listItem.versionedRdfRecord.recordId = recordId;
                                     ontologyStateStub.listItem.merge.active = true;
-                                    ontologyStateStub.listItem.merge.target = {'@id': branchId};
+                                    ontologyStateStub.listItem.merge.target = {'@id': targetBranchId};
                                     ontologyStateStub.listItem.upToDate = true;
                                     ontologyStateStub.list = [ontologyStateStub.listItem];
                                     component.acceptRequest();
@@ -332,9 +414,9 @@ describe('Merge Request View component', function() {
                                     expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
                                     expect(component.isAccepted).toBeTrue();
                                     expect(mergeRequestManagerStub.getRequest).toHaveBeenCalledWith(requestId);
-                                    expect(mergeRequestsStateStub.selected.jsonld).toEqual(jsonld);
+                                    expect(mergeRequestsStateStub.selected.jsonld).toEqual(mergeRequestJsonLd);
                                     expect(mergeRequestsStateStub.setRequestDetails).toHaveBeenCalledWith(mergeRequestsStateStub.selected);
-                                    expect(catalogManagerStub.deleteRecordBranch).toHaveBeenCalledWith(recordId, branchId, catalogId);
+                                    expect(catalogManagerStub.deleteRecordBranch).toHaveBeenCalledWith(recordId, sourceBranchId, catalogId);
                                     expect(ontologyStateStub.listItem.upToDate).toBeTrue();
                                     expect(toastStub.createWarningToast).toHaveBeenCalledWith(jasmine.any(String), {timeOut: 5000});
                                     expect(toastStub.createErrorToast).not.toHaveBeenCalled();
@@ -348,9 +430,9 @@ describe('Merge Request View component', function() {
                                 expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
                                 expect(component.isAccepted).toBeTrue();
                                 expect(mergeRequestManagerStub.getRequest).toHaveBeenCalledWith(requestId);
-                                expect(mergeRequestsStateStub.selected.jsonld).not.toEqual(jsonld);
+                                expect(mergeRequestsStateStub.selected.jsonld).not.toEqual(mergeRequestJsonLd);
                                 expect(mergeRequestsStateStub.setRequestDetails).toHaveBeenCalledWith(this.updatedRequest);
-                                expect(catalogManagerStub.deleteRecordBranch).toHaveBeenCalledWith(recordId, branchId, catalogId);
+                                expect(catalogManagerStub.deleteRecordBranch).toHaveBeenCalledWith(recordId, sourceBranchId, catalogId);
                                 expect(toastStub.createWarningToast).not.toHaveBeenCalled();
                                 expect(toastStub.createErrorToast).toHaveBeenCalledWith(error);
                             }));
@@ -368,7 +450,7 @@ describe('Merge Request View component', function() {
                                 expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
                                 expect(component.isAccepted).toBeTrue();
                                 expect(mergeRequestManagerStub.getRequest).toHaveBeenCalledWith(requestId);
-                                expect(mergeRequestsStateStub.selected.jsonld).toEqual(jsonld);
+                                expect(mergeRequestsStateStub.selected.jsonld).toEqual(mergeRequestJsonLd);
                                 expect(mergeRequestsStateStub.setRequestDetails).toHaveBeenCalledWith(mergeRequestsStateStub.selected);
                                 expect(catalogManagerStub.deleteRecordBranch).not.toHaveBeenCalled();
                                 expect(toastStub.createWarningToast).not.toHaveBeenCalled();
@@ -378,7 +460,7 @@ describe('Merge Request View component', function() {
                                 beforeEach(function() {
                                     ontologyStateStub.listItem = new OntologyListItem();
                                     ontologyStateStub.listItem.versionedRdfRecord.recordId = recordId;
-                                    ontologyStateStub.listItem.versionedRdfRecord.branchId = branchId;
+                                    ontologyStateStub.listItem.versionedRdfRecord.branchId = targetBranchId;
                                     ontologyStateStub.listItem.upToDate = true;
                                     ontologyStateStub.list = [ontologyStateStub.listItem];
                                 });
@@ -390,7 +472,7 @@ describe('Merge Request View component', function() {
                                     expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
                                     expect(component.isAccepted).toBeTrue();
                                     expect(mergeRequestManagerStub.getRequest).toHaveBeenCalledWith(requestId);
-                                    expect(mergeRequestsStateStub.selected.jsonld).toEqual(jsonld);
+                                    expect(mergeRequestsStateStub.selected.jsonld).toEqual(mergeRequestJsonLd);
                                     expect(mergeRequestsStateStub.setRequestDetails).toHaveBeenCalledWith(mergeRequestsStateStub.selected);
                                     expect(catalogManagerStub.deleteRecordBranch).not.toHaveBeenCalled();
                                     expect(ontologyStateStub.listItem.upToDate).toBeFalse();
@@ -406,7 +488,7 @@ describe('Merge Request View component', function() {
                                     expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
                                     expect(component.isAccepted).toBeTrue();
                                     expect(mergeRequestManagerStub.getRequest).toHaveBeenCalledWith(requestId);
-                                    expect(mergeRequestsStateStub.selected.jsonld).toEqual(jsonld);
+                                    expect(mergeRequestsStateStub.selected.jsonld).toEqual(mergeRequestJsonLd);
                                     expect(mergeRequestsStateStub.setRequestDetails).toHaveBeenCalledWith(mergeRequestsStateStub.selected);
                                     expect(catalogManagerStub.deleteRecordBranch).not.toHaveBeenCalled();
                                     expect(ontologyStateStub.listItem.upToDate).toBeFalse();
@@ -418,7 +500,7 @@ describe('Merge Request View component', function() {
                                 ontologyStateStub.listItem = new OntologyListItem();
                                 ontologyStateStub.listItem.versionedRdfRecord.recordId = recordId;
                                 ontologyStateStub.listItem.merge.active = true;
-                                ontologyStateStub.listItem.merge.target = {'@id': branchId};
+                                ontologyStateStub.listItem.merge.target = {'@id': targetBranchId};
                                 ontologyStateStub.listItem.upToDate = true;
                                 ontologyStateStub.list = [ontologyStateStub.listItem];
                                 component.acceptRequest();
@@ -428,7 +510,7 @@ describe('Merge Request View component', function() {
                                 expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
                                 expect(component.isAccepted).toBeTrue();
                                 expect(mergeRequestManagerStub.getRequest).toHaveBeenCalledWith(requestId);
-                                expect(mergeRequestsStateStub.selected.jsonld).toEqual(jsonld);
+                                expect(mergeRequestsStateStub.selected.jsonld).toEqual(mergeRequestJsonLd);
                                 expect(mergeRequestsStateStub.setRequestDetails).toHaveBeenCalledWith(mergeRequestsStateStub.selected);
                                 expect(catalogManagerStub.deleteRecordBranch).not.toHaveBeenCalled();
                                 expect(ontologyStateStub.listItem.upToDate).toBeTrue();
@@ -445,7 +527,7 @@ describe('Merge Request View component', function() {
                         expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
                         expect(component.isAccepted).toBeTrue();
                         expect(mergeRequestManagerStub.getRequest).toHaveBeenCalledWith(requestId);
-                        expect(mergeRequestsStateStub.selected.jsonld).not.toEqual(jsonld);
+                        expect(mergeRequestsStateStub.selected.jsonld).not.toEqual(mergeRequestJsonLd);
                         expect(mergeRequestsStateStub.setRequestDetails).toHaveBeenCalledWith(this.updatedRequest);
                         expect(catalogManagerStub.deleteRecordBranch).not.toHaveBeenCalled();
                         expect(toastStub.createErrorToast).toHaveBeenCalledWith(error);
@@ -458,7 +540,7 @@ describe('Merge Request View component', function() {
                     expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
                     expect(component.isAccepted).toBeTrue();
                     expect(mergeRequestManagerStub.getRequest).toHaveBeenCalledWith(requestId);
-                    expect(mergeRequestsStateStub.selected.jsonld).not.toEqual(jsonld);
+                    expect(mergeRequestsStateStub.selected.jsonld).not.toEqual(mergeRequestJsonLd);
                     expect(mergeRequestsStateStub.setRequestDetails).not.toHaveBeenCalled();
                     expect(toastStub.createErrorToast).toHaveBeenCalledWith(error);
                 }));
@@ -471,7 +553,7 @@ describe('Merge Request View component', function() {
                 expect(component.isAccepted).toBeFalse();
                 expect(mergeRequestManagerStub.getRequest).not.toHaveBeenCalled();
                 expect(mergeRequestsStateStub.setRequestDetails).not.toHaveBeenCalled();
-                expect(mergeRequestsStateStub.selected.jsonld).not.toEqual(jsonld);
+                expect(mergeRequestsStateStub.selected.jsonld).not.toEqual(mergeRequestJsonLd);
                 expect(toastStub.createErrorToast).toHaveBeenCalledWith(error);
             }));
         });
