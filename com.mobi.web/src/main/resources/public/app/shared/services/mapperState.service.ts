@@ -948,7 +948,7 @@ export class MapperStateService {
      */
     retrieveClasses(ontInfo: MappingOntologyInfo, searchText: string, limit = 100, isTracked = false): Observable<MappingClass[]> {
         const query = this.CLASSES_QUERY.replace('%SEARCH%', searchText).replace('%LIMIT%', `${limit}`);
-        return this.om.getQueryResults(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId, query, 'application/json', 
+        return this.om.postQueryResults(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId, query, 'application/json', 
           true, false, isTracked)
             .pipe(map(response => {
                 if (!response) {
@@ -973,7 +973,7 @@ export class MapperStateService {
      */
     retrieveSpecificClasses(ontInfo: MappingOntologyInfo, iris: string[]): Observable<MappingClass[]> {
       const query = this.CLASS_QUERY.replace('%IRI%', iris.map(iri => `<${iri}>`).join(' '));
-      return this.om.getQueryResults(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId, query, 'application/json')
+      return this.om.postQueryResults(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId, query, 'application/json')
           .pipe(map(response => {
               if (!response) {
                 return [];
@@ -1005,7 +1005,7 @@ export class MapperStateService {
             .replace('%CLASS%', classIri)
             .replace('%SEARCH%', searchText)
             .replace('%LIMIT%', `${limit}`);
-        return this.om.getQueryResults(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId, query, 'application/json', 
+        return this.om.postQueryResults(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId, query, 'application/json', 
           true, false, isTracked)
             .pipe(map(response => {
                 if (!response) {
@@ -1036,7 +1036,7 @@ export class MapperStateService {
     retrieveSpecificProps(ontInfo: MappingOntologyInfo, iris: {iri: string, type: string}[]): 
       Observable<MappingProperty[]> {
         const query = this.PROP_QUERY.replace('%IRI%', iris.map(iri => `(<${iri.iri}> <${iri.type}>)`).join(' '));
-        return this.om.getQueryResults(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId, query, 'application/json')
+        return this.om.postQueryResults(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId, query, 'application/json')
             .pipe(map(response => {
                 if (!response) {
                     return [];

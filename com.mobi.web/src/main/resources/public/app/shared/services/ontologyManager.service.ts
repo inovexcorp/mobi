@@ -736,10 +736,11 @@ export class OntologyManagerService {
      * @param {string} format The return format of the query results.
      * @param {boolean} [includeImports=true] Whether to include the imported ontologies data
      * @param {boolean} [applyInProgressCommit=false] Whether to apply the in progress commit changes
+     * @param {boolean} isTracked Whether the request should be tracked by the {@link shared.ProgressSpinnerService}
      * @return {Observable} An Observable containing the SPARQL query results
      */
     postQueryResults(recordId: string, branchId: string, commitId: string, query: string, format: string, 
-      includeImports = true, applyInProgressCommit = false): Observable<JSONLDObject[] | SPARQLSelectResults | string> {
+      includeImports = true, applyInProgressCommit = false, isTracked = false): Observable<JSONLDObject[] | SPARQLSelectResults | string> {
         const params = {
             branchId,
             commitId,
@@ -749,12 +750,12 @@ export class OntologyManagerService {
         let headers = new HttpHeaders();
         headers = headers.append('Accept', this._getMimeType(format));
         headers = headers.append('Content-Type', 'application/sparql-query');
-        return this.spinnerSrv.track(this.http.post(`${this.prefix}/${encodeURIComponent(recordId)}/query`, query, {
+        return this.spinnerSrv.trackedRequest(this.http.post(`${this.prefix}/${encodeURIComponent(recordId)}/query`, query, {
             responseType: 'text',
             observe: 'response',
             headers,
             params: createHttpParams(params)
-        })).pipe(
+        }), isTracked).pipe(
             catchError(handleError),
             map((response: HttpResponse<string>) => {
                 if (response.status === 204) {
