@@ -1158,12 +1158,12 @@ describe('Mapper State service', function() {
     });
     describe('should get the list of classes from the imports closure of a source ontology', function() {
         it('unless an error occurs', async function() {
-            ontologyManagerStub.getQueryResults.and.returnValue(throwError(error));
+            ontologyManagerStub.postQueryResults.and.returnValue(throwError(error));
             await service.retrieveClasses(ontInfo, 'custom search')
                 .subscribe(() => fail('Observable should have failed'), response => {
                     expect(response).toEqual(error);
                 });
-            expect(ontologyManagerStub.getQueryResults).toHaveBeenCalledWith(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId, 
+            expect(ontologyManagerStub.postQueryResults).toHaveBeenCalledWith(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId, 
                 jasmine.stringContaining('custom search'), 'application/json', true, false, false);
         });
         it('successfully', async function() {
@@ -1182,7 +1182,7 @@ describe('Mapper State service', function() {
                   },
                 ] }
             };
-            ontologyManagerStub.getQueryResults.and.returnValue(of(results));
+            ontologyManagerStub.postQueryResults.and.returnValue(of(results));
             await service.retrieveClasses(ontInfo, 'custom search').subscribe(result => {
                 expect(result.length).toEqual(2);
                 expect(result).toContain({
@@ -1198,25 +1198,25 @@ describe('Mapper State service', function() {
                     deprecated: true
                 });
             }, () => fail('Observable should have succeeded'));
-            expect(ontologyManagerStub.getQueryResults).toHaveBeenCalledWith(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId, 
+            expect(ontologyManagerStub.postQueryResults).toHaveBeenCalledWith(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId, 
                 jasmine.stringContaining('custom search'), 'application/json', true, false, false);
         });
     });
     describe('should retrieve specific classes from the imports closure of the selected Mapping', function() {
         it('unless an error occurs', async function() {
-            ontologyManagerStub.getQueryResults.and.returnValue(throwError(error));
+            ontologyManagerStub.postQueryResults.and.returnValue(throwError(error));
             await service.retrieveSpecificClasses(ontInfo, [mappingClass.iri]).subscribe(() => fail('Observable should have failed'), result => {
                 expect(result).toEqual(error);
             });
-            expect(ontologyManagerStub.getQueryResults).toHaveBeenCalledWith(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId, 
+            expect(ontologyManagerStub.postQueryResults).toHaveBeenCalledWith(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId, 
                 jasmine.stringContaining(mappingClass.iri), 'application/json');
         });
         it('unless no classes are found', async function() {
-            ontologyManagerStub.getQueryResults.and.returnValue(of(null));
+            ontologyManagerStub.postQueryResults.and.returnValue(of(null));
             await service.retrieveSpecificClasses(ontInfo, [mappingClass.iri]).subscribe(result => {
                 expect(result).toEqual([]);
             }, () => fail('Observable should have succeeded'));
-            expect(ontologyManagerStub.getQueryResults).toHaveBeenCalledWith(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId, 
+            expect(ontologyManagerStub.postQueryResults).toHaveBeenCalledWith(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId, 
                 jasmine.stringContaining(mappingClass.iri), 'application/json');
         });
         it('successfully with one IRI', async function() {
@@ -1228,11 +1228,11 @@ describe('Mapper State service', function() {
                   description: { value: mappingClass.description, type: 'string' },
               } ] }
             };
-            ontologyManagerStub.getQueryResults.and.returnValue(of(results));
+            ontologyManagerStub.postQueryResults.and.returnValue(of(results));
             await service.retrieveSpecificClasses(ontInfo, [mappingClass.iri]).subscribe(result => {
                 expect(result).toEqual([mappingClass]);
             }, () => fail('Observable should have succeeded'));
-            expect(ontologyManagerStub.getQueryResults).toHaveBeenCalledWith(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId, 
+            expect(ontologyManagerStub.postQueryResults).toHaveBeenCalledWith(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId, 
                 jasmine.stringContaining(mappingClass.iri), 'application/json');
         });
         it('successfully with multiple IRIs', async function() {
@@ -1258,22 +1258,22 @@ describe('Mapper State service', function() {
                   },
               ] }
             };
-            ontologyManagerStub.getQueryResults.and.returnValue(of(results));
+            ontologyManagerStub.postQueryResults.and.returnValue(of(results));
             await service.retrieveSpecificClasses(ontInfo, [mappingClass.iri, otherMappingClass.iri]).subscribe(result => {
                 expect(result).toEqual([mappingClass, otherMappingClass]);
             }, () => fail('Observable should have succeeded'));
-            expect(ontologyManagerStub.getQueryResults).toHaveBeenCalledWith(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId, 
+            expect(ontologyManagerStub.postQueryResults).toHaveBeenCalledWith(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId, 
                 jasmine.stringContaining(`<${mappingClass.iri}> <${otherMappingClass.iri}>`), 'application/json');
         });
     });
     describe('should get the list of properties for a class from the imports closure of a source ontology', function() {
         it('unless an error occurs', async function() {
-            ontologyManagerStub.getQueryResults.and.returnValue(throwError(error));
+            ontologyManagerStub.postQueryResults.and.returnValue(throwError(error));
             await service.retrieveProps(ontInfo, classId, 'custom search')
                 .subscribe(() => fail('Observable should have failed'), response => {
                     expect(response).toEqual(error);
                 });
-            expect(ontologyManagerStub.getQueryResults).toHaveBeenCalledWith(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId, 
+            expect(ontologyManagerStub.postQueryResults).toHaveBeenCalledWith(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId, 
                 jasmine.stringContaining('custom search'), 'application/json', true, false, false);
         });
         it('successfully', async function() {
@@ -1296,7 +1296,7 @@ describe('Mapper State service', function() {
                     },
                 ] }
             };
-            ontologyManagerStub.getQueryResults.and.returnValue(of(results));
+            ontologyManagerStub.postQueryResults.and.returnValue(of(results));
             await service.retrieveProps(ontInfo, classId, 'custom search').subscribe(result => {
                 expect(result.length).toEqual(2);
                 expect(result).toContain({
@@ -1316,25 +1316,25 @@ describe('Mapper State service', function() {
                     ranges: [`${XSD}string`, `${XSD}boolean`]
                 });
             }, () => fail('Observable should have succeeded'));
-            expect(ontologyManagerStub.getQueryResults).toHaveBeenCalledWith(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId, 
+            expect(ontologyManagerStub.postQueryResults).toHaveBeenCalledWith(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId, 
                 jasmine.stringContaining('custom search'), 'application/json', true, false, false);
         });
     });
     describe('should retrieve specific properties from the imports closure of the selected Mapping', function() {
         it('unless an error occurs', async function() {
-            ontologyManagerStub.getQueryResults.and.returnValue(throwError(error));
+            ontologyManagerStub.postQueryResults.and.returnValue(throwError(error));
             await service.retrieveSpecificProps(ontInfo, [{ iri: mappingProperty.iri, type: mappingProperty.type }]).subscribe(() => fail('Observable should have failed'), result => {
                 expect(result).toEqual(error);
             });
-            expect(ontologyManagerStub.getQueryResults).toHaveBeenCalledWith(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId, 
+            expect(ontologyManagerStub.postQueryResults).toHaveBeenCalledWith(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId, 
                 jasmine.stringContaining(mappingProperty.iri), 'application/json');
         });
         it('unless no properties are found', async function() {
-            ontologyManagerStub.getQueryResults.and.returnValue(of(null));
+            ontologyManagerStub.postQueryResults.and.returnValue(of(null));
             await service.retrieveSpecificProps(ontInfo, [{ iri: mappingProperty.iri, type: mappingProperty.type }]).subscribe(result => {
                 expect(result).toEqual([]);
             }, () => fail('Observable should have succeeded'));
-            expect(ontologyManagerStub.getQueryResults).toHaveBeenCalledWith(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId, 
+            expect(ontologyManagerStub.postQueryResults).toHaveBeenCalledWith(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId, 
                 jasmine.stringContaining(mappingProperty.iri), 'application/json');
         });
         it('successfully with one IRI', async function() {
@@ -1347,11 +1347,11 @@ describe('Mapper State service', function() {
                   ranges: { value: '', type: 'string' },
               } ] }
             };
-            ontologyManagerStub.getQueryResults.and.returnValue(of(results));
+            ontologyManagerStub.postQueryResults.and.returnValue(of(results));
             await service.retrieveSpecificProps(ontInfo, [{ iri: mappingProperty.iri, type: mappingProperty.type }]).subscribe(result => {
                 expect(result).toEqual([mappingProperty]);
             }, () => fail('Observable should have succeeded'));
-            expect(ontologyManagerStub.getQueryResults).toHaveBeenCalledWith(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId, 
+            expect(ontologyManagerStub.postQueryResults).toHaveBeenCalledWith(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId, 
                 jasmine.stringContaining(mappingProperty.iri), 'application/json');
         });
         it('successfully with multiple IRIs', async function() {
@@ -1382,11 +1382,11 @@ describe('Mapper State service', function() {
                   },
               ] }
             };
-            ontologyManagerStub.getQueryResults.and.returnValue(of(results));
+            ontologyManagerStub.postQueryResults.and.returnValue(of(results));
             await service.retrieveSpecificProps(ontInfo, [{ iri: mappingProperty.iri, type: mappingProperty.type }, { iri: otherMappingProperty.iri, type: otherMappingProperty.type}]).subscribe(result => {
                 expect(result).toEqual([mappingProperty, otherMappingProperty]);
             }, () => fail('Observable should have succeeded'));
-            expect(ontologyManagerStub.getQueryResults).toHaveBeenCalledWith(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId, 
+            expect(ontologyManagerStub.postQueryResults).toHaveBeenCalledWith(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId, 
                 jasmine.stringContaining(`(<${mappingProperty.iri}> <${mappingProperty.type}>) (<${otherMappingProperty.iri}> <${otherMappingProperty.type}>)`), 'application/json');
         });
     });
