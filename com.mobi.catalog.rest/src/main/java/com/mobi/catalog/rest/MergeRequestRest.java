@@ -897,7 +897,9 @@ public class MergeRequestRest {
     /**
      * Updates an existing {@link Comment} that has the {@code commentId} with the provided String of
      * {@code newCommentStr}.
-     *
+     * @param servletRequest The HttpServletRequest.
+     * @param requestId String representing the {@link MergeRequest} ID. NOTE: Assumes ID represents an IRI unless
+     *                  String begins with "_:".
      * @param commentId String representing the {@link Comment} ID. NOTE: Assumes ID represents an IRI unless
      *                  String begins with "_:".
      * @param newCommentStr String representing the new description of the updated {@link Comment}.
@@ -918,15 +920,29 @@ public class MergeRequestRest {
             }
     )
     public Response updateComment(
+            @Context HttpServletRequest servletRequest,
+            @Parameter(description = "String representing the MergeRequest ID", required = true)
+            @PathParam("requestId") String requestId,
             @Parameter(description = "String representing the Comment ID", required = true)
             @PathParam("commentId") String commentId,
             @Parameter(description = "String representing the new description of the updated Comment", required = true)
                     String newCommentStr) {
+        manager.getMergeRequest(createIRI(requestId, vf)).orElseThrow(() ->
+                ErrorUtils.sendError("MergeRequest " + requestId + " could not be found",
+                        Response.Status.NOT_FOUND));
+
         Resource commentIdResource = createIRI(commentId, vf);
         Comment comment = manager.getComment(commentIdResource).orElseThrow(() ->
                 ErrorUtils.sendError("Comment " + commentId + " could not be found",
                         Response.Status.BAD_REQUEST));
         checkStringParam(newCommentStr, "Comment string is required");
+
+        User activeUser = getActiveUser(servletRequest, engineManager);
+        Optional<org.eclipse.rdf4j.model.Value> creator = comment.getProperty(vf.createIRI(_Thing.creator_IRI));
+        if (creator.isPresent() && !(creator.get().stringValue().equals(activeUser.getResource().stringValue()))) {
+            return Response.status(Response.Status.UNAUTHORIZED).build();
+        }
+
         comment.setProperty(vf.createLiteral(newCommentStr), vf.createIRI(_Thing.description_IRI));
         try {
             manager.updateComment(commentIdResource, comment);

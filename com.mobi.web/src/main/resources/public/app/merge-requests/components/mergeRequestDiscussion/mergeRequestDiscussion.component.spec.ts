@@ -37,6 +37,7 @@ import { ToastService } from '../../../shared/services/toast.service';
 import { CommentDisplayComponent } from '../commentDisplay/commentDisplay.component';
 import { ReplyCommentComponent } from '../replyComment/replyComment.component';
 import { MergeRequestDiscussionComponent } from './mergeRequestDiscussion.component';
+import { cloneDeep } from 'lodash';
 
 describe('Merge Request Discussion component', function() {
     let component: MergeRequestDiscussionComponent;
@@ -55,8 +56,14 @@ describe('Merge Request Discussion component', function() {
     };
     const newComment = 'WOW';
 
-    beforeEach(async () => {
-        await TestBed.configureTestingModule({
+    const commentObject= {
+        commentId: 'https://www.example.com/comment#1',
+        mergeRequestId: 'https://www.example.com',
+        newComment: ''
+    };
+
+    beforeEach(() => {
+        TestBed.configureTestingModule({
             imports: [],
             declarations: [
                 MergeRequestDiscussionComponent,
@@ -92,7 +99,7 @@ describe('Merge Request Discussion component', function() {
         describe('should comment on the request', function() {
             beforeEach(function() {
                 component.newComment = newComment;
-                component.request = Object.assign({}, request);
+                component.request = cloneDeep(request);
             });
             describe('if createComment resolves', function() {
                 beforeEach(function() {
@@ -135,7 +142,7 @@ describe('Merge Request Discussion component', function() {
         });
         describe('should delete the comment', function() {
             beforeEach(function() {
-                component.request = Object.assign({}, request);
+                component.request = cloneDeep(request);
                 spyOn(component.requestChange, 'emit');
             });
             describe('if deleteComment resolves', function() {
@@ -173,6 +180,49 @@ describe('Merge Request Discussion component', function() {
                 expect(toastStub.createErrorToast).toHaveBeenCalledWith('Error message');
             }));
         });
+        describe('should update a comment on the request', function() {
+            beforeEach(function() {
+                component.request = cloneDeep(request);
+            });
+            describe('if updateComment resolves', function() {
+                beforeEach(function() {
+                    mergeRequestManagerStub.updateComment.and.returnValue(of(null));
+                    spyOn(component.requestChange, 'emit');
+                });
+                it('and getComments resolves', fakeAsync(function() {
+                    const comments: JSONLDObject[][] = [[{'@id': 'comment'}]];
+                    mergeRequestManagerStub.getComments.and.returnValue(of(comments));
+                    component.editComment(commentObject);
+                    tick();
+                    expect(mergeRequestManagerStub.updateComment).toHaveBeenCalledWith('https://www.example.com', 'https://www.example.com/comment#1', '');
+                    expect(component.newComment).toEqual('');
+                    expect(mergeRequestManagerStub.getComments).toHaveBeenCalledWith(request.jsonld['@id']);
+                    expect(component.request.comments).toEqual(comments);
+                    expect(component.requestChange.emit).toHaveBeenCalledWith(component.request);
+                    expect(toastStub.createErrorToast).not.toHaveBeenCalled();
+                }));
+                it('unless getComments rejects', fakeAsync(function() {
+                    mergeRequestManagerStub.getComments.and.returnValue(throwError('Error message'));
+                    component.editComment(commentObject);
+                    tick();
+                    expect(mergeRequestManagerStub.updateComment).toHaveBeenCalledWith('https://www.example.com', 'https://www.example.com/comment#1', '');
+                    expect(component.newComment).toEqual('');
+                    expect(mergeRequestManagerStub.getComments).toHaveBeenCalledWith(request.jsonld['@id']);
+                    expect(component.request.comments).toBeUndefined();
+                    expect(toastStub.createErrorToast).toHaveBeenCalledWith('Error message');
+                }));
+            });
+            it('unless updateComment rejects', fakeAsync(function() {
+                mergeRequestManagerStub.updateComment.and.returnValue(throwError('Error message'));
+                component.editComment(commentObject);
+                tick();
+                expect(mergeRequestManagerStub.updateComment).toHaveBeenCalledWith('https://www.example.com', 'https://www.example.com/comment#1', '');
+                expect(component.newComment).toEqual('');
+                expect(mergeRequestManagerStub.getComments).not.toHaveBeenCalled();
+                expect(component.request.comments).toBeUndefined();
+                expect(toastStub.createErrorToast).toHaveBeenCalledWith('Error message');
+            }));
+        });
     });
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
@@ -182,7 +232,7 @@ describe('Merge Request Discussion component', function() {
             expect(element.queryAll(By.css('.comment-chain')).length).toEqual(0);
             expect(element.queryAll(By.css('comment-display')).length).toEqual(0);
 
-            component.request = Object.assign({}, request);
+            component.request = cloneDeep(request);
             component.request.comments = [[{'@id': '0'}, {'@id': '1'}], [{'@id': '2'}]];
             fixture.detectChanges();
             expect(element.queryAll(By.css('.comment-chain')).length).toEqual(2);
@@ -190,7 +240,7 @@ describe('Merge Request Discussion component', function() {
         });
         it('if the request is accepted', function() {
             component.isAccepted = false;
-            component.request = Object.assign({}, request);
+            component.request = cloneDeep(request);
             component.request.comments = [[{'@id': '0'}, {'@id': '1'}], [{'@id': '2'}]];
             fixture.detectChanges();
             expect(element.queryAll(By.css('.new-comment')).length).toEqual(1);

@@ -35,7 +35,6 @@
 
             button:hover {
                 text-decoration: none;
-                color: inherit;
             }
         }
         &:hover {
@@ -50,4 +49,8 @@
 
 .comment-display.reply {
     margin-left: 3rem !important;
+}
+
+markdown-editor {
+    width: 100%;
 }
