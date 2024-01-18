@@ -260,8 +260,7 @@ export class MergeRequestManagerService {
      */
     updateComment(requestId: string, commentId: string, commentStr: string): Observable<void> {
         return this.spinnerSvc.track(this.http.put(`${this.prefix}/${encodeURIComponent(requestId)}/comments/${encodeURIComponent(commentId)}`, 
-          commentStr))
-           .pipe(catchError(handleError), map(() => {}));
+          commentStr)).pipe(catchError(handleError), map(() => {}));
     }
     /**
      * Calls the PUT /mobirest/merge-requests/{requestId} endpoint to update a Merge Request

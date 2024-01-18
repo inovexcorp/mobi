@@ -15,19 +15,36 @@
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
-  
+
   You should have received a copy of the GNU Affero General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
 <div class="comment-display" [ngClass]="{'reply': isReply}">
     <p class="comment-title mb-1 pb-1 border-bottom">
-        <strong class="text-truncate" title="Username: {{creatorUsername}}">{{creator}}</strong> <span class="text-muted"> {{isReply ? 'replied' : 'commented'}} on {{issued | date:'short'}}</span>
+        <strong class="text-truncate" title="Username: {{creatorUsername}}">{{creator}}</strong>
+        <span class="text-muted"> {{isReply ? 'replied' : 'commented'}} on {{issued | date:'short'}}</span>
+        <span class="text-muted" *ngIf="edited"> (edited on {{modified | date:'short'}})</span>
     </p>
     <div class="comment-body d-flex p-1">
-        <showdown class="markdown comment-body-text flex-1 remove-min-width break-word" [value]="commentText" sanitize></showdown>
-        <div class="button-container">
-            <button *ngIf="isCreator && !accepted" mat-icon-button color="primary" (click)="confirmDelete()" title="Delete"><i class="fa fa-times fa-fw"></i></button>
-        </div>
+        <markdown-editor *ngIf="edit; else notEditing"
+                         [(markdown)]="updatedComment"
+                         [allowBlank]="false"
+                         (saveEvent)="save()"
+                         [cancellable]="true"
+                         (cancelEvent)="cancel($event)"
+                         [height]="200">
+        </markdown-editor>
+        <ng-template #notEditing>
+            <showdown *ngIf="!edit" class="markdown comment-body-text flex-1 remove-min-width break-word"
+                      [value]="commentText" sanitize>
+            </showdown>
+            <div class="button-container">
+                <button *ngIf="isCreator" mat-icon-button color="primary" (click)="editComment()"
+                        [disabled]="editInProgress" [title]="tooltip"><i class="fa fa-pencil fa-fw"></i></button>
+                <button *ngIf="isCreator && !accepted" mat-icon-button color="primary" (click)="confirmDelete()" title="Delete"><i class="fa fa-times fa-fw"></i></button>
+            </div>
+        </ng-template>
+
     </div>
 </div>

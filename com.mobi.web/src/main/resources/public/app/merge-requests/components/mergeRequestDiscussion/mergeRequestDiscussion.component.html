@@ -26,7 +26,9 @@
                          [(comment)]="chain[commentIndex]"
                          [isReply]="commentIndex > 0"
                          [accepted]="isAccepted"
-                         (delete)="deleteComment($event)">
+                         [(editInProgress)]="editInProgress"
+                         (delete)="deleteComment($event)"
+                         (saveEdit)="editComment($event)">
         </comment-display>
         <reply-comment *ngIf="!isAccepted"
                        [ngClass]="{'reply': chain.length > 1}"

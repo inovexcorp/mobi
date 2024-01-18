@@ -90,7 +90,7 @@ describe('Merge Request View component', function() {
         'http://mobi.com/ontologies/merge-requests#MergeRequest'
       ],
       [`${MERGEREQ}onRecord`]: [{'@id': 'https://mobi.com/records#bc470b85-ecb4-4428-9dc4-1e64ff2863d6'}],
-      [`${MERGEREQ}assignee`]: [{"@id": "http://mobi.com/users/12dea96fec20593566ab75692c9949596833adc9"}],
+      [`${MERGEREQ}assignee`]: [{'@id': 'http://mobi.com/users/12dea96fec20593566ab75692c9949596833adc9'}],
       [`${MERGEREQ}removeSource`]: [
           {
               '@type': 'http://www.w3.org/2001/XMLSchema#boolean',
@@ -116,6 +116,7 @@ describe('Merge Request View component', function() {
       [`${DCTERMS}title`]: [{'@value': 'a'}]
       
     };
+
     const user: User = new User({
       '@id': userIri,
       '@type': [`${USER}User`],
