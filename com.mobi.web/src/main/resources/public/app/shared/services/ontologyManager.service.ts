@@ -68,6 +68,7 @@ import {
     handleErrorObject, 
     isBlankNode
 } from '../utility';
+import { OBJ_PROPERTY_VALUES_QUERY } from '../../queries';
 
 /**
  * @class shared.OntologyManagerService
@@ -1508,6 +1509,30 @@ export class OntologyManagerService {
                 }
             };
         }));
+    }
+
+    /**
+     * Retrieves the possible values of a specified object property for a given record, branch, and property IRI.
+     *
+     * @param {string} recordId - The IRI of the record.
+     * @param {string} branchId - The IRI of the branch.
+     * @param {string} propertyIri - The IRI of the object property.
+     * @param {boolean} isTracked - Indicates whether to track the request using a spinner service.
+     *
+     * @returns {Observable<JSONLDObject>} - An observable emitting the JSONLDObject containing the values of the object property.
+     */
+    getObjectPropertyValues(recordId: string, branchId: string, propertyIri: string,
+                            isTracked = false): Observable<SPARQLSelectResults> {
+        const url = `${this.prefix}/${encodeURIComponent(recordId)}/query`;
+        const valuesQuery = OBJ_PROPERTY_VALUES_QUERY.replace('%PROPIRI%', propertyIri);
+        const params = createHttpParams({
+            applyInProgressCommit: true,
+            branchId: branchId,
+            query: valuesQuery
+        });
+
+        const request = this.http.get<SPARQLSelectResults>(url, {params});
+        return this.spinnerSrv.trackedRequest(request, isTracked).pipe(catchError(handleError));
     }
 
     private _getFileTitleInfo(title) {

@@ -40,6 +40,7 @@ import { RESTError } from '../models/RESTError.interface';
 import { OntologyDocument } from '../models/ontologyDocument.interface';
 import { SPARQLSelectResults } from '../models/sparqlSelectResults.interface';
 import { OntologyManagerService } from './ontologyManager.service';
+import { OBJ_PROPERTY_VALUES_QUERY } from '../../queries';
 
 describe('Ontology Manager service', function() {
     let service: OntologyManagerService;
@@ -211,10 +212,11 @@ describe('Ontology Manager service', function() {
             'urn:hasTopping': ['urn:PizzaTopping']
         }
     };
+    const objQuery = OBJ_PROPERTY_VALUES_QUERY.replace('%PROPIRI%', objectPropertyId);
 
-    beforeEach(async () => {
-        await TestBed.configureTestingModule({
-            imports: [ HttpClientTestingModule ],
+    beforeEach(() => {
+        TestBed.configureTestingModule({
+            imports: [HttpClientTestingModule],
             providers: [
                 OntologyManagerService,
                 MockProvider(CatalogManagerService),
@@ -1486,6 +1488,36 @@ describe('Ontology Manager service', function() {
             const request = httpMock.expectOne(req => req.url === (`/mobirest/ontologies/${recordId}/failed-imports`) && req.method === 'GET');
             expect(request.request.params.get('branchId')).toEqual(branchId);
             expect((request.request.params).get('commitId')).toEqual(commitId);
+            request.flush('flush', { status: 400, statusText: error });
+        });
+    });
+    describe('getObjectPropertyValues calls the correct functions when GET /mobirest/ontologies/{recordId}/query', function() {
+        it('succeeds', function() {
+            service.getObjectPropertyValues(recordId, branchId, objectPropertyId)
+                .subscribe(response => {
+                    expect(response).toEqual(usages);
+                }, () => {
+                    fail('Observable should have succeeded');
+                });
+            const request = httpMock.expectOne(req =>
+                req.url === (`/mobirest/ontologies/${recordId}/query`) && req.method === 'GET');
+            expect(request.request.params.get('branchId')).toEqual(branchId);
+            expect((request.request.params).get('query')).toEqual(objQuery);
+            expect((request.request.params).get('applyInProgressCommit')).toBe('true');
+            request.flush(usages);
+        });
+        it('fails', function() {
+            service.getObjectPropertyValues(recordId, branchId, objectPropertyId)
+                .subscribe(() => {
+                    fail('Observable should have errored');
+                }, response => {
+                    expect(response).toBe(error);
+                });
+            const request = httpMock.expectOne(req =>
+                req.url === (`/mobirest/ontologies/${recordId}/query`) && req.method === 'GET');
+            expect(request.request.params.get('branchId')).toEqual(branchId);
+            expect((request.request.params).get('query')).toEqual(objQuery);
+            expect((request.request.params).get('applyInProgressCommit')).toBe('true');
             request.flush('flush', { status: 400, statusText: error });
         });
     });

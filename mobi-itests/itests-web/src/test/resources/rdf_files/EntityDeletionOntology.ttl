@@ -16,11 +16,14 @@
     <http://www.w3.org/2002/07/owl#NamedIndividual>;
   <http://purl.org/dc/terms/title> "Test Individual" .
 
-<https://mobi.com/ontologies/EntityDeletionOntology#TestConcept> a <http://www.w3.org/2004/02/skos/core#Concept>,
-    <http://www.w3.org/2002/07/owl#NamedIndividual>;
+<https://mobi.com/ontologies/EntityDeletionOntology#TestConcept> a <http://www.w3.org/2002/07/owl#NamedIndividual>,
+    <http://www.w3.org/2004/02/skos/core#Concept>;
   <http://www.w3.org/2004/02/skos/core#prefLabel> "Test Concept" .
 
-<https://mobi.com/ontologies/EntityDeletionOntology#TestScheme> a <http://www.w3.org/2004/02/skos/core#ConceptScheme>,
-    <http://www.w3.org/2002/07/owl#NamedIndividual>;
+<https://mobi.com/ontologies/EntityDeletionOntology#TestScheme> a <http://www.w3.org/2002/07/owl#NamedIndividual>,
+    <http://www.w3.org/2004/02/skos/core#ConceptScheme>;
   <http://purl.org/dc/terms/title> "Test Scheme" .
-  
+
+<https://mobi.com/ontologies/EntityDeletionOntology#SecondTestConcept> a <http://www.w3.org/2002/07/owl#NamedIndividual>,
+    <http://www.w3.org/2004/02/skos/core#Concept>;
+  <http://www.w3.org/2004/02/skos/core#prefLabel> "Second test concept" .

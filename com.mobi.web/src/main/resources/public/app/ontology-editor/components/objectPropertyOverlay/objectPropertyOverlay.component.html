@@ -30,7 +30,7 @@
                 formControlName="propertySelect"
                 placeholder="Select an object property"
                 [matAutocomplete]="autoComplete">
-        <mat-autocomplete #autoComplete="matAutocomplete" [displayWith]="getName.bind(this)">
+        <mat-autocomplete #autoComplete="matAutocomplete" [displayWith]="getName.bind(this)" (optionSelected)="getPropertyRangeValues($event)">
             <mat-optgroup *ngFor="let group of filteredIriList | async" [label]="group.namespace">
                 <mat-option *ngFor="let option of group.options" [value]="option.item" [title]="option.item">
                     {{option.name}}

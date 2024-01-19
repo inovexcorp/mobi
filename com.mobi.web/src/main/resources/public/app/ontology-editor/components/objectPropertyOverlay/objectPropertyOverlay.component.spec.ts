@@ -32,12 +32,12 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
-import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatAutocompleteModule, MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { By } from '@angular/platform-browser';
 
 import {
     cleanStylesFromDOM,
-} from '../../../../../public/test/ts/Shared';
+} from '../../../../test/ts/Shared';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
 import { OWL } from '../../../prefixes';
@@ -45,6 +45,7 @@ import { ToastService } from '../../../shared/services/toast.service';
 import { PropertyManagerService } from '../../../shared/services/propertyManager.service';
 import { IriSelectOntologyComponent } from '../iriSelectOntology/iriSelectOntology.component';
 import { ObjectPropertyOverlayComponent } from './objectPropertyOverlay.component';
+import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 
 describe('Object Property Overlay component', function() {
     let element: DebugElement;
@@ -52,6 +53,7 @@ describe('Object Property Overlay component', function() {
     let nativeElement: HTMLElement;
     let fixture:ComponentFixture<ObjectPropertyOverlayComponent>;
     let ontologyStateStub: jasmine.SpyObj<OntologyStateService>;
+    let ontologyManagerStub:  jasmine.SpyObj<OntologyManagerService>;
     let matDialogRef: jasmine.SpyObj<MatDialogRef<ObjectPropertyOverlayComponent>>;
     let toastStub: jasmine.SpyObj<ToastService>;
     let propertyManagerStub: jasmine.SpyObj<PropertyManagerService>;
@@ -67,7 +69,7 @@ describe('Object Property Overlay component', function() {
     let property, value;
 
     beforeEach(async () => {
-        await TestBed.configureTestingModule({
+        TestBed.configureTestingModule({
             imports: [
                 FormsModule,
                 ReactiveFormsModule,
@@ -87,9 +89,10 @@ describe('Object Property Overlay component', function() {
             providers: [
                 { provide: MAT_DIALOG_DATA, useValue: data },
                 MockProvider(OntologyStateService),
+                MockProvider(OntologyManagerService),
                 MockProvider(ToastService),
                 MockProvider(PropertyManagerService),
-                { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close'])}
+                { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close']) }
             ]
         });
     });
@@ -103,11 +106,13 @@ describe('Object Property Overlay component', function() {
         toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
         propertyManagerStub = TestBed.inject(PropertyManagerService) as jasmine.SpyObj<PropertyManagerService>;
         ontologyStateStub = TestBed.inject(OntologyStateService) as jasmine.SpyObj<OntologyStateService>;
+        ontologyManagerStub = TestBed.inject(OntologyManagerService) as jasmine.SpyObj<OntologyManagerService>;
 
         ontologyStateStub.getActiveEntityIRI.and.returnValue('active');
-        ontologyStateStub.listItem = listItem;        
+        ontologyStateStub.listItem = listItem;
         ontologyStateStub.listItem.versionedRdfRecord.recordId = 'recordId';
         ontologyStateStub.listItem.individuals.iris = {active: 'ontology', indiv: 'ontology'};
+        ontologyStateStub.listItem.objectProperties.iris = {'https://www.example.com/1': 'ontology', 'https://www.example.com/2': 'ontology'};
         ontologyStateStub.listItem.selected = {'@id': entityIRI};
         component.propertyValue = ['indiv'];
         fixture.detectChanges();
@@ -126,10 +131,9 @@ describe('Object Property Overlay component', function() {
     it('initializes with the correct values', function() {
         component.ngOnInit();
         fixture.detectChanges();
-        expect(component.individuals).toEqual({indiv: 'ontology'});
-        // TODO expand this
+        expect(component.objectProperties).toEqual(['https://www.example.com/1', 'https://www.example.com/2']);
     });
-   describe('contains the correct html', function() {
+    describe('contains the correct html', function() {
         it('for wrapping containers', function() {
             expect(element.queryAll(By.css('h1[mat-dialog-title]')).length).toEqual(1);
             expect(element.queryAll(By.css('form[mat-dialog-content]')).length).toEqual(1);
@@ -177,8 +181,8 @@ describe('Object Property Overlay component', function() {
                     component.addProperty();
                     expect(propertyManagerStub.addId).toHaveBeenCalledWith(ontologyStateStub.listItem.selected, property, value);
                     expect(ontologyStateStub.addToAdditions).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, {
-                      '@id': ontologyStateStub.listItem.selected['@id'],
-                      [property]: [{ '@id': value }]
+                        '@id': ontologyStateStub.listItem.selected['@id'],
+                        [property]: [{ '@id': value }]
                     });
                     expect(ontologyStateStub.saveCurrentChanges).toHaveBeenCalledWith();
                     expect(toastStub.createWarningToast).not.toHaveBeenCalled();
@@ -191,8 +195,8 @@ describe('Object Property Overlay component', function() {
                     component.addProperty();
                     expect(propertyManagerStub.addId).toHaveBeenCalledWith(ontologyStateStub.listItem.selected, property,  value);
                     expect(ontologyStateStub.addToAdditions).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, {
-                      '@id': ontologyStateStub.listItem.selected['@id'],
-                      [property]: [{ '@id': value }]
+                        '@id': ontologyStateStub.listItem.selected['@id'],
+                        [property]: [{ '@id': value }]
                     });
                     expect(ontologyStateStub.saveCurrentChanges).toHaveBeenCalledWith();
                     expect(toastStub.createWarningToast).not.toHaveBeenCalled();
@@ -204,8 +208,8 @@ describe('Object Property Overlay component', function() {
                     component.addProperty();
                     expect(propertyManagerStub.addId).toHaveBeenCalledWith(ontologyStateStub.listItem.selected, property, value);
                     expect(ontologyStateStub.addToAdditions).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, {
-                      '@id': ontologyStateStub.listItem.selected['@id'],
-                      [property]: [{ '@id': value }]
+                        '@id': ontologyStateStub.listItem.selected['@id'],
+                        [property]: [{ '@id': value }]
                     });
                     expect(ontologyStateStub.saveCurrentChanges).toHaveBeenCalledWith();
                     expect(toastStub.createWarningToast).not.toHaveBeenCalled();
@@ -216,7 +220,38 @@ describe('Object Property Overlay component', function() {
                 });
             });
         });
-        // TODO add test for filter, getName
+        it('should retrieve instances when an object property is selected', function() {
+            const value = 'https://mobi.com/ontologies/TestOntology#IndividualA';
+            const recordId = 'https://mobi.com/ontologies/TestOntology';
+            const branchId = 'https://mobi.com/ontologies/TestOntology#branch1';
+            const individualObj = {'https://mobi.com/ontologies/TestOntology#IndividualA': 'https://mobi.com/ontologies/TestOntology'}
+            ontologyStateStub.listItem.versionedRdfRecord.recordId = 'https://mobi.com/ontologies/TestOntology';
+            ontologyStateStub.listItem.versionedRdfRecord.branchId = 'https://mobi.com/ontologies/TestOntology#branch1';
+            ontologyStateStub.listItem.individuals.iris = individualObj;
+
+            const result = {
+                '@id': null,
+                '@type': null,
+                'head': { 'vars': ['value']},
+                'results': {
+                    'bindings': [{
+                        'value': {
+                            'type': 'uri',
+                            'value': 'https://mobi.com/ontologies/TestOntology#IndividualA'
+                        }
+                    }]
+                }
+            };
+
+            const event: MatAutocompleteSelectedEvent = {
+                option: {value: value}
+            } as MatAutocompleteSelectedEvent;
+
+            ontologyManagerStub.getObjectPropertyValues.and.returnValue(of(result));
+            component.getPropertyRangeValues(event);
+            expect(ontologyManagerStub.getObjectPropertyValues).toHaveBeenCalledWith(recordId, branchId, value);
+            expect(component.individuals).toEqual(individualObj);
+        });
     });
     it('should call addProperty when the button is clicked', function() {
         spyOn(component, 'addProperty');
