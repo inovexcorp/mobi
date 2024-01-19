@@ -65,6 +65,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URLDecoder;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -72,8 +74,10 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -116,7 +120,8 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
     protected void start(final PolicyManagerConfig config) {
         typeIRI = vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI);
         policyFileTypeIRI = vf.createIRI(PolicyFile.TYPE);
-        protectedPolicies = new HashSet<>(List.of(vf.createIRI("http://mobi.com/policies/admin-user-only-access-versioned-rdf-record")));
+        protectedPolicies = new HashSet<>(List.of(
+                vf.createIRI("http://mobi.com/policies/admin-user-only-access-versioned-rdf-record")));
 
         try {
             LOG.debug("Setting up policy file directory");
@@ -384,6 +389,9 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
         }
     }
 
+    /**
+     * Loads policies into the repository, policies file directory, and policy cache.
+     */
     private void loadPolicies() {
         LOG.debug("Loading policies");
         Optional<Cache<String, Policy>> cache = policyCache.getPolicyCache();
@@ -391,7 +399,24 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
         try (RepositoryConnection conn = repository.getConnection()) {
             VirtualFile directory = vfs.resolveVirtualFile(fileLocation);
 
+            // Grab policyIds that are already in the repository
+            // Track the policy IDs and the paths to files on disk with that ID
+            // This will help us determine which system policies need to be reset due to duplicates in a malformed
+            // backup.
+            Map<Resource, Set<String>> policyIdPaths = new HashMap<>();
+            conn.getStatements(null, typeIRI, policyFileTypeIRI).forEach(statement -> {
+                Resource policyIRI = statement.getSubject();
+                PolicyFile policyFile = validatePolicy(policyIRI);
+                policyIdPaths.putIfAbsent(policyIRI, new HashSet<>());
+                policyIdPaths.get(policyIRI).add(generatePath(FilenameUtils.removeExtension(getFileName(policyFile))));
+            });
+
+            // Walk the policy directory and add all policies into the repository
+            // Updates the map of policy IDs to paths to the files on disk
+            addMissingFilesToRepo(policyIdPaths, directory);
+
             // Initialize policies from the systemPolicies directory if they don't already exist
+            // Should happen on fresh installations or if a system policy was removed from the system between startups
             Path policiesDirectory = Paths.get(System.getProperty("karaf.etc") + File.separator + "policies"
                     + File.separator + "systemPolicies");
             try (Stream<Path> files = Files.walk(policiesDirectory)) {
@@ -402,19 +427,48 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
                                     FilenameUtils.getName(path.getFileName().toString()), StandardCharsets.UTF_8);
                             String fileId = FilenameUtils.removeExtension(
                                     URLDecoder.decode(fileName, StandardCharsets.UTF_8));
-                            Resource fileIRI = vf.createIRI(fileId);
-                            if (!ConnectionUtils.contains(conn, fileIRI, null, null)) {
+                            Resource systemPolicyId = vf.createIRI(fileId);
+
+                            // Clear any system policies with duplicates. A policy can have duplicate copies in the
+                            // policy directory on disk due to an older bug that caused the default system policy to be
+                            // loaded when an existing modified system policy already existed. This logic should run
+                            // after a Restore command of an older malformed backup
+                            if (policyIdPaths.containsKey(systemPolicyId)
+                                    && policyIdPaths.get(systemPolicyId).size() > 1) {
+                                LOG.info("Duplicate systemPolicyId for " + systemPolicyId.stringValue());
+                                // Remove systemPolicyId graph
+                                conn.clear(systemPolicyId);
+                                // Delete each existing file on disk for the given systemPolicyId
+                                policyIdPaths.get(systemPolicyId).forEach(pathStr -> {
+                                    try {
+                                        LOG.info("Deleting file" + pathStr);
+                                        boolean result = Files.deleteIfExists(Paths.get(pathStr));
+                                        if (!result) {
+                                            LOG.error("Could not find file " + pathStr);
+                                        }
+                                    } catch (IOException e) {
+                                        LOG.error("Could not delete file " + pathStr);
+                                    }
+                                });
+                            }
+
+                            // Verify the policy for the given systemPolicyId exists in repository and in policy vfs
+                            // If not, add the file
+                            if (!ConnectionUtils.contains(conn, systemPolicyId, null, null)) {
                                 VirtualFile file = vfs.resolveVirtualFile(Files.newInputStream(path), fileLocation);
                                 addPolicyFile(file, file.getIdentifier() + ".xml", getPolicyFromFile(file));
                             } else {
-                                PolicyFile policy = validatePolicy(fileIRI);
-                                VirtualFile file = vfs.resolveVirtualFile(policy.getRetrievalURL().toString());
-                                if (!file.exists()) {
-                                    file = vfs.resolveVirtualFile(Files.newInputStream(path), fileLocation);
+                                PolicyFile policy = validatePolicy(systemPolicyId);
+                                Optional<IRI> retrievalUrl = policy.getRetrievalURL();
+                                if (retrievalUrl.isEmpty() ||
+                                        !vfs.resolveVirtualFile(retrievalUrl.get().stringValue()).exists()) {
+                                    VirtualFile file = vfs.resolveVirtualFile(Files.newInputStream(path), fileLocation);
                                     addPolicyFile(file, file.getIdentifier() + ".xml", getPolicyFromFile(file));
                                 }
                             }
-                            systemPolicies.add(fileIRI);
+
+                            // Track system policies
+                            systemPolicies.add(systemPolicyId);
                         } catch (IOException e) {
                             LOG.error("Could not load system policy for: {}", path);
                         }
@@ -422,16 +476,7 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
                 });
             }
 
-            // Grab fileNames that are already in the repository
-            Set<String> fileNames = new HashSet<>();
-            conn.getStatements(null, typeIRI, policyFileTypeIRI).forEach(statement -> {
-                Resource policyIRI = statement.getSubject();
-                PolicyFile policyFile = validatePolicy(policyIRI);
-                fileNames.add(FilenameUtils.removeExtension(getFileName(policyFile)));
-            });
-
-            addMissingFilesToRepo(fileNames, directory);
-
+            // Load policies into policy cache
             conn.getStatements(null, typeIRI, policyFileTypeIRI).forEach(statement -> {
                 Resource policyIRI = statement.getSubject();
                 PolicyFile policyFile = validatePolicy(policyIRI);
@@ -443,14 +488,29 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
         }
     }
 
-    private void addMissingFilesToRepo(Set<String> filePaths, VirtualFile baseFolder) throws VirtualFilesystemException {
+    private void addMissingFilesToRepo(Map<Resource, Set<String>> policyIdPaths, VirtualFile baseFolder)
+            throws VirtualFilesystemException {
         for (VirtualFile file : baseFolder.getChildren()) {
             if (file.isFolder()) {
-                addMissingFilesToRepo(filePaths, file);
-            } else if (!filePaths.contains(file.getIdentifier())) {
+                addMissingFilesToRepo(policyIdPaths, file);
+            } else {
                 BalanaPolicy balanaPolicy = getPolicyFromFile(file);
-                addPolicyFile(file, file.getIdentifier() + ".xml", balanaPolicy);
+                if (!policyIdPaths.containsKey(balanaPolicy.getId())) {
+                    addPolicyFile(file, file.getIdentifier() + ".xml", balanaPolicy);
+                } else if (!policyIdPaths.get(balanaPolicy.getId()).contains(file.getIdentifier())){
+                    LOG.info("Found duplicate policyId for " + balanaPolicy.getId().stringValue());
+                }
+                policyIdPaths.putIfAbsent(balanaPolicy.getId(), new HashSet<>());
+                policyIdPaths.get(balanaPolicy.getId()).add(generatePath(file.getIdentifier()));
             }
+        }
+    }
+
+    private String generatePath(String pathWithProtocol) {
+        try {
+            return new URI(pathWithProtocol).getPath();
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
         }
     }
 
