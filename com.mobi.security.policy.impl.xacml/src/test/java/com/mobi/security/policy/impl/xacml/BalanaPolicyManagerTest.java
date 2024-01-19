@@ -55,6 +55,7 @@ import com.mobi.vfs.api.VirtualFile;
 import com.mobi.vfs.api.VirtualFilesystem;
 import com.mobi.vfs.impl.commons.SimpleVirtualFilesystem;
 import com.mobi.vfs.impl.commons.SimpleVirtualFilesystemConfig;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
@@ -76,6 +77,7 @@ import java.lang.reflect.Method;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Collections;
@@ -294,6 +296,156 @@ public class BalanaPolicyManagerTest extends OrmEnabledTestCase {
             PolicyFile policyFile = optPolicyFile.get();
             Optional<IRI> retrievalURL = policyFile.getRetrievalURL();
             assertTrue(retrievalURL.isPresent());
+            VirtualFile virtualFile = vfs.resolveVirtualFile(retrievalURL.get().stringValue());
+            assertTrue(virtualFile.exists() && virtualFile.isFile());
+            Optional<String> fileName = policyFile.getFileName();
+            assertTrue(fileName.isPresent());
+            Optional<Double> fileSize = policyFile.getSize();
+            assertTrue(fileSize.isPresent());
+            assertEquals((double) virtualFile.getSize(), fileSize.get(), 0.01);
+            assertTrue(policyFile.getChecksum().isPresent());
+            assertTrue(policyFile.getRelatedSubject().isEmpty());
+            assertTrue(!policyFile.getRelatedResource().isEmpty() && policyFile.getRelatedResource().contains(relatedResource));
+        }
+    }
+
+    @Test
+    public void startEmptyRepoCachePolicyDirTest() throws Exception {
+        // Setup:
+        StringBuilder builder = new StringBuilder(System.getProperty("java.io.tmpdir"));
+        if (!System.getProperty("java.io.tmpdir").endsWith("/")) {
+            builder.append("/");
+        }
+        builder.append("policiesTest");
+        String policiesDir = builder.toString();
+        Path path = Paths.get(policiesDir);
+        if (Files.exists(path)) {
+            FileUtils.deleteDirectory(path.toFile());
+        }
+        Files.createDirectory(path);
+        when(policyManagerConfig.policyFileLocation()).thenReturn(policiesDir);
+        setUpBundleTest();
+        defaultPolicyFile = policyFileFactory.createNew(defaultPolicyId);
+        VirtualFile file = vfs.resolveVirtualFile(getClass().getResourceAsStream("/policies/systemPolicies/http%3A%2F%2Fmobi.com%2Fpolicies%2Fontology-creation.xml"), fileLocation);
+        defaultPolicyFile.setRetrievalURL(VALUE_FACTORY.createIRI(file.getIdentifier()));
+        try (RepositoryConnection conn = repo.getConnection()) {
+            conn.clear();
+            cache.clear();
+        }
+        manager.start(policyManagerConfig);
+        assertEquals(1, manager.getSystemPolicyIds().size());
+        try (RepositoryConnection conn = repo.getConnection()) {
+            Model model = QueryResults.asModel(conn.getStatements(null, null, null, defaultPolicyId), MODEL_FACTORY);
+            assertFalse(model.isEmpty());
+            Optional<PolicyFile> optPolicyFile = policyFileFactory.getExisting(defaultPolicyId, model);
+            assertTrue(optPolicyFile.isPresent());
+            PolicyFile policyFile = optPolicyFile.get();
+            Optional<IRI> retrievalURL = policyFile.getRetrievalURL();
+            assertTrue(retrievalURL.isPresent());
+            assertEquals("file://" + policiesDir + "/37/3a/4f9f766a2d8a", retrievalURL.get().stringValue());
+            VirtualFile virtualFile = vfs.resolveVirtualFile(retrievalURL.get().stringValue());
+            assertTrue(virtualFile.exists() && virtualFile.isFile());
+            Optional<String> fileName = policyFile.getFileName();
+            assertTrue(fileName.isPresent());
+            Optional<Double> fileSize = policyFile.getSize();
+            assertTrue(fileSize.isPresent());
+            assertEquals((double) virtualFile.getSize(), fileSize.get(), 0.01);
+            assertTrue(policyFile.getChecksum().isPresent());
+            assertTrue(policyFile.getRelatedSubject().isEmpty());
+            assertTrue(!policyFile.getRelatedResource().isEmpty() && policyFile.getRelatedResource().contains(relatedResource));
+        }
+    }
+
+    @Test
+    public void startEmptyRepoCacheWithExistingPolicyInPolicyDir() throws Exception {
+        // Setup:
+        StringBuilder builder = new StringBuilder(System.getProperty("java.io.tmpdir"));
+        if (!System.getProperty("java.io.tmpdir").endsWith("/")) {
+            builder.append("/");
+        }
+        builder.append("policiesTest");
+        String policiesDir = builder.toString();
+        Path path = Paths.get(policiesDir);
+        if (Files.exists(path)) {
+            FileUtils.deleteDirectory(path.toFile());
+        }
+        Files.createDirectory(path);
+
+        // Create duplicates of ontology-creation in the policies dir
+        Path ontCreationPol = Paths.get(getClass().getResource("/policies/systemPolicies/http%3A%2F%2Fmobi.com%2Fpolicies%2Fontology-creation.xml").toURI());
+        Files.copy(ontCreationPol, Paths.get(policiesDir + "/one"));
+        when(policyManagerConfig.policyFileLocation()).thenReturn(policiesDir);
+        setUpBundleTest();
+        defaultPolicyFile = policyFileFactory.createNew(defaultPolicyId);
+        VirtualFile file = vfs.resolveVirtualFile(getClass().getResourceAsStream("/policies/systemPolicies/http%3A%2F%2Fmobi.com%2Fpolicies%2Fontology-creation.xml"), fileLocation);
+        defaultPolicyFile.setRetrievalURL(VALUE_FACTORY.createIRI(file.getIdentifier()));
+        try (RepositoryConnection conn = repo.getConnection()) {
+            conn.clear();
+            cache.clear();
+        }
+        manager.start(policyManagerConfig);
+        assertEquals(1, manager.getSystemPolicyIds().size());
+        try (RepositoryConnection conn = repo.getConnection()) {
+            Model model = QueryResults.asModel(conn.getStatements(null, null, null, defaultPolicyId), MODEL_FACTORY);
+            assertFalse(model.isEmpty());
+            Optional<PolicyFile> optPolicyFile = policyFileFactory.getExisting(defaultPolicyId, model);
+            assertTrue(optPolicyFile.isPresent());
+            PolicyFile policyFile = optPolicyFile.get();
+            Optional<IRI> retrievalURL = policyFile.getRetrievalURL();
+            assertTrue(retrievalURL.isPresent());
+            assertEquals("file://" + policiesDir + "/one", retrievalURL.get().stringValue());
+            VirtualFile virtualFile = vfs.resolveVirtualFile(retrievalURL.get().stringValue());
+            assertTrue(virtualFile.exists() && virtualFile.isFile());
+            Optional<String> fileName = policyFile.getFileName();
+            assertTrue(fileName.isPresent());
+            Optional<Double> fileSize = policyFile.getSize();
+            assertTrue(fileSize.isPresent());
+            assertEquals((double) virtualFile.getSize(), fileSize.get(), 0.01);
+            assertTrue(policyFile.getChecksum().isPresent());
+            assertTrue(policyFile.getRelatedSubject().isEmpty());
+            assertTrue(!policyFile.getRelatedResource().isEmpty() && policyFile.getRelatedResource().contains(relatedResource));
+        }
+    }
+
+    @Test
+    public void startEmptyRepoCacheWithMultipleExistingPoliciesInPolicyDir() throws Exception {
+        // Setup:
+        StringBuilder builder = new StringBuilder(System.getProperty("java.io.tmpdir"));
+        if (!System.getProperty("java.io.tmpdir").endsWith("/")) {
+            builder.append("/");
+        }
+        builder.append("policiesTest");
+        String policiesDir = builder.toString();
+        Path path = Paths.get(policiesDir);
+        if (Files.exists(path)) {
+            FileUtils.deleteDirectory(path.toFile());
+        }
+        Files.createDirectory(path);
+
+        // Create duplicates of ontology-creation in the policies dir
+        Path ontCreationPol = Paths.get(getClass().getResource("/policies/systemPolicies/http%3A%2F%2Fmobi.com%2Fpolicies%2Fontology-creation.xml").toURI());
+        Files.copy(ontCreationPol, Paths.get(policiesDir + "/one"));
+        Files.copy(ontCreationPol, Paths.get(policiesDir + "/two"));
+        when(policyManagerConfig.policyFileLocation()).thenReturn(policiesDir);
+        setUpBundleTest();
+        defaultPolicyFile = policyFileFactory.createNew(defaultPolicyId);
+        VirtualFile file = vfs.resolveVirtualFile(getClass().getResourceAsStream("/policies/systemPolicies/http%3A%2F%2Fmobi.com%2Fpolicies%2Fontology-creation.xml"), fileLocation);
+        defaultPolicyFile.setRetrievalURL(VALUE_FACTORY.createIRI(file.getIdentifier()));
+        try (RepositoryConnection conn = repo.getConnection()) {
+            conn.clear();
+            cache.clear();
+        }
+        manager.start(policyManagerConfig);
+        assertEquals(1, manager.getSystemPolicyIds().size());
+        try (RepositoryConnection conn = repo.getConnection()) {
+            Model model = QueryResults.asModel(conn.getStatements(null, null, null, defaultPolicyId), MODEL_FACTORY);
+            assertFalse(model.isEmpty());
+            Optional<PolicyFile> optPolicyFile = policyFileFactory.getExisting(defaultPolicyId, model);
+            assertTrue(optPolicyFile.isPresent());
+            PolicyFile policyFile = optPolicyFile.get();
+            Optional<IRI> retrievalURL = policyFile.getRetrievalURL();
+            assertTrue(retrievalURL.isPresent());
+            assertEquals("file://" + policiesDir + "/37/3a/4f9f766a2d8a", retrievalURL.get().stringValue());
             VirtualFile virtualFile = vfs.resolveVirtualFile(retrievalURL.get().stringValue());
             assertTrue(virtualFile.exists() && virtualFile.isFile());
             Optional<String> fileName = policyFile.getFileName();
