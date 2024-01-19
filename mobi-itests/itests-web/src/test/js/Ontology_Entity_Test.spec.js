@@ -25,7 +25,7 @@ var adminPassword = 'admin'
 var Onto1 = process.cwd()+ '/src/test/resources/rdf_files/EntityDeletionOntology.ttl'
 
 module.exports = {
-    '@tags': ['sanity', "ontology-editor"],
+    '@tags': ['sanity', "ontology-editor", "current-test"],
 
     'Step 1: Initial Setup': function (browser) {
         browser.globals.initial_steps(browser, adminUsername, adminPassword)
@@ -160,8 +160,8 @@ module.exports = {
             .waitForElementVisible('//mat-optgroup//mat-option//span[text()=" has broader "]')
             .click('//mat-optgroup//mat-option//span[text()=" has broader "]')
             .click('//object-property-overlay//form/iri-select-ontology//mat-form-field')
-            .waitForElementVisible('//mat-optgroup//mat-option//span[text()=" Test Scheme "]')
-            .click('//mat-optgroup//mat-option//span[text()=" Test Scheme "]')
+            .waitForElementVisible('//mat-optgroup//mat-option//span[text()=" Second test concept "]')
+            .click('//mat-optgroup//mat-option//span[text()=" Second test concept "]')
     },
 
     'Step 15 : Check if Value can be reselected': function (browser) {
@@ -170,8 +170,8 @@ module.exports = {
             .waitForElementVisible('//object-property-overlay//form')
             .waitForElementVisible('//object-property-overlay//div[contains(@class, "mat-dialog-actions")]')
             .click('//object-property-overlay//form/iri-select-ontology//mat-form-field')
-            .waitForElementVisible('//mat-optgroup//mat-option//span[text()=" Test Scheme "]')
-            .click('//mat-optgroup//mat-option//span[text()=" Test Scheme "]')
+            .waitForElementVisible('//mat-optgroup//mat-option//span[text()=" Second test concept "]')
+            .click('//mat-optgroup//mat-option//span[text()=" Second test concept "]')
             .click('//button//span[text()="Cancel"]')
     },
 

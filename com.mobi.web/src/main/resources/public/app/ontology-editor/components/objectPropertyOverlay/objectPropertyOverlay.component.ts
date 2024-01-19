@@ -32,6 +32,8 @@ import { OntologyStateService } from '../../../shared/services/ontologyState.ser
 import { ToastService } from '../../../shared/services/toast.service';
 import { PropertyManagerService } from '../../../shared/services/propertyManager.service';
 import { createJson } from '../../../shared/utility';
+import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
+import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 
 interface PropGrouping {
     namespace: string,
@@ -66,6 +68,7 @@ export class ObjectPropertyOverlayComponent implements OnInit {
     });
 
     constructor(public os:OntologyStateService,
+                private om:OntologyManagerService,
                 private toast: ToastService,
                 private pm: PropertyManagerService,
                 private fb: UntypedFormBuilder,
@@ -79,8 +82,6 @@ export class ObjectPropertyOverlayComponent implements OnInit {
                 startWith(''),
                 map(val => this.filter(val || ''))
             );
-        this.individuals = cloneDeep(this.os.listItem.individuals.iris);
-        delete this.individuals[this.os.getActiveEntityIRI()];
     }
     filter(val: string): PropGrouping[] {
         if (!this.objectProperties || !this.objectProperties.length) {
@@ -111,5 +112,24 @@ export class ObjectPropertyOverlayComponent implements OnInit {
     }
     getName(val: string): string {
         return val ? this.os.getEntityNameByListItem(val) : '';
+    }
+
+    getPropertyRangeValues(event: MatAutocompleteSelectedEvent): void {
+        this.om.getObjectPropertyValues(this.os.listItem.versionedRdfRecord.recordId,
+            this.os.listItem.versionedRdfRecord.branchId, event.option.value).subscribe( iris => {
+                const propertyValues = {};
+                const iriList = iris.results.bindings;
+                const ontologyIRIs = cloneDeep(this.os.listItem.individuals.iris);
+                if (iriList.length > 0) {
+                    iriList.forEach( (value: {[key: string]: {[key: string]: string}})=> {
+                        const iri = value.value?.value;
+                        propertyValues[iri] = ontologyIRIs[iri];
+                    });
+                    delete propertyValues[this.os.getActiveEntityIRI()];
+                    this.individuals = propertyValues;
+                } else {
+                    this.individuals = {};
+                }
+            });
     }
 }
