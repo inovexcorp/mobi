@@ -1021,6 +1021,40 @@ public class RestUtils {
     }
 
     /**
+     * Creates a {@link MobiWebException} containing a 401 response with the error message and error details provided
+     * in the body of the response.
+     *
+     * @param throwable The {@link Throwable} to create a JSON error object from.
+     * @return A {@link MobiWebException} of a 401 with error information in the body.
+     */
+    public static MobiWebException getErrorObjUnauthorized(Throwable throwable) {
+        ObjectNode objectNode = createJsonErrorObject(throwable, Models.ERROR_OBJECT_DELIMITER);
+        Response response = Response
+                .status(Response.Status.UNAUTHORIZED)
+                .type(MediaType.APPLICATION_JSON_TYPE)
+                .entity(objectNode.toString())
+                .build();
+        return ErrorUtils.sendError(throwable, throwable.getMessage(), response);
+    }
+
+    /**
+     * Creates a {@link MobiWebException} containing a 404 response with the error message and error details provided
+     * in the body of the response.
+     *
+     * @param throwable The {@link Throwable} to create a JSON error object from.
+     * @return A {@link MobiWebException} of a 404 with error information in the body.
+     */
+    public static MobiWebException getErrorObjNotFound(Throwable throwable) {
+        ObjectNode objectNode = createJsonErrorObject(throwable, Models.ERROR_OBJECT_DELIMITER);
+        Response response = Response
+                .status(Response.Status.NOT_FOUND)
+                .type(MediaType.APPLICATION_JSON_TYPE)
+                .entity(objectNode.toString())
+                .build();
+        return ErrorUtils.sendError(throwable, throwable.getMessage(), response);
+    }
+
+    /**
      * Creates a {@link MobiWebException} containing a 500 response with the error message provided in the body of the
      * response.
      *

@@ -26,6 +26,7 @@ import { switchMap } from 'rxjs/operators';
 import { MergeRequest } from '../../../shared/models/mergeRequest.interface';
 import { MergeRequestManagerService } from '../../../shared/services/mergeRequestManager.service';
 import { ToastService } from '../../../shared/services/toast.service';
+import { MergeRequestStatus } from '../../../shared/models/merge-request-status';
 
 /**
  * @class merge-requests.MergeRequestDiscussionComponent
@@ -44,14 +45,16 @@ import { ToastService } from '../../../shared/services/toast.service';
 })
 export class MergeRequestDiscussionComponent {
     newComment = '';
-    isAccepted = false;
+    requestStatus: MergeRequestStatus = 'open';
     editInProgress: false;
 
     private _request: MergeRequest;
+    isEditable = false;
 
     @Input() set request(value: MergeRequest) {
         this._request = value;
-        this.isAccepted = this.mm.isAccepted(this.request.jsonld);
+        this.requestStatus = this.mm.requestStatus(this.request.jsonld);
+        this.isEditable = this.requestStatus !== 'accepted';
     }
 
     get request(): MergeRequest {

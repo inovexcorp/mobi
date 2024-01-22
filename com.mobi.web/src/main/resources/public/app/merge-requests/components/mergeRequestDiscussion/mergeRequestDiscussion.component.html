@@ -25,18 +25,18 @@
         <comment-display *ngFor="let comment of chain; index as commentIndex" class="mt-3"
                          [(comment)]="chain[commentIndex]"
                          [isReply]="commentIndex > 0"
-                         [accepted]="isAccepted"
+                         [requestStatus]="requestStatus"
                          [(editInProgress)]="editInProgress"
                          (delete)="deleteComment($event)"
                          (saveEdit)="editComment($event)">
         </comment-display>
-        <reply-comment *ngIf="!isAccepted"
+        <reply-comment *ngIf="isEditable"
                        [ngClass]="{'reply': chain.length > 1}"
                        [parentId]="chain[0]['@id']"
                        [(request)]="request">
         </reply-comment>
     </div>
-    <div class="new-comment pt-3 clearfix" *ngIf="!isAccepted">
+    <div class="new-comment pt-3 clearfix" *ngIf="isEditable">
         <h6>New Comment</h6>
         <markdown-editor [(markdown)]="newComment"
                          (saveEvent)="saveComment($event)"

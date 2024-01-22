@@ -59,13 +59,6 @@ MergeRequestsPage.prototype.goToPage = function(browser) {
     browser.globals.wait_for_no_spinners(browser);
 };
 
-MergeRequestsPage.prototype.assertMatCardTitles = function(browser, titles) {
-    for (var titleIndex in titles) {
-        browser
-            .useXpath()
-            .waitForElementVisible('//create-request//request-record-select//mat-card//mat-card-title[contains(text(),"' + titles[titleIndex] + '")]')
-    }
-}
 // Used to execute a search on the main merge request landing page
 MergeRequestsPage.prototype.searchList = function(browser, searchText) {
     browser
@@ -101,19 +94,27 @@ MergeRequestsPage.prototype.createFilterXPathSelector = function(filterTypeHeade
 MergeRequestsPage.prototype.selectRequest = function(browser, mrTitle) {
     browser
         .useXpath()
-        .waitForElementVisible("//button//span[text()[contains(.,'New Request')]]")
+        .waitForElementVisible("//merge-requests-page//merge-request-list")
+        .waitForElementVisible("//merge-requests-page//merge-request-list//button//span[text()[contains(.,'New Request')]]")
         .useCss()
         .assert.textContains('div.request-contents .details h3', mrTitle)
         .click('xpath', '//div[contains(@class, "request-contents")]//h3//span[text()[contains(.,"' + mrTitle + '")]]')
     browser.globals.wait_for_no_spinners(browser);
 };
 
+// MergeRequestView Check for mat-chip status: open, accepted, closed
+MergeRequestsPage.prototype.mergeRequestViewCheckStatus = function(browser, statusTitle) {
+    browser
+        .useXpath()
+        .waitForElementVisible('//merge-requests-page//merge-request-view//mat-chip[contains(text(), "' + statusTitle + '")]');
+};
+
 // Accepts the currently displayed merge request
 MergeRequestsPage.prototype.acceptRequest = function(browser) {
     browser
         .useXpath()
-        .waitForElementVisible("//button//span[text()[contains(.,'Accept')]]")
-        .click("//button//span[text()[contains(.,'Accept')]]")
+        .waitForElementVisible("//merge-requests-page//merge-request-view//button//span[text()[contains(.,'Accept')]]")
+        .click("//merge-requests-page//merge-request-view//button//span[text()[contains(.,'Accept')]]")
         .useCss()
         .waitForElementVisible('div.mat-dialog-actions button.mat-primary')
         .click('div.mat-dialog-actions button.mat-primary')
@@ -125,9 +126,79 @@ MergeRequestsPage.prototype.acceptRequest = function(browser) {
         .waitForElementVisible('xpath', '//mat-chip[text()[contains(.,"Accepted")]]')
     browser
         .useXpath()
-        .waitForElementVisible("//button//span[text()[contains(.,'Back')]]")
-        .click("//button//span[text()[contains(.,'Back')]]");
+        .waitForElementVisible("//merge-requests-page//merge-request-view//button//span[text()[contains(.,'Back')]]")
+        .click("//merge-requests-page//merge-request-view//button//span[text()[contains(.,'Back')]]");
     browser.globals.wait_for_no_spinners(browser);
 };
+
+// Create New Request
+MergeRequestsPage.prototype.createNewRequest = function(browser) {
+    browser
+        .useXpath()
+        .waitForElementVisible("//merge-requests-page//button//span[text()[contains(.,'New Request')]]")
+        .click("//merge-requests-page//button//span[text()[contains(.,'New Request')]]");
+    browser
+        .useXpath()
+        .waitForElementVisible('//merge-requests-page//create-request');
+};
+
+MergeRequestsPage.prototype.assertMatCardTitles = function(browser, titles) {
+    browser
+        .useXpath()
+        .waitForElementVisible('//merge-requests-page//create-request');
+
+    for (var titleIndex in titles) {
+        browser
+            .useXpath()
+            .waitForElementVisible('//merge-requests-page//create-request//request-record-select//mat-card//mat-card-title[contains(text(),"' + titles[titleIndex] + '")]')
+    }
+};
+
+MergeRequestsPage.prototype.createRequestSourceBranchSelect = function(browser, branchTitle) {
+    browser
+        .useXpath()
+        .waitForElementVisible('//merge-requests-page//create-request//mat-horizontal-stepper//request-branch-select');
+    // set source branch
+    browser
+        .useXpath()
+        .waitForElementVisible('(//branch-select//div[contains(@class, "mat-form-field-infix")])[1]/input')
+        .click('(//branch-select//div[contains(@class, "mat-form-field-infix")])[1]')
+        .waitForElementVisible('//mat-option//span[text()[contains(.,"' + branchTitle + '")]]')
+        .click('//mat-option//span[text()[contains(.,"' + branchTitle + '")]]');
+};
+
+MergeRequestsPage.prototype.createRequestTargetBranchSelect = function(browser, branchTitle) { 
+    browser
+        .useXpath()
+        .waitForElementVisible('//merge-requests-page//create-request//mat-horizontal-stepper//request-branch-select');
+    // set target branch
+    browser
+        .useXpath()
+        .waitForElementVisible('(//branch-select//div[contains(@class, "mat-form-field-infix")])[2]/input')
+        .click('(//branch-select//div[contains(@class, "mat-form-field-infix")])[2]')
+        .waitForElementVisible('//mat-option//span[text()[contains(.,"' + branchTitle + '")]]')
+        .click('//mat-option//span[text()[contains(.,"' + branchTitle + '")]]');
+};
+
+MergeRequestsPage.prototype.createRequestSubmit = function(browser) { 
+    //stale element reference: stale element not found
+    browser 
+        .useXpath()
+        .waitForElementVisible('//merge-requests-page//create-request//button//span[text()="Submit"]')
+        .click('//merge-requests-page//create-request//button//span[text()="Submit"]');
+    browser.globals.wait_for_no_spinners(browser);
+};
+
+MergeRequestsPage.prototype.createRequestNext = function(browser) { 
+    browser
+        .useXpath()
+        .waitForElementVisible('//button//span[contains(text(), "Next")]/parent::button')
+        .assert.enabled('//button//span[contains(text(), "Next")]/parent::button')
+        .click('//button//span[contains(text(), "Next")]/parent::button');
+    browser
+        .useCss()
+        .waitForElementNotPresent('div.mat-horizontal-stepper-content.ng-animating');
+};
+
 
 module.exports = { mergeRequestsPage: new MergeRequestsPage() };

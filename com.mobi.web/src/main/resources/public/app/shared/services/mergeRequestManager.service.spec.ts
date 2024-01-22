@@ -251,10 +251,10 @@ describe('Merge Request Manager service', function() {
     });
     describe('should accept a merge request', function() {
         beforeEach(function() {
-            this.url = `${service.prefix}/${encodeURIComponent(requestId)}`;
+            this.url = `${service.prefix}/${encodeURIComponent(requestId)}/status?action=accept`;
         });
         it('unless an error occurs', function() {
-            service.acceptRequest(mergeRequest01)
+            service.updateRequestStatus(mergeRequest01, 'accept')
                 .subscribe(() => fail('Observable should have rejected'), response => {
                     expect(response).toEqual(error);
                 });
@@ -285,7 +285,7 @@ describe('Merge Request Manager service', function() {
             const sub = service.mergeRequestAction$.subscribe((e: EventWithPayload) => {
                 expect(e).toEqual(event);
             }, (e) => fail(`Observable should have resolved: ${e}`));
-            service.acceptRequest(mergeRequest01)
+            service.updateRequestStatus(mergeRequest01, 'accept')
               .subscribe(() => {
                 expect(true).toBeTrue();
             }, (e) => fail(`Observable should have resolved: ${e}`));
@@ -417,12 +417,12 @@ describe('Merge Request Manager service', function() {
         });
     });
     it('should determine whether a request is accepted', function() {
-        expect(service.isAccepted(emptyObj)).toEqual(false);
+        expect(service.requestStatus(emptyObj)).toEqual('open');
         const mr = Object.assign({}, emptyObj);
         mr['@type'] = [`${MERGEREQ}MergeRequest`];
-        expect(service.isAccepted(emptyObj)).toEqual(false);
+        expect(service.requestStatus(emptyObj)).toEqual('open');
         mr['@type'].push(`${MERGEREQ}AcceptedMergeRequest`);
-        expect(service.isAccepted(mr)).toEqual(true);
+        expect(service.requestStatus(mr)).toEqual('accepted');
     });
     describe('should retrieve the creators of merge requests', function() {
       beforeEach(function() {

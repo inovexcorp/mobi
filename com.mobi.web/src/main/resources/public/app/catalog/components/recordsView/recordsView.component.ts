@@ -64,6 +64,7 @@ export class RecordsViewComponent implements OnInit, OnDestroy {
     }
     ngOnDestroy(): void {
         this._destroySub$.next();
+        this._destroySub$.complete();
     }
     openRecord(record: JSONLDObject): void {
         this.state.selectedRecord = record;

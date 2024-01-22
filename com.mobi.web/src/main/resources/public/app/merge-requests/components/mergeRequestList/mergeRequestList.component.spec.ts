@@ -34,7 +34,7 @@ import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MockComponent, MockProvider } from 'ng-mocks';
-import { of } from 'rxjs';
+import { of, Subject } from 'rxjs';
 
 import {
     cleanStylesFromDOM
@@ -200,7 +200,7 @@ describe('Merge Request List component', function() {
                 creators: mergeRequestsStateStub.creators,
                 assignees: mergeRequestsStateStub.assignees,
                 records: mergeRequestsStateStub.records
-            });
+            }, jasmine.any(Subject));
         });
         it('should show the delete confirmation overlay', fakeAsync(function() {
             spyOn(component, 'loadRequests');

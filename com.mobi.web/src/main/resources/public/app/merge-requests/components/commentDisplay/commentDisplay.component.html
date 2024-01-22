@@ -42,9 +42,8 @@
             <div class="button-container">
                 <button *ngIf="isCreator" mat-icon-button color="primary" (click)="editComment()"
                         [disabled]="editInProgress" [title]="tooltip"><i class="fa fa-pencil fa-fw"></i></button>
-                <button *ngIf="isCreator && !accepted" mat-icon-button color="primary" (click)="confirmDelete()" title="Delete"><i class="fa fa-times fa-fw"></i></button>
+                <button *ngIf="isCreator && requestStatus !== 'accepted'" mat-icon-button color="primary" (click)="confirmDelete()" title="Delete"><i class="fa fa-times fa-fw"></i></button>
             </div>
         </ng-template>
-
     </div>
 </div>

@@ -239,7 +239,8 @@ describe('Merge Request Discussion component', function() {
             expect(element.queryAll(By.css('comment-display')).length).toEqual(3);
         });
         it('if the request is accepted', function() {
-            component.isAccepted = false;
+            component.requestStatus = 'open';
+            component.isEditable = true;
             component.request = cloneDeep(request);
             component.request.comments = [[{'@id': '0'}, {'@id': '1'}], [{'@id': '2'}]];
             fixture.detectChanges();
@@ -247,7 +248,9 @@ describe('Merge Request Discussion component', function() {
             expect(element.queryAll(By.css('markdown-editor')).length).toEqual(1);
             expect(element.queryAll(By.css('reply-comment')).length).toEqual(2);
 
-            component.isAccepted = true;
+            component.requestStatus = 'accepted';
+            component.isEditable = false;
+
             fixture.detectChanges();
             expect(element.queryAll(By.css('.new-comment')).length).toEqual(0);
             expect(element.queryAll(By.css('markdown-editor')).length).toEqual(0);

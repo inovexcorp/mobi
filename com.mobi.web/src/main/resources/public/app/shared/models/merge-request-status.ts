@@ -1,8 +1,8 @@
 /*-
-* #%L
+ * #%L
  * com.mobi.web
- *  $Id:$
- *  $HeadURL:$
+ * $Id:$
+ * $HeadURL:$
  * %%
  * Copyright (C) 2016 - 2024 iNovex Information Systems, Inc.
  * %%
@@ -19,19 +19,6 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
-*/
-
-export type EventPayload = {[key: string]: any};
-export class EventTypeConstants {
-    // Event on branch removal (IRI of the record and the branch IRI)
-    static EVENT_BRANCH_REMOVAL = 'EVENT_BRANCH_REMOVAL';
-    // Event on merge request acceptance (IRI of the record being accepted and the target branch IRI)
-    static EVENT_MERGE_REQUEST_ACCEPTED = 'EVENT_MERGE_REQUEST_ACCEPTED';
-    // Event on merge request closure
-    static EVENT_MERGE_REQUEST_CLOSED = 'EVENT_MERGE_REQUEST_CLOSED';
-}
-
-export interface EventWithPayload {
-    eventType: string;
-    payload: EventPayload;
-}
+ */
+export type MergeRequestStatus = 'open' | 'closed' | 'accepted';
+export type MergeRequestStatusAction = 'open' | 'close' | 'accept';

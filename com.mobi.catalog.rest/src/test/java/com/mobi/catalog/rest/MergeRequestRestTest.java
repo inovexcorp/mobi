@@ -23,12 +23,14 @@ package com.mobi.catalog.rest;
  * #L%
  */
 
+import static com.mobi.ontologies.rdfs.Resource.type_IRI;
 import static com.mobi.persistence.utils.ResourceUtils.encode;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getModelFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory;
 import static com.mobi.rest.util.RestUtils.createIRI;
 import static com.mobi.rest.util.RestUtils.getRDFFormat;
 import static com.mobi.rest.util.RestUtils.groupedModelToString;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
@@ -57,6 +59,8 @@ import com.mobi.catalog.api.mergerequest.MergeRequestManager;
 import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecordFactory;
+import com.mobi.catalog.api.ontologies.mergerequests.AcceptedMergeRequest;
+import com.mobi.catalog.api.ontologies.mergerequests.ClosedMergeRequest;
 import com.mobi.catalog.api.ontologies.mergerequests.Comment;
 import com.mobi.catalog.api.ontologies.mergerequests.CommentFactory;
 import com.mobi.catalog.api.ontologies.mergerequests.MergeRequest;
@@ -78,6 +82,7 @@ import com.mobi.rdf.orm.conversion.impl.ResourceValueConverter;
 import com.mobi.rdf.orm.conversion.impl.ShortValueConverter;
 import com.mobi.rdf.orm.conversion.impl.StringValueConverter;
 import com.mobi.rdf.orm.conversion.impl.ValueValueConverter;
+import com.mobi.repository.impl.sesame.memory.MemoryRepositoryWrapper;
 import com.mobi.rest.test.util.FormDataMultiPart;
 import com.mobi.rest.test.util.MobiRestTestCXF;
 import com.mobi.rest.test.util.UsernameTestFilter;
@@ -92,6 +97,8 @@ import org.eclipse.rdf4j.model.ModelFactory;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.eclipse.rdf4j.repository.sail.SailRepository;
+import org.eclipse.rdf4j.sail.memory.MemoryStore;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -146,6 +153,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
     private static UserFactory userFactory;
     private static VersionedRDFRecordFactory versionedRDFRecordFactory;
     private static ValueConverterRegistry vcr;
+    private MemoryRepositoryWrapper repo;
 
     private static MergeRequestManager requestManager;
     private static EngineManager engineManager;
@@ -214,6 +222,10 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
     public void setUpMocks() throws Exception {
         closeable = MockitoAnnotations.openMocks(this);
         when(configProvider.getLocalCatalogIRI()).thenReturn(vf.createIRI(CATALOG_IRI));
+
+        repo = new MemoryRepositoryWrapper();
+        repo.setDelegate(new SailRepository(new MemoryStore()));
+        when(configProvider.getRepository()).thenReturn(repo);
 
         request1 = mergeRequestFactory.createNew(vf.createIRI("http://mobi.com/merge-requests#1"));
         Model contextModel1 = mf.createEmptyModel();
@@ -892,7 +904,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
 
     @Test
     public void updateMergeRequestTest() {
-        Mockito.doReturn(false).when(rest).checkMergeRequestModifyPermissions(any(), any());
+        Mockito.doReturn(false).when(rest).checkMergeRequestManagePermissions(any(), any());
         Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()))
                 .request()
                 .put(Entity.entity(groupedModelToString(request1.getModel(), getRDFFormat("jsonld")), MediaType.APPLICATION_JSON_TYPE));
@@ -902,7 +914,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
 
     @Test
     public void updateMergeRequestEmptyJsonTest() {
-        Mockito.doReturn(false).when(rest).checkMergeRequestModifyPermissions(any(), any());
+        Mockito.doReturn(false).when(rest).checkMergeRequestManagePermissions(any(), any());
         Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()))
                 .request()
                 .put(Entity.json("[]"));
@@ -912,7 +924,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
 
     @Test
     public void updateMergeRequestWithInvalidJsonTest() {
-        Mockito.doReturn(false).when(rest).checkMergeRequestModifyPermissions(any(), any());
+        Mockito.doReturn(false).when(rest).checkMergeRequestManagePermissions(any(), any());
         Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()))
                 .request()
                 .put(Entity.json("['test': true]"));
@@ -922,7 +934,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
 
     @Test
     public void updateMergeRequestThatDoesNotMatchTest() {
-        Mockito.doReturn(false).when(rest).checkMergeRequestModifyPermissions(any(), any());
+        Mockito.doReturn(false).when(rest).checkMergeRequestManagePermissions(any(), any());
         Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()))
                 .request()
                 .put(Entity.entity(groupedModelToString(request2.getModel(), getRDFFormat("jsonld")), MediaType.APPLICATION_JSON_TYPE));
@@ -932,7 +944,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
 
     @Test
     public void updateMergeRequestWithErrorTest() {
-        Mockito.doReturn(false).when(rest).checkMergeRequestModifyPermissions(any(), any());
+        Mockito.doReturn(false).when(rest).checkMergeRequestManagePermissions(any(), any());
         doThrow(new MobiException()).when(requestManager).updateMergeRequest(eq(request1.getResource()), any(MergeRequest.class));
         Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()))
                 .request()
@@ -948,9 +960,10 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
         assertEquals(response.getStatus(), 400);
     }
 
+    /* GET merge-requests/{requestId}/status */
     @Test
     public void updateMergeRequestPermissionDeniedTest() {
-        Mockito.doReturn(true).when(rest).checkMergeRequestModifyPermissions(any(), any());
+        Mockito.doReturn(true).when(rest).checkMergeRequestManagePermissions(any(), any());
         Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()))
                 .request()
                 .put(Entity.entity(groupedModelToString(request1.getModel(), getRDFFormat("jsonld")), MediaType.APPLICATION_JSON_TYPE));
@@ -960,38 +973,132 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
     /* POST merge-requests/{requestId} */
 
     @Test
-    public void acceptMergeRequestTest() {
-        Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()))
-                .request().post(Entity.entity("", MediaType.TEXT_PLAIN));
-        verify(requestManager).acceptMergeRequest(request1.getResource(), user);
+    public void retrieveMergeRequestStatusClosedTest() {
+        Mockito.doReturn(false).when(rest).checkMergeRequestManagePermissions(any(), any());
+        try (RepositoryConnection conn = repo.getConnection()) {
+            conn.add(request1.getResource(), vf.createIRI(type_IRI), vf.createIRI(ClosedMergeRequest.TYPE));
+        }
+        Response response = target().path(String.format("merge-requests/%s/status", encode(request1.getResource().stringValue())))
+                .request().get();
         assertEquals(response.getStatus(), 200);
+        String responseStatus = response.readEntity(String.class);
+        assertEquals(responseStatus, "closed");
     }
 
     @Test
-    public void acceptMergeRequestWithBadArgumentsTest() {
+    public void retrieveMergeRequestStatusAcceptedTest() {
+        Mockito.doReturn(false).when(rest).checkMergeRequestManagePermissions(any(), any());
+        try (RepositoryConnection conn = repo.getConnection()) {
+            conn.add(request1.getResource(), vf.createIRI(type_IRI), vf.createIRI(AcceptedMergeRequest.TYPE));
+        }
+        Response response = target().path(String.format("merge-requests/%s/status", encode(request1.getResource().stringValue())))
+                .request().get();
+        assertEquals(response.getStatus(), 200);
+        String responseStatus = response.readEntity(String.class);
+        assertEquals(responseStatus, "accepted");
+    }
+
+    @Test
+    public void retrieveMergeRequestStatusOpenTest() {
+        Mockito.doReturn(false).when(rest).checkMergeRequestManagePermissions(any(), any());
+        try (RepositoryConnection conn = repo.getConnection()) {
+            conn.add(request1.getResource(), vf.createIRI(type_IRI), vf.createIRI(MergeRequest.TYPE));
+        }
+        Response response = target().path(String.format("merge-requests/%s/status", encode(request1.getResource().stringValue())))
+                .request().get();
+        assertEquals(response.getStatus(), 200);
+        String responseStatus = response.readEntity(String.class);
+        assertEquals(responseStatus, "open");
+    }
+
+    @Test
+    public void retrieveMergeRequestStatusNoAssociatedState() {
+        Mockito.doReturn(false).when(rest).checkMergeRequestManagePermissions(any(), any());
+        try (RepositoryConnection conn = repo.getConnection()) {
+            conn.add(request1.getResource(), vf.createIRI(type_IRI), vf.createIRI("urn:invalid"));
+        }
+        Response response = target().path(String.format("merge-requests/%s/status", encode(request1.getResource().stringValue())))
+                .request().get();
+        assertEquals(response.getStatus(), 500);
+    }
+
+    @Test
+    public void retrieveMergeRequestStatusNotFound() {
+        Mockito.doReturn(false).when(rest).checkMergeRequestManagePermissions(any(), any());
+        Response response = target().path(String.format("merge-requests/%s/status", encode(request1.getResource().stringValue())))
+                .request().get();
+        assertEquals(response.getStatus(), 404);
+    }
+
+    /* POST merge-requests/{requestId}/status */
+    @Test
+    public void updateMergeRequestStatusAcceptTest() {
+        Mockito.doReturn(false).when(rest).checkMergeRequestManagePermissions(any(), any());
+        Response response = target().path(String.format("merge-requests/%s/status", encode(request1.getResource().stringValue())))
+                .queryParam("action", "accept")
+                .request().post(Entity.entity("", MediaType.TEXT_PLAIN));
+
+        assertEquals(response.getStatus(), 200);
+        verify(requestManager).acceptMergeRequest(request1.getResource(), user);
+    }
+
+    @Test
+    public void updateMergeRequestStatusAcceptWithBadArgumentsTest() {
         // Setup:
+        Mockito.doReturn(false).when(rest).checkMergeRequestManagePermissions(any(), any());
         doThrow(new IllegalArgumentException()).when(requestManager).acceptMergeRequest(any(Resource.class), any(User.class));
 
-        Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()))
+        Response response = target().path(String.format("merge-requests/%s/status", encode(request1.getResource().stringValue())))
+                .queryParam("action", "accept")
                 .request().post(Entity.entity("", MediaType.TEXT_PLAIN));
         assertEquals(response.getStatus(), 400);
     }
 
     @Test
-    public void acceptMergeRequestWithErrorTest() {
+    public void updateMergeRequestStatusAcceptWithErrorTest() {
         // Setup:
+        Mockito.doReturn(false).when(rest).checkMergeRequestManagePermissions(any(), any());
         doThrow(new IllegalStateException()).when(requestManager).acceptMergeRequest(any(Resource.class), any(User.class));
 
-        Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()))
+        Response response = target().path(String.format("merge-requests/%s/status", encode(request1.getResource().stringValue())))
+                .queryParam("action", "accept")
                 .request().post(Entity.entity("", MediaType.TEXT_PLAIN));
         assertEquals(response.getStatus(), 500);
+    }
+
+    @Test
+    public void updateMergeRequestStatusCloseTest() {
+        Mockito.doReturn(false).when(rest).checkMergeRequestManagePermissions(any(), any());
+        Response response = target().path(String.format("merge-requests/%s/status", encode(request1.getResource().stringValue())))
+                .queryParam("action", "close")
+                .request().post(Entity.entity("", MediaType.TEXT_PLAIN));
+        assertEquals(response.getStatus(), 200);
+        verify(requestManager).closeMergeRequest(request1.getResource(), user);
+    }
+
+    @Test
+    public void updateMergeRequestStatusOpenTest() {
+        Mockito.doReturn(false).when(rest).checkMergeRequestManagePermissions(any(), any());
+        Response response = target().path(String.format("merge-requests/%s/status", encode(request1.getResource().stringValue())))
+                .queryParam("action", "open")
+                .request().post(Entity.entity("", MediaType.TEXT_PLAIN));
+        assertEquals(response.getStatus(), BAD_REQUEST.getStatusCode());
+    }
+
+    @Test
+    public void updateMergeRequestStatusInvalidActionTest() {
+        Mockito.doReturn(false).when(rest).checkMergeRequestManagePermissions(any(), any());
+        Response response = target().path(String.format("merge-requests/%s/status", encode(request1.getResource().stringValue())))
+                .queryParam("action", "invalid")
+                .request().post(Entity.entity("", MediaType.TEXT_PLAIN));
+        assertEquals(response.getStatus(), BAD_REQUEST.getStatusCode());
     }
 
     /* DELETE merge-requests/{requestId} */
 
     @Test
     public void deleteMergeRequestTest() {
-        Mockito.doReturn(false).when(rest).checkMergeRequestModifyPermissions(any(), any());
+        Mockito.doReturn(false).when(rest).checkMergeRequestManagePermissions(any(), any());
         Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()))
                 .request().delete();
         verify(requestManager).deleteMergeRequest(request1.getResource());
@@ -1000,7 +1107,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
 
     @Test
     public void deleteMergeRequestWithIRIDoesNotExistTest() {
-        Mockito.doReturn(false).when(rest).checkMergeRequestModifyPermissions(any(), any());
+        Mockito.doReturn(false).when(rest).checkMergeRequestManagePermissions(any(), any());
         Response response = target().path("merge-requests/" + encode(doesNotExist))
                 .request().delete();
         assertEquals(response.getStatus(), 404);
@@ -1008,7 +1115,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
 
     @Test
     public void deleteMergeRequestWithInvalidIRITest() {
-        Mockito.doReturn(false).when(rest).checkMergeRequestModifyPermissions(any(), any());
+        Mockito.doReturn(false).when(rest).checkMergeRequestManagePermissions(any(), any());
         Response response = target().path("merge-requests/" + encode(invalidIRIString))
                 .request().delete();
         assertEquals(response.getStatus(), 400);
@@ -1016,7 +1123,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
 
     @Test
     public void deleteMergeRequestPermissionDeniedTest() {
-        Mockito.doReturn(true).when(rest).checkMergeRequestModifyPermissions(any(), any());
+        Mockito.doReturn(true).when(rest).checkMergeRequestManagePermissions(any(), any());
         Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()))
                 .request().delete();
         verify(requestManager, never()).deleteMergeRequest(request1.getResource());
@@ -1428,7 +1535,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
     @Test
     public void checkMergeRequestPermissionsNotFoundTest() {
         try {
-            rest.checkMergeRequestModifyPermissions(vf.createIRI("http://non-exist.com"), Mockito.mock(User.class));
+            rest.checkMergeRequestManagePermissions(vf.createIRI("http://non-exist.com"), Mockito.mock(User.class));
             fail("Expected exception was not thrown");
         } catch (Exception e) {
             assertNotNull(e);
@@ -1445,7 +1552,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
         User user = Mockito.mock(User.class);
         when(user.getResource()).thenReturn(vf.createIRI("urn:user1"));
 
-        boolean accessDenied = rest.checkMergeRequestModifyPermissions(vf.createIRI("http://non-exist.com"), user);
+        boolean accessDenied = rest.checkMergeRequestManagePermissions(vf.createIRI("http://non-exist.com"), user);
         assertFalse(accessDenied);
     }
 
@@ -1459,7 +1566,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
         User user = Mockito.mock(User.class);
         when(user.getResource()).thenReturn(vf.createIRI("urn:user2"));
 
-        boolean accessDenied = rest.checkMergeRequestModifyPermissions(vf.createIRI("http://non-exist.com"), user);
+        boolean accessDenied = rest.checkMergeRequestManagePermissions(vf.createIRI("http://non-exist.com"), user);
         assertTrue(accessDenied);
     }
 
@@ -1481,7 +1588,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
         User user = Mockito.mock(User.class);
         when(user.getResource()).thenReturn(vf.createIRI("urn:user2"));
 
-        boolean accessDenied = rest.checkMergeRequestModifyPermissions(vf.createIRI("http://non-exist.com"), user);
+        boolean accessDenied = rest.checkMergeRequestManagePermissions(vf.createIRI("http://non-exist.com"), user);
         assertFalse(accessDenied);
         verify(pdp).createRequest(any(), any(), any(), any(), any(), any());
     }
@@ -1504,7 +1611,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
         User user = Mockito.mock(User.class);
         when(user.getResource()).thenReturn(vf.createIRI("urn:user2"));
 
-        boolean accessDenied = rest.checkMergeRequestModifyPermissions(vf.createIRI("http://non-exist.com"), user);
+        boolean accessDenied = rest.checkMergeRequestManagePermissions(vf.createIRI("http://non-exist.com"), user);
         assertTrue(accessDenied);
         verify(pdp).createRequest(any(), any(), any(), any(), any(), any());
     }

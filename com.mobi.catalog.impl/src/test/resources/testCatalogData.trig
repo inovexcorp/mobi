@@ -238,21 +238,25 @@ GRAPH versions:latest-tag {
 
 GRAPH branches:lone-branch {
     branches:lone-branch a mcat:Branch ;
+        dc:title "lone-branch" ;
         mcat:head commits:commit .
 }
 
 GRAPH branches:branch {
     branches:branch a mcat:Branch ;
+        dc:title "branch" ;
         dc:modified "2017-05-01T00:00:00Z"^^xsd:dateTime ;
         mcat:head commits:commitA1 .
 }
 
 GRAPH branches:no-head-branch {
-    branches:no-head-branch a mcat:Branch .
+    branches:no-head-branch a mcat:Branch ;
+        dc:title "no-head-branch" .
 }
 
 GRAPH branches:user-branch {
     branches:user-branch a mcat:Branch, mcat:UserBranch ;
+        dc:title "user-branch" ;
         mcat:createdFrom branches:branch .
 }
 
@@ -1415,6 +1419,7 @@ GRAPH records:quad-versioned-rdf-record {
 
 GRAPH branches:quad-branch {
     branches:quad-branch a mcat:Branch ;
+        dc:title "quad-branch" ;
         mcat:head commits:quad-test2 .
 }
 
