@@ -113,6 +113,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.time.OffsetDateTime;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -959,6 +960,7 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
             Branch branch = branchFactory.createNew(branchIRI);
             Commit commit = commitFactory.createNew(commitIRI);
             branch.setHead(commit);
+            branch.setProperty(VALUE_FACTORY.createLiteral("Test Record"), VALUE_FACTORY.createIRI(_Thing.title_IRI));
             record.setProperty(vf.createLiteral(OffsetDateTime.now().minusDays(1)), vf.createIRI(_Thing.modified_IRI));
             String previousModifiedValue = getModifiedIriValue(record);
             when(recordManager.getRecord(eq(catalogId), eq(testIRI), any(), any(RepositoryConnection.class))).thenReturn(record);
@@ -975,7 +977,8 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
             verify(thingManager).remove(eq(revision.getAdditions().get()), any(RepositoryConnection.class));
             verify(thingManager).remove(eq(revision.getDeletions().get()), any(RepositoryConnection.class));
             verify(ontologyCache).removeFromCache(testIRI.stringValue(), commitIRI.stringValue());
-            verify(mergeRequestManager).cleanMergeRequests(eq(testIRI), eq(branchIRI), any(RepositoryConnection.class));
+            verify(mergeRequestManager).cleanMergeRequests(eq(testIRI), eq(branchIRI), eq("Test Record"),
+                    eq(Arrays.asList(vf.createIRI("http://mobi.com/test/commits#commit"))), any(RepositoryConnection.class));
             assertNotSame(getModifiedIriValue(record), previousModifiedValue);
         }
     }

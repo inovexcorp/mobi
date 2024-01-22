@@ -41,6 +41,7 @@ import { MergeRequest } from '../models/mergeRequest.interface';
 import { UserCount } from '../models/user-count.interface';
 import { PaginatedConfig } from '../models/paginatedConfig.interface';
 import { RecordCount } from '../models/record-count.interface';
+import { MergeRequestStatus, MergeRequestStatusAction } from '../models/merge-request-status';
 
 /**
  * @class shared.MergeRequestManagerService
@@ -169,15 +170,19 @@ export class MergeRequestManagerService {
      * Calls the POST /mobirest/merge-requests/{requestId} endpoint to accept a Merge Request
      * with a matching IRI and perform the represented merge.
      *
-     * @param {string} requestId An IRI ID of a Merge Request
+     * @param {string} mergeRequest The jsonLD of the merge request to take an action against
+     * @param {string} action A string representation of the action to take against the mergeRequest
      * @returns {Observable<null>} An Observable that resolves if the request was accepted or rejects with an
      * error message
      */
-    acceptRequest(requestToAccept: MergeRequest): Observable<void> {
-        const requestToAcceptClone = cloneDeep(requestToAccept);
+    updateRequestStatus(mergeRequest: MergeRequest, action: MergeRequestStatusAction): Observable<void> {
+        const requestToAcceptClone = cloneDeep(mergeRequest);
         const mergeRequestId = requestToAcceptClone.jsonld['@id'];
-        return this.spinnerSvc.track(this.http.post(`${this.prefix}/${encodeURIComponent(mergeRequestId)}`, null))
-           .pipe(
+        const params = {
+            action: action
+        };
+        return this.spinnerSvc.track(this.http.post(`${this.prefix}/${encodeURIComponent(mergeRequestId)}/status`,
+            null, {params: createHttpParams(params)})).pipe(
                 catchError(handleError),
                 map(() => {}),
                 tap(() => {
@@ -313,7 +318,7 @@ export class MergeRequestManagerService {
       const url = `${this.prefix}/assignees`;
       const request =  this.http.get<UserCount[]>(url, { params, observe: 'response' });
       return this.spinnerSvc.trackedRequest(request, isTracked).pipe(catchError(handleError));
-  }
+    }
     /**
      * Retrieves the list of records of merge requests throughout the application using the provided pagination
      * parameters. Results include the record's IRI, title, and MR count and are ordered by title.
@@ -333,14 +338,19 @@ export class MergeRequestManagerService {
         const request =  this.http.get<RecordCount[]>(url, { params, observe: 'response' });
         return this.spinnerSvc.trackedRequest(request, isTracked).pipe(catchError(handleError));
     }
-
     /**
-     * Determines whether the passed request is accepted or not.
+     * Returns the current status of the passed Merge Request.
      *
      * @param {JSONLDObject} request A MergeRequest JSON-LD object
-     * @return {boolean} True if the MergeRequest is accepted; false otherwise
+     * @return {string} a status string corresponding to the current status
      */
-    isAccepted(request: JSONLDObject): boolean {
-        return includes(request['@type'], `${MERGEREQ}AcceptedMergeRequest`);
+    requestStatus(request: JSONLDObject): MergeRequestStatus {
+        if (includes(request['@type'], `${MERGEREQ}AcceptedMergeRequest`)) {
+            return 'accepted';
+        } else if (includes(request['@type'], `${MERGEREQ}ClosedMergeRequest`)) {
+            return 'closed';
+        } else {
+            return 'open';
+        }
     }
 }

@@ -307,7 +307,7 @@ describe('Merge Requests State service', function() {
         });
         describe('accepted and', function() {
             beforeEach(function() {
-                mergeRequestManagerStub.isAccepted.and.returnValue(true);
+                mergeRequestManagerStub.requestStatus.and.returnValue('accepted');
                 this.copyRequest.jsonld[`${MERGEREQ}sourceBranchTitle`] = [{ '@value': 'sourceBranchTitle' }];
                 this.copyRequest.jsonld[`${MERGEREQ}targetBranchTitle`] = [{ '@value': 'targetBranchTitle' }];
                 this.copyRequest.jsonld[`${MERGEREQ}sourceCommit`] = [{ '@id': 'sourceCommit' }];
@@ -343,8 +343,8 @@ describe('Merge Requests State service', function() {
                     it('processDifferenceResponse rejects', fakeAsync(function() {
                         spyOn(service, 'processDifferenceResponse').and.returnValue(throwError(error));
                         service.setRequestDetails(this.copyRequest)
-                            .subscribe(() => fail('Observable should have rejected'), response => {
-                                expect(response).toEqual(error);
+                            .subscribe(response => {
+                                expect(response).toEqual(null);
                                 expect(this.copyRequest.sourceBranch).toEqual({'@id': ''});
                                 expect(this.copyRequest.targetBranch).toEqual({'@id': ''});
                                 expect(this.copyRequest.removeSource).toBeUndefined();
@@ -356,7 +356,7 @@ describe('Merge Requests State service', function() {
                                 expect(mergeRequestManagerStub.getComments).toHaveBeenCalledWith(requestId);
                                 expect(catalogManagerStub.getDifference).toHaveBeenCalledWith('sourceCommit', 'targetCommit', 100, 0);
                                 expect(service.processDifferenceResponse).toHaveBeenCalledWith(recordId, '', 'sourceCommit', this.httpResponse, `${ONTOLOGYEDITOR}OntologyRecord`);
-                            });
+                            }, () => fail('Observable should have rejected'), );
                         tick();
                     }));
                 });
@@ -364,8 +364,8 @@ describe('Merge Requests State service', function() {
                     spyOn(service, 'processDifferenceResponse');
                     catalogManagerStub.getDifference.and.returnValue(throwError(error));
                     service.setRequestDetails(this.copyRequest)
-                        .subscribe(() => fail('Observable should have rejected'), response => {
-                            expect(response).toEqual(error);
+                        .subscribe(response => {
+                            expect(response).toEqual(null);
                             expect(this.copyRequest.sourceBranch).toEqual({'@id': ''});
                             expect(this.copyRequest.targetBranch).toEqual({'@id': ''});
                             expect(this.copyRequest.removeSource).toBeUndefined();
@@ -377,16 +377,16 @@ describe('Merge Requests State service', function() {
                             expect(mergeRequestManagerStub.getComments).toHaveBeenCalledWith(requestId);
                             expect(catalogManagerStub.getDifference).toHaveBeenCalledWith('sourceCommit', 'targetCommit', 100, 0);
                             expect(service.processDifferenceResponse).not.toHaveBeenCalled();
-                        });
+                        }, () => fail('Observable should have rejected'), );
                     tick();
                 }));
             });
             it('getComments rejects', fakeAsync(function() {
-                spyOn(service, 'processDifferenceResponse');
+                spyOn(service, 'processDifferenceResponse').and.returnValue(of(undefined));
                 mergeRequestManagerStub.getComments.and.returnValue(throwError(error));
                 service.setRequestDetails(this.copyRequest)
-                    .subscribe(() => fail('Observable should have rejected'), response => {
-                        expect(response).toEqual(error);
+                    .subscribe(response => {
+                        expect(response).toEqual(null);
                         expect(this.copyRequest.sourceBranch).toEqual({'@id': ''});
                         expect(this.copyRequest.targetBranch).toEqual({'@id': ''});
                         expect(this.copyRequest.removeSource).toBeUndefined();
@@ -396,15 +396,21 @@ describe('Merge Requests State service', function() {
                         expect(this.copyRequest.sourceCommit).toEqual('sourceCommit');
                         expect(this.copyRequest.targetCommit).toEqual('targetCommit');
                         expect(mergeRequestManagerStub.getComments).toHaveBeenCalledWith(requestId);
-                        expect(catalogManagerStub.getDifference).not.toHaveBeenCalled();
-                        expect(service.processDifferenceResponse).not.toHaveBeenCalled();
+                        
+                        expect(catalogManagerStub.getDifference).toHaveBeenCalledWith(this.copyRequest.sourceCommit,
+                            this.copyRequest.targetCommit, catalogManagerStub.differencePageSize, 0);
+                        expect(service.processDifferenceResponse).toHaveBeenCalledWith(this.copyRequest.recordIri,
+                            '', this.copyRequest.sourceCommit, jasmine.objectContaining({status: 200, statusText: 'OK', url: null, ok: true, type: 4, body: difference}), 
+                            this.copyRequest.recordType);
+                    }, error => {
+                        fail('Observable should have rejected: ' + error);
                     });
                 tick();
             }));
         });
         describe('open', function() {
             beforeEach(function() {
-                mergeRequestManagerStub.isAccepted.and.returnValue(false);
+                mergeRequestManagerStub.requestStatus.and.returnValue('open');
                 this.copyRequest.jsonld[`${MERGEREQ}sourceBranch`] = [{ '@id': sourceBranch['@id'] }];
                 spyOn(service, 'shouldRemoveSource').and.returnValue(false);
             });

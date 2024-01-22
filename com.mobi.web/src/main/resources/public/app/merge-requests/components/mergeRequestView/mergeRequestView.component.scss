@@ -24,84 +24,98 @@
 @import "../../../css/variables";
 
 .merge-request-view {
-    .buttons button {
-        margin-left: 10px;
-    }
-    .title h2 {
-        margin-bottom: 0;
-        vertical-align: bottom;
-    }
-   .request-info {
-       display: flex;
-       &-title {
-           align-self: center;
-       }
-   }
-    .assignees {
-        li {
-            display: inline;
-
-            &:after {
-                content: ', ';
-            }
-            &.last:after {
-                content: '';
-            }
+    .main-details {
+        .title-container {
+            overflow-x: hidden;
         }
-    }
-    .details-read-only {
-        margin: 0px 0px 0px 0px;
-        align-items: center;
-        justify-items: center;
-        word-break: break-all;
-        -webkit-transition: background-color ease-in-out 0.1s;
-        transition: background-color ease-in-out 0.1s;
-
-        .edit-button-container {
-            -webkit-transition: opacity ease-in-out 0.1s;
-            transition: opacity ease-in-out 0.1s;
-            opacity: 0;
-
-            button {
-                text-decoration: none;
-            }
-        }
-
-        &:hover {
-            background-color: var(--light);
-
-            .edit-button-container {
-                opacity: 1;
-            }
-        }
-    }
-    .details-hover {
-        margin: 0px 0px 0px 0px;
-        align-items: center;
-        justify-items: center;
-        word-break: break-all;
-        -webkit-transition: background-color ease-in-out 0.1s;
-        transition: background-color ease-in-out 0.1s;
-
-        .edit-button-container {
-            -webkit-transition: opacity ease-in-out 0.1s;
-            transition: opacity ease-in-out 0.1s;
-            opacity: 0;
-
-            button {
-                text-decoration: none;
-                &:hover {
-                    color: inherit;
+        .assignees {
+            li {
+                display: inline;
+                &:after {
+                    content: ', ';
+                }
+                &.last:after {
+                    content: '';
                 }
             }
         }
-
-        &:hover {
-            background-color: var(--light);
+        .details-read-only {
+            margin: 0px 0px 0px 0px;
+            align-items: center;
+            justify-items: center;
+            word-break: break-all;
+            -webkit-transition: background-color ease-in-out 0.1s;
+            transition: background-color ease-in-out 0.1s;
 
             .edit-button-container {
-                opacity: 1;
+                -webkit-transition: opacity ease-in-out 0.1s;
+                transition: opacity ease-in-out 0.1s;
+                opacity: 0;
+
+                button {
+                    text-decoration: none;
+                }
+            }
+
+            &:hover {
+                background-color: var(--light);
+
+                .edit-button-container {
+                    opacity: 1;
+                }
             }
         }
+        .details-hover {
+            margin: 0px 0px 0px 0px;
+            align-items: center;
+            justify-items: center;
+            word-break: break-all;
+            -webkit-transition: background-color ease-in-out 0.1s;
+            transition: background-color ease-in-out 0.1s;
+
+            .edit-button-container {
+                -webkit-transition: opacity ease-in-out 0.1s;
+                transition: opacity ease-in-out 0.1s;
+                opacity: 0;
+
+                button {
+                    text-decoration: none;
+                    &:hover {
+                        color: inherit;
+                    }
+                }
+            }
+
+            &:hover {
+                background-color: var(--light);
+
+                .edit-button-container {
+                    opacity: 1;
+                }
+            }
+        }
+    }
+    .chip-closed {
+        background-color: var(--orange);
+        color: var(--light);
+        &:disabled {
+            background-color: rgba(0, 0, 0, 0.12);
+            color: rgba(0, 0, 0, 0.26);
+        }
+    }
+    .chip-accepted {
+        background-color: var(--success);
+        color: var(--light);
+    }
+    .button-close {
+        background-color: var(--orange);
+        color: var(--light);
+        &:disabled {
+            background-color: rgba(0, 0, 0, 0.12);
+            color: rgba(0, 0, 0, 0.26);
+        }
+    }
+    .buttons button {
+        margin-left: 10px;
     }
 }

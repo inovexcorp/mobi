@@ -20,9 +20,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
-import { Observable, Subscription } from 'rxjs';
+import { Observable, Subject, Subscription } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 import { FilterItem } from '../../../shared/models/filterItem.interface';
 import { MergeRequestsStateService } from '../../../shared/services/mergeRequestsState.service';
@@ -34,6 +35,7 @@ import { FilterType, ListFilter } from '../../../shared/models/list-filter.inter
 import { SearchableListFilter } from '../../../shared/models/searchable-list-filter.interface';
 import { ToastService } from '../../../shared/services/toast.service';
 import { RecordCount } from '../../../shared/models/record-count.interface';
+import { MergeRequestStatus } from '../../../shared/models/merge-request-status';
 
 /**
  * @class merge-requests.MergeRequestFilterComponent
@@ -51,16 +53,18 @@ import { RecordCount } from '../../../shared/models/record-count.interface';
   templateUrl: './merge-request-filter.component.html',
   styleUrls: ['./merge-request-filter.component.scss']
 })
-export class MergeRequestFilterComponent implements OnInit {
+export class MergeRequestFilterComponent implements OnInit, OnDestroy {
   updateFiltersSubscription: Subscription;
   filters: ListFilter[];
-  requestStatusOptions = [
+  requestStatusOptions: {value: MergeRequestStatus; label: string;}[] = [
     { value: 'open', label: 'Open' },
     { value: 'accepted', label: 'Accepted' },
     { value: 'closed', label: 'Closed'}
   ];
   @Input() updateFilters: Observable<void>;
   @Output() changeFilter = new EventEmitter<MergeRequestFilterEvent>();
+
+  private _destroySub$ = new Subject<void>();
 
   constructor(private _state: MergeRequestsStateService, private _mm: MergeRequestManagerService, 
     private _toast: ToastService) {}
@@ -171,8 +175,9 @@ export class MergeRequestFilterComponent implements OnInit {
             pageIndex: pagingData.pageIndex,
             limit: pagingData.limit,
         };
-        componentContext._mm.getCreators(paginatedConfig)
-          .subscribe((response: HttpResponse<UserCount[]>) => {
+        componentContext._mm.getCreators(paginatedConfig).pipe(
+          takeUntil(componentContext._destroySub$),
+        ).subscribe((response: HttpResponse<UserCount[]>) => {
             if (pagingData.pageIndex === 0) {
               filterInstance.rawFilterItems = response.body;
             } else {
@@ -247,6 +252,7 @@ export class MergeRequestFilterComponent implements OnInit {
               limit: pagingData.limit,
           };
           componentContext._mm.getRecords(paginatedConfig)
+            .pipe(takeUntil(componentContext._destroySub$))
             .subscribe((response: HttpResponse<RecordCount[]>) => {
               if (pagingData.pageIndex === 0) {
                 filterInstance.rawFilterItems = response.body;
@@ -321,8 +327,9 @@ export class MergeRequestFilterComponent implements OnInit {
             pageIndex: pagingData.pageIndex,
             limit: pagingData.limit,
         };
-        componentContext._mm.getAssignees(paginatedConfig)
-          .subscribe((response: HttpResponse<UserCount[]>) => {
+        componentContext._mm.getAssignees(paginatedConfig).pipe(
+          takeUntil(componentContext._destroySub$),
+        ).subscribe((response: HttpResponse<UserCount[]>) => {
             if (pagingData.pageIndex === 0) {
               filterInstance.rawFilterItems = response.body;
             } else {
@@ -344,5 +351,9 @@ export class MergeRequestFilterComponent implements OnInit {
         filter.onInit();
       });
     });
+  }
+  ngOnDestroy(): void {
+    this._destroySub$.next();
+    this._destroySub$.complete();
   }
 }

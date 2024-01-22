@@ -167,7 +167,7 @@ describe('Comment Display component', function() {
             fixture.detectChanges();
             expect(element.queryAll(By.css('.comment-body button')).length).toEqual(2);
             
-            component.accepted = true;
+            component.requestStatus = 'accepted';
             fixture.detectChanges();
             expect(element.queryAll(By.css('.comment-body button')).length).toEqual(1);
         });

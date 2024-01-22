@@ -76,6 +76,7 @@ export class RecordViewComponent implements OnInit, OnDestroy {
     }
     ngOnDestroy(): void {
         this._destroySub$.next();
+        this._destroySub$.complete();
     }
     goBack(): void {
         this.state.selectedRecord = undefined;

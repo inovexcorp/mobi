@@ -410,7 +410,8 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
         record.setProperty(vf.createLiteral(OffsetDateTime.now()), vf.createIRI(_Thing.modified_IRI));
         thingManager.updateObject(record, conn);
         List<Resource> deletedCommits = removeBranch(versionedRDFRecordId, branch, conn);
-        mergeRequestManager.cleanMergeRequests(versionedRDFRecordId, branchId, conn);
+        mergeRequestManager.cleanMergeRequests(versionedRDFRecordId, branchId, getBranchTitle(branch),
+                deletedCommits, conn);
         conn.commit();
         return Optional.of(deletedCommits);
     }
@@ -654,5 +655,10 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
                 })
                 .reduce(false, (iri1, iri2) -> iri1 || iri2);
         return isHeadCommit || isParent;
+    }
+
+    private String getBranchTitle(Branch branch) {
+        return branch.getProperty(vf.createIRI(_Thing.title_IRI)).orElseThrow(() ->
+                new IllegalStateException("Branch " + branch.getResource() + " does not have a title")).stringValue();
     }
 }

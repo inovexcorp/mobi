@@ -96,8 +96,15 @@ AdministrationPage.prototype.logout = function(browser) {
     browser
         .useXpath()
         .click("//li/a[@class='nav-link']/span[text()[contains(.,'Logout')]]")
-        .assert.visible('//div[@class="form-group"]//input[@id="username"]')
-        .assert.visible('//div[@class="form-group"]//input[@id="password"]');
+        .waitForElementVisible('//div[@class="form-group"]//input[@id="username"]')
+        .waitForElementVisible('//div[@class="form-group"]//input[@id="password"]');
 }
+
+AdministrationPage.prototype.validateUserList = function(browser, username) {
+    browser
+        .useXpath()
+        .assert.visible("//div[@class= 'users-list tree scroll-without-buttons']//ul//li//a//span[text() " +
+            "[contains(., '" + username + "')]]", "new user is displayed");
+};
 
 module.exports = { administrationPage: new AdministrationPage() };

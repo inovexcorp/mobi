@@ -256,5 +256,6 @@ export class RecordFiltersComponent implements OnInit, OnDestroy {
     }
     ngOnDestroy(): void {
         this._destroySub$.next();
+        this._destroySub$.complete();
     }
 }

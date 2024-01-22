@@ -65,7 +65,7 @@ export class CommentDisplayComponent implements OnInit, OnChanges {
     private _comment: JSONLDObject;
 
     @Input() isReply: boolean;
-    @Input() accepted: boolean;
+    @Input() requestStatus: string;
     @Input() editInProgress: boolean;
     @Input() set comment(value: JSONLDObject) {
         this._comment = value;
