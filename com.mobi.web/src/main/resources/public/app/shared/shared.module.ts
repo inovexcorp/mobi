@@ -52,6 +52,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatRadioModule } from '@angular/material/radio';
 import { MatSelectModule } from '@angular/material/select';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatSliderModule } from '@angular/material/slider';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatStepperModule } from '@angular/material/stepper';
 import { MatTableModule } from '@angular/material/table';
@@ -189,6 +190,7 @@ import { HistoryGraph } from '../history-graph/history-graph.module';
         MatRadioModule,
         MatSelectModule,
         MatSlideToggleModule,
+        MatSliderModule,
         MatSnackBarModule,
         MatStepperModule,
         MatTableModule,
@@ -290,6 +292,7 @@ import { HistoryGraph } from '../history-graph/history-graph.module';
         MatRadioModule,
         MatSelectModule,
         MatSlideToggleModule,
+        MatSliderModule,
         MatSnackBarModule,
         MatStepperModule,
         MatTableModule,

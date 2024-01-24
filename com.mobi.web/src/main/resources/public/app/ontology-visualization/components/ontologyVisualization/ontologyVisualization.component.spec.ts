@@ -63,6 +63,9 @@ describe('Ontology Visualization component', () => {
         cyChartSpy = jasmine.createSpyObj('cyChart', {
             json: { elements: { nodes: [], edges: [] } },
             ready: undefined,
+            zoom: (zoomLevel: number) => {
+                console.log(zoomLevel);
+            }
         });
 
         fixture = TestBed.createComponent(OntologyVisualization);
@@ -147,11 +150,13 @@ describe('Ontology Visualization component', () => {
             fixture.autoDetectChanges();
             tick(50000);
             expect(element.query(By.css('.ontology-visualization.__________cytoscape_container'))).toBeTruthy();
+            expect(element.query(By.css('visualization-menu'))).toBeTruthy();
         }));
         it('when ontology has no class', () =>  {
             expect(element.query(By.css('info-message'))).toBeFalsy();
             component.cyChartSize = 0;
             fixture.detectChanges();
+            expect(element.query(By.css('visualization-menu'))).toBeFalsy();
             expect(element.query(By.css('info-message'))).toBeTruthy();
         });
     });

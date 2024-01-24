@@ -26,6 +26,7 @@ import {
     ChangeDetectorRef,
     Component,
     ElementRef,
+    HostListener,
     Input,
     OnChanges,
     OnDestroy,
@@ -60,12 +61,16 @@ import { GraphStateDataI } from '../../classes/graphState';
     styleUrls: ['./ontologyVisualization.component.scss'],
     changeDetection: ChangeDetectionStrategy.Default
 })
-export class OntologyVisualization implements OnInit, OnDestroy, OnChanges{
+export class OntologyVisualization implements OnInit, OnDestroy, OnChanges {
     @Input() ontologyId;
     @Input() commitId;
     @Input() branchId;
     @Input() inProgress;
     @ViewChild('ontologyVis') ontoVis: ElementRef;
+    @HostListener('wheel', ['$event'])
+    onWheelEvent = (event: WheelEvent): void => {
+        this.initialZoomLevel = this.cyChart.zoom();
+    }
 
     public readonly spinnerId = 'ontology-visualization';
     private _toastrConfig = {
@@ -92,6 +97,7 @@ export class OntologyVisualization implements OnInit, OnDestroy, OnChanges{
     }
     sidePanelActionSub$: Subscription; // Subscription to control cytoscape graph from different components
     newNodeWithPositionAdded = false;
+    initialZoomLevel = 0;
 
     constructor(private ovis: OntologyVisualizationService,  
         private d3Simulator: D3SimulatorService,
@@ -118,6 +124,9 @@ export class OntologyVisualization implements OnInit, OnDestroy, OnChanges{
                 self.initFailed(reason);
             }
         });
+        if (this.cyChart) {
+            this.initialZoomLevel = this.cyChart.zoom();
+        }
     }
     /**
      * ngOnChanges Lifecycle hook 
@@ -166,7 +175,8 @@ export class OntologyVisualization implements OnInit, OnDestroy, OnChanges{
                 const state = this.ovis.getGraphState(this.commitId);
                 this.updateMessages(state.isOverLimit, state.nodeLimit);
             }
-        } 
+            this.initialZoomLevel = this.cyChart.zoom();
+        }
     }
     ngOnDestroy(): void {
         this.toast.clearToast();
@@ -187,7 +197,7 @@ export class OntologyVisualization implements OnInit, OnDestroy, OnChanges{
         return cytoscape({ // Recyling an instance will help to keep memory usage lower
             container,
             // textureOnViewport: true, // Option makes large graphs more responsive
-            maxZoom: 8, // Helps with preventing user getting lost in the viewpoint
+            maxZoom: 4, // Helps with preventing user getting lost in the viewpoint
             minZoom: 0.05 
         });
     }
@@ -221,7 +231,7 @@ export class OntologyVisualization implements OnInit, OnDestroy, OnChanges{
                     const currentGraphState = this.ovis.getGraphState(this.commitId);
                     switch (payload.action) {
                         case SidePanelAction.ONTOLOGY_SELECT: {
-                            // need to figure out how to ont node
+                            // TODO need to figure out how to ont node
                             // cy.elements("node[weight >= 50][height < 180]");
                             // cy.filter('node[name = "Jerry"]')
                             break;
@@ -262,7 +272,11 @@ export class OntologyVisualization implements OnInit, OnDestroy, OnChanges{
                                     padding: 100,
                                 }
                             }, {
-                                duration: 1000
+                                duration: 1000,
+                                complete: () => {
+                                    self.initialZoomLevel = self.cyChart.zoom();
+                                    self.cf.markForCheck();
+                                }
                             });
                             self.cf.markForCheck();
                             break;
@@ -315,7 +329,7 @@ export class OntologyVisualization implements OnInit, OnDestroy, OnChanges{
                         }
                     }
                 } catch (error) {
-                    console.error(error);  // Error needs to be catched so that subscriber don't unsubscribe
+                    console.error(error);  // Error needs to be caught so that subscriber don't unsubscribe
                 }
             }
         };
@@ -420,6 +434,7 @@ export class OntologyVisualization implements OnInit, OnDestroy, OnChanges{
             this.cyChart.json(commitGraphState.positionData );
         } else {
             this.cyChart.fit(); // https://js.cytoscape.org/#cy.fit
+            this.initialZoomLevel = this.cyChart.zoom();
         }
         this.cf.markForCheck(); // Needed so that graph shows
         this.status.loaded = true;

@@ -360,6 +360,19 @@ ul {
         }
     }
 }
+
+visualization-menu {
+    button:focus {
+        outline: none;
+        border: none;
+    }
+
+    .mat-button:focus {
+        border: none;
+        outline: none;
+    }
+}
+
 login-layout {
     height: 100% !important;
     min-height: 0;
