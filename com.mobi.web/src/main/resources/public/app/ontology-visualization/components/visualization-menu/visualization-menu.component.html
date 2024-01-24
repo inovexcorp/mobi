@@ -10,18 +10,24 @@
   it under the terms of the GNU Affero General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
+  
   This program is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
+  
   You should have received a copy of the GNU Affero General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div #ontologyVis class="ontology-visualization-container">
-  <info-message *ngIf="!(cyChartSize > 0)">(No classes defined)</info-message>
-  <visualization-menu *ngIf="cyChartSize > 0" [cyChart]="this.cyChart"
-                      [initialZoom]="this.initialZoomLevel"></visualization-menu>
-  <div class="ontology-visualization" [ngClass]="{ invisible: !status.loaded, hide: cyChartSize === 0 && status.loaded }"></div>
-</div>
+<div class="menu-container">
+    <button mat-button color="primary" class="minus" [disabled]="lowerThanLimit" (click)="zoomOut()" disableRipple>
+        <mat-icon class="fa fa-minus"></mat-icon>
+    </button>
+    <mat-slider min="0" max="4" [step]=".5" (change)="calculateSlider($event)" [value]="zoomLevel"></mat-slider>
 
+    <button mat-button color="primary" class="plus" [disabled]="higherThanLimit" disableRipple (click)="zoomIn()">
+        <mat-icon class="fa fa-plus"></mat-icon>
+    </button>
+    <button mat-button color="primary" class="reset" (click)="fitGraph()" disableRipple>Reset</button>
+</div>
