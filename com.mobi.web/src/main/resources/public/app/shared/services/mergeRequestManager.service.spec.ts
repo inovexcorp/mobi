@@ -47,10 +47,18 @@ describe('Merge Request Manager service', function() {
     const commentId = 'commentId';
     const commentText = 'HELLO WORLD';
     const emptyObj: JSONLDObject = {'@id': '', '@type': []};
+    const creatorUserId = 'urn://test/user/creator-user-1';
+    const creatorUsername = 'creator';
+    const creator: User = new User({
+        '@id': creatorUserId,
+        '@type': [`${USER}User`],
+        [`${USER}username`]: [{ '@value': creatorUsername }],
+        [`${USER}hasUserRole`]: [],
+    });
     const mergeRequest01: MergeRequest = {
         title: 'title',
         date: '01/01/2020',
-        creator: 'string',
+        creator: creator,
         recordIri: 'RECORDIRI',
         assignees: [],
         jsonld: {
@@ -270,7 +278,7 @@ describe('Merge Request Manager service', function() {
                     'requestToAccept': {
                         'title': 'title',
                         'date': '01/01/2020',
-                        'creator': 'string',
+                        'creator': creator,
                         'recordIri': 'RECORDIRI',
                         'assignees': [],
                         'jsonld': {

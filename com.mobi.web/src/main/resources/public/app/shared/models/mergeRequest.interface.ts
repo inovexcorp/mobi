@@ -28,7 +28,7 @@ export interface MergeRequest {
     title: string,
     description?: string,
     date: string,
-    creator: string,
+    creator: User,
     recordIri: string,
     recordTitle?: string,
     recordType?: string,

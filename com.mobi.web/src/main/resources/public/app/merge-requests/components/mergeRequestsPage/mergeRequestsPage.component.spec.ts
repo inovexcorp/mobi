@@ -46,6 +46,8 @@ import { MergeRequestListComponent } from '../mergeRequestList/mergeRequestList.
 import { MergeRequestViewComponent } from '../mergeRequestView/mergeRequestView.component';
 import { MergeRequestsPageComponent } from './mergeRequestsPage.component';
 import { MergeRequestManagerService } from '../../../shared/services/mergeRequestManager.service';
+import { User } from '../../../shared/models/user.class';
+import { USER } from '../../../prefixes';
 
 describe('Merge Requests Page component', function() {
     let element: DebugElement;
@@ -104,10 +106,18 @@ describe('Merge Requests Page component', function() {
             expect(element.queryAll(By.css('create-request')).length).toBe(0);
         });
         it('if a request is selected', function() {
+            const creatorUserId = 'urn://test/user/creator-user-1';
+            const creatorUsername = 'creator';
+            const creator: User = new User({
+                '@id': creatorUserId,
+                '@type': [`${USER}User`],
+                [`${USER}username`]: [{ '@value': creatorUsername }],
+                [`${USER}hasUserRole`]: [],
+            });
             mergeRequestsStateStub.selected = {
                 title: '',
                 date: '',
-                creator: '',
+                creator: creator,
                 recordIri: '',
                 assignees: [],
                 jsonld: {'@id': 'request'}

@@ -48,7 +48,7 @@
                                 {{request.title}}
                             </span>
                         </h3>
-                        <p class="request-info"><small>Created on {{request.date}} by {{request.creator}}</small></p>
+                        <p class="request-info"><small>Created on {{request.date}} by <span title="Username: {{request.creator.username}}">{{request.creator.displayName}}</span></small></p>
                         <dl>
                             <dt class="text-muted">Record</dt>
                             <dd class="text-truncate" [title]="request.recordTitle">{{request.recordTitle}}</dd>

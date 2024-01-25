@@ -27,14 +27,14 @@
         <div class="col-6 user-select">
             <div class="selected-items">
                 <div class="d-flex selected-item" *ngFor="let user of item.selectedUsers">
-                    <span class="flex-1 text-truncate">{{user.displayName}}</span>
+                    <span class="flex-1 text-truncate" title="Username: {{user.username}}">{{user.displayName}}</span>
                     <a *ngIf="user.iri != lm.currentUserIRI" (click)="removeUser(user)"><i class="fa fa-times"></i></a>
                 </div>
             </div>
             <mat-form-field class="pt-1 w-100">
                 <input #userInput placeholder="Select a user..." matInput [matAutocomplete]="userAutocomplete" [formControl]="userSearchControl">
                 <mat-autocomplete #userAutocomplete="matAutocomplete" (optionSelected)="selectUser($event, userAutocomplete)" [displayWith]="getName">
-                    <mat-option *ngFor="let user of filteredAvailableUsers | async" [value]="user">
+                    <mat-option *ngFor="let user of filteredAvailableUsers | async" [value]="user" title="Username: {{user.username}}">
                         {{user.displayName}}
                     </mat-option>
                 </mat-autocomplete>

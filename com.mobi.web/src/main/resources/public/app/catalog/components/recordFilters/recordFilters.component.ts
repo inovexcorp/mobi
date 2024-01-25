@@ -149,6 +149,10 @@ export class RecordFiltersComponent implements OnInit, OnDestroy {
                 const count = filterItem.value['count'];
                 return `${userDisplay} (${count})`;
             },
+            getItemTooltip: function(filterItem: FilterItem) {
+                const userDisplay = filterItem.value['user'].username;
+                return `Username: ${userDisplay}`;
+            },
             setFilterItems: function() {
                 const filterInstance = this;
                 componentContext.cm.getRecords(componentContext.catalogId, {}).pipe(

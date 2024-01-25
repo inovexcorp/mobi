@@ -59,7 +59,14 @@ describe('Merge Requests State service', function() {
     const catalogId = 'catalogId';
     const requestId = 'requestId';
     const recordId = 'recordId';
-    const creatorId = 'creator';
+    const creatorUserId = 'urn://test/user/creator-user-1';
+    const creatorUsername = 'creator';
+    const creator: User = new User({
+        '@id': creatorUserId,
+        '@type': [`${USER}User`],
+        [`${USER}username`]: [{ '@value': creatorUsername }],
+        [`${USER}hasUserRole`]: [],
+    });
     const assigneeId = 'assignee';
     const assignee: User = new User({
       '@id': assigneeId,
@@ -68,7 +75,7 @@ describe('Merge Requests State service', function() {
     });
     const request: JSONLDObject = {
       '@id': requestId,
-      [`${DCTERMS}creator`]: [{'@id': creatorId}],
+      [`${DCTERMS}creator`]: [{'@id': creatorUserId}],
       [`${MERGEREQ}assignee`]: [{'@id': assigneeId}]
     };
     const sourceBranch: JSONLDObject = {
@@ -96,7 +103,7 @@ describe('Merge Requests State service', function() {
     const requestObj: MergeRequest = {
         title: 'title',
         date: 'date',
-        creator: creatorId,
+        creator: creator,
         recordIri: recordId,
         assignees: [assignee],
         jsonld: request,
@@ -717,7 +724,7 @@ describe('Merge Requests State service', function() {
         }));
         it('successfully and filters are cleared', fakeAsync(function() {
             mergeRequestManagerStub.deleteRequest.and.returnValue(of(null));
-            service.creators = [creatorId, 'other'];
+            service.creators = [creatorUserId, 'other'];
             service.assignees = [assigneeId, 'other'];
             service.deleteRequest(requestObj).subscribe(() => {}, () => fail('Observable should have succeeded'));
             tick();
@@ -729,12 +736,13 @@ describe('Merge Requests State service', function() {
         }));
     });
     it('should get the MergeRequest object from a JSON-LD object', function() {
+        const newcreator = new User({
+            '@id': 'newcreator',
+            '@type': [`${USER}User`],
+            [`${USER}username`]: [{ '@value': 'creatorU'}]
+        });
         userManagerStub.users = [
-            new User({
-                '@id': 'newcreator',
-                '@type': [`${USER}User`],
-                [`${USER}username`]: [{ '@value': 'creatorU'}]
-            }),
+            newcreator,
             new User({
                 '@id': 'newassignee',
                 '@type': [`${USER}User`],
@@ -753,7 +761,7 @@ describe('Merge Requests State service', function() {
             title: 'title',
             description: 'description',
             date: SHORTDATE_DATE_STR,
-            creator: 'creatorU',
+            creator: newcreator,
             recordIri: recordId,
             assignees: [userManagerStub.users[1]]
         });

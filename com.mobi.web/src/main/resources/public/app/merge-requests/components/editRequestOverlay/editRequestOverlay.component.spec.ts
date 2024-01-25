@@ -74,6 +74,14 @@ describe('Edit Request Overlay Component', function() {
         [`${USER}username`]: [{ '@value': username }],
         [`${USER}hasUserRole`]: [],
     });
+    const creatorUserId = 'urn://test/user/creator-user-1';
+    const creatorUsername = 'creator';
+    const creator: User = new User({
+        '@id': creatorUserId,
+        '@type': [`${USER}User`],
+        [`${USER}username`]: [{ '@value': creatorUsername }],
+        [`${USER}hasUserRole`]: [],
+    });
     const requestTitle = 'Merge Request 1';
     const error = 'error';
     const sourceBranch: JSONLDObject = {'@id': 'urn://test/branch/source'};
@@ -81,7 +89,7 @@ describe('Edit Request Overlay Component', function() {
     const emptyRequest: MergeRequest = {
         title: '',
         date: '',
-        creator: '',
+        creator: creator,
         assignees: [],
         removeSource: false,
         recordIri: '',
@@ -144,7 +152,7 @@ describe('Edit Request Overlay Component', function() {
             targetBranch: branch,
             removeSource: true,
             date: '',
-            creator: '',
+            creator: creator,
             assignees: [user]
         };
         catalogManagerStub.localCatalog = {'@id': catalogId};

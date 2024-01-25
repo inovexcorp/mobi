@@ -37,6 +37,8 @@ import { Difference } from '../../../shared/models/difference.class';
 import { MergeRequestsStateService } from '../../../shared/services/mergeRequestsState.service';
 import { MergeRequestDiscussionComponent } from '../mergeRequestDiscussion/mergeRequestDiscussion.component';
 import { MergeRequestTabsetComponent } from './mergeRequestTabset.component';
+import { USER } from '../../../prefixes';
+import { User } from '../../../shared/models/user.class';
 
 describe('Merge Request Tabset component', function() {
     let component: MergeRequestTabsetComponent;
@@ -69,10 +71,18 @@ describe('Merge Request Tabset component', function() {
         element = fixture.debugElement;
         mergeRequestsStateStub = TestBed.inject(MergeRequestsStateService) as jasmine.SpyObj<MergeRequestsStateService>;
 
+        const creatorUserId = 'urn://test/user/creator-user-1';
+        const creatorUsername = 'creator';
+        const creator: User = new User({
+            '@id': creatorUserId,
+            '@type': [`${USER}User`],
+            [`${USER}username`]: [{ '@value': creatorUsername }],
+            [`${USER}hasUserRole`]: [],
+        });
         component.request = {
             title: '',
             date: '',
-            creator: '',
+            creator: creator,
             recordIri: '',
             assignees: [],
             jsonld: {'@id': ''}

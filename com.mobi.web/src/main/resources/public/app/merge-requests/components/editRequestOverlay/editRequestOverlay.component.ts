@@ -88,7 +88,7 @@ export class EditRequestOverlayComponent implements OnInit {
             }, error => this.errorMessage = error);
     }
 
-    private _initRequestConfig() {
+    private _initRequestConfig(): void {
         this.editRequestForm = this.fb.group({
             title: [this.state.selected.title, [ Validators.required ]],
             description: [this.state.selected.description === 'No description' ? '' : this.state.selected.description],
@@ -99,7 +99,7 @@ export class EditRequestOverlayComponent implements OnInit {
 
         this.assignees = this.state.selected.assignees;
     }
-    private _getMergeRequestJson() {
+    private _getMergeRequestJson(): JSONLDObject {
         const jsonld = Object.assign({}, this.state.selected.jsonld);
 
         updateDctermsValue(jsonld, 'title', this.editRequestForm.controls.title.value);
