@@ -61,11 +61,19 @@ describe('Merge Request List component', function() {
     let mergeRequestsManagerStub: jasmine.SpyObj<MergeRequestManagerService>;
     let matDialog: jasmine.SpyObj<MatDialog>;
 
+    const creatorUserId = 'urn://test/user/creator-user-1';
+    const creatorUsername = 'creator';
+    const creator: User = new User({
+        '@id': creatorUserId,
+        '@type': [`${USER}User`],
+        [`${USER}username`]: [{ '@value': creatorUsername }],
+        [`${USER}hasUserRole`]: [],
+    });
     const request: MergeRequest = {
         title: '',
         recordIri: '',
         date: '',
-        creator: '',
+        creator: creator,
         assignees: [],
         jsonld: {'@id': ''}
     };

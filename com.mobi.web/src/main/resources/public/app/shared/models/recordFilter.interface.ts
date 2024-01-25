@@ -32,6 +32,7 @@ export interface RecordFilter {
     searchable: boolean,
     filterItems: FilterItem[],
     getItemText: (filterItem: FilterItem) => string,
+    getItemTooltip?: (filterItem: FilterItem) => string,
     onInit: () => void,
     setFilterItems: () => void,
     filter: (filterItem: FilterItem) => void

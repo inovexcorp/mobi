@@ -85,6 +85,7 @@ export class MergeRequestViewComponent implements OnInit, OnDestroy {
 
     isAdminUser: boolean;
     currentAssignees: User[] = [];
+    creator: User;
     
     private _destroySub$ = new Subject<void>();
     

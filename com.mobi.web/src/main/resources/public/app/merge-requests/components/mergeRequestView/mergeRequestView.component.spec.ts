@@ -137,6 +137,16 @@ describe('Merge Request View component', function() {
         [`${DCTERMS}title`]: [{'@value': 'MASTER'}]
     };
     const branches = [branch];
+
+    const creatorUserId = 'urn://test/user/creator-user-1';
+    const creatorUsername = 'creator';
+    const creator: User = new User({
+        '@id': creatorUserId,
+        '@type': [`${USER}User`],
+        [`${USER}username`]: [{ '@value': creatorUsername }],
+        [`${USER}hasUserRole`]: [],
+    });
+
     let mergeRequest: MergeRequest;
 
     beforeEach(async () => {
@@ -193,7 +203,7 @@ describe('Merge Request View component', function() {
         mergeRequestsStateStub.selected = {
             title: 'title',
             date: '',
-            creator: '',
+            creator: creator,
             recordIri: recordId,
             sourceBranch: {'@id': sourceBranchId},
             targetBranch: {'@id': targetBranchId},

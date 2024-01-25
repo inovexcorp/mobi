@@ -51,6 +51,7 @@ import { ToastService } from './toast.service';
 import { SortOption } from '../models/sortOption.interface';
 import { MergeRequestPaginatedConfig } from '../models/mergeRequestPaginatedConfig.interface';
 import { MergeRequestStatus } from '../models/merge-request-status';
+import { User } from '../models/user.class';
 
 /**
  * @class shared.MergeRequestsStateService
@@ -466,7 +467,7 @@ export class MergeRequestsStateService {
             title: getDctermsValue(jsonld, 'title'),
             description: getDctermsValue(jsonld, 'description') || 'No description',
             date: this._getDate(jsonld),
-            creator: this._getCreator(jsonld),
+            creator: this._getCreatorUser(jsonld),
             recordIri: getPropertyId(jsonld, `${MERGEREQ}onRecord`),
             assignees: get(jsonld, `['${MERGEREQ}assignee']`, [])
                 .map(obj => this.um.users.find(user => user.iri === obj['@id']))
@@ -626,8 +627,11 @@ export class MergeRequestsStateService {
         const dateStr = getDctermsValue(jsonld, 'issued');
         return getDate(dateStr, 'shortDate');
     }
-    private _getCreator(jsonld: JSONLDObject) {
+    public getUser(iri: string) {
+        return find(this.um.users, {iri});
+    }
+    private _getCreatorUser(jsonld: JSONLDObject): User {
         const iri = getDctermsId(jsonld, 'creator');
-        return get(find(this.um.users, {iri}), 'username');
+        return find(this.um.users, {iri});
     }
 }

@@ -35,7 +35,7 @@
                         </mat-chip-list>
                     </div>
                 </div>
-                <div><small class="ml-1">Created on {{state.selected.date}} by {{state.selected.creator}}</small></div>
+                <div><small class="ml-1">Created on {{state.selected.date}} by <span title="Username: {{state.selected.creator.username}}">{{state.selected.creator.displayName}}</span></small></div>
             </div>
             <div [ngClass]="{'details-read-only ': isEditDisabled, 'details-hover': !isEditDisabled, 'd-flex': true}">
                 <div [ngClass]="{'details-read-only ': isEditDisabled, 'details-hover': !isEditDisabled, 'flex-1': true, 'remove-min-width': true}">

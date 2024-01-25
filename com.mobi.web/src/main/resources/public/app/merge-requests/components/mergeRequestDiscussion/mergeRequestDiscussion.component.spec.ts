@@ -38,6 +38,8 @@ import { CommentDisplayComponent } from '../commentDisplay/commentDisplay.compon
 import { ReplyCommentComponent } from '../replyComment/replyComment.component';
 import { MergeRequestDiscussionComponent } from './mergeRequestDiscussion.component';
 import { cloneDeep } from 'lodash';
+import { USER } from '../../../prefixes';
+import { User } from '../../../shared/models/user.class';
 
 describe('Merge Request Discussion component', function() {
     let component: MergeRequestDiscussionComponent;
@@ -46,10 +48,18 @@ describe('Merge Request Discussion component', function() {
     let mergeRequestManagerStub: jasmine.SpyObj<MergeRequestManagerService>;
     let toastStub: jasmine.SpyObj<ToastService>;
 
+    const creatorUserId = 'urn://test/user/creator-user-1';
+    const creatorUsername = 'creator';
+    const creator: User = new User({
+        '@id': creatorUserId,
+        '@type': [`${USER}User`],
+        [`${USER}username`]: [{ '@value': creatorUsername }],
+        [`${USER}hasUserRole`]: [],
+    });
     const request: MergeRequest = {
         jsonld: {'@id': 'request', '@type': []},
         title: '',
-        creator: '',
+        creator: creator,
         date: '',
         recordIri: '',
         assignees: []

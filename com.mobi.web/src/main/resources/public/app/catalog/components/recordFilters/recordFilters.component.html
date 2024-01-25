@@ -33,7 +33,12 @@
             <info-message *ngIf="!currentFilter.filterItems.length">No {{ currentFilter.title }} available</info-message>
             <div [ngClass]="{pageable: currentFilter.pageable}">
                 <div class="filter-option my-2" *ngFor="let filterItem of currentFilter.filterItems">
-                    <mat-checkbox [(ngModel)]="filterItem.checked" (change)="currentFilter.filter(filterItem)">{{ currentFilter.getItemText(filterItem) }}</mat-checkbox>
+                    <ng-template [ngIf]="currentFilter.hasOwnProperty('getItemTooltip')" [ngIfElse]="noToolTip">
+                        <mat-checkbox [(ngModel)]="filterItem.checked" (change)="currentFilter.filter(filterItem)" [title]="currentFilter.getItemTooltip(filterItem)">{{ currentFilter.getItemText(filterItem) }}</mat-checkbox>
+                    </ng-template>
+                    <ng-template #noToolTip>
+                        <mat-checkbox [(ngModel)]="filterItem.checked" (change)="currentFilter.filter(filterItem)">{{ currentFilter.getItemText(filterItem) }}</mat-checkbox>
+                    </ng-template>
                 </div>
             </div>
             <a *ngIf="currentFilter.pageable && currentFilter.pagingData.hasNextPage" (click)="currentFilter.pagingData.currentPage = currentFilter.pagingData.currentPage + 1; currentFilter.nextPage()">

@@ -137,6 +137,11 @@ export class MergeRequestFilterComponent implements OnInit, OnDestroy {
         const userCount = filterItem.value as UserCount;
         return `${userCount.name} (${userCount.count})`;
       },
+      getItemTooltip: function(filterItem: FilterItem): string {
+        const userCount = filterItem.value as UserCount;
+        const user = componentContext._state.getUser(userCount.user);
+        return `Username: ${user.username}`;
+      },
       setFilterItems: function(): void {
         this.filterItems = this.rawFilterItems.map(userCount => ({
           value: userCount,
@@ -289,6 +294,11 @@ export class MergeRequestFilterComponent implements OnInit, OnDestroy {
         const userCount = filterItem.value as UserCount;
         return `${userCount.name} (${userCount.count})`;
       },
+      getItemTooltip: function(filterItem: FilterItem): string {
+        const userCount = filterItem.value as UserCount;
+        const user = componentContext._state.getUser(userCount.user);
+        return `Username: ${user.username}`;
+      },
       setFilterItems: function(): void {
         this.filterItems = this.rawFilterItems.map(userCount => ({
           value: userCount,
@@ -355,5 +365,8 @@ export class MergeRequestFilterComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this._destroySub$.next();
     this._destroySub$.complete();
+    if (this.updateFiltersSubscription) {
+      this.updateFiltersSubscription.unsubscribe();
+    }
   }
 }
