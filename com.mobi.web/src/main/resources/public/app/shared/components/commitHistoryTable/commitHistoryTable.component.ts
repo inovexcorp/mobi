@@ -100,6 +100,7 @@ export class CommitHistoryTableComponent implements OnInit, OnChanges, OnDestroy
         private dialog: MatDialog) {
     }
     error = '';
+    catalogId = '';
     commits: Commit[] = [];
     tagObjects: Tag[] = [];
     id = `commit-history-table${v4()}`;
@@ -119,6 +120,7 @@ export class CommitHistoryTableComponent implements OnInit, OnChanges, OnDestroy
         if (changesObj?.headTitle || changesObj?.commitId ||
             changesObj?.targetId || changesObj?.entityId || changesObj?.branches || changesObj?.tags) {
             this.getCommits();
+            this.getBranches();
             this.getTags();
         }
     }
@@ -163,6 +165,18 @@ export class CommitHistoryTableComponent implements OnInit, OnChanges, OnDestroy
             this.commits = [];
             this.receiveCommits.emit([]);
         }
+    }
+    getBranches() {
+        this.catalogId = get(this.cm.localCatalog, '@id', '');
+        this.cm.getRecordBranches(this.recordId, this.catalogId).subscribe(response => {
+            this.branches = response.body;
+            this.error = '';
+            this.spinnerSvc.finishLoadingForComponent(this.commitHistoryTable);
+        }, errorMessage => {
+            this.error = errorMessage;
+            this.branches = [];
+            this.spinnerSvc.finishLoadingForComponent(this.commitHistoryTable);
+        });
     }
     getTags(): void {
         if (this.tags) {

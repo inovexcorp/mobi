@@ -22,9 +22,9 @@
  */
 import { Injectable } from '@angular/core';
 
-import { createText, createRect, createCircle, createClipPath, createUse, createDefs, createG  } from '@gitgraph/js/lib/svg-elements.js';
-import { Branch as GitGraphBranch } from '@gitgraph/core/lib/branch';
-import { Commit as GitGraphCommit } from '@gitgraph/core/lib/commit';
+import { createText, createRect, createCircle, createClipPath, createUse, createDefs, createG  } from '@sourceflow/gitgraph-js/lib/svg-elements.js';
+import { Branch as GitGraphBranch } from '@sourceflow/gitgraph-core/lib/branch';
+import { Commit as GitGraphCommit } from '@sourceflow/gitgraph-core/lib/commit';
 
 const BRANCH_LABEL_PADDING_X = 10;
 const BRANCH_LABEL_PADDING_Y = 4;
@@ -97,9 +97,10 @@ export class SVGElementHelperService {
   /**
    * Render Branch Label
    * @param gitGraphBranch Branch<SVGElement>
+   * @param commit
    * @returns SVGElement
    */
-  renderBranchLabel(gitGraphBranch: GitGraphBranch<SVGElement>): SVGElement {
+  renderBranchLabel(gitGraphBranch: GitGraphBranch<SVGElement>, commit: GitGraphCommit): SVGElement {
     const rect = createRect({
         width: 0,
         height: 0,
@@ -107,9 +108,8 @@ export class SVGElementHelperService {
         stroke: gitGraphBranch.style.label.strokeColor || gitGraphBranch.computedColor,
         fill: gitGraphBranch.style.label.bgColor
     });
-
     const text = createText({
-        content: gitGraphBranch.name,
+        content: commit.commitLabel || gitGraphBranch.name,
         translate: {
             x: BRANCH_LABEL_PADDING_X,
             y: 0

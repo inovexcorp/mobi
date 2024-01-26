@@ -30,5 +30,7 @@ export interface GitAction {
   commit?: Commit,
   mergeTo?: string;
   atCommit?: string;
+  optionalLabel?:string
+  renderBranchLabel?: boolean
   sortFlag?: boolean; // used to detect if commit happens before branch creation
 }

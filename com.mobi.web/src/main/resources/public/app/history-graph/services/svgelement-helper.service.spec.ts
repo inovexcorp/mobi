@@ -23,9 +23,9 @@
 import { TestBed } from '@angular/core/testing';
 
 import { SVGElementHelperService } from './svgelement-helper.service';
-import { Branch as GitGraphBranch } from '@gitgraph/core/lib/branch';
-import { Commit as GitGraphCommit } from '@gitgraph/core/lib/commit';
-import { BranchStyle, CommitStyle, MergeStyle } from '@gitgraph/core/lib/template';
+import { Branch as GitGraphBranch } from '@sourceflow/gitgraph-core/lib/branch';
+import { Commit as GitGraphCommit } from '@sourceflow/gitgraph-core/lib/commit';
+import { BranchStyle, CommitStyle, MergeStyle } from '@sourceflow/gitgraph-core/lib/template';
 
 describe('SVGElementHelperService', () => {
   let service: SVGElementHelperService;
@@ -78,8 +78,9 @@ describe('SVGElementHelperService', () => {
   });
   it('renderBranchLabel should return svg', () => {
     const branchLabelSVGElement: GitGraphBranch = jasmine.createSpyObj(GitGraphBranch, ['onClick']);
+    const commitLabel: GitGraphCommit = jasmine.createSpyObj(GitGraphCommit,['onClick']);
     branchLabelSVGElement.style = branchStyle;
-    const svg = service.renderBranchLabel(branchLabelSVGElement);
+    const svg = service.renderBranchLabel(branchLabelSVGElement, commitLabel);
     expect(svg).toBeTruthy();
   });
   it('renderCommitMessage should return svg', () => {
