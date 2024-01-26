@@ -23,7 +23,7 @@
 
 import { catchError, map, mergeMap, switchMap, tap } from 'rxjs/operators';
 import { get } from 'lodash';
-import { forkJoin, from, Observable, of, throwError } from 'rxjs';
+import { forkJoin, from, Observable, of, Subject, throwError } from 'rxjs';
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
@@ -47,6 +47,7 @@ import { REST_PREFIX } from '../../constants';
 import { ToastService } from './toast.service';
 import { ProvManagerService } from './provManager.service';
 import { createHttpParams } from '../utility';
+import { EventWithPayload } from '../models/eventWithPayload.interface';
 
 /**
  * @class shared.LoginManagerService
@@ -57,6 +58,9 @@ import { createHttpParams } from '../utility';
 export class LoginManagerService {
     prefix = `${REST_PREFIX}session`;
     weGood = false;
+
+    private _loginManagerActionSubject = new Subject<EventWithPayload>();
+    public loginManagerAction$ = this._loginManagerActionSubject.asObservable();
 
     constructor(private http: HttpClient, private router: Router,
         private cm: CatalogManagerService,
@@ -126,6 +130,10 @@ export class LoginManagerService {
      * the login page.
      */
     logout(): void {
+        this._loginManagerActionSubject.next({eventType: 'LOGOUT', payload: {
+            currentUserIRI: this.currentUserIRI,
+            currentUser: this.currentUser
+        }});
         this.weGood = false;
         this.ds.reset();
         this.dlm.reset();

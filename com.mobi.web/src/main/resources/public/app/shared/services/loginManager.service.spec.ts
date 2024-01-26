@@ -218,6 +218,12 @@ describe('Login Manager service', function() {
         }));
     });
     it('should log a user out', function() {
+        service.currentUserIRI = 'urn:userIri';
+        service.currentUser = 'username';
+        let sub = service.loginManagerAction$.subscribe((event) => {
+            expect(event.eventType).toEqual('LOGOUT');
+            expect(event.payload).toEqual({currentUserIRI: 'urn:userIri', currentUser: 'username'});
+        }, () => fail('Observable should have resolved'));
         service.logout();
 
         const request = httpMock.expectOne(req => req.url === service.prefix && req.method === 'DELETE');
@@ -239,6 +245,7 @@ describe('Login Manager service', function() {
         expect(service.currentUserIRI).toBe('');
         expect(router.navigate).toHaveBeenCalledWith(['/login']);
         expect(service.weGood).toBe(false);
+        sub.unsubscribe();
     });
     describe('should get the current login', function() {
         it('unless an error occurs', function() {
