@@ -27,7 +27,7 @@ import { HttpClientModule } from '@angular/common/http';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ToastrModule } from 'ngx-toastr';
 
-import '@gitgraph/js';
+import '@sourceflow/gitgraph-js';
 import 'chroma-js';
 import 'lodash';
 import 'jquery';

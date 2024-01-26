@@ -24,11 +24,11 @@ import { DebugElement, SimpleChange } from '@angular/core';
 import { ComponentFixture, TestBed, waitForAsync } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
 import { By } from '@angular/platform-browser';
-import { GitgraphUserApi } from '@gitgraph/core';
+import { GitgraphUserApi } from '@sourceflow/gitgraph-core';
 import { MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
-import { GitgraphCommitOptions } from '@gitgraph/core';
-import { Branch as GitGraphBranch } from '@gitgraph/js';
+import { GitgraphCommitOptions } from '@sourceflow/gitgraph-core';
+import { Branch as GitGraphBranch } from '@sourceflow/gitgraph-js';
 
 import { CommitInfoOverlayComponent } from '../../../shared/components/commitInfoOverlay/commitInfoOverlay.component';
 import { Commit } from '../../../shared/models/commit.interface';

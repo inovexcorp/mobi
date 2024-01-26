@@ -34,7 +34,7 @@
     "@angular/platform-browser-dynamic": "^14.3.0",
     "@angular/router": "^14.3.0",
     "@ctrl/ngx-codemirror": "^4.1.1",
-    "@gitgraph/js": "^1.4.0",
+    "@sourceflow/gitgraph-js": "^1.4.4",
     "@triply/yasgui": "^4.2.27",
     "@types/chroma-js": "^2.4.0",
     "@types/codemirror": "0.0.100",
