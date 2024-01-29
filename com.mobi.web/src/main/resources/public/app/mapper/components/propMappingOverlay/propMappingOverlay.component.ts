@@ -172,6 +172,8 @@ export class PropMappingOverlayComponent implements OnInit {
         if (this.selectedProp.type === `${OWL}ObjectProperty`) {
             this.propMappingForm.controls.rangeClass.setValidators([this.emptyRangeValidator, Validators.required]);
             this.propMappingForm.controls.column.clearValidators();
+            this.propMappingForm.controls.column.setValue('');
+            this.propMappingForm.controls.column.updateValueAndValidity();
             this.setRangeClass();
         } else {
             this.propMappingForm.controls.rangeClass.clearValidators();
