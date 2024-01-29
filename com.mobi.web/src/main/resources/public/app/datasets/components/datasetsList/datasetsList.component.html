@@ -26,7 +26,12 @@
             <div class="search-form d-flex pt-2">
                 <search-bar class="flex-1 mr-2" [(bindModel)]="searchText" (submitEvent)="searchRecords()"></search-bar>
                 <div>
-                    <button class="new-button" mat-raised-button color="primary" (click)="showNew()">New Dataset</button>
+                    <button class="new-button"
+                            mat-raised-button color="primary"
+                            (click)="showNew()"
+                            [disabled]="!canCreate"
+                            matTooltip="You do not have permission to create dataset records"
+                            [matTooltipDisabled]="canCreate">New Dataset</button>
                 </div>
             </div>
             <div class="results-list flex-1 remove-min-height py-2" #datasetsList>

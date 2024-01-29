@@ -27,7 +27,7 @@ import { get, map, find } from 'lodash';
 import { forkJoin, Observable, of } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
 
-import { CATALOG, DATASET, POLICY } from '../../../prefixes';
+import { CATALOG, DATASET, POLICY, RDF } from '../../../prefixes';
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
 import { ProgressSpinnerService } from '../../../shared/components/progress-spinner/services/progressSpinner.service';
 import { Dataset } from '../../../shared/models/dataset.interface';
@@ -43,6 +43,7 @@ import { EditDatasetOverlayComponent } from '../editDatasetOverlay/editDatasetOv
 import { NewDatasetOverlayComponent } from '../newDatasetOverlay/newDatasetOverlay.component';
 import { UploadDataOverlayComponent } from '../uploadDataOverlay/uploadDataOverlay.component';
 import { getDate, getDctermsValue, getPropertyId, getPropertyValue } from '../../../shared/utility';
+import { XACMLRequest } from '../../../shared/models/XACMLRequest.interface';
 
 interface DatasetDisplayItem {
     title: string,
@@ -73,6 +74,7 @@ export class DatasetsListComponent implements OnInit {
     results: DatasetDisplayItem[] = [];
     searchText = '';
     repositoryMap: {[key: string]: Repository} = {};
+    canCreate = false;
 
     @ViewChild('datasetsList', { static: true }) datasetsList: ElementRef;
     
@@ -90,6 +92,7 @@ export class DatasetsListComponent implements OnInit {
                 this.repositoryMap[repo.id] = repo;
             });
         });
+        this._checkCreatePermission();
     }
     getIdentifiedOntologyIds(dataset: Dataset): string[] {
         return map(dataset.identifiers, identifier => identifier[`${DATASET}linksToRecord`][0]['@id']);
@@ -261,5 +264,20 @@ export class DatasetsListComponent implements OnInit {
         this.state.paginationConfig.searchText = this.searchText;
         this.setResults();
         this.state.submittedSearch = !!this.state.paginationConfig.searchText;
+    }
+    private _checkCreatePermission(): void {
+        const request = {
+            resourceId: `http://mobi.com/catalog-local`,
+            actionId: `${POLICY}Create`,
+            actionAttrs: {
+                [RDF + 'type']: `${DATASET}DatasetRecord`
+            }
+        } as XACMLRequest;
+        this.pep.evaluateRequest(request)
+            .subscribe(response => {
+                this.canCreate = response === this.pep.permit;
+            }, () => {
+                this.toast.createErrorToast('Could not retrieve dataset creation permissions');
+            });
     }
 }

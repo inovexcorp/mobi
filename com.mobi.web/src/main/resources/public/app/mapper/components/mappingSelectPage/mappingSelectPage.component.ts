@@ -45,6 +45,7 @@ import { DownloadMappingOverlayComponent } from '../downloadMappingOverlay/downl
 import { ViewMappingModalComponent } from '../viewMappingModal/viewMappingModal.component';
 import { getDate, getDctermsValue, getPropertyId } from '../../../shared/utility';
 import { IncompatibleWarningModalComponent } from '../incompatible-warning-modal/incompatible-warning-modal.component';
+import { XACMLRequest } from "../../../shared/models/XACMLRequest.interface";
 
 /**
  * @class mapper.MappingSelectPageComponent
@@ -62,6 +63,7 @@ export class MappingSelectPageComponent implements OnInit {
     results: MappingRecord[] = [];
     searchText = '';
     submittedSearch = false;
+    canCreate = false;
 
     @ViewChild('mappingList', { static: true }) mappingList: ElementRef;
 
@@ -73,6 +75,7 @@ export class MappingSelectPageComponent implements OnInit {
         this.searchText = this.state.paginationConfig.searchText;
         this.setResults();
         this.submittedSearch = !!this.searchText;
+        this._checkCreatePermission();
     }
     searchRecords(): void {
         this.state.resetPagination();
@@ -277,5 +280,20 @@ export class MappingSelectPageComponent implements OnInit {
                 }
             })
         );
+    }
+    private _checkCreatePermission(): void {
+        const request = {
+            resourceId: `http://mobi.com/catalog-local`,
+            actionId: `${POLICY}Create`,
+            actionAttrs: {
+                [RDF + 'type']: `${DELIM}MappingRecord`
+            }
+        } as XACMLRequest;
+        this.pep.evaluateRequest(request)
+            .subscribe(response => {
+                this.canCreate = response === this.pep.permit;
+            }, () => {
+                this.toast.createErrorToast('Could not retrieve mapping creation permissions');
+            });
     }
 }

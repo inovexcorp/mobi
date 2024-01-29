@@ -35,7 +35,7 @@ import { OntologyStateService } from '../../../shared/services/ontologyState.ser
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
 import { ProgressSpinnerService } from '../../../shared/components/progress-spinner/services/progressSpinner.service';
-import { DCTERMS, ONTOLOGYEDITOR } from '../../../prefixes';
+import { DCTERMS, ONTOLOGYEDITOR, POLICY, RDF } from '../../../prefixes';
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
 import { NewOntologyOverlayComponent } from '../newOntologyOverlay/newOntologyOverlay.component';
 import { UploadOntologyOverlayComponent } from '../uploadOntologyOverlay/uploadOntologyOverlay.component';
@@ -43,6 +43,8 @@ import { ToastService } from '../../../shared/services/toast.service';
 import { SettingManagerService } from '../../../shared/services/settingManager.service';
 import { OntologyDownloadModalComponent } from '../ontology-download-modal/ontology-download-modal.component';
 import { getDctermsValue, getPropertyId } from '../../../shared/utility';
+import { PolicyEnforcementService } from "../../../shared/services/policyEnforcement.service";
+import { XACMLRequest } from "../../../shared/models/XACMLRequest.interface";
 
 export interface OntologyRecordDisplay {
     title: string,
@@ -81,23 +83,27 @@ export class OpenOntologyTabComponent implements OnInit {
     searchBindModel = '';
     filterText = '';
     showSnackbar = false;
+    canCreate = false;
 
     @ViewChild('openOntologyFileInput', { static: true }) fileInput: ElementRef;
     @ViewChild('ontologyList', { static: true }) ontologyList: ElementRef;
 
     constructor(public dialog: MatDialog, private spinnerSvc: ProgressSpinnerService, public om: OntologyManagerService, 
         public os: OntologyStateService, public ms: MapperStateService, private cm: CatalogManagerService, 
-        private sm: SettingManagerService, private toast: ToastService) {}
+        private sm: SettingManagerService, private pep: PolicyEnforcementService, private toast: ToastService) {}
 
     ngOnInit(): void {
         this.setPageOntologyRecords(0, '');
+        this._checkCreatePermission();
     }
     clickUpload(): void {
         this.fileInput.nativeElement.value = null;
         this.fileInput.nativeElement.click();
     }
     updateFiles(files: FileList): void {
-        if (files) {
+        if (!this.canCreate) {
+            this.toast.createErrorToast('You do not have permission to create ontology records');
+        } else if (files) {
             this.os.uploadFiles = Array.from(files);
             this.showUploadOntologyOverlay();
         }
@@ -204,5 +210,20 @@ export class OpenOntologyTabComponent implements OnInit {
     }
     search(): void {
         this.setPageOntologyRecords(0, this.searchBindModel);
+    }
+    private _checkCreatePermission(): void {
+        const request = {
+            resourceId: `http://mobi.com/catalog-local`,
+            actionId: `${POLICY}Create`,
+            actionAttrs: {
+                [RDF + 'type']: `${ONTOLOGYEDITOR}OntologyRecord`
+            }
+        } as XACMLRequest;
+        this.pep.evaluateRequest(request)
+            .subscribe(response => {
+                this.canCreate = response === this.pep.permit;
+            }, () => {
+                this.toast.createErrorToast('Could not retrieve ontology creation permissions');
+            });
     }
 }

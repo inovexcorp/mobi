@@ -60,6 +60,7 @@ import { OntologyDownloadModalComponent } from '../ontology-download-modal/ontol
 import { Mapping } from '../../../shared/models/mapping.class';
 import { Difference } from '../../../shared/models/difference.class';
 import { OpenOntologyTabComponent } from './openOntologyTab.component';
+import { PolicyEnforcementService } from "../../../shared/services/policyEnforcement.service";
 
 describe('Open Ontology Tab component', function() {
     let component: OpenOntologyTabComponent;
@@ -72,6 +73,7 @@ describe('Open Ontology Tab component', function() {
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
     let matDialog: jasmine.SpyObj<MatDialog>;
     let settingManagerStub: jasmine.SpyObj<SettingManagerService>;
+    let policyEnforcementStub: jasmine.SpyObj<PolicyEnforcementService>;
     let toastStub: jasmine.SpyObj<ToastService>;
 
     const error = 'Error Message';
@@ -126,6 +128,7 @@ describe('Open Ontology Tab component', function() {
                 MockProvider(MapperStateService),
                 MockProvider(SettingManagerService),
                 MockProvider(ToastService),
+                MockProvider(PolicyEnforcementService),
                 { provide: MatDialog, useFactory: () => jasmine.createSpyObj('MatDialog', {
                     open: { afterClosed: () => of(true)}
                 }) }
@@ -143,6 +146,12 @@ describe('Open Ontology Tab component', function() {
         matDialog = TestBed.inject(MatDialog) as jasmine.SpyObj<MatDialog>;
         settingManagerStub = TestBed.inject(SettingManagerService) as jasmine.SpyObj<SettingManagerService>;
         toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
+        policyEnforcementStub = TestBed.inject(PolicyEnforcementService) as jasmine.SpyObj<PolicyEnforcementService>;
+
+        ontologyStateStub.uploadFiles = [];
+        policyEnforcementStub.permit = 'Permit';
+        policyEnforcementStub.deny = 'Deny';
+        policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.permit));
     });
 
     afterEach(function() {
@@ -156,6 +165,7 @@ describe('Open Ontology Tab component', function() {
         mapperStateStub = null;
         catalogManagerStub = null;
         settingManagerStub = null;
+        policyEnforcementStub = null;
         matDialog = null;
     });
 
@@ -175,14 +185,27 @@ describe('Open Ontology Tab component', function() {
             expect(nativeElement.value).toBeNull();
             expect(nativeElement.click).toHaveBeenCalledWith();
         });
-        it('should update the uploaded files', function() {
-            spyOn(component, 'showUploadOntologyOverlay');
-            const file = new File([], '');
-            const dt = new DataTransfer();
-            dt.items.add(file);
-            component.updateFiles(dt.files);
-            expect(ontologyStateStub.uploadFiles).toEqual([file]);
-            expect(component.showUploadOntologyOverlay).toHaveBeenCalledWith();
+        describe('should update the uploaded files', function() {
+            it('when the user can create ontology records', function() {
+                component.canCreate = true;
+                spyOn(component, 'showUploadOntologyOverlay');
+                const file = new File([], '');
+                const dt = new DataTransfer();
+                dt.items.add(file);
+                component.updateFiles(dt.files);
+                expect(ontologyStateStub.uploadFiles).toEqual([file]);
+                expect(component.showUploadOntologyOverlay).toHaveBeenCalledWith();
+            });
+            it('when the user cannot create ontology records', function() {
+                spyOn(component, 'showUploadOntologyOverlay');
+                const file = new File([], '');
+                const dt = new DataTransfer();
+                dt.items.add(file);
+                component.updateFiles(dt.files);
+                expect(toastStub.createErrorToast).toHaveBeenCalledWith('You do not have permission to create ontology records');
+                expect(ontologyStateStub.uploadFiles).toEqual([]);
+                expect(component.showUploadOntologyOverlay).not.toHaveBeenCalledWith();
+            });
         });
         describe('should show the uploadOntologyOverlay and handle when', function() {
             beforeEach(() => {
@@ -387,11 +410,24 @@ describe('Open Ontology Tab component', function() {
             fixture.detectChanges();
             expect(element.queryAll(By.css('upload-snackbar')).length).toEqual(1);
         });
-        it('with buttons to upload an ontology and make a new ontology', function() {
-            const buttons = element.queryAll(By.css('.search-form button'));
-            expect(buttons.length).toEqual(2);
-            expect(['Upload Ontology', 'New Ontology']).toContain(buttons[0].nativeElement.textContent.trim());
-            expect(['Upload Ontology', 'New Ontology']).toContain(buttons[1].nativeElement.textContent.trim());
+        describe('with buttons to upload an ontology and make a new ontology', function() {
+            it('when user can create', function() {
+                const buttons = element.queryAll(By.css('.search-form button'));
+                expect(buttons.length).toEqual(2);
+                buttons.forEach(button => expect(button.nativeElement.disabled).toBeFalse());
+                expect(['Upload Ontology', 'New Ontology']).toContain(buttons[0].nativeElement.textContent.trim());
+                expect(['Upload Ontology', 'New Ontology']).toContain(buttons[1].nativeElement.textContent.trim());
+            });
+            it('when user cannot create', function() {
+                catalogManagerStub.getRecords.and.returnValue(of(new HttpResponse({body: [ontologyRecord, {'@id': 'other'}], headers: new HttpHeaders()})));
+                policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.deny));
+                fixture.detectChanges();
+                const buttons = element.queryAll(By.css('.search-form button'));
+                expect(buttons.length).toEqual(2);
+                buttons.forEach(button => expect(button.nativeElement.disabled).toBeTrue());
+                expect(['Upload Ontology', 'New Ontology']).toContain(buttons[0].nativeElement.textContent.trim());
+                expect(['Upload Ontology', 'New Ontology']).toContain(buttons[1].nativeElement.textContent.trim());
+            });
         });
         it('depending on how many ontologies there are', function() {
             spyOn(component, 'setPageOntologyRecords');
