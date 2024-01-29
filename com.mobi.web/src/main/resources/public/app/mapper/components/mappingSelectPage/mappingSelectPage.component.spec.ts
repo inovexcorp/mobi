@@ -61,6 +61,7 @@ import { SearchBarComponent } from '../../../shared/components/searchBar/searchB
 import { PolicyEnforcementService } from '../../../shared/services/policyEnforcement.service';
 import { ToastService } from '../../../shared/services/toast.service';
 import { MappingSelectPageComponent } from './mappingSelectPage.component';
+import { MatTooltipModule } from "@angular/material/tooltip";
 
 describe('Mapping Select Page component', function() {
     let component: MappingSelectPageComponent;
@@ -114,7 +115,8 @@ describe('Mapping Select Page component', function() {
                 MatMenuModule,
                 MatPaginatorModule,
                 MatDividerModule,
-                MatIconModule
+                MatIconModule,
+                MatTooltipModule
             ],
             declarations: [
                 MappingSelectPageComponent,
@@ -528,6 +530,24 @@ describe('Mapping Select Page component', function() {
             const button = element.queryAll(By.css('button.new-button'))[0];
             button.triggerEventHandler('click', null);
             expect(component.showNew).toHaveBeenCalledWith();
+        });
+        describe('with button to create a new mapping', function() {
+            it('when user can create', function() {
+                component.canCreate = true;
+                fixture.detectChanges();
+                const buttons = element.queryAll(By.css('.search-form button'));
+                expect(buttons.length).toEqual(1);
+                expect(buttons[0].nativeElement.disabled).toBeFalse();
+                expect(buttons[0].nativeElement.textContent.trim()).toEqual('New Mapping');
+            });
+            it('when user cannot create', function() {
+                policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.deny));
+                fixture.detectChanges();
+                const buttons = element.queryAll(By.css('.search-form button'));
+                expect(buttons.length).toEqual(1);
+                expect(buttons[0].nativeElement.disabled).toBeTrue();
+                expect(buttons[0].nativeElement.textContent.trim()).toEqual('New Mapping');
+            });
         });
     });
     describe('menu button', function() {

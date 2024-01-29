@@ -25,8 +25,18 @@
         <div class="search-form d-flex pt-2">
             <search-bar class="flex-1 mr-2" [(bindModel)]="searchBindModel" (submitEvent)="search()"></search-bar>
             <div>
-                <button mat-raised-button color="primary" class="new-button ml-1" (click)="newOntology()">New Ontology</button>
-                <button mat-raised-button color="primary" class="upload-button ml-1" (click)="clickUpload()">Upload Ontology</button>
+                <button mat-raised-button color="primary"
+                        class="new-button ml-1"
+                        (click)="newOntology()"
+                        [disabled]="!canCreate"
+                        matTooltip="You do not have permission to create ontology records"
+                        [matTooltipDisabled]="canCreate">New Ontology</button>
+                <button mat-raised-button color="primary"
+                        class="upload-button ml-1"
+                        (click)="clickUpload()"
+                        [disabled]="!canCreate"
+                        matTooltip="You do not have permission to create ontology records"
+                        [matTooltipDisabled]="canCreate">Upload Ontology</button>
                 <input #openOntologyFileInput class="d-none" type="file" (change)="updateFiles($event.target.files)" multiple accept=".ttl,.xml,.jsonld,.rdf,.json,.n3,.nq,.nt,.owl,.obo,.txt,.json,.ofn,.omn,.owx,.rdfs,.zip"/>
             </div>
         </div>

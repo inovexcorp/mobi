@@ -460,6 +460,22 @@ describe('Datasets List component', function() {
             expect(element.queryAll(By.css('.results-list info-message.no-results')).length).toBe(0);
             expect(element.queryAll(By.css('.results-list info-message.no-match')).length).toBe(1);
         });
+        describe('with button to create a new dataset', function() {
+            it('when user can create', function() {
+                const buttons = element.queryAll(By.css('.search-form button'));
+                expect(buttons.length).toEqual(1);
+                expect(buttons[0].nativeElement.disabled).toBeFalse();
+                expect(buttons[0].nativeElement.textContent.trim()).toEqual('New Dataset');
+            });
+            it('when user cannot create', function() {
+                component.canCreate = false;
+                fixture.detectChanges();
+                const buttons = element.queryAll(By.css('.search-form button'));
+                expect(buttons.length).toEqual(1);
+                expect(buttons[0].nativeElement.disabled).toBeTrue();
+                expect(buttons[0].nativeElement.textContent.trim()).toEqual('New Dataset');
+            });
+        });
     });
     it('should call showNew when the button is clicked', function() {
         spyOn(component, 'showNew');
