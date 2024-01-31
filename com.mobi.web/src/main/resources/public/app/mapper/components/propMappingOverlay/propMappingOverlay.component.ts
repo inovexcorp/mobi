@@ -158,7 +158,6 @@ export class PropMappingOverlayComponent implements OnInit {
                 this.rangeClasses = undefined;
                 this.rangeClassOptions = [];
                 this.propMappingForm.controls.rangeClass.setValue('');
-                this.propMappingForm.controls.rangeClass.disable();
             }
             this.showRangeClass = true;
         });
