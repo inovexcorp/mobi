@@ -13,7 +13,7 @@
 @prefix : <http://mobi.solutions/ontologies/workflows#> .
 @base <http://mobi.solutions/ontologies/workflows> .
 
-<http://mobi.solutions/ontologies/worklows> a owl:Ontology ;
+<http://mobi.solutions/ontologies/workflows> a owl:Ontology ;
     owl:versionIRI <http://mobi.solutions/ontologies/workflows#1.0> ;
     owl:imports <http://mobi.com/ontologies/prov>, <http://mobi.com/ontologies/documents>, <http://mobi.com/ontologies/catalog> ;
     rdfs:label "The Mobi Workflows Ontology"@en ;
