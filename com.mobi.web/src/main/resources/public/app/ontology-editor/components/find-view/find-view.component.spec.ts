@@ -115,6 +115,7 @@ describe('Find View component', function() {
             searchText: searchText,
             selected: omit(selected, '@id')
         };
+        component.isClosedArray = new Array(ontologyStateStub.listItem.editorTabStates.search.length).fill(false);
         ontologyStateStub.isLinkable.and.callFake(id => !!id);
         fixture.detectChanges();
     });
@@ -262,6 +263,17 @@ describe('Find View component', function() {
             component.unselectItem();
             expect(ontologyStateStub.unSelectItem).toHaveBeenCalledWith();
             expect(ontologyStateStub.listItem.editorTabStates.search.selected).toBeUndefined();
+        });
+        it('should close an individual element', function() {
+            component.toggleElement(0);
+            expect(component.isClosedArray[0]).toBe(true);
+        });
+        it('should ensure an individual element is expanded by default', function() {
+            expect(component.isClosedArray[0]).toBe(false);
+        });
+        it('should ensure an individual element is expanded, despite another being closed', function() {
+            component.toggleElement(1);
+            expect(component.isClosedArray[0]).toBe(false);
         });
     });
 });

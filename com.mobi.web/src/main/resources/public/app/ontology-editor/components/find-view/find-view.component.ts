@@ -47,6 +47,7 @@ export class FindViewComponent implements OnDestroy {
     @ViewChild('searchResults', { static: true }) searchResults: ElementRef;
 
     sub: Subscription;
+    isClosedArray: boolean[] = [];
 
     constructor(public os: OntologyStateService, public om: OntologyManagerService,
                 private spinnerSvc: ProgressSpinnerService) {}
@@ -71,6 +72,7 @@ export class FindViewComponent implements OnDestroy {
                         arr.sort((iri1, iri2) => this.os.getEntityNameByListItem(iri1, this.os.listItem).localeCompare(this.os.getEntityNameByListItem(iri2, this.os.listItem)));
                     });
                     state.search.results = results;
+                    this.isClosedArray = new Array(state.search.results.length).fill(false);
                     this.countResults();
                     state.search.infoMessage = !isEmpty(results) ? '' : 'There were no results for your search text.';
                     state.search.highlightText = state.search.searchText;
@@ -96,6 +98,9 @@ export class FindViewComponent implements OnDestroy {
             .subscribe(() => {
                 this.os.listItem.editorTabStates.search.selected = omit(cloneDeep(this.os.listItem.selected), '@id', '@type', 'mobi');
             });
+    }
+    toggleElement(index: number): void {
+        this.isClosedArray[index] = !this.isClosedArray[index];
     }
     unselectItem(): void {
         this.os.unSelectItem();
