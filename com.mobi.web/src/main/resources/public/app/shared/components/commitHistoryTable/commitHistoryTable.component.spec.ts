@@ -241,7 +241,7 @@ describe('Commit History Table component', function() {
             fixture.detectChanges();
             await fixture.whenStable();
             expect(matDialog.open).toHaveBeenCalledWith(CommitInfoOverlayComponent, {
-                data: { commit: testData.commit, ontRecordId: testData.recordId, type: testData.type }
+                data: { commit: testData.commit, recordId: testData.recordId, type: testData.type }
             });
         });
         describe('should get the list of commits', function() {
@@ -402,13 +402,15 @@ describe('Commit History Table component', function() {
                 });
                 it('not provided', async function() {
                     catalogManagerStub.getRecordVersions.calls.reset();
+                    catalogManagerStub.getRecordVersions.and.returnValue(of());
                     component.tags = undefined;
-                    component.recordId = undefined;
+                    component.recordId = 'recordid';
                     fixture.detectChanges();
                     await fixture.whenStable();
 
                     component.getTags();
-                    expect(catalogManagerStub.getRecordVersions).not.toHaveBeenCalled();
+
+                    expect(catalogManagerStub.getRecordVersions).toHaveBeenCalledWith('recordid', '');
                     expect(component.tagObjects).toEqual([]);
                 });
             });
@@ -520,7 +522,7 @@ describe('Commit History Table component', function() {
 
             const id = element.queryAll(By.css('table tr td.commit-id a'))[0];
             id.triggerEventHandler('click', null);
-            expect(matDialog.open).toHaveBeenCalledWith(CommitInfoOverlayComponent, {data: {commit: testData.commit, ontRecordId: testData.recordId, type: testData.type}});
+            expect(matDialog.open).toHaveBeenCalledWith(CommitInfoOverlayComponent, {data: {commit: testData.commit, recordId: testData.recordId, type: testData.type}});
         });
     });
 });

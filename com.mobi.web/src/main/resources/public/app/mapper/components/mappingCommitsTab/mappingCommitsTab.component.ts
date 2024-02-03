@@ -42,10 +42,12 @@ export class MappingCommitsTabComponent implements OnInit {
     commitId = '';
     branchTitle = '';
     branchList = [];
+    recordId = '';
     constructor(public state: MapperStateService, private toast: ToastService) {}
 
     ngOnInit(): void {
         if (!this.state.newMapping) {
+            this.recordId = this.state.selected.record.id;
             if (!this.state.selected.branch) {
                 this.branchList.push(this.state.selected.branch);
                 this.state.setMasterBranch().subscribe(() => {

@@ -326,7 +326,7 @@ export class CommitHistoryGraphComponent implements OnChanges, AfterViewInit, Do
     this.dialog.open(CommitInfoOverlayComponent, {
       data: {
         commit: find(this.commits, {id: commitId}),
-        ontRecordId: this.recordId,
+        recordId: this.recordId,
         type: this.type
       }
     });

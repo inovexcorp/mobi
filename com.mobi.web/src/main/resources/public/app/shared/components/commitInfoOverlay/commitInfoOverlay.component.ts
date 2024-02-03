@@ -48,7 +48,7 @@ import { User } from '../../models/user.class';
  * following data to be provided.
  *
  * @param {Commit} MAT_DIALOG_DATA.commit The commit to display information about including the commit IRI
- * @param {string} MAT_DIALOG_DATA.ontRecordId An optional IRI string representing an OntologyRecord to query for names
+ * @param {string} MAT_DIALOG_DATA.recordId An optional IRI string representing an OntologyRecord to query for names
  * if present
  */
 @Component({
@@ -67,7 +67,7 @@ export class CommitInfoOverlayComponent implements OnInit {
     userDisplay: string;
 
     constructor(private dialogRef: MatDialogRef<CommitInfoOverlayComponent>, 
-                @Inject(MAT_DIALOG_DATA) public data: {ontRecordId: string, commit: Commit, type: string},
+                @Inject(MAT_DIALOG_DATA) public data: {recordId: string, commit: Commit, type: string},
                 private toast: ToastService, private cm: CatalogManagerService,
                 private om: OntologyManagerService) {
     }
@@ -89,10 +89,10 @@ export class CommitInfoOverlayComponent implements OnInit {
                     const headers = response.headers;
                     this.hasMoreResults = (headers.get('has-more-results') || 'false') === 'true';
 
-                    if (this.data.ontRecordId && (this.data.type === ONTOLOGYEDITOR + 'OntologyRecord')) {
+                    if (this.data.type === ONTOLOGYEDITOR + 'OntologyRecord') {
                         const diffIris = union(this.tempAdditions.map(obj => obj['@id']), this.tempDeletions.map(obj => obj['@id']));
                         const filterIris = union(diffIris, getObjIrisFromDifference(this.tempAdditions), getObjIrisFromDifference(this.tempDeletions));
-                        return this.om.getOntologyEntityNames(this.data.ontRecordId, '', this.data.commit.id, false, false, filterIris);
+                        return this.om.getOntologyEntityNames(this.data.recordId, '', this.data.commit.id, false, false, filterIris);
                     }
                     return of(null);
                 }),

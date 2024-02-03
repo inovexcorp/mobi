@@ -54,9 +54,9 @@ describe('Commit Info Overlay component', function() {
     let headers;
     
     const commitId = 'commitId';
-    const ontRecordId = 'ontRecordId';
+    const recordId = 'recordId';
     const emptyObj: JSONLDObject = {'@id': '', '@type': []};
-    const data: {commit: Commit, ontRecordId: string, type: string} = {
+    const data: {commit: Commit, recordId: string, type: string} = {
         commit: {
             id: commitId,
             condensedId: commitId,
@@ -66,7 +66,7 @@ describe('Commit Info Overlay component', function() {
             base: '',
             auxiliary: ''
         },
-        ontRecordId,
+        recordId,
         type: `${ONTOLOGYEDITOR}OntologyRecord`
     };
 
@@ -168,7 +168,7 @@ describe('Commit Info Overlay component', function() {
                     data.commit = {'@id': commitId, '@type': []};
                     catalogManagerStub.getDifference.and.returnValue(of(new HttpResponse<CommitDifference>({body: data, headers: new HttpHeaders(headers)})));
                 });
-                describe('and resolve.ontRecordId is set', function() {
+                describe('and resolve.recordId is set', function() {
                     beforeEach( async function() {
                         component.data = {
                             commit: {
@@ -179,7 +179,7 @@ describe('Commit Info Overlay component', function() {
                                 base: '',
                                 auxiliary: ''
                             },
-                            ontRecordId: 'recordId',
+                            recordId: 'recordId',
                             type: ONTOLOGYEDITOR + 'OntologyRecord'
                         };
                         fixture.detectChanges();
@@ -217,7 +217,7 @@ describe('Commit Info Overlay component', function() {
                             base: '',
                             auxiliary: ''
                         },
-                        ontRecordId: '',
+                        recordId: '',
                         type: ''
                     };
                     expect(component.additions).toEqual([]);
@@ -243,7 +243,7 @@ describe('Commit Info Overlay component', function() {
                         base: '',
                         auxiliary: ''
                     },
-                    ontRecordId: '',
+                    recordId: '',
                     type: ''
                 };
                 fixture.detectChanges();
