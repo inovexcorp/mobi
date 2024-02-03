@@ -83,7 +83,7 @@ export class CommitHistoryTableComponent implements OnInit, OnChanges, OnDestroy
     @Input() headTitle?: string;
     @Input() targetId?: string;
     @Input() entityId?: string;
-    @Input() recordId?: string;
+    @Input() recordId: string;
     @Input() tags?: JSONLDObject[];
     @Input() dotClickable: boolean;
     @Input() graph: boolean;
@@ -137,7 +137,7 @@ export class CommitHistoryTableComponent implements OnInit, OnChanges, OnDestroy
         this.dialog.open(CommitInfoOverlayComponent, {
             data: {
                 commit: find(this.commits, {id: commitId}),
-                ontRecordId: this.recordId,
+                recordId: this.recordId,
                 type: this.type
             }
         });
@@ -188,7 +188,7 @@ export class CommitHistoryTableComponent implements OnInit, OnChanges, OnDestroy
                     description: getDctermsValue(tag, 'description')
                 } as Tag;
             });
-        } else if (this.recordId) {
+        } else {
             this.spinnerSvc.startLoadingForComponent(this.commitHistoryTable, 30);
             this.cm.getRecordVersions(this.recordId, get(this.cm.localCatalog, '@id', '')).pipe(first()).subscribe(
                 (response: HttpResponse<JSONLDObject[]>) => {

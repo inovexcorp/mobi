@@ -32,7 +32,7 @@
         <prop-preview [propDetails]="selectedProp" [rangeClassDetails]="rangeClasses"></prop-preview>
         <mat-form-field class="range-class-select-container w-100" *ngIf="showRangeClass; else showDataPropFields">
             <mat-label>Link To</mat-label>
-            <mat-select placeholder="Link To" formControlName="rangeClass" [disabled]="propMappingForm.controls.rangeClass.value===''">
+            <mat-select placeholder="Link To" formControlName="rangeClass">
                 <mat-option *ngFor="let option of rangeClassOptions" [value]="option">
                     {{option.title}}
                 </mat-option>

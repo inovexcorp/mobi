@@ -55,7 +55,7 @@ export class CommitDifferenceTabsetComponent {
     @Input() difference: Difference;
     @Input() entityNameFunc?: (entityIRI: string) => string;
     @Input() startIndex?: number;
-    @Input() recordId?: string;
+    @Input() recordId: string;
     @Input() type: string;
     @Output() showMoreResultsFunc = new EventEmitter<{limit: number, offset: number}>();
     @Output() receiveCommits = new EventEmitter<Commit[]>();

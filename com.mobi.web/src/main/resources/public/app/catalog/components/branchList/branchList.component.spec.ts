@@ -135,7 +135,6 @@ describe('Branch List component', function() {
                     expect(component.branches.length).toEqual(branches.length);
                     expect(component.branches.map(obj => obj.branch)).toEqual(branches);
                     expect(component.totalSize).toEqual(totalSize);
-                    expect(ontologyManagerStub.isOntologyRecord).toHaveBeenCalledWith(record);
                     expect(toastStub.createErrorToast).not.toHaveBeenCalled();
                 }));
                 it('and a ShapesGraphRecord successfully', fakeAsync(function() {
@@ -147,7 +146,6 @@ describe('Branch List component', function() {
                     expect(component.branches.length).toEqual(branches.length);
                     expect(component.branches.map(obj => obj.branch)).toEqual(branches);
                     expect(component.totalSize).toEqual(totalSize);
-                    expect(ontologyManagerStub.isOntologyRecord).toHaveBeenCalledWith(record);
                     expect(toastStub.createErrorToast).not.toHaveBeenCalled();
                 }));
                 it('unless getRecordBranches rejects', fakeAsync(function() {
@@ -157,7 +155,6 @@ describe('Branch List component', function() {
                     expect(catalogManagerStub.getRecordBranches).toHaveBeenCalledWith(recordId, catalogId, {pageIndex: 0, limit: component.limit, sortOption: sortOption});
                     expect(component.branches).toEqual([]);
                     expect(component.totalSize).toEqual(0);
-                    expect(ontologyManagerStub.isOntologyRecord).toHaveBeenCalledWith(record);
                     expect(toastStub.createErrorToast).toHaveBeenCalledWith('Error Message');
                 }));
             });

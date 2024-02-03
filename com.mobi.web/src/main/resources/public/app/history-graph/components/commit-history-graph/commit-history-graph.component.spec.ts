@@ -347,7 +347,7 @@ describe('CommitHistoryGraphComponent', () => {
         fixture.detectChanges();
         await fixture.whenStable();
         expect(matDialogMock.open).toHaveBeenCalledWith(CommitInfoOverlayComponent, {
-            data: { commit: commit, ontRecordId: recordId, type: type }
+            data: { commit: commit, recordId: recordId, type: type }
         });
     });
     it('reset clears gitgraph and clears branches', async function() {

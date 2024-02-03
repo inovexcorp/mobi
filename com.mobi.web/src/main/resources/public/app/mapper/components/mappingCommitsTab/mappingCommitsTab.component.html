@@ -23,12 +23,16 @@
 <div class="mapping-commits-tab container-fluid h-100">
     <div class="row h-100">
         <div class="col-8 offset-2">
-            <commit-history-table
+            <commit-history-table *ngIf="!this.state.newMapping; else newMappingInfoMessage"
                     [commitId]="commitId"
+                    [recordId]="recordId"
                     [headTitle]="branchTitle"
                     [branches]="this.branchList"
                     [type]="state.recordType"
                     graph></commit-history-table>
+            <ng-template #newMappingInfoMessage>
+                <info-message>No commits to display</info-message>
+            </ng-template>
         </div>
     </div>
 </div>

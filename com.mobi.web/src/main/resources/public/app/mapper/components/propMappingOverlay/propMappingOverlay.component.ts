@@ -158,6 +158,7 @@ export class PropMappingOverlayComponent implements OnInit {
                 this.rangeClasses = undefined;
                 this.rangeClassOptions = [];
                 this.propMappingForm.controls.rangeClass.setValue('');
+                this.propMappingForm.controls.rangeClass.setValidators([this.emptyRangeValidator, Validators.required]);
             }
             this.showRangeClass = true;
         });
@@ -169,6 +170,7 @@ export class PropMappingOverlayComponent implements OnInit {
     updateRange(): void {
         this.propMappingForm.controls.column.setValue('');
         if (this.selectedProp.type === `${OWL}ObjectProperty`) {
+            this.propMappingForm.controls.rangeClass.reset();
             this.propMappingForm.controls.rangeClass.setValidators([this.emptyRangeValidator, Validators.required]);
             this.propMappingForm.controls.column.clearValidators();
             this.propMappingForm.controls.column.setValue('');
