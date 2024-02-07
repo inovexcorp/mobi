@@ -77,7 +77,8 @@ describe('SHACLFormFieldConfig', () => {
     { field: `${SHACL_FORM}TextInput`, type: 'text' },
     { field: `${SHACL_FORM}ToggleInput`, type: 'toggle'}, 
     { field: `${SHACL_FORM}RadioInput`, type: 'radio'}, 
-    { field: `${SHACL_FORM}CheckboxInput`, type: 'checkbox'}
+    { field: `${SHACL_FORM}CheckboxInput`, type: 'checkbox'},
+    { field: `${SHACL_FORM}TextareaInput`, type: 'textarea'}
   ].forEach(test => {
     it(`should create a basic ${test.field} with the precalculated fields set`, () => {
       const propertyShape: JSONLDObject = {

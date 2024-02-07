@@ -149,6 +149,78 @@ describe('SHACLFormFieldComponent', () => {
       expect(component.fieldFormControl.invalid).toBeTruthy();
     });
   });
+  describe('should create for a TextareaInput', () => {
+    const propertyShape: JSONLDObject = {
+      '@id': propertyShapeId,
+      '@type': [ `${SHACL}PropertyShape` ],
+      [`${SHACL_FORM}usesFormField`]: [{ '@id': `${SHACL_FORM}TextareaInput` }],
+      [`${SHACL}path`]: [{ '@id': propertyName }]
+    };
+    it('with a value already set', () => {
+      component.formFieldConfig = new SHACLFormFieldConfig(nodeShape, propertyShapeId, [propertyShape]);
+      component.parentFormGroup = new UntypedFormGroup({
+        [propertyName]: new UntypedFormControl('initial')
+      });
+      fixture.detectChanges();
+      expect(component).toBeTruthy();
+      expect(component.fieldFormControl.value).toEqual('initial');
+      expect(element.queryAll(By.css('.textarea-field')).length).toEqual(1);
+    });
+    it('with a value already set and a default', () => {
+      const adjustedPropertyShape = Object.assign({}, propertyShape);
+      adjustedPropertyShape[`${SHACL}defaultValue`] = [{ '@value': 'DEFAULT' }];
+      component.formFieldConfig = new SHACLFormFieldConfig(nodeShape, propertyShapeId, [adjustedPropertyShape]);
+      component.parentFormGroup = new UntypedFormGroup({
+        [propertyName]: new UntypedFormControl('initial')
+      });
+      fixture.detectChanges();
+      expect(component).toBeTruthy();
+      expect(component.fieldFormControl.value).toEqual('initial');
+      expect(element.queryAll(By.css('.textarea-field')).length).toEqual(1);
+    });
+    it('with no value set', () => {
+      component.formFieldConfig = new SHACLFormFieldConfig(nodeShape, propertyShapeId, [propertyShape]);
+      component.parentFormGroup = new UntypedFormGroup({
+        [propertyName]: new UntypedFormControl('')
+      });
+      fixture.detectChanges();
+      expect(component).toBeTruthy();
+      expect(component.fieldFormControl.value).toEqual('');
+      expect(element.queryAll(By.css('.textarea-field')).length).toEqual(1);
+    });
+    it('with no value set and a default', () => {
+      const adjustedPropertyShape = Object.assign({}, propertyShape);
+      adjustedPropertyShape[`${SHACL}defaultValue`] = [{ '@value': 'DEFAULT' }];
+      component.formFieldConfig = new SHACLFormFieldConfig(nodeShape, propertyShapeId, [adjustedPropertyShape]);
+      component.parentFormGroup = new UntypedFormGroup({
+        [propertyName]: new UntypedFormControl('')
+      });
+      fixture.detectChanges();
+      expect(component).toBeTruthy();
+      expect(component.fieldFormControl.value).toEqual('DEFAULT');
+      expect(element.queryAll(By.css('.textarea-field')).length).toEqual(1);
+    });
+    it('with validators', () => {
+      const adjustedPropertyShape = Object.assign({}, propertyShape);
+      adjustedPropertyShape[`${SHACL}minCount`] = [{ '@value': '1' }];
+      adjustedPropertyShape[`${SHACL}pattern`] = [{ '@value': 'word' }];
+      component.formFieldConfig = new SHACLFormFieldConfig(nodeShape, propertyShapeId, [adjustedPropertyShape]);
+      component.parentFormGroup = new UntypedFormGroup({
+        [propertyName]: new UntypedFormControl('')
+      });
+      fixture.detectChanges();
+      expect(component).toBeTruthy();
+      expect(component.fieldFormControl.value).toEqual('');
+      expect(element.queryAll(By.css('.textarea-field')).length).toEqual(1);
+      expect(component.fieldFormControl.invalid).toBeTruthy();
+      component.fieldFormControl.setValue('word');
+      fixture.detectChanges();
+      expect(component.fieldFormControl.invalid).toBeFalsy();
+      component.fieldFormControl.setValue('error');
+      fixture.detectChanges();
+      expect(component.fieldFormControl.invalid).toBeTruthy();
+    });
+  });
   describe('should create for a ToggleInput', () => {
     const propertyShape: JSONLDObject = {
       '@id': propertyShapeId,
