@@ -259,22 +259,24 @@ public class ProvRest {
                 IRI subjectId = (IRI) user.getResource();
                 IRI actionId = vf.createIRI(Read.TYPE);
 
-                List<IRI> resourceIds = records.stream().map(Record::getResource).map(resource -> (IRI) resource)
+                List<IRI> recordIRIs = records.stream().map(Record::getResource).map(resource -> (IRI) resource)
                         .collect(Collectors.toList());
                 Map<String, Literal> subjectAttrs = Collections.singletonMap(XACML.SUBJECT_ID,
                         vf.createLiteral(subjectId.stringValue()));
                 Map<String, Literal> actionAttrs = Collections.singletonMap(XACML.ACTION_ID,
                         vf.createLiteral(actionId.stringValue()));
 
-                Request request = pdp.createRequest(List.of(subjectId), subjectAttrs, resourceIds, new HashMap<>(),
+                Request request = pdp.createRequest(List.of(subjectId), subjectAttrs, recordIRIs, new HashMap<>(),
                         List.of(actionId), actionAttrs);
 
                 Set<String> viewableRecords = pdp.filter(request, vf.createIRI(POLICY_PERMIT_OVERRIDES));
-                entityToActivities.keySet().forEach(entityIRI -> {
-                    if (!viewableRecords.contains(entityIRI.stringValue())) {
-                        LOG.trace("Removing record " + entityIRI + " from return set");
-                        entitiesModel.remove(entityIRI, null, null);
-                        List<Resource> activityIRIsToRemove = entityToActivities.get(entityIRI);
+                // Only perform access control filtering on entities that are VersionedRDFRecords
+                entityToActivities.keySet().stream().filter(entityId -> recordIRIs.contains((IRI) entityId))
+                        .forEach(entityId -> {
+                    if (!viewableRecords.contains(entityId.stringValue())) {
+                        LOG.trace("Removing record " + entityId + " from return set");
+                        entitiesModel.remove(entityId, null, null);
+                        List<Resource> activityIRIsToRemove = entityToActivities.get(entityId);
                         LOG.trace("Removing activities " + activityIRIsToRemove + " from return set");
                         activityIRIsToRemove.forEach(activities::remove);
                     }
