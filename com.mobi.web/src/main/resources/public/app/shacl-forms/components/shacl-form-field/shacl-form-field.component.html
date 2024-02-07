@@ -31,6 +31,13 @@
           <mat-error *ngIf="fieldFormControl.invalid">Not a valid value</mat-error>
       </mat-form-field>
   </div>
+  <div class="textarea-field" *ngIf="formFieldConfig.fieldType === 'textarea'">
+    <mat-form-field class="w-100">
+        <mat-label>{{label}}</mat-label>
+        <textarea matInput [formControlName]="controlName"></textarea>
+        <mat-error *ngIf="fieldFormControl.invalid">Not a valid value</mat-error>
+    </mat-form-field>
+</div>
   <div class="radio-field pb-3" *ngIf="formFieldConfig.fieldType === 'radio'">
     <mat-radio-group class="d-flex flex-column" [formControlName]="controlName">
         <mat-radio-button *ngFor="let value of formFieldConfig.values"
