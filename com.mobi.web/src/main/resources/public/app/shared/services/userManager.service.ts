@@ -138,6 +138,15 @@ export class UserManagerService {
         }
     }
 
+    getUserDisplay(iri: string): string {
+        if (iri) {
+            const user = this.users.find(user => user.iri === iri);
+            return user ? user.displayName : '[Not Available]';
+        } else {
+            return '[Not Available]';
+        }
+    }
+
     /**
      * Calls the POST /mobirest/users endpoint to add the passed user to Mobi. Returns an observable that resolves if
      * the addition was successful and rejects with an error message if it was not. Updates the `users` list
