@@ -58,10 +58,23 @@
     <mat-form-field>
       <mat-label>{{label}}</mat-label>
       <mat-select [formControlName]="controlName">
-        <mat-option *ngFor="let option of dropdown" [value]="option">
+        <mat-option *ngFor="let option of options" [value]="option">
           {{ option }}
         </mat-option>
       </mat-select>
+    </mat-form-field>
+  </div>
+  <div class="autocomplete-field pb-3 d-flex flex-column" *ngIf="formFieldConfig.fieldType === 'autocomplete'">
+    <mat-form-field>
+      <mat-label>{{label}}</mat-label>
+      <input type="text" matInput placeholder="Select an option" [formControlName]="controlName"
+        [matAutocomplete]="auto">
+      <mat-icon matSuffix>keyboard_arrow_down</mat-icon>
+      <mat-autocomplete #auto="matAutocomplete">
+        <mat-option *ngFor="let option of filteredOptions | async" [value]="option">
+          {{option}}
+        </mat-option>
+      </mat-autocomplete>
     </mat-form-field>
   </div>
 </div>

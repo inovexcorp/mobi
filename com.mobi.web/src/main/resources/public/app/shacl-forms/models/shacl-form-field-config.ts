@@ -67,6 +67,9 @@ export class SHACLFormFieldConfig {
         case `${SHACL_FORM}DropdownInput`:
           this._fieldType = 'dropdown';
           break;
+        case `${SHACL_FORM}AutocompleteInput`:
+          this._fieldType = 'autocomplete';
+          break;
         case `${SHACL_FORM}TextareaInput`:
           this._fieldType = 'textarea';
           break;

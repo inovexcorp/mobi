@@ -32,6 +32,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatRadioModule } from '@angular/material/radio';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatSelectModule } from '@angular/material/select';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
 
 import { SHACLFormComponent } from './components/shacl-form/shacl-form.component';
 import { SHACLFormFieldComponent } from './components/shacl-form-field/shacl-form-field.component';
@@ -49,7 +50,8 @@ import { SHACLFormFieldComponent } from './components/shacl-form-field/shacl-for
     MatRadioModule,
     MatSlideToggleModule,
     MatSelectModule,
-    ReactiveFormsModule
+    ReactiveFormsModule,
+    MatAutocompleteModule
   ],
   declarations: [
     SHACLFormComponent,
