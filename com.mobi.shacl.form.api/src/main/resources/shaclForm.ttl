@@ -18,6 +18,8 @@
 
 :DropdownInput a :FormField .
 
+:AutocompleteInput a :FormField .
+
 :TextareaInput a :FormField .
 
 :usesFormField a owl:ObjectProperty;

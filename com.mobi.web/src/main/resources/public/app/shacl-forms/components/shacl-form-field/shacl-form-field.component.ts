@@ -26,6 +26,8 @@ import { MatCheckboxChange } from '@angular/material/checkbox';
 
 import { SHACLFormFieldConfig } from '../../models/shacl-form-field-config';
 import { XSD } from '../../../prefixes';
+import { Observable } from 'rxjs';
+import { map, startWith } from 'rxjs/operators';
 
 // TODO: Look into complex setting support
 
@@ -58,7 +60,8 @@ export class SHACLFormFieldComponent implements OnInit {
 
   disableCheckboxes = false;
   checkboxes: { value: string, checked: boolean }[] = [];
-  dropdown: string[];
+  options: string[];
+  filteredOptions: Observable<string[]>;
   label = '';
 
   constructor() { }
@@ -85,12 +88,21 @@ export class SHACLFormFieldComponent implements OnInit {
         }
         this.fieldFormArray.setValidators(validators);
         this.fieldFormArray.updateValueAndValidity({ emitEvent: false });
-      } else if (this.formFieldConfig.fieldType === 'dropdown') {
-        this.dropdown = this.formFieldConfig.values;
+      } else if (['dropdown', 'autocomplete'].includes(this.formFieldConfig.fieldType)) {
+        this.options = this.formFieldConfig.values;
         this.fieldFormArray.setValidators(validators);
         this.fieldFormArray.updateValueAndValidity({ emitEvent: false });
-        if (this.dropdown.length === 1) {
-          this.fieldFormControl.setValue(this.dropdown[0]);
+        if (this.options.length === 1 && this.formFieldConfig.fieldType === 'dropdown') {
+          this.fieldFormControl.setValue(this.options[0]);
+        } else if (this.formFieldConfig.fieldType === 'autocomplete') {
+          this.filteredOptions = this.fieldFormControl.valueChanges.pipe(
+            startWith(''),
+            map(value => {
+              const filteredOptions = this._filter(value || '');
+              this._checkValidity(value, filteredOptions);
+              return filteredOptions;
+            })
+          );
         }
       } else {
         if (this.formFieldConfig.datatype === `${XSD}boolean`) {
@@ -136,5 +148,19 @@ export class SHACLFormFieldComponent implements OnInit {
   handleCheckboxMaxCount(): void {
     const maxNum = this.formFieldConfig.maxCount;
     this.disableCheckboxes = maxNum !== undefined && this.fieldFormControl.value.length >= maxNum;
+  }
+
+  private _filter(value: string): string[] {
+    const filterValue = value.toLowerCase();
+    return this.options.filter(option => option.toLowerCase().includes(filterValue));
+  }
+
+  private _checkValidity(value: string, filteredOptions: string[]): void {
+    const isValid = filteredOptions.includes(value);
+    if (!isValid) {
+      this.fieldFormControl.setErrors({ 'invalidOption': true });
+    } else {
+      this.fieldFormControl.setErrors(null);
+    }
   }
 }
