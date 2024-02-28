@@ -135,23 +135,23 @@ export class LoginManagerService {
             currentUser: this.currentUser
         }});
         this.weGood = false;
-        this.ds.reset();
-        this.dlm.reset();
-        this.dis.reset();
-        this.ms.initialize();
-        this.ms.resetEdit();
-        this.mrs.reset();
-        this.os.reset();
-        this.sgs.reset();
-        this.cs.reset();
-        this.yasgui.reset();
-        this.prov.reset();
         this.http.delete(this.prefix)
             .subscribe(() => {
                 this.currentUser = '';
                 this.currentUserIRI = '';
                 this.us.reset();
                 this.router.navigate(['/login']);
+                this.ds.reset();
+                this.dlm.reset();
+                this.dis.reset();
+                this.ms.initialize();
+                this.ms.resetEdit();
+                this.mrs.reset();
+                this.os.reset();
+                this.sgs.reset();
+                this.cs.reset();
+                this.yasgui.reset();
+                this.prov.reset();
             });
     }
 
