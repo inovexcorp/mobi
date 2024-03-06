@@ -29,6 +29,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -47,6 +48,7 @@ import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.jaas.api.token.TokenManager;
 import com.mobi.ontologies.dcterms._Thing;
+import com.mobi.persistence.utils.api.BNodeService;
 import com.mobi.prov.api.ProvenanceService;
 import com.mobi.prov.api.builder.ActivityConfig;
 import com.mobi.rdf.orm.OrmFactory;
@@ -58,6 +60,8 @@ import com.mobi.vfs.api.VirtualFilesystemException;
 import com.mobi.vfs.impl.commons.SimpleVirtualFilesystem;
 import com.mobi.vfs.impl.commons.SimpleVirtualFilesystemConfig;
 import com.mobi.vfs.ontologies.documents.BinaryFile;
+import com.mobi.workflows.api.action.ActionHandler;
+import com.mobi.workflows.api.ontologies.workflows.Action;
 import com.mobi.workflows.api.ontologies.workflows.Workflow;
 import com.mobi.workflows.api.ontologies.workflows.WorkflowExecutionActivity;
 import com.mobi.workflows.api.ontologies.workflows.WorkflowRecord;
@@ -67,6 +71,7 @@ import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.LinkedHashModel;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.rio.RDFFormat;
@@ -78,6 +83,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 import java.io.IOException;
@@ -125,6 +131,7 @@ public class SimpleWorkflowManagerTest extends OrmEnabledTestCase {
     private MemoryRepositoryWrapper repository;
     private WorkflowExecutionActivity activity;
     private BinaryFile logFile;
+    private static BNodeService bNodeService;
 
     private final OrmFactory<WorkflowRecord> recordFactory = getRequiredOrmFactory(WorkflowRecord.class);
     private final OrmFactory<Catalog> catalogFactory = getRequiredOrmFactory(Catalog.class);
@@ -164,6 +171,8 @@ public class SimpleWorkflowManagerTest extends OrmEnabledTestCase {
         System.setProperty("karaf.etc", Objects.requireNonNull(SimpleWorkflowRecordServiceTest.class.getResource("/")).getPath());
         repository = new MemoryRepositoryWrapper();
         repository.setDelegate(new SailRepository(new MemoryStore()));
+        bNodeService = Mockito.mock(BNodeService.class);
+        when(bNodeService.deterministicSkolemize(any(Model.class), anyMap())).thenReturn(new LinkedHashModel());
 
         SimpleVirtualFilesystemConfig config = mock(SimpleVirtualFilesystemConfig.class);
 
@@ -209,6 +218,7 @@ public class SimpleWorkflowManagerTest extends OrmEnabledTestCase {
 
         workflowManager = new SimpleWorkflowManager();
         injectOrmFactoryReferencesIntoService(workflowManager);
+        workflowManager.bNodeService = this.bNodeService;
         workflowManager.commitManager = commitManager;
         workflowManager.branchManager = branchManager;
         workflowManager.compiledResourceManager = compiledResourceManager;
@@ -273,6 +283,22 @@ public class SimpleWorkflowManagerTest extends OrmEnabledTestCase {
         workflowModel = Rio.parse(stream, "", RDFFormat.TURTLE);
         workflowManager.validateWorkflow(workflowModel);
         thrown.expectMessage("Workflow definition is not valid:");
+    }
+
+    @Test
+    public void validateWorkflowWithDuplicateValues() throws IOException {
+        // Load the test workflow model
+        InputStream stream = getClass().getResourceAsStream("/test-workflow.ttl");
+        Model workflowModel = Rio.parse(stream, "", RDFFormat.TURTLE);
+
+        // Mock the ActionHandler by loading in duplicate input stream
+        ActionHandler<Action> mockActionHandler = mock(ActionHandler.class);
+        when(mockActionHandler.getShaclDefinition()).thenReturn(getClass().getResourceAsStream("/workflows.ttl"));
+        workflowManager.addActionHandler(mockActionHandler);
+
+        // Call the method to validate the workflow with duplicate values
+        workflowManager.validateWorkflow(workflowModel);
+        verify(mockActionHandler).getShaclDefinition();
     }
 
     @Test
