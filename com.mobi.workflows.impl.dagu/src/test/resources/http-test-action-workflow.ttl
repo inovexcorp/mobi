@@ -1,0 +1,15 @@
+@prefix dct: <http://purl.org/dc/terms/> .
+@prefix w: <http://mobi.solutions/ontologies/workflows#> .
+@prefix wext: <http://mobi.solutions/ontologies/workflows/catalog#> .
+
+
+<http://example.com/workflows/B> a <http://mobi.solutions/ontologies/workflows#Workflow> ;
+    <http://mobi.solutions/ontologies/workflows#hasAction> <http://example.com/workflows/B/action> .
+
+<http://example.com/workflows/B/action> a <http://mobi.solutions/ontologies/workflows#Action>,
+                                              <http://mobi.solutions/ontologies/workflows#HTTPRequestAction>;
+    <http://mobi.solutions/ontologies/workflows#hasHttpUrl> "https://httpbin.org/post" ;
+    <http://mobi.solutions/ontologies/workflows#hasHttpMethod> "POST" ;
+    <http://mobi.solutions/ontologies/workflows#hasHttpBody> "<?xml version=\"1.0\" encoding=\"UTF-8\"?><root><person><name>John Doe</name><age>30</age><email>john@example.com</email></person><person><name>Jane Smith</name><age>25</age><email>jane@example.com</email></person></root>" ;
+    <http://mobi.solutions/ontologies/workflows#hasHttpMediaType> "application/xml" ;
+    <http://mobi.solutions/ontologies/workflows#hasHttpTimeout> "45" .

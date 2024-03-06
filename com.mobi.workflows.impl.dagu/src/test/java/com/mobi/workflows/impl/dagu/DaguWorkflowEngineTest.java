@@ -24,6 +24,7 @@ package com.mobi.workflows.impl.dagu;
  */
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
@@ -39,6 +40,7 @@ import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.jaas.api.token.TokenManager;
+import com.mobi.ontologies.rdfs.Property;
 import com.mobi.prov.api.ProvenanceService;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
@@ -53,6 +55,7 @@ import com.mobi.workflows.api.ontologies.workflows.Action;
 import com.mobi.workflows.api.ontologies.workflows.ActionExecution;
 import com.mobi.workflows.api.ontologies.workflows.Workflow;
 import com.mobi.workflows.api.ontologies.workflows.WorkflowExecutionActivity;
+import com.mobi.workflows.impl.dagu.actions.DaguHTTPRequestActionHandler;
 import com.mobi.workflows.impl.dagu.actions.DaguTestActionHandler;
 import com.nimbusds.jwt.SignedJWT;
 import org.apache.commons.io.IOUtils;
@@ -112,23 +115,32 @@ public class DaguWorkflowEngineTest extends OrmEnabledTestCase {
     private SignedJWT signedJWT;
     private User user;
     private MemoryRepositoryWrapper repository;
-    private Workflow workflow;
-    private WorkflowExecutionActivity activity;
+    private Workflow workflowA;
+    private Workflow workflowB;
+
+    private WorkflowExecutionActivity activityA;
+    private WorkflowExecutionActivity activityB;
+
     private AutoCloseable closeable;
 
     private final DaguTestActionHandler actionHandler = new DaguTestActionHandler();
+    private final DaguHTTPRequestActionHandler httpActionHandler = new DaguHTTPRequestActionHandler();
+
 
     //IRI and metadata variables
     private final Literal userName = vf.createLiteral("testUser");
     private final IRI catalogId = vf.createIRI("http://mobi.com/test/catalogs#catalog-test");
-    private final IRI workflowId = vf.createIRI("http://example.com/workflows/A");
+    private final IRI workflowIdA = vf.createIRI("http://example.com/workflows/A");
+    private final IRI workflowIdB = vf.createIRI("http://example.com/workflows/B");
+
     private final IRI activityIRI = vf.createIRI("http://mobi.com/test/activities#activity");
     private final String hashString = "68335f26f9162a0a5bb2bd699970fe67d60b6ede";
 
     //ORM factories
     private final OrmFactory<User> userFactory = getRequiredOrmFactory(User.class);
     private final OrmFactory<Workflow> workflowFactory = getRequiredOrmFactory(Workflow.class);
-    private final OrmFactory<WorkflowExecutionActivity> executionActivityFactory = getRequiredOrmFactory(WorkflowExecutionActivity.class);
+    private final OrmFactory<WorkflowExecutionActivity> executionActivityFactory =
+            getRequiredOrmFactory(WorkflowExecutionActivity.class);
 
     //needed to inject into service
     private final OrmFactory<Action> actionFactory = getRequiredOrmFactory(Action.class);
@@ -163,24 +175,31 @@ public class DaguWorkflowEngineTest extends OrmEnabledTestCase {
         closeable = MockitoAnnotations.openMocks(this);
 
         signedJWT = mock(SignedJWT.class);
-        System.setProperty("karaf.etc", Objects.requireNonNull(DaguWorkflowEngineTest.class.getResource("/")).getPath());
+        System.setProperty("karaf.etc", Objects.requireNonNull(DaguWorkflowEngineTest.class.getResource("/"))
+                .getPath());
         config = mock(DaguWorkflowEngineConfig.class);
 
         repository = new MemoryRepositoryWrapper();
         repository.setDelegate(new SailRepository(new MemoryStore()));
 
-        InputStream stream = getClass().getResourceAsStream("/test-workflow.ttl");
-        Model workflowModel = Rio.parse(stream, "", RDFFormat.TURTLE);
+        InputStream streamTestAction = getClass().getResourceAsStream("/test-workflow.ttl");
+        InputStream streamHttpTestAction = getClass().getResourceAsStream("/http-test-action-workflow.ttl");
+        Model workflowModelA = Rio.parse(streamTestAction, "", RDFFormat.TURTLE);
+        Model workflowModelB = Rio.parse(streamHttpTestAction, "", RDFFormat.TURTLE);
         cookie = mock(Cookie.class);
 
         user = userFactory.createNew(vf.createIRI("http://test.org/user"));
         user.setUsername(userName);
 
-        workflow = workflowFactory.createNew(workflowId, workflowModel);
+        workflowA = workflowFactory.createNew(workflowIdA, workflowModelA);
+        workflowB = workflowFactory.createNew(workflowIdB, workflowModelB);
 
-        activity = executionActivityFactory.createNew(activityIRI);
-        activity.addWasAssociatedWith(user);
-        activity.addStartedAtTime(OffsetDateTime.now());
+        activityA = executionActivityFactory.createNew(activityIRI);
+        activityA.addWasAssociatedWith(user);
+        activityA.addStartedAtTime(OffsetDateTime.now());
+        activityB = executionActivityFactory.createNew(activityIRI);
+        activityB.addWasAssociatedWith(user);
+        activityB.addStartedAtTime(OffsetDateTime.now());
 
         // Setup VirtualFileSystem
         vfs = new SimpleVirtualFilesystem();
@@ -211,6 +230,7 @@ public class DaguWorkflowEngineTest extends OrmEnabledTestCase {
         daguEngine.configProvider = configProvider;
         daguEngine.client = httpClient;
         daguEngine.provService = provService;
+        daguEngine.addActionHandler(httpActionHandler);
         daguEngine.addActionHandler(actionHandler);
         daguEngine.factoryRegistry = getOrmFactoryRegistry();
         daguEngine.mobi = mobi;
@@ -250,6 +270,123 @@ public class DaguWorkflowEngineTest extends OrmEnabledTestCase {
     }
 
     @Test
+    public void createLocalHTTPAction() throws IOException {
+        //setup
+        when(config.local()).thenReturn(true);
+        String remoteYaml = String.format("logDir: %s\n" +
+                "params: MOBI_HOST MOBI_TOKEN\n" +
+                "steps:\n" +
+                "- name: http://example.com/workflows/B/action HTTP Request\n" +
+                "  executor:\n" +
+                "    type: http\n" +
+                "    config:\n" +
+                "      silent: true\n" +
+                "  command: POST https://httpbin.org/post\n" +
+                "  script: |\n" +
+                "    {\n" +
+                "      \"timeout\": 45,\n" +
+                "      \"headers\": {\n" +
+                "      \n" +
+                "      \"Content-Type\": \"application/xml\"\n" +
+                "    },\n" +
+                "      \"query\": {\n" +
+                "        \n" +
+                "      },\n" +
+                "      \"body\": \"<?xml version=\\\"1.0\\\" encoding=\\\"UTF-8\\\"?><root>" +
+                "<person><name>John Doe</name><age>30</age><email>john@example.com</email></person>" +
+                "<person><name>Jane Smith</name><age>25</age><email>jane@example.com</email></person></root>\"\n" +
+                "    }\n", fileLocation);
+
+        daguEngine.start(config);
+        String yaml = daguEngine.createYaml(workflowB);
+        assertTrue(yaml.contains(remoteYaml));
+    }
+
+    @Test
+    public void createRemoteHTTPAction() throws IOException {
+        //setup
+        when(config.local()).thenReturn(false);
+        String remoteYaml = "params: MOBI_HOST MOBI_TOKEN\n" +
+                "steps:\n" +
+                "- name: http://example.com/workflows/B/action HTTP Request\n" +
+                "  executor:\n" +
+                "    type: http\n" +
+                "    config:\n" +
+                "      silent: true\n" +
+                "  command: POST https://httpbin.org/post\n" +
+                "  script: |\n" +
+                "    {\n" +
+                "      \"timeout\": 45,\n" +
+                "      \"headers\": {\n" +
+                "      \n" +
+                "      \"Content-Type\": \"application/xml\"\n" +
+                "    },\n" +
+                "      \"query\": {\n" +
+                "        \n" +
+                "      },\n" +
+                "      \"body\": \"<?xml version=\\\"1.0\\\" encoding=\\\"UTF-8\\\"?><root><person>" +
+                "<name>John Doe</name><age>30</age><email>john@example.com</email></person><person>" +
+                "<name>Jane Smith</name><age>25</age><email>jane@example.com</email></person></root>\"\n" +
+                "    }\n";
+
+        daguEngine.start(config);
+        String yaml = daguEngine.createYaml(workflowB);
+        assertTrue(yaml.contains(remoteYaml));
+    }
+
+    @Test
+    public void createRemoteHTTPActionExpectNotEqual() throws IOException {
+        //setup
+        when(config.local()).thenReturn(false);
+        String remoteYaml = "params: MOBI_HOST MOBI_TOKEN\n" +
+                "steps:\n" +
+                "- name: http://example.com/workflows/B/action HTTP Request\n" +
+                "  executor:\n" +
+                "    type: http\n" +
+                "    config:\n" +
+                "      silent: true\n" +
+                "  command: GET https://httpbin.org/post\n" +
+                "  script: |\n" +
+                "    {\n" +
+                "      \"timeout\": 45,\n" +
+                "      \"headers\": {\n" +
+                "      \n" +
+                "      \"Content-Type\": \"application/xml\"\n" +
+                "    },\n" +
+                "      \"query\": {\n" +
+                "        \n" +
+                "      },\n" +
+                "      \"body\": \"<?xml version=\\\"1.0\\\" encoding=\\\"UTF-8\\\"?><root><person>" +
+                "<name>John Doe</name><age>30</age><email>john@example.com</email></person><person>" +
+                "<name>Jane Smith</name><age>25</age><email>jane@example.com</email></person></root>\"\n" +
+                "    }\n" +
+                "  output: RESULT\n" +
+                "- name: http://example.com/workflows/B/action output\n" +
+                "  depends:\n" +
+                "    - http://example.com/workflows/B/action HTTP Request\n" +
+                "  command: echo $RESULT";
+
+        daguEngine.start(config);
+        String yaml = daguEngine.createYaml(workflowB);
+        assertNotEquals(remoteYaml, yaml);
+    }
+
+    @Test
+    public void createRemoteHTTPActionInvalidYaml() throws IOException {
+        daguEngine.start(config);
+        Model invalidModel = workflowB.getModel();
+
+        IRI hasHttpUrlPredicate = vf.createIRI("http://mobi.solutions/ontologies/workflows#hasHttpUrl");
+        invalidModel = invalidModel.filter(null, hasHttpUrlPredicate, null);
+        if (!invalidModel.isEmpty()) {
+            invalidModel.removeAll(invalidModel);
+        }
+        thrown.expect(MobiException.class);
+        thrown.expectMessage("HTTP URL for Dagu Request not present");
+        daguEngine.createYaml(workflowB);
+    }
+    
+    @Test
     public void createRemoteYamlTest() throws IOException {
         //setup
         when(config.local()).thenReturn(false);
@@ -260,7 +397,7 @@ public class DaguWorkflowEngineTest extends OrmEnabledTestCase {
                   command: echo "This is a test message from Workflow A\"""";
 
         daguEngine.start(config);
-        String yaml = daguEngine.createYaml(workflow);
+        String yaml = daguEngine.createYaml(workflowA);
         assertEquals(remoteYaml, yaml);
     }
 
@@ -274,7 +411,7 @@ public class DaguWorkflowEngineTest extends OrmEnabledTestCase {
                 - name: http://example.com/workflows/A/action
                   command: echo "This is a test message from Workflow A\"""".formatted(fileLocation);
         daguEngine.start(config);
-        String yaml = daguEngine.createYaml(workflow);
+        String yaml = daguEngine.createYaml(workflowA);
         assertEquals(localYaml, yaml);
     }
 
@@ -290,7 +427,7 @@ public class DaguWorkflowEngineTest extends OrmEnabledTestCase {
 
         daguEngine.start(config);
         daguEngine.client = httpClient;
-        daguEngine.startWorkflow(workflow, activity);
+        daguEngine.startWorkflow(workflowA, activityA);
 
         verify(provService).deleteActivity(eq(activityIRI));
     }
@@ -311,7 +448,7 @@ public class DaguWorkflowEngineTest extends OrmEnabledTestCase {
 
         daguEngine.start(config);
         daguEngine.client = httpClient;
-        daguEngine.startWorkflow(workflow, activity);
+        daguEngine.startWorkflow(workflowA, activityA);
         verify(provService).deleteActivity(eq(activityIRI));
     }
 
@@ -323,7 +460,7 @@ public class DaguWorkflowEngineTest extends OrmEnabledTestCase {
 
         daguEngine.start(config);
         daguEngine.client = httpClient;
-        BinaryFile file = daguEngine.getSchedulerLog(hashString, path, activity, httpClient);
+        BinaryFile file = daguEngine.getSchedulerLog(hashString, path, activityA, httpClient);
         if (file.getFileName().isPresent()){
             assertEquals("agent_68335f26f9162a0a5bb2bd699970fe67d60b6ede.20230925.11:31:49.459.44dc0c43.log", file.getFileName().get());
         } else {
@@ -343,7 +480,7 @@ public class DaguWorkflowEngineTest extends OrmEnabledTestCase {
 
         daguEngine.start(config);
         daguEngine.client = httpClient;
-        BinaryFile file = daguEngine.getSchedulerLog(hashString, path, activity, httpClient);
+        BinaryFile file = daguEngine.getSchedulerLog(hashString, path, activityA, httpClient);
         if (file.getFileName().isPresent()) {
             assertEquals("agent_68335f26f9162a0a5bb2bd699970fe67d60b6ede.20230925.11:31:49.459.44dc0c43.log", file.getFileName().get());
         } else {
@@ -373,7 +510,7 @@ public class DaguWorkflowEngineTest extends OrmEnabledTestCase {
 
         daguEngine.start(config);
         daguEngine.client = httpClient;
-        daguEngine.getSchedulerLog(hashString, path, activity, httpClient);
+        daguEngine.getSchedulerLog(hashString, path, activityA, httpClient);
     }
 
     @Test
@@ -391,7 +528,7 @@ public class DaguWorkflowEngineTest extends OrmEnabledTestCase {
 
         daguEngine.start(config);
         daguEngine.client = httpClient;
-        daguEngine.getSchedulerLog(hashString, path, activity, httpClient);
+        daguEngine.getSchedulerLog(hashString, path, activityA, httpClient);
     }
 
     @Test
@@ -405,14 +542,14 @@ public class DaguWorkflowEngineTest extends OrmEnabledTestCase {
         ObjectNode testNode = new ObjectMapper().readValue(jsonString, ObjectNode.class);
 
         daguEngine.start(config);
-        daguEngine.initializeActionExecutions(activity, testNode, hashString, testMap);
+        daguEngine.initializeActionExecutions(activityA, testNode, hashString, testMap);
         try (RepositoryConnection conn = repository.getConnection()) {
             conn.begin();
-            conn.add(activity.getModel());
+            conn.add(activityA.getModel());
             conn.commit();
 
-            assertEquals(1, activity.getHasActionExecution_resource().size());
-            Resource actionIRI = activity.getHasActionExecution_resource().stream().findFirst().get();
+            assertEquals(1, activityA.getHasActionExecution_resource().size());
+            Resource actionIRI = activityA.getHasActionExecution_resource().stream().findFirst().get();
             Model actionModel = QueryResults.asModel(conn.getStatements(actionIRI, null, null));
             Optional<ActionExecution> executionOpt = actionExecutionFactory.getExisting(actionIRI, actionModel);
             if (executionOpt.isPresent()) {

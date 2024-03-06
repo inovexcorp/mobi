@@ -1,0 +1,23 @@
+- name: {{hasActionIri}} HTTP Request
+  executor:
+    type: http
+    config:
+      silent: true
+  command: {{hasHttpMethod}} {{hasHttpUrl}}
+  script: |
+    {
+      "timeout": {{hasHttpTimeout}},
+      "headers": {
+      {{hasHeader}}
+      {{hasHttpMediaType}}
+    },
+      "query": {
+        {{hasQueryParams}}
+      },
+      "body": "{{hasHttpBody}}"
+    }
+  output: {{hasRandomId}}
+- name: {{hasActionIri}} output
+  depends:
+    - {{hasActionIri}} HTTP Request
+  command: echo ${{hasRandomId}}

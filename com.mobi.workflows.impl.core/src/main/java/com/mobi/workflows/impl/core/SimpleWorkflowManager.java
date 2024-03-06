@@ -43,7 +43,9 @@ import com.mobi.ontologies.provo.Entity;
 import com.mobi.ontologies.provo.EntityFactory;
 import com.mobi.persistence.utils.Bindings;
 import com.mobi.persistence.utils.ConnectionUtils;
+import com.mobi.persistence.utils.SkolemizedStatementCollector;
 import com.mobi.persistence.utils.Statements;
+import com.mobi.persistence.utils.api.BNodeService;
 import com.mobi.prov.api.ProvOntologyLoader;
 import com.mobi.prov.api.ProvenanceService;
 import com.mobi.prov.api.builder.ActivityConfig;
@@ -71,6 +73,7 @@ import com.mobi.workflows.api.ontologies.workflows.WorkflowRecordFactory;
 import com.mobi.workflows.api.trigger.TriggerHandler;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.common.exception.ValidationException;
+import org.eclipse.rdf4j.model.BNode;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.ModelFactory;
@@ -90,7 +93,9 @@ import org.eclipse.rdf4j.repository.RepositoryException;
 import org.eclipse.rdf4j.repository.RepositoryResult;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.RDFParser;
 import org.eclipse.rdf4j.rio.Rio;
+import org.eclipse.rdf4j.rio.helpers.StatementCollector;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
 import org.eclipse.rdf4j.sail.shacl.ShaclSail;
 import org.osgi.service.component.annotations.Activate;
@@ -207,6 +212,9 @@ public class SimpleWorkflowManager implements WorkflowManager, EventHandler {
 
     @Reference
     EngineManager engineManager;
+
+    @Reference
+    BNodeService bNodeService;
 
     @Activate
     protected void startService() {
@@ -670,15 +678,27 @@ public class SimpleWorkflowManager implements WorkflowManager, EventHandler {
             log.trace("Adding Workflow Model");
             conn.add(workflowModel);
             log.trace("Adding base SHACL definitions");
-            conn.add(WorkflowManager.class.getResourceAsStream("/workflows.ttl"), RDFFormat.TURTLE,
-                    RDF4J.SHACL_SHAPE_GRAPH);
+
+            ModelFactory modelFactory = new DynamicModelFactory();
+            Map<BNode, IRI> skolemizedBNodes = new HashMap<>();
+            StatementCollector stmtCollector = new SkolemizedStatementCollector(modelFactory,
+                    bNodeService, skolemizedBNodes);
+            RDFParser parser = Rio.createParser(RDFFormat.TURTLE);
+            parser.setRDFHandler(stmtCollector);
+            parser.parse(WorkflowManager.class.getResourceAsStream("/workflows.ttl"), "");
+            conn.add(stmtCollector.getStatements(), RDF4J.SHACL_SHAPE_GRAPH);
+
             log.trace("Adding Trigger SHACL definitions");
             for (TriggerHandler<Trigger> handler : triggerHandlers.values()) {
-                conn.add(handler.getShaclDefinition(), RDFFormat.TURTLE, RDF4J.SHACL_SHAPE_GRAPH);
+                stmtCollector.clear();
+                parser.parse(handler.getShaclDefinition());
+                conn.add(stmtCollector.getStatements(), RDF4J.SHACL_SHAPE_GRAPH);
             }
             log.trace("Adding Action SHACL definitions");
             for (ActionHandler<Action> handler : actionHandlers.values()) {
-                conn.add(handler.getShaclDefinition(), RDFFormat.TURTLE, RDF4J.SHACL_SHAPE_GRAPH);
+                stmtCollector.clear();
+                parser.parse(handler.getShaclDefinition());
+                conn.add(stmtCollector.getStatements(), RDF4J.SHACL_SHAPE_GRAPH);
             }
             conn.commit();
             log.trace("Workflow RDF deemed valid");
