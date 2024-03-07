@@ -28,18 +28,16 @@ module.exports = {
     '@tags': ['sanity'],
 
     'Step 1: login as admin' : function(browser) {
-        browser
-            .url('https://localhost:' + browser.globals.globalPort + '/mobi/index.html#/home')
-            .useXpath()
-            .waitForElementVisible('//div[@class="form-group"]//input[@id="username"]')
-            .waitForElementVisible('//div[@class="form-group"]//input[@id="password"]')
-            .setValue('//div[@class="form-group"]//input[@id="username"]', adminUsername)
-            .setValue('//div[@class="form-group"]//input[@id="password"]', adminPassword)
-            .click('//button[@type="submit"]')
+        browser.globals.initial_steps(browser, adminUsername, adminPassword)
+        browser.globals.wait_for_no_spinners(browser);
+        browser.click('xpath', '//div//ul//a[@class="nav-link"][@href="#/home"]');
+        browser.globals.wait_for_no_spinners(browser);
+        browser.waitForElementVisible('.home-page')
     },
 
     'Step 2: check for visibility of home elements' : function(browser) {
         browser
+            .useXpath()
             .waitForElementVisible('//*[contains(@class, "quick-action-grid")]//span[text()[contains(.,"Search the Catalog")]]')
             .waitForElementVisible('//*[contains(@class, "quick-action-grid")]//span[text()[contains(.,"Open an Ontology")]]')
             .waitForElementVisible('//*[contains(@class, "quick-action-grid")]//span[text()[contains(.,"Read the Documentation")]]')

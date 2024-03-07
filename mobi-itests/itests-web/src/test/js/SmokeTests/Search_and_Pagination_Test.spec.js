@@ -26,17 +26,23 @@ var adminUsername = 'admin'
 var adminPassword = 'admin'
 
 var ontologies = [
-    process.cwd()+ '/src/test/resources/rdf_files/test-local-imports-1.ttl',
-    process.cwd()+ '/src/test/resources/rdf_files/test-local-imports-2.ttl',
-    process.cwd()+ '/src/test/resources/rdf_files/test-local-imports-3.ttl',
     process.cwd()+ '/src/test/resources/rdf_files/active-entity-filter-1.ttl',
     process.cwd()+ '/src/test/resources/rdf_files/active-entity-filter-2.ttl',
     process.cwd()+ '/src/test/resources/rdf_files/active-entity-filter-3.ttl',
-    process.cwd()+ '/src/test/resources/rdf_files/uhtc-ontology.ttl',
+    process.cwd()+ '/src/test/resources/rdf_files/ComplexBlankNodeChainDeletion.ttl',
+    process.cwd()+ '/src/test/resources/rdf_files/CurrencyUnitOntology.ttl',
+    process.cwd()+ '/src/test/resources/rdf_files/deprecated-entity-filter-1.ttl',
+    process.cwd()+ '/src/test/resources/rdf_files/deprecated-entity-filter-2.ttl',
+    process.cwd()+ '/src/test/resources/rdf_files/deprecated-entity-filter-3.ttl',
+    process.cwd()+ '/src/test/resources/rdf_files/EntityDeletionOntology.ttl',
+    process.cwd()+ '/src/test/resources/rdf_files/EventOntology.ttl',
     process.cwd()+ '/src/test/resources/rdf_files/pagination-ontology-1.ttl',
     process.cwd()+ '/src/test/resources/rdf_files/pagination-ontology-2.ttl',
     process.cwd()+ '/src/test/resources/rdf_files/pagination-ontology-3.ttl',
-    process.cwd()+ '/src/test/resources/rdf_files/pagination-ontology-4.ttl'
+    process.cwd()+ '/src/test/resources/rdf_files/pagination-ontology-4.ttl',
+    process.cwd()+ '/src/test/resources/rdf_files/test-local-imports-1.ttl',
+    process.cwd()+ '/src/test/resources/rdf_files/test-local-imports-2.ttl',
+    process.cwd()+ '/src/test/resources/rdf_files/test-local-imports-3.ttl',
 ]
 
 module.exports = {

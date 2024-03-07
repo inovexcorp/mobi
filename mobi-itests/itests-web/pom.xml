@@ -34,6 +34,7 @@
     <name>itests-web</name>
     <properties>
         <https-port>10000</https-port>
+        <contextDir>${project.basedir}/target/classes</contextDir>
     </properties>
 
     <dependencies>
@@ -94,7 +95,7 @@
                                     <overWrite>false</overWrite>
                                 </artifactItem>
                             </artifactItems>
-                            <outputDirectory>${project.basedir}/target/distribution</outputDirectory>
+                            <outputDirectory>${project.basedir}/target/classes</outputDirectory>
                             <overWriteReleases>true</overWriteReleases>
                             <overWriteSnapshots>true</overWriteSnapshots>
                         </configuration>
@@ -111,7 +112,7 @@
                                     <goal>copy-resources</goal>
                                 </goals>
                                 <configuration>
-                                    <outputDirectory>${project.basedir}/target/distribution</outputDirectory>
+                                    <outputDirectory>${project.basedir}/target/classes</outputDirectory>
                                     <resources>
                                         <resource>
                                             <directory>${project.basedir}/src/test/resources/filtered-resources</directory>
@@ -145,59 +146,6 @@
                             <reporter>jslint</reporter>
                             <reportFile>target/jshint.xml</reportFile>
                             <failOnError>true</failOnError>
-                        </configuration>
-                    </plugin>
-                    <plugin>
-                        <groupId>io.fabric8</groupId>
-                        <artifactId>docker-maven-plugin</artifactId>
-                        <version>0.40.1</version>
-                        <extensions>true</extensions>
-                        <executions>
-                            <execution>
-                                <id>start</id>
-                                <phase>pre-integration-test</phase>
-                                <goals>
-                                    <goal>build</goal>
-                                    <goal>start</goal>
-                                </goals>
-                            </execution>
-                            <execution>
-                                <id>stop</id>
-                                <phase>post-integration-test</phase>
-                                <goals>
-                                    <goal>stop</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                        <configuration>
-                            <images>
-                                <image>
-                                    <name>docker.io/mobi/test</name>
-                                    <build>
-                                        <contextDir>${project.basedir}/target/distribution</contextDir>
-                                        <dockerFile>${project.basedir}/target/classes/Dockerfile</dockerFile>
-                                    </build>
-                                    <run>
-                                        <ports>
-                                            <port>${https-port}:8443</port>
-                                        </ports>
-                                        <wait>
-                                            <http>
-                                                <allowAllHosts>true</allowAllHosts>
-                                                <status>200</status>
-                                                <!-- Check for this URL to return a 200 return code .... -->
-                                                <url>https://localhost:${https-port}/mobi/index.html#/home</url>
-                                                <method>GET</method>
-                                            </http>
-                                            <time>300000</time>
-                                            <exec>
-                                                <postStart>sh /opt/mobi/import.sh</postStart>
-<!--                                                <breakOnError>true</breakOnError>-->
-                                            </exec>
-                                        </wait>
-                                    </run>
-                                </image>
-                            </images>
                         </configuration>
                     </plugin>
                     <plugin>

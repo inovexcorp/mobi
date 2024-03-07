@@ -30,13 +30,7 @@ module.exports = {
     '@tags': ['sanity', "ontology-editor"],
 
     'Step 1: login as admin' : function(browser) {
-        browser
-            .url('https://localhost:' +browser.globals.globalPort+ '/mobi/index.html#/home')
-            .waitForElementVisible('input#username')
-            .waitForElementVisible('input#password')
-            .setValue('input#username', adminUsername)
-            .setValue('input#password', adminPassword)
-            .click('button[type=submit]')
+        browser.globals.initial_steps(browser, adminUsername, adminPassword)
     },
 
     'Step 2: check for visibility of home elements' : function(browser) {

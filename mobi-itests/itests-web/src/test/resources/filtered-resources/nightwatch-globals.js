@@ -1,11 +1,32 @@
+const Docker = require('dockerode');
+const fetch = require('node-fetch');
+const https = require('https');
+
+const docker =  new Docker({socketPath: '/var/run/docker.sock'});
+const contextDir = '${contextDir}';
+const dockerFile = '${dockerFile}';
+
+// custom agent as global variable
+const agent = new https.Agent({
+    rejectUnauthorized: false,
+});
+
+const buildOptions = {
+    context: contextDir,
+    src: ['Dockerfile', 'import.sh', 'mobi-distribution-2.6.0-SNAPSHOT.tar.gz', 'z-catalog-ontology-9p-records.trig']
+}
+
+let containerObj = undefined;
+let httpsPort = 10000;
 
 module.exports = {
-    'globalPort' : '${https-port}',
+    'globalPort' : httpsPort,
 
     // default timeout value in milliseconds for waitFor commands and implicit waitFor value for
     // expect assertions
-    waitForConditionTimeout : 20000,
-    retryAssertionTimeout: 20000,
+    waitForConditionTimeout : 30000,
+    retryAssertionTimeout: 30000,
+    asyncHookTimeout: 60000,
     create_shapes_graph_branch_button: {
         css: 'shapes-graph-editor-page button.create-branch'
     },
@@ -22,9 +43,150 @@ module.exports = {
         css: 'shapes-graph-editor-page button.upload-changes'
     },
 
+    before(done) {
+        // Build the Docker image
+        docker.buildImage(buildOptions, {t: 'docker.io/mobi/test', dockerFile: dockerFile}, function(err, stream) {
+            if (err) {
+                console.error('Error building image:', err);
+                return;
+            }
+
+            // Log build output
+            docker.modem.followProgress(stream, onFinished, onProgress);
+
+            function onFinished(err, output) {
+                if (err) {
+                    console.error('Error building image:', err);
+                    return;
+                }
+                console.log('Image built successfully');
+                done();
+            }
+
+            function onProgress(event) {
+                // uncomment if running into errors and want to see build progress
+                //console.log('Build progress:', event);
+            }
+        });
+    },
+
+    beforeEach(browser, done) {
+        httpsPort = Math.floor(Math.random() * 500 + 10000);
+        let counter = 0;
+        let status = 0;
+
+        const containerOptions = {
+            Image: 'docker.io/mobi/test',
+            name: `FTest-${httpsPort}`,
+            AttachStdout: true,
+            AttachStderr: true,
+            Tty: true,
+            ExposedPorts: { '8443/tcp': {} }, // Ports exposed by the container
+            HostConfig: {
+                PortBindings: {
+                    '8443/tcp': [{HostPort: `${httpsPort}`}] // Map container's port 80 to host's port 8080
+                }
+            }
+        }
+
+        async function testMobiAvailability() {
+            process.env.NODE_TLS_REJECT_UNAUTHORIZED='0'
+            if (counter < 30 && status !== 200) {
+                fetch(`https://localhost:${httpsPort}/mobi/index.html#/home`, {
+                    method: 'GET'
+                }, agent).then(async response => {
+                    if (response.status === 200) {
+                        console.info('Successfully connected to mobi front-end.')
+                        status = response.status;
+
+                        console.info('trying to import files');
+                        await containerObj.exec({
+                            Cmd: ['sh', '/opt/mobi/import.sh'],
+                            Tty: true,
+                            AttachStdout: true,
+                            AttachStderr: true,
+                        }, async (err, exec) => {
+                            if (err) {
+                                browser.assert.fail('err:', err);
+                                done();
+                                return;
+                            }
+
+                            await exec.start(async (err, stream) => {
+                                if (err) {
+                                    browser.assert.fail('Error creating command for Docker Container:', err);
+                                } else {
+                                    done();
+                                }
+
+                                // uncomment if you need to see output stream of import command
+                                // stream.on('data', (chunk) => {
+                                //     console.log('log:', chunk.toString('utf8'));
+                                // });
+
+                                // uncomment if you want to see error stream
+                                // exec.modem.demuxStream(stream, process.stdout, process.stderr);
+                            });
+                        })
+                    } else {
+                        setTimeout(() => {
+                            console.info('Could not access mobi. trying again in 1 second.');
+                            counter++;
+                            testMobiAvailability();
+                        }, 1000);
+                    }
+                }).catch(error => {
+                    setTimeout(() => {
+                        console.info('Error connecting to mobi. trying again in 5 seconds.');
+                        counter++;
+                        testMobiAvailability();
+                    }, 5000);
+                })
+            }
+        }
+
+        docker.createContainer(containerOptions, function(err, container) {
+            if (err) {
+                console.error('Error creating container:', err);
+                done()
+                return;
+            }
+
+            containerObj = container;
+            container.start(async function (err, data) {
+                if (err) {
+                    browser.assert.fail('Error starting container:', err);
+                    done();
+                } else {
+                    console.log(`Container ${containerObj.id} started successfully`);
+                    console.info('Testing if Mobi is accessible.')
+                    await testMobiAvailability();
+                }
+            });
+        })
+    },
+
+    afterEach(browser, done) {
+        containerObj.stop(function (err, data) {
+            if (err) {
+                console.log('Error stopping container:', err);
+            } else {
+                console.log(`Container ${containerObj.id} successfully stopped`);
+                containerObj.remove(function (err, data) {
+                    if (err) {
+                        browser.assert.fail(`Error removing container ${containerObj.id}:`, err);
+                        done();
+                    } else {
+                        console.log(`Container ${containerObj.id} successfully removed`);
+                        done();
+                    }
+                });
+            }
+        })
+    },
+
     'initial_steps': function (browser, user, password) {
-        browser
-            .url('https://localhost:' + browser.globals.globalPort + '/mobi/index.html#/home');
+        browser.url(`https://localhost:${httpsPort}/mobi/index.html#/home`);
         browser.globals.login(browser, user, password);
         browser.click('xpath', '//div//ul//a[@class="nav-link"][@href="#/ontology-editor"]');
         browser.globals.wait_for_no_spinners(browser);
@@ -57,13 +219,13 @@ module.exports = {
         browser.waitForElementPresent('ontology-editor-page open-ontology-tab');
     },
 
-    // TODO: Add a check to see if the ontology already exists, and if it does, either skip upload or delete and re-upload.
     'upload_ontologies': function (browser, ...args) {
       for (var i = 0; i < args.length - 1; i++) {
           browser
               .click('button.upload-button')
               .uploadFile('input[type=file]', args[i])
               .useXpath()
+              .waitForElementVisible('//upload-ontology-overlay//span[text() = "Submit"]/parent::button')
               .click('//upload-ontology-overlay//span[text() = "Submit"]/parent::button')
               .waitForElementNotPresent('//upload-ontology-overlay//span[text() = "Cancel"]/parent::button')
               .useCss()
@@ -80,7 +242,6 @@ module.exports = {
             .clearValue('open-ontology-tab search-bar input')
             .setValue('open-ontology-tab search-bar input', args[j].replace(process.cwd()+ '/src/test/resources/rdf_files/', '').replace(/\.[^/.]+$/, ''))
             .sendKeys('open-ontology-tab search-bar input', browser.Keys.ENTER)
-            .pause(1000) // TODO: Remove!
           browser.globals.wait_for_no_spinners(browser);
           browser
             .waitForElementVisible('open-ontology-tab search-bar input')
@@ -94,7 +255,6 @@ module.exports = {
           .sendKeys('open-ontology-tab search-bar input', browser.Keys.ENTER);
       browser.globals.wait_for_no_spinners(browser);
       browser
-          // .waitForElementNotPresent('xpath', '//div[@id="toast-container"]')
           .waitForElementNotPresent('div.fade')
 
     },

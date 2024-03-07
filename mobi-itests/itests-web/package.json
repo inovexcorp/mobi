@@ -3,15 +3,24 @@
   "version": "1.0.0",
   "description": "The web integration test are a combination of using Docker and Nightwatch.js. In order to add a test, the /Test.spec.js/ file must be added to the js directory located under src/test/. When tests are run, docker spins up an instance of mobi based off of the dockerfile specified which then allows nightwatch to run tests against that image. As part of the post-integration phase of maven, the docker container is stopped and removed and individual JUNIT xml files are verified for whether the tests were successful or not.",
   "main": "index.js",
+  "engines": {
+    "node": ">=16.20.2",
+    "npm": ">=8.19.4"
+  },
   "scripts": {
     "test": "./node_modules/.bin/nightwatch",
-    "verify": "./node_modules/.bin/verify-junit-xml ./target/nightwatch-reports/*.xml"
+    "verify": "./node_modules/.bin/verify-junit-xml ./target/nightwatch-reports/*/*.xml"
   },
   "devDependencies": {
     "chromedriver": "latest",
-    "nightwatch": "2.5.4",
-    "verify-junit-xml": "0.0.3"
+    "nightwatch": "3.4.0"
   },
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "dockerode": "^4.0.2",
+    "https": "^1.0.0",
+    "node-fetch": "^2.7.0",
+    "verify-junit-xml": "^0.0.3"
+  }
 }

@@ -25,7 +25,7 @@ var adminPassword = 'admin'
 var Onto1 = process.cwd()+ '/src/test/resources/rdf_files/EntityDeletionOntology.ttl'
 
 module.exports = {
-    '@tags': ['sanity', "ontology-editor", "current-test"],
+    '@tags': ['sanity', "ontology-editor"],
 
     'Step 1: Initial Setup': function (browser) {
         browser.globals.initial_steps(browser, adminUsername, adminPassword)
