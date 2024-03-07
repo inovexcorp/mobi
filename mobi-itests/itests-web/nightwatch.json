@@ -2,6 +2,13 @@
   "src_folders": [
     "src/test/js"
   ],
+  "live_output" : true,
+  "detailed_output": false,
+
+  "test_workers": {
+    "enabled": true,
+    "workers": 4
+  },
   "output_folder": "./target/nightwatch-reports/",
   "globals_path": "target/classes/nightwatch-globals.js",
   "webdriver": {
@@ -14,9 +21,6 @@
   },
   "test_settings": {
     "default": {
-      "globals": {
-        "waitForConditionTimeout": 20000
-      },
       "desiredCapabilities": {
         "browserName": "chrome",
         "goog:chromeOptions": {

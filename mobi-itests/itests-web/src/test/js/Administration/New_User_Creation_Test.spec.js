@@ -22,6 +22,10 @@
  */
 var adminUsername = "admin"
 var adminPassword = "admin"
+var CatalogOnto1 = process.cwd()+ '/src/test/resources/rdf_files/z-catalog-ontology-1.ttl'
+var CatalogOnto2 = process.cwd()+ '/src/test/resources/rdf_files/z-catalog-ontology-2.ttl'
+var CatalogOnto3 = process.cwd()+ '/src/test/resources/rdf_files/z-catalog-ontology-3.ttl'
+var CatalogOnto4 = process.cwd()+ '/src/test/resources/rdf_files/z-catalog-ontology-4.ttl'
 
 var newUser = { 'username': 'newUser', 'password': 'test',
     'firstName': 'firstTester', 'lastName': 'lastTester', 'email': 'test@gmail.com', 'role': 'admin' };
@@ -44,21 +48,12 @@ var verifyProfileTab = function(browser, userObject){
 module.exports = {
     '@tags': ['login', 'administration', 'sanity'],
 
-    'Step 1: login as admin' : function(browser) {
-        browser
-            .url('https://localhost:' + browser.globals.globalPort + '/mobi/index.html#/home')
-            .useXpath()
-            .waitForElementVisible('//div[@class="form-group"]//input[@id="username"]')
-            .waitForElementVisible('//div[@class="form-group"]//input[@id="password"]')
-            .setValue('//div[@class="form-group"]//input[@id="username"]', adminUsername )
-            .setValue('//div[@class="form-group"]//input[@id="password"]', adminPassword )
-            .click('//button[@type="submit"]')
+    'Step 1: Initial Setup' : function(browser) {
+        browser.globals.initial_steps(browser, adminUsername, adminPassword)
     },
 
-    'Step 2: check for visibility of home page Element' : function(browser) {
-        browser
-            .useCss()
-            .waitForElementVisible('.home-page')
+    'Step 2: Upload Ontologies' : function(browser) {
+        browser.globals.upload_ontologies(browser, CatalogOnto1, CatalogOnto2, CatalogOnto3, CatalogOnto4)
     },
 
     'Step 3: The user clicks on the Administration sidebar link' : function(browser) {

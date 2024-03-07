@@ -32,15 +32,8 @@ module.exports = {
     '@tags': ['shapes-editor', 'sanity'],
 
     'Step 1: Initial Setup': function (browser) {
-        browser
-            .url('https://localhost:' + browser.globals.globalPort + '/mobi/index.html#/home')
-            .waitForElementVisible('input#username')
-            .waitForElementVisible('input#password')
-            .setValue('input#username', adminUsername)
-            .setValue('input#password', adminPassword)
-            .click('button[type=submit]')
-            .waitForElementVisible('.home-page')
-            .click('xpath', '//div//ul//a[@class="nav-link"][@href="#/shapes-graph-editor"]')
+        browser.globals.initial_steps(browser, adminUsername, adminPassword)
+        browser.click('xpath', '//div//ul//a[@class="nav-link"][@href="#/shapes-graph-editor"]')
         browser.globals.wait_for_no_spinners(browser)
         browser.waitForElementVisible('shapes-graph-editor-page')
     },

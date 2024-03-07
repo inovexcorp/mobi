@@ -23,9 +23,9 @@
 var adminUsername = 'admin';
 var adminPassword = 'admin';
 
-var ontologyEditorPage = require('./zOntologyEditorPage').ontologyEditorPage;
-var mergeRequestPage = require('./zMergeRequestsPage').mergeRequestsPage;
-var administrationPage = require('./zAdministrationPage').administrationPage;
+var ontologyEditorPage = require('../zOntologyEditorPage').ontologyEditorPage;
+var mergeRequestPage = require('../zMergeRequestsPage').mergeRequestsPage;
+var administrationPage = require('../zAdministrationPage').administrationPage;
 
 var ontology01 = {
     title: 'myTitle2', 
@@ -42,14 +42,10 @@ module.exports = {
     '@tags': ['ontology-editor', 'sanity', 'merge-request'],
 
     'Step 1: Initial Setup' : function(browser) {
-        browser.url('https://localhost:' + browser.globals.globalPort + '/mobi/index.html#/home');
-        administrationPage.login(browser, adminUsername, adminPassword);
+        browser.globals.initial_steps(browser, adminUsername, adminPassword);
     },
 
     'Step 2: Ensure that user is on Ontology editor page' : function(browser) {
-        browser.click('xpath', '//div//ul//a[@class="nav-link"][@href="#/ontology-editor"]');
-        browser.globals.wait_for_no_spinners(browser);
-        browser.waitForElementVisible('button.upload-button');
         ontologyEditorPage.isActive(browser);
     },
 
@@ -409,10 +405,6 @@ module.exports = {
         browser.assert.elementPresent({ selector: closedStatusFilterXPathSelector, locateStrategy: 'xpath' });
         browser.click('xpath', closedStatusFilterXPathSelector, clickFunc);
         browser.globals.wait_for_no_spinners(browser);
-        // TODO Figure out intermitted issue when ClosingMr.spec.js runs first
-        // browser
-        //     .useCss()
-        //     .expect.element('div.merge-request-list info-message p').text.to.contain('No requests found');
 
         // Unselect the admin creator filter
         browser.click('xpath', statusFilterElementSelector + openRadioLabelSelector, clickFunc);

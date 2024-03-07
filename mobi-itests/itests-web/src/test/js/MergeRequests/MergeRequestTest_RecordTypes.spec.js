@@ -24,11 +24,11 @@
 var adminUsername = 'admin';
 var adminPassword = 'admin';
 
-var ontologyEditorPage = require('./zOntologyEditorPage').ontologyEditorPage;
-var datasetPage = require('./zDatasetPage').datasetPage;
-var mergeRequestPage = require('./zMergeRequestsPage').mergeRequestsPage;
-var administrationPage = require('./zAdministrationPage').administrationPage;
-var shapesEditorPage = require('./zShapesEditorPage').shapesEditorPage;
+var ontologyEditorPage = require('../zOntologyEditorPage').ontologyEditorPage;
+var datasetPage = require('../zDatasetPage').datasetPage;
+var mergeRequestPage = require('../zMergeRequestsPage').mergeRequestsPage;
+var administrationPage = require('../zAdministrationPage').administrationPage;
+var shapesEditorPage = require('../zShapesEditorPage').shapesEditorPage;
 
 var shapegraph001_title = 'Ontology Shapes Graph MR Test';
 var shapegraph001_branch001_title = 'MergeTestBranch001';
@@ -64,8 +64,7 @@ module.exports = {
     '@tags': ['ontology-editor', 'sanity', 'merge-request'],
 
     'Step 1: Initial Setup' : function(browser) {
-        browser.url('https://localhost:' + browser.globals.globalPort + '/mobi/index.html#/home');
-        administrationPage.login(browser, adminUsername, adminPassword);
+        browser.globals.initial_steps(browser, adminUsername, adminPassword)
     },
 
     'Step 2: Navigate to the Shapes Graph Editor': function(browser) {

@@ -21,10 +21,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-var ontologyEditorPage = require('./zOntologyEditorPage').ontologyEditorPage;
-var mergeRequestPage = require('./zMergeRequestsPage').mergeRequestsPage;
-var administrationPage = require('./zAdministrationPage').administrationPage;
-var catalogPage = require('./zCatalogPage').catalogPage;
+var ontologyEditorPage = require('../zOntologyEditorPage').ontologyEditorPage;
+var mergeRequestPage = require('../zMergeRequestsPage').mergeRequestsPage;
+var administrationPage = require('../zAdministrationPage').administrationPage;
+var catalogPage = require('../zCatalogPage').catalogPage;
 
 var adminUser = {
     'username': 'admin', 
@@ -77,8 +77,7 @@ module.exports = {
     '@tags': ['ontology-editor', 'sanity', 'merge-request'],
 
     'Step 1: Initial Setup' : function(browser) {
-        browser.url('https://localhost:' + browser.globals.globalPort + '/mobi/index.html#/home');
-        administrationPage.login(browser, adminUser.username, adminUser.password);
+        browser.globals.initial_steps(browser, adminUser.username, adminUser.password)
     },
 
     // Create 2 users, one user to create Ontology/MR and one user to test permissions

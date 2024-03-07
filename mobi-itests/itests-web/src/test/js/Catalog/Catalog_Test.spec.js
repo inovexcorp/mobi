@@ -27,7 +27,7 @@ var CatalogOnto2 = process.cwd()+ '/src/test/resources/rdf_files/z-catalog-ontol
 var CatalogOnto3 = process.cwd()+ '/src/test/resources/rdf_files/z-catalog-ontology-3.ttl'
 var CatalogOnto4 = process.cwd()+ '/src/test/resources/rdf_files/z-catalog-ontology-4.ttl'
 
-var catalogPage = require('./zCatalogPage').catalogPage;
+var catalogPage = require('../zCatalogPage').catalogPage;
 
 var newUser = { 
     'username': 'newUser1', 
