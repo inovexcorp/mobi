@@ -34,9 +34,7 @@ module.exports = {
     },
 
     'Step 2: Navigate to the Shapes Graph Editor': function(browser) {
-        browser.click('xpath', '//div//ul//a[@class="nav-link"][@href="#/shapes-graph-editor"]');
-        browser.globals.wait_for_no_spinners(browser);
-        browser.waitForElementVisible('shapes-graph-editor-page');
+        browser.globals.switchToPage(browser, 'shapes-graph-editor', 'shapes-graph-editor-page');
     },
 
     'Step 3: Create a new shapes graph': function (browser) {
@@ -50,8 +48,8 @@ module.exports = {
             .waitForElementVisible('shapes-graph-properties-block')
             .waitForElementVisible('div.yate')
             // .waitForElementNotPresent('xpath', '//div[@id="toast-container"]')
-            .assert.value('shapes-graph-editor-page editor-record-select input', 'Sem Ops Graph')
-            .assert.value('shapes-graph-editor-page editor-branch-select input', 'MASTER')
+            .assert.valueEquals('shapes-graph-editor-page editor-record-select input', 'Sem Ops Graph')
+            .assert.valueEquals('shapes-graph-editor-page editor-branch-select input', 'MASTER')
             .expect.elements('shapes-graph-editor-page shapes-graph-property-values').count.to.equal(3)
     },
 
@@ -64,8 +62,8 @@ module.exports = {
             .waitForElementVisible('shapes-graph-details')
             .waitForElementVisible('shapes-graph-properties-block')
             .waitForElementVisible('div.yate')
-            .assert.value('shapes-graph-editor-page editor-record-select input', 'Sem Ops Graph')
-            .assert.value('shapes-graph-editor-page editor-branch-select input', 'Sem Ops Branch')
+            .assert.valueEquals('shapes-graph-editor-page editor-record-select input', 'Sem Ops Graph')
+            .assert.valueEquals('shapes-graph-editor-page editor-branch-select input', 'Sem Ops Branch')
             .expect.elements('shapes-graph-editor-page shapes-graph-property-values').count.to.equal(3)
     },
 

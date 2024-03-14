@@ -31,10 +31,7 @@ module.exports = {
   },
 
   'Step 2: Navigate to administration page' : function(browser) {
-    browser
-      .useXpath()
-      .assert.visible("//li/a[@class='nav-link']/span[text()[contains(.,'Administration')]]")
-      .click("//li/a[@class='nav-link']/span[text()[contains(.,'Administration')]]")
+    browser.globals.switchToPage(browser, 'user-management')
   },
 
   'Step 3: check for and compare nav username text' : function(browser) {

@@ -24,21 +24,12 @@
 var adminUsername = 'admin';
 var adminPassword = 'admin';
 
-var ontologyEditorPage = require('../zOntologyEditorPage').ontologyEditorPage;
-var datasetPage = require('../zDatasetPage').datasetPage;
-var mergeRequestPage = require('../zMergeRequestsPage').mergeRequestsPage;
-var administrationPage = require('../zAdministrationPage').administrationPage;
-var shapesEditorPage = require('../zShapesEditorPage').shapesEditorPage;
-
 var shapegraph001_title = 'Ontology Shapes Graph MR Test';
 var shapegraph001_branch001_title = 'MergeTestBranch001';
 var shapegraph001_commit_message_001 = 'The first manual commit message';
 
 var shapes_mr_test = process.cwd()+ '/src/test/resources/rdf_files/shapes_mr_test.ttl'
 var shapes_mr_test_change = process.cwd()+ '/src/test/resources/rdf_files/shapes_mr_test_change_001.ttl'
-
-var dataset001_title = 'DatasetMergeTest001';
-var dataset001_desc = 'A dataset made for testing MergeRequest Page';
 
 var ontology001_title = 'ontMrTest001';
 var ontology001_title_changed = '';
@@ -68,20 +59,23 @@ module.exports = {
     },
 
     'Step 2: Navigate to the Shapes Graph Editor': function(browser) {
-        shapesEditorPage.goToPage(browser);
+        browser.globals.switchToPage(browser, 'shapes-graph-editor', 'shapes-graph-editor-page')
+        browser.globals.wait_for_no_spinners(browser);
+        browser.waitForElementVisible('shapes-graph-editor-page');
     },
 
     'Step 3: Create a new shapes graph': function (browser) {
-        shapesEditorPage.createShapesGraph(browser, shapegraph001_title, shapes_mr_test);
+        browser.page.shapesEditorPage().createShapesGraph(shapegraph001_title, shapes_mr_test);
     },
 
     'Step 4: Create a new branch for shape graph': function (browser) {
-        shapesEditorPage.createBranch(browser, shapegraph001_branch001_title);
+        browser.page.shapesEditorPage().createBranch(shapegraph001_branch001_title);
+        browser.globals.wait_for_no_spinners(browser);
     },
 
     'Step 5: Upload Changes to shape graph': function (browser) {
-        shapesEditorPage.uploadFile(browser, shapes_mr_test_change);
-        browser.pause(3200);  // wait for div.toast-message[success] to be done, prevents element click intercepted 
+        browser.page.shapesEditorPage().upload(shapes_mr_test_change);
+        browser.globals.wait_for_no_spinners(browser);
     },
 
     'Step 6: Verify Uploaded Changes': function (browser) {
@@ -92,7 +86,8 @@ module.exports = {
     
     'Step 7: Verify ShapeGraph Change pages': function (browser) {
         browser
-            .assert.not.elementPresent('div.toast-title')
+            .assert.not.elementPresent('div.toast-title');
+        browser
             .click('editor-top-bar button.changes')
             .waitForElementVisible('shapes-graph-changes-page')
             .waitForElementVisible('xpath','//shapes-graph-changes-page//button//span[contains(text(), "Remove All Changes")]')
@@ -109,11 +104,12 @@ module.exports = {
         browser.globals.wait_for_no_spinners(browser);
     },
 
-    'Step 7: Verify commit was made successfully': function (browser) {
+    'Step 9: Verify commit was made successfully': function (browser) {
         browser
             .useCss()
-            .assert.not.elementPresent('mat-chip.uncommitted')
-            .assert.not.elementPresent('shapes-graph-changes-page mat-expansion-panel')
+            .assert.not.elementPresent('mat-chip.uncommitted');
+        browser.assert.not.elementPresent('shapes-graph-changes-page mat-expansion-panel');
+        browser
             .assert.textContains('shapes-graph-changes-page info-message p', 'No Changes to Display')
             .expect.elements('commit-history-table svg .commit-hash-string').count.to.equal(2)
         browser
@@ -122,58 +118,59 @@ module.exports = {
             .assert.elementPresent('//commit-history-table//commit-history-graph//*[local-name()="svg"]//*[local-name()="text" and @class="commit-subject-string" and text()[contains(., "initial commit")]]')
     },
 
-    'Step 7: Navigate to datasets page' : function (browser) {
-        datasetPage.goToPage(browser);
+    'Step 10: Ensure that user is on Ontology editor page' : function(browser) {
+        browser.globals.switchToPage(browser, 'ontology-editor', 'button.upload-button');
+        browser.page.editorPage().isActive();
     },
 
-    'Step 8: Create a new Dataset' : function (browser) {
-        datasetPage.createDataset(browser, dataset001_title, dataset001_desc);
+    'Step 11: Open new Ontology Overlay' : function(browser) {
+        browser.page.editorPage().openNewOntologyOverlay();
     },
 
-    'Step 9: Ensure that user is on Ontology editor page' : function(browser) {
-        browser.click('xpath', '//div//ul//a[@class="nav-link"][@href="#/ontology-editor"]');
+    'Step 12: Edit New Ontology Overlay' : function(browser) {
+        browser.page.editorPage().editNewOntologyOverlay('ontMrTest001', 'myDescription');
+    },
+
+    'Step 13: Submit New Ontology Overlay' : function(browser) {
+        browser.page.editorPage().submitNewOntologyOverlay();
         browser.globals.wait_for_no_spinners(browser);
-        browser.waitForElementVisible('button.upload-button');
-        ontologyEditorPage.isActive(browser);
+        browser.page.editorPage().onProjectTab();
     },
 
-    'Step 10: Open new Ontology Overlay' : function(browser) {
-        ontologyEditorPage.openNewOntologyOverlay(browser);
+    'Step 14: Verify new ontology properties' : function(browser) {
+        browser.page.editorPage().onProjectTab();
+        browser.page.editorPage().verifyProjectTab('ontMrTest001', 'myDescription', 'OntMrTest001')
     },
 
-    'Step 11: Edit New Ontology Overlay' : function(browser) {
-        ontologyEditorPage.editNewOntologyOverlay(browser, 'ontMrTest001', 'myDescription');
+    'Step 15: Edit IRI for ontology' : function(browser) {
+        browser.page.editorPage().onProjectTab();
+        browser.page.editorPage().editIri('mrTest002');
+        browser.globals.wait_for_no_spinners(browser);
     },
 
-    'Step 12: Submit New Ontology Overlay' : function(browser) {
-        ontologyEditorPage.submitNewOntologyOverlay(browser);
+    'Step 16: Open Commit overlay' : function(browser) {
+        browser.page.editorPage().openCommitOverlay();
     },
 
-    'Step 13: Verify new ontology properties' : function(browser) {
-        ontologyEditorPage.verifyProjectTab(browser, 'ontMrTest001', 'myDescription', 'OntMrTest001')
-    },
-
-    'Step 14: Edit IRI for ontology' : function(browser) { 
-        ontologyEditorPage.editIri(browser, 'mrTest002');
-    },
-
-    'Step 15: Open Commit overlay' : function(browser) {
-        ontologyEditorPage.openCommitOverlay(browser);
-    },
-
-    'Step 16: Edit Commit message and Submit' : function(browser) { 
-        ontologyEditorPage.editCommitOverlayAndSubmit(browser, 'Changed IRI');
+    'Step 17: Edit Commit message and Submit' : function(browser) {
+        browser.page.editorPage().editCommitOverlayAndSubmit('Changed IRI');
+        browser.globals.wait_for_no_spinners(browser);
+        browser
+            .useCss()
+            .waitForElementNotPresent('commit-overlay')
+            .waitForElementNotPresent('commit-overlay h1.mat-dialog-title'); // intermittent issue caused by backend
         browser
             .waitForElementVisible('div.toast-success')
             .waitForElementNotPresent('div.toast-success');
-        ontologyEditorPage.isActive(browser, 'ontology-tab');
+        browser.page.editorPage().isActive('ontology-tab');
     },
 
-    'Step 17: Navigate to Merge Request Page' : function (browser) {
-        mergeRequestPage.goToPage(browser);
+    'Step 18: Navigate to Merge Request Page' : function (browser) {
+        browser.globals.switchToPage(browser, 'merge-requests')
+        browser.globals.wait_for_no_spinners(browser);
     },
 
-    'Step 18: Navigate to New Merge Request page' : function (browser) {
+    'Step 19: Navigate to New Merge Request page' : function (browser) {
         browser
             .useXpath()
             .waitForElementVisible("//merge-requests-page//button//span[text()[contains(.,'New Request')]]")
@@ -182,7 +179,12 @@ module.exports = {
             .waitForElementVisible('merge-requests-page create-request');
     },
 
-    'Step 18: Validate a merge request': function(browser) {
-        mergeRequestPage.assertMatCardTitles(browser, [shapegraph001_title, ontology001_title]);
+    'Step 20: Validate a merge request': function(browser) {
+        browser
+            .useXpath()
+            .waitForElementVisible('//merge-requests-page//create-request');
+        for (var title in [shapegraph001_title, ontology001_title]) {
+            browser.page.mergeRequestPage().assertMatCardTitle(title);
+        }
     }
 }

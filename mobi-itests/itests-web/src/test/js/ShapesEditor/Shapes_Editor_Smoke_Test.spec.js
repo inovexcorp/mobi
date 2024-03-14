@@ -33,9 +33,7 @@ module.exports = {
 
     'Step 1: Initial Setup': function (browser) {
         browser.globals.initial_steps(browser, adminUsername, adminPassword)
-        browser.click('xpath', '//div//ul//a[@class="nav-link"][@href="#/shapes-graph-editor"]')
-        browser.globals.wait_for_no_spinners(browser)
-        browser.waitForElementVisible('shapes-graph-editor-page')
+        browser.globals.switchToPage(browser, 'shapes-graph-editor', 'shapes-graph-editor-page')
     },
 
     'Step 2: Create a new shapes graph': function (browser) {
@@ -49,8 +47,8 @@ module.exports = {
             .waitForElementVisible('shapes-graph-properties-block')
             .waitForElementVisible('div.yate')
             // .waitForElementNotPresent('xpath', '//div[@id="toast-container"]')
-            .assert.value('shapes-graph-editor-page editor-record-select input', 'UHTC Test Graph')
-            .assert.value('shapes-graph-editor-page editor-branch-select input', 'MASTER')
+            .assert.valueEquals('shapes-graph-editor-page editor-record-select input', 'UHTC Test Graph')
+            .assert.valueEquals('shapes-graph-editor-page editor-branch-select input', 'MASTER')
             .expect.elements('shapes-graph-editor-page shapes-graph-property-values').count.to.equal(3)
     },
 
@@ -70,8 +68,8 @@ module.exports = {
             .waitForElementVisible('shapes-graph-details')
             .waitForElementVisible('shapes-graph-properties-block')
             .waitForElementVisible('div.yate')
-            .assert.value('shapes-graph-editor-page editor-record-select input', 'UHTC Test Graph')
-            .assert.value('shapes-graph-editor-page editor-branch-select input', 'UHTC Test Branch')
+            .assert.valueEquals('shapes-graph-editor-page editor-record-select input', 'UHTC Test Graph')
+            .assert.valueEquals('shapes-graph-editor-page editor-branch-select input', 'UHTC Test Branch')
             .expect.elements('shapes-graph-editor-page shapes-graph-property-values').count.to.equal(3)
     },
 
@@ -185,7 +183,7 @@ module.exports = {
     'Step 12: Delete created branch and verify successful deletion': function (browser) {
         browser
             .useCss()
-            .assert.value('shapes-graph-editor-page editor-branch-select input', 'MASTER')
+            .assert.valueEquals('shapes-graph-editor-page editor-branch-select input', 'MASTER')
             .click('editor-branch-select mat-form-field i')
             .pause(1000)
             .useXpath()
@@ -210,7 +208,7 @@ module.exports = {
             .sendKeys('xpath', '//create-tag-modal//mat-form-field[1]//input', 'UHTC Test Tag')
             .click('create-tag-modal button.mat-primary')
         browser.globals.wait_for_no_spinners(browser)
-        browser.assert.value('shapes-graph-editor-page editor-branch-select input', 'UHTC Test Tag')
+        browser.assert.valueEquals('shapes-graph-editor-page editor-branch-select input', 'UHTC Test Tag')
     },
 
     'Step 14: Delete created tag and verify deletion': function (browser) {

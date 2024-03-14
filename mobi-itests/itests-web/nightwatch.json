@@ -1,10 +1,8 @@
 {
-  "src_folders": [
-    "src/test/js"
-  ],
+  "src_folders": ["src/test/js"],
+  "page_objects_path": "./src/test/pages",
   "live_output" : true,
   "detailed_output": false,
-
   "test_workers": {
     "enabled": true,
     "workers": 4
