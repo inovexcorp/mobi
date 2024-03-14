@@ -145,7 +145,7 @@ module.exports = {
     'Step 12: Verify Mapping has been selected' : function (browser) {
         browser.globals.wait_for_no_spinners(browser)
         browser
-            .assert.value('edit-mapping-tab class-mapping-select input', 'UHTC Material')
+            .assert.valueEquals('edit-mapping-tab class-mapping-select input', 'UHTC Material')
     },
 
     'Step 13: Choose new IRI template' : function (browser) {
@@ -213,7 +213,7 @@ module.exports = {
             .waitForElementVisible('prop-mapping-overlay')
             .waitForElementVisible('prop-mapping-overlay prop-select')
             .waitForElementVisible({locateStrategy: 'xpath', selector: '//h1[contains(@class, "mat-dialog-title")][text()="Edit Property"]'})
-            .assert.value('form.mat-dialog-content prop-select input', 'Chemical Formula')
+            .assert.valueEquals('form.mat-dialog-content prop-select input', 'Chemical Formula')
             .click('div.mat-dialog-actions button:not([color="primary"])')
     },
 

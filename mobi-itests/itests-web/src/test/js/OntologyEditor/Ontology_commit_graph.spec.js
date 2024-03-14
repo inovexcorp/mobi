@@ -22,9 +22,6 @@
  */
 var adminUsername = 'admin';
 var adminPassword = 'admin';
-
-var ontologyEditorPage = require('../zOntologyEditorPage').ontologyEditorPage;
-var mergeRequest = require('../zMergeRequestsPage').mergeRequestsPage;
 var skosOnt = process.cwd()+ '/src/test/resources/rdf_files/skos.rdf';
 
 module.exports = {
@@ -42,55 +39,75 @@ module.exports = {
 
     },
     'Step 3: Ensure that user is on Ontology editor page' : function(browser) {
-        ontologyEditorPage.isActive(browser);
+        browser.page.editorPage().isActive();
     },
     'Step 4: Open new Ontology Overlay' : function(browser) {
-        ontologyEditorPage.openNewOntologyOverlay(browser);
+        browser.page.editorPage().openNewOntologyOverlay();
     },
 
     'Step 5: Edit New Ontology Overlay' : function(browser) {
-        ontologyEditorPage.editNewOntologyOverlay(browser, 'MyGraph', 'Ontology graph');
+        browser.page.editorPage().editNewOntologyOverlay('MyGraph', 'Ontology graph');
     },
 
     'Step 6: Submit New Ontology Overlay' : function(browser) {
-        ontologyEditorPage.submitNewOntologyOverlay(browser);
+        browser.page.editorPage().submitNewOntologyOverlay();
+        browser.globals.wait_for_no_spinners(browser);
+        browser.page.editorPage().onProjectTab();
     },
 
     'Step 7: Edit IRI for ontology' : function(browser) {
-        ontologyEditorPage.editIri(browser, 'MyGraphCommit1');
+        browser.page.editorPage().onProjectTab();
+        browser.page.editorPage().editIri('MyGraphCommit1');
+        browser.globals.wait_for_no_spinners(browser);
     },
     'Step 8: Open Commit overlay' : function(browser) {
-        ontologyEditorPage.openCommitOverlay(browser);
+        browser.page.editorPage().openCommitOverlay();
     },
     'Step 9: Edit Commit message and Submit' : function(browser) {
-        ontologyEditorPage.editCommitOverlayAndSubmit(browser, 'IRI changed 1');
-
+        browser.page.editorPage().editCommitOverlayAndSubmit('IRI changed 1');
+        browser.globals.wait_for_no_spinners(browser);
+        browser
+            .useCss()
+            .waitForElementNotPresent('commit-overlay')
+            .waitForElementNotPresent('commit-overlay h1.mat-dialog-title'); // intermittent issue caused by backend
         browser
             .useCss()
             .waitForElementPresent('ontology-editor-page ontology-tab')
     },
     'Step 10: Edit IRI for ontology' : function(browser) {
-        ontologyEditorPage.editIri(browser, 'MyGraphCommit2');
+        browser.page.editorPage().onProjectTab();
+        browser.page.editorPage().editIri('MyGraphCommit2');
+        browser.globals.wait_for_no_spinners(browser);
     },
     'Step 11: Open Commit overlay' : function(browser) {
-        ontologyEditorPage.openCommitOverlay(browser);
+        browser.page.editorPage().openCommitOverlay();
     },
     'Step 12: Edit Commit message and Submit' : function(browser) {
-        ontologyEditorPage.editCommitOverlayAndSubmit(browser, 'IRI changed 2');
-
+        browser.page.editorPage().editCommitOverlayAndSubmit('IRI changed 2');
+        browser.globals.wait_for_no_spinners(browser);
+        browser
+            .useCss()
+            .waitForElementNotPresent('commit-overlay')
+            .waitForElementNotPresent('commit-overlay h1.mat-dialog-title'); // intermittent issue caused by backend
         browser
             .useCss()
             .waitForElementPresent('ontology-editor-page ontology-tab')
     },
     'Step 13: Edit IRI for ontology' : function(browser) {
-        ontologyEditorPage.editIri(browser, 'MyGraphCommit3');
+        browser.page.editorPage().onProjectTab();
+        browser.page.editorPage().editIri('MyGraphCommit3');
+        browser.globals.wait_for_no_spinners(browser);
     },
     'Step 14: Open Commit overlay' : function(browser) {
-        ontologyEditorPage.openCommitOverlay(browser);
+        browser.page.editorPage().openCommitOverlay(browser);
     },
     'Step 15: Edit Commit message and Submit' : function(browser) {
-        ontologyEditorPage.editCommitOverlayAndSubmit(browser, 'IRI changed 3');
-
+        browser.page.editorPage().editCommitOverlayAndSubmit('IRI changed 3');
+        browser.globals.wait_for_no_spinners(browser);
+        browser
+            .useCss()
+            .waitForElementNotPresent('commit-overlay')
+            .waitForElementNotPresent('commit-overlay h1.mat-dialog-title'); // intermittent issue caused by backend
         browser
             .useCss()
             .waitForElementPresent('ontology-editor-page ontology-tab')

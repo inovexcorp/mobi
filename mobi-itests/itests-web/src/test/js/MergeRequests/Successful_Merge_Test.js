@@ -23,14 +23,26 @@
 var adminUsername = 'admin';
 var adminPassword = 'admin';
 
-var ontologyEditorPage = require('../zOntologyEditorPage').ontologyEditorPage;
-var mergeRequestPage = require('../zMergeRequestsPage').mergeRequestsPage;
-var administrationPage = require('../zAdministrationPage').administrationPage;
-
 var ontology01 = {
     title: 'myTitle2', 
     description: 'myDescription'
 };
+
+var createFilterXPathSelector = function(filterTypeHeader, filterOption) {
+    var selectors = ['//merge-requests-page',
+        '//merge-request-filter//div[contains(@class, "merge-request-filter")]//mat-expansion-panel-header',
+        '//mat-panel-title[contains(@class, "mat-expansion-panel-header-title")][text()[contains(.,"' + filterTypeHeader + '")]]//ancestor::mat-expansion-panel',
+        '//div[contains(@class, "mat-expansion-panel-content")]'
+    ];
+    if (filterOption) {
+        selectors = selectors.concat([
+            '//div[contains(@class, "filter-option")]//mat-checkbox',
+            '//span[contains(@class, "mat-checkbox-label")][text()[contains(., "' + filterOption + '")]]',
+            '//ancestor::mat-checkbox//label[contains(@class, "mat-checkbox-layout")]'
+        ]);
+    }
+    return selectors.join('');
+}
 
 /**
  * Functional Test for Merge Request Module
@@ -46,47 +58,60 @@ module.exports = {
     },
 
     'Step 2: Ensure that user is on Ontology editor page' : function(browser) {
-        ontologyEditorPage.isActive(browser);
+        browser.page.editorPage().isActive();
     },
 
     'Step 3: Open new Ontology Overlay' : function(browser) {
-        ontologyEditorPage.openNewOntologyOverlay(browser);
+        browser.page.editorPage().openNewOntologyOverlay();
     },
 
     'Step 4: Edit New Ontology Overlay' : function(browser) {
-        ontologyEditorPage.editNewOntologyOverlay(browser, ontology01.title, ontology01.description);
+        browser.page.editorPage().editNewOntologyOverlay(ontology01.title, ontology01.description);
     },
 
     'Step 5: Submit New Ontology Overlay' : function(browser) {
-        ontologyEditorPage.submitNewOntologyOverlay(browser);
+        browser.page.editorPage().submitNewOntologyOverlay();
+        browser.globals.wait_for_no_spinners(browser);
+        browser.page.editorPage().onProjectTab();
     },
 
     'Step 6: Verify new ontology properties' : function(browser) {
-        ontologyEditorPage.verifyProjectTab(browser, ontology01.title, ontology01.description, 'MyTitle2')
+        browser.page.editorPage().onProjectTab();
+        browser.page.editorPage().verifyProjectTab(ontology01.title, ontology01.description, 'MyTitle2')
     },
 
-    'Step 7: Edit IRI for ontology' : function(browser) { 
-        ontologyEditorPage.editIri(browser, 'myOntology2');
+    'Step 7: Edit IRI for ontology' : function(browser) {
+        browser.page.editorPage().onProjectTab();
+        browser.page.editorPage().editIri('myOntology2');
+        browser.globals.wait_for_no_spinners(browser);
     },
 
     'Step 8: Open Commit overlay' : function(browser) {
-        ontologyEditorPage.openCommitOverlay(browser);
+        browser.page.editorPage().openCommitOverlay();
     },
 
     'Step 9: Edit Commit message and Submit' : function(browser) { 
-        ontologyEditorPage.editCommitOverlayAndSubmit(browser, 'Changed IRI');
+        browser.page.editorPage().editCommitOverlayAndSubmit('Changed IRI');
+        browser.globals.wait_for_no_spinners(browser);
+        browser
+            .useCss()
+            .waitForElementNotPresent('commit-overlay')
+            .waitForElementNotPresent('commit-overlay h1.mat-dialog-title'); // intermittent issue caused by backend
         browser
             .waitForElementVisible('div.toast-success')
             .waitForElementNotPresent('div.toast-success');
-        ontologyEditorPage.isActive(browser, 'ontology-tab');
+        browser.page.editorPage().isActive('ontology-tab');
     },
 
     'Step 10: Open Ontology Editor Page Ontology List Page' : function(browser) { 
-        ontologyEditorPage.openOntologyListPage(browser);
+        browser.page.editorPage().openOntologyListPage();
     },
 
     'Step 11: On The Ontology List Page, search for ontology' : function(browser) { 
-        ontologyEditorPage.searchOntology(browser, 'myTitle');
+        browser.page.editorPage().searchOntology('myTitle');
+        browser.globals.wait_for_no_spinners(browser);
+        browser.page.editorPage().useCss()
+            .waitForElementVisible('@page');
     },
 
     'Step 12: Ensure IRI changes are successful on the Ontology List Page' : function(browser) {
@@ -96,20 +121,26 @@ module.exports = {
             .click('//ontology-editor-page//open-ontology-tab//small[text()[contains(.,"https://mobi.com/ontologies/myOntology2")]]');
         // wait for loading to finish
         browser.globals.wait_for_no_spinners(browser);
-        ontologyEditorPage.onProjectTab(browser);
+        browser.page.editorPage().onProjectTab();
     }, 
 
     'Step 13: Create a new branches' : function(browser) {
-        ontologyEditorPage.openNewBranchOverlay(browser);
-        ontologyEditorPage.editNewBranchOverlayAndSubmit(browser, 'newBranchTitle2', 'newBranchDescription');
+        browser.page.editorPage().openNewBranchOverlay();
+        browser.page.editorPage().editNewBranchOverlayAndSubmit('newBranchTitle2', 'newBranchDescription');
+        browser.globals.wait_for_no_spinners(browser);
+        browser
+            .useCss()
+            .waitForElementNotPresent('create-branch-overlay')
+            .waitForElementNotPresent('create-branch-overlay h1.mat-dialog-title');
     },
 
     'Step 14: Verify that branch was switched to the new branch' : function(browser) {
-        ontologyEditorPage.verifyBranchSelection(browser, 'newBranchTitle2');
+        browser.page.editorPage().verifyBranchSelection('newBranchTitle2');
     }, 
 
     'Step 15: Switch to new branch' : function(browser) {
-        ontologyEditorPage.switchToBranch(browser, 'newBranchTitle2');
+        browser.globals.wait_for_no_spinners(browser);
+        browser.page.editorPage().switchToBranch('newBranchTitle2');
     },
 
     'Step 16: Verify no uncommitted changes are shown': function(browser) {
@@ -127,7 +158,7 @@ module.exports = {
             .useXpath()
             .waitForElementVisible('//mat-tab-header//div[text()[contains(.,"Project")]]')
             .click('//mat-tab-header//div[text()[contains(.,"Project")]]');
-        ontologyEditorPage.onProjectTab(browser);
+        browser.page.editorPage().onProjectTab();
     },
 
     'Step 17: Verify submit cannot be clicked': function(browser) {
@@ -150,7 +181,7 @@ module.exports = {
                 this.assert.equal(result.value, "MASTER");
             })
             .useCss()
-            .assert.not.enabled(".merge-block .btn-container button.mat-primary") // intermitted issue
+            .assert.not.enabled(".merge-block .btn-container button.mat-primary") // intermittent issue
             .click('ontology-sidebar span.close-icon');
     },
 
@@ -194,12 +225,15 @@ module.exports = {
                 .useCss()
                 .click('xpath', '//div//ul//a[@class="nav-link"][@href="#/ontology-editor"]');
             browser.globals.wait_for_no_spinners(browser);
-            ontologyEditorPage.isActive(browser);
+            browser.page.editorPage().isActive();
             browser.waitForElementVisible('button.upload-button');
         },
 
     'Step 20: On The Ontology List Page, search for ontology' : function(browser) {
-        ontologyEditorPage.searchOntology(browser, 'myTitle');
+        browser.page.editorPage().searchOntology('myTitle');
+        browser.globals.wait_for_no_spinners(browser);
+        browser.page.editorPage().useCss()
+            .waitForElementVisible('@page');
     },
 
     'Step 21: Open the ontology' : function(browser) {
@@ -209,7 +243,7 @@ module.exports = {
             .click('//open-ontology-tab//small[text()[contains(.,"myOntology2")]]');
         browser.globals.wait_for_no_spinners(browser); // wait for loading to finish
         
-        ontologyEditorPage.onProjectTab(browser);
+        browser.page.editorPage().onProjectTab();
         browser
             .useXpath()
             .getValue("//open-ontology-select//input", function(result) {
@@ -220,9 +254,14 @@ module.exports = {
     },
 
     'Step 22: Create new Classes': function(browser) {
-        ontologyEditorPage.createNewOwlClass(browser, 'firstClass', 'firstClassDescription');
+        browser.page.editorPage().createNewOwlClass('firstClass', 'firstClassDescription');
         for (var i = 2; i <= 20; i++) {
-            ontologyEditorPage.createNewOwlClass(browser, 'class' + i + 'Title', 'class' + i + 'Description');
+            browser.page.editorPage().createNewOwlClass('class' + i + 'Title', 'class' + i + 'Description');
+            browser.globals.wait_for_no_spinners(browser);
+            browser
+                .useCss()
+                .waitForElementNotPresent('create-class-overlay')
+                .waitForElementNotPresent('create-class-overlay h1.mat-dialog-title');
         }
     },
 
@@ -255,12 +294,17 @@ module.exports = {
     },
 
     'Step 25: Commit Changes': function(browser) {
-        ontologyEditorPage.openCommitOverlay(browser);
-        ontologyEditorPage.editCommitOverlayAndSubmit(browser, 'commit123');
+        browser.page.editorPage().openCommitOverlay();
+        browser.page.editorPage().editCommitOverlayAndSubmit('commit123');
+        browser.globals.wait_for_no_spinners(browser);
+        browser
+            .useCss()
+            .waitForElementNotPresent('commit-overlay')
+            .waitForElementNotPresent('commit-overlay h1.mat-dialog-title'); // intermittent issue caused by backend
         browser
             .waitForElementVisible('div.toast-success')
             .waitForElementNotPresent('div.toast-success');
-        ontologyEditorPage.isActive(browser, 'ontology-tab');
+        browser.page.editorPage().isActive('ontology-tab');
     },
 
     'Step 26: Verify no changes are shown': function(browser) {
@@ -309,41 +353,56 @@ module.exports = {
     },
 
     'Step 28: Accept the merge request': function(browser) {
-        mergeRequestPage.selectRequest(browser, 'newBranchTitle2');
-        mergeRequestPage.acceptRequest(browser);
+        browser.page.mergeRequestPage().selectRequest('newBranchTitle2');
+        browser.globals.wait_for_no_spinners(browser);
+        browser.page.mergeRequestPage().acceptRequest();
     },
 
     'Step 29: Create branch used for branch removal Merge Request': function(browser) {
+        browser.useCss()
+            .globals.switchToPage(browser, 'ontology-editor');
+        browser.globals.wait_for_no_spinners(browser);
+        browser.page.editorPage().isActive();
+        // ontology-editor is on changes tab at this point
+        browser.page.editorPage().openNewBranchOverlay();
+        browser.page.editorPage().editNewBranchOverlayAndSubmit('newBranchTitle3Removal', 'newBranchDescriptionBranchRemoval');
+        browser.globals.wait_for_no_spinners(browser);
         browser
             .useCss()
-            .click('xpath', '//div//ul//a[@class="nav-link"][@href="#/ontology-editor"]');
-        browser.globals.wait_for_no_spinners(browser);
-        ontologyEditorPage.isActive(browser);
-        // ontology-editor is on changes tab at this point
-        ontologyEditorPage.openNewBranchOverlay(browser);
-        ontologyEditorPage.editNewBranchOverlayAndSubmit(browser, 'newBranchTitle3Removal', 'newBranchDescriptionBranchRemoval');
-        ontologyEditorPage.verifyBranchSelection(browser, 'newBranchTitle3Removal');
+            .waitForElementNotPresent('create-branch-overlay')
+            .waitForElementNotPresent('create-branch-overlay h1.mat-dialog-title');
+        browser.page.editorPage().verifyBranchSelection('newBranchTitle3Removal');
     },
 
     'Step 30: Add commits to branch': function (browser) {
         for (var i = 2; i <= 30; i++) {
-            ontologyEditorPage.createNewOwlClass(browser, 'classRemoval' + i + 'Title', 'classRemoval' + i + 'Description');
-            ontologyEditorPage.openCommitOverlay(browser);
-            ontologyEditorPage.editCommitOverlayAndSubmit(browser, 'commit123Removal' + i);
+            browser.page.editorPage().createNewOwlClass('classRemoval' + i + 'Title', 'classRemoval' + i + 'Description');
+            browser.globals.wait_for_no_spinners(browser);
+            browser
+                .useCss()
+                .waitForElementNotPresent('create-class-overlay')
+                .waitForElementNotPresent('create-class-overlay h1.mat-dialog-title');
+            browser.page.editorPage().openCommitOverlay();
+            browser.page.editorPage().editCommitOverlayAndSubmit('commit123Removal' + i);
+            browser.globals.wait_for_no_spinners(browser);
+            browser
+                .useCss()
+                .waitForElementNotPresent('commit-overlay')
+                .waitForElementNotPresent('commit-overlay h1.mat-dialog-title'); // intermittent issue caused by backend
         }
         browser
             .waitForElementVisible('div.toast-success')
             .waitForElementNotPresent('div.toast-success');
-        ontologyEditorPage.isActive(browser, 'ontology-tab');
+        browser.page.editorPage().isActive('ontology-tab');
     },
     'Step 31: Create a merge request': function(browser) {
         browser
             .useXpath()
             .click("//li/a[@class='nav-link']/span[text()[contains(.,'Merge Requests')]]")
             .waitForElementVisible("//button//span[text()[contains(.,'New Request')]]");
-        mergeRequestPage.verifyRecordFilters(browser);
-        mergeRequestPage.verifyMergeRequestList(browser);
-        mergeRequestPage.verifyMergePageSort(browser);
+        browser.page.mergeRequestPage().verifyRecordFilters();
+        browser.page.mergeRequestPage().verifyMergeRequestList();
+        browser.page.mergeRequestPage().verifyMergePageSort();
 
         // Start New Request, select the ontology record, and click Next
         browser
@@ -390,7 +449,7 @@ module.exports = {
     'Step 32: Ensure the request status filter works': function(browser) {
         // Confirm the status filter is present
         var clickFunc = function(result) { this.assert.strictEqual(result.status, 0) };
-        var statusFilterXPathSelector = mergeRequestPage.createFilterXPathSelector('Request Status');
+        var statusFilterXPathSelector = createFilterXPathSelector('Request Status');
         browser.assert.elementPresent({ selector: statusFilterXPathSelector, locateStrategy: 'xpath' });
 
         // Verify the correct amount of options is available
@@ -401,12 +460,24 @@ module.exports = {
         // Select the closed status filter
         var closedRadioLabelSelector = '//span[contains(@class, "mat-radio-label")][text()[contains(., "Closed")]]';
         var openRadioLabelSelector = '//span[contains(@class, "mat-radio-label")][text()[contains(., "Open")]]';
+        var acceptedRadioLabelSelector = '//span[contains(@class, "mat-radio-label")][text()[contains(., "Accepted")]]';
         var closedStatusFilterXPathSelector = statusFilterElementSelector + closedRadioLabelSelector;
         browser.assert.elementPresent({ selector: closedStatusFilterXPathSelector, locateStrategy: 'xpath' });
         browser.click('xpath', closedStatusFilterXPathSelector, clickFunc);
         browser.globals.wait_for_no_spinners(browser);
+        browser.useCss()
+            .expect.element('div.merge-request-list info-message p').text.to.contain('No requests found');
 
-        // Unselect the admin creator filter
+        //select the accepted status filter
+        var acceptedStatusFilterXPathSelector = statusFilterElementSelector + acceptedRadioLabelSelector;
+        var acceptedRequestXPath = '//merge-request-list//div//span[contains(@class, "request-info-title")][text()[contains(., "newBranchTitle2")]]'
+        browser.assert.elementPresent({ selector: acceptedStatusFilterXPathSelector, locateStrategy: 'xpath' });
+        browser.click('xpath', acceptedStatusFilterXPathSelector, clickFunc);
+        browser.globals.wait_for_no_spinners(browser);
+        browser.useXpath()
+            .assert.elementPresent(acceptedRequestXPath)
+
+        // Select the open status filter
         browser.click('xpath', statusFilterElementSelector + openRadioLabelSelector, clickFunc);
         browser.globals.wait_for_no_spinners(browser);
     },
@@ -414,7 +485,7 @@ module.exports = {
     'Step 33: Filter the merge request list by creator': function(browser) {
         // Confirm the Creator filter is present
         var clickFunc = function(result) { this.assert.strictEqual(result.status, 0) };
-        var creatorFilterXPathSelector = mergeRequestPage.createFilterXPathSelector('Creators');
+        var creatorFilterXPathSelector = createFilterXPathSelector('Creators');
         browser.assert.elementPresent({ selector: creatorFilterXPathSelector, locateStrategy: 'xpath' });
         // Submit a search of the creator filter
         var creatorSearchXPathSelector = creatorFilterXPathSelector + '//input';
@@ -426,7 +497,7 @@ module.exports = {
             .waitForElementNotPresent('#spinner-full');
 
         // Select the admin creator filter
-        var adminCreatorFilterXPathSelector = mergeRequestPage.createFilterXPathSelector('Creators', adminUsername + ' (2)');
+        var adminCreatorFilterXPathSelector = createFilterXPathSelector('Creators', adminUsername + ' (2)');
         browser.assert.elementPresent({ selector: adminCreatorFilterXPathSelector, locateStrategy: 'xpath' });
         browser.click('xpath', adminCreatorFilterXPathSelector, clickFunc);
         browser.globals.wait_for_no_spinners(browser);
@@ -442,9 +513,10 @@ module.exports = {
     'Step 34: Filter the merge request list by assignee': function(browser) {
       // Confirm the Creator filter is present
       var clickFunc = function(result) { this.assert.strictEqual(result.status, 0) };
-      var assigneeFilterXPathSelector = mergeRequestPage.createFilterXPathSelector('Assignees');
+      var assigneeFilterXPathSelector = createFilterXPathSelector('Assignees');
       browser.assert.elementPresent({ selector: assigneeFilterXPathSelector, locateStrategy: 'xpath' });
-      // Submit a search of the creator filter
+
+      // Submit a search of the assignee filter
       var assigneeSearchXPathSelector = assigneeFilterXPathSelector + '//input';
       browser.assert.elementPresent({ selector: assigneeSearchXPathSelector, locateStrategy: 'xpath' });
       browser
@@ -454,7 +526,7 @@ module.exports = {
           .waitForElementNotPresent('#spinner-full');
 
       // Select the admin creator filter
-      var adminAssigneeFilterXPathSelector = mergeRequestPage.createFilterXPathSelector('Assignee', adminUsername + ' (1)');
+      var adminAssigneeFilterXPathSelector = createFilterXPathSelector('Assignee', adminUsername + ' (1)');
       browser.assert.elementPresent({ selector: adminAssigneeFilterXPathSelector, locateStrategy: 'xpath' });
       browser.click('xpath', adminAssigneeFilterXPathSelector, clickFunc);
       browser.globals.wait_for_no_spinners(browser);
@@ -469,17 +541,18 @@ module.exports = {
 
     'Step 35: Search the merge request list': function(browser) {
         // Test no requests are shown
-        mergeRequestPage.searchList(browser, 'NONE');
+        browser.page.mergeRequestPage().searchList('NONE');
         browser.waitForElementVisible('div.merge-request-list info-message');
         browser.expect.element('div.merge-request-list info-message p').text.to.contain('No requests found');
 
         // Test searching with some results
-        mergeRequestPage.searchList(browser, 'rem');
+        browser.page.mergeRequestPage().searchList('rem');
         browser.assert.textContains('div.request-contents .details h3', 'newBranchTitle3Removal')
     },
 
     'Step 36: Accept the merge request': function(browser) {
-        mergeRequestPage.selectRequest(browser, 'newBranchTitle3Removal');
-        mergeRequestPage.acceptRequest(browser);
+        browser.page.mergeRequestPage().selectRequest('newBranchTitle3Removal');
+        browser.globals.wait_for_no_spinners(browser);
+        browser.page.mergeRequestPage().acceptRequest();
     }
 }

@@ -22,7 +22,7 @@
  */
 var adminUsername = 'admin'
 var adminPassword = 'admin'
-var pages = ["Catalog", "Ontology Editor", "Merge Requests", "Mapping Tool", "Datasets", "Discover"]
+var pages = ["Catalog", "Ontology Editor", "Merge Requests", "Shapes Editor" ,"Mapping Tool", "Datasets", "Discover"]
 
 module.exports = {
     '@tags': ['sanity'],
@@ -30,8 +30,7 @@ module.exports = {
     'Step 1: login as admin' : function(browser) {
         browser.globals.initial_steps(browser, adminUsername, adminPassword)
         browser.globals.wait_for_no_spinners(browser);
-        browser.click('xpath', '//div//ul//a[@class="nav-link"][@href="#/home"]');
-        browser.globals.wait_for_no_spinners(browser);
+        browser.globals.switchToPage(browser, 'home')
         browser.waitForElementVisible('.home-page')
     },
 
@@ -76,12 +75,19 @@ module.exports = {
                                 .waitForElementVisible("//span[text()[contains(.,'New Ontology')]]/parent::button")
                                 .waitForElementVisible("//span[text()[contains(.,'Upload Ontology')]]/parent::button");
                             break;
+                        case "Shapes Editor":
+                            browser.useCss()
+                                .waitForElementVisible('shapes-graph-editor-page')
+                                .waitForElementVisible('shapes-graph-editor-page editor-record-select')
+                                .waitForElementVisible('shapes-graph-editor-page editor-branch-select')
+                                .waitForElementVisible('shapes-graph-editor-page button')
+                                .assert.elementsCount('shapes-graph-editor-page button', 7)
+                            break;
                         case "Merge Requests":
                             browser.waitForElementVisible("//button/span[text()[contains(.,'New Request')]]");
                             break;
                         case "Mapping Tool":
                             browser.waitForElementVisible("//button/span[text()[contains(.,'New Mapping')]]");
-                            // browser.waitForElementVisible("//i[@class='fa fa-search']/following-sibling::input");
                             break;
                         case "Datasets":
                             browser.waitForElementVisible("//button/span[text()[contains(.,'New Dataset')]]");

@@ -57,8 +57,7 @@ module.exports = {
             .setValue('div.mat-dialog-content textarea', 'A dataset consisting of information about events')
             .click('xpath', '//div[contains(@class, "datasets-ontology-picker")]//h4[text()[contains(.,"EventOntology")]]//ancestor::mat-list-option')
         browser.globals.wait_for_no_spinners(browser)
-        browser
-            .click('div.mat-dialog-actions button.mat-primary')
+        browser.click('div.mat-dialog-actions button.mat-primary')
     },
     'Step 5: Validate dataset Appearance' : function (browser) {
         browser.globals.wait_for_no_spinners(browser)

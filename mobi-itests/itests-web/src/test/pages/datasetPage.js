@@ -20,8 +20,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-var DiscoverPage = function() {
+const datasetCommands = {
+    createDataset: function(title, description) {
+        return this.click('div.datasets-page button.mat-primary')
+            .waitForElementVisible('new-dataset-overlay')
+            .waitForElementVisible('new-dataset-overlay input[name="title"]')
+            .setValue('div.mat-dialog-content input[name=title]', title)
+            .setValue('div.mat-dialog-content textarea', description);
+        // .click('xpath', '//div[contains(@class, "datasets-ontology-picker")]//h4[text()[contains(.,"uhtc-ontology")]]//ancestor::mat-list-option')
+    }
+}
 
-};
-
-module.exports = { discoverPage: new DiscoverPage() };
+module.exports = {
+    elements: {},
+    commands: [datasetCommands]
+}

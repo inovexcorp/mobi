@@ -24,7 +24,7 @@ module.exports = {
 
     // default timeout value in milliseconds for waitFor commands and implicit waitFor value for
     // expect assertions
-    waitForConditionTimeout : 30000,
+    waitForConditionTimeout : 45000,
     retryAssertionTimeout: 30000,
     asyncHookTimeout: 60000,
     create_shapes_graph_branch_button: {
@@ -188,9 +188,8 @@ module.exports = {
     'initial_steps': function (browser, user, password) {
         browser.url(`https://localhost:${httpsPort}/mobi/index.html#/home`);
         browser.globals.login(browser, user, password);
-        browser.click('xpath', '//div//ul//a[@class="nav-link"][@href="#/ontology-editor"]');
         browser.globals.wait_for_no_spinners(browser);
-        browser.waitForElementVisible('button.upload-button');
+        browser.globals.switchToPage(browser, 'ontology-editor', 'button.upload-button');
     },
 
     'login': function (browser, username, password) {
@@ -375,13 +374,14 @@ module.exports = {
             .useCss()
             .waitForElementNotPresent('#spinner-full', t)
             //TODO make sure toaster containers are being removed
-            // .waitForElementNotPresent('xpath', '//div[@id="toast-container"]', t)
+            // .waitForElementNotVisible('xpath', '//div[@id="toast-container"]', t)
             .waitForElementNotPresent('div.fade', t)
     },
 
     'switchToPage': function(browser, page, waitForElement){
         browser
             .useCss()
+            .waitForElementVisible('sidebar div ul a[class=nav-link][href="#/' + page + '"]')
             .click('sidebar div ul a[class=nav-link][href="#/' + page + '"]')
             .waitForElementNotPresent('#spinner-full', 30000);
         if (waitForElement) {

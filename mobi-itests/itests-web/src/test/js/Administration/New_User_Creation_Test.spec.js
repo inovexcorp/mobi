@@ -57,14 +57,12 @@ module.exports = {
     },
 
     'Step 3: The user clicks on the Administration sidebar link' : function(browser) {
-        browser
-            .useXpath()
-            .waitForElementVisible("//li/a[@class='nav-link']/span[text()[contains(.,'Administration')]]")
-            .click("//li/a[@class='nav-link']/span[text()[contains(.,'Administration')]]")
+        browser.globals.switchToPage(browser, 'user-management')
     },
 
     'Step 4: A new user is created' : function(browser) {
         browser
+            .useXpath()
             .waitForElementVisible("//button/span[text() [contains(., 'Create User')]]")
             .click("//button/span[text() [contains(., 'Create User')]]")
             .waitForElementVisible("//h1[text() [contains(., 'Create User')]]")
