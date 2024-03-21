@@ -22,7 +22,7 @@
   -->
 <div class="selected-details">
     <div class="selected-heading" *ngIf="os.listItem.selected">
-        <span class="entity-name">{{om.getEntityName(os.listItem.selected)}}</span>
+        <span class="entity-name">{{os.getEntityNameByListItem(os.listItem.selected['@id'])}}</span>
         <static-iri class="editable-iri"
                     [readOnly]="readOnly"
                     [iri]="os.listItem.selected['@id']"

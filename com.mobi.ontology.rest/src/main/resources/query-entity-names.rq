@@ -29,13 +29,27 @@ WHERE {
       {
         ?entity (skos-xl:prefLabel/skos-xl:literalForm) ?name .
         FILTER(isIRI(?entity))
+        FILTER(LANGMATCHES(LANG(?name), "EN"))
         BIND(13 as ?propertyOrder)
+      }
+      UNION
+      {
+        ?entity (skos-xl:prefLabel/skos-xl:literalForm) ?name .
+        FILTER(isIRI(?entity))
+        BIND(14 as ?propertyOrder)
       }
       UNION
       {
         ?entity (skos-xl:altLabel/skos-xl:literalForm) ?name .
         FILTER(isIRI(?entity))
+        FILTER(LANGMATCHES(LANG(?name), "EN"))
         BIND(14 as ?propertyOrder)
+      }
+      UNION
+      {
+        ?entity (skos-xl:altLabel/skos-xl:literalForm) ?name .
+        FILTER(isIRI(?entity))
+        BIND(15 as ?propertyOrder)
       }
     } ORDER BY ?propertyOrder
   }
