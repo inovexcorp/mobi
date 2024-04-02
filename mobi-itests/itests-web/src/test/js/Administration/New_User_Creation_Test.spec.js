@@ -61,27 +61,7 @@ module.exports = {
     },
 
     'Step 4: A new user is created' : function(browser) {
-        browser
-            .useXpath()
-            .waitForElementVisible("//button/span[text() [contains(., 'Create User')]]")
-            .click("//button/span[text() [contains(., 'Create User')]]")
-            .waitForElementVisible("//h1[text() [contains(., 'Create User')]]")
-            .useCss()
-            .click('create-user-overlay input[name=username]')
-            .setValue('create-user-overlay input[name=username]', newUser.username)
-            .click('create-user-overlay input[name=unmaskPassword]')
-            .setValue('create-user-overlay input[name=unmaskPassword]', newUser.password)
-            .click('create-user-overlay input[name=firstName]')
-            .setValue('create-user-overlay input[name=firstName]', newUser.firstName)
-            .click('create-user-overlay input[name=lastName]')
-            .setValue('create-user-overlay input[name=lastName]', newUser.lastName)
-            .click('create-user-overlay input[name=email]')
-            .setValue('create-user-overlay input[name=email]', newUser.email)
-            .click('label.mat-slide-toggle-label')
-            .useXpath()
-            .click("//button/span[text() [contains(., 'Submit')]]")
-            .waitForElementNotPresent('create-user-overlay')
-            .assert.not.elementPresent("//button/span[text() [contains(., 'Submit')]]");
+        browser.page.administrationPage().createUser(newUser);
         browser.globals.wait_for_no_spinners(browser)
     },
 

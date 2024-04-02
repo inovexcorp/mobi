@@ -53,44 +53,44 @@ var createFilterXPathSelector = function(filterTypeHeader, filterOption) {
 module.exports = {
     '@tags': ['ontology-editor', 'sanity', 'merge-request'],
 
-    'Step 1: Initial Setup' : function(browser) {
+    'Step 1: Initial Setup': function(browser) {
         browser.globals.initial_steps(browser, adminUsername, adminPassword);
     },
 
-    'Step 2: Ensure that user is on Ontology editor page' : function(browser) {
+    'Step 2: Ensure that user is on Ontology editor page': function(browser) {
         browser.page.editorPage().isActive();
     },
 
-    'Step 3: Open new Ontology Overlay' : function(browser) {
+    'Step 3: Open new Ontology Overlay': function(browser) {
         browser.page.editorPage().openNewOntologyOverlay();
     },
 
-    'Step 4: Edit New Ontology Overlay' : function(browser) {
+    'Step 4: Edit New Ontology Overlay': function(browser) {
         browser.page.editorPage().editNewOntologyOverlay(ontology01.title, ontology01.description);
     },
 
-    'Step 5: Submit New Ontology Overlay' : function(browser) {
+    'Step 5: Submit New Ontology Overlay': function(browser) {
         browser.page.editorPage().submitNewOntologyOverlay();
         browser.globals.wait_for_no_spinners(browser);
         browser.page.editorPage().onProjectTab();
     },
 
-    'Step 6: Verify new ontology properties' : function(browser) {
+    'Step 6: Verify new ontology properties': function(browser) {
         browser.page.editorPage().onProjectTab();
         browser.page.editorPage().verifyProjectTab(ontology01.title, ontology01.description, 'MyTitle2')
     },
 
-    'Step 7: Edit IRI for ontology' : function(browser) {
+    'Step 7: Edit IRI for ontology': function(browser) {
         browser.page.editorPage().onProjectTab();
         browser.page.editorPage().editIri('myOntology2');
         browser.globals.wait_for_no_spinners(browser);
     },
 
-    'Step 8: Open Commit overlay' : function(browser) {
+    'Step 8: Open Commit overlay': function(browser) {
         browser.page.editorPage().openCommitOverlay();
     },
 
-    'Step 9: Edit Commit message and Submit' : function(browser) { 
+    'Step 9: Edit Commit message and Submit': function(browser) {
         browser.page.editorPage().editCommitOverlayAndSubmit('Changed IRI');
         browser.globals.wait_for_no_spinners(browser);
         browser
@@ -103,18 +103,18 @@ module.exports = {
         browser.page.editorPage().isActive('ontology-tab');
     },
 
-    'Step 10: Open Ontology Editor Page Ontology List Page' : function(browser) { 
+    'Step 10: Open Ontology Editor Page Ontology List Page': function(browser) {
         browser.page.editorPage().openOntologyListPage();
     },
 
-    'Step 11: On The Ontology List Page, search for ontology' : function(browser) { 
+    'Step 11: On The Ontology List Page, search for ontology': function(browser) {
         browser.page.editorPage().searchOntology('myTitle');
         browser.globals.wait_for_no_spinners(browser);
         browser.page.editorPage().useCss()
             .waitForElementVisible('@page');
     },
 
-    'Step 12: Ensure IRI changes are successful on the Ontology List Page' : function(browser) {
+    'Step 12: Ensure IRI changes are successful on the Ontology List Page': function(browser) {
         browser
             .useXpath()
             .waitForElementPresent('//ontology-editor-page//open-ontology-tab')
@@ -124,7 +124,7 @@ module.exports = {
         browser.page.editorPage().onProjectTab();
     }, 
 
-    'Step 13: Create a new branches' : function(browser) {
+    'Step 13: Create a new branch': function(browser) {
         browser.page.editorPage().openNewBranchOverlay();
         browser.page.editorPage().editNewBranchOverlayAndSubmit('newBranchTitle2', 'newBranchDescription');
         browser.globals.wait_for_no_spinners(browser);
@@ -134,11 +134,11 @@ module.exports = {
             .waitForElementNotPresent('create-branch-overlay h1.mat-dialog-title');
     },
 
-    'Step 14: Verify that branch was switched to the new branch' : function(browser) {
+    'Step 14: Verify that branch was switched to the new branch': function(browser) {
         browser.page.editorPage().verifyBranchSelection('newBranchTitle2');
     }, 
 
-    'Step 15: Switch to new branch' : function(browser) {
+    'Step 15: Switch to new branch': function(browser) {
         browser.globals.wait_for_no_spinners(browser);
         browser.page.editorPage().switchToBranch('newBranchTitle2');
     },
@@ -219,7 +219,7 @@ module.exports = {
             .waitForElementVisible("//button//span[text()[contains(.,'New Request')]]")
     },
 
-    'Step 19: Open Ontology Editor Page Ontology List Page' : function(browser) {
+    'Step 19: Open Ontology Editor Page Ontology List Page': function(browser) {
             browser.globals.wait_for_no_spinners(browser)
             browser
                 .useCss()
@@ -229,14 +229,14 @@ module.exports = {
             browser.waitForElementVisible('button.upload-button');
         },
 
-    'Step 20: On The Ontology List Page, search for ontology' : function(browser) {
+    'Step 20: On The Ontology List Page, search for ontology': function(browser) {
         browser.page.editorPage().searchOntology('myTitle');
         browser.globals.wait_for_no_spinners(browser);
         browser.page.editorPage().useCss()
             .waitForElementVisible('@page');
     },
 
-    'Step 21: Open the ontology' : function(browser) {
+    'Step 21: Open the ontology': function(browser) {
         browser
             .waitForElementPresent('ontology-editor-page open-ontology-tab')
             .useXpath()
@@ -244,8 +244,7 @@ module.exports = {
         browser.globals.wait_for_no_spinners(browser); // wait for loading to finish
         
         browser.page.editorPage().onProjectTab();
-        browser
-            .useXpath()
+        browser.useXpath()
             .getValue("//open-ontology-select//input", function(result) {
                 this.assert.equal(typeof result, "object");
                 this.assert.equal(result.status, 0);
@@ -344,8 +343,7 @@ module.exports = {
             .waitForElementNotPresent('div.mat-horizontal-stepper-content.ng-animating')
             .useXpath()
             .waitForElementVisible('//button//span[text()="Submit"]')
-        //stale element reference: stale element not found
-        browser 
+        browser
             .click('//button//span[text()="Submit"]')
             .useCss()
             .waitForElementVisible('div.toast-success')
@@ -374,7 +372,7 @@ module.exports = {
         browser.page.editorPage().verifyBranchSelection('newBranchTitle3Removal');
     },
 
-    'Step 30: Add commits to branch': function (browser) {
+    'Step 30: Add commits to branch': function(browser) {
         for (var i = 2; i <= 30; i++) {
             browser.page.editorPage().createNewOwlClass('classRemoval' + i + 'Title', 'classRemoval' + i + 'Description');
             browser.globals.wait_for_no_spinners(browser);

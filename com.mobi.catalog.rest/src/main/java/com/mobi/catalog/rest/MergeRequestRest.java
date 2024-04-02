@@ -733,7 +733,7 @@ public class MergeRequestRest {
             } else if (action.equals("close")) {
                 manager.closeMergeRequest(requestIdResource, activeUser);
             } else if (action.equals("open")) {
-                throw new IllegalArgumentException("open functionality not completed at this time.");
+                manager.reopenMergeRequest(requestIdResource, activeUser);
             } else {
                 throw new IllegalArgumentException("Not a valid action to take.");
             }

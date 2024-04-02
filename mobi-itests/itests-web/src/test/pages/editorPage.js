@@ -61,23 +61,29 @@ const ontologyPageCommands = {
             .waitForElementPresent('ontology-editor-page ontology-tab');
     },
 
-    openOntologyListPage: function () {
+    openOntologyListPage: function() {
         return this.click('xpath', '//div[contains(@class, "ontology-sidebar")]//span[text()[contains(.,"Ontologies")]]/parent::button')
             .waitForElementNotPresent('#spinner-full')
             .waitForElementPresent(ontologyListPageCss)
     },
 
-    searchOntology: function (searchText){
+    searchOntology: function(searchText) {
         return this.useCss()
             .waitForElementPresent(ontologyListPageCss)
             .clearValue('open-ontology-tab search-bar input')
             .setValue('open-ontology-tab search-bar input', searchText)
             .sendKeys('open-ontology-tab search-bar input', this.api.Keys.ENTER);
+    },
+
+    openOntology: function(ontologyTitle) {
+        return this.useXpath()
+            .waitForElementVisible('//ontology-editor-page//open-ontology-tab//div//h3//span[text()[contains(.,"' + ontologyTitle + '")]]')
+            .click('//ontology-editor-page//open-ontology-tab//div//h3//span[text()[contains(.,"' + ontologyTitle + '")]]')
     }
 }
 
 const ontologySidebarCommands = {
-    verifyBranchSelection: function (title) {
+    verifyBranchSelection: function(title) {
         return this.useXpath()
             .waitForElementPresent('//ontology-sidebar//open-ontology-select')
             .getValue("//ontology-sidebar//open-ontology-select//input", function (result) {
@@ -87,12 +93,23 @@ const ontologySidebarCommands = {
             });
     },
 
-    switchToBranch: function (title) {
+    switchToBranch: function(title) {
         return this.useCss()
             .click('open-ontology-select .mat-form-field-infix') // open open-ontology-select dropdown
             .useXpath()
             .waitForElementVisible('//mat-optgroup//mat-option//span[contains(text(), "' + title + '")]')
             .click('//mat-optgroup//mat-option//span[contains(text(), "' + title + '")]');
+    },
+
+    deleteBranch: function(title) {
+        return this.useCss()
+            .click('open-ontology-select .mat-form-field-infix') // open open-ontology-select dropdown
+            .useXpath()
+            .waitForElementVisible('//mat-optgroup//mat-option//span[contains(text(), "' + title + '")]')
+            .click('//mat-optgroup//mat-option//span[contains(text(), "' + title + '")]//following-sibling::span//a[contains(@class, "fa-trash-o")]')
+            .useCss()
+            .waitForElementVisible('mat-dialog-container confirm-modal button.mat-primary')
+            .click('mat-dialog-container confirm-modal button.mat-primary')
     }
 }
 

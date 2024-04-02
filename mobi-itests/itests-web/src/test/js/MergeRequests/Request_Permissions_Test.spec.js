@@ -224,17 +224,11 @@ module.exports = {
     },
 
     'Step 22: Validate New Merge Request Page mat cards': function(browser) {
-        browser
-            .useXpath()
-            .waitForElementVisible('//merge-requests-page//create-request');
         browser.page.mergeRequestPage().assertMatCardTitle(ontologyMrPermission_title);
     },
 
     'Step 23: Create a merge request': function(browser) {
-        browser
-            .useXpath()
-            .waitForElementVisible('//create-request//request-record-select//mat-card//mat-card-title[contains(text(),"' + ontologyMrPermission_title + '")]')
-            .click('//create-request//request-record-select//mat-card//mat-card-title[contains(text(),"' + ontologyMrPermission_title + '")]');
+        browser.click('//create-request//request-record-select//mat-card//mat-card-title[contains(text(),"' + ontologyMrPermission_title + '")]');
         browser.page.mergeRequestPage().createRequestNext();
     },
 
@@ -254,27 +248,11 @@ module.exports = {
         browser.page.mergeRequestPage().selectRequest(branchTitle);
         browser.globals.wait_for_no_spinners(browser);
         browser.page.mergeRequestPage().mergeRequestViewCheckStatus('Open');
-
-        browser.useXpath()
-            .waitForElementVisible('//merge-requests-page//merge-request-view//button//span[contains(text(), "Back")]/parent::button')
-            .assert.attributeEquals('//merge-requests-page//merge-request-view//button//span[contains(text(), "Back")]/parent::button', 'disabled', null)
-            .waitForElementVisible('//merge-requests-page//merge-request-view//button//span[contains(text(), "Accept")]/parent::button')
-            .assert.attributeEquals('//merge-requests-page//merge-request-view//button//span[contains(text(), "Accept")]/parent::button', 'disabled', null)
-            .waitForElementVisible('//merge-requests-page//merge-request-view//button//span[contains(text(), "Close")]/parent::button')
-            .assert.attributeEquals('//merge-requests-page//merge-request-view//button//span[contains(text(), "Close")]/parent::button', 'disabled', null)
-            .waitForElementVisible('//merge-requests-page//merge-request-view//button//span[contains(text(), "Delete")]/parent::button')
-            .assert.attributeEquals('//merge-requests-page//merge-request-view//button//span[contains(text(), "Delete")]/parent::button', 'disabled', null);
+        browser.page.mergeRequestPage().verifyMergeRequestButtons();
     },
 
     'Step 27: MergeRequestView - Close MR': function(browser) {
-        browser.page.mergeRequestPage().mergeRequestViewCheckStatus('Open');
-        browser.useXpath()
-            .waitForElementVisible('//merge-requests-page//merge-request-view//button//span[contains(text(), "Close")]/parent::button')
-            .assert.attributeEquals('//merge-requests-page//merge-request-view//button//span[contains(text(), "Close")]/parent::button', 'disabled', null)
-            .click('//merge-requests-page//merge-request-view//button//span[contains(text(), "Close")]/parent::button');
-        browser.useXpath()
-            .waitForElementVisible('//mat-dialog-container//confirm-modal')
-            .click('//mat-dialog-container//confirm-modal//button//span[contains(text(), "Yes")]/parent::button');
+        browser.page.mergeRequestPage().closeMergeRequest();
         browser.globals.wait_for_no_spinners(browser);
     },
 
@@ -302,17 +280,11 @@ module.exports = {
     },
 
     'Step 30: Validate New Merge Request Page mat cards': function(browser) {
-        browser
-            .useXpath()
-            .waitForElementVisible('//merge-requests-page//create-request');
         browser.page.mergeRequestPage().assertMatCardTitle(ontologyMrPermission_title);
     },
 
     'Step 31: Create a merge request': function(browser) {
-        browser
-            .useXpath()
-            .waitForElementVisible('//create-request//request-record-select//mat-card//mat-card-title[contains(text(),"'+ontologyMrPermission_title+'")]')
-            .click('//create-request//request-record-select//mat-card//mat-card-title[contains(text(),"'+ontologyMrPermission_title+'")]')
+        browser.click('//create-request//request-record-select//mat-card//mat-card-title[contains(text(),"'+ontologyMrPermission_title+'")]')
         browser.page.mergeRequestPage().createRequestNext();
     },
 
