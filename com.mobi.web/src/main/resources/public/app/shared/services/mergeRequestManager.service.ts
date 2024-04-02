@@ -176,8 +176,8 @@ export class MergeRequestManagerService {
      * error message
      */
     updateRequestStatus(mergeRequest: MergeRequest, action: MergeRequestStatusAction): Observable<void> {
-        const requestToAcceptClone = cloneDeep(mergeRequest);
-        const mergeRequestId = requestToAcceptClone.jsonld['@id'];
+        const requestClone = cloneDeep(mergeRequest);
+        const mergeRequestId = requestClone.jsonld['@id'];
         const params = {
             action: action
         };
@@ -186,26 +186,28 @@ export class MergeRequestManagerService {
                 catchError(handleError),
                 map(() => {}),
                 tap(() => {
-                    this._requestAccepted(requestToAcceptClone);
+                    this._requestAccepted(requestClone, action);
                 })
             );
     }
     /**
      * Emits an event on merge request acceptance (IRI of the record being accepted and the target branch IRI)
      * @param requestToAccept Merge Request IRI ID
-     * @param targetBranchId Target Branch IRI ID
+     * @param {string} action A string representation of the action to take against the mergeRequest
      */
-    _requestAccepted(requestToAccept: MergeRequest): void {
-        const recordId = requestToAccept.recordIri;
-        const targetBranchId = requestToAccept.targetBranch['@id'];
-        this._mergeRequestActionSubject.next({
-            eventType: EventTypeConstants.EVENT_MERGE_REQUEST_ACCEPTED, 
-            payload: {
-                recordId, 
-                targetBranchId,
-                requestToAccept
-            }
-        });
+    _requestAccepted(requestToAccept: MergeRequest, action: MergeRequestStatusAction): void {
+        if (action === 'accept') {
+            const recordId = requestToAccept.recordIri;
+            const targetBranchId = requestToAccept.targetBranch['@id'];
+            this._mergeRequestActionSubject.next({
+                eventType: EventTypeConstants.EVENT_MERGE_REQUEST_ACCEPTED,
+                payload: {
+                    recordId,
+                    targetBranchId,
+                    requestToAccept
+                }
+            });
+        }
     }
     /**
      * Calls the GET /mobirest/merge-requests/{requestId}/comments endpoint to retrieve the array of comment

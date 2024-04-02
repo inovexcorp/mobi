@@ -14,22 +14,22 @@ In order for the tests to run completely, you must have the following requiremen
 |----------|-----------------------------------------------------------|
 |Chrome    | latest (will not ignore local host certificate otherwise) |
 |Docker    | 19.03.* and greater                                       |
-|Node      | 10.16.3 and lower (test will fail otherwise)              |
+|Node      | 16.20.2 and greater (test will fail otherwise)            |
 
 
-##Tips and Tricks
+## Tips and Tricks
 - If attempting to run functional tests and the build fails, try these tips:
-   1. If the error is docker related:
-      - check to ensure that there is not an existing docker container with the same name already created. If there is already an existing container, you can remove it by running `docker rm [options] container [container id}`
-      - check to ensure that the docker container from a previous test run has completely stopped running and has been removed.
-      - check to ensure that you have completely built the mobi project.
-   2. If the error is test related:
-      - Ensure that you're not specifying a location strategy in your assert command. It is currently not supported
-        by our current version of nightwatch.
+   1. If the error seems to be docker related:
+      - Ensure that Docker is installed and can be accessed from the command line.
+      - Check to ensure that you have completely built the mobi project previous to running the tests.
+      - Uncomment the console.log statements found in the `before` hook found in the `nightwatch-globals.js` file
+   2. If the error seems to be test related:
+      - Up the timeout either via the `--timeout` flag or by altering the `waitForConditionTimeout` variable in the `nightwatch-globals.js` file
       - Ensure you're not using a deprecated method
       - Ensure you're using the correct location strategy for the selector you're passing in
-      - Try utilizing the global `wait_for_no_spinners` method found in the `nightwatch-globals.js` file as a race
-        condition could be happening.
+      - Try utilizing the global `wait_for_no_spinners` method found in the `nightwatch-globals.js` file as a race condition could be happening.
+      - Lower the amount of workers specified in the `nightwatch.json` file
+      - Make sure your docker instance has at least 16Gb of memory & 6 CPUs allotted for processes
 
 
 - To run an individual test in the functional test suite:
@@ -42,12 +42,17 @@ In order for the tests to run completely, you must have the following requiremen
    1. Change the url found on line 49 of the `nightwatch-globals.js` file to correspond to the url of the running
       distribution
    2. Build the functional test bundle in its entirety
-   3. Run the functional test as Normalg the "headless" flag found in `nightwatch.json` underneath `test_settings`.
+   3. Run the functional test as normal with the `headless` flag found in `nightwatch.json` underneath `test_settings`.
 
 
-NOTE: When running functional tests against a running distribution, after an initial build, the test script command
-found in the `package.json` file can be run directly in the root of the `itests-web` bundle to run tests without
-using DOCKER containers.
+## Additional Notes: 
+- The functional tests can also be run utilizing the test script command found in the `package.json` in the root of the `itests-web` bundle but
+to do so you must hardcode the `contextDir` and `dockerFile` variables found on lines 6 & 7 of the `nightwatch-globals.js` file.
 
-NOTE: You can also optionally set the web integration test to not run headless by erasing the "headless" flag found in
-`nightwatch.json` underneath `test_settings`.
+
+- If users wanted to visually inspect the process of a test running, they can do so by erasing the `headless` flag found
+ underneath `test_settings` key and set the `enabled` key underneath `test-workers` to false; both found in the `nightwatch.json` file.
+
+
+- To inspect a test at a moment in time, users can add a `browser.debug()` statement which when running headless will pause the respective test
+file, allowing to inspect elements. More details here - https://nightwatchjs.org/guide/writing-tests/nightwatch-inspector.html

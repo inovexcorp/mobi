@@ -64,7 +64,10 @@ export class MergeRequestViewComponent implements OnInit, OnDestroy {
     userAccessMsg = 'You are not assigned to and do not have permission to accept this merge.';
     closeAccessMsg = 'You do not have permission to close this merge.';
     deleteAccessMsg = 'You do not have permission to delete this merge.';
+    reopenAccessMsg = 'You do not have permission to reopen this merge.';
     canNotEditMsg = 'You can not edit the metadata of this merge.';
+    reopenMissingBranchMsg = 'Cannot be reopened due to missing source or target branch';
+    closeMissingBranchMsg = 'Cannot be closed due to missing source or target branch'
 
     resolveConflicts = false;
     copiedConflicts: Conflict[] = [];
@@ -74,18 +77,20 @@ export class MergeRequestViewComponent implements OnInit, OnDestroy {
     statusChipClass = 'mat-primary';
     // controls for view-buttons (Accept, Close, Delete)
     isSubmitDisabled = false;
-    isCloseDisabled = false;
-    isDeleteDisabled = true;
+    buttonsDisabled = false;
     acceptButtonTitle = '';
     closeButtonTitle = '';
     deleteButtonTitle = '';
+    reopenButtonTitle = '';
     // control for editing metadata
-    isEditDisabled = true;
     editButtonTitle = '';
 
     isAdminUser: boolean;
     currentAssignees: User[] = [];
     creator: User;
+
+    targetIRI = `${MERGEREQ}targetBranch`;
+    sourceIRI = `${MERGEREQ}sourceBranch`;
     
     private _destroySub$ = new Subject<void>();
     
@@ -105,12 +110,12 @@ export class MergeRequestViewComponent implements OnInit, OnDestroy {
     ngOnInit(): void {
         this.isAdminUser = this.um.isAdminUser(this.lm.currentUserIRI);
         if (this.isAdminUser) {
-            this.setModifyButtons(true);
+            this.setButtonsStatus(true);
         } else {
             const creatorIRIs: string[] = this.state.selected.jsonld[`${DCTERMS}creator`].map(r => r['@id']);
             const isCreator: boolean  = creatorIRIs.includes(this.lm.currentUserIRI);
             if (isCreator) {
-                this.setModifyButtons(true);
+                this.setButtonsStatus(true);
             } else {
                 // Check if user has managed permission on MergeRequest#OnRecord
                 const managePermissionOnRecordRequest = {
@@ -119,9 +124,9 @@ export class MergeRequestViewComponent implements OnInit, OnDestroy {
                 };
                 this.pep.evaluateRequest(managePermissionOnRecordRequest).pipe(takeUntil(this._destroySub$)).subscribe(decision => {
                     const isPermit = decision === this.pep.permit;
-                    this.setModifyButtons(isPermit);
+                    this.setButtonsStatus(isPermit);
                 }, () => {
-                    this.setModifyButtons(false);
+                    this.setButtonsStatus(false);
                 });
             }
             // Check if user can modify targetBranch
@@ -149,14 +154,14 @@ export class MergeRequestViewComponent implements OnInit, OnDestroy {
                 this.state.selected.jsonld = jsonld;
                 this.requestStatus = this.mm.requestStatus(this.state.selected.jsonld);
                 this.setStatusChipClass();
-                return this.state.setRequestDetails(this.state.selected)
+                return this.state.setRequestDetails(this.state.selected);
             })
         ).subscribe({
             next: () => {
                 this.currentAssignees = this.state.selected.assignees.slice();
             }, 
             error: () => {
-                this.setModifyButtons(false);
+                this.setButtonsStatus(false);
                 this.isSubmitDisabled = true;
                 this.toast.createWarningToast('The request you had selected no longer exists');
                 this.back();
@@ -168,13 +173,12 @@ export class MergeRequestViewComponent implements OnInit, OnDestroy {
         this._destroySub$.complete();
         this.state.clearDifference();
     }
-    setModifyButtons(isPermit: boolean): void {
-        this.isCloseDisabled = !isPermit;
-        this.isDeleteDisabled = !isPermit;
-        this.isEditDisabled = !isPermit;
-        this.closeButtonTitle = this.isCloseDisabled ?  this.closeAccessMsg : '';
-        this.deleteButtonTitle = this.isDeleteDisabled ?  this.deleteAccessMsg : '';
-        this.editButtonTitle = this.isEditDisabled ?  this.canNotEditMsg : '';
+    setButtonsStatus(isPermit: boolean): void {
+        this.buttonsDisabled = !isPermit;
+        this.deleteButtonTitle = this.buttonsDisabled ?  this.deleteAccessMsg : '';
+        this.editButtonTitle = this.buttonsDisabled ?  this.canNotEditMsg : '';
+        this.closeButtonTitle = this.buttonsDisabled ?  this.closeAccessMsg : '';
+        this.reopenButtonTitle = this.buttonsDisabled ?  this.reopenAccessMsg : '';
     }
     setStatusChipClass(): void {
         if (this.requestStatus === 'open') {
@@ -221,6 +225,35 @@ export class MergeRequestViewComponent implements OnInit, OnDestroy {
                 this.closeRequest();
             }
         });
+    }
+    showReopen(): void {
+        this.dialog.open(ConfirmModalComponent, {
+            data: {
+                content: `<p>Are you sure you want to reopen <strong>${this.state.selected.title}</strong. ?</p>`
+            }
+        }).afterClosed().subscribe((result: boolean) => {
+            if (result) {
+                this.reopenRequest();
+            }
+        });
+    }
+    reopenRequest(): void {
+        const requestToReopen: MergeRequest = Object.assign({}, this.state.selected);
+        this.mm.updateRequestStatus(requestToReopen, 'open')
+            .pipe(
+                switchMap(() => {
+                    this.toast.createSuccessToast('Request successfully reopened');
+                    this.requestStatus = 'open';
+                    this.setStatusChipClass();
+                    return this.mm.getRequest(requestToReopen.jsonld['@id']);
+                }),
+                switchMap((jsonld: JSONLDObject) => {
+                    requestToReopen.jsonld = jsonld;
+                    return this.state.setRequestDetails(requestToReopen);
+                }))
+            .subscribe(() => {
+                this.state.selected = requestToReopen;
+            }, error => this.toast.createErrorToast(error));
     }
     closeRequest(): void {
         const requestToAccept: MergeRequest = Object.assign({}, this.state.selected);

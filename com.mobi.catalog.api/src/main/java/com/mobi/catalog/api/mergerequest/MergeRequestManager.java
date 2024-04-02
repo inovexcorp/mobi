@@ -59,6 +59,23 @@ public interface MergeRequestManager {
     void acceptMergeRequest(Resource requestId, User user);
 
     /**
+     * Accepts a {@link MergeRequest} by performing a merge between the source and target {@link Branch branches},
+     * changing the type to an {@link com.mobi.catalog.api.ontologies.mergerequests.AcceptedMergeRequest},
+     * replacing the sourceBranch and targetBranch predicates with sourceBranchTitle, sourceCommit, targetBranchTitle,
+     * and targetCommit, and removing the removeSource predicate.
+     *
+     * @param requestId The {@link Resource} representing the {@link MergeRequest} ID to delete.
+     * @param user The {@link User} performing the acceptance
+     * @param conn A RepositoryConnection to use for lookup
+     * @throws IllegalStateException If any expected links between objects or data properties are not present on the
+     *      {@link MergeRequest}, {@link VersionedRDFRecord}, {@link Branch Branches}, or
+     *      {@link com.mobi.catalog.api.ontologies.mcat.Commit Commits}
+     * @throws IllegalArgumentException If the {@link MergeRequest} has already been accepted, does not have a target
+     *      {@link Branch}, or conflicts exist between the source {@link Branch} and target {@link Branch}
+     */
+    void acceptMergeRequest(Resource requestId, User user, RepositoryConnection conn);
+
+    /**
      * Closes a {@link MergeRequest} and changes the type to an {@link ClosedMergeRequest},
      * setting the targetCommit and sourceCommit properties to the current head Commits of the
      * targetBranch and sourceBranch.
@@ -88,21 +105,23 @@ public interface MergeRequestManager {
     void closeMergeRequest(Resource requestId, User user);
 
     /**
-     * Accepts a {@link MergeRequest} by performing a merge between the source and target {@link Branch branches},
-     * changing the type to an {@link com.mobi.catalog.api.ontologies.mergerequests.AcceptedMergeRequest},
-     * replacing the sourceBranch and targetBranch predicates with sourceBranchTitle, sourceCommit, targetBranchTitle,
-     * and targetCommit, and removing the removeSource predicate.
+     * Reopens a {@link ClosedMergeRequest} and changes the type to an {@link MergeRequest},
+     * removing the targetCommit and sourceCommit properties.
      *
-     * @param requestId The {@link Resource} representing the {@link MergeRequest} ID to delete.
-     * @param user The {@link User} performing the acceptance
-     * @param conn A RepositoryConnection to use for lookup
-     * @throws IllegalStateException If any expected links between objects or data properties are not present on the
-     *      {@link MergeRequest}, {@link VersionedRDFRecord}, {@link Branch Branches}, or
-     *      {@link com.mobi.catalog.api.ontologies.mcat.Commit Commits}
-     * @throws IllegalArgumentException If the {@link MergeRequest} has already been accepted, does not have a target
-     *      {@link Branch}, or conflicts exist between the source {@link Branch} and target {@link Branch}
+     * @param requestId The {@link Resource} representing the {@link ClosedMergeRequest} ID to reopen.
+     * @param user the {@link User} requesting to reopen the merge request
+     * @param conn the connection to the repository
      */
-    void acceptMergeRequest(Resource requestId, User user, RepositoryConnection conn);
+    void reopenMergeRequest(Resource requestId, User user, RepositoryConnection conn);
+
+    /**
+     * Reopens a {@link ClosedMergeRequest} identified by the given requestId for the specified user,
+     * removing the targetCommit and sourceCommit properties.
+     *
+     * @param requestId The {@link Resource} of the {@link ClosedMergeRequest} to be reopened
+     * @param user The {@link User} who is reopening the merge request
+     */
+    void reopenMergeRequest(Resource requestId, User user);
 
     /**
      * Stores the provided {@link MergeRequest} in the repository as long as it does not already exist.

@@ -1082,7 +1082,8 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
         Response response = target().path(String.format("merge-requests/%s/status", encode(request1.getResource().stringValue())))
                 .queryParam("action", "open")
                 .request().post(Entity.entity("", MediaType.TEXT_PLAIN));
-        assertEquals(response.getStatus(), BAD_REQUEST.getStatusCode());
+        assertEquals(response.getStatus(), 200);
+        verify(requestManager).reopenMergeRequest(request1.getResource(), user);
     }
 
     @Test

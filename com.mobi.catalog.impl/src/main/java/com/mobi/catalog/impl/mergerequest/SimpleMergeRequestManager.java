@@ -141,6 +141,7 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
 
     private static final String REQUEST_STATUS_CL0SED = "closed";
     private static final String REQUEST_STATUS_ACCEPTED = "accepted";
+    private static final String REQUEST_STATUS_OPEN = "open";
 
     static {
         try {
@@ -282,7 +283,7 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
         }
 
         // Collect information about the VersionedRDFRecord, Branches, and Commits
-        Resource recordId = request.getOnRecord_resource().orElseThrow(() ->
+        request.getOnRecord_resource().orElseThrow(() ->
                 new IllegalStateException("Request " + requestId + " does not have a VersionedRDFRecord"));
         Resource targetId = request.getTargetBranch_resource().orElseThrow(() ->
                 new IllegalArgumentException("Request " + requestId + " does not have a target Branch"));
@@ -295,17 +296,50 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
 
         // Turn MergeRequest into a ClosedMergeRequest
         ClosedMergeRequest closedRequest = closedMergeRequestFactory.createNew(request.getResource(), requestModel);
-        closedRequest.removeProperty(targetId, TARGET_BRANCH_IRI);
-        closedRequest.removeProperty(sourceId, SOURCE_BRANCH_IRI);
-        request.getProperty(REMOVE_SOURCE_IRI)
-                .ifPresent(removeSource -> closedRequest.removeProperty(removeSource, REMOVE_SOURCE_IRI));
-
         String sourceTitle = getBranchTitle(sourceBranch);
         String targetTitle = getBranchTitle(targetBranch);
         closedRequest.setTargetBranchTitle(targetTitle);
         closedRequest.setSourceBranchTitle(sourceTitle);
         closedRequest.setTargetCommit(commitFactory.createNew(targetCommitId));
         closedRequest.setSourceCommit(commitFactory.createNew(sourceCommitId));
+        thingManager.updateObject(closedRequest, conn);
+    }
+
+    @Override
+    public void reopenMergeRequest(Resource requestId, User user) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            reopenMergeRequest(requestId, user, conn);
+        }
+    }
+
+    @Override
+    public void reopenMergeRequest(Resource requestId, User user, RepositoryConnection conn) {
+        MergeRequest request = thingManager.getExpectedObject(requestId, mergeRequestFactory, conn);
+        Model requestModel = request.getModel();
+        if (requestModel.contains(requestId, TYPE_IRI, ACCEPTED_MERGE_REQUEST_IRI)) {
+            throw new IllegalArgumentException("Cannot reopen " + requestId + " as it's already accepted.");
+        } else if (!requestModel.contains(requestId, TYPE_IRI, CLOSED_MERGE_REQUEST_IRI)) {
+            throw new IllegalArgumentException("Request " + requestId + " is already open.");
+        }
+
+        ClosedMergeRequest closedRequest = closedMergeRequestFactory.getExisting(requestId, requestModel).orElseThrow(
+                () -> new IllegalArgumentException("Could not find Closed Merge Request with id" + requestId));
+
+        // Collect information about the VersionedRDFRecord, Branches
+        closedRequest.getOnRecord_resource().orElseThrow(() ->
+                new IllegalStateException("Request " + requestId + " does not have a VersionedRDFRecord"));
+        Resource targetId = closedRequest.getTargetBranch_resource().orElseThrow(() ->
+                new IllegalArgumentException("Request " + requestId + " does not have a target Branch"));
+        thingManager.getExpectedObject(targetId, branchFactory, conn);
+
+        Resource sourceId = closedRequest.getSourceBranch_resource().orElseThrow(() ->
+                new IllegalArgumentException("Request " + requestId + " does not have a source Branch"));
+        thingManager.getExpectedObject(sourceId, branchFactory, conn);
+
+        closedRequest.clearSourceCommit();
+        closedRequest.clearTargetCommit();
+        closedRequest.getProperty(TYPE_IRI)
+                .ifPresent(CLOSED_MERGE_REQUEST_IRI -> closedRequest.removeProperty(CLOSED_MERGE_REQUEST_IRI, TYPE_IRI));
         thingManager.updateObject(closedRequest, conn);
     }
 
@@ -338,10 +372,8 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
         // Find all MRs for the Record (all statuses)
         MergeRequestFilterParams.Builder builder = new MergeRequestFilterParams.Builder();
         builder.setOnRecords(Arrays.asList(recordId));
-
+        builder.setRequestStatus(null);
         List<MergeRequest> mergeRequests = getMergeRequests(builder.build(), conn);
-        builder.setRequestStatus(REQUEST_STATUS_CL0SED);
-        mergeRequests.addAll(getMergeRequests(builder.build(), conn));
 
         mergeRequests.forEach(mergeRequest -> {
             Model mergeRequestModel = mergeRequest.getModel();
@@ -634,14 +666,16 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
     public List<MergeRequest> getMergeRequests(MergeRequestFilterParams params, RepositoryConnection conn) {
         LOG.trace("Fetching list of Merge Requests");
         // Create filters used for query from params
-        StringBuilder filters = new StringBuilder("FILTER ");
-        if (params.getRequestStatus().equals("open")) {
-            filters.append("NOT EXISTS { ?").append(REQUEST_ID_BINDING).append(" a mq:AcceptedMergeRequest . }\n ")
-                    .append("FILTER NOT EXISTS { ?").append(REQUEST_ID_BINDING).append(" a mq:ClosedMergeRequest . } ");
-        } else if (params.getRequestStatus().equals(REQUEST_STATUS_CL0SED)) {
-            filters.append("EXISTS { ?").append(REQUEST_ID_BINDING).append(" a mq:ClosedMergeRequest . } ");
-        } else if (params.getRequestStatus().equals(REQUEST_STATUS_ACCEPTED)) {
-            filters.append("EXISTS { ?").append(REQUEST_ID_BINDING).append(" a mq:AcceptedMergeRequest . } ");
+        StringBuilder filters = new StringBuilder();
+        if (params.getRequestStatus() != (null)) {
+            if (params.getRequestStatus().equals(REQUEST_STATUS_OPEN)) {
+                filters.append("FILTER NOT EXISTS { ?").append(REQUEST_ID_BINDING).append(" a mq:AcceptedMergeRequest . }\n ")
+                        .append("FILTER NOT EXISTS { ?").append(REQUEST_ID_BINDING).append(" a mq:ClosedMergeRequest . } ");
+            } else if (params.getRequestStatus().equals(REQUEST_STATUS_CL0SED)) {
+                filters.append("FILTER EXISTS { ?").append(REQUEST_ID_BINDING).append(" a mq:ClosedMergeRequest . } ");
+            } else if (params.getRequestStatus().equals(REQUEST_STATUS_ACCEPTED)) {
+                filters.append("FILTER EXISTS { ?").append(REQUEST_ID_BINDING).append(" a mq:AcceptedMergeRequest . } ");
+            }
         }
 
         Resource sortBy = params.getSortBy().orElseGet(() -> vf.createIRI(_Thing.issued_IRI));

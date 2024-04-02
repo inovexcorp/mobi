@@ -63,6 +63,18 @@ const mergeRequestPageCommands = {
                 this.assert.equal(result.value, searchText);
             });
     },
+
+    assertMatCardTitle: function (title) {
+        return this.useXpath()
+            .waitForElementVisible('//merge-requests-page//create-request//request-record-select//mat-card//mat-card-title[contains(text(),"' + title + '")]')
+    },
+
+    changeStatusType: function (status) {
+        var statusXpath = '//merge-request-list//merge-request-filter//mat-expansion-panel//mat-panel-title[text()[contains(.,"Request Status")]]//ancestor::mat-expansion-panel//mat-radio-button//span[text()[contains(.,"' + status +'")]]'
+        return this.useXpath()
+            .waitForElementVisible(statusXpath)
+            .click(statusXpath)
+    }
 }
 
 const mergeRequestCommands = {
@@ -111,11 +123,6 @@ const mergeRequestCommands = {
             .waitForElementVisible('//merge-requests-page//create-request');
     },
 
-    assertMatCardTitle: function(title) {
-        return this.useXpath()
-            .waitForElementVisible('//merge-requests-page//create-request//request-record-select//mat-card//mat-card-title[contains(text(),"' + title + '")]')
-    },
-
     createRequestSourceBranchSelect: function(branchTitle) {
         return this.useXpath()
             .waitForElementVisible('//merge-requests-page//create-request//mat-horizontal-stepper//request-branch-select')
@@ -147,6 +154,63 @@ const mergeRequestCommands = {
             .click('//button//span[contains(text(), "Next")]/parent::button')
             .useCss()
             .waitForElementNotPresent('div.mat-horizontal-stepper-content.ng-animating');
+    },
+
+    closeMergeRequest: function() {
+        return this.useXpath()
+            .waitForElementVisible('//merge-requests-page//merge-request-view//button//span[contains(text(), "Close")]/parent::button')
+            .assert.attributeEquals('//merge-requests-page//merge-request-view//button//span[contains(text(), "Close")]/parent::button', 'disabled', null)
+            .click('//merge-requests-page//merge-request-view//button//span[contains(text(), "Close")]/parent::button')
+            .waitForElementVisible('//mat-dialog-container//confirm-modal')
+            .click('//mat-dialog-container//confirm-modal//button//span[contains(text(), "Yes")]/parent::button');
+    },
+
+    reopenMergeRequest: function(mrTitle) {
+        return this.useXpath()
+            .waitForElementVisible('//merge-requests-page//merge-request-view//button//span[contains(text(), "Reopen")]/parent::button')
+            .click('//merge-requests-page//merge-request-view//button//span[contains(text(), "Reopen")]/parent::button')
+            .waitForElementVisible('//mat-dialog-container//confirm-modal//p[contains(text(), "Are you sure you want to reopen ")]')
+            .waitForElementVisible('//mat-dialog-container//confirm-modal//p//strong[contains(text(), "' + mrTitle +'")]')
+            .useCss()
+            .waitForElementVisible('mat-dialog-container confirm-modal button.mat-primary')
+            .click('mat-dialog-container confirm-modal button.mat-primary')
+    },
+
+    verifyMergeRequestButtons: function () {
+        return this.useXpath()
+            .waitForElementVisible('//merge-requests-page//merge-request-view//button//span[contains(text(), "Back")]/parent::button')
+            .assert.attributeEquals('//merge-requests-page//merge-request-view//button//span[contains(text(), "Back")]/parent::button', 'disabled', null)
+            .waitForElementVisible('//merge-requests-page//merge-request-view//button//span[contains(text(), "Accept")]/parent::button')
+            .assert.attributeEquals('//merge-requests-page//merge-request-view//button//span[contains(text(), "Accept")]/parent::button', 'disabled', null)
+            .waitForElementVisible('//merge-requests-page//merge-request-view//button//span[contains(text(), "Close")]/parent::button')
+            .assert.attributeEquals('//merge-requests-page//merge-request-view//button//span[contains(text(), "Close")]/parent::button', 'disabled', null)
+            .waitForElementVisible('//merge-requests-page//merge-request-view//button//span[contains(text(), "Delete")]/parent::button')
+            .assert.attributeEquals('//merge-requests-page//merge-request-view//button//span[contains(text(), "Delete")]/parent::button', 'disabled', null);
+
+    },
+
+    verifyClosedMergeRequestButtons: function () {
+        return this.useXpath()
+            .waitForElementVisible('//merge-requests-page//merge-request-view//button//span[contains(text(), "Back")]/parent::button')
+            .assert.attributeEquals('//merge-requests-page//merge-request-view//button//span[contains(text(), "Back")]/parent::button', 'disabled', null)
+            .waitForElementNotPresent('//merge-requests-page//merge-request-view//button//span[contains(text(), "Accept")]/parent::button')
+            .waitForElementNotPresent('//merge-requests-page//merge-request-view//button//span[contains(text(), "Close")]/parent::button')
+            .waitForElementVisible('//merge-requests-page//merge-request-view//button//span[contains(text(), "Delete")]/parent::button')
+            .waitForElementVisible('//merge-requests-page//merge-request-view//button//span[contains(text(), "Reopen")]/parent::button')
+            .assert.attributeEquals('//merge-requests-page//merge-request-view//button//span[contains(text(), "Reopen")]/parent::button', 'disabled', null)
+            .assert.attributeEquals('//merge-requests-page//merge-request-view//button//span[contains(text(), "Delete")]/parent::button', 'disabled', null)
+    },
+
+    verifyClosedMergeRequestButtonsNoPermissions: function () {
+        return this.useXpath()
+            .waitForElementVisible('//merge-requests-page//merge-request-view//button//span[contains(text(), "Back")]/parent::button')
+            .assert.attributeEquals('//merge-requests-page//merge-request-view//button//span[contains(text(), "Back")]/parent::button', 'disabled', null)
+            .waitForElementNotPresent('//merge-requests-page//merge-request-view//button//span[contains(text(), "Accept")]/parent::button')
+            .waitForElementNotPresent('//merge-requests-page//merge-request-view//button//span[contains(text(), "Close")]/parent::button')
+            .waitForElementVisible('//merge-requests-page//merge-request-view//button//span[contains(text(), "Delete")]/parent::button')
+            .waitForElementVisible('//merge-requests-page//merge-request-view//button//span[contains(text(), "Reopen")]/parent::button')
+            .assert.attributeEquals('//merge-requests-page//merge-request-view//button//span[contains(text(), "Reopen")]/parent::button', 'disabled', 'true')
+            .assert.attributeEquals('//merge-requests-page//merge-request-view//button//span[contains(text(), "Delete")]/parent::button', 'disabled', 'true')
     },
 }
 

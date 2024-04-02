@@ -36,7 +36,7 @@ import { cloneDeep } from 'lodash';
 
 import {
     cleanStylesFromDOM,
-} from '../../../../../public/test/ts/Shared';
+} from '../../../../test/ts/Shared';
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
 import { ResolveConflictsFormComponent } from '../../../shared/components/resolveConflictsForm/resolveConflictsForm.component';
@@ -120,9 +120,11 @@ describe('Merge Request View component', function() {
     const user: User = new User({
       '@id': userIri,
       '@type': [`${USER}User`],
-      [`${FOAF}firstName`]: [{ '@value': 'Bruce' }],
       [`${USER}username`]: [{ '@value': 'bruce' }],
+      [`${FOAF}firstName`]: [{ '@value': 'Bruce' }],
+      [`${USER}lastName`]: [{ '@value': 'user' }]
     });
+
     const assignees = [user, new User({
       '@id': 'urn:superman',
       '@type': [`${USER}User`],
@@ -255,8 +257,8 @@ describe('Merge Request View component', function() {
             tick();
             expect(component.requestStatus).toBe('accepted');
             expect(component.isSubmitDisabled).toBeFalsy();
-            expect(component.isDeleteDisabled).toBeFalsy();
-            expect(component.isEditDisabled).toBeFalsy();
+            expect(component.buttonsDisabled).toBeFalsy();
+            expect(component.buttonsDisabled).toBeFalsy();
             expect(mergeRequestManagerStub.getRequest).toHaveBeenCalledWith(requestId);
             expect(mergeRequestsStateStub.selected).toBeDefined();
             expect(mergeRequestsStateStub.selected.jsonld).toEqual(mergeRequestJsonLd);
@@ -277,9 +279,9 @@ describe('Merge Request View component', function() {
             component.ngOnInit();
             tick();
             expect(component.isSubmitDisabled).toBeFalsy();
-            expect(component.isDeleteDisabled).toBeTrue();
-            expect(component.isEditDisabled).toBeTrue();
-            expect(component.requestStatus).toBe('open'); // TODO should this be accepted?
+            expect(component.buttonsDisabled).toBeTrue();
+            expect(component.buttonsDisabled).toBeTrue();
+            expect(component.requestStatus).toBe('open');
             expect(mergeRequestManagerStub.getRequest).toHaveBeenCalledWith(requestId);
             expect(mergeRequestManagerStub.requestStatus).toHaveBeenCalledWith(mergeRequestJsonLd);
             expect(mergeRequestsStateStub.selected.jsonld).toEqual(mergeRequestJsonLd);
@@ -301,10 +303,10 @@ describe('Merge Request View component', function() {
             fixture.detectChanges();
             component.ngOnInit();
             tick();
-            expect(component.requestStatus).toBe('open'); // TODO should this be accepted?
+            expect(component.requestStatus).toBe('open');
             expect(component.isSubmitDisabled).toBeFalsy();
-            expect(component.isDeleteDisabled).toBeFalsy();
-            expect(component.isEditDisabled).toBeFalsy();
+            expect(component.buttonsDisabled).toBeFalsy();
+            expect(component.buttonsDisabled).toBeFalsy();
             expect(mergeRequestManagerStub.getRequest).toHaveBeenCalledWith(requestId);
             expect(mergeRequestsStateStub.selected.jsonld).toEqual(mergeRequestJsonLd);
             expect(mergeRequestsStateStub.setRequestDetails).toHaveBeenCalledWith(mergeRequestsStateStub.selected);
@@ -318,7 +320,7 @@ describe('Merge Request View component', function() {
             tick();
             expect(component.requestStatus).toBe('open');
             expect(component.isSubmitDisabled).toBeTrue();
-            expect(component.isDeleteDisabled).toBeTrue();
+            expect(component.buttonsDisabled).toBeTrue();
             expect(component.back).toHaveBeenCalledWith();
             expect(mergeRequestManagerStub.getRequest).toHaveBeenCalledWith(requestId);
             expect(mergeRequestManagerStub.requestStatus).not.toHaveBeenCalled();
@@ -349,6 +351,13 @@ describe('Merge Request View component', function() {
             tick();
             expect(matDialog.open).toHaveBeenCalledWith(ConfirmModalComponent, {data: {content: jasmine.stringMatching('Are you sure you want to accept')}});
             expect(component.acceptRequest).toHaveBeenCalledWith();
+        }));
+        it('show the reopen overlay', fakeAsync(function() {
+            spyOn(component, 'reopenRequest');
+            component.showReopen();
+            tick();
+            expect(matDialog.open).toHaveBeenCalledWith(ConfirmModalComponent, {data: {content: jasmine.stringMatching('Are you sure you want to reopen')}});
+            expect(component.reopenRequest).toHaveBeenCalledWith();
         }));
         describe('should accept a merge request', function() {
             beforeEach(function() {
@@ -665,17 +674,17 @@ describe('Merge Request View component', function() {
                 });
                 it('with a button to Resolve', function() {
                     const button = element.queryAll(By.css('.buttons button[color="primary"]'))[0];
-                    expect(button).not.toBeNull();
+                    expect(button).toBeDefined();
                     expect(button.nativeElement.innerHTML).toContain('Resolve');
                 });
                 it('with a button to Cancel', function() {
                     const button = element.queryAll(By.css('.buttons button:not([color="primary"])'))[0];
-                    expect(button).not.toBeNull();
+                    expect(button).toBeDefined();
                     expect(button.nativeElement.innerHTML).toContain('Cancel');
                 });
                 it('depending on whether all the conflicts are resolved', function() {
                     const button = element.queryAll(By.css('.buttons button[color="primary"]'))[0];
-                    expect(button).not.toBeNull();
+                    expect(button).toBeDefined();
                     const spy = spyOn(component, 'allResolved').and.returnValue(false);
                     fixture.detectChanges();
                     expect(button.properties['disabled']).toBeTruthy();
@@ -702,12 +711,12 @@ describe('Merge Request View component', function() {
                 });
                 it('with a button to Delete', function() {
                     const button = element.queryAll(By.css('.buttons button[color="warn"]'))[0];
-                    expect(button).not.toBeNull();
+                    expect(button).toBeDefined();
                     expect(button.nativeElement.innerHTML).toContain('Delete');
                 });
                 it('with a button to go Back', function() {
                     const button = element.queryAll(By.css('.buttons button:not([color="primary"]):not([color="warn"])'))[0];
-                    expect(button).not.toBeNull();
+                    expect(button).toBeDefined();
                     expect(button.nativeElement.innerHTML).toContain('Back');
                 });
                 it('depending on whether the merge request is accepted', function() {
@@ -715,7 +724,7 @@ describe('Merge Request View component', function() {
                     fixture.detectChanges();
                     mergeRequestsStateStub.selected.assignees = assignees;
                     const button = element.queryAll(By.css('.buttons button[color="primary"]'))[0];
-                    expect(button).not.toBeNull();
+                    expect(button).toBeDefined();
                     expect(button.nativeElement.innerHTML).toContain('Accept');
 
                     component.requestStatus = 'accepted';
@@ -730,7 +739,7 @@ describe('Merge Request View component', function() {
                     mergeRequestsStateStub.selected.conflicts = [conflict];
                     fixture.detectChanges();
                     const indicator = element.queryAll(By.css('.alert'))[0];
-                    expect(indicator).not.toBeNull();
+                    expect(indicator).toBeDefined();
                     expect(indicator.nativeElement.innerHTML).toContain('This request has conflicts. You can resolve them right now or during the merge process.');
                 });
                 it('depending on whether the merge request has does not have a target branch set', function() {
@@ -741,7 +750,7 @@ describe('Merge Request View component', function() {
                     mergeRequestsStateStub.selected.targetTitle = '';
                     fixture.detectChanges();
                     const indicator = element.queryAll(By.css('.alert'))[0];
-                    expect(indicator).not.toBeNull();
+                    expect(indicator).toBeDefined();
                     expect(indicator.nativeElement.innerHTML).toContain('The target branch for this merge request has been deleted.');
                 });
             });
@@ -757,7 +766,7 @@ describe('Merge Request View component', function() {
         });
         it('depending on if the source branch is to be removed', function() {
             const checkbox = element.queryAll(By.css('mat-checkbox'))[0];
-            expect(checkbox).not.toBeNull();
+            expect(checkbox).toBeDefined();
             expect(checkbox.attributes['ng-reflect-model']).toEqual('true');
 
             mergeRequestsStateStub.selected.removeSource = false;
@@ -771,41 +780,78 @@ describe('Merge Request View component', function() {
             fixture.detectChanges();
             expect(element.queryAll(By.css('mat-checkbox')).length).toEqual(0);
         });
-        it('depending on whether the merge request is accepted', function() {
+        it('depending on whether the merge request is open', function() {
             const indicator = element.queryAll(By.css('.main-details mat-chip'))[0];
-            expect(indicator).not.toBeNull();
+            expect(indicator).toBeDefined();
             expect(indicator.classes['mat-primary']).toBeTruthy();
             expect(indicator.nativeElement.innerHTML).toContain('Open');
-            
+        });
+        it('depending on whether the merge request is accepted', function() {
+            const indicator = element.queryAll(By.css('.main-details mat-chip'))[0];
             component.requestStatus = 'accepted';
-            component.setStatusChipClass()
+            component.setStatusChipClass();
             fixture.detectChanges();
+            expect(indicator).toBeDefined();
             expect(indicator.classes['chip-accepted']).toBeTruthy();
             expect(indicator.nativeElement.innerHTML).toContain('Accepted');
-
+        });
+        it('depending on whether the merge request is closed', function() {
             component.requestStatus = 'closed';
-            component.setStatusChipClass()
+            component.setStatusChipClass();
             fixture.detectChanges();
+            const indicator = element.queryAll(By.css('.main-details mat-chip'))[0];
+            const reopenButton = element.queryAll(By.css('.button-reopen'))[0];
+            const deleteButton = element.queryAll(By.css('.button-delete'))[0];
+            expect(reopenButton).toBeDefined();
+            expect(deleteButton).toBeDefined();
+            expect(indicator).toBeDefined();
             expect(indicator.classes['chip-closed']).toBeTruthy();
             expect(indicator.nativeElement.innerHTML).toContain('Closed');
         });
-        // it('depending on whether the user is not authorize', fakeAsync(function() {
-        //     mergeRequestsStateStub.selected.assignees = ['user1', 'user2'];
-        //     fixture.detectChanges();
-        //     component.ngOnInit();
-        //     tick();
-        //     const button: HTMLElement = nativeElement.querySelector('.button-accept');
-        //     expect(button.title).toEqual(component.userAccessMsg);
-        //     expect(component.isSubmitDisabled).toBeTruthy();
-        //     expect(button.getAttribute('disabled')).toBeTruthy();
-        // }));
+        it('depending on whether the user is not authorized and the merge request is closed', fakeAsync(function() {
+            mergeRequestManagerStub.requestStatus.and.returnValue('closed');
+            policyEnforcementStub.evaluateRequest.and.returnValue(of('Deny'));
+            mergeRequestsStateStub.selected.jsonld[`${MERGEREQ}targetBranch`] = [{'@id': targetBranchId}];
+            component.ngOnInit();
+            tick();
+            fixture.detectChanges();
+            const reopenButton: HTMLElement = nativeElement.querySelector('.button-reopen');
+            expect(reopenButton.title).toEqual(component.reopenAccessMsg);
+            expect(component.isSubmitDisabled).toBeTruthy();
+            expect(reopenButton.getAttribute('disabled')).toBeTruthy();
+        }));
+        it('depending on whether the merge request is closed and a branch is deleted', function() {
+            component.requestStatus = 'closed';
+            mergeRequestsStateStub.selected.jsonld[`${MERGEREQ}targetBranch`] = undefined;
+            component.setButtonsStatus(true);
+            component.setStatusChipClass();
+            fixture.detectChanges();
+            const indicator = element.queryAll(By.css('.main-details mat-chip'))[0];
+            const reopenButton: HTMLElement = nativeElement.querySelector('.button-reopen');
+            expect(reopenButton).toBeDefined();
+            expect(indicator).toBeDefined();
+            expect(indicator.classes['chip-closed']).toBeTruthy();
+            expect(indicator.nativeElement.innerHTML).toContain('Closed');
+            expect(reopenButton.getAttribute('disabled')).toBeTruthy();
+            expect(reopenButton.title).toEqual(component.reopenMissingBranchMsg);
+        });
+        it('depending on whether the user is not authorized', fakeAsync(function() {
+            policyEnforcementStub.evaluateRequest.and.returnValue(of('Deny'));
+            component.ngOnInit();
+            tick();
+            fixture.detectChanges();
+            const button: HTMLElement = nativeElement.querySelector('.button-accept');
+            expect(button.title).toEqual(component.userAccessMsg);
+            expect(component.isSubmitDisabled).toBeTruthy();
+            expect(button.getAttribute('disabled')).toBeTruthy();
+        }));
     });
     it('should call showResolutionForm when the resolve button is clicked in the alert', function() {
         mergeRequestsStateStub.selected.conflicts = [conflict];
         fixture.detectChanges();
         spyOn(component, 'showResolutionForm');
         const button = element.queryAll(By.css('.alert button'))[0];
-        expect(button).not.toBeNull();
+        expect(button).toBeDefined();
         button.triggerEventHandler('click', null);
         expect(component.showResolutionForm).toHaveBeenCalledWith();
     });
@@ -813,7 +859,7 @@ describe('Merge Request View component', function() {
         fixture.detectChanges();
         spyOn(component, 'showDelete');
         const button = element.queryAll(By.css('.buttons button[color="warn"]'))[0];
-        expect(button).not.toBeNull();
+        expect(button).toBeDefined();
         button.triggerEventHandler('click', null);
         expect(component.showDelete).toHaveBeenCalledWith();
     });
@@ -821,15 +867,25 @@ describe('Merge Request View component', function() {
         fixture.detectChanges();
         spyOn(component, 'showAccept');
         const button = element.queryAll(By.css('.buttons button[color="primary"]'))[0];
-        expect(button).not.toBeNull();
+        expect(button).toBeDefined();
         button.triggerEventHandler('click', null);
         expect(component.showAccept).toHaveBeenCalledWith();
+    });
+    it('should call showReopen when the accept button is clicked', function() {
+        fixture.detectChanges();
+        component.requestStatus = 'closed';
+        fixture.detectChanges();
+        spyOn(component, 'showReopen');
+        const reopenButton = element.queryAll(By.css('.button-reopen'))[0];
+        expect(reopenButton).toBeDefined();
+        reopenButton.triggerEventHandler('click', null);
+        expect(component.showReopen).toHaveBeenCalledWith();
     });
     it('should call back when the button is clicked', function() {
         fixture.detectChanges();
         spyOn(component, 'back');
         const button = element.queryAll(By.css('.buttons button:not([color="primary"]):not([color="warn"])'))[0];
-        expect(button).not.toBeNull();
+        expect(button).toBeDefined();
         button.triggerEventHandler('click', null);
         expect(component.back).toHaveBeenCalledWith();
     });
@@ -838,7 +894,7 @@ describe('Merge Request View component', function() {
         fixture.detectChanges();
         spyOn(component, 'cancelResolve');
         const button = element.queryAll(By.css('.buttons button:not([color="primary"])'))[0];
-        expect(button).not.toBeNull();
+        expect(button).toBeDefined();
         button.triggerEventHandler('click', null);
         expect(component.cancelResolve).toHaveBeenCalledWith();
     });
@@ -847,7 +903,7 @@ describe('Merge Request View component', function() {
         fixture.detectChanges();
         spyOn(component, 'resolve');
         const button = element.queryAll(By.css('.buttons button[color="primary"]'))[0];
-        expect(button).not.toBeNull();
+        expect(button).toBeDefined();
         button.triggerEventHandler('click', null);
         expect(component.resolve).toHaveBeenCalledWith();
     });

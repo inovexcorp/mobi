@@ -48,13 +48,11 @@ var iconMappings = {
  * Functions Tested:
  * - The Merge Request Record Select list includes
  *   all VersionedRdfRecord instances in the application, including Shapes Records
- * - The branches, commits, and differences displays in the Merge Requests are 
- *   pulled the same for other records as Ontology Records
  */
 module.exports = {
     '@tags': ['ontology-editor', 'sanity', 'merge-request'],
 
-    'Step 1: Initial Setup' : function(browser) {
+    'Step 1: Initial Setup': function(browser) {
         browser.globals.initial_steps(browser, adminUsername, adminPassword)
     },
 
@@ -64,27 +62,27 @@ module.exports = {
         browser.waitForElementVisible('shapes-graph-editor-page');
     },
 
-    'Step 3: Create a new shapes graph': function (browser) {
+    'Step 3: Create a new shapes graph': function(browser) {
         browser.page.shapesEditorPage().createShapesGraph(shapegraph001_title, shapes_mr_test);
     },
 
-    'Step 4: Create a new branch for shape graph': function (browser) {
+    'Step 4: Create a new branch for shape graph': function(browser) {
         browser.page.shapesEditorPage().createBranch(shapegraph001_branch001_title);
         browser.globals.wait_for_no_spinners(browser);
     },
 
-    'Step 5: Upload Changes to shape graph': function (browser) {
+    'Step 5: Upload Changes to shape graph': function(browser) {
         browser.page.shapesEditorPage().upload(shapes_mr_test_change);
         browser.globals.wait_for_no_spinners(browser);
     },
 
-    'Step 6: Verify Uploaded Changes': function (browser) {
+    'Step 6: Verify Uploaded Changes': function(browser) {
         browser
             .assert.visible('mat-chip.uncommitted')
             .expect.elements('shapes-graph-editor-page shapes-graph-property-values').count.to.equal(3)
     },
     
-    'Step 7: Verify ShapeGraph Change pages': function (browser) {
+    'Step 7: Verify ShapeGraph Change pages': function(browser) {
         browser
             .assert.not.elementPresent('div.toast-title');
         browser
@@ -94,7 +92,7 @@ module.exports = {
             .expect.elements('shapes-graph-changes-page mat-expansion-panel').count.to.equal(3)
     },
 
-    'Step 8: Commit changes to shape graph': function (browser) {
+    'Step 8: Commit changes to shape graph': function(browser) {
         browser
             .useCss()
             .waitForElementVisible('shapes-graph-editor-page editor-top-bar button.commit')
@@ -104,7 +102,7 @@ module.exports = {
         browser.globals.wait_for_no_spinners(browser);
     },
 
-    'Step 9: Verify commit was made successfully': function (browser) {
+    'Step 9: Verify commit was made successfully': function(browser) {
         browser
             .useCss()
             .assert.not.elementPresent('mat-chip.uncommitted');
@@ -118,41 +116,39 @@ module.exports = {
             .assert.elementPresent('//commit-history-table//commit-history-graph//*[local-name()="svg"]//*[local-name()="text" and @class="commit-subject-string" and text()[contains(., "initial commit")]]')
     },
 
-    'Step 10: Ensure that user is on Ontology editor page' : function(browser) {
+    'Step 10: Ensure that user is on Ontology editor page': function(browser) {
         browser.globals.switchToPage(browser, 'ontology-editor', 'button.upload-button');
         browser.page.editorPage().isActive();
     },
 
-    'Step 11: Open new Ontology Overlay' : function(browser) {
+    'Step 11: Open new Ontology Overlay': function(browser) {
         browser.page.editorPage().openNewOntologyOverlay();
     },
 
-    'Step 12: Edit New Ontology Overlay' : function(browser) {
+    'Step 12: Edit New Ontology Overlay': function(browser) {
         browser.page.editorPage().editNewOntologyOverlay('ontMrTest001', 'myDescription');
     },
 
-    'Step 13: Submit New Ontology Overlay' : function(browser) {
+    'Step 13: Submit New Ontology Overlay': function(browser) {
         browser.page.editorPage().submitNewOntologyOverlay();
         browser.globals.wait_for_no_spinners(browser);
         browser.page.editorPage().onProjectTab();
     },
 
-    'Step 14: Verify new ontology properties' : function(browser) {
-        browser.page.editorPage().onProjectTab();
+    'Step 14: Verify new ontology properties': function(browser) {
         browser.page.editorPage().verifyProjectTab('ontMrTest001', 'myDescription', 'OntMrTest001')
     },
 
-    'Step 15: Edit IRI for ontology' : function(browser) {
-        browser.page.editorPage().onProjectTab();
+    'Step 15: Edit IRI for ontology': function(browser) {
         browser.page.editorPage().editIri('mrTest002');
         browser.globals.wait_for_no_spinners(browser);
     },
 
-    'Step 16: Open Commit overlay' : function(browser) {
+    'Step 16: Open Commit overlay': function(browser) {
         browser.page.editorPage().openCommitOverlay();
     },
 
-    'Step 17: Edit Commit message and Submit' : function(browser) {
+    'Step 17: Edit Commit message and Submit': function(browser) {
         browser.page.editorPage().editCommitOverlayAndSubmit('Changed IRI');
         browser.globals.wait_for_no_spinners(browser);
         browser
@@ -165,12 +161,12 @@ module.exports = {
         browser.page.editorPage().isActive('ontology-tab');
     },
 
-    'Step 18: Navigate to Merge Request Page' : function (browser) {
+    'Step 18: Navigate to Merge Request Page': function(browser) {
         browser.globals.switchToPage(browser, 'merge-requests')
         browser.globals.wait_for_no_spinners(browser);
     },
 
-    'Step 19: Navigate to New Merge Request page' : function (browser) {
+    'Step 19: Navigate to New Merge Request page': function(browser) {
         browser
             .useXpath()
             .waitForElementVisible("//merge-requests-page//button//span[text()[contains(.,'New Request')]]")
@@ -179,7 +175,7 @@ module.exports = {
             .waitForElementVisible('merge-requests-page create-request');
     },
 
-    'Step 20: Validate a merge request': function(browser) {
+    'Step 20: Validate list of records': function(browser) {
         browser
             .useXpath()
             .waitForElementVisible('//merge-requests-page//create-request');
