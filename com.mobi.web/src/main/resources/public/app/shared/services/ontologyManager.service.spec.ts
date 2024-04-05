@@ -39,8 +39,8 @@ import { GroupQueryResults } from '../models/groupQueryResults.interface';
 import { RESTError } from '../models/RESTError.interface';
 import { OntologyDocument } from '../models/ontologyDocument.interface';
 import { SPARQLSelectResults } from '../models/sparqlSelectResults.interface';
-import { OntologyManagerService } from './ontologyManager.service';
 import { OBJ_PROPERTY_VALUES_QUERY } from '../../queries';
+import { OntologyManagerService } from './ontologyManager.service';
 
 describe('Ontology Manager service', function() {
     let service: OntologyManagerService;

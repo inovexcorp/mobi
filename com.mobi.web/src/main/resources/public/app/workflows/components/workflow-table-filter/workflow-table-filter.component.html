@@ -1,0 +1,46 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 - 2024 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="table-filter-form">
+    <form>
+        <mat-form-field *ngIf="includeSearchText" class="filter-field field-search-text">
+            <input matInput [formControl]="searchTextField" class="search-text-input" placeholder="Search..." (keyup.enter)="onSearchText()">
+        </mat-form-field>
+        <mat-form-field class="filter-field field-status">
+            <mat-label>Select a status</mat-label>
+            <mat-select [formControl]="statusOption">
+                <mat-option *ngFor="let status of statusOptions" [value]="status.value">
+                    {{status.viewValue}}
+                </mat-option>
+            </mat-select>
+        </mat-form-field>
+        <mat-form-field class="filter-field field-time-range">
+            <mat-label>Select a time range</mat-label>
+            <mat-select [formControl]="timeRangeOption">
+                <mat-option *ngFor="let timeRange of timeRangeOptions" [value]="timeRange.value">
+                    {{timeRange.viewValue}}
+                </mat-option>
+            </mat-select>
+        </mat-form-field>
+    </form>
+</div>
+

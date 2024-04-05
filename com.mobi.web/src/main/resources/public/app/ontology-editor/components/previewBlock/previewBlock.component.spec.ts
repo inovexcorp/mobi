@@ -36,7 +36,7 @@ import { cleanStylesFromDOM } from '../../../../../public/test/ts/Shared';
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
-import { SerializationSelectComponent } from '../serializationSelect/serializationSelect.component';
+import { SerializationSelectComponent } from '../../../shared/components/serializationSelect/serializationSelect.component';
 import { PreviewBlockComponent } from './previewBlock.component';
 
 describe('Preview Block component', function() {

@@ -22,19 +22,27 @@
  */
 import { formatDate } from '@angular/common';
 import { HttpErrorResponse, HttpParams } from '@angular/common/http';
-import { forOwn, get, has, isArray, isEqual, isString, merge, remove, replace, set, some, unionWith } from 'lodash';
+import { find, forOwn, get, has, isArray, isEqual, isString, merge, reduce, remove, replace, set, some, unionWith } from 'lodash';
 import { Observable, throwError } from 'rxjs';
 import { v4 } from 'uuid';
+
+import moment from 'moment/moment';
 
 import { JSONLDObject } from './models/JSONLDObject.interface';
 import { JSONLDId } from './models/JSONLDId.interface';
 import { JSONLDValue } from './models/JSONLDValue.interface';
-import { DCTERMS, XSD } from '../prefixes';
+import { DC, DCTERMS, RDFS, XSD } from '../prefixes';
 import { PaginatedConfig } from './models/paginatedConfig.interface';
 import { RESTError } from './models/RESTError.interface';
 import { REGEX } from '../constants';
 import { splitIRI } from './pipes/splitIRI.pipe';
 import { beautify } from './pipes/beautify.pipe';
+
+export const entityNameProps = [
+  `${RDFS}label`, 
+  `${DCTERMS}title`, 
+  `${DC}title`, 
+];
 
 // General Utility Methods
 /**
@@ -558,6 +566,80 @@ export function condenseCommitId(id: string): string {
   return splitIRI(id).end.substring(0, 10);
 }
 
+/**
+ * Gets the provided entity's name. This name is either the `rdfs:label`, `dcterms:title`, or `dc:title`.
+ * If none of those annotations exist, it returns the beautified `@id`. Prioritizes english language tagged
+ * values over the others. Returns a string for the entity name.
+ *
+ * @param {JSONLDObject} entity The entity you want the name of.
+ * @returns {string} The beautified IRI string.
+ */
+export function getEntityName(entity: JSONLDObject, props = entityNameProps): string {
+  let result = reduce(props, (tempResult, prop) => tempResult 
+      || _getPrioritizedValue(entity, prop), '');
+  if (!result && has(entity, '@id')) {
+      result = getBeautifulIRI(entity['@id']);
+  }
+  return result;
+}
+
+/**
+ * Converts a Date object to a formatted date string.
+ * If the date is not null, it formats it as "h:mm:ssA M/D/Y".
+ * If the date is null, it returns '(none)'.
+ *
+ * @param {Date|null} date - The date to format.
+ * @returns {string} The formatted date string or '(none)'.
+ */
+export function toFormattedDateString(date:Date|null):string {
+  return  date ? moment(date).format('h:mm:ssA M/D/Y') : '(none)';
+}
+
+/**
+* Returns '(none)' if the value is falsy.
+* If a function is provided and the value is truthy, it applies the function to the value.
+*
+* @param {any} value - The value to check.
+* @param {Function|null} [func=null] - The function to apply to the value if it's truthy.
+* @returns {any|string} The original value, transformed value, or '(none)'.
+*/
+export function orNone(value, func = null): string {
+  return value ? (func ? func(value) : value) : '(none)';
+}
+
+/**
+* Calculates the running time between two dates in seconds or minutes.
+* If either start time or end time is falsy, it returns '(none)'.
+* Otherwise, it calculates the duration and returns it in appropriate units.
+*
+* @param {Date} sTime - The start time.
+* @param {Date} eTime - The end time.
+* @returns {string} The running time in seconds or minutes, or '(none)'.
+*/
+export function runningTime (sTime:Date, eTime:Date): string {
+  if (!sTime || !eTime) {
+      return '(none)';
+  }
+  const startTime = moment(sTime);
+  const endTime = moment(eTime);
+  const duration = moment.duration(endTime.diff(startTime));
+  const seconds = duration.asSeconds();
+  return seconds < 60 ?
+      `${seconds} sec` : `${duration.asMinutes()} min`;
+}
+
+/**
+* Returns the status if it's not equal to 'never_run', otherwise returns a default value.
+* If status is truthy and not 'never_run', it returns the status after applying `orNone`.
+*
+* @param {string} status - The status to check.
+* @param {string} [defaultValue='never-run'] - The default value to return if status is 'never_run'.
+* @returns {string} The status or the default value.
+*/
+export function getStatus(status:string, defaultValue='never-run'): string {
+  return status !== 'never_run' ? orNone(status) : defaultValue;
+}
+
 // Private Functions
 function _setValue(entity: JSONLDObject, propertyIRI: string, valueObj: JSONLDId|JSONLDValue): void {
   if (has(entity, `['${propertyIRI}']`)) {
@@ -579,4 +661,7 @@ function _removeValue(entity: JSONLDObject, propertyIRI: string, valueObj: JSONL
 }
 function _convertToString(param: string | number | boolean): string {
   return typeof param === 'string' ? param : '' + param;
+}
+function _getPrioritizedValue(entity, prop) {
+  return get(find(get(entity, `['${prop}']`), {'@language': 'en'}), '@value') || getPropertyValue(entity, prop);
 }

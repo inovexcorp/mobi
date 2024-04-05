@@ -35,6 +35,7 @@ import { Difference } from '../../../shared/models/difference.class';
 import { MapperStateService } from '../../../shared/services/mapperState.service';
 import { ToastService } from '../../../shared/services/toast.service';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { InfoMessageComponent } from '../../../shared/components/infoMessage/infoMessage.component';
 import { MappingCommitsTabComponent } from './mappingCommitsTab.component';
 
 describe('Mapping Commits Tab component', function() {
@@ -46,7 +47,7 @@ describe('Mapping Commits Tab component', function() {
 
     const error = 'Error Message';
     const commitId = 'commitId';
-    const recordId = 'recordId'
+    const recordId = 'recordId';
     const branchTitle = 'branchTitle';
     const branch: JSONLDObject = {
       '@id': 'branchId',
@@ -59,7 +60,8 @@ describe('Mapping Commits Tab component', function() {
         await TestBed.configureTestingModule({
             declarations: [
                 MappingCommitsTabComponent,
-                MockComponent(CommitHistoryTableComponent)
+                MockComponent(CommitHistoryTableComponent),
+                MockComponent(InfoMessageComponent)
             ],
             providers: [
                 MockProvider(MapperStateService),
@@ -159,7 +161,7 @@ describe('Mapping Commits Tab component', function() {
             mapperStateStub.setMasterBranch.and.returnValue(of(null));
             mapperStateStub.selected.branch = {
                 '@id': 'branchId',
-                [`${CATALOG}head`] : { '@id': 'headId'},
+                [`${CATALOG}head`]: { '@id': 'headId'},
                 [`${DCTERMS}title`]: branchTitle
             };
             fixture.detectChanges();

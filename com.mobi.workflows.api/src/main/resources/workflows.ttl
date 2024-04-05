@@ -296,3 +296,9 @@
     rdfs:comment "The timestamp that an executed action completed."@en ;
     rdfs:domain :ActionExecution ;
     rdfs:range xsd:dateTime .
+
+:aboutAction a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:label "about action"@en ;
+    rdfs:comment "The Action that was executed."@en ;
+    rdfs:domain :ActionExecution ;
+    rdfs:range :Action .

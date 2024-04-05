@@ -1,0 +1,83 @@
+PREFIX dcterm: <http://purl.org/dc/terms/>
+PREFIX foaf: <http://xmlns.com/foaf/0.1/>
+PREFIX mcat: <http://mobi.com/ontologies/catalog#>
+PREFIX policy: <http://mobi.com/ontologies/policy#>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+PREFIX um: <http://mobi.com/ontologies/user/management#>
+PREFIX wf: <http://mobi.solutions/ontologies/workflows#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+SELECT DISTINCT
+    %SELECT_VARIABLES%
+WHERE {
+    ?requestUserIri policy:Read ?workflowRecordIri .
+
+    ?workflowRecordIri a wf:WorkflowRecord .
+
+    OPTIONAL {
+        ?workflowRecordIri wf:latestActivity ?latestExecutionId .
+    }
+    ?executionId a wf:WorkflowExecutionActivity ;
+      prov:used ?workflowRecordIri ;
+      prov:wasAssociatedWith ?executorIri ;
+      prov:startedAtTime ?startTime . # XMLSchema#dateTime
+      ?executorIri a um:User;
+      um:username ?executorUsername .
+
+    OPTIONAL {
+      ?executorIri foaf:firstName ?executorFirstName .
+    }
+    OPTIONAL {
+      ?executorIri foaf:lastName ?executorLastName .
+    }
+    # endedAt and succeeded is optional
+    OPTIONAL {
+      ?executionId wf:succeeded ?succeeded ;
+                   prov:endedAtTime ?endTime . # XMLSchema#dateTime
+    }
+
+    # Generated Fields
+    BIND(IF(BOUND(?executorFirstName) && BOUND(?executorLastName), CONCAT(?executorFirstName, " ", ?executorLastName), "") as ?option4)
+    BIND(IF(?option4 != "", ?option4, IF(BOUND(?executorFirstName), ?executorFirstName, ?executorUsername)) as ?executorDisplayName)
+
+    BIND(IF(?executionId = ?latestExecutionId, "true"^^xsd:boolean, "false"^^xsd:boolean) as ?isLatestActivity)
+
+    # Status failure|started|success|never_run
+    BIND(IF(BOUND(?executionId) && BOUND(?endTime) && BOUND(?succeeded),
+      IF(?succeeded = "true"^^xsd:boolean, "success", "failure"),
+      "") as ?succeededStatus
+    )
+    BIND(IF(?succeededStatus != "",
+       ?succeededStatus,
+       IF(BOUND(?executionId), "started", "never_run")) as ?status
+    )
+    # FILTERS
+    # FILTER - executionId
+    BIND(IF(BOUND(?searchExecutorIri), ?executorIri = IRI(?searchExecutorIri), true) as ?searchExecutorIriResult)
+    FILTER(?searchExecutorIriResult)
+
+    # FILTER - title
+    BIND(IF(BOUND(?searchText), CONTAINS(LCASE(?title), LCASE(?searchText)), true) as ?searchTextResult)
+    FILTER(?searchTextResult)
+
+    # FILTER - executor (done by way of the display name)
+    BIND(IF(BOUND(?searchUserText) && BOUND(?option4), CONTAINS(LCASE(?option4), LCASE(?searchUserText)), true) as ?s4)
+    # executor search by firstName, lastName, combination
+    BIND(IF(BOUND(?searchUserText), CONTAINS(LCASE(?executorUsername), LCASE(?searchUserText)), true) as ?s1)
+    BIND(IF(BOUND(?searchUserText), CONTAINS(LCASE(?executorFirstName), LCASE(?searchUserText)), true) as ?s2)
+    BIND(IF(BOUND(?searchUserText), CONTAINS(LCASE(?executorLastName), LCASE(?searchUserText)), true) as ?s3)
+    BIND(IF(BOUND(?executorFirstName) && BOUND(?executorLastName), CONCAT(LCASE(?executorLastName), " ", LCASE(?executorFirstName)), "") as ?option5)
+    BIND(IF(BOUND(?executorFirstName) && BOUND(?executorLastName), CONCAT(LCASE(?executorLastName), ", ", LCASE(?executorFirstName)), "") as ?option6)
+    BIND(IF(BOUND(?searchUserText), CONTAINS(?option5, LCASE(?searchUserText)), true) as ?s5)
+    BIND(IF(BOUND(?searchUserText), CONTAINS(?option6, LCASE(?searchUserText)), true) as ?s6)
+    FILTER(?s1 || ?s2 || ?s3 || ?s4 || ?s5 || ?s6)
+
+    # FILTER - startingAfterFilter
+    FILTER(IF(BOUND(?startingAfterFilter), ?startTime >= xsd:dateTime(?startingAfterFilter), true))
+
+    # FILTER - endingBeforeFilter
+    FILTER(IF(BOUND(?endingBeforeFilter), ?startTime <= xsd:dateTime(?endingBeforeFilter), true))
+
+    # FILTER - status
+    FILTER(IF(BOUND(?statusFilter), ?status = ?statusFilter, true))
+}

@@ -89,7 +89,11 @@
         <osgi.version>8.0.0</osgi.version>
         <owlapi.version>5.5.0</owlapi.version>
         <owlapi.rdf4j.version>4.2.0</owlapi.rdf4j.version>
-        <poi.version>3.14_1</poi.version>
+        <poi.version>5.2.3_1</poi.version>
+        <!-- These deps are only needed for POI-->
+        <log4j.version>2.18.0</log4j.version>
+        <commons-compress.version>1.21</commons-compress.version>
+
         <rdf4j.version>4.3.2</rdf4j.version>
         <servlet.version>3.1.0</servlet.version>  <!-- 4.0.1 with later pax web -->
         <swagger.version>2.2.0</swagger.version>
@@ -202,6 +206,17 @@
             <dependency>
                 <groupId>org.eclipse.rdf4j</groupId>
                 <artifactId>rdf4j-queryresultio-api</artifactId>
+                <version>${rdf4j.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>com.github.jsonld-java</groupId>
+                        <artifactId>*</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>org.eclipse.rdf4j</groupId>
+                <artifactId>rdf4j-tools-federation</artifactId>
                 <version>${rdf4j.version}</version>
                 <exclusions>
                     <exclusion>
@@ -540,6 +555,18 @@
                 <groupId>com.github.kirviq</groupId>
                 <artifactId>dumbster</artifactId>
                 <version>1.7.1</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.logging.log4j</groupId>
+                <artifactId>log4j-api</artifactId>
+                <version>${log4j.version}</version>
+                <scope>test</scope>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-compress</artifactId>
+                <version>${commons-compress.version}</version>
                 <scope>test</scope>
             </dependency>
         </dependencies>

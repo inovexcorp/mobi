@@ -1,1 +1,2 @@
 for i in {1..5}; do sleep 5 && /opt/mobi/mobi-distribution/bin/client "mobi:import -r system /opt/mobi/z-catalog-ontology-9p-records.trig" && break || echo "Waiting for mobi shell..."; done
+for i in {1..5}; do sleep 5 && /opt/mobi/mobi-distribution/bin/client "mobi:import -r system /opt/mobi/workflows.trig" && break || echo "Waiting for mobi shell..."; done

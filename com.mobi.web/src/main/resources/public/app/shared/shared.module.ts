@@ -94,6 +94,7 @@ import { RecordIconComponent } from './components/recordIcon/recordIcon.componen
 import { ResolveConflictsBlock } from './components/resolveConflictsBlock/resolveConflictsBlock.component';
 import { ResolveConflictsFormComponent } from './components/resolveConflictsForm/resolveConflictsForm.component';
 import { SearchBarComponent } from './components/searchBar/searchBar.component';
+import { SerializationSelectComponent } from './components/serializationSelect/serializationSelect.component';
 import { SettingEditPageComponent } from './components/settingEditPage/settingEditPage.component';
 import { SettingGroupComponent } from './components/settingGroup/settingGroup.component';
 import { SidebarComponent } from './components/sidebar/sidebar.component';
@@ -150,7 +151,6 @@ import { TrustedHtmlPipe } from './pipes/trustedHtml.pipe';
 
 import { MobiErrorStateMatcher } from './MobiErrorStateMatcher';
 import { HistoryGraph } from '../history-graph/history-graph.module';
-
 
 /**
  * @namespace shared
@@ -241,6 +241,7 @@ import { HistoryGraph } from '../history-graph/history-graph.module';
         ResolveConflictsBlock,
         ResolveConflictsFormComponent,
         SearchBarComponent,
+        SerializationSelectComponent,
         SettingEditPageComponent,
         SettingGroupComponent,
         ShowPropertiesPipe,
@@ -327,6 +328,7 @@ import { HistoryGraph } from '../history-graph/history-graph.module';
         ResolveConflictsBlock,
         ResolveConflictsFormComponent,
         SearchBarComponent,
+        SerializationSelectComponent,
         SettingEditPageComponent,
         SidebarComponent,
         SpinnerComponent,

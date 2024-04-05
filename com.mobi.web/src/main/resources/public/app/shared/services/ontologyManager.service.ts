@@ -31,7 +31,6 @@ import {
     isMatch, 
     has, 
     filter, 
-    reduce, 
     intersection, 
     concat, 
     uniq
@@ -45,7 +44,7 @@ import { HttpClient, HttpErrorResponse, HttpHeaders, HttpResponse } from '@angul
 import { CatalogManagerService } from './catalogManager.service';
 import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
 import { REST_PREFIX } from '../../constants';
-import { DC, DCTERMS, ONTOLOGYEDITOR, OWL, RDFS, SKOS, SKOSXL } from '../../prefixes';
+import { DC, ONTOLOGYEDITOR, OWL, RDFS, SKOS, SKOSXL } from '../../prefixes';
 import { OntologyRecordConfig } from '../models/ontologyRecordConfig.interface';
 import { VocabularyStuff } from '../models/vocabularyStuff.interface';
 import { OntologyStuff } from '../models/ontologyStuff.interface';
@@ -60,8 +59,9 @@ import { GroupQueryResults } from '../models/groupQueryResults.interface';
 import { SPARQLSelectBinding, SPARQLSelectResults } from '../models/sparqlSelectResults.interface';
 import { 
     createHttpParams, 
-    getBeautifulIRI, 
+    entityNameProps, 
     getDctermsValue, 
+    getEntityName, 
     getErrorDataObject, 
     getPropertyValue, 
     handleError, 
@@ -89,10 +89,7 @@ export class OntologyManagerService {
      * 'entityNameProps' holds an array of properties used to determine an entity name.
      * @type {string[]}
      */
-    entityNameProps = [
-        `${RDFS}label`, 
-        `${DCTERMS}title`, 
-        `${DC}title`, 
+    entityNameProps = [...entityNameProps,
         `${SKOS}prefLabel`, 
         `${SKOS}altLabel`, 
         `${SKOSXL}literalForm`
@@ -1352,15 +1349,7 @@ export class OntologyManagerService {
      * @returns {string} The beautified IRI string.
      */
     getEntityName(entity: JSONLDObject): string {
-        let result = reduce(this.entityNameProps, (tempResult, prop) => tempResult 
-            || this.getPrioritizedValue(entity, prop), '');
-        if (!result && has(entity, '@id')) {
-            result = getBeautifulIRI(entity['@id']);
-        }
-        return result;
-    }
-    private getPrioritizedValue(entity, prop) {
-        return get(find(get(entity, `['${prop}']`), {'@language': 'en'}), '@value') || getPropertyValue(entity, prop);
+        return getEntityName(entity, this.entityNameProps);
     }
     /**
      * Gets the provided entity's names. These names are an array of the '@value' values for the entityNameProps.

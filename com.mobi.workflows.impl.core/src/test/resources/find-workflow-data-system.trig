@@ -1,0 +1,123 @@
+# USERS
+<http://mobi.com/usermanagement> {
+  <http://mobi.com/roles/admin> a <http://www.w3.org/2002/07/owl#Thing>, <http://mobi.com/ontologies/user/management#Role>,
+      <http://xmlns.com/foaf/0.1/Agent>;
+    <http://purl.org/dc/terms/title> "admin" .
+
+  <http://mobi.com/roles/user> a <http://www.w3.org/2002/07/owl#Thing>, <http://mobi.com/ontologies/user/management#Role>,
+      <http://xmlns.com/foaf/0.1/Agent>;
+    <http://purl.org/dc/terms/title> "user" .
+
+  <http://mobi.com/users/admin> a <http://www.w3.org/2002/07/owl#Thing>,
+      <http://xmlns.com/foaf/0.1/Agent>, <http://mobi.com/ontologies/user/management#User>,
+      <http://www.w3.org/ns/prov#Agent>, <http://www.w3.org/2003/01/geo/wgs84_pos#SpatialThing>,
+      <http://xmlns.com/foaf/0.1/Person>;
+    <http://mobi.com/ontologies/user/management#username> "admin";
+    <http://mobi.com/ontologies/user/management#password> "{CRYPT}21232F297A57A5A743894A0E4A801FC3{CRYPT}";
+    <http://mobi.com/ontologies/user/management#hasUserRole> <http://mobi.com/roles/admin>,
+      <http://mobi.com/roles/user> .
+
+  <http://mobi.com/users/user> a <http://www.w3.org/2002/07/owl#Thing>,
+      <http://xmlns.com/foaf/0.1/Agent>, <http://mobi.com/ontologies/user/management#User>,
+      <http://www.w3.org/ns/prov#Agent>, <http://www.w3.org/2003/01/geo/wgs84_pos#SpatialThing>,
+      <http://xmlns.com/foaf/0.1/Person>;
+    <http://mobi.com/ontologies/user/management#username> "user";
+    <http://mobi.com/ontologies/user/management#password> "{CRYPT}5F4DCC3B5AA765D61D8327DEB882CF99{CRYPT}";
+    <http://mobi.com/ontologies/user/management#hasUserRole> <http://mobi.com/roles/user> ;
+    <http://xmlns.com/foaf/0.1/firstName> "userFirstName" .
+
+  <http://mobi.com/users/user-fl> a <http://www.w3.org/2002/07/owl#Thing>,
+      <http://xmlns.com/foaf/0.1/Agent>, <http://mobi.com/ontologies/user/management#User>,
+      <http://www.w3.org/ns/prov#Agent>, <http://www.w3.org/2003/01/geo/wgs84_pos#SpatialThing>,
+      <http://xmlns.com/foaf/0.1/Person>;
+    <http://mobi.com/ontologies/user/management#username> "userfl";
+    <http://mobi.com/ontologies/user/management#password> "{CRYPT}5F4DCC3B5AA765D61D8327DEB882CF99{CRYPT}";
+    <http://mobi.com/ontologies/user/management#hasUserRole> <http://mobi.com/roles/user> ;
+    <http://xmlns.com/foaf/0.1/firstName> "userFirstName" ;
+    <http://xmlns.com/foaf/0.1/lastName> "userLastName" .
+}
+
+# WORKFLOW RECORDS
+# status=success
+<https://mobi.com/records#workflow1> {
+  <https://mobi.com/records#workflow1> a <http://www.w3.org/2002/07/owl#Thing>,
+      <http://mobi.solutions/ontologies/workflows#WorkflowRecord>, <http://mobi.com/ontologies/catalog#VersionedRecord>,
+      <http://mobi.com/ontologies/catalog#VersionedRDFRecord>, <http://mobi.com/ontologies/catalog#Record>;
+    <http://purl.org/dc/terms/title> "Workflow 1";
+    <http://purl.org/dc/terms/description> "Workflow 1 description";
+    <http://purl.org/dc/terms/issued> "2024-02-15T14:37:53.755758-05:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+    <http://purl.org/dc/terms/modified> "2024-02-15T14:39:19.252132-05:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+    <http://purl.org/dc/terms/publisher> <http://mobi.com/users/admin>;
+    <http://mobi.solutions/ontologies/workflows#active> true;
+    <http://mobi.com/ontologies/catalog#catalog> <http://mobi.com/catalog-local>;
+    <http://mobi.com/ontologies/catalog#masterBranch> <https://mobi.com/branches#cff05fda-9689-4d78-b33b-69514f24ceef>;
+    <http://mobi.com/ontologies/catalog#branch> <https://mobi.com/branches#cff05fda-9689-4d78-b33b-69514f24ceef>;
+    <http://mobi.solutions/ontologies/workflows#workflowIRI> <http://example.com/workflows/1>;
+    <http://mobi.solutions/ontologies/workflows#latestActivity> <http://mobi.com/activities/workflow1-wea-01> .
+}
+
+# status=failure
+<https://mobi.com/records#workflow2> {
+  <https://mobi.com/records#workflow2> a <http://www.w3.org/2002/07/owl#Thing>,
+      <http://mobi.solutions/ontologies/workflows#WorkflowRecord>, <http://mobi.com/ontologies/catalog#VersionedRecord>,
+      <http://mobi.com/ontologies/catalog#VersionedRDFRecord>, <http://mobi.com/ontologies/catalog#Record>;
+    <http://purl.org/dc/terms/title> "Workflow 2";
+    <http://purl.org/dc/terms/issued> "2024-02-15T14:43:45.346028-05:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+    <http://purl.org/dc/terms/modified> "2024-02-15T14:43:45.367961-05:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+    <http://purl.org/dc/terms/publisher> <http://mobi.com/users/admin>;
+    <http://mobi.solutions/ontologies/workflows#active> true;
+    <http://mobi.com/ontologies/catalog#catalog> <http://mobi.com/catalog-local>;
+    <http://mobi.com/ontologies/catalog#masterBranch> <https://mobi.com/branches#8e9893f4-3a5f-468b-979f-1732320d6878>;
+    <http://mobi.com/ontologies/catalog#branch> <https://mobi.com/branches#8e9893f4-3a5f-468b-979f-1732320d6878>;
+    <http://mobi.solutions/ontologies/workflows#workflowIRI> <http://example.com/workflows/2> ;
+    <http://mobi.solutions/ontologies/workflows#latestActivity> <http://mobi.com/activities/workflow2lastestactivity> . # run by user
+}
+
+# status=started
+<https://mobi.com/records#workflow3> {
+  <https://mobi.com/records#workflow3> a <http://www.w3.org/2002/07/owl#Thing>,
+      <http://mobi.solutions/ontologies/workflows#WorkflowRecord>, <http://mobi.com/ontologies/catalog#VersionedRecord>,
+      <http://mobi.com/ontologies/catalog#VersionedRDFRecord>, <http://mobi.com/ontologies/catalog#Record>;
+    <http://purl.org/dc/terms/title> "Workflow 3";
+    <http://purl.org/dc/terms/issued> "2024-02-15T14:44:43.349313-05:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+    <http://purl.org/dc/terms/modified> "2024-02-15T14:44:43.371977-05:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+    <http://purl.org/dc/terms/publisher> <http://mobi.com/users/user>;
+    <http://mobi.solutions/ontologies/workflows#active> true;
+    <http://mobi.com/ontologies/catalog#catalog> <http://mobi.com/catalog-local>;
+    <http://mobi.com/ontologies/catalog#masterBranch> <https://mobi.com/branches#9850f041-cd7f-4d8a-ad93-36c2de4dedd0>;
+    <http://mobi.com/ontologies/catalog#branch> <https://mobi.com/branches#9850f041-cd7f-4d8a-ad93-36c2de4dedd0>;
+    <http://mobi.solutions/ontologies/workflows#workflowIRI> <http://example.com/workflows/3> ;
+    <http://mobi.solutions/ontologies/workflows#latestActivity> <http://mobi.com/activities/workflow3lastestactivity> .
+}
+
+# status=never_run
+<https://mobi.com/records#workflow4> {
+  <https://mobi.com/records#workflow4> a <http://www.w3.org/2002/07/owl#Thing>,
+      <http://mobi.solutions/ontologies/workflows#WorkflowRecord>, <http://mobi.com/ontologies/catalog#VersionedRecord>,
+      <http://mobi.com/ontologies/catalog#VersionedRDFRecord>, <http://mobi.com/ontologies/catalog#Record>;
+    <http://purl.org/dc/terms/title> "Workflow 4";
+    <http://purl.org/dc/terms/issued> "2024-02-15T14:44:55.093419-05:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+    <http://purl.org/dc/terms/modified> "2024-02-15T14:44:55.112326-05:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+    <http://purl.org/dc/terms/publisher> <http://mobi.com/users/user>;
+    <http://mobi.solutions/ontologies/workflows#active> false;
+    <http://mobi.com/ontologies/catalog#catalog> <http://mobi.com/catalog-local>;
+    <http://mobi.com/ontologies/catalog#masterBranch> <https://mobi.com/branches#acfc66b3-7f7b-427a-bc3f-91d7cd1cf54e>;
+    <http://mobi.com/ontologies/catalog#branch> <https://mobi.com/branches#acfc66b3-7f7b-427a-bc3f-91d7cd1cf54e>;
+    <http://mobi.solutions/ontologies/workflows#workflowIRI> <http://example.com/workflows/4> .
+}
+
+# status=never_run, user does not have permission to view
+<https://mobi.com/records#workflow5> {
+  <https://mobi.com/records#workflow5> a <http://www.w3.org/2002/07/owl#Thing>,
+      <http://mobi.solutions/ontologies/workflows#WorkflowRecord>, <http://mobi.com/ontologies/catalog#VersionedRecord>,
+      <http://mobi.com/ontologies/catalog#VersionedRDFRecord>, <http://mobi.com/ontologies/catalog#Record>;
+    <http://purl.org/dc/terms/title> "Workflow 5";
+    <http://purl.org/dc/terms/issued> "2024-02-15T14:44:55.093419-05:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+    <http://purl.org/dc/terms/modified> "2024-02-15T14:44:55.112326-05:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+    <http://purl.org/dc/terms/publisher> <http://mobi.com/users/admin>;
+    <http://mobi.solutions/ontologies/workflows#active> false;
+    <http://mobi.com/ontologies/catalog#catalog> <http://mobi.com/catalog-local>;
+    <http://mobi.com/ontologies/catalog#masterBranch> <https://mobi.com/branches#acfc66b3-7f7b-427a-bc3f-91d7cd1cf54e>;
+    <http://mobi.com/ontologies/catalog#branch> <https://mobi.com/branches#acfc66b3-7f7b-427a-bc3f-91d7cd1cf54e>;
+    <http://mobi.solutions/ontologies/workflows#workflowIRI> <http://example.com/workflows/5> .
+}

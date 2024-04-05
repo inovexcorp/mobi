@@ -1,1 +1,254 @@
-{"RequestId":"9a9386f7-7179-4ba1-9f5f-93237c4f6c41","Name":"68335f26f9162a0a5bb2bd699970fe67d60b6ede","Status":4,"StatusText":"finished","Pid":7737,"Nodes":[{"Step":{"Name":"http://example.com/workflows/A/action","Description":"","Variables":[],"OutputVariables":{},"Dir":"/Users/khalilsavoy/.dagu","ExecutorConfig":{"Type":"","Config":{}},"CmdWithArgs":"echo \"This is a test message from Workflow A\"","Command":"echo","Script":"","Stdout":"","Stderr":"","Output":"","Args":["This is a test message from Workflow A"],"Depends":null,"ContinueOn":{"Failure":false,"Skipped":false},"RetryPolicy":null,"RepeatPolicy":{"Repeat":false,"Interval":0},"MailOnError":false,"Preconditions":[],"SignalOnStop":""},"Log":"/Users/khalilsavoy/desktop/workflows/68335f26f9162a0a5bb2bd699970fe67d60b6ede/http___example.com_workflows_A_action.20230925.16:13:00.050.9a9386f7.log","StartedAt":"2023-09-25 16:13:00","FinishedAt":"2023-09-25 16:13:00","Status":4,"RetryCount":0,"DoneCount":1,"Error":"","StatusText":"finished"}],"OnExit":null,"OnSuccess":null,"OnFailure":null,"OnCancel":null,"StartedAt":"2023-09-25 16:13:00","FinishedAt":"2023-09-25 16:13:00","Log":"/Users/khalilsavoy/desktop/workflows/68335f26f9162a0a5bb2bd699970fe67d60b6ede/agent_68335f26f9162a0a5bb2bd699970fe67d60b6ede.20230925.16:13:00.034.9a9386f7.log","Params":"\"https://localhost:8443\" \"eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwOlwvXC9tb2JpLmNvbVwvIiwic3ViIjoiYWRtaW4iLCJleHAiOjE2OTU3NTkxNzksInNjb3BlIjoic2VsZiBcLyoifQ.xRIcqYXWywKDBBMrsGewKCV-qfbK3EkZnR_C0qV3ppY\""}
+{
+  "RequestId": "9a9386f7-7179-4ba1-9f5f-93237c4f6c41",
+  "Name": "68335f26f9162a0a5bb2bd699970fe67d60b6ede",
+  "Status": 4,
+  "StatusText": "finished",
+  "Pid": 7737,
+  "Nodes": [
+    {
+      "Step": {
+        "Name": "http://example.com/workflows/A/action",
+        "Description": "",
+        "Variables": [],
+        "OutputVariables": {},
+        "Dir": "/Users/khalilsavoy/.dagu",
+        "ExecutorConfig": {
+          "Type": "",
+          "Config": {}
+        },
+        "CmdWithArgs": "echo \"This is a test message from Workflow A\"",
+        "Command": "echo",
+        "Script": "",
+        "Stdout": "",
+        "Stderr": "",
+        "Output": "",
+        "Args": [
+          "This is a test message from Workflow A"
+        ],
+        "Depends": null,
+        "ContinueOn": {
+          "Failure": false,
+          "Skipped": false
+        },
+        "RetryPolicy": null,
+        "RepeatPolicy": {
+          "Repeat": false,
+          "Interval": 0
+        },
+        "MailOnError": false,
+        "Preconditions": [],
+        "SignalOnStop": ""
+      },
+      "Log": "/Users/khalilsavoy/desktop/workflows/68335f26f9162a0a5bb2bd699970fe67d60b6ede/http___example.com_workflows_A_action.20230925.16:13:00.050.9a9386f7.log",
+      "StartedAt": "2023-09-25 16:13:00",
+      "FinishedAt": "2023-09-25 16:13:00",
+      "Status": 4,
+      "RetryCount": 0,
+      "DoneCount": 1,
+      "Error": "",
+      "StatusText": "finished"
+    },
+    {
+      "Step": {
+        "Name": "http://test.com/workflows-example#WorkflowAHTTPAction1 HTTP Request",
+        "Description": "",
+        "Variables": [],
+        "OutputVariables": {
+          "r6a72e8aaa1be4a92ad5b6c4928618eb8": "r6a72e8aaa1be4a92ad5b6c4928618eb8=201 Created\nAccess-Control-Allow-Credentials: true\r\nAccess-Control-Expose-Headers: Location\r\nAlt-Svc: h3=\":443\"; ma=86400\r\nCache-Control: no-cache\r\nCf-Cache-Status: DYNAMIC\r\nCf-Ray: 86a7b8c22d8542d5-EWR\r\nContent-Length: 65\r\nContent-Type: application/json; charset=utf-8\r\nDate: Tue, 26 Mar 2024 14:10:00 GMT\r\nEtag: W/\"41-GDNaWfnVU6RZhpLbye0veBaqcHA\"\r\nExpires: -1\r\nLocation: https://jsonplaceholder.typicode.com/posts/101\r\nNel: {\"report_to\":\"heroku-nel\",\"max_age\":3600,\"success_fraction\":0.005,\"failure_fraction\":0.05,\"response_headers\":[\"Via\"]}\r\nPragma: no-cache\r\nReport-To: {\"group\":\"heroku-nel\",\"max_age\":3600,\"endpoints\":[{\"url\":\"https://nel.heroku.com/reports?ts=1711462200&sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d&s=MrkyByApbRBJSNvOj3JoBNCWjzMZggg0nu8Kx9kwQmQ%3D\"}]}\r\nReporting-Endpoints: heroku-nel=https://nel.heroku.com/reports?ts=1711462200&sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d&s=MrkyByApbRBJSNvOj3JoBNCWjzMZggg0nu8Kx9kwQmQ%3D\r\nServer: cloudflare\r\nVary: Origin, X-HTTP-Method-Override, Accept-Encoding\r\nVia: 1.1 vegur\r\nX-Content-Type-Options: nosniff\r\nX-Powered-By: Express\r\nX-Ratelimit-Limit: 1000\r\nX-Ratelimit-Remaining: 998\r\nX-Ratelimit-Reset: 1711462205\r\n{\n \"title\": \"foo\",\n \"body\": \"bar\",\n \"userId\": 1,\n \"id\": 101\n}",
+          "r8a96a21fc95c4af08cc74c6a5908a42c": "r8a96a21fc95c4af08cc74c6a5908a42c=404 Not Found\nAccess-Control-Allow-Credentials: true\r\nAlt-Svc: h3=\":443\"; ma=86400\r\nCache-Control: no-cache\r\nCf-Cache-Status: DYNAMIC\r\nCf-Ray: 86a7b8c22ce542e7-EWR\r\nContent-Length: 2\r\nContent-Type: application/json; charset=utf-8\r\nDate: Tue, 26 Mar 2024 14:10:00 GMT\r\nEtag: W/\"2-vyGp6PvFo4RvsFtPoIWeCReyIC8\"\r\nExpires: -1\r\nNel: {\"report_to\":\"heroku-nel\",\"max_age\":3600,\"success_fraction\":0.005,\"failure_fraction\":0.05,\"response_headers\":[\"Via\"]}\r\nPragma: no-cache\r\nReport-To: {\"group\":\"heroku-nel\",\"max_age\":3600,\"endpoints\":[{\"url\":\"https://nel.heroku.com/reports?ts=1711462200&sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d&s=MrkyByApbRBJSNvOj3JoBNCWjzMZggg0nu8Kx9kwQmQ%3D\"}]}\r\nReporting-Endpoints: heroku-nel=https://nel.heroku.com/reports?ts=1711462200&sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d&s=MrkyByApbRBJSNvOj3JoBNCWjzMZggg0nu8Kx9kwQmQ%3D\r\nServer: cloudflare\r\nVary: Origin, X-HTTP-Method-Override, Accept-Encoding\r\nVia: 1.1 vegur\r\nX-Content-Type-Options: nosniff\r\nX-Powered-By: Express\r\nX-Ratelimit-Limit: 1000\r\nX-Ratelimit-Remaining: 999\r\nX-Ratelimit-Reset: 1711462205\r\n{}"
+        },
+        "Dir": "/Users/khalilsavoy/.dagu",
+        "ExecutorConfig": {
+          "Type": "http",
+          "Config": {
+            "silent": true
+          }
+        },
+        "CmdWithArgs": "POST https://jsonplaceholder.typicode.com/posts",
+        "Command": "POST",
+        "Script": "{\n \"timeout\": 45,\n \"headers\": {\n \n \"Content-Type\": \"application/json\"\n},\n \"query\": {\n  \n },\n \"body\": \"{\\\"title\\\": \\\"foo\\\", \\\"body\\\": \\\"bar\\\",\\\"userId\\\": 1}\"\n}\n",
+        "Stdout": "",
+        "Stderr": "",
+        "Output": "r6a72e8aaa1be4a92ad5b6c4928618eb8",
+        "Args": [
+          "https://jsonplaceholder.typicode.com/posts",
+          "/Users/khalilsavoy/.dagu/dagu_script-4266724610"
+        ],
+        "Depends": null,
+        "ContinueOn": {
+          "Failure": false,
+          "Skipped": false
+        },
+        "RetryPolicy": null,
+        "RepeatPolicy": {
+          "Repeat": false,
+          "Interval": 0
+        },
+        "MailOnError": false,
+        "Preconditions": [],
+        "SignalOnStop": ""
+      },
+      "Log": "/Users/khalilsavoy/desktop/workflows/68335f26f9162a0a5bb2bd699970fe67d60b6ede/http___test.com_workflows-example#WorkflowAHTTPAction1_HTTP_Request.20240326.10:10:00.440.506bf1f6.log",
+      "StartedAt": "2023-09-25 10:10:00",
+      "FinishedAt": "2023-09-25 10:11:00",
+      "Status": 4,
+      "RetryCount": 0,
+      "DoneCount": 1,
+      "Error": "",
+      "StatusText": "finished"
+    },
+    {
+      "Step": {
+        "Name": "http://test.com/workflows-example#WorkflowAHTTPAction1 output",
+        "Description": "",
+        "Variables": [],
+        "OutputVariables": {
+          "r6a72e8aaa1be4a92ad5b6c4928618eb8": "r6a72e8aaa1be4a92ad5b6c4928618eb8=201 Created\nAccess-Control-Allow-Credentials: true\r\nAccess-Control-Expose-Headers: Location\r\nAlt-Svc: h3=\":443\"; ma=86400\r\nCache-Control: no-cache\r\nCf-Cache-Status: DYNAMIC\r\nCf-Ray: 86a7b8c22d8542d5-EWR\r\nContent-Length: 65\r\nContent-Type: application/json; charset=utf-8\r\nDate: Tue, 26 Mar 2024 14:10:00 GMT\r\nEtag: W/\"41-GDNaWfnVU6RZhpLbye0veBaqcHA\"\r\nExpires: -1\r\nLocation: https://jsonplaceholder.typicode.com/posts/101\r\nNel: {\"report_to\":\"heroku-nel\",\"max_age\":3600,\"success_fraction\":0.005,\"failure_fraction\":0.05,\"response_headers\":[\"Via\"]}\r\nPragma: no-cache\r\nReport-To: {\"group\":\"heroku-nel\",\"max_age\":3600,\"endpoints\":[{\"url\":\"https://nel.heroku.com/reports?ts=1711462200&sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d&s=MrkyByApbRBJSNvOj3JoBNCWjzMZggg0nu8Kx9kwQmQ%3D\"}]}\r\nReporting-Endpoints: heroku-nel=https://nel.heroku.com/reports?ts=1711462200&sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d&s=MrkyByApbRBJSNvOj3JoBNCWjzMZggg0nu8Kx9kwQmQ%3D\r\nServer: cloudflare\r\nVary: Origin, X-HTTP-Method-Override, Accept-Encoding\r\nVia: 1.1 vegur\r\nX-Content-Type-Options: nosniff\r\nX-Powered-By: Express\r\nX-Ratelimit-Limit: 1000\r\nX-Ratelimit-Remaining: 998\r\nX-Ratelimit-Reset: 1711462205\r\n{\n \"title\": \"foo\",\n \"body\": \"bar\",\n \"userId\": 1,\n \"id\": 101\n}",
+          "r8a96a21fc95c4af08cc74c6a5908a42c": "r8a96a21fc95c4af08cc74c6a5908a42c=404 Not Found\nAccess-Control-Allow-Credentials: true\r\nAlt-Svc: h3=\":443\"; ma=86400\r\nCache-Control: no-cache\r\nCf-Cache-Status: DYNAMIC\r\nCf-Ray: 86a7b8c22ce542e7-EWR\r\nContent-Length: 2\r\nContent-Type: application/json; charset=utf-8\r\nDate: Tue, 26 Mar 2024 14:10:00 GMT\r\nEtag: W/\"2-vyGp6PvFo4RvsFtPoIWeCReyIC8\"\r\nExpires: -1\r\nNel: {\"report_to\":\"heroku-nel\",\"max_age\":3600,\"success_fraction\":0.005,\"failure_fraction\":0.05,\"response_headers\":[\"Via\"]}\r\nPragma: no-cache\r\nReport-To: {\"group\":\"heroku-nel\",\"max_age\":3600,\"endpoints\":[{\"url\":\"https://nel.heroku.com/reports?ts=1711462200&sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d&s=MrkyByApbRBJSNvOj3JoBNCWjzMZggg0nu8Kx9kwQmQ%3D\"}]}\r\nReporting-Endpoints: heroku-nel=https://nel.heroku.com/reports?ts=1711462200&sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d&s=MrkyByApbRBJSNvOj3JoBNCWjzMZggg0nu8Kx9kwQmQ%3D\r\nServer: cloudflare\r\nVary: Origin, X-HTTP-Method-Override, Accept-Encoding\r\nVia: 1.1 vegur\r\nX-Content-Type-Options: nosniff\r\nX-Powered-By: Express\r\nX-Ratelimit-Limit: 1000\r\nX-Ratelimit-Remaining: 999\r\nX-Ratelimit-Reset: 1711462205\r\n{}"
+        },
+        "Dir": "/Users/khalilsavoy/.dagu",
+        "ExecutorConfig": {
+          "Type": "",
+          "Config": {}
+        },
+        "CmdWithArgs": "echo $r6a72e8aaa1be4a92ad5b6c4928618eb8",
+        "Command": "echo",
+        "Script": "",
+        "Stdout": "",
+        "Stderr": "",
+        "Output": "",
+        "Args": [
+          "201 Created\nAccess-Control-Allow-Credentials: true\r\nAccess-Control-Expose-Headers: Location\r\nAlt-Svc: h3=\":443\"; ma=86400\r\nCache-Control: no-cache\r\nCf-Cache-Status: DYNAMIC\r\nCf-Ray: 86a7b8c22d8542d5-EWR\r\nContent-Length: 65\r\nContent-Type: application/json; charset=utf-8\r\nDate: Tue, 26 Mar 2024 14:10:00 GMT\r\nEtag: W/\"41-GDNaWfnVU6RZhpLbye0veBaqcHA\"\r\nExpires: -1\r\nLocation: https://jsonplaceholder.typicode.com/posts/101\r\nNel: {\"report_to\":\"heroku-nel\",\"max_age\":3600,\"success_fraction\":0.005,\"failure_fraction\":0.05,\"response_headers\":[\"Via\"]}\r\nPragma: no-cache\r\nReport-To: {\"group\":\"heroku-nel\",\"max_age\":3600,\"endpoints\":[{\"url\":\"https://nel.heroku.com/reports?ts=1711462200&sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d&s=MrkyByApbRBJSNvOj3JoBNCWjzMZggg0nu8Kx9kwQmQ%3D\"}]}\r\nReporting-Endpoints: heroku-nel=https://nel.heroku.com/reports?ts=1711462200&sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d&s=MrkyByApbRBJSNvOj3JoBNCWjzMZggg0nu8Kx9kwQmQ%3D\r\nServer: cloudflare\r\nVary: Origin, X-HTTP-Method-Override, Accept-Encoding\r\nVia: 1.1 vegur\r\nX-Content-Type-Options: nosniff\r\nX-Powered-By: Express\r\nX-Ratelimit-Limit: 1000\r\nX-Ratelimit-Remaining: 998\r\nX-Ratelimit-Reset: 1711462205\r\n{\n \"title\": \"foo\",\n \"body\": \"bar\",\n \"userId\": 1,\n \"id\": 101\n}"
+        ],
+        "Depends": [
+          "http://test.com/workflows-example#WorkflowAHTTPAction1 HTTP Request"
+        ],
+        "ContinueOn": {
+          "Failure": false,
+          "Skipped": false
+        },
+        "RetryPolicy": null,
+        "RepeatPolicy": {
+          "Repeat": false,
+          "Interval": 0
+        },
+        "MailOnError": false,
+        "Preconditions": [],
+        "SignalOnStop": ""
+      },
+      "Log": "/Users/khalilsavoy/desktop/workflows/68335f26f9162a0a5bb2bd699970fe67d60b6ede/http___test.com_workflows-example#WorkflowAHTTPAction1_output.20240326.10:10:00.744.506bf1f6.log",
+      "StartedAt": "2023-09-25 10:11:00",
+      "FinishedAt": "2023-09-25 10:12:00",
+      "Status": 4,
+      "RetryCount": 0,
+      "DoneCount": 1,
+      "Error": "",
+      "StatusText": "finished"
+    },
+    {
+      "Step": {
+        "Name": "http://test.com/workflows-example#WorkflowAHTTPAction2 HTTP Request",
+        "Description": "",
+        "Variables": [],
+        "OutputVariables": {
+          "r6a72e8aaa1be4a92ad5b6c4928618eb8": "r6a72e8aaa1be4a92ad5b6c4928618eb8=201 Created\nAccess-Control-Allow-Credentials: true\r\nAccess-Control-Expose-Headers: Location\r\nAlt-Svc: h3=\":443\"; ma=86400\r\nCache-Control: no-cache\r\nCf-Cache-Status: DYNAMIC\r\nCf-Ray: 86a7b8c22d8542d5-EWR\r\nContent-Length: 65\r\nContent-Type: application/json; charset=utf-8\r\nDate: Tue, 26 Mar 2024 14:10:00 GMT\r\nEtag: W/\"41-GDNaWfnVU6RZhpLbye0veBaqcHA\"\r\nExpires: -1\r\nLocation: https://jsonplaceholder.typicode.com/posts/101\r\nNel: {\"report_to\":\"heroku-nel\",\"max_age\":3600,\"success_fraction\":0.005,\"failure_fraction\":0.05,\"response_headers\":[\"Via\"]}\r\nPragma: no-cache\r\nReport-To: {\"group\":\"heroku-nel\",\"max_age\":3600,\"endpoints\":[{\"url\":\"https://nel.heroku.com/reports?ts=1711462200&sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d&s=MrkyByApbRBJSNvOj3JoBNCWjzMZggg0nu8Kx9kwQmQ%3D\"}]}\r\nReporting-Endpoints: heroku-nel=https://nel.heroku.com/reports?ts=1711462200&sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d&s=MrkyByApbRBJSNvOj3JoBNCWjzMZggg0nu8Kx9kwQmQ%3D\r\nServer: cloudflare\r\nVary: Origin, X-HTTP-Method-Override, Accept-Encoding\r\nVia: 1.1 vegur\r\nX-Content-Type-Options: nosniff\r\nX-Powered-By: Express\r\nX-Ratelimit-Limit: 1000\r\nX-Ratelimit-Remaining: 998\r\nX-Ratelimit-Reset: 1711462205\r\n{\n \"title\": \"foo\",\n \"body\": \"bar\",\n \"userId\": 1,\n \"id\": 101\n}",
+          "r8a96a21fc95c4af08cc74c6a5908a42c": "r8a96a21fc95c4af08cc74c6a5908a42c=404 Not Found\nAccess-Control-Allow-Credentials: true\r\nAlt-Svc: h3=\":443\"; ma=86400\r\nCache-Control: no-cache\r\nCf-Cache-Status: DYNAMIC\r\nCf-Ray: 86a7b8c22ce542e7-EWR\r\nContent-Length: 2\r\nContent-Type: application/json; charset=utf-8\r\nDate: Tue, 26 Mar 2024 14:10:00 GMT\r\nEtag: W/\"2-vyGp6PvFo4RvsFtPoIWeCReyIC8\"\r\nExpires: -1\r\nNel: {\"report_to\":\"heroku-nel\",\"max_age\":3600,\"success_fraction\":0.005,\"failure_fraction\":0.05,\"response_headers\":[\"Via\"]}\r\nPragma: no-cache\r\nReport-To: {\"group\":\"heroku-nel\",\"max_age\":3600,\"endpoints\":[{\"url\":\"https://nel.heroku.com/reports?ts=1711462200&sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d&s=MrkyByApbRBJSNvOj3JoBNCWjzMZggg0nu8Kx9kwQmQ%3D\"}]}\r\nReporting-Endpoints: heroku-nel=https://nel.heroku.com/reports?ts=1711462200&sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d&s=MrkyByApbRBJSNvOj3JoBNCWjzMZggg0nu8Kx9kwQmQ%3D\r\nServer: cloudflare\r\nVary: Origin, X-HTTP-Method-Override, Accept-Encoding\r\nVia: 1.1 vegur\r\nX-Content-Type-Options: nosniff\r\nX-Powered-By: Express\r\nX-Ratelimit-Limit: 1000\r\nX-Ratelimit-Remaining: 999\r\nX-Ratelimit-Reset: 1711462205\r\n{}"
+        },
+        "Dir": "/Users/khalilsavoy/.dagu",
+        "ExecutorConfig": {
+          "Type": "http",
+          "Config": {
+            "silent": true
+          }
+        },
+        "CmdWithArgs": "POST https://jsonplaceholder.typicode.com/postsssssssss",
+        "Command": "POST",
+        "Script": "{\n \"timeout\": 45,\n \"headers\": {\n \n \"Content-Type\": \"application/json\"\n},\n \"query\": {\n  \n },\n \"body\": \"{\\\"title\\\": \\\"foo\\\", \\\"body\\\": \\\"bar\\\",\\\"userId\\\": 1}\"\n}\n",
+        "Stdout": "",
+        "Stderr": "",
+        "Output": "r8a96a21fc95c4af08cc74c6a5908a42c",
+        "Args": [
+          "https://jsonplaceholder.typicode.com/postsssssssss",
+          "/Users/khalilsavoy/.dagu/dagu_script-2072304370"
+        ],
+        "Depends": null,
+        "ContinueOn": {
+          "Failure": false,
+          "Skipped": false
+        },
+        "RetryPolicy": null,
+        "RepeatPolicy": {
+          "Repeat": false,
+          "Interval": 0
+        },
+        "MailOnError": false,
+        "Preconditions": [],
+        "SignalOnStop": ""
+      },
+      "Log": "/Users/khalilsavoy/desktop/workflows/68335f26f9162a0a5bb2bd699970fe67d60b6ede/http___test.com_workflows-example#WorkflowAHTTPAction2_HTTP_Request.20240326.10:10:00.440.506bf1f6.log",
+      "StartedAt": "2023-09-25 10:10:00",
+      "FinishedAt": "2023-09-25 10:10:00",
+      "Status": 2,
+      "RetryCount": 0,
+      "DoneCount": 1,
+      "Error": "http status code not 2xx: 404",
+      "StatusText": "failed"
+    },
+    {
+      "Step": {
+        "Name": "http://test.com/workflows-example#WorkflowAHTTPAction2 output",
+        "Description": "",
+        "Variables": [],
+        "OutputVariables": {
+          "r6a72e8aaa1be4a92ad5b6c4928618eb8": "r6a72e8aaa1be4a92ad5b6c4928618eb8=201 Created\nAccess-Control-Allow-Credentials: true\r\nAccess-Control-Expose-Headers: Location\r\nAlt-Svc: h3=\":443\"; ma=86400\r\nCache-Control: no-cache\r\nCf-Cache-Status: DYNAMIC\r\nCf-Ray: 86a7b8c22d8542d5-EWR\r\nContent-Length: 65\r\nContent-Type: application/json; charset=utf-8\r\nDate: Tue, 26 Mar 2024 14:10:00 GMT\r\nEtag: W/\"41-GDNaWfnVU6RZhpLbye0veBaqcHA\"\r\nExpires: -1\r\nLocation: https://jsonplaceholder.typicode.com/posts/101\r\nNel: {\"report_to\":\"heroku-nel\",\"max_age\":3600,\"success_fraction\":0.005,\"failure_fraction\":0.05,\"response_headers\":[\"Via\"]}\r\nPragma: no-cache\r\nReport-To: {\"group\":\"heroku-nel\",\"max_age\":3600,\"endpoints\":[{\"url\":\"https://nel.heroku.com/reports?ts=1711462200&sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d&s=MrkyByApbRBJSNvOj3JoBNCWjzMZggg0nu8Kx9kwQmQ%3D\"}]}\r\nReporting-Endpoints: heroku-nel=https://nel.heroku.com/reports?ts=1711462200&sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d&s=MrkyByApbRBJSNvOj3JoBNCWjzMZggg0nu8Kx9kwQmQ%3D\r\nServer: cloudflare\r\nVary: Origin, X-HTTP-Method-Override, Accept-Encoding\r\nVia: 1.1 vegur\r\nX-Content-Type-Options: nosniff\r\nX-Powered-By: Express\r\nX-Ratelimit-Limit: 1000\r\nX-Ratelimit-Remaining: 998\r\nX-Ratelimit-Reset: 1711462205\r\n{\n \"title\": \"foo\",\n \"body\": \"bar\",\n \"userId\": 1,\n \"id\": 101\n}",
+          "r8a96a21fc95c4af08cc74c6a5908a42c": "r8a96a21fc95c4af08cc74c6a5908a42c=404 Not Found\nAccess-Control-Allow-Credentials: true\r\nAlt-Svc: h3=\":443\"; ma=86400\r\nCache-Control: no-cache\r\nCf-Cache-Status: DYNAMIC\r\nCf-Ray: 86a7b8c22ce542e7-EWR\r\nContent-Length: 2\r\nContent-Type: application/json; charset=utf-8\r\nDate: Tue, 26 Mar 2024 14:10:00 GMT\r\nEtag: W/\"2-vyGp6PvFo4RvsFtPoIWeCReyIC8\"\r\nExpires: -1\r\nNel: {\"report_to\":\"heroku-nel\",\"max_age\":3600,\"success_fraction\":0.005,\"failure_fraction\":0.05,\"response_headers\":[\"Via\"]}\r\nPragma: no-cache\r\nReport-To: {\"group\":\"heroku-nel\",\"max_age\":3600,\"endpoints\":[{\"url\":\"https://nel.heroku.com/reports?ts=1711462200&sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d&s=MrkyByApbRBJSNvOj3JoBNCWjzMZggg0nu8Kx9kwQmQ%3D\"}]}\r\nReporting-Endpoints: heroku-nel=https://nel.heroku.com/reports?ts=1711462200&sid=e11707d5-02a7-43ef-b45e-2cf4d2036f7d&s=MrkyByApbRBJSNvOj3JoBNCWjzMZggg0nu8Kx9kwQmQ%3D\r\nServer: cloudflare\r\nVary: Origin, X-HTTP-Method-Override, Accept-Encoding\r\nVia: 1.1 vegur\r\nX-Content-Type-Options: nosniff\r\nX-Powered-By: Express\r\nX-Ratelimit-Limit: 1000\r\nX-Ratelimit-Remaining: 999\r\nX-Ratelimit-Reset: 1711462205\r\n{}"
+        },
+        "Dir": "/Users/khalilsavoy/.dagu",
+        "ExecutorConfig": {
+          "Type": "",
+          "Config": {}
+        },
+        "CmdWithArgs": "echo $r8a96a21fc95c4af08cc74c6a5908a42c",
+        "Command": "echo",
+        "Script": "",
+        "Stdout": "",
+        "Stderr": "",
+        "Output": "",
+        "Args": [
+          "$r8a96a21fc95c4af08cc74c6a5908a42c"
+        ],
+        "Depends": [
+          "http://test.com/workflows-example#WorkflowAHTTPAction2 HTTP Request"
+        ],
+        "ContinueOn": {
+          "Failure": false,
+          "Skipped": false
+        },
+        "RetryPolicy": null,
+        "RepeatPolicy": {
+          "Repeat": false,
+          "Interval": 0
+        },
+        "MailOnError": false,
+        "Preconditions": [],
+        "SignalOnStop": ""
+      },
+      "Log": "",
+      "StartedAt": "-",
+      "FinishedAt": "-",
+      "Status": 3,
+      "RetryCount": 0,
+      "DoneCount": 0,
+      "Error": "upstream failed",
+      "StatusText": "canceled"
+    }
+  ],
+  "OnExit": null,
+  "OnSuccess": null,
+  "OnFailure": null,
+  "OnCancel": null,
+  "StartedAt": "2023-09-25 16:13:00",
+  "FinishedAt": "2023-09-25 16:13:00",
+  "Log": "/Users/khalilsavoy/desktop/workflows/68335f26f9162a0a5bb2bd699970fe67d60b6ede/agent_68335f26f9162a0a5bb2bd699970fe67d60b6ede.20230925.16:13:00.034.9a9386f7.log",
+  "Params": "\"https://localhost:8443\" \"eyJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwOlwvXC9tb2JpLmNvbVwvIiwic3ViIjoiYWRtaW4iLCJleHAiOjE2OTU3NTkxNzksInNjb3BlIjoic2VsZiBcLyoifQ.xRIcqYXWywKDBBMrsGewKCV-qfbK3EkZnR_C0qV3ppY\""
+}

@@ -1,0 +1,91 @@
+[
+  {
+    "requestUser" : "http://mobi.com/users/admin",
+    "workflowRecordIri" : "https://mobi.com/records#workflow1",
+    "params" : { },
+    "results" : {
+      "totalSize" : 3,
+      "pageSize" : 3,
+      "pageNumber" : 1,
+      "page" : [
+        {
+          "executionId" : "http://mobi.com/activities/c94de4cd-2314-4c0c-b7ca-a9899f56f981",
+          "executorIri" : "http://mobi.com/users/admin",
+          "executorUsername" : "admin",
+          "executorDisplayName" : "admin",
+          "startTime" : "2024-02-15T14:42:09.761747-05:00",
+          "endTime" : "2024-02-15T14:42:19.990385-05:00",
+          "succeeded" : true,
+          "status" : "success",
+          "isLatestActivity" : false
+        },
+        {
+          "executionId" : "http://mobi.com/activities/c3840b77-ea57-4dbe-8d13-051c9e6585ae",
+          "executorIri" : "http://mobi.com/users/admin",
+          "executorUsername" : "admin",
+          "executorDisplayName" : "admin",
+          "startTime" : "2024-02-15T14:42:34.36645-05:00",
+          "endTime" : "2024-02-15T14:42:44.456373-05:00",
+          "succeeded" : true,
+          "status" : "success",
+          "isLatestActivity" : false
+        },
+        {
+          "executionId" : "http://mobi.com/activities/workflow1-wea-01",
+          "executorIri" : "http://mobi.com/users/admin",
+          "executorUsername" : "admin",
+          "executorDisplayName" : "admin",
+          "startTime" : "2024-02-15T14:42:38.657699-05:00",
+          "endTime" : "2024-02-15T14:42:48.708031-05:00",
+          "succeeded" : true,
+          "status" : "success",
+          "isLatestActivity" : true
+        }
+      ]
+    }
+  },
+  {
+    "requestUser" : "http://mobi.com/users/admin",
+    "workflowRecordIri" : "https://mobi.com/records#workflow2",
+    "params" : { },
+    "results" : {
+      "totalSize" : 0,
+      "pageSize" : 0,
+      "pageNumber" : 0,
+      "page" : [ ]
+    }
+  },
+  {
+    "requestUser" : "http://mobi.com/users/admin",
+    "workflowRecordIri" : "https://mobi.com/records#workflow3",
+    "params" : { },
+    "results" : {
+      "totalSize" : 0,
+      "pageSize" : 0,
+      "pageNumber" : 0,
+      "page" : [ ]
+    }
+  },
+  {
+    "requestUser" : "http://mobi.com/users/admin",
+    "workflowRecordIri" : "https://mobi.com/records#workflow4",
+    "params" : { },
+    "results" : {
+      "totalSize" : 0,
+      "pageSize" : 0,
+      "pageNumber" : 0,
+      "page" : [ ]
+    }
+  },
+  {
+    "requestUser" : "http://mobi.com/users/user",
+    "workflowRecordIri" : "https://mobi.com/records#workflow1",
+    "params" : { },
+    "results" : {
+      "totalSize" : 0,
+      "pageSize" : 0,
+      "pageNumber" : 0,
+      "page" : [ ]
+    }
+  }
+]

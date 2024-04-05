@@ -46,7 +46,6 @@ import com.opencsv.CSVReaderBuilder;
 import com.opencsv.exceptions.CsvValidationException;
 import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.FormulaEvaluator;
 import org.apache.poi.ss.usermodel.Row;
@@ -64,7 +63,6 @@ import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
-import org.osgi.service.component.annotations.ReferencePolicyOption;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -80,6 +78,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -145,7 +144,7 @@ public class DelimitedConverterImpl implements DelimitedConverter {
             String[] nextLine;
             long index = config.getOffset();
             Optional<Long> limit = config.getLimit();
-            while ((nextLine = reader.readNext()) != null && (!limit.isPresent() || index < limit.get() + offset)) {
+            while ((nextLine = reader.readNext()) != null && (limit.isEmpty() || index < limit.get() + offset)) {
                 //Exporting to CSV from Excel can cause empty rows to contain columns
                 //Therefore, we must ensure at least one cell has values before processing the row
                 boolean rowContainsValues = false;
@@ -178,7 +177,7 @@ public class DelimitedConverterImpl implements DelimitedConverter {
         Model convertedRDF = modelFactory.createEmptyModel();
         ArrayList<ClassMapping> classMappings = parseClassMappings(config.getMapping());
 
-        try (Workbook wb = WorkbookFactory.create(config.getData())){
+        try (Workbook wb = WorkbookFactory.create(config.getData())) {
             FormulaEvaluator evaluator = wb.getCreationHelper().createFormulaEvaluator();
             Sheet sheet = wb.getSheetAt(0);
             DataFormatter df = new DataFormatter();
@@ -217,7 +216,7 @@ public class DelimitedConverterImpl implements DelimitedConverter {
                 }
                 lastRowNumber++;
             }
-        } catch (NotImplementedException | InvalidFormatException e) {
+        } catch (NotImplementedException e) {
             throw new MobiException(e);
         }
 
@@ -267,7 +266,7 @@ public class DelimitedConverterImpl implements DelimitedConverter {
             classInstance = mappedClasses.get(cm.getResource());
         } else {
             Optional<String> nameOptional = generateLocalName(cm, nextLine);
-            if (!nameOptional.isPresent()) {
+            if (nameOptional.isEmpty()) {
                 return convertedRDF;
             }
 
@@ -303,7 +302,7 @@ public class DelimitedConverterImpl implements DelimitedConverter {
                 // If the value is not empty
                 if (!StringUtils.isEmpty(nextLine[columnIndex])) {
                     // Determine the datatype for the data property range
-                    Literal literal;
+                    Literal literal = null;
                     if (languageOpt.isPresent()) {
                         datatype[0] = valueFactory.createIRI("http://www.w3.org/1999/02/22-rdf-syntax-ns#langString");
                         literal = valueFactory.createLiteral(nextLine[columnIndex], languageOpt.get().stringValue());
@@ -321,15 +320,27 @@ public class DelimitedConverterImpl implements DelimitedConverter {
                                                 .ifPresent(resource -> datatype[0] = (IRI) resource);
                                     });
                         }
-                        literal = valueFactory.createLiteral(nextLine[columnIndex], datatype[0]);
+                        try {
+                            // Validate URIs specifically
+                            if (Objects.equals(datatype[0].stringValue(), XSD.ANYURI)) {
+                                valueFactory.createIRI(nextLine[columnIndex]);
+                            }
+                            // Transform any potential boolean values to lowercase as ValidatingValueFactory doesn't
+                            // accept uppercase TRUE and FALSE
+                            if (Objects.equals(datatype[0].stringValue(), XSD.BOOLEAN)) {
+                                literal = valueFactory.createLiteral(nextLine[columnIndex].toLowerCase(), datatype[0]);
+                            } else {
+                                literal = valueFactory.createLiteral(nextLine[columnIndex], datatype[0]);
+                            }
+                        } catch (IllegalArgumentException ex) {
+                            LOGGER.warn(String.format("Column value %s not valid for range type %s of %s: %s",
+                                    nextLine[columnIndex], datatype[0].stringValue(), classInstance.stringValue(),
+                                    prop.stringValue()));
+                        }
                     }
                     // Only add literal if valid with the datatype
-                    if (isValidValue(literal, datatype[0])) {
+                    if (literal != null) {
                         convertedRDF.add(classInstance, (IRI) prop, literal);
-                    } else {
-                        LOGGER.warn(String.format("Column value %s not valid for range type %s of %s: %s",
-                                literal.stringValue(), datatype[0].stringValue(), classInstance.stringValue(),
-                                prop.stringValue()));
                     }
                 } // else don't create a stmt for blank values
             } else {
@@ -355,7 +366,7 @@ public class DelimitedConverterImpl implements DelimitedConverter {
                 targetIri = mappedClasses.get(targetClassMapping.getResource());
             } else {
                 Optional<String> targetNameOptional = generateLocalName(targetClassMapping, nextLine);
-                if (!targetNameOptional.isPresent()) {
+                if (targetNameOptional.isEmpty()) {
                     return;
                 } else {
                     targetIri = valueFactory.createIRI(targetClassMapping.getHasPrefix().iterator().next()
@@ -381,14 +392,14 @@ public class DelimitedConverterImpl implements DelimitedConverter {
     Optional<String> generateLocalName(ClassMapping cm, String[] currentLine) {
         Optional<String> nameOptional = cm.getLocalName();
 
-        if (!nameOptional.isPresent() || nameOptional.get().trim().isEmpty()) {
+        if (nameOptional.isEmpty() || nameOptional.get().trim().isEmpty()) {
             //Only generate UUIDs when necessary. If you really have to waste a UUID go here: http://wasteaguid.info/
             return Optional.of(generateUuid());
         }
 
         Pattern pat = Pattern.compile(LOCAL_NAME_PATTERN);
         Matcher mat = pat.matcher(nameOptional.get());
-        StringBuffer result = new StringBuffer();
+        StringBuilder result = new StringBuilder();
         while (mat.find()) {
             if ("UUID".equals(mat.group(1))) {
                 //Once again, only generate UUIDs when necessary
@@ -415,7 +426,7 @@ public class DelimitedConverterImpl implements DelimitedConverter {
     }
 
     /**
-     * Parse the data from the Mapping File into ClassMapping POJOs
+     * Parse the data from the Mapping File into ClassMapping POJOs.
      *
      * @param mappingModel The Mapping File used to parse CSV data in a Model
      * @return An ArrayList of ClassMapping Objects created from the mapping model.
@@ -463,50 +474,5 @@ public class DelimitedConverterImpl implements DelimitedConverter {
             }
         }
         return Collections.emptySet();
-    }
-
-    private boolean isValidValue(Literal literal, IRI datatype) {
-        try {
-            switch (datatype.stringValue()) {
-                case XSD.INT:
-                case XSD.INTEGER:
-                    literal.intValue();
-                    return true;
-                case XSD.BOOLEAN:
-                    literal.booleanValue();
-                    return true;
-                case XSD.DOUBLE:
-                    literal.doubleValue();
-                    return true;
-                case XSD.FLOAT:
-                    literal.floatValue();
-                    return true;
-                case XSD.LONG:
-                    literal.longValue();
-                    return true;
-                case XSD.SHORT:
-                    literal.shortValue();
-                    return true;
-                case XSD.BYTE:
-                    literal.byteValue();
-                    return true;
-                case XSD.DATE:
-                case XSD.DATE_TIME:
-                case XSD.DATE_TIME_STAMP:
-                case XSD.TIME:
-                    literal.temporalAccessorValue();
-                    return true;
-                case XSD.ANYURI:
-                    valueFactory.createIRI(literal.stringValue());
-                    return true;
-                case "http://www.w3.org/1999/02/22-rdf-syntax-ns#langString":
-                    literal.getLanguage().get();
-                    return true;
-                default:
-                    return true;
-            }
-        } catch (Exception ex) {
-            return false;
-        }
     }
 }

@@ -1,0 +1,13 @@
+PREFIX w: <http://mobi.solutions/ontologies/workflows#>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+
+CONSTRUCT {
+    ?activity ?p ?o .
+}
+WHERE {
+    ?activity a w:WorkflowExecutionActivity ;
+        ?p ?o .
+    FILTER NOT EXISTS {
+        ?activity prov:endedAtTime ?time .
+    }
+}

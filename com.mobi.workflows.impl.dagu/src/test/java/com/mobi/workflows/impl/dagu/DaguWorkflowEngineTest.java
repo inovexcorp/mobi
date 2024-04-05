@@ -25,12 +25,14 @@ package com.mobi.workflows.impl.dagu;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -39,8 +41,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.jaas.api.token.TokenManager;
-import com.mobi.ontologies.rdfs.Property;
 import com.mobi.prov.api.ProvenanceService;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
@@ -57,13 +57,15 @@ import com.mobi.workflows.api.ontologies.workflows.Workflow;
 import com.mobi.workflows.api.ontologies.workflows.WorkflowExecutionActivity;
 import com.mobi.workflows.impl.dagu.actions.DaguHTTPRequestActionHandler;
 import com.mobi.workflows.impl.dagu.actions.DaguTestActionHandler;
-import com.nimbusds.jwt.SignedJWT;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.query.QueryResults;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
@@ -76,29 +78,30 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
+import org.osgi.service.event.Event;
+import org.osgi.service.event.EventAdmin;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.time.OffsetDateTime;
-import java.util.ArrayList;
+import java.time.ZoneOffset;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import javax.servlet.http.Cookie;
 
 public class DaguWorkflowEngineTest extends OrmEnabledTestCase {
     private static final ValueFactory vf = getValueFactory();
+    private static final ObjectMapper mapper = new ObjectMapper();
     private static final String fileLocation;
     private static VirtualFilesystem vfs;
 
@@ -111,10 +114,8 @@ public class DaguWorkflowEngineTest extends OrmEnabledTestCase {
     }
 
     private DaguWorkflowEngine daguEngine;
-    private Cookie cookie;
-    private SignedJWT signedJWT;
     private User user;
-    private MemoryRepositoryWrapper repository;
+
     private Workflow workflowA;
     private Workflow workflowB;
 
@@ -123,9 +124,11 @@ public class DaguWorkflowEngineTest extends OrmEnabledTestCase {
 
     private AutoCloseable closeable;
 
+    private MemoryRepositoryWrapper provRepository;
+    private MemoryRepositoryWrapper systemRepository;
+
     private final DaguTestActionHandler actionHandler = new DaguTestActionHandler();
     private final DaguHTTPRequestActionHandler httpActionHandler = new DaguHTTPRequestActionHandler();
-
 
     //IRI and metadata variables
     private final Literal userName = vf.createLiteral("testUser");
@@ -135,6 +138,8 @@ public class DaguWorkflowEngineTest extends OrmEnabledTestCase {
 
     private final IRI activityIRI = vf.createIRI("http://mobi.com/test/activities#activity");
     private final String hashString = "68335f26f9162a0a5bb2bd699970fe67d60b6ede";
+    private final String schedulerLog = "agent_68335f26f9162a0a5bb2bd699970fe67d60b6ede.20230925.11:31:49.459.44dc0c43.log";
+    private final String actionLog = "http___example.com_workflows_A_action.20230925.16:13:00.050.9a9386f7.log";
 
     //ORM factories
     private final OrmFactory<User> userFactory = getRequiredOrmFactory(User.class);
@@ -153,9 +158,6 @@ public class DaguWorkflowEngineTest extends OrmEnabledTestCase {
     public ExpectedException thrown = ExpectedException.none();
 
     @Mock
-    TokenManager tokenManager;
-
-    @Mock
     protected ProvenanceService provService;
 
     @Mock
@@ -165,28 +167,28 @@ public class DaguWorkflowEngineTest extends OrmEnabledTestCase {
     protected Mobi mobi;
 
     @Mock
-    protected HttpClient httpClient;
+    protected DaguHttpClient daguHttpClient;
 
     @Mock
-    protected HttpResponse httpResponse;
+    protected EventAdmin eventAdmin;
 
     @Before
     public void setUp() throws Exception {
         closeable = MockitoAnnotations.openMocks(this);
 
-        signedJWT = mock(SignedJWT.class);
         System.setProperty("karaf.etc", Objects.requireNonNull(DaguWorkflowEngineTest.class.getResource("/"))
                 .getPath());
         config = mock(DaguWorkflowEngineConfig.class);
 
-        repository = new MemoryRepositoryWrapper();
-        repository.setDelegate(new SailRepository(new MemoryStore()));
+        provRepository = new MemoryRepositoryWrapper();
+        provRepository.setDelegate(new SailRepository(new MemoryStore()));
+        systemRepository = new MemoryRepositoryWrapper();
+        systemRepository.setDelegate(new SailRepository(new MemoryStore()));
 
         InputStream streamTestAction = getClass().getResourceAsStream("/test-workflow.ttl");
         InputStream streamHttpTestAction = getClass().getResourceAsStream("/http-test-action-workflow.ttl");
         Model workflowModelA = Rio.parse(streamTestAction, "", RDFFormat.TURTLE);
         Model workflowModelB = Rio.parse(streamHttpTestAction, "", RDFFormat.TURTLE);
-        cookie = mock(Cookie.class);
 
         user = userFactory.createNew(vf.createIRI("http://test.org/user"));
         user.setUsername(userName);
@@ -212,7 +214,7 @@ public class DaguWorkflowEngineTest extends OrmEnabledTestCase {
         m.invoke(vfs, fileConfig);
 
         //setting up mock calls
-        when(configProvider.getRepository()).thenReturn(repository);
+        when(configProvider.getRepository()).thenReturn(systemRepository);
         when(configProvider.getRepositoryId()).thenReturn("system");
         when(configProvider.getLocalCatalogIRI()).thenReturn(catalogId);
 
@@ -226,47 +228,31 @@ public class DaguWorkflowEngineTest extends OrmEnabledTestCase {
 
         daguEngine = spy(new DaguWorkflowEngine());
         injectOrmFactoryReferencesIntoService(daguEngine);
-        daguEngine.tokenManager = tokenManager;
         daguEngine.configProvider = configProvider;
-        daguEngine.client = httpClient;
         daguEngine.provService = provService;
+        daguEngine.setEventAdmin(eventAdmin);
         daguEngine.addActionHandler(httpActionHandler);
         daguEngine.addActionHandler(actionHandler);
         daguEngine.factoryRegistry = getOrmFactoryRegistry();
         daguEngine.mobi = mobi;
+        daguEngine.provRepo = provRepository;
     }
 
     @After
     public void reset() throws Exception {
-        try (RepositoryConnection connection = repository.getConnection()) {
+        Mockito.reset(provService, configProvider, mobi, daguHttpClient);
+        assertNoActivitiesSystemRepo();
+        try (RepositoryConnection connection = systemRepository.getConnection()) {
             connection.clear();
-
-            VirtualFile directory = vfs.resolveVirtualFile(fileLocation);
-            for (VirtualFile child : directory.getChildren()) {
-                child.deleteAll();
-            }
         }
-
+        try (RepositoryConnection connection = provRepository.getConnection()) {
+            connection.clear();
+        }
+        VirtualFile directory = vfs.resolveVirtualFile(fileLocation);
+        for (VirtualFile child : directory.getChildren()) {
+            child.deleteAll();
+        }
         closeable.close();
-    }
-
-    @Test
-    public void getTokenCookieTest() {
-        //setup
-        when(tokenManager.generateAuthToken(eq(userName.stringValue()))).thenReturn(signedJWT);
-        when(tokenManager.createSecureTokenCookie(eq(signedJWT))).thenReturn(cookie);
-
-        Cookie cookieResult = daguEngine.getTokenCookie(user);
-        assertEquals(cookieResult, cookie);
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void getTokenCookieNoUsernameTest() {
-        //setup
-        user.clearUsername();
-
-        daguEngine.getTokenCookie(user);
-        thrown.expectMessage("User does not have a username");
     }
 
     @Test
@@ -418,51 +404,47 @@ public class DaguWorkflowEngineTest extends OrmEnabledTestCase {
     @Test
     public void startWorkflowNoDaguConnectionTest() throws IOException, InterruptedException {
         //setup
-        when(httpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandlers.ofString().getClass())))
-                .thenReturn(httpResponse);
-        when(httpResponse.statusCode()).thenReturn(404);
+        when(daguHttpClient.getDag(any(String.class))).thenThrow( new MobiException("Could not connect to Dagu\n Status Code: 404\n  Body: "));
+        daguEngine.start(config);
+        daguEngine.daguHttpClient = daguHttpClient;
 
         thrown.expect(MobiException.class);
         thrown.expectMessage("Could not connect to Dagu\n Status Code: 404\n  Body: ");
 
-        daguEngine.start(config);
-        daguEngine.client = httpClient;
         daguEngine.startWorkflow(workflowA, activityA);
 
         verify(provService).deleteActivity(eq(activityIRI));
+        verify(eventAdmin, times(2)).sendEvent(any(Event.class));
     }
 
     @Test
     public void startWorkflowExistingDagError() throws IOException, InterruptedException {
         //setup
         String daguResponse = IOUtils.toString(Objects.requireNonNull(getClass().getResourceAsStream("/dagResponse.txt")), StandardCharsets.UTF_8);
-        when(httpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandlers.ofString().getClass())))
-                .thenReturn(httpResponse);
-        when(httpResponse.statusCode()).thenReturn(200, 400);
-        when(httpResponse.body()).thenReturn(daguResponse);
-        when(tokenManager.generateAuthToken(eq(userName.stringValue()))).thenReturn(signedJWT);
-        when(tokenManager.createSecureTokenCookie(eq(signedJWT))).thenReturn(cookie);
+        when(daguHttpClient.getDag(any(String.class))).thenReturn(mapper.readValue(daguResponse, ObjectNode.class));
+        Mockito.doThrow(new MobiException("Could not update dag " + hashString + "\n  Status Code: 400\n  Body: " + daguResponse))
+                .when(daguHttpClient).updateDag(any(String.class), any(String.class));
+        daguEngine.start(config);
+        daguEngine.daguHttpClient = daguHttpClient;
 
         thrown.expect(MobiException.class);
         thrown.expectMessage("Could not update dag " + hashString + "\n  Status Code: 400\n  Body: " + daguResponse);
 
-        daguEngine.start(config);
-        daguEngine.client = httpClient;
         daguEngine.startWorkflow(workflowA, activityA);
         verify(provService).deleteActivity(eq(activityIRI));
+        verify(eventAdmin, times(2)).sendEvent(any(Event.class));
     }
 
     @Test
-    public void getSchedulerLogLocal() throws IOException, InterruptedException {
+    public void getSchedulerLogLocal() throws Exception {
         //setup
         copyToTemp();
-        String path = fileLocation + "/" + hashString + "/agent_68335f26f9162a0a5bb2bd699970fe67d60b6ede.20230925.11:31:49.459.44dc0c43.log";
+        String path = fileLocation + "/" + hashString + "/" + schedulerLog;
 
         daguEngine.start(config);
-        daguEngine.client = httpClient;
-        BinaryFile file = daguEngine.getSchedulerLog(hashString, path, activityA, httpClient);
+        BinaryFile file = daguEngine.getSchedulerLog(hashString, path, activityA);
         if (file.getFileName().isPresent()){
-            assertEquals("agent_68335f26f9162a0a5bb2bd699970fe67d60b6ede.20230925.11:31:49.459.44dc0c43.log", file.getFileName().get());
+            assertEquals(schedulerLog, file.getFileName().get());
         } else {
             fail();
         }
@@ -471,24 +453,21 @@ public class DaguWorkflowEngineTest extends OrmEnabledTestCase {
     @Test
     public void getSchedulerLogRemote() throws IOException, InterruptedException {
         //setup
-        String path = fileLocation + "/" + hashString + "/agent_68335f26f9162a0a5bb2bd699970fe67d60b6ede.20230925.11:31:49.459.44dc0c43.log";
+        String path = fileLocation + "/" + hashString + "/" + schedulerLog;
         String daguResponse= IOUtils.toString(Objects.requireNonNull(getClass().getResourceAsStream("/logResponse.txt")), StandardCharsets.UTF_8);
         when(config.local()).thenReturn(false);
-        when(httpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandlers.ofString().getClass()))).thenReturn(httpResponse);
-        when(httpResponse.statusCode()).thenReturn(200);
-        when(httpResponse.body()).thenReturn(daguResponse);
-
+        when(daguHttpClient.getSchedulerLog(any(String.class))).thenReturn(mapper.readValue(daguResponse, ObjectNode.class));
         daguEngine.start(config);
-        daguEngine.client = httpClient;
-        BinaryFile file = daguEngine.getSchedulerLog(hashString, path, activityA, httpClient);
+        daguEngine.daguHttpClient = daguHttpClient;
+
+        BinaryFile file = daguEngine.getSchedulerLog(hashString, path, activityA);
         if (file.getFileName().isPresent()) {
-            assertEquals("agent_68335f26f9162a0a5bb2bd699970fe67d60b6ede.20230925.11:31:49.459.44dc0c43.log", file.getFileName().get());
+            assertEquals(schedulerLog, file.getFileName().get());
         } else {
             fail();
         }
-
         if (file.getRetrievalURL().isPresent()) {
-            String resultPath = "/68335f26f9162a0a5bb2bd699970fe67d60b6ede/agent_68335f26f9162a0a5bb2bd699970fe67d60b6ede.20230925.11:31:49.459.44dc0c43.log";
+            String resultPath = "/68335f26f9162a0a5bb2bd699970fe67d60b6ede/" + schedulerLog;
             assertEquals("file://" + path, file.getRetrievalURL().get().toString());
             String contents = Files.readString(Path.of(file.getRetrievalURL().get().toString().replace("file://", "")));
             assertEquals(IOUtils.toString(Objects.requireNonNull(getClass().getResourceAsStream(resultPath)), StandardCharsets.UTF_8), contents);
@@ -500,78 +479,130 @@ public class DaguWorkflowEngineTest extends OrmEnabledTestCase {
     @Test
     public void getSchedulerLogRemoteFail() throws IOException, InterruptedException {
         //setup
-        String path = fileLocation + "/" + hashString + "/agent_68335f26f9162a0a5bb2bd699970fe67d60b6ede.20230925.11:31:49.459.44dc0c43.log";
+        String path = fileLocation + "/" + hashString + "/" + schedulerLog;
         when(config.local()).thenReturn(false);
-        when(httpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandlers.ofString().getClass()))).thenReturn(httpResponse);
-        when(httpResponse.statusCode()).thenReturn(400);
+        when(daguHttpClient.getSchedulerLog(any(String.class))).thenThrow(new MobiException("Could not connect to Dagu\n Status Code: 400\n  Body: "));
+        daguEngine.start(config);
+        daguEngine.daguHttpClient = daguHttpClient;
 
         thrown.expect(MobiException.class);
         thrown.expectMessage("Could not connect to Dagu\n Status Code: 400\n  Body: ");
 
-        daguEngine.start(config);
-        daguEngine.client = httpClient;
-        daguEngine.getSchedulerLog(hashString, path, activityA, httpClient);
+        daguEngine.getSchedulerLog(hashString, path, activityA);
     }
 
     @Test
     public void getSchedulerLogRemoteNoLogs() throws IOException, InterruptedException {
         //setup
-        String path = fileLocation + "/" + hashString + "/agent_68335f26f9162a0a5bb2bd699970fe67d60b6ede.20230925.11:31:49.459.44dc0c43.log";
+        String path = fileLocation + "/" + hashString + "/" + schedulerLog;
         String daguResponse= IOUtils.toString(Objects.requireNonNull(getClass().getResourceAsStream("/invalidLogResponse.txt")), StandardCharsets.UTF_8);
         when(config.local()).thenReturn(false);
-        when(httpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandlers.ofString().getClass()))).thenReturn(httpResponse);
-        when(httpResponse.statusCode()).thenReturn(200);
-        when(httpResponse.body()).thenReturn(daguResponse);
+        when(daguHttpClient.getSchedulerLog(any(String.class))).thenReturn(mapper.readValue(daguResponse, ObjectNode.class));
+        daguEngine.start(config);
+        daguEngine.daguHttpClient = daguHttpClient;
 
         thrown.expect(MobiException.class);
         thrown.expectMessage("Scheduler-log response did not contain log content");
 
-        daguEngine.start(config);
-        daguEngine.client = httpClient;
-        daguEngine.getSchedulerLog(hashString, path, activityA, httpClient);
+        daguEngine.getSchedulerLog(hashString, path, activityA);
     }
 
     @Test
     public void initializeActionExecutionTest() throws IOException, InterruptedException {
         //setup
-        HashMap<String, List<String>> testMap = new HashMap<>();
-        ArrayList<String> testList = new ArrayList<>();
-        testList.add("\"http://example.com/workflows/A/action\"");
-        testMap.put("http://example.com/workflows/A/action", testList);
+        IRI action1 = vf.createIRI("http://example.com/workflows/A/action");
+        IRI action2 = vf.createIRI("http://test.com/workflows-example#WorkflowAHTTPAction1");
+        IRI action3 = vf.createIRI("http://test.com/workflows-example#WorkflowAHTTPAction2");
+        HashMap<Action, List<String>> testMap = new HashMap<>();
+        testMap.put(actionFactory.createNew(action1), List.of("\"http://example.com/workflows/A/action\""));
+        testMap.put(actionFactory.createNew(action2), List.of("\"http://test.com/workflows-example#WorkflowAHTTPAction1 HTTP Request\"", "\"http://test.com/workflows-example#WorkflowAHTTPAction1 output\""));
+        testMap.put(actionFactory.createNew(action3), List.of("\"http://test.com/workflows-example#WorkflowAHTTPAction2 HTTP Request\"", "\"http://test.com/workflows-example#WorkflowAHTTPAction2 output\""));
         String jsonString = IOUtils.toString(Objects.requireNonNull(getClass().getResourceAsStream("/objectNode.txt")), StandardCharsets.UTF_8);
         ObjectNode testNode = new ObjectMapper().readValue(jsonString, ObjectNode.class);
 
         daguEngine.start(config);
         daguEngine.initializeActionExecutions(activityA, testNode, hashString, testMap);
-        try (RepositoryConnection conn = repository.getConnection()) {
-            conn.begin();
-            conn.add(activityA.getModel());
-            conn.commit();
+        try (RepositoryConnection conn = provRepository.getConnection()) {
+            // Get WorkflowExecutionActivity
+            Model workflowExecutionActivityModel = QueryResults.asModel(conn.getStatements(activityIRI, null, null));
+            WorkflowExecutionActivity workflowExecutionActivity = executionActivityFactory.getExisting(activityIRI, workflowExecutionActivityModel).orElseThrow(AssertionError::new);
+            // Verify WorkflowExecutionActivity
+            assertEquals(3, workflowExecutionActivity.getProperties(RDF.TYPE).size());
+            assertEquals(3, workflowExecutionActivity.getHasActionExecution_resource().size());
+            assertNotNull(workflowExecutionActivity.getStartedAtTime());
+            assertEquals("[http://test.org/user]", workflowExecutionActivity.getWasAssociatedWith_resource().toString());
+            List<ActionExecution> actionExecutions = workflowExecutionActivity.getHasActionExecution_resource().stream()
+                    .map(iri -> {
+                        Model model = QueryResults.asModel(conn.getStatements(iri, null, null));
+                        return actionExecutionFactory.getExisting(iri, model).orElseThrow(AssertionError::new);
+                    })
+                    .toList();
 
-            assertEquals(1, activityA.getHasActionExecution_resource().size());
-            Resource actionIRI = activityA.getHasActionExecution_resource().stream().findFirst().get();
-            Model actionModel = QueryResults.asModel(conn.getStatements(actionIRI, null, null));
-            Optional<ActionExecution> executionOpt = actionExecutionFactory.getExisting(actionIRI, actionModel);
-            if (executionOpt.isPresent()) {
-                ActionExecution execution = executionOpt.get();
-                assertEquals(1, execution.getLogs_resource().size());
-                assertTrue(execution.getStartedAt().isPresent());
-                assertTrue(execution.getEndedAt().isPresent());
-                if (execution.getSucceeded().isPresent()) {
-                    assertTrue(execution.getSucceeded().get());
-                } else {
-                    fail();
-                }
-            } else {
-                fail();
-            }
+            // Verify ActionExecution 1
+            IRI errorIRI = vf.createIRI("urn:error");
+            Optional<ActionExecution> optActionExecution1 = actionExecutions.stream()
+                    .filter(actionExecution -> actionExecution.getAboutAction_resource().orElse(errorIRI).equals(action1))
+                    .findFirst();
+            assertTrue(optActionExecution1.isPresent());
+            ActionExecution actionExecution1 = optActionExecution1.get();
+            // ActionExecution 1 Properties
+            assertEquals(2, actionExecution1.getProperties(RDF.TYPE).size());
+            assertEquals(1, actionExecution1.getLogs_resource().size());
+            ZoneOffset offset = OffsetDateTime.now().getOffset();
+            assertEquals(OffsetDateTime.parse("2023-09-25T16:13" + offset), actionExecution1.getStartedAt().orElseThrow(AssertionError::new));
+            assertEquals(OffsetDateTime.parse("2023-09-25T16:13" + offset), actionExecution1.getEndedAt().orElseThrow(AssertionError::new));
+            assertEquals(true, actionExecution1.getSucceeded().orElseThrow(AssertionError::new));
+            // ActionExecution 1 log
+            Resource logIRI1 = actionExecution1.getLogs_resource().iterator().next();
+            Model binaryFileModel1 = QueryResults.asModel(conn.getStatements(logIRI1, null, null));
+            BinaryFile binaryFile1 = binaryFileFactory.getExisting(logIRI1, binaryFileModel1).orElseThrow(AssertionError::new);
+            assertEquals(2, binaryFile1.getProperties(RDF.TYPE).size());
+            assertEquals("http___example.com_workflows_A_action.20230925.16:13:00.050.9a9386f7.log", binaryFile1.getFileName().orElseThrow());
+            assertEquals("text/plain", binaryFile1.getMimeType().orElseThrow());
+            assertEquals(vf.createIRI("file:///Users/khalilsavoy/desktop/workflows/68335f26f9162a0a5bb2bd699970fe67d60b6ede/" + actionLog), binaryFile1.getRetrievalURL().orElseThrow());
+
+            // Verify ActionExecution 2
+            Optional<ActionExecution> optActionExecution2 = actionExecutions.stream()
+                    .filter(actionExecution -> actionExecution.getAboutAction_resource().orElse(errorIRI).equals(action2))
+                    .findFirst();
+            assertTrue(optActionExecution2.isPresent());
+            ActionExecution actionExecution2 = optActionExecution2.get();
+            // ActionExecution 2 Properties
+            assertEquals(2, actionExecution2.getProperties(RDF.TYPE).size());
+            assertEquals(2, actionExecution2.getLogs_resource().size());
+            assertEquals(OffsetDateTime.parse("2023-09-25T10:10" + offset), actionExecution2.getStartedAt().orElseThrow(AssertionError::new));
+            assertEquals(OffsetDateTime.parse("2023-09-25T10:12" + offset), actionExecution2.getEndedAt().orElseThrow(AssertionError::new));
+            assertEquals(true, actionExecution2.getSucceeded().orElseThrow(AssertionError::new));
+
+            // Verify ActionExecution 3
+            Optional<ActionExecution> optActionExecution3 = actionExecutions.stream()
+                    .filter(actionExecution -> actionExecution.getAboutAction_resource().orElse(errorIRI).equals(action3))
+                    .findFirst();
+            assertTrue(optActionExecution3.isPresent());
+            ActionExecution actionExecution3 = optActionExecution3.get();
+            // ActionExecution 3 Properties
+            assertEquals(2, actionExecution3.getProperties(RDF.TYPE).size());
+            assertEquals(1, actionExecution3.getLogs_resource().size());
+            assertEquals(OffsetDateTime.parse("2023-09-25T10:10" + offset), actionExecution3.getStartedAt().orElseThrow(AssertionError::new));
+            assertEquals(OffsetDateTime.parse("2023-09-25T10:10" + offset), actionExecution3.getEndedAt().orElseThrow(AssertionError::new));
+            assertEquals(false, actionExecution3.getSucceeded().orElseThrow(AssertionError::new));
         }
     }
 
-    private void copyToTemp() throws IOException {
+    private void copyToTemp() throws IOException, URISyntaxException {
         String resourceName = hashString;
-        String absolutePath = fileLocation + resourceName;
-        Files.copy(Objects.requireNonNull(getClass().getResourceAsStream("/" + resourceName)), Paths.get(absolutePath), StandardCopyOption.REPLACE_EXISTING);
+        String absolutePath = fileLocation + File.separator + resourceName;
+        FileUtils.copyDirectory(Paths.get(Objects.requireNonNull(getClass().getResource("/" + resourceName)).toURI()).toFile(), Paths.get(absolutePath).toFile());
     }
 
+    private void assertNoActivitiesSystemRepo() {
+        try (RepositoryConnection conn = systemRepository.getConnection()) {
+            List<Statement> workflowExecutionActivities = QueryResults.asList(conn.getStatements(null, null, vf.createIRI(WorkflowExecutionActivity.TYPE)));
+            assertTrue(workflowExecutionActivities.isEmpty());
+            List<Statement> actionExecutions = QueryResults.asList(conn.getStatements(null, null, vf.createIRI(ActionExecution.TYPE)));
+            assertTrue(actionExecutions.isEmpty());
+            List<Statement> binaryFiles = QueryResults.asList(conn.getStatements(null, null, vf.createIRI(BinaryFile.TYPE)));
+            assertTrue(binaryFiles.isEmpty());
+        }
+    }
 }

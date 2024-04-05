@@ -91,7 +91,6 @@ import { SavedChangesTabComponent } from './components/savedChangesTab/savedChan
 import { SearchTabComponent } from './components/searchTab/searchTab.component';
 import { SeeHistoryComponent } from './components/seeHistory/seeHistory.component';
 import { SelectedDetailsComponent } from './components/selectedDetails/selectedDetails.component';
-import { SerializationSelectComponent } from './components/serializationSelect/serializationSelect.component';
 import { StaticIriComponent } from './components/staticIri/staticIri.component';
 import { SuperClassSelectComponent } from './components/superClassSelect/superClassSelect.component';
 import { SuperPropertySelectComponent } from './components/superPropertySelect/superPropertySelect.component';
@@ -191,7 +190,6 @@ import { QueryViewComponent } from './components/query-view/query-view.component
         SearchTabComponent,
         SeeHistoryComponent,
         SelectedDetailsComponent,
-        SerializationSelectComponent,
         StaticIriComponent,
         SuperClassSelectComponent,
         SuperPropertySelectComponent,

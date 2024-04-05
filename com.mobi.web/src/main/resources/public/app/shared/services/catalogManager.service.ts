@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { HttpClient, HttpParams, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { has, find, get, forEach, difference } from 'lodash';
 import { catchError, map, mergeMap, switchMap, tap } from 'rxjs/operators';
@@ -43,7 +43,6 @@ import { ProgressSpinnerService } from '../components/progress-spinner/services/
 import { CATALOG, DCTERMS } from '../../prefixes';
 import { condenseCommitId, createHttpParams, getBeautifulIRI, getDctermsValue, handleError, paginatedConfigToHttpParams } from '../utility';
 import { EventTypeConstants, EventWithPayload } from '../models/eventWithPayload.interface';
-
 
 /**
  * @class shared.CatalogManagerService
@@ -789,7 +788,7 @@ export class CatalogManagerService {
                 catchError(handleError), 
                 map(() => {}),
                 tap(() => {
-                    this._recordBranchDeleted(recordId, branchId, catalogId)
+                    this._recordBranchDeleted(recordId, branchId, catalogId);
                 })
             );
     }
@@ -1048,18 +1047,29 @@ export class CatalogManagerService {
      * @returns {Observable} An Observable that resolves to the compiled resource or rejects with an error message.
      */
     getResource(commitId: string, branchId: string, recordId: string, catalogId: string, applyInProgressCommit?: boolean, format = 'jsonld'): Observable<string | JSONLDObject[]> {
-        const config = {
-            headers: {
-                'Content-Type': undefined,
-                'Accept': 'text/plain'
-            },
-            params: createHttpParams({
-                format,
-                applyInProgressCommit: !!applyInProgressCommit
-            })
-        };
-        return this.spinnerSrv.track(this.http.get<string | JSONLDObject[]>(`${this.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/branches/${encodeURIComponent(branchId)}/commits/${encodeURIComponent(commitId)}/resource`, config))
-            .pipe(catchError(handleError));
+      const params = {
+        format,
+        applyInProgressCommit: !!applyInProgressCommit
+      };
+      let headers = new HttpHeaders();
+      headers = headers.append('Accept', format === 'jsonld' ? 'application/json' : 'text/plain');
+      const url = `${this.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/branches/${encodeURIComponent(branchId)}/commits/${encodeURIComponent(commitId)}/resource`;
+      return this.spinnerSrv.track(this.http.get(url, {
+        responseType: 'text',
+        observe: 'response',
+        headers,
+        params: createHttpParams(params)
+      })).pipe(
+        catchError(handleError),
+        map((response: HttpResponse<string>) => {
+          const contentType = response.headers.get('Content-Type');
+          if (contentType === 'application/json') {
+              return (JSON.parse(response.body)) as JSONLDObject[];
+          } else {
+              return response.body;
+          }
+        })
+      );
     }
 
     /**

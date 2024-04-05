@@ -25,16 +25,21 @@ package com.mobi.workflows.rest;
 
 import static com.mobi.rest.util.RestUtils.checkStringParam;
 import static com.mobi.rest.util.RestUtils.createJsonErrorObject;
+import static com.mobi.rest.util.RestUtils.createPaginatedResponseWithJsonNode;
 import static com.mobi.rest.util.RestUtils.getActiveUser;
 import static com.mobi.rest.util.RestUtils.getObjectNodeFromJsonld;
 import static com.mobi.rest.util.RestUtils.getRDFFormat;
 import static com.mobi.rest.util.RestUtils.groupedModelToString;
+import static com.mobi.rest.util.RestUtils.modelToJsonld;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.mobi.catalog.api.PaginatedSearchResults;
 import com.mobi.catalog.api.RecordManager;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Modify;
+import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.api.record.config.OperationConfig;
 import com.mobi.catalog.api.record.config.RecordCreateSettings;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
@@ -47,22 +52,30 @@ import com.mobi.rest.security.annotations.ActionAttributes;
 import com.mobi.rest.security.annotations.ActionId;
 import com.mobi.rest.security.annotations.AttributeValue;
 import com.mobi.rest.security.annotations.ResourceId;
+import com.mobi.rest.security.annotations.Value;
 import com.mobi.rest.security.annotations.ValueType;
 import com.mobi.rest.util.ErrorUtils;
+import com.mobi.rest.util.MobiNotFoundException;
 import com.mobi.rest.util.RestUtils;
 import com.mobi.security.policy.api.ontologies.policy.Read;
+import com.mobi.vfs.api.VirtualFile;
+import com.mobi.vfs.api.VirtualFilesystem;
 import com.mobi.vfs.api.VirtualFilesystemException;
+import com.mobi.vfs.ontologies.documents.BinaryFile;
+import com.mobi.workflows.api.PaginatedWorkflowSearchParams;
 import com.mobi.workflows.api.WorkflowManager;
 import com.mobi.workflows.api.ontologies.workflows.WorkflowExecutionActivity;
 import com.mobi.workflows.api.ontologies.workflows.WorkflowRecord;
 import com.mobi.workflows.api.ontologies.workflows.WorkflowRecordFactory;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import org.apache.commons.io.IOUtils;
+import org.apache.commons.io.input.BoundedInputStream;
+import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Statement;
@@ -87,20 +100,27 @@ import java.util.stream.Stream;
 import javax.annotation.security.RolesAllowed;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.StreamingOutput;
+import javax.ws.rs.core.UriInfo;
 
 @Component(service = WorkflowsRest.class, immediate = true)
 @JaxrsResource
 @Path("/workflows")
 public class WorkflowsRest {
+
+    // Unit is in bytes
+    private final long FILE_SIZE_LIMIT = 512000;
     private static final ObjectMapper mapper = new ObjectMapper();
     private final ValueFactory vf = new ValidatingValueFactory();
 
@@ -118,6 +138,109 @@ public class WorkflowsRest {
 
     @Reference
     EngineManager engineManager;
+
+    @Reference
+    protected VirtualFilesystem vfs;
+
+    static final Set<String> GET_WORKFLOW_RECORDS_SORT_BY = Stream.of("iri", "title", "issued",
+            "modified", "active", "status", "workflowIRI", "executorIri", "executorUsername",
+            "executorDisplayName", "startTime", "endTime", "succeeded", "runningTime"
+    ).collect(Collectors.toUnmodifiableSet());
+
+    /**
+     * Retrieves a list of all the Records. An optional type parameter filters the returned Records.
+     * Parameters can be passed to control paging.
+     * @param servletRequest HttpServletRequest
+     * @param uriInfo UriInfo
+     * @param offset Offset for the page
+     * @param limit Number of Records to return in one page
+     * @param asc Whether or not the list should be sorted ascending or descending
+     * @param sort field to sort by
+     * @param searchText String used to filter out Records
+     * @param status String used to filters the returned records by status.
+     * @param startingAfter Datetime string and filters the records down to those whose latest execution activity
+     *                      started at or after the provided value
+     * @param endingBefore Datetime string and filters the records down to those whose latest execution
+     *                     activity ended at or before the provided value
+     * @return List of Workflow Records that match the search criteria.
+     */
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    @Operation(
+            tags = "workflows",
+            summary = "Retrieves the Workflows",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "List of Workflow Records that match the "
+                            + "search criteria"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
+            }
+    )
+    public Response findWorkflowRecords(
+            @Context HttpServletRequest servletRequest,
+            @Context UriInfo uriInfo,
+            @Parameter(description = "Offset for the page")
+            @QueryParam("offset") int offset,
+            @Parameter(description = "Number of Records to return in one page")
+            @QueryParam("limit") int limit,
+            @Parameter(description = "Whether or not the list should be sorted ascending or descending")
+            @DefaultValue("true") @QueryParam("ascending") boolean asc,
+            @Parameter(description = "field to sort by")
+            @QueryParam("sort") String sort,
+            @Parameter(description = "String used to filter out Records")
+            @QueryParam("searchText") String searchText,
+            @Parameter(description = "String used to filter the returned records by status. "
+                    + "Supports Strings 'running', 'succeeded', 'failed', and 'never_run'")
+            @QueryParam("status") String status,
+            @Parameter(description = "Datetime string and filters the records down to those whose latest execution "
+                    + "activity started at or after the provided value")
+            @QueryParam("startingAfter") String startingAfter,
+            @Parameter(description = "Datetime string and filters the records down to those whose latest execution "
+                    + "activity ended at or before the provided value")
+            @QueryParam("endingBefore") String endingBefore
+    ) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            PaginatedWorkflowSearchParams params = new PaginatedWorkflowSearchParams.Builder()
+                    .searchText(searchText)
+                    .status(status)
+                    .startingAfter(startingAfter)
+                    .endingBefore(endingBefore)
+                    .offset(offset)
+                    .limit(limit)
+                    .sortBy(sort)
+                    .ascending(asc)
+                    .build();
+            // Validation
+            List<String> invalidFields = params.validate();
+
+            params.getSortBy().ifPresent(userInput -> {
+                if (!GET_WORKFLOW_RECORDS_SORT_BY.contains(userInput)) {
+                    invalidFields.add("sortBy does not have a valid sort key. "
+                            + "Should be one of: " + GET_WORKFLOW_RECORDS_SORT_BY);
+                }
+            });
+
+            if (!invalidFields.isEmpty()) {
+                throw new IllegalArgumentException(String.format("Invalid Fields;;;%s",
+                        String.join(";;;", invalidFields)));
+            }
+            // Find Workflows
+            User activeUser = getActiveUser(servletRequest, engineManager);
+            PaginatedSearchResults<ObjectNode> records = workflowManager.findWorkflowRecords(params, activeUser, conn);
+            // Response
+            ArrayNode arrayNode = mapper.createArrayNode();
+            for (ObjectNode objectNode: records.getPage()) {
+                arrayNode.add(objectNode);
+            }
+            return createPaginatedResponseWithJsonNode(uriInfo, arrayNode, records.getTotalSize(), limit, offset);
+        } catch (IllegalArgumentException ex) {
+            throw RestUtils.getErrorObjBadRequest(ex);
+        } catch (MobiException ex) {
+            throw RestUtils.getErrorObjInternalServerError(ex);
+        }
+    }
 
     /**
      * Creates a new Workflow Record given the RDF provided either via JSON-LD or an RDF file and given all the metadata
@@ -194,11 +317,11 @@ public class WorkflowsRest {
     /**
      * Creates the WorkflowRecord using CatalogManager.
      *
-     * @param servletRequest          Context of the request.
-     * @param title            the title for the WorkflowRecord.
-     * @param description      the description for the WorkflowRecord.
-     * @param keywordSet       the comma separated list of keywords associated with the WorkflowRecord.
-     * @param config           the RecordOperationConfig containing the appropriate model or input file.
+     * @param servletRequest Context of the request.
+     * @param title the title for the WorkflowRecord.
+     * @param description the description for the WorkflowRecord.
+     * @param keywordSet  the comma separated list of keywords associated with the WorkflowRecord.
+     * @param config the RecordOperationConfig containing the appropriate model or input file.
      * @return a Response indicating the success of the creation with a JSON object containing the WorkflowId,
      *     recordId, branchId, and commitId.
      */
@@ -223,7 +346,8 @@ public class WorkflowsRest {
             branchId = record.getMasterBranch_resource()
                     .orElseThrow(() -> new IllegalStateException("Record master branch resource not found."));
 
-            RepositoryResult<Statement> commitStmt = conn.getStatements(branchId, vf.createIRI(Branch.head_IRI), null);
+            RepositoryResult<Statement> commitStmt = conn.getStatements(branchId,
+                    vf.createIRI(Branch.head_IRI), null);
             if (!commitStmt.hasNext()) {
                 throw new IllegalStateException("No head Commit found for the MASTER Branch");
             }
@@ -253,31 +377,6 @@ public class WorkflowsRest {
     }
 
     /**
-     * Class used for OpenAPI documentation for file upload endpoint.
-     */
-    private static class WorkflowFileUpload {
-        @Schema(type = "string", format = "binary", description = "Mapping file to upload.")
-        public String file;
-
-        @Schema(type = "string", description = "Mapping serialized as JSON-LD", required = true)
-        public String jsonld;
-
-        @Schema(type = "string", description = "Required title for the new WorkflowRecord", required = true)
-        public String title;
-
-        @Schema(type = "string", description = "Optional description for the new WorkflowRecord")
-        public String description;
-
-        @Schema(type = "string", description = "Optional markdown abstract for the new WorkflowRecord")
-        public String markdown;
-
-        @ArraySchema(arraySchema = @Schema(description = "Optional list of keywords strings for the new "
-                + "WorkflowRecord"), schema = @Schema(implementation = String.class, description = "keyword")
-        )
-        public List<String> keywords;
-    }
-
-    /**
      * Manually starts the identified Workflow Record as long as it is active.
      *
      * @param servletRequest The HttpServletRequest.
@@ -301,6 +400,12 @@ public class WorkflowsRest {
             }
     )
     @ActionId(Modify.TYPE)
+    @ActionAttributes(
+            @AttributeValue(id = "http://mobi.com/ontologies/catalog#branch", type = ValueType.PROP_PATH,
+                    value = "<" + VersionedRDFRecord.masterBranch_IRI + ">",
+                    start = @Value(type = ValueType.PATH, value = "workflowId")
+            )
+    )
     @ResourceId(type = ValueType.PATH, value = "workflowId")
     public Response startWorkflow(@Context HttpServletRequest servletRequest,
                                   @Parameter(description = "String representing the Record Resource ID. "
@@ -324,6 +429,94 @@ public class WorkflowsRest {
         } catch (IllegalArgumentException ex) {
             throw RestUtils.getErrorObjBadRequest(ex);
         } catch (IllegalStateException | MobiException ex) {
+            throw RestUtils.getErrorObjInternalServerError(ex);
+        }
+    }
+
+    /**
+     * Retrieves the JSON of the executions of the identified Workflow Record.
+     * @param servletRequest The HttpServletRequest.
+     * @param uriInfo UriInfo
+     * @param workflowRecordIri The IRI string of the {@link WorkflowRecord} to find executions for
+     * @param offset Offset for the page
+     * @param limit Number of Records to return in one page
+     * @param asc Whether or not the list should be sorted ascending or descending
+     * @param status String used to filters the returned records by status.
+     * @param startingAfter Datetime string and filters the records down to those whose latest execution activity
+     *                      started at or after the provided value
+     * @param endingBefore Datetime string and filters the records down to those whose latest execution
+     *                     activity ended at or before the provided value
+     * @return Response with the JSON-LD of the latest {@link WorkflowExecutionActivity}
+     */
+    @GET
+    @Path("{workflowRecordIri}/executions")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    @Operation(
+            tags = "workflows",
+            summary = "Retrieves the WorkflowExecutionActivities of the workflowRecord provided ID",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "The Workflow Execution Activities linked to the Workflow Record"
+                    ),
+                    @ApiResponse(responseCode = "400", description = "An invalid argument has been passed"),
+                    @ApiResponse(responseCode = "401", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
+            }
+    )
+    @ActionId(Read.TYPE)
+    @ResourceId(type = ValueType.PATH, value = "workflowRecordIri")
+    public Response findWorkflowExecutionActivities(
+            @Context HttpServletRequest servletRequest,
+            @Context UriInfo uriInfo,
+            @Parameter(description = "String representing the Record Resource ID. "
+                   + "NOTE: Assumes id represents an IRI unless String begins with \"_:\"",
+                   required = true)
+            @PathParam("workflowRecordIri") String workflowRecordIri,
+            @Parameter(description = "Offset for the page")
+            @QueryParam("offset") int offset,
+            @Parameter(description = "Number of Records to return in one page")
+            @QueryParam("limit") int limit,
+            @Parameter(description = "Whether or not the list should be sorted ascending or descending")
+            @DefaultValue("false") @QueryParam("ascending") boolean asc,
+            @Parameter(description = "String used to filters the returned records by status. "
+                    + "Supports Strings 'running', 'succeeded', 'failed', and 'never_run'")
+            @QueryParam("status") String status,
+            @Parameter(description = "Datetime string and filters the records down to those whose latest execution "
+                    + "activity started at or after the provided value")
+            @QueryParam("startingAfter") String startingAfter,
+            @Parameter(description = "Datetime string and filters the records down to those whose latest execution "
+                    + "activity ended at or before the provided value")
+            @QueryParam("endingBefore") String endingBefore) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            IRI workflowRecordId = vf.createIRI(workflowRecordIri);
+            PaginatedWorkflowSearchParams params = new PaginatedWorkflowSearchParams.Builder()
+                    .status(status)
+                    .startingAfter(startingAfter)
+                    .endingBefore(endingBefore)
+                    .offset(offset)
+                    .limit(limit)
+                    .ascending(asc)
+                    .build();
+            // Validation
+            List<String> invalidFields = params.validate();
+            if (!invalidFields.isEmpty()) {
+                throw new IllegalArgumentException(String.format("Invalid Fields;;;%s",
+                        String.join(";;;", invalidFields)));
+            }
+            // Find Workflows
+            User activeUser = getActiveUser(servletRequest, engineManager);
+            PaginatedSearchResults<ObjectNode> records = workflowManager.findWorkflowExecutionActivities(
+                    workflowRecordId, params, activeUser, conn);
+            // Response
+            ArrayNode arrayNode = mapper.createArrayNode();
+            for (ObjectNode objectNode: records.getPage()) {
+                arrayNode.add(objectNode);
+            }
+            return createPaginatedResponseWithJsonNode(uriInfo, arrayNode, records.getTotalSize(), limit, offset);
+        } catch (IllegalArgumentException ex) {
+            throw RestUtils.getErrorObjBadRequest(ex);
+        } catch (MobiException ex) {
             throw RestUtils.getErrorObjInternalServerError(ex);
         }
     }
@@ -384,58 +577,9 @@ public class WorkflowsRest {
     }
 
     /**
-     * Retrieves the contents of the log file directly associated with an identified execution of an identified Workflow
-     * Record and returns as a plain text string.
-     *
-     * @param servletRequest The HttpServletRequest.
-     * @param workflowRecordId The IRI string of the {@link WorkflowRecord} with the execution
-     * @param activityId The IRI string of the {@link WorkflowExecutionActivity} with the logs
-     * @return Response with a plain text string of the log file contents
-     */
-    @GET
-    @Path("{workflowId}/executions/{activityId}/logs")
-    @Produces(MediaType.TEXT_PLAIN)
-    @RolesAllowed("user")
-    @Operation(
-            tags = "workflows",
-            summary = "Retrieves the contents of the log file linked to the Execution Activity specified by the "
-                    + "provided ID",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "An output stream of the contents of the "
-                            + "log file associated with the passed Execution Activity",
-                            content = @Content(schema = @Schema(ref = "#/components/schemas/JsonLdObject"))),
-                    @ApiResponse(responseCode = "204", description = "Execution Activity logs do not exist"),
-                    @ApiResponse(responseCode = "400", description = "An invalid argument has been passed"),
-                    @ApiResponse(responseCode = "401", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
-    @ActionId(Modify.TYPE)
-    @ResourceId(type = ValueType.PATH, value = "workflowId")
-    public Response getExecutionLogs(@Context HttpServletRequest servletRequest,
-                                     @PathParam("workflowId") String workflowRecordId,
-                                     @PathParam("activityId") String activityId) {
-        try {
-            WorkflowExecutionActivity executionActivity = workflowManager.getExecutionActivity(vf.createIRI(activityId))
-                    .orElseThrow(() -> ErrorUtils.sendError("Execution Activity " + activityId + " not found",
-                            Response.Status.BAD_REQUEST));
-
-            Set<Resource> logFile = executionActivity.getLogs_resource();
-            if (logFile.isEmpty()) {
-                return Response.noContent().build();
-            }
-            return Response.ok(workflowManager.getLogFile(logFile.stream().findFirst().get())).build();
-        } catch (IllegalArgumentException ex) {
-            throw RestUtils.getErrorObjBadRequest(ex);
-        } catch (IllegalStateException | MobiException | VirtualFilesystemException ex) {
-            throw RestUtils.getErrorObjInternalServerError(ex);
-        }
-    }
-
-    /**
      * Retrieves the JSON-LD of the identified execution of the identified Workflow Record.
      *
-     * @param servletRequest The HttpServletRequest.
+     * @param servletRequest The HttpServletRequest
      * @param workflowRecordId The IRI string of the {@link WorkflowRecord} with the execution
      * @param activityId The IRI string of the {@link WorkflowExecutionActivity} to retrieve
      * @return Response with the JSON-LD of the {@link WorkflowExecutionActivity}
@@ -446,7 +590,7 @@ public class WorkflowsRest {
     @RolesAllowed("user")
     @Operation(
             tags = "workflows",
-            summary = "Retrieves the specified Execution Activity of the workflowRecord specified by the provided ID",
+            summary = "Retrieves the specified Execution Activity of the WorkflowRecord specified by the provided ID",
             responses = {
                     @ApiResponse(responseCode = "200", description = "The Execution Activity linked to the Workflow "
                             + "Record",
@@ -469,11 +613,73 @@ public class WorkflowsRest {
                                                  + "\"_:\"", required = true)
                                          @PathParam("activityId") String activityId) {
         try {
-            WorkflowExecutionActivity executionActivity = workflowManager.getExecutionActivity(vf.createIRI(activityId))
-                    .orElseThrow(() -> ErrorUtils.sendError("Execution Activity " + activityId + " not found",
-                            Response.Status.NOT_FOUND));
+            // Validate Activity is for Workflow
+            IRI workflowRecordIri = vf.createIRI(workflowRecordId);
+            IRI activityIri = vf.createIRI(activityId);
+            WorkflowExecutionActivity executionActivity = getAndValidateActivity(workflowRecordIri, activityIri, true);
+
             String json = groupedModelToString(executionActivity.getModel(), getRDFFormat("jsonld"));
             return Response.ok(getObjectNodeFromJsonld(json).toString()).build();
+        } catch (IllegalArgumentException ex) {
+            throw RestUtils.getErrorObjBadRequest(ex);
+        } catch (IllegalStateException ex) {
+            throw RestUtils.getErrorObjInternalServerError(ex);
+        } catch (MobiNotFoundException ex) {
+            throw RestUtils.getErrorObjNotFound(ex);
+        }
+    }
+
+    /**
+     * Retrieves the JSON-LD of all the {@link com.mobi.workflows.api.ontologies.workflows.ActionExecution} instances
+     * related to the {@link WorkflowExecutionActivity} identified by the provided IRIs.
+     *
+     * @param servletRequest The HttpServletRequest
+     * @param workflowRecordId The IRI string of the {@link WorkflowRecord} with the execution
+     * @param activityId The IRI string of the {@link WorkflowExecutionActivity} in question
+     * @return Response with the JSON-LD of the {@link com.mobi.workflows.api.ontologies.workflows.ActionExecution}s
+     */
+    @GET
+    @Path("{workflowId}/executions/{activityId}/actions")
+    @Produces("application/ld+json")
+    @RolesAllowed("user")
+    @Operation(
+            tags = "workflows",
+            summary = "Retrieves the ActionExecution details of the specified Execution Activity of the WorkflowRecord "
+                + "specified by the provided ID",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "The ActionExecutions linked to the Execution "
+                            + "Activity linked to the Workflow Record",
+                            content = @Content(schema = @Schema(ref = "#/components/schemas/JsonLdObject"))),
+                    @ApiResponse(responseCode = "400", description = "An invalid argument has been passed"),
+                    @ApiResponse(responseCode = "401", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
+            }
+    )
+    @ActionId(Read.TYPE)
+    @ResourceId(type = ValueType.PATH, value = "workflowId")
+    public Response getActionExecutions(@Context HttpServletRequest servletRequest,
+                                        @Parameter(description = "String representing the Record Resource ID. "
+                                                + "NOTE: Assumes id represents an IRI unless String begins with "
+                                                + "\"_:\"", required = true)
+                                        @PathParam("workflowId") String workflowRecordId,
+                                        @Parameter(description = "String representing the Execution Activity Resource "
+                                                + "ID. NOTE: Assumes id represents an IRI unless String begins with "
+                                                + "\"_:\"", required = true)
+                                        @PathParam("activityId") String activityId) {
+        try {
+            // Validate Activity is for Workflow
+            IRI workflowRecordIri = vf.createIRI(workflowRecordId);
+            IRI activityIri = vf.createIRI(activityId);
+            getAndValidateActivity(workflowRecordIri, activityIri, false);
+
+            ArrayNode result = mapper.createArrayNode();
+            workflowManager.getActionExecutions(activityIri).stream()
+                    .sorted((action1, action2) -> action1.getResource().stringValue()
+                            .compareToIgnoreCase(action2.getResource().stringValue()))
+                    .map(action -> modelToJsonld(action.getModel().filter(action.getResource(), null, null)))
+                    .map(RestUtils::getObjectNodeFromJsonld)
+                    .forEach(result::add);
+            return Response.ok(result.toString()).type("application/ld+json").build();
         } catch (IllegalArgumentException ex) {
             throw RestUtils.getErrorObjBadRequest(ex);
         } catch (IllegalStateException ex) {
@@ -482,14 +688,139 @@ public class WorkflowsRest {
     }
 
     /**
-     * Retrieves the contents of an identified log file for an identified execution of an identified Workflow Record
-     * and returns as a plain text string.
+     * Retrieves a preview of the contents of the log file directly associated with an identified execution of an
+     * identified WorkflowRecord and returns as a plain text string.
      *
      * @param servletRequest The HttpServletRequest.
      * @param workflowRecordId The IRI string of the {@link WorkflowRecord} with the execution
-     * @param executionActivityId The IRI string of the {@link WorkflowExecutionActivity} with the logs
+     * @param activityId The IRI string of the {@link WorkflowExecutionActivity} with the logs
+     * @return Response with a plain text string of a preview of the log file contents
+     */
+    @GET
+    @Path("{workflowId}/executions/{activityId}/logs")
+    @Produces(MediaType.TEXT_PLAIN)
+    @RolesAllowed("user")
+    @Operation(
+            tags = "workflows",
+            summary = "Retrieves a preview of the contents of the log file linked to the Execution Activity specified "
+                    + "by the provided ID",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "An output stream of the contents of the "
+                            + "log file associated with the passed Execution Activity"),
+                    @ApiResponse(responseCode = "204", description = "Execution Activity logs do not exist"),
+                    @ApiResponse(responseCode = "400", description = "An invalid argument has been passed"),
+                    @ApiResponse(responseCode = "401", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
+            }
+    )
+    @ActionId(Modify.TYPE)
+    @ActionAttributes(
+            @AttributeValue(id = "http://mobi.com/ontologies/catalog#branch", type = ValueType.PROP_PATH,
+                    value = "<" + VersionedRDFRecord.masterBranch_IRI + ">",
+                    start = @Value(type = ValueType.PATH, value = "workflowId")
+            )
+    )
+    @ResourceId(type = ValueType.PATH, value = "workflowId")
+    public Response getExecutionLogs(@Context HttpServletRequest servletRequest,
+                                     @Parameter(description = "String representing the Record Resource ID. "
+                                             + "NOTE: Assumes id represents an IRI unless String begins with "
+                                             + "\"_:\"", required = true)
+                                     @PathParam("workflowId") String workflowRecordId,
+                                     @Parameter(description = "String representing the Execution Activity Resource "
+                                             + "ID. NOTE: Assumes id represents an IRI unless String begins with "
+                                             + "\"_:\"", required = true)
+                                     @PathParam("activityId") String activityId) {
+        try {
+            // Validate Activity is for Workflow
+            IRI workflowRecordIri = vf.createIRI(workflowRecordId);
+            IRI activityIri = vf.createIRI(activityId);
+            WorkflowExecutionActivity executionActivity = getAndValidateActivity(workflowRecordIri, activityIri, false);
+
+            Set<Resource> logFileIRI = executionActivity.getLogs_resource();
+            if (logFileIRI.isEmpty()) {
+                return Response.noContent().build();
+            }
+            BinaryFile logFile = workflowManager.getLogFile(logFileIRI.iterator().next());
+            return previewFile(logFile);
+        } catch (IllegalArgumentException ex) {
+            throw RestUtils.getErrorObjBadRequest(ex);
+        } catch (IllegalStateException | MobiException | VirtualFilesystemException ex) {
+            throw RestUtils.getErrorObjInternalServerError(ex);
+        }
+    }
+
+    /**
+     * Downloads the entire contents of the log file directly associated with an identified execution of an identified
+     * WorkflowRecord into a file.
+     *
+     * @param servletRequest The HttpServletRequest.
+     * @param workflowRecordId The IRI string of the {@link WorkflowRecord} with the execution
+     * @param activityId The IRI string of the {@link WorkflowExecutionActivity} with the logs
+     * @return Response that downloads the entire log file
+     */
+    @GET
+    @Path("{workflowId}/executions/{activityId}/logs")
+    @Produces({MediaType.APPLICATION_OCTET_STREAM, "text/*", "application/*"})
+    @RolesAllowed("user")
+    @Operation(
+            tags = "workflows",
+            summary = "Downloads the contents of the log file linked to the Execution Activity specified by the "
+                    + "provided ID",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "An downloaded output stream of the contents of "
+                            + "the log file associated with the passed Execution Activity"),
+                    @ApiResponse(responseCode = "204", description = "Execution Activity logs do not exist"),
+                    @ApiResponse(responseCode = "400", description = "An invalid argument has been passed"),
+                    @ApiResponse(responseCode = "401", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
+            },
+            hidden = true
+    )
+    @ActionId(Modify.TYPE)
+    @ActionAttributes(
+            @AttributeValue(id = "http://mobi.com/ontologies/catalog#branch", type = ValueType.PROP_PATH,
+                    value = "<" + VersionedRDFRecord.masterBranch_IRI + ">",
+                    start = @Value(type = ValueType.PATH, value = "workflowId")
+            )
+    )
+    @ResourceId(type = ValueType.PATH, value = "workflowId")
+    public Response downloadExecutionLogs(@Context HttpServletRequest servletRequest,
+                                          @Parameter(description = "String representing the Record Resource ID. "
+                                                  + "NOTE: Assumes id represents an IRI unless String begins with "
+                                                  + "\"_:\"", required = true)
+                                          @PathParam("workflowId") String workflowRecordId,
+                                          @Parameter(description = "String representing the Execution Activity Resource "
+                                                  + "ID. NOTE: Assumes id represents an IRI unless String begins with "
+                                                  + "\"_:\"", required = true)
+                                          @PathParam("activityId") String activityId) {
+        try {
+            // Validate Activity is for Workflow
+            IRI workflowRecordIri = vf.createIRI(workflowRecordId);
+            IRI activityIri = vf.createIRI(activityId);
+            WorkflowExecutionActivity executionActivity = getAndValidateActivity(workflowRecordIri, activityIri, false);
+
+            Set<Resource> logFileIRI = executionActivity.getLogs_resource();
+            if (logFileIRI.isEmpty()) {
+                return Response.noContent().build();
+            }
+            BinaryFile logFile = workflowManager.getLogFile(logFileIRI.iterator().next());
+            return downloadFile(logFile);
+        } catch (IllegalArgumentException ex) {
+            throw RestUtils.getErrorObjBadRequest(ex);
+        } catch (IllegalStateException | MobiException | VirtualFilesystemException ex) {
+            throw RestUtils.getErrorObjInternalServerError(ex);
+        }
+    }
+
+    /**
+     * Retrieves a preview of the contents of an identified log file for an identified execution of an identified
+     * WorkflowRecord and returns as a plain text string.
+     *
+     * @param servletRequest The HttpServletRequest.
+     * @param workflowRecordId The IRI string of the {@link WorkflowRecord} with the execution
+     * @param activityId The IRI string of the {@link WorkflowExecutionActivity} with the logs
      * @param logId The IRI string of the Binary File logs to retrieve
-     * @return Response with a plain text string of the log file contents
+     * @return Response with a plain text string of a preview of the log file contents
      */
     @GET
     @Path("{workflowId}/executions/{activityId}/logs/{logId}")
@@ -497,29 +828,186 @@ public class WorkflowsRest {
     @RolesAllowed("user")
     @Operation(
             tags = "workflows",
-            summary = "Retrieves the contents of the log file specified by the provided ID",
+            summary = "Retrieves a preview of the contents of the log file specified by the provided ID",
             responses = {
                     @ApiResponse(responseCode = "200", description = "An output stream of the contents of the "
-                            + "log file associated with the passed Binary File IRI",
-                            content = @Content(schema = @Schema(ref = "#/components/schemas/JsonLdObject"))),
+                            + "log file associated with the passed Binary File IRI"),
                     @ApiResponse(responseCode = "400", description = "An invalid argument has been passed"),
                     @ApiResponse(responseCode = "401", description = "Permission Denied"),
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
     @ActionId(Modify.TYPE)
+    @ActionAttributes(
+            @AttributeValue(id = "http://mobi.com/ontologies/catalog#branch", type = ValueType.PROP_PATH,
+                    value = "<" + VersionedRDFRecord.masterBranch_IRI + ">",
+                    start = @Value(type = ValueType.PATH, value = "workflowId")
+            )
+    )
     @ResourceId(type = ValueType.PATH, value = "workflowId")
-    public Response getActionLog(@Context HttpServletRequest servletRequest,
-                                     @PathParam("workflowId") String workflowRecordId,
-                                     @PathParam("activityId") String executionActivityId,
-                                     @PathParam("logId") String logId) {
+    public Response getSpecificLog(@Context HttpServletRequest servletRequest,
+                                   @Parameter(description = "String representing the Record Resource ID. "
+                                         + "NOTE: Assumes id represents an IRI unless String begins with "
+                                         + "\"_:\"", required = true)
+                                 @PathParam("workflowId") String workflowRecordId,
+                                   @Parameter(description = "String representing the Execution Activity Resource "
+                                         + "ID. NOTE: Assumes id represents an IRI unless String begins with "
+                                         + "\"_:\"", required = true)
+                                 @PathParam("activityId") String activityId,
+                                   @Parameter(description = "String representing the Log File ID. "
+                                         + "NOTE: Assumes id represents an IRI unless String begins with "
+                                         + "\"_:\"", required = true)
+                                 @PathParam("logId") String logId) {
         try {
+            // Validate Activity is for Workflow
+            IRI workflowRecordIri = vf.createIRI(workflowRecordId);
+            IRI activityIri = vf.createIRI(activityId);
+            WorkflowExecutionActivity executionActivity = getAndValidateActivity(workflowRecordIri, activityIri, false);
+            // Validate Log is on the Activity or one of the Action Executions
             Resource logIRI = vf.createIRI(logId);
-            return Response.ok(workflowManager.getLogFile(logIRI)).build();
+            validateLog(executionActivity, logIRI);
+            // Send Log File preview
+            BinaryFile logFile = workflowManager.getLogFile(logIRI);
+            return previewFile(logFile);
         } catch (IllegalArgumentException ex) {
             throw RestUtils.getErrorObjBadRequest(ex);
         } catch (IllegalStateException | MobiException | VirtualFilesystemException ex) {
             throw RestUtils.getErrorObjInternalServerError(ex);
         }
+    }
+
+    /**
+     * Downloads the entire contents of an identified log file for an identified execution of an identified
+     * WorkflowRecord into a file.
+     *
+     * @param servletRequest The HttpServletRequest.
+     * @param workflowRecordId The IRI string of the {@link WorkflowRecord} with the execution
+     * @param activityId The IRI string of the {@link WorkflowExecutionActivity} with the logs
+     * @param logId The IRI string of the Binary File logs to retrieve
+     * @return Response that downloads the entire log file
+     */
+    @GET
+    @Path("{workflowId}/executions/{activityId}/logs/{logId}")
+    @Produces({MediaType.APPLICATION_OCTET_STREAM, "text/*", "application/*"})
+    @RolesAllowed("user")
+    @Operation(
+            tags = "workflows",
+            summary = "Downloads the contents of the log file specified by the provided ID",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "An output stream of the contents of the "
+                            + "log file associated with the passed Binary File IRI"),
+                    @ApiResponse(responseCode = "400", description = "An invalid argument has been passed"),
+                    @ApiResponse(responseCode = "401", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
+            },
+            hidden = true
+    )
+    @ActionId(Modify.TYPE)
+    @ActionAttributes(
+            @AttributeValue(id = "http://mobi.com/ontologies/catalog#branch", type = ValueType.PROP_PATH,
+                    value = "<" + VersionedRDFRecord.masterBranch_IRI + ">",
+                    start = @Value(type = ValueType.PATH, value = "workflowId")
+            )
+    )
+    @ResourceId(type = ValueType.PATH, value = "workflowId")
+    public Response downloadSpecificLog(@Context HttpServletRequest servletRequest,
+                                        @Parameter(description = "String representing the Record Resource ID. "
+                                              + "NOTE: Assumes id represents an IRI unless String begins with "
+                                              + "\"_:\"", required = true)
+                                     @PathParam("workflowId") String workflowRecordId,
+                                        @Parameter(description = "String representing the Execution Activity Resource "
+                                              + "ID. NOTE: Assumes id represents an IRI unless String begins with "
+                                              + "\"_:\"", required = true)
+                                     @PathParam("activityId") String activityId,
+                                        @Parameter(description = "String representing the Log File ID. "
+                                              + "NOTE: Assumes id represents an IRI unless String begins with "
+                                              + "\"_:\"", required = true)
+                                     @PathParam("logId") String logId) {
+        try {
+            // Validate Activity is for Workflow
+            IRI workflowRecordIri = vf.createIRI(workflowRecordId);
+            IRI activityIri = vf.createIRI(activityId);
+            WorkflowExecutionActivity executionActivity = getAndValidateActivity(workflowRecordIri, activityIri, false);
+            // Validate Log is on the Activity or one of the Action Executions
+            Resource logIRI = vf.createIRI(logId);
+            validateLog(executionActivity, logIRI);
+            // Send Log File preview
+            BinaryFile logFile = workflowManager.getLogFile(logIRI);
+            return downloadFile(logFile);
+        } catch (IllegalArgumentException ex) {
+            throw RestUtils.getErrorObjBadRequest(ex);
+        } catch (IllegalStateException | MobiException | VirtualFilesystemException ex) {
+            throw RestUtils.getErrorObjInternalServerError(ex);
+        }
+    }
+
+    private void validateLog(WorkflowExecutionActivity activity, Resource logIRI) {
+        boolean logIsRelated;
+        if (activity.getLogs_resource().contains(logIRI)) {
+            logIsRelated = true;
+        } else {
+            logIsRelated = workflowManager.getActionExecutions(activity.getResource()).stream()
+                    .anyMatch(actionExecution -> actionExecution.getLogs_resource().contains(logIRI));
+        }
+        if (!logIsRelated) {
+            throw new IllegalArgumentException("Log " + logIRI + " is not related to Activity "
+                    + activity.getResource());
+        }
+    }
+
+    private WorkflowExecutionActivity getAndValidateActivity(Resource workflowRecordIri, Resource activityIri,
+                                                             boolean useNotFound) {
+        WorkflowExecutionActivity executionActivity = workflowManager.getExecutionActivity(activityIri)
+                .orElseThrow(() -> {
+                    if (useNotFound) {
+                        return new MobiNotFoundException("Execution Activity " + activityIri + " not found");
+                    } else {
+                        return new IllegalArgumentException("Execution Activity " + activityIri + " not found");
+                    }
+                });
+        if (executionActivity.getUsed_resource().size() == 0
+                || !executionActivity.getUsed_resource().contains(workflowRecordIri)) {
+            throw new IllegalArgumentException("Execution Activity is not related to the specified Workflow");
+        }
+        return executionActivity;
+    }
+
+    private VirtualFile getLogVirtualFile(BinaryFile logFile) throws VirtualFilesystemException {
+        Optional<IRI> logPath = logFile.getRetrievalURL();
+        if (logPath.isPresent()) {
+            String path = logPath.get().stringValue().replace("file://", "");
+            try (VirtualFile file = this.vfs.resolveVirtualFile(path)) {
+                if (file.exists()) {
+                    return file;
+                } else {
+                    throw new IllegalStateException("Log file does not exist at " + path);
+                }
+            } catch (Exception ex) {
+                throw new VirtualFilesystemException(ex);
+            }
+        } else {
+            throw new IllegalStateException("Log file does not have a path set");
+        }
+    }
+
+    private Response downloadFile(BinaryFile logFile) throws VirtualFilesystemException {
+        VirtualFile file = getLogVirtualFile(logFile);
+        StreamingOutput out = os -> IOUtils.copy(file.readContent(), os);
+        String fileName = logFile.getFileName().orElse("logs.txt");
+        String mimeType = logFile.getMimeType().orElse("text/plain");
+        return Response.ok(out).header("Content-Disposition", "attachment;filename=" + fileName)
+                .header("Content-Type", mimeType)
+                .build();
+    }
+
+    private Response previewFile(BinaryFile logFile) throws VirtualFilesystemException {
+        VirtualFile file = getLogVirtualFile(logFile);
+        StreamingOutput out = os -> IOUtils.copy(
+                new BoundedInputStream(file.readContent(), FILE_SIZE_LIMIT), os);
+        Response.ResponseBuilder builder = Response.ok(out);
+        if (file.getSize() > FILE_SIZE_LIMIT) {
+            builder.header("X-Total-Size", file.getSize());
+        }
+        return builder.build();
     }
 }

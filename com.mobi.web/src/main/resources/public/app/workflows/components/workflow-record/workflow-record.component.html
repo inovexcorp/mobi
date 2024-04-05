@@ -1,0 +1,92 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 - 2024 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="workflow-record">
+    <div class="back-sidebar">
+        <button mat-icon-button (click)="goBack()" class="remove-min-width"><span class="fa fa-chevron-left fa-2x"></span></button>
+    </div>
+    <div class="workflow-record-main d-flex flex-column">
+        <div class="workflow-record-header">
+            <div class="workflow-details">
+                <div class="record-header">
+                    <h2 class="record-title d-flex align-items-center">
+                        {{ record.title }}
+                    </h2>
+                    <p class="record-workflow-iri text-muted">
+                        {{ record.workflowIRI }}
+                    </p>
+                    <div class="record-active-toggle">
+                        <mat-slide-toggle
+                                [disabled]="!record.canModifyMasterBranch"
+                                [checked]="record.active"
+                                (change)="toggleRecordActive($event, record)">
+                            {{recordStatus(record.active)}}
+                        </mat-slide-toggle>
+                    </div>
+                    <p class="record-description">
+                        {{ record.description  || '(No description)'}}
+                    </p>
+                </div>
+            </div>
+            <div class="workflow-control">
+                <app-workflow-controls [records]="[record]"
+                    [currentlyRunning]="currentlyRunning"
+                    (onRun)="runWorkflow()"
+                    (onDownload)="downloadWorkflow()"
+                    (onDelete)="deleteWorkflow()">
+                </app-workflow-controls>
+            </div>
+        </div>
+        <div class="workflow-record-body flex-1 remove-min-height">
+            <div class="workflow-record-body-tab-wrapper">
+                <mat-tab-group dynamicHeight="true">
+                    <mat-tab label="Executions"> 
+                        <ng-template matTabContent>
+                            <div class="mat-tab-content-wrapper">
+                                <app-execution-history-table [workflow]="record" [executingActivities]="executingActivities" [workflowRdf]="workflowRdf"></app-execution-history-table>
+                            </div>
+                        </ng-template>
+                    </mat-tab>
+                    <mat-tab label="Commits"> 
+                        <ng-template matTabContent>
+                            <div class="mat-tab-content-wrapper">
+                                <commit-history-table 
+                                    [headTitle]="branch.title"
+                                    [commitId]="branch.head"
+                                    [recordId]="record.iri"
+                                    [branches]="branches"
+                                    [type]="branch.type"
+                                    graph>
+                                </commit-history-table>
+                            </div>
+                        </ng-template>
+                    </mat-tab>
+                </mat-tab-group>
+            </div>
+            <!-- TODO UNCOMMENT FOR FUTURE TICKETS -->
+            <div class="workflow-record-body-display">
+                <!-- <app-workflow-display></app-workflow-display> --> 
+            </div>
+        </div>
+    </div>
+</div>
+

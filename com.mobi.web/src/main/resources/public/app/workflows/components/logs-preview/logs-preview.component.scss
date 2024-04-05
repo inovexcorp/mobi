@@ -1,0 +1,54 @@
+/*-
+ * #%L
+ * com.mobi.web
+ * $Id:$
+ * $HeadURL:$
+ * %%
+ * Copyright (C) 2016 - 2024 iNovex Information Systems, Inc.
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * #L%
+ */
+.logs-preview {
+  display: flex;
+  flex-direction: row;
+  padding: 1.5rem;
+  height: 100%;
+
+  .back-sidebar {
+      flex: 0 0 auto;
+      max-width: none;
+      width: auto;
+      padding-right: 1.5rem;
+      padding-left: 1.5rem;
+  }
+  .logs-preview-main {
+      flex: 1 0 0;
+      flex-direction: column;
+      padding-right: 1.5rem;
+      padding-left: 1.5rem;
+
+      ::ng-deep .CodeMirror {
+          height: 100%;
+          border: 1px solid rgba(0, 0, 0, 0.12);
+          
+          .CodeMirror-cursor {
+              display: none !important
+          }
+      }
+      .log-control {
+        width: 400px;
+      }
+  }
+}

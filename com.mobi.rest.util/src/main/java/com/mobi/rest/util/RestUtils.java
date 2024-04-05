@@ -62,8 +62,10 @@ import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.base.CoreDatatype;
 import org.eclipse.rdf4j.model.impl.LinkedHashModel;
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
+import org.eclipse.rdf4j.query.TupleQueryResult;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFHandler;
 import org.eclipse.rdf4j.rio.RDFParser;
@@ -102,7 +104,6 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
 public class RestUtils {
-
     private static final Logger LOG = LoggerFactory.getLogger(RestUtils.class);
     private static final ObjectMapper mapper = new ObjectMapper();
     public static final String XLSX_MIME_TYPE = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
@@ -1184,5 +1185,47 @@ public class RestUtils {
                 vf.createIRI(POLICY_PERMIT_OVERRIDES));
 
         return response.getDecision();
+    }
+
+    /**
+     * Converts a tuple query ResultSet into List of ObjectNodes which have properties for each specified binding.
+     * Converts literal bindings into the appropriate data types and IRIs into strings.
+     *
+     * @param result The query results to turn into a list of object nodes
+     * @param displayBindings The specific query bindings that should be included in the generated ObjectNodes
+     * @return List of ObjectNodes
+     */
+    public static List<ObjectNode> convertToObjectNodes(TupleQueryResult result, Collection<String> displayBindings) {
+        List<ObjectNode> records = new ArrayList<>();
+        result.forEach(bindings -> {
+            ObjectNode recordObjectNode = mapper.createObjectNode();
+            for (String key: displayBindings) {
+                Value value = bindings.getValue(key);
+                if (value == null) {
+                    recordObjectNode.set(key, null);
+                } else if (value.isLiteral()) {
+                    Literal literal = (Literal) value;
+                    if (literal.getDatatype().equals(CoreDatatype.XSD.BOOLEAN.getIri())) {
+                        recordObjectNode.put(key, literal.booleanValue());
+                    } else if (literal.getDatatype().equals(CoreDatatype.XSD.FLOAT.getIri())) {
+                        recordObjectNode.put(key, literal.floatValue());
+                    } else if (literal.getDatatype().equals(CoreDatatype.XSD.DOUBLE.getIri())) {
+                        recordObjectNode.put(key, literal.doubleValue());
+                    } else if (literal.getDatatype().equals(CoreDatatype.XSD.DECIMAL.getIri())) {
+                        recordObjectNode.put(key, literal.decimalValue());
+                    } else if (literal.getDatatype().equals(CoreDatatype.XSD.INTEGER.getIri())) {
+                        recordObjectNode.put(key, literal.integerValue());
+                    } else if (literal.getDatatype().equals(CoreDatatype.XSD.LONG.getIri())) {
+                        recordObjectNode.put(key, literal.longValue());
+                    } else {
+                        recordObjectNode.put(key, literal.stringValue());
+                    }
+                } else {
+                    recordObjectNode.put(key, value.stringValue());
+                }
+            }
+            records.add(recordObjectNode);
+        });
+        return records;
     }
 }

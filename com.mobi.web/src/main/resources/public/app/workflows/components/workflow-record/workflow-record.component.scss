@@ -1,0 +1,94 @@
+/*-
+ * #%L
+ * com.mobi.web
+ * $Id:$
+ * $HeadURL:$
+ * %%
+ * Copyright (C) 2016 - 2024 iNovex Information Systems, Inc.
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * #L%
+ */
+
+.workflow-record {
+    display: flex;
+    flex-direction: row;
+    padding: 1.5rem;
+    height: 100%;
+
+    .back-sidebar {
+        flex: 0 0 auto;
+        max-width: none;
+        width: auto;
+        padding-right: 1.5rem;
+        padding-left: 1.5rem;
+    }
+    .workflow-record-main {
+        flex: 1 0 0;
+        flex-direction: column;
+        max-width: 100%;
+        padding-right: 1.5rem;
+        padding-left: 1.5rem;
+
+        .workflow-record-header {
+            display: flex;
+            flex-wrap: wrap;
+            margin-right: -20px;
+            margin-left: -20px;
+
+            .workflow-details {
+                flex: 1 0 0;
+                max-width: 100%;
+            }
+            .workflow-control {
+                flex: 0 0 auto;
+                max-width: none;
+                width: auto;
+            }
+        }
+        .workflow-record-body {
+            display: flex;
+            flex-direction: column;
+            flex-wrap: wrap;
+            margin-right: -20px;
+            margin-left: -20px;
+            gap: 1rem;
+            &-tab-wrapper {
+                flex: 1 0 0;
+                max-width: 100%;
+                height: 100%;
+            }
+            &-display {
+                flex: 1 0 0;
+                max-width: 100%;
+            }
+            .mat-tab-group {
+              height: 100%;
+              .mat-tab-content-wrapper {
+                height: 100%;
+              }
+            }
+        }
+    }
+}
+
+@media screen and (min-width: 1000px) {
+    .workflow-record {
+        .workflow-record-main {
+            .workflow-record-body {
+                flex-direction: row;
+            }
+        }
+    }
+}

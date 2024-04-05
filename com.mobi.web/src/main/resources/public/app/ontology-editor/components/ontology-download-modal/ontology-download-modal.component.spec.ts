@@ -30,7 +30,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 
 import { cleanStylesFromDOM } from '../../../../test/ts/Shared';
-import { SerializationSelectComponent } from '../serializationSelect/serializationSelect.component';
+import { SerializationSelectComponent } from '../../../shared/components/serializationSelect/serializationSelect.component';
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 import { OntologyRecordDisplay } from '../openOntologyTab/openOntologyTab.component';
 import { OntologyDownloadModalComponent } from './ontology-download-modal.component';

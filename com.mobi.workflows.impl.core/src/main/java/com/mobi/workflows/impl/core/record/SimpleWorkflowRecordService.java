@@ -25,7 +25,6 @@ package com.mobi.workflows.impl.core.record;
 
 import com.mobi.catalog.api.record.RecordService;
 import com.mobi.exception.MobiException;
-import com.mobi.ontologies.provo.Activity;
 import com.mobi.persistence.utils.Bindings;
 import com.mobi.platform.config.api.ontologies.platformconfig.State;
 import com.mobi.platform.config.api.ontologies.platformconfig.StateFactory;

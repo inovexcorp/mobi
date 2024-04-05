@@ -1,0 +1,12 @@
+PREFIX wf: <http://mobi.solutions/ontologies/workflows#>
+
+CONSTRUCT {
+    ?action ?p ?o .
+}
+WHERE {
+    ?activityIri a wf:WorkflowExecutionActivity ;
+        wf:hasActionExecution ?action .
+
+    ?action a wf:ActionExecution ;
+        ?p ?o .
+}

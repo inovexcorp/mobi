@@ -172,6 +172,7 @@
         <bundle>wrap:mvn:org.lwjgl/lwjgl/3.3.1</bundle>
 
         <bundle>mvn:org.eclipse.rdf4j/rdf4j-runtime-osgi/${rdf4j.version}</bundle>
+        <bundle>wrap:mvn:org.eclipse.rdf4j/rdf4j-tools-federation/${rdf4j.version}</bundle>
     </feature>
     <feature name="elasticsearch-deps" description="Elasticsearch Bundles" version="${project.version}">
         <bundle>mvn:org.yaml/snakeyaml/2.0</bundle>

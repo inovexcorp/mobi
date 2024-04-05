@@ -35,6 +35,7 @@ import { ProgressSpinnerService } from '../../../shared/components/progress-spin
 import { ToastService } from '../../../shared/services/toast.service';
 import { SidePanelPayloadI } from '../../classes/sidebarState';
 import { D3SimulatorService } from '../../services/d3Simulator.service';
+import { VisualizationMenuComponent } from '../visualization-menu/visualization-menu.component';
 
 describe('Ontology Visualization component', () => {
     let component: OntologyVisualization;
@@ -50,7 +51,8 @@ describe('Ontology Visualization component', () => {
             declarations: [
                 OntologyVisualization,
                 MockComponent(SpinnerComponent),
-                MockComponent(InfoMessageComponent)
+                MockComponent(InfoMessageComponent),
+                MockComponent(VisualizationMenuComponent)
             ],
             providers: [
                 MockProvider(ProgressSpinnerService),
