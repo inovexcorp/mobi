@@ -13,7 +13,7 @@ const agent = new https.Agent({
 
 const buildOptions = {
     context: contextDir,
-    src: ['Dockerfile', 'import.sh', 'mobi-distribution-2.6.0-SNAPSHOT.tar.gz', 'z-catalog-ontology-9p-records.trig']
+    src: ['Dockerfile', 'import.sh', 'mobi-distribution-2.6.0-SNAPSHOT.tar.gz', 'z-catalog-ontology-9p-records.trig', 'workflows.trig']
 }
 
 let containerObj = undefined;

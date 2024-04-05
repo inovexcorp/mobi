@@ -35,6 +35,7 @@
     <properties>
         <https-port>10000</https-port>
         <contextDir>${project.basedir}/target/classes</contextDir>
+        <dockerFile>${project.basedir}/target/classes/dockerFile</dockerFile>
     </properties>
 
     <dependencies>
@@ -118,6 +119,7 @@
                                             <directory>${project.basedir}/src/test/resources/filtered-resources</directory>
                                             <includes>
                                                 <include>z-catalog-ontology-9p-records.trig</include>
+                                                <include>workflows.trig</include>
                                                 <include>import.sh</include>
                                             </includes>
                                         </resource>

@@ -1,0 +1,292 @@
+[
+  {
+    "requestUser" : "http://mobi.com/users/admin",
+    "params" : { },
+    "results" : {
+      "totalSize" : 4,
+      "pageSize" : 4,
+      "pageNumber" : 1,
+      "expectedIris" : [
+        "https://mobi.com/records#workflow1",
+        "https://mobi.com/records#workflow2",
+        "https://mobi.com/records#workflow3",
+        "https://mobi.com/records#workflow4"
+      ]
+    }
+  },
+  {
+    "requestUser" : "http://mobi.com/users/admin",
+    "params" : {
+      "searchText" : "Workflow 1"
+    },
+    "results" : {
+      "totalSize" : 1,
+      "pageSize" : 1,
+      "pageNumber" : 1,
+      "expectedIris" : [
+        "https://mobi.com/records#workflow1"
+      ]
+    }
+  },
+  {
+    "requestUser" : "http://mobi.com/users/admin",
+    "params" : {
+      "searchText" : "flow"
+    },
+    "results" : {
+      "totalSize" : 4,
+      "pageSize" : 4,
+      "pageNumber" : 1,
+      "expectedIris" : [
+        "https://mobi.com/records#workflow1",
+        "https://mobi.com/records#workflow2",
+        "https://mobi.com/records#workflow3",
+        "https://mobi.com/records#workflow4"
+      ]
+    }
+  },
+  {
+    "requestUser" : "http://mobi.com/users/user",
+    "params" : { },
+    "results" : {
+      "totalSize" : 0,
+      "pageSize" : 0,
+      "pageNumber" : 0,
+      "expectedIris" : [ ]
+    }
+  },
+  {
+    "requestUser" : "http://mobi.com/users/admin",
+    "params" : {
+      "limit" : 2,
+      "offset" : 0
+    },
+    "results" : {
+      "totalSize" : 4,
+      "pageSize" : 2,
+      "pageNumber" : 1,
+      "expectedIris" : [
+        "https://mobi.com/records#workflow1",
+        "https://mobi.com/records#workflow2"
+      ]
+    }
+  },
+  {
+    "requestUser" : "http://mobi.com/users/admin",
+    "params" : {
+      "limit" : 2,
+      "offset" : 2
+    },
+    "results" : {
+      "totalSize" : 4,
+      "pageSize" : 2,
+      "pageNumber" : 2,
+      "expectedIris" : [
+        "https://mobi.com/records#workflow3",
+        "https://mobi.com/records#workflow4"
+      ]
+    }
+  },
+  {
+    "requestUser" : "http://mobi.com/users/admin",
+    "params" : {
+      "limit" : 2,
+      "offset" : 4
+    },
+    "results" : {
+      "totalSize" : 4,
+      "pageSize" : 2,
+      "pageNumber" : 3,
+      "expectedIris" : [ ]
+    }
+  },
+  {
+    "requestUser" : "http://mobi.com/users/admin",
+    "params" : {
+      "ascending" : true,
+      "sortBy" : "title"
+    },
+    "results" : {
+      "totalSize" : 4,
+      "pageSize" : 4,
+      "pageNumber" : 1,
+      "expectedIris" : [
+        "https://mobi.com/records#workflow1",
+        "https://mobi.com/records#workflow2",
+        "https://mobi.com/records#workflow3",
+        "https://mobi.com/records#workflow4"
+      ]
+    }
+  },
+  {
+    "requestUser" : "http://mobi.com/users/admin",
+    "params" : {
+      "ascending" : false,
+      "sortBy" : "title"
+    },
+    "results" : {
+      "totalSize" : 4,
+      "pageSize" : 4,
+      "pageNumber" : 1,
+      "expectedIris" : [
+        "https://mobi.com/records#workflow4",
+        "https://mobi.com/records#workflow3",
+        "https://mobi.com/records#workflow2",
+        "https://mobi.com/records#workflow1"
+      ]
+    }
+  },
+  {
+    "requestUser" : "http://mobi.com/users/admin",
+    "params" : {
+      "ascending" : true,
+      "sortBy" : "status"
+    },
+    "results" : {
+      "totalSize" : 4,
+      "pageSize" : 4,
+      "pageNumber" : 1,
+      "expectedIris" : [
+        "https://mobi.com/records#workflow2",
+        "https://mobi.com/records#workflow4",
+        "https://mobi.com/records#workflow3",
+        "https://mobi.com/records#workflow1"
+      ]
+    }
+  },
+  {
+    "requestUser" : "http://mobi.com/users/admin",
+    "params" : {
+      "ascending" : false,
+      "sortBy" : "status"
+    },
+    "results" : {
+      "totalSize" : 4,
+      "pageSize" : 4,
+      "pageNumber" : 1,
+      "expectedIris" : [
+        "https://mobi.com/records#workflow1",
+        "https://mobi.com/records#workflow3",
+        "https://mobi.com/records#workflow4",
+        "https://mobi.com/records#workflow2"
+      ]
+    }
+  },
+  {
+    "requestUser" : "http://mobi.com/users/admin",
+    "params" : {
+      "status" : "success"
+    },
+    "results" : {
+      "totalSize" : 1,
+      "pageSize" : 1,
+      "pageNumber" : 1,
+      "expectedIris" : [
+        "https://mobi.com/records#workflow1"
+      ]
+    }
+  },
+  {
+    "requestUser" : "http://mobi.com/users/admin",
+    "params" : {
+      "status" : "failure"
+    },
+    "results" : {
+      "totalSize" : 1,
+      "pageSize" : 1,
+      "pageNumber" : 1,
+      "expectedIris" : [
+        "https://mobi.com/records#workflow2"
+      ]
+    }
+  },
+  {
+    "requestUser" : "http://mobi.com/users/admin",
+    "params" : {
+      "status" : "started"
+    },
+    "results" : {
+      "totalSize" : 1,
+      "pageSize" : 1,
+      "pageNumber" : 1,
+      "expectedIris" : [
+        "https://mobi.com/records#workflow3"
+      ]
+    }
+  },
+  {
+    "requestUser" : "http://mobi.com/users/admin",
+    "params" : {
+      "status" : "never_run"
+    },
+    "results" : {
+      "totalSize" : 1,
+      "pageSize" : 1,
+      "pageNumber" : 1,
+      "expectedIris" : [
+        "https://mobi.com/records#workflow4"
+      ]
+    }
+  },
+  {
+    "requestUser" : "http://mobi.com/users/admin",
+    "params" : {
+      "searchText" : "workflow 4",
+      "status" : "never_run"
+    },
+    "results" : {
+      "totalSize" : 1,
+      "pageSize" : 1,
+      "pageNumber" : 1,
+      "expectedIris" : [
+        "https://mobi.com/records#workflow4"
+      ]
+    }
+  },
+  {
+    "requestUser" : "http://mobi.com/users/admin",
+    "params" : {
+      "searchText" : "workflow 1",
+      "status" : "never_run"
+    },
+    "results" : {
+      "totalSize" : 0,
+      "pageSize" : 0,
+      "pageNumber" : 0,
+      "expectedIris" : [ ]
+    }
+  },
+  {
+    "requestUser" : "http://mobi.com/users/admin",
+    "params" : {
+      "startingAfter" : "2024-02-15T14:42:38.657699-05:00",
+      "endingBefore" : "2024-02-15T14:42:48.708031-05:00"
+    },
+    "results" : {
+      "totalSize" : 3,
+      "pageSize" : 3,
+      "pageNumber" : 1,
+      "expectedIris" : [
+        "https://mobi.com/records#workflow1",
+        "https://mobi.com/records#workflow2",
+        "https://mobi.com/records#workflow3"
+      ]
+    }
+  },
+  {
+    "requestUser" : "http://mobi.com/users/admin",
+    "params" : {
+      "startingAfter" : "2024-02-15T14:42:38.657699-05:00"
+    },
+    "results" : {
+      "totalSize" : 3,
+      "pageSize" : 3,
+      "pageNumber" : 1,
+      "expectedIris" : [
+        "https://mobi.com/records#workflow1",
+        "https://mobi.com/records#workflow2",
+        "https://mobi.com/records#workflow3"
+      ]
+    }
+  }
+]

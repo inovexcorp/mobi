@@ -23,6 +23,7 @@ package com.mobi.utils.cli.operations.config;
  * #L%
  */
 
+import com.mobi.exception.MobiException;
 import com.mobi.utils.cli.api.ConfigRestoreOperation;
 import org.apache.commons.io.IOUtils;
 import org.apache.maven.artifact.versioning.InvalidVersionSpecificationException;
@@ -32,8 +33,10 @@ import org.osgi.service.component.annotations.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Objects;
 
 @Component(
         service = { Karaf42Upgrade.class, ConfigRestoreOperation.class }
@@ -64,8 +67,12 @@ public class Karaf42Upgrade implements ConfigRestoreOperation {
         // Blacklist 1.12 default Karaf config files that have changed with Karaf 4.2.x upgrade
         // Blacklist also includes VFS config file with added directory property
         // Blacklist also includes PolicyCacheConfiguration config file for change between size to number of entries
-        return IOUtils.readLines(getClass().getResourceAsStream("/configBlacklist-1.12.txt"),
-                StandardCharsets.UTF_8);
+        try {
+            return IOUtils.readLines(Objects.requireNonNull(getClass().getResourceAsStream("/configBlacklist-1.12.txt")),
+                    StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            throw new MobiException(e);
+        }
     }
 
 }

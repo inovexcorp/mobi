@@ -1,0 +1,107 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 - 2024 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="execution-history-table d-flex flex-column h-100 w-100">
+  <div class="form-wrapper">
+    <app-workflow-table-filter (onFilter)="filterEvent($event)"></app-workflow-table-filter>
+  </div>
+  <div class="message-wrapper" *ngIf="dataSource.data.length == 0; else hasResults">
+    <info-message>No workflow execution activities for workflow found</info-message>
+  </div>
+  <ng-template #hasResults>
+    <div class="table-wrapper flex-1 remove-min-height">
+      <table mat-table [dataSource]="dataSource" multiTemplateDataRows>
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef>Status</th>
+          <td mat-cell *matCellDef="let element"> 
+            <span class="badge badge-pill text-capitalize badge-padded" [ngClass]="wss.getStatusClass(element.status)">{{element.status}}</span>
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="executor">
+          <th mat-header-cell *matHeaderCellDef>Executor</th>
+          <td mat-cell *matCellDef="let element"> 
+            <span [title]="'Username: ' + element.executorUsername"> {{element.executorDisplayName}} </span> 
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="executionId">
+          <th mat-header-cell *matHeaderCellDef>Execution ID</th>
+          <td mat-cell *matCellDef="let element"> 
+            <span [title]="element.executionId"> {{element.executionIdLabel}} </span> 
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="startTime">
+          <th mat-header-cell *matHeaderCellDef>Start Time</th>
+          <td mat-cell *matCellDef="let element"> {{element.startTimeLabel}} </td>
+        </ng-container>
+        <ng-container matColumnDef="runningTime">
+          <th mat-header-cell *matHeaderCellDef>Running Time</th>
+          <td mat-cell *matCellDef="let element"> {{element.runningTimeLabel}} </td>
+        </ng-container>
+        <ng-container matColumnDef="details">
+          <th mat-header-cell *matHeaderCellDef>Details</th>
+          <td mat-cell *matCellDef="let element"> 
+            <button mat-icon-button (click)="toggleRow($event, element)">
+              <mat-icon *ngIf="expandedRow !== element; else expanded">expand_more</mat-icon>
+              <ng-template #expanded><mat-icon>expand_less</mat-icon></ng-template>
+            </button> 
+          </td>
+        </ng-container>
+        <ng-container matColumnDef="logs">
+          <th mat-header-cell *matHeaderCellDef>Logs</th>
+          <td mat-cell *matCellDef="let element">
+            <button mat-icon-button (click)="viewLogs($event, element)" 
+                    [disabled]="element.status === 'started' || !workflow.canModifyMasterBranch" 
+                    [title]="element.status === 'started' ? 'Execution currently running' : !workflow.canModifyMasterBranch ? 'You do not have permissions to view the logs' : ''">
+              <mat-icon>description</mat-icon>
+            </button>
+          </td>
+        </ng-container>
+  
+        <!-- Expanded Details -->
+        <ng-container matColumnDef="expandedDetail">
+          <td mat-cell *matCellDef="let element" [attr.colspan]="displayedColumns.length">
+            <div class="action-details" [@detailExpand]="element == expandedRow ? 'expanded' : 'collapsed'">
+              <app-action-executions-table *ngIf="actions.length; else noActions" [actions]="actions" [workflowRdf]="workflowRdf"></app-action-executions-table>
+              <ng-template #noActions>
+                <info-message>No Action Executions to display</info-message>
+              </ng-template>
+            </div>
+          </td>
+        </ng-container>
+  
+        <tr mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;" class="activity-row"></tr>
+        <tr mat-row *matRowDef="let row; columns: ['expandedDetail'];" class="detail-row"
+            [class.detail-row-expanded]="expandedRow === row"></tr>
+      </table>
+    </div>
+    <div>
+      <mat-paginator
+          [pageSizeOptions]="pageSizeOptions"
+          [length]="totalCount"
+          [pageSize]="paginationConfig.limit" 
+          (page)="onPaginatorPage($event)"
+          aria-label="Select page of Execution Activities">
+      </mat-paginator>
+    </div>
+  </ng-template>
+</div>

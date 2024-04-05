@@ -1,0 +1,178 @@
+{
+  # WORKFLOW 1 - CreateActivity
+  <http://mobi.com/activities/4c6792e7-91b3-4278-a7a8-052accce7f7b> a <http://www.w3.org/ns/prov#Activity>,
+      <http://mobi.com/ontologies/prov#CreateActivity>, <http://www.w3.org/2002/07/owl#Thing>;
+    <http://www.w3.org/ns/prov#generated> <https://mobi.com/records#workflow1>;
+    <http://www.w3.org/ns/prov#wasAssociatedWith> <http://mobi.com/users/admin>;
+    <http://www.w3.org/ns/prov#startedAtTime> "2024-02-15T14:37:53.752546-05:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+    <http://www.w3.org/ns/prov#atLocation> "4c10a6a0-6317-378d-b6e1-d4899d9c7db9";
+    <http://www.w3.org/ns/prov#endedAtTime> "2024-02-15T14:37:54.309443-05:00"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
+
+  <https://mobi.com/records#workflow1> a <http://www.w3.org/2002/07/owl#Thing>,
+      <http://www.w3.org/ns/prov#Entity>;
+    <http://www.w3.org/ns/prov#atLocation> "system";
+    <http://www.w3.org/ns/prov#generatedAtTime> "2024-02-15T14:37:54.309274-05:00"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
+
+  # WORKFLOW 1 - WorkflowExecutionActivity
+  <http://mobi.com/activities/c94de4cd-2314-4c0c-b7ca-a9899f56f981> a <http://www.w3.org/ns/prov#Activity>,
+      <http://mobi.solutions/ontologies/workflows#WorkflowExecutionActivity>, <http://www.w3.org/2002/07/owl#Thing>;
+    <http://www.w3.org/ns/prov#used> <https://mobi.com/records#workflow1>;
+    <http://mobi.solutions/ontologies/workflows#hasActionExecution> <https://mobi.solutions/workflows/ActionExecution/lastest-id>;
+    <http://mobi.solutions/ontologies/workflows#succeeded> true;
+    <http://mobi.solutions/ontologies/workflows#logs> <https://mobi.solutions/workflows/log-files/agent_a520df178207bd0096e69e0841bd64d88c32b76e.20240215.14:42:10.084.bfdbd6c2.log>;
+    <http://www.w3.org/ns/prov#wasAssociatedWith> <http://mobi.com/users/admin>;
+    <http://www.w3.org/ns/prov#startedAtTime> "2024-02-15T14:42:09.761747-05:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+    <http://www.w3.org/ns/prov#endedAtTime> "2024-02-15T14:42:19.990385-05:00"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
+
+  <https://mobi.solutions/workflows/ActionExecution/lastest-id>
+    a <http://mobi.solutions/ontologies/workflows#ActionExecution>, <http://www.w3.org/2002/07/owl#Thing>;
+    <http://mobi.solutions/ontologies/workflows#succeeded> true;
+    <http://mobi.solutions/ontologies/workflows#logs> <https://mobi.solutions/workflows/log-files/http___example.com_workflows_A_action.20240215.14:42:10.091.bfdbd6c2.log>;
+    <http://mobi.solutions/ontologies/workflows#startedAt> "2024-02-15T14:42:10.0Z"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+    <http://mobi.solutions/ontologies/workflows#endedAt> "2024-02-15T14:42:10.0Z"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
+
+  <https://mobi.solutions/workflows/log-files/agent_a520df178207bd0096e69e0841bd64d88c32b76e.20240215.14:42:10.084.bfdbd6c2.log>
+    a <http://mobi.com/ontologies/documents#BinaryFile>, <http://www.w3.org/2002/07/owl#Thing>;
+    <http://mobi.com/ontologies/documents#fileName> "agent_a520df178207bd0096e69e0841bd64d88c32b76e.20240215.14:42:10.084.bfdbd6c2.log";
+    <http://mobi.com/ontologies/documents#mimeType> "text/plain";
+    <http://mobi.com/ontologies/documents#retrievalURL> <file:///Users/USERNAME/git/mobi/mobi-distribution/data/virtualFiles/dagu/a520df178207bd0096e69e0841bd64d88c32b76e/agent_a520df178207bd0096e69e0841bd64d88c32b76e.20240215.14:42:10.084.bfdbd6c2.log> .
+
+  <https://mobi.solutions/workflows/log-files/http___example.com_workflows_A_action.20240215.14:42:10.091.bfdbd6c2.log>
+    a <http://mobi.com/ontologies/documents#BinaryFile>, <http://www.w3.org/2002/07/owl#Thing>;
+    <http://mobi.com/ontologies/documents#fileName> "http___example.com_workflows_A_action.20240215.14:42:10.091.bfdbd6c2.log";
+    <http://mobi.com/ontologies/documents#mimeType> "text/plain";
+    <http://mobi.com/ontologies/documents#retrievalURL> <file:///Users/USERNAME/git/mobi/mobi-distribution/data/virtualFiles/dagu/a520df178207bd0096e69e0841bd64d88c32b76e/http___example.com_workflows_A_action.20240215.14:42:10.091.bfdbd6c2.log> .
+
+  <http://mobi.com/activities/c3840b77-ea57-4dbe-8d13-051c9e6585ae> a <http://www.w3.org/ns/prov#Activity>,
+      <http://mobi.solutions/ontologies/workflows#WorkflowExecutionActivity>, <http://www.w3.org/2002/07/owl#Thing>;
+    <http://www.w3.org/ns/prov#used> <https://mobi.com/records#workflow1>;
+    <http://mobi.solutions/ontologies/workflows#hasActionExecution> <https://mobi.solutions/workflows/ActionExecution/86c99796-70b2-4926-9a5b-6cf992767dcb>;
+    <http://mobi.solutions/ontologies/workflows#succeeded> true;
+    <http://mobi.solutions/ontologies/workflows#logs> <https://mobi.solutions/workflows/log-files/agent_a520df178207bd0096e69e0841bd64d88c32b76e.20240215.14:42:38.717.4c49a3e6.log>;
+    <http://www.w3.org/ns/prov#wasAssociatedWith> <http://mobi.com/users/admin>;
+    <http://www.w3.org/ns/prov#startedAtTime> "2024-02-15T14:42:34.36645-05:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+    <http://www.w3.org/ns/prov#endedAtTime> "2024-02-15T14:42:44.456373-05:00"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
+
+  <https://mobi.solutions/workflows/ActionExecution/86c99796-70b2-4926-9a5b-6cf992767dcb>
+    a <http://mobi.solutions/ontologies/workflows#ActionExecution>, <http://www.w3.org/2002/07/owl#Thing>;
+    <http://mobi.solutions/ontologies/workflows#succeeded> true;
+    <http://mobi.solutions/ontologies/workflows#logs> <https://mobi.solutions/workflows/log-files/workflow2-001-actionexecution.log>;
+    <http://mobi.solutions/ontologies/workflows#startedAt> "2024-02-15T14:42:38.0Z"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+    <http://mobi.solutions/ontologies/workflows#endedAt> "2024-02-15T14:42:38.0Z"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
+
+
+  # WORKFLOW 1 CURRENT latestActivity 
+  <http://mobi.com/activities/workflow1-wea-01> a <http://www.w3.org/ns/prov#Activity>,
+      <http://mobi.solutions/ontologies/workflows#WorkflowExecutionActivity>, <http://www.w3.org/2002/07/owl#Thing>;
+    <http://www.w3.org/ns/prov#used> <https://mobi.com/records#workflow1>;
+    <http://mobi.solutions/ontologies/workflows#hasActionExecution> <https://mobi.solutions/workflows/ActionExecution/workflow2lastestactivity-actionexecution>;
+    <http://mobi.solutions/ontologies/workflows#succeeded> true;
+    <http://mobi.solutions/ontologies/workflows#logs> <https://mobi.solutions/workflows/log-files/agent_a520df178207bd0096e69e0841bd64d88c32b76e.20240215.14:42:38.717.4c49a3e6.log>;
+    <http://www.w3.org/ns/prov#wasAssociatedWith> <http://mobi.com/users/admin>;
+    <http://www.w3.org/ns/prov#startedAtTime> "2024-02-15T14:42:38.657699-05:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+    <http://www.w3.org/ns/prov#endedAtTime> "2024-02-15T14:42:48.708031-05:00"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
+
+  <https://mobi.solutions/workflows/log-files/agent_a520df178207bd0096e69e0841bd64d88c32b76e.20240215.14:42:38.717.4c49a3e6.log>
+    a <http://mobi.com/ontologies/documents#BinaryFile>, <http://www.w3.org/2002/07/owl#Thing>;
+    <http://mobi.com/ontologies/documents#fileName> "agent_a520df178207bd0096e69e0841bd64d88c32b76e.20240215.14:42:38.717.4c49a3e6.log";
+    <http://mobi.com/ontologies/documents#mimeType> "text/plain";
+    <http://mobi.com/ontologies/documents#retrievalURL> <file:///Users/USERNAME/git/mobi/mobi-distribution/data/virtualFiles/dagu/a520df178207bd0096e69e0841bd64d88c32b76e/agent_a520df178207bd0096e69e0841bd64d88c32b76e.20240215.14:42:38.717.4c49a3e6.log> .
+
+  <https://mobi.solutions/workflows/ActionExecution/workflow2lastestactivity-actionexecution>
+    a <http://mobi.solutions/ontologies/workflows#ActionExecution>, <http://www.w3.org/2002/07/owl#Thing>;
+    <http://mobi.solutions/ontologies/workflows#succeeded> true;
+    <http://mobi.solutions/ontologies/workflows#logs> <https://mobi.solutions/workflows/log-files/workflow2-001-actionexecution.log>;
+    <http://mobi.solutions/ontologies/workflows#startedAt> "2024-02-15T14:42:38.0Z"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+    <http://mobi.solutions/ontologies/workflows#endedAt> "2024-02-15T14:42:38.0Z"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
+
+  <https://mobi.solutions/workflows/log-files/workflow2-001-actionexecution.log>
+    a <http://mobi.com/ontologies/documents#BinaryFile>, <http://www.w3.org/2002/07/owl#Thing>;
+    <http://mobi.com/ontologies/documents#fileName> "http___example.com_workflows_A_action.20240215.14:42:38.719.4c49a3e6.log";
+    <http://mobi.com/ontologies/documents#mimeType> "text/plain";
+    <http://mobi.com/ontologies/documents#retrievalURL> <file:///Users/USERNAME/git/mobi/mobi-distribution/data/virtualFiles/dagu/a520df178207bd0096e69e0841bd64d88c32b76e/http___example.com_workflows_A_action.20240215.14:42:38.719.4c49a3e6.log> .
+   
+  # WORKFLOW RECORD 2 - CreateActivity
+  <http://mobi.com/activities/35a1050c-b837-4d2a-a115-933c17369b8a> a <http://www.w3.org/ns/prov#Activity>,
+      <http://mobi.com/ontologies/prov#CreateActivity>, <http://www.w3.org/2002/07/owl#Thing>;
+    <http://www.w3.org/ns/prov#generated> <https://mobi.com/records#workflow2>;
+    <http://www.w3.org/ns/prov#wasAssociatedWith> <http://mobi.com/users/admin>;
+    <http://www.w3.org/ns/prov#startedAtTime> "2024-02-15T14:43:45.343292-05:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+    <http://www.w3.org/ns/prov#atLocation> "4c10a6a0-6317-378d-b6e1-d4899d9c7db9";
+    <http://www.w3.org/ns/prov#endedAtTime> "2024-02-15T14:43:45.474807-05:00"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
+    
+  <https://mobi.com/records#workflow2> a <http://www.w3.org/2002/07/owl#Thing>,
+      <http://www.w3.org/ns/prov#Entity>;
+    <http://www.w3.org/ns/prov#atLocation> "system";
+    <http://www.w3.org/ns/prov#generatedAtTime> "2024-02-15T14:43:45.474694-05:00"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
+
+  # WORKFLOW 2 CURRENT latestActivity, status=failure
+  <http://mobi.com/activities/workflow2lastestactivity> a <http://www.w3.org/ns/prov#Activity>,
+      <http://mobi.solutions/ontologies/workflows#WorkflowExecutionActivity>, <http://www.w3.org/2002/07/owl#Thing>;
+    #<http://www.w3.org/ns/prov#used> <https://mobi.com/records#workflow2>;
+    <http://mobi.solutions/ontologies/workflows#hasActionExecution> <https://mobi.solutions/workflows/ActionExecution/workflow2lastestactivity-actionexecution>;
+    <http://mobi.solutions/ontologies/workflows#succeeded> false;
+    <http://mobi.solutions/ontologies/workflows#logs> <https://mobi.solutions/workflows/log-files/workflow2-001.log>;
+    <http://www.w3.org/ns/prov#wasAssociatedWith> <http://mobi.com/users/user>;
+    <http://www.w3.org/ns/prov#startedAtTime> "2024-02-15T14:42:38.657699-05:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+    <http://www.w3.org/ns/prov#endedAtTime> "2024-02-15T14:42:48.708031-05:00"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
+
+  <https://mobi.solutions/workflows/log-files/workflow2-001.log>
+    a <http://mobi.com/ontologies/documents#BinaryFile>, <http://www.w3.org/2002/07/owl#Thing>;
+    <http://mobi.com/ontologies/documents#fileName> "agent_a520df178207bd0096e69e0841bd64d88c32b76e.20240215.14:42:38.717.4c49a3e6.log";
+    <http://mobi.com/ontologies/documents#mimeType> "text/plain";
+    <http://mobi.com/ontologies/documents#retrievalURL> <file:///Users/USERNAME/git/mobi/mobi-distribution/data/virtualFiles/dagu/a520df178207bd0096e69e0841bd64d88c32b76e/agent_a520df178207bd0096e69e0841bd64d88c32b76e.20240215.14:42:38.717.4c49a3e6.log> .
+
+  <https://mobi.solutions/workflows/ActionExecution/workflow2lastestactivity-actionexecution>
+    a <http://mobi.solutions/ontologies/workflows#ActionExecution>, <http://www.w3.org/2002/07/owl#Thing>;
+    <http://mobi.solutions/ontologies/workflows#succeeded> true;
+    <http://mobi.solutions/ontologies/workflows#logs> <https://mobi.solutions/workflows/log-files/workflow2-001-actionexecution.log>;
+    <http://mobi.solutions/ontologies/workflows#startedAt> "2024-02-15T14:42:38.0Z"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+    <http://mobi.solutions/ontologies/workflows#endedAt> "2024-02-15T14:42:38.0Z"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
+
+  <https://mobi.solutions/workflows/log-files/workflow2-001-actionexecution.log>
+    a <http://mobi.com/ontologies/documents#BinaryFile>, <http://www.w3.org/2002/07/owl#Thing>;
+    <http://mobi.com/ontologies/documents#fileName> "http___example.com_workflows_A_action.20240215.14:42:38.719.4c49a3e6.log";
+    <http://mobi.com/ontologies/documents#mimeType> "text/plain";
+    <http://mobi.com/ontologies/documents#retrievalURL> <file:///Users/USERNAME/git/mobi/mobi-distribution/data/virtualFiles/dagu/a520df178207bd0096e69e0841bd64d88c32b76e/http___example.com_workflows_A_action.20240215.14:42:38.719.4c49a3e6.log> .
+
+  # WORKFLOW RECORD 3 - CreateActivity
+  <http://mobi.com/activities/f89eab4a-45f9-420b-b349-66abcde5213d> a <http://www.w3.org/ns/prov#Activity>,
+      <http://mobi.com/ontologies/prov#CreateActivity>, <http://www.w3.org/2002/07/owl#Thing>;
+    <http://www.w3.org/ns/prov#generated> <https://mobi.com/records#workflow3>;
+    <http://www.w3.org/ns/prov#wasAssociatedWith> <http://mobi.com/users/admin>;
+    <http://www.w3.org/ns/prov#startedAtTime> "2024-02-15T14:44:43.347064-05:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+    <http://www.w3.org/ns/prov#atLocation> "4c10a6a0-6317-378d-b6e1-d4899d9c7db9";
+    <http://www.w3.org/ns/prov#endedAtTime> "2024-02-15T14:44:43.459586-05:00"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
+
+  <https://mobi.com/records#workflow3> a <http://www.w3.org/2002/07/owl#Thing>,
+      <http://www.w3.org/ns/prov#Entity>;
+    <http://www.w3.org/ns/prov#atLocation> "system";
+    <http://www.w3.org/ns/prov#generatedAtTime> "2024-02-15T14:44:43.459454-05:00"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
+
+  # WORKFLOW 3 CURRENT latestActivity, status=started
+  <http://mobi.com/activities/workflow3lastestactivity> a <http://www.w3.org/ns/prov#Activity>,
+      <http://mobi.solutions/ontologies/workflows#WorkflowExecutionActivity>, <http://www.w3.org/2002/07/owl#Thing>;
+    #<http://www.w3.org/ns/prov#used> <https://mobi.com/records#workflow3>;
+    <http://mobi.solutions/ontologies/workflows#hasActionExecution> <https://mobi.solutions/workflows/ActionExecution/workflow3lastestactivity-actionexecution>;
+    <http://www.w3.org/ns/prov#wasAssociatedWith> <http://mobi.com/users/user-fl>;
+    <http://www.w3.org/ns/prov#startedAtTime> "2024-02-15T14:42:38.657699-05:00"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
+
+  <https://mobi.solutions/workflows/ActionExecution/workflow3lastestactivity-actionexecution>
+    a <http://mobi.solutions/ontologies/workflows#ActionExecution>, <http://www.w3.org/2002/07/owl#Thing>;
+    <http://mobi.solutions/ontologies/workflows#startedAt> "2024-02-15T14:42:38.0Z"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
+
+  # WORKFLOW RECORD 4 - CreateActivity
+  <http://mobi.com/activities/ff21782f-9736-4f7a-9caa-7e64a35b1d5d> a <http://www.w3.org/ns/prov#Activity>,
+      <http://mobi.com/ontologies/prov#CreateActivity>, <http://www.w3.org/2002/07/owl#Thing>;
+    <http://www.w3.org/ns/prov#generated> <https://mobi.com/records#workflow4>;
+    <http://www.w3.org/ns/prov#wasAssociatedWith> <http://mobi.com/users/user>;
+    <http://www.w3.org/ns/prov#startedAtTime> "2024-02-15T14:44:55.091572-05:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+    <http://www.w3.org/ns/prov#atLocation> "4c10a6a0-6317-378d-b6e1-d4899d9c7db9";
+    <http://www.w3.org/ns/prov#endedAtTime> "2024-02-15T14:44:55.207441-05:00"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
+
+  <https://mobi.com/records#workflow4> a <http://www.w3.org/2002/07/owl#Thing>,
+      <http://www.w3.org/ns/prov#Entity>;
+    <http://www.w3.org/ns/prov#atLocation> "system";
+    <http://www.w3.org/ns/prov#generatedAtTime> "2024-02-15T14:44:55.207317-05:00"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
+
+}

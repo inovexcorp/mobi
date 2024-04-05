@@ -23,6 +23,7 @@ package com.mobi.utils.cli.operations.config;
  * #L%
  */
 
+import com.mobi.exception.MobiException;
 import com.mobi.utils.cli.api.ConfigRestoreOperation;
 import org.apache.commons.io.IOUtils;
 import org.apache.maven.artifact.versioning.InvalidVersionSpecificationException;
@@ -32,8 +33,10 @@ import org.osgi.service.component.annotations.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Objects;
 
 @Component(
         service = { BlacklistingDefault.class, ConfigRestoreOperation.class }
@@ -61,8 +64,12 @@ public class BlacklistingDefault implements ConfigRestoreOperation {
     public List<String> getExcludedFiles() {
         LOGGER.debug(getClass().getSimpleName() + " getExcludedFiles");
         LOGGER.debug("Version detected. Blacklisting default files from backup.");
-        return IOUtils.readLines(getClass().getResourceAsStream("/configBlacklist.txt"),
-                StandardCharsets.UTF_8);
+        try {
+            return IOUtils.readLines(Objects.requireNonNull(getClass().getResourceAsStream("/configBlacklist.txt")),
+                    StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            throw new MobiException(e);
+        }
     }
 
 }

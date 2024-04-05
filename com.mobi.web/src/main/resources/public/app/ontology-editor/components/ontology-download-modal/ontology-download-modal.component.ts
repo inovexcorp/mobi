@@ -31,7 +31,7 @@ import { OntologyManagerService } from '../../../shared/services/ontologyManager
  * @class ontology-editor.OntologyDownloadModalComponent
  * 
  * A component that creates content for a modal that downloaded the provided OntologyRecord into
- * a chosen RDF format from a {@link ontology-editor.SerializationSelectComponent}. The ontology is provided to the
+ * a chosen RDF format from a {@link shared.SerializationSelectComponent}. The ontology is provided to the
  * modal in the form of a `OntologyRecordDisplay` from {@link ontology-editor.OpenOntologyTabComponent} Meant to be used
  * in conjunction with the `MatDialog` service.
  */

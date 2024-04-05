@@ -31,7 +31,7 @@ import { OntologyManagerService } from '../../../shared/services/ontologyManager
  *
  * A component that creates a `mat-card` that displays a `codemirror` with the current
  * {@link shared.OntologyStateService#listItem selected ontology} in a specified RDF format. The card contains a
- * {@link ontology-editor.SerializationSelectComponent}, button to refresh the preview, and a button for downloading
+ * {@link shared.SerializationSelectComponent}, button to refresh the preview, and a button for downloading
  * the ontology in the selected format.
  */
 @Component({

@@ -24,7 +24,7 @@ import { Component, Input } from '@angular/core';
 import { UntypedFormGroup } from '@angular/forms';
 
 /**
- * @class ontology-editor.SerializationSelectComponent
+ * @class shared.SerializationSelectComponent
  *
  * A component that creates a `mat-form-field` with a `select` containing serialization formats for ontologies. Attaches
  * to a `serialization` control on the provided `parentForm`.

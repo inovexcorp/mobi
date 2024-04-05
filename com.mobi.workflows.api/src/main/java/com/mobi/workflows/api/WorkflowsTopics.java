@@ -29,6 +29,10 @@ public class WorkflowsTopics {
 
     public static final String TOPIC_BASE = "com/mobi/workflows";
     public static final String TOPIC_START = TOPIC_BASE + "/START";
+    public static final String TOPIC_ACTIVITY_BASE = TOPIC_BASE + "/activities";
+    public static final String TOPIC_ACTIVITY_START = TOPIC_ACTIVITY_BASE + "/START";
+    public static final String TOPIC_ACTIVITY_END = TOPIC_ACTIVITY_BASE + "/END";
     public static final String START_PROPERTY_WORKFLOW = "workflow";
     public static final String START_PROPERTY_TRIGGER = "trigger";
+    public static final String ACTIVITY_PROPERTY_ACTIVITY = "activity";
 }

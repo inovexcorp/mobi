@@ -32,7 +32,6 @@ import org.junit.Test;
 import org.mockito.MockitoAnnotations;
 
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class Karaf42UpgradeTest {
@@ -69,7 +68,7 @@ public class Karaf42UpgradeTest {
                 "2.3;false",
                 "2.4;false",
                 "2.5;false"
-        ).collect(Collectors.toUnmodifiableList());
+        ).toList();
         List<String> actualVersionCheck = CliTestUtils.runVersionCheck(operation, expectedVersions);
         Assert.assertEquals(expectedVersions, actualVersionCheck);
     }

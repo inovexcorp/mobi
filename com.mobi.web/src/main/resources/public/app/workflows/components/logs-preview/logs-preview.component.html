@@ -1,0 +1,52 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 - 2024 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="logs-preview">
+  <div class="back-sidebar">
+    <button mat-icon-button (click)="goBack()" class="remove-min-width"><span class="fa fa-chevron-left fa-2x"></span></button>
+  </div>
+  <div class="logs-preview-main d-flex flex-column remove-min-width">
+    <div class="log-header">
+      <h1>{{activity.executionIdLabel}} <span class="badge badge-pill text-capitalize badge-padded" [ngClass]="wss.getStatusClass(activity.status)">{{activity.status}}</span></h1>
+      <p>Executed by <strong title="Username: {{activity.executorUsername}}">{{activity.executorDisplayName}}</strong> at {{activity.startTimeLabel}} for {{activity.runningTimeLabel}}</p>
+      <mat-form-field class="log-control">
+        <mat-label>Log File</mat-label>
+        <mat-select [formControl]="logControl">
+          <mat-option *ngIf="activityLog" [value]="activityLog.iri">{{activityLog.label}}</mat-option>
+          <mat-optgroup *ngFor="let group of logFiles">
+            <span [title]="group.groupLabel"><mat-icon [ngClass]="getStatusCircleClass(group.groupStatus)">circle</mat-icon> {{group.groupLabel}}</span>
+            <mat-option *ngFor="let logFile of group.logs" [value]="logFile.iri" [title]="logFile.iri">{{logFile.label}}</mat-option>
+          </mat-optgroup>
+        </mat-select>
+      </mat-form-field>
+      <button mat-icon-button color="primary" [disabled]="!logControl.value" (click)="downloadLogs()"><mat-icon>download</mat-icon></button>
+    </div>
+    <warning-message *ngIf="limitedResults">Log preview has been limited. Download to see the full contents.</warning-message>
+    <div class="log-viewer flex-1 remove-min-height" #logViewer>
+      <error-display *ngIf="errorMessage">{{errorMessage}}</error-display>
+      <ngx-codemirror *ngIf="preview; else noFile" [(ngModel)]="preview" [options]="options"></ngx-codemirror>
+      <ng-template #noFile>
+        <warning-message *ngIf="!errorMessage">No log preview to show</warning-message>
+      </ng-template>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,11 @@
+PREFIX wf: <http://mobi.solutions/ontologies/workflows#>
+PREFIX mcat: <http://mobi.com/ontologies/catalog#>
+
+SELECT ?iri
+WHERE {
+  GRAPH ?iri {
+    ?iri a wf:WorkflowRecord ;
+         mcat:catalog ?catalog ;
+         wf:workflowIRI ?workflowIri .
+  }
+}

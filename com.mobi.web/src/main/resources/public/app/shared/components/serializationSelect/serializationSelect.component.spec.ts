@@ -29,7 +29,7 @@ import { MatSelectModule } from '@angular/material/select';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 
-import { cleanStylesFromDOM } from '../../../../../public/test/ts/Shared';
+import { cleanStylesFromDOM } from '../../../../test/ts/Shared';
 import { SerializationSelectComponent } from './serializationSelect.component';
 
 describe('Serialization Select component', function() {

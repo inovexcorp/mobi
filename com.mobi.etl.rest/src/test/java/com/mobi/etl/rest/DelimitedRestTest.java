@@ -57,7 +57,6 @@ import com.mobi.rest.test.util.MobiRestTestCXF;
 import com.mobi.rest.test.util.UsernameTestFilter;
 import net.sf.json.JSONArray;
 import org.apache.commons.io.IOUtils;
-import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.FormulaEvaluator;
@@ -86,13 +85,12 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.client.WebTarget;
@@ -169,12 +167,12 @@ public class DelimitedRestTest extends MobiRestTestCXF {
         when(mappingManager.createMappingId(any(IRI.class))).thenAnswer(i -> new MappingId() {
             @Override
             public Optional<IRI> getMappingIRI() {
-                return null;
+                return Optional.empty();
             }
 
             @Override
             public Optional<IRI> getVersionIRI() {
-                return null;
+                return Optional.empty();
             }
 
             @Override
@@ -222,7 +220,7 @@ public class DelimitedRestTest extends MobiRestTestCXF {
 
     @Test
     public void updateNonexistentDelimitedTest() throws Exception {
-        String fileName = UUID.randomUUID().toString() + ".csv";
+        String fileName = UUID.randomUUID() + ".csv";
         FormDataMultiPart fd = getFileFormData("test_updated.csv");
         Response response = target().path("delimited-files/" + fileName).request().put(Entity.entity(fd.body(),
                 MediaType.MULTIPART_FORM_DATA));
@@ -232,7 +230,7 @@ public class DelimitedRestTest extends MobiRestTestCXF {
 
     @Test
     public void updateDelimitedReplacesContentTest() throws Exception {
-        String fileName = UUID.randomUUID().toString() + ".csv";
+        String fileName = UUID.randomUUID() + ".csv";
         copyResourceToTemp("test.csv", fileName);
         List<String> expectedLines = getCsvResourceLines("test_updated.csv");
 
@@ -250,7 +248,7 @@ public class DelimitedRestTest extends MobiRestTestCXF {
 
     @Test
     public void getRowsFromCsvWithDefaultsTest() throws Exception {
-        String fileName = UUID.randomUUID().toString() + ".csv";
+        String fileName = UUID.randomUUID() + ".csv";
         copyResourceToTemp("test.csv", fileName);
         List<String> expectedLines = getCsvResourceLines("test.csv");
         Response response = target().path("delimited-files/" + fileName).request().get();
@@ -260,7 +258,7 @@ public class DelimitedRestTest extends MobiRestTestCXF {
 
     @Test
     public void getRowsFromCsvWithParamsTest() throws Exception {
-        String fileName = UUID.randomUUID().toString() + ".csv";
+        String fileName = UUID.randomUUID() + ".csv";
         copyResourceToTemp("test_tabs.csv", fileName);
         List<String> expectedLines = getCsvResourceLines("test_tabs.csv");
 
@@ -279,14 +277,14 @@ public class DelimitedRestTest extends MobiRestTestCXF {
 
     @Test
     public void getRowsFromExcelWithDefaultsTest() throws Exception {
-        String fileName1 = UUID.randomUUID().toString() + ".xls";
+        String fileName1 = UUID.randomUUID() + ".xls";
         copyResourceToTemp("test.xls", fileName1);
         List<String> expectedLines = getExcelResourceLines("test.xls");
         Response response = target().path("delimited-files/" + fileName1).request().get();
         assertEquals(response.getStatus(), 200);
         testResultsRows(response, expectedLines, 10);
 
-        String fileName2 = UUID.randomUUID().toString() + ".xlsx";
+        String fileName2 = UUID.randomUUID() + ".xlsx";
         copyResourceToTemp("test.xlsx", fileName2);
         expectedLines = getExcelResourceLines("test.xlsx");
         response = target().path("delimited-files/" + fileName2).request().get();
@@ -296,14 +294,14 @@ public class DelimitedRestTest extends MobiRestTestCXF {
 
     @Test
     public void getRowsFromExcelWithFormulasTest() throws Exception {
-        String fileName1 = UUID.randomUUID().toString() + ".xls";
+        String fileName1 = UUID.randomUUID() + ".xls";
         copyResourceToTemp("formulaData.xls", fileName1);
         List<String> expectedLines = getExcelResourceLines("formulaData.xls");
         Response response = target().path("delimited-files/" + fileName1).request().get();
         assertEquals(response.getStatus(), 200);
         testResultsRows(response, expectedLines, 9);
 
-        String fileName2 = UUID.randomUUID().toString() + ".xlsx";
+        String fileName2 = UUID.randomUUID() + ".xlsx";
         copyResourceToTemp("formulaData.xlsx", fileName2);
         expectedLines = getExcelResourceLines("formulaData.xlsx");
         response = target().path("delimited-files/" + fileName2).request().get();
@@ -315,14 +313,14 @@ public class DelimitedRestTest extends MobiRestTestCXF {
     public void getRowsFromExcelWithParamsTest() throws Exception {
         int rowNum = 5;
 
-        String fileName1 = UUID.randomUUID().toString() + ".xls";
+        String fileName1 = UUID.randomUUID() + ".xls";
         copyResourceToTemp("test.xls", fileName1);
         List<String> expectedLines = getExcelResourceLines("test.xls");
         Response response = target().path("delimited-files/" + fileName1).queryParam("rowCount", rowNum).request().get();
         assertEquals(response.getStatus(), 200);
         testResultsRows(response, expectedLines, rowNum);
 
-        String fileName2 = UUID.randomUUID().toString() + ".xlsx";
+        String fileName2 = UUID.randomUUID() + ".xlsx";
         copyResourceToTemp("test.xlsx", fileName2);
         expectedLines = getExcelResourceLines("test.xlsx");
         response = target().path("delimited-files/" + fileName2).queryParam("rowCount", rowNum).request().get();
@@ -343,7 +341,7 @@ public class DelimitedRestTest extends MobiRestTestCXF {
 
     @Test
     public void mapWithNonExistentMappingTest() throws Exception {
-        String fileName = UUID.randomUUID().toString() + ".csv";
+        String fileName = UUID.randomUUID() + ".csv";
         copyResourceToTemp("test.csv", fileName);
         Response response = target().path("delimited-files/" + fileName + "/map").queryParam("mappingIRI", ERROR_IRI)
                 .request().get();
@@ -352,7 +350,7 @@ public class DelimitedRestTest extends MobiRestTestCXF {
 
     @Test
     public void mapWithMalformedMappingIRITest() throws Exception {
-        String fileName = UUID.randomUUID().toString() + ".csv";
+        String fileName = UUID.randomUUID() + ".csv";
         copyResourceToTemp("test.csv", fileName);
         Response response = target().path("delimited-files/" + fileName + "/map").queryParam("mappingIRI", "error")
                 .request().get();
@@ -361,7 +359,7 @@ public class DelimitedRestTest extends MobiRestTestCXF {
 
     @Test
     public void mapCsvWithDefaultsTest() throws Exception {
-        String fileName = UUID.randomUUID().toString() + ".csv";
+        String fileName = UUID.randomUUID() + ".csv";
         copyResourceToTemp("test.csv", fileName);
         Response response = testMapDownload(fileName, MAPPING_RECORD_IRI, null);
         isJsonld(response.readEntity(String.class));
@@ -376,7 +374,7 @@ public class DelimitedRestTest extends MobiRestTestCXF {
         params.put("containsHeaders", true);
         params.put("separator", "\t");
         params.put("fileName", "test");
-        String fileName = UUID.randomUUID().toString() + ".csv";
+        String fileName = UUID.randomUUID() + ".csv";
         copyResourceToTemp("test_tabs.csv", fileName);
 
         Response response = testMapDownload(fileName, MAPPING_RECORD_IRI, params);
@@ -387,7 +385,7 @@ public class DelimitedRestTest extends MobiRestTestCXF {
 
     @Test
     public void mapExcelWithDefaultsTest() throws Exception {
-        String fileName = UUID.randomUUID().toString() + ".xls";
+        String fileName = UUID.randomUUID() + ".xls";
         copyResourceToTemp("test.xls", fileName);
 
         Response response = testMapDownload(fileName, MAPPING_RECORD_IRI, null);
@@ -402,7 +400,7 @@ public class DelimitedRestTest extends MobiRestTestCXF {
         params.put("format", "turtle");
         params.put("containsHeaders", true);
         params.put("fileName", "test");
-        String fileName = UUID.randomUUID().toString() + ".xls";
+        String fileName = UUID.randomUUID() + ".xls";
         copyResourceToTemp("test.xls", fileName);
 
         Response response = testMapDownload(fileName, MAPPING_RECORD_IRI, params);
@@ -422,7 +420,7 @@ public class DelimitedRestTest extends MobiRestTestCXF {
     public void mapDeletesFile() throws Exception {
         Map<String, Object> params = new HashMap<>();
         params.put("containsHeaders", true);
-        String fileName = UUID.randomUUID().toString() + ".xls";
+        String fileName = UUID.randomUUID() + ".xls";
         copyResourceToTemp("test.xls", fileName);
 
         assertTrue(Files.exists(Paths.get(DelimitedRest.TEMP_DIR + "/" + fileName)));
@@ -446,7 +444,7 @@ public class DelimitedRestTest extends MobiRestTestCXF {
 
     @Test
     public void mapPreviewCsvWithDefaultsTest() throws Exception {
-        String fileName = UUID.randomUUID().toString() + ".csv";
+        String fileName = UUID.randomUUID() + ".csv";
         copyResourceToTemp("test.csv", fileName);
         Response response = testMapPreview(fileName, "[]", null);
         isJsonld(response.readEntity(String.class));
@@ -458,7 +456,7 @@ public class DelimitedRestTest extends MobiRestTestCXF {
         params.put("format", "turtle");
         params.put("containsHeaders", true);
         params.put("separator", "\t");
-        String fileName = UUID.randomUUID().toString() + ".csv";
+        String fileName = UUID.randomUUID() + ".csv";
         copyResourceToTemp("test_tabs.csv", fileName);
 
         Response response = testMapPreview(fileName, "[]", params);
@@ -467,7 +465,7 @@ public class DelimitedRestTest extends MobiRestTestCXF {
 
     @Test
     public void mapPreviewExcelWithDefaultsTest() throws Exception {
-        String fileName = UUID.randomUUID().toString() + ".xls";
+        String fileName = UUID.randomUUID() + ".xls";
         copyResourceToTemp("test.xls", fileName);
 
         Response response = testMapPreview(fileName, "[]", null);
@@ -479,7 +477,7 @@ public class DelimitedRestTest extends MobiRestTestCXF {
         Map<String, Object> params = new HashMap<>();
         params.put("format", "turtle");
         params.put("containsHeaders", true);
-        String fileName = UUID.randomUUID().toString() + ".xls";
+        String fileName = UUID.randomUUID() + ".xls";
         copyResourceToTemp("test.xls", fileName);
 
         Response response = testMapPreview(fileName, "[]", params);
@@ -527,7 +525,7 @@ public class DelimitedRestTest extends MobiRestTestCXF {
     @Test
     public void mapIntoDatasetWithNonexistentMappingTest() throws Exception {
         // Setup:
-        String fileName = UUID.randomUUID().toString() + ".csv";
+        String fileName = UUID.randomUUID() + ".csv";
         copyResourceToTemp("test.csv", fileName);
 
         Response response = target().path("delimited-files/" + fileName + "/map").queryParam("mappingRecordIRI", ERROR_IRI)
@@ -538,7 +536,7 @@ public class DelimitedRestTest extends MobiRestTestCXF {
     @Test
     public void mapIntoDatasetWithMalformedMappingIRITest() throws Exception {
         // Setup:
-        String fileName = UUID.randomUUID().toString() + ".csv";
+        String fileName = UUID.randomUUID() + ".csv";
         copyResourceToTemp("test.csv", fileName);
 
         Response response = target().path("delimited-files/" + fileName + "/map").queryParam("mappingRecordIRI", "error")
@@ -550,7 +548,7 @@ public class DelimitedRestTest extends MobiRestTestCXF {
     public void mapIntoDatasetWithDatasetOrRepoIssue() throws Exception {
         // Setup:
         doThrow(new IllegalArgumentException("Dataset does not exist")).when(rdfImportService).importModel(any(), any());
-        String fileName = UUID.randomUUID().toString() + ".csv";
+        String fileName = UUID.randomUUID() + ".csv";
         copyResourceToTemp("test.csv", fileName);
 
         Response response = target().path("delimited-files/" + fileName + "/map").queryParam("mappingRecordIRI", MAPPING_RECORD_IRI)
@@ -563,9 +561,9 @@ public class DelimitedRestTest extends MobiRestTestCXF {
         // Setup:
         Statement data = vf.createStatement(vf.createIRI("http://test.org/class"), vf.createIRI("http://test.org/property"), vf.createLiteral(true));
         Model model = mf.createEmptyModel();
-        model.addAll(Collections.singleton(data));
+        model.add(data);
         when(converter.convert(any(SVConfig.class))).thenReturn(model);
-        String fileName = UUID.randomUUID().toString() + ".csv";
+        String fileName = UUID.randomUUID() + ".csv";
         copyResourceToTemp("test.csv", fileName);
 
         Response response = target().path("delimited-files/" + fileName + "/map").queryParam("mappingRecordIRI", MAPPING_RECORD_IRI)
@@ -578,9 +576,9 @@ public class DelimitedRestTest extends MobiRestTestCXF {
         // Setup:
         Statement data = vf.createStatement(vf.createIRI("http://test.org/class"), vf.createIRI("http://test.org/property"), vf.createLiteral(true));
         Model model = mf.createEmptyModel();
-        model.addAll(Collections.singleton(data));
+        model.add(data);
         when(converter.convert(any(ExcelConfig.class))).thenReturn(model);
-        String fileName = UUID.randomUUID().toString() + ".xls";
+        String fileName = UUID.randomUUID() + ".xls";
         copyResourceToTemp("test.xls", fileName);
 
         Response response = target().path("delimited-files/" + fileName + "/map").queryParam("mappingRecordIRI", MAPPING_RECORD_IRI)
@@ -620,7 +618,7 @@ public class DelimitedRestTest extends MobiRestTestCXF {
     @Test
     public void mapIntoOntologyRecordWithNonexistentMappingTest() throws Exception {
         // Setup:
-        String fileName = UUID.randomUUID().toString() + ".csv";
+        String fileName = UUID.randomUUID() + ".csv";
         copyResourceToTemp("test.csv", fileName);
 
         Response response = target().path("delimited-files/" + fileName + "/map-to-ontology").queryParam("mappingRecordIRI", ERROR_IRI)
@@ -631,7 +629,7 @@ public class DelimitedRestTest extends MobiRestTestCXF {
     @Test
     public void mapIntoOntologyRecordWithMalformedMappingIRITest() throws Exception {
         // Setup:
-        String fileName = UUID.randomUUID().toString() + ".csv";
+        String fileName = UUID.randomUUID() + ".csv";
         copyResourceToTemp("test.csv", fileName);
 
         Response response = target().path("delimited-files/" + fileName + "/map-to-ontology").queryParam("mappingRecordIRI", "error")
@@ -643,7 +641,7 @@ public class DelimitedRestTest extends MobiRestTestCXF {
     public void mapIntoOntologyRecordThatHasNoMasterBranchSetTest() throws Exception {
         // Setup:
         when(ontologyRecord.getMasterBranch_resource()).thenReturn(Optional.empty());
-        String fileName = UUID.randomUUID().toString() + ".csv";
+        String fileName = UUID.randomUUID() + ".csv";
         copyResourceToTemp("test.csv", fileName);
 
         Response response = target().path("delimited-files/" + fileName + "/map-to-ontology").queryParam("mappingRecordIRI", MAPPING_RECORD_IRI)
@@ -658,14 +656,14 @@ public class DelimitedRestTest extends MobiRestTestCXF {
         Statement statement2 = vf.createStatement(vf.createIRI("http://test.org/ontology-record-2"), vf.createIRI("http://test.org/property"), vf.createLiteral(true));
 
         Model model = mf.createEmptyModel();
-        model.addAll(Stream.of(statement1, statement2).collect(Collectors.toList()));
+        model.addAll(Stream.of(statement1, statement2).toList());
         Model committedModel = mf.createEmptyModel();
-        committedModel.addAll(Collections.singleton(statement2));
+        committedModel.add(statement2);
         when(converter.convert(any(SVConfig.class))).thenReturn(model);
         when(ontologyImportService.importOntology(eq(vf.createIRI(ONTOLOGY_RECORD_IRI)),
                 eq(vf.createIRI(ONTOLOGY_RECORD_BRANCH_IRI)), eq(false), eq(model), eq(user), anyString()))
                 .thenReturn(new Difference.Builder().additions(committedModel).build());
-        String fileName = UUID.randomUUID().toString() + ".csv";
+        String fileName = UUID.randomUUID() + ".csv";
         copyResourceToTemp("test.csv", fileName);
 
         Response response = target().path("delimited-files/" + fileName + "/map-to-ontology").queryParam("mappingRecordIRI", MAPPING_RECORD_IRI)
@@ -681,7 +679,7 @@ public class DelimitedRestTest extends MobiRestTestCXF {
         Statement statement2 = vf.createStatement(vf.createIRI("http://test.org/ontology-record-2"), vf.createIRI("http://test.org/property"), vf.createLiteral(true));
 
         Model model = mf.createEmptyModel();
-        model.addAll(Stream.of(statement1, statement2).collect(Collectors.toList()));
+        model.addAll(Stream.of(statement1, statement2).toList());
         when(converter.convert(any(SVConfig.class))).thenReturn(model);
         when(ontologyImportService.importOntology(eq(vf.createIRI(ONTOLOGY_RECORD_IRI)),
                 eq(vf.createIRI(ONTOLOGY_RECORD_BRANCH_IRI)), eq(false), eq(model), eq(user), anyString()))
@@ -689,7 +687,7 @@ public class DelimitedRestTest extends MobiRestTestCXF {
                         .additions(mf.createEmptyModel())
                         .deletions(mf.createEmptyModel())
                         .build());
-        String fileName = UUID.randomUUID().toString() + ".csv";
+        String fileName = UUID.randomUUID() + ".csv";
         copyResourceToTemp("test.csv", fileName);
 
         Response response = target().path("delimited-files/" + fileName + "/map-to-ontology").queryParam("mappingRecordIRI", MAPPING_RECORD_IRI)
@@ -705,14 +703,14 @@ public class DelimitedRestTest extends MobiRestTestCXF {
         Statement statement2 = vf.createStatement(vf.createIRI("http://test.org/ontology-record-2"), vf.createIRI("http://test.org/property"), vf.createLiteral(true));
 
         Model model = mf.createEmptyModel();
-        model.addAll(Stream.of(statement1, statement2).collect(Collectors.toList()));
+        model.addAll(Stream.of(statement1, statement2).toList());
         Model committedModel = mf.createEmptyModel();
-        committedModel.addAll(Collections.singleton(statement2));
+        committedModel.add(statement2);
         when(converter.convert(any(ExcelConfig.class))).thenReturn(model);
         when(ontologyImportService.importOntology(eq(vf.createIRI(ONTOLOGY_RECORD_IRI)),
                 eq(vf.createIRI(MASTER_BRANCH_IRI)), eq(false), eq(model), eq(user), anyString()))
                 .thenReturn(new Difference.Builder().additions(committedModel).build());
-        String fileName = UUID.randomUUID().toString() + ".xls";
+        String fileName = UUID.randomUUID() + ".xls";
         copyResourceToTemp("test.xls", fileName);
 
         Response response = target().path("delimited-files/" + fileName + "/map-to-ontology").queryParam("mappingRecordIRI", MAPPING_RECORD_IRI)
@@ -778,26 +776,26 @@ public class DelimitedRestTest extends MobiRestTestCXF {
     }
 
     private List<String> getCsvResourceLines(String fileName) throws Exception {
-        return IOUtils.readLines(getClass().getClassLoader().getResourceAsStream(fileName), StandardCharsets.UTF_8);
+        return IOUtils.readLines(Objects.requireNonNull(getClass().getClassLoader().getResourceAsStream(fileName)), StandardCharsets.UTF_8);
     }
 
     private List<String> getExcelResourceLines(String fileName) {
         List<String> expectedLines = new ArrayList<>();
         try {
-            Workbook wb = WorkbookFactory.create(getClass().getResourceAsStream("/" + fileName));
+            Workbook wb = WorkbookFactory.create(Objects.requireNonNull(getClass().getResourceAsStream("/" + fileName)));
             FormulaEvaluator evaluator = wb.getCreationHelper().createFormulaEvaluator();
             Sheet sheet = wb.getSheetAt(0);
             DataFormatter df = new DataFormatter();
             int index = 0;
             for (Row row : sheet) {
-                String rowStr = "";
+                StringBuilder rowStr = new StringBuilder();
                 for (Cell cell : row) {
-                    rowStr += df.formatCellValue(cell, evaluator);
+                    rowStr.append(df.formatCellValue(cell, evaluator));
                 }
-                expectedLines.add(index, rowStr);
+                expectedLines.add(index, rowStr.toString());
                 index++;
             }
-        } catch (IOException | InvalidFormatException e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
         return expectedLines;
@@ -811,7 +809,7 @@ public class DelimitedRestTest extends MobiRestTestCXF {
     }
 
     private void copyResourceToTemp(String resourceName, String newName) throws IOException {
-        Files.copy(getClass().getResourceAsStream("/" + resourceName),
+        Files.copy(Objects.requireNonNull(getClass().getResourceAsStream("/" + resourceName)),
                 Paths.get(DelimitedRest.TEMP_DIR + "/" + newName), StandardCopyOption.REPLACE_EXISTING);
     }
 }

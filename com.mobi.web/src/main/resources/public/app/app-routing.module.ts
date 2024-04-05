@@ -40,6 +40,7 @@ import { MainLayoutComponent } from './layouts/main-layout.component';
 import { LoginLayoutComponent } from './layouts/login-layout.component';
 import { AlreadyAuthenticatedGuard } from './alreadyAuthenticated.guard';
 import { PERSPECTIVES } from './shared/models/routePerspective.interface';
+import { WorkflowsComponent } from './workflows/components/workflows/workflows.component';
 
 const routes: Routes = [
     {
@@ -54,6 +55,7 @@ const routes: Routes = [
             { path: 'catalog', component: CatalogPageComponent, data: { title: 'Catalog' } },
             { path: 'ontology-editor', component: OntologyEditorPageComponent, data: { title: 'Ontology Editor' } },
             { path: 'shapes-graph-editor', component: ShapesGraphEditorPageComponent, data: { title: 'Shapes Editor' } },
+            { path: 'workflows', component: WorkflowsComponent, data: {title: 'Workflows'} },
             { path: 'discover', component: DiscoverPageComponent, data: { title: 'Discover' } },
             { path: 'mapper', component: MapperPageComponent, data: { title: 'Mapping Tool' } },
             { path: 'datasets', component: DatasetsPageComponent, data: { title: 'Datasets' } },
@@ -75,6 +77,7 @@ const routes: Routes = [
             { icon: 'book', route: '/catalog', name: 'Catalog' },
             { icon: 'pencil-square-o', route: '/ontology-editor', name: 'Ontology Editor'},
             { mat: true, icon: 'rule', route: '/shapes-graph-editor', name: 'Shapes Editor'},
+            { mat: true, icon: 'fact_check-square-o', route: '/workflows', name: 'Workflows'},
             { icon: 'envelope-o', route: '/merge-requests', name: 'Merge Requests' },
             { icon: 'map-o', route: '/mapper', name: 'Mapping Tool' },
             { icon: 'database', route: '/datasets', name: 'Datasets' },

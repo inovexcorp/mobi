@@ -40,6 +40,7 @@ import { UserManagerService } from '../../../shared/services/userManager.service
 import { DCTERMS, USER, MERGEREQ } from '../../../prefixes';
 import { User } from '../../../shared/models/user.class';
 import { CommentDisplayComponent } from './commentDisplay.component';
+import { MarkdownEditorComponent } from '../../../shared/components/markdownEditor/markdownEditor.component';
 
 describe('Comment Display component', function() {
     let component: CommentDisplayComponent;
@@ -68,6 +69,7 @@ describe('Comment Display component', function() {
             ],
             declarations: [
                 CommentDisplayComponent,
+                MockComponent(MarkdownEditorComponent),
                 MockComponent(ShowdownComponent),
             ],
             providers: [

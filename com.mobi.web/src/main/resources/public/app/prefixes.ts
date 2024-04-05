@@ -51,4 +51,6 @@ export const SHAPESGRAPHSTATE = 'http://mobi.com/ontologies/shapes-graph/state#'
 export const BRANCHID = 'http://mobi.com/states/shapes-graph-editor/branch-id/';
 export const TAGID ='http://mobi.com/states/shapes-graph-editor/tag-id/';
 export const COMMITID = 'http://mobi.com/states/shapes-graph-editor/commit-id/';
+export const WORKFLOWS = 'http://mobi.solutions/ontologies/workflows#';
+export const WORKFLOWLOGS = 'https://mobi.solutions/workflows/log-files/';
 export const GRAPHEDITOR = 'shapes-graph-editor';

@@ -24,8 +24,47 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { fakeAsync, tick } from '@angular/core/testing';
 import { formatDate } from '@angular/common';
 
-import { DCTERMS, XSD } from '../prefixes';
-import { condenseCommitId, createHttpParams, createJson, getBeautifulIRI, getDate, getDctermsId, getDctermsValue, getErrorDataObject, getIRILocalName, getIRINamespace, getInputType, getObjIrisFromDifference, getPattern, getPropertyId, getPropertyIds, getPropertyValue, getSkolemizedIRI, handleError, handleErrorObject, hasPropertyId, hasPropertyValue, isBlankNode, isBlankNodeId, mergingArrays, paginatedConfigToHttpParams, removeDctermsValue, removePropertyId, removePropertyValue, replacePropertyId, replacePropertyValue, setDctermsValue, setPropertyId, setPropertyValue, updateDctermsValue } from './utility';
+import moment from 'moment/moment';
+import { cloneDeep } from 'lodash';
+
+import { DC, DCTERMS, RDFS, XSD } from '../prefixes';
+import {
+  condenseCommitId,
+  createHttpParams,
+  createJson,
+  getBeautifulIRI,
+  getDate,
+  getDctermsId,
+  getDctermsValue,
+  getErrorDataObject,
+  getIRILocalName,
+  getIRINamespace,
+  getInputType,
+  getObjIrisFromDifference,
+  getPattern,
+  getPropertyId,
+  getPropertyIds,
+  getPropertyValue,
+  getSkolemizedIRI,
+  handleError,
+  handleErrorObject,
+  hasPropertyId,
+  hasPropertyValue,
+  isBlankNode,
+  isBlankNodeId,
+  mergingArrays,
+  paginatedConfigToHttpParams,
+  removeDctermsValue,
+  removePropertyId,
+  removePropertyValue,
+  replacePropertyId,
+  replacePropertyValue,
+  setDctermsValue,
+  setPropertyId,
+  setPropertyValue,
+  updateDctermsValue,
+  runningTime, toFormattedDateString, orNone, getStatus, getEntityName
+} from './utility';
 import { REGEX } from '../constants';
 import { JSONLDObject } from './models/JSONLDObject.interface';
 
@@ -498,5 +537,106 @@ describe('Utility method', () => {
   it('should condense a commit id', () => {
     const id = 'http://test.com#AAAAAAAAAAAAAAA';
     expect(condenseCommitId(id)).toEqual('AAAAAAAAAA');
+  });
+  describe('runningTime function', () => {
+    it('returns "(none)" for missing start time', () => {
+      const endTime = new Date();
+      expect(runningTime(null, endTime)).toBe('(none)');
+    });
+
+    it('returns "(none)" for missing end time', () => {
+      const startTime = new Date();
+      expect(runningTime(startTime, null)).toBe('(none)');
+    });
+
+    it('returns correct running time for less than 60 seconds', () => {
+      const startTime = new Date();
+      const endTime = moment(startTime).add(30, 'seconds').toDate();
+      expect(runningTime(startTime, endTime)).toBe('30 sec');
+    });
+    it('returns correct running time for less than 20 seconds with decimals', () => {
+      const t1 = '2024-03-06T11:36:51.356097-06:00';
+      const t2 = '2024-03-06T11:37:01.410147-06:00';
+      const time1 = new Date(t1);
+      const time2 = new Date(t2);
+      const startTime = moment(t1);
+      const endTime = moment(t2);
+      const running  = moment.duration(endTime.diff(startTime)).asSeconds();
+      expect(runningTime(time1, time2)).toBe(`${running} sec`);
+    });
+  });
+  describe('toFormattedDateString function', () => {
+    it('returns "(none)" for missing start time', () => {
+      expect(toFormattedDateString(null)).toBe('(none)');
+    });
+    it('dates are in the specified format.', () => {
+      const date = new Date();
+      expect(toFormattedDateString(date)).toBe(moment(date).format('h:mm:ssA M/D/Y'));
+    });
+  });
+  describe('orNone function', () => {
+    it('returns "(none)" for null value', () => {
+      expect(orNone(null)).toBe('(none)');
+    });
+    it('return the correct value when a non-null value is passed', () => {
+      const data = 'value';
+      expect(orNone(data)).toBe(data);
+    });
+    it('return the correct value when a non-null value is passed & a call back function is passed', () => {
+      const id = '5d22e258-03d7-4289-87c0-49396a67929f';
+      expect(orNone(id, condenseCommitId)).toBe(condenseCommitId(id));
+    });
+  });
+  describe('getStatus function', () => {
+    it('returns "(none)" for null value', () => {
+      expect(getStatus(null)).toBe('(none)');
+    });
+    it('return the correct value when a never_run value is passed', () => {
+      const data = 'never_run';
+      expect(getStatus(data)).toBe('never-run');
+    });
+    it('returns the provided value without modification ', () => {
+      const status = 'success';
+      expect(getStatus(status)).toBe(status);
+    });
+  });
+  describe('getEntityName should return', function() {
+    beforeEach(function () {
+      this.entity = cloneDeep({'@id': 'test'});
+    });
+    describe('returns the rdfs:label if present', function() {
+      it('and in english', function() {
+        this.entity[`${RDFS}label`] = [{'@value': 'hello', '@language': 'en'}, {'@value': 'hola', '@language': 'es'}];
+        expect(getEntityName(this.entity)).toEqual('hello');
+      });
+      it('and there is no english version', function() {
+        this.entity[`${RDFS}label`] = [{ '@value': 'title' }];
+        expect(getEntityName(this.entity)).toEqual('title');
+      });
+    });
+    describe('returns the dcterms:title if present and no rdfs:label', function() {
+      it('and in english', function() {
+        this.entity[`${DCTERMS}title`] = [{'@value': 'hello', '@language': 'en'}, {'@value': 'hola', '@language': 'es'}];
+        expect(getEntityName(this.entity)).toEqual('hello');
+      });
+      it('and there is no english version', function() {
+        this.entity[`${DCTERMS}title`] = [{ '@value': 'title' }];
+        expect(getEntityName(this.entity)).toEqual('title');
+      });
+    });
+    describe('returns the dc:title if present and no rdfs:label or dcterms:title', function() {
+      it('and in english', function() {
+        this.entity[`${DC}title`] = [{'@value': 'hello', '@language': 'en'}, {'@value': 'hola', '@language': 'es'}];
+        expect(getEntityName(this.entity)).toEqual('hello');
+      });
+      it('and there is no english version', function() {
+        this.entity[`${DC}title`] = [{ '@value': 'title' }];
+        expect(getEntityName(this.entity)).toEqual('title');
+      });
+    });
+    it('returns the @id if present and nothing else', function() {
+      this.entity['@id'] = 'http://test.com#ontology';
+      expect(getEntityName(this.entity)).toEqual('Ontology');
+    });
   });
 });

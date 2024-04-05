@@ -1,0 +1,123 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 - 2024 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="workflow-records h-100">
+    <div class="workflow-top-bar p-1">
+        <div class="workflow-filters">
+            <app-workflow-table-filter
+                [searchText]="paginationConfig.searchText"
+                [includeSearchText]="true" 
+                [includeNeverRunOption]="true"
+                (onFilter)="filterEvent($event)">
+            </app-workflow-table-filter>
+        </div>
+        <div class="workflow-control">
+            <app-workflow-controls [records]="getSelectedRecords()"
+                                    [currentlyRunning]="dataSource.isWorkflowRunning"
+                                    (onRun)="runWorkflow()"
+                                    (onDownload)="downloadWorkflow()"
+                                    (onDelete)="deleteWorkflow()">
+            </app-workflow-controls>
+        </div>
+    </div>
+    <error-display *ngIf="dataSource.errorMessage">{{dataSource.errorMessage}}</error-display>
+    <info-message *ngIf="dataSource.infoMessage">{{dataSource.infoMessage}}</info-message>
+    <ng-container *ngIf="dataSource.length > 0">
+        <div class="workflow-list flex-1">
+            <table mat-table class="workflow-table" 
+                [dataSource]="dataSource"  
+                matSort (matSortChange)="sortChange($event)" 
+                [matSortActive]="matSortActive"
+                [matSortDirection]="matSortDirection"
+                [trackBy]="trackWorkflowDataRow">
+                <!-- Position Column -->
+                <ng-container matColumnDef="position">
+                    <th mat-header-cell *matHeaderCellDef></th>
+                    <td mat-cell *matCellDef="let element">
+                        <mat-checkbox [ngModel]="element.checked" (ngModelChange)="toggleWorkflow(element, $event)" color="primary">
+                        </mat-checkbox>
+                    </td>
+                </ng-container>
+                <!-- Name Column -->
+                <ng-container matColumnDef="title">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header sortActionDescription="Sort by Workflow"> Workflow </th>
+                    <td mat-cell *matCellDef="let element">
+                        <span class="text-truncate" title="{{element.record.workflowIRI}}">
+                            {{element.record.title}}
+                        </span>
+                        <!-- TODO Figure out why arrow_outward does not work -->
+                        <button mat-icon-button (click)="openRecord(element)"><mat-icon>open_in_new</mat-icon></button>
+                    </td>
+                </ng-container>
+                <!-- active Column -->
+                <ng-container matColumnDef="active">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header sortActionDescription="Sort by Active"> Active </th>
+                    <td mat-cell *matCellDef="let element">
+                        <mat-slide-toggle
+                            [disabled]="!element.record.canModifyMasterBranch || element.record.status === 'started'"
+                            [(ngModel)]="element.record.active"
+                            (change)="updateStatus($event, element)"></mat-slide-toggle>
+                    </td>
+                </ng-container>
+                <!-- status Column -->
+                <ng-container matColumnDef="status">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header sortActionDescription="Sort by Status"> Status </th>
+                    <td mat-cell *matCellDef="let element">
+                        <span class="badge badge-pill text-capitalize badge-padded"
+                            [ngClass]="wss.getStatusClass(element.statusDisplay)">
+                            {{element.statusDisplay}}
+                        </span>
+                    </td>
+                </ng-container>
+                <!-- executor Column -->
+                <ng-container matColumnDef="executorUsername">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header sortActionDescription="Sort by Executor"> Executor </th>
+                    <td mat-cell *matCellDef="let element"> {{element.executorDisplay}} </td>
+                </ng-container>
+                <!-- executionId Column -->
+                <ng-container matColumnDef="executorIri">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header sortActionDescription="Sort by Execution ID"> Execution ID </th>
+                    <td mat-cell *matCellDef="let element"> {{element.executionIdDisplay}} </td>
+                </ng-container>
+                <!-- startTime Column -->
+                <ng-container matColumnDef="startTime" >
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header sortActionDescription="Sort by Start time"> Start Time </th>
+                    <td mat-cell *matCellDef="let element"> {{element.startTimeDisplay}} </td>
+                </ng-container>
+                <!-- runningTime Column -->
+                <ng-container matColumnDef="runningTime">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header sortActionDescription="Sort by Running time">Running Time</th>
+                    <td mat-cell *matCellDef="let element"> {{element.runningTimeDisplay}} </td>
+                </ng-container>
+                <tr mat-header-row *matHeaderRowDef="columnsToDisplay; sticky: true"></tr>
+                <tr mat-row *matRowDef="let row; columns: columnsToDisplay;"></tr>
+            </table>
+        </div>
+        <div>
+            <mat-paginator [pageIndex]="paginationConfig.pageIndex" 
+                [length]="dataSource.totalCount" 
+                [pageSize]="paginationConfig.limit" 
+                (page)="onPageChange($event)">
+            </mat-paginator>
+        </div>
+    </ng-container>
+</div>

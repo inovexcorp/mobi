@@ -26,6 +26,7 @@ package com.mobi.utils.cli;
 import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.etl.api.config.rdf.ImportServiceConfig;
 import com.mobi.etl.api.rdf.RDFImportService;
+import com.mobi.exception.MobiException;
 import com.mobi.platform.config.api.state.StateManager;
 import com.mobi.repository.api.RepositoryManager;
 import com.mobi.repository.impl.sesame.memory.MemoryRepositoryConfig;
@@ -71,6 +72,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
@@ -85,7 +87,7 @@ public class Restore implements Action {
     public static final String CONFIG_PATH = RESTORE_PATH + File.separator + "configurations";
     public static final String MANIFEST_FILE = RESTORE_PATH + File.separator + "manifest.json";
     private final List<String> mobiVersions = Arrays.asList("1.12", "1.13", "1.14", "1.15", "1.16", "1.17",
-            "1.18", "1.19", "1.20", "1.21", "1.22", "2.0", "2.1", "2.2", "2.3", "2.4", "2.5");
+            "1.18", "1.19", "1.20", "1.21", "1.22", "2.0", "2.1", "2.2", "2.3", "2.4", "2.5", "2.6");
 
     // Service References
     @Reference
@@ -101,7 +103,7 @@ public class Restore implements Action {
     protected StateManager stateManager;
 
     @Reference(optional = true)
-    volatile private EncryptionService encryptionService;
+    private volatile EncryptionService encryptionService;
 
     @Reference
     protected CatalogConfigProvider config;
@@ -127,7 +129,7 @@ public class Restore implements Action {
     // Implementation
 
     /**
-     * Execute Restore
+     * Execute Restore.
      * Steps:
      * - Unzip backup zip file
      * - Read Manifest File
@@ -141,7 +143,7 @@ public class Restore implements Action {
      * - Restarting all services
      *
      * @return Object
-     * @throws Exception
+     * @throws Exception If an error occurs when restoring
      */
     @Override
     public Object execute() throws Exception {
@@ -154,7 +156,7 @@ public class Restore implements Action {
         }
 
         ManifestFile manifestFile = ManifestFile.fromJson(MANIFEST_FILE, mobiVersions);
-        if(manifestFile.getError().isPresent()){
+        if (manifestFile.getError().isPresent()) {
             error(manifestFile.getError().get());
             return null;
         }
@@ -182,7 +184,10 @@ public class Restore implements Action {
 
         out("== Deleting Temporary Restore Directory");
         File tempArchive = new File(RESTORE_PATH);
-        tempArchive.delete();
+        boolean deleted = tempArchive.delete();
+        if (!deleted) {
+            out("Temporary restore directory was not deleted properly");
+        }
 
         out("== Restarting XACMLPolicyManager bundle ="); // recreate policies that were deleted
         long start = System.currentTimeMillis();
@@ -202,8 +207,8 @@ public class Restore implements Action {
             File configDir = new File(CONFIG_PATH);
 
             // Generate list of repoServices from the repository configuration filenames in the backup
-            File[] repoFiles = configDir.listFiles((d, name) -> name.contains("com.mobi.service.repository"));
-            if (repoFiles != null && repoFiles.length != 0) {
+            File[] repoFiles = configDir.listFiles((dir, name) -> name.contains("com.mobi.service.repository"));
+            if (repoFiles != null) {
                 for (File repoFile : repoFiles) {
                     String filename = repoFile.getName();
                     StringBuilder sb = new StringBuilder("(&(objectClass=com.mobi.repository.api.OsgiRepository)"
@@ -222,11 +227,11 @@ public class Restore implements Action {
             configRestoreOperations.forEach((ConfigRestoreOperation operation) -> {
                 try {
                     List<String> excludedFiles = operation.getExcludedFiles();
-                    out(String.format("Running Operation %s with priority %s for versions %s," +
-                                    " excludedFiles count: %s", operation.getClass(), operation.getPriority(),
+                    out(String.format("Running Operation %s with priority %s for versions %s,"
+                                    + " excludedFiles count: %s", operation.getClass(), operation.getPriority(),
                             operation.getVersionRange(), excludedFiles.size()));
                     blacklistedFiles.addAll(excludedFiles);
-                } catch (InvalidVersionSpecificationException e) {
+                } catch (InvalidVersionSpecificationException | MobiException e) {
                     error(e.getMessage(), e);
                 }
             });
@@ -241,7 +246,8 @@ public class Restore implements Action {
             try (Stream<Path> stream = Files.walk(src)) {
                 stream.forEach(backupConfig -> {
                     try {
-                        boolean isSystemPolicy = RestoreUtils.containsSubPath(backupConfig, Paths.get("policies/systemPolicies"));
+                        boolean isSystemPolicy = RestoreUtils.containsSubPath(backupConfig,
+                                Paths.get("policies/systemPolicies"));
                         Path newFileDest = dest.resolve(src.relativize(backupConfig));
                         if (Files.isDirectory(backupConfig)) {
                             if (!Files.exists(newFileDest)) {
@@ -254,16 +260,18 @@ public class Restore implements Action {
                         } else if (!blacklistedFiles.contains(newFileDest.getFileName().toString())) {
                             Files.copy(backupConfig, newFileDest, StandardCopyOption.REPLACE_EXISTING);
                         } else {
-                            LOGGER.trace("Skipping restore of file: " + newFileDest.getFileName().toString());
+                            LOGGER.trace("Skipping restore of file: " + newFileDest.getFileName());
                         }
                     } catch (IOException e) {
                         LOGGER.error("Could not copy file: " + backupConfig.getFileName());
                     }
                 });
             }
-            out(String.format("Waiting %s seconds for services to restart after copying config files", CONFIG_RESTART_TIMEOUT));
+            out(String.format("Waiting %s seconds for services to restart after copying config files",
+                    CONFIG_RESTART_TIMEOUT));
             TimeUnit.SECONDS.sleep(CONFIG_RESTART_TIMEOUT);
-            List<String> services = IOUtils.readLines(getClass().getResourceAsStream("/registered-services.txt"),
+            List<String> services = IOUtils.readLines(Objects.requireNonNull(getClass()
+                            .getResourceAsStream("/registered-services.txt")),
                     StandardCharsets.UTF_8);
             services.addAll(repoServices);
 
@@ -277,7 +285,7 @@ public class Restore implements Action {
     }
 
     /**
-     * Clear All Repos
+     * Clear All Repos.
      *
      * @param repositoryManager Repository Manager
      * @return A list of remote repos
@@ -316,7 +324,8 @@ public class Restore implements Action {
                 long startTime = System.currentTimeMillis();
                 importService.importFile(builder.build(), repoFile);
                 long endTime = System.currentTimeMillis();
-                out(String.format("Data successfully loaded to %s repository. Took %s ms", repoName, endTime - startTime));
+                out(String.format("Data successfully loaded to %s repository. Took %s ms", repoName,
+                        endTime - startTime));
             } else {
                 out("Skipping data load of remote repository " + repoName);
             }
@@ -324,17 +333,17 @@ public class Restore implements Action {
     }
 
     /**
-     * Restore Pre-Process
+     * Restore Pre-Process.
      *
      * @param backupVersion Backup Version
      */
-    private void restorePreProcess(String backupVersion){
+    private void restorePreProcess(String backupVersion) {
         List<PreRestoreOperation> preRestoreOperations = preRestoreOperationHandler.getOperations(backupVersion);
         executeRestoreOperations(preRestoreOperations);
     }
 
     /**
-     * Restore Process Post-processing
+     * Restore Process Post-processing.
      *
      * @param backupVersion Backup Version
      */
@@ -344,7 +353,7 @@ public class Restore implements Action {
     }
 
     /**
-     * Execute list of ExecutableRestoreOperation
+     * Execute list of ExecutableRestoreOperation.
      * @param executableRestoreOperation List of ExecutableRestore Operations
      */
     private void executeRestoreOperations(List<? extends ExecutableRestoreOperation> executableRestoreOperation) {
@@ -354,7 +363,8 @@ public class Restore implements Action {
                 operation.execute();
                 long endTime = System.currentTimeMillis();
                 out(String.format("Executed Operation %s with priority %s for versions %s, took %s ms",
-                        operation.getClass(), operation.getPriority(), operation.getVersionRange(), endTime - startTime));
+                        operation.getClass(), operation.getPriority(), operation.getVersionRange(),
+                        endTime - startTime));
             } catch (Exception e) {
                 error(e.getMessage(), e);
             }
@@ -371,8 +381,8 @@ public class Restore implements Action {
         System.out.println(msg);
     }
 
-    private void error(String msg, Exception e) {
-        LOGGER.error(msg, e);
+    private void error(String msg, Exception ex) {
+        LOGGER.error(msg, ex);
         System.out.println(msg);
     }
 }

@@ -45,6 +45,11 @@
         </dependency>
         <dependency>
             <groupId>com.mobi</groupId>
+            <artifactId>rest.util</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.mobi</groupId>
             <artifactId>api</artifactId>
             <version>${project.version}</version>
         </dependency>
@@ -84,10 +89,18 @@
             <artifactId>rdf-orm-test</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.junit.vintage</groupId>
+            <artifactId>junit-vintage-engine</artifactId>
+        </dependency>
+        <dependency>
             <groupId>com.mobi</groupId>
             <artifactId>repository.impl.sesame</artifactId>
             <version>${project.version}</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.rdf4j</groupId>
+            <artifactId>rdf4j-tools-federation</artifactId>
         </dependency>
         <dependency>
             <groupId>com.mobi</groupId>

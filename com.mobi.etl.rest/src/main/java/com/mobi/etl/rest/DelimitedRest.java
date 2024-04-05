@@ -65,7 +65,6 @@ import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import net.sf.json.JSONArray;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.poi.openxml4j.exceptions.InvalidFormatException;
 import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.FormulaEvaluator;
 import org.apache.poi.ss.usermodel.Row;
@@ -770,9 +769,8 @@ public class DelimitedRest {
      * @param numRows the number of rows from the Excel file to convert
      * @return a string with the JSON of the Excel rows
      * @throws IOException excel file could not be read
-     * @throws InvalidFormatException file is not in a valid excel format
      */
-    private String convertExcelRows(File input, int numRows) throws IOException, InvalidFormatException {
+    private String convertExcelRows(File input, int numRows) throws IOException {
         try (Workbook wb = WorkbookFactory.create(input)) {
             // Only support single sheet files for now
             FormulaEvaluator evaluator = wb.getCreationHelper().createFormulaEvaluator();

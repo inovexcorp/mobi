@@ -1,0 +1,78 @@
+/*-
+ * #%L
+ * com.mobi.web
+ * $Id:$
+ * $HeadURL:$
+ * %%
+ * Copyright (C) 2016 - 2024 iNovex Information Systems, Inc.
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * #L%
+ */
+
+.execution-history-table {
+    .form-wrapper {
+        padding: .5rem 1rem 0 1rem;
+        .filter-field {
+            padding-right: 0.5rem;
+        }
+    }
+    .table-wrapper {
+        padding: 0 1rem .5rem 1rem;
+        overflow-y: auto;
+        
+        .mat-table {
+            width: 100%;
+            .mat-header-row {
+                background: #f9fafb;
+            }
+            .mat-header-cell {
+                font-size: .80rem;
+                padding-right: .25rem;
+                font-weight:bold;
+                color: #5A6474;
+            }
+            .mat-row:hover {
+                background: #f4f4f5;
+                color: #3f3f46;
+            }
+            .mat-mdc-row .mat-mdc-cell {
+                border-bottom: 1px solid transparent;
+                border-top: 1px solid transparent;
+                cursor: pointer;
+            }
+            .mat-mdc-row:hover .mat-mdc-cell {
+                border-color: currentColor;
+            }
+            .mat-cell, .mat-header-cell {
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                max-width: 15rem;
+                padding-left: .25rem;
+                padding-right: .25rem;
+            }
+            tr.detail-row {
+              height: 0;
+
+              &:hover {
+                background: initial;
+              }
+            }
+        }
+    }
+    .message-wrapper {
+        padding: .5rem 1rem;
+    }
+}

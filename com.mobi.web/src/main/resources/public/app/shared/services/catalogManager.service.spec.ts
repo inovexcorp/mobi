@@ -1810,7 +1810,7 @@ describe('Catalog Manager service', function() {
             const request = httpMock.expectOne(req => req.url === this.url && req.method === 'GET');
             expect(request.request.params.get('format')).toEqual('jsonld');
             expect(request.request.params.get('applyInProgressCommit')).toEqual('false');
-            request.flush([emptyObj]);
+            request.flush([emptyObj], {headers: {'Content-Type': 'application/json'}});
         });
     });
     describe('should download the compiled resource from a Branch Commit', function() {

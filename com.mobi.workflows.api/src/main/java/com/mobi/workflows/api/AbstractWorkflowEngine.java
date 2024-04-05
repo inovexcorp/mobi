@@ -28,10 +28,15 @@ import com.mobi.prov.api.ProvenanceService;
 import com.mobi.vfs.ontologies.documents.BinaryFile;
 import com.mobi.workflows.api.ontologies.workflows.WorkflowExecutionActivity;
 import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.event.Event;
+import org.osgi.service.event.EventAdmin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
+import java.util.HashMap;
+import java.util.Map;
 
 public abstract class AbstractWorkflowEngine implements WorkflowEngine {
 
@@ -39,6 +44,8 @@ public abstract class AbstractWorkflowEngine implements WorkflowEngine {
 
     @Reference
     public ProvenanceService provService;
+
+    protected EventAdmin eventAdmin;
 
     protected void finalizeActivity(Activity activity) {
         activity.addEndedAtTime(OffsetDateTime.now());
@@ -50,7 +57,7 @@ public abstract class AbstractWorkflowEngine implements WorkflowEngine {
         }
     }
 
-    public void endExecutionActivity(WorkflowExecutionActivity executionActivity, BinaryFile logs,
+    protected void endExecutionActivity(WorkflowExecutionActivity executionActivity, BinaryFile logs,
                                         boolean succeeded) {
         if (logs != null) {
             executionActivity.addLogs(logs);
@@ -58,5 +65,32 @@ public abstract class AbstractWorkflowEngine implements WorkflowEngine {
         executionActivity.setSucceeded(succeeded);
         finalizeActivity(executionActivity);
         provService.updateActivity(executionActivity);
+        // Notify of activity end
+        Map<String, Object> eventProps = new HashMap<>();
+        eventProps.put(WorkflowsTopics.ACTIVITY_PROPERTY_ACTIVITY, executionActivity.getResource());
+        Event event = new Event(WorkflowsTopics.TOPIC_ACTIVITY_END, eventProps);
+        eventAdmin.postEvent(event);
+    }
+
+    protected static LocalDateTime verifyStartDate(LocalDateTime priorValue, LocalDateTime newValue) {
+        if (priorValue == null && newValue != null) {
+            return newValue;
+        } else if (priorValue != null && newValue != null) {
+            if (newValue.isBefore(priorValue)) {
+                return newValue;
+            }
+        }
+        return priorValue;
+    }
+
+    protected static LocalDateTime verifyStopDate(LocalDateTime priorValue, LocalDateTime newValue) {
+        if (priorValue == null && newValue != null) {
+            return newValue;
+        } else if (priorValue != null && newValue != null) {
+            if (newValue.isAfter(priorValue)) {
+                return newValue;
+            }
+        }
+        return priorValue;
     }
 }
