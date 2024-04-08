@@ -131,7 +131,6 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -150,11 +149,11 @@ import java.util.stream.Stream;
         property = EventConstants.EVENT_TOPIC + "=" + WorkflowsTopics.TOPIC_START)
 public class SimpleWorkflowManager implements WorkflowManager, EventHandler {
     public static final String WORKFLOW_RECORD_IRI_BINDING = "workflowRecordIri";
+
     private final Logger log = LoggerFactory.getLogger(SimpleWorkflowManager.class);
 
     protected final Map<String, TriggerHandler<Trigger>> triggerHandlers = new HashMap<>();
     protected final Map<String, ActionHandler<Action>> actionHandlers = new HashMap<>();
-    protected final List<Resource> executingWorkflows = new ArrayList<>();
     protected final ValueFactory vf = new ValidatingValueFactory();
     protected final ModelFactory mf = new DynamicModelFactory();
 
@@ -313,19 +312,25 @@ public class SimpleWorkflowManager implements WorkflowManager, EventHandler {
 
     private void initializeExecutingWorkflowsList() {
         log.debug("Initializing currently executing Workflows");
-        try (RepositoryConnection conn = provService.getConnection();
-                TupleQueryResult result = conn.prepareTupleQuery(GET_EXECUTING_WORKFLOWS).evaluate()) {
-            if (result.hasNext()) {
-                result.forEach(bindings -> {
-                    Resource workflowId = Bindings.requiredResource(bindings, "workflow");
-                    log.trace("Workflow " + workflowId + " is currently executing");
-                    if (!executingWorkflows.contains(workflowId)) {
-                        executingWorkflows.add(workflowId);
-                    }
-                });
-            } else {
-                log.trace("No executing Workflows found");
+
+        if (workflowEngine != null) {
+            try (RepositoryConnection conn = provService.getConnection();
+                    TupleQueryResult result = conn.prepareTupleQuery(GET_EXECUTING_WORKFLOWS).evaluate()) {
+                if (result.hasNext()) {
+                    result.forEach(bindings -> {
+                        Resource workflowId = Bindings.requiredResource(bindings, "workflow");
+                        log.trace("Workflow " + workflowId + " is currently executing");
+                        List<Resource> executingWorkflows = workflowEngine.getExecutingWorkflows();
+                        if (!executingWorkflows.contains(workflowId)) {
+                            executingWorkflows.add(workflowId);
+                        }
+                    });
+                } else {
+                    log.trace("No executing Workflows found");
+                }
             }
+        } else {
+            log.debug("Cannot initialize list of executing workflows due to no workflow engine being configured.");
         }
     }
 
@@ -576,7 +581,7 @@ public class SimpleWorkflowManager implements WorkflowManager, EventHandler {
         Workflow workflow = getWorkflow(workflowIRI).orElseThrow(() ->
                 new IllegalArgumentException("Workflow " + workflowIRI + " does not exist"));
 
-        if (executingWorkflows.contains(workflowIRI)) {
+        if (workflowEngine.getExecutingWorkflows().contains(workflowIRI)) {
             throw new IllegalArgumentException("Workflow " + workflowIRI + " is currently executing. "
                     + "Cannot update.");
         }
@@ -791,6 +796,10 @@ public class SimpleWorkflowManager implements WorkflowManager, EventHandler {
 
     @Override
     public Resource startWorkflow(User user, WorkflowRecord workflowRecord) {
+        if (workflowEngine == null) {
+            throw new MobiException("No workflow engine configured.");
+        }
+
         Resource workflowId = workflowRecord.getWorkflowIRI().orElseThrow(() ->
                 new IllegalStateException("Workflow Record must be linked to workflow object."));
 
@@ -798,28 +807,17 @@ public class SimpleWorkflowManager implements WorkflowManager, EventHandler {
         log.trace("Retrieving Workflow definition");
         Workflow workflow = getWorkflow(workflowId)
                 .orElseThrow(() -> new IllegalArgumentException("Workflow " + workflowId + " does not exist"));
-
-        if (executingWorkflows.contains(workflowId)) {
-            throw new IllegalArgumentException("Workflow " + workflowId + " is currently executing. Wait a bit and "
-                    + "try again.");
-        }
-
-        if (workflowEngine == null) {
-            throw new MobiException("No workflow engine configured.");
+        List<Resource> executingWorkflows = workflowEngine.getExecutingWorkflows();
+        if (!executingWorkflows.isEmpty()) {
+            throw new IllegalArgumentException("There is currently a workflow executing. Please wait a bit and try " +
+                    "again.");
         }
 
         executingWorkflows.add(workflow.getResource());
         WorkflowExecutionActivity activity = startExecutionActivity(user, workflowRecord);
 
-        try {
-            workflowEngine.startWorkflow(workflow, activity);
-            return activity.getResource();
-        } catch (NullPointerException ex) {
-            removeActivity(activity);
-            throw new MobiException("No workflow engine configured.");
-        } finally {
-            executingWorkflows.remove(workflow.getResource());
-        }
+        workflowEngine.startWorkflow(workflow, activity);
+        return activity.getResource();
     }
 
     @Override
@@ -857,19 +855,17 @@ public class SimpleWorkflowManager implements WorkflowManager, EventHandler {
         if (workflowRecord.getActive().isEmpty() || !workflowRecord.getActive().get()) {
             log.debug("Workflow " + workflowId + " is not active. Skipping execution.");
         } else {
-            if (executingWorkflows.contains(workflowId)) {
-                log.debug("Workflow " + workflowId + " is currently executing. Skipping execution.");
-            } else {
-                executingWorkflows.add(workflow.getResource());
-                WorkflowExecutionActivity activity = startExecutionActivity(user, workflowRecord);
-                try {
+            try {
+                List<Resource> executingWorkflows = workflowEngine.getExecutingWorkflows();
+                if (executingWorkflows.contains(workflowId)) {
+                    log.debug("Workflow " + workflowId + " is currently executing. Skipping execution.");
+                } else {
+                    executingWorkflows.add(workflow.getResource());
+                    WorkflowExecutionActivity activity = startExecutionActivity(user, workflowRecord);
                     workflowEngine.startWorkflow(workflow, activity);
-                } catch (NullPointerException ex) {
-                    removeActivity(activity);
-                    throw new MobiException("No workflow engine configured.");
-                } finally {
-                    executingWorkflows.remove(workflow.getResource());
                 }
+            } catch (NullPointerException ex) {
+                throw new MobiException("No workflow engine configured.");
             }
         }
     }

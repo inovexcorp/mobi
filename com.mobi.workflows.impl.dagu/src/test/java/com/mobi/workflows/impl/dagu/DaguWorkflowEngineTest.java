@@ -114,13 +114,11 @@ public class DaguWorkflowEngineTest extends OrmEnabledTestCase {
     }
 
     private DaguWorkflowEngine daguEngine;
-    private User user;
 
     private Workflow workflowA;
     private Workflow workflowB;
 
     private WorkflowExecutionActivity activityA;
-    private WorkflowExecutionActivity activityB;
 
     private AutoCloseable closeable;
 
@@ -190,7 +188,7 @@ public class DaguWorkflowEngineTest extends OrmEnabledTestCase {
         Model workflowModelA = Rio.parse(streamTestAction, "", RDFFormat.TURTLE);
         Model workflowModelB = Rio.parse(streamHttpTestAction, "", RDFFormat.TURTLE);
 
-        user = userFactory.createNew(vf.createIRI("http://test.org/user"));
+        User user = userFactory.createNew(vf.createIRI("http://test.org/user"));
         user.setUsername(userName);
 
         workflowA = workflowFactory.createNew(workflowIdA, workflowModelA);
@@ -199,7 +197,7 @@ public class DaguWorkflowEngineTest extends OrmEnabledTestCase {
         activityA = executionActivityFactory.createNew(activityIRI);
         activityA.addWasAssociatedWith(user);
         activityA.addStartedAtTime(OffsetDateTime.now());
-        activityB = executionActivityFactory.createNew(activityIRI);
+        WorkflowExecutionActivity activityB = executionActivityFactory.createNew(activityIRI);
         activityB.addWasAssociatedWith(user);
         activityB.addStartedAtTime(OffsetDateTime.now());
 
@@ -407,14 +405,22 @@ public class DaguWorkflowEngineTest extends OrmEnabledTestCase {
         when(daguHttpClient.getDag(any(String.class))).thenThrow( new MobiException("Could not connect to Dagu\n Status Code: 404\n  Body: "));
         daguEngine.start(config);
         daguEngine.daguHttpClient = daguHttpClient;
-
-        thrown.expect(MobiException.class);
-        thrown.expectMessage("Could not connect to Dagu\n Status Code: 404\n  Body: ");
-
         daguEngine.startWorkflow(workflowA, activityA);
+        Model activityModel = activityA.getModel();
+        assertEquals(13, activityModel.size());
+        verify(provService).updateActivity(eq(activityA));
+        verify(eventAdmin, times(1)).postEvent(any(Event.class));
 
-        verify(provService).deleteActivity(eq(activityIRI));
-        verify(eventAdmin, times(2)).sendEvent(any(Event.class));
+        Statement endedTriple = activityModel.getStatements(activityIRI,
+                       vf.createIRI(WorkflowExecutionActivity.endedAtTime_IRI), null).iterator().next();
+
+        Statement succeededTriple = activityModel.getStatements(activityIRI,
+                        vf.createIRI(WorkflowExecutionActivity.succeeded_IRI), null).iterator().next();
+
+        assertNotEquals(endedTriple.getObject().stringValue(), null);
+
+        assertEquals("\"false\"^^<http://www.w3.org/2001/XMLSchema#boolean>",
+                succeededTriple.getObject().toString());
     }
 
     @Test
@@ -427,12 +433,22 @@ public class DaguWorkflowEngineTest extends OrmEnabledTestCase {
         daguEngine.start(config);
         daguEngine.daguHttpClient = daguHttpClient;
 
-        thrown.expect(MobiException.class);
-        thrown.expectMessage("Could not update dag " + hashString + "\n  Status Code: 400\n  Body: " + daguResponse);
-
         daguEngine.startWorkflow(workflowA, activityA);
-        verify(provService).deleteActivity(eq(activityIRI));
-        verify(eventAdmin, times(2)).sendEvent(any(Event.class));
+        Model activityModel = activityA.getModel();
+        assertEquals(13, activityModel.size());
+        verify(provService).updateActivity(eq(activityA));
+        verify(eventAdmin, times(1)).postEvent(any(Event.class));
+
+        Statement endedTriple = activityModel.getStatements(activityIRI,
+                vf.createIRI(WorkflowExecutionActivity.endedAtTime_IRI), null).iterator().next();
+
+        Statement succeededTriple = activityModel.getStatements(activityIRI,
+                vf.createIRI(WorkflowExecutionActivity.succeeded_IRI), null).iterator().next();
+
+        assertNotEquals(endedTriple.getObject().stringValue(), null);
+
+        assertEquals("\"false\"^^<http://www.w3.org/2001/XMLSchema#boolean>",
+                succeededTriple.getObject().toString());
     }
 
     @Test

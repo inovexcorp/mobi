@@ -370,14 +370,14 @@ export class WorkflowRecordsComponent implements OnInit, OnDestroy {
             this.selectedWorkflows = [];
           },
           error: (error: RESTError) => {
+            const message = error.errorMessage ? error.errorMessage : error;
+            this._toast.createErrorToast(`Error executing workflow: ${message}`);
             this.updateWorkflowRecords();
-            console.error('Error executing workflow:', error.errorMessage);
             this.selectedWorkflows.forEach(workflow => {
               workflow.checked = false;
             });
             this.selectedWorkflows = [];
             this.tooltipMessage = 'Select a workflow.';
-            // TODO add snackbar
           }
         });
       }

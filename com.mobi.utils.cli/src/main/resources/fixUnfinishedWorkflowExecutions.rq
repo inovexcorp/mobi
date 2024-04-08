@@ -1,0 +1,16 @@
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+INSERT {?activity <http://mobi.solutions/ontologies/workflows#succeeded> 'false'^^xsd:boolean;
+                <http://www.w3.org/ns/prov#endedAtTime> ?endTime .
+} WHERE {
+    ?activity a <http://mobi.solutions/ontologies/workflows#WorkflowExecutionActivity> ;
+            <http://www.w3.org/ns/prov#startedAtTime> ?startedTime.
+
+    FILTER NOT EXISTS { ?activity <http://mobi.solutions/ontologies/workflows#succeeded> ?activityStatus;
+            <http://www.w3.org/ns/prov#endedAtTime> ?endedTime.
+    }
+
+    BIND(xsd:dateTime(?startedTime) AS ?convertedStart)
+    BIND('PT10S'^^xsd:duration AS ?durationToAdd)
+    BIND(xsd:dateTime(?convertedStart + ?durationToAdd) AS ?endTime)
+}

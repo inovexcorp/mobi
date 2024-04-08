@@ -1,0 +1,6 @@
+<https://www.example.com/activites/A> a <http://www.w3.org/ns/prov#Activity>,
+                                        <http://mobi.solutions/ontologies/workflows#WorkflowExecutionActivity>, <http://www.w3.org/2002/07/owl#Thing>;
+                                      <http://www.w3.org/ns/prov#used> <https://mobi.com/records#fef961dc-f4b1-4e20-8ed7-aa7e4d060f9f>;
+                                      <http://mobi.solutions/ontologies/workflows#logs> <https://mobi.solutions/workflows/log-files/error-20240403163637.log>;
+                                      <http://www.w3.org/ns/prov#wasAssociatedWith> <http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997>;
+                                      <http://www.w3.org/ns/prov#startedAtTime> "2024-04-03T16:36:37.023743-04:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>.
