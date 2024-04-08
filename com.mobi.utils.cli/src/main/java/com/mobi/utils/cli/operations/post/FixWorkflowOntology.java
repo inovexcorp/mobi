@@ -23,8 +23,10 @@ package com.mobi.utils.cli.operations.post;
  * #L%
  */
 
+import com.mobi.exception.MobiException;
 import com.mobi.repository.api.OsgiRepository;
 import com.mobi.utils.cli.api.PostRestoreOperation;
+import org.apache.commons.io.IOUtils;
 import org.apache.maven.artifact.versioning.InvalidVersionSpecificationException;
 import org.apache.maven.artifact.versioning.VersionRange;
 import org.eclipse.rdf4j.model.ValueFactory;
@@ -36,12 +38,29 @@ import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.Objects;
+
 @Component(
         service = { FixWorkflowOntology.class, PostRestoreOperation.class }
 )
 public class FixWorkflowOntology implements PostRestoreOperation {
     private static final Logger LOGGER = LoggerFactory.getLogger(FixWorkflowOntology.class);
     private static final ValueFactory vf = new ValidatingValueFactory();
+
+    private static final String FIX_DANGLING_WORKFLOW_EXECUTIONS;
+
+    static {
+        try {
+            FIX_DANGLING_WORKFLOW_EXECUTIONS = IOUtils.toString(
+                    Objects.requireNonNull(FixWorkflowOntology.class.getResourceAsStream("/fixUnfinishedWorkflowExecutions.rq")),
+                    StandardCharsets.UTF_8
+            );
+        } catch (IOException e) {
+            throw new MobiException(e);
+        }
+    }
 
     @Reference(target = "(id=prov)")
     OsgiRepository provRepo;
@@ -58,14 +77,15 @@ public class FixWorkflowOntology implements PostRestoreOperation {
 
     @Override
     public VersionRange getVersionRange() throws InvalidVersionSpecificationException {
-        // Versions up to 2.5 (not included)
-        return VersionRange.createFromVersionSpec("(,2.5)");
+        // Versions up to 2.6 (not included)
+        return VersionRange.createFromVersionSpec("(,2.7)");
     }
 
     @Override
     public void execute() {
         try (RepositoryConnection conn = provRepo.getConnection()) {
             conn.clear(vf.createIRI("http://mobi.solutions/ontologies/worklows"));
+            conn.prepareUpdate(FIX_DANGLING_WORKFLOW_EXECUTIONS).execute();
         }
     }
 }

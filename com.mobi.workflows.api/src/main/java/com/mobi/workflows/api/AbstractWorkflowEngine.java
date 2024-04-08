@@ -27,6 +27,7 @@ import com.mobi.ontologies.provo.Activity;
 import com.mobi.prov.api.ProvenanceService;
 import com.mobi.vfs.ontologies.documents.BinaryFile;
 import com.mobi.workflows.api.ontologies.workflows.WorkflowExecutionActivity;
+import org.eclipse.rdf4j.model.Resource;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventAdmin;
@@ -35,17 +36,27 @@ import org.slf4j.LoggerFactory;
 
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
+
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public abstract class AbstractWorkflowEngine implements WorkflowEngine {
-
     private final Logger log = LoggerFactory.getLogger(AbstractWorkflowEngine.class);
 
     @Reference
     public ProvenanceService provService;
 
+    protected static final List<Resource> executingWorkflows = new ArrayList<>();
+    protected static final String LOG_FILE_NAMESPACE = "https://mobi.solutions/workflows/log-files/";
+    protected static final String ACTION_EXECUTION_NAMESPACE = "https://mobi.solutions/workflows/ActionExecution/";
+
     protected EventAdmin eventAdmin;
+
+    public List<Resource> getExecutingWorkflows() {
+        return executingWorkflows;
+    }
 
     protected void finalizeActivity(Activity activity) {
         activity.addEndedAtTime(OffsetDateTime.now());

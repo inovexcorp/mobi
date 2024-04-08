@@ -23,11 +23,19 @@ package com.mobi.workflows.api;
  * #L%
  */
 
-import com.mobi.ontologies.rdfs.Resource;
 import com.mobi.workflows.api.ontologies.workflows.Workflow;
 import com.mobi.workflows.api.ontologies.workflows.WorkflowExecutionActivity;
+import org.eclipse.rdf4j.model.Resource;
+
+import java.util.List;
 
 public interface WorkflowEngine {
+    /**
+     * Retrieves the engine's list of currently executing workflows.
+     *
+     * @return An array of {@link Resource} that represent the workflow id of the executing workflows
+     */
+    List<Resource> getExecutingWorkflows();
 
     /**
      * Executes the provided {@link Workflow} entity, updating the provided {@link WorkflowExecutionActivity}.

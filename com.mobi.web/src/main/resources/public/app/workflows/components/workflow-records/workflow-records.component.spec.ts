@@ -68,8 +68,7 @@ describe('WorkflowRecordsComponent', () => {
   let element: DebugElement;
   let workflowsStateStub: jasmine.SpyObj<WorkflowsStateService>;
   let workflowsManagerStub: jasmine.SpyObj<WorkflowsManagerService>;
-  let policyEnformentStub: jasmine.SpyObj<PolicyEnforcementService>;
-  let policyManagerServiceStub: jasmine.SpyObj<PolicyManagerService>;
+  let policyEnforcementStub: jasmine.SpyObj<PolicyEnforcementService>;
   let matDialog: jasmine.SpyObj<MatDialog>;
   let toastStub: jasmine.SpyObj<ToastService>;
   let executionActivitiesSubject: Subject<JSONLDObject[]>;
@@ -101,9 +100,11 @@ describe('WorkflowRecordsComponent', () => {
         MockProvider(PolicyManagerService),
         MockProvider(PolicyEnforcementService),
         MockProvider(ProgressSpinnerService),
-        { provide: MatDialog, useFactory: () => jasmine.createSpyObj('MatDialog', {
-          open: { afterClosed: () => of(true)}
-        }) }
+        {
+          provide: MatDialog, useFactory: () => jasmine.createSpyObj('MatDialog', {
+            open: {afterClosed: () => of(true)}
+          })
+        }
       ],
       imports: [
         NoopAnimationsModule,
@@ -124,18 +125,16 @@ describe('WorkflowRecordsComponent', () => {
         MockComponent(ErrorDisplayComponent),
         MockComponent(ConfirmModalComponent)
       ],
-    })
-    .compileComponents();
+    }).compileComponents();
 
     executionActivitiesSubject = new Subject<JSONLDObject[]>();
     matDialog = TestBed.inject(MatDialog) as jasmine.SpyObj<MatDialog>;
     workflowsManagerStub = TestBed.inject(WorkflowsManagerService) as jasmine.SpyObj<WorkflowsManagerService>;
     catalogManagerStub = TestBed.inject(CatalogManagerService) as jasmine.SpyObj<CatalogManagerService>;
     toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
-    policyManagerServiceStub = TestBed.inject(PolicyManagerService) as jasmine.SpyObj<PolicyManagerService>;
 
-    policyEnformentStub = TestBed.inject(PolicyEnforcementService) as jasmine.SpyObj<PolicyEnforcementService>;
-    policyEnformentStub.evaluateMultiDecisionRequest.and.returnValue(of([]));
+    policyEnforcementStub = TestBed.inject(PolicyEnforcementService) as jasmine.SpyObj<PolicyEnforcementService>;
+    policyEnforcementStub.evaluateMultiDecisionRequest.and.returnValue(of([]));
 
     workflowsStateStub = TestBed.inject(WorkflowsStateService) as jasmine.SpyObj<WorkflowsStateService>;
     workflowsStateStub.getResults.and.returnValue(of({page: [], totalCount: 0}));
@@ -156,8 +155,7 @@ describe('WorkflowRecordsComponent', () => {
     matDialog = null;
     workflowsManagerStub = null;
     workflowsStateStub = null;
-    policyEnformentStub = null;
-    policyManagerServiceStub = null;
+    policyEnforcementStub = null;
     toastStub = null;
     catalogManagerStub = null;
     executionActivitiesSubject = null;
@@ -305,6 +303,7 @@ describe('WorkflowRecordsComponent', () => {
         expect(matDialog.open).toHaveBeenCalledWith(ConfirmModalComponent, jasmine.objectContaining({ data: { content: jasmine.stringContaining(workflow_data_row_mocks[0].record.title)}}));
         expect(workflowManagerStub.executeWorkflow).toHaveBeenCalledWith(workflow_data_row_mocks[0].record.iri);
         expect(component.selectedWorkflows.length).toBe(0);
+        expect(toastStub.createErrorToast).toHaveBeenCalledWith('Error executing workflow: Error message');
       }));
       it('successfully', fakeAsync(() => {
         workflowManagerStub.executeWorkflow.and.returnValue(of('someActivity.iri.com'));
@@ -313,6 +312,7 @@ describe('WorkflowRecordsComponent', () => {
         expect(matDialog.open).toHaveBeenCalledWith(ConfirmModalComponent, jasmine.objectContaining({ data: { content: jasmine.stringContaining(workflow_data_row_mocks[0].record.title)}}));
         expect(workflowManagerStub.executeWorkflow).toHaveBeenCalledWith(workflow_data_row_mocks[0].record.iri);
         expect(component.selectedWorkflows.length).toBe(0);
+        expect(toastStub.createErrorToast).not.toHaveBeenCalled();
       }));
     });
     it('should open download dialog', fakeAsync(() => {

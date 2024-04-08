@@ -68,6 +68,7 @@ import com.mobi.security.policy.api.ontologies.policy.Read;
 import com.mobi.vfs.impl.commons.SimpleVirtualFilesystemConfig;
 import com.mobi.vfs.ontologies.documents.BinaryFile;
 import com.mobi.workflows.api.PaginatedWorkflowSearchParams;
+import com.mobi.workflows.api.WorkflowEngine;
 import com.mobi.workflows.api.action.ActionHandler;
 import com.mobi.workflows.api.ontologies.workflows.Action;
 import com.mobi.workflows.api.ontologies.workflows.ActionExecution;
@@ -141,7 +142,6 @@ public class SimpleWorkflowManagerTest extends OrmEnabledTestCase {
     private Model workflowModel;
     private MemoryRepositoryWrapper provRepository;
     private MemoryRepositoryWrapper systemRepository;
-    private static BNodeService bNodeService;
 
     private final OrmFactory<WorkflowRecord> recordFactory = getRequiredOrmFactory(WorkflowRecord.class);
     private final OrmFactory<Catalog> catalogFactory = getRequiredOrmFactory(Catalog.class);
@@ -182,6 +182,9 @@ public class SimpleWorkflowManagerTest extends OrmEnabledTestCase {
     @Mock
     protected EventAdmin eventAdmin;
 
+    @Mock
+    WorkflowEngine workflowEngine;
+
     DefaultPrettyPrinter.Indenter indenter = new DefaultIndenter("  ", DefaultIndenter.SYS_LF);
     DefaultPrettyPrinter printer = new DefaultPrettyPrinter();
 
@@ -197,7 +200,8 @@ public class SimpleWorkflowManagerTest extends OrmEnabledTestCase {
         systemRepository = new MemoryRepositoryWrapper();
         systemRepository.setDelegate(new SailRepository(new MemoryStore()));
 
-        bNodeService = Mockito.mock(BNodeService.class);
+        BNodeService bNodeService = Mockito.mock(BNodeService.class);
+
         when(bNodeService.deterministicSkolemize(any(Model.class), anyMap())).thenReturn(new LinkedHashModel());
 
         SimpleVirtualFilesystemConfig config = mock(SimpleVirtualFilesystemConfig.class);
@@ -270,6 +274,7 @@ public class SimpleWorkflowManagerTest extends OrmEnabledTestCase {
             connection.clear();
         }
         closeable.close();
+        workflowManager.workflowEngine = null;
     }
 
     @Test
@@ -659,24 +664,27 @@ public class SimpleWorkflowManagerTest extends OrmEnabledTestCase {
 
     @Test(expected = IllegalArgumentException.class)
     public void startWorkflowNoWorkflow() {
+        workflowManager.workflowEngine = workflowEngine;
         workflowManager.startWorkflow(user, workflowRecord);
         thrown.expectMessage("Workflow " + workflowIRI + " does not exist");
     }
 
     @Test(expected = IllegalArgumentException.class)
-    public void startWorkflowExecutingWorkflow() {
+    public void startWorkflowWithExecutingWorkflow() {
         //setup
+        workflowManager.workflowEngine = workflowEngine;
+
         try (RepositoryConnection conn = systemRepository.getConnection()) {
             conn.add(workflowRecord.getModel(), workflowRecord.getResource());
         }
         when(branchManager.getMasterBranch(any(Resource.class), eq(recordIRI), any(RepositoryConnection.class))).thenReturn(branch);
         when(commitManager.getHeadCommit(any(Resource.class), eq(recordIRI), eq(branchIRI), any(RepositoryConnection.class))).thenReturn(commit);
         when(compiledResourceManager.getCompiledResource(eq(commitIRI), any(RepositoryConnection.class))).thenReturn(workflowRecord.getModel());
-        workflowManager.executingWorkflows.add(workflowIRI);
+        workflowEngine.getExecutingWorkflows().add(workflowIRI);
 
         workflowManager.startWorkflow(user, workflowRecord);
-        thrown.expectMessage("Workflow " + workflowIRI + " is currently executing. Wait a bit and "
-                + "try again.");
+        thrown.expectMessage("There is currently a workflow executing. Please wait a bit and try " +
+                "again.");
     }
 
     @Test(expected = MobiException.class)
@@ -715,7 +723,7 @@ public class SimpleWorkflowManagerTest extends OrmEnabledTestCase {
     }
 
     @Test
-    public void getActionExecutions() throws Exception {
+    public void getActionExecutions() {
         IRI actionExecIRI1 = vf.createIRI("http://mobi.solutions/test/action-execution1");
         ActionExecution actionExec1 = actionExecutionFactory.createNew(actionExecIRI1);
         ActionExecution actionExec2 = actionExecutionFactory.createNew(vf.createIRI("http://mobi.solutions/test/action-execution2"));

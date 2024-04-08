@@ -26,7 +26,6 @@ package com.mobi.workflows.impl.dagu;
 import static com.mobi.persistence.utils.ResourceUtils.encode;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.exception.MobiException;
@@ -75,6 +74,9 @@ import java.io.ByteArrayInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -102,14 +104,10 @@ import java.util.stream.Collectors;
 @Designate(ocd = DaguWorkflowEngineConfig.class)
 public class DaguWorkflowEngine extends AbstractWorkflowEngine implements WorkflowEngine {
     private final Logger log = LoggerFactory.getLogger(DaguWorkflowEngine.class);
-    private static final ObjectMapper mapper = new ObjectMapper();
 
     protected final ValueFactory vf = new ValidatingValueFactory();
     protected final Map<String, ActionHandler<Action>> actionHandlers = new HashMap<>();
     protected final Map<String, TriggerHandler<Trigger>> triggerHandlers = new HashMap<>();
-
-    private static final String LOG_FILE_NAMESPACE = "https://mobi.solutions/workflows/log-files/";
-    private static final String ACTION_EXECUTION_NAMESPACE = "https://mobi.solutions/workflows/ActionExecution/";
 
     private Path logDir;
     private long pollingTimeout;
@@ -186,11 +184,11 @@ public class DaguWorkflowEngine extends AbstractWorkflowEngine implements Workfl
 
     @Override
     public void startWorkflow(Workflow workflow, WorkflowExecutionActivity activity) {
+        String sha1WorkflowIRI = DigestUtils.sha1Hex(workflow.getResource().stringValue());
         try {
             log.debug("Collecting actions to execute");
             Map<Action, List<String>> actionList = createActionList(workflow);
             String workflowYaml = createYaml(workflow);
-            String sha1WorkflowIRI = DigestUtils.sha1Hex(workflow.getResource().stringValue());
 
             ObjectNode dag = daguHttpClient.getDag(sha1WorkflowIRI);
             if (dag.hasNonNull("DAG") && dag.get("DAG").hasNonNull("Error")) {
@@ -202,7 +200,7 @@ public class DaguWorkflowEngine extends AbstractWorkflowEngine implements Workfl
             log.trace("Running dag");
             daguHttpClient.runDagJob(activity, sha1WorkflowIRI);
 
-            log.debug("Successfully started Workflow " + workflow.getResource());
+            log.info("Successfully started Workflow " + workflow.getResource());
             new Thread(() -> {
                 long max = pollingTimeout / pollingInterval;
                 log.trace("Maximum polling count is " + max);
@@ -229,6 +227,7 @@ public class DaguWorkflowEngine extends AbstractWorkflowEngine implements Workfl
                                 initializeActionExecutions(activity, statusObject, sha1WorkflowIRI, actionList);
                                 String statusText = statusObject.get("StatusText").asText();
                                 log.trace("Ending execution activity");
+                                executingWorkflows.remove(workflow.getResource());
                                 endExecutionActivity(activity, binaryFile,
                                         statusText.equalsIgnoreCase("finished"));
                                 statusTimer.cancel();
@@ -236,8 +235,12 @@ public class DaguWorkflowEngine extends AbstractWorkflowEngine implements Workfl
                             }
                         } catch (Exception ex) {
                             log.error("Polling status timer hit an exception. Marking workflow as failure");
-                            log.error(ex.getMessage());
-                            endExecutionActivity(activity, null, false);
+                            StringWriter sw = new StringWriter();
+                            PrintWriter pw = new PrintWriter(sw);
+                            ex.printStackTrace(pw);
+                            BinaryFile errorLog = createErrorLog(activity, sha1WorkflowIRI, sw.toString());
+                            endExecutionActivity(activity, errorLog, false);
+                            executingWorkflows.remove(workflow.getResource());
                             statusTimer.cancel();
                             statusTimer.purge();
                         }
@@ -247,14 +250,14 @@ public class DaguWorkflowEngine extends AbstractWorkflowEngine implements Workfl
                 long interval = TimeUnit.SECONDS.toMillis(pollingInterval);
                 statusTimer.schedule(task, interval, interval);
             }).start();
-        } catch (IOException ex) {
-            throw new MobiException("Error running dagu requests", ex);
-        } catch (InterruptedException ex) {
-            throw new MobiException("Error making dagu HTTP request", ex);
         } catch (Exception ex) {
-            log.trace("Removing WorkflowExecutionActivity due to Exception");
-            removeActivity(activity);
-            throw ex;
+            log.debug("Ending WorkflowExecutionActivity due to Exception");
+            StringWriter sw = new StringWriter();
+            PrintWriter pw = new PrintWriter(sw);
+            ex.printStackTrace(pw);
+            BinaryFile errorLog = createErrorLog(activity, sha1WorkflowIRI, sw.toString());
+            endExecutionActivity(activity, errorLog, false);
+            executingWorkflows.remove(workflow.getResource());
         }
     }
 
@@ -547,5 +550,41 @@ public class DaguWorkflowEngine extends AbstractWorkflowEngine implements Workfl
                     .map(Object::toString)
                     .collect(Collectors.joining("\n"));
         }
+    }
+
+    /**
+     * Creates a log file in the configured directory that holds the stacktrace of the exception that caused the
+     * workflow to fail.
+     *
+     * @param activity The executing {@link WorkflowExecutionActivity} that has failed with an exception.
+     * @param sha1WorkflowIRI A string representing the hashed value of the Workflows {@link IRI}.
+     * @param error The String representation of the stacktrace of the exception that caused the execution to fail.
+     * @return An {@link BinaryFile} that holds the stacktrace details and should be attached to the execution activity.
+     */
+    protected BinaryFile createErrorLog(WorkflowExecutionActivity activity, String sha1WorkflowIRI, String error) {
+        OffsetDateTime now = OffsetDateTime.now();
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
+        String currentTime = now.format(formatter);
+        String fileName = "error-" + currentTime + ".log";
+        BinaryFile errorLogFile = binaryFileFactory.createNew(vf.createIRI(LOG_FILE_NAMESPACE + fileName),
+                activity.getModel());
+        errorLogFile.setFileName(fileName);
+        errorLogFile.setMimeType("text/plain");
+        Path workflowLogDir = Path.of(logDir + "/" + sha1WorkflowIRI);
+
+        try (InputStream logStream = new ByteArrayInputStream(error.getBytes())) {
+            if (Files.notExists(workflowLogDir)) {
+                Files.createDirectory(workflowLogDir);
+            }
+            Path workflowLogFile = Path.of(workflowLogDir + "/" + fileName);
+            Files.copy(logStream, workflowLogFile, StandardCopyOption.REPLACE_EXISTING);
+            errorLogFile.setRetrievalURL(vf.createIRI("file://" + workflowLogFile));
+        } catch (IOException ex) {
+            String errorText = "Could not create log file for error. Please see karaf logs for more details.";
+            log.error(errorText);
+            throw new MobiException(errorText);
+        }
+
+        return errorLogFile;
     }
 }

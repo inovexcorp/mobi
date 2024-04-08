@@ -28,6 +28,7 @@ import com.mobi.repository.base.OsgiRepositoryWrapper;
 import com.mobi.repository.exception.RepositoryConfigException;
 import com.mobi.repository.impl.sesame.RepositoryConfigHelper;
 import org.apache.commons.lang3.StringUtils;
+import org.eclipse.rdf4j.common.transaction.QueryEvaluationMode;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryException;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
@@ -70,6 +71,7 @@ public class NativeRepositoryWrapper extends OsgiRepositoryWrapper {
         }
 
         NativeStore nativeStore = new NativeStore();
+        nativeStore.setDefaultQueryEvaluationMode(QueryEvaluationMode.STANDARD);
         File file = new File(config.dataDir());
         nativeStore.setDataDir(file);
 

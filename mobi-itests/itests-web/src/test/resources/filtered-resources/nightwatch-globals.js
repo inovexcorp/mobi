@@ -89,10 +89,42 @@ module.exports = {
             }
         }
 
+        // Wraps a timeout as a Promise so it can be chained
+        async function delay(ms) {
+          return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        // Used to run a command on a Docker container within a Promise and wait for the results appropriately
+        async function runExec(container, options) {
+          await new Promise((resolve, reject) => container.exec(options, function(err, exec) {
+            if (err) {
+              reject(err)
+            }
+        
+            exec.start({ I: true, T: true }, function(err, stream) {
+              if (err) {
+                reject(err)
+              }
+          
+              stream.on('end', function() {
+                resolve()
+              });
+        
+              docker.modem.demuxStream(stream, process.stdout, process.stderr)
+        
+              exec.inspect(function(err) {
+                if (err) {
+                  return;
+                }
+              });
+            })
+          }));
+        }
+
         async function testMobiAvailability() {
             process.env.NODE_TLS_REJECT_UNAUTHORIZED='0'
             if (counter < 30 && status !== 200) {
-                fetch(`https://localhost:${httpsPort}/mobi/index.html#/home`, {
+                return await fetch(`https://localhost:${httpsPort}/mobi/index.html#/home`, {
                     method: 'GET'
                 }, agent).then(async response => {
                     if (response.status === 200) {
@@ -100,48 +132,22 @@ module.exports = {
                         status = response.status;
 
                         console.info('trying to import files');
-                        await containerObj.exec({
+                        await runExec(containerObj, {
                             Cmd: ['sh', '/opt/mobi/import.sh'],
                             Tty: true,
                             AttachStdout: true,
                             AttachStderr: true,
-                        }, async (err, exec) => {
-                            if (err) {
-                                browser.assert.fail('err:', err);
-                                done();
-                                return;
-                            }
-
-                            await exec.start(async (err, stream) => {
-                                if (err) {
-                                    browser.assert.fail('Error creating command for Docker Container:', err);
-                                } else {
-                                    done();
-                                }
-
-                                // uncomment if you need to see output stream of import command
-                                // stream.on('data', (chunk) => {
-                                //     console.log('log:', chunk.toString('utf8'));
-                                // });
-
-                                // uncomment if you want to see error stream
-                                // exec.modem.demuxStream(stream, process.stdout, process.stderr);
-                            });
-                        })
+                        });
                     } else {
-                        setTimeout(() => {
-                            console.info('Could not access mobi. trying again in 1 second.');
-                            counter++;
-                            testMobiAvailability();
-                        }, 1000);
+                      console.info('Could not access mobi. trying again in 1 second.');
+                      counter++;
+                      return delay(1000).then(() => testMobiAvailability());
                     }
-                }).catch(error => {
-                    setTimeout(() => {
-                        console.info('Error connecting to mobi. trying again in 5 seconds.');
-                        counter++;
-                        testMobiAvailability();
-                    }, 5000);
-                })
+                }).catch(() => {
+                  console.info('Error connecting to mobi. trying again in 5 seconds.');
+                  counter++;
+                  return delay(5000).then(() => testMobiAvailability());
+                });
             }
         }
 
@@ -161,6 +167,8 @@ module.exports = {
                     console.log(`Container ${containerObj.id} started successfully`);
                     console.info('Testing if Mobi is accessible.')
                     await testMobiAvailability();
+                    console.info('Finished setup');
+                    done();
                 }
             });
         })
