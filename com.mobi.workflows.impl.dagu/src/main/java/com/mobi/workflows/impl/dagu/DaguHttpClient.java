@@ -41,8 +41,10 @@ import java.net.URI;
 import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
+import java.net.http.HttpRequest.Builder;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -56,6 +58,8 @@ public class DaguHttpClient {
     private final Logger log = LoggerFactory.getLogger(DaguHttpClient.class);
 
     private String daguHost;
+    private String authHeader;
+
     protected TokenManager tokenManager;
     protected EngineManager engineManager;
     protected Mobi mobi;
@@ -69,10 +73,15 @@ public class DaguHttpClient {
      * @param engineManager An EngineManager service instance to use for retrieving user details
      * @param mobi A Mobi service instance to use for retrieving details about the Mobi server
      */
-    public DaguHttpClient(String daguHost, TokenManager tokenManager, EngineManager engineManager, Mobi mobi) {
+    public DaguHttpClient(String daguHost, TokenManager tokenManager, EngineManager engineManager, Mobi mobi,
+                          String username, String password) {
         this.daguHost = daguHost;
         this.tokenManager = tokenManager;
         this.engineManager = engineManager;
+        if (username != null && password != null) {
+            String valueToEncode = username + ":" + password;
+            this.authHeader = "Basic " + Base64.getEncoder().encodeToString(valueToEncode.getBytes());
+        }
         this.mobi = mobi;
         client = HttpClient.newHttpClient();
     }
@@ -88,9 +97,12 @@ public class DaguHttpClient {
      */
     public ObjectNode getDag(String sha1WorkflowIRI) throws IOException, InterruptedException {
         log.trace("Checking if dag " + sha1WorkflowIRI + " already exists");
-        HttpRequest existsRequest = HttpRequest.newBuilder(URI.create(daguHost + "/dags/" + sha1WorkflowIRI))
-                .header("Accept", "application/json")
-                .build();
+        Builder requestBuilder = HttpRequest.newBuilder(URI.create(daguHost + "/dags/" + sha1WorkflowIRI))
+                .header("Accept", "application/json");
+
+        addAuthHeader(requestBuilder);
+        HttpRequest existsRequest = requestBuilder.build();
+
         HttpResponse<String> existsResponse = client.send(existsRequest, HttpResponse.BodyHandlers.ofString());
         if (existsResponse.statusCode() != 200) {
             throw new MobiException("Could not connect to Dagu\n Status Code: "
@@ -112,11 +124,13 @@ public class DaguHttpClient {
         Map<String, String> createFormData = new HashMap<>();
         createFormData.put("action", "new");
         createFormData.put("value", sha1WorkflowIRI);
-        HttpRequest createRequest = HttpRequest.newBuilder(URI.create(daguHost + "/dags"))
+        Builder createBuilder = HttpRequest.newBuilder(URI.create(daguHost + "/dags"))
                 .header("Accept", "application/json")
                 .header("Content-Type", "application/x-www-form-urlencoded")
-                .POST(HttpRequest.BodyPublishers.ofString(getFormDataAsString(createFormData)))
-                .build();
+                .POST(HttpRequest.BodyPublishers.ofString(getFormDataAsString(createFormData)));
+
+        addAuthHeader(createBuilder);
+        HttpRequest createRequest = createBuilder.build();
 
         HttpResponse<String> createResponse = client.send(createRequest, HttpResponse.BodyHandlers.ofString());
         if (createResponse.statusCode() != 200) {
@@ -138,10 +152,13 @@ public class DaguHttpClient {
      */
     public ObjectNode getLogForStep(String sha1WorkflowIRI, String stepName) throws
             JsonProcessingException, IOException, InterruptedException {
-        HttpRequest logRequest = HttpRequest.newBuilder(
+        Builder logBuilder = HttpRequest.newBuilder(
                         URI.create(daguHost + "/dags/" + sha1WorkflowIRI + "/log?step=" + stepName))
-                .header("Accept", "application/json")
-                .build();
+                .header("Accept", "application/json");
+
+        addAuthHeader(logBuilder);
+        HttpRequest logRequest = logBuilder.build();
+
         HttpResponse<String> logResponse = client.send(logRequest, HttpResponse.BodyHandlers.ofString());
         if (logResponse.statusCode() != 200) {
             throw new MobiException("Could not connect to Dagu\n Status Code: "
@@ -161,17 +178,19 @@ public class DaguHttpClient {
      * @throws InterruptedException If an error occurs sending the HTTP request
      */
     public ObjectNode getSchedulerLog(String sha1WorkflowIRI) throws IOException, InterruptedException {
-        HttpRequest logRequest = HttpRequest.newBuilder(
+        Builder logBuilder = HttpRequest.newBuilder(
                         URI.create(daguHost + "/dags/" + sha1WorkflowIRI + "/scheduler-log"))
-                .header("Accept", "application/json")
-                .build();
+                .header("Accept", "application/json");
+
+        addAuthHeader(logBuilder);
+        HttpRequest logRequest = logBuilder.build();
+
         HttpResponse<String> logResponse = client.send(logRequest, HttpResponse.BodyHandlers.ofString());
         if (logResponse.statusCode() != 200) {
             throw new MobiException("Could not connect to Dagu\n Status Code: "
                     + logResponse.statusCode() + "\n  Body: " + logResponse.body());
         }
-        ObjectNode dag = mapper.readValue(logResponse.body(), ObjectNode.class);
-        return dag;
+        return mapper.readValue(logResponse.body(), ObjectNode.class);
     }
 
     /**
@@ -188,9 +207,12 @@ public class DaguHttpClient {
      */
     public Optional<ObjectNode> checkDagExist(String sha1WorkflowIRI) throws IOException, InterruptedException {
         log.trace("Checking dag " + sha1WorkflowIRI + " status");
-        HttpRequest getRequest = HttpRequest.newBuilder(URI.create(daguHost + "/dags/" + sha1WorkflowIRI))
-                .header("accept", "application/json")
-                .build();
+        Builder requestBuilder = HttpRequest.newBuilder(URI.create(daguHost + "/dags/" + sha1WorkflowIRI))
+                .header("accept", "application/json");
+
+        addAuthHeader(requestBuilder);
+        HttpRequest getRequest = requestBuilder.build();
+
         HttpResponse<String> getResponse = client.send(getRequest, HttpResponse.BodyHandlers.ofString());
         if (getResponse.statusCode() != 200) {
             throw new MobiException("Failed to connect to dagu\n  Status Code: " + getResponse.statusCode()
@@ -236,11 +258,14 @@ public class DaguHttpClient {
         Map<String, String> startFormData = new HashMap<>();
         startFormData.put("action", "start");
         startFormData.put("params", mobi.getHostName() + " " + cookie.getValue());
-        HttpRequest startRequest = HttpRequest.newBuilder(URI.create(daguHost + "/dags/" + sha1WorkflowIRI))
+         Builder requestBuilder = HttpRequest.newBuilder(URI.create(daguHost + "/dags/" + sha1WorkflowIRI))
                 .header("Accept", "application/json")
                 .header("Content-Type", "application/x-www-form-urlencoded")
-                .POST(HttpRequest.BodyPublishers.ofString(getFormDataAsString(startFormData)))
-                .build();
+                .POST(HttpRequest.BodyPublishers.ofString(getFormDataAsString(startFormData)));
+
+        addAuthHeader(requestBuilder);
+        HttpRequest startRequest = requestBuilder.build();
+
         HttpResponse<String> startResponse = client.send(startRequest, HttpResponse.BodyHandlers.ofString());
         if (startResponse.statusCode() != 200 && startResponse.statusCode() != 303) {
             throw new MobiException("Could not start dag " + sha1WorkflowIRI + "\n Status Code: "
@@ -261,11 +286,14 @@ public class DaguHttpClient {
         Map<String, String> updateFormData = new HashMap<>();
         updateFormData.put("action", "save");
         updateFormData.put("value", workflowYaml);
-        HttpRequest updateRequest = HttpRequest.newBuilder(URI.create(daguHost + "/dags/" + sha1WorkflowIRI))
+        Builder requestBuilder = HttpRequest.newBuilder(URI.create(daguHost + "/dags/" + sha1WorkflowIRI))
                 .header("Accept", "application/json")
                 .header("Content-Type", "application/x-www-form-urlencoded")
-                .POST(HttpRequest.BodyPublishers.ofString(getFormDataAsString(updateFormData)))
-                .build();
+                .POST(HttpRequest.BodyPublishers.ofString(getFormDataAsString(updateFormData)));
+
+        addAuthHeader(requestBuilder);
+        HttpRequest updateRequest = requestBuilder.build();
+
         HttpResponse<String> updateResponse = client.send(updateRequest, HttpResponse.BodyHandlers.ofString());
         if (updateResponse.statusCode() != 200) {
             throw new MobiException("Could not update dag " + sha1WorkflowIRI + "\n  Status Code: "
@@ -301,5 +329,11 @@ public class DaguHttpClient {
             formBodyBuilder.append(URLEncoder.encode(singleEntry.getValue(), StandardCharsets.UTF_8));
         }
         return formBodyBuilder.toString();
+    }
+
+    protected void addAuthHeader(Builder requestBuilder) {
+        if (authHeader != null) {
+            requestBuilder.header("Authorization", authHeader);
+        }
     }
 }

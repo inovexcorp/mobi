@@ -70,4 +70,20 @@ public @interface DaguWorkflowEngineConfig {
      */
     @AttributeDefinition(defaultValue = "300")
     long pollTimeout() default 300;
+
+    /**
+     *  The username of the optional basic auth account configured on the DAGU server.
+     *
+     * @return A string representing the username to be used for basic auth on the DAGU server
+     */
+    @AttributeDefinition(name = "username", required = false)
+    String username();
+
+    /**
+     *  The password of the optional basic auth account configured on the DAGU server.
+     *
+     * @return A string representing the password to be used for basic auth on the DAGU server
+     */
+    @AttributeDefinition(name = "password", required = false)
+    String password();
 }

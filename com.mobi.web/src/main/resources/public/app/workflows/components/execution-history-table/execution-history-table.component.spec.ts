@@ -398,12 +398,12 @@ describe('ExecutionHistoryTableComponent', () => {
     it('for table rows', () => {
       expect(element.queryAll(By.css('table.mat-table')).length).toEqual(1);
       expect(element.queryAll(By.css('table tbody tr.mat-row')).length).toEqual(6);
-      const row1 = ['success', 'admin', 'exeId31', '2:42:38PM 2/15/2024', '10.051 sec', 'expand_more', 'description'];
-      const row2 = ['failure', 'admin', 'exeId2', '2:42:34PM 2/15/2024', '10.09 sec', 'expand_more', 'description'];
-      const row3 = ['success', 'admin', 'exeId3', '2:42:09PM 2/15/2024', '10.229 sec', 'expand_more', 'description'];
-      expect(element.queryAll(By.css('table tbody tr.mat-row.activity-row:nth-child(1) td')).map((debugElement) => debugElement.nativeElement.innerText)).toEqual(row1);
-      expect(element.queryAll(By.css('table tbody tr.mat-row.activity-row:nth-child(3) td')).map((debugElement) => debugElement.nativeElement.innerText)).toEqual(row2);
-      expect(element.queryAll(By.css('table tbody tr.mat-row.activity-row:nth-child(5) td')).map((debugElement) => debugElement.nativeElement.innerText)).toEqual(row3);
+      const row1 = ['success', 'admin', 'exeid31', '2:42:38pm 2/15/2024', '10.051 sec', 'expand_more', 'description'];
+      const row2 = ['failure', 'admin', 'exeid2', '2:42:34pm 2/15/2024', '10.09 sec', 'expand_more', 'description'];
+      const row3 = ['success', 'admin', 'exeid3', '2:42:09pm 2/15/2024', '10.229 sec', 'expand_more', 'description'];
+      expect(element.queryAll(By.css('table tbody tr.mat-row.activity-row:nth-child(1) td')).map((debugElement) => debugElement.nativeElement.innerText.toLowerCase())).toEqual(row1);
+      expect(element.queryAll(By.css('table tbody tr.mat-row.activity-row:nth-child(3) td')).map((debugElement) => debugElement.nativeElement.innerText.toLowerCase())).toEqual(row2);
+      expect(element.queryAll(By.css('table tbody tr.mat-row.activity-row:nth-child(5) td')).map((debugElement) => debugElement.nativeElement.innerText.toLowerCase())).toEqual(row3);
     });
     it('for table mat-paginator', () => {
       expect(element.queryAll(By.css('mat-paginator')).length).toEqual(1);
