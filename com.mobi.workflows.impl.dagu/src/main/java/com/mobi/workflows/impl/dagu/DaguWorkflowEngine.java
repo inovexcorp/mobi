@@ -12,12 +12,12 @@ package com.mobi.workflows.impl.dagu;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
@@ -36,6 +36,7 @@ import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.OrmFactoryRegistry;
 import com.mobi.rdf.orm.Thing;
 import com.mobi.repository.api.OsgiRepository;
+import com.mobi.security.api.EncryptionService;
 import com.mobi.server.api.Mobi;
 import com.mobi.vfs.ontologies.documents.BinaryFile;
 import com.mobi.vfs.ontologies.documents.BinaryFileFactory;
@@ -58,10 +59,10 @@ import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.osgi.service.cm.ConfigurationAdmin;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.ConfigurationPolicy;
-import org.osgi.service.component.annotations.Modified;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.component.annotations.ReferencePolicy;
@@ -76,7 +77,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -100,9 +100,14 @@ import java.util.stream.Collectors;
 @Component(
         immediate = true,
         service = { DaguWorkflowEngine.class, AbstractWorkflowEngine.class, WorkflowEngine.class},
-        configurationPolicy = ConfigurationPolicy.REQUIRE)
+        configurationPolicy = ConfigurationPolicy.REQUIRE,
+        property = {
+                "engineName=DaguWorkflowEngine"
+        })
 @Designate(ocd = DaguWorkflowEngineConfig.class)
 public class DaguWorkflowEngine extends AbstractWorkflowEngine implements WorkflowEngine {
+    public static final String ENGINE_NAME = "com.mobi.workflows.impl.dagu.DaguWorkflowEngine";
+
     private final Logger log = LoggerFactory.getLogger(DaguWorkflowEngine.class);
 
     protected final ValueFactory vf = new ValidatingValueFactory();
@@ -113,6 +118,7 @@ public class DaguWorkflowEngine extends AbstractWorkflowEngine implements Workfl
     private long pollingTimeout;
     private long pollingInterval;
     private boolean isLocal;
+    private String password;
 
     protected DaguHttpClient daguHttpClient;
 
@@ -141,6 +147,12 @@ public class DaguWorkflowEngine extends AbstractWorkflowEngine implements Workfl
     protected ActionExecutionFactory actionExecutionFactory;
 
     @Reference
+    protected ConfigurationAdmin configurationAdmin;
+
+    @Reference
+    protected EncryptionService encryptionService;
+
+    @Reference
     protected void setEventAdmin(EventAdmin eventAdmin) {
         this.eventAdmin = eventAdmin;
     }
@@ -158,28 +170,11 @@ public class DaguWorkflowEngine extends AbstractWorkflowEngine implements Workfl
     @Activate
     protected void start(final DaguWorkflowEngineConfig config) throws IOException {
         log.debug("Starting DaguWorkflowEngine");
+        setupEncryption(config);
+        validateConfig(config);
         log.trace("DaguWorkflowEngine started with config: " + config);
         setUpEngine(config);
         log.debug("Started DaguWorkflowEngine");
-    }
-
-    @Modified
-    protected void modified(final DaguWorkflowEngineConfig config) throws IOException {
-        log.debug("Modifying DaguWorkflowEngine");
-        log.trace("DaguWorkflowEngine modified with config: " + config);
-        setUpEngine(config);
-        log.debug("Modified DaguWorkflowEngine");
-    }
-
-    private void setUpEngine(DaguWorkflowEngineConfig config) throws IOException {
-        daguHttpClient = new DaguHttpClient(config.daguHost(), tokenManager, engineManager, mobi);
-        isLocal = config.local();
-        pollingTimeout = config.pollTimeout();
-        pollingInterval = config.pollInterval();
-        logDir = Paths.get(config.logDir());
-        if (Files.notExists(logDir)) {
-            Files.createDirectory(logDir);
-        }
     }
 
     @Override
@@ -586,5 +581,65 @@ public class DaguWorkflowEngine extends AbstractWorkflowEngine implements Workfl
         }
 
         return errorLogFile;
+    }
+
+    protected void updatedEncryptionService(EncryptionService encryptionService) {
+        try {
+            encryptionService.encrypt(password, "password", this.configurationAdmin.getConfiguration(ENGINE_NAME));
+        } catch (IOException e) {
+            log.error("Could not get configuration for " + ENGINE_NAME, e);
+            throw new MobiException(e);
+        } catch (MobiException m) {
+            log.error("Encryption service password has been changed. Please enter the DAGU basic auth password in " +
+                    "plaintext to encrypt/decrypt.");
+        }
+    }
+
+    /**
+     * Sets up the Dagu Workflow Engine with the provided configuration options.
+     *
+     * @param config The {@link DaguWorkflowEngineConfig} for the Dagu Workflow Engine
+     * @throws IOException If an error occurs during setup
+     */
+    private void setUpEngine(DaguWorkflowEngineConfig config) throws IOException {
+        daguHttpClient = new DaguHttpClient(config.daguHost(), tokenManager, engineManager, mobi,
+                config.username(), password);
+        isLocal = config.local();
+        pollingTimeout = config.pollTimeout();
+        pollingInterval = config.pollInterval();
+        logDir = Paths.get(config.logDir());
+        if (Files.notExists(logDir)) {
+            Files.createDirectory(logDir);
+        }
+    }
+
+    /**
+     * Validates whether the configuration for the Dagu Workflow Engine has both the basic auth username and password
+     * or neither of the two. Throws an IllegalArgumentException if the configuration is invalid.
+     *
+     * @param config The {@link DaguWorkflowEngineConfig} to validate
+     * @throws IllegalArgumentException if the configuration is invalid
+     */
+    private void validateConfig(DaguWorkflowEngineConfig config) {
+        if (config.username() != null & config.password() == null) {
+            throw new IllegalArgumentException("Dagu Workflow Engine cannot be run due to DaguWorkflowEngineConfig" +
+                    " having a basic auth username and no password configured.");
+        } else if (config.username() == null & config.password() != null) {
+            throw new IllegalArgumentException("Dagu Workflow Engine cannot be run due to DaguWorkflowEngineConfig" +
+                    " having a basic auth password and no username configured.");
+        }
+    }
+
+    private void setupEncryption(DaguWorkflowEngineConfig config) {
+        try {
+            password = encryptionService.isEnabled() ? encryptionService.decrypt(config.password(), "password",
+                    this.configurationAdmin.getConfiguration(ENGINE_NAME)) : config.password();
+        } catch (IOException e) {
+            log.error("Could not get configuration for " + ENGINE_NAME, e);
+            throw new MobiException(e);
+        } catch (MobiException m) {
+            log.error("Encryption service password has been changed. Please enter the DAGU basic auth password in" +
+                    "plaintext to encrypt/decrypt.");
+        }
     }
 }

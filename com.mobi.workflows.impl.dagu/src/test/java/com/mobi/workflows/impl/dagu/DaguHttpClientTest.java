@@ -28,6 +28,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -53,10 +55,14 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 import java.io.IOException;
+import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
+import java.net.http.HttpRequest.Builder;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import javax.servlet.http.Cookie;
@@ -110,12 +116,15 @@ public class DaguHttpClientTest extends OrmEnabledTestCase {
         when(mobi.getHostName()).thenReturn("https://localhost:8443/");
         when(engineManager.getUsername(vf.createIRI("http://test.org/user"))).thenReturn(Optional.of(userName));
 
-        daguHttpClient = spy(new DaguHttpClient("http://127.0.0.1:8080", tokenManager, engineManager, mobi));
+        daguHttpClient = spy(new DaguHttpClient("http://127.0.0.1:8080", tokenManager, engineManager, mobi,
+                null, null));
         daguHttpClient.client = httpClient;
     }
 
     @After
     public void reset() throws Exception {
+        daguHttpClient = spy(new DaguHttpClient("http://127.0.0.1:8080", tokenManager, engineManager, mobi,
+                null, null));
         Mockito.reset(mobi, tokenManager, httpClient, httpResponse);
         closeable.close();
     }
@@ -139,6 +148,7 @@ public class DaguHttpClientTest extends OrmEnabledTestCase {
 
         ObjectNode actual = daguHttpClient.getDag(hashString);
         Assert.assertEquals(mapper.readValue(daguResponse, ObjectNode.class).toString(), actual.toString());
+        verify(daguHttpClient, times(1)).addAuthHeader(any(HttpRequest.Builder.class));
     }
 
     @Test
@@ -152,6 +162,7 @@ public class DaguHttpClientTest extends OrmEnabledTestCase {
         thrown.expectMessage("Could not connect to Dagu\n Status Code: 404\n  Body: ");
 
         daguHttpClient.getDag(hashString);
+        verify(daguHttpClient, times(1)).addAuthHeader(any(HttpRequest.Builder.class));
     }
 
     @Test
@@ -166,6 +177,7 @@ public class DaguHttpClientTest extends OrmEnabledTestCase {
         when(tokenManager.createSecureTokenCookie(eq(signedJWT))).thenReturn(cookie);
 
         daguHttpClient.getSchedulerLog(hashString);
+        verify(daguHttpClient, times(1)).addAuthHeader(any(HttpRequest.Builder.class));
     }
 
     @Test
@@ -183,6 +195,7 @@ public class DaguHttpClientTest extends OrmEnabledTestCase {
         thrown.expectMessage("Could not update dag " + hashString + "\n  Status Code: 400\n  Body: " + daguResponse);
 
         daguHttpClient.updateDag(yaml, hashString);
+        verify(daguHttpClient, times(1)).addAuthHeader(any(HttpRequest.Builder.class));
     }
 
     @Test
@@ -194,6 +207,7 @@ public class DaguHttpClientTest extends OrmEnabledTestCase {
 
         ObjectNode actual = daguHttpClient.getSchedulerLog(hashString);
         Assert.assertEquals(mapper.readValue(daguResponse, ObjectNode.class).toString(), actual.toString());
+        verify(daguHttpClient, times(1)).addAuthHeader(any(HttpRequest.Builder.class));
     }
 
     @Test
@@ -206,6 +220,7 @@ public class DaguHttpClientTest extends OrmEnabledTestCase {
         thrown.expectMessage("Could not connect to Dagu\n Status Code: 400\n  Body: ");
 
         daguHttpClient.getSchedulerLog(hashString);
+        verify(daguHttpClient, times(1)).addAuthHeader(any(HttpRequest.Builder.class));
     }
 
     @Test
@@ -217,6 +232,21 @@ public class DaguHttpClientTest extends OrmEnabledTestCase {
 
         ObjectNode actual = daguHttpClient.getSchedulerLog(hashString);
         Assert.assertEquals(mapper.readValue(daguResponse, ObjectNode.class).toString(), actual.toString());
+        verify(daguHttpClient, times(1)).addAuthHeader(any(HttpRequest.Builder.class));
     }
 
+    @Test
+    public void addAuthHeaderTest() throws IOException, InterruptedException {
+        daguHttpClient = spy(new DaguHttpClient("http://127.0.0.1:8080", tokenManager, engineManager, mobi,
+                "test", "test"));
+        daguHttpClient.client = httpClient;
+
+        Builder requestBuilder = HttpRequest.newBuilder(URI.create("http://127.0.0.1:8080/dags/dc5ead9cb65a662ddd0048af30e00a86a449cded"))
+                .header("Accept", "application/json");
+
+        daguHttpClient.addAuthHeader(requestBuilder);
+        Map<String, List<String>> HeaderMap = requestBuilder.build().headers().map();
+        Assert.assertTrue(HeaderMap.containsKey("Authorization"));
+        Assert.assertEquals("Basic dGVzdDp0ZXN0", HeaderMap.get("Authorization").get(0));
+    }
 }

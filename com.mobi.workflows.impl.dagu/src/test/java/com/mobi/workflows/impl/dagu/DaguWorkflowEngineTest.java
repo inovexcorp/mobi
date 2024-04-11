@@ -45,6 +45,7 @@ import com.mobi.prov.api.ProvenanceService;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import com.mobi.repository.impl.sesame.memory.MemoryRepositoryWrapper;
+import com.mobi.security.api.EncryptionService;
 import com.mobi.server.api.Mobi;
 import com.mobi.vfs.api.VirtualFile;
 import com.mobi.vfs.api.VirtualFilesystem;
@@ -80,6 +81,9 @@ import org.junit.rules.ExpectedException;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
+import org.osgi.framework.Bundle;
+import org.osgi.framework.BundleContext;
+import org.osgi.service.cm.ConfigurationAdmin;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventAdmin;
 
@@ -170,9 +174,23 @@ public class DaguWorkflowEngineTest extends OrmEnabledTestCase {
     @Mock
     protected EventAdmin eventAdmin;
 
+    @Mock
+    protected EncryptionService encryptionService;
+
+    @Mock
+    protected ConfigurationAdmin configurationAdmin;
+
+    @Mock
+    private Bundle bundle;
+
+    @Mock
+    private BundleContext bundleContext;
+
     @Before
     public void setUp() throws Exception {
         closeable = MockitoAnnotations.openMocks(this);
+
+        when(bundleContext.getBundle()).thenReturn(bundle);
 
         System.setProperty("karaf.etc", Objects.requireNonNull(DaguWorkflowEngineTest.class.getResource("/"))
                 .getPath());
@@ -234,6 +252,8 @@ public class DaguWorkflowEngineTest extends OrmEnabledTestCase {
         daguEngine.factoryRegistry = getOrmFactoryRegistry();
         daguEngine.mobi = mobi;
         daguEngine.provRepo = provRepository;
+        daguEngine.encryptionService = encryptionService;
+        daguEngine.configurationAdmin = configurationAdmin;
     }
 
     @After
@@ -603,6 +623,30 @@ public class DaguWorkflowEngineTest extends OrmEnabledTestCase {
             assertEquals(OffsetDateTime.parse("2023-09-25T10:10" + offset), actionExecution3.getEndedAt().orElseThrow(AssertionError::new));
             assertEquals(false, actionExecution3.getSucceeded().orElseThrow(AssertionError::new));
         }
+    }
+
+    @Test
+    public void validateConfigNoUsernameTest() throws IOException {
+        when(config.password()).thenReturn(null);
+        when(config.username()).thenReturn("test");
+
+        thrown.expect(IllegalArgumentException.class);
+        thrown.expectMessage("Dagu Workflow Engine cannot be run due to DaguWorkflowEngineConfig" +
+                " having a basic auth username and no password configured.");
+
+        daguEngine.start(config);
+    }
+
+    @Test
+    public void validateConfigNoPasswordTest() throws IOException {
+        when(config.password()).thenReturn("test");
+        when(config.username()).thenReturn(null);
+
+        thrown.expect(IllegalArgumentException.class);
+        thrown.expectMessage("Dagu Workflow Engine cannot be run due to DaguWorkflowEngineConfig" +
+                " having a basic auth password and no username configured.");
+
+        daguEngine.start(config);
     }
 
     private void copyToTemp() throws IOException, URISyntaxException {
