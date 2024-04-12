@@ -1,0 +1,13 @@
+@prefix w: <http://mobi.solutions/ontologies/workflows#> .
+@prefix : <http://test.com/workflows-example#> .
+
+:WorkflowA a w:Workflow ;
+  w:hasTrigger :WorkflowATrigger ;
+  w:hasAction :WorkflowAAction1.
+
+:WorkflowAAction1 a w:Action, w:TestAction ;
+  w:testMessage "This is a test from Workflow A Action 1" .
+
+:WorkflowATrigger a w:Trigger, w:EventTrigger, w:CommitToBranchTrigger ;
+  w:watchesRecord <https://mobi.com/records#f5350991-5ff6-4ee0-9436-ca75db6b027b> ;
+  w:watchesBranch <https://mobi.com/branches#281711aa-919c-492c-a2cd-7cbf1921fe2a> .

@@ -53,18 +53,31 @@
     sh:property :watchesRecordPropertyShape, :watchesBranchPropertyShape .
 
 :watchesRecordPropertyShape a sh:PropertyShape;
-    wf:usesFormField wf:TextInput ;
+    wf:usesFormField wf:AutocompleteInput ;
+    sh:class mcat:VersionedRDFRecord ;
     sh:path :watchesRecord ;
-    sh:nodeKind sh:IRI ;
     sh:minCount 1 ;
     sh:maxCount 1 .
 
-:watchesBranchPropertyShape a sh:PropertyShape;
-    wf:usesFormField wf:TextInput ;
+:watchesBranchPropertyShape a sh:PropertyShape ;
+    wf:usesFormField wf:AutocompleteInput ;
     sh:path :watchesBranch ;
-    sh:nodeKind sh:IRI ;
+    sh:class mcat:Branch ;
     sh:minCount 1 ;
-    sh:maxCount 1 .
+    sh:maxCount 1 ;
+    sh:sparql [
+        a sh:SPARQLConstraint ;
+        sh:prefixes : ;
+        sh:select """
+            SELECT $this ?value
+            WHERE {
+                $this $PATH ?value .
+                FILTER NOT EXISTS {
+                    ?value ^<http://mobi.com/ontologies/catalog#branch>/^<http://mobi.solutions/ontologies/workflows#watchesRecord> $this .
+                }
+            }
+        """
+    ] .
 
 :watchesRecord a owl:ObjectProperty, owl:FunctionalProperty ;
     rdfs:label "watches Record"@en ;
