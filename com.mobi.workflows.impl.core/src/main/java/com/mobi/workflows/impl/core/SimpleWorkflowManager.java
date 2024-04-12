@@ -100,6 +100,7 @@ import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.model.vocabulary.RDF4J;
 import org.eclipse.rdf4j.query.BindingSet;
 import org.eclipse.rdf4j.query.GraphQuery;
+import org.eclipse.rdf4j.query.GraphQueryResult;
 import org.eclipse.rdf4j.query.MalformedQueryException;
 import org.eclipse.rdf4j.query.QueryResults;
 import org.eclipse.rdf4j.query.TupleQuery;
@@ -131,6 +132,7 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -955,15 +957,44 @@ public class SimpleWorkflowManager implements WorkflowManager, EventHandler {
         log.debug("Validating provided Workflow RDF");
         ShaclSail shaclSail = new ShaclSail(new MemoryStore());
         Repository validationRepo = new SailRepository(shaclSail);
+        List<Resource> undefinedWorkflowIris = new ArrayList<>();
+        List<Statement> systemRepoTriplesToAdd = new ArrayList<>();
 
         if (!workflowModel.contains(null, RDF.TYPE, vf.createIRI(Workflow.TYPE))) {
             throw new IllegalArgumentException("No workflow provided in RDF data.");
+        }
+
+        for (Statement statement : workflowModel) {
+            Resource subject = statement.getSubject();
+            IRI predicate = statement.getPredicate();
+            Value object = statement.getObject();
+
+            if (subject instanceof IRI && !predicate.equals(RDF.TYPE)) {
+                if (object instanceof Resource && !workflowModel.subjects().contains((Resource) object)) {
+                    undefinedWorkflowIris.add((Resource) object);
+                }
+            }
+        }
+
+        try (RepositoryConnection sysConn = configProvider.getRepository().getConnection()) {
+            String queryString = buildSparqlQuery(undefinedWorkflowIris);
+            GraphQuery query = sysConn.prepareGraphQuery(queryString);
+
+            try (GraphQueryResult result = query.evaluate()) {
+                result.forEach(statement -> {
+                    systemRepoTriplesToAdd.add(statement);
+                });
+            }
+        } catch (RepositoryException e) {
+            e.printStackTrace();
         }
 
         try (RepositoryConnection conn = validationRepo.getConnection()) {
             conn.begin();
             log.trace("Adding Workflow Model");
             conn.add(workflowModel);
+            log.trace("Adding System Repo Definitions");
+            conn.add(systemRepoTriplesToAdd);
             log.trace("Adding base SHACL definitions");
 
             ModelFactory modelFactory = new DynamicModelFactory();
@@ -1004,6 +1035,24 @@ public class SimpleWorkflowManager implements WorkflowManager, EventHandler {
         } finally {
             validationRepo.shutDown();
         }
+    }
+
+    /**
+     * Builds a SPARQL query string based on a list of values.
+     *
+     * @param values A list of RDF values used to construct the query
+     * @return A SPARQL query string.
+     */
+    protected String buildSparqlQuery(List<Resource> values) {
+        StringBuilder queryStringBuilder = new StringBuilder("CONSTRUCT {?s ?p ?o} WHERE { ?s ?p ?o . FILTER(?s IN (");
+        for (int i = 0; i < values.size(); i++) {
+            queryStringBuilder.append("<").append(values.get(i).stringValue()).append(">");
+            if (i < values.size() - 1) {
+                queryStringBuilder.append(", ");
+            }
+        }
+        queryStringBuilder.append(")) }");
+        return queryStringBuilder.toString();
     }
 
     private User getUser(Resource userId, RepositoryConnection conn) {

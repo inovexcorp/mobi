@@ -25,6 +25,7 @@ package com.mobi.workflows.impl.core;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -72,9 +73,11 @@ import com.mobi.workflows.api.WorkflowEngine;
 import com.mobi.workflows.api.action.ActionHandler;
 import com.mobi.workflows.api.ontologies.workflows.Action;
 import com.mobi.workflows.api.ontologies.workflows.ActionExecution;
+import com.mobi.workflows.api.ontologies.workflows.Trigger;
 import com.mobi.workflows.api.ontologies.workflows.Workflow;
 import com.mobi.workflows.api.ontologies.workflows.WorkflowExecutionActivity;
 import com.mobi.workflows.api.ontologies.workflows.WorkflowRecord;
+import com.mobi.workflows.api.trigger.TriggerHandler;
 import com.mobi.workflows.impl.core.fedx.FedXUtils;
 import com.mobi.workflows.impl.core.record.SimpleWorkflowRecordServiceTest;
 import org.apache.commons.io.IOUtils;
@@ -111,6 +114,7 @@ import org.osgi.service.event.EventAdmin;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -292,6 +296,45 @@ public class SimpleWorkflowManagerTest extends OrmEnabledTestCase {
         assertFalse(result);
     }
 
+    @Test
+    public void buildSparqlQueryWithCorrectAmountResults() {
+        List<Resource> values = Arrays.asList(
+                vf.createIRI("http://example.com/subject0"),
+                vf.createIRI("http://example.com/subject1"),
+                vf.createIRI("http://example.com/subject2"));
+        String expectedQuery = "CONSTRUCT {?s ?p ?o} WHERE { ?s ?p ?o . FILTER(?s IN (<http://example.com/subject0>, <http://example.com/subject1>, <http://example.com/subject2>)) }";
+        String actualQuery = workflowManager.buildSparqlQuery(values);
+        assertEquals(expectedQuery, actualQuery);
+    }
+
+    @Test
+    public void buildSparqlQueryWithIncorrectAmountResults() {
+        List<Resource> values = Arrays.asList(
+                vf.createIRI("http://example.com/subject0"),
+                vf.createIRI("http://example.com/subject1"));
+        String expectedQuery = "CONSTRUCT {?s ?p ?o} WHERE { ?s ?p ?o . FILTER(?s IN (<http://example.com/subject0>, <http://example.com/subject1>, <http://example.com/subject2>)) }";
+        String actualQuery = workflowManager.buildSparqlQuery(values);
+        assertNotEquals(expectedQuery, actualQuery);
+    }
+
+    @Test
+    public void buildSparqlQueryWithIncorrectResults() {
+        List<Resource> values = Arrays.asList(
+                vf.createIRI("http://example.com/subject1"),
+                vf.createIRI("http://example.com/subject2"));
+        String expectedQuery = "CONSTRUCT {?s ?p ?o} WHERE { ?s ?p ?o . FILTER(?s IN (<http://example.com/subject0>, <http://example.com/subject2>)) }";
+        String actualQuery = workflowManager.buildSparqlQuery(values);
+        assertNotEquals(expectedQuery, actualQuery);
+    }
+
+    @Test
+    public void buildSparqlQueryWithEmptyList() {
+        List<Resource> values = List.of();
+        String expectedQuery = "CONSTRUCT {?s ?p ?o} WHERE { ?s ?p ?o . FILTER(?s IN ()) }";
+        String actualQuery = workflowManager.buildSparqlQuery(values);
+        assertEquals(expectedQuery, actualQuery);
+    }
+
     private void addFindWorkflowData() throws IOException {
         FedXUtils mockFedXUtils = mock(FedXUtils.class);
         doAnswer((InvocationOnMock invocationOnMock) -> {
@@ -408,6 +451,67 @@ public class SimpleWorkflowManagerTest extends OrmEnabledTestCase {
                 output.add(expectedObjectNode);
             }
             assertEquals(testingData, mapper.writer(printer).writeValueAsString(output));
+        }
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void validateWorkflowTestWithUndefinedValues() throws IOException {
+        InputStream stream = getClass().getResourceAsStream("/undefined-workflow.ttl");
+        workflowModel = Rio.parse(stream, "", RDFFormat.TURTLE);
+
+        TriggerHandler<Trigger> mockTriggerHandler = mock(TriggerHandler.class);
+        when(mockTriggerHandler.getShaclDefinition()).thenReturn(getClass().getResourceAsStream("/triggerOntology.ttl"));
+        workflowManager.addTriggerHandler(mockTriggerHandler);
+        workflowManager.validateWorkflow(workflowModel);
+    }
+
+    @Test
+    public void validateWorkflowTestWithUndefinedValuesInSystemRepo() throws IOException {
+        InputStream stream = getClass().getResourceAsStream("/undefined-workflow.ttl");
+        workflowModel = Rio.parse(stream, "", RDFFormat.TURTLE);
+        try (RepositoryConnection conn = systemRepository.getConnection()) {
+            Resource recordIri = conn.getValueFactory().createIRI("https://mobi.com/records#f5350991-5ff6-4ee0-9436-ca75db6b027b");
+            Resource branchIri = conn.getValueFactory().createIRI("https://mobi.com/branches#281711aa-919c-492c-a2cd-7cbf1921fe2a");
+            Statement recordTypeStatement = conn.getValueFactory().createStatement(recordIri, RDF.TYPE, conn.getValueFactory().createIRI("http://mobi.com/ontologies/catalog#VersionedRDFRecord"));
+            Statement branchTypeStatement = conn.getValueFactory().createStatement(branchIri, RDF.TYPE, conn.getValueFactory().createIRI("http://mobi.com/ontologies/catalog#Branch"));
+            conn.add(recordTypeStatement);
+            conn.add(branchTypeStatement);
+
+            conn.commit();
+
+            ActionHandler<Action> mockActionHandler = mock(ActionHandler.class);
+            when(mockActionHandler.getShaclDefinition()).thenReturn(getClass().getResourceAsStream("/workflows.ttl"));
+            workflowManager.addActionHandler(mockActionHandler);
+            TriggerHandler<Trigger> mockTriggerHandler = mock(TriggerHandler.class);
+            when(mockTriggerHandler.getShaclDefinition()).thenReturn(getClass().getResourceAsStream("/triggerOntology.ttl"));
+            workflowManager.addTriggerHandler(mockTriggerHandler);
+
+            workflowManager.validateWorkflow(workflowModel);
+        }
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void validateWorkflowTestWithDifferemtValuesInSystemRepo() throws IOException {
+        InputStream stream = getClass().getResourceAsStream("/undefined-workflow.ttl");
+        workflowModel = Rio.parse(stream, "", RDFFormat.TURTLE);
+        try (RepositoryConnection conn = systemRepository.getConnection()) {
+            Resource recordIri = conn.getValueFactory().createIRI("https://mobi.com/record0#f5350991-5ff6-4ee0-9436-ca75db6b027b");
+            Resource branchIri = conn.getValueFactory().createIRI("https://mobi.com/branch0#281711aa-919c-492c-a2cd-7cbf1921fe2a");
+            Statement recordTypeStatement = conn.getValueFactory().createStatement(recordIri, RDF.TYPE, conn.getValueFactory().createIRI("http://mobi.com/ontologies/catalog#VersionedRDFRecord"));
+            Statement branchTypeStatement = conn.getValueFactory().createStatement(branchIri, RDF.TYPE, conn.getValueFactory().createIRI("http://mobi.com/ontologies/catalog#Branch"));
+            conn.add(recordTypeStatement);
+            conn.add(branchTypeStatement);
+
+            conn.commit();
+
+            ActionHandler<Action> mockActionHandler = mock(ActionHandler.class);
+            when(mockActionHandler.getShaclDefinition()).thenReturn(getClass().getResourceAsStream("/workflows.ttl"));
+            workflowManager.addActionHandler(mockActionHandler);
+            TriggerHandler<Trigger> mockTriggerHandler = mock(TriggerHandler.class);
+            when(mockTriggerHandler.getShaclDefinition()).thenReturn(getClass().getResourceAsStream("/triggerOntology.ttl"));
+            workflowManager.addTriggerHandler(mockTriggerHandler);
+
+            workflowManager.validateWorkflow(workflowModel);
         }
     }
 
