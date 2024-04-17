@@ -29,22 +29,23 @@ import { MatSortModule } from '@angular/material/sort';
 import { SharedModule } from '../shared/shared.module';
 
 // Workflows
+import { ActionExecutionsTableComponent } from './components/action-executions-table/action-executions-table.component';
 import { ExecutionHistoryTableComponent } from './components/execution-history-table/execution-history-table.component';
+import { LogsPreviewComponent } from './components/logs-preview/logs-preview.component';
+import { WorkflowControlsComponent } from './components/workflow-controls/workflow-controls.component';
+import { WorkflowsComponent } from './components/workflows/workflows.component';
 import { WorkflowDisplayComponent } from './components/workflow-display/workflow-display.component';
+import { WorkflowDownloadModalComponent } from './components/workflow-download-modal/workflow-download-modal.component';
+import { WorkflowPropertyOverlayComponent} from './components/workflow-property-overlay-component/workflow-property-overlay.component';
 import { WorkflowRecordComponent } from './components/workflow-record/workflow-record.component';
 import { WorkflowRecordsComponent } from './components/workflow-records/workflow-records.component';
-import { WorkflowControlsComponent } from './components/workflow-controls/workflow-controls.component';
 import { WorkflowTableFilterComponent } from './components/workflow-table-filter/workflow-table-filter.component';
-import { WorkflowsComponent } from './components/workflows/workflows.component';
 import { WorkflowsManagerService } from './services/workflows-manager.service';
 import { WorkflowsStateService } from './services/workflows-state.service';
-import { ActionExecutionsTableComponent } from './components/action-executions-table/action-executions-table.component';
-import { WorkflowDownloadModalComponent } from './components/workflow-download-modal/workflow-download-modal.component';
-import { LogsPreviewComponent } from './components/logs-preview/logs-preview.component';
 
 const routes: Routes = [{
-    path: '', component: WorkflowsComponent,
-    children: []
+  path: '', component: WorkflowsComponent,
+  children: []
 }];
 
 /**
@@ -53,27 +54,28 @@ const routes: Routes = [{
  * The `workflows` module provides components that make up the Workflows page of Mobi for managing Workflow Records.
  */
 @NgModule({
-    declarations: [
-      ExecutionHistoryTableComponent,
-      WorkflowControlsComponent,
-      WorkflowDisplayComponent,
-      WorkflowRecordComponent,
-      WorkflowRecordsComponent,
-      WorkflowTableFilterComponent,
-      WorkflowsComponent,
-      WorkflowDownloadModalComponent,
-      ActionExecutionsTableComponent,
-      LogsPreviewComponent
-    ],
-    imports: [
-      CommonModule,
-      RouterModule.forChild(routes),
-      SharedModule,
-      MatSortModule
-    ],
-    providers: [
-      WorkflowsManagerService,
-      WorkflowsStateService
-    ]
+  declarations: [
+    ActionExecutionsTableComponent,
+    ExecutionHistoryTableComponent,
+    LogsPreviewComponent,
+    WorkflowControlsComponent,
+    WorkflowsComponent,
+    WorkflowDisplayComponent,
+    WorkflowDownloadModalComponent,
+    WorkflowPropertyOverlayComponent,
+    WorkflowRecordComponent,
+    WorkflowRecordsComponent,
+    WorkflowTableFilterComponent,
+  ],
+  imports: [
+    CommonModule,
+    RouterModule.forChild(routes),
+    SharedModule,
+    MatSortModule
+  ],
+  providers: [
+    WorkflowsManagerService,
+    WorkflowsStateService
+  ]
 })
 export class WorkflowsModule {}

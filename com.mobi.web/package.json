@@ -53,6 +53,7 @@
     "codemirror-no-newlines": "git+https://github.com/mnmercer/codemirror-no-newlines.git",
     "core-js": "^2.5.4",
     "cytoscape": "^3.17.0",
+    "cytoscape-dagre": "^2.5.0",
     "d3-force": "^3.0.0",
     "daemonite-material": "^4.1.1",
     "eslint": "^7.6.0",
