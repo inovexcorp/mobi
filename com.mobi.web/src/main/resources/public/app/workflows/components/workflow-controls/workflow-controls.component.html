@@ -20,6 +20,20 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<button [disabled]="isRunDisabled()" class="workflow-run" color="primary" mat-icon-button (click)="runWorkflow()" [title]="getRunTooltip()"><mat-icon>play_circle</mat-icon></button>
-<button [disabled]="isDeleteDisabled()" class="workflow-delete" color="primary" mat-icon-button (click)="deleteWorkflow()" [title]="getDeleteTooltip()"><mat-icon>delete</mat-icon></button>
-<button [disabled]="isDownloadDisabled()" class="workflow-download" color="primary" mat-icon-button (click)="downloadWorkflow()" [title]="getDownloadTooltip()"><mat-icon>download</mat-icon></button>
+<button [disabled]="isRunDisabled()" class="workflow-run" color="primary" mat-icon-button (click)="runWorkflow()" [matTooltip]="getRunTooltip()"><mat-icon>play_circle</mat-icon></button>
+<button [disabled]="isDeleteDisabled()" class="workflow-delete" color="primary" mat-icon-button (click)="deleteWorkflow()" [matTooltip]="getDeleteTooltip()"><mat-icon>delete</mat-icon></button>
+<button [disabled]="isDownloadDisabled()" class="workflow-download" color="primary" mat-icon-button (click)="downloadWorkflow()" [matTooltip]="getDownloadTooltip()"><mat-icon>download</mat-icon></button>
+<ng-container *ngIf="!wss.selectedRecord">
+  <button mat-raised-button color="primary"
+  class="ml-1 workflow-create"
+  [disabled]="!canCreate"
+  (click)="createWorkflow()"
+  [matTooltip]="creationTooltip"
+  [matTooltipDisabled]="canCreate">New</button>
+  <button mat-raised-button color="primary"
+  class="ml-1 workflow-upload"
+  [disabled]="!canCreate"
+  (click)="uploadWorkflow()"
+  [matTooltip]="creationTooltip"
+  [matTooltipDisabled]="canCreate">Upload</button>
+</ng-container>

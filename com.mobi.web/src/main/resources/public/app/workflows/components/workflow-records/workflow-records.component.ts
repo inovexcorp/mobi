@@ -46,6 +46,7 @@ import { WorkflowTableFilterEvent } from '../../models/workflow-table-filter-eve
 import { WorkflowsManagerService } from '../../services/workflows-manager.service';
 import { WorkflowsStateService } from '../../services/workflows-state.service';
 import { getPropertyId } from '../../../shared/utility';
+import { WorkflowCreationModalComponent } from '../workflow-creation-modal/workflow-creation-modal.component';
 import { RESTError } from '../../../shared/models/RESTError.interface';
 
 /**
@@ -272,6 +273,12 @@ export class WorkflowRecordsComponent implements OnInit, OnDestroy {
    * @type {string}
    */
   catalogId;
+    /**
+   * A boolean representation of if a user can create a workflow record
+   *
+   * @type {boolean}
+   */
+  canCreate = false;
 
   /**
    * WorkflowRecordsComponent Constructor
@@ -296,6 +303,9 @@ export class WorkflowRecordsComponent implements OnInit, OnDestroy {
    * Initializes the component, restore search text from state service
    */
   ngOnInit(): void {
+    this._wms.checkCreatePermission().subscribe((response) => {
+      this.canCreate = response === 'Permit';
+    } );
     this.catalogId = get(this._cms.localCatalog, '@id', '');
     this.paginationConfig.searchText = this.wss.landingPageSearchText;
     this.dataSourceSub = this.dataSource.connect().subscribe((workflows) => {
@@ -438,6 +448,28 @@ export class WorkflowRecordsComponent implements OnInit, OnDestroy {
         this.updateWorkflowRecords();
       }
     });
+  }
+
+  /**
+   * Opens a dialog window for creating workflows, then opens the individual workflow page
+   */
+  createWorkflow(): void {
+    this._dialog.open(WorkflowCreationModalComponent).afterClosed().subscribe((result) => {
+      if (result.status) {
+          const newWorkflowDataRow : WorkflowDataRow = {
+            record: result.newWorkflow,
+            statusDisplay: undefined,
+            executorDisplay: undefined,
+            executionIdDisplay: undefined,
+            startTimeDisplay: undefined,
+            runningTimeDisplay: undefined
+          };
+          this.openRecord(newWorkflowDataRow);
+      }
+    });
+  }
+  uploadWorkflow(): void {
+    console.log('upload workflow placeholder');
   }
   /**
    * Updates the selected workflows based on the provided workflow element, and updates boolean validity and tooltip accordingly.

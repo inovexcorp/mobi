@@ -45,6 +45,12 @@ const administrationPageCommands = {
             .waitForElementNotPresent('create-user-overlay')
             .assert.not.elementPresent("//button/span[text() [contains(., 'Submit')]]");
     },
+    toggleWorkflowCreatePermission: function() {
+        return browser.useXpath()
+        .click('//*[@id="mat-tab-label-1-2"]')
+        .click('//*[@id="mat-slide-toggle-2"]')
+        .click('//permissions-page/div/div[7]/button')
+    },
 
     validateUserList:function(username) {
         return this.useXpath()

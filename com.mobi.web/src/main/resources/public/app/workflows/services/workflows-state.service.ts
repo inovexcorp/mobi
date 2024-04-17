@@ -85,7 +85,6 @@ export class WorkflowsStateService {
     private loginManagerService: LoginManagerService) { 
       this.subscribeToLoginManagerServiceEvents();
   }
-
   /**
    * Subscribes to {@link LoginManagerService} actions observable for events. 
    * For example it handles event when user logouts.
