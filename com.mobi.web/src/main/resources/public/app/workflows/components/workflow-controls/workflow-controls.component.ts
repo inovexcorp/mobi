@@ -23,6 +23,7 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 
 import { WorkflowSchema } from '../../models/workflow-record.interface';
+import { WorkflowsStateService } from '../../services/workflows-state.service';
 
 /**
  * @class workflows.WorkflowControlsComponent
@@ -39,13 +40,18 @@ import { WorkflowSchema } from '../../models/workflow-record.interface';
 export class WorkflowControlsComponent {
   @Input() records: WorkflowSchema[];
   @Input() currentlyRunning = false;
+  @Input() canCreate;
   @Output() onRun = new EventEmitter<WorkflowSchema[]>();
   @Output() onDownload = new EventEmitter<WorkflowSchema[]>();
   @Output() onDelete = new EventEmitter<WorkflowSchema[]>();
+  @Output() onCreate = new EventEmitter<WorkflowSchema[]>();
+  @Output() onUpload = new EventEmitter<WorkflowSchema[]>();
 
-  disableClickFeature = false
+  creationTooltip = '';
 
-  constructor() { }
+  constructor(public wss: WorkflowsStateService) {
+    this.setWorkflowCreationTooltip();
+   }
 
   /**
    * @returns {boolean} Whether the run button should be disabled. True if there are no workflow records provided, a
@@ -130,6 +136,13 @@ export class WorkflowControlsComponent {
     }
   }
 
+  /**
+   * Updates the create workflow button tooltip message based on permissions.
+   */
+  setWorkflowCreationTooltip(): void {  
+    this.creationTooltip = this.canCreate ? '' : 'You do not have permission to create workflow records.';
+  }
+
   runWorkflow(): void {
     this.onRun.emit(this.records);
   }
@@ -138,5 +151,11 @@ export class WorkflowControlsComponent {
   }
   downloadWorkflow(): void {
     this.onDownload.emit(this.records); 
+  }
+  createWorkflow(): void {
+    this.onCreate.emit(); 
+  }
+  uploadWorkflow(): void {
+    this.onUpload.emit(); 
   }
 }

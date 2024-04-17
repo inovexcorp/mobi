@@ -710,6 +710,7 @@ public class WorkflowsRest {
                     @ApiResponse(responseCode = "204", description = "Execution Activity logs do not exist"),
                     @ApiResponse(responseCode = "400", description = "An invalid argument has been passed"),
                     @ApiResponse(responseCode = "401", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "404", description = "Execution Activity does not exist"),
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
@@ -753,7 +754,7 @@ public class WorkflowsRest {
      * Downloads the entire contents of the log file directly associated with an identified execution of an identified
      * WorkflowRecord into a file.
      *
-     * @param servletRequest The HttpServletRequest.
+     * @param servletRequest The HttpServletRequest
      * @param workflowRecordId The IRI string of the {@link WorkflowRecord} with the execution
      * @param activityId The IRI string of the {@link WorkflowExecutionActivity} with the logs
      * @return Response that downloads the entire log file

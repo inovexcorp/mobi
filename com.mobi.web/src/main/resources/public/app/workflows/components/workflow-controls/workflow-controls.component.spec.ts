@@ -27,9 +27,13 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { cloneDeep } from 'lodash';
+import { MockProvider } from 'ng-mocks';
 
 import { workflow_mocks } from '../../models/mock_data/workflow-mocks';
+import { WorkflowsStateService } from '../../services/workflows-state.service';
+import { WorkflowSchema } from '../../models/workflow-record.interface';
 import { WorkflowControlsComponent } from './workflow-controls.component';
 
 describe('WorkflowControlsComponent', () => {
@@ -44,9 +48,13 @@ describe('WorkflowControlsComponent', () => {
         CommonModule,
         MatIconModule,
         MatButtonModule,
+        MatTooltipModule
       ],
       declarations: [ 
-        WorkflowControlsComponent 
+        WorkflowControlsComponent,
+      ],
+      providers: [
+        MockProvider(WorkflowsStateService)
       ]
     })
     .compileComponents();
@@ -150,10 +158,19 @@ describe('WorkflowControlsComponent', () => {
       component.records = [cloneDeep(workflow_mocks[0])];
       expect(component.getDownloadTooltip()).toEqual('');
     });
+    it('should return the proper tooltip for the create/upload button button', () => {
+      // No Permission
+      component.canCreate = false;
+      component.setWorkflowCreationTooltip();
+      expect(component.creationTooltip).toEqual('You do not have permission to create workflow records.');
+      // Valid Permission
+      component.canCreate = true;
+      component.setWorkflowCreationTooltip();
+      expect(component.creationTooltip).toEqual('');
+    });
   });
   describe('contains the correct html bindings', () => {
     it('workflow run button', () => {
-      component.disableClickFeature = false;
       fixture.detectChanges();
       spyOn(component, 'runWorkflow');
       expect(element.queryAll(By.css('.workflow-run')).length).toEqual(1);
@@ -162,7 +179,6 @@ describe('WorkflowControlsComponent', () => {
       expect(component.runWorkflow).toHaveBeenCalledWith();
     });
     it('workflow delete button', () => {
-      component.disableClickFeature = false;
       fixture.detectChanges();
       spyOn(component, 'deleteWorkflow');
       expect(element.queryAll(By.css('.workflow-delete')).length).toEqual(1);
@@ -171,13 +187,54 @@ describe('WorkflowControlsComponent', () => {
       expect(component.deleteWorkflow).toHaveBeenCalledWith();
     });
     it('workflow download button', () => {
-      component.disableClickFeature = false;
       fixture.detectChanges();
       spyOn(component, 'downloadWorkflow');
       expect(element.queryAll(By.css('.workflow-download')).length).toEqual(1);
       const button = element.queryAll(By.css('.workflow-download'))[0];
       button.triggerEventHandler('click', jasmine.createSpy('PointerEvent'));
       expect(component.downloadWorkflow).toHaveBeenCalledWith();
+    });
+    it('workflow create button', () => {
+      fixture.detectChanges();
+      spyOn(component, 'createWorkflow');
+      expect(element.queryAll(By.css('.workflow-create')).length).toEqual(1);
+      const button = element.queryAll(By.css('.workflow-create'))[0];
+      button.triggerEventHandler('click', jasmine.createSpy('PointerEvent'));
+      expect(component.createWorkflow).toHaveBeenCalledWith();
+      // Test that is not visible on individual page
+      const sampleWorkflowSchema: WorkflowSchema = {
+        iri: '',
+        title: '',
+        issued: undefined,
+        modified: undefined,
+        description: '',
+        active: false,
+        workflowIRI: ''
+      };
+      component.wss.selectedRecord = sampleWorkflowSchema;
+      fixture.detectChanges();
+      expect(element.queryAll(By.css('.workflow-create')).length).toEqual(0);
+    });
+    it('workflow upload button', () => {
+      fixture.detectChanges();
+      spyOn(component, 'uploadWorkflow');
+      expect(element.queryAll(By.css('.workflow-upload')).length).toEqual(1);
+      const button = element.queryAll(By.css('.workflow-upload'))[0];
+      button.triggerEventHandler('click', jasmine.createSpy('PointerEvent'));
+      expect(component.uploadWorkflow).toHaveBeenCalledWith();
+      // Test that is not visible on individual page
+      const sampleWorkflowSchema: WorkflowSchema = {
+        iri: '',
+        title: '',
+        issued: undefined,
+        modified: undefined,
+        description: '',
+        active: false,
+        workflowIRI: ''
+      };
+      component.wss.selectedRecord = sampleWorkflowSchema;
+      fixture.detectChanges();
+      expect(element.queryAll(By.css('.workflow-upload')).length).toEqual(0);
     });
   });
 });

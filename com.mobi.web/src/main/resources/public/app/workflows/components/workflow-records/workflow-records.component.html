@@ -32,10 +32,13 @@
         </div>
         <div class="workflow-control">
             <app-workflow-controls [records]="getSelectedRecords()"
-                                    [currentlyRunning]="dataSource.isWorkflowRunning"
-                                    (onRun)="runWorkflow()"
-                                    (onDownload)="downloadWorkflow()"
-                                    (onDelete)="deleteWorkflow()">
+                                   [canCreate]="canCreate"
+                                   [currentlyRunning]="dataSource.isWorkflowRunning"
+                                   (onRun)="runWorkflow()"
+                                   (onDownload)="downloadWorkflow()"
+                                   (onDelete)="deleteWorkflow()"
+                                   (onCreate)="createWorkflow()"
+                                   (onUpload)="uploadWorkflow()">
             </app-workflow-controls>
         </div>
     </div>

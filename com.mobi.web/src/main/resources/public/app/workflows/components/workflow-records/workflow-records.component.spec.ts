@@ -58,6 +58,7 @@ import { WorkflowDownloadModalComponent } from '../workflow-download-modal/workf
 import { MatSortModule } from '@angular/material/sort';
 import { WorkflowPaginatedConfig } from '../../models/workflow-paginated-config.interface';
 import { WorkflowTableFilterComponent } from '../workflow-table-filter/workflow-table-filter.component';
+import { WorkflowCreationModalComponent } from '../workflow-creation-modal/workflow-creation-modal.component';
 import { RESTError } from '../../../shared/models/RESTError.interface';
 
 describe('WorkflowRecordsComponent', () => {
@@ -69,6 +70,7 @@ describe('WorkflowRecordsComponent', () => {
   let workflowsStateStub: jasmine.SpyObj<WorkflowsStateService>;
   let workflowsManagerStub: jasmine.SpyObj<WorkflowsManagerService>;
   let policyEnforcementStub: jasmine.SpyObj<PolicyEnforcementService>;
+  let policyManagerServiceStub: jasmine.SpyObj<PolicyManagerService>;
   let matDialog: jasmine.SpyObj<MatDialog>;
   let toastStub: jasmine.SpyObj<ToastService>;
   let executionActivitiesSubject: Subject<JSONLDObject[]>;
@@ -141,6 +143,7 @@ describe('WorkflowRecordsComponent', () => {
 
     workflowManagerStub = TestBed.inject(WorkflowsManagerService) as jasmine.SpyObj<WorkflowsManagerService>;
     workflowManagerStub.getExecutionActivitiesEvents.and.returnValue(executionActivitiesSubject.asObservable());
+    workflowManagerStub.checkCreatePermission.and.returnValue(of('Permit'));
 
     fixture = TestBed.createComponent(WorkflowRecordsComponent);
     component = fixture.componentInstance;
@@ -156,6 +159,7 @@ describe('WorkflowRecordsComponent', () => {
     workflowsManagerStub = null;
     workflowsStateStub = null;
     policyEnforcementStub = null;
+    policyManagerServiceStub = null;
     toastStub = null;
     catalogManagerStub = null;
     executionActivitiesSubject = null;
@@ -319,6 +323,10 @@ describe('WorkflowRecordsComponent', () => {
       catalogManagerStub.downloadResource.and.returnValue(null);
       component.downloadWorkflow();
       expect(matDialog.open).toHaveBeenCalledWith(WorkflowDownloadModalComponent, jasmine.objectContaining({ data: { workflows: component.getSelectedRecords() } }));
+    }));
+    it('should open create dialog', fakeAsync(() => {
+      component.createWorkflow();
+      expect(matDialog.open).toHaveBeenCalledWith(WorkflowCreationModalComponent);
     }));
     describe('should delete a workflow', () => {
       beforeEach(() => {

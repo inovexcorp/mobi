@@ -24,7 +24,7 @@
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable, NgZone } from '@angular/core';
 //Lodash
-import { get, has, isObject } from 'lodash';
+import { forEach, get, has, isObject } from 'lodash';
 //RxJs
 import { Observable, forkJoin, of } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
@@ -41,10 +41,11 @@ import { WorkflowSchema } from '../models/workflow-record.interface';
 import { condenseCommitId, handleErrorObject, paginatedConfigToHttpParams, runningTime, toFormattedDateString } from '../../shared/utility';
 import { XACMLRequest } from '../../shared/models/XACMLRequest.interface';
 import { PolicyManagerService } from '../../shared/services/policyManager.service';
-import { CATALOG, WORKFLOWS } from '../../prefixes';
+import { CATALOG, POLICY, RDF, WORKFLOWS } from '../../prefixes';
 import { PolicyEnforcementService } from '../../shared/services/policyEnforcement.service';
 import { CatalogManagerService } from '../../shared/services/catalogManager.service';
 import { XACMLDecision } from '../../shared/models/XACMLDecision.interface';
+import { WorkflowRecordConfig } from '../models/workflowRecordConfig.interface';
 
 /**
  * WorkflowsManagerService is an angular service class that is responsible for managing workflows.
@@ -329,6 +330,22 @@ export class WorkflowsManagerService {
   }
 
   /**
+   * Checks the permission to create a workflow record.
+   *
+   * @return {Observable<string>} An observable that emits the result of the permission check.
+   */
+  checkCreatePermission(): Observable<string> {
+    const createWorkflowPermissionRequest: XACMLRequest = {
+      resourceId: 'http://mobi.com/catalog-local',
+      actionId: `${POLICY}Create`,
+      actionAttrs: {
+        [`${RDF}type`]: `${WORKFLOWS}WorkflowRecord`
+      }
+    };
+    return this._pe.evaluateRequest(createWorkflowPermissionRequest, true);
+  }
+
+  /**
    * Update the workflow status of a record.
    *
    * @param {JSONLDObject[]} record The record to update.
@@ -361,6 +378,22 @@ export class WorkflowsManagerService {
   }
 
   /**
+   * Creates a new workflow record by sending a POST request to the server.
+   * 
+   * @param {WorkflowRecordConfig} newWorkflow - The configuration object for the new workflow record.
+   * @returns {Observable<string>} An observable that emits a string JSON Object of the workflow record that was created.
+   */
+  createWorkflowRecord(newWorkflow: WorkflowRecordConfig, isTracked = false): Observable<string> {
+    const formData = new FormData();
+    formData.append('title', newWorkflow.title);
+    formData.append('description', newWorkflow.description);
+    formData.append('jsonld', JSON.stringify(newWorkflow.jsonld));
+    forEach(newWorkflow.keywords, word => formData.append('keywords', word));
+
+    const request = this._http.post<string>(this.workflows_prefix, formData, { responseType: 'json' });
+    return this._spinnerSrv.trackedRequest(request, isTracked).pipe(catchError(handleErrorObject));
+  }
+  /*
    * Hits the GET /workflows/{workflowId}/executions/{executionId}/logs endpoint to retrieve a preview of the logs for
    * the WorkflowExecutionActivity with the provided IRI associated with the WorkflowRecord with the provided IRI. If
    * the full log contents are more than the backend limit, a 'X-Total-Size' header will be set with the total size in

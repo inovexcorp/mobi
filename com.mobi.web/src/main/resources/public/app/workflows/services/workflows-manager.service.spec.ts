@@ -299,14 +299,14 @@ describe('WorkflowsManagerService', () => {
     beforeEach(async () => {
       policyEnforcementStub.permit = 'Permit';
     });
-    it('when they do not have permission',async () => {
+    it('when they do not have permission', async () => {
       policyEnforcementStub.permit = 'Permit';
       policyEnforcementStub.evaluateRequest.and.returnValue(of('Not Permitted'));
       service.checkMasterBranchPermissions('mockMasterBranchIRI', 'mockWorkflowRecordIRI').subscribe(response => {
         expect(response).toBe(false);
       });
     });
-    it('when they do have permission',async () => {
+    it('when they do have permission', async () => {
       policyEnforcementStub.permit = 'Permit';
       policyEnforcementStub.evaluateRequest.and.returnValue(of('Permit'));
       service.checkMasterBranchPermissions('mockMasterBranchIRI', 'mockWorkflowRecordIRI').subscribe(response => {
@@ -314,8 +314,27 @@ describe('WorkflowsManagerService', () => {
       });
     });
   });
+  describe('checkCreatePermission should return appropriate response', function() {
+    beforeEach(() => {
+      policyEnforcementStub.permit = 'Permit';
+    });
+    it('when they do not have permission', () => {
+      policyEnforcementStub.permit = 'Permit';
+      policyEnforcementStub.evaluateRequest.and.returnValue(of('Not Permitted'));
+      service.checkCreatePermission().subscribe(response => {
+        expect(response).not.toBe(policyEnforcementStub.permit);
+      });
+    });
+    it('when they do have permission', () => {
+      policyEnforcementStub.permit = 'Permit';
+      policyEnforcementStub.evaluateRequest.and.returnValue(of('Permit'));
+      service.checkCreatePermission().subscribe(response => {
+        expect(response).toBe(policyEnforcementStub.permit);
+      });
+    });
+  });
   describe('checkWorkflowDeletePermissions should return appropriate response', function() {
-    it('when they do not have permission',async () => {
+    it('when they do not have permission', async () => {
       policyEnforcementStub.evaluateMultiDecisionRequest.and.returnValue(of([{
         'urn:oasis:names:tc:xacml:1.0:subject-category:access-subject': 'http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997',
         'urn:oasis:names:tc:xacml:3.0:attribute-category:resource': 'https://mobi.com/records#0ce1e51e-dd1b-4277-925f-2dc838d0dbc5',
@@ -327,7 +346,7 @@ describe('WorkflowsManagerService', () => {
         expect(response).toEqual(fakePermissionDeny);
       });
     });
-    it('when they do have permission',async () => {
+    it('when they do have permission', async () => {
       policyEnforcementStub.evaluateMultiDecisionRequest.and.returnValue(of([{
         'urn:oasis:names:tc:xacml:1.0:subject-category:access-subject': 'http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997',
         'urn:oasis:names:tc:xacml:3.0:attribute-category:resource': 'https://mobi.com/records#0ce1e51e-dd1b-4277-925f-2dc838d0dbc5',

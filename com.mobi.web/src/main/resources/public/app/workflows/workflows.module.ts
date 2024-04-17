@@ -42,6 +42,7 @@ import { WorkflowRecordsComponent } from './components/workflow-records/workflow
 import { WorkflowTableFilterComponent } from './components/workflow-table-filter/workflow-table-filter.component';
 import { WorkflowsManagerService } from './services/workflows-manager.service';
 import { WorkflowsStateService } from './services/workflows-state.service';
+import { WorkflowCreationModalComponent } from './components/workflow-creation-modal/workflow-creation-modal.component';
 
 const routes: Routes = [{
   path: '', component: WorkflowsComponent,
@@ -66,6 +67,7 @@ const routes: Routes = [{
     WorkflowRecordComponent,
     WorkflowRecordsComponent,
     WorkflowTableFilterComponent,
+    WorkflowCreationModalComponent,
   ],
   imports: [
     CommonModule,
