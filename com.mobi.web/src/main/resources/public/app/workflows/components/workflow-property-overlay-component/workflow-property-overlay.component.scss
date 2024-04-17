@@ -20,7 +20,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-.workflow-display {
-    border: .1rem solid rgba(0, 0, 0, 0.29);
-    height: 100%;
+.entity {
+  --entity-margin: .75rem;
+    flex-direction: column;
+    flex: 1 1 auto;
+    word-wrap: break-word;
+    &-title {
+      padding: 0;
+      margin-bottom: var(--entity-margin);
+      font-weight: 500;
+      line-height: 1.2;
+    }
+
+  &-value {
+    padding-left: .8rem;
+    margin-bottom: 1rem;
+  }
 }

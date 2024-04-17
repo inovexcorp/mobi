@@ -1,0 +1,43 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 - 2024 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="workflow-entity-dialog">
+    <h1 mat-dialog-title>Details</h1>
+    <mat-dialog-content>
+        <ng-container *ngIf="displayData.length > 0; else elseBlock">
+            <div class="overflow-properties">
+                <div class="d-flex entity" *ngFor="let item of displayData">
+                    <h5 class="col-sm-6 text-capitalize entity-title">{{item.key}}</h5>
+                    <div class="d-flex flex-column ml-1">
+                        <div *ngFor="let value of item.value" class="entity-value">{{value}}</div>
+                    </div>
+                </div>
+            </div>
+        </ng-container>
+        <ng-template #elseBlock>
+            <info-message>{{message}}</info-message>
+        </ng-template>
+    </mat-dialog-content>
+    <mat-dialog-actions>
+        <button mat-raised-button (click)="close()">Close</button>
+    </mat-dialog-actions>
+</div>

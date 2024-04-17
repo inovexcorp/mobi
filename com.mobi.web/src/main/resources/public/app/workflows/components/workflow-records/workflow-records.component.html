@@ -61,11 +61,13 @@
                 <ng-container matColumnDef="title">
                     <th mat-header-cell *matHeaderCellDef mat-sort-header sortActionDescription="Sort by Workflow"> Workflow </th>
                     <td mat-cell *matCellDef="let element">
-                        <span class="text-truncate" title="{{element.record.workflowIRI}}">
-                            {{element.record.title}}
-                        </span>
-                        <!-- TODO Figure out why arrow_outward does not work -->
-                        <button mat-icon-button (click)="openRecord(element)"><mat-icon>open_in_new</mat-icon></button>
+                        <div class="d-flex align-items-center">
+                            <span class="text-truncate" title="{{element.record.workflowIRI}}">
+                                {{element.record.title}}
+                            </span>
+                            <!-- TODO Figure out why arrow_outward does not work -->
+                            <button mat-icon-button (click)="openRecord(element)"><mat-icon>open_in_new</mat-icon></button>
+                        </div>
                     </td>
                 </ng-container>
                 <!-- active Column -->

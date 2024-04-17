@@ -62,7 +62,11 @@
                     <mat-tab label="Executions"> 
                         <ng-template matTabContent>
                             <div class="mat-tab-content-wrapper">
-                                <app-execution-history-table [workflow]="record" [executingActivities]="executingActivities" [workflowRdf]="workflowRdf"></app-execution-history-table>
+                                <app-execution-history-table
+                                   [workflow]="record"
+                                   [executingActivities]="executingActivities"
+                                   [workflowRdf]="workflowRdf">
+                                </app-execution-history-table>
                             </div>
                         </ng-template>
                     </mat-tab>
@@ -82,9 +86,8 @@
                     </mat-tab>
                 </mat-tab-group>
             </div>
-            <!-- TODO UNCOMMENT FOR FUTURE TICKETS -->
             <div class="workflow-record-body-display">
-                <!-- <app-workflow-display></app-workflow-display> --> 
+                <app-workflow-display [resource]="workflowRdf"></app-workflow-display>
             </div>
         </div>
     </div>
