@@ -25,6 +25,7 @@ import { FormControl, Validators } from '@angular/forms';
 import { RDF, SHACL, SHACL_FORM, XSD } from '../../prefixes';
 import { JSONLDObject } from '../../shared/models/JSONLDObject.interface';
 import { SHACLFormFieldConfig } from './shacl-form-field-config';
+import { Option } from './option.class';
 
 describe('SHACLFormFieldConfig', () => {
   const nodeShape: JSONLDObject = { '@id': 'urn:NodeShape', '@type': [`${SHACL}NodeShape`] };
@@ -142,7 +143,7 @@ describe('SHACLFormFieldConfig', () => {
     expect(result).toBeTruthy();
     expect(result.isValid).toBeTrue();
     expect(result.errorMessage).toEqual('');
-    expect(result.values).toEqual(['A']);
+    expect(result.values).toEqual([new Option('A', 'A')]);
   });
   it('should handle when a blank node in a sh:in list has a rdf:rest of rdf:nil', () => {
     const propertyShape: JSONLDObject = {
@@ -157,7 +158,7 @@ describe('SHACLFormFieldConfig', () => {
     expect(result).toBeTruthy();
     expect(result.isValid).toBeTrue();
     expect(result.errorMessage).toEqual('');
-    expect(result.values).toEqual(['A']);
+    expect(result.values).toEqual([new Option('A', 'A')]);
   });
   it('should handle when a blank node in a sh:in list cannot be found', () => {
     const propertyShape: JSONLDObject = {
@@ -172,7 +173,7 @@ describe('SHACLFormFieldConfig', () => {
     expect(result).toBeTruthy();
     expect(result.isValid).toBeTrue();
     expect(result.errorMessage).toEqual('');
-    expect(result.values).toEqual(['A']);
+    expect(result.values).toEqual([new Option('A', 'A')]);
   });
   it('should handle a lengthy sh:in list', () => {
     const propertyShape: JSONLDObject = {
@@ -190,7 +191,7 @@ describe('SHACLFormFieldConfig', () => {
     expect(result).toBeTruthy();
     expect(result.isValid).toBeTrue();
     expect(result.errorMessage).toEqual('');
-    expect(result.values).toEqual(['A', 'Y', 'B', 'Z']);
+    expect(result.values).toEqual([new Option('A', 'A'), new Option('Y', 'Y'), new Option('B', 'B'), new Option('Z', 'Z')]);
   });
   it('should correctly fetch the sh:minCount value', () => {
     const propertyShape: JSONLDObject = {

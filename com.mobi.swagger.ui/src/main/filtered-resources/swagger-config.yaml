@@ -15,6 +15,7 @@ resourcePackages:
   - com.mobi.sparql.rest
   - com.mobi.shapes.rest
   - com.mobi.workflows.rest
+  - com.mobi.shacl.form.rest
 prettyPrint: true
 cacheTTL: 0
 openAPI:

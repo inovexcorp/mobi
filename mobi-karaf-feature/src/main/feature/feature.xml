@@ -273,6 +273,7 @@
         <bundle>mvn:com.mobi/prov.rest/${project.version}</bundle>
         <bundle>mvn:com.mobi/shapes.rest/${project.version}</bundle>
         <bundle>mvn:com.mobi/workflows.rest/${project.version}</bundle>
+        <bundle>mvn:com.mobi/shacl.form.rest/${project.version}</bundle>
         <bundle>mvn:com.mobi/setting.rest/${project.version}</bundle>
         <bundle>mvn:com.mobi/document.translator.rest/${project.version}</bundle>
         <bundle>mvn:com.mobi/security.policy.rest/${project.version}</bundle>

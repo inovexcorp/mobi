@@ -183,6 +183,9 @@ export function getPropertyId(entity: JSONLDObject, propertyIRI: string): string
  */
 export function getPropertyIds(entity: JSONLDObject, propertyIRI: string): Set<string> {
   const propertyValues = get(entity, `['${propertyIRI}']`, []) as JSONLDObject[];
+  if (typeof propertyValues === 'string') {
+      return new Set();
+  }
   const ids: Set<string> = new Set();
 
   propertyValues.forEach(value => {

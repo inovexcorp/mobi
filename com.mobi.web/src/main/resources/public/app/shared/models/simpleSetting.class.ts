@@ -28,7 +28,7 @@ import { DCTERMS, OWL, RDFS, SETTING, SHACL } from '../../prefixes';
 import { JSONLDObject } from './JSONLDObject.interface';
 import { SHACLFormFieldConfig } from '../../shacl-forms/models/shacl-form-field-config';
 import { FormValues } from '../../shacl-forms/components/shacl-form/shacl-form.component';
-import { getPropertyId, getPropertyValue, hasPropertyId, setPropertyValue } from '../utility';
+import { getPropertyId, getPropertyValue, hasPropertyId, setPropertyValue, getPropertyIds } from '../utility';
 
 /**
  * @class shared.SimpleSetting
@@ -46,7 +46,9 @@ export class SimpleSetting implements Setting {
 
     constructor(settingJson: JSONLDObject, shapeDefinitions: {[key: string]: JSONLDObject}) {
         this._json = settingJson;
-        this._formFieldPropertyShapes = [shapeDefinitions[getPropertyId(this.json, `${SHACL}property`)]];
+        getPropertyIds(this.json, `${SHACL}property`).forEach(propertyId => {
+            this._formFieldPropertyShapes.push(shapeDefinitions[propertyId]);
+        });
         this._formFieldPropertyShapes.forEach(formField => {
             this._formFieldProperties.push(getPropertyId(formField, `${SHACL}path`));
             this._formFieldConfigs.push(new SHACLFormFieldConfig(this.json, formField['@id'], Object.values(shapeDefinitions)));

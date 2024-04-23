@@ -1,0 +1,48 @@
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+PREFIX dct: <http://purl.org/dc/terms/>
+PREFIX dc: <http://purl.org/dc/elements/1.1/>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX skosxl: <http://www.w3.org/2008/05/skos-xl#>
+PREFIX mcat: <http://mobi.com/ontologies/catalog#>
+
+SELECT DISTINCT (?iri as ?value) ?name WHERE {
+  {
+        SELECT ?iri (GROUP_CONCAT(?nameOption;separator="�") as ?names)
+        WHERE {
+          {
+            SELECT ?iri ?nameOption
+            WHERE {
+              {
+                ?iri a %SH_CLASS% .
+                FILTER(ISIRI(?iri))
+                BIND(REPLACE(STR(?iri), "^.*?([_\\\\p{L}][-_\\\\p{L}\\\\p{N}]*)$", "$1") as ?nameOption)
+                BIND(15 as ?propertyOrder)
+              } UNION {
+                VALUES (?property ?propertyOrder) { (rdfs:label 2) (dct:title 4) (dc:title 6) (skos:prefLabel 8) (skos:altLabel 10) }
+                ?iri a %SH_CLASS% ;
+                  ?property ?nameOption .
+                FILTER(ISIRI(?iri))
+                OPTIONAL {
+                  ?iri ?property ?nameOption .
+                  FILTER(LANGMATCHES(LANG(?nameOption), "EN"))
+                  BIND(?propertyOrder - 1 as ?propertyOrder)
+                }
+              } UNION {
+                ?iri a %SH_CLASS% ;
+                  (skosxl:prefLabel/skosxl:literalForm) ?nameOption .
+                FILTER(ISIRI(?iri))
+                BIND(13 as ?propertyOrder)
+              } UNION {
+                ?iri a %SH_CLASS% ;
+                  (skosxl:altLabel/skosxl:literalForm) ?nameOption .
+                FILTER(ISIRI(?iri))
+                BIND(14 as ?propertyOrder)
+              }
+            } ORDER BY ?propertyOrder
+        }
+    } GROUP BY ?iri
+  }
+  BIND(IF(STRBEFORE(?names, "�") = "", ?names, STRBEFORE(?names, "�")) as ?name)
+}

@@ -42,16 +42,16 @@
     <mat-radio-group class="d-flex flex-column" [formControlName]="controlName">
         <mat-radio-button *ngFor="let value of formFieldConfig.values"
                           [value]="value">
-            {{ value }}
+            {{ value.name }}
         </mat-radio-button>
     </mat-radio-group>
   </div>
   <div class="checkbox-field pb-3 d-flex flex-column" *ngIf="formFieldConfig.fieldType === 'checkbox'" >
     <mat-checkbox *ngFor="let checkbox of checkboxes" 
-                  (change)="checkboxChange($event)" [value]="checkbox.value" 
+                  (change)="checkboxChange($event)" [value]="checkbox.value.value" 
                   [checked]="checkbox.checked" 
                   [disabled]="disableCheckboxes && !checkbox.checked">
-      {{ checkbox.value }}
+      {{ checkbox.value.name }}
     </mat-checkbox>
   </div>
   <div class="dropdown-field pb-3 d-flex flex-column" *ngIf="formFieldConfig.fieldType === 'dropdown'" >
@@ -59,7 +59,7 @@
       <mat-label>{{label}}</mat-label>
       <mat-select [formControlName]="controlName">
         <mat-option *ngFor="let option of options" [value]="option">
-          {{ option }}
+          {{ option.name }}
         </mat-option>
       </mat-select>
     </mat-form-field>
@@ -67,12 +67,14 @@
   <div class="autocomplete-field pb-3 d-flex flex-column" *ngIf="formFieldConfig.fieldType === 'autocomplete'">
     <mat-form-field>
       <mat-label>{{label}}</mat-label>
-      <input type="text" matInput placeholder="Select an option" [formControlName]="controlName"
+      <input type="text" matInput placeholder="Select an option"  (focus)="getAutocompleteOptions(formFieldConfig)" [formControlName]="controlName"
         [matAutocomplete]="auto">
       <mat-icon matSuffix>keyboard_arrow_down</mat-icon>
-      <mat-autocomplete #auto="matAutocomplete">
+      <mat-autocomplete #auto="matAutocomplete" (optionSelected)="onOptionSelected($event.option.value)" [displayWith]="displayFn">
         <mat-option *ngFor="let option of filteredOptions | async" [value]="option">
-          {{option}}
+          <div [matTooltip]="option.value" matTooltipPosition="above">
+            {{ option.name }}
+          </div>
         </mat-option>
       </mat-autocomplete>
     </mat-form-field>

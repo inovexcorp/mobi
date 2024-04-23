@@ -127,6 +127,11 @@
         </dependency>
         <dependency>
             <groupId>com.mobi</groupId>
+            <artifactId>shacl.form.rest</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.mobi</groupId>
             <artifactId>document.translator.rest</artifactId>
             <version>${project.version}</version>
         </dependency>

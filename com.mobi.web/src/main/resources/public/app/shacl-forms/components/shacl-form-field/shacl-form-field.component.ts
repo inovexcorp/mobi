@@ -20,19 +20,25 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, OnInit, Output, EventEmitter, ViewChild } from '@angular/core';
 import { FormArray, FormControl, FormGroup } from '@angular/forms';
 import { MatCheckboxChange } from '@angular/material/checkbox';
 
 import { SHACLFormFieldConfig } from '../../models/shacl-form-field-config';
-import { XSD } from '../../../prefixes';
-import { Observable } from 'rxjs';
-import { map, startWith } from 'rxjs/operators';
+import { SHACL, XSD } from '../../../prefixes';
+import { Observable, Subject, merge } from 'rxjs';
+import { debounceTime, map, mapTo, startWith } from 'rxjs/operators';
+import { SHACLFormManagerService } from '../../services/shaclFormManager.service';
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { Option } from '../../models/option.class';
+import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
+import { ChangeDetectorRef } from '@angular/core';
+import { getPropertyId } from '../../../shared/utility';
 
 // TODO: Look into complex setting support
 
 /**
- * @class shared.SHACLFormFieldComponent
+ * @class shacl-forms.SHACLFormFieldComponent
  * 
  * A component which will create an individual Angular form-field for the provided parent FormGroup depending on the
  * configuration provided in a {@link SHACLFormFieldConfig}. Supports `TextInput`, `ToggleInput`, `RadioInput`, and
@@ -54,17 +60,31 @@ import { map, startWith } from 'rxjs/operators';
   styleUrls: ['./shacl-form-field.component.scss']
 })
 export class SHACLFormFieldComponent implements OnInit {
+  @ViewChild(MatAutocompleteTrigger, { static: true }) autocompleteTrigger: MatAutocompleteTrigger;
+
   @Input() formFieldConfig: SHACLFormFieldConfig;
   @Input() parentFormGroup: FormGroup;
   @Input() controlName: string;
+  @Input() focusNode: JSONLDObject[];
+
+  @Output() calculateFocusNode = new EventEmitter<any>();
 
   disableCheckboxes = false;
-  checkboxes: { value: string, checked: boolean }[] = [];
-  options: string[];
-  filteredOptions: Observable<string[]>;
+  checkboxes: { value: Option, checked: boolean }[] = [];
+  options: Option[];
+  filteredOptions: Observable<Option[]>;
   label = '';
+  focusSubject: Subject<number> = new Subject<number>();
+  dependsOn: Set<string> = new Set<string>();
 
-  constructor() { }
+  constructor(public sh: SHACLFormManagerService, private ref: ChangeDetectorRef) {
+    this.sh.fieldUpdated.subscribe((fieldName: string) => {
+        if (this.dependsOn.has(fieldName)) {
+            this.fieldFormControl.setValue(new Option('', ''));
+            this.ngOnInit();
+        }
+      });
+  }
 
   ngOnInit(): void {
     if (this.formFieldConfig.fieldType) {
@@ -73,17 +93,17 @@ export class SHACLFormFieldComponent implements OnInit {
       this.label = this.formFieldConfig.label;
       // If the field is a checkbox, create the checkbox map and handle initialization of checked states
       if (this.formFieldConfig.fieldType === 'checkbox') {
-        this.checkboxes = this.formFieldConfig.values.map(value => ({ value, checked: false }));
+        this.checkboxes = this.formFieldConfig.values.map((value: Option) => ({ value: value, checked: false }));
         if (this.fieldFormArray.value && this.fieldFormArray.value.length) {
-          this.checkboxes.forEach(checkbox => checkbox.checked = this.fieldFormArray.value.includes(checkbox.value));
+          this.checkboxes.forEach((checkbox: { value: Option, checked: boolean })  => checkbox.checked = this.fieldFormArray.value.map((option: Option) => option.value).includes(checkbox.value.value));
           this.handleCheckboxMaxCount();
         } else {
           if (defaultValue) {
-            const checkbox = this.checkboxes.find(checkbox => checkbox.value === defaultValue);
+            const checkbox = this.checkboxes.find(checkbox => checkbox.value.value === defaultValue);
             if (checkbox) {
               checkbox.checked = true;
             }
-            this.fieldFormArray.push(new FormControl(defaultValue));
+            this.fieldFormArray.push(new FormControl(new Option(defaultValue, checkbox.value.name)));
           }
         }
         this.fieldFormArray.setValidators(validators);
@@ -95,25 +115,68 @@ export class SHACLFormFieldComponent implements OnInit {
         if (this.options.length === 1 && this.formFieldConfig.fieldType === 'dropdown') {
           this.fieldFormControl.setValue(this.options[0]);
         } else if (this.formFieldConfig.fieldType === 'autocomplete') {
-          this.filteredOptions = this.fieldFormControl.valueChanges.pipe(
-            startWith(''),
-            map(value => {
-              const filteredOptions = this._filter(value || '');
-              this._checkValidity(value, filteredOptions);
-              return filteredOptions;
-            })
-          );
+            this.filteredOptions = merge(
+                this.focusSubject.pipe(mapTo('')),
+                this.fieldFormControl.valueChanges.pipe(debounceTime(200))
+              ).pipe(
+                startWith(''),
+                map((value: string | Option) => {
+                    value = typeof value === 'string' ? value : value.name;
+                    const filteredOptions = this._filter(value || '');
+                    this._checkValidity(value || '', filteredOptions.map(values => values.name));
+                    return filteredOptions;
+                  })
+              );
         }
       } else {
         if (this.formFieldConfig.datatype === `${XSD}boolean`) {
           this.setFormValueToBoolean(defaultValue);
         } else if (defaultValue && !this.fieldFormControl.value) {
-          this.fieldFormControl.setValue(defaultValue);
+            if (this.formFieldConfig.values.length) {
+                const value = this.formFieldConfig.values.filter(val => val.value === defaultValue);
+                if (!value.length) {
+                    console.log('Could not find a matching option for default value');
+                } else {
+                    this.fieldFormControl.setValue(value[0]);
+                }
+            } else {
+                this.fieldFormControl.setValue(new Option(defaultValue, defaultValue));
+            }
         }
         this.fieldFormControl.setValidators(validators);
         this.fieldFormControl.updateValueAndValidity({ emitEvent: false });
       }
     }
+  }
+
+  onOptionSelected(option: Option): void {
+    this.sh.fieldUpdated.emit(this.formFieldConfig.property);
+  }
+
+  getAutocompleteOptions(formFieldConfig: SHACLFormFieldConfig): void {
+      this.calculateFocusNode.emit();
+      this.sh.getAutocompleteOptions(formFieldConfig.collectAllReferencedNodes(formFieldConfig.propertyShape, formFieldConfig.jsonld), this.focusNode).subscribe((entities: Option[]) => {
+        this.options = entities;
+        if (this.focusNode) {
+            this.getFieldsFromJSONLD(this.focusNode[0]).forEach(field => {
+                if ((field !== formFieldConfig.property) && getPropertyId(formFieldConfig.propertyShape, `${SHACL}sparql`)) {
+                    this.dependsOn.add(field);
+                }   
+            });
+        }
+        this.focusSubject.next(Math.random());
+        this.ref.markForCheck();
+      });
+  }
+
+  getFieldsFromJSONLD(jsonld: JSONLDObject): string[] {
+    const fields = [];
+    Object.keys(jsonld).forEach(key => {
+        if (key !== '@id' && key !== '@type') {
+            fields.push(key);
+        }
+    });
+    return fields;
   }
 
   get fieldFormControl(): FormControl {
@@ -129,14 +192,14 @@ export class SHACLFormFieldComponent implements OnInit {
   }
 
   checkboxChange(event: MatCheckboxChange): void {   
-    const checkbox = this.checkboxes.find(checkbox => checkbox.value === event.source.value);
+    const checkbox = this.checkboxes.find(checkbox => checkbox.value.value === event.source.value);
     if (event.checked) {
-      this.fieldFormArray.push(new FormControl(event.source.value));
+      this.fieldFormArray.push(new FormControl(new Option(event.source.value, checkbox.value.name)));
       if (checkbox) {
         checkbox.checked = true;
       }
     } else {
-      const i = this.fieldFormArray.controls.findIndex(x => x.value === event.source.value);
+      const i = this.fieldFormArray.controls.findIndex(x => x.value?.value === event.source.value);
       this.fieldFormArray.removeAt(i);
       if (checkbox) {
         checkbox.checked = false;
@@ -150,9 +213,13 @@ export class SHACLFormFieldComponent implements OnInit {
     this.disableCheckboxes = maxNum !== undefined && this.fieldFormControl.value.length >= maxNum;
   }
 
-  private _filter(value: string): string[] {
+  displayFn(option: {name: string, value: string}): string {
+    return option && option.name ? option.name : '';
+  }
+
+  private _filter(value: string): Option[] {
     const filterValue = value.toLowerCase();
-    return this.options.filter(option => option.toLowerCase().includes(filterValue));
+    return (this.options as Option[]).filter(option => option.name.toLowerCase().includes(filterValue));
   }
 
   private _checkValidity(value: string, filteredOptions: string[]): void {
