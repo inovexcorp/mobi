@@ -237,7 +237,7 @@ public class CatalogRest {
             }
     )
     public Response getCatalogs(
-            @Parameter(description = "Optional Type of Catalog you want back (local or distributed)", required = false)
+            @Parameter(description = "Optional Type of Catalog you want back (local or distributed)")
             @QueryParam("type") String catalogType) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Set<Catalog> catalogs = new HashSet<>();
@@ -355,9 +355,9 @@ public class CatalogRest {
                             "http://mobi.com/ontologies/dataset#DatasetRecord"},
                     required = true))
             @QueryParam("type") String recordType,
-            @Parameter(description = "List of keywords", required = false)
+            @Parameter(description = "List of keywords")
             @QueryParam("keywords") List<String> keywords,
-            @Parameter(description = "List of creator IRIs", required = false)
+            @Parameter(description = "List of creator IRIs")
             @QueryParam("creators") List<String> creators,
             @Parameter(description = "Offset for the page", required = true)
             @QueryParam("offset") int offset,
@@ -366,7 +366,7 @@ public class CatalogRest {
             @Parameter(description = "Whether or not the list should be sorted ascending or descending",
                     required = false)
             @DefaultValue("true") @QueryParam("ascending") boolean asc,
-            @Parameter(description = "String used to filter out Records", required = true)
+            @Parameter(description = "String used to filter out Records")
             @QueryParam("searchText") String searchText) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             validatePaginationParams(sort, SORT_RESOURCES, limit, offset);
@@ -572,7 +572,7 @@ public class CatalogRest {
             @Context UriInfo uriInfo,
             @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
-            @Parameter(description = "String used to filter out Keywords", required = false)
+            @Parameter(description = "String used to filter out Keywords")
             @QueryParam("searchText") String searchText,
             @Parameter(description = "Offset for the page", required = true)
             @QueryParam("offset") int offset,
@@ -996,7 +996,7 @@ public class CatalogRest {
                     description = "Required title for the new Version", required = true))
             @FormParam("title") String title,
             @Parameter(schema = @Schema(type = "string",
-                    description = "Optional description for the new Version", required = false))
+                    description = "Optional description for the new Version"))
             @FormParam("description") String description) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             checkStringParam(title, "Version title is required");

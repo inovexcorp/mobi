@@ -26,7 +26,6 @@ package com.mobi.catalog.rest;
 import static com.mobi.ontologies.rdfs.Resource.type_IRI;
 import static com.mobi.rest.util.RestUtils.checkStringParam;
 import static com.mobi.rest.util.RestUtils.createIRI;
-import static com.mobi.rest.util.RestUtils.createJsonErrorObject;
 import static com.mobi.rest.util.RestUtils.createPaginatedResponseWithJsonNode;
 import static com.mobi.rest.util.RestUtils.getActiveUser;
 import static com.mobi.rest.util.RestUtils.getObjectFromJsonld;
@@ -69,13 +68,14 @@ import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.LinksUtils;
 import com.mobi.rest.util.MobiNotFoundException;
 import com.mobi.rest.util.RestUtils;
-import com.mobi.security.policy.api.ontologies.policy.Read;
-import com.mobi.security.policy.api.ontologies.policy.Update;
 import com.mobi.security.policy.api.Decision;
 import com.mobi.security.policy.api.PDP;
 import com.mobi.security.policy.api.Request;
+import com.mobi.security.policy.api.ontologies.policy.Read;
+import com.mobi.security.policy.api.ontologies.policy.Update;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.Explode;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -311,7 +311,7 @@ public class MergeRequestRest {
                     description = "Required IRI of the target Branch which will receive the new commits "
                     + "from the source Branch of the new MergeRequest", required = true))
             @FormParam("targetBranchId") String targetBranchId,
-            @Parameter(array = @ArraySchema(
+            @Parameter(explode = Explode.TRUE, array = @ArraySchema(
                     arraySchema = @Schema(description = "List of username of Users to assign the new MergeRequest to"),
                     schema = @Schema(implementation = String.class, description = "Username")))
             @FormParam("assignees") List<String> assignees,

@@ -70,6 +70,7 @@ import com.mobi.workflows.api.ontologies.workflows.WorkflowRecordFactory;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Encoding;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -267,8 +268,9 @@ public class WorkflowsRest {
             },
             requestBody = @RequestBody(
                     content = {
-                            @Content(mediaType = MediaType.MULTIPART_FORM_DATA,
-                                    schema = @Schema(implementation = WorkflowFileUpload.class)
+                            @Content(mediaType = MediaType.MULTIPART_FORM_DATA, encoding = {
+                                    @Encoding(name = "keywords", explode = true)
+                                }, schema = @Schema(implementation = WorkflowFileUpload.class)
                             )
                     }
             )
