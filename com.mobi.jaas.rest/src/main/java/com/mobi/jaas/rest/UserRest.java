@@ -46,6 +46,7 @@ import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.RestUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.Explode;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -178,7 +179,7 @@ public class UserRest {
             @Parameter(schema = @Schema(type = "string",
                     description = "Required password of the User to create", required = true))
             @FormParam("password") String password,
-            @Parameter(array = @ArraySchema(
+            @Parameter(explode = Explode.TRUE, array = @ArraySchema(
                     arraySchema = @Schema(description = "List of roles of the User to create"),
                     schema = @Schema(implementation = String.class, description = "Role")))
             @FormParam("roles") List<String> roles,

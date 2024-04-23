@@ -42,6 +42,7 @@ import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.RestUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.Explode;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -163,11 +164,11 @@ public class GroupRest {
             @Parameter(schema = @Schema(type = "string",
                     description = "Description of the Group", required = true))
             @FormParam("description") String description,
-            @Parameter(array = @ArraySchema(
+            @Parameter(explode = Explode.TRUE, array = @ArraySchema(
                     arraySchema = @Schema(description = "List of roles of the Group", required = true),
                     schema = @Schema(implementation = String.class, description = "Role")))
             @FormParam("roles") List<String> roles,
-            @Parameter(array = @ArraySchema(
+            @Parameter(explode = Explode.TRUE, array = @ArraySchema(
                     arraySchema = @Schema(description = "List of members of the Group", required = true),
                     schema = @Schema(implementation = String.class, description = "Member")))
             @FormParam("members") List<String> members) {

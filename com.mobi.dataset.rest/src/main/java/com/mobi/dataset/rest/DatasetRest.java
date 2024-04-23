@@ -62,6 +62,7 @@ import com.mobi.rest.util.jaxb.Links;
 import com.mobi.security.policy.api.ontologies.policy.Delete;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.enums.Explode;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -263,12 +264,12 @@ public class DatasetRest {
             @Parameter(schema = @Schema(type = "string",
                     description = "Optional markdown abstract for the new DatasetRecord"))
             @FormParam("markdown") String markdown,
-            @Parameter(array = @ArraySchema(
+            @Parameter(explode = Explode.TRUE, array = @ArraySchema(
                     arraySchema = @Schema(description =
                             "Optional list of keywords strings for the new DatasetRecord"),
                     schema = @Schema(implementation = String.class, description = "Keyword")))
             @FormParam("keywords") List<String> keywords,
-            @Parameter(array = @ArraySchema(
+            @Parameter(explode = Explode.TRUE, array = @ArraySchema(
                     arraySchema = @Schema(description =
                             "Optional list of OntologyRecord IRI strings for the new DatasetRecord"),
                     schema = @Schema(implementation = String.class, description = "OntologyRecord IRI")))
