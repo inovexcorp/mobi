@@ -22,11 +22,13 @@
  */
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { FormArray, FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
+import { v4 } from 'uuid';
 
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { SHACLFormFieldConfig } from '../../models/shacl-form-field-config';
 import { JSONLDId } from '../../../shared/models/JSONLDId.interface';
 import { JSONLDValue } from '../../../shared/models/JSONLDValue.interface';
+import { Option } from '../../models/option.class';
 
 export interface FormValues {
   [key: string]: string | string[] | { [key:string]: string }[]
@@ -39,7 +41,7 @@ interface FormComponent {
 }
 
 /**
- * @class shared.SHACLFormComponent
+ * @class shacl-forms.SHACLFormComponent
  * 
  * A component which creates an Angular Reactive form for a specific SHACL NodeShape and its associated PropertyShapes.
  * Creates a {@link shared.SHACLFormFieldComponent} for every form field configuration with names of the property IRIs
@@ -75,6 +77,8 @@ export class SHACLFormComponent implements OnInit {
   formComponents: FormComponent[] = [];
 
   form: FormGroup = this._fb.group({});
+
+  focusNode: JSONLDObject[];
 
   constructor(private _fb: FormBuilder) { }
 
@@ -146,12 +150,43 @@ export class SHACLFormComponent implements OnInit {
         }
       });
     }
-    this.form.valueChanges.subscribe(newValues => {
-      this.updateEvent.emit(newValues);
+    this.form.valueChanges.subscribe((newValues: { [key:string]: Option|Option[]|string }[]) => {
+      const newValuesNormalized = Object.entries(newValues).reduce((accumulator, [key, value]) => {
+        if (value.value) {
+            accumulator[key] = value.value;
+        } else if (Array.isArray(value)) {
+            accumulator[key] = value.map(option => option.value);
+        } else {
+            accumulator[key] = value;
+        }
+        return accumulator;
+      }, {});
+      this.updateEvent.emit(newValuesNormalized);
     });
     this.form.statusChanges.subscribe(newStatus => {
       this.statusEvent.emit(newStatus);
     });
+  }
+
+  generateFocusNodeFromForm(): void {
+    const jsonld = {};
+
+    // Iterate through form fields (assuming you have direct access to controls)
+    for (const field in this.form.controls) {
+      const value = this.form.get([field]).value;
+      if (value) {
+        if (Array.isArray(value)) { // Multivalued field
+            jsonld[field] = value.map(val => ({ '@id': val.value })); 
+          } else { // Single value field
+            jsonld[field] = [{ '@id': value.value }];
+          }
+      }
+    }
+    if (Object.keys(jsonld).length) {
+        jsonld['@id'] = `https://mobi.solutions/ontologies/form#${v4()}`;
+        jsonld['@type'] = [this.nodeShape['@id']];
+        this.focusNode = [jsonld] as JSONLDObject[];
+    }
   }
 
   addFormBlock(comp: FormComponent): void {

@@ -5,6 +5,7 @@
 @prefix dct: <http://purl.org/dc/terms/>.
 @prefix sh: <http://www.w3.org/ns/shacl#>.
 @prefix setting: <http://mobi.com/ontologies/setting#>.
+@prefix mcat: <http://mobi.com/ontologies/catalog#> .
 @prefix webForm: <https://mobi.solutions/ontologies/form#> .
 @prefix : <http://mobi.com/ontologies/namespace#>.
 @base <http://mobi.com/ontologies/namespace>.

@@ -24,25 +24,29 @@ import { ValidatorFn, Validators } from '@angular/forms';
 
 import { RDF, SHACL_FORM, SHACL, XSD } from '../../prefixes';
 import { JSONLDObject } from '../../shared/models/JSONLDObject.interface';
-import { getPropertyId, getPropertyValue } from '../../shared/utility';
+import { getPropertyId, getPropertyValue, getPropertyIds } from '../../shared/utility';
+import { Option } from './option.class';
 
 export class SHACLFormFieldConfig {
   private _isValid: boolean;
   private _errorMessage = '';
   private _nodeShape: JSONLDObject;
   private _propertyShape: JSONLDObject;
-  private _values: string[];
+  private _values: Option[];
   private _fieldType: string;
   private _property: string;
   private _label: string;
+  private _jsonld: JSONLDObject[];
   
   constructor(nodeShape: JSONLDObject, propertyShapeId: string, fullJsonld: JSONLDObject[]) {
     this._nodeShape = nodeShape;
+    this._jsonld = fullJsonld;
     try {
       this._propertyShape = fullJsonld.find(obj => obj['@id'] === propertyShapeId);
       if (!this._propertyShape) {
         throw new Error('Could not find specified PropertyShape in provided JSON-LD');
       }
+
       this._label = getPropertyValue(this._propertyShape, `${SHACL}name`);
       this._property = getPropertyId(this._propertyShape, `${SHACL}path`);
       if (!this._property) {
@@ -79,9 +83,11 @@ export class SHACLFormFieldConfig {
           throw new Error('Form field type not supported');
       }
 
-      this._values = this._propertyShape[`${SHACL}in`] ? 
+      const valueArray = this._propertyShape[`${SHACL}in`] ? 
         this._rdfListToValueArray(fullJsonld, getPropertyId(this._propertyShape, `${SHACL}in`)) :
         [];
+    
+      this._values = valueArray.map(value => new Option(value, value));
       this._isValid = true;
     } catch (e) { // If anything goes wrong in the initialization, catch the error message and mark config as invalid
       this._isValid = false;
@@ -121,8 +127,12 @@ export class SHACLFormFieldConfig {
     return this._property;
   }
 
-  public get values(): string[] {
+  public get values(): Option[] {
       return this._values;
+  }
+
+  public get jsonld(): JSONLDObject[] {
+      return this._jsonld;
   }
 
   // sh:minCount
@@ -173,6 +183,27 @@ export class SHACLFormFieldConfig {
     }
     return validators;
   }
+
+  public collectAllReferencedNodes(propertyShape: JSONLDObject, jsonldObjects: JSONLDObject[]): JSONLDObject[] {
+    // Collect all blank node identifiers referenced in the propertyShape
+    const blankNodeIdentifiers = new Set<string>();
+    Object.keys(propertyShape).forEach(key => {
+        let propertyIds: Set<string> = getPropertyIds(propertyShape, key);
+        if (propertyIds.size) {
+            propertyIds.forEach(propertyId => {
+                blankNodeIdentifiers.add(propertyId);
+            });
+        }
+    });
+
+    // Find and collect all JSON-LD objects that match the blank node identifiers
+    const referencedBlankNodes = jsonldObjects.filter(obj => 
+        obj['@id'] && blankNodeIdentifiers.has(obj['@id'])
+    );
+
+    // Return the array consisting of the propertyShape and any found blank node objects
+    return [propertyShape, ...referencedBlankNodes];
+}
 
   private _rdfListToValueArray(fullJsonld: JSONLDObject[], firstElementID: string, sortedList: string[] = []): string[] {
     const currentElement: JSONLDObject|undefined = fullJsonld.find(jsonLDObject => jsonLDObject['@id'] === firstElementID);

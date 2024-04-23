@@ -409,6 +409,11 @@
         </dependency>
         <dependency>
             <groupId>com.mobi</groupId>
+            <artifactId>shacl.form.rest</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.mobi</groupId>
             <artifactId>workflows.api</artifactId>
             <version>${project.version}</version>
         </dependency>

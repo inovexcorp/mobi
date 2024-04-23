@@ -359,6 +359,55 @@ public class SimpleRecordManager implements RecordManager {
         }
     }
 
+    protected List<String> getViewableRecords(Resource catalogId, PaginatedSearchParams searchParams, User user,
+                                           RepositoryConnection conn) {
+        Optional<Resource> typeParam = searchParams.getTypeFilter();
+
+        String queryString = replaceRecordsFilter(new ArrayList<>(), replaceCreatorFilter(searchParams,
+                replaceKeywordFilter(searchParams, FIND_RECORDS_QUERY)));
+
+        log.debug("Query String:\n" + queryString);
+
+        TupleQuery query = conn.prepareTupleQuery(queryString);
+        query.setBinding(CATALOG_BINDING, catalogId);
+        typeParam.ifPresent(resource -> query.setBinding(TYPE_FILTER_BINDING, resource));
+        searchParams.getSearchText().ifPresent(searchText ->
+                query.setBinding(SEARCH_BINDING, vf.createLiteral(searchText)));
+
+        log.debug("Query Plan:\n" + query);
+
+        // Get Results
+        List<String> recordIRIs = new ArrayList<>();
+        try (TupleQueryResult result = query.evaluate()) {
+            result.forEach(bindings -> recordIRIs.add(Bindings.requiredResource(bindings, RECORD_BINDING)
+                    .stringValue()));
+        }
+
+        Map<String, Literal> subjectAttrs = new HashMap<>();
+        Map<String, Literal> actionAttrs = new HashMap<>();
+
+        IRI subjectId = (IRI) user.getResource();
+
+        // Will this always be Read?
+        IRI actionId = vf.createIRI(Read.TYPE);
+
+        List<IRI> resourceIds = recordIRIs.stream().map(vf::createIRI)
+                .collect(Collectors.toList());
+        subjectAttrs.put(XACML.SUBJECT_ID, vf.createLiteral(subjectId.stringValue()));
+        actionAttrs.put(XACML.ACTION_ID, vf.createLiteral(actionId.stringValue()));
+
+        if (resourceIds.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        Request request = pdp.createRequest(List.of(subjectId), subjectAttrs, resourceIds, new HashMap<>(),
+                List.of(actionId), actionAttrs);
+
+        Set<String> viewableRecords = pdp.filter(request,
+                vf.createIRI(POLICY_PERMIT_OVERRIDES));
+        return new ArrayList<>(viewableRecords);
+    }
+
     protected String escapeKeyword(String keyword) {
         return keyword.replace("\\", "\\\\").replace("'", "\\'");
     }
@@ -531,56 +580,6 @@ public class SimpleRecordManager implements RecordManager {
 
     private <T extends Record> RecordService<T> getRecordService(Class<T> clazz) {
         return recordServices.get(clazz);
-    }
-
-    private List<String> getViewableRecords(Resource catalogId, PaginatedSearchParams searchParams, User user,
-                                            RepositoryConnection conn) {
-        Optional<Resource> typeParam = searchParams.getTypeFilter();
-
-        String queryString = replaceRecordsFilter(new ArrayList<>(), replaceCreatorFilter(searchParams,
-                replaceKeywordFilter(searchParams, FIND_RECORDS_QUERY)));
-
-        log.debug("Query String:\n" + queryString);
-
-        TupleQuery query = conn.prepareTupleQuery(queryString);
-        query.setBinding(CATALOG_BINDING, catalogId);
-        typeParam.ifPresent(resource -> query.setBinding(TYPE_FILTER_BINDING, resource));
-        searchParams.getSearchText().ifPresent(searchText ->
-                query.setBinding(SEARCH_BINDING, vf.createLiteral(searchText)));
-
-        log.debug("Query Plan:\n" + query);
-
-        // Get Results
-        List<String> recordIRIs = new ArrayList<>();
-        try (TupleQueryResult result = query.evaluate()) {
-            result.forEach(bindings -> recordIRIs.add(Bindings.requiredResource(bindings, RECORD_BINDING)
-                    .stringValue()));
-        }
-
-
-        Map<String, Literal> subjectAttrs = new HashMap<>();
-        Map<String, Literal> actionAttrs = new HashMap<>();
-
-        IRI subjectId = (IRI) user.getResource();
-
-        // Will this always be Read?
-        IRI actionId = vf.createIRI(Read.TYPE);
-
-        List<IRI> resourceIds = recordIRIs.stream().map(vf::createIRI)
-                .collect(Collectors.toList());
-        subjectAttrs.put(XACML.SUBJECT_ID, vf.createLiteral(subjectId.stringValue()));
-        actionAttrs.put(XACML.ACTION_ID, vf.createLiteral(actionId.stringValue()));
-
-        if (resourceIds.isEmpty()) {
-            return new ArrayList<>();
-        }
-
-        Request request = pdp.createRequest(List.of(subjectId), subjectAttrs, resourceIds, new HashMap<>(),
-                List.of(actionId), actionAttrs);
-
-        Set<String> viewableRecords = pdp.filter(request,
-                vf.createIRI(POLICY_PERMIT_OVERRIDES));
-        return new ArrayList<>(viewableRecords);
     }
 
     private String replaceRecordsFilter(List<String> recordIRIs, String queryString) {

@@ -36,6 +36,8 @@ import { MatAutocompleteModule } from '@angular/material/autocomplete';
 
 import { SHACLFormComponent } from './components/shacl-form/shacl-form.component';
 import { SHACLFormFieldComponent } from './components/shacl-form-field/shacl-form-field.component';
+import { SHACLFormManagerService } from './services/shaclFormManager.service';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 @NgModule({
   imports: [
@@ -50,6 +52,7 @@ import { SHACLFormFieldComponent } from './components/shacl-form-field/shacl-for
     MatRadioModule,
     MatSlideToggleModule,
     MatSelectModule,
+    MatTooltipModule,
     ReactiveFormsModule,
     MatAutocompleteModule
   ],
@@ -61,5 +64,8 @@ import { SHACLFormFieldComponent } from './components/shacl-form-field/shacl-for
     SHACLFormComponent,
     SHACLFormFieldComponent
   ],
+  providers: [
+    SHACLFormManagerService
+  ]
 })
 export class SHACLFormsModule { }
