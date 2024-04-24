@@ -25,15 +25,15 @@
 <button [disabled]="isDownloadDisabled()" class="workflow-download" color="primary" mat-icon-button (click)="downloadWorkflow()" [matTooltip]="getDownloadTooltip()"><mat-icon>download</mat-icon></button>
 <ng-container *ngIf="!wss.selectedRecord">
   <button mat-raised-button color="primary"
-  class="ml-1 workflow-create"
-  [disabled]="!canCreate"
-  (click)="createWorkflow()"
-  [matTooltip]="creationTooltip"
-  [matTooltipDisabled]="canCreate">New</button>
+    class="ml-1 workflow-create"
+    [disabled]="!canCreate"
+    (click)="createWorkflow()"
+    [matTooltip]="creationTooltip"
+    [matTooltipDisabled]="canCreate">New</button>
   <button mat-raised-button color="primary"
-  class="ml-1 workflow-upload"
-  [disabled]="!canCreate"
-  (click)="uploadWorkflow()"
-  [matTooltip]="creationTooltip"
-  [matTooltipDisabled]="canCreate">Upload</button>
+    class="ml-1 workflow-upload"
+    [disabled]="!canCreate"
+    (click)="uploadWorkflow()"
+    [matTooltip]="creationTooltip"
+    [matTooltipDisabled]="canCreate">Upload</button>
 </ng-container>

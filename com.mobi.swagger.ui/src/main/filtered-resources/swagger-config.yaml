@@ -55,9 +55,42 @@ openAPI:
         properties:
           "@id":
             type: string
+            format: uri
           "@type":
             type: array
+            minItems: 1
             items:
               type: string
+              format: uri
+        additionalProperties:
+          type: array
+          minItems: 1
+          items:
+            oneOf:
+              - $ref: '#/components/schemas/JsonLdIdValue'
+              - $ref: '#/components/schemas/JsonLdLiteralValue'
+        required:
+          - "@id"
+      JsonLdIdValue:
+        type: object
+        properties:
+          "@id":
+            type: string
+            format: uri
+        required:
+          - "@id"
+      JsonLdLiteralValue:
+        type: object
+        properties:
+          "@value":
+            type: string
+          "@language":
+            type: string
+          "@datatype":
+            type: string
+            format: uri
+        required:
+          - "@value"
+
   security:
     - bearerAuth: [ ]

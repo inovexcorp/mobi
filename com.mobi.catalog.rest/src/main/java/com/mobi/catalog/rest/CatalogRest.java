@@ -326,7 +326,8 @@ public class CatalogRest {
             tags = "catalogs",
             summary = "Retrieves the Records in the Catalog",
             responses = {
-                    @ApiResponse(responseCode = "200", description = "List of Records that match the search criteria"),
+                    @ApiResponse(responseCode = "200", description = "List of Records that match the search criteria",
+                            content = @Content(schema = @Schema(ref = "#/components/schemas/JsonLdObjects"))),
                     @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId could not"
                             + " be found"),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),

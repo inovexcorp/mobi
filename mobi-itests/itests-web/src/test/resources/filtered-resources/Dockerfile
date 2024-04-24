@@ -7,8 +7,7 @@ ENV MOBI_VERSION ${project.version}
 WORKDIR /opt/mobi
 ADD ./mobi-distribution-$MOBI_VERSION.tar.gz ./
 RUN mv ./mobi-distribution-$MOBI_VERSION ./mobi-distribution
-COPY ./z-catalog-ontology-9p-records.trig ./
-COPY ./workflows.trig ./
+ADD ./dataFiles ./dataFiles
 COPY ./import.sh ./
 CMD ./mobi-distribution/bin/karaf server
 

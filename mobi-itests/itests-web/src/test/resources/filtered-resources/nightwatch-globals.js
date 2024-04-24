@@ -13,7 +13,7 @@ const agent = new https.Agent({
 
 const buildOptions = {
     context: contextDir,
-    src: ['Dockerfile', 'import.sh', 'mobi-distribution-2.6.0-SNAPSHOT.tar.gz', 'z-catalog-ontology-9p-records.trig', 'workflows.trig']
+    src: ['Dockerfile', 'import.sh', 'mobi-distribution-2.6.0-SNAPSHOT.tar.gz', 'dataFiles']
 }
 
 let containerObj = undefined;
@@ -95,8 +95,8 @@ module.exports = {
         }
 
         // Used to run a command on a Docker container within a Promise and wait for the results appropriately
-        async function runExec(container, options) {
-          await new Promise((resolve, reject) => container.exec(options, function(err, exec) {
+        function runExec(container, options) {
+          return new Promise((resolve, reject) => container.exec(options, function(err, exec) {
             if (err) {
               reject(err)
             }
@@ -120,6 +120,7 @@ module.exports = {
             })
           }));
         }
+        browser.globals.runExec = runExec;
 
         async function testMobiAvailability() {
             process.env.NODE_TLS_REJECT_UNAUTHORIZED='0'
@@ -133,7 +134,7 @@ module.exports = {
 
                         console.info('trying to import files');
                         await runExec(containerObj, {
-                            Cmd: ['sh', '/opt/mobi/import.sh'],
+                            Cmd: ['sh', '/opt/mobi/import.sh', 'system', '/opt/mobi/dataFiles/z-catalog-ontology-9p-records.trig'],
                             Tty: true,
                             AttachStdout: true,
                             AttachStderr: true,
@@ -159,6 +160,7 @@ module.exports = {
             }
 
             containerObj = container;
+            browser.globals.containerObj = container;
             container.start(async function (err, data) {
                 if (err) {
                     browser.assert.fail('Error starting container:', err);

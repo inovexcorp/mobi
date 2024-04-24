@@ -22,10 +22,11 @@
  */
 const recordsViewCssSelector = 'catalog-page records-view';
 const recordViewCssSelector = 'catalog-page record-view';
-const recordFiltersCssSelector = recordsViewCssSelector + ' record-filters';
-const recordsViewSearchBarCssSelector = recordsViewCssSelector + ' .d-flex .search-form input'
-const recordBodyTitleSelector = recordViewCssSelector + ' div.record-body h2.record-title div.inline-edit';
-const recordBodyDescriptionSelector = recordViewCssSelector + ' div.record-body p inline-edit';
+const recordFiltersCssSelector = `${recordsViewCssSelector} record-filters`;
+const recordsViewSearchBarCssSelector = `${recordsViewCssSelector} .d-flex .search-form input`;
+const recordBodyTitleSelector = `${recordViewCssSelector} div.record-body h2.record-title div.inline-edit`;
+const recordBodyDescriptionSelector = `${recordViewCssSelector} div.record-body p inline-edit`;
+const recordManageButtonSelector = `${recordViewCssSelector} div.record-sidebar manage-record-button button`;
 
 var createRecordFiltersXPathSelector = function(filterTypeHeader, filterType) {
     var selectors = ['//catalog-page',
@@ -136,7 +137,7 @@ const catalogRecordCommands = {
     },
 
     changeRecordFields: function(titleOfRecord, changeObj) {
-        if('description' in changeObj) {
+        if ('description' in changeObj) {
             var description = changeObj.description;
             browser.expect.element(recordBodyTitleSelector).text.to.contain(titleOfRecord);
             browser
@@ -146,7 +147,7 @@ const catalogRecordCommands = {
             browser.expect.element(recordBodyDescriptionSelector).text.to.contain(description);
         }
 
-        if('keywords' in changeObj) {
+        if ('keywords' in changeObj) {
             var keywords = changeObj.keywords;
             browser.expect.element(recordBodyTitleSelector).text.to.contain(titleOfRecord);
             browser
@@ -161,8 +162,23 @@ const catalogRecordCommands = {
                 .click('css selector', 'catalog-page record-view catalog-record-keywords a', function(result) { this.assert.strictEqual(result.status, 0) })
                 .waitForElementNotPresent('#spinner-full');
         }
-    }
+    },
 
+    openManage: function() {
+        return this.useCss()
+            .assert.elementPresent(recordManageButtonSelector)
+            .click(recordManageButtonSelector)
+            .waitForElementVisible('.record-permission-view');
+    },
+
+    toggleRecordEveryonePermission: function(permissionTitle) {
+        return this.useXpath()
+            .waitForElementVisible(`//user-access-controls//*[h4="${permissionTitle}"]//mat-slide-toggle`)
+            .click(`//user-access-controls//*[h4="${permissionTitle}"]//mat-slide-toggle`)
+            .useCss()
+            .click('div.save-container')
+            .api.globals.wait_for_no_spinners(this);
+    }
 }
 
 module.exports = {
@@ -172,7 +188,8 @@ module.exports = {
         filterSelector: recordFiltersCssSelector,
         searchBar: recordsViewSearchBarCssSelector,
         recordTitle: recordBodyTitleSelector,
-        recordDescription: recordBodyDescriptionSelector
+        recordDescription: recordBodyDescriptionSelector,
+        recordManageButton: recordManageButtonSelector
     },
     commands: [catalogPageCommands, catalogRecordCommands]
 }

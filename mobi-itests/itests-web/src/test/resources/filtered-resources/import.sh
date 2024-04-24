@@ -1,1 +1,2 @@
-(r=5;while ! (/opt/mobi/mobi-distribution/bin/client "mobi:import -r system /opt/mobi/z-catalog-ontology-9p-records.trig" && /opt/mobi/mobi-distribution/bin/client "mobi:import -r system /opt/mobi/workflows.trig") ; do ((--r))||exit;echo "Waiting for mobi shell...";sleep 5;done)
+# First argument is repository id. Second argument is path to file to import
+(r=5;while ! (/opt/mobi/mobi-distribution/bin/client "mobi:import -r $1 $2"); do ((--r))||exit;echo "Waiting for mobi shell...";sleep 5;done)

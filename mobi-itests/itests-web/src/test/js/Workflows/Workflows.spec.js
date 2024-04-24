@@ -20,120 +20,235 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-var adminUsername = 'admin'
-var adminPassword = 'admin'
+var adminUsername = 'admin';
+var adminPassword = 'admin';
+
+var newUser = { 'username': 'test', 'password': 'test',
+    'firstName': 'Johnny', 'lastName': 'Test', 'email': 'test@gmail.com', 'role': 'admin' };
 
 module.exports = {
     '@tags': ['sanity', 'workflows'],
 
     'Step 1: Initial Setup' : function(browser) {
-        browser.globals.initial_steps(browser, adminUsername, adminPassword)
+        browser.globals.initial_steps(browser, adminUsername, adminPassword);
     },
-    'Step 2: Navigate to  Workflows page' : function (browser) {
-        browser
-            .click('xpath', '//div//ul//a[@class="nav-link"][@href= "#/workflows"]')
-            .useXpath()
-            .waitForElementVisible('//app-workflow-records')
+    'Step 2: Navigate to Workflows page' : function(browser) {
+        browser.globals.switchToPage(browser, 'workflows', 'app-workflow-records');
     },
-    'Step 3: Validate Workflow Search/Filter elements': function (browser) {
-        browser
-            .useCss()
-        browser
-            .assert.visible('app-workflows app-workflow-records .workflow-top-bar .workflow-filters app-workflow-table-filter .field-search-text')
-            .assert.visible('app-workflows app-workflow-records .workflow-top-bar .workflow-filters app-workflow-table-filter .field-status')
-            .assert.visible('app-workflows app-workflow-records .workflow-top-bar .workflow-filters app-workflow-table-filter .field-time-range')
+    'Step 3: Validate Workflow Search/Filter elements': function(browser) {
+        browser.page.workflowsPage().useCss()
+            .assert.visible('@workflowSearchText')
+            .assert.visible('@workflowStatusFilter')
+            .assert.visible('@workflowTimeRangeFilter');
     },
-    'Step 4: Validate Pagination': function (browser) {
-        browser
-            .useCss()
-        browser
+    'Step 4: Validate Pagination and Table not shown': function(browser) {
+        browser.useCss()
+            .assert.not.elementPresent('mat-paginator')
+            .assert.not.elementPresent('app-workflow-records table');
+    },
+    'Step 5: Create Workflows': function(browser) {
+        for (var i = 1; i <= 25; i++) {
+            browser.page.workflowsPage().createWorkflow('Workflow' + i);
+            browser.globals.wait_for_no_spinners(browser);
+        }
+    },
+    'Step 6: Validate Pagination visible': function(browser) {
+        browser.useCss()
             .assert.visible('mat-paginator')
-            .assert.visible('app-workflow-records button.mat-paginator-navigation-next:disabled')
-            .assert.visible('app-workflow-records button.mat-paginator-navigation-previous:disabled')
+            .page.workflowsPage()
+            .assert.visible('@workflowsTableNext')
+            .assert.attributeEquals('@workflowsTableNext', 'disabled', null)
+            .assert.visible('@workflowsTablePrevious')
+            .assert.attributeEquals('@workflowsTablePrevious', 'disabled', 'true');
     },
-    'Step 5: Validate Table': function (browser) {
+    'Step 7: Validate Table visible': function(browser) {
+        var tableXpath = browser.page.workflowsPage().elements.workflowsTableXpath.selector;
         browser.useXpath()
-        .assert.visible('//app-workflow-records//div[contains(@class, "workflow-list")]//table')
-        .assert.visible('//app-workflow-records//div[contains(@class, "workflow-list")]//table//thead')
-        .assert.visible('//app-workflow-records//div[contains(@class, "workflow-list")]//table//thead//th//div[contains(@class, "mat-sort-header-content") and contains(text(), "Workflow")]')
-        .assert.visible('//app-workflow-records//div[contains(@class, "workflow-list")]//table//thead//th//div[contains(@class, "mat-sort-header-content") and contains(text(), "Active")]')
-        .assert.visible('//app-workflow-records//div[contains(@class, "workflow-list")]//table//thead//th//div[contains(@class, "mat-sort-header-content") and contains(text(), "Status")]')
-        .assert.visible('//app-workflow-records//div[contains(@class, "workflow-list")]//table//thead//th//div[contains(@class, "mat-sort-header-content") and contains(text(), "Executor")]')
-        .assert.visible('//app-workflow-records//div[contains(@class, "workflow-list")]//table//thead//th//div[contains(@class, "mat-sort-header-content") and contains(text(), "Execution ID")]')
-        .assert.visible('//app-workflow-records//div[contains(@class, "workflow-list")]//table//thead//th//div[contains(@class, "mat-sort-header-content") and contains(text(), "Start Time")]')
-        .assert.visible('//app-workflow-records//div[contains(@class, "workflow-list")]//table//thead//th//div[contains(@class, "mat-sort-header-content") and contains(text(), "Running Time")]')
-        .assert.visible('//app-workflow-records//div[contains(@class, "workflow-list")]//table//tbody')
-        browser.useCss().expect.elements('table tbody tr').count.to.equal(15);
+            .assert.visible(tableXpath)
+            .assert.visible(tableXpath + '//thead')
+            .assert.visible(tableXpath + '//thead//th//div[contains(@class, "mat-sort-header-content") and contains(text(), "Workflow")]')
+            .assert.visible(tableXpath + '//thead//th//div[contains(@class, "mat-sort-header-content") and contains(text(), "Active")]')
+            .assert.visible(tableXpath + '//thead//th//div[contains(@class, "mat-sort-header-content") and contains(text(), "Status")]')
+            .assert.visible(tableXpath + '//thead//th//div[contains(@class, "mat-sort-header-content") and contains(text(), "Executor")]')
+            .assert.visible(tableXpath + '//thead//th//div[contains(@class, "mat-sort-header-content") and contains(text(), "Execution ID")]')
+            .assert.visible(tableXpath + '//thead//th//div[contains(@class, "mat-sort-header-content") and contains(text(), "Start Time")]')
+            .assert.visible(tableXpath + '//thead//th//div[contains(@class, "mat-sort-header-content") and contains(text(), "Running Time")]')
+            .assert.visible(tableXpath + '//tbody');
+        browser.page.workflowsPage().validateWorkflowTableRowCount(20);
     },
-    // TODO: Uncomment when paths don't change anymore
-    // 'Step 6: Test that you cannot execute when multiple workflows are selected': function (browser) {
-    //     browser
-    //     .click('xpath', '//*[@id="mat-checkbox-1"]/label/span[1]')
-    //     .click('xpath', '//*[@id="mat-checkbox-2"]/label/span[1]')
-    //     .useXpath()
-    //     .assert.attributeEquals('/html/body/mobi-app/login-layout/div/div/div/section/app-workflows/div/div/div/workflow-records/div/div[1]/button', 'disabled', 'true')
-    // },
-    // 'Step 7: Test that you can execute when a single workflow is selected, it is active, and you have permissions': function (browser) {
-    //     browser
-    //     .click('xpath', '//*[@id="mat-checkbox-2"]/label/span[1]')
-    //     .assert.not.attributeEquals('/html/body/mobi-app/login-layout/div/div/div/section/app-workflows/div/div/div/workflow-records/div/div[1]/button', 'disabled', 'true')
-    // },
-    // 'Step 8: Validate user with edit permission can active and deactive workflow': function (browser) {
-    //     browser
-    //     .click('xpath', '//*[@id="mat-slide-toggle-1"]')
-    //     .globals.wait_for_no_spinners(browser)
-    //     .assert.not.attributeEquals('app-workflows/workflow-records/[@id="mat-slide-toggle-1"]', 'disabled', 'false')
-    // },
-    // 'Step 9: Test that you cannot execute when a single workflow is selected that you do not have permission to run': function (browser) {
-    //     browser
-    //     .click('xpath', '//*[@id="mat-checkbox-1"]/label/span[1]')
-    //     .click('xpath', '//*[@id="mat-checkbox-2"]/label/span[1]')
-    //     .assert.attributeEquals('/html/body/mobi-app/login-layout/div/div/div/section/app-workflows/div/div/div/workflow-records/div/div[1]/button', 'disabled', 'true')
-    // },
-    // 'Step 10: Test that you cannot execute when a single workflow is selected that is not active': function (browser) {
-    //     browser
-    //     .click('xpath', '//*[@id="mat-checkbox-2"]/label/span[1]')
-    //     .click('xpath', '//*[@id="mat-checkbox-3"]/label/span[1]')
-    //     .assert.attributeEquals('/html/body/mobi-app/login-layout/div/div/div/section/app-workflows/div/div/div/workflow-records/div/div[1]/button', 'disabled', 'true')
-    // },
-    // 'Step 11: Test that the button is correctly enabled/disabled for selections': function (browser) {
-    //     browser
-    //     .assert.attributeEquals('/html/body/mobi-app/login-layout/div/div/div/section/app-workflows/div/div/div/app-workflow-records/div/div[1]/div[2]/app-workflow-controls/button[1]', 'disabled', 'true')
-    //     .click('xpath', '//*[@id="mat-checkbox-3"]/label/span[1]')
-    //     .assert.not.attributeEquals('/html/body/mobi-app/login-layout/div/div/div/section/app-workflows/div/div/div/workflow-records/div/div[1]/button', 'disabled', 'true')
-    //     .click('xpath', '//*[@id="mat-checkbox-3"]/label/span[1]')
-    //     .assert.attributeEquals('/html/body/mobi-app/login-layout/div/div/div/section/app-workflows/div/div/div/workflow-records/div/div[1]/button', 'disabled', 'true')
-    // },
-    // 'Step 12: Test you can delete workflows': function (browser) {
-    //     browser
-    //     .click('xpath', '//*[@id="mat-checkbox-3"]/label/span[1]')
-    //     .click('xpath', '//*[@id="mat-checkbox-4"]/label/span[1]')
-    //     .click('xpath', '/html/body/mobi-app/login-layout/div/div/div/section/app-workflows/div/div/div/app-workflow-records/div/div[1]/div[2]/app-workflow-controls/button[1]')
-    //     .click('xpath', '/html/body/mobi-app/login-layout/div/div/div/section/app-workflows/div/div/div/app-workflow-records/div/div[1]/div[2]/app-workflow-controls/button[1]')
-    //     browser.useCss().expect.elements('table tbody tr').count.to.equal(13);
-    // },
-    // 'Step 13: Test the download button will enable/disable': function (browser) {
-    //     browser.useXpath()
-    //     .assert.attributeEquals('/html/body/mobi-app/login-layout/div/div/div/section/app-workflows/div/div/div/app-workflow-records/div/div[1]/div[2]/app-workflow-controls/button[3]', 'disabled', 'true')
-    //     .click('xpath', '//*[@id="mat-checkbox-1"]/label/span[1]')
-    //     .assert.not.attributeEquals('/html/body/mobi-app/login-layout/div/div/div/section/app-workflows/div/div/div/app-workflow-records/div/div[1]/div[2]/app-workflow-controls/button[3]', 'disabled', 'true')
-    // },
-    // 'Step 14: Test the download button will download selected workflows': function (browser) {
-    //     browser
-    //     .click('xpath', '/html/body/mobi-app/login-layout/div/div/div/section/app-workflows/div/div/div/app-workflow-records/div/div[1]/div[2]/app-workflow-controls/button[3]')
-    //     .click('xpath', '//*[@id="mat-dialog-2"]/app-workflow-download-modal/div/button[2]')
-    //     .assert.attributeEquals('/html/body/mobi-app/login-layout/div/div/div/section/app-workflows/div/div/div/app-workflow-records/div/div[1]/div[2]/app-workflow-controls/button[3]', 'disabled', 'true')
-    // },
-    // 'Step 15: Test the download button will download selected workflow in the individual page': function (browser) {
-    //     browser
-    //     .click('xpath', '/html/body/mobi-app/login-layout/div/div/div/section/app-workflows/div/div/div/app-workflow-records/div/div[2]/table/tbody/tr/td[2]/span/button')
-    //     .click('xpath', '/html/body/mobi-app/login-layout/div/div/div/section/app-workflows/div/app-workflow-record/div/div[2]/div[1]/div[2]/app-workflow-controls/button[3]')
-    //     .assert.attributeEquals('/html/body/mobi-app/login-layout/div/div/div/section/app-workflows/div/div/div/app-workflow-records/div/div[1]/div[2]/app-workflow-controls/button[3]', 'disabled', 'true')
-    // },
-    // 'Step 16: Test the delete button will delete selected workflow in the individual page': function (browser) {
-    //     browser
-    //     .click('xpath', '/html/body/mobi-app/login-layout/div/div/div/section/app-workflows/div/div/div/app-workflow-records/div/div[2]/table/tbody/tr/td[2]/span/button')
-    //     .click('xpath', '/html/body/mobi-app/login-layout/div/div/div/section/app-workflows/div/app-workflow-record/div/div[2]/div[1]/div[2]/app-workflow-controls/button[2]')
-    //     browser.useCss().expect.elements('table tbody tr').count.to.equal(12);
-    // }
+    'Step 8: Workflows table is paginated': function(browser) {
+        browser.page.workflowsPage().useCss()
+            .click('@workflowsTableNext');
+        browser.globals.wait_for_no_spinners(browser);
+        browser.page.workflowsPage().validateWorkflowTableRowCount(5);
+        browser.useCss()
+            .assert.visible('mat-paginator')
+            .page.workflowsPage()
+            .assert.attributeEquals('@workflowsTableNext', 'disabled', 'true')
+            .assert.attributeEquals('@workflowsTablePrevious', 'disabled', null);
+    },
+    'Step 9: Validate filter resets pagination': function(browser) {
+        browser.page.workflowsPage().selectWorkflowStatusFilter('Success');
+        browser.globals.wait_for_no_spinners(browser);
+        browser.useCss()
+            .assert.not.elementPresent('mat-paginator')
+            .page.workflowsPage()
+            .assert.not.elementPresent('@workflowsTable');
+        browser.page.workflowsPage().selectWorkflowStatusFilter('--');
+        browser.globals.wait_for_no_spinners(browser);
+        browser.useCss()
+            .assert.visible('mat-paginator')
+            .page.workflowsPage()
+            .assert.attributeEquals('@workflowsTableNext', 'disabled', null)
+            .assert.attributeEquals('@workflowsTablePrevious', 'disabled', 'true');
+    },
+    'Step 10: Validate initial state of buttons with nothing selected': function(browser) {
+        browser.page.workflowsPage()
+            .assert.attributeEquals('@runWorkflowButton', 'disabled', 'true')
+            .assert.attributeEquals('@deleteWorkflowButton', 'disabled', 'true')
+            .assert.attributeEquals('@downloadWorkflowButton', 'disabled', 'true');
+    },
+    'Step 11: Validate user cannot execute when multiple workflows are selected': function(browser) {
+        browser.useCss()
+            .click('.workflow-list table tr:nth-child(1) mat-checkbox')
+            .click('.workflow-list table tr:nth-child(2) mat-checkbox');
+        browser.page.workflowsPage()
+            .assert.attributeEquals('@runWorkflowButton', 'disabled', 'true');
+    },
+    'Step 12: Validate user cannot execute a single workflow if it is not active even if user has permissions': function(browser) {
+        browser.useCss()
+            .click('.workflow-list table tr:nth-child(2) mat-checkbox');
+        browser.page.workflowsPage()
+            .assert.attributeEquals('@runWorkflowButton', 'disabled', 'true');
+    },
+    'Step 13: Validate user with modify master permission can activate workflow': function(browser) {
+        browser.useCss()
+            .assert.not.hasClass('.workflow-list table tr:nth-child(1) mat-slide-toggle', 'mat-disabled')
+            .click('.workflow-list table tr:nth-child(1) mat-slide-toggle');
+        browser.globals.wait_for_no_spinners(browser);
+    },
+    'Step 14: Validate user can execute when a single workflow is selected, it is active, and has modify master permissions': function(browser) {
+        browser.page.workflowsPage()
+            .assert.attributeEquals('@runWorkflowButton', 'disabled', null);
+    },
+    'Step 15: Validate user can download when at least one workflow is selected': function(browser) {
+        browser.page.workflowsPage()
+            .assert.attributeEquals('@downloadWorkflowButton', 'disabled', null); // First test button is enabled with one
+        browser.useCss()
+            .click('.workflow-list table tr:nth-child(2) mat-checkbox');
+        browser.page.workflowsPage()
+            .assert.attributeEquals('@downloadWorkflowButton', 'disabled', null)
+            .downloadWorkflow();
+        browser.globals.wait_for_no_spinners(browser);
+        browser.useCss()
+            .assert.not.hasClass('.workflow-list table tr:nth-child(1) mat-checkbox', 'mat-checkbox-checked')
+            .assert.not.hasClass('.workflow-list table tr:nth-child(2) mat-checkbox', 'mat-checkbox-checked');
+    },
+    'Step 16: Validate user can delete when multiple workflows are selected and user has delete permission': function(browser) {
+        browser.useCss()
+            .click('.workflow-list table tr:nth-child(5) mat-checkbox'); // First test button is enabled with one
+        browser.page.workflowsPage()
+            .assert.attributeEquals('@deleteWorkflowButton', 'disabled', null);
+        browser
+            .click('.workflow-list table tr:nth-child(6) mat-checkbox')
+            .click('.workflow-list table tr:nth-child(7) mat-checkbox')
+            .click('.workflow-list table tr:nth-child(8) mat-checkbox'); // Test button is enabled with multiple
+        browser.page.workflowsPage()
+            .assert.attributeEquals('@deleteWorkflowButton', 'disabled', null)
+            .deleteWorkflow();
+        browser.globals.wait_for_no_spinners(browser);
+        browser.page.workflowsPage().validateWorkflowTableRowCount(20);
+        browser.useCss()
+            .assert.visible('mat-paginator')
+            .page.workflowsPage()
+            .assert.attributeEquals('@workflowsTableNext', 'disabled', null);
+    },
+    'Step 17: Open Individual Workflow': function(browser) {
+        browser.page.workflowsPage()
+            .openWorkflowPage('Workflow10');
+        browser.globals.wait_for_no_spinners(browser);
+    },
+    'Step 18: Validate user can download a workflow': function(browser) {
+      browser.page.workflowsPage().useCss()
+          .assert.attributeEquals('@downloadWorkflowButton', 'disabled', null)
+          .downloadWorkflow();
+      browser.globals.wait_for_no_spinners(browser);
+    },
+    'Step 19: Validate user can activate and execute a workflow with modify master permission': function(browser) {
+        browser.page.workflowsPage().useCss()
+            .assert.attributeEquals('@runWorkflowButton', 'disabled', 'true');
+        browser.useCss()
+            .assert.not.hasClass('app-workflow-record .record-header mat-slide-toggle', 'mat-disabled')
+            .click('app-workflow-record .record-header mat-slide-toggle');
+        browser.globals.wait_for_no_spinners(browser);
+        browser.page.workflowsPage().useCss()
+            .assert.attributeEquals('@runWorkflowButton', 'disabled', null);
+    },
+    'Step 20: Validate user can delete a workflow with delete permission': function(browser) {
+        browser.page.workflowsPage()
+            .assert.attributeEquals('@deleteWorkflowButton', 'disabled', null)
+            .deleteWorkflow();
+        browser.globals.wait_for_no_spinners(browser);
+        browser.useCss()
+            .assert.elementPresent('app-workflow-records');
+        browser.page.workflowsPage().validateWorkflowTableRowCount(20);
+        browser.useCss()
+            .assert.visible('mat-paginator')
+            .page.workflowsPage()
+            .assert.attributeEquals('@workflowsTableNext', 'disabled', 'true');
+    },
+    'Step 21: Create a New user': function(browser) {
+        browser.globals.switchToPage(browser, 'user-management')
+        browser.page.administrationPage().createUser(newUser);
+        browser.globals.wait_for_no_spinners(browser);
+    },
+    'Step 22: Navigate to Catalog': function(browser) {
+        browser.globals.switchToPage(browser, 'catalog', 'div.catalog-page');
+        browser.globals.wait_for_no_spinners(browser);
+    },
+    'Step 23: Remove read permission on a workflow': function(browser) {
+      browser.page.catalogPage()
+          .applySearchText('Workflow20')
+          .assertRecordVisible('Workflow20', 1)
+          .openRecordItem('Workflow20');
+      browser.page.catalogPage()
+          .openManage()
+          .toggleRecordEveryonePermission('View Record');
+    },
+    'Step 24: Logout and Sign-in as New User': function(browser) {
+        browser.globals.logout(browser);
+        browser.globals.login(browser, newUser.username, newUser.password);
+        browser.globals.switchToPage(browser, 'workflows', 'app-workflow-records');
+        browser.globals.wait_for_no_spinners(browser);
+    },
+    'Step 25: Validate user can only see records they are allowed to': function(browser) {
+        browser.useCss()
+            .assert.visible('mat-paginator')
+            .assert.visible('app-workflow-records table');
+        browser.page.workflowsPage().validateWorkflowTableRowCount(19);
+    },
+    'Step 26: Validate that user cannot execute or delete workflow without modify master or delete permission': function(browser) {
+        browser.useCss()
+            .click('.workflow-list table tr:nth-child(1) mat-checkbox');
+        browser.page.workflowsPage()
+            .assert.attributeEquals('@runWorkflowButton', 'disabled', 'true')
+            .assert.attributeEquals('@deleteWorkflowButton', 'disabled', 'true');
+    },
+    'Step 27: Validate that user cannot activate workflow without modify master permission': function(browser) {
+        browser.useCss()
+            .assert.hasClass('.workflow-list table tr:nth-child(1) mat-slide-toggle', 'mat-disabled')
+    },
+    'Step 28: Open Individual Workflow': function(browser) {
+        browser.page.workflowsPage()
+            .openWorkflowPage('Workflow1');
+    },
+    'Step 29: Validate that user cannot execute or delete workflow without modify master or delete permission': function(browser) {
+        browser.page.workflowsPage()
+            .assert.attributeEquals('@runWorkflowButton', 'disabled', 'true')
+            .assert.attributeEquals('@deleteWorkflowButton', 'disabled', 'true');
+    },
+    'Step 30: Validate that user cannot activate workflow without modify master permission': function(browser) {
+        browser.useCss()
+            .assert.hasClass('app-workflow-record .record-header mat-slide-toggle', 'mat-disabled')
+    }
 }

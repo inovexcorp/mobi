@@ -43,18 +43,19 @@ const administrationPageCommands = {
             .useXpath()
             .click("//button/span[text() [contains(., 'Submit')]]")
             .waitForElementNotPresent('create-user-overlay')
-            .assert.not.elementPresent("//button/span[text() [contains(., 'Submit')]]");
+            .assert.not.elementPresent("//button/span[text()[contains(., 'Submit')]]");
     },
     toggleWorkflowCreatePermission: function() {
-        return browser.useXpath()
-        .click('//*[@id="mat-tab-label-1-2"]')
-        .click('//*[@id="mat-slide-toggle-2"]')
-        .click('//permissions-page/div/div[7]/button')
+        return this.useXpath()
+          .click('//mat-tab-header//div[text()[contains(.,"Permissions")]]')
+          .waitForElementVisible('//permissions-page')
+          .click('//permissions-page//user-access-controls//h4[text()[contains(.,"Create Workflow Record")]]/following-sibling::mat-slide-toggle')
+          .useCss()
+          .click('permissions-page .save-button');
     },
-
     validateUserList:function(username) {
         return this.useXpath()
-            .assert.visible("//div[@class= 'users-list tree scroll-without-buttons']//ul//li//a//span[text() " +
+            .assert.visible("//div[@class='users-list tree scroll-without-buttons']//ul//li//a//span[text() " +
             "[contains(., '" + username + "')]]", "new user is displayed");
     }
 }
