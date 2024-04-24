@@ -41,26 +41,28 @@ module.exports = {
         browser.page.administrationPage().createUser(user01),
         browser.page.administrationPage().toggleWorkflowCreatePermission();
     },
-    'Step 2: Navigate to  Workflows page' : function (browser) {
+    'Step 2: Navigate to Workflows page' : function(browser) {
         browser.globals.switchToPage(browser, 'workflows');
     },
-    'Step 3: Create two workflows' : function (browser) {
-        browser.page.workflowsPage().createWorkflow('SeansWorkflowCreateTest1'),
-        browser.page.workflowsPage().createWorkflow('SeansWorkflowCreateTest2'),
-        browser
-        .useCss()
-        .assert.not.attributeEquals('app-workflow-controls button:nth-child(4)', 'disabled', 'true')
-        .setValue('.field-search-text input', 'SeansWorkflowCreateTest')
-        .sendKeys('.field-search-text input', browser.Keys.ENTER)
-        .expect.elements('table tbody tr').count.to.equal(2);
+    'Step 3: Create two workflows' : function(browser) {
+        browser.page.workflowsPage().createWorkflow('SeansWorkflowCreateTest1');
+        browser.globals.wait_for_no_spinners(browser);
+        browser.page.workflowsPage().createWorkflow('SeansWorkflowCreateTest2');
+        browser.globals.wait_for_no_spinners(browser);
+        browser.page.workflowsPage()
+            .useCss()
+            .assert.not.attributeEquals('@createWorkflowButton', 'disabled', 'true')
+        browser.page.workflowsPage().searchWorkflows('SeansWorkflowCreateTest');
+        browser.globals.wait_for_no_spinners(browser);
+        browser.page.workflowsPage().validateWorkflowTableRowCount(2);
     },
-    'Step 4: Logout and Login as new user without create permissions' : function (browser) {
+    'Step 4: Logout and Login as new user without create permissions' : function(browser) {
         browser.globals.logout(browser),
         browser.globals.login(browser, user01.username, user01.password);
     },
-    'Step 5: Assert that the new user cannot create a new workflow' : function (browser) {
+    'Step 5: Assert that the new user cannot create a new workflow' : function(browser) {
         browser.globals.switchToPage(browser, 'workflows'),
-        browser.useCss()
-        .assert.attributeEquals('app-workflow-controls button:nth-child(4)', 'disabled', 'true');
+        browser.page.workflowsPage().useCss()
+          .assert.attributeEquals('@createWorkflowButton', 'disabled', 'true');
     }
 }
