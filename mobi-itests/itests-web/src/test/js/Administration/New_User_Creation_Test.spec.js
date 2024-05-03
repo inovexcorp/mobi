@@ -22,13 +22,15 @@
  */
 var adminUsername = "admin"
 var adminPassword = "admin"
-var CatalogOnto1 = process.cwd()+ '/src/test/resources/rdf_files/z-catalog-ontology-1.ttl'
-var CatalogOnto2 = process.cwd()+ '/src/test/resources/rdf_files/z-catalog-ontology-2.ttl'
-var CatalogOnto3 = process.cwd()+ '/src/test/resources/rdf_files/z-catalog-ontology-3.ttl'
-var CatalogOnto4 = process.cwd()+ '/src/test/resources/rdf_files/z-catalog-ontology-4.ttl'
 
-var newUser = { 'username': 'newUser', 'password': 'test',
-    'firstName': 'firstTester', 'lastName': 'lastTester', 'email': 'test@gmail.com', 'role': 'admin' };
+var newUser = {
+    username: 'newUser',
+    password: 'test',
+    firstName: 'firstTester', 
+    lastName: 'lastTester', 
+    email: 'test@gmail.com',
+    role: 'admin'
+};
 
 var newUserChanged = { 'firstName': 'fcTester', 'lastName': 'lcTester', 'email': 'testc@gmail.com', 'role': 'admin' };
 
@@ -52,55 +54,35 @@ module.exports = {
         browser.globals.initial_steps(browser, adminUsername, adminPassword)
     },
 
-    'Step 2: Upload Ontologies' : function(browser) {
-        browser.globals.upload_ontologies(browser, CatalogOnto1, CatalogOnto2, CatalogOnto3, CatalogOnto4)
-    },
-
-    'Step 3: The user clicks on the Administration sidebar link' : function(browser) {
+    'Step 2: The user clicks on the Administration sidebar link' : function(browser) {
         browser.globals.switchToPage(browser, 'user-management')
     },
 
-    'Step 4: A new user is created' : function(browser) {
+    'Step 3: A new user is created' : function(browser) {
         browser.page.administrationPage().createUser(newUser);
         browser.globals.wait_for_no_spinners(browser)
     },
 
-    'Step 5: The new user is displayed in users list' : function(browser) {
-        browser
-            .useXpath()
-            .assert.visible("//div[@class= 'users-list tree scroll-without-buttons']//ul//li//a//span[text() " +
-                "[contains(., '" + newUser.firstName + "')]]", "new user is displayed")
+    'Step 4: The new user is displayed in users list' : function(browser) {
+        browser.page.administrationPage().validateUserList(newUser.firstName);
     },
 
-    'Step 6: The user clicks logout' : function(browser) {
-        browser
-            .click("//li/a[@class='nav-link']/span[text()[contains(.,'Logout')]]")
-            .waitForElementVisible('//div[@class="form-group"]//input[@id="username"]')
+    'Step 5: The user clicks logout' : function(browser) {
+        browser.globals.logout(browser);
     },
 
-    'Step 7: Test logins as the newly created user' : function(browser) {
-        browser
-            .waitForElementVisible('//div[@class="form-group"]//input[@id="username"]')
-            .waitForElementVisible('//div[@class="form-group"]//input[@id="password"]')
-            .setValue('//div[@class="form-group"]//input[@id="username"]', newUser.username )
-            .setValue('//div[@class="form-group"]//input[@id="password"]', newUser.password )
-            .click('//button[@type="submit"]')
+    'Step 6: Test logins as the newly created user' : function(browser) {
+        browser.globals.login(browser, newUser.username, newUser.password);
     },
 
-    'Step 8: check for visibility of home elements' : function(browser) {
-        browser
-            .useCss()
-            .waitForElementVisible('.home-page')
-    },
-
-    'Step 9: New User name is displayed in sidebar on left' : function(browser) {
+    'Step 7: New User name is displayed in sidebar on left' : function(browser) {
         browser
             .useCss()
             .assert.visible('a.current-user-box div.user-title')
             .assert.textContains('a.current-user-box div.user-title', newUser.firstName)
     },
 
-    'Step 10: Go to profile tab and verify user info' : function(browser) {
+    'Step 8: Go to profile tab and verify user info' : function(browser) {
         browser
             .useCss()
             .click('div.sidebar a.current-user-box')
@@ -109,7 +91,7 @@ module.exports = {
         verifyProfileTab(browser, newUser)
     },
 
-    'Step 11: Edit User ' : function(browser) {
+    'Step 9: Edit User' : function(browser) {
         browser
             .useXpath()
             .clearValue(selectors.profileTabFirstName)
@@ -126,24 +108,15 @@ module.exports = {
         verifyProfileTab(browser, newUserChanged)
     },
 
-    'Step 12: The user successfully logs out' : function(browser) {
-        browser
-            .useXpath()
-            .click("//i[@class= 'fa fa-sign-out fa-fw']/following-sibling::span[text()[contains(.,'Logout')]]")
-            .assert.visible('//div[@class="form-group"]//input[@id="username"]')
-            .assert.visible('//div[@class="form-group"]//input[@id="password"]')
+    'Step 10: The user successfully logs out' : function(browser) {
+        browser.globals.logout(browser);
     },
 
-    'Step 13: Test logins as the newly created user after name change' : function(browser) {
-        browser
-            .waitForElementVisible('//div[@class="form-group"]//input[@id="username"]')
-            .waitForElementVisible('//div[@class="form-group"]//input[@id="password"]')
-            .setValue('//div[@class="form-group"]//input[@id="username"]', newUser.username)
-            .setValue('//div[@class="form-group"]//input[@id="password"]', newUser.password)
-            .click('//button[@type="submit"]')
+    'Step 11: Test logins as the newly created user after name change' : function(browser) {
+        browser.globals.login(browser, newUser.username, newUser.password);
     },
 
-    'Step 14: Go to profile tab and verify user info' : function(browser) {
+    'Step 12: Go to profile tab and verify user info' : function(browser) {
         browser
             .useCss()
             .click('div.sidebar a.current-user-box')
@@ -152,57 +125,31 @@ module.exports = {
         verifyProfileTab(browser, newUserChanged)
     },
 
-    'Step 15: The new user can create an ontology' : function(browser) {
-        browser
-            .useXpath()
-            .click('//div//ul//a[@class="nav-link"][@href="#/ontology-editor"]')
+    'Step 13: The new user can create an ontology' : function(browser) {
+        browser.globals.switchToPage(browser, 'ontology-editor', 'ontology-editor-page');
         browser.globals.wait_for_no_spinners(browser);
-        browser
-            .useXpath()
-            .waitForElementVisible('//span[text()="New Ontology"]/parent::button')
-            .click('//span[text()="New Ontology"]/parent::button')
-            .useCss()
-            .waitForElementVisible('xpath', '//new-ontology-overlay//mat-form-field//input[@name="title"]')
-            .setValue('xpath', '//new-ontology-overlay//mat-form-field//input[@name="title"]', 'testOntology')
-            .waitForElementVisible('xpath', '//new-ontology-overlay//mat-form-field//textarea[@name="description"]')
-            .setValue('xpath', '//new-ontology-overlay//mat-form-field//textarea[@name="description"]', 'testDescription')
-            .useXpath()
-            .click('//new-ontology-overlay//span[text()="Submit"]/parent::button')
-            .useCss()
-            .waitForElementNotPresent('new-ontology-overlay h1')
+        browser.page.ontologyEditorPage().createOntology('testOntology', 'testDescription');
+        browser.globals.wait_for_no_spinners(browser);
+        browser.page.ontologyEditorPage().onProjectTab();
     },
 
-    'Step 16: The user successfully logs out' : function(browser) {
-        browser
-            .useXpath()
-            .click("//i[@class= 'fa fa-sign-out fa-fw']/following-sibling::span[text()[contains(.,'Logout')]]")
-            .assert.visible('//div[@class="form-group"]//input[@id="username"]')
-            .assert.visible('//div[@class="form-group"]//input[@id="password"]')
+    'Step 14: The user successfully logs out' : function(browser) {
+        browser.globals.logout(browser);
     },
 
-    'Step 17: The admin user logs in' : function(browser) {
-        browser
-            .waitForElementVisible('//div[@class="form-group"]//input[@id="username"]')
-            .waitForElementVisible('//div[@class="form-group"]//input[@id="password"]')
-            .setValue('//div[@class="form-group"]//input[@id="username"]', adminUsername )
-            .setValue('//div[@class="form-group"]//input[@id="password"]', adminPassword )
-            .click('//button[@type="submit"]')
-            .useCss()
-            .waitForElementVisible('.home-page')
+    'Step 15: The admin user logs in' : function(browser) {
+        browser.globals.login(browser, adminUsername, adminPassword);
     },
 
-    'Step 18: The admin user can manage the newly created ontology' : function(browser) {
-        browser
-            .click('sidebar div ul a[class=nav-link][href="#/catalog"]')
-            .waitForElementNotPresent('#spinner-full')
-            .setValue('catalog-page records-view .d-flex .search-form input','z-catalog-ontology-1')
-            .sendKeys('catalog-page records-view .d-flex .search-form input', browser.Keys.ENTER)
-            .waitForElementNotPresent('#spinner-full')
-            .click('xpath', '//catalog-page//record-card//mat-card-title//span[text()[contains(., "z-catalog-ontology-1")]]//ancestor::mat-card')
-            .waitForElementVisible('catalog-page record-view div.record-body')
-            .expect.element('catalog-page record-view div.record-body h2.record-title div.inline-edit').text.to.contain('z-catalog-ontology-1');
+    'Step 16: The admin user can manage the newly created ontology' : function(browser) {
+        browser.globals.switchToPage(browser, 'catalog', 'catalog-page records-view');
+        browser.globals.wait_for_no_spinners(browser);
+        browser.page.catalogPage().waitForElementPresent('@searchBar')
+        browser.page.catalogPage().clearCatalogSearchBar();
+        browser.page.catalogPage().applySearchText('testOntology');
+        browser.globals.wait_for_no_spinners(browser);
+        browser.page.catalogPage().openRecordItem('testOntology');
+        browser.globals.wait_for_no_spinners(browser);
         browser.assert.elementPresent('catalog-page record-view div.record-sidebar manage-record-button button');
-
     }
-
 }

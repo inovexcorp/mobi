@@ -22,12 +22,17 @@
  */
 var adminUsername = 'admin'
 var adminPassword = 'admin'
-var newUser = { 'username': 'newUserB', 'password': 'testB',
-    'firstName': 'firstTesterA', 'lastName': 'lastTesterA', 'email': 'testA@gmail.com' };
-var shapes_graph = process.cwd()+ '/src/test/resources/rdf_files/semops_shapes.ttl'
+var newUser = {
+    username: 'newUserB',
+    password: 'testB',
+    firstName: 'firstTesterA',
+    lastName: 'lastTesterA',
+    email: 'testA@gmail.com'
+};
+var shapes_graph = process.cwd() + '/src/test/resources/rdf_files/semops_shapes.ttl'
 
 module.exports = {
-    '@tags': ['ontology-editor', 'sanity'],
+    '@tags': ['shapes-editor', 'sanity'],
 
     'Step 1: Initial Setup' : function(browser) {
         browser.globals.initial_steps(browser, adminUsername, adminPassword)
@@ -37,46 +42,48 @@ module.exports = {
         browser.globals.switchToPage(browser, 'shapes-graph-editor', 'shapes-graph-editor-page');
     },
 
-    'Step 3: Create a new shapes graph': function (browser) {
-        browser.globals.create_shapes_graph(browser, 'Sem Ops Graph', shapes_graph)
-    },
-
-    'Step 4: Verify shapes graph presentation': function (browser) {
+    'Step 3: Create a new shapes graph': function(browser) {
+        browser.page.shapesEditorPage().uploadShapesGraph(shapes_graph)
         browser.globals.wait_for_no_spinners(browser)
+    },
+
+    'Step 4: Verify shapes graph presentation': function(browser) {
         browser
             .waitForElementVisible('shapes-graph-details')
             .waitForElementVisible('shapes-graph-properties-block')
             .waitForElementVisible('div.yate')
-            // .waitForElementNotPresent('xpath', '//div[@id="toast-container"]')
-            .assert.valueEquals('shapes-graph-editor-page editor-record-select input', 'Sem Ops Graph')
-            .assert.valueEquals('shapes-graph-editor-page editor-branch-select input', 'MASTER')
-            .expect.elements('shapes-graph-editor-page shapes-graph-property-values').count.to.equal(3)
+            .page.editorPage()
+            .assert.valueEquals('@editorRecordSelectInput', 'semops_shapes')
+            .assert.valueEquals('@editorBranchSelectInput', 'MASTER')
+        browser
+            .page.shapesEditorPage()
+            .expect.elements('@propertyValues').count.to.equal(3)
     },
 
-    'Step 5: Create a new branch': function (browser) {
-        browser.globals.create_shapes_graph_branch(browser, 'Sem Ops Branch');
+    'Step 5: Create a new branch': function(browser) {
+        browser.page.shapesEditorPage().createBranch('Sem Ops Branch');
+        browser.globals.wait_for_no_spinners(browser);
     },
 
-    'Step 6: Verify switching of branches': function (browser) {
+    'Step 6: Verify switching of branches': function(browser) {
         browser
             .waitForElementVisible('shapes-graph-details')
             .waitForElementVisible('shapes-graph-properties-block')
             .waitForElementVisible('div.yate')
-            .assert.valueEquals('shapes-graph-editor-page editor-record-select input', 'Sem Ops Graph')
-            .assert.valueEquals('shapes-graph-editor-page editor-branch-select input', 'Sem Ops Branch')
-            .expect.elements('shapes-graph-editor-page shapes-graph-property-values').count.to.equal(3)
+            .page.editorPage()
+            .assert.valueEquals('@editorRecordSelectInput', 'semops_shapes')
+            .assert.valueEquals('@editorBranchSelectInput', 'Sem Ops Branch')
+        browser
+            .page.shapesEditorPage()
+            .expect.elements('@propertyValues').count.to.equal(3)
     },
-
 
     'Step 7: The admin user clicks on the Administration sidebar link' : function(browser) {
-        browser
-            .useXpath()
-            .waitForElementVisible("//li/a[@class='nav-link']/span[text()[contains(.,'Administration')]]")
-            .click("//li/a[@class='nav-link']/span[text()[contains(.,'Administration')]]")
+        browser.globals.switchToPage(browser, 'user-management')
     },
 
     'Step 8: A new user is created' : function(browser) {
-        browser.globals.add_new_user(browser, newUser)
+        browser.page.administrationPage().createUser(newUser);
     },
 
     'Step 9: The admin user clicks on the permissions tab' : function(browser) {
@@ -116,53 +123,37 @@ module.exports = {
     },
 
     'Step 15: Navigate to shapes graph editor' : function(browser) {
-        browser
-            .useXpath()
-            .waitForElementVisible("//a[starts-with(@href, '#/shapes-graph-editor')][1]")
-            .click("//a[starts-with(@href, '#/shapes-graph-editor')][1]")
+        browser.globals.switchToPage(browser, 'shapes-graph-editor', 'shapes-graph-editor-page')
     },
 
     'Step 16: Assert Create Shapes graph button is disabled' : function(browser) {
-        browser
-            .useCss()
-            .click('shapes-graph-editor-page editor-record-select  mat-form-field mat-icon')
-            .waitForElementVisible('mat-option button.create-record')
-            .pause(2000)
-            .useXpath()
-            .assert.not.enabled('//span[@class="mat-option-text"]/span/button[contains(@class,"create-record")]')
+        browser.page.shapesEditorPage().openRecordSelect();
+        browser.page.editorPage().useCss()
+            .waitForElementVisible('@createRecordButton')
+            .waitForElementVisible('@uploadRecordButton')
+            .assert.not.enabled('@createRecordButton')
+            .assert.not.enabled('@uploadRecordButton')
     },
 
     'Step 17: Assert Delete Shapes graph button is disabled' : function(browser) {
         browser
-            .click('xpath', '//div//ul//a[@class="nav-link"][@href="#/shapes-graph-editor"]'); // click off dropdown
-            browser.globals.wait_for_no_spinners(browser);
-        browser
-            .waitForElementVisible('shapes-graph-editor-page editor-record-select')
-            .click('shapes-graph-editor-page editor-record-select')
-        browser
             .useXpath()
-            .pause(1000)
-            .waitForElementVisible('//mat-optgroup/span[text()[contains(., "Unopened")]]/following::span[@class="mat-option-text"]//span[text()[contains(., "Sem Ops Graph")]]/following::button[contains(@class,"delete-record")][@disabled]')
-            .click('//div//ul//a[@class="nav-link"][@href="#/shapes-graph-editor"]'); // click off dropdown
-        browser.globals.wait_for_no_spinners(browser);
-        browser
-            .useCss()
-            .waitForElementVisible('shapes-graph-editor-page');
+            .waitForElementVisible('//mat-optgroup/span[text()[contains(., "Unopened")]]/following::span[@class="mat-option-text"]//span[text()[contains(., "semops_shapes")]]/following::button[contains(@class,"delete-record")][@disabled]')
     },
 
     'Step 18: Open Shapes Graph' : function(browser) {
-        browser.globals.open_shapes_graph(browser, 'Sem Ops Graph');
+        browser.page.shapesEditorPage().openShapesGraph('semops_shapes');
     },
 
     'Step 19: Verify the correct buttons are disabled' : function(browser) {
         browser
-            .useCss()
-            .waitForElementVisible(browser.globals.create_shapes_graph_branch_button.css)
-            .assert.enabled(browser.globals.create_shapes_graph_branch_button.css)
-            .assert.not.enabled(browser.globals.merge_shapes_graph_button.css)
-            .assert.enabled(browser.globals.create_shapes_graph_tag_button.css)
-            .assert.enabled(browser.globals.download_shapes_graph_button.css)
-            .assert.not.enabled(browser.globals.upload_changes_shapes_graph_button.css)
+            .page.editorPage()
+            .waitForElementVisible('@createBranchButton')
+            .assert.enabled('@createBranchButton')
+            .assert.not.enabled('@mergeBranchesButton')
+            .assert.enabled('@createTagButton')
+            .assert.enabled('@downloadButton')
+            .assert.not.enabled('@uploadChangesButton')
     },
 
     'Step 20: The user clicks logout' : function(browser) {
@@ -180,20 +171,20 @@ module.exports = {
     },
 
     'Step 23: The admin user navigates to the catalog page' : function(browser) {
-        browser.click('sidebar div ul a[class=nav-link][href="#/catalog"]');
+        browser.globals.switchToPage(browser, 'catalog')
         browser.globals.wait_for_no_spinners(browser);
     },
 
-    'Step 24: The admin user removes modify permission for the shapes graph record' : function (browser) {
+    'Step 24: The admin user removes modify permission for the shapes graph record' : function(browser) {
         browser
             .useCss()
             .waitForElementNotPresent('#spinner-full')
-            .setValue('catalog-page records-view .d-flex .search-form input','Sem Ops Graph')
+            .setValue('catalog-page records-view .d-flex .search-form input','semops_shapes')
             .sendKeys('catalog-page records-view .d-flex .search-form input', browser.Keys.ENTER)
             .waitForElementNotPresent('#spinner-full')
-            .click('xpath', '//catalog-page//record-card//mat-card-title//span[text()[contains(., "Sem Ops Graph")]]//ancestor::mat-card')
+            .click('xpath', '//catalog-page//record-card//mat-card-title//span[text()[contains(., "semops_shapes")]]//ancestor::mat-card')
             .waitForElementVisible('catalog-page record-view div.record-body')
-            .expect.element('catalog-page record-view div.record-body h2.record-title div.inline-edit').text.to.contain('Sem Ops Graph');
+            .expect.element('catalog-page record-view div.record-body h2.record-title div.inline-edit').text.to.contain('semops_shapes');
         browser.assert.elementPresent('catalog-page record-view div.record-sidebar manage-record-button button');
         browser
             .assert.elementPresent('catalog-page record-view div.record-sidebar manage-record-button button')
@@ -224,28 +215,25 @@ module.exports = {
         browser
             .useCss()
             .assert.visible('a.current-user-box div.user-title')
-            .assert.containsText('a.current-user-box div.user-title', newUser.firstName)
+            .assert.textContains('a.current-user-box div.user-title', newUser.firstName)
     },
 
     'Step 29: Navigate to shapes graph editor' : function(browser) {
-        browser
-            .useXpath()
-            .waitForElementVisible("//a[starts-with(@href, '#/shapes-graph-editor')][1]")
-            .click("//a[starts-with(@href, '#/shapes-graph-editor')][1]")
+        browser.globals.switchToPage(browser, 'shapes-graph-editor', 'shapes-graph-editor-page');
     },
 
     'Step 30: Open Shapes Graph' : function(browser) {
-        browser.globals.open_shapes_graph(browser, 'Sem Ops Graph');
+        browser.page.shapesEditorPage().openShapesGraph('semops_shapes');
     },
 
     'Step 31: Verify the correct buttons are disabled' : function(browser) {
         browser
-            .useCss()
-            .waitForElementVisible(browser.globals.create_shapes_graph_branch_button.css)
-            .assert.not.enabled(browser.globals.create_shapes_graph_branch_button.css)
-            .assert.not.enabled(browser.globals.merge_shapes_graph_button.css)
-            .assert.not.enabled(browser.globals.create_shapes_graph_tag_button.css)
-            .assert.enabled(browser.globals.download_shapes_graph_button.css)
-            .assert.not.enabled(browser.globals.upload_changes_shapes_graph_button.css)
+            .page.editorPage()
+            .waitForElementVisible('@createBranchButton')
+            .assert.not.enabled('@createBranchButton')
+            .assert.not.enabled('@mergeBranchesButton')
+            .assert.not.enabled('@createTagButton')
+            .assert.enabled('@downloadButton')
+            .assert.not.enabled('@uploadChangesButton')
     }
 }

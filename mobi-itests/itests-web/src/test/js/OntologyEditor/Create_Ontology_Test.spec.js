@@ -36,163 +36,58 @@ module.exports = {
             .waitForElementPresent('ontology-editor-page')
     },
 
-    'Step 3: Open new Ontology Overlay' : function(browser) {
-        var newOntologyButtonXpath = '//span[text()="New Ontology"]/parent::button';
-        browser
-            .useXpath()
-            .waitForElementVisible(newOntologyButtonXpath)
-            .click(newOntologyButtonXpath)
+    'Step 3: Create New Ontology': function(browser) {
+        browser.page.ontologyEditorPage().createOntology('myTitle', 'myDescription');
+        browser.globals.wait_for_no_spinners(browser);
+        browser.page.ontologyEditorPage().onProjectTab();
     },
 
-    'Step 3: Edit New Ontology Overlay' : function(browser) {
-        browser   
-            .useCss()        
-            .waitForElementVisible('new-ontology-overlay')
-            .waitForElementVisible('xpath', '//new-ontology-overlay//mat-form-field//input[@name="title"]')
-            .waitForElementVisible('xpath', '//new-ontology-overlay//mat-form-field//textarea[@name="description"]')
-            .setValue('xpath', '//new-ontology-overlay//mat-form-field//input[@name="title"]', 'myTitle')
-            .setValue('xpath', '//new-ontology-overlay//mat-form-field//textarea[@name="description"]', 'myDescription')
-    },
-
-    'Step 4: Submit New Ontology Overlay' : function(browser) {
-        browser
-            .useCss()        
-            .waitForElementVisible('new-ontology-overlay')
-            .useXpath()
-            .click('//new-ontology-overlay//span[text()="Submit"]/parent::button')
-            .useCss()
-            .waitForElementNotPresent('new-ontology-overlay')
-            .waitForElementPresent('ontology-editor-page ontology-tab')
-    },
-
-    'Step 5: Verify new ontology properties' : function(browser) {
+    'Step 4: Verify new ontology properties' : function(browser) {
         browser
             .waitForElementPresent('ontology-editor-page ontology-tab')
             .waitForElementVisible('ontology-editor-page ontology-tab project-tab imports-block')
-            .useXpath()
-            .waitForElementVisible('//ontology-properties-block//value-display//span[text()[contains(.,"myTitle")]]')
-            .waitForElementVisible('//ontology-properties-block//value-display//span[text()[contains(.,"myDescription")]]')
-            .waitForElementVisible('//static-iri//span[text()[contains(.,"MyTitle")]]')
-            .waitForElementVisible('//mat-tab-header//div[text()[contains(.,"Project")]]')
-            .useCss()       
+        browser.page.ontologyEditorPage().verifyProjectTab('myTitle', 'myDescription', 'MyTitle')
     },
 
-    'Step 6: Edit IRI for ontology' : function(browser) { 
-        browser
-            .useXpath()
-            .waitForElementVisible('//static-iri//div[contains(@class, "static-ir")]//span//a//i[contains(@class, "fa-pencil")]')
-            .click('//static-iri//div[contains(@class, "static-ir")]//span//a//i[contains(@class, "fa-pencil")]')
-            .waitForElementVisible("//h1[text() [contains(., 'Edit IRI')]]")
-            .useCss()
-            .pause(1000) // To avoid clashes with autofocusing
-            .setValue('edit-iri-overlay input[name=iriEnd]', 'myOntology')
-            .useXpath()
-            .click("//button/span[text() [contains(., 'Submit')]]")
-            .waitForElementNotPresent('edit-iri-overlay')
-            .assert.not.elementPresent("//button/span[text() [contains(., 'Submit')]]")
+    'Step 5: Edit IRI for ontology' : function(browser) { 
+        browser.page.ontologyEditorPage().onProjectTab();
+        browser.page.ontologyEditorPage().editIri('myOntology');
         browser.globals.wait_for_no_spinners(browser);
     },
 
-    'Step 7: Open Commit overlay' : function(browser) {
-        browser
-            .useCss()
-            .pause(1000)
-            .moveToElement('ontology-button-stack circle-button-stack', 0, 0)
-            .waitForElementVisible('ontology-button-stack circle-button-stack button.btn-info')
-            .click('ontology-button-stack circle-button-stack button.btn-info')
-            .waitForElementVisible('commit-overlay')
-    },
-
-    'Step 8: Edit Commit message and Submit' : function(browser) {
-        browser
-            .assert.textContains('commit-overlay h1.mat-dialog-title', 'Commit')
-            .setValue('commit-overlay textarea[name=comment]', 'Changed IRI')
-            .useXpath()
-            .click('//commit-overlay//span[text()="Submit"]')
-            .useCss()
-            .waitForElementNotPresent('#spinner-full')
-            .waitForElementNotPresent('commit-overlay')
-            .waitForElementPresent('ontology-editor-page ontology-tab')
-    },
-
-    'Step 9: Open Ontology Editor Page Ontology List Page' : function(browser) {
-        browser
-            .click('xpath', '//div[contains(@class, "ontology-sidebar")]//span[text()[contains(.,"Ontologies")]]/parent::button')
-            .waitForElementNotPresent('#spinner-full')
-            .waitForElementPresent('ontology-editor-page open-ontology-tab')
-    },
-
-    'Step 10: On The Ontology List Page, search for ontology' : function(browser) {
-        browser
-            .useCss() 
-            .waitForElementPresent('ontology-editor-page open-ontology-tab')
-            .clearValue('open-ontology-tab search-bar input')
-            .setValue('open-ontology-tab search-bar input', 'myTitle')
-            .sendKeys('open-ontology-tab search-bar input', browser.Keys.ENTER);
+    'Step 6: Commit IRI Change' : function(browser) {
+        browser.page.ontologyEditorPage().commit('Changed IRI');
         browser.globals.wait_for_no_spinners(browser);
-        browser.waitForElementVisible('ontology-editor-page open-ontology-tab')
+        browser.globals.dismiss_toast(browser);
+        browser.page.ontologyEditorPage().isActive('ontology-tab');
     },
 
-    'Step 11: Ensure IRI changes are successful' : function(browser) {
-        browser
+    'Step 7: Ensure IRI changes are shown in the record select' : function(browser) {
+      browser.page.ontologyEditorPage().searchForOntology('myTitle');
+      browser
             .useXpath()
-            .assert.textContains('//open-ontology-tab//small', 'myOntology')
-            .click('//open-ontology-tab//small[text()[contains(.,"myOntology")]]')
-        browser
-            .useCss()
-            .waitForElementNotPresent('#spinner-full')
-            .waitForElementPresent('ontology-editor-page ontology-tab')
-            .waitForElementVisible('ontology-editor-page ontology-tab project-tab imports-block')
+            .waitForElementVisible('//mat-optgroup//mat-option//span[text()[contains(., "myTitle")]]//p[text()[contains(., "https://mobi.com/ontologies/myOntology")]]')
+        browser.page.ontologyEditorPage().onProjectTab();
     },
 
-    'Step 12: Create a new branch' : function(browser) {
-        browser
-            .moveToElement('ontology-button-stack circle-button-stack', 0, 0)
-            .waitForElementVisible('ontology-button-stack circle-button-stack button i.fa-code-fork')
-            .click('ontology-button-stack circle-button-stack button i.fa-code-fork')
-            .waitForElementVisible('create-branch-overlay h1.mat-dialog-title')
-            .assert.textContains('create-branch-overlay h1.mat-dialog-title', 'Create New Branch')
-            .useXpath()
-            .waitForElementVisible('//create-branch-overlay//input[@data-placeholder="Title"]')
-            .waitForElementVisible('//create-branch-overlay//textarea[@data-placeholder="Description"]')
-            .setValue('//create-branch-overlay//input[@data-placeholder="Title"]', "newBranchTitle")
-            .setValue('//create-branch-overlay//textarea[@data-placeholder="Description"]', "newBranchDescription")
-            .click('//create-branch-overlay//span[text()="Submit"]')
-            .useCss()
-            .waitForElementNotPresent('create-branch-overlay h1.mat-dialog-title');
-            browser.globals.wait_for_no_spinners(browser);
+    'Step 8: Create a new branch' : function(browser) {
+        browser.page.ontologyEditorPage().createBranch('newBranchTitle', 'newBranchDescription');
+        browser.globals.wait_for_no_spinners(browser);
     },
 
-    'Step 13: Verify a new branch was created' : function(browser) {
+    'Step 9: Verify a new branch was created' : function(browser) {
         browser
-            .useXpath()
-            .getValue("//open-ontology-select//input", function(result) {
-                this.assert.equal(typeof result, "object");
-                this.assert.equal(result.status, 0);
-                this.assert.equal(result.value, "newBranchTitle");
-            })
-            .useCss()
+            .page.editorPage()
+            .assert.valueEquals('@editorRecordSelectInput', 'myTitle')
+            .assert.valueEquals('@editorBranchSelectInput', 'newBranchTitle');
     },
 
-    'Step 14: Create a new Class': function(browser) {
-        browser
-            .click('ontology-button-stack circle-button-stack')
-            .waitForElementVisible('create-entity-modal h1.mat-dialog-title')
-            .assert.textContains('create-entity-modal h1.mat-dialog-title', 'Create Entity')
-            .click('create-entity-modal .create-class')
-            .waitForElementNotPresent('create-entity-modal .create-class')
-            .waitForElementVisible('create-class-overlay h1.mat-dialog-title')
-            .assert.textContains('create-class-overlay h1.mat-dialog-title', 'Create New OWL Class')
-            .useXpath()
-            .waitForElementVisible('//mat-label[text()[contains(.,"Name")]]//ancestor::mat-form-field//input')
-            .setValue('//mat-label[text()[contains(.,"Name")]]//ancestor::mat-form-field//input', 'firstClass')
-            .setValue('//mat-label[text()[contains(.,"Description")]]//ancestor::mat-form-field//textarea', 'firstClassDescription')
-            .click('//create-class-overlay//span[text()="Submit"]')
-            .useCss()
-            .waitForElementNotPresent('create-class-overlay h1.mat-dialog-title')
+    'Step 10: Create a new Class': function(browser) {
+        browser.page.ontologyEditorPage().createNewOwlClass('firstClass', 'firstClassDescription');
+        browser.globals.wait_for_no_spinners(browser);
     },
 
-    'Step 15: Verify class was created': function(browser) {
+    'Step 11: Verify class was created': function(browser) {
         browser
             .useXpath()
             .waitForElementVisible('//mat-tab-header//div[text()[contains(.,"Classes")]]')
@@ -201,63 +96,54 @@ module.exports = {
         browser
             .useXpath()
             .assert.visible('//class-hierarchy-block//tree-item//span[text()[contains(.,"firstClass")]]')
+            .useCss();
     },
 
-    'Step 16: Verify changes are shown': function(browser) {
+    'Step 12: Verify changes are shown': function(browser) {
+        browser.page.ontologyEditorPage().toggleChangesPage();
         browser
-            .useXpath() // Must use Xpath when checking does an element with a certain value exist among other like elements
-            .waitForElementVisible('//mat-tab-header//div[text()[contains(.,"Changes")]]')
-            .click('//mat-tab-header//div[text()[contains(.,"Changes")]]')
             .useCss()
-            .waitForElementVisible('saved-changes-tab mat-expansion-panel mat-panel-title[title*="firstClass"]')
-            .assert.textContains('saved-changes-tab mat-expansion-panel mat-panel-title[title*="firstClass"]', 'firstClass') // Verify Title
-            .assert.textContains('saved-changes-tab mat-expansion-panel mat-panel-Description[title*="FirstClass"]', 'FirstClass') // Verify IRI
-            .click('saved-changes-tab mat-expansion-panel mat-panel-title[title*="firstClass"]')
-            .waitForElementVisible('saved-changes-tab commit-compiled-resource')
-            .assert.textContains('saved-changes-tab commit-compiled-resource p.type-label', "Type(s)")
-            .assert.textContains('saved-changes-tab commit-compiled-resource p.type-label ~ div.type div.px-4', 'owl:Class')
+            .waitForElementVisible('app-changes-page div.changes-info button.mat-warn')
+            .expect.elements('app-changes-page mat-expansion-panel').count.to.equal(1);
+        browser
+            .useCss()
+            .waitForElementVisible('app-changes-page mat-expansion-panel mat-panel-title[title*="firstClass"]')
+            .assert.textContains('app-changes-page mat-expansion-panel mat-panel-title[title*="firstClass"]', 'firstClass') // Verify Title
+            .click('app-changes-page mat-expansion-panel mat-panel-title[title*="firstClass"]')
+            .waitForElementVisible('app-changes-page commit-compiled-resource')
+            .assert.textContains('app-changes-page commit-compiled-resource p.type-label', "Type(s)")
+            .assert.textContains('app-changes-page commit-compiled-resource p.type-label ~ div.type div.px-4', 'owl:Class')
             .useXpath()
-            .assert.textContains('//saved-changes-tab//commit-compiled-resource//p[contains(@title,"http://purl.org/dc/terms/description")]', "Description")
-            .assert.textContains('//saved-changes-tab//commit-compiled-resource//p[contains(@title,"http://purl.org/dc/terms/description")]/../..//div[contains(@class, "prop-value-container")]//div[contains(@class, "value-display")]', 'firstClassDescription')
-            .assert.textContains('//saved-changes-tab//commit-compiled-resource//p[contains(@title,"http://purl.org/dc/terms/title")]', "Title")
-            .assert.textContains('//saved-changes-tab//commit-compiled-resource//p[contains(@title,"http://purl.org/dc/terms/title")]/../..//div[contains(@class, "prop-value-container")]//div[contains(@class, "value-display")]', 'firstClass')
+            .assert.textContains('//app-changes-page//commit-compiled-resource//p[contains(@title,"http://purl.org/dc/terms/description")]', "Description")
+            .assert.textContains('//app-changes-page//commit-compiled-resource//p[contains(@title,"http://purl.org/dc/terms/description")]/../..//div[contains(@class, "prop-value-container")]//div[contains(@class, "value-display")]', 'firstClassDescription')
+            .assert.textContains('//app-changes-page//commit-compiled-resource//p[contains(@title,"http://purl.org/dc/terms/title")]', "Title")
+            .assert.textContains('//app-changes-page//commit-compiled-resource//p[contains(@title,"http://purl.org/dc/terms/title")]/../..//div[contains(@class, "prop-value-container")]//div[contains(@class, "value-display")]', 'firstClass')
+            .useCss();
     },
 
-    'Step 17: Commit Changes': function(browser) {
+    'Step 13: Commit Changes': function(browser) {
+        browser.page.ontologyEditorPage().commit('commit123');
+        browser.globals.wait_for_no_spinners(browser);
         browser
-            .useCss()
-            .moveToElement('ontology-button-stack circle-button-stack', 0, 0)
-            .waitForElementVisible('ontology-button-stack circle-button-stack button.btn-info')
-            .click('ontology-button-stack circle-button-stack button.btn-info')
-            .waitForElementVisible('commit-overlay h1.mat-dialog-title')
-            .assert.textContains('commit-overlay h1.mat-dialog-title', 'Commit')
-            .setValue('commit-overlay textarea[name=comment]', 'commit123')
-            .useXpath()
-            .click('//commit-overlay//span[text()="Submit"]')
-            .useCss()
-            .waitForElementNotPresent('commit-overlay h1.mat-dialog-title')
+            .assert.not.elementPresent('mat-chip.uncommitted')
+            .assert.not.elementPresent('app-changes-page mat-expansion-panel')
+            .assert.textContains('app-changes-page info-message p', 'No Changes to Display')
+            .expect.elements('commit-history-table svg .commit-hash-string').count.to.equal(3);
+        browser.globals.dismiss_toast(browser);
     },
 
-    'Step 18: Verify no changes are shown': function(browser) {
+    'Step 14: Verify Commits': function(browser) {
         browser
             .useXpath()
-            .waitForElementVisible('//mat-tab-header//div[text()[contains(.,"Changes")]]')
-            .useCss()
-            .waitForElementVisible('info-message p')
-            .assert.textContains('info-message p', 'You don\'t have any uncommitted changes.')
-            .assert.not.elementPresent('saved-changes-tab .expansion-panel')
+            .assert.elementPresent('//commit-history-table//commit-history-graph//*[local-name()="svg"]//*[local-name()="text" and @class="commit-subject-string" and text()[contains(., "initial commit")]]')
+            .assert.elementPresent('//commit-history-table//commit-history-graph//*[local-name()="svg"]//*[local-name()="text" and @class="commit-subject-string" and text()[contains(., "commit123")]]')
     },
 
-    'Step 19: Open the Create Data Property Modal': function(browser) {
+    'Step 15: Open the Create Data Property Modal': function(browser) {
+        browser.page.ontologyEditorPage().toggleChangesPage(false);
+        browser.globals.wait_for_no_spinners(browser);
+        browser.page.ontologyEditorPage().openCreateOwlDataPropertyModal();
         browser
-            .waitForElementVisible('ontology-button-stack circle-button-stack')
-            .click('ontology-button-stack circle-button-stack')
-            .waitForElementVisible('create-entity-modal h1.mat-dialog-title')
-            .assert.textContains('create-entity-modal h1.mat-dialog-title', 'Create Entity')
-            .click('create-entity-modal .create-data-property')
-            .waitForElementNotPresent('create-entity-modal .create-data-property')
-            .waitForElementVisible('create-data-property-overlay h1.mat-dialog-title')
-            .assert.textContains('create-data-property-overlay h1.mat-dialog-title', 'Create New OWL Data Property')
             .useXpath()
             .waitForElementVisible('//create-data-property-overlay//span[@class="mat-checkbox-label"][text()[contains(.,"Functional Property")]]')
             .click('//create-data-property-overlay//span[text()="Cancel"]')
@@ -265,16 +151,9 @@ module.exports = {
             .waitForElementNotPresent('create-data-property-overlay h1.mat-dialog-title')
     },
 
-    'Step 20: Open the Create Object Property Modal': function(browser) {
+    'Step 16: Open the Create Object Property Modal': function(browser) {
+        browser.page.ontologyEditorPage().openCreateOwlObjectPropertyModal();
         browser
-            .waitForElementVisible('ontology-button-stack circle-button-stack')
-            .click('ontology-button-stack circle-button-stack')
-            .waitForElementVisible('create-entity-modal h1.mat-dialog-title')
-            .assert.textContains('create-entity-modal h1.mat-dialog-title', 'Create Entity')
-            .click('create-entity-modal .create-object-property')
-            .waitForElementNotPresent('create-entity-modal .create-object-property')
-            .waitForElementVisible('create-object-property-overlay h1.mat-dialog-title')
-            .assert.textContains('create-object-property-overlay h1.mat-dialog-title', 'Create New OWL Object Property')
             .useXpath()
             .waitForElementVisible('//create-object-property-overlay//span[@class="mat-checkbox-label"][text()[contains(.,"Functional Property")]]')
             .waitForElementVisible('//create-object-property-overlay//span[@class="mat-checkbox-label"][text()[contains(.,"Asymmetric Property")]]')
@@ -287,106 +166,64 @@ module.exports = {
             .waitForElementNotPresent('create-object-property-overlay h1.mat-dialog-title')
     },
 
-    'Step 21: Verify Commit': function(browser) {
-        browser
-            .useXpath()
-            .waitForElementVisible('//mat-tab-header//div[text()[contains(.,"Commits")]]')
-            .click('//mat-tab-header//div[text()[contains(.,"Commits")]]')
-            .assert.elementPresent('//commit-history-table//commit-history-graph//*[local-name()="svg"]//*[local-name()="text" and @class="commit-subject-string" and text()[contains(., "initial commit")]]')
-            .assert.elementPresent('//commit-history-table//commit-history-graph//*[local-name()="svg"]//*[local-name()="text" and @class="commit-subject-string" and text()[contains(., "commit123")]]')
-    },
-
-    'Step 22: Verify Master Branch only has initial commit': function(browser) {
-        browser
-            .useXpath()
-            .getValue("//open-ontology-select//input", function(result) {
-                this.assert.equal(typeof result, "object");
-                this.assert.equal(result.status, 0);
-                this.assert.equal(result.value, "newBranchTitle");
-            })
-            .useCss()
-            .click('open-ontology-select .mat-form-field-infix')
-            .useXpath()
-            .waitForElementVisible('//mat-optgroup//mat-option//span[contains(text(), "MASTER")]')
-            .click('//mat-optgroup//mat-option//span[contains(text(), "MASTER")]');
+    'Step 17: Verify Master Branch only has initial commit': function(browser) {
+        browser.page.ontologyEditorPage().switchBranch('MASTER');
+        browser.globals.wait_for_no_spinners(browser);
+        browser.page.editorPage()
+            .assert.valueEquals('@editorRecordSelectInput', 'myTitle')
+            .assert.valueEquals('@editorBranchSelectInput', 'MASTER');
+        browser.page.ontologyEditorPage().toggleChangesPage();
         browser.globals.wait_for_no_spinners(browser);
         browser
             .useXpath()
-            .getValue("//open-ontology-select//input", function(result) {
-                this.assert.equal(typeof result, "object");
-                this.assert.equal(result.status, 0);
-                this.assert.equal(result.value, "MASTER");
-            })
             .waitForElementNotPresent('//commit-history-table//commit-history-graph//*[local-name()="svg"]//*[local-name()="text" and @class="commit-subject-string" and text()[contains(., "commit123")]]')
-            .assert.elementPresent( '//commit-history-table//commit-history-graph//*[local-name()="svg"]//*[local-name()="text" and @class="commit-subject-string" and text()[contains(., "The initial commit.")]]')
+            .assert.elementPresent( '//commit-history-table//commit-history-graph//*[local-name()="svg"]//*[local-name()="text" and @class="commit-subject-string" and text()[contains(., "initial commit")]]')
+            .useCss();
     },
 
-    'Step 23: Switch back to the other branch': function(browser) {
+    'Step 18: Switch back to the other branch': function(browser) {
+        browser.page.ontologyEditorPage().switchBranch('newBranchTitle');
+        browser.globals.wait_for_no_spinners(browser);
+        browser.page.editorPage()
+            .assert.valueEquals('@editorRecordSelectInput', 'myTitle')
+            .assert.valueEquals('@editorBranchSelectInput', 'newBranchTitle');
+    },
+
+    'Step 19: Perform a merge': function(browser) {
+        browser.page.editorPage()
+            .click('@mergeBranchesButton')
         browser
-            .useXpath()
-            .getValue("//open-ontology-select//input", function(result) {
-                this.assert.equal(typeof result, "object");
-                this.assert.equal(result.status, 0);
-                this.assert.equal(result.value, "MASTER");
-            })
+            .waitForElementVisible('app-merge-page branch-select input')
+            .waitForElementVisible('app-merge-page button.mat-primary')
+            .click('app-merge-page branch-select')
+            .waitForElementVisible('xpath', '//mat-option//span[text()[contains(.,"MASTER")]]')
+            .click('xpath', '//div//mat-option//span[contains(text(), "MASTER")]')
+        browser
             .useCss()
-            .click('open-ontology-select .mat-form-field-infix')
+            .waitForElementVisible('.merge-block commit-changes-display mat-panel-title[title*="firstClass"]')
+            .assert.textContains('.merge-block commit-changes-display mat-panel-title[title*="firstClass"]', 'firstClass')
+            .waitForElementVisible('.merge-block commit-changes-display mat-panel-title[title*="firstClass"] ~ mat-panel-description small')
+            .assert.textContains('.merge-block commit-changes-display mat-panel-title[title*="firstClass"] ~ mat-panel-description small', 'myOntology#FirstClass')
+            .click('.merge-block commit-changes-display mat-panel-title[title*="firstClass"]')
+            .waitForElementVisible('.merge-block commit-compiled-resource')
+            .assert.textContains('.merge-block commit-compiled-resource p.type-label', "Type(s)")
+            .assert.textContains('.merge-block commit-compiled-resource p.type-label ~ div.type div.px-4', 'owl:Class')
             .useXpath()
-            .waitForElementVisible('//mat-optgroup//mat-option//span[contains(text(), "newBranchTitle")]')
-            .click('//mat-optgroup//mat-option//span[contains(text(), "newBranchTitle")]');
+            .assert.textContains('//div[contains(@class, "merge-block")]//commit-compiled-resource//p[contains(@title,"http://purl.org/dc/terms/description")]', "Description")
+            .assert.textContains('//div[contains(@class, "merge-block")]//commit-compiled-resource//p[contains(@title,"http://purl.org/dc/terms/description")]/../..//div[contains(@class, "prop-value-container")]//div[contains(@class, "value-display")]', 'firstClassDescription')
+            .assert.textContains('//div[contains(@class, "merge-block")]//commit-compiled-resource//p[contains(@title,"http://purl.org/dc/terms/title")]', "Title")
+            .assert.textContains('//div[contains(@class, "merge-block")]//commit-compiled-resource//p[contains(@title,"http://purl.org/dc/terms/title")]/../..//div[contains(@class, "prop-value-container")]//div[contains(@class, "value-display")]', 'firstClass')
+        browser.useCss()
+            .click('app-merge-page button.mat-primary')
+        browser.globals.wait_for_no_spinners(browser)
+    },
+
+    'Step 20: Validate Merged Commits': function(browser) {
+        browser.page.ontologyEditorPage().toggleChangesPage(); // Merging closed the changes page
         browser.globals.wait_for_no_spinners(browser);
         browser
+            .waitForElementVisible('app-changes-page')
             .useXpath()
-            .getValue("//open-ontology-select//input", function(result) {
-                this.assert.equal(typeof result, "object");
-                this.assert.equal(result.status, 0);
-                this.assert.equal(result.value, "newBranchTitle");
-            })
-            .useCss()
-    },
-
-    'Step 24: Perform a merge': function(browser) {
-        browser.globals.wait_for_no_spinners(browser)
-        browser
-            .useCss()
-            .moveToElement('ontology-button-stack circle-button-stack', 0, 0)
-            .waitForElementVisible('ontology-button-stack circle-button-stack button.btn-info')
-            .useXpath().click('//circle-button-stack//button[@mattooltip="Merge Branches"]')
-            .useCss().waitForElementVisible('.merge-message')
-            .assert.textContains('.merge-message', 'newBranchTitle')
-            .useXpath()
-            .click('//branch-select//div[@class=\'branch-select\']//div[contains(@class, \'mat-form-field-infix\')]')
-            .waitForElementVisible('//mat-option//span[text()[contains(.,"MASTER")]]')
-            .click('//mat-option//span[text()[contains(.,"MASTER")]]')
-            .waitForElementVisible('//branch-select//input')
-            .getValue("//branch-select//input", function(result) {
-                this.assert.equal(typeof result, "object");
-                this.assert.equal(result.status, 0);
-                this.assert.equal(result.value, "MASTER");
-            })
-            .useCss()
-            .waitForElementVisible('merge-block commit-changes-display mat-panel-title[title*="firstClass"]')
-            .assert.textContains('merge-block commit-changes-display mat-panel-title[title*="firstClass"]', 'firstClass')
-            .waitForElementVisible('merge-block commit-changes-display mat-panel-title[title*="firstClass"] ~ mat-panel-description small')
-            .assert.textContains('merge-block commit-changes-display mat-panel-title[title*="firstClass"] ~ mat-panel-description small', 'myOntology#FirstClass')
-            .click('merge-block commit-changes-display mat-panel-title[title*="firstClass"]')
-            .waitForElementVisible('merge-block commit-compiled-resource')
-            .assert.textContains('merge-block commit-compiled-resource p.type-label', "Type(s)")
-            .assert.textContains('merge-block commit-compiled-resource p.type-label ~ div.type div.px-4', 'owl:Class')
-            .useXpath()
-            .assert.textContains('//merge-block//commit-compiled-resource//p[contains(@title,"http://purl.org/dc/terms/description")]', "Description")
-            .assert.textContains('//merge-block//commit-compiled-resource//p[contains(@title,"http://purl.org/dc/terms/description")]/../..//div[contains(@class, "prop-value-container")]//div[contains(@class, "value-display")]', 'firstClassDescription')
-            .assert.textContains('//merge-block//commit-compiled-resource//p[contains(@title,"http://purl.org/dc/terms/title")]', "Title")
-            .assert.textContains('//merge-block//commit-compiled-resource//p[contains(@title,"http://purl.org/dc/terms/title")]/../..//div[contains(@class, "prop-value-container")]//div[contains(@class, "value-display")]', 'firstClass')
-            .click('//button//span[text()="Submit"]')
-    },
-
-    'Step 25: Validate Merged Commits': function(browser) {
-        browser
-            .useCss()
-            .waitForElementNotPresent('#spinner-full')
-            .useXpath()
-            .waitForElementVisible('//mat-tab-header//div[text()[contains(.,"Commits")]]')
             .assert.elementPresent('//commit-history-table//commit-history-graph//*[local-name()="svg"]//*[local-name()="text" and @class="commit-subject-string" and text()[contains(., "The initial commit.")]]')
             .assert.elementPresent('//commit-history-table//commit-history-graph//*[local-name()="svg"]//*[local-name()="text" and @class="commit-subject-string" and text()[contains(., "commit123")]]')
             .assert.elementPresent('//commit-history-table//commit-history-graph//*[local-name()="svg"]//*[local-name()="text" and @class="commit-subject-string" and text()[contains(., "Merge of newBranchTitle into MASTER")]]')

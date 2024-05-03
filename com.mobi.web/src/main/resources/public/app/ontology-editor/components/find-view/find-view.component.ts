@@ -69,7 +69,7 @@ export class FindViewComponent implements OnDestroy {
                 .subscribe(results => {
                     state.search.errorMessage = '';
                     forEach(results, arr => {
-                        arr.sort((iri1, iri2) => this.os.getEntityNameByListItem(iri1, this.os.listItem).localeCompare(this.os.getEntityNameByListItem(iri2, this.os.listItem)));
+                        arr.sort((iri1, iri2) => this.os.getEntityName(iri1).localeCompare(this.os.getEntityName(iri2)));
                     });
                     state.search.results = results;
                     this.isClosedArray = new Array(state.search.results.length).fill(false);
@@ -106,7 +106,7 @@ export class FindViewComponent implements OnDestroy {
         this.os.unSelectItem();
         this.os.listItem.editorTabStates.search.selected = undefined;
     }
-    searchChanged(value): void {
+    searchChanged(value: string): void {
         this.os.listItem.editorTabStates.search.searchText = value;
     }
     trackByIndex = (index: number): number => {

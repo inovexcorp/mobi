@@ -32,11 +32,6 @@
 
     <artifactId>itests-web</artifactId>
     <name>itests-web</name>
-    <properties>
-        <https-port>10000</https-port>
-        <contextDir>${project.basedir}/target/classes</contextDir>
-        <dockerFile>${project.basedir}/target/classes/dockerFile</dockerFile>
-    </properties>
 
     <dependencies>
         <!-- Karaf Dependencies -->
@@ -94,39 +89,13 @@
                                     <version>${project.version}</version>
                                     <type>tar.gz</type>
                                     <overWrite>false</overWrite>
+                                    <destFileName>mobi-distribution.tar.gz</destFileName>
                                 </artifactItem>
                             </artifactItems>
                             <outputDirectory>${project.basedir}/target/classes</outputDirectory>
                             <overWriteReleases>true</overWriteReleases>
                             <overWriteSnapshots>true</overWriteSnapshots>
                         </configuration>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-resources-plugin</artifactId>
-                        <version>3.1.0</version>
-                        <executions>
-                            <execution>
-                                <id>copy-resource-one</id>
-                                <phase>package</phase>
-                                <goals>
-                                    <goal>copy-resources</goal>
-                                </goals>
-                                <configuration>
-                                    <outputDirectory>${project.basedir}/target/classes</outputDirectory>
-                                    <resources>
-                                        <resource>
-                                            <directory>${project.basedir}/src/test/resources/filtered-resources</directory>
-                                            <includes>
-                                                <include>z-catalog-ontology-9p-records.trig</include>
-                                                <include>workflows.trig</include>
-                                                <include>import.sh</include>
-                                            </includes>
-                                        </resource>
-                                    </resources>
-                                </configuration>
-                            </execution>
-                        </executions>
                     </plugin>
                     <plugin>
                         <groupId>com.cj.jshintmojo</groupId>
@@ -206,8 +175,7 @@
                 </plugins>
                 <resources>
                     <resource>
-                        <directory>${project.basedir}/src/test/resources/filtered-resources</directory>
-                        <filtering>true</filtering>
+                        <directory>${project.basedir}/src/test/resources/build-resources</directory>
                     </resource>
                 </resources>
             </build>

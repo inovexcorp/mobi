@@ -48,8 +48,7 @@ interface ClassGroup {
  */
 @Component({
     selector: 'class-select',
-    templateUrl: './classSelect.component.html',
-    styleUrls: ['./classSelect.component.scss']
+    templateUrl: './classSelect.component.html'
 })
 export class ClassSelectComponent implements OnInit {
     error = '';

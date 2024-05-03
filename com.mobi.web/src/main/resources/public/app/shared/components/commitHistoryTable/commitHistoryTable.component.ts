@@ -166,7 +166,7 @@ export class CommitHistoryTableComponent implements OnInit, OnChanges, OnDestroy
             this.receiveCommits.emit([]);
         }
     }
-    getBranches() {
+    getBranches(): void {
         this.catalogId = get(this.cm.localCatalog, '@id', '');
         this.cm.getRecordBranches(this.recordId, this.catalogId).subscribe(response => {
             this.branches = response.body;

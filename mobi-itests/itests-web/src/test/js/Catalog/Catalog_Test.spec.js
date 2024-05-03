@@ -22,10 +22,10 @@
  */
 var adminUsername = 'admin'
 var adminPassword = 'admin'
-var CatalogOnto1 = process.cwd()+ '/src/test/resources/rdf_files/z-catalog-ontology-1.ttl'
-var CatalogOnto2 = process.cwd()+ '/src/test/resources/rdf_files/z-catalog-ontology-2.ttl'
-var CatalogOnto3 = process.cwd()+ '/src/test/resources/rdf_files/z-catalog-ontology-3.ttl'
-var CatalogOnto4 = process.cwd()+ '/src/test/resources/rdf_files/z-catalog-ontology-4.ttl'
+var CatalogOnto1 = process.cwd() + '/src/test/resources/rdf_files/z-catalog-ontology-1.ttl'
+var CatalogOnto2 = process.cwd() + '/src/test/resources/rdf_files/z-catalog-ontology-2.ttl'
+var CatalogOnto3 = process.cwd() + '/src/test/resources/rdf_files/z-catalog-ontology-3.ttl'
+var CatalogOnto4 = process.cwd() + '/src/test/resources/rdf_files/z-catalog-ontology-4.ttl'
 
 var newUser = { 
     'username': 'newUser1', 
@@ -57,14 +57,17 @@ var createRecordFiltersXPathSelector = function(filterTypeHeader, filterType) {
 };
 
 module.exports = {
-    '@tags': ['sanity', "catalog"],
+    '@tags': ['sanity', 'catalog'],
 
     'Step 1: Initial Setup' : function(browser) {
         browser.globals.initial_steps(browser, adminUsername, adminPassword)
     },
 
     'Step 2: Upload Ontologies' : function(browser) {
-        browser.globals.upload_ontologies(browser, CatalogOnto1, CatalogOnto2, CatalogOnto3, CatalogOnto4)
+        [CatalogOnto1, CatalogOnto2, CatalogOnto3, CatalogOnto4].forEach(function(file) {
+            browser.page.ontologyEditorPage().uploadOntology(file);
+            browser.globals.wait_for_no_spinners(browser);
+        });
     },
 
     'Step 3: Switch to catalog page' : function(browser) {
@@ -136,9 +139,11 @@ module.exports = {
             browser.page.catalogPage().assertRecordVisible(title, index + 1)
         })
         browser.page.catalogPage().openRecordItem('z-catalog-ontology-9p.ttl');
-        browser.page.catalogPage().changeRecordFields('z-catalog-ontology-9p.ttl', {'description': 'new description', 'keywords': keywordsList});
-        browser.expect.element('//catalog-page//record-view//div[contains(@class,"record-sidebar")]//dd[2]', 'xpath').text.to.not.contain('5/27/21 1:12 PM')
-        browser.page.catalogPage().leaveCatalogRecord(browser);
+        browser.getText('xpath', '//catalog-page//record-view//div[contains(@class,"record-sidebar")]//dd[2]', function(result) {
+          browser.page.catalogPage().changeRecordFields('z-catalog-ontology-9p.ttl', {'description': 'new description', 'keywords': keywordsList});
+          browser.expect.element('//catalog-page//record-view//div[contains(@class,"record-sidebar")]//dd[2]', 'xpath').text.to.not.equal(result.value)
+          browser.page.catalogPage().leaveCatalogRecord(browser);
+        });
     },
 
     'Step 11: Check metadata of z-catalog-ontology-1' : function(browser) {
@@ -181,60 +186,27 @@ module.exports = {
     },
 
     'Step 14: A new user is created' : function(browser) {
-        browser
-            .useXpath()
-            .waitForElementVisible("//button/span[text() [contains(., 'Create User')]]")
-            .click("//button/span[text() [contains(., 'Create User')]]")
-            .waitForElementVisible("//h1[text() [contains(., 'Create User')]]")
-            .useCss()
-            .waitForElementVisible("create-user-overlay input[name=unmaskPassword]")
-            .click('create-user-overlay input[name=username]')
-            .setValue('create-user-overlay input[name=username]', newUser.username)
-            .click('create-user-overlay input[name=unmaskPassword]')
-            .setValue('create-user-overlay input[name=unmaskPassword]', newUser.password)
-            .click('create-user-overlay input[name=firstName]')
-            .setValue('create-user-overlay input[name=firstName]', newUser.firstName)
-            .click('create-user-overlay input[name=lastName]')
-            .setValue('create-user-overlay input[name=lastName]', newUser.lastName)
-            .click('create-user-overlay input[name=email]')
-            .setValue('create-user-overlay input[name=email]', newUser.email)
-            .click('label.mat-slide-toggle-label')
-            .useXpath()
-            .click("//button/span[text() [contains(., 'Submit')]]")
-            .waitForElementNotPresent('create-user-overlay')
-            .assert.not.elementPresent("//button/span[text() [contains(., 'Submit')]]");
+        browser.page.administrationPage().createUser(newUser);
         browser.globals.wait_for_no_spinners(browser);
     },
 
     'Step 15: The user successfully logs out' : function(browser) {
-        browser
-            .useXpath()
-            .click("//li/a[@class='nav-link']/span[text()[contains(.,'Logout')]]")
-            .assert.visible('//div[@class="form-group"]//input[@id="username"]')
-            .assert.visible('//div[@class="form-group"]//input[@id="password"]');
+        browser.globals.logout(browser);
     },
 
     'Step 16: Test logins as the newly created user' : function(browser) {
-        browser
-            .useXpath()
-            .waitForElementVisible('//div[@class="form-group"]//input[@id="username"]')
-            .waitForElementVisible('//div[@class="form-group"]//input[@id="password"]')
-            .setValue('//div[@class="form-group"]//input[@id="username"]', newUser.username )
-            .setValue('//div[@class="form-group"]//input[@id="password"]', newUser.password )
-            .click('//button[@type="submit"]');
+        browser.globals.login(browser, newUser.username, newUser.password);
     },
 
-    'Step 17: check for visibility of home elements' : function(browser) {
-        browser
-            .useCss()
-            .waitForElementVisible('.home-page');
-    },
-
-    'Step 18: Switch to catalog page' : function(browser) {
-        browser
-            .click('sidebar div ul a[class=nav-link][href="#/catalog"]')
-            .waitForElementNotPresent('#spinner-full')
+    'Step 17: Switch to catalog page' : function(browser) {
+        browser.globals.switchToPage(browser, 'catalog', 'catalog-page records-view')
+        browser.globals.wait_for_no_spinners(browser);
+        browser.page.catalogPage().waitForElementPresent('@searchBar')
+        browser.page.catalogPage().clearCatalogSearchBar();
+        browser.page.catalogPage().applySearchText('z-catalog-ontology-1');
+        browser.globals.wait_for_no_spinners(browser);
         browser.page.catalogPage().openRecordItem('z-catalog-ontology-1');
+        browser.globals.wait_for_no_spinners(browser);
         browser.assert.not.elementPresent('catalog-page record-view div.record-sidebar manage-record-button button');
     }
 

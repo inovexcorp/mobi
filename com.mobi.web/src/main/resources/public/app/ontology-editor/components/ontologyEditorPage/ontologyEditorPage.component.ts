@@ -23,24 +23,33 @@
 import { Component, OnDestroy } from '@angular/core';
 
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import { stateServiceToken } from '../../../versioned-rdf-record-editor/injection-token';
 
 /**
  * @class ontology-editor.OntologyEditorPageComponent
  *
  * A component that creates a `div` containing the main components of the Ontology Editor.
- * These components are {@link ontology-editor.OntologySidebarComponent}, {@link ontology-editor.OntologyTabComponent} 
- * with the {@link shared.OntologyStateService#listItem currently selected open ontology}, and
- * {@link ontology-editor.OpenOntologyTabComponent}.
+ * These components are {@link versioned-rdf-record-editor.EditorTopBarComponent}, 
+ * {@link versioned-rdf-record-editor.MergePageComponent}, {@link versioned-rdf-record-editor.ChangesPageComponent}, 
+ * and {@link ontology-editor.OntologyTabComponent} with the
+ * {@link shared.OntologyStateService#listItem currently selected open ontology}.
  */
 @Component({
     selector: 'ontology-editor-page',
     templateUrl: './ontologyEditorPage.component.html',
-    styleUrls: ['./ontologyEditorPage.component.scss']
+    styleUrls: ['./ontologyEditorPage.component.scss'],
+    providers: [
+      {
+          provide: stateServiceToken,
+          useExisting: OntologyStateService
+      }
+    ]
 })
 export class OntologyEditorPageComponent implements OnDestroy {
-    constructor(public os: OntologyStateService) {}
+    constructor(public state: OntologyStateService) {}
+    
     ngOnDestroy(): void {
-        this.os.toast.clearToast();
-        this.os.snackBar.dismiss();
+        this.state.toast.clearToast();
+        this.state.snackBar.dismiss();
     }
 }

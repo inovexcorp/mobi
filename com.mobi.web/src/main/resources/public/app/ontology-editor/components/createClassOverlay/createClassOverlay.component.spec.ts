@@ -39,7 +39,7 @@ import {
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
 import { StaticIriComponent } from '../staticIri/staticIri.component';
-import { AdvancedLanguageSelectComponent } from '../advancedLanguageSelect/advancedLanguageSelect.component';
+import { AdvancedLanguageSelectComponent } from '../../../shared/components/advancedLanguageSelect/advancedLanguageSelect.component';
 import { CamelCasePipe } from '../../../shared/pipes/camelCase.pipe';
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
 import { SuperClassSelectComponent } from '../superClassSelect/superClassSelect.component';
@@ -194,7 +194,6 @@ describe('Create Class Overlay component', function() {
             it('are not set', fakeAsync(function() {
                 component.create();
                 tick();
-                expect(ontologyStateStub.addLanguageToNewEntity).toHaveBeenCalledWith(component.clazz, component.createForm.controls.language.value);
                 expect(ontologyStateStub.addEntity).toHaveBeenCalledWith(component.clazz);
                 expect(ontologyStateStub.createFlatEverythingTree).toHaveBeenCalledWith(ontologyStateStub.listItem);
                 expect(ontologyStateStub.listItem.flatEverythingTree).toEqual([hierarchyNode]);
@@ -215,7 +214,6 @@ describe('Create Class Overlay component', function() {
                     ontologyStateStub.containsDerivedConcept.and.returnValue(true);
                     component.create();
                     tick();
-                    expect(ontologyStateStub.addLanguageToNewEntity).toHaveBeenCalledWith(component.clazz, component.createForm.controls.language.value);
                     expect(ontologyStateStub.addEntity).toHaveBeenCalledWith(component.clazz);
                     expect(ontologyStateStub.createFlatEverythingTree).toHaveBeenCalledWith(ontologyStateStub.listItem);
                     expect(ontologyStateStub.listItem.flatEverythingTree).toEqual([hierarchyNode]);
@@ -231,7 +229,6 @@ describe('Create Class Overlay component', function() {
                 it('without a derived concept',fakeAsync( function() {
                     component.create();
                     tick();
-                    expect(ontologyStateStub.addLanguageToNewEntity).toHaveBeenCalledWith(component.clazz, component.createForm.controls.language.value);
                     expect(ontologyStateStub.addEntity).toHaveBeenCalledWith(component.clazz);
                     expect(ontologyStateStub.createFlatEverythingTree).toHaveBeenCalledWith(ontologyStateStub.listItem);
                     expect(ontologyStateStub.listItem.flatEverythingTree).toEqual([hierarchyNode]);

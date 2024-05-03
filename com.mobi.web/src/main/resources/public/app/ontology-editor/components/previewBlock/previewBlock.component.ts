@@ -84,14 +84,6 @@ export class PreviewBlockComponent implements OnInit, OnChanges {
                 this.activePageChange.emit(this.activePage);
             });
     }
-    download(): void {
-        const fileName = this.os.listItem.versionedRdfRecord.title.replace(/[ &/\\#,+()$~%.'":*?<>{}]/g, '');
-        this.om.downloadOntology(this.os.listItem.versionedRdfRecord.recordId, 
-            this.os.listItem.versionedRdfRecord.branchId, 
-            this.os.listItem.versionedRdfRecord.commitId, 
-            this.activePage.serialization, 
-            fileName);
-    }
 
     private _setMode(serialization) {
         if (serialization === 'turtle') {

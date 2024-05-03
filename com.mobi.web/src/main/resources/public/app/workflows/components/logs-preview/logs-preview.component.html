@@ -33,7 +33,7 @@
         <mat-select [formControl]="logControl">
           <mat-option *ngIf="activityLog" [value]="activityLog.iri">{{activityLog.label}}</mat-option>
           <mat-optgroup *ngFor="let group of logFiles">
-            <span [title]="group.groupLabel"><mat-icon [ngClass]="getStatusCircleClass(group.groupStatus)">circle</mat-icon> {{group.groupLabel}}</span>
+            <span [title]="group.groupLabel"><span class="stacked-icon" [ngClass]="getStatusCircleClass(group.groupStatus)"><mat-icon>{{getStatusIcon(group.groupStatus)}}</mat-icon></span> {{group.groupLabel}}</span>
             <mat-option *ngFor="let logFile of group.logs" [value]="logFile.iri" [title]="logFile.iri">{{logFile.label}}</mat-option>
           </mat-optgroup>
         </mat-select>

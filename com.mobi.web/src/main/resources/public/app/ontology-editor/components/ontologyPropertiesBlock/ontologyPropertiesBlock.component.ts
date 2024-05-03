@@ -58,7 +58,7 @@ export class OntologyPropertiesBlockComponent implements OnChanges {
     }
     updatePropertiesFiltered(): void {
         this.properties = union(this.pm.ontologyProperties, this.pm.defaultAnnotations, this.pm.owlAnnotations, Object.keys(this.os.listItem.annotations.iris));
-        this.propertiesFiltered = sortBy(this.properties.filter(prop => has(this.ontology, prop)), iri => this.os.getEntityNameByListItem(iri));
+        this.propertiesFiltered = sortBy(this.properties.filter(prop => has(this.ontology, prop)), iri => this.os.getEntityName(iri));
     }
     openAddOverlay(): void {
         this.dialog.open(OntologyPropertyOverlayComponent, {data: { editing: false }}).afterClosed()

@@ -265,10 +265,16 @@ describe('LogsPreviewComponent', () => {
       expect(component.getFileName(`${WORKFLOWLOGS}log-name-that-is-very_long.log`)).toEqual('log-name-that-is-very_long.log');
     });
     it('should get the correct classes for a status circle', () => {
-      expect(component.getStatusCircleClass('failure')).toEqual('text-danger');
-      expect(component.getStatusCircleClass('success')).toEqual('text-success');
-      expect(component.getStatusCircleClass('never_run')).toEqual('text-light');
-      expect(component.getStatusCircleClass('started')).toEqual('text-info');
+      expect(component.getStatusCircleClass('failure')).toEqual('badge-danger');
+      expect(component.getStatusCircleClass('success')).toEqual('badge-success');
+      expect(component.getStatusCircleClass('never_run')).toEqual('badge-light');
+      expect(component.getStatusCircleClass('started')).toEqual('badge-info');
+    });
+    it('should get the correct icon name for a status circle', () => {
+      expect(component.getStatusIcon('failure')).toEqual('priority_high');
+      expect(component.getStatusIcon('success')).toEqual('done');
+      expect(component.getStatusIcon('never_run')).toEqual('');
+      expect(component.getStatusIcon('started')).toEqual('sync');
     });
     it('should download the selected logs', () => {
       component.logControl.setValue(`${WORKFLOWLOGS}log1`);

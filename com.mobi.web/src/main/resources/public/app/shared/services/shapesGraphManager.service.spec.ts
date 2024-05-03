@@ -82,6 +82,7 @@ describe('Shapes Graph Manager service', function() {
             fileName: file.name
         };
         progressSpinnerStub.track.and.callFake((ob) => ob);
+        progressSpinnerStub.trackedRequest.and.callFake((ob) => ob);
     });
 
     afterEach(function() {
@@ -118,7 +119,6 @@ describe('Shapes Graph Manager service', function() {
             request.flush(uploadResponse);
         });
     });
-
     describe('should upload changes to a shapes graph record', function() {
         it('unless an error occurs', function() {
             service.uploadChanges(rdfUpdate)
@@ -161,7 +161,6 @@ describe('Shapes Graph Manager service', function() {
           request.flush([uploadResponse]);
       });
     });
-
     describe('should delete changes on a shapes graph record', function() {
         it('unless an error occurs', function() {
             service.deleteShapesGraphRecord(rdfUpdate.recordId)
@@ -184,7 +183,6 @@ describe('Shapes Graph Manager service', function() {
             request.flush(200);
         });
     });
-
     describe('should retrieve shapes graph content of a shapes graph record', function() {
         it('unless an error occurs', function() {
             service.getShapesGraphContent('record1', 'branch1', 'commit1')
@@ -203,7 +201,6 @@ describe('Shapes Graph Manager service', function() {
             request.flush('content');
         });
     });
-
     describe('should download a shapes graph record', function() {
         beforeEach(function() {
             spyOn(window, 'open');
@@ -213,14 +210,12 @@ describe('Shapes Graph Manager service', function() {
 
             expect(window.open).toHaveBeenCalledWith(`${service.prefix}/${encodeURIComponent(rdfDownload.recordId)}?branchId=branch1&commitId=commit1&rdfFormat=turtle&fileName=filename&applyInProgressCommit=false`);
         });
-
         it('with rdfFormat not set', function() {
             rdfDownload.rdfFormat = undefined;
             service.downloadShapesGraph(rdfDownload);
 
             expect(window.open).toHaveBeenCalledWith(`${service.prefix}/${encodeURIComponent(rdfDownload.recordId)}?branchId=branch1&commitId=commit1&rdfFormat=jsonld&fileName=filename&applyInProgressCommit=false`);
         });
-
         it('with fileName not set', function() {
             rdfDownload.fileName = undefined;
             service.downloadShapesGraph(rdfDownload);

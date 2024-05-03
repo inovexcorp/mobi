@@ -220,12 +220,12 @@ describe('IRI Select Ontology component', function() {
         });
         it('getName should return the name of an iri', function() {
             ontologyStateStub.getBlankNodeValue.and.returnValue('bnode');
-            ontologyStateStub.getEntityNameByListItem.and.returnValue('name');
+            ontologyStateStub.getEntityName.and.returnValue('name');
 
             expect(component.getName(iri, true)).toEqual('bnode');
             expect(ontologyStateStub.getBlankNodeValue).toHaveBeenCalledWith(iri);
             expect(component.getName(iri, false)).toEqual('name');
-            expect(ontologyStateStub.getEntityNameByListItem).toHaveBeenCalledWith(iri);
+            expect(ontologyStateStub.getEntityName).toHaveBeenCalledWith(iri);
         });
         it('add should handle adding a chip', function() {
             spyOn(component, 'getName').and.returnValue('name');

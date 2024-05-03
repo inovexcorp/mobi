@@ -22,32 +22,28 @@
  */
 var adminUsername = 'admin'
 var adminPassword = 'admin'
-var Onto1 = process.cwd()+ '/src/test/resources/rdf_files/ComplexBlankNodeChainDeletion.ttl'
+var Onto1 = process.cwd() + '/src/test/resources/rdf_files/ComplexBlankNodeChainDeletion.ttl'
 
 module.exports = {
-    '@tags': ['sanity', "ontology-editor"],
+    '@tags': ['sanity', 'ontology-editor'],
 
-    'Step 1: Initial Setup': function (browser) {
+    'Step 1: Initial Setup': function(browser) {
         browser.globals.initial_steps(browser, adminUsername, adminPassword)
     },
 
-    'Step 2: Upload Ontologies': function (browser) {
-        browser.globals.upload_ontologies(browser, Onto1)
+    'Step 2: Upload Ontologies': function(browser) {
+        browser.page.ontologyEditorPage().uploadOntology(Onto1);
+        browser.globals.wait_for_no_spinners(browser);
+        browser.page.ontologyEditorPage().onProjectTab();
     },
 
-    'Step 3: Open an Ontology called ComplexBlankNodeChainDeletion.ttl': function (browser) {
-        browser
-            .setValue('open-ontology-tab search-bar input', '')
-            .globals.open_ontology(browser, Onto1)
-    },
-
-    'Step 4: Click classes tab': function (browser) {
+    'Step 3: Click classes tab': function(browser) {
         browser
             .useXpath().waitForElementVisible('//mat-tab-header//div[text()[contains(., "Classes")]]')
             .click('xpath', '//mat-tab-header//div[text()[contains(., "Classes")]]')
     },
 
-    'Step 5: Open for Ontology class': function (browser) {
+    'Step 4: Open for Ontology class': function(browser) {
         browser
             .useCss().waitForElementVisible('div.tree')
             .useXpath()
@@ -58,7 +54,7 @@ module.exports = {
             .click('xpath', '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "MainClass")]]')
     },
 
-    'Step 5: Delete Axiom for Ontology class': function (browser) {
+    'Step 5: Delete Axiom for Ontology class': function(browser) {
         browser
             .useCss().waitForElementVisible('div.tree')
             .useXpath()
@@ -67,19 +63,21 @@ module.exports = {
                 selector: '//div[contains(@class, "class-axioms")]//span[text()[contains(., "SubClass2")]]'
             })
             .click('//div[contains(@class, "class-axioms")]//button')
-            .waitForElementVisible('//confirm-modal')
-            .click('css selector', 'confirm-modal div.mat-dialog-actions button.mat-primary')
-            .pause(2000)
-    },
+            .useCss()
+            .waitForElementVisible('confirm-modal')
+            .waitForElementVisible('confirm-modal button.mat-primary')
+            .click('confirm-modal button.mat-primary')
+            .waitForElementNotPresent('confirm-modal button:not(.mat-primary)');
+        browser.globals.wait_for_no_spinners(browser);
+      },
 
-    'Step 6: Click changes tab': function (browser) {
+    'Step 6: Click changes tab': function(browser) {
         browser
-            .useXpath().waitForElementVisible('//mat-tab-header//div[text()[contains(., "Changes")]]')
-            .click('xpath', '//mat-tab-header//div[text()[contains(., "Changes")]]')
-            .waitForElementVisible({
-                locateStrategy: 'xpath',
-                selector: '//mat-accordion'
-            })
-            .expect.elements('//mat-accordion').count.to.equal(5)
+            .assert.visible('mat-chip.uncommitted')
+        browser.page.ontologyEditorPage().toggleChangesPage();
+        browser.globals.wait_for_no_spinners(browser);
+        browser
+            .waitForElementVisible('app-changes-page div.changes-info button.mat-warn')
+            .expect.elements('app-changes-page mat-expansion-panel').count.to.equal(5)
     }
 }

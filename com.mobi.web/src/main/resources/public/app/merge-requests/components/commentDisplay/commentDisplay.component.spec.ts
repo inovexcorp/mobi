@@ -39,8 +39,8 @@ import { LoginManagerService } from '../../../shared/services/loginManager.servi
 import { UserManagerService } from '../../../shared/services/userManager.service';
 import { DCTERMS, USER, MERGEREQ } from '../../../prefixes';
 import { User } from '../../../shared/models/user.class';
-import { CommentDisplayComponent } from './commentDisplay.component';
 import { MarkdownEditorComponent } from '../../../shared/components/markdownEditor/markdownEditor.component';
+import { CommentDisplayComponent } from './commentDisplay.component';
 
 describe('Comment Display component', function() {
     let component: CommentDisplayComponent;

@@ -26,21 +26,25 @@ var adminPassword = 'admin'
 var Onto1 = process.cwd()+ '/src/test/resources/rdf_files/pizza.owl'
 
 module.exports = {
-    '@tags': ['sanity', "ontology-editor"],
+    '@tags': ['sanity', 'ontology-editor'],
 
     'Step 1: Initial Setup' : function(browser) {
         browser.globals.initial_steps(browser, adminUsername, adminPassword)
+        browser.page.ontologyEditorPage().isActive();
     },
 
     'Step 2: Upload Ontologies' : function(browser) {
-        browser.globals.upload_ontologies(browser, Onto1)
+        browser.page.ontologyEditorPage().uploadOntology(Onto1);
+        browser.globals.wait_for_no_spinners(browser);
     },
 
-    'Step 3: Open on Ontology called “pizza.owl' : function (browser) {
-        browser.globals.open_ontology(browser, Onto1)
+    'Step 3: Verify Ontology called “pizza.owl" is open' : function(browser) {
+        browser.page.editorPage()
+            .assert.valueEquals('@editorRecordSelectInput', 'pizza')
+            .assert.valueEquals('@editorBranchSelectInput', 'MASTER')
     },
 
-    'Step 4: Open Ontology Visualization' : function (browser) {
+    'Step 4: Open Ontology Visualization' : function(browser) {
         browser
             .useXpath()
             .waitForElementVisible('//mat-tab-header//div[text()[contains(., "Visualization")]]')

@@ -39,7 +39,7 @@
                  [ngStyle]="{'padding-left': (indent * item.indent) + 'em'}">
                 <a (click)="toggleOpen(item); $event.stopPropagation()">
                     <i class="fa fa-fw" [ngClass]="{'fa-folder-open-o': item.isOpened, 'fa-folder-o': !item.isOpened}"></i>
-                    <span>{{this.os.getEntityNameByListItem(item.entityIRI)}}</span>
+                    <span>{{this.os.getEntityName(item.entityIRI)}}</span>
                 </a>
             </div>
             <div *ngIf="!item.isClass"

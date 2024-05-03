@@ -52,10 +52,11 @@ export class ShapesGraphManagerService {
      * resolves with the result of the call if it was successful and rejects with an error message if it was not.
      *
      * @param {RdfUpload} newRecord the new SHACL record to add
+     * @param {boolean} isTracked Whether the request should be tracked by the {@link shared.ProgressSpinnerService}
      * @returns {Observable} A Observable that resolves with metadata about the newly created Record if the request was 
      *    successful; rejects with a {@link RESTError} otherwise
      */
-    createShapesGraphRecord(newRecord: RdfUpload): Observable<VersionedRdfUploadResponse> {
+    createShapesGraphRecord(newRecord: RdfUpload, isTracked = false): Observable<VersionedRdfUploadResponse> {
         const fd = new FormData();
         fd.append('title', newRecord.title);
         if (newRecord.jsonld) {
@@ -68,9 +69,8 @@ export class ShapesGraphManagerService {
             fd.append('description', newRecord.description);
         }
         forEach(get(newRecord, 'keywords', []), keyword => fd.append('keywords', keyword));
-
-        return this.spinnerSvc.track(this.http.post<VersionedRdfUploadResponse>(this.prefix, fd))
-            .pipe(catchError(handleErrorObject));
+        const request = this.http.post<VersionedRdfUploadResponse>(this.prefix, fd);
+        return this.spinnerSvc.trackedRequest(request, isTracked).pipe(catchError(handleErrorObject));
     }
     /**
      * Calls the GET /mobirest/shapes-graphs/{recordId} endpoint using the `window.location` variable which will

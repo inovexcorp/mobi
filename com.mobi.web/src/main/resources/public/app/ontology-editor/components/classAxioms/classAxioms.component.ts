@@ -58,7 +58,7 @@ export class ClassAxiomsComponent implements OnChanges {
     }
     updateAxioms(): void {
         const axioms =  map(this.pm.classAxiomList, 'iri');
-        this.axioms = sortBy(axioms.filter(prop => has(this.os.listItem.selected, prop)), iri => this.os.getEntityNameByListItem(iri));
+        this.axioms = sortBy(axioms.filter(prop => has(this.os.listItem.selected, prop)), iri => this.os.getEntityName(iri));
     }
     openRemoveOverlay(event: {iri: string, index: number}): void {
         this.dialog.open(ConfirmModalComponent, {

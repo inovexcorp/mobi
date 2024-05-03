@@ -28,7 +28,7 @@ var invalidEndsWidth = 'test`-local-`imports-1';
 var input_iriBegin = '//mat-label[text()[contains(.,"Begins With")]]//ancestor::mat-form-field//input';
 var input_iriEnds = '//mat-label[text()[contains(.,"Ends With")]]//ancestor::mat-form-field//input';
 
-var Onto1 = process.cwd()+ '/src/test/resources/rdf_files/CurrencyUnitOntology.ttl'
+var Onto1 = process.cwd() + '/src/test/resources/rdf_files/CurrencyUnitOntology.ttl'
 
 module.exports = {
     '@tags': ['sanity', 'ontology-editor'],
@@ -38,14 +38,12 @@ module.exports = {
     },
 
     'Step 2: Upload Ontologies' : function(browser) {
-        browser.globals.upload_ontologies(browser, Onto1)
+        browser.page.ontologyEditorPage().uploadOntology(Onto1);
+        browser.globals.wait_for_no_spinners(browser);
+        browser.page.ontologyEditorPage().onProjectTab();
     },
 
-    'Step 3: Open on Ontology called “CurrencyUnitOntology' : function (browser) {
-        browser.globals.open_ontology(browser, Onto1)
-    },
-
-    'Step 4: Open edit IRI Modal' : function (browser) {
+    'Step 3: Open edit IRI Modal' : function(browser) {
         browser
             .useXpath()
             .waitForElementVisible('//static-iri//div[contains(@class, "static-ir")]//span//a//i[contains(@class, "fa-pencil")]')
@@ -66,18 +64,11 @@ module.exports = {
         browser.globals.wait_for_no_spinners(browser);
     },
 
-    'Step 5: Open create class modal' : function (browser) {
-        browser
-            .click('ontology-button-stack circle-button-stack')
-            .waitForElementVisible('create-entity-modal h1.mat-dialog-title')
-            .assert.textContains('create-entity-modal h1.mat-dialog-title', 'Create Entity')
-            .click('create-entity-modal .create-class')
-            .waitForElementNotPresent('create-entity-modal .create-class')
-            .waitForElementVisible('create-class-overlay h1.mat-dialog-title')
-            .assert.textContains('create-class-overlay h1.mat-dialog-title', 'Create New OWL Class')
+    'Step 4: Open create class modal' : function(browser) {
+        browser.page.ontologyEditorPage().openCreateOwlClassModal();
     },
 
-    'Step 6: Set the IRI' : function (browser) {
+    'Step 5: Set the IRI' : function(browser) {
         browser
             .useXpath()
             .waitForElementVisible('//mat-label[text()[contains(.,"Name")]]//ancestor::mat-form-field//input')
@@ -101,7 +92,7 @@ module.exports = {
             .waitForElementNotPresent('edit-iri-overlay h1.mat-dialog-title');
     },
 
-    'Step 7: Create class' : function (browser) {
+    'Step 6: Create class' : function(browser) {
         browser
             .useXpath()
             .click('//create-class-overlay//span[text()="Submit"]')
@@ -110,7 +101,7 @@ module.exports = {
         browser.globals.wait_for_no_spinners(browser);
     },
 
-    'Step 8: Verify class was created' : function(browser) {
+    'Step 7: Verify class was created' : function(browser) {
         browser
             .useXpath()
             .waitForElementVisible('//mat-tab-header//div[text()[contains(.,"Classes")]]')
@@ -121,7 +112,7 @@ module.exports = {
             .assert.visible('//class-hierarchy-block//tree-item//span[text()[contains(.,"Class A")]]')
     },
 
-    'Step 9: Verify new class IRI is correct' : function(browser) {
+    'Step 8: Verify new class IRI is correct' : function(browser) {
         browser
             .useXpath()
             .click('//class-hierarchy-block//tree-item//span[text()[contains(.,"Class A")]]')
@@ -130,18 +121,11 @@ module.exports = {
             .assert.textContains('static-iri div.static-iri span strong', 'http://www.ontologyrepository.com/CommonCoreOntologies/ClassA')
     },
 
-    'Step 10: Open create class modal' : function (browser) {
-        browser
-            .click('ontology-button-stack circle-button-stack')
-            .waitForElementVisible('create-entity-modal h1.mat-dialog-title')
-            .assert.textContains('create-entity-modal h1.mat-dialog-title', 'Create Entity')
-            .click('create-entity-modal .create-class')
-            .waitForElementNotPresent('create-entity-modal .create-class')
-            .waitForElementVisible('create-class-overlay h1.mat-dialog-title')
-            .assert.textContains('create-class-overlay h1.mat-dialog-title', 'Create New OWL Class')
+    'Step 9: Open create class modal' : function(browser) {
+        browser.page.ontologyEditorPage().openCreateOwlClassModal();
     },
 
-    'Step 11: Validate duplicate check' : function (browser) {
+    'Step 10: Validate duplicate check' : function(browser) {
         browser
             .useXpath()
             .waitForElementVisible('//mat-label[text()[contains(.,"Name")]]//ancestor::mat-form-field//input')

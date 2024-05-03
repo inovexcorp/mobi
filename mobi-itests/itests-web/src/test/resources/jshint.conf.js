@@ -11,7 +11,8 @@
    */
   "globals": {
      "module": true,
-        "require": true,
-        "process": true
+      "require": true,
+      "process": true,
+      "console": true,
   }
 }

@@ -147,7 +147,15 @@ export class ImportsOverlayComponent implements OnInit {
             const urlObjs = map(addedUrls, url => ({'@id': url}));
             this.os.addToAdditions(this.os.listItem.versionedRdfRecord.recordId, {'@id': this.os.listItem.selected['@id'], [importsIRI]: urlObjs});
             this.os.saveCurrentChanges().pipe(
-                switchMap(() => this.os.updateOntology(this.os.listItem.versionedRdfRecord.recordId, this.os.listItem.versionedRdfRecord.branchId, this.os.listItem.versionedRdfRecord.commitId, this.os.listItem.upToDate, this.os.listItem.inProgressCommit))
+                switchMap(() => this.os.changeVersion(this.os.listItem.versionedRdfRecord.recordId, 
+                  this.os.listItem.versionedRdfRecord.branchId, 
+                  this.os.listItem.versionedRdfRecord.commitId, 
+                  undefined, 
+                  this.os.listItem.currentVersionTitle, 
+                  this.os.listItem.upToDate, 
+                  false, 
+                  false
+                ))
             ).subscribe(() => {
                 this.dialogRef.close(true);
             }, errorMessage => this._onError(errorMessage, tabIndex));

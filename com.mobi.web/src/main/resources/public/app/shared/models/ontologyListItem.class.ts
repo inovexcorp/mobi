@@ -79,8 +79,6 @@ const ontologyEditorTabStates = {
     search: {
         openIndex: 0
     },
-    savedChanges: { },
-    commits: { },
     visualization: {
         targetedSpinnerId: 'visualization-spinner'
     }
@@ -94,8 +92,6 @@ export class OntologyListItem extends VersionedRdfListItem {
     importedOntologies: {id: string, ontologyId: string}[]
     importedOntologyIds: string[]
     createdFromExists: boolean
-    userCanModify: boolean
-    userCanModifyMaster: boolean
     dataPropertyRange: {[key: string]: string}
     derivedConcepts: string[]
     derivedConceptSchemes: string[]
@@ -114,7 +110,6 @@ export class OntologyListItem extends VersionedRdfListItem {
     conceptSchemes: Hierarchy
     blankNodes: {[key: string]: string}
     entityInfo: EntityNames
-    branches: JSONLDObject[]
     classesAndIndividuals: {[key: string]: string[]}
     classesWithIndividuals: string[]
     individualsParentPath: string[]
@@ -126,7 +121,6 @@ export class OntologyListItem extends VersionedRdfListItem {
     selectedBlankNodes: JSONLDObject[]
     failedImports: string[]
     seeHistory: boolean
-    isSaved: boolean
     hasPendingRefresh: boolean
     openSnackbar: MatSnackBarRef<SimpleSnackBar>
     iriBegin: string
@@ -141,9 +135,7 @@ export class OntologyListItem extends VersionedRdfListItem {
     static CONCEPTS_SCHEMES_TAB = 5;
     static CONCEPTS_TAB = 6;
     static SEARCH_TAB = 7;
-    static SAVED_CHANGES_TAB = 8;
-    static COMMITS_TAB = 9;
-    static VISUALIZATION_TAB = 10;
+    static VISUALIZATION_TAB = 8;
 
     constructor() {
         super();
@@ -209,7 +201,6 @@ export class OntologyListItem extends VersionedRdfListItem {
         };
         this.blankNodes = {};
         this.entityInfo = {};
-        this.branches = [];
         this.classesAndIndividuals = {};
         this.classesWithIndividuals = [];
         this.individualsParentPath = [];
@@ -221,7 +212,6 @@ export class OntologyListItem extends VersionedRdfListItem {
         this.selectedBlankNodes = [];
         this.failedImports = [];
         this.seeHistory = false;
-        this.isSaved = false;
         this.hasPendingRefresh = false;
         this.iriBegin = '';
         this.iriThen = '';

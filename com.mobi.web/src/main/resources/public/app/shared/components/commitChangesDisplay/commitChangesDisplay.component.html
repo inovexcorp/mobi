@@ -39,7 +39,8 @@
             </mat-expansion-panel>
         </mat-accordion>
         <div class="text-center">
-            <a *ngIf="hasMoreResults" (click)="loadMore()"><i class="fa fa-fw fa-plus"></i><span>Load More</span></a>
+            <button *ngIf="hasMoreResults" mat-stroked-button color="primary" (click)="loadMore()">Load More</button>
+            <!-- <a *ngIf="hasMoreResults" (click)="loadMore()"><i class="fa fa-fw fa-plus"></i><span>Load More</span></a> -->
         </div>
     </div>
 </div>

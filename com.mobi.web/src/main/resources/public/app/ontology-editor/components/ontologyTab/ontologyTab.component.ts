@@ -20,30 +20,22 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { find, get } from 'lodash';
-import { switchMap } from 'rxjs/operators';
-import { Component, OnDestroy, OnInit, Input, OnChanges, SimpleChanges, ViewChild, ViewContainerRef, TemplateRef, ViewEncapsulation } from '@angular/core';
-import { MatTabChangeEvent } from '@angular/material/tabs';
+import { Component, OnDestroy, Input, OnChanges, SimpleChanges, ViewChild, ViewContainerRef, TemplateRef, ViewEncapsulation } from '@angular/core';
+import { MatTabChangeEvent, MatTabGroup } from '@angular/material/tabs';
 
-import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
-import { ONTOLOGYSTATE } from '../../../prefixes';
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
-import { ToastService } from '../../../shared/services/toast.service';
-import { getDctermsValue, getPropertyId } from '../../../shared/utility';
-import { MatTabGroup } from '@angular/material/tabs';
 
 /**
  * @class ontology-editor.OntologyTabComponent
  *
  * A component that creates a `div` containing all the components necessary for displaying an ontology. This includes a
- * {@link ontology-editor.MergeTabComponent}, {@link ontology-editor.OntologyButtonStackComponent}, and a
- * `mat-tab-group`. The `mat-tab-group` contains tabs for the {@link ontology-editor.ProjectTabComponent},
- * {@link ontology-editor.OverviewTabComponent}, {@link ontology-editor.ClassesTabComponent},
- * {@link ontology-editor.PropertiesTabComponent}, {@link ontology-editor.IndividualsTabComponent},
- * {@link ontology-editor.ConceptSchemesTabComponent}, {@link ontology-editor.ConceptsTabComponent},
- * {@link ontology-editor.SearchTabComponent}, {@link ontology-editor.SavedChangesTabComponent}, and
- * {@link ontology-editor.CommitsTabComponent}.
+ * {@link ontology-editor.OntologyButtonStackComponent} and a `mat-tab-group`. The `mat-tab-group` contains tabs for the
+ * {@link ontology-editor.ProjectTabComponent}, {@link ontology-editor.OverviewTabComponent},
+ * {@link ontology-editor.ClassesTabComponent}, {@link ontology-editor.PropertiesTabComponent},
+ * {@link ontology-editor.IndividualsTabComponent}, {@link ontology-editor.ConceptSchemesTabComponent},
+ * {@link ontology-editor.ConceptsTabComponent}, {@link ontology-editor.SearchTabComponent}, and
+ * {@link ontology-editor.VisualizationTabComponent}.
  */
 @Component({
     selector: 'ontology-tab',
@@ -51,17 +43,14 @@ import { MatTabGroup } from '@angular/material/tabs';
     styleUrls: ['./ontologyTab.component.scss'],
     encapsulation: ViewEncapsulation.None
 })
-export class OntologyTabComponent implements OnInit, OnChanges, OnDestroy {
+export class OntologyTabComponent implements OnChanges, OnDestroy {
     @Input() isVocab: boolean;
     @ViewChild('outlet', { read: ViewContainerRef }) outletRef?: ViewContainerRef;
     @ViewChild('content', { read: TemplateRef }) contentRef: TemplateRef<any>;
     @ViewChild('tabsGroup') tabsGroup: MatTabGroup;
 
-    constructor(public os: OntologyStateService, private cm: CatalogManagerService, private toast: ToastService) {}
+    constructor(public os: OntologyStateService) {}
     
-    ngOnInit(): void {
-        this._checkBranchExists();
-    }
     ngOnChanges(changes: SimpleChanges): void {
         if (changes.isVocab && this.outletRef) {
             this.outletRef.clear();
@@ -102,25 +91,6 @@ export class OntologyTabComponent implements OnInit, OnChanges, OnDestroy {
             default:
         }
     }
-
-    private _checkBranchExists() {
-        if (this.os.listItem.versionedRdfRecord.branchId && !find(this.os.listItem.branches, {'@id': this.os.listItem.versionedRdfRecord.branchId})) {
-            const catalogId = get(this.cm.localCatalog, '@id', '');
-            const masterBranch = find(this.os.listItem.branches, branch => getDctermsValue(branch, 'title') === 'MASTER')['@id'];
-            const state = this.os.getStateByRecordId(this.os.listItem.versionedRdfRecord.recordId);
-            let commitId = getPropertyId(find(state.model, {[`${ONTOLOGYSTATE}branch`]: [{'@id': masterBranch}]}), `${ONTOLOGYSTATE}commit`);
-            this.cm.getBranchHeadCommit(masterBranch, this.os.listItem.versionedRdfRecord.recordId, catalogId)
-                .pipe(switchMap(headCommit => {
-                    const headCommitId = get(headCommit, 'commit[\'@id\']', '');
-                    if (!commitId) {
-                        commitId = headCommitId;
-                    }
-                    return this.os.updateOntology(this.os.listItem.versionedRdfRecord.recordId, masterBranch, commitId, commitId === headCommitId);
-                }))
-                .subscribe(() => this.os.resetStateTabs(), error => this.toast.createErrorToast(error));
-        }
-    }
-
     /**
      * Re-aligns the ink bar to the selected tab element
      */

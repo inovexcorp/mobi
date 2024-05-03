@@ -1,0 +1,44 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 - 2024 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<button mat-icon-button #uploadLogTrigger color="primary" [matMenuTriggerFor]="uploadLog" title="Upload Log">
+  <mat-icon [matBadge]="getNumErrors() || undefined" matBadgeSize="small" matBadgeColor="warn">history</mat-icon>
+</button>
+<mat-menu #uploadLog="matMenu" class="upload-menu" (closed)="menuClosed($event)">
+  <p *ngIf="!state.uploadList.length; else uploadList" class="text-muted pl-3 mb-0">Nothing to display</p>
+  <ng-template #uploadList>
+    <div *ngFor="let item of state.uploadList; last as lastItem" class="uploaded-record d-flex align-items-baseline p-2" [ngClass]="{'last': lastItem}">
+      <div class="item-indicator pr-2" *ngIf="(item.status | async) as status">
+        <mat-spinner *ngIf="status === 'processing'; else elseBlock" [diameter]="18"></mat-spinner>
+        <ng-template #elseBlock><div class="item-completed">
+            <mat-icon *ngIf="(status === 'complete') && !item.error" class="text-success">check</mat-icon>
+            <mat-icon *ngIf="(item.error && item.error.errorMessage)" class="text-danger">error</mat-icon>
+        </div></ng-template>
+      </div>
+      <div class="item-details flex-1 remove-min-width">
+        <h4 class="m-0 text-truncate">{{item.title}}</h4>
+        <p *ngIf="item.error" class="text-danger m-0"><small>{{item.error.errorMessage}}</small></p>
+        <a *ngIf="item.error && item.error.errorDetails && item.error.errorDetails.length > 0" (click)="showUploadErrorsOverlay(item)">Details</a>
+      </div>
+    </div>
+  </ng-template>
+</mat-menu>

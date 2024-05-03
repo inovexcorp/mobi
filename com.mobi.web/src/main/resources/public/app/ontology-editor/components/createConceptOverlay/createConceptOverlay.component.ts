@@ -31,6 +31,7 @@ import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { REGEX } from '../../../constants';
 import { splitIRI } from '../../../shared/pipes/splitIRI.pipe';
 import { noWhitespaceValidator } from '../../../shared/validators/noWhitespace.validator';
+import { addLanguageToAnnotations } from '../../../shared/utility';
 
 /**
  * @class ontology-editor.CreateConceptOverlayComponent
@@ -89,7 +90,7 @@ export class CreateConceptOverlayComponent implements OnInit {
             }]
 
         };
-        this.os.addLanguageToNewEntity(concept, this.createForm.controls.language.value);
+        addLanguageToAnnotations(concept, this.createForm.controls.language.value);
         return concept;
     }
     create(): void  {

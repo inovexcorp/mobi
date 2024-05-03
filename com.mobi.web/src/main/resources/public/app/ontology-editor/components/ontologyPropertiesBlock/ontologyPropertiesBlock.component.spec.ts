@@ -129,7 +129,7 @@ describe('Ontology Properties Block component', function() {
     });
     describe('controller methods', function() {
         it('should update the filtered properties', function() {
-            ontologyStateStub.getEntityNameByListItem.and.callFake(a => a);
+            ontologyStateStub.getEntityName.and.callFake(a => a);
             ontologyStateStub.listItem.annotations.iris = {'annotation1': '', 'default2': '', 'owl2': '', 'prop2': ''};
             propertyManagerStub.ontologyProperties = ['ont1', 'ont2'];
             propertyManagerStub.defaultAnnotations = ['default1', 'default2', 'prop1'];

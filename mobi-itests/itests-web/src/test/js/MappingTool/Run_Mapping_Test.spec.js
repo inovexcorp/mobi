@@ -24,58 +24,41 @@ var adminUsername = 'admin'
 var adminPassword = 'admin'
 var OntoSample = process.cwd()+ '/src/test/resources/rdf_files/uhtc-ontology.ttl'
 var skosOnt = process.cwd()+ '/src/test/resources/rdf_files/skos.rdf'
-var OntoCSV= process.cwd()+ '/src/test/resources/ontology_csv\'s/uhtc-compounds.csv'
+var OntoCSV = process.cwd()+ '/src/test/resources/ontology_csv\'s/uhtc-compounds.csv'
 
 module.exports = {
-    '@tags': ['mapping-tool', 'sanity'],
+    '@tags': ['mapping-tool', 'datasets', 'sanity'],
 
     'Step 1: Initial Setup' : function(browser) {
         browser.globals.initial_steps(browser, adminUsername, adminPassword)
     },
 
     'Step 2: Upload Ontologies' : function(browser) {
-        browser.globals.upload_ontologies(browser, OntoSample, skosOnt)
+        [OntoSample, skosOnt].forEach(function(file) {
+            browser.page.ontologyEditorPage().uploadOntology(file);
+            browser.globals.wait_for_no_spinners(browser);
+          });
     },
 
     'Step 3: Link ontologies' : function(browser) {
-        browser.globals.open_ontology(browser, OntoSample)
-        browser
-            .waitForElementVisible('imports-block div.section-header')
-            .click('.imports-block a.fa-plus')
-            .waitForElementVisible('imports-overlay')
-            .useXpath().waitForElementVisible('//imports-overlay//button//span[text()[contains(.,"Submit")]]')
-            .pause(1000)
-            .click('xpath', '//imports-overlay//div[text()[contains(.,"On Server")]]')
-            .useCss().waitForElementNotVisible('div.spinner')
-            .click('xpath', '//imports-overlay//h4[text()[contains(.,"skos")]]')
-            .useXpath().waitForElementVisible('//imports-overlay//mat-chip-list//mat-chip[text()[contains(.,"skos")]]')
-            .click('//button//span[text()[contains(.,"Submit")]]')
-            .useCss().waitForElementNotPresent('imports-overlay')
-            .waitForElementVisible('.imports-block')
+        browser.page.ontologyEditorPage().openOntology('uhtc-ontology');
+        browser.globals.wait_for_no_spinners(browser);
+        browser.page.ontologyEditorPage().onProjectTab();
+        browser.page.ontologyEditorPage().addServerImport('skos');
+        browser.globals.wait_for_no_spinners(browser)
     },
 
-    'Step 4: Navigate to datasets tab' : function (browser) {
-        browser
-            .click('xpath', '//div//ul//a[@class="nav-link"][@href="#/datasets"]')
+    'Step 4: Navigate to datasets tab' : function(browser) {
+        browser.globals.switchToPage(browser, 'datasets', 'datasets-page');
+        browser.globals.wait_for_no_spinners(browser)
     },
 
-    'Step 5: Create a new Dataset' : function (browser) {
+    'Step 5: Create a new Dataset' : function(browser) {
+        browser.page.datasetPage().createDataset('UHTC ontology data', 'A dataset consisting of information recorded on various earthly materials', ['uhtc-ontology']);
         browser.globals.wait_for_no_spinners(browser)
-        browser
-            .click('div.datasets-page button.mat-primary')
-            .waitForElementVisible('new-dataset-overlay')
-            .waitForElementVisible('new-dataset-overlay input[name="title"]')
-            .setValue('div.mat-dialog-content input[name=title]', 'UHTC ontology data')
-            .setValue('div.mat-dialog-content textarea', 'A dataset consisting of information recorded on various earthly materials')
-            .click('xpath', '//div[contains(@class, "datasets-ontology-picker")]//h4[text()[contains(.,"uhtc-ontology")]]//ancestor::mat-list-option')
-        browser.globals.wait_for_no_spinners(browser)
-        browser
-            .waitForElementNotPresent('#spinner-full')
-            .click('div.mat-dialog-actions button.mat-primary')
     },
 
-    'Step 6: Validate dataset Appearance' : function (browser) {
-        browser.globals.wait_for_no_spinners(browser)
+    'Step 6: Validate dataset Appearance' : function(browser) {
         browser
             .waitForElementPresent('datasets-list')
             .waitForElementPresent('div.dataset-info')
@@ -84,14 +67,13 @@ module.exports = {
             .useCss()
     },
 
-    'Step 7: Navigate to Mapping page' : function (browser) {
+    'Step 7: Navigate to Mapping page' : function(browser) {
         browser.globals.wait_for_no_spinners(browser)
-        browser
-            .click('xpath', '//div//ul//a[@class="nav-link"][@href="#/mapper"]')
+        browser.globals.switchToPage(browser, 'mapper', 'mapper-page')
+        browser.globals.wait_for_no_spinners(browser)
     },
 
-    'Step 8: Create new mapping' : function (browser) {
-        browser.globals.wait_for_no_spinners(browser)
+    'Step 8: Create new mapping' : function(browser) {
         browser
             .click('button.new-button')
             .waitForElementVisible('create-mapping-overlay')
@@ -101,7 +83,7 @@ module.exports = {
             .click('div.mat-dialog-actions button.mat-primary')
     },
 
-    'Step 9: Attach csv to mapping' : function (browser) {
+    'Step 9: Attach csv to mapping' : function(browser) {
         browser.globals.wait_for_no_spinners(browser);
         browser
             .waitForElementNotPresent('div.modal.fade')
@@ -111,7 +93,7 @@ module.exports = {
             .click('button.continue-btn')
     },
 
-    'Step 10: Click on uploaded ontology' : function (browser) {
+    'Step 10: Click on uploaded ontology' : function(browser) {
         browser.globals.wait_for_no_spinners(browser)
         browser
             .waitForElementNotPresent('#spinner-full')
@@ -127,7 +109,7 @@ module.exports = {
 
     },
 
-    'Step 11: Add class to mapping' : function (browser) {
+    'Step 11: Add class to mapping' : function(browser) {
         browser.globals.wait_for_no_spinners(browser)
         browser
             .waitForElementVisible('edit-mapping-tab .editor-form')
@@ -142,13 +124,13 @@ module.exports = {
             .useCss()
     },
 
-    'Step 12: Verify Mapping has been selected' : function (browser) {
+    'Step 12: Verify Mapping has been selected' : function(browser) {
         browser.globals.wait_for_no_spinners(browser)
         browser
             .assert.valueEquals('edit-mapping-tab class-mapping-select input', 'UHTC Material')
     },
 
-    'Step 13: Choose new IRI template' : function (browser) {
+    'Step 13: Choose new IRI template' : function(browser) {
         browser.globals.wait_for_no_spinners(browser)
         browser
             .click('.iri-template .field-label button.mat-primary')
@@ -162,7 +144,7 @@ module.exports = {
             .click('div.mat-dialog-actions button.mat-primary')
     },
 
-    'Step 14: Add Property Mappings and verify addition' : function (browser) {
+    'Step 14: Add Property Mappings and verify addition' : function(browser) {
         browser.globals.wait_for_no_spinners(browser)
         var properties = ["Chemical Formula", "Density", "Melting Point", "Title", "Description", "No Domain", "Union Domain"]
 
@@ -204,7 +186,7 @@ module.exports = {
         }
     },
 
-    'Step 15: Verify Edit Property modal auto selects correct property' : function (browser){
+    'Step 15: Verify Edit Property modal auto selects correct property' : function(browser){
         browser.globals.wait_for_no_spinners(browser)
         browser
             .click('xpath', '//mat-list[contains(@class, "prop-list")]//h4[text()="Chemical Formula"]//parent::div/following-sibling::div[contains(@class, "prop-actions")]//button[contains(@class, "menu-button")]')
@@ -217,7 +199,7 @@ module.exports = {
             .click('div.mat-dialog-actions button:not([color="primary"])')
     },
 
-    'Step 16: Add Crystal Structure Mapping' : function (browser){
+    'Step 16: Add Crystal Structure Mapping' : function(browser){
         browser.globals.wait_for_no_spinners(browser)
         browser
             .click('div.properties-field-name button.add-prop-mapping-button')
@@ -233,7 +215,7 @@ module.exports = {
             .click('div.mat-dialog-actions button.mat-primary')
     },
 
-    'Step 17: Verify Crystal Class addition' : function (browser) {
+    'Step 17: Verify Crystal Class addition' : function(browser) {
         browser.globals.wait_for_no_spinners(browser)
         browser
             .useXpath()
@@ -241,7 +223,7 @@ module.exports = {
             .useCss()
     },
 
-    'Step 18: Switch to crystal structure class' : function (browser) {
+    'Step 18: Switch to crystal structure class' : function(browser) {
         browser.globals.wait_for_no_spinners(browser)
         browser
             .click('edit-mapping-tab class-mapping-select')
@@ -253,7 +235,7 @@ module.exports = {
             .useCss()
     },
 
-    'Step 19: Add crystal structure name property' : function (browser) {
+    'Step 19: Add crystal structure name property' : function(browser) {
         browser.globals.wait_for_no_spinners(browser)
         browser
             .click('div.properties-field-name button.add-prop-mapping-button')
@@ -269,7 +251,7 @@ module.exports = {
             .click('div.mat-dialog-actions button.mat-primary')
     },
 
-    'Step 20: Verify visibility of crystal structure name property' : function (browser) {
+    'Step 20: Verify visibility of crystal structure name property' : function(browser) {
         browser.globals.wait_for_no_spinners(browser)
         browser
             .useXpath()
@@ -277,13 +259,13 @@ module.exports = {
             .useCss()
     },
 
-    'Step 21: Save Mapping' : function (browser) {
+    'Step 21: Save Mapping' : function(browser) {
         browser.globals.wait_for_no_spinners(browser)
         browser
             .click('edit-mapping-tab .button-container .drop-down-button')
     },
 
-    'Step 22: Upload mapping to dataset' : function (browser) {
+    'Step 22: Upload mapping to dataset' : function(browser) {
         browser
             .waitForElementVisible('div.mat-menu-content button.mat-menu-item.run-dataset')
             .click('div.mat-menu-content button.mat-menu-item.run-dataset')
@@ -295,16 +277,18 @@ module.exports = {
         browser.click('div.mat-dialog-actions button.mat-primary')
     },
 
-    'Step 23: Verify user is back on main mapping page' : function (browser) {
+    'Step 23: Verify user is back on main mapping page' : function(browser) {
         browser.globals.wait_for_no_spinners(browser)
         browser
             .assert.visible('mapping-select-page')
     },
 
-    'Step 24: Explore dataset mapping' : function (browser) {
+    'Step 24: Explore dataset mapping' : function(browser) {
+        browser.globals.wait_for_no_spinners(browser)
+        browser.globals.switchToPage(browser, 'discover', 'discover-page');
         browser.globals.wait_for_no_spinners(browser)
         browser
-            .click('xpath', '//div//ul//a[@class="nav-link"][@href="#/discover"]')
+            // .click('xpath', '//div//ul//a[@class="nav-link"][@href="#/discover"]')
             .click('dataset-select mat-form-field')
             .waitForElementVisible('dataset-select mat-form-field')
             .useXpath()
@@ -313,7 +297,7 @@ module.exports = {
             .useCss()
     },
 
-    'Step 25: Check for Material and Crystal structure cards' : function (browser) {
+    'Step 25: Check for Material and Crystal structure cards' : function(browser) {
         browser.globals.wait_for_no_spinners(browser)
         browser
             .useXpath()

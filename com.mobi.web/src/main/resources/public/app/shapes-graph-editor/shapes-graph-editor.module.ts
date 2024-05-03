@@ -23,23 +23,13 @@
 import { NgModule } from '@angular/core';
 
 import { SharedModule } from '../shared/shared.module';
-import { CreateBranchModal } from './components/createBranchModal/createBranchModal.component';
-import { CreateTagModal } from './components/createTagModal/createTagModal.component';
-import { DownloadRecordModalComponent } from './components/downloadRecordModal/downloadRecordModal.component';
-import { EditorBranchSelectComponent } from './components/editorBranchSelect/editorBranchSelect.component';
-import { EditorRecordSelectComponent } from './components/editorRecordSelect/editorRecordSelect.component';
-import { EditorTopBarComponent } from './components/editorTopBar/editorTopBar.component';
-import { NewShapesGraphRecordModalComponent } from './components/newShapesGraphRecordModal/newShapesGraphRecordModal.component';
 import { ShapesGraphEditorPageComponent } from './components/shapesGraphEditorPage/shapesGraphEditorPage.component';
-import { ShapesGraphChangesPageComponent } from './components/shapesGraphChangesPage/shapesGraphChangesPage.component';
-import { CommitModalComponent } from './components/commitModal/commitModal.component';
-import { ShapesGraphMergePageComponent } from './components/shapesGraphMergePage/shapesGraphMergePage.component';
-import { UploadRecordModalComponent } from './components/uploadRecordModal/uploadRecordModal.component';
 import { ShapesGraphDetailsComponent } from './components/shapesGraphDetails/shapesGraphDetails.component';
 import { StaticIriLimitedComponent } from './components/staticIriLimited/staticIriLimited.component';
 import { ShapesGraphPropertiesBlockComponent } from './components/shapesGraphPropertiesBlock/shapesGraphPropertiesBlock.component';
 import { ShapesGraphPropertyValuesComponent } from './components/shapesGraphPropertyValues/shapesGraphPropertyValues.component';
 import { YateComponent } from './components/yate/yate.component';
+import { VersionedRdfRecordEditorModule } from '../versioned-rdf-record-editor/versioned-rdf-record-editor.module';
 
 /**
  * @namespace shapes-graph-editor
@@ -48,26 +38,16 @@ import { YateComponent } from './components/yate/yate.component';
  */
  @NgModule({
      imports: [
-        SharedModule
+        SharedModule,
+        VersionedRdfRecordEditorModule
      ],
     declarations: [
-        NewShapesGraphRecordModalComponent,
         ShapesGraphDetailsComponent,
-        EditorBranchSelectComponent,
-        EditorRecordSelectComponent,
-        EditorTopBarComponent,
         ShapesGraphEditorPageComponent,
-        DownloadRecordModalComponent,
-        UploadRecordModalComponent,
-        CommitModalComponent,
-        ShapesGraphChangesPageComponent,
-        ShapesGraphMergePageComponent,
         ShapesGraphPropertiesBlockComponent,
         ShapesGraphPropertyValuesComponent,
-        CreateBranchModal,
         StaticIriLimitedComponent,
         YateComponent,
-        CreateTagModal
     ],
     providers: []
 })

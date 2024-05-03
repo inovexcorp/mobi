@@ -26,6 +26,17 @@ import { Observable } from 'rxjs';
 import 'hammerjs';
 import { GraphState, StateEdge, StateNode } from '../../app/ontology-visualization/classes';
 import { ControlRecordI } from '../../app/ontology-visualization/classes/controlRecords';
+import { VersionedRdfState } from '../../app/shared/services/versionedRdfState.service';
+import { VersionedRdfListItem } from '../../app/shared/models/versionedRdfListItem.class';
+import { RecordSelectFiltered } from '../../app/versioned-rdf-record-editor/models/record-select-filtered.interface';
+import { JSONLDObject } from '../../app/shared/models/JSONLDObject.interface';
+import { RdfDownload } from '../../app/shared/models/rdfDownload.interface';
+import { RdfUpdate } from '../../app/shared/models/rdfUpdate.interface';
+import { RdfUpload } from '../../app/shared/models/rdfUpload.interface';
+import { VersionedRdfUploadResponse } from '../../app/shared/models/versionedRdfUploadResponse.interface';
+import { VersionedRdfStateBase } from '../../app/shared/models/versionedRdfStateBase.interface';
+import { State } from '../../app/shared/models/state.interface';
+import { Difference } from '../../app/shared/models/difference.class';
 
 export const DATE_STR = '2023-01-01T00:00:00Z';
 export const SHORT_DATE_STR = formatDate(new Date(DATE_STR), 'short', 'en-US');
@@ -182,4 +193,44 @@ export class mockStateManager {
     getState = jasmine.createSpy('getState').and.resolveTo();
     updateState = jasmine.createSpy('updateState').and.resolveTo();
     deleteState = jasmine.createSpy('deleteState').and.resolveTo();
+}
+
+export class MockVersionedRdfState extends VersionedRdfState<VersionedRdfListItem> {
+  changeVersion = jasmine.createSpy('changeVersion')
+  open = jasmine.createSpy('open')
+  delete = jasmine.createSpy('delete')
+  getIdentifierIRI = jasmine.createSpy('getIdentifierIRI')
+  download = jasmine.createSpy('download')
+  uploadChanges = jasmine.createSpy('uploadChanges')
+  removeChanges = jasmine.createSpy('removeChanges')
+  create = jasmine.createSpy('create')
+  createAndOpen = jasmine.createSpy('createAndOpen')
+  getDefaultNamespace = jasmine.createSpy('getDefaultNamespace')
+  getEntityName = jasmine.createSpy('getEntityName')
+  getId = jasmine.createSpy('getId')
+  merge = jasmine.createSpy('merge')
+  isCommittable = jasmine.createSpy('merge')
+  validateCurrentStateExists = jasmine.createSpy('validateCurrentStateExists')
+  close = jasmine.createSpy('close')
+  canModify = jasmine.createSpy('canModify')
+  clearInProgressCommit = jasmine.createSpy('clearInProgressCommit')
+  createState = jasmine.createSpy('createState')
+  getStateByRecordId = jasmine.createSpy('getStateByRecordId')
+  updateState = jasmine.createSpy('updateState')
+  deleteState = jasmine.createSpy('deleteState')
+  deleteBranchState = jasmine.createSpy('deleteBranchState')
+  getCurrentStateByRecordId = jasmine.createSpy('getCurrentStateByRecordId')
+  getCurrentStateIdByRecordId = jasmine.createSpy('getCurrentStateIdByRecordId')
+  getCurrentState = jasmine.createSpy('getCurrentState')
+  getCurrentStateId = jasmine.createSpy('getCurrentStateId')
+  getCommitIdOfBranchState = jasmine.createSpy('getCommitIdOfBranchState')
+  isStateTag = jasmine.createSpy('isStateTag')
+  isStateBranch = jasmine.createSpy('isStateBranch')
+  getCatalogDetails = jasmine.createSpy('getCatalogDetails')
+  getLatestMaster = jasmine.createSpy('getLatestMaster')
+  getMergeDifferences = jasmine.createSpy('getMergeDifferences')
+  attemptMerge = jasmine.createSpy('attemptMerge')
+  checkConflicts = jasmine.createSpy('checkConflicts')
+  cancelMerge = jasmine.createSpy('cancelMerge')
+  getListItemByRecordId = jasmine.createSpy('getListItemByRecordId')
 }

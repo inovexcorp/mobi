@@ -179,23 +179,11 @@ describe('Preview Block component', function() {
                 }));
             });
         });
-        it('should download the ontology', function() {
-            ontologyStateStub.listItem.versionedRdfRecord.title = 'This %$#is*&)( a<>{}//?Title';
-            component.activePage = {serialization: 'jsonld'};
-            component.download();
-            expect(ontologyManagerStub.downloadOntology).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, ontologyStateStub.listItem.versionedRdfRecord.branchId, ontologyStateStub.listItem.versionedRdfRecord.commitId, 'jsonld', 'ThisisaTitle');
-        });
     });
     it('should call getPreview when the button is clicked', function() {
         spyOn(component, 'setPreview');
         const button = element.queryAll(By.css('button.refresh-button'))[0];
         button.triggerEventHandler('click', null);
         expect(component.setPreview).toHaveBeenCalledWith();
-    });
-    it('should call download when the download button is clicked', function() {
-        spyOn(component, 'download');
-        const button = element.queryAll(By.css('button.download-button'))[0];
-        button.triggerEventHandler('click', null);
-        expect(component.download).toHaveBeenCalledWith();
     });
 });

@@ -26,7 +26,7 @@ import { JSONLDObject } from './JSONLDObject.interface';
  * Represents an upload of RDF into the system. The `jsonld` and `file` are optional as only one is required.
  */
 export interface RdfUpload {
-    jsonld?: JSONLDObject,
+    jsonld?: JSONLDObject[],
     file?: File,
     title: string,
     description?: string,

@@ -55,13 +55,13 @@
             <div class="property-values mt-3"
                  *ngFor="let selected of os.listItem.editorTabStates.search.selected | keyvalue;trackBy:trackByKey">
                 <div class="prop-header d-flex align-items-center clearfix">
-                    <p class="text text-truncate m-0" title="{{selected.key}}"><span>{{os.getEntityNameByListItem(selected.key, os.listItem)}}</span></p>
+                    <p class="text text-truncate m-0" title="{{selected.key}}"><span>{{os.getEntityName(selected.key)}}</span></p>
                     <small class="ml-1 text-muted text-truncate flex-1">&lt;<span>{{selected.key}}</span>&gt;</small>
                 </div>
                 <div class="prop-value-container p-1 ml-3 mt-1" *ngFor="let item of selected.value">
                     <span class="value-display-wrapper">
                         <span *ngIf="os.isLinkable(item['@id'])" class="value-display">
-                            <span [innerHtml]="os.getEntityNameByListItem(item['@id']) | highlightText: os.listItem.editorTabStates.search.highlightText:true | safeHtml: 'html'"></span>
+                            <span [innerHtml]="os.getEntityName(item['@id']) | highlightText: os.listItem.editorTabStates.search.highlightText:true | safeHtml: 'html'"></span>
                             <small> &lt;<a (click)="os.goTo(item['@id'])" [innerHtml]="item['@id'] | highlightText:os.listItem.editorTabStates.search.highlightText:true | safeHtml: 'html'"></a>&gt;</small>
                         </span>
                         <span *ngIf="!os.isLinkable(item['@id'])" class="value-display">

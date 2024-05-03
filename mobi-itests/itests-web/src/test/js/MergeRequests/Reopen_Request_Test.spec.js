@@ -35,54 +35,49 @@ module.exports = {
     },
 
     'Steps 2: Create a New Ontology': function(browser) {
-        browser.globals.switchToPage(browser, 'ontology-editor', 'button.upload-button');
-        browser.page.editorPage().isActive();
-        browser.page.editorPage().openNewOntologyOverlay();
-        browser.page.editorPage().editNewOntologyOverlay('Test Ontology', 'test description');
-        browser.page.editorPage().submitNewOntologyOverlay();
+        browser.globals.switchToPage(browser, 'ontology-editor', 'ontology-editor-page');
+        browser.page.ontologyEditorPage().isActive();
+        browser.page.ontologyEditorPage().createOntology('Test Ontology', 'test description');
         browser.globals.wait_for_no_spinners(browser);
-        browser.page.editorPage().onProjectTab();
-        browser.page.editorPage().verifyProjectTab('Test Ontology', 'test description', 'TestOntology')
+        browser.page.ontologyEditorPage().onProjectTab();
+        browser.page.ontologyEditorPage().verifyProjectTab('Test Ontology', 'test description', 'TestOntology')
     },
 
     'Step 3: Create a New Branch' : function(browser) {
-        browser.page.editorPage().openNewBranchOverlay();
-        browser.page.editorPage().editNewBranchOverlayAndSubmit('Test Branch', 'test Branch Description');
+        browser.page.ontologyEditorPage().createBranch('Test Branch', 'test Branch Description');
         browser.globals.wait_for_no_spinners(browser);
-        browser.useCss().waitForElementNotPresent('create-branch-overlay')
     },
 
     'Step 4: Verify Branch Creation and Switch': function(browser) {
-        browser.page.editorPage().verifyBranchSelection('Test Branch');
+      browser
+            .page.editorPage()
+            .assert.valueEquals('@editorRecordSelectInput', 'Test Ontology')
+            .assert.valueEquals('@editorBranchSelectInput', 'Test Branch');
     },
 
     'Step 5: Make an Edit to the Ontology': function(browser) {
-        browser.page.editorPage().editIri('ChangedOntologyIri');
+        browser.page.ontologyEditorPage().editIri('ChangedOntologyIri');
         browser.globals.wait_for_no_spinners(browser);
-        browser.page.editorPage().openCommitOverlay();
-        browser.page.editorPage().editCommitOverlayAndSubmit('Changed IRI');
+        browser.page.ontologyEditorPage().commit('Changed IRI');
         browser.globals.wait_for_no_spinners(browser);
-        browser
-            .useCss()
-            .waitForElementNotPresent('commit-overlay')
-            .waitForElementVisible('div.toast-success')
-            .waitForElementNotPresent('div.toast-success');
-        browser.page.editorPage().isActive('ontology-tab');
+        browser.globals.dismiss_toast(browser);
+        browser.page.ontologyEditorPage().isActive('ontology-tab');
     },
 
     'Step 6: Switch to Merge Request Page': function(browser) {
         browser.globals.switchToPage(browser, 'merge-requests', 'button.new-request-btn');
+        browser.globals.wait_for_no_spinners(browser);
     },
 
     'Step 7: Create Merge Request': function(browser) {
         browser.page.mergeRequestPage().createNewRequest();
-        browser.page.mergeRequestPage().assertMatCardTitle('Test Ontology');
-        browser.click('//create-request//request-record-select//mat-card//mat-card-title[contains(text(),"Test Ontology")]');
+        browser.page.mergeRequestPage().clickMatCard('Test Ontology');
         browser.page.mergeRequestPage().createRequestNext();
         browser.globals.wait_for_no_spinners(browser);
         browser.page.mergeRequestPage().createRequestSourceBranchSelect('Test Branch');
         browser.page.mergeRequestPage().createRequestTargetBranchSelect('MASTER');
         browser.page.mergeRequestPage().createRequestNext();
+        browser.globals.wait_for_no_spinners(browser);
     },
 
     'Step 8: Submit Merge Request': function(browser) {
@@ -148,18 +143,21 @@ module.exports = {
     },
 
     'Step 19: Open The Ontology': function(browser) {
-        browser.globals.switchToPage(browser, 'ontology-editor', 'button.upload-button');
-        browser.page.editorPage().isActive();
-        browser.page.editorPage().openOntology('Test Ontology');
+        browser.globals.switchToPage(browser, 'ontology-editor', 'ontology-editor-page');
+        browser.page.ontologyEditorPage().isActive();
+        browser.page.ontologyEditorPage().openOntology('Test Ontology');
         browser.globals.wait_for_no_spinners(browser);
     },
 
     'Step 20: Delete the target branch': function(browser) {
-        browser.page.editorPage().switchToBranch('MASTER');
+        browser.page.ontologyEditorPage().switchBranch('MASTER');
         browser.globals.wait_for_no_spinners(browser);
-        browser.page.editorPage().deleteBranch('Test Branch');
+        browser.page.ontologyEditorPage().deleteBranchOrTag('Test Branch');
         browser.globals.wait_for_no_spinners(browser);
-        browser.page.editorPage().verifyBranchSelection('MASTER');
+        browser
+            .page.editorPage()
+            .assert.valueEquals('@editorRecordSelectInput', 'Test Ontology')
+            .assert.valueEquals('@editorBranchSelectInput', 'MASTER');
     },
 
     'Step 21: Verify Reopen Permissions': function(browser) {

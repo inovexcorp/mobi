@@ -31,6 +31,7 @@ import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { REGEX } from '../../../constants';
 import { splitIRI } from '../../../shared/pipes/splitIRI.pipe';
 import { noWhitespaceValidator } from '../../../shared/validators/noWhitespace.validator';
+import { addLanguageToAnnotations } from '../../../shared/utility';
 
 /**
  * @class ontology-editor.CreateConceptSchemeOverlayComponent
@@ -92,7 +93,7 @@ export class CreateConceptSchemeOverlayComponent implements OnInit {
         if (this.selectedConcepts.length) {
             scheme[`${SKOS}hasTopConcept`] = this.selectedConcepts.map(iri => ({'@id': iri}));
         }
-        this.os.addLanguageToNewEntity(scheme, this.createForm.controls.language.value);
+        addLanguageToAnnotations(scheme, this.createForm.controls.language.value);
         return scheme;
     }
     create(): void  {

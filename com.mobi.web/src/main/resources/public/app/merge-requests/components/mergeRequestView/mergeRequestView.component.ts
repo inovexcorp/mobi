@@ -22,7 +22,7 @@
  */
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
-import { forEach, concat, some, get, isEmpty } from 'lodash';
+import { forEach, concat, some, get } from 'lodash';
 import { Subject, of } from 'rxjs';
 import { switchMap, takeUntil } from 'rxjs/operators';
 
@@ -34,7 +34,6 @@ import { MergeRequestStatus } from '../../../shared/models/merge-request-status'
 import { MergeRequestManagerService } from '../../../shared/services/mergeRequestManager.service';
 import { MergeRequestsStateService } from '../../../shared/services/mergeRequestsState.service';
 import { EditRequestOverlayComponent } from '../editRequestOverlay/editRequestOverlay.component';
-import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { ToastService } from '../../../shared/services/toast.service';
 import { CATALOG, DCTERMS, MERGEREQ, POLICY } from '../../../prefixes';
 import { PolicyEnforcementService } from '../../../shared/services/policyEnforcement.service';
@@ -98,7 +97,6 @@ export class MergeRequestViewComponent implements OnInit, OnDestroy {
                 public state: MergeRequestsStateService,
                 private dialog: MatDialog,
                 private toast: ToastService,
-                public os: OntologyStateService,
                 public um: UserManagerService,
                 private lm: LoginManagerService,
                 protected cm: CatalogManagerService,
@@ -276,7 +274,6 @@ export class MergeRequestViewComponent implements OnInit, OnDestroy {
     acceptRequest(): void {
         const requestToAccept: MergeRequest = Object.assign({}, this.state.selected);
         const sourceBranchId = requestToAccept.sourceBranch['@id'];
-        const targetBranchId = requestToAccept.targetBranch['@id'];
         const removeSource = requestToAccept.removeSource;
         const localCatalogId = get(this.cm.localCatalog, '@id', '');
         this.mm.updateRequestStatus(requestToAccept, 'accept')
@@ -299,17 +296,6 @@ export class MergeRequestViewComponent implements OnInit, OnDestroy {
                 }))
             .subscribe(() => {
                 this.state.selected = requestToAccept;
-                if (!isEmpty(this.os.listItem)) {
-                    if (get(this.os.listItem, 'versionedRdfRecord.branchId') === targetBranchId) {
-                        this.os.listItem.upToDate = false;
-                        if (this.os.listItem.merge.active) {
-                            this.toast.createWarningToast('You have a merge in progress in the Ontology Editor that is out of date. Please reopen the merge form.', {timeOut: 5000});
-                        }
-                    }
-                    if (this.os.listItem.merge.active && get(this.os.listItem.merge.target, '@id') === targetBranchId) {
-                        this.toast.createWarningToast('You have a merge in progress in the Ontology Editor that is out of date. Please reopen the merge form to avoid conflicts.', {timeOut: 5000});
-                    }
-                }
             }, error => this.toast.createErrorToast(error));
     }
     showResolutionForm(): void {

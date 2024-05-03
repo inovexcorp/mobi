@@ -22,7 +22,7 @@
   -->
 <div class="static-iri-limited">
     <span>
-        <strong class="text-muted" matTooltip="Copy IRI" matTooltipPosition="above" [copy-clipboard]="iri">
+        <strong class="text-muted break-word" matTooltip="Copy IRI" matTooltipPosition="above" [copy-clipboard]="iri">
             <span>{{iriBegin + iriThen}}</span><span [innerHtml]="iriEnd | safeHtml: 'html'"></span>
         </strong>
     </span>

@@ -23,6 +23,6 @@
 export interface ParentNode {
     title: string,
     isOpened?: boolean,
-    get: (a: string) => boolean
-    set: (a: string, b: boolean) => void,
+    get: () => boolean
+    set: (b: boolean) => void,
 }

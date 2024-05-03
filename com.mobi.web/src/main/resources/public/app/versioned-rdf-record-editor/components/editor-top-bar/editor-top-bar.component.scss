@@ -1,0 +1,61 @@
+/*-
+ * #%L
+ * com.mobi.web
+ * $Id:$
+ * $HeadURL:$
+ * %%
+ * Copyright (C) 2016 - 2024 iNovex Information Systems, Inc.
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * #L%
+ */
+@use 'sass:map';
+@use '@angular/material' as mat;
+
+/* Core variables */
+@import "../../../css/variables";
+
+.editor-top-bar {
+    width: 100%;
+
+    .top-bar-content {
+        width: 100%;
+    }
+    .left-side {
+        padding: 0.5em;
+        
+        .mat-chip-list {
+            display: inline-block;
+
+            .mat-chip.mat-warn {
+                background-color: mat.get-color-from-palette(mat.$amber-palette, 500);
+                color: white;
+            }
+        }
+    }
+    .right-side {
+        padding: 0.5em;
+        margin-left: auto;
+        
+        .mat-button {
+            &:focus {
+                outline: none;
+            }
+        }
+        ::ng-deep p {
+            margin: 0;
+            padding: 0;
+        }
+    }
+}

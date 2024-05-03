@@ -43,7 +43,7 @@ import { OWL, SKOS } from '../../../prefixes';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
 import { StaticIriComponent } from '../staticIri/staticIri.component';
-import { AdvancedLanguageSelectComponent } from '../advancedLanguageSelect/advancedLanguageSelect.component';
+import { AdvancedLanguageSelectComponent } from '../../../shared/components/advancedLanguageSelect/advancedLanguageSelect.component';
 import { CamelCasePipe } from '../../../shared/pipes/camelCase.pipe';
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
 import { IriSelectOntologyComponent } from '../iriSelectOntology/iriSelectOntology.component';
@@ -207,7 +207,6 @@ describe('Create Concept Scheme Overlay component', function() {
                 expect(ontologyStateStub.addEntityToHierarchy).toHaveBeenCalledWith(ontologyStateStub.listItem.conceptSchemes, concept, schemeIri);
             });
             expect(ontologyStateStub.addEntity).toHaveBeenCalledWith(component.scheme);
-            expect(ontologyStateStub.addLanguageToNewEntity).toHaveBeenCalledWith(component.scheme, component.createForm.controls.language.value);
             expect(ontologyStateStub.listItem.conceptSchemes.iris).toEqual({[schemeIri]: ontologyStateStub.listItem.ontologyId});
             expect(ontologyStateStub.listItem.conceptSchemes.flat).toEqual([hierarchyNode]);
             expect(ontologyStateStub.addIndividual).toHaveBeenCalledWith(component.scheme);

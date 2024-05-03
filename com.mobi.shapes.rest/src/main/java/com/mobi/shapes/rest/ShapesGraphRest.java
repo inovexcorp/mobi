@@ -569,7 +569,7 @@ public class ShapesGraphRest {
 
             Resource inProgressCommitIRI = getInProgressCommitIRI(user, recordId, conn);
             commitManager.updateInProgressCommit(catalogIRI, recordId, inProgressCommitIRI,
-                    BNodeUtils.restoreBNodes(diff.getAdditions(), uploadedBNodes, mf),
+                    BNodeUtils.restoreBNodes(diff.getAdditions(), uploadedBNodes, catalogBNodes, mf),
                     BNodeUtils.restoreBNodes(diff.getDeletions(), catalogBNodes, mf), conn);
 
             return Response.ok().build();

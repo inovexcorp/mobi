@@ -20,8 +20,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-var adminUsername = "admin"
-var adminPassword = "admin"
+var adminUsername = 'admin'
+var adminPassword = 'admin'
 
 module.exports = {
   '@tags': ['login', 'sanity'],
@@ -42,23 +42,17 @@ module.exports = {
   },
 
   'Step 4: logout' : function(browser){
-    browser
-      .useXpath()
-      .click('//li/a[@class=\'nav-link\']/span[text()[contains(.,\'Logout\')]]')
+    browser.globals.logout(browser);
   },
 
   'Step 5: login as all caps admin' : function(browser) {
-    browser
-      .waitForElementVisible('//div[@class="form-group"]//input[@id="username"]')
-      .waitForElementVisible('//div[@class="form-group"]//input[@id="password"]')
-      .setValue('//div[@class="form-group"]//input[@id="username"]', adminUsername.toUpperCase() )
-      .setValue('//div[@class="form-group"]//input[@id="password"]', adminPassword)
-      .click('//button[@type="submit"]')
+    browser.globals.login(browser, adminUsername.toUpperCase(), adminPassword);
   },
 
   'Step 6: check for administration nav item' : function(browser) {
-    browser
-      .assert.visible("//li/a[@class='nav-link']/span[text()[contains(.,'Administration')]]")
+      browser
+        .useXpath()
+        .assert.visible("//li/a[@class='nav-link']/span[text()[contains(.,'Administration')]]")
   },
 
   'Step 7: check for and compare nav username text' : function(browser) {

@@ -75,7 +75,7 @@ describe('Ontology Class Select component', function() {
 
         ontologyStateStub.listItem = new OntologyListItem();
         spyOn(component.selectedChange, 'emit');
-        ontologyStateStub.getEntityNameByListItem.and.returnValue(classOption.name);
+        ontologyStateStub.getEntityName.and.returnValue(classOption.name);
     });
 
     afterEach(function() {

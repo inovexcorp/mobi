@@ -37,51 +37,14 @@ module.exports = {
             .waitForElementPresent('ontology-editor-page')
     },
 
-    'Step 3: Open new Ontology Overlay' : function(browser) {
-        var newOntologyButtonXpath = '//span[text()="New Ontology"]/parent::button';
-        browser
-            .useXpath()
-            .waitForElementVisible(newOntologyButtonXpath)
-            .click(newOntologyButtonXpath)
-
-    },
-
-    'Step 3: Edit New Ontology Overlay' : function(browser) {
-        browser
-            .useCss()
-            .waitForElementVisible('new-ontology-overlay')
-            .waitForElementVisible('xpath', '//new-ontology-overlay//mat-form-field//input[@name="title"]')
-            .waitForElementVisible('xpath', '//new-ontology-overlay//mat-form-field//textarea[@name="description"]')
-            .setValue('xpath', '//new-ontology-overlay//mat-form-field//input[@name="title"]', 'Metadata Test Ontology')
-            .setValue('xpath', '//new-ontology-overlay//mat-form-field//textarea[@name="description"]', 'Metadata Test Description')
-    },
-
-    'Step 4: Submit New Ontology Overlay' : function(browser) {
-        browser
-            .useCss()
-            .waitForElementVisible('new-ontology-overlay')
-            .useXpath()
-            .click('//new-ontology-overlay//span[text()="Submit"]/parent::button')
-            .useCss()
-            .waitForElementNotPresent('new-ontology-overlay')
-            .waitForElementPresent('ontology-editor-page ontology-tab')
+    'Step 3: Create New Ontology': function(browser) {
+        browser.page.ontologyEditorPage().createOntology('Metadata Test Ontology', 'Metadata Test Description');
+        browser.globals.wait_for_no_spinners(browser);
+        browser.page.ontologyEditorPage().onProjectTab();
     },
 
     'Step 5: Create a new Class': function(browser) {
-        browser
-            .click('ontology-button-stack circle-button-stack')
-            .waitForElementVisible('create-entity-modal h1.mat-dialog-title')
-            .assert.textContains('create-entity-modal h1.mat-dialog-title', 'Create Entity')
-            .click('create-entity-modal .create-class')
-            .waitForElementNotPresent('create-entity-modal .create-class')
-            .waitForElementVisible('create-class-overlay h1.mat-dialog-title')
-            .assert.textContains('create-class-overlay h1.mat-dialog-title', 'Create New OWL Class')
-            .useXpath()
-            .waitForElementVisible('//mat-label[text()[contains(.,"Name")]]//ancestor::mat-form-field//input')
-            .setValue('//mat-label[text()[contains(.,"Name")]]//ancestor::mat-form-field//input', 'class A')
-            .click('//create-class-overlay//span[text()="Submit"]')
-            .useCss()
-            .waitForElementNotPresent('create-class-overlay  h1.mat-dialog-title')
+        browser.page.ontologyEditorPage().createNewOwlClass('class A');
         browser.globals.wait_for_no_spinners(browser);
     },
 
@@ -97,25 +60,21 @@ module.exports = {
     },
 
     'Step 7: Commit Changes': function(browser) {
-        browser
-            .useCss()
-            .moveToElement('ontology-button-stack circle-button-stack', 0, 0)
-            .waitForElementVisible('ontology-button-stack circle-button-stack button.btn-info')
-            .click('ontology-button-stack circle-button-stack button.btn-info')
-            .waitForElementVisible('commit-overlay h1.mat-dialog-title')
-            .assert.textContains('commit-overlay h1.mat-dialog-title', 'Commit')
-            .setValue('commit-overlay textarea[name=comment]', 'commit123')
-            .useXpath()
-            .click('//commit-overlay//span[text()="Submit"]')
-            .useCss()
-            .waitForElementNotPresent('commit-overlay h1.mat-dialog-title')
+        browser.page.ontologyEditorPage().commit('commit123');
+        browser.globals.wait_for_no_spinners(browser);
+        browser.globals.dismiss_toast(browser);
     },
 
     'Step 8: Verify Commit': function(browser) {
+        browser.page.ontologyEditorPage().toggleChangesPage();
+        browser.globals.wait_for_no_spinners(browser);
+        browser
+            .assert.not.elementPresent('mat-chip.uncommitted')
+            .assert.not.elementPresent('app-changes-page mat-expansion-panel')
+            .assert.textContains('app-changes-page info-message p', 'No Changes to Display')
+            .expect.elements('commit-history-table svg .commit-hash-string').count.to.equal(2);
         browser
             .useXpath()
-            .waitForElementVisible('//mat-tab-header//div[text()[contains(.,"Commits")]]')
-            .click('//mat-tab-header//div[text()[contains(.,"Commits")]]')
             .assert.elementPresent('//commit-history-table//commit-history-graph//*[local-name()="svg"]//*[local-name()="text" and @class="commit-subject-string" and text()[contains(., "initial commit")]]')
             .assert.elementPresent('//commit-history-table//commit-history-graph//*[local-name()="svg"]//*[local-name()="text" and @class="commit-subject-string" and text()[contains(., "commit123")]]')
     },
@@ -124,6 +83,8 @@ module.exports = {
         var classTitleSelector = '//value-display//div//span[text()[contains(.,"class A")]]'
         var annotationSelector = classTitleSelector + '//ancestor::div[@class[contains(.,"prop-value-container")]]//button[@title="Edit"]'
 
+        browser.page.ontologyEditorPage().toggleChangesPage(false);
+        browser.globals.wait_for_no_spinners(browser);
         browser
             .useXpath()
             .waitForElementVisible('//mat-tab-header//div[text()[contains(.,"Classes")]]')
@@ -134,68 +95,48 @@ module.exports = {
             .moveToElement(classTitleSelector, 0, 0)
             .waitForElementVisible(annotationSelector)
             .click(annotationSelector)
-            .waitForElementVisible('//annotation-overlay//textarea')
-            .clearValue('//annotation-overlay//textarea')
-            .setValue('//annotation-overlay//textarea', 'A Edited')
-            .click('//annotation-overlay//span[text()="Submit"]')
+            .useCss()
+            .waitForElementVisible('annotation-overlay textarea')
+            .clearValue('annotation-overlay textarea')
+            .setValue('annotation-overlay textarea', 'A Edited')
+            .click('annotation-overlay div.mat-dialog-actions button.mat-primary')
+            .waitForElementNotPresent('annotation-overlay div.mat-dialog-actions button:not(.mat-primary)');
     },
 
     'Step 10: Verify Changes to Class': function(browser) {
+        browser.globals.wait_for_no_spinners(browser);
         browser
-            .useCss()
-            .waitForElementNotPresent('create-class-overlay h1.mat-dialog-title')
-            .waitForElementNotPresent('#spinner-full')
             .useXpath()
             .assert.visible('//class-hierarchy-block//tree-item//span[text()[contains(.,"A Edited")]]')
             .assert.visible('//value-display//div//span[text()[contains(.,"A Edited")]]')
     },
 
     'Step 11: Commit Changes': function(browser) {
-        browser
-            .useCss()
-            .moveToElement('ontology-button-stack circle-button-stack', 0, 0)
-            .waitForElementVisible('ontology-button-stack circle-button-stack button.btn-info')
-            .click('ontology-button-stack circle-button-stack button.btn-info')
-            .waitForElementVisible('commit-overlay h1.mat-dialog-title')
-            .assert.textContains('commit-overlay h1.mat-dialog-title', 'Commit')
-            .setValue('commit-overlay textarea[name=comment]', 'commit456')
-            .useXpath()
-            .click('//commit-overlay//span[text()="Submit"]')
-            .useCss()
-            .waitForElementNotPresent('commit-overlay h1.mat-dialog-title')
+        browser.page.ontologyEditorPage().commit('commit456');
         browser.globals.wait_for_no_spinners(browser);
+        browser.globals.dismiss_toast(browser);
     },
 
     'Step 12: Verify Commit': function(browser) {
+        browser.page.ontologyEditorPage().toggleChangesPage();
+        browser.globals.wait_for_no_spinners(browser);
+        browser
+            .assert.not.elementPresent('mat-chip.uncommitted')
+            .assert.not.elementPresent('app-changes-page mat-expansion-panel')
+            .assert.textContains('app-changes-page info-message p', 'No Changes to Display')
+            .expect.elements('commit-history-table svg .commit-hash-string').count.to.equal(3);
         browser
             .useXpath()
-            .waitForElementVisible('//mat-tab-header//div[text()[contains(.,"Commits")]]')
-            .click('//mat-tab-header//div[text()[contains(.,"Commits")]]')
             .assert.elementPresent('//commit-history-table//commit-history-graph//*[local-name()="svg"]//*[local-name()="text" and @class="commit-subject-string" and text()[contains(., "The initial commit.")]]')
+            .assert.elementPresent('//commit-history-table//commit-history-graph//*[local-name()="svg"]//*[local-name()="text" and @class="commit-subject-string" and text()[contains(., "commit123")]]')
             .assert.elementPresent('//commit-history-table//commit-history-graph//*[local-name()="svg"]//*[local-name()="text" and @class="commit-subject-string" and text()[contains(., "commit456")]]')
     },
 
     'Step 13: Close & Re-open Ontology' : function(browser) {
-        browser
-            .useXpath()
-            .click('//ontology-sidebar//span[@class[contains(.,"close-icon")]]')
-            .useCss()
-            .waitForElementPresent('ontology-editor-page open-ontology-tab')
-            .clearValue('open-ontology-tab search-bar input')
-            .setValue('open-ontology-tab search-bar input', 'Metadata Test Ontology')
-            .sendKeys('open-ontology-tab search-bar input', browser.Keys.ENTER);
+        browser.page.ontologyEditorPage().closeOntology('Metadata Test Ontology');
         browser.globals.wait_for_no_spinners(browser);
-        browser
-            .waitForElementVisible('ontology-editor-page open-ontology-tab')
-            .setValue('open-ontology-tab search-bar input', 'Metadata')
-            .sendKeys('open-ontology-tab search-bar input', browser.Keys.ENTER)
-            .useXpath()
-            .assert.textContains('//open-ontology-tab//small', 'MetadataTestOntology')
-            .click('//open-ontology-tab//small[text()[contains(.,"MetadataTestOntology")]]')
-            .useCss()
-            .waitForElementNotPresent('#spinner-full')
-            .waitForElementPresent('ontology-editor-page ontology-tab')
-            .waitForElementVisible('ontology-editor-page ontology-tab project-tab imports-block')
+        browser.page.ontologyEditorPage().openOntology('Metadata Test Ontology');
+        browser.globals.wait_for_no_spinners(browser);
     },
 
     'Step 14: Verify Presentation of Class A' : function(browser) {

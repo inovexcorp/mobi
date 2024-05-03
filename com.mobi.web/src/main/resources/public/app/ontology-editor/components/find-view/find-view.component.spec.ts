@@ -179,7 +179,7 @@ describe('Find View component', function() {
                             'class2'
                         ]
                     };
-                    ontologyStateStub.getEntityNameByListItem.and.returnValue('');
+                    ontologyStateStub.getEntityName.and.returnValue('');
                     ontologyManagerStub.getSearchResults.and.returnValue(of(results));
                     component.onKeyup();
                     fixture.detectChanges();
@@ -196,7 +196,7 @@ describe('Find View component', function() {
                         results['http://www.w3.org/2002/07/owl#Class'].push('class' + i);
                         results['http://www.w3.org/2002/07/owl#Concept'].push('concept' + i);
                     }
-                    ontologyStateStub.getEntityNameByListItem.and.returnValue('');
+                    ontologyStateStub.getEntityName.and.returnValue('');
                     ontologyManagerStub.getSearchResults.and.returnValue(of(results));
                     component.onKeyup();
                     fixture.detectChanges();

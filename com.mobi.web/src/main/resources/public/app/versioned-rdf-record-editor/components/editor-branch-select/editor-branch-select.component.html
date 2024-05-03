@@ -1,0 +1,64 @@
+<!--
+ #%L
+ com.mobi.web
+ $Id:$
+ $HeadURL:$
+ %%
+ Copyright (C) 2016 - 2024 iNovex Information Systems, Inc.
+ %%
+ This program is free software: you can redistribute it and/or modify
+ it under the terms of the GNU Affero General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+ This program is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ GNU General Public License for more details.
+ You should have received a copy of the GNU Affero General Public License
+ along with this program. If not, see <http://www.gnu.org/licenses/>.
+ #L%
+ -->
+<mat-form-field class="editor-branch-select">
+  <span matPrefix class="spinner-prefix" #editorBranchSelectSpinner></span>
+  <input class="text-truncate" matInput #textInput placeholder="Select branch/tag" [matAutocomplete]="branchAutocomplete"
+         [formControl]="branchSearchControl" (focusin)="open()"/>
+  <mat-icon *ngIf="selectedIcon.mat" matSuffix>{{selectedIcon.icon}}</mat-icon>
+  <i *ngIf="!selectedIcon.mat" class="{{selectedIcon.icon}}" matSuffix></i>
+  <mat-icon matSuffix>keyboard_arrow_down</mat-icon>
+  <mat-autocomplete class="panel-max-height branch-options-select"
+                    #branchAutocomplete="matAutocomplete"
+                    (optionSelected)="selectVersion($event)"
+                    [panelWidth]="301"
+                    [displayWith]="displayWith">
+    <mat-optgroup *ngFor="let group of filteredOptions | async" [label]="group.title">
+      <mat-option *ngFor="let option of group.options" [disabled]="isSelected(option)" [ngStyle]="{ 'height': option.description ? 'unset' : '48px' }" [value]="option">
+        <span class="d-flex">
+          <span class="flex-1 text-truncate editor-branch-select-text" [title]="option.title">{{option.title}}
+            <p *ngIf="option.description" class="description-text pl-3 small text-muted text-truncate" [title]="option.description">{{option.description}}</p>
+          </span>
+          <button *ngIf="option.branchIri && !option.tagIri && !option.isUserBranch && option.title !== 'MASTER' && state.listItem.userCanModify"
+                  class="edit-branch"
+                  mat-icon-button
+                  color="primary"
+                  (click)="showEditBranchOverlay(option, $event)">
+            <mat-icon class="w-100">edit</mat-icon>
+          </button>
+          <button *ngIf="option.branchIri && !option.tagIri && option?.branchIri !== state.listItem.versionedRdfRecord?.branchId && option.title !== 'MASTER' && state.listItem.userCanModify"
+                  class="delete-branch"
+                  mat-icon-button
+                  color="primary"
+                  (click)="showDeleteBranchConfirmationOverlay(option, $event)">
+            <mat-icon class="w-100">delete</mat-icon>
+          </button>
+          <button *ngIf="option.tagIri && option.title !== state.listItem.currentVersionTitle"
+                  class="delete-tag"
+                  mat-icon-button
+                  color="primary"
+                  (click)="showDeleteTagConfirmationOverlay(option, $event)">
+            <mat-icon class="w-100">delete</mat-icon>
+          </button>
+        </span>
+      </mat-option>
+    </mat-optgroup>
+  </mat-autocomplete>
+</mat-form-field>

@@ -46,9 +46,7 @@ import { MergeRequestManagerService } from '../../../shared/services/mergeReques
 import { MergeRequestsStateService } from '../../../shared/services/mergeRequestsState.service';
 import { EditRequestOverlayComponent } from '../editRequestOverlay/editRequestOverlay.component';
 import { MergeRequestTabsetComponent } from '../mergeRequestTabset/mergeRequestTabset.component';
-import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { ToastService } from '../../../shared/services/toast.service';
-import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
 import { UserManagerService } from '../../../shared/services/userManager.service';
 import { LoginManagerService } from '../../../shared/services/loginManager.service';
 import { PolicyEnforcementService } from '../../../shared/services/policyEnforcement.service';
@@ -68,13 +66,11 @@ describe('Merge Request View component', function() {
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
     let mergeRequestManagerStub: jasmine.SpyObj<MergeRequestManagerService>;
     let mergeRequestsStateStub: jasmine.SpyObj<MergeRequestsStateService>;
-    let ontologyStateStub: jasmine.SpyObj<OntologyStateService>;
     let userManagerStub: jasmine.SpyObj<UserManagerService>;
     let loginManagerStub: jasmine.SpyObj<LoginManagerService>;
     let policyEnforcementStub: jasmine.SpyObj<PolicyEnforcementService>;
     let toastStub: jasmine.SpyObj<ToastService>;
     let matDialog: jasmine.SpyObj<MatDialog>;
-    let nativeElement: HTMLElement;
 
     const error = 'Error Message';
     const requestId = 'requestId';
@@ -171,7 +167,6 @@ describe('Merge Request View component', function() {
                 MockProvider(CatalogManagerService),
                 MockProvider(MergeRequestManagerService),
                 MockProvider(MergeRequestsStateService),
-                MockProvider(OntologyStateService),
                 MockProvider(UserManagerService),
                 MockProvider(LoginManagerService),
                 MockProvider(PolicyEnforcementService),
@@ -187,14 +182,12 @@ describe('Merge Request View component', function() {
         element = fixture.debugElement;
         mergeRequestManagerStub = TestBed.inject(MergeRequestManagerService) as jasmine.SpyObj<MergeRequestManagerService>;
         mergeRequestsStateStub = TestBed.inject(MergeRequestsStateService) as jasmine.SpyObj<MergeRequestsStateService>;
-        ontologyStateStub = TestBed.inject(OntologyStateService) as jasmine.SpyObj<OntologyStateService>;
         loginManagerStub = TestBed.inject(LoginManagerService) as jasmine.SpyObj<LoginManagerService>;
         userManagerStub = TestBed.inject(UserManagerService) as jasmine.SpyObj<UserManagerService>;
         policyEnforcementStub = TestBed.inject(PolicyEnforcementService) as jasmine.SpyObj<PolicyEnforcementService>;
         mergeRequestManagerStub = TestBed.inject(MergeRequestManagerService) as jasmine.SpyObj<MergeRequestManagerService>;
         toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
         matDialog = TestBed.inject(MatDialog) as jasmine.SpyObj<MatDialog>;
-        nativeElement = element.nativeElement as HTMLElement;
         catalogManagerStub = TestBed.inject(CatalogManagerService) as jasmine.SpyObj<CatalogManagerService>;
         catalogManagerStub.localCatalog = {'@id': catalogId, '@type': []};
         catalogManagerStub.getRecordBranches.and.returnValue(of(new HttpResponse<JSONLDObject[]>({body: [{'@id': catalogId, data: branches}]})));
@@ -230,7 +223,6 @@ describe('Merge Request View component', function() {
         mergeRequestsStateStub = null;
         mergeRequestManagerStub = null;
         toastStub = null;
-        ontologyStateStub = null;
         matDialog = null;
         userManagerStub = null;
         loginManagerStub = null;
@@ -371,83 +363,19 @@ describe('Merge Request View component', function() {
                 describe('if getRequest resolves', function() {
                     describe('if setRequestDetails resolves', function() {
                         describe('if removeSource is set to true', function() {
-                            describe('if deleteOntologyBranch resolves', function() {
-                                beforeEach(function() {
-                                    catalogManagerStub.deleteRecordBranch.and.returnValue(of(null));
-                                });
-                                it('and the ontology editor is not open on an ontology', fakeAsync(function() {
-                                    ontologyStateStub.listItem = undefined;
-                                    component.acceptRequest();
-                                    tick();
-                                    expect(mergeRequestManagerStub.updateRequestStatus).toHaveBeenCalledWith(mergeRequest, 'accept');
-                                    expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
-                                    expect(component.requestStatus).toBe('accepted');
-                                    expect(mergeRequestManagerStub.getRequest).toHaveBeenCalledWith(requestId);
-                                    expect(mergeRequestsStateStub.selected.jsonld).toEqual(mergeRequestJsonLd);
-                                    expect(mergeRequestsStateStub.setRequestDetails).toHaveBeenCalledWith(mergeRequestsStateStub.selected);
-                                    expect(catalogManagerStub.deleteRecordBranch).toHaveBeenCalledWith(recordId, sourceBranchId, catalogId);
-                                    expect(toastStub.createWarningToast).not.toHaveBeenCalled();
-                                    expect(toastStub.createErrorToast).not.toHaveBeenCalled();
-                                }));
-                                describe('and the ontology editor is on the target branch', function() {
-                                    beforeEach(function() {
-                                        ontologyStateStub.listItem = new OntologyListItem();
-                                        ontologyStateStub.listItem.versionedRdfRecord.recordId = recordId;
-                                        ontologyStateStub.listItem.versionedRdfRecord.branchId = targetBranchId;
-                                        ontologyStateStub.listItem.upToDate = true;
-                                        ontologyStateStub.list = [ontologyStateStub.listItem];
-                                    });
-                                    it('and it not in the middle of a merge', fakeAsync(function() {
-                                        component.acceptRequest();
-                                        tick();
-                                        expect(mergeRequestManagerStub.updateRequestStatus).toHaveBeenCalledWith(mergeRequest, 'accept');
-                                        expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
-                                        expect(component.requestStatus).toBe('accepted');
-                                        expect(mergeRequestManagerStub.getRequest).toHaveBeenCalledWith(requestId);
-                                        expect(mergeRequestsStateStub.selected.jsonld).toEqual(mergeRequestJsonLd);
-                                        expect(mergeRequestsStateStub.setRequestDetails).toHaveBeenCalledWith(mergeRequestsStateStub.selected);
-                                        expect(catalogManagerStub.deleteRecordBranch).toHaveBeenCalledWith(recordId, sourceBranchId, catalogId);
-                                        expect(ontologyStateStub.listItem.upToDate).toBeFalse();
-                                        expect(toastStub.createWarningToast).not.toHaveBeenCalled();
-                                        expect(toastStub.createErrorToast).not.toHaveBeenCalled();
-                                    }));
-                                    it('and is in the middle of a merge', fakeAsync(function() {
-                                        ontologyStateStub.listItem.merge.active = true;
-                                        component.acceptRequest();
-                                        tick();
-                                        expect(mergeRequestManagerStub.updateRequestStatus).toHaveBeenCalledWith(mergeRequest, 'accept');
-                                        expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
-                                        expect(component.requestStatus).toBe('accepted');
-                                        expect(mergeRequestManagerStub.getRequest).toHaveBeenCalledWith(requestId);
-                                        expect(mergeRequestsStateStub.selected.jsonld).toEqual(mergeRequestJsonLd);
-                                        expect(mergeRequestsStateStub.setRequestDetails).toHaveBeenCalledWith(mergeRequestsStateStub.selected);
-                                        expect(catalogManagerStub.deleteRecordBranch).toHaveBeenCalledWith(recordId, sourceBranchId, catalogId);
-                                        expect(ontologyStateStub.listItem.upToDate).toBeFalse();
-                                        expect(toastStub.createWarningToast).toHaveBeenCalledWith(jasmine.any(String), {timeOut: 5000});
-                                        expect(toastStub.createErrorToast).not.toHaveBeenCalled();
-                                    }));
-                                });
-                                it('and the ontology editor is in the middle of merging into the target', fakeAsync(function() {
-                                    ontologyStateStub.listItem = new OntologyListItem();
-                                    ontologyStateStub.listItem.versionedRdfRecord.recordId = recordId;
-                                    ontologyStateStub.listItem.merge.active = true;
-                                    ontologyStateStub.listItem.merge.target = {'@id': targetBranchId};
-                                    ontologyStateStub.listItem.upToDate = true;
-                                    ontologyStateStub.list = [ontologyStateStub.listItem];
-                                    component.acceptRequest();
-                                    tick();
-                                    expect(mergeRequestManagerStub.updateRequestStatus).toHaveBeenCalledWith(mergeRequest, 'accept');
-                                    expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
-                                    expect(component.requestStatus).toBe('accepted');
-                                    expect(mergeRequestManagerStub.getRequest).toHaveBeenCalledWith(requestId);
-                                    expect(mergeRequestsStateStub.selected.jsonld).toEqual(mergeRequestJsonLd);
-                                    expect(mergeRequestsStateStub.setRequestDetails).toHaveBeenCalledWith(mergeRequestsStateStub.selected);
-                                    expect(catalogManagerStub.deleteRecordBranch).toHaveBeenCalledWith(recordId, sourceBranchId, catalogId);
-                                    expect(ontologyStateStub.listItem.upToDate).toBeTrue();
-                                    expect(toastStub.createWarningToast).toHaveBeenCalledWith(jasmine.any(String), {timeOut: 5000});
-                                    expect(toastStub.createErrorToast).not.toHaveBeenCalled();
-                                }));
-                            });
+                            it('if deleteRecordBranch resolves', fakeAsync(function() {
+                                catalogManagerStub.deleteRecordBranch.and.returnValue(of(null));
+                                component.acceptRequest();
+                                tick();
+                                expect(mergeRequestManagerStub.updateRequestStatus).toHaveBeenCalledWith(mergeRequest, 'accept');
+                                expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
+                                expect(component.requestStatus).toBe('accepted');
+                                expect(mergeRequestManagerStub.getRequest).toHaveBeenCalledWith(requestId);
+                                expect(mergeRequestsStateStub.selected.jsonld).toEqual(mergeRequestJsonLd);
+                                expect(mergeRequestsStateStub.setRequestDetails).toHaveBeenCalledWith(mergeRequestsStateStub.selected);
+                                expect(catalogManagerStub.deleteRecordBranch).toHaveBeenCalledWith(recordId, sourceBranchId, catalogId);
+                                expect(toastStub.createErrorToast).not.toHaveBeenCalled();
+                            }));
                             it('unless deleteOntologyBranch rejects', fakeAsync(function() {
                                 catalogManagerStub.deleteRecordBranch.and.returnValue(throwError(error));
                                 component.acceptRequest();
@@ -459,91 +387,23 @@ describe('Merge Request View component', function() {
                                 expect(mergeRequestsStateStub.selected.jsonld).not.toEqual(mergeRequestJsonLd);
                                 expect(mergeRequestsStateStub.setRequestDetails).toHaveBeenCalledWith(this.updatedRequest);
                                 expect(catalogManagerStub.deleteRecordBranch).toHaveBeenCalledWith(recordId, sourceBranchId, catalogId);
-                                expect(toastStub.createWarningToast).not.toHaveBeenCalled();
                                 expect(toastStub.createErrorToast).toHaveBeenCalledWith(error);
                             }));
                         });
-                        describe('if removeSource is set to false', function() {
-                            beforeEach(function() {
-                                mergeRequestsStateStub.selected.removeSource = false;
-                            });
-                            it('and the ontology editor is not open to an ontology', fakeAsync(function() {
-                                ontologyStateStub.listItem = undefined;
-                                component.acceptRequest();
-                                tick();
-                                mergeRequest.removeSource = false;
-                                expect(mergeRequestManagerStub.updateRequestStatus).toHaveBeenCalledWith(mergeRequest, 'accept');
-                                expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
-                                expect(component.requestStatus).toBe('accepted');
-                                expect(mergeRequestManagerStub.getRequest).toHaveBeenCalledWith(requestId);
-                                expect(mergeRequestsStateStub.selected.jsonld).toEqual(mergeRequestJsonLd);
-                                expect(mergeRequestsStateStub.setRequestDetails).toHaveBeenCalledWith(mergeRequestsStateStub.selected);
-                                expect(catalogManagerStub.deleteRecordBranch).not.toHaveBeenCalled();
-                                expect(toastStub.createWarningToast).not.toHaveBeenCalled();
-                                expect(toastStub.createErrorToast).not.toHaveBeenCalled();
-                            }));
-                            describe('and the ontology editor is on the target branch', function() {
-                                beforeEach(function() {
-                                    ontologyStateStub.listItem = new OntologyListItem();
-                                    ontologyStateStub.listItem.versionedRdfRecord.recordId = recordId;
-                                    ontologyStateStub.listItem.versionedRdfRecord.branchId = targetBranchId;
-                                    ontologyStateStub.listItem.upToDate = true;
-                                    ontologyStateStub.list = [ontologyStateStub.listItem];
-                                });
-                                it('and it not in the middle of a merge', fakeAsync(function() {
-                                    component.acceptRequest();
-                                    tick();
-                                    mergeRequest.removeSource = false;
-                                    expect(mergeRequestManagerStub.updateRequestStatus).toHaveBeenCalledWith(mergeRequest, 'accept');
-                                    expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
-                                    expect(component.requestStatus).toBe('accepted');
-                                    expect(mergeRequestManagerStub.getRequest).toHaveBeenCalledWith(requestId);
-                                    expect(mergeRequestsStateStub.selected.jsonld).toEqual(mergeRequestJsonLd);
-                                    expect(mergeRequestsStateStub.setRequestDetails).toHaveBeenCalledWith(mergeRequestsStateStub.selected);
-                                    expect(catalogManagerStub.deleteRecordBranch).not.toHaveBeenCalled();
-                                    expect(ontologyStateStub.listItem.upToDate).toBeFalse();
-                                    expect(toastStub.createWarningToast).not.toHaveBeenCalled();
-                                    expect(toastStub.createErrorToast).not.toHaveBeenCalled();
-                                }));
-                                it('and is in the middle of a merge', fakeAsync(function() {
-                                    ontologyStateStub.listItem.merge.active = true;
-                                    component.acceptRequest();
-                                    tick();
-                                    mergeRequest.removeSource = false;
-                                    expect(mergeRequestManagerStub.updateRequestStatus).toHaveBeenCalledWith(mergeRequest, 'accept');
-                                    expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
-                                    expect(component.requestStatus).toBe('accepted');
-                                    expect(mergeRequestManagerStub.getRequest).toHaveBeenCalledWith(requestId);
-                                    expect(mergeRequestsStateStub.selected.jsonld).toEqual(mergeRequestJsonLd);
-                                    expect(mergeRequestsStateStub.setRequestDetails).toHaveBeenCalledWith(mergeRequestsStateStub.selected);
-                                    expect(catalogManagerStub.deleteRecordBranch).not.toHaveBeenCalled();
-                                    expect(ontologyStateStub.listItem.upToDate).toBeFalse();
-                                    expect(toastStub.createWarningToast).toHaveBeenCalledWith(jasmine.any(String), {timeOut: 5000});
-                                    expect(toastStub.createErrorToast).not.toHaveBeenCalled();
-                                }));
-                            });
-                            it('and the ontology editor is in the middle of merging into the target', fakeAsync(function() {
-                                ontologyStateStub.listItem = new OntologyListItem();
-                                ontologyStateStub.listItem.versionedRdfRecord.recordId = recordId;
-                                ontologyStateStub.listItem.merge.active = true;
-                                ontologyStateStub.listItem.merge.target = {'@id': targetBranchId};
-                                ontologyStateStub.listItem.upToDate = true;
-                                ontologyStateStub.list = [ontologyStateStub.listItem];
-                                component.acceptRequest();
-                                tick();
-                                mergeRequest.removeSource = false;
-                                expect(mergeRequestManagerStub.updateRequestStatus).toHaveBeenCalledWith(mergeRequest, 'accept');
-                                expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
-                                expect(component.requestStatus).toBe('accepted');
-                                expect(mergeRequestManagerStub.getRequest).toHaveBeenCalledWith(requestId);
-                                expect(mergeRequestsStateStub.selected.jsonld).toEqual(mergeRequestJsonLd);
-                                expect(mergeRequestsStateStub.setRequestDetails).toHaveBeenCalledWith(mergeRequestsStateStub.selected);
-                                expect(catalogManagerStub.deleteRecordBranch).not.toHaveBeenCalled();
-                                expect(ontologyStateStub.listItem.upToDate).toBeTrue();
-                                expect(toastStub.createWarningToast).toHaveBeenCalledWith(jasmine.any(String), {timeOut: 5000});
-                                expect(toastStub.createErrorToast).not.toHaveBeenCalled();
-                            }));
-                        });
+                        it('if removeSource is set to false', fakeAsync(function() {
+                            mergeRequestsStateStub.selected.removeSource = false;
+                            component.acceptRequest();
+                            tick();
+                            mergeRequest.removeSource = false;
+                            expect(mergeRequestManagerStub.updateRequestStatus).toHaveBeenCalledWith(mergeRequest, 'accept');
+                            expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
+                            expect(component.requestStatus).toBe('accepted');
+                            expect(mergeRequestManagerStub.getRequest).toHaveBeenCalledWith(requestId);
+                            expect(mergeRequestsStateStub.selected.jsonld).toEqual(mergeRequestJsonLd);
+                            expect(mergeRequestsStateStub.setRequestDetails).toHaveBeenCalledWith(mergeRequestsStateStub.selected);
+                            expect(catalogManagerStub.deleteRecordBranch).not.toHaveBeenCalled();
+                            expect(toastStub.createErrorToast).not.toHaveBeenCalled();
+                        }));
                     });
                     it('unless setRequestDetails rejects', fakeAsync(function() {
                         mergeRequestsStateStub.setRequestDetails.and.returnValue(throwError(error));
@@ -815,10 +675,10 @@ describe('Merge Request View component', function() {
             component.ngOnInit();
             tick();
             fixture.detectChanges();
-            const reopenButton: HTMLElement = nativeElement.querySelector('.button-reopen');
-            expect(reopenButton.title).toEqual(component.reopenAccessMsg);
+            const reopenButton = element.query(By.css('.button-reopen'));
+            expect(reopenButton.nativeElement.title).toEqual(component.reopenAccessMsg);
             expect(component.isSubmitDisabled).toBeTruthy();
-            expect(reopenButton.getAttribute('disabled')).toBeTruthy();
+            expect(reopenButton.nativeElement.getAttribute('disabled')).toBeTruthy();
         }));
         it('depending on whether the merge request is closed and a branch is deleted', function() {
             component.requestStatus = 'closed';
@@ -827,23 +687,24 @@ describe('Merge Request View component', function() {
             component.setStatusChipClass();
             fixture.detectChanges();
             const indicator = element.queryAll(By.css('.main-details mat-chip'))[0];
-            const reopenButton: HTMLElement = nativeElement.querySelector('.button-reopen');
+            const reopenButton = element.query(By.css('.button-reopen'));
             expect(reopenButton).toBeDefined();
             expect(indicator).toBeDefined();
             expect(indicator.classes['chip-closed']).toBeTruthy();
             expect(indicator.nativeElement.innerHTML).toContain('Closed');
-            expect(reopenButton.getAttribute('disabled')).toBeTruthy();
-            expect(reopenButton.title).toEqual(component.reopenMissingBranchMsg);
+            expect(reopenButton.nativeElement.getAttribute('disabled')).toBeTruthy();
+            expect(reopenButton.nativeElement.title).toEqual(component.reopenMissingBranchMsg);
         });
         it('depending on whether the user is not authorized', fakeAsync(function() {
             policyEnforcementStub.evaluateRequest.and.returnValue(of('Deny'));
             component.ngOnInit();
             tick();
             fixture.detectChanges();
-            const button: HTMLElement = nativeElement.querySelector('.button-accept');
-            expect(button.title).toEqual(component.userAccessMsg);
+            const button = element.query(By.css('.button-accept'));
+            expect(button).toBeDefined();
+            expect(button.nativeElement.title).toEqual(component.userAccessMsg);
             expect(component.isSubmitDisabled).toBeTruthy();
-            expect(button.getAttribute('disabled')).toBeTruthy();
+            expect(button.nativeElement.getAttribute('disabled')).toBeTruthy();
         }));
     });
     it('should call showResolutionForm when the resolve button is clicked in the alert', function() {

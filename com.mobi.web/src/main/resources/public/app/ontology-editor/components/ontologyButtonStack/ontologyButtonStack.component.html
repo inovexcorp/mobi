@@ -21,12 +21,5 @@
   #L%
   -->
 <div class="ontology-button-stack">
-    <circle-button-stack>
-        <button mat-mini-fab class="upload-circle-button" (click)="showUploadChangesOverlay()" [disabled]="!os.canModify() || os.isCommittable(os.listItem)" matTooltip="Upload Changes" matTooltipPosition="left"><mat-icon>publish</mat-icon></button>
-        <button mat-mini-fab class="btn-dark" (click)="showCreateTagModal()" [disabled]="!os.listItem.userCanModify || os.hasChanges(os.listItem) || os.isCommittable(os.listItem)" matTooltip="Create Tag" matTooltipPosition="left"><mat-icon>local_offer</mat-icon></button>
-        <button mat-mini-fab class="btn-warning" (click)="showCreateBranchOverlay()" [disabled]="!os.listItem.userCanModify" matTooltip="Create Branch" matTooltipPosition="left"><i class="fa fa-fw fa-code-fork"></i></button>
-        <button mat-mini-fab class="btn-success" (click)="os.listItem.merge.active = true" [disabled]="os.isCommittable(os.listItem) || os.hasChanges(os.listItem) || os.listItem.userBranch || !os.listItem.upToDate || !os.canModify()" matTooltip="Merge Branches" matTooltipPosition="left"><mat-icon>merge</mat-icon></button>
-        <button mat-mini-fab class="btn-info" (click)="showCommitOverlay()" [disabled]="!os.isCommittable(os.listItem) || !os.listItem.userCanModify || !os.listItem.versionedRdfRecord.branchId" matTooltip="Commit Changes" matTooltipPosition="left"><mat-icon>commit</mat-icon></button>
-        <button mat-fab color="primary" (click)="showCreateEntityOverlay()" [disabled]="!os.canModify()" matTooltip="Create Entity" matTooltipPosition="left"><mat-icon>add</mat-icon></button>
-    </circle-button-stack>
+  <button mat-fab color="primary" (click)="showCreateEntityOverlay()" [disabled]="!os.canModify()" matTooltip="Create Entity" matTooltipPosition="left"><mat-icon>add</mat-icon></button>
 </div>

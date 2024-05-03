@@ -97,11 +97,11 @@ export class DatatypePropertyOverlayComponent implements OnInit {
             this.propertyForm.controls.propertySelect.enable();
         }
     }
-    filter(val: string): PropGrouping[] {
+    filter(searchText: string): PropGrouping[] {
         if (!this.dataProperties || !this.dataProperties.length) {
             return [];
         }
-        return this.os.getGroupedSelectList(this.dataProperties, val, iri => this.os.getEntityNameByListItem(iri));
+        return this.os.getGroupedSelectList(this.dataProperties, searchText, iri => this.os.getEntityName(iri));
     }
     submit(): void {
         if (this.data.editingProperty) {
@@ -150,7 +150,7 @@ export class DatatypePropertyOverlayComponent implements OnInit {
         return language ? '' : type || `${XSD}string`;
     }
     getName(val: string): string {
-        return val ? this.os.getEntityNameByListItem(val) : '';
+        return val ? this.os.getEntityName(val) : '';
     }
     validateValue(newValue: string[]): void {
         this.propertyType = newValue;

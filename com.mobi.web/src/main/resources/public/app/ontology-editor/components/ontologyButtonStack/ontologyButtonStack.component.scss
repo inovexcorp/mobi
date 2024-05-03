@@ -29,23 +29,7 @@
     right: 25px;
     z-index: 1000;
     
-    button {
-        margin-top: 0.5rem;
-    }
-    .btn-dark:not([disabled]) {
-        background-color: #424242;
-        color: #ffffff !important;
-    }
-    .btn-warning:not([disabled]) {
-        background-color: #ff9800;
-        color: #ffffff !important;
-    }
-    .btn-success:not([disabled]) {
-        background-color: #4caf50;
-        color: #ffffff !important;
-    }
-    .btn-info:not([disabled]) {
-        background-color: #424fff;
-        color: #ffffff !important;
+    button:focus {
+        outline: none !important;
     }
 }

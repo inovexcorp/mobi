@@ -58,7 +58,7 @@ export class ObjectPropertyBlockComponent implements OnChanges {
     }
     updatePropertiesFiltered(): void{
         this.objectProperties = Object.keys(this.os.listItem.objectProperties.iris);
-        this.objectPropertiesFiltered = sortBy(this.objectProperties.filter(prop => has(this.os.listItem.selected, prop)), iri => this.os.getEntityNameByListItem(iri));
+        this.objectPropertiesFiltered = sortBy(this.objectProperties.filter(prop => has(this.os.listItem.selected, prop)), iri => this.os.getEntityName(iri));
     }
     openAddObjectPropOverlay(): void {
         this.dialog.open(ObjectPropertyOverlayComponent).afterClosed().subscribe(() => {

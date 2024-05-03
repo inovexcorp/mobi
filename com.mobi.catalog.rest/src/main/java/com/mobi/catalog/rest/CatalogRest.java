@@ -1082,12 +1082,11 @@ public class CatalogRest {
             IRI commitIri = vf.createIRI(commitId);
             IRI tagIri = vf.createIRI(iri);
             if (!commitManager.commitInRecord(recordIri, commitIri, conn)) {
-                throw ErrorUtils.sendError("Commit " + commitId + " is not in record " + recordId,
-                        Response.Status.BAD_REQUEST);
+                throw new IllegalArgumentException("Commit " + commitId + " is not in record " + recordId);
             }
 
             OrmFactory<Tag> factory = factoryRegistry.getFactoryOfType(Tag.class).orElseThrow(() ->
-                    ErrorUtils.sendError("Tag Factory not found", Response.Status.INTERNAL_SERVER_ERROR));
+                    new IllegalStateException("Tag Factory not found"));
             OffsetDateTime now = OffsetDateTime.now();
             Tag tag = factory.createNew(tagIri);
             tag.setProperty(vf.createLiteral(title), vf.createIRI(_Thing.title_IRI));
@@ -1102,9 +1101,9 @@ public class CatalogRest {
             versionManager.addVersion(vf.createIRI(catalogId), recordIri, tag, conn);
             return Response.status(201).entity(tag.getResource().stringValue()).build();
         } catch (IllegalArgumentException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
+            throw RestUtils.getErrorObjBadRequest(ex);
         } catch (MobiException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(ex);
         }
     }
 

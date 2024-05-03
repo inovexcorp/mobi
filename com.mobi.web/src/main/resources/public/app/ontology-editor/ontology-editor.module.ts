@@ -25,7 +25,6 @@ import { ScrollingModule } from '@angular/cdk/scrolling';
 
 import { SharedModule } from '../shared/shared.module';
 
-import { AdvancedLanguageSelectComponent } from './components/advancedLanguageSelect/advancedLanguageSelect.component';
 import { AnnotationBlockComponent } from './components/annotationBlock/annotationBlock.component';
 import { AnnotationOverlayComponent } from './components/annotationOverlay/annotationOverlay.component';
 import { AssociationBlockComponent } from './components/associationBlock/associationBlock.component';
@@ -36,14 +35,11 @@ import { CharacteristicsRowComponent } from './components/characteristicsRow/cha
 import { ClassAxiomsComponent } from './components/classAxioms/classAxioms.component';
 import { ClassHierarchyBlockComponent } from './components/classHierarchyBlock/classHierarchyBlock.component';
 import { ClassesTabComponent } from './components/classesTab/classesTab.component';
-import { CommitOverlayComponent } from './components/commitOverlay/commitOverlay.component';
-import { CommitsTabComponent } from './components/commitsTab/commitsTab.component';
 import { ConceptHierarchyBlockComponent } from './components/conceptHierarchyBlock/conceptHierarchyBlock.component';
 import { ConceptSchemeHierarchyBlockComponent } from './components/conceptSchemeHierarchyBlock/conceptSchemeHierarchyBlock.component';
 import { ConceptSchemesTabComponent } from './components/conceptSchemesTab/conceptSchemesTab.component';
 import { ConceptsTabComponent } from './components/conceptsTab/conceptsTab.component';
 import { CreateAnnotationPropertyOverlayComponent } from './components/createAnnotationPropertyOverlay/createAnnotationPropertyOverlay.component';
-import { CreateBranchOverlayComponent } from './components/createBranchOverlay/createBranchOverlay.component';
 import { CreateClassOverlayComponent } from './components/createClassOverlay/createClassOverlay.component';
 import { CreateConceptOverlayComponent } from './components/createConceptOverlay/createConceptOverlay.component';
 import { CreateConceptSchemeOverlayComponent }  from './components/createConceptSchemeOverlay/createConceptSchemeOverlay.component';
@@ -51,11 +47,9 @@ import { CreateDataPropertyOverlayComponent }  from './components/createDataProp
 import { CreateEntityModalComponent } from './components/createEntityModal/createEntityModal.component';
 import { CreateIndividualOverlayComponent } from './components/createIndividualOverlay/createIndividualOverlay.component';
 import { CreateObjectPropertyOverlayComponent } from './components/createObjectPropertyOverlay/createObjectPropertyOverlay.component';
-import { CreateTagOverlayComponent } from './components/createTagOverlay/createTagOverlay.component';
 import { DatatypePropertyAxiomsComponent } from './components/datatypePropertyAxioms/datatypePropertyAxioms.component';
 import { DatatypePropertyBlockComponent } from './components/datatypePropertyBlock/datatypePropertyBlock.component';
 import { DatatypePropertyOverlayComponent } from './components/datatypePropertyOverlay/datatypePropertyOverlay.component';
-import { EditBranchOverlayComponent } from './components/editBranchOverlay/editBranchOverlay.component';
 import { EverythingTreeComponent } from './components/everythingTree/everythingTree.component';
 import { HierarchyFilterComponent } from './components/hierarchyFilter/hierarchyFilter.component';
 import { HierarchyTreeComponent } from './components/hierarchyTree/hierarchyTree.component';
@@ -66,20 +60,16 @@ import { IndividualHierarchyBlockComponent } from './components/individualHierar
 import { IndividualTypesModalComponent } from './components/individualTypesModal/individualTypesModal.component';
 import { IndividualTreeComponent } from './components/individualTree/individualTree.component';
 import { IriSelectOntologyComponent } from './components/iriSelectOntology/iriSelectOntology.component';
-import { NewOntologyOverlayComponent } from './components/newOntologyOverlay/newOntologyOverlay.component';
+import { FindViewComponent } from './components/find-view/find-view.component';
 import { ObjectPropertyAxiomsComponent } from './components/objectPropertyAxioms/objectPropertyAxioms.component';
 import { ObjectPropertyBlockComponent } from './components/objectPropertyBlock/objectPropertyBlock.component';
 import { ObjectPropertyOverlayComponent } from './components/objectPropertyOverlay/objectPropertyOverlay.component';
 import { OntologyButtonStackComponent } from './components/ontologyButtonStack/ontologyButtonStack.component';
 import { OntologyClassSelectComponent } from './components/ontologyClassSelect/ontologyClassSelect.component';
-import { OntologyCloseOverlayComponent } from './components/ontologyCloseOverlay/ontologyCloseOverlay.component';
 import { OntologyEditorPageComponent } from './components/ontologyEditorPage/ontologyEditorPage.component';
 import { OntologyPropertiesBlockComponent } from './components/ontologyPropertiesBlock/ontologyPropertiesBlock.component';
 import { OntologyPropertyOverlayComponent } from './components/ontologyPropertyOverlay/ontologyPropertyOverlay.component';
-import { OntologySidebarComponent } from './components/ontologySidebar/ontologySidebar.component';
 import { OntologyTabComponent } from './components/ontologyTab/ontologyTab.component';
-import { OpenOntologySelectComponent } from './components/openOntologySelect/openOntologySelect.component';
-import { OpenOntologyTabComponent } from './components/openOntologyTab/openOntologyTab.component';
 import { OverviewTabComponent } from './components/overviewTab/overviewTab.component';
 import { PreviewBlockComponent } from './components/previewBlock/previewBlock.component';
 import { ProjectTabComponent } from './components/projectTab/projectTab.component';
@@ -87,7 +77,7 @@ import { PropertiesTabComponent } from './components/propertiesTab/propertiesTab
 import { PropertyHierarchyBlockComponent } from './components/propertyHierarchyBlock/propertyHierarchyBlock.component';
 import { PropertyTreeComponent } from './components/propertyTree/propertyTree.component';
 import { PropertyValuesComponent } from './components/propertyValues/propertyValues.component';
-import { SavedChangesTabComponent } from './components/savedChangesTab/savedChangesTab.component';
+import { QueryViewComponent } from './components/query-view/query-view.component';
 import { SearchTabComponent } from './components/searchTab/searchTab.component';
 import { SeeHistoryComponent } from './components/seeHistory/seeHistory.component';
 import { SelectedDetailsComponent } from './components/selectedDetails/selectedDetails.component';
@@ -95,19 +85,11 @@ import { StaticIriComponent } from './components/staticIri/staticIri.component';
 import { SuperClassSelectComponent } from './components/superClassSelect/superClassSelect.component';
 import { SuperPropertySelectComponent } from './components/superPropertySelect/superPropertySelect.component';
 import { TreeItemComponent } from './components/treeItem/treeItem.component';
-import { UploadChangesOverlayComponent } from './components/uploadChangesOverlay/uploadChangesOverlay.component';
-import { UploadErrorsOverlayComponent } from './components/uploadErrorsOverlay/uploadErrorsOverlay.component';
-import { UploadOntologyOverlayComponent } from './components/uploadOntologyOverlay/uploadOntologyOverlay.component';
-import { UploadSnackbarComponent } from './components/uploadSnackbar/uploadSnackbar.component';
 import { UsagesBlockComponent } from './components/usagesBlock/usagesBlock.component';
 import { VisualizationTabComponent } from './components/visualizationTab/visualizationTab.component';
 
 import { OntologyVisualizationModule } from '../ontology-visualization/ontologyVisualization.module';
-import { MergeBlockComponent } from './components/mergeBlock/mergeBlock.component';
-import { MergeTabComponent } from './components/mergeTab/mergeTab.component';
-import { OntologyDownloadModalComponent } from './components/ontology-download-modal/ontology-download-modal.component';
-import { FindViewComponent } from './components/find-view/find-view.component';
-import { QueryViewComponent } from './components/query-view/query-view.component';
+import { VersionedRdfRecordEditorModule } from '../versioned-rdf-record-editor/versioned-rdf-record-editor.module';
 
 /**
  * @namespace ontology-editor
@@ -118,11 +100,11 @@ import { QueryViewComponent } from './components/query-view/query-view.component
 @NgModule({
     imports: [
         SharedModule,
+        VersionedRdfRecordEditorModule,
         OntologyVisualizationModule,
         ScrollingModule,
     ],
     declarations: [
-        AdvancedLanguageSelectComponent,
         AnnotationBlockComponent,
         AnnotationOverlayComponent,
         AssociationBlockComponent,
@@ -133,14 +115,11 @@ import { QueryViewComponent } from './components/query-view/query-view.component
         ClassAxiomsComponent,
         ClassHierarchyBlockComponent,
         ClassesTabComponent,
-        CommitOverlayComponent,
-        CommitsTabComponent,
         ConceptHierarchyBlockComponent,
         ConceptSchemeHierarchyBlockComponent,
         ConceptSchemesTabComponent,
         ConceptsTabComponent,
         CreateAnnotationPropertyOverlayComponent,
-        CreateBranchOverlayComponent,
         CreateClassOverlayComponent,
         CreateConceptOverlayComponent,
         CreateConceptSchemeOverlayComponent,
@@ -148,11 +127,9 @@ import { QueryViewComponent } from './components/query-view/query-view.component
         CreateEntityModalComponent,
         CreateIndividualOverlayComponent,
         CreateObjectPropertyOverlayComponent,
-        CreateTagOverlayComponent,
         DatatypePropertyAxiomsComponent,
         DatatypePropertyOverlayComponent,
         DatatypePropertyBlockComponent,
-        EditBranchOverlayComponent,
         EverythingTreeComponent,
         HierarchyFilterComponent,
         HierarchyTreeComponent,
@@ -163,22 +140,16 @@ import { QueryViewComponent } from './components/query-view/query-view.component
         IndividualTypesModalComponent,
         IndividualTreeComponent,
         IriSelectOntologyComponent,
-        MergeBlockComponent,
-        MergeTabComponent,
-        NewOntologyOverlayComponent,
+        FindViewComponent,
         ObjectPropertyAxiomsComponent,
         ObjectPropertyBlockComponent,
         ObjectPropertyOverlayComponent,
         OntologyButtonStackComponent,
         OntologyClassSelectComponent,
-        OntologyCloseOverlayComponent,
         OntologyEditorPageComponent,
         OntologyPropertiesBlockComponent,
         OntologyPropertyOverlayComponent,
         OntologyTabComponent,
-        OntologySidebarComponent,
-        OpenOntologySelectComponent,
-        OpenOntologyTabComponent,
         OverviewTabComponent,
         PreviewBlockComponent,
         ProjectTabComponent,
@@ -186,7 +157,7 @@ import { QueryViewComponent } from './components/query-view/query-view.component
         PropertyHierarchyBlockComponent,
         PropertyTreeComponent,
         PropertyValuesComponent,
-        SavedChangesTabComponent,
+        QueryViewComponent,
         SearchTabComponent,
         SeeHistoryComponent,
         SelectedDetailsComponent,
@@ -194,15 +165,8 @@ import { QueryViewComponent } from './components/query-view/query-view.component
         SuperClassSelectComponent,
         SuperPropertySelectComponent,
         TreeItemComponent,
-        UploadChangesOverlayComponent,
-        UploadErrorsOverlayComponent,
-        UploadOntologyOverlayComponent,
-        UploadSnackbarComponent,
         UsagesBlockComponent,
         VisualizationTabComponent,
-        OntologyDownloadModalComponent,
-        FindViewComponent,
-        QueryViewComponent,
     ]
 })
 export class OntologyEditorModule {}

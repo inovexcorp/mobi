@@ -165,7 +165,7 @@ export class PropertyTreeComponent implements OnInit, OnChanges, OnDestroy, Afte
         if (!node.title) {
             this.os.listItem.editorTabStates[this.activeTab].open[node.joinedPath] = node.isOpened;
         } else {
-            node.set(this.os.listItem.versionedRdfRecord.recordId, node.isOpened, OntologyListItem.PROPERTIES_TAB);
+            node.set(node.isOpened, OntologyListItem.PROPERTIES_TAB);
             this.os.listItem.editorTabStates[this.activeTab].open[node.title] = node.isOpened;
         }
         this.filteredHierarchy = this.preFilteredHierarchy.filter(node => this.isShown(node));
@@ -208,7 +208,7 @@ export class PropertyTreeComponent implements OnInit, OnChanges, OnDestroy, Afte
             if (toOpen) {
                 if (!node.isOpened) {
                     node.isOpened = true;
-                    node.set(this.os.listItem.versionedRdfRecord.recordId, true, OntologyListItem.PROPERTIES_TAB);
+                    node.set(true, OntologyListItem.PROPERTIES_TAB);
                 }
                 node.displayNode = true;
             }
@@ -230,7 +230,7 @@ export class PropertyTreeComponent implements OnInit, OnChanges, OnDestroy, Afte
         delete node.displayNode;
 
         if (node.title) {
-            node.isOpened = node.get(this.os.listItem.versionedRdfRecord.recordId, OntologyListItem.PROPERTIES_TAB);
+            node.isOpened = node.get(OntologyListItem.PROPERTIES_TAB);
             if (this.filterText || this.dropdownFilterActive) {
                 node.parentNoMatch = true;
             } else {
@@ -270,7 +270,7 @@ export class PropertyTreeComponent implements OnInit, OnChanges, OnDestroy, Afte
         return every(this.dropdownFilters, filter => filter.flag ? filter.filter(node) : true);
     }
     isShown(node: HierarchyNode): boolean {
-        const displayNode = !has(node, 'entityIRI') || (this.os.areParentsOpen(node, this.activeTab) && node.get(this.os.listItem.versionedRdfRecord.recordId, OntologyListItem.PROPERTIES_TAB));
+        const displayNode = !has(node, 'entityIRI') || (this.os.areParentsOpen(node, this.activeTab) && node.get(OntologyListItem.PROPERTIES_TAB));
         if ((this.filterText || this.dropdownFilterActive)&& node.parentNoMatch) {
             if (node.displayNode === undefined) {
                 return false;

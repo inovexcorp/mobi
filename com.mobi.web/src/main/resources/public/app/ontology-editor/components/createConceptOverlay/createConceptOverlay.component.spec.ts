@@ -42,7 +42,7 @@ import { OntologyStateService } from '../../../shared/services/ontologyState.ser
 import { OWL, SKOS } from '../../../prefixes';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
 import { StaticIriComponent } from '../staticIri/staticIri.component';
-import { AdvancedLanguageSelectComponent } from '../advancedLanguageSelect/advancedLanguageSelect.component';
+import { AdvancedLanguageSelectComponent } from '../../../shared/components/advancedLanguageSelect/advancedLanguageSelect.component';
 import { CamelCasePipe } from '../../../shared/pipes/camelCase.pipe';
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
 import { IriSelectOntologyComponent } from '../iriSelectOntology/iriSelectOntology.component';
@@ -202,7 +202,6 @@ describe('Create Concept Overlay component', function() {
             component.selectedSchemes = ['scheme'];
             component.create();
             tick();
-            expect(ontologyStateStub.addLanguageToNewEntity).toHaveBeenCalledWith(component.concept, component.createForm.controls.language.value);
             expect(ontologyStateStub.addEntityToHierarchy).toHaveBeenCalledWith(ontologyStateStub.listItem.conceptSchemes, conceptIri, 'scheme');
             expect(ontologyStateStub.addToAdditions).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, component.concept);
             expect(ontologyStateStub.flattenHierarchy).toHaveBeenCalledWith(ontologyStateStub.listItem.conceptSchemes);
