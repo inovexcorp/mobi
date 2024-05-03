@@ -58,7 +58,7 @@ export class AnnotationBlockComponent implements OnChanges {
     }
     updatePropertiesFiltered(): void {
         this.annotations = union(Object.keys(this.os.listItem.annotations.iris), this.pm.defaultAnnotations, this.pm.owlAnnotations);
-        this.annotationsFiltered = sortBy(this.annotations.filter(prop => has(this.os.listItem.selected, prop)), iri => this.os.getEntityNameByListItem(iri));
+        this.annotationsFiltered = sortBy(this.annotations.filter(prop => has(this.os.listItem.selected, prop)), iri => this.os.getEntityName(iri));
     }
     openAddOverlay(): void {
         this.dialog.open(AnnotationOverlayComponent, {data: { editing: false }}).afterClosed().subscribe(result => {

@@ -32,6 +32,7 @@ import { RouterModule } from '@angular/router';
 
 import { ErrorStateMatcher } from '@angular/material/core';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatBadgeModule } from '@angular/material/badge';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatCardModule } from '@angular/material/card';
@@ -67,6 +68,7 @@ import { SHACLFormsModule } from '../shacl-forms/shacl-forms.module';
 
 import { ActivityListComponent } from './components/activity-list/activity-list.component';
 import { ActivityTitleComponent } from './components/activityTitle/activityTitle.component';
+import { AdvancedLanguageSelectComponent } from './components/advancedLanguageSelect/advancedLanguageSelect.component';
 import { BlankNodeValueDisplayComponent } from './components/blankNodeValueDisplay/blankNodeValueDisplay.component';
 import { BranchSelectComponent } from './components/branchSelect/branchSelect.component';
 import { BreadcrumbsComponent } from './components/breadcrumbs/breadcrumbs.component';
@@ -170,6 +172,7 @@ import { HistoryGraph } from '../history-graph/history-graph.module';
         HttpClientModule,
         MatMarkdownEditorModule,
         MatAutocompleteModule,
+        MatBadgeModule,
         MatButtonModule,
         MatButtonToggleModule,
         MatCardModule,
@@ -204,6 +207,7 @@ import { HistoryGraph } from '../history-graph/history-graph.module';
     declarations: [
         ActivityListComponent,
         ActivityTitleComponent,
+        AdvancedLanguageSelectComponent,
         BeautifyPipe,
         BlankNodeValueDisplayComponent,
         BranchSelectComponent,
@@ -273,6 +277,7 @@ import { HistoryGraph } from '../history-graph/history-graph.module';
         HttpClientModule,
         MatMarkdownEditorModule,
         MatAutocompleteModule,
+        MatBadgeModule,
         MatButtonModule,
         MatButtonToggleModule,
         MatCardModule,
@@ -304,6 +309,7 @@ import { HistoryGraph } from '../history-graph/history-graph.module';
         SHACLFormsModule,
         ActivityListComponent,
         ActivityTitleComponent,
+        AdvancedLanguageSelectComponent,
         BlankNodeValueDisplayComponent,
         BranchSelectComponent,
         BreadcrumbsComponent,

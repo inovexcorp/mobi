@@ -390,3 +390,8 @@ login-layout {
     text-decoration: none !important;
     background-color: var(--light);
 }
+.spinner-prefix {
+  display: block;
+  width: 15px;
+  height: 15px;
+}

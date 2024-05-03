@@ -42,7 +42,7 @@ import { DCTERMS, OWL, RDFS } from '../../../prefixes';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
 import { StaticIriComponent } from '../staticIri/staticIri.component';
-import { AdvancedLanguageSelectComponent } from '../advancedLanguageSelect/advancedLanguageSelect.component';
+import { AdvancedLanguageSelectComponent } from '../../../shared/components/advancedLanguageSelect/advancedLanguageSelect.component';
 import { CamelCasePipe } from '../../../shared/pipes/camelCase.pipe';
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
 import { IriSelectOntologyComponent } from '../iriSelectOntology/iriSelectOntology.component';
@@ -210,10 +210,9 @@ describe('Create Data Property Overlay component', function() {
                 component.selectedRanges = ['range'];
                 component.create();
                 tick();
-                expect(component.property[`${DCTERMS}description`]).toEqual([{'@value': 'description'}]);
+                expect(component.property[`${DCTERMS}description`]).toEqual([{'@value': 'description', '@language': 'en'}]);
                 expect(component.property[`${RDFS}domain`]).toEqual([{'@id': 'domain'}]);
                 expect(component.property[`${RDFS}range`]).toEqual([{'@id': 'range'}]);
-                expect(ontologyStateStub.addLanguageToNewEntity).toHaveBeenCalledWith(component.property, component.createForm.controls.language.value);
                 expect(ontologyStateStub.updatePropertyIcon).toHaveBeenCalledWith(component.property);
                 expect(ontologyStateStub.addEntity).toHaveBeenCalledWith(component.property);
                 expect(ontologyStateStub.addToAdditions).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, component.property);
@@ -225,7 +224,6 @@ describe('Create Data Property Overlay component', function() {
                 it('are not set', fakeAsync(function() {
                     component.create();
                     tick();
-                    expect(ontologyStateStub.addLanguageToNewEntity).toHaveBeenCalledWith(component.property, component.createForm.controls.language.value);
                     expect(ontologyStateStub.updatePropertyIcon).toHaveBeenCalledWith(component.property);
                     expect(ontologyStateStub.addEntity).toHaveBeenCalledWith(component.property);
                     expect(ontologyStateStub.createFlatEverythingTree).toHaveBeenCalledWith(ontologyStateStub.listItem);
@@ -242,7 +240,6 @@ describe('Create Data Property Overlay component', function() {
                     component.selectedSubProperties = [{'@id': 'propertyA'}];
                     component.create();
                     tick();
-                    expect(ontologyStateStub.addLanguageToNewEntity).toHaveBeenCalledWith(component.property, component.createForm.controls.language.value);
                     expect(ontologyStateStub.updatePropertyIcon).toHaveBeenCalledWith(component.property);
                     expect(ontologyStateStub.addEntity).toHaveBeenCalledWith(component.property);
                     expect(ontologyStateStub.createFlatEverythingTree).toHaveBeenCalledWith(ontologyStateStub.listItem);

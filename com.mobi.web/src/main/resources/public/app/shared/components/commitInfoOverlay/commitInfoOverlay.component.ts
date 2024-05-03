@@ -60,7 +60,7 @@ export class CommitInfoOverlayComponent implements OnInit {
     additions: JSONLDObject[] = [];
     deletions: JSONLDObject[] = [];
     hasMoreResults = false;
-    entityNames = {};
+    entityNames: EntityNames = {};
     tempAdditions: JSONLDObject[] = [];
     tempDeletions: JSONLDObject[] = [];
     date = '';
@@ -89,7 +89,7 @@ export class CommitInfoOverlayComponent implements OnInit {
                     const headers = response.headers;
                     this.hasMoreResults = (headers.get('has-more-results') || 'false') === 'true';
 
-                    if (this.data.type === ONTOLOGYEDITOR + 'OntologyRecord') {
+                    if (this.data.type === `${ONTOLOGYEDITOR}OntologyRecord`) {
                         const diffIris = union(this.tempAdditions.map(obj => obj['@id']), this.tempDeletions.map(obj => obj['@id']));
                         const filterIris = union(diffIris, getObjIrisFromDifference(this.tempAdditions), getObjIrisFromDifference(this.tempDeletions));
                         return this.om.getOntologyEntityNames(this.data.recordId, '', this.data.commit.id, false, false, filterIris);

@@ -57,157 +57,92 @@ module.exports = {
         browser.globals.initial_steps(browser, adminUsername, adminPassword);
     },
 
-    'Step 2: Ensure that user is on Ontology editor page': function(browser) {
-        browser.page.editorPage().isActive();
+    'Step 2: Ensure that user is on Ontology editor page' : function(browser) {
+        browser.page.ontologyEditorPage().isActive();
     },
 
-    'Step 3: Open new Ontology Overlay': function(browser) {
-        browser.page.editorPage().openNewOntologyOverlay();
-    },
-
-    'Step 4: Edit New Ontology Overlay': function(browser) {
-        browser.page.editorPage().editNewOntologyOverlay(ontology01.title, ontology01.description);
-    },
-
-    'Step 5: Submit New Ontology Overlay': function(browser) {
-        browser.page.editorPage().submitNewOntologyOverlay();
+    'Step 3: Create New Ontology' : function(browser) {
+        browser.page.ontologyEditorPage().createOntology(ontology01.title, ontology01.description);
         browser.globals.wait_for_no_spinners(browser);
-        browser.page.editorPage().onProjectTab();
+        browser.page.ontologyEditorPage().onProjectTab();
     },
 
-    'Step 6: Verify new ontology properties': function(browser) {
-        browser.page.editorPage().onProjectTab();
-        browser.page.editorPage().verifyProjectTab(ontology01.title, ontology01.description, 'MyTitle2')
+    'Step 4: Verify new ontology properties' : function(browser) {
+        browser.page.ontologyEditorPage().verifyProjectTab(ontology01.title, ontology01.description, 'MyTitle2')
     },
 
-    'Step 7: Edit IRI for ontology': function(browser) {
-        browser.page.editorPage().onProjectTab();
-        browser.page.editorPage().editIri('myOntology2');
+    'Step 5: Edit IRI for ontology' : function(browser) {
+        browser.page.ontologyEditorPage().onProjectTab();
+        browser.page.ontologyEditorPage().editIri('myOntology2');
         browser.globals.wait_for_no_spinners(browser);
     },
 
-    'Step 8: Open Commit overlay': function(browser) {
-        browser.page.editorPage().openCommitOverlay();
-    },
-
-    'Step 9: Edit Commit message and Submit': function(browser) {
-        browser.page.editorPage().editCommitOverlayAndSubmit('Changed IRI');
+    'Step 6: Commit IRI change' : function(browser) { 
+        browser.page.ontologyEditorPage().commit('Changed IRI');
         browser.globals.wait_for_no_spinners(browser);
-        browser
-            .useCss()
-            .waitForElementNotPresent('commit-overlay')
-            .waitForElementNotPresent('commit-overlay h1.mat-dialog-title'); // intermittent issue caused by backend
-        browser
-            .waitForElementVisible('div.toast-success')
-            .waitForElementNotPresent('div.toast-success');
-        browser.page.editorPage().isActive('ontology-tab');
+        browser.globals.dismiss_toast(browser);
+        browser.page.ontologyEditorPage().isActive('ontology-tab');
     },
 
-    'Step 10: Open Ontology Editor Page Ontology List Page': function(browser) {
-        browser.page.editorPage().openOntologyListPage();
-    },
-
-    'Step 11: On The Ontology List Page, search for ontology': function(browser) {
-        browser.page.editorPage().searchOntology('myTitle');
-        browser.globals.wait_for_no_spinners(browser);
-        browser.page.editorPage().useCss()
-            .waitForElementVisible('@page');
-    },
-
-    'Step 12: Ensure IRI changes are successful on the Ontology List Page': function(browser) {
+    'Step 7: Ensure IRI changes are shown in the record select' : function(browser) {
+        browser.page.ontologyEditorPage().searchForOntology('myTitle');
         browser
             .useXpath()
-            .waitForElementPresent('//ontology-editor-page//open-ontology-tab')
-            .click('//ontology-editor-page//open-ontology-tab//small[text()[contains(.,"https://mobi.com/ontologies/myOntology2")]]');
-        // wait for loading to finish
-        browser.globals.wait_for_no_spinners(browser);
-        browser.page.editorPage().onProjectTab();
+            .waitForElementVisible('//mat-optgroup//mat-option//span[text()[contains(., "' + ontology01.title + '")]]//p[text()[contains(., "https://mobi.com/ontologies/myOntology2")]]')
+        browser.page.ontologyEditorPage().onProjectTab();
     }, 
 
-    'Step 13: Create a new branch': function(browser) {
-        browser.page.editorPage().openNewBranchOverlay();
-        browser.page.editorPage().editNewBranchOverlayAndSubmit('newBranchTitle2', 'newBranchDescription');
+    'Step 8: Create a new branch' : function(browser) {
+        browser.page.ontologyEditorPage().createBranch('newBranchTitle2', 'newBranchDescription');
         browser.globals.wait_for_no_spinners(browser);
-        browser
-            .useCss()
-            .waitForElementNotPresent('create-branch-overlay')
-            .waitForElementNotPresent('create-branch-overlay h1.mat-dialog-title');
     },
 
-    'Step 14: Verify that branch was switched to the new branch': function(browser) {
-        browser.page.editorPage().verifyBranchSelection('newBranchTitle2');
+    'Step 9: Verify that branch was switched to the new branch' : function(browser) {
+        browser
+            .page.editorPage()
+            .assert.valueEquals('@editorRecordSelectInput', ontology01.title)
+            .assert.valueEquals('@editorBranchSelectInput', 'newBranchTitle2');
     }, 
 
-    'Step 15: Switch to new branch': function(browser) {
+    'Step 10: Verify no uncommitted changes are shown': function(browser) {
+        browser.page.ontologyEditorPage().toggleChangesPage();
+        browser.globals.wait_for_no_spinners(browser)
+        browser
+            .assert.not.elementPresent('mat-chip.uncommitted')
+            .assert.not.elementPresent('app-changes-page mat-expansion-panel')
+            .assert.textContains('app-changes-page info-message p', 'No Changes to Display')
+            .expect.elements('commit-history-table svg .commit-hash-string').count.to.equal(2)
+        browser.page.ontologyEditorPage().toggleChangesPage(false);
         browser.globals.wait_for_no_spinners(browser);
-        browser.page.editorPage().switchToBranch('newBranchTitle2');
+        browser.page.ontologyEditorPage().onProjectTab();
     },
 
-    'Step 16: Verify no uncommitted changes are shown': function(browser) {
-        browser.globals.wait_for_no_spinners(browser);
+    'Step 11: Verify merge submit cannot be clicked': function(browser) {
+        browser.page.editorPage()
+            .click('@mergeBranchesButton');
         browser
-            .useXpath()
-            .waitForElementVisible('//mat-tab-header//div[text()[contains(.,"Changes")]]')
-            .click('//mat-tab-header//div[text()[contains(.,"Changes")]]')
-            .useCss()
-            .waitForElementVisible('info-message p')
-            .assert.textContains('info-message p', 'You don\'t have any uncommitted changes.')
-            .assert.not.elementPresent('saved-changes-tab .expansion-panel');
-        browser.globals.wait_for_no_spinners(browser);
-        browser
-            .useXpath()
-            .waitForElementVisible('//mat-tab-header//div[text()[contains(.,"Project")]]')
-            .click('//mat-tab-header//div[text()[contains(.,"Project")]]');
-        browser.page.editorPage().onProjectTab();
-    },
-
-    'Step 17: Verify submit cannot be clicked': function(browser) {
-        browser
-            .moveToElement('ontology-button-stack circle-button-stack', 0, 0)
-            .useXpath()
-            .waitForElementVisible('//circle-button-stack//button[@mattooltip="Merge Branches"]')
-            .click('//circle-button-stack//button[@mattooltip="Merge Branches"]')
-            .useCss()
+            .waitForElementVisible('app-merge-page branch-select input')
+            .waitForElementVisible('app-merge-page button.mat-primary')
             .waitForElementVisible('.merge-message')
             .assert.textContains('.merge-message', 'newBranchTitle2')
-            .useXpath()
-            .click('//branch-select')
-            .waitForElementVisible('//mat-option//span[text()[contains(.,"MASTER")]]')
-            .click('//mat-option//span[text()[contains(.,"MASTER")]]')
-            .waitForElementVisible('//branch-select//input')
-            .getValue("//branch-select//input", function(result) {
-                this.assert.equal(typeof result, "object");
-                this.assert.equal(result.status, 0);
-                this.assert.equal(result.value, "MASTER");
-            })
-            .useCss()
-            .assert.not.enabled(".merge-block .btn-container button.mat-primary") // intermittent issue
-            .click('ontology-sidebar span.close-icon');
+            .click('app-merge-page branch-select')
+            .waitForElementVisible('xpath', '//mat-option//span[text()[contains(.,"MASTER")]]')
+            .click('xpath', '//div//mat-option//span[contains(text(), "MASTER")]');
+        browser.globals.wait_for_no_spinners(browser);
+        browser
+            .waitForElementVisible('.merge-block .btn-container button.mat-primary[disabled=true]') // Intermittent failure
+            .click('.merge-block .btn-container button:not(.mat-primary)');
     },
 
-    'Step 18: Verify again in merge requests tab': function(browser) {
-        browser
-            .useXpath()
-            .click("//li/a[@class='nav-link']/span[text()[contains(.,'Merge Requests')]]")
-            .waitForElementVisible("//button//span[text()[contains(.,'New Request')]]")
-            .click("//button//span[text()[contains(.,'New Request')]]")
-            .waitForElementVisible('//create-request//request-record-select//mat-card//mat-card-title[contains(text(),"myTitle2")]')
-            .click('//create-request//request-record-select//mat-card//mat-card-title[contains(text(),"myTitle2")]')
-            .waitForElementVisible('//button//span[text()="Next"]')
-            .click('//button//span[text()="Next"]')
-            .waitForElementNotPresent('div.mat-horizontal-stepper-content.ng-animating')
-            .waitForElementVisible('(//div[contains(@class, "mat-form-field-infix")])[1]/input')
-            .click('(//div[contains(@class, "mat-form-field-infix")])[1]')
-            .waitForElementVisible('//mat-option//span[text()[contains(.,"newBranchTitle2")]]')
-            .click('//mat-option//span[text()[contains(.,"newBranchTitle2")]]')
-        browser.globals.wait_for_no_spinners(browser)
-        browser
-            .useXpath()
-            .waitForElementVisible('(//div[contains(@class, "mat-form-field-infix")])[2]/input')
-            .click('(//div[contains(@class, "mat-form-field-infix")])[2]')
-            .waitForElementVisible('//mat-option//span[text()[contains(.,"MASTER")]]')
-            .click('//mat-option//span[text()[contains(.,"MASTER")]]')
-        browser.globals.wait_for_no_spinners(browser)
+    'Step 12: Verify again in merge requests tab': function(browser) {
+        browser.globals.switchToPage(browser, 'merge-requests', 'button.new-request-btn');
+        browser.globals.wait_for_no_spinners(browser);
+        browser.page.mergeRequestPage().createNewRequest();
+        browser.page.mergeRequestPage().clickMatCard(ontology01.title);
+        browser.page.mergeRequestPage().createRequestNext();
+        browser.globals.wait_for_no_spinners(browser);
+        browser.page.mergeRequestPage().createRequestSourceBranchSelect('newBranchTitle2');
+        browser.page.mergeRequestPage().createRequestTargetBranchSelect('MASTER');
         browser
             .useXpath()
             .assert.not.enabled('//button//span[contains(text(), "Next")]/parent::button')
@@ -219,232 +154,148 @@ module.exports = {
             .waitForElementVisible("//button//span[text()[contains(.,'New Request')]]")
     },
 
-    'Step 19: Open Ontology Editor Page Ontology List Page': function(browser) {
-            browser.globals.wait_for_no_spinners(browser)
-            browser
-                .useCss()
-                .click('xpath', '//div//ul//a[@class="nav-link"][@href="#/ontology-editor"]');
-            browser.globals.wait_for_no_spinners(browser);
-            browser.page.editorPage().isActive();
-            browser.waitForElementVisible('button.upload-button');
-        },
+    'Step 13: Open Ontology Editor' : function(browser) {
+          browser.globals.wait_for_no_spinners(browser)
+          browser.globals.switchToPage(browser, 'ontology-editor', 'ontology-editor-page');
+          browser.globals.wait_for_no_spinners(browser);
+          browser.page.ontologyEditorPage().isActive();
+      },
 
-    'Step 20: On The Ontology List Page, search for ontology': function(browser) {
-        browser.page.editorPage().searchOntology('myTitle');
-        browser.globals.wait_for_no_spinners(browser);
-        browser.page.editorPage().useCss()
-            .waitForElementVisible('@page');
+    'Step 14: Ensure the ontology is still open' : function(browser) {
+        browser.page.ontologyEditorPage().onProjectTab();
+        browser.page.editorPage()
+            .assert.valueEquals('@editorRecordSelectInput', ontology01.title)
+            .assert.valueEquals('@editorBranchSelectInput', 'newBranchTitle2');
     },
 
-    'Step 21: Open the ontology': function(browser) {
-        browser
-            .waitForElementPresent('ontology-editor-page open-ontology-tab')
-            .useXpath()
-            .click('//open-ontology-tab//small[text()[contains(.,"myOntology2")]]');
-        browser.globals.wait_for_no_spinners(browser); // wait for loading to finish
-        
-        browser.page.editorPage().onProjectTab();
-        browser.useXpath()
-            .getValue("//open-ontology-select//input", function(result) {
-                this.assert.equal(typeof result, "object");
-                this.assert.equal(result.status, 0);
-                this.assert.equal(result.value, "newBranchTitle2");
-            })
-    },
-
-    'Step 22: Create new Classes': function(browser) {
-        browser.page.editorPage().createNewOwlClass('firstClass', 'firstClassDescription');
-        for (var i = 2; i <= 20; i++) {
-            browser.page.editorPage().createNewOwlClass('class' + i + 'Title', 'class' + i + 'Description');
+    'Step 15: Create new Classes': function(browser) {
+        browser.page.ontologyEditorPage().createNewOwlClass('firstClass', 'firstClassDescription');
+        for (var i = 2; i <= 10; i++) {
+            browser.page.ontologyEditorPage().createNewOwlClass('class' + i + 'Title', 'class' + i + 'Description');
             browser.globals.wait_for_no_spinners(browser);
-            browser
-                .useCss()
-                .waitForElementNotPresent('create-class-overlay')
-                .waitForElementNotPresent('create-class-overlay h1.mat-dialog-title');
         }
     },
 
-    'Step 23: Verify class was created': function(browser) {
+    'Step 16: Verify class was created': function(browser) {
         browser
             .useXpath()
             .waitForElementVisible('//mat-tab-header//div[text()[contains(.,"Classes")]]')
             .click('//mat-tab-header//div[text()[contains(.,"Classes")]]')
             .assert.visible('//class-hierarchy-block//tree-item//span[text()[contains(.,"firstClass")]]')
+            .useCss();
     },
 
-    'Step 24: Verify changes are shown': function(browser) {
+    'Step 17: Verify changes are shown': function(browser) {
+        browser.page.ontologyEditorPage().toggleChangesPage();
         browser
-            .useXpath() // Must use Xpath when checking does an element with a certain value exist among other like elements
-            .waitForElementVisible('//mat-tab-header//div[text()[contains(.,"Changes")]]')
-            .click('//mat-tab-header//div[text()[contains(.,"Changes")]]')
             .useCss()
-            .waitForElementVisible('saved-changes-tab mat-expansion-panel mat-panel-title[title*="firstClass"]')
-            .assert.textContains('saved-changes-tab mat-expansion-panel mat-panel-title[title*="firstClass"]', 'firstClass') // Verify Title
-            .assert.textContains('saved-changes-tab mat-expansion-panel mat-panel-Description[title*="FirstClass"]', 'FirstClass') // Verify IRI
-            .click('saved-changes-tab mat-expansion-panel mat-panel-title[title*="firstClass"]')
-            .waitForElementVisible('saved-changes-tab commit-compiled-resource')
-            .assert.textContains('saved-changes-tab commit-compiled-resource p.type-label', "Type(s)")
-            .assert.textContains('saved-changes-tab commit-compiled-resource p.type-label ~ div.type div.px-4', 'owl:Class')
+            .waitForElementVisible('app-changes-page div.changes-info button.mat-warn')
+            .expect.elements('app-changes-page mat-expansion-panel').count.to.equal(10);
+        browser
+            .useCss()
+            .waitForElementVisible('app-changes-page mat-expansion-panel mat-panel-title[title*="firstClass"]')
+            .assert.textContains('app-changes-page mat-expansion-panel mat-panel-title[title*="firstClass"]', 'firstClass') // Verify Title
+            .click('app-changes-page mat-expansion-panel mat-panel-title[title*="firstClass"]')
+            .waitForElementVisible('app-changes-page commit-compiled-resource')
+            .assert.textContains('app-changes-page commit-compiled-resource p.type-label', "Type(s)")
+            .assert.textContains('app-changes-page commit-compiled-resource p.type-label ~ div.type div.px-4', 'owl:Class')
             .useXpath()
-            .assert.textContains('//saved-changes-tab//commit-compiled-resource//p[contains(@title,"http://purl.org/dc/terms/description")]', "Description")
-            .assert.textContains('//saved-changes-tab//commit-compiled-resource//p[contains(@title,"http://purl.org/dc/terms/description")]/../..//div[contains(@class, "prop-value-container")]//div[contains(@class, "value-display")]', 'firstClassDescription')
-            .assert.textContains('//saved-changes-tab//commit-compiled-resource//p[contains(@title,"http://purl.org/dc/terms/title")]', "Title")
-            .assert.textContains('//saved-changes-tab//commit-compiled-resource//p[contains(@title,"http://purl.org/dc/terms/title")]/../..//div[contains(@class, "prop-value-container")]//div[contains(@class, "value-display")]', 'firstClass')
+            .assert.textContains('//app-changes-page//commit-compiled-resource//p[contains(@title,"http://purl.org/dc/terms/description")]', "Description")
+            .assert.textContains('//app-changes-page//commit-compiled-resource//p[contains(@title,"http://purl.org/dc/terms/description")]/../..//div[contains(@class, "prop-value-container")]//div[contains(@class, "value-display")]', 'firstClassDescription')
+            .assert.textContains('//app-changes-page//commit-compiled-resource//p[contains(@title,"http://purl.org/dc/terms/title")]', "Title")
+            .assert.textContains('//app-changes-page//commit-compiled-resource//p[contains(@title,"http://purl.org/dc/terms/title")]/../..//div[contains(@class, "prop-value-container")]//div[contains(@class, "value-display")]', 'firstClass')
+            .useCss();
     },
 
-    'Step 25: Commit Changes': function(browser) {
-        browser.page.editorPage().openCommitOverlay();
-        browser.page.editorPage().editCommitOverlayAndSubmit('commit123');
+    'Step 18: Commit changes and verify commit was made successfully': function(browser) {
+        browser.page.ontologyEditorPage().commit('commit123');
         browser.globals.wait_for_no_spinners(browser);
         browser
-            .useCss()
-            .waitForElementNotPresent('commit-overlay')
-            .waitForElementNotPresent('commit-overlay h1.mat-dialog-title'); // intermittent issue caused by backend
-        browser
-            .waitForElementVisible('div.toast-success')
-            .waitForElementNotPresent('div.toast-success');
-        browser.page.editorPage().isActive('ontology-tab');
+            .assert.not.elementPresent('mat-chip.uncommitted')
+            .assert.not.elementPresent('app-changes-page mat-expansion-panel')
+            .assert.textContains('app-changes-page info-message p', 'No Changes to Display')
+            .expect.elements('commit-history-table svg .commit-hash-string').count.to.equal(3);
+        browser.globals.dismiss_toast(browser);
     },
 
-    'Step 26: Verify no changes are shown': function(browser) {
-        browser
-            .useXpath()
-            .waitForElementVisible('//mat-tab-header//div[text()[contains(.,"Changes")]]')
-            .useCss()
-            .waitForElementVisible('info-message p')
-            .assert.textContains('info-message p', 'You don\'t have any uncommitted changes.')
-            .assert.not.elementPresent('saved-changes-tab .expansion-panel')
+    'Step 19: Create a merge request': function(browser) {
+        browser.globals.switchToPage(browser, 'merge-requests', 'button.new-request-btn');
+        browser.globals.wait_for_no_spinners(browser);
+        // Start New Request, select the ontology record, and click Next
+        browser.page.mergeRequestPage().createNewRequest();
+        browser.page.mergeRequestPage().clickMatCard(ontology01.title);
+        browser.page.mergeRequestPage().createRequestNext();
+        // Select checkbox to remove branch after acceptance and add admin as assignee
+        browser.page.mergeRequestPage().createRequestSourceBranchSelect('newBranchTitle2');
+        browser.page.mergeRequestPage().createRequestTargetBranchSelect('MASTER');
+        browser.page.mergeRequestPage().createRequestNext();
+
+        browser.page.mergeRequestPage().createRequestSubmit();
+        browser.globals.wait_for_no_spinners(browser);
+        
+        browser.globals.dismiss_toast(browser);
     },
 
-    'Step 27: Create a merge request': function(browser) {
-        browser
-            .useXpath()
-            .click("//li/a[@class='nav-link']/span[text()[contains(.,'Merge Requests')]]")
-            .waitForElementVisible("//button//span[text()[contains(.,'New Request')]]")
-            .click("//button//span[text()[contains(.,'New Request')]]")
-            .waitForElementVisible('//create-request//request-record-select//mat-card//mat-card-title[contains(text(),"myTitle2")]')
-            .click('//create-request//request-record-select//mat-card//mat-card-title[contains(text(),"myTitle2")]')
-            .waitForElementVisible('//button//span[text()="Next"]')
-            .click('//button//span[text()="Next"]')
-            .waitForElementNotPresent('div.mat-horizontal-stepper-content.ng-animating');
-        browser
-            .waitForElementVisible('(//div[contains(@class, "mat-form-field-infix")])[1]/input')
-            .click('(//div[contains(@class, "mat-form-field-infix")])[1]')
-            .waitForElementVisible('//mat-option//span[text()[contains(.,"newBranchTitle2")]]')
-            .click('//mat-option//span[text()[contains(.,"newBranchTitle2")]]')
-            .waitForElementVisible('(//div[contains(@class, "mat-form-field-infix")])[2]/input')
-            .click('(//div[contains(@class, "mat-form-field-infix")])[2]')
-            .waitForElementVisible('//mat-option//span[text()[contains(.,"MASTER")]]')
-            .click('//mat-option//span[text()[contains(.,"MASTER")]]')
-            .assert.enabled('//button//span[contains(text(), "Next")]/parent::button')
-            .click('//button//span[contains(text(), "Next")]/parent::button');
-        browser
-            .useCss()
-            .waitForElementNotPresent('div.mat-horizontal-stepper-content.ng-animating')
-            .useXpath()
-            .waitForElementVisible('//button//span[text()="Submit"]')
-        browser
-            .click('//button//span[text()="Submit"]')
-            .useCss()
-            .waitForElementVisible('div.toast-success')
-            .waitForElementNotPresent('div.toast-success');
-    },
-
-    'Step 28: Accept the merge request': function(browser) {
+    'Step 20: Accept the merge request': function(browser) {
         browser.page.mergeRequestPage().selectRequest('newBranchTitle2');
         browser.globals.wait_for_no_spinners(browser);
         browser.page.mergeRequestPage().acceptRequest();
     },
 
-    'Step 29: Create branch used for branch removal Merge Request': function(browser) {
+    'Step 21: Create branch used for branch removal Merge Request': function(browser) {
         browser.useCss()
-            .globals.switchToPage(browser, 'ontology-editor');
+            .globals.switchToPage(browser, 'ontology-editor', 'ontology-editor-page');
         browser.globals.wait_for_no_spinners(browser);
-        browser.page.editorPage().isActive();
-        // ontology-editor is on changes tab at this point
-        browser.page.editorPage().openNewBranchOverlay();
-        browser.page.editorPage().editNewBranchOverlayAndSubmit('newBranchTitle3Removal', 'newBranchDescriptionBranchRemoval');
+        browser.page.ontologyEditorPage().createBranch('newBranchTitle3Removal', 'newBranchDescriptionBranchRemoval');
         browser.globals.wait_for_no_spinners(browser);
         browser
-            .useCss()
-            .waitForElementNotPresent('create-branch-overlay')
-            .waitForElementNotPresent('create-branch-overlay h1.mat-dialog-title');
-        browser.page.editorPage().verifyBranchSelection('newBranchTitle3Removal');
+            .page.editorPage()
+            .assert.valueEquals('@editorRecordSelectInput', ontology01.title)
+            .assert.valueEquals('@editorBranchSelectInput', 'newBranchTitle3Removal');
     },
 
-    'Step 30: Add commits to branch': function(browser) {
+    'Step 22: Add commits to branch': function(browser) {
+        browser.page.ontologyEditorPage().toggleChangesPage(false);
+        browser.globals.wait_for_no_spinners(browser);
         for (var i = 2; i <= 30; i++) {
-            browser.page.editorPage().createNewOwlClass('classRemoval' + i + 'Title', 'classRemoval' + i + 'Description');
+            browser.page.ontologyEditorPage().createNewOwlClass('classRemoval' + i + 'Title', 'classRemoval' + i + 'Description');
             browser.globals.wait_for_no_spinners(browser);
-            browser
-                .useCss()
-                .waitForElementNotPresent('create-class-overlay')
-                .waitForElementNotPresent('create-class-overlay h1.mat-dialog-title');
-            browser.page.editorPage().openCommitOverlay();
-            browser.page.editorPage().editCommitOverlayAndSubmit('commit123Removal' + i);
+            browser.page.ontologyEditorPage().commit('commit123Removal' + i);
             browser.globals.wait_for_no_spinners(browser);
-            browser
-                .useCss()
-                .waitForElementNotPresent('commit-overlay')
-                .waitForElementNotPresent('commit-overlay h1.mat-dialog-title'); // intermittent issue caused by backend
+            browser.globals.dismiss_toast(browser);
         }
-        browser
-            .waitForElementVisible('div.toast-success')
-            .waitForElementNotPresent('div.toast-success');
-        browser.page.editorPage().isActive('ontology-tab');
+        browser.page.ontologyEditorPage().isActive('ontology-tab');
     },
-    'Step 31: Create a merge request': function(browser) {
-        browser
-            .useXpath()
-            .click("//li/a[@class='nav-link']/span[text()[contains(.,'Merge Requests')]]")
-            .waitForElementVisible("//button//span[text()[contains(.,'New Request')]]");
+
+    'Step 23: Create a merge request': function(browser) {
+        browser.useCss()
+            .globals.switchToPage(browser, 'merge-requests', 'button.new-request-btn');
         browser.page.mergeRequestPage().verifyRecordFilters();
         browser.page.mergeRequestPage().verifyMergeRequestList();
         browser.page.mergeRequestPage().verifyMergePageSort();
 
         // Start New Request, select the ontology record, and click Next
-        browser
-            .useXpath()
-            .click("//button//span[text()[contains(.,'New Request')]]")
-            .waitForElementVisible('//create-request//request-record-select//mat-card//mat-card-title[contains(text(),"myTitle2")]')
-            .click('//create-request//request-record-select//mat-card//mat-card-title[contains(text(),"myTitle2")]')
-            .waitForElementVisible('//button//span[text()="Next"]')
-            .click('//button//span[text()="Next"]')
-            .waitForElementNotPresent('div.mat-horizontal-stepper-content.ng-animating');
+        browser.page.mergeRequestPage().createNewRequest();
+        browser.page.mergeRequestPage().clickMatCard(ontology01.title);
+        browser.page.mergeRequestPage().createRequestNext();
         // Select the source and target branches and click Next
-        browser
-            .waitForElementVisible('(//div[contains(@class, "mat-form-field-infix")])[1]/input')
-            .click('(//div[contains(@class, "mat-form-field-infix")])[1]')
-            .waitForElementVisible('//mat-option//span[text()[contains(.,"newBranchTitle3Removal")]]')
-            .click('//mat-option//span[text()[contains(.,"newBranchTitle3Removal")]]')
-            .waitForElementVisible('(//div[contains(@class, "mat-form-field-infix")])[2]/input')
-            .click('(//div[contains(@class, "mat-form-field-infix")])[2]')
-            .waitForElementVisible('//mat-option//span[text()[contains(.,"MASTER")]]')
-            .click('//mat-option//span[text()[contains(.,"MASTER")]]')
-            .assert.enabled('//button//span[contains(text(), "Next")]/parent::button')
-            .click('//button//span[contains(text(), "Next")]/parent::button')
+        browser.page.mergeRequestPage().createRequestSourceBranchSelect('newBranchTitle3Removal');
+        browser.page.mergeRequestPage().createRequestTargetBranchSelect('MASTER');
+        browser.page.mergeRequestPage().createRequestNext();
         // Select checkbox to remove branch after acceptance and add admin as assignee
         browser
+            .useXpath()
             .waitForElementVisible('//merge-requests-page//create-request//mat-checkbox//span[contains(text(), "Remove")]')
             .click('//merge-requests-page//create-request//mat-checkbox//span[contains(text(), "Remove")]')
             .waitForElementVisible('//merge-requests-page//create-request//div[contains(@class, "assignee-input")]//div[contains(@class, "mat-form-field-infix")]//input')
             .click('//merge-requests-page//create-request//div[contains(@class, "assignee-input")]//div[contains(@class, "mat-form-field-infix")]//input')
             .waitForElementVisible('//mat-option//span[text()[contains(., "' + adminUsername + '")]]')
             .click('//mat-option//span[text()[contains(., "' + adminUsername + '")]]')
-        browser
-            .useCss()
-            .waitForElementNotPresent('div.mat-horizontal-stepper-content.ng-animating')
-            .useXpath()
-            .waitForElementVisible('//button//span[text()="Submit"]')
-        //stale element reference: stale element not found
-        browser
-            .click('//button//span[text()="Submit"]')
-            .useCss()
-            .waitForElementVisible('div.toast-success')
-            .waitForElementNotPresent('div.toast-success');
+        browser.page.mergeRequestPage().createRequestSubmit();
+        browser.globals.dismiss_toast(browser);
     },
 
-    'Step 32: Ensure the request status filter works': function(browser) {
+    'Step 24: Ensure the request status filter works': function(browser) {
         // Confirm the status filter is present
         var clickFunc = function(result) { this.assert.strictEqual(result.status, 0) };
         var statusFilterXPathSelector = createFilterXPathSelector('Request Status');
@@ -480,7 +331,7 @@ module.exports = {
         browser.globals.wait_for_no_spinners(browser);
     },
 
-    'Step 33: Filter the merge request list by creator': function(browser) {
+    'Step 25: Filter the merge request list by creator': function(browser) {
         // Confirm the Creator filter is present
         var clickFunc = function(result) { this.assert.strictEqual(result.status, 0) };
         var creatorFilterXPathSelector = createFilterXPathSelector('Creators');
@@ -508,36 +359,36 @@ module.exports = {
         browser.globals.wait_for_no_spinners(browser);
     },
 
-    'Step 34: Filter the merge request list by assignee': function(browser) {
-      // Confirm the Creator filter is present
-      var clickFunc = function(result) { this.assert.strictEqual(result.status, 0) };
-      var assigneeFilterXPathSelector = createFilterXPathSelector('Assignees');
-      browser.assert.elementPresent({ selector: assigneeFilterXPathSelector, locateStrategy: 'xpath' });
+    'Step 26: Filter the merge request list by assignee': function(browser) {
+        // Confirm the Creator filter is present
+        var clickFunc = function(result) { this.assert.strictEqual(result.status, 0) };
+        var assigneeFilterXPathSelector = createFilterXPathSelector('Assignees');
+        browser.assert.elementPresent({ selector: assigneeFilterXPathSelector, locateStrategy: 'xpath' });
 
-      // Submit a search of the assignee filter
-      var assigneeSearchXPathSelector = assigneeFilterXPathSelector + '//input';
-      browser.assert.elementPresent({ selector: assigneeSearchXPathSelector, locateStrategy: 'xpath' });
-      browser
-          .useXpath()
-          .sendKeys(assigneeSearchXPathSelector, ['ad', browser.Keys.ENTER])
-          .useCss()
-          .waitForElementNotPresent('#spinner-full');
+        // Submit a search of the assignee filter
+        var assigneeSearchXPathSelector = assigneeFilterXPathSelector + '//input';
+        browser.assert.elementPresent({ selector: assigneeSearchXPathSelector, locateStrategy: 'xpath' });
+        browser
+            .useXpath()
+            .sendKeys(assigneeSearchXPathSelector, ['ad', browser.Keys.ENTER])
+            .useCss()
+            .waitForElementNotPresent('#spinner-full');
 
-      // Select the admin creator filter
-      var adminAssigneeFilterXPathSelector = createFilterXPathSelector('Assignee', adminUsername + ' (1)');
-      browser.assert.elementPresent({ selector: adminAssigneeFilterXPathSelector, locateStrategy: 'xpath' });
-      browser.click('xpath', adminAssigneeFilterXPathSelector, clickFunc);
-      browser.globals.wait_for_no_spinners(browser);
-      browser
-          .useCss()
-          .assert.textContains('div.request-contents .details h3', 'newBranchTitle3Removal');
+        // Select the admin creator filter
+        var adminAssigneeFilterXPathSelector = createFilterXPathSelector('Assignee', adminUsername + ' (1)');
+        browser.assert.elementPresent({ selector: adminAssigneeFilterXPathSelector, locateStrategy: 'xpath' });
+        browser.click('xpath', adminAssigneeFilterXPathSelector, clickFunc);
+        browser.globals.wait_for_no_spinners(browser);
+        browser
+            .useCss()
+            .assert.textContains('div.request-contents .details h3', 'newBranchTitle3Removal');
 
-      // Unselect the admin creator filter
-      browser.click('xpath', adminAssigneeFilterXPathSelector, clickFunc);
-      browser.globals.wait_for_no_spinners(browser);
-  },
+        // Unselect the admin creator filter
+        browser.click('xpath', adminAssigneeFilterXPathSelector, clickFunc);
+        browser.globals.wait_for_no_spinners(browser);
+    },
 
-    'Step 35: Search the merge request list': function(browser) {
+    'Step 27: Search the merge request list': function(browser) {
         // Test no requests are shown
         browser.page.mergeRequestPage().searchList('NONE');
         browser.waitForElementVisible('div.merge-request-list info-message');
@@ -548,7 +399,7 @@ module.exports = {
         browser.assert.textContains('div.request-contents .details h3', 'newBranchTitle3Removal')
     },
 
-    'Step 36: Accept the merge request': function(browser) {
+    'Step 28: Accept the merge request': function(browser) {
         browser.page.mergeRequestPage().selectRequest('newBranchTitle3Removal');
         browser.globals.wait_for_no_spinners(browser);
         browser.page.mergeRequestPage().acceptRequest();

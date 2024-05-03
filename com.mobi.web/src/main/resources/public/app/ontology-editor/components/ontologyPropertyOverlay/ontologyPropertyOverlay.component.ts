@@ -119,11 +119,11 @@ export class OntologyPropertyOverlayComponent implements OnInit {
             namespace,
             options: grouped[namespace].map(property => ({
                 property,
-                name: this.os.getEntityNameByListItem(property)
+                name: this.os.getEntityName(property)
             }))
         }));
         rtn.forEach(group => {
-            group.options = sortBy(group.options, option => this.os.getEntityNameByListItem(option.property));
+            group.options = sortBy(group.options, option => this.os.getEntityName(option.property));
         });
         return rtn;
     }

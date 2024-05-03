@@ -1,0 +1,62 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 - 2024 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="changes-page h-100 row m-0">
+  <div class="col-lg-10 offset-lg-1 pt-2 h-100">
+    <div class="row h-100 flex-nowrap">
+      <div class="col-6">
+        <info-message *ngIf="!state.isCommittable() && state?.listItem?.versionedRdfRecord?.recordId">No Changes to Display</info-message>
+        <div class="has-changes h-100 vertical-scroll" *ngIf="state.isCommittable()">
+          <div class="changes-info">
+            <div class="btn-container clearfix">
+              <button mat-raised-button color="warn"
+                      *ngIf="state.isCommittable()"
+                      class="m-2"
+                      (click)="removeChanges()">Remove All Changes
+              </button>
+            </div>
+          </div>
+          <commit-changes-display [additions]="displayAdditions" [deletions]="displayDeletions"
+            [commitId]="state?.listItem?.versionedRdfRecord?.commitId"
+            [entityNameFunc]="getEntityName.bind(this)"
+            [hasMoreResults]="hasMoreResults"
+            (showMoreResultsEmitter)="setResults($event?.limit, $event?.offset)"
+            [startIndex]="index"></commit-changes-display>
+        </div>
+      </div>
+      <div class="col d-flex remove-min-width horizontal-scroll">
+        <commit-history-table class="flex-1"
+                              [commitId]="state.listItem.versionedRdfRecord.commitId"
+                              [recordId]="state.listItem.versionedRdfRecord.recordId"
+                              [headTitle]="state?.listItem?.currentVersionTitle"
+                              [tags]="tags"
+                              (receiveCommits)="commits = $event"
+                              [branches]="branches"
+                              [type]="state.type"
+                              (commitDotOnClick)="openCommit($event)"
+                              dotClickable
+                              graph>
+        </commit-history-table>
+      </div>
+    </div>
+  </div>
+</div>

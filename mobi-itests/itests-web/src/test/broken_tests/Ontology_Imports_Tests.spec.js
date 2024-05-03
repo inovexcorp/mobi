@@ -38,19 +38,19 @@ module.exports = {
             .waitForElementVisible('.home-page')
     },
 
-    'Step 3: navigate to the Ontology Editor page' : function (browser) {
+    'Step 3: navigate to the Ontology Editor page' : function(browser) {
         browser
             .click('xpath', '//div//ul//a[@class="nav-link"][@href="#/ontology-editor"]')
     },
 
-    'Step 4: click upload ontology' : function (browser) {
+    'Step 4: click upload ontology' : function(browser) {
         browser
             .waitForElementNotVisible('div.spinner')
             .waitForElementVisible('div.btn-container button')
             .click('xpath', '//div[@class="btn-container"]//button[text()[contains(.,"Upload Ontology")]]')
     },
 
-    'Step 5: Upload an Ontology' : function (browser) {
+    'Step 5: Upload an Ontology' : function(browser) {
         browser
             .uploadFile('input[type=file]', Onto1)
             .click('upload-ontology-overlay div.modal-footer button.btn')
@@ -61,13 +61,13 @@ module.exports = {
             .uploadFile('input[type=file]', Onto3)
     },
 
-    'Step 6: Submit all ontology files' : function (browser) {
+    'Step 6: Submit all ontology files' : function(browser) {
         browser
             .waitForElementVisible('upload-ontology-overlay')
             .click('xpath', '//button[text()[contains(.,"Submit All")]]')
     },
 
-    'Step 7: Validate Ontology Appearance' : function (browser) {
+    'Step 7: Validate Ontology Appearance' : function(browser) {
         browser
             .waitForElementVisible('div.ontologies')
             .assert.not.elementPresent('div.modal-header')
@@ -79,12 +79,12 @@ module.exports = {
             .useCss()
     },
 
-    'Step 8: Click on Ontology called “test-local-imports-1.ttl' : function (browser) {
+    'Step 8: Click on Ontology called “test-local-imports-1.ttl' : function(browser) {
         browser
             .click('xpath', '//div[contains(@class, "list-group")]//div//div[text()[contains(.,"test-local-imports-1.ttl")]]')
     },
 
-    'Step 9: Validate Ontology Imports Appearance' : function (browser) {
+    'Step 9: Validate Ontology Imports Appearance' : function(browser) {
         browser
             .waitForElementVisible('.imports-block')
             .useXpath()
@@ -93,14 +93,14 @@ module.exports = {
             .assert.not.elementPresent('//imports-block//div[contains(@class, "indirect-import-container")]//p//a[text()[contains(.,"http://mobi.com/ontology/test-local-imports-2")]]')
     },
 
-    'Step 10: Click classes tab' : function (browser) {
+    'Step 10: Click classes tab' : function(browser) {
         browser
             .useCss()
             .waitForElementVisible('div.material-tabset li.nav-item')
             .click('xpath', '//mat-tab-header//div[text()[contains(., "Classes")]]')
     },
 
-    'Step 11: Check for Ontology classes' : function (browser) {
+    'Step 11: Check for Ontology classes' : function(browser) {
         browser
             .waitForElementVisible('div.tree')
             .useXpath()
@@ -112,13 +112,13 @@ module.exports = {
             .waitForElementVisible({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 3")]]'})
     },
 
-    'Step 11: Set Selected Item to an Ontology Class' : function (browser) {
+    'Step 11: Set Selected Item to an Ontology Class' : function(browser) {
         browser
             .useXpath()
             .click({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 2")]]'})
     },
 
-    'Step 12: Validate Ontology Imports Appearance' : function (browser) {
+    'Step 12: Validate Ontology Imports Appearance' : function(browser) {
         browser
             .click("//material-tabset//a[@class='nav-link']//span[text()[contains(., 'Project')]]")
             .waitForElementVisible('//imports-block')

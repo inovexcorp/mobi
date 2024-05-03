@@ -21,194 +21,279 @@
  * #L%
  */
 
-const ontologyListPageCss = 'ontology-editor-page open-ontology-tab';
+const editorTopBar = 'app-editor-top-bar';
+const uploadRecordLogButton = `${editorTopBar} app-upload-record-log button.mat-primary`;
+const createBranchButton = `${editorTopBar} button.create-branch`;
+const createTagButton = `${editorTopBar} button.create-tag`;
+const mergeBranchesButton = `${editorTopBar} button.merge-branch`;
+const downloadButton = `${editorTopBar} button.download-record`;
+const uploadChangesButton = `${editorTopBar} button.upload-changes`;
+const editorRecordSelect = 'app-editor-record-select';
+const editorRecordSelectInput = 'app-editor-record-select mat-form-field input';
+const editorRecordSelectIcon = 'app-editor-record-select mat-form-field mat-icon';
+const editorBranchSelect = 'app-editor-branch-select';
+const editorBranchSelectInput = 'app-editor-branch-select mat-form-field input';
+const editorBranchSelectIcon = 'app-editor-branch-select mat-form-field mat-icon';
+const createRecordButton = '.record-options-select mat-option button.create-record';
+const uploadRecordButton = '.record-options-select mat-option button.upload-record';
 
-const ontologyPageCommands = {
-    isActive: function (option) {
-        if (option === 'ontology-tab') {
-            return this.waitForElementPresent('ontology-editor-page ontology-tab');
-        } else {
-            return this.waitForElementPresent('ontology-editor-page');
+const editorCommands = {
+    openRecordSelect: function(parentEl) {
+        return this.useCss()
+            .waitForElementVisible(parentEl)
+            .waitForElementVisible(`${parentEl} ${editorRecordSelect}`)
+            .click(`${parentEl} ${editorRecordSelectIcon}`)
+            .waitForElementVisible('mat-option');
+    },
+
+    createRecord: function(parentEl, title, description) {
+        this.openRecordSelect(parentEl)
+            .click(createRecordButton)
+            .waitForElementVisible('app-new-record-modal')
+            .waitForElementVisible('app-new-record-modal mat-form-field input[name="title"]')
+            .waitForElementVisible('app-new-record-modal mat-form-field textarea[name="description"]')
+            .waitForElementVisible('app-new-record-modal div.mat-dialog-actions button.mat-primary')
+            .setValue('app-new-record-modal mat-form-field input[name="title"]', title);
+        if (description) {
+            this.setValue('app-new-record-modal mat-form-field textarea[name="description"]', description);
         }
+        return this
+            .click('app-new-record-modal div.mat-dialog-actions button.mat-primary')
+            .waitForElementNotPresent('app-new-record-modal div.mat-dialog-actions button:not(.mat-primary)');
     },
 
-    openNewOntologyOverlay: function() {
-        const newOntologyButtonXpath = '//span[text()="New Ontology"]/parent::button';
-        return this.useCss()
-            .waitForElementPresent(ontologyListPageCss)
+    uploadRecord: function(parentEl, file) {
+        return this.openRecordSelect(parentEl)
+            .click(uploadRecordButton)
+            .uploadFile('input[type=file]', file)
+            .waitForElementVisible('app-upload-record-modal')
+            .waitForElementVisible('app-upload-record-modal div.mat-dialog-actions button.mat-primary')
+            .click('app-upload-record-modal div.mat-dialog-actions button.mat-primary')
+            .waitForElementNotPresent('app-upload-record-modal div.mat-dialog-actions button:not(.mat-primary)');
+    },
+
+    searchForRecord: function(parentEl, title) {
+        return this.openRecordSelect(parentEl)
+            .sendKeys(`${parentEl} ${editorRecordSelectInput}`, title);
+    },
+
+    openRecord: function(parentEl, title) {
+        return this.openRecordSelect(parentEl)
             .useXpath()
-            .waitForElementVisible(newOntologyButtonXpath)
-            .click(newOntologyButtonXpath)
+            .waitForElementVisible(`//mat-optgroup//mat-option//span[text()[contains(., "${title}")]]/ancestor::mat-option`)
+            .click(`//mat-optgroup//mat-option//span[text()[contains(., "${title}")]]/ancestor::mat-option`)
             .useCss()
-            .waitForElementVisible('new-ontology-overlay');
+            .waitForElementNotPresent('mat-optgroup');
     },
 
-    editNewOntologyOverlay: function(title, description, language, keywords) {
+    closeRecord: function(parentEl, title) {
+      return this.useCss()
+          .waitForElementVisible(parentEl)
+          .waitForElementVisible(`${parentEl} ${editorRecordSelect}`)
+          .click(`${parentEl} ${editorRecordSelectIcon}`)
+          .waitForElementVisible('mat-option')
+          .useXpath()
+          .waitForElementVisible(`//mat-optgroup/span[text()[contains(., "Open")]]/following::span[@class="mat-option-text"]//span[text()[contains(., "${title}")]]/ancestor::mat-option`)
+          .waitForElementVisible(`//mat-optgroup//mat-option//span[contains(text(), "${title}")]/following-sibling::button`)
+          .click(`//mat-optgroup//mat-option//span[contains(text(), "${title}")]/following-sibling::button`)
+          .useCss()
+          .waitForElementNotPresent('mat-optgroup');
+    },
+
+    openUploadRecordLog: function(parentEl) {
         return this.useCss()
-            .waitForElementVisible('new-ontology-overlay')
-            .waitForElementVisible('xpath', '//new-ontology-overlay//mat-form-field//input[@name="title"]')
-            .waitForElementVisible('xpath', '//new-ontology-overlay//mat-form-field//textarea[@name="description"]')
-            .setValue('xpath', '//new-ontology-overlay//mat-form-field//input[@name="title"]', title)
-            .setValue('xpath', '//new-ontology-overlay//mat-form-field//textarea[@name="description"]', description);
+            .waitForElementVisible(parentEl)
+            .waitForElementVisible(`${parentEl} ${uploadRecordLogButton}`)
+            .click(`${parentEl} ${uploadRecordLogButton}`)
+            .waitForElementVisible('.upload-menu');
     },
 
-    submitNewOntologyOverlay: function() {
-        return this.useXpath()
-            .waitForElementVisible('//new-ontology-overlay')
-            .click('//new-ontology-overlay//span[text()="Submit"]/parent::button')
+    createBranch: function(parentEl, branch_title, branch_description) {
+        this.useCss()
+            .waitForElementVisible(parentEl)
+            .waitForElementVisible(`${parentEl} ${editorTopBar}`)
+            .click(createBranchButton)
+            .waitForElementVisible('app-create-branch-modal')
+            .waitForElementVisible('app-create-branch-modal mat-form-field input[name="title"]')
+            .waitForElementVisible('app-create-branch-modal mat-form-field textarea[name="description"]')
+            .waitForElementVisible('app-create-branch-modal div.mat-dialog-actions button.mat-primary')
+            .setValue('app-create-branch-modal mat-form-field input[name="title"]', branch_title);
+        if (branch_description) {
+          this.setValue('app-create-branch-modal mat-form-field textarea[name="description"]', branch_description);
+        }
+        return this
+            .click('app-create-branch-modal div.mat-dialog-actions button.mat-primary')
+            .waitForElementNotPresent('app-create-branch-modal div.mat-dialog-actions button:not(.mat-primary)');
+    },
+
+    createTag: function(parentEl, tag_title) {
+      return this.useCss()
+            .waitForElementVisible(parentEl)
+            .waitForElementVisible(`${parentEl} ${editorTopBar}`)
+            .click(createTagButton)
+            .waitForElementVisible('app-create-tag-modal')
+            .waitForElementVisible('app-create-tag-modal mat-form-field input[name="title"]')
+            .waitForElementVisible('app-create-tag-modal div.mat-dialog-actions button.mat-primary')
+            .sendKeys('app-create-tag-modal mat-form-field input[name="title"]', tag_title)
+            .click('app-create-tag-modal div.mat-dialog-actions button.mat-primary')
+            .waitForElementNotPresent('app-create-tag-modal div.mat-dialog-actions button:not(.mat-primary)');
+    },
+
+    openBranchSelect: function(parentEl) {
+        return this.useCss()
+            .waitForElementVisible(parentEl)
+            .waitForElementVisible(`${parentEl} ${editorBranchSelect}`)
+            .click(`${parentEl} ${editorBranchSelectIcon}`)
+            .waitForElementVisible('mat-option')
+    },
+
+    switchBranch: function(parentEl, branch_title) {
+        return this.openBranchSelect(parentEl)
+            .useXpath()
+            .waitForElementVisible(`//mat-optgroup//mat-option//span[contains(text(), "${branch_title}")]`)
+            .click(`//mat-optgroup//mat-option//span[contains(text(), "${branch_title}")]`)
             .useCss()
-            .waitForElementNotPresent('new-ontology-overlay') // intermittent not found backend issue
-            .waitForElementPresent('ontology-editor-page ontology-tab');
+            .waitForElementNotPresent('mat-optgroup');
     },
 
-    openOntologyListPage: function() {
-        return this.click('xpath', '//div[contains(@class, "ontology-sidebar")]//span[text()[contains(.,"Ontologies")]]/parent::button')
-            .waitForElementNotPresent('#spinner-full')
-            .waitForElementPresent(ontologyListPageCss)
+    deleteBranchOrTag: function(parentEl, title, isBranch = true) {
+        // TODO: This version ideally would handle switching to MASTER if the user is on the specified branch or tag
+        // this.useCss()
+        //     .waitForElementVisible(parentEl)
+        //     .waitForElementVisible(`${parentEl} app-editor-branch-select`)
+        //     .click(`${parentEl} app-editor-branch-select mat-form-field mat-icon`)
+        //     .waitForElementVisible('mat-option')
+        //     .useXpath()
+        //     .waitForElementVisible('//mat-optgroup/span[text()[contains(., "Branches")]]/following::span[@class="mat-option-text"]')
+        //     .element(`//mat-optgroup//mat-option//span[text()[contains(., "${title}")]]/following-sibling::button[contains(@class,"${isBranch ? 'delete-branch' : 'delete-tag'}")]`, function(result) {
+        //        // If branch is selected, move to MASTER
+        //        if (result.status > -1) {
+        //            console.log('====TEST====');
+        //            this.useXpath()
+        //                .waitForElementVisible('//mat-optgroup//mat-option//span[text()[contains(., "MASTER")]]')
+        //                .click('//mat-optgroup//mat-option//span[text()[contains(., "MASTER")]]')
+        //                .useCss()
+        //                .waitForElementNotPresent('mat-optgroup')
+        //                .click('shapes-graph-editor-page app-editor-branch-select mat-form-field mat-icon')
+        //                .waitForElementVisible('mat-option')
+        //                .useXpath();
+        //        }
+        //    }.bind(this));
+        // return this
+        //     .click(`//mat-optgroup//mat-option//span[text()[contains(., "${title}")]]/following-sibling::button[contains(@class,"${isBranch ? 'delete-branch' : 'delete-tag'}")]`)
+        //     .useCss()
+        //     .waitForElementVisible('confirm-modal')
+        //     .waitForElementVisible('confirm-modal button.mat-primary')
+        //     .click('confirm-modal button.mat-primary')
+        //     .waitForElementVisible('div#toast-container')
+        //     .pause(1000)
+        //     .click('shapes-graph-editor-page app-editor-branch-select mat-form-field mat-icon')
+        //     .waitForElementVisible('mat-option')
+        //     .useXpath()
+        //     .assert.not.elementPresent(`//mat-optgroup//mat-option//span[text()[contains(., "${title}")]]`);
+        return this.openBranchSelect(parentEl)
+            .useXpath()
+            .waitForElementVisible('//mat-optgroup/span[text()[contains(., "Branches")]]/following::span[@class="mat-option-text"]')
+            .waitForElementVisible(`//mat-optgroup//mat-option//span[text()[contains(., "${title}")]]/following-sibling::button[contains(@class,"${isBranch ? 'delete-branch' : 'delete-tag'}")]`)
+            .click(`//mat-optgroup//mat-option//span[text()[contains(., "${title}")]]/following-sibling::button[contains(@class,"${isBranch ? 'delete-branch' : 'delete-tag'}")]`)
+            .useCss()
+            .waitForElementVisible('confirm-modal')
+            .waitForElementVisible('confirm-modal button.mat-primary')
+            .click('confirm-modal button.mat-primary')
+            .waitForElementVisible('div#toast-container')
+            .pause(1000)
+            .click(`${parentEl} ${editorBranchSelectIcon}`)
+            .waitForElementVisible('mat-option')
+            .useXpath()
+            .assert.not.elementPresent(`//mat-optgroup//mat-option//span[text()[contains(., "${title}")]]`)
+            .useCss()
+            .click(editorTopBar); // Closes select
     },
 
-    searchOntology: function(searchText) {
-        return this.useCss()
-            .waitForElementPresent(ontologyListPageCss)
-            .clearValue('open-ontology-tab search-bar input')
-            .setValue('open-ontology-tab search-bar input', searchText)
-            .sendKeys('open-ontology-tab search-bar input', this.api.Keys.ENTER);
-    },
-
-    openOntology: function(ontologyTitle) {
-        return this.useXpath()
-            .waitForElementVisible('//ontology-editor-page//open-ontology-tab//div//h3//span[text()[contains(.,"' + ontologyTitle + '")]]')
-            .click('//ontology-editor-page//open-ontology-tab//div//h3//span[text()[contains(.,"' + ontologyTitle + '")]]')
-    }
-}
-
-const ontologySidebarCommands = {
-    verifyBranchSelection: function(title) {
-        return this.useXpath()
-            .waitForElementPresent('//ontology-sidebar//open-ontology-select')
-            .getValue("//ontology-sidebar//open-ontology-select//input", function (result) {
-                this.assert.equal(typeof result, "object");
-                this.assert.equal(result.status, 0);
-                this.assert.equal(result.value, title);
+    deleteRecord: function(parentEl, title) {
+        // TODO: Pretty sure this is not actually deleting the records and validating
+        return this.openRecordSelect(parentEl)
+            .useXpath()
+            .waitForElementVisible('//mat-optgroup/span[text()[contains(., "Open")]]/following::span[@class="mat-option-text"]')
+            .element(`//mat-optgroup/span[text()[contains(., "Open")]]/following::span[@class="mat-option-text"]//span[text()[contains(., "${title}")]]/ancestor::mat-option`, result => {
+                // If Record is opened, close it first
+                (result.value && result.value.ELEMENT ? this.useXpath() : this.useXpath()
+                    .waitForElementVisible(`//mat-optgroup//mat-option//span[contains(text(), "${title}")]/following-sibling::button`)
+                    .click(`//mat-optgroup//mat-option//span[contains(text(), "${title}")]/following-sibling::button`)
+                    .useCss()
+                    .waitForElementNotPresent('mat-optgroup')
+                    .click('shapes-graph-editor-page app-editor-record-select mat-form-field mat-icon')
+                    .useXpath()
+                ).waitForElementVisible(`//mat-optgroup//mat-option//span[contains(text(), "${title}")]/following-sibling::button`)
+                .click(`//mat-optgroup//mat-option//span[contains(text(), "${title}")]/following-sibling::button`)
+                .useCss()
+                .waitForElementVisible('confirm-modal')
+                .waitForElementVisible('confirm-modal button.mat-primary')
+                .click('confirm-modal button.mat-primary')
+                .waitForElementVisible('div#toast-container')
+                .pause(1000)
+                .click(`${parentEl} ${editorRecordSelectIcon}`)
+                .waitForElementVisible('mat-option')
+                .useXpath()
+                .assert.not.elementPresent(`//mat-optgroup//mat-option//span[contains(text(), "${title}")]`)
             });
     },
 
-    switchToBranch: function(title) {
+    uploadChanges: function(parentEl, file) {
         return this.useCss()
-            .click('open-ontology-select .mat-form-field-infix') // open open-ontology-select dropdown
-            .useXpath()
-            .waitForElementVisible('//mat-optgroup//mat-option//span[contains(text(), "' + title + '")]')
-            .click('//mat-optgroup//mat-option//span[contains(text(), "' + title + '")]');
+            .waitForElementVisible(parentEl)
+            .waitForElementVisible(`${parentEl} ${editorTopBar}`)
+            .click(uploadChangesButton)
+            .waitForElementVisible('app-upload-changes-modal')
+            .waitForElementVisible('app-upload-changes-modal file-input')
+            .waitForElementVisible('app-upload-changes-modal div.mat-dialog-actions button.mat-primary')
+            .uploadFile('app-upload-changes-modal file-input input', file)
+            .click('app-upload-changes-modal div.mat-dialog-actions button.mat-primary')
+            .waitForElementNotPresent('app-create-branch-modal div.mat-dialog-actions button:not(.mat-primary)');
     },
 
-    deleteBranch: function(title) {
+    commit: function(parentEl, message) {
         return this.useCss()
-            .click('open-ontology-select .mat-form-field-infix') // open open-ontology-select dropdown
-            .useXpath()
-            .waitForElementVisible('//mat-optgroup//mat-option//span[contains(text(), "' + title + '")]')
-            .click('//mat-optgroup//mat-option//span[contains(text(), "' + title + '")]//following-sibling::span//a[contains(@class, "fa-trash-o")]')
-            .useCss()
-            .waitForElementVisible('mat-dialog-container confirm-modal button.mat-primary')
-            .click('mat-dialog-container confirm-modal button.mat-primary')
+            .waitForElementVisible(parentEl)
+            .waitForElementVisible(`${parentEl} ${editorTopBar}`)
+            .click(`${parentEl} ${editorTopBar} button.commit`)
+            .waitForElementVisible('app-commit-modal')
+            .waitForElementVisible('app-commit-modal textarea')
+            .waitForElementVisible('app-commit-modal div.mat-dialog-actions button.mat-primary')
+            .sendKeys('app-commit-modal textarea', message)
+            .click('app-commit-modal div.mat-dialog-actions button.mat-primary')
+            .waitForElementNotPresent('app-commit-modal div.mat-dialog-actions button:not(.mat-primary)');
+    },
+
+    toggleChangesPage: function(parentEl, open = true) {
+      this.useCss()
+          .waitForElementVisible(parentEl)
+          .waitForElementVisible(`${parentEl} ${editorTopBar}`)
+          .click('app-editor-top-bar button.changes');
+      if (open) {
+          return this.waitForElementVisible('app-changes-page');
+      } else {
+          return this.waitForElementNotPresent('app-changes-page');
+      }
     }
-}
-
-const ontologyStackCommands = {
-    openCommitOverlay: function() {
-        return this.useCss()
-            .waitForElementVisible('ontology-tab')
-            .moveToElement('ontology-button-stack circle-button-stack', 0, 0)
-            .waitForElementVisible('ontology-button-stack circle-button-stack button.btn-info')
-            .click('ontology-button-stack circle-button-stack button.btn-info')
-            .waitForElementVisible('commit-overlay');
-    },
-
-    editCommitOverlayAndSubmit: function(comment) {
-        return this.useCss()
-            .waitForElementVisible('commit-overlay')
-            .assert.textContains('commit-overlay h1.mat-dialog-title', 'Commit')
-            .setValue('commit-overlay textarea[name=comment]', comment)
-            .useXpath()
-            .click('//commit-overlay//span[text()="Submit"]');
-    },
-
-    openNewBranchOverlay: function() {
-        return this.useCss()
-            .waitForElementVisible('ontology-tab')
-            .moveToElement('ontology-button-stack circle-button-stack', 0, 0)
-            .waitForElementVisible('ontology-button-stack circle-button-stack button i.fa-code-fork')
-            .click('ontology-button-stack circle-button-stack button.btn-warning i.fa-code-fork')
-            .waitForElementVisible('create-branch-overlay h1.mat-dialog-title')
-            .assert.textContains('create-branch-overlay h1.mat-dialog-title', 'Create New Branch');
-    },
-
-    editNewBranchOverlayAndSubmit: function(title, description) {
-        return this.useXpath()
-            .waitForElementVisible('//create-branch-overlay//input[@data-placeholder="Title"]')
-            .waitForElementVisible('//create-branch-overlay//textarea[@data-placeholder="Description"]')
-            .setValue('//create-branch-overlay//input[@data-placeholder="Title"]', title)
-            .setValue('//create-branch-overlay//textarea[@data-placeholder="Description"]', description)
-            .click('//create-branch-overlay//span[text()="Submit"]');
-    },
-
-    createNewOwlClass: function(title, description) {
-        return this.useCss()
-            .click('ontology-button-stack circle-button-stack')
-            .waitForElementVisible('create-entity-modal h1.mat-dialog-title')
-            .assert.textContains('create-entity-modal h1.mat-dialog-title', 'Create Entity')
-            .click('create-entity-modal .create-class')
-            .waitForElementNotPresent('create-entity-modal .create-class')
-            .waitForElementVisible('create-class-overlay h1.mat-dialog-title')
-            .assert.textContains('create-class-overlay h1.mat-dialog-title', 'Create New OWL Class')
-            .useXpath()
-            .waitForElementVisible('//mat-label[text()[contains(.,"Name")]]//ancestor::mat-form-field//input')
-            .setValue('//mat-label[text()[contains(.,"Name")]]//ancestor::mat-form-field//input', title)
-            .setValue('//mat-label[text()[contains(.,"Description")]]//ancestor::mat-form-field//textarea', description)
-            .click('//create-class-overlay//span[text()="Submit"]');
-    },
-}
-
-const projectTabCommands = {
-    onProjectTab: function() {
-        return this.useCss()
-            .waitForElementVisible('ontology-editor-page')
-            .waitForElementVisible('ontology-editor-page ontology-tab')
-            .waitForElementVisible('ontology-editor-page ontology-tab project-tab')
-            .waitForElementVisible('xpath', '//mat-tab-header//div[text()[contains(.,"Project")]]')
-            .waitForElementVisible('ontology-editor-page ontology-tab project-tab selected-details')
-            .waitForElementVisible('ontology-editor-page ontology-tab project-tab selected-details static-iri')
-            .waitForElementVisible('ontology-editor-page ontology-tab project-tab ontology-properties-block')
-            .waitForElementVisible('ontology-editor-page ontology-tab project-tab imports-block')
-            .waitForElementVisible('ontology-editor-page ontology-tab project-tab preview-block');
-    },
-
-    verifyProjectTab: function(title, description, iri) {
-        return this.useXpath()
-            .waitForElementVisible('//project-tab//ontology-properties-block//value-display//span[text()[contains(.,"' + title + '")]]')
-            .waitForElementVisible('//project-tab//ontology-properties-block//value-display//span[text()[contains(.,"' + description + '")]]')
-            .waitForElementVisible('//project-tab//selected-details//static-iri//span[text()[contains(.,"' + iri + '")]]');
-    },
-
-    editIri: function(newIriEnd) {
-        return this.useXpath()
-            .waitForElementVisible('//static-iri//div[contains(@class, "static-ir")]//span//a//i[contains(@class, "fa-pencil")]')
-            .click('//static-iri//div[contains(@class, "static-ir")]//span//a//i[contains(@class, "fa-pencil")]')
-            .waitForElementVisible('//edit-iri-overlay')
-            .waitForElementVisible("//edit-iri-overlay//h1[text() [contains(., 'Edit IRI')]]")
-            .useCss()
-            .pause(1000) // To avoid clashes with autofocusing
-            .setValue('edit-iri-overlay input[name=iriEnd]', newIriEnd)
-            .useXpath()
-            .click("//edit-iri-overlay//button/span[text() [contains(., 'Submit')]]")
-            .waitForElementNotPresent('//edit-iri-overlay')
-            .assert.not.elementPresent("//edit-iri-overlay//button/span[text() [contains(., 'Submit')]]")
-    },
 }
 
 module.exports = {
     elements: {
-        page: ontologyListPageCss
+        createBranchButton: createBranchButton,
+        createTagButton: createTagButton,
+        mergeBranchesButton: mergeBranchesButton,
+        downloadButton: downloadButton,
+        uploadChangesButton: uploadChangesButton,
+        editorRecordSelect: editorRecordSelect,
+        editorRecordSelectInput: editorRecordSelectInput,
+        editorRecordSelectIcon: editorRecordSelectIcon,
+        editorBranchSelect: editorBranchSelect,
+        editorBranchSelectInput: editorBranchSelectInput,
+        editorBranchSelectIcon: editorBranchSelectIcon,
+        createRecordButton: createRecordButton,
+        uploadRecordButton: uploadRecordButton
     },
-    commands: [ontologyPageCommands, ontologySidebarCommands, ontologyStackCommands, projectTabCommands],
+    commands: [editorCommands],
 }
 

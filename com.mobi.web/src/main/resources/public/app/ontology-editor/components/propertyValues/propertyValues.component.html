@@ -21,12 +21,12 @@
   #L%
   -->
 <div class="property-values mt-3">
-    <div class="prop-header d-flex align-items-baseline clearfix">
-        <p class="text text-truncate m-0" title="{{property}}">{{os.getEntityNameByListItem(property, os.listItem)}}</p>
+    <div class="prop-header d-flex align-items-baseline clearfix" title="{{property}}">
+        <p class="text text-truncate m-0">{{os.getEntityName(property)}}</p>
         <small class="ml-1 text-muted text-truncate flex-1">&lt;{{property}}&gt;</small>
     </div>
     <div class="prop-value-container d-flex p-1 ml-3 mt-1" *ngFor="let value of entity[property]; index as $index">
-        <span *ngIf="os.isLinkable(value['@id']); else notLinkable" class="value-display-wrapper flex-1 remove-min-width">{{os.getEntityNameByListItem(value['@id'])}} <small>&lt;<a (click)="os.goTo(value['@id'])">{{value['@id']}}</a>&gt;</small></span>
+        <span *ngIf="os.isLinkable(value['@id']); else notLinkable" class="value-display-wrapper flex-1 remove-min-width">{{os.getEntityName(value['@id'])}} <small>&lt;<a (click)="os.goTo(value['@id'])">{{value['@id']}}</a>&gt;</small></span>
         <ng-template #notLinkable><span class="value-display-wrapper flex-1 remove-min-width">
             <blank-node-value-display *ngIf="isBlankNodeId(value['@id']); else notBlankNode" [node]="value"></blank-node-value-display>
             <ng-template #notBlankNode>

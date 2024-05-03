@@ -199,7 +199,7 @@ export class IriSelectOntologyComponent implements OnInit, OnChanges {
         })), group => group.namespace.toUpperCase());
     }
     getName(value: string, isBlankNode?: boolean): string {
-        return isBlankNode ? this.os.getBlankNodeValue(value) : this.os.getEntityNameByListItem(value);
+        return isBlankNode ? this.os.getBlankNodeValue(value) : this.os.getEntityName(value);
     }
     displayFn(iriOption: IriOption): string {
         return iriOption ? iriOption.name : '';

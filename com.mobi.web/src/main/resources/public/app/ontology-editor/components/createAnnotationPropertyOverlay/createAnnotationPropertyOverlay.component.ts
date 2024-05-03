@@ -31,6 +31,7 @@ import { CamelCasePipe } from '../../../shared/pipes/camelCase.pipe';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { REGEX } from '../../../constants';
 import { splitIRI } from '../../../shared/pipes/splitIRI.pipe';
+import { addLanguageToAnnotations } from '../../../shared/utility';
 
 /**
  * @class ontology-editor.CreateAnnotationPropertyOverlayComponent
@@ -91,7 +92,7 @@ export class CreateAnnotationPropertyOverlayComponent implements OnInit {
         if (property[`${DCTERMS}description`][0]['@value'] === '') {
             unset(property, `${DCTERMS}description`);
         }
-        this.os.addLanguageToNewEntity(property, this.createForm.controls.language.value);
+        addLanguageToAnnotations(property, this.createForm.controls.language.value);
         return property;
     }
     create(): void {

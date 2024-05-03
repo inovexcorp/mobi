@@ -28,13 +28,13 @@ import { MockComponent, MockProvider } from 'ng-mocks';
 import { YateComponent } from '../yate/yate.component';
 
 import { cleanStylesFromDOM } from '../../../../../public/test/ts/Shared';
-import { EditorTopBarComponent } from '../editorTopBar/editorTopBar.component';
-import { ShapesGraphMergePageComponent } from '../shapesGraphMergePage/shapesGraphMergePage.component';
-import { ShapesGraphChangesPageComponent } from '../shapesGraphChangesPage/shapesGraphChangesPage.component';
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
 import { ShapesGraphDetailsComponent } from '../shapesGraphDetails/shapesGraphDetails.component';
 import { ShapesGraphPropertiesBlockComponent } from '../shapesGraphPropertiesBlock/shapesGraphPropertiesBlock.component';
 import { ShapesGraphListItem } from '../../../shared/models/shapesGraphListItem.class';
+import { EditorTopBarComponent } from '../../../versioned-rdf-record-editor/components/editor-top-bar/editor-top-bar.component';
+import { ChangesPageComponent } from '../../../versioned-rdf-record-editor/components/changes-page/changes-page.component';
+import { MergePageComponent } from '../../../versioned-rdf-record-editor/components/merge-page/merge-page.component';
 import { ShapesGraphEditorPageComponent } from './shapesGraphEditorPage.component';
 
 describe('Shapes Graph Editor Page component', function() {
@@ -50,8 +50,8 @@ describe('Shapes Graph Editor Page component', function() {
             declarations: [
                 ShapesGraphEditorPageComponent,
                 MockComponent(EditorTopBarComponent),
-                MockComponent(ShapesGraphChangesPageComponent),
-                MockComponent(ShapesGraphMergePageComponent),
+                MockComponent(ChangesPageComponent),
+                MockComponent(MergePageComponent),
                 MockComponent(ShapesGraphDetailsComponent),
                 MockComponent(ShapesGraphPropertiesBlockComponent),
                 MockComponent(YateComponent)
@@ -82,39 +82,39 @@ describe('Shapes Graph Editor Page component', function() {
             it('when no active merge', async function() {
                 fixture.detectChanges();
                 await fixture.whenStable();
-                expect(element.queryAll(By.css('editor-top-bar')).length).toEqual(1);
+                expect(element.queryAll(By.css('app-editor-top-bar')).length).toEqual(1);
             });
             it('with an active merge', async function() {
                 shapesGraphStateStub.listItem.merge.active = true;
                 fixture.detectChanges();
                 await fixture.whenStable();
-                expect(element.queryAll(By.css('editor-top-bar')).length).toEqual(0);
+                expect(element.queryAll(By.css('app-editor-top-bar')).length).toEqual(0);
             });
         });
         describe('with shapes graph merge page', function() {
             it('when no active merge', async function() {
                 fixture.detectChanges();
                 await fixture.whenStable();
-                expect(element.queryAll(By.css('shapes-graph-merge-page')).length).toEqual(0);
+                expect(element.queryAll(By.css('app-merge-page')).length).toEqual(0);
             });
             it('with an active merge', async function() {
                 shapesGraphStateStub.listItem.merge.active = true;
                 fixture.detectChanges();
                 await fixture.whenStable();
-                expect(element.queryAll(By.css('shapes-graph-merge-page')).length).toEqual(1);
+                expect(element.queryAll(By.css('app-merge-page')).length).toEqual(1);
             });
         });
         describe('with shapes graph changes page', function() {
             it('when no active merge', async function() {
                 fixture.detectChanges();
                 await fixture.whenStable();
-                expect(element.queryAll(By.css('shapes-graph-changes-page')).length).toEqual(0);
+                expect(element.queryAll(By.css('app-changes-page')).length).toEqual(0);
             });
             it('with an active merge', async function() {
                 shapesGraphStateStub.listItem.changesPageOpen = true;
                 fixture.detectChanges();
                 await fixture.whenStable();
-                expect(element.queryAll(By.css('shapes-graph-changes-page')).length).toEqual(1);
+                expect(element.queryAll(By.css('app-changes-page')).length).toEqual(1);
             });
         });
     });

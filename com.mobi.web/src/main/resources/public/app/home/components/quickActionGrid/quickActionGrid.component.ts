@@ -20,13 +20,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { chunk, isEmpty } from 'lodash';
+import { chunk } from 'lodash';
 import { Component, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { WindowRef } from '../../../shared/services/windowRef.service';
 import { DiscoverStateService } from '../../../shared/services/discoverState.service';
-import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 
 /**
  * @class home.QuickActionGridComponent
@@ -43,8 +42,7 @@ import { OntologyStateService } from '../../../shared/services/ontologyState.ser
 export class QuickActionGridComponent implements OnInit {
     actions = [];
 
-    constructor(private windowRef: WindowRef, private router: Router, private os: OntologyStateService,
-                private ds: DiscoverStateService) {}
+    constructor(private windowRef: WindowRef, private router: Router, private ds: DiscoverStateService) {}
     
     ngOnInit(): void {
         const actions = [
@@ -85,10 +83,6 @@ export class QuickActionGridComponent implements OnInit {
         this.router.navigate(['/catalog']);
     }
     openAnOntology(): void {
-        if (!isEmpty(this.os.listItem)) {
-            this.os.listItem.active = false;
-        }
-        this.os.listItem = undefined;
         this.router.navigate(['/ontology-editor']);
     }
     readTheDocumentation(): void {

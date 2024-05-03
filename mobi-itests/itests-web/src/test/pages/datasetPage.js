@@ -21,13 +21,22 @@
  * #L%
  */
 const datasetCommands = {
-    createDataset: function(title, description) {
-        return this.click('div.datasets-page button.mat-primary')
+    createDataset: function(title, description, onts) {
+        this.click('div.datasets-page button.mat-primary')
             .waitForElementVisible('new-dataset-overlay')
             .waitForElementVisible('new-dataset-overlay input[name="title"]')
             .setValue('div.mat-dialog-content input[name=title]', title)
             .setValue('div.mat-dialog-content textarea', description);
-        // .click('xpath', '//div[contains(@class, "datasets-ontology-picker")]//h4[text()[contains(.,"uhtc-ontology")]]//ancestor::mat-list-option')
+        if (onts) {
+          onts.forEach(function(ont) {
+              this.useXpath()
+                  .waitForElementVisible(`//div[contains(@class, "datasets-ontology-picker")]//h4[text()[contains(.,"${ont}")]]//ancestor::mat-list-option`)
+                  .click(`//div[contains(@class, "datasets-ontology-picker")]//h4[text()[contains(.,"${ont}")]]//ancestor::mat-list-option`);
+          }.bind(this));
+        }
+        return this.useCss()
+            .click('new-dataset-overlay div.mat-dialog-actions button.mat-primary')
+            .waitForElementNotPresent('new-dataset-overlay div.mat-dialog-actions button:not(.mat-primary)');
     }
 }
 

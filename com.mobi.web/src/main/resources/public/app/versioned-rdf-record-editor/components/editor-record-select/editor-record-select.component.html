@@ -1,0 +1,85 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 - 2024 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<input #recordSelectFileInput class="d-none" type="file" (change)="updateFiles($event.target.files)" multiple accept=".ttl,.xml,.jsonld,.rdf,.json,.n3,.nq,.nt,.owl,.obo,.txt,.json,.ofn,.omn,.owx,.rdfs,.zip"/>
+<mat-form-field class="editor-record-select">
+  <span matPrefix class="spinner-prefix" #editorRecordSelectSpinner></span>
+  <input class="text-truncate" matInput #textInput placeholder="Select {{beautifulTypeName}}" [matAutocomplete]="recordAutocomplete"
+         [formControl]="recordSearchControl" (focusin)="retrieveRecords()"/>
+  <mat-icon matSuffix>keyboard_arrow_down</mat-icon>
+  <mat-autocomplete class="panel-max-height record-options-select"
+                    #recordAutocomplete="matAutocomplete"
+                    (optionSelected)="selectRecord($event)"
+                    [panelWidth]="501"
+                    [displayWith]="displayWith">
+    <mat-option [disabled]="true">
+      <span class="d-flex justify-content-around">
+        <button class="create-record"
+                matTooltip="You do not have permission to create {{typeName}}s"
+                [matTooltipDisabled]="!disabledFlag"
+                mat-button color="primary"
+                [disabled]="disabledFlag"
+                (click)="create($event)">
+            New
+        </button>
+        <button class="upload-record"
+                matTooltip="You do not have permission to create {{typeName}}s"
+                [matTooltipDisabled]="!disabledFlag"
+                mat-button color="primary"
+                [disabled]="disabledFlag"
+                (click)="upload($event)">
+            Upload
+        </button>
+      </span>
+    </mat-option>
+    <mat-divider></mat-divider>
+    <mat-optgroup *ngFor="let group of filteredOptions | async" [label]="group.title">
+      <mat-option *ngFor="let option of group.options" [disabled]="isSelected(option)" [ngStyle]="{ 'height': option.description ? 'unset' : '48px' }" [value]="option">
+        <span class="d-flex">
+          <span class="flex-1 text-truncate editor-record-select-record-text">{{option.title}}
+            <p class="small text-muted text-truncate" [title]="option.identifierIRI">{{option.identifierIRI}}</p>
+          </span>
+          <button *ngIf="group.title === 'Open'; else otherButtons"
+                  class="close-record"
+                  mat-icon-button
+                  color="primary"
+                  (click)="closeRecord(option.recordId)">
+            <mat-icon class="w-100">close</mat-icon>
+          </button>
+          <ng-template #otherButtons>
+            <button class="download-record"
+                    mat-icon-button
+                    color="primary"
+                    (click)="showDownloadOverlay(option, $event)">
+              <mat-icon class="w-100">download</mat-icon>
+            </button>
+            <button class="delete-record"
+                    mat-icon-button
+                    color="primary"
+                    [disabled]="option.canNotDelete"
+                    (click)="showDeleteConfirmationOverlay(option, $event)">
+              <mat-icon class="w-100">delete</mat-icon>
+            </button>
+          </ng-template>
+        </span>
+      </mat-option>
+    </mat-optgroup>
+  </mat-autocomplete>
+</mat-form-field>

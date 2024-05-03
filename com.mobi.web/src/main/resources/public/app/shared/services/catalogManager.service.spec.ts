@@ -34,6 +34,7 @@ import { Difference } from '../models/difference.class';
 import { JSONLDObject } from '../models/JSONLDObject.interface';
 import { SortOption } from '../models/sortOption.interface';
 import { CATALOG, DCTERMS } from '../../prefixes';
+import { RESTError } from '../models/RESTError.interface';
 import { CatalogManagerService } from './catalogManager.service';
 
 describe('Catalog Manager service', function() {
@@ -42,6 +43,11 @@ describe('Catalog Manager service', function() {
     let progressSpinnerStub: jasmine.SpyObj<ProgressSpinnerService>;
 
     const error = 'Error Message';
+    const errorObj: RESTError = {
+      error: '',
+      errorDetails: [],
+      errorMessage: error
+    };
     const entityId = 'test';
     const catalogId = 'http://mobi.com/catalogs/local';
     const recordId = 'http://mobi.com/records/test';
@@ -784,11 +790,11 @@ describe('Catalog Manager service', function() {
         it('unless an error occurs', function() {
             service.createRecordTag(recordId, catalogId, this.tagConfig)
                 .subscribe(() => fail('Observable should have rejected'), response => {
-                    expect(response).toEqual(error);
+                    expect(response).toEqual(errorObj);
                 });
             const request = httpMock.expectOne({url: this.url, method: 'POST'});
             expect(request.request.body instanceof FormData).toBeTruthy();
-            request.flush('flush', { status: 400, statusText: error });
+            request.flush(errorObj, { status: 400, statusText: error });
         });
         it('with a description', function() {
             service.createRecordTag(recordId, catalogId, this.tagConfig)
@@ -1457,11 +1463,11 @@ describe('Catalog Manager service', function() {
         it('unless an error occurs', function() {
             service.createBranchCommit(branchId, recordId, catalogId, 'test')
                 .subscribe(() => fail('Observable should have rejected'), response => {
-                    expect(response).toEqual(error);
+                    expect(response).toEqual(errorObj);
                 });
             const request = httpMock.expectOne(req => req.url === this.url && req.method === 'POST');
             expect(request.request.params.get('message').toString()).toEqual('test');
-            request.flush('flush', { status: 400, statusText: error });
+            request.flush(errorObj, { status: 400, statusText: error });
         });
         it('successfully', function() {
             service.createBranchCommit(branchId, recordId, catalogId, 'test')

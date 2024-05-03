@@ -24,18 +24,6 @@
 @import "../../../css/variables";
 
 .ontology-tab {
-    &.up-to-date .mat-tab-label .fa.fa-exclamation-triangle {
-        display: none;
-    }
-    .mat-tab-label {
-        &.mat-tab-label-active .fa.fa-exclamation-triangle {
-            color: var(--danger);
-        }
-
-        .fa.fa-exclamation-triangle {
-            color: var(--danger-light);
-        }
-    }
     .selected-header {
         .btn-container {
             button[color='primary'] {

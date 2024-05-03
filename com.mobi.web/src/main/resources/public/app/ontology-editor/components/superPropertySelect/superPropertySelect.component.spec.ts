@@ -75,7 +75,7 @@ describe('Super Property Select component', function() {
 
         ontologyStateStub.listItem = new OntologyListItem();
         spyOn(component.selectedChange, 'emit');
-        ontologyStateStub.getEntityNameByListItem.and.returnValue(propOption.name);
+        ontologyStateStub.getEntityName.and.returnValue(propOption.name);
         component.key = 'dataProperties';
     });
 

@@ -45,7 +45,6 @@ import { CatalogManagerService } from './catalogManager.service';
 import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
 import { REST_PREFIX } from '../../constants';
 import { DC, ONTOLOGYEDITOR, OWL, RDFS, SKOS, SKOSXL } from '../../prefixes';
-import { OntologyRecordConfig } from '../models/ontologyRecordConfig.interface';
 import { VocabularyStuff } from '../models/vocabularyStuff.interface';
 import { OntologyStuff } from '../models/ontologyStuff.interface';
 import { PropertyToRanges } from '../models/propertyToRanges.interface';
@@ -69,6 +68,8 @@ import {
     isBlankNode
 } from '../utility';
 import { OBJ_PROPERTY_VALUES_QUERY } from '../../queries';
+import { RdfUpload } from '../models/rdfUpload.interface';
+import { VersionedRdfUploadResponse } from '../models/versionedRdfUploadResponse.interface';
 
 /**
  * @class shared.OntologyManagerService
@@ -106,13 +107,13 @@ export class OntologyManagerService {
      * with the file/JSON-LD provided. This creates a new OntologyRecord associated with this ontology. Returns an
      * observable indicating whether the ontology was persisted. Provide either a file or JSON-LD, but not both.
      *
-     * @param {OntologyRecordConfig} config A configuration object containing metadata for the new Record as well as
+     * @param {RdfUpload} config A configuration object containing metadata for the new Record as well as
      * the actual data itself
+     * @param {boolean} isTracked Whether the request should be tracked by the {@link shared.ProgressSpinnerService}
      * @returns {Observable} An Observable that resolves with the ontology record metadata if successfully persisted or
      * rejects with an error message
      */
-    uploadOntology(config: OntologyRecordConfig): Observable<{ontologyId: string, recordId: string, branchId: string, 
-      commitId: string} | RESTError> {
+    uploadOntology(config: RdfUpload, isTracked = false): Observable<VersionedRdfUploadResponse> {
         const fd = new FormData();
         let prepObservable: Observable<null>;
         if (config.file !== undefined) {
@@ -146,8 +147,8 @@ export class OntologyManagerService {
                     fd.append('description', config.description);
                 }
                 forEach(config.keywords, word => fd.append('keywords', word));
-                return this.http.post<{ontologyId: string, recordId: string, branchId: string, commitId: string}>(this.prefix, fd)
-                    .pipe(catchError(handleErrorObject));
+                const request = this.http.post<{ontologyId: string, recordId: string, branchId: string, commitId: string}>(this.prefix, fd);
+                return this.spinnerSrv.trackedRequest(request, isTracked).pipe(catchError(handleErrorObject));
             })
         );
     }
@@ -267,6 +268,17 @@ export class OntologyManagerService {
         window.open(`${this.prefix}/${encodeURIComponent(recordId)}?${params.toString()}`);
     }
     /**
+     * 
+     * @param recordId 
+     * @param commitId 
+     * @returns 
+     */
+    clearCache(recordId: string, commitId: string): Observable<void> {
+      const params = createHttpParams({ commitId });
+      return this.spinnerSrv.track(this.http.delete(`${this.prefix}/${encodeURIComponent(recordId)}/cache`, { params }))
+        .pipe(catchError(handleError), map(() => {}));
+    }
+    /**
      * Calls the DELETE /mobirest/ontologies/{recordId}/branches/{branchId} endpoint which deletes the provided
      * branch from the OntologyRecord
      *
@@ -305,7 +317,7 @@ export class OntologyManagerService {
      * @param {boolean} isTracked Whether the request should be tracked by the {@link shared.ProgressSpinnerService}
      * @return {Observable<OntologyStuff>} An Observable with an OntologyStuff object containing listItem keys.
      */
-    getOntologyStuff(recordId: string, branchId: string, commitId: string, clearCache: boolean, isTracked = false): 
+    getOntologyStuff(recordId: string, branchId: string, commitId: string, clearCache = false, isTracked = false): 
       Observable<OntologyStuff> {
         const params = { branchId, commitId, clearCache };
         const url = `${this.prefix}/${encodeURIComponent(recordId)}/ontology-stuff`;

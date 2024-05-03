@@ -101,7 +101,7 @@ export class OntologyVisualizationService {
             ontologyListItem.inProgressCommit.additions = inProgressCommit?.additions;
             ontologyListItem.inProgressCommit.deletions = inProgressCommit?.deletions;
         }
-        const hasInProgressCommit: boolean = inProgressCommit ? this.os.hasInProgressCommit(ontologyListItem) : null;
+        const hasInProgressCommit: boolean = !!inProgressCommit && !!inProgressCommit?.additions.length && !!inProgressCommit?.deletions.length;
         return of(commitId).pipe(
             tap((commitId: string): void => {
                 if (this.os.listItem.hasPendingRefresh) {

@@ -392,7 +392,7 @@ describe('Imports Overlay component', function() {
                 expect(toastStub.createWarningToast).toHaveBeenCalledWith('Duplicate property values not allowed');
                 expect(ontologyStateStub.addToAdditions).not.toHaveBeenCalled();
                 expect(ontologyStateStub.saveCurrentChanges).not.toHaveBeenCalled();
-                expect(ontologyStateStub.updateOntology).not.toHaveBeenCalled();
+                expect(ontologyStateStub.changeVersion).not.toHaveBeenCalled();
                 expect(matDialogRef.close).toHaveBeenCalledWith(false);
             });
             describe('if there are no duplicated values', function() {
@@ -409,23 +409,23 @@ describe('Imports Overlay component', function() {
                     });
                     it('when update ontology resolves', fakeAsync(function() {
                         ontologyStateStub.isCommittable.and.returnValue(true);
-                        ontologyStateStub.updateOntology.and.returnValue(of(null));
+                        ontologyStateStub.changeVersion.and.returnValue(of(null));
                         component.confirmed([url], 0);
                         tick();
                         expect(propertyManagerStub.addId).toHaveBeenCalledWith(ontologyStateStub.listItem.selected, `${OWL}imports`, url);
                         expect(ontologyStateStub.addToAdditions).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, this.additionsObj);
                         expect(ontologyStateStub.saveCurrentChanges).toHaveBeenCalledWith();
-                        expect(ontologyStateStub.updateOntology).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, ontologyStateStub.listItem.versionedRdfRecord.branchId, ontologyStateStub.listItem.versionedRdfRecord.commitId, ontologyStateStub.listItem.upToDate, ontologyStateStub.listItem.inProgressCommit);
+                        expect(ontologyStateStub.changeVersion).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, ontologyStateStub.listItem.versionedRdfRecord.branchId, ontologyStateStub.listItem.versionedRdfRecord.commitId, undefined, ontologyStateStub.listItem.currentVersionTitle, ontologyStateStub.listItem.upToDate, false, false);
                         expect(matDialogRef.close).toHaveBeenCalledWith(true);
                     }));
                     it('when update ontology rejects', fakeAsync(function() {
-                        ontologyStateStub.updateOntology.and.returnValue(throwError(error));
+                        ontologyStateStub.changeVersion.and.returnValue(throwError(error));
                         component.confirmed([url], 0);
                         tick();
                         expect(propertyManagerStub.addId).toHaveBeenCalledWith(ontologyStateStub.listItem.selected, `${OWL}imports`, url);
                         expect(ontologyStateStub.addToAdditions).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, this.additionsObj);
                         expect(ontologyStateStub.saveCurrentChanges).toHaveBeenCalledWith();
-                        expect(ontologyStateStub.updateOntology).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, ontologyStateStub.listItem.versionedRdfRecord.branchId, ontologyStateStub.listItem.versionedRdfRecord.commitId, ontologyStateStub.listItem.upToDate, ontologyStateStub.listItem.inProgressCommit);
+                        expect(ontologyStateStub.changeVersion).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, ontologyStateStub.listItem.versionedRdfRecord.branchId, ontologyStateStub.listItem.versionedRdfRecord.commitId, undefined, ontologyStateStub.listItem.currentVersionTitle, ontologyStateStub.listItem.upToDate, false, false);
                         expect(matDialogRef.close).not.toHaveBeenCalled();
                         expect(component.urlError).toEqual(error);
                     }));
@@ -437,7 +437,7 @@ describe('Imports Overlay component', function() {
                     expect(propertyManagerStub.addId).toHaveBeenCalledWith(ontologyStateStub.listItem.selected, `${OWL}imports`, url);
                     expect(ontologyStateStub.addToAdditions).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, this.additionsObj);
                     expect(ontologyStateStub.saveCurrentChanges).toHaveBeenCalledWith();
-                    expect(ontologyStateStub.updateOntology).not.toHaveBeenCalled();
+                    expect(ontologyStateStub.changeVersion).not.toHaveBeenCalled();
                     expect(matDialogRef.close).not.toHaveBeenCalled();
                     expect(component.urlError).toEqual(error);
                 }));

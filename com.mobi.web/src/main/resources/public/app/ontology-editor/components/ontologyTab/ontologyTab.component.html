@@ -20,10 +20,9 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="ontology-tab h-100" [ngClass]="{'up-to-date': os.listItem.upToDate && !os.listItem.userBranch}">
+<div class="ontology-tab h-100">
     <see-history *ngIf="os.listItem.seeHistory"></see-history>
-    <merge-tab *ngIf="os.listItem.merge.active"></merge-tab>
-    <div class="main-tabs h-100" *ngIf="!os.listItem.merge.active && !os.listItem.seeHistory">
+    <div class="main-tabs h-100" *ngIf="!os.listItem.seeHistory">
         <mat-tab-group #tabsGroup dynamicHeight="true" class="h-100" [(selectedIndex)]="os.listItem.tabIndex" (selectedTabChange)="onTabChanged($event)">
             <mat-tab label="Project">
                 <ng-template matTabContent>
@@ -69,17 +68,6 @@
                     <button mat-menu-item class="find-button" (click)="os.listItem.editorTabStates.search.openIndex = 0">Find</button>
                     <button mat-menu-item class="query-button" (click)="os.listItem.editorTabStates.search.openIndex = 1">Query</button>
                 </mat-menu>
-            </mat-tab>
-            <mat-tab>
-                <ng-template mat-tab-label><i class="fa fa-exclamation-triangle"></i> Changes</ng-template>
-                <ng-template matTabContent>
-                    <saved-changes-tab [difference]="os.listItem.inProgressCommit"></saved-changes-tab>
-                </ng-template>
-            </mat-tab>
-            <mat-tab label="Commits">
-                <ng-template matTabContent>
-                    <commits-tab (doRealignTabs)="realignTabs()"></commits-tab>
-                </ng-template>
             </mat-tab>
             <mat-tab class="mobi-visualization" label="Visualization">
                 <ng-template matTabContent>

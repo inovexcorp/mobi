@@ -36,15 +36,12 @@ import {
 import { SharedModule } from '../../../shared/shared.module';
 import { WindowRef } from '../../../shared/services/windowRef.service';
 import { DiscoverStateService } from '../../../shared/services/discoverState.service';
-import { OntologyStateService } from '../../../shared/services/ontologyState.service';
-import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
 import { QuickActionGridComponent } from './quickActionGrid.component';
 
 describe('Quick Action Grid component', function() {
     let component: QuickActionGridComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<QuickActionGridComponent>;
-    let ontologyStateStub: jasmine.SpyObj<OntologyStateService>;
     let discoverStateStub: jasmine.SpyObj<DiscoverStateService>;
     let windowRefStub;
     let router: Router;
@@ -57,7 +54,6 @@ describe('Quick Action Grid component', function() {
             ],
             providers: [
                 MockProvider(DiscoverStateService),
-                MockProvider(OntologyStateService),
                 { provide: WindowRef, useClass: mockWindowRef },
             ]
         });
@@ -67,7 +63,6 @@ describe('Quick Action Grid component', function() {
         fixture = TestBed.createComponent(QuickActionGridComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
-        ontologyStateStub = TestBed.inject(OntologyStateService) as jasmine.SpyObj<OntologyStateService>;
         discoverStateStub = TestBed.inject(DiscoverStateService) as jasmine.SpyObj<DiscoverStateService>;
         windowRefStub = TestBed.inject(WindowRef) as jasmine.SpyObj<WindowRef>;
         router = TestBed.inject(Router) as jasmine.SpyObj<Router>;
@@ -79,7 +74,6 @@ describe('Quick Action Grid component', function() {
         component = null;
         element = null;
         fixture = null;
-        ontologyStateStub = null;
         discoverStateStub = null;
         windowRefStub = null;
         router = null;
@@ -95,21 +89,9 @@ describe('Quick Action Grid component', function() {
             component.searchTheCatalog();
             expect(router.navigate).toHaveBeenCalledWith(['/catalog']);
         });
-        describe('should open an ontology', function() {
-            it('if one is selected', function() {
-                const item = new OntologyListItem();
-                item.active = true;
-                ontologyStateStub.listItem = item;
-                component.openAnOntology();
-                expect(router.navigate).toHaveBeenCalledWith(['/ontology-editor']);
-                expect(item.active).toEqual(false);
-                expect(ontologyStateStub.listItem).toEqual(undefined);
-            });
-            it('if one is not selected', function() {
-                component.openAnOntology();
-                expect(router.navigate).toHaveBeenCalledWith(['/ontology-editor']);
-                expect(ontologyStateStub.listItem).toEqual(undefined);
-            });
+        it('should open an ontology', function() {
+            component.openAnOntology();
+            expect(router.navigate).toHaveBeenCalledWith(['/ontology-editor']);
         });
         it('should explore data', function() {
             component.exploreData();

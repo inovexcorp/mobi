@@ -26,7 +26,6 @@
             <form [formGroup]="previewForm">
                 <serialization-select class="d-inline-block" [parentForm]="previewForm"></serialization-select>
                 <button mat-raised-button color="primary" class="refresh-button ml-2" (click)="setPreview()" [disabled]="!activePage.serialization">Refresh</button>
-                <button mat-raised-button color="primary" class="download-button remove-min-width ml-2" (click)="download()" [disabled]="!activePage.serialization"><i class="fa fa-fw fa-download"></i></button>
             </form>
         </mat-card-header>
         <mat-card-content class="flex-1 remove-min-height position-relative">

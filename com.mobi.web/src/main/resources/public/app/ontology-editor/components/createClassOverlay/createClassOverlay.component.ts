@@ -34,6 +34,7 @@ import { REGEX } from '../../../constants';
 import { splitIRI } from '../../../shared/pipes/splitIRI.pipe';
 import { JSONLDId } from '../../../shared/models/JSONLDId.interface';
 import { noWhitespaceValidator } from '../../../shared/validators/noWhitespace.validator';
+import { addLanguageToAnnotations } from '../../../shared/utility';
 
 /**
  * @class ontology-editor.CreateClassOverlayComponent
@@ -99,7 +100,7 @@ export class CreateClassOverlayComponent implements OnInit {
         if (this.selectedClasses.length) {
             clazz[`${RDFS}subClassOf`] = this.selectedClasses;
         }
-        this.os.addLanguageToNewEntity(clazz, this.createForm.controls.language.value);
+        addLanguageToAnnotations(clazz, this.createForm.controls.language.value);
         return clazz;
     }
     create(): void  {

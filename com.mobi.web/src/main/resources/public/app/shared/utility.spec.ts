@@ -27,7 +27,7 @@ import { formatDate } from '@angular/common';
 import moment from 'moment/moment';
 import { cloneDeep } from 'lodash';
 
-import { DC, DCTERMS, RDFS, XSD } from '../prefixes';
+import { DC, DCTERMS, RDFS, SKOS, XSD } from '../prefixes';
 import {
   condenseCommitId,
   createHttpParams,
@@ -63,7 +63,8 @@ import {
   setPropertyId,
   setPropertyValue,
   updateDctermsValue,
-  runningTime, toFormattedDateString, orNone, getStatus, getEntityName
+  runningTime, toFormattedDateString, orNone, getStatus, getEntityName,
+  addLanguageToAnnotations
 } from './utility';
 import { REGEX } from '../constants';
 import { JSONLDObject } from './models/JSONLDObject.interface';
@@ -304,6 +305,48 @@ describe('Utility method', () => {
     });
     it('if it does not contain the property', () => {
       expect(getDctermsId({'@id': ''}, 'prop')).toBe('');
+    });
+  });
+  describe('addLanguageToAnnotations should set the proper values', function() {
+    it('when language is undefined', function() {
+      const entity = {'@id': ''};
+      addLanguageToAnnotations(entity, undefined);
+      expect(entity).toEqual({'@id': ''});
+    });
+    describe('when language is provided', function() {
+      const language = 'en';
+      it('and it has a dcterms:title', function() {
+        const entity = {'@id': '', [`${DCTERMS}title`]: [{'@value': 'value'}]};
+        const expected = {'@id': '', [`${DCTERMS}title`]: [{'@value': 'value', '@language': language}]};
+        addLanguageToAnnotations(entity, language);
+        expect(entity).toEqual(expected);
+      });
+      it('and it has a dcterms:description', function() {
+        const entity = {'@id': '', [`${DCTERMS}description`]: [{'@value': 'value'}]};
+        const expected = {'@id': '', [`${DCTERMS}description`]: [{'@value': 'value', '@language': language}]};
+        addLanguageToAnnotations(entity, language);
+        expect(entity).toEqual(expected);
+      });
+      it('and it has both dcterms:title and dcterms:description', function() {
+        const entity = {
+          '@id': '', 
+          [`${DCTERMS}description`]: [{'@value': 'description'}],
+          [`${DCTERMS}title`]: [{'@value': 'title'}]
+        };
+        const expected = {
+          '@id': '', 
+          [`${DCTERMS}description`]: [{'@value': 'description', '@language': language}],
+          [`${DCTERMS}title`]: [{'@value': 'title', '@language': language}]
+        };
+        addLanguageToAnnotations(entity, language);
+        expect(entity).toEqual(expected);
+      });
+      it('and it has a skos:prefLabel', function() {
+        const entity = {'@id': '', [`${SKOS}prefLabel`]: [{'@value': 'value'}]};
+        const expected = {'@id': '', [`${SKOS}prefLabel`]: [{'@value': 'value', '@language': language}]};
+        addLanguageToAnnotations(entity, language);
+        expect(entity).toEqual(expected);
+      });
     });
   });
   it('getSkolemizedIRI should create the correct type of string', () => {

@@ -24,7 +24,7 @@
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
 import { intersection, sortBy } from 'lodash';
 
-import { ChangesItem } from '../../../ontology-editor/components/savedChangesTab/savedChangesTab.component';
+import { ChangesItem } from '../../models/changes-item';
 import { OWL, SKOS } from '../../../prefixes';
 import { Difference } from '../../models/difference.class';
 import { JSONLDObject } from '../../models/JSONLDObject.interface';
@@ -38,10 +38,9 @@ import { getBeautifulIRI, isBlankNodeId } from '../../utility';
  *
  * A *dumb* component that creates a sequence of mat-accordion displaying the changes made to entities separated by
  * additions and deletions. Each changes display uses the `mat-expansion-panel`. The display of an entity's name can be
- * optionally controlled by the provided `entityNameFunc` function and defaults to the
- * {@link shared.ToastService beautified local name} of the IRI. The display of the changes can optionally include a
- * toggle to include all triples for an entity in the expansion panel body. This controlled by the presence of the
- * `commitId` input. If not present, the toggle will not be shown.
+ * optionally controlled by the provided `entityNameFunc` function and defaults to the beautified local name of the IRI.
+ * The display of the changes can optionally include a toggle to include all triples for an entity in the expansion
+ * panel body. This controlled by the presence of the `commitId` input. If not present, the toggle will not be shown.
  *
  * @param {string} [commitId=''] An optional Commit IRI to use in the Show Full toggle
  * @param {JSONLDObject[]} additions An array of JSON-LD objects representing statements added
@@ -68,6 +67,7 @@ export class CommitChangesDisplayComponent implements OnInit, OnChanges {
 
     @Output() showMoreResultsEmitter = new EventEmitter<{limit: number, offset: number}>();
 
+    private readonly errorMessageNoData = 'Error retrieving full entity information';
     types = [
         `${OWL}Class`,
         `${OWL}ObjectProperty`,
@@ -122,7 +122,7 @@ export class CommitChangesDisplayComponent implements OnInit, OnChanges {
         this.showMoreResultsEmitter.emit({limit: this.limit, offset: this.offsetIndex}); // Will trigger ngOnChanges
     }
     getEntityName(entityIRI: string): string {
-        return this.entityNameFunc ? this.entityNameFunc(entityIRI) : this.os.getEntityNameByListItem(entityIRI);
+        return this.entityNameFunc ? this.entityNameFunc(entityIRI) : this.os.getEntityName(entityIRI);
     }
     toggleFull(item: ChangesItem): void {
         if (this.commitId) {
@@ -131,7 +131,7 @@ export class CommitChangesDisplayComponent implements OnInit, OnChanges {
                     .subscribe((resources: JSONLDObject[]) => {
                         item.resource = resources.find(obj => obj['@id'] === item.id);
                     }, () => {
-                        this.toast.createErrorToast('Error retrieving full entity information');
+                        this.toast.createErrorToast(this.errorMessageNoData);
                     });
             } else {
                 item.resource = undefined;

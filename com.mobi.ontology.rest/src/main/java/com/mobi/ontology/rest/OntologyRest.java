@@ -845,6 +845,47 @@ public class OntologyRest {
         return bNodeService.deterministicSkolemize(
                 compiledResourceManager.getCompiledResource(recordId, branchId, commitId, conn), bNodesMap);
     }
+
+    /**
+     * Clears the cached version of the Ontology identified by the Record IRI and optionally by the provided Commit IRI.
+     * If the specified version of the Ontology is not cached, still returns a 200.
+     *
+     * @param servletRequest the HttpServletRequest.
+     * @param recordIdStr String representing the record Resource id. NOTE: Assumes id represents an IRI unless
+     *                    String begins with "_:".
+     * @param commitIdStr String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
+     *                    String begins with "_:". NOTE: Optional param
+     * @return A Response indicating the success of the operation
+     */
+    @DELETE
+    @Path("{recordId}/cache")
+    @RolesAllowed("user")
+    @Operation(tags = "ontologies",
+            summary = "Clears the cached version of an ontology",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "The operation was successful"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR", content = {
+                            @Content(mediaType = MediaType.APPLICATION_JSON,
+                                    schema = @Schema(implementation = ErrorObjectSchema.class)
+                            )
+                    }),
+            })
+    @ActionId(Read.TYPE)
+    @ResourceId(type = ValueType.PATH, value = "recordId")
+    public Response clearCache(@Context HttpServletRequest servletRequest,
+                               @Parameter(description = "String representing the Record Resource ID", required = true)
+                               @PathParam("recordId") String recordIdStr,
+                               @Parameter(description = "String representing the Commit Resource ID")
+                               @QueryParam("commitId") String commitIdStr) {
+        try {
+            ontologyCache.removeFromCache(recordIdStr, commitIdStr);
+            return Response.ok().build();
+        } catch (Exception ex) {
+            throw RestUtils.getErrorObjInternalServerError(ex);
+        }
+    }
+
     
     /**
      * Returns a JSON object with keys for the list of IRIs of derived skos:Concepts, the list of IRIs of derived

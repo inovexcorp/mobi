@@ -27,27 +27,32 @@ var Onto2 = process.cwd()+ '/src/test/resources/rdf_files/active-entity-filter-2
 var Onto3 = process.cwd()+ '/src/test/resources/rdf_files/active-entity-filter-3.ttl'
 
 module.exports = {
-    '@tags': ['sanity', "ontology-editor"],
+    '@tags': ['sanity', 'ontology-editor'],
 
     'Step 1: Initial Setup' : function(browser) {
         browser.globals.initial_steps(browser, adminUsername, adminPassword)
     },
 
     'Step 2: Upload Ontologies' : function(browser) {
-        browser.globals.upload_ontologies(browser, Onto1, Onto2, Onto3)
+        [Onto3, Onto2, Onto1].forEach(function(file) {
+            browser.page.ontologyEditorPage().uploadOntology(file);
+            browser.globals.wait_for_no_spinners(browser);
+        });
     },
 
-    'Step 3: Open active-entity-filter-1 Ontology' : function (browser) {
-        browser.globals.open_ontology(browser, Onto1)
+    'Step 3: Ensure active-entity-filter-1 Ontology is open' : function(browser) {
+        browser.page.editorPage()
+            .assert.valueEquals('@editorRecordSelectInput', 'active-entity-filter-1');
+        browser.page.ontologyEditorPage().onProjectTab();
     },
 
-    'Step 4: Click classes tab' : function (browser) {
+    'Step 4: Click classes tab' : function(browser) {
         browser
             .waitForElementVisible('mat-tab-header div.mat-tab-label-content')
             .click('xpath', '//mat-tab-header//div[text()[contains(., "Classes")]]')
     },
 
-    'Step 5: Check for Ontology classes' : function (browser) {
+    'Step 5: Check for Ontology classes' : function(browser) {
         browser
             .waitForElementVisible('div.tree')
             .useXpath()
@@ -58,7 +63,7 @@ module.exports = {
             .assert.not.elementPresent({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 1")]]'})
     },
 
-    'Step 6: Click on an imported class' : function (browser) {
+    'Step 6: Click on an imported class' : function(browser) {
         browser
             .useCss()
             .click('xpath', '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Other Class")]]//parent::a')
@@ -66,7 +71,7 @@ module.exports = {
             .assert.textContains('selected-details .entity-name', 'Other Class')
     },
 
-    'Step 7: Apply the Active Entity Filter' : function (browser) {
+    'Step 7: Apply the Active Entity Filter' : function(browser) {
         browser
             .waitForElementVisible('.hierarchy-filter a')
             .click('.hierarchy-filter a')

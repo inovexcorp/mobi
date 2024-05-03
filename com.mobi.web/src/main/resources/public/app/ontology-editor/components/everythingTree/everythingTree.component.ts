@@ -132,7 +132,7 @@ export class EverythingTreeComponent implements OnInit, OnChanges, AfterViewInit
     toggleOpen(node: HierarchyNode): void {
         node.isOpened = !node.isOpened;
         if (node.title) {
-            node.set(this.os.listItem.versionedRdfRecord.recordId, node.isOpened);
+            node.set(node.isOpened);
         }
         node.isOpened ? this.os.listItem.editorTabStates[this.activeTab].open[node.joinedPath] = true : delete this.os.listItem.editorTabStates[this.activeTab].open[node.joinedPath];
         this.filteredHierarchy = this.preFilteredHierarchy.filter(node => this.isShown(node));
@@ -167,9 +167,9 @@ export class EverythingTreeComponent implements OnInit, OnChanges, AfterViewInit
         delete node.displayNode;
         if (node.title) {
             if (this.filterText || this.dropdownFilterActive) {
-                node.set(this.os.listItem.versionedRdfRecord.recordId, true);
+                node.set(true);
             }
-            node.isOpened = node.get(this.os.listItem.versionedRdfRecord.recordId);
+            node.isOpened = node.get();
         } else {
             if (this.filterText || this.dropdownFilterActive) {
                 delete node.isOpened;
@@ -211,11 +211,14 @@ export class EverythingTreeComponent implements OnInit, OnChanges, AfterViewInit
         return true;
     }
     isShown(node: HierarchyNode): boolean {
-        const displayNode = !has(node, 'entityIRI') || (has(node, 'get') && node.get(this.os.listItem.versionedRdfRecord.recordId)) || (!has(node, 'get') && node.indent > 0 && this.os.areParentsOpen(node, this.activeTab)) || (node.indent === 0 && get(node, 'path', []).length === 2);
+        const displayNode = !has(node, 'entityIRI') 
+          || (has(node, 'get') && node.get()) 
+          || (!has(node, 'get') && node.indent > 0 && this.os.areParentsOpen(node, this.activeTab)) 
+          || (node.indent === 0 && get(node, 'path', []).length === 2);
         if ((this.dropdownFilterActive || this.filterText) && node['title']) {
             const position = findIndex(this.preFilteredHierarchy, 'title');
             if (position === this.preFilteredHierarchy.length - 1) {
-                node.set(this.os.listItem.versionedRdfRecord.recordId, false);
+                node.set(false);
                 return false;
             }
         }

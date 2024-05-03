@@ -28,21 +28,26 @@ var Onto3 = process.cwd()+ '/src/test/resources/rdf_files/test-local-imports-3.t
 var skosOnt = process.cwd()+ '/src/test/resources/rdf_files/skos.rdf'
 
 module.exports = {
-    '@tags': ['sanity', "ontology-editor"],
+    '@tags': ['sanity', 'ontology-editor'],
 
-    'Step 1: Login and navigate to Ontology Editor' : function (browser) {
+    'Step 1: Login and navigate to Ontology Editor' : function(browser) {
         browser.globals.initial_steps(browser, adminUsername, adminPassword)
     },
 
     'Step 2: Upload Ontologies' : function(browser) {
-        browser.globals.upload_ontologies(browser, vocab, Onto2, Onto3, skosOnt)
+        [vocab, skosOnt, Onto3, Onto2].forEach(function(file) {
+            browser.page.ontologyEditorPage().uploadOntology(file);
+            browser.globals.wait_for_no_spinners(browser);
+        });
     },
 
-    'Step 3: Open test-local-imports-2 Ontology' : function (browser) {
-        browser.globals.open_ontology(browser, Onto2)
+    'Step 3: Ensure test-local-imports-2 Ontology is open' : function(browser) {
+        browser.page.editorPage()
+            .assert.valueEquals('@editorRecordSelectInput', 'test-local-imports-2');
+        browser.page.ontologyEditorPage().onProjectTab();
     },
 
-    'Step 4: Validate Ontology Imports Appearance' : function (browser) {
+    'Step 4: Validate Ontology Imports Appearance' : function(browser) {
         browser
             .waitForElementVisible('.imports-block')
             .useXpath()
@@ -51,23 +56,11 @@ module.exports = {
             .assert.not.elementPresent('//imports-block//div[contains(@class, "indirect-import-container")]//p//a[text()[contains(.,"http://www.w3.org/2004/02/skos/core")]]')
     },
 
-    'Step 5: Add a vocab as an import': function (browser) {
+    'Step 5: Add a vocab as an import': function(browser) {
+        browser.page.ontologyEditorPage().addServerImport('single-concept-vocab');
+        browser.globals.wait_for_no_spinners(browser);  
         browser
             .useCss()
-            .click('.imports-block a.fa-plus') // clicking this opens imports-overlay
-            .waitForElementVisible('imports-overlay')
-            .useXpath()
-            .waitForElementVisible('//imports-overlay//div[text()[contains(.,"On Server")]]')
-            .waitForElementVisible('//imports-overlay//button//span[text()[contains(.,"Submit")]]')
-            .pause(1000)
-            .click('xpath', '//imports-overlay//div[text()[contains(.,"On Server")]]')
-            .useCss().waitForElementNotVisible('div.spinner') // waits for imports to loads up
-            .useXpath().waitForElementVisible('//imports-overlay//h4[text()[contains(.,"single-concept-vocab")]]')
-            .click('//imports-overlay//h4[text()[contains(.,"single-concept-vocab")]]//parent::div')
-            .waitForElementVisible('//imports-overlay//mat-chip-list//mat-chip[text()[contains(.,"single-concept-vocab")]]')
-            .click('xpath', '//button//span[text()[contains(.,"Submit")]]')
-            .useCss()
-            .waitForElementNotPresent('imports-overlay')
             .waitForElementVisible('.imports-block')
             .useXpath()
             .assert.visible('//imports-block//p//a[text()[contains(.,"http://www.w3.org/2004/02/skos/core")]]')
@@ -75,28 +68,18 @@ module.exports = {
     },
 
     'Step 6: Commit Changes': function(browser) {
-        browser
-            .useCss()
-            .moveToElement('ontology-button-stack circle-button-stack', 0, 0) // hover over + element
-            .waitForElementVisible('ontology-button-stack circle-button-stack button.btn-info')
-            .click('ontology-button-stack circle-button-stack button.btn-info')
-            .waitForElementVisible('commit-overlay')
-            .assert.textContains('commit-overlay h1.mat-dialog-title', 'Commit')
-            .setValue('commit-overlay textarea[name=comment]', 'commit456')
-            .useXpath()
-            .click('//commit-overlay//button//span[text()="Submit"]')
-            .useCss()
-            .waitForElementNotPresent('commit-overlay')
-            .waitForElementVisible('.imports-block') // ensure that still on correct tab after committing
+        browser.page.ontologyEditorPage().commit('commit456');
+        browser.globals.wait_for_no_spinners(browser);  
+        browser.page.ontologyEditorPage().onProjectTab();
     },
 
-    'Step 7: Click the concepts tab and ensure hierarchy block is showing' : function (browser) {
+    'Step 7: Click the concepts tab and ensure hierarchy block is showing' : function(browser) {
         // 'const' is available in ES6
         var conceptTabXpath = '//mat-tab-header//div[text()[contains(., "Concepts")]]';
-        browser
-            .click('ontology-sidebar span.close-icon')
-            .useXpath()
-        browser.globals.open_ontology(browser, Onto2)
+        browser.page.ontologyEditorPage().closeOntology('test-local-imports-2');
+        browser.globals.wait_for_no_spinners(browser);  
+        browser.page.ontologyEditorPage().openOntology('test-local-imports-2');
+        browser.globals.wait_for_no_spinners(browser);  
         browser
             .useXpath()
             .waitForElementVisible(conceptTabXpath)
@@ -106,7 +89,7 @@ module.exports = {
             .waitForElementPresent('div.concepts-tab concept-hierarchy-block')
     },
 
-    'Step 8: Check for Imported Concept' : function (browser) {
+    'Step 8: Check for Imported Concept' : function(browser) {
         var concept1Xpath = '//hierarchy-tree//tree-item//span[text()[contains(., "Concept 1")]]'
         browser
             .useCss()
@@ -116,7 +99,7 @@ module.exports = {
             .assert.visible(concept1Xpath + '//ancestor::div[contains(@class, "imported")]');
     },
 
-    'Step 9: Click the properties tab and ensure hierarchy block is showing' : function (browser) {
+    'Step 9: Click the properties tab and ensure hierarchy block is showing' : function(browser) {
         var propertiesTabXpath = '//mat-tab-header//div[text()[contains(., "Properties")]]'
         browser
             .useXpath()
@@ -126,7 +109,7 @@ module.exports = {
             .waitForElementPresent('div.properties-tab property-hierarchy-block')
     },
     
-    'Step 10: Click on Object Properties and ensure that correct object properties are on page' : function (browser) {
+    'Step 10: Click on Object Properties and ensure that correct object properties are on page' : function(browser) {
         var objectPropertiesTreeXPath = '//property-tree//i[contains(@class, "fa-folder")]//following-sibling::span[text()[contains(., "Object Properties")]]'
         // click on 'Object Property 0' and ensure that selected-property has right property
         browser
@@ -140,7 +123,7 @@ module.exports = {
             .waitForElementVisible('//property-tree//tree-item//span[text()[contains(., "Object Property 2")]]')
     },
 
-    'Step 11: Click on Data Properties and ensure that correct Data properties are on page' : function (browser) {
+    'Step 11: Click on Data Properties and ensure that correct Data properties are on page' : function(browser) {
         var objectPropertiesTreeXPath = '//property-tree//i[contains(@class, "fa-folder")]//following-sibling::span[text()[contains(., "Data Properties")]]'
         // click on 'Object Property 0' and ensure that selected-property has right property
         browser
@@ -159,7 +142,7 @@ module.exports = {
             .waitForElementVisible('//selected-details//span[contains(@class, "entity-name")][text()[contains(., "Data Property 0")]]')
     },
 
-    'Step 12: Open Axiom Overlay for Data Property 0' : function (browser) {
+    'Step 12: Open Axiom Overlay for Data Property 0' : function(browser) {
         browser
             .useCss()
             .waitForElementVisible('properties-tab .selected-property')
@@ -170,7 +153,7 @@ module.exports = {
             .waitForElementPresent('axiom-overlay')
     },
 
-    'Step 13: Axiom Overlay - Edit Domain Property through Manchester Editor' : function (browser) {
+    'Step 13: Axiom Overlay - Edit Domain Property through Manchester Editor' : function(browser) {
         browser
             .waitForElementVisible('axiom-overlay')
             .waitForElementVisible('mat-optgroup mat-option')
@@ -193,7 +176,7 @@ module.exports = {
             .waitForElementNotPresent('axiom-overlay')
     },
 
-    'Step 14: Axiom Overlay - Verify Expression was added to data property' : function (browser) {
+    'Step 14: Axiom Overlay - Verify Expression was added to data property' : function(browser) {
         browser.globals.wait_for_no_spinners(browser);
         browser
             .useXpath()
@@ -205,7 +188,7 @@ module.exports = {
             .assert.visible('//axiom-block//datatype-property-axioms//property-values//blank-node-value-display //span[text()[contains(., "DataProperty2")]]')
     },
     
-    'Step 15: Open Axiom Overlay for Object Property 0' : function (browser) {
+    'Step 15: Open Axiom Overlay for Object Property 0' : function(browser) {
         browser
             .click('//property-tree//tree-item//span[text()[contains(., "Object Property 0")]]')
             .useCss()
@@ -221,7 +204,7 @@ module.exports = {
             .waitForElementPresent('axiom-overlay')
     },
 
-    'Step 16: Axiom Overlay - Edit SubProperty Axiom for Object Property' : function (browser) {
+    'Step 16: Axiom Overlay - Edit SubProperty Axiom for Object Property' : function(browser) {
         browser
             .waitForElementVisible('axiom-overlay')
             .waitForElementVisible('mat-optgroup mat-option')
@@ -232,7 +215,7 @@ module.exports = {
             .waitForElementNotPresent('mat-optgroup')
     },
 
-    'Step 17: Axiom Overlay - Edit SubProperty values for Object Property' : function (browser) {
+    'Step 17: Axiom Overlay - Edit SubProperty values for Object Property' : function(browser) {
         browser
             .waitForElementPresent('axiom-overlay') // ensure still on overlay
             .assert.not.elementPresent('mat-optgroup') // ensure list is hidden
@@ -251,7 +234,7 @@ module.exports = {
             .waitForElementNotPresent('mat-optgroup mat-option')
     },
 
-    'Step 18: Axiom Overlay - Submit data' : function (browser) {
+    'Step 18: Axiom Overlay - Submit data' : function(browser) {
         browser
             .useCss()
             .waitForElementPresent('axiom-overlay')
@@ -263,7 +246,7 @@ module.exports = {
             .waitForElementNotPresent('axiom-overlay')
     },
 
-    'Step 19: Click the concepts tab' : function (browser) {
+    'Step 19: Click the concepts tab' : function(browser) {
         var conceptTabXpath = '//mat-tab-header//div[text()[contains(., "Concepts")]]';
         browser
             .useXpath()
@@ -273,7 +256,7 @@ module.exports = {
             .waitForElementPresent('div.concepts-tab concept-hierarchy-block')
     },
 
-    'Step 20: Check for Imported Concept' : function (browser) {
+    'Step 20: Check for Imported Concept' : function(browser) {
         var concept1Xpath = '//hierarchy-tree//tree-item//span[text()[contains(., "Concept 1")]]'
         browser
             .useCss()

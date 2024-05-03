@@ -55,7 +55,7 @@ export class ObjectPropertyAxiomsComponent implements OnChanges{
 
     ngOnChanges(): void {
         const axioms = map(this.pm.objectAxiomList, 'iri');
-        this.axioms = sortBy(axioms.filter(prop => has(this.os.listItem.selected, prop)), iri => this.os.getEntityNameByListItem(iri));
+        this.axioms = sortBy(axioms.filter(prop => has(this.os.listItem.selected, prop)), iri => this.os.getEntityName(iri));
     }
     openRemoveOverlay(event: {iri: string, index: number}): void {
         this.dialog.open(ConfirmModalComponent, {

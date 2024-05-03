@@ -113,83 +113,54 @@ module.exports = {
     },
 
     'Step 7: Ensure that user is on Ontology editor page' : function(browser) {
-        browser.globals.switchToPage(browser, 'ontology-editor', 'button.upload-button');
-        browser.page.editorPage().isActive();
-    },
-
-    'Step 8: Open new Ontology Overlay' : function(browser) {
-        browser.page.editorPage().openNewOntologyOverlay();
-    },
-
-    'Step 9: Edit New Ontology Overlay' : function(browser) {
-        browser.page.editorPage().editNewOntologyOverlay(ontologyMrPermission_title, ontologyMrPermission_desc);
-    },
-
-    'Step 10: Submit New Ontology Overlay' : function(browser) {
-        browser.page.editorPage().submitNewOntologyOverlay();
+        browser.globals.switchToPage(browser, 'ontology-editor', 'ontology-editor-page');
         browser.globals.wait_for_no_spinners(browser);
-        browser.page.editorPage().onProjectTab();
     },
 
-    'Step 11: Verify new ontology properties' : function(browser) {
-        browser.page.editorPage().onProjectTab();
-        browser.page.editorPage().verifyProjectTab(ontologyMrPermission_title, ontologyMrPermission_desc, ontologyMrPermission_staticIri)
-    },
-
-    'Step 12: Create a new branch' : function(browser) {
-        browser.page.editorPage().openNewBranchOverlay();
-        browser.page.editorPage().editNewBranchOverlayAndSubmit(branchTitle, 'newBranchDescription');
+    'Step 8: Create New Ontology': function(browser) {
+        browser.page.ontologyEditorPage().createOntology(ontologyMrPermission_title, ontologyMrPermission_desc);
         browser.globals.wait_for_no_spinners(browser);
+        browser.page.ontologyEditorPage().onProjectTab();
+    },
+
+    'Step 9: Verify new ontology properties' : function(browser) {
+        browser.page.ontologyEditorPage().verifyProjectTab(ontologyMrPermission_title, ontologyMrPermission_desc, ontologyMrPermission_staticIri)
+    },
+
+    'Step 10: Create a new branch' : function(browser) {
+        browser.page.ontologyEditorPage().createBranch(branchTitle, 'newBranchDescription');
+        browser.globals.wait_for_no_spinners(browser);
+    },
+
+    'Step 11: Verify that branch was switched to the new branch' : function(browser) {
+        browser.page.editorPage()
+            .assert.valueEquals('@editorRecordSelectInput', ontologyMrPermission_title)
+            .assert.valueEquals('@editorBranchSelectInput', branchTitle);
+    },
+
+    'Step 12: Verify no uncommitted changes are shown': function(browser) {
+        browser.page.ontologyEditorPage().toggleChangesPage();
+        browser.globals.wait_for_no_spinners(browser)
         browser
-            .useCss()
-            .waitForElementNotPresent('create-branch-overlay')
-            .waitForElementNotPresent('create-branch-overlay h1.mat-dialog-title');
+            .assert.not.elementPresent('mat-chip.uncommitted')
+            .assert.not.elementPresent('app-changes-page mat-expansion-panel')
+            .assert.textContains('app-changes-page info-message p', 'No Changes to Display')
+            .expect.elements('commit-history-table svg .commit-hash-string').count.to.equal(1)
+        browser.page.ontologyEditorPage().toggleChangesPage(false);
+        browser.globals.wait_for_no_spinners(browser);
+        browser.page.ontologyEditorPage().onProjectTab();
     },
 
-    'Step 13: Verify that branch was switched to the new branch' : function(browser) {
-        browser.page.editorPage().verifyBranchSelection(branchTitle);
-    }, 
-
-    'Step 14: Switch to new branch' : function(browser) {
-        browser.page.editorPage().switchToBranch(branchTitle);
-    },
-
-    'Step 15: Verify no uncommitted changes are shown': function(browser) {
+    'Step 13: Create new Classes': function(browser) {
+        browser.page.ontologyEditorPage().createNewOwlClass('firstClass', 'firstClassDescription');
         browser.globals.wait_for_no_spinners(browser);
-        browser
-            .useXpath()
-            .waitForElementVisible('//mat-tab-header//div[text()[contains(.,"Changes")]]')
-            .click('//mat-tab-header//div[text()[contains(.,"Changes")]]')
-            .useCss()
-            .waitForElementVisible('info-message p')
-            .assert.textContains('info-message p', 'You don\'t have any uncommitted changes.')
-            .assert.not.elementPresent('saved-changes-tab .expansion-panel');
-        browser.globals.wait_for_no_spinners(browser);
-        browser
-            .useXpath()
-            .waitForElementVisible('//mat-tab-header//div[text()[contains(.,"Project")]]')
-            .click('//mat-tab-header//div[text()[contains(.,"Project")]]');
-        browser.page.editorPage().onProjectTab();
-    },
-
-    'Step 16: Create new Classes': function(browser) {
-        browser.page.editorPage().createNewOwlClass('firstClass', 'firstClassDescription');
-        browser.globals.wait_for_no_spinners(browser);
-        browser
-            .useCss()
-            .waitForElementNotPresent('create-class-overlay')
-            .waitForElementNotPresent('create-class-overlay h1.mat-dialog-title');
         for (var i = 2; i <= 10; i++) {
-            browser.page.editorPage().createNewOwlClass('class' + i + 'Title', 'class' + i + 'Description');
+            browser.page.ontologyEditorPage().createNewOwlClass('class' + i + 'Title', 'class' + i + 'Description');
             browser.globals.wait_for_no_spinners(browser);
-            browser
-                .useCss()
-                .waitForElementNotPresent('create-class-overlay')
-                .waitForElementNotPresent('create-class-overlay h1.mat-dialog-title');
         }
     },
 
-    'Step 17: Verify class was created': function(browser) {
+    'Step 14: Verify class was created': function(browser) {
         browser
             .useXpath()
             .waitForElementVisible('//mat-tab-header//div[text()[contains(.,"Classes")]]')
@@ -197,66 +168,61 @@ module.exports = {
             .assert.visible('//class-hierarchy-block//tree-item//span[text()[contains(.,"firstClass")]]')
     },
 
-    'Step 18: Open Commit overlay' : function(browser) {
-        browser.page.editorPage().openCommitOverlay();
-    },
-
-    'Step 19: Edit Commit message and Submit' : function(browser) {
-        browser.page.editorPage().editCommitOverlayAndSubmit('Changed IRI');
+    'Step 15: Commit new classes' : function(browser) {
+        browser.page.ontologyEditorPage().commit('Added classes');
         browser.globals.wait_for_no_spinners(browser);
-        browser
-            .useCss()
-            .waitForElementNotPresent('commit-overlay')
-            .waitForElementNotPresent('commit-overlay h1.mat-dialog-title'); // intermittent issue caused by backend
-        browser
-            .waitForElementVisible('div.toast-success')
-            .waitForElementNotPresent('div.toast-success');
-        browser.page.editorPage().isActive('ontology-tab');
+        browser.globals.dismiss_toast(browser);
+        browser.page.ontologyEditorPage().isActive('ontology-tab');
     },
 
     // Create MR
-    'Step 20: Navigate to Merge Request Page' : function (browser) {
+    'Step 16: Navigate to Merge Request Page' : function(browser) {
         browser.globals.switchToPage(browser, 'merge-requests', 'merge-requests-page button');
     },
 
-    'Step 21: Create New Merge request' : function (browser) {
+    'Step 17: Create New Merge request' : function(browser) {
         browser.page.mergeRequestPage().createNewRequest();
     },
 
-    'Step 22: Validate New Merge Request Page mat cards': function(browser) {
+    'Step 18: Validate New Merge Request Page mat cards': function(browser) {
+        browser
+            .useXpath()
+            .waitForElementVisible('//merge-requests-page//create-request');
         browser.page.mergeRequestPage().assertMatCardTitle(ontologyMrPermission_title);
     },
 
-    'Step 23: Create a merge request': function(browser) {
-        browser.click('//create-request//request-record-select//mat-card//mat-card-title[contains(text(),"' + ontologyMrPermission_title + '")]');
+    'Step 19: Create a merge request': function(browser) {
+        browser
+            .useXpath()
+            .waitForElementVisible('//create-request//request-record-select//mat-card//mat-card-title[contains(text(),"' + ontologyMrPermission_title + '")]')
+            .click('//create-request//request-record-select//mat-card//mat-card-title[contains(text(),"' + ontologyMrPermission_title + '")]');
         browser.page.mergeRequestPage().createRequestNext();
     },
 
-    'Step 24: Create a merge request - modify branches': function(browser) {
+    'Step 20: Create a merge request - modify branches': function(browser) {
         browser.page.mergeRequestPage().createRequestSourceBranchSelect(branchTitle);
         browser.page.mergeRequestPage().createRequestTargetBranchSelect(masterBranchTitle);
         browser.page.mergeRequestPage().createRequestNext();
     },
 
-    'Step 25: Create a merge request - submit MR': function(browser) {
+    'Step 21: Create a merge request - submit MR': function(browser) {
         browser.page.mergeRequestPage().createRequestSubmit();
         browser.globals.wait_for_no_spinners(browser);
-
     },
 
-    'Step 26: MergeRequestView - Validate Permissions - MR should be open and no button disabled': function(browser) {
+    'Step 22: MergeRequestView - Validate Permissions - MR should be open and no button disabled': function(browser) {
         browser.page.mergeRequestPage().selectRequest(branchTitle);
         browser.globals.wait_for_no_spinners(browser);
         browser.page.mergeRequestPage().mergeRequestViewCheckStatus('Open');
         browser.page.mergeRequestPage().verifyMergeRequestButtons();
     },
 
-    'Step 27: MergeRequestView - Close MR': function(browser) {
+    'Step 23: MergeRequestView - Close MR': function(browser) {
         browser.page.mergeRequestPage().closeMergeRequest();
         browser.globals.wait_for_no_spinners(browser);
     },
 
-    'Step 27: Validated Closed MR': function(browser) {
+    'Step 24: Validated Closed MR': function(browser) {
         browser.page.mergeRequestPage().mergeRequestViewCheckStatus('Close');
         browser.useXpath()
             .waitForElementVisible('//merge-requests-page//merge-request-view//button//span[contains(text(), "Back")]/parent::button')
@@ -267,7 +233,8 @@ module.exports = {
             .assert.attributeEquals('//merge-requests-page//merge-request-view//button//span[contains(text(), "Delete")]/parent::button', 'disabled', null);
     },
 
-    'Step 28: Go back to merge-requests-page': function(browser) {
+    'Step 25: Go back to merge-requests-page': function(browser) {
+        browser.globals.dismiss_toast(browser);
         browser.useXpath()
             .waitForElementVisible('//merge-requests-page//merge-request-view//button//span[contains(text(), "Back")]/parent::button')
             .assert.attributeEquals('//merge-requests-page//merge-request-view//button//span[contains(text(), "Back")]/parent::button', 'disabled', null)
@@ -275,31 +242,37 @@ module.exports = {
     },
 
     // Create another MR keep open
-    'Step 29: Navigate to New Merge Request page to create new MR' : function (browser) {
+    'Step 26: Navigate to New Merge Request page to create new MR' : function(browser) {
         browser.page.mergeRequestPage().createNewRequest();
     },
 
-    'Step 30: Validate New Merge Request Page mat cards': function(browser) {
+    'Step 27: Validate New Merge Request Page mat cards': function(browser) {
+        browser
+            .useXpath()
+            .waitForElementVisible('//merge-requests-page//create-request');
         browser.page.mergeRequestPage().assertMatCardTitle(ontologyMrPermission_title);
     },
 
-    'Step 31: Create a merge request': function(browser) {
-        browser.click('//create-request//request-record-select//mat-card//mat-card-title[contains(text(),"'+ontologyMrPermission_title+'")]')
+    'Step 28: Create a merge request': function(browser) {
+        browser
+            .useXpath()
+            .waitForElementVisible('//create-request//request-record-select//mat-card//mat-card-title[contains(text(),"'+ontologyMrPermission_title+'")]')
+            .click('//create-request//request-record-select//mat-card//mat-card-title[contains(text(),"'+ontologyMrPermission_title+'")]')
         browser.page.mergeRequestPage().createRequestNext();
     },
 
-    'Step 32: Create a merge request - modify branches': function(browser) {
+    'Step 29: Create a merge request - modify branches': function(browser) {
         browser.page.mergeRequestPage().createRequestSourceBranchSelect(branchTitle);
         browser.page.mergeRequestPage().createRequestTargetBranchSelect(masterBranchTitle);
         browser.page.mergeRequestPage().createRequestNext();
     },
 
-    'Step 33: Create a merge request - submit MR': function(browser) {
+    'Step 30: Create a merge request - submit MR': function(browser) {
         browser.page.mergeRequestPage().createRequestSubmit();
         browser.globals.wait_for_no_spinners(browser);
     },
 
-    'Step 34: MergeRequestView - Validate Permissions - MR should be open and no button disabled': function(browser) {
+    'Step 31: MergeRequestView - Validate Permissions - MR should be open and no button disabled': function(browser) {
         browser.page.mergeRequestPage().selectRequest(branchTitle);
         browser.globals.wait_for_no_spinners(browser);
         browser.page.mergeRequestPage().mergeRequestViewCheckStatus('Open');
@@ -314,22 +287,22 @@ module.exports = {
     },
 
     // Logout and log in with user that has less permissions
-    'Step 35: The user clicks logout' : function(browser) {
+    'Step 32: The user clicks logout' : function(browser) {
         browser.globals.logout(browser);
     },
 
-    'Step 36: Test logins as the newly created user' : function(browser) {
+    'Step 33: Test logins as the newly created user' : function(browser) {
         browser.globals.login(browser, user02.username, user02.password);
         browser.globals.wait_for_no_spinners(browser);
         browser.useCss()
             .waitForElementVisible('.home-page');
     },
 
-    'Step 37: Navigate to Merge Request Page' : function (browser) {
+    'Step 34: Navigate to Merge Request Page' : function(browser) {
         browser.globals.switchToPage(browser, 'merge-requests', 'merge-requests-page button');
     },
 
-    'Step 38: Validate Permissions as user with less permission': function(browser) {
+    'Step 35: Validate Permissions as user with less permission': function(browser) {
         browser.page.mergeRequestPage().selectRequest(branchTitle);
         browser.globals.wait_for_no_spinners(browser);
         browser.page.mergeRequestPage().mergeRequestViewCheckStatus('Open');
@@ -347,23 +320,23 @@ module.exports = {
             .assert.attributeEquals('//merge-requests-page//merge-request-view//button//span[contains(text(), "Delete")]/parent::button', 'disabled', 'true');
     },
 
-    'Step 39: The user clicks logout' : function(browser) {
+    'Step 36: The user clicks logout' : function(browser) {
         browser.globals.logout(browser);
     },
 
     // Admin everything permission check
-    'Step 40: Test logins as the admin' : function(browser) {
+    'Step 37: Test logins as the admin' : function(browser) {
         browser.globals.login(browser, adminUser.username, adminUser.password);
         browser.globals.wait_for_no_spinners(browser);
         browser.useCss()
             .waitForElementVisible('.home-page');
     },
 
-    'Step 41: Navigate to Merge Request Page' : function (browser) {
+    'Step 38: Navigate to Merge Request Page' : function(browser) {
         browser.globals.switchToPage(browser, 'merge-requests', 'merge-requests-page button');
     },
 
-    'Step 42: Validate Permissions (admin everything rule)': function(browser) {
+    'Step 39: Validate Permissions (admin everything rule)': function(browser) {
         browser.page.mergeRequestPage().selectRequest(branchTitle);
         browser.globals.wait_for_no_spinners(browser);
         browser.page.mergeRequestPage().mergeRequestViewCheckStatus('Open');
@@ -374,7 +347,7 @@ module.exports = {
             .assert.attributeEquals('//button//span[contains(text(), "Delete")]/parent::button', 'disabled', null);
     },
 
-   'Step 43: Give user002 manage permission for ontology': function(browser) {
+   'Step 40: Give user002 manage permission for ontology': function(browser) {
         browser.useCss();
         browser.globals.switchToPage(browser, 'catalog', 'catalog-page records-view');
         browser.page.catalogPage().verifyRecordList();
@@ -401,23 +374,23 @@ module.exports = {
             .waitForElementNotPresent('div.mat-horizontal-stepper-content.ng-animating');
    },
 
-   'Step 44: The user clicks logout' : function(browser) {
+   'Step 41: The user clicks logout' : function(browser) {
         browser.globals.logout(browser);
     },
 
     // login as user with less permission to check that user has permission to accept
-    'Step 45: Test logins as the newly created user' : function(browser) {
+    'Step 42: Test logins as the newly created user' : function(browser) {
         browser.globals.login(browser, user02.username, user02.password);
         browser.globals.wait_for_no_spinners(browser);
         browser.useCss()
             .waitForElementVisible('.home-page');
     },
 
-    'Step 46: Navigate to Merge Request Page' : function (browser) {
+    'Step 43: Navigate to Merge Request Page' : function(browser) {
         browser.globals.switchToPage(browser, 'merge-requests', 'merge-requests-page button');
     },
 
-    'Step 47: Validate Permissions': function(browser) {
+    'Step 44: Validate Permissions': function(browser) {
         browser.page.mergeRequestPage().selectRequest(branchTitle);
         browser.globals.wait_for_no_spinners(browser);
         
@@ -438,18 +411,18 @@ module.exports = {
     },
 
     // Verify Modify Master Branch Permission by having admin change permissions
-    'Step 48: The user clicks logout' : function(browser) {
+    'Step 45: The user clicks logout' : function(browser) {
         browser.globals.logout(browser);
     },
 
-    'Step 49: Test logins as the admin' : function(browser) {
+    'Step 46: Test logins as the admin' : function(browser) {
         browser.globals.login(browser, adminUser.username, adminUser.password);
         browser.globals.wait_for_no_spinners(browser);
         browser.useCss()
             .waitForElementVisible('.home-page');
     },
 
-    'Step 50: Give user002 manage permission for ontology': function(browser) {
+    'Step 47: Give user002 manage permission for ontology': function(browser) {
         browser.useCss();
         browser.globals.switchToPage(browser, 'catalog', this.recordsViewCssSelector);
         browser.page.catalogPage().verifyRecordList();
@@ -474,25 +447,25 @@ module.exports = {
         browser
             .useCss()
             .waitForElementNotPresent('div.mat-horizontal-stepper-content.ng-animating');
-   },
+    },
 
-    'Step 51: The user clicks logout' : function(browser) {
+    'Step 48: The user clicks logout' : function(browser) {
         browser.globals.logout(browser);
     },
 
     // login as user with less permission to check that user has permission to accept
-    'Step 52: Test logins as the newly created user' : function(browser) {
+    'Step 49: Test logins as the newly created user' : function(browser) {
         browser.globals.login(browser, user02.username, user02.password);
         browser.globals.wait_for_no_spinners(browser);
         browser.useCss()
             .waitForElementVisible('.home-page');
     },
 
-    'Step 53: Navigate to Merge Request Page' : function (browser) {
+    'Step 50: Navigate to Merge Request Page' : function(browser) {
         browser.globals.switchToPage(browser, 'merge-requests', 'merge-requests-page button');
     },
 
-    'Step 54: Validate Permissions': function(browser) {
+    'Step 51: Validate Permissions': function(browser) {
         browser.page.mergeRequestPage().selectRequest(branchTitle);
         browser.globals.wait_for_no_spinners(browser);
         

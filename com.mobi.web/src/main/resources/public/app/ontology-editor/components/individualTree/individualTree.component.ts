@@ -158,7 +158,7 @@ export class IndividualTreeComponent implements OnInit, OnChanges, OnDestroy, Af
     toggleOpen(node: HierarchyNode): void {
         node.isOpened = !node.isOpened;
         if (node.title) {
-            node.set(this.os.listItem.versionedRdfRecord.recordId, node.isOpened);
+            node.set(node.isOpened);
         }
         node.isOpened ? this.os.listItem.editorTabStates[this.activeTab].open[node.joinedPath] = true : delete this.os.listItem.editorTabStates[this.activeTab].open[node.joinedPath];
         this.filteredHierarchy = filter(this.preFilteredHierarchy, node => this.isShown(node));

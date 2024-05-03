@@ -58,6 +58,7 @@ import { MergeRequestsModule } from './merge-requests/merge-requests.module';
 import { MapperModule } from './mapper/mapper.module';
 import { DiscoverModule } from './discover/discover.module';
 import { OntologyEditorModule } from './ontology-editor/ontology-editor.module';
+import { VersionedRdfRecordEditorModule } from './versioned-rdf-record-editor/versioned-rdf-record-editor.module';
 import { LoginLayoutComponent } from './layouts/login-layout.component';
 import { MainLayoutComponent } from './layouts/main-layout.component';
 import { WorkflowsModule } from './workflows/workflows.module';
@@ -83,6 +84,7 @@ import { AppRoutingModule } from './app-routing.module';
         SettingsModule,
         ShapesGraphEditorModule,
         UserManagementModule,
+        VersionedRdfRecordEditorModule,
         WorkflowsModule
     ],
     declarations: [

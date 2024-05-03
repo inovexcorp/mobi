@@ -24,23 +24,13 @@ import { Component } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
-import { CommitOverlayComponent } from '../commitOverlay/commitOverlay.component';
-import { CreateBranchOverlayComponent } from '../createBranchOverlay/createBranchOverlay.component';
 import { CreateEntityModalComponent } from '../createEntityModal/createEntityModal.component';
-import { CreateTagOverlayComponent } from '../createTagOverlay/createTagOverlay.component';
-import { UploadChangesOverlayComponent } from '../uploadChangesOverlay/uploadChangesOverlay.component';
 
 /**
  * @class ontology-editor.OntologyButtonStackComponent
  *
- * A component that creates a {@link shared.CircleButtonStackComponent} for actions in the Ontology Editor against the
- * current {@link shared.OntologyStateService#listItem selected ontology}. These actions are uploading a file of changes,
- * creating a branch, merging branches, and committing changes. The component houses the methods for opening modals for
- * {@link ontology-editor.CreateTagOverlayComponent creating tags},
- * {@link ontology-editor.UploadChangesOverlayComponent uploading changes},
- * {@link ontology-editor.CreateBranchOverlayComponent creating branches},
- * {@link ontology-editor.CommitOverlayComponent committing}, and
- * {@link ontology-editor.CreateEntityModalComponent creating entities}.
+ * A component that creates a button for {@link ontology-editor.CreateEntityModalComponent creating entities} in the
+ * Ontology Editor against the current {@link shared.OntologyStateService#listItem selected ontology}.
  */
 @Component({
     selector: 'ontology-button-stack',
@@ -51,18 +41,6 @@ export class OntologyButtonStackComponent {
 
     constructor(public os: OntologyStateService, private dialog: MatDialog) {}
 
-    showCreateBranchOverlay(): void {
-        this.dialog.open(CreateBranchOverlayComponent);
-    }
-    showCreateTagModal(): void {
-        this.dialog.open(CreateTagOverlayComponent, { autoFocus: false });
-    }
-    showCommitOverlay(): void{
-        this.dialog.open(CommitOverlayComponent);
-    }
-    showUploadChangesOverlay(): void{
-        this.dialog.open(UploadChangesOverlayComponent);
-    }
     showCreateEntityOverlay(): void {
         if (this.os.getActiveKey() !== 'project') {
             this.os.unSelectItem();

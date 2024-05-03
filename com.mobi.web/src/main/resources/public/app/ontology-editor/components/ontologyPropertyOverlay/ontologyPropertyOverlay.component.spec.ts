@@ -166,7 +166,7 @@ describe('Ontology Property Overlay component', function() {
             expect(element.queryAll(By.css('div[mat-dialog-actions]')).length).toEqual(1);
         });
         ['input[aria-label="Property"]', 'mat-autocomplete'].forEach(test => {
-            it('with a ' + test, function() {
+            it(`with a ${test}`, function() {
                 expect(element.queryAll(By.css(test)).length).toEqual(1);
             });
         });
@@ -238,7 +238,7 @@ describe('Ontology Property Overlay component', function() {
     });
     describe('controller methods', function() {
         it('should correctly group and filter the list of annotations', function() {
-            ontologyStateStub.getEntityNameByListItem.and.callFake(a => a);
+            ontologyStateStub.getEntityName.and.callFake(a => a);
             component.properties = ['http://A#prop1', 'http://B#prop3', 'http://A#prop2', 'http://C#other'];
             expect(component.filter('PROP')).toEqual([
                 { namespace: 'http://A#', options: [

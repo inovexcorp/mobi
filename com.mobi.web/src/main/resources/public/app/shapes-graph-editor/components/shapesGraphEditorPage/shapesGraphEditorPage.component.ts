@@ -24,6 +24,7 @@ import { Component } from '@angular/core';
 
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { stateServiceToken } from '../../../versioned-rdf-record-editor/injection-token';
 
 /**
  * @class shapes-graph-editor.ShapesGraphEditorPageComponent
@@ -33,7 +34,13 @@ import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 @Component({
     selector: 'shapes-graph-editor-page',
     templateUrl: './shapesGraphEditorPage.component.html',
-    styleUrls: ['./shapesGraphEditorPage.component.scss']
+    styleUrls: ['./shapesGraphEditorPage.component.scss'],
+    providers: [
+        {
+            provide: stateServiceToken,
+            useExisting: ShapesGraphStateService
+        }
+    ]
 })
 export class ShapesGraphEditorPageComponent {
 

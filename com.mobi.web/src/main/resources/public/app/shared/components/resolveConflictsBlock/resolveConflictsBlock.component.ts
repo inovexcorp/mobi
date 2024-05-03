@@ -21,11 +21,12 @@
  * #L%
  */
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { concat, forEach, find, some } from 'lodash';
+import { concat, forEach, some } from 'lodash';
 
 import { VersionedRdfListItem } from '../../models/versionedRdfListItem.class';
 import { Difference } from '../../models/difference.class';
 import { getDctermsValue } from '../../utility';
+import { JSONLDObject } from '../../models/JSONLDObject.interface';
 
 /**
  * @class ontology-editor.ResolveConflictsBlockComponent
@@ -43,6 +44,7 @@ import { getDctermsValue } from '../../utility';
 export class ResolveConflictsBlock implements OnInit {
     @Input() error: string;
     @Input() listItem: VersionedRdfListItem;
+    @Input() sourceBranch: JSONLDObject;
     @Output() cancelEvent = new EventEmitter<void>();
     @Output() submitEvent = new EventEmitter<void>();
 
@@ -52,15 +54,7 @@ export class ResolveConflictsBlock implements OnInit {
     constructor() {}
 
     ngOnInit(): void {
-        let branchId;
-        if (this.listItem.versionedRdfRecord?.branchId) { // Should be removed when ontologyState is updated to new service
-            branchId = this.listItem.versionedRdfRecord.branchId;
-        }
-        if (this.listItem?.versionedRdfRecord?.branchId) {
-            branchId = this.listItem.versionedRdfRecord.branchId;
-        }
-        const branch = find(this.listItem.branches, {'@id': branchId});
-        this.branchTitle = getDctermsValue(branch, 'title');
+        this.branchTitle = getDctermsValue(this.sourceBranch, 'title');
         this.targetTitle = getDctermsValue(this.listItem.merge.target, 'title');
     }
     allResolved(): boolean {

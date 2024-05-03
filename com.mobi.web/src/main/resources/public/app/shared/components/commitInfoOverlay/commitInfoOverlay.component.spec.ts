@@ -257,7 +257,7 @@ describe('Commit Info Overlay component', function() {
         });
         describe('getEntityName returns when the calculated entityName', function() {
             it('exists', function() {
-                component.entityNames['iri'] = {label: 'iriLabel'};
+                component.entityNames['iri'] = {label: 'iriLabel', names: []};
                 expect(component.getEntityName('iri')).toEqual('iriLabel');
             });
             it('does not exist', function() {

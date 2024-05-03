@@ -27,7 +27,7 @@ import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { MatChipInputEvent } from '@angular/material/chips';
 import { Observable } from 'rxjs';
 import { debounceTime, map, startWith } from 'rxjs/operators';
-import {includes} from 'lodash';
+import { includes } from 'lodash';
 
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 
@@ -73,7 +73,7 @@ export class OntologyClassSelectComponent implements OnInit {
 
     ngOnInit(): void {
         this.selectedOptions = this.selected.map(iri => ({
-            name: this.os.getEntityNameByListItem(iri),
+            name: this.os.getEntityName(iri),
             item: iri
         }));
         this.filteredClasses = this.clazzControl.valueChanges
@@ -96,14 +96,14 @@ export class OntologyClassSelectComponent implements OnInit {
             iris = iris.concat(this.extraOptions);
         }
         iris = iris.filter(iri => !this.selected.includes(iri));
-        return this.os.getGroupedSelectList(iris, searchText, iri => this.os.getEntityNameByListItem(iri));
+        return this.os.getGroupedSelectList(iris, searchText, iri => this.os.getEntityName(iri));
     }
     add(event: MatChipInputEvent): void {
         const input = event.input;
         const value = event.value;
 
         if (value && includes(Object.keys(this.os.listItem.classes.iris), value)) {
-            this.selectedOptions.push({ item: value, name: this.os.getEntityNameByListItem(value) });
+            this.selectedOptions.push({ item: value, name: this.os.getEntityName(value) });
             this.selected.push(value);
             this.selectedChange.emit(this.selected);
         }

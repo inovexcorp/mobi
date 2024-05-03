@@ -21,10 +21,10 @@
  * #L%
  */
 import { Component, Input } from '@angular/core';
-import { find, isEmpty } from 'lodash';
+import { find } from 'lodash';
 import { Router } from '@angular/router';
 
-import { RecordSelectFiltered } from '../../../shapes-graph-editor/models/recordSelectFiltered.interface';
+import { RecordSelectFiltered } from '../../../versioned-rdf-record-editor/models/record-select-filtered.interface';
 import { CatalogStateService } from '../../../shared/services/catalogState.service';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
@@ -36,6 +36,7 @@ import { PolicyEnforcementService } from '../../../shared/services/policyEnforce
 import { ToastService } from '../../../shared/services/toast.service';
 import { PolicyManagerService } from '../../../shared/services/policyManager.service';
 import { getDctermsValue } from '../../../shared/utility';
+import { ShapesGraphListItem } from '../../../shared/models/shapesGraphListItem.class';
 
 /**
  * @class catalog.OpenRecordButtonComponent
@@ -96,16 +97,17 @@ export class OpenRecordButtonComponent {
     }
     openOntology(): void {
         this.router.navigate(['/ontology-editor']);
-        if (!isEmpty(this.os.listItem)) {
-            this.os.listItem.active = false;
-        }
         const listItem: OntologyListItem = find(this.os.list, {versionedRdfRecord: {recordId: this.record['@id']}});
         if (listItem) {
-            this.os.listItem = listItem;
-            this.os.listItem.active = true;
+          this.os.listItem = listItem;
         } else {
-            this.os.openOntology(this.record['@id'], getDctermsValue(this.record, 'title'))
-                .subscribe(() => {}, error => this.toast.createErrorToast(error));
+          const recordSelect: RecordSelectFiltered = {
+            recordId: this.record['@id'],
+            title: getDctermsValue(this.record, 'title'),
+            description: getDctermsValue(this.record, 'description'),
+            identifierIRI: this.os.getIdentifierIRI(this.record)
+          };
+          this.os.open(recordSelect).subscribe(() => {}, error => this.toast.createErrorToast(error));
         }
     }
     openMapping(): void {
@@ -116,13 +118,19 @@ export class OpenRecordButtonComponent {
         this.router.navigate(['/datasets']);
     }
     openShapesGraph(): void {
-        const recordSelect: RecordSelectFiltered = {
+        this.router.navigate(['/shapes-graph-editor']);
+        const listItem: ShapesGraphListItem = find(this.sgs.list, { versionedRdfRecord: { recordId: this.record['@id'] } });
+        if (listItem) {
+            this.sgs.listItem = listItem;
+        } else {
+          const recordSelect: RecordSelectFiltered = {
             recordId: this.record['@id'],
             title: getDctermsValue(this.record, 'title'),
-            description: getDctermsValue(this.record, 'description')
-        };
-        this.router.navigate(['/shapes-graph-editor']);
-        this.sgs.openShapesGraph(recordSelect).subscribe(() => {}, error => this.toast.createErrorToast(error));
+            description: getDctermsValue(this.record, 'description'),
+            identifierIRI: this.sgs.getIdentifierIRI(this.record)
+          };
+          this.sgs.open(recordSelect).subscribe(() => {}, error => this.toast.createErrorToast(error));
+        }
     }
     update(): void {
         this.recordType = this.cs.getRecordType(this.record);

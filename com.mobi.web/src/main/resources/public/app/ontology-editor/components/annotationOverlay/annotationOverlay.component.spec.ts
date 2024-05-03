@@ -232,7 +232,7 @@ describe('Annotation Overlay component', function() {
     });
     describe('controller methods', function() {
         it('should correctly group and filter the list of annotations', function() {
-            ontologyStateStub.getEntityNameByListItem.and.callFake(a => a);
+            ontologyStateStub.getEntityName.and.callFake(a => a);
             spyOn(component, 'isPropDisabled').and.callFake(a => a === 'http://A#prop2');
             component.annotations = ['http://A#prop1', 'http://B#prop3', 'http://A#prop2', 'http://C#other'];
             expect(component.filter('PROP')).toEqual([

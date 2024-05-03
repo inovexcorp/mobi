@@ -27,26 +27,31 @@ var Onto2 = process.cwd()+ '/src/test/resources/rdf_files/deprecated-entity-filt
 var Onto3 = process.cwd()+ '/src/test/resources/rdf_files/deprecated-entity-filter-3.ttl'
 
 module.exports = {
-    '@tags': ['sanity', "ontology-editor"],
+    '@tags': ['sanity', 'ontology-editor'],
 
     'Step 1: Initial Setup' : function(browser) {
         browser.globals.initial_steps(browser, adminUsername, adminPassword)
     },
 
     'Step 2: Upload Ontologies' : function(browser) {
-        browser.globals.upload_ontologies(browser, Onto1, Onto2, Onto3)
+        [Onto1, Onto2, Onto3].forEach(function(file) {
+            browser.page.ontologyEditorPage().uploadOntology(file);
+            browser.globals.wait_for_no_spinners(browser);
+        });
     },
 
-    'Step 3: Open deprecated-entity-filter-1 Ontology' : function (browser) {
-        browser.globals.open_ontology(browser, Onto1)
+    'Step 3: Open deprecated-entity-filter-1 Ontology' : function(browser) {
+        browser.page.ontologyEditorPage().openOntology('deprecated-entity-filter-1');
+        browser.globals.wait_for_no_spinners(browser);  
+        browser.page.ontologyEditorPage().onProjectTab();
     },
 
-    'Step 4: Click classes tab' : function (browser) {
+    'Step 4: Click classes tab' : function(browser) {
         browser
             .click('xpath', '//mat-tab-header//div[text()[contains(., "Classes")]]')
     },
 
-    'Step 5: Check for Ontology classes' : function (browser) {
+    'Step 5: Check for Ontology classes' : function(browser) {
         browser
             .waitForElementVisible('div.tree')
             .useXpath()
@@ -56,7 +61,7 @@ module.exports = {
             .assert.not.elementPresent({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 1b")]]'})
     },
 
-    'Step 6: Click on a deprecated class' : function (browser) {
+    'Step 6: Click on a deprecated class' : function(browser) {
         browser
             .useCss()
             .click('xpath', '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 3a")]]//parent::a')
@@ -64,7 +69,7 @@ module.exports = {
             .assert.textContains('selected-details .entity-name', 'Class 3a')
     },
 
-    'Step 7: Apply the Deprecated Filter' : function (browser) {
+    'Step 7: Apply the Deprecated Filter' : function(browser) {
         browser
             .waitForElementVisible('.hierarchy-filter a')
             .click('.hierarchy-filter a')

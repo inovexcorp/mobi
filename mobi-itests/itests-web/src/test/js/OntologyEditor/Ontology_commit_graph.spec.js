@@ -25,143 +25,99 @@ var adminPassword = 'admin';
 var skosOnt = process.cwd()+ '/src/test/resources/rdf_files/skos.rdf';
 
 module.exports = {
-    '@tags': ['ontology-editor', 'sanity', 'merge-request'],
+    '@tags': ['ontology-editor', 'sanity'],
 
     'Step 1: Initial Setup' : function(browser) {
         browser.globals.initial_steps(browser, adminUsername, adminPassword)
     },
-    'Step 2: Upload SKOS Ontologies' : function (browser) {
-        browser
-            .click('button.upload-button')
-            .uploadFile('input[type=file]', skosOnt)
-            .click('xpath', '//upload-ontology-overlay//span[text() = "Submit"]/parent::button')
-            .globals.wait_for_no_spinners(browser);
 
-    },
-    'Step 3: Ensure that user is on Ontology editor page' : function(browser) {
-        browser.page.editorPage().isActive();
-    },
-    'Step 4: Open new Ontology Overlay' : function(browser) {
-        browser.page.editorPage().openNewOntologyOverlay();
+    'Step 2: Upload SKOS Ontologies' : function(browser) {
+        browser.page.ontologyEditorPage().uploadOntology(skosOnt);
+        browser.globals.wait_for_no_spinners(browser);
+        browser.page.ontologyEditorPage().onProjectTab();
     },
 
-    'Step 5: Edit New Ontology Overlay' : function(browser) {
-        browser.page.editorPage().editNewOntologyOverlay('MyGraph', 'Ontology graph');
+    'Step 3: Create New Ontology' : function(browser) {
+        browser.page.ontologyEditorPage().createOntology('MyGraph', 'Ontology graph');
+        browser.globals.wait_for_no_spinners(browser);
+        browser.page.ontologyEditorPage().onProjectTab();
     },
 
-    'Step 6: Submit New Ontology Overlay' : function(browser) {
-        browser.page.editorPage().submitNewOntologyOverlay();
+    'Step 4: Edit IRI for ontology' : function(browser) {
+        browser.page.ontologyEditorPage().editIri('MyGraphCommit1');
         browser.globals.wait_for_no_spinners(browser);
-        browser.page.editorPage().onProjectTab();
     },
 
-    'Step 7: Edit IRI for ontology' : function(browser) {
-        browser.page.editorPage().onProjectTab();
-        browser.page.editorPage().editIri('MyGraphCommit1');
+    'Step 5: Commit first IRI change' : function(browser) {
+        browser.page.ontologyEditorPage().commit('IRI changed 1');
+        browser.globals.wait_for_no_spinners(browser);
+        browser.globals.dismiss_toast(browser);
+        browser.page.ontologyEditorPage().isActive('ontology-tab');
+    },
+
+    'Step 6: Edit IRI for ontology a second time' : function(browser) {
+        browser.page.ontologyEditorPage().onProjectTab();
+        browser.page.ontologyEditorPage().editIri('MyGraphCommit2');
         browser.globals.wait_for_no_spinners(browser);
     },
-    'Step 8: Open Commit overlay' : function(browser) {
-        browser.page.editorPage().openCommitOverlay();
-    },
-    'Step 9: Edit Commit message and Submit' : function(browser) {
-        browser.page.editorPage().editCommitOverlayAndSubmit('IRI changed 1');
+
+    'Step 7: Commit second IRI change' : function(browser) {
+        browser.page.ontologyEditorPage().commit('IRI changed 2');
         browser.globals.wait_for_no_spinners(browser);
-        browser
-            .useCss()
-            .waitForElementNotPresent('commit-overlay')
-            .waitForElementNotPresent('commit-overlay h1.mat-dialog-title'); // intermittent issue caused by backend
-        browser
-            .useCss()
-            .waitForElementPresent('ontology-editor-page ontology-tab')
+        browser.globals.dismiss_toast(browser);
+        browser.page.ontologyEditorPage().isActive('ontology-tab');
     },
-    'Step 10: Edit IRI for ontology' : function(browser) {
-        browser.page.editorPage().onProjectTab();
-        browser.page.editorPage().editIri('MyGraphCommit2');
+
+    'Step 8: Edit IRI for ontology a third time' : function(browser) {
+        browser.page.ontologyEditorPage().onProjectTab();
+        browser.page.ontologyEditorPage().editIri('MyGraphCommit3');
         browser.globals.wait_for_no_spinners(browser);
     },
-    'Step 11: Open Commit overlay' : function(browser) {
-        browser.page.editorPage().openCommitOverlay();
-    },
-    'Step 12: Edit Commit message and Submit' : function(browser) {
-        browser.page.editorPage().editCommitOverlayAndSubmit('IRI changed 2');
+
+    'Step 9: Commit third IRI change' : function(browser) {
+        browser.page.ontologyEditorPage().commit('IRI changed 3');
         browser.globals.wait_for_no_spinners(browser);
-        browser
-            .useCss()
-            .waitForElementNotPresent('commit-overlay')
-            .waitForElementNotPresent('commit-overlay h1.mat-dialog-title'); // intermittent issue caused by backend
-        browser
-            .useCss()
-            .waitForElementPresent('ontology-editor-page ontology-tab')
+        browser.globals.dismiss_toast(browser);
+        browser.page.ontologyEditorPage().isActive('ontology-tab');
     },
-    'Step 13: Edit IRI for ontology' : function(browser) {
-        browser.page.editorPage().onProjectTab();
-        browser.page.editorPage().editIri('MyGraphCommit3');
+
+    'Step 10: add new Import': function(browser) {
+        browser.page.ontologyEditorPage().addServerImport('skos');
+    },
+
+    'Step 11: Commit Changes': function(browser) {
+        browser.page.ontologyEditorPage().commit('Update imports');
         browser.globals.wait_for_no_spinners(browser);
+        browser.globals.dismiss_toast(browser);
+        browser.page.ontologyEditorPage().isActive('ontology-tab');
     },
-    'Step 14: Open Commit overlay' : function(browser) {
-        browser.page.editorPage().openCommitOverlay(browser);
-    },
-    'Step 15: Edit Commit message and Submit' : function(browser) {
-        browser.page.editorPage().editCommitOverlayAndSubmit('IRI changed 3');
-        browser.globals.wait_for_no_spinners(browser);
+
+    'Step 12: View changes and commits': function(browser) {
+        browser.page.ontologyEditorPage().toggleChangesPage();
+        browser.globals.wait_for_no_spinners(browser)
         browser
-            .useCss()
-            .waitForElementNotPresent('commit-overlay')
-            .waitForElementNotPresent('commit-overlay h1.mat-dialog-title'); // intermittent issue caused by backend
-        browser
-            .useCss()
-            .waitForElementPresent('ontology-editor-page ontology-tab')
-    },
-    'Step 16: add new Import': function(browser) {
-        browser
-            .waitForElementVisible('imports-block div.section-header')
-            .click('.imports-block a.fa-plus')
-            .waitForElementVisible('imports-overlay')
-            .useXpath().waitForElementVisible('//imports-overlay//button//span[text()[contains(.,"Submit")]]')
-            .pause(1000)
-            .click('xpath', '//imports-overlay//div[text()[contains(.,"On Server")]]')
-            .useCss().waitForElementNotVisible('div.spinner')
-            .click('xpath', '//imports-overlay//h4[text()[contains(.,"skos")]]')
-            .useXpath().waitForElementVisible('//imports-overlay//mat-chip-list//mat-chip[text()[contains(.,"skos")]]')
-            .click('//button//span[text()[contains(.,"Submit")]]')
-            .useCss().waitForElementNotPresent('imports-overlay')
-            .waitForElementVisible('.imports-block');
-    },
-    'Step 17: Commit Changes': function(browser) {
-        browser
-            .useCss()
-            .moveToElement('ontology-button-stack circle-button-stack', 0, 0) // hover over + element
-            .waitForElementVisible('ontology-button-stack circle-button-stack button.btn-info')
-            .click('ontology-button-stack circle-button-stack button.btn-info')
-            .waitForElementVisible('commit-overlay')
-            .assert.textContains('commit-overlay h1.mat-dialog-title', 'Commit')
-            .setValue('commit-overlay textarea[name=comment]', 'Update imports')
-            .useXpath()
-            .click('//commit-overlay//button//span[text()="Submit"]')
-            .useCss()
-            .waitForElementNotPresent('commit-overlay')
-            .waitForElementVisible('.imports-block') // ensure that still on correct tab after committing
-            .click('xpath', '//div[@id="toast-container"]')
-            .waitForElementNotVisible('xpath', '//div[@id="toast-container"]')
-    },
-    'Step 18: Navigate to commit tab': function(browser) {
+            .assert.not.elementPresent('mat-chip.uncommitted')
+            .assert.not.elementPresent('app-changes-page mat-expansion-panel')
+            .assert.textContains('app-changes-page info-message p', 'No Changes to Display')
+            .expect.elements('commit-history-table svg .commit-hash-string').count.to.equal(5)
         browser
             .useXpath()
-            .waitForElementVisible('//mat-tab-header//button[contains(@class, "mat-tab-header-pagination-after")]')
-            .click('//mat-tab-header//button[contains(@class, "mat-tab-header-pagination-after")]')
-            .waitForElementVisible('//mat-tab-header//div[text()[contains(.,"Commits")]]')
-            .click('//mat-tab-header//div[text()[contains(.,"Commits")]]')
+            .assert.elementPresent('//commit-history-table//commit-history-graph//*[local-name()="svg"]//*[local-name()="text" and @class="commit-subject-string" and text()[contains(., "Update imports")]]')
+            .assert.elementPresent('//commit-history-table//commit-history-graph//*[local-name()="svg"]//*[local-name()="text" and @class="commit-subject-string" and text()[contains(., "IRI changed 3")]]')
+            .assert.elementPresent('//commit-history-table//commit-history-graph//*[local-name()="svg"]//*[local-name()="text" and @class="commit-subject-string" and text()[contains(., "IRI changed 2")]]')
+            .assert.elementPresent('//commit-history-table//commit-history-graph//*[local-name()="svg"]//*[local-name()="text" and @class="commit-subject-string" and text()[contains(., "IRI changed 1")]]')
             .assert.elementPresent('//commit-history-table//commit-history-graph//*[local-name()="svg"]//*[local-name()="text" and @class="commit-subject-string" and text()[contains(., "initial commit")]]')
     },
+
     'Step 19: Checkout Initial commit ': function(browser) {
         browser
             .useXpath()
             .click('css selector','commit-history-graph svg g g:last-child g g:first-child')
             .waitForElementNotPresent('//commit-history-table//commit-history-graph//*[local-name()="svg"]//*[local-name()="text" and @class="commit-subject-string" and text()[contains(., "MASTER")]]')
             .useCss()
-            .waitForElementVisible('.mat-tab-label-container .mat-tab-label:nth-child(10)')
+            .waitForElementVisible('.mat-tab-label-container .mat-tab-label:nth-child(9)')
 
-        browser.getElementRect('css selector', '.mat-tab-label-container .mat-tab-label:nth-child(10)', function(result) {
+        browser.getElementRect('css selector', '.mat-tab-label-container .mat-tab-label:nth-child(9)', function(result) {
             browser.getElementRect('css selector', 'mat-ink-bar', function(ink) {
                 browser.assert.equal(result.x,  ink.x);
             });

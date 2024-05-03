@@ -31,7 +31,7 @@ import moment from 'moment/moment';
 import { JSONLDObject } from './models/JSONLDObject.interface';
 import { JSONLDId } from './models/JSONLDId.interface';
 import { JSONLDValue } from './models/JSONLDValue.interface';
-import { DC, DCTERMS, RDFS, XSD } from '../prefixes';
+import { DC, DCTERMS, RDFS, SKOS, XSD } from '../prefixes';
 import { PaginatedConfig } from './models/paginatedConfig.interface';
 import { RESTError } from './models/RESTError.interface';
 import { REGEX } from '../constants';
@@ -318,6 +318,23 @@ export function updateDctermsValue(entity: JSONLDObject, property: string, value
  */
 export function getDctermsId(entity: JSONLDObject, property: string): string {
   return get(entity, `['${DCTERMS + property}'][0]['@id']`, '');
+}
+
+/**
+ * Adds a language specification on the dct:title, dct:description, and skos:prefLabel properties on the
+ * provided JSON-LD object.
+ * 
+ * @param {JSONLDObject} entity A JSON-LD Object
+ * @param {string} language The language tag to add
+ */
+export function addLanguageToAnnotations(entity: JSONLDObject, language: string): void {
+  if (language) {
+      [`${DCTERMS}title`, `${DCTERMS}description`, `${SKOS}prefLabel`].forEach(item => {
+          if (get(entity, `['${item}'][0]`)) {
+              set(entity[item][0], '@language', language);
+          }
+      });
+  }
 }
 
 /**

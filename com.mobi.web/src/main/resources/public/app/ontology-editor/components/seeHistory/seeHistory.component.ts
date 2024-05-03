@@ -72,7 +72,7 @@ export class SeeHistoryComponent{
         this.selectCommit();
     }
     getEntityNameDisplay(iri: string): string {
-        return isBlankNodeId(iri) ? this.os.getBlankNodeValue(iri) : this.os.getEntityNameByListItem(iri);
+        return isBlankNodeId(iri) ? this.os.getBlankNodeValue(iri) : this.os.getEntityName(iri);
     }
     receiveCommits(commits: Commit[]): void {
         this.commits = commits;

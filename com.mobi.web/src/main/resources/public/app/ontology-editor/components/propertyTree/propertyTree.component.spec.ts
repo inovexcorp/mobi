@@ -392,19 +392,19 @@ describe('Property Tree component', function() {
                     it('and has a child that has a text match', function() {
                         this.node.displayNode = true;
                         expect(component.isShown(this.node)).toEqual(true);
-                        expect(this.get).toHaveBeenCalledWith(ontologyStateServiceStub.listItem.versionedRdfRecord.recordId, 3);
+                        expect(this.get).toHaveBeenCalledWith(3);
                         expect(ontologyStateServiceStub.areParentsOpen).toHaveBeenCalledWith(this.node, component.activeTab);
                     });
                     it('and does not have a child with a text match', function() {
                         expect(component.isShown(this.node)).toEqual(false);
-                        expect(this.get).toHaveBeenCalledWith(ontologyStateServiceStub.listItem.versionedRdfRecord.recordId, 3);
+                        expect(this.get).toHaveBeenCalledWith(3);
                         expect(ontologyStateServiceStub.areParentsOpen).toHaveBeenCalledWith(this.node, component.activeTab);
                     });
                 });
                 it('and filterText is not set and is not a parent node without a text match', function() {
                     ontologyStateServiceStub.areParentsOpen.and.returnValue(true);
                     expect(component.isShown(this.node)).toEqual(true);
-                    expect(this.get).toHaveBeenCalledWith(ontologyStateServiceStub.listItem.versionedRdfRecord.recordId, 3);
+                    expect(this.get).toHaveBeenCalledWith(3);
                     expect(ontologyStateServiceStub.areParentsOpen).toHaveBeenCalledWith(this.node, component.activeTab);
                 });
             });
@@ -446,16 +446,16 @@ describe('Property Tree component', function() {
                         it('and has a child that has a text match', function() {
                             this.node.displayNode = true;
                             expect(component.isShown(this.node)).toEqual(false);
-                            expect(this.get).toHaveBeenCalledWith(ontologyStateServiceStub.listItem.versionedRdfRecord.recordId, 3);
+                            expect(this.get).toHaveBeenCalledWith(3);
                         });
                         it('and does not have a child with a text match', function() {
                             expect(component.isShown(this.node)).toEqual(false);
-                            expect(this.get).toHaveBeenCalledWith(ontologyStateServiceStub.listItem.versionedRdfRecord.recordId, 3);
+                            expect(this.get).toHaveBeenCalledWith(3);
                         });
                     });
                     it('and filterText is not set and is not a parent node without a text match', function() {
                         expect(component.isShown(this.node)).toEqual(false);
-                        expect(this.get).toHaveBeenCalledWith(ontologyStateServiceStub.listItem.versionedRdfRecord.recordId, 3);
+                        expect(this.get).toHaveBeenCalledWith(3);
                     });
                 });
             });

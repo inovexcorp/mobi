@@ -123,6 +123,17 @@ const mergeRequestCommands = {
             .waitForElementVisible('//merge-requests-page//create-request');
     },
 
+    assertMatCardTitle: function(title) {
+        return this.useXpath()
+            .waitForElementVisible(`//merge-requests-page//create-request//request-record-select//mat-card//mat-card-title[contains(text(),"${title}")]`)
+    },
+
+    clickMatCard: function(title) {
+        return this.useXpath()
+            .waitForElementVisible(`//merge-requests-page//create-request//request-record-select//mat-card//mat-card-title[contains(text(),"${title}")]`)
+            .click(`//merge-requests-page//create-request//request-record-select//mat-card//mat-card-title[contains(text(),"${title}")]`);
+    },
+
     createRequestSourceBranchSelect: function(branchTitle) {
         return this.useXpath()
             .waitForElementVisible('//merge-requests-page//create-request//mat-horizontal-stepper//request-branch-select')

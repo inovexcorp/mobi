@@ -87,7 +87,7 @@ export class ObjectPropertyOverlayComponent implements OnInit {
         if (!this.objectProperties || !this.objectProperties.length) {
             return [];
         }
-        return this.os.getGroupedSelectList(this.objectProperties, val, iri => this.os.getEntityNameByListItem(iri));
+        return this.os.getGroupedSelectList(this.objectProperties, val, iri => this.os.getEntityName(iri));
     }
     addProperty(): void {
         const select = this.objectPropertyForm.controls.propertySelect.value;
@@ -111,7 +111,7 @@ export class ObjectPropertyOverlayComponent implements OnInit {
         this.dialogRef.close();
     }
     getName(val: string): string {
-        return val ? this.os.getEntityNameByListItem(val) : '';
+        return val ? this.os.getEntityName(val) : '';
     }
 
     getPropertyRangeValues(event: MatAutocompleteSelectedEvent): void {

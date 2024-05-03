@@ -22,26 +22,22 @@
  */
 var adminUsername = 'admin'
 var adminPassword = 'admin'
-var Onto1 = process.cwd()+ '/src/test/resources/rdf_files/EntityDeletionOntology.ttl'
+var Onto1 = process.cwd() + '/src/test/resources/rdf_files/EntityDeletionOntology.ttl'
 
 module.exports = {
-    '@tags': ['sanity', "ontology-editor"],
+    '@tags': ['sanity', 'ontology-editor'],
 
-    'Step 1: Initial Setup': function (browser) {
+    'Step 1: Initial Setup': function(browser) {
         browser.globals.initial_steps(browser, adminUsername, adminPassword)
     },
 
-    'Step 2: Upload Ontologies': function (browser) {
-        browser.globals.upload_ontologies(browser, Onto1)
+    'Step 2: Upload Ontologies': function(browser) {
+        browser.page.ontologyEditorPage().uploadOntology(Onto1);
+        browser.globals.wait_for_no_spinners(browser);
+        browser.page.ontologyEditorPage().onProjectTab();
     },
 
-    'Step 3: Open an Ontology called EntityDeletionOntology.ttl': function (browser) {
-        browser
-            .setValue('open-ontology-tab search-bar input', '')
-            .globals.open_ontology(browser, Onto1)
-    },
-
-    'Step 4: Click classes tab & open class': function (browser) {
+    'Step 3: Click classes tab & open class': function(browser) {
         browser
             .useXpath().waitForElementVisible('//mat-tab-header//div[text()[contains(., "Classes")]]')
             .click('xpath', '//mat-tab-header//div[text()[contains(., "Classes")]]')
@@ -52,7 +48,7 @@ module.exports = {
             .click('xpath', '//div[contains(@class, "tree-item-wrapper")]//span[text()="Test Class"]')
     },
 
-    'Step 5: Delete ontology class': function (browser) {
+    'Step 4: Delete ontology class': function(browser) {
         browser
             .useCss().waitForElementVisible('div.tree')
             .useXpath()
@@ -62,7 +58,7 @@ module.exports = {
             .click('css selector', 'confirm-modal div.mat-dialog-actions button.mat-primary')
     },
 
-    'Step 6: Verify class deletion': function (browser) {
+    'Step 5: Verify class deletion': function(browser) {
         browser.globals.wait_for_no_spinners(browser)
         browser
             .useCss()
@@ -71,7 +67,7 @@ module.exports = {
             .waitForElementNotPresent('//div[contains(@class, "tree-item-wrapper")]//span[text()="Test Class"]')
     },
 
-    'Step 7: Click properties tab & open property': function (browser) {
+    'Step 6: Click properties tab & open property': function(browser) {
         var propertiesTabXpath = '//mat-tab-header//div[text()[contains(., "Properties")]]'
         var dataPropertiesTreeXPath = '//property-tree//i[contains(@class, "fa-folder")]//following-sibling::span[text()[contains(., "Data Properties")]]'
         browser
@@ -87,7 +83,7 @@ module.exports = {
             .click('xpath', '//property-tree//tree-item//span[text()[contains(., "Test Data Property")]]')
     },
 
-    'Step 8: Delete ontology property': function (browser) {
+    'Step 7: Delete ontology property': function(browser) {
         browser
             .useCss().waitForElementVisible('div.tree')
             .useXpath()
@@ -97,7 +93,7 @@ module.exports = {
             .click('css selector', 'confirm-modal div.mat-dialog-actions button.mat-primary')
     },
 
-    'Step 9: Verify property deletion': function (browser) {
+    'Step 8: Verify property deletion': function(browser) {
         browser.globals.wait_for_no_spinners(browser)
         browser
             .useCss()
@@ -106,7 +102,7 @@ module.exports = {
             .waitForElementNotPresent('//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Test Data Property")]]')
     },
 
-    'Step 10: Click individuals tab & open individual': function (browser) {
+    'Step 9: Click individuals tab & open individual': function(browser) {
         browser
             .useXpath().waitForElementVisible('//mat-tab-header//div[text()[contains(., "Classes")]]')
             .click('xpath', '//mat-tab-header//div[text()[contains(., "Individuals")]]')
@@ -119,7 +115,7 @@ module.exports = {
             .click('xpath', '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Test Individual")]]')
     },
 
-    'Step 11: Delete ontology individual': function (browser) {
+    'Step 10: Delete ontology individual': function(browser) {
         browser
             .useCss().waitForElementVisible('div.tree')
             .useXpath()
@@ -129,7 +125,7 @@ module.exports = {
             .click('css selector', 'confirm-modal div.mat-dialog-actions button.mat-primary')
     },
 
-    'Step 12: Verify individual deletion': function (browser) {
+    'Step 11: Verify individual deletion': function(browser) {
         browser.globals.wait_for_no_spinners(browser)
         browser
             .useCss()
@@ -138,7 +134,7 @@ module.exports = {
             .waitForElementNotPresent('//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Test Individual")]]')
     },
 
-    'Step 13 : Click concepts tab & open concept': function (browser) {
+    'Step 12 : Click concepts tab & open concept': function(browser) {
         browser
             .useXpath().waitForElementVisible('//mat-tab-header//div[text()[contains(., "Classes")]]')
             .click('xpath', '//mat-tab-header//div[text()[contains(., "Concepts")]]')
@@ -149,7 +145,7 @@ module.exports = {
             .click('xpath', '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Test Concept")]]')
     },
 
-    'Step 14 : Add broader property to concept': function (browser) {
+    'Step 13: Add broader property to concept': function(browser) {
         !browser
             .useXpath()
             .waitForElementVisible('//object-property-block//h5[text()[contains(., "Object Properties")]]')
@@ -164,7 +160,7 @@ module.exports = {
             .click('//mat-optgroup//mat-option//span[text()=" Second test concept "]')
     },
 
-    'Step 15 : Check if Value can be reselected': function (browser) {
+    'Step 14: Check if Value can be reselected': function(browser) {
         !browser
             .useXpath()
             .waitForElementVisible('//object-property-overlay//form')
@@ -175,7 +171,7 @@ module.exports = {
             .click('//button//span[text()="Cancel"]')
     },
 
-    'Step 16: Delete ontology concept': function (browser) {
+    'Step 15: Delete ontology concept': function(browser) {
         browser
             .useCss().waitForElementVisible('div.tree')
             .useXpath()
@@ -186,14 +182,14 @@ module.exports = {
             .pause(2000)
     },
 
-    'Step 17: Verify concept deletion': function (browser) {
+    'Step 16: Verify concept deletion': function(browser) {
         browser.globals.wait_for_no_spinners(browser)
         browser
             .useXpath()
             .waitForElementNotPresent('//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Test Concept")]]')
     },
 
-    'Step 18: Click schemes tab & open scheme': function (browser) {
+    'Step 17: Click schemes tab & open scheme': function(browser) {
         browser
             .useXpath().waitForElementVisible('//mat-tab-header//div[text()[contains(., "Classes")]]')
             .click('xpath', '//mat-tab-header//div[text()[contains(., "Schemes")]]')
@@ -204,7 +200,7 @@ module.exports = {
             .click('xpath', '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Test Scheme")]]')
     },
 
-    'Step 19: Delete ontology scheme': function (browser) {
+    'Step 18: Delete ontology scheme': function(browser) {
         browser
             .useCss().waitForElementVisible('div.tree')
             .useXpath()
@@ -214,7 +210,7 @@ module.exports = {
             .click('css selector', 'confirm-modal div.mat-dialog-actions button.mat-primary')
     },
 
-    'Step 20: Verify scheme deletion': function (browser) {
+    'Step 19: Verify scheme deletion': function(browser) {
         browser.globals.wait_for_no_spinners(browser)
         browser
             .useXpath()

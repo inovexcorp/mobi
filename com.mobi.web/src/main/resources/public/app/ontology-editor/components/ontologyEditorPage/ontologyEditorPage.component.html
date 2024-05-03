@@ -20,12 +20,14 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="ontology-editor-page container-fluid h-100">
-    <div class="row flex-nowrap h-100">
-        <ontology-sidebar [list]="os.list"></ontology-sidebar>
-        <ontology-tab class="col p-0 remove-min-width" *ngIf="os.listItem" [isVocab]="os.listItem.isVocabulary"></ontology-tab>
-        <div class="col p-0 remove-min-width" *ngIf="!os.listItem">
-            <open-ontology-tab></open-ontology-tab>
-        </div>
-    </div>
+<div class="ontology-editor-page d-flex flex-column p-3 h-100">
+  <app-editor-top-bar *ngIf="!state?.listItem?.merge?.active"></app-editor-top-bar>
+  <app-merge-page class="h-100" *ngIf="state?.listItem?.merge?.active"></app-merge-page>
+  <app-changes-page class="flex-1 remove-min-height" *ngIf="state?.listItem?.changesPageOpen"
+                    [additions]="state?.listItem?.inProgressCommit?.additions"
+                    [deletions]="state?.listItem?.inProgressCommit?.deletions">
+  </app-changes-page>
+  <div class="flex-1 remove-min-height d-flex flex-column h-100 vertical-scroll" *ngIf="state.listItem && !state?.listItem?.changesPageOpen && !state?.listItem?.merge?.active">
+    <ontology-tab class="h-100" [isVocab]="state.listItem.isVocabulary"></ontology-tab>
+  </div>
 </div>

@@ -26,15 +26,8 @@
 .shapes-graph-editor-page {
     width: 100%;
     height: 100%;
-
-    ::ng-deep .shapes-graph-changes-page {
-        display: inline-block;
-        width: 100%;
-        height: 90% !important;
-        overflow: hidden;
-    }
     
-    .section-header {
+    ::ng-deep .section-header {
         border-bottom: 1px solid var(--light-dark);
         padding-bottom: 0.5rem;
 

@@ -47,72 +47,67 @@ module.exports = {
     },
 
     'Step 2: check sidebar page elements and children elements' : function(browser) {
-            for (var i = 0; i < pages.length; i++){
-                try {
-                    browser.useXpath()
-                    browser.waitForElementVisible("//li/a[@class='nav-link']/span[text()[contains(.,'" + pages[i] + "')]]")
-                    browser.click("//li/a[@class='nav-link']/span[text()[contains(.,'" + pages[i] + "')]]")
-                    switch (pages[i]) {
-                        case "Home":
-                            browser.waitForElementVisible("//*[contains(@class, 'quick-action-grid')]//span[text()[contains(.,'Search the Catalog')]]");
-                            browser.waitForElementVisible("//*[contains(@class, 'quick-action-grid')]//span[text()[contains(.,'Open an Ontology')]]");
-                            browser.waitForElementVisible("//*[contains(@class, 'quick-action-grid')]//span[text()[contains(.,'Read the Documentation')]]");
-                            browser.waitForElementVisible("//*[contains(@class, 'quick-action-grid')]//span[text()[contains(.,'Explore Data')]]");
-                            browser.waitForElementVisible("//*[contains(@class, 'quick-action-grid')]//span[text()[contains(.,'Query Data')]]");
-                            browser.waitForElementVisible("//*[contains(@class, 'quick-action-grid')]//span[text()[contains(.,'Ingest Data')]]");
-                            browser.waitForElementVisible("//a[@class='nav-link active'][text()[contains(.,'Recent Activity')]]");
-                            break;
-                        case "Catalog":
-                            browser.waitForElementVisible("//div[contains(@class,'mat-form-field')]/input");
-                            break;
-                        case "Ontology Editor":
-                            browser.waitForElementVisible('//div[contains(@class, "ontology-sidebar")]//span[text()[contains(.,"Ontologies")]]/parent::button');
-                            browser
-                                .useCss()
-                                .waitForElementVisible("open-ontology-tab search-bar input");
-                            browser
-                                .useXpath()
-                                .waitForElementVisible("//span[text()[contains(.,'New Ontology')]]/parent::button")
-                                .waitForElementVisible("//span[text()[contains(.,'Upload Ontology')]]/parent::button");
-                            break;
-                        case "Shapes Editor":
-                            browser.useCss()
-                                .waitForElementVisible('shapes-graph-editor-page')
-                                .waitForElementVisible('shapes-graph-editor-page editor-record-select')
-                                .waitForElementVisible('shapes-graph-editor-page editor-branch-select')
-                                .waitForElementVisible('shapes-graph-editor-page button')
-                                .assert.elementsCount('shapes-graph-editor-page button', 7)
-                            break;
-                        case "Merge Requests":
-                            browser.waitForElementVisible("//button/span[text()[contains(.,'New Request')]]");
-                            break;
-                        case "Mapping Tool":
-                            browser.waitForElementVisible("//button/span[text()[contains(.,'New Mapping')]]");
-                            break;
-                        case "Datasets":
-                            browser.waitForElementVisible("//button/span[text()[contains(.,'New Dataset')]]");
-                            break;
-                        case "Discover":
-                            browser.waitForElementVisible('//*[contains(@class, "mat-tab-labels")]//div[contains(@class,"mat-tab-label-content")][text()[contains(.,"Explore")]]');
-                            browser.waitForElementVisible('//*[contains(@class, "mat-tab-labels")]//div[contains(@class,"mat-tab-label-content")][text()[contains(.,"Query")]]');
-                            break;
-                        default:
-                            break;
-                    }
-                } catch (TimeoutException) {
-                    browser.waitForElementVisible("//li[contains(@class, 'active')]/a[@class='nav-link']/span[text()[contains(.,'" + pages[i] + "')]]")
+        for (var i = 0; i < pages.length; i++){
+            try {
+                browser.useXpath()
+                browser.waitForElementVisible("//li/a[@class='nav-link']/span[text()[contains(.,'" + pages[i] + "')]]")
+                browser.click("//li/a[@class='nav-link']/span[text()[contains(.,'" + pages[i] + "')]]")
+                switch (pages[i]) {
+                    case "Home":
+                        browser.waitForElementVisible("//*[contains(@class, 'quick-action-grid')]//span[text()[contains(.,'Search the Catalog')]]");
+                        browser.waitForElementVisible("//*[contains(@class, 'quick-action-grid')]//span[text()[contains(.,'Open an Ontology')]]");
+                        browser.waitForElementVisible("//*[contains(@class, 'quick-action-grid')]//span[text()[contains(.,'Read the Documentation')]]");
+                        browser.waitForElementVisible("//*[contains(@class, 'quick-action-grid')]//span[text()[contains(.,'Explore Data')]]");
+                        browser.waitForElementVisible("//*[contains(@class, 'quick-action-grid')]//span[text()[contains(.,'Query Data')]]");
+                        browser.waitForElementVisible("//*[contains(@class, 'quick-action-grid')]//span[text()[contains(.,'Ingest Data')]]");
+                        browser.waitForElementVisible("//a[@class='nav-link active'][text()[contains(.,'Recent Activity')]]");
+                        break;
+                    case "Catalog":
+                        browser.waitForElementVisible("//div[contains(@class,'mat-form-field')]/input");
+                        break;
+                    case "Ontology Editor":
+                        browser.useCss()
+                            .waitForElementVisible('ontology-editor-page')
+                            .waitForElementVisible('ontology-editor-page app-editor-record-select')
+                            .waitForElementVisible('ontology-editor-page app-editor-branch-select')
+                            .waitForElementVisible('ontology-editor-page button')
+                            .assert.elementsCount('ontology-editor-page button', 8)
+                        break;
+                    case "Shapes Editor":
+                        browser.useCss()
+                            .waitForElementVisible('shapes-graph-editor-page')
+                            .waitForElementVisible('shapes-graph-editor-page app-editor-record-select')
+                            .waitForElementVisible('shapes-graph-editor-page app-editor-branch-select')
+                            .waitForElementVisible('shapes-graph-editor-page button')
+                            .assert.elementsCount('shapes-graph-editor-page button', 8)
+                        break;
+                    case "Merge Requests":
+                        browser.waitForElementVisible("//button/span[text()[contains(.,'New Request')]]");
+                        break;
+                    case "Mapping Tool":
+                        browser.waitForElementVisible("//button/span[text()[contains(.,'New Mapping')]]");
+                        break;
+                    case "Datasets":
+                        browser.waitForElementVisible("//button/span[text()[contains(.,'New Dataset')]]");
+                        break;
+                    case "Discover":
+                        browser.waitForElementVisible('//*[contains(@class, "mat-tab-labels")]//div[contains(@class,"mat-tab-label-content")][text()[contains(.,"Explore")]]');
+                        browser.waitForElementVisible('//*[contains(@class, "mat-tab-labels")]//div[contains(@class,"mat-tab-label-content")][text()[contains(.,"Query")]]');
+                        break;
+                    default:
+                        break;
                 }
+            } catch (TimeoutException) {
+                browser.waitForElementVisible("//li[contains(@class, 'active')]/a[@class='nav-link']/span[text()[contains(.,'" + pages[i] + "')]]")
             }
+        }
     },
 
     'Step 3: The user clicks on the Administration sidebar link' : function(browser) {
-        browser
-            .waitForElementVisible("//li/a[@class='nav-link']/span[text()[contains(.,'Administration')]]")
-            .click("//li/a[@class='nav-link']/span[text()[contains(.,'Administration')]]")
+        browser.globals.switchToPage(browser, 'user-management');
     },
 
     'Step 4: The user clicks logout' : function(browser) {
-        browser
-            .click("//li/a[@class='nav-link']/span[text()[contains(.,'Logout')]]")
+        browser.globals.logout(browser);
     }
 }

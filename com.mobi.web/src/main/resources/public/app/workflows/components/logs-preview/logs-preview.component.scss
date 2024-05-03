@@ -20,7 +20,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-.logs-preview {
+.stacked-icon {
+  display: inline-block;
+  width: 2em;
+  height: 2em;
+  border-radius: 50%;
+  vertical-align: middle;
+
+  .mat-icon {
+    margin-right: 0 !important;
+    vertical-align: baseline !important;
+    margin-left: 2px;
+  }
+}
+ .logs-preview {
   display: flex;
   flex-direction: row;
   padding: 1.5rem;
