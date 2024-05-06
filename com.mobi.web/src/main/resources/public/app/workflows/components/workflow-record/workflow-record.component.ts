@@ -40,6 +40,8 @@ import { ConfirmModalComponent } from '../../../shared/components/confirmModal/c
 import { WorkflowSchema } from '../../models/workflow-record.interface';
 import { WorkflowDownloadModalComponent } from '../workflow-download-modal/workflow-download-modal.component';
 import { BranchInfo } from '../../models/branch-info.interface';
+import { WorkflowUploadChangesModalComponent } from '../workflow-upload-changes-modal/workflow-upload-changes-modal.component';
+import { Difference } from '../../../shared/models/difference.class';
 
 /**
  * @class workflows.WorkflowRecordComponent
@@ -61,16 +63,19 @@ export class WorkflowRecordComponent implements OnInit, OnDestroy {
   currentlyRunning = false;
   executingActivities: JSONLDObject[] = [];
   workflowRdf: JSONLDObject[] = [];
+  catalogId: string;
 
   disableClickFeature = true; // Used to disable buttons until future tickets are done
 
   private executionActivityEventsSubscription: Subscription;
   
-  constructor(private _workflowsState: WorkflowsStateService,
+  constructor(public workflowsState: WorkflowsStateService,
     public cm: CatalogManagerService,
     private _toast: ToastService,
     private _wm: WorkflowsManagerService,
-    private _dialog: MatDialog) { }
+    private _dialog: MatDialog) {
+      this.catalogId = get(this.cm.localCatalog, '@id', '');
+     }
 
   ngOnInit(): void {
     this.localCatalogIri = get(this.cm.localCatalog, '@id', '');
@@ -110,7 +115,7 @@ export class WorkflowRecordComponent implements OnInit, OnDestroy {
               .filter((branch: BranchInfo) => branch.title === 'MASTER');
             this.branch = this.branches[0];
             this.cm.getResource(getPropertyId(this.branch.branch, `${CATALOG}head`), this.record.master, 
-              this.record.iri, this.localCatalogIri).subscribe(response => {
+              this.record.iri, this.localCatalogIri,this.workflowsState.hasChanges).subscribe(response => {
               if (typeof response !== 'string') {
                 this.workflowRdf = response as JSONLDObject[];
               }
@@ -124,7 +129,23 @@ export class WorkflowRecordComponent implements OnInit, OnDestroy {
         });
   }
   goBack(): void {
-    this._workflowsState.selectedRecord = undefined;
+    if (this.workflowsState.isEditMode) {
+      this._dialog.open(ConfirmModalComponent, {
+        data: {
+          content: 'Are you sure you want to go back? You will lose changes made during editing.'
+        }
+      }).afterClosed().subscribe((result: boolean) => {
+        if (result) {
+          this.workflowsState.selectedRecord = undefined;
+          this.workflowsState.isEditMode = false;
+          this.workflowsState.hasChanges = false;
+        }
+      });
+    } else {
+      this.workflowsState.selectedRecord = undefined;
+      this.workflowsState.isEditMode = false;
+      this.workflowsState.hasChanges = false;
+    }
   }
 
   /**
@@ -141,6 +162,10 @@ export class WorkflowRecordComponent implements OnInit, OnDestroy {
       record.active = checked;
     });
   }
+  /**
+   * Opens a confirmation dialog to run a workflow and executes the workflow if confirmed.
+   * Displays success or error toast messages accordingly.
+   */
   runWorkflow(): void {
     this._dialog.open(ConfirmModalComponent, {
       data: {
@@ -153,12 +178,17 @@ export class WorkflowRecordComponent implements OnInit, OnDestroy {
             this._toast.createSuccessToast('Successfully started workflow');
           },
           error: (error) => {
-            this._toast.createErrorToast(`Error executing workflow: ${error}`);
+            const message = error.errorMessage ? error.errorMessage : error;
+            this._toast.createErrorToast(`Error executing workflow: ${message}`);
           }
         });
       }
     });
   }
+  /**
+   * Opens a confirmation dialog to delete a workflow and deletes it if confirmed.
+   * Navigates back after successful deletion or displays an error toast on failure.
+   */
   deleteWorkflow(): void {
     const workflowTitle = this.record.title;
 
@@ -180,8 +210,13 @@ export class WorkflowRecordComponent implements OnInit, OnDestroy {
     });
   }
   
+  /**
+   * Opens a modal dialog to download the workflow.
+   * Passes the workflow record to the modal component along with a flag indicating whether to
+   * get the resources most recent in progress commit.
+   */
   downloadWorkflow(): void {
-    this._dialog.open(WorkflowDownloadModalComponent, { data: { workflows: [this.record] } });
+    this._dialog.open(WorkflowDownloadModalComponent, { data: { workflows: [this.record], applyInProgressCommit: this.workflowsState.isEditMode } });
   }
   /**
    * returns the status based on the given boolean value.
@@ -192,5 +227,69 @@ export class WorkflowRecordComponent implements OnInit, OnDestroy {
    */
   recordStatus(active: boolean): string {
     return active ? 'Active' : 'Inactive';
+  }
+
+  /**
+   * Toggles the edit mode for the workflow.
+   * Updates the state and clears any pending changes.
+   * Deletes any in-progress commit, if it exists.
+   */
+  toggleEditMode(): void {
+    this.workflowsState.isEditMode = !this.workflowsState.isEditMode;
+    this.workflowsState.hasChanges = false;
+    this.cm.getInProgressCommit(this.record.iri, this.catalogId).subscribe((response: Difference) => {
+      if (response.additions.length > 0 || response.deletions.length < 0) {
+        this.cm.deleteInProgressCommit(this.record.iri, this.catalogId).subscribe();
+      }
+    }
+    );
+  }
+
+  /**
+   * Opens a modal dialog for uploading workflow changes.
+   * Retrieves the head commit of the branch and opens the upload changes modal with necessary data.
+   * Updates the state and fetches the latest workflow RDF if changes are uploaded successfully.
+   * Displays a warning toast if no changes are detected with the new upload.
+   */
+  uploadModal(): void {
+    this.cm.getBranchHeadCommit(this.branch.branch['@id'] ,this.record.iri, this.catalogId).subscribe(response => {
+      this._dialog.open(WorkflowUploadChangesModalComponent, {data: {recordId: this.record.iri, branchId: this.branch.branch['@id'], commitId: response.commit['@id'], catalogId: this.catalogId}})
+      .afterClosed().subscribe((result) => {
+        if (result && result.status === 200) {
+          this.workflowsState.hasChanges = true;
+          this.cm.getResource(getPropertyId(this.branch.branch, `${CATALOG}head`), this.record.master, 
+          this.record.iri, this.localCatalogIri, true).subscribe(response => {
+          if (typeof response !== 'string') {
+            this.workflowRdf = response as JSONLDObject[];
+          }
+        }, error => {
+          this._toast.createErrorToast(`Issue fetching latest workflow RDF: ${error}`);
+        });
+        } else if (result && result.status === 204) {
+          this._toast.createWarningToast('No changes detected with new upload');
+        }
+      });
+
+    });
+  }
+
+  /**
+   * Commits the pending changes to the workflow.
+   * If there are pending changes, creates a new branch commit with a commit message.
+   * Toggles edit mode and updates commit tab after committing changes.
+   * If there are no pending changes, simply toggles edit mode.
+   */
+  commitChanges(): void {
+    if (this.workflowsState.hasChanges) {
+      this.cm.createBranchCommit(this.branch.branch['@id'], this.record.iri, this.catalogId, 'Commit for new Workflow Changes').subscribe(() => {
+        this.toggleEditMode();
+        this.setRecordBranches();
+      },
+      () => {
+        this._toast.createErrorToast('Error saving changes to workflow');
+      });
+    } else {
+      this.toggleEditMode();
+    }
   }
 }

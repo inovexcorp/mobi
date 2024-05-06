@@ -76,6 +76,7 @@ describe('WorkflowControlsComponent', () => {
   });
   describe('controller methods', () => {
     it('should properly determine whether the run button should be disabled', () => {
+      component.isEditMode = false;
       // No Records
       component.records = [];
       expect(component.isRunDisabled()).toBeTrue();
@@ -96,6 +97,9 @@ describe('WorkflowControlsComponent', () => {
       // Enabled
       component.records[0].canModifyMasterBranch = true;
       expect(component.isRunDisabled()).toBeFalse();
+      // In Edit Mode
+      component.isEditMode = true;
+      expect(component.isRunDisabled()).toBeTrue();
     });
     it('should properly determine whether the download button should be disabled', () => {
       // No Records
@@ -106,6 +110,7 @@ describe('WorkflowControlsComponent', () => {
       expect(component.isDownloadDisabled()).toBeFalse();
     });
     it('should properly determine whether the delete button should be disabled', () => {
+      component.isEditMode = false;
       // No Records
       component.records = [];
       expect(component.isDeleteDisabled()).toBeTrue();
@@ -116,6 +121,9 @@ describe('WorkflowControlsComponent', () => {
       // Enabled
       component.records[0].canDeleteWorkflow = true;
       expect(component.isDeleteDisabled()).toBeFalse();
+      // In Edit Mode
+      component.isEditMode = true;
+      expect(component.isDeleteDisabled()).toBeTrue();
     });
     it('should return the proper tooltip for the run button', () => {
       // Currently Running
@@ -212,6 +220,8 @@ describe('WorkflowControlsComponent', () => {
         workflowIRI: ''
       };
       component.wss.selectedRecord = sampleWorkflowSchema;
+      component.wss.isEditMode = true;
+      expect(component.wss.isEditMode).toBeTrue();
       fixture.detectChanges();
       expect(element.queryAll(By.css('.workflow-create')).length).toEqual(0);
     });

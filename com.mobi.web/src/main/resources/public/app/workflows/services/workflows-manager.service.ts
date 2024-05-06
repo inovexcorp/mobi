@@ -38,7 +38,10 @@ import { WorkflowExecutionActivityDisplayI } from '../models/workflow-execution-
 import { WorkflowExecutionActivityI } from '../models/workflow-execution-activity.interface';
 import { WorkflowPaginatedConfig } from '../models/workflow-paginated-config.interface';
 import { WorkflowSchema } from '../models/workflow-record.interface';
-import { condenseCommitId, handleErrorObject, paginatedConfigToHttpParams, runningTime, toFormattedDateString } from '../../shared/utility';
+import {
+  condenseCommitId, createHttpParams, handleErrorObject, paginatedConfigToHttpParams, runningTime,
+  toFormattedDateString
+} from '../../shared/utility';
 import { XACMLRequest } from '../../shared/models/XACMLRequest.interface';
 import { PolicyManagerService } from '../../shared/services/policyManager.service';
 import { CATALOG, POLICY, RDF, WORKFLOWS } from '../../prefixes';
@@ -72,6 +75,30 @@ export class WorkflowsManagerService {
     private _zone: NgZone,
     public _cm: CatalogManagerService
   ) { }
+
+  /**
+   * Uploads changes to a workflow record
+   * Constructs a FormData object and appends the provided file.
+   * Tracks the HTTP request with a spinner service.
+   * Returns an observable of type HttpResponse<string> containing the response.
+   *
+   * @param recordId The ID of the workflow record.
+   * @param branchId The ID of the branch to upload changes to.
+   * @param commitId The ID of the commit to upload changes to.
+   * @param file The file to upload.
+   * @returns An observable of type HttpResponse<string> containing the response.
+   */
+  uploadChanges(recordId: string, branchId: string, commitId: string, file: File): Observable<HttpResponse<string>> {
+    const fd = new FormData();
+    fd.append('file', file);
+
+    const params = {
+      branchId: branchId,
+      commitId: commitId,
+    };
+    return this._spinnerSrv.track(this._http.put<string>(this._buildWorkflowUrl(recordId), fd,
+      { observe: 'response', params: createHttpParams(params) })).pipe(catchError(handleErrorObject));
+  }
 
   /**
    * Retrieves workflow records based on the provided pagination configuration.

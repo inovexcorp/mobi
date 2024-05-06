@@ -1,0 +1,12 @@
+@prefix dct: <http://purl.org/dc/terms/> .
+@prefix w: <http://mobi.solutions/ontologies/workflows#> .
+@prefix wext: <http://mobi.solutions/ontologies/workflows#> .
+
+<http://example.com/workflows/A> a w:Workflow;
+  dct:title "Workflow A";
+  dct:description "This is Workflow A with a new description.";
+  w:active true;
+  w:hasActioniesta <http://example.com/workflows/A/action>.
+
+<http://example.com/workflows/A/action> a w:Action, w:TestAction;
+  w:testMessageresdw "This is a test message from Workflow A" .

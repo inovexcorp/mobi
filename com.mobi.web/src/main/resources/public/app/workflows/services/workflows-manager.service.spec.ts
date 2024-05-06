@@ -418,6 +418,48 @@ describe('WorkflowsManagerService', () => {
     service.downloadExecutionLogs(workflowId, activity['@id']);
     expect(window.open).toHaveBeenCalledWith(`${service.workflows_prefix}/${encodeURIComponent(workflowId)}/executions/${encodeURIComponent(activity['@id'])}/logs`);
   });
+  describe('uploadChanges', () => {
+    it('should upload changes successfully', () => {
+      const recordId = 'recordId';
+      const branchId = 'branchId';
+      const commitId = 'commitId';
+      const file = new File(['file content'], 'filename.txt');
+
+      service.uploadChanges(recordId, branchId, commitId, file).subscribe(() => {
+        const expectedUrl = `${service.workflows_prefix}/${encodeURIComponent(recordId)}/`;
+        const req = httpMock.expectOne(expectedUrl);
+        expect(req.request.method).toEqual('PUT');
+        expect(req.request.params.get('branchId')).toEqual(branchId);
+        expect(req.request.params.get('commitId')).toEqual(commitId);
+        expect(progressSpinnerStub.trackedRequest).toHaveBeenCalledWith(jasmine.any(Observable), true);
+        req.flush('response', { status: 200, statusText: 'Ok' });
+      });
+    });
+    it('should handle errors during upload', () => {
+      const recordId = 'recordId';
+      const branchId = 'branchId';
+      const commitId = 'commitId';
+      const file = new File(['file contents'], 'filename');
+      const expectedUrl = `${service.workflows_prefix}/${encodeURIComponent(recordId)}/`; // Construct URL manually
+
+      service.uploadChanges(recordId, branchId, commitId, file).subscribe({
+        next: () => {
+          expect(progressSpinnerStub.trackedRequest).toHaveBeenCalledWith(jasmine.any(Observable), true);
+          fail('Should not emit a next value');
+        },
+        error: (error) => {
+          expect(error).toBeDefined();
+        }
+      });
+
+      const req = httpMock.expectOne(req => {
+        return req.method === 'PUT' && req.url === expectedUrl;
+      });
+      expect(req.request.method).toBe('PUT');
+
+      req.flush('Error occurred', { status: 500, statusText: 'Internal Server Error' });
+    });
+  });
   describe('should retrieve a preview of a specific workflow log', () => {
     let url;
     beforeEach(() => {

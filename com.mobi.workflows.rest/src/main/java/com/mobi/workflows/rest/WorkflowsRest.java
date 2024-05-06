@@ -27,17 +27,27 @@ import static com.mobi.rest.util.RestUtils.checkStringParam;
 import static com.mobi.rest.util.RestUtils.createJsonErrorObject;
 import static com.mobi.rest.util.RestUtils.createPaginatedResponseWithJsonNode;
 import static com.mobi.rest.util.RestUtils.getActiveUser;
+import static com.mobi.rest.util.RestUtils.getCurrentModel;
+import static com.mobi.rest.util.RestUtils.getGarbageCollectionTime;
+import static com.mobi.rest.util.RestUtils.getInProgressCommitIRI;
 import static com.mobi.rest.util.RestUtils.getObjectNodeFromJsonld;
 import static com.mobi.rest.util.RestUtils.getRDFFormat;
+import static com.mobi.rest.util.RestUtils.getUploadedModel;
 import static com.mobi.rest.util.RestUtils.groupedModelToString;
 import static com.mobi.rest.util.RestUtils.modelToJsonld;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.mobi.catalog.api.BranchManager;
+import com.mobi.catalog.api.CommitManager;
+import com.mobi.catalog.api.CompiledResourceManager;
+import com.mobi.catalog.api.DifferenceManager;
 import com.mobi.catalog.api.PaginatedSearchResults;
 import com.mobi.catalog.api.RecordManager;
+import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
+import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
 import com.mobi.catalog.api.ontologies.mcat.Modify;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.api.record.config.OperationConfig;
@@ -48,6 +58,10 @@ import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
+import com.mobi.ontology.utils.OntologyModels;
+import com.mobi.persistence.utils.BNodeUtils;
+import com.mobi.persistence.utils.RDFFiles;
+import com.mobi.persistence.utils.api.BNodeService;
 import com.mobi.rest.security.annotations.ActionAttributes;
 import com.mobi.rest.security.annotations.ActionId;
 import com.mobi.rest.security.annotations.AttributeValue;
@@ -57,6 +71,8 @@ import com.mobi.rest.security.annotations.ValueType;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.MobiNotFoundException;
 import com.mobi.rest.util.RestUtils;
+import com.mobi.security.policy.api.Decision;
+import com.mobi.security.policy.api.PDP;
 import com.mobi.security.policy.api.ontologies.policy.Read;
 import com.mobi.vfs.api.VirtualFile;
 import com.mobi.vfs.api.VirtualFilesystem;
@@ -67,6 +83,7 @@ import com.mobi.workflows.api.WorkflowManager;
 import com.mobi.workflows.api.ontologies.workflows.WorkflowExecutionActivity;
 import com.mobi.workflows.api.ontologies.workflows.WorkflowRecord;
 import com.mobi.workflows.api.ontologies.workflows.WorkflowRecordFactory;
+import com.mobi.workflows.exception.InvalidWorkflowException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -76,19 +93,28 @@ import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.input.BoundedInputStream;
+import org.apache.commons.lang3.StringUtils;
+import org.eclipse.rdf4j.model.BNode;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.ModelFactory;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
+import org.eclipse.rdf4j.model.vocabulary.OWL;
+import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.RepositoryResult;
 import org.eclipse.rdf4j.rio.RDFParseException;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.jaxrs.whiteboard.propertytypes.JaxrsResource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -96,6 +122,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.annotation.security.RolesAllowed;
@@ -105,6 +134,7 @@ import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -125,6 +155,8 @@ public class WorkflowsRest {
     private static final ObjectMapper mapper = new ObjectMapper();
     private final ValueFactory vf = new ValidatingValueFactory();
 
+    private final ModelFactory modelFactory = new DynamicModelFactory();
+
     @Reference
     CatalogConfigProvider configProvider;
 
@@ -135,13 +167,33 @@ public class WorkflowsRest {
     RecordManager recordManager;
 
     @Reference
+    protected DifferenceManager differenceManager;
+
+    @Reference
+    BranchManager branchManager;
+
+    @Reference
     WorkflowRecordFactory workflowRecordFactory;
 
     @Reference
     EngineManager engineManager;
 
     @Reference
+    protected CompiledResourceManager compiledResourceManager;
+
+    @Reference
+    protected BNodeService bNodeService;
+
+    @Reference
+    protected CommitManager commitManager;
+
+    @Reference
+    protected PDP pdp;
+
+    @Reference
     protected VirtualFilesystem vfs;
+
+    private static final Logger log = LoggerFactory.getLogger(WorkflowsRest.class);
 
     static final Set<String> GET_WORKFLOW_RECORDS_SORT_BY = Stream.of("iri", "title", "issued",
             "modified", "active", "status", "workflowIRI", "executorIri", "executorUsername",
@@ -376,6 +428,178 @@ public class WorkflowsRest {
         objectNode.put("title", title);
 
         return Response.status(Response.Status.CREATED).entity(objectNode.toString()).build();
+    }
+
+    /**
+     * Handles uploading changes to a workflow.
+     *
+     * @param servletRequest The HttpServletRequest object.
+     * @param recordIdStr The string representing the Record Resource ID (required).
+     * @param branchIdStr The string representing the Branch Resource ID (optional).
+     * @param commitIdStr The string representing the Commit Resource ID (optional).
+     * @return A Response object indicating the success or failure of the operation.
+     */
+    @PUT
+    @Path("{recordId}")
+    @Consumes(MediaType.MULTIPART_FORM_DATA)
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    @Operation(
+            tags = "workflows",
+            summary = "Updates the specified workflow branch and commit with the data provided",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "OK if successful or METHOD_NOT_ALLOWED if the changes "
+                                    + "can not be applied to the commit specified"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "409", description = "User already has an in-progress commit"),
+                    @ApiResponse(responseCode = "401", description = "User does not have permission"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
+            },
+            requestBody = @RequestBody(
+                    content = {
+                            @Content(mediaType = MediaType.MULTIPART_FORM_DATA,
+                                    schema = @Schema(implementation = WorkflowFileUpload.class)
+                            )
+                    }
+            )
+    )
+    @ActionId(Modify.TYPE)
+    @ResourceId(type = ValueType.PATH, value = "recordId")
+    @ActionAttributes(
+            @AttributeValue(id = "http://mobi.com/ontologies/catalog#branch", value = "branchId", type =
+                    ValueType.QUERY, required = false)
+    )
+    public Response uploadChangesToWorkflow(
+            @Context HttpServletRequest servletRequest,
+            @Parameter(description = "String representing the Record Resource ID", required = true)
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "String representing the Branch Resource ID")
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "String representing the Commit Resource ID")
+            @QueryParam("commitId") String commitIdStr) {
+
+        Map<String, Object> formData = RestUtils.getFormData(servletRequest, new HashMap<>());
+        InputStream fileInputStream = (InputStream) formData.get("stream");
+        String filename = (String) formData.get("filename");
+
+        long totalTime = System.currentTimeMillis();
+        if (fileInputStream == null) {
+            throw ErrorUtils.sendError("The file is missing.", Response.Status.BAD_REQUEST);
+        }
+
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            Resource catalogIRI = configProvider.getLocalCatalogIRI();
+            IRI recordId = vf.createIRI(recordIdStr);
+
+            User user = getActiveUser(servletRequest, engineManager);
+            Optional<InProgressCommit> commit = commitManager.getInProgressCommitOpt(catalogIRI, recordId, user,  conn);
+
+            if (commit.isPresent()) {
+                log.debug("Removing in progress commit before uploading new commit");
+                commitManager.removeInProgressCommit(commit.get(), conn);
+            }
+
+            Resource branchId;
+            Resource commitId;
+            if (StringUtils.isNotBlank(commitIdStr)) {
+                checkStringParam(branchIdStr, "The branchIdStr is missing.");
+                commitId = vf.createIRI(commitIdStr);
+                branchId = vf.createIRI(branchIdStr);
+            } else if (StringUtils.isNotBlank(branchIdStr)) {
+                branchId = vf.createIRI(branchIdStr);
+                commitId = commitManager.getHeadCommit(catalogIRI, recordId, branchId, conn).getResource();
+            } else {
+                Branch branch = branchManager.getMasterBranch(catalogIRI, recordId, conn);
+                branchId = branch.getResource();
+                Decision canModify = RestUtils.isBranchModifiable(user, (IRI) branchId, recordId, pdp);
+                if (canModify == Decision.DENY) {
+                    throw ErrorUtils.sendError("User does not have permission to modify the master branch.",
+                            Response.Status.UNAUTHORIZED);
+                }
+                commitId = branch.getHead_resource().orElseThrow(() -> new IllegalStateException("Branch "
+                        + branchIdStr + " has no head Commit set"));
+            }
+
+            long startTime = System.currentTimeMillis();
+            // Uploaded BNode map used for restoring addition BNodes
+            Map<BNode, IRI> uploadedBNodes = new HashMap<>();
+            final CompletableFuture<Model> uploadedModelFuture = CompletableFuture.supplyAsync(() -> {
+                try {
+                    long startTimeF = System.currentTimeMillis();
+                    Model temp = getUploadedModel(fileInputStream,
+                            RDFFiles.getFileExtension(filename), uploadedBNodes, modelFactory, bNodeService);
+                    workflowManager.validateWorkflow(temp);
+                    log.trace("uploadedModelFuture took {} ms", System.currentTimeMillis() - startTimeF);
+                    return temp;
+                } catch (IOException e) {
+                    throw new CompletionException(e);
+                }
+            });
+
+            // Catalog BNode map used for restoring deletion BNodes
+            Map<BNode, IRI> catalogBNodes = new HashMap<>();
+            final CompletableFuture<Model> currentModelFuture = CompletableFuture.supplyAsync(() -> {
+                long startTimeF = System.currentTimeMillis();
+                Model temp = getCurrentModel(recordId, branchId, commitId, catalogBNodes, conn, bNodeService, compiledResourceManager);
+                log.trace("currentModelFuture took " + (System.currentTimeMillis() - startTimeF));
+                return temp;
+            });
+            log.trace("uploadChangesToOntology futures creation took {} ms", System.currentTimeMillis() - startTime);
+
+            Model currentModel = currentModelFuture.get();
+            Model uploadedModel = uploadedModelFuture.get();
+
+            startTime = System.currentTimeMillis();
+            if (!OntologyModels.findFirstOntologyIRI(uploadedModel, vf).isPresent()) {
+                OntologyModels.findFirstOntologyIRI(currentModel, vf)
+                        .ifPresent(iri -> uploadedModel.add(iri, vf.createIRI(RDF.TYPE.stringValue()),
+                                vf.createIRI(OWL.ONTOLOGY.stringValue())));
+            }
+            log.trace("uploadChangesToOntology futures completion took {} ms", System.currentTimeMillis() - startTime);
+
+            startTime = System.currentTimeMillis();
+            Difference diff = differenceManager.getDiff(currentModel, uploadedModel);
+            log.trace("uploadChangesToOntology getDiff took {} ms", System.currentTimeMillis() - startTime);
+
+            if (diff.getAdditions().isEmpty() && diff.getDeletions().isEmpty()) {
+                return Response.noContent().build();
+            }
+
+            Resource inProgressCommitIRI = getInProgressCommitIRI(user, recordId, conn, commitManager, configProvider);
+            startTime = System.currentTimeMillis();
+            Model additionsRestored = BNodeUtils.restoreBNodes(diff.getAdditions(), uploadedBNodes, catalogBNodes,
+                    modelFactory);
+            Model deletionsRestored = BNodeUtils.restoreBNodes(diff.getDeletions(), catalogBNodes, modelFactory);
+            commitManager.updateInProgressCommit(catalogIRI, recordId, inProgressCommitIRI,
+                    additionsRestored, deletionsRestored, conn);
+            log.trace("uploadChangesToWorkflow getInProgressCommitIRI took {} ms",
+                    System.currentTimeMillis() - startTime);
+
+            return Response.ok().build();
+
+        } catch (IllegalArgumentException | RDFParseException ex) {
+            throw RestUtils.getErrorObjBadRequest(ex);
+        } catch (MobiException | ExecutionException | InterruptedException | CompletionException ex) {
+            if (ex instanceof ExecutionException) {
+                if (ex.getCause() instanceof InvalidWorkflowException) {
+                    InvalidWorkflowException invalidWorkflowException = (InvalidWorkflowException) ex.getCause();
+                    ObjectNode error = createJsonInvalidWorkflowError(invalidWorkflowException);
+                    throw RestUtils.getErrorObjInternalServerError(invalidWorkflowException, error);
+                }
+                else if (ex.getCause() instanceof IllegalArgumentException) {
+                    throw RestUtils.getErrorObjBadRequest(ex.getCause());
+                } else if (ex.getCause() instanceof RDFParseException) {
+                    throw RestUtils.getErrorObjBadRequest(ex.getCause());
+                }
+            }
+            throw RestUtils.getErrorObjInternalServerError(ex);
+        } finally {
+            IOUtils.closeQuietly(fileInputStream);
+            log.trace("uploadChangesToOntology took " + (System.currentTimeMillis() - totalTime));
+            log.trace("uploadChangesToOntology getGarbageCollectionTime {} ms", getGarbageCollectionTime());
+        }
     }
 
     /**
@@ -1012,5 +1236,27 @@ public class WorkflowsRest {
             builder.header("X-Total-Size", file.getSize());
         }
         return builder.build();
+    }
+
+    public static ObjectNode createJsonInvalidWorkflowError(InvalidWorkflowException exception) {
+        ObjectNode objectNode = mapper.createObjectNode();
+        objectNode.put("error", exception.getClass().getSimpleName());
+
+        String errorMessage = exception.getMessage();
+        objectNode.put("errorMessage", errorMessage);
+        Model validationReport = exception.getValidationReport();
+
+        String validationReportTurtle = RestUtils.modelToString(validationReport, "turtle");
+        ArrayNode arrayNode = mapper.createArrayNode();
+
+        String[] validationReportLines = validationReportTurtle.split("\n");
+
+        for (String validationReportLine : validationReportLines) {
+            arrayNode.add(validationReportLine.trim());
+        }
+
+        objectNode.set("errorDetails", arrayNode);
+
+        return objectNode;
     }
 }

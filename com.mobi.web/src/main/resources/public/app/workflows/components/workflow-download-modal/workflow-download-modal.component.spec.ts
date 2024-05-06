@@ -68,7 +68,7 @@ describe('WorkflowDownloadModalComponent', () => {
         MockProvider(MatDialogRef),
         MockProvider(ToastService),
         MockProvider(MAT_DIALOG_DATA),
-        { provide: MAT_DIALOG_DATA, useValue: { workflows: workflow_mocks } },
+        { provide: MAT_DIALOG_DATA, useValue: { workflows: workflow_mocks, applyInProgressCommit: false } },
         { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close'])}
       ]
     })
@@ -92,6 +92,14 @@ describe('WorkflowDownloadModalComponent', () => {
       catalogManagerStub.getRecordMasterBranch.and.returnValue(of(branch));
       component.download();
       expect(catalogManagerStub.downloadResource).toHaveBeenCalled();
+      expect(matDialogRef.close).toHaveBeenCalledWith(true);
+    });
+    it('should download a workflow w/ in progress commit', function () {
+      catalogManagerStub.getRecordMasterBranch.and.returnValue(of(branch));
+      component.data.applyInProgressCommit = true;
+      component.download();
+      expect(catalogManagerStub.downloadResource).toHaveBeenCalledWith('commitId', 'https://mobi.com/branches#5ce0a198-875a-4b3c-84f7-9dc2ca318197',
+       'https://mobi.com/records#87ecd33d-c5c4-441a-9d8c-33151bc32952', '', true, 'turtle', 'PipeDreamHarmony');
       expect(matDialogRef.close).toHaveBeenCalledWith(true);
     });
     it('should error if incorrect jsonld', function () {

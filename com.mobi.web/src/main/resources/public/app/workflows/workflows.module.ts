@@ -43,6 +43,7 @@ import { WorkflowTableFilterComponent } from './components/workflow-table-filter
 import { WorkflowsManagerService } from './services/workflows-manager.service';
 import { WorkflowsStateService } from './services/workflows-state.service';
 import { WorkflowCreationModalComponent } from './components/workflow-creation-modal/workflow-creation-modal.component';
+import { WorkflowUploadChangesModalComponent } from './components/workflow-upload-changes-modal/workflow-upload-changes-modal.component';
 
 const routes: Routes = [{
   path: '', component: WorkflowsComponent,
@@ -68,6 +69,7 @@ const routes: Routes = [{
     WorkflowRecordsComponent,
     WorkflowTableFilterComponent,
     WorkflowCreationModalComponent,
+    WorkflowUploadChangesModalComponent,
   ],
   imports: [
     CommonModule,

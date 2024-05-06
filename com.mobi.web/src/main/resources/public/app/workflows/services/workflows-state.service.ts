@@ -79,6 +79,14 @@ export class WorkflowsStateService {
    * {@link workflows.LogsPreviewComponent}
    */
   selectedWorkflowRdf: JSONLDObject[] = [];
+  /**
+   * Boolean representation of edit mode status of an individual workflow, false by default
+   */
+  isEditMode = false;
+  /**
+   * Boolean representation of edit mode status of an individual workflow, false by default
+   */
+  hasChanges = false;
 
   constructor(private wms: WorkflowsManagerService, 
     private _um: UserManagerService,
