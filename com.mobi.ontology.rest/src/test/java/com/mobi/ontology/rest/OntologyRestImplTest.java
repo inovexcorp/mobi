@@ -4989,7 +4989,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         assertEquals(response.getStatus(), Response.Status.BAD_REQUEST.getStatusCode());
         JSONObject responseObject = getResponse(response);
         assertEquals(responseObject.get("error"), "IllegalArgumentException");
-        assertEquals(responseObject.get("errorMessage"), "TriG data is not supported for ontology upload changes.");
+        assertEquals(responseObject.get("errorMessage"), "TriG data is not supported for upload changes.");
         assertNotEquals(responseObject.get("errorDetails"), null);
     }
     

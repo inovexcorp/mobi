@@ -28,7 +28,7 @@ import { FormsModule } from '@angular/forms';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
-import { MatSlideToggleChange, MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatSlideToggle, MatSlideToggleChange, MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatTabsModule } from '@angular/material/tabs';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MatDialog } from '@angular/material/dialog';
@@ -49,6 +49,9 @@ import { WorkflowsManagerService } from '../../services/workflows-manager.servic
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
 import { WorkflowDownloadModalComponent } from '../workflow-download-modal/workflow-download-modal.component';
 import { WorkflowRecordComponent } from './workflow-record.component';
+import { Difference } from '../../../shared/models/difference.class';
+import { WorkflowUploadChangesModalComponent } from '../workflow-upload-changes-modal/workflow-upload-changes-modal.component';
+import { CommitDifference } from '../../../shared/models/commitDifference.interface';
 
 describe('WorkflowRecordComponent', () => {
   let component: WorkflowRecordComponent;
@@ -86,6 +89,10 @@ describe('WorkflowRecordComponent', () => {
     { '@id': 'workflow', '@type': [`${WORKFLOWS}Workflow`]},
     { '@id': 'action1', '@type': [`${WORKFLOWS}Action`]},
   ];
+  const mockJSONLDObject: JSONLDObject = {
+    '@id': 'mockId',
+    '@type': ['mockType'],
+  };
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -106,12 +113,22 @@ describe('WorkflowRecordComponent', () => {
       ],
       providers: [
         MockProvider(WorkflowsManagerService),
-        MockProvider(WorkflowsStateService),
+        MockProvider(WorkflowsStateService, {
+          isEditMode: false,
+          hasChanges: false
+        }),
         MockProvider(CatalogManagerService),
         MockProvider(ToastService),
-        { provide: MatDialog, useFactory: () => jasmine.createSpyObj('MatDialog', {
-          open: { afterClosed: () => of(true)}
-        }) }
+        { 
+          provide: MatDialog, 
+          useFactory: () => {
+            const matDialogSpy = jasmine.createSpyObj('MatDialog', ['open']);
+            matDialogSpy.open.and.returnValue({
+              afterClosed: () => of({ status: 200 })
+            });
+            return matDialogSpy;
+          }
+        } 
       ]
     })
     .compileComponents();
@@ -160,6 +177,8 @@ describe('WorkflowRecordComponent', () => {
     expect(workflowsManagerStub.getExecutionActivitiesEvents).toHaveBeenCalledWith();
     expect(component.executingActivities).toEqual([activity1]);
     expect(component.currentlyRunning).toBeTrue();
+    expect(workflowsStateStub.isEditMode).toBeFalse();
+    expect(workflowsStateStub.hasChanges).toBeFalse();
   }));
   describe('controller methods', () => {
     describe('should retrieve the branches of the workflow record', () => {
@@ -245,9 +264,10 @@ describe('WorkflowRecordComponent', () => {
       }));
     });
     it('should open download dialog', fakeAsync(() => {
+      workflowsStateStub.isEditMode = false;
       catalogManagerStub.downloadResource.and.returnValue(null);
       component.downloadWorkflow();
-      expect(matDialog.open).toHaveBeenCalledWith(WorkflowDownloadModalComponent, jasmine.objectContaining({ data: { workflows: [workflow_mocks[0]] } }));
+      expect(matDialog.open).toHaveBeenCalledWith(WorkflowDownloadModalComponent, jasmine.objectContaining({ data: { workflows: [workflow_mocks[0]], applyInProgressCommit: false } }));
     }));
     describe('should update the workflow state', () => {
       it('When toggle is false', async () => {
@@ -275,8 +295,145 @@ describe('WorkflowRecordComponent', () => {
         expect(component.record.active).toBeTruthy();
       });
     });
+    describe('edit mode', () => {
+      it('should toggle with a difference', () => {
+        const response: Difference = new Difference([mockJSONLDObject], []);
+
+        catalogManagerStub.getInProgressCommit.and.returnValue(of(response));
+        catalogManagerStub.deleteInProgressCommit.and.returnValue(of(null));
+        component.toggleEditMode();
+        fixture.detectChanges();
+        expect(element.queryAll(By.css('.upload-button')).length).toEqual(1);
+        expect(element.queryAll(By.css('.save-button')).length).toEqual(1);
+        expect(element.queryAll(By.css('.edit-button')).length).toEqual(0);
+        expect(workflowsStateStub.isEditMode).toBeTrue();
+        expect(workflowsStateStub.hasChanges).toBeFalse();
+
+      });
+      it('should toggle without a difference', () => {
+        const response: Difference = new Difference([], []); 
+
+        catalogManagerStub.getInProgressCommit.and.returnValue(of(response));
+        catalogManagerStub.deleteInProgressCommit.and.returnValue(of(null));
+        component.toggleEditMode();
+        fixture.detectChanges();
+        expect(element.queryAll(By.css('.upload-button')).length).toEqual(1);
+        expect(element.queryAll(By.css('.save-button')).length).toEqual(1);
+        expect(element.queryAll(By.css('.edit-button')).length).toEqual(0);
+        expect(workflowsStateStub.isEditMode).toBeTrue();
+        expect(workflowsStateStub.hasChanges).toBeFalse();
+      });
+    });
+    describe('upload modal', () => {
+      it('should open dialog and handle 200', () => {
+        const response = new CommitDifference();
+        response.commit = { '@id': 'commitId' } as JSONLDObject;
+        catalogManagerStub.getBranchHeadCommit.and.returnValue(of(response));
+        catalogManagerStub.getResource.and.returnValue(of([mockJSONLDObject]));
+      
+        component.uploadModal();
+        expect(matDialog.open).toHaveBeenCalledWith(WorkflowUploadChangesModalComponent, {
+          data: {
+            recordId: component.record.iri,
+            branchId: component.branch.branch['@id'],
+            commitId: response.commit['@id'],
+            catalogId: catalogId
+          }
+        });
+
+        expect(workflowsStateStub.hasChanges).toBeTrue();
+        expect(toastStub.createWarningToast).not.toHaveBeenCalled();
+        expect(component.workflowRdf).toEqual([mockJSONLDObject]);
+      });
+      it('should open dialog and handle 204', () => {
+        const response = new CommitDifference();
+        response.commit = { '@id': 'commitId' } as JSONLDObject;
+        catalogManagerStub.getBranchHeadCommit.and.returnValue(of(response));
+        catalogManagerStub.getResource.and.returnValue(of([mockJSONLDObject]));
+        const dialogRefMock = {
+          afterClosed: () => of({ status: 204 })
+        };
+        matDialog.open.and.returnValue(dialogRefMock as any);
+        component.uploadModal();
+      
+        expect(matDialog.open).toHaveBeenCalledWith(WorkflowUploadChangesModalComponent, {
+          data: {
+            recordId: component.record.iri,
+            branchId: component.branch.branch['@id'],
+            commitId: response.commit['@id'],
+            catalogId: catalogId
+          }
+        });
+    
+        expect(workflowsStateStub.hasChanges).toBeFalse();
+        expect(toastStub.createWarningToast).toHaveBeenCalled();
+      });
+      it('should fail to open the dialog',() => {
+        const response = new CommitDifference();
+        response.commit = { '@id': 'commitId' } as JSONLDObject;
+        catalogManagerStub.getBranchHeadCommit.and.returnValue(of(response));
+        catalogManagerStub.getResource.and.returnValue(throwError('Error'));
+      
+        component.uploadModal();
+      
+        expect(toastStub.createErrorToast).toHaveBeenCalledWith('Issue fetching latest workflow RDF: Error');
+      });
+    });
+    describe('commitChanges', () => {
+      it('should commit changes then calculate new state', fakeAsync(() => {
+        workflowsStateStub.hasChanges = true;
+        catalogManagerStub.createBranchCommit.and.returnValue(of('commitIRI'));
+        spyOn(component, 'toggleEditMode');
+        spyOn(component, 'setRecordBranches');
+        component.commitChanges();
+
+        expect(component.toggleEditMode).toHaveBeenCalled();
+        expect(component.setRecordBranches).toHaveBeenCalled();
+      }));
+      it('should toggle edit mode only, if hasChanges is false', () => {
+        workflowsStateStub.hasChanges = false;
+        spyOn(component, 'toggleEditMode');
+        spyOn(component, 'setRecordBranches');
+        catalogManagerStub.createBranchCommit.and.returnValue(of('commitIRI'));
+        component.commitChanges();
+    
+        expect(component.toggleEditMode).toHaveBeenCalled();
+        expect(component.setRecordBranches).not.toHaveBeenCalled();
+      });
+      it('unless an error occurs', () => {
+        const errorMessage = 'Error saving changes to workflow';
+        workflowsStateStub.hasChanges = true;
+        catalogManagerStub.createBranchCommit.and.returnValue(throwError(errorMessage));
+        component.commitChanges();
+    
+        expect(toastStub.createErrorToast).toHaveBeenCalledWith(errorMessage);
+      });
+    });
   });
   describe('contains the correct html', () => {
+    describe('concerning edit mode', () => {
+      it('when not in edit mode', () => {
+        expect(element.queryAll(By.css('.edit-button')).length).toEqual(1);
+        expect(element.queryAll(By.css('.upload-button')).length).toEqual(0);
+        expect(element.queryAll(By.css('.save-button')).length).toEqual(0);
+      });
+      it('when in edit mode', () => {
+        workflowsStateStub.isEditMode = true;
+        fixture.detectChanges();
+        expect(element.queryAll(By.css('.upload-button')).length).toEqual(1);
+        expect(element.queryAll(By.css('.save-button')).length).toEqual(1);
+        expect(element.queryAll(By.css('.edit-button')).length).toEqual(0);
+
+        const slideToggleElements = fixture.debugElement.queryAll(By.directive(MatSlideToggle));
+        expect(slideToggleElements.length).toEqual(1);
+        const inputElement = slideToggleElements[0].query(By.css('input')).nativeElement;
+        expect(inputElement.disabled).toBeTrue();
+      });
+      it('when has changes', () => {
+        workflowsStateStub.hasChanges = true;
+        expect(element.queryAll(By.css('.changes-text')).length).toEqual(1);
+      });
+    });
     it('for wrapping containers', () => {
         expect(element.queryAll(By.css('div.workflow-record')).length).toEqual(1);
         expect(element.queryAll(By.css('div.workflow-record div.back-sidebar')).length).toEqual(1);

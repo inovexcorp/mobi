@@ -46,7 +46,9 @@ const workflowsCommands = {
             .setValue('app-workflow-creation-modal mat-form-field input[name=title]', title)
             .click('app-workflow-creation-modal div.mat-dialog-actions button.mat-primary')
             .waitForElementNotPresent('app-workflow-creation-modal div.mat-dialog-actions button:not(.mat-primary)')
-            .click('app-workflow-record button span.fa-chevron-left');
+            .assert.visible('.edit-icon')
+            .click('app-workflow-record button span.fa-chevron-left')
+            .click('confirm-modal .mat-dialog-actions > button:nth-child(2)');
     },
     selectWorkflowStatusFilter: function(status) {
         return this.useCss()

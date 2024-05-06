@@ -320,9 +320,10 @@ describe('WorkflowRecordsComponent', () => {
       }));
     });
     it('should open download dialog', fakeAsync(() => {
+      workflowsStateStub.isEditMode = false;
       catalogManagerStub.downloadResource.and.returnValue(null);
       component.downloadWorkflow();
-      expect(matDialog.open).toHaveBeenCalledWith(WorkflowDownloadModalComponent, jasmine.objectContaining({ data: { workflows: component.getSelectedRecords() } }));
+      expect(matDialog.open).toHaveBeenCalledWith(WorkflowDownloadModalComponent, jasmine.objectContaining({ data: { workflows: component.getSelectedRecords(), applyInProgressCommit: false } }));
     }));
     it('should open create dialog', fakeAsync(() => {
       component.createWorkflow();

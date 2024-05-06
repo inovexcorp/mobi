@@ -78,6 +78,7 @@ import com.mobi.workflows.api.ontologies.workflows.Workflow;
 import com.mobi.workflows.api.ontologies.workflows.WorkflowExecutionActivity;
 import com.mobi.workflows.api.ontologies.workflows.WorkflowRecord;
 import com.mobi.workflows.api.trigger.TriggerHandler;
+import com.mobi.workflows.exception.InvalidWorkflowException;
 import com.mobi.workflows.impl.core.fedx.FedXUtils;
 import com.mobi.workflows.impl.core.record.SimpleWorkflowRecordServiceTest;
 import org.apache.commons.io.IOUtils;
@@ -454,7 +455,7 @@ public class SimpleWorkflowManagerTest extends OrmEnabledTestCase {
         }
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test(expected = InvalidWorkflowException.class)
     public void validateWorkflowTestWithUndefinedValues() throws IOException {
         InputStream stream = getClass().getResourceAsStream("/undefined-workflow.ttl");
         workflowModel = Rio.parse(stream, "", RDFFormat.TURTLE);
@@ -490,7 +491,7 @@ public class SimpleWorkflowManagerTest extends OrmEnabledTestCase {
         }
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test(expected = InvalidWorkflowException.class)
     public void validateWorkflowTestWithDifferemtValuesInSystemRepo() throws IOException {
         InputStream stream = getClass().getResourceAsStream("/undefined-workflow.ttl");
         workflowModel = Rio.parse(stream, "", RDFFormat.TURTLE);
@@ -533,12 +534,12 @@ public class SimpleWorkflowManagerTest extends OrmEnabledTestCase {
         thrown.expectMessage("No workflow provided in RDF data.");
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test(expected = InvalidWorkflowException.class)
     public void validateWorkflowInvalidModelTest() throws IOException {
         InputStream stream = getClass().getResourceAsStream("/test-workflow-invalid.ttl");
         workflowModel = Rio.parse(stream, "", RDFFormat.TURTLE);
         workflowManager.validateWorkflow(workflowModel);
-        thrown.expectMessage("Workflow definition is not valid:");
+        thrown.expectMessage("Workflow definition is not valid.");
     }
 
     @Test

@@ -35,6 +35,10 @@ import static com.mobi.rest.util.RestUtils.XLS_MIME_TYPE;
 import static com.mobi.rest.util.RestUtils.checkStringParam;
 import static com.mobi.rest.util.RestUtils.convertFileExtensionToMimeType;
 import static com.mobi.rest.util.RestUtils.getActiveUser;
+import static com.mobi.rest.util.RestUtils.getCurrentModel;
+import static com.mobi.rest.util.RestUtils.getGarbageCollectionTime;
+import static com.mobi.rest.util.RestUtils.getInProgressCommitIRI;
+import static com.mobi.rest.util.RestUtils.getUploadedModel;
 import static com.mobi.rest.util.RestUtils.getObjectNodeFromJsonld;
 import static com.mobi.rest.util.RestUtils.getRDFFormatFileExtension;
 import static com.mobi.rest.util.RestUtils.getRDFFormatMimeType;
@@ -84,8 +88,6 @@ import com.mobi.ontology.utils.cache.OntologyCache;
 import com.mobi.persistence.utils.BNodeUtils;
 import com.mobi.persistence.utils.Bindings;
 import com.mobi.persistence.utils.JSONQueryResults;
-import com.mobi.persistence.utils.Models;
-import com.mobi.persistence.utils.ParsedModel;
 import com.mobi.persistence.utils.RDFFiles;
 import com.mobi.persistence.utils.api.BNodeService;
 import com.mobi.rest.security.annotations.ActionAttributes;
@@ -154,8 +156,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
-import java.lang.management.GarbageCollectorMXBean;
-import java.lang.management.ManagementFactory;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -616,7 +616,7 @@ public class OntologyRest {
             Difference diff = differenceManager.getDiff(entityModel, getModelFromJson(entityJson));
             Resource recordId = valueFactory.createIRI(recordIdStr);
             User user = getActiveUser(servletRequest, engineManager);
-            Resource inProgressCommitIRI = getInProgressCommitIRI(user, recordId, conn);
+            Resource inProgressCommitIRI = getInProgressCommitIRI(user, recordId, conn, commitManager, configProvider);
             commitManager.updateInProgressCommit(configProvider.getLocalCatalogIRI(), recordId, inProgressCommitIRI,
                     diff.getAdditions(), diff.getDeletions(), conn);
             return Response.ok().build();
@@ -718,7 +718,7 @@ public class OntologyRest {
                 try {
                     long startTimeF = System.currentTimeMillis();
                     Model temp = getUploadedModel(fileInputStream,
-                            RDFFiles.getFileExtension(filename), uploadedBNodes);
+                            RDFFiles.getFileExtension(filename), uploadedBNodes, modelFactory, bNodeService);
                     log.trace("uploadedModelFuture took {} ms", System.currentTimeMillis() - startTimeF);
                     return temp;
                 } catch (IOException e) {
@@ -730,7 +730,8 @@ public class OntologyRest {
             Map<BNode, IRI> catalogBNodes = new HashMap<>();
             final CompletableFuture<Model> currentModelFuture = CompletableFuture.supplyAsync(() -> {
                 long startTimeF = System.currentTimeMillis();
-                Model temp = getCurrentModel(recordId, branchId, commitId, catalogBNodes, conn);
+                Model temp = getCurrentModel(recordId, branchId, commitId, catalogBNodes, conn, bNodeService,
+                        compiledResourceManager);
                 log.trace("currentModelFuture took " + (System.currentTimeMillis() - startTimeF));
                 return temp;
             });
@@ -755,7 +756,7 @@ public class OntologyRest {
                 return Response.noContent().build();
             }
 
-            Resource inProgressCommitIRI = getInProgressCommitIRI(user, recordId, conn);
+            Resource inProgressCommitIRI = getInProgressCommitIRI(user, recordId, conn, commitManager, configProvider);
             startTime = System.currentTimeMillis();
             Model additionsRestored = BNodeUtils.restoreBNodes(diff.getAdditions(), uploadedBNodes, catalogBNodes,
                     modelFactory);
@@ -790,60 +791,6 @@ public class OntologyRest {
     private class OntologyFileUploadChanges {
         @Schema(type = "string", format = "binary", description = "Ontology file to upload.")
         public String file;
-    }
-
-    /**
-     * Calculates the garbage collection time in milliseconds.
-     *
-     * @return The total garbage collection time.
-     */
-    private static long getGarbageCollectionTime() {
-        long collectionTime = 0;
-        for (GarbageCollectorMXBean garbageCollectorMXBean : ManagementFactory.getGarbageCollectorMXBeans()) {
-            collectionTime += garbageCollectorMXBean.getCollectionTime();
-        }
-        return collectionTime;
-    }
-
-    /**
-     * Gets a {@link Model} of the provided {@link InputStream}. Deterministically skolemizes any BNode in the model.
-     *
-     * @param fileInputStream The {@link InputStream} to process.
-     * @param fileExtension The extension of the file associated with the fileInputStream.
-     * @param bNodesMap The {@link Map} of BNodes to their deterministically skolemized IRIs. Will be populated in
-     *                  method.
-     * @return A {@link Model} with deterministically skolemized BNodes.
-     * @throws IOException When an error occurs processing the {@link InputStream}
-     */
-    private Model getUploadedModel(InputStream fileInputStream, String fileExtension, Map<BNode, IRI> bNodesMap)
-            throws IOException {
-        // Load uploaded ontology into a skolemized model
-        ParsedModel parsedModel = Models.createSkolemizedModel(fileExtension, fileInputStream,
-                modelFactory, bNodeService, bNodesMap);
-
-        if ("trig".equalsIgnoreCase(parsedModel.getRdfFormatName())) {
-            throw new IllegalArgumentException("TriG data is not supported for ontology upload changes.");
-        }
-
-        return parsedModel.getModel();
-    }
-
-    /**
-     * Gets a {@link Model} from the provided Record/Branch/Commit in the Catalog. Deterministically skolemizes any
-     * BNode in the model.
-     *
-     * @param recordId  The {@link Resource} of the recordId.
-     * @param branchId  The {@link Resource} of the branchId.
-     * @param commitId  The {@link Resource} of the commitId.
-     * @param bNodesMap The {@link Map} of BNodes to their deterministically skolemized IRIs. Will be populated in
-     *                  method.
-     * @param conn      A RepositoryConnection for lookup.
-     * @return A {@link Model} with deterministically skolemized BNodes.
-     */
-    private Model getCurrentModel(Resource recordId, Resource branchId, Resource commitId, Map<BNode, IRI> bNodesMap, RepositoryConnection conn) {
-        // Load existing ontology into a skolemized model
-        return bNodeService.deterministicSkolemize(
-                compiledResourceManager.getCompiledResource(recordId, branchId, commitId, conn), bNodesMap);
     }
 
     /**
@@ -4524,28 +4471,6 @@ public class OntologyRest {
     }
 
     /**
-     * Gets the Resource for the InProgressCommit associated with the provided User and the Record identified by the
-     * provided Resource. If that User does not have an InProgressCommit, a new one will be created and that Resource
-     * will be returned.
-     *
-     * @param user     the User with the InProgressCommit
-     * @param recordId the Resource identifying the Record with the InProgressCommit
-     * @param conn     A repository connection for lookup.
-     * @return a Resource which identifies the InProgressCommit associated with the User for the Record
-     */
-    private Resource getInProgressCommitIRI(User user, Resource recordId, RepositoryConnection conn) {
-        Optional<InProgressCommit> optional = commitManager.getInProgressCommitOpt(configProvider.getLocalCatalogIRI(),
-                recordId, user, conn);
-        if (optional.isPresent()) {
-            return optional.get().getResource();
-        } else {
-            InProgressCommit inProgressCommit = commitManager.createInProgressCommit(user);
-            commitManager.addInProgressCommit(configProvider.getLocalCatalogIRI(), recordId, inProgressCommit, conn);
-            return inProgressCommit.getResource();
-        }
-    }
-
-    /**
      * Optionally gets the Ontology based on the provided IDs.
      *
      * @param servletRequest        The HttpServletRequest.
@@ -5135,7 +5060,7 @@ public class OntologyRest {
                                                  Model entityModel, RepositoryConnection conn) {
         User user = getActiveUser(servletRequest, engineManager);
         Resource recordId = valueFactory.createIRI(recordIdStr);
-        Resource inProgressCommitIRI = getInProgressCommitIRI(user, recordId, conn);
+        Resource inProgressCommitIRI = getInProgressCommitIRI(user, recordId, conn, commitManager, configProvider);
         commitManager.updateInProgressCommit(configProvider.getLocalCatalogIRI(), recordId, inProgressCommitIRI,
                 entityModel, null, conn);
         return Response.status(Response.Status.CREATED).build();
@@ -5156,7 +5081,7 @@ public class OntologyRest {
                                                  String entityIdStr, String recordIdStr, RepositoryConnection conn) {
         User user = getActiveUser(servletRequest, engineManager);
         Resource recordId = valueFactory.createIRI(recordIdStr);
-        Resource inProgressCommitIRI = getInProgressCommitIRI(user, recordId, conn);
+        Resource inProgressCommitIRI = getInProgressCommitIRI(user, recordId, conn, commitManager, configProvider);
         Model ontologyModel = ontology.asModel();
         Resource entityId = valueFactory.createIRI(entityIdStr);
         Model model = modelFactory.createEmptyModel();

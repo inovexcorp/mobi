@@ -80,6 +80,7 @@ import com.mobi.workflows.api.ontologies.workflows.WorkflowFactory;
 import com.mobi.workflows.api.ontologies.workflows.WorkflowRecord;
 import com.mobi.workflows.api.ontologies.workflows.WorkflowRecordFactory;
 import com.mobi.workflows.api.trigger.TriggerHandler;
+import com.mobi.workflows.exception.InvalidWorkflowException;
 import com.mobi.workflows.impl.core.fedx.FedXUtils;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.common.exception.ValidationException;
@@ -583,7 +584,7 @@ public class SimpleWorkflowManager implements WorkflowManager, EventHandler {
         Workflow workflow = getWorkflow(workflowIRI).orElseThrow(() ->
                 new IllegalArgumentException("Workflow " + workflowIRI + " does not exist"));
 
-        if (workflowEngine.getExecutingWorkflows().contains(workflowIRI)) {
+        if (workflowEngine != null && workflowEngine.getExecutingWorkflows().contains(workflowIRI)) {
             throw new IllegalArgumentException("Workflow " + workflowIRI + " is currently executing. "
                     + "Cannot update.");
         }
@@ -1028,7 +1029,7 @@ public class SimpleWorkflowManager implements WorkflowManager, EventHandler {
                 Model validationReportModel = ((ValidationException) cause).validationReportAsModel();
                 StringWriter sw = new StringWriter();
                 Rio.write(validationReportModel, sw, RDFFormat.TURTLE);
-                throw new IllegalArgumentException("Workflow definition is not valid:\n" + sw);
+                throw new InvalidWorkflowException("Workflow definition is not valid.", ex, validationReportModel);
             } else {
                 throw ex;
             }

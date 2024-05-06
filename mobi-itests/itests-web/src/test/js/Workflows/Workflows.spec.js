@@ -20,6 +20,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+var badWorkflowFile = process.cwd()+ '/src/test/resources/rdf_files/invalid-workflow.ttl'  // has workflow def issue
+var validWorkflowFile = process.cwd()+ '/src/test/resources/rdf_files/test-workflow.ttl' 
+
 var adminUsername = 'admin';
 var adminPassword = 'admin';
 
@@ -250,5 +253,50 @@ module.exports = {
     'Step 30: Validate that user cannot activate workflow without modify master permission': function(browser) {
         browser.useCss()
             .assert.hasClass('app-workflow-record .record-header mat-slide-toggle', 'mat-disabled')
+    },
+    'Step 31: Verify edit mode functionality when in edit mode': function(browser) {
+        browser.globals.logout(browser);
+        browser.globals.login(browser, adminUsername, adminPassword);
+        browser.globals.switchToPage(browser, 'workflows');
+        browser.page.workflowsPage()
+            .openWorkflowPage('Workflow1');
+        browser.useCss()
+            .click('.edit-button')
+            .assert.visible('.edit-icon')
+        browser.page.workflowsPage().useCss()
+            .assert.attributeEquals('@runWorkflowButton', 'disabled', 'true')
+            .assert.attributeEquals('@deleteWorkflowButton', 'disabled', 'true')
+            .assert.attributeEquals('@downloadWorkflowButton', 'disabled', null);
+        browser.useCss()
+            .assert.hasClass('app-workflow-record .record-header mat-slide-toggle', 'mat-disabled')
+            .assert.attributeEquals('app-execution-history-table .field-status', 'disabled', null)
+            .assert.attributeEquals('app-execution-history-table .field-time-range', 'disabled', null)
+            .click('app-workflows .mat-tab-labels > div:nth-child(2)')
+        browser.globals.switchToPage(browser, 'catalog', 'div.catalog-page')
+        browser.globals.switchToPage(browser, 'workflows');   
+        browser.useCss()
+            .assert.visible('.edit-icon')
+            .click('app-workflow-record button span.fa-chevron-left')
+            .assert.visible('confirm-modal')
+            .click('confirm-modal .mat-dialog-actions > button:nth-child(1)')
+    },
+    'Step 32: Verify upload changes functionality': function(browser) {
+        browser.useCss()
+            .click('app-workflows .upload-button')
+            .assert.visible('mat-dialog-container')
+            .uploadFile('input[type=file]', badWorkflowFile)
+            .click('mat-dialog-container .mat-dialog-actions > button:nth-child(2)')
+            .assert.visible('mat-dialog-container error-display')
+            .uploadFile('input[type=file]', validWorkflowFile)
+            .click('mat-dialog-container .mat-dialog-actions > button:nth-child(2)');
+        browser.globals.wait_for_no_spinners(browser);
+        browser.useCss()
+            .assert.visible('app-workflows .info-message')
+            .click('app-workflows .save-button')
+        browser.useCss()
+            .assert.visible('.edit-button')
+            .click('app-workflows .mat-tab-labels > div:nth-child(2)');
+        browser.useXpath()
+            .assert.visible('//*[contains(text(), "new Workflow Changes")]')
     }
 }

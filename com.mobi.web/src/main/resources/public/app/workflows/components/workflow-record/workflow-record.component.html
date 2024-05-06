@@ -28,15 +28,18 @@
         <div class="workflow-record-header">
             <div class="workflow-details">
                 <div class="record-header">
-                    <h2 class="record-title d-flex align-items-center">
-                        {{ record.title }}
-                    </h2>
+                    <span class="workflow-title-line">
+                        <h2 class="record-title d-flex align-items-center">
+                            {{ record.title }}
+                        </h2>
+                        <mat-icon class="edit-icon" *ngIf="workflowsState.isEditMode">warning</mat-icon>
+                    </span>
                     <p class="record-workflow-iri text-muted">
                         {{ record.workflowIRI }}
                     </p>
                     <div class="record-active-toggle">
                         <mat-slide-toggle
-                                [disabled]="!record.canModifyMasterBranch"
+                                [disabled]="!record.canModifyMasterBranch || workflowsState.isEditMode"
                                 [checked]="record.active"
                                 (change)="toggleRecordActive($event, record)">
                             {{recordStatus(record.active)}}
@@ -50,6 +53,7 @@
             <div class="workflow-control">
                 <app-workflow-controls [records]="[record]"
                     [currentlyRunning]="currentlyRunning"
+                    [isEditMode]="workflowsState.isEditMode"
                     (onRun)="runWorkflow()"
                     (onDownload)="downloadWorkflow()"
                     (onDelete)="deleteWorkflow()">
@@ -84,9 +88,24 @@
                             </div>
                         </ng-template>
                     </mat-tab>
-                </mat-tab-group>
+                </mat-tab-group> 
             </div>
             <div class="workflow-record-body-display">
+                <div class="model-overlay">
+                    <div class="changes-text">
+                        <info-message *ngIf="workflowsState.hasChanges">You have unsaved changes in your workflow model.</info-message>
+                    </div>
+                    <div class="model-buttons">
+                        <ng-template #editButton>
+                            <button class="edit-button" color="primary" (click)="toggleEditMode()" mat-icon-button><mat-icon>edit</mat-icon></button>
+                        </ng-template>
+                        <ng-template #otherButtons>
+                            <button class="upload-button" color="primary" (click)="uploadModal()" mat-icon-button><mat-icon>upload</mat-icon></button>
+                            <button class="save-button" color="primary" (click)="commitChanges()" mat-icon-button><mat-icon>save</mat-icon></button>
+                        </ng-template>
+                        <ng-container *ngIf="!workflowsState.isEditMode; then editButton else otherButtons"></ng-container>
+                    </div>
+                </div>
                 <app-workflow-display [resource]="workflowRdf"></app-workflow-display>
             </div>
         </div>

@@ -360,8 +360,11 @@ export class WorkflowRecordsComponent implements OnInit, OnDestroy {
   /**
    * Open Workflow Page
    */
-  openRecord(row: WorkflowDataRow): void {
+  openRecord(row: WorkflowDataRow, openInEditMode = false): void {
     this.wss.selectedRecord = row.record;
+    if (openInEditMode) {
+      this.wss.isEditMode = true;
+    }
   }
   /**
    * Executes the selected workflow after confirming with the user.
@@ -441,13 +444,14 @@ export class WorkflowRecordsComponent implements OnInit, OnDestroy {
    */
   downloadWorkflow(): void {
     this._dialog.open(WorkflowDownloadModalComponent,
-       { data: { workflows: this.getSelectedRecords() } }).afterClosed().subscribe((result: boolean) => {
-      if (result) {
-        this.selectedWorkflows = [];
-        this.resetLimitOffset();
-        this.updateWorkflowRecords();
-      }
-    });
+      {data: {workflows: this.getSelectedRecords(), applyInProgressCommit: this.wss.isEditMode}})
+      .afterClosed().subscribe((result: boolean) => {
+        if (result) {
+          this.selectedWorkflows = [];
+          this.resetLimitOffset();
+          this.updateWorkflowRecords();
+        }
+      });
   }
 
   /**
@@ -455,7 +459,7 @@ export class WorkflowRecordsComponent implements OnInit, OnDestroy {
    */
   createWorkflow(): void {
     this._dialog.open(WorkflowCreationModalComponent).afterClosed().subscribe((result) => {
-      if (result.status) {
+      if (result?.status) {
           const newWorkflowDataRow : WorkflowDataRow = {
             record: result.newWorkflow,
             statusDisplay: undefined,
@@ -464,7 +468,7 @@ export class WorkflowRecordsComponent implements OnInit, OnDestroy {
             startTimeDisplay: undefined,
             runningTimeDisplay: undefined
           };
-          this.openRecord(newWorkflowDataRow);
+          this.openRecord(newWorkflowDataRow, true);
       }
     });
   }

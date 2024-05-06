@@ -36,6 +36,16 @@
     display: flex;
     padding: var(--pad);
     height: 100%;
+    .workflow-title-line {
+        display: flex;
+        align-items: center;
+        .edit-icon {
+            transform: scale(1.2);
+            margin-left: 0.5rem;
+            margin-bottom: .3rem;
+            color: #ff9800; 
+        }
+    }
 
     .back-sidebar {
         @include flexSettings;
@@ -75,6 +85,19 @@
                 flex-grow: 1;
                 min-height: 20rem;
                 overflow: auto; /* For scrollable content */
+                .model-overlay {
+                    position: relative;
+                    z-index: 2;
+                    .model-buttons {
+                        position: absolute; 
+                        right: 5px;
+                    }
+                    .changes-text {
+                        position: absolute; 
+                        left: 5px;
+                        margin-top: .7rem;
+                    }
+                }
             }
             .mat-tab-content-wrapper {
                 min-height: 20rem;

@@ -130,6 +130,8 @@ describe('WorkflowsStateService', () => {
     expect(service.selectedActivity).toBeUndefined();
     expect(service.selectedLogFileIRI).toEqual('');
     expect(service.selectedWorkflowRdf).toEqual([]);
+    expect(service.hasChanges).toBeFalse();
+    expect(service.isEditMode).toBeFalse();
   });
   describe('getResults should call the proper methods', function() {
     it('when getResults resolves', async () => {

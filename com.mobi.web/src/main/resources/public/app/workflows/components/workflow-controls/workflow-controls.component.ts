@@ -40,7 +40,8 @@ import { WorkflowsStateService } from '../../services/workflows-state.service';
 export class WorkflowControlsComponent {
   @Input() records: WorkflowSchema[];
   @Input() currentlyRunning = false;
-  @Input() canCreate;
+  @Input() isEditMode: boolean;
+  @Input() canCreate: boolean;
   @Output() onRun = new EventEmitter<WorkflowSchema[]>();
   @Output() onDownload = new EventEmitter<WorkflowSchema[]>();
   @Output() onDelete = new EventEmitter<WorkflowSchema[]>();
@@ -61,7 +62,8 @@ export class WorkflowControlsComponent {
   isRunDisabled(): boolean {
     const someNotActive = this.records.some(workflow => !workflow.active);
     const someNotPermitted = this.records.some(workflow => !workflow.canModifyMasterBranch);
-    return !this.records.length || this.records.length > 1 || this.currentlyRunning || someNotActive || someNotPermitted;
+    return !this.records.length || this.records.length > 1 || this.currentlyRunning || someNotActive
+      || someNotPermitted || this.isEditMode;
   }
 
   /**
@@ -72,7 +74,7 @@ export class WorkflowControlsComponent {
    */
   isDeleteDisabled(): boolean {
     const someNotPermitted = this.records.some(workflow => !workflow.canDeleteWorkflow);
-    return !this.records.length || someNotPermitted;
+    return !this.records.length || someNotPermitted || this.isEditMode;
   }
 
   /**

@@ -32,12 +32,17 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.github.jsonldjava.core.JsonLdApi;
 import com.github.jsonldjava.core.JsonLdOptions;
 import com.github.jsonldjava.utils.JsonUtils;
+import com.mobi.catalog.api.CommitManager;
+import com.mobi.catalog.api.CompiledResourceManager;
+import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
 import com.mobi.catalog.api.ontologies.mcat.Modify;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
+import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.persistence.utils.Models;
+import com.mobi.persistence.utils.ParsedModel;
 import com.mobi.persistence.utils.SkolemizedStatementIterable;
 import com.mobi.persistence.utils.api.BNodeService;
 import com.mobi.rdf.orm.Thing;
@@ -59,6 +64,7 @@ import org.eclipse.rdf4j.model.BNode;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.ModelFactory;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.ValueFactory;
@@ -66,6 +72,7 @@ import org.eclipse.rdf4j.model.base.CoreDatatype;
 import org.eclipse.rdf4j.model.impl.LinkedHashModel;
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.eclipse.rdf4j.query.TupleQueryResult;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFHandler;
 import org.eclipse.rdf4j.rio.RDFParser;
@@ -81,6 +88,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.StringWriter;
+import java.lang.management.GarbageCollectorMXBean;
+import java.lang.management.ManagementFactory;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -217,6 +226,92 @@ public class RestUtils {
      */
     public static String modelToString(Model model, String format) {
         return modelToString(model, getRDFFormat(format));
+    }
+
+    /**
+     * Gets a {@link Model} of the provided {@link InputStream}. Deterministically skolemizes any BNode in the model.
+     *
+     * @param fileInputStream The {@link InputStream} to process.
+     * @param fileExtension The extension of the file associated with the fileInputStream.
+     * @param bNodesMap The {@link Map} of BNodes to their deterministically skolemized IRIs. Will be populated in
+     *                  method.
+     * @param modelFactory The {@link ModelFactory} used to create the model.
+     * @param bNodeService The {@link BNodeService} used for skolemization.
+     * @return A {@link Model} with deterministically skolemized BNodes.
+     * @throws IOException When an error occurs processing the {@link InputStream}
+     */
+    public static Model getUploadedModel(InputStream fileInputStream, String fileExtension, Map<BNode, IRI> bNodesMap,
+                                         ModelFactory modelFactory, BNodeService bNodeService)
+            throws IOException {
+        // Load uploaded ontology into a skolemized model
+        ParsedModel parsedModel = Models.createSkolemizedModel(fileExtension, fileInputStream,
+                modelFactory, bNodeService, bNodesMap);
+
+        if ("trig".equalsIgnoreCase(parsedModel.getRdfFormatName())) {
+            throw new IllegalArgumentException("TriG data is not supported for upload changes.");
+        }
+
+        return parsedModel.getModel();
+    }
+
+    /**
+     * Gets a {@link Model} from the provided Record/Branch/Commit in the Catalog.
+     * Deterministically skolemizes any
+     * BNode in the model.
+     *
+     * @param recordId  The {@link Resource} of the recordId.
+     * @param branchId  The {@link Resource} of the branchId.
+     * @param commitId  The {@link Resource} of the commitId.
+     * @param bNodesMap The {@link Map} of BNodes to their deterministically
+     *                  skolemized IRIs. Will be populated in
+     *                  method.
+     * @param conn      A RepositoryConnection for lookup.
+     * @return A {@link Model} with deterministically skolemized BNodes.
+     */
+    public static Model getCurrentModel(Resource recordId, Resource branchId, Resource commitId,
+            Map<BNode, IRI> bNodesMap, RepositoryConnection conn, BNodeService bNodeService,
+            CompiledResourceManager compiledResourceManager) {
+        // Load existing ontology into a skolemized model
+        return bNodeService.deterministicSkolemize(
+                compiledResourceManager.getCompiledResource(recordId, branchId, commitId, conn), bNodesMap);
+    }
+
+    /**
+     * Gets the Resource for the InProgressCommit associated with the provided User and the Record identified by the
+     * provided Resource. If that User does not have an InProgressCommit, a new one will be created and that Resource
+     * will be returned.
+     *
+     * @param user     the User with the InProgressCommit
+     * @param recordId the Resource identifying the Record with the InProgressCommit
+     * @param conn     A repository connection for lookup.
+     * @param commitManager  The {@link CommitManager} instance for managing commits.
+     * @param configProvider The {@link CatalogConfigProvider} instance for providing catalog configurations.
+     * @return a Resource which identifies the InProgressCommit associated with the User for the Record
+     */
+    public static Resource getInProgressCommitIRI(User user, Resource recordId, RepositoryConnection conn,
+            CommitManager commitManager, CatalogConfigProvider configProvider) {
+        Optional<InProgressCommit> optional = commitManager.getInProgressCommitOpt(configProvider.getLocalCatalogIRI(),
+                recordId, user, conn);
+        if (optional.isPresent()) {
+            return optional.get().getResource();
+        } else {
+            InProgressCommit inProgressCommit = commitManager.createInProgressCommit(user);
+            commitManager.addInProgressCommit(configProvider.getLocalCatalogIRI(), recordId, inProgressCommit, conn);
+            return inProgressCommit.getResource();
+        }
+    }
+
+    /**
+     * Calculates the garbage collection time in milliseconds.
+     *
+     * @return The total garbage collection time.
+     */
+    public static long getGarbageCollectionTime() {
+        long collectionTime = 0;
+        for (GarbageCollectorMXBean garbageCollectorMXBean : ManagementFactory.getGarbageCollectorMXBeans()) {
+            collectionTime += garbageCollectorMXBean.getCollectionTime();
+        }
+        return collectionTime;
     }
 
     /**
@@ -1068,6 +1163,23 @@ public class RestUtils {
                 .status(Response.Status.INTERNAL_SERVER_ERROR)
                 .type(MediaType.APPLICATION_JSON_TYPE)
                 .entity(objectNode.toString())
+                .build();
+        return ErrorUtils.sendError(throwable, throwable.getMessage(), response);
+    }
+
+    /**
+     * Creates a {@link MobiWebException} containing a 500 response with the error message provided in the body of the
+     * response.
+     *
+     * @param throwable The {@link Throwable} to create a JSON error object from.
+     * @param overrideObjectNode The {@link ObjectNode} entity error object node
+     * @return A {@link MobiWebException} of a 500 with error information in the body.
+     */
+    public static MobiWebException getErrorObjInternalServerError(Throwable throwable, ObjectNode overrideObjectNode) {
+        Response response = Response
+                .status(Response.Status.INTERNAL_SERVER_ERROR)
+                .type(MediaType.APPLICATION_JSON_TYPE)
+                .entity(overrideObjectNode.toString())
                 .build();
         return ErrorUtils.sendError(throwable, throwable.getMessage(), response);
     }

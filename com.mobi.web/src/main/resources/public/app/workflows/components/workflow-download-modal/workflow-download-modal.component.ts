@@ -50,7 +50,7 @@ export class WorkflowDownloadModalComponent {
     private _cms: CatalogManagerService,
     private _dialogRef: MatDialogRef<WorkflowDownloadModalComponent>,
     private toast: ToastService,
-    @Inject(MAT_DIALOG_DATA) public data: { workflows: WorkflowSchema[] }) {
+    @Inject(MAT_DIALOG_DATA) public data: { workflows: WorkflowSchema[], applyInProgressCommit: boolean }) {
     this.workflowTitles = this.data.workflows.map(workflow => workflow.title).join(', ');
     this.catalogId = get(this._cms.localCatalog, '@id', '');
     this.displayInfoMessage = this.data.workflows.length > 1;
@@ -79,7 +79,8 @@ export class WorkflowDownloadModalComponent {
           const headCommitId = jsonLDObject[this.catalogHead][0]['@id'];
 
           try {
-            this._cms.downloadResource(headCommitId, masterBranchId, workflow.iri, this.catalogId, false, this.downloadForm.controls.serialization.value, fileName);
+            this._cms.downloadResource(headCommitId, masterBranchId, workflow.iri, this.catalogId,
+              this.data.applyInProgressCommit, this.downloadForm.controls.serialization.value, fileName);
           } catch (downloadError) {
             this.toast.createErrorToast('Error downloading: ' + workflowName);
           }

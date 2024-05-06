@@ -23,6 +23,7 @@ package com.mobi.rest.util;
  * #L%
  */
 
+import static junit.framework.TestCase.assertNotNull;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -30,14 +31,22 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.mobi.catalog.api.CommitManager;
+import com.mobi.catalog.api.CompiledResourceManager;
+import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
+import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.persistence.utils.api.BNodeService;
+
+import org.eclipse.rdf4j.model.BNode;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.ModelFactory;
@@ -55,6 +64,7 @@ import net.sf.json.JSONArray;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.junit.After;
 import org.junit.Before;
@@ -62,13 +72,17 @@ import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
@@ -83,7 +97,7 @@ import javax.ws.rs.core.UriInfo;
 public class RestUtilsTest {
     private AutoCloseable closeable;
     private static final ValueFactory vf = new ValidatingValueFactory();
-    private static final ModelFactory mf = new DynamicModelFactory();
+    private static ModelFactory mf = new DynamicModelFactory();
     private static IRI testPropIRI = vf.createIRI("http://example.com/test#prop");
 
     private String bNodeJsonld;
@@ -101,6 +115,15 @@ public class RestUtilsTest {
     private ContainerRequestContext context;
 
     @Mock
+    private CatalogConfigProvider configProvider;
+
+    @Mock
+    private RepositoryConnection conn;
+
+    @Mock
+    private CommitManager commitManager;
+
+    @Mock
     private EngineManager engineManager;
 
     @Mock
@@ -114,6 +137,12 @@ public class RestUtilsTest {
 
     @Mock
     private Thing thing;
+
+    @Mock
+    CompiledResourceManager compiledResourceManager;
+
+    @Mock
+    BNodeService bNodeService;
 
     @Before
     public void setUp() throws Exception {
@@ -650,6 +679,117 @@ public class RestUtilsTest {
         MobiWebException exception = RestUtils.getErrorObjInternalServerError(new IllegalStateException("Exception"));
         assertEquals("Exception", exception.getMessage());
         assertEquals(500, exception.getResponse().getStatus());
+    }
+
+    @Test
+    public void getErrorObjInternalServerErrorTestOverride() {
+        ObjectNode customErrorObject = JsonNodeFactory.instance.objectNode();
+        customErrorObject.put("error", "Custom error message");
+
+        MobiWebException exception = RestUtils.getErrorObjInternalServerError(new IllegalStateException("Exception"), customErrorObject);
+
+        assertEquals("Exception", exception.getMessage());
+        assertEquals(500, exception.getResponse().getStatus());
+
+        assertEquals(customErrorObject.toString(), exception.getResponse().getEntity());
+    }
+
+    @Test
+    public void testGetCurrentModel() {
+        Resource recordId = mock(Resource.class);
+        Resource branchId = mock(Resource.class);
+        Resource commitId = mock(Resource.class);
+        RepositoryConnection conn = mock(RepositoryConnection.class);
+        Map<BNode, IRI> bNodesMap = new HashMap<>();
+        Model compiledModel = mock(Model.class);
+        
+        when(compiledResourceManager.getCompiledResource(recordId, branchId, commitId, conn)).thenReturn(compiledModel);
+        
+        RestUtils.getCurrentModel(recordId, branchId, commitId, bNodesMap, conn, bNodeService, compiledResourceManager);
+        
+        // Verify that the deterministicSkolemize method of bNodeService was called with the correct arguments
+        verify(bNodeService).deterministicSkolemize(eq(compiledModel), eq(bNodesMap));
+    }
+
+    @Test
+    public void testGetUploadedModel() throws IOException {
+        String rdfData = "<rdf:RDF xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\">\n" +
+                "  <rdf:Description rdf:about=\"http://example.org\">\n" +
+                "    <rdf:type rdf:resource=\"http://www.w3.org/2002/07/owl#Ontology\"/>\n" +
+                "  </rdf:Description>\n" +
+                "</rdf:RDF>\n";
+        InputStream inputStream = new ByteArrayInputStream(rdfData.getBytes());
+        String fileExtension = "rdf";
+        Map<BNode, IRI> bNodesMap = new HashMap<>();
+
+        RestUtils.getUploadedModel(inputStream, fileExtension, bNodesMap, mf, bNodeService);
+
+        verify(bNodeService).deterministicSkolemize(mf.createEmptyModel(), bNodesMap);
+    }
+
+    @Test
+    public void getInProgressCommitIRI_WhenInProgressCommitExists_ReturnsExistingInProgressCommitResource() {
+        User user = mock(User.class);
+        Resource recordId = mock(Resource.class);
+        RepositoryConnection conn = mock(RepositoryConnection.class);
+        CommitManager commitManager = mock(CommitManager.class);
+        CatalogConfigProvider configProvider = mock(CatalogConfigProvider.class);
+
+        // Create an in-progress commit
+        InProgressCommit inProgressCommit = mock(InProgressCommit.class);
+        Resource expectedResource = mock(Resource.class);
+
+        // Mock behavior to return a non-null IRI when configProvider.getLocalCatalogIRI() is called
+        IRI localCatalogIRI = mock(IRI.class);
+        when(configProvider.getLocalCatalogIRI()).thenReturn(localCatalogIRI);
+
+        // Set up mock to return the existing in-progress commit
+        when(commitManager.getInProgressCommitOpt(any(), any(), any(), any()))
+                .thenReturn(Optional.of(inProgressCommit));
+
+        // Mock behavior to return expectedResource when getResource is called on the inProgressCommit
+        when(inProgressCommit.getResource()).thenReturn(expectedResource);
+
+        // Call the method under test
+        Resource result = RestUtils.getInProgressCommitIRI(user, recordId, conn, commitManager, configProvider);
+
+        // Assert the result
+        assertEquals(expectedResource, result);
+    }
+
+    @Test
+    public void getInProgressCommitIRI_WhenInProgressCommitDoesNotExist_CreatesNewInProgressCommitAndReturnsResource() {
+        User user = mock(User.class);
+        Resource recordId = mock(Resource.class);
+        InProgressCommit inProgressCommit = mock(InProgressCommit.class);
+        Resource expectedResource = mock(Resource.class);
+
+        // Mock behavior to return a non-null IRI when configProvider.getLocalCatalogIRI() is called
+        IRI localCatalogIRI = mock(IRI.class);
+        when(configProvider.getLocalCatalogIRI()).thenReturn(localCatalogIRI);
+
+        // Set up mock to return empty optional, indicating that inProgressCommit does not exist
+        when(commitManager.getInProgressCommitOpt(eq(localCatalogIRI), eq(recordId), eq(user), eq(conn)))
+                .thenReturn(Optional.empty());
+
+        // Mock behavior to return a valid inProgressCommit when createInProgressCommit is called
+        when(commitManager.createInProgressCommit(user)).thenReturn(inProgressCommit);
+
+        // Mock behavior to return expectedResource when getResource is called on the inProgressCommit
+        when(inProgressCommit.getResource()).thenReturn(expectedResource);
+
+        Resource result = RestUtils.getInProgressCommitIRI(user, recordId, conn, commitManager, configProvider);
+
+        assertEquals(expectedResource, result);
+        verify(commitManager).addInProgressCommit(eq(localCatalogIRI), eq(recordId), eq(inProgressCommit), eq(conn));
+    }
+
+    @Test
+    public void testGetGarbageCollectionTime() {
+        long totalCollectionTime = RestUtils.getGarbageCollectionTime();
+
+        // Assert that a total collection time is returned
+        assertNotNull(totalCollectionTime);
     }
 
     private void setUpModels() {
