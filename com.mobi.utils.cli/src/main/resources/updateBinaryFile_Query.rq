@@ -1,0 +1,14 @@
+Delete {
+    ?file <http://mobi.com/ontologies/documents#retrievalURL> ?location.
+} Insert {
+    ?file <http://mobi.com/ontologies/documents#retrievalURL> ?newLocation.
+} where {
+    ?file a <http://mobi.com/ontologies/documents#BinaryFile>;
+    <http://mobi.com/ontologies/documents#retrievalURL> ?location .
+
+    BIND(STRAFTER(STR(?location), ?homeDirectory) as ?trailingPath)
+    BIND(CONCAT(?basePath, ?trailingPath) as ?fullPath)
+    BIND(IRI(?fullPath) as ?newLocation)
+
+    Filter (Contains(STR(?location), ?homeDirectory)).
+}

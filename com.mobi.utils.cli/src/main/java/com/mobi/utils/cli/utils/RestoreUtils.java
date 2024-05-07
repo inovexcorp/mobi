@@ -91,7 +91,8 @@ public class RestoreUtils {
                     zipEntry = zis.getNextEntry();
                 }
                 if (newFile.getAbsolutePath().endsWith("configurations.zip")
-                        || newFile.getAbsolutePath().endsWith("policies.zip")) {
+                        || newFile.getAbsolutePath().endsWith("policies.zip")
+                        || newFile.getAbsolutePath().endsWith("data.zip")) {
                     unzipFile(newFile.getAbsolutePath(), newFile.getParentFile().getAbsolutePath()
                             + File.separator + FilenameUtils.removeExtension(newFile.getName()));
                 } else if (newFile.getAbsolutePath().endsWith(".zip")) {

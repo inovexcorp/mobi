@@ -35,17 +35,19 @@ import org.osgi.service.component.annotations.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.swing.plaf.FileChooserUI;
 import java.io.File;
 import java.io.IOException;
 
 @Component(
-        service = { CopyPolicyDirectory.class, PreRestoreOperation.class }
+        service = { CopyDataDirectory.class, PreRestoreOperation.class }
 )
-public class CopyPolicyDirectory implements PreRestoreOperation {
-    private static final Logger LOGGER = LoggerFactory.getLogger(CopyPolicyDirectory.class);
-    private static final String RESTORE_PATH = System.getProperty("java.io.tmpdir") + File.separator + "restoreZip";
+public class CopyDataDirectory implements PreRestoreOperation {
+    private static final Logger LOGGER = LoggerFactory.getLogger(CopyDataDirectory.class);
+    private static final String TEMP_DIR = System.getProperty("java.io.tmpdir");
+    private static final String DATA_DIR_PATH = System.getProperty("karaf.data") + File.separator + "virtualFiles";
+    private static final String RESTORE_PATH = TEMP_DIR + File.separator + "restoreZip";
     private static final String RESTORE_POLICY_PATH = RESTORE_PATH + File.separator + "policies";
+    private static final String RESTORE_DATA_PATH = RESTORE_PATH + File.separator + "data";
 
     @Override
     public Integer getPriority() {
@@ -70,6 +72,15 @@ public class CopyPolicyDirectory implements PreRestoreOperation {
         String policyFileLocation = (String) serviceRef.getProperty("policyFileLocation");
         LOGGER.debug("Identified policy directory as " + policyFileLocation);
         File policyDir = new File(policyFileLocation);
+        if (policyDir.getParentFile().getAbsolutePath().equals(DATA_DIR_PATH)) {
+            copyDataDir();
+        } else {
+            copyDataDir();
+            copyPolicy(policyDir);
+        }
+    }
+
+    private void copyPolicy(File policyDir) {
         if (policyDir.exists()) {
             File tmpPolicyDir = new File(RESTORE_POLICY_PATH);
             try {
@@ -86,4 +97,17 @@ public class CopyPolicyDirectory implements PreRestoreOperation {
         }
     }
 
+    private void copyDataDir() {
+        File tmpDataDir = new File(RESTORE_DATA_PATH);
+        File currentDataDir = new File(DATA_DIR_PATH);
+        try {
+            FileUtils.deleteDirectory(currentDataDir); // Delete old policies
+            LOGGER.debug(String.format("Data Directory Deleted: %s", currentDataDir));
+            FileUtils.forceMkdir(currentDataDir); // Make Policy Directory
+            FileUtils.copyDirectory(tmpDataDir, currentDataDir); // Copy Backup policies into policy directory
+            LOGGER.debug(String.format("Copied Directory %s into: %s", tmpDataDir, currentDataDir));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 }
