@@ -25,11 +25,13 @@ package com.mobi.utils.cli;
 
 import com.mobi.etl.api.config.rdf.export.RDFExportConfig;
 import com.mobi.etl.api.rdf.export.RDFExportService;
+import com.mobi.exception.MobiException;
 import com.mobi.repository.api.OsgiRepository;
 import com.mobi.repository.api.RepositoryManager;
 import com.mobi.repository.impl.sesame.memory.MemoryRepositoryConfig;
 import com.mobi.repository.impl.sesame.nativestore.NativeRepositoryConfig;
 import com.mobi.security.policy.api.xacml.XACMLPolicyManager;
+import com.mobi.utils.cli.operations.post.FixWorkflowOntology;
 import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.time.StopWatch;
@@ -40,6 +42,13 @@ import org.apache.karaf.shell.api.action.Option;
 import org.apache.karaf.shell.api.action.lifecycle.Reference;
 import org.apache.karaf.shell.api.action.lifecycle.Service;
 import org.apache.karaf.shell.support.completers.FileCompleter;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.Value;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
+import org.eclipse.rdf4j.query.QueryResults;
+import org.eclipse.rdf4j.query.Update;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.osgi.framework.FrameworkUtil;
 import org.osgi.framework.ServiceReference;
@@ -51,8 +60,12 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -70,6 +83,22 @@ public class Backup implements Action {
 
     private static final String PROP_FILENAME = "/application.properties";
 
+    private static final String UPDATE_BASE_PATH_EXECUTIONS;
+
+    static {
+        try {
+            UPDATE_BASE_PATH_EXECUTIONS = IOUtils.toString(
+                    Objects.requireNonNull(
+                            FixWorkflowOntology.class.getResourceAsStream("/updateBinaryFile_Query.rq")),
+                    StandardCharsets.UTF_8
+            );
+        } catch (IOException e) {
+            throw new MobiException(e);
+        }
+    }
+
+    final ValueFactory vf = new ValidatingValueFactory();
+
     // Service References
     @Reference
     private RepositoryManager repoManager;
@@ -85,9 +114,14 @@ public class Backup implements Action {
         this.exportService = exportService;
     }
 
-    @Option(name = "-f", aliases = "--file-path", description = "The path to the output file")
+    @Option(name = "-o", aliases = "--output-path", description = "The path to the output file")
     @Completion(FileCompleter.class)
-    private String filePath = null;
+    protected String filePath = null;
+
+    @Option(name = "-b", aliases = "--base-path",
+            description = "The home directory of the target distribution for restore")
+    @Completion(FileCompleter.class)
+    protected String basePath = null;
 
     @Override
     public Object execute() throws Exception {
@@ -108,30 +142,23 @@ public class Backup implements Action {
             JSONObject repositories = new JSONObject();
             Map<String, OsgiRepository> repos = repoManager.getAllRepositories();
             for (String repoId : repos.keySet()) {
-                Class<?> repoConfigType = repos.get(repoId).getConfigType();
-                if (repoConfigType.equals(NativeRepositoryConfig.class)
-                        || repoConfigType.equals(MemoryRepositoryConfig.class)) {
-                    LOGGER.trace("Backing up the " + repoId + " repository");
-                    ByteArrayOutputStream repoOut = new ByteArrayOutputStream();
-                    try (ZipOutputStream repoZip = new ZipOutputStream(repoOut)) {
-                        final ZipEntry repoEntry = new ZipEntry(repoId + ".trig");
-                        repoZip.putNextEntry(repoEntry);
-                        RDFExportConfig config = new RDFExportConfig.Builder(repoZip, RDFFormat.TRIG).build();
-                        exportService.export(config, repoId);
+                OsgiRepository repo = repos.get(repoId);
+                if (basePath != null) {
+                    try (RepositoryConnection conn = repo.getConnection()) {
+                        conn.begin();
+                        updateRetrievalUrl(conn);
+                        Model repoModel = QueryResults.asModel(conn.getStatements(null, null, null));
+                        backupRepository(outputFile, repositories, repo, repoId, mainZip, repoModel);
+                        conn.rollback();
                     }
-                    repositories.accumulate(repoId, "repos/" + repoId + ".zip");
-                    final ZipEntry repoZipEntry = new ZipEntry("repos/" + repoId + ".zip");
-                    mainZip.putNextEntry(repoZipEntry);
-                    mainZip.write(repoOut.toByteArray());
-                    System.out.println("Backed up the " + repoId + " repository");
-                    LOGGER.trace("Backed up the " + repoId + " repository");
                 } else {
-                    System.out.println("Skipping back up of non Native/Memory Repository: " + repoId);
-                    LOGGER.trace("Skipping back up of non Native/Memory Repository: " + repoId);
+                    backupRepository(outputFile, repositories, repo, repoId, mainZip, null);
                 }
             }
             LOGGER.trace("Backed up the repositories to the zip");
             manifest.accumulate("repositories", repositories);
+
+            String dataPath = getKarafHome().getAbsolutePath() + "/data/virtualFiles";
 
             // Policies
             LOGGER.trace("Backing up the policies");
@@ -143,14 +170,20 @@ public class Backup implements Action {
             String policyFileLocation = (String) serviceRef.getProperty("policyFileLocation");
             LOGGER.trace("Identified policy directory as " + policyFileLocation);
             File policyDir = new File(policyFileLocation);
-            ByteArrayOutputStream policiesOut = new ByteArrayOutputStream();
-            try (ZipOutputStream policiesZip = new ZipOutputStream(policiesOut)) {
-                addFolderToZip(policyDir, policyDir, policiesZip);
+
+            if (!policyDir.getParentFile().getAbsolutePath().equals(dataPath)) {
+                ByteArrayOutputStream policiesOut = new ByteArrayOutputStream();
+                try (ZipOutputStream policiesZip = new ZipOutputStream(policiesOut)) {
+                    addFolderToZip(policyDir, policyDir, policiesZip);
+                }
+                final ZipEntry policiesZipEntry = new ZipEntry("policies.zip");
+                mainZip.putNextEntry(policiesZipEntry);
+                mainZip.write(policiesOut.toByteArray());
+                LOGGER.trace("Backed up the policies to the zip");
             }
-            final ZipEntry policiesZipEntry = new ZipEntry("policies.zip");
-            mainZip.putNextEntry(policiesZipEntry);
-            mainZip.write(policiesOut.toByteArray());
-            LOGGER.trace("Backed up the policies to the zip");
+
+            // Backing up Karaf data directory
+            backupDataDirectory(mainZip, dataPath);
 
             // Configurations
             LOGGER.trace("Backing up the configurations");
@@ -181,6 +214,58 @@ public class Backup implements Action {
         LOGGER.debug("Finished backup after " + watch.getTime() + "ms");
         System.out.println("Back up complete at " + outputFile.getAbsolutePath());
         return null;
+    }
+
+    private void backupDataDirectory(ZipOutputStream mainZip, String dataPath) throws Exception {
+        LOGGER.trace("Backing up the data directory");
+
+        File dataDirectory = new File(dataPath);
+        ByteArrayOutputStream karafDataOut = new ByteArrayOutputStream();
+
+        try (ZipOutputStream karafDataZip = new ZipOutputStream(karafDataOut)) {
+            addFolderToZip(dataDirectory, dataDirectory, karafDataZip);
+        }
+
+        final ZipEntry karafDataZipEntry = new ZipEntry("data.zip");
+        mainZip.putNextEntry(karafDataZipEntry);
+        mainZip.write(karafDataOut.toByteArray());
+        LOGGER.trace("Backed up the karaf data directory to the zip");
+    }
+
+    private void backupRepository(File outputFile, JSONObject repositories, OsgiRepository repo,  String repoId,
+                                  ZipOutputStream mainZip, Model model) throws Exception {
+        try {
+            Class<?> repoConfigType = repo.getConfigType();
+            if (repoConfigType.equals(NativeRepositoryConfig.class)
+                    || repoConfigType.equals(MemoryRepositoryConfig.class)) {
+                LOGGER.trace("Backing up the " + repoId + " repository");
+                ByteArrayOutputStream repoOut = new ByteArrayOutputStream();
+                try (ZipOutputStream repoZip = new ZipOutputStream(repoOut)) {
+                    final ZipEntry repoEntry = new ZipEntry(repoId + ".trig");
+                    repoZip.putNextEntry(repoEntry);
+                    RDFExportConfig config = new RDFExportConfig.Builder(repoZip, RDFFormat.TRIG).build();
+                    if (model == null) {
+                        exportService.export(config, repoId);
+                    } else {
+                        exportService.export(config, model);
+                    }
+                }
+                repositories.accumulate(repoId, "repos/" + repoId + ".zip");
+                final ZipEntry repoZipEntry = new ZipEntry("repos/" + repoId + ".zip");
+                mainZip.putNextEntry(repoZipEntry);
+                mainZip.write(repoOut.toByteArray());
+                System.out.println("Backed up the " + repoId + " repository");
+                LOGGER.trace("Backed up the " + repoId + " repository");
+            } else {
+                System.out.println("Skipping back up of non Native/Memory Repository: " + repoId);
+                LOGGER.trace("Skipping back up of non Native/Memory Repository: " + repoId);
+            }
+        } catch (Exception ex) {
+            if (outputFile.exists()) {
+                outputFile.delete();
+            }
+            throw ex;
+        }
     }
 
     private File getOutputFile(OffsetDateTime date) throws Exception {
@@ -254,5 +339,21 @@ public class Backup implements Action {
             throw new IllegalStateException("karaf.home is not set");
         }
         return new File(karafHome);
+    }
+
+    private void updateRetrievalUrl(RepositoryConnection conn) {
+        try {
+            //checks to ensure the Path is not malformed
+            Paths.get(basePath);
+
+            String newPath = "file://" + basePath;
+            Value pathValue = vf.createLiteral(newPath);
+            Update query = conn.prepareUpdate(UPDATE_BASE_PATH_EXECUTIONS);
+            query.setBinding("homeDirectory", vf.createLiteral(getKarafHome().getAbsolutePath()));
+            query.setBinding("basePath", pathValue);
+            query.execute();
+        } catch (InvalidPathException ex) {
+            throw new IllegalArgumentException("The file path is malformed: " + ex.getMessage());
+        }
     }
 }

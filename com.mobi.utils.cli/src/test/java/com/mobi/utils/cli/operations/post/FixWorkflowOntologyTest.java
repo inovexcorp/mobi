@@ -56,7 +56,6 @@ public class FixWorkflowOntologyTest {
 
     private FixWorkflowOntology fixOperation;
 
-
     @Before
     public void setupMocks() throws Exception {
         provRepo = new MemoryRepositoryWrapper();
@@ -66,7 +65,6 @@ public class FixWorkflowOntologyTest {
 
         fixOperation = new FixWorkflowOntology();
         fixOperation.provRepo = provRepo;
-
     }
 
     @Test

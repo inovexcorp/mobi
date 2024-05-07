@@ -1,0 +1,24 @@
+
+  <http://mobi.com/activities/65fbfd5c-7370-4712-ac7f-eba662f38f59> a <http://www.w3.org/ns/prov#Activity>,
+      <http://mobi.solutions/ontologies/workflows#WorkflowExecutionActivity>, <http://www.w3.org/2002/07/owl#Thing>;
+    <http://www.w3.org/ns/prov#used> <https://mobi.com/records#ed130fb8-c0d9-4ee2-b1e4-45986b0fcbe0>;
+    <http://mobi.solutions/ontologies/workflows#hasActionExecution> <https://mobi.solutions/workflows/ActionExecution/3ee90027-edca-4678-aadb-04a5059cd62b>;
+    <http://mobi.solutions/ontologies/workflows#succeeded> true;
+    <http://mobi.solutions/ontologies/workflows#logs> <https://mobi.solutions/workflows/log-files/agent_4a142ab4b7b6051b3c160f0e77e9e50617e97225.20240424.16:22:26.280.3c55f4f3.log>;
+    <http://www.w3.org/ns/prov#wasAssociatedWith> <http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997>;
+    <http://www.w3.org/ns/prov#startedAtTime> "2024-04-24T16:22:26.064379-04:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+    <http://www.w3.org/ns/prov#endedAtTime> "2024-04-24T16:22:36.368374-04:00"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
+  
+  <https://mobi.solutions/workflows/ActionExecution/3ee90027-edca-4678-aadb-04a5059cd62b>
+    a <http://mobi.solutions/ontologies/workflows#ActionExecution>, <http://www.w3.org/2002/07/owl#Thing>;
+    <http://mobi.solutions/ontologies/workflows#succeeded> true;
+    <http://mobi.solutions/ontologies/workflows#logs> <https://mobi.solutions/workflows/log-files/http___mobi.solutions_ontologies_workflows_TestWorkflow_action.20240424.16:22:26.283.3c55f4f3.log>;
+    <http://mobi.solutions/ontologies/workflows#startedAt> "2024-04-24T16:22:26.0-04:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+    <http://mobi.solutions/ontologies/workflows#endedAt> "2024-04-24T16:22:26.0-04:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+    <http://mobi.solutions/ontologies/workflows#aboutAction> <http://mobi.solutions/ontologies/workflows/TestWorkflow/action> .
+  
+  <https://mobi.solutions/workflows/log-files/agent_4a142ab4b7b6051b3c160f0e77e9e50617e97225.20240424.16:22:26.280.3c55f4f3.log>
+    a <http://mobi.com/ontologies/documents#BinaryFile>, <http://www.w3.org/2002/07/owl#Thing>;
+    <http://mobi.com/ontologies/documents#fileName> "agent_4a142ab4b7b6051b3c160f0e77e9e50617e97225.20240424.16:22:26.280.3c55f4f3.log";
+    <http://mobi.com/ontologies/documents#mimeType> "text/plain";
+    <http://mobi.com/ontologies/documents#size> 3.305E3.
