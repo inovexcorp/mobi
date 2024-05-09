@@ -244,7 +244,7 @@ describe('WorkflowCreationModalComponent', () => {
         it('with a description', fakeAsync(function () {
           workflowManagerStub.createWorkflowRecord.and.returnValue(of(''));
           workflowManagerStub.checkMasterBranchPermissions.and.returnValue(of(true));
-          workflowManagerStub.checkWorkflowDeletePermissions.and.returnValue(of(fakePermissionPermit));
+          workflowManagerStub.checkMultiWorkflowDeletePermissions.and.returnValue(of(fakePermissionPermit));
           component.newWorkflowForm.controls.description.setValue('description');
           newWorkflowRecord.description = 'description';
           newWorkflowRecord.jsonld[0][`${DCTERMS}description`] = [{ '@value': 'description' }];
@@ -256,7 +256,7 @@ describe('WorkflowCreationModalComponent', () => {
         it('without description', fakeAsync(function () {
           workflowManagerStub.createWorkflowRecord.and.returnValue(of(''));
           workflowManagerStub.checkMasterBranchPermissions.and.returnValue(of(true));
-          workflowManagerStub.checkWorkflowDeletePermissions.and.returnValue(of(fakePermissionPermit));
+          workflowManagerStub.checkMultiWorkflowDeletePermissions.and.returnValue(of(fakePermissionPermit));
           component.newWorkflowForm.controls.description.setValue('');
           component.create();
           tick();

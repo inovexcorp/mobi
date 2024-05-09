@@ -86,8 +86,6 @@ describe('Setting Group component', function() {
         loginManagerStub = TestBed.inject(LoginManagerService) as jasmine.SpyObj<LoginManagerService>;
         loginManagerStub.currentUserIRI = userId;
 
-        spyOn(SimpleSetting, 'isSimpleSetting').and.returnValue(true);
-        
         component.settingType = { iri: 'http://mobitest.com/Preference', userText: 'Preferences'};
 
         testUserSettings = {

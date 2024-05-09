@@ -148,7 +148,7 @@ export class WorkflowsManagerService {
               return of(results);
             } else {
               // Get delete permissions for all workflows
-              const deletePermissions$ = this.checkWorkflowDeletePermissions(response.body);
+              const deletePermissions$ = this.checkMultiWorkflowDeletePermissions(response.body);
 
               // Get master branch permissions for all workflows
               const masterPermissions$ = forkJoin(
@@ -188,12 +188,29 @@ export class WorkflowsManagerService {
    * @param {WorkflowSchema[]} workflows Array of WorkflowSchema objects for which delete permissions need to be checked.
    * @returns {Observable<XACMLDecision[]>} An Observable that resolves with the permissions for deleting workflows
    */
-  checkWorkflowDeletePermissions(workflows: WorkflowSchema[]): Observable<XACMLDecision[]> {
+  checkMultiWorkflowDeletePermissions(workflows: WorkflowSchema[]): Observable<XACMLDecision[]> {
     const deleteRequest: XACMLRequest = {
       resourceId: workflows.map(record => record.iri),
       actionId: [this._polm.actionDelete]
     };
     return this._pe.evaluateMultiDecisionRequest(deleteRequest, true);
+  }
+
+  /**
+  * Checks if the current user has permissions to delete the provided workflow record.
+  *
+  * @param {string} workflowRecordIRI - The IRI of the workflow record.
+  * @returns {Observable<boolean>} - An observable that emits a boolean indicating whether the user has permission.
+  */
+  checkDeletePermissions(workflowRecordIRI: string): Observable<boolean> {
+    const deleteRequest: XACMLRequest = {
+      resourceId: workflowRecordIRI,
+      actionId: this._polm.actionDelete
+    };
+
+    return this._pe.evaluateRequest(deleteRequest).pipe(
+      map(currentPermissions => this._pe.permit === currentPermissions)
+    );
   }
 
   /**

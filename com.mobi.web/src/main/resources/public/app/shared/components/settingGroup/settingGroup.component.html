@@ -23,10 +23,9 @@
 <error-display *ngIf="errorMessage">{{errorMessage}}</error-display>
 <div *ngFor="let settingIRI of settingIRIs" class="pb-2">
     <h4>{{settings[settingIRI].label}}</h4>
-    <!-- Assumes only one object in setting instance array, i.e. a SimpleSetting -->
     <app-shacl-form [nodeShape]="settings[settingIRI].json" 
                     [formFieldConfigs]="settings[settingIRI].formFieldConfigs"
-                    [genObj]="settings[settingIRI].values[0]"
+                    [genObj]="settings[settingIRI].values"
                     (updateEvent)="updateSettingWithValues($event, settings[settingIRI])"
                     (statusEvent)="updateSaveableStatus($event, settings[settingIRI])"></app-shacl-form>
     <button mat-raised-button color="primary" [disabled]="!settingSaveable[settingIRI]" (click)="updateSetting(settings[settingIRI])">Save</button>

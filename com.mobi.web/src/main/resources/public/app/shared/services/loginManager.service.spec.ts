@@ -220,7 +220,7 @@ describe('Login Manager service', function() {
     it('should log a user out', function() {
         service.currentUserIRI = 'urn:userIri';
         service.currentUser = 'username';
-        let sub = service.loginManagerAction$.subscribe((event) => {
+        const sub = service.loginManagerAction$.subscribe((event) => {
             expect(event.eventType).toEqual('LOGOUT');
             expect(event.payload).toEqual({currentUserIRI: 'urn:userIri', currentUser: 'username'});
         }, () => fail('Observable should have resolved'));

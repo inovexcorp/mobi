@@ -130,13 +130,13 @@ export class LoginManagerService {
      * the login page.
      */
     logout(): void {
-        this._loginManagerActionSubject.next({eventType: 'LOGOUT', payload: {
-            currentUserIRI: this.currentUserIRI,
-            currentUser: this.currentUser
-        }});
-        this.weGood = false;
-        this.http.delete(this.prefix)
-            .subscribe(() => {
+      this.weGood = false;
+      this.http.delete(this.prefix)
+          .subscribe(() => {
+                this._loginManagerActionSubject.next({eventType: 'LOGOUT', payload: {
+                    currentUserIRI: this.currentUserIRI,
+                    currentUser: this.currentUser
+                }});
                 this.currentUser = '';
                 this.currentUserIRI = '';
                 this.us.reset();

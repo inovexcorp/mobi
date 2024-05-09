@@ -41,7 +41,7 @@ describe('SHACLFormComponent', () => {
   let element: DebugElement;
   let fixture: ComponentFixture<SHACLFormComponent>;
 
-  const nodeShape: JSONLDObject = { '@id': 'urn:NodeShape', '@type': [`${SHACL}NodeShape`] };
+  const nodeShape: JSONLDObject = { '@id': 'urn:Class', '@type': [`${SHACL}NodeShape`] };
   const textPropertyShape: JSONLDObject = {
     '@id': 'urn:TextPropertyShape',
     '@type': [ `${SHACL}PropertyShape` ],
@@ -99,13 +99,62 @@ describe('SHACLFormComponent', () => {
     [`${RDF}first`]: [{ '@value': 'Z' }],
     [`${RDF}rest`]: [{ '@value': `${RDF}nil` }]
   };
-  const fullArr: JSONLDObject[] = [textPropertyShape, unlimitedTextPropertyShape, togglePropertyShape, radioPropertyShape, radioBnode1, radioBnode2, checkboxPropertyShape, checkboxBnode1, checkboxBnode2];
+  const complexPropertyShape: JSONLDObject = {
+    '@id': 'urn:ComplexPropertyShape',
+    '@type': [ `${SHACL}PropertyShape` ],
+    [`${SHACL}path`]: [{ '@id': 'urn:complexProp' }],
+    [`${SHACL}maxCount`]: [{ '@value': '1' }],
+    [`${SHACL}node`]: [{ '@id': 'urn:subNode1' }]
+  };
+  const subNodeShape1: JSONLDObject = {
+    '@id': 'urn:subNode1',
+    '@type': [`${SHACL}NodeShape`],
+    [`${SHACL}property`]: [{ '@id': 'urn:subPropertyShape1' }]
+  };
+  const subPropertyShape1: JSONLDObject = {
+    '@id': 'urn:subPropertyShape1',
+    '@type': [`${SHACL}PropertyShape`],
+    [`${SHACL}path`]: [{ '@id': 'urn:subProperty1' }],
+    [`${SHACL}name`]: [{ '@value': 'Sub Label 1' }],
+    [`${SHACL_FORM}usesFormField`]: [{ '@id': `${SHACL_FORM}TextInput` }],
+  };
+  const complexMultivaluedPropertyShape: JSONLDObject = {
+    '@id': 'urn:ComplexMultivaluedPropertyShape',
+    '@type': [ `${SHACL}PropertyShape` ],
+    [`${SHACL}path`]: [{ '@id': 'urn:complexMultivaluedProp' }],
+    [`${SHACL}node`]: [{ '@id': 'urn:subNode2' }]
+  };
+  const subNodeShape2: JSONLDObject = {
+    '@id': 'urn:subNode2',
+    '@type': [`${SHACL}NodeShape`],
+    [`${SHACL}property`]: [
+      { '@id': 'urn:subPropertyShape2' },
+      { '@id': 'urn:subPropertyShape3' },
+    ]
+  };
+  const subPropertyShape2: JSONLDObject = {
+    '@id': 'urn:subPropertyShape2',
+    '@type': [`${SHACL}PropertyShape`],
+    [`${SHACL}path`]: [{ '@id': 'urn:subProperty2' }],
+    [`${SHACL}name`]: [{ '@value': 'Sub Label 2' }],
+    [`${SHACL_FORM}usesFormField`]: [{ '@id': `${SHACL_FORM}TextInput` }],
+  };
+  const subPropertyShape3: JSONLDObject = {
+    '@id': 'urn:subPropertyShape3',
+    '@type': [`${SHACL}PropertyShape`],
+    [`${SHACL}path`]: [{ '@id': 'urn:subProperty3' }],
+    [`${SHACL}name`]: [{ '@value': 'Sub Label 3' }],
+    [`${SHACL_FORM}usesFormField`]: [{ '@id': `${SHACL_FORM}TextInput` }],
+  };
+  const fullArr: JSONLDObject[] = [textPropertyShape, unlimitedTextPropertyShape, togglePropertyShape, radioPropertyShape, radioBnode1, radioBnode2, checkboxPropertyShape, checkboxBnode1, checkboxBnode2, complexPropertyShape, subNodeShape1, subPropertyShape1, complexMultivaluedPropertyShape, subNodeShape2, subPropertyShape2, subPropertyShape3];
   const invalidFormFieldConfig: SHACLFormFieldConfig = new SHACLFormFieldConfig(nodeShape, 'error', fullArr);
   const textFormFieldConfig: SHACLFormFieldConfig = new SHACLFormFieldConfig(nodeShape, textPropertyShape['@id'], fullArr);
   const unlimitedTextFormFieldConfig: SHACLFormFieldConfig = new SHACLFormFieldConfig(nodeShape, unlimitedTextPropertyShape['@id'], fullArr);
   const toggleFormFieldConfig: SHACLFormFieldConfig = new SHACLFormFieldConfig(nodeShape, togglePropertyShape['@id'], fullArr);
   const radioFormFieldConfig: SHACLFormFieldConfig = new SHACLFormFieldConfig(nodeShape, radioPropertyShape['@id'], fullArr);
   const checkboxFormFieldConfig: SHACLFormFieldConfig = new SHACLFormFieldConfig(nodeShape, checkboxPropertyShape['@id'], fullArr);
+  const complexFormFieldConfig: SHACLFormFieldConfig = new SHACLFormFieldConfig(nodeShape, complexPropertyShape['@id'], fullArr);
+  const complexMultivaluedFormFieldConfig: SHACLFormFieldConfig = new SHACLFormFieldConfig(nodeShape, complexMultivaluedPropertyShape['@id'], fullArr);
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -136,7 +185,7 @@ describe('SHACLFormComponent', () => {
   });
 
   it('should create with a blank form', () => {
-    component.formFieldConfigs = [textFormFieldConfig, unlimitedTextFormFieldConfig, toggleFormFieldConfig, radioFormFieldConfig, checkboxFormFieldConfig, invalidFormFieldConfig];
+    component.formFieldConfigs = [textFormFieldConfig, unlimitedTextFormFieldConfig, toggleFormFieldConfig, radioFormFieldConfig, checkboxFormFieldConfig, invalidFormFieldConfig, complexFormFieldConfig, complexMultivaluedFormFieldConfig];
     fixture.detectChanges();
     expect(component).toBeTruthy();
     expect(component.formComponents.length).toEqual(component.formFieldConfigs.length);
@@ -179,6 +228,20 @@ describe('SHACLFormComponent', () => {
     const checkboxControl = component.form.get([checkboxFormFieldConfig.property]);
     expect(checkboxControl).toBeTruthy();
     expect(checkboxControl.value).toEqual([]);
+    // Check Complex FormComponent
+    const complexComp = component.formComponents.find(comp => comp.config === complexFormFieldConfig);
+    expect(complexComp).toBeTruthy();
+    expect(complexComp.isMultivalued).toBeFalse();
+    const complexControl = component.form.get([complexFormFieldConfig.property]);
+    expect(complexControl).toBeTruthy();
+    expect(complexControl.value).toEqual({ 'urn:complexPropurn:subProperty1': '' });
+    // Check Complex Multivalued FormComponent
+    const complexMultivaluedComp = component.formComponents.find(comp => comp.config === complexMultivaluedFormFieldConfig);
+    expect(complexMultivaluedComp).toBeTruthy();
+    expect(complexMultivaluedComp.isMultivalued).toBeTrue();
+    const complexMultivaluedControl = component.form.get([complexMultivaluedFormFieldConfig.property]);
+    expect(complexMultivaluedControl).toBeTruthy();
+    expect(complexMultivaluedControl.value).toEqual([]);
     // Check invalid FormComponent
     const invalidComp = component.formComponents.find(comp => comp.config === invalidFormFieldConfig);
     expect(invalidComp).toBeTruthy();
@@ -187,26 +250,44 @@ describe('SHACLFormComponent', () => {
     expect(invalidControl).toBeFalsy();
     // Check HTML
     const multivaluedEl = element.queryAll(By.css('.multivalued'));
-    expect(multivaluedEl.length).toEqual(2);
+    expect(multivaluedEl.length).toEqual(3);
     expect(multivaluedEl[0].queryAll(By.css('app-shacl-form-field')).length).toEqual(0);
     expect(multivaluedEl[0].queryAll(By.css('.delete-block-button')).length).toEqual(0);
     expect(multivaluedEl[0].queryAll(By.css('.add-block-button')).length).toEqual(1);
     expect(multivaluedEl[1].queryAll(By.css('app-shacl-form-field')).length).toEqual(0);
     expect(multivaluedEl[1].queryAll(By.css('.delete-block-button')).length).toEqual(0);
     expect(multivaluedEl[1].queryAll(By.css('.add-block-button')).length).toEqual(1);
-    expect(element.queryAll(By.css('app-shacl-form-field.top-level-field')).length).toEqual(3);
+    expect(multivaluedEl[2].queryAll(By.css('app-shacl-form-field')).length).toEqual(0);
+    expect(multivaluedEl[2].queryAll(By.css('.delete-block-button')).length).toEqual(0);
+    expect(multivaluedEl[2].queryAll(By.css('.add-block-button')).length).toEqual(1);
+    expect(element.queryAll(By.css('app-shacl-form-field.top-level-field')).length).toEqual(4);
     expect(element.queryAll(By.css('.error-msg')).length).toEqual(1);
   });
   it('should create with a filled form', () => {
-    component.formFieldConfigs = [textFormFieldConfig, toggleFormFieldConfig, radioFormFieldConfig, checkboxFormFieldConfig, invalidFormFieldConfig];
-    component.genObj = {
-      '@id': 'urn:test',
-      '@type': ['urn:Class'],
-      [textFormFieldConfig.property]: [{ '@value': 'First' }],
-      [toggleFormFieldConfig.property]: [{ '@value': 'true' }],
-      [radioFormFieldConfig.property]: [{ '@value': 'A' }],
-      [checkboxFormFieldConfig.property]: [{ '@value': 'Y' }],
-    };
+    component.formFieldConfigs = [textFormFieldConfig, toggleFormFieldConfig, radioFormFieldConfig, checkboxFormFieldConfig, invalidFormFieldConfig, complexFormFieldConfig, complexMultivaluedFormFieldConfig];
+    component.genObj = [
+      {
+        '@id': 'urn:test',
+        '@type': ['urn:Class'],
+        [textFormFieldConfig.property]: [{ '@value': 'First' }],
+        [toggleFormFieldConfig.property]: [{ '@value': 'true' }],
+        [radioFormFieldConfig.property]: [{ '@value': 'A' }],
+        [checkboxFormFieldConfig.property]: [{ '@value': 'Y' }],
+        [complexFormFieldConfig.property]: [{ '@id': 'urn:genObj1' }],
+        [complexMultivaluedFormFieldConfig.property]: [{ '@id': 'urn:genObj2' }],
+      },
+      {
+        '@id': 'urn:genObj1',
+        '@type': [subNodeShape1['@id']],
+        'urn:subProperty1': [{ '@value': 'Sub Z' }]
+      },
+      {
+        '@id': 'urn:genObj2',
+        '@type': [subNodeShape2['@id']],
+        'urn:subProperty2': [{ '@value': 'Sub A' }],
+        'urn:subProperty3': [{ '@value': 'Sub B' }]
+      }
+    ];
     fixture.detectChanges();
     expect(component).toBeTruthy();
     expect(component.formComponents.length).toEqual(component.formFieldConfigs.length);
@@ -240,6 +321,25 @@ describe('SHACLFormComponent', () => {
     const checkboxControl = component.form.get([checkboxFormFieldConfig.property]);
     expect(checkboxControl).toBeTruthy();
     expect(checkboxControl.value).toEqual(['Y']);
+    // Check Complex FormComponent
+    const complexComp = component.formComponents.find(comp => comp.config === complexFormFieldConfig);
+    expect(complexComp).toBeTruthy();
+    expect(complexComp.isMultivalued).toBeFalse();
+    const complexControl = component.form.get([complexFormFieldConfig.property]);
+    expect(complexControl).toBeTruthy();
+    expect(complexControl.value).toEqual({ 'urn:complexPropurn:subProperty1': 'Sub Z' });
+    // Check Complex Multivalued FormComponent
+    const complexMultivaluedComp = component.formComponents.find(comp => comp.config === complexMultivaluedFormFieldConfig);
+    expect(complexMultivaluedComp).toBeTruthy();
+    expect(complexMultivaluedComp.isMultivalued).toBeTrue();
+    const complexMultivaluedControl = component.form.get([complexMultivaluedFormFieldConfig.property]);
+    expect(complexMultivaluedControl).toBeTruthy();
+    expect(complexMultivaluedControl.value).toEqual([
+      { [complexMultivaluedFormFieldConfig.property + '0']: { 
+        [complexMultivaluedFormFieldConfig.property + '0urn:subProperty2']: 'Sub A', 
+        [complexMultivaluedFormFieldConfig.property + '0urn:subProperty3']: 'Sub B'
+      } }
+    ]);
     // Check invalid FormComponent
     const invalidComp = component.formComponents.find(comp => comp.config === invalidFormFieldConfig);
     expect(invalidComp).toBeTruthy();
@@ -248,76 +348,217 @@ describe('SHACLFormComponent', () => {
     expect(invalidControl).toBeFalsy();
     // Check HTML
     const multivaluedEl = element.queryAll(By.css('.multivalued'));
-    expect(multivaluedEl.length).toEqual(1);
+    expect(multivaluedEl.length).toEqual(2);
     expect(multivaluedEl[0].queryAll(By.css('app-shacl-form-field')).length).toEqual(1);
     expect(multivaluedEl[0].queryAll(By.css('.delete-block-button')).length).toEqual(1);
     expect(multivaluedEl[0].queryAll(By.css('.add-block-button')).length).toEqual(1);
-    expect(element.queryAll(By.css('app-shacl-form-field.top-level-field')).length).toEqual(3);
+    //// Complex Multivalued
+    expect(multivaluedEl[1].queryAll(By.css('app-shacl-form-field')).length).toEqual(2);
+    expect(multivaluedEl[1].queryAll(By.css('.delete-block-button')).length).toEqual(1);
+    expect(multivaluedEl[1].queryAll(By.css('.add-block-button')).length).toEqual(1);
+    expect(element.queryAll(By.css('app-shacl-form-field.top-level-field')).length).toEqual(4);
     expect(element.queryAll(By.css('.error-msg')).length).toEqual(1);
   });
-  it('should correctly add a value for a multivalued property', () => {
-    component.formFieldConfigs = [textFormFieldConfig];
+  it('should set the focus node correctly', () => {
+    component.formFieldConfigs = [textFormFieldConfig, toggleFormFieldConfig, radioFormFieldConfig, checkboxFormFieldConfig, invalidFormFieldConfig, complexFormFieldConfig, complexMultivaluedFormFieldConfig];
+    component.genObj = [
+      {
+        '@id': 'urn:test',
+        '@type': ['urn:Class'],
+        [textFormFieldConfig.property]: [{ '@value': 'First' }],
+        [toggleFormFieldConfig.property]: [{ '@value': 'true' }],
+        [radioFormFieldConfig.property]: [{ '@value': 'A' }],
+        [checkboxFormFieldConfig.property]: [{ '@value': 'Y' }],
+        [complexFormFieldConfig.property]: [{ '@id': 'urn:genObj1' }],
+        [complexMultivaluedFormFieldConfig.property]: [{ '@id': 'urn:genObj2' }],
+      },
+      {
+        '@id': 'urn:genObj1',
+        '@type': [subNodeShape1['@id']],
+        'urn:subProperty1': [{ '@value': 'Sub Z' }]
+      },
+      {
+        '@id': 'urn:genObj2',
+        '@type': [subNodeShape2['@id']],
+        'urn:subProperty2': [{ '@value': 'Sub A' }],
+        'urn:subProperty3': [{ '@value': 'Sub B' }]
+      }
+    ];
     fixture.detectChanges();
-    expect(component.formComponents.length).toEqual(1);
-    const textControl = component.form.get([textFormFieldConfig.property]);
-    expect(textControl).toBeTruthy();
-    expect(textControl.value).toEqual([]);
-    expect(textControl.invalid).toBeTruthy();
-    
-    component.addFormBlock(component.formComponents[0]);
-    expect((textControl as FormArray).controls.length).toEqual(1);
-    expect(textControl.value).toEqual([{[textFormFieldConfig.property + '0']: ''}]);
-    expect(textControl.invalid).toBeFalsy();
-    const newControl = (textControl as FormArray).controls[0].get([textFormFieldConfig.property + '0']);
-    expect(newControl).toBeTruthy();
-    expect(newControl.value).toEqual('');
+
+    component.generateFocusNodeFromForm();
+    expect(component.focusNode).toBeTruthy();
+    expect(component.focusNode.length).toEqual(1);
+    const node = component.focusNode[0];
+    expect(node['@id']).toContain('https://mobi.solutions/ontologies/form#');
+    expect(node['@type']).toEqual([nodeShape['@id']]);
+    expect(node[textFormFieldConfig.property]).toEqual([{ '@value': 'First' }]);
+    expect(node[toggleFormFieldConfig.property]).toEqual([{ '@value': 'true' }]);
+    expect(node[radioFormFieldConfig.property]).toEqual([{ '@value': 'A' }]);
+    expect(node[checkboxFormFieldConfig.property]).toEqual([{ '@value': 'Y' }]);
+    expect(node[complexFormFieldConfig.property]).toEqual([{ '@id': jasmine.any(String) }]);
+    expect(node[complexMultivaluedFormFieldConfig.property]).toEqual([{ '@id': jasmine.any(String) }]);
   });
-  it('should correctly remove a value for a multivalued property', () => {
-    component.formFieldConfigs = [textFormFieldConfig];
-    component.genObj = {
-      '@id': 'urn:test',
-      '@type': ['urn:Class'],
-      [textFormFieldConfig.property]: [{ '@value': 'First' }, { '@value': 'Second' }],
-    };
-    fixture.detectChanges();
-    // Validate starting point with two values
-    expect(component.formComponents.length).toEqual(1);
-    const textControl = component.form.get([textFormFieldConfig.property]);
-    expect(textControl).toBeTruthy();
-    expect(textControl.value).toEqual([
-      { [textFormFieldConfig.property + '0']: 'First' },
-      { [textFormFieldConfig.property + '1']: 'Second' },
-    ]);
-    const firstControl = (textControl as FormArray).controls[0].get([textFormFieldConfig.property + '0']);
-    expect(firstControl).toBeTruthy();
-    expect(firstControl.value).toEqual('First');
-    expect(textControl.invalid).toBeFalsy();
-    const secondControl = (textControl as FormArray).controls[1].get([textFormFieldConfig.property + '1']);
-    expect(secondControl).toBeTruthy();
-    expect(secondControl.value).toEqual('Second');
-    expect(textControl.invalid).toBeFalsy();
-    
-    // Remove the first value in the array
-    component.deleteFormBlock(0, component.formComponents[0]);
-    expect((textControl as FormArray).controls.length).toEqual(1);
-    expect(textControl.value).toEqual([{ [textFormFieldConfig.property + '0']: 'Second' }]);
-    const remainingControl = (textControl as FormArray).controls[0].get([textFormFieldConfig.property + '0']);
-    expect(remainingControl).toBeTruthy();
-    expect(remainingControl.value).toEqual('Second');
-    expect(textControl.invalid).toBeFalsy();
-    // Remove the first value in the array (last value)
-    component.deleteFormBlock(0, component.formComponents[0]);
-    expect((textControl as FormArray).controls.length).toEqual(0);
-    expect(textControl.value).toEqual([]);
-    expect(textControl.invalid).toBeTruthy();
+  describe('should correctly add a value for a multivalued property', () => {
+    it('if simple', () => {
+      component.formFieldConfigs = [textFormFieldConfig];
+      fixture.detectChanges();
+      expect(component.formComponents.length).toEqual(1);
+      const textControl = component.form.get([textFormFieldConfig.property]);
+      expect(textControl).toBeTruthy();
+      expect(textControl.value).toEqual([]);
+      expect(textControl.invalid).toBeTruthy();
+      
+      component.addFormBlock(component.formComponents[0]);
+      expect((textControl as FormArray).controls.length).toEqual(1);
+      expect(textControl.value).toEqual([{[textFormFieldConfig.property + '0']: ''}]);
+      expect(textControl.invalid).toBeFalsy();
+      const newControl = (textControl as FormArray).controls[0].get([textFormFieldConfig.property + '0']);
+      expect(newControl).toBeTruthy();
+      expect(newControl.value).toEqual('');
+    });
+    it('if complex', () => {
+      component.formFieldConfigs = [complexMultivaluedFormFieldConfig];
+      fixture.detectChanges();
+      expect(component.formComponents.length).toEqual(1);
+      const complexControl = component.form.get([complexMultivaluedFormFieldConfig.property]);
+      expect(complexControl).toBeTruthy();
+      expect(complexControl.value).toEqual([]);
+      expect(complexControl.invalid).toBeFalsy();
+      
+      component.addFormBlock(component.formComponents[0]);
+      expect((complexControl as FormArray).controls.length).toEqual(1);
+      expect(complexControl.value).toEqual([{[complexMultivaluedFormFieldConfig.property + '0']: { 
+        [complexMultivaluedFormFieldConfig.property + '0urn:subProperty2']: '',
+        [complexMultivaluedFormFieldConfig.property + '0urn:subProperty3']: ''
+      }}]);
+      expect(complexControl.invalid).toBeFalsy();
+      const newControl = (complexControl as FormArray).controls[0].get([complexMultivaluedFormFieldConfig.property + '0']);
+      expect(newControl).toBeTruthy();
+      expect(newControl.value).toEqual({ 
+        [complexMultivaluedFormFieldConfig.property + '0urn:subProperty2']: '',
+        [complexMultivaluedFormFieldConfig.property + '0urn:subProperty3']: ''
+      });
+    });
+  });
+  describe('should correctly remove a value for a multivalued property', () => {
+    it('if simple', () => {
+      component.formFieldConfigs = [textFormFieldConfig];
+      component.genObj = [{
+        '@id': 'urn:test',
+        '@type': ['urn:Class'],
+        [textFormFieldConfig.property]: [{ '@value': 'First' }, { '@value': 'Second' }],
+      }];
+      fixture.detectChanges();
+      // Validate starting point with two values
+      expect(component.formComponents.length).toEqual(1);
+      const textControl = component.form.get([textFormFieldConfig.property]);
+      expect(textControl).toBeTruthy();
+      expect(textControl.value).toEqual([
+        { [textFormFieldConfig.property + '0']: 'First' },
+        { [textFormFieldConfig.property + '1']: 'Second' },
+      ]);
+      const firstControl = (textControl as FormArray).controls[0].get([textFormFieldConfig.property + '0']);
+      expect(firstControl).toBeTruthy();
+      expect(firstControl.value).toEqual('First');
+      expect(textControl.invalid).toBeFalsy();
+      const secondControl = (textControl as FormArray).controls[1].get([textFormFieldConfig.property + '1']);
+      expect(secondControl).toBeTruthy();
+      expect(secondControl.value).toEqual('Second');
+      expect(textControl.invalid).toBeFalsy();
+      
+      // Remove the first value in the array
+      component.deleteFormBlock(0, component.formComponents[0]);
+      expect((textControl as FormArray).controls.length).toEqual(1);
+      expect(textControl.value).toEqual([{ [textFormFieldConfig.property + '0']: 'Second' }]);
+      const remainingControl = (textControl as FormArray).controls[0].get([textFormFieldConfig.property + '0']);
+      expect(remainingControl).toBeTruthy();
+      expect(remainingControl.value).toEqual('Second');
+      expect(textControl.invalid).toBeFalsy();
+      // Remove the first value in the array (last value)
+      component.deleteFormBlock(0, component.formComponents[0]);
+      expect((textControl as FormArray).controls.length).toEqual(0);
+      expect(textControl.value).toEqual([]);
+      expect(textControl.invalid).toBeTruthy();
+    });
+    it('if complex', () => {
+      component.formFieldConfigs = [complexMultivaluedFormFieldConfig];
+      component.genObj = [
+        {
+          '@id': 'urn:test',
+          '@type': ['urn:Class'],
+          [complexMultivaluedFormFieldConfig.property]: [{ '@id': 'urn:First' }, { '@id': 'urn:Second' }],
+        },
+        {
+          '@id': 'urn:First',
+          '@type': [subNodeShape2['@id']],
+          'urn:subProperty2': [{ '@value': 'First2' }],
+          'urn:subProperty3': [{ '@value': 'First3' }]
+        },
+        {
+          '@id': 'urn:Second',
+          '@type': [subNodeShape2['@id']],
+          'urn:subProperty2': [{ '@value': 'Second2' }],
+          'urn:subProperty3': [{ '@value': 'Second3' }]
+        }
+      ];
+      fixture.detectChanges();
+      // Validate starting point with two values
+      expect(component.formComponents.length).toEqual(1);
+      const complexControl = component.form.get([complexMultivaluedFormFieldConfig.property]);
+      expect(complexControl).toBeTruthy();
+      expect(complexControl.value).toEqual([
+        { [complexMultivaluedFormFieldConfig.property + '0']: {
+          [complexMultivaluedFormFieldConfig.property + '0urn:subProperty2']: 'First2',
+          [complexMultivaluedFormFieldConfig.property + '0urn:subProperty3']: 'First3'
+        } },
+        { [complexMultivaluedFormFieldConfig.property + '1']: {
+          [complexMultivaluedFormFieldConfig.property + '1urn:subProperty2']: 'Second2',
+          [complexMultivaluedFormFieldConfig.property + '1urn:subProperty3']: 'Second3'
+        } },
+      ]);
+      const firstControl = (complexControl as FormArray).controls[0].get([complexMultivaluedFormFieldConfig.property + '0']);
+      expect(firstControl).toBeTruthy();
+      expect(firstControl.value).toEqual({
+        [complexMultivaluedFormFieldConfig.property + '0urn:subProperty2']: 'First2',
+        [complexMultivaluedFormFieldConfig.property + '0urn:subProperty3']: 'First3'
+      });
+      const secondControl = (complexControl as FormArray).controls[1].get([complexMultivaluedFormFieldConfig.property + '1']);
+      expect(secondControl).toBeTruthy();
+      expect(secondControl.value).toEqual({
+        [complexMultivaluedFormFieldConfig.property + '1urn:subProperty2']: 'Second2',
+        [complexMultivaluedFormFieldConfig.property + '1urn:subProperty3']: 'Second3'
+      });
+      expect(complexControl.invalid).toBeFalsy();
+      
+      // Remove the first value in the array
+      component.deleteFormBlock(0, component.formComponents[0]);
+      expect((complexControl as FormArray).controls.length).toEqual(1);
+      expect(complexControl.value).toEqual([{ [complexMultivaluedFormFieldConfig.property + '0']: {
+        [complexMultivaluedFormFieldConfig.property + '0urn:subProperty2']: 'Second2',
+        [complexMultivaluedFormFieldConfig.property + '0urn:subProperty3']: 'Second3'
+      } }]);
+      const remainingControl = (complexControl as FormArray).controls[0].get([complexMultivaluedFormFieldConfig.property + '0']);
+      expect(remainingControl).toBeTruthy();
+      expect(remainingControl.value).toEqual({
+        [complexMultivaluedFormFieldConfig.property + '0urn:subProperty2']: 'Second2',
+        [complexMultivaluedFormFieldConfig.property + '0urn:subProperty3']: 'Second3'
+      });
+      expect(complexControl.invalid).toBeFalsy();
+      // Remove the first value in the array (last value)
+      component.deleteFormBlock(0, component.formComponents[0]);
+      expect((complexControl as FormArray).controls.length).toEqual(0);
+      expect(complexControl.value).toEqual([]);
+      expect(complexControl.invalid).toBeFalsy();
+    });
   });
   it('should handle updates to the form values', () => {
     component.formFieldConfigs = [toggleFormFieldConfig];
-    component.genObj = {
+    component.genObj = [{
       '@id': 'urn:test',
       '@type': ['urn:Class'],
       [toggleFormFieldConfig.property]: [{ '@value': 'true' }],
-    };
+    }];
     fixture.detectChanges();
     expect(component.formComponents.length).toEqual(1);
     const toggleControl = component.form.get([toggleFormFieldConfig.property]);
@@ -331,10 +572,10 @@ describe('SHACLFormComponent', () => {
   });
   it('should handle updates to the form status', () => {
     component.formFieldConfigs = [radioFormFieldConfig];
-    component.genObj = {
+    component.genObj = [{
       '@id': 'urn:test',
       '@type': ['urn:Class']
-    };
+    }];
     fixture.detectChanges();
     expect(component.formComponents.length).toEqual(1);
     const radioControl = component.form.get([radioFormFieldConfig.property]);

@@ -34,7 +34,7 @@ import {
 import { CatalogStateService } from '../../../shared/services/catalogState.service';
 import { SharedModule } from '../../../shared/shared.module';
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
-import { CATALOG, DATASET, DCTERMS, DELIM, ONTOLOGYEDITOR, SHAPESGRAPHEDITOR } from '../../../prefixes';
+import { CATALOG, DATASET, DCTERMS, DELIM, ONTOLOGYEDITOR, SHAPESGRAPHEDITOR, WORKFLOWS } from '../../../prefixes';
 import { MapperStateService } from '../../../shared/services/mapperState.service';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { PolicyEnforcementService } from '../../../shared/services/policyEnforcement.service';
@@ -44,6 +44,8 @@ import { PolicyManagerService } from '../../../shared/services/policyManager.ser
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { RecordSelectFiltered } from '../../../versioned-rdf-record-editor/models/record-select-filtered.interface';
 import { ShapesGraphListItem } from '../../../shared/models/shapesGraphListItem.class';
+import { WorkflowsStateService } from '../../../workflows/services/workflows-state.service';
+import { WorkflowSchema } from '../../../workflows/models/workflow-record.interface';
 import { OpenRecordButtonComponent } from './openRecordButton.component';
 
 describe('Open Record Button component', function() {
@@ -56,6 +58,7 @@ describe('Open Record Button component', function() {
   let policyEnforcementStub: jasmine.SpyObj<PolicyEnforcementService>;
   let policyManagerStub: jasmine.SpyObj<PolicyManagerService>;
   let shapesGraphStateStub: jasmine.SpyObj<ShapesGraphStateService>;
+  let workflowsStateStub: jasmine.SpyObj<WorkflowsStateService>;
   let toastStub: jasmine.SpyObj<ToastService>;
   let router: Router;
 
@@ -77,6 +80,7 @@ describe('Open Record Button component', function() {
         MockProvider(ShapesGraphStateService),
         MockProvider(MapperStateService),
         MockProvider(OntologyStateService),
+        MockProvider(WorkflowsStateService),
         MockProvider(PolicyEnforcementService),
         MockProvider(PolicyManagerService),
         MockProvider(ToastService),
@@ -92,6 +96,7 @@ describe('Open Record Button component', function() {
     policyEnforcementStub = TestBed.inject(PolicyEnforcementService) as jasmine.SpyObj<PolicyEnforcementService>;
     policyManagerStub = TestBed.inject(PolicyManagerService) as jasmine.SpyObj<PolicyManagerService>;
     shapesGraphStateStub = TestBed.inject(ShapesGraphStateService) as jasmine.SpyObj<ShapesGraphStateService>;
+    workflowsStateStub = TestBed.inject(WorkflowsStateService) as jasmine.SpyObj<WorkflowsStateService>;
     toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
     router = TestBed.inject(Router) as jasmine.SpyObj<Router>;
     spyOn(router, 'navigate');
@@ -108,6 +113,7 @@ describe('Open Record Button component', function() {
     catalogStateStub = null;
     mapperStateStub = null;
     ontologyStateStub = null;
+    workflowsStateStub = null;
     policyEnforcementStub = null;
     toastStub = null;
     router = null;
@@ -149,6 +155,12 @@ describe('Open Record Button component', function() {
         spyOn(component, 'openShapesGraph');
         component.openRecord(this.event);
         expect(component.openShapesGraph).toHaveBeenCalledWith();
+      });
+      it('WorkflowRecord', function() {
+        component.recordType = `${WORKFLOWS}WorkflowRecord`;
+        spyOn(component, 'openWorkflow');
+        component.openRecord(this.event);
+        expect(component.openWorkflow).toHaveBeenCalledWith();
       });
     });
     describe('openOntology navigates to the ontology editor', function() {
@@ -248,6 +260,23 @@ describe('Open Record Button component', function() {
         }));
       });
     });
+    it('openWorkflow navigates to the workflows module ', fakeAsync(() => {
+      const schema: WorkflowSchema = {
+        iri: '',
+        title: '',
+        issued: undefined,
+        modified: undefined,
+        description: '',
+        active: false,
+        workflowIRI: ''
+      };
+      workflowsStateStub.convertJSONLDToWorkflowSchema.and.returnValue(of(schema));
+      component.openWorkflow();
+      tick();
+      expect(workflowsStateStub.convertJSONLDToWorkflowSchema).toHaveBeenCalledWith(component.record);
+      expect(workflowsStateStub.selectedRecord).toEqual(schema);
+      expect(router.navigate).toHaveBeenCalledWith(['/workflows']);
+    }));
     describe('update set the appropriate variables', function() {
       beforeEach(function() {
         component.record = record;

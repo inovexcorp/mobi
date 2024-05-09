@@ -20,31 +20,31 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { ComponentFixture, TestBed} from '@angular/core/testing';
-
-import { WorkflowUploadChangesModalComponent } from './workflow-upload-changes-modal.component';
 import { DebugElement } from '@angular/core';
-import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
-import { Difference } from '../../../shared/models/difference.class';
+import { ComponentFixture, TestBed} from '@angular/core/testing';
+import { HttpHeaders, HttpResponse } from '@angular/common/http';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { MatInputModule } from '@angular/material/input';
-import { MatFormFieldModule } from '@angular/material/form-field';
+import { By } from '@angular/platform-browser';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
 import { MatChipsModule } from '@angular/material/chips';
-import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { MatIconModule } from '@angular/material/icon';
-import { By } from '@angular/platform-browser';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
-import { cleanStylesFromDOM } from 'target/classes/build/test/ts/Shared';
+
+import { Difference } from '../../../shared/models/difference.class';
+import { cleanStylesFromDOM } from '../../../../test/ts/Shared';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
 import { FileInputComponent } from '../../../shared/components/fileInput/fileInput.component';
 import { WorkflowsManagerService } from '../../services/workflows-manager.service';
-import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { ProgressSpinnerService } from '../../../shared/components/progress-spinner/services/progressSpinner.service';
 import { PolicyManagerService } from '../../../shared/services/policyManager.service';
+import { WorkflowUploadChangesModalComponent } from './workflow-upload-changes-modal.component';
 
 describe('WorkflowUploadChangesModalComponent', () => {
   let component: WorkflowUploadChangesModalComponent;

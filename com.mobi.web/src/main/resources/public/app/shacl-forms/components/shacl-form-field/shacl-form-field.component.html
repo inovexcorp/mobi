@@ -21,24 +21,24 @@
   #L%
   -->
 <div class="shacl-form-field" *ngIf="formFieldConfig.fieldType" [formGroup]="parentFormGroup">
-  <div class="toggle-field pb-2" *ngIf="formFieldConfig.fieldType === 'toggle'">
+  <div class="toggle-field pb-2" *ngIf="formFieldConfig.fieldType === FieldType.TOGGLE">
       <mat-slide-toggle [formControlName]="controlName">{{label}}</mat-slide-toggle>
   </div>
-  <div class="text-field" *ngIf="formFieldConfig.fieldType === 'text'">
+  <div class="text-field" *ngIf="formFieldConfig.fieldType === FieldType.TEXT">
       <mat-form-field class="w-100">
           <mat-label>{{label}}</mat-label>
           <input matInput [formControlName]="controlName">
           <mat-error *ngIf="fieldFormControl.invalid">Not a valid value</mat-error>
       </mat-form-field>
   </div>
-  <div class="textarea-field" *ngIf="formFieldConfig.fieldType === 'textarea'">
+  <div class="textarea-field" *ngIf="formFieldConfig.fieldType === FieldType.TEXTAREA">
     <mat-form-field class="w-100">
         <mat-label>{{label}}</mat-label>
         <textarea matInput [formControlName]="controlName"></textarea>
         <mat-error *ngIf="fieldFormControl.invalid">Not a valid value</mat-error>
     </mat-form-field>
 </div>
-  <div class="radio-field pb-3" *ngIf="formFieldConfig.fieldType === 'radio'">
+  <div class="radio-field pb-3" *ngIf="formFieldConfig.fieldType === FieldType.RADIO">
     <mat-radio-group class="d-flex flex-column" [formControlName]="controlName">
         <mat-radio-button *ngFor="let value of formFieldConfig.values"
                           [value]="value">
@@ -46,7 +46,7 @@
         </mat-radio-button>
     </mat-radio-group>
   </div>
-  <div class="checkbox-field pb-3 d-flex flex-column" *ngIf="formFieldConfig.fieldType === 'checkbox'" >
+  <div class="checkbox-field pb-3 d-flex flex-column" *ngIf="formFieldConfig.fieldType === FieldType.CHECKBOX" >
     <mat-checkbox *ngFor="let checkbox of checkboxes" 
                   (change)="checkboxChange($event)" [value]="checkbox.value.value" 
                   [checked]="checkbox.checked" 
@@ -54,7 +54,7 @@
       {{ checkbox.value.name }}
     </mat-checkbox>
   </div>
-  <div class="dropdown-field pb-3 d-flex flex-column" *ngIf="formFieldConfig.fieldType === 'dropdown'" >
+  <div class="dropdown-field pb-3 d-flex flex-column" *ngIf="formFieldConfig.fieldType === FieldType.DROPDOWN" >
     <mat-form-field>
       <mat-label>{{label}}</mat-label>
       <mat-select [formControlName]="controlName">
@@ -64,7 +64,7 @@
       </mat-select>
     </mat-form-field>
   </div>
-  <div class="autocomplete-field pb-3 d-flex flex-column" *ngIf="formFieldConfig.fieldType === 'autocomplete'">
+  <div class="autocomplete-field pb-3 d-flex flex-column" *ngIf="formFieldConfig.fieldType === FieldType.AUTOCOMPLETE">
     <mat-form-field>
       <mat-label>{{label}}</mat-label>
       <input type="text" matInput placeholder="Select an option"  (focus)="getAutocompleteOptions(formFieldConfig)" [formControlName]="controlName"

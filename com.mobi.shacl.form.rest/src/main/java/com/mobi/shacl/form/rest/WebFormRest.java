@@ -165,12 +165,14 @@ public class WebFormRest {
                 Model propertyShapeModel = jsonldToModel(propertyShape);
                 if (!StringUtils.isBlank(focusNode)) {
                     Model focusNodeModel = jsonldToModel(focusNode);
-                    if (focusNodeModel.subjects().size() != 1) {
-                        throw new IllegalArgumentException("There must be exactly one subject in the focus node");
+                    if (focusNodeModel.size() > 0) {
+                        if (focusNodeModel.subjects().size() != 1) {
+                            throw new IllegalArgumentException("There must be exactly one subject in the focus node");
+                        }
+                        focusNodeIRIOpt = focusNodeModel.subjects().stream().findFirst();
+                        conn.remove(focusNodeIRIOpt.get(), null, null);
+                        conn.add(focusNodeModel, vf.createIRI("http://mobi.com/testgraph"));
                     }
-                    focusNodeIRIOpt = focusNodeModel.subjects().stream().findFirst();
-                    conn.remove(focusNodeIRIOpt.get(), null, null);
-                    conn.add(focusNodeModel, vf.createIRI("http://mobi.com/testgraph"));
                 }
                 Collection<PropertyShape> propertyShapes = propertyShapeFactory.getAllExisting(propertyShapeModel);
                 List<Entity> options;

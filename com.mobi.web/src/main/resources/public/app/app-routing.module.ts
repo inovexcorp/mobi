@@ -77,11 +77,11 @@ const routes: Routes = [
             { icon: 'book', route: '/catalog', name: 'Catalog' },
             { icon: 'pencil-square-o', route: '/ontology-editor', name: 'Ontology Editor'},
             { mat: true, icon: 'rule', route: '/shapes-graph-editor', name: 'Shapes Editor'},
-            { mat: true, icon: 'fact_check-square-o', route: '/workflows', name: 'Workflows'},
             { icon: 'envelope-o', route: '/merge-requests', name: 'Merge Requests' },
             { icon: 'map-o', route: '/mapper', name: 'Mapping Tool' },
             { icon: 'database', route: '/datasets', name: 'Datasets' },
             { icon: 'search', route: '/discover', name: 'Discover' },
+            { mat: true, icon: 'fact_check', route: '/workflows', name: 'Workflows'},
         ]},
         AuthenticationGuard,
         AlreadyAuthenticatedGuard

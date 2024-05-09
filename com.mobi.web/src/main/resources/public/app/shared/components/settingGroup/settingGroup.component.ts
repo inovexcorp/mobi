@@ -29,7 +29,7 @@ import { SETTING } from '../../../prefixes';
 import { ToastService } from '../../services/toast.service';
 import { SettingManagerService } from '../../services/settingManager.service';
 import { JSONLDObject } from '../../models/JSONLDObject.interface';
-import { FormValues } from '../../../shacl-forms/components/shacl-form/shacl-form.component';
+import { FormValues } from '../../../shacl-forms/models/form-values.interface';
 import { getPropertyId, setPropertyId } from '../../utility';
 import { LoginManagerService } from '../../services/loginManager.service';
 import { RESTError } from '../../models/RESTError.interface';
@@ -84,15 +84,10 @@ export class SettingGroupComponent implements OnChanges {
                             }
                         });
                         forEach(settingObject, (settingJson: JSONLDObject, settingType: string) => {
-                            let setting: Setting;
-                            if (SimpleSetting.isSimpleSetting(settingJson, shapeDefinitions)) {
-                                setting = new SimpleSetting(settingJson, shapeDefinitions);
-                                setting.populate(settingResponse[settingType] || []);
-                                this.settings[settingType] = setting;
-                                this.settingSaveable[settingType] = false;
-                            } else {
-                                this.toast.createErrorToast('Complex Settings are not yet supported.');
-                            }
+                            const setting: Setting = new SimpleSetting(settingJson, shapeDefinitions);
+                            setting.populate(settingResponse[settingType] || []);
+                            this.settings[settingType] = setting;
+                            this.settingSaveable[settingType] = false;
                         });
                         this.settingIRIs = Object.keys(this.settings);
                         this.ref.markForCheck();
@@ -117,7 +112,7 @@ export class SettingGroupComponent implements OnChanges {
                 .subscribe(() => {
                     this.errorMessage = '';
                     this.settingSaveable[setting.type] = false;
-                    setting.values.forEach(val => {
+                    setting.values.filter(obj => obj['@type'].includes(setting.type)).forEach(val => {
                         if (!getPropertyId(val, `${SETTING}forUser`)) {
                             setPropertyId(val, `${SETTING}forUser`, this.lm.currentUserIRI);
                         }

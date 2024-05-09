@@ -28,6 +28,8 @@ import { SimpleSetting } from './simpleSetting.class';
 
 describe('SimpleSetting', () => {
   const propertyShapeId = 'urn:PropertyShapeA';
+  const subPropA = 'urn:subPropA';
+  const subPropB = 'urn:subPropB';
   const applicationSettingNodeShape: JSONLDObject = {
     '@id': 'urn:CustomApplicationSetting',
     '@type': [`${OWL}Class`, `${SHACL}NodeShape`],
@@ -48,14 +50,30 @@ describe('SimpleSetting', () => {
     [`${SHACL}path`]: [{ '@id': `${SETTING}hasDataValue` }],
     [`${SHACL_FORM}usesFormField`]: [{ '@id': `${SHACL_FORM}TextInput` }]
   };
+  const complexPropertyShape: JSONLDObject = {
+    '@id': propertyShapeId,
+    '@type': [`${SHACL}PropertyShape`],
+    [`${SHACL}path`]: [{ '@id': `${SETTING}hasObjectValue` }],
+    [`${SHACL}node`]: [{ '@id': 'urn:AssociatedObject' }]
+  };
+  const associatedNodeShape: JSONLDObject = {
+    '@id': 'urn:AssociatedObject',
+    '@type': [`${OWL}Class`, `${SHACL}NodeShape`],
+    [`${SHACL}property`]: [{ '@id': subPropA + 'Shape' }, { '@id': subPropB + 'Shape' }]
+  };
+  const associatedPropertyShapeA: JSONLDObject = {
+    '@id': subPropA + 'Shape',
+    '@type': [`${SHACL}PropertyShape`],
+    [`${SHACL}path`]: [{ '@id': subPropA }],
+    [`${SHACL_FORM}usesFormField`]: [{ '@id': `${SHACL_FORM}TextInput` }]
+  };
+  const associatedPropertyShapeB: JSONLDObject = {
+    '@id': subPropB + 'Shape',
+    '@type': [`${SHACL}PropertyShape`],
+    [`${SHACL}path`]: [{ '@id': subPropB }],
+    [`${SHACL_FORM}usesFormField`]: [{ '@id': `${SHACL_FORM}TextInput` }]
+  };
 
-  it('should test whether a provided setting is a SimpleSetting or not', () => {
-    expect(SimpleSetting.isSimpleSetting(applicationSettingNodeShape, {[propertyShapeId]: textPropertyShape})).toBeTrue();
-    expect(SimpleSetting.isSimpleSetting(applicationSettingNodeShape, {})).toBeFalse();
-    expect(SimpleSetting.isSimpleSetting(applicationSettingNodeShape, {
-      [propertyShapeId]: { '@id': propertyShapeId, [`${SHACL}node`]: [{ '@id': 'test' }] }
-    })).toBeFalse();
-  });
   it('should create for a simple text application setting', () => {
     const setting = new SimpleSetting(applicationSettingNodeShape, {[propertyShapeId]: textPropertyShape});
     expect(setting.type).toEqual(applicationSettingNodeShape['@id']);
@@ -75,6 +93,23 @@ describe('SimpleSetting', () => {
     expect(setting.label).toEqual('Test Preference');
     expect(setting.json).toEqual(preferenceNodeShape);
     expect(setting.formFieldProperties).toEqual([`${SETTING}hasDataValue`]);
+    expect(setting.values).toEqual([]);
+    expect(setting.topLevelSettingNodeshapeInstanceId).toBeUndefined();
+    expect(setting.formFieldConfigs.length).toEqual(1);
+    expect(setting.settingType).toEqual(`${SETTING}Preference`);
+  });
+  it('should create for a complex preference', () => {
+    const setting = new SimpleSetting(preferenceNodeShape, {
+      [propertyShapeId]: complexPropertyShape,
+      [associatedNodeShape['@id']]: associatedNodeShape,
+      [subPropA + 'Shape']: associatedPropertyShapeA,
+      [subPropB + 'Shape']: associatedPropertyShapeB,
+    });
+    expect(setting.type).toEqual(preferenceNodeShape['@id']);
+    expect(setting.formFieldPropertyShapes).toEqual([complexPropertyShape]);
+    expect(setting.label).toEqual('Test Preference');
+    expect(setting.json).toEqual(preferenceNodeShape);
+    expect(setting.formFieldProperties).toEqual([`${SETTING}hasObjectValue`]);
     expect(setting.values).toEqual([]);
     expect(setting.topLevelSettingNodeshapeInstanceId).toBeUndefined();
     expect(setting.formFieldConfigs.length).toEqual(1);
@@ -122,7 +157,8 @@ describe('SimpleSetting', () => {
     const settingValues = [settingValue, {'@id': 'other'}];
     const setting = new SimpleSetting(preferenceNodeShape, {[propertyShapeId]: textPropertyShape});
     setting.populate(settingValues);
-    expect(setting.values).toEqual([settingValue]);
+    // Order switched due to sort by IRI
+    expect(setting.values).toEqual([{'@id': 'other'}, settingValue]);
     expect(setting.topLevelSettingNodeshapeInstanceId).toEqual(settingValue['@id']);
   });
   it('should populate the Setting given a filled in setting with more than one data value', () => {
@@ -134,8 +170,9 @@ describe('SimpleSetting', () => {
     const settingValues = [settingValue, {'@id': 'other'}];
     const setting = new SimpleSetting(preferenceNodeShape, {[propertyShapeId]: textPropertyShape});
     setting.populate(settingValues);
-    expect(setting.values).toEqual([settingValue]);
-    expect(setting.values[0][`${SETTING}hasDataValue`]).toEqual([{ '@value': 'A' }, { '@value': 'B' }]);
+    // Order switched due to sort by IRI
+    expect(setting.values).toEqual([{'@id': 'other'}, settingValue]);
+    expect(setting.values[1][`${SETTING}hasDataValue`]).toEqual([{ '@value': 'A' }, { '@value': 'B' }]);
     expect(setting.topLevelSettingNodeshapeInstanceId).toEqual(settingValue['@id']);
   });
   it('should test whether the Setting has been populated', () => {
@@ -151,135 +188,384 @@ describe('SimpleSetting', () => {
   });
   describe('should update the Setting with form values', () => {
     describe('if the Setting has been populated', () => {
-      const settingValue = {
-        '@id': 'uuid',
-        '@type': [preferenceNodeShape['@id'], `${SETTING}Preference`, `${SETTING}Setting`, `${OWL}Thing`],
-        [`${SETTING}hasDataValue`]: [{ '@value': 'A' }]
-      };
-      it('and the value is a simple string', () => {
-        const formValues = {
-          [`${SETTING}hasDataValue`]: 'NEW'
+      describe('with hasDataValue', () => {
+        const settingValue = {
+          '@id': 'uuid',
+          '@type': [preferenceNodeShape['@id'], `${SETTING}Preference`, `${SETTING}Setting`, `${OWL}Thing`],
+          [`${SETTING}hasDataValue`]: [{ '@value': 'A' }]
         };
-        const setting = new SimpleSetting(preferenceNodeShape, {[propertyShapeId]: textPropertyShape});
-        setting.populate([settingValue]);
-        expect(setting.values).toEqual([settingValue]);
-
-        setting.updateWithFormValues(formValues);
-        expect(setting.values.length).toEqual(1);
-        expect(setting.values[0]['@id']).toEqual(settingValue['@id']);
-        expect(setting.values[0][`${SETTING}hasDataValue`]).toEqual([{ '@value': 'NEW' }]);
+        it('and the value is a simple string', () => {
+          const formValues = {
+            [`${SETTING}hasDataValue`]: 'NEW'
+          };
+          const setting = new SimpleSetting(preferenceNodeShape, {[propertyShapeId]: textPropertyShape});
+          setting.populate([cloneDeep(settingValue)]);
+          expect(setting.values).toEqual([settingValue]);
+  
+          setting.updateWithFormValues(formValues);
+          expect(setting.values.length).toEqual(1);
+          expect(setting.values[0]['@id']).toEqual(settingValue['@id']);
+          expect(setting.values[0][`${SETTING}hasDataValue`]).toEqual([{ '@value': 'NEW' }]);
+        });
+        it('and the value is an array of strings', () => {
+          const formValues = {
+            [`${SETTING}hasDataValue`]: ['NEW1', 'NEW2']
+          };
+          const setting = new SimpleSetting(preferenceNodeShape, {[propertyShapeId]: textPropertyShape});
+          setting.populate([cloneDeep(settingValue)]);
+          expect(setting.values).toEqual([settingValue]);
+  
+          setting.updateWithFormValues(formValues);
+          expect(setting.values.length).toEqual(1);
+          expect(setting.values[0]['@id']).toEqual(settingValue['@id']);
+          expect(setting.values[0][`${SETTING}hasDataValue`]).toEqual([{ '@value': 'NEW1' }, { '@value': 'NEW2' }]);
+        });
+        it('and the value is an array of nested strings', () => {
+          const formValues = {
+            [`${SETTING}hasDataValue`]: [
+              {[`${SETTING}hasDataValue0`]: 'NEW1'},
+              {[`${SETTING}hasDataValue1`]: 'NEW2'}
+            ]
+          };
+          const setting = new SimpleSetting(preferenceNodeShape, {[propertyShapeId]: textPropertyShape});
+          setting.populate([cloneDeep(settingValue)]);
+          expect(setting.values).toEqual([settingValue]);
+  
+          setting.updateWithFormValues(formValues);
+          expect(setting.values.length).toEqual(1);
+          expect(setting.values[0]['@id']).toEqual(settingValue['@id']);
+          expect(setting.values[0][`${SETTING}hasDataValue`]).toEqual([{ '@value': 'NEW1' }, { '@value': 'NEW2' }]);
+        });
+        it('and the value is an array of nested strings with one value removed', () => {
+          const settingValueClone: JSONLDObject = cloneDeep(settingValue);
+          settingValueClone[`${SETTING}hasDataValue`] = [{ '@value': 'A' }, { '@value': 'B' }];
+          const formValues = {
+            [`${SETTING}hasDataValue`]: [
+              {[`${SETTING}hasDataValue1`]: 'B'}
+            ]
+          };
+          const setting = new SimpleSetting(preferenceNodeShape, {[propertyShapeId]: textPropertyShape});
+          setting.populate([cloneDeep(settingValue)]);
+          expect(setting.values).toEqual([settingValue]);
+  
+          setting.updateWithFormValues(formValues);
+          expect(setting.values.length).toEqual(1);
+          expect(setting.values[0]['@id']).toEqual(settingValue['@id']);
+          expect(setting.values[0][`${SETTING}hasDataValue`]).toEqual([{ '@value': 'B' }]);
+        });
+        it('and the value has been removed', () => {
+          const formValues = {
+            [`${SETTING}hasDataValue`]: ''
+          };
+          const setting = new SimpleSetting(preferenceNodeShape, {[propertyShapeId]: textPropertyShape});
+          setting.populate([cloneDeep(settingValue)]);
+          expect(setting.values).toEqual([settingValue]);
+  
+          setting.updateWithFormValues(formValues);
+          expect(setting.values.length).toEqual(1);
+          expect(setting.values[0]['@id']).toEqual(settingValue['@id']);
+          expect(setting.values[0][`${SETTING}hasDataValue`]).toBeUndefined();
+        });
       });
-      it('and the value is an array of strings', () => {
-        const formValues = {
-          [`${SETTING}hasDataValue`]: ['NEW1', 'NEW2']
+      describe('with hasObjectValue', () => {
+        const settingValue: JSONLDObject = {
+          '@id': 'uuid',
+          '@type': [preferenceNodeShape['@id'], `${SETTING}Preference`, `${SETTING}Setting`, `${OWL}Thing`],
+          [`${SETTING}hasObjectValue`]: [{ '@id': 'urn:assocObj1' }]
         };
-        const setting = new SimpleSetting(preferenceNodeShape, {[propertyShapeId]: textPropertyShape});
-        setting.populate([settingValue]);
-        expect(setting.values).toEqual([settingValue]);
-
-        setting.updateWithFormValues(formValues);
-        expect(setting.values.length).toEqual(1);
-        expect(setting.values[0]['@id']).toEqual(settingValue['@id']);
-        expect(setting.values[0][`${SETTING}hasDataValue`]).toEqual([{ '@value': 'NEW1' }, { '@value': 'NEW2' }]);
-      });
-      it('and the value is an array of nested strings', () => {
-        const formValues = {
-          [`${SETTING}hasDataValue`]: [
-            {[`${SETTING}hasDataValue0`]: 'NEW1'},
-            {[`${SETTING}hasDataValue1`]: 'NEW2'}
-          ]
+        const assocObject: JSONLDObject = {
+          '@id': 'urn:assocObj1',
+          '@type': [associatedNodeShape['@id']],
+          [subPropA]: [{ '@value': 'A' }],
+          [subPropB]: [{ '@value': 'B' }],
         };
-        const setting = new SimpleSetting(preferenceNodeShape, {[propertyShapeId]: textPropertyShape});
-        setting.populate([settingValue]);
-        expect(setting.values).toEqual([settingValue]);
+        it('and the value is a single object', () => {
+          const formValues = {
+            [`${SETTING}hasObjectValue`]: {
+              [subPropA]: 'NEWA',
+              [subPropB]: 'NEWB',
+            }
+          };
+          const setting = new SimpleSetting(preferenceNodeShape, {
+            [propertyShapeId]: complexPropertyShape,
+            [associatedNodeShape['@id']]: associatedNodeShape,
+            [subPropA + 'Shape']: associatedPropertyShapeA,
+            [subPropB + 'Shape']: associatedPropertyShapeB,
+          });
+          setting.populate([cloneDeep(settingValue), assocObject]);
+          expect(setting.values).toEqual([assocObject, settingValue]);
 
-        setting.updateWithFormValues(formValues);
-        expect(setting.values.length).toEqual(1);
-        expect(setting.values[0]['@id']).toEqual(settingValue['@id']);
-        expect(setting.values[0][`${SETTING}hasDataValue`]).toEqual([{ '@value': 'NEW1' }, { '@value': 'NEW2' }]);
-      });
-      it('and the value is an array of nested strings with one value removed', () => {
-        const settingValueClone: JSONLDObject = cloneDeep(settingValue);
-        settingValueClone[`${SETTING}hasDataValue`] = [{ '@value': 'A' }, { '@value': 'B' }];
-        const formValues = {
-          [`${SETTING}hasDataValue`]: [
-            {[`${SETTING}hasDataValue1`]: 'B'}
-          ]
-        };
-        const setting = new SimpleSetting(preferenceNodeShape, {[propertyShapeId]: textPropertyShape});
-        setting.populate([settingValue]);
-        expect(setting.values).toEqual([settingValue]);
+          setting.updateWithFormValues(formValues);
+          expect(setting.values.length).toEqual(2);
+          expect(setting.values[0]['@id']).toEqual(settingValue['@id']);
+          expect(setting.values[0][`${SETTING}hasObjectValue`]).toEqual([{ '@id': setting.values[1]['@id'] }]);
+          expect(setting.values[1]['@id']).toContain('http://mobi.solutions/AssociatedObject#');
+          expect(setting.values[1][subPropA]).toEqual([{ '@value': 'NEWA' }]);
+          expect(setting.values[1][subPropB]).toEqual([{ '@value': 'NEWB' }]);
+        });
+        it('and the value is an array', () => {
+          const formValues = {
+            [`${SETTING}hasObjectValue`]: [
+              {
+                [subPropA]: 'NEWA',
+                [subPropB]: 'NEWB',
+              },
+              {
+                [subPropA]: 'NEWY',
+                [subPropB]: 'NEWZ',
+              },
+            ]
+          };
+          const setting = new SimpleSetting(preferenceNodeShape, {
+            [propertyShapeId]: complexPropertyShape,
+            [associatedNodeShape['@id']]: associatedNodeShape,
+            [subPropA + 'Shape']: associatedPropertyShapeA,
+            [subPropB + 'Shape']: associatedPropertyShapeB,
+          });
+          setting.populate([cloneDeep(settingValue), assocObject]);
+          expect(setting.values).toEqual([assocObject, settingValue]);
 
-        setting.updateWithFormValues(formValues);
-        expect(setting.values.length).toEqual(1);
-        expect(setting.values[0]['@id']).toEqual(settingValue['@id']);
-        expect(setting.values[0][`${SETTING}hasDataValue`]).toEqual([{ '@value': 'B' }]);
-      });
-      it('and the value has been removed', () => {
-        const formValues = {
-          [`${SETTING}hasDataValue`]: ''
-        };
-        const setting = new SimpleSetting(preferenceNodeShape, {[propertyShapeId]: textPropertyShape});
-        setting.populate([settingValue]);
-        expect(setting.values).toEqual([settingValue]);
+          setting.updateWithFormValues(formValues);
+          expect(setting.values.length).toEqual(3);
+          expect(setting.values[0]['@id']).toEqual(settingValue['@id']);
+          expect(setting.values[0][`${SETTING}hasObjectValue`]).toEqual([
+            { '@id': setting.values[1]['@id'] },
+            { '@id': setting.values[2]['@id'] }
+          ]);
+          expect(setting.values[1]['@id']).toContain('http://mobi.solutions/AssociatedObject#');
+          expect(setting.values[1][subPropA]).toEqual([{ '@value': 'NEWA' }]);
+          expect(setting.values[1][subPropB]).toEqual([{ '@value': 'NEWB' }]);
+          expect(setting.values[2]['@id']).toContain('http://mobi.solutions/AssociatedObject#');
+          expect(setting.values[2][subPropA]).toEqual([{ '@value': 'NEWY' }]);
+          expect(setting.values[2][subPropB]).toEqual([{ '@value': 'NEWZ' }]);
+        });
+        it('and the value is an array with one value removed', () => {
+          const settingValueClone: JSONLDObject = cloneDeep(settingValue);
+          settingValueClone[`${SETTING}hasObjectValue`].push({ '@id': 'urn:assocObj2' });
+          const assocObjectClone: JSONLDObject = cloneDeep(assocObject);
+          assocObjectClone['@id'] = 'urn:assocObj2';
+          assocObjectClone[subPropA] = [{ '@value': 'Y' }];
+          assocObjectClone[subPropB] = [{ '@value': 'Z' }];
+          const formValues = {
+            [`${SETTING}hasObjectValue`]: {
+              [subPropA]: 'Y',
+              [subPropB]: 'Z',
+            }
+          };
+          const setting = new SimpleSetting(preferenceNodeShape, {
+            [propertyShapeId]: complexPropertyShape,
+            [associatedNodeShape['@id']]: associatedNodeShape,
+            [subPropA + 'Shape']: associatedPropertyShapeA,
+            [subPropB + 'Shape']: associatedPropertyShapeB,
+          });
+          setting.populate([settingValueClone, assocObject, assocObjectClone]);
+          expect(setting.values).toEqual([assocObject, assocObjectClone, settingValueClone]);
 
-        setting.updateWithFormValues(formValues);
-        expect(setting.values.length).toEqual(1);
-        expect(setting.values[0]['@id']).toEqual(settingValue['@id']);
-        expect(setting.values[0][`${SETTING}hasDataValue`]).toBeUndefined();
+          setting.updateWithFormValues(formValues);
+          expect(setting.values.length).toEqual(2);
+          expect(setting.values[0]['@id']).toEqual(settingValue['@id']);
+          expect(setting.values[0][`${SETTING}hasObjectValue`]).toEqual([{ '@id': setting.values[1]['@id'] }]);
+          expect(setting.values[1]['@id']).toContain('http://mobi.solutions/AssociatedObject#');
+          expect(setting.values[1][subPropA]).toEqual([{ '@value': 'Y' }]);
+          expect(setting.values[1][subPropB]).toEqual([{ '@value': 'Z' }]);
+        });
+        it('and the single object value has been removed', () => {
+          const formValues = {
+            [`${SETTING}hasObjectValue`]: {
+              [subPropA]: '',
+              [subPropB]: '',
+            }
+          };
+          const setting = new SimpleSetting(preferenceNodeShape, {
+            [propertyShapeId]: complexPropertyShape,
+            [associatedNodeShape['@id']]: associatedNodeShape,
+            [subPropA + 'Shape']: associatedPropertyShapeA,
+            [subPropB + 'Shape']: associatedPropertyShapeB,
+          });
+          setting.populate([cloneDeep(settingValue), assocObject]);
+          expect(setting.values).toEqual([assocObject, settingValue]);
+
+          setting.updateWithFormValues(formValues);
+          expect(setting.values.length).toEqual(2);
+          expect(setting.values[0]['@id']).toEqual(settingValue['@id']);
+          expect(setting.values[0][`${SETTING}hasObjectValue`]).toEqual([{ '@id': setting.values[1]['@id'] }]);
+          expect(setting.values[1]['@id']).toContain('http://mobi.solutions/AssociatedObject#');
+          expect(setting.values[1][subPropA]).toBeUndefined();
+          expect(setting.values[1][subPropB]).toBeUndefined();
+        });
+        it('and the array value has been removed', () => {
+          const formValues = {
+            [`${SETTING}hasObjectValue`]: []
+          };
+          const setting = new SimpleSetting(preferenceNodeShape, {
+            [propertyShapeId]: complexPropertyShape,
+            [associatedNodeShape['@id']]: associatedNodeShape,
+            [subPropA + 'Shape']: associatedPropertyShapeA,
+            [subPropB + 'Shape']: associatedPropertyShapeB,
+          });
+          setting.populate([cloneDeep(settingValue), assocObject]);
+          expect(setting.values).toEqual([assocObject, settingValue]);
+
+          setting.updateWithFormValues(formValues);
+          expect(setting.values.length).toEqual(1);
+          expect(setting.values[0]['@id']).toEqual(settingValue['@id']);
+          expect(setting.values[0][`${SETTING}hasObjectValue`]).toBeUndefined();
+        });
       });
     });
     describe('if the Setting has not been populated', () => {
-      it('and the value is a simple string', () => {
-        const formValues = {
-          [`${SETTING}hasDataValue`]: 'NEW'
-        };
-        const setting = new SimpleSetting(preferenceNodeShape, {[propertyShapeId]: textPropertyShape});
-        expect(setting.values).toEqual([]);
-
-        setting.updateWithFormValues(formValues);
-        expect(setting.values.length).toEqual(1);
-        expect(setting.values[0]['@id']).toContain('http://mobi.solutions/setting#');
-        expect(setting.values[0][`${SETTING}hasDataValue`]).toEqual([{ '@value': 'NEW' }]);
+      describe('with hasDataValue', () => {
+        it('and the value is a simple string', () => {
+          const formValues = {
+            [`${SETTING}hasDataValue`]: 'NEW'
+          };
+          const setting = new SimpleSetting(preferenceNodeShape, {[propertyShapeId]: textPropertyShape});
+          expect(setting.values).toEqual([]);
+  
+          setting.updateWithFormValues(formValues);
+          expect(setting.values.length).toEqual(1);
+          expect(setting.values[0]['@id']).toContain('http://mobi.solutions/setting#');
+          expect(setting.values[0][`${SETTING}hasDataValue`]).toEqual([{ '@value': 'NEW' }]);
+        });
+        it('and the value is an array of strings', () => {
+          const formValues = {
+            [`${SETTING}hasDataValue`]: ['NEW1', 'NEW2']
+          };
+          const setting = new SimpleSetting(preferenceNodeShape, {[propertyShapeId]: textPropertyShape});
+          expect(setting.values).toEqual([]);
+  
+          setting.updateWithFormValues(formValues);
+          expect(setting.values.length).toEqual(1);
+          expect(setting.values[0]['@id']).toContain('http://mobi.solutions/setting#');
+          expect(setting.values[0][`${SETTING}hasDataValue`]).toEqual([{ '@value': 'NEW1' }, { '@value': 'NEW2' }]);
+        });
+        it('and the value is an array of nested strings', () => {
+          const formValues = {
+            [`${SETTING}hasDataValue`]: [
+              { [`${SETTING}hasDataValue0`]: 'NEW1' },
+              { [`${SETTING}hasDataValue1`]: 'NEW2' }
+            ]
+          };
+          const setting = new SimpleSetting(preferenceNodeShape, {[propertyShapeId]: textPropertyShape});
+          expect(setting.values).toEqual([]);
+  
+          setting.updateWithFormValues(formValues);
+          expect(setting.values.length).toEqual(1);
+          expect(setting.values[0]['@id']).toContain('http://mobi.solutions/setting#');
+          expect(setting.values[0][`${SETTING}hasDataValue`]).toEqual([{ '@value': 'NEW1' }, { '@value': 'NEW2' }]);
+        });
+        it('and the value has been removed', () => {
+          const formValues = {
+            [`${SETTING}hasDataValue`]: ''
+          };
+          const setting = new SimpleSetting(preferenceNodeShape, {[propertyShapeId]: textPropertyShape});
+          expect(setting.values).toEqual([]);
+  
+          setting.updateWithFormValues(formValues);
+          expect(setting.values.length).toEqual(1);
+          expect(setting.values[0]['@id']).toContain('http://mobi.solutions/setting#');
+          expect(setting.values[0][`${SETTING}hasDataValue`]).toBeUndefined();
+        });
       });
-      it('and the value is an array of strings', () => {
-        const formValues = {
-          [`${SETTING}hasDataValue`]: ['NEW1', 'NEW2']
-        };
-        const setting = new SimpleSetting(preferenceNodeShape, {[propertyShapeId]: textPropertyShape});
-        expect(setting.values).toEqual([]);
+      describe('with hasObjectValue', () => {
+        it('and the value is a single object', () => {
+          const formValues = {
+            [`${SETTING}hasObjectValue`]: {
+              [subPropA]: 'NEWA',
+              [subPropB]: 'NEWB',
+            }
+          };
+          const setting = new SimpleSetting(preferenceNodeShape, {
+            [propertyShapeId]: complexPropertyShape,
+            [associatedNodeShape['@id']]: associatedNodeShape,
+            [subPropA + 'Shape']: associatedPropertyShapeA,
+            [subPropB + 'Shape']: associatedPropertyShapeB,
+          });
+          expect(setting.values).toEqual([]);
 
-        setting.updateWithFormValues(formValues);
-        expect(setting.values.length).toEqual(1);
-        expect(setting.values[0]['@id']).toContain('http://mobi.solutions/setting#');
-        expect(setting.values[0][`${SETTING}hasDataValue`]).toEqual([{ '@value': 'NEW1' }, { '@value': 'NEW2' }]);
-      });
-      it('and the value is an array of nested strings', () => {
-        const formValues = {
-          [`${SETTING}hasDataValue`]: [
-            { [`${SETTING}hasDataValue0`]: 'NEW1' },
-            { [`${SETTING}hasDataValue1`]: 'NEW2' }
-          ]
-        };
-        const setting = new SimpleSetting(preferenceNodeShape, {[propertyShapeId]: textPropertyShape});
-        expect(setting.values).toEqual([]);
+          setting.updateWithFormValues(formValues);
+          expect(setting.values.length).toEqual(2);
+          expect(setting.values[0]['@id']).toContain('http://mobi.solutions/setting#');
+          expect(setting.values[0][`${SETTING}hasObjectValue`]).toEqual([{ '@id': setting.values[1]['@id'] }]);
+          expect(setting.values[1]['@id']).toContain('http://mobi.solutions/AssociatedObject#');
+          expect(setting.values[1][subPropA]).toEqual([{ '@value': 'NEWA' }]);
+          expect(setting.values[1][subPropB]).toEqual([{ '@value': 'NEWB' }]);
+        });
+        it('and the value is an array', () => {
+          const formValues = {
+            [`${SETTING}hasObjectValue`]: [
+              {
+                [subPropA]: 'NEWA',
+                [subPropB]: 'NEWB',
+              },
+              {
+                [subPropA]: 'NEWY',
+                [subPropB]: 'NEWZ',
+              },
+            ]
+          };
+          const setting = new SimpleSetting(preferenceNodeShape, {
+            [propertyShapeId]: complexPropertyShape,
+            [associatedNodeShape['@id']]: associatedNodeShape,
+            [subPropA + 'Shape']: associatedPropertyShapeA,
+            [subPropB + 'Shape']: associatedPropertyShapeB,
+          });
+          expect(setting.values).toEqual([]);
 
-        setting.updateWithFormValues(formValues);
-        expect(setting.values.length).toEqual(1);
-        expect(setting.values[0]['@id']).toContain('http://mobi.solutions/setting#');
-        expect(setting.values[0][`${SETTING}hasDataValue`]).toEqual([{ '@value': 'NEW1' }, { '@value': 'NEW2' }]);
-      });
-      it('and the value has been removed', () => {
-        const formValues = {
-          [`${SETTING}hasDataValue`]: ''
-        };
-        const setting = new SimpleSetting(preferenceNodeShape, {[propertyShapeId]: textPropertyShape});
-        expect(setting.values).toEqual([]);
+          setting.updateWithFormValues(formValues);
+          expect(setting.values.length).toEqual(3);
+          expect(setting.values[0]['@id']).toContain('http://mobi.solutions/setting#');
+          expect(setting.values[0][`${SETTING}hasObjectValue`]).toEqual([
+            { '@id': setting.values[1]['@id'] },
+            { '@id': setting.values[2]['@id'] }
+          ]);
+          expect(setting.values[1]['@id']).toContain('http://mobi.solutions/AssociatedObject#');
+          expect(setting.values[1][subPropA]).toEqual([{ '@value': 'NEWA' }]);
+          expect(setting.values[1][subPropB]).toEqual([{ '@value': 'NEWB' }]);
+          expect(setting.values[2]['@id']).toContain('http://mobi.solutions/AssociatedObject#');
+          expect(setting.values[2][subPropA]).toEqual([{ '@value': 'NEWY' }]);
+          expect(setting.values[2][subPropB]).toEqual([{ '@value': 'NEWZ' }]);
+        });
+        it('and the single object value has been removed', () => {
+          const formValues = {
+            [`${SETTING}hasObjectValue`]: {
+              [subPropA]: '',
+              [subPropB]: '',
+            }
+          };
+          const setting = new SimpleSetting(preferenceNodeShape, {
+            [propertyShapeId]: complexPropertyShape,
+            [associatedNodeShape['@id']]: associatedNodeShape,
+            [subPropA + 'Shape']: associatedPropertyShapeA,
+            [subPropB + 'Shape']: associatedPropertyShapeB,
+          });
+          expect(setting.values).toEqual([]);
 
-        setting.updateWithFormValues(formValues);
-        expect(setting.values.length).toEqual(1);
-        expect(setting.values[0]['@id']).toContain('http://mobi.solutions/setting#');
-        expect(setting.values[0][`${SETTING}hasDataValue`]).toBeUndefined();
+          setting.updateWithFormValues(formValues);
+          expect(setting.values.length).toEqual(2);
+          expect(setting.values[0]['@id']).toContain('http://mobi.solutions/setting#');
+          expect(setting.values[0][`${SETTING}hasObjectValue`]).toEqual([{ '@id': setting.values[1]['@id'] }]);
+          expect(setting.values[1]['@id']).toContain('http://mobi.solutions/AssociatedObject#');
+          expect(setting.values[1][subPropA]).toBeUndefined();
+          expect(setting.values[1][subPropB]).toBeUndefined();
+        });
+        it('and the array value has been removed', () => {
+          const formValues = {
+            [`${SETTING}hasObjectValue`]: []
+          };
+          const setting = new SimpleSetting(preferenceNodeShape, {
+            [propertyShapeId]: complexPropertyShape,
+            [associatedNodeShape['@id']]: associatedNodeShape,
+            [subPropA + 'Shape']: associatedPropertyShapeA,
+            [subPropB + 'Shape']: associatedPropertyShapeB,
+          });
+          expect(setting.values).toEqual([]);
+
+          setting.updateWithFormValues(formValues);
+          expect(setting.values.length).toEqual(1);
+          expect(setting.values[0]['@id']).toContain('http://mobi.solutions/setting#');
+          expect(setting.values[0][`${SETTING}hasObjectValue`]).toBeUndefined();
+        });
       });
     });
   });
