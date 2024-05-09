@@ -26,11 +26,20 @@
     <ng-template #validBlock>
       <div class="multivalued" *ngIf="comp.isMultivalued; else elseBlock" [formArrayName]="comp.config.property">
         <div class="field-wrapper d-flex" *ngFor="let formGroup of form.get([comp.config.property]).controls; let n = index" [formGroup]="formGroup">
-          <app-shacl-form-field class="flex-1 remove-min-width" [formFieldConfig]="comp.config" 
+          <!-- No Associated Objects -->
+          <app-shacl-form-field *ngIf="!comp.hasSubFields; else hasSubFieldsMulti" class="flex-1 remove-min-width" [formFieldConfig]="comp.config" 
                                 [controlName]="comp.config.property + n" 
                                 [parentFormGroup]="formGroup" 
                                 [focusNode]="focusNode">
           </app-shacl-form-field>
+          <!-- Has Associated Objects -->
+          <ng-template #hasSubFieldsMulti>
+            <app-shacl-form-field *ngFor="let subField of comp.config.subFields; let last = last" class="flex-1 remove-min-width" [ngClass]="last ? '' : 'pr-2'" [formFieldConfig]="subField" 
+                                [controlName]="comp.config.property + n + subField.property" 
+                                [parentFormGroup]="formGroup.get([comp.config.property + n])" 
+                                [focusNode]="focusNode">
+            </app-shacl-form-field>
+          </ng-template>
           <button class="delete-block-button" mat-icon-button *ngIf="form.get([comp.config.property]).controls.length >= 1" mat-icon-button (click)="deleteFormBlock(n, comp)">
             <mat-icon>clear</mat-icon>
           </button>
@@ -40,12 +49,22 @@
         </button> 
       </div>
       <ng-template #elseBlock>
-        <app-shacl-form-field class="top-level-field" [formFieldConfig]="comp.config" 
-                            [controlName]="comp.config.property" 
-                            [parentFormGroup]="form" 
-                            [focusNode]="focusNode" 
-                            (calculateFocusNode)="generateFocusNodeFromForm()">
+          <!-- No Associated Object -->
+          <app-shacl-form-field *ngIf="!comp.hasSubFields; else hasSubFields" class="top-level-field" [formFieldConfig]="comp.config" 
+                              [controlName]="comp.config.property" 
+                              [parentFormGroup]="form" 
+                              [focusNode]="focusNode" 
+                              (calculateFocusNode)="generateFocusNodeFromForm()">
         </app-shacl-form-field>
+        <ng-template #hasSubFields>
+          <!-- Has Associated Object -->
+          <app-shacl-form-field *ngFor="let subField of comp.config.subFields" class="top-level-field" [formFieldConfig]="subField" 
+                                [controlName]="comp.config.property + subField.property" 
+                                [parentFormGroup]="form.get([comp.config.property])" 
+                                [focusNode]="focusNode" 
+                                (calculateFocusNode)="generateFocusNodeFromForm()">
+          </app-shacl-form-field>
+        </ng-template>
       </ng-template>
     </ng-template>
   </div>

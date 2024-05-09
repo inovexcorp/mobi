@@ -103,11 +103,11 @@ describe('SHACLFormFieldComponent', () => {
     it('with a value already set', () => {
       component.formFieldConfig = new SHACLFormFieldConfig(nodeShape, propertyShapeId, [propertyShape]);
       component.parentFormGroup = new UntypedFormGroup({
-        [propertyName]: new UntypedFormControl(new Option('initial', 'initial'))
+        [propertyName]: new UntypedFormControl('initial')
       });
       fixture.detectChanges();
       expect(component).toBeTruthy();
-      expect(component.fieldFormControl.value).toEqual(new Option('initial', 'initial'));
+      expect(component.fieldFormControl.value).toEqual('initial');
       expect(element.queryAll(By.css('.text-field')).length).toEqual(1);
     });
     it('with a value already set and a default', () => {
@@ -115,11 +115,11 @@ describe('SHACLFormFieldComponent', () => {
       adjustedPropertyShape[`${SHACL}defaultValue`] = [{ '@value': 'DEFAULT' }];
       component.formFieldConfig = new SHACLFormFieldConfig(nodeShape, propertyShapeId, [adjustedPropertyShape]);
       component.parentFormGroup = new UntypedFormGroup({
-        [propertyName]: new UntypedFormControl(new Option('initial', 'initial'))
+        [propertyName]: new UntypedFormControl('initial')
       });
       fixture.detectChanges();
       expect(component).toBeTruthy();
-      expect(component.fieldFormControl.value).toEqual(new Option('initial', 'initial'));
+      expect(component.fieldFormControl.value).toEqual('initial');
       expect(element.queryAll(By.css('.text-field')).length).toEqual(1);
     });
     it('with no value set', () => {
@@ -141,7 +141,7 @@ describe('SHACLFormFieldComponent', () => {
       });
       fixture.detectChanges();
       expect(component).toBeTruthy();
-      expect(component.fieldFormControl.value).toEqual(new Option('DEFAULT', 'DEFAULT'));
+      expect(component.fieldFormControl.value).toEqual('DEFAULT');
       expect(element.queryAll(By.css('.text-field')).length).toEqual(1);
     });
     it('with validators', () => {
@@ -175,11 +175,11 @@ describe('SHACLFormFieldComponent', () => {
     it('with a value already set', () => {
       component.formFieldConfig = new SHACLFormFieldConfig(nodeShape, propertyShapeId, [propertyShape]);
       component.parentFormGroup = new UntypedFormGroup({
-        [propertyName]: new UntypedFormControl(new Option('initial', 'initial'))
+        [propertyName]: new UntypedFormControl('initial')
       });
       fixture.detectChanges();
       expect(component).toBeTruthy();
-      expect(component.fieldFormControl.value).toEqual(new Option('initial', 'initial'));
+      expect(component.fieldFormControl.value).toEqual('initial');
       expect(element.queryAll(By.css('.textarea-field')).length).toEqual(1);
     });
     it('with a value already set and a default', () => {
@@ -187,11 +187,11 @@ describe('SHACLFormFieldComponent', () => {
       adjustedPropertyShape[`${SHACL}defaultValue`] = [{ '@value': 'DEFAULT' }];
       component.formFieldConfig = new SHACLFormFieldConfig(nodeShape, propertyShapeId, [adjustedPropertyShape]);
       component.parentFormGroup = new UntypedFormGroup({
-        [propertyName]: new UntypedFormControl(new Option('initial', 'initial'))
+        [propertyName]: new UntypedFormControl('initial')
       });
       fixture.detectChanges();
       expect(component).toBeTruthy();
-      expect(component.fieldFormControl.value).toEqual(new Option('initial', 'initial'));
+      expect(component.fieldFormControl.value).toEqual('initial');
       expect(element.queryAll(By.css('.textarea-field')).length).toEqual(1);
     });
     it('with no value set', () => {
@@ -213,7 +213,7 @@ describe('SHACLFormFieldComponent', () => {
       });
       fixture.detectChanges();
       expect(component).toBeTruthy();
-      expect(component.fieldFormControl.value).toEqual(new Option('DEFAULT', 'DEFAULT'));
+      expect(component.fieldFormControl.value).toEqual('DEFAULT');
       expect(element.queryAll(By.css('.textarea-field')).length).toEqual(1);
     });
     it('with validators', () => {
@@ -451,7 +451,6 @@ describe('SHACLFormFieldComponent', () => {
       expect(component.fieldFormControl.value).toEqual(value);
       expect(element.queryAll(By.css('.radio-field')).length).toEqual(1);
       expect(element.queryAll(By.css('mat-radio-button')).length).toEqual(3);
-      const hello = element.queryAll(By.css('mat-radio-button'));
       const checked = element.queryAll(By.css('mat-radio-button.mat-radio-checked'));
       expect(checked.length).toEqual(1);
       expect(checked[0].nativeElement.textContent.trim()).toEqual('A');

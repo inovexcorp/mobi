@@ -27,16 +27,27 @@ import { JSONLDObject } from '../../shared/models/JSONLDObject.interface';
 import { getPropertyId, getPropertyValue, getPropertyIds } from '../../shared/utility';
 import { Option } from './option.class';
 
+export enum FieldType {
+  TEXT = 'text',
+  TOGGLE = 'toggle',
+  RADIO = 'radio',
+  CHECKBOX = 'checkbox',
+  DROPDOWN = 'dropdown',
+  AUTOCOMPLETE = 'autocomplete',
+  TEXTAREA = 'textarea',
+}
+
 export class SHACLFormFieldConfig {
   private _isValid: boolean;
   private _errorMessage = '';
   private _nodeShape: JSONLDObject;
   private _propertyShape: JSONLDObject;
   private _values: Option[];
-  private _fieldType: string;
+  private _fieldType: FieldType;
   private _property: string;
   private _label: string;
   private _jsonld: JSONLDObject[];
+  private _subFields: SHACLFormFieldConfig[];
   
   constructor(nodeShape: JSONLDObject, propertyShapeId: string, fullJsonld: JSONLDObject[]) {
     this._nodeShape = nodeShape;
@@ -52,42 +63,50 @@ export class SHACLFormFieldConfig {
       if (!this._property) {
         throw new Error('Property path not configured');
       }
-      // Assumption of simple PropertyShapes (i.e. without sh:node)
-      // If sh:node, could have internal list of SHACLFormFieldConfig whose NodeShape is the sh:node linked NodeShape
-      switch (getPropertyId(this._propertyShape, `${SHACL_FORM}usesFormField`)) {
-        // All supported FormField types are defined in `com.mobi.shacl.form.api/src/main/resources/shaclForm.ttl`
-        case `${SHACL_FORM}TextInput`:
-          this._fieldType = 'text';
-          break;
-        case `${SHACL_FORM}ToggleInput`:
-          this._fieldType = 'toggle';
-          break;
-        case `${SHACL_FORM}RadioInput`:
-          this._fieldType = 'radio';
-          break;
-        case `${SHACL_FORM}CheckboxInput`:
-          this._fieldType = 'checkbox';
-          break;
-        case `${SHACL_FORM}DropdownInput`:
-          this._fieldType = 'dropdown';
-          break;
-        case `${SHACL_FORM}AutocompleteInput`:
-          this._fieldType = 'autocomplete';
-          break;
-        case `${SHACL_FORM}TextareaInput`:
-          this._fieldType = 'textarea';
-          break;
-        case '':
-          throw new Error('Form field type not configured');
-        default:
-          throw new Error('Form field type not supported');
-      }
 
-      const valueArray = this._propertyShape[`${SHACL}in`] ? 
-        this._rdfListToValueArray(fullJsonld, getPropertyId(this._propertyShape, `${SHACL}in`)) :
-        [];
-    
-      this._values = valueArray.map(value => new Option(value, value));
+      if (this._propertyShape[`${SHACL}node`]) { // If a complex PropertyShape (i.e. with sh:node)
+        const subNodeShapeId = getPropertyId(this._propertyShape, `${SHACL}node`);
+        const subNodeShape = fullJsonld.find(obj => obj['@id'] === subNodeShapeId);
+        this._subFields = [];
+        getPropertyIds(subNodeShape, `${SHACL}property`).forEach(subFieldId => {
+          this._subFields.push(new SHACLFormFieldConfig(subNodeShape, subFieldId, fullJsonld));
+        });
+      } else { // Assumption of simple PropertyShapes (i.e. without sh:node)
+        switch (getPropertyId(this._propertyShape, `${SHACL_FORM}usesFormField`)) {
+          // All supported FormField types are defined in `com.mobi.shacl.form.api/src/main/resources/shaclForm.ttl`
+          case `${SHACL_FORM}TextInput`:
+            this._fieldType = FieldType.TEXT;
+            break;
+          case `${SHACL_FORM}ToggleInput`:
+            this._fieldType = FieldType.TOGGLE;
+            break;
+          case `${SHACL_FORM}RadioInput`:
+            this._fieldType = FieldType.RADIO;
+            break;
+          case `${SHACL_FORM}CheckboxInput`:
+            this._fieldType = FieldType.CHECKBOX;
+            break;
+          case `${SHACL_FORM}DropdownInput`:
+            this._fieldType = FieldType.DROPDOWN;
+            break;
+          case `${SHACL_FORM}AutocompleteInput`:
+            this._fieldType = FieldType.AUTOCOMPLETE;
+            break;
+          case `${SHACL_FORM}TextareaInput`:
+            this._fieldType = FieldType.TEXTAREA;
+            break;
+          case '':
+            throw new Error('Form field type not configured');
+          default:
+            throw new Error('Form field type not supported');
+        }
+  
+        const valueArray = this._propertyShape[`${SHACL}in`] ? 
+          this._rdfListToValueArray(fullJsonld, getPropertyId(this._propertyShape, `${SHACL}in`)) :
+          [];
+      
+        this._values = valueArray.map(value => new Option(value, value));
+      }
       this._isValid = true;
     } catch (e) { // If anything goes wrong in the initialization, catch the error message and mark config as invalid
       this._isValid = false;
@@ -115,7 +134,7 @@ export class SHACLFormFieldConfig {
     return this._propertyShape;
   }
 
-  public get fieldType(): string {
+  public get fieldType(): FieldType {
     return this._fieldType;
   }
 
@@ -133,6 +152,13 @@ export class SHACLFormFieldConfig {
 
   public get jsonld(): JSONLDObject[] {
       return this._jsonld;
+  }
+
+  /**
+   * sh:node value's form field configurations
+   */
+  public get subFields(): SHACLFormFieldConfig[]|undefined {
+    return this._subFields;
   }
 
   // sh:minCount
@@ -167,6 +193,7 @@ export class SHACLFormFieldConfig {
     return tempValue || tempId || undefined;
   }
 
+  // All the form validators for the field
   public get validators(): ValidatorFn[] {
     const validators = [];
     const regex = this.regex;
@@ -184,26 +211,32 @@ export class SHACLFormFieldConfig {
     return validators;
   }
 
-  public collectAllReferencedNodes(propertyShape: JSONLDObject, jsonldObjects: JSONLDObject[]): JSONLDObject[] {
+  /**
+   * Creates a JSON-LD array of the field's PropertyShape and all the referenced blank nodes from within the stored 
+   * JSON-LD.
+   * 
+   * @returns {JSONLDObject[]} An array with the PropertyShape and all referenced blank nodes
+   */
+  public collectAllReferencedNodes(): JSONLDObject[] {
     // Collect all blank node identifiers referenced in the propertyShape
     const blankNodeIdentifiers = new Set<string>();
-    Object.keys(propertyShape).forEach(key => {
-        let propertyIds: Set<string> = getPropertyIds(propertyShape, key);
-        if (propertyIds.size) {
-            propertyIds.forEach(propertyId => {
-                blankNodeIdentifiers.add(propertyId);
-            });
-        }
+    Object.keys(this.propertyShape).forEach(key => {
+      const propertyIds: Set<string> = getPropertyIds(this.propertyShape, key);
+      if (propertyIds.size) {
+        propertyIds.forEach(propertyId => {
+          blankNodeIdentifiers.add(propertyId);
+        });
+      }
     });
 
     // Find and collect all JSON-LD objects that match the blank node identifiers
-    const referencedBlankNodes = jsonldObjects.filter(obj => 
+    const referencedBlankNodes = this.jsonld.filter(obj => 
         obj['@id'] && blankNodeIdentifiers.has(obj['@id'])
     );
 
     // Return the array consisting of the propertyShape and any found blank node objects
-    return [propertyShape, ...referencedBlankNodes];
-}
+    return [this.propertyShape, ...referencedBlankNodes];
+  }
 
   private _rdfListToValueArray(fullJsonld: JSONLDObject[], firstElementID: string, sortedList: string[] = []): string[] {
     const currentElement: JSONLDObject|undefined = fullJsonld.find(jsonLDObject => jsonLDObject['@id'] === firstElementID);

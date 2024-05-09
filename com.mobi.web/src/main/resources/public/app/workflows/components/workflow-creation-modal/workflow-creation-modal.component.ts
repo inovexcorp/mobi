@@ -145,7 +145,7 @@ export class WorkflowCreationModalComponent implements OnInit {
 
         forkJoin({
           modifyPermission: this.wms.checkMasterBranchPermissions(masterBranchId, recordId),
-          deletePermission: this.wms.checkWorkflowDeletePermissions([newWorkflow])
+          deletePermission: this.wms.checkMultiWorkflowDeletePermissions([newWorkflow])
         }).subscribe(({modifyPermission, deletePermission}) => {
           newWorkflow.canModifyMasterBranch = modifyPermission;
           newWorkflow.canDeleteWorkflow = deletePermission.some(permission => permission.decision === 'Permit');

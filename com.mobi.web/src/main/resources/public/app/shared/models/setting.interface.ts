@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { FormValues } from '../../shacl-forms/components/shacl-form/shacl-form.component';
+import { FormValues } from '../../shacl-forms/models/form-values.interface';
 import { JSONLDObject } from './JSONLDObject.interface';
 import { SHACLFormFieldConfig } from '../../shacl-forms/models/shacl-form-field-config';
 

@@ -32,7 +32,7 @@ import { ProgressSpinnerService } from '../../shared/components/progress-spinner
 import { WorkflowPaginatedConfig } from '../models/workflow-paginated-config.interface';
 import { SseService } from '../../shared/services/sse.service';
 import { JSONLDObject } from '../../shared/models/JSONLDObject.interface';
-import { WORKFLOWS } from '../../prefixes';
+import { CATALOG, WORKFLOWS } from '../../prefixes';
 import { RESTError } from '../../shared/models/RESTError.interface';
 import { workflow_mocks, workflowRecordJSONLD } from '../models/mock_data/workflow-mocks';
 import { PolicyEnforcementService } from '../../shared/services/policyEnforcement.service';
@@ -134,7 +134,7 @@ describe('WorkflowsManagerService', () => {
   describe('should retrieve workflows record', () => {
     beforeEach(() => {
       spyOn(service, 'checkMasterBranchPermissions').and.returnValue(of(true));
-      spyOn(service, 'checkWorkflowDeletePermissions').and.returnValue(of(fakePermissionPermit));
+      spyOn(service, 'checkMultiWorkflowDeletePermissions').and.returnValue(of(fakePermissionPermit));
       policyManagerStub.resourceCategory = 'urn:oasis:names:tc:xacml:3.0:attribute-category:resource';
     });
     it('unless an error occurs', function() {
@@ -152,7 +152,7 @@ describe('WorkflowsManagerService', () => {
             expect(response.page).toEqual([workflow_mocks[1]]);
             expect(response.totalCount).toEqual(1);
             expect(service.checkMasterBranchPermissions).toHaveBeenCalledWith(workflow_mocks[1].master, workflow_mocks[1].iri);
-            expect(service.checkWorkflowDeletePermissions).toHaveBeenCalledWith([workflow_mocks[1]]);
+            expect(service.checkMultiWorkflowDeletePermissions).toHaveBeenCalledWith([workflow_mocks[1]]);
           }, () => fail('Observable should have resolved'));
       const request = httpMock.expectOne(req => req.url === service.workflows_prefix && req.method === 'GET');
       expect(request.request.params.get('limit')).toEqual('' + paginationConfig.limit);
@@ -296,7 +296,7 @@ describe('WorkflowsManagerService', () => {
     }));
   });
   describe('checkMasterBranchPermissions should return appropriate response', function() {
-    beforeEach(async () => {
+    beforeEach(() => {
       policyEnforcementStub.permit = 'Permit';
     });
     it('when they do not have permission', async () => {
@@ -304,6 +304,11 @@ describe('WorkflowsManagerService', () => {
       policyEnforcementStub.evaluateRequest.and.returnValue(of('Not Permitted'));
       service.checkMasterBranchPermissions('mockMasterBranchIRI', 'mockWorkflowRecordIRI').subscribe(response => {
         expect(response).toBe(false);
+        expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({
+          resourceId: 'mockWorkflowRecordIRI',
+          actionId: policyManagerStub.actionModify,
+          actionAttrs: { [`${CATALOG}branch`]: 'mockMasterBranchIRI' }
+        });
       });
     });
     it('when they do have permission', async () => {
@@ -311,6 +316,11 @@ describe('WorkflowsManagerService', () => {
       policyEnforcementStub.evaluateRequest.and.returnValue(of('Permit'));
       service.checkMasterBranchPermissions('mockMasterBranchIRI', 'mockWorkflowRecordIRI').subscribe(response => {
         expect(response).toBe(true);
+        expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({
+          resourceId: 'mockWorkflowRecordIRI',
+          actionId: policyManagerStub.actionModify,
+          actionAttrs: { [`${CATALOG}branch`]: 'mockMasterBranchIRI' }
+        });
       });
     });
   });
@@ -333,7 +343,7 @@ describe('WorkflowsManagerService', () => {
       });
     });
   });
-  describe('checkWorkflowDeletePermissions should return appropriate response', function() {
+  describe('checkMultiWorkflowDeletePermissions should return appropriate response', function() {
     it('when they do not have permission', async () => {
       policyEnforcementStub.evaluateMultiDecisionRequest.and.returnValue(of([{
         'urn:oasis:names:tc:xacml:1.0:subject-category:access-subject': 'http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997',
@@ -341,7 +351,7 @@ describe('WorkflowsManagerService', () => {
         'urn:oasis:names:tc:xacml:3.0:attribute-category:action': 'http://mobi.com/ontologies/policy#Delete',
         'decision': 'Not-Permitted'
       }]));
-      service.checkWorkflowDeletePermissions([workflow_mocks[1]]).subscribe(response => {
+      service.checkMultiWorkflowDeletePermissions([workflow_mocks[1]]).subscribe(response => {
         expect(response).not.toEqual(fakePermissionPermit);
         expect(response).toEqual(fakePermissionDeny);
       });
@@ -353,8 +363,35 @@ describe('WorkflowsManagerService', () => {
         'urn:oasis:names:tc:xacml:3.0:attribute-category:action': 'http://mobi.com/ontologies/policy#Delete',
         'decision': 'Permit'
       }]));
-      service.checkWorkflowDeletePermissions([workflow_mocks[1]]).subscribe(response => {
+      service.checkMultiWorkflowDeletePermissions([workflow_mocks[1]]).subscribe(response => {
         expect(response).toEqual(fakePermissionPermit);
+      });
+    });
+  });
+  describe('checkDeletePermissions should return appropriate response', function() {
+    beforeEach(() => {
+      policyEnforcementStub.permit = 'Permit';
+    });
+    it('when they do not have permission', async () => {
+      policyEnforcementStub.permit = 'Permit';
+      policyEnforcementStub.evaluateRequest.and.returnValue(of('Not Permitted'));
+      service.checkDeletePermissions('mockWorkflowRecordIRI').subscribe(response => {
+        expect(response).toBe(false);
+        expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({
+          resourceId: 'mockWorkflowRecordIRI',
+          actionId: policyManagerStub.actionDelete,
+        });
+      });
+    });
+    it('when they do have permission', async () => {
+      policyEnforcementStub.permit = 'Permit';
+      policyEnforcementStub.evaluateRequest.and.returnValue(of('Permit'));
+      service.checkDeletePermissions('mockWorkflowRecordIRI').subscribe(response => {
+        expect(response).toBe(true);
+        expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({
+          resourceId: 'mockWorkflowRecordIRI',
+          actionId: policyManagerStub.actionDelete,
+        });
       });
     });
   });

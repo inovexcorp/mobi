@@ -24,7 +24,7 @@ import { FormControl, Validators } from '@angular/forms';
 
 import { RDF, SHACL, SHACL_FORM, XSD } from '../../prefixes';
 import { JSONLDObject } from '../../shared/models/JSONLDObject.interface';
-import { SHACLFormFieldConfig } from './shacl-form-field-config';
+import { FieldType, SHACLFormFieldConfig } from './shacl-form-field-config';
 import { Option } from './option.class';
 
 describe('SHACLFormFieldConfig', () => {
@@ -75,12 +75,12 @@ describe('SHACLFormFieldConfig', () => {
     expect(result.errorMessage).toEqual('Form field type not supported');
   });
   [
-    { field: `${SHACL_FORM}TextInput`, type: 'text' },
-    { field: `${SHACL_FORM}ToggleInput`, type: 'toggle'}, 
-    { field: `${SHACL_FORM}RadioInput`, type: 'radio'}, 
-    { field: `${SHACL_FORM}CheckboxInput`, type: 'checkbox'},
-    { field: `${SHACL_FORM}TextareaInput`, type: 'textarea'},
-    { field: `${SHACL_FORM}AutocompleteInput`, type: 'autocomplete'}
+    { field: `${SHACL_FORM}TextInput`, type: FieldType.TEXT },
+    { field: `${SHACL_FORM}ToggleInput`, type: FieldType.TOGGLE}, 
+    { field: `${SHACL_FORM}RadioInput`, type: FieldType.RADIO}, 
+    { field: `${SHACL_FORM}CheckboxInput`, type: FieldType.CHECKBOX},
+    { field: `${SHACL_FORM}TextareaInput`, type: FieldType.TEXTAREA},
+    { field: `${SHACL_FORM}AutocompleteInput`, type: FieldType.AUTOCOMPLETE}
   ].forEach(test => {
     it(`should create a basic ${test.field} with the precalculated fields set`, () => {
       const propertyShape: JSONLDObject = {
@@ -101,6 +101,45 @@ describe('SHACLFormFieldConfig', () => {
       expect(result.fieldType).toEqual(test.type);
       expect(result.values).toEqual([]);
     });
+  });
+  it('should create a complex field when sh:node is detected', () => {
+    const propertyShape: JSONLDObject = {
+      '@id': propertyShapeId,
+      '@type': [`${SHACL}PropertyShape`],
+      [`${SHACL}path`]: [{ '@id': propertyId }],
+      [`${SHACL}name`]: [{ '@value': 'Label' }],
+      [`${SHACL}node`]: [{ '@id': 'urn:subObject' }]
+    };
+    const subObject: JSONLDObject = {
+      '@id': 'urn:subObject',
+      '@type': [`${SHACL}NodeShape`],
+      [`${SHACL}property`]: [{ '@id': 'urn:subPropertyShape' }]
+    };
+    const subPropertyShape: JSONLDObject = {
+      '@id': 'urn:subPropertyShape',
+      '@type': [`${SHACL}PropertyShape`],
+      [`${SHACL}path`]: [{ '@id': 'urn:subProperty' }],
+      [`${SHACL}name`]: [{ '@value': 'Sub Label' }],
+      [`${SHACL_FORM}usesFormField`]: [{ '@id': `${SHACL_FORM}TextInput` }],
+    };
+    const result = new SHACLFormFieldConfig(nodeShape, propertyShapeId, [propertyShape, subObject, subPropertyShape]);
+    expect(result).toBeTruthy();
+    expect(result.isValid).toBeTrue();
+    expect(result.errorMessage).toEqual('');
+    expect(result.nodeShape).toEqual(nodeShape);
+    expect(result.propertyShape).toEqual(propertyShape);
+    expect(result.property).toEqual(propertyId);
+    expect(result.label).toEqual('Label');
+    expect(result.fieldType).toBeUndefined();
+    expect(result.subFields.length).toEqual(1);
+    expect(result.subFields[0].isValid).toBeTrue();
+    expect(result.subFields[0].errorMessage).toEqual('');
+    expect(result.subFields[0].nodeShape).toEqual(subObject);
+    expect(result.subFields[0].propertyShape).toEqual(subPropertyShape);
+    expect(result.subFields[0].property).toEqual('urn:subProperty');
+    expect(result.subFields[0].label).toEqual('Sub Label');
+    expect(result.subFields[0].fieldType).toEqual(FieldType.TEXT);
+    expect(result.values).toBeUndefined();
   });
   it('should handle when the first blank node cannot be found for a sh:in list', () => {
     const propertyShape: JSONLDObject = {

@@ -23,31 +23,29 @@
 import { Component, Input, OnInit, Output, EventEmitter, ViewChild } from '@angular/core';
 import { FormArray, FormControl, FormGroup } from '@angular/forms';
 import { MatCheckboxChange } from '@angular/material/checkbox';
-
-import { SHACLFormFieldConfig } from '../../models/shacl-form-field-config';
-import { SHACL, XSD } from '../../../prefixes';
+import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
+import { ChangeDetectorRef } from '@angular/core';
 import { Observable, Subject, merge } from 'rxjs';
 import { debounceTime, map, mapTo, startWith } from 'rxjs/operators';
+
+import { FieldType, SHACLFormFieldConfig } from '../../models/shacl-form-field-config';
+import { SHACL, XSD } from '../../../prefixes';
 import { SHACLFormManagerService } from '../../services/shaclFormManager.service';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { Option } from '../../models/option.class';
-import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
-import { ChangeDetectorRef } from '@angular/core';
 import { getPropertyId } from '../../../shared/utility';
-
-// TODO: Look into complex setting support
 
 /**
  * @class shacl-forms.SHACLFormFieldComponent
  * 
  * A component which will create an individual Angular form-field for the provided parent FormGroup depending on the
- * configuration provided in a {@link SHACLFormFieldConfig}. Supports `TextInput`, `ToggleInput`, `RadioInput`, and
- * `CheckboxInput` field types. Will apply the appropriate validators depending on the underlying PropertyShape
- * definition for the configuration. Will also set a default value if provided as long as the form field does not
- * already have a value set. Checkboxes are expected to be represented in the FormGroup under the provided control name
- * as a FormArray of individual FormControls with their values being the individual checkbox values. All other input
- * types are expected to be a single FormControl under the provided control name. Will emit form value updates when
- * setting default values.
+ * configuration provided in a {@link SHACLFormFieldConfig}. Supports `TextInput`, `TextareaInput`, `ToggleInput`, 
+ * `RadioInput`, `CheckboxInput`, `AutocompleteInput`, and `DropdownInput` field types. Will apply the appropriate 
+ * validators depending on the underlying PropertyShape definition for the configuration. Will also set a default value 
+ * if provided as long as the form field does not already have a value set. Checkboxes are expected to be represented
+ * in the FormGroup under the provided control name as a FormArray of individual FormControls with their values being
+ * the individual checkbox values. All other input types are expected to be a single FormControl under the provided
+ * control name. Will emit form value updates when setting default values.
  * 
  * @param {SHACLFormFieldConfig} formFieldConfig The SHACL backed configuration for a form field to render
  * @param {FormGroup} parentFormGroup The FormGroup that contains the field represented by the configuration. The field
@@ -60,6 +58,8 @@ import { getPropertyId } from '../../../shared/utility';
   styleUrls: ['./shacl-form-field.component.scss']
 })
 export class SHACLFormFieldComponent implements OnInit {
+  public readonly FieldType :  typeof FieldType = FieldType;
+
   @ViewChild(MatAutocompleteTrigger, { static: true }) autocompleteTrigger: MatAutocompleteTrigger;
 
   @Input() formFieldConfig: SHACLFormFieldConfig;
@@ -67,7 +67,7 @@ export class SHACLFormFieldComponent implements OnInit {
   @Input() controlName: string;
   @Input() focusNode: JSONLDObject[];
 
-  @Output() calculateFocusNode = new EventEmitter<any>();
+  @Output() calculateFocusNode = new EventEmitter<void>();
 
   disableCheckboxes = false;
   checkboxes: { value: Option, checked: boolean }[] = [];
@@ -79,102 +79,65 @@ export class SHACLFormFieldComponent implements OnInit {
 
   constructor(public sh: SHACLFormManagerService, private ref: ChangeDetectorRef) {
     this.sh.fieldUpdated.subscribe((fieldName: string) => {
-        if (this.dependsOn.has(fieldName)) {
-            this.fieldFormControl.setValue(new Option('', ''));
-            this.ngOnInit();
-        }
-      });
+      if (this.dependsOn.has(fieldName)) {
+        this.fieldFormControl.setValue(new Option('', ''));
+        this.ngOnInit();
+      }
+    });
   }
 
   ngOnInit(): void {
     if (this.formFieldConfig.fieldType) {
-      const defaultValue = this.formFieldConfig.defaultValue;
-      const validators = this.formFieldConfig.validators;
       this.label = this.formFieldConfig.label;
-      // If the field is a checkbox, create the checkbox map and handle initialization of checked states
-      if (this.formFieldConfig.fieldType === 'checkbox') {
-        this.checkboxes = this.formFieldConfig.values.map((value: Option) => ({ value: value, checked: false }));
-        if (this.fieldFormArray.value && this.fieldFormArray.value.length) {
-          this.checkboxes.forEach((checkbox: { value: Option, checked: boolean })  => checkbox.checked = this.fieldFormArray.value.map((option: Option) => option.value).includes(checkbox.value.value));
-          this.handleCheckboxMaxCount();
-        } else {
-          if (defaultValue) {
-            const checkbox = this.checkboxes.find(checkbox => checkbox.value.value === defaultValue);
-            if (checkbox) {
-              checkbox.checked = true;
-            }
-            this.fieldFormArray.push(new FormControl(new Option(defaultValue, checkbox.value.name)));
-          }
-        }
-        this.fieldFormArray.setValidators(validators);
-        this.fieldFormArray.updateValueAndValidity({ emitEvent: false });
-      } else if (['dropdown', 'autocomplete'].includes(this.formFieldConfig.fieldType)) {
-        this.options = this.formFieldConfig.values;
-        this.fieldFormArray.setValidators(validators);
-        this.fieldFormArray.updateValueAndValidity({ emitEvent: false });
-        if (this.options.length === 1 && this.formFieldConfig.fieldType === 'dropdown') {
-          this.fieldFormControl.setValue(this.options[0]);
-        } else if (this.formFieldConfig.fieldType === 'autocomplete') {
-            this.filteredOptions = merge(
-                this.focusSubject.pipe(mapTo('')),
-                this.fieldFormControl.valueChanges.pipe(debounceTime(200))
-              ).pipe(
-                startWith(''),
-                map((value: string | Option) => {
-                    value = typeof value === 'string' ? value : value.name;
-                    const filteredOptions = this._filter(value || '');
-                    this._checkValidity(value || '', filteredOptions.map(values => values.name));
-                    return filteredOptions;
-                  })
-              );
-        }
+      if (this.formFieldConfig.fieldType === FieldType.CHECKBOX) {
+        this._setupCheckbox();
+      } else if ([FieldType.DROPDOWN, FieldType.AUTOCOMPLETE].includes(this.formFieldConfig.fieldType)) {
+        this._setupDropdownOrAutocomplete();
       } else {
-        if (this.formFieldConfig.datatype === `${XSD}boolean`) {
-          this.setFormValueToBoolean(defaultValue);
-        } else if (defaultValue && !this.fieldFormControl.value) {
-            if (this.formFieldConfig.values.length) {
-                const value = this.formFieldConfig.values.filter(val => val.value === defaultValue);
-                if (!value.length) {
-                    console.log('Could not find a matching option for default value');
-                } else {
-                    this.fieldFormControl.setValue(value[0]);
-                }
-            } else {
-                this.fieldFormControl.setValue(new Option(defaultValue, defaultValue));
-            }
-        }
-        this.fieldFormControl.setValidators(validators);
-        this.fieldFormControl.updateValueAndValidity({ emitEvent: false });
+        this._setupRadioToggleOrTextual();
       }
     }
   }
 
-  onOptionSelected(option: Option): void {
+  onOptionSelected(): void {
     this.sh.fieldUpdated.emit(this.formFieldConfig.property);
   }
 
+  /**
+   * Retrieves all valid options for an autocomplete associated with the provided SHACLFormFieldConfig. If there is a
+   * focus node, looks for any other fields on the node that use the `sh:sparql` constraint and adds to the internal
+   * tracker of fields that should be cleared when this field value is set.
+   * 
+   * @param {SHACLFormFieldConfig} formFieldConfig The configuration for the autocomplete field
+   */
   getAutocompleteOptions(formFieldConfig: SHACLFormFieldConfig): void {
-      this.calculateFocusNode.emit();
-      this.sh.getAutocompleteOptions(formFieldConfig.collectAllReferencedNodes(formFieldConfig.propertyShape, formFieldConfig.jsonld), this.focusNode).subscribe((entities: Option[]) => {
-        this.options = entities;
-        if (this.focusNode) {
-            this.getFieldsFromJSONLD(this.focusNode[0]).forEach(field => {
-                if ((field !== formFieldConfig.property) && getPropertyId(formFieldConfig.propertyShape, `${SHACL}sparql`)) {
-                    this.dependsOn.add(field);
-                }   
-            });
-        }
-        this.focusSubject.next(Math.random());
-        this.ref.markForCheck();
-      });
+    this.calculateFocusNode.emit();
+    this.sh.getAutocompleteOptions(formFieldConfig.collectAllReferencedNodes(), this.focusNode).subscribe((entities: Option[]) => {
+      this.options = entities;
+      if (this.focusNode) {
+        this.getFieldsFromJSONLD(this.focusNode[0]).forEach(field => {
+          if ((field !== formFieldConfig.property) && getPropertyId(formFieldConfig.propertyShape, `${SHACL}sparql`)) {
+            this.dependsOn.add(field);
+          }
+        });
+      }
+      this.focusSubject.next(Math.random());
+      this.ref.markForCheck();
+    });
   }
 
+  /**
+   * Retrieves all properties on the provided JSON-LD object besides the IRI and types.
+   * 
+   * @param {JSONLDObject} jsonld A JSON-LD object
+   * @returns {string[]} The array of property names from the JSON-LD object
+   */
   getFieldsFromJSONLD(jsonld: JSONLDObject): string[] {
     const fields = [];
     Object.keys(jsonld).forEach(key => {
-        if (key !== '@id' && key !== '@type') {
-            fields.push(key);
-        }
+      if (key !== '@id' && key !== '@type') {
+        fields.push(key);
+      }
     });
     return fields;
   }
@@ -187,10 +150,21 @@ export class SHACLFormFieldComponent implements OnInit {
     return this.parentFormGroup.get([this.controlName]) as FormArray;
   }
 
+  /**
+   * Sets the form field control value to a boolean value based on the control's current value or the optional provided
+   * default value.
+   * 
+   * @param {string|undefined} defaultValue An optional default value for the boolean control
+   */
   setFormValueToBoolean(defaultValue: string|undefined): void {
     this.fieldFormControl.setValue((this.fieldFormControl.value || defaultValue) === 'true', { emitEvent: false });
   }
 
+  /**
+   * Handles updates to a checkbox value in the underlying FormArray for this field.
+   * 
+   * @param {MatCheckboxChange} event The event containing details about what checkbox was changed
+   */
   checkboxChange(event: MatCheckboxChange): void {   
     const checkbox = this.checkboxes.find(checkbox => checkbox.value.value === event.source.value);
     if (event.checked) {
@@ -208,6 +182,9 @@ export class SHACLFormFieldComponent implements OnInit {
     this.handleCheckboxMaxCount();
   }
 
+  /**
+   * Updates whether the checkbox control should be disabled based on the field's max count constraint.
+   */
   handleCheckboxMaxCount(): void {
     const maxNum = this.formFieldConfig.maxCount;
     this.disableCheckboxes = maxNum !== undefined && this.fieldFormControl.value.length >= maxNum;
@@ -229,5 +206,87 @@ export class SHACLFormFieldComponent implements OnInit {
     } else {
       this.fieldFormControl.setErrors(null);
     }
+  }
+
+  /**
+   * Sets up the field for a Checkbox with the appropriate max count handlers, representations in the `checkboxes`
+   * array, default value set if applicable, and validators.
+   */
+  private _setupCheckbox(): void {
+    // If the field is a checkbox, create the checkbox map and handle initialization of checked states
+    const defaultValue = this.formFieldConfig.defaultValue;
+    const validators = this.formFieldConfig.validators;
+    this.checkboxes = this.formFieldConfig.values.map((value: Option) => ({ value: value, checked: false }));
+    if (this.fieldFormArray.value && this.fieldFormArray.value.length) {
+      this.checkboxes.forEach((checkbox: { value: Option, checked: boolean })  => checkbox.checked = this.fieldFormArray.value.map((option: Option) => option.value).includes(checkbox.value.value));
+      this.handleCheckboxMaxCount();
+    } else {
+      if (defaultValue) {
+        const checkbox = this.checkboxes.find(checkbox => checkbox.value.value === defaultValue);
+        if (checkbox) {
+          checkbox.checked = true;
+        }
+        this.fieldFormArray.push(new FormControl(new Option(defaultValue, checkbox.value.name)));
+      }
+    }
+    this.fieldFormArray.setValidators(validators);
+    this.fieldFormArray.updateValueAndValidity({ emitEvent: false });
+  }
+
+  /**
+   * Sets up the field for a Dropdown or Autocomplete with the appropriate validators, and options. If for a Dropdown
+   * and there's only one option, preselects the first option. If Autocomplete, sets up an Observable to handle updates
+   * to the options based on entered text or new options being fetched.
+   */
+  private _setupDropdownOrAutocomplete(): void {
+    const validators = this.formFieldConfig.validators;
+    this.options = this.formFieldConfig.values;
+    this.fieldFormArray.setValidators(validators);
+    this.fieldFormArray.updateValueAndValidity({ emitEvent: false });
+    if (this.options.length === 1 && this.formFieldConfig.fieldType === FieldType.DROPDOWN) {
+      this.fieldFormControl.setValue(this.options[0]);
+    } else if (this.formFieldConfig.fieldType === FieldType.AUTOCOMPLETE) {
+      this.filteredOptions = merge(
+        this.focusSubject.pipe(mapTo('')),
+        this.fieldFormControl.valueChanges.pipe(debounceTime(200))
+      ).pipe(
+        startWith(''),
+        map((value: string | Option) => {
+          value = typeof value === 'string' ? value : value.name;
+          const filteredOptions = this._filter(value || '');
+          this._checkValidity(value || '', filteredOptions.map(values => values.name));
+          return filteredOptions;
+        })
+      );
+    }
+  }
+
+  /**
+   * Sets up the field as a Radio, Toggle, Text, or Textarea with the appropriate default value set if applicable and
+   * validators set.
+   */
+  private _setupRadioToggleOrTextual(): void {
+    const defaultValue = this.formFieldConfig.defaultValue;
+    const validators = this.formFieldConfig.validators;
+    if (this.formFieldConfig.datatype === `${XSD}boolean`) {
+      this.setFormValueToBoolean(defaultValue);
+    } else if (defaultValue && !this.fieldFormControl.value) {
+      if (![FieldType.TEXT, FieldType.TEXTAREA, FieldType.TOGGLE].includes(this.formFieldConfig.fieldType)) {
+        if (this.formFieldConfig.values.length) {
+          const value = this.formFieldConfig.values.filter(val => val.value === defaultValue);
+          if (!value.length) {
+            console.log('Could not find a matching option for default value');
+          } else {
+            this.fieldFormControl.setValue(value[0]);
+          }
+        } else {
+          this.fieldFormControl.setValue(new Option(defaultValue, defaultValue));
+        }
+      } else {
+        this.fieldFormControl.setValue(defaultValue);
+      }
+    }
+    this.fieldFormControl.setValidators(validators);
+    this.fieldFormControl.updateValueAndValidity();
   }
 }

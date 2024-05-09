@@ -27,7 +27,7 @@ import { formatDate } from '@angular/common';
 import moment from 'moment/moment';
 import { cloneDeep } from 'lodash';
 
-import { DC, DCTERMS, RDFS, SKOS, XSD } from '../prefixes';
+import { DC, DCTERMS, RDFS, SHACL, SHACL_FORM, SKOS, XSD } from '../prefixes';
 import {
   condenseCommitId,
   createHttpParams,
@@ -64,10 +64,13 @@ import {
   setPropertyValue,
   updateDctermsValue,
   runningTime, toFormattedDateString, orNone, getStatus, getEntityName,
-  addLanguageToAnnotations
+  addLanguageToAnnotations,
+  getShaclGeneratedData
 } from './utility';
 import { REGEX } from '../constants';
 import { JSONLDObject } from './models/JSONLDObject.interface';
+import { SHACLFormFieldConfig } from '../shacl-forms/models/shacl-form-field-config';
+import { FormValues } from '../shacl-forms/models/form-values.interface';
 
 describe('Utility method', () => {
   const properties = [
@@ -681,5 +684,132 @@ describe('Utility method', () => {
       this.entity['@id'] = 'http://test.com#ontology';
       expect(getEntityName(this.entity)).toEqual('Ontology');
     });
+  });
+  it('getShaclGeneratedData should convert FormValues into JSON-LD', () => {
+    const simpleTextProp = 'urn:simpleTextProp';
+    const multiTextProp = 'urn:multiTextProp';
+    const missingProp = 'urn:missingTextProp';
+    const complexProp = 'urn:complexProp';
+    const complexPropA = 'urn:subPropA';
+    const multiComplexProp = 'urn:multiComplexProp';
+    const multiComplexPropA = 'urn:multiSubPropA';
+    const multiComplexPropB = 'urn:multiSubPropB';
+    const nodeShape: JSONLDObject = { '@id': 'urn:Class', '@type': [`${SHACL}NodeShape`] };
+    const simpleTextPropertyShape: JSONLDObject = {
+      '@id': 'urn:SimpleTextPropertyShape',
+      '@type': [ `${SHACL}PropertyShape` ],
+      [`${SHACL_FORM}usesFormField`]: [{ '@id': `${SHACL_FORM}TextInput` }],
+      [`${SHACL}path`]: [{ '@id': simpleTextProp }],
+      [`${SHACL}minCount`]: [{ '@value': '1' }],
+      [`${SHACL}maxCount`]: [{ '@value': '2' }]
+    };
+    const multiTextPropertyShape: JSONLDObject = {
+      '@id': 'urn:MultiTextPropertyShape',
+      '@type': [ `${SHACL}PropertyShape` ],
+      [`${SHACL_FORM}usesFormField`]: [{ '@id': `${SHACL_FORM}TextInput` }],
+      [`${SHACL}path`]: [{ '@id': multiTextProp }],
+      [`${SHACL}minCount`]: [{ '@value': '1' }],
+      [`${SHACL}maxCount`]: [{ '@value': '2' }]
+    };
+    const missingPropertyShape: JSONLDObject = {
+      '@id': 'urn:MissingPropertyShape',
+      '@type': [ `${SHACL}PropertyShape` ],
+      [`${SHACL_FORM}usesFormField`]: [{ '@id': `${SHACL_FORM}TextInput` }],
+      [`${SHACL}path`]: [{ '@id': missingProp }],
+      [`${SHACL}minCount`]: [{ '@value': '1' }],
+      [`${SHACL}maxCount`]: [{ '@value': '2' }]
+    };
+    const complexPropertyShape: JSONLDObject = {
+      '@id': 'urn:ComplexPropertyShape',
+      '@type': [ `${SHACL}PropertyShape` ],
+      [`${SHACL}path`]: [{ '@id': complexProp }],
+      [`${SHACL}maxCount`]: [{ '@value': '1' }],
+      [`${SHACL}node`]: [{ '@id': 'urn:subNode1' }]
+    };
+    const subNodeShape1: JSONLDObject = {
+      '@id': 'urn:subNode1',
+      '@type': [`${SHACL}NodeShape`],
+      [`${SHACL}property`]: [{ '@id': 'urn:subPropertyShape1' }]
+    };
+    const subPropertyShape1: JSONLDObject = {
+      '@id': 'urn:subPropertyShape1',
+      '@type': [`${SHACL}PropertyShape`],
+      [`${SHACL}path`]: [{ '@id': complexPropA }],
+      [`${SHACL}name`]: [{ '@value': 'Complex Prop A' }],
+      [`${SHACL_FORM}usesFormField`]: [{ '@id': `${SHACL_FORM}TextInput` }],
+    };
+    const multiComplexPropertyShape: JSONLDObject = {
+      '@id': 'urn:multiComplexPropertyShape',
+      '@type': [ `${SHACL}PropertyShape` ],
+      [`${SHACL}path`]: [{ '@id': multiComplexProp }],
+      [`${SHACL}node`]: [{ '@id': 'urn:subNode2' }]
+    };
+    const subNodeShape2: JSONLDObject = {
+      '@id': 'urn:subNode2',
+      '@type': [`${SHACL}NodeShape`],
+      [`${SHACL}property`]: [
+        { '@id': 'urn:subPropertyShape2' },
+        { '@id': 'urn:subPropertyShape3' },
+      ]
+    };
+    const subPropertyShape2: JSONLDObject = {
+      '@id': 'urn:subPropertyShape2',
+      '@type': [`${SHACL}PropertyShape`],
+      [`${SHACL}path`]: [{ '@id': multiComplexPropA }],
+      [`${SHACL}name`]: [{ '@value': 'Multi Complex Prop A' }],
+      [`${SHACL_FORM}usesFormField`]: [{ '@id': `${SHACL_FORM}TextInput` }],
+    };
+    const subPropertyShape3: JSONLDObject = {
+      '@id': 'urn:subPropertyShape3',
+      '@type': [`${SHACL}PropertyShape`],
+      [`${SHACL}path`]: [{ '@id': multiComplexPropB }],
+      [`${SHACL}name`]: [{ '@value': 'Multi Complex Prop B' }],
+      [`${SHACL_FORM}usesFormField`]: [{ '@id': `${SHACL_FORM}TextInput` }],
+    };
+    const fullRDF: JSONLDObject[] = [nodeShape, simpleTextPropertyShape, multiTextPropertyShape, missingPropertyShape, complexPropertyShape, subNodeShape1, subPropertyShape1, multiComplexPropertyShape, subNodeShape2, subPropertyShape2, subPropertyShape3];
+    const simpleTextConfig: SHACLFormFieldConfig = new SHACLFormFieldConfig(nodeShape, simpleTextPropertyShape['@id'], fullRDF);
+    const multiTextConfig: SHACLFormFieldConfig = new SHACLFormFieldConfig(nodeShape, multiTextPropertyShape['@id'], fullRDF);
+    const missingTextConfig: SHACLFormFieldConfig = new SHACLFormFieldConfig(nodeShape, missingPropertyShape['@id'], fullRDF);
+    const complexConfig: SHACLFormFieldConfig = new SHACLFormFieldConfig(nodeShape, complexPropertyShape['@id'], fullRDF);
+    const multiComplexConfig: SHACLFormFieldConfig = new SHACLFormFieldConfig(nodeShape, multiComplexPropertyShape['@id'], fullRDF);
+    const formValues: FormValues = {
+      [simpleTextProp]: 'simple text',
+      [multiTextProp]: ['A', 'B', ''],
+      [complexProp]: {
+        [complexPropA]: 'http://test.com'
+      },
+      [multiComplexProp]: [
+        { [multiComplexPropA]: 'A', [multiComplexPropB]: 'B' },
+        { [multiComplexPropA]: 'Y', [multiComplexPropB]: 'Z' },
+        { [multiComplexPropA]: 'WOW', [multiComplexPropB]: '' },
+      ]
+    };
+    const instance: JSONLDObject = { '@id': 'test', '@type': [nodeShape['@id']] };
+    const result = getShaclGeneratedData(instance, [simpleTextConfig, multiTextConfig, missingTextConfig, complexConfig, multiComplexConfig], formValues);
+    expect(result.length).toEqual(5);
+    expect(result[0]['@id']).toEqual(instance['@id']);
+    expect(instance[simpleTextProp]).toEqual([{'@value': 'simple text'}]);
+    expect(instance[multiTextProp]).toEqual([ { '@value': 'A' }, { '@value': 'B' } ]);
+    expect(instance[complexProp]).toEqual([ { '@id': jasmine.any(String) } ]);
+    const complexNode: JSONLDObject = result.find(obj => obj['@id'] === instance[complexProp][0]['@id']);
+    expect(complexNode).toBeTruthy();
+    expect(complexNode['@type']).toEqual([subNodeShape1['@id']]);
+    expect(complexNode[complexPropA]).toEqual([ { '@id': 'http://test.com' } ]);
+    expect(instance[multiComplexProp]).toEqual([ { '@id': jasmine.any(String) }, { '@id': jasmine.any(String) }, { '@id': jasmine.any(String) } ]);
+    const multiComplexNode1 = result.find(obj => obj['@id'] === instance[multiComplexProp][0]['@id']);
+    expect(multiComplexNode1).toBeTruthy();
+    expect(multiComplexNode1['@type']).toEqual([subNodeShape2['@id']]);
+    expect(multiComplexNode1[multiComplexPropA]).toEqual([ { '@value': 'A' } ]);
+    expect(multiComplexNode1[multiComplexPropB]).toEqual([ { '@value': 'B' } ]);
+    const multiComplexNode2 = result.find(obj => obj['@id'] === instance[multiComplexProp][1]['@id']);
+    expect(multiComplexNode2).toBeTruthy();
+    expect(multiComplexNode2['@type']).toEqual([subNodeShape2['@id']]);
+    expect(multiComplexNode2[multiComplexPropA]).toEqual([ { '@value': 'Y' } ]);
+    expect(multiComplexNode2[multiComplexPropB]).toEqual([ { '@value': 'Z' } ]);
+    const multiComplexNode3 = result.find(obj => obj['@id'] === instance[multiComplexProp][2]['@id']);
+    expect(multiComplexNode3).toBeTruthy();
+    expect(multiComplexNode3['@type']).toEqual([subNodeShape2['@id']]);
+    expect(multiComplexNode3[multiComplexPropA]).toEqual([ { '@value': 'WOW' } ]);
+    expect(multiComplexNode3[multiComplexPropB]).toBeUndefined();
   });
 });

@@ -29,7 +29,7 @@ import { CatalogStateService } from '../../../shared/services/catalogState.servi
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
 import { MapperStateService } from '../../../shared/services/mapperState.service';
-import { DATASET, DELIM, ONTOLOGYEDITOR, SHAPESGRAPHEDITOR } from '../../../prefixes';
+import { DATASET, DELIM, ONTOLOGYEDITOR, SHAPESGRAPHEDITOR, WORKFLOWS } from '../../../prefixes';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
 import { PolicyEnforcementService } from '../../../shared/services/policyEnforcement.service';
@@ -37,6 +37,7 @@ import { ToastService } from '../../../shared/services/toast.service';
 import { PolicyManagerService } from '../../../shared/services/policyManager.service';
 import { getDctermsValue } from '../../../shared/utility';
 import { ShapesGraphListItem } from '../../../shared/models/shapesGraphListItem.class';
+import { WorkflowsStateService } from '../../../workflows/services/workflows-state.service';
 
 /**
  * @class catalog.OpenRecordButtonComponent
@@ -69,10 +70,10 @@ export class OpenRecordButtonComponent {
     @Input() flat: boolean;
     @Input() stopProp: boolean;
 
-    constructor(public router: Router, public cs: CatalogStateService, public ms: MapperStateService,
-        public os: OntologyStateService, public pep: PolicyEnforcementService,
-        public pm: PolicyManagerService, public sgs: ShapesGraphStateService,
-        private toast: ToastService) {}
+    constructor(private _router: Router, private _cs: CatalogStateService, private _ms: MapperStateService,
+        private _os: OntologyStateService, private _pep: PolicyEnforcementService,
+        private _pm: PolicyManagerService, private _sgs: ShapesGraphStateService, private _wss: WorkflowsStateService,
+        private _toast: ToastService) {}
 
     openRecord(event: MouseEvent): void {
         if (this.stopProp) {
@@ -91,57 +92,66 @@ export class OpenRecordButtonComponent {
             case `${SHAPESGRAPHEDITOR}ShapesGraphRecord`:
                 this.openShapesGraph();
                 break;
+            case `${WORKFLOWS}WorkflowRecord`:
+                  this.openWorkflow();
+                  break;
             default:
-                this.toast.createWarningToast('No module for record type ' + this.recordType);
+                this._toast.createWarningToast('No module for record type ' + this.recordType);
         }
     }
     openOntology(): void {
-        this.router.navigate(['/ontology-editor']);
-        const listItem: OntologyListItem = find(this.os.list, {versionedRdfRecord: {recordId: this.record['@id']}});
+        this._router.navigate(['/ontology-editor']);
+        const listItem: OntologyListItem = find(this._os.list, {versionedRdfRecord: {recordId: this.record['@id']}});
         if (listItem) {
-          this.os.listItem = listItem;
+          this._os.listItem = listItem;
         } else {
           const recordSelect: RecordSelectFiltered = {
             recordId: this.record['@id'],
             title: getDctermsValue(this.record, 'title'),
             description: getDctermsValue(this.record, 'description'),
-            identifierIRI: this.os.getIdentifierIRI(this.record)
+            identifierIRI: this._os.getIdentifierIRI(this.record)
           };
-          this.os.open(recordSelect).subscribe(() => {}, error => this.toast.createErrorToast(error));
+          this._os.open(recordSelect).subscribe(() => {}, error => this._toast.createErrorToast(error));
         }
     }
     openMapping(): void {
-        this.ms.paginationConfig.searchText = getDctermsValue(this.record, 'title');
-        this.router.navigate(['/mapper']);
+        this._ms.paginationConfig.searchText = getDctermsValue(this.record, 'title');
+        this._router.navigate(['/mapper']);
     }
     openDataset(): void {
-        this.router.navigate(['/datasets']);
+        this._router.navigate(['/datasets']);
     }
     openShapesGraph(): void {
-        this.router.navigate(['/shapes-graph-editor']);
-        const listItem: ShapesGraphListItem = find(this.sgs.list, { versionedRdfRecord: { recordId: this.record['@id'] } });
+        this._router.navigate(['/shapes-graph-editor']);
+        const listItem: ShapesGraphListItem = find(this._sgs.list, { versionedRdfRecord: { recordId: this.record['@id'] } });
         if (listItem) {
-            this.sgs.listItem = listItem;
+            this._sgs.listItem = listItem;
         } else {
           const recordSelect: RecordSelectFiltered = {
             recordId: this.record['@id'],
             title: getDctermsValue(this.record, 'title'),
             description: getDctermsValue(this.record, 'description'),
-            identifierIRI: this.sgs.getIdentifierIRI(this.record)
+            identifierIRI: this._sgs.getIdentifierIRI(this.record)
           };
-          this.sgs.open(recordSelect).subscribe(() => {}, error => this.toast.createErrorToast(error));
+          this._sgs.open(recordSelect).subscribe(() => {}, error => this._toast.createErrorToast(error));
         }
     }
+    openWorkflow(): void {
+        this._wss.convertJSONLDToWorkflowSchema(this.record).subscribe(schema => {
+          this._wss.selectedRecord = schema;
+          this._router.navigate(['/workflows']);
+        });
+    }
     update(): void {
-        this.recordType = this.cs.getRecordType(this.record);
+        this.recordType = this._cs.getRecordType(this.record);
 
         if (this.recordType === `${ONTOLOGYEDITOR}OntologyRecord`) {
             const request = {
                 resourceId: this.record['@id'],
-                actionId: this.pm.actionRead
+                actionId: this._pm.actionRead
             };
-            this.pep.evaluateRequest(request).subscribe(decision => {
-                this.showButton = decision !== this.pep.deny;
+            this._pep.evaluateRequest(request).subscribe(decision => {
+                this.showButton = decision !== this._pep.deny;
             });
         } else {
             this.showButton = true;

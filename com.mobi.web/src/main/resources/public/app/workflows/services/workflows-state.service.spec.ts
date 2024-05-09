@@ -22,10 +22,10 @@
  */
 //Angular
 import { HttpClientTestingModule } from '@angular/common/http/testing';
-import { TestBed } from '@angular/core/testing';
+import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
 // libraries
-import { Subject, of } from 'rxjs';
+import { Subject, of, throwError } from 'rxjs';
 import { cloneDeep } from 'lodash';
 //local
 import { ProgressSpinnerService } from '../../shared/components/progress-spinner/services/progressSpinner.service';
@@ -33,7 +33,7 @@ import { WorkflowSchema } from '../models/workflow-record.interface';
 import { condenseCommitId, runningTime, toFormattedDateString } from '../../shared/utility';
 import { workflow_data_row_mocks, workflow_mocks } from '../models/mock_data/workflow-mocks';
 import { User } from '../../shared/models/user.class';
-import { PROV, USER, WORKFLOWS } from '../../prefixes';
+import { CATALOG, DCTERMS, PROV, USER, WORKFLOWS } from '../../prefixes';
 import { UserManagerService } from '../../shared/services/userManager.service';
 import { JSONLDObject } from '../../shared/models/JSONLDObject.interface';
 import { WorkflowsManagerService } from './workflows-manager.service';
@@ -217,5 +217,60 @@ describe('WorkflowsStateService', () => {
     const actualClasses = statuses.map(s => service.getStatusClass(s));
     const expectedClasses = ['bg-danger text-white', 'bg-light text-dark', 'bg-info text-white', 'bg-success text-white'];
     expect(expectedClasses).toEqual(actualClasses);
+  });
+  describe('should convert WorkflowRecord JSON-LD into a WorkflowSchema', () => {
+    const record: JSONLDObject = {
+      '@id': 'urn:test',
+      '@type': [`${WORKFLOWS}WorkflowRecord`],
+      [`${DCTERMS}title`]: [{ '@value': 'Test' }],
+      [`${DCTERMS}description`]: [{ '@value': 'Test Description' }],
+      [`${DCTERMS}issued`]: [{ '@value': '2024-02-22T15:45:44.042837-06:00' }],
+      [`${DCTERMS}modified`]: [{ '@value': '2024-02-22T15:47:44.042837-06:00' }],
+      [`${WORKFLOWS}active`]: [{ '@value': 'true' }],
+      [`${WORKFLOWS}workflowIRI`]: [{ '@id': 'urn:workflowIRI' }],
+      [`${CATALOG}masterBranch`]: [{ '@id': 'urn:master' }]
+    };
+    it('if permission checks pass', fakeAsync(() => {
+      workflowManagerStub.checkMasterBranchPermissions.and.returnValue(of(true));
+      workflowManagerStub.checkDeletePermissions.and.returnValue(of(true));
+      service.convertJSONLDToWorkflowSchema(record).subscribe(result => {
+        expect(result).toEqual({
+          iri: record['@id'],
+          title: 'Test',
+          description: 'Test Description',
+          issued: new Date('2024-02-22T15:45:44.042837-06:00'),
+          modified: new Date('2024-02-22T15:47:44.042837-06:00'),
+          active: true,
+          workflowIRI: 'urn:workflowIRI',
+          master: 'urn:master',
+          canModifyMasterBranch: true,
+          canDeleteWorkflow: true,
+        });
+      });
+      tick();
+      expect(workflowManagerStub.checkDeletePermissions).toHaveBeenCalledWith(record['@id']);
+      expect(workflowManagerStub.checkMasterBranchPermissions).toHaveBeenCalledWith('urn:master', record['@id']);
+    }));
+    it('if a permission check fails', fakeAsync(() => {
+      workflowManagerStub.checkMasterBranchPermissions.and.returnValue(throwError('Error'));
+      workflowManagerStub.checkDeletePermissions.and.returnValue(of(true));
+      service.convertJSONLDToWorkflowSchema(record).subscribe(result => {
+        expect(result).toEqual({
+          iri: record['@id'],
+          title: 'Test',
+          description: 'Test Description',
+          issued: new Date('2024-02-22T15:45:44.042837-06:00'),
+          modified: new Date('2024-02-22T15:47:44.042837-06:00'),
+          active: true,
+          workflowIRI: 'urn:workflowIRI',
+          master: 'urn:master',
+          canModifyMasterBranch: false,
+          canDeleteWorkflow: false,
+        });
+      });
+      tick();
+      expect(workflowManagerStub.checkDeletePermissions).toHaveBeenCalledWith(record['@id']);
+      expect(workflowManagerStub.checkMasterBranchPermissions).toHaveBeenCalledWith('urn:master', record['@id']);
+    }));
   });
 });

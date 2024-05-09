@@ -22,17 +22,18 @@
  */
 import { Injectable } from '@angular/core';
 //RxJs
-import { Observable, merge, of } from 'rxjs';
-import { map, switchMap } from 'rxjs/operators';
+import { Observable, forkJoin, merge, of } from 'rxjs';
+import { catchError, map, switchMap } from 'rxjs/operators';
 //Local
 import { WorkflowsManagerService } from './workflows-manager.service';
 import { WorkflowDataRow } from '../models/workflow-record-table';
 import { WorkflowPaginatedConfig } from '../models/workflow-paginated-config.interface';
 import { JSONLDObject } from '../../shared/models/JSONLDObject.interface';
-import { PROV, WORKFLOWS } from '../../prefixes';
+import { CATALOG, PROV, WORKFLOWS } from '../../prefixes';
 import { UserManagerService } from '../../shared/services/userManager.service';
 import {
   condenseCommitId,
+  getDctermsValue,
   getPropertyId,
   getPropertyValue,
   getStatus,
@@ -214,5 +215,38 @@ export class WorkflowsStateService {
       default:
         return 'bg-light text-dark';
     }
+  }
+
+  /**
+   * Creates a WorkflowSchema object from the JSON-LD object of a WorkflowRecord.
+   * 
+   * @param {JSONLDObject} record The JSON-LD object of a WorkflowRecord
+   * @returns {Observable} An Observable that resolves with the converted WorkflowSchema object
+   */
+  convertJSONLDToWorkflowSchema(record: JSONLDObject): Observable<WorkflowSchema> {
+    const schema: WorkflowSchema = {
+      iri: record['@id'],
+      title: getDctermsValue(record, 'title'),
+      description: getDctermsValue(record, 'description'),
+      issued: new Date(getDctermsValue(record, 'issued')),
+      modified: new Date(getDctermsValue(record, 'modified')),
+      active: getPropertyValue(record, `${WORKFLOWS}active`) === 'true',
+      workflowIRI: getPropertyId(record, `${WORKFLOWS}workflowIRI`),
+      master: getPropertyId(record, `${CATALOG}masterBranch`)
+    };
+    return forkJoin({
+      canModifyMaster: this.wms.checkMasterBranchPermissions(schema.master, schema.iri),
+      canDelete: this.wms.checkDeletePermissions(schema.iri)
+    }).pipe(
+      catchError(error => {
+        console.error(`Issue fetching Workflow Record permissions: ${error}`);
+        return of({ canModifyMaster: false, canDelete: false });
+      }),
+      map(responses => {
+        schema.canModifyMasterBranch = responses.canModifyMaster;
+        schema.canDeleteWorkflow = responses.canDelete;
+        return schema;
+      })
+    );
   }
 }
