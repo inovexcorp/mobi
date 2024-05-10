@@ -32,6 +32,9 @@ var user01 = {
     'role': 'user' 
 };
 
+var badWorkflowFile = process.cwd()+ '/src/test/resources/rdf_files/invalid-workflow.ttl'  // has workflow def issue
+var validWorkflowFile = process.cwd()+ '/src/test/resources/rdf_files/test-workflow.ttl' 
+
 module.exports = {
     '@tags': ['sanity', 'workflows'],
 
@@ -61,8 +64,32 @@ module.exports = {
         browser.globals.login(browser, user01.username, user01.password);
     },
     'Step 5: Assert that the new user cannot create a new workflow' : function(browser) {
-        browser.globals.switchToPage(browser, 'workflows'),
+        browser.globals.switchToPage(browser, 'workflows');
         browser.page.workflowsPage().useCss()
-          .assert.attributeEquals('@createWorkflowButton', 'disabled', 'true');
+          .assert.attributeEquals('@createWorkflowButton', 'disabled', 'true')
+          .assert.attributeEquals('@uploadWorkflowButton', 'disabled', 'true');
+    },
+    'Step 6: Verify upload new workflow functionality': function(browser) {
+        browser.globals.logout(browser);
+        browser.globals.login(browser, adminUsername, adminPassword);
+        browser.globals.switchToPage(browser, 'workflows');
+        browser.page.workflowsPage().useCss()
+            .assert.visible('@uploadWorkflowButton')
+            .click('@uploadWorkflowButton');
+        browser.useCss()
+            .uploadFile('input[type=file]', badWorkflowFile)
+            .waitForElementVisible('mat-dialog-container')
+            .click('mat-dialog-container .mat-dialog-actions > button:nth-child(2)')
+            .assert.visible('mat-dialog-container error-display')
+            .click('mat-dialog-container .mat-dialog-actions > button:nth-child(1)');
+        browser.page.workflowsPage().useCss()
+            .click('@uploadWorkflowButton');
+        browser.useCss()
+            .uploadFile('input[type=file]', validWorkflowFile)
+            .waitForElementVisible('mat-dialog-container')
+            .click('mat-dialog-container .mat-dialog-actions > button:nth-child(2)');
+        browser.globals.wait_for_no_spinners(browser);
+        browser.useCss()
+            .assert.visible('app-workflow-record')
     }
 }

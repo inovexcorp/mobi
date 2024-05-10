@@ -20,7 +20,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="workflow-records h-100">
+<input #recordSelectFileInput class="d-none" type="file" (change)="uploadWorkflow($event)" accept=".owl,.ttl,.xml,.jsonld,.owx,.rdf,.obo,.jsonld">
+  <div class="workflow-records h-100">
     <div class="workflow-top-bar p-1">
         <div class="workflow-filters">
             <app-workflow-table-filter
@@ -38,7 +39,7 @@
                                    (onDownload)="downloadWorkflow()"
                                    (onDelete)="deleteWorkflow()"
                                    (onCreate)="createWorkflow()"
-                                   (onUpload)="uploadWorkflow()">
+                                   (onUpload)="openFileSelection()">
             </app-workflow-controls>
         </div>
     </div>

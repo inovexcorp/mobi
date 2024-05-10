@@ -331,7 +331,7 @@ describe('WorkflowRecordComponent', () => {
         catalogManagerStub.getBranchHeadCommit.and.returnValue(of(response));
         catalogManagerStub.getResource.and.returnValue(of([mockJSONLDObject]));
       
-        component.uploadModal();
+        component.uploadChangesModal();
         expect(matDialog.open).toHaveBeenCalledWith(WorkflowUploadChangesModalComponent, {
           data: {
             recordId: component.record.iri,
@@ -354,7 +354,7 @@ describe('WorkflowRecordComponent', () => {
           afterClosed: () => of({ status: 204 })
         };
         matDialog.open.and.returnValue(dialogRefMock as any);
-        component.uploadModal();
+        component.uploadChangesModal();
       
         expect(matDialog.open).toHaveBeenCalledWith(WorkflowUploadChangesModalComponent, {
           data: {
@@ -374,7 +374,7 @@ describe('WorkflowRecordComponent', () => {
         catalogManagerStub.getBranchHeadCommit.and.returnValue(of(response));
         catalogManagerStub.getResource.and.returnValue(throwError('Error'));
       
-        component.uploadModal();
+        component.uploadChangesModal();
       
         expect(toastStub.createErrorToast).toHaveBeenCalledWith('Issue fetching latest workflow RDF: Error');
       });

@@ -40,6 +40,7 @@ import { PolicyManagerService } from '../../shared/services/policyManager.servic
 import { CatalogManagerService } from '../../shared/services/catalogManager.service';
 import { XACMLDecision } from '../../shared/models/XACMLDecision.interface';
 import { WorkflowsManagerService } from './workflows-manager.service';
+import { WorkflowRecordConfig } from '../models/workflowRecordConfig.interface';
 
 describe('WorkflowsManagerService', () => {
   let service: WorkflowsManagerService;
@@ -130,6 +131,73 @@ describe('WorkflowsManagerService', () => {
 
   it('should be created', () => {
     expect(service).toBeTruthy();
+  });
+  describe('create workflow record when', () => {
+    const file = new File(['file content'], 'filename.txt');
+    const newWorkflowWithFile: WorkflowRecordConfig = {
+      title: 'Test Workflow',
+      description: 'Test Description',
+      file: file,
+      keywords: ['test', 'workflow']
+    };
+    it('should create a workflow record with file', () => {
+      const formData = new FormData();
+
+      formData.append('title', newWorkflowWithFile.title);
+      formData.append('description', newWorkflowWithFile.description);
+      formData.append('file', newWorkflowWithFile.file);
+      formData.append('keywords', 'test');
+      formData.append('keywords', 'workflow');
+  
+      service.createWorkflowRecord(newWorkflowWithFile).subscribe();
+  
+      const req = httpMock.expectOne(service.workflows_prefix);
+      expect(req.request.method).toEqual('POST');
+      expect(req.request.body instanceof FormData).toBeTruthy();
+      expect(req.request.body.get('title')).toEqual(newWorkflowWithFile.title);
+      expect(req.request.body.get('description')).toEqual(newWorkflowWithFile.description);
+      expect(req.request.body.get('file')).toEqual(newWorkflowWithFile.file);
+      expect(req.request.body.getAll('keywords')).toEqual(['test', 'workflow']);
+  
+      req.flush('success');
+    });
+    it('should create a workflow record without file', () => {
+      const formData = new FormData();
+      const newWorkflow: WorkflowRecordConfig = {
+        title: 'Test Workflow',
+        description: 'Test Description',
+        jsonld: [activity],
+        keywords: ['test', 'workflow']
+      };
+      formData.append('title', newWorkflow.title);
+      formData.append('description', newWorkflow.description);
+      formData.append('jsonld', JSON.stringify(newWorkflow.jsonld));
+      formData.append('keywords', 'test');
+      formData.append('keywords', 'workflow');
+  
+      service.createWorkflowRecord(newWorkflow).subscribe();
+  
+      const req = httpMock.expectOne(service.workflows_prefix);
+      expect(req.request.method).toEqual('POST');
+      expect(req.request.body instanceof FormData).toBeTruthy();
+      expect(req.request.body.get('title')).toEqual(newWorkflow.title);
+      expect(req.request.body.get('description')).toEqual(newWorkflow.description);
+      expect(req.request.body.get('jsonld')).toEqual(JSON.stringify(newWorkflow.jsonld));
+      expect(req.request.body.getAll('keywords')).toEqual(['test', 'workflow']);
+  
+      req.flush('success');
+    });
+    it('should handle error during creation', () => {
+      service.createWorkflowRecord(newWorkflowWithFile).subscribe(
+        () => fail('Expected error, but got success response'),
+        error => {
+          expect(error).toBeTruthy();
+        }
+      );
+  
+      const req = httpMock.expectOne(service.workflows_prefix);
+      req.error(new ErrorEvent('network error'));
+    });
   });
   describe('should retrieve workflows record', () => {
     beforeEach(() => {

@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { MatPaginator, PageEvent } from '@angular/material/paginator';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 import { Observable, ReplaySubject, Subscription, combineLatest, forkJoin, of, throwError } from 'rxjs';
@@ -48,6 +48,8 @@ import { WorkflowsStateService } from '../../services/workflows-state.service';
 import { getPropertyId } from '../../../shared/utility';
 import { WorkflowCreationModalComponent } from '../workflow-creation-modal/workflow-creation-modal.component';
 import { RESTError } from '../../../shared/models/RESTError.interface';
+import { WorkflowUploadModalComponent } from '../workflow-upload-modal/workflow-upload-modal.component';
+import { ComponentType } from '@angular/cdk/overlay';
 
 /**
  * Represents the DataSource for Workflows Table
@@ -207,6 +209,7 @@ class WorkflowsDataSource extends DataSource<WorkflowDataRow> {
 })
 export class WorkflowRecordsComponent implements OnInit, OnDestroy {
   @ViewChild(MatPaginator) paginator!: MatPaginator;
+  @ViewChild('recordSelectFileInput', { static: true }) fileInput: ElementRef;
   /**
    * Variable used to control which field of MatSort component is shown to be sorted
    */
@@ -455,25 +458,57 @@ export class WorkflowRecordsComponent implements OnInit, OnDestroy {
   }
 
   /**
-   * Opens a dialog window for creating workflows, then opens the individual workflow page
+   * Opens a dialog window for creating workflows
    */
   createWorkflow(): void {
-    this._dialog.open(WorkflowCreationModalComponent).afterClosed().subscribe((result) => {
+    this.openDialog(WorkflowCreationModalComponent);
+  }
+
+  /**
+   * Opens a dialog window for uploading a workflow file when triggered by a file input event.
+   * 
+   * @param event The event object triggered by selecting a file using a file input element.
+   *              It should contain the selected file in the target property.
+   */
+  uploadWorkflow(event: any): void {
+    const file = event.target.files[0];
+    if (file) {
+      this.openDialog(WorkflowUploadModalComponent, { file });
+    }
+  }
+
+  /**
+   * Opens a dialog window for either creating a new workflow or uploading a workflow file.
+   * 
+   * @param component The type of dialog component to open. It should be either WorkflowCreationModalComponent or
+   * WorkflowUploadModalComponent.
+   * @param data Optional data to pass to the dialog component. For upload workflow, it should contain the selected file.
+   */
+  private openDialog(component: ComponentType<WorkflowCreationModalComponent |
+     WorkflowUploadModalComponent>, data?: { file: File }): void {
+    this._dialog.open(component, { data }).afterClosed().subscribe((result) => {
       if (result?.status) {
-          const newWorkflowDataRow : WorkflowDataRow = {
-            record: result.newWorkflow,
-            statusDisplay: undefined,
-            executorDisplay: undefined,
-            executionIdDisplay: undefined,
-            startTimeDisplay: undefined,
-            runningTimeDisplay: undefined
-          };
-          this.openRecord(newWorkflowDataRow, true);
+        const newWorkflowDataRow: WorkflowDataRow = {
+          record: result.newWorkflow,
+          statusDisplay: undefined,
+          executorDisplay: undefined,
+          executionIdDisplay: undefined,
+          startTimeDisplay: undefined,
+          runningTimeDisplay: undefined
+        };
+        this.openRecord(newWorkflowDataRow, true);
       }
     });
   }
-  uploadWorkflow(): void {
-    console.log('upload workflow placeholder');
+
+  /**
+   * Opens the browser file selection dialog when the associated button is clicked.
+   * Resets the value of the file input element before triggering a click event
+   * to ensure that the dialog opens even if the same file is selected again.
+   */
+  openFileSelection(): void {
+    this.fileInput.nativeElement.value = null;
+    this.fileInput.nativeElement.click();
   }
   /**
    * Updates the selected workflows based on the provided workflow element, and updates boolean validity and tooltip accordingly.
@@ -535,7 +570,7 @@ export class WorkflowRecordsComponent implements OnInit, OnDestroy {
     } else if (sortState.direction === 'desc') {
       sortOption.asc = false;
     }
-    if (sortState.active !== null || sortState.active !== undefined) {
+    if (sortState?.active) {
       this.matSortActive = sortState.active;
       sortOption.field = sortState.active;
     }

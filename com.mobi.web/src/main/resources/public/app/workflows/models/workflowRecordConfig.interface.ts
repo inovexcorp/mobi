@@ -32,4 +32,5 @@ import { RecordConfig } from '../../shared/models/recordConfig.interface';
  */
 export interface WorkflowRecordConfig extends RecordConfig {
     jsonld?: JSONLDObject[],
+    file?: File,
 }

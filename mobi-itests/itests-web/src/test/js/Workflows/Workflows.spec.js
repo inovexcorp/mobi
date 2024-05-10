@@ -297,6 +297,8 @@ module.exports = {
             .assert.visible('.edit-button')
             .click('app-workflows .mat-tab-labels > div:nth-child(2)');
         browser.useXpath()
-            .assert.visible('//*[contains(text(), "new Workflow Changes")]')
+            .assert.visible('//*[contains(text(), "new Workflow Changes")]');
+        browser.page.workflowsPage().deleteWorkflow();
+        browser.globals.wait_for_no_spinners(browser);
     }
 }
