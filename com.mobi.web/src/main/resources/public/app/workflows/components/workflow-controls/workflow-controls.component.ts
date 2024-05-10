@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
 
 import { WorkflowSchema } from '../../models/workflow-record.interface';
 import { WorkflowsStateService } from '../../services/workflows-state.service';
@@ -37,7 +37,7 @@ import { WorkflowsStateService } from '../../services/workflows-state.service';
   selector: 'app-workflow-controls',
   templateUrl: './workflow-controls.component.html',
 })
-export class WorkflowControlsComponent {
+export class WorkflowControlsComponent implements OnInit, OnChanges {
   @Input() records: WorkflowSchema[];
   @Input() currentlyRunning = false;
   @Input() isEditMode: boolean;
@@ -50,9 +50,15 @@ export class WorkflowControlsComponent {
 
   creationTooltip = '';
 
-  constructor(public wss: WorkflowsStateService) {
+  constructor(public wss: WorkflowsStateService) {}
+
+  ngOnChanges(): void {
     this.setWorkflowCreationTooltip();
-   }
+  }
+
+  ngOnInit(): void {
+    this.setWorkflowCreationTooltip();
+  }
 
   /**
    * @returns {boolean} Whether the run button should be disabled. True if there are no workflow records provided, a
@@ -101,6 +107,8 @@ export class WorkflowControlsComponent {
         return 'You do not have permission to execute a selected workflow.';
       } else if (someNotActive) {
         return 'A selected workflow is not active.';
+      } else if (this.isEditMode) {
+        return 'Cannot run workflow while in edit mode.';
       } else {
         return ''; 
       } 
@@ -120,6 +128,8 @@ export class WorkflowControlsComponent {
       return 'Select a workflow.';
     } else if (someNotPermitted) {
       return 'You do not have permission to delete a selected workflow.';
+    } else if (this.isEditMode) {
+      return 'Cannot delete while in edit mode.';
     } else {
       return '';
     }

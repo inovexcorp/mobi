@@ -22,6 +22,7 @@
  */
 const workflowControls = 'app-workflow-controls';
 const createWorkflowButton = `${workflowControls} button.workflow-create`;
+const uploadWorkflowButton = `${workflowControls} button.workflow-upload`;
 const deleteWorkflowButton = `${workflowControls} button.workflow-delete`;
 const runWorkflowButton = `${workflowControls} button.workflow-run`;
 const downloadWorkflowButton = `${workflowControls} button.workflow-download`;
@@ -129,6 +130,7 @@ module.exports = {
         workflowStatusFilter: workflowStatusFilter,
         workflowTimeRangeFilter: workflowTimeRangeFilter,
         createWorkflowButton: createWorkflowButton,
+        uploadWorkflowButton: uploadWorkflowButton,
         deleteWorkflowButton: deleteWorkflowButton,
         runWorkflowButton: runWorkflowButton,
         downloadWorkflowButton: downloadWorkflowButton,

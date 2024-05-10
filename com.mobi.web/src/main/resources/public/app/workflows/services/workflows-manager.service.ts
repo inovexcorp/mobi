@@ -431,7 +431,11 @@ export class WorkflowsManagerService {
     const formData = new FormData();
     formData.append('title', newWorkflow.title);
     formData.append('description', newWorkflow.description);
-    formData.append('jsonld', JSON.stringify(newWorkflow.jsonld));
+    if (newWorkflow.file){
+      formData.append('file', newWorkflow.file);
+    } else {
+      formData.append('jsonld', JSON.stringify(newWorkflow.jsonld));
+    }
     forEach(newWorkflow.keywords, word => formData.append('keywords', word));
 
     const request = this._http.post<string>(this.workflows_prefix, formData, { responseType: 'json' });

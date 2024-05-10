@@ -32,7 +32,7 @@
                         <h2 class="record-title d-flex align-items-center">
                             {{ record.title }}
                         </h2>
-                        <mat-icon class="edit-icon" *ngIf="workflowsState.isEditMode">warning</mat-icon>
+                        <mat-icon class="edit-icon" *ngIf="workflowsState.isEditMode" title="Currently Editing Workflow Model.">warning</mat-icon>
                     </span>
                     <p class="record-workflow-iri text-muted">
                         {{ record.workflowIRI }}
@@ -97,11 +97,11 @@
                     </div>
                     <div class="model-buttons">
                         <ng-template #editButton>
-                            <button class="edit-button" color="primary" (click)="toggleEditMode()" mat-icon-button><mat-icon>edit</mat-icon></button>
+                            <button class="edit-button" color="primary" (click)="toggleEditMode()" mat-icon-button title="Edit Workflow Model."><mat-icon>edit</mat-icon></button>
                         </ng-template>
                         <ng-template #otherButtons>
-                            <button class="upload-button" color="primary" (click)="uploadModal()" mat-icon-button><mat-icon>upload</mat-icon></button>
-                            <button class="save-button" color="primary" (click)="commitChanges()" mat-icon-button><mat-icon>save</mat-icon></button>
+                            <button class="upload-button" color="primary" (click)="uploadChangesModal()" mat-icon-button title="Upload Changes to Workflow Model."><mat-icon>upload</mat-icon></button>
+                            <button class="save-button" color="primary" (click)="commitChanges()" mat-icon-button title="Save Changes to Workflow Model."><mat-icon>save</mat-icon></button>
                         </ng-template>
                         <ng-container *ngIf="!workflowsState.isEditMode; then editButton else otherButtons"></ng-container>
                     </div>

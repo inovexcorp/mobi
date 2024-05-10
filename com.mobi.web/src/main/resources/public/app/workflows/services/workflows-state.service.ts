@@ -85,7 +85,7 @@ export class WorkflowsStateService {
    */
   isEditMode = false;
   /**
-   * Boolean representation of edit mode status of an individual workflow, false by default
+   * Boolean representation of changes status of an individual workflow, false by default
    */
   hasChanges = false;
 

@@ -60,6 +60,7 @@ import { WorkflowPaginatedConfig } from '../../models/workflow-paginated-config.
 import { WorkflowTableFilterComponent } from '../workflow-table-filter/workflow-table-filter.component';
 import { WorkflowCreationModalComponent } from '../workflow-creation-modal/workflow-creation-modal.component';
 import { RESTError } from '../../../shared/models/RESTError.interface';
+import { WorkflowUploadModalComponent } from '../workflow-upload-modal/workflow-upload-modal.component';
 
 describe('WorkflowRecordsComponent', () => {
   let component: WorkflowRecordsComponent;
@@ -70,7 +71,6 @@ describe('WorkflowRecordsComponent', () => {
   let workflowsStateStub: jasmine.SpyObj<WorkflowsStateService>;
   let workflowsManagerStub: jasmine.SpyObj<WorkflowsManagerService>;
   let policyEnforcementStub: jasmine.SpyObj<PolicyEnforcementService>;
-  let policyManagerServiceStub: jasmine.SpyObj<PolicyManagerService>;
   let matDialog: jasmine.SpyObj<MatDialog>;
   let toastStub: jasmine.SpyObj<ToastService>;
   let executionActivitiesSubject: Subject<JSONLDObject[]>;
@@ -159,7 +159,6 @@ describe('WorkflowRecordsComponent', () => {
     workflowsManagerStub = null;
     workflowsStateStub = null;
     policyEnforcementStub = null;
-    policyManagerServiceStub = null;
     toastStub = null;
     catalogManagerStub = null;
     executionActivitiesSubject = null;
@@ -174,6 +173,20 @@ describe('WorkflowRecordsComponent', () => {
     expect(component.dataSource.retrieveWorkflows).toHaveBeenCalledWith(component.paginationConfig);
   });
   describe('component methods', () => {
+    it('should open dialog with selected file', () => {
+      const file = new File(['dummy content'], 'dummy.txt', { type: 'text/plain' });
+      const event = { target: { files: [file] } };
+  
+      component.uploadWorkflow(event);
+  
+      expect(matDialog.open).toHaveBeenCalledWith(WorkflowUploadModalComponent, { data: { file } });
+    });
+    it('should start an upload', function() {
+      spyOn(component.fileInput.nativeElement, 'click');
+      component.openFileSelection();
+      expect(component.fileInput.nativeElement.value).toEqual('');
+      expect(component.fileInput.nativeElement.click).toHaveBeenCalledWith();
+    });
     it('should get a page of events', () => {
       spyOn(component.dataSource, 'retrieveWorkflows').and.callThrough();
       const event = new PageEvent();
@@ -327,7 +340,7 @@ describe('WorkflowRecordsComponent', () => {
     }));
     it('should open create dialog', fakeAsync(() => {
       component.createWorkflow();
-      expect(matDialog.open).toHaveBeenCalledWith(WorkflowCreationModalComponent);
+      expect(matDialog.open).toHaveBeenCalledWith(WorkflowCreationModalComponent, jasmine.objectContaining({ data: undefined}));
     }));
     describe('should delete a workflow', () => {
       beforeEach(() => {
@@ -442,6 +455,10 @@ describe('WorkflowRecordsComponent', () => {
       });
       it('mat-slide-toggle', function() {
         expect(element.queryAll(By.css('mat-slide-toggle')).length).toEqual(2);
+      });
+      it('hidden file input', function() {
+        const hiddenFileInput = fixture.nativeElement.querySelector('input[type="file"].d-none');
+        expect(hiddenFileInput).toBeTruthy();
       });
       it('badge', function() {
         expect(element.queryAll(By.css('.badge')).length).toEqual(2);
