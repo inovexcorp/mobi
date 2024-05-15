@@ -151,7 +151,7 @@ public class MappingRest {
     @ActionAttributes(@AttributeValue(id = com.mobi.ontologies.rdfs.Resource.type_IRI, value = MappingRecord.TYPE))
     @ResourceId("http://mobi.com/catalog-local")
     public Response upload(@Context HttpServletRequest servletRequest) {
-        Map<String, List<Class>> fields = new HashMap<>();
+        Map<String, List<Class<?>>> fields = new HashMap<>();
         fields.put("title", Stream.of(String.class).collect(Collectors.toList()));
         fields.put("description", Stream.of(String.class).collect(Collectors.toList()));
         fields.put("jsonld", Stream.of(String.class).collect(Collectors.toList()));

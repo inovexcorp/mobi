@@ -27,7 +27,7 @@ import static com.mobi.catalog.rest.utils.CatalogRestUtils.createCommitJson;
 import static com.mobi.catalog.rest.utils.CatalogRestUtils.createCommitResponse;
 import static com.mobi.catalog.rest.utils.CatalogRestUtils.getDifferenceJsonString;
 import static com.mobi.rest.util.RestUtils.checkStringParam;
-import static com.mobi.rest.util.RestUtils.createPaginatedResponseWithJsonNode;
+import static com.mobi.rest.util.RestUtils.createPaginatedResponse;
 import static com.mobi.rest.util.RestUtils.modelToSkolemizedString;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -228,7 +228,7 @@ public class CommitRest {
             result.map(r -> createCommitJson(r, vf, engineManager))
                     .forEach(commitChain::add);
 
-            return createPaginatedResponseWithJsonNode(uriInfo, commitChain, commits.size(), limit, offset);
+            return createPaginatedResponse(uriInfo, commitChain, commits.size(), limit, offset);
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (IllegalStateException | MobiException ex) {

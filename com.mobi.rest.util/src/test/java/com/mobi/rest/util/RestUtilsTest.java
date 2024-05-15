@@ -35,7 +35,9 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mobi.catalog.api.CommitManager;
@@ -45,6 +47,11 @@ import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.persistence.utils.api.BNodeService;
+import com.mobi.rdf.orm.Thing;
+import com.mobi.rdf.orm.conversion.ValueConverterRegistry;
+import com.mobi.rdf.orm.impl.ThingImpl;
+import com.mobi.web.security.util.AuthenticationProps;
+import org.apache.commons.io.IOUtils;
 
 import org.eclipse.rdf4j.model.BNode;
 import org.eclipse.rdf4j.model.IRI;
@@ -56,13 +63,6 @@ import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
-import com.mobi.rdf.orm.Thing;
-import com.mobi.rdf.orm.conversion.ValueConverterRegistry;
-import com.mobi.rdf.orm.impl.ThingImpl;
-import com.mobi.web.security.util.AuthenticationProps;
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
-import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.rio.RDFFormat;
@@ -85,6 +85,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
@@ -96,9 +97,10 @@ import javax.ws.rs.core.UriInfo;
 
 public class RestUtilsTest {
     private AutoCloseable closeable;
+    private static final ObjectMapper mapper = new ObjectMapper();
     private static final ValueFactory vf = new ValidatingValueFactory();
-    private static ModelFactory mf = new DynamicModelFactory();
-    private static IRI testPropIRI = vf.createIRI("http://example.com/test#prop");
+    private static final ModelFactory mf = new DynamicModelFactory();
+    private static final IRI testPropIRI = vf.createIRI("http://example.com/test#prop");
 
     private String bNodeJsonld;
     private String expectedJsonld;
@@ -108,8 +110,8 @@ public class RestUtilsTest {
     private String expectedGroupedRdfxml;
     private String expectedRdfxml;
     private String expectedTrig;
-    private Model model = mf.createEmptyModel();
-    private Model typedModel = mf.createEmptyModel();
+    private final Model model = mf.createEmptyModel();
+    private final Model typedModel = mf.createEmptyModel();
 
     @Mock
     private ContainerRequestContext context;
@@ -148,17 +150,17 @@ public class RestUtilsTest {
     public void setUp() throws Exception {
         setUpModels();
 
-        bNodeJsonld = IOUtils.toString(getClass().getResourceAsStream("/test-bnode.json"), StandardCharsets.UTF_8);
-        expectedJsonld = IOUtils.toString(getClass().getResourceAsStream("/test.json"), StandardCharsets.UTF_8);
-        expectedTypedJsonld = IOUtils.toString(getClass().getResourceAsStream("/test-typed.json"),
+        bNodeJsonld = IOUtils.toString(Objects.requireNonNull(getClass().getResourceAsStream("/test-bnode.json")), StandardCharsets.UTF_8);
+        expectedJsonld = IOUtils.toString(Objects.requireNonNull(getClass().getResourceAsStream("/test.json")), StandardCharsets.UTF_8);
+        expectedTypedJsonld = IOUtils.toString(Objects.requireNonNull(getClass().getResourceAsStream("/test-typed.json")),
                 StandardCharsets.UTF_8);
-        expectedTurtle = IOUtils.toString(getClass().getResourceAsStream("/test.ttl"), StandardCharsets.UTF_8);
-        expectedGroupedTurtle = IOUtils.toString(getClass().getResourceAsStream("/grouped-test.ttl"),
+        expectedTurtle = IOUtils.toString(Objects.requireNonNull(getClass().getResourceAsStream("/test.ttl")), StandardCharsets.UTF_8);
+        expectedGroupedTurtle = IOUtils.toString(Objects.requireNonNull(getClass().getResourceAsStream("/grouped-test.ttl")),
                 StandardCharsets.UTF_8);
-        expectedRdfxml = IOUtils.toString(getClass().getResourceAsStream("/test.xml"), StandardCharsets.UTF_8);
-        expectedGroupedRdfxml = IOUtils.toString(getClass().getResourceAsStream("/grouped-test.xml"),
+        expectedRdfxml = IOUtils.toString(Objects.requireNonNull(getClass().getResourceAsStream("/test.xml")), StandardCharsets.UTF_8);
+        expectedGroupedRdfxml = IOUtils.toString(Objects.requireNonNull(getClass().getResourceAsStream("/grouped-test.xml")),
                 StandardCharsets.UTF_8);
-        expectedTrig= IOUtils.toString(getClass().getResourceAsStream("/test.trig"), StandardCharsets.UTF_8);
+        expectedTrig= IOUtils.toString(Objects.requireNonNull(getClass().getResourceAsStream("/test.trig")), StandardCharsets.UTF_8);
 
         closeable = MockitoAnnotations.openMocks(this);
         when(context.getProperty(AuthenticationProps.USERNAME)).thenReturn("tester");
@@ -269,15 +271,9 @@ public class RestUtilsTest {
 
             String result = os.toString();
             switch (format.getName()) {
-                case "JSON-LD":
-                    assertEquals(removeWhitespace(expectedJsonld), removeWhitespace(result));
-                    break;
-                case "Turtle":
-                    assertEquals(expectedGroupedTurtle, result);
-                    break;
-                case "RDF/XML":
-                    assertEquals(expectedGroupedRdfxml, result);
-                    break;
+                case "JSON-LD" -> assertEquals(removeWhitespace(expectedJsonld), removeWhitespace(result));
+                case "Turtle" -> assertEquals(expectedGroupedTurtle, result);
+                case "RDF/XML" -> assertEquals(expectedGroupedRdfxml, result);
             }
             Files.deleteIfExists(file);
         }
@@ -417,29 +413,29 @@ public class RestUtilsTest {
     }
 
     @Test
-    public void getObjectFromJsonldNoContextTest() {
-        JSONObject expected = JSONObject.fromObject("{'@id': 'test'}");
+    public void getObjectFromJsonldNoContextTest() throws Exception {
+        ObjectNode expected = mapper.readValue("{\"@id\": \"test\"}", ObjectNode.class);
         String jsonld = "[" + expected.toString() + "]";
         assertEquals(expected, RestUtils.getObjectFromJsonld(jsonld));
     }
 
     @Test
-    public void getObjectFromJsonldWithContextTest() {
-        JSONObject expected = JSONObject.fromObject("{'@id': 'test'}");
-        String jsonld = "[{'@graph':[" + expected.toString() + "]}]";
+    public void getObjectFromJsonldWithContextTest() throws Exception {
+        ObjectNode expected = mapper.readValue("{\"@id\": \"test\"}", ObjectNode.class);
+        String jsonld = "[{\"@graph\":[" + expected.toString() + "]}]";
         assertEquals(expected, RestUtils.getObjectFromJsonld(jsonld));
     }
 
     @Test
     public void getObjectFromJsonldThatDoesNotExistTest() {
-        assertEquals(new JSONObject(), RestUtils.getObjectFromJsonld("[]"));
-        assertEquals(new JSONObject(), RestUtils.getObjectFromJsonld("[{'@graph': []}]"));
+        assertEquals(mapper.createObjectNode(), RestUtils.getObjectFromJsonld("[]"));
+        assertEquals(mapper.createObjectNode(), RestUtils.getObjectFromJsonld("[{\"@graph\": []}]"));
     }
 
     @Test
-    public void getTypedObjectFromJsonldTest() {
-        JSONObject expected = JSONArray.fromObject(expectedTypedJsonld).getJSONObject(0);
-        String jsonld = "[{'@graph':[" + expected.toString() + "]}]";
+    public void getTypedObjectFromJsonldTest() throws Exception {
+        JsonNode expected = mapper.readValue(expectedTypedJsonld, ArrayNode.class).get(0);
+        String jsonld = "[{\"@graph\":[" + expected.toString() + "]}]";
         assertEquals(expected, RestUtils.getTypedObjectFromJsonld(jsonld, "urn:test"));
     }
 
@@ -459,165 +455,137 @@ public class RestUtilsTest {
     }
 
     @Test
-    public void createPaginatedResponseTest() {
+    public void createPaginatedResponseTest() throws Exception {
         // Setup
         Set<Thing> set = getTestThings(Collections.singletonMap(testPropIRI, "VALUE"));
 
         // TEST ASC
         Response response = RestUtils.createPaginatedThingResponse(uriInfo, set, testPropIRI, 0, 1,
-                true, (Function<Thing, Boolean>) null,
-                "http://example.com/test#TestThing", service);
-        Object object = response.getEntity();
-        assertTrue(object instanceof JSONArray);
-        JSONArray array = (JSONArray) object;
-        assertTrue(array.get(0) instanceof JSONObject);
-        JSONObject jsonObject = (JSONObject) array.get(0);
-        assertEquals(jsonObject.getJSONArray(testPropIRI.stringValue()).getJSONObject(0).getString("@value"), "VALUE 1");
+                true, null, "http://example.com/test#TestThing", service);
+        ArrayNode array = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
+        assertTrue(array.get(0).isObject());
+        ObjectNode jsonObject = (ObjectNode) array.get(0);
+        assertEquals(jsonObject.get(testPropIRI.stringValue()).get(0).get("@value").asText(), "VALUE 1");
         assertEquals(response.getLinks().size(), 1);
         Link link = response.getLinks().iterator().next();
         assertEquals(link.getRel(), "next");
-        assertTrue(link.getUri().getRawPath().equals("/rest/tests"));
+        assertEquals("/rest/tests", link.getUri().getRawPath());
 
         response = RestUtils.createPaginatedThingResponse(uriInfo, set, testPropIRI, 1, 1, true,
-                (Function<Thing, Boolean>) null, "http://example.com/test#TestThing",
-                service);
-        object = response.getEntity();
-        assertTrue(object instanceof JSONArray);
-        array = (JSONArray) object;
-        assertTrue(array.get(0) instanceof JSONObject);
-        jsonObject = (JSONObject) array.get(0);
-        assertEquals(jsonObject.getJSONArray(testPropIRI.stringValue()).getJSONObject(0).getString("@value"), "VALUE 2");
+                null, "http://example.com/test#TestThing", service);
+        array = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
+        assertTrue(array.get(0).isObject());
+        jsonObject = (ObjectNode) array.get(0);
+        assertEquals(jsonObject.get(testPropIRI.stringValue()).get(0).get("@value").asText(), "VALUE 2");
         assertEquals(response.getLinks().size(), 2);
         assertTrue(response.getLinks().stream()
                 .allMatch(lnk -> (lnk.getRel().equals("prev") || lnk.getRel().equals("next"))
                         && lnk.getUri().getRawPath().equals("/rest/tests")));
 
         response = RestUtils.createPaginatedThingResponse(uriInfo, set, testPropIRI, 2, 1, true,
-                (Function<Thing, Boolean>) null, "http://example.com/test#TestThing",
-                service);
-        object = response.getEntity();
-        assertTrue(object instanceof JSONArray);
-        array = (JSONArray) object;
-        assertTrue(array.get(0) instanceof JSONObject);
-        jsonObject = (JSONObject) array.get(0);
-        assertEquals(jsonObject.getJSONArray(testPropIRI.stringValue()).getJSONObject(0).getString("@value"), "VALUE 3");
+                null, "http://example.com/test#TestThing", service);
+        array = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
+        assertTrue(array.get(0).isObject());
+        jsonObject = (ObjectNode) array.get(0);
+        assertEquals(jsonObject.get(testPropIRI.stringValue()).get(0).get("@value").asText(), "VALUE 3");
         assertEquals(response.getLinks().size(), 1);
         link = response.getLinks().iterator().next();
         assertEquals(link.getRel(), "prev");
-        assertTrue(link.getUri().getRawPath().equals("/rest/tests"));
+        assertEquals("/rest/tests", link.getUri().getRawPath());
 
         // TEST DESC
         response = RestUtils.createPaginatedThingResponse(uriInfo, set, testPropIRI, 0, 1, false,
-                (Function<Thing, Boolean>) null, "http://example.com/test#TestThing",
-                service);
-        object = response.getEntity();
-        assertTrue(object instanceof JSONArray);
-        array = (JSONArray) object;
-        assertTrue(array.get(0) instanceof JSONObject);
-        jsonObject = (JSONObject) array.get(0);
-        assertEquals(jsonObject.getJSONArray(testPropIRI.stringValue()).getJSONObject(0).getString("@value"), "VALUE 3");
+                null, "http://example.com/test#TestThing", service);
+        array = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
+        assertTrue(array.get(0).isObject());
+        jsonObject = (ObjectNode) array.get(0);
+        assertEquals(jsonObject.get(testPropIRI.stringValue()).get(0).get("@value").asText(), "VALUE 3");
         assertEquals(response.getLinks().size(), 1);
         link = response.getLinks().iterator().next();
         assertEquals(link.getRel(), "next");
-        assertTrue(link.getUri().getRawPath().equals("/rest/tests"));
+        assertEquals("/rest/tests", link.getUri().getRawPath());
 
         response = RestUtils.createPaginatedThingResponse(uriInfo, set, testPropIRI, 1, 1, false,
-                (Function<Thing, Boolean>) null, "http://example.com/test#TestThing",
-                service);
-        object = response.getEntity();
-        assertTrue(object instanceof JSONArray);
-        array = (JSONArray) object;
-        assertTrue(array.get(0) instanceof JSONObject);
-        jsonObject = (JSONObject) array.get(0);
-        assertEquals(jsonObject.getJSONArray(testPropIRI.stringValue()).getJSONObject(0).getString("@value"), "VALUE 2");
+                null, "http://example.com/test#TestThing", service);
+        array = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
+        assertTrue(array.get(0).isObject());
+        jsonObject = (ObjectNode) array.get(0);
+        assertEquals(jsonObject.get(testPropIRI.stringValue()).get(0).get("@value").asText(), "VALUE 2");
         assertEquals(response.getLinks().size(), 2);
         assertTrue(response.getLinks().stream()
                 .allMatch(lnk -> (lnk.getRel().equals("prev") || lnk.getRel().equals("next"))
                         && lnk.getUri().getRawPath().equals("/rest/tests")));
 
         response = RestUtils.createPaginatedThingResponse(uriInfo, set, testPropIRI, 2, 1, false,
-                (Function<Thing, Boolean>) null, "http://example.com/test#TestThing",
-                service);
-        object = response.getEntity();
-        assertTrue(object instanceof JSONArray);
-        array = (JSONArray) object;
-        assertTrue(array.get(0) instanceof JSONObject);
-        jsonObject = (JSONObject) array.get(0);
-        assertEquals(jsonObject.getJSONArray(testPropIRI.stringValue()).getJSONObject(0).getString("@value"), "VALUE 1");
+                null, "http://example.com/test#TestThing", service);
+        array = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
+        assertTrue(array.get(0).isObject());
+        jsonObject = (ObjectNode) array.get(0);
+        assertEquals(jsonObject.get(testPropIRI.stringValue()).get(0).get("@value").asText(), "VALUE 1");
         assertEquals(response.getLinks().size(), 1);
         link = response.getLinks().iterator().next();
         assertEquals(link.getRel(), "prev");
-        assertTrue(link.getUri().getRawPath().equals("/rest/tests"));
+        assertEquals("/rest/tests", link.getUri().getRawPath());
 
         // TEST NO PAGING REQUIRED
         response = RestUtils.createPaginatedThingResponse(uriInfo, set, testPropIRI, 0, 10, true,
-                (Function<Thing, Boolean>) null, "http://example.com/test#TestThing",
-                service);
+                null, "http://example.com/test#TestThing", service);
         assertEquals(response.getLinks().size(), 0);
     }
 
     @Test
-    public void createPaginatedResponseTestFiltered() {
+    public void createPaginatedResponseTestFiltered() throws Exception {
         // Setup
         Set<Thing> set = getTestThings(Collections.singletonMap(testPropIRI, "VALUE"));
         Function<Thing, Boolean> f;
-        f = new Function<Thing, Boolean>() {
-            @Override
-            public Boolean apply(Thing t) {
-                return !t.getProperties(testPropIRI).contains(vf.createLiteral("VALUE 2"));
-            }
-        };
+        f = t -> !t.getProperties(testPropIRI).contains(vf.createLiteral("VALUE 2"));
 
         Response response = RestUtils.createPaginatedThingResponse(uriInfo, set, testPropIRI, 0, 1, true,
                 f, "http://example.com/test#TestThing", service);
-        Object object = response.getEntity();
-        assertTrue(object instanceof JSONArray);
-        JSONArray array = (JSONArray) object;
-        assertTrue(array.get(0) instanceof JSONObject);
-        JSONObject jsonObject = (JSONObject) array.get(0);
-        assertEquals(jsonObject.getJSONArray(testPropIRI.stringValue()).getJSONObject(0).getString("@value"), "VALUE 1");
+        ArrayNode array = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
+        assertTrue(array.get(0).isObject());
+        ObjectNode jsonObject = (ObjectNode) array.get(0);
+        assertEquals(jsonObject.get(testPropIRI.stringValue()).get(0).get("@value").asText(), "VALUE 1");
         assertEquals(response.getLinks().size(), 1);
         Link link = response.getLinks().iterator().next();
         assertEquals(link.getRel(), "next");
-        assertTrue(link.getUri().getRawPath().equals("/rest/tests"));
+        assertEquals("/rest/tests", link.getUri().getRawPath());
 
         response = RestUtils.createPaginatedThingResponse(uriInfo, set, testPropIRI, 1, 1, true,
                 f, "http://example.com/test#TestThing", service);
-        object = response.getEntity();
-        assertTrue(object instanceof JSONArray);
-        array = (JSONArray) object;
-        assertTrue(array.get(0) instanceof JSONObject);
-        jsonObject = (JSONObject) array.get(0);
-        assertEquals(jsonObject.getJSONArray(testPropIRI.stringValue()).getJSONObject(0).getString("@value"), "VALUE 3");
+        array = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
+        assertTrue(array.get(0).isObject());
+        jsonObject = (ObjectNode) array.get(0);
+        assertEquals(jsonObject.get(testPropIRI.stringValue()).get(0).get("@value").asText(), "VALUE 3");
         assertEquals(response.getLinks().size(), 1);
         link = response.getLinks().iterator().next();
         assertEquals(link.getRel(), "prev");
-        assertTrue(link.getUri().getRawPath().equals("/rest/tests"));
+        assertEquals("/rest/tests", link.getUri().getRawPath());
     }
 
     @Test
-    public void createPaginatedResponseWithJsonTest() {
-        JSONArray array = JSONArray.fromObject("[{'@graph':[" + expectedTypedJsonld + "]}]");
+    public void createPaginatedResponseTestWithArray() throws Exception {
+        ArrayNode array = mapper.readValue("[{\"@graph\":[" + expectedTypedJsonld + "]}]", ArrayNode.class);
 
-        Response response = RestUtils.createPaginatedResponseWithJson(uriInfo, array, 3, 1, 0);
+        Response response = RestUtils.createPaginatedResponse(uriInfo, array, 3, 1, 0);
         assertEquals(response.getLinks().size(), 1);
         Link link = response.getLinks().iterator().next();
         assertEquals(link.getRel(), "next");
-        assertTrue(link.getUri().getRawPath().equals("/rest/tests"));
+        assertEquals("/rest/tests", link.getUri().getRawPath());
 
-        response = RestUtils.createPaginatedResponseWithJson(uriInfo, array, 3, 1, 1);
+        response = RestUtils.createPaginatedResponse(uriInfo, array, 3, 1, 1);
         assertEquals(response.getLinks().size(), 2);
         assertTrue(response.getLinks().stream()
                 .allMatch(lnk -> (lnk.getRel().equals("prev") || lnk.getRel().equals("next"))
                         && lnk.getUri().getRawPath().equals("/rest/tests")));
 
-        response = RestUtils.createPaginatedResponseWithJson(uriInfo, array, 3, 1, 2);
+        response = RestUtils.createPaginatedResponse(uriInfo, array, 3, 1, 2);
         assertEquals(response.getLinks().size(), 1);
         link = response.getLinks().iterator().next();
         assertEquals(link.getRel(), "prev");
-        assertTrue(link.getUri().getRawPath().equals("/rest/tests"));
+        assertEquals("/rest/tests", link.getUri().getRawPath());
 
-        response = RestUtils.createPaginatedResponseWithJson(uriInfo, array, 3, 3, 0);
+        response = RestUtils.createPaginatedResponse(uriInfo, array, 3, 3, 0);
         assertEquals(response.getLinks().size(), 0);
     }
 
@@ -626,7 +594,7 @@ public class RestUtilsTest {
         // Setup
         when(thing.getModel()).thenReturn(typedModel);
 
-        JSONObject result = RestUtils.thingToSkolemizedJsonObject(thing, "urn:test", service);
+        JsonNode result = RestUtils.thingToSkolemizedObjectNode(thing, "urn:test", service);
         assertTrue(expectedTypedJsonld.startsWith(result.toString(), 1));
     }
 
@@ -713,11 +681,13 @@ public class RestUtilsTest {
 
     @Test
     public void testGetUploadedModel() throws IOException {
-        String rdfData = "<rdf:RDF xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\">\n" +
-                "  <rdf:Description rdf:about=\"http://example.org\">\n" +
-                "    <rdf:type rdf:resource=\"http://www.w3.org/2002/07/owl#Ontology\"/>\n" +
-                "  </rdf:Description>\n" +
-                "</rdf:RDF>\n";
+        String rdfData = """
+                <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+                  <rdf:Description rdf:about="http://example.org">
+                    <rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Ontology"/>
+                  </rdf:Description>
+                </rdf:RDF>
+                """;
         InputStream inputStream = new ByteArrayInputStream(rdfData.getBytes());
         String fileExtension = "rdf";
         Map<BNode, IRI> bNodesMap = new HashMap<>();
@@ -842,7 +812,7 @@ public class RestUtilsTest {
         return set;
     }
 
-    private class TestThing extends ThingImpl {
+    private static class TestThing extends ThingImpl {
         /**
          * The type IRI string for a {@link TestThing} instance.
          */

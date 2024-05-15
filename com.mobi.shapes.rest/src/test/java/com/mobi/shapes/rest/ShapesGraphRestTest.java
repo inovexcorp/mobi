@@ -42,6 +42,9 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mobi.catalog.api.BranchManager;
 import com.mobi.catalog.api.CommitManager;
 import com.mobi.catalog.api.CompiledResourceManager;
@@ -71,7 +74,6 @@ import com.mobi.shapes.api.ShapesGraph;
 import com.mobi.shapes.api.ShapesGraphManager;
 import com.mobi.shapes.api.ontologies.shapesgrapheditor.ShapesGraphRecord;
 import com.mobi.shapes.impl.SimpleShapesGraph;
-import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
@@ -109,6 +111,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 public class ShapesGraphRestTest extends MobiRestTestCXF {
+    private static final ObjectMapper mapper = new ObjectMapper();
     private static ShapesGraphRest rest;
     private static ValueFactory vf;
     private static ModelFactory mf;
@@ -263,7 +266,7 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
         Response response = target().path("shapes-graphs").request().post(Entity.entity(fd.body(),
                 MediaType.MULTIPART_FORM_DATA));
         assertEquals(response.getStatus(), 201);
-        String id = getResponse(response).optString("shapesGraphId");
+        String id = getResponse(response).get("shapesGraphId").asText();
         assertEquals(id, shapesGraphId.stringValue());
         ArgumentCaptor<RecordOperationConfig> config = ArgumentCaptor.forClass(RecordOperationConfig.class);
         verify(recordManager).createRecord(any(User.class), config.capture(), eq(ShapesGraphRecord.class), any(RepositoryConnection.class));
@@ -293,9 +296,9 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
 
         assertEquals(response.getStatus(), 500);
 
-        JSONObject responseObject = getResponse(response);
-        assertEquals(responseObject.get("error"), "MobiException");
-        assertEquals(responseObject.get("errorMessage"), "I'm an exception!");
+        ObjectNode responseObject = getResponse(response);
+        assertEquals("MobiException", responseObject.get("error").asText());
+        assertEquals("I'm an exception!", responseObject.get("errorMessage").asText());
         assertNotEquals(responseObject.get("errorDetails"), null);
     }
 
@@ -315,9 +318,9 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
 
         assertEquals(response.getStatus(), 400);
 
-        JSONObject responseObject = getResponse(response);
-        assertEquals(responseObject.get("error"), "RDFParseException");
-        assertEquals(responseObject.get("errorMessage"), "I'm an exception!");
+        ObjectNode responseObject = getResponse(response);
+        assertEquals("RDFParseException", responseObject.get("error").asText());
+        assertEquals("I'm an exception!", responseObject.get("errorMessage").asText());
         assertNotEquals(responseObject.get("errorDetails"), null);
     }
 
@@ -337,9 +340,9 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
 
         assertEquals(response.getStatus(), 400);
 
-        JSONObject responseObject = getResponse(response);
-        assertEquals(responseObject.get("error"), "IllegalArgumentException");
-        assertEquals(responseObject.get("errorMessage"), "I'm an exception!");
+        ObjectNode responseObject = getResponse(response);
+        assertEquals("IllegalArgumentException", responseObject.get("error").asText());
+        assertEquals("I'm an exception!", responseObject.get("errorMessage").asText());
         assertNotEquals(responseObject.get("errorDetails"), null);
     }
 
@@ -680,9 +683,9 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
                 .put(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
 
         assertEquals(response.getStatus(), Response.Status.BAD_REQUEST.getStatusCode());
-        JSONObject responseObject = getResponse(response);
-        assertEquals(responseObject.get("error"), "IllegalArgumentException");
-        assertEquals(responseObject.get("errorMessage"), "TriG data is not supported for shapes graph upload changes.");
+        ObjectNode responseObject = getResponse(response);
+        assertEquals("IllegalArgumentException", responseObject.get("error").asText());
+        assertEquals("TriG data is not supported for shapes graph upload changes.", responseObject.get("errorMessage").asText());
         assertNotEquals(responseObject.get("errorDetails"), null);
     }
 
@@ -1041,8 +1044,12 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
         verify(shapesGraphSpy).serializeShapesGraph(eq("turtle"));
     }
 
-    private JSONObject getResponse(Response response) {
-        return JSONObject.fromObject(response.readEntity(String.class));
+    private ObjectNode getResponse(Response response) {
+        try {
+            return mapper.readValue(response.readEntity(String.class), ObjectNode.class);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     private void assertGetUserFromContext() {

@@ -23,7 +23,9 @@ package com.mobi.utils.cli.impl;
  * #L%
  */
 
-import net.sf.json.JSONObject;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.IOException;
@@ -49,8 +51,9 @@ import java.util.regex.Pattern;
 public class ManifestFile {
     private String version;
     private String date;
-    private JSONObject repositories;
+    private ObjectNode repositories;
     private Optional<String> error;
+    private static final ObjectMapper mapper = new ObjectMapper();
 
     public ManifestFile() {
        this.error = Optional.empty();
@@ -72,11 +75,11 @@ public class ManifestFile {
         this.date = date;
     }
 
-    public JSONObject getRepositories() {
+    public ObjectNode getRepositories() {
         return repositories;
     }
 
-    public void setRepositories(JSONObject repositories) {
+    public void setRepositories(ObjectNode repositories) {
         this.repositories = repositories;
     }
 
@@ -91,38 +94,38 @@ public class ManifestFile {
     public static ManifestFile fromJson(String jsonFilePath, List<String> supportedMobiVersions) {
         ManifestFile manifestFile = new ManifestFile();
 
-        JSONObject manifest;
+        ObjectNode manifest;
         try {
             String manifestStr = new String(Files.readAllBytes(Paths.get(jsonFilePath)));
-            manifest = JSONObject.fromObject(manifestStr);
-            if (manifest == null){
+            manifest = mapper.readValue(manifestStr, ObjectNode.class);
+            if (manifest == null) {
                 manifestFile.setError(Optional.of("Manifest JSON is invalid"));
                 return manifestFile;
             }
-            JSONObject manifestRepos = manifest.optJSONObject("repositories");
-            if (manifestRepos == null){
+            JsonNode manifestRepos = manifest.get("repositories");
+            if (manifestRepos == null || !manifestRepos.isObject()) {
                 manifestFile.setError(Optional.of("Manifest JSON is missing repositories"));
                 return manifestFile;
             }
-            manifestFile.setRepositories(manifestRepos);
+            manifestFile.setRepositories((ObjectNode) manifestRepos);
         } catch (IOException e) {
             manifestFile.setError(Optional.of("Error loading manifest file: " + e.getMessage()));
             return manifestFile;
         }
 
-        String date = manifest.optString("date");
-        if (StringUtils.isNotEmpty(date)) {
-            manifestFile.setDate(date);
+        JsonNode date = manifest.get("date");
+        if (date != null && StringUtils.isNotEmpty(date.asText())) {
+            manifestFile.setDate(date.asText());
         }
 
-        String fullBackupVer = manifest.optString("version");
-        if (StringUtils.isEmpty(fullBackupVer)) {
+        JsonNode fullBackupVer = manifest.get("version");
+        if (fullBackupVer == null || StringUtils.isEmpty(fullBackupVer.asText())) {
             manifestFile.setError(Optional.of("Manifest must contain the Mobi 'version' identifier of backup"));
             return manifestFile;
         }
         
         Pattern versionPattern = Pattern.compile("([0-9]+\\.[0-9]+)");
-        Matcher matcher = versionPattern.matcher(fullBackupVer);
+        Matcher matcher = versionPattern.matcher(fullBackupVer.asText());
         if (!matcher.find()) {
             manifestFile.setError(Optional.of("Mobi version in manifest must match regex pattern [0-9]+\\\\.[0-9]+"));
             return manifestFile;
@@ -130,7 +133,8 @@ public class ManifestFile {
 
         String backupVersion = matcher.group(1);
         if (!supportedMobiVersions.contains(backupVersion)) {
-            manifestFile.setError(Optional.of("A valid version of Mobi is required (" + String.join(".*, ", supportedMobiVersions) + ".*)."));
+            manifestFile.setError(Optional.of("A valid version of Mobi is required (" + String.join(".*, ",
+                    supportedMobiVersions) + ".*)."));
             return manifestFile;
         }
         manifestFile.setVersion(backupVersion);

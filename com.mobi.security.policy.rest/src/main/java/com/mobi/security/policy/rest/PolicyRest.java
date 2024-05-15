@@ -26,11 +26,13 @@ package com.mobi.security.policy.rest;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.module.jaxb.JaxbAnnotationModule;
 import com.mobi.exception.MobiException;
 import com.mobi.rest.security.annotations.ResourceId;
 import com.mobi.rest.security.annotations.ValueType;
 import com.mobi.rest.util.ErrorUtils;
+import com.mobi.rest.util.RestUtils;
 import com.mobi.security.policy.api.exception.PolicySyntaxException;
 import com.mobi.security.policy.api.xacml.PolicyQueryParams;
 import com.mobi.security.policy.api.xacml.XACMLPolicy;
@@ -39,7 +41,6 @@ import com.mobi.security.policy.api.xacml.jaxb.PolicyType;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import net.sf.json.JSONArray;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
@@ -76,12 +77,12 @@ public class PolicyRest {
     /**
      * Fetches all security policies that match the provided query parameters.
      *
-     * @param relatedSubject  Optional string representing a subject ID. NOTE: Assumes ID represents an IRI unless String
-     *                        begins with "_:"
-     * @param relatedResource Optional string representing a resource ID. NOTE: Assumes ID represents an IRI unless String
-     *                        begins with "_:"
-     * @param relatedAction   Optional string representing an action ID. NOTE: Assumes ID represents an IRI unless String
-     *                        begins with "_:"
+     * @param relatedSubject  Optional string representing a subject ID. NOTE: Assumes ID represents an IRI unless
+     *                        String begins with "_:"
+     * @param relatedResource Optional string representing a resource ID. NOTE: Assumes ID represents an IRI unless
+     *                        String begins with "_:"
+     * @param relatedAction   Optional string representing an action ID. NOTE: Assumes ID represents an IRI unless
+     *                        String begins with "_:"
      * @param systemOnly      Boolean representing whether only system policies should be returned. Defaults to false
      * @return A JSON array of JSON representations of matching policies
      */
@@ -123,7 +124,8 @@ public class PolicyRest {
         try {
             return Response.ok(policyManager.getPolicies(params.build()).stream()
                     .map(this::policyToJson)
-                    .collect(JSONArray::new, JSONArray::add, JSONArray::add)).build();
+                    .map(RestUtils::getObjectNodeFromJson)
+                    .collect(getMapper()::createArrayNode, ArrayNode::add, ArrayNode::add)).build();
         } catch (Exception ex) {
             throw ErrorUtils.sendError(ex, "Error retrieving policies", Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -188,7 +190,7 @@ public class PolicyRest {
             @PathParam("policyId") String policyId) {
         try {
             Optional<XACMLPolicy> policy = policyManager.getPolicy(vf.createIRI(policyId));
-            if (!policy.isPresent()) {
+            if (policy.isEmpty()) {
                 throw ErrorUtils.sendError("Policy could not be found", Response.Status.BAD_REQUEST);
             }
             return Response.ok(policyToJson(policy.get())).build();

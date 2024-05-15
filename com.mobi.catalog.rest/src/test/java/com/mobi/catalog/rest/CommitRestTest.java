@@ -42,6 +42,10 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mobi.catalog.api.CommitManager;
 import com.mobi.catalog.api.CompiledResourceManager;
 import com.mobi.catalog.api.DifferenceManager;
@@ -60,8 +64,6 @@ import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.repository.api.OsgiRepository;
 import com.mobi.rest.test.util.MobiRestTestCXF;
 import com.mobi.rest.test.util.UsernameTestFilter;
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.ModelFactory;
@@ -91,6 +93,7 @@ import javax.ws.rs.core.Response;
 
 public class CommitRestTest extends MobiRestTestCXF {
     private AutoCloseable closeable;
+    private static final ObjectMapper mapper = new ObjectMapper();
     private static final String USER_IRI = "http://mobi.com/users/tester";
     private static final String RECORD_IRI = "http://mobi.com/records/test";
     private static final String ERROR_IRI = "http://mobi.com/error";
@@ -223,15 +226,15 @@ public class CommitRestTest extends MobiRestTestCXF {
     public void getCommitTest() {
         Response response = target().path("commits/" + encode(COMMIT_IRIS[1]))
                 .request().get();
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(commitManager).getCommit(vf.createIRI(COMMIT_IRIS[1]), conn);
         try {
-            JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
-            assertFalse(result.containsKey("commit"));
-            assertFalse(result.containsKey("additions"));
-            assertFalse(result.containsKey("deletions"));
-            assertTrue(result.containsKey("@id"));
-            assertEquals(result.getString("@id"), COMMIT_IRIS[1]);
+            ObjectNode result = mapper.readValue(response.readEntity(String.class), ObjectNode.class);
+            assertFalse(result.has("commit"));
+            assertFalse(result.has("additions"));
+            assertFalse(result.has("deletions"));
+            assertTrue(result.has("@id"));
+            assertEquals(COMMIT_IRIS[1], result.get("@id").asText());
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
@@ -247,7 +250,7 @@ public class CommitRestTest extends MobiRestTestCXF {
                 .request().get();
 
         // Then:
-        assertEquals(response.getStatus(), 404);
+        assertEquals(404, response.getStatus());
         verify(commitManager).getCommit(vf.createIRI(COMMIT_IRIS[1]), conn);
     }
 
@@ -258,7 +261,7 @@ public class CommitRestTest extends MobiRestTestCXF {
 
         Response response = target().path("commits/" + encode(ERROR_IRI))
                 .request().get();
-        assertEquals(response.getStatus(), 500);
+        assertEquals(500, response.getStatus());
     }
 
     // GET commits/{commitId}/history
@@ -266,18 +269,17 @@ public class CommitRestTest extends MobiRestTestCXF {
     public void getCommitHistoryTest() {
         Response response = target().path("commits/" + encode(COMMIT_IRIS[1]) + "/history")
                 .request().get();
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(commitManager).getCommitChain(vf.createIRI(COMMIT_IRIS[1]), conn);
         MultivaluedMap<String, Object> headers = response.getHeaders();
-        assertEquals(headers.get("X-Total-Count").get(0), "" + COMMIT_IRIS.length);
+        assertEquals(headers.get("X-Total-Count").get(0), String.valueOf(COMMIT_IRIS.length));
         assertEquals(response.getLinks().size(), 0);
         try {
-            JSONArray array = JSONArray.fromObject(response.readEntity(String.class));
+            ArrayNode array = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
             assertEquals(array.size(), COMMIT_IRIS.length);
             array.forEach(result -> {
-                JSONObject commitObj = JSONObject.fromObject(result);
-                assertTrue(commitObj.containsKey("id"));
-                assertTrue(Arrays.asList(COMMIT_IRIS).contains(commitObj.getString("id")));
+                assertTrue(result.has("id"));
+                assertTrue(Arrays.asList(COMMIT_IRIS).contains(result.get("id").asText()));
             });
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
@@ -290,18 +292,17 @@ public class CommitRestTest extends MobiRestTestCXF {
                 .queryParam("offset", 0)
                 .queryParam("limit", 10)
                 .request().get();
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(commitManager).getCommitChain(vf.createIRI(COMMIT_IRIS[1]), conn);
         MultivaluedMap<String, Object> headers = response.getHeaders();
-        assertEquals(headers.get("X-Total-Count").get(0), "" + COMMIT_IRIS.length);
+        assertEquals(headers.get("X-Total-Count").get(0), String.valueOf(COMMIT_IRIS.length));
         assertEquals(response.getLinks().size(), 0);
         try {
-            JSONArray array = JSONArray.fromObject(response.readEntity(String.class));
+            ArrayNode array = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
             assertEquals(array.size(), COMMIT_IRIS.length);
             array.forEach(result -> {
-                JSONObject commitObj = JSONObject.fromObject(result);
-                assertTrue(commitObj.containsKey("id"));
-                assertTrue(Arrays.asList(COMMIT_IRIS).contains(commitObj.getString("id")));
+                assertTrue(result.has("id"));
+                assertTrue(Arrays.asList(COMMIT_IRIS).contains(result.get("id").asText()));
             });
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
@@ -314,10 +315,10 @@ public class CommitRestTest extends MobiRestTestCXF {
                 .queryParam("offset", 1)
                 .queryParam("limit", 1)
                 .request().get();
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(commitManager).getCommitChain(vf.createIRI(COMMIT_IRIS[1]), conn);
         MultivaluedMap<String, Object> headers = response.getHeaders();
-        assertEquals(headers.get("X-Total-Count").get(0), "" + COMMIT_IRIS.length);
+        assertEquals(headers.get("X-Total-Count").get(0), String.valueOf(COMMIT_IRIS.length));
         Set<Link> links = response.getLinks();
         assertEquals(links.size(), 2);
         links.forEach(link -> {
@@ -325,11 +326,11 @@ public class CommitRestTest extends MobiRestTestCXF {
             assertTrue(link.getRel().equals("prev") || link.getRel().equals("next"));
         });
         try {
-            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+            ArrayNode result = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
             assertEquals(result.size(), 1);
-            JSONObject commitObj = result.getJSONObject(0);
-            assertTrue(commitObj.containsKey("id"));
-            assertEquals(commitObj.getString("id"), COMMIT_IRIS[1]);
+            JsonNode commitObj = result.get(0);
+            assertTrue(commitObj.has("id"));
+            assertEquals(COMMIT_IRIS[1], commitObj.get("id").asText());
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
@@ -342,7 +343,7 @@ public class CommitRestTest extends MobiRestTestCXF {
 
         Response response = target().path("commits/" + encode(ERROR_IRI) + "/history")
                 .request().get();
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -352,12 +353,12 @@ public class CommitRestTest extends MobiRestTestCXF {
 
         Response response = target().path("commits/" + encode(COMMIT_IRIS[1]) + "/history")
                 .request().get();
-        assertEquals(response.getStatus(), 500);
+        assertEquals(500, response.getStatus());
 
         doThrow(new IllegalStateException()).when(commitManager).getCommitChain(vf.createIRI(COMMIT_IRIS[1]), conn);
         response = target().path("commits/" + encode(COMMIT_IRIS[1]) + "/history")
                 .request().get();
-        assertEquals(response.getStatus(), 500);
+        assertEquals(500, response.getStatus());
     }
 
     // GET commits/{commitId}/resource
@@ -370,14 +371,14 @@ public class CommitRestTest extends MobiRestTestCXF {
         when(compiledResourceManager.getCompiledResource(any(List.class), any(RepositoryConnection.class))).thenReturn(expected);
         Response response = target().path("commits/" + encode(COMMIT_IRIS[1]) + "/resource")
                 .request().get();
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(commitManager).getCommitChain(vf.createIRI(COMMIT_IRIS[1]), conn);
         try {
-            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
-            JSONObject commitObj = result.getJSONObject(0);
-            assertTrue(commitObj.containsKey("@id"));
-            assertEquals(commitObj.getString("@id"), COMMIT_IRIS[0]);
-            assertTrue(result.size() == 3);
+            ArrayNode result = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
+            JsonNode commitObj = result.get(0);
+            assertTrue(commitObj.has("@id"));
+            assertEquals(COMMIT_IRIS[0], commitObj.get("@id").asText());
+            assertEquals(3, result.size());
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
@@ -391,13 +392,13 @@ public class CommitRestTest extends MobiRestTestCXF {
         when(compiledResourceManager.getCompiledResource(any(List.class), any(RepositoryConnection.class), any(Resource.class))).thenReturn(expected);
         Response response = target().path("commits/" + encode(COMMIT_IRIS[1]) + "/resource")
                 .queryParam("entityId", encode("http://www.w3.org/2002/07/owl#Ontology")).request().get();
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(commitManager).getCommitEntityChain(vf.createIRI(COMMIT_IRIS[1]), vf.createIRI("http://www.w3.org/2002/07/owl#Ontology"), conn);
         try {
-            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
-            JSONObject commitObj = result.getJSONObject(0);
-            assertTrue(commitObj.containsKey("@id"));
-            assertTrue(result.size() == 1);
+            ArrayNode result = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
+            JsonNode commitObj = result.get(0);
+            assertTrue(commitObj.has("@id"));
+            assertEquals(1, result.size());
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
@@ -411,11 +412,11 @@ public class CommitRestTest extends MobiRestTestCXF {
         when(commitManager.getCommitEntityChain(any(Resource.class), any(Resource.class), any(RepositoryConnection.class))).thenReturn(emptyList);
         Response response = target().path("commits/" + encode(COMMIT_IRIS[1]) + "/resource")
                 .queryParam("entityId", encode("http://mobi.com/test/empty")).request().get();
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(commitManager).getCommitEntityChain(vf.createIRI(COMMIT_IRIS[1]), vf.createIRI("http://mobi.com/test/empty"), conn);
         try {
-            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
-            assertTrue(result.size() == 0);
+            ArrayNode result = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
+            assertEquals(0, result.size());
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
@@ -426,12 +427,12 @@ public class CommitRestTest extends MobiRestTestCXF {
     public void getDifferenceTest() {
         Response response = target().path("commits/" + encode(COMMIT_IRIS[1]) + "/difference")
                 .queryParam("targetId", encode(COMMIT_IRIS[0])).request().get();
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(differenceManager).getDifference(eq(vf.createIRI(COMMIT_IRIS[1])), eq(vf.createIRI(COMMIT_IRIS[0])), any(RepositoryConnection.class));
         try {
-            JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
-            assertTrue(result.containsKey("additions"));
-            assertTrue(result.containsKey("deletions"));
+            ObjectNode result = mapper.readValue(response.readEntity(String.class), ObjectNode.class);
+            assertTrue(result.has("additions"));
+            assertTrue(result.has("deletions"));
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
@@ -445,12 +446,12 @@ public class CommitRestTest extends MobiRestTestCXF {
                 .queryParam("limit", 100).queryParam("offset", 0).request().get();
 
         // Then
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(differenceManager).getCommitDifferencePaged(eq(vf.createIRI(COMMIT_IRIS[1])), eq(vf.createIRI(COMMIT_IRIS[0])), eq(100), eq(0), any(RepositoryConnection.class));
         try {
-            JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
-            assertTrue(result.containsKey("additions"));
-            assertTrue(result.containsKey("deletions"));
+            ObjectNode result = mapper.readValue(response.readEntity(String.class), ObjectNode.class);
+            assertTrue(result.has("additions"));
+            assertTrue(result.has("deletions"));
             assertTrue(response.getHeaders().keySet().contains("Has-More-Results"));
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
@@ -463,16 +464,16 @@ public class CommitRestTest extends MobiRestTestCXF {
         Response response = target().path("commits/" + encode(COMMIT_IRIS[1]) + "/difference").request().get();
 
         // Then
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(commitManager).getCommit(vf.createIRI(COMMIT_IRIS[1]), conn);
         try {
-            JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
-            assertTrue(result.containsKey("commit"));
-            assertTrue(result.containsKey("additions"));
-            assertTrue(result.containsKey("deletions"));
-            JSONObject commit = result.getJSONObject("commit");
-            assertTrue(commit.containsKey("@id"));
-            assertEquals(commit.getString("@id"), COMMIT_IRIS[1]);
+            ObjectNode result = mapper.readValue(response.readEntity(String.class), ObjectNode.class);
+            assertTrue(result.has("commit"));
+            assertTrue(result.has("additions"));
+            assertTrue(result.has("deletions"));
+            JsonNode commit = result.get("commit");
+            assertTrue(commit.has("@id"));
+            assertEquals(COMMIT_IRIS[1], commit.get("@id").asText());
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
@@ -488,7 +489,7 @@ public class CommitRestTest extends MobiRestTestCXF {
                 .request().get();
 
         // Then:
-        assertEquals(response.getStatus(), 404);
+        assertEquals(404, response.getStatus());
         verify(commitManager).getCommit(vf.createIRI(COMMIT_IRIS[1]), conn);
     }
 
@@ -498,17 +499,17 @@ public class CommitRestTest extends MobiRestTestCXF {
         doThrow(new IllegalArgumentException()).when(differenceManager).getDifference(eq(vf.createIRI(ERROR_IRI)), eq(vf.createIRI(COMMIT_IRIS[0])), any(RepositoryConnection.class));
         Response response = target().path("commits/" + encode(ERROR_IRI) + "/difference")
                 .queryParam("targetId", encode(COMMIT_IRIS[0])).request().get();
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
 
         doThrow(new MobiException()).when(differenceManager).getDifference(eq(vf.createIRI(COMMIT_IRIS[1])), eq(vf.createIRI(COMMIT_IRIS[0])), any(RepositoryConnection.class));
         response = target().path("commits/" + encode(COMMIT_IRIS[1]) + "/difference")
                 .queryParam("targetId", encode(COMMIT_IRIS[0])).request().get();
-        assertEquals(response.getStatus(), 500);
+        assertEquals(500, response.getStatus());
 
         doThrow(new IllegalStateException()).when(differenceManager).getDifference(eq(vf.createIRI(COMMIT_IRIS[1])), eq(vf.createIRI(COMMIT_IRIS[0])), any(RepositoryConnection.class));
         response = target().path("commits/" + encode(COMMIT_IRIS[1]) + "/difference")
                 .queryParam("targetId", encode(COMMIT_IRIS[0])).request().get();
-        assertEquals(response.getStatus(), 500);
+        assertEquals(500, response.getStatus());
     }
 
     @Test
@@ -518,17 +519,17 @@ public class CommitRestTest extends MobiRestTestCXF {
                 .queryParam("limit", 100).queryParam("offset", 0).request().get();
 
         // Then
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(commitManager).getCommit(vf.createIRI(COMMIT_IRIS[1]), conn);
         try {
-            JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
-            assertTrue(result.containsKey("commit"));
-            assertTrue(result.containsKey("additions"));
-            assertTrue(result.containsKey("deletions"));
-            JSONObject commit = result.getJSONObject("commit");
-            assertTrue(commit.containsKey("@id"));
-            assertEquals(commit.getString("@id"), COMMIT_IRIS[1]);
-            assertTrue(response.getHeaders().keySet().contains("Has-More-Results"));
+            ObjectNode result = mapper.readValue(response.readEntity(String.class), ObjectNode.class);
+            assertTrue(result.has("commit"));
+            assertTrue(result.has("additions"));
+            assertTrue(result.has("deletions"));
+            JsonNode commit = result.get("commit");
+            assertTrue(commit.has("@id"));
+            assertEquals(COMMIT_IRIS[1], commit.get("@id").asText());
+            assertTrue(response.getHeaders().containsKey("Has-More-Results"));
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
@@ -539,13 +540,13 @@ public class CommitRestTest extends MobiRestTestCXF {
     public void getDifferenceForSubjectTest() {
         Response response = target().path("commits/" + encode(COMMIT_IRIS[1]) + "/difference/" + encode(SUBJECT_IRI[0]))
                 .request().get();
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(commitManager).getCommit(vf.createIRI(COMMIT_IRIS[1]), conn);
         verify(differenceManager).getCommitDifferenceForSubject(eq(vf.createIRI(SUBJECT_IRI[0])), eq(vf.createIRI(COMMIT_IRIS[1])), any(RepositoryConnection.class));
         try {
-            JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
-            assertTrue(result.containsKey("additions"));
-            assertTrue(result.containsKey("deletions"));
+            ObjectNode result = mapper.readValue(response.readEntity(String.class), ObjectNode.class);
+            assertTrue(result.has("additions"));
+            assertTrue(result.has("deletions"));
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
@@ -558,19 +559,19 @@ public class CommitRestTest extends MobiRestTestCXF {
         Response response = target().path("commits/" + encode(COMMIT_IRIS[1]) + "/difference/" + encode(SUBJECT_IRI[0]))
                 .request().get();
         verify(commitManager).getCommit(vf.createIRI(COMMIT_IRIS[1]), conn);
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
 
         doThrow(new MobiException()).when(differenceManager).getCommitDifferenceForSubject(eq(vf.createIRI(SUBJECT_IRI[0])), eq(vf.createIRI(COMMIT_IRIS[1])), any(RepositoryConnection.class));
         response = target().path("commits/" + encode(COMMIT_IRIS[1]) + "/difference/" + encode(SUBJECT_IRI[0]))
                 .request().get();
         verify(commitManager, times(2)).getCommit(vf.createIRI(COMMIT_IRIS[1]), conn);
-        assertEquals(response.getStatus(), 500);
+        assertEquals(500, response.getStatus());
 
         doThrow(new IllegalStateException()).when(differenceManager).getCommitDifferenceForSubject(eq(vf.createIRI(SUBJECT_IRI[0])), eq(vf.createIRI(COMMIT_IRIS[1])), any(RepositoryConnection.class));
         response = target().path("commits/" + encode(COMMIT_IRIS[1]) + "/difference/" + encode(SUBJECT_IRI[0]))
                 .request().get();
         verify(commitManager, times(3)).getCommit(vf.createIRI(COMMIT_IRIS[1]), conn);
-        assertEquals(response.getStatus(), 500);
+        assertEquals(500, response.getStatus());
     }
 
     @Test
@@ -583,7 +584,7 @@ public class CommitRestTest extends MobiRestTestCXF {
                 .request().get();
 
         // Then:
-        assertEquals(response.getStatus(), 404);
+        assertEquals(404, response.getStatus());
         verify(commitManager).getCommit(vf.createIRI(COMMIT_IRIS[1]), conn);
     }
 
@@ -596,7 +597,7 @@ public class CommitRestTest extends MobiRestTestCXF {
                 .queryParam("offset", 0)
                 .queryParam("limit", 1)
                 .request().get();
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(commitManager).getCommitEntityChain(vf.createIRI(COMMIT_IRIS[1]), vf.createIRI("http://mobi.com/test/class5"), conn);
         MultivaluedMap<String, Object> headers = response.getHeaders();
         assertEquals(headers.get("X-Total-Count").get(0), "" + ENTITY_IRI.length);
@@ -608,11 +609,11 @@ public class CommitRestTest extends MobiRestTestCXF {
             assertTrue(link.getRel().equals("prev") || link.getRel().equals("next"));
         });
         try {
-            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+            ArrayNode result = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
             assertEquals(result.size(), 1);
-            JSONObject commitObj = result.getJSONObject(0);
-            assertTrue(commitObj.containsKey("id"));
-            assertEquals(commitObj.getString("id"), COMMIT_IRIS[1]);
+            JsonNode commitObj = result.get(0);
+            assertTrue(commitObj.has("id"));
+            assertEquals(COMMIT_IRIS[1], commitObj.get("id").asText());
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
@@ -625,7 +626,7 @@ public class CommitRestTest extends MobiRestTestCXF {
                 .queryParam("targetId", encode(COMMIT_IRIS[0]))
                 .queryParam("entityId", encode(vf.createIRI("http://mobi.com/test/class5")))
                 .request().get();
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(commitManager).getCommitEntityChain(vf.createIRI(COMMIT_IRIS[1]), vf.createIRI(COMMIT_IRIS[0]), vf.createIRI("http://mobi.com/test/class5"), conn);
         MultivaluedMap<String, Object> headers = response.getHeaders();
         assertEquals(headers.get("X-Total-Count").get(0), "" + ENTITY_IRI.length);
@@ -636,11 +637,11 @@ public class CommitRestTest extends MobiRestTestCXF {
             assertTrue(link.getRel().equals("prev") || link.getRel().equals("next"));
         });
         try {
-            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+            ArrayNode result = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
             assertEquals(result.size(), 1);
-            JSONObject commitObj = result.getJSONObject(0);
-            assertTrue(commitObj.containsKey("id"));
-            assertEquals(commitObj.getString("id"), COMMIT_IRIS[1]);
+            JsonNode commitObj = result.get(0);
+            assertTrue(commitObj.has("id"));
+            assertEquals(COMMIT_IRIS[1], commitObj.get("id").asText());
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }

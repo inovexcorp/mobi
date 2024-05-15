@@ -37,6 +37,9 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.Role;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
@@ -50,8 +53,6 @@ import com.mobi.setting.api.ontologies.ApplicationSetting;
 import com.mobi.setting.api.ontologies.ApplicationSettingImpl;
 import com.mobi.setting.api.ontologies.Preference;
 import com.mobi.setting.api.ontologies.PreferenceImpl;
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
@@ -66,12 +67,14 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
 
 public class SettingRestTest extends MobiRestTestCXF {
+    private static final ObjectMapper mapper = new ObjectMapper();
     private static SettingRest rest;
     private static OrmFactory<User> userFactory;
     private static OrmFactory<Role> roleFactory;
@@ -121,7 +124,7 @@ public class SettingRestTest extends MobiRestTestCXF {
         preferenceSet.add(simplePreference);
         preferenceSet.add(complexPreference);
 
-        simplePreferenceJson = IOUtils.toString(getClass().getResourceAsStream("/simplePreference.json"), StandardCharsets.UTF_8);
+        simplePreferenceJson = IOUtils.toString(Objects.requireNonNull(getClass().getResourceAsStream("/simplePreference.json")), StandardCharsets.UTF_8);
 
         // Get mocks
         when(preferenceService.getTypeIRI()).thenReturn(Preference.TYPE);
@@ -153,7 +156,7 @@ public class SettingRestTest extends MobiRestTestCXF {
         applicationSettingSet.add(simpleApplicationSetting);
         applicationSettingSet.add(complexApplicationSetting);
 
-        simpleApplicationSettingJson = IOUtils.toString(getClass().getResourceAsStream("/simpleApplicationSetting.json"), StandardCharsets.UTF_8);
+        simpleApplicationSettingJson = IOUtils.toString(Objects.requireNonNull(getClass().getResourceAsStream("/simpleApplicationSetting.json")), StandardCharsets.UTF_8);
 
         when(applicationSettingService.getTypeIRI()).thenReturn(ApplicationSetting.TYPE);
         when(applicationSettingService.getSettings(user)).thenReturn(applicationSettingSet);
@@ -177,10 +180,10 @@ public class SettingRestTest extends MobiRestTestCXF {
     public void getPreferencesTest() throws Exception {
         Response response = target().path("settings").queryParam("type", Preference.TYPE).request().get();
         assertEquals(200, response.getStatus());
-        JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
+        ObjectNode result = mapper.readValue(response.readEntity(String.class), ObjectNode.class);
         assertEquals(2, result.size());
-        assertEquals(1, result.getJSONArray(TestSimplePreference.TYPE).size());
-        assertEquals(2, result.getJSONArray(TestComplexPreference.TYPE).size());
+        assertEquals(1, result.get(TestSimplePreference.TYPE).size());
+        assertEquals(2, result.get(TestComplexPreference.TYPE).size());
     }
 
     @Test
@@ -188,7 +191,7 @@ public class SettingRestTest extends MobiRestTestCXF {
         when(preferenceService.getSettings(any())).thenReturn(new HashSet<>());
         Response response = target().path("settings").queryParam("type", Preference.TYPE).request().get();
         assertEquals(200, response.getStatus());
-        JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
+        ObjectNode result = mapper.readValue(response.readEntity(String.class), ObjectNode.class);
         assertEquals(0, result.size());
     }
 
@@ -199,10 +202,10 @@ public class SettingRestTest extends MobiRestTestCXF {
     public void getApplicationSettingsTest() throws Exception {
         Response response = target().path("settings").queryParam("type", ApplicationSetting.TYPE).request().get();
         assertEquals(200, response.getStatus());
-        JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
+        ObjectNode result = mapper.readValue(response.readEntity(String.class), ObjectNode.class);
         assertEquals(2, result.size());
-        assertEquals(1, result.getJSONArray(SettingRestTest.TestSimpleApplicationSetting.TYPE).size());
-        assertEquals(2, result.getJSONArray(SettingRestTest.TestComplexApplicationSetting.TYPE).size());
+        assertEquals(1, result.get(SettingRestTest.TestSimpleApplicationSetting.TYPE).size());
+        assertEquals(2, result.get(SettingRestTest.TestComplexApplicationSetting.TYPE).size());
     }
 
     @Test
@@ -210,7 +213,7 @@ public class SettingRestTest extends MobiRestTestCXF {
         when(applicationSettingService.getSettings(any())).thenReturn(new HashSet<>());
         Response response = target().path("settings").queryParam("type", ApplicationSetting.TYPE).request().get();
         assertEquals(200, response.getStatus());
-        JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
+        ObjectNode result = mapper.readValue(response.readEntity(String.class), ObjectNode.class);
         assertEquals(0, result.size());
     }
 
@@ -221,13 +224,13 @@ public class SettingRestTest extends MobiRestTestCXF {
         Response response = target().path("settings/" + encode("http://example.com/MySimplePreference"))
                 .queryParam("type", Preference.TYPE)
                 .request().get();
-        JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+        ArrayNode result = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
         assertEquals(1, result.size());
 
         Response secondResponse = target().path("settings/" + encode("http://example.com/MyComplexPreference"))
                 .queryParam("type", Preference.TYPE)
                 .request().get();
-        JSONArray secondResult = JSONArray.fromObject(secondResponse.readEntity(String.class));
+        ArrayNode secondResult = mapper.readValue(secondResponse.readEntity(String.class), ArrayNode.class);
         assertEquals(2, secondResult.size());
     }
 
@@ -265,13 +268,13 @@ public class SettingRestTest extends MobiRestTestCXF {
         Response response = target().path("settings/" + encode("http://example.com/MySimpleApplicationSetting"))
                 .queryParam("type", ApplicationSetting.TYPE)
                 .request().get();
-        JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+        ArrayNode result = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
         assertEquals(1, result.size());
 
         Response secondResponse = target().path("settings/" + encode("http://example.com/MyComplexApplicationSetting"))
                 .queryParam("type", ApplicationSetting.TYPE)
                 .request().get();
-        JSONArray secondResult = JSONArray.fromObject(secondResponse.readEntity(String.class));
+        ArrayNode secondResult = mapper.readValue(secondResponse.readEntity(String.class), ArrayNode.class);
         assertEquals(2, secondResult.size());
     }
 
@@ -307,7 +310,7 @@ public class SettingRestTest extends MobiRestTestCXF {
 
     @Test
     public void createPreferenceTest() throws Exception {
-        JSONArray entity = JSONArray.fromObject(simplePreferenceJson);
+        ArrayNode entity = mapper.readValue(simplePreferenceJson, ArrayNode.class);
         Response response = target().path("settings")
                 .queryParam("type", Preference.TYPE)
                 .queryParam("subType", TestSimplePreference.TYPE)
@@ -328,7 +331,7 @@ public class SettingRestTest extends MobiRestTestCXF {
 
     @Test
     public void createPreferenceNoTypeTest() throws Exception {
-        JSONArray entity = JSONArray.fromObject(simplePreferenceJson);
+        ArrayNode entity = mapper.readValue(simplePreferenceJson, ArrayNode.class);
         Response response = target().path("settings")
                 .queryParam("subType", TestSimplePreference.TYPE)
                 .request().post(Entity.json(entity.toString()));
@@ -338,7 +341,7 @@ public class SettingRestTest extends MobiRestTestCXF {
 
     @Test
     public void createPreferenceNoSubTypeTest() throws Exception {
-        JSONArray entity = JSONArray.fromObject(simplePreferenceJson);
+        ArrayNode entity = mapper.readValue(simplePreferenceJson, ArrayNode.class);
         Response response = target().path("settings")
                 .queryParam("type", Preference.TYPE)
                 .request().post(Entity.json(entity.toString()));
@@ -349,7 +352,7 @@ public class SettingRestTest extends MobiRestTestCXF {
     @Test
     public void createPreferenceIllegalArgumentTest() throws Exception {
         doThrow(IllegalArgumentException.class).when(preferenceService).createSetting(any(), any(), any());
-        JSONArray entity = JSONArray.fromObject(simplePreferenceJson);
+        ArrayNode entity = mapper.readValue(simplePreferenceJson, ArrayNode.class);
         Response response = target().path("settings")
                 .queryParam("type", Preference.TYPE)
                 .queryParam("subType", TestSimplePreference.TYPE)
@@ -361,7 +364,7 @@ public class SettingRestTest extends MobiRestTestCXF {
     @Test
     public void createPreferenceIllegalStateTest() throws Exception {
         doThrow(IllegalStateException.class).when(preferenceService).createSetting(any(), any(), any());
-        JSONArray entity = JSONArray.fromObject(simplePreferenceJson);
+        ArrayNode entity = mapper.readValue(simplePreferenceJson, ArrayNode.class);
         Response response = target().path("settings")
                 .queryParam("type", Preference.TYPE)
                 .queryParam("subType", TestSimplePreference.TYPE)
@@ -375,7 +378,7 @@ public class SettingRestTest extends MobiRestTestCXF {
 
     @Test
     public void createApplicationSettingWithNonAdminTest() throws Exception {
-        JSONArray entity = JSONArray.fromObject(simpleApplicationSettingJson);
+        ArrayNode entity = mapper.readValue(simpleApplicationSettingJson, ArrayNode.class);
         Response response = target().path("settings")
                 .queryParam("type", ApplicationSetting.TYPE)
                 .queryParam("subType", TestSimpleApplicationSetting.TYPE)
@@ -387,7 +390,7 @@ public class SettingRestTest extends MobiRestTestCXF {
     @Test
     public void createApplicationSettingWithAdminTest() throws Exception {
         when(engineManager.retrieveUser(any())).thenReturn(Optional.of(adminUser));
-        JSONArray entity = JSONArray.fromObject(simpleApplicationSettingJson);
+        ArrayNode entity = mapper.readValue(simpleApplicationSettingJson, ArrayNode.class);
         Response response = target().path("settings")
                 .queryParam("type", ApplicationSetting.TYPE)
                 .queryParam("subType", TestSimpleApplicationSetting.TYPE)
@@ -410,7 +413,7 @@ public class SettingRestTest extends MobiRestTestCXF {
     @Test
     public void createApplicationSettingNoSubType() throws Exception {
         when(engineManager.retrieveUser(any())).thenReturn(Optional.of(adminUser));
-        JSONArray entity = JSONArray.fromObject(simpleApplicationSettingJson);
+        ArrayNode entity = mapper.readValue(simpleApplicationSettingJson, ArrayNode.class);
         Response response = target().path("settings")
                 .queryParam("type", ApplicationSetting.TYPE)
                 .request().post(Entity.json(entity.toString()));
@@ -420,7 +423,7 @@ public class SettingRestTest extends MobiRestTestCXF {
     @Test
     public void createApplicationSettingNoType() throws Exception {
         when(engineManager.retrieveUser(any())).thenReturn(Optional.of(adminUser));
-        JSONArray entity = JSONArray.fromObject(simpleApplicationSettingJson);
+        ArrayNode entity = mapper.readValue(simpleApplicationSettingJson, ArrayNode.class);
         Response response = target().path("settings")
                 .queryParam("subType", TestSimpleApplicationSetting.TYPE)
                 .request().post(Entity.json(entity.toString()));
@@ -431,7 +434,7 @@ public class SettingRestTest extends MobiRestTestCXF {
     public void createApplicationIllegalArgumentTest() throws Exception {
         when(engineManager.retrieveUser(any())).thenReturn(Optional.of(adminUser));
         doThrow(IllegalArgumentException.class).when(applicationSettingService).createSetting(any(), any(), any());
-        JSONArray entity = JSONArray.fromObject(simpleApplicationSettingJson);
+        ArrayNode entity = mapper.readValue(simpleApplicationSettingJson, ArrayNode.class);
         Response response = target().path("settings")
                 .queryParam("type", ApplicationSetting.TYPE)
                 .queryParam("subType", TestSimplePreference.TYPE)
@@ -444,7 +447,7 @@ public class SettingRestTest extends MobiRestTestCXF {
     public void createApplicationIllegalStateTest() throws Exception {
         when(engineManager.retrieveUser(any())).thenReturn(Optional.of(adminUser));
         doThrow(IllegalStateException.class).when(applicationSettingService).createSetting(any(), any(), any());
-        JSONArray entity = JSONArray.fromObject(simplePreferenceJson);
+        ArrayNode entity = mapper.readValue(simplePreferenceJson, ArrayNode.class);
         Response response = target().path("settings")
                 .queryParam("type", ApplicationSetting.TYPE)
                 .queryParam("subType", TestSimplePreference.TYPE)
@@ -458,7 +461,7 @@ public class SettingRestTest extends MobiRestTestCXF {
 
     @Test
     public void updatePreferenceTest() throws Exception {
-        JSONArray entity = JSONArray.fromObject(simplePreferenceJson);
+        ArrayNode entity = mapper.readValue(simplePreferenceJson, ArrayNode.class);
         Response response = target().path("settings/" + encode("http://example.com/MySimplePreference"))
                 .queryParam("type", Preference.TYPE)
                 .queryParam("subType", TestSimplePreference.TYPE)
@@ -479,7 +482,7 @@ public class SettingRestTest extends MobiRestTestCXF {
 
     @Test
     public void updatePreferenceNoSubTypeTest() throws Exception {
-        JSONArray entity = JSONArray.fromObject(simplePreferenceJson);
+        ArrayNode entity = mapper.readValue(simplePreferenceJson, ArrayNode.class);
         Response response = target().path("settings/" + encode("http://example.com/MySimplePreference"))
                 .queryParam("type", Preference.TYPE)
                 .request().put(Entity.json(entity.toString()));
@@ -489,7 +492,7 @@ public class SettingRestTest extends MobiRestTestCXF {
 
     @Test
     public void updatePreferenceNoTypeTest() throws Exception {
-        JSONArray entity = JSONArray.fromObject(simplePreferenceJson);
+        ArrayNode entity = mapper.readValue(simplePreferenceJson, ArrayNode.class);
         Response response = target().path("settings/" + encode("http://example.com/MySimplePreference"))
                 .queryParam("subType", TestComplexPreference.TYPE)
                 .request().put(Entity.json(entity.toString()));
@@ -500,7 +503,7 @@ public class SettingRestTest extends MobiRestTestCXF {
     @Test
     public void updatePreferenceIllegalArgumentTest() throws Exception {
         doThrow(IllegalArgumentException.class).when(preferenceService).updateSetting(any(), any(), any(), any());
-        JSONArray entity = JSONArray.fromObject(simplePreferenceJson);
+        ArrayNode entity = mapper.readValue(simplePreferenceJson, ArrayNode.class);
         Response response = target().path("settings/" + encode("http://example.com/MySimplePreference"))
                 .queryParam("type", Preference.TYPE)
                 .queryParam("subType", TestSimplePreference.TYPE)
@@ -512,7 +515,7 @@ public class SettingRestTest extends MobiRestTestCXF {
     @Test
     public void updatePreferenceIllegalStateTest() throws Exception {
         doThrow(IllegalStateException.class).when(preferenceService).updateSetting(any(), any(), any(), any());
-        JSONArray entity = JSONArray.fromObject(simplePreferenceJson);
+        ArrayNode entity = mapper.readValue(simplePreferenceJson, ArrayNode.class);
         Response response = target().path("settings/" + encode("http://example.com/MySimplePreference"))
                 .queryParam("type", Preference.TYPE)
                 .queryParam("subType", TestSimplePreference.TYPE)
@@ -526,7 +529,7 @@ public class SettingRestTest extends MobiRestTestCXF {
 
     @Test
     public void updateApplicationSettingNonAdminTest() throws Exception {
-        JSONArray entity = JSONArray.fromObject(simpleApplicationSettingJson);
+        ArrayNode entity = mapper.readValue(simpleApplicationSettingJson, ArrayNode.class);
         Response response = target().path("settings/" + encode("http://example.com/MySimpleApplicationSetting"))
                 .queryParam("type", ApplicationSetting.TYPE)
                 .queryParam("subType", TestSimpleApplicationSetting.TYPE)
@@ -538,7 +541,7 @@ public class SettingRestTest extends MobiRestTestCXF {
     @Test
     public void updateApplicationSettingWithAdminTest() throws Exception {
         when(engineManager.retrieveUser(any())).thenReturn(Optional.of(adminUser));
-        JSONArray entity = JSONArray.fromObject(simpleApplicationSettingJson);
+        ArrayNode entity = mapper.readValue(simpleApplicationSettingJson, ArrayNode.class);
         Response response = target().path("settings/" + encode("http://example.com/MySimpleApplicationSetting"))
                 .queryParam("type", ApplicationSetting.TYPE)
                 .queryParam("subType", TestSimpleApplicationSetting.TYPE)
@@ -561,7 +564,7 @@ public class SettingRestTest extends MobiRestTestCXF {
     @Test
     public void updateApplicationSettingNoSubTypeTest() throws Exception {
         when(engineManager.retrieveUser(any())).thenReturn(Optional.of(adminUser));
-        JSONArray entity = JSONArray.fromObject(simpleApplicationSettingJson);
+        ArrayNode entity = mapper.readValue(simpleApplicationSettingJson, ArrayNode.class);
         Response response = target().path("settings/" + encode("http://example.com/MySimpleApplicationSetting"))
                 .queryParam("type", TestSimpleApplicationSetting.TYPE)
                 .request().put(Entity.json(entity.toString()));
@@ -571,7 +574,7 @@ public class SettingRestTest extends MobiRestTestCXF {
     @Test
     public void updateApplicationSettingNoTypeTest() throws Exception {
         when(engineManager.retrieveUser(any())).thenReturn(Optional.of(adminUser));
-        JSONArray entity = JSONArray.fromObject(simpleApplicationSettingJson);
+        ArrayNode entity = mapper.readValue(simpleApplicationSettingJson, ArrayNode.class);
         Response response = target().path("settings/" + encode("http://example.com/MySimpleApplicationSetting"))
                 .queryParam("subType", TestSimpleApplicationSetting.TYPE)
                 .request().put(Entity.json(entity.toString()));
@@ -582,7 +585,7 @@ public class SettingRestTest extends MobiRestTestCXF {
     public void updateApplicationSettingIllegalArgumentTest() throws Exception {
         when(engineManager.retrieveUser(any())).thenReturn(Optional.of(adminUser));
         doThrow(IllegalArgumentException.class).when(applicationSettingService).updateSetting(any(), any(), any(), any());
-        JSONArray entity = JSONArray.fromObject(simpleApplicationSettingJson);
+        ArrayNode entity = mapper.readValue(simpleApplicationSettingJson, ArrayNode.class);
         Response response = target().path("settings/" + encode("http://example.com/MySimpleApplicationSetting"))
                 .queryParam("type", ApplicationSetting.TYPE)
                 .queryParam("subType", TestSimpleApplicationSetting.TYPE)
@@ -595,7 +598,7 @@ public class SettingRestTest extends MobiRestTestCXF {
     public void updateApplicationSettingIllegalStateTest() throws Exception {
         when(engineManager.retrieveUser(any())).thenReturn(Optional.of(adminUser));
         doThrow(IllegalStateException.class).when(applicationSettingService).updateSetting(any(), any(), any(), any());
-        JSONArray entity = JSONArray.fromObject(simpleApplicationSettingJson);
+        ArrayNode entity = mapper.readValue(simpleApplicationSettingJson, ArrayNode.class);
         Response response = target().path("settings/" + encode("http://example.com/MySimpleApplicationSetting"))
                 .queryParam("type", ApplicationSetting.TYPE)
                 .queryParam("subType", TestSimpleApplicationSetting.TYPE)
@@ -705,13 +708,13 @@ public class SettingRestTest extends MobiRestTestCXF {
         Response response = target().path("settings/types/" + encode(TestSimplePreference.TYPE))
                 .queryParam("type", Preference.TYPE)
                 .request().get();
-        JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+        ArrayNode result = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
         assertEquals(1, result.size());
 
         Response secondResponse = target().path("settings/types/" + encode(TestComplexPreference.TYPE))
                 .queryParam("type", Preference.TYPE)
                 .request().get();
-        JSONArray secondResult = JSONArray.fromObject(secondResponse.readEntity(String.class));
+        ArrayNode secondResult = mapper.readValue(secondResponse.readEntity(String.class), ArrayNode.class);
         assertEquals(2, secondResult.size());
     }
 
@@ -749,13 +752,13 @@ public class SettingRestTest extends MobiRestTestCXF {
         Response response = target().path("settings/types/" + encode(TestSimpleApplicationSetting.TYPE))
                 .queryParam("type", ApplicationSetting.TYPE)
                 .request().get();
-        JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+        ArrayNode result = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
         assertEquals(1, result.size());
 
         Response secondResponse = target().path("settings/types/" + encode(TestComplexApplicationSetting.TYPE))
                 .queryParam("type", ApplicationSetting.TYPE)
                 .request().get();
-        JSONArray secondResult = JSONArray.fromObject(secondResponse.readEntity(String.class));
+        ArrayNode secondResult = mapper.readValue(secondResponse.readEntity(String.class), ArrayNode.class);
         assertEquals(2, secondResult.size());
     }
 
@@ -892,7 +895,7 @@ public class SettingRestTest extends MobiRestTestCXF {
         Response response = target().path("settings/groups/")
                 .queryParam("type", Preference.TYPE)
                 .request().get();
-        JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+        ArrayNode result = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
         assertEquals(200, response.getStatus());
         assertEquals(2, result.size());
     }
@@ -934,7 +937,7 @@ public class SettingRestTest extends MobiRestTestCXF {
         Response response = target().path("settings/groups")
                 .queryParam("type", ApplicationSetting.TYPE)
                 .request().get();
-        JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+        ArrayNode result = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
         assertEquals(200, response.getStatus());
         assertEquals(2, result.size());
     }
@@ -977,7 +980,7 @@ public class SettingRestTest extends MobiRestTestCXF {
                 encode("http://example.com/SomeOtherPreferenceGroup") + "/definitions")
                 .queryParam("type", Preference.TYPE)
                 .request().get();
-        JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+        ArrayNode result = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
         assertEquals(200, response.getStatus());
         assertEquals(4, result.size());
     }
@@ -1020,7 +1023,7 @@ public class SettingRestTest extends MobiRestTestCXF {
                 encode("http://example.com/SomeOtherApplicationSettingGroup") + "/definitions")
                 .queryParam("type", ApplicationSetting.TYPE)
                 .request().get();
-        JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+        ArrayNode result = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
         assertEquals(200, response.getStatus());
         assertEquals(4, result.size());
     }

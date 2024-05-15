@@ -86,7 +86,6 @@ import com.mobi.workflows.api.ontologies.workflows.WorkflowExecutionActivity;
 import com.mobi.workflows.api.ontologies.workflows.WorkflowRecord;
 import com.mobi.workflows.api.ontologies.workflows.WorkflowRecordFactory;
 import com.mobi.workflows.exception.InvalidWorkflowException;
-import net.sf.json.JSONObject;
 import org.apache.cxf.helpers.IOUtils;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
@@ -1169,7 +1168,7 @@ public class WorkflowsRestTest extends MobiRestTestCXF {
     }
 
     @Test
-    public void testUploadChangesTrigToWorkflowNoDiff() {
+    public void testUploadChangesTrigToWorkflowNoDiff() throws Exception {
         when(compiledResourceManager.getCompiledResource(eq(recordId), eq(branchId), eq(commitId), any(RepositoryConnection.class)))
                 .thenReturn(workflowModel);
         when(commitManager.getInProgressCommitOpt(eq(catalogId), eq(recordId),
@@ -1187,9 +1186,9 @@ public class WorkflowsRestTest extends MobiRestTestCXF {
                 .put(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
 
         assertEquals(response.getStatus(), Response.Status.BAD_REQUEST.getStatusCode());
-        JSONObject responseObject = getResponse(response);
-        assertEquals(responseObject.get("error"), "IllegalArgumentException");
-        assertEquals(responseObject.get("errorMessage"), "TriG data is not supported for upload changes.");
+        ObjectNode responseObject = getResponse(response);
+        assertEquals(responseObject.get("error").asText(), "IllegalArgumentException");
+        assertEquals(responseObject.get("errorMessage").asText(), "TriG data is not supported for upload changes.");
         assertNotEquals(responseObject.get("errorDetails"), null);
     }
 
@@ -1204,7 +1203,7 @@ public class WorkflowsRestTest extends MobiRestTestCXF {
         verify(engineManager, atLeastOnce()).retrieveUser(anyString());
     }
 
-    private JSONObject getResponse(Response response) {
-        return JSONObject.fromObject(response.readEntity(String.class));
+    private ObjectNode getResponse(Response response) throws Exception {
+        return mapper.readValue(response.readEntity(String.class), ObjectNode.class);
     }
 }

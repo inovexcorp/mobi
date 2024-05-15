@@ -23,6 +23,8 @@ package com.mobi.utils.cli;
  * #L%
  */
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mobi.etl.api.config.rdf.export.RDFExportConfig;
 import com.mobi.etl.api.rdf.export.RDFExportService;
 import com.mobi.exception.MobiException;
@@ -32,7 +34,6 @@ import com.mobi.repository.impl.sesame.memory.MemoryRepositoryConfig;
 import com.mobi.repository.impl.sesame.nativestore.NativeRepositoryConfig;
 import com.mobi.security.policy.api.xacml.XACMLPolicyManager;
 import com.mobi.utils.cli.operations.post.FixWorkflowOntology;
-import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.time.StopWatch;
 import org.apache.karaf.shell.api.action.Action;
@@ -64,7 +65,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.InvalidPathException;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
@@ -80,6 +80,7 @@ import java.util.zip.ZipOutputStream;
 public class Backup implements Action {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(Backup.class);
+    private static final ObjectMapper mapper = new ObjectMapper();
 
     private static final String PROP_FILENAME = "/application.properties";
 
@@ -128,18 +129,18 @@ public class Backup implements Action {
         StopWatch watch = new StopWatch();
         watch.start();
         LOGGER.debug("Starting backup");
-        JSONObject manifest = new JSONObject();
+        ObjectNode manifest = mapper.createObjectNode();
         LOGGER.trace("Loading properties file");
         Properties properties = loadProperties();
         LOGGER.trace("Loaded properties file");
-        manifest.accumulate("version", properties.getProperty("application.version"));
+        manifest.put("version", properties.getProperty("application.version"));
         OffsetDateTime date = OffsetDateTime.now();
         File outputFile = getOutputFile(date);
-        manifest.accumulate("date", date.toString());
+        manifest.put("date", date.toString());
 
         try (ZipOutputStream mainZip = new ZipOutputStream(new FileOutputStream(outputFile))) {
             // Repositories
-            JSONObject repositories = new JSONObject();
+            ObjectNode repositories = mapper.createObjectNode();
             Map<String, OsgiRepository> repos = repoManager.getAllRepositories();
             for (String repoId : repos.keySet()) {
                 OsgiRepository repo = repos.get(repoId);
@@ -156,7 +157,7 @@ public class Backup implements Action {
                 }
             }
             LOGGER.trace("Backed up the repositories to the zip");
-            manifest.accumulate("repositories", repositories);
+            manifest.set("repositories", repositories);
 
             String dataPath = getKarafHome().getAbsolutePath() + "/data/virtualFiles";
 
@@ -198,10 +199,10 @@ public class Backup implements Action {
             LOGGER.trace("Backed up the configurations to the zip");
 
             // Manifest
-            LOGGER.trace("Writing manifest", manifest);
+            LOGGER.trace("Writing manifest: " + manifest);
             final ZipEntry manifestZipEntry = new ZipEntry("manifest.json");
             mainZip.putNextEntry(manifestZipEntry);
-            mainZip.write(manifest.toString(4).getBytes());
+            mainZip.write(manifest.toPrettyString().getBytes());
             LOGGER.trace("Manifest added to zip");
         } catch (Exception ex) {
             if (outputFile.exists()) {
@@ -232,7 +233,7 @@ public class Backup implements Action {
         LOGGER.trace("Backed up the karaf data directory to the zip");
     }
 
-    private void backupRepository(File outputFile, JSONObject repositories, OsgiRepository repo,  String repoId,
+    private void backupRepository(File outputFile, ObjectNode repositories, OsgiRepository repo,  String repoId,
                                   ZipOutputStream mainZip, Model model) throws Exception {
         try {
             Class<?> repoConfigType = repo.getConfigType();
@@ -250,7 +251,7 @@ public class Backup implements Action {
                         exportService.export(config, model);
                     }
                 }
-                repositories.accumulate(repoId, "repos/" + repoId + ".zip");
+                repositories.put(repoId, "repos/" + repoId + ".zip");
                 final ZipEntry repoZipEntry = new ZipEntry("repos/" + repoId + ".zip");
                 mainZip.putNextEntry(repoZipEntry);
                 mainZip.write(repoOut.toByteArray());
@@ -304,7 +305,8 @@ public class Backup implements Action {
     }
 
     private void addConfigFolderToZip(File rootPath, File srcFolder, ZipOutputStream zip) throws Exception {
-        List<String> blacklistedFiles = IOUtils.readLines(getClass().getResourceAsStream("/configBlacklist.txt"),
+        List<String> blacklistedFiles = IOUtils.readLines(Objects.requireNonNull(getClass()
+                        .getResourceAsStream("/configBlacklist.txt")),
                 StandardCharsets.UTF_8);
         for (File fileName : Objects.requireNonNull(srcFolder.listFiles())) {
             if (!blacklistedFiles.contains(fileName.getName())) {

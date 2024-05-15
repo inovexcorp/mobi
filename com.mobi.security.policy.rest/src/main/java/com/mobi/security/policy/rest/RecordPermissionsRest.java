@@ -23,6 +23,11 @@ package com.mobi.security.policy.rest;
  * #L%
  */
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.rest.security.annotations.ActionId;
@@ -55,8 +60,6 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Statement;
@@ -91,6 +94,7 @@ import javax.xml.namespace.QName;
 @Path("/record-permissions")
 public class RecordPermissionsRest {
     private final Logger LOGGER = LoggerFactory.getLogger(RecordPermissionsRest.class);
+    private static final ObjectMapper mapper = new ObjectMapper();
 
     private static final String ONTOLOGIES_CATALOG_MODIFY = "http://mobi.com/ontologies/catalog#Modify";
     private final ValueFactory vf = new ValidatingValueFactory();
@@ -154,7 +158,7 @@ public class RecordPermissionsRest {
                     + recordId + " does not exist in repository", Response.Status.BAD_REQUEST));
 
             Optional<XACMLPolicy> policy = policyManager.getPolicy(vf.createIRI(recordPolicyId));
-            if (!policy.isPresent()) {
+            if (policy.isEmpty()) {
                 throw ErrorUtils.sendError("Policy could not be found", Response.Status.BAD_REQUEST);
             }
 
@@ -209,7 +213,7 @@ public class RecordPermissionsRest {
                     + recordId + " does not exist in repository", Response.Status.BAD_REQUEST));
             IRI recordPolicyIRI = vf.createIRI(recordPolicyId);
             Optional<XACMLPolicy> recordPolicy = policyManager.getPolicy(recordPolicyIRI);
-            if (!recordPolicy.isPresent()) {
+            if (recordPolicy.isEmpty()) {
                 throw ErrorUtils.sendError("Record policy to update could not be found", Response.Status.BAD_REQUEST);
             }
 
@@ -229,7 +233,7 @@ public class RecordPermissionsRest {
             }
             IRI policyPolicyIRI = vf.createIRI(policyPolicyId);
             Optional<XACMLPolicy> policyPolicy = policyManager.getPolicy(policyPolicyIRI);
-            if (!policyPolicy.isPresent()) {
+            if (policyPolicy.isEmpty()) {
                 throw ErrorUtils.sendError("Policy policy to update could not be found",
                         Response.Status.BAD_REQUEST);
             }
@@ -280,9 +284,14 @@ public class RecordPermissionsRest {
         AttributeDesignatorType subjectIdAttrDesig = createSubjectIdAttrDesig();
         AttributeDesignatorType groupAttrDesig = createGroupAttrDesig();
 
-        JSONObject jsonObject = JSONObject.fromObject(json);
-        JSONObject updateObj = jsonObject.optJSONObject("urn:update");
-        if (updateObj == null) {
+        ObjectNode jsonObject = null;
+        try {
+            jsonObject = mapper.readValue(json, ObjectNode.class);
+        } catch (JsonProcessingException e) {
+            throw new IllegalArgumentException("Policy JSON is not valid");
+        }
+        JsonNode updateObj = jsonObject.get("urn:update");
+        if (updateObj == null || !updateObj.isObject()) {
             throw new IllegalArgumentException("Invalid JSON representation of a Policy. Missing update rule.");
         }
 
@@ -290,24 +299,24 @@ public class RecordPermissionsRest {
         AnyOfType updateUserAnyOf = policyType.getRule().get(1).getTarget().getAnyOf().get(1);
         readUserAnyOf.getAllOf().clear();
         updateUserAnyOf.getAllOf().clear();
-        if (updateObj.opt("everyone") == null) {
+        if (updateObj.get("everyone") == null) {
             throw new IllegalArgumentException("Invalid JSON representation of a Policy. Missing everyone field.");
         }
-        if (updateObj.getBoolean("everyone")) {
+        if (updateObj.get("everyone").asBoolean()) {
             MatchType userRoleMatch = createUserRoleMatch();
             AllOfType everyoneAllOf = new AllOfType();
             everyoneAllOf.getMatch().add(userRoleMatch);
             readUserAnyOf.getAllOf().add(everyoneAllOf);
             updateUserAnyOf.getAllOf().add(everyoneAllOf);
         } else {
-            JSONArray usersArray = updateObj.optJSONArray("users");
-            JSONArray groupsArray = updateObj.optJSONArray("groups");
-            if (usersArray == null || groupsArray == null) {
+            JsonNode usersArray = updateObj.get("users");
+            JsonNode groupsArray = updateObj.get("groups");
+            if (usersArray == null || groupsArray == null || !usersArray.isArray() || !groupsArray.isArray()) {
                 throw new IllegalArgumentException("Invalid JSON representation of a Policy."
                         + " Users or groups not set properly for update rule");
             }
-            addUsersOrGroupsToAnyOf(usersArray, subjectIdAttrDesig, readUserAnyOf, updateUserAnyOf);
-            addUsersOrGroupsToAnyOf(groupsArray, groupAttrDesig, readUserAnyOf, updateUserAnyOf);
+            addUsersOrGroupsToAnyOf((ArrayNode) usersArray, subjectIdAttrDesig, readUserAnyOf, updateUserAnyOf);
+            addUsersOrGroupsToAnyOf((ArrayNode) groupsArray, groupAttrDesig, readUserAnyOf, updateUserAnyOf);
         }
 
         return policyManager.createPolicy(policyType);
@@ -324,18 +333,14 @@ public class RecordPermissionsRest {
         Optional<String> masterBranch = Optional.empty();
 
         List<RuleType> policyTypeRules = policyType.getRule();
-        for (RuleType ruleType: policyTypeRules) {
-            switch (ruleType.getRuleId()) {
-                case "urn:modifyMaster":
-                    try {
-                        masterBranch = Optional.of(ruleType.getTarget().getAnyOf().get(0).getAllOf().get(0).getMatch()
-                                .get(1).getAttributeValue().getContent().get(0).toString());
-                    } catch (IndexOutOfBoundsException e){
-                        LOGGER.error("Policy File is corrupted: master branch target invalid");
-                    }
-                    break;
-                default:
-                    break;
+        for (RuleType ruleType : policyTypeRules) {
+            if (ruleType.getRuleId().equals("urn:modifyMaster")) {
+                try {
+                    masterBranch = Optional.of(ruleType.getTarget().getAnyOf().get(0).getAllOf().get(0).getMatch()
+                            .get(1).getAttributeValue().getContent().get(0).toString());
+                } catch (IndexOutOfBoundsException e) {
+                    LOGGER.error("Policy File is corrupted: master branch target invalid");
+                }
             }
         }
 
@@ -346,11 +351,16 @@ public class RecordPermissionsRest {
         AttributeDesignatorType groupAttrDesig = createGroupAttrDesig();
         AttributeDesignatorType branchAttrDesig = createBranchAttrDesig();
 
-        JSONObject jsonObject = JSONObject.fromObject(json);
-        Iterator<?> keys = jsonObject.keys();
+        ObjectNode jsonObject = null;
+        try {
+            jsonObject = mapper.readValue(json, ObjectNode.class);
+        } catch (JsonProcessingException e) {
+            throw new IllegalArgumentException("Policy JSON is not valid");
+        }
+        Iterator<String> keys = jsonObject.fieldNames();
         // iterate all json keys
         while (keys.hasNext()) {
-            String key = (String)keys.next();
+            String key = keys.next();
             TargetType target = new TargetType();
             RuleType rule = createRule(EffectType.PERMIT, key, target);
             AttributeValueType ruleTypeAttrVal = new AttributeValueType();
@@ -360,23 +370,11 @@ public class RecordPermissionsRest {
             MatchType ruleTypeMatch = createMatch(XACML.STRING_EQUALS, actionIdAttrDesig, ruleTypeAttrVal);
             ruleTypeAttrVal.getContent().clear();
             switch (key) {
-                case "urn:read":
-                    ruleTypeAttrVal.getContent().add(Read.TYPE);
-                    break;
-                case "urn:delete":
-                    ruleTypeAttrVal.getContent().add(Delete.TYPE);
-                    break;
-                case "urn:update":
-                    ruleTypeAttrVal.getContent().add(Update.TYPE);
-                    break;
-                case "urn:modify":
-                    ruleTypeAttrVal.getContent().add(ONTOLOGIES_CATALOG_MODIFY);
-                    break;
-                case "urn:modifyMaster":
-                    ruleTypeAttrVal.getContent().add(ONTOLOGIES_CATALOG_MODIFY);
-                    break;
-                default:
-                    throw new MobiException("Invalid rule key: " + key);
+                case "urn:read" -> ruleTypeAttrVal.getContent().add(Read.TYPE);
+                case "urn:delete" -> ruleTypeAttrVal.getContent().add(Delete.TYPE);
+                case "urn:update" -> ruleTypeAttrVal.getContent().add(Update.TYPE);
+                case "urn:modify", "urn:modifyMaster" -> ruleTypeAttrVal.getContent().add(ONTOLOGIES_CATALOG_MODIFY);
+                default -> throw new MobiException("Invalid rule key: " + key);
             }
 
             AnyOfType anyOfType = new AnyOfType();
@@ -393,31 +391,32 @@ public class RecordPermissionsRest {
 
             // Setup Users
             AnyOfType usersGroups = new AnyOfType();
-            JSONObject jsonRule = jsonObject.optJSONObject(key);
-            if (jsonRule == null) {
+            JsonNode jsonRule = jsonObject.get(key);
+            if (jsonRule == null || !jsonRule.isObject()) {
                 throw new IllegalArgumentException("Invalid JSON representation of a Policy. Missing rule " + key);
             }
-            if (jsonRule.opt("everyone") == null) {
+            if (jsonRule.get("everyone") == null) {
                 throw new IllegalArgumentException("Invalid JSON representation of a Policy. Missing everyone field"
                         + "for " + key);
             }
-            if (jsonRule.getBoolean("everyone")) {
+            if (jsonRule.get("everyone").asBoolean()) {
                 MatchType userRoleMatch = createUserRoleMatch();
                 AllOfType everyoneAllOf = new AllOfType();
                 everyoneAllOf.getMatch().add(userRoleMatch);
                 usersGroups.getAllOf().add(everyoneAllOf);
             } else {
-                JSONArray usersArray = jsonRule.optJSONArray("users");
-                JSONArray groupsArray = jsonRule.optJSONArray("groups");
-                if (usersArray == null || groupsArray == null) {
+                JsonNode usersArray = jsonRule.get("users");
+                JsonNode groupsArray = jsonRule.get("groups");
+                if (usersArray == null || groupsArray == null || !usersArray.isArray() || !groupsArray.isArray()) {
                     throw new IllegalArgumentException("Invalid JSON representation of a Policy."
                             + " Users or groups not set properly for " + key);
                 }
-                if (usersArray.size() == 0 && groupsArray.size() == 0){
-                    throw new IllegalArgumentException("Need to have at least one user or group since everybody is false");
+                if (usersArray.size() == 0 && groupsArray.size() == 0) {
+                    throw new IllegalArgumentException("Need to have at least one user or group since everybody is"
+                            + " false");
                 }
-                addUsersOrGroupsToAnyOf(usersArray, subjectIdAttrDesig, usersGroups);
-                addUsersOrGroupsToAnyOf(groupsArray, groupAttrDesig, usersGroups);
+                addUsersOrGroupsToAnyOf((ArrayNode) usersArray, subjectIdAttrDesig, usersGroups);
+                addUsersOrGroupsToAnyOf((ArrayNode) groupsArray, groupAttrDesig, usersGroups);
             }
             rule.getTarget().getAnyOf().add(usersGroups);
 
@@ -432,16 +431,16 @@ public class RecordPermissionsRest {
     }
 
     /**
-     * Iterates over the JSONArray of users or groups and adds an AllOf with a single Match to the provided AnyOf.
+     * Iterates over the ArrayNode of users or groups and adds an AllOf with a single Match to the provided AnyOf.
      *
-     * @param array The JSONArray of users or groups to iterate over
+     * @param array The ArrayNode of users or groups to iterate over
      * @param attributeDesignator the AttributeDesignatorType to apply to the MatchType
      * @param anyOfArray the AnyOfType to add the AllOf statement to
      */
-    private void addUsersOrGroupsToAnyOf(JSONArray array, AttributeDesignatorType attributeDesignator,
+    private void addUsersOrGroupsToAnyOf(ArrayNode array, AttributeDesignatorType attributeDesignator,
                                          AnyOfType... anyOfArray) {
         for (int i = 0; i < array.size(); i++) {
-            String value = array.optString(i);
+            String value = array.get(i).asText();
             if (StringUtils.isEmpty(value)) {
                 throw new IllegalArgumentException("Invalid JSON representation of a Policy."
                         + " User or group not set properly.");
@@ -514,9 +513,9 @@ public class RecordPermissionsRest {
      */
     private String recordPolicyToJson(XACMLPolicy policy) {
         List<RuleType> rules = policy.getJaxbPolicy().getRule();
-        JSONObject json = new JSONObject();
+        ObjectNode json = mapper.createObjectNode();
         for (RuleType rule : rules) {
-            JSONObject people = new JSONObject();
+            ObjectNode people = mapper.createObjectNode();
             final boolean[] everyone = {false};
             List<String> users = new ArrayList<>();
             List<String> groups = new ArrayList<>();
@@ -533,14 +532,14 @@ public class RecordPermissionsRest {
 
             if (everyone[0]) {
                 people.put("everyone", true);
-                people.put("users", new String[0]);
-                people.put("groups", new String[0]);
+                people.set("users", mapper.createArrayNode());
+                people.set("groups", mapper.createArrayNode());
             } else {
                 people.put("everyone", false);
-                people.put("users", users);
-                people.put("groups", groups);
+                people.set("users", mapper.valueToTree(users));
+                people.set("groups", mapper.valueToTree(groups));
             }
-            json.put(rule.getRuleId(), people);
+            json.set(rule.getRuleId(), people);
         }
         return json.toString();
     }

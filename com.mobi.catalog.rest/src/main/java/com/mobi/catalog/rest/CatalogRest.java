@@ -27,9 +27,8 @@ import static com.mobi.catalog.rest.utils.CatalogRestUtils.createCommitJson;
 import static com.mobi.catalog.rest.utils.CatalogRestUtils.createCommitResponse;
 import static com.mobi.catalog.rest.utils.CatalogRestUtils.getDifferenceJsonString;
 import static com.mobi.rest.util.RestUtils.checkStringParam;
-import static com.mobi.rest.util.RestUtils.createPaginatedResponseJackson;
-import static com.mobi.rest.util.RestUtils.createPaginatedResponseWithJsonNode;
-import static com.mobi.rest.util.RestUtils.createPaginatedThingResponseJackson;
+import static com.mobi.rest.util.RestUtils.createPaginatedResponse;
+import static com.mobi.rest.util.RestUtils.createPaginatedThingResponse;
 import static com.mobi.rest.util.RestUtils.getActiveUser;
 import static com.mobi.rest.util.RestUtils.getRDFFormatFileExtension;
 import static com.mobi.rest.util.RestUtils.getRDFFormatMimeType;
@@ -394,7 +393,7 @@ public class CatalogRest {
             }
             PaginatedSearchResults<Record> records = recordManager.findRecord(vf.createIRI(catalogId),
                     builder.build(), getActiveUser(servletRequest, engineManager), conn);
-            return createPaginatedResponseJackson(uriInfo, records.getPage(), records.getTotalSize(), limit, offset,
+            return createPaginatedResponse(uriInfo, records.getPage(), records.getTotalSize(), limit, offset,
                     Record.TYPE, bNodeService);
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
@@ -596,7 +595,7 @@ public class CatalogRest {
 
             ArrayNode keywordsArrayNode = serializeKeywordCount(keywordCounts);
 
-            return createPaginatedResponseWithJsonNode(uriInfo, keywordsArrayNode, keywordCounts.getTotalSize(),
+            return createPaginatedResponse(uriInfo, keywordsArrayNode, keywordCounts.getTotalSize(),
                     limit, offset);
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
@@ -670,7 +669,7 @@ public class CatalogRest {
             validatePaginationParams(sort, SORT_RESOURCES, limit, offset);
             Set<Distribution> distributions = distributionManager.getUnversionedDistributions(vf.createIRI(catalogId),
                     vf.createIRI(recordId), conn);
-            return createPaginatedThingResponseJackson(uriInfo, distributions, vf.createIRI(sort), offset,
+            return createPaginatedThingResponse(uriInfo, distributions, vf.createIRI(sort), offset,
                     limit, asc, null,
                     Distribution.TYPE, bNodeService);
         } catch (IllegalArgumentException ex) {
@@ -938,7 +937,7 @@ public class CatalogRest {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             validatePaginationParams(sort, SORT_RESOURCES, limit, offset);
             Set<Version> versions = versionManager.getVersions(vf.createIRI(catalogId), vf.createIRI(recordId), conn);
-            return createPaginatedThingResponseJackson(uriInfo, versions, vf.createIRI(sort), offset, limit,
+            return createPaginatedThingResponse(uriInfo, versions, vf.createIRI(sort), offset, limit,
                     asc, null, Version.TYPE, bNodeService);
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
@@ -1353,7 +1352,7 @@ public class CatalogRest {
             validatePaginationParams(sort, SORT_RESOURCES, limit, offset);
             Set<Distribution> distributions = distributionManager.getVersionedDistributions(vf.createIRI(catalogId),
                     vf.createIRI(recordId), vf.createIRI(versionId), conn);
-            return createPaginatedThingResponseJackson(uriInfo, distributions, vf.createIRI(sort), offset,
+            return createPaginatedThingResponse(uriInfo, distributions, vf.createIRI(sort), offset,
                     limit, asc, null,
                     Distribution.TYPE, bNodeService);
         } catch (IllegalArgumentException ex) {
@@ -1706,7 +1705,7 @@ public class CatalogRest {
                             .stringValue().equals(activeUser.getResource().stringValue());
                 };
             }
-            return createPaginatedThingResponseJackson(uriInfo, branches, vf.createIRI(sort), offset, limit,
+            return createPaginatedThingResponse(uriInfo, branches, vf.createIRI(sort), offset, limit,
                     asc, filterFunction,
                     Branch.TYPE, bNodeService);
         } catch (IllegalArgumentException ex) {
@@ -2061,7 +2060,7 @@ public class CatalogRest {
                         .limit(limit);
             }
             result.map(r -> createCommitJson(r, vf, engineManager)).forEach(commitChain::add);
-            return createPaginatedResponseWithJsonNode(uriInfo, commitChain, commits.size(), limit, offset);
+            return createPaginatedResponse(uriInfo, commitChain, commits.size(), limit, offset);
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (IllegalStateException | MobiException ex) {

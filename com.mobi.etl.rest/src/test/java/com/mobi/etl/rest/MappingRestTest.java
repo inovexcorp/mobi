@@ -38,6 +38,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.mobi.catalog.api.RecordManager;
 import com.mobi.catalog.api.record.config.RecordCreateSettings;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
@@ -55,7 +57,6 @@ import com.mobi.repository.api.OsgiRepository;
 import com.mobi.rest.test.util.FormDataMultiPart;
 import com.mobi.rest.test.util.MobiRestTestCXF;
 import com.mobi.rest.test.util.UsernameTestFilter;
-import net.sf.json.JSONArray;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
@@ -83,6 +84,7 @@ import javax.ws.rs.core.Response;
 
 public class MappingRestTest extends MobiRestTestCXF {
     private AutoCloseable closeable;
+    private static final ObjectMapper mapper = new ObjectMapper();
     private static final String CATALOG_IRI = "http://test.org/catalog";
     private static final String MAPPING_IRI = "http://test.org/test";
     private static final String MAPPING_RECORD_IRI = "http://test.org/record";
@@ -183,11 +185,11 @@ public class MappingRestTest extends MobiRestTestCXF {
         fd.bodyPart("file", "mapping.jsonld", content);
         fd.field("jsonld", mappingJsonld);
         Response response = target().path("mappings").request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
         verify(recordManager, times(0)).createRecord(any(User.class), any(RecordOperationConfig.class), eq(MappingRecord.class), any(RepositoryConnection.class));
 
         response = target().path("mappings").request().post(Entity.entity(FormDataMultiPart.emptyBody(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
         verify(recordManager, times(0)).createRecord(any(User.class), any(RecordOperationConfig.class), eq(MappingRecord.class), any(RepositoryConnection.class));
     }
 
@@ -202,7 +204,7 @@ public class MappingRestTest extends MobiRestTestCXF {
         fd.bodyPart("file", "mapping.jsonld", content);
         Response response = target().path("mappings").request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
 
-        assertEquals(response.getStatus(), 201);
+        assertEquals(201, response.getStatus());
         assertEquals(MAPPING_RECORD_IRI, response.readEntity(String.class));
         ArgumentCaptor<RecordOperationConfig> config = ArgumentCaptor.forClass(RecordOperationConfig.class);
         verify(recordManager).createRecord(eq(user), config.capture(), eq(MappingRecord.class), any(RepositoryConnection.class));
@@ -225,7 +227,7 @@ public class MappingRestTest extends MobiRestTestCXF {
         fd.field("keywords", "keyword");
         fd.field("jsonld", mappingJsonld);
         Response response = target().path("mappings").request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 201);
+        assertEquals(201, response.getStatus());
         assertEquals(MAPPING_RECORD_IRI, response.readEntity(String.class));
         ArgumentCaptor<RecordOperationConfig> config = ArgumentCaptor.forClass(RecordOperationConfig.class);
         verify(recordManager).createRecord(eq(user), config.capture(), eq(MappingRecord.class), any(RepositoryConnection.class));
@@ -242,10 +244,10 @@ public class MappingRestTest extends MobiRestTestCXF {
     public void getMappingTest() {
         Response response = target().path("mappings/" + encode(MAPPING_IRI)).request()
                 .accept(MediaType.APPLICATION_JSON_TYPE).get();
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(manager).retrieveMapping(vf.createIRI(MAPPING_IRI));
         try {
-            JSONArray.fromObject(response.readEntity(String.class));
+            mapper.readValue(response.readEntity(String.class), ArrayNode.class);
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
@@ -256,14 +258,14 @@ public class MappingRestTest extends MobiRestTestCXF {
         Response response = target().path("mappings/" + encode(ERROR_IRI)).request()
                 .accept(MediaType.APPLICATION_JSON_TYPE).get();
         verify(manager).retrieveMapping(vf.createIRI(ERROR_IRI));
-        assertEquals(response.getStatus(), 404);
+        assertEquals(404, response.getStatus());
     }
 
     @Test
     public void downloadMappingTest() {
         Response response = target().path("mappings/" + encode(MAPPING_IRI)).request()
                 .accept(MediaType.APPLICATION_OCTET_STREAM_TYPE).get();
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(manager).retrieveMapping(vf.createIRI(MAPPING_IRI));
     }
 
@@ -272,13 +274,13 @@ public class MappingRestTest extends MobiRestTestCXF {
         Response response = target().path("mappings/" + encode(ERROR_IRI)).request()
                 .accept(MediaType.APPLICATION_OCTET_STREAM_TYPE).get();
         verify(manager).retrieveMapping(vf.createIRI(ERROR_IRI));
-        assertEquals(response.getStatus(), 404);
+        assertEquals(404, response.getStatus());
     }
 
     @Test
     public void deleteMappingTest() {
         Response response = target().path("mappings/" + encode(MAPPING_RECORD_IRI)).request().delete();
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
 
         verify(recordManager).removeRecord(catalogId, recordId, user, MappingRecord.class, conn);
         verify(engineManager, atLeastOnce()).retrieveUser(anyString());

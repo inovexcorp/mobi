@@ -129,7 +129,7 @@ public class DocumentTranslatorRest {
     public Response translateDocument(@Context HttpServletRequest servletRequest) {
         java.nio.file.Path tempFolder = null;
         try {
-            Map<String, List<Class>> fields = new HashMap<>();
+            Map<String, List<Class<?>>> fields = new HashMap<>();
             fields.put("type", Stream.of(String.class).collect(Collectors.toList()));
             fields.put("ontologyIriString", Stream.of(String.class).collect(Collectors.toList()));
             fields.put("outputName", Stream.of(String.class).collect(Collectors.toList()));

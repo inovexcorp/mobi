@@ -28,8 +28,9 @@ import static com.mobi.rest.util.RestUtils.getObjectFromJsonld;
 import static com.mobi.rest.util.RestUtils.getRDFFormat;
 import static com.mobi.rest.util.RestUtils.groupedModelToString;
 import static com.mobi.rest.util.RestUtils.jsonldToModel;
-import static com.mobi.rest.util.RestUtils.modelToJsonld;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.Engine;
 import com.mobi.jaas.api.engines.EngineManager;
@@ -46,7 +47,6 @@ import io.swagger.v3.oas.annotations.enums.Explode;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import net.sf.json.JSONArray;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
@@ -89,6 +89,7 @@ public class GroupRest {
     private GroupFactory groupFactory;
     private Engine rdfEngine;
     private final Logger logger = LoggerFactory.getLogger(GroupRest.class);
+    private static final ObjectMapper mapper = new ObjectMapper();
 
     @Reference
     void setEngineManager(EngineManager engineManager) {
@@ -123,11 +124,11 @@ public class GroupRest {
     )
     public Response getGroups() {
         try {
-            JSONArray result = JSONArray.fromObject(engineManager.getGroups().stream()
+            ArrayNode result = engineManager.getGroups().stream()
                     .map(group -> group.getModel().filter(group.getResource(), null, null))
                     .map(RestUtils::modelToJsonld)
                     .map(RestUtils::getObjectFromJsonld)
-                    .collect(Collectors.toList()));
+                    .collect(mapper::createArrayNode, ArrayNode::add, ArrayNode::add);
             return Response.ok(result).build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex.getMessage(), Response.Status.BAD_REQUEST);
@@ -378,11 +379,11 @@ public class GroupRest {
             Group group = engineManager.retrieveGroup(groupTitle).orElseThrow(() ->
                     ErrorUtils.sendError("Group " + groupTitle + " not found", Response.Status.BAD_REQUEST));
 
-            JSONArray result = JSONArray.fromObject(group.getHasGroupRole().stream()
+            ArrayNode result = group.getHasGroupRole().stream()
                     .map(role -> role.getModel().filter(role.getResource(), null, null))
-                    .map(roleModel -> modelToJsonld(roleModel))
+                    .map(RestUtils::modelToJsonld)
                     .map(RestUtils::getObjectFromJsonld)
-                    .collect(Collectors.toList()));
+                    .collect(mapper::createArrayNode, ArrayNode::add, ArrayNode::add);
             return Response.ok(result).build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex.getMessage(), Response.Status.BAD_REQUEST);
@@ -514,14 +515,14 @@ public class GroupRest {
                                     Response.Status.INTERNAL_SERVER_ERROR)))
                     .collect(Collectors.toSet());
 
-            JSONArray result = JSONArray.fromObject(members.stream()
+            ArrayNode result = members.stream()
                     .map(member -> {
                         member.clearPassword();
                         return member.getModel().filter(member.getResource(), null, null);
                     })
-                    .map(roleModel -> modelToJsonld(roleModel))
+                    .map(RestUtils::modelToJsonld)
                     .map(RestUtils::getObjectFromJsonld)
-                    .collect(Collectors.toList()));
+                    .collect(mapper::createArrayNode, ArrayNode::add, ArrayNode::add);
             return Response.ok(result).build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex.getMessage(), Response.Status.BAD_REQUEST);

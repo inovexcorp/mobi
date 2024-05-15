@@ -49,6 +49,10 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mobi.catalog.api.PaginatedSearchParams;
 import com.mobi.catalog.api.PaginatedSearchResults;
 import com.mobi.catalog.api.builder.RecordCount;
@@ -89,8 +93,6 @@ import com.mobi.rest.test.util.UsernameTestFilter;
 import com.mobi.security.policy.api.Decision;
 import com.mobi.security.policy.api.PDP;
 import com.mobi.security.policy.api.Request;
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.ModelFactory;
@@ -118,6 +120,7 @@ import javax.ws.rs.core.Response;
 
 public class MergeRequestRestTest extends MobiRestTestCXF {
     private AutoCloseable closeable;
+    private static final ObjectMapper mapper = new ObjectMapper();
     private MergeRequest request1;
     private MergeRequest request2;
     private Comment comment1;
@@ -303,15 +306,15 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
     @Test
     public void getMergeRequestsTest() {
         Response response = target().path("merge-requests").request().get();
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(requestManager).getMergeRequests(any(MergeRequestFilterParams.class));
         try {
-            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+            ArrayNode result = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
             assertEquals(result.size(), 1);
-            JSONObject requestObj = result.getJSONObject(0);
-            assertFalse(requestObj.containsKey("@graph"));
-            assertTrue(requestObj.containsKey("@id"));
-            assertEquals(requestObj.getString("@id"), request1.getResource().stringValue());
+            JsonNode requestObj = result.get(0);
+            assertFalse(requestObj.has("@graph"));
+            assertTrue(requestObj.has("@id"));
+            assertEquals(request1.getResource().stringValue(), requestObj.get("@id").asText());
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
@@ -323,7 +326,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
         doThrow(new IllegalStateException()).when(requestManager).getMergeRequests(any(MergeRequestFilterParams.class));
 
         Response response = target().path("merge-requests").request().get();
-        assertEquals(response.getStatus(), 500);
+        assertEquals(500, response.getStatus());
         verify(requestManager).getMergeRequests(any(MergeRequestFilterParams.class));
     }
 
@@ -333,20 +336,20 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
         doThrow(new MobiException()).when(requestManager).getMergeRequests(any(MergeRequestFilterParams.class));
 
         Response response = target().path("merge-requests").request().get();
-        assertEquals(response.getStatus(), 500);
+        assertEquals(500, response.getStatus());
         verify(requestManager).getMergeRequests(any(MergeRequestFilterParams.class));
     }
 
     @Test
     public void getMergeRequestsWithInvalidSortTest() {
         Response response = target().path("merge-requests").queryParam("sort", invalidIRIString).request().get();
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
     public void getMergeRequestsWithSearch() {
         Response response = target().path("merge-requests").queryParam("searchText", "test").request().get();
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         ArgumentCaptor<MergeRequestFilterParams> captor = ArgumentCaptor.forClass(MergeRequestFilterParams.class);
         verify(requestManager).getMergeRequests(captor.capture());
         MergeRequestFilterParams params = captor.getValue();
@@ -354,12 +357,12 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
         assertTrue(searchText.isPresent());
         assertEquals("test", searchText.get());
         try {
-            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+            ArrayNode result = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
             assertEquals(result.size(), 1);
-            JSONObject requestObj = result.getJSONObject(0);
-            assertFalse(requestObj.containsKey("@graph"));
-            assertTrue(requestObj.containsKey("@id"));
-            assertEquals(requestObj.getString("@id"), request1.getResource().stringValue());
+            JsonNode requestObj = result.get(0);
+            assertFalse(requestObj.has("@graph"));
+            assertTrue(requestObj.has("@id"));
+            assertEquals(request1.getResource().stringValue(), requestObj.get("@id").asText());
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
@@ -368,7 +371,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
     @Test
     public void getMergeRequestsWithCreators() {
         Response response = target().path("merge-requests").queryParam("creators", user.getResource()).request().get();
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         ArgumentCaptor<MergeRequestFilterParams> captor = ArgumentCaptor.forClass(MergeRequestFilterParams.class);
         verify(requestManager).getMergeRequests(captor.capture());
         MergeRequestFilterParams params = captor.getValue();
@@ -377,12 +380,12 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
         assertEquals(1, creators.get().size());
         assertEquals(user.getResource(), creators.get().get(0));
         try {
-            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+            ArrayNode result = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
             assertEquals(result.size(), 1);
-            JSONObject requestObj = result.getJSONObject(0);
-            assertFalse(requestObj.containsKey("@graph"));
-            assertTrue(requestObj.containsKey("@id"));
-            assertEquals(requestObj.getString("@id"), request1.getResource().stringValue());
+            JsonNode requestObj = result.get(0);
+            assertFalse(requestObj.has("@graph"));
+            assertTrue(requestObj.has("@id"));
+            assertEquals(request1.getResource().stringValue(), requestObj.get("@id").asText());
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
@@ -391,7 +394,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
     @Test
     public void getMergeRequestsWithAssignees() {
         Response response = target().path("merge-requests").queryParam("assignees", user.getResource()).request().get();
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         ArgumentCaptor<MergeRequestFilterParams> captor = ArgumentCaptor.forClass(MergeRequestFilterParams.class);
         verify(requestManager).getMergeRequests(captor.capture());
         MergeRequestFilterParams params = captor.getValue();
@@ -400,12 +403,12 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
         assertEquals(1, assignees.get().size());
         assertEquals(user.getResource(), assignees.get().get(0));
         try {
-            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+            ArrayNode result = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
             assertEquals(result.size(), 1);
-            JSONObject requestObj = result.getJSONObject(0);
-            assertFalse(requestObj.containsKey("@graph"));
-            assertTrue(requestObj.containsKey("@id"));
-            assertEquals(requestObj.getString("@id"), request1.getResource().stringValue());
+            JsonNode requestObj = result.get(0);
+            assertFalse(requestObj.has("@graph"));
+            assertTrue(requestObj.has("@id"));
+            assertEquals(request1.getResource().stringValue(), requestObj.get("@id").asText());
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
@@ -416,7 +419,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
     @Test
     public void getCreatorsTest() {
         Response response = target().path("merge-requests/creators").request().get();
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         ArgumentCaptor<PaginatedSearchParams> captor = ArgumentCaptor.forClass(PaginatedSearchParams.class);
         verify(requestManager).getCreators(captor.capture(), eq(user.getResource()));
         PaginatedSearchParams params = captor.getValue();
@@ -424,15 +427,15 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
         assertTrue(params.getLimit().isEmpty());
         assertTrue(params.getSearchText().isEmpty());
         try {
-            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+            ArrayNode result = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
             assertEquals(result.size(), 1);
-            JSONObject requestObj = result.getJSONObject(0);
-            assertTrue(requestObj.containsKey("user"));
-            assertEquals(userCount.getUser().stringValue(), requestObj.getString("user"));
-            assertTrue(requestObj.containsKey("name"));
-            assertEquals(userCount.getName(), requestObj.getString("name"));
-            assertTrue(requestObj.containsKey("count"));
-            assertEquals(userCount.getCount().intValue(), requestObj.getInt("count"));
+            JsonNode requestObj = result.get(0);
+            assertTrue(requestObj.has("user"));
+            assertEquals(userCount.getUser().stringValue(), requestObj.get("user").asText());
+            assertTrue(requestObj.has("name"));
+            assertEquals(userCount.getName(), requestObj.get("name").asText());
+            assertTrue(requestObj.has("count"));
+            assertEquals(userCount.getCount().intValue(), requestObj.get("count").asInt());
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
@@ -441,7 +444,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
     @Test
     public void getCreatorsWithPagingTest() {
         Response response = target().path("merge-requests/creators").queryParam("offset", 1).queryParam("limit", 10).request().get();
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         ArgumentCaptor<PaginatedSearchParams> captor = ArgumentCaptor.forClass(PaginatedSearchParams.class);
         verify(requestManager).getCreators(captor.capture(), eq(user.getResource()));
         PaginatedSearchParams params = captor.getValue();
@@ -450,15 +453,15 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
         assertEquals(10, params.getLimit().get().intValue());
         assertTrue(params.getSearchText().isEmpty());
         try {
-            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+            ArrayNode result = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
             assertEquals(result.size(), 1);
-            JSONObject requestObj = result.getJSONObject(0);
-            assertTrue(requestObj.containsKey("user"));
-            assertEquals(userCount.getUser().stringValue(), requestObj.getString("user"));
-            assertTrue(requestObj.containsKey("name"));
-            assertEquals(userCount.getName(), requestObj.getString("name"));
-            assertTrue(requestObj.containsKey("count"));
-            assertEquals(userCount.getCount().intValue(), requestObj.getInt("count"));
+            JsonNode requestObj = result.get(0);
+            assertTrue(requestObj.has("user"));
+            assertEquals(userCount.getUser().stringValue(), requestObj.get("user").asText());
+            assertTrue(requestObj.has("name"));
+            assertEquals(userCount.getName(), requestObj.get("name").asText());
+            assertTrue(requestObj.has("count"));
+            assertEquals(userCount.getCount().intValue(), requestObj.get("count").asInt());
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
@@ -467,7 +470,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
     @Test
     public void getCreatorsWithBadPagingTest() {
         Response response = target().path("merge-requests/creators").queryParam("offset", -1).queryParam("limit", -1).request().get();
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
         verify(requestManager, times(0)).getCreators(any(PaginatedSearchParams.class), any(Resource.class));
         assertEquals("", response.readEntity(String.class));
     }
@@ -475,7 +478,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
     @Test
     public void getCreatorsWithSearchText() {
         Response response = target().path("merge-requests/creators").queryParam("searchText", "test").request().get();
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         ArgumentCaptor<PaginatedSearchParams> captor = ArgumentCaptor.forClass(PaginatedSearchParams.class);
         verify(requestManager).getCreators(captor.capture(), eq(user.getResource()));
         PaginatedSearchParams params = captor.getValue();
@@ -484,15 +487,15 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
         assertTrue(params.getSearchText().isPresent());
         assertEquals("test", params.getSearchText().get());
         try {
-            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+            ArrayNode result = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
             assertEquals(result.size(), 1);
-            JSONObject requestObj = result.getJSONObject(0);
-            assertTrue(requestObj.containsKey("user"));
-            assertEquals(userCount.getUser().stringValue(), requestObj.getString("user"));
-            assertTrue(requestObj.containsKey("name"));
-            assertEquals(userCount.getName(), requestObj.getString("name"));
-            assertTrue(requestObj.containsKey("count"));
-            assertEquals(userCount.getCount().intValue(), requestObj.getInt("count"));
+            JsonNode requestObj = result.get(0);
+            assertTrue(requestObj.has("user"));
+            assertEquals(userCount.getUser().stringValue(), requestObj.get("user").asText());
+            assertTrue(requestObj.has("name"));
+            assertEquals(userCount.getName(), requestObj.get("name").asText());
+            assertTrue(requestObj.has("count"));
+            assertEquals(userCount.getCount().intValue(), requestObj.get("count").asInt());
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
@@ -503,13 +506,13 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
         Mockito.doThrow(new IllegalArgumentException("I'm an exception!")).when(requestManager).getCreators(any(PaginatedSearchParams.class), any(Resource.class));
 
         Response response = target().path("merge-requests/creators").request().get();
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
         verify(requestManager).getCreators(any(PaginatedSearchParams.class), any(Resource.class));
 
         try {
-            JSONObject responseObject = JSONObject.fromObject(response.readEntity(String.class));
-            assertEquals(responseObject.get("error"), "IllegalArgumentException");
-            assertEquals(responseObject.get("errorMessage"), "I'm an exception!");
+            ObjectNode responseObject = mapper.readValue(response.readEntity(String.class), ObjectNode.class);
+            assertEquals(responseObject.get("error").asText(), "IllegalArgumentException");
+            assertEquals(responseObject.get("errorMessage").asText(), "I'm an exception!");
             assertNotEquals(responseObject.get("errorDetails"), null);
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
@@ -521,13 +524,13 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
         Mockito.doThrow(new IllegalStateException("I'm an exception!")).when(requestManager).getCreators(any(PaginatedSearchParams.class), any(Resource.class));
 
         Response response = target().path("merge-requests/creators").request().get();
-        assertEquals(response.getStatus(), 500);
+        assertEquals(500, response.getStatus());
         verify(requestManager).getCreators(any(PaginatedSearchParams.class), any(Resource.class));
 
         try {
-            JSONObject responseObject = JSONObject.fromObject(response.readEntity(String.class));
-            assertEquals(responseObject.get("error"), "IllegalStateException");
-            assertEquals(responseObject.get("errorMessage"), "I'm an exception!");
+            ObjectNode responseObject = mapper.readValue(response.readEntity(String.class), ObjectNode.class);
+            assertEquals(responseObject.get("error").asText(), "IllegalStateException");
+            assertEquals(responseObject.get("errorMessage").asText(), "I'm an exception!");
             assertNotEquals(responseObject.get("errorDetails"), null);
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
@@ -539,7 +542,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
     @Test
     public void getAssigneesTest() {
         Response response = target().path("merge-requests/assignees").request().get();
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         ArgumentCaptor<PaginatedSearchParams> captor = ArgumentCaptor.forClass(PaginatedSearchParams.class);
         verify(requestManager).getAssignees(captor.capture(), eq(user.getResource()));
         PaginatedSearchParams params = captor.getValue();
@@ -547,15 +550,15 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
         assertTrue(params.getLimit().isEmpty());
         assertTrue(params.getSearchText().isEmpty());
         try {
-            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+            ArrayNode result = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
             assertEquals(result.size(), 1);
-            JSONObject requestObj = result.getJSONObject(0);
-            assertTrue(requestObj.containsKey("user"));
-            assertEquals(userCount.getUser().stringValue(), requestObj.getString("user"));
-            assertTrue(requestObj.containsKey("name"));
-            assertEquals(userCount.getName(), requestObj.getString("name"));
-            assertTrue(requestObj.containsKey("count"));
-            assertEquals(userCount.getCount().intValue(), requestObj.getInt("count"));
+            JsonNode requestObj = result.get(0);
+            assertTrue(requestObj.has("user"));
+            assertEquals(userCount.getUser().stringValue(), requestObj.get("user").asText());
+            assertTrue(requestObj.has("name"));
+            assertEquals(userCount.getName(), requestObj.get("name").asText());
+            assertTrue(requestObj.has("count"));
+            assertEquals(userCount.getCount().intValue(), requestObj.get("count").asInt());
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
@@ -564,7 +567,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
     @Test
     public void getAssigneesWithPagingTest() {
         Response response = target().path("merge-requests/assignees").queryParam("offset", 1).queryParam("limit", 10).request().get();
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         ArgumentCaptor<PaginatedSearchParams> captor = ArgumentCaptor.forClass(PaginatedSearchParams.class);
         verify(requestManager).getAssignees(captor.capture(), eq(user.getResource()));
         PaginatedSearchParams params = captor.getValue();
@@ -573,15 +576,15 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
         assertEquals(10, params.getLimit().get().intValue());
         assertTrue(params.getSearchText().isEmpty());
         try {
-            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+            ArrayNode result = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
             assertEquals(result.size(), 1);
-            JSONObject requestObj = result.getJSONObject(0);
-            assertTrue(requestObj.containsKey("user"));
-            assertEquals(userCount.getUser().stringValue(), requestObj.getString("user"));
-            assertTrue(requestObj.containsKey("name"));
-            assertEquals(userCount.getName(), requestObj.getString("name"));
-            assertTrue(requestObj.containsKey("count"));
-            assertEquals(userCount.getCount().intValue(), requestObj.getInt("count"));
+            JsonNode requestObj = result.get(0);
+            assertTrue(requestObj.has("user"));
+            assertEquals(userCount.getUser().stringValue(), requestObj.get("user").asText());
+            assertTrue(requestObj.has("name"));
+            assertEquals(userCount.getName(), requestObj.get("name").asText());
+            assertTrue(requestObj.has("count"));
+            assertEquals(userCount.getCount().intValue(), requestObj.get("count").asInt());
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
@@ -590,7 +593,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
     @Test
     public void getAssigneesWithBadPagingTest() {
         Response response = target().path("merge-requests/assignees").queryParam("offset", -1).queryParam("limit", -1).request().get();
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
         verify(requestManager, times(0)).getAssignees(any(PaginatedSearchParams.class), any(Resource.class));
         assertEquals("", response.readEntity(String.class));
     }
@@ -598,7 +601,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
     @Test
     public void getAssigneesWithSearchText() {
         Response response = target().path("merge-requests/assignees").queryParam("searchText", "test").request().get();
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         ArgumentCaptor<PaginatedSearchParams> captor = ArgumentCaptor.forClass(PaginatedSearchParams.class);
         verify(requestManager).getAssignees(captor.capture(), eq(user.getResource()));
         PaginatedSearchParams params = captor.getValue();
@@ -607,15 +610,15 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
         assertTrue(params.getSearchText().isPresent());
         assertEquals("test", params.getSearchText().get());
         try {
-            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+            ArrayNode result = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
             assertEquals(result.size(), 1);
-            JSONObject requestObj = result.getJSONObject(0);
-            assertTrue(requestObj.containsKey("user"));
-            assertEquals(userCount.getUser().stringValue(), requestObj.getString("user"));
-            assertTrue(requestObj.containsKey("name"));
-            assertEquals(userCount.getName(), requestObj.getString("name"));
-            assertTrue(requestObj.containsKey("count"));
-            assertEquals(userCount.getCount().intValue(), requestObj.getInt("count"));
+            JsonNode requestObj = result.get(0);
+            assertTrue(requestObj.has("user"));
+            assertEquals(userCount.getUser().stringValue(), requestObj.get("user").asText());
+            assertTrue(requestObj.has("name"));
+            assertEquals(userCount.getName(), requestObj.get("name").asText());
+            assertTrue(requestObj.has("count"));
+            assertEquals(userCount.getCount().intValue(), requestObj.get("count").asInt());
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
@@ -626,13 +629,13 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
         Mockito.doThrow(new IllegalArgumentException("I'm an exception!")).when(requestManager).getAssignees(any(PaginatedSearchParams.class), any(Resource.class));
 
         Response response = target().path("merge-requests/assignees").request().get();
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
         verify(requestManager).getAssignees(any(PaginatedSearchParams.class), any(Resource.class));
 
         try {
-            JSONObject responseObject = JSONObject.fromObject(response.readEntity(String.class));
-            assertEquals(responseObject.get("error"), "IllegalArgumentException");
-            assertEquals(responseObject.get("errorMessage"), "I'm an exception!");
+            ObjectNode responseObject = mapper.readValue(response.readEntity(String.class), ObjectNode.class);
+            assertEquals(responseObject.get("error").asText(), "IllegalArgumentException");
+            assertEquals(responseObject.get("errorMessage").asText(), "I'm an exception!");
             assertNotEquals(responseObject.get("errorDetails"), null);
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
@@ -644,13 +647,13 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
         Mockito.doThrow(new IllegalStateException("I'm an exception!")).when(requestManager).getAssignees(any(PaginatedSearchParams.class), any(Resource.class));
 
         Response response = target().path("merge-requests/assignees").request().get();
-        assertEquals(response.getStatus(), 500);
+        assertEquals(500, response.getStatus());
         verify(requestManager).getAssignees(any(PaginatedSearchParams.class), any(Resource.class));
 
         try {
-            JSONObject responseObject = JSONObject.fromObject(response.readEntity(String.class));
-            assertEquals(responseObject.get("error"), "IllegalStateException");
-            assertEquals(responseObject.get("errorMessage"), "I'm an exception!");
+            ObjectNode responseObject = mapper.readValue(response.readEntity(String.class), ObjectNode.class);
+            assertEquals(responseObject.get("error").asText(), "IllegalStateException");
+            assertEquals(responseObject.get("errorMessage").asText(), "I'm an exception!");
             assertNotEquals(responseObject.get("errorDetails"), null);
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
@@ -672,7 +675,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
         fd.field("removeSource", "true");
 
         Response response = target().path("merge-requests").request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 201);
+        assertEquals(201, response.getStatus());
         verify(engineManager, atLeastOnce()).retrieveUser(UsernameTestFilter.USERNAME);
         verify(requestManager).createMergeRequest(any(MergeRequestConfig.class), any(Resource.class));
         verify(requestManager).addMergeRequest(any(MergeRequest.class));
@@ -692,7 +695,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
         fd.field("removeSource", "true");
 
         Response response = target().path("merge-requests").request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
         verify(engineManager, atLeastOnce()).retrieveUser(UsernameTestFilter.USERNAME);
     }
 
@@ -707,7 +710,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
         fd.field("assignees", "error");
 
         Response response = target().path("merge-requests").request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
         verify(engineManager, atLeastOnce()).retrieveUser(UsernameTestFilter.USERNAME);
         verify(requestManager, times(0)).createMergeRequest(any(MergeRequestConfig.class), any(Resource.class));
         verify(requestManager, times(0)).addMergeRequest(any(MergeRequest.class));
@@ -722,7 +725,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
         fd.field("targetBranchId", TARGET_BRANCH_ID);
 
         Response response = target().path("merge-requests").request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
         verify(engineManager, times(0)).retrieveUser(UsernameTestFilter.USERNAME);
         verify(requestManager, times(0)).createMergeRequest(any(MergeRequestConfig.class), any(Resource.class));
         verify(requestManager, times(0)).addMergeRequest(any(MergeRequest.class));
@@ -737,7 +740,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
         fd.field("targetBranchId", TARGET_BRANCH_ID);
 
         Response response = target().path("merge-requests").request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
         verify(engineManager, times(0)).retrieveUser(UsernameTestFilter.USERNAME);
         verify(requestManager, times(0)).createMergeRequest(any(MergeRequestConfig.class), any(Resource.class));
         verify(requestManager, times(0)).addMergeRequest(any(MergeRequest.class));
@@ -752,7 +755,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
         fd.field("targetBranchId", TARGET_BRANCH_ID);
 
         Response response = target().path("merge-requests").request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
         verify(engineManager, times(0)).retrieveUser(UsernameTestFilter.USERNAME);
         verify(requestManager, times(0)).createMergeRequest(any(MergeRequestConfig.class), any(Resource.class));
         verify(requestManager, times(0)).addMergeRequest(any(MergeRequest.class));
@@ -767,7 +770,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
         fd.field("sourceBranchId", SOURCE_BRANCH_ID);
 
         Response response = target().path("merge-requests").request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
         verify(engineManager, times(0)).retrieveUser(UsernameTestFilter.USERNAME);
         verify(requestManager, times(0)).createMergeRequest(any(MergeRequestConfig.class), any(Resource.class));
         verify(requestManager, times(0)).addMergeRequest(any(MergeRequest.class));
@@ -784,7 +787,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
         doThrow(new IllegalArgumentException()).when(requestManager).createMergeRequest(any(MergeRequestConfig.class), any(Resource.class));
 
         Response response = target().path("merge-requests").request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
         verify(engineManager, atLeastOnce()).retrieveUser(UsernameTestFilter.USERNAME);
         verify(requestManager).createMergeRequest(any(MergeRequestConfig.class), any(Resource.class));
         verify(requestManager, times(0)).addMergeRequest(any(MergeRequest.class));
@@ -800,7 +803,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
         fd.field("targetBranchId", TARGET_BRANCH_ID);
 
         Response response = target().path("merge-requests").request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -813,7 +816,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
         fd.field("targetBranchId", invalidIRIString);
 
         Response response = target().path("merge-requests").request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -827,7 +830,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
         doThrow(new IllegalStateException()).when(requestManager).createMergeRequest(any(MergeRequestConfig.class), any(Resource.class));
 
         Response response = target().path("merge-requests").request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 500);
+        assertEquals(500, response.getStatus());
         verify(engineManager, atLeastOnce()).retrieveUser(UsernameTestFilter.USERNAME);
         verify(requestManager).createMergeRequest(any(MergeRequestConfig.class), any(Resource.class));
         verify(requestManager, times(0)).addMergeRequest(any(MergeRequest.class));
@@ -844,7 +847,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
         doThrow(new MobiException()).when(requestManager).createMergeRequest(any(MergeRequestConfig.class), any(Resource.class));
 
         Response response = target().path("merge-requests").request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 500);
+        assertEquals(500, response.getStatus());
         verify(engineManager, atLeastOnce()).retrieveUser(UsernameTestFilter.USERNAME);
         verify(requestManager).createMergeRequest(any(MergeRequestConfig.class), any(Resource.class));
         verify(requestManager, times(0)).addMergeRequest(any(MergeRequest.class));
@@ -855,13 +858,13 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
     @Test
     public void getMergeRequestTest() {
         Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue())).request().get();
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(requestManager).getMergeRequest(request1.getResource());
         try {
-            JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
-            assertFalse(result.containsKey("@graph"));
-            assertTrue(result.containsKey("@id"));
-            assertEquals(result.getString("@id"), request1.getResource().stringValue());
+            ObjectNode result = mapper.readValue(response.readEntity(String.class), ObjectNode.class);
+            assertFalse(result.has("@graph"));
+            assertTrue(result.has("@id"));
+            assertEquals(request1.getResource().stringValue(), result.get("@id").asText());
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
@@ -870,7 +873,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
     @Test
     public void getMissingMergeRequestTest() {
         Response response = target().path("merge-requests/" + encode("http://mobi.com/error")).request().get();
-        assertEquals(response.getStatus(), 404);
+        assertEquals(404, response.getStatus());
         verify(requestManager).getMergeRequest(vf.createIRI("http://mobi.com/error"));
     }
 
@@ -880,7 +883,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
         doThrow(new IllegalStateException()).when(requestManager).getMergeRequest(request1.getResource());
 
         Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue())).request().get();
-        assertEquals(response.getStatus(), 500);
+        assertEquals(500, response.getStatus());
         verify(requestManager).getMergeRequest(request1.getResource());
     }
 
@@ -890,14 +893,14 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
         doThrow(new MobiException()).when(requestManager).getMergeRequest(request1.getResource());
 
         Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue())).request().get();
-        assertEquals(response.getStatus(), 500);
+        assertEquals(500, response.getStatus());
         verify(requestManager).getMergeRequest(request1.getResource());
     }
 
     @Test
     public void getMergeRequestWithInvalidIRITest() {
         Response response = target().path("merge-requests/" + encode(invalidIRIString)).request().get();
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     /* POST merge-requests/{requestId} */
@@ -909,7 +912,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
                 .request()
                 .put(Entity.entity(groupedModelToString(request1.getModel(), getRDFFormat("jsonld")), MediaType.APPLICATION_JSON_TYPE));
         verify(requestManager).updateMergeRequest(eq(request1.getResource()), any(MergeRequest.class));
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
     }
 
     @Test
@@ -919,7 +922,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
                 .request()
                 .put(Entity.json("[]"));
         verify(requestManager, never()).updateMergeRequest(eq(request1.getResource()), any(MergeRequest.class));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -929,7 +932,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
                 .request()
                 .put(Entity.json("['test': true]"));
         verify(requestManager, never()).updateMergeRequest(eq(request1.getResource()), any(MergeRequest.class));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -939,7 +942,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
                 .request()
                 .put(Entity.entity(groupedModelToString(request2.getModel(), getRDFFormat("jsonld")), MediaType.APPLICATION_JSON_TYPE));
         verify(requestManager, never()).updateMergeRequest(eq(request1.getResource()), any(MergeRequest.class));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -950,14 +953,14 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
                 .request()
                 .put(Entity.entity(groupedModelToString(request1.getModel(), getRDFFormat("jsonld")), MediaType.APPLICATION_JSON_TYPE));
         verify(requestManager).updateMergeRequest(eq(request1.getResource()), any(MergeRequest.class));
-        assertEquals(response.getStatus(), 500);
+        assertEquals(500, response.getStatus());
     }
 
     @Test
     public void updateMergeRequestWithInvalidIRITest() {
         Response response = target().path("merge-requests/" + encode(invalidIRIString)).request()
                 .put(Entity.entity(groupedModelToString(request1.getModel(), getRDFFormat("jsonld")), MediaType.APPLICATION_JSON_TYPE));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     /* GET merge-requests/{requestId}/status */
@@ -967,7 +970,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
         Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()))
                 .request()
                 .put(Entity.entity(groupedModelToString(request1.getModel(), getRDFFormat("jsonld")), MediaType.APPLICATION_JSON_TYPE));
-        assertEquals(response.getStatus(), 401);
+        assertEquals(401, response.getStatus());
     }
 
     /* POST merge-requests/{requestId} */
@@ -980,7 +983,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
         }
         Response response = target().path(String.format("merge-requests/%s/status", encode(request1.getResource().stringValue())))
                 .request().get();
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         String responseStatus = response.readEntity(String.class);
         assertEquals(responseStatus, "closed");
     }
@@ -993,7 +996,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
         }
         Response response = target().path(String.format("merge-requests/%s/status", encode(request1.getResource().stringValue())))
                 .request().get();
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         String responseStatus = response.readEntity(String.class);
         assertEquals(responseStatus, "accepted");
     }
@@ -1006,7 +1009,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
         }
         Response response = target().path(String.format("merge-requests/%s/status", encode(request1.getResource().stringValue())))
                 .request().get();
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         String responseStatus = response.readEntity(String.class);
         assertEquals(responseStatus, "open");
     }
@@ -1019,7 +1022,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
         }
         Response response = target().path(String.format("merge-requests/%s/status", encode(request1.getResource().stringValue())))
                 .request().get();
-        assertEquals(response.getStatus(), 500);
+        assertEquals(500, response.getStatus());
     }
 
     @Test
@@ -1027,7 +1030,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
         Mockito.doReturn(false).when(rest).checkMergeRequestManagePermissions(any(), any());
         Response response = target().path(String.format("merge-requests/%s/status", encode(request1.getResource().stringValue())))
                 .request().get();
-        assertEquals(response.getStatus(), 404);
+        assertEquals(404, response.getStatus());
     }
 
     /* POST merge-requests/{requestId}/status */
@@ -1038,7 +1041,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
                 .queryParam("action", "accept")
                 .request().post(Entity.entity("", MediaType.TEXT_PLAIN));
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(requestManager).acceptMergeRequest(request1.getResource(), user);
     }
 
@@ -1051,7 +1054,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
         Response response = target().path(String.format("merge-requests/%s/status", encode(request1.getResource().stringValue())))
                 .queryParam("action", "accept")
                 .request().post(Entity.entity("", MediaType.TEXT_PLAIN));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -1063,7 +1066,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
         Response response = target().path(String.format("merge-requests/%s/status", encode(request1.getResource().stringValue())))
                 .queryParam("action", "accept")
                 .request().post(Entity.entity("", MediaType.TEXT_PLAIN));
-        assertEquals(response.getStatus(), 500);
+        assertEquals(500, response.getStatus());
     }
 
     @Test
@@ -1072,7 +1075,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
         Response response = target().path(String.format("merge-requests/%s/status", encode(request1.getResource().stringValue())))
                 .queryParam("action", "close")
                 .request().post(Entity.entity("", MediaType.TEXT_PLAIN));
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(requestManager).closeMergeRequest(request1.getResource(), user);
     }
 
@@ -1103,7 +1106,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
         Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()))
                 .request().delete();
         verify(requestManager).deleteMergeRequest(request1.getResource());
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
     }
 
     @Test
@@ -1111,7 +1114,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
         Mockito.doReturn(false).when(rest).checkMergeRequestManagePermissions(any(), any());
         Response response = target().path("merge-requests/" + encode(doesNotExist))
                 .request().delete();
-        assertEquals(response.getStatus(), 404);
+        assertEquals(404, response.getStatus());
     }
 
     @Test
@@ -1119,7 +1122,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
         Mockito.doReturn(false).when(rest).checkMergeRequestManagePermissions(any(), any());
         Response response = target().path("merge-requests/" + encode(invalidIRIString))
                 .request().delete();
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -1128,7 +1131,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
         Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()))
                 .request().delete();
         verify(requestManager, never()).deleteMergeRequest(request1.getResource());
-        assertEquals(response.getStatus(), 401);
+        assertEquals(401, response.getStatus());
     }
 
     /* GET merge-requests/{requestId}/comments */
@@ -1136,10 +1139,10 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
     @Test
     public void getCommentsTest() {
         Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()) + "/comments").request().get();
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(requestManager).getComments(eq(request1.getResource()));
         try {
-            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+            ArrayNode result = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
             assertEquals(result.size(), 2);
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
@@ -1152,7 +1155,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
         doThrow(new MobiException()).when(requestManager).getComments(any(Resource.class));
 
         Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()) + "/comments").request().get();
-        assertEquals(response.getStatus(), 500);
+        assertEquals(500, response.getStatus());
         verify(requestManager).getComments(eq(request1.getResource()));
     }
 
@@ -1162,7 +1165,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
     public void createCommentTest() {
         Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()) + "/comments")
                 .request().post(Entity.text(commentText));
-        assertEquals(response.getStatus(), 201);
+        assertEquals(201, response.getStatus());
         verify(engineManager, atLeastOnce()).retrieveUser(UsernameTestFilter.USERNAME);
         verify(requestManager).createComment(eq(request1.getResource()), any(User.class), anyString());
         assertEquals(comment1.getResource().stringValue(), response.readEntity(String.class));
@@ -1174,7 +1177,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
 
         Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()) + "/comments")
                 .request().post(Entity.text(commentText));
-        assertEquals(response.getStatus(), 500);
+        assertEquals(500, response.getStatus());
         verify(engineManager, atLeastOnce()).retrieveUser(UsernameTestFilter.USERNAME);
         verify(requestManager).createComment(eq(request1.getResource()), any(User.class), anyString());
     }
@@ -1183,7 +1186,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
     public void createCommentEmptyCommentTest() {
         Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()) + "/comments")
                 .request().post(Entity.text(""));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -1191,7 +1194,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
         Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()) + "/comments")
                 .queryParam("commentId", comment1.getResource().stringValue())
                 .request().post(Entity.text(commentText));
-        assertEquals(response.getStatus(), 201);
+        assertEquals(201, response.getStatus());
         verify(engineManager, atLeastOnce()).retrieveUser(UsernameTestFilter.USERNAME);
         verify(requestManager).createComment(eq(request1.getResource()), any(User.class), anyString(), eq(comment1.getResource()));
         assertEquals(comment2.getResource().stringValue(), response.readEntity(String.class));
@@ -1204,7 +1207,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
         Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()) + "/comments")
                 .queryParam("commentId", comment1.getResource().stringValue())
                 .request().post(Entity.text(commentText));
-        assertEquals(response.getStatus(), 500);
+        assertEquals(500, response.getStatus());
         verify(engineManager, atLeastOnce()).retrieveUser(UsernameTestFilter.USERNAME);
         verify(requestManager).createComment(eq(request1.getResource()), any(User.class), anyString(), eq(comment1.getResource()));
     }
@@ -1214,7 +1217,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
         Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()) + "/comments")
                 .queryParam("commentId", comment2.getResource().stringValue())
                 .request().post(Entity.text(""));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     /* GET merge-requests/{requestId}/comments/{commentId} */
@@ -1223,12 +1226,12 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
     public void getCommentTest() {
         Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()) + "/comments/"
                 + encode(comment1.getResource().stringValue())).request().get();
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(requestManager).getMergeRequest(request1.getResource());
         verify(requestManager).getComment(comment1.getResource());
         try {
-            JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
-            assertEquals(result.getString("@id"), comment1.getResource().stringValue());
+            ObjectNode result = mapper.readValue(response.readEntity(String.class), ObjectNode.class);
+            assertEquals(comment1.getResource().stringValue(), result.get("@id").asText());
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
@@ -1238,7 +1241,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
     public void getCommentMissingTest() {
         Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()) + "/comments/"
                 + encode("http://mobi.com/error")).request().get();
-        assertEquals(response.getStatus(), 404);
+        assertEquals(404, response.getStatus());
         verify(requestManager).getMergeRequest(request1.getResource());
         verify(requestManager).getComment(vf.createIRI("http://mobi.com/error"));
     }
@@ -1247,7 +1250,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
     public void getCommentMissingRequestTest() {
         Response response = target().path("merge-requests/" + encode("http://mobi.com/error") + "/comments/"
                 + encode(comment1.getResource().stringValue())).request().get();
-        assertEquals(response.getStatus(), 404);
+        assertEquals(404, response.getStatus());
         verify(requestManager).getMergeRequest(vf.createIRI("http://mobi.com/error"));
     }
 
@@ -1258,7 +1261,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
 
         Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()) + "/comments/"
                 + encode(comment1.getResource().stringValue())).request().get();
-        assertEquals(response.getStatus(), 500);
+        assertEquals(500, response.getStatus());
         verify(requestManager).getMergeRequest(request1.getResource());
         verify(requestManager).getComment(comment1.getResource());
     }
@@ -1267,7 +1270,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
     public void getCommentWithInvalidIRITest() {
         Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()) + "/comments/"
                 + encode(invalidIRIString)).request().get();
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     /* POST merge-requests/{requestId}/comments/{commentId} */
@@ -1283,7 +1286,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
         Comment comment = commentArgumentCaptor.getValue();
         assertNotEquals(comment.getProperty(vf.createIRI(_Thing.description_IRI)), Optional.empty());
         assertEquals(comment.getProperty(vf.createIRI(_Thing.description_IRI)).get().stringValue(), updateCommentText);
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
     }
 
     @Test
@@ -1293,7 +1296,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
                 .request()
                 .put(Entity.text(""));
         verify(requestManager, never()).updateComment(eq(comment1.getResource()), any(Comment.class));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -1308,7 +1311,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
         Comment comment = commentArgumentCaptor.getValue();
         assertNotEquals(comment.getProperty(vf.createIRI(_Thing.description_IRI)), Optional.empty());
         assertEquals(comment.getProperty(vf.createIRI(_Thing.description_IRI)).get().stringValue(), largeComment);
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -1323,7 +1326,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
         Comment comment = commentArgumentCaptor.getValue();
         assertNotEquals(comment.getProperty(vf.createIRI(_Thing.description_IRI)), Optional.empty());
         assertEquals(comment.getProperty(vf.createIRI(_Thing.description_IRI)).get().stringValue(), updateCommentText);
-        assertEquals(response.getStatus(), 500);
+        assertEquals(500, response.getStatus());
     }
 
     @Test
@@ -1332,7 +1335,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
                 + encode(invalidIRIString))
                 .request()
                 .put(Entity.text(updateCommentText));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     /* DELETE merge-requests/{requestId}/comments/{commentId} */
@@ -1344,7 +1347,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
                 .request().delete();
         verify(requestManager).getMergeRequest(request1.getResource());
         verify(requestManager).deleteComment(comment1.getResource());
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
     }
 
     @Test
@@ -1355,7 +1358,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
                 .request().delete();
         verify(requestManager).getMergeRequest(request1.getResource());
         verify(requestManager).deleteComment(comment1.getResource());
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -1366,7 +1369,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
                 .request().delete();
         verify(requestManager).getMergeRequest(request1.getResource());
         verify(requestManager).deleteComment(comment1.getResource());
-        assertEquals(response.getStatus(), 500);
+        assertEquals(500, response.getStatus());
     }
 
     @Test
@@ -1377,7 +1380,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
                 .request().delete();
         verify(requestManager).getMergeRequest(request1.getResource());
         verify(requestManager).deleteComment(comment1.getResource());
-        assertEquals(response.getStatus(), 500);
+        assertEquals(500, response.getStatus());
     }
 
     @Test
@@ -1385,7 +1388,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
         Response response = target().path("merge-requests/" + encode("http://mobi.com/error") + "/comments/"
                 + encode(comment1.getResource().stringValue()))
                 .request().delete();
-        assertEquals(response.getStatus(), 404);
+        assertEquals(404, response.getStatus());
         verify(requestManager).getMergeRequest(vf.createIRI("http://mobi.com/error"));
     }
 
@@ -1394,7 +1397,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
         Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()) + "/comments/"
                 + encode("http://mobi.com/error"))
                 .request().delete();
-        assertEquals(response.getStatus(), 404);
+        assertEquals(404, response.getStatus());
         verify(requestManager).getMergeRequest(request1.getResource());
         verify(requestManager).getComment(vf.createIRI("http://mobi.com/error"));
     }
@@ -1407,7 +1410,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
         Response response = target().path("merge-requests/" + encode(request1.getResource().stringValue()) + "/comments/"
                 + encode(comment1.getResource().stringValue()))
                 .request().delete();
-        assertEquals(response.getStatus(), 401);
+        assertEquals(401, response.getStatus());
         verify(requestManager).getMergeRequest(request1.getResource());
         verify(requestManager).getComment(comment1.getResource());
     }
@@ -1415,7 +1418,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
     @Test
     public void getRecordsTest() {
         Response response = target().path("merge-requests/records").request().get();
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         ArgumentCaptor<PaginatedSearchParams> captor = ArgumentCaptor.forClass(PaginatedSearchParams.class);
         verify(requestManager).getRecords(captor.capture(), eq(user.getResource()));
         PaginatedSearchParams params = captor.getValue();
@@ -1423,15 +1426,15 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
         assertTrue(params.getLimit().isEmpty());
         assertTrue(params.getSearchText().isEmpty());
         try {
-            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+            ArrayNode result = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
             assertEquals(result.size(), 1);
-            JSONObject requestObj = result.getJSONObject(0);
-            assertTrue(requestObj.containsKey("record"));
-            assertEquals(recordCount.getRecord().stringValue(), requestObj.getString("record"));
-            assertTrue(requestObj.containsKey("title"));
-            assertEquals(recordCount.getTitle(), requestObj.getString("title"));
-            assertTrue(requestObj.containsKey("count"));
-            assertEquals(recordCount.getCount().intValue(), requestObj.getInt("count"));
+            JsonNode requestObj = result.get(0);
+            assertTrue(requestObj.has("record"));
+            assertEquals(recordCount.getRecord().stringValue(), requestObj.get("record").asText());
+            assertTrue(requestObj.has("title"));
+            assertEquals(recordCount.getTitle(), requestObj.get("title").asText());
+            assertTrue(requestObj.has("count"));
+            assertEquals(recordCount.getCount().intValue(), requestObj.get("count").asInt());
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
@@ -1440,7 +1443,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
     @Test
     public void getRecordsWithPagingTest() {
         Response response = target().path("merge-requests/records").queryParam("offset", 1).queryParam("limit", 10).request().get();
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         ArgumentCaptor<PaginatedSearchParams> captor = ArgumentCaptor.forClass(PaginatedSearchParams.class);
         verify(requestManager).getRecords(captor.capture(), eq(user.getResource()));
         PaginatedSearchParams params = captor.getValue();
@@ -1449,15 +1452,15 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
         assertEquals(10, params.getLimit().get().intValue());
         assertTrue(params.getSearchText().isEmpty());
         try {
-            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+            ArrayNode result = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
             assertEquals(result.size(), 1);
-            JSONObject requestObj = result.getJSONObject(0);
-            assertTrue(requestObj.containsKey("record"));
-            assertEquals(recordCount.getRecord().stringValue(), requestObj.getString("record"));
-            assertTrue(requestObj.containsKey("title"));
-            assertEquals(recordCount.getTitle(), requestObj.getString("title"));
-            assertTrue(requestObj.containsKey("count"));
-            assertEquals(recordCount.getCount().intValue(), requestObj.getInt("count"));
+            JsonNode requestObj = result.get(0);
+            assertTrue(requestObj.has("record"));
+            assertEquals(recordCount.getRecord().stringValue(), requestObj.get("record").asText());
+            assertTrue(requestObj.has("title"));
+            assertEquals(recordCount.getTitle(), requestObj.get("title").asText());
+            assertTrue(requestObj.has("count"));
+            assertEquals(recordCount.getCount().intValue(), requestObj.get("count").asInt());
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
@@ -1466,7 +1469,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
     @Test
     public void getRecordsWithBadPagingTest() {
         Response response = target().path("merge-requests/records").queryParam("offset", -1).queryParam("limit", -1).request().get();
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
         verify(requestManager, times(0)).getRecords(any(PaginatedSearchParams.class), any(Resource.class));
         assertEquals("", response.readEntity(String.class));
     }
@@ -1474,7 +1477,7 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
     @Test
     public void getRecordsWithSearchText() {
         Response response = target().path("merge-requests/records").queryParam("searchText", "test").request().get();
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         ArgumentCaptor<PaginatedSearchParams> captor = ArgumentCaptor.forClass(PaginatedSearchParams.class);
         verify(requestManager).getRecords(captor.capture(), eq(user.getResource()));
         PaginatedSearchParams params = captor.getValue();
@@ -1483,15 +1486,15 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
         assertTrue(params.getSearchText().isPresent());
         assertEquals("test", params.getSearchText().get());
         try {
-            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+            ArrayNode result = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
             assertEquals(result.size(), 1);
-            JSONObject requestObj = result.getJSONObject(0);
-            assertTrue(requestObj.containsKey("record"));
-            assertEquals(recordCount.getRecord().stringValue(), requestObj.getString("record"));
-            assertTrue(requestObj.containsKey("title"));
-            assertEquals(recordCount.getTitle(), requestObj.getString("title"));
-            assertTrue(requestObj.containsKey("count"));
-            assertEquals(recordCount.getCount().intValue(), requestObj.getInt("count"));
+            JsonNode requestObj = result.get(0);
+            assertTrue(requestObj.has("record"));
+            assertEquals(recordCount.getRecord().stringValue(), requestObj.get("record").asText());
+            assertTrue(requestObj.has("title"));
+            assertEquals(recordCount.getTitle(), requestObj.get("title").asText());
+            assertTrue(requestObj.has("count"));
+            assertEquals(recordCount.getCount().intValue(), requestObj.get("count").asInt());
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
@@ -1502,13 +1505,13 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
         Mockito.doThrow(new IllegalArgumentException("I'm an exception!")).when(requestManager).getRecords(any(PaginatedSearchParams.class), any(Resource.class));
 
         Response response = target().path("merge-requests/records").request().get();
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
         verify(requestManager).getRecords(any(PaginatedSearchParams.class), any(Resource.class));
 
         try {
-            JSONObject responseObject = JSONObject.fromObject(response.readEntity(String.class));
-            assertEquals(responseObject.get("error"), "IllegalArgumentException");
-            assertEquals(responseObject.get("errorMessage"), "I'm an exception!");
+            ObjectNode responseObject = mapper.readValue(response.readEntity(String.class), ObjectNode.class);
+            assertEquals(responseObject.get("error").asText(), "IllegalArgumentException");
+            assertEquals(responseObject.get("errorMessage").asText(), "I'm an exception!");
             assertNotEquals(responseObject.get("errorDetails"), null);
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
@@ -1520,13 +1523,13 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
         Mockito.doThrow(new IllegalStateException("I'm an exception!")).when(requestManager).getRecords(any(PaginatedSearchParams.class), any(Resource.class));
 
         Response response = target().path("merge-requests/records").request().get();
-        assertEquals(response.getStatus(), 500);
+        assertEquals(500, response.getStatus());
         verify(requestManager).getRecords(any(PaginatedSearchParams.class), any(Resource.class));
 
         try {
-            JSONObject responseObject = JSONObject.fromObject(response.readEntity(String.class));
-            assertEquals(responseObject.get("error"), "IllegalStateException");
-            assertEquals(responseObject.get("errorMessage"), "I'm an exception!");
+            ObjectNode responseObject = mapper.readValue(response.readEntity(String.class), ObjectNode.class);
+            assertEquals(responseObject.get("error").asText(), "IllegalStateException");
+            assertEquals(responseObject.get("errorMessage").asText(), "I'm an exception!");
             assertNotEquals(responseObject.get("errorDetails"), null);
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());

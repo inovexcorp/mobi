@@ -36,6 +36,10 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mobi.rest.test.util.MobiRestTestCXF;
 import com.mobi.rest.test.util.UsernameTestFilter;
 import com.mobi.security.policy.api.exception.PolicySyntaxException;
@@ -43,8 +47,6 @@ import com.mobi.security.policy.api.xacml.PolicyQueryParams;
 import com.mobi.security.policy.api.xacml.XACMLPolicy;
 import com.mobi.security.policy.api.xacml.XACMLPolicyManager;
 import com.mobi.security.policy.api.xacml.jaxb.PolicyType;
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Resource;
@@ -59,6 +61,7 @@ import org.mockito.MockitoAnnotations;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import javax.ws.rs.client.Entity;
@@ -66,6 +69,7 @@ import javax.ws.rs.core.Response;
 
 public class PolicyRestTest extends MobiRestTestCXF {
     private AutoCloseable closeable;
+    private static final ObjectMapper mapper = new ObjectMapper();
     private String xml;
     private String json;
     private XACMLPolicy policy;
@@ -92,8 +96,8 @@ public class PolicyRestTest extends MobiRestTestCXF {
     public void setUpMocks() throws Exception {
         closeable = MockitoAnnotations.openMocks(this);
         reset(policyManager);
-        xml = IOUtils.toString(getClass().getResourceAsStream("/policy.xml"), StandardCharsets.UTF_8);
-        json = IOUtils.toString(getClass().getResourceAsStream("/policy.json"), StandardCharsets.UTF_8);
+        xml = IOUtils.toString(Objects.requireNonNull(getClass().getResourceAsStream("/policy.xml")), StandardCharsets.UTF_8);
+        json = IOUtils.toString(Objects.requireNonNull(getClass().getResourceAsStream("/policy.json")), StandardCharsets.UTF_8);
         policy = new XACMLPolicy(xml, vf);
         policyId = vf.createIRI("http://mobi.com/policies/policy1");
 
@@ -114,16 +118,16 @@ public class PolicyRestTest extends MobiRestTestCXF {
     @Test
     public void getPoliciesTest() {
         Response response = target().path("policies").request().get();
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(policyManager).getPolicies(any(PolicyQueryParams.class));
         try {
-            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+            ArrayNode result = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
             assertEquals(result.size(), 1);
-            JSONObject policyObj = result.optJSONObject(0);
+            JsonNode policyObj = result.get(0);
             assertNotNull(policyObj);
-            String id = policyObj.optString("PolicyId");
+            JsonNode id = policyObj.get("PolicyId");
             assertNotNull(id);
-            assertEquals(id, policyId.stringValue());
+            assertEquals(policyId.stringValue(), id.asText());
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
@@ -137,7 +141,7 @@ public class PolicyRestTest extends MobiRestTestCXF {
                 .queryParam("relatedSubject", vf.createIRI("urn:subject"))
                 .queryParam("relatedAction", vf.createIRI("urn:action"))
                 .queryParam("systemOnly", true).request().get();
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(policyManager).getPolicies(params.capture());
         Set<IRI> resourceIRIs = params.getValue().getResourceIRIs();
         assertEquals(resourceIRIs.size(), 1);
@@ -150,13 +154,13 @@ public class PolicyRestTest extends MobiRestTestCXF {
         assertTrue(subjectIRIs.contains(vf.createIRI("urn:subject")));
         assertTrue(params.getValue().isSystemOnly());
         try {
-            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+            ArrayNode result = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
             assertEquals(result.size(), 1);
-            JSONObject policyObj = result.optJSONObject(0);
+            JsonNode policyObj = result.get(0);
             assertNotNull(policyObj);
-            String id = policyObj.optString("PolicyId");
+            JsonNode id = policyObj.get("PolicyId");
             assertNotNull(id);
-            assertEquals(id, policyId.stringValue());
+            assertEquals(policyId.stringValue(), id.asText());
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
@@ -168,7 +172,7 @@ public class PolicyRestTest extends MobiRestTestCXF {
         doThrow(new IllegalStateException()).when(policyManager).getPolicies(any(PolicyQueryParams.class));
 
         Response response = target().path("policies").request().get();
-        assertEquals(response.getStatus(), 500);
+        assertEquals(500, response.getStatus());
         verify(policyManager).getPolicies(any(PolicyQueryParams.class));
     }
 
@@ -177,7 +181,7 @@ public class PolicyRestTest extends MobiRestTestCXF {
     @Test
     public void createPolicyTest() {
         Response response = target().path("policies").request().post(Entity.json(json));
-        assertEquals(response.getStatus(), 201);
+        assertEquals(201, response.getStatus());
         assertEquals(response.readEntity(String.class), policyId.stringValue());
         verify(policyManager).createPolicy(any(PolicyType.class));
         verify(policyManager).addPolicy(policy);
@@ -186,7 +190,7 @@ public class PolicyRestTest extends MobiRestTestCXF {
     @Test
     public void createPolicyMissingIdTest() {
         Response response = target().path("policies").request().post(Entity.json("{}"));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
         verify(policyManager, times(0)).createPolicy(any(PolicyType.class));
         verify(policyManager, times(0)).addPolicy(any(XACMLPolicy.class));
     }
@@ -197,7 +201,7 @@ public class PolicyRestTest extends MobiRestTestCXF {
         doThrow(new IllegalArgumentException()).when(policyManager).addPolicy(policy);
 
         Response response = target().path("policies").request().post(Entity.json("{\"PolicyId\": \"urn:test\"}"));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
         verify(policyManager).createPolicy(any(PolicyType.class));
         verify(policyManager).addPolicy(any(XACMLPolicy.class));
     }
@@ -208,7 +212,7 @@ public class PolicyRestTest extends MobiRestTestCXF {
         doThrow(new PolicySyntaxException()).when(policyManager).createPolicy(any(PolicyType.class));
 
         Response response = target().path("policies").request().post(Entity.json("{\"PolicyId\": \"urn:test\"}"));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
         verify(policyManager).createPolicy(any(PolicyType.class));
         verify(policyManager, times(0)).addPolicy(any(XACMLPolicy.class));
     }
@@ -219,7 +223,7 @@ public class PolicyRestTest extends MobiRestTestCXF {
         doThrow(new IllegalStateException()).when(policyManager).addPolicy(policy);
 
         Response response = target().path("policies").request().post(Entity.json(json));
-        assertEquals(response.getStatus(), 500);
+        assertEquals(500, response.getStatus());
         verify(policyManager).createPolicy(any(PolicyType.class));
         verify(policyManager).addPolicy(policy);
     }
@@ -229,13 +233,13 @@ public class PolicyRestTest extends MobiRestTestCXF {
     @Test
     public void retrievePolicyTest() {
         Response response = target().path("policies/" + encode(policyId.stringValue())).request().get();
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(policyManager).getPolicy(policyId);
         try {
-            JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
-            String id = result.optString("PolicyId");
+            ObjectNode result = mapper.readValue(response.readEntity(String.class), ObjectNode.class);
+            JsonNode id = result.get("PolicyId");
             assertNotNull(id);
-            assertEquals(id, policyId.stringValue());
+            assertEquals(policyId.stringValue(), id.asText());
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
@@ -244,7 +248,7 @@ public class PolicyRestTest extends MobiRestTestCXF {
     @Test
     public void retrievePolicyThatDoesNotExistTest() {
         Response response = target().path("policies/" + encode("urn:missing")).request().get();
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
         verify(policyManager).getPolicy(vf.createIRI("urn:missing"));
     }
 
@@ -254,7 +258,7 @@ public class PolicyRestTest extends MobiRestTestCXF {
         doThrow(new IllegalStateException()).when(policyManager).getPolicy(policyId);
 
         Response response = target().path("policies/" + encode(policyId.stringValue())).request().get();
-        assertEquals(response.getStatus(), 500);
+        assertEquals(500, response.getStatus());
         verify(policyManager).getPolicy(policyId);
     }
 
@@ -263,7 +267,7 @@ public class PolicyRestTest extends MobiRestTestCXF {
     @Test
     public void updatePolicyTest() {
         Response response = target().path("policies/" + encode(policyId.stringValue())).request().put(Entity.json(json));
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(policyManager).createPolicy(any(PolicyType.class));
         verify(policyManager).updatePolicy(policy);
     }
@@ -271,7 +275,7 @@ public class PolicyRestTest extends MobiRestTestCXF {
     @Test
     public void updatePolicyMissingIdTest() {
         Response response = target().path("policies/" + encode(policyId.stringValue())).request().put(Entity.json("{}"));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
         verify(policyManager, times(0)).createPolicy(any(PolicyType.class));
         verify(policyManager, times(0)).updatePolicy(any(XACMLPolicy.class));
     }
@@ -282,7 +286,7 @@ public class PolicyRestTest extends MobiRestTestCXF {
         doThrow(new PolicySyntaxException()).when(policyManager).createPolicy(any(PolicyType.class));
 
         Response response = target().path("policies/" + encode(policyId.stringValue())).request().put(Entity.json("{\"PolicyId\": \"urn:test\"}"));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
         verify(policyManager).createPolicy(any(PolicyType.class));
         verify(policyManager, times(0)).updatePolicy(any(XACMLPolicy.class));
     }
@@ -290,7 +294,7 @@ public class PolicyRestTest extends MobiRestTestCXF {
     @Test
     public void updatePolicyIdDoesNotMatchTest() {
         Response response = target().path("policies/" + encode("urn:different")).request().put(Entity.json(json));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
         verify(policyManager).createPolicy(any(PolicyType.class));
         verify(policyManager, times(0)).updatePolicy(any(XACMLPolicy.class));
     }
@@ -301,7 +305,7 @@ public class PolicyRestTest extends MobiRestTestCXF {
         doThrow(new IllegalStateException()).when(policyManager).updatePolicy(policy);
 
         Response response = target().path("policies/" + encode(policyId.stringValue())).request().put(Entity.json(json));
-        assertEquals(response.getStatus(), 500);
+        assertEquals(500, response.getStatus());
         verify(policyManager).createPolicy(any(PolicyType.class));
         verify(policyManager).updatePolicy(any(XACMLPolicy.class));
     }

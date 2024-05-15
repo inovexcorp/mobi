@@ -34,6 +34,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.repository.impl.sesame.memory.MemoryRepositoryWrapper;
 import com.mobi.rest.test.util.MobiRestTestCXF;
@@ -42,7 +44,6 @@ import com.mobi.security.policy.api.ontologies.policy.PolicyFile;
 import com.mobi.security.policy.api.xacml.XACMLPolicy;
 import com.mobi.security.policy.api.xacml.XACMLPolicyManager;
 import com.mobi.security.policy.api.xacml.jaxb.PolicyType;
-import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Resource;
@@ -59,12 +60,14 @@ import org.mockito.MockitoAnnotations;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
+import java.util.Objects;
 import java.util.Optional;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
 
 public class RecordPermissionsRestTest extends MobiRestTestCXF {
     private AutoCloseable closeable;
+    private static final ObjectMapper mapper = new ObjectMapper();
     private String recordJson;
     private XACMLPolicy recordPolicy;
     private XACMLPolicy policyPolicy;
@@ -99,16 +102,16 @@ public class RecordPermissionsRestTest extends MobiRestTestCXF {
         closeable = MockitoAnnotations.openMocks(this);
         vf = getValueFactory();
 
-        recordJson = IOUtils.toString(getClass().getResourceAsStream("/recordPolicy.json"),
+        recordJson = IOUtils.toString(Objects.requireNonNull(getClass().getResourceAsStream("/recordPolicy.json")),
                 StandardCharsets.UTF_8);
         recordIRI = vf.createIRI("http://mobi.com/records/testRecord1");
         recordPolicyIRI = vf.createIRI("http://mobi.com/policies/record/https%3A%2F%2Fmobi.com%2Frecords%2FtestRecord1");
         policyPolicyIRI = vf.createIRI("http://mobi.com/policies/policy/record/https%3A%2F%2Fmobi.com%2Frecords%2FtestRecord1");
         invalidIRI = vf.createIRI("urn:invalidRecordId");
 
-        recordPolicy = new XACMLPolicy(IOUtils.toString(getClass().getResourceAsStream("/recordPolicy.xml"),
+        recordPolicy = new XACMLPolicy(IOUtils.toString(Objects.requireNonNull(getClass().getResourceAsStream("/recordPolicy.xml")),
                 StandardCharsets.UTF_8), vf);
-        policyPolicy = new XACMLPolicy(IOUtils.toString(getClass().getResourceAsStream("/policyPolicy.xml"),
+        policyPolicy = new XACMLPolicy(IOUtils.toString(Objects.requireNonNull(getClass().getResourceAsStream("/policyPolicy.xml")),
                 StandardCharsets.UTF_8), vf);
 
         try (RepositoryConnection conn = repo.getConnection()) {
@@ -142,9 +145,8 @@ public class RecordPermissionsRestTest extends MobiRestTestCXF {
         assertEquals(response.getStatus(), 200);
         verify(policyManager).getPolicy(recordPolicyIRI);
         try {
-            JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
-            assertEquals(result, JSONObject.fromObject(recordJson));
-
+            ObjectNode result = mapper.readValue(response.readEntity(String.class), ObjectNode.class);
+            assertEquals(result, mapper.readValue(recordJson, ObjectNode.class));
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
@@ -187,27 +189,27 @@ public class RecordPermissionsRestTest extends MobiRestTestCXF {
     }
 
     @Test
-    public void updateRecordPolicyMissingEveryoneTest() {
-        JSONObject jsonObject = JSONObject.fromObject(recordJson);
-        jsonObject.getJSONObject("urn:read").remove("everyone");
+    public void updateRecordPolicyMissingEveryoneTest() throws Exception {
+        ObjectNode jsonObject = mapper.readValue(recordJson, ObjectNode.class);
+        ((ObjectNode) jsonObject.get("urn:read")).remove("everyone");
 
         Response response = target().path("record-permissions/" + encode(recordIRI.stringValue())).request().put(Entity.json(jsonObject.toString()));
         assertEquals(response.getStatus(), 400);
     }
 
     @Test
-    public void updateRecordPolicyMissingUsersTest() {
-        JSONObject jsonObject = JSONObject.fromObject(recordJson);
-        jsonObject.getJSONObject("urn:update").remove("users");
+    public void updateRecordPolicyMissingUsersTest() throws Exception {
+        ObjectNode jsonObject = mapper.readValue(recordJson, ObjectNode.class);
+        ((ObjectNode) jsonObject.get("urn:update")).remove("users");
 
         Response response = target().path("record-permissions/" + encode(recordIRI.stringValue())).request().put(Entity.json(jsonObject.toString()));
         assertEquals(response.getStatus(), 400);
     }
 
     @Test
-    public void updateRecordPolicyMissingGroupsTest() {
-        JSONObject jsonObject = JSONObject.fromObject(recordJson);
-        jsonObject.getJSONObject("urn:update").remove("groups");
+    public void updateRecordPolicyMissingGroupsTest() throws Exception {
+        ObjectNode jsonObject = mapper.readValue(recordJson, ObjectNode.class);
+        ((ObjectNode) jsonObject.get("urn:update")).remove("groups");
 
         Response response = target().path("record-permissions/" + encode(recordIRI.stringValue())).request().put(Entity.json(jsonObject.toString()));
         assertEquals(response.getStatus(), 400);

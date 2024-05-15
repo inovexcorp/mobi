@@ -692,14 +692,13 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-checkstyle-plugin</artifactId>
-                <version>2.17</version>
+                <version>3.3.1</version>
                 <executions>
                     <execution>
                         <id>validate</id>
                         <phase>validate</phase>
                         <configuration>
                             <configLocation>../google_checks.xml</configLocation>
-                            <encoding>UTF-8</encoding>
                             <consoleOutput>true</consoleOutput>
                         </configuration>
                         <goals>

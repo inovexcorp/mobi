@@ -32,6 +32,8 @@ import static com.mobi.security.policy.api.xacml.XACML.POLICY_PERMIT_OVERRIDES;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mobi.catalog.api.ontologies.mcat.Record;
 import com.mobi.catalog.api.ontologies.mcat.RecordFactory;
 import com.mobi.exception.MobiException;
@@ -55,8 +57,6 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.StopWatch;
@@ -111,11 +111,10 @@ import javax.ws.rs.core.UriInfo;
 public class ProvRest {
 
     private static final Logger LOG = LoggerFactory.getLogger(ProvRest.class);
+    private static final ObjectMapper mapper = new ObjectMapper();
 
     private final ValueFactory vf = new ValidatingValueFactory();
     private final ModelFactory mf = new DynamicModelFactory();
-
-    private static final ObjectMapper mapper = new ObjectMapper();
 
     @Reference
     protected ProvenanceService provService;
@@ -210,9 +209,9 @@ public class ProvRest {
             Map<Resource, List<Resource>> entityToActivities = new HashMap<>();
             try (TupleQueryResult distinctResult = distinctQuery.evaluate()) {
                 if (!distinctResult.hasNext()) {
-                    JSONObject object = new JSONObject();
-                    object.element("activities", new JSONArray());
-                    object.element("entities", new JSONArray());
+                    ObjectNode object = mapper.createObjectNode();
+                    object.set("activities", mapper.createArrayNode());
+                    object.set("entities", mapper.createArrayNode());
                     return Response.ok(object).header("X-Total-Count", 0).build();
                 }
                 distinctResult.forEach(bindings -> {
@@ -273,14 +272,14 @@ public class ProvRest {
                 // Only perform access control filtering on entities that are VersionedRDFRecords
                 entityToActivities.keySet().stream().filter(entityId -> recordIRIs.contains((IRI) entityId))
                         .forEach(entityId -> {
-                    if (!viewableRecords.contains(entityId.stringValue())) {
-                        LOG.trace("Removing record " + entityId + " from return set");
-                        entitiesModel.remove(entityId, null, null);
-                        List<Resource> activityIRIsToRemove = entityToActivities.get(entityId);
-                        LOG.trace("Removing activities " + activityIRIsToRemove + " from return set");
-                        activityIRIsToRemove.forEach(activities::remove);
-                    }
-                });
+                            if (!viewableRecords.contains(entityId.stringValue())) {
+                                LOG.trace("Removing record " + entityId + " from return set");
+                                entitiesModel.remove(entityId, null, null);
+                                List<Resource> activityIRIsToRemove = entityToActivities.get(entityId);
+                                LOG.trace("Removing activities " + activityIRIsToRemove + " from return set");
+                                activityIRIsToRemove.forEach(activities::remove);
+                            }
+                        });
                 watch.stop();
                 LOG.trace("End access control filtering: " + watch.getTime() + "ms");
                 watch.reset();
@@ -301,16 +300,16 @@ public class ProvRest {
                 entityModel.subjects()
                         .forEach(entityIRI -> finalEntitiesModel.addAll(entitiesModel.filter(entityIRI, null, null)));
             });
-            JSONArray activityArr = new JSONArray();
+            ArrayNode activityArr = mapper.createArrayNode();
             activityList.forEach(activity -> {
                 Model tempModel = mf.createEmptyModel();
                 tempModel.addAll(activity.getModel());
                 Model activityModel = tempModel.filter(activity.getResource(), null, null);
                 activityArr.add(RestUtils.getObjectFromJsonld(RestUtils.modelToJsonld(activityModel)));
             });
-            JSONObject object = new JSONObject();
-            object.element("activities", activityArr);
-            object.element("entities", RestUtils.modelToJsonld(finalEntitiesModel));
+            ObjectNode object = mapper.createObjectNode();
+            object.set("activities", activityArr);
+            object.set("entities", RestUtils.getArrayNodeFromJson(RestUtils.modelToJsonld(finalEntitiesModel)));
             watch.stop();
             LOG.trace("End collecting prov activities: " + watch.getTime() + "ms");
 

@@ -23,6 +23,7 @@ package com.mobi.utils.cli;
  * #L%
  */
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.etl.api.config.rdf.ImportServiceConfig;
 import com.mobi.etl.api.rdf.RDFImportService;
@@ -42,7 +43,6 @@ import com.mobi.utils.cli.impl.ManifestFile;
 import com.mobi.utils.cli.impl.PostRestoreOperationHandler;
 import com.mobi.utils.cli.impl.PreRestoreOperationHandler;
 import com.mobi.utils.cli.utils.RestoreUtils;
-import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
 import org.apache.karaf.shell.api.action.Action;
 import org.apache.karaf.shell.api.action.Argument;
@@ -71,6 +71,7 @@ import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -143,7 +144,7 @@ public class Restore implements Action {
      * - Restarting all services
      *
      * @return Object
-     * @throws Exception If an error occurs when restoring
+     * @throws Exception An error occurs
      */
     @Override
     public Object execute() throws Exception {
@@ -161,7 +162,7 @@ public class Restore implements Action {
             return null;
         }
 
-        JSONObject manifestRepos = manifestFile.getRepositories();
+        ObjectNode manifestRepos = manifestFile.getRepositories();
         String backupVersion = manifestFile.getVersion();
         out("== Restoring Version: " + backupVersion);
 
@@ -305,7 +306,7 @@ public class Restore implements Action {
         return remoteRepos;
     }
 
-    private void restoreRepositories(JSONObject manifestRepos, Set<String> remoteRepos) throws IOException {
+    private void restoreRepositories(ObjectNode manifestRepos, Set<String> remoteRepos) throws IOException {
         // Populate Repositories
         ImportServiceConfig.Builder builder = new ImportServiceConfig.Builder()
                 .continueOnError(false)
@@ -313,10 +314,10 @@ public class Restore implements Action {
                 .printOutput(true)
                 .batchSize(batchSize);
 
-        for (Object key : manifestRepos.keySet()) {
-            String repoName = key.toString();
+        for (Iterator<String> i = manifestRepos.fieldNames(); i.hasNext();) {
+            String repoName = i.next();
             if (!remoteRepos.contains(repoName)) {
-                String repoPath = manifestRepos.optString(key.toString());
+                String repoPath = manifestRepos.get(repoName).asText();
                 String repoDirectoryPath = repoPath.substring(0, repoPath.lastIndexOf(repoName + ".zip"));
                 builder.repository(repoName);
                 File repoFile = new File(RESTORE_PATH + File.separator + repoDirectoryPath + File.separator
@@ -354,6 +355,7 @@ public class Restore implements Action {
 
     /**
      * Execute list of ExecutableRestoreOperation.
+     *
      * @param executableRestoreOperation List of ExecutableRestore Operations
      */
     private void executeRestoreOperations(List<? extends ExecutableRestoreOperation> executableRestoreOperation) {
