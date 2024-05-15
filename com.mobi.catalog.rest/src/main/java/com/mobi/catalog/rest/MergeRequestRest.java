@@ -26,10 +26,9 @@ package com.mobi.catalog.rest;
 import static com.mobi.ontologies.rdfs.Resource.type_IRI;
 import static com.mobi.rest.util.RestUtils.checkStringParam;
 import static com.mobi.rest.util.RestUtils.createIRI;
-import static com.mobi.rest.util.RestUtils.createPaginatedResponseWithJsonNode;
+import static com.mobi.rest.util.RestUtils.createPaginatedResponse;
 import static com.mobi.rest.util.RestUtils.getActiveUser;
 import static com.mobi.rest.util.RestUtils.getObjectFromJsonld;
-import static com.mobi.rest.util.RestUtils.getObjectNodeFromJsonld;
 import static com.mobi.rest.util.RestUtils.getRDFFormat;
 import static com.mobi.rest.util.RestUtils.groupedModelToString;
 import static com.mobi.rest.util.RestUtils.jsonldToModel;
@@ -243,7 +242,7 @@ public class MergeRequestRest {
             }
             ArrayNode result = mapper.createArrayNode();
             stream.map(request -> modelToJsonld(request.getModel()))
-                    .map(RestUtils::getObjectNodeFromJsonld)
+                    .map(RestUtils::getObjectFromJsonld)
                     .forEach(result::add);
             return Response.ok(result).header("X-Total-Count", requests.size()).build();
         } catch (IllegalArgumentException ex) {
@@ -405,7 +404,7 @@ public class MergeRequestRest {
             User activeUser = getActiveUser(servletRequest, engineManager);
             PaginatedSearchResults<UserCount> counts = manager.getCreators(builder.build(), activeUser.getResource());
             ArrayNode arr = serializeUserCount(counts);
-            return createPaginatedResponseWithJsonNode(uriInfo, arr, counts.getTotalSize(), limit == 0
+            return createPaginatedResponse(uriInfo, arr, counts.getTotalSize(), limit == 0
                     ? counts.getTotalSize() : limit, offset);
         } catch (IllegalArgumentException ex) {
             throw RestUtils.getErrorObjBadRequest(ex);
@@ -467,7 +466,7 @@ public class MergeRequestRest {
             User activeUser = getActiveUser(servletRequest, engineManager);
             PaginatedSearchResults<UserCount> counts = manager.getAssignees(builder.build(), activeUser.getResource());
             ArrayNode arr = serializeUserCount(counts);
-            return createPaginatedResponseWithJsonNode(uriInfo, arr, counts.getTotalSize(), limit == 0
+            return createPaginatedResponse(uriInfo, arr, counts.getTotalSize(), limit == 0
                     ? counts.getTotalSize() : limit, offset);
         } catch (IllegalArgumentException ex) {
             throw RestUtils.getErrorObjBadRequest(ex);
@@ -529,7 +528,7 @@ public class MergeRequestRest {
             User activeUser = getActiveUser(servletRequest, engineManager);
             PaginatedSearchResults<RecordCount> counts = manager.getRecords(builder.build(), activeUser.getResource());
             ArrayNode arr = serializeRecordCount(counts);
-            return createPaginatedResponseWithJsonNode(uriInfo, arr, counts.getTotalSize(), limit == 0
+            return createPaginatedResponse(uriInfo, arr, counts.getTotalSize(), limit == 0
                     ? counts.getTotalSize() : limit, offset);
         } catch (IllegalArgumentException ex) {
             throw RestUtils.getErrorObjBadRequest(ex);
@@ -858,7 +857,7 @@ public class MergeRequestRest {
                     .forEach(comments -> {
                         ArrayNode commentArr = mapper.createArrayNode();
                         comments.stream()
-                                .map(comment -> getObjectNodeFromJsonld(
+                                .map(comment -> getObjectFromJsonld(
                                         groupedModelToString(comment.getModel(), RDFFormat.JSONLD)))
                                 .forEach(commentArr::add);
                         result.add(commentArr);

@@ -209,7 +209,7 @@ public class ShapesGraphRest {
     @ActionAttributes(@AttributeValue(id = com.mobi.ontologies.rdfs.Resource.type_IRI, value = ShapesGraphRecord.TYPE))
     @ResourceId("http://mobi.com/catalog-local")
     public Response uploadFile(@Context HttpServletRequest servletRequest) {
-        Map<String, List<Class>> fields = new HashMap<>();
+        Map<String, List<Class<?>>> fields = new HashMap<>();
         fields.put("title", Stream.of(String.class).collect(Collectors.toList()));
         fields.put("description", Stream.of(String.class).collect(Collectors.toList()));
         fields.put("json", Stream.of(String.class).collect(Collectors.toList()));
@@ -489,7 +489,7 @@ public class ShapesGraphRest {
             @QueryParam("commitId") String commitIdStr,
             @Parameter(description = "Boolean representing whether the in progress commit should be overwritten")
             @DefaultValue("false") @QueryParam("replaceInProgressCommit") boolean replaceInProgressCommit) {
-        Map<String, List<Class>> fields = new HashMap<>();
+        Map<String, List<Class<?>>> fields = new HashMap<>();
         fields.put("json", Stream.of(String.class).collect(Collectors.toList()));
 
         Map<String, Object> formData = RestUtils.getFormData(servletRequest, fields);

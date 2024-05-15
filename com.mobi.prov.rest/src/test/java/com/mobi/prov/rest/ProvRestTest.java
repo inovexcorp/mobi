@@ -41,6 +41,10 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mobi.catalog.api.ontologies.mcat.Record;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
@@ -56,8 +60,6 @@ import com.mobi.rest.test.util.MobiRestTestCXF;
 import com.mobi.rest.test.util.UsernameTestFilter;
 import com.mobi.security.policy.api.PDP;
 import com.mobi.security.policy.api.Request;
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Resource;
@@ -95,6 +97,7 @@ import javax.ws.rs.core.Response;
 
 public class ProvRestTest extends MobiRestTestCXF {
     private AutoCloseable closeable;
+    private static final ObjectMapper mapper = new ObjectMapper();
     private static OrmFactory<Activity> activityFactory;
     private static OrmFactory<Entity> entityFactory;
 
@@ -208,13 +211,13 @@ public class ProvRestTest extends MobiRestTestCXF {
         }
 
         Response response = target().path("provenance-data").request().get();
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         MultivaluedMap<String, Object> headers = response.getHeaders();
         assertEquals(headers.get("X-Total-Count").get(0), "0");
         verify(provService, times(0)).getActivity(any(Resource.class));
         verify(pdp, times(0)).filter(eq(request), any(IRI.class));
         try {
-            JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
+            ObjectNode result = mapper.readValue(response.readEntity(String.class), ObjectNode.class);
             assertActivities(result, new ArrayList<>());
             assertEntities(result, new ArrayList<>());
         } catch (Exception e) {
@@ -225,7 +228,7 @@ public class ProvRestTest extends MobiRestTestCXF {
     @Test
     public void getActivitiesOnePageTest() throws Exception {
         Response response = target().path("provenance-data").request().get();
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         MultivaluedMap<String, Object> headers = response.getHeaders();
         assertEquals(headers.get("X-Total-Count").get(0), "10");
         verify(provService, times(10)).getActivity(any(Resource.class));
@@ -233,7 +236,7 @@ public class ProvRestTest extends MobiRestTestCXF {
         try {
             List<String> expected = new ArrayList<>(activityIRIs);
             Collections.reverse(expected);
-            JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
+            ObjectNode result = mapper.readValue(response.readEntity(String.class), ObjectNode.class);
             assertActivities(result, expected);
             assertEntities(result, entityIRIs);
         } catch (Exception e) {
@@ -244,7 +247,7 @@ public class ProvRestTest extends MobiRestTestCXF {
     @Test
     public void getActivitiesWithLinksTest() throws Exception {
         Response response = target().path("provenance-data").queryParam("limit", 2).queryParam("offset", 2).request().get();
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         MultivaluedMap<String, Object> headers = response.getHeaders();
         assertEquals(headers.get("X-Total-Count").get(0), "10");
         Set<Link> links = response.getLinks();
@@ -254,7 +257,7 @@ public class ProvRestTest extends MobiRestTestCXF {
         verify(provService, times(2)).getActivity(any(Resource.class));
         verify(pdp, times(0)).filter(eq(request), any(IRI.class));
         try {
-            JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
+            ObjectNode result = mapper.readValue(response.readEntity(String.class), ObjectNode.class);
             assertActivities(result, Stream.of(activityIRIs.get(7), activityIRIs.get(6)).collect(Collectors.toList()));
             assertEntities(result, Stream.of(entityIRIs.get(3), entityIRIs.get(4)).collect(Collectors.toList()));
         } catch (Exception e) {
@@ -266,7 +269,7 @@ public class ProvRestTest extends MobiRestTestCXF {
     public void getActivitiesWithAgentTest() throws Exception {
         String USER_1_IRI = "http://test.org/users#1";
         Response response = target().path("provenance-data").queryParam("agent", USER_1_IRI).request().get();
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         MultivaluedMap<String, Object> headers = response.getHeaders();
         assertEquals(headers.get("X-Total-Count").get(0), "6");
         verify(provService, times(6)).getActivity(any(Resource.class));
@@ -274,7 +277,7 @@ public class ProvRestTest extends MobiRestTestCXF {
         try {
             List<String> expected = Stream.of(activityIRIs.get(2), activityIRIs.get(4), activityIRIs.get(5), activityIRIs.get(6), activityIRIs.get(8), activityIRIs.get(9)).collect(Collectors.toList());
             Collections.reverse(expected);
-            JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
+            ObjectNode result = mapper.readValue(response.readEntity(String.class), ObjectNode.class);
             assertActivities(result, expected);
             assertEntities(result, Stream.of(entityIRIs.get(0), entityIRIs.get(1), entityIRIs.get(2), entityIRIs.get(3), entityIRIs.get(4)).collect(Collectors.toList()));
         } catch (Exception e) {
@@ -285,7 +288,7 @@ public class ProvRestTest extends MobiRestTestCXF {
     @Test
     public void getActivitiesWithEntityTest() throws Exception {
         Response response = target().path("provenance-data").queryParam("entity", entityIRIs.get(0)).request().get();
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         MultivaluedMap<String, Object> headers = response.getHeaders();
         assertEquals(headers.get("X-Total-Count").get(0), "3");
         verify(provService, times(3)).getActivity(any(Resource.class));
@@ -293,7 +296,7 @@ public class ProvRestTest extends MobiRestTestCXF {
         try {
             List<String> expected = Stream.of(activityIRIs.get(0), activityIRIs.get(1), activityIRIs.get(5)).collect(Collectors.toList());
             Collections.reverse(expected);
-            JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
+            ObjectNode result = mapper.readValue(response.readEntity(String.class), ObjectNode.class);
             assertActivities(result, expected);
             assertEntities(result, Stream.of(entityIRIs.get(0)).collect(Collectors.toList()));
         } catch (Exception e) {
@@ -309,7 +312,7 @@ public class ProvRestTest extends MobiRestTestCXF {
         }
 
         Response response = target().path("provenance-data").request().get();
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         MultivaluedMap<String, Object> headers = response.getHeaders();
         assertEquals(headers.get("X-Total-Count").get(0), "8");
         verify(provService, times(8)).getActivity(any(Resource.class));
@@ -318,7 +321,7 @@ public class ProvRestTest extends MobiRestTestCXF {
         try {
             List<String> expected = Stream.of(activityIRIs.get(0), activityIRIs.get(1), activityIRIs.get(2), activityIRIs.get(3), activityIRIs.get(4), activityIRIs.get(5), activityIRIs.get(6), activityIRIs.get(9)).collect(Collectors.toList());
             Collections.reverse(expected);
-            JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
+            ObjectNode result = mapper.readValue(response.readEntity(String.class), ObjectNode.class);
             assertActivities(result, expected);
             assertEntities(result, entityIRIs.subList(0, entityIRIs.size() - 1));
         } catch (Exception e) {
@@ -331,25 +334,25 @@ public class ProvRestTest extends MobiRestTestCXF {
     @Test
     public void getActivityWithoutErrorTest() {
         Response response = target().path("provenance-data/" + ResourceUtils.encode(activityIRIs.get(0))).request().get();
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
     }
 
     @Test
     public void getActivityWithErrorTest() {
         Response response = target().path("provenance-data/" + NULL_ACT_IRI).request().get();
-        assertEquals(response.getStatus(), 404);
+        assertEquals(404, response.getStatus());
     }
 
     @Test
     public void getActivitiesWithNegativeLimitTest() {
         Response response = target().path("provenance-data").queryParam("limit", -1).request().get();
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
     public void getActivitiesWithNegativeOffsetTest() {
         Response response = target().path("provenance-data").queryParam("offset", -1).request().get();
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -358,42 +361,44 @@ public class ProvRestTest extends MobiRestTestCXF {
         doThrow(new MobiException()).when(provService).getConnection();
 
         Response response = target().path("provenance-data").request().get();
-        assertEquals(response.getStatus(), 500);
+        assertEquals(500, response.getStatus());
     }
 
     // Helper methods
 
-    private void assertResourceOrder(JSONArray array, List<String> expectedOrder) {
+    private void assertResourceOrder(ArrayNode array, List<String> expectedOrder) {
         List<String> resources = getResources(array);
         assertEquals(resources, expectedOrder);
     }
 
-    private List<String> getResources(JSONArray array) {
+    private List<String> getResources(ArrayNode array) {
         List<String> resources = new ArrayList<>();
         for (int i = 0; i < array.size(); i++) {
-            JSONObject obj = array.optJSONObject(i);
+            JsonNode obj = array.get(i);
             assertNotNull(obj);
-            String iri = obj.optString("@id");
+            JsonNode iri = obj.get("@id");
             assertNotNull(iri);
-            resources.add(iri);
+            resources.add(iri.asText());
         }
         return resources;
     }
 
-    private void assertActivities(JSONObject result, List<String> expected) {
-        assertTrue(result.containsKey("activities"));
-        JSONArray activities = result.optJSONArray("activities");
+    private void assertActivities(ObjectNode result, List<String> expected) {
+        assertTrue(result.has("activities"));
+        JsonNode activities = result.get("activities");
         assertNotNull(activities);
+        assertTrue(activities.isArray());
         assertEquals(activities.size(), expected.size());
-        assertResourceOrder(activities, expected);
+        assertResourceOrder((ArrayNode) activities, expected);
     }
 
-    private void assertEntities(JSONObject result, List<String> expected) {
-        assertTrue(result.containsKey("entities"));
-        JSONArray entities = result.optJSONArray("entities");
+    private void assertEntities(ObjectNode result, List<String> expected) {
+        assertTrue(result.has("entities"));
+        JsonNode entities = result.get("entities");
         assertNotNull(entities);
+        assertTrue(entities.isArray());
         assertEquals(entities.size(), expected.size());
-        List<String> resources = getResources(entities);
+        List<String> resources = getResources((ArrayNode) entities);
         assertTrue(resources.containsAll(expected));
     }
 }

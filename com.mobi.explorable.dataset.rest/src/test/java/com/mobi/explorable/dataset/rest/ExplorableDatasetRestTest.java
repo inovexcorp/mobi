@@ -40,6 +40,10 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mobi.catalog.api.CompiledResourceManager;
 import com.mobi.catalog.api.RecordManager;
 import com.mobi.catalog.config.CatalogConfigProvider;
@@ -60,8 +64,6 @@ import com.mobi.repository.api.OsgiRepository;
 import com.mobi.repository.impl.sesame.memory.MemoryRepositoryWrapper;
 import com.mobi.rest.test.util.MobiRestTestCXF;
 import com.mobi.rest.test.util.TestQueryResult;
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
@@ -88,6 +90,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -98,6 +101,7 @@ import javax.ws.rs.core.Response;
 
 public class ExplorableDatasetRestTest extends MobiRestTestCXF {
     private AutoCloseable closeable;
+    private static final ObjectMapper mapper = new ObjectMapper();
     private OrmFactory<OntologyRecord> ontologyRecordFactory;
 
     private MemoryRepositoryWrapper repository;
@@ -110,9 +114,9 @@ public class ExplorableDatasetRestTest extends MobiRestTestCXF {
     private IRI ontologyRecordId;
     private IRI catalogId;
 
-    private static Set<DataProperty> dataProperties = new HashSet<>();
-    private static Set<ObjectProperty> objectProperties = new HashSet<>();
-    private static Set<Resource> range = new HashSet<>();
+    private static final Set<DataProperty> dataProperties = new HashSet<>();
+    private static final Set<ObjectProperty> objectProperties = new HashSet<>();
+    private static final Set<Resource> range = new HashSet<>();
 
     private static final String RECORD_ID_STR = "https://mobi.com/records#90075db8-e0b1-45b8-9f9e-1eda496ebcc5";
     private static final String CLASS_ID_STR = "http://mobi.com/ontologies/uhtc/Material";
@@ -259,23 +263,23 @@ public class ExplorableDatasetRestTest extends MobiRestTestCXF {
     }
 
     @Test
-    public void getClassDetailsTest() {
+    public void getClassDetailsTest() throws Exception {
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/class-details").request()
                 .get();
         assertEquals(response.getStatus(), 200);
-        JSONArray responseArray = JSONArray.fromObject(response.readEntity(String.class));
+        ArrayNode responseArray = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
         assertEquals(responseArray.size(), 2);
     }
 
     @Test
-    public void getClassDetailsWhenClassesNotFound() {
+    public void getClassDetailsWhenClassesNotFound() throws Exception {
         //Setup:
         when(compiledResourceManager.getCompiledResource(eq(vf.createIRI(commitId)), any(RepositoryConnection.class))).thenReturn(mf.createEmptyModel());
 
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/class-details").request()
                 .get();
         assertEquals(response.getStatus(), 200);
-        JSONArray responseArray = JSONArray.fromObject(response.readEntity(String.class));
+        ArrayNode responseArray = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
         assertEquals(responseArray.size(), 0);
     }
 
@@ -289,9 +293,9 @@ public class ExplorableDatasetRestTest extends MobiRestTestCXF {
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/class-details").request()
                 .get();
         assertEquals(response.getStatus(), 200);
-        JSONArray responseArray = JSONArray.fromObject(response.readEntity(String.class));
+        ArrayNode responseArray = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
         assertEquals(responseArray.size(), 1);
-        assertTrue(responseArray.getJSONObject(0).getBoolean("deprecated"));
+        assertTrue(responseArray.get(0).get("deprecated").asBoolean());
     }
 
     @Test
@@ -325,11 +329,11 @@ public class ExplorableDatasetRestTest extends MobiRestTestCXF {
     }
 
     @Test
-    public void getInstanceDetailsTest() {
+    public void getInstanceDetailsTest() throws Exception {
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/classes/"
                 + encode(CLASS_ID_STR) + "/instance-details").request().get();
         assertEquals(response.getStatus(), 200);
-        JSONArray responseArray = JSONArray.fromObject(response.readEntity(String.class));
+        ArrayNode responseArray = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
         assertEquals(responseArray.size(), 13);
         assertEquals(response.getHeaders().get("X-Total-Count").get(0), "13");
     }
@@ -338,13 +342,13 @@ public class ExplorableDatasetRestTest extends MobiRestTestCXF {
     public void getInstanceDetailsDataTest() throws Exception {
         //Setup:
         String otherClassId = "http://mobi.com/ontologies/uhtc/CrystalStructure";
-        JSONArray expected = JSONArray.fromObject(IOUtils.toString(getClass()
-                .getResourceAsStream("/expected-instance-details.json"), StandardCharsets.UTF_8));
+        ArrayNode expected = mapper.readValue(IOUtils.toString(Objects.requireNonNull(getClass()
+                .getResourceAsStream("/expected-instance-details.json")), StandardCharsets.UTF_8), ArrayNode.class);
 
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/classes/"
                 + encode(otherClassId) + "/instance-details").request().get();
         assertEquals(response.getStatus(), 200);
-        JSONArray responseArray = JSONArray.fromObject(response.readEntity(String.class));
+        ArrayNode responseArray = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
         assertEquals(responseArray, expected);
         assertEquals(response.getHeaders().get("X-Total-Count").get(0), "4");
     }
@@ -366,28 +370,28 @@ public class ExplorableDatasetRestTest extends MobiRestTestCXF {
     }
 
     @Test
-    public void getInstanceDetailsWithOffsetAndLimitTest() {
+    public void getInstanceDetailsWithOffsetAndLimitTest() throws Exception {
         //Setup:
         String pathString = "explorable-datasets/" + encode(RECORD_ID_STR) + "/classes/" + encode(CLASS_ID_STR)
                 + "/instance-details";
 
         Response response = target().path(pathString).queryParam("offset", 0).queryParam("limit", 13).request().get();
         assertEquals(response.getStatus(), 200);
-        JSONArray responseArray = JSONArray.fromObject(response.readEntity(String.class));
+        ArrayNode responseArray = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
         assertEquals(responseArray.size(), 13);
         assertEquals(response.getHeaders().get("X-Total-Count").get(0), "13");
         assertEquals(response.getLinks().size(), 0);
     }
 
     @Test
-    public void getInstanceDetailsWithLinksTest() {
+    public void getInstanceDetailsWithLinksTest() throws Exception {
         //Setup:
         String pathString = "explorable-datasets/" + encode(RECORD_ID_STR) + "/classes/" + encode(CLASS_ID_STR)
                 + "/instance-details";
 
         Response response = target().path(pathString).queryParam("offset", 3).queryParam("limit", 3).request().get();
         assertEquals(response.getStatus(), 200);
-        JSONArray responseArray = JSONArray.fromObject(response.readEntity(String.class));
+        ArrayNode responseArray = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
         assertEquals(responseArray.size(), 3);
         assertEquals(response.getHeaders().get("X-Total-Count").get(0), "13");
         Set<Link> links = response.getLinks();
@@ -399,35 +403,35 @@ public class ExplorableDatasetRestTest extends MobiRestTestCXF {
     }
 
     @Test
-    public void getInstanceDetailsWithNextLinkTest() {
+    public void getInstanceDetailsWithNextLinkTest() throws Exception {
         //Setup:
         String pathString = "explorable-datasets/" + encode(RECORD_ID_STR) + "/classes/" + encode(CLASS_ID_STR)
                 + "/instance-details";
 
         Response response = target().path(pathString).queryParam("offset", 0).queryParam("limit", 3).request().get();
         assertEquals(response.getStatus(), 200);
-        JSONArray responseArray = JSONArray.fromObject(response.readEntity(String.class));
+        ArrayNode responseArray = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
         assertEquals(responseArray.size(), 3);
         assertEquals(response.getHeaders().get("X-Total-Count").get(0), "13");
         Link link = response.getLink("next");
         assertTrue(link.getUri().getRawPath().contains(pathString));
-        assertTrue(link.getRel().equals("next"));
+        assertEquals("next", link.getRel());
     }
 
     @Test
-    public void getInstanceDetailsWithPrevLinkTest() {
+    public void getInstanceDetailsWithPrevLinkTest() throws Exception {
         //Setup:
         String pathString = "explorable-datasets/" + encode(RECORD_ID_STR) + "/classes/" + encode(CLASS_ID_STR)
                 + "/instance-details";
 
         Response response = target().path(pathString).queryParam("offset", 12).queryParam("limit", 3).request().get();
         assertEquals(response.getStatus(), 200);
-        JSONArray responseArray = JSONArray.fromObject(response.readEntity(String.class));
+        ArrayNode responseArray = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
         assertEquals(responseArray.size(), 1);
         assertEquals(response.getHeaders().get("X-Total-Count").get(0), "13");
         Link link = response.getLink("prev");
         assertTrue(link.getUri().getRawPath().contains(pathString));
-        assertTrue(link.getRel().equals("prev"));
+        assertEquals("prev", link.getRel());
     }
 
     @Test
@@ -452,11 +456,11 @@ public class ExplorableDatasetRestTest extends MobiRestTestCXF {
     }
 
     @Test
-    public void getInstanceDetailsWithInferTest() {
+    public void getInstanceDetailsWithInferTest() throws Exception {
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/classes/"
                 + encode(CLASS_ID_STR) + "/instance-details").queryParam("infer", true).request().get();
         assertEquals(response.getStatus(), 200);
-        JSONArray responseArray = JSONArray.fromObject(response.readEntity(String.class));
+        ArrayNode responseArray = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
         assertEquals(responseArray.size(), 17);
         assertEquals(response.getHeaders().get("X-Total-Count").get(0), "17");
         verify(datasetManager).getDatasetRecord(recordId);
@@ -476,13 +480,13 @@ public class ExplorableDatasetRestTest extends MobiRestTestCXF {
     @Test
     public void getClassPropertyDetailsTest() throws Exception {
         //Setup:
-        JSONArray expected = JSONArray.fromObject(IOUtils.toString(getClass()
-                .getResourceAsStream("/expected-class-property-details.json"), StandardCharsets.UTF_8));
+        ArrayNode expected = mapper.readValue(IOUtils.toString(Objects.requireNonNull(getClass()
+                .getResourceAsStream("/expected-class-property-details.json")), StandardCharsets.UTF_8), ArrayNode.class);
 
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/classes/"
                 + encode(CLASS_ID_STR) + "/property-details").request().get();
         assertEquals(response.getStatus(), 200);
-        JSONArray details = JSONArray.fromObject(response.readEntity(String.class));
+        ArrayNode details = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
         verify(ontology, times(0)).getAllNoDomainDataProperties();
         verify(ontology, times(0)).getAllNoDomainObjectProperties();
         verify(ontology).getAllClassDataProperties(any(IRI.class));
@@ -493,8 +497,8 @@ public class ExplorableDatasetRestTest extends MobiRestTestCXF {
     @Test
     public void getClassPropertyDetailsWhenNotFoundInOntologyTest() throws Exception {
         //Setup:
-        JSONArray expected = JSONArray.fromObject(IOUtils.toString(getClass()
-                .getResourceAsStream("/expected-class-property-details.json"), StandardCharsets.UTF_8));
+        ArrayNode expected = mapper.readValue(IOUtils.toString(Objects.requireNonNull(getClass()
+                .getResourceAsStream("/expected-class-property-details.json")), StandardCharsets.UTF_8), ArrayNode.class);
 
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/classes/"
                 + encode(MISSING_ID) + "/property-details").request().get();
@@ -503,20 +507,20 @@ public class ExplorableDatasetRestTest extends MobiRestTestCXF {
         verify(ontology).getAllNoDomainObjectProperties();
         verify(ontology, times(0)).getAllClassDataProperties(any(IRI.class));
         verify(ontology, times(0)).getAllClassObjectProperties(any(IRI.class));
-        JSONArray details = JSONArray.fromObject(response.readEntity(String.class));
+        ArrayNode details = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
         assertEquals(details, expected);
     }
 
     @Test
-    public void getClassPropertyDetailsWhenNoPropertiesTest() {
+    public void getClassPropertyDetailsWhenNoPropertiesTest() throws Exception {
         //Setup:
-        when(ontology.getAllNoDomainObjectProperties()).thenReturn(Collections.EMPTY_SET);
-        when(ontology.getAllNoDomainDataProperties()).thenReturn(Collections.EMPTY_SET);
+        when(ontology.getAllNoDomainObjectProperties()).thenReturn(Collections.emptySet());
+        when(ontology.getAllNoDomainDataProperties()).thenReturn(Collections.emptySet());
 
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/classes/"
                 + encode(CLASS_ID_STR_2) + "/property-details").request().get();
         assertEquals(response.getStatus(), 200);
-        JSONArray responseArray = JSONArray.fromObject(response.readEntity(String.class));
+        ArrayNode responseArray = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
         assertEquals(responseArray.size(), 0);
     }
 
@@ -545,17 +549,17 @@ public class ExplorableDatasetRestTest extends MobiRestTestCXF {
         when(ontology2.containsClass(any(IRI.class))).thenReturn(true);
         when(ontology2.getAllClassDataProperties(classId)).thenReturn(dataProperties);
         when(ontology2.getAllClassObjectProperties(classId)).thenReturn(objectProperties);
-        when(ontology2.getDataPropertyRange(dataProperty)).thenReturn(Collections.EMPTY_SET);
-        when(ontology2.getObjectPropertyRange(objectProperty)).thenReturn(Collections.EMPTY_SET);
+        when(ontology2.getDataPropertyRange(dataProperty)).thenReturn(Collections.emptySet());
+        when(ontology2.getObjectPropertyRange(objectProperty)).thenReturn(Collections.emptySet());
         when(ontology2.getTupleQueryResults(anyString(), anyBoolean())).thenReturn(new TestQueryResult(Collections.emptyList(), Collections.emptyList(), 0, vf));
         when(ontologyManager.retrieveOntology(vf.createIRI(ontologyId), vf.createIRI(branchId), vf.createIRI(commitId))).thenReturn(Optional.of(ontology2));
-        JSONArray expected = JSONArray.fromObject(IOUtils.toString(getClass()
-                .getResourceAsStream("/expected-class-property-details.json"), StandardCharsets.UTF_8));
+        ArrayNode expected = mapper.readValue(IOUtils.toString(Objects.requireNonNull(getClass()
+                .getResourceAsStream("/expected-class-property-details.json")), StandardCharsets.UTF_8), ArrayNode.class);
 
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/classes/"
                 + encode(CLASS_ID_STR) + "/property-details").request().get();
         assertEquals(response.getStatus(), 200);
-        JSONArray details = JSONArray.fromObject(response.readEntity(String.class));
+        ArrayNode details = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
         verify(ontology, times(0)).getAllNoDomainDataProperties();
         verify(ontology, times(0)).getAllNoDomainObjectProperties();
         verify(ontology2, times(0)).getAllNoDomainDataProperties();
@@ -570,8 +574,8 @@ public class ExplorableDatasetRestTest extends MobiRestTestCXF {
     @Test
     public void createInstanceTest() {
         //Setup:
-        JSONObject instance = new JSONObject().element("@id", NEW_INSTANCE_ID_STR).element(_Thing.title_IRI,
-                new JSONArray().element(new JSONObject().element("@value", "title")));
+        ObjectNode instance = mapper.createObjectNode().put("@id", NEW_INSTANCE_ID_STR).set(_Thing.title_IRI,
+                mapper.createArrayNode().add(mapper.createObjectNode().put("@value", "title")));
 
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/instances").request()
                 .post(Entity.json(instance.toString()));
@@ -582,8 +586,8 @@ public class ExplorableDatasetRestTest extends MobiRestTestCXF {
     @Test
     public void createInstanceTestWhenIRIAlreadyTaken() {
         //Setup:
-        JSONObject instance = new JSONObject().element("@id", INSTANCE_ID_STR).element(_Thing.title_IRI, new JSONArray()
-                .element(new JSONObject().element("@value", "title")));
+        ObjectNode instance = mapper.createObjectNode().put("@id", INSTANCE_ID_STR).set(_Thing.title_IRI,
+                mapper.createArrayNode().add(mapper.createObjectNode().put("@value", "title")));
 
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/instances").request()
                 .post(Entity.json(instance.toString()));
@@ -594,8 +598,8 @@ public class ExplorableDatasetRestTest extends MobiRestTestCXF {
     public void createInstanceTestWithNoDatasetConnectionTestIllegalArgumentThrown() {
         //Setup:
         when(datasetManager.getConnection(recordId)).thenThrow(new IllegalArgumentException());
-        JSONObject instance = new JSONObject().element("@id", NEW_INSTANCE_ID_STR).element(_Thing.title_IRI,
-                new JSONArray().element(new JSONObject().element("@value", "title")));
+        ObjectNode instance = mapper.createObjectNode().put("@id", NEW_INSTANCE_ID_STR).set(_Thing.title_IRI,
+                mapper.createArrayNode().add(mapper.createObjectNode().put("@value", "title")));
 
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/instances").request()
                 .post(Entity.json(instance.toString()));
@@ -606,8 +610,8 @@ public class ExplorableDatasetRestTest extends MobiRestTestCXF {
     public void createInstanceTestWithNoDatasetConnectionTestIllegalStateThrown() {
         //Setup:
         when(datasetManager.getConnection(recordId)).thenThrow(new IllegalStateException());
-        JSONObject instance = new JSONObject().element("@id", NEW_INSTANCE_ID_STR).element(_Thing.title_IRI,
-                new JSONArray().element(new JSONObject().element("@value", "title")));
+        ObjectNode instance = mapper.createObjectNode().put("@id", NEW_INSTANCE_ID_STR).set(_Thing.title_IRI,
+                mapper.createArrayNode().add(mapper.createObjectNode().put("@value", "title")));
 
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/instances").request()
                 .post(Entity.json(instance.toString()));
@@ -615,13 +619,13 @@ public class ExplorableDatasetRestTest extends MobiRestTestCXF {
     }
 
     @Test
-    public void getInstanceTest() {
+    public void getInstanceTest() throws Exception {
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/instances/"
                 + encode(INSTANCE_ID_STR)).request().get();
         assertEquals(response.getStatus(), 200);
-        JSONObject instance = JSONArray.fromObject(response.readEntity(String.class)).getJSONObject(0);
-        assertTrue(instance.containsKey("@id"));
-        assertEquals(instance.getString("@id"), INSTANCE_ID_STR);
+        JsonNode instance = mapper.readValue(response.readEntity(String.class), ArrayNode.class).get(0);
+        assertTrue(instance.has("@id"));
+        assertEquals(INSTANCE_ID_STR, instance.get("@id").asText());
     }
 
     @Test
@@ -632,20 +636,21 @@ public class ExplorableDatasetRestTest extends MobiRestTestCXF {
     }
 
     @Test
-    public void getInstanceTestWhenMoreThan100() {
+    public void getInstanceTestWhenMoreThan100() throws Exception{
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/instances/"
                 + encode(LARGE_ID)).request().get();
         assertEquals(response.getStatus(), 200);
-        JSONArray titles = JSONArray.fromObject(response.readEntity(String.class)).getJSONObject(0).getJSONArray("http://purl.org/dc/terms/title");
+        JsonNode titles = mapper.readValue(response.readEntity(String.class), ArrayNode.class)
+                .get(0).get("http://purl.org/dc/terms/title");
         assertEquals(titles.size(), 100);
     }
 
     @Test
-    public void getInstanceTestWithReifiedStatements() {
+    public void getInstanceTestWithReifiedStatements() throws Exception {
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/instances/"
                 + encode(REIFIED_ID)).request().get();
         assertEquals(response.getStatus(), 200);
-        JSONArray array = JSONArray.fromObject(response.readEntity(String.class));
+        ArrayNode array = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
         assertEquals(array.size(), 2);
     }
 
@@ -672,9 +677,9 @@ public class ExplorableDatasetRestTest extends MobiRestTestCXF {
     @Test
     public void updateInstanceTest() {
         //Setup:
-        JSONArray array = new JSONArray();
-        array.add(new JSONObject().element("@value", "title"));
-        JSONObject instance = new JSONObject().element("@id", INSTANCE_ID_STR).element(_Thing.title_IRI, array);
+        ArrayNode array = mapper.createArrayNode();
+        array.add(mapper.createObjectNode().put("@value", "title"));
+        ObjectNode instance = mapper.createObjectNode().put("@id", INSTANCE_ID_STR).set(_Thing.title_IRI, array);
 
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/instances/"
                 + encode(INSTANCE_ID_STR)).request().put(Entity.json(instance.toString()));
@@ -689,9 +694,9 @@ public class ExplorableDatasetRestTest extends MobiRestTestCXF {
     @Test
     public void updateInstanceWithReifiedTriplesTest() {
         //Setup:
-        JSONArray array = new JSONArray();
-        array.add(new JSONObject().element("@value", "title"));
-        JSONObject instance = new JSONObject().element("@id", INSTANCE_ID_STR).element(_Thing.title_IRI, array);
+        ArrayNode array = mapper.createArrayNode();
+        array.add(mapper.createObjectNode().put("@value", "title"));
+        ObjectNode instance = mapper.createObjectNode().put("@id", INSTANCE_ID_STR).set(_Thing.title_IRI, array);
 
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/instances/"
                 + encode(REIFIED_ID)).request().put(Entity.json(instance.toString()));
@@ -706,8 +711,8 @@ public class ExplorableDatasetRestTest extends MobiRestTestCXF {
     @Test
     public void updateInstanceTestWhenNotFound() {
         //Setup:
-        JSONObject instance = new JSONObject().element("@id", INSTANCE_ID_STR)
-                .element(_Thing.title_IRI, new JSONObject().element("@value", "title"));
+        ObjectNode instance = mapper.createObjectNode().put("@id", INSTANCE_ID_STR)
+                .set(_Thing.title_IRI, mapper.createObjectNode().put("@value", "title"));
 
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/instances/"
                 + encode(MISSING_ID)).request().put(Entity.json(instance.toString()));
@@ -717,8 +722,8 @@ public class ExplorableDatasetRestTest extends MobiRestTestCXF {
     @Test
     public void updateInstanceTestWithNoDatasetConnectionTestIllegalArgumentThrown() {
         //Setup:
-        JSONObject instance = new JSONObject().element("@id", INSTANCE_ID_STR)
-                .element(_Thing.title_IRI, new JSONObject().element("@value", "title"));
+        ObjectNode instance = mapper.createObjectNode().put("@id", INSTANCE_ID_STR)
+                .set(_Thing.title_IRI, mapper.createObjectNode().put("@value", "title"));
         when(datasetManager.getConnection(recordId)).thenThrow(new IllegalArgumentException());
 
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/instances/"
@@ -729,8 +734,8 @@ public class ExplorableDatasetRestTest extends MobiRestTestCXF {
     @Test
     public void updateInstanceTestWithNoDatasetConnectionTestIllegalStateThrown() {
         //Setup:
-        JSONObject instance = new JSONObject().element("@id", INSTANCE_ID_STR)
-                .element(_Thing.title_IRI, new JSONObject().element("@value", "title"));
+        ObjectNode instance = mapper.createObjectNode().put("@id", INSTANCE_ID_STR)
+                .set(_Thing.title_IRI, mapper.createObjectNode().put("@value", "title"));
         when(datasetManager.getConnection(recordId)).thenThrow(new IllegalStateException());
 
         Response response = target().path("explorable-datasets/" + encode(RECORD_ID_STR) + "/instances/"

@@ -28,8 +28,9 @@ import static com.mobi.rest.util.RestUtils.getObjectFromJsonld;
 import static com.mobi.rest.util.RestUtils.getRDFFormat;
 import static com.mobi.rest.util.RestUtils.groupedModelToString;
 import static com.mobi.rest.util.RestUtils.jsonldToModel;
-import static com.mobi.rest.util.RestUtils.modelToJsonld;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.mobi.catalog.api.CommitManager;
 import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
 import com.mobi.catalog.config.CatalogConfigProvider;
@@ -50,7 +51,6 @@ import io.swagger.v3.oas.annotations.enums.Explode;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import net.sf.json.JSONArray;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
@@ -92,6 +92,7 @@ import javax.ws.rs.core.Response;
 @Path("/users")
 public class UserRest {
     private final Logger logger = LoggerFactory.getLogger(UserRest.class);
+    private static final ObjectMapper mapper = new ObjectMapper();
     static final String ADMIN_USER_IRI = "http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997";
 
     final ValueFactory vf = new ValidatingValueFactory();
@@ -132,14 +133,14 @@ public class UserRest {
     public Response getUsers() {
         try {
             Set<User> users = engineManager.getUsers();
-            JSONArray result = JSONArray.fromObject(users.stream()
+            ArrayNode result = users.stream()
                     .map(user -> {
                         user.clearPassword();
                         return user.getModel().filter(user.getResource(), null, null);
                     })
                     .map(RestUtils::modelToJsonld)
                     .map(RestUtils::getObjectFromJsonld)
-                    .collect(Collectors.toList()));
+                    .collect(mapper::createArrayNode, ArrayNode::add, ArrayNode::add);
             return Response.ok(result).build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex.getMessage(), Response.Status.BAD_REQUEST);
@@ -220,7 +221,7 @@ public class UserRest {
             }
 
             User user = engineManager.createUser(rdfEngine.getEngineName(), builder.build());
-            if (!user.getUsername().isPresent()) {
+            if (user.getUsername().isEmpty()) {
                 throw ErrorUtils.sendError("User must have a username", Response.Status.INTERNAL_SERVER_ERROR);
             }
             engineManager.storeUser(rdfEngine.getEngineName(), user);
@@ -292,7 +293,8 @@ public class UserRest {
             @Context HttpServletRequest servletRequest,
             @Parameter(description = "Current username of the user to update", required = true)
             @PathParam("username") String username,
-            @Parameter(description = "JSON-LD string representation of a User with the new information to update", required = true)
+            @Parameter(description = "JSON-LD string representation of a User with the new information to update",
+                    required = true)
                     String newUserStr) {
         if (StringUtils.isEmpty(username)) {
             throw ErrorUtils.sendError("Current username must be provided", Response.Status.BAD_REQUEST);
@@ -316,10 +318,10 @@ public class UserRest {
             }
             User savedUser = engineManager.retrieveUser(rdfEngine.getEngineName(), username).orElseThrow(() ->
                     ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
-            if (!savedUser.getUsername().isPresent()) {
+            if (savedUser.getUsername().isEmpty()) {
                 throw ErrorUtils.sendError("User must have a username", Response.Status.INTERNAL_SERVER_ERROR);
             }
-            if (!savedUser.getPassword().isPresent()) {
+            if (savedUser.getPassword().isEmpty()) {
                 throw ErrorUtils.sendError("User must have a password", Response.Status.INTERNAL_SERVER_ERROR);
             }
             if (!savedUser.getUsername().get().equals(newUsername)) {
@@ -381,7 +383,7 @@ public class UserRest {
             if (!engineManager.checkPassword(rdfEngine.getEngineName(), username, currentPassword)) {
                 throw RestUtils.getErrorObjBadRequest(new MobiException("Current password is wrong"));
             }
-            return changePassword(username, newPassword);
+            return updatePassword(username, newPassword);
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex.getMessage(), Response.Status.BAD_REQUEST);
         }
@@ -419,7 +421,7 @@ public class UserRest {
             throw ErrorUtils.sendError("New password must be provided", Response.Status.BAD_REQUEST);
         }
         try {
-            return changePassword(username, newPassword);
+            return updatePassword(username, newPassword);
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex.getMessage(), Response.Status.BAD_REQUEST);
         }
@@ -454,7 +456,7 @@ public class UserRest {
         isAuthorizedUser(servletRequest, username);
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Optional<User> user = engineManager.retrieveUser(username);
-            if (!user.isPresent()) {
+            if (user.isEmpty()) {
                 throw ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST);
             }
             String userIRI = user.get().getResource().stringValue();
@@ -509,11 +511,11 @@ public class UserRest {
                     ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
             Set<Role> roles = includeGroups ? engineManager.getUserRoles(username)
                     : user.getHasUserRole();
-            JSONArray result = JSONArray.fromObject(roles.stream()
+            ArrayNode result = roles.stream()
                     .map(role -> role.getModel().filter(role.getResource(), null, null))
-                    .map(roleModel -> modelToJsonld(roleModel))
+                    .map(RestUtils::modelToJsonld)
                     .map(RestUtils::getObjectFromJsonld)
-                    .collect(Collectors.toList()));
+                    .collect(mapper::createArrayNode, ArrayNode::add, ArrayNode::add);
             return Response.ok(result).build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex.getMessage(), Response.Status.BAD_REQUEST);
@@ -642,11 +644,11 @@ public class UserRest {
                             .anyMatch(resource -> resource.equals(savedUser.getResource())))
                     .collect(Collectors.toSet());
 
-            JSONArray result = JSONArray.fromObject(groups.stream()
+            ArrayNode result = groups.stream()
                     .map(group -> group.getModel().filter(group.getResource(), null, null))
-                    .map(roleModel -> modelToJsonld(roleModel))
+                    .map(RestUtils::modelToJsonld)
                     .map(RestUtils::getObjectFromJsonld)
-                    .collect(Collectors.toList()));
+                    .collect(mapper::createArrayNode, ArrayNode::add, ArrayNode::add);
             return Response.ok(result).build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex.getMessage(), Response.Status.BAD_REQUEST);
@@ -804,15 +806,15 @@ public class UserRest {
      * @param newPassword The new password for the identified User
      * @return A Response indicating the success of the request
      */
-    private Response changePassword(String username, String newPassword) {
+    private Response updatePassword(String username, String newPassword) {
         User savedUser = engineManager.retrieveUser(rdfEngine.getEngineName(), username).orElseThrow(() ->
                         RestUtils.getErrorObjBadRequest(new MobiException("User " + username + " not found")));
-        if (!savedUser.getPassword().isPresent()) {
+        if (savedUser.getPassword().isEmpty()) {
             throw RestUtils.getErrorObjInternalServerError(new MobiException("User must have a password"));
         }
         User tempUser = engineManager.createUser(rdfEngine.getEngineName(),
                 new UserConfig.Builder("", newPassword, new HashSet<>()).build());
-        if (!tempUser.getPassword().isPresent()) {
+        if (tempUser.getPassword().isEmpty()) {
             throw RestUtils.getErrorObjInternalServerError(new MobiException("User must have a password"));
         }
         savedUser.setPassword(tempUser.getPassword().get());

@@ -42,6 +42,9 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mobi.catalog.api.CommitManager;
 import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
 import com.mobi.catalog.config.CatalogConfigProvider;
@@ -59,8 +62,6 @@ import com.mobi.repository.api.OsgiRepository;
 import com.mobi.rest.test.util.FormDataMultiPart;
 import com.mobi.rest.test.util.MobiRestTestCXF;
 import com.mobi.rest.test.util.UsernameTestFilter;
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.ModelFactory;
@@ -93,6 +94,7 @@ import javax.ws.rs.core.Response;
 
 public class UserRestTest extends MobiRestTestCXF {
     private AutoCloseable closeable;
+    private static final ObjectMapper mapper = new ObjectMapper();
     private OrmFactory<User> userFactory;
     private OrmFactory<Group> groupFactory;
     private OrmFactory<Role> roleFactory;
@@ -244,10 +246,9 @@ public class UserRestTest extends MobiRestTestCXF {
     public void getUsersTest() {
         Response response = target().path("users").request().get();
         verify(engineManager, atLeastOnce()).getUsers();
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         try {
-            String str = response.readEntity(String.class);
-            JSONArray result = JSONArray.fromObject(str);
+            ArrayNode result = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
             assertEquals(result.size(), users.size());
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
@@ -269,7 +270,7 @@ public class UserRestTest extends MobiRestTestCXF {
 
         Response response = target().path("users")
                 .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 201);
+        assertEquals(201, response.getStatus());
         verify(engineManager).storeUser(eq(ENGINE_NAME), any(User.class));
     }
 
@@ -286,7 +287,7 @@ public class UserRestTest extends MobiRestTestCXF {
 
         Response response = target().path("users")
                 .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -302,7 +303,7 @@ public class UserRestTest extends MobiRestTestCXF {
 
         Response response = target().path("users")
                 .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -317,24 +318,24 @@ public class UserRestTest extends MobiRestTestCXF {
 
         Response response = target().path("users")
                 .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
-    public void getUserTest() {
+    public void getUserTest() throws Exception {
         Response response = target().path("users/" + UsernameTestFilter.USERNAME).request().get();
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(engineManager).retrieveUser(UsernameTestFilter.USERNAME);
-        JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
-        assertFalse(result.containsKey("@graph"));
-        assertTrue(result.containsKey("@id"));
-        assertEquals(result.getString("@id"), user.getResource().stringValue());
+        ObjectNode result = mapper.readValue(response.readEntity(String.class), ObjectNode.class);
+        assertFalse(result.has("@graph"));
+        assertTrue(result.has("@id"));
+        assertEquals(user.getResource().stringValue(), result.get("@id").asText());
     }
 
     @Test
     public void getUserThatDoesNotExistTest() {
         Response response = target().path("users/error").request().get();
-        assertEquals(response.getStatus(), 404);
+        assertEquals(404, response.getStatus());
         verify(engineManager).retrieveUser("error");
     }
 
@@ -344,7 +345,7 @@ public class UserRestTest extends MobiRestTestCXF {
         Response response = target().path("users/" + UsernameTestFilter.USERNAME)
                 .request().put(Entity.entity(groupedModelToString(user.getModel(), getRDFFormat("jsonld")),
                         MediaType.APPLICATION_JSON_TYPE));
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(engineManager, atLeastOnce()).retrieveUser(ENGINE_NAME, UsernameTestFilter.USERNAME);
         verify(engineManager).updateUser(eq(ENGINE_NAME), any(User.class));
     }
@@ -358,7 +359,7 @@ public class UserRestTest extends MobiRestTestCXF {
         Response response = target().path("users/user2")
                 .request().put(Entity.entity(groupedModelToString(user.getModel(), getRDFFormat("jsonld")),
                         MediaType.APPLICATION_JSON_TYPE));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -369,7 +370,7 @@ public class UserRestTest extends MobiRestTestCXF {
         Response response = target().path("users/" + UsernameTestFilter.USERNAME)
                 .request().put(Entity.entity(groupedModelToString(user.getModel(), getRDFFormat("jsonld")),
                         MediaType.APPLICATION_JSON_TYPE));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
         verify(engineManager, atLeastOnce()).retrieveUser(ENGINE_NAME, UsernameTestFilter.USERNAME);
     }
 
@@ -379,7 +380,7 @@ public class UserRestTest extends MobiRestTestCXF {
                 .queryParam("currentPassword", "ABC")
                 .queryParam("newPassword", "XYZ")
                 .request().post(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(engineManager).checkPassword(ENGINE_NAME, UsernameTestFilter.USERNAME, "ABC");
         verify(engineManager, atLeastOnce()).retrieveUser(ENGINE_NAME, UsernameTestFilter.USERNAME);
         verify(engineManager).updateUser(eq(ENGINE_NAME), any(User.class));
@@ -391,24 +392,24 @@ public class UserRestTest extends MobiRestTestCXF {
                 .queryParam("currentPassword", "ABC")
                 .queryParam("newPassword", "XYZ")
                 .request().post(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 401);
+        assertEquals(401, response.getStatus());
     }
 
     @Test
-    public void changePasswordWithoutCurrentPasswordTest() {
+    public void changePasswordWithoutCurrentPasswordTest() throws Exception {
         Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/password")
                 .queryParam("newPassword", "XYZ")
                 .request().post(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
 
-        JSONObject responseObject = getResponse(response);
-        assertEquals(responseObject.get("error"), "MobiException");
-        assertEquals(responseObject.get("errorMessage"), "Current password must be provided");
+        ObjectNode responseObject = getResponse(response);
+        assertEquals("MobiException", responseObject.get("error").asText());
+        assertEquals("Current password must be provided", responseObject.get("errorMessage").asText());
         assertNotEquals(responseObject.get("errorDetails"), null);
     }
 
     @Test
-    public void changePasswordWithWrongPasswordTest() {
+    public void changePasswordWithWrongPasswordTest() throws Exception {
         // Setup:
         when(engineManager.checkPassword(anyString(), anyString(), eq("error"))).thenReturn(false);
 
@@ -416,29 +417,29 @@ public class UserRestTest extends MobiRestTestCXF {
                 .queryParam("currentPassword", "error")
                 .queryParam("newPassword", "XYZ")
                 .request().post(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
 
-        JSONObject responseObject = getResponse(response);
-        assertEquals(responseObject.get("error"), "MobiException");
-        assertEquals(responseObject.get("errorMessage"), "Current password is wrong");
+        ObjectNode responseObject = getResponse(response);
+        assertEquals("MobiException", responseObject.get("error").asText());
+        assertEquals("Current password is wrong", responseObject.get("errorMessage").asText());
         assertNotEquals(responseObject.get("errorDetails"), null);
     }
 
     @Test
-    public void changePasswordWithoutNewPasswordTest() {
+    public void changePasswordWithoutNewPasswordTest() throws Exception {
         Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/password")
                 .queryParam("currentPassword", "ABC")
                 .request().post(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
 
-        JSONObject responseObject = getResponse(response);
-        assertEquals(responseObject.get("error"), "MobiException");
-        assertEquals(responseObject.get("errorMessage"), "New password must be provided");
+        ObjectNode responseObject = getResponse(response);
+        assertEquals("MobiException", responseObject.get("error").asText());
+        assertEquals("New password must be provided", responseObject.get("errorMessage").asText());
         assertNotEquals(responseObject.get("errorDetails"), null);
     }
 
     @Test
-    public void changePasswordForUserThatDoesNotExistTest() {
+    public void changePasswordForUserThatDoesNotExistTest() throws Exception {
         // Setup:
         when(engineManager.retrieveUser(ENGINE_NAME, UsernameTestFilter.USERNAME)).thenReturn(Optional.empty());
 
@@ -446,11 +447,11 @@ public class UserRestTest extends MobiRestTestCXF {
                 .queryParam("currentPassword", "ABC")
                 .queryParam("newPassword", "XYZ")
                 .request().post(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
 
-        JSONObject responseObject = getResponse(response);
-        assertEquals(responseObject.get("error"), "MobiException");
-        assertEquals(responseObject.get("errorMessage"), "User tester not found");
+        ObjectNode responseObject = getResponse(response);
+        assertEquals("MobiException", responseObject.get("error").asText());
+        assertEquals("User tester not found", responseObject.get("errorMessage").asText());
         assertNotEquals(responseObject.get("errorDetails"), null);
     }
 
@@ -459,7 +460,7 @@ public class UserRestTest extends MobiRestTestCXF {
         Response response = target().path("users/username/password")
                 .queryParam("newPassword", "XYZ")
                 .request().put(Entity.entity("user", MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(engineManager, atLeastOnce()).retrieveUser(ENGINE_NAME, "username");
         verify(engineManager).updateUser(eq(ENGINE_NAME), any(User.class));
     }
@@ -468,25 +469,25 @@ public class UserRestTest extends MobiRestTestCXF {
     public void resetPasswordWithoutNewPasswordTest() {
         Response response = target().path("users/username/password")
                 .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
-    public void resetPasswordOfUserThatDoesNotExistTest() {
+    public void resetPasswordOfUserThatDoesNotExistTest() throws Exception {
         Response response = target().path("users/error/password")
                 .queryParam("newPassword", "XYZ")
                 .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 400);
-        JSONObject responseObject = getResponse(response);
-        assertEquals(responseObject.get("error"), "MobiException");
-        assertEquals(responseObject.get("errorMessage"), "User error not found");
+        assertEquals(400, response.getStatus());
+        ObjectNode responseObject = getResponse(response);
+        assertEquals("MobiException", responseObject.get("error").asText());
+        assertEquals("User error not found", responseObject.get("errorMessage").asText());
         assertNotEquals(responseObject.get("errorDetails"), null);
     }
 
     @Test
     public void deleteUserTest() {
         Response response = target().path("users/" + UsernameTestFilter.USERNAME).request().delete();
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(engineManager).deleteUser(ENGINE_NAME, UsernameTestFilter.USERNAME);
         verify(commitManager).getInProgressCommits(eq(user), any(RepositoryConnection.class));
         verify(commitManager).removeInProgressCommit(eq(inProgressCommitIRI1), any(RepositoryConnection.class));
@@ -500,7 +501,7 @@ public class UserRestTest extends MobiRestTestCXF {
         when(commitManager.getInProgressCommits(eq(user), any(RepositoryConnection.class))).thenReturn(new ArrayList<>());
 
         Response response = target().path("users/" + UsernameTestFilter.USERNAME).request().delete();
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(engineManager).deleteUser(ENGINE_NAME, UsernameTestFilter.USERNAME);
         verify(commitManager).getInProgressCommits(eq(user), any(RepositoryConnection.class));
         verify(commitManager, never()).removeInProgressCommit(any(Resource.class), any(RepositoryConnection.class));
@@ -510,10 +511,10 @@ public class UserRestTest extends MobiRestTestCXF {
 
     @Test
     public void deleteUserNoStatesTest() {
-        when(stateManager.getStates(eq(UsernameTestFilter.USERNAME), eq(null), any(Set.class))).thenReturn(new HashMap());
+        when(stateManager.getStates(eq(UsernameTestFilter.USERNAME), eq(null), any(Set.class))).thenReturn(Collections.emptyMap());
 
         Response response = target().path("users/" + UsernameTestFilter.USERNAME).request().delete();
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(engineManager).deleteUser(ENGINE_NAME, UsernameTestFilter.USERNAME);
         verify(commitManager).getInProgressCommits(eq(user), any(RepositoryConnection.class));
         verify(commitManager).removeInProgressCommit(eq(inProgressCommitIRI1), any(RepositoryConnection.class));
@@ -528,7 +529,7 @@ public class UserRestTest extends MobiRestTestCXF {
         when(engineManager.userExists("error")).thenReturn(false);
 
         Response response = target().path("users/error").request().delete();
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -536,16 +537,16 @@ public class UserRestTest extends MobiRestTestCXF {
         when(engineManager.retrieveUser("admin")).thenReturn(Optional.of(adminUserMock));
         when(adminUserMock.getResource()).thenReturn(vf.createIRI(UserRest.ADMIN_USER_IRI));
         Response response = target().path("users/" + UsernameTestFilter.ADMIN_USER).request().delete();
-        assertEquals(response.getStatus(), 405);
+        assertEquals(405, response.getStatus());
     }
 
     @Test
     public void getUserRolesTest() {
         Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/roles").request().get();
         verify(engineManager).retrieveUser(UsernameTestFilter.USERNAME);
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         try {
-            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+            ArrayNode result = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
             assertEquals(result.size(), roles.size());
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
@@ -556,9 +557,9 @@ public class UserRestTest extends MobiRestTestCXF {
     public void getUserRolesIncludingGroupsTest() {
         Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/roles").queryParam("includeGroups", "true").request().get();
         verify(engineManager).retrieveUser(UsernameTestFilter.USERNAME);
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         try {
-            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+            ArrayNode result = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
             assertEquals(result.size(), roles.size() + group.getHasGroupRole().size());
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
@@ -568,7 +569,7 @@ public class UserRestTest extends MobiRestTestCXF {
     @Test
     public void getUserRolesThatDoNotExistTest() {
         Response response = target().path("users/error/roles").request().get();
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -584,7 +585,7 @@ public class UserRestTest extends MobiRestTestCXF {
 
         Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/roles").queryParam("roles", roles.keySet().toArray())
                 .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(engineManager).retrieveUser(UsernameTestFilter.USERNAME);
         roles.keySet().forEach(s -> verify(engineManager).getRole(s));
         ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
@@ -604,7 +605,7 @@ public class UserRestTest extends MobiRestTestCXF {
 
         Response response = target().path("users/error/roles").queryParam("roles", roles)
                 .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -615,21 +616,21 @@ public class UserRestTest extends MobiRestTestCXF {
 
         Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/roles").queryParam("roles", roles)
                 .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
     public void addUserRolesWithoutRolesTest() {
         Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/roles")
                 .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
     public void removeUserRoleTest() {
         Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/roles").queryParam("role", "testRole")
                 .request().delete();
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(engineManager).retrieveUser(UsernameTestFilter.USERNAME);
         ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
         verify(engineManager).updateUser(captor.capture());
@@ -646,14 +647,14 @@ public class UserRestTest extends MobiRestTestCXF {
         Response response = target().path("users/" + UsernameTestFilter.ADMIN_USER + "/roles")
                 .queryParam("role", "admin")
                 .request().delete();
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
     public void removeRoleFromUserThatDoesNotExistTest() {
         Response response = target().path("users/error/roles").queryParam("role", "testRole")
                 .request().delete();
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -663,17 +664,17 @@ public class UserRestTest extends MobiRestTestCXF {
 
         Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/roles").queryParam("role", "error")
                 .request().delete();
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
     public void getUserGroupsTest() {
         Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/groups").request().get();
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(engineManager).retrieveUser(UsernameTestFilter.USERNAME);
         verify(engineManager).getGroups();
         try {
-            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+            ArrayNode result = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
             assertEquals(result.size(), groups.size());
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
@@ -688,7 +689,7 @@ public class UserRestTest extends MobiRestTestCXF {
 
         Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/groups").queryParam("group", "anothergroup")
                 .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(engineManager).retrieveUser(UsernameTestFilter.USERNAME);
         verify(engineManager).retrieveGroup("anothergroup");
         ArgumentCaptor<Group> captor = ArgumentCaptor.forClass(Group.class);
@@ -704,21 +705,21 @@ public class UserRestTest extends MobiRestTestCXF {
     public void addGroupToUserThatDoesNotExistTest() {
         Response response = target().path("users/error/groups").queryParam("group", "testGroup")
                 .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
     public void addGroupThatDoesNotExistToUserTest() {
         Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/groups").queryParam("group", "error")
                 .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
     public void removeUserGroupTest() {
         Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/groups").queryParam("group", "testGroup")
                 .request().delete();
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(engineManager).retrieveUser(UsernameTestFilter.USERNAME);
         verify(engineManager).retrieveGroup(ENGINE_NAME, "testGroup");
         ArgumentCaptor<Group> captor = ArgumentCaptor.forClass(Group.class);
@@ -732,14 +733,14 @@ public class UserRestTest extends MobiRestTestCXF {
     public void removeGroupFromUserThatDoesNotExistTest() {
         Response response = target().path("users/error/groups").queryParam("group", "testGroup")
                 .request().delete();
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
     public void removeGroupThatDoesNotExistFromUserTest() {
         Response response = target().path("users/" + UsernameTestFilter.USERNAME + "/groups").queryParam("group", "error")
                 .request().delete();
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -749,7 +750,7 @@ public class UserRestTest extends MobiRestTestCXF {
 
         Response response = target().path("users/username").queryParam("iri", user.getResource())
                 .request().get();
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         assertEquals(response.readEntity(String.class), UsernameTestFilter.USERNAME);
     }
 
@@ -757,11 +758,11 @@ public class UserRestTest extends MobiRestTestCXF {
     public void getUserForUserThatDoesNotExistTest() {
         Response response = target().path("users/username").queryParam("iri", "http://example.com/error")
                 .request().get();
-        assertEquals(response.getStatus(), 404);
+        assertEquals(404, response.getStatus());
     }
 
-    private JSONObject getResponse(Response response) {
-        return JSONObject.fromObject(response.readEntity(String.class));
+    private ObjectNode getResponse(Response response) throws Exception {
+        return mapper.readValue(response.readEntity(String.class), ObjectNode.class);
     }
 
 }

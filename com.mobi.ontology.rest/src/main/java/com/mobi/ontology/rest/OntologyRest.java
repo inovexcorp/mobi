@@ -35,11 +35,11 @@ import static com.mobi.rest.util.RestUtils.XLS_MIME_TYPE;
 import static com.mobi.rest.util.RestUtils.checkStringParam;
 import static com.mobi.rest.util.RestUtils.convertFileExtensionToMimeType;
 import static com.mobi.rest.util.RestUtils.getActiveUser;
+import static com.mobi.rest.util.RestUtils.getObjectFromJsonld;
 import static com.mobi.rest.util.RestUtils.getCurrentModel;
 import static com.mobi.rest.util.RestUtils.getGarbageCollectionTime;
 import static com.mobi.rest.util.RestUtils.getInProgressCommitIRI;
 import static com.mobi.rest.util.RestUtils.getUploadedModel;
-import static com.mobi.rest.util.RestUtils.getObjectNodeFromJsonld;
 import static com.mobi.rest.util.RestUtils.getRDFFormatFileExtension;
 import static com.mobi.rest.util.RestUtils.getRDFFormatMimeType;
 import static com.mobi.rest.util.RestUtils.jsonldToModel;
@@ -164,6 +164,7 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -245,20 +246,24 @@ public class OntologyRest {
     static {
         try {
             GET_ENTITY_QUERY = IOUtils.toString(
-                    OntologyRest.class.getResourceAsStream("/retrieve-entity.rq"), StandardCharsets.UTF_8
+                    Objects.requireNonNull(OntologyRest.class.getResourceAsStream("/retrieve-entity.rq")),
+                    StandardCharsets.UTF_8
             );
             GET_PROPERTY_RANGES = IOUtils.toString(
-                    OntologyRest.class.getResourceAsStream("/query-property-ranges.rq"), StandardCharsets.UTF_8
+                    Objects.requireNonNull(OntologyRest.class.getResourceAsStream("/query-property-ranges.rq")),
+                    StandardCharsets.UTF_8
             );
             GET_CLASS_PROPERTIES = IOUtils.toString(
-                    OntologyRest.class.getResourceAsStream("/query-class-properties.rq"), StandardCharsets.UTF_8
+                    Objects.requireNonNull(OntologyRest.class.getResourceAsStream("/query-class-properties.rq")),
+                    StandardCharsets.UTF_8
             );
             GET_NO_DOMAIN_PROPERTIES = IOUtils.toString(
-                    OntologyRest.class.getResourceAsStream("/query-no-domain-properties.rq"),
+                    Objects.requireNonNull(OntologyRest.class.getResourceAsStream("/query-no-domain-properties.rq")),
                     StandardCharsets.UTF_8
             );
             GET_ENTITY_NAMES = IOUtils.toString(
-                    OntologyRest.class.getResourceAsStream("/query-entity-names.rq"), StandardCharsets.UTF_8
+                    Objects.requireNonNull(OntologyRest.class.getResourceAsStream("/query-entity-names.rq")),
+                    StandardCharsets.UTF_8
             );
         } catch (IOException e) {
             throw new MobiException(e);
@@ -303,7 +308,7 @@ public class OntologyRest {
     @ActionAttributes(@AttributeValue(id = com.mobi.ontologies.rdfs.Resource.type_IRI, value = OntologyRecord.TYPE))
     @ResourceId("http://mobi.com/catalog-local")
     public Response uploadFile(@Context HttpServletRequest servletRequest) {
-        Map<String, List<Class>> fields = new HashMap<>();
+        Map<String, List<Class<?>>> fields = new HashMap<>();
         fields.put("title", Stream.of(String.class).collect(Collectors.toList()));
         fields.put("description", Stream.of(String.class).collect(Collectors.toList()));
         fields.put("json", Stream.of(String.class).collect(Collectors.toList()));
@@ -384,10 +389,10 @@ public class OntologyRest {
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
      * @param rdfFormat   the desired RDF return format. NOTE: Optional param - defaults to "jsonld".
-     * @param clearCache  whether or not the cached version of the identified Ontology should be cleared before
+     * @param clearCache  whether the cached version of the identified Ontology should be cleared before
      *                    retrieval
-     * @param skolemize   whether or not the JSON-LD of the ontology should be skolemized
-     * @param applyInProgressCommit Boolean indicating whether or not any in progress commits by user should be
+     * @param skolemize   whether the JSON-LD of the ontology should be skolemized
+     * @param applyInProgressCommit Boolean indicating whether any in progress commits by user should be
      *                              applied to the return value
      * @return a Response with the ontology in the requested format.
      */
@@ -416,7 +421,7 @@ public class OntologyRest {
             @Parameter(description = "Optional String representing the Commit Resource id. NOTE: Assumes id "
                     + "represents an IRI unless String begins with \"_:\". Defaults to head commit if missing. The "
                     + "provided commitId must be on the Branch identified by the provided branchId; "
-                    + "otherwise, nothing will be returned", required = false)
+                    + "otherwise, nothing will be returned")
             @QueryParam("commitId") String commitIdStr,
             @Parameter(description = "Desired RDF return format",
                     schema = @Schema(allowableValues = {"jsonld", "rdf/xml", "owl/xml", "turtle"}))
@@ -434,14 +439,13 @@ public class OntologyRest {
             if (clearCache) {
                 ontologyCache.removeFromCache(recordIdStr, commitIdStr);
             }
-            Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr,
+            Ontology ontology = optOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr,
                     applyInProgressCommit, conn)
                     .orElseThrow(() ->
                             ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
 
-            StreamingOutput output = outputStream -> {
-                writeOntologyToStream(ontology, rdfFormat, skolemize, outputStream);
-            };
+            StreamingOutput output = outputStream ->
+                    writeOntologyToStream(ontology, rdfFormat, skolemize, outputStream);
             return Response.ok(output).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
@@ -541,7 +545,7 @@ public class OntologyRest {
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit
     ) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr,
+            Ontology ontology = optOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr,
                     applyInProgressCommit, conn)
                     .orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
                             Response.Status.BAD_REQUEST));
@@ -600,15 +604,15 @@ public class OntologyRest {
             @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
-            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @Parameter(description = "String representing the Branch Resource ID")
             @QueryParam("branchId") String branchIdStr,
-            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @Parameter(description = "String representing the Commit Resource ID")
             @QueryParam("commitId") String commitIdStr,
             @Parameter(description = "String representing the edited entity id", required = true)
             @QueryParam("entityId") String entityIdStr,
             @Parameter(description = "String representing the edited Resource", required = true) String entityJson) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true,
+            Ontology ontology = optOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true,
                     conn)
                     .orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
                             Response.Status.BAD_REQUEST));
@@ -661,7 +665,7 @@ public class OntologyRest {
     @ResourceId(type = ValueType.PATH, value = "recordId")
     @ActionAttributes(
             @AttributeValue(id = "http://mobi.com/ontologies/catalog#branch", value = "branchId", type =
-                    ValueType.QUERY, required = false)
+                    ValueType.QUERY)
     )
     public Response uploadChangesToOntology(
             @Context HttpServletRequest servletRequest,
@@ -741,7 +745,7 @@ public class OntologyRest {
             Model uploadedModel = uploadedModelFuture.get();
 
             startTime = System.currentTimeMillis();
-            if (!OntologyModels.findFirstOntologyIRI(uploadedModel, valueFactory).isPresent()) {
+            if (OntologyModels.findFirstOntologyIRI(uploadedModel, valueFactory).isEmpty()) {
                 OntologyModels.findFirstOntologyIRI(currentModel, valueFactory)
                         .ifPresent(iri -> uploadedModel.add(iri, valueFactory.createIRI(RDF.TYPE.stringValue()),
                                 valueFactory.createIRI(OWL.ONTOLOGY.stringValue())));
@@ -788,7 +792,7 @@ public class OntologyRest {
     /**
      * Class used for OpenAPI documentation for upload changes endpoint.
      */
-    private class OntologyFileUploadChanges {
+    private static class OntologyFileUploadChanges {
         @Schema(type = "string", format = "binary", description = "Ontology file to upload.")
         public String file;
     }
@@ -832,7 +836,6 @@ public class OntologyRest {
             throw RestUtils.getErrorObjInternalServerError(ex);
         }
     }
-
     
     /**
      * Returns a JSON object with keys for the list of IRIs of derived skos:Concepts, the list of IRIs of derived
@@ -873,12 +876,12 @@ public class OntologyRest {
             @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
-            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @Parameter(description = "String representing the Branch Resource ID")
             @QueryParam("branchId") String branchIdStr,
-            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @Parameter(description = "String representing the Commit Resource ID")
             @QueryParam("commitId") String commitIdStr) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            Optional<Ontology> optionalOntology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr,
+            Optional<Ontology> optionalOntology = optOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr,
                     true, conn);
             if (optionalOntology.isPresent()) {
                 StreamingOutput output = getVocabularyStuffStream(optionalOntology.get());
@@ -973,7 +976,7 @@ public class OntologyRest {
     }
 
     /**
-     * Returns a JSON object with all of the lists and objects needed by the UI to properly display and work with
+     * Returns a JSON object with all the lists and objects needed by the UI to properly display and work with
      * ontologies.
      *
      * @param servletRequest the HttpServletRequest.
@@ -986,7 +989,7 @@ public class OntologyRest {
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
-     * @param applyInProgressCommit Boolean indicating whether or not any in progress commits by user should be
+     * @param applyInProgressCommit Boolean indicating whether any in progress commits by user should be
      *                              applied to the return value
      * @return JSON object with keys .
      */
@@ -1009,9 +1012,9 @@ public class OntologyRest {
             @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
-            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @Parameter(description = "String representing the Branch Resource ID")
             @QueryParam("branchId") String branchIdStr,
-            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @Parameter(description = "String representing the Commit Resource ID")
             @QueryParam("commitId") String commitIdStr,
             @Parameter(description = "Boolean to decide to clear cache")
             @DefaultValue("false") @QueryParam("clearCache") boolean clearCache,
@@ -1021,7 +1024,7 @@ public class OntologyRest {
             if (clearCache) {
                 ontologyCache.removeFromCache(recordIdStr, commitIdStr);
             }
-            Optional<Ontology> optionalOntology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr,
+            Optional<Ontology> optionalOntology = optOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr,
                     applyInProgressCommit, conn);
             if (optionalOntology.isPresent()) {
                 StreamingOutput output = getOntologyStuffStream(optionalOntology.get());
@@ -1043,8 +1046,8 @@ public class OntologyRest {
 
             OntologyId ontologyId = ontology.getOntologyId();
             outputStream.write("{ \"ontologyIRI\": ".getBytes());
-            outputStream.write(ontologyId.getOntologyIRI().isPresent() ?
-                    ("\"" + ontologyId.getOntologyIRI().get().toString() + "\"").getBytes() : "".getBytes());
+            outputStream.write(ontologyId.getOntologyIRI().isPresent()
+                    ? ("\"" + ontologyId.getOntologyIRI().get() + "\"").getBytes() : "".getBytes());
 
             log.trace("Start iriList");
             watch.start();
@@ -1160,7 +1163,8 @@ public class OntologyRest {
             log.trace("Start noDomainProperties");
             watch.start();
             outputStream.write(", \"noDomainProperties\": ".getBytes());
-            writeNoDomainPropertiesToStream(ontology.getTupleQueryResults(GET_NO_DOMAIN_PROPERTIES, true), outputStream);
+            writeNoDomainPropertiesToStream(ontology.getTupleQueryResults(GET_NO_DOMAIN_PROPERTIES, true),
+                    outputStream);
             watch.stop();
             log.trace("End noDomainProperties: " + watch.getTime() + "ms");
 
@@ -1178,7 +1182,7 @@ public class OntologyRest {
     }
 
     /**
-     * Returns a JSON object with (ObjectPropertyRange) properties and ranges
+     * Returns a JSON object with (ObjectPropertyRange) properties and ranges.
      *
      * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
      *                    String begins with "_:".
@@ -1189,7 +1193,7 @@ public class OntologyRest {
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
-     * @param applyInProgressCommit Boolean indicating whether or not any in progress commits by user should be
+     * @param applyInProgressCommit Boolean indicating whether any in progress commits by user should be
      *                              applied to the return value
      * @return JSON object with keys
      */
@@ -1212,14 +1216,14 @@ public class OntologyRest {
             @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
-            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @Parameter(description = "String representing the Branch Resource ID")
             @QueryParam("branchId") String branchIdStr,
-            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @Parameter(description = "String representing the Commit Resource ID")
             @QueryParam("commitId") String commitIdStr,
             @Parameter(description = "Whether or not to apply the in progress commit for the user making the request")
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            Optional<Ontology> optionalOntology = getOntology(servletRequest,
+            Optional<Ontology> optionalOntology = optOntology(servletRequest,
                     recordIdStr, branchIdStr, commitIdStr, applyInProgressCommit, conn);
             if (optionalOntology.isPresent()) {
                 StreamingOutput output = getPropertyToRangesStream(optionalOntology.get());
@@ -1249,6 +1253,7 @@ public class OntologyRest {
             outputStream.write("}".getBytes());
         };
     }
+
     /**
      * Returns IRIs in the ontology identified by the provided IDs.
      *
@@ -1283,9 +1288,9 @@ public class OntologyRest {
             @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
-            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @Parameter(description = "String representing the Branch Resource ID")
             @QueryParam("branchId") String branchIdStr,
-            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @Parameter(description = "String representing the Commit Resource ID")
             @QueryParam("commitId") String commitIdStr) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             ObjectNode result = doWithOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, this::getAllIRIs,
@@ -1331,9 +1336,9 @@ public class OntologyRest {
             @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
-            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @Parameter(description = "String representing the Branch Resource ID")
             @QueryParam("branchId") String branchIdStr,
-            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @Parameter(description = "String representing the Commit Resource ID")
             @QueryParam("commitId") String commitIdStr) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             ObjectNode result = doWithOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr,
@@ -1431,12 +1436,12 @@ public class OntologyRest {
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the annotation Resource ID", required = true)
             @PathParam("annotationId") String annotationIdStr,
-            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @Parameter(description = "String representing the Branch Resource ID")
             @QueryParam("branchId") String branchIdStr,
-            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @Parameter(description = "String representing the Commit Resource ID")
             @QueryParam("commitId") String commitIdStr) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true,
+            Ontology ontology = optOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true,
                     conn)
                     .orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
                             Response.Status.BAD_REQUEST));
@@ -1459,7 +1464,7 @@ public class OntologyRest {
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
-     * @param applyInProgressCommit Boolean indicating whether or not any in progress commits by user should be
+     * @param applyInProgressCommit Boolean indicating whether any in progress commits by user should be
      *                              applied to the return value
      * @return classes in the ontology identified by the provided IDs.
      */
@@ -1483,11 +1488,11 @@ public class OntologyRest {
             @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
-            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @Parameter(description = "String representing the Branch Resource ID")
             @QueryParam("branchId") String branchIdStr,
-            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @Parameter(description = "String representing the Commit Resource ID")
             @QueryParam("commitId") String commitIdStr,
-            @Parameter(description = "Boolean indicating whether or not any in progress commits by user should be "
+            @Parameter(description = "Boolean indicating whether any in progress commits by user should be "
                     + "applied to the return value")
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
@@ -1581,12 +1586,12 @@ public class OntologyRest {
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the class Resource ID", required = true)
             @PathParam("classId") String classIdStr,
-            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @Parameter(description = "String representing the Branch Resource ID")
             @QueryParam("branchId") String branchIdStr,
-            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @Parameter(description = "String representing the Commit Resource ID")
             @QueryParam("commitId") String commitIdStr) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true,
+            Ontology ontology = optOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true,
                     conn)
                     .orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
                             Response.Status.BAD_REQUEST));
@@ -1631,9 +1636,9 @@ public class OntologyRest {
             @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
-            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @Parameter(description = "String representing the Branch Resource ID")
             @QueryParam("branchId") String branchIdStr,
-            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @Parameter(description = "String representing the Commit Resource ID")
             @QueryParam("commitId") String commitIdStr) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             ObjectNode result = doWithOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr,
@@ -1726,12 +1731,12 @@ public class OntologyRest {
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the datatype Resource ID", required = true)
             @PathParam("datatypeId") String datatypeIdStr,
-            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @Parameter(description = "String representing the Branch Resource ID")
             @QueryParam("branchId") String branchIdStr,
-            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @Parameter(description = "String representing the Commit Resource ID")
             @QueryParam("commitId") String commitIdStr) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true,
+            Ontology ontology = optOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true,
                     conn)
                     .orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
                             Response.Status.BAD_REQUEST));
@@ -1776,9 +1781,9 @@ public class OntologyRest {
             @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
-            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @Parameter(description = "String representing the Branch Resource ID")
             @QueryParam("branchId") String branchIdStr,
-            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @Parameter(description = "String representing the Commit Resource ID")
             @QueryParam("commitId") String commitIdStr) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             ArrayNode result = doWithOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr,
@@ -1871,12 +1876,12 @@ public class OntologyRest {
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the class Resource ID", required = true)
             @PathParam("objectPropertyId") String objectPropertyIdStr,
-            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @Parameter(description = "String representing the Branch Resource ID")
             @QueryParam("branchId") String branchIdStr,
-            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @Parameter(description = "String representing the Commit Resource ID")
             @QueryParam("commitId") String commitIdStr) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true,
+            Ontology ontology = optOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true,
                     conn)
                     .orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
                             Response.Status.BAD_REQUEST));
@@ -1921,9 +1926,9 @@ public class OntologyRest {
             @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
-            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @Parameter(description = "String representing the Branch Resource ID")
             @QueryParam("branchId") String branchIdStr,
-            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @Parameter(description = "String representing the Commit Resource ID")
             @QueryParam("commitId") String commitIdStr) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             ArrayNode result = doWithOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr,
@@ -2016,12 +2021,12 @@ public class OntologyRest {
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the class Resource ID", required = true)
             @PathParam("dataPropertyId") String dataPropertyIdStr,
-            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @Parameter(description = "String representing the Branch Resource ID")
             @QueryParam("branchId") String branchIdStr,
-            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @Parameter(description = "String representing the Commit Resource ID")
             @QueryParam("commitId") String commitIdStr) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true,
+            Ontology ontology = optOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true,
                     conn)
                     .orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
                             Response.Status.BAD_REQUEST));
@@ -2066,9 +2071,9 @@ public class OntologyRest {
             @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
-            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @Parameter(description = "String representing the Branch Resource ID")
             @QueryParam("branchId") String branchIdStr,
-            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @Parameter(description = "String representing the Commit Resource ID")
             @QueryParam("commitId") String commitIdStr) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             ObjectNode result = doWithOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr,
@@ -2113,7 +2118,7 @@ public class OntologyRest {
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the new individual model", required = true)
             String individualJson) {
-        verifyJsonldType(individualJson, OWL.INDIVIDUAL.stringValue());
+        verifyJsonldType(individualJson, OWL.NAMEDINDIVIDUAL.stringValue());
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             return additionsToInProgressCommit(servletRequest, recordIdStr, getModelFromJson(individualJson), conn);
         } catch (MobiException e) {
@@ -2161,12 +2166,12 @@ public class OntologyRest {
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the individual Resource ID", required = true)
             @PathParam("individualId") String individualIdStr,
-            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @Parameter(description = "String representing the Branch Resource ID")
             @QueryParam("branchId") String branchIdStr,
-            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @Parameter(description = "String representing the Commit Resource ID")
             @QueryParam("commitId") String commitIdStr) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true,
+            Ontology ontology = optOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true,
                     conn)
                     .orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
                             Response.Status.BAD_REQUEST));
@@ -2189,7 +2194,7 @@ public class OntologyRest {
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
-     * @param applyInProgressCommit Boolean indicating whether or not any in progress commits by user should be
+     * @param applyInProgressCommit Boolean indicating whether any in progress commits by user should be
      *                              applied to the return value
      * @return IRIs in the ontology identified by the provided IDs.
      */
@@ -2213,11 +2218,11 @@ public class OntologyRest {
             @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
-            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @Parameter(description = "String representing the Branch Resource ID")
             @QueryParam("branchId") String branchIdStr,
-            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @Parameter(description = "String representing the Commit Resource ID")
             @QueryParam("commitId") String commitIdStr,
-            @Parameter(description = "Whether to apply in progress commit", required = false)
+            @Parameter(description = "Whether to apply in progress commit")
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             return doWithImportedOntologies(servletRequest, recordIdStr, branchIdStr, commitIdStr, this::getAllIRIs,
@@ -2263,16 +2268,16 @@ public class OntologyRest {
             @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
-            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @Parameter(description = "String representing the Branch Resource ID")
             @QueryParam("branchId") String branchIdStr,
-            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @Parameter(description = "String representing the Commit Resource ID")
             @QueryParam("commitId") String commitIdStr) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             ArrayNode arrayNode = mapper.createArrayNode();
             Set<String> importedOntologyIris = new HashSet<>();
-            Optional<Ontology> optionalOntology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr,
+            Optional<Ontology> optionalOntology = optOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr,
                     false, conn);
-            if(optionalOntology.isPresent()) {
+            if (optionalOntology.isPresent()) {
                 Ontology ontology = optionalOntology.get();
                 ontology.getUnloadableImportIRIs().stream()
                         .map(Value::stringValue)
@@ -2333,11 +2338,11 @@ public class OntologyRest {
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "Desired RDF return format")
             @DefaultValue("jsonld") @QueryParam("rdfFormat") String rdfFormat,
-            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @Parameter(description = "String representing the Branch Resource ID")
             @QueryParam("branchId") String branchIdStr,
-            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @Parameter(description = "String representing the Commit Resource ID")
             @QueryParam("commitId") String commitIdStr,
-            @Parameter(description = "Whether to apply in progress commit", required = false)
+            @Parameter(description = "Whether to apply in progress commit")
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Set<Ontology> importedOntologies = getImportedOntologies(servletRequest, recordIdStr, branchIdStr,
@@ -2365,7 +2370,7 @@ public class OntologyRest {
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
-     * @param applyInProgressCommit Boolean indicating whether or not any in progress commits by user should be
+     * @param applyInProgressCommit Boolean indicating whether any in progress commits by user should be
      *                              applied to the return value
      * @return annotation properties in the ontology identified by the provided IDs.
      */
@@ -2389,11 +2394,11 @@ public class OntologyRest {
             @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
-            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @Parameter(description = "String representing the Branch Resource ID")
             @QueryParam("branchId") String branchIdStr,
-            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @Parameter(description = "String representing the Commit Resource ID")
             @QueryParam("commitId") String commitIdStr,
-            @Parameter(description = "Whether to apply in progress commit", required = false)
+            @Parameter(description = "Whether to apply in progress commit")
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             return doWithImportedOntologies(servletRequest, recordIdStr, branchIdStr, commitIdStr,
@@ -2416,7 +2421,7 @@ public class OntologyRest {
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
-     * @param applyInProgressCommit Boolean indicating whether or not any in progress commits by user should be
+     * @param applyInProgressCommit Boolean indicating whether any in progress commits by user should be
      *                              applied to the return value
      * @return classes in the ontology identified by the provided IDs.
      */
@@ -2440,11 +2445,11 @@ public class OntologyRest {
             @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
-            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @Parameter(description = "String representing the Branch Resource ID")
             @QueryParam("branchId") String branchIdStr,
-            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @Parameter(description = "String representing the Commit Resource ID")
             @QueryParam("commitId") String commitIdStr,
-            @Parameter(description = "Whether to apply in progress commit", required = false)
+            @Parameter(description = "Whether to apply in progress commit")
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit
     ) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
@@ -2468,7 +2473,7 @@ public class OntologyRest {
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
-     * @param applyInProgressCommit Boolean indicating whether or not any in progress commits by user should be
+     * @param applyInProgressCommit Boolean indicating whether any in progress commits by user should be
      *                              applied to the return value
      * @return datatypes in the ontology identified by the provided IDs.
      */
@@ -2492,11 +2497,11 @@ public class OntologyRest {
             @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
-            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @Parameter(description = "String representing the Branch Resource ID")
             @QueryParam("branchId") String branchIdStr,
-            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @Parameter(description = "String representing the Commit Resource ID")
             @QueryParam("commitId") String commitIdStr,
-            @Parameter(description = "Whether to apply in progress commit", required = false)
+            @Parameter(description = "Whether to apply in progress commit")
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             return doWithImportedOntologies(servletRequest, recordIdStr, branchIdStr, commitIdStr,
@@ -2519,7 +2524,7 @@ public class OntologyRest {
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
-     * @param applyInProgressCommit Boolean indicating whether or not any in progress commits by user should be
+     * @param applyInProgressCommit Boolean indicating whether any in progress commits by user should be
      *                              applied to the return value
      * @return object properties in the ontology identified by the provided IDs.
      */
@@ -2543,11 +2548,11 @@ public class OntologyRest {
             @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
-            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @Parameter(description = "String representing the Branch Resource ID")
             @QueryParam("branchId") String branchIdStr,
-            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @Parameter(description = "String representing the Commit Resource ID")
             @QueryParam("commitId") String commitIdStr,
-            @Parameter(description = "Whether to apply in progress commit", required = false)
+            @Parameter(description = "Whether to apply in progress commit")
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             return doWithImportedOntologies(servletRequest, recordIdStr, branchIdStr, commitIdStr,
@@ -2570,7 +2575,7 @@ public class OntologyRest {
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
-     * @param applyInProgressCommit Boolean indicating whether or not any in progress commits by user should be
+     * @param applyInProgressCommit Boolean indicating whether any in progress commits by user should be
      *                              applied to the return value
      * @return data properties in the ontology identified by the provided IDs.
      */
@@ -2595,11 +2600,11 @@ public class OntologyRest {
             @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
-            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @Parameter(description = "String representing the Branch Resource ID")
             @QueryParam("branchId") String branchIdStr,
-            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @Parameter(description = "String representing the Commit Resource ID")
             @QueryParam("commitId") String commitIdStr,
-            @Parameter(description = "Whether to apply in progress commit", required = false)
+            @Parameter(description = "Whether to apply in progress commit")
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             return doWithImportedOntologies(servletRequest, recordIdStr, branchIdStr, commitIdStr,
@@ -2622,7 +2627,7 @@ public class OntologyRest {
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
-     * @param applyInProgressCommit Boolean indicating whether or not any in progress commits by user should be
+     * @param applyInProgressCommit Boolean indicating whether any in progress commits by user should be
      *                              applied to the return value
      * @return named individuals in the ontology identified by the provided IDs.
      */
@@ -2646,11 +2651,11 @@ public class OntologyRest {
             @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
-            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @Parameter(description = "String representing the Branch Resource ID")
             @QueryParam("branchId") String branchIdStr,
-            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @Parameter(description = "String representing the Commit Resource ID")
             @QueryParam("commitId") String commitIdStr,
-            @Parameter(description = "Whether to apply in progress commit", required = false)
+            @Parameter(description = "Whether to apply in progress commit")
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit
     ) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
@@ -2677,7 +2682,7 @@ public class OntologyRest {
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
      * @param nested      Whether to return the nested JSON-LD version of the hierarchy.
-     * @param applyInProgressCommit Boolean indicating whether or not any in progress commits by user should be
+     * @param applyInProgressCommit Boolean indicating whether any in progress commits by user should be
      *                              applied to the return value
      * @return A JSON object that represents the class hierarchy for the ontology identified by the provided IDs.
      */
@@ -2702,9 +2707,9 @@ public class OntologyRest {
             @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
-            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @Parameter(description = "String representing the Branch Resource ID")
             @QueryParam("branchId") String branchIdStr,
-            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @Parameter(description = "String representing the Commit Resource ID")
             @QueryParam("commitId") String commitIdStr,
             @Parameter(description = "Whether to return the nested JSON-LD version of the hierarchy")
             @DefaultValue("false") @QueryParam("nested") boolean nested,
@@ -2712,9 +2717,9 @@ public class OntologyRest {
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit
     ) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr,
-                    applyInProgressCommit, conn).orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
-                    Response.Status.BAD_REQUEST));
+            Ontology ontology = optOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr,
+                    applyInProgressCommit, conn).orElseThrow(() -> 
+                        ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
             Hierarchy hierarchy = ontology.getSubClassesOf();
             return Response.ok(getHierarchyStream(hierarchy, nested, getClassIRIs(ontology))).build();
         } catch (MobiException e) {
@@ -2762,14 +2767,14 @@ public class OntologyRest {
             @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
-            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @Parameter(description = "String representing the Branch Resource ID")
             @QueryParam("branchId") String branchIdStr,
-            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @Parameter(description = "String representing the Commit Resource ID")
             @QueryParam("commitId") String commitIdStr,
             @Parameter(description = "Whether to return the nested JSON-LD version of the hierarchy")
             @DefaultValue("false") @QueryParam("nested") boolean nested) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true,
+            Ontology ontology = optOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true,
                     conn)
                     .orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
                             Response.Status.BAD_REQUEST));
@@ -2820,14 +2825,14 @@ public class OntologyRest {
             @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
-            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @Parameter(description = "String representing the Branch Resource ID")
             @QueryParam("branchId") String branchIdStr,
-            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @Parameter(description = "String representing the Commit Resource ID")
             @QueryParam("commitId") String commitIdStr,
             @Parameter(description = "Whether to return the nested JSON-LD version of the hierarchy")
             @DefaultValue("false") @QueryParam("nested") boolean nested) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true,
+            Ontology ontology = optOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true,
                     conn)
                     .orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
                             Response.Status.BAD_REQUEST));
@@ -2879,14 +2884,14 @@ public class OntologyRest {
             @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
-            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @Parameter(description = "String representing the Branch Resource ID")
             @QueryParam("branchId") String branchIdStr,
-            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @Parameter(description = "String representing the Commit Resource ID")
             @QueryParam("commitId") String commitIdStr,
             @Parameter(description = "Whether to return the nested JSON-LD version of the hierarchy")
             @DefaultValue("false") @QueryParam("nested") boolean nested) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true,
+            Ontology ontology = optOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true,
                     conn)
                     .orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
                             Response.Status.BAD_REQUEST));
@@ -2936,14 +2941,14 @@ public class OntologyRest {
             @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
-            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @Parameter(description = "String representing the Branch Resource ID")
             @QueryParam("branchId") String branchIdStr,
-            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @Parameter(description = "String representing the Commit Resource ID")
             @QueryParam("commitId") String commitIdStr,
             @Parameter(description = "Whether to return the nested JSON-LD version of the hierarchy")
             @DefaultValue("false") @QueryParam("nested") boolean nested) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true,
+            Ontology ontology = optOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true,
                     conn)
                     .orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
                             Response.Status.BAD_REQUEST));
@@ -2995,14 +3000,14 @@ public class OntologyRest {
             @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
-            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @Parameter(description = "String representing the Branch Resource ID")
             @QueryParam("branchId") String branchIdStr,
-            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @Parameter(description = "String representing the Commit Resource ID")
             @QueryParam("commitId") String commitIdStr,
             @Parameter(description = "Whether to return the nested JSON-LD version of the hierarchy")
             @DefaultValue("false") @QueryParam("nested") boolean nested) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true,
+            Ontology ontology = optOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true,
                     conn)
                     .orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
                             Response.Status.BAD_REQUEST));
@@ -3051,12 +3056,12 @@ public class OntologyRest {
             @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
-            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @Parameter(description = "String representing the Branch Resource ID")
             @QueryParam("branchId") String branchIdStr,
-            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @Parameter(description = "String representing the Commit Resource ID")
             @QueryParam("commitId") String commitIdStr) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true,
+            Ontology ontology = optOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true,
                     conn)
                     .orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
                             Response.Status.BAD_REQUEST));
@@ -3112,14 +3117,14 @@ public class OntologyRest {
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the entity Resource IRI", required = true)
             @PathParam("entityIri") String entityIRIStr,
-            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @Parameter(description = "String representing the Branch Resource ID")
             @QueryParam("branchId") String branchIdStr,
-            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @Parameter(description = "String representing the Commit Resource ID")
             @QueryParam("commitId") String commitIdStr,
             @Parameter(description = "String identifying whether you want to do a select or construct query")
             @DefaultValue("select") @QueryParam("queryType") String queryType) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true,
+            Ontology ontology = optOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true,
                     conn)
                     .orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
                             Response.Status.BAD_REQUEST));
@@ -3183,12 +3188,12 @@ public class OntologyRest {
             @Parameter(description = "String for the text that is searched for in all of the Literals within the "
                     + "ontology with the requested record ID")
             @QueryParam("searchText") String searchText,
-            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @Parameter(description = "String representing the Branch Resource ID")
             @QueryParam("branchId") String branchIdStr,
-            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @Parameter(description = "String representing the Commit Resource ID")
             @QueryParam("commitId") String commitIdStr) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true,
+            Ontology ontology = optOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true,
                     conn)
                     .orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
                             Response.Status.BAD_REQUEST));
@@ -3252,12 +3257,12 @@ public class OntologyRest {
             @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
-            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @Parameter(description = "String representing the Branch Resource ID")
             @QueryParam("branchId") String branchIdStr,
-            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @Parameter(description = "String representing the Commit Resource ID")
             @QueryParam("commitId") String commitIdStr) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true,
+            Ontology ontology = optOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true,
                     conn)
                     .orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
                             Response.Status.BAD_REQUEST));
@@ -3282,8 +3287,8 @@ public class OntologyRest {
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
-     * @param includeImports boolean indicating whether or not ontology imports should be included in the query.
-     * @param applyInProgressCommit whether or not to apply the in progress commit for the user making the request.
+     * @param includeImports boolean indicating whether ontology imports should be included in the query.
+     * @param applyInProgressCommit whether to apply the in progress commit for the user making the request.
      * @return The SPARQL 1.1 results in JSON format if the query is a SELECT or the JSONLD serialization of the results
      *      if the query is a CONSTRUCT
      */
@@ -3301,9 +3306,9 @@ public class OntologyRest {
                                     + "or the JSONLD serialization of the results if the query is a CONSTRUCT",
                             content = {
                                     @Content(mediaType = JSON_MIME_TYPE),
-                            @Content(mediaType = TURTLE_MIME_TYPE),
-                            @Content(mediaType = LDJSON_MIME_TYPE),
-                            @Content(mediaType = RDFXML_MIME_TYPE),
+                                    @Content(mediaType = TURTLE_MIME_TYPE),
+                                    @Content(mediaType = LDJSON_MIME_TYPE),
+                                    @Content(mediaType = RDFXML_MIME_TYPE),
                             }
                             ),
                     @ApiResponse(responseCode = "400", description = "BAD REQUEST", content = {
@@ -3327,11 +3332,11 @@ public class OntologyRest {
             @Parameter(description = "SPARQL Query to perform against ontology", required = true,
                     example = "SELECT * WHERE { ?s ?p ?o . }")
             @QueryParam("query") String queryString,
-            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @Parameter(description = "String representing the Commit Resource ID")
             @QueryParam("branchId") String branchIdStr,
-            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @Parameter(description = "String representing the Branch Resource ID")
             @QueryParam("commitId") String commitIdStr,
-            @Parameter(description = "Boolean indicating whether or not ontology "
+            @Parameter(description = "Boolean indicating whether ontology "
                     + "imports should be included in the query")
             @DefaultValue("true") @QueryParam("includeImports") boolean includeImports,
             @Parameter(description = "Whether or not to apply the in progress commit for the user making the request")
@@ -3361,8 +3366,8 @@ public class OntologyRest {
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
-     * @param includeImports boolean indicating whether or not ontology imports should be included in the query.
-     * @param applyInProgressCommit whether or not to apply the in progress commit for the user making the request.
+     * @param includeImports boolean indicating whether ontology imports should be included in the query.
+     * @param applyInProgressCommit whether to apply the in progress commit for the user making the request.
      * @param queryString SPARQL Query to perform against ontology.
      * @return The SPARQL 1.1 results in JSON format if the query is a SELECT or the JSONLD serialization of the results
      *      if the query is a CONSTRUCT
@@ -3379,11 +3384,11 @@ public class OntologyRest {
             @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
-            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @Parameter(description = "String representing the Commit Resource ID")
             @QueryParam("branchId") String branchIdStr,
-            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @Parameter(description = "String representing the Branch Resource ID")
             @QueryParam("commitId") String commitIdStr,
-            @Parameter(description = "Boolean indicating whether or not ontology "
+            @Parameter(description = "Boolean indicating whether ontology "
                     + "imports should be included in the query")
             @DefaultValue("true") @QueryParam("includeImports") boolean includeImports,
             @Parameter(description = "Whether or not to apply the in progress commit for the user making the request")
@@ -3416,8 +3421,8 @@ public class OntologyRest {
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
-     * @param includeImports boolean indicating whether or not ontology imports should be included in the query.
-     * @param applyInProgressCommit whether or not to apply the in progress commit for the user making the request.
+     * @param includeImports boolean indicating whether ontology imports should be included in the query.
+     * @param applyInProgressCommit whether to apply the in progress commit for the user making the request.
      * @return The SPARQL 1.1 results in JSON format if the query is a SELECT or the JSONLD serialization of the results
      *      if the query is a CONSTRUCT
      */
@@ -3435,11 +3440,11 @@ public class OntologyRest {
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "SPARQL Query to perform against ontology", required = true)
             @FormParam("query") String queryString,
-            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @Parameter(description = "String representing the Commit Resource ID")
             @FormParam("branchId") String branchIdStr,
-            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @Parameter(description = "String representing the Branch Resource ID")
             @FormParam("commitId") String commitIdStr,
-            @Parameter(description = "Boolean indicating whether or not ontology "
+            @Parameter(description = "Boolean indicating whether ontology "
                     + "imports should be included in the query")
             @DefaultValue("true") @FormParam("includeImports") boolean includeImports,
             @Parameter(description = "Whether or not to apply the in progress commit for the user making the request")
@@ -3470,8 +3475,8 @@ public class OntologyRest {
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
-     * @param includeImports boolean indicating whether or not ontology imports should be included in the query.
-     * @param applyInProgressCommit whether or not to apply the in progress commit for the user making the request.
+     * @param includeImports boolean indicating whether ontology imports should be included in the query.
+     * @param applyInProgressCommit whether to apply the in progress commit for the user making the request.
      * @return The SPARQL 1.1 results in JSON format if the query is a SELECT or the JSONLD serialization of the results
      *      if the query is a CONSTRUCT
      */
@@ -3487,11 +3492,11 @@ public class OntologyRest {
             @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
-            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @Parameter(description = "String representing the Commit Resource ID")
             @QueryParam("branchId") String branchIdStr,
-            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @Parameter(description = "String representing the Branch Resource ID")
             @QueryParam("commitId") String commitIdStr,
-            @Parameter(description = "Boolean indicating whether or not ontology "
+            @Parameter(description = "Boolean indicating whether ontology "
                     + "imports should be included in the query")
             @DefaultValue("true") @QueryParam("includeImports") boolean includeImports,
             @Parameter(description = "Whether or not to apply the in progress commit for the user making the request")
@@ -3531,8 +3536,8 @@ public class OntologyRest {
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
-     * @param includeImports boolean indicating whether or not ontology imports should be included in the query.
-     * @param applyInProgressCommit whether or not to apply the in progress commit for the user making the request.
+     * @param includeImports boolean indicating whether ontology imports should be included in the query.
+     * @param applyInProgressCommit whether to apply the in progress commit for the user making the request.
      * @return The SPARQL 1.1 results in JSON format if the query is a SELECT or the JSONLD serialization of the results
      *      if the query is a CONSTRUCT
      */
@@ -3616,11 +3621,11 @@ public class OntologyRest {
             @FormParam("query") String queryString,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
-            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @Parameter(description = "String representing the Commit Resource ID")
             @FormParam("branchId") String branchIdStr,
-            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @Parameter(description = "String representing the Branch Resource ID")
             @FormParam("commitId") String commitIdStr,
-            @Parameter(description = "Boolean indicating whether or not ontology "
+            @Parameter(description = "Boolean indicating whether ontology "
                     + "imports should be included in the query")
             @DefaultValue("true") @FormParam("includeImports") boolean includeImports,
             @Parameter(description = "Whether or not to apply the in progress commit for the user making the request")
@@ -3654,7 +3659,7 @@ public class OntologyRest {
                         + "when accept header is application/octet-stream"));
             }
 
-            Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, applyInProgressCommit, conn)
+            Ontology ontology = optOntology(context, recordIdStr, branchIdStr, commitIdStr, applyInProgressCommit, conn)
                     .orElseThrow(() -> RestUtils.getErrorObjBadRequest(
                             new IllegalArgumentException("The ontology could not be found.")));
 
@@ -3685,8 +3690,7 @@ public class OntologyRest {
         };
         return Response.ok(output);
     }
-
-    // ======================================================================================================================================
+    
     /**
      * Retrieves the results of the provided SPARQL query, number of records limited to configurable
      * limit field variable under CatalogConfigProvider.
@@ -3706,7 +3710,8 @@ public class OntologyRest {
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
      * @param includeImports Boolean indicating whether to ontology imports should be included in the query.
-     * @param applyInProgressCommit Boolean indicating whether to apply the in progress commit for the user making the request.
+     * @param applyInProgressCommit Boolean indicating whether to apply the in progress commit for the user making the 
+     *                              request.
      * @return The SPARQL 1.1 results in mime type specified by accept header
      */
     @GET
@@ -3747,11 +3752,11 @@ public class OntologyRest {
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "The SPARQL query to execute", required = true)
             @QueryParam("query") String queryString,
-            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @Parameter(description = "String representing the Commit Resource ID")
             @QueryParam("branchId") String branchIdStr,
-            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @Parameter(description = "String representing the Branch Resource ID")
             @QueryParam("commitId") String commitIdStr,
-            @Parameter(description = "Boolean indicating whether or not ontology "
+            @Parameter(description = "Boolean indicating whether ontology "
                     + "imports should be included in the query")
             @DefaultValue("true") @QueryParam("includeImports") boolean includeImports,
             @Parameter(description = "Whether or not to apply the in progress commit for the user making the request")
@@ -3762,8 +3767,8 @@ public class OntologyRest {
             throw RestUtils.getErrorObjBadRequest(new IllegalArgumentException("Parameter 'query' must be set"));
         }
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            Ontology ontology = getOntology(httpServletRequest, recordIdStr, branchIdStr, commitIdStr, applyInProgressCommit, conn)
-                    .orElseThrow(() -> RestUtils.getErrorObjBadRequest(
+            Ontology ontology = optOntology(httpServletRequest, recordIdStr, branchIdStr, commitIdStr, 
+                    applyInProgressCommit, conn).orElseThrow(() -> RestUtils.getErrorObjBadRequest(
                             new IllegalArgumentException("The ontology could not be found.")));
             return RestQueryUtils.handleQueryEagerly(queryString, null, acceptString,
                     this.configProvider.getLimitedSize(), ontology, includeImports, null);
@@ -3789,7 +3794,8 @@ public class OntologyRest {
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
      * @param includeImports Boolean indicating whether ontology imports should be included in the query.
-     * @param applyInProgressCommit Boolean indicating whether to apply the in progress commit for the user making the request.
+     * @param applyInProgressCommit Boolean indicating whether to apply the in progress commit for the user making the 
+     *                              request.
      * @return The SPARQL 1.1 results in mime type specified by accept header
      */
     @POST
@@ -3803,11 +3809,11 @@ public class OntologyRest {
             @Context HttpServletRequest context,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
-            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @Parameter(description = "String representing the Commit Resource ID")
             @QueryParam("branchId") String branchIdStr,
-            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @Parameter(description = "String representing the Branch Resource ID")
             @QueryParam("commitId") String commitIdStr,
-            @Parameter(description = "Boolean indicating whether or not ontology "
+            @Parameter(description = "Boolean indicating whether ontology "
                     + "imports should be included in the query")
             @DefaultValue("true") @QueryParam("includeImports") boolean includeImports,
             @Parameter(description = "Whether or not to apply the in progress commit for the user making the request")
@@ -3820,7 +3826,7 @@ public class OntologyRest {
             throw RestUtils.getErrorObjBadRequest(new IllegalArgumentException("Parameter 'query' must be set"));
         }
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, applyInProgressCommit, conn)
+            Ontology ontology = optOntology(context, recordIdStr, branchIdStr, commitIdStr, applyInProgressCommit, conn)
                     .orElseThrow(() -> RestUtils.getErrorObjBadRequest(
                             new IllegalArgumentException("The ontology could not be found.")));
             return RestQueryUtils.handleQueryEagerly(queryString, null, acceptString,
@@ -3838,11 +3844,11 @@ public class OntologyRest {
         String branchIdStr;
         @Schema(type = "string", description = "String representing the Commit Resource ID")
         String commitIdStr;
-        @Schema(type = "boolean", description = "Boolean indicating whether or not ontology "
+        @Schema(type = "boolean", description = "Boolean indicating whether ontology "
                 + "imports should be included in the query", defaultValue = "false")
         boolean includeImports;
-        @Schema(type = "boolean", description = "Whether or not to apply the in progress commit for " +
-                "the user making the request", defaultValue = "false")
+        @Schema(type = "boolean", description = "Whether or not to apply the in progress commit for "
+                + "the user making the request", defaultValue = "false")
         boolean applyInProgressCommit;
     }
 
@@ -3865,7 +3871,8 @@ public class OntologyRest {
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
      * @param includeImports Boolean indicating whether ontology imports should be included in the query.
-     * @param applyInProgressCommit Boolean indicating whether to apply the in progress commit for the user making the request.
+     * @param applyInProgressCommit Boolean indicating whether to apply the in progress commit for the user making the
+     *                              request.
      * @return The SPARQL 1.1 results in mime type specified by accept header
      */
     @POST
@@ -3932,11 +3939,11 @@ public class OntologyRest {
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "The SPARQL query to execute", required = true)
             @FormParam("query") String queryString,
-            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @Parameter(description = "String representing the Commit Resource ID")
             @FormParam("branchId") String branchIdStr,
-            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @Parameter(description = "String representing the Branch Resource ID")
             @FormParam("commitId") String commitIdStr,
-            @Parameter(description = "Boolean indicating whether or not ontology "
+            @Parameter(description = "Boolean indicating whether ontology "
                     + "imports should be included in the query")
             @DefaultValue("true") @FormParam("includeImports") boolean includeImports,
             @Parameter(description = "Whether or not to apply the in progress commit for the user making the request")
@@ -3946,7 +3953,7 @@ public class OntologyRest {
             throw RestUtils.getErrorObjBadRequest(new IllegalArgumentException("Form Parameter 'query' must be set"));
         }
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            Ontology ontology = getOntology(context, recordIdStr, branchIdStr, commitIdStr, applyInProgressCommit, conn)
+            Ontology ontology = optOntology(context, recordIdStr, branchIdStr, commitIdStr, applyInProgressCommit, conn)
                     .orElseThrow(() -> RestUtils.getErrorObjBadRequest(
                             new IllegalArgumentException("The ontology could not be found.")));
             return RestQueryUtils.handleQueryEagerly(queryString, null, acceptString,
@@ -3968,7 +3975,8 @@ public class OntologyRest {
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
-     * @param applyInProgressCommit Boolean indicating whether to apply the in progress commit for the user making the request.
+     * @param applyInProgressCommit Boolean indicating whether to apply the in progress commit for the user making the
+     *                              request.
      * @return The SPARQL 1.1 results in JSON format if the query is a SELECT or the JSONLD serialization of the results
      *      if the query is a CONSTRUCT
      */
@@ -3996,18 +4004,18 @@ public class OntologyRest {
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "SPARQL Query to perform against ontology", required = true)
             @QueryParam("query") String queryString,
-            @Parameter(description = "The limit of results that is set within the query", required = false)
+            @Parameter(description = "The limit of results that is set within the query")
             @DefaultValue("500") @QueryParam("limit") String queryLimit,
-            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @Parameter(description = "String representing the Branch Resource ID")
             @QueryParam("branchId") String branchIdStr,
-            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @Parameter(description = "String representing the Commit Resource ID")
             @QueryParam("commitId") String commitIdStr,
             @Parameter(description = "Whether or not to apply the in progress commit for the user making the request")
             @DefaultValue("false") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit) {
         checkStringParam(queryString, "Parameter 'query' must be set.");
 
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr,
+            Ontology ontology = optOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr,
                     applyInProgressCommit, conn)
                     .orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
                             Response.Status.BAD_REQUEST));
@@ -4019,7 +4027,9 @@ public class OntologyRest {
             Optional<ObjectNode> baseResults = handleGroupedQuery(ontology, queryString.concat(" limit " + queryLimit));
             if (baseResults.isPresent()) {
                 currentNodes = currentNodes + baseResults.get().findValue("bindings").size();
-                results.putPOJO(ontology.getOntologyId().getOntologyIRI().get().toString(), baseResults.get());
+                Resource ontologyIRI = ontology.getOntologyId().getOntologyIRI().orElseThrow(() ->
+                        new IllegalStateException("Ontology IRI expected to be present"));
+                results.putPOJO(ontologyIRI.toString(), baseResults.get());
             }
 
             if (currentNodes < queryLimitNum) {
@@ -4030,8 +4040,10 @@ public class OntologyRest {
                                 queryString.concat("limit " + (queryLimitNum - currentNodes)));
                         if (importedResults.isPresent()) {
                             currentNodes = currentNodes + importedResults.get().findValue("bindings").size();
-                            results.putPOJO(importedOntology.getOntologyId().getOntologyIRI().get().toString(),
-                                    importedResults.get());
+                            Resource importedOntIRI = importedOntology.getOntologyId().getOntologyIRI()
+                                    .orElseThrow(() -> new IllegalStateException("Ontology IRI expected to be "
+                                            + "present"));
+                            results.putPOJO(importedOntIRI.toString(), importedResults.get());
                         }
                     } else {
                         break;
@@ -4040,7 +4052,9 @@ public class OntologyRest {
             }
             if (results.size() > 0) {
                 return Response.ok(results.toString(), MediaType.APPLICATION_JSON_TYPE).build();
-            } else { return Response.noContent().build(); }
+            } else {
+                return Response.noContent().build();
+            }
         } catch (MalformedQueryException | NumberFormatException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (MobiException ex) {
@@ -4064,7 +4078,7 @@ public class OntologyRest {
                     ObjectNode constructResults = mapper.createObjectNode();
                     ArrayNode stringResults = mapper.createArrayNode();
                     // TODO: Make this actually create JSON-LD
-                    for (Object statement: graphQueryResults.toArray()) {
+                    for (Object statement : graphQueryResults.toArray()) {
                         stringResults.add(statement.toString());
                     }
                     constructResults.set("bindings", stringResults);
@@ -4096,8 +4110,8 @@ public class OntologyRest {
      *                       branchId; otherwise, nothing will be returned.
      * @param format         the specified format for the return data. Valid values include "jsonld", "turtle",
      *                       "rdf/xml", and "trig"
-     * @param includeImports boolean indicating whether or not ontology imports should be included in the query.
-     * @param applyInProgressCommit whether or not to apply the in progress commit for the user making the request.
+     * @param includeImports boolean indicating whether ontology imports should be included in the query.
+     * @param applyInProgressCommit whether to apply the in progress commit for the user making the request.
      * @return The RDF triples for a specified entity including all of is transitively attached Blank Nodes.
      */
     @GET
@@ -4124,14 +4138,14 @@ public class OntologyRest {
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the entity Resource ID", required = true)
             @PathParam("entityId") String entityIdStr,
-            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @Parameter(description = "String representing the Branch Resource ID")
             @QueryParam("branchId") String branchIdStr,
-            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @Parameter(description = "String representing the Commit Resource ID")
             @QueryParam("commitId") String commitIdStr,
             @Parameter(description = "Specified format for the return data. Valid values include 'jsonld', "
                     + "'turtle', 'rdf/xml', and 'trig'")
             @DefaultValue("jsonld") @QueryParam("format") String format,
-            @Parameter(description = "Boolean indicating whether or not ontology imports "
+            @Parameter(description = "Boolean indicating whether ontology imports "
                     + "should be included in the query")
             @DefaultValue("true") @QueryParam("includeImports") boolean includeImports,
             @Parameter(description = "Whether or not to apply the in progress commit "
@@ -4139,7 +4153,7 @@ public class OntologyRest {
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit
     ) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            Ontology ontology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr,
+            Ontology ontology = optOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr,
                     applyInProgressCommit, conn).orElseThrow(() -> ErrorUtils.sendError(
                             "The ontology could not be found.", Response.Status.BAD_REQUEST));
 
@@ -4167,7 +4181,7 @@ public class OntologyRest {
      *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
-     * @param applyInProgressCommit Boolean indicating whether or not any in progress commits by user should be
+     * @param applyInProgressCommit Boolean indicating whether any in progress commits by user should be
      *                              applied to the return value
      * @return Returns the list of EntityNames for the given Ontology.
      */
@@ -4192,13 +4206,13 @@ public class OntologyRest {
             @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
-            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @Parameter(description = "String representing the Branch Resource ID")
             @QueryParam("branchId") String branchIdStr,
-            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @Parameter(description = "String representing the Commit Resource ID")
             @QueryParam("commitId") String commitIdStr,
-            @Parameter(description = "Boolean indicating whether or not any imports")
+            @Parameter(description = "Boolean indicating whether any imports")
             @DefaultValue("true") @QueryParam("includeImports") boolean includeImports,
-            @Parameter(description = "Boolean indicating whether or not any in progress commits by user should be "
+            @Parameter(description = "Boolean indicating whether any in progress commits by user should be "
                     + "applied to the return value")
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit,
             @Parameter(description = "Filter JSON", required = true) String filterJson) {
@@ -4223,7 +4237,7 @@ public class OntologyRest {
                         .collect(Collectors.joining("> <")) + ">}";
                 queryString = GET_ENTITY_NAMES.replace("%ENTITIES%", resourcesString);
             }
-            Optional<Ontology> optionalOntology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr,
+            Optional<Ontology> optionalOntology = optOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr,
                     applyInProgressCommit, conn);
             if (optionalOntology.isPresent()) {
                 String finalQueryString = queryString;
@@ -4274,7 +4288,7 @@ public class OntologyRest {
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
-    public Response getOntology(
+    public Response getOntologyByIRI(
             @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the IRI of the requested ontology", required = true)
             @PathParam("ontologyIRI") String ontologyIRI,
@@ -4301,11 +4315,12 @@ public class OntologyRest {
                             RDFFiles.getFormatForFileName(ontologyIRI).isPresent()
                                     ? RDFFiles.getFormatForFileName(ontologyIRI).get().getName() : "turtle");
 
-                    Optional<Ontology> ontology = this.ontologyManager.retrieveOntologyByIRI(ontIRI);
+                    Ontology ontology = this.ontologyManager.retrieveOntologyByIRI(ontIRI).orElseThrow(
+                            () -> new IllegalStateException("Expected Ontology object to be present")
+                    );
 
-                    StreamingOutput output = outputStream -> {
-                        writeOntologyToStream(ontology.get(), finalFormat, false, outputStream);
-                    };
+                    StreamingOutput output = outputStream -> 
+                            writeOntologyToStream(ontology, finalFormat, false, outputStream);
                     return Response.ok(output).build();
                 } else {
                     throw ErrorUtils.sendError("User does not have permission to access ontology.",
@@ -4334,16 +4349,12 @@ public class OntologyRest {
     }
 
     private RDFFormat getRdfFormat(String format) {
-        switch (format.toLowerCase()) {
-            case "rdf/xml":
-                return RDFFormat.RDFXML;
-            case "owl/xml":
-                throw new NotImplementedException("OWL/XML format is not yet implemented.");
-            case "turtle":
-                return  RDFFormat.TURTLE;
-            default:
-                return RDFFormat.JSONLD;
-        }
+        return switch (format.toLowerCase()) {
+            case "rdf/xml" -> RDFFormat.RDFXML;
+            case "owl/xml" -> throw new NotImplementedException("OWL/XML format is not yet implemented.");
+            case "turtle" -> RDFFormat.TURTLE;
+            default -> RDFFormat.JSONLD;
+        };
     }
 
     private Set<String> getUnloadableImportIRIs(Ontology ontology) {
@@ -4385,7 +4396,8 @@ public class OntologyRest {
      * @param tupleQueryResults the query results that contain "prop" and "range" bindings
      * @param outputStream the output stream to write the results to
      */
-    private void writePropertyRangesToStream(TupleQueryResult tupleQueryResults, OutputStream outputStream) throws IOException {
+    private void writePropertyRangesToStream(TupleQueryResult tupleQueryResults, OutputStream outputStream) 
+            throws IOException {
         Map<String, Set<String>> propertyMap = new HashMap<>();
         tupleQueryResults.forEach(bindings -> {
             String prop = Bindings.requiredResource(bindings, "prop").stringValue();
@@ -4407,7 +4419,8 @@ public class OntologyRest {
      * @param tupleQueryResults the query results that contain "class" and "prop" bindings
      * @param outputStream the output stream to write the results to
      */
-    private void writeClassPropertiesToStream(TupleQueryResult tupleQueryResults, OutputStream outputStream) throws IOException {
+    private void writeClassPropertiesToStream(TupleQueryResult tupleQueryResults, OutputStream outputStream) 
+            throws IOException {
         Map<String, Set<String>> classMap = new HashMap<>();
         tupleQueryResults.forEach(bindings -> {
             String clazz = Bindings.requiredResource(bindings, "class").stringValue();
@@ -4429,7 +4442,8 @@ public class OntologyRest {
      * @param tupleQueryResults the query results that contain "prop" bindings
      * @param outputStream the output stream to write the results to
      */
-    private void writeNoDomainPropertiesToStream(TupleQueryResult tupleQueryResults, OutputStream outputStream) throws IOException {
+    private void writeNoDomainPropertiesToStream(TupleQueryResult tupleQueryResults, OutputStream outputStream)
+            throws IOException {
         List<String> props = new ArrayList<>();
         tupleQueryResults.forEach(bindings -> {
             String prop = Bindings.requiredResource(bindings, "prop").stringValue();
@@ -4445,7 +4459,8 @@ public class OntologyRest {
      * @param tupleQueryResults the query results that contain "entity", "prefName", and ?names_array bindings
      * @param outputStream the output stream to write the results to
      */
-    private void writeEntityNamesToStream(TupleQueryResult tupleQueryResults, OutputStream outputStream) throws IOException {
+    private void writeEntityNamesToStream(TupleQueryResult tupleQueryResults, OutputStream outputStream) 
+            throws IOException {
         Map<String, EntityNames> entityNamesMap = new HashMap<>();
         String entityBinding = "entity";
         String namesBinding = "names_array";
@@ -4477,12 +4492,12 @@ public class OntologyRest {
      * @param recordIdStr           the record ID String to process.
      * @param branchIdStr           the branch ID String to process.
      * @param commitIdStr           the commit ID String to process.
-     * @param applyInProgressCommit Boolean indicating whether or not any in progress commits by user should be
+     * @param applyInProgressCommit Boolean indicating whether any in progress commits by user should be
      *                              applied to the return value
-     * @param conn
+     * @param conn                  the RepositoryConnection to use for lookup
      * @return an Optional containing the Ontology if it was found.
      */
-    private Optional<Ontology> getOntology(HttpServletRequest servletRequest, String recordIdStr, String branchIdStr,
+    private Optional<Ontology> optOntology(HttpServletRequest servletRequest, String recordIdStr, String branchIdStr,
                                            String commitIdStr, boolean applyInProgressCommit,
                                            RepositoryConnection conn) {
         checkStringParam(recordIdStr, "The recordIdStr is missing.");
@@ -4530,18 +4545,18 @@ public class OntologyRest {
      * @param recordIdStr           the record ID String to process.
      * @param branchIdStr           the branch ID String to process.
      * @param commitIdStr           the commit ID String to process.
-     * @param iriFunction           the Function that takes an Ontology and returns a List of IRI corresponding to an Ontology
-     *                              component.
-     * @param applyInProgressCommit Boolean indicating whether or not any in progress commits by user should be
+     * @param iriFunction           the Function that takes an Ontology and returns a List of IRI corresponding to an 
+     *                              Ontology component.
+     * @param applyInProgressCommit Boolean indicating whether any in progress commits by user should be
      *                              applied to the return value
-     * @param conn
+     * @param conn                  the RepositoryConnection to use for lookup
      * @return The properly formatted JSON response with a List of a particular Ontology Component.
      */
     private <T extends JsonNode> T doWithOntology(HttpServletRequest servletRequest, String recordIdStr,
                                                   String branchIdStr, String commitIdStr,
                                                   Function<Ontology, T> iriFunction,
                                                   boolean applyInProgressCommit, RepositoryConnection conn) {
-        Optional<Ontology> optionalOntology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr,
+        Optional<Ontology> optionalOntology = optOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr,
                 applyInProgressCommit, conn);
         if (optionalOntology.isPresent()) {
             return iriFunction.apply(optionalOntology.get());
@@ -4558,11 +4573,11 @@ public class OntologyRest {
      * @param recordIdStr           the record ID String to process.
      * @param branchIdStr           the branch ID String to process.
      * @param commitIdStr           the commit ID String to process.
-     * @param iriFunction           the Function that takes an Ontology and returns a List of IRI corresponding to an Ontology
-     *                              component.
-     * @param applyInProgressCommit Boolean indicating whether or not any in progress commits by user should be
+     * @param iriFunction           the Function that takes an Ontology and returns a List of IRI corresponding to an
+     *                              Ontology component.
+     * @param applyInProgressCommit Boolean indicating whether any in progress commits by user should be
      *                              applied to the return value
-     * @param conn
+     * @param conn                  the RepositoryConnection to use for lookup
      * @return the JSON list of imported IRI lists determined by the provided Function.
      */
     private Response doWithImportedOntologies(HttpServletRequest servletRequest, String recordIdStr,
@@ -4607,13 +4622,13 @@ public class OntologyRest {
      * @param branchIdStr           the branch ID String to process.
      * @param commitIdStr           the commit ID String to process.
      * @param applyInProgressCommit whether to apply uncommitted changes when grabbing the ontologies
-     * @param conn
+     * @param conn                  the RepositoryConnection to use for lookup
      * @return the Set of imported Ontologies.
      */
     private Set<Ontology> getImportedOntologies(HttpServletRequest servletRequest, String recordIdStr,
                                                 String branchIdStr, String commitIdStr, boolean applyInProgressCommit,
                                                 RepositoryConnection conn) {
-        Optional<Ontology> optionalOntology = getOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr,
+        Optional<Ontology> optionalOntology = optOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr,
                 applyInProgressCommit, conn);
         if (optionalOntology.isPresent()) {
             Ontology baseOntology = optionalOntology.get();
@@ -4624,10 +4639,10 @@ public class OntologyRest {
     }
 
     /**
-     * Gets a JSONArray of Annotations from the provided Ontology.
+     * Gets an ArrayNode of Annotations from the provided Ontology.
      *
      * @param ontology the Ontology to get the Annotations from.
-     * @return a JSONArray of Annotations from the provided Ontology.
+     * @return an ArrayNode of Annotations from the provided Ontology.
      */
     private ObjectNode getAnnotationIRIObject(Ontology ontology) {
         Set<IRI> iris = getAnnotationIRIs(ontology);
@@ -4648,10 +4663,10 @@ public class OntologyRest {
     }
 
     /**
-     * Gets a JSONArray of Deprecated from the provided Ontology.
+     * Gets an ArrayNode of Deprecated from the provided Ontology.
      *
      * @param ontology the Ontology to get the Deprecated from.
-     * @return a JSONArray of Deprecated from the provided Ontology.
+     * @return an ArrayNode of Deprecated from the provided Ontology.
      */
     private ObjectNode getDeprecatedIRIObject(Ontology ontology) {
         Set<IRI> iris = ontology.getDeprecatedIRIs();
@@ -4659,10 +4674,10 @@ public class OntologyRest {
     }
 
     /**
-     * Gets a JSONObject of Class IRIs from the provided Ontology.
+     * Gets an ObjectNode of Class IRIs from the provided Ontology.
      *
      * @param ontology the Ontology to get the Classes from.
-     * @return a JSONObject with a classes key to an array of Class IRIs from the provided Ontology.
+     * @return an ObjectNode with a classes key to an array of Class IRIs from the provided Ontology.
      */
     private ObjectNode getClassIRIArray(Ontology ontology) {
         Set<IRI> iris = getClassIRIs(ontology);
@@ -4683,27 +4698,27 @@ public class OntologyRest {
     }
 
     /**
-     * Gets a JSONArray of Classes from the provided Ontology.
+     * Gets an ArrayNode of Classes from the provided Ontology.
      *
      * @param ontology the Ontology to get the Classes from.
-     * @return a JSONArray of Classes form the provided Ontology.
+     * @return an ArrayNode of Classes form the provided Ontology.
      */
     private ArrayNode getClassArray(Ontology ontology) {
         ArrayNode arrayNode = mapper.createArrayNode();
         Model model = ontology.asModel();
         ontology.getAllClasses().stream()
-                .map(oClass -> model.filter(oClass.getIRI(), null, null))
+                .map(clazz -> model.filter(clazz.getIRI(), null, null))
                 .filter(m -> !m.isEmpty())
-                .map(m -> getObjectNodeFromJsonld(modelToJsonld(m)))
+                .map(m -> getObjectFromJsonld(modelToJsonld(m)))
                 .forEach(arrayNode::add);
         return arrayNode;
     }
 
     /**
-     * Gets a JSONObject of Datatype IRIs from the provided Ontology.
+     * Gets an ObjectNode of Datatype IRIs from the provided Ontology.
      *
      * @param ontology the Ontology to get the Datatypes from.
-     * @return a JSONObject with a datatypes key to an array of Datatype IRIs from the provided Ontology.
+     * @return an ObjectNode with a datatypes key to an array of Datatype IRIs from the provided Ontology.
      */
     private ObjectNode getDatatypeIRIObject(Ontology ontology) {
         Set<IRI> iris = ontology.getAllDatatypes()
@@ -4714,10 +4729,10 @@ public class OntologyRest {
     }
 
     /**
-     * Gets a JSONObject of ObjectProperty IRIs from the provided Ontology.
+     * Gets an ObjectNode of ObjectProperty IRIs from the provided Ontology.
      *
      * @param ontology the Ontology to get the ObjectProperties from.
-     * @return a JSONObject with a objectProperties key to an array of ObjectProperty IRIs from the provided Ontology.
+     * @return an ObjectNode with a objectProperties key to an array of ObjectProperty IRIs from the provided Ontology.
      */
     private ObjectNode getObjectPropertyIRIObject(Ontology ontology) {
         Set<IRI> iris = getObjectPropertyIRIs(ontology);
@@ -4738,25 +4753,25 @@ public class OntologyRest {
     }
 
     /**
-     * Gets a JSONArray of ObjectProperties from the provided Ontology.
+     * Gets an ArrayNode of ObjectProperties from the provided Ontology.
      *
      * @param ontology the Ontology to get the ObjectProperties from.
-     * @return a JSONArray of ObjectProperties from the provided Ontology.
+     * @return an ArrayNode of ObjectProperties from the provided Ontology.
      */
     private ArrayNode getObjectPropertyArray(Ontology ontology) {
         ArrayNode arrayNode = mapper.createArrayNode();
         Model model = ontology.asModel();
         ontology.getAllObjectProperties().stream()
-                .map(property -> getObjectNodeFromJsonld(modelToJsonld(model.filter(property.getIRI(), null, null))))
+                .map(property -> getObjectFromJsonld(modelToJsonld(model.filter(property.getIRI(), null, null))))
                 .forEach(arrayNode::add);
         return arrayNode;
     }
 
     /**
-     * Gets a JSONObject of DatatypeProperty IRIs from the provided Ontology.
+     * Gets an ObjectNode of DatatypeProperty IRIs from the provided Ontology.
      *
      * @param ontology the Ontology to get the DatatypeProperties from.
-     * @return a JSONObject with a dataProperties key to an array of DatatypeProperty IRIs from the provided Ontology.
+     * @return an ObjectNode with a dataProperties key to an array of DatatypeProperty IRIs from the provided Ontology.
      */
     private ObjectNode getDataPropertyIRIObject(Ontology ontology) {
         Set<IRI> iris = getDataPropertyIRIs(ontology);
@@ -4777,27 +4792,27 @@ public class OntologyRest {
     }
 
     /**
-     * Gets a JSONArray of DatatypeProperties from the provided Ontology.
+     * Gets an ArrayNode of DatatypeProperties from the provided Ontology.
      *
      * @param ontology the Ontology to get the DatatypeProperties from.
-     * @return a JSONArray of DatatypeProperties from the provided Ontology.
+     * @return an ArrayNode of DatatypeProperties from the provided Ontology.
      */
     private ArrayNode getDataPropertyArray(Ontology ontology) {
         ArrayNode arrayNode = mapper.createArrayNode();
         Model model = ontology.asModel();
         ontology.getAllDataProperties().stream()
                 .map(dataProperty ->
-                        getObjectNodeFromJsonld(modelToJsonld(model.filter(dataProperty.getIRI(),
+                        getObjectFromJsonld(modelToJsonld(model.filter(dataProperty.getIRI(),
                                 null, null))))
                 .forEach(arrayNode::add);
         return arrayNode;
     }
 
     /**
-     * Gets a JSONArray of NamedIndividuals from the provided Ontology.
+     * Gets an ArrayNode of NamedIndividuals from the provided Ontology.
      *
      * @param ontology the Ontology to get the NamedIndividuals from.
-     * @return a JSONArray of NamedIndividuals from the provided Ontology.
+     * @return an ArrayNode of NamedIndividuals from the provided Ontology.
      */
     private ObjectNode getNamedIndividualIRIObject(Ontology ontology) {
         Set<IRI> iris = getNamedIndividualIRIs(ontology);
@@ -4817,10 +4832,10 @@ public class OntologyRest {
     }
 
     /**
-     * Gets a JSONObject of Concept IRIs from the provided Ontology.
+     * Gets an ObjectNode of Concept IRIs from the provided Ontology.
      *
      * @param ontology the Ontology to get the Concepts from.
-     * @return a JSONObject with a concepts key to an array of Concept IRIs from the provided Ontology.
+     * @return an ObjectNode with a concepts key to an array of Concept IRIs from the provided Ontology.
      */
     private ObjectNode getConceptIRIObject(Ontology ontology) {
         Set<IRI> iris = getConceptIRIs(ontology);
@@ -4840,10 +4855,10 @@ public class OntologyRest {
     }
 
     /**
-     * Gets a JSONObject of ConceptScheme IRIs from the provided Ontology.
+     * Gets an ObjectNode of ConceptScheme IRIs from the provided Ontology.
      *
      * @param ontology the Ontology to get the ConceptSchemes from.
-     * @return a JSONObject with a conceptSchemes key to an array of ConceptScheme IRIs from the provided Ontology.
+     * @return an ObjectNode with a conceptSchemes key to an array of ConceptScheme IRIs from the provided Ontology.
      */
     private ObjectNode getConceptSchemeIRIObject(Ontology ontology) {
         Set<IRI> iris = getConceptSchemeIRIs(ontology);
@@ -4914,21 +4929,18 @@ public class OntologyRest {
      *
      * @param ontology  the Ontology you want to serialize in a different format.
      * @param rdfFormat the format you want.
-     * @param skolemize whether or not the Ontology should be skoelmized before serialized (NOTE: only applies to
+     * @param skolemize whether the Ontology should be skoelmized before serialized (NOTE: only applies to
      *                  serializing as JSON-LD)
      * @param outputStream the OutputStream that the rdf should be written to
      */
-    private OutputStream writeOntologyToStream(Ontology ontology, String rdfFormat, boolean skolemize, OutputStream outputStream) {
-        switch (rdfFormat.toLowerCase()) {
-            case "rdf/xml":
-                return ontology.asRdfXml(outputStream);
-            case "owl/xml":
-                return ontology.asOwlXml(outputStream);
-            case "turtle":
-                return ontology.asTurtle(outputStream);
-            default:
-                return ontology.asJsonLD(skolemize, outputStream);
-        }
+    private OutputStream writeOntologyToStream(Ontology ontology, String rdfFormat, boolean skolemize,
+                                               OutputStream outputStream) {
+        return switch (rdfFormat.toLowerCase()) {
+            case "rdf/xml" -> ontology.asRdfXml(outputStream);
+            case "owl/xml" -> ontology.asOwlXml(outputStream);
+            case "turtle" -> ontology.asTurtle(outputStream);
+            default -> ontology.asJsonLD(skolemize, outputStream);
+        };
     }
 
     /**
@@ -4936,30 +4948,34 @@ public class OntologyRest {
      *
      * @param ontology  the Ontology you want to serialize in a different format.
      * @param rdfFormat the format you want.
-     * @param skolemize whether or not the Ontology should be skoelmized before serialized (NOTE: only applies to
+     * @param skolemize whether the Ontology should be skoelmized before serialized (NOTE: only applies to
      *                  serializing as JSON-LD)
      * @return A String containing the newly serialized Ontology.
      */
     private String getOntologyAsRdf(Ontology ontology, String rdfFormat, boolean skolemize) {
         switch (rdfFormat.toLowerCase()) {
-            case "rdf/xml":
+            case "rdf/xml" -> {
                 return ontology.asRdfXml().toString();
-            case "owl/xml":
+            }
+            case "owl/xml" -> {
                 return ontology.asOwlXml().toString();
-            case "turtle":
+            }
+            case "turtle" -> {
                 return ontology.asTurtle().toString();
-            default:
+            }
+            default -> {
                 OutputStream outputStream = ontology.asJsonLD(skolemize);
                 return outputStream.toString();
+            }
         }
     }
 
     /**
-     * Return a JSONObject with the requested format and the requested ontology in that format.
+     * Return an ObjectNode with the requested format and the requested ontology in that format.
      *
      * @param ontology  the ontology to format and return
      * @param rdfFormat the format to serialize the ontology in
-     * @return a JSONObject with the document format and the ontology in that format
+     * @return an ObjectNode with the document format and the ontology in that format
      */
     private ObjectNode getOntologyAsJsonObject(Ontology ontology, String rdfFormat) {
         log.trace("Start getOntologyAsJsonObject");
@@ -4994,10 +5010,10 @@ public class OntologyRest {
     }
 
     /**
-     * Return a JSONObject with the IRIs for all components of an ontology.
+     * Return an ObjectNode with the IRIs for all components of an ontology.
      *
      * @param ontology The Ontology from which to get component IRIs
-     * @return the JSONObject with the IRIs for all components of an ontology.
+     * @return the ObjectNode with the IRIs for all components of an ontology.
      */
     private ObjectNode getAllIRIs(Ontology ontology) {
         return combineJsonObjects(
@@ -5020,17 +5036,14 @@ public class OntologyRest {
     }
 
     /**
-     * Combines multiple JSONObjects into a single JSONObject.
+     * Combines multiple ObjectNodes into a single ObjectNode.
      *
-     * @param objects the JSONObjects to combine.
-     * @return a JSONObject which has the combined key-value pairs from all of the provided JSONObjects.
+     * @param objects the ObjectNodes to combine.
+     * @return an ObjectNode which has the combined key-value pairs from all the provided ObjectNodes.
      */
     private ObjectNode combineJsonObjects(ObjectNode... objects) {
         ObjectNode objectNode = mapper.createObjectNode();
 
-        if (objects.length == 0) {
-            return objectNode;
-        }
         for (ObjectNode each : objects) {
             objectNode.setAll(each);
         }
@@ -5053,7 +5066,7 @@ public class OntologyRest {
      * @param servletRequest the HttpServletRequest.
      * @param recordIdStr    the record ID String to process.
      * @param entityModel    the Model to add to the additions in the InProgressCommit.
-     * @param conn
+     * @param conn           the RepositoryConnection to use for lookup
      * @return a Response indicating the success or failure of the addition.
      */
     private Response additionsToInProgressCommit(HttpServletRequest servletRequest, String recordIdStr,
@@ -5074,7 +5087,7 @@ public class OntologyRest {
      * @param ontology       the ontology to process.
      * @param entityIdStr    the ID of the entity to be deleted.
      * @param recordIdStr    the ID of the record which contains the entity to be deleted.
-     * @param conn
+     * @param conn           the RepositoryConnection to use for lookup
      * @return a Response indicating the success or failure of the deletion.
      */
     private Response deletionsToInProgressCommit(HttpServletRequest servletRequest, Ontology ontology,
@@ -5170,7 +5183,8 @@ public class OntologyRest {
         Resource commitId;
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             record = recordManager.createRecord(user, config, OntologyRecord.class, conn);
-            branchId = record.getMasterBranch_resource().get();
+            branchId = record.getMasterBranch_resource().orElseThrow(() ->
+                    new IllegalStateException("Record must have a master branch"));
 
             RepositoryResult<Statement> commitStmt = conn.getStatements(branchId,
                     valueFactory.createIRI(Branch.head_IRI), null);
@@ -5188,8 +5202,9 @@ public class OntologyRest {
         }
 
         ObjectNode objectNode = mapper.createObjectNode();
-
-        objectNode.put("ontologyId", record.getOntologyIRI().get().toString());
+        Resource ontologyIRI = record.getOntologyIRI().orElseThrow(() ->
+                new IllegalStateException("Ontology IRI must be present"));
+        objectNode.put("ontologyId", ontologyIRI.toString());
         objectNode.put("recordId", record.getResource().stringValue());
         objectNode.put("branchId", branchId.toString());
         objectNode.put("commitId", commitId.toString());
@@ -5214,11 +5229,11 @@ public class OntologyRest {
         @Schema(type = "boolean", description = "Optional boolean representing whether to "
                 + "apply the in progress commit when executing the query")
         public String applyInProgressCommit;
-        @Schema(name = "fileName", description = "File name of the downloaded results file when the " +
-                "`ACCEPT` header is set to `application/octet-stream`")
+        @Schema(name = "fileName", description = "File name of the downloaded results file when the "
+                + "`ACCEPT` header is set to `application/octet-stream`")
         public String fileName;
-        @Schema(type= "string", description = "Format of the downloaded results file when the `ACCEPT` " +
-                "header is set to `application/octet-stream`",
+        @Schema(type = "string", description = "Format of the downloaded results file when the `ACCEPT` "
+                + "header is set to `application/octet-stream`",
                 allowableValues = {"xlsx", "csv", "tsv", "ttl", "jsonld", "rdf", "json"})
         public String fileType;
     }

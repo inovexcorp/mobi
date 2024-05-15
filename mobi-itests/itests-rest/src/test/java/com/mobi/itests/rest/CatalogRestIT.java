@@ -30,8 +30,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mobi.itests.rest.utils.RestITUtils;
-import net.sf.json.JSONObject;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpStatus;
@@ -77,6 +78,7 @@ import javax.inject.Inject;
 public class CatalogRestIT extends KarafTestSupport {
 
     private static Boolean setupComplete = false;
+    private static final ObjectMapper mapper = new ObjectMapper();
 
     @Inject
     protected static BundleContext thisBundleContext;
@@ -200,10 +202,10 @@ public class CatalogRestIT extends KarafTestSupport {
     }
 
     private String[] parseAndValidateUploadResponse(CloseableHttpResponse response) throws IOException {
-        JSONObject object = JSONObject.fromObject(EntityUtils.toString(response.getEntity()));
-        String recordId = object.get("recordId").toString();
-        String branchId = object.get("branchId").toString();
-        String commitId = object.get("commitId").toString();
+        ObjectNode object = mapper.readValue(EntityUtils.toString(response.getEntity()), ObjectNode.class);
+        String recordId = object.get("recordId").asText();
+        String branchId = object.get("branchId").asText();
+        String commitId = object.get("commitId").asText();
         assertNotNull(recordId);
         assertNotNull(branchId);
         assertNotNull(commitId);

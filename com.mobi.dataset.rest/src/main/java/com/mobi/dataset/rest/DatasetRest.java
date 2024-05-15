@@ -28,6 +28,8 @@ import static com.mobi.rest.util.RestUtils.getActiveUser;
 import static com.mobi.rest.util.RestUtils.modelToJsonld;
 import static com.mobi.rest.util.RestUtils.modelToSkolemizedJsonld;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.mobi.catalog.api.BranchManager;
 import com.mobi.catalog.api.CommitManager;
 import com.mobi.catalog.api.PaginatedSearchResults;
@@ -68,7 +70,6 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import net.sf.json.JSONArray;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.ModelFactory;
 import org.eclipse.rdf4j.model.Resource;
@@ -114,6 +115,7 @@ import javax.ws.rs.core.UriInfo;
 public class DatasetRest {
     private final ValueFactory vf = new ValidatingValueFactory();
     private final ModelFactory mf = new DynamicModelFactory();
+    private static final ObjectMapper mapper = new ObjectMapper();
 
     @Reference
     protected DatasetManager manager;
@@ -194,13 +196,15 @@ public class DatasetRest {
             PaginatedSearchResults<Record> results = recordManager.findRecord(configProvider.getLocalCatalogIRI(),
                     params.build(), getActiveUser(servletRequest, engineManager), conn);
 
-            JSONArray array = JSONArray.fromObject(results.getPage().stream()
+            ArrayNode array = results.getPage().stream()
                     .map(datasetRecord -> removeContext(datasetRecord.getModel()))
                     .map(model -> modelToSkolemizedJsonld(model, bNodeService))
-                    .collect(Collectors.toList()));
+                    .map(RestUtils::getArrayNodeFromJson)
+                    .collect(mapper::createArrayNode, ArrayNode::add, ArrayNode::add);
 
             Links links = LinksUtils.buildLinks(uriInfo, array.size(), results.getTotalSize(), limit, offset);
-            Response.ResponseBuilder response = Response.ok(array).header("X-Total-Count", results.getTotalSize());
+            Response.ResponseBuilder response = Response.ok(array)
+                    .header("X-Total-Count", results.getTotalSize());
             if (links.getNext() != null) {
                 response = response.link(links.getBase() + links.getNext(), "next");
             }

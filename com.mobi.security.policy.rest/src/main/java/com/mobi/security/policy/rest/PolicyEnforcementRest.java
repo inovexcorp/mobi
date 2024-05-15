@@ -25,9 +25,12 @@ package com.mobi.security.policy.rest;
 
 import static com.mobi.security.policy.api.xacml.XACML.POLICY_PERMIT_OVERRIDES;
 import static com.mobi.web.security.util.AuthenticationProps.ANON_USER;
-import static java.util.Arrays.asList;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
@@ -38,7 +41,6 @@ import com.mobi.security.policy.api.Request;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import net.sf.json.JSONObject;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Literal;
@@ -50,10 +52,12 @@ import org.osgi.service.jaxrs.whiteboard.propertytypes.JaxrsResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 import javax.annotation.security.RolesAllowed;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
@@ -70,6 +74,7 @@ import javax.ws.rs.core.Response;
 public class PolicyEnforcementRest {
 
     private final Logger log = LoggerFactory.getLogger(PolicyEnforcementRest.class);
+    private static final ObjectMapper mapper = new ObjectMapper();
 
     private PDP pdp;
     private final ValueFactory vf = new ValidatingValueFactory();
@@ -120,31 +125,25 @@ public class PolicyEnforcementRest {
         log.debug("Authorizing...");
         long start = System.currentTimeMillis();
         try {
-            JSONObject json = JSONObject.fromObject(jsonRequest);
+            ObjectNode json = mapper.readValue(jsonRequest, ObjectNode.class);
             IRI subjectId = (IRI) RestUtils.optActiveUser(servletRequest, engineManager).map(User::getResource)
                     .orElse(vf.createIRI(ANON_USER));
 
-            String actionIdStr = json.optString("actionId");
-            String resourceIdStr = json.optString("resourceId");
-            if (StringUtils.isEmpty(actionIdStr) || StringUtils.isEmpty(resourceIdStr)) {
-                throw ErrorUtils.sendError("ID is required.", Response.Status.BAD_REQUEST);
-            }
+            String actionIdStr = Optional.ofNullable(json.get("actionId"))
+                    .orElseThrow(() -> new IllegalArgumentException("Action ID is required")).asText();
+            String resourceIdStr = Optional.ofNullable(json.get("resourceId"))
+                    .orElseThrow(() -> new IllegalArgumentException("Resource Id is required")).asText();
 
             IRI actionId = vf.createIRI(actionIdStr);
             IRI resourceId = vf.createIRI(resourceIdStr);
 
-            Map<String, String> attributes = json.getJSONObject("subjectAttrs");
-            Map<String, Literal> subjectAttrs = attributes.entrySet().stream().collect(Collectors.toMap(
-                    e -> e.getKey(), e -> vf.createLiteral(e.getValue())));
-            attributes = json.getJSONObject("resourceAttrs");
-            Map<String, Literal> resourceAttrs = attributes.entrySet().stream().collect(Collectors.toMap(
-                    e -> e.getKey(), e -> vf.createLiteral(e.getValue())));
-            attributes = json.getJSONObject("actionAttrs");
-            Map<String, Literal> actionAttrs = attributes.entrySet().stream().collect(Collectors.toMap(
-                    e -> e.getKey(), e -> vf.createLiteral(e.getValue())));
+            Map<String, Literal> subjectAttrs = getAttrMap("subjectAttrs", json);
+            Map<String, Literal> resourceAttrs = getAttrMap("resourceAttrs", json);
+            Map<String, Literal> actionAttrs = getAttrMap("actionAttrs", json);
 
-            Request request = pdp.createRequest(asList(subjectId), subjectAttrs, asList(resourceId), resourceAttrs,
-                    asList(actionId), actionAttrs);
+            Request request = pdp.createRequest(Collections.singletonList(subjectId), subjectAttrs,
+                    Collections.singletonList(resourceId), resourceAttrs,
+                    Collections.singletonList(actionId), actionAttrs);
 
             log.debug(request.toString());
             com.mobi.security.policy.api.Response response = pdp.evaluate(request,
@@ -153,7 +152,9 @@ public class PolicyEnforcementRest {
             log.debug(String.format("Request Evaluated. %dms", System.currentTimeMillis() - start));
 
             return Response.ok(response.getDecision().toString()).build();
-        } catch (IllegalArgumentException | MobiException ex) {
+        } catch (IllegalArgumentException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
+        } catch (JsonProcessingException | MobiException ex) {
             throw ErrorUtils.sendError("Request could not be evaluated", Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
@@ -179,7 +180,8 @@ public class PolicyEnforcementRest {
             tags = "pep",
             summary = "Converts user provided requests into XACML and evaluates",
             responses = {
-                    @ApiResponse(responseCode = "200", description = "the XACML Responses for the corresponding XACML requests"),
+                    @ApiResponse(responseCode = "200", description = "the XACML Responses for the corresponding XACML"
+                            + " requests"),
                     @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
@@ -191,31 +193,33 @@ public class PolicyEnforcementRest {
         log.debug("Authorizing...");
         long start = System.currentTimeMillis();
         try {
-            JSONObject json = JSONObject.fromObject(jsonRequest);
+            ObjectNode json = mapper.readValue(jsonRequest, ObjectNode.class);
             IRI subjectId = (IRI) RestUtils.optActiveUser(servletRequest, engineManager).map(User::getResource)
                     .orElse(vf.createIRI(ANON_USER));
 
-            List<IRI> actionIds = Arrays.stream(json.optJSONArray("actionId").stream().toArray())
-                    .map(Object::toString).map(actionIdStr -> vf.createIRI(actionIdStr)).collect(Collectors.toList());
-            List<IRI> resourceIds = Arrays.stream(json.optJSONArray("resourceId").stream().toArray())
-                    .map(Object::toString).map(resourceIdStr -> vf.createIRI(resourceIdStr)).collect(Collectors.toList());
+            List<IRI> actionIds = json.hasNonNull("actionId") && json.get("actionId").isArray()
+                    ? StreamSupport.stream(json.get("actionId").spliterator(), false)
+                            .map(JsonNode::asText)
+                            .map(vf::createIRI)
+                            .collect(Collectors.toList())
+                    : Collections.emptyList();
+            List<IRI> resourceIds = json.hasNonNull("resourceId") && json.get("resourceId").isArray()
+                    ? StreamSupport.stream(json.get("resourceId").spliterator(), false)
+                            .map(JsonNode::asText)
+                            .map(vf::createIRI)
+                            .collect(Collectors.toList())
+                    : Collections.emptyList();
 
             if (resourceIds.size() > 1 && actionIds.size() > 1) {
                 throw ErrorUtils.sendError("Only one field may have more than one value.", Response.Status.BAD_REQUEST);
             }
 
-            Map<String, String> attributes = json.getJSONObject("subjectAttrs");
-            Map<String, Literal> subjectAttrs = attributes.entrySet().stream().collect(Collectors.toMap(
-                    e -> e.getKey(), e -> vf.createLiteral(e.getValue())));
-            attributes = json.getJSONObject("resourceAttrs");
-            Map<String, Literal> resourceAttrs = attributes.entrySet().stream().collect(Collectors.toMap(
-                    e -> e.getKey(), e -> vf.createLiteral(e.getValue())));
-            attributes = json.getJSONObject("actionAttrs");
-            Map<String, Literal> actionAttrs = attributes.entrySet().stream().collect(Collectors.toMap(
-                    e -> e.getKey(), e -> vf.createLiteral(e.getValue())));
+            Map<String, Literal> subjectAttrs = getAttrMap("subjectAttrs", json);
+            Map<String, Literal> resourceAttrs = getAttrMap("resourceAttrs", json);
+            Map<String, Literal> actionAttrs = getAttrMap("actionAttrs", json);
 
-            Request request = pdp.createRequest(Arrays.asList(subjectId), subjectAttrs, resourceIds, resourceAttrs,
-                    actionIds, actionAttrs);
+            Request request = pdp.createRequest(Collections.singletonList(subjectId), subjectAttrs, resourceIds,
+                    resourceAttrs, actionIds, actionAttrs);
 
             log.debug(request.toString());
             ArrayNode response = pdp.evaluateMultiResponse(request,
@@ -224,9 +228,17 @@ public class PolicyEnforcementRest {
             log.debug(String.format("Request Evaluated. %dms", System.currentTimeMillis() - start));
 
             return Response.ok(response.toString()).build();
-        } catch (IllegalArgumentException | MobiException ex) {
+        } catch (JsonProcessingException | IllegalArgumentException | MobiException ex) {
             throw ErrorUtils.sendError("Request could not be evaluated", Response.Status.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    private Map<String, Literal> getAttrMap(String property, ObjectNode json) {
+        return json.hasNonNull(property) ? json.get(property)
+                .properties()
+                .stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, entry -> vf.createLiteral(entry.getValue().asText())))
+                : Collections.emptyMap();
     }
 
     private String getMessageOrDefault(com.mobi.security.policy.api.Response response, String defaultMessage) {

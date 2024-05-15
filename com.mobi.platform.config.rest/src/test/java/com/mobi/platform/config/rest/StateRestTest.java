@@ -39,13 +39,15 @@ import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mobi.exception.MobiException;
 import com.mobi.platform.config.api.state.StateManager;
 import com.mobi.rest.test.util.MobiRestTestCXF;
 import com.mobi.rest.test.util.UsernameTestFilter;
 import com.mobi.rest.util.RestUtils;
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.ModelFactory;
 import org.eclipse.rdf4j.model.Resource;
@@ -69,6 +71,7 @@ import javax.ws.rs.core.Response;
 
 public class StateRestTest extends MobiRestTestCXF {
     private AutoCloseable closeable;
+    private static final ObjectMapper mapper = new ObjectMapper();
     private static Map<Resource, Model> results = new HashMap<>();
     private static Resource stateId;
     private static Model stateModel;
@@ -116,16 +119,15 @@ public class StateRestTest extends MobiRestTestCXF {
     @Test
     public void getStatesWithoutFiltersTest() {
         Response response = target().path("states").request().get();
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(stateManager).getStates(anyString(), any(), anySet());
         try {
-            String str = response.readEntity(String.class);
-            JSONArray arr = JSONArray.fromObject(str);
+            ArrayNode arr = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
             assertEquals(results.size(), arr.size());
             for (int i = 0; i < arr.size(); i++) {
-                JSONObject object = arr.optJSONObject(i);
+                JsonNode object = arr.get(i);
                 assertNotNull(object);
-                assertTrue(results.keySet().contains(vf.createIRI(object.get("id").toString())));
+                assertTrue(results.containsKey(vf.createIRI(object.get("id").asText())));
             }
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
@@ -145,16 +147,15 @@ public class StateRestTest extends MobiRestTestCXF {
             webTarget = webTarget.queryParam("subjects", subject.stringValue());
         }
         Response response = webTarget.request().get();
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(stateManager).getStates(anyString(), eq("app"), eq(subjects));
         try {
-            String str = response.readEntity(String.class);
-            JSONArray arr = JSONArray.fromObject(str);
+            ArrayNode arr = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
             assertEquals(results.size(), arr.size());
             for (int i = 0; i < arr.size(); i++) {
-                JSONObject object = arr.optJSONObject(i);
+                JsonNode object = arr.get(i);
                 assertNotNull(object);
-                assertTrue(results.keySet().contains(vf.createIRI(object.get("id").toString())));
+                assertTrue(results.containsKey(vf.createIRI(object.get("id").asText())));
             }
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
@@ -168,7 +169,7 @@ public class StateRestTest extends MobiRestTestCXF {
         state.add(vf.createIRI("http://example.com"), vf.createIRI(DCTERMS.TITLE.stringValue()), vf.createLiteral("Title"));
 
         Response response = target().path("states").request().post(Entity.json(modelToJsonld(state)));
-        assertEquals(response.getStatus(), 201);
+        assertEquals(201, response.getStatus());
         verify(stateManager).storeState(eq(state), anyString());
         try {
             String str = response.readEntity(String.class);
@@ -186,7 +187,7 @@ public class StateRestTest extends MobiRestTestCXF {
 
         Response response = target().path("states").queryParam("application", "app")
                 .request().post(Entity.json(modelToJsonld(state)));
-        assertEquals(response.getStatus(), 201);
+        assertEquals(201, response.getStatus());
         verify(stateManager).storeState(eq(state), anyString(), eq("app"));
         try {
             String str = response.readEntity(String.class);
@@ -199,18 +200,17 @@ public class StateRestTest extends MobiRestTestCXF {
     @Test
     public void createStateWithInvalidJsonldTest() {
         // Setup:
-        JSONObject state = new JSONObject();
-        state.put("test", "test");
+        ObjectNode state = mapper.createObjectNode().put("test", "test");
 
         Response response = target().path("states")
                 .request().post(Entity.json(state.toString()));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
     public void getStateTest() {
         Response response = target().path("states/" + encode(stateId.stringValue())).request().get();
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(stateManager).stateExistsForUser(eq(stateId), anyString());
         verify(stateManager).getState(stateId);
         try {
@@ -227,7 +227,7 @@ public class StateRestTest extends MobiRestTestCXF {
         when(stateManager.stateExistsForUser(any(Resource.class), anyString())).thenReturn(false);
 
         Response response = target().path("states/" + encode(stateId.stringValue())).request().get();
-        assertEquals(response.getStatus(), 401);
+        assertEquals(401, response.getStatus());
     }
 
     @Test
@@ -236,7 +236,7 @@ public class StateRestTest extends MobiRestTestCXF {
         when(stateManager.getState(any(Resource.class))).thenThrow(new IllegalArgumentException());
 
         Response response = target().path("states/" + encode(stateId.stringValue())).request().get();
-        assertEquals(response.getStatus(), 404);
+        assertEquals(404, response.getStatus());
     }
 
     @Test
@@ -245,7 +245,7 @@ public class StateRestTest extends MobiRestTestCXF {
         when(stateManager.getState(any(Resource.class))).thenThrow(new MobiException());
 
         Response response = target().path("states/" + encode(stateId.stringValue())).request().get();
-        assertEquals(response.getStatus(), 500);
+        assertEquals(500, response.getStatus());
     }
 
     @Test
@@ -256,7 +256,7 @@ public class StateRestTest extends MobiRestTestCXF {
 
         Response response = target().path("states/" + encode(stateId.stringValue()))
                 .request().put(Entity.json(modelToJsonld(state)));
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(stateManager).stateExistsForUser(eq(stateId), anyString());
         verify(stateManager).updateState(eq(stateId), eq(state));
     }
@@ -264,12 +264,11 @@ public class StateRestTest extends MobiRestTestCXF {
     @Test
     public void updateStateWithInvalidJsonldTest() {
         // Setup:
-        JSONObject state = new JSONObject();
-        state.put("test", "test");
+        ObjectNode state = mapper.createObjectNode().put("test", "test");
 
         Response response = target().path("states/" + encode(stateId.stringValue()))
                 .request().put(Entity.json(state.toString()));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -281,7 +280,7 @@ public class StateRestTest extends MobiRestTestCXF {
 
         Response response = target().path("states/" + encode(stateId.stringValue()))
                 .request().put(Entity.json(modelToJsonld(state)));
-        assertEquals(response.getStatus(), 404);
+        assertEquals(404, response.getStatus());
     }
 
     @Test
@@ -293,7 +292,7 @@ public class StateRestTest extends MobiRestTestCXF {
 
         Response response = target().path("states/" + encode(stateId.stringValue()))
                 .request().put(Entity.json(modelToJsonld(state)));
-        assertEquals(response.getStatus(), 401);
+        assertEquals(401, response.getStatus());
     }
 
     @Test
@@ -305,14 +304,14 @@ public class StateRestTest extends MobiRestTestCXF {
 
         Response response = target().path("states/" + encode(stateId.stringValue()))
                 .request().put(Entity.json(modelToJsonld(state)));
-        assertEquals(response.getStatus(), 500);
+        assertEquals(500, response.getStatus());
     }
 
     @Test
     public void deleteStateTest() {
         Response response = target().path("states/" + encode(stateId.stringValue()))
                 .request().delete();
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(stateManager).deleteState(eq(stateId));
     }
 
@@ -323,7 +322,7 @@ public class StateRestTest extends MobiRestTestCXF {
 
         Response response = target().path("states/" + encode(stateId.stringValue()))
                 .request().delete();
-        assertEquals(response.getStatus(), 401);
+        assertEquals(401, response.getStatus());
     }
 
     @Test
@@ -333,7 +332,7 @@ public class StateRestTest extends MobiRestTestCXF {
 
         Response response = target().path("states/" + encode(stateId.stringValue()))
                 .request().delete();
-        assertEquals(response.getStatus(), 404);
+        assertEquals(404, response.getStatus());
     }
 
     @Test
@@ -343,7 +342,7 @@ public class StateRestTest extends MobiRestTestCXF {
 
         Response response = target().path("states/" + encode(stateId.stringValue()))
                 .request().delete();
-        assertEquals(response.getStatus(), 500);
+        assertEquals(500, response.getStatus());
     }
 
     private String modelToJsonld(Model model) {

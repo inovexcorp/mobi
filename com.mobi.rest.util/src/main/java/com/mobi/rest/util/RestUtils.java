@@ -25,6 +25,7 @@ package com.mobi.rest.util;
 
 import static com.mobi.security.policy.api.xacml.XACML.POLICY_PERMIT_OVERRIDES;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -51,8 +52,6 @@ import com.mobi.security.policy.api.Decision;
 import com.mobi.security.policy.api.PDP;
 import com.mobi.security.policy.api.Request;
 import com.mobi.web.security.util.AuthenticationProps;
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
 import org.apache.commons.fileupload.FileItemIterator;
 import org.apache.commons.fileupload.FileItemStream;
 import org.apache.commons.fileupload.FileUploadException;
@@ -105,6 +104,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 import javax.annotation.Nullable;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.container.ContainerRequestContext;
@@ -112,6 +112,9 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriInfo;
 
+/**
+ * A utility class for various actions and variables needed within the REST services.
+ */
 public class RestUtils {
     private static final Logger LOG = LoggerFactory.getLogger(RestUtils.class);
     private static final ObjectMapper mapper = new ObjectMapper();
@@ -132,17 +135,12 @@ public class RestUtils {
      * @return A RDFFormat object with the requested format.
      */
     public static RDFFormat getRDFFormat(String format) {
-        switch (format.toLowerCase()) {
-            case "turtle":
-                return RDFFormat.TURTLE;
-            case "trig":
-                return RDFFormat.TRIG;
-            case "rdf/xml":
-                return RDFFormat.RDFXML;
-            case "jsonld":
-            default:
-                return RDFFormat.JSONLD;
-        }
+        return switch (format.toLowerCase()) {
+            case "turtle" -> RDFFormat.TURTLE;
+            case "trig" -> RDFFormat.TRIG;
+            case "rdf/xml" -> RDFFormat.RDFXML;
+            default -> RDFFormat.JSONLD;
+        };
     }
 
     /**
@@ -157,14 +155,11 @@ public class RestUtils {
             return RDFFormat.JSONLD; // default value is JSON-LD
         }
 
-        switch (mimeType.toLowerCase()) {
-            case TURTLE_MIME_TYPE:
-                return RDFFormat.TURTLE;
-            case RDFXML_MIME_TYPE:
-                return RDFFormat.RDFXML;
-            default:
-                return RDFFormat.JSONLD;
-        }
+        return switch (mimeType.toLowerCase()) {
+            case TURTLE_MIME_TYPE -> RDFFormat.TURTLE;
+            case RDFXML_MIME_TYPE -> RDFFormat.RDFXML;
+            default -> RDFFormat.JSONLD;
+        };
     }
 
     /**
@@ -178,25 +173,16 @@ public class RestUtils {
             fileExtension = "";
         }
 
-        switch (fileExtension) {
-            case "xlsx":
-                return XLSX_MIME_TYPE;
-            case "xls":
-                return XLS_MIME_TYPE;
-            case "csv":
-                return CSV_MIME_TYPE;
-            case "tsv":
-                return TSV_MIME_TYPE;
-            case "ttl":
-                return TURTLE_MIME_TYPE;
-            case "jsonld":
-                return LDJSON_MIME_TYPE;
-            case "rdf":
-                return RDFXML_MIME_TYPE;
-            case "json":
-            default:
-                return JSON_MIME_TYPE;
-        }
+        return switch (fileExtension) {
+            case "xlsx" -> XLSX_MIME_TYPE;
+            case "xls" -> XLS_MIME_TYPE;
+            case "csv" -> CSV_MIME_TYPE;
+            case "tsv" -> TSV_MIME_TYPE;
+            case "ttl" -> TURTLE_MIME_TYPE;
+            case "jsonld" -> LDJSON_MIME_TYPE;
+            case "rdf" -> RDFXML_MIME_TYPE;
+            default -> JSON_MIME_TYPE;
+        };
     }
 
     /**
@@ -523,19 +509,13 @@ public class RestUtils {
      * @return The default file extension for the requested format.
      */
     public static String getRDFFormatFileExtension(String format) {
-        switch (format.toLowerCase()) {
-            case "turtle":
-                return RDFFormat.TURTLE.getDefaultFileExtension();
-            case "rdf/xml":
-                return RDFFormat.RDFXML.getDefaultFileExtension();
-            case "trig":
-                return RDFFormat.TRIG.getDefaultFileExtension();
-            case "owl/xml":
-                return "owx";
-            case "jsonld":
-            default:
-                return RDFFormat.JSONLD.getDefaultFileExtension();
-        }
+        return switch (format.toLowerCase()) {
+            case "turtle" -> RDFFormat.TURTLE.getDefaultFileExtension();
+            case "rdf/xml" -> RDFFormat.RDFXML.getDefaultFileExtension();
+            case "trig" -> RDFFormat.TRIG.getDefaultFileExtension();
+            case "owl/xml" -> "owx";
+            default -> RDFFormat.JSONLD.getDefaultFileExtension();
+        };
     }
 
     /**
@@ -545,19 +525,13 @@ public class RestUtils {
      * @return The default MIME type for the requested format.
      */
     public static String getRDFFormatMimeType(String format) {
-        switch (format.toLowerCase()) {
-            case "turtle":
-                return RDFFormat.TURTLE.getDefaultMIMEType();
-            case "rdf/xml":
-                return RDFFormat.RDFXML.getDefaultMIMEType();
-            case "trig":
-                return RDFFormat.TRIG.getDefaultMIMEType();
-            case "owl/xml":
-                return "application/owl+xml";
-            case "jsonld":
-            default:
-                return RDFFormat.JSONLD.getDefaultMIMEType();
-        }
+        return switch (format.toLowerCase()) {
+            case "turtle" -> RDFFormat.TURTLE.getDefaultMIMEType();
+            case "rdf/xml" -> RDFFormat.RDFXML.getDefaultMIMEType();
+            case "trig" -> RDFFormat.TRIG.getDefaultMIMEType();
+            case "owl/xml" -> "application/owl+xml";
+            default -> RDFFormat.JSONLD.getDefaultMIMEType();
+        };
     }
 
     /**
@@ -574,6 +548,19 @@ public class RestUtils {
     }
 
     /**
+     * Retrieves the User associated with a Request using the passed EngineManager. If the User cannot be found, throws
+     * a 401 Response.
+     *
+     * @param servletRequest The servletRequest of a Request.
+     * @param engineManager  The EngineManager to use when attempting to retrieve the User.
+     * @return The User who made the Request if found; throws a 401 otherwise.
+     */
+    public static User getActiveUser(HttpServletRequest servletRequest, EngineManager engineManager) {
+        return engineManager.retrieveUser(getActiveUsername(servletRequest)).orElseThrow(() ->
+                ErrorUtils.sendError("User not found", Response.Status.UNAUTHORIZED));
+    }
+
+    /**
      * Retrieves the username associated with a Request. If the username cannot be found, throws a 401 Response.
      *
      * @param context The context of a Request.
@@ -586,19 +573,6 @@ public class RestUtils {
         } else {
             return result.toString();
         }
-    }
-
-    /**
-     * Retrieves the User associated with a Request using the passed EngineManager. If the User cannot be found, throws
-     * a 401 Response.
-     *
-     * @param servletRequest The servletRequest of a Request.
-     * @param engineManager  The EngineManager to use when attempting to retrieve the User.
-     * @return The User who made the Request if found; throws a 401 otherwise.
-     */
-    public static User getActiveUser(HttpServletRequest servletRequest, EngineManager engineManager) {
-        return engineManager.retrieveUser(getActiveUsername(servletRequest)).orElseThrow(() ->
-                ErrorUtils.sendError("User not found", Response.Status.UNAUTHORIZED));
     }
 
     /**
@@ -673,24 +647,13 @@ public class RestUtils {
     }
 
     /**
-     * Retrieves a single Entity object from a JSON-LD string and returns it as a JSONObject. Looks within the first
+     * Retrieves a single Entity object from a JSON-LD string and returns it as a ObjectNode. Looks within the first
      * context object if present.
      *
      * @param json A JSON-LD string
      * @return The first object representing a single Entity present in the JSON-LD array.
      */
-    public static JSONObject getObjectFromJsonld(String json) {
-        JSONArray array = JSONArray.fromObject(json);
-        JSONObject firstObject = Optional.ofNullable(array.optJSONObject(0)).orElse(new JSONObject());
-        if (firstObject.containsKey("@graph")) {
-            firstObject = Optional.ofNullable(firstObject.getJSONArray("@graph").optJSONObject(0))
-                    .orElse(new JSONObject());
-        }
-        return firstObject;
-    }
-
-    public static ObjectNode getObjectNodeFromJsonld(String json) {
-        ObjectMapper mapper = new ObjectMapper();
+    public static ObjectNode getObjectFromJsonld(String json) {
         JsonNode jsonNode = null;
         try {
             jsonNode = mapper.readTree(json);
@@ -710,38 +673,47 @@ public class RestUtils {
     }
 
     /**
+     * Creates an {@link ArrayNode} from a String containing JSON.
+     *
+     * @param json A String containing JSON
+     * @return An ArrayNode of the parsed JSON
+     */
+    public static ArrayNode getArrayNodeFromJson(String json) {
+        try {
+            return mapper.readValue(json, ArrayNode.class);
+        } catch (JsonProcessingException e) {
+            throw new MobiException(e);
+        }
+    }
+
+    /**
+     * Creates an {@link ObjectNode} from a String containing JSON.
+     *
+     * @param json A String containing JSON
+     * @return An ObjectNode of the parsed JSON
+     */
+    public static ObjectNode getObjectNodeFromJson(String json) {
+        try {
+            return mapper.readValue(json, ObjectNode.class);
+        } catch (JsonProcessingException e) {
+            throw new MobiException(e);
+        }
+    }
+
+    public static boolean arrayContains(ArrayNode array, String value) {
+        Stream<JsonNode> nodeStream = StreamSupport.stream(array.spliterator(), false);
+        return nodeStream.anyMatch(node -> node.asText().equals(value));
+    }
+
+    /**
      * Retrieves a single entity object, of the type specified, from a JSON-LD string and returns it as a
-     * {@link JSONObject}.
+     * {@link JsonNode}.
      *
      * @param json A JSON-LD string
      * @param type The entity type that is required.
      * @return The first object representing the specified type of entity present in the JSON-LD.
      */
-    public static JSONObject getTypedObjectFromJsonld(String json, String type) {
-        long start = System.currentTimeMillis();
-        try {
-            List<JSONObject> objects = new ArrayList<>();
-            JSONArray array = JSONArray.fromObject(json);
-
-            array.forEach(o -> objects.add(JSONObject.fromObject(o)));
-
-            for (JSONObject o : objects) {
-                if (o.isArray()) {
-                    o = getTypedObjectFromJsonld(o.toString(), type);
-                } else if (o.containsKey("@graph")) {
-                    o = getTypedObjectFromJsonld(JSONArray.fromObject(o.get("@graph")).toString(), type);
-                }
-                if (o != null && o.containsKey("@type") && JSONArray.fromObject(o.get("@type")).contains(type)) {
-                    return o;
-                }
-            }
-            return null;
-        } finally {
-            LOG.trace("getTypedObjectFromJsonld took {}ms", System.currentTimeMillis() - start);
-        }
-    }
-
-    public static JsonNode getTypedObjectNodeFromJsonld(String json, String type) {
+    public static JsonNode getTypedObjectFromJsonld(String json, String type) {
         long start = System.currentTimeMillis();
         JsonNode arrayNode = null;
         try {
@@ -749,9 +721,9 @@ public class RestUtils {
 
             for (JsonNode o : arrayNode) {
                 if (o.isArray()) {
-                    o = getTypedObjectNodeFromJsonld(o.toString(), type);
+                    o = getTypedObjectFromJsonld(o.toString(), type);
                 } else if (o.has("@graph")) {
-                    o = getTypedObjectNodeFromJsonld(o.get("@graph").toString(), type);
+                    o = getTypedObjectFromJsonld(o.get("@graph").toString(), type);
                 }
                 if (o != null && o.has("@type")
                         && mapper.convertValue(o.get("@type"), ArrayList.class).contains(type)) {
@@ -782,43 +754,35 @@ public class RestUtils {
     }
 
     /**
-     * Converts a Thing into a JSONObject by the first object of a specific type in the JSON-LD serialization of the
+     * Converts a Thing into a JsonNode by the first object of a specific type in the JSON-LD serialization of the
      * Thing's Model.
      *
-     * @param thing The Thing to convert into a JSONObject.
+     * @param thing The Thing to convert into a JsonNode.
      * @param type  The type of the {@link Thing} passed in.
-     * @return The JSONObject with the JSON-LD of the Thing entity from its Model.
+     * @return The JsonNode with the JSON-LD of the Thing entity from its Model.
      */
-    public static JSONObject thingToJsonObject(Thing thing, String type) {
+    public static JsonNode thingToObjectNode(Thing thing, String type) {
         return getTypedObjectFromJsonld(modelToString(thing.getModel(), RDFFormat.JSONLD), type);
     }
 
-    public static JsonNode thingToObjectNode(Thing thing, String type) {
-        return getTypedObjectNodeFromJsonld(modelToString(thing.getModel(), RDFFormat.JSONLD), type);
-    }
-
     /**
-     * Converts a Thing into a skolemized JSONObject by the first object of a specific type in the JSON-LD serialization
+     * Converts a Thing into a skolemized JsonNode by the first object of a specific type in the JSON-LD serialization
      * of the Thing's Model.
      *
-     * @param thing        The Thing to convert into a JSONObject.
+     * @param thing        The Thing to convert into a JsonNode.
      * @param type         The type of the {@link Thing} passed in.
      * @param bNodeService The {@link BNodeService} to use.
-     * @return The JSONObject with the JSON-LD of the Thing entity from its Model.
+     * @return The JsonNode with the JSON-LD of the Thing entity from its Model.
      */
-    public static JSONObject thingToSkolemizedJsonObject(Thing thing, String type, BNodeService bNodeService) {
-        return getTypedObjectFromJsonld(
-                modelToSkolemizedString(thing.getModel(), RDFFormat.JSONLD, bNodeService), type);
-    }
-
     public static JsonNode thingToSkolemizedObjectNode(Thing thing, String type, BNodeService bNodeService) {
-        return getTypedObjectNodeFromJsonld(
+        return getTypedObjectFromJsonld(
                 modelToSkolemizedString(thing.getModel(), RDFFormat.JSONLD, bNodeService), type);
     }
 
     /**
      * Creates a {@link Response} for a page of a sorted limited offset {@link Set} of {@link Thing}s based on the
-     * return type of the passed function using the passed full {@link Set} of {@link org.eclipse.rdf4j.model.Resource}s.
+     * return type of the passed function using the passed full {@link Set} of
+     * {@link org.eclipse.rdf4j.model.Resource}s.
      *
      * @param <T>            A class that extends {@link Thing}.
      * @param uriInfo        The URI information of the request.
@@ -831,45 +795,9 @@ public class RestUtils {
      * @param type           The type of the {@link Thing} to be returned
      * @param bNodeService   The {@link BNodeService} to use.
      * @return A {@link Response} with a page of {@link Thing}s that has been filtered, sorted, and limited and headers
-     * for the total size and links to the next and prev pages if present.
+     *      for the total size and links to the next and prev pages if present.
      */
     public static <T extends Thing> Response createPaginatedThingResponse(UriInfo uriInfo, Set<T> things,
-                                                                          IRI sortIRI, int offset, int limit,
-                                                                          boolean asc,
-                                                                          Function<T, Boolean> filterFunction,
-                                                                          String type,
-                                                                          BNodeService bNodeService) {
-        long start = System.currentTimeMillis();
-        try {
-            if (offset > things.size()) {
-                throw ErrorUtils.sendError("Offset exceeds total size", Response.Status.BAD_REQUEST);
-            }
-            Comparator<T> comparator = Comparator.comparing(dist -> dist.getProperty(sortIRI).get().stringValue());
-
-            Stream<T> stream = things.stream();
-
-            if (!asc) {
-                comparator = comparator.reversed();
-            }
-
-            if (filterFunction != null) {
-                stream = stream.filter(filterFunction::apply);
-            }
-
-            List<T> filteredThings = stream.collect(Collectors.toList());
-            List<T> result = filteredThings.stream()
-                    .sorted(comparator)
-                    .skip(offset)
-                    .limit(limit)
-                    .collect(Collectors.toList());
-
-            return createPaginatedResponse(uriInfo, result, filteredThings.size(), limit, offset, type, bNodeService);
-        } finally {
-            LOG.trace("createPaginatedThingResponse took {}ms", System.currentTimeMillis() - start);
-        }
-    }
-
-    public static <T extends Thing> Response createPaginatedThingResponseJackson(UriInfo uriInfo, Set<T> things,
                                                                                  IRI sortIRI, int offset, int limit,
                                                                                  boolean asc,
                                                                                  Function<T, Boolean> filterFunction,
@@ -880,7 +808,8 @@ public class RestUtils {
             if (offset > things.size()) {
                 throw ErrorUtils.sendError("Offset exceeds total size", Response.Status.BAD_REQUEST);
             }
-            Comparator<T> comparator = Comparator.comparing(dist -> dist.getProperty(sortIRI).get().stringValue());
+            Comparator<T> comparator = Comparator.comparing(dist -> dist.getProperty(sortIRI)
+                    .orElse(vf.createLiteral("")).stringValue());
 
             Stream<T> stream = things.stream();
 
@@ -892,14 +821,14 @@ public class RestUtils {
                 stream = stream.filter(filterFunction::apply);
             }
 
-            List<T> filteredThings = stream.collect(Collectors.toList());
+            List<T> filteredThings = stream.toList();
             List<T> result = filteredThings.stream()
                     .sorted(comparator)
                     .skip(offset)
                     .limit(limit)
                     .collect(Collectors.toList());
 
-            return createPaginatedResponseJackson(uriInfo, result, filteredThings.size(), limit, offset, type,
+            return createPaginatedResponse(uriInfo, result, filteredThings.size(), limit, offset, type,
                     bNodeService);
         } finally {
             LOG.trace("createPaginatedThingResponse took {}ms", System.currentTimeMillis() - start);
@@ -919,7 +848,7 @@ public class RestUtils {
      * @param offset    The offset for the current page.
      * @param type      The type of the {@link Thing} to be returned
      * @return A Response with the current page of Things and headers for the total size and links to the next and prev
-     * pages if present.
+     *      pages if present.
      */
     public static <T extends Thing> Response createPaginatedResponse(UriInfo uriInfo, Collection<T> items,
                                                                      int totalSize, int limit, int offset,
@@ -941,31 +870,9 @@ public class RestUtils {
      * @param type         The type of the {@link Thing} to be returned
      * @param bNodeService The {@link BNodeService} to use.
      * @return A Response with the current page of Things and headers for the total size and links to the next and prev
-     * pages if present.
+     *      pages if present.
      */
     public static <T extends Thing> Response createPaginatedResponse(UriInfo uriInfo, Collection<T> items,
-                                                                     int totalSize, int limit, int offset,
-                                                                     String type, BNodeService bNodeService) {
-        JSONArray results;
-        long start = System.currentTimeMillis();
-
-        try {
-            if (bNodeService == null) {
-                results = JSONArray.fromObject(items.stream()
-                        .map(thing -> thingToJsonObject(thing, type))
-                        .collect(Collectors.toList()));
-            } else {
-                results = JSONArray.fromObject(items.stream()
-                        .map(thing -> thingToSkolemizedJsonObject(thing, type, bNodeService))
-                        .collect(Collectors.toList()));
-            }
-            return createPaginatedResponseWithJson(uriInfo, results, totalSize, limit, offset);
-        } finally {
-            LOG.trace("createPaginatedResponse took {}ms", System.currentTimeMillis() - start);
-        }
-    }
-
-    public static <T extends Thing> Response createPaginatedResponseJackson(UriInfo uriInfo, Collection<T> items,
                                                                             int totalSize, int limit,
                                                                             int offset, String type,
                                                                             BNodeService bNodeService) {
@@ -982,7 +889,7 @@ public class RestUtils {
                         .map(thing -> thingToSkolemizedObjectNode(thing, type, bNodeService))
                         .collect(Collectors.toList()));
             }
-            return createPaginatedResponseWithJsonNode(uriInfo, results, totalSize, limit, offset);
+            return createPaginatedResponse(uriInfo, results, totalSize, limit, offset);
         } finally {
             LOG.trace("createPaginatedResponse took {}ms", System.currentTimeMillis() - start);
         }
@@ -999,29 +906,10 @@ public class RestUtils {
      * @param limit     The limit for each page.
      * @param offset    The offset for the current page.
      * @return A Response with the current page of Things and headers for the total size and links to the next and prev
-     * pages if present.
+     *      pages if present.
      */
-    public static Response createPaginatedResponseWithJson(UriInfo uriInfo, JSONArray items, int totalSize, int limit,
-                                                           int offset) {
-        long start = System.currentTimeMillis();
-        try {
-            LinksUtils.validateParams(limit, offset);
-            Links links = LinksUtils.buildLinks(uriInfo, items.size(), totalSize, limit, offset);
-            Response.ResponseBuilder response = Response.ok(items).header("X-Total-Count", totalSize);
-            if (links.getNext() != null) {
-                response = response.link(links.getBase() + links.getNext(), "next");
-            }
-            if (links.getPrev() != null) {
-                response = response.link(links.getBase() + links.getPrev(), "prev");
-            }
-            return response.build();
-        } finally {
-            LOG.trace("createPaginatedResponseWithJson took {}ms", System.currentTimeMillis() - start);
-        }
-    }
-
-    public static Response createPaginatedResponseWithJsonNode(UriInfo uriInfo, ArrayNode items,
-                                                               int totalSize, int limit, int offset) {
+    public static Response createPaginatedResponse(UriInfo uriInfo, ArrayNode items, int totalSize, int limit,
+                                                   int offset) {
         long start = System.currentTimeMillis();
         try {
             LinksUtils.validateParams(limit, offset);
@@ -1195,7 +1083,8 @@ public class RestUtils {
      * @param fields         A {@link Map} of field name to the Class of the field.
      * @return A map of the field name to the corresponding form data field Object.
      */
-    public static Map<String, Object> getFormData(HttpServletRequest servletRequest, Map<String, List<Class>> fields) {
+    public static Map<String, Object> getFormData(HttpServletRequest servletRequest, Map<String,
+            List<Class<?>>> fields) {
         try {
             Map<String, Object> parsedValues = new HashMap<>();
             Set<String> fieldNames = fields.keySet();
@@ -1207,21 +1096,21 @@ public class RestUtils {
                 try (InputStream stream = item.openStream()) {
                     if (item.isFormField()) {
                         if (fieldNames.contains(name)) {
-                            List<Class> classes = fields.get(name);
+                            List<Class<?>> classes = fields.get(name);
                             if (classes.size() > 1) {
                                 // Is a Collection of Type
-                                Class collectionClass = classes.get(0);
-                                Class typeClass = classes.get(1);
+                                Class<?> collectionClass = classes.get(0);
+                                Class<?> typeClass = classes.get(1);
                                 if (!parsedValues.containsKey(name)) {
                                     if (collectionClass == Set.class) {
                                         parsedValues.put(name, new HashSet<>());
                                     } else if (collectionClass == List.class) {
                                         parsedValues.put(name, new ArrayList<>());
                                     } else {
-                                        throw new MobiException("Invalid parent class type. Must provide a collection.");
+                                        throw new MobiException("Invalid parent class type. Must provide collection.");
                                     }
                                 }
-                                Collection collection = (Collection) parsedValues.get(name);
+                                Collection<Object> collection = (Collection<Object>) parsedValues.get(name);
                                 collection.add(getValue(typeClass, stream));
                                 parsedValues.put(name, collection);
                             } else {
@@ -1245,7 +1134,7 @@ public class RestUtils {
         }
     }
 
-    private static Object getValue(Class clazz, InputStream stream) throws IOException {
+    private static Object getValue(Class<?> clazz, InputStream stream) throws IOException {
         try {
             if (clazz == String.class) {
                 return Streams.asString(stream);

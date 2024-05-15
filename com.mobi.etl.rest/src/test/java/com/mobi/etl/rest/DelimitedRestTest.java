@@ -37,6 +37,9 @@ import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.when;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.dataset.ontology.dataset.Dataset;
 import com.mobi.dataset.ontology.dataset.DatasetRecord;
@@ -55,7 +58,6 @@ import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rest.test.util.FormDataMultiPart;
 import com.mobi.rest.test.util.MobiRestTestCXF;
 import com.mobi.rest.test.util.UsernameTestFilter;
-import net.sf.json.JSONArray;
 import org.apache.commons.io.IOUtils;
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.DataFormatter;
@@ -82,6 +84,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
@@ -99,6 +102,7 @@ import javax.ws.rs.core.Response;
 
 public class DelimitedRestTest extends MobiRestTestCXF {
     private AutoCloseable closeable;
+    private static final ObjectMapper mapper = new ObjectMapper();
     private User user;
     private static final String MAPPING_RECORD_IRI = "http://test.org/mapping-record";
     private static final String DATASET_RECORD_IRI = "http://test.org/dataset-record";
@@ -213,7 +217,7 @@ public class DelimitedRestTest extends MobiRestTestCXF {
             response = target().path("delimited-files").request().post(ent);
             String filename = response.readEntity(String.class);
 
-            assertEquals(response.getStatus(), 201);
+            assertEquals(201, response.getStatus());
             assertTrue(Files.exists(Paths.get(DelimitedRest.TEMP_DIR + "/" + filename)));
         }
     }
@@ -224,7 +228,7 @@ public class DelimitedRestTest extends MobiRestTestCXF {
         FormDataMultiPart fd = getFileFormData("test_updated.csv");
         Response response = target().path("delimited-files/" + fileName).request().put(Entity.entity(fd.body(),
                 MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         assertTrue(Files.exists(Paths.get(DelimitedRest.TEMP_DIR + "/" + fileName)));
     }
 
@@ -237,7 +241,7 @@ public class DelimitedRestTest extends MobiRestTestCXF {
         FormDataMultiPart fd = getFileFormData("test_updated.csv");
         Response response = target().path("delimited-files/" + fileName).request().put(Entity.entity(fd.body(),
                 MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         assertEquals(response.readEntity(String.class), fileName);
         List<String> resultLines = Files.readAllLines(Paths.get(DelimitedRest.TEMP_DIR + "/" + fileName));
         assertEquals(resultLines.size(), expectedLines.size());
@@ -252,7 +256,7 @@ public class DelimitedRestTest extends MobiRestTestCXF {
         copyResourceToTemp("test.csv", fileName);
         List<String> expectedLines = getCsvResourceLines("test.csv");
         Response response = target().path("delimited-files/" + fileName).request().get();
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         testResultsRows(response, expectedLines, 10);
     }
 
@@ -265,14 +269,14 @@ public class DelimitedRestTest extends MobiRestTestCXF {
         int rowNum = 5;
         Response response = target().path("delimited-files/" + fileName).queryParam("rowCount", rowNum)
                 .queryParam("separator", "\t").request().get();
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         testResultsRows(response, expectedLines, rowNum);
     }
 
     @Test
     public void nonExistentRowsTest() {
         Response response = target().path("delimited-files/error").request().get();
-        assertEquals(response.getStatus(), 404);
+        assertEquals(404, response.getStatus());
     }
 
     @Test
@@ -281,14 +285,14 @@ public class DelimitedRestTest extends MobiRestTestCXF {
         copyResourceToTemp("test.xls", fileName1);
         List<String> expectedLines = getExcelResourceLines("test.xls");
         Response response = target().path("delimited-files/" + fileName1).request().get();
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         testResultsRows(response, expectedLines, 10);
 
         String fileName2 = UUID.randomUUID() + ".xlsx";
         copyResourceToTemp("test.xlsx", fileName2);
         expectedLines = getExcelResourceLines("test.xlsx");
         response = target().path("delimited-files/" + fileName2).request().get();
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         testResultsRows(response, expectedLines, 10);
     }
 
@@ -298,14 +302,14 @@ public class DelimitedRestTest extends MobiRestTestCXF {
         copyResourceToTemp("formulaData.xls", fileName1);
         List<String> expectedLines = getExcelResourceLines("formulaData.xls");
         Response response = target().path("delimited-files/" + fileName1).request().get();
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         testResultsRows(response, expectedLines, 9);
 
         String fileName2 = UUID.randomUUID() + ".xlsx";
         copyResourceToTemp("formulaData.xlsx", fileName2);
         expectedLines = getExcelResourceLines("formulaData.xlsx");
         response = target().path("delimited-files/" + fileName2).request().get();
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         testResultsRows(response, expectedLines, 9);
     }
 
@@ -317,14 +321,14 @@ public class DelimitedRestTest extends MobiRestTestCXF {
         copyResourceToTemp("test.xls", fileName1);
         List<String> expectedLines = getExcelResourceLines("test.xls");
         Response response = target().path("delimited-files/" + fileName1).queryParam("rowCount", rowNum).request().get();
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         testResultsRows(response, expectedLines, rowNum);
 
         String fileName2 = UUID.randomUUID() + ".xlsx";
         copyResourceToTemp("test.xlsx", fileName2);
         expectedLines = getExcelResourceLines("test.xlsx");
         response = target().path("delimited-files/" + fileName2).queryParam("rowCount", rowNum).request().get();
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         testResultsRows(response, expectedLines, rowNum);
     }
 
@@ -333,10 +337,10 @@ public class DelimitedRestTest extends MobiRestTestCXF {
         String mapping = "";
         Response response = target().path("delimited-files/test.csv/map").queryParam("mappingIRI", mapping)
                 .request().get();
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
 
         response = target().path("delimited-files/test.csv/map").request().get();
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -345,7 +349,7 @@ public class DelimitedRestTest extends MobiRestTestCXF {
         copyResourceToTemp("test.csv", fileName);
         Response response = target().path("delimited-files/" + fileName + "/map").queryParam("mappingIRI", ERROR_IRI)
                 .request().get();
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -354,7 +358,7 @@ public class DelimitedRestTest extends MobiRestTestCXF {
         copyResourceToTemp("test.csv", fileName);
         Response response = target().path("delimited-files/" + fileName + "/map").queryParam("mappingIRI", "error")
                 .request().get();
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -413,7 +417,7 @@ public class DelimitedRestTest extends MobiRestTestCXF {
     public void mapNonexistentDelimitedTest() {
         Response response = target().path("delimited-files/error/map").queryParam("mappingIRI", MAPPING_RECORD_IRI)
                 .request().get();
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -423,10 +427,11 @@ public class DelimitedRestTest extends MobiRestTestCXF {
         String fileName = UUID.randomUUID() + ".xls";
         copyResourceToTemp("test.xls", fileName);
 
-        assertTrue(Files.exists(Paths.get(DelimitedRest.TEMP_DIR + "/" + fileName)));
+        Path path = Paths.get(DelimitedRest.TEMP_DIR + "/" + fileName);
+        assertTrue(Files.exists(path));
 
         testMapDownload(fileName, MAPPING_RECORD_IRI, params);
-        assertFalse(Files.exists(Paths.get(DelimitedRest.TEMP_DIR + "/" + fileName)));
+        assertFalse(Files.exists(path));
     }
 
     @Test
@@ -436,10 +441,10 @@ public class DelimitedRestTest extends MobiRestTestCXF {
         fd.field("jsonld", mapping);
         Response response = target().path("delimited-files/test.csv/map-preview").request().post(Entity.entity(fd.body(),
                 MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
 
         response = target().path("delimited-files/test.csv/map-preview").request().post(Entity.entity(FormDataMultiPart.emptyBody(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -490,36 +495,36 @@ public class DelimitedRestTest extends MobiRestTestCXF {
         fd.field("jsonld", "[]");
         Response response = target().path("delimited-files/error/map-preview").request().post(Entity.entity(fd.body(),
                 MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
     public void mapIntoDatasetWithoutMappingTest() {
         Response response = target().path("delimited-files/test.csv/map").queryParam("mappingRecordIRI", "")
                 .queryParam("datasetRecordIRI", DATASET_RECORD_IRI).request().post(Entity.json(""));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
 
         response = target().path("delimited-files/test.csv/map").queryParam("datasetRecordIRI", DATASET_RECORD_IRI)
                 .request().post(Entity.json(""));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
     public void mapIntoDatasetWithoutDatasetTest() {
         Response response = target().path("delimited-files/test.csv/map").queryParam("mappingRecordIRI", MAPPING_RECORD_IRI)
                 .queryParam("datasetRecordIRI", "").request().post(Entity.json(""));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
 
         response = target().path("delimited-files/test.csv/map").queryParam("mappingRecordIRI", MAPPING_RECORD_IRI)
                 .request().post(Entity.json(""));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
     public void mapIntoNonexistentDatasetTest() {
         Response response = target().path("delimited-files/test.csv/map").queryParam("mappingRecordIRI", MAPPING_RECORD_IRI)
                 .queryParam("datasetRecordIRI", ERROR_IRI).request().post(Entity.json(""));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -530,7 +535,7 @@ public class DelimitedRestTest extends MobiRestTestCXF {
 
         Response response = target().path("delimited-files/" + fileName + "/map").queryParam("mappingRecordIRI", ERROR_IRI)
                 .queryParam("datasetRecordIRI", DATASET_RECORD_IRI).request().post(Entity.json(""));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -541,7 +546,7 @@ public class DelimitedRestTest extends MobiRestTestCXF {
 
         Response response = target().path("delimited-files/" + fileName + "/map").queryParam("mappingRecordIRI", "error")
                 .queryParam("datasetRecordIRI", DATASET_RECORD_IRI).request().post(Entity.json(""));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -553,7 +558,7 @@ public class DelimitedRestTest extends MobiRestTestCXF {
 
         Response response = target().path("delimited-files/" + fileName + "/map").queryParam("mappingRecordIRI", MAPPING_RECORD_IRI)
                 .queryParam("datasetRecordIRI", DATASET_RECORD_IRI).request().post(Entity.json(""));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -568,7 +573,7 @@ public class DelimitedRestTest extends MobiRestTestCXF {
 
         Response response = target().path("delimited-files/" + fileName + "/map").queryParam("mappingRecordIRI", MAPPING_RECORD_IRI)
                 .queryParam("datasetRecordIRI", DATASET_RECORD_IRI).request().post(Entity.json(""));
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
     }
 
     @Test
@@ -583,36 +588,36 @@ public class DelimitedRestTest extends MobiRestTestCXF {
 
         Response response = target().path("delimited-files/" + fileName + "/map").queryParam("mappingRecordIRI", MAPPING_RECORD_IRI)
                 .queryParam("datasetRecordIRI", DATASET_RECORD_IRI).request().post(Entity.json(""));
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
     }
 
     @Test
     public void mapIntoOntologyRecordWithoutMappingTest() {
         Response response = target().path("delimited-files/test.csv/map-to-ontology").queryParam("mappingRecordIRI", "")
                 .queryParam("ontologyRecordIRI", ONTOLOGY_RECORD_IRI).request().post(Entity.json(""));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
 
         response = target().path("delimited-files/test.csv/map-to-ontology").queryParam("ontologyRecordIRI", ONTOLOGY_RECORD_IRI)
                .request().post(Entity.json(""));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
     public void mapIntoOntologyRecordWithoutOntologyTest() {
         Response response = target().path("delimited-files/test.csv/map-to-ontology").queryParam("mappingRecordIRI", MAPPING_RECORD_IRI)
                 .queryParam("ontologyRecordIRI", "").request().post(Entity.json(""));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
 
         response = target().path("delimited-files/test.csv/map-to-ontology").queryParam("mappingRecordIRI", MAPPING_RECORD_IRI)
                 .request().post(Entity.json(""));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
     public void mapIntoNonexistentOntologyRecordTest() {
         Response response = target().path("delimited-files/test.csv/map-to-ontology").queryParam("mappingRecordIRI", MAPPING_RECORD_IRI)
                 .queryParam("ontologyRecordIRI", ERROR_IRI).request().post(Entity.json(""));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -623,7 +628,7 @@ public class DelimitedRestTest extends MobiRestTestCXF {
 
         Response response = target().path("delimited-files/" + fileName + "/map-to-ontology").queryParam("mappingRecordIRI", ERROR_IRI)
                 .queryParam("ontologyRecordIRI", ONTOLOGY_RECORD_IRI).request().post(Entity.json(""));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -634,7 +639,7 @@ public class DelimitedRestTest extends MobiRestTestCXF {
 
         Response response = target().path("delimited-files/" + fileName + "/map-to-ontology").queryParam("mappingRecordIRI", "error")
                 .queryParam("ontologyRecordIRI", ONTOLOGY_RECORD_IRI).request().post(Entity.json(""));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -646,7 +651,7 @@ public class DelimitedRestTest extends MobiRestTestCXF {
 
         Response response = target().path("delimited-files/" + fileName + "/map-to-ontology").queryParam("mappingRecordIRI", MAPPING_RECORD_IRI)
                 .queryParam("ontologyRecordIRI", ONTOLOGY_RECORD_IRI).request().post(Entity.json(""));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -669,7 +674,7 @@ public class DelimitedRestTest extends MobiRestTestCXF {
         Response response = target().path("delimited-files/" + fileName + "/map-to-ontology").queryParam("mappingRecordIRI", MAPPING_RECORD_IRI)
                 .queryParam("ontologyRecordIRI", ONTOLOGY_RECORD_IRI).queryParam("branchIRI", ONTOLOGY_RECORD_BRANCH_IRI)
                 .request().post(Entity.json(""));
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
     }
 
     @Test
@@ -693,7 +698,7 @@ public class DelimitedRestTest extends MobiRestTestCXF {
         Response response = target().path("delimited-files/" + fileName + "/map-to-ontology").queryParam("mappingRecordIRI", MAPPING_RECORD_IRI)
                 .queryParam("ontologyRecordIRI", ONTOLOGY_RECORD_IRI).queryParam("branchIRI", ONTOLOGY_RECORD_BRANCH_IRI)
                 .request().post(Entity.json(""));
-        assertEquals(response.getStatus(), 204);
+        assertEquals(204, response.getStatus());
     }
 
     @Test
@@ -716,12 +721,12 @@ public class DelimitedRestTest extends MobiRestTestCXF {
         Response response = target().path("delimited-files/" + fileName + "/map-to-ontology").queryParam("mappingRecordIRI", MAPPING_RECORD_IRI)
                 .queryParam("ontologyRecordIRI", ONTOLOGY_RECORD_IRI).queryParam("branchIRI", MASTER_BRANCH_IRI)
                 .request().post(Entity.json(""));
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
     }
 
     private void isJsonld(String str) {
         try {
-            JSONArray result = JSONArray.fromObject(str);
+            ArrayNode result = mapper.readValue(str, ArrayNode.class);
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
@@ -729,7 +734,7 @@ public class DelimitedRestTest extends MobiRestTestCXF {
 
     private void isNotJsonld(String str) {
         try {
-            JSONArray result = JSONArray.fromObject(str);
+            ArrayNode result = mapper.readValue(str, ArrayNode.class);
             fail();
         } catch (Exception e) {
             System.out.println("Format is not JSON-LD, as expected");
@@ -746,7 +751,7 @@ public class DelimitedRestTest extends MobiRestTestCXF {
             }
         }
         Response response = wt.request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         return response;
     }
 
@@ -758,19 +763,19 @@ public class DelimitedRestTest extends MobiRestTestCXF {
             }
         }
         Response response = wt.request().get();
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         return response;
     }
 
-    private void testResultsRows(Response response, List<String> expectedLines, int rowNum) {
+    private void testResultsRows(Response response, List<String> expectedLines, int rowNum) throws Exception {
         String body = response.readEntity(String.class);
-        JSONArray lines = JSONArray.fromObject(body);
-        assertEquals(lines.size(), rowNum + 1);
+        ArrayNode lines = mapper.readValue(body, ArrayNode.class);
+        assertEquals(rowNum + 1, lines.size());
         for (int i = 0; i < lines.size(); i++) {
-            JSONArray line = lines.getJSONArray(i);
+            JsonNode line = lines.get(i);
             String expectedLine = expectedLines.get(i);
-            for (Object item : line) {
-                assertTrue(expectedLine.contains(item.toString()));
+            for (JsonNode item : line) {
+                assertTrue(expectedLine.contains(item.asText()));
             }
         }
     }

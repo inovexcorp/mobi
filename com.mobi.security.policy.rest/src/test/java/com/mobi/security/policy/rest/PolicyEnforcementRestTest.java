@@ -31,16 +31,16 @@ import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import org.eclipse.rdf4j.model.IRI;
-import org.eclipse.rdf4j.model.ValueFactory;
 import com.mobi.rest.test.util.MobiRestTestCXF;
 import com.mobi.security.policy.api.Decision;
 import com.mobi.security.policy.api.PDP;
 import com.mobi.security.policy.api.Request;
 import com.mobi.web.security.util.AuthenticationProps;
-import net.sf.json.JSONObject;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.ValueFactory;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -50,7 +50,6 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.Optional;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Response;
@@ -59,9 +58,9 @@ public class PolicyEnforcementRestTest extends MobiRestTestCXF {
     private static final String USER_IRI = "http://mobi.com/users/tester";
     private static final ObjectMapper mapper = new ObjectMapper();
 
-    private JSONObject json;
+    private ObjectNode json;
     private AutoCloseable closeable;
-    private JSONObject multiRequestJson;
+    private ObjectNode multiRequestJson;
     private String multiResponse;
 
     // Mock services used in server
@@ -117,19 +116,19 @@ public class PolicyEnforcementRestTest extends MobiRestTestCXF {
 
         String attrs = "{\"http://www.w3.org/1999/02/22-rdf-syntax-ns#type\":"
                 + "\"http://mobi.com/ontologies/ontology-editor#OntologyRecord\"}";
-        json = new JSONObject();
-        json.put("subjectAttrs", attrs);
+        json = mapper.createObjectNode();
+        json.set("subjectAttrs", mapper.valueToTree(attrs));
         json.put("resourceId", "urn:resourceId");
-        json.put("resourceAttrs", attrs);
+        json.set("resourceAttrs", mapper.valueToTree(attrs));
         json.put("actionId", "urn:actionId");
-        json.put("actionAttrs", attrs);
+        json.set("actionAttrs", mapper.valueToTree(attrs));
 
-        multiRequestJson = new JSONObject();
-        multiRequestJson.put("subjectAttrs", attrs);
-        multiRequestJson.put("resourceId", Arrays.asList("urn:resourceId"));
-        multiRequestJson.put("resourceAttrs", attrs);
-        multiRequestJson.put("actionId", Arrays.asList("urn:actionId"));
-        multiRequestJson.put("actionAttrs", attrs);
+        multiRequestJson = mapper.createObjectNode();
+        multiRequestJson.set("subjectAttrs", mapper.valueToTree(attrs));
+        multiRequestJson.set("resourceId", mapper.createArrayNode().add("urn:resourceId"));
+        multiRequestJson.set("resourceAttrs", mapper.valueToTree(attrs));
+        multiRequestJson.set("actionId", mapper.createArrayNode().add("urn:actionId"));
+        multiRequestJson.set("actionAttrs", mapper.valueToTree(attrs));
     }
 
     @After
@@ -146,7 +145,7 @@ public class PolicyEnforcementRestTest extends MobiRestTestCXF {
 
     @Test
     public void evaluateEmptyRequestTest() {
-        Response response = target().path("pep").request().post(Entity.json(new JSONObject().toString()));
+        Response response = target().path("pep").request().post(Entity.json(mapper.createObjectNode().toString()));
         assertEquals(response.getStatus(), 400);
     }
 
@@ -224,7 +223,7 @@ public class PolicyEnforcementRestTest extends MobiRestTestCXF {
     @Test
     public void evaluateMultiRequestTest() throws IOException {
         Response response = target().path("pep/multiDecisionRequest").request().post(Entity.json(multiRequestJson.toString()));
-        assertEquals(response.readEntity(String.class), ((ArrayNode) mapper.readTree(multiResponse)).toString());
+        assertEquals(response.readEntity(String.class), mapper.readValue(multiResponse, ArrayNode.class).toString());
         assertEquals(response.getStatus(), 200);
     }
 }

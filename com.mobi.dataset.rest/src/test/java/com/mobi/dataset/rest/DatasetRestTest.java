@@ -40,6 +40,8 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.mobi.catalog.api.BranchManager;
 import com.mobi.catalog.api.CommitManager;
 import com.mobi.catalog.api.PaginatedSearchParams;
@@ -66,7 +68,6 @@ import com.mobi.repository.api.OsgiRepository;
 import com.mobi.rest.test.util.FormDataMultiPart;
 import com.mobi.rest.test.util.MobiRestTestCXF;
 import com.mobi.rest.test.util.UsernameTestFilter;
-import net.sf.json.JSONArray;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Statement;
@@ -74,7 +75,6 @@ import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.RepositoryException;
-import org.eclipse.rdf4j.repository.RepositoryResult;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -99,6 +99,7 @@ import javax.ws.rs.core.Response;
 
 public class DatasetRestTest extends MobiRestTestCXF {
     private AutoCloseable closeable;
+    private static final ObjectMapper mapper = new ObjectMapper();
     private OrmFactory<Branch> branchFactory;
     private DatasetRecord record1;
     private DatasetRecord record2;
@@ -227,12 +228,12 @@ public class DatasetRestTest extends MobiRestTestCXF {
     @Test
     public void getDatasetRecordsTest() {
         Response response = target().path("datasets").request().get();
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(recordManager).findRecord(any(Resource.class), any(PaginatedSearchParams.class), any(User.class), any(RepositoryConnection.class));
         verify(datasetManager, never()).getDatasetRecords(any(DatasetPaginatedSearchParams.class));
         verify(service, atLeastOnce()).skolemize(any(Statement.class));
         try {
-            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+            ArrayNode result = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
             assertEquals(result.size(), 3);
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
@@ -247,7 +248,7 @@ public class DatasetRestTest extends MobiRestTestCXF {
         when(recordResults.getPageSize()).thenReturn(1);
 
         Response response = target().path("datasets").queryParam("offset", 1).queryParam("limit", 1).request().get();
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
 
         verify(recordManager).findRecord(any(Resource.class), any(PaginatedSearchParams.class), any(User.class), any(RepositoryConnection.class));
         verify(datasetManager, never()).getDatasetRecords(any(DatasetPaginatedSearchParams.class));
@@ -260,7 +261,7 @@ public class DatasetRestTest extends MobiRestTestCXF {
         assertTrue(response.hasLink("prev"));
         assertTrue(response.hasLink("next"));
         try {
-            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+            ArrayNode result = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
             assertEquals(result.size(), 1);
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
@@ -270,13 +271,13 @@ public class DatasetRestTest extends MobiRestTestCXF {
     @Test
     public void getDatasetRecordsWithNegativeLimitTest() {
         Response response = target().path("datasets").queryParam("limit", -1).request().get();
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
     public void getDatasetRecordsWithNegativeOffsetTest() {
         Response response = target().path("datasets").queryParam("offset", -1).request().get();
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -285,7 +286,7 @@ public class DatasetRestTest extends MobiRestTestCXF {
         when(recordManager.findRecord(any(Resource.class), any(PaginatedSearchParams.class), any(User.class), any(RepositoryConnection.class))).thenThrow(new MobiException());
 
         Response response = target().path("datasets").request().get();
-        assertEquals(response.getStatus(), 500);
+        assertEquals(500, response.getStatus());
     }
 
     /* POST datasets */
@@ -303,7 +304,7 @@ public class DatasetRestTest extends MobiRestTestCXF {
                 .field("ontologies", ontologyRecordIRI.stringValue());
 
         Response response = target().path("datasets").request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 201);
+        assertEquals(201, response.getStatus());
         ArgumentCaptor<RecordOperationConfig> config = ArgumentCaptor.forClass(RecordOperationConfig.class);
         verify(recordManager).createRecord(any(User.class), config.capture(), any(), any(RepositoryConnection.class));
         assertEquals("http://example.com/dataset", config.getValue().get(DatasetRecordCreateSettings.DATASET));
@@ -325,7 +326,7 @@ public class DatasetRestTest extends MobiRestTestCXF {
         FormDataMultiPart fd = new FormDataMultiPart().field("repositoryId", "system");
 
         Response response = target().path("datasets").request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -334,7 +335,7 @@ public class DatasetRestTest extends MobiRestTestCXF {
         FormDataMultiPart fd = new FormDataMultiPart().field("title", "title");
 
         Response response = target().path("datasets").request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -345,7 +346,7 @@ public class DatasetRestTest extends MobiRestTestCXF {
         when(recordManager.createRecord(any(User.class), any(RecordOperationConfig.class), any(), any(RepositoryConnection.class))).thenThrow(new IllegalArgumentException());
 
         Response response = target().path("datasets").request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -357,7 +358,7 @@ public class DatasetRestTest extends MobiRestTestCXF {
                 .field("ontologies", errorIRI.stringValue());
 
         Response response = target().path("datasets").request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -369,7 +370,7 @@ public class DatasetRestTest extends MobiRestTestCXF {
                 .field("ontologies", errorIRI.stringValue());
 
         Response response = target().path("datasets").request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 500);
+        assertEquals(500, response.getStatus());
     }
 
     @Test
@@ -382,7 +383,7 @@ public class DatasetRestTest extends MobiRestTestCXF {
                 .field("ontologies", ontologyRecordIRI.stringValue());
 
         Response response = target().path("datasets").request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 500);
+        assertEquals(500, response.getStatus());
     }
 
     @Test
@@ -393,7 +394,7 @@ public class DatasetRestTest extends MobiRestTestCXF {
         when(recordManager.createRecord(any(User.class), any(RecordOperationConfig.class), any(), any(RepositoryConnection.class))).thenThrow(new MobiException());
 
         Response response = target().path("datasets").request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 500);
+        assertEquals(500, response.getStatus());
     }
 
     /* GET datasets/{datasetId} */
@@ -401,7 +402,7 @@ public class DatasetRestTest extends MobiRestTestCXF {
     @Test
     public void getDatasetRecordTest() {
         Response response = target().path("datasets/" + encode(record1.getResource().stringValue())).request().get();
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(datasetManager).getDatasetRecord(record1.getResource());
     }
 
@@ -410,7 +411,7 @@ public class DatasetRestTest extends MobiRestTestCXF {
         when(datasetManager.getDatasetRecord(any(Resource.class))).thenReturn(Optional.empty());
 
         Response response = target().path("datasets/" + encode(record1.getResource().stringValue())).request().get();
-        assertEquals(response.getStatus(), 404);
+        assertEquals(404, response.getStatus());
         verify(datasetManager).getDatasetRecord(record1.getResource());
     }
 
@@ -419,7 +420,7 @@ public class DatasetRestTest extends MobiRestTestCXF {
         doThrow(new IllegalArgumentException()).when(datasetManager).getDatasetRecord(any(Resource.class));
 
         Response response = target().path("datasets/" + encode(record1.getResource().stringValue())).request().get();
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
         verify(datasetManager).getDatasetRecord(record1.getResource());
     }
 
@@ -428,7 +429,7 @@ public class DatasetRestTest extends MobiRestTestCXF {
         doThrow(new IllegalStateException()).when(datasetManager).getDatasetRecord(any(Resource.class));
 
         Response response = target().path("datasets/" + encode(record1.getResource().stringValue())).request().get();
-        assertEquals(response.getStatus(), 500);
+        assertEquals(500, response.getStatus());
         verify(datasetManager).getDatasetRecord(record1.getResource());
     }
 
@@ -437,7 +438,7 @@ public class DatasetRestTest extends MobiRestTestCXF {
         doThrow(new RepositoryException()).when(datasetManager).getDatasetRecord(any(Resource.class));
 
         Response response = target().path("datasets/" + encode(record1.getResource().stringValue())).request().get();
-        assertEquals(response.getStatus(), 500);
+        assertEquals(500, response.getStatus());
         verify(datasetManager).getDatasetRecord(record1.getResource());
     }
 
@@ -447,7 +448,7 @@ public class DatasetRestTest extends MobiRestTestCXF {
     public void deleteDatasetRecordWithForceTest() {
         Response response = target().path("datasets/" + encode(record1.getResource().stringValue()))
                 .queryParam("force", true).request().delete();
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(datasetManager).deleteDataset(record1.getResource(), user);
         verify(datasetManager, never()).safeDeleteDataset(any(Resource.class), any(User.class));
     }
@@ -456,7 +457,7 @@ public class DatasetRestTest extends MobiRestTestCXF {
     public void deleteDatasetRecordWithoutForceTest() {
         Response response = target().path("datasets/" + encode(record1.getResource().stringValue()))
                 .queryParam("force", false).request().delete();
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(datasetManager).safeDeleteDataset(record1.getResource(), user);
         verify(datasetManager, never()).deleteDataset(any(Resource.class), any(User.class));
     }
@@ -469,11 +470,11 @@ public class DatasetRestTest extends MobiRestTestCXF {
 
         Response response = target().path("datasets/" + encode(record1.getResource().stringValue()))
                 .queryParam("force", false).request().delete();
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
 
         response = target().path("datasets/" + encode(record1.getResource().stringValue()))
                 .queryParam("force", true).request().delete();
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -484,11 +485,11 @@ public class DatasetRestTest extends MobiRestTestCXF {
 
         Response response = target().path("datasets/" + encode(record1.getResource().stringValue()))
                 .queryParam("force", false).request().delete();
-        assertEquals(response.getStatus(), 500);
+        assertEquals(500, response.getStatus());
 
         response = target().path("datasets/" + encode(record1.getResource().stringValue()))
                 .queryParam("force", true).request().delete();
-        assertEquals(response.getStatus(), 500);
+        assertEquals(500, response.getStatus());
     }
 
     /* DELETE datasets/{datasetId}/data */
@@ -497,7 +498,7 @@ public class DatasetRestTest extends MobiRestTestCXF {
     public void clearDatasetRecordWithForceTest() {
         Response response = target().path("datasets/" + encode(record1.getResource().stringValue()) + "/data")
                 .queryParam("force", true).request().delete();
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(datasetManager).clearDataset(record1.getResource());
         verify(datasetManager, never()).safeClearDataset(any(Resource.class));
     }
@@ -506,7 +507,7 @@ public class DatasetRestTest extends MobiRestTestCXF {
     public void clearDatasetRecordWithoutForceTest() {
         Response response = target().path("datasets/" + encode(record1.getResource().stringValue()) + "/data")
                 .queryParam("force", false).request().delete();
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(datasetManager).safeClearDataset(record1.getResource());
         verify(datasetManager, never()).clearDataset(any(Resource.class));
     }
@@ -519,11 +520,11 @@ public class DatasetRestTest extends MobiRestTestCXF {
 
         Response response = target().path("datasets/" + encode(record1.getResource().stringValue()) + "/data")
                 .queryParam("force", false).request().delete();
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
 
         response = target().path("datasets/" + encode(record1.getResource().stringValue()) + "/data")
                 .queryParam("force", true).request().delete();
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -534,11 +535,11 @@ public class DatasetRestTest extends MobiRestTestCXF {
 
         Response response = target().path("datasets/" + encode(record1.getResource().stringValue()) + "/data")
                 .queryParam("force", false).request().delete();
-        assertEquals(response.getStatus(), 500);
+        assertEquals(500, response.getStatus());
 
         response = target().path("datasets/" + encode(record1.getResource().stringValue()) + "/data")
                 .queryParam("force", true).request().delete();
-        assertEquals(response.getStatus(), 500);
+        assertEquals(500, response.getStatus());
     }
 
     /* POST datasets/{datasetId}/data */
@@ -551,7 +552,7 @@ public class DatasetRestTest extends MobiRestTestCXF {
 
         Response response = target().path("datasets/" + encode(record1.getResource().stringValue()) + "/data")
                 .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(importService).importInputStream(any(ImportServiceConfig.class), any(InputStream.class), eq(true));
     }
 
@@ -563,7 +564,7 @@ public class DatasetRestTest extends MobiRestTestCXF {
 
         Response response = target().path("datasets/" + encode(record1.getResource().stringValue()) + "/data")
                 .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
         verify(importService, times(0)).importInputStream(any(ImportServiceConfig.class), any(InputStream.class), eq(true));
     }
 
@@ -576,7 +577,7 @@ public class DatasetRestTest extends MobiRestTestCXF {
 
         Response response = target().path("datasets/" + encode(record1.getResource().stringValue()) + "/data")
                 .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
         verify(importService).importInputStream(any(ImportServiceConfig.class), any(InputStream.class), eq(true));
     }
 
@@ -589,7 +590,7 @@ public class DatasetRestTest extends MobiRestTestCXF {
 
         Response response = target().path("datasets/" + encode(record1.getResource().stringValue()) + "/data")
                 .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 500);
+        assertEquals(500, response.getStatus());
         verify(importService).importInputStream(any(ImportServiceConfig.class), any(InputStream.class), eq(true));
     }
 }

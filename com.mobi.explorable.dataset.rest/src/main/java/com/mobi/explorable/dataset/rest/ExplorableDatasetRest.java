@@ -24,6 +24,7 @@ package com.mobi.explorable.dataset.rest;
  */
 
 import static com.mobi.rest.util.RestUtils.checkStringParam;
+import static com.mobi.rest.util.RestUtils.getArrayNodeFromJson;
 import static com.mobi.rest.util.RestUtils.jsonldToDeskolemizedModel;
 import static com.mobi.rest.util.RestUtils.jsonldToModel;
 import static com.mobi.rest.util.RestUtils.modelToSkolemizedJsonld;
@@ -60,7 +61,6 @@ import com.mobi.rest.util.jaxb.Links;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import net.sf.json.JSONArray;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.model.BNode;
 import org.eclipse.rdf4j.model.IRI;
@@ -84,7 +84,6 @@ import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.RepositoryResult;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
-import org.osgi.service.component.annotations.ReferencePolicyOption;
 import org.osgi.service.jaxrs.whiteboard.propertytypes.JaxrsResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -97,6 +96,7 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -172,27 +172,31 @@ public class ExplorableDatasetRest {
     static {
         try {
             GET_CLASSES_TYPES = IOUtils.toString(
-                    ExplorableDatasetRest.class.getResourceAsStream("/get-classes-types.rq"),
+                    Objects.requireNonNull(ExplorableDatasetRest.class.getResourceAsStream("/get-classes-types.rq")),
                     StandardCharsets.UTF_8
             );
             GET_CLASSES_DETAILS = IOUtils.toString(
-                    ExplorableDatasetRest.class.getResourceAsStream("/get-classes-details.rq"),
+                    Objects.requireNonNull(ExplorableDatasetRest.class.getResourceAsStream("/get-classes-details.rq")),
                     StandardCharsets.UTF_8
             );
             GET_CLASSES_INSTANCES = IOUtils.toString(
-                    ExplorableDatasetRest.class.getResourceAsStream("/get-classes-instances.rq"),
+                    Objects.requireNonNull(ExplorableDatasetRest.class
+                            .getResourceAsStream("/get-classes-instances.rq")),
                     StandardCharsets.UTF_8
             );
             GET_ALL_CLASS_INSTANCES = IOUtils.toString(
-                    ExplorableDatasetRest.class.getResourceAsStream("/get-all-class-instances.rq"),
+                    Objects.requireNonNull(ExplorableDatasetRest.class
+                            .getResourceAsStream("/get-all-class-instances.rq")),
                     StandardCharsets.UTF_8
             );
             GET_REIFIED_STATEMENTS = IOUtils.toString(
-                    ExplorableDatasetRest.class.getResourceAsStream("/get-reified-statements.rq"),
+                    Objects.requireNonNull(ExplorableDatasetRest.class
+                            .getResourceAsStream("/get-reified-statements.rq")),
                     StandardCharsets.UTF_8
             );
             GET_CARDINALITY_RESTRICTIONS = IOUtils.toString(
-                    ExplorableDatasetRest.class.getResourceAsStream("/get-cardinality-restrictions.rq"),
+                    Objects.requireNonNull(ExplorableDatasetRest.class
+                            .getResourceAsStream("/get-cardinality-restrictions.rq")),
                     StandardCharsets.UTF_8
             );
         } catch (IOException e) {
@@ -223,7 +227,8 @@ public class ExplorableDatasetRest {
     )
     @ResourceId(type = ValueType.PATH, value = "recordIRI")
     public Response getClassDetails(
-            @Parameter(description = "ID of the DatasetRecord for the Dataset from which to retrieve the data", required = true)
+            @Parameter(description = "ID of the DatasetRecord for the Dataset from which to retrieve the data",
+                    required = true)
             @PathParam("recordIRI") String recordIRI) {
         checkStringParam(recordIRI, "The Dataset Record IRI is required.");
         Resource datasetRecordRsr = factory.createIRI(recordIRI);
@@ -234,7 +239,8 @@ public class ExplorableDatasetRest {
             Consumer<TupleQueryResult> tupleQueryResultConsumer = results ->
                     getClassDetailsFromQueryResults(results, datasetRecordRsr, classes);
             getQueryResults(datasetRecordRsr, GET_CLASSES_TYPES, "", null, tupleQueryResultConsumer);
-            List<ClassDetails> finalClasses = addOntologyDetailsToClasses(classes, record.getOntology(), record.getModel(), conn);
+            List<ClassDetails> finalClasses = addOntologyDetailsToClasses(classes, record.getOntology(),
+                    record.getModel(), conn);
             return Response.ok(finalClasses).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
@@ -433,7 +439,7 @@ public class ExplorableDatasetRest {
                 throw ErrorUtils.sendError("The requested instance could not be found.", Response.Status.BAD_REQUEST);
             }
             String json = modelToSkolemizedJsonld(instanceModel, bNodeService);
-            return Response.ok(JSONArray.fromObject(json)).build();
+            return Response.ok(getArrayNodeFromJson(json)).build();
         } catch (IllegalArgumentException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
         } catch (IllegalStateException e) {
@@ -481,8 +487,8 @@ public class ExplorableDatasetRest {
             if (!statements.hasNext()) {
                 throw ErrorUtils.sendError("The requested instance could not be found.", Response.Status.BAD_REQUEST);
             }
-            RepositoryResult<Statement> reifiedDeclarations = conn.getStatements(null, RDF.SUBJECT, instanceId);
             conn.begin();
+            RepositoryResult<Statement> reifiedDeclarations = conn.getStatements(null, RDF.SUBJECT, instanceId);
             conn.remove(statements);
             statements.close();
             reifiedDeclarations.forEach(statement -> {
@@ -490,6 +496,7 @@ public class ExplorableDatasetRest {
                 conn.remove(reification);
                 reification.close();
             });
+            reifiedDeclarations.close();
             conn.add(jsonldToDeskolemizedModel(json, bNodeService));
             conn.commit();
             return Response.ok().build();
@@ -531,7 +538,7 @@ public class ExplorableDatasetRest {
         checkStringParam(recordIRI, "The Dataset Record IRI is required.");
         checkStringParam(instanceIRI, "The Instance IRI is required.");
         try (DatasetConnection conn = datasetManager.getConnection(factory.createIRI(recordIRI))) {
-            Model instanceModel = getInstance(instanceIRI, conn);
+            Model instanceModel = getInstanceModel(instanceIRI, conn);
             if (instanceModel.size() == 0) {
                 throw ErrorUtils.sendError("The requested instance could not be found.",
                         Response.Status.BAD_REQUEST);
@@ -574,7 +581,7 @@ public class ExplorableDatasetRest {
     }
 
     /**
-     * Gets a limited version of the instance
+     * Gets a limited version of the instance.
      *
      * @param instanceIRI The ID of the instance to retrieve.
      * @param conn        The DatasetConnection to use to find the triples.
@@ -598,13 +605,13 @@ public class ExplorableDatasetRest {
     }
 
     /**
-     * Gets the instance and all associated reified statements
+     * Gets the instance and all associated reified statements.
      *
      * @param instanceIRI The ID of the instance to retrieve.
      * @param conn        The DatasetConnection to use to find the triples.
      * @return A Model containing all triples which represent the instance.
      */
-    private Model getInstance(String instanceIRI, DatasetConnection conn) {
+    private Model getInstanceModel(String instanceIRI, DatasetConnection conn) {
         Model instanceModel = modelFactory.createEmptyModel();
         Resource instanceId = factory.createIRI(instanceIRI);
         RepositoryResult<Statement> statements = conn.getStatements(instanceId, null, null);
@@ -819,11 +826,11 @@ public class ExplorableDatasetRest {
                 IRI ontologyRecordIRI = ontologyRecordIRIOpt.get();
                 Optional<OntologyRecord> ontologyRecordOpt = recordManager.getRecordOpt(
                         configProvider.getLocalCatalogIRI(), ontologyRecordIRI, ontologyRecordFactory, conn);
-                if (!ontologyRecordOpt.isPresent()) {
+                if (ontologyRecordOpt.isEmpty()) {
                     log.warn("OntologyRecord " + ontologyRecordIRI + " could not be found");
                 }
-                Model ontologyRecordModel = ontologyRecordOpt.map(Thing::getModel).orElseGet(() ->
-                        modelFactory.createEmptyModel());
+                Model ontologyRecordModel = ontologyRecordOpt.map(Thing::getModel)
+                        .orElseGet(modelFactory::createEmptyModel);
                 List<ClassDetails> found = new ArrayList<>();
                 copy.forEach(classDetails -> {
                     IRI classIRI = factory.createIRI(classDetails.getClassIRI());
@@ -838,7 +845,7 @@ public class ExplorableDatasetRest {
                     }
                 });
                 copy.removeAll(found);
-            } else if (!ontologyRecordIRIOpt.isPresent() && !compiledResourceOpt.isPresent()) {
+            } else if (ontologyRecordIRIOpt.isEmpty() && compiledResourceOpt.isEmpty()) {
                 log.warn("The Compiled Resource and Ontology Record IRI could not be found");
             } else {
                 ontologyRecordIRIOpt.ifPresent(iri -> log.warn("The Compiled Resource for OntologyRecord " + iri
@@ -855,7 +862,8 @@ public class ExplorableDatasetRest {
      * @param recordResource the dataset record IRI
      * @param classes  list of class details to populate with their count, IRI, and examples
      */
-    private void getClassDetailsFromQueryResults(TupleQueryResult results, Resource recordResource, List<ClassDetails> classes) {
+    private void getClassDetailsFromQueryResults(TupleQueryResult results, Resource recordResource,
+                                                 List<ClassDetails> classes) {
         results.forEach(bindingSet -> {
             if (Optional.ofNullable(bindingSet.getValue(TYPE_BINDING)).isPresent()
                     && Optional.ofNullable(bindingSet.getValue(COUNT_BINDING)).isPresent()) {
@@ -890,7 +898,8 @@ public class ExplorableDatasetRest {
                 instanceDetails.setInstanceIRI(instanceIRI);
                 instanceDetails.setTitle(getValueFromBindingSet(instance, LABEL_BINDING, TITLE_BINDING,
                         splitCamelCase(factory.createIRI(instanceIRI).getLocalName())));
-                instanceDetails.setDescription(getValueFromBindingSet(instance, COMMENT_BINDING, DESCRIPTION_BINDING, ""));
+                instanceDetails.setDescription(getValueFromBindingSet(instance, COMMENT_BINDING,
+                        DESCRIPTION_BINDING, ""));
                 instances.add(instanceDetails);
             }
         });
@@ -934,8 +943,8 @@ public class ExplorableDatasetRest {
     }
 
     private static class Restriction {
-        private Resource propertyIRI;
-        private RestrictionDetails details;
+        private final Resource propertyIRI;
+        private final RestrictionDetails details;
 
         Restriction(Resource propertyIRI, RestrictionDetails details) {
             this.propertyIRI = propertyIRI;

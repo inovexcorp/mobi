@@ -29,6 +29,7 @@ import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getOrmFactoryRegistry;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getRequiredOrmFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.injectOrmFactoryReferencesIntoService;
+import static com.mobi.rest.util.RestUtils.arrayContains;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
@@ -45,6 +46,7 @@ import static org.mockito.Mockito.when;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mobi.catalog.api.BranchManager;
 import com.mobi.catalog.api.CatalogManager;
 import com.mobi.catalog.api.CatalogProvUtils;
@@ -87,8 +89,6 @@ import com.mobi.repository.api.OsgiRepository;
 import com.mobi.rest.test.util.FormDataMultiPart;
 import com.mobi.rest.test.util.MobiRestTestCXF;
 import com.mobi.rest.test.util.UsernameTestFilter;
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.ModelFactory;
@@ -114,6 +114,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Link;
 import javax.ws.rs.core.MediaType;
@@ -427,7 +428,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
         verify(catalogManager).getLocalCatalog(any(RepositoryConnection.class));
         verify(catalogManager).getDistributedCatalog(any(RepositoryConnection.class));
         try {
-            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+            ArrayNode result = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
             assertEquals(2, result.size());
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
@@ -440,11 +441,11 @@ public class CatalogRestTest extends MobiRestTestCXF {
         assertEquals(200, response.getStatus());
         verify(catalogManager, atLeastOnce()).getLocalCatalog(any(RepositoryConnection.class));
         try {
-            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+            ArrayNode result = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
             assertEquals(1, result.size());
-            JSONObject catalog = result.getJSONObject(0);
-            assertTrue(catalog.containsKey("@id"));
-            assertEquals(LOCAL_IRI, catalog.getString("@id"));
+            JsonNode catalog = result.get(0);
+            assertTrue(catalog.has("@id"));
+            assertEquals(LOCAL_IRI, catalog.get("@id").asText());
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
@@ -453,11 +454,11 @@ public class CatalogRestTest extends MobiRestTestCXF {
         assertEquals(200, response.getStatus());
         verify(catalogManager, atLeastOnce()).getDistributedCatalog(any(RepositoryConnection.class));
         try {
-            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+            ArrayNode result = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
             assertEquals(1, result.size());
-            JSONObject catalog = result.getJSONObject(0);
-            assertTrue(catalog.containsKey("@id"));
-            assertEquals(DISTRIBUTED_IRI, catalog.getString("@id"));
+            JsonNode catalog = result.get(0);
+            assertTrue(catalog.has("@id"));
+            assertEquals(DISTRIBUTED_IRI, catalog.get("@id").asText());
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
@@ -468,7 +469,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
         Response response = target().path("catalogs").queryParam("type", "error").request().get();
         assertEquals(200, response.getStatus());
         try {
-            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+            ArrayNode result = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
             assertEquals(0, result.size());
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
@@ -546,7 +547,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
         assertEquals(headers.get("X-Total-Count").get(0), "" + recordResults.getTotalSize());
         assertEquals(0, response.getLinks().size());
         try {
-            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+            ArrayNode result = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
             assertEquals(result.size(), recordResults.getPage().size());
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
@@ -583,7 +584,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
         assertEquals(headers.get("X-Total-Count").get(0), "" + recordResults.getTotalSize());
         assertEquals(0, response.getLinks().size());
         try {
-            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+            ArrayNode result = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
             assertEquals(result.size(), recordResults.getPage().size());
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
@@ -618,7 +619,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
         assertEquals("" + recordResults.getTotalSize(), headers.get("X-Total-Count").get(0));
         assertEquals(0, response.getLinks().size());
         try {
-            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+            ArrayNode result = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
             assertEquals(result.size(), recordResults.getPage().size());
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
@@ -797,8 +798,8 @@ public class CatalogRestTest extends MobiRestTestCXF {
     @Test
     public void updateRecordTest() {
         //Setup:
-        JSONObject record = new JSONObject().element("@id", RECORD_IRI)
-                .element("@type", new JSONArray().element(Record.TYPE));
+        ObjectNode record = mapper.createObjectNode().put("@id", RECORD_IRI)
+                .set("@type", mapper.createArrayNode().add(Record.TYPE));
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI))
                 .request().put(Entity.json(record.toString()));
@@ -817,8 +818,8 @@ public class CatalogRestTest extends MobiRestTestCXF {
     @Test
     public void updateRecordThatDoesNotMatchTest() {
         //Setup:
-        JSONObject record = new JSONObject().element("@id", ERROR_IRI)
-                .element("@type", new JSONArray().element(Record.TYPE));
+        ObjectNode record = mapper.createObjectNode().put("@id", ERROR_IRI)
+                .set("@type", mapper.createArrayNode().add(Record.TYPE));
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI))
                 .request().put(Entity.json(record.toString()));
@@ -828,8 +829,8 @@ public class CatalogRestTest extends MobiRestTestCXF {
     @Test
     public void updateRecordWithIncorrectPathTest() {
         // Setup:
-        JSONObject record = new JSONObject().element("@id", RECORD_IRI)
-                .element("@type", new JSONArray().element(Record.TYPE));
+        ObjectNode record = mapper.createObjectNode().put("@id", RECORD_IRI)
+                .set("@type", mapper.createArrayNode().add(Record.TYPE));
         doThrow(new IllegalArgumentException()).when(recordManager).updateRecord(eq(vf.createIRI(ERROR_IRI)), any(Record.class), any(RepositoryConnection.class));
 
         Response response = target().path("catalogs/" + encode(ERROR_IRI) + "/records/" + encode(RECORD_IRI))
@@ -840,8 +841,8 @@ public class CatalogRestTest extends MobiRestTestCXF {
     @Test
     public void updateRecordWithErrorTest() {
         // Setup:
-        JSONObject record = new JSONObject().element("@id", RECORD_IRI)
-                .element("@type", new JSONArray().element(Record.TYPE));
+        ObjectNode record = mapper.createObjectNode().put("@id", RECORD_IRI)
+                .set("@type", mapper.createArrayNode().add(Record.TYPE));
         doThrow(new MobiException()).when(recordManager).updateRecord(eq(vf.createIRI(LOCAL_IRI)), any(Record.class), any(RepositoryConnection.class));
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI))
@@ -886,12 +887,12 @@ public class CatalogRestTest extends MobiRestTestCXF {
         assertEquals(0, response.getLinks().size());
         try {
             String responseString = response.readEntity(String.class);
-            JSONArray result = JSONArray.fromObject(responseString);
+            ArrayNode result = mapper.readValue(responseString, ArrayNode.class);
             assertEquals(result.size(), keywordResults.getPage().size());
 
             String expected = "1.4,2.1";
-            Object actual = result.stream()
-                    .map(e -> ((JSONObject)e).get("http://mobi.com/ontologies/catalog#keyword").toString() + "." + ((JSONObject)e).get("count").toString() )
+            String actual = StreamSupport.stream(result.spliterator(), false)
+                    .map(e -> e.get("http://mobi.com/ontologies/catalog#keyword").asText() + "." + e.get("count").asText() )
                     .collect(Collectors.joining(","));
             assertEquals(expected, actual);
         } catch (Exception e) {
@@ -922,12 +923,12 @@ public class CatalogRestTest extends MobiRestTestCXF {
         assertEquals(0, response.getLinks().size());
         try {
             String responseString = response.readEntity(String.class);
-            JSONArray result = JSONArray.fromObject(responseString);
+            ArrayNode result = mapper.readValue(responseString, ArrayNode.class);
             assertEquals(result.size(), keywordResults.getPage().size());
 
             String expected = "1.4,2.1";
-            Object actual = result.stream()
-                    .map(e -> ((JSONObject)e).get("http://mobi.com/ontologies/catalog#keyword").toString() + "." + ((JSONObject)e).get("count").toString() )
+            String actual = StreamSupport.stream(result.spliterator(), false)
+                    .map(e -> e.get("http://mobi.com/ontologies/catalog#keyword").asText() + "." + e.get("count").asText() )
                     .collect(Collectors.joining(","));
             assertEquals(expected, actual);
         } catch (Exception e) {
@@ -999,7 +1000,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
         assertEquals("1", headers.get("X-Total-Count").get(0));
         assertEquals(0, response.getLinks().size());
         try {
-            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+            ArrayNode result = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
             assertEquals(1, result.size());
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
@@ -1224,8 +1225,8 @@ public class CatalogRestTest extends MobiRestTestCXF {
     @Test
     public void updateUnversionedDistributionTest() {
         //Setup:
-        JSONObject distribution = new JSONObject().element("@id", DISTRIBUTION_IRI)
-                .element("@type", new JSONArray().element(Distribution.TYPE));
+        ObjectNode distribution = mapper.createObjectNode().put("@id", DISTRIBUTION_IRI)
+                .set("@type", mapper.createArrayNode().add(Distribution.TYPE));
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/distributions/" + encode(DISTRIBUTION_IRI))
@@ -1246,7 +1247,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
     @Test
     public void updateUnversionedDistributionThatDoesNotMatchTest() {
         //Setup:
-        JSONObject distribution = new JSONObject().element("@id", ERROR_IRI);
+        ObjectNode distribution = mapper.createObjectNode().put("@id", ERROR_IRI);
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/distributions/" + encode(DISTRIBUTION_IRI))
@@ -1257,7 +1258,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
     @Test
     public void updateUnversionedDistributionWithIncorrectPathTest() {
         // Setup:
-        JSONObject distribution = new JSONObject().element("@id", DISTRIBUTION_IRI);
+        ObjectNode distribution = mapper.createObjectNode().put("@id", DISTRIBUTION_IRI);
         doThrow(new IllegalArgumentException()).when(distributionManager).updateUnversionedDistribution(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(ERROR_IRI)), any(Distribution.class), any(RepositoryConnection.class));
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(ERROR_IRI)
@@ -1269,7 +1270,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
     @Test
     public void updateUnversionedDistributionWithErrorTest() {
         //Setup:
-        JSONObject distribution = new JSONObject().element("@id", DISTRIBUTION_IRI);
+        ObjectNode distribution = mapper.createObjectNode().put("@id", DISTRIBUTION_IRI);
         doThrow(new MobiException()).when(distributionManager).updateUnversionedDistribution(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), any(Distribution.class), any(RepositoryConnection.class));
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
@@ -1291,7 +1292,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
         assertEquals("1", headers.get("X-Total-Count").get(0));
         assertEquals(0, response.getLinks().size());
         try {
-            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+            ArrayNode result = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
             assertEquals(1, result.size());
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
@@ -1657,8 +1658,8 @@ public class CatalogRestTest extends MobiRestTestCXF {
     @Test
     public void updateVersionTest() {
         //Setup:
-        JSONObject version = new JSONObject().element("@id", VERSION_IRI)
-                .element("@type", new JSONArray().element(Version.TYPE));
+        ObjectNode version = mapper.createObjectNode().put("@id", VERSION_IRI)
+                .set("@type", mapper.createArrayNode().add(Version.TYPE));
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(VERSION_IRI))
@@ -1679,7 +1680,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
     @Test
     public void updateVersionThatDoesNotMatchTest() {
         //Setup:
-        JSONObject version = new JSONObject().element("@id", ERROR_IRI);
+        ObjectNode version = mapper.createObjectNode().put("@id", ERROR_IRI);
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(VERSION_IRI))
@@ -1690,7 +1691,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
     @Test
     public void updateVersionWithIncorrectPathTest() {
         //Setup:
-        JSONObject version = new JSONObject().element("@id", VERSION_IRI);
+        ObjectNode version = mapper.createObjectNode().put("@id", VERSION_IRI);
         doThrow(new IllegalArgumentException()).when(versionManager).updateVersion(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), any(Version.class), any(RepositoryConnection.class));
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
@@ -1702,7 +1703,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
     @Test
     public void updateVersionWithErrorTest() {
         //Setup:
-        JSONObject version = new JSONObject().element("@id", VERSION_IRI).element("@type", new JSONArray().element(Version.TYPE));
+        ObjectNode version = mapper.createObjectNode().put("@id", VERSION_IRI).set("@type", mapper.createArrayNode().add(Version.TYPE));
         doThrow(new MobiException()).when(versionManager).updateVersion(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), any(Version.class), any(RepositoryConnection.class));
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
@@ -1726,7 +1727,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
         assertEquals("1", headers.get("X-Total-Count").get(0));
         assertEquals(0, response.getLinks().size());
         try {
-            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+            ArrayNode result = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
             assertEquals(1, result.size());
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
@@ -1964,8 +1965,8 @@ public class CatalogRestTest extends MobiRestTestCXF {
     @Test
     public void updateVersionedDistributionTest() {
         //Setup:
-        JSONObject distribution = new JSONObject().element("@id", DISTRIBUTION_IRI)
-                .element("@type", new JSONArray().element(Distribution.TYPE));
+        ObjectNode distribution = mapper.createObjectNode().put("@id", DISTRIBUTION_IRI)
+                .set("@type", mapper.createArrayNode().add(Distribution.TYPE));
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(VERSION_IRI) + "/distributions/" + encode(DISTRIBUTION_IRI))
@@ -1986,7 +1987,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
     @Test
     public void updateVersionedDistributionThatDoesNotMatchTest() {
         //Setup:
-        JSONObject distribution = new JSONObject().element("@id", ERROR_IRI);
+        ObjectNode distribution = mapper.createObjectNode().put("@id", ERROR_IRI);
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/versions/" + encode(VERSION_IRI) + "/distributions/" + encode(DISTRIBUTION_IRI))
@@ -1997,7 +1998,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
     @Test
     public void updateVersionedDistributionWithIncorrectPathTest() {
         // Setup:
-        JSONObject distribution = new JSONObject().element("@id", DISTRIBUTION_IRI);
+        ObjectNode distribution = mapper.createObjectNode().put("@id", DISTRIBUTION_IRI);
         doThrow(new IllegalArgumentException()).when(distributionManager).updateVersionedDistribution(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), eq(vf.createIRI(ERROR_IRI)), any(Distribution.class), any(RepositoryConnection.class));
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
@@ -2009,7 +2010,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
     @Test
     public void updateVersionedDistributionWithErrorTest() {
         //Setup:
-        JSONObject distribution = new JSONObject().element("@id", DISTRIBUTION_IRI).element("@type", new JSONArray().element(Distribution.TYPE));
+        ObjectNode distribution = mapper.createObjectNode().put("@id", DISTRIBUTION_IRI).set("@type", mapper.createArrayNode().add(Distribution.TYPE));
         doThrow(new MobiException()).when(distributionManager).updateVersionedDistribution(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), eq(vf.createIRI(VERSION_IRI)), any(Distribution.class), any(RepositoryConnection.class));
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
@@ -2028,13 +2029,13 @@ public class CatalogRestTest extends MobiRestTestCXF {
         assertEquals(200, response.getStatus());
         verify(commitManager).getTaggedCommit(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(VERSION_IRI), conn);
         try {
-            JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
-            assertTrue(result.containsKey("commit"));
-            assertTrue(result.containsKey("additions"));
-            assertTrue(result.containsKey("deletions"));
-            JSONObject commit = result.getJSONObject("commit");
-            assertTrue(commit.containsKey("@id"));
-            assertEquals(commit.getString("@id"), COMMIT_IRIS[0]);
+            ObjectNode result = mapper.readValue(response.readEntity(String.class), ObjectNode.class);
+            assertTrue(result.has("commit"));
+            assertTrue(result.has("additions"));
+            assertTrue(result.has("deletions"));
+            JsonNode commit = result.get("commit");
+            assertTrue(commit.has("@id"));
+            assertEquals(COMMIT_IRIS[0], commit.get("@id").asText());
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
@@ -2083,7 +2084,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
         assertEquals("2", headers.get("X-Total-Count").get(0));
         assertEquals(0, response.getLinks().size());
         try {
-            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+            ArrayNode result = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
             assertEquals(2, result.size());
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
@@ -2107,7 +2108,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
         assertEquals("1", headers.get("X-Total-Count").get(0));
         assertEquals(0, response.getLinks().size());
         try {
-            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+            ArrayNode result = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
             assertEquals(1, result.size());
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
@@ -2151,7 +2152,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
         assertEquals("2", headers.get("X-Total-Count").get(0));
         assertEquals(0, response.getLinks().size());
         try {
-            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+            ArrayNode result = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
             assertEquals(2, result.size());
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
@@ -2405,8 +2406,8 @@ public class CatalogRestTest extends MobiRestTestCXF {
     @Test
     public void updateBranchTest() {
         //Setup:
-        JSONObject branch = new JSONObject().element("@id", BRANCH_IRI)
-                .element("@type", new JSONArray().element(Branch.TYPE));
+        ObjectNode branch = mapper.createObjectNode().put("@id", BRANCH_IRI)
+                .set("@type", mapper.createArrayNode().add(Branch.TYPE));
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI))
@@ -2427,7 +2428,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
     @Test
     public void updateBranchThatDoesNotMatchTest() {
         //Setup:
-        JSONObject branch = new JSONObject().element("@id", ERROR_IRI);
+        ObjectNode branch = mapper.createObjectNode().put("@id", ERROR_IRI);
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI))
@@ -2438,7 +2439,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
     @Test
     public void updateBranchWithIncorrectPathTest() {
         //Setup:
-        JSONObject branch = new JSONObject().element("@id", BRANCH_IRI);
+        ObjectNode branch = mapper.createObjectNode().put("@id", BRANCH_IRI);
         doThrow(new IllegalArgumentException()).when(branchManager).updateBranch(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(ERROR_IRI)), any(Branch.class), any(RepositoryConnection.class));
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(ERROR_IRI)
@@ -2450,7 +2451,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
     @Test
     public void updateBranchWithErrorTest() {
         //Setup:
-        JSONObject branch = new JSONObject().element("@id", BRANCH_IRI).element("@type", new JSONArray().element(Branch.TYPE));
+        ObjectNode branch = mapper.createObjectNode().put("@id", BRANCH_IRI).set("@type", mapper.createArrayNode().add(Branch.TYPE));
         doThrow(new MobiException()).when(branchManager).updateBranch(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), any(Branch.class), any(RepositoryConnection.class));
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
@@ -2469,15 +2470,14 @@ public class CatalogRestTest extends MobiRestTestCXF {
         assertEquals(200, response.getStatus());
         verify(commitManager).getCommitChain(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(BRANCH_IRI), conn);
         MultivaluedMap<String, Object> headers = response.getHeaders();
-        assertEquals("" + COMMIT_IRIS.length,  headers.get("X-Total-Count").get(0));
+        assertEquals(String.valueOf(COMMIT_IRIS.length),  headers.get("X-Total-Count").get(0));
         assertEquals(0, response.getLinks().size());
         try {
-            JSONArray array = JSONArray.fromObject(response.readEntity(String.class));
+            ArrayNode array = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
             assertEquals(array.size(), COMMIT_IRIS.length);
             array.forEach(result -> {
-                JSONObject commitObj = JSONObject.fromObject(result);
-                assertTrue(commitObj.containsKey("id"));
-                assertTrue(Arrays.asList(COMMIT_IRIS).contains(commitObj.getString("id")));
+                assertTrue(result.has("id"));
+                assertTrue(Arrays.asList(COMMIT_IRIS).contains(result.get("id").asText()));
             });
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
@@ -2492,15 +2492,14 @@ public class CatalogRestTest extends MobiRestTestCXF {
         assertEquals(200, response.getStatus());
         verify(commitManager).getCommitChain(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(BRANCH_IRI), conn);
         MultivaluedMap<String, Object> headers = response.getHeaders();
-        assertEquals("" + COMMIT_IRIS.length, headers.get("X-Total-Count").get(0));
+        assertEquals(String.valueOf(COMMIT_IRIS.length), headers.get("X-Total-Count").get(0));
         assertEquals(0, response.getLinks().size());
         try {
-            JSONArray array = JSONArray.fromObject(response.readEntity(String.class));
+            ArrayNode array = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
             assertEquals(array.size(), COMMIT_IRIS.length);
             array.forEach(result -> {
-                JSONObject commitObj = JSONObject.fromObject(result);
-                assertTrue(commitObj.containsKey("id"));
-                assertTrue(Arrays.asList(COMMIT_IRIS).contains(commitObj.getString("id")));
+                assertTrue(result.has("id"));
+                assertTrue(Arrays.asList(COMMIT_IRIS).contains(result.get("id").asText()));
             });
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
@@ -2515,7 +2514,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
         assertEquals(200, response.getStatus());
         verify(commitManager).getCommitChain(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(BRANCH_IRI), conn);
         MultivaluedMap<String, Object> headers = response.getHeaders();
-        assertEquals(headers.get("X-Total-Count").get(0), "" + COMMIT_IRIS.length);
+        assertEquals(headers.get("X-Total-Count").get(0), String.valueOf(COMMIT_IRIS.length));
         Set<Link> links = response.getLinks();
         assertEquals(2, links.size());
         links.forEach(link -> {
@@ -2524,11 +2523,11 @@ public class CatalogRestTest extends MobiRestTestCXF {
             assertTrue(link.getRel().equals("prev") || link.getRel().equals("next"));
         });
         try {
-            JSONArray array = JSONArray.fromObject(response.readEntity(String.class));
+            ArrayNode array = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
             assertEquals(1, array.size());
-            JSONObject commitObj = array.getJSONObject(0);
-            assertTrue(commitObj.containsKey("id"));
-            assertEquals(commitObj.getString("id"), COMMIT_IRIS[1]);
+            JsonNode commitObj = array.get(0);
+            assertTrue(commitObj.has("id"));
+            assertEquals(COMMIT_IRIS[1], commitObj.get("id").asText());
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
@@ -2571,15 +2570,14 @@ public class CatalogRestTest extends MobiRestTestCXF {
         assertEquals(200, response.getStatus());
         verify(commitManager).getDifferenceChain(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(BRANCH_IRI), vf.createIRI(BRANCH_IRI), conn);
         MultivaluedMap<String, Object> headers = response.getHeaders();
-        assertEquals("" + COMMIT_IRIS.length, headers.get("X-Total-Count").get(0));
+        assertEquals(String.valueOf(COMMIT_IRIS.length), headers.get("X-Total-Count").get(0));
         assertEquals(0, response.getLinks().size());
         try {
-            JSONArray array = JSONArray.fromObject(response.readEntity(String.class));
+            ArrayNode array = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
             assertEquals(COMMIT_IRIS.length, array.size());
             array.forEach(result -> {
-                JSONObject commitObj = JSONObject.fromObject(result);
-                assertTrue(commitObj.containsKey("id"));
-                assertTrue(Arrays.asList(COMMIT_IRIS).contains(commitObj.getString("id")));
+                assertTrue(result.has("id"));
+                assertTrue(Arrays.asList(COMMIT_IRIS).contains(result.get("id").asText()));
             });
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
@@ -2647,13 +2645,13 @@ public class CatalogRestTest extends MobiRestTestCXF {
         assertEquals(200, response.getStatus());
         verify(commitManager).getHeadCommit(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(BRANCH_IRI), conn);
         try {
-            JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
-            assertTrue(result.containsKey("commit"));
-            assertTrue(result.containsKey("additions"));
-            assertTrue(result.containsKey("deletions"));
-            JSONObject commit = result.getJSONObject("commit");
-            assertTrue(commit.containsKey("@id"));
-            assertEquals(commit.getString("@id"), COMMIT_IRIS[0]);
+            ObjectNode result = mapper.readValue(response.readEntity(String.class), ObjectNode.class);
+            assertTrue(result.has("commit"));
+            assertTrue(result.has("additions"));
+            assertTrue(result.has("deletions"));
+            JsonNode commit = result.get("commit");
+            assertTrue(commit.has("@id"));
+            assertEquals(COMMIT_IRIS[0], commit.get("@id").asText());
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
@@ -2697,13 +2695,13 @@ public class CatalogRestTest extends MobiRestTestCXF {
         assertEquals(200, response.getStatus());
         verify(commitManager).getCommit(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(BRANCH_IRI), vf.createIRI(COMMIT_IRIS[1]), conn);
         try {
-            JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
-            assertTrue(result.containsKey("commit"));
-            assertTrue(result.containsKey("additions"));
-            assertTrue(result.containsKey("deletions"));
-            JSONObject commit = result.getJSONObject("commit");
-            assertTrue(commit.containsKey("@id"));
-            assertEquals(commit.getString("@id"), COMMIT_IRIS[1]);
+            ObjectNode result = mapper.readValue(response.readEntity(String.class), ObjectNode.class);
+            assertTrue(result.has("commit"));
+            assertTrue(result.has("additions"));
+            assertTrue(result.has("deletions"));
+            JsonNode commit = result.get("commit");
+            assertTrue(commit.has("@id"));
+            assertEquals(COMMIT_IRIS[1], commit.get("@id").asText());
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
@@ -2759,9 +2757,9 @@ public class CatalogRestTest extends MobiRestTestCXF {
         verify(commitManager, times(2)).getHeadCommit(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(BRANCH_IRI), conn);
         verify(differenceManager).getDifference(eq(vf.createIRI(COMMIT_IRIS[0])), eq(vf.createIRI(COMMIT_IRIS[0])), any(RepositoryConnection.class));
         try {
-            JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
-            assertTrue(result.containsKey("additions"));
-            assertTrue(result.containsKey("deletions"));
+            ObjectNode result = mapper.readValue(response.readEntity(String.class), ObjectNode.class);
+            assertTrue(result.has("additions"));
+            assertTrue(result.has("deletions"));
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
@@ -2813,17 +2811,17 @@ public class CatalogRestTest extends MobiRestTestCXF {
         verify(commitManager, times(2)).getHeadCommit(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(BRANCH_IRI), conn);
         verify(differenceManager).getConflicts(eq(vf.createIRI(COMMIT_IRIS[0])), eq(vf.createIRI(COMMIT_IRIS[0])), any(RepositoryConnection.class));
         try {
-            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+            ArrayNode result = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
             assertEquals(1, result.size());
-            JSONObject outcome = JSONObject.fromObject(result.get(0));
-            assertTrue(outcome.containsKey("left"));
-            assertTrue(outcome.containsKey("right"));
-            JSONObject left = JSONObject.fromObject(outcome.get("left"));
-            JSONObject right = JSONObject.fromObject(outcome.get("right"));
-            assertTrue(left.containsKey("additions"));
-            assertTrue(left.containsKey("deletions"));
-            assertTrue(right.containsKey("additions"));
-            assertTrue(right.containsKey("deletions"));
+            JsonNode outcome = result.get(0);
+            assertTrue(outcome.has("left"));
+            assertTrue(outcome.has("right"));
+            JsonNode left = outcome.get("left");
+            JsonNode right = outcome.get("right");
+            assertTrue(left.has("additions"));
+            assertTrue(left.has("deletions"));
+            assertTrue(right.has("additions"));
+            assertTrue(right.has("deletions"));
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
@@ -2869,10 +2867,10 @@ public class CatalogRestTest extends MobiRestTestCXF {
     @Test
     public void mergeTest() {
         // Setup:
-        JSONArray adds = new JSONArray();
-        adds.add(new JSONObject().element("@id", "http://example.com/add").element("@type", new JSONArray().element("http://example.com/Add")));
-        JSONArray deletes = new JSONArray();
-        deletes.add(new JSONObject().element("@id", "http://example.com/delete").element("@type", new JSONArray().element("http://example.com/Delete")));
+        ArrayNode adds = mapper.createArrayNode();
+        adds.add(mapper.createObjectNode().put("@id", "http://example.com/add").set("@type", mapper.createArrayNode().add("http://example.com/Add")));
+        ArrayNode deletes = mapper.createArrayNode();
+        deletes.add(mapper.createObjectNode().put("@id", "http://example.com/delete").set("@type", mapper.createArrayNode().add("http://example.com/Delete")));
         FormDataMultiPart fd = new FormDataMultiPart();
         fd.field("additions", adds.toString());
         fd.field("deletions", deletes.toString());
@@ -2889,8 +2887,8 @@ public class CatalogRestTest extends MobiRestTestCXF {
     public void mergeWithIncorrectPathTest() {
         // Setup:
         doThrow(new IllegalArgumentException()).when(versioningManager).merge(any(), any(), any(), any(), any(), any(), any());
-        JSONArray adds = new JSONArray();
-        adds.add(new JSONObject().element("@id", "http://example.com/add").element("@type", new JSONArray().element("http://example.com/Add")));
+        ArrayNode adds = mapper.createArrayNode();
+        adds.add(mapper.createObjectNode().put("@id", "http://example.com/add").set("@type", mapper.createArrayNode().add("http://example.com/Add")));
         FormDataMultiPart fd = new FormDataMultiPart();
         fd.field("additions", adds.toString());
 
@@ -2904,8 +2902,8 @@ public class CatalogRestTest extends MobiRestTestCXF {
     public void mergeForUserThatDoesNotExistTest() {
         // Setup:
         when(engineManager.retrieveUser(anyString())).thenReturn(Optional.empty());
-        JSONArray adds = new JSONArray();
-        adds.add(new JSONObject().element("@id", "http://example.com/add").element("@type", new JSONArray().element("http://example.com/Add")));
+        ArrayNode adds = mapper.createArrayNode();
+        adds.add(mapper.createObjectNode().put("@id", "http://example.com/add").set("@type", mapper.createArrayNode().add("http://example.com/Add")));
         FormDataMultiPart fd = new FormDataMultiPart();
         fd.field("additions", adds.toString());
 
@@ -2919,8 +2917,8 @@ public class CatalogRestTest extends MobiRestTestCXF {
     public void mergeWithErrorTest() {
         // Setup:
         doThrow(new MobiException()).when(versioningManager).merge(any(), any(), any(), any(), any(), any(), any());
-        JSONArray adds = new JSONArray();
-        adds.add(new JSONObject().element("@id", "http://example.com/add").element("@type", new JSONArray().element("http://example.com/Add")));
+        ArrayNode adds = mapper.createArrayNode();
+        adds.add(mapper.createObjectNode().put("@id", "http://example.com/add").set("@type", mapper.createArrayNode().add("http://example.com/Add")));
         FormDataMultiPart fd = new FormDataMultiPart();
         fd.field("additions", adds.toString());
 
@@ -3194,11 +3192,11 @@ public class CatalogRestTest extends MobiRestTestCXF {
         verify(commitManager).getInProgressCommitOpt(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), any(User.class), any(RepositoryConnection.class));
         verify(differenceManager).getCommitDifference(eq(vf.createIRI(COMMIT_IRIS[0])), any(RepositoryConnection.class));
         try {
-            JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
-            assertTrue(result.containsKey("additions"));
-            assertTrue(result.containsKey("deletions"));
-            isJsonld(result.getString("additions"));
-            isJsonld(result.getString("deletions"));
+            ObjectNode result = mapper.readValue(response.readEntity(String.class), ObjectNode.class);
+            assertTrue(result.has("additions"));
+            assertTrue(result.has("deletions"));
+            isJsonld(result.get("additions"));
+            isJsonld(result.get("deletions"));
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
@@ -3212,11 +3210,11 @@ public class CatalogRestTest extends MobiRestTestCXF {
         verify(commitManager).getInProgressCommitOpt(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), any(User.class), any(RepositoryConnection.class));
         verify(differenceManager).getCommitDifference(eq(vf.createIRI(COMMIT_IRIS[0])), any(RepositoryConnection.class));
         try {
-            JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
-            assertTrue(result.containsKey("additions"));
-            assertTrue(result.containsKey("deletions"));
-            notJsonld(result.getString("additions"));
-            notJsonld(result.getString("deletions"));
+            ObjectNode result = mapper.readValue(response.readEntity(String.class), ObjectNode.class);
+            assertTrue(result.has("additions"));
+            assertTrue(result.has("deletions"));
+            notJsonld(result.get("additions"));
+            notJsonld(result.get("deletions"));
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
@@ -3230,11 +3228,11 @@ public class CatalogRestTest extends MobiRestTestCXF {
         verify(commitManager).getInProgressCommitOpt(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), any(User.class), any(RepositoryConnection.class));
         verify(differenceManager).getCommitDifference(eq(vf.createIRI(COMMIT_IRIS[0])), any(RepositoryConnection.class));
         try {
-            JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
-            assertTrue(result.containsKey("additions"));
-            assertTrue(result.containsKey("deletions"));
-            notJsonld(result.getString("additions"));
-            notJsonld(result.getString("deletions"));
+            ObjectNode result = mapper.readValue(response.readEntity(String.class), ObjectNode.class);
+            assertTrue(result.has("additions"));
+            assertTrue(result.has("deletions"));
+            notJsonld(result.get("additions"));
+            notJsonld(result.get("deletions"));
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
@@ -3335,10 +3333,10 @@ public class CatalogRestTest extends MobiRestTestCXF {
     @Test
     public void updateInProgressCommitTest() {
         // Setup:
-        JSONArray adds = new JSONArray();
-        adds.add(new JSONObject().element("@id", "http://example.com/add").element("@type", new JSONArray().element("http://example.com/Add")));
-        JSONArray deletes = new JSONArray();
-        deletes.add(new JSONObject().element("@id", "http://example.com/delete").element("@type", new JSONArray().element("http://example.com/Delete")));
+        ArrayNode adds = mapper.createArrayNode();
+        adds.add(mapper.createObjectNode().put("@id", "http://example.com/add").set("@type", mapper.createArrayNode().add("http://example.com/Add")));
+        ArrayNode deletes = mapper.createArrayNode();
+        deletes.add(mapper.createObjectNode().put("@id", "http://example.com/delete").set("@type", mapper.createArrayNode().add("http://example.com/Delete")));
         FormDataMultiPart fd = new FormDataMultiPart();
         fd.field("additions", adds.toString());
         fd.field("deletions", deletes.toString());
@@ -3353,8 +3351,8 @@ public class CatalogRestTest extends MobiRestTestCXF {
     @Test
     public void updateInProgressCommitWithIncorrectPathTest() {
         // Setup:
-        JSONArray adds = new JSONArray();
-        adds.add(new JSONObject().element("@id", "http://example.com/add").element("@type", new JSONArray().element("http://example.com/Add")));
+        ArrayNode adds = mapper.createArrayNode();
+        adds.add(mapper.createObjectNode().put("@id", "http://example.com/add").set("@type", mapper.createArrayNode().add("http://example.com/Add")));
         FormDataMultiPart fd = new FormDataMultiPart();
         fd.field("additions", adds.toString());
         doThrow(new IllegalArgumentException()).when(commitManager).updateInProgressCommit(any(), any(), (User) any(), any(), any(), any(RepositoryConnection.class));
@@ -3367,8 +3365,8 @@ public class CatalogRestTest extends MobiRestTestCXF {
     @Test
     public void updateInProgressCommitForUserThatDoesNotExistTest() {
         // Setup:
-        JSONArray adds = new JSONArray();
-        adds.add(new JSONObject().element("@id", "http://example.com/add").element("@type", new JSONArray().element("http://example.com/Add")));
+        ArrayNode adds = mapper.createArrayNode();
+        adds.add(mapper.createObjectNode().put("@id", "http://example.com/add").set("@type", mapper.createArrayNode().add("http://example.com/Add")));
         FormDataMultiPart fd = new FormDataMultiPart();
         fd.field("additions", adds.toString());
         when(engineManager.retrieveUser(anyString())).thenReturn(Optional.empty());
@@ -3381,8 +3379,8 @@ public class CatalogRestTest extends MobiRestTestCXF {
     @Test
     public void updateInProgressCommitWithErrorTest() {
         // Setup:
-        JSONArray adds = new JSONArray();
-        adds.add(new JSONObject().element("@id", "http://example.com/add").element("@type", new JSONArray().element("http://example.com/Add")));
+        ArrayNode adds = mapper.createArrayNode();
+        adds.add(mapper.createObjectNode().put("@id", "http://example.com/add").set("@type", mapper.createArrayNode().add("http://example.com/Add")));
         FormDataMultiPart fd = new FormDataMultiPart();
         fd.field("additions", adds.toString());
         doThrow(new MobiException()).when(commitManager).updateInProgressCommit(any(), any(), (User) any(), any(), any(), any(RepositoryConnection.class));
@@ -3404,13 +3402,13 @@ public class CatalogRestTest extends MobiRestTestCXF {
         Response response = target().path("catalogs/record-types").request().get();
         assertEquals(200, response.getStatus());
         try {
-            JSONArray array = JSONArray.fromObject(response.readEntity(String.class));
+            ArrayNode array = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
             assertEquals(5, array.size());
-            assertTrue(array.contains(recordFactory.getTypeIRI().stringValue()));
-            assertTrue(array.contains(unversionedRecordFactory.getTypeIRI().stringValue()));
-            assertTrue(array.contains(versionedRecordFactory.getTypeIRI().stringValue()));
-            assertTrue(array.contains(versionedRDFRecordFactory.getTypeIRI().stringValue()));
-            assertTrue(array.contains(mappingRecordFactory.getTypeIRI().stringValue()));
+            assertTrue(arrayContains(array, recordFactory.getTypeIRI().stringValue()));
+            assertTrue(arrayContains(array, unversionedRecordFactory.getTypeIRI().stringValue()));
+            assertTrue(arrayContains(array, versionedRecordFactory.getTypeIRI().stringValue()));
+            assertTrue(arrayContains(array, versionedRDFRecordFactory.getTypeIRI().stringValue()));
+            assertTrue(arrayContains(array, mappingRecordFactory.getTypeIRI().stringValue()));
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
@@ -3423,11 +3421,11 @@ public class CatalogRestTest extends MobiRestTestCXF {
         Response response = target().path("catalogs/sort-options").request().get();
         assertEquals(200, response.getStatus());
         try {
-            JSONArray array = JSONArray.fromObject(response.readEntity(String.class));
+            ArrayNode array = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
             assertEquals(3, array.size());
-            assertTrue(array.contains(DCTERMS.TITLE.stringValue()));
-            assertTrue(array.contains(DCTERMS.MODIFIED.stringValue()));
-            assertTrue(array.contains(DCTERMS.ISSUED.stringValue()));
+            assertTrue(arrayContains(array, DCTERMS.TITLE.stringValue()));
+            assertTrue(arrayContains(array, DCTERMS.MODIFIED.stringValue()));
+            assertTrue(arrayContains(array, DCTERMS.ISSUED.stringValue()));
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
@@ -3469,17 +3467,29 @@ public class CatalogRestTest extends MobiRestTestCXF {
         assertEquals(COMMIT_IRIS[0], optHead.get().stringValue());
     }
 
+    private void isJsonld(JsonNode body) {
+        if (body.isTextual()) {
+            fail();
+        }
+    }
+
     private void isJsonld(String body) {
         try {
-            JSONArray result = JSONArray.fromObject(body);
+            JsonNode result = mapper.valueToTree(body);
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
     }
 
+    private void notJsonld(JsonNode body) {
+        if (!body.isTextual()) {
+            fail();
+        }
+    }
+
     private void notJsonld(String body) {
         try {
-            JSONArray result = JSONArray.fromObject(body);
+            ArrayNode result = mapper.readValue(body, ArrayNode.class);
             fail();
         } catch (Exception e) {
             System.out.println("Format is not JSON-LD, as expected");
@@ -3488,9 +3498,9 @@ public class CatalogRestTest extends MobiRestTestCXF {
 
     private void assertResponseIsObjectWithId(Response response, String id) {
         try {
-            JSONObject record = JSONObject.fromObject(response.readEntity(String.class));
-            assertTrue(record.containsKey("@id"));
-            assertEquals(record.getString("@id"), id);
+            ObjectNode record = mapper.readValue(response.readEntity(String.class), ObjectNode.class);
+            assertTrue(record.has("@id"));
+            assertEquals(id, record.get("@id").asText());
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }

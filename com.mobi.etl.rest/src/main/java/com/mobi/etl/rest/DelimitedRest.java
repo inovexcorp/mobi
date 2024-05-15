@@ -30,6 +30,8 @@ import static com.mobi.rest.util.RestUtils.groupedModelToString;
 import static com.mobi.rest.util.RestUtils.jsonldToModel;
 import static java.nio.file.FileVisitResult.CONTINUE;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.ontologies.mcat.Modify;
 import com.mobi.etl.api.config.delimited.ExcelConfig;
@@ -63,7 +65,6 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import net.sf.json.JSONArray;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.poi.ss.usermodel.DataFormatter;
 import org.apache.poi.ss.usermodel.FormulaEvaluator;
@@ -137,6 +138,7 @@ public class DelimitedRest {
     private OntologyImportService ontologyImportService;
 
     private final Logger logger = LoggerFactory.getLogger(DelimitedRest.class);
+    private static final ObjectMapper mapper = new ObjectMapper();
 
     private static final long NUM_LINE_PREVIEW = 10;
 
@@ -293,7 +295,7 @@ public class DelimitedRest {
     /**
      * Class used for OpenAPI documentation for upload endpoint.
      */
-    private class DelimitedRestFileUpload {
+    private static class DelimitedRestFileUpload {
         @Schema(type = "string", format = "binary", description = "Delimited file to upload.")
         public String delimitedFile;
     }
@@ -341,7 +343,7 @@ public class DelimitedRest {
         checkStringParam(jsonld, "Must provide a JSON-LD string");
         try {
             // Convert the data
-            Model data = etlFile(fileName, () -> jsonldToModel(jsonld), containsHeaders, separator, true);
+            Model data = etlFileToModel(fileName, () -> jsonldToModel(jsonld), containsHeaders, separator, true);
 
             return Response.ok(groupedModelToString(data, format)).build();
         } catch (IllegalStateException | MobiException ex) {
@@ -396,8 +398,9 @@ public class DelimitedRest {
         checkStringParam(mappingRecordIRI, "Must provide the IRI of a mapping record");
 
         try {
-        // Convert the data
-            Model data = etlFile(fileName, () -> getUploadedMapping(mappingRecordIRI), containsHeaders, separator, false);
+            // Convert the data
+            Model data = etlFileToModel(fileName, () -> getUploadedMapping(mappingRecordIRI), containsHeaders,
+                    separator, false);
             String result = groupedModelToString(data, format);
 
             // Write data into a stream
@@ -464,7 +467,7 @@ public class DelimitedRest {
 
         try {
             // Convert the data
-            Model data = etlFile(fileName, () -> getUploadedMapping(mappingRecordIRI), containsHeaders,
+            Model data = etlFileToModel(fileName, () -> getUploadedMapping(mappingRecordIRI), containsHeaders,
                     separator, false);
 
             // Add data to the dataset
@@ -545,7 +548,7 @@ public class DelimitedRest {
 
         try {
             // Convert the data
-            Model mappingData = etlFile(fileName, () -> getUploadedMapping(mappingRecordIRI), containsHeaders,
+            Model mappingData = etlFileToModel(fileName, () -> getUploadedMapping(mappingRecordIRI), containsHeaders,
                     separator, false);
 
             // Commit converted data
@@ -584,7 +587,7 @@ public class DelimitedRest {
      * @param separator Character the columns are separated by if it is a CSV
      * @return a Mobi Model with the resulting mapped RDF data
      */
-    private Model etlFile(String fileName, SupplierWithException<Model> mappingSupplier,
+    private Model etlFileToModel(String fileName, SupplierWithException<Model> mappingSupplier,
                           boolean containsHeaders, String separator, boolean limit) {
         // Collect the delimited file and its extension
         File delimitedFile = getUploadedFile(fileName).orElseThrow(() ->
@@ -608,7 +611,7 @@ public class DelimitedRest {
                 if (limit) {
                     config.limit(NUM_LINE_PREVIEW);
                 }
-                result = etlFile(() -> converter.convert(config.build()));
+                result = etlFileWithSupplier(() -> converter.convert(config.build()));
             } else {
                 SVConfig.SVConfigBuilder config = new SVConfig.SVConfigBuilder(data, mappingModel)
                         .separator(separator.charAt(0))
@@ -616,7 +619,7 @@ public class DelimitedRest {
                 if (limit) {
                     config.limit(NUM_LINE_PREVIEW);
                 }
-                result = etlFile(() -> converter.convert(config.build()));
+                result = etlFileWithSupplier(() -> converter.convert(config.build()));
             }
             logger.info("File mapped: " + delimitedFile.getPath());
             return result;
@@ -631,7 +634,7 @@ public class DelimitedRest {
      * @param supplier the supplier for getting the result of running a conversion using a Config
      * @return a Mobi Model with the delimited data converted into RDF
      */
-    private Model etlFile(SupplierWithException<Model> supplier) {
+    private Model etlFileWithSupplier(SupplierWithException<Model> supplier) {
         try {
             return supplier.get();
         } catch (IOException | MobiException e) {
@@ -750,12 +753,12 @@ public class DelimitedRest {
     private String convertCSVRows(File input, int numRows, char separator) throws IOException, CsvException {
         Charset charset = getCharset(Files.readAllBytes(input.toPath()));
         CSVParser parser = new CSVParserBuilder().withSeparator(separator).build();
-        try (CSVReader reader = new CSVReaderBuilder(new InputStreamReader(new FileInputStream(input), charset.name()))
+        try (CSVReader reader = new CSVReaderBuilder(new InputStreamReader(new FileInputStream(input), charset))
                 .withCSVParser(parser).build()) {
             List<String[]> csvRows = reader.readAll();
-            JSONArray returnRows = new JSONArray();
+            ArrayNode returnRows = mapper.createArrayNode();
             for (int i = 0; i <= numRows && i < csvRows.size(); i++) {
-                returnRows.add(i, csvRows.get(i));
+                returnRows.insert(i, mapper.valueToTree(csvRows.get(i)));
             }
             return returnRows.toString();
         }
@@ -776,14 +779,13 @@ public class DelimitedRest {
             FormulaEvaluator evaluator = wb.getCreationHelper().createFormulaEvaluator();
             Sheet sheet = wb.getSheetAt(0);
             DataFormatter df = new DataFormatter();
-            JSONArray rowList = new JSONArray();
-            String[] columns;
+            ArrayNode rowList = mapper.createArrayNode();
             for (Row row : sheet) {
                 if (row.getRowNum() <= numRows) {
                     //getLastCellNumber instead of getPhysicalNumberOfCells so that blank values don't shift cells
-                    columns = new String[row.getLastCellNum()];
-                    for (int i = 0; i < row.getLastCellNum(); i++ ) {
-                        columns[i] = df.formatCellValue(row.getCell(i), evaluator);
+                    ArrayNode columns = mapper.createArrayNode();
+                    for (int i = 0; i < row.getLastCellNum(); i++) {
+                        columns.insert(i, df.formatCellValue(row.getCell(i), evaluator));
                     }
                     rowList.add(columns);
                 }
@@ -849,7 +851,7 @@ public class DelimitedRest {
         try {
             mappingOpt = mappingManager.retrieveMapping(vf.createIRI(mappingRecordIRI));
         } catch (IllegalArgumentException e) {
-            ErrorUtils.sendError("Mapping " + mappingRecordIRI + " does not exist", Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError("Mapping " + mappingRecordIRI + " does not exist", Response.Status.BAD_REQUEST);
         }
         MappingWrapper mapping = mappingOpt.orElseThrow(() ->
                 ErrorUtils.sendError("Mapping " + mappingRecordIRI + " could not be retrieved",

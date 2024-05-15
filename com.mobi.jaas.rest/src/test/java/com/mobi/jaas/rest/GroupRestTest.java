@@ -41,6 +41,9 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.engines.GroupConfig;
 import com.mobi.jaas.api.engines.UserConfig;
@@ -52,8 +55,6 @@ import com.mobi.jaas.engines.RdfEngine;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rest.test.util.FormDataMultiPart;
 import com.mobi.rest.test.util.MobiRestTestCXF;
-import net.sf.json.JSONArray;
-import net.sf.json.JSONObject;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
@@ -79,6 +80,7 @@ import javax.ws.rs.core.Response;
 
 public class GroupRestTest extends MobiRestTestCXF {
     private AutoCloseable closeable;
+    private static final ObjectMapper mapper = new ObjectMapper();
     private OrmFactory<User> userFactory;
     private OrmFactory<Group> groupFactory;
     private OrmFactory<Role> roleFactory;
@@ -171,9 +173,9 @@ public class GroupRestTest extends MobiRestTestCXF {
     public void getGroupsTest() {
         Response response = target().path("groups").request().get();
         verify(engineManager, atLeastOnce()).getGroups();
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         try {
-            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+            ArrayNode result = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
             assertEquals(result.size(), groups.size());
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
@@ -193,7 +195,7 @@ public class GroupRestTest extends MobiRestTestCXF {
         fd.field("roles", "admin");
         Response response = target().path("groups")
                 .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 201);
+        assertEquals(201, response.getStatus());
         verify(engineManager).storeGroup(eq(ENGINE_NAME), any(Group.class));
     }
 
@@ -208,7 +210,7 @@ public class GroupRestTest extends MobiRestTestCXF {
         fd.field("roles", "admin");
         Response response = target().path("groups")
                 .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -219,24 +221,24 @@ public class GroupRestTest extends MobiRestTestCXF {
         fd.field("description", "This is a description");
         Response response = target().path("groups")
                 .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
-    public void getGroupTest() {
+    public void getGroupTest() throws Exception {
         Response response = target().path("groups/testGroup").request().get();
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(engineManager).retrieveGroup("testGroup");
-        JSONObject result = JSONObject.fromObject(response.readEntity(String.class));
-        assertFalse(result.containsKey("@graph"));
-        assertTrue(result.containsKey("@id"));
-        assertEquals(result.getString("@id"), group.getResource().stringValue());
+        ObjectNode result = mapper.readValue(response.readEntity(String.class), ObjectNode.class);
+        assertFalse(result.has("@graph"));
+        assertTrue(result.has("@id"));
+        assertEquals(group.getResource().stringValue(), result.get("@id").asText());
     }
 
     @Test
     public void getGroupThatDoesNotExistTest() {
         Response response = target().path("groups/error").request().get();
-        assertEquals(response.getStatus(), 404);
+        assertEquals(404, response.getStatus());
     }
 
     @Test
@@ -245,7 +247,7 @@ public class GroupRestTest extends MobiRestTestCXF {
                 .request()
                 .put(Entity.entity(groupedModelToString(group.getModel(), getRDFFormat("jsonld")),
                         MediaType.APPLICATION_JSON_TYPE));
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(engineManager).retrieveGroup(ENGINE_NAME, "testGroup");
         verify(engineManager).updateGroup(eq(ENGINE_NAME), any(Group.class));
     }
@@ -259,7 +261,7 @@ public class GroupRestTest extends MobiRestTestCXF {
         Response response = target().path("groups/group2")
                 .request().put(Entity.entity(groupedModelToString(group.getModel(), getRDFFormat("jsonld")),
                         MediaType.APPLICATION_JSON_TYPE));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -270,29 +272,29 @@ public class GroupRestTest extends MobiRestTestCXF {
         Response response = target().path("groups/testGroup")
                 .request().put(Entity.entity(groupedModelToString(user.getModel(), getRDFFormat("jsonld")),
                         MediaType.APPLICATION_JSON_TYPE));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
         verify(engineManager, atLeastOnce()).retrieveGroup(ENGINE_NAME, "testGroup");
     }
 
     @Test
     public void deleteGroupTest() {
         Response response = target().path("groups/testGroup").request().delete();
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(engineManager).deleteGroup(ENGINE_NAME, "testGroup");
     }
 
     @Test
     public void deleteGroupThatDoesNotExistTest() {
         Response response = target().path("groups/error").request().delete();
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
     public void getGroupRolesTest() {
         Response response = target().path("groups/testGroup/roles").request().get();
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         try {
-            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+            ArrayNode result = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
             assertEquals(result.size(), roles.size());
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
@@ -302,7 +304,7 @@ public class GroupRestTest extends MobiRestTestCXF {
     @Test
     public void getGroupRolesThatDoNotExistTest() {
         Response response = target().path("groups/error/roles").request().get();
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -318,7 +320,7 @@ public class GroupRestTest extends MobiRestTestCXF {
 
         Response response = target().path("groups/testGroup/roles").queryParam("roles", roles.keySet().toArray())
                 .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(engineManager).retrieveGroup("testGroup");
         roles.keySet().forEach(s -> verify(engineManager).getRole(s));
         ArgumentCaptor<Group> captor = ArgumentCaptor.forClass(Group.class);
@@ -338,7 +340,7 @@ public class GroupRestTest extends MobiRestTestCXF {
 
         Response response = target().path("groups/error/roles").queryParam("roles", roles)
                 .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -349,21 +351,21 @@ public class GroupRestTest extends MobiRestTestCXF {
 
         Response response = target().path("groups/testGroup/roles").queryParam("roles", roles)
                 .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
     public void addGroupRolesWithoutRolesTest() {
         Response response = target().path("groups/testGroup/roles")
                 .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
     public void removeGroupRoleTest() {
         Response response = target().path("groups/testGroup/roles").queryParam("role", "testRole")
                 .request().delete();
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(engineManager).retrieveGroup("testGroup");
         ArgumentCaptor<Group> captor = ArgumentCaptor.forClass(Group.class);
         verify(engineManager).updateGroup(captor.capture());
@@ -376,7 +378,7 @@ public class GroupRestTest extends MobiRestTestCXF {
     public void removeRoleFromGroupThatDoesNotExistTest() {
         Response response = target().path("groups/error/roles").queryParam("role", "testRole")
                 .request().delete();
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -386,15 +388,15 @@ public class GroupRestTest extends MobiRestTestCXF {
 
         Response response = target().path("groups/testGroup/roles").queryParam("role", "error")
                 .request().delete();
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
     public void getGroupUsersTest() {
         Response response = target().path("groups/testGroup/users").request().get();
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         try {
-            JSONArray result = JSONArray.fromObject(response.readEntity(String.class));
+            ArrayNode result = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
             assertEquals(result.size(), users.size());
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
@@ -407,13 +409,13 @@ public class GroupRestTest extends MobiRestTestCXF {
         when(engineManager.getUsername(any(Resource.class))).thenReturn(Optional.empty());
 
         Response response = target().path("groups/testGroup/users").request().get();
-        assertEquals(response.getStatus(), 500);
+        assertEquals(500, response.getStatus());
     }
 
     @Test
     public void getGroupUsersGroupDoesNotExistTest() {
         Response response = target().path("groups/error/users").request().get();
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -430,7 +432,7 @@ public class GroupRestTest extends MobiRestTestCXF {
 
         Response response = target().path("groups/testGroup/users").queryParam("users", users.keySet().toArray())
                 .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(engineManager).retrieveGroup(ENGINE_NAME, "testGroup");
         users.keySet().forEach(s -> verify(engineManager).retrieveUser(s));
         ArgumentCaptor<Group> captor = ArgumentCaptor.forClass(Group.class);
@@ -446,7 +448,7 @@ public class GroupRestTest extends MobiRestTestCXF {
     @Test
     public void addGroupUserToGroupThatDoesNotExistTest() {
         Response response = target().path("groups/error/users").request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -456,14 +458,14 @@ public class GroupRestTest extends MobiRestTestCXF {
 
         Response response = target().path("groups/testGroup/users").queryParam("users", usernames)
                 .request().put(Entity.entity("", MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
     public void removeGroupUserTest() {
         Response response = target().path("groups/testGroup/users").queryParam("user", "tester")
                 .request().delete();
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(engineManager).retrieveGroup("testGroup");
         verify(engineManager).retrieveUser("tester");
         ArgumentCaptor<Group> captor = ArgumentCaptor.forClass(Group.class);
@@ -477,13 +479,13 @@ public class GroupRestTest extends MobiRestTestCXF {
     public void removeGroupUserFromGroupThatDoesNotExistTest() {
         Response response = target().path("groups/error/users").queryParam("user", "tester")
                 .request().delete();
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
     public void removeGroupUserTHatDoesNotExistTest() {
         Response response = target().path("groups/testGroup/users").queryParam("user", "error")
                 .request().delete();
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 }

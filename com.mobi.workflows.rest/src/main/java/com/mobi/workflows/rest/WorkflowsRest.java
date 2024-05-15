@@ -25,12 +25,12 @@ package com.mobi.workflows.rest;
 
 import static com.mobi.rest.util.RestUtils.checkStringParam;
 import static com.mobi.rest.util.RestUtils.createJsonErrorObject;
-import static com.mobi.rest.util.RestUtils.createPaginatedResponseWithJsonNode;
+import static com.mobi.rest.util.RestUtils.createPaginatedResponse;
 import static com.mobi.rest.util.RestUtils.getActiveUser;
 import static com.mobi.rest.util.RestUtils.getCurrentModel;
 import static com.mobi.rest.util.RestUtils.getGarbageCollectionTime;
 import static com.mobi.rest.util.RestUtils.getInProgressCommitIRI;
-import static com.mobi.rest.util.RestUtils.getObjectNodeFromJsonld;
+import static com.mobi.rest.util.RestUtils.getObjectFromJsonld;
 import static com.mobi.rest.util.RestUtils.getRDFFormat;
 import static com.mobi.rest.util.RestUtils.getUploadedModel;
 import static com.mobi.rest.util.RestUtils.groupedModelToString;
@@ -203,11 +203,12 @@ public class WorkflowsRest {
     /**
      * Retrieves a list of all the Records. An optional type parameter filters the returned Records.
      * Parameters can be passed to control paging.
+     *
      * @param servletRequest HttpServletRequest
      * @param uriInfo UriInfo
      * @param offset Offset for the page
      * @param limit Number of Records to return in one page
-     * @param asc Whether or not the list should be sorted ascending or descending
+     * @param asc Whether the list should be sorted ascending or descending
      * @param sort field to sort by
      * @param searchText String used to filter out Records
      * @param status String used to filters the returned records by status.
@@ -238,7 +239,7 @@ public class WorkflowsRest {
             @QueryParam("offset") int offset,
             @Parameter(description = "Number of Records to return in one page")
             @QueryParam("limit") int limit,
-            @Parameter(description = "Whether or not the list should be sorted ascending or descending")
+            @Parameter(description = "Whether the list should be sorted ascending or descending")
             @DefaultValue("true") @QueryParam("ascending") boolean asc,
             @Parameter(description = "field to sort by")
             @QueryParam("sort") String sort,
@@ -284,10 +285,10 @@ public class WorkflowsRest {
             PaginatedSearchResults<ObjectNode> records = workflowManager.findWorkflowRecords(params, activeUser, conn);
             // Response
             ArrayNode arrayNode = mapper.createArrayNode();
-            for (ObjectNode objectNode: records.getPage()) {
+            for (ObjectNode objectNode : records.getPage()) {
                 arrayNode.add(objectNode);
             }
-            return createPaginatedResponseWithJsonNode(uriInfo, arrayNode, records.getTotalSize(), limit, offset);
+            return createPaginatedResponse(uriInfo, arrayNode, records.getTotalSize(), limit, offset);
         } catch (IllegalArgumentException ex) {
             throw RestUtils.getErrorObjBadRequest(ex);
         } catch (MobiException ex) {
@@ -322,8 +323,7 @@ public class WorkflowsRest {
                     content = {
                             @Content(mediaType = MediaType.MULTIPART_FORM_DATA, encoding = {
                                     @Encoding(name = "keywords", explode = true)
-                                }, schema = @Schema(implementation = WorkflowFileUpload.class)
-                            )
+                            }, schema = @Schema(implementation = WorkflowFileUpload.class))
                     }
             )
     )
@@ -331,7 +331,7 @@ public class WorkflowsRest {
     @ResourceId("http://mobi.com/catalog-local")
     public Response createWorkflow(@Context HttpServletRequest servletRequest,
                                    @HeaderParam("Content-Type") String contentType) {
-        Map<String, List<Class>> fields = new HashMap<>();
+        Map<String, List<Class<?>>> fields = new HashMap<>();
         fields.put("title", Stream.of(String.class).collect(Collectors.toList()));
         fields.put("description", Stream.of(String.class).collect(Collectors.toList()));
         fields.put("jsonld", Stream.of(String.class).collect(Collectors.toList()));
@@ -542,7 +542,8 @@ public class WorkflowsRest {
             Map<BNode, IRI> catalogBNodes = new HashMap<>();
             final CompletableFuture<Model> currentModelFuture = CompletableFuture.supplyAsync(() -> {
                 long startTimeF = System.currentTimeMillis();
-                Model temp = getCurrentModel(recordId, branchId, commitId, catalogBNodes, conn, bNodeService, compiledResourceManager);
+                Model temp = getCurrentModel(recordId, branchId, commitId, catalogBNodes, conn, bNodeService, 
+                        compiledResourceManager);
                 log.trace("currentModelFuture took " + (System.currentTimeMillis() - startTimeF));
                 return temp;
             });
@@ -552,7 +553,7 @@ public class WorkflowsRest {
             Model uploadedModel = uploadedModelFuture.get();
 
             startTime = System.currentTimeMillis();
-            if (!OntologyModels.findFirstOntologyIRI(uploadedModel, vf).isPresent()) {
+            if (OntologyModels.findFirstOntologyIRI(uploadedModel, vf).isEmpty()) {
                 OntologyModels.findFirstOntologyIRI(currentModel, vf)
                         .ifPresent(iri -> uploadedModel.add(iri, vf.createIRI(RDF.TYPE.stringValue()),
                                 vf.createIRI(OWL.ONTOLOGY.stringValue())));
@@ -583,12 +584,10 @@ public class WorkflowsRest {
             throw RestUtils.getErrorObjBadRequest(ex);
         } catch (MobiException | ExecutionException | InterruptedException | CompletionException ex) {
             if (ex instanceof ExecutionException) {
-                if (ex.getCause() instanceof InvalidWorkflowException) {
-                    InvalidWorkflowException invalidWorkflowException = (InvalidWorkflowException) ex.getCause();
+                if (ex.getCause() instanceof InvalidWorkflowException invalidWorkflowException) {
                     ObjectNode error = createJsonInvalidWorkflowError(invalidWorkflowException);
                     throw RestUtils.getErrorObjInternalServerError(invalidWorkflowException, error);
-                }
-                else if (ex.getCause() instanceof IllegalArgumentException) {
+                } else if (ex.getCause() instanceof IllegalArgumentException) {
                     throw RestUtils.getErrorObjBadRequest(ex.getCause());
                 } else if (ex.getCause() instanceof RDFParseException) {
                     throw RestUtils.getErrorObjBadRequest(ex.getCause());
@@ -661,12 +660,13 @@ public class WorkflowsRest {
 
     /**
      * Retrieves the JSON of the executions of the identified Workflow Record.
+     *
      * @param servletRequest The HttpServletRequest.
      * @param uriInfo UriInfo
      * @param workflowRecordIri The IRI string of the {@link WorkflowRecord} to find executions for
      * @param offset Offset for the page
      * @param limit Number of Records to return in one page
-     * @param asc Whether or not the list should be sorted ascending or descending
+     * @param asc Whether the list should be sorted ascending or descending
      * @param status String used to filters the returned records by status.
      * @param startingAfter Datetime string and filters the records down to those whose latest execution activity
      *                      started at or after the provided value
@@ -703,7 +703,7 @@ public class WorkflowsRest {
             @QueryParam("offset") int offset,
             @Parameter(description = "Number of Records to return in one page")
             @QueryParam("limit") int limit,
-            @Parameter(description = "Whether or not the list should be sorted ascending or descending")
+            @Parameter(description = "Whether the list should be sorted ascending or descending")
             @DefaultValue("false") @QueryParam("ascending") boolean asc,
             @Parameter(description = "String used to filters the returned records by status. "
                     + "Supports Strings 'running', 'succeeded', 'failed', and 'never_run'")
@@ -736,10 +736,10 @@ public class WorkflowsRest {
                     workflowRecordId, params, activeUser, conn);
             // Response
             ArrayNode arrayNode = mapper.createArrayNode();
-            for (ObjectNode objectNode: records.getPage()) {
+            for (ObjectNode objectNode : records.getPage()) {
                 arrayNode.add(objectNode);
             }
-            return createPaginatedResponseWithJsonNode(uriInfo, arrayNode, records.getTotalSize(), limit, offset);
+            return createPaginatedResponse(uriInfo, arrayNode, records.getTotalSize(), limit, offset);
         } catch (IllegalArgumentException ex) {
             throw RestUtils.getErrorObjBadRequest(ex);
         } catch (MobiException ex) {
@@ -791,7 +791,7 @@ public class WorkflowsRest {
                                 + " not found"));
 
                 String json = groupedModelToString(executionActivity.getModel(), getRDFFormat("jsonld"));
-                return Response.ok(getObjectNodeFromJsonld(json).toString()).build();
+                return Response.ok(getObjectFromJsonld(json).toString()).build();
             } else {
                 return Response.noContent().build();
             }
@@ -845,7 +845,7 @@ public class WorkflowsRest {
             WorkflowExecutionActivity executionActivity = getAndValidateActivity(workflowRecordIri, activityIri, true);
 
             String json = groupedModelToString(executionActivity.getModel(), getRDFFormat("jsonld"));
-            return Response.ok(getObjectNodeFromJsonld(json).toString()).build();
+            return Response.ok(getObjectFromJsonld(json).toString()).build();
         } catch (IllegalArgumentException ex) {
             throw RestUtils.getErrorObjBadRequest(ex);
         } catch (IllegalStateException ex) {
@@ -903,7 +903,7 @@ public class WorkflowsRest {
                     .sorted((action1, action2) -> action1.getResource().stringValue()
                             .compareToIgnoreCase(action2.getResource().stringValue()))
                     .map(action -> modelToJsonld(action.getModel().filter(action.getResource(), null, null)))
-                    .map(RestUtils::getObjectNodeFromJsonld)
+                    .map(RestUtils::getObjectFromJsonld)
                     .forEach(result::add);
             return Response.ok(result.toString()).type("application/ld+json").build();
         } catch (IllegalArgumentException ex) {
@@ -1016,7 +1016,7 @@ public class WorkflowsRest {
                                                   + "NOTE: Assumes id represents an IRI unless String begins with "
                                                   + "\"_:\"", required = true)
                                           @PathParam("workflowId") String workflowRecordId,
-                                          @Parameter(description = "String representing the Execution Activity Resource "
+                                          @Parameter(description = "String representing the Execution Activity Resource"
                                                   + "ID. NOTE: Assumes id represents an IRI unless String begins with "
                                                   + "\"_:\"", required = true)
                                           @PathParam("activityId") String activityId) {
@@ -1238,7 +1238,7 @@ public class WorkflowsRest {
         return builder.build();
     }
 
-    public static ObjectNode createJsonInvalidWorkflowError(InvalidWorkflowException exception) {
+    protected static ObjectNode createJsonInvalidWorkflowError(InvalidWorkflowException exception) {
         ObjectNode objectNode = mapper.createObjectNode();
         objectNode.put("error", exception.getClass().getSimpleName());
 
