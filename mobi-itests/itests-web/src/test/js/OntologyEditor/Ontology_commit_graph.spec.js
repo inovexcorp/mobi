@@ -20,9 +20,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+var path = require('path');
 var adminUsername = 'admin';
 var adminPassword = 'admin';
-var skosOnt = process.cwd()+ '/src/test/resources/rdf_files/skos.rdf';
+var skosOnt = path.resolve(__dirname + '/../../resources/rdf_files/skos.rdf');
 
 module.exports = {
     '@tags': ['ontology-editor', 'sanity'],

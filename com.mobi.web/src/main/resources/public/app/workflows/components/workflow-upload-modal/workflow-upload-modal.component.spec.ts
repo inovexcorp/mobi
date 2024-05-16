@@ -23,7 +23,7 @@
 
 import { WorkflowUploadModalComponent } from './workflow-upload-modal.component';
 import { WorkflowsManagerService } from '../../services/workflows-manager.service';
-import { cleanStylesFromDOM } from 'src/main/resources/public/test/ts/Shared';
+import { cleanStylesFromDOM } from '../../../../test/ts/Shared';
 import { RESTError } from '../../../shared/models/RESTError.interface';
 import { WorkflowRecordConfig } from '../../models/workflowRecordConfig.interface';
 import { XACMLDecision } from '../../../shared/models/XACMLDecision.interface';

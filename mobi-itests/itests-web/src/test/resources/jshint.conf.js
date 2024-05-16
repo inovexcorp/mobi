@@ -13,6 +13,7 @@
      "module": true,
       "require": true,
       "process": true,
+      "__dirname": true,
       "console": true,
   }
 }

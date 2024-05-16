@@ -28,15 +28,6 @@ import { GraphState, StateEdge, StateNode } from '../../app/ontology-visualizati
 import { ControlRecordI } from '../../app/ontology-visualization/classes/controlRecords';
 import { VersionedRdfState } from '../../app/shared/services/versionedRdfState.service';
 import { VersionedRdfListItem } from '../../app/shared/models/versionedRdfListItem.class';
-import { RecordSelectFiltered } from '../../app/versioned-rdf-record-editor/models/record-select-filtered.interface';
-import { JSONLDObject } from '../../app/shared/models/JSONLDObject.interface';
-import { RdfDownload } from '../../app/shared/models/rdfDownload.interface';
-import { RdfUpdate } from '../../app/shared/models/rdfUpdate.interface';
-import { RdfUpload } from '../../app/shared/models/rdfUpload.interface';
-import { VersionedRdfUploadResponse } from '../../app/shared/models/versionedRdfUploadResponse.interface';
-import { VersionedRdfStateBase } from '../../app/shared/models/versionedRdfStateBase.interface';
-import { State } from '../../app/shared/models/state.interface';
-import { Difference } from '../../app/shared/models/difference.class';
 
 export const DATE_STR = '2023-01-01T00:00:00Z';
 export const SHORT_DATE_STR = formatDate(new Date(DATE_STR), 'short', 'en-US');

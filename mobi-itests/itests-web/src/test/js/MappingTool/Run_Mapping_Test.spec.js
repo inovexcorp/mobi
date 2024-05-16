@@ -20,11 +20,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+var path = require('path');
 var adminUsername = 'admin'
 var adminPassword = 'admin'
-var OntoSample = process.cwd()+ '/src/test/resources/rdf_files/uhtc-ontology.ttl'
-var skosOnt = process.cwd()+ '/src/test/resources/rdf_files/skos.rdf'
-var OntoCSV = process.cwd()+ '/src/test/resources/ontology_csv\'s/uhtc-compounds.csv'
+var OntoSample = path.resolve(__dirname + '/../../resources/rdf_files/uhtc-ontology.ttl');
+var skosOnt = path.resolve(__dirname + '/../../resources/rdf_files/skos.rdf');
+var OntoCSV = path.resolve(__dirname + '/../../resources/ontology_csv\'s/uhtc-compounds.csv');
 
 module.exports = {
     '@tags': ['mapping-tool', 'datasets', 'sanity'],
