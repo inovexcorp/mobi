@@ -20,6 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+var path = require('path');
 var adminUsername = 'admin'
 var adminPassword = 'admin'
 
@@ -32,8 +33,8 @@ var user01 = {
     'role': 'user' 
 };
 
-var badWorkflowFile = process.cwd()+ '/src/test/resources/rdf_files/invalid-workflow.ttl'  // has workflow def issue
-var validWorkflowFile = process.cwd()+ '/src/test/resources/rdf_files/test-workflow.ttl' 
+var badWorkflowFile = path.resolve(__dirname + '/../../resources/rdf_files/invalid-workflow.ttl' ); // has workflow def issue
+var validWorkflowFile = path.resolve(__dirname + '/../../resources/rdf_files/test-workflow.ttl');
 
 module.exports = {
     '@tags': ['sanity', 'workflows'],

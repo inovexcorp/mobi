@@ -20,17 +20,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+var path = require('path');
 var adminUsername = 'admin'
 var adminPassword = 'admin'
 
 var shapes_graph_title = 'UHTC_shapes';
-var shapes_graph = process.cwd()+ '/src/test/resources/rdf_files/UHTC_shapes.ttl';
+var shapes_graph = path.resolve(__dirname + '/../../resources/rdf_files/UHTC_shapes.ttl');
 
 var additional_shapes_graph_title = 'additional_shapes';
-var additional_shapes_graph = process.cwd()+ '/src/test/resources/rdf_files/additional_shapes.ttl';
+var additional_shapes_graph = path.resolve(__dirname + '/../../resources/rdf_files/additional_shapes.ttl');
 
-var shapes_graph_update = process.cwd()+ '/src/test/resources/rdf_files/UHTC_shapes_update.ttl';
-var shapes_graph_conflict = process.cwd()+ '/src/test/resources/rdf_files/UHTC_shapes_conflict.ttl';
+var shapes_graph_update = path.resolve(__dirname + '/../../resources/rdf_files/UHTC_shapes_update.ttl');
+var shapes_graph_conflict = path.resolve(__dirname + '/../../resources/rdf_files/UHTC_shapes_conflict.ttl');
 
 
 module.exports = {

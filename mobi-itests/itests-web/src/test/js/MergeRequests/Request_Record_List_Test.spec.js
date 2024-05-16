@@ -21,6 +21,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+var path = require('path');
 var adminUsername = 'admin';
 var adminPassword = 'admin';
 
@@ -28,8 +29,8 @@ var shapegraph001_title = 'shapes_mr_test';
 var shapegraph001_branch001_title = 'MergeTestBranch001';
 var shapegraph001_commit_message_001 = 'The first manual commit message';
 
-var shapes_mr_test = process.cwd()+ '/src/test/resources/rdf_files/shapes_mr_test.ttl'
-var shapes_mr_test_change = process.cwd()+ '/src/test/resources/rdf_files/shapes_mr_test_change_001.ttl'
+var shapes_mr_test = path.resolve( __dirname + '/../../resources/rdf_files/shapes_mr_test.ttl');
+var shapes_mr_test_change = path.resolve(__dirname + '/../../resources/rdf_files/shapes_mr_test_change_001.ttl');
 
 var ontology001_title = 'ontMrTest001';
 var ontology001_title_changed = '';

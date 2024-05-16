@@ -26,10 +26,11 @@
 /*global console */
 /*jshint multistr: true */
 
+var path = require('path');
 var adminUsername = "admin"
 var adminPassword = "admin"
 var dropDownSelector = '//query-tab//form//dataset-form-group//ul[contains(@class, "ui-select-choices")]//li[contains(@class, "ui-select-choices-group")]//div[contains(@class,"ui-select-choices-row")]';
-var Onto1 = process.cwd()+ '/src/test/resources/rdf_files/EventOntology.ttl'
+var Onto1 = path.resolve(__dirname + '/../../resources/rdf_files/EventOntology.ttl');
 
 // TODO: Move a lot of these functions to the datasetsPage and discoverPage
 module.exports = {

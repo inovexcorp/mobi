@@ -20,12 +20,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+var path = require('path');
 var adminUsername = 'admin'
 var adminPassword = 'admin'
-var CatalogOnto1 = process.cwd() + '/src/test/resources/rdf_files/z-catalog-ontology-1.ttl'
-var CatalogOnto2 = process.cwd() + '/src/test/resources/rdf_files/z-catalog-ontology-2.ttl'
-var CatalogOnto3 = process.cwd() + '/src/test/resources/rdf_files/z-catalog-ontology-3.ttl'
-var CatalogOnto4 = process.cwd() + '/src/test/resources/rdf_files/z-catalog-ontology-4.ttl'
+var CatalogOnto1 = path.resolve(__dirname + '/../../resources/rdf_files/z-catalog-ontology-1.ttl');
+var CatalogOnto2 = path.resolve(__dirname + '/../../resources/rdf_files/z-catalog-ontology-2.ttl');
+var CatalogOnto3 = path.resolve(__dirname + '/../../resources/rdf_files/z-catalog-ontology-3.ttl');
+var CatalogOnto4 = path.resolve(__dirname + '/../../resources/rdf_files/z-catalog-ontology-4.ttl');
 
 var newUser = { 
     'username': 'newUser1', 

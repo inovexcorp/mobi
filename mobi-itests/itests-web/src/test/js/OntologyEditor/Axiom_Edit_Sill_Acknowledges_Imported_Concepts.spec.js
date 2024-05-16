@@ -20,12 +20,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+var path = require('path');
 var adminUsername = 'admin'
 var adminPassword = 'admin'
-var vocab = process.cwd()+ '/src/test/resources/rdf_files/single-concept-vocab.ttl'
-var Onto2 = process.cwd()+ '/src/test/resources/rdf_files/test-local-imports-2.ttl'
-var Onto3 = process.cwd()+ '/src/test/resources/rdf_files/test-local-imports-3.ttl'
-var skosOnt = process.cwd()+ '/src/test/resources/rdf_files/skos.rdf'
+var vocab = path.resolve(__dirname + '/../../resources/rdf_files/single-concept-vocab.ttl');
+var Onto2 = path.resolve(__dirname + '/../../resources/rdf_files/test-local-imports-2.ttl');
+var Onto3 = path.resolve(__dirname + '/../../resources/rdf_files/test-local-imports-3.ttl');
+var skosOnt = path.resolve(__dirname + '/../../resources/rdf_files/skos.rdf');
 
 module.exports = {
     '@tags': ['sanity', 'ontology-editor'],

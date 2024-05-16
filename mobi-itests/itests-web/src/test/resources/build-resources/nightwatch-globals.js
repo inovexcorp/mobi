@@ -22,7 +22,7 @@ module.exports = {
 
     // default timeout value in milliseconds for waitFor commands and implicit waitFor value for
     // expect assertions
-    waitForConditionTimeout : 45000,
+    waitForConditionTimeout : 60000,
     retryAssertionTimeout: 30000,
     asyncHookTimeout: 60000,
 

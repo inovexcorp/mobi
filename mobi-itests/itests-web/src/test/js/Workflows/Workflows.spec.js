@@ -20,8 +20,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-var badWorkflowFile = process.cwd()+ '/src/test/resources/rdf_files/invalid-workflow.ttl'  // has workflow def issue
-var validWorkflowFile = process.cwd()+ '/src/test/resources/rdf_files/test-workflow.ttl' 
+var path = require('path');
+var badWorkflowFile = path.resolve(__dirname + '/../../resources/rdf_files/invalid-workflow.ttl');  // has workflow def issue
+var validWorkflowFile = path.resolve(__dirname + '/../../resources/rdf_files/test-workflow.ttl');
 
 var adminUsername = 'admin';
 var adminPassword = 'admin';

@@ -99,15 +99,17 @@ public class CopyDataDirectory implements PreRestoreOperation {
 
     private void copyDataDir() {
         File tmpDataDir = new File(RESTORE_DATA_PATH);
-        File currentDataDir = new File(DATA_DIR_PATH);
-        try {
-            FileUtils.deleteDirectory(currentDataDir); // Delete old policies
-            LOGGER.debug(String.format("Data Directory Deleted: %s", currentDataDir));
-            FileUtils.forceMkdir(currentDataDir); // Make Policy Directory
-            FileUtils.copyDirectory(tmpDataDir, currentDataDir); // Copy Backup policies into policy directory
-            LOGGER.debug(String.format("Copied Directory %s into: %s", tmpDataDir, currentDataDir));
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        if (tmpDataDir.exists()) {
+            File currentDataDir = new File(DATA_DIR_PATH);
+            try {
+                FileUtils.deleteDirectory(currentDataDir); // Delete old policies
+                LOGGER.debug(String.format("Data Directory Deleted: %s", currentDataDir));
+                FileUtils.forceMkdir(currentDataDir); // Make Policy Directory
+                FileUtils.copyDirectory(tmpDataDir, currentDataDir); // Copy Backup policies into policy directory
+                LOGGER.debug(String.format("Copied Directory %s into: %s", tmpDataDir, currentDataDir));
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 }
