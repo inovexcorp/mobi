@@ -32,6 +32,7 @@ import org.eclipse.rdf4j.federated.endpoint.RepositoryEndpoint;
 import org.eclipse.rdf4j.federated.endpoint.provider.NativeRepositoryInformation;
 import org.eclipse.rdf4j.federated.endpoint.provider.ResolvableRepositoryInformation;
 import org.eclipse.rdf4j.federated.exception.FedXException;
+import org.eclipse.rdf4j.federated.repository.FedXRepository;
 import org.eclipse.rdf4j.federated.util.Vocabulary;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
@@ -78,7 +79,7 @@ public class FedXUtils {
      * @return A Federated Repository of the provided list of repositories
      * @throws FedXException If an error occurs constructing the Federated Repository
      */
-    public Repository getFedXRepo(Repository ...repositories) throws FedXException {
+    public FedXRepository getFedXRepo(Repository ...repositories) throws FedXException {
         List<Endpoint> endpoints = new ArrayList<>();
         int id = 0;
         for (Repository repo: repositories) {
@@ -89,7 +90,8 @@ public class FedXUtils {
     }
 
     /**
-     * Get a Repository Endpoint for the provided repository depending on its type for use in a Federated Repository.
+     * Get a un-writeable Repository Endpoint for the provided repository depending on its type for use in a Federated
+     * Repository.
      *
      * @param repository The repository to generate an endpoint for
      * @param id The id of the repository if needed
@@ -104,13 +106,44 @@ public class FedXUtils {
     }
 
     /**
-     * Get a Resolvable RepositoryEndpoint for a non-native repository with the provided id for use in a Federated
-     * Repository.
+     * Get a Repository Endpoint for the provided repository depending on its type for use in a Federated
+     * Repository.Has the option to be writeable or not.
+     *
+     * @param repository The repository to generate an endpoint for
+     * @param id The id of the repository if needed
+     * @param writeable Whether the endpoint should be considered writeable
+     * @return A RepositoryEndpoint to use in a Federated Repository
+     */
+    public RepositoryEndpoint getRepositoryEndpoint(Repository repository, String id, boolean writeable) {
+        if (repository.getDataDir() != null) {
+            return getNativeRepositoryEndpoint(repository, writeable);
+        } else {
+            return getResolvableRepositoryEndpoint(repository, id, writeable);
+        }
+    }
+
+    /**
+     * Get a Resolvable un-writeable RepositoryEndpoint for a non-native repository with the provided id for use in a
+     * Federated Repository.
      *
      * @param repository A Repository to generate an endpoint for
+     * @param id The identifier of the repository to use for the endpoint
      * @return A RepositoryEndpoint to use in a Federated Repository
      */
     public RepositoryEndpoint getResolvableRepositoryEndpoint(Repository repository, String id) {
+        return this.getResolvableRepositoryEndpoint(repository, id, false);
+    }
+
+    /**
+     * Get a Resolvable RepositoryEndpoint for a non-native repository with the provided id for use in a
+     * Federated Repository. Has the option to be writeable or not.
+     *
+     * @param repository A Repository to generate an endpoint for
+     * @param id The identifier of the repository to use for the endpoint
+     * @param writeable Whether the endpoint should be considered writeable
+     * @return A RepositoryEndpoint to use in a Federated Repository
+     */
+    public RepositoryEndpoint getResolvableRepositoryEndpoint(Repository repository, String id, boolean writeable) {
         IRI viewableRepoId = vf.createIRI("urn:ResolvableRepositoryEndpoint-" + id);
         Model resolvableRepositoryInformationModel = new LinkedHashModel();
         resolvableRepositoryInformationModel.add(viewableRepoId, Vocabulary.FEDX.REPOSITORY_NAME, viewableRepoId);
@@ -118,6 +151,7 @@ public class FedXUtils {
         ResolvableRepositoryInformation resolvableRepositoryInformation = new ResolvableRepositoryInformation(
                 resolvableRepositoryInformationModel, viewableRepoId);
         resolvableRepositoryInformation.setType(EndpointType.NativeStore);
+        resolvableRepositoryInformation.setWritable(writeable);
 
         ManagedRepositoryEndpoint viewableRecordEndpoint = new ManagedRepositoryEndpoint(
                 resolvableRepositoryInformation,
@@ -129,19 +163,32 @@ public class FedXUtils {
     }
 
     /**
-     * Get a RepositoryEndpoint for a native repository, meaning one stored on local disk, for use in a Federated
-     * Repository.
+     * Get a un-writeable RepositoryEndpoint for a native repository, meaning one stored on local disk, for use in a
+     * Federated Repository.
      *
      * @param repository Native Repository to generate an endpoint for
      * @return A RepositoryEndpoint to use in a Federated Repository
      */
     public RepositoryEndpoint getNativeRepositoryEndpoint(Repository repository) {
+        return getNativeRepositoryEndpoint(repository, false);
+    }
+
+    /**
+     * Get a RepositoryEndpoint for a native repository, meaning one stored on local disk, for use in a Federated
+     * Repository. Has the option to be writeable or not.
+     *
+     * @param repository Native Repository to generate an endpoint for
+     * @param writeable Whether the endpoint should be considered writeable
+     * @return A RepositoryEndpoint to use in a Federated Repository
+     */
+    public RepositoryEndpoint getNativeRepositoryEndpoint(Repository repository, boolean writeable) {
         assert repository.getDataDir() != null;
-        NativeRepositoryInformation provRepoInfo = new NativeRepositoryInformation("repo",
+        NativeRepositoryInformation repoInfo = new NativeRepositoryInformation("repo",
                 repository.getDataDir().getAbsolutePath());
-        ManagedRepositoryEndpoint provRepositoryEndpoint = new ManagedRepositoryEndpoint(provRepoInfo,
-                provRepoInfo.getLocation(), EndpointClassification.Local, repository);
-        provRepositoryEndpoint.setEndpointConfiguration(provRepoInfo.getEndpointConfiguration());
-        return provRepositoryEndpoint;
+        repoInfo.setWritable(writeable);
+        ManagedRepositoryEndpoint repositoryEndpoint = new ManagedRepositoryEndpoint(repoInfo,
+                repoInfo.getLocation(), EndpointClassification.Local, repository);
+        repositoryEndpoint.setEndpointConfiguration(repoInfo.getEndpointConfiguration());
+        return repositoryEndpoint;
     }
 }

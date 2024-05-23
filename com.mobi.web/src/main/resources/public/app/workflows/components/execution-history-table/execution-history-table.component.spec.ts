@@ -154,6 +154,7 @@ describe('ExecutionHistoryTableComponent', () => {
     element = fixture.debugElement;
     fixture.detectChanges();
   });
+
   afterEach(() => {
     fixture = null;
     component = null;
@@ -326,6 +327,7 @@ describe('ExecutionHistoryTableComponent', () => {
       expect(component.paginationConfig.offset).toEqual(0);
     });
     it('findWorkflowExecutionActivities', () => {
+      component.findWorkflowExecutionActivities();
       expect(component.totalCount).toEqual(3);
       expect(component.dataSource.data).toEqual(activities);
       component.expandedRow = activities[0];
@@ -383,6 +385,10 @@ describe('ExecutionHistoryTableComponent', () => {
     expect(workflowsStateStub.selectedWorkflowRdf).toEqual([{'@id': 'workflow'}]);
   });
   describe('contains the correct html', () => {
+    beforeEach(() => {
+      component.findWorkflowExecutionActivities();
+      fixture.detectChanges();
+    });
     it('for wrapping containers', () => {
         expect(element.queryAll(By.css('div.execution-history-table')).length).toEqual(1);
         expect(element.queryAll(By.css('div.execution-history-table div.form-wrapper')).length).toEqual(1);

@@ -34,7 +34,6 @@ import com.mobi.workflows.api.ontologies.workflows.WorkflowRecord;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
-import org.eclipse.rdf4j.repository.RepositoryConnection;
 
 import java.util.Optional;
 import java.util.Set;
@@ -47,12 +46,11 @@ public interface WorkflowManager {
      *
      * @param searchParams Search parameters.
      * @param requestUser The user to check record read permissions for
-     * @param conn A RepositoryConnection to use for lookup.
      * @return PaginatedSearchResults for a page matching the search criteria.
      * @throws IllegalArgumentException Thrown if the passed offset is greater than the number of results.
      */
-    PaginatedSearchResults<ObjectNode> findWorkflowRecords(PaginatedWorkflowSearchParams searchParams, User requestUser,
-                                                           RepositoryConnection conn);
+    PaginatedSearchResults<ObjectNode> findWorkflowRecords(PaginatedWorkflowSearchParams searchParams,
+                                                           User requestUser);
 
     /**
      * Creates a trigger service for the workflow linked to the passed in {@link WorkflowRecord}.
@@ -92,14 +90,12 @@ public interface WorkflowManager {
      * @param workflowRecordIri Workflow Record IRI.
      * @param searchParams Search parameters.
      * @param requestUser The user to check record read permissions for.
-     * @param conn A RepositoryConnection to use for lookup.
      * @return PaginatedSearchResults for a page matching the search criteria.
      * @throws IllegalArgumentException Thrown if the passed offset is greater than the number of results.
      */
     PaginatedSearchResults<ObjectNode> findWorkflowExecutionActivities(Resource workflowRecordIri,
                                                                        PaginatedWorkflowSearchParams searchParams,
-                                                                       User requestUser,
-                                                                       RepositoryConnection conn);
+                                                                       User requestUser);
 
     /**
      * Retrieves the Workflow Execution Activity denoted by the passed IRI.

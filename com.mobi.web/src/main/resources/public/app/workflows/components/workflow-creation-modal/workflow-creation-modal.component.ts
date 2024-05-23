@@ -40,7 +40,8 @@ import { WorkflowSchema } from '../../models/workflow-record.interface';
  * @class workflows.WorkflowCreationModalComponent
  *
  * A component that creates content for a modal with a form containing fields for creating a new Workflow Record. The
- * fields are for the title, workflow IRI, description, and {@link shared.KeywordSelectComponent keywords}.
+ * fields are for the title, workflow IRI, description, and {@link shared.KeywordSelectComponent keywords}. Meant to be
+ * used in conjunction with the `MatDialog` service.
  */
 @Component({
   selector: 'app-workflow-creation-modal',

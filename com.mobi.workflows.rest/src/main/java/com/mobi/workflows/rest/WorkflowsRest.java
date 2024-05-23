@@ -255,7 +255,7 @@ public class WorkflowsRest {
                     + "activity ended at or before the provided value")
             @QueryParam("endingBefore") String endingBefore
     ) {
-        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+        try {
             PaginatedWorkflowSearchParams params = new PaginatedWorkflowSearchParams.Builder()
                     .searchText(searchText)
                     .status(status)
@@ -282,7 +282,7 @@ public class WorkflowsRest {
             }
             // Find Workflows
             User activeUser = getActiveUser(servletRequest, engineManager);
-            PaginatedSearchResults<ObjectNode> records = workflowManager.findWorkflowRecords(params, activeUser, conn);
+            PaginatedSearchResults<ObjectNode> records = workflowManager.findWorkflowRecords(params, activeUser);
             // Response
             ArrayNode arrayNode = mapper.createArrayNode();
             for (ObjectNode objectNode : records.getPage()) {
@@ -714,7 +714,7 @@ public class WorkflowsRest {
             @Parameter(description = "Datetime string and filters the records down to those whose latest execution "
                     + "activity ended at or before the provided value")
             @QueryParam("endingBefore") String endingBefore) {
-        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+        try {
             IRI workflowRecordId = vf.createIRI(workflowRecordIri);
             PaginatedWorkflowSearchParams params = new PaginatedWorkflowSearchParams.Builder()
                     .status(status)
@@ -733,7 +733,7 @@ public class WorkflowsRest {
             // Find Workflows
             User activeUser = getActiveUser(servletRequest, engineManager);
             PaginatedSearchResults<ObjectNode> records = workflowManager.findWorkflowExecutionActivities(
-                    workflowRecordId, params, activeUser, conn);
+                    workflowRecordId, params, activeUser);
             // Response
             ArrayNode arrayNode = mapper.createArrayNode();
             for (ObjectNode objectNode : records.getPage()) {

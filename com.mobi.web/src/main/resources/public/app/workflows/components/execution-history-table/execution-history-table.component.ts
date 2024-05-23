@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { AfterViewInit, Component, Input, OnChanges, OnInit, SimpleChanges, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, Input, OnChanges, SimpleChanges, ViewChild } from '@angular/core';
 import { MatTableDataSource } from '@angular/material/table';
 import { MatPaginator, PageEvent } from '@angular/material/paginator';
 import { animate, state, style, transition, trigger } from '@angular/animations';
@@ -42,8 +42,13 @@ import { WorkflowSchema } from '../../models/workflow-record.interface';
 /**
  * @class workflows.ExecutionHistoryTableComponent
  * 
- * Represents a component for displaying Activity Execution History
- * @implements OnInit, AfterViewInit
+ * Represents a component for displaying the Execution History of a particular Workflow.
+ * @implements OnChanges, AfterViewInit
+ * 
+ * @param {WorkflowSchema} workflow A representation of the Workflow to display the execution history of
+ * @param {JSONLDObject[]} workflowRdf The JSON-LD of the current version of the Workflow being viewed
+ * @param {JSONLDObject[]} executingActivities The JSON-LD of all the WorkflowExecutionActivities for the provided
+ * Workflow that are currently running. This is expected to update "on-demand" through SSE in the parent component.
  */
 @Component({
   selector: 'app-execution-history-table',
@@ -57,7 +62,7 @@ import { WorkflowSchema } from '../../models/workflow-record.interface';
     ]),
   ],
 })
-export class ExecutionHistoryTableComponent implements OnInit, OnChanges, AfterViewInit {
+export class ExecutionHistoryTableComponent implements OnChanges, AfterViewInit {
   @Input() workflow: WorkflowSchema;
   @Input() workflowRdf: JSONLDObject[] = [];
   @Input() executingActivities: JSONLDObject[] = [];
@@ -82,9 +87,6 @@ export class ExecutionHistoryTableComponent implements OnInit, OnChanges, AfterV
 
   constructor(public wss: WorkflowsStateService, private _wms: WorkflowsManagerService) { }
 
-  ngOnInit(): void {
-    this.findWorkflowExecutionActivities();
-  }
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['executingActivities']) {
       if (changes['executingActivities'].firstChange) {

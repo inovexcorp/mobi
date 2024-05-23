@@ -30,11 +30,12 @@ import { getBeautifulIRI } from '../../../shared/utility';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 
 /**
- *  WorkflowPropertyOverlayComponent.
- * Is responsible for displaying the properties of an entity in an overlay dialog.
- *
- * @Class WorkflowPropertyOverlayComponent
- * @implements {OnInit}
+ * @class WorkflowPropertyOverlayComponent
+ * 
+ * A component that creates content for a modal to display the properties of an entity within a Workflow. Displays the
+ * type of the entity and each property on the entity with its values. Meant to be used in conjunction with the
+ * `MatDialog` service.
+ * @implements OnInit
  */
 @Component({
   selector: 'app-workflow-property-overlay-component',
@@ -42,7 +43,7 @@ import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
   styleUrls: ['./workflow-property-overlay.component.scss']
 })
 export class WorkflowPropertyOverlayComponent implements OnInit {
-  displayData: { key:string, value: any[] }[] = []
+  displayData: { key: string, value: any[] }[] = []
   message = '';
 
   constructor(@Inject(MAT_DIALOG_DATA) public data: { entity: JSONLDObject },
@@ -68,7 +69,7 @@ export class WorkflowPropertyOverlayComponent implements OnInit {
       const entity = this.data[key];
 
       if (entity) {
-        let displayKey = getBeautifulIRI(key).replace('@','');
+        const displayKey = getBeautifulIRI(key).replace('@','');
         let values: string[];
         if (isArray(entity)) {
           values = this.buildEntityValues(entity);
@@ -104,7 +105,7 @@ export class WorkflowPropertyOverlayComponent implements OnInit {
    *
    * @return {void}
    */
-  close():void {
+  close(): void {
     this.dialogRef.close();
   }
 
