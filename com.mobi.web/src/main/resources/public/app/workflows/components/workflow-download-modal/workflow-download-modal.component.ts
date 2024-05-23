@@ -31,6 +31,13 @@ import { CATALOG } from '../../../prefixes';
 import { ToastService } from '../../../shared/services/toast.service';
 import { WorkflowSchema } from '../../models/workflow-record.interface';
 
+/**
+ * @class workflows.WorkflowDownloadModalComponent
+ * 
+ * A component that creates content for a modal to download the provided list of workflows into separate files. Contains
+ * a {@link shared.SerializationSelectComponent} to pick the RDF format for the downloads. Meant to be used in
+ * conjunction with the `MatDialog` service.
+ */
 @Component({
   selector: 'app-workflow-download-modal',
   templateUrl: './workflow-download-modal.component.html',
@@ -40,7 +47,7 @@ export class WorkflowDownloadModalComponent {
   displayInfoMessage: boolean;
   workflowTitles: string;
   catalogId: string;
-  catalogHead = CATALOG + 'head';
+  catalogHead = `${CATALOG}head`;
 
   downloadForm: UntypedFormGroup = this._fb.group({
     serialization: ['turtle', [Validators.required]]

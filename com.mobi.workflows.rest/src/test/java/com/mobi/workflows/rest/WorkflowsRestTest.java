@@ -353,7 +353,7 @@ public class WorkflowsRestTest extends MobiRestTestCXF {
                 return 1;
             }
         };
-        when(workflowManager.findWorkflowRecords(any(), any(), any())).thenReturn(results);
+        when(workflowManager.findWorkflowRecords(any(), any())).thenReturn(results);
         Response response = target().path("workflows")
                 .queryParam("offset", 1)
                 .queryParam("limit", 10)
@@ -376,7 +376,7 @@ public class WorkflowsRestTest extends MobiRestTestCXF {
                 .startingAfter("2024-03-13T15:00:00.015Z")
                 .endingBefore("2024-03-14T15:00:00.015Z");
 
-        verify(workflowManager).findWorkflowRecords(eq(builder.build()), eq(user), any());
+        verify(workflowManager).findWorkflowRecords(eq(builder.build()), eq(user));
         MultivaluedMap<String, Object> headers = response.getHeaders();
         assertEquals(headers.get("X-Total-Count").get(0), "" + results.getTotalSize());
         assertEquals(1, response.getLinks().size());
@@ -633,7 +633,7 @@ public class WorkflowsRestTest extends MobiRestTestCXF {
                 return 1;
             }
         };
-        when(workflowManager.findWorkflowExecutionActivities(any(), any(), any(), any())).thenReturn(results);
+        when(workflowManager.findWorkflowExecutionActivities(any(), any(), any())).thenReturn(results);
         Response response = target().path("workflows/" + encode(workflowId) + "/executions")
                 .queryParam("offset", 1)
                 .queryParam("limit", 10)
@@ -652,7 +652,7 @@ public class WorkflowsRestTest extends MobiRestTestCXF {
                 .startingAfter("2024-03-13T15:00:00.015Z")
                 .endingBefore("2024-03-14T15:00:00.015Z");
 
-        verify(workflowManager).findWorkflowExecutionActivities(eq(workflowId), eq(builder.build()), eq(user), any());
+        verify(workflowManager).findWorkflowExecutionActivities(eq(workflowId), eq(builder.build()), eq(user));
         MultivaluedMap<String, Object> headers = response.getHeaders();
         assertEquals(headers.get("X-Total-Count").get(0), "" + results.getTotalSize());
         assertEquals(1, response.getLinks().size());

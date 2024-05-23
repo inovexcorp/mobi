@@ -65,7 +65,6 @@ import com.mobi.rdf.orm.Thing;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import com.mobi.repository.impl.sesame.memory.MemoryRepositoryWrapper;
 import com.mobi.security.policy.api.PDP;
-import com.mobi.security.policy.api.ontologies.policy.Read;
 import com.mobi.vfs.impl.commons.SimpleVirtualFilesystemConfig;
 import com.mobi.vfs.ontologies.documents.BinaryFile;
 import com.mobi.workflows.api.PaginatedWorkflowSearchParams;
@@ -79,7 +78,6 @@ import com.mobi.workflows.api.ontologies.workflows.WorkflowExecutionActivity;
 import com.mobi.workflows.api.ontologies.workflows.WorkflowRecord;
 import com.mobi.workflows.api.trigger.TriggerHandler;
 import com.mobi.workflows.exception.InvalidWorkflowException;
-import com.mobi.workflows.impl.core.fedx.FedXUtils;
 import com.mobi.workflows.impl.core.record.SimpleWorkflowRecordServiceTest;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.model.IRI;
@@ -93,7 +91,6 @@ import org.eclipse.rdf4j.model.util.Models;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.query.QueryResults;
-import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.rio.RDFFormat;
@@ -267,6 +264,7 @@ public class SimpleWorkflowManagerTest extends OrmEnabledTestCase {
         workflowManager.provRepo = provRepository;
         workflowManager.pdp = pdp;
         workflowManager.eventAdmin = eventAdmin;
+        workflowManager.startService();
     }
 
     @After
@@ -279,6 +277,7 @@ public class SimpleWorkflowManagerTest extends OrmEnabledTestCase {
             connection.clear();
         }
         closeable.close();
+        workflowManager.stopService();
         workflowManager.workflowEngine = null;
     }
 
@@ -337,30 +336,13 @@ public class SimpleWorkflowManagerTest extends OrmEnabledTestCase {
     }
 
     private void addFindWorkflowData() throws IOException {
-        FedXUtils mockFedXUtils = mock(FedXUtils.class);
-        doAnswer((InvocationOnMock invocationOnMock) -> {
-            Model model = invocationOnMock.getArgument(0);
-            Repository repo1 = invocationOnMock.getArgument(1);
-            Repository repo2 = invocationOnMock.getArgument(2);
-
-            Repository inMemoryRepo = new SailRepository(new MemoryStore());
-            try(RepositoryConnection conn = inMemoryRepo.getConnection()) {
-                conn.add(model);
-                conn.add(repo1.getConnection().getStatements(null, null, null));
-                conn.add(repo2.getConnection().getStatements(null, null, null));
-            }
-            return inMemoryRepo;
-        }).when(mockFedXUtils).getFedXRepoWithModel(any(Model.class), any(Repository.class));
-        workflowManager.fedXUtils = mockFedXUtils;
-
-        Model permissionModel = new LinkedHashModel();
         IRI adminIri = vf.createIRI("http://mobi.com/users/admin");
-        IRI readActionIri = vf.createIRI(Read.TYPE);
-        permissionModel.add(adminIri, readActionIri, vf.createIRI("https://mobi.com/records#workflow1"));
-        permissionModel.add(adminIri, readActionIri, vf.createIRI("https://mobi.com/records#workflow2"));
-        permissionModel.add(adminIri, readActionIri, vf.createIRI("https://mobi.com/records#workflow3"));
-        permissionModel.add(adminIri, readActionIri, vf.createIRI("https://mobi.com/records#workflow4"));
-        Mockito.doReturn(permissionModel).when(workflowManager).populateViewableWorkflowRecords(any(User.class), any(RepositoryConnection.class));
+        Set<Resource> viewableRecords = Set.of(vf.createIRI("https://mobi.com/records#workflow1"),
+                vf.createIRI("https://mobi.com/records#workflow2"),
+                vf.createIRI("https://mobi.com/records#workflow3"),
+                vf.createIRI("https://mobi.com/records#workflow4"));
+        Mockito.doReturn(Collections.emptySet()).when(workflowManager).getViewableWorkflowRecords(any(Resource.class));
+        Mockito.doReturn(viewableRecords).when(workflowManager).getViewableWorkflowRecords(adminIri);
         try (RepositoryConnection conn = systemRepository.getConnection()) {
             Model workflowDataSystem = Rio.parse(getClass().getResourceAsStream("/find-workflow-data-system.trig"), "", RDFFormat.TRIG);
             conn.add(workflowDataSystem);
@@ -382,7 +364,7 @@ public class SimpleWorkflowManagerTest extends OrmEnabledTestCase {
             PaginatedWorkflowSearchParams searchParams = new PaginatedWorkflowSearchParams.Builder()
                     .build();
 
-            PaginatedSearchResults<ObjectNode> results = workflowManager.findWorkflowRecords(searchParams, adminUser, conn);
+            PaginatedSearchResults<ObjectNode> results = workflowManager.findWorkflowRecords(searchParams, adminUser);
             assertNotNull(results);
             assertNotNull(results.getPage());
             assertEquals(4, results.getTotalSize());
@@ -434,7 +416,7 @@ public class SimpleWorkflowManagerTest extends OrmEnabledTestCase {
                     Optional.ofNullable(params.get("offset")).ifPresent((input) -> searchParamsBuilder.offset(input.asInt()));
                     Optional.ofNullable(params.get("ascending")).ifPresent((input) -> searchParamsBuilder.ascending(input.asBoolean()));
                 }
-                PaginatedSearchResults<ObjectNode> results = workflowManager.findWorkflowRecords(searchParamsBuilder.build(), adminUser, conn);
+                PaginatedSearchResults<ObjectNode> results = workflowManager.findWorkflowRecords(searchParamsBuilder.build(), adminUser);
                 assertNotNull(results);
 
                 ObjectNode jsonResults = mapper.createObjectNode();
@@ -726,7 +708,7 @@ public class SimpleWorkflowManagerTest extends OrmEnabledTestCase {
                     Optional.ofNullable(params.get("offset")).ifPresent((input) -> searchParamsBuilder.offset(input.asInt()));
                     Optional.ofNullable(params.get("ascending")).ifPresent((input) -> searchParamsBuilder.ascending(input.asBoolean()));
                 }
-                PaginatedSearchResults<ObjectNode> results = workflowManager.findWorkflowExecutionActivities(workflowRecordIri, searchParamsBuilder.build(), adminUser, conn);
+                PaginatedSearchResults<ObjectNode> results = workflowManager.findWorkflowExecutionActivities(workflowRecordIri, searchParamsBuilder.build(), adminUser);
                 assertNotNull(results);
                 ObjectNode jsonResults = mapper.createObjectNode();
                 jsonResults.put("totalSize", results.getTotalSize());

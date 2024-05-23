@@ -32,6 +32,17 @@ import { WorkflowsStateService } from '../../services/workflows-state.service';
  * to delete, and a button to download. The run button is enabled based on the number of provided workflows, whether a
  * workflow is running, whether all the workflows are active, and whether the user has modify MASTER permission on all
  * the workflows.
+ * 
+ * @param {WorkflowSchema} records A list of representations of workflows as the target of the workflow controls
+ * @param {boolean} currentlyRunning Whether a workflow is currently running in the system
+ * @param {boolean} canCreate Whether the current user is allowed to create workflows
+ * @param {Function} onRun A function to call when the run button is clicked. Expects an argument of a workflows array
+ * @param {Function} onDownload A function to call when the download button is clicked. Expects an argument of a
+ * workflows array
+ * @param {Function} onDelete A function to call when the delete button is clicked. Expects an argument of a workflows 
+ * array
+ * @param {Function} onCreate A function to call when the create button is clicked
+ * @param {Function} onUpload A function to call when the upload button is clicked
  */
 @Component({
   selector: 'app-workflow-controls',

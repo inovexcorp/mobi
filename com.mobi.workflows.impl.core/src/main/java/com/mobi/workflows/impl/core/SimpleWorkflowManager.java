@@ -83,8 +83,10 @@ import com.mobi.workflows.api.trigger.TriggerHandler;
 import com.mobi.workflows.exception.InvalidWorkflowException;
 import com.mobi.workflows.impl.core.fedx.FedXUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.time.StopWatch;
 import org.eclipse.rdf4j.common.exception.ValidationException;
 import org.eclipse.rdf4j.federated.exception.FedXException;
+import org.eclipse.rdf4j.federated.repository.FedXRepository;
 import org.eclipse.rdf4j.model.BNode;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Literal;
@@ -95,7 +97,6 @@ import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
-import org.eclipse.rdf4j.model.impl.LinkedHashModel;
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.model.vocabulary.RDF4J;
@@ -109,6 +110,7 @@ import org.eclipse.rdf4j.query.TupleQueryResult;
 import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.RepositoryException;
+import org.eclipse.rdf4j.repository.RepositoryResult;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFParser;
@@ -118,6 +120,7 @@ import org.eclipse.rdf4j.sail.memory.MemoryStore;
 import org.eclipse.rdf4j.sail.shacl.ShaclSail;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.component.annotations.ReferencePolicy;
@@ -139,7 +142,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -168,6 +170,11 @@ public class SimpleWorkflowManager implements WorkflowManager, EventHandler {
     private static final String GET_ACTION_EXECUTIONS;
     // Substitutions
     private static final String FIND_RECORDS_SELECT_VARIABLES = "%SELECT_VARIABLES%";
+    private static final String FILTER_SEARCH = "%FILTER_SEARCH%";
+    private static final String FILTER_STARTING_AFTER = "%FILTER_STARTING_AFTER%";
+    private static final String FILTER_ENDING_BEFORE = "%FILTER_ENDING_BEFORE%";
+    private static final String FILTER_STATUS = "%FILTER_STATUS%";
+    private static final String VIEWABLE_RECORDS = "%VIEWABLE_RECORDS%";
     // Bindings
     private static final String AT_LOCATION = "http://www.w3.org/ns/prov#atLocation";
     private static final String ACTIVITY_IRI_BINDING = "activityIri";
@@ -175,10 +182,6 @@ public class SimpleWorkflowManager implements WorkflowManager, EventHandler {
     private static final String REQUEST_USER_IRI_BINDING = "requestUserIri";
     private static final String CATALOG_BINDING = "catalog";
     private static final String RECORD_COUNT_BINDING = "count";
-    private static final String SEARCH_BINDING = "searchText";
-    private static final String STARTING_AFTER_FILTER_BINDING = "startingAfterFilter";
-    private static final String ENDING_BEFORE_FILTER_BINDING = "endingBeforeFilter";
-    private static final String STATUS_FILTER_BINDING = "statusFilter";
     private static final List<String> FIND_WORKFLOW_RECORDS_BINDINGS = Stream.of(
             "iri", "title", "issued", "modified", "description", "active", "status", "workflowIRI", "master",
             "executionId", "executorIri", "executorUsername", "executorDisplayName", "startTime", "endTime",
@@ -280,16 +283,25 @@ public class SimpleWorkflowManager implements WorkflowManager, EventHandler {
     @Reference
     protected EventAdmin eventAdmin;
 
-    protected FedXUtils fedXUtils;
+    protected FedXRepository fedXRepository;
 
     @Reference
     BNodeService bNodeService;
 
     @Activate
     protected void startService() {
-        fedXUtils = new FedXUtils();
+        System.setProperty("org.eclipse.rdf4j.repository.debug", "true");
+        FedXUtils fedXUtils = new FedXUtils();
+        this.fedXRepository = fedXUtils.getFedXRepo(configProvider.getRepository(), provRepo);
         ProvOntologyLoader.loadOntology(provRepo, WorkflowManager.class.getResourceAsStream("/workflows.ttl"));
         initializeExecutingWorkflowsList();
+    }
+
+    @Deactivate
+    protected void stopService() {
+        if (this.fedXRepository != null && this.fedXRepository.isInitialized()) {
+            this.fedXRepository.shutDown();
+        }
     }
 
     @Reference(cardinality = ReferenceCardinality.MULTIPLE, policy = ReferencePolicy.DYNAMIC)
@@ -396,140 +408,110 @@ public class SimpleWorkflowManager implements WorkflowManager, EventHandler {
         }
     }
 
-    /**
-     * Creates a model with triples representing which WorkflowRecords for readable by the provided user. Each Viewable
-     * Record is represented with a triple of the format `UserIRI policy:Read RecordIRI`. Queries over the provided
-     * RepositoryConnection to collect the WorkflowRecord IRIs, expected to be the system repository.
-     *
-     * @param requestUser The User requesting to read WorkflowRecords
-     * @param conn A System Repo Connection
-     * @return Model with triples representing which WorkflowRecords the user can read
-     */
-    protected Model populateViewableWorkflowRecords(User requestUser, RepositoryConnection conn) {
-        Model memoryView = new LinkedHashModel();
-        // Filter by Viewable WorkflowRecords for User
-        Map<String, Literal> subjectAttrs = new HashMap<>();
-        Map<String, Literal> actionAttrs = new HashMap<>();
-
-        IRI readActionIri = vf.createIRI(Read.TYPE);
-        subjectAttrs.put(XACML.SUBJECT_ID, vf.createLiteral(requestUser.getResource().stringValue()));
-        actionAttrs.put(XACML.ACTION_ID, vf.createLiteral(readActionIri.stringValue()));
-
-        List<IRI> resourceIds = conn.getStatements(null, RDF.TYPE, vf.createIRI(WorkflowRecord.TYPE)).stream()
-                .map(stmt -> (IRI) stmt.getSubject())
-                .toList();
-
-        if (resourceIds.isEmpty()) {
-            return memoryView;
-        }
-        // Create PDP Request
-        Request request = pdp.createRequest(List.of((IRI) requestUser.getResource()), subjectAttrs, resourceIds,
-                new HashMap<>(), List.of(readActionIri), actionAttrs);
-
-        Set<String> viewableRecords = pdp.filter(request, vf.createIRI(POLICY_PERMIT_OVERRIDES));
-
-        for (String recordIRI: viewableRecords) {
-            memoryView.add(requestUser.getResource(), readActionIri, vf.createIRI(recordIRI));
-        }
-        return memoryView;
-    }
-
     @Override
     public PaginatedSearchResults<ObjectNode> findWorkflowRecords(PaginatedWorkflowSearchParams searchParams,
-                                                                  User requestUser, RepositoryConnection conn) {
-        try {
-            Model viewableWorkflowRecordsModel = populateViewableWorkflowRecords(requestUser, conn);
-            // Create Federated Repository
-            Repository fedXRepo = fedXUtils.getFedXRepoWithModel(viewableWorkflowRecordsModel,
-                    conn.getRepository(),
-                    provRepo);
-            // Get Total Count
-            TupleQuery countQuery = fedXRepo.getConnection().prepareTupleQuery(
-                    FIND_WORKFLOWS_RECORDS.replace(FIND_RECORDS_SELECT_VARIABLES,
-                            "(COUNT(DISTINCT ?iri) as ?count)"));
-            setFindWorkflowRecordsQueryBindings(searchParams, requestUser, countQuery);
-
+                                                                  User requestUser) {
+        StopWatch watch = new StopWatch();
+        startWatch(watch, "viewable records for records");
+        Set<Resource> viewableRecords = getViewableWorkflowRecords(requestUser.getResource());
+        stopWatch(watch, "viewable records for records");
+        startWatch(watch, "inject record count filters");
+        String query = injectFilters(searchParams, FIND_WORKFLOWS_RECORDS.replace(FIND_RECORDS_SELECT_VARIABLES,
+                "(COUNT(DISTINCT ?iri) as ?count)"), viewableRecords);
+        stopWatch(watch, "inject record count filters");
+        startWatch(watch, "prepare record query");
+        // Get Total Count
+        try (RepositoryConnection fedXRepoConnection = this.fedXRepository.getConnection()) {
+            TupleQuery countQuery = fedXRepoConnection.prepareTupleQuery(query);
+            stopWatch(watch, "prepare record query");
+            startWatch(watch, "set record count bindings");
+            setFindWorkflowRecordsQueryBindings(requestUser, countQuery);
+            stopWatch(watch, "set record count bindings");
+            startWatch(watch, "record count evaluate");
             // Evaluate
-            TupleQueryResult countResults = countQuery.evaluate();
-
             int totalCount;
-            BindingSet countBindingSet;
-            if (countResults.hasNext()
-                    && (countBindingSet = countResults.next()).getBindingNames().contains(RECORD_COUNT_BINDING)) {
-                totalCount = Bindings.requiredLiteral(countBindingSet, RECORD_COUNT_BINDING).intValue();
-                countResults.close();
-                if (totalCount == 0) {
+            try (TupleQueryResult countResults = countQuery.evaluate()) {
+                stopWatch(watch, "record count evaluate");
+                startWatch(watch, "get record count");
+                BindingSet countBindingSet;
+                if (countResults.hasNext()
+                        && (countBindingSet = countResults.next()).getBindingNames().contains(RECORD_COUNT_BINDING)) {
+                    totalCount = Bindings.requiredLiteral(countBindingSet, RECORD_COUNT_BINDING).intValue();
+                    stopWatch(watch, "get record count zero count");
+                    if (totalCount == 0) {
+                        return WorkflowSearchResults.emptyResults();
+                    }
+                } else {
+                    stopWatch(watch, "get record count no results");
                     return WorkflowSearchResults.emptyResults();
                 }
-            } else {
-                countResults.close();
-                conn.close();
-                return WorkflowSearchResults.emptyResults();
             }
             log.debug("Record count: " + totalCount);
-            return executeFindWorkflowRecordsQuery(searchParams, totalCount, requestUser, fedXRepo.getConnection());
-        } catch (FedXException | NoSuchElementException exp) {
-            throw new MobiException(exp);
+            return executeFindWorkflowRecordsQuery(searchParams, totalCount, requestUser, fedXRepoConnection,
+                    viewableRecords);
+        } catch (MalformedQueryException | FedXException ex) {
+            throw new MobiException(ex);
         }
     }
 
     private PaginatedSearchResults<ObjectNode> executeFindWorkflowRecordsQuery(
-            PaginatedWorkflowSearchParams searchParams, int totalCount, User requestUser, RepositoryConnection conn) {
+            PaginatedWorkflowSearchParams searchParams, int totalCount, User requestUser, RepositoryConnection conn,
+            Set<Resource> viewableRecords) {
+        StopWatch watch = new StopWatch();
+        startWatch(watch, "create records query string");
+        // Prepare Query
+        int offset = searchParams.getOffset();
+        int limit = searchParams.getLimit().orElse(totalCount);
+
+        if (offset > totalCount) {
+            throw new IllegalArgumentException("Offset exceeds total size");
+        }
+        String bindings = String.join("\n", FIND_WORKFLOW_RECORDS_BINDINGS
+                .stream().map(binding -> String.format("?%s", binding)).toList());
+        StringBuilder queryStringBuilder = new StringBuilder(FIND_WORKFLOWS_RECORDS
+                .replace(FIND_RECORDS_SELECT_VARIABLES, bindings));
+        // Build Suffix
+        StringBuilder querySuffix = new StringBuilder();
+        // ORDER BY & Ascending
+        String sortByParam = searchParams.getSortBy().orElse("title");
+        boolean isAsc = searchParams.getAscending().orElse(true);
+        if (isAsc) {
+            querySuffix.append(String.format("\nORDER BY ASC(?%s)", sortByParam));
+        } else {
+            querySuffix.append(String.format("\nORDER BY DESC(?%s)", sortByParam));
+        }
+        // LIMIT and OFFSET
+        querySuffix.append("\nLIMIT ").append(limit).append("\nOFFSET ").append(offset);
+        queryStringBuilder.append(querySuffix);
+        String queryString = injectFilters(searchParams, queryStringBuilder.toString(), viewableRecords);
+        stopWatch(watch, "create records query string");
         try {
-            // Prepare Query
-            int offset = searchParams.getOffset();
-            int limit = searchParams.getLimit().orElse(totalCount);
-
-            if (offset > totalCount) {
-                throw new IllegalArgumentException("Offset exceeds total size");
-            }
-            String bindings = String.join("\n", FIND_WORKFLOW_RECORDS_BINDINGS
-                    .stream().map(binding -> String.format("?%s", binding)).toList());
-            StringBuilder queryString = new StringBuilder(FIND_WORKFLOWS_RECORDS
-                    .replace(FIND_RECORDS_SELECT_VARIABLES, bindings));
-            // Build Suffix
-            StringBuilder querySuffix = new StringBuilder();
-            // ORDER BY & Ascending
-            String sortByParam = searchParams.getSortBy().orElse("title");
-            boolean isAsc = searchParams.getAscending().orElse(true);
-            if (isAsc) {
-                querySuffix.append(String.format("\nORDER BY ASC(?%s)", sortByParam));
-            } else {
-                querySuffix.append(String.format("\nORDER BY DESC(?%s)", sortByParam));
-            }
-            // LIMIT and OFFSET
-            querySuffix.append("\nLIMIT ").append(limit).append("\nOFFSET ").append(offset);
-            queryString.append(querySuffix);
-
-            TupleQuery query = conn.prepareTupleQuery(queryString.toString());
-            setFindWorkflowRecordsQueryBindings(searchParams, requestUser, query);
-
+            startWatch(watch, "prepare records query");
+            TupleQuery query = conn.prepareTupleQuery(queryString);
+            stopWatch(watch, "prepare records query");
+            startWatch(watch, "set records bindings");
+            setFindWorkflowRecordsQueryBindings(requestUser, query);
+            stopWatch(watch, "set records bindings");
             log.trace("Query Plan:\n" + query);
+            startWatch(watch, "records evaluate");
             // Get Results
-            TupleQueryResult result = query.evaluate();
-            List<ObjectNode> records = RestUtils.convertToObjectNodes(result, FIND_WORKFLOW_RECORDS_BINDINGS);
-            result.close();
-
+            List<ObjectNode> records;
+            try (TupleQueryResult result = query.evaluate()) {
+                stopWatch(watch, "records evaluate");
+                startWatch(watch, "convert records results");
+                records = RestUtils.convertToObjectNodes(result, FIND_WORKFLOW_RECORDS_BINDINGS);
+                stopWatch(watch, "convert records results");
+            }
             log.debug("Result set size: " + records.size());
-
             int pageNumber = (limit > 0) ? (offset / limit) + 1 : 1;
             return new WorkflowSearchResults(records, totalCount, limit, pageNumber);
-        } catch (MalformedQueryException e) {
-            throw new MobiException(e);
+        } catch (MalformedQueryException ex) {
+            throw new MobiException(ex);
         }
     }
 
-    private void setFindWorkflowRecordsQueryBindings(PaginatedWorkflowSearchParams searchParams, User requestUser,
-                                                     TupleQuery query) {
+    private void setFindWorkflowRecordsQueryBindings(User requestUser, TupleQuery query) {
         query.setBinding(REQUEST_USER_IRI_BINDING, requestUser.getResource());
-        searchParams.getSearchText().ifPresent(searchText ->
-                query.setBinding(SEARCH_BINDING, vf.createLiteral(searchText)));
-        searchParams.getStartingAfter().ifPresent(dateTime ->
-                query.setBinding(STARTING_AFTER_FILTER_BINDING, vf.createLiteral(dateTime)));
-        searchParams.getEndingBefore().ifPresent(dateTime ->
-                query.setBinding(ENDING_BEFORE_FILTER_BINDING, vf.createLiteral(dateTime)));
-        searchParams.getStatus().ifPresent(status ->
-                query.setBinding(STATUS_FILTER_BINDING, vf.createLiteral(status)));
     }
 
     @Override
@@ -656,103 +638,114 @@ public class SimpleWorkflowManager implements WorkflowManager, EventHandler {
 
     @Override
     public PaginatedSearchResults<ObjectNode> findWorkflowExecutionActivities(Resource workflowRecordIri,
-                                                                              PaginatedWorkflowSearchParams searchParams,
-                                                                              User requestUser,
-                                                                              RepositoryConnection conn) {
-        try {
-            Model viewableWorkflowRecordsModel = populateViewableWorkflowRecords(requestUser, conn);
-            // Create Federated Repository
-            Repository fedXRepo = fedXUtils.getFedXRepoWithModel(viewableWorkflowRecordsModel,
-                    conn.getRepository(), provRepo);
-            // Get Total Count
-            TupleQuery countQuery = fedXRepo.getConnection()
-                    .prepareTupleQuery(FIND_WORKFLOWS_ACTIVITIES.replace(FIND_RECORDS_SELECT_VARIABLES,
-                            "(COUNT(DISTINCT ?executionId) as ?count)"));
-            setWorkflowExecutionActivitiesQueryBindings(workflowRecordIri, searchParams, requestUser, countQuery);
-
+                                                                      PaginatedWorkflowSearchParams searchParams,
+                                                                      User requestUser) {
+        StopWatch watch = new StopWatch();
+        startWatch(watch, "viewable records for executions");
+        Set<Resource> viewableRecords = getViewableWorkflowRecords(requestUser.getResource());
+        if (!viewableRecords.contains(workflowRecordIri)) {
+            log.debug("User " + requestUser.getResource() + " does not have permission to view activities for "
+                    + workflowRecordIri);
+            stopWatch(watch, "viewable records for executions no permissions");
+            return WorkflowSearchResults.emptyResults();
+        }
+        stopWatch(watch, "viewable records for executions");
+        startWatch(watch, "inject execution count filters");
+        String query = injectFilters(searchParams, FIND_WORKFLOWS_ACTIVITIES
+                .replace(FIND_RECORDS_SELECT_VARIABLES, "(COUNT(DISTINCT ?executionId) as ?count)"), viewableRecords);
+        stopWatch(watch, "inject execution count filters");
+        startWatch(watch, "prepare execution count query");
+        // Get Total Count
+        try (RepositoryConnection fedXRepoConnection = this.fedXRepository.getConnection()) {
+            TupleQuery countQuery = fedXRepoConnection.prepareTupleQuery(query);
+            stopWatch(watch, "prepare execution count query");
+            startWatch(watch, "set execution count bindings");
+            setWorkflowExecutionActivitiesQueryBindings(workflowRecordIri, countQuery);
+            stopWatch(watch, "set execution count bindings");
+            startWatch(watch, "execution count evaluate");
             // Evaluate
-            TupleQueryResult countResults = countQuery.evaluate();
             int totalCount;
-            BindingSet countBindingSet;
-            if (countResults.hasNext()
-                    && (countBindingSet = countResults.next()).getBindingNames().contains(RECORD_COUNT_BINDING)) {
-                totalCount = Bindings.requiredLiteral(countBindingSet, RECORD_COUNT_BINDING).intValue();
-                countResults.close();
-                if (totalCount == 0) {
+            try (TupleQueryResult countResults = countQuery.evaluate()) {
+                stopWatch(watch, "execution count evaluate");
+                startWatch(watch, "get execution count");
+                BindingSet countBindingSet;
+                if (countResults.hasNext()
+                        && (countBindingSet = countResults.next()).getBindingNames().contains(RECORD_COUNT_BINDING)) {
+                    totalCount = Bindings.requiredLiteral(countBindingSet, RECORD_COUNT_BINDING).intValue();
+                    stopWatch(watch, "get execution count");
+                    if (totalCount == 0) {
+                        return WorkflowSearchResults.emptyResults();
+                    }
+                } else {
+                    stopWatch(watch, "get execution count");
                     return WorkflowSearchResults.emptyResults();
                 }
-            } else {
-                countResults.close();
-                conn.close();
-                return WorkflowSearchResults.emptyResults();
             }
             log.debug("Workflow Activities count: " + totalCount);
-            return executeWorkflowExecutionActivities(workflowRecordIri,
-                    searchParams, totalCount, requestUser, fedXRepo.getConnection());
-        } catch (FedXException | NoSuchElementException exp) {
-            throw new MobiException(exp);
+            return executeWorkflowExecutions(workflowRecordIri, searchParams, totalCount, fedXRepoConnection,
+                    viewableRecords);
+        } catch (MalformedQueryException e) {
+            throw new MobiException(e);
         }
     }
 
-    private PaginatedSearchResults<ObjectNode> executeWorkflowExecutionActivities(Resource workflowRecordIri,
-                                                                                  PaginatedWorkflowSearchParams searchParams,
-                                                                                  int totalCount,
-                                                                                  User requestUser,
-                                                                                  RepositoryConnection conn) {
+    private PaginatedSearchResults<ObjectNode> executeWorkflowExecutions(Resource workflowRecordIri,
+                                                                         PaginatedWorkflowSearchParams searchParams,
+                                                                         int totalCount,
+                                                                         RepositoryConnection conn,
+                                                                         Set<Resource> viewableRecords) {
+        StopWatch watch = new StopWatch();
+        startWatch(watch, "create executions query string");
+        // Prepare Query
+        int offset = searchParams.getOffset();
+        int limit = searchParams.getLimit().orElse(totalCount);
+
+        if (offset > totalCount) {
+            throw new IllegalArgumentException("Offset exceeds total size");
+        }
+        String bindings = String.join("\n", FIND_WORKFLOWS_ACTIVITIES_BINDINGS
+                .stream().map(binding -> String.format("?%s", binding)).toList());
+        StringBuilder queryStringBuilder = new StringBuilder(
+                FIND_WORKFLOWS_ACTIVITIES.replace(FIND_RECORDS_SELECT_VARIABLES, bindings));
+
+        // Build Suffix
+        StringBuilder querySuffix = new StringBuilder();
+        // ORDER BY & Ascending
+        String sortByParam = searchParams.getSortBy().orElse("startTime");
+        boolean isAsc = searchParams.getAscending().orElse(true);
+        if (isAsc) {
+            querySuffix.append(String.format("\nORDER BY ASC(?%s)", sortByParam));
+        } else {
+            querySuffix.append(String.format("\nORDER BY DESC(?%s)", sortByParam));
+        }
+        // LIMIT and OFFSET
+        querySuffix.append("\nLIMIT ").append(limit).append("\nOFFSET ").append(offset);
+        queryStringBuilder.append(querySuffix);
+        String queryString = injectFilters(searchParams, queryStringBuilder.toString(), viewableRecords);
+        stopWatch(watch, "create executions query string");
+        startWatch(watch, "prepare executions query");
         try {
-            // Prepare Query
-            int offset = searchParams.getOffset();
-            int limit = searchParams.getLimit().orElse(totalCount);
-
-            if (offset > totalCount) {
-                throw new IllegalArgumentException("Offset exceeds total size");
-            }
-            String bindings = String.join("\n", FIND_WORKFLOWS_ACTIVITIES_BINDINGS
-                    .stream().map(binding -> String.format("?%s", binding)).toList());
-            StringBuilder queryString = new StringBuilder(
-                    FIND_WORKFLOWS_ACTIVITIES.replace(FIND_RECORDS_SELECT_VARIABLES, bindings));
-
-            // Build Suffix
-            StringBuilder querySuffix = new StringBuilder();
-            // ORDER BY & Ascending
-            String sortByParam = searchParams.getSortBy().orElse("startTime");
-            boolean isAsc = searchParams.getAscending().orElse(true);
-            if (isAsc) {
-                querySuffix.append(String.format("\nORDER BY ASC(?%s)", sortByParam));
-            } else {
-                querySuffix.append(String.format("\nORDER BY DESC(?%s)", sortByParam));
-            }
-            // LIMIT and OFFSET
-            querySuffix.append("\nLIMIT ").append(limit).append("\nOFFSET ").append(offset);
-            queryString.append(querySuffix);
-
-            TupleQuery query = conn.prepareTupleQuery(queryString.toString());
-            setWorkflowExecutionActivitiesQueryBindings(workflowRecordIri, searchParams, requestUser, query);
-
+            TupleQuery query = conn.prepareTupleQuery(queryString);
+            stopWatch(watch, "prepare executions query");
+            startWatch(watch, "set executions bindings");
+            setWorkflowExecutionActivitiesQueryBindings(workflowRecordIri, query);
+            stopWatch(watch, "set executions bindings");
+            startWatch(watch, "executions evaluate");
             log.trace("WorkflowExecutionActivities Query Plan:\n" + query);
             // Get Results
-            TupleQueryResult result = query.evaluate();
-            List<ObjectNode> records = RestUtils.convertToObjectNodes(result, FIND_WORKFLOWS_ACTIVITIES_BINDINGS);
-            result.close();
+            List<ObjectNode> records;
+            try (TupleQueryResult result = query.evaluate()) {
+                stopWatch(watch, "executions evaluate");
+                startWatch(watch, "convert executions results");
+                records = RestUtils.convertToObjectNodes(result, FIND_WORKFLOWS_ACTIVITIES_BINDINGS);
+                stopWatch(watch, "convert executions results");
+            }
             log.debug("WorkflowExecutionActivities Result set size: " + records.size());
             int pageNumber = (limit > 0) ? (offset / limit) + 1 : 1;
             return new WorkflowSearchResults(records, totalCount, limit, pageNumber);
         } catch (MalformedQueryException e) {
             throw new MobiException(e);
         }
-    }
-
-    private void setWorkflowExecutionActivitiesQueryBindings(Resource workflowRecordId,
-                                                             PaginatedWorkflowSearchParams searchParams,
-                                                             User requestUser, TupleQuery query) {
-        query.setBinding(REQUEST_USER_IRI_BINDING, requestUser.getResource());
-        query.setBinding(WORKFLOW_RECORD_IRI_BINDING, workflowRecordId);
-        searchParams.getStartingAfter().ifPresent(dateTime ->
-                query.setBinding(STARTING_AFTER_FILTER_BINDING, vf.createLiteral(dateTime)));
-        searchParams.getEndingBefore().ifPresent(dateTime ->
-                query.setBinding(ENDING_BEFORE_FILTER_BINDING, vf.createLiteral(dateTime)));
-        searchParams.getStatus().ifPresent(status ->
-                query.setBinding(STATUS_FILTER_BINDING, vf.createLiteral(status)));
     }
 
     @Override
@@ -812,8 +805,8 @@ public class SimpleWorkflowManager implements WorkflowManager, EventHandler {
                 .orElseThrow(() -> new IllegalArgumentException("Workflow " + workflowId + " does not exist"));
         List<Resource> executingWorkflows = workflowEngine.getExecutingWorkflows();
         if (!executingWorkflows.isEmpty()) {
-            throw new IllegalArgumentException("There is currently a workflow executing. Please wait a bit and try " +
-                    "again.");
+            throw new IllegalArgumentException("There is currently a workflow executing. Please wait a bit and try "
+                    + "again.");
         }
 
         executingWorkflows.add(workflow.getResource());
@@ -871,6 +864,107 @@ public class SimpleWorkflowManager implements WorkflowManager, EventHandler {
                 throw new MobiException("No workflow engine configured.");
             }
         }
+    }
+
+    @Override
+    public void validateWorkflow(Model workflowModel) throws IllegalArgumentException {
+        log.debug("Validating provided Workflow RDF");
+        ShaclSail shaclSail = new ShaclSail(new MemoryStore());
+        Repository validationRepo = new SailRepository(shaclSail);
+        List<Resource> undefinedWorkflowIris = new ArrayList<>();
+        List<Statement> systemRepoTriplesToAdd = new ArrayList<>();
+
+        if (!workflowModel.contains(null, RDF.TYPE, vf.createIRI(Workflow.TYPE))) {
+            throw new IllegalArgumentException("No workflow provided in RDF data.");
+        }
+
+        for (Statement statement : workflowModel) {
+            Resource subject = statement.getSubject();
+            IRI predicate = statement.getPredicate();
+            Value object = statement.getObject();
+
+            if (subject instanceof IRI && !predicate.equals(RDF.TYPE)) {
+                if (object instanceof Resource && !workflowModel.subjects().contains((Resource) object)) {
+                    undefinedWorkflowIris.add((Resource) object);
+                }
+            }
+        }
+
+        try (RepositoryConnection sysConn = configProvider.getRepository().getConnection()) {
+            String queryString = buildSparqlQuery(undefinedWorkflowIris);
+            GraphQuery query = sysConn.prepareGraphQuery(queryString);
+
+            try (GraphQueryResult result = query.evaluate()) {
+                result.forEach(systemRepoTriplesToAdd::add);
+            }
+        } catch (RepositoryException e) {
+            e.printStackTrace();
+        }
+
+        try (RepositoryConnection conn = validationRepo.getConnection()) {
+            conn.begin();
+            log.trace("Adding Workflow Model");
+            conn.add(workflowModel);
+            log.trace("Adding System Repo Definitions");
+            conn.add(systemRepoTriplesToAdd);
+            log.trace("Adding base SHACL definitions");
+
+            ModelFactory modelFactory = new DynamicModelFactory();
+            Map<BNode, IRI> skolemizedBNodes = new HashMap<>();
+            StatementCollector stmtCollector = new SkolemizedStatementCollector(modelFactory,
+                    bNodeService, skolemizedBNodes);
+            RDFParser parser = Rio.createParser(RDFFormat.TURTLE);
+            parser.setRDFHandler(stmtCollector);
+            parser.parse(WorkflowManager.class.getResourceAsStream("/workflows.ttl"), "");
+            conn.add(stmtCollector.getStatements(), RDF4J.SHACL_SHAPE_GRAPH);
+
+            log.trace("Adding Trigger SHACL definitions");
+            for (TriggerHandler<Trigger> handler : triggerHandlers.values()) {
+                stmtCollector.clear();
+                parser.parse(handler.getShaclDefinition());
+                conn.add(stmtCollector.getStatements(), RDF4J.SHACL_SHAPE_GRAPH);
+            }
+            log.trace("Adding Action SHACL definitions");
+            for (ActionHandler<Action> handler : actionHandlers.values()) {
+                stmtCollector.clear();
+                parser.parse(handler.getShaclDefinition());
+                conn.add(stmtCollector.getStatements(), RDF4J.SHACL_SHAPE_GRAPH);
+            }
+            conn.commit();
+            log.trace("Workflow RDF deemed valid");
+        } catch (IOException ex) {
+            log.error("Could not read in workflow ontology", ex);
+        } catch (RepositoryException ex) {
+            Throwable cause = ex.getCause();
+            if (cause instanceof ValidationException) {
+                Model validationReportModel = ((ValidationException) cause).validationReportAsModel();
+                StringWriter sw = new StringWriter();
+                Rio.write(validationReportModel, sw, RDFFormat.TURTLE);
+                throw new InvalidWorkflowException("Workflow definition is not valid.", ex, validationReportModel);
+            } else {
+                throw ex;
+            }
+        } finally {
+            validationRepo.shutDown();
+        }
+    }
+
+    /**
+     * Builds a SPARQL query string based on a list of values.
+     *
+     * @param values A list of RDF values used to construct the query
+     * @return A SPARQL query string.
+     */
+    protected String buildSparqlQuery(List<Resource> values) {
+        StringBuilder queryStringBuilder = new StringBuilder("CONSTRUCT {?s ?p ?o} WHERE { ?s ?p ?o . FILTER(?s IN (");
+        for (int i = 0; i < values.size(); i++) {
+            queryStringBuilder.append("<").append(values.get(i).stringValue()).append(">");
+            if (i < values.size() - 1) {
+                queryStringBuilder.append(", ");
+            }
+        }
+        queryStringBuilder.append(")) }");
+        return queryStringBuilder.toString();
     }
 
     protected TriggerHandler<Trigger> getTriggerHandler(Resource triggerId, Model model) {
@@ -953,125 +1047,90 @@ public class SimpleWorkflowManager implements WorkflowManager, EventHandler {
         }
     }
 
-    @Override
-    public void validateWorkflow(Model workflowModel) throws IllegalArgumentException {
-        log.debug("Validating provided Workflow RDF");
-        ShaclSail shaclSail = new ShaclSail(new MemoryStore());
-        Repository validationRepo = new SailRepository(shaclSail);
-        List<Resource> undefinedWorkflowIris = new ArrayList<>();
-        List<Statement> systemRepoTriplesToAdd = new ArrayList<>();
+    /**
+     * Retrieves the list of which WorkflowRecords are readable by the provided user. Queries the Catalog repository to
+     * collect the total list of WorkflowRecord IRIs.
+     *
+     * @param requestUserIri The IRI of the user requesting to read WorkflowRecords
+     * @return Set of WorkflowRecord IRIs that the user can read
+     */
+    protected Set<Resource> getViewableWorkflowRecords(Resource requestUserIri) {
+        // Filter by Viewable WorkflowRecords for User
+        Map<String, Literal> subjectAttrs = new HashMap<>();
+        Map<String, Literal> actionAttrs = new HashMap<>();
 
-        if (!workflowModel.contains(null, RDF.TYPE, vf.createIRI(Workflow.TYPE))) {
-            throw new IllegalArgumentException("No workflow provided in RDF data.");
+        IRI readActionIri = vf.createIRI(Read.TYPE);
+        subjectAttrs.put(XACML.SUBJECT_ID, vf.createLiteral(requestUserIri.stringValue()));
+        actionAttrs.put(XACML.ACTION_ID, vf.createLiteral(readActionIri.stringValue()));
+
+        List<IRI> resourceIds;
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            resourceIds = conn.getStatements(null, RDF.TYPE, vf.createIRI(WorkflowRecord.TYPE)).stream()
+                    .map(stmt -> (IRI) stmt.getSubject())
+                    .toList();
         }
 
-        for (Statement statement : workflowModel) {
-            Resource subject = statement.getSubject();
-            IRI predicate = statement.getPredicate();
-            Value object = statement.getObject();
-
-            if (subject instanceof IRI && !predicate.equals(RDF.TYPE)) {
-                if (object instanceof Resource && !workflowModel.subjects().contains((Resource) object)) {
-                    undefinedWorkflowIris.add((Resource) object);
-                }
-            }
+        if (resourceIds.isEmpty()) {
+            return Collections.emptySet();
         }
+        // Create PDP Request
+        Request request = pdp.createRequest(List.of((IRI) requestUserIri), subjectAttrs, resourceIds,
+                new HashMap<>(), List.of(readActionIri), actionAttrs);
 
-        try (RepositoryConnection sysConn = configProvider.getRepository().getConnection()) {
-            String queryString = buildSparqlQuery(undefinedWorkflowIris);
-            GraphQuery query = sysConn.prepareGraphQuery(queryString);
-
-            try (GraphQueryResult result = query.evaluate()) {
-                result.forEach(statement -> {
-                    systemRepoTriplesToAdd.add(statement);
-                });
-            }
-        } catch (RepositoryException e) {
-            e.printStackTrace();
-        }
-
-        try (RepositoryConnection conn = validationRepo.getConnection()) {
-            conn.begin();
-            log.trace("Adding Workflow Model");
-            conn.add(workflowModel);
-            log.trace("Adding System Repo Definitions");
-            conn.add(systemRepoTriplesToAdd);
-            log.trace("Adding base SHACL definitions");
-
-            ModelFactory modelFactory = new DynamicModelFactory();
-            Map<BNode, IRI> skolemizedBNodes = new HashMap<>();
-            StatementCollector stmtCollector = new SkolemizedStatementCollector(modelFactory,
-                    bNodeService, skolemizedBNodes);
-            RDFParser parser = Rio.createParser(RDFFormat.TURTLE);
-            parser.setRDFHandler(stmtCollector);
-            parser.parse(WorkflowManager.class.getResourceAsStream("/workflows.ttl"), "");
-            conn.add(stmtCollector.getStatements(), RDF4J.SHACL_SHAPE_GRAPH);
-
-            log.trace("Adding Trigger SHACL definitions");
-            for (TriggerHandler<Trigger> handler : triggerHandlers.values()) {
-                stmtCollector.clear();
-                parser.parse(handler.getShaclDefinition());
-                conn.add(stmtCollector.getStatements(), RDF4J.SHACL_SHAPE_GRAPH);
-            }
-            log.trace("Adding Action SHACL definitions");
-            for (ActionHandler<Action> handler : actionHandlers.values()) {
-                stmtCollector.clear();
-                parser.parse(handler.getShaclDefinition());
-                conn.add(stmtCollector.getStatements(), RDF4J.SHACL_SHAPE_GRAPH);
-            }
-            conn.commit();
-            log.trace("Workflow RDF deemed valid");
-        } catch (IOException ex) {
-            log.error("Could not read in workflow ontology", ex);
-        } catch (RepositoryException ex) {
-            Throwable cause = ex.getCause();
-            if (cause instanceof ValidationException) {
-                Model validationReportModel = ((ValidationException) cause).validationReportAsModel();
-                StringWriter sw = new StringWriter();
-                Rio.write(validationReportModel, sw, RDFFormat.TURTLE);
-                throw new InvalidWorkflowException("Workflow definition is not valid.", ex, validationReportModel);
-            } else {
-                throw ex;
-            }
-        } finally {
-            validationRepo.shutDown();
-        }
+        return pdp.filter(request, vf.createIRI(POLICY_PERMIT_OVERRIDES)).stream()
+                .map(vf::createIRI).collect(Collectors.toSet());
     }
 
-    /**
-     * Builds a SPARQL query string based on a list of values.
-     *
-     * @param values A list of RDF values used to construct the query
-     * @return A SPARQL query string.
-     */
-    protected String buildSparqlQuery(List<Resource> values) {
-        StringBuilder queryStringBuilder = new StringBuilder("CONSTRUCT {?s ?p ?o} WHERE { ?s ?p ?o . FILTER(?s IN (");
-        for (int i = 0; i < values.size(); i++) {
-            queryStringBuilder.append("<").append(values.get(i).stringValue()).append(">");
-            if (i < values.size() - 1) {
-                queryStringBuilder.append(", ");
-            }
-        }
-        queryStringBuilder.append(")) }");
-        return queryStringBuilder.toString();
+    private String injectFilters(PaginatedWorkflowSearchParams searchParams, String query,
+                                 Set<Resource> viewableRecords) {
+        return query
+                .replace(FILTER_SEARCH, searchParams.getSearchText()
+                        .map(searchText -> "FILTER(CONTAINS(LCASE(?title), LCASE(\"" + searchText + "\")))").orElse(""))
+                .replace(FILTER_STARTING_AFTER, searchParams.getStartingAfter()
+                        .map(dateTime -> "FILTER(?startTime >= xsd:dateTime(\"" + dateTime + "\"))").orElse(""))
+                .replace(FILTER_ENDING_BEFORE, searchParams.getEndingBefore()
+                        .map(dateTime -> "FILTER(?startTime <= xsd:dateTime(\"" + dateTime + "\"))").orElse(""))
+                .replace(FILTER_STATUS, searchParams.getStatus()
+                        .map(status -> "FILTER(?status = \"" + status + "\")").orElse(""))
+                .replace(VIEWABLE_RECORDS, viewableRecords.stream()
+                        .map(iri -> "<" + iri.stringValue() + ">").collect(Collectors.joining(" ")));
+    }
+
+    private void setWorkflowExecutionActivitiesQueryBindings(Resource workflowRecordId, TupleQuery query) {
+        query.setBinding(WORKFLOW_RECORD_IRI_BINDING, workflowRecordId);
     }
 
     private User getUser(Resource userId, RepositoryConnection conn) {
-        Optional<Statement> usernameOpt = conn.getStatements(userId, vf.createIRI(User.username_IRI), null)
-                .stream().findFirst();
-
-        if (usernameOpt.isPresent()) {
-            String username = usernameOpt.get().getObject().stringValue();
-            Optional<User> userOpt = engineManager.retrieveUser(username);
-            if (userOpt.isEmpty()) {
-                log.error("No user could be found with IRI " + userId + ", using admin user instead");
+        try (RepositoryResult<Statement> stmts = conn.getStatements(userId, vf.createIRI(User.username_IRI), null)) {
+            if (stmts.hasNext()) {
+                String username = stmts.next().getObject().stringValue();
+                Optional<User> userOpt = engineManager.retrieveUser(username);
+                if (userOpt.isEmpty()) {
+                    log.error("No user could be found with IRI " + userId + ", using admin user instead");
+                } else {
+                    return userOpt.get();
+                }
             } else {
-                return userOpt.get();
+                log.error("No username set on user with IRI " + userId + ", Using admin user instead.");
             }
-        } else {
-            log.error("No username set on user with IRI " + userId + ", Using admin user instead.");
         }
         return engineManager.retrieveUser("admin").orElseThrow(() ->
                 new IllegalStateException("Admin user could not be found. Workflow will not be executed."));
+    }
+
+    private void startWatch(StopWatch watch, String tag) {
+        if (watch.isStarted()) {
+            watch.stop();
+            log.trace("StopWatch was already started. Stopping: " + watch.getTime() + "ms");
+            watch.reset();
+        }
+        log.trace("Start " + tag);
+        watch.start();
+    }
+
+    private void stopWatch(StopWatch watch, String tag) {
+        watch.stop();
+        log.trace("End " + tag + ": " + watch.getTime() + "ms");
+        watch.reset();
     }
 }
