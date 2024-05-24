@@ -81,7 +81,9 @@ import com.mobi.vfs.impl.commons.SimpleVirtualFilesystemConfig;
 import com.mobi.vfs.ontologies.documents.BinaryFile;
 import com.mobi.workflows.api.PaginatedWorkflowSearchParams;
 import com.mobi.workflows.api.WorkflowManager;
+import com.mobi.workflows.api.ontologies.workflows.Action;
 import com.mobi.workflows.api.ontologies.workflows.ActionExecution;
+import com.mobi.workflows.api.ontologies.workflows.Trigger;
 import com.mobi.workflows.api.ontologies.workflows.WorkflowExecutionActivity;
 import com.mobi.workflows.api.ontologies.workflows.WorkflowRecord;
 import com.mobi.workflows.api.ontologies.workflows.WorkflowRecordFactory;
@@ -94,6 +96,7 @@ import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 import org.eclipse.rdf4j.model.vocabulary.PROV;
+import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.rio.RDFFormat;
@@ -117,8 +120,10 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -1190,6 +1195,43 @@ public class WorkflowsRestTest extends MobiRestTestCXF {
         assertEquals(responseObject.get("error").asText(), "IllegalArgumentException");
         assertEquals(responseObject.get("errorMessage").asText(), "TriG data is not supported for upload changes.");
         assertNotEquals(responseObject.get("errorDetails"), null);
+    }
+
+    @Test
+    public void testGetWorkflowShaclDefinitions() throws Exception {
+        // Setup:
+        Model triggerModel = mf.createEmptyModel();
+        IRI triggerIRI = vf.createIRI("urn:someTrigger");
+        triggerModel.add(triggerIRI, RDF.TYPE, vf.createIRI(Trigger.TYPE));
+        Model actionModel = mf.createEmptyModel();
+        IRI actionIRI = vf.createIRI("urn:someAction");
+        actionModel.add(actionIRI, RDF.TYPE, vf.createIRI(Action.TYPE));
+        Map<Resource, Model> triggerMap = new HashMap<>();
+        triggerMap.put(triggerIRI, triggerModel);
+        Map<Resource, Model> actionMap = new HashMap<>();
+        actionMap.put(actionIRI, actionModel);
+        when(workflowManager.getTriggerShaclDefinitions()).thenReturn(triggerMap);
+        when(workflowManager.getActionShaclDefinitions()).thenReturn(actionMap);
+
+        Response response = target().path("workflows/shacl-definitions").request().get();
+        assertEquals(200, response.getStatus());
+        verify(workflowManager).getTriggerShaclDefinitions();
+        verify(workflowManager).getActionShaclDefinitions();
+        ObjectNode responseObject = (ObjectNode) mapper.readTree(response.readEntity(String.class));
+        assertTrue(responseObject.has("triggers"));
+        JsonNode triggers = responseObject.get("triggers");
+        assertNotNull(triggers);
+        assertTrue(triggers.has(triggerIRI.stringValue()));
+        JsonNode triggerJsonld = triggers.get(triggerIRI.stringValue());
+        assertNotNull(triggerJsonld);
+        assertTrue(triggerJsonld.isArray());
+        assertTrue(responseObject.has("actions"));
+        JsonNode actions = responseObject.get("actions");
+        assertNotNull(actions);
+        assertTrue(actions.has(actionIRI.stringValue()));
+        JsonNode actionJsonld = actions.get(actionIRI.stringValue());
+        assertNotNull(actionJsonld);
+        assertTrue(actionJsonld.isArray());
     }
 
     private String copyToTemp() throws IOException {

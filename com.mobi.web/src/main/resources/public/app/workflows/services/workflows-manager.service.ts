@@ -21,7 +21,7 @@
  * #L%
  */
 //Angular
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Injectable, NgZone } from '@angular/core';
 //Lodash
 import { forEach, get, has, isObject } from 'lodash';
@@ -39,7 +39,7 @@ import { WorkflowExecutionActivityI } from '../models/workflow-execution-activit
 import { WorkflowPaginatedConfig } from '../models/workflow-paginated-config.interface';
 import { WorkflowSchema } from '../models/workflow-record.interface';
 import {
-  condenseCommitId, createHttpParams, handleErrorObject, paginatedConfigToHttpParams, runningTime,
+  condenseCommitId, createHttpParams, handleError, handleErrorObject, paginatedConfigToHttpParams, runningTime,
   toFormattedDateString
 } from '../../shared/utility';
 import { XACMLRequest } from '../../shared/models/XACMLRequest.interface';
@@ -49,6 +49,8 @@ import { PolicyEnforcementService } from '../../shared/services/policyEnforcemen
 import { CatalogManagerService } from '../../shared/services/catalogManager.service';
 import { XACMLDecision } from '../../shared/models/XACMLDecision.interface';
 import { WorkflowRecordConfig } from '../models/workflowRecordConfig.interface';
+import { WorkflowSHACLDefinitions } from '../models/workflow-shacl-definitions.interface';
+import { Difference } from '../../shared/models/difference.class';
 
 /**
  * WorkflowsManagerService is an angular service class that is responsible for managing workflows.
@@ -397,12 +399,13 @@ export class WorkflowsManagerService {
    * @param {string} value The new value for the workflow status.
    * @returns {Observable<JSONLDObject[]>} An Observable that emits the updated record or an empty array.
    */
-  updateWorkflowStatus(record: JSONLDObject[], catalogId: string, value: boolean): Observable<JSONLDObject[]> {
+  updateWorkflowStatus(record: JSONLDObject[], value: boolean): Observable<JSONLDObject[]> {
+    const localCatalogId = get(this._cm.localCatalog, '@id', '');
     const [workflow] = record;
     const activeStatusKey = `${WORKFLOWS}active`;
     if (isObject(workflow[activeStatusKey])) {
       workflow[`${WORKFLOWS}active`][0]['@value'] = value;
-      return this._cm.updateRecord(workflow['@id'], catalogId, record);
+      return this._cm.updateRecord(workflow['@id'], localCatalogId, record);
     }
     return of([]);
   }
@@ -417,7 +420,7 @@ export class WorkflowsManagerService {
   updateWorkflowActiveStatus(workflowRecordIRI: string, status: boolean): Observable<JSONLDObject[]> {
     const localCatalogId = get(this._cm.localCatalog, '@id', '');
     return this._cm.getRecord(workflowRecordIRI, localCatalogId).pipe(
-      switchMap((data) => this.updateWorkflowStatus(data, localCatalogId, status))
+      switchMap((data) => this.updateWorkflowStatus(data, status))
     );
   }
 
@@ -492,6 +495,18 @@ export class WorkflowsManagerService {
   }
 
   /**
+   * Retrieves the SHACL definitions of the trigger and action types available.
+   *
+   * @param {boolean} isTracked - Indicates whether the request should be tracked.
+   * @return {Observable>} - An Observable emitting the SHACL definitions of triggers and actions as an object
+   */
+  getShaclDefinitions(isTracked: boolean): Observable<WorkflowSHACLDefinitions> {
+    const url = `${this.workflows_prefix}/shacl-definitions`;
+    return this._spinnerSrv.trackedRequest(this._http.get<WorkflowSHACLDefinitions>(url), isTracked)
+      .pipe(catchError(handleErrorObject));
+  }
+
+  /**
    * Hits the GET /workflows/{workflowId}/executions/{executionId}/logs/{logId} endpoint with download headers to
    * retrieve the specified log file from the WorkflowExecutionActivity or one of its ActionExecutions with the provided
    * IRI associated with the WorkflowRecord with the provided IRI.
@@ -503,6 +518,34 @@ export class WorkflowsManagerService {
   downloadSpecificLog(workflowRecordIRI: string, activityIRI: string, logIRI: string): void {
     const url = `${this._buildWorkflowExecutionUrl(workflowRecordIRI, activityIRI)}/logs/${encodeURIComponent(logIRI)}`;
     window.open(url);
+  }
+
+  /**
+   * This method handles the workflow configuration changes.
+   *
+   * @param {Difference} changes - The changes to be made in the workflow configuration.
+   * @param {string} recordId - The IRI of the WorkflowRecord to save changes for
+   * @return {Observable} Observable that resolves if the operation was successful; otherwise emits a HttpErrorResponse
+   */
+  updateWorkflowConfiguration(changes: Difference, record: string): Observable<void> {
+    const localCatalogId = get(this._cm.localCatalog, '@id', '');
+    return this._cm.getInProgressCommit(record, localCatalogId)
+      .pipe(
+        catchError((response: HttpErrorResponse) => this._handleCommitError(response, record, localCatalogId)),
+        switchMap(() => this._handleCommitSuccess(record, localCatalogId, changes))
+      );
+  }
+
+  private _handleCommitError(err: HttpErrorResponse, recordId: string, catalogId: string): Observable<void> {
+    if (err.status === 404) {
+      return this._cm.createInProgressCommit(recordId, catalogId).pipe(catchError(handleError));
+    } else {
+      return handleError(err);
+    }
+  }
+
+  private _handleCommitSuccess(recordId: string, catalogId: string, changes: Difference): Observable<void> {
+    return this._cm.updateInProgressCommit(recordId, catalogId, changes).pipe(catchError(handleError));
   }
 
   private _buildWorkflowUrl(workflowRecordIRI: string): string {

@@ -28,6 +28,8 @@ export type WorkflowTableFilterType =  /**
    */
     'status' | 'timeRange'| 'searchText';
 /**
+ * @interface WorkflowTableFilterEvent
+ * 
  * Event object representing a filter applied to the workflow table.
  */
 export interface WorkflowTableFilterEvent {

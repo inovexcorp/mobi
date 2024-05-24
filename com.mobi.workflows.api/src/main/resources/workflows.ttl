@@ -166,6 +166,7 @@
     sh:datatype xsd:string ;
     sh:minCount 0 ;
     sh:maxCount 1 ;
+    sh:minLength 1 ;
     wf:usesFormField wf:TextareaInput .
 
 :hasHttpBody a owl:DatatypeProperty, owl:FunctionalProperty ;
@@ -185,7 +186,7 @@
        "application/x-trigstar" "application/n-quads" "text/x-nquads" "text/nquads" "application/x-binary-rdf"
         "application/vnd.hdt" "application/x-ld+ndjson" "application/trix" "text/x-turtlestar"
          "application/x-turtlestar" "application/ld+json" "application/sparql-query") ;
-    wf:usesFormField wf:AutocompleteInput .
+    wf:usesFormField wf:DropdownInput .
 
 :hasHttpMediaType a owl:DatatypeProperty, owl:FunctionalProperty ;
     rdfs:label "media type"@en ;
@@ -211,12 +212,12 @@
 :httpHeaderPropertyShape a sh:PropertyShape ;
     sh:minCount 0 ;
     sh:path :hasHeader ;
-    sh:node :HeaderShape .
+    sh:node :Header .
 
-:HeaderShape a sh:NodeShape ;
+:Header a owl:Class, sh:NodeShape, rdfs:Class ;
+    rdfs:label "Header"@en ;
     sh:property :headerNamePropertyShape ;
-    sh:property :headerValuePropertyShape ;
-    sh:targetClass :Header .
+    sh:property :headerValuePropertyShape .
 
 :headerNamePropertyShape a sh:PropertyShape ;
     sh:name "Header Name" ;
@@ -247,9 +248,6 @@
     sh:order 1 ;
     rdfs:domain :Header ;
     rdfs:range xsd:string .
-
-:Header a owl:Class ;
-    rdfs:label "Header"@en.
 
 :hasHeader a owl:ObjectProperty ;
     rdfs:label "hasHeader" ;

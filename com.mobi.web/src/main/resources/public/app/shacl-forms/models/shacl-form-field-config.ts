@@ -24,7 +24,7 @@ import { ValidatorFn, Validators } from '@angular/forms';
 
 import { RDF, SHACL_FORM, SHACL, XSD } from '../../prefixes';
 import { JSONLDObject } from '../../shared/models/JSONLDObject.interface';
-import { getPropertyId, getPropertyValue, getPropertyIds } from '../../shared/utility';
+import { getPropertyId, getPropertyValue, getPropertyIds, getBeautifulIRI } from '../../shared/utility';
 import { Option } from './option.class';
 
 export enum FieldType {
@@ -57,9 +57,10 @@ export class SHACLFormFieldConfig {
       if (!this._propertyShape) {
         throw new Error('Could not find specified PropertyShape in provided JSON-LD');
       }
-
-      this._label = getPropertyValue(this._propertyShape, `${SHACL}name`);
       this._property = getPropertyId(this._propertyShape, `${SHACL}path`);
+      this._label = getPropertyValue(this._propertyShape, `${SHACL}name`) || getBeautifulIRI(this._property)
+        .replace('Has ', '');
+
       if (!this._property) {
         throw new Error('Property path not configured');
       }

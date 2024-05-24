@@ -88,9 +88,9 @@
                             </div>
                         </ng-template>
                     </mat-tab>
-                </mat-tab-group> 
+                </mat-tab-group>
             </div>
-            <div class="workflow-record-body-display">
+            <div class="workflow-record-body-display" *ngIf="workflowRdf.length">
                 <div class="model-overlay">
                     <div class="changes-text">
                         <info-message *ngIf="workflowsState.hasChanges">You have unsaved changes in your workflow model.</info-message>
@@ -106,9 +106,12 @@
                         <ng-container *ngIf="!workflowsState.isEditMode; then editButton else otherButtons"></ng-container>
                     </div>
                 </div>
-                <app-workflow-display [resource]="workflowRdf"></app-workflow-display>
+                <app-workflow-display [resource]="workflowRdf"
+                                      [shaclDefinitions]="shaclDefinitions"
+                                      [isEditMode]="workflowsState.isEditMode"
+                                      [recordId]="record.iri"
+                ></app-workflow-display>
             </div>
         </div>
     </div>
 </div>
-

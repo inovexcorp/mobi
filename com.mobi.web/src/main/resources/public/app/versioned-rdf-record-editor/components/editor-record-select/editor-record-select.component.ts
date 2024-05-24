@@ -228,6 +228,8 @@ export class EditorRecordSelectComponent<TData extends VersionedRdfListItem> imp
    * the State Service has been deleted at the end.
    */
   retrieveRecords(): void {
+     // Clears out unopened list to avoid deleted records appearing for a few seconds due to slow network speeds
+    this.unopened = [];
     // Resets the form control, marking it pristine and untouched, and resetting the value.
     this.recordSearchControl.reset();
     this._spinnerSrv.startLoadingForComponent(this.editorRecordSelectSpinner, 15);

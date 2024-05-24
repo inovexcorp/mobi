@@ -162,7 +162,7 @@ export class WorkflowControlsComponent implements OnInit, OnChanges {
   /**
    * Updates the create workflow button tooltip message based on permissions.
    */
-  setWorkflowCreationTooltip(): void {  
+  setWorkflowCreationTooltip(): void {
     this.creationTooltip = this.canCreate ? '' : 'You do not have permission to create workflow records.';
   }
 
@@ -176,9 +176,9 @@ export class WorkflowControlsComponent implements OnInit, OnChanges {
     this.onDownload.emit(this.records); 
   }
   createWorkflow(): void {
-    this.onCreate.emit(); 
+    this.onCreate.emit();
   }
   uploadWorkflow(): void {
-    this.onUpload.emit(); 
+    this.onUpload.emit();
   }
 }

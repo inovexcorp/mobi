@@ -26,14 +26,13 @@ import { MatCheckboxChange } from '@angular/material/checkbox';
 import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
 import { ChangeDetectorRef } from '@angular/core';
 import { Observable, Subject, merge } from 'rxjs';
-import { debounceTime, map, mapTo, startWith } from 'rxjs/operators';
+import { debounceTime, map } from 'rxjs/operators';
 
 import { FieldType, SHACLFormFieldConfig } from '../../models/shacl-form-field-config';
 import { SHACL, XSD } from '../../../prefixes';
 import { SHACLFormManagerService } from '../../services/shaclFormManager.service';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { Option } from '../../models/option.class';
-import { getPropertyId } from '../../../shared/utility';
 
 /**
  * @class shacl-forms.SHACLFormFieldComponent
@@ -74,12 +73,12 @@ export class SHACLFormFieldComponent implements OnInit {
   options: Option[];
   filteredOptions: Observable<Option[]>;
   label = '';
-  focusSubject: Subject<number> = new Subject<number>();
-  dependsOn: Set<string> = new Set<string>();
+  focusSubject: Subject<string> = new Subject<string>();
 
   constructor(public sh: SHACLFormManagerService, private ref: ChangeDetectorRef) {
     this.sh.fieldUpdated.subscribe((fieldName: string) => {
-      if (this.dependsOn.has(fieldName)) {
+      // If an autocomplete field was updated in the form and the current field is an autocomplete with a SPARQL constraint, reset the value
+      if (fieldName !== this.formFieldConfig.property && this.formFieldConfig.fieldType === FieldType.AUTOCOMPLETE && this.formFieldConfig.propertyShape[`${SHACL}sparql`]) {
         this.fieldFormControl.setValue(new Option('', ''));
         this.ngOnInit();
       }
@@ -104,9 +103,7 @@ export class SHACLFormFieldComponent implements OnInit {
   }
 
   /**
-   * Retrieves all valid options for an autocomplete associated with the provided SHACLFormFieldConfig. If there is a
-   * focus node, looks for any other fields on the node that use the `sh:sparql` constraint and adds to the internal
-   * tracker of fields that should be cleared when this field value is set.
+   * Retrieves all valid options for an autocomplete associated with the provided SHACLFormFieldConfig.
    * 
    * @param {SHACLFormFieldConfig} formFieldConfig The configuration for the autocomplete field
    */
@@ -114,32 +111,9 @@ export class SHACLFormFieldComponent implements OnInit {
     this.calculateFocusNode.emit();
     this.sh.getAutocompleteOptions(formFieldConfig.collectAllReferencedNodes(), this.focusNode).subscribe((entities: Option[]) => {
       this.options = entities;
-      if (this.focusNode) {
-        this.getFieldsFromJSONLD(this.focusNode[0]).forEach(field => {
-          if ((field !== formFieldConfig.property) && getPropertyId(formFieldConfig.propertyShape, `${SHACL}sparql`)) {
-            this.dependsOn.add(field);
-          }
-        });
-      }
-      this.focusSubject.next(Math.random());
+      this.focusSubject.next(this.fieldFormControl.value);
       this.ref.markForCheck();
     });
-  }
-
-  /**
-   * Retrieves all properties on the provided JSON-LD object besides the IRI and types.
-   * 
-   * @param {JSONLDObject} jsonld A JSON-LD object
-   * @returns {string[]} The array of property names from the JSON-LD object
-   */
-  getFieldsFromJSONLD(jsonld: JSONLDObject): string[] {
-    const fields = [];
-    Object.keys(jsonld).forEach(key => {
-      if (key !== '@id' && key !== '@type') {
-        fields.push(key);
-      }
-    });
-    return fields;
   }
 
   get fieldFormControl(): FormControl {
@@ -218,7 +192,7 @@ export class SHACLFormFieldComponent implements OnInit {
     const validators = this.formFieldConfig.validators;
     this.checkboxes = this.formFieldConfig.values.map((value: Option) => ({ value: value, checked: false }));
     if (this.fieldFormArray.value && this.fieldFormArray.value.length) {
-      this.checkboxes.forEach((checkbox: { value: Option, checked: boolean })  => checkbox.checked = this.fieldFormArray.value.map((option: Option) => option.value).includes(checkbox.value.value));
+      this.checkboxes.forEach((checkbox: { value: Option, checked: boolean }) => checkbox.checked = this.fieldFormArray.value.map((option: Option) => option.value).includes(checkbox.value.value));
       this.handleCheckboxMaxCount();
     } else {
       if (defaultValue) {
@@ -241,18 +215,17 @@ export class SHACLFormFieldComponent implements OnInit {
   private _setupDropdownOrAutocomplete(): void {
     const validators = this.formFieldConfig.validators;
     this.options = this.formFieldConfig.values;
-    this.fieldFormArray.setValidators(validators);
-    this.fieldFormArray.updateValueAndValidity({ emitEvent: false });
+    this.fieldFormControl.setValidators(validators);
+    this.fieldFormControl.updateValueAndValidity({ emitEvent: false });
     if (this.options.length === 1 && this.formFieldConfig.fieldType === FieldType.DROPDOWN) {
       this.fieldFormControl.setValue(this.options[0]);
     } else if (this.formFieldConfig.fieldType === FieldType.AUTOCOMPLETE) {
       this.filteredOptions = merge(
-        this.focusSubject.pipe(mapTo('')),
+        this.focusSubject,
         this.fieldFormControl.valueChanges.pipe(debounceTime(200))
       ).pipe(
-        startWith(''),
         map((value: string | Option) => {
-          value = typeof value === 'string' ? value : value.name;
+          value = !value ? '' : typeof value === 'string' ? value : value.name;
           const filteredOptions = this._filter(value || '');
           this._checkValidity(value || '', filteredOptions.map(values => values.name));
           return filteredOptions;
@@ -287,6 +260,6 @@ export class SHACLFormFieldComponent implements OnInit {
       }
     }
     this.fieldFormControl.setValidators(validators);
-    this.fieldFormControl.updateValueAndValidity();
+    this.fieldFormControl.updateValueAndValidity({ emitEvent: false });
   }
 }

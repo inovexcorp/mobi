@@ -24,6 +24,7 @@
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { MockProvider } from 'ng-mocks';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { HttpErrorResponse } from '@angular/common/http';
 // Libraries
 import EventSource from 'eventsourcemock';
 import { Observable, of, throwError } from 'rxjs';
@@ -39,8 +40,9 @@ import { PolicyEnforcementService } from '../../shared/services/policyEnforcemen
 import { PolicyManagerService } from '../../shared/services/policyManager.service';
 import { CatalogManagerService } from '../../shared/services/catalogManager.service';
 import { XACMLDecision } from '../../shared/models/XACMLDecision.interface';
-import { WorkflowsManagerService } from './workflows-manager.service';
 import { WorkflowRecordConfig } from '../models/workflowRecordConfig.interface';
+import { Difference } from '../../shared/models/difference.class';
+import { WorkflowsManagerService } from './workflows-manager.service';
 
 describe('WorkflowsManagerService', () => {
   let service: WorkflowsManagerService;
@@ -53,6 +55,7 @@ describe('WorkflowsManagerService', () => {
   let eventSource: EventSource;
 
   const catalogId = 'catalogId';
+  const recordId = 'recordId';
   const error: RESTError = {
     errorMessage: 'Error Message',
     error: '',
@@ -484,7 +487,7 @@ describe('WorkflowsManagerService', () => {
           .subscribe(response => {
             expect(response).toEqual(workflowRecordJSONLD);
             expect(catalogManagerStub.getRecord).toHaveBeenCalledWith('id', catalogId);
-            expect(service.updateWorkflowStatus).toHaveBeenCalledWith(workflowRecordJSONLD, catalogId, true);
+            expect(service.updateWorkflowStatus).toHaveBeenCalledWith(workflowRecordJSONLD, true);
           }, () => fail('Observable should have resolved'));
     });
   });
@@ -525,20 +528,18 @@ describe('WorkflowsManagerService', () => {
   });
   describe('uploadChanges', () => {
     it('should upload changes successfully', () => {
-      const recordId = 'recordId';
       const branchId = 'branchId';
       const commitId = 'commitId';
       const file = new File(['file content'], 'filename.txt');
 
       service.uploadChanges(recordId, branchId, commitId, file).subscribe(() => {
-        const expectedUrl = `${service.workflows_prefix}/${encodeURIComponent(recordId)}/`;
-        const req = httpMock.expectOne(expectedUrl);
-        expect(req.request.method).toEqual('PUT');
-        expect(req.request.params.get('branchId')).toEqual(branchId);
-        expect(req.request.params.get('commitId')).toEqual(commitId);
-        expect(progressSpinnerStub.trackedRequest).toHaveBeenCalledWith(jasmine.any(Observable), true);
-        req.flush('response', { status: 200, statusText: 'Ok' });
+        expect(progressSpinnerStub.track).toHaveBeenCalledWith(jasmine.any(Observable));
       });
+      const expectedUrl = `${service.workflows_prefix}/${encodeURIComponent(recordId)}/`;
+      const req = httpMock.expectOne(req => req.method === 'PUT' && req.url === expectedUrl);
+      expect(req.request.params.get('branchId')).toEqual(branchId);
+      expect(req.request.params.get('commitId')).toEqual(commitId);
+      req.flush('response', { status: 200, statusText: 'Ok' });
     });
     it('should handle errors during upload', () => {
       const recordId = 'recordId';
@@ -599,5 +600,74 @@ describe('WorkflowsManagerService', () => {
     spyOn(window, 'open');
     service.downloadSpecificLog(workflowId, activity['@id'], logId);
     expect(window.open).toHaveBeenCalledWith(`${service.workflows_prefix}/${encodeURIComponent(workflowId)}/executions/${encodeURIComponent(activity['@id'])}/logs/${encodeURIComponent(logId)}`);
+  });
+  describe('should update a WorkflowRecord InProgressCommit', () => {
+    const diff = new Difference();
+    it('unless an error occurs', fakeAsync(() => {
+      catalogManagerStub.getInProgressCommit.and.returnValue(throwError(new HttpErrorResponse({status: 500, statusText: error.errorMessage})));
+      service.updateWorkflowConfiguration(diff, recordId)
+        .subscribe(() => fail('Observable should have failed'), result => {
+          expect(result).toEqual(error.errorMessage);
+        });
+      tick();
+      expect(catalogManagerStub.getInProgressCommit).toHaveBeenCalledWith(recordId, catalogId);
+      expect(catalogManagerStub.createInProgressCommit).not.toHaveBeenCalled();
+      expect(catalogManagerStub.updateInProgressCommit).not.toHaveBeenCalled();
+    }));
+    describe('if it exists', () => {
+      beforeEach(() => {
+        catalogManagerStub.getInProgressCommit.and.returnValue(of(new Difference()));
+      });
+      it('unless an error occurs', fakeAsync(() => {
+        catalogManagerStub.updateInProgressCommit.and.returnValue(throwError(new HttpErrorResponse({status: 500, statusText: error.errorMessage})));
+        service.updateWorkflowConfiguration(diff, recordId)
+          .subscribe(() => fail('Observable should have failed'), result => {
+            expect(result).toEqual(error.errorMessage);
+          });
+        tick();
+        expect(catalogManagerStub.getInProgressCommit).toHaveBeenCalledWith(recordId, catalogId);
+        expect(catalogManagerStub.createInProgressCommit).not.toHaveBeenCalled();
+        expect(catalogManagerStub.updateInProgressCommit).toHaveBeenCalledWith(recordId, catalogId, diff);
+      }));
+      it('successfully', fakeAsync(() => {
+        catalogManagerStub.updateInProgressCommit.and.returnValue(of(null));
+        service.updateWorkflowConfiguration(diff, recordId)
+          .subscribe(() => {
+            expect(true).toEqual(true);
+          });
+        tick();
+        expect(catalogManagerStub.getInProgressCommit).toHaveBeenCalledWith(recordId, catalogId);
+        expect(catalogManagerStub.createInProgressCommit).not.toHaveBeenCalled();
+        expect(catalogManagerStub.updateInProgressCommit).toHaveBeenCalledWith(recordId, catalogId, diff);
+      }));
+    });
+    describe('if it does not exist', () => {
+      beforeEach(() => {
+        catalogManagerStub.getInProgressCommit.and.returnValue(throwError(new HttpErrorResponse({status: 404})));
+      });
+      it('unless an error occurs', fakeAsync(() => {
+        catalogManagerStub.createInProgressCommit.and.returnValue(throwError(new HttpErrorResponse({status: 500, statusText: error.errorMessage})));
+        service.updateWorkflowConfiguration(diff, recordId)
+          .subscribe(() => fail('Observable should have failed'), result => {
+            expect(result).toEqual(error.errorMessage);
+          });
+        tick();
+        expect(catalogManagerStub.getInProgressCommit).toHaveBeenCalledWith(recordId, catalogId);
+        expect(catalogManagerStub.createInProgressCommit).toHaveBeenCalledWith(recordId, catalogId);
+        expect(catalogManagerStub.updateInProgressCommit).not.toHaveBeenCalled();
+      }));
+      it('successfully', fakeAsync(() => {
+        catalogManagerStub.createInProgressCommit.and.returnValue(of(null));
+        catalogManagerStub.updateInProgressCommit.and.returnValue(of(null));
+        service.updateWorkflowConfiguration(diff, recordId)
+          .subscribe(() => {
+            expect(true).toEqual(true);
+          });
+        tick();
+        expect(catalogManagerStub.getInProgressCommit).toHaveBeenCalledWith(recordId, catalogId);
+        expect(catalogManagerStub.createInProgressCommit).toHaveBeenCalledWith(recordId, catalogId);
+        expect(catalogManagerStub.updateInProgressCommit).toHaveBeenCalledWith(recordId, catalogId, diff);
+      }));
+    });
   });
 });

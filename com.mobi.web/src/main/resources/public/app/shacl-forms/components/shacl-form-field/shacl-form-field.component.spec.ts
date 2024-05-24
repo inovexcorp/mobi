@@ -30,19 +30,20 @@ import { MatInputModule } from '@angular/material/input';
 import { MatRadioModule } from '@angular/material/radio';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatSelectModule } from '@angular/material/select';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { By } from '@angular/platform-browser';
+import { MockProvider } from 'ng-mocks';
+import { of } from 'rxjs';
+import { cloneDeep } from 'lodash';
 
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { RDF, SHACL, SHACL_FORM, XSD } from '../../../prefixes';
 import { SHACLFormFieldConfig } from '../../models/shacl-form-field-config';
 import { cleanStylesFromDOM } from '../../../../test/ts/Shared';
-import { SHACLFormFieldComponent } from './shacl-form-field.component';
-import { MatSelectModule } from '@angular/material/select';
-import { MockProvider } from 'ng-mocks';
 import { SHACLFormManagerService } from '../../services/shaclFormManager.service';
 import { Option } from '../../models/option.class';
-import { of } from 'rxjs';
-import { MatTooltipModule } from '@angular/material/tooltip';
+import { SHACLFormFieldComponent } from './shacl-form-field.component';
 
 describe('SHACLFormFieldComponent', () => {
   let component: SHACLFormFieldComponent;
@@ -93,6 +94,55 @@ describe('SHACLFormFieldComponent', () => {
     shaclFormManagerStub = null;
   });
 
+  describe('should handle another field in the form being updated', () => {
+    const propertyShape: JSONLDObject = {
+      '@id': propertyShapeId,
+      '@type': [ `${SHACL}PropertyShape` ],
+      [`${SHACL_FORM}usesFormField`]: [{ '@id': `${SHACL_FORM}AutocompleteInput` }],
+      [`${SHACL}path`]: [{ '@id': propertyName }]
+    };
+    const option = new Option('A', 'A');
+    it('if the current field is the one that was updated', () => {
+      component.formFieldConfig = new SHACLFormFieldConfig(nodeShape, propertyShapeId, [propertyShape]);
+      component.parentFormGroup = new UntypedFormGroup({
+        [propertyName]: new UntypedFormControl(option)
+      });
+      fixture.detectChanges();
+      shaclFormManagerStub.fieldUpdated.emit(propertyName);
+      expect(component.fieldFormControl.value).toEqual(option);
+    });
+    it('if the current field is not an autocomplete', () => {
+      const propertyShapeClone = cloneDeep(propertyShape);
+      propertyShapeClone[`${SHACL_FORM}usesFormField`] = [{ '@id': `${SHACL_FORM}TextInput` }];
+      component.formFieldConfig = new SHACLFormFieldConfig(nodeShape, propertyShapeId, [propertyShapeClone]);
+      component.parentFormGroup = new UntypedFormGroup({
+        [propertyName]: new UntypedFormControl('Test')
+      });
+      fixture.detectChanges();
+      shaclFormManagerStub.fieldUpdated.emit('urn:otherProperty');
+      expect(component.fieldFormControl.value).toEqual('Test');
+    });
+    it('if the current field is an autocomplete with no SPARQL constraint', () => {
+      component.formFieldConfig = new SHACLFormFieldConfig(nodeShape, propertyShapeId, [propertyShape]);
+      component.parentFormGroup = new UntypedFormGroup({
+        [propertyName]: new UntypedFormControl(option)
+      });
+      fixture.detectChanges();
+      shaclFormManagerStub.fieldUpdated.emit('urn:otherProperty');
+      expect(component.fieldFormControl.value).toEqual(option);
+    });
+    it('if the current field is an autocomplete with a SPARQL constraint', () => {
+      const propertyShapeClone = cloneDeep(propertyShape);
+      propertyShapeClone[`${SHACL}sparql`] = [{ '@id': '_:someBnode' }];
+      component.formFieldConfig = new SHACLFormFieldConfig(nodeShape, propertyShapeId, [propertyShapeClone]);
+      component.parentFormGroup = new UntypedFormGroup({
+        [propertyName]: new UntypedFormControl(option)
+      });
+      fixture.detectChanges();
+      shaclFormManagerStub.fieldUpdated.emit('urn:otherProperty');
+      expect(component.fieldFormControl.value).toEqual(new Option('', ''));
+    });
+  });
   describe('should create for a TextInput', () => {
     const propertyShape: JSONLDObject = {
       '@id': propertyShapeId,
@@ -370,7 +420,9 @@ describe('SHACLFormFieldComponent', () => {
       expect(component.options.length).toEqual(3);
     });
     it('with no options set', () => {
-      component.formFieldConfig = new SHACLFormFieldConfig(nodeShape, propertyShapeId, [propertyShape]);
+      const propertyShapeClone = cloneDeep(propertyShape);
+      delete propertyShapeClone[`${SHACL}in`];
+      component.formFieldConfig = new SHACLFormFieldConfig(nodeShape, propertyShapeId, [propertyShapeClone]);
       component.parentFormGroup = new UntypedFormGroup({
         [propertyName]: new UntypedFormControl(new Option('A', 'A'))
       });
@@ -414,7 +466,7 @@ describe('SHACLFormFieldComponent', () => {
       expect(component).toBeTruthy();
       fixture.detectChanges(); // Process synchronous changes
       tick(250); // wait for debounce time
-      expect(component.fieldFormControl.errors).not.toBeNull();
+      expect(component.fieldFormControl.errors).toBeNull();
     }));
   });
   describe('should create for a RadioInput', () => {

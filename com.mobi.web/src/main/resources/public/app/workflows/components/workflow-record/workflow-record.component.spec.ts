@@ -48,10 +48,11 @@ import { workflow_mocks } from '../../models/mock_data/workflow-mocks';
 import { WorkflowsManagerService } from '../../services/workflows-manager.service';
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
 import { WorkflowDownloadModalComponent } from '../workflow-download-modal/workflow-download-modal.component';
-import { WorkflowRecordComponent } from './workflow-record.component';
 import { Difference } from '../../../shared/models/difference.class';
 import { WorkflowUploadChangesModalComponent } from '../workflow-upload-changes-modal/workflow-upload-changes-modal.component';
 import { CommitDifference } from '../../../shared/models/commitDifference.interface';
+import { WorkflowSHACLDefinitions } from '../../models/workflow-shacl-definitions.interface';
+import { WorkflowRecordComponent } from './workflow-record.component';
 
 describe('WorkflowRecordComponent', () => {
   let component: WorkflowRecordComponent;
@@ -92,6 +93,14 @@ describe('WorkflowRecordComponent', () => {
   const mockJSONLDObject: JSONLDObject = {
     '@id': 'mockId',
     '@type': ['mockType'],
+  };
+  const wfShaclDefinition: WorkflowSHACLDefinitions = {
+    actions: {
+      'id:1': [activity1]
+    },
+    triggers: {
+      'id:2': [activity2]
+    }
   };
 
   beforeEach(async () => {
@@ -140,6 +149,7 @@ describe('WorkflowRecordComponent', () => {
     matDialog = TestBed.inject(MatDialog) as jasmine.SpyObj<MatDialog>;
 
     workflowsManagerStub.getExecutionActivitiesEvents.and.returnValue(of([activity1, activity2]));
+    workflowsManagerStub.getShaclDefinitions.and.returnValue(of(wfShaclDefinition));
 
     catalogManagerStub.localCatalog = {'@id': catalogId, '@type': []};
     catalogManagerStub.sortOptions = [sortOption];
@@ -173,7 +183,6 @@ describe('WorkflowRecordComponent', () => {
     component.ngOnInit();
     tick();
     expect(component.setRecordBranches).toHaveBeenCalledWith();
-    expect(component.localCatalogIri).toEqual(catalogId);
     expect(workflowsManagerStub.getExecutionActivitiesEvents).toHaveBeenCalledWith();
     expect(component.executingActivities).toEqual([activity1]);
     expect(component.currentlyRunning).toBeTrue();
@@ -249,7 +258,7 @@ describe('WorkflowRecordComponent', () => {
         component.deleteWorkflow();
         tick();
         expect(matDialog.open).toHaveBeenCalledWith(ConfirmModalComponent, jasmine.objectContaining({ data: { content: jasmine.stringContaining(workflow_mocks[0].title)}}));
-        expect(catalogManagerStub.deleteRecord).toHaveBeenCalledWith(workflow_mocks[0].iri, component.localCatalogIri);
+        expect(catalogManagerStub.deleteRecord).toHaveBeenCalledWith(workflow_mocks[0].iri, catalogId);
         expect(component.goBack).toHaveBeenCalledWith();
         expect(toastStub.createErrorToast).not.toHaveBeenCalled();
       }));
@@ -258,7 +267,7 @@ describe('WorkflowRecordComponent', () => {
         component.deleteWorkflow();
         tick();
         expect(matDialog.open).toHaveBeenCalledWith(ConfirmModalComponent, jasmine.objectContaining({ data: { content: jasmine.stringContaining(workflow_mocks[0].title)}}));
-        expect(catalogManagerStub.deleteRecord).toHaveBeenCalledWith(workflow_mocks[0].iri, component.localCatalogIri);
+        expect(catalogManagerStub.deleteRecord).toHaveBeenCalledWith(workflow_mocks[0].iri, catalogId);
         expect(toastStub.createSuccessToast).not.toHaveBeenCalled();
         expect(toastStub.createErrorToast).toHaveBeenCalledWith(jasmine.stringContaining(`Error deleting workflow: ${workflow_mocks[0].title}`));
       }));
@@ -458,7 +467,6 @@ describe('WorkflowRecordComponent', () => {
       expect(component.goBack).toHaveBeenCalledWith();
     });
     it('record active toggle', () => {
-      component.disableClickFeature = false;
       fixture.detectChanges();
       spyOn(component, 'toggleRecordActive');
       expect(element.queryAll(By.css('.workflow-record-main .record-active-toggle')).length).toEqual(1);

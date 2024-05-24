@@ -20,14 +20,24 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { JSONLDObject } from '../../shared/models/JSONLDObject.interface';
+
 /**
- * @interface FilterOption
+ * @interface EntityTypesI
  * 
- * The options for statusOption and timeRangeOption
+ * A map of entity type IRI to the JSON-LD array of the SHACL definition for the type.
  */
-export interface FilterOption {
-    /** The value of the option. */
-    value: string | null;
-    /** The display value. */
-    viewValue: string;
+export interface EntityTypesI {
+  [key: string]: JSONLDObject[];
+}
+
+/**
+ * @interface WorkflowSHACLDefinitions
+ * 
+ * The response object from the /workflows/shacl-definitions endpoint. Each key in the triggers and actions objects is
+ * an IRI of a Trigger or Action subclass and each value is the JSON-LD array of the RDF for the SHACL definitions.
+ */
+export interface WorkflowSHACLDefinitions {
+  actions: EntityTypesI,
+  triggers: EntityTypesI
 }

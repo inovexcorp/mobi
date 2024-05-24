@@ -35,6 +35,7 @@ import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
 
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -144,4 +145,16 @@ public interface WorkflowManager {
      * @param workflowModel The workflow model to be validated
      */
     void validateWorkflow(Model workflowModel);
+
+    /**
+     * Returns a {@link Map} of {@link com.mobi.workflows.api.ontologies.workflows.Trigger} subclass IRIs to the RDF
+     * model of all the SHACL definitions for them.
+     */
+    Map<Resource, Model> getTriggerShaclDefinitions();
+
+    /**
+     * Returns a {@link Map} of {@link com.mobi.workflows.api.ontologies.workflows.Action} subclass IRIs to the RDF
+     * model of all the SHACL definitions for them.
+     */
+    Map<Resource, Model> getActionShaclDefinitions();
 }

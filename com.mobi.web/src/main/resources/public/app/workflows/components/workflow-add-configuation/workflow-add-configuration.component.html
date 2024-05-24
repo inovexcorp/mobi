@@ -1,0 +1,52 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 - 2024 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="add-configuration-modal">
+    <h1 mat-dialog-title>{{ modalTitle }}</h1>
+    <div mat-dialog-content>
+        <error-display *ngIf="errorMsg">{{ errorMsg }}</error-display>
+        <div *ngIf="configurationList.length > 0" [formGroup]="configurationFormGroup">
+            <mat-form-field class="w-100">
+                <mat-label class="text-capitalize">{{ data.type }} Type</mat-label>
+                <mat-select formControlName="configType" (selectionChange)="configurationControlChange($event)"
+                            required>
+                    <mat-option *ngFor="let config of configurationList" [value]="config">
+                        {{ config.label }}
+                    </mat-option>
+                </mat-select>
+            </mat-form-field>
+        </div>
+        <div *ngIf="selectedConfiguration">
+            <app-shacl-form [nodeShape]="selectedConfiguration.nodeShape"
+                            [formFieldConfigs]="selectedConfiguration.formFieldConfigs"
+                            [genObj]="data.workflowEntity ? data.workflowEntity : null"
+                            (updateEvent)="updateFormValues($event)"
+                            (statusEvent)="updateFormValidity($event)"></app-shacl-form>
+        </div>
+    </div>
+    <div mat-dialog-actions>
+        <button mat-raised-button [mat-dialog-close]="false" class="cancel-button">Cancel</button>
+        <button mat-raised-button color="primary" class="submit-button" [disabled]="submitDisabled" (click)="submit()">
+            Submit
+        </button>
+    </div>
+</div>

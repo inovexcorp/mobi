@@ -133,13 +133,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -406,6 +406,76 @@ public class SimpleWorkflowManager implements WorkflowManager, EventHandler {
             result.close();
             return exists;
         }
+    }
+
+    /**
+     * Updates the provided filtered Model with only the statements related to the starting IRI and it's transitively
+     * referenced entities from within the triples in the input Model.
+     *
+     * @param inputModel The model to source triples from
+     * @param filteredModel The model that will contain the filtered triples
+     * @param startIri The starting IRI to filter statements to
+     */
+    private void travelModel(Model inputModel, Model filteredModel, Resource startIri) {
+        Set<Resource> toTravel = new HashSet<>();
+        Set<Resource> traveled = new HashSet<>();
+        toTravel.add(startIri);
+
+        while (toTravel.size() > 0) {
+            Resource subject = toTravel.iterator().next();
+            traveled.add(subject);
+            Iterator<Statement> statementsIterator = inputModel.getStatements(subject, null, null).iterator();
+            statementsIterator.forEachRemaining(statement -> {
+                Value object = statement.getObject();
+                filteredModel.add(statement.getSubject(), statement.getPredicate(), object);
+                if ((object.isResource() || object.isBNode())
+                        && object != subject && !traveled.contains((Resource) object)) {
+                    toTravel.add((Resource) object);
+                }
+            });
+            toTravel.remove(subject);
+        }
+    }
+
+    @Override
+    public Map<Resource, Model> getTriggerShaclDefinitions() {
+
+        Map<Resource, Model> triggerHandlersShacl = new HashMap<>();
+        for (TriggerHandler<Trigger> handler : triggerHandlers.values()) {
+            IRI triggerTypeIRI = vf.createIRI(handler.getTypeIRI());
+            Model tempModel;
+            try {
+                tempModel = Rio.parse(handler.getShaclDefinition(), RDFFormat.TURTLE);
+            } catch (IOException e) {
+                throw new MobiException("Error reading SHACL definitions for Trigger " + triggerTypeIRI, e);
+            }
+
+            // Filter Model to contain only handler getTypeIRI
+            Model filteredModel = mf.createEmptyModel();
+            travelModel(tempModel, filteredModel, triggerTypeIRI);
+            triggerHandlersShacl.put(triggerTypeIRI, filteredModel);
+        }
+        return triggerHandlersShacl;
+    }
+
+    @Override
+    public Map<Resource, Model> getActionShaclDefinitions() {
+        Map<Resource, Model> actionHandlersShacl = new HashMap<>();
+        for (ActionHandler<Action> handler : actionHandlers.values()) {
+            IRI actionTypeIRI = vf.createIRI(handler.getTypeIRI());
+            Model tempModel;
+            try {
+                tempModel = Rio.parse(handler.getShaclDefinition(), RDFFormat.TURTLE);
+            } catch (IOException e) {
+                throw new MobiException("Error reading SHACL definitions for Action " + actionTypeIRI, e);
+            }
+
+            // Filter Model to contain only handler getTypeIRI
+            Model filteredModel = mf.createEmptyModel();
+            travelModel(tempModel, filteredModel, actionTypeIRI);
+            actionHandlersShacl.put(actionTypeIRI, filteredModel);
+        }
+        return actionHandlersShacl;
     }
 
     @Override
@@ -938,8 +1008,6 @@ public class SimpleWorkflowManager implements WorkflowManager, EventHandler {
             Throwable cause = ex.getCause();
             if (cause instanceof ValidationException) {
                 Model validationReportModel = ((ValidationException) cause).validationReportAsModel();
-                StringWriter sw = new StringWriter();
-                Rio.write(validationReportModel, sw, RDFFormat.TURTLE);
                 throw new InvalidWorkflowException("Workflow definition is not valid.", ex, validationReportModel);
             } else {
                 throw ex;
