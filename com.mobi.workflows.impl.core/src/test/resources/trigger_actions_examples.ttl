@@ -1,0 +1,55 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix w: <http://mobi.solutions/ontologies/workflows#> .
+@prefix : <http://mobi.solutions/test/triggers-actions#> .
+
+:TriggerA a owl:Class, sh:NodeShape, rdfs:Class ;
+    rdfs:subClassOf w:Trigger ;
+    sh:property [
+        sh:path :triggerAProperty ;
+        sh:datatype xsd:string
+    ] .
+
+:triggerAProperty a owl:DatatypeProperty ;
+    rdfs:domain :TriggerA ;
+    rdfs:range xsd:string .
+
+:TriggerB a owl:Class, sh:NodeShape, rdfs:Class ;
+    rdfs:subClassOf w:Trigger ;
+    sh:property :TriggerBPropertyShape .
+
+:TriggerBPropertyShape a sh:PropertyShape ;
+    sh:path :triggerBProperty ;
+    sh:datatype xsd:string ;
+    sh:in ("A" "B") .
+
+:triggerBProperty a owl:DatatypeProperty ;
+    rdfs:domain :TriggerB ;
+    rdfs:range xsd:string .
+
+:ActionA a owl:Class, sh:NodeShape, rdfs:Class ;
+    rdfs:subClassOf w:Action ;
+    sh:property [
+        sh:path :actionAProperty ;
+        sh:datatype xsd:string
+    ] .
+
+:actionAProperty a owl:DatatypeProperty ;
+    rdfs:domain :ActionA ;
+    rdfs:range xsd:string .
+
+:ActionB a owl:Class, sh:NodeShape, rdfs:Class ;
+    rdfs:subClassOf w:Action ;
+    sh:property :ActionBPropertyShape .
+
+:ActionBPropertyShape a sh:PropertyShape ;
+    sh:path :actionBProperty ;
+    sh:datatype xsd:string ;
+    sh:in ("A" "B") .
+
+:actionBProperty a owl:DatatypeProperty ;
+    rdfs:domain :ActionB ;
+    rdfs:range xsd:string .

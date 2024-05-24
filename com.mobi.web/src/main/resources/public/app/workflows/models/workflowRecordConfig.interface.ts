@@ -24,11 +24,9 @@ import { JSONLDObject } from '../../shared/models/JSONLDObject.interface';
 import { RecordConfig } from '../../shared/models/recordConfig.interface';
 
  /**
- * @ngdoc interface
- * @name WorkflowRecordConfig
- *
- * @description
- * Represents Ontology Record Config
+ * @interface RecordConfig
+ * 
+ * Configuration for making a new WorkflowRecord
  */
 export interface WorkflowRecordConfig extends RecordConfig {
     jsonld?: JSONLDObject[],

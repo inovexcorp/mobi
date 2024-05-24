@@ -38,6 +38,7 @@ import { Option } from '../models/option.class';
 export class SHACLFormManagerService {
     prefix = `${REST_PREFIX}web-forms`;
 
+    // TODO: At some point change this to indicate what form the field was changed in. Otherwise a field changed in a different form could wipe a field another form on the same page. No use cases for this right now though
     fieldUpdated = new EventEmitter<string>();
 
     constructor(private http: HttpClient) {}

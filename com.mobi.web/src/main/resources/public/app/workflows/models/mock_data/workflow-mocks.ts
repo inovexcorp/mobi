@@ -20,11 +20,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import moment from 'moment';
+
 import { WorkflowSchema } from '../workflow-record.interface';
 import { WorkflowDataRow } from '../workflow-record-table';
 import { condenseCommitId } from '../../../shared/utility';
-import moment from 'moment';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { CATALOG, DCTERMS, OWL, RDFS, SHACL, SHACL_FORM, WORKFLOWS, XSD } from '../../../prefixes';
 
 const workflow_mocks: WorkflowSchema[] = [
     {
@@ -91,42 +93,42 @@ const workflow_data_row_mocks: WorkflowDataRow[] =
 
 export { workflow_data_row_mocks };
 
-const workflowRecordJSONLD:JSONLDObject[] =  [{
+const workflowRecordJSONLD: JSONLDObject[] =  [{
     '@id': 'https://mobi.com/records#5a1591d2-e5c5-4a30-bd8d-7b4b454d6c01',
     '@type': [
-        'http://www.w3.org/2002/07/owl#Thing',
-        'http://mobi.solutions/ontologies/workflows#WorkflowRecord',
-        'http://mobi.com/ontologies/catalog#VersionedRecord',
-        'http://mobi.com/ontologies/catalog#VersionedRDFRecord', 'http://mobi.com/ontologies/catalog#Record'
+        `${OWL}Thing`,
+        `${WORKFLOWS}WorkflowRecord`,
+        `${CATALOG}VersionedRecord`,
+        `${CATALOG}VersionedRDFRecord`, `${CATALOG}Record`
     ],
-    'http://mobi.com/ontologies/catalog#branch': [ {
+    [`${CATALOG}branch`]: [ {
         '@id': 'https://mobi.com/branches#94c3573a-012d-4104-8c75-2a7ed15dca15'
     } ],
-    'http://mobi.com/ontologies/catalog#catalog': [ {
+    [`${CATALOG}catalog`]: [ {
         '@id': 'http://mobi.com/catalog-local'
     } ],
-    'http://mobi.com/ontologies/catalog#masterBranch': [ {
+    [`${CATALOG}masterBranch`]: [ {
         '@id': 'https://mobi.com/branches#94c3573a-012d-4104-8c75-2a7ed15dca15'
     } ],
-    'http://mobi.solutions/ontologies/workflows#active': [ {
-        '@type': 'http://www.w3.org/2001/XMLSchema#boolean',
+    [`${WORKFLOWS}active`]: [ {
+        '@type': `${XSD}boolean`,
         '@value': 'true'
     } ],
-    'http://mobi.solutions/ontologies/workflows#workflowIRI': [ {
+    [`${WORKFLOWS}workflowIRI`]: [ {
         '@id': 'http://example.com/workflows/100'
     } ],
-    'http://purl.org/dc/terms/issued': [ {
-        '@type': 'http://www.w3.org/2001/XMLSchema#dateTime',
+    [`${DCTERMS}issued`]: [ {
+        '@type': `${XSD}dateTime`,
         '@value': '2024-03-04T12:07:50.819659-06:00'
     } ],
-    'http://purl.org/dc/terms/modified': [ {
-        '@type': 'http://www.w3.org/2001/XMLSchema#dateTime',
+    [`${DCTERMS}modified`]: [ {
+        '@type': `${XSD}dateTime`,
         '@value': '2024-03-15T16:42:49.433528-05:00'
     } ],
-    'http://purl.org/dc/terms/publisher': [ {
+    [`${DCTERMS}publisher`]: [ {
         '@id': 'http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997'
     } ],
-    'http://purl.org/dc/terms/title': [ {
+    [`${DCTERMS}title`]: [ {
         '@value': 'Workflow 100'
     } ]
 }];
@@ -137,9 +139,9 @@ const workflowRDF: JSONLDObject[] = [
     {
         '@id': 'http://example.com/workflows/LEDControl',
         '@type': [
-            'http://mobi.solutions/ontologies/workflows#Workflow'
+            `${WORKFLOWS}Workflow`
         ],
-        'http://mobi.solutions/ontologies/workflows#hasAction': [
+        [`${WORKFLOWS}hasAction`]: [
             {
                 '@id': 'http://example.com/workflows/LEDControl/action'
             },
@@ -147,17 +149,17 @@ const workflowRDF: JSONLDObject[] = [
                 '@id': 'http://example.com/workflows/LEDControl/action/b'
             }
         ],
-        'http://mobi.solutions/ontologies/workflows#hasTrigger': [
+        [`${WORKFLOWS}hasTrigger`]: [
             {
                 '@id': 'http://example.com/workflows/LEDControl/trigger'
             }
         ],
-        'http://purl.org/dc/terms/description': [
+        [`${DCTERMS}description`]: [
             {
                 '@value': 'This is Workflow Daily LED Control.'
             }
         ],
-        'http://purl.org/dc/terms/title': [
+        [`${DCTERMS}title`]: [
             {
                 '@value': 'Workflow Daily LED Control'
             }
@@ -166,10 +168,10 @@ const workflowRDF: JSONLDObject[] = [
     {
         '@id': 'http://example.com/workflows/LEDControl/action',
         '@type': [
-            'http://mobi.solutions/ontologies/workflows#Action',
-            'http://mobi.solutions/ontologies/workflows#TestAction'
+            `${WORKFLOWS}Action`,
+            `${WORKFLOWS}TestAction`
         ],
-        'http://mobi.solutions/ontologies/workflows#testMessage': [
+        [`${WORKFLOWS}testMessage`]: [
             {
                 '@value': 'This is a test message from Workflow C'
             }
@@ -178,22 +180,41 @@ const workflowRDF: JSONLDObject[] = [
     {
         '@id': 'http://example.com/workflows/LEDControl/action/b',
         '@type': [
-            'http://mobi.solutions/ontologies/workflows#Action',
-            'http://mobi.solutions/ontologies/workflows#TestAction'
+            `${WORKFLOWS}Action`,
+            `${WORKFLOWS}HTTPRequestAction`
         ],
-        'http://mobi.solutions/ontologies/workflows#testMessage': [
+        [`${WORKFLOWS}hasHttpUrl`]: [
             {
-                '@value': 'Lights On'
+                '@value': 'http://test.com'
             }
-        ]
+        ],
+        [`${WORKFLOWS}hasHeader`]: [
+          {
+              '@id': 'http://example.com/workflows/LEDControl/header'
+          }
+      ]
+    },
+    {
+        '@id': 'http://example.com/workflows/LEDControl/header',
+        '@type': [`${WORKFLOWS}Header`],
+        [`${WORKFLOWS}hasHeaderName`]: [
+            {
+                '@value': 'X-Test'
+            }
+        ],
+        [`${WORKFLOWS}hasHeaderValue`]: [
+          {
+              '@value': 'Test Value'
+          }
+      ]
     },
     {
         '@id': 'http://example.com/workflows/LEDControl/trigger',
         '@type': [
-            'http://mobi.solutions/ontologies/workflows#Trigger',
-            'http://mobi.solutions/ontologies/workflows#ScheduledTrigger'
+            `${WORKFLOWS}Trigger`,
+            `${WORKFLOWS}ScheduledTrigger`
         ],
-        'http://mobi.solutions/ontologies/workflows#cron': [
+        [`${WORKFLOWS}cron`]: [
             {
                 '@value': '1 0/1 * 1/1 * ? *'
             }
@@ -201,3 +222,711 @@ const workflowRDF: JSONLDObject[] = [
     }
 ];
 export { workflowRDF };
+
+const testActionNodeShape: JSONLDObject = {
+  '@id': `${WORKFLOWS}TestAction`,
+  '@type': [
+      `${OWL}Class`,
+      `${SHACL}NodeShape`,
+      `${RDFS}Class`
+  ],
+  [`${RDFS}comment`]: [
+      {
+          '@language': 'en',
+          '@value': 'An action that simply outputs the provided message.'
+      }
+  ],
+  [`${RDFS}label`]: [
+      {
+          '@language': 'en',
+          '@value': 'Test Action'
+      }
+  ],
+  [`${RDFS}subClassOf`]: [
+      {
+          '@id': `${WORKFLOWS}Action`
+      }
+  ],
+  [`${SHACL}property`]: [
+      {
+          '@id': `${WORKFLOWS}testActionPropertyShape`
+      }
+  ]
+};
+export { testActionNodeShape };
+
+const httpRequestActionNodeShape: JSONLDObject = {
+    '@id': `${WORKFLOWS}HTTPRequestAction`,
+    '@type': [
+        `${OWL}Class`,
+        `${SHACL}NodeShape`,
+        `${RDFS}Class`
+    ],
+    [`${RDFS}label`]: [
+        {
+            '@language': 'en',
+            '@value': 'HTTP Request Action'
+        }
+    ],
+    [`${RDFS}subClassOf`]: [
+        {
+            '@id': `${WORKFLOWS}Action`
+        }
+    ],
+    [`${SHACL}property`]: [
+        {
+            '@id': `${WORKFLOWS}httpUrlPropertyShape`
+        },
+        {
+            '@id': `${WORKFLOWS}httpHeaderPropertyShape`
+        }
+    ]
+};
+export { httpRequestActionNodeShape };
+
+const actionSHACLDefinitions = {
+    [testActionNodeShape['@id']]: [
+        {
+            '@id': `${WORKFLOWS}Action`,
+            '@type': [
+                `${OWL}Class`
+            ],
+            [`${RDFS}comment`]: [
+                {
+                    '@language': 'en',
+                    '@value': 'A set of instructions that should be executed when a Workflow is running.'
+                }
+            ],
+            [`${RDFS}label`]: [
+                {
+                    '@language': 'en',
+                    '@value': 'Action'
+                }
+            ]
+        },
+        testActionNodeShape,
+        {
+            '@id': `${WORKFLOWS}testActionPropertyShape`,
+            '@type': [
+                `${SHACL}PropertyShape`
+            ],
+            [`${SHACL}datatype`]: [
+                {
+                    '@id': `${XSD}string`
+                }
+            ],
+            [`${SHACL}maxCount`]: [
+                {
+                    '@type': `${XSD}integer`,
+                    '@value': '1'
+                }
+            ],
+            [`${SHACL}minCount`]: [
+                {
+                    '@type': `${XSD}integer`,
+                    '@value': '1'
+                }
+            ],
+            [`${SHACL}path`]: [
+                {
+                    '@id': `${WORKFLOWS}testMessage`
+                }
+            ],
+            [`${SHACL_FORM}usesFormField`]: [
+                {
+                    '@id': `${SHACL_FORM}TextInput`
+                }
+            ]
+        },
+        {
+            '@id': `${WORKFLOWS}testMessage`,
+            '@type': [
+                `${OWL}DatatypeProperty`,
+                `${OWL}FunctionalProperty`
+            ],
+            [`${RDFS}comment`]: [
+                {
+                    '@language': 'en',
+                    '@value': 'A message for a Test Action to output.'
+                }
+            ],
+            [`${RDFS}domain`]: [
+                {
+                    '@id': `${WORKFLOWS}TestAction`
+                }
+            ],
+            [`${RDFS}label`]: [
+                {
+                    '@language': 'en',
+                    '@value': 'test message'
+                }
+            ],
+            [`${RDFS}range`]: [
+                {
+                    '@id': `${XSD}string`
+                }
+            ]
+        }
+    ],
+    [httpRequestActionNodeShape['@id']]: [
+        httpRequestActionNodeShape,
+        {
+            '@id': `${WORKFLOWS}Header`,
+            '@type': [
+                `${OWL}Class`,
+                `${SHACL}NodeShape`,
+                `${RDFS}Class`
+            ],
+            [`${RDFS}label`]: [
+                {
+                    '@language': 'en',
+                    '@value': 'Header'
+                }
+            ],
+            [`${SHACL}property`]: [
+                {
+                    '@id': `${WORKFLOWS}headerNamePropertyShape`
+                },
+                {
+                    '@id': `${WORKFLOWS}headerValuePropertyShape`
+                }
+            ]
+        },
+        {
+            '@id': `${WORKFLOWS}hasHeader`,
+            '@type': [
+                `${OWL}ObjectProperty`
+            ],
+            [`${RDFS}domain`]: [
+                {
+                    '@id': `${WORKFLOWS}HTTPRequestAction`
+                }
+            ],
+            [`${RDFS}label`]: [
+                {
+                    '@value': 'hasHeader'
+                }
+            ],
+            [`${RDFS}range`]: [
+                {
+                    '@id': `${WORKFLOWS}Header`
+                }
+            ]
+        },
+        {
+            '@id': `${WORKFLOWS}hasHeaderName`,
+            '@type': [
+                `${OWL}DatatypeProperty`,
+                `${OWL}FunctionalProperty`
+            ],
+            [`${RDFS}comment`]: [
+                {
+                    '@language': 'en',
+                    '@value': 'The Key/Name of the Header'
+                }
+            ],
+            [`${RDFS}domain`]: [
+                {
+                    '@id': `${WORKFLOWS}Header`
+                }
+            ],
+            [`${RDFS}label`]: [
+                {
+                    '@language': 'en',
+                    '@value': 'header name'
+                }
+            ],
+            [`${RDFS}range`]: [
+                {
+                    '@id': `${XSD}string`
+                }
+            ],
+            [`${SHACL}order`]: [
+                {
+                    '@type': `${XSD}integer`,
+                    '@value': '0'
+                }
+            ]
+        },
+        {
+            '@id': `${WORKFLOWS}hasHeaderValue`,
+            '@type': [
+                `${OWL}DatatypeProperty`,
+                `${OWL}FunctionalProperty`
+            ],
+            [`${RDFS}comment`]: [
+                {
+                    '@language': 'en',
+                    '@value': 'The Value of the Header'
+                }
+            ],
+            [`${RDFS}domain`]: [
+                {
+                    '@id': `${WORKFLOWS}Header`
+                }
+            ],
+            [`${RDFS}label`]: [
+                {
+                    '@language': 'en',
+                    '@value': 'header value'
+                }
+            ],
+            [`${RDFS}range`]: [
+                {
+                    '@id': `${XSD}string`
+                }
+            ],
+            [`${SHACL}order`]: [
+                {
+                    '@type': `${XSD}integer`,
+                    '@value': '1'
+                }
+            ]
+        },
+        {
+            '@id': `${WORKFLOWS}hasHttpUrl`,
+            '@type': [
+                `${OWL}DatatypeProperty`,
+                `${OWL}FunctionalProperty`
+            ],
+            [`${RDFS}comment`]: [
+                {
+                    '@language': 'en',
+                    '@value': 'The URL of the HTTP request'
+                }
+            ],
+            [`${RDFS}domain`]: [
+                {
+                    '@id': `${WORKFLOWS}HTTPRequestAction`
+                }
+            ],
+            [`${RDFS}label`]: [
+                {
+                    '@language': 'en',
+                    '@value': 'http url'
+                }
+            ],
+            [`${RDFS}range`]: [
+                {
+                    '@id': `${XSD}string`
+                }
+            ]
+        },
+        {
+            '@id': `${WORKFLOWS}headerNamePropertyShape`,
+            '@type': [
+                `${SHACL}PropertyShape`
+            ],
+            [`${SHACL}datatype`]: [
+                {
+                    '@id': `${XSD}string`
+                }
+            ],
+            [`${SHACL}maxCount`]: [
+                {
+                    '@type': `${XSD}integer`,
+                    '@value': '1'
+                }
+            ],
+            [`${SHACL}minCount`]: [
+                {
+                    '@type': `${XSD}integer`,
+                    '@value': '1'
+                }
+            ],
+            [`${SHACL}name`]: [
+                {
+                    '@value': 'Header Name'
+                }
+            ],
+            [`${SHACL}path`]: [
+                {
+                    '@id': `${WORKFLOWS}hasHeaderName`
+                }
+            ],
+            [`${SHACL_FORM}usesFormField`]: [
+                {
+                    '@id': `${SHACL_FORM}TextInput`
+                }
+            ]
+        },
+        {
+            '@id': `${WORKFLOWS}headerValuePropertyShape`,
+            '@type': [
+                `${SHACL}PropertyShape`
+            ],
+            [`${SHACL}datatype`]: [
+                {
+                    '@id': `${XSD}string`
+                }
+            ],
+            [`${SHACL}maxCount`]: [
+                {
+                    '@type': `${XSD}integer`,
+                    '@value': '1'
+                }
+            ],
+            [`${SHACL}minCount`]: [
+                {
+                    '@type': `${XSD}integer`,
+                    '@value': '1'
+                }
+            ],
+            [`${SHACL}name`]: [
+                {
+                    '@value': 'Header Value'
+                }
+            ],
+            [`${SHACL}path`]: [
+                {
+                    '@id': `${WORKFLOWS}hasHeaderValue`
+                }
+            ],
+            [`${SHACL_FORM}usesFormField`]: [
+                {
+                    '@id': `${SHACL_FORM}TextInput`
+                }
+            ]
+        },
+        {
+            '@id': `${WORKFLOWS}httpHeaderPropertyShape`,
+            '@type': [
+                `${SHACL}PropertyShape`
+            ],
+            [`${SHACL}minCount`]: [
+                {
+                    '@type': `${XSD}integer`,
+                    '@value': '0'
+                }
+            ],
+            [`${SHACL}node`]: [
+                {
+                    '@id': `${WORKFLOWS}Header`
+                }
+            ],
+            [`${SHACL}path`]: [
+                {
+                    '@id': `${WORKFLOWS}hasHeader`
+                }
+            ]
+        },
+        {
+            '@id': `${WORKFLOWS}httpUrlPropertyShape`,
+            '@type': [
+                `${SHACL}PropertyShape`
+            ],
+            [`${SHACL}datatype`]: [
+                {
+                    '@id': `${XSD}string`
+                }
+            ],
+            [`${SHACL}maxCount`]: [
+                {
+                    '@type': `${XSD}integer`,
+                    '@value': '1'
+                }
+            ],
+            [`${SHACL}minCount`]: [
+                {
+                    '@type': `${XSD}integer`,
+                    '@value': '1'
+                }
+            ],
+            [`${SHACL}path`]: [
+                {
+                    '@id': `${WORKFLOWS}hasHttpUrl`
+                }
+            ],
+            [`${SHACL}pattern`]: [
+                {
+                    '@value': '^(https?|ftp):\\/\\/[^\\s\\/$.?#].[^\\s]*$'
+                }
+            ],
+            [`${SHACL_FORM}usesFormField`]: [
+                {
+                    '@id': `${SHACL_FORM}TextInput`
+                }
+            ]
+        }
+    ]
+};
+export { actionSHACLDefinitions };
+
+const scheduledTriggerNodeShape: JSONLDObject = {
+    '@id': `${WORKFLOWS}ScheduledTrigger`,
+    '@type': [
+        `${OWL}Class`,
+        `${SHACL}NodeShape`,
+        `${RDFS}Class`
+    ],
+    [`${RDFS}comment`]: [
+        {
+            '@language': 'en',
+            '@value': 'A specification for executing a Workflow on a specified schedule.'
+        }
+    ],
+    [`${RDFS}label`]: [
+        {
+            '@language': 'en',
+            '@value': 'Scheduled Trigger'
+        }
+    ],
+    [`${RDFS}subClassOf`]: [
+        {
+            '@id': `${WORKFLOWS}Trigger`
+        }
+    ],
+    [`${SHACL}property`]: [
+        {
+            '@id': `${WORKFLOWS}cronExpressionPropertyShape`
+        }
+    ]
+};
+export { scheduledTriggerNodeShape };
+
+const commitToBranchTriggerNodeShape: JSONLDObject = {
+    '@id': `${WORKFLOWS}CommitToBranchTrigger`,
+    '@type': [
+        `${OWL}Class`,
+        `${SHACL}NodeShape`,
+        `${RDFS}Class`
+    ],
+    [`${RDFS}comment`]: [
+        {
+            '@language': 'en',
+            '@value': 'A specification for executing a Workflow when a Commit is made on a specified Branch of a specific Record.'
+        }
+    ],
+    [`${RDFS}label`]: [
+        {
+            '@language': 'en',
+            '@value': 'Commit to Branch Trigger'
+        }
+    ],
+    [`${RDFS}subClassOf`]: [
+        {
+            '@id': `${WORKFLOWS}EventTrigger`
+        }
+    ],
+    [`${SHACL}property`]: [
+        {
+            '@id': `${WORKFLOWS}watchesRecordPropertyShape`
+        },
+        {
+            '@id': `${WORKFLOWS}watchesBranchPropertyShape`
+        }
+    ]
+};
+export { commitToBranchTriggerNodeShape };
+
+const triggerSHACLDefinitions = {
+    [commitToBranchTriggerNodeShape['@id']]: [
+        {
+            '@id': '_:02f15581c487430599f07bb6b91688ad8933',
+            '@type': [
+                `${SHACL}SPARQLConstraint`
+            ]
+        },
+        commitToBranchTriggerNodeShape,
+        {
+          '@id': `${WORKFLOWS}watchesBranch`,
+          '@type': [
+              `${OWL}ObjectProperty`,
+              `${OWL}FunctionalProperty`
+          ],
+          [`${RDFS}comment`]: [
+              {
+                  '@language': 'en',
+                  '@value': 'The Branch to watch for Commit activity.'
+              }
+          ],
+          [`${RDFS}domain`]: [
+              {
+                  '@id': `${WORKFLOWS}CommitToBranchTrigger`
+              }
+          ],
+          [`${RDFS}label`]: [
+              {
+                  '@language': 'en',
+                  '@value': 'watches Branch'
+              }
+          ],
+          [`${RDFS}range`]: [
+              {
+                  '@id': `${CATALOG}Branch`
+              }
+          ]
+      },
+      {
+          '@id': `${WORKFLOWS}watchesBranchPropertyShape`,
+          '@type': [
+              `${SHACL}PropertyShape`
+          ],
+          [`${SHACL}class`]: [
+              {
+                  '@id': `${CATALOG}Branch`
+              }
+          ],
+          [`${SHACL}maxCount`]: [
+              {
+                  '@type': `${XSD}integer`,
+                  '@value': '1'
+              }
+          ],
+          [`${SHACL}minCount`]: [
+              {
+                  '@type': `${XSD}integer`,
+                  '@value': '1'
+              }
+          ],
+          [`${SHACL}path`]: [
+              {
+                  '@id': `${WORKFLOWS}watchesBranch`
+              }
+          ],
+          [`${SHACL}sparql`]: [
+              {
+                  '@id': '_:02f15581c487430599f07bb6b91688ad8933'
+              }
+          ],
+          [`${SHACL_FORM}usesFormField`]: [
+              {
+                  '@id': `${SHACL_FORM}AutocompleteInput`
+              }
+          ]
+      },
+      {
+          '@id': `${WORKFLOWS}watchesRecord`,
+          '@type': [
+              `${OWL}ObjectProperty`,
+              `${OWL}FunctionalProperty`
+          ],
+          [`${RDFS}comment`]: [
+              {
+                  '@language': 'en',
+                  '@value': 'The VersionedRdfRecord with the Branch to watch for Commit activity.'
+              }
+          ],
+          [`${RDFS}domain`]: [
+              {
+                  '@id': `${WORKFLOWS}CommitToBranchTrigger`
+              }
+          ],
+          [`${RDFS}label`]: [
+              {
+                  '@language': 'en',
+                  '@value': 'watches Record'
+              }
+          ],
+          [`${RDFS}range`]: [
+              {
+                  '@id': `${CATALOG}VersionedRdfRecord`
+              }
+          ]
+      },
+      {
+          '@id': `${WORKFLOWS}watchesRecordPropertyShape`,
+          '@type': [
+              `${SHACL}PropertyShape`
+          ],
+          [`${SHACL}class`]: [
+              {
+                  '@id': `${CATALOG}VersionedRDFRecord`
+              }
+          ],
+          [`${SHACL}maxCount`]: [
+              {
+                  '@type': `${XSD}integer`,
+                  '@value': '1'
+              }
+          ],
+          [`${SHACL}minCount`]: [
+              {
+                  '@type': `${XSD}integer`,
+                  '@value': '1'
+              }
+          ],
+          [`${SHACL}path`]: [
+              {
+                  '@id': `${WORKFLOWS}watchesRecord`
+              }
+          ],
+          [`${SHACL_FORM}usesFormField`]: [
+              {
+                  '@id': `${SHACL_FORM}AutocompleteInput`
+              }
+          ]
+        }
+    ],
+    [scheduledTriggerNodeShape['@id']]: [
+      scheduledTriggerNodeShape,
+      {
+          '@id': `${WORKFLOWS}cron`,
+          '@type': [
+              `${OWL}DatatypeProperty`,
+              `${OWL}FunctionalProperty`
+          ],
+          [`${RDFS}comment`]: [
+              {
+                  '@language': 'en',
+                  '@value': 'A cron expression that dictates when the ScheduledTrigger should kick off a Workflow.'
+              }
+          ],
+          [`${RDFS}domain`]: [
+              {
+                  '@id': `${WORKFLOWS}ScheduledTrigger`
+              }
+          ],
+          [`${RDFS}label`]: [
+              {
+                  '@language': 'en',
+                  '@value': 'cron'
+              }
+          ],
+          [`${RDFS}range`]: [
+              {
+                  '@id': `${XSD}string`
+              }
+          ]
+      },
+      {
+          '@id': `${WORKFLOWS}cronExpressionPropertyShape`,
+          '@type': [
+              `${SHACL}PropertyShape`
+          ],
+          [`${SHACL}datatype`]: [
+              {
+                  '@id': `${XSD}string`
+              }
+          ],
+          [`${SHACL}maxCount`]: [
+              {
+                  '@type': `${XSD}integer`,
+                  '@value': '1'
+              }
+          ],
+          [`${SHACL}minCount`]: [
+              {
+                  '@type': `${XSD}integer`,
+                  '@value': '1'
+              }
+          ],
+          [`${SHACL}path`]: [
+              {
+                  '@id': `${WORKFLOWS}cron`
+              }
+          ],
+          [`${SHACL}pattern`]: [
+              {
+                  '@value': '(((\\d+,)+\\d+|(\\d+(\\/|-)\\d+)|\\d+|\\*|\\?) ?){5,7}'
+              }
+          ],
+          [`${SHACL_FORM}usesFormField`]: [
+              {
+                  '@id': `${SHACL_FORM}TextInput`
+              }
+          ]
+      }
+    ]
+};
+export { triggerSHACLDefinitions };

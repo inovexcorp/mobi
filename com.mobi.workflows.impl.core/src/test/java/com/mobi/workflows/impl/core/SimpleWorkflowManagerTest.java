@@ -115,6 +115,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -333,6 +334,106 @@ public class SimpleWorkflowManagerTest extends OrmEnabledTestCase {
         String expectedQuery = "CONSTRUCT {?s ?p ?o} WHERE { ?s ?p ?o . FILTER(?s IN ()) }";
         String actualQuery = workflowManager.buildSparqlQuery(values);
         assertEquals(expectedQuery, actualQuery);
+    }
+
+    @Test
+    public void getTriggerShaclDefinitionsNoData() {
+        Map<Resource, Model> result = workflowManager.getTriggerShaclDefinitions();
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    public void getTriggerShaclDefinitionsSingleHandler() {
+        // Setup:
+        IRI exampleTrigger = vf.createIRI("http://mobi.solutions/test/triggers-actions#TriggerA");
+        TriggerHandler<Trigger> mockTriggerHandler = mock(TriggerHandler.class);
+        when(mockTriggerHandler.getTypeIRI()).thenReturn(exampleTrigger.stringValue());
+        when(mockTriggerHandler.getShaclDefinition()).thenReturn(getClass().getResourceAsStream("/trigger_actions_examples.ttl"));
+        workflowManager.addTriggerHandler(mockTriggerHandler);
+
+        Map<Resource, Model> result = workflowManager.getTriggerShaclDefinitions();
+        assertEquals(Collections.singleton(exampleTrigger), result.keySet());
+        Model triggerModel = result.get(exampleTrigger);
+        assertEquals(3, triggerModel.subjects().size());
+        assertTrue(triggerModel.subjects().contains(exampleTrigger));
+        assertTrue(triggerModel.subjects().contains(vf.createIRI("http://mobi.solutions/test/triggers-actions#triggerAProperty")));
+    }
+
+    @Test
+    public void getTriggerShaclDefinitionsMultipleHandlers() {
+        // Setup:
+        IRI exampleTriggerA = vf.createIRI("http://mobi.solutions/test/triggers-actions#TriggerA");
+        IRI exampleTriggerB = vf.createIRI("http://mobi.solutions/test/triggers-actions#TriggerB");
+        TriggerHandler<Trigger> mockTriggerHandlerA = mock(TriggerHandler.class);
+        when(mockTriggerHandlerA.getTypeIRI()).thenReturn(exampleTriggerA.stringValue());
+        when(mockTriggerHandlerA.getShaclDefinition()).thenReturn(getClass().getResourceAsStream("/trigger_actions_examples.ttl"));
+        TriggerHandler<Trigger> mockTriggerHandlerB = mock(TriggerHandler.class);
+        when(mockTriggerHandlerB.getTypeIRI()).thenReturn(exampleTriggerB.stringValue());
+        when(mockTriggerHandlerB.getShaclDefinition()).thenReturn(getClass().getResourceAsStream("/trigger_actions_examples.ttl"));
+        workflowManager.addTriggerHandler(mockTriggerHandlerA);
+        workflowManager.addTriggerHandler(mockTriggerHandlerB);
+
+        Map<Resource, Model> result = workflowManager.getTriggerShaclDefinitions();
+        assertEquals(2, result.size());
+        assertEquals(Set.of(exampleTriggerA, exampleTriggerB), result.keySet());
+        Model triggerModel = result.get(exampleTriggerA);
+        assertEquals(3, triggerModel.subjects().size());
+        assertTrue(triggerModel.subjects().contains(exampleTriggerA));
+        assertTrue(triggerModel.subjects().contains(vf.createIRI("http://mobi.solutions/test/triggers-actions#triggerAProperty")));
+        triggerModel = result.get(exampleTriggerB);
+        assertEquals(5, triggerModel.subjects().size());
+        assertTrue(triggerModel.subjects().contains(exampleTriggerB));
+        assertTrue(triggerModel.subjects().contains(vf.createIRI("http://mobi.solutions/test/triggers-actions#triggerBProperty")));
+    }
+
+    @Test
+    public void getActionShaclDefinitionsNoData() {
+        Map<Resource, Model> result = workflowManager.getActionShaclDefinitions();
+        assertTrue(result.isEmpty());
+    }
+
+    @Test
+    public void getActionShaclDefinitionsSingleHandler() {
+        // Setup:
+        IRI exampleAction = vf.createIRI("http://mobi.solutions/test/triggers-actions#ActionA");
+        ActionHandler<Action> mockActionHandler = mock(ActionHandler.class);
+        when(mockActionHandler.getTypeIRI()).thenReturn(exampleAction.stringValue());
+        when(mockActionHandler.getShaclDefinition()).thenReturn(getClass().getResourceAsStream("/trigger_actions_examples.ttl"));
+        workflowManager.addActionHandler(mockActionHandler);
+
+        Map<Resource, Model> result = workflowManager.getActionShaclDefinitions();
+        assertEquals(Collections.singleton(exampleAction), result.keySet());
+        Model actionModel = result.get(exampleAction);
+        assertEquals(3, actionModel.subjects().size());
+        assertTrue(actionModel.subjects().contains(exampleAction));
+        assertTrue(actionModel.subjects().contains(vf.createIRI("http://mobi.solutions/test/triggers-actions#actionAProperty")));
+    }
+
+    @Test
+    public void getActionShaclDefinitionsMultipleHandlers() {
+        // Setup:
+        IRI exampleActionA = vf.createIRI("http://mobi.solutions/test/triggers-actions#ActionA");
+        IRI exampleActionB = vf.createIRI("http://mobi.solutions/test/triggers-actions#ActionB");
+        ActionHandler<Action> mockActionHandlerA = mock(ActionHandler.class);
+        when(mockActionHandlerA.getTypeIRI()).thenReturn(exampleActionA.stringValue());
+        when(mockActionHandlerA.getShaclDefinition()).thenReturn(getClass().getResourceAsStream("/trigger_actions_examples.ttl"));
+        ActionHandler<Action> mockActionHandlerB = mock(ActionHandler.class);
+        when(mockActionHandlerB.getTypeIRI()).thenReturn(exampleActionB.stringValue());
+        when(mockActionHandlerB.getShaclDefinition()).thenReturn(getClass().getResourceAsStream("/trigger_actions_examples.ttl"));
+        workflowManager.addActionHandler(mockActionHandlerA);
+        workflowManager.addActionHandler(mockActionHandlerB);
+
+        Map<Resource, Model> result = workflowManager.getActionShaclDefinitions();
+        assertEquals(2, result.size());
+        assertEquals(Set.of(exampleActionA, exampleActionB), result.keySet());
+        Model actionModel = result.get(exampleActionA);
+        assertEquals(3, actionModel.subjects().size());
+        assertTrue(actionModel.subjects().contains(exampleActionA));
+        assertTrue(actionModel.subjects().contains(vf.createIRI("http://mobi.solutions/test/triggers-actions#actionAProperty")));
+        actionModel = result.get(exampleActionB);
+        assertEquals(5, actionModel.subjects().size());
+        assertTrue(actionModel.subjects().contains(exampleActionB));
+        assertTrue(actionModel.subjects().contains(vf.createIRI("http://mobi.solutions/test/triggers-actions#actionBProperty")));
     }
 
     private void addFindWorkflowData() throws IOException {

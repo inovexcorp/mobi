@@ -44,6 +44,7 @@ import { WorkflowsManagerService } from './services/workflows-manager.service';
 import { WorkflowsStateService } from './services/workflows-state.service';
 import { WorkflowCreationModalComponent } from './components/workflow-creation-modal/workflow-creation-modal.component';
 import { WorkflowUploadChangesModalComponent } from './components/workflow-upload-changes-modal/workflow-upload-changes-modal.component';
+import { WorkflowAddConfigurationComponent } from './components/workflow-add-configuation/workflow-add-configuration.component';
 import { WorkflowUploadModalComponent } from './components/workflow-upload-modal/workflow-upload-modal.component';
 
 const routes: Routes = [{
@@ -72,6 +73,8 @@ const routes: Routes = [{
     WorkflowCreationModalComponent,
     WorkflowUploadChangesModalComponent,
     WorkflowUploadModalComponent,
+    WorkflowAddConfigurationComponent,
+    WorkflowUploadChangesModalComponent
   ],
   imports: [
     CommonModule,

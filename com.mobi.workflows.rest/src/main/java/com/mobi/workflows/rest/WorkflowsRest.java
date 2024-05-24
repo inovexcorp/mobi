@@ -36,6 +36,7 @@ import static com.mobi.rest.util.RestUtils.getUploadedModel;
 import static com.mobi.rest.util.RestUtils.groupedModelToString;
 import static com.mobi.rest.util.RestUtils.modelToJsonld;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -364,6 +365,11 @@ public class WorkflowsRest {
         } catch (IllegalArgumentException | RDFParseException ex) {
             throw RestUtils.getErrorObjBadRequest(ex);
         } catch (MobiException | IllegalStateException ex) {
+            if (ex instanceof InvalidWorkflowException) {
+                InvalidWorkflowException invalidWorkflowException = (InvalidWorkflowException) ex;
+                ObjectNode error = createJsonInvalidWorkflowError(invalidWorkflowException);
+                throw RestUtils.getErrorObjInternalServerError(invalidWorkflowException, error);
+            }
             throw RestUtils.getErrorObjInternalServerError(ex);
         }
     }
@@ -598,6 +604,64 @@ public class WorkflowsRest {
             IOUtils.closeQuietly(fileInputStream);
             log.trace("uploadChangesToOntology took " + (System.currentTimeMillis() - totalTime));
             log.trace("uploadChangesToOntology getGarbageCollectionTime {} ms", getGarbageCollectionTime());
+        }
+    }
+
+    /**
+     * Returns a JSON object of the SHACL definitions for all the Trigger and Action types in the system.
+     * The structure of the object looks like:
+     * <pre>
+     *     {
+     *         "triggers": {
+     *             "urn:triggerType": [] // JSON-LD of the SHACL definition
+     *         },
+     *         "actions": {
+     *             "urn:actionType": [] // JSON-LD of the SHACL definition
+     *         }
+     *     }
+     * </pre>
+     *
+     * @return A Response object indicating the success or failure of the operation.
+     */
+    @GET
+    @Path("shacl-definitions")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    @Operation(
+            tags = "workflows",
+            summary = "Returns the SHACL definition data for the Trigger and Actions types in the system",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "OK if successful"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "401", description = "User does not have permission"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
+            }
+    )
+    public Response getWorkflowShaclDefinitions() {
+        try {
+            Map<Resource, Model> actionsShaclDefinitions = this.workflowManager.getActionShaclDefinitions();
+            Map<Resource, Model> triggersShaclDefinitions =  this.workflowManager.getTriggerShaclDefinitions();
+
+            ObjectNode actions = mapper.createObjectNode();
+            for (Map.Entry<Resource, Model> entry: actionsShaclDefinitions.entrySet()) {
+                actions.set(entry.getKey().stringValue(), mapper.readTree(RestUtils.modelToJsonld(entry.getValue())));
+            }
+
+            ObjectNode trigger = mapper.createObjectNode();
+            for (Map.Entry<Resource, Model> entry: triggersShaclDefinitions.entrySet()) {
+                trigger.set(entry.getKey().stringValue(), mapper.readTree(RestUtils.modelToJsonld(entry.getValue())));
+            }
+
+            ObjectNode definitions = mapper.createObjectNode();
+            definitions.set("actions", actions);
+            definitions.set("triggers", trigger);
+
+            return Response.ok(definitions).build();
+        } catch (IllegalArgumentException ex) {
+            throw RestUtils.getErrorObjBadRequest(ex);
+        } catch (MobiException | JsonProcessingException | IllegalStateException ex) {
+            throw RestUtils.getErrorObjInternalServerError(ex);
         }
     }
 

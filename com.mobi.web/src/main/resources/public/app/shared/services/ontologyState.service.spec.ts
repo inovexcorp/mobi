@@ -695,9 +695,8 @@ describe('Ontology State Service', function() {
         beforeEach(function() {
           spyOn(service, 'createOntologyListItem').and.returnValue(of(listItem));
         });
-        it('and the ontologyId changed and the in progress commit should be cleared with the same version title', fakeAsync(function() {
+        it('and the in progress commit should be cleared with the same version title', fakeAsync(function() {
           spyOn(service, 'getActiveKey').and.returnValue('key');
-          this.oldListItem.ontologyId = 'old';
           const versionTitle = this.oldListItem.currentVersionTitle;
           service.changeVersion(recordId, branchId, commitId, tagId, undefined, listItem.upToDate, true, true)
             .subscribe(() => {}, () => fail('Observable should have resolved'));
@@ -709,20 +708,14 @@ describe('Ontology State Service', function() {
           expect(this.oldListItem.changesPageOpen).toBeTrue();
           expect(this.oldListItem.currentVersionTitle).toEqual(versionTitle);
         }));
-        it('and the ontologyId is the same and the in progress commit should not be cleared with a new version title', fakeAsync(function() {
+        it('and the in progress commit should not be cleared with a new version title', fakeAsync(function() {
           spyOn(service, 'getActiveKey').and.returnValue('key');
-          this.oldListItem.selected = {'@id': 'old'};
-          this.oldListItem.selectedBlankNodes = [{'@id': 'bnode'}];
-          this.oldListItem.blankNodes = {bnode: 'bnode'};
           service.changeVersion(recordId, branchId, commitId, tagId, 'New Title', listItem.upToDate, false, false)
             .subscribe(() => {}, () => fail('Observable should have resolved'));
           tick();
           expect(service.updateState).toHaveBeenCalledWith({ recordId, commitId, branchId, tagId });
           expect(service.createOntologyListItem).toHaveBeenCalledWith(recordId, branchId, commitId, tagId, difference, listItem.upToDate, listItem.versionedRdfRecord.title);
-          expect(service.resetStateTabs).not.toHaveBeenCalled();
-          expect(listItem.selected).toEqual({'@id': 'old'});
-          expect(listItem.selectedBlankNodes).toEqual([{'@id': 'bnode'}]);
-          expect(listItem.blankNodes).toEqual({bnode: 'bnode'});
+          expect(service.resetStateTabs).toHaveBeenCalledWith(listItem);
           expect(this.oldListItem.tabIndex).toEqual(1);
           expect(this.oldListItem.changesPageOpen).toBeFalse();
           expect(this.oldListItem.currentVersionTitle).toEqual('New Title');

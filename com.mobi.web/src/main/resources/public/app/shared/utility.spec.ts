@@ -28,6 +28,10 @@ import moment from 'moment/moment';
 import { cloneDeep } from 'lodash';
 
 import { DC, DCTERMS, RDFS, SHACL, SHACL_FORM, SKOS, XSD } from '../prefixes';
+import { REGEX } from '../constants';
+import { JSONLDObject } from './models/JSONLDObject.interface';
+import { SHACLFormFieldConfig } from '../shacl-forms/models/shacl-form-field-config';
+import { FormValues } from '../shacl-forms/models/form-values.interface';
 import {
   condenseCommitId,
   createHttpParams,
@@ -67,10 +71,6 @@ import {
   addLanguageToAnnotations,
   getShaclGeneratedData
 } from './utility';
-import { REGEX } from '../constants';
-import { JSONLDObject } from './models/JSONLDObject.interface';
-import { SHACLFormFieldConfig } from '../shacl-forms/models/shacl-form-field-config';
-import { FormValues } from '../shacl-forms/models/form-values.interface';
 
 describe('Utility method', () => {
   const properties = [
@@ -142,6 +142,18 @@ describe('Utility method', () => {
       const entity = {'@id': '', 'property': [{'@value': 'other'}]};
       const expected = {'@id': '', 'property': [{'@value': 'other'}, {'@value': value}]};
       setPropertyValue(entity, 'property', value);
+      expect(entity).toEqual(expected);
+    });
+    it('with a datatype', () => {
+      const entity = {'@id': '', 'property': [{'@value': 'other'}]};
+      const expected = {'@id': '', 'property': [{'@value': 'other'}, {'@value': value, '@type': `${XSD}boolean`}]};
+      setPropertyValue(entity, 'property', value, `${XSD}boolean`);
+      expect(entity).toEqual(expected);
+    });
+    it('with a string datatype', () => {
+      const entity = {'@id': '', 'property': [{'@value': 'other'}]};
+      const expected = {'@id': '', 'property': [{'@value': 'other'}, {'@value': value}]};
+      setPropertyValue(entity, 'property', value, `${XSD}string`);
       expect(entity).toEqual(expected);
     });
   });
@@ -701,7 +713,8 @@ describe('Utility method', () => {
       [`${SHACL_FORM}usesFormField`]: [{ '@id': `${SHACL_FORM}TextInput` }],
       [`${SHACL}path`]: [{ '@id': simpleTextProp }],
       [`${SHACL}minCount`]: [{ '@value': '1' }],
-      [`${SHACL}maxCount`]: [{ '@value': '2' }]
+      [`${SHACL}maxCount`]: [{ '@value': '2' }],
+      [`${SHACL}datatype`]: [{ '@id': `${XSD}int` }],
     };
     const multiTextPropertyShape: JSONLDObject = {
       '@id': 'urn:MultiTextPropertyShape',
@@ -757,6 +770,7 @@ describe('Utility method', () => {
       '@type': [`${SHACL}PropertyShape`],
       [`${SHACL}path`]: [{ '@id': multiComplexPropA }],
       [`${SHACL}name`]: [{ '@value': 'Multi Complex Prop A' }],
+      [`${SHACL}datatype`]: [{ '@id': `${XSD}string` }],
       [`${SHACL_FORM}usesFormField`]: [{ '@id': `${SHACL_FORM}TextInput` }],
     };
     const subPropertyShape3: JSONLDObject = {
@@ -773,22 +787,22 @@ describe('Utility method', () => {
     const complexConfig: SHACLFormFieldConfig = new SHACLFormFieldConfig(nodeShape, complexPropertyShape['@id'], fullRDF);
     const multiComplexConfig: SHACLFormFieldConfig = new SHACLFormFieldConfig(nodeShape, multiComplexPropertyShape['@id'], fullRDF);
     const formValues: FormValues = {
-      [simpleTextProp]: 'simple text',
+      [simpleTextProp]: '10',
       [multiTextProp]: ['A', 'B', ''],
       [complexProp]: {
         [complexPropA]: 'http://test.com'
       },
       [multiComplexProp]: [
-        { [multiComplexPropA]: 'A', [multiComplexPropB]: 'B' },
-        { [multiComplexPropA]: 'Y', [multiComplexPropB]: 'Z' },
-        { [multiComplexPropA]: 'WOW', [multiComplexPropB]: '' },
+        { [multiComplexPropA]: 'http://example.com/1', [multiComplexPropB]: 'B' },
+        { [multiComplexPropA]: 'http://example.com/2', [multiComplexPropB]: 'Z' },
+        { [multiComplexPropA]: 'http://example.com/3', [multiComplexPropB]: '' },
       ]
     };
     const instance: JSONLDObject = { '@id': 'test', '@type': [nodeShape['@id']] };
     const result = getShaclGeneratedData(instance, [simpleTextConfig, multiTextConfig, missingTextConfig, complexConfig, multiComplexConfig], formValues);
     expect(result.length).toEqual(5);
     expect(result[0]['@id']).toEqual(instance['@id']);
-    expect(instance[simpleTextProp]).toEqual([{'@value': 'simple text'}]);
+    expect(instance[simpleTextProp]).toEqual([{'@value': '10', '@type': `${XSD}int`}]);
     expect(instance[multiTextProp]).toEqual([ { '@value': 'A' }, { '@value': 'B' } ]);
     expect(instance[complexProp]).toEqual([ { '@id': jasmine.any(String) } ]);
     const complexNode: JSONLDObject = result.find(obj => obj['@id'] === instance[complexProp][0]['@id']);
@@ -799,17 +813,17 @@ describe('Utility method', () => {
     const multiComplexNode1 = result.find(obj => obj['@id'] === instance[multiComplexProp][0]['@id']);
     expect(multiComplexNode1).toBeTruthy();
     expect(multiComplexNode1['@type']).toEqual([subNodeShape2['@id']]);
-    expect(multiComplexNode1[multiComplexPropA]).toEqual([ { '@value': 'A' } ]);
+    expect(multiComplexNode1[multiComplexPropA]).toEqual([ { '@value': 'http://example.com/1' } ]);
     expect(multiComplexNode1[multiComplexPropB]).toEqual([ { '@value': 'B' } ]);
     const multiComplexNode2 = result.find(obj => obj['@id'] === instance[multiComplexProp][1]['@id']);
     expect(multiComplexNode2).toBeTruthy();
     expect(multiComplexNode2['@type']).toEqual([subNodeShape2['@id']]);
-    expect(multiComplexNode2[multiComplexPropA]).toEqual([ { '@value': 'Y' } ]);
+    expect(multiComplexNode2[multiComplexPropA]).toEqual([ { '@value': 'http://example.com/2' } ]);
     expect(multiComplexNode2[multiComplexPropB]).toEqual([ { '@value': 'Z' } ]);
     const multiComplexNode3 = result.find(obj => obj['@id'] === instance[multiComplexProp][2]['@id']);
     expect(multiComplexNode3).toBeTruthy();
     expect(multiComplexNode3['@type']).toEqual([subNodeShape2['@id']]);
-    expect(multiComplexNode3[multiComplexPropA]).toEqual([ { '@value': 'WOW' } ]);
+    expect(multiComplexNode3[multiComplexPropA]).toEqual([ { '@value': 'http://example.com/3' } ]);
     expect(multiComplexNode3[multiComplexPropB]).toBeUndefined();
   });
 });

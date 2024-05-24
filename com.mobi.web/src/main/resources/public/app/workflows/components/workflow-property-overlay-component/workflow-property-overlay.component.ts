@@ -23,19 +23,22 @@
 import { Component, Inject, OnInit } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 
-import { isArray, isObject } from 'lodash';
+import { isObject } from 'lodash';
 
 //local
 import { getBeautifulIRI } from '../../../shared/utility';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { JSONLDId } from '../../../shared/models/JSONLDId.interface';
+import { JSONLDValue } from '../../../shared/models/JSONLDValue.interface';
 
 /**
- * @class WorkflowPropertyOverlayComponent
+ * @class workflows.WorkflowPropertyOverlayComponent
  * 
- * A component that creates content for a modal to display the properties of an entity within a Workflow. Displays the
+ * A component that creates content for a modal to display all the properties on an entity in a Workflow. Displays the
  * type of the entity and each property on the entity with its values. Meant to be used in conjunction with the
  * `MatDialog` service.
- * @implements OnInit
+ *
+ * @implements {OnInit}
  */
 @Component({
   selector: 'app-workflow-property-overlay-component',
@@ -43,41 +46,41 @@ import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
   styleUrls: ['./workflow-property-overlay.component.scss']
 })
 export class WorkflowPropertyOverlayComponent implements OnInit {
-  displayData: { key: string, value: any[] }[] = []
+  displayData: { key: string, value: string[] }[] = []
   message = '';
 
-  constructor(@Inject(MAT_DIALOG_DATA) public data: { entity: JSONLDObject },
+  constructor(@Inject(MAT_DIALOG_DATA) public data: { entityIRI: string, entity: JSONLDObject[] },
               public dialogRef: MatDialogRef<WorkflowPropertyOverlayComponent>) { }
 
   ngOnInit(): void {
-    this.setEntityValues();
+    this.setDisplayValues();
   }
 
   /**
-   * Retrieves the values
+   * Sets the display values
    */
-  setEntityValues(): void | null {
-    if (!this.data) {
+  setDisplayValues(): void | null {
+    if (!this.data.entity) {
       this.message = 'No data to display.';
       return;
     }
-    const keys = Object.keys(this.data);
+    const mainEntity = this.data.entity.find(obj => obj['@id'] === this.data.entityIRI);
+    if (!mainEntity) {
+      this.message = 'No data to display.';
+      return;
+    }
+    const keys = Object.keys(mainEntity);
     for (const key of keys) {
       if (key === '@id') {
         continue;
       }
-      const entity = this.data[key];
+      const propValues: (string|JSONLDId|JSONLDValue)[] = mainEntity[key];
 
-      if (entity) {
+      if (propValues) {
         const displayKey = getBeautifulIRI(key).replace('@','');
-        let values: string[];
-        if (isArray(entity)) {
-          values = this.buildEntityValues(entity);
-        } else {
-          values = [entity];
-        }
-        if (values) {
-          this.displayData.push({ key: displayKey, value: values });
+        const valueStrings: string[] = this.buildEntityValues(propValues);
+        if (valueStrings) {
+          this.displayData.push({ key: displayKey, value: valueStrings });
         }
       }
     }
@@ -85,52 +88,62 @@ export class WorkflowPropertyOverlayComponent implements OnInit {
   /**
    * Builds an array of values from the given entity array based on the displayKey provided.
    *
-   * @param {any[]} entity - The entity array.
-   * @return {any[]} - An array of values.
+   * @param {(string|JSONLDId|JSONLDValue)[]} entity - The entity array.
+   * @return {string[]} - An array of values.
    */
-  buildEntityValues(entity: JSONLDObject[] | string[]): string[] {
-    let values: string[] = [];
+  buildEntityValues(entity: (string|JSONLDId|JSONLDValue)[]): string[] {
+    const values: string[] = [];
     for (const item of entity) {
       if (isObject(item)) {
-        values = this.getValueFromEntityObject(item);
+        if (item['@value']) {
+          values.push(item['@value']);
+        } else {
+          values.push(this._getObjectPropertyDisplay(item as JSONLDId));
+        }
       } else {
-        values.push((getBeautifulIRI(item)));
+        values.push(getBeautifulIRI(item));
       }
     }
     return this.filterEntityValues(values);
   }
 
   /**
-   * closes the current dialog.
-   *
-   * @return {void}
+   * Closes the current dialog.
    */
   close(): void {
     this.dialogRef.close();
   }
 
   /**
-   * Process an item if it is of type object.
-   *
-   * @param item An object type entity item.
-   * @return Array of processed values.
-   */
-  private getValueFromEntityObject(item: JSONLDObject): string[] {
-    let objectValues: string[] = [];
-
-    Object.keys(item).forEach(key => {
-      objectValues = [item[key]];
-    });
-    return objectValues;
-  }
-
-  /**
    * Filters out specific items from the given values.
+   * @private
    *
-   * @param values Array of values to be filtered.
-   * @return Filtered values.
+   * @param {string[]} values Array of values to be filtered.
+   * @return {string[]} Filtered values.
    */
   private filterEntityValues(values: string[]): string[] {
     return values.filter(item => item !== 'Action' && item !== 'Trigger' && item !== 'Event Trigger');
+  }
+  /**
+   * Creates a display string for an object property value on the entity represented by the provided JSONLDId. If the
+   * object with the IRI is found in the entity JSON-LD array, generates a display of the properties on that object.
+   * @private
+   * 
+   * @param {JSONLDId} val The value of an object property on the entity
+   * @returns {string} A string representation of the object property value
+   */
+  private _getObjectPropertyDisplay(val: JSONLDId): string {
+    const associatedObject = this.data.entity.find(obj => obj['@id'] === val['@id']);
+    if (associatedObject) {
+      return Object.keys(associatedObject).filter(key => key !== '@id' && key !== '@type').map(key => {
+        const prop = getBeautifulIRI(key);
+        const values = associatedObject[key]
+          .map(value => value['@id'] || value['@value'])
+          .join(', ');
+        return `${prop}: ${values}`;
+      }).join(' | ');
+    } else {
+      return val['@id'];
+    }
   }
 }

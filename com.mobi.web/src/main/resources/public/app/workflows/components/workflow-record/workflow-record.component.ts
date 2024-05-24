@@ -42,6 +42,8 @@ import { WorkflowDownloadModalComponent } from '../workflow-download-modal/workf
 import { BranchInfo } from '../../models/branch-info.interface';
 import { WorkflowUploadChangesModalComponent } from '../workflow-upload-changes-modal/workflow-upload-changes-modal.component';
 import { Difference } from '../../../shared/models/difference.class';
+import { WorkflowSHACLDefinitions } from '../../models/workflow-shacl-definitions.interface';
+import { RESTError } from '../../../shared/models/RESTError.interface';
 
 /**
  * @class workflows.WorkflowRecordComponent
@@ -59,13 +61,12 @@ export class WorkflowRecordComponent implements OnInit, OnDestroy {
 
   branch: BranchInfo;
   branches: BranchInfo[] = [];
-  localCatalogIri: string;
   currentlyRunning = false;
   executingActivities: JSONLDObject[] = [];
   workflowRdf: JSONLDObject[] = [];
   catalogId: string;
 
-  disableClickFeature = true; // Used to disable buttons until future tickets are done
+  shaclDefinitions: WorkflowSHACLDefinitions;
 
   private executionActivityEventsSubscription: Subscription;
   
@@ -78,8 +79,8 @@ export class WorkflowRecordComponent implements OnInit, OnDestroy {
      }
 
   ngOnInit(): void {
-    this.localCatalogIri = get(this.cm.localCatalog, '@id', '');
     this.setRecordBranches();
+    this.setShaclDefinitions();
     this.executionActivityEventsSubscription = this._wm.getExecutionActivitiesEvents().subscribe(activities => {
       this.currentlyRunning = activities.length > 0;
       this.executingActivities = sortBy(
@@ -100,7 +101,7 @@ export class WorkflowRecordComponent implements OnInit, OnDestroy {
       sortOption: find(this.cm.sortOptions, {field: `${DCTERMS}issued`, asc: true})
     };
     this.workflowRdf = [];
-    this.cm.getRecordBranches(this.record.iri, this.localCatalogIri, paginatedConfig)
+    this.cm.getRecordBranches(this.record.iri, this.catalogId, paginatedConfig)
         .subscribe((response: HttpResponse<JSONLDObject[]>) => {
             this.branches = response.body
               .filter(branch => !this.cm.isUserBranch(branch))
@@ -114,14 +115,8 @@ export class WorkflowRecordComponent implements OnInit, OnDestroy {
               }))
               .filter((branch: BranchInfo) => branch.title === 'MASTER');
             this.branch = this.branches[0];
-            this.cm.getResource(getPropertyId(this.branch.branch, `${CATALOG}head`), this.record.master, 
-              this.record.iri, this.localCatalogIri,this.workflowsState.hasChanges).subscribe(response => {
-              if (typeof response !== 'string') {
-                this.workflowRdf = response as JSONLDObject[];
-              }
-            }, error => {
-              this._toast.createErrorToast(`Issue fetching latest workflow RDF: ${error}`);
-            });
+
+            this.setWorkflowRdf();
         }, error => {
           this.branches = [];
           this.branch = undefined;
@@ -198,7 +193,7 @@ export class WorkflowRecordComponent implements OnInit, OnDestroy {
       }
     }).afterClosed().subscribe((result: boolean) => {
       if (result) {
-        this.cm.deleteRecord(this.record.iri, this.localCatalogIri).subscribe({
+        this.cm.deleteRecord(this.record.iri, this.catalogId).subscribe({
           next: () => {
             this.goBack();
           },
@@ -241,8 +236,7 @@ export class WorkflowRecordComponent implements OnInit, OnDestroy {
       if (response.additions.length > 0 || response.deletions.length < 0) {
         this.cm.deleteInProgressCommit(this.record.iri, this.catalogId).subscribe();
       }
-    }
-    );
+    });
   }
 
   /**
@@ -257,19 +251,31 @@ export class WorkflowRecordComponent implements OnInit, OnDestroy {
       .afterClosed().subscribe((result) => {
         if (result && result.status === 200) {
           this.workflowsState.hasChanges = true;
-          this.cm.getResource(getPropertyId(this.branch.branch, `${CATALOG}head`), this.record.master, 
-          this.record.iri, this.localCatalogIri, true).subscribe(response => {
-          if (typeof response !== 'string') {
-            this.workflowRdf = response as JSONLDObject[];
-          }
-        }, error => {
-          this._toast.createErrorToast(`Issue fetching latest workflow RDF: ${error}`);
-        });
+          this.setWorkflowRdf();
         } else if (result && result.status === 204) {
           this._toast.createWarningToast('No changes detected with new upload');
         }
       });
+    });
+  }
 
+  setWorkflowRdf(): void {
+    this.cm.getResource(getPropertyId(this.branch.branch, `${CATALOG}head`), this.record.master, this.record.iri,
+      this.catalogId, this.workflowsState.hasChanges
+    ).subscribe(response => {
+      if (typeof response !== 'string') {
+        this.workflowRdf = response as JSONLDObject[];
+      }
+    }, error => {
+      this._toast.createErrorToast(`Issue fetching latest workflow RDF: ${error}`);
+    });
+  }
+
+  setShaclDefinitions(): void {
+    this._wm.getShaclDefinitions(true).subscribe(definitions => {
+      this.shaclDefinitions = definitions;
+    }, (error: RESTError) => {
+      this._toast.createErrorToast(`Issue fetching Workflow SHACL definitions: ${error.errorMessage}`);
     });
   }
 

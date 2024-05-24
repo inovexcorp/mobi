@@ -21,7 +21,7 @@
  * #L%
  */
 import { HttpErrorResponse } from '@angular/common/http';
-import { forkJoin, throwError, from, Observable, of, Subject, noop, merge as rxjsMerge } from 'rxjs';
+import { forkJoin, throwError, from, Observable, of, Subject, merge as rxjsMerge } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 import {
     assign,
@@ -461,14 +461,7 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
           newListItem = createdItem;
           newListItem.editorTabStates = oldListItem.editorTabStates;
           newListItem.changesPageOpen = changesPageOpen;
-          if (newListItem.ontologyId !== oldListItem.ontologyId) {
-            return this.resetStateTabs(newListItem);
-          } else {
-            newListItem.selected = oldListItem.selected;
-            newListItem.selectedBlankNodes = oldListItem.selectedBlankNodes;
-            newListItem.blankNodes = oldListItem.blankNodes;
-            return of(null);
-          }
+          return this.resetStateTabs(newListItem);
         }),
         map(() => {
           if (versionTitle) {

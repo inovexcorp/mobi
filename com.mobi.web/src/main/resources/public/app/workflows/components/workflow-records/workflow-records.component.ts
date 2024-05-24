@@ -447,7 +447,7 @@ export class WorkflowRecordsComponent implements OnInit, OnDestroy {
    */
   downloadWorkflow(): void {
     this._dialog.open(WorkflowDownloadModalComponent,
-      {data: {workflows: this.getSelectedRecords(), applyInProgressCommit: this.wss.isEditMode}})
+       { data: { workflows: this.getSelectedRecords(), applyInProgressCommit: this.wss.isEditMode } })
       .afterClosed().subscribe((result: boolean) => {
         if (result) {
           this.selectedWorkflows = [];

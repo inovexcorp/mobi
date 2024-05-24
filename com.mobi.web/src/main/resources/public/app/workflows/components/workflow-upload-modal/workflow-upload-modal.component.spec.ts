@@ -20,25 +20,26 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { MatInputModule } from '@angular/material/input';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { DebugElement } from '@angular/core';
+import { By } from '@angular/platform-browser';
+import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { of, throwError } from 'rxjs';
+import { MockComponent, MockProvider } from 'ng-mocks';
+import { map, trim, uniq } from 'lodash';
 
-import { WorkflowUploadModalComponent } from './workflow-upload-modal.component';
 import { WorkflowsManagerService } from '../../services/workflows-manager.service';
 import { cleanStylesFromDOM } from '../../../../test/ts/Shared';
 import { RESTError } from '../../../shared/models/RESTError.interface';
 import { WorkflowRecordConfig } from '../../models/workflowRecordConfig.interface';
 import { XACMLDecision } from '../../../shared/models/XACMLDecision.interface';
-
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
-import { of, throwError } from 'rxjs';
-import { MockProvider } from 'ng-mocks';
-import { MatInputModule } from '@angular/material/input';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { DebugElement } from '@angular/core';
-import { By } from '@angular/platform-browser';
-import { map, trim, uniq } from 'lodash';
+import { KeywordSelectComponent } from '../../../shared/components/keywordSelect/keywordSelect.component';
+import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
+import { WorkflowUploadModalComponent } from './workflow-upload-modal.component';
 
 describe('WorkflowUploadModalComponent', () => {
   let component: WorkflowUploadModalComponent;
@@ -73,7 +74,11 @@ describe('WorkflowUploadModalComponent', () => {
         MatInputModule,
         NoopAnimationsModule,
       ],
-      declarations: [ WorkflowUploadModalComponent ],
+      declarations: [
+        WorkflowUploadModalComponent,
+        MockComponent(KeywordSelectComponent),
+        MockComponent(ErrorDisplayComponent)
+      ],
       providers: [
         MockProvider(WorkflowsManagerService),
         { provide: MAT_DIALOG_DATA, useValue: {file: mockFile} },

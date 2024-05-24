@@ -67,7 +67,7 @@
   <div class="autocomplete-field pb-3 d-flex flex-column" *ngIf="formFieldConfig.fieldType === FieldType.AUTOCOMPLETE">
     <mat-form-field>
       <mat-label>{{label}}</mat-label>
-      <input type="text" matInput placeholder="Select an option"  (focus)="getAutocompleteOptions(formFieldConfig)" [formControlName]="controlName"
+      <input type="text" matInput placeholder="Select an option" (focus)="getAutocompleteOptions(formFieldConfig)" [formControlName]="controlName"
         [matAutocomplete]="auto">
       <mat-icon matSuffix>keyboard_arrow_down</mat-icon>
       <mat-autocomplete #auto="matAutocomplete" (optionSelected)="onOptionSelected($event.option.value)" [displayWith]="displayFn">

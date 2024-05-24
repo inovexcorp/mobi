@@ -27,6 +27,7 @@ import { Observable, throwError } from 'rxjs';
 import { v4 } from 'uuid';
 
 import moment from 'moment/moment';
+import * as sha1 from 'js-sha1';
 
 import { JSONLDObject } from './models/JSONLDObject.interface';
 import { JSONLDId } from './models/JSONLDId.interface';
@@ -109,8 +110,12 @@ export function getPropertyValue(entity: JSONLDObject, propertyIRI: string): str
 * @param {string} propertyIRI The IRI of a property
 * @param {string} value The new value for the property
 */
-export function setPropertyValue(entity: JSONLDObject, propertyIRI: string, value: string): void {
-  _setValue(entity, propertyIRI, {'@value': value});
+export function setPropertyValue(entity: JSONLDObject, propertyIRI: string, value: string, datatype?: string): void {
+  const valObj: JSONLDValue = {'@value': value};
+  if (datatype && datatype !== `${XSD}string`) {
+    valObj['@type'] = datatype;
+  }
+  _setValue(entity, propertyIRI, valObj);
 }
 
 /**
@@ -687,17 +692,18 @@ export function getShaclGeneratedData(instance: JSONLDObject, configs: SHACLForm
           valToSet = '' + val;
         } else { // If the property value is an object
           const objVal = val as { [key: string]: string };
-          // If the object has keys that start with the property name, assume all the values of the object are values of the property
-          const valKey = Object.keys(objVal).find(key => key.startsWith(prop));
-          if (valKey) {
-            valToSet = '' + objVal[valKey];
-          } else { // If the object does not have keys starting with the property name, need to generate/update an associated object for the complex setting value
+          // If the field config has sub fields, need to generate an associated object
+          if (config.subFields && config.subFields.length) { 
             const assocObject: JSONLDObject = _createAssociatedObject(config, objVal);
             genData.push(assocObject);
             valToSet = assocObject['@id'];
+          } else { 
+            // If the object has keys that start with the property name, assume all the values of the object are values of the property
+            const valKey = Object.keys(objVal).find(key => key.startsWith(prop));
+            valToSet = '' + objVal[valKey];
           }
         }
-        _setJSONLDPropValue(instance, prop, valToSet);
+        _setJSONLDPropValue(instance, config, valToSet);
       });
     } else { // Form value is not an array
       let valToSet: string;
@@ -709,7 +715,7 @@ export function getShaclGeneratedData(instance: JSONLDObject, configs: SHACLForm
         genData.push(assocObject);
         valToSet = assocObject['@id'];
       }
-      _setJSONLDPropValue(instance, prop, valToSet);
+      _setJSONLDPropValue(instance, config, valToSet);
     }
     // If no values were found for the property, remove it from the settings instance
     if (!instance[prop].length) {
@@ -759,12 +765,14 @@ function _createAssociatedObject(config: SHACLFormFieldConfig, objectValue: { [k
   // Assumes type of associated object is IRI of the NodeShape (i.e. implicit class target)
   const className = splitIRI(subNodeShape['@id']).end;
   const assocObject: JSONLDObject = {
-    '@id': `http://mobi.solutions/${className}#${v4()}`,
+    '@id': `http://mobi.solutions/${className}#`,
     '@type': [subNodeShape['@id']]
   };
-  Object.keys(objectValue).forEach(subProp => {
-    _setJSONLDPropValue(assocObject, subProp, objectValue[subProp]);
+  config.subFields.forEach(subConfig => {
+    _setJSONLDPropValue(assocObject, subConfig, objectValue[subConfig.property]);
   });
+  // Deterministically create the local name for the associated object based off the type and properties
+  assocObject['@id'] += sha1.sha1(JSON.stringify(assocObject));
   return assocObject;
 }
 /**
@@ -784,12 +792,12 @@ function _isIRIValue(val: string) {
  * @param {string} prop The IRI of the property to set
  * @param {string} value The property value to set
  */
-function _setJSONLDPropValue(instance: JSONLDObject, prop: string, value: string): void {
+function _setJSONLDPropValue(instance: JSONLDObject, config: SHACLFormFieldConfig, value: string): void {
   if (value) {
-    if (_isIRIValue(value)) {
-      setPropertyId(instance, prop, value);
+    if (_isIRIValue(value) && !config.datatype) {
+      setPropertyId(instance, config.property, value);
     } else {
-      setPropertyValue(instance, prop, value);
+      setPropertyValue(instance, config.property, value, config.datatype);
     }
   }
 }

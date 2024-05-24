@@ -26,20 +26,15 @@ import { DebugElement } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
 import { MockComponent, MockProvider } from 'ng-mocks';
 
-import { find } from 'lodash';
-
 import { InfoMessageComponent } from '../../../shared/components/infoMessage/infoMessage.component';
 import { workflowRDF } from '../../models/mock_data/workflow-mocks';
 import { WorkflowPropertyOverlayComponent } from './workflow-property-overlay.component';
 
-describe('WorkflowPropertyOverlayComponentComponent', () => {
+describe('WorkflowPropertyOverlayComponent', () => {
   let component: WorkflowPropertyOverlayComponent;
   let element: DebugElement;
   let fixture: ComponentFixture<WorkflowPropertyOverlayComponent>;
   let matDialogRef: jasmine.SpyObj<MatDialogRef<WorkflowPropertyOverlayComponent>>;
-
-  const triggerId = 'http://example.com/workflows/LEDControl/trigger';
-  const entity = find(workflowRDF, {'@id': triggerId} );
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -49,7 +44,7 @@ describe('WorkflowPropertyOverlayComponentComponent', () => {
       ],
       providers: [
         MockProvider(MatDialogRef),
-        MockProvider(MAT_DIALOG_DATA),
+        { provide: MAT_DIALOG_DATA, useValue: {entityIRI: 'http://example.com/workflows/LEDControl/trigger', entity: workflowRDF}},
         { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close'])}
       ],
       imports: [
@@ -64,19 +59,18 @@ describe('WorkflowPropertyOverlayComponentComponent', () => {
     element = fixture.debugElement;
     fixture.detectChanges();
   });
+
   afterEach(() => {
     component = null;
     fixture = null;
     element = null;
     matDialogRef = null;
   });
+
   it('should create', () => {
     expect(component).toBeTruthy();
   });
   describe('component methods', () => {
-    beforeEach(() => {
-        component.data = {entity};
-    });
     it('should call close method', () => {
         const button = element.query(By.css('button'));
         button.triggerEventHandler('click', undefined);
@@ -84,9 +78,9 @@ describe('WorkflowPropertyOverlayComponentComponent', () => {
         expect(matDialogRef.close).toHaveBeenCalledWith();
     });
     it('should call getEntityValues method', () => {
-        spyOn(component, 'setEntityValues');
-        component.setEntityValues();
-        expect(component.setEntityValues).toHaveBeenCalled();
+        spyOn(component, 'setDisplayValues');
+        component.setDisplayValues();
+        expect(component.setDisplayValues).toHaveBeenCalledWith();
     });
     it('should call buildEntityValues method', () => {
         spyOn(component, 'buildEntityValues');
@@ -95,10 +89,21 @@ describe('WorkflowPropertyOverlayComponentComponent', () => {
         expect(component.buildEntityValues).toHaveBeenCalledWith(entity);
     });
     it('should initialize displayData', () => {
+        expect(component.displayData.length).toEqual(2);
+    });
+    it('should initialize displayData with associated objects', () => {
+        component.data.entityIRI = 'http://example.com/workflows/LEDControl/action/b';
+        component.displayData = [];
         component.ngOnInit();
-        expect(component.displayData[0].value).toEqual([entity]);
+        expect(component.displayData.length).toEqual(3);
+        const headerDisplay = component.displayData.find(disp => disp.key === 'Has Header');
+        expect(headerDisplay).toBeDefined();
+        expect(headerDisplay.value.length).toEqual(1);
+        expect(headerDisplay.value[0]).toContain('Has Header Name');
     });
     it('should set message', () => {
+        component.data = { entityIRI: '', entity: undefined };
+        component.ngOnInit();
         expect(component.message).toEqual('No data to display.');
     });
     it('should inject MAT_DIALOG_DATA and MatDialogRef', () => {
@@ -108,18 +113,16 @@ describe('WorkflowPropertyOverlayComponentComponent', () => {
   });
   describe('contains the correct html', function () {
     it('for wrapping containers', function () {
-        component.data = {entity};
-        component.setEntityValues();
-        fixture.detectChanges();
         expect(element.queryAll(By.css('.workflow-entity-dialog')).length).toEqual(1);
         expect(element.queryAll(By.css('.overflow-properties')).length).toEqual(1);
         expect(element.queryAll(By.css('button')).length).toEqual(1);
-        expect(element.queryAll(By.css('h5')).length).toEqual(1);
+        expect(element.queryAll(By.css('h5')).length).toEqual(2);
     });
     it('when no component data', async () => {
-        component.data = { entity: undefined };
+        component.data = { entityIRI: '', entity: undefined };
+        component.displayData = [];
         fixture.detectChanges();
-        component.setEntityValues();
+        component.setDisplayValues();
         await fixture.whenStable();
         expect(element.queryAll(By.css('info-message')).length).toEqual(1);
         expect(element.queryAll(By.css('.overflow-properties')).length).toEqual(0);

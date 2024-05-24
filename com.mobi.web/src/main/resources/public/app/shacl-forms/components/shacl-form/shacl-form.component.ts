@@ -20,8 +20,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { FormArray, FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
+import { Observable, forkJoin, from, of } from 'rxjs';
+import { concatMap, map, toArray } from 'rxjs/operators';
 import { v4 } from 'uuid';
 
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
@@ -30,10 +32,11 @@ import { JSONLDId } from '../../../shared/models/JSONLDId.interface';
 import { JSONLDValue } from '../../../shared/models/JSONLDValue.interface';
 import { Option } from '../../models/option.class';
 import { FormValues } from '../../models/form-values.interface';
-import { getShaclGeneratedData } from '../../../shared/utility';
+import { getPropertyId, getPropertyValue, getShaclGeneratedData } from '../../../shared/utility';
+import { SHACLFormManagerService } from '../../services/shaclFormManager.service';
 
 interface RawFormValues {
-  [key: string]: Option | string | { [key: string]: string } | (Option |string | { [key: string]: { [key: string]: string }})[]
+  [key: string]: Option | string | { [key: string]: string|Option } | (Option |string | { [key: string]: { [key: string]: string|Option }})[]
 }
 
 interface FormComponent {
@@ -84,7 +87,7 @@ export class SHACLFormComponent implements OnInit {
 
   focusNode: JSONLDObject[] = [];
 
-  constructor(private _fb: FormBuilder) { }
+  constructor(private _fb: FormBuilder, private _sh: SHACLFormManagerService, private _ref: ChangeDetectorRef) { }
 
   ngOnInit(): void {
     this.formComponents = this._generateFormComponents();
@@ -157,19 +160,20 @@ export class SHACLFormComponent implements OnInit {
     const array: FormArray = this.form.get([comp.config.property]) as FormArray;
     array.removeAt(index, { emitEvent: array.length === 1 });
     // Reset form indexes
-    const values: { [key: string]: string|{ [key: string]: string } }[] = array.value;
+    const values: { [key: string]: string|Option|{ [key: string]: string|Option } }[] = array.value;
     array.clear({ emitEvent: false });
     values.forEach((val, idx) => {
       let group: FormGroup;
-      if (comp.hasSubFields) { // If the field generates an associated object
-        const subValObj: { [key: string]: string } = val[`${comp.config.property}${idx < index ? idx : idx + 1}`] as { [key: string]: string };
+      const subGroupVal: string|Option|{ [key: string]: string|Option } = val[`${comp.config.property}${idx < index ? idx : idx + 1}`];
+      if (comp.hasSubFields && typeof subGroupVal === 'object') { // If the field generates an associated object
         // Create a FormGroup to collect all the fields for the associated object populated with existing values
         // Control name is the parent property + index after removal of the specified value + sub field property
         group = this._createSubFieldFormGroup(comp.config, idx, 
-          (subProp: string) => subValObj[`${comp.config.property}${idx < index ? idx : idx + 1}${subProp}`]);
+          (config: SHACLFormFieldConfig) => 
+            subGroupVal[`${comp.config.property}${idx < index ? idx : idx + 1}${config.property}`]);
       } else { // Else the field is simple (i.e. no associated object)
         group = this._fb.group({
-          [comp.config.property + idx]: this._fb.control(val[`${comp.config.property}${idx < index ? idx : idx + 1}`])
+          [comp.config.property + idx]: this._fb.control(subGroupVal)
         });
       }
       array.push(group);
@@ -238,14 +242,12 @@ export class SHACLFormComponent implements OnInit {
    */
   private _normalizeFormValues(rawValues: RawFormValues): FormValues {
     return Object.entries(rawValues).reduce((accumulator, [key, value]) => {
-      if (value instanceof Option) {
-        accumulator[key] = value.value;
-      } else if (Array.isArray(value)) {
+      if (Array.isArray(value)) {
         accumulator[key] = value.map((option, idx) => {
           if (typeof option !== 'object') {
             return option;
           }
-          if (option instanceof Option) {
+          if ('value' in option) {
             return option.value;
           }
           if (typeof option[key + idx] !== 'object') {
@@ -254,7 +256,11 @@ export class SHACLFormComponent implements OnInit {
           return this._normalizeObjectValue(option[key + idx], key + idx);
         });
       } else if (typeof value === 'object') {
-        accumulator[key] = this._normalizeObjectValue(value, key);
+        if ('value' in value) {
+          accumulator[key] = value.value;
+        } else {
+          accumulator[key] = this._normalizeObjectValue(value, key);
+        }
       } else {
         accumulator[key] = value;
       }
@@ -262,9 +268,18 @@ export class SHACLFormComponent implements OnInit {
     }, {});
   }
 
-  private _normalizeObjectValue(obj: { [key: string]: string }, key: string): { [key: string]: string } {
+  /**
+   * Returns a "normalized" version of an associated object's value coming from the form. Each property on the object
+   * corresponds to a property to be set on an associated object. The provided key is the parent key to be stripped out
+   * of the raw form value key.
+   * 
+   * @param {{ [key: string]: string|Option }} obj A form value for an associated object
+   * @param {string} key The parent form value key to remove from the object keys
+   * @returns {{ [key: string]: string }} "Normalized" version of the associated object values
+   */
+  private _normalizeObjectValue(obj: { [key: string]: string|Option }, key: string): { [key: string]: string } {
     return Object.entries(obj).reduce((subAccumulator, [subKey, subValue]) => {
-      subAccumulator[subKey.replace(key, '')] = subValue;
+      subAccumulator[subKey.replace(key, '')] = typeof subValue === 'string' ? subValue : subValue.value;
       return subAccumulator;
     }, {});
   }
@@ -276,8 +291,10 @@ export class SHACLFormComponent implements OnInit {
     // If initial data has been provided
     if (this.genObj) {
       // Assumes there is only one instance of the node in the array and that the NodeShape uses implicit class targeting
-      const nodeInstance = this.genObj.find(obj => obj['@type'].includes(this.nodeShape['@id']));
+      const nodeInstance = this.genObj.find(obj => !!obj && obj['@type'].includes(this.nodeShape['@id']));
       if (nodeInstance) {
+        // Initializes the focus node with the provided data
+        this.focusNode = [nodeInstance];
         // Only care about property fields, not the IRI or types
         Object.keys(nodeInstance).filter(key => key !== '@id' && key !== '@type').forEach(property => {
           const values: JSONLDId[]|JSONLDValue[] = nodeInstance[property];
@@ -313,24 +330,40 @@ export class SHACLFormComponent implements OnInit {
    */
   private _populateMultiValued(comp: FormComponent, values: JSONLDId[]|JSONLDValue[]): void {
     const array: FormArray = this.form.get([comp.config.property]) as FormArray;
-    values.forEach((val, idx) => {
-      let group: FormGroup;
-      if (comp.hasSubFields && val['@id']) { // If the field generates an associated object
-        // Find the associated object for this value
-        const subObject = this.genObj.find(obj => obj['@id'] === val['@id']);
-        if (subObject) { // If the associated object exists
-          // Create a FormGroup to collect all the fields for the associated object
-          group = this._createSubFieldFormGroup(comp.config, idx, 
-            (subProp: string) => subObject[subProp][0]['@value'] || subObject[subProp][0]['@id']);
+    from(values).pipe(
+      // Uses concatMap so the array indices execute in turn and return the FormGroups in order
+      concatMap((val, idx) => {
+        if (comp.hasSubFields && val['@id']) { // If the field generates an associated object
+          // Find the associated object for this value
+          const subObject = this.genObj.find(obj => obj['@id'] === val['@id']);
+          if (subObject) { // If the associated object exists
+            // Get the values of each individual sub field up front
+            const subValues$ = comp.config.subFields.map(subField => 
+              this._getSingleFieldValue(subField, getPropertyValue(subObject, subField.property) || getPropertyId(subObject, subField.property)));
+            return forkJoin(subValues$).pipe(map(result => {
+              // Create a FormGroup to collect all the fields for the associated object
+              return this._createSubFieldFormGroup(comp.config, idx, 
+                (config: SHACLFormFieldConfig) => {
+                  const subFieldIndex = comp.config.subFields.findIndex(subField => subField === config);
+                  return result[subFieldIndex];
+                });
+            }));
+          }
+        } else { // Else the field is a simple field (i.e. no associated object)
+          return this._getSingleFieldValue(comp.config, val['@value'] || val['@id']).pipe(map(valToSet => {
+            return this._fb.group({
+              [comp.config.property + idx]: this._fb.control(valToSet)
+            });
+          }));
         }
-      } else { // Else the field is a simple field (i.e. no associated object)
-        group = this._fb.group({
-          [comp.config.property + idx]: this._fb.control(val['@value'] || val['@id'])
-        });
-      }
-      if (group) {
+      }),
+      toArray()
+    ).subscribe(groups => {
+      // Add each group to the FormArray in turn
+      groups.forEach(group => {
         array.push(group, { emitEvent: false });
-      }
+      });
+      this._ref.markForCheck();
     });
   }
 
@@ -345,7 +378,9 @@ export class SHACLFormComponent implements OnInit {
   private _populateCheckbox(comp: FormComponent, values: JSONLDId[]|JSONLDValue[]): void {
     const array: FormArray = this.form.get([comp.config.property]) as FormArray;
     values.forEach(val => {
-      array.push(new FormControl(val['@value'] || val['@id']), { emitEvent: false });
+      // Need to set the field value to a valid Option
+      const existingOption = comp.config.values.find(option => option.value === val['@value'] || val['@id']);
+      array.push(new FormControl(existingOption || ''), { emitEvent: false });
     });
   }
 
@@ -364,12 +399,43 @@ export class SHACLFormComponent implements OnInit {
       if (subObject) { // If the associated object exists
         // For each field on the associated object, update the control with the field value
         comp.config.subFields.forEach(subConfig => {
-          this.form.get([comp.config.property, comp.config.property + subConfig.property])
-            .setValue(subObject[subConfig.property][0]['@value'] || subObject[subConfig.property][0]['@id']);
+          const valToSet = getPropertyValue(subObject, subConfig.property) || getPropertyId(subObject, subConfig.property);
+          this._getSingleFieldValue(comp.config, valToSet).subscribe(result => {
+            this.form.get([comp.config.property, comp.config.property + subConfig.property]).setValue(result);
+          });
         });
       }
-    } else { // Else the field is a simple field (i.e. no associated object) so set value of FormControl
-      this.form.get([comp.config.property]).setValue(value['@value'] || value['@id'], { emitEvent: false });
+    } else { // Else the field is a simple field (i.e. no associated object)
+      this._getSingleFieldValue(comp.config, value['@value'] || value['@id']).subscribe(valToSet => {
+        this.form.get([comp.config.property]).setValue(valToSet, { emitEvent: false });
+      });
+    }
+  }
+
+  /**
+   * Retrieves the form value to set on an individual Form Control based on the provided SHACLFormFieldConfig and the
+   * value that should be set. Assume the value is coming from a JSON-LD property value. If the config is for an
+   * autocomplete fetches the options from the backend to choose the appropriate Option. If the config is for a radio
+   * button, chooses the appropriate Option from the supported values. For every other field type, just returns back
+   * the provided value.
+   * 
+   * @param {SHACLFormFieldConfig} config The configuration of the field this value is for
+   * @param {string} valToSet A string containing the form field value to set
+   * @returns {Observable} An Observable with the appropriate form field value to set
+   */
+  private _getSingleFieldValue(config: SHACLFormFieldConfig, valToSet: string): Observable<string|Option> {
+    // If the field is an Autocomplete, we need to set the form value to a valid Option
+    if (config.fieldType === FieldType.AUTOCOMPLETE) {
+      const nodeInstance = this.genObj.find(obj => !!obj && obj['@type'].includes(this.nodeShape['@id']));
+      // TODO: Once WebFormRest supports more than just the node being passed, change second argument to this.genObj
+      return this._sh.getAutocompleteOptions(config.collectAllReferencedNodes(), [nodeInstance])
+        .pipe(map(options => options.find(option => option.value === valToSet) || ''));
+    } else if ([FieldType.RADIO, FieldType.DROPDOWN].includes(config.fieldType)) {
+      // If the field is a Radio or Dropdown, we need to set the form value to a valid Option
+      return of(config.values.find(option => option.value === valToSet) || '');
+    } else {
+      // All other FieldTypes can just be the value from the RDF straight
+      return of(valToSet);
     }
   }
 
@@ -382,16 +448,17 @@ export class SHACLFormComponent implements OnInit {
    * 
    * @param {SHACLFormFieldConfig} config The configuration for the field to create a FormGroup for
    * @param {number} [index=undefined] The optional index of the generated FormGroup within a FormArray
-   * @param {Function} populateValue An optional function to generate the value for the passed in sub field
+   * @param {Function} populateValue An optional function to generate the value for the passed in sub field config
    * @returns {FormGroup} A FormGroup containing controls for all the fields for the associated object generated by the
    * property represented in the provided SHACLFormFieldConfig
    */
-  private _createSubFieldFormGroup(config: SHACLFormFieldConfig, index?: number, populateValue?: (subProp: string) => string): FormGroup {
+  private _createSubFieldFormGroup(config: SHACLFormFieldConfig, index?: number, 
+    populateValue?: (config: SHACLFormFieldConfig) => string|Option): FormGroup {
     // Create a FormGroup to collect all the fields for the associated object
     const subGroup = this._fb.group({});
     config.subFields.forEach(subField => {
       // If a value populate function provided, generate the value for the sub field
-      const val = populateValue ? populateValue(subField.property) : '';
+      const val = populateValue ? populateValue(subField) : '';
       // If this is in a FormArray (i.e. an index was provided), include the index in the form field name
       // Does not emit event and relies on calling function to update the form if needed
       subGroup.addControl(config.property + (index !== undefined ? index : '') + subField.property, this._fb.control(val), { emitEvent: false });
