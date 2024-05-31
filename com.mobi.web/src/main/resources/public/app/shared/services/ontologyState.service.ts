@@ -336,6 +336,12 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
           newListItem.masterBranchIri = data.branchId;
           newListItem.userCanModify = true;
           newListItem.userCanModifyMaster = true;
+          newListItem.entityInfo[data.ontologyId] = {
+            label: rdfUpload.title,
+            names: [rdfUpload.title],
+            imported: false,
+            ontologyId: data.ontologyId
+          };
           return of(newListItem);
         }),
         switchMap(newListItem => {
