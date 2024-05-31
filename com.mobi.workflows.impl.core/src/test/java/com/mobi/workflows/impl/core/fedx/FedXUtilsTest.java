@@ -24,6 +24,7 @@ package com.mobi.workflows.impl.core.fedx;
  */
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
@@ -60,7 +61,9 @@ public class FedXUtilsTest {
         assertCountStatements(fedRepo, vf.createIRI("urn:id1"), 3);
         String query1 = "SELECT * WHERE { <urn:id1> ?p ?o }";
         List<String> resultList1 = getQueryBindingValues(fedRepo, query1, "p");
-        assertEquals("[urn:property1, urn:property2, urn:property3]", resultList1.toString());
+        assertTrue(resultList1.contains("urn:property1"));
+        assertTrue(resultList1.contains("urn:property2"));
+        assertTrue(resultList1.contains("urn:property3"));
 
         String query2 = "SELECT * WHERE { ?s ?p ?o . FILTER(?s = iri('urn:id1'))} ORDER BY (?p) LIMIT 10";
         List<String> resultList2 = getQueryBindingValues(fedRepo, query2, "p");
@@ -81,7 +84,9 @@ public class FedXUtilsTest {
 
         String query1 = "SELECT * WHERE { <urn:id1> ?p ?o }";
         List<String> resultList1 = getQueryBindingValues(fedRepo, query1, "p");
-        assertEquals("[urn:property1, urn:property2, urn:property0]", resultList1.toString());
+        assertTrue(resultList1.contains("urn:property0"));
+        assertTrue(resultList1.contains("urn:property1"));
+        assertTrue(resultList1.contains("urn:property2"));
 
         String query2 = "SELECT * WHERE { ?s ?p ?o . FILTER(?s = iri('urn:id1'))} ORDER BY (?p) LIMIT 10";
         List<String> resultList2 = getQueryBindingValues(fedRepo, query2, "p");

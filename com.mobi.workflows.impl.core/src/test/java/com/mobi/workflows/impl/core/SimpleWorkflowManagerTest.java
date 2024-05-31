@@ -278,7 +278,6 @@ public class SimpleWorkflowManagerTest extends OrmEnabledTestCase {
             connection.clear();
         }
         closeable.close();
-        workflowManager.stopService();
         workflowManager.workflowEngine = null;
     }
 

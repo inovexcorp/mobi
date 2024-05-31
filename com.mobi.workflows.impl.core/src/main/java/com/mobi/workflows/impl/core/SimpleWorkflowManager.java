@@ -120,7 +120,6 @@ import org.eclipse.rdf4j.sail.memory.MemoryStore;
 import org.eclipse.rdf4j.sail.shacl.ShaclSail;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.component.annotations.ReferenceCardinality;
 import org.osgi.service.component.annotations.ReferencePolicy;
@@ -179,7 +178,6 @@ public class SimpleWorkflowManager implements WorkflowManager, EventHandler {
     private static final String AT_LOCATION = "http://www.w3.org/ns/prov#atLocation";
     private static final String ACTIVITY_IRI_BINDING = "activityIri";
     private static final String WORKFLOW_IRI_BINDING = "workflowIri";
-    private static final String REQUEST_USER_IRI_BINDING = "requestUserIri";
     private static final String CATALOG_BINDING = "catalog";
     private static final String RECORD_COUNT_BINDING = "count";
     private static final List<String> FIND_WORKFLOW_RECORDS_BINDINGS = Stream.of(
@@ -283,25 +281,14 @@ public class SimpleWorkflowManager implements WorkflowManager, EventHandler {
     @Reference
     protected EventAdmin eventAdmin;
 
-    protected FedXRepository fedXRepository;
-
     @Reference
     BNodeService bNodeService;
 
     @Activate
     protected void startService() {
         System.setProperty("org.eclipse.rdf4j.repository.debug", "true");
-        FedXUtils fedXUtils = new FedXUtils();
-        this.fedXRepository = fedXUtils.getFedXRepo(configProvider.getRepository(), provRepo);
         ProvOntologyLoader.loadOntology(provRepo, WorkflowManager.class.getResourceAsStream("/workflows.ttl"));
         initializeExecutingWorkflowsList();
-    }
-
-    @Deactivate
-    protected void stopService() {
-        if (this.fedXRepository != null && this.fedXRepository.isInitialized()) {
-            this.fedXRepository.shutDown();
-        }
     }
 
     @Reference(cardinality = ReferenceCardinality.MULTIPLE, policy = ReferencePolicy.DYNAMIC)
@@ -485,18 +472,26 @@ public class SimpleWorkflowManager implements WorkflowManager, EventHandler {
         startWatch(watch, "viewable records for records");
         Set<Resource> viewableRecords = getViewableWorkflowRecords(requestUser.getResource());
         stopWatch(watch, "viewable records for records");
-        startWatch(watch, "inject record count filters");
-        String query = injectFilters(searchParams, FIND_WORKFLOWS_RECORDS.replace(FIND_RECORDS_SELECT_VARIABLES,
-                "(COUNT(DISTINCT ?iri) as ?count)"), viewableRecords);
-        stopWatch(watch, "inject record count filters");
-        startWatch(watch, "prepare record query");
+        if (viewableRecords.size() == 0) {
+            log.debug("No viewable workflows");
+            return WorkflowSearchResults.emptyResults();
+        }
         // Get Total Count
-        try (RepositoryConnection fedXRepoConnection = this.fedXRepository.getConnection()) {
+        FedXUtils fedXUtils = new FedXUtils();
+        FedXRepository fedXRepository = fedXUtils.getFedXRepo(configProvider.getRepository(), provRepo);
+        try (RepositoryConnection fedXRepoConnection = fedXRepository.getConnection()) {
+            if (noFilters(searchParams)) {
+                log.debug("No workflow filters so viewable count of {} is total count", viewableRecords.size());
+                return executeFindWorkflowRecordsQuery(searchParams, viewableRecords.size(), fedXRepoConnection,
+                        viewableRecords);
+            }
+            startWatch(watch, "inject record count filters");
+            String query = injectFilters(searchParams, FIND_WORKFLOWS_RECORDS.replace(FIND_RECORDS_SELECT_VARIABLES,
+                    "(COUNT(DISTINCT ?iri) as ?count)"), viewableRecords);
+            stopWatch(watch, "inject record count filters");
+            startWatch(watch, "prepare record query");
             TupleQuery countQuery = fedXRepoConnection.prepareTupleQuery(query);
             stopWatch(watch, "prepare record query");
-            startWatch(watch, "set record count bindings");
-            setFindWorkflowRecordsQueryBindings(requestUser, countQuery);
-            stopWatch(watch, "set record count bindings");
             startWatch(watch, "record count evaluate");
             // Evaluate
             int totalCount;
@@ -517,15 +512,23 @@ public class SimpleWorkflowManager implements WorkflowManager, EventHandler {
                 }
             }
             log.debug("Record count: " + totalCount);
-            return executeFindWorkflowRecordsQuery(searchParams, totalCount, requestUser, fedXRepoConnection,
-                    viewableRecords);
+            return executeFindWorkflowRecordsQuery(searchParams, totalCount, fedXRepoConnection, viewableRecords);
         } catch (MalformedQueryException | FedXException ex) {
             throw new MobiException(ex);
+        } finally {
+            stopWatch(watch, "federated repo shutdown");
+            fedXRepository.shutDown();
+            stopWatch(watch, "federated repo shutdown");
         }
     }
 
+    private boolean noFilters(PaginatedWorkflowSearchParams searchParams) {
+        return searchParams.getSearchText().isEmpty() && searchParams.getStartingAfter().isEmpty()
+                && searchParams.getEndingBefore().isEmpty() && searchParams.getStatus().isEmpty();
+    }
+
     private PaginatedSearchResults<ObjectNode> executeFindWorkflowRecordsQuery(
-            PaginatedWorkflowSearchParams searchParams, int totalCount, User requestUser, RepositoryConnection conn,
+            PaginatedWorkflowSearchParams searchParams, int totalCount, RepositoryConnection conn,
             Set<Resource> viewableRecords) {
         StopWatch watch = new StopWatch();
         startWatch(watch, "create records query string");
@@ -559,9 +562,6 @@ public class SimpleWorkflowManager implements WorkflowManager, EventHandler {
             startWatch(watch, "prepare records query");
             TupleQuery query = conn.prepareTupleQuery(queryString);
             stopWatch(watch, "prepare records query");
-            startWatch(watch, "set records bindings");
-            setFindWorkflowRecordsQueryBindings(requestUser, query);
-            stopWatch(watch, "set records bindings");
             log.trace("Query Plan:\n" + query);
             startWatch(watch, "records evaluate");
             // Get Results
@@ -578,10 +578,6 @@ public class SimpleWorkflowManager implements WorkflowManager, EventHandler {
         } catch (MalformedQueryException ex) {
             throw new MobiException(ex);
         }
-    }
-
-    private void setFindWorkflowRecordsQueryBindings(User requestUser, TupleQuery query) {
-        query.setBinding(REQUEST_USER_IRI_BINDING, requestUser.getResource());
     }
 
     @Override
@@ -726,7 +722,9 @@ public class SimpleWorkflowManager implements WorkflowManager, EventHandler {
         stopWatch(watch, "inject execution count filters");
         startWatch(watch, "prepare execution count query");
         // Get Total Count
-        try (RepositoryConnection fedXRepoConnection = this.fedXRepository.getConnection()) {
+        FedXUtils fedXUtils = new FedXUtils();
+        FedXRepository fedXRepository = fedXUtils.getFedXRepo(configProvider.getRepository(), provRepo);
+        try (RepositoryConnection fedXRepoConnection = fedXRepository.getConnection()) {
             TupleQuery countQuery = fedXRepoConnection.prepareTupleQuery(query);
             stopWatch(watch, "prepare execution count query");
             startWatch(watch, "set execution count bindings");
@@ -756,6 +754,10 @@ public class SimpleWorkflowManager implements WorkflowManager, EventHandler {
                     viewableRecords);
         } catch (MalformedQueryException e) {
             throw new MobiException(e);
+        } finally {
+            startWatch(watch, "federated repo shutdown");
+            fedXRepository.shutDown();
+            stopWatch(watch, "federated repo shutdown");
         }
     }
 
@@ -1197,8 +1199,10 @@ public class SimpleWorkflowManager implements WorkflowManager, EventHandler {
     }
 
     private void stopWatch(StopWatch watch, String tag) {
-        watch.stop();
-        log.trace("End " + tag + ": " + watch.getTime() + "ms");
-        watch.reset();
+        if (watch.isStarted()) {
+            watch.stop();
+            log.trace("End " + tag + ": " + watch.getTime() + "ms");
+            watch.reset();
+        }
     }
 }

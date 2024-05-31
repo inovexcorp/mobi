@@ -204,8 +204,8 @@
     wf:usesFormField wf:TextInput .
 
 :hasHttpTimeout a owl:DatatypeProperty, owl:FunctionalProperty ;
-    rdfs:label "http timeout"@en ;
-    rdfs:comment "The timeout value of the HTTP request"@en ;
+    rdfs:label "http timeout (seconds)"@en ;
+    rdfs:comment "The timeout value in seconds of the HTTP request"@en ;
     rdfs:domain :HTTPRequestAction ;
     rdfs:range xsd:integer .
 

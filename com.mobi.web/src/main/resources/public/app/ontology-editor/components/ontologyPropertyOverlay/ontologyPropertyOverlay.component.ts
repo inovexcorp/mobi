@@ -36,6 +36,7 @@ import { PropertyManagerService } from '../../../shared/services/propertyManager
 import { ToastService } from '../../../shared/services/toast.service';
 import { datatype } from '../../../shared/validators/datatype.validator';
 import { createJson, getIRINamespace } from '../../../shared/utility';
+import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 
 interface PropertyGroup {
     namespace: string,
@@ -78,7 +79,7 @@ export class OntologyPropertyOverlayComponent implements OnInit {
     isOntologyProperty = false;
     type = `${XSD}string`;
 
-    propertyForm = this.fb.group({
+    propertyForm = this._fb.group({
         property: ['', [Validators.required]],
         value: ['', [Validators.required, datatype(() => this.type)]],
         type: [this.type],
@@ -87,13 +88,14 @@ export class OntologyPropertyOverlayComponent implements OnInit {
 
     filteredProperties: Observable<PropertyGroup[]>;
 
-    constructor(private fb: UntypedFormBuilder, private dialogRef: MatDialogRef<OntologyPropertyOverlayComponent>, 
+    constructor(private _fb: UntypedFormBuilder, private _dialogRef: MatDialogRef<OntologyPropertyOverlayComponent>, 
         @Inject(MAT_DIALOG_DATA) public data: PropertyOverlayDataOptions,
-        public os: OntologyStateService, public pm: PropertyManagerService, private toast: ToastService) {}
+        public os: OntologyStateService, private _pm: PropertyManagerService, private _toast: ToastService, 
+        private _om: OntologyManagerService) {}
     
     ngOnInit(): void {
-        this.annotations = union(this.pm.defaultAnnotations, this.pm.owlAnnotations, Object.keys(this.os.listItem.annotations.iris));
-        this.properties = union(this.pm.ontologyProperties, this.annotations);
+        this.annotations = union(this._pm.defaultAnnotations, this._pm.owlAnnotations, Object.keys(this.os.listItem.annotations.iris));
+        this.properties = union(this._pm.ontologyProperties, this.annotations);
         this.filteredProperties = this.propertyForm.controls.property.valueChanges.pipe(
             startWith(''),
             map(value => this.filter(value || ''))
@@ -136,7 +138,7 @@ export class OntologyPropertyOverlayComponent implements OnInit {
     }
     selectProp(event: MatAutocompleteSelectedEvent): void {
         const selectedProperty: string = event.option.value;
-        this.isOntologyProperty = !!selectedProperty && some(this.pm.ontologyProperties, property => selectedProperty === property);
+        this.isOntologyProperty = !!selectedProperty && some(this._pm.ontologyProperties, property => selectedProperty === property);
         if (this.isOntologyProperty) {
             this.type = `${XSD}anyURI`;
             this.propertyForm.controls.type.setValue(this.type);
@@ -160,17 +162,20 @@ export class OntologyPropertyOverlayComponent implements OnInit {
         let added = false;
         
         if (this.isOntologyProperty) {
-            added = this.pm.addId(this.os.listItem.selected, property, value);
+            added = this._pm.addId(this.os.listItem.selected, property, value);
         } else {
-            added = this.pm.addValue(this.os.listItem.selected, property, value, type, language);
+            added = this._pm.addValue(this.os.listItem.selected, property, value, type, language);
         }
         if (added) {
             this.os.addToAdditions(this.os.listItem.versionedRdfRecord.recordId, this._createJson(value, type, language));
             this.os.saveCurrentChanges().subscribe();
+            if (this._om.entityNameProps.includes(property)) {
+                this.os.updateLabel();
+            }
         } else {
-            this.toast.createWarningToast('Duplicate property values not allowed');
+            this._toast.createWarningToast('Duplicate property values not allowed');
         }
-        this.dialogRef.close(added);
+        this._dialogRef.close(added);
     }
     editProperty(): void {
         const property = this.propertyForm.controls.property.value;
@@ -181,18 +186,21 @@ export class OntologyPropertyOverlayComponent implements OnInit {
         let edited = false;
         
         if (this.isOntologyProperty) {
-            edited = this.pm.editId(this.os.listItem.selected, property, this.data.index, value);
+            edited = this._pm.editId(this.os.listItem.selected, property, this.data.index, value);
         } else {
-            edited = this.pm.editValue(this.os.listItem.selected, property, this.data.index, value, type, language);
+            edited = this._pm.editValue(this.os.listItem.selected, property, this.data.index, value, type, language);
         }
         if (edited) {
             this.os.addToDeletions(this.os.listItem.versionedRdfRecord.recordId, this._createJson(get(oldObj, '@value', get(oldObj, '@id')), get(oldObj, '@type'), get(oldObj, '@language')));
             this.os.addToAdditions(this.os.listItem.versionedRdfRecord.recordId,this._createJson(value, type, language));
             this.os.saveCurrentChanges().subscribe();
+            if (this._om.entityNameProps.includes(property)) {
+                this.os.updateLabel();
+            }
         } else {
-            this.toast.createWarningToast('Duplicate property values not allowed');
+            this._toast.createWarningToast('Duplicate property values not allowed');
         }
-        this.dialogRef.close(edited);
+        this._dialogRef.close(edited);
     }
 
     validateValue(newValue: string[]): void {
@@ -210,7 +218,7 @@ export class OntologyPropertyOverlayComponent implements OnInit {
     }
 
     private _createJson(value, type, language) {
-        const valueObj = this.isOntologyProperty ? {'@id': value} : this.pm.createValueObj(value, type, language);
+        const valueObj = this.isOntologyProperty ? {'@id': value} : this._pm.createValueObj(value, type, language);
         return createJson(this.os.listItem.selected['@id'], this.propertyForm.controls.property.value, valueObj);
     }
 }

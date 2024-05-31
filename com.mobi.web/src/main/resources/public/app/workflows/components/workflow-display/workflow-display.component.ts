@@ -605,15 +605,18 @@ export class WorkflowDisplayComponent implements OnChanges {
     this.cyMenu.forEach(menu => {
       menu.destroy();
     });
+    this.cyMenu = [];
   }
   /**
    * Creates the context menus for the nodes to be used when editing.
    * @private
    */
   private _initializeContextMenu() {
-    this._getContextMenus().forEach(menu => {
-      this.cyMenu.push(this.cyChart.cxtmenu(menu));
-    });
+    if (!this.cyMenu.length) {
+      this._getContextMenus().forEach(menu => {
+        this.cyMenu.push(this.cyChart.cxtmenu(menu));
+      });
+    }
   }
   /**
    * Retrieves the context menus for each node type.
