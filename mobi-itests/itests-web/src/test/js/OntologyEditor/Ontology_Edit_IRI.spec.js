@@ -20,6 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+var path = require('path');
 var adminUsername = 'admin'
 var adminPassword = 'admin'
 var validURL = 'https://avm.inovexcorp.com/ontologies/10/2019';
@@ -28,7 +29,7 @@ var invalidEndsWidth = 'test`-local-`imports-1';
 var input_iriBegin = '//mat-label[text()[contains(.,"Begins With")]]//ancestor::mat-form-field//input';
 var input_iriEnds = '//mat-label[text()[contains(.,"Ends With")]]//ancestor::mat-form-field//input';
 
-var Onto1 = process.cwd() + '/src/test/resources/rdf_files/CurrencyUnitOntology.ttl'
+var Onto1 = path.resolve(__dirname + '/../../resources/rdf_files/CurrencyUnitOntology.ttl');
 
 module.exports = {
     '@tags': ['sanity', 'ontology-editor'],

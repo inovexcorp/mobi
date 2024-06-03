@@ -23,7 +23,6 @@ package com.mobi.workflows.api.record;
  * #L%
  */
 
-import com.mobi.catalog.api.ThingManager;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
 import com.mobi.catalog.api.record.AbstractVersionedRDFRecordService;
@@ -75,10 +74,13 @@ public abstract class AbstractWorkflowRecordService <T extends WorkflowRecord>
             addRecord(record, masterBranch, conn);
             commitManager.addInProgressCommit(catalogIdIRI, record.getResource(), commit, conn);
 
-            setWorkflowToRecord(record, commit, conn);
+            IRI additionsGraph = getRevisionGraph(commit, true);
+            setWorkflowToRecord(record, additionsGraph, conn);
+            workflowManager.checkTriggerExists(additionsGraph, conn);
 
             versioningManager.commit(catalogIdIRI, record.getResource(), masterBranchId, user,
                     "The initial commit.", conn);
+
             conn.commit();
             writePolicies(user, record);
             workflowFile.delete();
@@ -96,11 +98,10 @@ public abstract class AbstractWorkflowRecordService <T extends WorkflowRecord>
      * Validates and sets the Workflow Record IRI to the WorkflowRecord.
      *
      * @param record the WorkflowRecord to set the Workflow IRI
-     * @param inProgressCommit inProgressCommit with the loaded file
+     * @param additionsGraph The {@link IRI} of the graph with the data of the in-progress commit
      * @param conn RepositoryConnection with the transaction
      */
-    private void setWorkflowToRecord(T record, InProgressCommit inProgressCommit, RepositoryConnection conn) {
-        IRI additionsGraph = getRevisionGraph(inProgressCommit, true);
+    private void setWorkflowToRecord(T record, IRI additionsGraph, RepositoryConnection conn) {
         Model workflowModel = QueryResults.asModel(conn.getStatements(null, RDF.TYPE,
                 valueFactory.createIRI(Workflow.TYPE), additionsGraph));
 

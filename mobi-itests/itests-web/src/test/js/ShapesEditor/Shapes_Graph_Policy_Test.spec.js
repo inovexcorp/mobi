@@ -20,6 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+var path = require('path');
 var adminUsername = 'admin'
 var adminPassword = 'admin'
 var newUser = {
@@ -29,7 +30,7 @@ var newUser = {
     lastName: 'lastTesterA',
     email: 'testA@gmail.com'
 };
-var shapes_graph = process.cwd() + '/src/test/resources/rdf_files/semops_shapes.ttl'
+var shapes_graph = path.resolve(__dirname + '/../../resources/rdf_files/semops_shapes.ttl');
 
 module.exports = {
     '@tags': ['shapes-editor', 'sanity'],

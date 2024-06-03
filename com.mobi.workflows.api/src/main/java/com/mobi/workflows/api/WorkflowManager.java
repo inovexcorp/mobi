@@ -28,12 +28,14 @@ import com.mobi.catalog.api.PaginatedSearchResults;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.vfs.ontologies.documents.BinaryFile;
 import com.mobi.workflows.api.ontologies.workflows.ActionExecution;
+import com.mobi.workflows.api.ontologies.workflows.Trigger;
 import com.mobi.workflows.api.ontologies.workflows.Workflow;
 import com.mobi.workflows.api.ontologies.workflows.WorkflowExecutionActivity;
 import com.mobi.workflows.api.ontologies.workflows.WorkflowRecord;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 
 import java.util.Map;
 import java.util.Optional;
@@ -52,6 +54,16 @@ public interface WorkflowManager {
      */
     PaginatedSearchResults<ObjectNode> findWorkflowRecords(PaginatedWorkflowSearchParams searchParams,
                                                            User requestUser);
+
+    /**
+     * Verifies if any there are any previously existing {@link Trigger} in the additions graph associated with the
+     * passed commit {@link IRI}.
+     *
+     * @param commitGraphId The {@link IRI} of the in progress commit of which to query for Trigger IRIs.
+     * @param conn An existing {@link RepositoryConnection} to query.
+     * @throws IllegalArgumentException If any of the associated triggers already exist within the system.
+     */
+    void checkTriggerExists(IRI commitGraphId, RepositoryConnection conn);
 
     /**
      * Creates a trigger service for the workflow linked to the passed in {@link WorkflowRecord}.

@@ -20,9 +20,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+var path = require('path');
 var adminUsername = 'admin'
 var adminPassword = 'admin'
-var Onto1 = process.cwd() + '/src/test/resources/rdf_files/ComplexBlankNodeChainDeletion.ttl'
+var Onto1 = path.resolve(__dirname + '/../../resources/rdf_files/ComplexBlankNodeChainDeletion.ttl');
 
 module.exports = {
     '@tags': ['sanity', 'ontology-editor'],

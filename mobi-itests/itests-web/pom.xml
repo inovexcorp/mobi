@@ -50,6 +50,12 @@
         </dependency>
     </dependencies>
 
+    <properties>
+        <distributionName>mobi</distributionName>
+        <distribution>mobi-distribution</distribution>
+        <source-files>Dockerfile, import.sh, dataFiles, mobi-distribution.tar.gz</source-files>
+    </properties>
+
     <build>
         <plugins>
             <plugin>
@@ -199,6 +205,7 @@
                 <resources>
                     <resource>
                         <directory>${project.basedir}/src/test/resources/build-resources</directory>
+                        <filtering>true</filtering>
                     </resource>
                 </resources>
             </build>

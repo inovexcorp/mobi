@@ -379,6 +379,9 @@ public class SimpleWorkflowManager implements WorkflowManager, EventHandler {
             log.error(ex.getMessage());
             log.error("SimpleWorkflowManager references not initialized. "
                     + "The service will initialize triggers when complete.");
+        } catch (IllegalStateException ex) {
+            log.error(ex.getMessage());
+            log.error("Error initializing Workflow TriggerServices.");
         }
     }
 
@@ -408,7 +411,7 @@ public class SimpleWorkflowManager implements WorkflowManager, EventHandler {
         Set<Resource> traveled = new HashSet<>();
         toTravel.add(startIri);
 
-        while (toTravel.size() > 0) {
+        while (!toTravel.isEmpty()) {
             Resource subject = toTravel.iterator().next();
             traveled.add(subject);
             Iterator<Statement> statementsIterator = inputModel.getStatements(subject, null, null).iterator();
@@ -602,6 +605,25 @@ public class SimpleWorkflowManager implements WorkflowManager, EventHandler {
                 }
             });
         }
+    }
+
+    @Override
+    public void checkTriggerExists(IRI commitGraphId, RepositoryConnection conn) {
+        Model workflowModel = QueryResults.asModel(conn.getStatements(null, null, null, commitGraphId));
+        workflowModel.getStatements(null, vf.createIRI(Workflow.hasTrigger_IRI), null)
+                .forEach(statement -> {
+                    IRI triggerIRI = (IRI) statement.getObject();
+
+                    Model triggerModel = QueryResults.asModel(conn.getStatements(triggerIRI, null, null));
+                    OrmFactory<? extends Trigger> ormFactory = getTriggerFactory(triggerIRI, triggerModel);
+                    TriggerHandler<Trigger> handler = triggerHandlers.get(ormFactory.getTypeIRI().stringValue());
+
+                    log.trace("Identified Trigger type as " + handler.getTypeIRI());
+                    // Assumption that Workflows don't share Triggers
+                    if (handler.exists(triggerIRI)) {
+                        throw new IllegalArgumentException("Trigger " + triggerIRI + " already exists");
+                    }
+                });
     }
 
     @Override
@@ -1171,21 +1193,22 @@ public class SimpleWorkflowManager implements WorkflowManager, EventHandler {
     }
 
     private User getUser(Resource userId, RepositoryConnection conn) {
-        try (RepositoryResult<Statement> stmts = conn.getStatements(userId, vf.createIRI(User.username_IRI), null)) {
-            if (stmts.hasNext()) {
-                String username = stmts.next().getObject().stringValue();
+        try (RepositoryResult<Statement> usernameResult = conn.getStatements(userId,
+                vf.createIRI(User.username_IRI), null)) {
+            if (usernameResult.hasNext()) {
+                String username = usernameResult.next().getObject().stringValue();
                 Optional<User> userOpt = engineManager.retrieveUser(username);
                 if (userOpt.isEmpty()) {
-                    log.error("No user could be found with IRI " + userId + ", using admin user instead");
+                    log.error("No user could be found with IRI {}, using admin user instead", userId);
                 } else {
                     return userOpt.get();
                 }
             } else {
-                log.error("No username set on user with IRI " + userId + ", Using admin user instead.");
+                log.error("No username set on user with IRI {}, Using admin user instead.", userId);
             }
+            return engineManager.retrieveUser("admin").orElseThrow(() ->
+                    new IllegalStateException("Admin user could not be found. Workflow will not be executed."));
         }
-        return engineManager.retrieveUser("admin").orElseThrow(() ->
-                new IllegalStateException("Admin user could not be found. Workflow will not be executed."));
     }
 
     private void startWatch(StopWatch watch, String tag) {

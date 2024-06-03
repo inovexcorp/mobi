@@ -88,7 +88,7 @@ module.exports = {
         browser.page.ontologyEditorPage().searchForOntology('myTitle');
         browser
             .useXpath()
-            .waitForElementVisible('//mat-optgroup//mat-option//span[text()[contains(., "' + ontology01.title + '")]]//p[text()[contains(., "https://mobi.com/ontologies/myOntology2")]]')
+            .waitForElementVisible('//mat-optgroup//mat-option//span[text()[contains(., "' + ontology01.title + '")]]//p[text()[contains(., "myOntology2")]]')
         browser.page.ontologyEditorPage().onProjectTab();
     }, 
 
