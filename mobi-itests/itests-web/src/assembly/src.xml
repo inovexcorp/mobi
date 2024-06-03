@@ -32,6 +32,11 @@
         <fileSet>
             <directory>src/test</directory>
             <useDefaultExcludes>true</useDefaultExcludes>
+            <excludes>
+                <exclude>
+                    resources/build-resources/Dockerfile
+                </exclude>
+            </excludes>
         </fileSet>
     </fileSets>
 </assembly>

@@ -20,21 +20,22 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+var path = require('path');
 var adminUsername = 'admin';
 var adminPassword = 'admin';
-var Onto1 = process.cwd() + '/src/test/resources/rdf_files/test-local-imports-1.ttl';
+var Onto1 = path.resolve(__dirname + '/../../resources/rdf_files/test-local-imports-1.ttl');
 var Onto1eName = 'test-local-imports-1e.ttl';
-var Onto1e = process.cwd() + '/src/test/resources/rdf_files/' + Onto1eName; // has syntax issue
+var Onto1e = path.resolve(__dirname + '/../../resources/rdf_files/' + Onto1eName); // has syntax issue
 var Onto1sName = 'test-local-imports-1s.ttl';
-var Onto1s = process.cwd() + '/src/test/resources/rdf_files/' + Onto1sName; // same as test-local-imports-1
+var Onto1s = path.resolve(__dirname + '/../../resources/rdf_files/' + Onto1sName); // same as test-local-imports-1
 var Onto1TrigName = 'test-local-imports-1s.trig';
-var Onto1Trig = process.cwd() + '/src/test/resources/rdf_files/' + Onto1TrigName;
+var Onto1Trig = path.resolve(__dirname + '/../../resources/rdf_files/' + Onto1TrigName);
 var Onto1TrigZipName = 'test-local-imports-1s.trig.zip';
-var Onto1TrigZip = process.cwd() + '/src/test/resources/rdf_files/' + Onto1TrigZipName;
-var Onto2 = process.cwd() + '/src/test/resources/rdf_files/test-local-imports-2.ttl';
-var Onto3 = process.cwd() + '/src/test/resources/rdf_files/test-local-imports-3.ttl';
-var Onto4 = process.cwd() + '/src/test/resources/rdf_files/unresolvableImport.owl'; // OWL Files Processed Differently
-var Onto5 = process.cwd() + '/src/test/resources/rdf_files/test-class-empty-label.ttl'; // Class has empty string for label
+var Onto1TrigZip = path.resolve(__dirname + '/../../resources/rdf_files/' + Onto1TrigZipName);
+var Onto2 = path.resolve(__dirname + '/../../resources/rdf_files/test-local-imports-2.ttl');
+var Onto3 = path.resolve(__dirname + '/../../resources/rdf_files/test-local-imports-3.ttl');
+var Onto4 = path.resolve(__dirname + '/../../resources/rdf_files/unresolvableImport.owl'); // OWL Files Processed Differently
+var Onto5 = path.resolve(__dirname + '/../../resources/rdf_files/test-class-empty-label.ttl'); // Class has empty string for label
 
 module.exports = {
     '@tags': ['sanity', 'ontology-editor'],

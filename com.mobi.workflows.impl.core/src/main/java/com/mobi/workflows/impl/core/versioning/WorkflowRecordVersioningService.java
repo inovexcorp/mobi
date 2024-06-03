@@ -116,11 +116,6 @@ public class WorkflowRecordVersioningService extends BaseVersioningService<Workf
 
     @Override
     public void addCommit(VersionedRDFRecord record, Branch branch, Commit commit, RepositoryConnection conn) {
-        boolean connectionActive = conn.isActive();
-        if (!connectionActive) {
-            conn.begin();
-        }
-
         WorkflowRecord workflowRecord = recordManager.getRecord(configProvider.getLocalCatalogIRI(),
                 record.getResource(), workflowRecordFactory, conn);
 
@@ -132,7 +127,7 @@ public class WorkflowRecordVersioningService extends BaseVersioningService<Workf
         if (isMasterBranch(record, branch)) {
             commit.getBaseCommit_resource()
                     .ifPresent(baseCommit -> {
-                        updateWorkflowIRI(workflowRecord, workflowIRI, commit, conn);
+                        updateWorkflowIRI(workflowRecord, commit, conn);
                         oldWorkflow.set(workflowManager.getWorkflow(workflowIRI).orElseThrow(() ->
                                 new IllegalArgumentException("Workflow " + workflowIRI + " does not exist")));
                     });
@@ -144,8 +139,6 @@ public class WorkflowRecordVersioningService extends BaseVersioningService<Workf
         commit.getWasAssociatedWith_resource().stream().findFirst()
                 .ifPresent(userIri -> sendCommitEvent(record.getResource(), branch.getResource(), userIri,
                         commit.getResource()));
-
-        conn.commit();
 
         if (commit.getBaseCommit_resource().isPresent() && isMasterBranch(record, branch)) {
             workflowManager.updateTriggerService(workflowRecord, oldWorkflow.get());
@@ -188,7 +181,7 @@ public class WorkflowRecordVersioningService extends BaseVersioningService<Workf
                     // Else, this is a regular commit. Make sure we remove duplicated add/del statements
                     model = differenceManager.applyDifference(mf.createEmptyModel(), diff);
                 }
-                updateWorkflowIRI(workflowRecord, iri, model, conn);
+                updateWorkflowIRI(workflowRecord, model, conn);
             }
         }
         commitManager.addCommit(branch, newCommit, conn);
@@ -203,7 +196,7 @@ public class WorkflowRecordVersioningService extends BaseVersioningService<Workf
         return newCommit.getResource();
     }
 
-    private void updateWorkflowIRI(WorkflowRecord record, Resource iri, Commit commit, RepositoryConnection conn) {
+    private void updateWorkflowIRI(WorkflowRecord record, Commit commit, RepositoryConnection conn) {
         IRI generatedIRI = vf.createIRI(Activity.generated_IRI);
         Resource revisionIRI = (Resource) commit.getProperty(generatedIRI)
                 .orElseThrow(() -> new IllegalStateException("Commit is missing revision."));
@@ -212,25 +205,23 @@ public class WorkflowRecordVersioningService extends BaseVersioningService<Workf
         try (TupleQueryResult result = query.evaluate()) {
             if (result.hasNext()) {
                 Resource newIRI = Bindings.requiredResource(result.next(), WORKFLOW_IRI_BINDING);
-                updateWorkflowIRI(conn, record, iri, newIRI);
+                updateWorkflowIRI(conn, record, newIRI);
             }
         }
     }
 
-    private void updateWorkflowIRI(WorkflowRecord record, Resource iri, Model additions,
-                                   RepositoryConnection conn) {
+    private void updateWorkflowIRI(WorkflowRecord record, Model additions, RepositoryConnection conn) {
         Optional<Statement> ontStmt = additions
                 .filter(null, vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI), vf.createIRI(Workflow.TYPE))
                 .stream()
                 .findFirst();
         if (ontStmt.isPresent()) {
             Resource newIRI = ontStmt.get().getSubject();
-            updateWorkflowIRI(conn, record, iri, newIRI);
+            updateWorkflowIRI(conn, record, newIRI);
         }
     }
 
-    private void updateWorkflowIRI(RepositoryConnection conn, WorkflowRecord record, Resource iri,
-                                Resource newIRI) {
+    private void updateWorkflowIRI(RepositoryConnection conn, WorkflowRecord record, Resource newIRI) {
             assertWorkflowUniqueness(newIRI);
             record.setWorkflowIRI(newIRI);
             thingManager.updateObject(record, conn);

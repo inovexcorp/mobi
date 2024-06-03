@@ -4,6 +4,12 @@ const https = require('https');
 
 const docker =  new Docker({socketPath: '/var/run/docker.sock'});
 
+//custom variables
+let distributionName = '${distributionName}';
+let sourceFiles = `${source-files}`.split(', ');
+let containerObj = undefined;
+let httpsPort = 10000;
+
 // custom agent as global variable
 const agent = new https.Agent({
     rejectUnauthorized: false,
@@ -11,11 +17,8 @@ const agent = new https.Agent({
 
 const buildOptions = {
     context: __dirname,
-    src: ['Dockerfile', 'import.sh', 'mobi-distribution.tar.gz', 'dataFiles']
+    src: sourceFiles
 }
-
-let containerObj = undefined;
-let httpsPort = 10000;
 
 module.exports = {
     'globalPort' : httpsPort,
@@ -28,7 +31,7 @@ module.exports = {
 
     before(done) {
         // Build the Docker image
-        docker.buildImage(buildOptions, {t: 'docker.io/mobi/test', dockerFile: __dirname + '/Dockerfile'}, function(err, stream) {
+        docker.buildImage(buildOptions, {t: `docker.io/${distributionName}/test`, dockerFile: __dirname + '/Dockerfile'}, function(err, stream) {
             if (err) {
                 console.error('Error building image:', err);
                 return;
@@ -59,7 +62,7 @@ module.exports = {
         let status = 0;
 
         const containerOptions = {
-            Image: 'docker.io/mobi/test',
+            Image: `docker.io/${distributionName}/test`,
             name: `FTest-${httpsPort}`,
             AttachStdout: true,
             AttachStderr: true,
@@ -108,11 +111,11 @@ module.exports = {
         async function testMobiAvailability() {
             process.env.NODE_TLS_REJECT_UNAUTHORIZED='0'
             if (counter < 30 && status !== 200) {
-                return await fetch(`https://localhost:${httpsPort}/mobi/index.html#/home`, {
+                return await fetch(`https://localhost:${httpsPort}/${distributionName}/index.html#/home`, {
                     method: 'GET'
                 }, agent).then(async response => {
                     if (response.status === 200) {
-                        console.info('Successfully connected to mobi front-end.')
+                        console.info(`Successfully connected to ${distributionName} front-end.`)
                         status = response.status;
 
                         console.info('trying to import files');
@@ -123,12 +126,12 @@ module.exports = {
                             AttachStderr: true,
                         });
                     } else {
-                      console.info('Could not access mobi. trying again in 1 second.');
+                      console.info(`Could not access ${distributionName}. trying again in 1 second.`);
                       counter++;
                       return delay(1000).then(() => testMobiAvailability());
                     }
                 }).catch(() => {
-                  console.info('Error connecting to mobi. trying again in 5 seconds.');
+                  console.info(`Error connecting to ${distributionName}. trying again in 5 seconds.`);
                   counter++;
                   return delay(5000).then(() => testMobiAvailability());
                 });
@@ -150,7 +153,7 @@ module.exports = {
                     done();
                 } else {
                     console.log(`Container ${containerObj.id} started successfully`);
-                    console.info('Testing if Mobi is accessible.')
+                    console.info(`Testing if ${distributionName} is accessible.`)
                     await testMobiAvailability();
                     console.info('Finished setup');
                     done();
@@ -179,7 +182,7 @@ module.exports = {
     },
 
     'initial_steps': function (browser, user, password) {
-        browser.url(`https://localhost:${httpsPort}/mobi/index.html#/home`);
+        browser.url(`https://localhost:${httpsPort}/${distributionName}/index.html#/home`);
         browser.globals.login(browser, user, password);
         browser.globals.wait_for_no_spinners(browser);
         browser.globals.switchToPage(browser, 'ontology-editor', 'ontology-editor-page');
