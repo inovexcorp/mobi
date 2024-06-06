@@ -61,8 +61,8 @@
             </div>
         </div>
         <div class="workflow-record-body flex-1 remove-min-height">
-            <div class="workflow-record-body-tab-wrapper">
-                <mat-tab-group dynamicHeight="true">
+            <div class="h-100 workflow-record-body-tab-wrapper">
+                <mat-tab-group class="h-100" dynamicHeight="true">
                     <mat-tab label="Executions"> 
                         <ng-template matTabContent>
                             <div class="mat-tab-content-wrapper">
@@ -90,7 +90,7 @@
                     </mat-tab>
                 </mat-tab-group>
             </div>
-            <div class="workflow-record-body-display" *ngIf="workflowRdf.length">
+            <div class="h-100 workflow-record-body-display" *ngIf="workflowRdf.length">
                 <div class="model-overlay">
                     <div class="changes-text">
                         <info-message *ngIf="workflowsState.hasChanges">You have unsaved changes in your workflow model.</info-message>

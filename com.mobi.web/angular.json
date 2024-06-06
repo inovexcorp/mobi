@@ -50,7 +50,11 @@
               "src/main/resources/public/app/css/yasgui.scss",
               "src/main/resources/public/app/shared/directives/dragFile/dragFile.directive.scss"
             ],
-            "scripts": [],
+            "scripts": [
+              "src/main/resources/public/app/vendor/ace.js",
+              "node_modules/marked/marked.min.js",
+              "node_modules/highlight.js/lib/highlight.js"
+            ],
             "vendorChunk": true,
             "extractLicenses": false,
             "buildOptimizer": false,

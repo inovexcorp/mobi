@@ -38,6 +38,7 @@ module.exports = {
         [Onto1, Onto2, Onto3].forEach(function(file) {
             browser.page.ontologyEditorPage().uploadOntology(file);
             browser.globals.wait_for_no_spinners(browser);
+            browser.globals.dismiss_toast(browser);
         });
     },
 

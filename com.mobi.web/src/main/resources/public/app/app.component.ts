@@ -82,7 +82,7 @@ export class AppComponent implements OnInit {
     handleUnload(event: Event): void {
         const ontologyHasChanges = some(this.os.list, item => this.os.hasChanges(item));
         const mappingHasChanges = this.ms.isMappingChanged();
-        const workflowHasChanges = this._wss.isEditMode;
+        const workflowHasChanges = this._wss.isEditMode && this._wss.hasChanges;
         if (ontologyHasChanges || mappingHasChanges || workflowHasChanges) {
             event.preventDefault();
         }

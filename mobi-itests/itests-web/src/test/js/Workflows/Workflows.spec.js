@@ -52,7 +52,8 @@ module.exports = {
     },
     'Step 5: Create Workflows': function(browser) {
         for (var i = 1; i <= 25; i++) {
-            browser.page.workflowsPage().createWorkflow('Workflow' + i);
+            browser.page.workflowsPage().createWorkflow('Workflow' + i)
+                .returnToLanding();
             browser.globals.wait_for_no_spinners(browser);
         }
     },
@@ -215,13 +216,16 @@ module.exports = {
           .applySearchText('Workflow20')
           .assertRecordVisible('Workflow20', 1)
           .openRecordItem('Workflow20');
+      browser.globals.wait_for_no_spinners(browser);
       browser.page.catalogPage()
           .openManage()
           .toggleRecordEveryonePermission('View Record');
     },
     'Step 24: Logout and Sign-in as New User': function(browser) {
         browser.globals.logout(browser);
+        browser.globals.wait_for_no_spinners(browser);
         browser.globals.login(browser, newUser.username, newUser.password);
+        browser.globals.wait_for_no_spinners(browser);
         browser.globals.switchToPage(browser, 'workflows', 'app-workflow-records');
         browser.globals.wait_for_no_spinners(browser);
     },
@@ -245,7 +249,8 @@ module.exports = {
     'Step 28: Open Individual Workflow': function(browser) {
         browser.page.workflowsPage()
             .openWorkflowPage('Workflow1');
-    },
+        browser.globals.wait_for_no_spinners(browser);
+      },
     'Step 29: Validate that user cannot execute or delete workflow without modify master or delete permission': function(browser) {
         browser.page.workflowsPage()
             .assert.attributeEquals('@runWorkflowButton', 'disabled', 'true')
@@ -257,13 +262,16 @@ module.exports = {
     },
     'Step 31: Verify edit mode functionality when in edit mode': function(browser) {
         browser.globals.logout(browser);
+        browser.globals.wait_for_no_spinners(browser);
         browser.globals.login(browser, adminUsername, adminPassword);
+        browser.globals.wait_for_no_spinners(browser);
         browser.globals.switchToPage(browser, 'workflows');
         browser.page.workflowsPage()
-            .openWorkflowPage('Workflow1');
-        browser.useCss()
-            .click('.edit-button')
-            .assert.visible('.edit-icon')
+            .openWorkflowPage('Workflow1')
+        browser.globals.wait_for_no_spinners(browser);
+        browser.page.workflowsPage()
+            .editWorkflow();
+        browser.globals.wait_for_no_spinners(browser);
         browser.page.workflowsPage().useCss()
             .assert.attributeEquals('@runWorkflowButton', 'disabled', 'true')
             .assert.attributeEquals('@deleteWorkflowButton', 'disabled', 'true')
@@ -273,33 +281,30 @@ module.exports = {
             .assert.attributeEquals('app-execution-history-table .field-status', 'disabled', null)
             .assert.attributeEquals('app-execution-history-table .field-time-range', 'disabled', null)
             .click('app-workflows .mat-tab-labels > div:nth-child(2)')
+        browser.globals.wait_for_no_spinners(browser);
         browser.globals.switchToPage(browser, 'catalog', 'div.catalog-page')
         browser.globals.switchToPage(browser, 'workflows');   
-        browser.useCss()
-            .assert.visible('.edit-icon')
-            .click('app-workflow-record button span.fa-chevron-left')
-            .assert.visible('confirm-modal')
-            .click('confirm-modal .mat-dialog-actions > button:nth-child(1)')
+        browser.globals.wait_for_no_spinners(browser);
+        browser.page.workflowsPage()
+            .assert.visible('@editIcon');
     },
     'Step 32: Verify upload changes functionality': function(browser) {
-        browser.useCss()
-            .click('app-workflows .upload-button')
-            .assert.visible('mat-dialog-container')
-            .uploadFile('input[type=file]', badWorkflowFile)
-            .click('mat-dialog-container .mat-dialog-actions > button:nth-child(2)')
-            .assert.visible('mat-dialog-container error-display')
-            .uploadFile('input[type=file]', validWorkflowFile)
-            .click('mat-dialog-container .mat-dialog-actions > button:nth-child(2)');
+        browser.page.workflowsPage()
+            .openUploadChanges()
+            .submitUploadChanges(badWorkflowFile);
+        browser.globals.wait_for_no_spinners(browser);
+        browser
+            .assert.visible('mat-dialog-container error-display');
+        browser.page.workflowsPage().submitUploadChanges(validWorkflowFile);
         browser.globals.wait_for_no_spinners(browser);
         browser.useCss()
-            .assert.visible('app-workflows .info-message')
-            .click('app-workflows .save-button')
+            .assert.visible('app-workflows .info-message');
+        browser.page.workflowsPage().saveChanges();
+        browser.globals.wait_for_no_spinners(browser);
         browser.useCss()
-            .assert.visible('.edit-button')
             .click('app-workflows .mat-tab-labels > div:nth-child(2)');
+        browser.globals.wait_for_no_spinners(browser);
         browser.useXpath()
             .assert.visible('//*[contains(text(), "new Workflow Changes")]');
-        browser.page.workflowsPage().deleteWorkflow();
-        browser.globals.wait_for_no_spinners(browser);
     }
 }

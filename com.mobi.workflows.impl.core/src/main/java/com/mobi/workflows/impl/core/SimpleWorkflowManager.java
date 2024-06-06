@@ -645,13 +645,13 @@ public class SimpleWorkflowManager implements WorkflowManager, EventHandler {
     }
 
     @Override
-    public void updateTriggerService(WorkflowRecord workflowRecord, Workflow oldWorkflow) {
+    public void updateTriggerService(WorkflowRecord workflowRecord, Workflow oldWorkflow, RepositoryConnection conn) {
         log.debug("Updating trigger services linked to Record " + workflowRecord.getResource());
         Resource workflowIRI = workflowRecord.getWorkflowIRI().orElseThrow(() ->
                 new IllegalArgumentException("Workflow Record " + workflowRecord.getResource()
                         + " missing workflow entity"));
 
-        Workflow workflow = getWorkflow(workflowIRI).orElseThrow(() ->
+        Workflow workflow = getWorkflow(workflowIRI, conn).orElseThrow(() ->
                 new IllegalArgumentException("Workflow " + workflowIRI + " does not exist"));
 
         if (workflowEngine != null && workflowEngine.getExecutingWorkflows().contains(workflowIRI)) {
@@ -693,7 +693,7 @@ public class SimpleWorkflowManager implements WorkflowManager, EventHandler {
             handler.create(workflow.getResource(), ormFactory.getExisting(trigger.getResource(), trigger.getModel())
                     .orElseThrow(() -> new IllegalStateException("Issue converting Trigger types")));
         }
-        log.debug("Successfully updated Workflow for workflow Record " + workflowRecord.getResource());
+        log.debug("Successfully updated trigger services for Workflow Record " + workflowRecord.getResource());
     }
 
     @Override

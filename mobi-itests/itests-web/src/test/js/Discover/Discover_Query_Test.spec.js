@@ -20,12 +20,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-
- /*jslint browser: true */
-/*global window */
-/*global console */
-/*jshint multistr: true */
-
 var path = require('path');
 var adminUsername = "admin"
 var adminPassword = "admin"
@@ -43,6 +37,7 @@ module.exports = {
     'Step 2: Upload Ontologies' : function(browser) {
         browser.page.ontologyEditorPage().uploadOntology(Onto1);
         browser.globals.wait_for_no_spinners(browser);
+        browser.globals.dismiss_toast(browser);
     },
 
     'Step 3: Navigate to datasets tab' : function(browser) {

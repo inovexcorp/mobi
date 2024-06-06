@@ -85,8 +85,9 @@ public interface WorkflowManager {
      * Updates the trigger services linked to a workflow and performs cleanup actions.
      *
      * @param workflowRecord the {@link Workflow} for which trigger services need updating
+     * @param conn A RepositoryConnection to use for look up
      */
-    void updateTriggerService(WorkflowRecord workflowRecord, Workflow oldWorkflow);
+    void updateTriggerService(WorkflowRecord workflowRecord, Workflow oldWorkflow, RepositoryConnection conn);
 
     /**
      * Retrieves the workflow entity denoted by the passed iri.

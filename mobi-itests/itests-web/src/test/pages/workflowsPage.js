@@ -36,6 +36,8 @@ const workflowsTablePrevious = 'app-workflow-records button.mat-paginator-naviga
 const executionsTable = 'app-workflow-record div.execution-history-table table';
 const executionsTableXpath = '//app-workflow-record//div[contains(@class, "execution-history-table")]//table';
 const executionStatusFilter = 'app-workflows app-workflow-record div.execution-history-table app-workflow-table-filter .field-status';
+const editIcon = 'app-workflows app-workflow-record .record-header .edit-icon';
+const backButton = 'app-workflow-record button span.fa-chevron-left';
 
 const workflowsCommands = {
     createWorkflow: function(title) {
@@ -47,9 +49,7 @@ const workflowsCommands = {
             .setValue('app-workflow-creation-modal mat-form-field input[name=title]', title)
             .click('app-workflow-creation-modal div.mat-dialog-actions button.mat-primary')
             .waitForElementNotPresent('app-workflow-creation-modal div.mat-dialog-actions button:not(.mat-primary)')
-            .assert.visible('.edit-icon')
-            .click('app-workflow-record button span.fa-chevron-left')
-            .click('confirm-modal .mat-dialog-actions > button:nth-child(2)');
+            .assert.visible(editIcon);
     },
     selectWorkflowStatusFilter: function(status) {
         return this.useCss()
@@ -120,6 +120,45 @@ const individualWorkflowCommands = {
             .waitForElementVisible('div.mat-select-panel')
             .waitForElementVisible('div.mat-select-panel mat-option')
             .click('xpath', `//div[contains(@class, "mat-select-panel")]//mat-option//span[contains(@class,"mat-option-text")][text()[contains(., "${status}")]]`);
+    },
+    editWorkflow: function() {
+        return this.useCss()
+            .waitForElementVisible('app-workflow-record')
+            .waitForElementNotPresent(editIcon)
+            .waitForElementVisible('app-workflow-record .model-buttons .edit-button')
+            .click('app-workflow-record .model-buttons .edit-button')
+            .waitForElementVisible(editIcon);
+    },
+    saveChanges: function() {
+        return this.useCss()
+            .waitForElementVisible('app-workflow-record')
+            .waitForElementVisible(editIcon)
+            .waitForElementVisible('app-workflow-record .model-buttons .save-button')
+            .click('app-workflow-record .model-buttons .save-button')
+            .waitForElementNotPresent(editIcon);
+    },
+    openUploadChanges: function() {
+        return this.useCss()
+            .waitForElementVisible('app-workflow-record')
+            .waitForElementVisible(editIcon)
+            .waitForElementVisible('app-workflow-record .model-buttons .upload-button')
+            .click('app-workflow-record .model-buttons .upload-button')
+            .waitForElementVisible('app-workflow-upload-changes-modal')
+            .waitForElementPresent('app-workflow-upload-changes-modal input[type="file"]');
+    },
+    submitUploadChanges: function(changesFile) {
+        return this.useCss()
+            .waitForElementVisible('app-workflow-upload-changes-modal')
+            .waitForElementPresent('app-workflow-upload-changes-modal input[type="file"]')
+            .uploadFile('app-workflow-upload-changes-modal input[type="file"]', changesFile)
+            .click('app-workflow-upload-changes-modal .mat-dialog-actions button.mat-primary');
+    },
+    returnToLanding: function() {
+        return this.useCss()
+            .waitForElementVisible('app-workflow-record')
+            .waitForElementVisible(backButton)
+            .click(backButton)
+            .waitForElementVisible('app-workflow-records');
     }
 }
 
@@ -140,7 +179,8 @@ module.exports = {
         workflowsTablePrevious: workflowsTablePrevious,
         executionsTable: executionsTable,
         executionsTableXpath: executionsTableXpath,
-        executionStatusFilter: executionStatusFilter
+        executionStatusFilter: executionStatusFilter,
+        editIcon: editIcon,
     },
     commands: [workflowsCommands, individualWorkflowCommands]
 }
