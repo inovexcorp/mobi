@@ -35,6 +35,7 @@ module.exports = {
     'Step 2: Upload Ontologies': function(browser) {
         browser.page.ontologyEditorPage().uploadOntology(Onto1);
         browser.globals.wait_for_no_spinners(browser);
+        browser.globals.dismiss_toast(browser);
         browser.page.ontologyEditorPage().onProjectTab();
     },
 

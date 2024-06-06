@@ -49,9 +49,9 @@ module.exports = {
         browser.globals.switchToPage(browser, 'workflows');
     },
     'Step 3: Create two workflows' : function(browser) {
-        browser.page.workflowsPage().createWorkflow('SeansWorkflowCreateTest1');
+        browser.page.workflowsPage().createWorkflow('SeansWorkflowCreateTest1').returnToLanding();
         browser.globals.wait_for_no_spinners(browser);
-        browser.page.workflowsPage().createWorkflow('SeansWorkflowCreateTest2');
+        browser.page.workflowsPage().createWorkflow('SeansWorkflowCreateTest2').returnToLanding();
         browser.globals.wait_for_no_spinners(browser);
         browser.page.workflowsPage()
             .useCss()

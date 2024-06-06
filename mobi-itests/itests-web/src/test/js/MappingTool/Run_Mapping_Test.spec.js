@@ -38,7 +38,8 @@ module.exports = {
         [OntoSample, skosOnt].forEach(function(file) {
             browser.page.ontologyEditorPage().uploadOntology(file);
             browser.globals.wait_for_no_spinners(browser);
-          });
+            browser.globals.dismiss_toast(browser);
+        });
     },
 
     'Step 3: Link ontologies' : function(browser) {
@@ -166,7 +167,7 @@ module.exports = {
                         browser.click('xpath','//div[contains(@class, "mat-select-panel")]//mat-option//span[contains(@class,"mat-option-text")][text()[contains(., "Source")]]')
                         break;
                     case "Melting Point":
-                        browser.click('xpath','//div[contains(@class, "mat-select-panel")]//mat-option//span[contains(@class,"mat-option-text")][text()[contains(., "Melting point (ÎçC)")]]')
+                        browser.click('xpath','//div[contains(@class, "mat-select-panel")]//mat-option//span[contains(@class,"mat-option-text")][text()[contains(., "Melting point") and contains(., "C")]]')
                         break;
                     case "No Domain":
                         browser.click('xpath','//div[contains(@class, "mat-select-panel")]//mat-option//span[contains(@class,"mat-option-text")][text()[contains(., "Source")]]')

@@ -141,7 +141,7 @@ public class WorkflowRecordVersioningService extends BaseVersioningService<Workf
                         commit.getResource()));
 
         if (commit.getBaseCommit_resource().isPresent() && isMasterBranch(record, branch)) {
-            workflowManager.updateTriggerService(workflowRecord, oldWorkflow.get());
+            workflowManager.updateTriggerService(workflowRecord, oldWorkflow.get(), conn);
         }
     }
 
@@ -188,7 +188,7 @@ public class WorkflowRecordVersioningService extends BaseVersioningService<Workf
         workflowManager.validateWorkflow(compiledResourceManager.getCompiledResource(newCommit.getResource(), conn));
 
         if (oldWorkflow != null) {
-            workflowManager.updateTriggerService(workflowRecord, oldWorkflow);
+            workflowManager.updateTriggerService(workflowRecord, oldWorkflow, conn);
         }
 
         commitManager.updateCommit(newCommit, additions, deletions, conn);

@@ -39,6 +39,7 @@ module.exports = {
         [vocab, skosOnt, Onto3, Onto2].forEach(function(file) {
             browser.page.ontologyEditorPage().uploadOntology(file);
             browser.globals.wait_for_no_spinners(browser);
+            browser.globals.dismiss_toast(browser);
         });
     },
 

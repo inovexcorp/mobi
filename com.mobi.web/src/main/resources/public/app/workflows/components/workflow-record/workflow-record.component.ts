@@ -124,7 +124,7 @@ export class WorkflowRecordComponent implements OnInit, OnDestroy {
         });
   }
   goBack(): void {
-    if (this.workflowsState.isEditMode) {
+    if (this.workflowsState.isEditMode && this.workflowsState.hasChanges) {
       this._dialog.open(ConfirmModalComponent, {
         data: {
           content: 'Are you sure you want to go back? You will lose changes made during editing.'
