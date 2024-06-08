@@ -88,7 +88,7 @@ public class Restore implements Action {
     public static final String CONFIG_PATH = RESTORE_PATH + File.separator + "configurations";
     public static final String MANIFEST_FILE = RESTORE_PATH + File.separator + "manifest.json";
     private final List<String> mobiVersions = Arrays.asList("1.12", "1.13", "1.14", "1.15", "1.16", "1.17",
-            "1.18", "1.19", "1.20", "1.21", "1.22", "2.0", "2.1", "2.2", "2.3", "2.4", "2.5", "2.6");
+            "1.18", "1.19", "1.20", "1.21", "1.22", "2.0", "2.1", "2.2", "2.3", "2.4", "2.5", "3.0");
 
     // Service References
     @Reference
