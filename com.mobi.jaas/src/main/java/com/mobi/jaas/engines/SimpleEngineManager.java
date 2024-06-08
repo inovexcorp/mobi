@@ -449,11 +449,6 @@ public class SimpleEngineManager implements EngineManager {
         Optional<? extends ExternalUser> newUserOpt = factory.getExisting(existingUser.getResource(),
                 newUserWithExistingIRI);
         T newExternalUser = (T) newUserOpt.get();
-        // Combine Roles
-        for (Resource role: existingUser.getHasUserRole_resource()) {
-            Role currentRole = roleFactory.createNew(role);
-            newExternalUser.addHasUserRole(currentRole);
-        }
 
         try (RepositoryConnection conn = repository.getConnection()) {
             // Remove existingUser since it will be replaced with newExternalUser
@@ -474,11 +469,6 @@ public class SimpleEngineManager implements EngineManager {
         Optional<? extends ExternalGroup> newGroupOpt = factory.getExisting(existingGroup.getResource(),
                 newGroupWithExistingIRI);
         T newExternalGroup = (T) newGroupOpt.get();
-        // Combine Roles
-        for (Resource role: existingGroup.getHasGroupRole_resource()) {
-            Role currentRole = roleFactory.createNew(role);
-            newExternalGroup.addHasGroupRole(currentRole);
-        }
 
         // Add previous members of group
         for (User member : getGroupMembers(existingGroup)) {

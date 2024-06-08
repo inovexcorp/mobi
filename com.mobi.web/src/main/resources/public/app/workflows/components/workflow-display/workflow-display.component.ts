@@ -142,17 +142,14 @@ export class WorkflowDisplayComponent implements OnChanges {
    * @param {SimpleChanges} changes - The changes object containing the modified input properties.
    */
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes?.shaclDefinitions) {
+    // If the workflow data changed (or on first initialization)
+    if (changes?.shaclDefinitions || changes?.resource) {
       this.setWorkflowData();
-    }
-    if (changes?.isEditMode) {
-      if (changes?.isEditMode.currentValue) {
-        this._initializeContextMenu();
-        this._editedResource = cloneDeep(this.resource);
-      } else {
-        this._destroyMenus();
-        this._editedResource = [];
-      }
+      // Resets the right click menus if needed
+      this.cyMenu = [];
+      this._handleEditMode();
+    } else if (changes?.isEditMode) { // If the data didn't change but the edit status did
+      this._handleEditMode();
     }
   }
   /**
@@ -241,10 +238,6 @@ export class WorkflowDisplayComponent implements OnChanges {
     this.cyChart.layout(this.cyLayout).run();
     this.cyChart.ready(this.bindNodes.bind(this));
     this.cyChart.center();
-    // Add context menu to node if component is in edit mode.
-    if (this._workflowsState.isEditMode) {
-      this._initializeContextMenu();
-    }
   }
   /**
    * Create Cytoscape Instance
@@ -302,11 +295,11 @@ export class WorkflowDisplayComponent implements OnChanges {
     if (this._workflowsState.isEditMode) {
       return;
     }
-    const allData = this._collectEntityAndReferencedObjects(entity, this.resource);
+    const allData = entity ? this._collectEntityAndReferencedObjects(entity, this.resource) : undefined;
     this._dialog.open(WorkflowPropertyOverlayComponent, { panelClass: 'medium-dialog', data: {
-      entityIRI: entity['@id'],
-      entity: allData
-    } });
+        entityIRI: entity ? entity['@id'] : undefined,
+        entity: allData
+      } });
   }
   /**
    * Creates a node type style object based on the provided entity type
@@ -414,6 +407,20 @@ export class WorkflowDisplayComponent implements OnChanges {
   /*****************
    * Private methods
    ****************/
+
+  /**
+   * Sets up or clears the right click menus on the nodes of the graph depending on whether edit mode is enabled.
+   * @private
+   */
+  private _handleEditMode() {
+    if (this.isEditMode) {
+      this._initializeContextMenu();
+      this._editedResource = cloneDeep(this.resource);
+    } else {
+      this._destroyMenus();
+      this._editedResource = [];
+    }
+  }
 
   /**
    * Construct the graph data for visualization.

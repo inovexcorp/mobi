@@ -124,20 +124,38 @@ describe('WorkflowDisplayComponent', () => {
     beforeEach(() => {
       spyOn(component, 'setWorkflowData').and.callThrough();
     });
-    it('if in edit mode', () => {
+    it('if the shacl definitions changed', () => {
       component.ngOnChanges({
         shaclDefinitions: new SimpleChange(undefined, component.shaclDefinitions, true),
-        isEditMode: new SimpleChange(undefined, true, true)
       });
       expect(component.setWorkflowData).toHaveBeenCalledWith();  
+      expect(component.cyMenu).toEqual([]);
+      expect((<any> component)._editedResource).toEqual([]);
+    });
+    it('if the resource changed', () => {
+      component.ngOnChanges({
+        resource: new SimpleChange(undefined, component.resource, true),
+      });
+      expect(component.setWorkflowData).toHaveBeenCalledWith();  
+      expect(component.cyMenu).toEqual([]);
+      expect((<any> component)._editedResource).toEqual([]);
+    });
+    it('if in edit mode', () => {
+      component.setWorkflowData();
+      component.isEditMode = true;
+      component.ngOnChanges({
+        isEditMode: new SimpleChange(undefined, true, true)
+      });
+      expect(component.cyMenu.length).toBeTruthy();
       expect((<any> component)._editedResource).toEqual(component.resource);
     });
     it('if not in edit mode', () => {
+      component.isEditMode = false;
       component.ngOnChanges({
-        shaclDefinitions: new SimpleChange(undefined, component.shaclDefinitions, true),
         isEditMode: new SimpleChange(undefined, false, true)
       });
-      expect(component.setWorkflowData).toHaveBeenCalledWith();  
+      expect(component.setWorkflowData).not.toHaveBeenCalled();  
+      expect(component.cyMenu).toEqual([]);
       expect((<any> component)._editedResource).toEqual([]);
     });
   });
