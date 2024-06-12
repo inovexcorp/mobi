@@ -1516,7 +1516,7 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
      */
     goTo(iri: string): void {
         if (get(this.listItem, 'ontologyId') === iri) {
-            this._commonGoTo(OntologyListItem.PROJECT_TAB, iri);
+          this._commonGoTo(OntologyListItem.PROJECT_TAB, iri, this.listItem.classes.flat);
         } else if (this._isInIris('classes', iri)) {
             this._commonGoTo(OntologyListItem.CLASSES_TAB, iri, this.listItem.classes.flat);
             this.listItem.editorTabStates.classes.index = this._getScrollIndex(iri, this.listItem.classes.flat, 
