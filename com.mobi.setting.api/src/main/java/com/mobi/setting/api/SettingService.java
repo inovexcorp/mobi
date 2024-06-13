@@ -24,7 +24,7 @@ package com.mobi.setting.api;
  */
 
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.setting.api.ontologies.Setting;
+import com.mobi.setting.api.ontologies.setting.Setting;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
@@ -167,16 +167,16 @@ public interface SettingService<T extends Setting> {
      * Retrieves all SHACL shapes in the repo transitively referenced by {@link Setting}'s that are part of the
      * passed in {@code settingGroupId}.
      *
-     * @param settingGroupId The {@link Resource} of a {@link com.mobi.setting.api.ontologies.SettingGroup}.
+     * @param settingGroupId The {@link Resource} of a {@link com.mobi.setting.api.ontologies.setting.SettingGroup}.
      * @return The SHACL shapes transitively referenced by {@link Setting}'s that are part of the
      * {@code settingGroupId}.
      */
     Model getSettingDefinitions(Resource settingGroupId);
 
     /**
-     * Retrieves the {@link Model} representing the {@link com.mobi.setting.api.ontologies.SettingGroup}s in the repo.
+     * Retrieves the {@link Model} representing the {@link com.mobi.setting.api.ontologies.setting.SettingGroup}s in the repo.
      *
-     * @return The {@link Model} representing the {@link com.mobi.setting.api.ontologies.SettingGroup}s in the repo.
+     * @return The {@link Model} representing the {@link com.mobi.setting.api.ontologies.setting.SettingGroup}s in the repo.
      */
     Model getSettingGroups();
 }

@@ -31,7 +31,7 @@ import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.OrmFactoryRegistry;
 import com.mobi.setting.api.SettingService;
 import com.mobi.setting.api.SettingUtilsService;
-import com.mobi.setting.api.ontologies.ApplicationSetting;
+import com.mobi.setting.api.ontologies.setting.ApplicationSetting;
 import org.eclipse.rdf4j.model.BNode;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Literal;
