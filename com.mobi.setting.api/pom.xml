@@ -94,7 +94,7 @@
                             <generates>
                                 <ontology>
                                     <ontologyFile>${project.basedir}/src/main/resources/setting.ttl</ontologyFile>
-                                    <outputPackage>com.mobi.setting.api.ontologies</outputPackage>
+                                    <outputPackage>com.mobi.setting.api.ontologies.setting</outputPackage>
                                     <ontologyName>Setting</ontologyName>
                                 </ontology>
                             </generates>

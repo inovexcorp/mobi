@@ -30,7 +30,7 @@ import com.mobi.persistence.utils.ConnectionUtils;
 import com.mobi.persistence.utils.Statements;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.OrmFactoryRegistry;
-import com.mobi.setting.api.ontologies.Setting;
+import com.mobi.setting.api.ontologies.setting.Setting;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;

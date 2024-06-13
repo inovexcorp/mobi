@@ -28,7 +28,7 @@ import com.mobi.namespace.api.ontologies.DefaultOntologyNamespaceApplicationSett
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.impl.core.AbstractOntologyId;
 import com.mobi.setting.api.SettingService;
-import com.mobi.setting.api.ontologies.ApplicationSetting;
+import com.mobi.setting.api.ontologies.setting.ApplicationSetting;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;

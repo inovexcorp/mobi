@@ -24,7 +24,6 @@ package com.mobi.setting.api;
  */
 
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.setting.api.ontologies.Setting;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
 
@@ -45,8 +44,9 @@ public interface SettingUtilsService {
     void initializeApplicationSettingsWithDefaultValues(Model model, Resource defaultIRI);
 
     /**
-     * Retrieves a {@link Set} of {@link Setting}s of type {@link T}. If the service utilizes a {@link User} and one is
-     * provided, then it retrieves the {@link Setting}s for that user.
+     * Retrieves a {@link Set} of {@link com.mobi.setting.api.ontologies.setting.Setting}s of type {@link T}.
+     * If the service utilizes a {@link User} and one is provided, then it retrieves the
+     * {@link com.mobi.setting.api.ontologies.setting.Setting}s for that user.
      *
      * @param ontology An {@link InputStream} containing setting shacl definitions to load into the repo
      * @param ontologyName The name of the ontology being stored

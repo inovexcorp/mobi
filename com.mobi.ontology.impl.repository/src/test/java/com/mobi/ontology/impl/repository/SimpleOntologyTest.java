@@ -66,7 +66,7 @@ import com.mobi.repository.api.OsgiRepository;
 import com.mobi.repository.api.RepositoryManager;
 import com.mobi.repository.impl.core.SimpleRepositoryManager;
 import com.mobi.setting.api.SettingService;
-import com.mobi.setting.api.ontologies.ApplicationSetting;
+import com.mobi.setting.api.ontologies.setting.ApplicationSetting;
 import com.mobi.vocabularies.xsd.XSD;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.model.IRI;
