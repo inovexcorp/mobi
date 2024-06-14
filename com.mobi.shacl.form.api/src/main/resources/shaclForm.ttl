@@ -22,6 +22,8 @@
 
 :TextareaInput a :FormField .
 
+:HiddenTextInput a :FormField .
+
 :usesFormField a owl:ObjectProperty;
    rdfs:label "For User"@en;
    rdfs:domain sh:PropertyShape;

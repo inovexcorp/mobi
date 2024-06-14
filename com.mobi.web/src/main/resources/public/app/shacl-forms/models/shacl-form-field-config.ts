@@ -35,6 +35,7 @@ export enum FieldType {
   DROPDOWN = 'dropdown',
   AUTOCOMPLETE = 'autocomplete',
   TEXTAREA = 'textarea',
+  HIDDEN_TEXT = 'hidden-text'
 }
 
 export class SHACLFormFieldConfig {
@@ -95,6 +96,9 @@ export class SHACLFormFieldConfig {
             break;
           case `${SHACL_FORM}TextareaInput`:
             this._fieldType = FieldType.TEXTAREA;
+            break;
+          case `${SHACL_FORM}HiddenTextInput`:
+            this._fieldType = FieldType.HIDDEN_TEXT;
             break;
           case '':
             throw new Error('Form field type not configured');

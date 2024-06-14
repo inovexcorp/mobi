@@ -20,12 +20,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component, Input, OnInit, Output, EventEmitter, ViewChild } from '@angular/core';
+import { ChangeDetectorRef, Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { FormArray, FormControl, FormGroup } from '@angular/forms';
 import { MatCheckboxChange } from '@angular/material/checkbox';
 import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
-import { ChangeDetectorRef } from '@angular/core';
-import { Observable, Subject, merge } from 'rxjs';
+import { merge, Observable, Subject } from 'rxjs';
 import { debounceTime, map } from 'rxjs/operators';
 
 import { FieldType, SHACLFormFieldConfig } from '../../models/shacl-form-field-config';
@@ -92,6 +91,8 @@ export class SHACLFormFieldComponent implements OnInit {
         this._setupCheckbox();
       } else if ([FieldType.DROPDOWN, FieldType.AUTOCOMPLETE].includes(this.formFieldConfig.fieldType)) {
         this._setupDropdownOrAutocomplete();
+      } else if (this.formFieldConfig.fieldType === FieldType.HIDDEN_TEXT) {
+        this._setupHiddenDisplay();
       } else {
         this._setupRadioToggleOrTextual();
       }
@@ -261,5 +262,9 @@ export class SHACLFormFieldComponent implements OnInit {
     }
     this.fieldFormControl.setValidators(validators);
     this.fieldFormControl.updateValueAndValidity({ emitEvent: false });
+  }
+
+  private _setupHiddenDisplay(): void {
+    this.fieldFormControl.setValue(this.formFieldConfig.defaultValue);
   }
 }

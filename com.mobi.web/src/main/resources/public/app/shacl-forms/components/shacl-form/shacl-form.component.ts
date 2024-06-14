@@ -200,7 +200,8 @@ export class SHACLFormComponent implements OnInit {
       const comp: FormComponent = {
         hasSubFields: false,
         config,
-        isMultivalued: config.fieldType !== FieldType.CHECKBOX && (maxCount === undefined || maxCount > 1)
+        isMultivalued: (config.fieldType !== FieldType.CHECKBOX && config.fieldType !== FieldType.HIDDEN_TEXT)
+            && (maxCount === undefined || maxCount > 1)
       };
       // If the field is multivalued and is not a checkbox, setup a FormArray and capture the max allowed (if set)
       if (comp.isMultivalued) {
