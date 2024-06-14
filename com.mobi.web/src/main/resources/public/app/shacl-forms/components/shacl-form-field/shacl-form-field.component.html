@@ -79,4 +79,9 @@
       </mat-autocomplete>
     </mat-form-field>
   </div>
+  <div class="cdk-visually-hidden" *ngIf="formFieldConfig.fieldType === FieldType.HIDDEN_TEXT">
+    <mat-form-field>
+      <input matInput class="hidden-input" [hidden]="true" [formControlName]="controlName">
+    </mat-form-field>
+  </div>
 </div>

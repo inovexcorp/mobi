@@ -51,6 +51,7 @@ describe('SHACLFormComponent', () => {
   const checkboxProp = 'urn:checkboxProp';
   const dropdownProp = 'urn:dropdownProp';
   const autocompleteProp = 'urn:autocompleteProp';
+  const hiddenTextInputProp = 'urn:hiddenTextInputProp';
   const complexProp = 'urn:complexProp';
   const complexSubProperty1 = 'urn:complexSubProperty1';
   const complexSubProperty2 = 'urn:complexSubProperty2';
@@ -143,6 +144,12 @@ describe('SHACLFormComponent', () => {
     [`${SHACL}maxCount`]: [{ '@value': '1' }],
     [`${SHACL}class`]: [{ '@id': 'urn:SomeClass' }]
   };
+  const hiddenTextInputPropertyShape: JSONLDObject = {
+    '@id': 'urn:HiddenTextInputPropertyShape',
+    '@type': [ `${SHACL}PropertyShape` ],
+    [`${SHACL_FORM}usesFormField`]: [{ '@id': `${SHACL_FORM}HiddenTextInput` }],
+    [`${SHACL}path`]: [{ '@id': hiddenTextInputProp }]
+  };
   const complexSubPropertyShape1: JSONLDObject = {
     '@id': 'urn:ComplexSubPropertyShape1',
     '@type': [`${SHACL}PropertyShape`],
@@ -228,7 +235,8 @@ describe('SHACLFormComponent', () => {
     dropdownPropertyShape,
     dropdownBnode1,
     dropdownBnode2,
-    autocompletePropertyShape, 
+    autocompletePropertyShape,
+    hiddenTextInputPropertyShape,
     complexPropertyShape, 
     complexNodeShape, 
     complexSubPropertyShape1, 
@@ -248,6 +256,7 @@ describe('SHACLFormComponent', () => {
   const checkboxFormFieldConfig: SHACLFormFieldConfig = new SHACLFormFieldConfig(nodeShape, checkboxPropertyShape['@id'], fullArr);
   const dropdownFormFieldConfig: SHACLFormFieldConfig = new SHACLFormFieldConfig(nodeShape, dropdownPropertyShape['@id'], fullArr);
   const autocompleteFormFieldConfig: SHACLFormFieldConfig = new SHACLFormFieldConfig(nodeShape, autocompletePropertyShape['@id'], fullArr);
+  const hiddenTextInputFormFieldConfig: SHACLFormFieldConfig = new SHACLFormFieldConfig(nodeShape, hiddenTextInputPropertyShape['@id'], fullArr);
   const complexFormFieldConfig: SHACLFormFieldConfig = new SHACLFormFieldConfig(nodeShape, complexPropertyShape['@id'], fullArr);
   const complexMultivaluedFormFieldConfig: SHACLFormFieldConfig = new SHACLFormFieldConfig(nodeShape, complexMultivaluedPropertyShape['@id'], fullArr);
 
@@ -285,7 +294,7 @@ describe('SHACLFormComponent', () => {
   });
 
   it('should create with a blank form', () => {
-    component.formFieldConfigs = [textFormFieldConfig, unlimitedTextFormFieldConfig, toggleFormFieldConfig, radioFormFieldConfig, checkboxFormFieldConfig, dropdownFormFieldConfig, autocompleteFormFieldConfig, invalidFormFieldConfig, complexFormFieldConfig, complexMultivaluedFormFieldConfig];
+    component.formFieldConfigs = [textFormFieldConfig, unlimitedTextFormFieldConfig, toggleFormFieldConfig, radioFormFieldConfig, checkboxFormFieldConfig, dropdownFormFieldConfig, autocompleteFormFieldConfig, hiddenTextInputFormFieldConfig, invalidFormFieldConfig, complexFormFieldConfig, complexMultivaluedFormFieldConfig];
     fixture.detectChanges();
     expect(component).toBeTruthy();
     expect(component.focusNode).toEqual([]);
@@ -343,6 +352,13 @@ describe('SHACLFormComponent', () => {
     const autocompleteControl = component.form.get([autocompleteFormFieldConfig.property]);
     expect(autocompleteControl).toBeTruthy();
     expect(autocompleteControl.value).toEqual('');
+    // Check HiddenTextInput FormComponent
+    const hiddenTextInputComp = component.formComponents.find(comp => comp.config === hiddenTextInputFormFieldConfig);
+    expect(hiddenTextInputComp).toBeTruthy();
+    expect(hiddenTextInputComp.isMultivalued).toBeFalse();
+    const hiddenTextinputControl = component.form.get([hiddenTextInputFormFieldConfig.property]);
+    expect(hiddenTextinputControl).toBeTruthy();
+    expect(hiddenTextinputControl.value).toEqual('');
     // Check Complex FormComponent
     const complexComp = component.formComponents.find(comp => comp.config === complexFormFieldConfig);
     expect(complexComp).toBeTruthy();
@@ -378,11 +394,11 @@ describe('SHACLFormComponent', () => {
     expect(multivaluedEl[2].queryAll(By.css('app-shacl-form-field')).length).toEqual(0);
     expect(multivaluedEl[2].queryAll(By.css('.delete-block-button')).length).toEqual(0);
     expect(multivaluedEl[2].queryAll(By.css('.add-block-button')).length).toEqual(1);
-    expect(element.queryAll(By.css('app-shacl-form-field.top-level-field')).length).toEqual(7);
+    expect(element.queryAll(By.css('app-shacl-form-field.top-level-field')).length).toEqual(8);
     expect(element.queryAll(By.css('.error-msg')).length).toEqual(1);
   });
   it('should create with a filled form', () => {
-    component.formFieldConfigs = [textFormFieldConfig, toggleFormFieldConfig, radioFormFieldConfig, checkboxFormFieldConfig, dropdownFormFieldConfig, autocompleteFormFieldConfig, invalidFormFieldConfig, complexFormFieldConfig, complexMultivaluedFormFieldConfig];
+    component.formFieldConfigs = [textFormFieldConfig, toggleFormFieldConfig, radioFormFieldConfig, checkboxFormFieldConfig, dropdownFormFieldConfig, autocompleteFormFieldConfig, hiddenTextInputFormFieldConfig, invalidFormFieldConfig, complexFormFieldConfig, complexMultivaluedFormFieldConfig];
     component.genObj = [
       {
         '@id': 'urn:test',
@@ -393,6 +409,7 @@ describe('SHACLFormComponent', () => {
         [checkboxFormFieldConfig.property]: [{ '@value': 'Y' }],
         [dropdownFormFieldConfig.property]: [{ '@value': '10', '@type': `${XSD}integer` }],
         [autocompleteFormFieldConfig.property]: [{ '@id': 'urn:recordA' }],
+        [hiddenTextInputFormFieldConfig.property]: [{ '@id': 'urn:hiddenTextInputProp' }],
         [complexFormFieldConfig.property]: [{ '@id': 'urn:genObj1' }],
         [complexMultivaluedFormFieldConfig.property]: [{ '@id': 'urn:genObj2' }],
       },
@@ -458,6 +475,13 @@ describe('SHACLFormComponent', () => {
     expect(autocompleteControl).toBeTruthy();
     expect(autocompleteControl.value).toEqual(autocompleteOption);
     expect(shaclFormManagerStub.getAutocompleteOptions).toHaveBeenCalledWith([autocompletePropertyShape], [component.genObj[0]]);
+    // Check HiddenTextInput FormComponent
+    const hiddenTextInputComp = component.formComponents.find(comp => comp.config === hiddenTextInputFormFieldConfig);
+    expect(hiddenTextInputComp).toBeTruthy();
+    expect(hiddenTextInputComp.isMultivalued).toBeFalse();
+    const hiddenTextInputControl = component.form.get([hiddenTextInputFormFieldConfig.property]);
+    expect(hiddenTextInputControl).toBeTruthy();
+    expect(hiddenTextInputControl.value).toEqual(hiddenTextInputProp);
     // Check Complex FormComponent
     const complexComp = component.formComponents.find(comp => comp.config === complexFormFieldConfig);
     expect(complexComp).toBeTruthy();
@@ -496,11 +520,11 @@ describe('SHACLFormComponent', () => {
     expect(multivaluedEl[1].queryAll(By.css('app-shacl-form-field')).length).toEqual(2);
     expect(multivaluedEl[1].queryAll(By.css('.delete-block-button')).length).toEqual(1);
     expect(multivaluedEl[1].queryAll(By.css('.add-block-button')).length).toEqual(1);
-    expect(element.queryAll(By.css('app-shacl-form-field.top-level-field')).length).toEqual(7);
+    expect(element.queryAll(By.css('app-shacl-form-field.top-level-field')).length).toEqual(8);
     expect(element.queryAll(By.css('.error-msg')).length).toEqual(1);
   });
   it('should set the focus node correctly', () => {
-    component.formFieldConfigs = [textFormFieldConfig, toggleFormFieldConfig, radioFormFieldConfig, checkboxFormFieldConfig, dropdownFormFieldConfig, autocompleteFormFieldConfig, invalidFormFieldConfig, complexFormFieldConfig, complexMultivaluedFormFieldConfig];
+    component.formFieldConfigs = [textFormFieldConfig, toggleFormFieldConfig, radioFormFieldConfig, checkboxFormFieldConfig, dropdownFormFieldConfig, autocompleteFormFieldConfig, hiddenTextInputFormFieldConfig, invalidFormFieldConfig, complexFormFieldConfig, complexMultivaluedFormFieldConfig];
     component.genObj = [
       {
         '@id': 'urn:test',
@@ -511,6 +535,7 @@ describe('SHACLFormComponent', () => {
         [checkboxFormFieldConfig.property]: [{ '@value': 'Y' }],
         [dropdownFormFieldConfig.property]: [{ '@value': '10', '@type': `${XSD}integer` }],
         [autocompleteFormFieldConfig.property]: [{ '@id': 'urn:recordA' }],
+        [hiddenTextInputFormFieldConfig.property]: [{ '@id': 'urn:hiddenTextInputProp' }],
         [complexFormFieldConfig.property]: [{ '@id': 'urn:genObj1' }],
         [complexMultivaluedFormFieldConfig.property]: [{ '@id': 'urn:genObj2' }],
       },
@@ -541,6 +566,7 @@ describe('SHACLFormComponent', () => {
     expect(node[checkboxFormFieldConfig.property]).toEqual([{ '@value': 'Y' }]);
     expect(node[dropdownFormFieldConfig.property]).toEqual([{ '@value': '10', '@type': `${XSD}integer` }]);
     expect(node[autocompleteFormFieldConfig.property]).toEqual([{ '@id': 'urn:recordA' }]);
+    expect(node[hiddenTextInputFormFieldConfig.property]).toEqual([{ '@id': 'urn:hiddenTextInputProp' }]);
     expect(node[complexFormFieldConfig.property]).toEqual([{ '@id': jasmine.any(String) }]);
     expect(node[complexMultivaluedFormFieldConfig.property]).toEqual([{ '@id': jasmine.any(String) }]);
   });
