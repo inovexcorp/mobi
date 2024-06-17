@@ -86,4 +86,12 @@ public @interface DaguWorkflowEngineConfig {
      */
     @AttributeDefinition(name = "password", required = false)
     String password();
+
+    /**
+     *  The number of workflows that can be run simultaneously.
+     *
+     * @return An integer corresponding to how many workflows can be run concurrently
+     */
+    @AttributeDefinition(required = false, defaultValue = "100")
+    int concurrencyLimit() default 100;
 }

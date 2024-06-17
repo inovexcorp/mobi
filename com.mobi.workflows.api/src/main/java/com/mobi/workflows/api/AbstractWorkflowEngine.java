@@ -41,6 +41,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ThreadPoolExecutor;
 
 public abstract class AbstractWorkflowEngine implements WorkflowEngine {
     private final Logger log = LoggerFactory.getLogger(AbstractWorkflowEngine.class);
@@ -49,6 +50,7 @@ public abstract class AbstractWorkflowEngine implements WorkflowEngine {
     public ProvenanceService provService;
 
     protected static final List<Resource> executingWorkflows = new ArrayList<>();
+    protected static ThreadPoolExecutor threadPool;
     protected static final String LOG_FILE_NAMESPACE = "https://mobi.solutions/workflows/log-files/";
     protected static final String ACTION_EXECUTION_NAMESPACE = "https://mobi.solutions/workflows/ActionExecution/";
 

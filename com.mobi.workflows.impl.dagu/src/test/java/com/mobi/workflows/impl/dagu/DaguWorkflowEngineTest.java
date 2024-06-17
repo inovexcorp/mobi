@@ -141,7 +141,6 @@ public class DaguWorkflowEngineTest extends OrmEnabledTestCase {
     private final IRI activityIRI = vf.createIRI("http://mobi.com/test/activities#activity");
     private final String hashString = "68335f26f9162a0a5bb2bd699970fe67d60b6ede";
     private final String schedulerLog = "agent_68335f26f9162a0a5bb2bd699970fe67d60b6ede.20230925.11:31:49.459.44dc0c43.log";
-    private final String actionLog = "http___example.com_workflows_A_action.20230925.16:13:00.050.9a9386f7.log";
 
     //ORM factories
     private final OrmFactory<User> userFactory = getRequiredOrmFactory(User.class);
@@ -239,6 +238,7 @@ public class DaguWorkflowEngineTest extends OrmEnabledTestCase {
         when(config.daguHost()).thenReturn("http://127.0.0.1:8080");
         when(config.pollInterval()).thenReturn(10L);
         when(config.pollTimeout()).thenReturn(200L);
+        when(config.concurrencyLimit()).thenReturn(100);
 
         when(mobi.getHostName()).thenReturn("https://localhost:8443/");
 
@@ -277,29 +277,31 @@ public class DaguWorkflowEngineTest extends OrmEnabledTestCase {
     public void createLocalHTTPAction() throws IOException {
         //setup
         when(config.local()).thenReturn(true);
-        String remoteYaml = String.format("logDir: %s\n" +
-                "params: MOBI_HOST MOBI_TOKEN\n" +
-                "steps:\n" +
-                "- name: http://example.com/workflows/B/action HTTP Request\n" +
-                "  executor:\n" +
-                "    type: http\n" +
-                "    config:\n" +
-                "      silent: true\n" +
-                "  command: POST https://httpbin.org/post\n" +
-                "  script: |\n" +
-                "    {\n" +
-                "      \"timeout\": 45,\n" +
-                "      \"headers\": {\n" +
-                "      \n" +
-                "      \"Content-Type\": \"application/xml\"\n" +
-                "    },\n" +
-                "      \"query\": {\n" +
-                "        \n" +
-                "      },\n" +
-                "      \"body\": \"<?xml version=\\\"1.0\\\" encoding=\\\"UTF-8\\\"?><root>" +
-                "<person><name>John Doe</name><age>30</age><email>john@example.com</email></person>" +
-                "<person><name>Jane Smith</name><age>25</age><email>jane@example.com</email></person></root>\"\n" +
-                "    }\n", fileLocation);
+        String remoteYaml = String.format("""
+                logDir: %s
+                params: MOBI_HOST MOBI_TOKEN
+                steps:
+                - name: http://example.com/workflows/B/action HTTP Request
+                  executor:
+                    type: http
+                    config:
+                      silent: true
+                  command: POST https://httpbin.org/post
+                  script: |
+                    {
+                      "timeout": 45,
+                      "headers": {
+                     \s
+                      "Content-Type": "application/xml"
+                    },
+                      "query": {
+                       \s
+                      },
+                      "body": "<?xml version=\\"1.0\\" encoding=\\"UTF-8\\"?><root>\
+                <person><name>John Doe</name><age>30</age><email>john@example.com</email></person>\
+                <person><name>Jane Smith</name><age>25</age><email>jane@example.com</email></person></root>"
+                    }
+                """, fileLocation);
 
         daguEngine.start(config);
         String yaml = daguEngine.createYaml(workflowB);
@@ -310,28 +312,30 @@ public class DaguWorkflowEngineTest extends OrmEnabledTestCase {
     public void createRemoteHTTPAction() throws IOException {
         //setup
         when(config.local()).thenReturn(false);
-        String remoteYaml = "params: MOBI_HOST MOBI_TOKEN\n" +
-                "steps:\n" +
-                "- name: http://example.com/workflows/B/action HTTP Request\n" +
-                "  executor:\n" +
-                "    type: http\n" +
-                "    config:\n" +
-                "      silent: true\n" +
-                "  command: POST https://httpbin.org/post\n" +
-                "  script: |\n" +
-                "    {\n" +
-                "      \"timeout\": 45,\n" +
-                "      \"headers\": {\n" +
-                "      \n" +
-                "      \"Content-Type\": \"application/xml\"\n" +
-                "    },\n" +
-                "      \"query\": {\n" +
-                "        \n" +
-                "      },\n" +
-                "      \"body\": \"<?xml version=\\\"1.0\\\" encoding=\\\"UTF-8\\\"?><root><person>" +
-                "<name>John Doe</name><age>30</age><email>john@example.com</email></person><person>" +
-                "<name>Jane Smith</name><age>25</age><email>jane@example.com</email></person></root>\"\n" +
-                "    }\n";
+        String remoteYaml = """
+                params: MOBI_HOST MOBI_TOKEN
+                steps:
+                - name: http://example.com/workflows/B/action HTTP Request
+                  executor:
+                    type: http
+                    config:
+                      silent: true
+                  command: POST https://httpbin.org/post
+                  script: |
+                    {
+                      "timeout": 45,
+                      "headers": {
+                     \s
+                      "Content-Type": "application/xml"
+                    },
+                      "query": {
+                       \s
+                      },
+                      "body": "<?xml version=\\"1.0\\" encoding=\\"UTF-8\\"?><root><person>\
+                <name>John Doe</name><age>30</age><email>john@example.com</email></person><person>\
+                <name>Jane Smith</name><age>25</age><email>jane@example.com</email></person></root>"
+                    }
+                """;
 
         daguEngine.start(config);
         String yaml = daguEngine.createYaml(workflowB);
@@ -342,33 +346,34 @@ public class DaguWorkflowEngineTest extends OrmEnabledTestCase {
     public void createRemoteHTTPActionExpectNotEqual() throws IOException {
         //setup
         when(config.local()).thenReturn(false);
-        String remoteYaml = "params: MOBI_HOST MOBI_TOKEN\n" +
-                "steps:\n" +
-                "- name: http://example.com/workflows/B/action HTTP Request\n" +
-                "  executor:\n" +
-                "    type: http\n" +
-                "    config:\n" +
-                "      silent: true\n" +
-                "  command: GET https://httpbin.org/post\n" +
-                "  script: |\n" +
-                "    {\n" +
-                "      \"timeout\": 45,\n" +
-                "      \"headers\": {\n" +
-                "      \n" +
-                "      \"Content-Type\": \"application/xml\"\n" +
-                "    },\n" +
-                "      \"query\": {\n" +
-                "        \n" +
-                "      },\n" +
-                "      \"body\": \"<?xml version=\\\"1.0\\\" encoding=\\\"UTF-8\\\"?><root><person>" +
-                "<name>John Doe</name><age>30</age><email>john@example.com</email></person><person>" +
-                "<name>Jane Smith</name><age>25</age><email>jane@example.com</email></person></root>\"\n" +
-                "    }\n" +
-                "  output: RESULT\n" +
-                "- name: http://example.com/workflows/B/action output\n" +
-                "  depends:\n" +
-                "    - http://example.com/workflows/B/action HTTP Request\n" +
-                "  command: echo $RESULT";
+        String remoteYaml = """
+                params: MOBI_HOST MOBI_TOKEN
+                steps:
+                - name: http://example.com/workflows/B/action HTTP Request
+                  executor:
+                    type: http
+                    config:
+                      silent: true
+                  command: GET https://httpbin.org/post
+                  script: |
+                    {
+                      "timeout": 45,
+                      "headers": {
+                     \s
+                      "Content-Type": "application/xml"
+                    },
+                      "query": {
+                       \s
+                      },
+                      "body": "<?xml version=\\"1.0\\" encoding=\\"UTF-8\\"?><root><person>\
+                <name>John Doe</name><age>30</age><email>john@example.com</email></person><person>\
+                <name>Jane Smith</name><age>25</age><email>jane@example.com</email></person></root>"
+                    }
+                  output: RESULT
+                - name: http://example.com/workflows/B/action output
+                  depends:
+                    - http://example.com/workflows/B/action HTTP Request
+                  command: echo $RESULT""";
 
         daguEngine.start(config);
         String yaml = daguEngine.createYaml(workflowB);
@@ -595,6 +600,7 @@ public class DaguWorkflowEngineTest extends OrmEnabledTestCase {
             assertEquals(2, binaryFile1.getProperties(RDF.TYPE).size());
             assertEquals("http___example.com_workflows_A_action.20230925.16:13:00.050.9a9386f7.log", binaryFile1.getFileName().orElseThrow());
             assertEquals("text/plain", binaryFile1.getMimeType().orElseThrow());
+            String actionLog = "http___example.com_workflows_A_action.20230925.16:13:00.050.9a9386f7.log";
             assertEquals(vf.createIRI("file:///Users/khalilsavoy/desktop/workflows/68335f26f9162a0a5bb2bd699970fe67d60b6ede/" + actionLog), binaryFile1.getRetrievalURL().orElseThrow());
 
             // Verify ActionExecution 2

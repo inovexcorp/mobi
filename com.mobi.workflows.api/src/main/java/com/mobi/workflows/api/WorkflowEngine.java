@@ -38,6 +38,13 @@ public interface WorkflowEngine {
     List<Resource> getExecutingWorkflows();
 
     /**
+     * Checks whether the limit of concurrently running workflows has been hit.
+     *
+     * @return A boolean with a true value if the limit has been hit, and false otherwise.
+     */
+    boolean availableToRun();
+
+    /**
      * Executes the provided {@link Workflow} entity, updating the provided {@link WorkflowExecutionActivity}.
      *
      * @param workflow A java pojo of the rdf representation of the workflow
