@@ -475,7 +475,7 @@ public class SimpleWorkflowManager implements WorkflowManager, EventHandler {
         startWatch(watch, "viewable records for records");
         Set<Resource> viewableRecords = getViewableWorkflowRecords(requestUser.getResource());
         stopWatch(watch, "viewable records for records");
-        if (viewableRecords.size() == 0) {
+        if (viewableRecords.isEmpty()) {
             log.debug("No viewable workflows");
             return WorkflowSearchResults.emptyResults();
         }
@@ -897,10 +897,15 @@ public class SimpleWorkflowManager implements WorkflowManager, EventHandler {
         log.trace("Retrieving Workflow definition");
         Workflow workflow = getWorkflow(workflowId)
                 .orElseThrow(() -> new IllegalArgumentException("Workflow " + workflowId + " does not exist"));
+
         List<Resource> executingWorkflows = workflowEngine.getExecutingWorkflows();
-        if (!executingWorkflows.isEmpty()) {
-            throw new IllegalArgumentException("There is currently a workflow executing. Please wait a bit and try "
-                    + "again.");
+
+        if (executingWorkflows.contains(workflowId)) {
+            throw new IllegalArgumentException(String.format("Workflow %s is already running. please wait and try " +
+                    "again.", workflowId));
+        } else if (!workflowEngine.availableToRun()) {
+            throw new IllegalArgumentException(String.format("The limit on executing workflows has been reached. " +
+                    "Cannot run workflow %s.", workflowId));
         }
 
         executingWorkflows.add(workflow.getResource());
@@ -948,7 +953,11 @@ public class SimpleWorkflowManager implements WorkflowManager, EventHandler {
             try {
                 List<Resource> executingWorkflows = workflowEngine.getExecutingWorkflows();
                 if (executingWorkflows.contains(workflowId)) {
-                    log.debug("Workflow " + workflowId + " is currently executing. Skipping execution.");
+                    throw new IllegalArgumentException(String.format("Workflow %s is already running. please wait and try " +
+                            "again.", workflowId));
+                } else if (!workflowEngine.availableToRun()) {
+                    throw new IllegalArgumentException(String.format("The limit on executing workflows has been reached. " +
+                            "Cannot run workflow %s.", workflowId));
                 } else {
                     executingWorkflows.add(workflow.getResource());
                     WorkflowExecutionActivity activity = startExecutionActivity(user, workflowRecord);

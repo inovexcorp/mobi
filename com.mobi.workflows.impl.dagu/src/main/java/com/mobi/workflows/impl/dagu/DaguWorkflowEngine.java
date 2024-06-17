@@ -94,6 +94,9 @@ import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.UUID;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -119,6 +122,7 @@ public class DaguWorkflowEngine extends AbstractWorkflowEngine implements Workfl
     private long pollingInterval;
     private boolean isLocal;
     private String password;
+    private int concurrentLimit;
 
     protected DaguHttpClient daguHttpClient;
 
@@ -177,6 +181,10 @@ public class DaguWorkflowEngine extends AbstractWorkflowEngine implements Workfl
         log.debug("Started DaguWorkflowEngine");
     }
 
+    public boolean availableToRun() {
+        return threadPool.getActiveCount() < concurrentLimit;
+    }
+
     @Override
     public void startWorkflow(Workflow workflow, WorkflowExecutionActivity activity) {
         String sha1WorkflowIRI = DigestUtils.sha1Hex(workflow.getResource().stringValue());
@@ -196,7 +204,8 @@ public class DaguWorkflowEngine extends AbstractWorkflowEngine implements Workfl
             daguHttpClient.runDagJob(activity, sha1WorkflowIRI);
 
             log.info("Successfully started Workflow " + workflow.getResource());
-            new Thread(() -> {
+            Runnable runnable = () -> {
+                CountDownLatch latch = new CountDownLatch(1);
                 long max = pollingTimeout / pollingInterval;
                 log.trace("Maximum polling count is " + max);
                 Timer statusTimer = new Timer();
@@ -209,6 +218,7 @@ public class DaguWorkflowEngine extends AbstractWorkflowEngine implements Workfl
                             endExecutionActivity(activity, null, false);
                             statusTimer.cancel();
                             statusTimer.purge();
+                            latch.countDown();
                             return;
                         }
                         try {
@@ -227,6 +237,7 @@ public class DaguWorkflowEngine extends AbstractWorkflowEngine implements Workfl
                                         statusText.equalsIgnoreCase("finished"));
                                 statusTimer.cancel();
                                 statusTimer.purge();
+                                latch.countDown();
                             }
                         } catch (Exception ex) {
                             log.error("Polling status timer hit an exception. Marking workflow as failure");
@@ -238,13 +249,22 @@ public class DaguWorkflowEngine extends AbstractWorkflowEngine implements Workfl
                             executingWorkflows.remove(workflow.getResource());
                             statusTimer.cancel();
                             statusTimer.purge();
+                            latch.countDown();
                         }
                     }
                 };
                 log.trace("Starting timer task");
                 long interval = TimeUnit.SECONDS.toMillis(pollingInterval);
                 statusTimer.schedule(task, interval, interval);
-            }).start();
+
+                try {
+                    latch.await();   // Wait until the latch count reaches zero
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            };
+
+            threadPool.submit(runnable);
         } catch (Exception ex) {
             log.debug("Ending WorkflowExecutionActivity due to Exception");
             StringWriter sw = new StringWriter();
@@ -607,6 +627,8 @@ public class DaguWorkflowEngine extends AbstractWorkflowEngine implements Workfl
         isLocal = config.local();
         pollingTimeout = config.pollTimeout();
         pollingInterval = config.pollInterval();
+        concurrentLimit = config.concurrencyLimit();
+        threadPool = (ThreadPoolExecutor) Executors.newFixedThreadPool(config.concurrencyLimit());
         logDir = Paths.get(config.logDir());
         if (Files.notExists(logDir)) {
             Files.createDirectory(logDir);

@@ -75,6 +75,7 @@ import com.mobi.workflows.api.ontologies.workflows.ActionExecution;
 import com.mobi.workflows.api.ontologies.workflows.Trigger;
 import com.mobi.workflows.api.ontologies.workflows.Workflow;
 import com.mobi.workflows.api.ontologies.workflows.WorkflowExecutionActivity;
+import com.mobi.workflows.api.ontologies.workflows.WorkflowFactory;
 import com.mobi.workflows.api.ontologies.workflows.WorkflowRecord;
 import com.mobi.workflows.api.trigger.TriggerHandler;
 import com.mobi.workflows.exception.InvalidWorkflowException;
@@ -108,6 +109,8 @@ import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.osgi.service.event.Event;
 import org.osgi.service.event.EventAdmin;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -122,6 +125,7 @@ import java.util.Set;
 
 public class SimpleWorkflowManagerTest extends OrmEnabledTestCase {
     private static final ObjectMapper mapper = new ObjectMapper();
+    private static final Logger log = LoggerFactory.getLogger(SimpleWorkflowManagerTest.class);
     private AutoCloseable closeable;
     private static final ValueFactory vf = getValueFactory();
 
@@ -154,6 +158,7 @@ public class SimpleWorkflowManagerTest extends OrmEnabledTestCase {
     private final OrmFactory<Branch> branchFactory = getRequiredOrmFactory(Branch.class);
     private final OrmFactory<Commit> commitFactory = getRequiredOrmFactory(Commit.class);
     private final OrmFactory<BinaryFile> binaryFactory = getRequiredOrmFactory(BinaryFile.class);
+    private final OrmFactory<Workflow> workflowFactory = getRequiredOrmFactory(Workflow.class);
 
     @Rule
     public ExpectedException thrown = ExpectedException.none();
@@ -192,7 +197,7 @@ public class SimpleWorkflowManagerTest extends OrmEnabledTestCase {
     DefaultPrettyPrinter printer = new DefaultPrettyPrinter();
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         printer.indentObjectsWith(indenter);
         printer.indentArraysWith(indenter);
         closeable = MockitoAnnotations.openMocks(this);
@@ -207,7 +212,7 @@ public class SimpleWorkflowManagerTest extends OrmEnabledTestCase {
 
         when(bNodeService.deterministicSkolemize(any(Model.class), anyMap())).thenReturn(new LinkedHashModel());
 
-        SimpleVirtualFilesystemConfig config = mock(SimpleVirtualFilesystemConfig.class);
+        mock(SimpleVirtualFilesystemConfig.class);
 
         user = userFactory.createNew(vf.createIRI("http://test.org/user"));
         user.setUsername(userName);
@@ -222,6 +227,13 @@ public class SimpleWorkflowManagerTest extends OrmEnabledTestCase {
         workflowRecord.setBranch(Collections.singleton(branch));
         workflowRecord.setMasterBranch(branchFactory.createNew(masterBranchIRI));
         workflowRecord.setWorkflowIRI(workflowIRI);
+
+        try {
+            InputStream stream = getClass().getResourceAsStream("/test-workflow.ttl");
+            workflowModel = Rio.parse(stream, "", RDFFormat.TURTLE);
+        } catch (IOException ex) {
+            log.error("could not load test-workflow.ttl", ex);
+        }
 
         activity = executionActivityFactory.createNew(activityIRI);
 
@@ -537,8 +549,9 @@ public class SimpleWorkflowManagerTest extends OrmEnabledTestCase {
         }
     }
 
-    @Test(expected = InvalidWorkflowException.class)
+    @Test
     public void validateWorkflowTestWithUndefinedValues() throws IOException {
+        thrown.expect(InvalidWorkflowException.class);
         InputStream stream = getClass().getResourceAsStream("/undefined-workflow.ttl");
         workflowModel = Rio.parse(stream, "", RDFFormat.TURTLE);
 
@@ -573,8 +586,10 @@ public class SimpleWorkflowManagerTest extends OrmEnabledTestCase {
         }
     }
 
-    @Test(expected = InvalidWorkflowException.class)
-    public void validateWorkflowTestWithDifferemtValuesInSystemRepo() throws IOException {
+    @Test
+    public void validateWorkflowTestWithDifferentValuesInSystemRepo() throws IOException {
+        thrown.expect(InvalidWorkflowException.class);
+
         InputStream stream = getClass().getResourceAsStream("/undefined-workflow.ttl");
         workflowModel = Rio.parse(stream, "", RDFFormat.TURTLE);
         try (RepositoryConnection conn = systemRepository.getConnection()) {
@@ -608,20 +623,24 @@ public class SimpleWorkflowManagerTest extends OrmEnabledTestCase {
         }
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void validateWorkflowNoWorkflowIRITest() throws IOException {
+        thrown.expect(IllegalArgumentException.class);
+        thrown.expectMessage("No workflow provided in RDF data.");
+
         InputStream stream = getClass().getResourceAsStream("/test-workflow-no-iri.ttl");
         workflowModel = Rio.parse(stream, "", RDFFormat.TURTLE);
         workflowManager.validateWorkflow(workflowModel);
-        thrown.expectMessage("No workflow provided in RDF data.");
     }
 
-    @Test(expected = InvalidWorkflowException.class)
+    @Test
     public void validateWorkflowInvalidModelTest() throws IOException {
+        thrown.expect(InvalidWorkflowException.class);
+        thrown.expectMessage("Workflow definition is not valid.");
+
         InputStream stream = getClass().getResourceAsStream("/test-workflow-invalid.ttl");
         workflowModel = Rio.parse(stream, "", RDFFormat.TURTLE);
         workflowManager.validateWorkflow(workflowModel);
-        thrown.expectMessage("Workflow definition is not valid.");
     }
 
     @Test
@@ -714,8 +733,11 @@ public class SimpleWorkflowManagerTest extends OrmEnabledTestCase {
         verify(eventAdmin).postEvent(any(Event.class));
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void startExecutionActivityNoActivityTest() {
+        thrown.expect(IllegalStateException.class);
+        thrown.expectMessage("WorkflowExecutionActivity not made correctly");
+
         //setup
         try(RepositoryConnection conn = systemRepository.getConnection()) {
             conn.add(workflowRecord.getModel(), workflowRecord.getResource());
@@ -724,7 +746,6 @@ public class SimpleWorkflowManagerTest extends OrmEnabledTestCase {
         when(provService.createActivity(any(ActivityConfig.class))).thenReturn(activity);
 
         workflowManager.startExecutionActivity(user, workflowRecord);
-        thrown.expectMessage("WorkflowExecutionActivity not made correctly");
         verify(provService, times(1)).addActivity(activity);
         verify(thingManager, times(0)).updateObject(eq(workflowRecord), any(RepositoryConnection.class));
         verify(eventAdmin, times(0)).postEvent(any(Event.class));
@@ -849,33 +870,19 @@ public class SimpleWorkflowManagerTest extends OrmEnabledTestCase {
         assertEquals(result, Optional.empty());
     }
 
-    @Test(expected = IllegalArgumentException.class)
     public void startWorkflowNoWorkflow() {
-        workflowManager.workflowEngine = workflowEngine;
-        workflowManager.startWorkflow(user, workflowRecord);
+        thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage("Workflow " + workflowIRI + " does not exist");
-    }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void startWorkflowWithExecutingWorkflow() {
-        //setup
         workflowManager.workflowEngine = workflowEngine;
-
-        try (RepositoryConnection conn = systemRepository.getConnection()) {
-            conn.add(workflowRecord.getModel(), workflowRecord.getResource());
-        }
-        when(branchManager.getMasterBranch(any(Resource.class), eq(recordIRI), any(RepositoryConnection.class))).thenReturn(branch);
-        when(commitManager.getHeadCommit(any(Resource.class), eq(recordIRI), eq(branchIRI), any(RepositoryConnection.class))).thenReturn(commit);
-        when(compiledResourceManager.getCompiledResource(eq(commitIRI), any(RepositoryConnection.class))).thenReturn(workflowRecord.getModel());
-        workflowEngine.getExecutingWorkflows().add(workflowIRI);
-
         workflowManager.startWorkflow(user, workflowRecord);
-        thrown.expectMessage("There is currently a workflow executing. Please wait a bit and try " +
-                "again.");
     }
 
-    @Test(expected = MobiException.class)
-    public void startWorkflowNoEngine() throws Exception{
+    @Test
+    public void startWorkflowNoEngine() throws Exception {
+        thrown.expect(MobiException.class);
+        thrown.expectMessage("No workflow engine configured.");
+
         //setup
         Model workflowModel;
         try (RepositoryConnection conn = systemRepository.getConnection()) {
@@ -889,7 +896,6 @@ public class SimpleWorkflowManagerTest extends OrmEnabledTestCase {
         when(compiledResourceManager.getCompiledResource(eq(commitIRI), any(RepositoryConnection.class))).thenReturn(workflowModel);
 
         workflowManager.startWorkflow(user, workflowRecord);
-        thrown.expectMessage("No workflow engine configured.");
     }
 
     @Test
@@ -903,10 +909,12 @@ public class SimpleWorkflowManagerTest extends OrmEnabledTestCase {
         assertTrue(Models.isomorphic(logFile.getModel(), result.getModel()));
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void getMissingLogFile() {
-        workflowManager.getLogFile(logFileIRI);
+        thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage("Log file " + logFileIRI + " does not exist on the system.");
+
+        workflowManager.getLogFile(logFileIRI);
     }
 
     @Test
@@ -930,6 +938,59 @@ public class SimpleWorkflowManagerTest extends OrmEnabledTestCase {
         ActionExecution result1 = result.iterator().next();
         assertEquals(actionExecIRI1, result1.getResource());
         assertTrue(Models.isomorphic(result1.getModel(), actionExec1.getModel()));
+    }
+
+    @Test
+    public void concurrentLimitReachedTest() throws Exception {
+        //Exception Assertions
+        thrown.expect(IllegalArgumentException.class);
+        thrown.expectMessage(String.format("The limit on executing workflows has been reached. " +
+                "Cannot run workflow %s.", workflowIRI));
+
+        //setup
+        workflowManager.workflowEngine = workflowEngine;
+
+        try (RepositoryConnection conn = systemRepository.getConnection()) {
+            InputStream stream = getClass().getResourceAsStream("/test-workflow.ttl");
+            workflowModel = Rio.parse(stream, "", RDFFormat.TURTLE);
+            workflowRecord.getModel().addAll(workflowModel);
+
+            conn.add(workflowRecord.getModel(), workflowRecord.getResource());
+        }
+        workflowManager.workflowFactory = (WorkflowFactory) workflowFactory;
+        when(branchManager.getMasterBranch(any(Resource.class), eq(recordIRI), any(RepositoryConnection.class))).thenReturn(branch);
+        when(commitManager.getHeadCommit(any(Resource.class), eq(recordIRI), eq(branchIRI), any(RepositoryConnection.class))).thenReturn(commit);
+        when(compiledResourceManager.getCompiledResource(eq(commitIRI), any(RepositoryConnection.class))).thenReturn(workflowRecord.getModel());
+        when(workflowEngine.availableToRun()).thenReturn(false);
+
+        workflowManager.startWorkflow(user, workflowRecord);
+    }
+
+    @Test
+    public void noDuplicateRunsTest() throws Exception {
+        //Exception Assertions
+        thrown.expect(IllegalArgumentException.class);
+        thrown.expectMessage(String.format("Workflow %s is already running. please wait and try " +
+                "again.", workflowIRI));
+
+        //setup
+        workflowManager.workflowEngine = workflowEngine;
+
+        try (RepositoryConnection conn = systemRepository.getConnection()) {
+            InputStream stream = getClass().getResourceAsStream("/test-workflow.ttl");
+            workflowModel = Rio.parse(stream, "", RDFFormat.TURTLE);
+            workflowRecord.getModel().addAll(workflowModel);
+
+            conn.add(workflowRecord.getModel(), workflowRecord.getResource());
+        }
+        workflowManager.workflowFactory = (WorkflowFactory) workflowFactory;
+        when(branchManager.getMasterBranch(any(Resource.class), eq(recordIRI), any(RepositoryConnection.class))).thenReturn(branch);
+        when(commitManager.getHeadCommit(any(Resource.class), eq(recordIRI), eq(branchIRI), any(RepositoryConnection.class))).thenReturn(commit);
+        when(compiledResourceManager.getCompiledResource(eq(commitIRI), any(RepositoryConnection.class))).thenReturn(workflowRecord.getModel());
+        when(workflowEngine.availableToRun()).thenReturn(true);
+        when(workflowEngine.getExecutingWorkflows()).thenReturn(List.of(workflowIRI));
+
+        workflowManager.startWorkflow(user, workflowRecord);
     }
 
     private void assertNoActivitiesSystemRepo() {
