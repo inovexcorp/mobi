@@ -36,4 +36,20 @@ public @interface ImportsResolverConfig {
      */
     @AttributeDefinition(required = false)
     String userAgent();
+
+    /**
+     * The connection timeout in milliseconds.
+     *
+     * @return The connection timeout
+     */
+    @AttributeDefinition(required = false, defaultValue = "3000")
+    int connectionTimeout() default 3000;
+
+    /**
+     * The read timeout in milliseconds.
+     *
+     * @return The read timeout
+     */
+    @AttributeDefinition(required = false, defaultValue = "10000")
+    int readTimeout() default 10000;
 }
