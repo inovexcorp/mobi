@@ -48,6 +48,7 @@ import com.mobi.rest.security.annotations.AttributeValue;
 import com.mobi.rest.security.annotations.ResourceId;
 import com.mobi.rest.security.annotations.ValueType;
 import com.mobi.rest.util.ErrorUtils;
+import com.mobi.rest.util.FileUpload;
 import com.mobi.rest.util.RestUtils;
 import com.mobi.security.policy.api.ontologies.policy.Delete;
 import io.swagger.v3.oas.annotations.Operation;
@@ -81,8 +82,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import javax.annotation.security.RolesAllowed;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
@@ -152,11 +151,11 @@ public class MappingRest {
     @ResourceId("http://mobi.com/catalog-local")
     public Response upload(@Context HttpServletRequest servletRequest) {
         Map<String, List<Class<?>>> fields = new HashMap<>();
-        fields.put("title", Stream.of(String.class).collect(Collectors.toList()));
-        fields.put("description", Stream.of(String.class).collect(Collectors.toList()));
-        fields.put("jsonld", Stream.of(String.class).collect(Collectors.toList()));
-        fields.put("markdown", Stream.of(String.class).collect(Collectors.toList()));
-        fields.put("keywords", Stream.of(Set.class, String.class).collect(Collectors.toList()));
+        fields.put("title", List.of(String.class));
+        fields.put("description", List.of(String.class));
+        fields.put("jsonld", List.of(String.class));
+        fields.put("markdown", List.of(String.class));
+        fields.put("keywords", List.of(Set.class, String.class));
 
         Map<String, Object> formData = RestUtils.getFormData(servletRequest, fields);
         String title = (String) formData.get("title");
@@ -164,8 +163,9 @@ public class MappingRest {
         String jsonld = (String) formData.get("jsonld");
         String markdown = (String) formData.get("markdown");
         Set<String> keywords = (Set<String>) formData.get("keywords");
-        InputStream inputStream = (InputStream) formData.get("stream");
-        String filename = (String) formData.get("filename");
+        FileUpload file = (FileUpload) formData.getOrDefault("file", new FileUpload());
+        InputStream inputStream = file.getStream();
+        String filename = file.getFilename();
 
         if ((inputStream == null && jsonld == null) || (inputStream != null && jsonld != null)) {
             throw ErrorUtils.sendError("Must provide either a file or a JSON-LD string", Response.Status.BAD_REQUEST);

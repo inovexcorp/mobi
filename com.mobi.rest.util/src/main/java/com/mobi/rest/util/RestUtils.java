@@ -1083,8 +1083,8 @@ public class RestUtils {
      * @param fields         A {@link Map} of field name to the Class of the field.
      * @return A map of the field name to the corresponding form data field Object.
      */
-    public static Map<String, Object> getFormData(HttpServletRequest servletRequest, Map<String,
-            List<Class<?>>> fields) {
+    public static Map<String, Object> getFormData(HttpServletRequest servletRequest,
+                                                  Map<String, List<Class<?>>> fields) {
         try {
             Map<String, Object> parsedValues = new HashMap<>();
             Set<String> fieldNames = fields.keySet();
@@ -1123,8 +1123,8 @@ public class RestUtils {
                         }
                     } else {
                         // Is the file stream
-                        parsedValues.put("filename", item.getName());
-                        parsedValues.put("stream", Models.toByteArrayInputStream(stream));
+                        parsedValues.put(item.getFieldName(),
+                                new FileUpload(item.getName(), Models.toByteArrayInputStream(stream)));
                     }
                 }
             }

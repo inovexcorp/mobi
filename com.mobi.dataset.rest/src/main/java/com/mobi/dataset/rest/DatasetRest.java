@@ -58,6 +58,7 @@ import com.mobi.rest.security.annotations.AttributeValue;
 import com.mobi.rest.security.annotations.ResourceId;
 import com.mobi.rest.security.annotations.ValueType;
 import com.mobi.rest.util.ErrorUtils;
+import com.mobi.rest.util.FileUpload;
 import com.mobi.rest.util.LinksUtils;
 import com.mobi.rest.util.RestUtils;
 import com.mobi.rest.util.jaxb.Links;
@@ -470,8 +471,9 @@ public class DatasetRest {
                                @Parameter(description = "IRI of a DatasetRecord", required = true)
                                @PathParam("datasetRecordId") String datasetRecordId) {
         Map<String, Object> formData = RestUtils.getFormData(servletRequest, new HashMap<>());
-        InputStream inputStream = (InputStream) formData.get("stream");
-        String filename = (String) formData.get("filename");
+        FileUpload file = (FileUpload) formData.getOrDefault("file", new FileUpload());
+        InputStream inputStream = file.getStream();
+        String filename = file.getFilename();
 
         if (inputStream == null) {
             throw ErrorUtils.sendError("Must provide a file", Response.Status.BAD_REQUEST);

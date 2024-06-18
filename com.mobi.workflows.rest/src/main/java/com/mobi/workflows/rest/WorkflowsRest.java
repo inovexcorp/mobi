@@ -70,6 +70,7 @@ import com.mobi.rest.security.annotations.ResourceId;
 import com.mobi.rest.security.annotations.Value;
 import com.mobi.rest.security.annotations.ValueType;
 import com.mobi.rest.util.ErrorUtils;
+import com.mobi.rest.util.FileUpload;
 import com.mobi.rest.util.MobiNotFoundException;
 import com.mobi.rest.util.RestUtils;
 import com.mobi.security.policy.api.Decision;
@@ -333,11 +334,11 @@ public class WorkflowsRest {
     public Response createWorkflow(@Context HttpServletRequest servletRequest,
                                    @HeaderParam("Content-Type") String contentType) {
         Map<String, List<Class<?>>> fields = new HashMap<>();
-        fields.put("title", Stream.of(String.class).collect(Collectors.toList()));
-        fields.put("description", Stream.of(String.class).collect(Collectors.toList()));
-        fields.put("jsonld", Stream.of(String.class).collect(Collectors.toList()));
-        fields.put("markdown", Stream.of(String.class).collect(Collectors.toList()));
-        fields.put("keywords", Stream.of(Set.class, String.class).collect(Collectors.toList()));
+        fields.put("title", List.of(String.class));
+        fields.put("description", List.of(String.class));
+        fields.put("jsonld", List.of(String.class));
+        fields.put("markdown", List.of(String.class));
+        fields.put("keywords", List.of(Set.class, String.class));
 
         Map<String, Object> formData = RestUtils.getFormData(servletRequest, fields);
         String title = (String) formData.get("title");
@@ -345,8 +346,9 @@ public class WorkflowsRest {
         String jsonld = (String) formData.get("jsonld");
         String markdown = (String) formData.get("markdown");
         Set<String> keywords = (Set<String>) formData.get("keywords");
-        InputStream inputStream = (InputStream) formData.get("stream");
-        String filename = (String) formData.get("filename");
+        FileUpload file = (FileUpload) formData.getOrDefault("file", new FileUpload());
+        InputStream inputStream = file.getStream();
+        String filename = file.getFilename();
 
         try {
             if ((inputStream == null && jsonld == null) || (inputStream != null && jsonld != null)) {
@@ -487,8 +489,9 @@ public class WorkflowsRest {
             @QueryParam("commitId") String commitIdStr) {
 
         Map<String, Object> formData = RestUtils.getFormData(servletRequest, new HashMap<>());
-        InputStream fileInputStream = (InputStream) formData.get("stream");
-        String filename = (String) formData.get("filename");
+        FileUpload file = (FileUpload) formData.getOrDefault("file", new FileUpload());
+        InputStream fileInputStream = file.getStream();
+        String filename = file.getFilename();
 
         long totalTime = System.currentTimeMillis();
         if (fileInputStream == null) {

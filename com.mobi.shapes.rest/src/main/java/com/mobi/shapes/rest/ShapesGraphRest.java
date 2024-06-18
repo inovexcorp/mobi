@@ -59,6 +59,7 @@ import com.mobi.rest.security.annotations.AttributeValue;
 import com.mobi.rest.security.annotations.ResourceId;
 import com.mobi.rest.security.annotations.ValueType;
 import com.mobi.rest.util.ErrorUtils;
+import com.mobi.rest.util.FileUpload;
 import com.mobi.rest.util.RestUtils;
 import com.mobi.security.policy.api.Decision;
 import com.mobi.security.policy.api.PDP;
@@ -112,8 +113,6 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import javax.annotation.security.RolesAllowed;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
@@ -210,11 +209,11 @@ public class ShapesGraphRest {
     @ResourceId("http://mobi.com/catalog-local")
     public Response uploadFile(@Context HttpServletRequest servletRequest) {
         Map<String, List<Class<?>>> fields = new HashMap<>();
-        fields.put("title", Stream.of(String.class).collect(Collectors.toList()));
-        fields.put("description", Stream.of(String.class).collect(Collectors.toList()));
-        fields.put("json", Stream.of(String.class).collect(Collectors.toList()));
-        fields.put("markdown", Stream.of(String.class).collect(Collectors.toList()));
-        fields.put("keywords", Stream.of(Set.class, String.class).collect(Collectors.toList()));
+        fields.put("title", List.of(String.class));
+        fields.put("description", List.of(String.class));
+        fields.put("json", List.of(String.class));
+        fields.put("markdown", List.of(String.class));
+        fields.put("keywords", List.of(Set.class, String.class));
 
         Map<String, Object> formData = RestUtils.getFormData(servletRequest, fields);
         String title = (String) formData.get("title");
@@ -222,8 +221,9 @@ public class ShapesGraphRest {
         String json = (String) formData.get("json");
         String markdown = (String) formData.get("markdown");
         Set<String> keywords = (Set<String>) formData.get("keywords");
-        InputStream inputStream = (InputStream) formData.get("stream");
-        String filename = (String) formData.get("filename");
+        FileUpload file = (FileUpload) formData.getOrDefault("file", new FileUpload());
+        InputStream inputStream = file.getStream();
+        String filename = file.getFilename();
         checkStringParam(title, "The title is missing.");
         if (inputStream == null && json == null) {
             throw ErrorUtils.sendError("The SHACL Shapes Graph data is missing.", Response.Status.BAD_REQUEST);
@@ -490,11 +490,12 @@ public class ShapesGraphRest {
             @Parameter(description = "Boolean representing whether the in progress commit should be overwritten")
             @DefaultValue("false") @QueryParam("replaceInProgressCommit") boolean replaceInProgressCommit) {
         Map<String, List<Class<?>>> fields = new HashMap<>();
-        fields.put("json", Stream.of(String.class).collect(Collectors.toList()));
+        fields.put("json", List.of(String.class));
 
         Map<String, Object> formData = RestUtils.getFormData(servletRequest, fields);
-        InputStream fileInputStream = (InputStream) formData.get("stream");
-        String filename = (String) formData.get("filename");
+        FileUpload file = (FileUpload) formData.getOrDefault("file", new FileUpload());
+        InputStream fileInputStream = file.getStream();
+        String filename = file.getFilename();
         String jsonld = (String) formData.get("json");
         if (replaceInProgressCommit) {
             throw ErrorUtils.sendError("This functionality has not yet been implemented.",

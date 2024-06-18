@@ -35,13 +35,13 @@ import static com.mobi.rest.util.RestUtils.XLS_MIME_TYPE;
 import static com.mobi.rest.util.RestUtils.checkStringParam;
 import static com.mobi.rest.util.RestUtils.convertFileExtensionToMimeType;
 import static com.mobi.rest.util.RestUtils.getActiveUser;
-import static com.mobi.rest.util.RestUtils.getObjectFromJsonld;
 import static com.mobi.rest.util.RestUtils.getCurrentModel;
 import static com.mobi.rest.util.RestUtils.getGarbageCollectionTime;
 import static com.mobi.rest.util.RestUtils.getInProgressCommitIRI;
-import static com.mobi.rest.util.RestUtils.getUploadedModel;
+import static com.mobi.rest.util.RestUtils.getObjectFromJsonld;
 import static com.mobi.rest.util.RestUtils.getRDFFormatFileExtension;
 import static com.mobi.rest.util.RestUtils.getRDFFormatMimeType;
+import static com.mobi.rest.util.RestUtils.getUploadedModel;
 import static com.mobi.rest.util.RestUtils.jsonldToModel;
 import static com.mobi.rest.util.RestUtils.modelToJsonld;
 import static com.mobi.security.policy.api.xacml.XACML.POLICY_PERMIT_OVERRIDES;
@@ -96,6 +96,7 @@ import com.mobi.rest.security.annotations.AttributeValue;
 import com.mobi.rest.security.annotations.ResourceId;
 import com.mobi.rest.security.annotations.ValueType;
 import com.mobi.rest.util.ErrorUtils;
+import com.mobi.rest.util.FileUpload;
 import com.mobi.rest.util.RestQueryUtils;
 import com.mobi.rest.util.RestUtils;
 import com.mobi.rest.util.swagger.ErrorObjectSchema;
@@ -172,7 +173,6 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import javax.annotation.Nullable;
 import javax.annotation.security.RolesAllowed;
 import javax.servlet.http.HttpServletRequest;
@@ -309,11 +309,11 @@ public class OntologyRest {
     @ResourceId("http://mobi.com/catalog-local")
     public Response uploadFile(@Context HttpServletRequest servletRequest) {
         Map<String, List<Class<?>>> fields = new HashMap<>();
-        fields.put("title", Stream.of(String.class).collect(Collectors.toList()));
-        fields.put("description", Stream.of(String.class).collect(Collectors.toList()));
-        fields.put("json", Stream.of(String.class).collect(Collectors.toList()));
-        fields.put("markdown", Stream.of(String.class).collect(Collectors.toList()));
-        fields.put("keywords", Stream.of(Set.class, String.class).collect(Collectors.toList()));
+        fields.put("title", List.of(String.class));
+        fields.put("description", List.of(String.class));
+        fields.put("json", List.of(String.class));
+        fields.put("markdown", List.of(String.class));
+        fields.put("keywords", List.of(Set.class, String.class));
 
         Map<String, Object> formData = RestUtils.getFormData(servletRequest, fields);
         String title = (String) formData.get("title");
@@ -321,8 +321,9 @@ public class OntologyRest {
         String json = (String) formData.get("json");
         String markdown = (String) formData.get("markdown");
         Set<String> keywords = (Set<String>) formData.get("keywords");
-        InputStream inputStream = (InputStream) formData.get("stream");
-        String filename = (String) formData.get("filename");
+        FileUpload file = (FileUpload) formData.getOrDefault("file", new FileUpload());
+        InputStream inputStream = file.getStream();
+        String filename = file.getFilename();
 
         checkStringParam(title, "The title is missing.");
         if (inputStream == null && json == null) {
@@ -676,8 +677,9 @@ public class OntologyRest {
             @Parameter(description = "String representing the Commit Resource ID")
             @QueryParam("commitId") String commitIdStr) {
         Map<String, Object> formData = RestUtils.getFormData(servletRequest, new HashMap<>());
-        InputStream fileInputStream = (InputStream) formData.get("stream");
-        String filename = (String) formData.get("filename");
+        FileUpload file = (FileUpload) formData.getOrDefault("file", new FileUpload());
+        InputStream fileInputStream = file.getStream();
+        String filename = file.getFilename();
 
         long totalTime = System.currentTimeMillis();
         if (fileInputStream == null) {
