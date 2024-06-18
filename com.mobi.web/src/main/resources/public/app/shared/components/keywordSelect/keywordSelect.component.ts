@@ -22,7 +22,7 @@
  */
 
 import { ENTER } from '@angular/cdk/keycodes';
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { Component, ElementRef, EventEmitter, Input, OnChanges, Output, SimpleChanges, ViewChild } from '@angular/core';
 import { UntypedFormGroup } from '@angular/forms';
 import { MatChipInputEvent } from '@angular/material/chips';
 
@@ -41,21 +41,30 @@ import { MatChipInputEvent } from '@angular/material/chips';
     templateUrl: './keywordSelect.component.html',
     styleUrls: ['./keywordSelect.component.scss']
 })
-export class KeywordSelectComponent {
+export class KeywordSelectComponent implements OnChanges {
+
+    /**
+     * Represents the chip input element.
+     *
+     * @typedef {ElementRef<HTMLInputElement>} chipInput
+     */
+    @ViewChild('chipInput') chipInput: ElementRef<HTMLInputElement>;
+
     readonly separatorKeysCodes: number[] = [ENTER];
     
     @Input() parentForm: UntypedFormGroup;
+    @Input() clearInput: number;
     @Output() cancelEvent = new EventEmitter<null>();
     
     constructor() {}
 
     addKeyword(event: MatChipInputEvent): void {
-        const input = event.input;
-        const value = event.value;
+        const input: HTMLInputElement = event.chipInput?.inputElement;
+        const value: string = event.value;
 
         if ((value || '').trim()) {
-            this.parentForm.controls.keywords.setValue([...this.parentForm.controls.keywords.value, value.trim()]);
-            this.parentForm.controls.keywords.updateValueAndValidity();
+            const keywords = [...this.parentForm.controls.keywords.value, value.trim()];
+            this._updateKeywordsValue(keywords);
         }
 
         // Reset the input value
@@ -67,10 +76,44 @@ export class KeywordSelectComponent {
         const idx = this.parentForm.controls.keywords.value.indexOf(keyword);
         if (idx >= 0) {
             this.parentForm.controls.keywords.value.splice(idx, 1);
-            this.parentForm.controls.keywords.updateValueAndValidity();
+            this._updateKeywordsValue(this.parentForm.controls.keywords.value);
         }
     }
     cancel(): void {
         this.cancelEvent.emit();
+    }
+
+    ngOnChanges(changes: SimpleChanges): void {
+        if (changes.clearInput?.currentValue !== changes.clearInput?.previousValue) {
+            this._clearInput();
+        }
+    }
+
+    /**
+     * Clears the input value of a chip input field and the corresponding form control.
+     *
+     * @description
+     * This method clears the value of the chip input field and the corresponding form control if the chip input
+     * element and the clearInput option are both available.
+     *
+     * @return {void} This method does not return anything.
+     */
+    private _clearInput(): void {
+        if (this.chipInput && this.clearInput > 0) {
+            this._updateKeywordsValue([]);
+            this.chipInput.nativeElement.value = '';
+        }
+    }
+
+    /**
+     * Updates the `keywords` value of the parentForm control and triggers validation.
+     *
+     * @param {any} value - The new value to update the control with.
+     *
+     * @return {void}
+     */
+    private _updateKeywordsValue(value: any): void {
+        this.parentForm.controls.keywords.setValue(value);
+        this.parentForm.controls.keywords.updateValueAndValidity();
     }
 }

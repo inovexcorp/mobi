@@ -64,6 +64,7 @@ export class UploadRecordModalComponent<TData extends VersionedRdfListItem> impl
     description: [''],
     keywords: [[]],
   });
+  clearInput = 0;
 
   constructor(private _fb: UntypedFormBuilder, private _dialogRef: MatDialogRef<UploadRecordModalComponent<TData>>, 
     @Inject(stateServiceToken) private _state: VersionedRdfState<TData>,
@@ -145,6 +146,7 @@ export class UploadRecordModalComponent<TData extends VersionedRdfListItem> impl
     this.file = pullAt(this._data.files, 0)[0];
     this.uploadRecordForm.controls.title.setValue(this.file.name.replace(/\.[^/.]+$/, ''));
     this.uploadRecordForm.controls.description.setValue('');
+    this.clearInput = this.index;
     this.uploadRecordForm.controls.keywords.setValue([]);
   }
 }
