@@ -29,6 +29,7 @@ import com.mobi.document.translator.ontology.ExtractedOntology;
 import com.mobi.exception.MobiException;
 import com.mobi.rdf.orm.OrmFactoryRegistry;
 import com.mobi.rest.util.ErrorUtils;
+import com.mobi.rest.util.FileUpload;
 import com.mobi.rest.util.RestUtils;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -65,7 +66,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -130,18 +130,19 @@ public class DocumentTranslatorRest {
         java.nio.file.Path tempFolder = null;
         try {
             Map<String, List<Class<?>>> fields = new HashMap<>();
-            fields.put("type", Stream.of(String.class).collect(Collectors.toList()));
-            fields.put("ontologyIriString", Stream.of(String.class).collect(Collectors.toList()));
-            fields.put("outputName", Stream.of(String.class).collect(Collectors.toList()));
-            fields.put("desiredRows", Stream.of(Integer.class).collect(Collectors.toList()));
+            fields.put("type", List.of(String.class));
+            fields.put("ontologyIriString", List.of(String.class));
+            fields.put("outputName", List.of(String.class));
+            fields.put("desiredRows", List.of(Integer.class));
 
             Map<String, Object> formData = RestUtils.getFormData(servletRequest, fields);
             String type = (String) formData.get("type");
             String ontologyIriString = (String) formData.get("ontologyIriString");
             String outputName = (String) formData.get("outputName");
             int desiredRows = (Integer) formData.getOrDefault("desiredRows", 10);
-            InputStream inputStream = (InputStream) formData.get("stream");
-            String filename = (String) formData.get("filename");
+            FileUpload file = (FileUpload) formData.getOrDefault("file", new FileUpload());
+            InputStream inputStream = file.getStream();
+            String filename = file.getFilename();
 
             if (inputStream == null) {
                 throw ErrorUtils.sendError("The file is missing.", Response.Status.BAD_REQUEST);

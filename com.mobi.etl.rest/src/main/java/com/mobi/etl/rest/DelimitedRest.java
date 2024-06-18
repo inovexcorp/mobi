@@ -53,6 +53,7 @@ import com.mobi.rest.security.annotations.ResourceId;
 import com.mobi.rest.security.annotations.ValueType;
 import com.mobi.rest.util.CharsetUtils;
 import com.mobi.rest.util.ErrorUtils;
+import com.mobi.rest.util.FileUpload;
 import com.mobi.rest.util.RestUtils;
 import com.opencsv.CSVParser;
 import com.opencsv.CSVParserBuilder;
@@ -211,8 +212,9 @@ public class DelimitedRest {
     public Response upload(@Context HttpServletRequest servletRequest) {
         try {
             Map<String, Object> formData = RestUtils.getFormData(servletRequest, new HashMap<>());
-            InputStream inputStream = (InputStream) formData.get("stream");
-            String filename = (String) formData.get("filename");
+            FileUpload file = (FileUpload) formData.get("delimitedFile");
+            InputStream inputStream = file.getStream();
+            String filename = file.getFilename();
 
             ByteArrayOutputStream fileOutput;
             try {
@@ -272,7 +274,8 @@ public class DelimitedRest {
                            @PathParam("documentName") String fileName) {
         try {
             Map<String, Object> formData = RestUtils.getFormData(servletRequest, new HashMap<>());
-            InputStream inputStream = (InputStream) formData.get("stream");
+            FileUpload file = (FileUpload) formData.get("delimitedFile");
+            InputStream inputStream = file.getStream();
 
             ByteArrayOutputStream fileOutput;
             try {
