@@ -68,6 +68,8 @@ public class ImportsResolverImpl implements ImportsResolver {
     private final ValueFactory vf = new ValidatingValueFactory();
 
     private String userAgent;
+    private int connectionTimeout;
+    private int readTimeout;
     private String acceptHeaders;
     private Set<String> contentTypes = new HashSet<>();
 
@@ -95,6 +97,9 @@ public class ImportsResolverImpl implements ImportsResolver {
         } else {
             userAgent = config.userAgent();
         }
+        connectionTimeout = config.connectionTimeout();
+        readTimeout = config.readTimeout();
+
         StringBuilder sb = new StringBuilder();
         RDFFiles.getFormats().forEach(format -> {
             format.getMIMETypes().forEach(mimeType -> {
@@ -121,7 +126,8 @@ public class ImportsResolverImpl implements ImportsResolver {
         URL url = new URL(actualUrlStr);
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         conn.setRequestProperty("User-Agent", userAgent);
-        conn.setConnectTimeout(3000);
+        conn.setConnectTimeout(connectionTimeout);
+        conn.setReadTimeout(readTimeout);
         conn.setRequestProperty("Accept", acceptHeaders);
         conn.connect();
 
@@ -140,7 +146,8 @@ public class ImportsResolverImpl implements ImportsResolver {
             }
             conn = (HttpURLConnection) newURL.openConnection();
             conn.addRequestProperty("Accept", acceptHeaders);
-            conn.setConnectTimeout(3000);
+            conn.setConnectTimeout(connectionTimeout);
+                conn.setReadTimeout(readTimeout);
             status = conn.getResponseCode();
         }
         return conn;
