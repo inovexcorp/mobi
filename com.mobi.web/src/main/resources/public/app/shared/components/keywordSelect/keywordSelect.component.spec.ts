@@ -21,7 +21,7 @@
  * #L%
  */
 
-import { DebugElement } from '@angular/core';
+import { DebugElement, SimpleChange, SimpleChanges } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { UntypedFormControl, UntypedFormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
@@ -88,6 +88,19 @@ describe('Keyword Select component', function() {
 
             component.removeKeyword('C');
             expect(component.parentForm.controls.keywords.value).toEqual(['B']);
+        });
+        it('should detect changes and call _clearInput method', () => {
+            const changes: SimpleChanges = {
+                clearInput: new SimpleChange(1, 2, false)
+            };
+            component.parentForm.controls.keywords.setValue(['A']);
+            component.clearInput = 2;
+            const input = element.query(By.css('.mat-chip-input'));
+            fixture.detectChanges();
+            component.ngOnChanges(changes);
+            expect(component.parentForm.controls.keywords.value).toEqual([]);
+            expect(input.nativeElement.value).toEqual('');
+
         });
     });
     describe('contains the correct html', function() {

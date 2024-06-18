@@ -30,7 +30,7 @@
     <mat-label>Description</mat-label>
     <textarea matInput name="description" formControlName="description"></textarea>
   </mat-form-field>
-  <keyword-select [parentForm]="uploadRecordForm"></keyword-select>
+    <keyword-select [parentForm]="uploadRecordForm" [clearInput]="clearInput"></keyword-select>
 </form>
 <div mat-dialog-actions>
   <button mat-raised-button (click)="cancel()">Cancel</button>
