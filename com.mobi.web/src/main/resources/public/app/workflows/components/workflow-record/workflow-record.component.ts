@@ -44,6 +44,7 @@ import { WorkflowUploadChangesModalComponent } from '../workflow-upload-changes-
 import { Difference } from '../../../shared/models/difference.class';
 import { WorkflowSHACLDefinitions } from '../../models/workflow-shacl-definitions.interface';
 import { RESTError } from '../../../shared/models/RESTError.interface';
+import { switchMap } from 'rxjs/operators';
 
 /**
  * @class workflows.WorkflowRecordComponent
@@ -79,6 +80,11 @@ export class WorkflowRecordComponent implements OnInit, OnDestroy {
      }
 
   ngOnInit(): void {
+    this.cm.getRecord(this.record.iri, this.catalogId).pipe(
+      switchMap(recordJsonLd => this.workflowsState.convertJSONLDToWorkflowSchema(recordJsonLd[0]))
+    ).subscribe(record => {
+      this.record = record;
+    });
     this.setRecordBranches();
     this.setShaclDefinitions();
     this.executionActivityEventsSubscription = this._wm.getExecutionActivitiesEvents().subscribe(activities => {

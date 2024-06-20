@@ -44,7 +44,7 @@ import { ToastService } from '../../../shared/services/toast.service';
 import { WorkflowDisplayComponent } from '../workflow-display/workflow-display.component';
 import { WorkflowsStateService } from '../../services/workflows-state.service';
 import { WorkflowControlsComponent } from '../workflow-controls/workflow-controls.component';
-import { workflow_mocks } from '../../models/mock_data/workflow-mocks';
+import { workflow_mocks, workflowRecordJSONLD } from '../../models/mock_data/workflow-mocks';
 import { WorkflowsManagerService } from '../../services/workflows-manager.service';
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
 import { WorkflowDownloadModalComponent } from '../workflow-download-modal/workflow-download-modal.component';
@@ -148,6 +148,7 @@ describe('WorkflowRecordComponent', () => {
     workflowsStateStub = TestBed.inject(WorkflowsStateService) as jasmine.SpyObj<WorkflowsStateService>;
     matDialog = TestBed.inject(MatDialog) as jasmine.SpyObj<MatDialog>;
 
+    workflowsStateStub.convertJSONLDToWorkflowSchema.and.returnValue(of(workflow_mocks[0]));
     workflowsManagerStub.getExecutionActivitiesEvents.and.returnValue(of([activity1, activity2]));
     workflowsManagerStub.getShaclDefinitions.and.returnValue(of(wfShaclDefinition));
 
@@ -157,6 +158,7 @@ describe('WorkflowRecordComponent', () => {
     catalogManagerStub.getRecordBranches.and.
       returnValue(of(new HttpResponse<JSONLDObject[]>({body: branches, headers: new HttpHeaders(headers)})));
     catalogManagerStub.getResource.and.returnValue(of(workflow));
+    catalogManagerStub.getRecord.and.returnValue(of(workflowRecordJSONLD));
 
     fixture = TestBed.createComponent(WorkflowRecordComponent);
     component = fixture.componentInstance;
@@ -182,6 +184,7 @@ describe('WorkflowRecordComponent', () => {
     spyOn(component, 'setRecordBranches');
     component.ngOnInit();
     tick();
+    expect(catalogManagerStub.getRecord).toHaveBeenCalledWith(workflow_mocks[0].iri, catalogId);
     expect(component.setRecordBranches).toHaveBeenCalledWith();
     expect(workflowsManagerStub.getExecutionActivitiesEvents).toHaveBeenCalledWith();
     expect(component.executingActivities).toEqual([activity1]);
@@ -375,7 +378,7 @@ describe('WorkflowRecordComponent', () => {
         });
     
         expect(workflowsStateStub.hasChanges).toBeFalse();
-        expect(toastStub.createWarningToast).toHaveBeenCalled();
+        expect(toastStub.createWarningToast).toHaveBeenCalledWith('No changes detected with new upload');
       });
       it('should fail to open the dialog',() => {
         const response = new CommitDifference();
@@ -396,8 +399,8 @@ describe('WorkflowRecordComponent', () => {
         spyOn(component, 'setRecordBranches');
         component.commitChanges();
 
-        expect(component.toggleEditMode).toHaveBeenCalled();
-        expect(component.setRecordBranches).toHaveBeenCalled();
+        expect(component.toggleEditMode).toHaveBeenCalledWith();
+        expect(component.setRecordBranches).toHaveBeenCalledWith();
       }));
       it('should toggle edit mode only, if hasChanges is false', () => {
         workflowsStateStub.hasChanges = false;
@@ -406,8 +409,8 @@ describe('WorkflowRecordComponent', () => {
         catalogManagerStub.createBranchCommit.and.returnValue(of('commitIRI'));
         component.commitChanges();
     
-        expect(component.toggleEditMode).toHaveBeenCalled();
-        expect(component.setRecordBranches).not.toHaveBeenCalled();
+        expect(component.toggleEditMode).toHaveBeenCalledWith();
+        expect(component.setRecordBranches).not.toHaveBeenCalledWith();
       });
       it('unless an error occurs', () => {
         const errorMessage = 'Error saving changes to workflow';
