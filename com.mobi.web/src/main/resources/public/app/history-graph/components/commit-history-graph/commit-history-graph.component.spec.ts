@@ -244,7 +244,7 @@ describe('CommitHistoryGraphComponent', () => {
       component.gitGraph = mockGitGraph;
       component.createBranchAction(gitActions[0]);
       expect(component.gitGraphBranches).toEqual([mockGitBranch]);
-      expect(mockGitGraph.branch).toHaveBeenCalled();
+      expect(mockGitGraph.branch).toHaveBeenCalledWith(jasmine.any(Object));
     });
     describe('commitAction commits to a branch', function() {
       beforeEach(function() {
@@ -255,7 +255,7 @@ describe('CommitHistoryGraphComponent', () => {
         component.gitGraphBranches = [ mockGitBranch ];
         component.commitAction(gitActions[1], 0);
         expect(component.createCommitOptions).toHaveBeenCalledWith(gitActions[1]);
-        expect(mockGitBranch.commit).toHaveBeenCalled();
+        expect(mockGitBranch.commit).toHaveBeenCalledWith(undefined);
       });
       it('with exception', async function() {
         const mockGitBranch: jasmine.SpyObj<GitGraphBranch> = jasmine.createSpyObj('GitGraphBranch', ['commit'], {name: 'branch1'});
@@ -324,7 +324,6 @@ describe('CommitHistoryGraphComponent', () => {
           subject: 'message',
           hash: '1234567890',
           author: 'firstName lastName',
-          tag: `${tag1.title} | ${tag2.title}`,
           renderDot: jasmine.any(Function),
           renderMessage: jasmine.any(Function),
           onMessageClick: jasmine.any(Function),

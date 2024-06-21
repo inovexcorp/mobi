@@ -218,6 +218,13 @@ export class CommitHistoryGraphComponent implements OnChanges, AfterViewInit, Do
         } else if (gitAction.action === 'merge-commit') {
           this.mergeCommitAction(gitAction, index);
         }
+        // Add Tag to commit
+        if (gitAction?.commit?.id) {
+          const label = this.getTags(gitAction?.commit?.id);
+          if (label) {
+            this.gitGraph.tag({name: label, render: (name, style) => this.svgElementHelperService.createTag(name, style)});
+          }
+        }
       } catch (error) {
         this.errors.push(error);
       }
@@ -284,14 +291,12 @@ export class CommitHistoryGraphComponent implements OnChanges, AfterViewInit, Do
     if (!gitAction.commit) {
       throw Error('GitAction object commit property is empty');
     }
-
     const commitId = gitAction.commit.id;
     const commitDate = gitAction.commit.date || '' ;
     return {
       subject: gitAction.commit.message,
       hash: condenseCommitId(commitId),
       author: User.getDisplayName(gitAction.commit.creator),
-      tag: this.getTags(commitId),
       renderDot: (svgCommit: GitGraphCommit) => {
         if (gitAction.renderBranchLabel) {
           svgCommit.showLabel = true;
@@ -312,7 +317,7 @@ export class CommitHistoryGraphComponent implements OnChanges, AfterViewInit, Do
    * @param options
    * @param gitAction
    */
-  updateBranchOptions(options:GitgraphBranchOptions<SVGElement>, gitAction:GitAction) {
+  updateBranchOptions(options:GitgraphBranchOptions<SVGElement>, gitAction:GitAction): void {
     const behindBranch = this.filterBehindBranchList(gitAction);
     if (!this.branchesNames.find(item => item.name === gitAction.branch) || !!behindBranch) {
       options.style = {
@@ -369,7 +374,7 @@ export class CommitHistoryGraphComponent implements OnChanges, AfterViewInit, Do
    * @returns The branch with the given title, if it exists, or `null` if no such
    * branch exists.
    */
-  private getBranchByTitle(name:string) {
+  private getBranchByTitle(name:string): JSONLDObject {
     return this.branches
         .find(b => name === getDctermsValue(b, 'title'));
   }
@@ -382,7 +387,7 @@ export class CommitHistoryGraphComponent implements OnChanges, AfterViewInit, Do
    * @param action gitGraph action
    * @private
    */
-  private updateBranchListState(headCommit:string, commitId:string, title:string, action:string) {
+  private updateBranchListState(headCommit:string, commitId:string, title:string, action:string): void {
     if (headCommit !== commitId && this.commits[0]?.id !== headCommit) {
       this.behindBranches.push({title, commitId, action});
     }
@@ -393,7 +398,7 @@ export class CommitHistoryGraphComponent implements OnChanges, AfterViewInit, Do
    * @param gitAction
    * @private
    */
-  private filterBehindBranchList(gitAction:GitAction) {
+  private filterBehindBranchList(gitAction:GitAction): boolean {
     if (gitAction.commit) {
       return this.behindBranches
           .filter(action => action.action === gitAction.action)
@@ -401,11 +406,11 @@ export class CommitHistoryGraphComponent implements OnChanges, AfterViewInit, Do
     } else {
       return this.behindBranches
           .some(item => item.title === gitAction.branch && gitAction.atCommit !== item.commitId
-              && item.action == gitAction.action);
+              && item.action === gitAction.action);
     }
   }
   /**
-   * Filters action "merge-commit" and "commit" types,
+   * Filters action 'merge-commit' and 'commit' types,
    * and then updates the state of branch lists based on the actions' information.
    * @param actions
    * @private
@@ -416,14 +421,20 @@ export class CommitHistoryGraphComponent implements OnChanges, AfterViewInit, Do
     mergeActions.forEach((gitAction: GitAction) => {
       const branch = this.getBranchByTitle(gitAction.mergeTo);
       if (branch) {
-        this.updateBranchListState(branch[this.headURI][0]['@id'], gitAction.commit.id, getDctermsValue(branch, 'title'), 'merge-commit')
+        this.updateBranchListState(branch[this.headURI][0]['@id'], 
+          gitAction.commit.id, 
+          getDctermsValue(branch, 'title'), 
+          'merge-commit');
       }
     });
 
     commitActions.forEach((gitAction: GitAction) => {
       const branch = this.getBranchByTitle(gitAction.branch);
       if (branch) {
-        this.updateBranchListState(branch[this.headURI][0]['@id'], gitAction.commit.id, getDctermsValue(branch, 'title'), 'commit')
+        this.updateBranchListState(branch[this.headURI][0]['@id'], 
+          gitAction.commit.id, 
+          getDctermsValue(branch, 'title'), 
+          'commit');
       }
     });
   }
@@ -434,7 +445,7 @@ export class CommitHistoryGraphComponent implements OnChanges, AfterViewInit, Do
    * @param {Object} gitAction - The git action object representing a commit.
    * @returns {Object} - The branch object that matches the gitAction commit ID.
    */
-  private findBranch(gitAction) {
+  private findBranch(gitAction): JSONLDObject[] {
     return this.branches.filter(item => item[this.headURI][0]['@id'] === gitAction.commit.id);
   }
 
@@ -446,11 +457,11 @@ export class CommitHistoryGraphComponent implements OnChanges, AfterViewInit, Do
    * @param {object} gitAction - The git action to update the commit label for.
    * @param {object} branches - The branch to use for the optional label.
    */
-  private updateCommitLabel(gitAction: GitAction, branches: JSONLDObject[]) {
+  private updateCommitLabel(gitAction: GitAction, branches: JSONLDObject[]): void {
     if (!branches || branches.length === 0) {
       return; // Handle empty branches early
     }
-    const length = branches.length
+    const length = branches.length;
 
     const [firstTitle, secondTitle] = this.getBranchesTitle(gitAction, branches);
 
@@ -459,7 +470,6 @@ export class CommitHistoryGraphComponent implements OnChanges, AfterViewInit, Do
       gitAction.optionalLabel +=  ' | ...';
     }
     gitAction.renderBranchLabel = true;
-
   }
 
   /**
@@ -488,7 +498,7 @@ export class CommitHistoryGraphComponent implements OnChanges, AfterViewInit, Do
    * @param {object} gitAction - The git action object.
    * @return {Function} - A function that returns the rendered label for the git action.
    */
-  private getRenderLabel(gitAction) {
+  private getRenderLabel(gitAction): (gitGraphBranch: Branch<SVGElement>, commit: GitGraphCommit) => SVGElement {
     const branch = this.findBranch(gitAction);
     this.updateCommitLabel(gitAction, branch);
 

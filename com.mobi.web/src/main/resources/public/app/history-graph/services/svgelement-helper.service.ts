@@ -22,12 +22,17 @@
  */
 import { Injectable } from '@angular/core';
 
-import { createText, createRect, createCircle, createClipPath, createUse, createDefs, createG  } from '@sourceflow/gitgraph-js/lib/svg-elements.js';
+import { createText, createRect, createCircle, createClipPath, createUse, createDefs, createG, createPath  } from '@sourceflow/gitgraph-js/lib/svg-elements.js';
 import { Branch as GitGraphBranch } from '@sourceflow/gitgraph-core/lib/branch';
 import { Commit as GitGraphCommit } from '@sourceflow/gitgraph-core/lib/commit';
+import { TagStyle } from '@sourceflow/gitgraph-core/lib/template';
 
 const BRANCH_LABEL_PADDING_X = 10;
 const BRANCH_LABEL_PADDING_Y = 4;
+
+const TAG_LABEL_PADDING_X = 10;
+const TAG_LABEL_PADDING_Y = 5;
+
 const BRANCH_LABEL_Y_OFFSET = -10;
 const SUBJECT_SVG_ELEMENT_OFFSET = 100;
 const SVG_NAMESPACE = 'http://www.w3.org/2000/svg';
@@ -187,5 +192,68 @@ export class SVGElementHelperService {
     }
     gSvgElement.appendChild(subjectSvgElement);
     return gSvgElement;
+  }
+  /**
+   * Create Tag 
+   * Reference: https://github.com/alvarezr/gitgraph.js/blob/master/packages/gitgraph-js/lib/tag.js#L5
+   * @param name Tag Title
+   * @param style Tag Style
+   * @returns SVGElement
+   */
+  createTag(name: string, style: TagStyle): SVGElement {
+    const path = createPath({
+        d: '',
+        fill: style.bgColor,
+        stroke: style.strokeColor,
+    });
+    const text = createText({
+        content: name.length >= 10 ? name.substring(0, 10) + '...' : name,
+        fill: style.color,
+        font: style.font,
+        translate: { x: 0, y: 0 },
+    });
+    // create title for element
+    if (name.length >= 10) {
+      const titleElement = document.createElementNS(SVG_NAMESPACE, 'title');
+      titleElement.textContent = name;
+      text.appendChild(titleElement);
+    }
+    const result = createG({ children: [path] });
+    const offset = style.pointerWidth;
+    const observer = new MutationObserver(function () {
+        const _a = text.getBBox(), height = _a.height, width = _a.width;
+        if (height === 0 || width === 0) {
+          return;
+        }
+        const radius = style.borderRadius;
+        const boxWidth = offset + width + 2 * TAG_LABEL_PADDING_X;
+        const boxHeight = height + 2 * TAG_LABEL_PADDING_Y;
+        const pathD = [
+            'M 0,0',
+            'L ' + offset + ',' + boxHeight / 2,
+            'V ' + boxHeight / 2,
+            'Q ' + offset + ',' + boxHeight / 2 + ' ' + (offset + radius) + ',' + boxHeight / 2,
+            'H ' + (boxWidth - radius),
+            'Q ' + boxWidth + ',' + boxHeight / 2 + ' ' + boxWidth + ',' + (boxHeight / 2 - radius),
+            'V -' + (boxHeight / 2 - radius),
+            'Q ' + boxWidth + ',-' + boxHeight / 2 + ' ' + (boxWidth - radius) + ',-' + boxHeight / 2,
+            'H ' + (offset + radius),
+            'Q ' + offset + ',-' + boxHeight / 2 + ' ' + offset + ',-' + boxHeight / 2,
+            'V -' + boxHeight / 2,
+            'z',
+        ].join(' ');
+        // Ideally, it would be great to refactor these behavior into SVG elements.
+        path.setAttribute('d', pathD.toString());
+        text.setAttribute('x', (offset + TAG_LABEL_PADDING_X).toString());
+    });
+    observer.observe(result, {
+        attributes: false,
+        subtree: false,
+        childList: true,
+    });
+    // Add text after observer is set up => react based on text size.
+    // We might refactor it by including `onChildrenUpdate()` to `createG()`.
+    result.appendChild(text);
+    return result;
   }
 }
