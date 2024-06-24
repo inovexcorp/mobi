@@ -62,12 +62,11 @@ export class WorkflowRecordComponent implements OnInit, OnDestroy {
 
   branch: BranchInfo;
   branches: BranchInfo[] = [];
-  currentlyRunning = false;
   executingActivities: JSONLDObject[] = [];
   workflowRdf: JSONLDObject[] = [];
   catalogId: string;
-
   shaclDefinitions: WorkflowSHACLDefinitions;
+  runningWorkflows: string[] = [];
 
   private executionActivityEventsSubscription: Subscription;
   
@@ -88,7 +87,7 @@ export class WorkflowRecordComponent implements OnInit, OnDestroy {
     this.setRecordBranches();
     this.setShaclDefinitions();
     this.executionActivityEventsSubscription = this._wm.getExecutionActivitiesEvents().subscribe(activities => {
-      this.currentlyRunning = activities.length > 0;
+      this._getExecutingWorkflow(activities);
       this.executingActivities = sortBy(
         activities.filter(activity => getPropertyId(activity, `${PROV}used`) === this.record.iri),
         activity => new Date(getPropertyId(activity, `${PROV}startedAtTime`))
@@ -303,5 +302,18 @@ export class WorkflowRecordComponent implements OnInit, OnDestroy {
     } else {
       this.toggleEditMode();
     }
+  }
+
+  /**
+   * Creates a list of IRIs of the currently executing workflows.
+   *
+   * @private
+   * @param activities A list of the current executing workflow activities from the executionActivityEventsSubscription
+   */
+  private _getExecutingWorkflow(activities: JSONLDObject[]): void {
+    this.runningWorkflows = [];
+    activities.forEach(activity => {
+      this.runningWorkflows.push(getPropertyId(activity, `${PROV}used`));
+    });
   }
 }

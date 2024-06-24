@@ -54,23 +54,28 @@ module.exports = {
   'Step 2: Navigate to Workflows and validate initial state': function(browser) {
     browser.globals.switchToPage(browser, 'workflows', 'app-workflow-records');
     browser.globals.wait_for_no_spinners(browser);
-    browser.page.workflowsPage().validateWorkflowTableRowCount(3);
+    browser.page.workflowsPage().validateWorkflowTableRowCount(4);
   },
-  'Step 3: Validate default alphabetical ordering': function(browser) {
-    browser.page.workflowsPage().validateWorkflowVisible(neverRunWorkflow, 1);
-    browser.page.workflowsPage().validateWorkflowVisible(successWorkflow, 2);
-    browser.page.workflowsPage().validateWorkflowVisible(workflowA, 3);
+  'Step 3: Verify run button status': function(browser) {
+    browser.page.workflowsPage().verifyRunButton('true');
+    browser.page.workflowsPage().selectWorkflow(workflowA);
+    browser.page.workflowsPage().verifyRunButton(null);
   },
-  'Step 4: Validate column sorting': function(browser) {
-    browser.page.workflowsPage().sortByHeader('Running Time');
-    browser.globals.wait_for_no_spinners(browser);
+  'Step 4: Validate default alphabetical ordering': function(browser) {
     browser.page.workflowsPage().validateWorkflowVisible(neverRunWorkflow, 1);
     browser.page.workflowsPage().validateWorkflowVisible(successWorkflow, 3);
-    browser.page.workflowsPage().validateWorkflowVisible(workflowA, 2);
+    browser.page.workflowsPage().validateWorkflowVisible(workflowA, 4);
+  },
+  'Step 5: Validate column sorting': function(browser) {
+    browser.page.workflowsPage().sortByHeader('Running Time');
+    browser.globals.wait_for_no_spinners(browser);
+    browser.page.workflowsPage().validateWorkflowVisible(neverRunWorkflow, 2);
+    browser.page.workflowsPage().validateWorkflowVisible(successWorkflow, 4);
+    browser.page.workflowsPage().validateWorkflowVisible(workflowA, 3);
 
     browser.page.workflowsPage().sortByHeader('Running Time');
     browser.globals.wait_for_no_spinners(browser);
-    browser.page.workflowsPage().validateWorkflowVisible(neverRunWorkflow, 3);
+    browser.page.workflowsPage().validateWorkflowVisible(neverRunWorkflow, 4);
     browser.page.workflowsPage().validateWorkflowVisible(successWorkflow, 1);
     browser.page.workflowsPage().validateWorkflowVisible(workflowA, 2);
 
@@ -82,45 +87,45 @@ module.exports = {
 
     browser.page.workflowsPage().sortByHeader('Start Time');
     browser.globals.wait_for_no_spinners(browser);
-    browser.page.workflowsPage().validateWorkflowVisible(neverRunWorkflow, 3);
-    browser.page.workflowsPage().validateWorkflowVisible(successWorkflow, 2);
-    browser.page.workflowsPage().validateWorkflowVisible(workflowA, 1);
-
-    browser.page.workflowsPage().sortByHeader('Execution ID');
-    browser.globals.wait_for_no_spinners(browser);
-    browser.page.workflowsPage().validateWorkflowVisible(neverRunWorkflow, 1);
-    browser.page.workflowsPage().validateWorkflowVisible(successWorkflow, 2);
-    browser.page.workflowsPage().validateWorkflowVisible(workflowA, 3);
-
-    browser.page.workflowsPage().sortByHeader('Execution ID');
-    browser.globals.wait_for_no_spinners(browser);
-    browser.page.workflowsPage().validateWorkflowVisible(neverRunWorkflow, 3);
-    browser.page.workflowsPage().validateWorkflowVisible(successWorkflow, 1);
-    browser.page.workflowsPage().validateWorkflowVisible(workflowA, 2);
-
-    browser.page.workflowsPage().sortByHeader('Executor');
-    browser.globals.wait_for_no_spinners(browser);
-    browser.page.workflowsPage().validateWorkflowVisible(neverRunWorkflow, 1);
-    browser.page.workflowsPage().validateWorkflowVisible(successWorkflow, 2);
-    browser.page.workflowsPage().validateWorkflowVisible(workflowA, 3);
-
-    browser.page.workflowsPage().sortByHeader('Executor');
-    browser.globals.wait_for_no_spinners(browser);
-    browser.page.workflowsPage().validateWorkflowVisible(neverRunWorkflow, 3);
-    browser.page.workflowsPage().validateWorkflowVisible(successWorkflow, 1);
-    browser.page.workflowsPage().validateWorkflowVisible(workflowA, 2);
-
-    browser.page.workflowsPage().sortByHeader('Status');
-    browser.globals.wait_for_no_spinners(browser);
-    browser.page.workflowsPage().validateWorkflowVisible(neverRunWorkflow, 2);
+    browser.page.workflowsPage().validateWorkflowVisible(neverRunWorkflow, 4);
     browser.page.workflowsPage().validateWorkflowVisible(successWorkflow, 3);
-    browser.page.workflowsPage().validateWorkflowVisible(workflowA, 1);
+    browser.page.workflowsPage().validateWorkflowVisible(workflowA, 2);
+
+    browser.page.workflowsPage().sortByHeader('Execution ID');
+    browser.globals.wait_for_no_spinners(browser);
+    browser.page.workflowsPage().validateWorkflowVisible(neverRunWorkflow, 1);
+    browser.page.workflowsPage().validateWorkflowVisible(successWorkflow, 2);
+    browser.page.workflowsPage().validateWorkflowVisible(workflowA, 3);
+
+    browser.page.workflowsPage().sortByHeader('Execution ID');
+    browser.globals.wait_for_no_spinners(browser);
+    browser.page.workflowsPage().validateWorkflowVisible(neverRunWorkflow, 4);
+    browser.page.workflowsPage().validateWorkflowVisible(successWorkflow, 1);
+    browser.page.workflowsPage().validateWorkflowVisible(workflowA, 2);
+
+    browser.page.workflowsPage().sortByHeader('Executor');
+    browser.globals.wait_for_no_spinners(browser);
+    browser.page.workflowsPage().validateWorkflowVisible(neverRunWorkflow, 1);
+    browser.page.workflowsPage().validateWorkflowVisible(successWorkflow, 2);
+    browser.page.workflowsPage().validateWorkflowVisible(workflowA, 3);
+
+    browser.page.workflowsPage().sortByHeader('Executor');
+    browser.globals.wait_for_no_spinners(browser);
+    browser.page.workflowsPage().validateWorkflowVisible(neverRunWorkflow, 4);
+    browser.page.workflowsPage().validateWorkflowVisible(successWorkflow, 1);
+    browser.page.workflowsPage().validateWorkflowVisible(workflowA, 2);
 
     browser.page.workflowsPage().sortByHeader('Status');
     browser.globals.wait_for_no_spinners(browser);
     browser.page.workflowsPage().validateWorkflowVisible(neverRunWorkflow, 2);
+    browser.page.workflowsPage().validateWorkflowVisible(successWorkflow, 4);
+    browser.page.workflowsPage().validateWorkflowVisible(workflowA, 1);
+
+    browser.page.workflowsPage().sortByHeader('Status');
+    browser.globals.wait_for_no_spinners(browser);
+    browser.page.workflowsPage().validateWorkflowVisible(neverRunWorkflow, 3);
     browser.page.workflowsPage().validateWorkflowVisible(successWorkflow, 1);
-    browser.page.workflowsPage().validateWorkflowVisible(workflowA, 3);
+    browser.page.workflowsPage().validateWorkflowVisible(workflowA, 4);
 
     browser.page.workflowsPage().sortByHeader('Active');
     browser.globals.wait_for_no_spinners(browser);
@@ -130,17 +135,17 @@ module.exports = {
 
     browser.page.workflowsPage().sortByHeader('Active');
     browser.globals.wait_for_no_spinners(browser);
-    browser.page.workflowsPage().validateWorkflowVisible(neverRunWorkflow, 3);
+    browser.page.workflowsPage().validateWorkflowVisible(neverRunWorkflow, 4);
     browser.page.workflowsPage().validateWorkflowVisible(successWorkflow, 1);
     browser.page.workflowsPage().validateWorkflowVisible(workflowA, 2);
 
     browser.page.workflowsPage().sortByHeader('Workflow');
     browser.globals.wait_for_no_spinners(browser);
     browser.page.workflowsPage().validateWorkflowVisible(neverRunWorkflow, 1);
-    browser.page.workflowsPage().validateWorkflowVisible(successWorkflow, 2);
-    browser.page.workflowsPage().validateWorkflowVisible(workflowA, 3);
+    browser.page.workflowsPage().validateWorkflowVisible(successWorkflow, 3);
+    browser.page.workflowsPage().validateWorkflowVisible(workflowA, 4);
   },
-  'Step 5: Validate status filtering': function(browser) {
+  'Step 6: Validate status filtering': function(browser) {
     browser.page.workflowsPage().selectWorkflowStatusFilter('Never Run');
     browser.globals.wait_for_no_spinners(browser);
     browser.page.workflowsPage().validateWorkflowTableRowCount(1);
@@ -156,11 +161,14 @@ module.exports = {
     browser.page.workflowsPage().validateWorkflowTableRowCount(1);
     browser.page.workflowsPage().validateWorkflowVisible(workflowA, 1);
   },
-  'Step 6: Open Workflow A Page': function(browser) {
+  'Step 7: Open Workflow A Page': function(browser) {
     browser.page.workflowsPage().openWorkflowPage(workflowA);
     browser.globals.wait_for_no_spinners(browser);
   },
-  'Step 7: Validate initial executions table state': function(browser) {
+  'Step 8: Verify Run Button Status': function(browser) {
+    browser.page.workflowsPage().verifyRunButton(null);
+  },
+  'Step 9: Validate initial executions table state': function(browser) {
     var tableXpath = browser.page.workflowsPage().elements.executionsTableXpath.selector;
     browser.useXpath()
       .assert.visible(tableXpath)
@@ -174,7 +182,7 @@ module.exports = {
       .assert.visible(tableXpath + '//thead//th[contains(text(), "Logs")]')
     browser.page.workflowsPage().validateExecutionTableRowCount(1);
   },
-  'Step 8: Validate executions table status filter': function(browser) {
+  'Step 10: Validate executions table status filter': function(browser) {
     browser.page.workflowsPage().selectExecutionStatusFilter('Success');
     browser.globals.wait_for_no_spinners(browser);
     browser.page.workflowsPage().useCss()
@@ -189,7 +197,7 @@ module.exports = {
     browser.globals.wait_for_no_spinners(browser);
     browser.page.workflowsPage().validateExecutionTableRowCount(1);
   },
-  'Step 9: Expand Actions on Workflow Execution': function(browser) {
+  'Step 11: Expand Actions on Workflow Execution': function(browser) {
     var tablePath = browser.page.workflowsPage().elements.executionsTable.selector;
     browser.useCss()
         .assert.elementPresent(tablePath + ' tbody tr td:nth-child(6) button')
@@ -199,7 +207,7 @@ module.exports = {
         .waitForElementVisible(tablePath + ' app-action-executions-table table')
         .expect.elements('app-action-executions-table table tbody tr').count.to.equal(4);
   },
-  'Step 10: Open Workflow Log view': function(browser) {
+  'Step 12: Open Workflow Log view': function(browser) {
     var tablePath = browser.page.workflowsPage().elements.executionsTable.selector;
     browser.useCss()
         .assert.elementPresent(tablePath + ' tbody tr td:nth-child(7) button')

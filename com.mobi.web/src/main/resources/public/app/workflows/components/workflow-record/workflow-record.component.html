@@ -52,7 +52,7 @@
             </div>
             <div class="workflow-control">
                 <app-workflow-controls [records]="[record]"
-                    [currentlyRunning]="currentlyRunning"
+                    [executingWorkflows]="runningWorkflows"
                     [isEditMode]="workflowsState.isEditMode"
                     (onRun)="runWorkflow()"
                     (onDownload)="downloadWorkflow()"

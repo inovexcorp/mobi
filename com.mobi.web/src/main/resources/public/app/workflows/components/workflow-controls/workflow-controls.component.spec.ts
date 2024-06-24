@@ -75,31 +75,61 @@ describe('WorkflowControlsComponent', () => {
     expect(component).toBeTruthy();
   });
   describe('controller methods', () => {
-    it('should properly determine whether the run button should be disabled', () => {
-      component.isEditMode = false;
-      // No Records
-      component.records = [];
-      expect(component.isRunDisabled()).toBeTrue();
-      // Currently Running
-      component.records = [cloneDeep(workflow_mocks[0])];
-      component.records[0].active = true;
-      component.records[0].canModifyMasterBranch = true;
-      component.currentlyRunning = true;
-      expect(component.isRunDisabled()).toBeTrue();
-      // Inactive
-      component.currentlyRunning = false;
-      component.records[0].active = false;
-      expect(component.isRunDisabled()).toBeTrue();
-      // No Permissions
-      component.records[0].active = true;
-      component.records[0].canModifyMasterBranch = false;
-      expect(component.isRunDisabled()).toBeTrue();
-      // Enabled
-      component.records[0].canModifyMasterBranch = true;
-      expect(component.isRunDisabled()).toBeFalse();
-      // In Edit Mode
-      component.isEditMode = true;
-      expect(component.isRunDisabled()).toBeTrue();
+    describe('should properly determine whether the run button should be disabled', () => {
+      beforeEach(() => {
+        component.isEditMode = false;
+      });
+      it('when there are no records selected', () => {
+        component.records = [];
+        component.isRunDisabled();
+        expect(component.runDisabled).toBeTrue();
+      });
+      it('when there is a record already running', () => {
+        component.executingWorkflows = [cloneDeep(workflow_mocks[1]['iri'])];
+        component.records = [cloneDeep(workflow_mocks[0])];
+        component.isRunDisabled();
+        expect(component.runDisabled).toBeTrue();
+        component.records[0].active = true;
+        component.records[0].canModifyMasterBranch = true;
+        component.isRunDisabled();
+        expect(component.runDisabled).toBeFalse();
+      });
+      it('when the same record is already running', () => {
+        component.executingWorkflows = [cloneDeep(workflow_mocks[0]['iri'])];
+        component.records = [cloneDeep(workflow_mocks[0])];
+        component.isRunDisabled();
+        expect(component.runDisabled).toBeTrue();
+        component.records[0].active = true;
+        component.records[0].canModifyMasterBranch = true;
+        component.isRunDisabled();
+        expect(component.runDisabled).toBeTrue();
+      });
+      it('When the selected record is inactive', () => {
+        component.currentlyRunning = false;
+        component.records[0].active = false;
+        component.isRunDisabled();
+        expect(component.runDisabled).toBeTrue();
+      });
+      it('When the user does not have permissions', () => {
+        component.records[0].active = true;
+        component.records[0].canModifyMasterBranch = false;
+        component.isRunDisabled();
+        expect(component.runDisabled).toBeTrue();
+      });
+      it('when the user is in edit mode', () => {
+        component.isEditMode = true;
+        component.isRunDisabled();
+        expect(component.runDisabled).toBeTrue();
+      });
+      it('when the user is not in edit mode, has permissions, and the record is enabled', () => {
+        component.executingWorkflows = [];
+        component.records = [cloneDeep(workflow_mocks[0])];
+        component.isEditMode = false;
+        component.records[0].active = true;
+        component.records[0].canModifyMasterBranch = true;
+        component.isRunDisabled();
+        expect(component.runDisabled).toBeFalse();
+      });
     });
     it('should properly determine whether the download button should be disabled', () => {
       // No Records
@@ -128,7 +158,7 @@ describe('WorkflowControlsComponent', () => {
     it('should return the proper tooltip for the run button', () => {
       // Currently Running
       component.currentlyRunning = true;
-      expect(component.getRunTooltip()).toEqual('Workflow currently running.');
+      expect(component.getRunTooltip()).toEqual('A selected workflow is already currently running.');
       // No Records
       component.currentlyRunning = false;
       component.records = [];
