@@ -51,6 +51,12 @@ const workflowsCommands = {
             .waitForElementNotPresent('app-workflow-creation-modal div.mat-dialog-actions button:not(.mat-primary)')
             .assert.visible(editIcon);
     },
+    selectWorkflow: function(workflowTitle) {
+        return this.useXpath()
+            .waitForElementVisible(workflowsTableXpath)
+            .waitForElementVisible(`${workflowsTableXpath}//td//span[text()[contains(.,"${workflowTitle}")]]`)
+            .click(`${workflowsTableXpath}//td//span[text()[contains(.,"${workflowTitle}")]]//ancestor::tr//mat-checkbox`)
+    },
     selectWorkflowStatusFilter: function(status) {
         return this.useCss()
             .waitForElementVisible(workflowStatusFilter)
@@ -162,6 +168,16 @@ const individualWorkflowCommands = {
     }
 }
 
+const generalChecks = {
+    verifyRunButton: function(disabledStatus) {
+        return this.useCss()
+            .waitForElementVisible(runWorkflowButton)
+            .useXpath()
+            .assert.attributeEquals('//app-workflow-controls//button[contains(@class, "workflow-run")]', 'disabled', disabledStatus)
+            .useCss()
+    }
+}
+
 module.exports = {
     elements: {
         workflowControls: workflowControls,
@@ -182,5 +198,5 @@ module.exports = {
         executionStatusFilter: executionStatusFilter,
         editIcon: editIcon,
     },
-    commands: [workflowsCommands, individualWorkflowCommands]
+    commands: [workflowsCommands, individualWorkflowCommands, generalChecks]
 }

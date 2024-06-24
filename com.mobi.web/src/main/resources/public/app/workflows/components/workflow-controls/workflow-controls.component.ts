@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output } from '@angular/core';
 
 import { WorkflowSchema } from '../../models/workflow-record.interface';
 import { WorkflowsStateService } from '../../services/workflows-state.service';
@@ -30,11 +30,11 @@ import { WorkflowsStateService } from '../../services/workflows-state.service';
  * 
  * Creates a collection of buttons to work against the provided list of Workflows. Includes a button to run, a button
  * to delete, and a button to download. The run button is enabled based on the number of provided workflows, whether a
- * workflow is running, whether all the workflows are active, and whether the user has modify MASTER permission on all
- * the workflows.
+ * workflow is running, whether all the workflows are active, and whether the user has the modify MASTER permission on
+ * all the workflows.
  * 
  * @param {WorkflowSchema} records A list of representations of workflows as the target of the workflow controls
- * @param {boolean} currentlyRunning Whether a workflow is currently running in the system
+ * @param {String} executingWorkflows A list of IRIs representing the currently running workflows
  * @param {boolean} canCreate Whether the current user is allowed to create workflows
  * @param {Function} onRun A function to call when the run button is clicked. Expects an argument of a workflows array
  * @param {Function} onDownload A function to call when the download button is clicked. Expects an argument of a
@@ -48,9 +48,9 @@ import { WorkflowsStateService } from '../../services/workflows-state.service';
   selector: 'app-workflow-controls',
   templateUrl: './workflow-controls.component.html',
 })
-export class WorkflowControlsComponent implements OnInit, OnChanges {
+export class WorkflowControlsComponent implements OnChanges {
   @Input() records: WorkflowSchema[];
-  @Input() currentlyRunning = false;
+  @Input() executingWorkflows: string[] = [];
   @Input() isEditMode: boolean;
   @Input() canCreate: boolean;
   @Output() onRun = new EventEmitter<WorkflowSchema[]>();
@@ -59,15 +59,14 @@ export class WorkflowControlsComponent implements OnInit, OnChanges {
   @Output() onCreate = new EventEmitter<WorkflowSchema[]>();
   @Output() onUpload = new EventEmitter<WorkflowSchema[]>();
 
+  currentlyRunning = false;
+  runDisabled = false;
   creationTooltip = '';
 
   constructor(public wss: WorkflowsStateService) {}
 
   ngOnChanges(): void {
-    this.setWorkflowCreationTooltip();
-  }
-
-  ngOnInit(): void {
+    this.isRunDisabled();
     this.setWorkflowCreationTooltip();
   }
 
@@ -77,10 +76,14 @@ export class WorkflowControlsComponent implements OnInit, OnChanges {
    *    permission to some of the records
    */
   isRunDisabled(): boolean {
+    this.currentlyRunning = this.verifyRunningWorkflow();
+    console.log(this.currentlyRunning);
     const someNotActive = this.records.some(workflow => !workflow.active);
     const someNotPermitted = this.records.some(workflow => !workflow.canModifyMasterBranch);
-    return !this.records.length || this.records.length > 1 || this.currentlyRunning || someNotActive
+    this.runDisabled = !this.records.length || this.records.length > 1 || this.currentlyRunning || someNotActive
       || someNotPermitted || this.isEditMode;
+
+    return this.runDisabled;
   }
 
   /**
@@ -110,7 +113,7 @@ export class WorkflowControlsComponent implements OnInit, OnChanges {
     const someNotActive = this.records.some(workflow => !workflow.active);
     const someNotPermitted = this.records.some(workflow => !workflow.canModifyMasterBranch);
     if (this.currentlyRunning) {
-      return 'Workflow currently running.'; 
+      return 'A selected workflow is already currently running.';
     } else if (this.records.length > 0) {
       if (this.records.length > 1) {
         return 'Select only one workflow.';
@@ -180,5 +183,12 @@ export class WorkflowControlsComponent implements OnInit, OnChanges {
   }
   uploadWorkflow(): void {
     this.onUpload.emit();
+  }
+  verifyRunningWorkflow(): boolean {
+    return this.records.some((record: WorkflowSchema) => {
+      if (this.executingWorkflows.includes(record.iri)) {
+        return true;
+      }
+    });
   }
 }

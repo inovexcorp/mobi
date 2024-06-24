@@ -151,4 +151,11 @@
     <http://mobi.com/ontologies/documents#fileName> "http___test.com_workflows-example#WorkflowAHTTPAction2_HTTP_Request.20240418.10:26:33.100.6c1fc920.log";
     <http://mobi.com/ontologies/documents#mimeType> "text/plain";
     <http://mobi.com/ontologies/documents#retrievalURL> <file:///Users/meganmercer/matonto/mobi-distribution/target/mobi-distribution-2.6.0-SNAPSHOT/data/virtualFiles/workflow-logs/b6accdc19fbf628caa3962606199e79817462403/http___test.com_workflows-example#WorkflowAHTTPAction2_HTTP_Request.20240418.10:26:33.100.6c1fc920.log> .
+
+<http://mobi.com/activities/1d4c5a27-85f9-4fb7-97c8-a6e889617787> a <http://www.w3.org/ns/prov#Activity>,
+      <http://mobi.solutions/ontologies/workflows#WorkflowExecutionActivity>, <http://www.w3.org/2002/07/owl#Thing>;
+    <http://www.w3.org/ns/prov#used> <https://mobi.com/records#7237aaa1-e20a-4a56-baf9-dd6c0ec722c4>;
+    <http://mobi.solutions/ontologies/workflows#hasActionExecution> <https://mobi.solutions/workflows/ActionExecution/7c111a9a-8d49-4710-b291-1a35d0bc7475>;
+    <http://www.w3.org/ns/prov#wasAssociatedWith> <http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997>;
+    <http://www.w3.org/ns/prov#startedAtTime> "2024-04-18T10:29:19.25291-04:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>.
 }

@@ -188,7 +188,6 @@ describe('WorkflowRecordComponent', () => {
     expect(component.setRecordBranches).toHaveBeenCalledWith();
     expect(workflowsManagerStub.getExecutionActivitiesEvents).toHaveBeenCalledWith();
     expect(component.executingActivities).toEqual([activity1]);
-    expect(component.currentlyRunning).toBeTrue();
     expect(workflowsStateStub.isEditMode).toBeFalse();
     expect(workflowsStateStub.hasChanges).toBeFalse();
   }));

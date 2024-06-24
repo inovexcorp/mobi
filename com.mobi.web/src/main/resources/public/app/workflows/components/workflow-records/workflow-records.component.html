@@ -34,7 +34,7 @@
         <div class="workflow-control">
             <app-workflow-controls [records]="getSelectedRecords()"
                                    [canCreate]="canCreate"
-                                   [currentlyRunning]="dataSource.isWorkflowRunning"
+                                   [executingWorkflows]="executingWorkflows"
                                    (onRun)="runWorkflow()"
                                    (onDownload)="downloadWorkflow()"
                                    (onDelete)="deleteWorkflow()"

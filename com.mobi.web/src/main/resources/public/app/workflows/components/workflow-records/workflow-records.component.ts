@@ -56,6 +56,7 @@ import { ComponentType } from '@angular/cdk/overlay';
  */
 class WorkflowsDataSource extends DataSource<WorkflowDataRow> {
   public readonly messageNoData = 'No Workflow record found';
+  public executingWorkflows = [];
   private _activityEventDataStream = new ReplaySubject<JSONLDObject[]>();
   private _workflowDataStream = new ReplaySubject<WorkflowDataRow[]>();
   private _length = 0;
@@ -66,7 +67,8 @@ class WorkflowsDataSource extends DataSource<WorkflowDataRow> {
   public totalCount = 0;
   private initialRequest = true;
   
-  constructor(public _wss: WorkflowsStateService, public _wms: WorkflowsManagerService, public paginationConfig: WorkflowPaginatedConfig) {
+  constructor(public _wss: WorkflowsStateService, public _wms: WorkflowsManagerService,
+              public paginationConfig: WorkflowPaginatedConfig) {
     super();
     this.executionActivitiesSub = this._wms.getExecutionActivitiesEvents().subscribe((events) => {
       this._activityEventDataStream.next(events);
@@ -85,9 +87,9 @@ class WorkflowsDataSource extends DataSource<WorkflowDataRow> {
    */
   connect(): Observable<WorkflowDataRow[]> {
     return combineLatest([this._workflowDataStream, this._activityEventDataStream]).pipe(
-      switchMap((lastestResults) => {
-        const workflowRecords: WorkflowDataRow[] = lastestResults[0];
-        const activityEvents: JSONLDObject[] = lastestResults[1];
+      switchMap((latestResults) => {
+        const workflowRecords: WorkflowDataRow[] = latestResults[0];
+        const activityEvents: JSONLDObject[] = latestResults[1];
         return this.mergeWorkflowRecordActivities(workflowRecords, activityEvents);
       }),
       catchError(err => this.handleError(err))
@@ -95,7 +97,7 @@ class WorkflowsDataSource extends DataSource<WorkflowDataRow> {
   }
   mergeWorkflowRecordActivities(workflowRecords: WorkflowDataRow[], activityEvents: JSONLDObject[]): Observable<WorkflowDataRow[]> {
     this.isWorkflowRunning = activityEvents.length > 0;
-    const runningWorkflows: WorkflowDataRow[] = workflowRecords.filter(workflow => workflow.statusDisplay.toLowerCase() === 'started');
+    const runningWorkflows: WorkflowDataRow[] = workflowRecords.filter(workflow=> workflow.statusDisplay.toLowerCase() === 'started');
     const actuallyRunningWorkflowIRIs: string[] = [];
     activityEvents.forEach(activity => {
       const usedWorkflow = getPropertyId(activity, `${PROV}used`);
@@ -282,6 +284,12 @@ export class WorkflowRecordsComponent implements OnInit, OnDestroy {
    * @type {boolean}
    */
   canCreate = false;
+  /**
+   * An array of the IRIs of executing workflows.
+   *
+   * @type {string[]}
+   */
+  executingWorkflows: string[];
 
   /**
    * WorkflowRecordsComponent Constructor
@@ -312,6 +320,7 @@ export class WorkflowRecordsComponent implements OnInit, OnDestroy {
     this.catalogId = get(this._cms.localCatalog, '@id', '');
     this.paginationConfig.searchText = this.wss.landingPageSearchText;
     this.dataSourceSub = this.dataSource.connect().subscribe((workflows) => {
+      this._getExecutingWorkflows(workflows);
       this.selectedWorkflows.forEach((selected, idx) => {
         const visibleWorkflow = workflows.find(workflow => workflow.record.iri === selected.record.iri);
         if (visibleWorkflow) {
@@ -588,6 +597,15 @@ export class WorkflowRecordsComponent implements OnInit, OnDestroy {
     const { checked } = $event;
     this._wms.updateWorkflowActiveStatus(workflow.record.iri, checked).subscribe(() =>{
       workflow.record.active = checked;
+    });
+  }
+
+  _getExecutingWorkflows(workflows: WorkflowDataRow[]): void {
+    this.executingWorkflows = [];
+     workflows.forEach(workflow => {
+      if (workflow.record.status === 'started') {
+        this.executingWorkflows.push(workflow.record.iri);
+      }
     });
   }
 }
