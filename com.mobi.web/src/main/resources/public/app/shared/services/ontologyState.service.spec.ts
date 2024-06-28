@@ -1133,6 +1133,12 @@ describe('Ontology State Service', function() {
             expect(get(response, 'userCanModify')).toEqual(true);
             expect(get(response, 'userCanModifyMaster')).toEqual(true);
             expect(get(response, 'entityInfo')).toEqual({
+              [ontologyId]: {
+                label: 'Ontology Id', 
+                names: [], 
+                ontologyId: 'ontologyId',
+                imported: false
+              },
               [annotationId]: {
                 label: 'Annotation Id',
                 names: [],
@@ -1327,6 +1333,12 @@ describe('Ontology State Service', function() {
             expect(get(response, 'userCanModify')).toEqual(true);
             expect(get(response, 'userCanModifyMaster')).toEqual(true);
             expect(get(response, 'entityInfo')).toEqual({
+              [ontologyId]: {
+                label: 'Ontology Id', 
+                names: [], 
+                ontologyId: 'ontologyId',
+                imported: false
+              },
               [annotationId]: {
                 label: 'Annotation Id',
                 names: [],
@@ -1525,6 +1537,12 @@ describe('Ontology State Service', function() {
             expect(get(response, 'userCanModify')).toEqual(true);
             expect(get(response, 'userCanModifyMaster')).toEqual(true);
             expect(get(response, 'entityInfo')).toEqual({
+              [ontologyId]: {
+                label: 'Ontology Id', 
+                names: [], 
+                ontologyId: 'ontologyId',
+                imported: false
+              },
               [annotationId]: {
                 label: 'Annotation Id',
                 names: [],

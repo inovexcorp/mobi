@@ -594,6 +594,7 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
                 listItem.entityInfo = get(response[0], 'entityNames', {});
                 const responseIriList = get(response[0], 'iriList', {});
                 listItem.iriList = union(listItem.iriList, flatten(values(responseIriList)));
+                this._addInfo(listItem, listItem.ontologyId, listItem.ontologyId);
                 get(responseIriList, 'annotationProperties', []).forEach(iri => this._addIri(listItem, 'annotations.iris', iri, listItem.ontologyId));
                 get(responseIriList, 'classes', []).forEach(iri => this.addToClassIRIs(listItem, iri));
                 get(responseIriList, 'dataProperties', []).forEach(iri => this._addIri(listItem, 'dataProperties.iris', iri, listItem.ontologyId));
