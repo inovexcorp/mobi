@@ -61,9 +61,9 @@
             </div>
         </div>
         <div class="workflow-record-body flex-1 remove-min-height">
-            <div class="h-100 workflow-record-body-tab-wrapper">
+            <div class="h-100 workflow-record-body-tab-wrapper" *ngIf="!fullScreenMode">
                 <mat-tab-group class="h-100" dynamicHeight="true">
-                    <mat-tab label="Executions"> 
+                    <mat-tab label="Executions">
                         <ng-template matTabContent>
                             <div class="mat-tab-content-wrapper">
                                 <app-execution-history-table
@@ -74,10 +74,10 @@
                             </div>
                         </ng-template>
                     </mat-tab>
-                    <mat-tab label="Commits"> 
+                    <mat-tab label="Commits">
                         <ng-template matTabContent>
                             <div class="mat-tab-content-wrapper">
-                                <commit-history-table 
+                                <commit-history-table
                                     [headTitle]="branch.title"
                                     [commitId]="branch.head"
                                     [recordId]="record.iri"
@@ -98,10 +98,12 @@
                     <div class="model-buttons">
                         <ng-template #editButton>
                             <button class="edit-button" color="primary" (click)="toggleEditMode()" mat-icon-button title="Edit Workflow Model."><mat-icon>edit</mat-icon></button>
+                            <button class="fullscreen-button" color="primary" (click)="toggleFullscreen()" mat-icon-button title="Expand to Full Screen"><mat-icon>fullscreen</mat-icon></button>
                         </ng-template>
                         <ng-template #otherButtons>
                             <button class="upload-button" color="primary" (click)="uploadChangesModal()" mat-icon-button title="Upload Changes to Workflow Model."><mat-icon>upload</mat-icon></button>
                             <button class="save-button" color="primary" (click)="commitChanges()" mat-icon-button title="Save Changes to Workflow Model."><mat-icon>save</mat-icon></button>
+                            <button class="fullscreen-button" color="primary" (click)="toggleFullscreen()" mat-icon-button title="Expand to Full Screen"><mat-icon>fullscreen</mat-icon></button>
                         </ng-template>
                         <ng-container *ngIf="!workflowsState.isEditMode; then editButton else otherButtons"></ng-container>
                     </div>
@@ -110,6 +112,7 @@
                                       [shaclDefinitions]="shaclDefinitions"
                                       [isEditMode]="workflowsState.isEditMode"
                                       [recordId]="record.iri"
+                                      [fullScreenMode]="fullScreenMode"
                 ></app-workflow-display>
             </div>
         </div>

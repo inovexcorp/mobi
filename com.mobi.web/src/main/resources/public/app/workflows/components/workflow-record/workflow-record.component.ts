@@ -67,6 +67,7 @@ export class WorkflowRecordComponent implements OnInit, OnDestroy {
   catalogId: string;
   shaclDefinitions: WorkflowSHACLDefinitions;
   runningWorkflows: string[] = [];
+  fullScreenMode = false;
 
   private executionActivityEventsSubscription: Subscription;
   
@@ -303,7 +304,9 @@ export class WorkflowRecordComponent implements OnInit, OnDestroy {
       this.toggleEditMode();
     }
   }
-
+  toggleFullscreen(): void {
+    this.fullScreenMode = !this.fullScreenMode;
+  }
   /**
    * Creates a list of IRIs of the currently executing workflows.
    *

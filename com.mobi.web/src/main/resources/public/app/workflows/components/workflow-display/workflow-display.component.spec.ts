@@ -53,6 +53,8 @@ describe('WorkflowDisplayComponent', () => {
   let workflowsStateStub: jasmine.SpyObj<WorkflowsStateService>;
   let workflowsManagerStub: jasmine.SpyObj<WorkflowsManagerService>;
 
+  let cyChartSpy;
+
   const recordId = 'recordId';
   const nodeData: Element[] = [
     {
@@ -93,6 +95,18 @@ describe('WorkflowDisplayComponent', () => {
         }
       ]
     }).compileComponents();
+
+    cyChartSpy = jasmine.createSpyObj('cyChart', {
+      json: { elements: { nodes: [], edges: [] } },
+      ready: undefined,
+      zoom: (zoomLevel: number) => {
+        console.log(zoomLevel);
+      },
+      animate: (...args) => {
+        console.log("stubbed animate");
+      }
+    });
+
     //DI
     matDialog = TestBed.inject(MatDialog) as jasmine.SpyObj<MatDialog>;
     workflowsStateStub = TestBed.inject(WorkflowsStateService) as jasmine.SpyObj<WorkflowsStateService>;
@@ -106,6 +120,7 @@ describe('WorkflowDisplayComponent', () => {
       actions: actionSHACLDefinitions,
       triggers: triggerSHACLDefinitions
     };
+    component.cyChart = cyChartSpy;
     fixture.detectChanges();
   });
 
