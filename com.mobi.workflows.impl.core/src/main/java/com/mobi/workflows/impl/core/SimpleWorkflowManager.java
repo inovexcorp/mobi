@@ -82,6 +82,7 @@ import com.mobi.workflows.api.ontologies.workflows.WorkflowRecordFactory;
 import com.mobi.workflows.api.trigger.TriggerHandler;
 import com.mobi.workflows.exception.InvalidWorkflowException;
 import com.mobi.workflows.impl.core.fedx.FedXUtils;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.time.StopWatch;
 import org.eclipse.rdf4j.common.exception.ValidationException;
@@ -900,18 +901,19 @@ public class SimpleWorkflowManager implements WorkflowManager, EventHandler {
 
         List<Resource> executingWorkflows = workflowEngine.getExecutingWorkflows();
 
-        if (executingWorkflows.contains(workflowId)) {
-            throw new IllegalArgumentException(String.format("Workflow %s is already running. please wait and try " +
-                    "again.", workflowId));
-        } else if (!workflowEngine.availableToRun()) {
-            throw new IllegalArgumentException(String.format("The limit on executing workflows has been reached. " +
-                    "Cannot run workflow %s.", workflowId));
-        }
-
-        executingWorkflows.add(workflow.getResource());
         WorkflowExecutionActivity activity = startExecutionActivity(user, workflowRecord);
 
-        workflowEngine.startWorkflow(workflow, activity);
+        if (executingWorkflows.contains(workflowId)) {
+            handleStartErrors(workflow, activity, String.format("Workflow %s is already running. please wait and try " +
+                    "again.", workflowId));
+        } else if (!workflowEngine.availableToRun()) {
+            handleStartErrors(workflow, activity, String.format("The limit on executing workflows has been reached. " +
+                    "Cannot run workflow %s.", workflowId));
+        } else {
+            executingWorkflows.add(workflow.getResource());
+            workflowEngine.startWorkflow(workflow, activity);
+        }
+
         return activity.getResource();
     }
 
@@ -952,15 +954,15 @@ public class SimpleWorkflowManager implements WorkflowManager, EventHandler {
         } else {
             try {
                 List<Resource> executingWorkflows = workflowEngine.getExecutingWorkflows();
+                WorkflowExecutionActivity activity = startExecutionActivity(user, workflowRecord);
                 if (executingWorkflows.contains(workflowId)) {
-                    throw new IllegalArgumentException(String.format("Workflow %s is already running. please wait and try " +
-                            "again.", workflowId));
+                    handleStartErrors(workflow, activity, String.format("Workflow %s is already running. please wait " +
+                            "and try again.", workflowId));
                 } else if (!workflowEngine.availableToRun()) {
-                    throw new IllegalArgumentException(String.format("The limit on executing workflows has been reached. " +
-                            "Cannot run workflow %s.", workflowId));
+                    handleStartErrors(workflow, activity, String.format("The limit on executing workflows has been " +
+                            "reached. Cannot run workflow %s.", workflowId));
                 } else {
                     executingWorkflows.add(workflow.getResource());
-                    WorkflowExecutionActivity activity = startExecutionActivity(user, workflowRecord);
                     workflowEngine.startWorkflow(workflow, activity);
                 }
             } catch (NullPointerException ex) {
@@ -1236,5 +1238,11 @@ public class SimpleWorkflowManager implements WorkflowManager, EventHandler {
             log.trace("End " + tag + ": " + watch.getTime() + "ms");
             watch.reset();
         }
+    }
+
+    private void handleStartErrors(Workflow workflow, WorkflowExecutionActivity activity, String errorMessage) {
+        String sha1WorkflowIRI = DigestUtils.sha1Hex(workflow.getResource().stringValue());
+        BinaryFile errorLog = workflowEngine.createErrorLog(activity, sha1WorkflowIRI, errorMessage);
+        workflowEngine.endExecutionActivity(activity, errorLog, false);
     }
 }

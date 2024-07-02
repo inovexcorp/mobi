@@ -567,16 +567,8 @@ public class DaguWorkflowEngine extends AbstractWorkflowEngine implements Workfl
         }
     }
 
-    /**
-     * Creates a log file in the configured directory that holds the stacktrace of the exception that caused the
-     * workflow to fail.
-     *
-     * @param activity The executing {@link WorkflowExecutionActivity} that has failed with an exception.
-     * @param sha1WorkflowIRI A string representing the hashed value of the Workflows {@link IRI}.
-     * @param error The String representation of the stacktrace of the exception that caused the execution to fail.
-     * @return An {@link BinaryFile} that holds the stacktrace details and should be attached to the execution activity.
-     */
-    protected BinaryFile createErrorLog(WorkflowExecutionActivity activity, String sha1WorkflowIRI, String error) {
+    @Override
+    public BinaryFile createErrorLog(WorkflowExecutionActivity activity, String sha1WorkflowIRI, String error) {
         OffsetDateTime now = OffsetDateTime.now();
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
         String currentTime = now.format(formatter);
