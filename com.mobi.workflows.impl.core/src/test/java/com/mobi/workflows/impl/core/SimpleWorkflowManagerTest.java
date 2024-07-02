@@ -942,39 +942,15 @@ public class SimpleWorkflowManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void concurrentLimitReachedTest() throws Exception {
-        //Exception Assertions
-        thrown.expect(IllegalArgumentException.class);
-        thrown.expectMessage(String.format("The limit on executing workflows has been reached. " +
-                "Cannot run workflow %s.", workflowIRI));
-
         //setup
         workflowManager.workflowEngine = workflowEngine;
-
-        try (RepositoryConnection conn = systemRepository.getConnection()) {
-            InputStream stream = getClass().getResourceAsStream("/test-workflow.ttl");
-            workflowModel = Rio.parse(stream, "", RDFFormat.TURTLE);
-            workflowRecord.getModel().addAll(workflowModel);
-
-            conn.add(workflowRecord.getModel(), workflowRecord.getResource());
-        }
         workflowManager.workflowFactory = (WorkflowFactory) workflowFactory;
         when(branchManager.getMasterBranch(any(Resource.class), eq(recordIRI), any(RepositoryConnection.class))).thenReturn(branch);
         when(commitManager.getHeadCommit(any(Resource.class), eq(recordIRI), eq(branchIRI), any(RepositoryConnection.class))).thenReturn(commit);
         when(compiledResourceManager.getCompiledResource(eq(commitIRI), any(RepositoryConnection.class))).thenReturn(workflowRecord.getModel());
         when(workflowEngine.availableToRun()).thenReturn(false);
-
-        workflowManager.startWorkflow(user, workflowRecord);
-    }
-
-    @Test
-    public void noDuplicateRunsTest() throws Exception {
-        //Exception Assertions
-        thrown.expect(IllegalArgumentException.class);
-        thrown.expectMessage(String.format("Workflow %s is already running. please wait and try " +
-                "again.", workflowIRI));
-
-        //setup
-        workflowManager.workflowEngine = workflowEngine;
+        when(provService.createActivity(any(ActivityConfig.class))).thenReturn(activity);
+        when(workflowEngine.createErrorLog(any(WorkflowExecutionActivity.class), any(String.class), any(String.class))).thenReturn(logFile);
 
         try (RepositoryConnection conn = systemRepository.getConnection()) {
             InputStream stream = getClass().getResourceAsStream("/test-workflow.ttl");
@@ -983,14 +959,47 @@ public class SimpleWorkflowManagerTest extends OrmEnabledTestCase {
 
             conn.add(workflowRecord.getModel(), workflowRecord.getResource());
         }
+
+        workflowManager.startWorkflow(user, workflowRecord);
+
+        verify(workflowEngine, times(1)).createErrorLog(any(WorkflowExecutionActivity.class),
+                eq("68335f26f9162a0a5bb2bd699970fe67d60b6ede"), eq("The limit on executing workflows has" +
+                        " been reached. Cannot run workflow http://example.com/workflows/A."));
+
+        verify(workflowEngine, times(1)).endExecutionActivity(any(WorkflowExecutionActivity.class),
+                eq(logFile), eq(false));
+    }
+
+    @Test
+    public void noDuplicateRunsTest() throws Exception {
+
+        //setup
+        workflowManager.workflowEngine = workflowEngine;
         workflowManager.workflowFactory = (WorkflowFactory) workflowFactory;
         when(branchManager.getMasterBranch(any(Resource.class), eq(recordIRI), any(RepositoryConnection.class))).thenReturn(branch);
         when(commitManager.getHeadCommit(any(Resource.class), eq(recordIRI), eq(branchIRI), any(RepositoryConnection.class))).thenReturn(commit);
         when(compiledResourceManager.getCompiledResource(eq(commitIRI), any(RepositoryConnection.class))).thenReturn(workflowRecord.getModel());
         when(workflowEngine.availableToRun()).thenReturn(true);
         when(workflowEngine.getExecutingWorkflows()).thenReturn(List.of(workflowIRI));
+        when(provService.createActivity(any(ActivityConfig.class))).thenReturn(activity);
+        when(workflowEngine.createErrorLog(any(WorkflowExecutionActivity.class), any(String.class), any(String.class))).thenReturn(logFile);
+
+        try (RepositoryConnection conn = systemRepository.getConnection()) {
+            InputStream stream = getClass().getResourceAsStream("/test-workflow.ttl");
+            workflowModel = Rio.parse(stream, "", RDFFormat.TURTLE);
+            workflowRecord.getModel().addAll(workflowModel);
+
+            conn.add(workflowRecord.getModel(), workflowRecord.getResource());
+        }
 
         workflowManager.startWorkflow(user, workflowRecord);
+
+        verify(workflowEngine, times(1)).createErrorLog(any(WorkflowExecutionActivity.class),
+                eq("68335f26f9162a0a5bb2bd699970fe67d60b6ede"), eq("Workflow http://example.com/workflows/A" +
+                        " is already running. please wait and try again."));
+
+        verify(workflowEngine, times(1)).endExecutionActivity(any(WorkflowExecutionActivity.class),
+                eq(logFile), eq(false));
     }
 
     private void assertNoActivitiesSystemRepo() {

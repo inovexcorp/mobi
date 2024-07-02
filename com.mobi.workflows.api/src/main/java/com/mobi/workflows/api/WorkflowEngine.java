@@ -23,8 +23,10 @@ package com.mobi.workflows.api;
  * #L%
  */
 
+import com.mobi.vfs.ontologies.documents.BinaryFile;
 import com.mobi.workflows.api.ontologies.workflows.Workflow;
 import com.mobi.workflows.api.ontologies.workflows.WorkflowExecutionActivity;
+import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Resource;
 
 import java.util.List;
@@ -36,6 +38,17 @@ public interface WorkflowEngine {
      * @return An array of {@link Resource} that represent the workflow id of the executing workflows
      */
     List<Resource> getExecutingWorkflows();
+
+    /**
+     * Creates a log file in the configured directory that holds the stacktrace of the exception that caused the
+     * workflow to fail.
+     *
+     * @param activity The executing {@link WorkflowExecutionActivity} that has failed with an exception.
+     * @param sha1WorkflowIRI A string representing the hashed value of the Workflows {@link IRI}.
+     * @param error The String representation of the stacktrace of the exception that caused the execution to fail.
+     * @return An {@link BinaryFile} that holds the stacktrace details and should be attached to the execution activity.
+     */
+     BinaryFile createErrorLog(WorkflowExecutionActivity activity, String sha1WorkflowIRI, String error);
 
     /**
      * Checks whether the limit of concurrently running workflows has been hit.
@@ -51,4 +64,14 @@ public interface WorkflowEngine {
      * @param activity A java pojo of the rdf representation of the execution activity to update
      */
     void startWorkflow(Workflow workflow, WorkflowExecutionActivity activity);
+
+    /**
+     * Adds the metadata on a WorkflowExecutionActivity that signifies that the activity has ended and whether the
+     * activity has failed or not.
+     *
+     * @param executionActivity The {@link WorkflowExecutionActivity} activity to be ended.
+     * @param logs The {@link BinaryFile} containing the logs for the execution activity. Can be null.
+     * @param succeeded Indicates whether the workflow execution succeeded or not.
+     */
+    void endExecutionActivity(WorkflowExecutionActivity executionActivity, BinaryFile logs, boolean succeeded);
 }
