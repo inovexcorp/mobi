@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { AfterContentChecked, Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 // material
 import { MatDialog } from '@angular/material/dialog';
 // cytoscape
@@ -106,7 +106,7 @@ type MenuCommandArray = MenuCommand[] | (() => MenuCommand[]);
   templateUrl: './workflow-display.component.html',
   styleUrls: ['./workflow-display.component.scss']
 })
-export class WorkflowDisplayComponent implements OnChanges {
+export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked {
   // public attributes
   public cyChart: cytoscape.Core; // cytoscape instance
   public cyMenu: cxtmenu[] = [];
@@ -125,6 +125,7 @@ export class WorkflowDisplayComponent implements OnChanges {
   @Input() resource!: JSONLDObject[];
   @Input() recordId: string;
   @Input() isEditMode!: boolean;
+  @Input() fullScreenMode: boolean;
   // private attributes
   private _isDefaultTrigger = false;
   private _editedResource: JSONLDObject[] = [];
@@ -1003,5 +1004,15 @@ export class WorkflowDisplayComponent implements OnChanges {
    */
   private _getTriggerJSONLD(resource: JSONLDObject[]): JSONLDObject {
     return resource.find(obj => obj['@type'].includes(this.activityKeyMap.trigger.id));
+  }
+
+  ngAfterContentChecked(): void {
+    //Used when the canvas resizes to keep things from looking choppy and to make sure all elements are on screen.
+    this.cyChart.animate(
+        {duration: 150},
+        {fit: {
+          padding: 50}
+        }
+    );
   }
 }

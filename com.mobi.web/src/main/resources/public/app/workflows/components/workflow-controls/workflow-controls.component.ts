@@ -77,7 +77,6 @@ export class WorkflowControlsComponent implements OnChanges {
    */
   isRunDisabled(): boolean {
     this.currentlyRunning = this.verifyRunningWorkflow();
-    console.log(this.currentlyRunning);
     const someNotActive = this.records.some(workflow => !workflow.active);
     const someNotPermitted = this.records.some(workflow => !workflow.canModifyMasterBranch);
     this.runDisabled = !this.records.length || this.records.length > 1 || this.currentlyRunning || someNotActive
