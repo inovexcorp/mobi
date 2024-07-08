@@ -23,33 +23,44 @@ package com.mobi.etl.cli.export;
  * #L%
  */
 
-import com.mobi.etl.api.config.rdf.export.RecordExportConfig;
-import com.mobi.etl.api.rdf.export.RecordExportService;
-import org.apache.commons.lang.StringUtils;
+import com.mobi.catalog.api.RecordManager;
+import com.mobi.catalog.api.record.config.OperationConfig;
+import com.mobi.catalog.api.record.config.RecordExportSettings;
+import com.mobi.catalog.api.record.config.RecordOperationConfig;
+import com.mobi.catalog.config.CatalogConfigProvider;
+import com.mobi.persistence.utils.BatchExporter;
 import org.apache.karaf.shell.api.action.Action;
 import org.apache.karaf.shell.api.action.Argument;
 import org.apache.karaf.shell.api.action.Command;
 import org.apache.karaf.shell.api.action.lifecycle.Reference;
 import org.apache.karaf.shell.api.action.lifecycle.Service;
-import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.eclipse.rdf4j.rio.Rio;
+import org.eclipse.rdf4j.rio.helpers.BufferedGroupingRDFHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.io.OutputStream;
 import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Command(scope = "mobi", name = "export-records", description = "Exports records from the local catalog")
 @Service
 public class ExportRecords extends ExportBase implements Action {
 
+    private static final Logger LOG = LoggerFactory.getLogger(ExportRecords.class);
+    final ValueFactory vf = new ValidatingValueFactory();
+
     // Service References
 
     @Reference
-    private RecordExportService exportService;
+    protected CatalogConfigProvider configProvider;
 
-    void setExportService(RecordExportService exportService) {
-        this.exportService = exportService;
-    }
+    @Reference
+    private RecordManager recordManager;
 
     // Command Parameters
 
@@ -61,17 +72,19 @@ public class ExportRecords extends ExportBase implements Action {
 
     @Override
     public Object execute() throws Exception {
-        OutputStream output = getOuput();
-        RDFFormat outputFormat = getFormat();
+        List<Resource> recordIRIs = Arrays.asList(recordsParam.split(",")).stream()
+                .map(record -> vf.createIRI(record.trim())).collect(Collectors.toList());
 
-        RecordExportConfig.Builder builder = new RecordExportConfig.Builder(output, outputFormat);
+        BatchExporter writer = new BatchExporter(new BufferedGroupingRDFHandler(
+                Rio.createWriter(getFormat(), getOuput())));
+        writer.setLogger(LOG);
+        writer.setPrintToSystem(true);
 
-        if (!StringUtils.isEmpty(recordsParam)) {
-            Set<String> records = new HashSet<>(Arrays.asList(recordsParam.split(",")));
-            builder.records(records);
+        RecordOperationConfig operationConfig = new OperationConfig();
+        operationConfig.set(RecordExportSettings.BATCH_EXPORTER, writer);
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            recordManager.export(recordIRIs, operationConfig, conn);
         }
-
-        exportService.export(builder.build());
 
         return null;
     }

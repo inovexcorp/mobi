@@ -35,11 +35,13 @@ import com.mobi.catalog.api.ontologies.mcat.CatalogFactory;
 import com.mobi.catalog.api.ontologies.mcat.Record;
 import com.mobi.catalog.api.ontologies.mcat.RecordFactory;
 import com.mobi.catalog.api.record.RecordService;
+import com.mobi.catalog.api.record.config.RecordExportSettings;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
 import com.mobi.catalog.util.SearchResults;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.dcterms._Thing;
+import com.mobi.persistence.utils.BatchExporter;
 import com.mobi.persistence.utils.Bindings;
 import com.mobi.persistence.utils.ConnectionUtils;
 import com.mobi.persistence.utils.Statements;
@@ -177,7 +179,15 @@ public class SimpleRecordManager implements RecordManager {
 
     @Override
     public void export(List<Resource> recordIRIs, RecordOperationConfig config, RepositoryConnection conn) {
+        BatchExporter exporter = config.get(RecordExportSettings.BATCH_EXPORTER);
+        boolean exporterIsActive = exporter.isActive();
+        if (!exporterIsActive) {
+            exporter.startRDF();
+        }
         recordIRIs.forEach(iri -> export(iri, config, conn));
+        if (!exporterIsActive) {
+            exporter.endRDF();
+        }
     }
 
     @Override
