@@ -32,6 +32,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -41,6 +42,7 @@ import com.mobi.catalog.api.BranchManager;
 import com.mobi.catalog.api.CatalogProvUtils;
 import com.mobi.catalog.api.CommitManager;
 import com.mobi.catalog.api.DifferenceManager;
+import com.mobi.catalog.api.RevisionManager;
 import com.mobi.catalog.api.ThingManager;
 import com.mobi.catalog.api.VersionManager;
 import com.mobi.catalog.api.builder.Difference;
@@ -125,6 +127,8 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
     private final IRI catalogId = VALUE_FACTORY.createIRI("http://mobi.com/test/catalogs#catalog-test");
     private final IRI branchIRI = VALUE_FACTORY.createIRI("http://mobi.com/test/branches#branch");
     private final IRI commitIRI = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#commit");
+    private final IRI additionsIRI = VALUE_FACTORY.createIRI("http://example.org/additions1");
+    private final IRI deletionsIRI = VALUE_FACTORY.createIRI("http://example.org/deletions1");
     private final IRI inProgressCommitIRI = VALUE_FACTORY.createIRI("http://mobi.com/test/inProgressCommits#commit");
     private final IRI tagIRI = VALUE_FACTORY.createIRI("http://mobi.com/test/versions#tag");
     private final IRI distributionIRI = VALUE_FACTORY.createIRI("http://mobi.com/test/distributions#distribution");
@@ -194,6 +198,9 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
     private CatalogConfigProvider configProvider;
 
     @Mock
+    RevisionManager revisionManager;
+
+    @Mock
     private EngineManager engineManager;
 
     @Mock
@@ -216,7 +223,7 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
 
         Model deletions = MODEL_FACTORY.createEmptyModel();
         deletions.add(VALUE_FACTORY.createIRI("http://test.com#sub"), VALUE_FACTORY.createIRI(_Thing.description_IRI),
-                VALUE_FACTORY.createLiteral("Description"));
+                VALUE_FACTORY.createLiteral("Description"), deletionsIRI);
 
         difference = new Difference.Builder()
                 .additions(MODEL_FACTORY.createEmptyModel())
@@ -240,6 +247,10 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
         when(thingManager.optObject(any(IRI.class), any(OrmFactory.class), any(RepositoryConnection.class))).thenReturn(Optional.of(testRecord));
         when(branchManager.getBranch(eq(testRecord), eq(branchIRI), any(OrmFactory.class), any(RepositoryConnection.class))).thenReturn(branch);
         when(commitManager.getHeadCommitIRI(eq(branch))).thenReturn(commitIRI);
+        Revision rev = mock(Revision.class);
+        when(revisionManager.getRevision(eq(commitIRI), any(RepositoryConnection.class))).thenReturn(rev);
+        when(rev.getAdditions()).thenReturn(Optional.of(additionsIRI));
+        when(rev.getDeletions()).thenReturn(Optional.of(deletionsIRI));
         doReturn(Stream.of(commitIRI).collect(Collectors.toList()))
                 .when(commitManager).getCommitChain(eq(commitIRI), eq(false), any(RepositoryConnection.class));
         when(thingManager.getExpectedObject(eq(commitIRI), any(OrmFactory.class), any(RepositoryConnection.class))).thenReturn(headCommit);
@@ -268,6 +279,7 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
         recordService.commitManager = commitManager;
         recordService.differenceManager = differenceManager;
         recordService.versionManager = versionManager;
+        recordService.revisionManager = revisionManager;
     }
 
     @After
@@ -459,7 +471,9 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
         assertFalse(exporter.isActive());
         exporter.startRDF();
         assertTrue(exporter.isActive());
+
         try (RepositoryConnection connection = repository.getConnection()) {
+            connection.add(difference.getDeletions());
             recordService.export(testIRI, config, connection);
         }
         exporter.endRDF();
@@ -476,7 +490,6 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
         verify(commitManager).getHeadCommitIRI(eq(branch));
         verify(commitManager).getCommitChain(eq(commitIRI), eq(false), any(RepositoryConnection.class));
         verify(thingManager).getExpectedObject(eq(commitIRI), any(OrmFactory.class), any(RepositoryConnection.class));
-        verify(differenceManager).getCommitDifference(eq(commitIRI), any(RepositoryConnection.class));
     }
 
     @Test
@@ -492,6 +505,7 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
         exporter.startRDF();
         assertTrue(exporter.isActive());
         try (RepositoryConnection connection = repository.getConnection()) {
+            connection.add(difference.getDeletions());
             recordService.export(testIRI, config, connection);
         }
         exporter.endRDF();
@@ -531,6 +545,7 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
         exporter.startRDF();
         assertTrue(exporter.isActive());
         try (RepositoryConnection connection = repository.getConnection()) {
+            connection.add(difference.getDeletions());
             recordService.export(testIRI, config, connection);
         }
         exporter.endRDF();
@@ -548,7 +563,6 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
         verify(commitManager).getHeadCommitIRI(eq(branch));
         verify(commitManager).getCommitChain(eq(commitIRI), eq(false), any(RepositoryConnection.class));
         verify(thingManager).getExpectedObject(eq(commitIRI), any(OrmFactory.class), any(RepositoryConnection.class));
-        verify(differenceManager).getCommitDifference(eq(commitIRI), any(RepositoryConnection.class));
     }
 
     @Test (expected = IllegalArgumentException.class)
@@ -558,6 +572,7 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
 
         config.set(RecordExportSettings.BATCH_EXPORTER, exporter);
         try (RepositoryConnection connection = repository.getConnection()) {
+            connection.add(difference.getDeletions());
             recordService.export(testIRI, config, connection);
         }
     }

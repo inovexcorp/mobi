@@ -47,12 +47,13 @@ import com.mobi.catalog.api.ontologies.mcat.VersionedRecord;
 import com.mobi.catalog.api.record.RecordService;
 import com.mobi.catalog.api.record.config.OperationConfig;
 import com.mobi.catalog.api.record.config.RecordCreateSettings;
+import com.mobi.catalog.api.record.config.RecordExportSettings;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
 import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.dcterms._Thing;
+import com.mobi.persistence.utils.BatchExporter;
 import com.mobi.rdf.orm.OrmFactory;
-import com.mobi.rdf.orm.Thing;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import com.mobi.repository.impl.sesame.memory.MemoryRepositoryWrapper;
 import com.mobi.security.policy.api.PDP;
@@ -127,6 +128,9 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
     @Mock
     private Request request;
 
+    @Mock
+    private BatchExporter exporter;
+
     private ThingManager thingManager;
 
     @Before
@@ -152,6 +156,7 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
         when(versionedRDFRecordService.getType()).thenReturn(VersionedRDFRecord.class);
         when(versionedRecordService.getType()).thenReturn(VersionedRecord.class);
         when(unversionedRecordService.getType()).thenReturn(UnversionedRecord.class);
+        when(exporter.isActive()).thenReturn(false);
 
         thingManager = spy(new SimpleThingManager());
         manager = spy(new SimpleRecordManager());
@@ -1200,6 +1205,7 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
     @Test
     public void testExportWithList() throws Exception {
         RecordOperationConfig config = new OperationConfig();
+        config.set(RecordExportSettings.BATCH_EXPORTER, exporter);
         List<Resource> exportList = new ArrayList<>();
         exportList.add(ManagerTestConstants.RECORD_IRI);
         exportList.add(ManagerTestConstants.VERSIONED_RECORD_IRI);

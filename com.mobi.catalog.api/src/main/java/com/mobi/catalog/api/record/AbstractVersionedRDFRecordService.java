@@ -30,7 +30,6 @@ import com.mobi.catalog.api.DifferenceManager;
 import com.mobi.catalog.api.RecordManager;
 import com.mobi.catalog.api.RevisionManager;
 import com.mobi.catalog.api.VersionManager;
-import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.mergerequest.MergeRequestManager;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
@@ -478,9 +477,13 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
                     commit.getModel().forEach(exporter::handleStatement);
 
                     // Write Additions/Deletions Graphs
-                    Difference revisionChanges = differenceManager.getCommitDifference(commitId, conn);
-                    revisionChanges.getAdditions().forEach(exporter::handleStatement);
-                    revisionChanges.getDeletions().forEach(exporter::handleStatement);
+                    Revision revision = revisionManager.getRevision(commitId, conn);
+                    revision.getAdditions().ifPresentOrElse(graph -> {
+                        conn.getStatements(null, null, null, graph).forEach(exporter::handleStatement);
+                    }, () -> new IllegalStateException("No Additions Graph IRI found"));
+                    revision.getDeletions().ifPresentOrElse(graph -> {
+                        conn.getStatements(null, null, null, graph).forEach(exporter::handleStatement);
+                    }, () -> new IllegalStateException("No Deletions Graph IRI found"));
                 }
             }
         });
