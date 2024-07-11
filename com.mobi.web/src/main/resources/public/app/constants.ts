@@ -30,7 +30,9 @@ export const REGEX = {
     'DATETIME': /^\d{4}(-\d\d(-\d\d(T\d\d:\d\d(:\d\d)?(\.\d+)?(([+-]\d\d:\d\d)|Z)?)?)?)?$/i,
     'INTEGER': /^[-+]?\d+$/,
     'DECIMAL': /^[-+]?\d*[.]?\d*$/,
-    'ANYTHING': /^.+$/
+    'ANYTHING': /^.+$/,
+    'HOST_NAME_REGEX_PATTERN': /^([a-zA-Z0-9][a-zA-Z0-9-_]*[a-zA-Z0-9])$/,
+    'LDAP_DN_REGEX_PATTERN': /^cn=([^,]+),/,
 };
 
 export const REST_PREFIX = '/mobirest/';
