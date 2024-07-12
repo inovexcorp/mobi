@@ -32,7 +32,7 @@ import * as sha1 from 'js-sha1';
 import { JSONLDObject } from './models/JSONLDObject.interface';
 import { JSONLDId } from './models/JSONLDId.interface';
 import { JSONLDValue } from './models/JSONLDValue.interface';
-import { DC, DCTERMS, RDFS, SKOS, XSD } from '../prefixes';
+import { DC, DCTERMS, RDF, RDFS, SKOS, XSD } from '../prefixes';
 import { PaginatedConfig } from './models/paginatedConfig.interface';
 import { RESTError } from './models/RESTError.interface';
 import { REGEX } from '../constants';
@@ -265,6 +265,60 @@ export function replacePropertyId(entity: JSONLDObject, propertyIRI: string, idT
 export function updatePropertyId(entity: JSONLDObject, propertyIRI: string, id: string): void {
   const idValueToRemove = getPropertyId(entity, propertyIRI);
   replacePropertyId(entity, propertyIRI, idValueToRemove, id);
+}
+
+/**
+ * Creates a string array for a JSONLD blank node list.
+ *
+ * @param fullJsonld The JSONLD to convert to an array
+ * @param firstElementID The ID of the first blank node
+ * @param sortedList The sorted array of values
+ * @param property An optional property to retrieve from the blank nodes. If not set, will retrieve direct string values
+ * in RDF list
+ */
+export function rdfListToValueArray(fullJsonld: JSONLDObject[], firstElementID: string, sortedList: string[] = [], property = ''): string[] {
+    const currentElement: JSONLDObject|undefined = fullJsonld.find(jsonLDObject => jsonLDObject['@id'] === firstElementID);
+    if (!currentElement) {
+        console.error(`Could not find element ID ${firstElementID} in provided JSON-LD`);
+        return sortedList;
+    } else if (currentElement[`${RDF}first`] === undefined && property === '') {
+        console.error(`No rdf:first predicate found in element with ID ${firstElementID}`);
+        return sortedList;
+    } else if (currentElement[`${RDF}first`] === undefined && property !== '') {
+        console.debug('Element is a JSONLDObject with a property filter. Pulling out property id/value from element');
+        const value = getPropertyId(currentElement, property) || getPropertyValue(currentElement, property);
+        if (value) {
+            sortedList.push(value);
+        }
+        return sortedList;
+    } else if (currentElement[`${RDF}rest`] === undefined && property === '') {
+        const value = getPropertyId(currentElement, `${RDF}first`) || getPropertyValue(currentElement, `${RDF}first`);
+        if (value) {
+            sortedList.push(value);
+        }
+        console.error(`No rdf:rest predicate found in element with ID ${firstElementID}`);
+        return sortedList;
+    } else {
+        const id = getPropertyId(currentElement, `${RDF}first`);
+        if (id && fullJsonld.some(el => el['@id'] === id) && (isBlankNodeId(id) || id.startsWith('_:'))) {
+            // Checks to see if it points to a different blank node array that contains the values
+            console.debug('rdf:first points to another blank node. Recursing through chain.');
+            rdfListToValueArray(fullJsonld, id, sortedList, property);
+        } else {
+            // The value is the result itself
+            const value = id || getPropertyValue(currentElement, `${RDF}first`);
+            if (value) {
+                sortedList.push(value);
+            }
+        }
+        
+        if (getPropertyId(currentElement, `${RDF}rest`) === `${RDF}nil`) {
+            console.debug('Reached end of rdf list');
+            return sortedList;
+        }
+        console.debug('Recursing through rdf:rest chain.');
+        return rdfListToValueArray(fullJsonld, getPropertyId(currentElement, `${RDF}rest`), sortedList, property);
+    }
 }
 
 /**

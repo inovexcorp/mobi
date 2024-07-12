@@ -24,7 +24,13 @@ import { ValidatorFn, Validators } from '@angular/forms';
 
 import { RDF, SHACL_FORM, SHACL, XSD } from '../../prefixes';
 import { JSONLDObject } from '../../shared/models/JSONLDObject.interface';
-import { getPropertyId, getPropertyValue, getPropertyIds, getBeautifulIRI } from '../../shared/utility';
+import {
+  getPropertyId,
+  getPropertyValue,
+  getPropertyIds,
+  getBeautifulIRI,
+  rdfListToValueArray
+} from '../../shared/utility';
 import { Option } from './option.class';
 
 export enum FieldType {
@@ -107,7 +113,7 @@ export class SHACLFormFieldConfig {
         }
   
         const valueArray = this._propertyShape[`${SHACL}in`] ? 
-          this._rdfListToValueArray(fullJsonld, getPropertyId(this._propertyShape, `${SHACL}in`)) :
+          rdfListToValueArray(fullJsonld, getPropertyId(this._propertyShape, `${SHACL}in`)) :
           [];
       
         this._values = valueArray.map(value => new Option(value, value));
@@ -241,26 +247,5 @@ export class SHACLFormFieldConfig {
 
     // Return the array consisting of the propertyShape and any found blank node objects
     return [this.propertyShape, ...referencedBlankNodes];
-  }
-
-  private _rdfListToValueArray(fullJsonld: JSONLDObject[], firstElementID: string, sortedList: string[] = []): string[] {
-    const currentElement: JSONLDObject|undefined = fullJsonld.find(jsonLDObject => jsonLDObject['@id'] === firstElementID);
-    if (!currentElement) {
-      console.error(`Could not find element ID ${firstElementID} in provided JSON-LD`);
-      return sortedList;
-    }  else if (currentElement[`${RDF}first`] === undefined) {
-      console.error(`No rdf:first predicate found in element with ID ${firstElementID}`);
-      return sortedList;
-    } else if (currentElement[`${RDF}rest`] === undefined) {
-      sortedList.push(getPropertyValue(currentElement, `${RDF}first`));
-      console.error(`No rdf:rest predicate found in element with ID ${firstElementID}`);
-      return sortedList;
-    } else if (getPropertyId(currentElement, `${RDF}rest`) === `${RDF}nil`) {
-      sortedList.push(getPropertyValue(currentElement, `${RDF}first`));
-      return sortedList;
-    } else {
-      sortedList.push(getPropertyValue(currentElement, `${RDF}first`));
-      return this._rdfListToValueArray(fullJsonld, getPropertyId(currentElement, `${RDF}rest`), sortedList);
-    }
   }
 }
