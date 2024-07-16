@@ -194,7 +194,7 @@ public class DaguWorkflowEngine extends AbstractWorkflowEngine implements Workfl
             String workflowYaml = createYaml(workflow);
 
             ObjectNode dag = daguHttpClient.getDag(sha1WorkflowIRI);
-            if (dag.hasNonNull("DAG") && dag.get("DAG").hasNonNull("Error")) {
+            if (dag.hasNonNull("DAG") && dag.get("DAG").hasNonNull("ErrorT")) {
                 daguHttpClient.createDag(sha1WorkflowIRI);
             }
             log.trace("Updating dag " + sha1WorkflowIRI);
