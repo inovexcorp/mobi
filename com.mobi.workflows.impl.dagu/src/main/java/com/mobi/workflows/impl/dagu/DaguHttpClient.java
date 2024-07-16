@@ -38,15 +38,11 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.net.URI;
-import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpRequest.Builder;
 import java.net.http.HttpResponse;
-import java.nio.charset.StandardCharsets;
 import java.util.Base64;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
 import javax.servlet.http.Cookie;
 
@@ -56,6 +52,8 @@ import javax.servlet.http.Cookie;
 public class DaguHttpClient {
     private static final ObjectMapper mapper = new ObjectMapper();
     private final Logger log = LoggerFactory.getLogger(DaguHttpClient.class);
+    private final String DAGU_REST_PREFIX = "/api/v1/";
+    private final String DAGS_REST_PREFIX = DAGU_REST_PREFIX + "dags/";
 
     private String daguHost;
     private String authHeader;
@@ -97,7 +95,7 @@ public class DaguHttpClient {
      */
     public ObjectNode getDag(String sha1WorkflowIRI) throws IOException, InterruptedException {
         log.trace("Checking if dag " + sha1WorkflowIRI + " already exists");
-        Builder requestBuilder = HttpRequest.newBuilder(URI.create(daguHost + "/dags/" + sha1WorkflowIRI))
+        Builder requestBuilder = HttpRequest.newBuilder(URI.create(daguHost + DAGS_REST_PREFIX + sha1WorkflowIRI))
                 .header("Accept", "application/json");
 
         addAuthHeader(requestBuilder);
@@ -121,13 +119,13 @@ public class DaguHttpClient {
      */
     public void createDag(String sha1WorkflowIRI) throws IOException, InterruptedException {
         log.trace("dag " + sha1WorkflowIRI + " does not exist. Creating.");
-        Map<String, String> createFormData = new HashMap<>();
-        createFormData.put("action", "new");
-        createFormData.put("value", sha1WorkflowIRI);
-        Builder createBuilder = HttpRequest.newBuilder(URI.create(daguHost + "/dags"))
+        ObjectNode createJson = mapper.createObjectNode();
+        createJson.put("action", "new");
+        createJson.put("value", sha1WorkflowIRI);
+        Builder createBuilder = HttpRequest.newBuilder(URI.create(daguHost + DAGU_REST_PREFIX + "dags"))
                 .header("Accept", "application/json")
-                .header("Content-Type", "application/x-www-form-urlencoded")
-                .POST(HttpRequest.BodyPublishers.ofString(getFormDataAsString(createFormData)));
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(createJson.toString()));
 
         addAuthHeader(createBuilder);
         HttpRequest createRequest = createBuilder.build();
@@ -153,7 +151,7 @@ public class DaguHttpClient {
     public ObjectNode getLogForStep(String sha1WorkflowIRI, String stepName) throws
             JsonProcessingException, IOException, InterruptedException {
         Builder logBuilder = HttpRequest.newBuilder(
-                        URI.create(daguHost + "/dags/" + sha1WorkflowIRI + "/log?step=" + stepName))
+                        URI.create(daguHost + DAGS_REST_PREFIX + sha1WorkflowIRI + "?tab=log&step=" + stepName))
                 .header("Accept", "application/json");
 
         addAuthHeader(logBuilder);
@@ -179,7 +177,7 @@ public class DaguHttpClient {
      */
     public ObjectNode getSchedulerLog(String sha1WorkflowIRI) throws IOException, InterruptedException {
         Builder logBuilder = HttpRequest.newBuilder(
-                        URI.create(daguHost + "/dags/" + sha1WorkflowIRI + "/scheduler-log"))
+                        URI.create(daguHost + DAGS_REST_PREFIX + sha1WorkflowIRI + "?tab=scheduler-log"))
                 .header("Accept", "application/json");
 
         addAuthHeader(logBuilder);
@@ -207,7 +205,7 @@ public class DaguHttpClient {
      */
     public Optional<ObjectNode> checkDagExist(String sha1WorkflowIRI) throws IOException, InterruptedException {
         log.trace("Checking dag " + sha1WorkflowIRI + " status");
-        Builder requestBuilder = HttpRequest.newBuilder(URI.create(daguHost + "/dags/" + sha1WorkflowIRI))
+        Builder requestBuilder = HttpRequest.newBuilder(URI.create(daguHost + DAGS_REST_PREFIX + sha1WorkflowIRI))
                 .header("accept", "application/json");
 
         addAuthHeader(requestBuilder);
@@ -255,13 +253,13 @@ public class DaguHttpClient {
         String username = engineManager.getUsername(userIri)
                 .orElseThrow(() -> new IllegalStateException("No user linked to iri " + userIri));
         Cookie cookie = getTokenCookie(username);
-        Map<String, String> startFormData = new HashMap<>();
-        startFormData.put("action", "start");
-        startFormData.put("params", mobi.getHostName() + " " + cookie.getValue());
-         Builder requestBuilder = HttpRequest.newBuilder(URI.create(daguHost + "/dags/" + sha1WorkflowIRI))
+        ObjectNode startJson = mapper.createObjectNode();
+        startJson.put("action", "start");
+        startJson.put("params", mobi.getHostName() + " " + cookie.getValue());
+         Builder requestBuilder = HttpRequest.newBuilder(URI.create(daguHost + DAGS_REST_PREFIX + sha1WorkflowIRI))
                 .header("Accept", "application/json")
-                .header("Content-Type", "application/x-www-form-urlencoded")
-                .POST(HttpRequest.BodyPublishers.ofString(getFormDataAsString(startFormData)));
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(startJson.toString()));
 
         addAuthHeader(requestBuilder);
         HttpRequest startRequest = requestBuilder.build();
@@ -283,13 +281,13 @@ public class DaguHttpClient {
      * @throws InterruptedException If an error occurs sending the HTTP request
      */
     public void updateDag(String workflowYaml, String sha1WorkflowIRI) throws IOException, InterruptedException {
-        Map<String, String> updateFormData = new HashMap<>();
-        updateFormData.put("action", "save");
-        updateFormData.put("value", workflowYaml);
-        Builder requestBuilder = HttpRequest.newBuilder(URI.create(daguHost + "/dags/" + sha1WorkflowIRI))
+        ObjectNode updateJson = mapper.createObjectNode();
+        updateJson.put("action", "save");
+        updateJson.put("value", workflowYaml);
+        Builder requestBuilder = HttpRequest.newBuilder(URI.create(daguHost + DAGS_REST_PREFIX + sha1WorkflowIRI))
                 .header("Accept", "application/json")
-                .header("Content-Type", "application/x-www-form-urlencoded")
-                .POST(HttpRequest.BodyPublishers.ofString(getFormDataAsString(updateFormData)));
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(updateJson.toString()));
 
         addAuthHeader(requestBuilder);
         HttpRequest updateRequest = requestBuilder.build();
@@ -310,25 +308,6 @@ public class DaguHttpClient {
     public Cookie getTokenCookie(String username) {
         SignedJWT jwt = tokenManager.generateAuthToken(username);
         return tokenManager.createSecureTokenCookie(jwt);
-    }
-
-    /**
-     * Convert a Map of form data into a x-www-form-urlencoded string for use in calls to Dagu.
-     *
-     * @param formData Map of Form Data
-     * @return A string formatted as x-www-form-urlencoded data
-     */
-    static String getFormDataAsString(Map<String, String> formData) {
-        StringBuilder formBodyBuilder = new StringBuilder();
-        for (Map.Entry<String, String> singleEntry : formData.entrySet()) {
-            if (!formBodyBuilder.isEmpty()) {
-                formBodyBuilder.append("&");
-            }
-            formBodyBuilder.append(URLEncoder.encode(singleEntry.getKey(), StandardCharsets.UTF_8));
-            formBodyBuilder.append("=");
-            formBodyBuilder.append(URLEncoder.encode(singleEntry.getValue(), StandardCharsets.UTF_8));
-        }
-        return formBodyBuilder.toString();
     }
 
     protected void addAuthHeader(Builder requestBuilder) {
