@@ -539,6 +539,11 @@ public class SimpleCommitManager implements CommitManager {
 
     @Override
     public void removeInProgressCommit(InProgressCommit commit, RepositoryConnection conn) {
+        boolean isActive = conn.isActive();
+        if (!isActive) {
+            conn.begin();
+        }
+
         Revision revision = revisionManager.getRevision(commit.getResource(), conn);
         thingManager.removeObject(commit, conn);
 
@@ -567,6 +572,10 @@ public class SimpleCommitManager implements CommitManager {
                 thingManager.remove(resource, conn);
             }
         });
+
+        if (!isActive) {
+            conn.commit();
+        }
     }
 
     @Override
@@ -752,6 +761,11 @@ public class SimpleCommitManager implements CommitManager {
         Set<Statement> oppositeGraphStatements = QueryResults.asSet(conn.getStatements(null,
                 null, null, oppositeNamedGraph));
 
+        boolean isActive = conn.isActive();
+        if (!isActive) {
+            conn.begin();
+        }
+
         changes.forEach(statement -> {
             Statement withContext = vf.createStatement(statement.getSubject(), statement.getPredicate(),
                     statement.getObject(), oppositeNamedGraph);
@@ -762,6 +776,10 @@ public class SimpleCommitManager implements CommitManager {
                 oppositeGraphStatements.remove(withContext);
             }
         });
+
+        if (!isActive) {
+            conn.commit();
+        }
     }
 
     /**
