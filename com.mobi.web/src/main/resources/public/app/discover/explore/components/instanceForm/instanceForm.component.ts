@@ -22,9 +22,8 @@
  */
 import { MatDialog } from '@angular/material/dialog';
 import { filter, some, forEach, concat, includes, uniq, map, join, get, flatten, remove } from 'lodash';
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { forkJoin } from 'rxjs';
-import { MatChipInputEvent } from '@angular/material/chips';
 
 import { NewInstancePropertyOverlayComponent } from '../newInstancePropertyOverlay/newInstancePropertyOverlay.component';
 import { EditIriOverlayComponent } from '../../../../shared/components/editIriOverlay/editIriOverlay.component';
@@ -40,6 +39,8 @@ import { PropertyDetails } from '../../../models/propertyDetails.interface';
 import { ToastService } from '../../../../shared/services/toast.service';
 import { OnEditEventI } from '../../../../shared/models/onEditEvent.interface';
 import { getBeautifulIRI } from '../../../../shared/utility';
+import { FormBuilder, ValidatorFn, Validators } from '@angular/forms';
+import { MatChipInputEvent } from '@angular/material/chips';
 
 /**
  * @class explore.InstanceFormComponent
@@ -57,16 +58,18 @@ import { getBeautifulIRI } from '../../../../shared/utility';
 @Component({
     selector: 'instance-form',
     templateUrl: './instanceForm.component.html',
-    styleUrls: ['./instanceForm.component.scss']
+    styleUrls: ['./instanceForm.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class InstanceFormComponent implements OnInit {
     @Input() header;
     @Input() isValid;
     @Output() changeEvent = new EventEmitter<{value: boolean}>();
     isInstancePropertyDisabled: boolean;
+    form = this._fb.group({});
 
     constructor(private es: ExploreService, public eu: ExploreUtilsService, private ds: DiscoverStateService,
-                private dialog: MatDialog, private toast: ToastService) {
+                private dialog: MatDialog, private toast: ToastService, private _fb: FormBuilder) {
     }
 
     propertyDetailsMap: {[key: string]: PropertyDetails} = {
@@ -127,6 +130,35 @@ export class InstanceFormComponent implements OnInit {
         const newProperties = this.eu.getNewProperties(Object.values(this.propertyDetailsMap), this.instance, '');
         this.isInstancePropertyDisabled = newProperties ? !newProperties.length : false ;
     }
+    updateForm(): void {
+        this.form = this._fb.group({});
+        Object.keys(this.instance).forEach(key => {
+            if (key !== '@id' && key !== '@type') {
+                if (this.eu.isBoolean(key, this.properties) && !this.instance[key].length) {
+                    this.instance[key][0] = (this.eu.createValueObj('false', key, Object.values(this.propertyDetailsMap)));
+                    this.form.addControl(key, this._fb.control(this.instance[key][0]));
+                } else {
+                    this.form.addControl(key, this._fb.control('', [this.getValidator(key)]));
+                }
+            }
+        });
+    }
+    getValidator(instanceProperty: string): ValidatorFn {
+        if (this.eu.isPropertyOfType(instanceProperty, 'Data', this.properties) && !this.eu.isBoolean(instanceProperty, this.properties)) {
+            return Validators.pattern(this.eu.getPattern(instanceProperty, this.properties));
+        } else {
+            return Validators.required;
+        }
+    }
+    addChip(event: MatChipInputEvent, property: string): void {
+        if (this.form.get([property]).valid) {
+            this.addDataProperty(event, property); 
+            this.addToChanged(property);
+            this.form.get([property]).reset();
+        } else {
+            this.form.get([property]).markAsTouched();
+        }
+    }
     getPropertyDisplay(propertyIRI: string): string {
         const details = this.propertyDetailsMap[propertyIRI];
         return details ? details.display : getBeautifulIRI(propertyIRI);
@@ -140,6 +172,7 @@ export class InstanceFormComponent implements OnInit {
         }).afterClosed().subscribe((result: {propertyIRI: string, range: [], restrictions: [], type: string}) => {
             if (result) {
                 this.addToChanged(result.propertyIRI);
+                this.updateForm();
             }
         });
     }
@@ -231,13 +264,13 @@ export class InstanceFormComponent implements OnInit {
                 });
                 this.missingProperties = this.getMissingProperties();
                 this.properties = Object.values(this.propertyDetailsMap);
+                this.updateForm();
             }, () => this.toast.createErrorToast('An error occurred retrieving the instance properties.'));
     }
 
     private addDataProperty(event: MatChipInputEvent, propertyIRI: string) {
         if (event.value) {
             this.instance[propertyIRI].push(this.eu.createValueObj(event.value, propertyIRI, Object.values(this.propertyDetailsMap)));
-            event.input.value = '';
         }
     }
     private addObjectProperty(item, propertyIRI: string) {
@@ -246,6 +279,9 @@ export class InstanceFormComponent implements OnInit {
     }
     private removeDataProperty(item, propertyIRI: string) {
         remove(this.instance[propertyIRI], item);
+    }
+    private removeBooleanProperty(item, propertyIRI: string) {
+        delete this.instance[propertyIRI];
     }
     private removeObjectProperty(item, propertyIRI: string) {
         remove(this.instance[propertyIRI], item);
