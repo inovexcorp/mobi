@@ -30,7 +30,7 @@
                 matTooltipPosition="above">{{instance['@id']}}</strong>
             <a (click)="showIriConfirm()"><i class="fa fa-pencil"></i></a>
         </div>
-        <form name="form" autocomplete="off">
+        <form [formGroup]="form" autocomplete="off">
             <div class="form-group" *ngFor="let instanceProperty of instance | keyvalue">
                 <ng-container *ngIf="instanceProperty.key !== '@id' && instanceProperty.key !== '@type'">
                     <div class="field-label" [ngClass]="{'changed': isChanged(instanceProperty.key)}">
@@ -43,6 +43,11 @@
                                       (change)="handleCheckBoxClick($event.checked, instanceProperty.key); addToChanged(instanceProperty.key)"
                                       aria-label="{{getPropertyDisplay(instanceProperty.key)}}">
                         </mat-checkbox>
+                        <button class="delete-block-button" mat-icon-button 
+                            *ngIf="instanceProperty.value.length && instanceProperty.value[0] !== ''" 
+                            (click)="removeBooleanProperty(instanceProperty.value[0], instanceProperty.key); addToChanged(instanceProperty.key)">
+                            <mat-icon>clear</mat-icon>
+                        </button>
                     </div>
                     <mat-form-field class="w-100" *ngIf="eu.isPropertyOfType(instanceProperty.key, 'Data', properties) && !eu.isBoolean(instanceProperty.key, properties)">
                         <mat-chip-list class="data-property" #dataPropertySelect >
@@ -52,10 +57,13 @@
                                 <mat-icon matChipRemove>cancel</mat-icon>
                             </mat-chip>
                             <input type="{{eu.getInputType(instanceProperty.key, properties)}}" placeholder="Enter value..."
-                                   pattern="eu.getPattern(instanceProperty.key, properties)"
+                                    [formControlName]="instanceProperty.key"
                                    [matChipInputFor]="dataPropertySelect"
-                                   [matChipInputAddOnBlur]="false"
-                                   (matChipInputTokenEnd)=" addDataProperty($event, instanceProperty.key); addToChanged(instanceProperty.key);">
+                                   (matChipInputTokenEnd)="addChip($event, instanceProperty.key);"
+                                   [matChipInputAddOnBlur]="false">
+                            <mat-error *ngIf="form.get([instanceProperty.key]).invalid">
+                            Please enter a valid value
+                            </mat-error>
                         </mat-chip-list>
                     </mat-form-field>
                     <mat-form-field class="w-100" *ngIf="eu.isPropertyOfType(instanceProperty.key, 'Object', properties)">

@@ -619,6 +619,8 @@ export function getInputType(typeIRI: string): string {
  */
 export function getPattern(typeIRI: string): RegExp {
   switch (replace(typeIRI, XSD, '')) {
+      case 'anyURI':
+          return REGEX.IRI;
       case 'dateTime':
       case 'dateTimeStamp':
           return REGEX.DATETIME;

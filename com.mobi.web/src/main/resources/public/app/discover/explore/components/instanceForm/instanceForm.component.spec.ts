@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { DebugElement } from '@angular/core';
+import { ChangeDetectionStrategy, DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatButtonModule } from '@angular/material/button';
@@ -52,6 +52,7 @@ import { CopyClipboardDirective } from '../../../../shared/directives/copyClipbo
 import { ToastService } from '../../../../shared/services/toast.service';
 import { ErrorDisplayComponent } from '../../../../shared/components/errorDisplay/errorDisplay.component';
 import { InstanceFormComponent } from './instanceForm.component';
+import { REGEX } from '../../../../constants';
 
 describe('Instance Form component', function() {
     let component: InstanceFormComponent;
@@ -95,6 +96,9 @@ describe('Instance Form component', function() {
                 MockProvider(MatDialog),
                 MockProvider(ToastService),
             ]
+            
+        }).overrideComponent(InstanceFormComponent, {
+            set: { changeDetection: ChangeDetectionStrategy.Default } // needed due to https://github.com/angular/angular/issues/12313
         }).compileComponents();
 
         fixture = TestBed.createComponent(InstanceFormComponent);
@@ -244,19 +248,44 @@ describe('Instance Form component', function() {
             fixture.detectChanges();
             expect(element.queryAll(By.css('.boolean-property')).length).toBe(0);
         });
-        it('with a .data-property', async () => {
-            exploreUtilsServiceStub.isPropertyOfType.and.returnValue(true);
-            exploreUtilsServiceStub.isBoolean.and.returnValue(false);
-            component.ngOnInit();
-            fixture.detectChanges();
-            await fixture.whenStable();
-            expect(element.queryAll(By.css('.data-property')).length).toBe(2);
-            exploreUtilsServiceStub.isPropertyOfType.and.returnValue(false);
-            fixture.detectChanges();
-            expect(element.queryAll(By.css('.data-property')).length).toBe(0);
+        describe('with a .data-property', function() {
+            it('when value is valid', async () => {
+                exploreUtilsServiceStub.isPropertyOfType.and.returnValue(true);
+                exploreUtilsServiceStub.isBoolean.and.returnValue(false);
+                exploreServiceStub.getClassPropertyDetails.and.returnValue(of([]));
+                component.ngOnInit();
+                fixture.detectChanges();
+                await fixture.whenStable();
+                component.form.get(['prop1']).setValue('urn:test');
+                fixture.detectChanges();
+                await fixture.whenStable();
+                expect(element.queryAll(By.css('.data-property')).length).toBe(2);
+                exploreUtilsServiceStub.isPropertyOfType.and.returnValue(false);
+                expect(element.queryAll(By.css('mat-error')).length).toEqual(0);
+                fixture.detectChanges();
+                expect(element.queryAll(By.css('.data-property')).length).toBe(0);
+            });
+            it('when value is invalid', async () => {
+                exploreUtilsServiceStub.isPropertyOfType.and.returnValue(true);
+                exploreUtilsServiceStub.isBoolean.and.returnValue(false);
+                exploreServiceStub.getClassPropertyDetails.and.returnValue(of([]));
+                exploreUtilsServiceStub.getPattern.and.returnValue(REGEX.IRI);
+                component.ngOnInit();
+                fixture.detectChanges();
+                await fixture.whenStable();
+                component.form.get(['prop1']).setValue('asd');
+                fixture.detectChanges();
+                await fixture.whenStable();
+                expect(element.queryAll(By.css('.data-property')).length).toBe(2);
+                expect(element.queryAll(By.css('mat-error')).length).toEqual(1);
+                exploreUtilsServiceStub.isPropertyOfType.and.returnValue(false);
+                fixture.detectChanges();
+                expect(element.queryAll(By.css('.data-property')).length).toBe(0); 
+            });
         });
         it('with a .object-property', function() {
             exploreUtilsServiceStub.isPropertyOfType.and.returnValue(true);
+            exploreServiceStub.getClassPropertyDetails.and.returnValue(of([]));
             fixture.detectChanges();
             expect(element.queryAll(By.css('.object-property')).length).toBe(2);
             exploreUtilsServiceStub.isPropertyOfType.and.returnValue(false);
