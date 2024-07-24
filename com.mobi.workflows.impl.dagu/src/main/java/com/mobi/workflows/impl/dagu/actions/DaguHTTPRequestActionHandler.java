@@ -29,18 +29,18 @@ import com.mobi.workflows.api.action.ActionHandler;
 import com.mobi.workflows.api.ontologies.workflows.HTTPRequestAction;
 import com.mobi.workflows.api.ontologies.workflows.Header;
 import org.apache.commons.io.IOUtils;
+import org.apache.http.NameValuePair;
+import org.apache.http.client.utils.URIBuilder;
 import org.osgi.service.component.annotations.Component;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLDecoder;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -52,11 +52,10 @@ public class DaguHTTPRequestActionHandler implements ActionHandler<HTTPRequestAc
     @Override
     public ActionDefinition createDefinition(HTTPRequestAction action) {
         String yamlContent;
-        try {
-            InputStream is = DaguHTTPRequestActionHandler.class
-                    .getResourceAsStream("/HTTPRequestActionTemplate.yaml");
-            yamlContent = IOUtils.toString(is, StandardCharsets.UTF_8);
-        } catch (IOException e){
+        try (InputStream is = DaguHTTPRequestActionHandler.class
+                .getResourceAsStream("/HTTPRequestActionTemplate.yaml")) {
+            yamlContent = IOUtils.toString(Objects.requireNonNull(is), StandardCharsets.UTF_8);
+        } catch (IOException e) {
             throw new MobiException("Error parsing YAML " + e);
         }
         yamlContent = fillTemplate(yamlContent, action);
@@ -83,48 +82,49 @@ public class DaguHTTPRequestActionHandler implements ActionHandler<HTTPRequestAc
      *                       or if any required value (such as HTTP method) is missing.
      */
     protected String fillTemplate(String yamlString, HTTPRequestAction action) {
+        // Populate YAML replacements map with request values
         Map<String, String> replacements = new HashMap<>();
-        // Generate uuid for individual step
-        UUID uuid = UUID.randomUUID();
-        String uuidString = uuid.toString().replace("-","");
-        String httpUrl = action.getHasHttpUrl().orElseThrow(()->
+        String httpUrl = action.getHasHttpUrl().orElseThrow(() ->
                 new MobiException("HTTP URL for Dagu Request not present"));
-        String httpMethod = action.getHasHttpMethod().orElseThrow(()->
-                new MobiException("HTTP Method for Dagu Request not present"));
-        String httpBody = yamlEscapeFormatting(action.getHasHttpBody().orElse(""));
         String hasQueryParams = "";
-        String httpMediaType = action.getHasHttpMediaType().isPresent() ?
-                "\"Content-Type\": \"" + action.getHasHttpMediaType().get() + "\"" : "";
+        try {
+            URIBuilder builder = new URIBuilder(httpUrl);
+            List<NameValuePair> queryParams = builder.getQueryParams();
+            httpUrl = builder.removeQuery().build().toString();
+
+            if (queryParams != null && !queryParams.isEmpty()) {
+                hasQueryParams = queryParams.stream()
+                        .map(this::formatQueryParam)
+                        .collect(Collectors.joining(",\n        "));
+            }
+        } catch (URISyntaxException e) {
+            throw new MobiException("Error parsing URL " + e);
+        }
+        replacements.put("{{hasHttpUrl}}", httpUrl);
+        replacements.put("{{hasQueryParams}}", hasQueryParams);
+        String httpMethod = action.getHasHttpMethod().orElseThrow(() ->
+                new MobiException("HTTP Method for Dagu Request not present"));
+        replacements.put("{{hasHttpMethod}}", httpMethod);
+
+        String httpBody = yamlEscapeFormatting(action.getHasHttpBody().orElse(""));
+        replacements.put("{{hasHttpBody}}", httpBody);
+        String httpMediaType = action.getHasHttpMediaType().isPresent()
+                ? "\"Content-Type\": \"" + action.getHasHttpMediaType().get() + "\"" : "";
+        replacements.put("{{hasHttpMediaType}}", httpMediaType);
         String httpTimeout = action.getHasHttpTimeout().orElse(30).toString();
+        replacements.put("{{hasHttpTimeout}}", httpTimeout);
         String actionIri = action.getResource().toString();
+        replacements.put("{{hasActionIri}}", actionIri);
         String hasHeaders = action.getHasHeader().stream().map(this::formatHeader).collect(Collectors
                 .joining(",\n        "));
         if (!hasHeaders.isBlank()) {
             hasHeaders = hasHeaders.concat(",");
         }
-        try {
-            URL urlObject = new URL(httpUrl);
-            httpUrl = urlObject.getProtocol() + "://" + urlObject.getHost() + urlObject.getPath();
-            String query = urlObject.getQuery();
-            if (query != null && !query.isEmpty()) {
-                String[] queryParams = query.split("&");
-                hasQueryParams = Arrays.stream(queryParams)
-                        .map(param -> formatQueryParam(param))
-                        .collect(Collectors.joining(",\n        "));
-            }
-        } catch (MalformedURLException e) {
-            throw new MobiException("Error parsing URL " + e);
-        }
-        // Populate YAML replacements map with request values
-        replacements.put("{{hasHttpUrl}}", httpUrl);
-        replacements.put("{{hasHttpMethod}}", httpMethod);
-        replacements.put("{{hasHttpBody}}", httpBody);
-        replacements.put("{{hasHttpMediaType}}", httpMediaType);
         replacements.put("{{hasHeader}}", hasHeaders);
-        replacements.put("{{hasQueryParams}}", hasQueryParams);
-        replacements.put("{{hasHttpTimeout}}", httpTimeout);
-        replacements.put("{{hasActionIri}}", actionIri);
-        replacements.put("{{hasRandomId}}", 'r'+uuidString);
+        // Generate uuid for individual step
+        UUID uuid = UUID.randomUUID();
+        String uuidString = uuid.toString().replace("-", "");
+        replacements.put("{{hasRandomId}}", 'r' + uuidString);
 
         // Make replacements in yaml file, then return updated yaml string
         for (Map.Entry<String, String> entry : replacements.entrySet()) {
@@ -148,25 +148,20 @@ public class DaguHTTPRequestActionHandler implements ActionHandler<HTTPRequestAc
     }
 
     /**
-     * Formats a query parameter string into a JSON-like representation.
-     * Splits the parameter string into key-value pairs, decodes each key and value using UTF-8 encoding,
-     * and constructs a formatted string of the form: "key": "value".
+     * Formats a query parameter in the form of a {@link NameValuePair} into a formatted JSON-like string of the form:
+     * "key": "value".
      *
-     * @param queryParam The query parameter string to be formatted.
+     * @param queryParam The pair of a name of a query parameter and its value
      * @return A string representing the query parameter in the format: "key": "value".
-     * @throws MobiException If an error occurs while decoding the query parameter string.
-     *                       This typically indicates an unsupported encoding.
      */
-    protected String formatQueryParam(String queryParam) {
-        String[] keyValue = queryParam.split("=");
-        String key = URLDecoder.decode(keyValue[0], StandardCharsets.UTF_8);
-        String value = URLDecoder.decode(keyValue[1], StandardCharsets.UTF_8);
+    protected String formatQueryParam(NameValuePair queryParam) {
+        String key = queryParam.getName();
+        String value = queryParam.getValue();
         return "\"" + key + "\": \"" + yamlEscapeFormatting(value) + "\"";
     }
 
     /**
      * Escapes special characters in the given string value for formatting purposes.
-     *
      * This method escapes double quotes ("), ensuring they are preceded by a single backslash (\").
      * It also reduces multiple consecutive backslashes to a single backslash.
      *
