@@ -197,16 +197,23 @@ describe('Prop Mapping Overlay component', function() {
                 component.propMappingForm.controls.rangeClass.disable();
             });
             it('unless property has no ranges', fakeAsync(function() {
+                mappingStub.getClassMappingsByClassId.and.returnValue([classMapping]);
+                mapperStateStub.retrieveClasses.and.returnValue(of([mappingClass]));
+
                 const mappingPropertyClone = cloneDeep(mappingProperty);
                 mappingPropertyClone.ranges = [];
                 component.selectedProp = mappingPropertyClone;
                 component.setRangeClass();
                 tick();
                 expect(mapperStateStub.retrieveSpecificClasses).not.toHaveBeenCalled();
-                expect(component.rangeClasses).toBeUndefined();
-                expect(component.rangeClassOptions).toEqual([]);
-                expect(component.propMappingForm.controls.rangeClass.value).toEqual('');
-                expect(component.propMappingForm.controls.rangeClass.disabled).toBeTrue();
+                expect(mapperStateStub.retrieveClasses).toHaveBeenCalled();
+                expect(component.rangeClasses).toEqual([mappingClass]);
+                expect(component.rangeClassOptions).toEqual([
+                    { new: true, title: `[New ${mappingClass.name}]`, mappingClass, classMapping: undefined },
+                    { new: false, title: 'title', mappingClass, classMapping }
+                ]);
+                expect(component.propMappingForm.controls.rangeClass.value).toEqual({ new: false, title: 'title', mappingClass, classMapping });
+                expect(component.propMappingForm.controls.rangeClass.disabled).toBeFalse();
             }));
             describe('if the property has ranges set', function() {
                 beforeEach(function() {
@@ -991,6 +998,7 @@ describe('Prop Mapping Overlay component', function() {
             component.selectedProp = mappingProperty;
             mappingStub.getClassMappingsByClassId.and.returnValue([classMapping]);
             mapperStateStub.retrieveSpecificClasses.and.returnValue(of([mappingClass]));
+            mapperStateStub.retrieveClasses.and.returnValue(of([mappingClass]));
         });
 
         it('should account for when there are no range class options found', fakeAsync(function() {
@@ -1002,8 +1010,21 @@ describe('Prop Mapping Overlay component', function() {
             fixture.detectChanges();
             tick();
 
-            expect(component.rangeClasses).toBe(undefined);
-            expect(component.propMappingForm.controls.rangeClass.invalid).toBe(true);
+            expect(component.rangeClasses).not.toBe(undefined);
+            expect(component.propMappingForm.controls.rangeClass.valid).toBe(true);
+        }));
+
+        it('should account for when the range is Owl:Thing', fakeAsync(function() {
+            const mappingPropertyClone = cloneDeep(mappingProperty);
+            mappingPropertyClone.ranges = [`${OWL}Thing`];
+            component.selectedProp = mappingPropertyClone;
+            component.setRangeClass();
+
+            fixture.detectChanges();
+            tick();
+
+            expect(component.rangeClasses).not.toBe(undefined);
+            expect(component.propMappingForm.controls.rangeClass.valid).toBe(true);
         }));
         
         it('should account for when there are some range class options found', fakeAsync(function() {

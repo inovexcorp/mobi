@@ -283,7 +283,8 @@ export class MapperStateService {
         ?iri owl:deprecated ?deprecateds .
       }
       OPTIONAL {
-        ?iri rdfs:range ?startingRange .
+        ?iri rdfs:subPropertyOf* ?prop .
+        ?prop rdfs:range ?startingRange .
         ?startingRange ^rdfs:subClassOf* ?range .
         FILTER(isIRI(?range))
       }
@@ -830,8 +831,7 @@ export class MapperStateService {
         const ontologyId = this.iriMap?.objectProperties[propDetails.iri];
         const rangeClassMapping = this.selected.mapping.getClassMapping(rangeClassMappingId);
         if (this.selected.mapping.hasClassMapping(classMappingId) && rangeClassMapping && ontologyId 
-            && propDetails.type === `${OWL}ObjectProperty`
-            && propDetails.ranges.includes(getPropertyId(rangeClassMapping, `${DELIM}mapsTo`))) {
+            && propDetails.type === `${OWL}ObjectProperty`) {
             const propMapping = this.selected.mapping.addObjectPropMapping(propDetails.iri, classMappingId, rangeClassMappingId);
             setDctermsValue(propMapping, 'title', propDetails.name);
             (this.selected.difference.additions as JSONLDObject[]).push(Object.assign({}, propMapping));

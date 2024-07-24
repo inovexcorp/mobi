@@ -110,7 +110,7 @@ describe('Prop Preview component', function() {
             });
             it('and the range class was not passed', function() {
                 component.rangeClassDetails = undefined;
-                expect(component.ranges).toEqual([]);
+                expect(component.ranges).toEqual([{ iri: 'classId', name: 'Class Id', deprecated: false }]);
             });
         });
     });
