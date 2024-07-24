@@ -33,6 +33,8 @@ import com.mobi.exception.MobiException;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import com.mobi.workflows.api.ontologies.workflows.HTTPRequestAction;
 import com.mobi.workflows.api.ontologies.workflows.Header;
+import org.apache.http.NameValuePair;
+import org.apache.http.message.BasicNameValuePair;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.junit.Before;
@@ -47,9 +49,8 @@ import java.util.UUID;
 
 public class DaguHTTPRequestActionHandlerTest extends OrmEnabledTestCase {
 
-    private UUID uuid;
     private String uuidString;
-    private DaguHTTPRequestActionHandler actionHandler = new DaguHTTPRequestActionHandler();
+    private final DaguHTTPRequestActionHandler actionHandler = new DaguHTTPRequestActionHandler();
     private HTTPRequestAction requestAction;
     IRI mockIRI = vf.createIRI("http://example.com/workflows/B/action");
 
@@ -66,8 +67,8 @@ public class DaguHTTPRequestActionHandlerTest extends OrmEnabledTestCase {
         when(requestAction.getHasHttpTimeout()).thenReturn(Optional.of(30));
         IRI actionIri = SimpleValueFactory.getInstance().createIRI("http://example.com/workflows/B/action");
         when(requestAction.getResource()).thenReturn(actionIri);
-        uuid = UUID.randomUUID();
-        uuidString = 'r'+uuid.toString().replace("-","");
+        UUID uuid = UUID.randomUUID();
+        uuidString = 'r'+ uuid.toString().replace("-","");
         yamlString = "- name: {{hasActionIri}} HTTP Request\n" +
                 "  executor:\n" +
                 "    type: http\n" +
@@ -144,7 +145,7 @@ public class DaguHTTPRequestActionHandlerTest extends OrmEnabledTestCase {
 
     @Test
     public void testFormatQueryParam_WithBasicValues() {
-        String queryParam = "key1=value1";
+        NameValuePair queryParam = new BasicNameValuePair("key1", "value1");
         String result = actionHandler.formatQueryParam(queryParam);
 
         assertEquals("\"key1\": \"value1\"", result);
@@ -152,7 +153,7 @@ public class DaguHTTPRequestActionHandlerTest extends OrmEnabledTestCase {
 
     @Test
     public void testFormatQueryParam_WithSpecialCharacters() {
-        String queryParam = "key2=value with \\backslashes\\ and \"quotes\"";
+        NameValuePair queryParam = new BasicNameValuePair("key2", "value with \\backslashes\\ and \"quotes\"");
         String result = actionHandler.formatQueryParam(queryParam);
 
         assertEquals("\"key2\": \"value with \\backslashes\\ and \\\"quotes\\\"\"", result);
@@ -352,5 +353,16 @@ public class DaguHTTPRequestActionHandlerTest extends OrmEnabledTestCase {
         String result = actionHandler.fillTemplate(yamlString, requestAction);
 
         assertTrue(result.contains("\"query\": {\n        \"key1\": \"value1\",\n        \"key2\": \"value2\"\n      }"));
+    }
+
+    @Test
+    public void testFillTemplate_WithNoHeaders_Port() {
+        when(requestAction.getHasHeader()).thenReturn(Collections.emptySet());
+
+        // Mock the HTTP URL with a port specified
+        when(requestAction.getHasHttpUrl()).thenReturn(Optional.of("http://example.com:8443"));
+        String result = actionHandler.fillTemplate(yamlString, requestAction);
+
+        assertTrue(result.contains("http://example.com:8443"));
     }
 }
