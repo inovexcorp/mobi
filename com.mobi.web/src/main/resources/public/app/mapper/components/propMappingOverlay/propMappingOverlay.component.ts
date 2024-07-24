@@ -22,7 +22,7 @@
  */
 
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
-import { UntypedFormBuilder, ValidationErrors, Validators } from '@angular/forms';
+import { UntypedFormBuilder, Validators } from '@angular/forms';
 import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { MatDialogRef } from '@angular/material/dialog';
 import { get, remove, find, has, invertBy, pick } from 'lodash';
@@ -81,7 +81,6 @@ export class PropMappingOverlayComponent implements OnInit {
     showDatatypeSelect = false;
     datatypeMap: {[key: string]: string} = {};
     langString = false;
-    emptyRangeValidator = (): ValidationErrors | null => !this.selectedProp?.ranges.length ? {empty: true} : null; 
 
     propMappingForm = this.fb.group({
         prop: [{ value: '', disabled: false},  Validators.required],
@@ -118,10 +117,14 @@ export class PropMappingOverlayComponent implements OnInit {
     setRangeClass(): void {
         let ob: Observable<MappingClass[]>;
         if (this.selectedProp.ranges.length) {
-            ob = this.state.retrieveSpecificClasses(this.state.selected.mapping.getSourceOntologyInfo(), 
-                this.selectedProp.ranges);
+            if (this.selectedProp.ranges.includes(`${OWL}Thing`)) {
+                ob = this.state.retrieveClasses(this.state.selected.mapping.getSourceOntologyInfo(), '');
+            } else {
+                ob = this.state.retrieveSpecificClasses(this.state.selected.mapping.getSourceOntologyInfo(),
+                    this.selectedProp.ranges);
+            }
         } else {
-            ob = of(undefined);
+            ob = this.state.retrieveClasses(this.state.selected.mapping.getSourceOntologyInfo(), '');
         }
         ob.subscribe((result: MappingClass[] | undefined) => {
             if (result && result.length) { // Found range classes in imports closure
@@ -154,11 +157,6 @@ export class PropMappingOverlayComponent implements OnInit {
                     this.propMappingForm.controls.rangeClass.setValue('');
                 }
                 this.propMappingForm.controls.rangeClass.enable();
-            } else { // No range classes set or they couldn't be found in imports closure
-                this.rangeClasses = undefined;
-                this.rangeClassOptions = [];
-                this.propMappingForm.controls.rangeClass.setValue('');
-                this.propMappingForm.controls.rangeClass.setValidators([this.emptyRangeValidator, Validators.required]);
             }
             this.showRangeClass = true;
         });
@@ -171,7 +169,7 @@ export class PropMappingOverlayComponent implements OnInit {
         this.propMappingForm.controls.column.setValue('');
         if (this.selectedProp.type === `${OWL}ObjectProperty`) {
             this.propMappingForm.controls.rangeClass.reset();
-            this.propMappingForm.controls.rangeClass.setValidators([this.emptyRangeValidator, Validators.required]);
+            this.propMappingForm.controls.rangeClass.setValidators([Validators.required]);
             this.propMappingForm.controls.column.clearValidators();
             this.propMappingForm.controls.column.setValue('');
             this.propMappingForm.controls.column.updateValueAndValidity();

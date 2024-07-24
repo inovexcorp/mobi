@@ -30,7 +30,9 @@
     <div class="range">
         <span class="field-label">Range</span> 
         <p *ngIf="ranges.length; else elseBlock" class="has-ranges">
-            <span class="range-item" *ngFor="let range of ranges; last as last" [title]="range.iri">{{range.name}} <span class="deprecated text-muted" *ngIf="range.deprecated">(Deprecated)</span><span *ngIf="!last">, </span></span>
+            <span class="range-item" *ngFor="let range of ranges; last as last" [title]="range.iri">{{range.name}}
+                <span class="deprecated text-muted" *ngIf="range.deprecated">(Deprecated)</span><span *ngIf="!last">, </span>
+            </span>
         </p>
         <ng-template #elseBlock><p class="no-range">(No Range)</p></ng-template>
     </div>

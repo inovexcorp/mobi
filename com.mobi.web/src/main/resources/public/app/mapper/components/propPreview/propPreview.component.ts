@@ -66,14 +66,24 @@ export class PropPreviewComponent {
         this._rangeClassDetails = value;
         if (this.propDetails.ranges.length) {
             if (this.propDetails.type === `${OWL}ObjectProperty`) {
-                if (value && value.length) {
+                if (this.propDetails.ranges.includes(`${OWL}Thing`)) {
+                    this.ranges = [{
+                        iri: `${OWL}Thing`,
+                        name: getBeautifulIRI(`${OWL}Thing`) || 'String',
+                        deprecated: false
+                    }];
+                } else if (value && value.length) {
                     this.ranges = value.map(rangeClass => ({
                         iri: rangeClass.iri,
                         name: rangeClass.name,
                         deprecated: rangeClass.deprecated
                     }));
                 } else { // Property has ranges set, but they could not be found in the imports closure
-                    this.ranges = [];
+                    this.ranges = this.propDetails.ranges.map(range => ({
+                        iri: range,
+                        name: getBeautifulIRI(range) || 'String',
+                        deprecated: false
+                    }));
                 }
             } else {
                 this.ranges = this.propDetails.ranges.map(range => ({

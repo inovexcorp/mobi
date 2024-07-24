@@ -906,13 +906,6 @@ describe('Mapper State service', function() {
             expect(mappingStub.addObjectPropMapping).not.toHaveBeenCalled();
             expect(service.selected.difference.additions).toEqual([]);
         });
-        it('unless the property ranges do not include the class for the range ClassMapping', function() {
-            const mappingObjPropertyClone = cloneDeep(mappingObjProperty);
-            mappingObjPropertyClone.ranges = [];
-            expect(service.addObjectMapping(mappingObjPropertyClone, classMappingId, rangeMappingId)).toBeUndefined();
-            expect(mappingStub.addObjectPropMapping).not.toHaveBeenCalled();
-            expect(service.selected.difference.additions).toEqual([]);
-        });
         it('successfully', function() {
             expect(service.addObjectMapping(mappingObjProperty, classMappingId, rangeMappingId)).toEqual(this.newPropMapping);
             expect(mappingStub.addObjectPropMapping).toHaveBeenCalledWith(mappingObjProperty.iri, classMappingId, rangeMappingId);
