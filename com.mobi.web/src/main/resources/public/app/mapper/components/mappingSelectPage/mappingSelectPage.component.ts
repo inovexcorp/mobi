@@ -45,7 +45,7 @@ import { DownloadMappingOverlayComponent } from '../downloadMappingOverlay/downl
 import { ViewMappingModalComponent } from '../viewMappingModal/viewMappingModal.component';
 import { getDate, getDctermsValue, getPropertyId } from '../../../shared/utility';
 import { IncompatibleWarningModalComponent } from '../incompatible-warning-modal/incompatible-warning-modal.component';
-import { XACMLRequest } from "../../../shared/models/XACMLRequest.interface";
+import { XACMLRequest } from '../../../shared/models/XACMLRequest.interface';
 
 /**
  * @class mapper.MappingSelectPageComponent

@@ -21,7 +21,8 @@
  * #L%
  */
 import { HttpResponse } from '@angular/common/http';
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from '@angular/core';
+
 import { forEach, map, filter, includes} from 'lodash';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
@@ -32,10 +33,9 @@ import { CatalogManagerService } from '../../../shared/services/catalogManager.s
 import { CatalogStateService } from '../../../shared/services/catalogState.service';
 import { ToastService } from '../../../shared/services/toast.service';
 import { FilterItem } from '../../../shared/models/filterItem.interface'; 
-import { RecordFilter } from '../../../shared/models/recordFilter.interface';
-import { SearchableRecordFilter } from '../../../shared/models/searchableRecordFilter.interface';
 import { UserManagerService } from '../../../shared/services/userManager.service';
-import { getBeautifulIRI } from '../../../shared/utility';
+import { FilterType, ListFilter } from '../../../shared/models/list-filter.interface';
+import { SearchableListFilter } from '../../../shared/models/searchable-list-filter.interface';
 
 /**
  * @class catalog.RecordFiltersComponent
@@ -61,8 +61,8 @@ import { getBeautifulIRI } from '../../../shared/utility';
     templateUrl: './recordFilters.component.html',
     styleUrls: ['./recordFilters.component.scss']
 })
-export class RecordFiltersComponent implements OnInit, OnDestroy {
-    filters: RecordFilter[] = [];
+export class RecordFiltersComponent implements OnInit, OnChanges, OnDestroy {
+    filters: ListFilter[] = [];
     private _destroySub$ = new Subject<void>();
     
     @Input() catalogId: string;
@@ -70,55 +70,32 @@ export class RecordFiltersComponent implements OnInit, OnDestroy {
     @Input() keywordFilterList: string[];
     @Input() creatorFilterList: string[];
     @Output() changeFilter = new EventEmitter<{recordType: string, keywordFilterList: string[], creatorFilterList: string[]}>();
+    
+    recordTypeFilterItem: FilterItem;
 
     constructor(public state: CatalogStateService, public cm: CatalogManagerService, private toast: ToastService, 
       private _um: UserManagerService) {}
 
     ngOnInit(): void {
-        const componentContext = this;
-        const recordTypeFilter: RecordFilter = {
-            title: 'Record Type',
-            hide: false,
-            pageable: false,
-            searchable: false,
-            filterItems: [],
-            onInit: function() {
-                this.setFilterItems();
-            },
-            getItemText: function(filterItem: FilterItem) {
-                return getBeautifulIRI(filterItem.value);
-            },
-            setFilterItems: function() {
-                this.filterItems = map(componentContext.cm.recordTypes, type => ({
-                    value: type,
-                    checked: type === componentContext.recordType,
-                }));
-            },
-            filter: function(filterItem: FilterItem) {
-                if (filterItem.checked) {
-                    forEach(this.filterItems, typeFilter => {
-                        if (typeFilter.value !== filterItem.value) {
-                            typeFilter.checked = false;
-                        }
-                    });
-                    componentContext.changeFilter.emit({recordType: filterItem.value, keywordFilterList: componentContext.keywordFilterList, creatorFilterList: componentContext.creatorFilterList});
-                } else {
-                    if (componentContext.recordType === filterItem.value) {
-                        componentContext.changeFilter.emit({recordType: '', keywordFilterList: componentContext.keywordFilterList, creatorFilterList: componentContext.creatorFilterList});
-                    }
-                }
-            }
+        this.recordTypeFilterItem = {
+            value: this.recordType,
+            checked: false
         };
+        const componentContext = this;
+        const recordTypeFilter: ListFilter = this.cm.getRecordTypeFilter(this.recordTypeFilterItem, (value) => componentContext.changeFilter.emit({recordType: value, keywordFilterList: componentContext.keywordFilterList, creatorFilterList: componentContext.creatorFilterList}));
+        const getNumChecked = (items => items.filter(item => item.checked).length);
 
-        const creatorFilter: SearchableRecordFilter = {
+        const creatorFilter: SearchableListFilter = {
             title: 'Creators',
+            type: FilterType.CHECKBOX,
+            numChecked: 0,
             hide: false,
             pageable: true,
             searchable: true,
             pagingData: {
               limit: 10,
               totalSize: 0,
-              currentPage: 1,
+              pageIndex: 1,
               hasNextPage: false
             },
             rawFilterItems: [],
@@ -132,7 +109,7 @@ export class RecordFiltersComponent implements OnInit, OnDestroy {
             },
             searchSubmitted: function() {
                 this.pagingData['totalSize'] = 0;
-                this.pagingData['currentPage'] = 1;
+                this.pagingData['pageIndex'] = 1;
                 this.pagingData['hasNextPage'] = false;
                 this.nextPage();
             },
@@ -140,7 +117,7 @@ export class RecordFiltersComponent implements OnInit, OnDestroy {
                 const filtered = componentContext._um.filterUsers(this.rawFilterItems.map(item => item.value.user), componentContext.state.creatorSearchText);
                 this.pagingData['totalSize'] = filtered.length;
 
-                const offset = this.pagingData.limit * (this.pagingData.currentPage - 1);
+                const offset = this.pagingData.limit * (this.pagingData.pageIndex - 1);
                 this.filterItems = filtered.slice(0, offset + this.pagingData.limit).map(user => this.rawFilterItems.find(item => user === item.value.user));
                 this.pagingData['hasNextPage'] = filtered.length > this.filterItems.length;
             },
@@ -173,24 +150,28 @@ export class RecordFiltersComponent implements OnInit, OnDestroy {
                         checked: componentContext.creatorFilterList.includes(userIri)
                     })).sort((item1, item2) => item1.value.user.username.localeCompare(item2.value.user.username));
                     filterInstance.nextPage();
+                    this.numChecked = getNumChecked(this.filterItems);
                 });
             },
             filter: function() {
                 const checkedCreatorObjects = filter(this.filterItems, currentFilterItem => currentFilterItem.checked);
                 const creators = map(checkedCreatorObjects, currentFilterItem => currentFilterItem.value['user'].iri);
-                componentContext.changeFilter.emit({recordType: componentContext.recordType, keywordFilterList: componentContext.keywordFilterList, creatorFilterList: creators});
+                componentContext.changeFilter.emit({recordType: componentContext.recordTypeFilterItem.value, keywordFilterList: componentContext.keywordFilterList, creatorFilterList: creators});
+                this.numChecked = getNumChecked(this.filterItems);
             }
         };
 
-        const keywordsFilter: SearchableRecordFilter = {
+        const keywordsFilter: SearchableListFilter = {
             title: 'Keywords',
+            type: FilterType.CHECKBOX,
+            numChecked: 0,
             hide: false,
             pageable: true,
             searchable: true,
             pagingData: {
                 limit: 12,
                 totalSize: 0,
-                currentPage: 1,
+                pageIndex: 1,
                 hasNextPage: false
             },
             rawFilterItems: [],
@@ -204,7 +185,7 @@ export class RecordFiltersComponent implements OnInit, OnDestroy {
             },
             searchSubmitted: function(){
                 this.pagingData['totalSize'] = 0;
-                this.pagingData['currentPage'] = 1;
+                this.pagingData['pageIndex'] = 1;
                 this.pagingData['hasNextPage'] = false;
                 this.nextPage();
             },
@@ -213,13 +194,13 @@ export class RecordFiltersComponent implements OnInit, OnDestroy {
                 const pagingData = filterInstance.pagingData;
                 const paginatedConfig = {
                     searchText: componentContext.state.keywordSearchText,
-                    pageIndex: pagingData.currentPage - 1,
+                    pageIndex: pagingData.pageIndex - 1,
                     limit: pagingData.limit,
                 };
                 componentContext.cm.getKeywords(componentContext.catalogId, paginatedConfig).pipe(
                     takeUntil(componentContext._destroySub$),
                 ).subscribe((response: HttpResponse<KeywordCount[]>) => {
-                        if (pagingData.currentPage === 1) {
+                        if (pagingData.pageIndex === 1) {
                             filterInstance.rawFilterItems = response.body;
                         } else {
                             filterInstance.rawFilterItems = filterInstance.rawFilterItems.concat(response.body);
@@ -227,6 +208,7 @@ export class RecordFiltersComponent implements OnInit, OnDestroy {
                         filterInstance.setFilterItems();
                         pagingData['totalSize'] = Number(response.headers.get('x-total-count')) || 0;
                         pagingData['hasNextPage'] = filterInstance.filterItems.length < pagingData.totalSize;
+                        filterInstance.numChecked = getNumChecked(this.filterItems);
                     }, error => componentContext.toast.createErrorToast(error));
             },
             getItemText: function(filterItem) {
@@ -242,12 +224,13 @@ export class RecordFiltersComponent implements OnInit, OnDestroy {
                 const keywords = filter(componentContext.state.keywordFilterList, keyword => {
                     return this.filterItems.filter(currentFilterItem => currentFilterItem.value[`${CATALOG}keyword`].indexOf(keyword) !== -1).length;
                 });
-                componentContext.changeFilter.emit({recordType: componentContext.recordType, keywordFilterList: keywords, creatorFilterList: componentContext.creatorFilterList});
+                componentContext.changeFilter.emit({recordType: componentContext.recordTypeFilterItem.value, keywordFilterList: keywords, creatorFilterList: componentContext.creatorFilterList});
             },
             filter: function() {
                 const checkedKeywordObjects = filter(this.filterItems, currentFilterItem => currentFilterItem.checked);
                 const keywords = map(checkedKeywordObjects, currentFilterItem => currentFilterItem.value[`${CATALOG}keyword`]);
-                componentContext.changeFilter.emit({recordType: componentContext.recordType, keywordFilterList: keywords, creatorFilterList: componentContext.creatorFilterList});
+                componentContext.changeFilter.emit({recordType: componentContext.recordTypeFilterItem.value, keywordFilterList: keywords, creatorFilterList: componentContext.creatorFilterList});
+                this.numChecked = getNumChecked(this.filterItems);
             }
         };
 
@@ -258,6 +241,13 @@ export class RecordFiltersComponent implements OnInit, OnDestroy {
             }
         });
     }
+    
+    ngOnChanges(changes: SimpleChanges): void {
+        if (changes.recordType && !changes.recordType.isFirstChange()) {
+            this.recordTypeFilterItem.value = changes.recordType.currentValue;
+        }
+    }
+
     ngOnDestroy(): void {
         this._destroySub$.next();
         this._destroySub$.complete();

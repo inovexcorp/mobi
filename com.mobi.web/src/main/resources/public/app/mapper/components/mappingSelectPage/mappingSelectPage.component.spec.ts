@@ -36,6 +36,7 @@ import { of, throwError } from 'rxjs';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 import {
     cleanStylesFromDOM, DATE_STR, SHORT_DATE_STR,
@@ -61,7 +62,6 @@ import { SearchBarComponent } from '../../../shared/components/searchBar/searchB
 import { PolicyEnforcementService } from '../../../shared/services/policyEnforcement.service';
 import { ToastService } from '../../../shared/services/toast.service';
 import { MappingSelectPageComponent } from './mappingSelectPage.component';
-import { MatTooltipModule } from "@angular/material/tooltip";
 
 describe('Mapping Select Page component', function() {
     let component: MappingSelectPageComponent;

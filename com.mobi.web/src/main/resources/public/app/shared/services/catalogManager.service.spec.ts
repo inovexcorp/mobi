@@ -36,6 +36,7 @@ import { SortOption } from '../models/sortOption.interface';
 import { CATALOG, DCTERMS } from '../../prefixes';
 import { RESTError } from '../models/RESTError.interface';
 import { CatalogManagerService } from './catalogManager.service';
+import { FilterItem } from '../models/filterItem.interface';
 
 describe('Catalog Manager service', function() {
     let service: CatalogManagerService;
@@ -1998,5 +1999,34 @@ describe('Catalog Manager service', function() {
         expect(service.isCommit(emptyObj)).toEqual(true);
         emptyObj['@type'].push(`${CATALOG}Test`);
         expect(service.isCommit(emptyObj)).toEqual(true);
+    });
+    describe('recordTypeFilter', function() {
+        beforeEach(function() {
+            this.recordTypeFilterItem = {
+                value: 'test1',
+                checked: false
+            } as FilterItem;
+            this.firstRecordFilterItem = {value: 'test1', checked: true};
+            this.secondRecordFilterItem = {value: 'test2', checked: true};
+            this.emitterCall = (value) => {};
+            spyOn(this, 'emitterCall');
+            this.recordTypeFilter = service.getRecordTypeFilter(this.recordTypeFilterItem, this.emitterCall);
+            this.recordTypeFilter.filterItems = [this.firstRecordFilterItem, this.secondRecordFilterItem];
+        });
+        describe('should filter records', function() {
+            it('if the filter has been checked', function() {
+                this.recordTypeFilter.filter(this.firstRecordFilterItem);
+                expect(this.secondRecordFilterItem.checked).toEqual(false);
+                expect(this.emitterCall).toHaveBeenCalled();
+            });
+            it('if the filter has been unchecked', function() {
+                this.firstRecordFilterItem.checked = false;
+                this.recordTypeFilter.filter(this.firstRecordFilterItem);
+                expect(this.emitterCall).toHaveBeenCalled();
+            });
+        });
+        it('filter text method returns correctly', function() {
+            expect(this.recordTypeFilter.getItemText(this.firstRecordFilterItem)).toEqual('Test 1');
+        });
     });
 });

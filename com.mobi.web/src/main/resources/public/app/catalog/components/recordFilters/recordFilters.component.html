@@ -21,29 +21,5 @@
   #L%
   -->
 <div class="record-filters w-100">
-    <!-- TODO: Replace with list-filters at some point -->
-    <mat-expansion-panel class="mat-elevation-z0" *ngFor="let currentFilter of filters" [expanded]="!currentFilter.hide">
-        <mat-expansion-panel-header>
-            <mat-panel-title>
-                {{ currentFilter.title }}
-            </mat-panel-title>
-        </mat-expansion-panel-header>
-        <div class="filter-options">
-            <search-bar *ngIf="currentFilter.searchable" class="w-100" [bindModel]="currentFilter.searchModel" (bindModelChange)="currentFilter.searchChanged($event)" (submitEvent)="currentFilter.searchSubmitted()"></search-bar>
-            <info-message *ngIf="!currentFilter.filterItems.length">No {{ currentFilter.title }} available</info-message>
-            <div [ngClass]="{pageable: currentFilter.pageable}">
-                <div class="filter-option my-2" *ngFor="let filterItem of currentFilter.filterItems">
-                    <ng-template [ngIf]="currentFilter.hasOwnProperty('getItemTooltip')" [ngIfElse]="noToolTip">
-                        <mat-checkbox [(ngModel)]="filterItem.checked" (change)="currentFilter.filter(filterItem)" [title]="currentFilter.getItemTooltip(filterItem)">{{ currentFilter.getItemText(filterItem) }}</mat-checkbox>
-                    </ng-template>
-                    <ng-template #noToolTip>
-                        <mat-checkbox [(ngModel)]="filterItem.checked" (change)="currentFilter.filter(filterItem)">{{ currentFilter.getItemText(filterItem) }}</mat-checkbox>
-                    </ng-template>
-                </div>
-            </div>
-            <a *ngIf="currentFilter.pageable && currentFilter.pagingData.hasNextPage" (click)="currentFilter.pagingData.currentPage = currentFilter.pagingData.currentPage + 1; currentFilter.nextPage()">
-                <i class="fa fa-fw fa-plus"></i><span>Load More</span>
-            </a>
-        </div>
-    </mat-expansion-panel>
+    <app-list-filters [filters]="filters"></app-list-filters>
 </div>

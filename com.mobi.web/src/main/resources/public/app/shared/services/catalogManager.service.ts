@@ -22,9 +22,9 @@
  */
 import { HttpClient, HttpHeaders, HttpParams, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { has, find, get, forEach, difference } from 'lodash';
+import { difference, find, forEach, get, has } from 'lodash';
 import { catchError, map, mergeMap, switchMap, tap } from 'rxjs/operators';
-import { Observable, throwError, of, forkJoin, Subject } from 'rxjs';
+import { forkJoin, Observable, of, Subject, throwError } from 'rxjs';
 
 import { REST_PREFIX } from '../../constants';
 import { CommitDifference } from '../models/commitDifference.interface';
@@ -41,8 +41,18 @@ import { TagConfig } from '../models/tagConfig.interface';
 import { KeywordCount } from '../models/keywordCount.interface';
 import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
 import { CATALOG, DCTERMS } from '../../prefixes';
-import { condenseCommitId, createHttpParams, getBeautifulIRI, getDctermsValue, handleError, handleErrorObject, paginatedConfigToHttpParams } from '../utility';
+import {
+    condenseCommitId,
+    createHttpParams,
+    getBeautifulIRI,
+    getDctermsValue,
+    handleError,
+    handleErrorObject,
+    paginatedConfigToHttpParams
+} from '../utility';
 import { EventTypeConstants, EventWithPayload } from '../models/eventWithPayload.interface';
+import { FilterItem } from '../models/filterItem.interface';
+import { FilterType, ListFilter } from '../models/list-filter.interface';
 
 /**
  * @class shared.CatalogManagerService
@@ -1258,6 +1268,59 @@ export class CatalogManagerService {
         const type = difference(this.recordTypes, this.coreRecordTypes)
             .find(type => get(record, '@type', []).includes(type));
         return type || `${CATALOG}Record`;
+    }
+
+    /**
+     * Returns a ListFilter object for filtering record types.
+     *
+     * @param {FilterItem} recordFilterItem - The currently selected record type filter item.
+     * @param {(value: string) => void} [emitterCall] - An optional callback function to be called when a filter item is selected.
+     * @returns {ListFilter} - The generated ListFilter object.
+     */
+    getRecordTypeFilter(recordFilterItem: FilterItem, emitterCall?: (value: string) => void): ListFilter {
+        const filterItems = this.recordTypes.map( type => ({
+            value: type,
+            checked: type === recordFilterItem.value,
+        } as FilterItem));
+
+        const getNumChecked = (items => items.filter(item => item.checked).length);
+
+        return {
+            title: 'Record Type',
+            type: FilterType.CHECKBOX,
+            numChecked: 0,
+            hide: false,
+            pageable: false,
+            searchable: false,
+            filterItems,
+            onInit: function() {
+                this.setFilterItems();
+                this.numChecked = getNumChecked(this.filterItems);
+            },
+            getItemText: function(filterItem: FilterItem) {
+                return getBeautifulIRI(filterItem.value);
+            },
+            setFilterItems: () => {},
+            filter: function(filterItem: FilterItem) {
+                if (filterItem.checked) {
+                    forEach(this.filterItems, typeFilter => {
+                        if (typeFilter.value !== filterItem.value) {
+                            typeFilter.checked = false;
+                        }
+                    });
+                    if (emitterCall) {
+                        emitterCall(filterItem.value);
+                    }
+                } else {
+                    if (recordFilterItem.value === filterItem.value) {
+                        if (emitterCall) {
+                            emitterCall('');
+                        }
+                    }
+                }
+              this.numChecked = getNumChecked(this.filterItems);
+            }
+        };
     }
 
     private _createVersion(recordId: string, catalogId: string, versionConfig: NewConfig): Observable<string> {
