@@ -24,6 +24,8 @@ import { Component, Input } from '@angular/core';
 
 import { JSONLDObject } from '../../models/JSONLDObject.interface';
 import { CatalogStateService } from '../../services/catalogState.service';
+import { CatalogManagerService } from '../../services/catalogManager.service';
+import { getBeautifulIRI } from '../../utility';
 
 /**
  * @class shared.RecordIconComponent
@@ -41,12 +43,14 @@ import { CatalogStateService } from '../../services/catalogState.service';
 export class RecordIconComponent {
     icon = '';
     isMaterial = false;
+    title = '';
 
     private _record: JSONLDObject;
 
     @Input() set record(value: JSONLDObject) {
         this._record = value;
         this._changeIcon(this.state.getRecordIcon(this._record));
+        this.title = getBeautifulIRI(this.cm.getType(value));
     }
 
     get record(): JSONLDObject {
@@ -58,7 +62,8 @@ export class RecordIconComponent {
         this._changeIcon(this.state.getRecordIcon(this._record));
     }
 
-    constructor(public state: CatalogStateService) {}
+  constructor(public state: CatalogStateService, private cm: CatalogManagerService) {
+  }
 
     private _changeIcon(recordIcon: string): void {
         if (recordIcon.startsWith('mat ')) {

@@ -23,8 +23,8 @@
 
 <span *ngIf="!isMaterial" class="record-icon fa-stack">
   <i class="fa fa-square fa-stack-2x"></i>
-  <i class="fa {{icon}} fa-inverse fa-stack-1x"></i>
+  <i class="fa {{icon}} fa-inverse fa-stack-1x" title="{{title}}"></i>
 </span>
 <span *ngIf="isMaterial" class="record-icon mat-record-icon">
-  <mat-icon>{{icon}}</mat-icon> 
+  <mat-icon title="{{title}}">{{icon}}</mat-icon>
 </span>
