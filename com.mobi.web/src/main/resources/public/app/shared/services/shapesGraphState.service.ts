@@ -380,26 +380,25 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
   merge(): Observable<null> {
     const sourceId = this.listItem.versionedRdfRecord.branchId;
     const shouldDelete = this.listItem.merge.checkbox;
-    let commitId;
     return this.cm.mergeBranches(sourceId, this.listItem.merge.target['@id'], 
       this.listItem.versionedRdfRecord.recordId, 
       this.catalogId, 
       this.listItem.merge.resolutions
     ).pipe(
-      switchMap(commit => {
-        commitId = commit;
+      switchMap(commit => 
+        // changeVersion called before branch deletion in order to avoid a race condition with the branch deletion event handler
+        this.changeVersion(this.listItem.versionedRdfRecord.recordId, 
+          this.listItem.merge.target['@id'], 
+          commit, 
+          undefined, 
+          getDctermsValue(this.listItem.merge.target, 'title'), true, false, false)
+      ),
+      switchMap(() => {
         if (shouldDelete) {
           return this.cm.deleteRecordBranch(this.listItem.versionedRdfRecord.recordId, sourceId, this.catalogId);
         } else {
           return of(null);
         }
-      }),
-      switchMap(() => {
-        return this.changeVersion(this.listItem.versionedRdfRecord.recordId, 
-          this.listItem.merge.target['@id'], 
-          commitId, 
-          undefined, 
-          getDctermsValue(this.listItem.merge.target, 'title'), true, false, false);
       })
     );
   }
