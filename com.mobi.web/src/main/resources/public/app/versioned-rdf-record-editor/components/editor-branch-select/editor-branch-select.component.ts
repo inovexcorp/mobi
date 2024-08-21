@@ -197,12 +197,12 @@ export class EditorBranchSelectComponent<TData extends VersionedRdfListItem> imp
     }
   }
   /**
-   * On panel first open, resets the control value and refetches the list of ranches and tags.
+   * On panel first open, refetches the list of ranches and tags then resets the control value. The reset happens after
+   * so that it accounts for the new branches and tags that were fetched
    */
   open(): void {
     // Resets the form control, marking it pristine and untouched, and resetting the value.
-    this.branchSearchControl.reset();
-    this.retrieveBranchesAndTags().subscribe();
+    this.retrieveBranchesAndTags().subscribe(() => this.branchSearchControl.reset());
   }
   /**
    * Resets the value of the control and the selected icon to display depending on what is selected on the listItem.

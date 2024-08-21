@@ -477,7 +477,7 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
           const prevActiveKey = this.getActiveKey();
           assign(oldListItem, newListItem);
           if (!newListItem.isVocabulary && (prevActiveKey === 'concepts' || prevActiveKey === 'schemes')) {
-              oldListItem.tabIndex = 0;
+            oldListItem.tabIndex = 0;
           } else {
             oldListItem.tabIndex = tabIndex;
           }
@@ -501,26 +501,25 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
     merge(): Observable<null> {
       const sourceId = this.listItem.versionedRdfRecord.branchId;
       const checkbox = this.listItem.merge.checkbox;
-      let commitId;
       return this.cm.mergeBranches(sourceId, this.listItem.merge.target['@id'], this.listItem.versionedRdfRecord.recordId, this.catalogId, this.listItem.merge.resolutions)
         .pipe(
-          switchMap((commit: string) => {
-            commitId = commit;
+          // changeVersion called before branch deletion in order to avoid a race condition with the branch deletion event handler
+          switchMap((commit: string) => this.changeVersion(this.listItem.versionedRdfRecord.recordId, 
+              this.listItem.merge.target['@id'], 
+              commit, 
+              undefined, 
+              getDctermsValue(this.listItem.merge.target, 'title'), 
+              true, 
+              false, 
+              false)
+          ),
+          switchMap(() => {
             if (checkbox) {
-                return this.cm.deleteRecordBranch(this.listItem.versionedRdfRecord.recordId, sourceId, this.catalogId);
+              return this.cm.deleteRecordBranch(this.listItem.versionedRdfRecord.recordId, sourceId, this.catalogId);
             } else {
-                return of(1);
+              return of(1);
             }
           }),
-          switchMap(() => this.changeVersion(this.listItem.versionedRdfRecord.recordId, 
-            this.listItem.merge.target['@id'], 
-            commitId, 
-            undefined, 
-            getDctermsValue(this.listItem.merge.target, 'title'), 
-            true, 
-            false, 
-            false)
-          ),
           switchMap(() => this.resetStateTabs())
         );
     }

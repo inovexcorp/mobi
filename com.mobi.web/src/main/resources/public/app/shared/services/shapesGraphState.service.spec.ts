@@ -654,72 +654,38 @@ describe('Shapes Graph State service', function() {
       catalogManagerStub.deleteRecordBranch.and.returnValue(of(null));
       catalogManagerStub.mergeBranches.and.returnValue(of('commitId'));
     });
-    describe('and delete the branch if the checkbox is', function() {
-      describe('checked', function() {
-        beforeEach(function() {
-            service.listItem.merge.checkbox = true;
-        });
-        describe('and should change the shapes graph version to the target branch', function() {
-          it('successfully', async function() {
-            await service.merge()
-              .subscribe(() => {
-                expect(catalogManagerStub.mergeBranches).toHaveBeenCalledWith('sourceBranchId', 'targetBranchId', 'recordId', 'catalog', new Difference());
-                expect(catalogManagerStub.deleteRecordBranch).toHaveBeenCalledWith('recordId', 'sourceBranchId', catalogId);
-                expect(this.changeVersionSpy).toHaveBeenCalledWith('recordId', 'targetBranchId', 'commitId', undefined, 'branchTitle', true, false, false);
-              }, () => fail('Observable should have succeeded'));
-          });
-          it('unless an error occurs', async function() {
-            this.changeVersionSpy.and.returnValue(throwError('Error'));
-            await service.merge()
-              .subscribe(() => {
-                fail('Observable should have rejected');
-              }, response => {
-                expect(response).toEqual('Error');
-                expect(catalogManagerStub.mergeBranches).toHaveBeenCalledWith('sourceBranchId', 'targetBranchId', 'recordId', 'catalog', new Difference());
-                expect(catalogManagerStub.deleteRecordBranch).toHaveBeenCalledWith('recordId', 'sourceBranchId', catalogId);
-                expect(this.changeVersionSpy).toHaveBeenCalledWith('recordId', 'targetBranchId', 'commitId', undefined, 'branchTitle', true, false, false);
-              });
-          });
-        });
-        it('unless an error occurs', async function() {
-          catalogManagerStub.deleteRecordBranch.and.returnValue(throwError('Error'));
-          await service.merge()
-            .subscribe(() => {
-              fail('Observable should have errored');
-            }, response => {
-              expect(response).toEqual('Error');
-              expect(catalogManagerStub.mergeBranches).toHaveBeenCalledWith('sourceBranchId', 'targetBranchId', 'recordId', 'catalog', new Difference());
-              expect(catalogManagerStub.deleteRecordBranch).toHaveBeenCalledWith('recordId', 'sourceBranchId', catalogId);
-              expect(this.changeVersionSpy).not.toHaveBeenCalled();
-            });
-        });
-      });
-      describe('unchecked and should change the shapes graph version to the target branch', function() {
-        beforeEach(function() {
-          service.listItem.merge.checkbox = false;
-        });
-        it('successfully', async function() {
-          catalogManagerStub.mergeBranches.and.returnValue(of('commitId'));
+    describe('and should change the shapes graph version to the target branch', function()  {
+      describe('and handle if the checkbox is', function() {
+        it('checked', async function() {
+          service.listItem.merge.checkbox = true;
           await service.merge()
             .subscribe(() => {
               expect(catalogManagerStub.mergeBranches).toHaveBeenCalledWith('sourceBranchId', 'targetBranchId', 'recordId', 'catalog', new Difference());
-              expect(catalogManagerStub.deleteRecordBranch).not.toHaveBeenCalled();
               expect(this.changeVersionSpy).toHaveBeenCalledWith('recordId', 'targetBranchId', 'commitId', undefined, 'branchTitle', true, false, false);
+              expect(catalogManagerStub.deleteRecordBranch).toHaveBeenCalledWith('recordId', 'sourceBranchId', catalogId);
             }, () => fail('Observable should have succeeded'));
         });
-        it('unless an error occurs', async function() {
-          catalogManagerStub.mergeBranches.and.returnValue(of('commitId'));
-          this.changeVersionSpy.and.returnValue(throwError('Error'));
+        it('unchecked', async function() {
+          service.listItem.merge.checkbox = false;
           await service.merge()
             .subscribe(() => {
-              fail('Observable should have rejected');
-            }, response => {
-              expect(response).toEqual('Error');
               expect(catalogManagerStub.mergeBranches).toHaveBeenCalledWith('sourceBranchId', 'targetBranchId', 'recordId', 'catalog', new Difference());
-              expect(catalogManagerStub.deleteRecordBranch).not.toHaveBeenCalled();
               expect(this.changeVersionSpy).toHaveBeenCalledWith('recordId', 'targetBranchId', 'commitId', undefined, 'branchTitle', true, false, false);
-            });
+              expect(catalogManagerStub.deleteRecordBranch).not.toHaveBeenCalled();
+            }, () => fail('Observable should have succeeded'));
         });
+      });
+      it('unless an error occurs', async function() {
+        this.changeVersionSpy.and.returnValue(throwError('Error'));
+        await service.merge()
+          .subscribe(() => {
+            fail('Observable should have errored');
+          }, response => {
+            expect(response).toEqual('Error');
+            expect(catalogManagerStub.mergeBranches).toHaveBeenCalledWith('sourceBranchId', 'targetBranchId', 'recordId', 'catalog', new Difference());
+            expect(this.changeVersionSpy).toHaveBeenCalledWith('recordId', 'targetBranchId', 'commitId', undefined, 'branchTitle', true, false, false);
+            expect(catalogManagerStub.deleteRecordBranch).not.toHaveBeenCalled();
+          });
       });
     });
     it('unless an error occurs', async function() {
@@ -730,6 +696,7 @@ describe('Shapes Graph State service', function() {
         }, response => {
           expect(response).toEqual('Error');
           expect(catalogManagerStub.mergeBranches).toHaveBeenCalledWith('sourceBranchId', 'targetBranchId', 'recordId', 'catalog', new Difference());
+          expect(this.changeVersionSpy).not.toHaveBeenCalled();
           expect(catalogManagerStub.deleteRecordBranch).not.toHaveBeenCalled();
           expect(this.changeVersionSpy).not.toHaveBeenCalled();
         });
