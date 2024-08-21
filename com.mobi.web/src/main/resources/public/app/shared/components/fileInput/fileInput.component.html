@@ -20,7 +20,7 @@
   -->
 <div *ngIf="displayText" class="field-label">{{displayText}}</div>
 <div class="file-input mt-2">
-    <input style="display: none" type="file" (change)="update($event)" accept="{{accept}}" required="{{isRequired}}" multiple="{{isMultiple ? 'multiple' : ''}}" #hiddenfileinput>
+    <input style="display: none" type="file" (change)="update($event)" [accept]="accept" [required]="isRequired" [multiple]="isMultiple ? 'multiple' : ''" #hiddenfileinput>
     <button (click)="hiddenfileinput.click()" mat-raised-button>Choose File</button>
     <span class="file-name-label mx-1 text-truncate text-muted" [ngClass]="{'text-body': selected}"> {{text}}</span>
 </div>

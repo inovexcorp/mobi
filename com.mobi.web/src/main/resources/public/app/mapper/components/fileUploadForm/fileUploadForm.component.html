@@ -22,7 +22,7 @@
   -->
 <div class="file-upload-form">
     <error-display *ngIf="errorMessage">{{errorMessage}}</error-display>
-    <file-input [files]="dm.fileObj" [accept]="['.csv','.xls','.xlsx','.tsv']" (filesChange)="upload($event)" required></file-input>
+    <file-input [files]="dm.fileObj" [accept]="acceptFileTypes" (filesChange)="upload($event)" required></file-input>
     <div class="pt-2" [formGroup]="uploadFileForm">
         <mat-checkbox formControlName="containsHeaders">Contains Headers</mat-checkbox>
         <div *ngIf="dm.fileObj && !isExcel">

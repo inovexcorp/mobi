@@ -20,9 +20,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { UntypedFormBuilder } from '@angular/forms';
 import { includes, get } from 'lodash';
+import { Subscription } from 'rxjs';
 
 import { DelimitedManagerService } from '../../../shared/services/delimitedManager.service';
 import { MapperStateService } from '../../../shared/services/mapperState.service';
@@ -36,51 +37,63 @@ import { MapperStateService } from '../../../shared/services/mapperState.service
  * {@link shared.MapperStateService#selected mapping} and outputs a list of any invalid data property mappings.
  */
 @Component({
-    selector: 'file-upload-form',
-    templateUrl: './fileUploadForm.component.html'
+  selector: 'file-upload-form',
+  templateUrl: './fileUploadForm.component.html'
 })
-export class FileUploadFormComponent implements OnInit {
-    errorMessage = '';
-    uploadFileForm = this.fb.group({
-        containsHeaders: [true],
-        separator: [',']
-    });
-    isExcel = false;
+export class FileUploadFormComponent implements OnInit, OnDestroy {
+  errorMessage = '';
+  uploadFileForm = this.fb.group({
+    containsHeaders: [true],
+    separator: [',']
+  });
+  isExcel = false;
+  readonly acceptFileTypes = ['.csv','.xls','.xlsx','.tsv'];
 
-    constructor(public dm: DelimitedManagerService, public state: MapperStateService, private fb: UntypedFormBuilder) {}
+  constructor(public dm: DelimitedManagerService, public state: MapperStateService, private fb: UntypedFormBuilder) {}
+  
+  containsHeadersSubscription: Subscription;
+  separatorSubscription: Subscription;
 
-    ngOnInit(): void {
-        this.uploadFileForm.controls.containsHeaders.valueChanges
-            .subscribe(newValue => {
-                this.dm.containsHeaders = newValue;
-            });
-        this.uploadFileForm.controls.separator.valueChanges
-            .subscribe(newValue => {
-                this.changeSeparator(newValue);
-            });
+  ngOnInit(): void {
+    this.containsHeadersSubscription = this.uploadFileForm.controls.containsHeaders.valueChanges
+      .subscribe((newValue: boolean) => {
+        this.dm.containsHeaders = newValue;
+      });
+    this.separatorSubscription = this.uploadFileForm.controls.separator.valueChanges
+      .subscribe((newValue: string) => {
+        this.changeSeparator(newValue);
+      });
+  }
+  ngOnDestroy(): void {
+    if (this.containsHeadersSubscription && !this.containsHeadersSubscription.closed) {
+      this.containsHeadersSubscription.unsubscribe();
     }
-    upload(value: File): void {
-        this.dm.fileObj = value;
-        this.isExcel = includes(get(this.dm.fileObj, 'name', ''), 'xls');
-        if (this.dm.fileObj) {
-            this.dm.upload(this.dm.fileObj).subscribe(data => {
-                this.dm.fileName = data;
-                this.errorMessage = '';
-                this.dm.previewFile(50).subscribe(() => this.state.setInvalidProps(), error => this._onError(error));
-            }, error => this._onError(error));
-        }
+    if (this.separatorSubscription && !this.separatorSubscription.closed) {
+      this.separatorSubscription.unsubscribe();
     }
-    changeSeparator(value: string): void {
-        this.dm.separator = value;
-        this.dm.previewFile(50).subscribe(() => {
-            this.errorMessage = '';
-            this.state.setInvalidProps();
-        }, error => this._onError(error));
+  }
+  upload(value: File): void {
+    this.dm.fileObj = value;
+    this.isExcel = includes(get(this.dm.fileObj, 'name', ''), 'xls');
+    if (this.dm.fileObj) {
+      this.dm.upload(this.dm.fileObj).subscribe(data => {
+        this.dm.fileName = data;
+        this.errorMessage = '';
+        this.dm.previewFile(50).subscribe(() => this.state.setInvalidProps(), error => this._onError(error));
+      }, error => this._onError(error));
     }
+  }
+  changeSeparator(value: string): void {
+    this.dm.separator = value;
+    this.dm.previewFile(50).subscribe(() => {
+      this.errorMessage = '';
+      this.state.setInvalidProps();
+    }, error => this._onError(error));
+  }
 
-    private _onError(errorMessage) {
-        this.errorMessage = errorMessage;
-        this.dm.dataRows = undefined;
-        this.state.invalidProps = [];
-    }
+  private _onError(errorMessage) {
+    this.errorMessage = errorMessage;
+    this.dm.dataRows = undefined;
+    this.state.invalidProps = [];
+  }
 }
