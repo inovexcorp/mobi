@@ -12,12 +12,12 @@ package com.mobi.catalog.impl;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
@@ -47,11 +47,8 @@ import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecordFactory;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.dcterms._Thing;
-import com.mobi.ontologies.provo.Activity;
-import com.mobi.ontologies.provo.Entity;
 import com.mobi.persistence.utils.Bindings;
 import com.mobi.persistence.utils.ConnectionUtils;
-import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
@@ -62,6 +59,7 @@ import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
+import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 import org.eclipse.rdf4j.model.vocabulary.PROV;
 import org.eclipse.rdf4j.query.BindingSet;
 import org.eclipse.rdf4j.query.BooleanQuery;
@@ -103,43 +101,45 @@ public class SimpleCommitManager implements CommitManager {
     private static final String RECORD_BINDING = "record";
     private static final String COMMIT_BINDING = "commit";
     private static final String BRANCH_BINDING = "branch";
+    private static final String PARENT_BINDING = "parent";
+    private static final String ENTITY_BINDING = "entity";
     private static final String GET_IN_PROGRESS_COMMIT;
     private static final String GET_ALL_IN_PROGRESS_COMMIT_IRIS;
     private static final String VERSIONED_RDF_RECORD_IRI_QUERY;
     private static final String COMMIT_IN_RECORD;
     private static final String GET_COMMIT_CHAIN;
     private static final String GET_COMMIT_ENTITY_CHAIN;
-    private static final String PARENT_BINDING = "parent";
-    private static final String ENTITY_BINDING = "entity";
 
     static {
         try {
             GET_IN_PROGRESS_COMMIT = IOUtils.toString(
                     Objects.requireNonNull(SimpleCommitManager.class
-                            .getResourceAsStream("/get-in-progress-commit.rq")),
+                            .getResourceAsStream("/commit/get-in-progress-commit.rq")),
                     StandardCharsets.UTF_8
             );
             GET_ALL_IN_PROGRESS_COMMIT_IRIS = IOUtils.toString(
                     Objects.requireNonNull(SimpleCommitManager.class
-                            .getResourceAsStream("/get-all-in-progress-commit-iris.rq")),
+                            .getResourceAsStream("/commit/get-all-in-progress-commit-iris.rq")),
                     StandardCharsets.UTF_8
             );
             VERSIONED_RDF_RECORD_IRI_QUERY = IOUtils.toString(
                     Objects.requireNonNull(SimpleCommitManager.class
-                            .getResourceAsStream("/get-record-from-branch.rq")),
+                            .getResourceAsStream("/commit/get-record-from-branch.rq")),
                     StandardCharsets.UTF_8
             );
             COMMIT_IN_RECORD = IOUtils.toString(
-                    Objects.requireNonNull(SimpleCommitManager.class.getResourceAsStream("/commit-in-record.rq")),
+                    Objects.requireNonNull(
+                            SimpleCommitManager.class.getResourceAsStream("/commit/commit-in-record.rq")),
                     StandardCharsets.UTF_8
             );
             GET_COMMIT_CHAIN = IOUtils.toString(
-                    Objects.requireNonNull(SimpleCommitManager.class.getResourceAsStream("/get-commit-chain.rq")),
+                    Objects.requireNonNull(
+                            SimpleCommitManager.class.getResourceAsStream("/commit/get-commit-chain.rq")),
                     StandardCharsets.UTF_8
             );
             GET_COMMIT_ENTITY_CHAIN = IOUtils.toString(
-                    Objects.requireNonNull(SimpleCommitManager.class
-                            .getResourceAsStream("/get-commit-entity-chain.rq")),
+                    Objects.requireNonNull(
+                            SimpleCommitManager.class.getResourceAsStream("/commit/get-commit-entity-chain.rq")),
                     StandardCharsets.UTF_8
             );
         } catch (IOException e) {
@@ -208,7 +208,7 @@ public class SimpleCommitManager implements CommitManager {
     @Override
     public void addInProgressCommit(Resource catalogId, Resource versionedRDFRecordId,
                                     InProgressCommit inProgressCommit, RepositoryConnection conn) {
-        Resource userIRI = (Resource) inProgressCommit.getProperty(vf.createIRI(Activity.wasAssociatedWith_IRI))
+        Resource userIRI = (Resource) inProgressCommit.getProperty(PROV.WAS_ASSOCIATED_WITH)
                 .orElseThrow(() -> new IllegalArgumentException("User not set on InProgressCommit "
                         + inProgressCommit.getResource()));
         if (getInProgressCommitIRI(versionedRDFRecordId, userIRI, conn).isPresent()) {
@@ -234,65 +234,54 @@ public class SimpleCommitManager implements CommitManager {
 
     @Override
     public Commit createCommit(@Nonnull InProgressCommit inProgressCommit, @Nonnull String message, Commit baseCommit,
-                               Commit auxCommit) {
+                               Commit auxCommit, boolean masterCommit) {
         if (auxCommit != null && baseCommit == null) {
             throw new IllegalArgumentException("Commit must have a base commit in order to have an auxiliary commit");
         }
-        IRI associatedWith = vf.createIRI(Activity.wasAssociatedWith_IRI);
-        IRI generatedIRI = vf.createIRI(Activity.generated_IRI);
-        OffsetDateTime now = OffsetDateTime.now();
-        Resource revisionIRI = (Resource) inProgressCommit.getProperty(generatedIRI).get();
-        Value user = inProgressCommit.getProperty(associatedWith).get();
-        StringBuilder metadata = new StringBuilder(now.toString() + user.stringValue());
+        Resource revisionIRI = getRevisionValue(inProgressCommit);
+        Value user = getCommitUser(inProgressCommit);
 
-        Set<Value> generatedParents = new HashSet<>();
-        if (baseCommit != null) {
-            metadata.append(baseCommit.getResource().stringValue());
-            generatedParents.add(baseCommit.getProperty(generatedIRI).get());
-        }
-        if (auxCommit != null) {
-            metadata.append(auxCommit.getResource().stringValue());
-            generatedParents.add(auxCommit.getProperty(generatedIRI).get());
-        }
-        Commit commit = commitFactory.createNew(vf.createIRI(Catalogs.COMMIT_NAMESPACE
-                + DigestUtils.sha1Hex(metadata.toString())));
-        commit.setProperty(revisionIRI, generatedIRI);
-        commit.setProperty(vf.createLiteral(now), PROV.AT_TIME);
-        commit.setProperty(vf.createLiteral(message), vf.createIRI(_Thing.title_IRI));
-        commit.setProperty(user, associatedWith);
+        Commit commit = commitFactory.createNew(vf.createIRI(Catalogs.COMMIT_NAMESPACE + UUID.randomUUID()));
+        commit.setProperty(revisionIRI, PROV.GENERATED);
+        commit.setProperty(vf.createLiteral(OffsetDateTime.now()), PROV.AT_TIME);
+        commit.setProperty(vf.createLiteral(message), DCTERMS.TITLE);
+        commit.setProperty(user, PROV.WAS_ASSOCIATED_WITH);
 
-        if (baseCommit != null) {
+        if (!masterCommit) {
+            commit.getModel().addAll(inProgressCommit.getModel().filter(revisionIRI, null, null));
+        }
+        if (masterCommit && baseCommit != null) {
             commit.setBaseCommit(baseCommit);
+        } else if (!masterCommit && baseCommit != null) {
+            commit.setBranchCommit(baseCommit);
         }
         if (auxCommit != null) {
             commit.setAuxiliaryCommit(auxCommit);
         }
-
-        Model revisionModel = mf.createEmptyModel();
-        revisionModel.addAll(inProgressCommit.getModel());
-        revisionModel.remove(inProgressCommit.getResource(), null, null);
-        revisionFactory.getExisting(revisionIRI, revisionModel).ifPresent(revision -> {
-            if (generatedParents.size() > 0) {
-                revision.setProperties(generatedParents, vf.createIRI(Entity.wasDerivedFrom_IRI));
-            }
-        });
-
-        commit.getModel().addAll(revisionModel);
         return commit;
+    }
+
+    private Resource getRevisionValue(Commit commit) {
+        return (Resource) commit.getProperty(PROV.GENERATED)
+                .orElseThrow(() -> new IllegalStateException(String.format("Commit %s does not contain a revision",
+                        commit.getResource().stringValue())));
+    }
+
+    private Value getCommitUser(Commit commit) {
+        return commit.getProperty(PROV.WAS_ASSOCIATED_WITH)
+                .orElseThrow(() -> new IllegalStateException(String.format("InProgressCommit %s does not contain a "
+                        + "user", commit.getResource().stringValue())));
     }
 
     @Override
     public InProgressCommit createInProgressCommit(User user) {
         UUID uuid = UUID.randomUUID();
-
-        Revision revision = revisionFactory.createNew(vf.createIRI(Catalogs.REVISION_NAMESPACE + uuid));
-        revision.setAdditions(vf.createIRI(Catalogs.ADDITIONS_NAMESPACE + uuid));
-        revision.setDeletions(vf.createIRI(Catalogs.DELETIONS_NAMESPACE + uuid));
+        Revision revision = revisionManager.createRevision(uuid);
 
         InProgressCommit inProgressCommit = inProgressCommitFactory.createNew(vf.createIRI(
                 Catalogs.IN_PROGRESS_COMMIT_NAMESPACE + uuid));
-        inProgressCommit.setProperty(user.getResource(), vf.createIRI(Activity.wasAssociatedWith_IRI));
-        inProgressCommit.setProperty(revision.getResource(), vf.createIRI(Activity.generated_IRI));
+        inProgressCommit.setProperty(user.getResource(), PROV.WAS_ASSOCIATED_WITH);
+        inProgressCommit.setProperty(revision.getResource(), PROV.GENERATED);
         inProgressCommit.getModel().addAll(revision.getModel());
 
         return inProgressCommit;
@@ -544,7 +533,7 @@ public class SimpleCommitManager implements CommitManager {
             conn.begin();
         }
 
-        Revision revision = revisionManager.getRevision(commit.getResource(), conn);
+        Revision revision = revisionManager.getRevisionFromCommitId(commit.getResource(), conn);
         thingManager.removeObject(commit, conn);
 
         Set<Resource> graphs = new HashSet<>();
@@ -556,21 +545,9 @@ public class SimpleCommitManager implements CommitManager {
         });
 
         graphs.forEach(resource -> {
-            // Transaction bug here where the statements in the removed commit are still in the repo when retrieved
-            // with the additions/deletions graph resource as the object. When retrieving the InProgressCommit graph
-            // no results are returned as expected.
-            // https://github.com/eclipse-rdf4j/rdf4j/issues/3796
-            // https://github.com/eclipse-rdf4j/rdf4j/issues/3156
-
-            // Original logic:
-            // if (!ConnectionUtils.contains(conn, null, null, resource)) {
-            //     remove(resource, conn);
-            // }
-            Model model = QueryResults.asModel(conn.getStatements(null, null, resource), mf);
-            model.remove(null, null, null, commit.getResource());
-            if (!model.contains(null, null, resource)) {
-                thingManager.remove(resource, conn);
-            }
+             if (!conn.hasStatement(null, null, resource, false)) {
+                 thingManager.remove(resource, conn);
+             }
         });
 
         if (!isActive) {
@@ -592,7 +569,7 @@ public class SimpleCommitManager implements CommitManager {
                                        @Nullable Model additions, @Nullable Model deletions,
                                        RepositoryConnection conn) {
         validateInProgressCommit(catalogId, versionedRDFRecordId, commitId, conn);
-        Revision revision = revisionManager.getRevision(commitId, conn);
+        Revision revision = revisionManager.getRevisionFromCommitId(commitId, conn);
         updateCommit(commitId, revision, additions, deletions, conn);
     }
 
@@ -709,8 +686,8 @@ public class SimpleCommitManager implements CommitManager {
                 changesContextLocalName = commitHash + "%00" + URLEncoder.encode(modifiedGraph.stringValue(),
                         StandardCharsets.UTF_8);
 
-                IRI additionsIRI = vf.createIRI(Catalogs.ADDITIONS_NAMESPACE + changesContextLocalName);
-                IRI deletionsIRI = vf.createIRI(Catalogs.DELETIONS_NAMESPACE + changesContextLocalName);
+                IRI additionsIRI = vf.createIRI(Catalogs.DELTAS_NAMESPACE + changesContextLocalName + "-A");
+                IRI deletionsIRI = vf.createIRI(Catalogs.DELTAS_NAMESPACE + changesContextLocalName + "-B");
 
                 graphRevision.setAdditions(additionsIRI);
                 graphRevision.setDeletions(deletionsIRI);
@@ -753,7 +730,7 @@ public class SimpleCommitManager implements CommitManager {
      * @param conn               A RepositoryConnection to use for lookup.
      */
     protected void addChanges(Resource targetNamedGraph, Resource oppositeNamedGraph, Model changes,
-                           RepositoryConnection conn) {
+                              RepositoryConnection conn) {
         if (changes == null) {
             return;
         }
@@ -822,8 +799,7 @@ public class SimpleCommitManager implements CommitManager {
 
     /**
      * Gets an iterator which contains all the Commit ids, filtered by a Commit containing the Entity id in its
-     * additions or deletions, in the specified direction, either ascending or descending by date. If descending,
-     * the provided Resource identifying a Commit will be first.
+     * additions or deletions.
      *
      * @param commitId The Resource identifying the Commit that you want to get the chain for.
      * @param entityId The Resource identifying the Entity that you want to get the chain for.

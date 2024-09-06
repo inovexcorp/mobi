@@ -1,0 +1,27 @@
+PREFIX mcat: <http://mobi.com/ontologies/catalog#>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+
+SELECT ?commit ?base ?aux ?revision ?additions ?deletions
+WHERE {
+    ?commit mcat:baseCommit ?base ;
+        prov:generated ?revision .
+
+    ?revision a mcat:Revision ;
+        mcat:additions ?additions ;
+        mcat:deletions ?deletions .
+
+    OPTIONAL {
+        ?commit mcat:auxiliaryCommit ?aux .
+    }
+    {
+        SELECT DISTINCT ?commit ?time
+        WHERE {
+            ?initialCommit (^mcat:baseCommit | ^mcat:auxiliaryCommit)+ ?commit .
+
+            ?commit a mcat:Commit ;
+                prov:atTime ?time .
+            FILTER(?commit in (%FILTER_IN%))
+        }
+        ORDER BY ASC(?time)
+    }
+}

@@ -29,11 +29,11 @@
             <error-display *ngIf="os.listItem.editorTabStates.search.errorMessage">{{os.listItem.editorTabStates.search.errorMessage}}</error-display>
             <info-message *ngIf="os.listItem.editorTabStates.search.infoMessage">{{os.listItem.editorTabStates.search.infoMessage}}</info-message>
             <warning-message *ngIf="os.listItem.editorTabStates.search.warningMessage">{{os.listItem.editorTabStates.search.warningMessage}}</warning-message>
-            <div class="result" *ngFor="let result of os.listItem.editorTabStates.search.results | keyvalue; let i = index; trackBy:trackByKey">
-                <div class="result-header text-muted d-flex" (click)="toggleElement(i)"><strong class="d-inline-block text-truncate flex-1" title="{{result.key}}">{{result.key | prefixation}}</strong><i class="fa fa-fw float-right" [ngClass]="{'fa-chevron-up': !isClosedArray[i], 'fa-chevron-down': isClosedArray[i]}"></i>
+            <div class="headAndBranch" *ngFor="let headAndBranch of os.listItem.editorTabStates.search.results | keyvalue; let i = index; trackBy:trackByKey">
+                <div class="headAndBranch-header text-muted d-flex" (click)="toggleElement(i)"><strong class="d-inline-block text-truncate flex-1" title="{{headAndBranch.key}}">{{headAndBranch.key | prefixation}}</strong><i class="fa fa-fw float-right" [ngClass]="{'fa-chevron-up': !isClosedArray[i], 'fa-chevron-down': isClosedArray[i]}"></i>
                 </div>
                 <ul class="tree" *ngIf="!isClosedArray[i]">
-                    <tree-item *ngFor="let item of result.value;trackBy:trackByIndex"
+                    <tree-item *ngFor="let item of headAndBranch.value;trackBy:trackByIndex"
                                [entityInfo]="os.getEntityByRecordId(os.listItem.versionedRdfRecord.recordId, item)"
                                [isActive]="os.getActiveEntityIRI() === item"
                                (onClick)="selectItem(item)"

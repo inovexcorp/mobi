@@ -1,0 +1,7 @@
+CONSTRUCT {
+    ?s ?p ?o .
+}
+FROM DEFAULT
+WHERE {
+    ?s ?p ?o .
+}

@@ -739,6 +739,7 @@ public class OntologyRest {
                 Model temp = getCurrentModel(recordId, branchId, commitId, catalogBNodes, conn, bNodeService,
                         compiledResourceManager);
                 log.trace("currentModelFuture took " + (System.currentTimeMillis() - startTimeF));
+                assert temp != null;
                 return temp;
             });
             log.trace("uploadChangesToOntology futures creation took {} ms", System.currentTimeMillis() - startTime);
@@ -747,8 +748,8 @@ public class OntologyRest {
             Model uploadedModel = uploadedModelFuture.get();
 
             startTime = System.currentTimeMillis();
-            if (OntologyModels.findFirstOntologyIRI(uploadedModel, valueFactory).isEmpty()) {
-                OntologyModels.findFirstOntologyIRI(currentModel, valueFactory)
+            if (OntologyModels.findFirstOntologyIRI(uploadedModel).isEmpty()) {
+                OntologyModels.findFirstOntologyIRI(currentModel)
                         .ifPresent(iri -> uploadedModel.add(iri, valueFactory.createIRI(RDF.TYPE.stringValue()),
                                 valueFactory.createIRI(OWL.ONTOLOGY.stringValue())));
             }
@@ -2720,7 +2721,7 @@ public class OntologyRest {
     ) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Ontology ontology = optOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr,
-                    applyInProgressCommit, conn).orElseThrow(() -> 
+                    applyInProgressCommit, conn).orElseThrow(() ->
                         ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
             Hierarchy hierarchy = ontology.getSubClassesOf();
             return Response.ok(getHierarchyStream(hierarchy, nested, getClassIRIs(ontology))).build();
@@ -3692,7 +3693,7 @@ public class OntologyRest {
         };
         return Response.ok(output);
     }
-    
+
     /**
      * Retrieves the results of the provided SPARQL query, number of records limited to configurable
      * limit field variable under CatalogConfigProvider.
@@ -3712,7 +3713,7 @@ public class OntologyRest {
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
      * @param includeImports Boolean indicating whether to ontology imports should be included in the query.
-     * @param applyInProgressCommit Boolean indicating whether to apply the in progress commit for the user making the 
+     * @param applyInProgressCommit Boolean indicating whether to apply the in progress commit for the user making the
      *                              request.
      * @return The SPARQL 1.1 results in mime type specified by accept header
      */
@@ -3769,7 +3770,7 @@ public class OntologyRest {
             throw RestUtils.getErrorObjBadRequest(new IllegalArgumentException("Parameter 'query' must be set"));
         }
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            Ontology ontology = optOntology(httpServletRequest, recordIdStr, branchIdStr, commitIdStr, 
+            Ontology ontology = optOntology(httpServletRequest, recordIdStr, branchIdStr, commitIdStr,
                     applyInProgressCommit, conn).orElseThrow(() -> RestUtils.getErrorObjBadRequest(
                             new IllegalArgumentException("The ontology could not be found.")));
             return RestQueryUtils.handleQueryEagerly(queryString, null, acceptString,
@@ -3796,7 +3797,7 @@ public class OntologyRest {
      *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
      *                    otherwise, nothing will be returned.
      * @param includeImports Boolean indicating whether ontology imports should be included in the query.
-     * @param applyInProgressCommit Boolean indicating whether to apply the in progress commit for the user making the 
+     * @param applyInProgressCommit Boolean indicating whether to apply the in progress commit for the user making the
      *                              request.
      * @return The SPARQL 1.1 results in mime type specified by accept header
      */
@@ -4321,7 +4322,7 @@ public class OntologyRest {
                             () -> new IllegalStateException("Expected Ontology object to be present")
                     );
 
-                    StreamingOutput output = outputStream -> 
+                    StreamingOutput output = outputStream ->
                             writeOntologyToStream(ontology, finalFormat, false, outputStream);
                     return Response.ok(output).build();
                 } else {
@@ -4398,7 +4399,7 @@ public class OntologyRest {
      * @param tupleQueryResults the query results that contain "prop" and "range" bindings
      * @param outputStream the output stream to write the results to
      */
-    private void writePropertyRangesToStream(TupleQueryResult tupleQueryResults, OutputStream outputStream) 
+    private void writePropertyRangesToStream(TupleQueryResult tupleQueryResults, OutputStream outputStream)
             throws IOException {
         Map<String, Set<String>> propertyMap = new HashMap<>();
         tupleQueryResults.forEach(bindings -> {
@@ -4421,7 +4422,7 @@ public class OntologyRest {
      * @param tupleQueryResults the query results that contain "class" and "prop" bindings
      * @param outputStream the output stream to write the results to
      */
-    private void writeClassPropertiesToStream(TupleQueryResult tupleQueryResults, OutputStream outputStream) 
+    private void writeClassPropertiesToStream(TupleQueryResult tupleQueryResults, OutputStream outputStream)
             throws IOException {
         Map<String, Set<String>> classMap = new HashMap<>();
         tupleQueryResults.forEach(bindings -> {
@@ -4461,7 +4462,7 @@ public class OntologyRest {
      * @param tupleQueryResults the query results that contain "entity", "prefName", and ?names_array bindings
      * @param outputStream the output stream to write the results to
      */
-    private void writeEntityNamesToStream(TupleQueryResult tupleQueryResults, OutputStream outputStream) 
+    private void writeEntityNamesToStream(TupleQueryResult tupleQueryResults, OutputStream outputStream)
             throws IOException {
         Map<String, EntityNames> entityNamesMap = new HashMap<>();
         String entityBinding = "entity";
@@ -4547,7 +4548,7 @@ public class OntologyRest {
      * @param recordIdStr           the record ID String to process.
      * @param branchIdStr           the branch ID String to process.
      * @param commitIdStr           the commit ID String to process.
-     * @param iriFunction           the Function that takes an Ontology and returns a List of IRI corresponding to an 
+     * @param iriFunction           the Function that takes an Ontology and returns a List of IRI corresponding to an
      *                              Ontology component.
      * @param applyInProgressCommit Boolean indicating whether any in progress commits by user should be
      *                              applied to the return value

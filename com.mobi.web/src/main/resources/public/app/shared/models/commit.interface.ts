@@ -37,5 +37,6 @@ export interface Commit {
     dateObj?: Date,
     message: string,
     base: string,
+    branch: string,
     auxiliary: string
 }

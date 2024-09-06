@@ -368,11 +368,11 @@ public class CommitRestTest extends MobiRestTestCXF {
         expected.add(vf.createIRI(COMMIT_IRIS[0]), typeIRI, vf.createIRI("http://www.w3.org/2002/07/owl#Ontology"));
         expected.add(vf.createIRI(COMMIT_IRIS[1]), typeIRI, vf.createIRI("http://www.w3.org/2002/07/owl#Ontology"));
         expected.add(vf.createIRI(COMMIT_IRIS[2]), typeIRI, vf.createIRI("http://www.w3.org/2002/07/owl#Ontology"));
-        when(compiledResourceManager.getCompiledResource(any(List.class), any(RepositoryConnection.class))).thenReturn(expected);
+
+        when(compiledResourceManager.getCompiledResource(any(Resource.class), any(RepositoryConnection.class))).thenReturn(expected);
         Response response = target().path("commits/" + encode(COMMIT_IRIS[1]) + "/resource")
                 .request().get();
         assertEquals(200, response.getStatus());
-        verify(commitManager).getCommitChain(vf.createIRI(COMMIT_IRIS[1]), conn);
         try {
             ArrayNode result = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
             JsonNode commitObj = result.get(0);
@@ -389,11 +389,10 @@ public class CommitRestTest extends MobiRestTestCXF {
         Model expected = mf.createEmptyModel();
         expected.add(vf.createIRI("http://www.w3.org/2002/07/owl#Ontology"), typeIRI, vf.createIRI(COMMIT_IRIS[1]));
         when(commitManager.getCommitEntityChain(any(Resource.class), any(Resource.class), any(RepositoryConnection.class))).thenReturn(entityCommits);
-        when(compiledResourceManager.getCompiledResource(any(List.class), any(RepositoryConnection.class), any(Resource.class))).thenReturn(expected);
+        when(compiledResourceManager.getCompiledResource(any(Resource.class), any(RepositoryConnection.class), any(Resource.class))).thenReturn(expected);
         Response response = target().path("commits/" + encode(COMMIT_IRIS[1]) + "/resource")
                 .queryParam("entityId", encode("http://www.w3.org/2002/07/owl#Ontology")).request().get();
         assertEquals(200, response.getStatus());
-        verify(commitManager).getCommitEntityChain(vf.createIRI(COMMIT_IRIS[1]), vf.createIRI("http://www.w3.org/2002/07/owl#Ontology"), conn);
         try {
             ArrayNode result = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
             JsonNode commitObj = result.get(0);
@@ -408,12 +407,11 @@ public class CommitRestTest extends MobiRestTestCXF {
     public void getCompiledResourceEmptyModelTest() {
         List<Commit> emptyList = new ArrayList<>();
         Model expected = mf.createEmptyModel();
-        when(compiledResourceManager.getCompiledResource(any(List.class), any(RepositoryConnection.class), any(Resource.class))).thenReturn(expected);
+        when(compiledResourceManager.getCompiledResource(any(Resource.class), any(RepositoryConnection.class), any(Resource.class))).thenReturn(expected);
         when(commitManager.getCommitEntityChain(any(Resource.class), any(Resource.class), any(RepositoryConnection.class))).thenReturn(emptyList);
         Response response = target().path("commits/" + encode(COMMIT_IRIS[1]) + "/resource")
                 .queryParam("entityId", encode("http://mobi.com/test/empty")).request().get();
         assertEquals(200, response.getStatus());
-        verify(commitManager).getCommitEntityChain(vf.createIRI(COMMIT_IRIS[1]), vf.createIRI("http://mobi.com/test/empty"), conn);
         try {
             ArrayNode result = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
             assertEquals(0, result.size());

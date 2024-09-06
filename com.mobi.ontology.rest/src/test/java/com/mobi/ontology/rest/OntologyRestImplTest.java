@@ -64,9 +64,7 @@ import com.mobi.catalog.api.PaginatedSearchParams;
 import com.mobi.catalog.api.PaginatedSearchResults;
 import com.mobi.catalog.api.RecordManager;
 import com.mobi.catalog.api.builder.Difference;
-import com.mobi.catalog.api.ontologies.mcat.Branch;
-import com.mobi.catalog.api.ontologies.mcat.Commit;
-import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
+import com.mobi.catalog.api.ontologies.mcat.*;
 import com.mobi.catalog.api.ontologies.mcat.Record;
 import com.mobi.catalog.api.record.config.RecordCreateSettings;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
@@ -186,6 +184,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
     private Commit commit;
     private IRI branchId;
     private Branch branch;
+    private MasterBranch masterBranch;
     private User user;
     private IRI classId;
     private Difference difference;
@@ -319,6 +318,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         }
 
         ontologyRecordFactory = getRequiredOrmFactory(OntologyRecord.class);
+        OrmFactory<MasterBranch> masterBranchFactory = getRequiredOrmFactory(MasterBranch.class);
         OrmFactory<Commit> commitFactory = getRequiredOrmFactory(Commit.class);
         OrmFactory<Branch> branchFactory = getRequiredOrmFactory(Branch.class);
         OrmFactory<InProgressCommit> inProgressCommitFactory = getRequiredOrmFactory(InProgressCommit.class);
@@ -333,8 +333,9 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         commit = commitFactory.createNew(commitId);
         branchId = vf.createIRI("http://mobi.com/branch");
         branch = branchFactory.createNew(branchId);
+        masterBranch = masterBranchFactory.createNew(branchId);
         user = userFactory.createNew(vf.createIRI("http://mobi.com/users/" + UsernameTestFilter.USERNAME));
-        record.setMasterBranch(branch);
+        record.setMasterBranch(masterBranch);
         classId = vf.createIRI("http://mobi.com/ontology#Class1a");
         IRI titleIRI = vf.createIRI(DCTERMS.TITLE.stringValue());
         Model additions = mf.createEmptyModel();
@@ -478,7 +479,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
             Object[] args = invocation.getArguments();
             OutputStream os = (OutputStream) args[1];
             WriterConfig config = new WriterConfig();
-            config.set(JSONLDSettings.JSONLD_MODE, JSONLDMode.FLATTEN);
+            config.set(JSONLDSettings.JSONLD_MODE, JSONLDMode.FLATTEN); // TODO FIX
             Rio.write(ontologyModel, os, RDFFormat.JSONLD, config);
             return os;
         });
@@ -489,7 +490,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         when(recordManager.removeRecord(eq(catalogId), eq(recordId), eq(user), eq(OntologyRecord.class), any(RepositoryConnection.class))).thenReturn(record);
         when(commitManager.createInProgressCommit(any(User.class))).thenReturn(inProgressCommit);
         when(commitManager.getInProgressCommitOpt(eq(catalogId), eq(recordId), eq(user), any(RepositoryConnection.class))).thenReturn(Optional.of(inProgressCommit));
-        when(commitManager.createCommit(eq(inProgressCommit), anyString(), any(Commit.class), any(Commit.class))).thenReturn(commit);
+        when(commitManager.createCommit(eq(inProgressCommit), anyString(), any(Commit.class), any(Commit.class), anyBoolean())).thenReturn(commit);
         when(differenceManager.applyInProgressCommit(eq(inProgressCommitId), any(Model.class), any(RepositoryConnection.class))).thenReturn(mf.createEmptyModel());
         when(differenceManager.getDiff(any(Model.class), any(Model.class))).thenReturn(difference);
         when(recordManager.createRecord(any(User.class), any(RecordOperationConfig.class), eq(OntologyRecord.class), any(RepositoryConnection.class))).thenReturn(record);
@@ -4886,7 +4887,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
 
         when(commitManager.getInProgressCommitOpt(eq(catalogId), eq(recordId),
                 any(User.class), any(RepositoryConnection.class))).thenReturn(Optional.empty());
-        when(branchManager.getMasterBranch(eq(catalogId), eq(recordId), any(RepositoryConnection.class))).thenReturn(branch);
+        when(branchManager.getMasterBranch(eq(catalogId), eq(recordId), any(RepositoryConnection.class))).thenReturn(masterBranch);
         when(response.getDecision()).thenReturn(Decision.PERMIT);
         FormDataMultiPart fd = new FormDataMultiPart();
         fd.bodyPart("file", "test-ontology.ttl", getClass().getResourceAsStream("/test-ontology.ttl"));
@@ -4910,7 +4911,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .thenReturn(ontologyModel);
         when(commitManager.getInProgressCommitOpt(eq(catalogId), eq(recordId),
                 any(User.class), any(RepositoryConnection.class))).thenReturn(Optional.empty());
-        when(branchManager.getMasterBranch(eq(catalogId), eq(recordId), any(RepositoryConnection.class))).thenReturn(branch);
+        when(branchManager.getMasterBranch(eq(catalogId), eq(recordId), any(RepositoryConnection.class))).thenReturn(masterBranch);
         when(response.getDecision()).thenReturn(Decision.DENY);
         FormDataMultiPart fd = new FormDataMultiPart();
         fd.bodyPart("file", "test-ontology.ttl", getClass().getResourceAsStream("/test-ontology.ttl"));

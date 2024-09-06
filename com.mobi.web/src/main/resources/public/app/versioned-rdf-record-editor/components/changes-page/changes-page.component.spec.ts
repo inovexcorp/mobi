@@ -64,6 +64,7 @@ describe('Changes Page component', function() {
     date: '',
     auxiliary: '',
     base: '',
+    branch: '',
     message: ''
   };
   const branch: JSONLDObject = {

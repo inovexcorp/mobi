@@ -64,7 +64,8 @@ describe('Commit Info Overlay component', function() {
             date: '',
             message: '',
             base: '',
-            auxiliary: ''
+            auxiliary: '',
+            branch: ''
         },
         recordId,
         type: `${ONTOLOGYEDITOR}OntologyRecord`
@@ -177,7 +178,8 @@ describe('Commit Info Overlay component', function() {
                                 date: '',
                                 message: '',
                                 base: '',
-                                auxiliary: ''
+                                auxiliary: '',
+                                branch: ''
                             },
                             recordId: 'recordId',
                             type: ONTOLOGYEDITOR + 'OntologyRecord'
@@ -215,7 +217,8 @@ describe('Commit Info Overlay component', function() {
                             date: '',
                             message: '',
                             base: '',
-                            auxiliary: ''
+                            auxiliary: '',
+                            branch: ''
                         },
                         recordId: '',
                         type: ''
@@ -241,7 +244,8 @@ describe('Commit Info Overlay component', function() {
                         date: '',
                         message: '',
                         base: '',
-                        auxiliary: ''
+                        auxiliary: '',
+                        branch: ''
                     },
                     recordId: '',
                     type: ''

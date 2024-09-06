@@ -91,7 +91,7 @@ public abstract class AbstractOntologyId implements OntologyId {
             builder.ontologyIRI = null;
             builder.versionIRI = null;
             builder.identifier = null;
-            OntologyModels.findFirstOntologyIRI(builder.model, factory).ifPresent(ontologyIRI
+            OntologyModels.findFirstOntologyIRI(builder.model).ifPresent(ontologyIRI
                     -> builder.ontologyIRI = ontologyIRI);
             if (builder.ontologyIRI != null) {
                 OntologyModels.findFirstVersionIRI(builder.model, builder.ontologyIRI, factory).ifPresent(versionIRI

@@ -55,9 +55,9 @@ import { RdfUpdate } from '../models/rdfUpdate.interface';
  */
 @Injectable()
 export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListItem> {
-  
+
   type = `${SHAPESGRAPHEDITOR}ShapesGraphRecord`;
-  
+
   constructor(protected sm: StateManagerService,
               protected cm: CatalogManagerService,
               protected mrm: MergeRequestManagerService,
@@ -106,7 +106,7 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
   // Updates state if a branch was removed
   _handleEventBranchRemoval(payload: EventPayload): Observable<null> {
     const recordId = get(payload, 'recordId');
-    const branchId = get(payload, 'branchId'); 
+    const branchId = get(payload, 'branchId');
     if (recordId && branchId) {
       const recordExistInList = some(this.list, {versionedRdfRecord: {recordId: recordId}});
       if (recordExistInList) {
@@ -122,7 +122,7 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
   // Updates state if a merge request has been accepted
   _handleEventMergeRequestAcceptance(payload: EventPayload): Observable<null> {
     const recordId = get(payload, 'recordId');
-    const targetBranchId = get(payload, 'targetBranchId'); 
+    const targetBranchId = get(payload, 'targetBranchId');
     if (recordId && targetBranchId) {
       const recordExistInList = some(this.list, {versionedRdfRecord: {recordId: recordId}});
       if (recordExistInList) {
@@ -234,15 +234,15 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
             commitId: response.commitId
           };
           listItem.currentVersionTitle = 'MASTER';
-          return this.sgm.getShapesGraphMetadata(listItem.versionedRdfRecord.recordId, 
-            listItem.versionedRdfRecord.branchId, 
-            listItem.versionedRdfRecord.commitId, 
+          return this.sgm.getShapesGraphMetadata(listItem.versionedRdfRecord.recordId,
+            listItem.versionedRdfRecord.branchId,
+            listItem.versionedRdfRecord.commitId,
             listItem.shapesGraphId
           ).pipe(
             switchMap((arr: string | JSONLDObject[]) => {
               listItem.metadata = find((arr as JSONLDObject[]), {'@id': listItem.shapesGraphId});
-              return this.sgm.getShapesGraphContent(listItem.versionedRdfRecord.recordId, 
-                listItem.versionedRdfRecord.branchId, 
+              return this.sgm.getShapesGraphContent(listItem.versionedRdfRecord.recordId,
+                listItem.versionedRdfRecord.branchId,
                 listItem.versionedRdfRecord.commitId
               );
             }),
@@ -298,8 +298,8 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
     return this.cm.deleteInProgressCommit(this.listItem.versionedRdfRecord.recordId, this.catalogId).pipe(
       switchMap(() => {
         this.clearInProgressCommit();
-        return this.updateShapesGraphMetadata(this.listItem.versionedRdfRecord.recordId, 
-          this.listItem.versionedRdfRecord.branchId, 
+        return this.updateShapesGraphMetadata(this.listItem.versionedRdfRecord.recordId,
+          this.listItem.versionedRdfRecord.branchId,
           this.listItem.versionedRdfRecord.commitId
         );
       }));
@@ -363,8 +363,8 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
           const idx = this.list.indexOf(oldListItem);
           this.list[idx] = item;
           this.listItem = item;
-          return this.updateShapesGraphMetadata(item.versionedRdfRecord.recordId, 
-            item.versionedRdfRecord.branchId, 
+          return this.updateShapesGraphMetadata(item.versionedRdfRecord.recordId,
+            item.versionedRdfRecord.branchId,
             item.versionedRdfRecord.commitId
           );
         }
@@ -380,17 +380,18 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
   merge(): Observable<null> {
     const sourceId = this.listItem.versionedRdfRecord.branchId;
     const shouldDelete = this.listItem.merge.checkbox;
-    return this.cm.mergeBranches(sourceId, this.listItem.merge.target['@id'], 
-      this.listItem.versionedRdfRecord.recordId, 
-      this.catalogId, 
-      this.listItem.merge.resolutions
+    return this.cm.mergeBranches(sourceId, this.listItem.merge.target['@id'],
+      this.listItem.versionedRdfRecord.recordId,
+      this.catalogId,
+      this.listItem.merge.resolutions,
+      this.listItem.merge.conflicts
     ).pipe(
-      switchMap(commit => 
+      switchMap(commit =>
         // changeVersion called before branch deletion in order to avoid a race condition with the branch deletion event handler
-        this.changeVersion(this.listItem.versionedRdfRecord.recordId, 
-          this.listItem.merge.target['@id'], 
-          commit, 
-          undefined, 
+        this.changeVersion(this.listItem.versionedRdfRecord.recordId,
+          this.listItem.merge.target['@id'],
+          commit,
+          undefined,
           getDctermsValue(this.listItem.merge.target, 'title'), true, false, false)
       ),
       switchMap(() => {
@@ -412,7 +413,7 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
    * @param {string} recordId the IRI of the record to retrieve metadata for.
    * @param {string} branchId the IRI of the branch to retrieve metadata for.
    * @param {string} commitId the IRI of the commit to retrieve metadata for.
-   * @returns {Observable} An Observable that resolves if the metadata update was successful; otherwise fails with either an 
+   * @returns {Observable} An Observable that resolves if the metadata update was successful; otherwise fails with either an
    *    error string or a {@link RESTError} object.
    */
   updateShapesGraphMetadata(recordId: string, branchId: string, commitId: string): Observable<null> {
@@ -420,16 +421,16 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
     return this.sgm.getShapesGraphIRI(recordId, branchId, commitId).pipe(
       switchMap((shapesGraphId: string) => {
         listItem.shapesGraphId = shapesGraphId;
-        return this.sgm.getShapesGraphMetadata(listItem.versionedRdfRecord.recordId, 
-          listItem.versionedRdfRecord.branchId, 
-          listItem.versionedRdfRecord.commitId, 
+        return this.sgm.getShapesGraphMetadata(listItem.versionedRdfRecord.recordId,
+          listItem.versionedRdfRecord.branchId,
+          listItem.versionedRdfRecord.commitId,
           listItem.shapesGraphId
         );
       }),
       switchMap((arr: string | JSONLDObject[]) => {
         listItem.metadata = find((arr as JSONLDObject[]), {'@id': listItem.shapesGraphId});
-        return this.sgm.getShapesGraphContent(listItem.versionedRdfRecord.recordId, 
-          listItem.versionedRdfRecord.branchId, 
+        return this.sgm.getShapesGraphContent(listItem.versionedRdfRecord.recordId,
+          listItem.versionedRdfRecord.branchId,
           listItem.versionedRdfRecord.commitId
         );
       }),

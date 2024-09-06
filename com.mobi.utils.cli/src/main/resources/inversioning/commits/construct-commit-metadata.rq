@@ -1,0 +1,15 @@
+PREFIX mcat: <http://mobi.com/ontologies/catalog#>
+PREFIX dct: <http://purl.org/dc/terms/>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+
+CONSTRUCT {
+    ?commit dct:title ?message ;
+        prov:atTime ?time ;
+        prov:wasAssociatedWith ?user .
+}
+WHERE {
+    ?commit a mcat:Commit ;
+        dct:title ?message ;
+        prov:atTime ?time ;
+        prov:wasAssociatedWith ?user .
+}

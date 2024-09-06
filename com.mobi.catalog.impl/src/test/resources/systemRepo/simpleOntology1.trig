@@ -1,0 +1,309 @@
+@prefix apps: <http://mobi.com/applications#> .
+@prefix branches: <https://mobi.com/branches#> .
+@prefix commits: <https://mobi.com/commits#> .
+@prefix config: <http://mobi.com/ontologies/platform/config#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix deltas: <https://mobi.com/deltas#> .
+@prefix documents: <http://mobi.com/ontologies/documents#> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix geo1: <http://www.w3.org/2003/01/geo/wgs84_pos#> .
+@prefix mcat: <http://mobi.com/ontologies/catalog#> .
+@prefix mobiSpace: <http://mobi.com/> .
+@prefix namespaces: <http://mobi.com/ontologies/namespace#> .
+@prefix ontologies: <https://mobi.com/ontologies/> .
+@prefix ontologyEditor: <http://mobi.com/ontologies/ontology-editor#> .
+@prefix ontologystate: <http://mobi.com/ontologies/state#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix policies: <http://mobi.com/policies/> .
+@prefix policy: <http://mobi.com/ontologies/policy#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix recordPolicy: <http://mobi.com/policies/record/> .
+@prefix records: <https://mobi.com/records#> .
+@prefix revisions: <https://mobi.com/revisions#> .
+@prefix roles: <http://mobi.com/roles/> .
+@prefix setting: <http://mobi.com/ontologies/setting#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix shaclForm: <https://mobi.solutions/ontologies/form#> .
+@prefix user: <http://mobi.com/ontologies/user/management#> .
+@prefix users: <http://mobi.com/users/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+{
+    apps:mapping-tool a config:Application,
+            owl:Thing ;
+        dcterms:description "The built-in Mapping Tool application in Mobi." ;
+        dcterms:title "Mapping Tool" .
+
+    apps:shapes-graph-editor a config:Application,
+            owl:Thing ;
+        dcterms:description "The built-in Shapes Graph Editor application in Mobi." ;
+        dcterms:title "Shapes Graph Editor" .
+
+    apps:sparql-editor a config:Application,
+            owl:Thing ;
+        dcterms:description "The built-in SPARQL Query Editor application in Mobi." ;
+        dcterms:title "SPARQL Editor" .
+
+    <http://mobi.com/states#3140493b-cbe1-4b2f-b0cf-0c2ee28c2b85> a config:ApplicationState,
+            config:State,
+            owl:Thing ;
+        config:application apps:ontology-editor ;
+        config:forUser users:d033e22ae348aeb5660fc2140aec35850c4da997 ;
+        config:stateResource ontologystate:785f80ae-ec76-401a-91f6-edae48bc035a,
+            <http://mobi.com/states/ontology-editor/branch-id/2baa27f7-bcee-47f5-b607-9083525fae96>,
+            <http://mobi.com/states/ontology-editor/branch-id/9dde695b-37a7-4286-a230-774d510a09c6> .
+
+    apps:ontology-editor a config:Application,
+            owl:Thing ;
+        dcterms:description "The built-in Ontology Editor application in Mobi." ;
+        dcterms:title "Ontology Editor" .
+
+    ontologystate:785f80ae-ec76-401a-91f6-edae48bc035a a ontologystate:StateRecord ;
+        ontologystate:branchStates <http://mobi.com/states/ontology-editor/branch-id/2baa27f7-bcee-47f5-b607-9083525fae96>,
+            <http://mobi.com/states/ontology-editor/branch-id/9dde695b-37a7-4286-a230-774d510a09c6> ;
+        ontologystate:currentState <http://mobi.com/states/ontology-editor/branch-id/2baa27f7-bcee-47f5-b607-9083525fae96> ;
+        ontologystate:record records:simple-ontology-01 .
+
+    <http://mobi.com/states/ontology-editor/branch-id/9dde695b-37a7-4286-a230-774d510a09c6> a ontologystate:StateBranch,
+            ontologystate:StateCommit ;
+        ontologystate:branch branches:0e837d83-4783-46a9-b57f-b2a2116ab70c ;
+        ontologystate:commit commits:92e5822e-2df8-4701-aa55-554b43ff3ccd .
+
+    <http://mobi.com/states/ontology-editor/branch-id/2baa27f7-bcee-47f5-b607-9083525fae96> a ontologystate:StateBranch,
+            ontologystate:StateCommit ;
+        ontologystate:branch branches:519c2dc8-fda8-4279-ad81-2a1ccbdf2a32 ;
+        ontologystate:commit commits:4712e32b-e6ab-4d17-971c-45cdba5b5496 .
+}
+
+
+mobiSpace:catalog-local {
+    mobiSpace:catalog-local a mcat:Catalog,
+            owl:Thing ;
+        dcterms:description "The Mobi Catalog records datasets, ontologies, data mappings, and other resources." ;
+        dcterms:issued "2024-04-22T13:14:18.464062-04:00"^^xsd:dateTime ;
+        dcterms:modified "2024-04-22T13:14:18.464062-04:00"^^xsd:dateTime ;
+        dcterms:title "Mobi Catalog (Local)" .
+}
+
+mobiSpace:catalog-distributed {
+    mobiSpace:catalog-distributed a mcat:Catalog,
+            owl:Thing ;
+        dcterms:description "The Mobi Catalog records datasets, ontologies, data mappings, and other resources." ;
+        dcterms:issued "2024-04-22T13:14:18.462132-04:00"^^xsd:dateTime ;
+        dcterms:modified "2024-04-22T13:14:18.462132-04:00"^^xsd:dateTime ;
+        dcterms:title "Mobi Catalog (Distributed)" .
+}
+
+mobiSpace:usermanagement {
+    roles:admin a user:Role,
+            owl:Thing,
+            foaf:Agent ;
+        dcterms:title "admin" .
+
+    roles:user a user:Role,
+            owl:Thing,
+            foaf:Agent ;
+        dcterms:title "user" .
+
+    users:d033e22ae348aeb5660fc2140aec35850c4da997 a user:User,
+            owl:Thing,
+            geo1:SpatialThing,
+            prov:Agent,
+            foaf:Agent,
+            foaf:Person ;
+        user:hasUserRole roles:admin,
+            roles:user ;
+        user:password "{CRYPT}21232F297A57A5A743894A0E4A801FC3{CRYPT}" ;
+        user:username "admin" .
+}
+
+mobiSpace:setting-management {
+    <http://mobi.com/ontologies/namespace/DefaultOntologyNamespace/e5395ae8-1417-4bbc-aba4-aa165b724bfd> a namespaces:DefaultOntologyNamespaceApplicationSetting,
+            setting:ApplicationSetting,
+            setting:Setting,
+            owl:Thing ;
+        setting:hasDataValue "https://mobi.com/ontologies/" .
+
+    namespaces:DefaultOntologyNamespaceApplicationSetting a owl:Class,
+            sh:NodeShape ;
+        setting:inGroup namespaces:NamespaceApplicationSettingGroup ;
+        dcterms:description "Default Ontology Namespace" ;
+        rdfs:comment "An Application Setting an organization can have within the Mobi framework that signifies the namespace to be used for created ontology IRIs."@en ;
+        rdfs:subClassOf setting:ApplicationSetting ;
+        sh:property namespaces:DefaultOntologyNamespaceApplicationSettingPropertyShape .
+
+    namespaces:DefaultOntologyNamespaceApplicationSettingPropertyShape a sh:PropertyShape ;
+        sh:datatype xsd:string ;
+        sh:defaultValue "https://mobi.com/ontologies/"@en ;
+        sh:maxCount 1 ;
+        sh:minCount 1 ;
+        sh:path setting:hasDataValue ;
+        sh:pattern "(?:(?:https?|ftp):\\/\\/)(?:\\S+(?::\\S*)?@)?(?:(?!10(?:\\.\\d{1,3}){3})(?!127(?:\\.\\d{1,3}){3})(?!169\\.254(?:\\.\\d{1,3}){2})(?!192\\.168(?:\\.\\d{1,3}){2})(?!172\\.(?:1[6-9]|2\\d|3[0-1])(?:\\.\\d{1,3}){2})(?:[1-9]\\d?|1\\d\\d|2[01]\\d|22[0-3])(?:\\.(?:1?\\d{1,2}|2[0-4]\\d|25[0-5])){2}(?:\\.(?:[1-9]\\d?|1\\d\\d|2[0-4]\\d|25[0-4]))|(?:(?:[a-z\\u00a1-\\uffff0-9]+-?)*[a-z\\u00a1-\\uffff0-9]+)(?:\\.(?:[a-z\\u00a1-\\uffff0-9]+-?)*[a-z\\u00a1-\\uffff0-9]+)*(?:\\.(?:[a-z\\u00a1-\\uffff]{2,})))(?::\\d{2,5})?([\\w\\-\\._~:/?#[\\]@!\\$&'\\(\\)\\*\\+,;=.])+(#|:|\\/)$" ;
+        shaclForm:usesFormField shaclForm:TextInput .
+
+    namespaces:NamespaceApplicationSettingGroup a setting:ApplicationSettingGroup ;
+        rdfs:label "Namespaces"@en .
+}
+
+records:simple-ontology-01 {
+    records:simple-ontology-01 a mcat:Record,
+            mcat:VersionedRDFRecord,
+            mcat:VersionedRecord,
+            ontologyEditor:OntologyRecord,
+            owl:Thing ;
+        mcat:branch branches:0e837d83-4783-46a9-b57f-b2a2116ab70c,
+            branches:519c2dc8-fda8-4279-ad81-2a1ccbdf2a32 ;
+        mcat:catalog mobiSpace:catalog-local ;
+        mcat:keyword "keyword1",
+            "keyword2" ;
+        mcat:latestVersion <https://mobi.com/ontologies/Simple/FirstTag> ;
+        mcat:masterBranch branches:0e837d83-4783-46a9-b57f-b2a2116ab70c ;
+        mcat:version <https://mobi.com/ontologies/Simple/FirstTag> ;
+        ontologyEditor:ontologyIRI ontologies:Simple ;
+        dcterms:description "SimpleDescription" ;
+        dcterms:issued "2024-04-22T13:15:51.751468-04:00"^^xsd:dateTime ;
+        dcterms:modified "2024-04-22T13:17:48.975775-04:00"^^xsd:dateTime ;
+        dcterms:publisher users:d033e22ae348aeb5660fc2140aec35850c4da997 ;
+        dcterms:title "Simple" .
+}
+
+branches:0e837d83-4783-46a9-b57f-b2a2116ab70c {
+    branches:0e837d83-4783-46a9-b57f-b2a2116ab70c a mcat:Branch,
+            mcat:MasterBranch,
+            owl:Thing ;
+        mcat:head commits:92e5822e-2df8-4701-aa55-554b43ff3ccd ;
+        mcat:headGraph <https://mobi.com/records#simple-ontology-01/HEAD> ;
+        dcterms:description "The master branch." ;
+        dcterms:issued "2024-04-22T13:15:51.752657-04:00"^^xsd:dateTime ;
+        dcterms:modified "2024-04-22T13:16:22.844544-04:00"^^xsd:dateTime ;
+        dcterms:publisher users:d033e22ae348aeb5660fc2140aec35850c4da997 ;
+        dcterms:title "MASTER" .
+}
+
+<https://mobi.com/records#simple-ontology-01/HEAD> {
+    ontologies:Simple a owl:Ontology ;
+        dcterms:description "SimpleDescription"@en ;
+        dcterms:title "Simple"@en .
+
+    <https://mobi.com/ontologies/Simple#Class01> a owl:Class ;
+        dcterms:title "class01"@en .
+}
+
+branches:519c2dc8-fda8-4279-ad81-2a1ccbdf2a32 {
+    branches:519c2dc8-fda8-4279-ad81-2a1ccbdf2a32 a mcat:Branch,
+            owl:Thing ;
+        mcat:head commits:4712e32b-e6ab-4d17-971c-45cdba5b5496 ;
+        dcterms:description "branch used to add Class02" ;
+        dcterms:issued "2024-04-22T13:17:24.431861-04:00"^^xsd:dateTime ;
+        dcterms:modified "2024-04-22T13:17:48.976010-04:00"^^xsd:dateTime ;
+        dcterms:publisher users:d033e22ae348aeb5660fc2140aec35850c4da997 ;
+        dcterms:title "branchForClass02" .
+}
+
+<https://mobi.com/ontologies/Simple/FirstTag> {
+    <https://mobi.com/ontologies/Simple/FirstTag> a mcat:Tag,
+            mcat:Version,
+            owl:Thing ;
+        mcat:commit commits:92e5822e-2df8-4701-aa55-554b43ff3ccd ;
+        dcterms:issued "2024-04-22T13:16:47.477169-04:00"^^xsd:dateTime ;
+        dcterms:modified "2024-04-22T13:16:47.477169-04:00"^^xsd:dateTime ;
+        dcterms:publisher users:d033e22ae348aeb5660fc2140aec35850c4da997 ;
+        dcterms:title "firstTag" .
+}
+
+commits:92e5822e-2df8-4701-aa55-554b43ff3ccd {
+    commits:92e5822e-2df8-4701-aa55-554b43ff3ccd a mcat:Commit,
+            owl:Thing,
+            prov:Activity ;
+        mcat:baseCommit commits:f8b466bf-ba01-4068-ad3c-a3364e128883 ;
+        dcterms:title "1st comment" ;
+        prov:atTime "2024-04-22T13:16:22.840511-04:00"^^xsd:dateTime ;
+        prov:generated revisions:b3e30e04-a03f-4681-8ec6-39fba571c8b8 ;
+        prov:wasAssociatedWith users:d033e22ae348aeb5660fc2140aec35850c4da997 .
+
+    revisions:b3e30e04-a03f-4681-8ec6-39fba571c8b8 a mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:2c9115ee-2b27-4271-a8be-69937aa943a8-A ;
+        mcat:deletions deltas:2c9115ee-2b27-4271-a8be-69937aa943a8-B ;
+        prov:hadPrimarySource revisions:d6d0fe5f-7178-4017-b971-54d6e62db6f0 .
+}
+
+commits:4712e32b-e6ab-4d17-971c-45cdba5b5496 {
+    revisions:58cace34-d5d0-4b1e-9f2e-c618a414fb8a a mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:58cace34-d5d0-4b1e-9f2e-c618a414fb8a-A ;
+        mcat:deletions deltas:58cace34-d5d0-4b1e-9f2e-c618a414fb8a-B ;
+        prov:hadPrimarySource revisions:b3e30e04-a03f-4681-8ec6-39fba571c8b8 .
+
+    commits:4712e32b-e6ab-4d17-971c-45cdba5b5496 a mcat:Commit,
+            owl:Thing,
+            prov:Activity ;
+        mcat:branchCommit commits:92e5822e-2df8-4701-aa55-554b43ff3ccd ;
+        dcterms:title "class 02" ;
+        prov:atTime "2024-04-22T13:17:48.974056-04:00"^^xsd:dateTime ;
+        prov:generated revisions:58cace34-d5d0-4b1e-9f2e-c618a414fb8a ;
+        prov:wasAssociatedWith users:d033e22ae348aeb5660fc2140aec35850c4da997 .
+}
+
+deltas:58cace34-d5d0-4b1e-9f2e-c618a414fb8a-A {
+    <https://mobi.com/ontologies/Simple#Class02> a owl:Class ;
+        dcterms:title "class02" .
+}
+
+deltas:b3e30e04-a03f-4681-8ec6-39fba571c8b8-A {
+    <https://mobi.com/ontologies/Simple#Class01> a owl:Class ;
+        dcterms:title "class01"@en .
+}
+
+commits:f8b466bf-ba01-4068-ad3c-a3364e128883 {
+    commits:f8b466bf-ba01-4068-ad3c-a3364e128883 a mcat:Commit,
+            owl:Thing,
+            prov:Activity ;
+        mcat:initialRevision revisions:94f51033-14ad-4566-864f-2de7a1396735 ;
+        dcterms:title "The initial commit." ;
+        prov:atTime "2024-04-22T13:15:51.771928-04:00"^^xsd:dateTime ;
+        prov:generated revisions:d6d0fe5f-7178-4017-b971-54d6e62db6f0 ;
+        prov:wasAssociatedWith users:d033e22ae348aeb5660fc2140aec35850c4da997 .
+
+    revisions:94f51033-14ad-4566-864f-2de7a1396735 a mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:94f51033-14ad-4566-864f-2de7a1396735-A ;
+        mcat:deletions deltas:94f51033-14ad-4566-864f-2de7a1396735-B .
+
+    revisions:d6d0fe5f-7178-4017-b971-54d6e62db6f0 a mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:b3e30e04-a03f-4681-8ec6-39fba571c8b8-B ;
+        mcat:deletions deltas:b3e30e04-a03f-4681-8ec6-39fba571c8b8-A .
+}
+
+deltas:94f51033-14ad-4566-864f-2de7a1396735-A {
+    ontologies:Simple a owl:Ontology ;
+        dcterms:description "SimpleDescription"@en ;
+        dcterms:title "Simple"@en .
+}
+
+<https://mobi.com/in-progress-commits#1c5bed2c-0634-4824-aa2c-a52e89bcfcfa> {
+    <https://mobi.com/in-progress-commits#1c5bed2c-0634-4824-aa2c-a52e89bcfcfa> a mcat:Commit,
+            mcat:InProgressCommit,
+            owl:Thing,
+            prov:Activity ;
+        mcat:onVersionedRDFRecord records:simple-ontology-01 ;
+        prov:generated revisions:1c5bed2c-0634-4824-aa2c-a52e89bcfcfa ;
+        prov:wasAssociatedWith users:d033e22ae348aeb5660fc2140aec35850c4da997 .
+
+    revisions:1c5bed2c-0634-4824-aa2c-a52e89bcfcfa a mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:1c5bed2c-0634-4824-aa2c-a52e89bcfcfa-A ;
+        mcat:deletions deltas:1c5bed2c-0634-4824-aa2c-a52e89bcfcfa-B .
+}
+
+deltas:1c5bed2c-0634-4824-aa2c-a52e89bcfcfa-A {
+    <https://mobi.com/ontologies/Simple#Inprogressclass> a owl:Class ;
+        dcterms:title "inprogressclass" .
+}

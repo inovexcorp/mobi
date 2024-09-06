@@ -31,6 +31,9 @@ openAPI:
         type: http
         scheme: bearer
         bearerFormat: JWT
+      basicAuth:
+        type: http
+        scheme: basic
     responses:
       UnauthorizedError:
         description: Access token is missing or invalid
@@ -91,6 +94,41 @@ openAPI:
             format: uri
         required:
           - "@value"
+      CommitDataArr:
+        type: array
+        items:
+          $ref: '#/components/schemas/CommitData'
+      CommitData:
+        type: object
+        properties:
+          id:
+            type: string
+            format: uri
+          creator:
+            $ref: '#/components/schemas/UserData'
+          date:
+            type: string
+          message:
+            type: string
+          base:
+            type: string
+            format: uri
+          branch:
+            type: string
+            format: uri
+          auxiliary:
+            type: string
+            format: uri
+      UserData:
+        type: object
+        properties:
+          firstName:
+            type: string
+          lastName:
+            type: string
+          username:
+            type: string
 
   security:
     - bearerAuth: [ ]
+    - basicAuth: []

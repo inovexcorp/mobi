@@ -29,7 +29,6 @@ import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.rio.RDFFormat;
 
 import java.io.File;
-import java.util.List;
 
 public interface CompiledResourceManager {
 
@@ -37,13 +36,14 @@ public interface CompiledResourceManager {
      * Gets the Model which represents the compiled resource at the instance of the Commit identified by the provided
      * Resource using previous Commit data to construct it.
      *
-     * @param commitId The Resource identifying the Commit identifying the spot in the entity's history that you wish
-     *                 to retrieve.
-     * @param conn     A RepositoryConnection for lookup.
+     * @param commitId  The Resource identifying the Commit identifying the spot in the entity's history that you wish
+     *                  to retrieve.
+     * @param conn      A RepositoryConnection for lookup.
+     * @param entityIds Optional list of entity {@link Resource}s to filter the compiled resource by
      * @return Model which represents the resource at the Commit's point in history.
      * @throws IllegalArgumentException Thrown if the Commit could not be found.
      */
-    Model getCompiledResource(Resource commitId, RepositoryConnection conn);
+    Model getCompiledResource(Resource commitId, RepositoryConnection conn, Resource... entityIds);
 
     /**
      * Gets the Model which represents the compiled resource at the instance of the Commit identified by the provided
@@ -54,33 +54,24 @@ public interface CompiledResourceManager {
      * @param commitId             The Resource identifying the Commit identifying the spot in the entity's history that
      *                             you wish to retrieve.
      * @param conn                 A RepositoryConnection for lookup.
+     * @param entityIds            Optional list of entity {@link Resource}s to filter the compiled resource by
      * @return Model which represents the resource at the Commit's point in history.
      * @throws IllegalArgumentException Thrown if the Commit could not be found.
      */
     Model getCompiledResource(Resource versionedRDFRecordId, Resource branchId, Resource commitId,
-                              RepositoryConnection conn);
-
-    /**
-     * Gets the Model which represents the resource at the instance of the Commit identified by the first Resource in
-     * the provided List using previous Commit data to construct it. Will filter the compiled resource based on the
-     * optionally provided subjectIds if present.
-     *
-     * @param commits The ordered List of Resource identifying the Commits to create a compiled resource from
-     * @param conn The RepositoryConnection used to retrieve the resource.
-     * @param subjectIds Optional list of entity {@link Resource}s to filter the compiled resource by
-     * @return Model which represents the resource at the Commit's point in history.
-     */
-    Model getCompiledResource(List<Resource> commits, RepositoryConnection conn, Resource... subjectIds);
+                              RepositoryConnection conn, Resource... entityIds);
 
     /**
      * Gets the File which represents the compiled resource at the instance of the Commit identified by the provided
      * Resource using previous Commit data to construct it.
      *
-     * @param commitId The Resource identifying the Commit identifying the spot in the entity's history that you wish
-     *                 to retrieve.
+     * @param commitId  The Resource identifying the Commit identifying the spot in the entity's history that you wish
+     *                  to retrieve.
      * @param rdfFormat The RDF serialization format of the file.
-     * @param conn The RepositoryConnection used to retrieve the resource.
+     * @param conn      The RepositoryConnection used to retrieve the resource.
+     * @param entityIds Optional list of entity {@link Resource}s to filter the compiled resource by
      * @return A {@link File} which represents the resource at the Commit's point in history.
      */
-    File getCompiledResourceFile(Resource commitId, RDFFormat rdfFormat, RepositoryConnection conn);
+    File getCompiledResourceFile(Resource commitId, RDFFormat rdfFormat, RepositoryConnection conn,
+                                 Resource... entityIds);
 }

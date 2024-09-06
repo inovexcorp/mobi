@@ -30,30 +30,13 @@ import static junit.framework.TestCase.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
-import com.mobi.catalog.api.BranchManager;
-import com.mobi.catalog.api.CatalogManager;
-import com.mobi.catalog.api.CatalogProvUtils;
-import com.mobi.catalog.api.CommitManager;
-import com.mobi.catalog.api.DifferenceManager;
-import com.mobi.catalog.api.ThingManager;
-import com.mobi.catalog.api.VersionManager;
+import com.mobi.catalog.api.*;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.mergerequest.MergeRequestManager;
-import com.mobi.catalog.api.ontologies.mcat.Branch;
-import com.mobi.catalog.api.ontologies.mcat.Catalog;
-import com.mobi.catalog.api.ontologies.mcat.Commit;
-import com.mobi.catalog.api.ontologies.mcat.Distribution;
-import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
+import com.mobi.catalog.api.ontologies.mcat.*;
 import com.mobi.catalog.api.ontologies.mcat.Record;
-import com.mobi.catalog.api.ontologies.mcat.Revision;
-import com.mobi.catalog.api.ontologies.mcat.Tag;
 import com.mobi.catalog.api.record.config.OperationConfig;
 import com.mobi.catalog.api.record.config.RecordCreateSettings;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
@@ -101,7 +84,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class SimpleShapesGraphRecordServiceTest extends OrmEnabledTestCase {
-
     private final IRI testIRI = VALUE_FACTORY.createIRI("urn:test");
     private final IRI catalogId = VALUE_FACTORY.createIRI("http://mobi.com/test/catalogs#catalog-test");
     private final IRI branchIRI = VALUE_FACTORY.createIRI("http://mobi.com/test/branches#branch");
@@ -133,6 +115,7 @@ public class SimpleShapesGraphRecordServiceTest extends OrmEnabledTestCase {
     private OrmFactory<User> userFactory = getRequiredOrmFactory(User.class);
     private OrmFactory<DeleteActivity> deleteActivityFactory = getRequiredOrmFactory(DeleteActivity.class);
     private OrmFactory<Branch> branchFactory = getRequiredOrmFactory(Branch.class);
+    private OrmFactory<MasterBranch> masterBranchFactory = getRequiredOrmFactory(MasterBranch.class);
     private OrmFactory<Commit> commitFactory = getRequiredOrmFactory(Commit.class);
     private OrmFactory<Tag> tagFactory = getRequiredOrmFactory(Tag.class);
     private OrmFactory<Distribution> distributionFactory = getRequiredOrmFactory(Distribution.class);
@@ -165,6 +148,9 @@ public class SimpleShapesGraphRecordServiceTest extends OrmEnabledTestCase {
 
     @Mock
     private VersioningManager versioningManager;
+
+    @Mock
+    private RevisionManager revisionManager;
 
     @Mock
     private XACMLPolicyManager xacmlPolicyManager;
@@ -222,7 +208,7 @@ public class SimpleShapesGraphRecordServiceTest extends OrmEnabledTestCase {
         testRecord.setVersion(Collections.singleton(tag));
         testRecord.setLatestVersion(tag);
         testRecord.setBranch(Collections.singleton(branch));
-        testRecord.setMasterBranch(branchFactory.createNew(masterBranchIRI));
+        testRecord.setMasterBranch(masterBranchFactory.createNew(masterBranchIRI));
         testRecord.setShapesGraphIRI(testIRI);
 
         closeable = MockitoAnnotations.openMocks(this);
@@ -267,6 +253,7 @@ public class SimpleShapesGraphRecordServiceTest extends OrmEnabledTestCase {
         recordService.commitManager = commitManager;
         recordService.differenceManager = differenceManager;
         recordService.versionManager = versionManager;
+        recordService.revisionManager = revisionManager;
     }
 
     @After
@@ -325,6 +312,17 @@ public class SimpleShapesGraphRecordServiceTest extends OrmEnabledTestCase {
         config.set(RecordCreateSettings.RECORD_KEYWORDS, keywords);
         config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
 
+        Revision revision = mock(Revision.class);
+        when(revision.getAdditions()).thenReturn(Optional.of(getValueFactory().createIRI("http://revision/add")));
+        when(revision.getDeletions()).thenReturn(Optional.of(getValueFactory().createIRI("http://revision/del")));
+        when(revision.getModel()).thenReturn(MODEL_FACTORY.createEmptyModel());
+        when(revisionManager.createRevision(any())).thenReturn(revision);
+
+        Commit initialCommit = commitFactory.createNew(commitIRI);
+        IRI initialCommitIri = getValueFactory().createIRI("http://mobi.com/commit#initial");
+        when(versioningManager.commit(eq(catalogId), any(Resource.class), any(Resource.class), eq(user), eq("The initial commit."), any(RepositoryConnection.class))).thenReturn(initialCommitIri);
+        when(commitManager.getCommit(eq(initialCommitIri), any(RepositoryConnection.class))).thenReturn(Optional.of(initialCommit));
+
         ShapesGraphRecord shaclRecord;
         try (RepositoryConnection connection = repository.getConnection()) {
             shaclRecord = recordService.create(user, config, connection);
@@ -375,6 +373,17 @@ public class SimpleShapesGraphRecordServiceTest extends OrmEnabledTestCase {
         config.set(RecordCreateSettings.RECORD_KEYWORDS, keywords);
         config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
 
+        Revision revision = mock(Revision.class);
+        when(revision.getAdditions()).thenReturn(Optional.of(getValueFactory().createIRI("http://revision/add")));
+        when(revision.getDeletions()).thenReturn(Optional.of(getValueFactory().createIRI("http://revision/del")));
+        when(revision.getModel()).thenReturn(MODEL_FACTORY.createEmptyModel());
+        when(revisionManager.createRevision(any())).thenReturn(revision);
+
+        Commit initialCommit = commitFactory.createNew(commitIRI);
+        IRI initialCommitIri = getValueFactory().createIRI("http://mobi.com/commit#initial");
+        when(versioningManager.commit(eq(catalogId), any(Resource.class), any(Resource.class), eq(user), eq("The initial commit."), any(RepositoryConnection.class))).thenReturn(initialCommitIri);
+        when(commitManager.getCommit(eq(initialCommitIri), any(RepositoryConnection.class))).thenReturn(Optional.of(initialCommit));
+
         ShapesGraphRecord shaclRecord;
         try (RepositoryConnection connection = repository.getConnection()) {
             shaclRecord = recordService.create(user, config, connection);
@@ -422,6 +431,17 @@ public class SimpleShapesGraphRecordServiceTest extends OrmEnabledTestCase {
         config.set(RecordCreateSettings.RECORD_KEYWORDS, keywords);
         config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
         config.set(VersionedRDFRecordCreateSettings.INITIAL_COMMIT_DATA, MODEL_FACTORY.createEmptyModel());
+
+        Revision revision = mock(Revision.class);
+        when(revision.getAdditions()).thenReturn(Optional.of(getValueFactory().createIRI("http://revision/add")));
+        when(revision.getDeletions()).thenReturn(Optional.of(getValueFactory().createIRI("http://revision/del")));
+        when(revision.getModel()).thenReturn(MODEL_FACTORY.createEmptyModel());
+        when(revisionManager.createRevision(any())).thenReturn(revision);
+
+        Commit initialCommit = commitFactory.createNew(commitIRI);
+        IRI initialCommitIri = getValueFactory().createIRI("http://mobi.com/commit#initial");
+        when(versioningManager.commit(eq(catalogId), any(Resource.class), any(Resource.class), eq(user), eq("The initial commit."), any(RepositoryConnection.class))).thenReturn(initialCommitIri);
+        when(commitManager.getCommit(eq(initialCommitIri), any(RepositoryConnection.class))).thenReturn(Optional.of(initialCommit));
 
         ShapesGraphRecord shaclRecord;
         try (RepositoryConnection connection = repository.getConnection()) {
@@ -553,10 +573,21 @@ public class SimpleShapesGraphRecordServiceTest extends OrmEnabledTestCase {
         config.set(RecordCreateSettings.RECORD_KEYWORDS, keywords);
         config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
         // When:
+        Revision revision = mock(Revision.class);
+        when(revision.getAdditions()).thenReturn(Optional.of(getValueFactory().createIRI("http://revision/add")));
+        when(revision.getDeletions()).thenReturn(Optional.of(getValueFactory().createIRI("http://revision/del")));
+        when(revision.getModel()).thenReturn(MODEL_FACTORY.createEmptyModel());
+        when(revisionManager.createRevision(any())).thenReturn(revision);
+
+        Commit initialCommit = commitFactory.createNew(commitIRI);
+        IRI initialCommitIri = getValueFactory().createIRI("http://mobi.com/commit#initial");
+        when(versioningManager.commit(eq(catalogId), any(Resource.class), any(Resource.class), eq(user), eq("The initial commit."), any(RepositoryConnection.class))).thenReturn(initialCommitIri);
+        when(commitManager.getCommit(eq(initialCommitIri), any(RepositoryConnection.class))).thenReturn(Optional.of(initialCommit));
+
         try (RepositoryConnection connection = repository.getConnection()) {
             recordService.create(user, config, connection);
         } catch (Exception e) {
-            fail("Exception was thrown");
+            fail("Exception was thrown: " + e);
         }
     }
 

@@ -92,7 +92,7 @@
     rdfs:label "master branch"@en;
     rdfs:comment "The master Branch of the described Versioned RDF Record."@en;
     rdfs:domain :VersionedRDFRecord;
-    rdfs:range :Branch.
+    rdfs:range :MasterBranch.
 
 # Branch
 
@@ -105,6 +105,17 @@
     rdfs:comment "The latest Commit of the described Branch."@en;
     rdfs:domain :Branch;
     rdfs:range :Commit.
+
+:MasterBranch a owl:Class;
+    rdfs:subClassOf :Branch;
+    rdfs:label "Master Branch"@en;
+    rdfs:comment "A set of Commits of a Versioned RDF Record MASTER record."@en.
+
+:headGraph a owl:DatatypeProperty, owl:FunctionalProperty;
+    rdfs:label "head graph"@en;
+    rdfs:comment "Links the IRI of a graph containing the triples of the latest state for a MasterBranch."@en;
+    rdfs:domain :MasterBranch;
+    rdfs:range xsd:anyURI.
 
 # UserBranch
 
@@ -182,6 +193,48 @@
     rdfs:comment "The Commit that was merged into the described Commit."@en ;
     rdfs:domain :Commit ;
     rdfs:range :Commit .
+
+:branchCommit a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:subPropertyOf prov:wasInformedBy ;
+    rdfs:label "branch commit"@en ;
+    rdfs:comment "The branch Commit indicating a forward delta of the described Commit."@en ;
+    rdfs:domain :Commit ;
+    rdfs:range :Commit .
+
+:mergeDisplayRevision a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:subPropertyOf prov:generated ;
+    rdfs:label "merge display revision" ;
+    rdfs:comment "The Revision that should be displayed to users for conflict resolution."@en ;
+    rdfs:domain :Commit ;
+    rdfs:range :Revision .
+
+:forwardMergeAuxRevision a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:subPropertyOf prov:generated ;
+    rdfs:label "forward merge aux revision" ;
+    rdfs:comment "The Revision that should be applied down the auxiliary chain for a forward merge when eventually merged into master."@en ;
+    rdfs:domain :Commit ;
+    rdfs:range :Revision .
+
+:forwardMergeBaseRevision a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:subPropertyOf prov:generated ;
+    rdfs:label "forward merge base revision" ;
+    rdfs:comment "The Revision that should be applied down the base chain for a forward merge when eventually merged into master."@en ;
+    rdfs:domain :Commit ;
+    rdfs:range :Revision .
+
+:masterMergeIntoBranchRevision a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:subPropertyOf prov:influenced ;
+    rdfs:label "master merge into branch revision" ;
+    rdfs:comment "The Revision that holds the aux side merge conflicts when master is merged into a forward branch that is later merged into master."@en ;
+    rdfs:domain :Commit ;
+    rdfs:range :Revision .
+
+:initialRevision a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:subPropertyOf prov:generated ;
+    rdfs:label "initial revision" ;
+    rdfs:comment "The Revision the initial revision of a VersionedRDFRecord."@en ;
+    rdfs:domain :Commit ;
+    rdfs:range :Revision .
 
 # In Progress Commit
 

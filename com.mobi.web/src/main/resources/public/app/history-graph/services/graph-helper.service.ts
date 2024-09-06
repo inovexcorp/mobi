@@ -58,7 +58,7 @@ export class GraphHelperService {
           branch: columnToCommit.branchName || '**UNKNOWN BRANCH**',
           commit: commit
         };
-        if (isEmpty(commit.auxiliary) && isEmpty(commit.base)) {
+        if (isEmpty(commit.auxiliary) && isEmpty(commit.base) && isEmpty(commit.branch)) {
           currentGitAction.branch = headTitle;
         }
         // Commit to the current branch
@@ -150,8 +150,8 @@ export class GraphHelperService {
         const lastCommit = cc.commitHashes.slice(-1)[0];
         commits.forEach((currentCommit: Commit) =>{
           if (lastCommit === currentCommit.id) {
-            if (currentCommit.base) {
-              cc.startCommitHash = currentCommit.base;
+            if (currentCommit.base || currentCommit.branch) {
+              cc.startCommitHash = currentCommit.base !== '' ? currentCommit.base : currentCommit.branch;
             } else {
               cc.startCommitHash = currentCommit.id;
             }
@@ -164,7 +164,7 @@ export class GraphHelperService {
   private recurse(commits: Commit[], commitColumns: CommitColumn[], currentCommit: Commit): void {
     // Find the column this commit belongs to and the ids of its base and auxiliary commits
     const commitColumn: CommitColumn | undefined = find(commitColumns, col => includes(col.commitHashes, currentCommit.id));
-    const baseParentHash: string = currentCommit.base;
+    const baseParentHash: string = currentCommit.base !== '' ? currentCommit.base : currentCommit.branch;
     const auxParentHash: string = currentCommit.auxiliary;
     // If there is an auxiliary parent, there is also a base parent
     if (auxParentHash) {

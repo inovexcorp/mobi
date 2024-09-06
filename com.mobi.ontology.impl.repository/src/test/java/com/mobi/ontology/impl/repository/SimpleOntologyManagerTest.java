@@ -45,10 +45,7 @@ import com.mobi.catalog.api.CompiledResourceManager;
 import com.mobi.catalog.api.DifferenceManager;
 import com.mobi.catalog.api.RecordManager;
 import com.mobi.catalog.api.builder.Difference;
-import com.mobi.catalog.api.ontologies.mcat.Branch;
-import com.mobi.catalog.api.ontologies.mcat.Catalog;
-import com.mobi.catalog.api.ontologies.mcat.Commit;
-import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
+import com.mobi.catalog.api.ontologies.mcat.*;
 import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.dataset.api.DatasetUtilsService;
 import com.mobi.dataset.impl.SimpleDatasetRepositoryConnection;
@@ -144,6 +141,7 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
     private final OrmFactory<OntologyRecord> ontologyRecordFactory = getRequiredOrmFactory(OntologyRecord.class);
     private final OrmFactory<Commit> commitFactory = getRequiredOrmFactory(Commit.class);
     private final OrmFactory<Branch> branchFactory = getRequiredOrmFactory(Branch.class);
+    private final OrmFactory<MasterBranch> masterBranchFactory = getRequiredOrmFactory(MasterBranch.class);
     private final OrmFactory<InProgressCommit> inProgressCommitFactory = getRequiredOrmFactory(InProgressCommit.class);
     private final OrmFactory<Dataset> datasetFactory = getRequiredOrmFactory(Dataset.class);
     private IRI missingIRI;
@@ -294,7 +292,7 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testApplyChangesDifference() {
-        Branch branch = branchFactory.createNew(branchIRI);
+        MasterBranch branch = masterBranchFactory.createNew(branchIRI);
         branch.setHead(commitFactory.createNew(commitIRI));
         when(branchManager.getMasterBranch(eq(catalogIRI), eq(recordIRI), any(RepositoryConnection.class))).thenReturn(branch);
         manager.applyChanges(ontology, difference);
@@ -303,7 +301,7 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testApplyChangesInProgressCommit() {
-        Branch branch = branchFactory.createNew(branchIRI);
+        MasterBranch branch = masterBranchFactory.createNew(branchIRI);
         branch.setHead(commitFactory.createNew(commitIRI));
         when(branchManager.getMasterBranch(eq(catalogIRI), eq(recordIRI), any(RepositoryConnection.class))).thenReturn(branch);
 
@@ -314,7 +312,7 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
 
     @Test(expected = MobiException.class)
     public void testApplyChangesDifferenceNotSimpleOntologyInstance() {
-        Branch branch = branchFactory.createNew(branchIRI);
+        MasterBranch branch = masterBranchFactory.createNew(branchIRI);
         branch.setHead(commitFactory.createNew(commitIRI));
         when(branchManager.getMasterBranch(eq(catalogIRI), eq(recordIRI), any(RepositoryConnection.class))).thenReturn(branch);
         manager.applyChanges(nonSimpleOntology, difference);
@@ -337,7 +335,7 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
     @Test
     public void testRetrieveOntologyByIRIWithCacheMiss() {
         // Setup
-        Branch branch = branchFactory.createNew(branchIRI);
+        MasterBranch branch = masterBranchFactory.createNew(branchIRI);
         branch.setHead(commitFactory.createNew(commitIRI));
         when(branchManager.getMasterBranch(eq(catalogIRI), eq(recordIRI), any(RepositoryConnection.class))).thenReturn(branch);
         when(compiledResourceManager.getCompiledResourceFile(eq(commitIRI), eq(RDFFormat.NQUADS), any(RepositoryConnection.class))).thenReturn(file);
@@ -353,7 +351,7 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
     @Test
     public void testRetrieveOntologyByIRIWithCacheHit() {
         // Setup
-        Branch branch = branchFactory.createNew(branchIRI);
+        MasterBranch branch = masterBranchFactory.createNew(branchIRI);
         branch.setHead(commitFactory.createNew(commitIRI));
         String key = ontologyCache.generateKey(recordIRI.stringValue(), commitIRI.stringValue());
         when(branchManager.getMasterBranch(eq(catalogIRI), eq(recordIRI), any(RepositoryConnection.class))).thenReturn(branch);
@@ -384,7 +382,7 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
     @Test(expected = IllegalStateException.class)
     public void testRetrieveOntologyWithHeadCommitNotSet() {
         // Setup:
-        Branch branch = branchFactory.createNew(branchIRI);
+        MasterBranch branch = masterBranchFactory.createNew(branchIRI);
         when(branchManager.getMasterBranch(eq(catalogIRI), eq(recordIRI), any(RepositoryConnection.class))).thenReturn(branch);
 
         manager.retrieveOntology(recordIRI);
@@ -393,7 +391,7 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
     @Test(expected = IllegalArgumentException.class)
     public void testRetrieveOntologyWhenCompiledResourceCannotBeFound() {
         // Setup:
-        Branch branch = branchFactory.createNew(branchIRI);
+        MasterBranch branch = masterBranchFactory.createNew(branchIRI);
         branch.setHead(commitFactory.createNew(commitIRI));
         when(branchManager.getMasterBranch(eq(catalogIRI), eq(recordIRI), any(RepositoryConnection.class))).thenReturn(branch);
         doThrow(new IllegalArgumentException()).when(ontologyCreationService).createOntologyFromCommit(any(), any());
@@ -404,7 +402,7 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
     @Test
     public void testRetrieveOntologyWithCacheMiss() {
         // Setup
-        Branch branch = branchFactory.createNew(branchIRI);
+        MasterBranch branch = masterBranchFactory.createNew(branchIRI);
         branch.setHead(commitFactory.createNew(commitIRI));
         when(branchManager.getMasterBranch(eq(catalogIRI), eq(recordIRI), any(RepositoryConnection.class))).thenReturn(branch);
 
@@ -419,7 +417,7 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
     @Test
     public void testRetrieveOntologyWithCacheHit() {
         // Setup:
-        Branch branch = branchFactory.createNew(branchIRI);
+        MasterBranch branch = masterBranchFactory.createNew(branchIRI);
         branch.setHead(commitFactory.createNew(commitIRI));
         String key = ontologyCache.generateKey(recordIRI.stringValue(), commitIRI.stringValue());
         when(branchManager.getMasterBranch(eq(catalogIRI), eq(recordIRI), any(RepositoryConnection.class))).thenReturn(branch);

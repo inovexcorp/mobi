@@ -1,0 +1,9 @@
+CONSTRUCT { ?s ?p ?o . }
+WHERE {
+    GRAPH ?graph1 { ?s ?p ?o }
+    FILTER NOT EXISTS {
+        GRAPH ?graph2 {
+            ?s ?p ?o
+        }
+    }
+}

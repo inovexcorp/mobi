@@ -551,7 +551,7 @@ public class WorkflowsRest {
             Map<BNode, IRI> catalogBNodes = new HashMap<>();
             final CompletableFuture<Model> currentModelFuture = CompletableFuture.supplyAsync(() -> {
                 long startTimeF = System.currentTimeMillis();
-                Model temp = getCurrentModel(recordId, branchId, commitId, catalogBNodes, conn, bNodeService, 
+                Model temp = getCurrentModel(recordId, branchId, commitId, catalogBNodes, conn, bNodeService,
                         compiledResourceManager);
                 log.trace("currentModelFuture took " + (System.currentTimeMillis() - startTimeF));
                 return temp;
@@ -562,8 +562,8 @@ public class WorkflowsRest {
             Model uploadedModel = uploadedModelFuture.get();
 
             startTime = System.currentTimeMillis();
-            if (OntologyModels.findFirstOntologyIRI(uploadedModel, vf).isEmpty()) {
-                OntologyModels.findFirstOntologyIRI(currentModel, vf)
+            if (OntologyModels.findFirstOntologyIRI(uploadedModel).isEmpty()) {
+                OntologyModels.findFirstOntologyIRI(currentModel)
                         .ifPresent(iri -> uploadedModel.add(iri, vf.createIRI(RDF.TYPE.stringValue()),
                                 vf.createIRI(OWL.ONTOLOGY.stringValue())));
             }

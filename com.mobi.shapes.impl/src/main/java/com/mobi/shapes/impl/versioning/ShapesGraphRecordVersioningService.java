@@ -23,32 +23,19 @@ package com.mobi.shapes.impl.versioning;
  * #L%
  */
 
-import com.mobi.catalog.api.builder.Difference;
-import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
-import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
-import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.api.versioning.BaseVersioningService;
 import com.mobi.catalog.api.versioning.VersioningService;
-import com.mobi.exception.MobiException;
-import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.ontologies.owl.Ontology;
-import com.mobi.ontologies.provo.Activity;
-import com.mobi.persistence.utils.Bindings;
+import com.mobi.ontology.utils.OntologyModels;
 import com.mobi.shapes.api.ShapesGraphManager;
 import com.mobi.shapes.api.ontologies.shapesgrapheditor.ShapesGraphRecord;
 import com.mobi.shapes.api.ontologies.shapesgrapheditor.ShapesGraphRecordFactory;
-import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
-import org.eclipse.rdf4j.model.ModelFactory;
 import org.eclipse.rdf4j.model.Resource;
-import org.eclipse.rdf4j.model.Statement;
-import org.eclipse.rdf4j.model.ValueFactory;
-import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
-import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
-import org.eclipse.rdf4j.query.TupleQuery;
-import org.eclipse.rdf4j.query.TupleQueryResult;
+import org.eclipse.rdf4j.model.vocabulary.OWL;
+import org.eclipse.rdf4j.model.vocabulary.RDF;
+import org.eclipse.rdf4j.query.QueryResults;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
@@ -57,36 +44,11 @@ import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.event.EventAdmin;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-
 @Component(
         immediate = true,
         service = { VersioningService.class, ShapesGraphRecordVersioningService.class }
 )
 public class ShapesGraphRecordVersioningService extends BaseVersioningService<ShapesGraphRecord> {
-
-    private static final String ADDITION_SHAPES_GRAPH_IRI_QUERY;
-    private static final String REVISION_BINDING = "revision";
-    private static final String SHAPES_GRAPH_IRI_BINDING = "shapesGraphIRI";
-
-    static {
-        try {
-            ADDITION_SHAPES_GRAPH_IRI_QUERY = IOUtils.toString(
-                    Objects.requireNonNull(ShapesGraphRecordVersioningService.class
-                            .getResourceAsStream("/get-shapes-graph-iri-addition.rq")), StandardCharsets.UTF_8
-            );
-        } catch (IOException e) {
-            throw new MobiException(e);
-        }
-    }
-
-    final ValueFactory vf = new ValidatingValueFactory();
-    final ModelFactory mf = new DynamicModelFactory();
-
     @Reference
     ShapesGraphRecordFactory shapesGraphRecordFactory;
 
@@ -107,84 +69,29 @@ public class ShapesGraphRecordVersioningService extends BaseVersioningService<Sh
     }
 
     @Override
-    public void addCommit(VersionedRDFRecord record, Branch branch, Commit commit, RepositoryConnection conn) {
-        if (isMasterBranch(record, branch)) {
-            commit.getBaseCommit_resource()
-                    .ifPresent(baseCommit -> updateShapesGraphIRI(record.getResource(), commit, conn));
+    protected void updateMasterRecordIRI(Resource recordId, Commit commit, RepositoryConnection conn) {
+        Resource headGraph = branchManager.getHeadGraph(
+                branchManager.getMasterBranch(configProvider.getLocalCatalogIRI(), recordId, conn));
+        Model currentIRIs = QueryResults.asModel(
+                conn.getStatements(null, RDF.TYPE, OWL.ONTOLOGY, headGraph));
+        if (currentIRIs.isEmpty()) {
+            throw new IllegalStateException("Ontology does not contain an ontology definition");
         }
-        commitManager.addCommit(branch, commit, conn);
-        commit.getWasAssociatedWith_resource().stream().findFirst()
-                .ifPresent(userIri -> sendCommitEvent(record.getResource(), branch.getResource(), userIri,
-                        commit.getResource()));
-    }
-
-    @Override
-    public Resource addCommit(VersionedRDFRecord record, Branch branch, User user, String message, Model additions,
-                              Model deletions, Commit baseCommit, Commit auxCommit, RepositoryConnection conn) {
-        InProgressCommit inProgressCommit = commitManager.createInProgressCommit(user);
-        Commit newCommit = commitManager.createCommit(inProgressCommit, message, baseCommit, auxCommit);
-        // Determine if branch is the master branch of a record
-        if (isMasterBranch(record, branch)) {
-            if (baseCommit != null) {
-                // If this is not the initial commit
-                Model model;
-                Difference diff = new Difference.Builder()
-                        .additions(additions == null ? mf.createEmptyModel() : additions)
-                        .deletions(deletions == null ? mf.createEmptyModel() : deletions)
-                        .build();
-                if (auxCommit != null) {
-                    // If this is a merge, collect all the additions from the aux branch and provided models
-                    List<Resource> sourceChain = commitManager.getCommitChain(auxCommit.getResource(), false, conn);
-                    sourceChain.removeAll(commitManager.getCommitChain(baseCommit.getResource(), false, conn));
-                    model = differenceManager.applyDifference(compiledResourceManager.getCompiledResource(sourceChain, conn), diff);
-                } else {
-                    // Else, this is a regular commit. Make sure we remove duplicated add/del statements
-                    model = differenceManager.applyDifference(mf.createEmptyModel(), diff);
-                }
-                updateShapesGraphIRI(record.getResource(), model, conn);
-            }
-        }
-        commitManager.addCommit(branch, newCommit, conn);
-        commitManager.updateCommit(newCommit, additions, deletions, conn);
-        sendCommitEvent(record.getResource(), branch.getResource(), user.getResource(), newCommit.getResource());
-        return newCommit.getResource();
-    }
-
-    private void updateShapesGraphIRI(Resource recordId, Commit commit, RepositoryConnection conn) {
         ShapesGraphRecord record = thingManager.getObject(recordId, shapesGraphRecordFactory, conn);
-        Optional<Resource> iri = record.getShapesGraphIRI();
-        IRI generatedIRI = vf.createIRI(Activity.generated_IRI);
-        Resource revisionIRI = (Resource) commit.getProperty(generatedIRI)
-                .orElseThrow(() -> new IllegalStateException("Commit is missing revision."));
-        TupleQuery query = conn.prepareTupleQuery(ADDITION_SHAPES_GRAPH_IRI_QUERY);
-        query.setBinding(REVISION_BINDING, revisionIRI);
-        try (TupleQueryResult result = query.evaluate()) {
-            if (result.hasNext()) {
-                Resource newIRI = Bindings.requiredResource(result.next(), SHAPES_GRAPH_IRI_BINDING);
-                if (iri.isEmpty() || !newIRI.equals(iri.get())) {
-                    assertShapesGraphIRIUniqueness(newIRI);
-                    record.setShapesGraphIRI(newIRI);
-                    thingManager.updateObject(record, conn);
-                }
-            }
-        }
-    }
+        Resource existingOntologyIRI = record.getShapesGraphIRI()
+                .orElseThrow(() -> new IllegalStateException("ShapesGraphRecord " + recordId.stringValue()
+                        + " does not have an ontologyIRI"));
+        Model ontologyDefinitions = mf.createEmptyModel();
+        currentIRIs.subjects().stream()
+                .map(iri -> QueryResults.asModel(conn.getStatements(iri, null, null, headGraph)))
+                .forEach(ontologyDefinitions::addAll);
+        Resource currentOntologyIRI = OntologyModels.findFirstOntologyIRI(ontologyDefinitions)
+                .orElse((IRI) existingOntologyIRI);
 
-    private void updateShapesGraphIRI(Resource recordId, Model additions, RepositoryConnection conn) {
-        ShapesGraphRecord record = thingManager.getObject(recordId, shapesGraphRecordFactory, conn);
-        Optional<Resource> iri = record.getShapesGraphIRI();
-
-        Optional<Statement> ontStmt = additions
-                .filter(null, vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI), vf.createIRI(Ontology.TYPE))
-                .stream()
-                .findFirst();
-        if (ontStmt.isPresent()) {
-            Resource newIRI = ontStmt.get().getSubject();
-            if (iri.isEmpty() || !newIRI.equals(iri.get())) {
-                assertShapesGraphIRIUniqueness(newIRI);
-                record.setShapesGraphIRI(newIRI);
-                thingManager.updateObject(record, conn);
-            }
+        if (!currentOntologyIRI.equals(existingOntologyIRI)) {
+            assertShapesGraphIRIUniqueness(currentOntologyIRI);
+            record.setShapesGraphIRI(currentOntologyIRI);
+            thingManager.updateObject(record, conn);
         }
     }
 
@@ -193,5 +100,4 @@ public class ShapesGraphRecordVersioningService extends BaseVersioningService<Sh
             throw new IllegalArgumentException("Shapes Graph already exists with IRI " + shapesGraphIRI);
         }
     }
-
 }

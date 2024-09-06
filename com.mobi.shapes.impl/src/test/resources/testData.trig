@@ -1,28 +1,335 @@
-@prefix owl: <http://www.w3.org/2002/07/owl#> .
-@prefix dct: <http://purl.org/dc/terms/> .
-@prefix shapesedit: <http://mobi.com/ontologies/shapes-graph-editor#> .
+@prefix apps: <http://mobi.com/applications#> .
+@prefix branches: <https://mobi.com/branches#> .
+@prefix commits: <https://mobi.com/commits#> .
+@prefix config: <http://mobi.com/ontologies/platform/config#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix deltas: <https://mobi.com/deltas#> .
+@prefix documents: <http://mobi.com/ontologies/documents#> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix geo1: <http://www.w3.org/2003/01/geo/wgs84_pos#> .
 @prefix mcat: <http://mobi.com/ontologies/catalog#> .
-@prefix records: <http://mobi.com/test/records#> .
-@prefix branches: <http://mobi.com/test/branches#> .
+@prefix mobiSpace: <http://mobi.com/> .
+@prefix namespaces: <http://mobi.com/ontologies/namespace#> .
+@prefix ontologies: <https://mobi.com/ontologies/> .
+@prefix ontologyEditor: <http://mobi.com/ontologies/ontology-editor#> .
+@prefix ontologystate: <http://mobi.com/ontologies/state#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix policies: <http://mobi.com/policies/> .
+@prefix policy: <http://mobi.com/ontologies/policy#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix recordPolicy: <http://mobi.com/policies/record/> .
+@prefix records: <https://mobi.com/records#> .
+@prefix revisions: <https://mobi.com/revisions#> .
+@prefix roles: <http://mobi.com/roles/> .
+@prefix setting: <http://mobi.com/ontologies/setting#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix shaclForm: <https://mobi.solutions/ontologies/form#> .
+@prefix shapesGraphBranchId: <http://mobi.com/states/shapes-graph-editor/branch-id/> .
+@prefix shapesGraphEditor: <http://mobi.com/ontologies/shapes-graph-editor#> .
+@prefix shapesGraphState: <http://mobi.com/ontologies/shapes-graph/state#> .
+@prefix user: <http://mobi.com/ontologies/user/management#> .
+@prefix users: <http://mobi.com/users/> .
+@prefix workflow: <http://mobi.solutions/ontologies/workflows#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
 
-records:shapes-record a shapesedit:ShapesGraphRecord ;
-    mcat:branch branches:branch ;
-    mcat:masterBranch branches:branch .
+# OntologyRecord
 
-branches:branch a mcat:Branch .
-
-<http://mobi.com/test/revisions#revision> mcat:additions <http://mobi.com/test/additions#commit> .
-
-<http://mobi.com/test/revisions#revisionUsed> mcat:additions <http://mobi.com/test/additions#used> .
-
-GRAPH <http://mobi.com/test/additions#commit> {
-    <http://test.com/ontology/new> a owl:Ontology .
+records:NewOntologyId {
+    records:NewOntologyId a mcat:Record,
+            mcat:VersionedRDFRecord,
+            mcat:VersionedRecord,
+            ontologyEditor:OntologyRecord,
+            owl:Thing ;
+        mcat:branch branches:NewOntologyIdBranchIdb ;
+        mcat:catalog mobiSpace:catalog-local ;
+        mcat:masterBranch branches:NewOntologyIdBranchIdb ;
+        ontologyEditor:ontologyIRI ontologies:NewOntology ;
+        dcterms:issued "2024-05-17T14:13:00.246494-04:00"^^xsd:dateTime ;
+        dcterms:modified "2024-05-17T14:13:00.275423-04:00"^^xsd:dateTime ;
+        dcterms:publisher users:adminUserId ;
+        dcterms:title "NewOntology" .
 }
 
-GRAPH <http://mobi.com/test/additions#used> {
-    <http://test.com/ontology/used> a owl:Ontology .
+<https://mobi.com/records#NewOntologyId/HEAD> {
+    ontologies:NewOntology a owl:Ontology ;
+        dcterms:title "NewOntology" .
 }
 
-GRAPH <http://mobi.com/test/additions#no-iri> {
-    <http://test.com/test> dct:title "Title" .
+branches:NewOntologyIdBranchIdb {
+    branches:NewOntologyIdBranchIdb a mcat:Branch,
+            mcat:MasterBranch,
+            owl:Thing ;
+        mcat:head commits:31c00edf-d95c-4228-bbd1-e57bc71c19fa ;
+        mcat:headGraph <https://mobi.com/records#NewOntologyId/HEAD> ;
+        dcterms:description "The master branch." ;
+        dcterms:issued "2024-05-17T14:13:00.246997-04:00"^^xsd:dateTime ;
+        dcterms:modified "2024-05-17T14:13:00.275528-04:00"^^xsd:dateTime ;
+        dcterms:publisher users:adminUserId ;
+        dcterms:title "MASTER" .
+}
+
+commits:31c00edf-d95c-4228-bbd1-e57bc71c19fa {
+    commits:31c00edf-d95c-4228-bbd1-e57bc71c19fa a mcat:Commit,
+            owl:Thing,
+            prov:Activity ;
+        mcat:initialRevision revisions:e98649a6-c894-437a-8d89-0ec5e641b3bd ;
+        dcterms:title "The initial commit." ;
+        prov:atTime "2024-05-17T14:13:00.274645-04:00"^^xsd:dateTime ;
+        prov:generated revisions:4c6d1e71-9853-4462-9f37-0a8e7925f573 ;
+        prov:wasAssociatedWith users:adminUserId .
+
+    revisions:4c6d1e71-9853-4462-9f37-0a8e7925f573 a mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:4c6d1e71-9853-4462-9f37-0a8e7925f573-A ;
+        mcat:deletions deltas:4c6d1e71-9853-4462-9f37-0a8e7925f573-B .
+
+    revisions:e98649a6-c894-437a-8d89-0ec5e641b3bd a mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:e98649a6-c894-437a-8d89-0ec5e641b3bd-A ;
+        mcat:deletions deltas:e98649a6-c894-437a-8d89-0ec5e641b3bd-B .
+}
+
+
+deltas:e98649a6-c894-437a-8d89-0ec5e641b3bd-A {
+    ontologies:NewOntology a owl:Ontology ;
+        dcterms:title "NewOntology" .
+}
+
+# ShapesGraphRecord
+
+records:NewShapeGraphId {
+    records:NewShapeGraphId a mcat:Record,
+            mcat:VersionedRDFRecord,
+            mcat:VersionedRecord,
+            shapesGraphEditor:ShapesGraphRecord,
+            owl:Thing ;
+        mcat:branch branches:NewShapeGraphIdBranchId ;
+        mcat:catalog mobiSpace:catalog-local ;
+        mcat:masterBranch branches:NewShapeGraphIdBranchId ;
+        shapesGraphEditor:shapesGraphIRI <http://mobi.solutions/ontologies/shapes-graph/NewShapeGraph> ;
+        dcterms:issued "2024-05-17T14:13:14.351065-04:00"^^xsd:dateTime ;
+        dcterms:modified "2024-05-17T14:13:14.363672-04:00"^^xsd:dateTime ;
+        dcterms:publisher users:adminUserId ;
+        dcterms:title "NewShapeGraph" .
+}
+
+<https://mobi.com/records#NewShapeGraphId/HEAD> {
+    <http://mobi.solutions/ontologies/shapes-graph/NewShapeGraph> a owl:Ontology ;
+        dcterms:title "NewShapeGraph" .
+}
+
+branches:NewShapeGraphIdBranchId {
+    branches:NewShapeGraphIdBranchId a mcat:Branch,
+            mcat:MasterBranch,
+            owl:Thing ;
+        mcat:head commits:NewShapeGraphIdCommit000 ;
+        mcat:headGraph <https://mobi.com/records#NewShapeGraphId/HEAD> ;
+        dcterms:description "The master branch." ;
+        dcterms:issued "2024-05-17T14:13:14.351351-04:00"^^xsd:dateTime ;
+        dcterms:modified "2024-05-17T14:13:14.363783-04:00"^^xsd:dateTime ;
+        dcterms:publisher users:adminUserId ;
+        dcterms:title "MASTER" .
+}
+
+commits:NewShapeGraphIdCommit000 {
+    commits:NewShapeGraphIdCommit000 a mcat:Commit,
+            owl:Thing,
+            prov:Activity ;
+        mcat:initialRevision revisions:NewShapeGraphIdCommit000Delta000 ;
+        dcterms:title "The initial commit." ;
+        prov:atTime "2024-05-17T14:13:14.363144-04:00"^^xsd:dateTime ;
+        prov:generated revisions:29196571-7f3a-4540-9c56-98a210e93a66 ;
+        prov:wasAssociatedWith users:adminUserId .
+
+    revisions:29196571-7f3a-4540-9c56-98a210e93a66 a mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:29196571-7f3a-4540-9c56-98a210e93a66-A ;
+        mcat:deletions deltas:29196571-7f3a-4540-9c56-98a210e93a66-B .
+
+    revisions:NewShapeGraphIdCommit000Delta000 a mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:NewShapeGraphIdCommit000Delta000-A ;
+        mcat:deletions deltas:NewShapeGraphIdCommit000Delta000-B .
+}
+
+deltas:NewShapeGraphIdCommit000Delta000-A {
+    <http://mobi.solutions/ontologies/shapes-graph/NewShapeGraph> a owl:Ontology ;
+        dcterms:title "NewShapeGraph" .
+}
+
+# Workflow Record
+
+records:NewWorkflowId {
+    records:NewWorkflowId a mcat:Record,
+            mcat:VersionedRDFRecord,
+            mcat:VersionedRecord,
+            workflow:WorkflowRecord,
+            owl:Thing ;
+        mcat:branch branches:NewWorkflowIdBranchId ;
+        mcat:catalog mobiSpace:catalog-local ;
+        mcat:masterBranch branches:NewWorkflowIdBranchId ;
+        workflow:active false ;
+        workflow:workflowIRI <http://mobi.solutions/ontologies/workflows/NewWorkflow> ;
+        dcterms:issued "2024-05-17T14:13:29.656585-04:00"^^xsd:dateTime ;
+        dcterms:modified "2024-05-17T14:13:29.671483-04:00"^^xsd:dateTime ;
+        dcterms:publisher users:adminUserId ;
+        dcterms:title "NewWorkflow" .
+}
+
+<https://mobi.com/records#NewWorkflowId/HEAD> {
+    <http://mobi.solutions/ontologies/workflows/NewWorkflow> a workflow:Workflow ;
+        workflow:hasAction <http://mobi.solutions/ontologies/workflows/NewWorkflow/action> .
+
+    <http://mobi.solutions/ontologies/workflows/NewWorkflow/action> a workflow:Action,
+            workflow:TestAction ;
+        workflow:testMessage "This is a test message from http://mobi.solutions/ontologies/workflows/NewWorkflow/action" .
+}
+
+branches:NewWorkflowIdBranchId {
+    branches:NewWorkflowIdBranchId a mcat:Branch,
+            mcat:MasterBranch,
+            owl:Thing ;
+        mcat:head commits:NewWorkflowIdCommit000 ;
+        mcat:headGraph <https://mobi.com/records#NewWorkflowId/HEAD> ;
+        dcterms:description "The master branch." ;
+        dcterms:issued "2024-05-17T14:13:29.656915-04:00"^^xsd:dateTime ;
+        dcterms:modified "2024-05-17T14:13:29.671613-04:00"^^xsd:dateTime ;
+        dcterms:publisher users:adminUserId ;
+        dcterms:title "MASTER" .
+}
+
+commits:NewWorkflowIdCommit000 {
+    commits:NewWorkflowIdCommit000 a mcat:Commit,
+            owl:Thing,
+            prov:Activity ;
+        mcat:initialRevision revisions:d79432ba-48f1-49ca-b364-b883775a8e78 ;
+        dcterms:title "The initial commit." ;
+        prov:atTime "2024-05-17T14:13:29.670931-04:00"^^xsd:dateTime ;
+        prov:generated revisions:NewWorkflowIdCommit000Delta000 ;
+        prov:wasAssociatedWith users:adminUserId .
+
+    revisions:d79432ba-48f1-49ca-b364-b883775a8e78 a mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:d79432ba-48f1-49ca-b364-b883775a8e78-A ;
+        mcat:deletions deltas:d79432ba-48f1-49ca-b364-b883775a8e78-B .
+
+    revisions:NewWorkflowIdCommit000Delta000 a mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:NewWorkflowIdCommit000Delta000-A ;
+        mcat:deletions deltas:NewWorkflowIdCommit000Delta000-B .
+}
+
+deltas:d79432ba-48f1-49ca-b364-b883775a8e78-A {
+    <http://mobi.solutions/ontologies/workflows/NewWorkflow> a workflow:Workflow ;
+        workflow:hasAction <http://mobi.solutions/ontologies/workflows/NewWorkflow/action> .
+
+    <http://mobi.solutions/ontologies/workflows/NewWorkflow/action> a workflow:Action,
+            workflow:TestAction ;
+        workflow:testMessage "This is a test message from http://mobi.solutions/ontologies/workflows/NewWorkflow/action" .
+}
+
+mobiSpace:catalog-distributed {
+    mobiSpace:catalog-distributed a mcat:Catalog,
+            owl:Thing ;
+        dcterms:description "The Mobi Catalog records datasets, ontologies, data mappings, and other resources." ;
+        dcterms:issued "2024-05-17T14:11:52.411540-04:00"^^xsd:dateTime ;
+        dcterms:modified "2024-05-17T14:11:52.411540-04:00"^^xsd:dateTime ;
+        dcterms:title "Mobi Catalog (Distributed)" .
+}
+
+{
+    apps:mapping-tool a config:Application,
+            owl:Thing ;
+        dcterms:description "The built-in Mapping Tool application in Mobi." ;
+        dcterms:title "Mapping Tool" .
+
+    apps:sparql-editor a config:Application,
+            owl:Thing ;
+        dcterms:description "The built-in SPARQL Query Editor application in Mobi." ;
+        dcterms:title "SPARQL Editor" .
+
+    <http://mobi.com/states#a1b8088b-1a2f-4eee-8a44-731b37774fb9> a config:ApplicationState,
+            config:State,
+            owl:Thing ;
+        config:application apps:shapes-graph-editor ;
+        config:forUser users:adminUserId ;
+        config:stateResource shapesGraphState:1e252a8e-e0ab-41fe-a6f5-fd7e92475945,
+            shapesGraphBranchId:68f71178-6e39-4ef3-aca8-fe60ba5b1db6 .
+
+    <http://mobi.com/states#aafd65ee-277a-4048-844d-55d7f4ccf759> a config:ApplicationState,
+            config:State,
+            owl:Thing ;
+        config:application apps:ontology-editor ;
+        config:forUser users:adminUserId ;
+        config:stateResource ontologystate:6d3c4cd1-c796-4241-becf-30c825138df0,
+            <http://mobi.com/states/ontology-editor/branch-id/dea9467d-7643-493e-8685-80dbcd1d9165> .
+
+    apps:ontology-editor a config:Application,
+            owl:Thing ;
+        dcterms:description "The built-in Ontology Editor application in Mobi." ;
+        dcterms:title "Ontology Editor" .
+
+    apps:shapes-graph-editor a config:Application,
+            owl:Thing ;
+        dcterms:description "The built-in Shapes Graph Editor application in Mobi." ;
+        dcterms:title "Shapes Graph Editor" .
+
+    shapesGraphState:1e252a8e-e0ab-41fe-a6f5-fd7e92475945 a shapesGraphState:StateRecord ;
+        shapesGraphState:branchStates shapesGraphBranchId:68f71178-6e39-4ef3-aca8-fe60ba5b1db6 ;
+        shapesGraphState:currentState shapesGraphBranchId:68f71178-6e39-4ef3-aca8-fe60ba5b1db6 ;
+        shapesGraphState:record records:NewShapeGraphId .
+
+    ontologystate:6d3c4cd1-c796-4241-becf-30c825138df0 a ontologystate:StateRecord ;
+        ontologystate:branchStates <http://mobi.com/states/ontology-editor/branch-id/dea9467d-7643-493e-8685-80dbcd1d9165> ;
+        ontologystate:currentState <http://mobi.com/states/ontology-editor/branch-id/dea9467d-7643-493e-8685-80dbcd1d9165> ;
+        ontologystate:record records:NewOntologyId .
+
+    <http://mobi.com/states/ontology-editor/branch-id/dea9467d-7643-493e-8685-80dbcd1d9165> a ontologystate:StateBranch,
+            ontologystate:StateCommit ;
+        ontologystate:branch branches:NewOntologyIdBranchIdb ;
+        ontologystate:commit commits:31c00edf-d95c-4228-bbd1-e57bc71c19fa .
+
+    shapesGraphBranchId:68f71178-6e39-4ef3-aca8-fe60ba5b1db6 a shapesGraphState:StateBranch,
+            shapesGraphState:StateCommit ;
+        shapesGraphState:branch branches:NewShapeGraphIdBranchId ;
+        shapesGraphState:commit commits:NewShapeGraphIdCommit000 .
+}
+
+mobiSpace:usermanagement {
+    roles:admin a user:Role,
+            owl:Thing,
+            foaf:Agent ;
+        dcterms:title "admin" .
+
+    roles:user a user:Role,
+            owl:Thing,
+            foaf:Agent ;
+        dcterms:title "user" .
+
+    users:adminUserId a user:User,
+            owl:Thing,
+            geo1:SpatialThing,
+            prov:Agent,
+            foaf:Agent,
+            foaf:Person ;
+        user:hasUserRole roles:admin,
+            roles:user ;
+        user:password "{CRYPT}21232F297A57A5A743894A0E4A801FC3{CRYPT}" ;
+        user:username "admin" .
+}
+
+mobiSpace:catalog-local {
+    mobiSpace:catalog-local a mcat:Catalog,
+            owl:Thing ;
+        dcterms:description "The Mobi Catalog records datasets, ontologies, data mappings, and other resources." ;
+        dcterms:issued "2024-05-17T14:11:52.415611-04:00"^^xsd:dateTime ;
+        dcterms:modified "2024-05-17T14:11:52.415611-04:00"^^xsd:dateTime ;
+        dcterms:title "Mobi Catalog (Local)" .
 }

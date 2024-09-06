@@ -23,6 +23,7 @@ package com.mobi.catalog.impl;
  * #L%
  */
 
+import static com.mobi.catalog.impl.TestResourceUtils.trigRequired;
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertNotNull;
@@ -38,6 +39,7 @@ import static org.mockito.Mockito.when;
 
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Distribution;
+import com.mobi.catalog.api.ontologies.mcat.MasterBranch;
 import com.mobi.catalog.api.ontologies.mcat.UserBranch;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.api.record.RecordService;
@@ -48,8 +50,6 @@ import com.mobi.repository.impl.sesame.memory.MemoryRepositoryWrapper;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
-import org.eclipse.rdf4j.rio.RDFFormat;
-import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
 import org.junit.After;
 import org.junit.Before;
@@ -59,7 +59,6 @@ import org.junit.rules.ExpectedException;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import java.io.InputStream;
 import java.time.OffsetDateTime;
 import java.util.Arrays;
 import java.util.Collections;
@@ -71,6 +70,7 @@ public class SimpleBranchManagerTest extends OrmEnabledTestCase {
     private MemoryRepositoryWrapper repo;
     private SimpleBranchManager manager;
     private final OrmFactory<Branch> branchFactory = getRequiredOrmFactory(Branch.class);
+    private final OrmFactory<MasterBranch> masterBranchFactory = getRequiredOrmFactory(MasterBranch.class);
     private final OrmFactory<UserBranch> userBranchFactory = getRequiredOrmFactory(UserBranch.class);
     private final OrmFactory<VersionedRDFRecord> versionedRDFRecordFactory = getRequiredOrmFactory(VersionedRDFRecord.class);
     private final OrmFactory<Distribution> distributionFactory = getRequiredOrmFactory(Distribution.class);
@@ -91,11 +91,6 @@ public class SimpleBranchManagerTest extends OrmEnabledTestCase {
         repo.setDelegate(new SailRepository(new MemoryStore()));
         closeable = MockitoAnnotations.openMocks(this);
 
-        try (RepositoryConnection conn = repo.getConnection()) {
-            InputStream testData = getClass().getResourceAsStream("/testCatalogData.trig");
-            conn.add(Rio.parse(testData, "", RDFFormat.TRIG));
-        }
-
         when(versionedRDFRecordService.getTypeIRI()).thenReturn(VersionedRDFRecord.TYPE);
         when(versionedRDFRecordService.getType()).thenReturn(VersionedRDFRecord.class);
 
@@ -110,6 +105,7 @@ public class SimpleBranchManagerTest extends OrmEnabledTestCase {
         injectOrmFactoryReferencesIntoService(recordManager);
         injectOrmFactoryReferencesIntoService(revisionManager);
         injectOrmFactoryReferencesIntoService(thingManager);
+        injectOrmFactoryReferencesIntoService(masterBranchFactory);
     }
 
     @After
@@ -122,6 +118,7 @@ public class SimpleBranchManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testGetBranches() throws Exception {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
         // Setup:
         try (RepositoryConnection conn = repo.getConnection()) {
             VersionedRDFRecord record = versionedRDFRecordFactory.createNew(ManagerTestConstants.VERSIONED_RDF_RECORD_IRI);
@@ -177,6 +174,7 @@ public class SimpleBranchManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testUpdateBranch() throws Exception {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:
             Branch branch = branchFactory.createNew(ManagerTestConstants.BRANCH_IRI);
@@ -193,6 +191,7 @@ public class SimpleBranchManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testUpdateUserBranch() throws Exception {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:
             UserBranch branch = userBranchFactory.createNew(ManagerTestConstants.USER_BRANCH_IRI);
@@ -209,6 +208,7 @@ public class SimpleBranchManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testUpdateMasterBranch() {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:
             Branch branch = branchFactory.createNew(ManagerTestConstants.MASTER_BRANCH_IRI);
@@ -227,6 +227,7 @@ public class SimpleBranchManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testRemoveBranch() throws Exception {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
         try (RepositoryConnection conn = repo.getConnection()) {
             when(versionedRDFRecordService.deleteBranch(eq(ManagerTestConstants.CATALOG_IRI), eq(ManagerTestConstants.VERSIONED_RDF_RECORD_IRI), eq(ManagerTestConstants.BRANCH_IRI), any(RepositoryConnection.class)))
                     .thenReturn(Optional.of(Arrays.asList()));
@@ -236,6 +237,7 @@ public class SimpleBranchManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testDeleteBranchWithMissingIdentifier() {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
         try (RepositoryConnection conn = repo.getConnection()) {
             thrown.expect(IllegalArgumentException.class);
             thrown.expectMessage("Record does not support Delete Branch operation");
@@ -248,6 +250,7 @@ public class SimpleBranchManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testRemoveMasterBranch() {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:
             when(versionedRDFRecordService.deleteBranch(eq(ManagerTestConstants.CATALOG_IRI), eq(ManagerTestConstants.VERSIONED_RDF_RECORD_IRI), eq(ManagerTestConstants.MASTER_BRANCH_IRI), any(RepositoryConnection.class)))
@@ -300,6 +303,7 @@ public class SimpleBranchManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testGetBranchOfWrongRecord() throws Exception {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
         try (RepositoryConnection conn = repo.getConnection()) {
             Optional<Branch> result = manager.getBranchOpt(ManagerTestConstants.CATALOG_IRI, ManagerTestConstants.VERSIONED_RDF_RECORD_IRI, ManagerTestConstants.EMPTY_IRI, branchFactory, conn);
             assertFalse(result.isPresent());
@@ -310,23 +314,25 @@ public class SimpleBranchManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testGetMasterBranch() throws Exception {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:
             VersionedRDFRecord record = versionedRDFRecordFactory.createNew(ManagerTestConstants.VERSIONED_RDF_RECORD_IRI);
-            Branch branch = branchFactory.createNew(ManagerTestConstants.MASTER_BRANCH_IRI);
+            MasterBranch branch = masterBranchFactory.createNew(ManagerTestConstants.MASTER_BRANCH_IRI);
             record.setMasterBranch(branch);
             doReturn(record).when(recordManager).getRecord(eq(ManagerTestConstants.CATALOG_IRI), eq(ManagerTestConstants.VERSIONED_RDF_RECORD_IRI), eq(versionedRDFRecordFactory), any(RepositoryConnection.class));
-            doReturn(branch).when(thingManager).getExpectedObject(eq(ManagerTestConstants.MASTER_BRANCH_IRI), eq(branchFactory), any(RepositoryConnection.class));
+            doReturn(branch).when(thingManager).getExpectedObject(eq(ManagerTestConstants.MASTER_BRANCH_IRI), eq(masterBranchFactory), any(RepositoryConnection.class));
 
             Branch result = manager.getMasterBranch(ManagerTestConstants.CATALOG_IRI, ManagerTestConstants.VERSIONED_RDF_RECORD_IRI, conn);
             verify(recordManager).getRecord(eq(ManagerTestConstants.CATALOG_IRI), eq(ManagerTestConstants.VERSIONED_RDF_RECORD_IRI), eq(versionedRDFRecordFactory), any(RepositoryConnection.class));
-            verify(thingManager).getExpectedObject(eq(ManagerTestConstants.MASTER_BRANCH_IRI), eq(branchFactory), any(RepositoryConnection.class));
+            verify(thingManager).getExpectedObject(eq(ManagerTestConstants.MASTER_BRANCH_IRI), eq(masterBranchFactory), any(RepositoryConnection.class));
             assertEquals(branch, result);
         }
     }
 
     @Test
     public void testGetMasterBranchOfRecordWithoutMasterSet() {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:
             thrown.expect(IllegalStateException.class);
@@ -351,6 +357,7 @@ public class SimpleBranchManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testBranchPathWithMissingRecord() {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
         // Setup:
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage("VersionedRDFRecord " + ManagerTestConstants.MISSING_IRI + " could not be found");
@@ -362,6 +369,7 @@ public class SimpleBranchManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testBranchPathWithWrongCatalog() {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
         // Setup:
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage(String.format("Record %s does not belong to Catalog %s", ManagerTestConstants.VERSIONED_RDF_RECORD_NO_CATALOG_IRI, ManagerTestConstants.CATALOG_IRI));
@@ -373,6 +381,7 @@ public class SimpleBranchManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testBranchPathWithWrongRecord() {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
         // Setup:
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage(String.format("Branch %s does not belong to VersionedRDFRecord %s", ManagerTestConstants.LONE_BRANCH_IRI, ManagerTestConstants.VERSIONED_RDF_RECORD_IRI));
@@ -386,6 +395,7 @@ public class SimpleBranchManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void getBranchTest() {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
         try (RepositoryConnection conn = repo.getConnection()) {
             Branch branch = manager.getBranch(ManagerTestConstants.CATALOG_IRI, ManagerTestConstants.VERSIONED_RDF_RECORD_IRI, ManagerTestConstants.BRANCH_IRI, branchFactory, conn);
             assertFalse(branch.getModel().isEmpty());
@@ -406,6 +416,7 @@ public class SimpleBranchManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void getBranchWithMissingRecordTest() {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
         // Setup:
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage("VersionedRDFRecord " + ManagerTestConstants.MISSING_IRI + " could not be found");
@@ -417,6 +428,7 @@ public class SimpleBranchManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void getBranchWithWrongCatalogTest() {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
         // Setup:
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage(String.format("Record %s does not belong to Catalog %s", ManagerTestConstants.VERSIONED_RDF_RECORD_NO_CATALOG_IRI, ManagerTestConstants.CATALOG_IRI));
@@ -428,6 +440,7 @@ public class SimpleBranchManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void getBranchWithWrongRecordTest() {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
         // Setup:
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage(String.format("Branch %s does not belong to VersionedRDFRecord %s", ManagerTestConstants.LONE_BRANCH_IRI, ManagerTestConstants.VERSIONED_RDF_RECORD_IRI));
@@ -439,6 +452,7 @@ public class SimpleBranchManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void getMissingBranchTest() {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
         // Setup:
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage("Branch " + ManagerTestConstants.RANDOM_IRI + " could not be found");
@@ -452,6 +466,7 @@ public class SimpleBranchManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void getBranchWithRecordTest() {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
         try (RepositoryConnection conn = repo.getConnection()) {
             VersionedRDFRecord record = versionedRDFRecordFactory.createNew(ManagerTestConstants.VERSIONED_RDF_RECORD_IRI);
             record.setBranch(Collections.singleton(branchFactory.createNew(ManagerTestConstants.BRANCH_IRI)));

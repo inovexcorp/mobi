@@ -1,0 +1,15 @@
+DELETE {
+    GRAPH ?g {
+        ?newCommit ?p ?o
+    }
+}
+INSERT {
+    GRAPH ?g {
+        ?commit ?p ?o
+    }
+}
+WHERE {
+    GRAPH ?g {
+        ?newCommit ?p ?o
+    }
+}

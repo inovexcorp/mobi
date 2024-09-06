@@ -23,10 +23,12 @@ package com.mobi.utils.cli.utils;
  * #L%
  */
 
+import com.mobi.exception.MobiException;
 import com.mobi.utils.cli.api.RestoreOperation;
 import org.apache.maven.artifact.versioning.ArtifactVersion;
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion;
 import org.apache.maven.artifact.versioning.InvalidVersionSpecificationException;
+import org.apache.maven.artifact.versioning.VersionRange;
 
 import java.util.Comparator;
 import java.util.List;
@@ -54,5 +56,14 @@ public class VersionRangeUtils {
                 })
                 .sorted(Comparator.comparing(RestoreOperation::getPriority))
                 .collect(Collectors.toList());
+    }
+
+    public static boolean isPre4Version(String currentMobiVersion) {
+        try {
+            return VersionRange.createFromVersionSpec("(,4.0)")
+                    .containsVersion(new DefaultArtifactVersion(currentMobiVersion));
+        } catch (InvalidVersionSpecificationException e) {
+            throw new MobiException(e);
+        }
     }
 }

@@ -1,0 +1,313 @@
+
+<https://mobi.com/deltas#7b82704c-a527-4ab8-96ce-6129787e5211-A> {
+    <urn:test> <http://purl.org/dc/terms/hasVersion> <http://purl.org/dc/terms/isPartOf> .
+}
+
+<https://mobi.com/commits#96cf8bb0-9adf-401c-a547-cbbec15d4b10> {
+    <https://mobi.com/commits#96cf8bb0-9adf-401c-a547-cbbec15d4b10> a <http://mobi.com/ontologies/catalog#Commit>,
+                                                                          <http://www.w3.org/2002/07/owl#Thing>, <http://www.w3.org/ns/prov#Activity>;
+        <http://www.w3.org/ns/prov#generated> <https://mobi.com/revisions#ef9913b4-af62-41a7-ac3d-82c29ea08fa8>;
+        <http://www.w3.org/ns/prov#atTime> "2024-02-08T10:56:29.826408-05:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+        <http://purl.org/dc/terms/title> "Merge of MASTER into Branch 1";
+        <http://www.w3.org/ns/prov#wasAssociatedWith> <http://test.com#user>;
+        <http://mobi.com/ontologies/catalog#branchCommit> <https://mobi.com/commits#8ef3f4a2-9418-4948-a539-8c820e5f5fde>;
+        <http://mobi.com/ontologies/catalog#auxiliaryCommit> <https://mobi.com/commits#36039950-5e78-462c-81c3-57e9da4bd3ef> .
+
+    <https://mobi.com/revisions#ef9913b4-af62-41a7-ac3d-82c29ea08fa8> a <http://mobi.com/ontologies/catalog#Revision>,
+                                                                            <http://www.w3.org/ns/prov#Entity>, <http://www.w3.org/2002/07/owl#Thing>;
+        <http://mobi.com/ontologies/catalog#additions> <https://mobi.com/deltas#ef9913b4-af62-41a7-ac3d-82c29ea08fa8-A>;
+        <http://mobi.com/ontologies/catalog#deletions> <https://mobi.com/deltas#ef9913b4-af62-41a7-ac3d-82c29ea08fa8-B>;
+        <http://www.w3.org/ns/prov#hadPrimarySource> <https://mobi.com/revisions#60f7f8e9-a481-435f-a5a7-441bca8313a8>;
+        <http://www.w3.org/ns/prov#wasDerivedFrom> <https://mobi.com/revisions#af41198a-f0d8-4f30-9f32-3f46c142c1a9> .
+}
+
+<https://mobi.com/commits#6f96f4ba-f063-41ad-9b3a-50f0470c18f8> {
+    <https://mobi.com/commits#6f96f4ba-f063-41ad-9b3a-50f0470c18f8> a <http://mobi.com/ontologies/catalog#Commit>,
+                                                                          <http://www.w3.org/2002/07/owl#Thing>, <http://www.w3.org/ns/prov#Activity>;
+        <http://www.w3.org/ns/prov#generated> <https://mobi.com/revisions#8cea772b-5735-43bf-a12d-9f6ed34ab500>;
+        <http://www.w3.org/ns/prov#atTime> "2024-02-08T10:56:29.812816-05:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+        <http://purl.org/dc/terms/title> "Commit Number 3 on \"Branch 1\"";
+        <http://www.w3.org/ns/prov#wasAssociatedWith> <http://test.com#user>;
+        <http://mobi.com/ontologies/catalog#branchCommit> <https://mobi.com/commits#724e31e2-9c92-447b-bcf7-f68facf89bfa> .
+
+    <https://mobi.com/revisions#8cea772b-5735-43bf-a12d-9f6ed34ab500> a <http://mobi.com/ontologies/catalog#Revision>,
+                                                                            <http://www.w3.org/ns/prov#Entity>, <http://www.w3.org/2002/07/owl#Thing>;
+        <http://mobi.com/ontologies/catalog#additions> <https://mobi.com/deltas#8cea772b-5735-43bf-a12d-9f6ed34ab500-A>;
+        <http://mobi.com/ontologies/catalog#deletions> <https://mobi.com/deltas#8cea772b-5735-43bf-a12d-9f6ed34ab500-B>;
+        <http://www.w3.org/ns/prov#hadPrimarySource> <https://mobi.com/revisions#6bd832a7-dcfe-433e-8a16-099c4ba38bb2> .
+}
+
+<https://mobi.com/commits#8ef3f4a2-9418-4948-a539-8c820e5f5fde> {
+    <https://mobi.com/commits#8ef3f4a2-9418-4948-a539-8c820e5f5fde> a <http://mobi.com/ontologies/catalog#Commit>,
+                                                                          <http://www.w3.org/2002/07/owl#Thing>, <http://www.w3.org/ns/prov#Activity>;
+        <http://www.w3.org/ns/prov#generated> <https://mobi.com/revisions#60f7f8e9-a481-435f-a5a7-441bca8313a8>;
+        <http://www.w3.org/ns/prov#atTime> "2024-02-08T10:56:29.817804-05:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+        <http://purl.org/dc/terms/title> "Commit Number 4 on \"Branch 1\"";
+        <http://www.w3.org/ns/prov#wasAssociatedWith> <http://test.com#user>;
+        <http://mobi.com/ontologies/catalog#branchCommit> <https://mobi.com/commits#6f96f4ba-f063-41ad-9b3a-50f0470c18f8> .
+
+    <https://mobi.com/revisions#60f7f8e9-a481-435f-a5a7-441bca8313a8> a <http://mobi.com/ontologies/catalog#Revision>,
+                                                                            <http://www.w3.org/ns/prov#Entity>, <http://www.w3.org/2002/07/owl#Thing>;
+        <http://mobi.com/ontologies/catalog#additions> <https://mobi.com/deltas#60f7f8e9-a481-435f-a5a7-441bca8313a8-A>;
+        <http://mobi.com/ontologies/catalog#deletions> <https://mobi.com/deltas#60f7f8e9-a481-435f-a5a7-441bca8313a8-B>;
+        <http://www.w3.org/ns/prov#hadPrimarySource> <https://mobi.com/revisions#8cea772b-5735-43bf-a12d-9f6ed34ab500> .
+}
+
+<https://mobi.com/deltas#8cea772b-5735-43bf-a12d-9f6ed34ab500-A> {
+    <urn:test> <http://purl.org/dc/terms/date> <http://purl.org/dc/terms/ProvenanceStatement> .
+}
+
+<https://mobi.com/records#8dbdf369-e49d-41b4-902e-822e1ac0461a> {
+    <https://mobi.com/records#8dbdf369-e49d-41b4-902e-822e1ac0461a> a <http://mobi.com/ontologies/catalog#VersionedRDFRecord>,
+                                                                          <http://mobi.com/ontologies/catalog#VersionedRecord>, <http://mobi.com/ontologies/catalog#Record>,
+                                                                          <http://www.w3.org/2002/07/owl#Thing>;
+        <http://mobi.com/ontologies/catalog#catalog> <http://mobi.com/test/catalogs#catalog-local>;
+        <http://purl.org/dc/terms/title> "DC Terms";
+        <http://purl.org/dc/terms/issued> "2024-02-08T10:56:29.503263-05:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+        <http://purl.org/dc/terms/publisher> <http://test.com#user>;
+        <http://purl.org/dc/terms/description> "DC Terms Ontology";
+        <http://mobi.com/ontologies/catalog#masterBranch> <https://mobi.com/branches#4bef51e3-dc23-4b56-86f4-bb7ac770aa6c>;
+        <http://mobi.com/ontologies/catalog#branch> <https://mobi.com/branches#4bef51e3-dc23-4b56-86f4-bb7ac770aa6c>,
+                                                        <https://mobi.com/branches#797530f6-6030-4045-b8f3-154451fd5d77>;
+        <http://purl.org/dc/terms/modified> "2024-02-08T10:56:29.838856-05:00"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
+}
+
+<https://mobi.com/commits#36039950-5e78-462c-81c3-57e9da4bd3ef> {
+    <https://mobi.com/commits#36039950-5e78-462c-81c3-57e9da4bd3ef> a <http://mobi.com/ontologies/catalog#Commit>,
+                                                                          <http://www.w3.org/2002/07/owl#Thing>, <http://www.w3.org/ns/prov#Activity>;
+        <http://www.w3.org/ns/prov#generated> <https://mobi.com/revisions#af41198a-f0d8-4f30-9f32-3f46c142c1a9>;
+        <http://www.w3.org/ns/prov#atTime> "2024-02-08T10:56:29.822258-05:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+        <http://purl.org/dc/terms/title> "Commit Number 5 on \"MASTER\"";
+        <http://www.w3.org/ns/prov#wasAssociatedWith> <http://test.com#user>;
+        <http://mobi.com/ontologies/catalog#baseCommit> <https://mobi.com/commits#724e31e2-9c92-447b-bcf7-f68facf89bfa> .
+
+    <https://mobi.com/revisions#af41198a-f0d8-4f30-9f32-3f46c142c1a9> a <http://mobi.com/ontologies/catalog#Revision>,
+                                                                            <http://www.w3.org/ns/prov#Entity>, <http://www.w3.org/2002/07/owl#Thing>;
+        <http://www.w3.org/ns/prov#hadPrimarySource> <https://mobi.com/revisions#6bd832a7-dcfe-433e-8a16-099c4ba38bb2>;
+        <http://mobi.com/ontologies/catalog#deletions> <https://mobi.com/deltas#5491117c-610e-4608-b519-c4e6c9fef231-A>;
+        <http://mobi.com/ontologies/catalog#additions> <https://mobi.com/deltas#5491117c-610e-4608-b519-c4e6c9fef231-B> .
+}
+
+<https://mobi.com/branches#797530f6-6030-4045-b8f3-154451fd5d77> {
+    <https://mobi.com/branches#797530f6-6030-4045-b8f3-154451fd5d77> a <http://mobi.com/ontologies/catalog#Branch>,
+                                                                           <http://www.w3.org/2002/07/owl#Thing>;
+        <http://purl.org/dc/terms/title> "Branch 1";
+        <http://purl.org/dc/terms/issued> "2024-02-08T10:56:29.808848-05:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+        <http://purl.org/dc/terms/description> "Branch 1 Description";
+        <http://mobi.com/ontologies/catalog#head> <https://mobi.com/commits#b541052e-2402-45c0-a331-fb6634a13701>;
+        <http://purl.org/dc/terms/modified> "2024-02-08T10:56:29.838972-05:00"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
+}
+
+<https://mobi.com/deltas#af41198a-f0d8-4f30-9f32-3f46c142c1a9-A> {
+    <urn:test> <http://purl.org/dc/terms/source> <http://purl.org/dc/terms/Standard> .
+}
+
+<https://mobi.com/deltas#5491117c-610e-4608-b519-c4e6c9fef231-A> {
+    <urn:test> <http://purl.org/dc/terms/LicenseDocument> <http://purl.org/dc/terms/ISO3166> .
+}
+
+<https://mobi.com/commits#b541052e-2402-45c0-a331-fb6634a13701> {
+    <https://mobi.com/commits#b541052e-2402-45c0-a331-fb6634a13701> a <http://mobi.com/ontologies/catalog#Commit>,
+                                                                          <http://www.w3.org/2002/07/owl#Thing>, <http://www.w3.org/ns/prov#Activity>;
+        <http://www.w3.org/ns/prov#generated> <https://mobi.com/revisions#7b82704c-a527-4ab8-96ce-6129787e5211>;
+        <http://www.w3.org/ns/prov#atTime> "2024-02-08T10:56:29.83799-05:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+        <http://purl.org/dc/terms/title> "Commit Number 7 on \"Branch 1\"";
+        <http://www.w3.org/ns/prov#wasAssociatedWith> <http://test.com#user>;
+        <http://mobi.com/ontologies/catalog#branchCommit> <https://mobi.com/commits#96cf8bb0-9adf-401c-a547-cbbec15d4b10> .
+
+    <https://mobi.com/revisions#7b82704c-a527-4ab8-96ce-6129787e5211> a <http://mobi.com/ontologies/catalog#Revision>,
+                                                                            <http://www.w3.org/ns/prov#Entity>, <http://www.w3.org/2002/07/owl#Thing>;
+        <http://mobi.com/ontologies/catalog#additions> <https://mobi.com/deltas#7b82704c-a527-4ab8-96ce-6129787e5211-A>;
+        <http://mobi.com/ontologies/catalog#deletions> <https://mobi.com/deltas#7b82704c-a527-4ab8-96ce-6129787e5211-B>;
+        <http://www.w3.org/ns/prov#hadPrimarySource> <https://mobi.com/revisions#ef9913b4-af62-41a7-ac3d-82c29ea08fa8> .
+}
+
+<https://mobi.com/commits#0f381697-7d0c-4ece-a8e3-039edf71ca27> {
+    <https://mobi.com/commits#0f381697-7d0c-4ece-a8e3-039edf71ca27> a <http://mobi.com/ontologies/catalog#Commit>,
+                                                                          <http://www.w3.org/2002/07/owl#Thing>, <http://www.w3.org/ns/prov#Activity>;
+        <http://www.w3.org/ns/prov#generated> <https://mobi.com/revisions#5491117c-610e-4608-b519-c4e6c9fef231>;
+        <http://www.w3.org/ns/prov#atTime> "2024-02-08T10:56:29.829481-05:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+        <http://purl.org/dc/terms/title> "Commit Number 6 on \"MASTER\"";
+        <http://www.w3.org/ns/prov#wasAssociatedWith> <http://test.com#user>;
+        <http://mobi.com/ontologies/catalog#baseCommit> <https://mobi.com/commits#36039950-5e78-462c-81c3-57e9da4bd3ef> .
+
+    <https://mobi.com/revisions#5491117c-610e-4608-b519-c4e6c9fef231> a <http://mobi.com/ontologies/catalog#Revision>,
+                                                                            <http://www.w3.org/ns/prov#Entity>, <http://www.w3.org/2002/07/owl#Thing>;
+        <http://mobi.com/ontologies/catalog#additions> <https://mobi.com/deltas#495f00b1-9c1f-4bcb-b72d-b16542b38262-A>;
+        <http://mobi.com/ontologies/catalog#deletions> <https://mobi.com/deltas#495f00b1-9c1f-4bcb-b72d-b16542b38262-B>;
+        <http://www.w3.org/ns/prov#hadPrimarySource> <https://mobi.com/revisions#af41198a-f0d8-4f30-9f32-3f46c142c1a9> .
+}
+
+<http://mobi.com/test/catalogs#catalog-local> {
+    <http://mobi.com/test/catalogs#catalog-local> a <http://mobi.com/ontologies/catalog#Catalog>,
+                                                        <http://www.w3.org/2002/07/owl#Thing> .
+}
+
+<https://mobi.com/commits#724e31e2-9c92-447b-bcf7-f68facf89bfa> {
+    <https://mobi.com/commits#724e31e2-9c92-447b-bcf7-f68facf89bfa> a <http://mobi.com/ontologies/catalog#Commit>,
+                                                                          <http://www.w3.org/2002/07/owl#Thing>, <http://www.w3.org/ns/prov#Activity>;
+        <http://www.w3.org/ns/prov#generated> <https://mobi.com/revisions#6bd832a7-dcfe-433e-8a16-099c4ba38bb2>;
+        <http://www.w3.org/ns/prov#atTime> "2024-02-08T10:56:29.802674-05:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+        <http://purl.org/dc/terms/title> "Commit Number 2 on \"MASTER\"";
+        <http://www.w3.org/ns/prov#wasAssociatedWith> <http://test.com#user>;
+        <http://mobi.com/ontologies/catalog#baseCommit> <https://mobi.com/commits#154b75c4-bcb7-4bf1-8405-b5ace56cad15> .
+
+    <https://mobi.com/revisions#6bd832a7-dcfe-433e-8a16-099c4ba38bb2> a <http://mobi.com/ontologies/catalog#Revision>,
+                                                                            <http://www.w3.org/ns/prov#Entity>, <http://www.w3.org/2002/07/owl#Thing>;
+        <http://www.w3.org/ns/prov#hadPrimarySource> <https://mobi.com/revisions#78a86ed4-bf01-4a29-b1de-e91433d4eff2>;
+        <http://mobi.com/ontologies/catalog#deletions> <https://mobi.com/deltas#af41198a-f0d8-4f30-9f32-3f46c142c1a9-A>;
+        <http://mobi.com/ontologies/catalog#additions> <https://mobi.com/deltas#af41198a-f0d8-4f30-9f32-3f46c142c1a9-B> .
+}
+
+<https://mobi.com/commits#154b75c4-bcb7-4bf1-8405-b5ace56cad15> {
+    <https://mobi.com/commits#154b75c4-bcb7-4bf1-8405-b5ace56cad15> a <http://mobi.com/ontologies/catalog#Commit>,
+                                                                          <http://www.w3.org/2002/07/owl#Thing>, <http://www.w3.org/ns/prov#Activity>;
+        <http://www.w3.org/ns/prov#generated> <https://mobi.com/revisions#78a86ed4-bf01-4a29-b1de-e91433d4eff2>;
+        <http://www.w3.org/ns/prov#atTime> "2024-02-08T10:56:29.617167-05:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+        <http://purl.org/dc/terms/title> "The initial commit.";
+        <http://www.w3.org/ns/prov#wasAssociatedWith> <http://test.com#user> .
+
+    <https://mobi.com/revisions#78a86ed4-bf01-4a29-b1de-e91433d4eff2> a <http://mobi.com/ontologies/catalog#Revision>,
+                                                                            <http://www.w3.org/ns/prov#Entity>, <http://www.w3.org/2002/07/owl#Thing>;
+        <http://mobi.com/ontologies/catalog#deletions> <https://mobi.com/deltas#6bd832a7-dcfe-433e-8a16-099c4ba38bb2-A>;
+        <http://mobi.com/ontologies/catalog#additions> <https://mobi.com/deltas#6bd832a7-dcfe-433e-8a16-099c4ba38bb2-B> .
+}
+
+<https://mobi.com/deltas#6bd832a7-dcfe-433e-8a16-099c4ba38bb2-A> {
+    <urn:test> <http://purl.org/dc/terms/Policy> <http://purl.org/dc/terms/SizeOrDuration> .
+}
+
+<https://mobi.com/branches#4bef51e3-dc23-4b56-86f4-bb7ac770aa6c> {
+    <https://mobi.com/branches#4bef51e3-dc23-4b56-86f4-bb7ac770aa6c> a <http://mobi.com/ontologies/catalog#MasterBranch>,
+                                                                           <http://mobi.com/ontologies/catalog#Branch>, <http://www.w3.org/2002/07/owl#Thing>;
+        <http://purl.org/dc/terms/title> "MASTER";
+        <http://purl.org/dc/terms/issued> "2024-02-08T10:56:29.510868-05:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+        <http://purl.org/dc/terms/description> "The master branch.";
+        <http://purl.org/dc/terms/publisher> <http://test.com#user>;
+        <http://mobi.com/ontologies/catalog#headGraph> <https://mobi.com/records#8dbdf369-e49d-41b4-902e-822e1ac0461a/HEAD>;
+        <http://mobi.com/ontologies/catalog#head> <https://mobi.com/commits#0f381697-7d0c-4ece-a8e3-039edf71ca27>;
+        <http://purl.org/dc/terms/modified> "2024-02-08T10:56:29.830623-05:00"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
+}
+
+<https://mobi.com/records#8dbdf369-e49d-41b4-902e-822e1ac0461a/HEAD> {
+    <http://purl.org/dc/terms/> a <http://www.w3.org/2002/07/owl#Ontology>;
+        <http://purl.org/dc/terms/modified> "2016-10-14"^^<http://www.w3.org/2001/XMLSchema#date>;
+        <http://www.w3.org/2000/01/rdf-schema#label> "DCMI Metadata Terms - MatOnto Ontology Version"@en .
+
+    <http://purl.org/dc/terms/Agent> a <http://www.w3.org/2000/01/rdf-schema#Class>, <http://www.w3.org/2002/07/owl#Class>;
+        <http://www.w3.org/2000/01/rdf-schema#comment> "A resource that acts or has the power to act."@en;
+        <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <http://purl.org/dc/terms/>;
+        <http://www.w3.org/2000/01/rdf-schema#label> "Agent"@en .
+
+    <http://purl.org/dc/terms/FileFormat> a <http://www.w3.org/2000/01/rdf-schema#Class>,
+                                                <http://www.w3.org/2002/07/owl#Class>;
+        <http://www.w3.org/2000/01/rdf-schema#comment> "A digital resource format."@en;
+        <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <http://purl.org/dc/terms/>;
+        <http://www.w3.org/2000/01/rdf-schema#label> "File Format"@en;
+        <http://www.w3.org/2000/01/rdf-schema#subClassOf> <http://purl.org/dc/terms/MediaType> .
+
+    <http://purl.org/dc/terms/MediaType> a <http://www.w3.org/2000/01/rdf-schema#Class>,
+                                               <http://www.w3.org/2002/07/owl#Class>;
+        <http://www.w3.org/2000/01/rdf-schema#comment> "A file format or physical medium."@en;
+        <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <http://purl.org/dc/terms/>;
+        <http://www.w3.org/2000/01/rdf-schema#label> "Media Type"@en;
+        <http://www.w3.org/2000/01/rdf-schema#subClassOf> <http://purl.org/dc/terms/MediaTypeOrExtent> .
+
+    <http://purl.org/dc/terms/MediaTypeOrExtent> a <http://www.w3.org/2000/01/rdf-schema#Class>,
+                                                       <http://www.w3.org/2002/07/owl#Class>;
+        <http://www.w3.org/2000/01/rdf-schema#comment> "A media type or extent."@en;
+        <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <http://purl.org/dc/terms/>;
+        <http://www.w3.org/2000/01/rdf-schema#label> "Media Type or Extent"@en .
+
+    <http://purl.org/dc/terms/contributor> a <http://www.w3.org/1999/02/22-rdf-syntax-ns#Property>,
+                                                 <http://www.w3.org/2002/07/owl#ObjectProperty>;
+        <http://www.w3.org/2000/01/rdf-schema#comment> "An entity responsible for making contributions to the resource."@en;
+        <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <http://purl.org/dc/terms/>;
+        <http://www.w3.org/2000/01/rdf-schema#label> "Contributor"@en;
+        <http://www.w3.org/2000/01/rdf-schema#range> <http://purl.org/dc/terms/Agent>;
+        <http://www.w3.org/2000/01/rdf-schema#subPropertyOf> <http://purl.org/dc/elements/1.1/contributor> .
+
+    <http://purl.org/dc/terms/creator> a <http://www.w3.org/1999/02/22-rdf-syntax-ns#Property>,
+                                             <http://www.w3.org/2002/07/owl#ObjectProperty>;
+        <http://www.w3.org/2000/01/rdf-schema#comment> "An entity primarily responsible for making the resource."@en;
+        <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <http://purl.org/dc/terms/>;
+        <http://www.w3.org/2000/01/rdf-schema#label> "Creator"@en;
+        <http://www.w3.org/2000/01/rdf-schema#range> <http://purl.org/dc/terms/Agent>;
+        <http://www.w3.org/2000/01/rdf-schema#subPropertyOf> <http://purl.org/dc/elements/1.1/creator>,
+                                                                 <http://purl.org/dc/terms/contributor>;
+        <http://www.w3.org/2002/07/owl#equivalentProperty> <http://xmlns.com/foaf/0.1/maker> .
+
+    <http://purl.org/dc/terms/date> a <http://www.w3.org/1999/02/22-rdf-syntax-ns#Property>,
+                                          <http://www.w3.org/2002/07/owl#DatatypeProperty>;
+        <http://www.w3.org/2000/01/rdf-schema#comment> "A point or period of time associated with an event in the lifecycle of the resource."@en;
+        <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <http://purl.org/dc/terms/>;
+        <http://www.w3.org/2000/01/rdf-schema#label> "Date"@en;
+        <http://www.w3.org/2000/01/rdf-schema#range> <http://www.w3.org/2000/01/rdf-schema#Literal>;
+        <http://www.w3.org/2000/01/rdf-schema#subPropertyOf> <http://purl.org/dc/elements/1.1/date> .
+
+    <http://purl.org/dc/terms/description> a <http://www.w3.org/1999/02/22-rdf-syntax-ns#Property>,
+                                                 <http://www.w3.org/2002/07/owl#DatatypeProperty>;
+        <http://www.w3.org/2000/01/rdf-schema#comment> "An account of the resource."@en;
+        <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <http://purl.org/dc/terms/>;
+        <http://www.w3.org/2000/01/rdf-schema#label> "Description"@en;
+        <http://www.w3.org/2000/01/rdf-schema#range> <http://www.w3.org/2000/01/rdf-schema#Literal>;
+        <http://www.w3.org/2000/01/rdf-schema#subPropertyOf> <http://purl.org/dc/elements/1.1/description> .
+
+    <http://purl.org/dc/terms/format> a <http://www.w3.org/1999/02/22-rdf-syntax-ns#Property>,
+                                            <http://www.w3.org/2002/07/owl#ObjectProperty>;
+        <http://www.w3.org/2000/01/rdf-schema#comment> "The file format, physical medium, or dimensions of the resource."@en;
+        <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <http://purl.org/dc/terms/>;
+        <http://www.w3.org/2000/01/rdf-schema#label> "Format"@en;
+        <http://www.w3.org/2000/01/rdf-schema#range> <http://purl.org/dc/terms/MediaTypeOrExtent>;
+        <http://www.w3.org/2000/01/rdf-schema#subPropertyOf> <http://purl.org/dc/elements/1.1/format> .
+
+    <http://purl.org/dc/terms/identifier> a <http://www.w3.org/1999/02/22-rdf-syntax-ns#Property>,
+                                                <http://www.w3.org/2002/07/owl#DatatypeProperty>;
+        <http://www.w3.org/2000/01/rdf-schema#comment> "An unambiguous reference to the resource within a given context."@en;
+        <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <http://purl.org/dc/terms/>;
+        <http://www.w3.org/2000/01/rdf-schema#label> "Identifier"@en;
+        <http://www.w3.org/2000/01/rdf-schema#range> <http://www.w3.org/2000/01/rdf-schema#Literal>;
+        <http://www.w3.org/2000/01/rdf-schema#subPropertyOf> <http://purl.org/dc/elements/1.1/identifier> .
+
+    <http://purl.org/dc/terms/issued> a <http://www.w3.org/1999/02/22-rdf-syntax-ns#Property>,
+                                            <http://www.w3.org/2002/07/owl#DatatypeProperty>;
+        <http://www.w3.org/2000/01/rdf-schema#comment> "Date of formal issuance (e.g., publication) of the resource."@en;
+        <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <http://purl.org/dc/terms/>;
+        <http://www.w3.org/2000/01/rdf-schema#label> "Date Issued"@en;
+        <http://www.w3.org/2000/01/rdf-schema#range> <http://www.w3.org/2000/01/rdf-schema#Literal>;
+        <http://www.w3.org/2000/01/rdf-schema#subPropertyOf> <http://purl.org/dc/elements/1.1/date>,
+                                                                 <http://purl.org/dc/terms/date> .
+
+    <http://purl.org/dc/terms/modified> a <http://www.w3.org/1999/02/22-rdf-syntax-ns#Property>,
+                                              <http://www.w3.org/2002/07/owl#DatatypeProperty>;
+        <http://www.w3.org/2000/01/rdf-schema#comment> "Date on which the resource was changed."@en;
+        <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <http://purl.org/dc/terms/>;
+        <http://www.w3.org/2000/01/rdf-schema#label> "Date Modified"@en;
+        <http://www.w3.org/2000/01/rdf-schema#range> <http://www.w3.org/2000/01/rdf-schema#Literal>;
+        <http://www.w3.org/2000/01/rdf-schema#subPropertyOf> <http://purl.org/dc/elements/1.1/date>,
+                                                                 <http://purl.org/dc/terms/date> .
+
+    <http://purl.org/dc/terms/publisher> a <http://www.w3.org/1999/02/22-rdf-syntax-ns#Property>,
+                                               <http://www.w3.org/2002/07/owl#ObjectProperty>;
+        <http://www.w3.org/2000/01/rdf-schema#comment> "An entity responsible for making the resource available."@en;
+        <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <http://purl.org/dc/terms/>;
+        <http://www.w3.org/2000/01/rdf-schema#label> "Publisher"@en;
+        <http://www.w3.org/2000/01/rdf-schema#range> <http://purl.org/dc/terms/Agent>;
+        <http://www.w3.org/2000/01/rdf-schema#subPropertyOf> <http://purl.org/dc/elements/1.1/publisher> .
+
+    <http://purl.org/dc/terms/title> a <http://www.w3.org/1999/02/22-rdf-syntax-ns#Property>,
+                                           <http://www.w3.org/2002/07/owl#DatatypeProperty>;
+        <http://www.w3.org/2000/01/rdf-schema#comment> "A name given to the resource."@en;
+        <http://www.w3.org/2000/01/rdf-schema#isDefinedBy> <http://purl.org/dc/terms/>;
+        <http://www.w3.org/2000/01/rdf-schema#label> "Title"@en;
+        <http://www.w3.org/2000/01/rdf-schema#range> <http://www.w3.org/2000/01/rdf-schema#Literal>;
+        <http://www.w3.org/2000/01/rdf-schema#subPropertyOf> <http://purl.org/dc/elements/1.1/title> .
+
+    <urn:test> <http://purl.org/dc/terms/Policy> <http://purl.org/dc/terms/SizeOrDuration>;
+        <http://purl.org/dc/terms/source> <http://purl.org/dc/terms/Standard>;
+        <http://purl.org/dc/terms/LicenseDocument> <http://purl.org/dc/terms/ISO3166> .
+}
+
+<https://mobi.com/deltas#60f7f8e9-a481-435f-a5a7-441bca8313a8-A> {
+    <urn:test> <http://purl.org/dc/terms/UDC> <http://purl.org/dc/terms/description> .
+}

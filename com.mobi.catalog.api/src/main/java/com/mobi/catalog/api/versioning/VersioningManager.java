@@ -24,6 +24,7 @@ package com.mobi.catalog.api.versioning;
  */
 
 
+import com.mobi.catalog.api.builder.Conflict;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
@@ -32,6 +33,8 @@ import com.mobi.jaas.api.ontologies.usermanagement.User;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
+
+import java.util.Map;
 
 public interface VersioningManager {
 
@@ -51,7 +54,7 @@ public interface VersioningManager {
      *      Record does not belong to the Catalog, the Branch could not be found, or the InProgress could not be found.
      */
    Resource commit(Resource catalogId, Resource recordId, Resource branchId, User user, String message,
-                    RepositoryConnection conn);
+                   RepositoryConnection conn);
 
     /**
      * Merges a {@link Branch} identified by the provided Resources into
@@ -61,17 +64,19 @@ public interface VersioningManager {
      * {@link Commit} which will be associated with the provided {@link User}.
      * The head of the target Branch will be the new merge Commit, but the head of the source Branch will not change.
      *
-     * @param catalogId The Resource identifying the Catalog which contains the Record.
-     * @param recordId The Resource identifying the VersionedRDFRecord which has the Branches.
+     * @param catalogId      The Resource identifying the Catalog which contains the Record.
+     * @param recordId       The Resource identifying the VersionedRDFRecord which has the Branches.
      * @param sourceBranchId The Resource identifying the source Branch which will merge into the target Branch.
      * @param targetBranchId The Resource identifying the target Branch which will be merged into by the source Branch.
-     * @param user The User with the InProgressCommit.
-     * @param additions The statements which were added to the named graph.
-     * @param deletions The statements which were deleted from the named graph.
+     * @param user           The User with the InProgressCommit.
+     * @param additions      The statements which were added to the named graph.
+     * @param deletions      The statements which were deleted from the named graph.
+     * @param conflictMap    A Map of subject IRIs to the associated Conflicts.
+     * @param conn           A RepositoryConnection used by the VersioningService.
      * @return The Resource of the new merge Commit.
      * @throws IllegalArgumentException Thrown if the Catalog could not be found, the Record could not be found, the
-     *      Record does not belong to the Catalog, or either Branch could not be found
+     *                                  Record does not belong to the Catalog, or either Branch could not be found
      */
     Resource merge(Resource catalogId, Resource recordId, Resource sourceBranchId, Resource targetBranchId, User user,
-                   Model additions, Model deletions);
+                   Model additions, Model deletions, Map<Resource, Conflict> conflictMap, RepositoryConnection conn);
 }

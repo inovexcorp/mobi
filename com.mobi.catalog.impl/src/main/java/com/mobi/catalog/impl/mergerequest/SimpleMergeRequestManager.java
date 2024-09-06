@@ -56,7 +56,6 @@ import com.mobi.catalog.impl.SimpleSearchResults;
 import com.mobi.catalog.util.SearchResults;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.persistence.utils.Bindings;
 import com.mobi.persistence.utils.ConnectionUtils;
 import com.mobi.security.policy.api.PDP;
@@ -73,6 +72,7 @@ import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
+import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 import org.eclipse.rdf4j.query.TupleQuery;
 import org.eclipse.rdf4j.query.TupleQueryResult;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
@@ -82,7 +82,6 @@ import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.annotation.Nullable;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
@@ -98,6 +97,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+import javax.annotation.Nullable;
 
 @Component(name = SimpleMergeRequestManager.COMPONENT_NAME)
 public class SimpleMergeRequestManager implements MergeRequestManager {
@@ -146,19 +146,21 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
     static {
         try {
             GET_COMMENT_CHAINS = IOUtils.toString(Objects.requireNonNull(SimpleMergeRequestManager.class
-                    .getResourceAsStream("/get-comment-chains.rq")), StandardCharsets.UTF_8
+                    .getResourceAsStream("/merge-request/get-comment-chains.rq")), StandardCharsets.UTF_8
             );
             GET_MERGE_REQUESTS_QUERY = IOUtils.toString(Objects.requireNonNull(SimpleMergeRequestManager.class
-                    .getResourceAsStream("/get-merge-requests.rq")), StandardCharsets.UTF_8
+                    .getResourceAsStream("/merge-request/get-merge-requests.rq")), StandardCharsets.UTF_8
             );
             GET_MERGE_REQUEST_USERS_QUERY = IOUtils.toString(Objects.requireNonNull(SimpleMergeRequestManager.class
-                    .getResourceAsStream("/get-merge-request-users.rq")), StandardCharsets.UTF_8
+                    .getResourceAsStream("/merge-request/get-merge-request-users.rq")), StandardCharsets.UTF_8
             );
             GET_MERGE_REQUEST_RECORDS_QUERY = IOUtils.toString(Objects.requireNonNull(SimpleMergeRequestManager.class
-                    .getResourceAsStream("/get-merge-request-records.rq")), StandardCharsets.UTF_8
+                    .getResourceAsStream("/merge-request/get-merge-request-records.rq")), StandardCharsets.UTF_8
             );
-            GET_MERGE_REQUEST_RECORD_COUNTS_QUERY = IOUtils.toString(Objects.requireNonNull(SimpleMergeRequestManager.class
-                    .getResourceAsStream("/get-merge-request-record-counts.rq")), StandardCharsets.UTF_8
+            GET_MERGE_REQUEST_RECORD_COUNTS_QUERY = IOUtils.toString(Objects.requireNonNull(
+                    SimpleMergeRequestManager.class
+                    .getResourceAsStream("/merge-request/get-merge-request-record-counts.rq")),
+                    StandardCharsets.UTF_8
             );
             TYPE_IRI = vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI);
             ACCEPTED_MERGE_REQUEST_IRI = vf.createIRI(AcceptedMergeRequest.TYPE);
@@ -221,7 +223,7 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
     }
 
     @Override
-    public void acceptMergeRequest(Resource requestId, User user,  RepositoryConnection conn) {
+    public void acceptMergeRequest(Resource requestId, User user, RepositoryConnection conn) {
         // Validate MergeRequest
         MergeRequest request = thingManager.getExpectedObject(requestId, mergeRequestFactory, conn);
         if (request.getModel().contains(requestId, TYPE_IRI, ACCEPTED_MERGE_REQUEST_IRI)) {
@@ -246,7 +248,8 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
             throw new IllegalArgumentException("Branch " + sourceId + " and " + targetId
                     + " have conflicts and cannot be merged");
         }
-        versioningManager.merge(configProvider.getLocalCatalogIRI(), recordId, sourceId, targetId, user, null, null);
+        versioningManager.merge(configProvider.getLocalCatalogIRI(), recordId, sourceId, targetId, user, null, null,
+                new HashMap<>(), conn);
 
         // Turn MergeRequest into an AcceptedMergeRequest
         AcceptedMergeRequest acceptedRequest = acceptedMergeRequestFactory.createNew(request.getResource(),
@@ -460,10 +463,10 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
         }
         OffsetDateTime now = OffsetDateTime.now();
         Comment comment = commentFactory.createNew(vf.createIRI(COMMENT_NAMESPACE + UUID.randomUUID()));
-        comment.setProperty(vf.createLiteral(now), vf.createIRI(_Thing.issued_IRI));
-        comment.setProperty(vf.createLiteral(now), vf.createIRI(_Thing.modified_IRI));
-        comment.setProperty(user.getResource(), vf.createIRI(_Thing.creator_IRI));
-        comment.setProperty(vf.createLiteral(commentStr), vf.createIRI(_Thing.description_IRI));
+        comment.setProperty(vf.createLiteral(now), DCTERMS.ISSUED);
+        comment.setProperty(vf.createLiteral(now), DCTERMS.MODIFIED);
+        comment.setProperty(user.getResource(), DCTERMS.CREATOR);
+        comment.setProperty(vf.createLiteral(commentStr), DCTERMS.DESCRIPTION);
         MergeRequest mergeRequest = getMergeRequest(requestId).orElseThrow(
                 () -> new IllegalArgumentException("MergeRequest " + requestId + " does not exist"));
         comment.setOnMergeRequest(mergeRequest);
@@ -504,16 +507,16 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
 
         OffsetDateTime now = OffsetDateTime.now();
         MergeRequest request = mergeRequestFactory.createNew(vf.createIRI(MERGE_REQUEST_NAMESPACE + UUID.randomUUID()));
-        request.setProperty(vf.createLiteral(now), vf.createIRI(_Thing.issued_IRI));
-        request.setProperty(vf.createLiteral(now), vf.createIRI(_Thing.modified_IRI));
+        request.setProperty(vf.createLiteral(now), DCTERMS.ISSUED);
+        request.setProperty(vf.createLiteral(now), DCTERMS.MODIFIED);
         request.setOnRecord(recordFactory.createNew(config.getRecordId()));
         request.setSourceBranch(branchFactory.createNew(config.getSourceBranchId()));
         request.setTargetBranch(branchFactory.createNew(config.getTargetBranchId()));
-        request.setProperty(vf.createLiteral(config.getTitle()), vf.createIRI(_Thing.title_IRI));
+        request.setProperty(vf.createLiteral(config.getTitle()), DCTERMS.TITLE);
         request.setRemoveSource(config.getRemoveSource());
         config.getDescription().ifPresent(description ->
-                request.setProperty(vf.createLiteral(description), vf.createIRI(_Thing.description_IRI)));
-        request.setProperty(config.getCreator().getResource(), vf.createIRI(_Thing.creator_IRI));
+                request.setProperty(vf.createLiteral(description), DCTERMS.DESCRIPTION));
+        request.setProperty(config.getCreator().getResource(), DCTERMS.CREATOR);
         config.getAssignees().forEach(request::addAssignee);
         return request;
     }
@@ -678,7 +681,7 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
             }
         }
 
-        Resource sortBy = params.getSortBy().orElseGet(() -> vf.createIRI(_Thing.issued_IRI));
+        Resource sortBy = params.getSortBy().orElseGet(() -> DCTERMS.ISSUED);
         filters.append("?").append(REQUEST_ID_BINDING).append(" <").append(sortBy).append("> ?")
                 .append(SORT_PRED_BINDING).append(". ");
 
@@ -811,7 +814,7 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
 
     @Override
     public void updateComment(Resource commentId, Comment comment, RepositoryConnection conn) {
-        Optional<Value> description = comment.getProperty(vf.createIRI(_Thing.description_IRI));
+        Optional<Value> description = comment.getProperty(DCTERMS.DESCRIPTION);
         if (description.isPresent() && description.get().stringValue().length() > MAX_COMMENT_STRING_LENGTH) {
             throw new IllegalArgumentException("Comment string length must be less than "
                     + MAX_COMMENT_STRING_LENGTH);
@@ -820,7 +823,7 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
             throw new IllegalArgumentException("Comment string is required");
         }
         OffsetDateTime now = OffsetDateTime.now();
-        comment.setProperty(vf.createLiteral(now), vf.createIRI(_Thing.modified_IRI));
+        comment.setProperty(vf.createLiteral(now), DCTERMS.MODIFIED);
         thingManager.validateResource(commentId, commentFactory.getTypeIRI(), conn);
         thingManager.updateObject(comment, conn);
     }
@@ -866,26 +869,26 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
     @Override
     public PaginatedSearchResults<UserCount> getCreators(PaginatedSearchParams params) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            return getUserCounts(vf.createIRI(_Thing.creator_IRI), params, conn, null);
+            return getUserCounts(DCTERMS.CREATOR, params, conn, null);
         }
     }
 
     @Override
     public PaginatedSearchResults<UserCount> getCreators(PaginatedSearchParams params, Resource user) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            return getUserCounts(vf.createIRI(_Thing.creator_IRI), params, conn, user);
+            return getUserCounts(DCTERMS.CREATOR, params, conn, user);
         }
     }
 
     @Override
     public PaginatedSearchResults<UserCount> getCreators(PaginatedSearchParams params, RepositoryConnection conn) {
-        return getUserCounts(vf.createIRI(_Thing.creator_IRI), params, conn, null);
+        return getUserCounts(DCTERMS.CREATOR, params, conn, null);
     }
 
     @Override
     public PaginatedSearchResults<UserCount> getCreators(PaginatedSearchParams params, RepositoryConnection conn,
                                                          Resource user) {
-        return getUserCounts(vf.createIRI(_Thing.creator_IRI), params, conn, user);
+        return getUserCounts(DCTERMS.CREATOR, params, conn, user);
     }
 
     @Override
@@ -989,7 +992,7 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
     }
 
     private String getBranchTitle(Branch branch) {
-        return branch.getProperty(vf.createIRI(_Thing.title_IRI)).orElseThrow(() ->
+        return branch.getProperty(DCTERMS.TITLE).orElseThrow(() ->
                 new IllegalStateException("Branch " + branch.getResource() + " does not have a title")).stringValue();
     }
 

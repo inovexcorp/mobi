@@ -112,7 +112,7 @@ public abstract class AbstractUnversionedRecordService<T extends UnversionedReco
      * @return The {@link Resource} of the new Policy
      */
     protected Resource addPolicy(String policyString) {
-        XACMLPolicy policy = new XACMLPolicy(policyString, valueFactory);
+        XACMLPolicy policy = new XACMLPolicy(policyString, vf);
         return xacmlPolicyManager.addPolicy(policy);
     }
 }

@@ -1748,7 +1748,7 @@ describe('Catalog Manager service', function() {
             this.url = `${service.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/branches/${encodeURIComponent(branchId)}/conflicts/resolution`;
         });
         it('unless an error occurs', function() {
-            service.mergeBranches(branchId, branchId, recordId, catalogId, difference)
+            service.mergeBranches(branchId, branchId, recordId, catalogId, difference, [])
                 .subscribe(() => fail('Observable should have rejected'), response => {
                     expect(response).toEqual(error);
                 });
@@ -1761,7 +1761,7 @@ describe('Catalog Manager service', function() {
             const fullDifference = Object.assign({}, difference);
             fullDifference.additions = [emptyObj];
             fullDifference.deletions = [emptyObj];
-            service.mergeBranches(branchId, branchId, recordId, catalogId, fullDifference)
+            service.mergeBranches(branchId, branchId, recordId, catalogId, fullDifference, [])
                 .subscribe(response => {
                     expect(response).toEqual(commitId);
                 }, () => fail('Observable should have resolved'));
@@ -1773,7 +1773,7 @@ describe('Catalog Manager service', function() {
             request.flush(commitId);
         });
         it('without additions and deletions', function() {
-            service.mergeBranches(branchId, branchId, recordId, catalogId, difference)
+            service.mergeBranches(branchId, branchId, recordId, catalogId, difference, [])
                 .subscribe(response => {
                     expect(response).toEqual(commitId);
                 }, () => fail('Observable should have resolved'));

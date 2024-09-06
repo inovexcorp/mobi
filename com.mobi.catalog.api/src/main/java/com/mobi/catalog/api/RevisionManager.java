@@ -23,11 +23,34 @@ package com.mobi.catalog.api;
  * #L%
  */
 
+import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.api.ontologies.mcat.Revision;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
+
 public interface RevisionManager {
+
+    /**
+     * Creates a Revision with a unique identifier.
+     *
+     * @param uuid The UUID to use as the unique identifier
+     * @return A Revision with a unique identifier.
+     */
+    Revision createRevision(UUID uuid);
+
+
+    /**
+     * Retrieves the Revision with the given revisionId from the provided RepositoryConnection.
+     *
+     * @param revisionId The Resource identifying the revision
+     * @param conn The connection to the repository
+     * @return The Revision with the given revisionId
+     */
+    Revision getRevision(Resource revisionId, RepositoryConnection conn);
 
     /**
      * Gets the Revision associated with the provided commit Resource.
@@ -36,5 +59,50 @@ public interface RevisionManager {
      * @param conn     The connection to the repository
      * @return The Revision associated with the provided commit Resource.
      */
-    Revision getRevision(Resource commitId, RepositoryConnection conn);
+    Revision getRevisionFromCommitId(Resource commitId, RepositoryConnection conn);
+
+    /**
+     * Gets the Revisions associated with the provided commit Resource.
+     *
+     * @param commitId The Resource identifying the commit
+     * @param conn     The connection to the repository
+     * @return The Set of Revisions associated with the provided commit Resource.
+     */
+    Set<Revision> getAllRevisionsFromCommitId(Resource commitId, RepositoryConnection conn);
+
+    /**
+     * Gets the display Revision associated with the provided commit Resource.
+     *
+     * @param commitId The Resource identifying the commit
+     * @param conn     The connection to the repository
+     * @return The Revision associated with the provided commit Resource.
+     */
+    Revision getDisplayRevisionFromCommitId(Resource commitId, RepositoryConnection conn);
+
+    /**
+     * Gets the Revision associated from the provided Commit.
+     *
+     * @param commit The Commit to retrieve the revision from
+     * @return The Revision associated with the provided commit Resource.
+     */
+    Revision getGeneratedRevision(Commit commit);
+
+    /**
+     * Gets the List of Influenced Revisions associated with the provided commit Resource. These Revisions are the
+     * reverse deltas of a branch that branched off of the provided commit.
+     *
+     * @param commitId The Resource identifying the commit
+     * @param conn     The connection to the repository
+     * @return The Revision associated with the provided commit Resource.
+     */
+    List<Revision> getInfluencedRevisions(Resource commitId, RepositoryConnection conn);
+
+    /**
+     * Retrieves the revision chain associated with a given commit ID.
+     *
+     * @param commitId The Resource identifying the commit
+     * @param conn The connection to the repository
+     * @return The revision chain associated with the provided commit ID
+     */
+    List<Revision> getRevisionChain(Resource commitId, RepositoryConnection conn);
 }

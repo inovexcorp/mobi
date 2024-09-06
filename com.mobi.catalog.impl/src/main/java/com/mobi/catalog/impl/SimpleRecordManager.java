@@ -104,19 +104,19 @@ public class SimpleRecordManager implements RecordManager {
     static {
         try {
             FIND_RECORDS_QUERY = IOUtils.toString(
-                    Objects.requireNonNull(SimpleCatalogManager.class.getResourceAsStream("/find-records.rq")),
+                    Objects.requireNonNull(SimpleCatalogManager.class.getResourceAsStream("/record/find-records.rq")),
                     StandardCharsets.UTF_8
             );
             COUNT_RECORDS_QUERY = IOUtils.toString(
-                    Objects.requireNonNull(SimpleCatalogManager.class.getResourceAsStream("/count-records.rq")),
+                    Objects.requireNonNull(SimpleCatalogManager.class.getResourceAsStream("/record/count-records.rq")),
                     StandardCharsets.UTF_8
             );
             GET_KEYWORD_QUERY = IOUtils.toString(
-                    Objects.requireNonNull(SimpleCatalogManager.class.getResourceAsStream("/get-keywords.rq")),
+                    Objects.requireNonNull(SimpleCatalogManager.class.getResourceAsStream("/record/get-keywords.rq")),
                     StandardCharsets.UTF_8
             );
             GET_KEYWORD_COUNT_QUERY = IOUtils.toString(
-                    Objects.requireNonNull(SimpleCatalogManager.class.getResourceAsStream("/get-keywords-count.rq")),
+                    Objects.requireNonNull(SimpleCatalogManager.class.getResourceAsStream("/record/get-keywords-count.rq")),
                     StandardCharsets.UTF_8
             );
         } catch (IOException e) {

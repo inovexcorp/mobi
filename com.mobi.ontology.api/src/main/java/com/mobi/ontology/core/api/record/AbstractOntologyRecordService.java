@@ -23,13 +23,14 @@ package com.mobi.ontology.core.api.record;
  * #L%
  */
 
-import com.mobi.catalog.api.ontologies.mcat.Branch;
+import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
+import com.mobi.catalog.api.ontologies.mcat.MasterBranch;
+import com.mobi.catalog.api.ontologies.mcat.Revision;
 import com.mobi.catalog.api.record.AbstractVersionedRDFRecordService;
 import com.mobi.catalog.api.record.RecordService;
 import com.mobi.catalog.api.record.config.RecordCreateSettings;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
-import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.api.OntologyManager;
@@ -63,32 +64,40 @@ public abstract class AbstractOntologyRecordService<T extends OntologyRecord>
     public T createRecord(User user, RecordOperationConfig config, OffsetDateTime issued, OffsetDateTime modified,
                           RepositoryConnection conn) {
         T record = createRecordObject(config, issued, modified);
-        Branch masterBranch = createMasterBranch(record);
-        InProgressCommit commit = null;
+        MasterBranch masterBranch = createMasterBranch(record);
         File ontologyFile = null;
+        InitialLoad initialLoad = null;
         try {
             semaphore.acquire();
             ontologyFile = createDataFile(config);
-            IRI catalogIdIRI = valueFactory.createIRI(config.get(RecordCreateSettings.CATALOG_ID));
+            IRI catalogIdIRI = vf.createIRI(config.get(RecordCreateSettings.CATALOG_ID));
             Resource masterBranchId = record.getMasterBranch_resource().orElseThrow(() ->
                     new IllegalStateException("OntologyRecord must have a master Branch"));
-            commit = loadInProgressCommit(user, ontologyFile);
+            initialLoad = loadHeadGraph(masterBranch, user, ontologyFile);
 
             conn.begin();
             addRecord(record, masterBranch, conn);
-            commitManager.addInProgressCommit(catalogIdIRI, record.getResource(), commit, conn);
+            commitManager.addInProgressCommit(catalogIdIRI, record.getResource(), initialLoad.ipc(), conn);
 
-            setOntologyToRecord(record, commit, conn);
+            setOntologyToRecord(record, masterBranch, initialLoad.initialRevision(), conn);
 
-            versioningManager.commit(catalogIdIRI, record.getResource(), masterBranchId, user,
+            Resource initialCommitIRI = versioningManager.commit(catalogIdIRI, record.getResource(), masterBranchId, user,
                     "The initial commit.", conn);
+            Commit initialCommit = commitManager.getCommit(initialCommitIRI, conn).orElseThrow(
+                    () -> new IllegalStateException("Could not retrieve commit " + initialCommitIRI.stringValue()));
+            initialCommit.setInitialRevision(initialLoad.initialRevision());
+            initialCommit.getModel().addAll(initialLoad.initialRevision().getModel());
+            thingManager.updateObject(initialCommit, conn);
+
             conn.commit();
             writePolicies(user, record);
             ontologyFile.delete();
-        } catch (InterruptedException e) {
-            throw new MobiException(e);
         } catch (Exception e) {
-            handleError(commit, ontologyFile, e);
+            Revision revision = null;
+            if (initialLoad != null) {
+                revision = initialLoad.initialRevision();
+            }
+            handleError(masterBranch, revision, ontologyFile, e);
         } finally {
             semaphore.release();
         }
@@ -98,15 +107,21 @@ public abstract class AbstractOntologyRecordService<T extends OntologyRecord>
     /**
      * Validates and sets the ontology to the record.
      *
-     * @param record created record
-     * @param inProgressCommit the {@link InProgressCommit} to query for the ontologyIRI
-     * @param conn The {@link RepositoryConnection} with the transaction for creating the record
+     * @param record       created record
+     * @param masterBranch the {@link InProgressCommit} to query for the ontologyIRI
+     * @param initialRevision the initial {@link Revision}
+     * @param conn         The {@link RepositoryConnection} with the transaction for creating the record
      */
-    private void setOntologyToRecord(T record, InProgressCommit inProgressCommit, RepositoryConnection conn) {
-        IRI additionsGraph = getRevisionGraph(inProgressCommit, true);
-        Model ontology = QueryResults.asModel(conn.getStatements(null, RDF.TYPE, OWL.ONTOLOGY, additionsGraph));
+    private void setOntologyToRecord(T record, MasterBranch masterBranch, Revision initialRevision,
+                                     RepositoryConnection conn) {
+        IRI headGraph = branchManager.getHeadGraph(masterBranch);
+        Model ontology = QueryResults.asModel(conn.getStatements(null, RDF.TYPE, OWL.ONTOLOGY, headGraph));
+        Model ontologyDefinitions = mf.createEmptyModel();
+        ontology.subjects().stream()
+                .map(iri -> QueryResults.asModel(conn.getStatements(iri, null, null, headGraph)))
+                .forEach(ontologyDefinitions::addAll);
 
-        OntologyId id = ontologyManager.createOntologyId(ontology);
+        OntologyId id = ontologyManager.createOntologyId(ontologyDefinitions);
         IRI ontologyIRI = id.getOntologyIRI().orElse((IRI) id.getOntologyIdentifier());
 
         if (id.getOntologyIRI().isEmpty()) {
@@ -116,11 +131,14 @@ public abstract class AbstractOntologyRecordService<T extends OntologyRecord>
             if (firstOntologyResource.isPresent()) {
                 // Handle Blank Node Ontology Resource
                 ontology.filter(firstOntologyResource.get(), null, null).forEach(statement ->
-                        conn.add(ontologyIRI, statement.getPredicate(), statement.getObject(), additionsGraph));
-                conn.remove(firstOntologyResource.get(), null, null, additionsGraph);
+                        conn.add(ontologyIRI, statement.getPredicate(), statement.getObject(), headGraph));
+                conn.remove(firstOntologyResource.get(), null, null, headGraph);
+                IRI initRevAddGraph = initialRevision.getAdditions().orElseThrow(
+                        () -> new IllegalStateException("Initial revision missing additions graph"));
+                conn.remove(firstOntologyResource.get(), null, null, initRevAddGraph);
             } else {
                 // Handle missing Ontology Resource
-                conn.add(ontologyIRI, RDF.TYPE, OWL.ONTOLOGY, additionsGraph);
+                conn.add(ontologyIRI, RDF.TYPE, OWL.ONTOLOGY, headGraph);
             }
         }
         validateOntology(ontologyIRI);

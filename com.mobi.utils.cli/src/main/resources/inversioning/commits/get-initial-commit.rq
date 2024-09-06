@@ -1,0 +1,33 @@
+PREFIX mcat: <http://mobi.com/ontologies/catalog#>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+
+# Retrieve the initial commit
+SELECT DISTINCT ?initialCommit
+WHERE {
+    {
+        # Get the master HEAD and find the initial commit from
+        ?record a mcat:VersionedRDFRecord ;
+           mcat:masterBranch ?masterBranch .
+
+        ?masterBranch a mcat:Branch ;
+           mcat:head ?head .
+
+        ?head a mcat:Commit ;
+           mcat:baseCommit+ ?initialCommit .
+        ?initialCommit prov:atTime ?time .
+    }
+    UNION
+    {
+        # Include case if the record only has one commit
+        ?record a mcat:VersionedRDFRecord ;
+            mcat:masterBranch ?masterBranch .
+
+        ?masterBranch a mcat:Branch ;
+            mcat:head ?initialCommit .
+
+        ?initialCommit a mcat:Commit ;
+            prov:atTime ?time .
+    }
+}
+ORDER BY ASC(?time)
+LIMIT 1

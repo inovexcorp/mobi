@@ -1,0 +1,12 @@
+PREFIX mcat: <http://mobi.com/ontologies/catalog#>
+
+SELECT ?headCommit ?masterBranch
+WHERE {
+    ?branch mcat:head/(mcat:baseCommit|mcat:auxiliaryCommit|mcat:branchCommit)* ?commit .
+
+    ?record a mcat:Record;
+        mcat:branch ?branch;
+        mcat:masterBranch ?masterBranch .
+
+    ?masterBranch mcat:head ?headCommit .
+}

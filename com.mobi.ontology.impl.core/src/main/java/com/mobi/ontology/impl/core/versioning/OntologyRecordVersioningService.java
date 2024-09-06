@@ -23,33 +23,20 @@ package com.mobi.ontology.impl.core.versioning;
  * #L%
  */
 
-import com.mobi.catalog.api.builder.Difference;
-import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
-import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
-import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.api.versioning.BaseVersioningService;
 import com.mobi.catalog.api.versioning.VersioningService;
-import com.mobi.exception.MobiException;
-import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.ontologies.owl.Ontology;
-import com.mobi.ontologies.provo.Activity;
+import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecordFactory;
 import com.mobi.ontology.utils.cache.OntologyCache;
-import com.mobi.persistence.utils.Bindings;
-import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
-import org.eclipse.rdf4j.model.ModelFactory;
 import org.eclipse.rdf4j.model.Resource;
-import org.eclipse.rdf4j.model.Statement;
-import org.eclipse.rdf4j.model.ValueFactory;
-import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
-import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
-import org.eclipse.rdf4j.query.TupleQuery;
-import org.eclipse.rdf4j.query.TupleQueryResult;
+import org.eclipse.rdf4j.model.vocabulary.OWL;
+import org.eclipse.rdf4j.model.vocabulary.RDF;
+import org.eclipse.rdf4j.query.QueryResults;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
@@ -57,12 +44,6 @@ import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.event.EventAdmin;
-
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
 
 @Component(
         immediate = true,
@@ -77,24 +58,6 @@ public class OntologyRecordVersioningService extends BaseVersioningService<Ontol
 
     @Reference
     protected OntologyCache ontologyCache;
-    private final ValueFactory vf = new ValidatingValueFactory();
-    private final ModelFactory mf = new DynamicModelFactory();
-
-    private static final String ADDITION_ONTOLOGY_IRI_QUERY;
-    private static final String REVISION_BINDING = "revision";
-    private static final String ONTOLOGY_IRI_BINDING = "ontologyIRI";
-
-    static {
-        try {
-            ADDITION_ONTOLOGY_IRI_QUERY = IOUtils.toString(
-                    Objects.requireNonNull(OntologyRecordVersioningService.class
-                            .getResourceAsStream("/get-ontology-iri-addition.rq")),
-                    StandardCharsets.UTF_8
-            );
-        } catch (IOException e) {
-            throw new MobiException(e);
-        }
-    }
 
     @Activate
     void start(BundleContext context) {
@@ -110,88 +73,31 @@ public class OntologyRecordVersioningService extends BaseVersioningService<Ontol
     }
 
     @Override
-    public void addCommit(VersionedRDFRecord record, Branch branch, Commit commit, RepositoryConnection conn) {
-        if (isMasterBranch(record, branch)) {
-            commit.getBaseCommit_resource()
-                    .ifPresent(baseCommit -> updateOntologyIRI(record.getResource(), commit, conn));
+    protected void updateMasterRecordIRI(Resource recordId, Commit commit, RepositoryConnection conn) {
+        Resource headGraph = branchManager.getHeadGraph(
+                branchManager.getMasterBranch(configProvider.getLocalCatalogIRI(), recordId, conn));
+        Model currentIRIs = QueryResults.asModel(
+                conn.getStatements(null, RDF.TYPE, OWL.ONTOLOGY, headGraph));
+        if (currentIRIs.isEmpty()) {
+            throw new IllegalStateException("Ontology does not contain an ontology definition");
         }
-        commitManager.addCommit(branch, commit, conn);
-        commit.getWasAssociatedWith_resource().stream().findFirst()
-                .ifPresent(userIri -> sendCommitEvent(record.getResource(), branch.getResource(), userIri,
-                        commit.getResource()));
-    }
-
-    @Override
-    public Resource addCommit(VersionedRDFRecord record, Branch branch, User user, String message, Model additions,
-                              Model deletions, Commit baseCommit, Commit auxCommit, RepositoryConnection conn) {
-        InProgressCommit inProgressCommit = commitManager.createInProgressCommit(user);
-        Commit newCommit = commitManager.createCommit(inProgressCommit, message, baseCommit, auxCommit);
-        // Determine if branch is the master branch of a record
-        if (isMasterBranch(record, branch)) {
-            if (baseCommit != null) {
-                // If this is not the initial commit
-                Model model;
-                Difference diff = new Difference.Builder()
-                        .additions(additions == null ? mf.createEmptyModel() : additions)
-                        .deletions(deletions == null ? mf.createEmptyModel() : deletions)
-                        .build();
-                if (auxCommit != null) {
-                    // If this is a merge, collect all the additions from the aux branch and provided models
-                    List<Resource> sourceChain = commitManager.getCommitChain(auxCommit.getResource(), false, conn);
-                    sourceChain.removeAll(commitManager.getCommitChain(baseCommit.getResource(), false, conn));
-                    model = differenceManager.applyDifference(compiledResourceManager.getCompiledResource(sourceChain, conn), diff);
-                } else {
-                    // Else, this is a regular commit. Make sure we remove duplicated add/del statements
-                    model = differenceManager.applyDifference(mf.createEmptyModel(), diff);
-                }
-                updateOntologyIRI(record.getResource(), model, conn);
-            }
-        }
-        commitManager.addCommit(branch, newCommit, conn);
-        commitManager.updateCommit(newCommit, additions, deletions, conn);
-        sendCommitEvent(record.getResource(), branch.getResource(), user.getResource(), newCommit.getResource());
-        return newCommit.getResource();
-    }
-
-    private void updateOntologyIRI(Resource recordId, Commit commit, RepositoryConnection conn) {
         OntologyRecord record = thingManager.getObject(recordId, ontologyRecordFactory, conn);
-        Optional<Resource> iri = record.getOntologyIRI();
-        iri.ifPresent(resource -> ontologyCache.clearCacheImports(resource));
-        IRI generatedIRI = vf.createIRI(Activity.generated_IRI);
-        Resource revisionIRI = (Resource) commit.getProperty(generatedIRI)
-                .orElseThrow(() -> new IllegalStateException("Commit is missing revision."));
-        TupleQuery query = conn.prepareTupleQuery(ADDITION_ONTOLOGY_IRI_QUERY);
-        query.setBinding(REVISION_BINDING, revisionIRI);
-        try (TupleQueryResult result = query.evaluate()) {
-            if (result.hasNext()) {
-                Resource newIRI = Bindings.requiredResource(result.next(), ONTOLOGY_IRI_BINDING);
-                if (iri.isEmpty() || !newIRI.equals(iri.get())) {
-                    testOntologyIRIUniqueness(newIRI);
-                    record.setOntologyIRI(newIRI);
-                    thingManager.updateObject(record, conn);
-                    ontologyCache.clearCacheImports(newIRI);
-                }
-            }
-        }
-    }
+        Resource existingOntologyIRI = record.getOntologyIRI()
+                .orElseThrow(() -> new IllegalStateException("OntologyRecord " + recordId.stringValue()
+                        + " does not have an ontologyIRI"));
+        Model ontologyDefinitions = mf.createEmptyModel();
+        currentIRIs.subjects().stream()
+                .map(iri -> QueryResults.asModel(conn.getStatements(iri, null, null, headGraph)))
+                .forEach(ontologyDefinitions::addAll);
+        OntologyId ontologyId = ontologyManager.createOntologyId(ontologyDefinitions);
+        Resource currentOntologyIRI = ontologyId.getOntologyIRI().orElse((IRI) ontologyId.getOntologyIdentifier());
 
-    private void updateOntologyIRI(Resource recordId, Model additions, RepositoryConnection conn) {
-        OntologyRecord record = thingManager.getObject(recordId, ontologyRecordFactory, conn);
-        Optional<Resource> iri = record.getOntologyIRI();
-        iri.ifPresent(resource -> ontologyCache.clearCacheImports(resource));
-
-        Optional<Statement> ontStmt = additions
-                .filter(null, vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI), vf.createIRI(Ontology.TYPE))
-                .stream()
-                .findFirst();
-        if (ontStmt.isPresent()) {
-            Resource newIRI = ontStmt.get().getSubject();
-            if (iri.isEmpty() || !newIRI.equals(iri.get())) {
-                testOntologyIRIUniqueness(newIRI);
-                record.setOntologyIRI(newIRI);
-                thingManager.updateObject(record, conn);
-                ontologyCache.clearCacheImports(newIRI);
-            }
+        if (!currentOntologyIRI.equals(existingOntologyIRI)) {
+            ontologyCache.clearCacheImports(existingOntologyIRI);
+            testOntologyIRIUniqueness(currentOntologyIRI);
+            record.setOntologyIRI(currentOntologyIRI);
+            thingManager.updateObject(record, conn);
+            ontologyCache.clearCacheImports(currentOntologyIRI);
         }
     }
 

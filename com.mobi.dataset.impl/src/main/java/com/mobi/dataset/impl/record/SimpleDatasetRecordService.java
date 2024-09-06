@@ -59,9 +59,9 @@ public class SimpleDatasetRecordService extends DatasetRecordService<DatasetReco
 
     @Override
     public void overwritePolicyDefault(DatasetRecord datasetRecord) {
-        String publisherIri = datasetRecord.getProperty(valueFactory.createIRI(DCTERMS_PUBLISHER))
+        String publisherIri = datasetRecord.getProperty(vf.createIRI(DCTERMS_PUBLISHER))
                 .orElseThrow(() -> new IllegalArgumentException("Publisher target does not exist.")).stringValue();
-        Resource publisher = valueFactory.createIRI(publisherIri);
+        Resource publisher = vf.createIRI(publisherIri);
         writePolicies(publisher, datasetRecord.getResource());
     }
 }

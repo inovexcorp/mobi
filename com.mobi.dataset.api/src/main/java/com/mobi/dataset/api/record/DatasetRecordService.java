@@ -86,7 +86,7 @@ public abstract class DatasetRecordService<T extends DatasetRecord>
             if (datasetConfig == null || StringUtils.isBlank(datasetConfig)) {
                 datasetConfig = DEFAULT_DS_NAMESPACE + UUID.randomUUID();
             }
-            IRI datasetIRI = valueFactory.createIRI(datasetConfig);
+            IRI datasetIRI = vf.createIRI(datasetConfig);
 
             conn.begin();
 

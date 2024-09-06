@@ -1,0 +1,11 @@
+PREFIX mcat: <http://mobi.com/ontologies/catalog#>
+
+ASK {
+    ?mergeCommit mcat:mergeDisplayRevision ?mergeRev .
+
+    ?mergeRev mcat:additions ?mergeRevAdd .
+
+    GRAPH ?mergeRevAdd {
+        ?s ?p ?o .
+    }
+}

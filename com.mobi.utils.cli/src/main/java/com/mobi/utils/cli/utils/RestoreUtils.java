@@ -23,7 +23,9 @@ package com.mobi.utils.cli.utils;
  * #L%
  */
 
+import com.mobi.utils.cli.api.RestoreOperation;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.maven.artifact.versioning.InvalidVersionSpecificationException;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceReference;
@@ -152,5 +154,34 @@ public class RestoreUtils {
                 LOGGER.debug("Could not find service " + service);
             }
         }
+    }
+
+    public static void out(String msg, Logger logger) {
+        logger.info(msg);
+        System.out.println(msg);
+    }
+
+    public static void error(String msg, Logger logger) {
+        logger.error(msg);
+        System.out.println(msg);
+    }
+
+    public static void error(String msg, Exception ex, Logger logger) {
+        logger.error(msg, ex);
+        System.out.println(msg);
+    }
+
+    public static void error(RestoreOperation operation, String msg, Exception ex, Logger logger) {
+        logger.error(msg, ex);
+        String versionRange;
+        try {
+            versionRange = operation.getVersionRange().toString();
+        } catch (InvalidVersionSpecificationException e) {
+            versionRange = "undefined";
+        }
+        System.out.println(String.format("\nERROR: Operation %s with priority %s for versions %s,"
+                + " with exception:", operation.getClass(), operation.getPriority(), versionRange));
+        ex.printStackTrace();
+        System.out.println();
     }
 }

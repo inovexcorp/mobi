@@ -1,0 +1,45 @@
+PREFIX mcat: <http://mobi.com/ontologies/catalog#>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+
+# Retrieves all the forward commits/revisions. The last headAndBranch is the branching commit/revision off of MASTER
+SELECT DISTINCT ?parent ?revision ?masterMerge
+WHERE {
+    {
+        ?commit a mcat:Commit ;
+            (mcat:auxiliaryCommit | mcat:branchCommit)+ ?parent .
+
+        ?parent a mcat:Commit ;
+            prov:atTime ?time ;
+            prov:generated ?revision .
+
+        # Check for merge of master back into the forward delta branch
+        OPTIONAL {
+            ?parent mcat:baseCommit ?masterCommit .
+        }
+        # Check if commit is the initial commit
+        OPTIONAL {
+            ?parent mcat:initialRevision ?initialRevision
+        }
+        # Remove result if master head is the parent commit
+        FILTER NOT EXISTS {
+            ?masterBranch a mcat:MasterBranch;
+                mcat:head ?parent .
+        }
+
+        BIND(IF(BOUND(?masterCommit) || BOUND(?initialRevision), "true"^^xsd:boolean, "false"^^xsd:boolean) as ?masterMerge)
+    }
+    UNION
+        # Handle if the commit to build is directly off master
+    {
+        ?commit a mcat:Commit ;
+            mcat:branchCommit ?someMasterCommit ;
+            prov:atTime ?time ;
+            prov:generated ?revision .
+
+        BIND(?commit as ?parent)
+        BIND("false"^^xsd:boolean as ?masterMerge)
+    }
+
+}
+ORDER BY ASC(?time)

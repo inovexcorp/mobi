@@ -24,93 +24,78 @@ package com.mobi.ontology.impl.core.versioning;
  */
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
-import com.mobi.catalog.api.BranchManager;
-import com.mobi.catalog.api.CommitManager;
-import com.mobi.catalog.api.CompiledResourceManager;
-import com.mobi.catalog.api.DifferenceManager;
-import com.mobi.catalog.api.ThingManager;
-import com.mobi.catalog.api.builder.Difference;
-import com.mobi.catalog.api.ontologies.mcat.Branch;
-import com.mobi.catalog.api.ontologies.mcat.Commit;
-import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
-import com.mobi.catalog.api.ontologies.mcat.Revision;
-import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.ontologies.dcterms._Thing;
+import com.mobi.catalog.api.*;
+import com.mobi.catalog.api.ontologies.mcat.*;
+import com.mobi.catalog.config.CatalogConfigProvider;
+import com.mobi.exception.MobiException;
+import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
 import com.mobi.ontology.utils.cache.OntologyCache;
 import com.mobi.rdf.orm.OrmFactory;
+import com.mobi.rdf.orm.Thing;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import com.mobi.repository.base.OsgiRepositoryWrapper;
 import com.mobi.repository.impl.sesame.memory.MemoryRepositoryWrapper;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Statement;
-import org.eclipse.rdf4j.model.vocabulary.OWL;
+import org.eclipse.rdf4j.query.QueryResults;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.eclipse.rdf4j.repository.RepositoryResult;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.rules.ExpectedException;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.osgi.framework.BundleContext;
-import org.osgi.framework.ServiceReference;
-import org.osgi.service.event.Event;
-import org.osgi.service.event.EventAdmin;
 
 import java.io.InputStream;
-import java.util.Collections;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.Optional;
 
 public class OntologyRecordVersioningServiceTest extends OrmEnabledTestCase {
+
     private AutoCloseable closeable;
     private OsgiRepositoryWrapper repo;
     private OntologyRecordVersioningService service;
+
+    // OrmFactories
     private final OrmFactory<OntologyRecord> ontologyRecordFactory = getRequiredOrmFactory(OntologyRecord.class);
-    private final OrmFactory<Branch> branchFactory = getRequiredOrmFactory(Branch.class);
     private final OrmFactory<Commit> commitFactory = getRequiredOrmFactory(Commit.class);
-    private final OrmFactory<Revision> revisionFactory = getRequiredOrmFactory(Revision.class);
 
-    private final IRI originalIRI = VALUE_FACTORY.createIRI("http://test.com/ontology");
+    // Constant
+    private final IRI originalIRI = VALUE_FACTORY.createIRI("https://mobi.com/records#NewOntologyId");
+    private final IRI originalIRIHeadGraph = VALUE_FACTORY.createIRI("https://mobi.com/records#NewOntologyId/HEAD");
+    private final IRI originalOntologyIRI = VALUE_FACTORY.createIRI("https://mobi.com/ontologies/NewOntology");
     private final IRI newIRI = VALUE_FACTORY.createIRI("http://test.com/ontology/new");
-    private final IRI usedIRI = VALUE_FACTORY.createIRI("http://test.com/ontology/used");
-    private final IRI typeIRI = VALUE_FACTORY.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI);
-    private final IRI ontologyIRI = VALUE_FACTORY.createIRI(OWL.ONTOLOGY.stringValue());
+    private final IRI commitID = VALUE_FACTORY.createIRI("https://mobi.com/commits#31c00edf-d95c-4228-bbd1-e57bc71c19fa");
+    private final IRI catalogIri = VALUE_FACTORY.createIRI("http://mobi.com/catalog-local");
 
-    private User user;
+    // Variables
     private OntologyRecord record;
-    private Branch branch;
     private Commit commit;
-    private Revision revision;
-    private InProgressCommit inProgressCommit;
-    private Stream<Statement> additions;
-    private Stream<Statement> additionsUsed;
-    private Stream<Statement> additionsNoIRI;
 
     @Rule
     public ExpectedException thrown = ExpectedException.none();
 
+    // Mock Variables
     @Mock
     private OntologyManager ontologyManager;
 
     @Mock
     private OntologyCache ontologyCache;
+
+    // BaseVersioningService Dependencies
+    @Mock
+    private CatalogConfigProvider configProvider;
 
     @Mock
     private ThingManager thingManager;
@@ -125,16 +110,25 @@ public class OntologyRecordVersioningServiceTest extends OrmEnabledTestCase {
     private DifferenceManager differenceManager;
 
     @Mock
-    private CompiledResourceManager compiledResourceManager;
+    private RevisionManager revisionManager;
 
     @Mock
-    private EventAdmin eventAdmin;
+    private CompiledResourceManager compiledResourceManager;
 
     @Mock
     private BundleContext context;
 
     @Mock
-    private ServiceReference<EventAdmin> serviceReference;
+    private MasterBranch masterBranch;
+
+    public <T extends Thing> Optional<T> optObject(Resource id, OrmFactory<T> factory, RepositoryConnection conn) {
+        try (RepositoryResult<Statement> repositoryResult = conn.getStatements(null, null, null, id)) {
+            Model model = QueryResults.asModel(repositoryResult, getModelFactory());
+            return factory.getExisting(id, model);
+        } catch (Exception e) {
+            throw new MobiException(e);
+        }
+    }
 
     @Before
     public void setUp() throws Exception {
@@ -146,43 +140,17 @@ public class OntologyRecordVersioningServiceTest extends OrmEnabledTestCase {
         try (RepositoryConnection conn = repo.getConnection()) {
             InputStream testData = getClass().getResourceAsStream("/testData.trig");
             conn.add(Rio.parse(testData, "", RDFFormat.TRIG));
+            record = spy(optObject(originalIRI, ontologyRecordFactory, conn).orElseThrow(() -> new Exception("Can't find record")));
+            commit = optObject(commitID, commitFactory, conn).orElseThrow(() -> new Exception("Can't find commit"));
         }
 
-        OrmFactory<User> userFactory = getRequiredOrmFactory(User.class);
-        OrmFactory<InProgressCommit> inProgressCommitFactory = getRequiredOrmFactory(InProgressCommit.class);
-        user = userFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/users#user"));
-        inProgressCommit = inProgressCommitFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/commits#in-progress-commit"));
-        commit = commitFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/commits#commit"));
-        revision = revisionFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/revisions#revision"));
-        commit.setGenerated(Collections.singleton(revision));
-        commit.setWasAssociatedWith(Collections.singleton(user));
-
-        branch = branchFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/branches#branch"));
-        branch.setHead(commit);
-        record = ontologyRecordFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/records#ontology-record"));
-        record.setOntologyIRI(originalIRI);
-        record.setMasterBranch(branch);
-        additions = Stream.of(VALUE_FACTORY.createStatement(newIRI, typeIRI, ontologyIRI));
-        additionsUsed = Stream.of(VALUE_FACTORY.createStatement(usedIRI, typeIRI, ontologyIRI));
-        additionsNoIRI = Stream.of(VALUE_FACTORY.createStatement(originalIRI, VALUE_FACTORY.createIRI(_Thing.title_IRI), VALUE_FACTORY.createLiteral("Title")));
-
-        when(branchManager.getBranch(any(OntologyRecord.class), any(org.eclipse.rdf4j.model.Resource.class), eq(branchFactory), any(RepositoryConnection.class))).thenReturn(branch);
-        when(commitManager.getInProgressCommit(any(org.eclipse.rdf4j.model.Resource.class), any(org.eclipse.rdf4j.model.Resource.class), any(RepositoryConnection.class))).thenReturn(inProgressCommit);
-        when(thingManager.getObject(any(org.eclipse.rdf4j.model.Resource.class), eq(commitFactory), any(RepositoryConnection.class))).thenReturn(commit);
-        when(thingManager.getObject(any(org.eclipse.rdf4j.model.Resource.class), eq(ontologyRecordFactory), any(RepositoryConnection.class))).thenReturn(record);
-        when(differenceManager.applyDifference(any(), any())).thenAnswer(i -> i.getArgument(1, Difference.class).getAdditions());
-        when(compiledResourceManager.getCompiledResource(anyList(), any(RepositoryConnection.class))).thenReturn(MODEL_FACTORY.createEmptyModel());
-
-        when(ontologyManager.ontologyIriExists(usedIRI)).thenReturn(true);
-
-        when(commitManager.createCommit(any(InProgressCommit.class), anyString(), any(), any())).thenReturn(commit);
-        when(commitManager.createInProgressCommit(any(User.class))).thenReturn(inProgressCommit);
-
-        when(context.getServiceReference(EventAdmin.class)).thenReturn(serviceReference);
-        when(context.getService(serviceReference)).thenReturn(eventAdmin);
+        when(branchManager.getMasterBranch(eq(catalogIri), eq(originalIRI), any(RepositoryConnection.class))).thenReturn(masterBranch);
+        when(branchManager.getHeadGraph(masterBranch)).thenReturn(originalIRIHeadGraph);
+        when(configProvider.getLocalCatalogIRI()).thenReturn(catalogIri);
 
         service = new OntologyRecordVersioningService();
         injectOrmFactoryReferencesIntoService(service);
+        service.configProvider = configProvider;
         service.thingManager = thingManager;
         service.commitManager = commitManager;
         service.branchManager = branchManager;
@@ -190,6 +158,7 @@ public class OntologyRecordVersioningServiceTest extends OrmEnabledTestCase {
         service.compiledResourceManager = compiledResourceManager;
         service.ontologyManager = ontologyManager;
         service.ontologyCache = ontologyCache;
+        service.revisionManager = revisionManager;
         service.start(context);
     }
 
@@ -198,317 +167,56 @@ public class OntologyRecordVersioningServiceTest extends OrmEnabledTestCase {
         closeable.close();
     }
 
+    // addMasterCommit, addBranchCommit, mergeIntoMaster, mergeIntoBranch test coverage provided by BaseVersioningServiceTest
+
     @Test
     public void getTypeIRITest() throws Exception {
         assertEquals(OntologyRecord.TYPE, service.getTypeIRI());
     }
 
-    /* addCommit(Branch, Commit, RepositoryConnection) */
-
-    @Test
-    public void addCommitToOtherBranchWithCommitTest() throws Exception {
-        try (RepositoryConnection conn = repo.getConnection()) {
-            // Setup:
-            Branch newBranch = branchFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/branches#new"));
-
-            service.addCommit(record, newBranch, commit, conn);
-            verify(commitManager).addCommit(newBranch, commit, conn);
-            verify(thingManager, times(0)).getObject(record.getResource(), ontologyRecordFactory, conn);
-            verify(thingManager, times(0)).getObject(record.getResource(), ontologyRecordFactory, conn);
-            verify(ontologyManager, times(0)).ontologyIriExists(newIRI);
-            assertTrue(record.getOntologyIRI().isPresent());
-            assertEquals(originalIRI, record.getOntologyIRI().get());
-            verify(thingManager, times(0)).updateObject(record, conn);
-            verify(ontologyCache, times(0)).clearCacheImports(any(org.eclipse.rdf4j.model.Resource.class));
-            verify(eventAdmin).postEvent(any(Event.class));
+    @Test(expected=IllegalStateException.class)
+    public void updateMasterRecordIRINotContainOntologyDefinitionTest() throws Exception {
+        try(RepositoryConnection conn = repo.getConnection()) {
+            conn.clear();
         }
+        service.updateMasterRecordIRI(record.getResource(), commit, repo.getConnection());
     }
 
-    @Test
-    public void addCommitToMasterWithCommitWithNoBaseTest() throws Exception {
-        try (RepositoryConnection conn = repo.getConnection()) {
-            service.addCommit(record, branch, commit, conn);
-            verify(commitManager).addCommit(branch, commit, conn);
-            verify(thingManager, times(0)).getObject(record.getResource(), ontologyRecordFactory, conn);
-            verify(ontologyManager, times(0)).ontologyIriExists(newIRI);
-            assertTrue(record.getOntologyIRI().isPresent());
-            assertEquals(originalIRI, record.getOntologyIRI().get());
-            verify(thingManager, times(0)).updateObject(record, conn);
-            verify(ontologyCache, times(0)).clearCacheImports(any(org.eclipse.rdf4j.model.Resource.class));
-            verify(eventAdmin).postEvent(any(Event.class));
-        }
-    }
+    @Test(expected=IllegalArgumentException.class)
+    public void updateMasterRecordIRIOntologyIRISameTest() throws Exception {
+        OntologyId ontologyIdMock = mock(OntologyId.class);
+        when(ontologyIdMock.getOntologyIRI()).thenReturn(Optional.of(newIRI));
+        when(ontologyManager.createOntologyId(any(Model.class))).thenReturn(ontologyIdMock);
+        when(ontologyManager.ontologyIriExists(newIRI)).thenReturn(true);
+        when(thingManager.getObject(eq(record.getResource()), eq(service.ontologyRecordFactory), any(RepositoryConnection.class))).thenReturn(record);
 
-    @Test
-    public void addCommitToMasterWithCommitWithBaseAndNewOntologyIRITest() throws Exception {
-        try (RepositoryConnection conn = repo.getConnection()) {
-            // Setup:
-            commit.setBaseCommit(commitFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/commits#new")));
-
-            service.addCommit(record, branch, commit, conn);
-            verify(commitManager).addCommit(branch, commit, conn);
-            verify(thingManager).getObject(record.getResource(), ontologyRecordFactory, conn);
-            verify(ontologyManager).ontologyIriExists(newIRI);
-            assertTrue(record.getOntologyIRI().isPresent());
-            assertEquals(newIRI, record.getOntologyIRI().get());
-            verify(thingManager).updateObject(record, conn);
-            verify(ontologyCache).clearCacheImports(originalIRI);
-            verify(ontologyCache).clearCacheImports(newIRI);
-            verify(eventAdmin).postEvent(any(Event.class));
-        }
-    }
-
-    @Test
-    public void addCommitToMasterOfRecordWithoutIRIWithCommitWithBaseTest() throws Exception {
-        try (RepositoryConnection conn = repo.getConnection()) {
-            // Setup:
-            commit.setBaseCommit(commitFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/commits#new")));
-            OntologyRecord newRecord = ontologyRecordFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/records#new"));
-            when(thingManager.getObject(any(org.eclipse.rdf4j.model.Resource.class), eq(ontologyRecordFactory), eq(conn))).thenReturn(newRecord);
-
-            service.addCommit(record, branch, commit, conn);
-            verify(commitManager).addCommit(branch, commit, conn);
-            verify(thingManager).getObject(any(org.eclipse.rdf4j.model.Resource.class), eq(ontologyRecordFactory), eq(conn));
-            verify(ontologyManager).ontologyIriExists(newIRI);
-            assertTrue(newRecord.getOntologyIRI().isPresent());
-            assertEquals(newIRI, newRecord.getOntologyIRI().get());
-            verify(thingManager).updateObject(newRecord, conn);
-            verify(ontologyCache).clearCacheImports(newIRI);
-            verify(eventAdmin).postEvent(any(Event.class));
-        }
-    }
-
-    @Test
-    public void addCommitToMasterWithCommitWithBaseAndUsedOntologyIRITest() throws Exception {
-        // Setup:
-        commit.setBaseCommit(commitFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/commits#new")));
-        Revision revisionUsed = revisionFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/revisions#revisionUsed"));
-        commit.setGenerated(Collections.singleton(revisionUsed));
-        thrown.expect(IllegalArgumentException.class);
-        thrown.expectMessage("Ontology already exists with IRI " + usedIRI);
-
-        try (RepositoryConnection conn = repo.getConnection()) {
-            service.addCommit(record, branch, commit, conn);
+        try(RepositoryConnection conn = repo.getConnection()) {
+            service.updateMasterRecordIRI(record.getResource(), commit, conn);
         } finally {
-            verify(thingManager).getObject(eq(record.getResource()), eq(ontologyRecordFactory), any(RepositoryConnection.class));
-            verify(commitManager, times(0)).addCommit(eq(branch), eq(commit), any(RepositoryConnection.class));
-            verify(ontologyManager).ontologyIriExists(usedIRI);
-            assertTrue(record.getOntologyIRI().isPresent());
-            assertEquals(originalIRI, record.getOntologyIRI().get());
-            verify(thingManager, times(0)).updateObject(eq(record), any(RepositoryConnection.class));
-            verify(ontologyCache).clearCacheImports(originalIRI);
-            verify(eventAdmin, times(0)).postEvent(any(Event.class));
+            verify(ontologyCache).clearCacheImports(originalOntologyIRI);
+            verify(ontologyManager).ontologyIriExists(eq(newIRI));
+            verify(record, never()).setOntologyIRI(eq(newIRI));
+            verify(thingManager, never()).updateObject(any(OntologyRecord.class), any(RepositoryConnection.class));
+            verify(ontologyCache, never()).clearCacheImports(newIRI);
         }
     }
 
     @Test
-    public void addCommitToMasterWithCommitWithBaseAndNoIRITest() throws Exception {
-        try (RepositoryConnection conn = repo.getConnection()) {
-            // Setup:
-            commit.setBaseCommit(commitFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/commits#new")));
-            Revision revisionNoChange = revisionFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/revisions#revision2"));
-            commit.setGenerated(Collections.singleton(revisionNoChange));
-
-            service.addCommit(record, branch, commit, conn);
-            verify(commitManager).addCommit(branch, commit, conn);
-            verify(thingManager).getObject(record.getResource(), ontologyRecordFactory, conn);
-            verify(ontologyManager, times(0)).ontologyIriExists(any(IRI.class));
-            assertTrue(record.getOntologyIRI().isPresent());
-            assertEquals(originalIRI, record.getOntologyIRI().get());
-            verify(thingManager, times(0)).updateObject(record, conn);
-            verify(ontologyCache).clearCacheImports(originalIRI);
-            verify(eventAdmin).postEvent(any(Event.class));
-        }
-    }
-
-    /* addCommit(Branch, User, String, Model, Model, Commit, Commit, RepositoryConnection)*/
-
-    @Test
-    public void addCommitToOtherBranchWithChangesTest() throws Exception {
-        try (RepositoryConnection conn = repo.getConnection()) {
-            // Setup:
-            Branch newBranch = branchFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/branches#new"));
-            Model additions = MODEL_FACTORY.createEmptyModel();
-            Model deletions = MODEL_FACTORY.createEmptyModel();
-
-            service.addCommit(record, newBranch, user, "Message", additions, deletions, commit, null, conn);
-            verify(commitManager).createInProgressCommit(user);
-            verify(commitManager).createCommit(inProgressCommit, "Message", commit, null);
-            verify(commitManager, times(0)).getCommitChain(any(org.eclipse.rdf4j.model.Resource.class), eq(false), eq(conn));
-            verify(compiledResourceManager, times(0)).getCompiledResource(anyList(), eq(conn));
-            verify(differenceManager, times(0)).applyDifference(any(Model.class), any(Difference.class));
-            verify(thingManager, times(0)).getObject(record.getResource(), ontologyRecordFactory, conn);
-            verify(ontologyManager, times(0)).ontologyIriExists(newIRI);
-            verify(commitManager).updateCommit(commit, additions, deletions, conn);
-            verify(commitManager).addCommit(newBranch, commit, conn);
-            assertTrue(record.getOntologyIRI().isPresent());
-            assertEquals(originalIRI, record.getOntologyIRI().get());
-            verify(thingManager, times(0)).updateObject(record, conn);
-            verify(ontologyCache, times(0)).clearCacheImports(any(org.eclipse.rdf4j.model.Resource.class));
-            verify(eventAdmin).postEvent(any(Event.class));
-        }
-    }
-
-    @Test
-    public void addCommitToMasterWithChangesAndNoBaseTest() throws Exception {
-        try (RepositoryConnection conn = repo.getConnection()) {
-            // Setup:
-            Model additions = MODEL_FACTORY.createEmptyModel();
-            Model deletions = MODEL_FACTORY.createEmptyModel();
-
-            service.addCommit(record, branch, user, "Message", additions, deletions, null, null, conn);
-            verify(commitManager).createInProgressCommit(user);
-            verify(commitManager).createCommit(inProgressCommit, "Message", null, null);
-            verify(commitManager, times(0)).getCommitChain(any(org.eclipse.rdf4j.model.Resource.class), eq(false), eq(conn));
-            verify(compiledResourceManager, times(0)).getCompiledResource(anyList(), eq(conn));
-            verify(differenceManager, times(0)).applyDifference(any(Model.class), any(Difference.class));
-            verify(thingManager, times(0)).getObject(record.getResource(), ontologyRecordFactory, conn);
-            verify(ontologyManager, times(0)).ontologyIriExists(newIRI);
-            verify(commitManager).updateCommit(commit, additions, deletions, conn);
-            verify(commitManager).addCommit(branch, commit, conn);
-            assertTrue(record.getOntologyIRI().isPresent());
-            assertEquals(originalIRI, record.getOntologyIRI().get());
-            verify(thingManager, times(0)).updateObject(record, conn);
-            verify(ontologyCache, times(0)).clearCacheImports(any(org.eclipse.rdf4j.model.Resource.class));
-            verify(eventAdmin).postEvent(any(Event.class));
-        }
-    }
-
-    @Test
-    public void addCommitToMasterWithChangesAndBaseAndNoAuxTest() throws Exception {
-        try (RepositoryConnection conn = repo.getConnection()) {
-            // Setup:
-            Model additionsModel = MODEL_FACTORY.createEmptyModel();
-            additionsModel.addAll(additions.collect(Collectors.toSet()));
-            Model deletions = MODEL_FACTORY.createEmptyModel();
-
-            service.addCommit(record, branch, user, "Message", additionsModel, deletions, commit, null, conn);
-            verify(commitManager).createInProgressCommit(user);
-            verify(commitManager).createCommit(inProgressCommit, "Message", commit, null);
-            verify(commitManager, times(0)).getCommitChain(any(org.eclipse.rdf4j.model.Resource.class), eq(false), eq(conn));
-            verify(compiledResourceManager, times(0)).getCompiledResource(anyList(), eq(conn));
-            verify(differenceManager).applyDifference(any(Model.class), any(Difference.class));
-            verify(thingManager).getObject(record.getResource(), ontologyRecordFactory, conn);
-            verify(ontologyManager).ontologyIriExists(newIRI);
-            verify(commitManager).updateCommit(commit, additionsModel, deletions, conn);
-            verify(commitManager).addCommit(branch, commit, conn);
-            assertTrue(record.getOntologyIRI().isPresent());
-            assertEquals(newIRI, record.getOntologyIRI().get());
-            verify(thingManager).updateObject(record, conn);
-            verify(ontologyCache).clearCacheImports(originalIRI);
-            verify(ontologyCache).clearCacheImports(newIRI);
-            verify(eventAdmin).postEvent(any(Event.class));
-        }
-    }
-
-    @Test
-    public void addCommitToMasterWithChangesAndBaseAndAuxTest() throws Exception {
-        try (RepositoryConnection conn = repo.getConnection()) {
-            // Setup:
-            Model additionsModel = MODEL_FACTORY.createEmptyModel();
-            additionsModel.addAll(additions.collect(Collectors.toSet()));
-            Model deletions = MODEL_FACTORY.createEmptyModel();
-
-            service.addCommit(record, branch, user, "Message", additionsModel, deletions, commit, commit, conn);
-            verify(commitManager).createInProgressCommit(user);
-            verify(commitManager).createCommit(inProgressCommit, "Message", commit, commit);
-            verify(commitManager, times(2)).getCommitChain(commit.getResource(), false, conn);
-            verify(compiledResourceManager).getCompiledResource(anyList(), eq(conn));
-            verify(differenceManager).applyDifference(any(Model.class), any(Difference.class));
-            verify(thingManager).getObject(record.getResource(), ontologyRecordFactory, conn);
-            verify(ontologyManager).ontologyIriExists(newIRI);
-            verify(commitManager).updateCommit(commit, additionsModel, deletions, conn);
-            verify(commitManager).addCommit(branch, commit, conn);
-            assertTrue(record.getOntologyIRI().isPresent());
-            assertEquals(newIRI, record.getOntologyIRI().get());
-            verify(thingManager).updateObject(record, conn);
-            verify(ontologyCache).clearCacheImports(originalIRI);
-            verify(ontologyCache).clearCacheImports(newIRI);
-            verify(eventAdmin).postEvent(any(Event.class));
-        }
-    }
-
-    @Test
-    public void addCommitToMasterOfRecordWithoutIRIWithChangesAndBaseTest() throws Exception {
-        try (RepositoryConnection conn = repo.getConnection()) {
-            // Setup:
-            OntologyRecord newRecord = ontologyRecordFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/records#new"));
-            when(thingManager.getObject(any(org.eclipse.rdf4j.model.Resource.class), eq(ontologyRecordFactory), eq(conn))).thenReturn(newRecord);
-            Model additionsModel = MODEL_FACTORY.createEmptyModel();
-            additionsModel.addAll(additions.collect(Collectors.toSet()));
-            Model deletions = MODEL_FACTORY.createEmptyModel();
-
-            service.addCommit(record, branch, user, "Message", additionsModel, deletions, commit, null, conn);
-            verify(commitManager).createInProgressCommit(user);
-            verify(commitManager).createCommit(inProgressCommit, "Message", commit, null);
-            verify(commitManager, times(0)).getCommitChain(any(org.eclipse.rdf4j.model.Resource.class), eq(false), eq(conn));
-            verify(compiledResourceManager, times(0)).getCompiledResource(anyList(), eq(conn));
-            verify(differenceManager).applyDifference(any(Model.class), any(Difference.class));
-            verify(thingManager).getObject(any(org.eclipse.rdf4j.model.Resource.class), eq(ontologyRecordFactory), eq(conn));
-            verify(ontologyManager).ontologyIriExists(newIRI);
-            verify(commitManager).updateCommit(commit, additionsModel, deletions, conn);
-            verify(commitManager).addCommit(branch, commit, conn);
-            assertTrue(newRecord.getOntologyIRI().isPresent());
-            assertEquals(newIRI, newRecord.getOntologyIRI().get());
-            verify(thingManager).updateObject(newRecord, conn);
-            verify(ontologyCache).clearCacheImports(newIRI);
-            verify(eventAdmin).postEvent(any(Event.class));
-        }
-    }
-
-    @Test
-    public void addCommitToMasterWithChangesWithBaseAndUsedOntologyIRITest() throws Exception {
-        // Setup:
-        Model additionsModel = MODEL_FACTORY.createEmptyModel();
-        additionsModel.addAll(additionsUsed.collect(Collectors.toSet()));
-        Model deletions = MODEL_FACTORY.createEmptyModel();
-        thrown.expect(IllegalArgumentException.class);
-        thrown.expectMessage("Ontology already exists with IRI " + usedIRI);
+    public void updateMasterRecordIRITest() throws Exception {
+        OntologyId ontologyIdMock = mock(OntologyId.class);
+        when(ontologyIdMock.getOntologyIRI()).thenReturn(Optional.of(newIRI));
+        when(ontologyManager.createOntologyId(any(Model.class))).thenReturn(ontologyIdMock);
+        when(ontologyManager.ontologyIriExists(newIRI)).thenReturn(false);
+        when(thingManager.getObject(eq(record.getResource()), eq(service.ontologyRecordFactory), any(RepositoryConnection.class))).thenReturn(record);
 
         try (RepositoryConnection conn = repo.getConnection()) {
-            service.addCommit(record, branch, user, "Message", additionsModel, deletions, commit, null, conn);
+            service.updateMasterRecordIRI(record.getResource(), commit, conn);
         } finally {
-            verify(commitManager).createInProgressCommit(user);
-            verify(commitManager).createCommit(inProgressCommit, "Message", commit, null);
-            verify(commitManager, times(0)).getCommitChain(any(org.eclipse.rdf4j.model.Resource.class), eq(false), any(RepositoryConnection.class));
-            verify(compiledResourceManager, times(0)).getCompiledResource(anyList(), any(RepositoryConnection.class));
-            verify(differenceManager).applyDifference(any(Model.class), any(Difference.class));
-            verify(thingManager).getObject(eq(record.getResource()), eq(ontologyRecordFactory), any(RepositoryConnection.class));
-            verify(ontologyManager).ontologyIriExists(usedIRI);
-            verify(commitManager, times(0)).updateCommit(eq(commit), eq(additionsModel), eq(deletions), any(RepositoryConnection.class));
-            verify(commitManager, times(0)).addCommit(eq(branch), eq(commit), any(RepositoryConnection.class));
-            assertTrue(record.getOntologyIRI().isPresent());
-            assertEquals(originalIRI, record.getOntologyIRI().get());
-            verify(thingManager, times(0)).updateObject(eq(record), any(RepositoryConnection.class));
-            verify(ontologyCache).clearCacheImports(originalIRI);
-            verify(eventAdmin, times(0)).postEvent(any(Event.class));
-        }
-    }
-
-    @Test
-    public void addCommitToMasterWithChangesWithBaseAndNoIRITest() throws Exception {
-        try (RepositoryConnection conn = repo.getConnection()) {
-            // Setup:
-            Model additionsModel = MODEL_FACTORY.createEmptyModel();
-            additionsModel.addAll(additionsNoIRI.collect(Collectors.toSet()));
-            Model deletions = MODEL_FACTORY.createEmptyModel();
-
-            service.addCommit(record, branch, user, "Message", additionsModel, deletions, commit, null, conn);
-            verify(commitManager).createInProgressCommit(user);
-            verify(commitManager).createCommit(inProgressCommit, "Message", commit, null);
-            verify(commitManager, times(0)).getCommitChain(any(org.eclipse.rdf4j.model.Resource.class), eq(false), eq(conn));
-            verify(compiledResourceManager, times(0)).getCompiledResource(anyList(), eq(conn));
-            verify(differenceManager).applyDifference(any(Model.class), any(Difference.class));
-            verify(thingManager).getObject(record.getResource(), ontologyRecordFactory, conn);
-            verify(ontologyManager, times(0)).ontologyIriExists(newIRI);
-            verify(commitManager).updateCommit(commit, additionsModel, deletions, conn);
-            verify(commitManager).addCommit(branch, commit, conn);
-            verify(ontologyManager, times(0)).ontologyIriExists(any(IRI.class));
-            assertTrue(record.getOntologyIRI().isPresent());
-            assertEquals(originalIRI, record.getOntologyIRI().get());
-            verify(thingManager, times(0)).updateObject(record, conn);
-            verify(ontologyCache).clearCacheImports(originalIRI);
-            verify(eventAdmin).postEvent(any(Event.class));
+            verify(ontologyCache).clearCacheImports(originalOntologyIRI);
+            verify(ontologyManager).ontologyIriExists(eq(newIRI));
+            verify(record).setOntologyIRI(eq(newIRI));
+            verify(thingManager).updateObject(any(OntologyRecord.class), any(RepositoryConnection.class));
+            verify(ontologyCache).clearCacheImports(newIRI);
         }
     }
 }

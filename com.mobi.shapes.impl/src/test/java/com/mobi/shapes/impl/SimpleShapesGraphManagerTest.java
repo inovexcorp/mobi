@@ -36,6 +36,7 @@ import com.mobi.catalog.api.CommitManager;
 import com.mobi.catalog.api.CompiledResourceManager;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
+import com.mobi.catalog.api.ontologies.mcat.MasterBranch;
 import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.repository.impl.sesame.memory.MemoryRepositoryWrapper;
@@ -53,8 +54,10 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.Optional;
 
@@ -67,6 +70,7 @@ public class SimpleShapesGraphManagerTest extends OrmEnabledTestCase {
 
     private AutoCloseable closeable;
     private OrmFactory<Branch> branchFactory = getRequiredOrmFactory(Branch.class);
+    private OrmFactory<MasterBranch> masterBranchFactory = getRequiredOrmFactory(MasterBranch.class);
     private OrmFactory<Commit> commitFactory = getRequiredOrmFactory(Commit.class);
     private IRI recordIRI;
     private IRI branchIRI;
@@ -98,11 +102,6 @@ public class SimpleShapesGraphManagerTest extends OrmEnabledTestCase {
         catalogIri = vf.createIRI("http://mobi.com/catalog-local");
         testShapeIri = vf.createIRI("http://mobi.com/ontologies/shapes-graph/test-shape-record");
 
-        try (RepositoryConnection conn = repo.getConnection()) {
-            InputStream testData = getClass().getResourceAsStream("/test-shape-record.trig");
-            conn.add((Rio.parse(testData, "", RDFFormat.TRIG)));
-        }
-
         doThrow(new IllegalArgumentException()).when(branchManager).getMasterBranch(eq(catalogIri), eq(missingIRI), any(RepositoryConnection.class));
         doThrow(new IllegalArgumentException()).when(branchManager).getBranchOpt(eq(catalogIri), eq(recordIRI), eq(missingIRI), eq(branchFactory), any(RepositoryConnection.class));
         doThrow(new IllegalArgumentException()).when(commitManager).getCommit(eq(catalogIri), eq(recordIRI), eq(branchIRI), eq(missingIRI), any(RepositoryConnection.class));
@@ -121,13 +120,22 @@ public class SimpleShapesGraphManagerTest extends OrmEnabledTestCase {
         manager.compiledResourceManager = compiledResourceManager;
     }
 
+    private void trigFile() throws IOException {
+        try (RepositoryConnection conn = repo.getConnection()) {
+            InputStream testData = getClass().getResourceAsStream("/test-shape-record.trig");
+            conn.add((Rio.parse(testData, "", RDFFormat.TRIG)));
+        }
+    }
+
     @After
     public void resetMocks() throws Exception {
         closeable.close();
+        Mockito.reset(compiledResourceManager);
     }
 
     @Test
     public void checkShapesGraphIriExistsTest() throws Exception {
+        trigFile();
         boolean exists = manager.shapesGraphIriExists(testShapeIri);
         assertTrue(exists);
         verify(configProvider).getRepository();
@@ -136,6 +144,7 @@ public class SimpleShapesGraphManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void checkShapesGraphIriExistsNewTest() throws Exception {
+        trigFile();
         Resource newShapeIri = vf.createIRI("urn:testShapeIriThatDoesNotExistInRepo");
         boolean exists = manager.shapesGraphIriExists(newShapeIri);
         assertFalse(exists);
@@ -161,7 +170,7 @@ public class SimpleShapesGraphManagerTest extends OrmEnabledTestCase {
     @Test(expected = IllegalStateException.class)
     public void testRetrieveShapesGraphWithHeadCommitNotSet() {
         // Setup:
-        Branch branch = branchFactory.createNew(branchIRI);
+        MasterBranch branch = masterBranchFactory.createNew(branchIRI);
         when(branchManager.getMasterBranch(eq(catalogIri), eq(recordIRI), any(RepositoryConnection.class))).thenReturn(branch);
 
         manager.retrieveShapesGraph(recordIRI);
@@ -170,7 +179,7 @@ public class SimpleShapesGraphManagerTest extends OrmEnabledTestCase {
     @Test(expected = IllegalArgumentException.class)
     public void testRetrieveShapesGraphWhenCompiledResourceCannotBeFound() {
         // Setup:
-        Branch branch = branchFactory.createNew(branchIRI);
+        MasterBranch branch = masterBranchFactory.createNew(branchIRI);
         branch.setHead(commitFactory.createNew(commitIRI));
         when(branchManager.getMasterBranch(eq(catalogIri), eq(recordIRI), any(RepositoryConnection.class))).thenReturn(branch);
         doThrow(new IllegalArgumentException()).when(compiledResourceManager).getCompiledResource(eq(commitIRI), any(RepositoryConnection.class));
@@ -181,7 +190,7 @@ public class SimpleShapesGraphManagerTest extends OrmEnabledTestCase {
     @Test
     public void testRetrieveShapesGraphSuccess() {
         // Setup:
-        Branch branch = branchFactory.createNew(branchIRI);
+        MasterBranch branch = masterBranchFactory.createNew(branchIRI);
         branch.setHead(commitFactory.createNew(commitIRI));
         when(branchManager.getMasterBranch(eq(catalogIri), eq(recordIRI), any(RepositoryConnection.class))).thenReturn(branch);
         when(compiledResourceManager.getCompiledResource(eq(commitIRI), any(RepositoryConnection.class))).thenReturn(MODEL_FACTORY.createEmptyModel());
@@ -230,7 +239,6 @@ public class SimpleShapesGraphManagerTest extends OrmEnabledTestCase {
     public void testRetrieveShapesGraphUsingACommitWhenCompiledResourceCannotBeFound() {
         // Setup:
         doThrow(new IllegalArgumentException()).when(compiledResourceManager).getCompiledResource(eq(recordIRI), eq(branchIRI), eq(commitIRI), any(RepositoryConnection.class));
-
         manager.retrieveShapesGraph(recordIRI, branchIRI, commitIRI);
     }
 

@@ -158,7 +158,7 @@
         <bundle>mvn:org.apache.httpcomponents/httpclient-osgi/4.5.8</bundle>
         <bundle>mvn:com.github.jsonld-java/jsonld-java/${jsonld-java.version}</bundle>
         <bundle>mvn:com.google.guava/failureaccess/1.0.1</bundle>
-        <bundle>mvn:com.google.guava/guava/30.1.1-jre</bundle>
+        <bundle>mvn:com.google.guava/guava/32.1.2-jre</bundle>
         <bundle>mvn:commons-collections/commons-collections/3.2.1</bundle>
         <bundle>mvn:commons-beanutils/commons-beanutils/1.9.3</bundle>
         <bundle>mvn:org.locationtech.spatial4j/spatial4j/0.8</bundle>

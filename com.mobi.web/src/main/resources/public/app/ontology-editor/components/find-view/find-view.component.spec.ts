@@ -133,7 +133,7 @@ describe('Find View component', function() {
         it('for wrapping containers', function() {
             expect(element.queryAll(By.css('.find-view')).length).toEqual(1);
         });
-        ['.search', '.result', '.property-values', '.entity-IRI'].forEach(test => {
+        ['.search', '.property-values', '.entity-IRI'].forEach(test => {
             it('with a ' + test, function() {
                 expect(element.queryAll(By.css(test)).length).toEqual(1);
             });

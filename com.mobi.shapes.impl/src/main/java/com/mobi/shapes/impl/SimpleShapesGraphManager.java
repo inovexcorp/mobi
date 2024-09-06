@@ -121,9 +121,8 @@ public class SimpleShapesGraphManager implements ShapesGraphManager {
     public Optional<ShapesGraph> retrieveShapesGraph(@Nonnull Resource recordId, @Nonnull Resource branchId,
                                                      @Nonnull Resource commitId) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            return Optional.of(
-                    getShapesGraphFromModel(compiledResourceManager.getCompiledResource(recordId, branchId, commitId,
-                            conn)));
+            Model compiledResource = compiledResourceManager.getCompiledResource(recordId, branchId, commitId, conn);
+            return Optional.of(getShapesGraphFromModel(compiledResource));
         }
     }
 

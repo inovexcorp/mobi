@@ -27,22 +27,11 @@ import static junit.framework.Assert.assertFalse;
 import static junit.framework.TestCase.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
-import com.mobi.catalog.api.BranchManager;
-import com.mobi.catalog.api.CatalogProvUtils;
-import com.mobi.catalog.api.CommitManager;
-import com.mobi.catalog.api.ThingManager;
+import com.mobi.catalog.api.*;
 import com.mobi.catalog.api.mergerequest.MergeRequestManager;
-import com.mobi.catalog.api.ontologies.mcat.Branch;
-import com.mobi.catalog.api.ontologies.mcat.Catalog;
-import com.mobi.catalog.api.ontologies.mcat.Commit;
-import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
+import com.mobi.catalog.api.ontologies.mcat.*;
 import com.mobi.catalog.api.ontologies.mcat.Record;
 import com.mobi.catalog.api.record.config.OperationConfig;
 import com.mobi.catalog.api.record.config.RecordCreateSettings;
@@ -113,14 +102,14 @@ public class MappingRecordServiceTest extends OrmEnabledTestCase {
     private Model mappingModel;
     private OutputStream mappingJsonLd;
     private User user;
-    private Branch branch;
+    private MasterBranch masterBranch;
     private Commit headCommit;
 
     private OrmFactory<MappingRecord> recordFactory = getRequiredOrmFactory(MappingRecord.class);
     private OrmFactory<Catalog> catalogFactory = getRequiredOrmFactory(Catalog.class);
     private OrmFactory<User> userFactory = getRequiredOrmFactory(User.class);
     private OrmFactory<DeleteActivity> deleteActivityFactory = getRequiredOrmFactory(DeleteActivity.class);
-    private OrmFactory<Branch> branchFactory = getRequiredOrmFactory(Branch.class);
+    private OrmFactory<MasterBranch> branchFactory = getRequiredOrmFactory(MasterBranch.class);
     private OrmFactory<Commit> commitFactory = getRequiredOrmFactory(Commit.class);
 
     @Rule
@@ -163,6 +152,9 @@ public class MappingRecordServiceTest extends OrmEnabledTestCase {
     private MappingWrapper mappingWrapper;
 
     @Mock
+    private RevisionManager revisionManager;
+
+    @Mock
     private MappingId mappingId;
 
     @Mock
@@ -185,15 +177,15 @@ public class MappingRecordServiceTest extends OrmEnabledTestCase {
 
         user = userFactory.createNew(VALUE_FACTORY.createIRI("http://test.org/user"));
         headCommit = commitFactory.createNew(commitIRI);
-        branch = branchFactory.createNew(branchIRI);
-        branch.setHead(headCommit);
-        branch.setProperty(VALUE_FACTORY.createLiteral("Test Branch"), VALUE_FACTORY.createIRI(_Thing.title_IRI));
+        masterBranch = branchFactory.createNew(branchIRI);
+        masterBranch.setHead(headCommit);
+        masterBranch.setProperty(VALUE_FACTORY.createLiteral("Test Branch"), VALUE_FACTORY.createIRI(_Thing.title_IRI));
 
         testRecord = recordFactory.createNew(recordIRI);
         testRecord.setProperty(VALUE_FACTORY.createLiteral("Test Record"), VALUE_FACTORY.createIRI(_Thing.title_IRI));
         testRecord.setCatalog(catalogFactory.createNew(catalogIRI));
-        testRecord.setBranch(Collections.singleton(branch));
-        testRecord.setMasterBranch(branch);
+        testRecord.setBranch(Collections.singleton(masterBranch));
+        testRecord.setMasterBranch(masterBranch);
 
         closeable = MockitoAnnotations.openMocks(this);
 
@@ -203,8 +195,8 @@ public class MappingRecordServiceTest extends OrmEnabledTestCase {
         when(xacmlPolicyManager.addPolicy(any(XACMLPolicy.class))).thenReturn(recordPolicyIRI);
 
         when(thingManager.optObject(any(IRI.class), any(OrmFactory.class), any(RepositoryConnection.class))).thenReturn(Optional.of(testRecord));
-        when(branchManager.getBranch(eq(testRecord), eq(branchIRI), any(OrmFactory.class), any(RepositoryConnection.class))).thenReturn(branch);
-        when(commitManager.getHeadCommitIRI(eq(branch))).thenReturn(commitIRI);
+        when(branchManager.getBranch(eq(testRecord), eq(branchIRI), any(OrmFactory.class), any(RepositoryConnection.class))).thenReturn(masterBranch);
+        when(commitManager.getHeadCommitIRI(eq(masterBranch))).thenReturn(commitIRI);
         doReturn(Stream.of(commitIRI).collect(Collectors.toList()))
                 .when(commitManager).getCommitChain(eq(commitIRI), eq(false), any(RepositoryConnection.class));
         when(thingManager.getExpectedObject(eq(commitIRI), any(OrmFactory.class), any(RepositoryConnection.class))).thenReturn(headCommit);
@@ -221,6 +213,13 @@ public class MappingRecordServiceTest extends OrmEnabledTestCase {
         when(provUtils.startDeleteActivity(any(), any())).thenReturn(deleteActivity);
         when(provUtils.startCreateActivity(any())).thenReturn(createActivity);
 
+        Revision revision = mock(Revision.class);
+        when(revision.getAdditions()).thenReturn(Optional.of(getValueFactory().createIRI("http://revision/add")));
+        when(revision.getDeletions()).thenReturn(Optional.of(getValueFactory().createIRI("http://revision/del")));
+        Model initialRevisionModel = MODEL_FACTORY.createEmptyModel();
+        when(revision.getModel()).thenReturn(initialRevisionModel);
+
+        when(revisionManager.createRevision(any())).thenReturn(revision);
         injectOrmFactoryReferencesIntoService(recordService);
         recordService.manager = manager;
         recordService.thingManager = thingManager;
@@ -233,6 +232,7 @@ public class MappingRecordServiceTest extends OrmEnabledTestCase {
         recordService.engineManager = engineManager;
         recordService.configProvider = configProvider;
         recordService.recordFactory = recordService.mappingRecordFactory;
+        recordService.revisionManager = revisionManager;
     }
 
     @After
@@ -279,6 +279,7 @@ public class MappingRecordServiceTest extends OrmEnabledTestCase {
 
     @Test
     public void createTest() throws Exception {
+        // TODO more involved test
         RecordOperationConfig config = new OperationConfig();
         Set<String> keywords = Stream.of("A", "B").collect(Collectors.toSet());
         Set<User> users = Collections.singleton(user);
@@ -290,6 +291,10 @@ public class MappingRecordServiceTest extends OrmEnabledTestCase {
         config.set(RecordCreateSettings.RECORD_MARKDOWN, "# Markdown");
         config.set(RecordCreateSettings.RECORD_KEYWORDS, keywords);
         config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
+        Commit commit = mock(Commit.class);
+        when(commit.getModel()).thenReturn(getModelFactory().createEmptyModel());
+        when(versioningManager.commit(any(), any(), any(), any(),any(), any())).thenReturn(commitIRI);
+        when(commitManager.getCommit(eq(commitIRI), any())).thenReturn(Optional.of(commit));
 
         try (RepositoryConnection connection = repository.getConnection()){
             MappingRecord record = recordService.create(user, config, connection);
@@ -307,6 +312,12 @@ public class MappingRecordServiceTest extends OrmEnabledTestCase {
 
     @Test
     public void createWithoutInputFileTest() throws Exception {
+        Commit initialCommit = mock(Commit.class);
+        when(initialCommit.getModel()).thenReturn(MODEL_FACTORY.createEmptyModel());
+        IRI initialCommitIri = getValueFactory().createIRI("http://mobi.com/commit#initial");
+        when(versioningManager.commit(eq(catalogIRI), any(Resource.class), any(Resource.class), eq(user), eq("The initial commit."), any(RepositoryConnection.class))).thenReturn(initialCommitIri);
+        when(commitManager.getCommit(eq(initialCommitIri), any(RepositoryConnection.class))).thenReturn(Optional.of(initialCommit));
+
         RecordOperationConfig config = new OperationConfig();
         Set<String> keywords = Stream.of("A", "B").collect(Collectors.toSet());
         Set<User> users = Collections.singleton(user);
@@ -393,13 +404,13 @@ public class MappingRecordServiceTest extends OrmEnabledTestCase {
     public void deleteTest() throws Exception {
         try (RepositoryConnection connection = repository.getConnection()) {
             connection.add(testRecord.getModel(), testRecord.getResource());
-            connection.add(branch.getModel(), branch.getResource());
+            connection.add(masterBranch.getModel(), masterBranch.getResource());
             connection.add(headCommit.getModel(), headCommit.getResource());
             connection.add(inProgressCommitIRI, VALUE_FACTORY.createIRI(InProgressCommit.onVersionedRDFRecord_IRI), testRecord.getResource());
             MappingRecord deletedRecord = recordService.delete(recordIRI, user, connection);
 
             assertEquals(testRecord, deletedRecord);
-            assertFalse(ConnectionUtils.containsContext(connection, branch.getResource()));
+            assertFalse(ConnectionUtils.containsContext(connection, masterBranch.getResource()));
             assertFalse(ConnectionUtils.containsContext(connection, commitIRI));
         }
         verify(thingManager).optObject(eq(recordIRI), eq(recordFactory), any(RepositoryConnection.class));

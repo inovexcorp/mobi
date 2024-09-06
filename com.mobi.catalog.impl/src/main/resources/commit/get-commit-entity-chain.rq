@@ -1,0 +1,48 @@
+PREFIX mcat: <http://mobi.com/ontologies/catalog#>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+
+SELECT DISTINCT ?parent ?type
+WHERE {
+    ?commit a mcat:Commit ;
+        (mcat:baseCommit | mcat:auxiliaryCommit | mcat:branchCommit)* ?parent .
+
+    ?parent prov:atTime ?time ;
+    OPTIONAL {
+        ?parent mcat:branchCommit ?branchCommit ;
+            prov:generated ?revision.
+
+        ?revision a mcat:Revision ;
+            mcat:additions ?additions ;
+            mcat:deletions ?deletions .
+        BIND("branch" as ?type)
+    }
+    OPTIONAL {
+        ?parent mcat:baseCommit ?baseCommit ;
+            prov:generated/prov:hadPrimarySource ?revision.
+
+        ?revision a mcat:Revision ;
+            mcat:additions ?additions ;
+            mcat:deletions ?deletions .
+        BIND("base" as ?type)
+    }
+    # INITIAL COMMIT
+    OPTIONAL {
+        ?parent mcat:initialRevision ?revision .
+
+        ?revision a mcat:Revision ;
+            mcat:additions ?additions ;
+            mcat:deletions ?deletions .
+        BIND("init" as ?type)
+    }
+
+    FILTER (exists {
+       graph ?additions {
+           ?entity ?p ?o .
+       }
+    } || exists {
+       graph ?deletions {
+           ?entity ?p ?o .
+       }
+    })
+}
+ORDER BY DESC(?time)

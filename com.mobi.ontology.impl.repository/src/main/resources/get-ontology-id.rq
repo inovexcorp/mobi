@@ -1,12 +1,9 @@
 PREFIX owl: <http://www.w3.org/2002/07/owl#>
 CONSTRUCT {
-	?ontologyIri a owl:Ontology .
-  	?ontologyIri owl:versionIRI ?versionIri .
+	?ontologyIri a owl:Ontology ;
+        ?p ?o .
 }
 WHERE {
-  ?ontologyIri a owl:Ontology .
-
-  OPTIONAL {
-   ?ontologyIri owl:versionIRI ?versionIri .
-  }
+  ?ontologyIri a owl:Ontology ;
+      ?p ?o .
 }

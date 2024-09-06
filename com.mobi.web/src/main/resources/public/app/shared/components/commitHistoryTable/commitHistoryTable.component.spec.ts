@@ -110,7 +110,8 @@ describe('Commit History Table component', function() {
             dateObj: new Date(),
             message: 'message',
             base: 'baseHash',
-            auxiliary: 'auxiliaryHash'
+            auxiliary: 'auxiliaryHash',
+            branch: ''
         };
         const tag: JSONLDObject = {
             '@id': 'urn:tagId'
