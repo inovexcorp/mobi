@@ -2,40 +2,51 @@
   <https://mobi.com/commits#75ddf306a1d8f41576188a1299e6d4a8c3b285ee> a <http://www.w3.org/2002/07/owl#Thing>,
       <http://mobi.com/ontologies/catalog#Commit>, <http://www.w3.org/ns/prov#Activity>;
     <http://purl.org/dc/terms/title> "The initial commit.";
+    <http://www.w3.org/ns/prov#generated> <https://mobi.com/revisions#a3b915e3-238e-41b8-8660-981d28d37888>;
     <http://www.w3.org/ns/prov#atTime> "2021-05-27T13:12:28.859-04:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
-    <http://www.w3.org/ns/prov#generated> <https://mobi.com/revisions#e5ebf661-5774-4717-9470-0e38fc1e8feb>;
-    <http://www.w3.org/ns/prov#wasAssociatedWith> <http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997> .
+    <http://www.w3.org/ns/prov#wasAssociatedWith> <http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997>;
+    <http://mobi.com/ontologies/catalog#initialRevision> <https://mobi.com/revisions#9fe7cc59-ff3b-4d1b-9e3c-8d1230d50445> .
 
-  <https://mobi.com/revisions#e5ebf661-5774-4717-9470-0e38fc1e8feb> a <http://www.w3.org/2002/07/owl#Thing>,
+  <https://mobi.com/revisions#a3b915e3-238e-41b8-8660-981d28d37888> a <http://www.w3.org/2002/07/owl#Thing>,
       <http://mobi.com/ontologies/catalog#Revision>, <http://www.w3.org/ns/prov#Entity>;
-    <http://mobi.com/ontologies/catalog#additions> <https://mobi.com/additions#e5ebf661-5774-4717-9470-0e38fc1e8feb>;
-    <http://mobi.com/ontologies/catalog#deletions> <https://mobi.com/deletions#e5ebf661-5774-4717-9470-0e38fc1e8feb> .
+    <http://mobi.com/ontologies/catalog#additions> <https://mobi.com/deltas#a3b915e3-238e-41b8-8660-981d28d37888-A>;
+    <http://mobi.com/ontologies/catalog#deletions> <https://mobi.com/deltas#a3b915e3-238e-41b8-8660-981d28d37888-B> .
+
+  <https://mobi.com/revisions#9fe7cc59-ff3b-4d1b-9e3c-8d1230d50445> a <http://www.w3.org/2002/07/owl#Thing>,
+      <http://mobi.com/ontologies/catalog#Revision>, <http://www.w3.org/ns/prov#Entity>;
+    <http://mobi.com/ontologies/catalog#additions> <https://mobi.com/deltas#9fe7cc59-ff3b-4d1b-9e3c-8d1230d50445-A>;
+    <http://mobi.com/ontologies/catalog#deletions> <https://mobi.com/deltas#9fe7cc59-ff3b-4d1b-9e3c-8d1230d50445-B> .
 }
 
 <https://mobi.com/branches#4af41c5a-1013-4537-8e21-274206e13202> {
   <https://mobi.com/branches#4af41c5a-1013-4537-8e21-274206e13202> a <http://www.w3.org/2002/07/owl#Thing>,
-      <http://mobi.com/ontologies/catalog#Branch>;
+     <http://mobi.com/ontologies/catalog#Branch>, <http://mobi.com/ontologies/catalog#MasterBranch>;
     <http://purl.org/dc/terms/title> "MASTER";
     <http://purl.org/dc/terms/description> "The master branch.";
     <http://purl.org/dc/terms/issued> "2021-05-27T13:12:28.795-04:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
     <http://purl.org/dc/terms/modified> "2021-05-27T13:12:28.863-04:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
-    <http://mobi.com/ontologies/catalog#head> <https://mobi.com/commits#75ddf306a1d8f41576188a1299e6d4a8c3b285ee> .
+    <http://mobi.com/ontologies/catalog#head> <https://mobi.com/commits#75ddf306a1d8f41576188a1299e6d4a8c3b285ee>;
+    <http://mobi.com/ontologies/catalog#headGraph> <https://mobi.com/records#bab27341-bf30-4262-8d0b-42db709bcc3a/HEAD> .
 }
 
 <https://mobi.com/records#722eb4a7-dae3-40c8-8f6a-8b6083222b3f> {
   <https://mobi.com/records#722eb4a7-dae3-40c8-8f6a-8b6083222b3f> a <http://www.w3.org/2002/07/owl#Thing>,
-      <http://mobi.com/ontologies/catalog#Record>, <http://mobi.com/ontologies/catalog#VersionedRDFRecord>,
-      <http://mobi.com/ontologies/catalog#VersionedRecord>, <http://mobi.com/ontologies/ontology-editor#OntologyRecord>;
+      <http://mobi.com/ontologies/ontology-editor#OntologyRecord>, <http://mobi.com/ontologies/catalog#VersionedRecord>,
+      <http://mobi.com/ontologies/catalog#VersionedRDFRecord>, <http://mobi.com/ontologies/catalog#Record>;
     <http://purl.org/dc/terms/title> "z-catalog-ontology-9p.ttl";
     <http://purl.org/dc/terms/issued> "2021-05-27T13:12:28.793-04:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
     <http://purl.org/dc/terms/modified> "2021-05-27T13:12:28.862-04:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
-    <http://mobi.com/ontologies/catalog#branch> <https://mobi.com/branches#4af41c5a-1013-4537-8e21-274206e13202>;
     <http://mobi.com/ontologies/catalog#catalog> <http://mobi.com/catalog-local>;
+    <http://purl.org/dc/terms/publisher> <http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997>;
     <http://mobi.com/ontologies/catalog#masterBranch> <https://mobi.com/branches#4af41c5a-1013-4537-8e21-274206e13202>;
-    <http://mobi.com/ontologies/ontology-editor#ontologyIRI> <http://mobi.com/ontology/z-catalog-ontology-9p>;
-    <http://purl.org/dc/terms/publisher> <http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997> .
+    <http://mobi.com/ontologies/catalog#branch> <https://mobi.com/branches#4af41c5a-1013-4537-8e21-274206e13202>;
+    <http://mobi.com/ontologies/ontology-editor#ontologyIRI> <http://mobi.com/ontology/z-catalog-ontology-9p> .
 }
 
-<https://mobi.com/additions#e5ebf661-5774-4717-9470-0e38fc1e8feb> {
+<https://mobi.com/records#bab27341-bf30-4262-8d0b-42db709bcc3a/HEAD> {
+  <http://mobi.com/ontology/z-catalog-ontology-9p> a <http://www.w3.org/2002/07/owl#Ontology> .
+}
+
+<https://mobi.com/deltas#9fe7cc59-ff3b-4d1b-9e3c-8d1230d50445-A> {
   <http://mobi.com/ontology/z-catalog-ontology-9p> a <http://www.w3.org/2002/07/owl#Ontology> .
 }

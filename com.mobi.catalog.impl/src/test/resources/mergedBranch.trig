@@ -1,0 +1,304 @@
+@prefix mcat: <http://mobi.com/ontologies/catalog#> .
+@prefix muser: <http://mobi.com/ontologies/user/management#> .
+@prefix dc: <http://purl.org/dc/terms/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix catalogs: <http://mobi.com/test/catalogs#> .
+@prefix records: <http://mobi.com/test/records#> .
+@prefix distributions: <http://mobi.com/test/distributions#> .
+@prefix versions: <http://mobi.com/test/versions#> .
+@prefix branches: <http://mobi.com/test/branches#> .
+@prefix commits: <http://mobi.com/test/commits#> .
+@prefix revisions: <http://mobi.com/test/revisions#> .
+@prefix users: <http://mobi.com/test/users#> .
+@prefix deltas: <https://mobi.com/deltas#> .
+@prefix graphs: <http://mobi.com/test/graphs#> .
+@prefix mergereqs: <http://mobi.com/ontologies/merge-requests#> .
+@prefix ontedit: <http://mobi.com/ontologies/ontology-editor#> .
+
+GRAPH records:versioned-rdf-record-unmerged-master {
+    records:versioned-rdf-record-unmerged-master a mcat:VersionedRDFRecord, mcat:VersionedRecord, mcat:Record, ontedit:OntologyRecord;
+        mcat:catalog catalogs:catalog-local ;
+        dc:title "Versioned RDF Record" ;
+        dc:description "Description" ;
+        dc:issued "2023-01-01T00:00:00Z"^^xsd:dateTime ;
+        dc:modified "2023-05-01T00:00:00Z"^^xsd:dateTime ;
+        mcat:branch branches:branch ;
+        mcat:branch branches:master ;
+        mcat:masterBranch branches:master .
+}
+
+GRAPH branches:master {
+    branches:master a mcat:Branch, mcat:MasterBranch ;
+        dc:title "Master Branch" ;
+        dc:issued "2023-03-01T00:00:00Z"^^xsd:dateTime ;
+        dc:modified "2023-01-02T00:00:00Z"^^xsd:dateTime ;
+        mcat:head commits:commit4 ;
+        mcat:headGraph records:versioned-rdf-record-unmerged-master-HEAD
+}
+
+GRAPH records:versioned-rdf-record-unmerged-master-HEAD {
+     <https://mobi.com/ontologies/TestOntology> a <http://www.w3.org/2002/07/owl#Ontology>;
+            <http://purl.org/dc/terms/title> "New Title for TestOntology Again" ;
+            <http://purl.org/dc/terms/creator> "Clark Kent" .
+
+     <https://mobi.com/ontologies/TestOntology#TestClass2> a <http://www.w3.org/2002/07/owl#Class>;
+            <http://purl.org/dc/terms/title> "TestClass2" .
+
+     <https://mobi.com/ontologies/TestOntology#TestClass3> a <http://www.w3.org/2002/07/owl#Class>;
+            <http://purl.org/dc/terms/title> "TestClass3" .
+
+     <https://mobi.com/ontologies/TestOntology#TestClass4> a <http://www.w3.org/2002/07/owl#Class>;
+            <http://purl.org/dc/terms/title> "TestClass4" .
+}
+
+GRAPH branches:branch {
+    branches:branch a mcat:Branch ;
+        dc:modified "2023-05-01T00:00:00Z"^^xsd:dateTime ;
+        mcat:head commits:commit3 .
+}
+
+# Merged branch off MASTER
+#  Δ = Forward Delta
+# ~Δ = Reverse Delta
+#
+#   <MASTER HEAD>
+# (Commit 5 - Merge)______
+#       |                 \
+#       |                  \
+#       |-BaseCommit        \
+#       |                    \ -AuxCommit
+#       |                     \
+#       ▼                      \
+#   (Commit 4) ~Δ               \
+#       |                       ▼
+#       |                 <Branch HEAD>
+#       |-BaseCommit        (Commit 3) Δ
+#       |                       |
+#       |                       |
+#       ▼                       |
+#   (Commit 2) ~Δ               |-BaseCommit
+#       |                       |
+#       |                       ▼
+#       |-BaseCommit        (Commit 1) Δ
+#       |                       |
+#       |                      /
+#       ▼                     /-BaseCommit
+#   (Commit 0) ~Δ ◀-----------
+#     ^Initial
+
+# State at this commit
+#
+# <https://mobi.com/ontologies/TestOntology> a <http://www.w3.org/2002/07/owl#Ontology>;
+#        <http://purl.org/dc/terms/title> "New Title for TestOntology Again" ;
+#        <http://purl.org/dc/terms/creator> "Clark Kent" .
+#
+# <https://mobi.com/ontologies/TestOntology#TestClass2> a <http://www.w3.org/2002/07/owl#Class>;
+#        <http://purl.org/dc/terms/title> "TestClass2" .
+#
+# <https://mobi.com/ontologies/TestOntology#TestClass3> a <http://www.w3.org/2002/07/owl#Class>;
+#        <http://purl.org/dc/terms/title> "TestClass3" .
+#
+# <https://mobi.com/ontologies/TestOntology#TestClass4> a <http://www.w3.org/2002/07/owl#Class>;
+#        <http://purl.org/dc/terms/title> "TestClass4" .
+#
+# HEAD COMMIT - START OF MASTER CHAIN
+GRAPH commits:commit5 {
+    commits:commit5 a mcat:Commit ;
+        dc:title "Master Merge Commit" ;
+        prov:atTime "2023-01-06T00:00:00Z"^^xsd:dateTime ;
+        mcat:baseCommit commits:commit2 ;
+        mcat:auxCommit commits:commit3 ;
+        prov:generated revisions:initial .
+
+    # Reverse delta
+    revisions:initial a mcat:Revision ;
+        mcat:additions deltas:commit5-2 ;
+        mcat:deletions deltas:commit5-1 .
+}
+
+GRAPH deltas:commit5-1 {
+    # HEAD COMMIT ON MASTER IS EMPTY.
+    # STATE GRAPH CONTAINS THE HEAD STATE. APPLYING EMPTY DELTAS WILL KEEP STATE
+    # GETS POPULATED WHEN A NEW COMMIT IS MADE ON MASTER USING THE FLIPPED CHANGES OF THE INPROGRESSCOMMIT
+    # INPROGRESSCOMMIT IS STORED AS FORWARD DELTAS
+}
+
+GRAPH deltas:commit5-2 {
+    # HEAD COMMIT ON MASTER IS EMPTY.
+    # STATE GRAPH CONTAINS THE HEAD STATE. APPLYING EMPTY DELTAS WILL KEEP STATE
+    # GETS POPULATED WHEN A NEW COMMIT IS MADE ON MASTER USING THE FLIPPED CHANGES OF THE INPROGRESSCOMMIT
+    # INPROGRESSCOMMIT IS STORED AS FORWARD DELTAS
+}
+
+# State at this commit
+#
+# <https://mobi.com/ontologies/TestOntology> a <http://www.w3.org/2002/07/owl#Ontology>;
+#        <http://purl.org/dc/terms/title> "New Title for TestOntology" .
+#
+# <https://mobi.com/ontologies/TestOntology#TestClass2> a <http://www.w3.org/2002/07/owl#Class>;
+#        <http://purl.org/dc/terms/title> "TestClass2" .
+#
+# HEAD COMMIT - START OF MASTER CHAIN
+GRAPH commits:commit4 {
+    commits:commit4 a mcat:Commit ;
+        dc:title "Third Master Commit" ;
+        prov:atTime "2023-01-05T00:00:00Z"^^xsd:dateTime ;
+        mcat:baseCommit commits:commit2 ;
+        prov:generated revisions:initial .
+
+    # Reverse delta
+    revisions:initial a mcat:Revision ;
+        mcat:additions deltas:commit4-2 ;
+        mcat:deletions deltas:commit4-1 .
+}
+
+GRAPH deltas:commit4-1 {
+    # POPULATED WITH CHANGES FROM DIVERGENCE IN AUX COMMIT
+}
+
+GRAPH deltas:commit4-2 {
+    # POPULATED WITH CHANGES FROM DIVERGENCE IN AUX COMMIT
+}
+
+# State at this commit
+#
+# <https://mobi.com/ontologies/TestOntology> a <http://www.w3.org/2002/07/owl#Ontology>;
+#        <http://purl.org/dc/terms/title> "New Title for TestOntology" .
+#
+# <https://mobi.com/ontologies/TestOntology#TestClass> a <http://www.w3.org/2002/07/owl#Class>;
+#         <http://purl.org/dc/terms/title> "TestClass" .
+#
+GRAPH commits:commit2 {
+    commits:commit2 a mcat:Commit ;
+        dc:title "Second Master Commit" ;
+        prov:atTime "2023-01-03T00:00:00Z"^^xsd:dateTime ;
+        mcat:baseCommit commits:commit0 ;
+        prov:generated revisions:initial .
+
+    # Reverse delta
+    revisions:initial a mcat:Revision ;
+        mcat:additions deltas:commit2-2 ;
+        mcat:deletions deltas:commit2-1 .
+}
+
+GRAPH deltas:commit2-1 {
+    <https://mobi.com/ontologies/TestOntology#TestClass2> a <http://www.w3.org/2002/07/owl#Class>;
+        <http://purl.org/dc/terms/title> "TestClass2" .
+}
+
+GRAPH deltas:commit2-2 {
+    <https://mobi.com/ontologies/TestOntology#TestClass> a <http://www.w3.org/2002/07/owl#Class>;
+        <http://purl.org/dc/terms/title> "TestClass" .
+}
+
+
+# State at this commit
+#
+# <https://mobi.com/ontologies/TestOntology> a <http://www.w3.org/2002/07/owl#Ontology>;
+#        <http://purl.org/dc/terms/title> "TestOntology" .
+#
+GRAPH commits:commit0 {
+    commits:commit0 a mcat:Commit ;
+        dc:title "Initial Master Commit" ;
+        prov:atTime "2023-01-01T00:00:00Z"^^xsd:dateTime ;
+        prov:generated revisions:initial .
+
+    # Reverse delta
+    revisions:initial a mcat:Revision ;
+        mcat:additions deltas:commit0-2 ;
+        mcat:deletions deltas:commit0-1 .
+}
+
+# Is a "Deletion" to get back to original state
+GRAPH deltas:commit0-1 {
+    <https://mobi.com/ontologies/TestOntology> <http://purl.org/dc/terms/title> "New Title for TestOntology" .
+    <https://mobi.com/ontologies/TestOntology#TestClass> a <http://www.w3.org/2002/07/owl#Class>;
+        <http://purl.org/dc/terms/title> "TestClass" .
+}
+
+GRAPH deltas:commit0-2 {
+    <https://mobi.com/ontologies/TestOntology> <http://purl.org/dc/terms/title> "TestOntology" .
+}
+
+# HEAD of UNMERGED BRANCH
+# State at this commit
+#
+# <https://mobi.com/ontologies/TestOntology> a <http://www.w3.org/2002/07/owl#Ontology>;
+#        <http://purl.org/dc/terms/title> "New Title for TestOntology Again" ;
+#        <http://purl.org/dc/terms/creator> "Clark Kent" .
+#
+# <https://mobi.com/ontologies/TestOntology#TestClass> a <http://www.w3.org/2002/07/owl#Class>;
+#        <http://purl.org/dc/terms/title> "TestClass" .
+#
+# <https://mobi.com/ontologies/TestOntology#TestClass3> a <http://www.w3.org/2002/07/owl#Class>;
+#        <http://purl.org/dc/terms/title> "TestClass3" .
+#
+# <https://mobi.com/ontologies/TestOntology#TestClass4> a <http://www.w3.org/2002/07/owl#Class>;
+#        <http://purl.org/dc/terms/title> "TestClass4" .
+#
+GRAPH commits:commit3 {
+    commits:commit3 a mcat:Commit ;
+        dc:title "Second Branch Commit" ;
+        prov:atTime "2023-01-04T00:00:00Z"^^xsd:dateTime ;
+        mcat:baseCommit commits:commit1 ;
+        prov:generated revisions:initial .
+
+    # Forward delta
+    revisions:initial a mcat:Revision ;
+        mcat:additions deltas:commit3-1 ;
+        mcat:deletions deltas:commit3-2 .
+}
+
+# Is a forward addition delta that will be flipped when merged into master
+GRAPH deltas:commit3-1 {
+    <https://mobi.com/ontologies/TestOntology> <http://purl.org/dc/terms/creator> "Clark Kent" .
+
+    <https://mobi.com/ontologies/TestOntology#TestClass4> a <http://www.w3.org/2002/07/owl#Class>;
+        <http://purl.org/dc/terms/title> "TestClass4" .
+}
+
+# Is a forward deletion delta that will be flipped when merged into master
+GRAPH deltas:commit3-2 {
+    <https://mobi.com/ontologies/TestOntology> <http://purl.org/dc/terms/creator> "Bruce Wayne" .
+}
+
+# State at this commit
+#
+# <https://mobi.com/ontologies/TestOntology> a <http://www.w3.org/2002/07/owl#Ontology>;
+#        <http://purl.org/dc/terms/title> "New Title for TestOntology Again" ;
+#        <http://purl.org/dc/terms/creator> "Bruce Wayne" .
+#
+# <https://mobi.com/ontologies/TestOntology#TestClass> a <http://www.w3.org/2002/07/owl#Class>;
+#        <http://purl.org/dc/terms/title> "TestClass" .
+#
+# <https://mobi.com/ontologies/TestOntology#TestClass3> a <http://www.w3.org/2002/07/owl#Class>;
+#        <http://purl.org/dc/terms/title> "TestClass3" .
+#
+GRAPH commits:commit1 {
+    commits:commit1 a mcat:Commit ;
+        dc:title "First Branch Commit" ;
+        prov:atTime "2023-01-02T00:00:00Z"^^xsd:dateTime ;
+        mcat:baseCommit commits:commit0 ;
+        prov:generated revisions:initial .
+
+    # Forward delta
+    revisions:initial a mcat:Revision ;
+        mcat:additions deltas:commit1-1 ;
+        mcat:deletions deltas:commit1-2 .
+}
+
+# Is a forward addition delta that will be flipped when merged into master
+GRAPH deltas:commit1-1 {
+    <https://mobi.com/ontologies/TestOntology> <http://purl.org/dc/terms/title> "New Title for TestOntology Again" ;
+        <http://purl.org/dc/terms/creator> "Bruce Wayne" .
+
+    <https://mobi.com/ontologies/TestOntology#TestClass3> a <http://www.w3.org/2002/07/owl#Class>;
+        <http://purl.org/dc/terms/title> "TestClass3" .
+}
+
+# Is a forward deletion delta that will be flipped when merged into master
+GRAPH deltas:commit1-2 {
+    <https://mobi.com/ontologies/TestOntology> <http://purl.org/dc/terms/title> "New Title for TestOntology" .
+}

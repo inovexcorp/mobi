@@ -1,5 +1,3 @@
-PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
-PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX mcat: <http://mobi.com/ontologies/catalog#>
 PREFIX prov: <http://www.w3.org/ns/prov#>
 
@@ -20,7 +18,7 @@ SELECT DISTINCT ?graph WHERE {
     ?recordId mcat:branch ?branch .
     ?branch mcat:head ?headCommit .
     ?headCommit a mcat:Commit ;
-            (mcat:baseCommit | mcat:auxiliaryCommit)+ ?graph .
+        (mcat:baseCommit | mcat:branchCommit | mcat:auxiliaryCommit)+ ?graph .
     ?graph a mcat:Commit .
   }
   UNION
@@ -28,39 +26,24 @@ SELECT DISTINCT ?graph WHERE {
     ?recordId mcat:branch ?branch .
     ?branch mcat:head ?headCommit .
     ?headCommit a mcat:Commit ;
-            prov:generated ?revision .
+        (prov:generated | prov:influenced | prov:hadPrimarySource | prov:wasDerivedFrom | mcat:mergeDisplayRevision | mcat:forwardMergeBaseRevision | mcat:forwardMergeAuxRevision | mcat:initialRevision | mcat:masterMergeIntoBranchRevision) ?revision .
     ?revision a mcat:Revision ;
-            mcat:additions ?graph .
+        (mcat:additions | mcat:deletions) ?graph .
   }
   UNION
   {
     ?recordId mcat:branch ?branch .
     ?branch mcat:head ?headCommit .
     ?headCommit a mcat:Commit ;
-            prov:generated ?revision .
-    ?revision a mcat:Revision ;
-            mcat:deletions ?graph .
-  }
-  UNION
-  {
-    ?recordId mcat:branch ?branch .
-    ?branch mcat:head ?headCommit .
-    ?headCommit a mcat:Commit ;
-            (mcat:baseCommit | mcat:auxiliaryCommit)+ ?commit .
+        (mcat:baseCommit | mcat:branchCommit | mcat:auxiliaryCommit)+ ?commit .
     ?commit a mcat:Commit ;
-             prov:generated ?revision .
+        (prov:generated | prov:influenced | prov:hadPrimarySource | prov:wasDerivedFrom | mcat:mergeDisplayRevision | mcat:forwardMergeBaseRevision | mcat:forwardMergeAuxRevision | mcat:initialRevision | mcat:masterMergeIntoBranchRevision) ?revision .
     ?revision a mcat:Revision ;
-            mcat:additions ?graph .
+      (mcat:additions | mcat:deletions) ?graph .
   }
-  UNION
-  {
-    ?recordId mcat:branch ?branch .
-    ?branch mcat:head ?headCommit .
-    ?headCommit a mcat:Commit ;
-            (mcat:baseCommit | mcat:auxiliaryCommit)+ ?commit .
-    ?commit a mcat:Commit ;
-             prov:generated ?revision .
-    ?revision a mcat:Revision ;
-            mcat:deletions ?graph .
+  UNION {
+    ?recordId mcat:masterBranch ?branch .
+    ?branch a mcat:MasterBranch;
+        mcat:headGraph ?graph .
   }
 }

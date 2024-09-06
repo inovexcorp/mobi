@@ -27,6 +27,7 @@ import com.mobi.catalog.api.CommitManager
 import com.mobi.catalog.api.DifferenceManager
 import com.mobi.catalog.api.builder.Difference
 import com.mobi.catalog.api.ontologies.mcat.Branch
+import com.mobi.catalog.api.ontologies.mcat.MasterBranch
 import com.mobi.catalog.api.versioning.VersioningManager
 import com.mobi.catalog.config.CatalogConfigProvider
 import com.mobi.jaas.api.ontologies.usermanagement.User
@@ -56,7 +57,7 @@ class OntologyImportServiceImplSpec extends Specification {
     def repositoryMock = Mock(OsgiRepository)
 
     def ontologyIRI = Mock(IRI)
-    def branch = Mock(Branch)
+    def branch = Mock(MasterBranch)
     def branchIRI = Mock(IRI)
     def user = Mock(User)
 

@@ -25,6 +25,7 @@ package com.mobi.utils.cli;
 
 import com.mobi.security.policy.api.xacml.XACMLPolicy;
 import com.mobi.security.policy.api.xacml.XACMLPolicyManager;
+import com.mobi.utils.cli.utils.RestoreUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.karaf.shell.api.action.Action;
@@ -50,7 +51,6 @@ import java.nio.file.Paths;
 @Command(scope = "mobi", name = "reload-system-policy", description = "Reloads a system policy in Mobi")
 @Service
 public class ReloadSystemPolicy implements Action {
-
     private static final Logger LOGGER = LoggerFactory.getLogger(ReloadSystemPolicy.class);
 
     ValueFactory vf = new ValidatingValueFactory();
@@ -66,7 +66,7 @@ public class ReloadSystemPolicy implements Action {
     @Override
     public Object execute() throws Exception {
         if (StringUtils.isEmpty(filePath)) {
-            System.out.println("A valid file must be provided.");
+            RestoreUtils.error("A valid file must be provided.", LOGGER);
             throw new IllegalArgumentException("A valid file must be provided.");
         }
         Path file = Paths.get(filePath);
@@ -84,14 +84,14 @@ public class ReloadSystemPolicy implements Action {
             try (InputStream data = Files.newInputStream(file)) {
                 String policyContents = new String(data.readAllBytes(), StandardCharsets.UTF_8);
                 policyManager.loadSystemPolicyIfAbsent(policyContents);
-                System.out.println("Policy " + policyId.stringValue() + " successfully updated.");
+                RestoreUtils.out("Policy " + policyId.stringValue() + " successfully updated.", LOGGER);
             } catch (Exception e) {
                 LOGGER.error("Could not load updated policy", e);
-                System.out.println("Could not load updated policy. See logs for details.");
+                RestoreUtils.out("Could not load updated policy. See logs for details.", LOGGER);
                 policyManager.addSystemPolicy(oldPolicy);
             }
         } else {
-            System.out.println("Policy " + policyId.stringValue() + " is not a registered system policy.");
+            RestoreUtils.out("Policy " + policyId.stringValue() + " is not a registered system policy.", LOGGER);
         }
 
         return null;

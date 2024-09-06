@@ -1,0 +1,38 @@
+PREFIX mcat: <http://mobi.com/ontologies/catalog#>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+
+CONSTRUCT {
+  ?s ?p ?o
+} WHERE {
+    VALUES ?commit { %COMMITLIST% }
+    {
+        GRAPH ?commit {
+            ?commit prov:generated ?revision ;
+                mcat:branchCommit ?someCommit .
+
+            ?revision mcat:deletions ?deletionsGraph .
+        }
+        GRAPH ?deletionsGraph {
+            ?s ?p ?o .
+            %SUBJECTLIST%
+        }
+    }
+    UNION
+    {
+        GRAPH ?commit {
+            ?commit prov:generated ?revRevision ;
+                mcat:baseCommit ?someCommit .
+
+            ?revRevision prov:hadPrimarySource ?revision .
+        }
+
+        GRAPH ?someCommit {
+            ?revision mcat:additions ?deletionsGraph .
+        }
+
+        GRAPH ?deletionsGraph {
+            ?s ?p ?o .
+            %SUBJECTLIST%
+        }
+    }
+}

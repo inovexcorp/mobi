@@ -1,0 +1,1510 @@
+@prefix apps: <http://mobi.com/applications#> .
+@prefix branches: <https://mobi.com/branches#> .
+@prefix commits: <https://mobi.com/commits#> .
+@prefix config: <http://mobi.com/ontologies/platform/config#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix deltas: <https://mobi.com/deltas#> .
+@prefix documents: <http://mobi.com/ontologies/documents#> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix geo1: <http://www.w3.org/2003/01/geo/wgs84_pos#> .
+@prefix mcat: <http://mobi.com/ontologies/catalog#> .
+@prefix mobiSpace: <http://mobi.com/> .
+@prefix namespaces: <http://mobi.com/ontologies/namespace#> .
+@prefix ontologies: <https://mobi.com/ontologies/> .
+@prefix ontologyEditor: <http://mobi.com/ontologies/ontology-editor#> .
+@prefix ontologystate: <http://mobi.com/ontologies/state#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix policies: <http://mobi.com/policies/> .
+@prefix policy: <http://mobi.com/ontologies/policy#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix recordPolicy: <http://mobi.com/policies/record/> .
+@prefix records: <https://mobi.com/records#> .
+@prefix revisions: <https://mobi.com/revisions#> .
+@prefix roles: <http://mobi.com/roles/> .
+@prefix setting: <http://mobi.com/ontologies/setting#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix shaclForm: <https://mobi.solutions/ontologies/form#> .
+@prefix user: <http://mobi.com/ontologies/user/management#> .
+@prefix users: <http://mobi.com/users/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+policies:dataset-creation {
+    policies:dataset-creation a documents:BinaryFile,
+            policy:Policy,
+            policy:PolicyFile,
+            owl:Thing ;
+        documents:checksum "\\^�tu����f�&	�Ls�vJy.p��0a揋" ;
+        documents:fileName "file:///Users/mannyrivera/git-old/mobi/mobi-distribution-2.6.0-SNAPSHOT/data/virtualFiles/policies/9c/68/dc7e20a2da2b.xml" ;
+        documents:retrievalURL <file:///Users/mannyrivera/git-old/mobi/mobi-distribution-2.6.0-SNAPSHOT/data/virtualFiles/policies/9c/68/dc7e20a2da2b> ;
+        documents:size 4.077e+03 ;
+        policy:relatedAction policy:Create ;
+        policy:relatedResource mobiSpace:catalog-local .
+}
+
+deltas:b8046c2d-780f-46b4-bbd6-39a6530d4b3a-A {
+    <https://mobi.com/ontologies/Simple#SimpleClass02> a owl:Class ;
+        dcterms:description "SimpleClass02 Description" ;
+        dcterms:title "SimpleClass02" ;
+        rdfs:subClassOf <https://mobi.com/ontologies/Simple#SimpleClass01> .
+
+    <https://mobi.com/ontologies/Simple#SimpleClass01> a owl:Class ;
+        dcterms:description "Description SimpleClass01" ;
+        dcterms:title "SimpleClass01" .
+}
+
+commits:5c1b960f-e88f-4ec3-a826-92e072c35025 {
+    commits:5c1b960f-e88f-4ec3-a826-92e072c35025 a mcat:Commit,
+            owl:Thing,
+            prov:Activity ;
+        mcat:baseCommit commits:2e5d1127-1e03-4e69-85a2-ffbffea44510 ;
+        dcterms:title "class003 blanknode subclass" ;
+        prov:atTime "2024-05-24T12:59:55.373810-04:00"^^xsd:dateTime ;
+        prov:generated revisions:df44840c-35a4-4738-b2f2-4a7a5ae70156 ;
+        prov:wasAssociatedWith users:d033e22ae348aeb5660fc2140aec35850c4da997 .
+
+    revisions:df44840c-35a4-4738-b2f2-4a7a5ae70156 a mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:c78f2419-50da-4f4d-a63a-0150b7436276-B ;
+        mcat:deletions deltas:c78f2419-50da-4f4d-a63a-0150b7436276-A ;
+        prov:hadPrimarySource revisions:05222b48-6b1d-491e-b8be-b7b2e3b6aaf2 .
+}
+
+deltas:709a0f7a-afd8-4806-b1ee-554306962900-B {
+    <https://mobi.com/ontologies/EntityChange1-1#Class10> a owl:Class ;
+        dcterms:title "Class10-1" .
+}
+
+policies:system-repo-access {
+    policies:system-repo-access a documents:BinaryFile,
+            policy:Policy,
+            policy:PolicyFile,
+            owl:Thing ;
+        documents:checksum "���k�\\ڔ�}f��{��IZ�p轐�" ;
+        documents:fileName "file:///Users/mannyrivera/git-old/mobi/mobi-distribution-2.6.0-SNAPSHOT/data/virtualFiles/policies/50/a4/b6f525c9c03b.xml" ;
+        documents:retrievalURL <file:///Users/mannyrivera/git-old/mobi/mobi-distribution-2.6.0-SNAPSHOT/data/virtualFiles/policies/50/a4/b6f525c9c03b> ;
+        documents:size 4.589e+03 ;
+        policy:relatedAction policy:Create,
+            policy:Read ;
+        policy:relatedResource mobiSpace:system-repo .
+}
+
+records:7aac337d-20d5-42ad-9c83-a4ad9267f11c {
+    records:7aac337d-20d5-42ad-9c83-a4ad9267f11c a mcat:Record,
+            mcat:VersionedRDFRecord,
+            mcat:VersionedRecord,
+            ontologyEditor:OntologyRecord,
+            owl:Thing ;
+        mcat:branch branches:5658c039-053e-4987-9ebb-29a7fcd9e46b ;
+        mcat:catalog mobiSpace:catalog-local ;
+        mcat:keyword "1",
+            "10",
+            "2",
+            "3",
+            "4",
+            "5",
+            "6",
+            "7",
+            "8",
+            "9" ;
+        mcat:masterBranch branches:5658c039-053e-4987-9ebb-29a7fcd9e46b ;
+        ontologyEditor:ontologyIRI ontologies:SimpleD ;
+        dcterms:description "Description" ;
+        dcterms:issued "2024-05-22T11:56:18.924073-04:00"^^xsd:dateTime ;
+        dcterms:modified "2024-05-23T15:46:01.642100-04:00"^^xsd:dateTime ;
+        dcterms:publisher users:d033e22ae348aeb5660fc2140aec35850c4da997 ;
+        dcterms:title "Simple" .
+}
+
+commits:3b4f2bf0-4523-482c-a8b3-43623db57333 {
+    commits:3b4f2bf0-4523-482c-a8b3-43623db57333 a mcat:Commit,
+            owl:Thing,
+            prov:Activity ;
+        mcat:baseCommit commits:2cf9b3e3-ddbb-41bb-b9cd-c8401cf2aaa1 ;
+        dcterms:title """entityChange
+""" ;
+        prov:atTime "2024-05-23T15:46:01.640382-04:00"^^xsd:dateTime ;
+        prov:generated revisions:86845d43-dbbc-4dee-92d8-49bd26be6e51 ;
+        prov:wasAssociatedWith users:d033e22ae348aeb5660fc2140aec35850c4da997 .
+
+    revisions:86845d43-dbbc-4dee-92d8-49bd26be6e51 a mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:0d14cc13-412e-4546-aa84-af7d0c6735f6-A ;
+        mcat:deletions deltas:0d14cc13-412e-4546-aa84-af7d0c6735f6-B ;
+        prov:hadPrimarySource revisions:b8046c2d-780f-46b4-bbd6-39a6530d4b3a .
+}
+
+deltas:d16ca4c5-ff9a-44b9-ad0b-d2da38f7f6c4-A {
+    <https://mobi.com/ontologies/EntityChange1#Class01-1> a owl:Class ;
+        dcterms:title "Class01-1" .
+
+    <https://mobi.com/ontologies/EntityChange1-1#Class10-1> a owl:Class ;
+        dcterms:title "Class10-1" .
+}
+
+deltas:d0377518-dbbb-454f-95b7-d93a5f632705-B {
+    <https://mobi.com/ontologies/EntityChange1#Class012> a owl:Class ;
+        dcterms:title "Class012" .
+}
+
+branches:98b6416f-cb75-40cb-b624-6e5e397c7080 {
+    branches:98b6416f-cb75-40cb-b624-6e5e397c7080 a mcat:Branch,
+            mcat:MasterBranch,
+            owl:Thing ;
+        mcat:head commits:52ac25f2-f8a8-477a-8ecc-94c31736976b ;
+        mcat:headGraph <https://mobi.com/records#3cc2a18f-23b8-4f2c-a5b1-3b4c6aeea63d/HEAD> ;
+        dcterms:description "The master branch." ;
+        dcterms:issued "2024-05-22T11:57:33.936661-04:00"^^xsd:dateTime ;
+        dcterms:modified "2024-05-24T13:00:18.463245-04:00"^^xsd:dateTime ;
+        dcterms:publisher users:d033e22ae348aeb5660fc2140aec35850c4da997 ;
+        dcterms:title "MASTER" .
+}
+
+commits:ontology-simple-id-002-commit-004 {
+    commits:ontology-simple-id-002-commit-004 a mcat:Commit,
+            owl:Thing,
+            prov:Activity ;
+        mcat:auxiliaryCommit commits:bf3979fd-00ee-4378-98e9-ce4b0fa018f7 ;
+        mcat:baseCommit commits:e1a96215-0b90-4d29-8547-5fc4eca6c58b ;
+        dcterms:title "Merge of Branch01 into MASTER" ;
+        prov:atTime "2024-05-22T11:59:25.391597-04:00"^^xsd:dateTime ;
+        prov:generated revisions:bc7b3a3a-d39d-4a10-b3f6-0d9a22867ea7 ;
+        prov:wasAssociatedWith users:d033e22ae348aeb5660fc2140aec35850c4da997 .
+
+    revisions:bc7b3a3a-d39d-4a10-b3f6-0d9a22867ea7 a mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:4f6ea77a-54a4-4d7e-96e3-fa14f1fd511f-B ;
+        mcat:deletions deltas:4f6ea77a-54a4-4d7e-96e3-fa14f1fd511f-A ;
+        prov:hadPrimarySource revisions:c638d2fa-bbee-4090-8e73-ce18f63b174d ;
+        prov:wasDerivedFrom revisions:e23dfd4f-bf85-4b02-a119-59cad40ce2ef .
+}
+
+records:3cc2a18f-23b8-4f2c-a5b1-3b4c6aeea63d {
+    records:3cc2a18f-23b8-4f2c-a5b1-3b4c6aeea63d a mcat:Record,
+            mcat:VersionedRDFRecord,
+            mcat:VersionedRecord,
+            ontologyEditor:OntologyRecord,
+            owl:Thing ;
+        mcat:branch branches:34366a44-20f5-4281-9b54-6447fd92a007,
+            branches:98b6416f-cb75-40cb-b624-6e5e397c7080 ;
+        mcat:catalog mobiSpace:catalog-local ;
+        mcat:masterBranch branches:98b6416f-cb75-40cb-b624-6e5e397c7080 ;
+        ontologyEditor:ontologyIRI ontologies:SimpleMergeExample ;
+        dcterms:issued "2024-05-22T11:57:33.936415-04:00"^^xsd:dateTime ;
+        dcterms:modified "2024-05-24T13:00:18.496225-04:00"^^xsd:dateTime ;
+        dcterms:publisher users:d033e22ae348aeb5660fc2140aec35850c4da997 ;
+        dcterms:title "SimpleMergeExample" .
+}
+
+policies:shapes-graph-record-creation {
+    policies:shapes-graph-record-creation a documents:BinaryFile,
+            policy:Policy,
+            policy:PolicyFile,
+            owl:Thing ;
+        documents:checksum "�w/O��s*�Ӿ���55V����%�fBN׭�" ;
+        documents:fileName "file:///Users/mannyrivera/git-old/mobi/mobi-distribution-2.6.0-SNAPSHOT/data/virtualFiles/policies/21/86/ec57b975c7e5.xml" ;
+        documents:retrievalURL <file:///Users/mannyrivera/git-old/mobi/mobi-distribution-2.6.0-SNAPSHOT/data/virtualFiles/policies/21/86/ec57b975c7e5> ;
+        documents:size 4.118e+03 ;
+        policy:relatedAction policy:Create ;
+        policy:relatedResource mobiSpace:catalog-local .
+}
+
+commits:c96c28b4-eda4-473b-b5bb-04f005441eec {
+    commits:c96c28b4-eda4-473b-b5bb-04f005441eec a mcat:Commit,
+            owl:Thing,
+            prov:Activity ;
+        mcat:initialRevision revisions:b024972d-9fbf-45ef-986b-c308c029796c ;
+        dcterms:title "The initial commit." ;
+        prov:atTime "2024-05-24T12:45:52.710703-04:00"^^xsd:dateTime ;
+        prov:generated revisions:2173b12a-4792-4a81-b787-f05f93a3d924 ;
+        prov:wasAssociatedWith users:d033e22ae348aeb5660fc2140aec35850c4da997 .
+
+    revisions:2173b12a-4792-4a81-b787-f05f93a3d924 a mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:2173b12a-4792-4a81-b787-f05f93a3d924-A ;
+        mcat:deletions deltas:2173b12a-4792-4a81-b787-f05f93a3d924-B .
+
+    revisions:b024972d-9fbf-45ef-986b-c308c029796c a mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:b024972d-9fbf-45ef-986b-c308c029796c-A ;
+        mcat:deletions deltas:b024972d-9fbf-45ef-986b-c308c029796c-B .
+}
+
+branches:34366a44-20f5-4281-9b54-6447fd92a007 {
+    branches:34366a44-20f5-4281-9b54-6447fd92a007 a mcat:Branch,
+            owl:Thing ;
+        mcat:head commits:bf3979fd-00ee-4378-98e9-ce4b0fa018f7 ;
+        dcterms:description "" ;
+        dcterms:issued "2024-05-22T11:58:09.131475-04:00"^^xsd:dateTime ;
+        dcterms:modified "2024-05-22T11:58:24.827671-04:00"^^xsd:dateTime ;
+        dcterms:publisher users:d033e22ae348aeb5660fc2140aec35850c4da997 ;
+        dcterms:title "Branch01" .
+}
+
+commits:df690842-19a2-463d-810e-8eed8df78b60 {
+    commits:df690842-19a2-463d-810e-8eed8df78b60 a mcat:Commit,
+            owl:Thing,
+            prov:Activity ;
+        mcat:initialRevision revisions:8fde5b93-7613-4bc4-b6b3-3d7bfcfaa5cb ;
+        dcterms:title "The initial commit." ;
+        prov:atTime "2024-05-22T11:57:33.950424-04:00"^^xsd:dateTime ;
+        prov:generated revisions:84afbcd6-56d2-4291-a895-357707b165ee ;
+        prov:influenced revisions:2b0acbda-0c02-4997-be85-de4cb557d4f3 ;
+        prov:wasAssociatedWith users:d033e22ae348aeb5660fc2140aec35850c4da997 .
+
+    revisions:2b0acbda-0c02-4997-be85-de4cb557d4f3 a mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:e23dfd4f-bf85-4b02-a119-59cad40ce2ef-B ;
+        mcat:deletions deltas:e23dfd4f-bf85-4b02-a119-59cad40ce2ef-A .
+
+    revisions:84afbcd6-56d2-4291-a895-357707b165ee a mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:c638d2fa-bbee-4090-8e73-ce18f63b174d-B ;
+        mcat:deletions deltas:c638d2fa-bbee-4090-8e73-ce18f63b174d-A .
+
+    revisions:8fde5b93-7613-4bc4-b6b3-3d7bfcfaa5cb a mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:8fde5b93-7613-4bc4-b6b3-3d7bfcfaa5cb-A ;
+        mcat:deletions deltas:8fde5b93-7613-4bc4-b6b3-3d7bfcfaa5cb-B .
+}
+
+deltas:02b0ae5b-400b-406e-81ea-6de23533073f-B {
+    <https://mobi.com/ontologies/EntityChange1#Class01> a owl:Class ;
+        dcterms:title "Class01" .
+}
+
+commits:ef808973-b377-4a10-80f6-dcb3bf0e9b3c {
+    commits:ef808973-b377-4a10-80f6-dcb3bf0e9b3c a mcat:Commit,
+            owl:Thing,
+            prov:Activity ;
+        mcat:baseCommit commits:ontology-simple-id-002-commit-005 ;
+        dcterms:title "EntityChange" ;
+        prov:atTime "2024-05-24T12:37:04.966693-04:00"^^xsd:dateTime ;
+        prov:generated revisions:04b8b095-7d0b-461c-bc03-79f4223278d0 ;
+        prov:wasAssociatedWith users:d033e22ae348aeb5660fc2140aec35850c4da997 .
+
+    revisions:04b8b095-7d0b-461c-bc03-79f4223278d0 a mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:d990e036-78a5-4330-a8c6-0280a052ef32-B ;
+        mcat:deletions deltas:d990e036-78a5-4330-a8c6-0280a052ef32-A ;
+        prov:hadPrimarySource revisions:4f6ea77a-54a4-4d7e-96e3-fa14f1fd511f .
+}
+
+recordPolicy:https%3A%2F%2Fmobi.com%2Frecords%233cc2a18f-23b8-4f2c-a5b1-3b4c6aeea63d {
+    recordPolicy:https%3A%2F%2Fmobi.com%2Frecords%233cc2a18f-23b8-4f2c-a5b1-3b4c6aeea63d a documents:BinaryFile,
+            policy:Policy,
+            policy:PolicyFile,
+            owl:Thing ;
+        documents:checksum """
+�TRB!N����:�5���X�:E� 	3ϚD""" ;
+        documents:fileName "file:///Users/mannyrivera/git-old/mobi/mobi-distribution-2.6.0-SNAPSHOT/data/virtualFiles/policies/bf/b7/4dab6b059f12.xml" ;
+        documents:retrievalURL <file:///Users/mannyrivera/git-old/mobi/mobi-distribution-2.6.0-SNAPSHOT/data/virtualFiles/policies/bf/b7/4dab6b059f12> ;
+        documents:size 9.585e+03 ;
+        policy:relatedResource records:3cc2a18f-23b8-4f2c-a5b1-3b4c6aeea63d .
+}
+
+commits:0509298a-cf40-4855-990e-240054915ab1 {
+    commits:0509298a-cf40-4855-990e-240054915ab1 a mcat:Commit,
+            owl:Thing,
+            prov:Activity ;
+        mcat:baseCommit commits:699bc667-87b2-4086-8a4b-c6be535fac43 ;
+        dcterms:title "Entity change + adding class" ;
+        prov:atTime "2024-05-24T12:07:02.517155-04:00"^^xsd:dateTime ;
+        prov:generated revisions:2cb648b9-c9d3-4965-b2c5-3accad8b563d ;
+        prov:wasAssociatedWith users:d033e22ae348aeb5660fc2140aec35850c4da997 .
+
+    revisions:2cb648b9-c9d3-4965-b2c5-3accad8b563d a mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:02b0ae5b-400b-406e-81ea-6de23533073f-B ;
+        mcat:deletions deltas:02b0ae5b-400b-406e-81ea-6de23533073f-A ;
+        prov:hadPrimarySource revisions:975eeed6-ff8f-4c01-b71d-f8e5d31b35f6 .
+}
+
+deltas:731e6e04-b118-4836-afd3-bb4448f73335-A {
+    ontologies:Simple a owl:Ontology ;
+        dcterms:description "Description"@en ;
+        dcterms:title "Simple"@en .
+}
+
+deltas:d0377518-dbbb-454f-95b7-d93a5f632705-A {
+    <https://mobi.com/ontologies/EntityChange1#Class10> a owl:Class ;
+        dcterms:title "Class10" .
+
+    <https://mobi.com/ontologies/EntityChange1#Class01> a owl:Class ;
+        dcterms:title "Class01" .
+}
+
+deltas:2cb648b9-c9d3-4965-b2c5-3accad8b563d-B {
+    ontologies:EntityChange a owl:Ontology ;
+        dcterms:title "EntityChange" .
+}
+
+deltas:a51c55f5-5889-4675-b289-495e8c76c3bd-A {
+    ontologies:EntityChange a owl:Ontology ;
+        dcterms:title "EntityChange" .
+}
+
+mobiSpace:catalog-distributed {
+    mobiSpace:catalog-distributed a mcat:Catalog,
+            owl:Thing ;
+        dcterms:description "The Mobi Catalog records datasets, ontologies, data mappings, and other resources." ;
+        dcterms:issued "2024-05-22T11:54:54.503963-04:00"^^xsd:dateTime ;
+        dcterms:modified "2024-05-22T11:54:54.503963-04:00"^^xsd:dateTime ;
+        dcterms:title "Mobi Catalog (Distributed)" .
+}
+
+policies:workflow-record-creation {
+    policies:workflow-record-creation a documents:BinaryFile,
+            policy:Policy,
+            policy:PolicyFile,
+            owl:Thing ;
+        documents:checksum "���)9�l��j��/\"�j�0l��\"{;�w�B" ;
+        documents:fileName "file:///Users/mannyrivera/git-old/mobi/mobi-distribution-2.6.0-SNAPSHOT/data/virtualFiles/policies/18/5d/9c4f72b32e20.xml" ;
+        documents:retrievalURL <file:///Users/mannyrivera/git-old/mobi/mobi-distribution-2.6.0-SNAPSHOT/data/virtualFiles/policies/18/5d/9c4f72b32e20> ;
+        documents:size 4.097e+03 ;
+        policy:relatedAction policy:Create ;
+        policy:relatedResource mobiSpace:catalog-local .
+}
+
+commits:43251e65-c4d9-4d06-b5a6-287ba686dfce {
+    commits:43251e65-c4d9-4d06-b5a6-287ba686dfce a mcat:Commit,
+            owl:Thing,
+            prov:Activity ;
+        mcat:baseCommit commits:e28b3343-c431-44a3-ba73-e19d2a2bdf0d ;
+        dcterms:title "Change IRI" ;
+        prov:atTime "2024-05-24T12:12:08.736338-04:00"^^xsd:dateTime ;
+        prov:generated revisions:709a0f7a-afd8-4806-b1ee-554306962900 ;
+        prov:wasAssociatedWith users:d033e22ae348aeb5660fc2140aec35850c4da997 .
+
+    revisions:709a0f7a-afd8-4806-b1ee-554306962900 a mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:212a2130-ca89-49ba-8fa2-d1577cab41ab-A ;
+        mcat:deletions deltas:212a2130-ca89-49ba-8fa2-d1577cab41ab-B ;
+        prov:hadPrimarySource revisions:13cc5a40-71c0-4b35-8d73-c1d2529e2d35 .
+}
+
+deltas:f2a64ffb-d1dd-45e9-9bc4-1831496e9b35-A {
+    <https://mobi.com/ontologies/EntityChange1#Class3> a owl:Class ;
+        dcterms:title "Class3" .
+
+    <https://mobi.com/ontologies/EntityChange1#Class4> a owl:Class ;
+        dcterms:title "Class4" .
+
+    <https://mobi.com/ontologies/EntityChange1#Class5> a owl:Class ;
+        rdfs:label "Class05Label" ;
+        dcterms:title "Class5" ;
+        rdfs:subClassOf <https://mobi.com/ontologies/EntityChange1#Class01-1> .
+}
+
+commits:e28b3343-c431-44a3-ba73-e19d2a2bdf0d {
+    commits:e28b3343-c431-44a3-ba73-e19d2a2bdf0d a mcat:Commit,
+            owl:Thing,
+            prov:Activity ;
+        mcat:baseCommit commits:4a75e9b0-70b0-465a-ae82-4e98a77e4aa1 ;
+        dcterms:title "Change IRI" ;
+        prov:atTime "2024-05-24T12:11:28.923696-04:00"^^xsd:dateTime ;
+        prov:generated revisions:13cc5a40-71c0-4b35-8d73-c1d2529e2d35 ;
+        prov:wasAssociatedWith users:d033e22ae348aeb5660fc2140aec35850c4da997 .
+
+    revisions:13cc5a40-71c0-4b35-8d73-c1d2529e2d35 a mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:709a0f7a-afd8-4806-b1ee-554306962900-B ;
+        mcat:deletions deltas:709a0f7a-afd8-4806-b1ee-554306962900-A ;
+        prov:hadPrimarySource revisions:17df93f0-9386-4e45-a187-e417dd2b1454 .
+}
+
+<http://mobi.com/policies/policy/record/https%3A%2F%2Fmobi.com%2Frecords%233cc2a18f-23b8-4f2c-a5b1-3b4c6aeea63d> {
+    <http://mobi.com/policies/policy/record/https%3A%2F%2Fmobi.com%2Frecords%233cc2a18f-23b8-4f2c-a5b1-3b4c6aeea63d> a documents:BinaryFile,
+            policy:Policy,
+            policy:PolicyFile,
+            owl:Thing ;
+        documents:checksum "P�>|�@�L4Y��!���l63��=���" ;
+        documents:fileName "file:///Users/mannyrivera/git-old/mobi/mobi-distribution-2.6.0-SNAPSHOT/data/virtualFiles/policies/83/24/c5eb503781ed.xml" ;
+        documents:retrievalURL <file:///Users/mannyrivera/git-old/mobi/mobi-distribution-2.6.0-SNAPSHOT/data/virtualFiles/policies/83/24/c5eb503781ed> ;
+        documents:size 4.155e+03 ;
+        policy:relatedResource recordPolicy:https%3A%2F%2Fmobi.com%2Frecords%233cc2a18f-23b8-4f2c-a5b1-3b4c6aeea63d .
+}
+
+policies:admin-user-only-access-versioned-rdf-record {
+    policies:admin-user-only-access-versioned-rdf-record a documents:BinaryFile,
+            policy:Policy,
+            policy:PolicyFile,
+            owl:Thing ;
+        documents:checksum "ǀ����~�B6`&��w�=��Z���ls�Żu" ;
+        documents:fileName "file:///Users/mannyrivera/git-old/mobi/mobi-distribution-2.6.0-SNAPSHOT/data/virtualFiles/policies/95/8d/f3b61d6e25de.xml" ;
+        documents:retrievalURL <file:///Users/mannyrivera/git-old/mobi/mobi-distribution-2.6.0-SNAPSHOT/data/virtualFiles/policies/95/8d/f3b61d6e25de> ;
+        documents:size 9.067e+03 .
+}
+
+deltas:b83c5cb0-9c1e-4fef-9198-c09426ced768-A {
+    <https://mobi.com/ontologies/InProgressCommitNonMaster#Hello1> a owl:Class ;
+        dcterms:title "Hello1" .
+}
+
+<https://mobi.com/records#f5b78915-a73d-436f-a565-e0a37d8dcaff/HEAD> {
+    ontologies:InProgressCommit a owl:Ontology ;
+        dcterms:title "InProgressCommit" .
+}
+
+commits:4a75e9b0-70b0-465a-ae82-4e98a77e4aa1 {
+    commits:4a75e9b0-70b0-465a-ae82-4e98a77e4aa1 a mcat:Commit,
+            owl:Thing,
+            prov:Activity ;
+        mcat:auxiliaryCommit commits:e1da46ae-3a02-412f-b662-30f2fa861d79 ;
+        mcat:baseCommit commits:9dfbdc23-f74e-402a-88e0-a2a98a414686 ;
+        dcterms:title "Merge of EntityMergeBranch into MASTER" ;
+        prov:atTime "2024-05-24T12:10:53.761406-04:00"^^xsd:dateTime ;
+        prov:generated revisions:17df93f0-9386-4e45-a187-e417dd2b1454 ;
+        prov:wasAssociatedWith users:d033e22ae348aeb5660fc2140aec35850c4da997 .
+
+    revisions:17df93f0-9386-4e45-a187-e417dd2b1454 a mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:13cc5a40-71c0-4b35-8d73-c1d2529e2d35-B ;
+        mcat:deletions deltas:13cc5a40-71c0-4b35-8d73-c1d2529e2d35-A ;
+        prov:hadPrimarySource revisions:d0377518-dbbb-454f-95b7-d93a5f632705 ;
+        prov:wasDerivedFrom revisions:d16ca4c5-ff9a-44b9-ad0b-d2da38f7f6c4 .
+}
+
+commits:729fd411-7f27-40bb-93cb-fad9a325c338 {
+    commits:729fd411-7f27-40bb-93cb-fad9a325c338 a mcat:Commit,
+            owl:Thing,
+            prov:Activity ;
+        mcat:baseCommit commits:ef808973-b377-4a10-80f6-dcb3bf0e9b3c ;
+        dcterms:title "BlankNode" ;
+        prov:atTime "2024-05-24T12:56:34.815585-04:00"^^xsd:dateTime ;
+        prov:generated revisions:d990e036-78a5-4330-a8c6-0280a052ef32 ;
+        prov:wasAssociatedWith users:d033e22ae348aeb5660fc2140aec35850c4da997 .
+
+    revisions:d990e036-78a5-4330-a8c6-0280a052ef32 a mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:5c25130a-48dc-41a2-a45a-d0e6bee0a285-B ;
+        mcat:deletions deltas:5c25130a-48dc-41a2-a45a-d0e6bee0a285-A ;
+        prov:hadPrimarySource revisions:04b8b095-7d0b-461c-bc03-79f4223278d0 .
+}
+
+<http://mobi.com/policies/policy/record/https%3A%2F%2Fmobi.com%2Frecords%23f5b78915-a73d-436f-a565-e0a37d8dcaff> {
+    <http://mobi.com/policies/policy/record/https%3A%2F%2Fmobi.com%2Frecords%23f5b78915-a73d-436f-a565-e0a37d8dcaff> a documents:BinaryFile,
+            policy:Policy,
+            policy:PolicyFile,
+            owl:Thing ;
+        documents:checksum """�@�Ϳ���-�
+�n����ȄV8����""" ;
+        documents:fileName "file:///Users/mannyrivera/git-old/mobi/mobi-distribution-2.6.0-SNAPSHOT/data/virtualFiles/policies/a8/56/b36bde082ba1.xml" ;
+        documents:retrievalURL <file:///Users/mannyrivera/git-old/mobi/mobi-distribution-2.6.0-SNAPSHOT/data/virtualFiles/policies/a8/56/b36bde082ba1> ;
+        documents:size 4.155e+03 ;
+        policy:relatedResource recordPolicy:https%3A%2F%2Fmobi.com%2Frecords%23f5b78915-a73d-436f-a565-e0a37d8dcaff .
+}
+
+commits:5b3cbee4-7c13-4a71-867f-561f57bd93df {
+    commits:5b3cbee4-7c13-4a71-867f-561f57bd93df a mcat:Commit,
+            owl:Thing,
+            prov:Activity ;
+        mcat:initialRevision revisions:09e5f120-2d0c-4665-9810-1c1abae28312 ;
+        dcterms:title "The initial commit." ;
+        prov:atTime "2024-05-24T12:46:39.244695-04:00"^^xsd:dateTime ;
+        prov:generated revisions:801574b9-406b-490c-8191-e503db14f060 ;
+        prov:wasAssociatedWith users:d033e22ae348aeb5660fc2140aec35850c4da997 .
+
+    revisions:09e5f120-2d0c-4665-9810-1c1abae28312 a mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:09e5f120-2d0c-4665-9810-1c1abae28312-A ;
+        mcat:deletions deltas:09e5f120-2d0c-4665-9810-1c1abae28312-B .
+
+    revisions:801574b9-406b-490c-8191-e503db14f060 a mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:78ae26fb-4ea6-4237-b1c4-ac8416498eeb-B ;
+        mcat:deletions deltas:78ae26fb-4ea6-4237-b1c4-ac8416498eeb-A .
+}
+
+deltas:709a0f7a-afd8-4806-b1ee-554306962900-A {
+    <https://mobi.com/ontologies/EntityChange1#Class01> rdfs:subClassOf <https://mobi.com/ontologies/EntityChange1#Class10> .
+
+    <https://mobi.com/ontologies/EntityChange1#Class10> a owl:Class ;
+        dcterms:title "Class10-1" .
+}
+
+recordPolicy:https%3A%2F%2Fmobi.com%2Frecords%237aac337d-20d5-42ad-9c83-a4ad9267f11c {
+    recordPolicy:https%3A%2F%2Fmobi.com%2Frecords%237aac337d-20d5-42ad-9c83-a4ad9267f11c a documents:BinaryFile,
+            policy:Policy,
+            policy:PolicyFile,
+            owl:Thing ;
+        documents:checksum """��
+�ץ���kNl����i�
+�Vkn۩��""" ;
+        documents:fileName "file:///Users/mannyrivera/git-old/mobi/mobi-distribution-2.6.0-SNAPSHOT/data/virtualFiles/policies/f9/ec/fbe84232e21e.xml" ;
+        documents:retrievalURL <file:///Users/mannyrivera/git-old/mobi/mobi-distribution-2.6.0-SNAPSHOT/data/virtualFiles/policies/f9/ec/fbe84232e21e> ;
+        documents:size 9.585e+03 ;
+        policy:relatedResource records:7aac337d-20d5-42ad-9c83-a4ad9267f11c .
+}
+
+deltas:86845d43-dbbc-4dee-92d8-49bd26be6e51-A {
+    ontologies:SimpleD a owl:Ontology ;
+        dcterms:description "Description"@en ;
+        dcterms:title "Simple1"@en .
+}
+
+branches:efb34f4f-332e-417a-85c9-26b2a8e437d4 {
+    branches:efb34f4f-332e-417a-85c9-26b2a8e437d4 a mcat:Branch,
+            owl:Thing ;
+        mcat:head commits:e1da46ae-3a02-412f-b662-30f2fa861d79 ;
+        dcterms:description "" ;
+        dcterms:issued "2024-05-24T12:10:36.448055-04:00"^^xsd:dateTime ;
+        dcterms:modified "2024-05-24T12:10:36.448055-04:00"^^xsd:dateTime ;
+        dcterms:publisher users:d033e22ae348aeb5660fc2140aec35850c4da997 ;
+        dcterms:title "EntityMergeBranch" .
+}
+
+<https://mobi.com/records#7aac337d-20d5-42ad-9c83-a4ad9267f11c/HEAD> {
+    <https://mobi.com/ontologies/Simple#SimpleClass02> a owl:Class ;
+        dcterms:description "SimpleClass02 Description" ;
+        dcterms:title "SimpleClass02" ;
+        rdfs:subClassOf <https://mobi.com/ontologies/Simple#SimpleClass01> .
+
+    ontologies:SimpleD a owl:Ontology ;
+        dcterms:description "Description"@en ;
+        dcterms:title "Simple1"@en .
+
+    <https://mobi.com/ontologies/Simple#SimpleClass01> a owl:Class ;
+        dcterms:description "Description SimpleClass01" ;
+        dcterms:title "SimpleClass01" .
+}
+
+commits:2e5d1127-1e03-4e69-85a2-ffbffea44510 {
+    commits:2e5d1127-1e03-4e69-85a2-ffbffea44510 a mcat:Commit,
+            owl:Thing,
+            prov:Activity ;
+        mcat:baseCommit commits:729fd411-7f27-40bb-93cb-fad9a325c338 ;
+        dcterms:title "Remove blank nodes" ;
+        prov:atTime "2024-05-24T12:58:30.460327-04:00"^^xsd:dateTime ;
+        prov:generated revisions:5c25130a-48dc-41a2-a45a-d0e6bee0a285 ;
+        prov:influenced revisions:05222b48-6b1d-491e-b8be-b7b2e3b6aaf2 ;
+        prov:wasAssociatedWith users:d033e22ae348aeb5660fc2140aec35850c4da997 .
+
+    revisions:5c25130a-48dc-41a2-a45a-d0e6bee0a285 a mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:a67ac396-91c1-41e8-bf37-ce2a7f7c397d-B ;
+        mcat:deletions deltas:a67ac396-91c1-41e8-bf37-ce2a7f7c397d-A ;
+        prov:hadPrimarySource revisions:d990e036-78a5-4330-a8c6-0280a052ef32 .
+
+    revisions:05222b48-6b1d-491e-b8be-b7b2e3b6aaf2 a mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:df44840c-35a4-4738-b2f2-4a7a5ae70156-B ;
+        mcat:deletions deltas:df44840c-35a4-4738-b2f2-4a7a5ae70156-A .
+}
+
+records:4de737e8-13dd-4397-9995-d87d719cb646 {
+    records:4de737e8-13dd-4397-9995-d87d719cb646 a mcat:Record,
+            mcat:VersionedRDFRecord,
+            mcat:VersionedRecord,
+            ontologyEditor:OntologyRecord,
+            owl:Thing ;
+        mcat:branch branches:418dd6dd-6b57-4aae-b54f-b96200af0594,
+            branches:c667b903-26f9-4e5c-b1e6-f66b0dca3864 ;
+        mcat:catalog mobiSpace:catalog-local ;
+        mcat:masterBranch branches:c667b903-26f9-4e5c-b1e6-f66b0dca3864 ;
+        ontologyEditor:ontologyIRI ontologies:InProgressCommitNonMaster ;
+        dcterms:issued "2024-05-24T12:46:39.232392-04:00"^^xsd:dateTime ;
+        dcterms:modified "2024-05-24T12:47:03.424854-04:00"^^xsd:dateTime ;
+        dcterms:publisher users:d033e22ae348aeb5660fc2140aec35850c4da997 ;
+        dcterms:title "InProgressCommitNonMaster" .
+}
+
+<http://mobi.com/policies/policy/record/https%3A%2F%2Fmobi.com%2Frecords%234de737e8-13dd-4397-9995-d87d719cb646> {
+    <http://mobi.com/policies/policy/record/https%3A%2F%2Fmobi.com%2Frecords%234de737e8-13dd-4397-9995-d87d719cb646> a documents:BinaryFile,
+            policy:Policy,
+            policy:PolicyFile,
+            owl:Thing ;
+        documents:checksum "p}�r��48�ћ��\\c!F��p�K�a8cy C" ;
+        documents:fileName "file:///Users/mannyrivera/git-old/mobi/mobi-distribution-2.6.0-SNAPSHOT/data/virtualFiles/policies/d9/e5/eef524cc688f.xml" ;
+        documents:retrievalURL <file:///Users/mannyrivera/git-old/mobi/mobi-distribution-2.6.0-SNAPSHOT/data/virtualFiles/policies/d9/e5/eef524cc688f> ;
+        documents:size 4.155e+03 ;
+        policy:relatedResource recordPolicy:https%3A%2F%2Fmobi.com%2Frecords%234de737e8-13dd-4397-9995-d87d719cb646 .
+}
+
+deltas:13cc5a40-71c0-4b35-8d73-c1d2529e2d35-A {
+    <https://mobi.com/ontologies/EntityChange1-1#Class10> a owl:Class ;
+        dcterms:title "Class10-1" .
+
+    <https://mobi.com/ontologies/EntityChange1#Class01> a owl:Class ;
+        dcterms:title "Class01-1" .
+}
+
+branches:c667b903-26f9-4e5c-b1e6-f66b0dca3864 {
+    branches:c667b903-26f9-4e5c-b1e6-f66b0dca3864 a mcat:Branch,
+            mcat:MasterBranch,
+            owl:Thing ;
+        mcat:head commits:6720e897-500b-4072-b98d-67e1ada0ff12 ;
+        mcat:headGraph <https://mobi.com/records#4de737e8-13dd-4397-9995-d87d719cb646/HEAD> ;
+        dcterms:description "The master branch." ;
+        dcterms:issued "2024-05-24T12:46:39.232667-04:00"^^xsd:dateTime ;
+        dcterms:modified "2024-05-24T12:46:54.192893-04:00"^^xsd:dateTime ;
+        dcterms:publisher users:d033e22ae348aeb5660fc2140aec35850c4da997 ;
+        dcterms:title "MASTER" .
+}
+
+deltas:4f6ea77a-54a4-4d7e-96e3-fa14f1fd511f-A {
+    <https://mobi.com/ontologies/SimpleMergeExample#Class03V2> a owl:Class ;
+        dcterms:title "Class03V2" .
+}
+
+deltas:86845d43-dbbc-4dee-92d8-49bd26be6e51-B {
+    ontologies:Simple a owl:Ontology ;
+        dcterms:description "Description"@en ;
+        dcterms:title "Simple"@en .
+}
+
+commits:e1da46ae-3a02-412f-b662-30f2fa861d79 {
+    commits:e1da46ae-3a02-412f-b662-30f2fa861d79 a mcat:Commit,
+            owl:Thing,
+            prov:Activity ;
+        mcat:baseCommit commits:9dfbdc23-f74e-402a-88e0-a2a98a414686 ;
+        dcterms:title "Branch Entity Change" ;
+        prov:atTime "2024-05-24T12:10:18.425749-04:00"^^xsd:dateTime ;
+        prov:generated revisions:d16ca4c5-ff9a-44b9-ad0b-d2da38f7f6c4 ;
+        prov:wasAssociatedWith users:d033e22ae348aeb5660fc2140aec35850c4da997 .
+
+    revisions:d16ca4c5-ff9a-44b9-ad0b-d2da38f7f6c4 a mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:2a654719-9e69-4038-87ba-3fbd61cda6d3-B ;
+        mcat:deletions deltas:2a654719-9e69-4038-87ba-3fbd61cda6d3-A ;
+        prov:hadPrimarySource revisions:a73cc3b0-5cda-49c6-8f95-987d605598ef .
+}
+
+deltas:4f6ea77a-54a4-4d7e-96e3-fa14f1fd511f-B {
+    <https://mobi.com/ontologies/SimpleMergeExample#Class03> a owl:Class ;
+        dcterms:title "Class03" .
+}
+
+commits:ontology-simple-id-002-commit-005 {
+    commits:ontology-simple-id-002-commit-005 a mcat:Commit,
+            owl:Thing,
+            prov:Activity ;
+        mcat:baseCommit commits:ontology-simple-id-002-commit-004 ;
+        dcterms:title "Delete class03, add class 03v2" ;
+        prov:atTime "2024-05-22T12:00:47.789151-04:00"^^xsd:dateTime ;
+        prov:generated revisions:4f6ea77a-54a4-4d7e-96e3-fa14f1fd511f ;
+        prov:wasAssociatedWith users:d033e22ae348aeb5660fc2140aec35850c4da997 .
+
+    revisions:4f6ea77a-54a4-4d7e-96e3-fa14f1fd511f a mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:04b8b095-7d0b-461c-bc03-79f4223278d0-B ;
+        mcat:deletions deltas:04b8b095-7d0b-461c-bc03-79f4223278d0-A ;
+        prov:hadPrimarySource revisions:bc7b3a3a-d39d-4a10-b3f6-0d9a22867ea7 .
+}
+
+deltas:b024972d-9fbf-45ef-986b-c308c029796c-A {
+    ontologies:InProgressCommit a owl:Ontology ;
+        dcterms:title "InProgressCommit" .
+}
+
+branches:e01bc2c2-358c-4bbf-9d5b-394fe8193472 {
+    branches:e01bc2c2-358c-4bbf-9d5b-394fe8193472 a mcat:Branch,
+            owl:Thing ;
+        mcat:head commits:6a7ea42f-dea1-45cf-b6a6-4f6048595560 ;
+        dcterms:description "" ;
+        dcterms:issued "2024-05-24T12:09:21.291796-04:00"^^xsd:dateTime ;
+        dcterms:modified "2024-05-24T12:14:05.165492-04:00"^^xsd:dateTime ;
+        dcterms:publisher users:d033e22ae348aeb5660fc2140aec35850c4da997 ;
+        dcterms:title "EntityChange" .
+}
+
+recordPolicy:https%3A%2F%2Fmobi.com%2Frecords%23f5b78915-a73d-436f-a565-e0a37d8dcaff {
+    recordPolicy:https%3A%2F%2Fmobi.com%2Frecords%23f5b78915-a73d-436f-a565-e0a37d8dcaff a documents:BinaryFile,
+            policy:Policy,
+            policy:PolicyFile,
+            owl:Thing ;
+        documents:checksum "���w�צLެ����<����P��}" ;
+        documents:fileName "file:///Users/mannyrivera/git-old/mobi/mobi-distribution-2.6.0-SNAPSHOT/data/virtualFiles/policies/92/fe/44f1f0ffc24d.xml" ;
+        documents:retrievalURL <file:///Users/mannyrivera/git-old/mobi/mobi-distribution-2.6.0-SNAPSHOT/data/virtualFiles/policies/92/fe/44f1f0ffc24d> ;
+        documents:size 9.585e+03 ;
+        policy:relatedResource records:f5b78915-a73d-436f-a565-e0a37d8dcaff .
+}
+
+<https://mobi.com/in-progress-commits#b83c5cb0-9c1e-4fef-9198-c09426ced768> {
+    <https://mobi.com/in-progress-commits#b83c5cb0-9c1e-4fef-9198-c09426ced768> a mcat:Commit,
+            mcat:InProgressCommit,
+            owl:Thing,
+            prov:Activity ;
+        mcat:onVersionedRDFRecord records:4de737e8-13dd-4397-9995-d87d719cb646 ;
+        prov:generated revisions:b83c5cb0-9c1e-4fef-9198-c09426ced768 ;
+        prov:wasAssociatedWith users:d033e22ae348aeb5660fc2140aec35850c4da997 .
+
+    revisions:b83c5cb0-9c1e-4fef-9198-c09426ced768 a mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:b83c5cb0-9c1e-4fef-9198-c09426ced768-A ;
+        mcat:deletions deltas:b83c5cb0-9c1e-4fef-9198-c09426ced768-B .
+}
+
+records:6db8a4d7-6c7e-4eb2-99ad-30b6ef92ae4a {
+    records:6db8a4d7-6c7e-4eb2-99ad-30b6ef92ae4a a mcat:Record,
+            mcat:VersionedRDFRecord,
+            mcat:VersionedRecord,
+            ontologyEditor:OntologyRecord,
+            owl:Thing ;
+        mcat:branch branches:7bb36632-ecda-42bc-8d74-39dcc7a46171,
+            branches:e01bc2c2-358c-4bbf-9d5b-394fe8193472,
+            branches:efb34f4f-332e-417a-85c9-26b2a8e437d4 ;
+        mcat:catalog mobiSpace:catalog-local ;
+        mcat:masterBranch branches:7bb36632-ecda-42bc-8d74-39dcc7a46171 ;
+        ontologyEditor:ontologyIRI ontologies:EntityChange1 ;
+        dcterms:issued "2024-05-24T12:05:45.492069-04:00"^^xsd:dateTime ;
+        dcterms:modified "2024-05-24T12:14:05.165367-04:00"^^xsd:dateTime ;
+        dcterms:publisher users:d033e22ae348aeb5660fc2140aec35850c4da997 ;
+        dcterms:title "EntityChange" .
+}
+
+deltas:13cc5a40-71c0-4b35-8d73-c1d2529e2d35-B {
+    <https://mobi.com/ontologies/EntityChange1-1#Class10-1> a owl:Class ;
+        dcterms:title "Class10-1" .
+
+    <https://mobi.com/ontologies/EntityChange1#Class01-1> a owl:Class ;
+        dcterms:title "Class01-1" .
+}
+
+recordPolicy:https%3A%2F%2Fmobi.com%2Frecords%236db8a4d7-6c7e-4eb2-99ad-30b6ef92ae4a {
+    recordPolicy:https%3A%2F%2Fmobi.com%2Frecords%236db8a4d7-6c7e-4eb2-99ad-30b6ef92ae4a a documents:BinaryFile,
+            policy:Policy,
+            policy:PolicyFile,
+            owl:Thing ;
+        documents:checksum ",��֎v�!����*[��m���7D*X�S֡" ;
+        documents:fileName "file:///Users/mannyrivera/git-old/mobi/mobi-distribution-2.6.0-SNAPSHOT/data/virtualFiles/policies/10/bb/5dd7d0747bb6.xml" ;
+        documents:retrievalURL <file:///Users/mannyrivera/git-old/mobi/mobi-distribution-2.6.0-SNAPSHOT/data/virtualFiles/policies/10/bb/5dd7d0747bb6> ;
+        documents:size 9.585e+03 ;
+        policy:relatedResource records:6db8a4d7-6c7e-4eb2-99ad-30b6ef92ae4a .
+}
+
+deltas:a37d48eb-e4f9-445f-8f11-71f86a814f62-A {
+    <https://mobi.com/ontologies/InProgressCommit#Class01Inprogress> a owl:Class ;
+        dcterms:title "Class01Inprogress" .
+}
+
+commits:52ac25f2-f8a8-477a-8ecc-94c31736976b {
+    commits:52ac25f2-f8a8-477a-8ecc-94c31736976b a mcat:Commit,
+            owl:Thing,
+            prov:Activity ;
+        mcat:auxiliaryCommit commits:5c1b960f-e88f-4ec3-a826-92e072c35025 ;
+        mcat:baseCommit commits:2e5d1127-1e03-4e69-85a2-ffbffea44510 ;
+        dcterms:title "Merge of MergingBlankNode into MASTER" ;
+        prov:atTime "2024-05-24T13:00:18.460895-04:00"^^xsd:dateTime ;
+        prov:generated revisions:fe753170-e735-4db5-a79a-f6c1b3d00f0d ;
+        prov:wasAssociatedWith users:d033e22ae348aeb5660fc2140aec35850c4da997 .
+
+    revisions:fe753170-e735-4db5-a79a-f6c1b3d00f0d a mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:fe753170-e735-4db5-a79a-f6c1b3d00f0d-A ;
+        mcat:deletions deltas:fe753170-e735-4db5-a79a-f6c1b3d00f0d-B ;
+        prov:hadPrimarySource revisions:5c25130a-48dc-41a2-a45a-d0e6bee0a285 ;
+        prov:wasDerivedFrom revisions:df44840c-35a4-4738-b2f2-4a7a5ae70156 .
+}
+
+deltas:df44840c-35a4-4738-b2f2-4a7a5ae70156-A {
+    <https://mobi.com/ontologies/SimpleMergeExample#Class300> rdfs:subClassOf _:n857e92866f1248a5a639611592b8142eb2 .
+
+    _:n857e92866f1248a5a639611592b8142eb2 a owl:Restriction ;
+        owl:onProperty <https://mobi.com/ontologies/SimpleMergeExample#someProp> ;
+        owl:someValuesFrom <https://mobi.com/ontologies/SimpleMergeExample#Class100> .
+}
+
+policies:mapping-creation {
+    policies:mapping-creation a documents:BinaryFile,
+            policy:Policy,
+            policy:PolicyFile,
+            owl:Thing ;
+        documents:checksum "4ߢ�҄Y�Z��HAa���\"�#���2*ޗ" ;
+        documents:fileName "file:///Users/mannyrivera/git-old/mobi/mobi-distribution-2.6.0-SNAPSHOT/data/virtualFiles/policies/45/62/2f16ef289afa.xml" ;
+        documents:retrievalURL <file:///Users/mannyrivera/git-old/mobi/mobi-distribution-2.6.0-SNAPSHOT/data/virtualFiles/policies/45/62/2f16ef289afa> ;
+        documents:size 4.079e+03 ;
+        policy:relatedAction policy:Create ;
+        policy:relatedResource mobiSpace:catalog-local .
+}
+
+deltas:04b8b095-7d0b-461c-bc03-79f4223278d0-A {
+    <https://mobi.com/ontologies/SimpleMergeExample#Class01> dcterms:title "Class01Change" .
+}
+
+<http://mobi.com/policies/policy/record/https%3A%2F%2Fmobi.com%2Frecords%236db8a4d7-6c7e-4eb2-99ad-30b6ef92ae4a> {
+    <http://mobi.com/policies/policy/record/https%3A%2F%2Fmobi.com%2Frecords%236db8a4d7-6c7e-4eb2-99ad-30b6ef92ae4a> a documents:BinaryFile,
+            policy:Policy,
+            policy:PolicyFile,
+            owl:Thing ;
+        documents:checksum ",% �8gP��5q��;ݏ�[D��9h�?��|" ;
+        documents:fileName "file:///Users/mannyrivera/git-old/mobi/mobi-distribution-2.6.0-SNAPSHOT/data/virtualFiles/policies/72/78/1e0f4dabd1a9.xml" ;
+        documents:retrievalURL <file:///Users/mannyrivera/git-old/mobi/mobi-distribution-2.6.0-SNAPSHOT/data/virtualFiles/policies/72/78/1e0f4dabd1a9> ;
+        documents:size 4.155e+03 ;
+        policy:relatedResource recordPolicy:https%3A%2F%2Fmobi.com%2Frecords%236db8a4d7-6c7e-4eb2-99ad-30b6ef92ae4a .
+}
+
+deltas:5c25130a-48dc-41a2-a45a-d0e6bee0a285-B {
+    <https://mobi.com/ontologies/SimpleMergeExample#Class300> rdfs:subClassOf _:n857e92866f1248a5a639611592b8142eb1 .
+
+    _:n857e92866f1248a5a639611592b8142eb1 a owl:Restriction ;
+        owl:onProperty <https://mobi.com/ontologies/SimpleMergeExample#someProp> ;
+        owl:someValuesFrom <https://mobi.com/ontologies/SimpleMergeExample#Class200> .
+}
+
+<https://mobi.com/records#4de737e8-13dd-4397-9995-d87d719cb646/HEAD> {
+    <https://mobi.com/ontologies/InProgressCommitNonMaster#Hello> a owl:Class ;
+        dcterms:title "Hello" .
+
+    ontologies:InProgressCommitNonMaster a owl:Ontology ;
+        dcterms:title "InProgressCommitNonMaster" .
+}
+
+branches:7bb36632-ecda-42bc-8d74-39dcc7a46171 {
+    branches:7bb36632-ecda-42bc-8d74-39dcc7a46171 a mcat:Branch,
+            mcat:MasterBranch,
+            owl:Thing ;
+        mcat:head commits:43251e65-c4d9-4d06-b5a6-287ba686dfce ;
+        mcat:headGraph <https://mobi.com/records#6db8a4d7-6c7e-4eb2-99ad-30b6ef92ae4a/HEAD> ;
+        dcterms:description "The master branch." ;
+        dcterms:issued "2024-05-24T12:05:45.492263-04:00"^^xsd:dateTime ;
+        dcterms:modified "2024-05-24T12:12:08.738019-04:00"^^xsd:dateTime ;
+        dcterms:publisher users:d033e22ae348aeb5660fc2140aec35850c4da997 ;
+        dcterms:title "MASTER" .
+}
+
+{
+    apps:mapping-tool a config:Application,
+            owl:Thing ;
+        dcterms:description "The built-in Mapping Tool application in Mobi." ;
+        dcterms:title "Mapping Tool" .
+
+    apps:shapes-graph-editor a config:Application,
+            owl:Thing ;
+        dcterms:description "The built-in Shapes Graph Editor application in Mobi." ;
+        dcterms:title "Shapes Graph Editor" .
+
+    apps:sparql-editor a config:Application,
+            owl:Thing ;
+        dcterms:description "The built-in SPARQL Query Editor application in Mobi." ;
+        dcterms:title "SPARQL Editor" .
+
+    <http://mobi.com/states#3b658e32-7dda-4a0e-aa3f-e3b5a7f2c842> a config:ApplicationState,
+            config:State,
+            owl:Thing ;
+        config:application apps:ontology-editor ;
+        config:forUser users:d033e22ae348aeb5660fc2140aec35850c4da997 ;
+        config:stateResource ontologystate:f7b33153-c5a5-4776-8f52-ab408392813d,
+            <http://mobi.com/states/ontology-editor/branch-id/c400130d-d0fb-46f0-9c8a-5efcf953bad0>,
+            <http://mobi.com/states/ontology-editor/branch-id/d8993aa7-195e-4eaf-8ec4-befab88e0e71>,
+            <http://mobi.com/states/ontology-editor/branch-id/f4f58b40-1fe3-4ade-a456-a0472fcdf76e> .
+
+    <http://mobi.com/states#51c2a426-667b-4096-b20f-0f59e8b78c0e> a config:ApplicationState,
+            config:State,
+            owl:Thing ;
+        config:application apps:ontology-editor ;
+        config:forUser users:d033e22ae348aeb5660fc2140aec35850c4da997 ;
+        config:stateResource ontologystate:d15574e6-be04-4f43-9374-f20dc6d77868,
+            <http://mobi.com/states/ontology-editor/branch-id/6207190a-e6f4-4c1d-b653-129b149d9d49>,
+            <http://mobi.com/states/ontology-editor/branch-id/668db052-1642-4f00-82b2-3a5fbb98bf59> .
+
+    <http://mobi.com/states#a3c014e8-04e0-4b72-8b74-10c0293cc899> a config:ApplicationState,
+            config:State,
+            owl:Thing ;
+        config:application apps:ontology-editor ;
+        config:forUser users:d033e22ae348aeb5660fc2140aec35850c4da997 ;
+        config:stateResource ontologystate:93e8fe83-3a12-4277-b99e-d6b28788da33,
+            <http://mobi.com/states/ontology-editor/branch-id/55e2c181-08d9-4178-bf45-9f28b008e9a9>,
+            <http://mobi.com/states/ontology-editor/branch-id/70a26d90-df1d-4fb7-89c4-65280a713c09>,
+            <http://mobi.com/states/ontology-editor/branch-id/9c5f87df-c7f1-4a83-9866-791a6fc53bdf> .
+
+    <http://mobi.com/states#cee57000-77f6-4118-be50-347cdaa6fe89> a config:ApplicationState,
+            config:State,
+            owl:Thing ;
+        config:application apps:ontology-editor ;
+        config:forUser users:d033e22ae348aeb5660fc2140aec35850c4da997 ;
+        config:stateResource ontologystate:8b83b055-7db7-45ee-bd0e-a84dd76240b2,
+            <http://mobi.com/states/ontology-editor/branch-id/e6abad21-61cd-4fec-997d-66cbffb5ff24> .
+
+    <http://mobi.com/states#da6883b9-8a3d-4110-b594-4c1812fc603a> a config:ApplicationState,
+            config:State,
+            owl:Thing ;
+        config:application apps:ontology-editor ;
+        config:forUser users:d033e22ae348aeb5660fc2140aec35850c4da997 ;
+        config:stateResource ontologystate:11996b6c-3dc1-43b7-bd01-089e2110fc7b,
+            <http://mobi.com/states/ontology-editor/branch-id/a1eabfd5-fe36-4119-841f-a763244cc980> .
+
+    ontologystate:11996b6c-3dc1-43b7-bd01-089e2110fc7b a ontologystate:StateRecord ;
+        ontologystate:branchStates <http://mobi.com/states/ontology-editor/branch-id/a1eabfd5-fe36-4119-841f-a763244cc980> ;
+        ontologystate:currentState <http://mobi.com/states/ontology-editor/branch-id/a1eabfd5-fe36-4119-841f-a763244cc980> ;
+        ontologystate:record records:7aac337d-20d5-42ad-9c83-a4ad9267f11c .
+
+    ontologystate:8b83b055-7db7-45ee-bd0e-a84dd76240b2 a ontologystate:StateRecord ;
+        ontologystate:branchStates <http://mobi.com/states/ontology-editor/branch-id/e6abad21-61cd-4fec-997d-66cbffb5ff24> ;
+        ontologystate:currentState <http://mobi.com/states/ontology-editor/branch-id/e6abad21-61cd-4fec-997d-66cbffb5ff24> ;
+        ontologystate:record records:f5b78915-a73d-436f-a565-e0a37d8dcaff .
+
+    ontologystate:93e8fe83-3a12-4277-b99e-d6b28788da33 a ontologystate:StateRecord ;
+        ontologystate:branchStates <http://mobi.com/states/ontology-editor/branch-id/55e2c181-08d9-4178-bf45-9f28b008e9a9>,
+            <http://mobi.com/states/ontology-editor/branch-id/70a26d90-df1d-4fb7-89c4-65280a713c09>,
+            <http://mobi.com/states/ontology-editor/branch-id/9c5f87df-c7f1-4a83-9866-791a6fc53bdf> ;
+        ontologystate:currentState <http://mobi.com/states/ontology-editor/branch-id/55e2c181-08d9-4178-bf45-9f28b008e9a9>,
+            <http://mobi.com/states/ontology-editor/branch-id/9c5f87df-c7f1-4a83-9866-791a6fc53bdf> ;
+        ontologystate:record records:3cc2a18f-23b8-4f2c-a5b1-3b4c6aeea63d .
+
+    ontologystate:d15574e6-be04-4f43-9374-f20dc6d77868 a ontologystate:StateRecord ;
+        ontologystate:branchStates <http://mobi.com/states/ontology-editor/branch-id/6207190a-e6f4-4c1d-b653-129b149d9d49>,
+            <http://mobi.com/states/ontology-editor/branch-id/668db052-1642-4f00-82b2-3a5fbb98bf59> ;
+        ontologystate:currentState <http://mobi.com/states/ontology-editor/branch-id/6207190a-e6f4-4c1d-b653-129b149d9d49> ;
+        ontologystate:record records:4de737e8-13dd-4397-9995-d87d719cb646 .
+
+    ontologystate:f7b33153-c5a5-4776-8f52-ab408392813d a ontologystate:StateRecord ;
+        ontologystate:branchStates <http://mobi.com/states/ontology-editor/branch-id/c400130d-d0fb-46f0-9c8a-5efcf953bad0>,
+            <http://mobi.com/states/ontology-editor/branch-id/d8993aa7-195e-4eaf-8ec4-befab88e0e71>,
+            <http://mobi.com/states/ontology-editor/branch-id/f4f58b40-1fe3-4ade-a456-a0472fcdf76e> ;
+        ontologystate:currentState <http://mobi.com/states/ontology-editor/branch-id/f4f58b40-1fe3-4ade-a456-a0472fcdf76e> ;
+        ontologystate:record records:6db8a4d7-6c7e-4eb2-99ad-30b6ef92ae4a .
+
+    <http://mobi.com/states/ontology-editor/branch-id/668db052-1642-4f00-82b2-3a5fbb98bf59> a ontologystate:StateBranch,
+            ontologystate:StateCommit ;
+        ontologystate:branch branches:c667b903-26f9-4e5c-b1e6-f66b0dca3864 ;
+        ontologystate:commit commits:6720e897-500b-4072-b98d-67e1ada0ff12 .
+
+    <http://mobi.com/states/ontology-editor/branch-id/70a26d90-df1d-4fb7-89c4-65280a713c09> a ontologystate:StateBranch,
+            ontologystate:StateCommit ;
+        ontologystate:branch branches:34366a44-20f5-4281-9b54-6447fd92a007 ;
+        ontologystate:commit commits:bf3979fd-00ee-4378-98e9-ce4b0fa018f7 .
+
+    <http://mobi.com/states/ontology-editor/branch-id/c400130d-d0fb-46f0-9c8a-5efcf953bad0> a ontologystate:StateBranch,
+            ontologystate:StateCommit ;
+        ontologystate:branch branches:7bb36632-ecda-42bc-8d74-39dcc7a46171 ;
+        ontologystate:commit commits:43251e65-c4d9-4d06-b5a6-287ba686dfce .
+
+    <http://mobi.com/states/ontology-editor/branch-id/d8993aa7-195e-4eaf-8ec4-befab88e0e71> a ontologystate:StateBranch,
+            ontologystate:StateCommit ;
+        ontologystate:branch branches:efb34f4f-332e-417a-85c9-26b2a8e437d4 ;
+        ontologystate:commit commits:e1da46ae-3a02-412f-b662-30f2fa861d79 .
+
+    <http://mobi.com/states/ontology-editor/branch-id/55e2c181-08d9-4178-bf45-9f28b008e9a9> a ontologystate:StateBranch,
+            ontologystate:StateCommit ;
+        ontologystate:branch branches:983acaf7-183b-4235-a5da-66c130a13c9d ;
+        ontologystate:commit commits:5c1b960f-e88f-4ec3-a826-92e072c35025 .
+
+    <http://mobi.com/states/ontology-editor/branch-id/6207190a-e6f4-4c1d-b653-129b149d9d49> a ontologystate:StateBranch,
+            ontologystate:StateCommit ;
+        ontologystate:branch branches:418dd6dd-6b57-4aae-b54f-b96200af0594 ;
+        ontologystate:commit commits:6720e897-500b-4072-b98d-67e1ada0ff12 .
+
+    <http://mobi.com/states/ontology-editor/branch-id/9c5f87df-c7f1-4a83-9866-791a6fc53bdf> a ontologystate:StateBranch,
+            ontologystate:StateCommit ;
+        ontologystate:branch branches:98b6416f-cb75-40cb-b624-6e5e397c7080 ;
+        ontologystate:commit commits:2e5d1127-1e03-4e69-85a2-ffbffea44510,
+            commits:52ac25f2-f8a8-477a-8ecc-94c31736976b .
+
+    <http://mobi.com/states/ontology-editor/branch-id/a1eabfd5-fe36-4119-841f-a763244cc980> a ontologystate:StateBranch,
+            ontologystate:StateCommit ;
+        ontologystate:branch branches:5658c039-053e-4987-9ebb-29a7fcd9e46b ;
+        ontologystate:commit commits:3b4f2bf0-4523-482c-a8b3-43623db57333 .
+
+    <http://mobi.com/states/ontology-editor/branch-id/e6abad21-61cd-4fec-997d-66cbffb5ff24> a ontologystate:StateBranch,
+            ontologystate:StateCommit ;
+        ontologystate:branch branches:36fb6dee-803b-4e0a-a9fe-3ee75c3b5557 ;
+        ontologystate:commit commits:c96c28b4-eda4-473b-b5bb-04f005441eec .
+
+    <http://mobi.com/states/ontology-editor/branch-id/f4f58b40-1fe3-4ade-a456-a0472fcdf76e> a ontologystate:StateBranch,
+            ontologystate:StateCommit ;
+        ontologystate:branch branches:e01bc2c2-358c-4bbf-9d5b-394fe8193472 ;
+        ontologystate:commit commits:6a7ea42f-dea1-45cf-b6a6-4f6048595560 .
+
+    apps:ontology-editor a config:Application,
+            owl:Thing ;
+        dcterms:description "The built-in Ontology Editor application in Mobi." ;
+        dcterms:title "Ontology Editor" .
+}
+
+deltas:d16ca4c5-ff9a-44b9-ad0b-d2da38f7f6c4-B {
+    <https://mobi.com/ontologies/EntityChange1#Class10> a owl:Class ;
+        dcterms:title "Class10" .
+
+    <https://mobi.com/ontologies/EntityChange1#Class01> a owl:Class ;
+        dcterms:title "Class01" .
+}
+
+commits:e1a96215-0b90-4d29-8547-5fc4eca6c58b {
+    commits:e1a96215-0b90-4d29-8547-5fc4eca6c58b a mcat:Commit,
+            owl:Thing,
+            prov:Activity ;
+        mcat:baseCommit commits:df690842-19a2-463d-810e-8eed8df78b60 ;
+        dcterms:title "Class03" ;
+        prov:atTime "2024-05-22T11:59:13.957542-04:00"^^xsd:dateTime ;
+        prov:generated revisions:c638d2fa-bbee-4090-8e73-ce18f63b174d ;
+        prov:wasAssociatedWith users:d033e22ae348aeb5660fc2140aec35850c4da997 .
+
+    revisions:c638d2fa-bbee-4090-8e73-ce18f63b174d a mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:039768d0-d268-4332-b611-33d352770f69-B ;
+        mcat:deletions deltas:039768d0-d268-4332-b611-33d352770f69-A ;
+        prov:hadPrimarySource revisions:84afbcd6-56d2-4291-a895-357707b165ee .
+}
+
+deltas:c638d2fa-bbee-4090-8e73-ce18f63b174d-A {
+    <https://mobi.com/ontologies/SimpleMergeExample#Class03> a owl:Class ;
+        dcterms:title "Class03" .
+}
+
+policies:ontology-creation {
+    policies:ontology-creation a documents:BinaryFile,
+            policy:Policy,
+            policy:PolicyFile,
+            owl:Thing ;
+        documents:checksum "�?$���@p%J?��Dp�vd��y����|" ;
+        documents:fileName "file:///Users/mannyrivera/git-old/mobi/mobi-distribution-2.6.0-SNAPSHOT/data/virtualFiles/policies/47/d4/87ffd739f4f9.xml" ;
+        documents:retrievalURL <file:///Users/mannyrivera/git-old/mobi/mobi-distribution-2.6.0-SNAPSHOT/data/virtualFiles/policies/47/d4/87ffd739f4f9> ;
+        documents:size 4.09e+03 ;
+        policy:relatedAction policy:Create ;
+        policy:relatedResource mobiSpace:catalog-local .
+}
+
+commits:2cf9b3e3-ddbb-41bb-b9cd-c8401cf2aaa1 {
+    commits:2cf9b3e3-ddbb-41bb-b9cd-c8401cf2aaa1 a mcat:Commit,
+            owl:Thing,
+            prov:Activity ;
+        mcat:baseCommit commits:5c60742e-515e-4c91-8e71-2daf31fc235c ;
+        dcterms:title "Commit Message 001" ;
+        prov:atTime "2024-05-22T11:57:11.160868-04:00"^^xsd:dateTime ;
+        prov:generated revisions:b8046c2d-780f-46b4-bbd6-39a6530d4b3a ;
+        prov:wasAssociatedWith users:d033e22ae348aeb5660fc2140aec35850c4da997 .
+
+    revisions:b8046c2d-780f-46b4-bbd6-39a6530d4b3a a mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:86845d43-dbbc-4dee-92d8-49bd26be6e51-B ;
+        mcat:deletions deltas:86845d43-dbbc-4dee-92d8-49bd26be6e51-A ;
+        prov:hadPrimarySource revisions:639acffb-0d36-4bd3-8d04-d28ad2341194 .
+}
+
+mobiSpace:setting-management {
+    <http://mobi.com/ontologies/namespace/DefaultOntologyNamespace/907ef2c3-1b7e-420c-949b-4ffe099f2a9a> a namespaces:DefaultOntologyNamespaceApplicationSetting,
+            setting:ApplicationSetting,
+            setting:Setting,
+            owl:Thing ;
+        setting:hasDataValue "https://mobi.com/ontologies/" .
+
+    namespaces:DefaultOntologyNamespaceApplicationSetting a owl:Class,
+            sh:NodeShape ;
+        setting:inGroup namespaces:NamespaceApplicationSettingGroup ;
+        dcterms:description "Default Ontology Namespace" ;
+        rdfs:comment "An Application Setting an organization can have within the Mobi framework that signifies the namespace to be used for created ontology IRIs."@en ;
+        rdfs:subClassOf setting:ApplicationSetting ;
+        sh:property namespaces:DefaultOntologyNamespaceApplicationSettingPropertyShape .
+
+    namespaces:DefaultOntologyNamespaceApplicationSettingPropertyShape a sh:PropertyShape ;
+        sh:datatype xsd:string ;
+        sh:defaultValue "https://mobi.com/ontologies/"@en ;
+        sh:maxCount 1 ;
+        sh:minCount 1 ;
+        sh:path setting:hasDataValue ;
+        sh:pattern "(?:(?:https?|ftp):\\/\\/)(?:\\S+(?::\\S*)?@)?(?:(?!10(?:\\.\\d{1,3}){3})(?!127(?:\\.\\d{1,3}){3})(?!169\\.254(?:\\.\\d{1,3}){2})(?!192\\.168(?:\\.\\d{1,3}){2})(?!172\\.(?:1[6-9]|2\\d|3[0-1])(?:\\.\\d{1,3}){2})(?:[1-9]\\d?|1\\d\\d|2[01]\\d|22[0-3])(?:\\.(?:1?\\d{1,2}|2[0-4]\\d|25[0-5])){2}(?:\\.(?:[1-9]\\d?|1\\d\\d|2[0-4]\\d|25[0-4]))|(?:(?:[a-z\\u00a1-\\uffff0-9]+-?)*[a-z\\u00a1-\\uffff0-9]+)(?:\\.(?:[a-z\\u00a1-\\uffff0-9]+-?)*[a-z\\u00a1-\\uffff0-9]+)*(?:\\.(?:[a-z\\u00a1-\\uffff]{2,})))(?::\\d{2,5})?([\\w\\-\\._~:/?#[\\]@!\\$&'\\(\\)\\*\\+,;=.])+(#|:|\\/)$" ;
+        shaclForm:usesFormField shaclForm:TextInput .
+
+    namespaces:NamespaceApplicationSettingGroup a setting:ApplicationSettingGroup ;
+        rdfs:label "Namespaces"@en .
+}
+
+<https://mobi.com/records#6db8a4d7-6c7e-4eb2-99ad-30b6ef92ae4a/HEAD> {
+    ontologies:EntityChange1 a owl:Ontology ;
+        dcterms:title "EntityChange" .
+
+    <https://mobi.com/ontologies/EntityChange1#Class01> a owl:Class ;
+        dcterms:title "Class01-1" ;
+        rdfs:subClassOf <https://mobi.com/ontologies/EntityChange1#Class10> .
+
+    <https://mobi.com/ontologies/EntityChange1#Class10> a owl:Class ;
+        dcterms:title "Class10-1" .
+}
+
+deltas:2cb648b9-c9d3-4965-b2c5-3accad8b563d-A {
+    ontologies:EntityChange1 a owl:Ontology ;
+        dcterms:title "EntityChange" .
+
+    <https://mobi.com/ontologies/EntityChange1#Class01> a owl:Class ;
+        dcterms:title "Class01" .
+}
+
+deltas:09e5f120-2d0c-4665-9810-1c1abae28312-A {
+    ontologies:InProgressCommitNonMaster a owl:Ontology ;
+        dcterms:title "InProgressCommitNonMaster" .
+}
+
+commits:40b55c72-3979-4a3d-a7d7-e9660c6148f1 {
+    commits:40b55c72-3979-4a3d-a7d7-e9660c6148f1 a mcat:Commit,
+            owl:Thing,
+            prov:Activity ;
+        mcat:baseCommit commits:0509298a-cf40-4855-990e-240054915ab1 ;
+        dcterms:title "Entity IRI + title change" ;
+        prov:atTime "2024-05-24T12:08:04.073593-04:00"^^xsd:dateTime ;
+        prov:generated revisions:02b0ae5b-400b-406e-81ea-6de23533073f ;
+        prov:wasAssociatedWith users:d033e22ae348aeb5660fc2140aec35850c4da997 .
+
+    revisions:02b0ae5b-400b-406e-81ea-6de23533073f a mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:d0377518-dbbb-454f-95b7-d93a5f632705-B ;
+        mcat:deletions deltas:d0377518-dbbb-454f-95b7-d93a5f632705-A ;
+        prov:hadPrimarySource revisions:2cb648b9-c9d3-4965-b2c5-3accad8b563d .
+}
+
+deltas:d990e036-78a5-4330-a8c6-0280a052ef32-A {
+    ontologies:SimpleMergeExample dcterms:contributor "contributor01",
+            "contributor02",
+            "contributor03" .
+
+    <https://mobi.com/ontologies/SimpleMergeExample#Class01> rdfs:subClassOf <https://mobi.com/ontologies/SimpleMergeExample#Class02>,
+            <https://mobi.com/ontologies/SimpleMergeExample#Class03V2> .
+
+    <https://mobi.com/ontologies/SimpleMergeExample#Class100> a owl:Class ;
+        dcterms:title "Class100" .
+
+    <https://mobi.com/ontologies/SimpleMergeExample#Class200> a owl:Class ;
+        dcterms:title "Class200" .
+
+    <https://mobi.com/ontologies/SimpleMergeExample#Class300> a owl:Class ;
+        dcterms:title "Class300" ;
+        rdfs:subClassOf _:n857e92866f1248a5a639611592b8142eb1 .
+
+    <https://mobi.com/ontologies/SimpleMergeExample#someProp> a owl:DatatypeProperty ;
+        dcterms:title "someProp" .
+
+    _:n857e92866f1248a5a639611592b8142eb1 a owl:Restriction ;
+        owl:onProperty <https://mobi.com/ontologies/SimpleMergeExample#someProp> ;
+        owl:someValuesFrom <https://mobi.com/ontologies/SimpleMergeExample#Class200> .
+}
+
+deltas:8fde5b93-7613-4bc4-b6b3-3d7bfcfaa5cb-A {
+    ontologies:SimpleMergeExample a owl:Ontology ;
+        dcterms:title "SimpleMergeExample" .
+}
+
+branches:36fb6dee-803b-4e0a-a9fe-3ee75c3b5557 {
+    branches:36fb6dee-803b-4e0a-a9fe-3ee75c3b5557 a mcat:Branch,
+            mcat:MasterBranch,
+            owl:Thing ;
+        mcat:head commits:c96c28b4-eda4-473b-b5bb-04f005441eec ;
+        mcat:headGraph <https://mobi.com/records#f5b78915-a73d-436f-a565-e0a37d8dcaff/HEAD> ;
+        dcterms:description "The master branch." ;
+        dcterms:issued "2024-05-24T12:45:52.691756-04:00"^^xsd:dateTime ;
+        dcterms:modified "2024-05-24T12:45:52.710906-04:00"^^xsd:dateTime ;
+        dcterms:publisher users:d033e22ae348aeb5660fc2140aec35850c4da997 ;
+        dcterms:title "MASTER" .
+}
+
+commits:6a7ea42f-dea1-45cf-b6a6-4f6048595560 {
+    revisions:f2a64ffb-d1dd-45e9-9bc4-1831496e9b35 a mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:f2a64ffb-d1dd-45e9-9bc4-1831496e9b35-A ;
+        mcat:deletions deltas:f2a64ffb-d1dd-45e9-9bc4-1831496e9b35-B ;
+        prov:hadPrimarySource revisions:d16ca4c5-ff9a-44b9-ad0b-d2da38f7f6c4 .
+
+    commits:6a7ea42f-dea1-45cf-b6a6-4f6048595560 a mcat:Commit,
+            owl:Thing,
+            prov:Activity ;
+        mcat:branchCommit commits:e1da46ae-3a02-412f-b662-30f2fa861d79 ;
+        dcterms:title "AddClass3+4" ;
+        prov:atTime "2024-05-24T12:14:05.164881-04:00"^^xsd:dateTime ;
+        prov:generated revisions:f2a64ffb-d1dd-45e9-9bc4-1831496e9b35 ;
+        prov:wasAssociatedWith users:d033e22ae348aeb5660fc2140aec35850c4da997 .
+}
+
+deltas:02b0ae5b-400b-406e-81ea-6de23533073f-A {
+    <https://mobi.com/ontologies/EntityChange1#Class012> a owl:Class ;
+        dcterms:title "Class012" .
+}
+
+commits:6720e897-500b-4072-b98d-67e1ada0ff12 {
+    revisions:78ae26fb-4ea6-4237-b1c4-ac8416498eeb a mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:83f82787-6c67-4fd4-8701-5cfcdd573435-A ;
+        mcat:deletions deltas:83f82787-6c67-4fd4-8701-5cfcdd573435-B ;
+        prov:hadPrimarySource revisions:801574b9-406b-490c-8191-e503db14f060 .
+
+    commits:6720e897-500b-4072-b98d-67e1ada0ff12 a mcat:Commit,
+            owl:Thing,
+            prov:Activity ;
+        mcat:baseCommit commits:5b3cbee4-7c13-4a71-867f-561f57bd93df ;
+        dcterms:title "hello" ;
+        prov:atTime "2024-05-24T12:46:54.191305-04:00"^^xsd:dateTime ;
+        prov:generated revisions:78ae26fb-4ea6-4237-b1c4-ac8416498eeb ;
+        prov:wasAssociatedWith users:d033e22ae348aeb5660fc2140aec35850c4da997 .
+}
+
+commits:5c60742e-515e-4c91-8e71-2daf31fc235c {
+    commits:5c60742e-515e-4c91-8e71-2daf31fc235c a mcat:Commit,
+            owl:Thing,
+            prov:Activity ;
+        mcat:initialRevision revisions:731e6e04-b118-4836-afd3-bb4448f73335 ;
+        dcterms:title "The initial commit." ;
+        prov:atTime "2024-05-22T11:56:18.947260-04:00"^^xsd:dateTime ;
+        prov:generated revisions:639acffb-0d36-4bd3-8d04-d28ad2341194 ;
+        prov:wasAssociatedWith users:d033e22ae348aeb5660fc2140aec35850c4da997 .
+
+    revisions:731e6e04-b118-4836-afd3-bb4448f73335 a mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:731e6e04-b118-4836-afd3-bb4448f73335-A ;
+        mcat:deletions deltas:731e6e04-b118-4836-afd3-bb4448f73335-B .
+
+    revisions:639acffb-0d36-4bd3-8d04-d28ad2341194 a mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:b8046c2d-780f-46b4-bbd6-39a6530d4b3a-B ;
+        mcat:deletions deltas:b8046c2d-780f-46b4-bbd6-39a6530d4b3a-A .
+}
+
+branches:418dd6dd-6b57-4aae-b54f-b96200af0594 {
+    branches:418dd6dd-6b57-4aae-b54f-b96200af0594 a mcat:Branch,
+            owl:Thing ;
+        mcat:head commits:6720e897-500b-4072-b98d-67e1ada0ff12 ;
+        dcterms:description "" ;
+        dcterms:issued "2024-05-24T12:47:03.423548-04:00"^^xsd:dateTime ;
+        dcterms:modified "2024-05-24T12:47:03.423548-04:00"^^xsd:dateTime ;
+        dcterms:publisher users:d033e22ae348aeb5660fc2140aec35850c4da997 ;
+        dcterms:title "Branch01" .
+}
+
+mobiSpace:catalog-local {
+    mobiSpace:catalog-local a mcat:Catalog,
+            owl:Thing ;
+        dcterms:description "The Mobi Catalog records datasets, ontologies, data mappings, and other resources." ;
+        dcterms:issued "2024-05-22T11:54:54.507816-04:00"^^xsd:dateTime ;
+        dcterms:modified "2024-05-22T11:54:54.507816-04:00"^^xsd:dateTime ;
+        dcterms:title "Mobi Catalog (Local)" .
+}
+
+mobiSpace:usermanagement {
+    roles:admin a user:Role,
+            owl:Thing,
+            foaf:Agent ;
+        dcterms:title "admin" .
+
+    roles:user a user:Role,
+            owl:Thing,
+            foaf:Agent ;
+        dcterms:title "user" .
+
+    users:d033e22ae348aeb5660fc2140aec35850c4da997 a user:User,
+            owl:Thing,
+            geo1:SpatialThing,
+            prov:Agent,
+            foaf:Agent,
+            foaf:Person ;
+        user:hasUserRole roles:admin,
+            roles:user ;
+        user:password "{CRYPT}21232F297A57A5A743894A0E4A801FC3{CRYPT}" ;
+        user:username "admin" .
+}
+
+<https://mobi.com/in-progress-commits#a37d48eb-e4f9-445f-8f11-71f86a814f62> {
+    <https://mobi.com/in-progress-commits#a37d48eb-e4f9-445f-8f11-71f86a814f62> a mcat:Commit,
+            mcat:InProgressCommit,
+            owl:Thing,
+            prov:Activity ;
+        mcat:onVersionedRDFRecord records:f5b78915-a73d-436f-a565-e0a37d8dcaff ;
+        prov:generated revisions:a37d48eb-e4f9-445f-8f11-71f86a814f62 ;
+        prov:wasAssociatedWith users:d033e22ae348aeb5660fc2140aec35850c4da997 .
+
+    revisions:a37d48eb-e4f9-445f-8f11-71f86a814f62 a mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:a37d48eb-e4f9-445f-8f11-71f86a814f62-A ;
+        mcat:deletions deltas:a37d48eb-e4f9-445f-8f11-71f86a814f62-B .
+}
+
+records:f5b78915-a73d-436f-a565-e0a37d8dcaff {
+    records:f5b78915-a73d-436f-a565-e0a37d8dcaff a mcat:Record,
+            mcat:VersionedRDFRecord,
+            mcat:VersionedRecord,
+            ontologyEditor:OntologyRecord,
+            owl:Thing ;
+        mcat:branch branches:36fb6dee-803b-4e0a-a9fe-3ee75c3b5557 ;
+        mcat:catalog mobiSpace:catalog-local ;
+        mcat:masterBranch branches:36fb6dee-803b-4e0a-a9fe-3ee75c3b5557 ;
+        ontologyEditor:ontologyIRI ontologies:InProgressCommit ;
+        dcterms:issued "2024-05-24T12:45:52.691570-04:00"^^xsd:dateTime ;
+        dcterms:modified "2024-05-24T12:45:52.710849-04:00"^^xsd:dateTime ;
+        dcterms:publisher users:d033e22ae348aeb5660fc2140aec35850c4da997 ;
+        dcterms:title "InProgressCommit" .
+}
+
+commits:699bc667-87b2-4086-8a4b-c6be535fac43 {
+    commits:699bc667-87b2-4086-8a4b-c6be535fac43 a mcat:Commit,
+            owl:Thing,
+            prov:Activity ;
+        mcat:initialRevision revisions:a51c55f5-5889-4675-b289-495e8c76c3bd ;
+        dcterms:title "The initial commit." ;
+        prov:atTime "2024-05-24T12:05:45.508743-04:00"^^xsd:dateTime ;
+        prov:generated revisions:975eeed6-ff8f-4c01-b71d-f8e5d31b35f6 ;
+        prov:wasAssociatedWith users:d033e22ae348aeb5660fc2140aec35850c4da997 .
+
+    revisions:a51c55f5-5889-4675-b289-495e8c76c3bd a mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:a51c55f5-5889-4675-b289-495e8c76c3bd-A ;
+        mcat:deletions deltas:a51c55f5-5889-4675-b289-495e8c76c3bd-B .
+
+    revisions:975eeed6-ff8f-4c01-b71d-f8e5d31b35f6 a mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:2cb648b9-c9d3-4965-b2c5-3accad8b563d-B ;
+        mcat:deletions deltas:2cb648b9-c9d3-4965-b2c5-3accad8b563d-A .
+}
+
+commits:bf3979fd-00ee-4378-98e9-ce4b0fa018f7 {
+    revisions:e23dfd4f-bf85-4b02-a119-59cad40ce2ef a mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:12b39cf9-3f6a-4932-a46d-fc5c56eeeab4-B ;
+        mcat:deletions deltas:12b39cf9-3f6a-4932-a46d-fc5c56eeeab4-A ;
+        prov:hadPrimarySource revisions:2b0acbda-0c02-4997-be85-de4cb557d4f3 .
+
+    commits:bf3979fd-00ee-4378-98e9-ce4b0fa018f7 a mcat:Commit,
+            owl:Thing,
+            prov:Activity ;
+        mcat:baseCommit commits:df690842-19a2-463d-810e-8eed8df78b60 ;
+        dcterms:title "class02" ;
+        prov:atTime "2024-05-22T11:58:24.826480-04:00"^^xsd:dateTime ;
+        prov:generated revisions:e23dfd4f-bf85-4b02-a119-59cad40ce2ef ;
+        prov:wasAssociatedWith users:d033e22ae348aeb5660fc2140aec35850c4da997 .
+}
+
+deltas:e23dfd4f-bf85-4b02-a119-59cad40ce2ef-A {
+    <https://mobi.com/ontologies/SimpleMergeExample#Class02> a owl:Class ;
+        dcterms:title "Class02" .
+
+    <https://mobi.com/ontologies/SimpleMergeExample#Class01> a owl:Class ;
+        dcterms:title "Class01" .
+}
+
+branches:5658c039-053e-4987-9ebb-29a7fcd9e46b {
+    branches:5658c039-053e-4987-9ebb-29a7fcd9e46b a mcat:Branch,
+            mcat:MasterBranch,
+            owl:Thing ;
+        mcat:head commits:3b4f2bf0-4523-482c-a8b3-43623db57333 ;
+        mcat:headGraph <https://mobi.com/records#7aac337d-20d5-42ad-9c83-a4ad9267f11c/HEAD> ;
+        dcterms:description "The master branch." ;
+        dcterms:issued "2024-05-22T11:56:18.925196-04:00"^^xsd:dateTime ;
+        dcterms:modified "2024-05-23T15:46:01.642246-04:00"^^xsd:dateTime ;
+        dcterms:publisher users:d033e22ae348aeb5660fc2140aec35850c4da997 ;
+        dcterms:title "MASTER" .
+}
+
+<https://mobi.com/records#3cc2a18f-23b8-4f2c-a5b1-3b4c6aeea63d/HEAD> {
+    ontologies:SimpleMergeExample a owl:Ontology ;
+        dcterms:contributor "contributor01",
+            "contributor02",
+            "contributor03" ;
+        dcterms:title "SimpleMergeExample" .
+
+    <https://mobi.com/ontologies/SimpleMergeExample#Class01> a owl:Class ;
+        dcterms:title "Class01Change" ;
+        rdfs:subClassOf <https://mobi.com/ontologies/SimpleMergeExample#Class02>,
+            <https://mobi.com/ontologies/SimpleMergeExample#Class03V2> .
+
+    <https://mobi.com/ontologies/SimpleMergeExample#Class02> a owl:Class ;
+        dcterms:title "Class02" .
+
+    <https://mobi.com/ontologies/SimpleMergeExample#Class03V2> a owl:Class ;
+        dcterms:title "Class03V2" .
+
+    <https://mobi.com/ontologies/SimpleMergeExample#Class100> a owl:Class ;
+        dcterms:title "Class100" .
+
+    <https://mobi.com/ontologies/SimpleMergeExample#Class200> a owl:Class ;
+        dcterms:title "Class200" .
+
+    <https://mobi.com/ontologies/SimpleMergeExample#Class300> a owl:Class ;
+        dcterms:title "Class300" ;
+        rdfs:subClassOf _:n857e92866f1248a5a639611592b8142eb2 .
+
+    <https://mobi.com/ontologies/SimpleMergeExample#someProp> a owl:DatatypeProperty ;
+        dcterms:title "someProp" .
+
+    _:n857e92866f1248a5a639611592b8142eb2 a owl:Restriction ;
+        owl:onProperty <https://mobi.com/ontologies/SimpleMergeExample#someProp> ;
+        owl:someValuesFrom <https://mobi.com/ontologies/SimpleMergeExample#Class100> .
+}
+
+recordPolicy:https%3A%2F%2Fmobi.com%2Frecords%234de737e8-13dd-4397-9995-d87d719cb646 {
+    recordPolicy:https%3A%2F%2Fmobi.com%2Frecords%234de737e8-13dd-4397-9995-d87d719cb646 a documents:BinaryFile,
+            policy:Policy,
+            policy:PolicyFile,
+            owl:Thing ;
+        documents:checksum """�Oj�(X޽
+�r��@	���[h��3ֈk��]""" ;
+        documents:fileName "file:///Users/mannyrivera/git-old/mobi/mobi-distribution-2.6.0-SNAPSHOT/data/virtualFiles/policies/39/be/339574100d93.xml" ;
+        documents:retrievalURL <file:///Users/mannyrivera/git-old/mobi/mobi-distribution-2.6.0-SNAPSHOT/data/virtualFiles/policies/39/be/339574100d93> ;
+        documents:size 9.585e+03 ;
+        policy:relatedResource records:4de737e8-13dd-4397-9995-d87d719cb646 .
+}
+
+deltas:78ae26fb-4ea6-4237-b1c4-ac8416498eeb-A {
+    <https://mobi.com/ontologies/InProgressCommitNonMaster#Hello> a owl:Class ;
+        dcterms:title "Hello" .
+}
+
+deltas:04b8b095-7d0b-461c-bc03-79f4223278d0-B {
+    <https://mobi.com/ontologies/SimpleMergeExample#Class01> dcterms:title "Class01" .
+}
+
+<http://mobi.com/policies/policy/record/https%3A%2F%2Fmobi.com%2Frecords%237aac337d-20d5-42ad-9c83-a4ad9267f11c> {
+    <http://mobi.com/policies/policy/record/https%3A%2F%2Fmobi.com%2Frecords%237aac337d-20d5-42ad-9c83-a4ad9267f11c> a documents:BinaryFile,
+            policy:Policy,
+            policy:PolicyFile,
+            owl:Thing ;
+        documents:checksum "Ȭ�?����6��ۧ��C���W��k�D-+" ;
+        documents:fileName "file:///Users/mannyrivera/git-old/mobi/mobi-distribution-2.6.0-SNAPSHOT/data/virtualFiles/policies/92/d5/dc4f8e0a5db3.xml" ;
+        documents:retrievalURL <file:///Users/mannyrivera/git-old/mobi/mobi-distribution-2.6.0-SNAPSHOT/data/virtualFiles/policies/92/d5/dc4f8e0a5db3> ;
+        documents:size 4.155e+03 ;
+        policy:relatedResource recordPolicy:https%3A%2F%2Fmobi.com%2Frecords%237aac337d-20d5-42ad-9c83-a4ad9267f11c .
+}
+
+commits:9dfbdc23-f74e-402a-88e0-a2a98a414686 {
+    commits:9dfbdc23-f74e-402a-88e0-a2a98a414686 a mcat:Commit,
+            owl:Thing,
+            prov:Activity ;
+        mcat:baseCommit commits:40b55c72-3979-4a3d-a7d7-e9660c6148f1 ;
+        dcterms:title "Changed" ;
+        prov:atTime "2024-05-24T12:08:55.819119-04:00"^^xsd:dateTime ;
+        prov:generated revisions:d0377518-dbbb-454f-95b7-d93a5f632705 ;
+        prov:influenced revisions:a73cc3b0-5cda-49c6-8f95-987d605598ef ;
+        prov:wasAssociatedWith users:d033e22ae348aeb5660fc2140aec35850c4da997 .
+
+    revisions:a73cc3b0-5cda-49c6-8f95-987d605598ef a mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:d16ca4c5-ff9a-44b9-ad0b-d2da38f7f6c4-B ;
+        mcat:deletions deltas:d16ca4c5-ff9a-44b9-ad0b-d2da38f7f6c4-A .
+
+    revisions:d0377518-dbbb-454f-95b7-d93a5f632705 a mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:e289609c-b6fc-4e23-8b1f-8f898fa7fbbb-B ;
+        mcat:deletions deltas:e289609c-b6fc-4e23-8b1f-8f898fa7fbbb-A ;
+        prov:hadPrimarySource revisions:02b0ae5b-400b-406e-81ea-6de23533073f .
+}
+
+

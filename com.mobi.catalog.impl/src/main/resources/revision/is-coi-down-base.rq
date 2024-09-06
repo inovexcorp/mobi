@@ -1,0 +1,5 @@
+PREFIX mcat: <http://mobi.com/ontologies/catalog#>
+
+ASK {
+    ?mergeCommit (mcat:baseCommit|mcat:auxiliaryCommit)+ ?commit .
+}

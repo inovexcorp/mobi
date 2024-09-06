@@ -1,0 +1,32 @@
+====== commit: https://mobi.com/commits#5c60742e-515e-4c91-8e71-2daf31fc235c ======
+https://mobi.com/ontologies/Simple, http://purl.org/dc/terms/description, Description, null
+https://mobi.com/ontologies/Simple, http://purl.org/dc/terms/title, Simple, null
+https://mobi.com/ontologies/Simple, http://www.w3.org/1999/02/22-rdf-syntax-ns#type, http://www.w3.org/2002/07/owl#Ontology, null
+
+
+====== commit: https://mobi.com/commits#2cf9b3e3-ddbb-41bb-b9cd-c8401cf2aaa1 ======
+https://mobi.com/ontologies/Simple#SimpleClass01, http://purl.org/dc/terms/description, Description SimpleClass01, null
+https://mobi.com/ontologies/Simple#SimpleClass01, http://purl.org/dc/terms/title, SimpleClass01, null
+https://mobi.com/ontologies/Simple#SimpleClass01, http://www.w3.org/1999/02/22-rdf-syntax-ns#type, http://www.w3.org/2002/07/owl#Class, null
+https://mobi.com/ontologies/Simple#SimpleClass02, http://purl.org/dc/terms/description, SimpleClass02 Description, null
+https://mobi.com/ontologies/Simple#SimpleClass02, http://purl.org/dc/terms/title, SimpleClass02, null
+https://mobi.com/ontologies/Simple#SimpleClass02, http://www.w3.org/1999/02/22-rdf-syntax-ns#type, http://www.w3.org/2002/07/owl#Class, null
+https://mobi.com/ontologies/Simple#SimpleClass02, http://www.w3.org/2000/01/rdf-schema#subClassOf, https://mobi.com/ontologies/Simple#SimpleClass01, null
+https://mobi.com/ontologies/Simple, http://purl.org/dc/terms/description, Description, null
+https://mobi.com/ontologies/Simple, http://purl.org/dc/terms/title, Simple, null
+https://mobi.com/ontologies/Simple, http://www.w3.org/1999/02/22-rdf-syntax-ns#type, http://www.w3.org/2002/07/owl#Ontology, null
+
+
+====== commit: https://mobi.com/commits#3b4f2bf0-4523-482c-a8b3-43623db57333 ======
+https://mobi.com/ontologies/Simple#SimpleClass01, http://purl.org/dc/terms/description, Description SimpleClass01, null
+https://mobi.com/ontologies/Simple#SimpleClass01, http://purl.org/dc/terms/title, SimpleClass01, null
+https://mobi.com/ontologies/Simple#SimpleClass01, http://www.w3.org/1999/02/22-rdf-syntax-ns#type, http://www.w3.org/2002/07/owl#Class, null
+https://mobi.com/ontologies/Simple#SimpleClass02, http://purl.org/dc/terms/description, SimpleClass02 Description, null
+https://mobi.com/ontologies/Simple#SimpleClass02, http://purl.org/dc/terms/title, SimpleClass02, null
+https://mobi.com/ontologies/Simple#SimpleClass02, http://www.w3.org/1999/02/22-rdf-syntax-ns#type, http://www.w3.org/2002/07/owl#Class, null
+https://mobi.com/ontologies/Simple#SimpleClass02, http://www.w3.org/2000/01/rdf-schema#subClassOf, https://mobi.com/ontologies/Simple#SimpleClass01, null
+https://mobi.com/ontologies/SimpleD, http://purl.org/dc/terms/description, Description, null
+https://mobi.com/ontologies/SimpleD, http://purl.org/dc/terms/title, Simple1, null
+https://mobi.com/ontologies/SimpleD, http://www.w3.org/1999/02/22-rdf-syntax-ns#type, http://www.w3.org/2002/07/owl#Ontology, null
+
+

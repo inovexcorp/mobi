@@ -1,27 +1,21 @@
-<https://mobi.com/additions#98a7504f-e16d-495d-bbb9-a332313e2c26> {
-  <http://test.com/workflows-example#SuccessWorkflow> a <http://mobi.solutions/ontologies/workflows#Workflow>;
-    <http://mobi.solutions/ontologies/workflows#hasAction> <http://test.com/workflows-example#SuccessWorkflowAction> .
-  
-  <http://test.com/workflows-example#SuccessWorkflowAction> a <http://mobi.solutions/ontologies/workflows#Action>,
-      <http://mobi.solutions/ontologies/workflows#TestAction>;
-    <http://mobi.solutions/ontologies/workflows#testMessage> "This is a test from Success Workflow Test Action" .
-}
+
 
 <https://mobi.com/branches#bff88e31-b6fe-4e82-82b8-81b1ddc49bdd> {
   <https://mobi.com/branches#bff88e31-b6fe-4e82-82b8-81b1ddc49bdd> a <http://www.w3.org/2002/07/owl#Thing>,
-      <http://mobi.com/ontologies/catalog#Branch>;
+     <http://mobi.com/ontologies/catalog#Branch>, <http://mobi.com/ontologies/catalog#MasterBranch>;
     <http://purl.org/dc/terms/title> "MASTER";
     <http://purl.org/dc/terms/description> "The master branch.";
     <http://purl.org/dc/terms/issued> "2024-04-18T10:24:08.814127-04:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
     <http://purl.org/dc/terms/modified> "2024-04-18T10:24:08.870115-04:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+    <http://mobi.com/ontologies/catalog#head> <https://mobi.com/commits#4d59f4d1bf6921b092eee2e928208dc32e8a7477>;
     <http://purl.org/dc/terms/publisher> <http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997>;
-    <http://mobi.com/ontologies/catalog#head> <https://mobi.com/commits#4d59f4d1bf6921b092eee2e928208dc32e8a7477> .
+    <http://mobi.com/ontologies/catalog#headGraph> <https://mobi.com/records#b1f0c202-f7a7-49ed-8bcd-9da21f62992e/HEAD> .
 }
 
 <https://mobi.com/records#7237aaa1-e20a-4a56-baf9-dd6c0ec722c9> {
   <https://mobi.com/records#7237aaa1-e20a-4a56-baf9-dd6c0ec722c9> a <http://www.w3.org/2002/07/owl#Thing>,
-      <http://mobi.solutions/ontologies/workflows#WorkflowRecord>, <http://mobi.com/ontologies/catalog#VersionedRecord>,
-      <http://mobi.com/ontologies/catalog#VersionedRDFRecord>, <http://mobi.com/ontologies/catalog#Record>;
+      <http://mobi.com/ontologies/catalog#VersionedRecord>, <http://mobi.com/ontologies/catalog#VersionedRDFRecord>,
+      <http://mobi.com/ontologies/catalog#Record>, <http://mobi.solutions/ontologies/workflows#WorkflowRecord>;
     <http://purl.org/dc/terms/title> "Success Workflow";
     <http://purl.org/dc/terms/issued> "2024-04-18T10:24:08.813367-04:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
     <http://purl.org/dc/terms/modified> "2024-04-18T10:24:14.835694-04:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
@@ -35,34 +29,62 @@
 }
 
 <https://mobi.com/commits#272507f7d20e7d7ba5446f9d7c0fc6549f9aa84c> {
-  <https://mobi.com/revisions#49a64990-551e-4b47-84fb-064ea3e3c46c> a <http://www.w3.org/2002/07/owl#Thing>,
-      <http://mobi.com/ontologies/catalog#Revision>, <http://www.w3.org/ns/prov#Entity>;
-    <http://mobi.com/ontologies/catalog#additions> <https://mobi.com/additions#49a64990-551e-4b47-84fb-064ea3e3c46c>;
-    <http://mobi.com/ontologies/catalog#deletions> <https://mobi.com/deletions#49a64990-551e-4b47-84fb-064ea3e3c46c> .
-  
   <https://mobi.com/commits#272507f7d20e7d7ba5446f9d7c0fc6549f9aa84c> a <http://www.w3.org/2002/07/owl#Thing>,
       <http://mobi.com/ontologies/catalog#Commit>, <http://www.w3.org/ns/prov#Activity>;
     <http://purl.org/dc/terms/title> "The initial commit.";
+    <http://www.w3.org/ns/prov#generated> <https://mobi.com/revisions#585af18b-b8e8-4b78-9b76-4647ff1195cc>;
+    <http://www.w3.org/ns/prov#atTime> "2024-04-18T10:21:56.430124-04:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
     <http://www.w3.org/ns/prov#wasAssociatedWith> <http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997>;
-    <http://www.w3.org/ns/prov#generated> <https://mobi.com/revisions#49a64990-551e-4b47-84fb-064ea3e3c46c>;
-    <http://www.w3.org/ns/prov#atTime> "2024-04-18T10:21:56.430124-04:00"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
+    <http://mobi.com/ontologies/catalog#initialRevision> <https://mobi.com/revisions#30bfae3d-dad4-4458-a5ce-2fbe61cd6f02> .
+
+  <https://mobi.com/revisions#585af18b-b8e8-4b78-9b76-4647ff1195cc> a <http://www.w3.org/2002/07/owl#Thing>,
+      <http://mobi.com/ontologies/catalog#Revision>, <http://www.w3.org/ns/prov#Entity>;
+    <http://mobi.com/ontologies/catalog#additions> <https://mobi.com/deltas#585af18b-b8e8-4b78-9b76-4647ff1195cc-A>;
+    <http://mobi.com/ontologies/catalog#deletions> <https://mobi.com/deltas#585af18b-b8e8-4b78-9b76-4647ff1195cc-B> .
+
+  <https://mobi.com/revisions#30bfae3d-dad4-4458-a5ce-2fbe61cd6f02> a <http://www.w3.org/2002/07/owl#Thing>,
+      <http://mobi.com/ontologies/catalog#Revision>, <http://www.w3.org/ns/prov#Entity>;
+    <http://mobi.com/ontologies/catalog#additions> <https://mobi.com/deltas#30bfae3d-dad4-4458-a5ce-2fbe61cd6f02-A>;
+    <http://mobi.com/ontologies/catalog#deletions> <https://mobi.com/deltas#30bfae3d-dad4-4458-a5ce-2fbe61cd6f02-B> .
+}
+
+<https://mobi.com/deltas#30bfae3d-dad4-4458-a5ce-2fbe61cd6f02-A> {
+  <http://mobi.solutions/ontologies/workflows/NeverRunWorkflow> a <http://mobi.solutions/ontologies/workflows#Workflow>;
+    <http://mobi.solutions/ontologies/workflows#hasAction> <http://mobi.solutions/ontologies/workflows/NeverRunWorkflow/action> .
+
+  <http://mobi.solutions/ontologies/workflows/NeverRunWorkflow/action> a <http://mobi.solutions/ontologies/workflows#Action>,
+                                                                           <http://mobi.solutions/ontologies/workflows#TestAction>;
+    <http://mobi.solutions/ontologies/workflows#testMessage> "This is a test message from http://mobi.solutions/ontologies/workflows/NeverRunWorkflow/action" .
 }
 
 <https://mobi.com/branches#b105631e-578f-48db-b15b-cb04fb1ca7c0> {
   <https://mobi.com/branches#b105631e-578f-48db-b15b-cb04fb1ca7c0> a <http://www.w3.org/2002/07/owl#Thing>,
-      <http://mobi.com/ontologies/catalog#Branch>;
+     <http://mobi.com/ontologies/catalog#Branch>, <http://mobi.com/ontologies/catalog#MasterBranch>;
     <http://purl.org/dc/terms/title> "MASTER";
     <http://purl.org/dc/terms/description> "The master branch.";
     <http://purl.org/dc/terms/issued> "2024-04-18T10:21:56.353483-04:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
     <http://purl.org/dc/terms/modified> "2024-04-18T10:21:56.458192-04:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+    <http://mobi.com/ontologies/catalog#head> <https://mobi.com/commits#272507f7d20e7d7ba5446f9d7c0fc6549f9aa84c>;
     <http://purl.org/dc/terms/publisher> <http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997>;
-    <http://mobi.com/ontologies/catalog#head> <https://mobi.com/commits#272507f7d20e7d7ba5446f9d7c0fc6549f9aa84c> .
+    <http://mobi.com/ontologies/catalog#headGraph> <https://mobi.com/records#f29eed8e-3d84-424a-b7bb-40eab654580d/HEAD> .
+}
+
+<https://mobi.com/branches#2575f9bc-7083-43c7-8384-ab95202eeca6> {
+  <https://mobi.com/branches#2575f9bc-7083-43c7-8384-ab95202eeca6> a <http://www.w3.org/2002/07/owl#Thing>,
+      <http://mobi.com/ontologies/catalog#Branch>, <http://mobi.com/ontologies/catalog#MasterBranch>;
+    <http://purl.org/dc/terms/title> "MASTER";
+    <http://purl.org/dc/terms/description> "The master branch.";
+    <http://purl.org/dc/terms/issued> "2024-04-18T10:26:09.808777-04:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+    <http://purl.org/dc/terms/modified> "2024-04-18T10:26:09.872992-04:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+    <http://mobi.com/ontologies/catalog#head> <https://mobi.com/commits#d4d5fd8f5e079d14fc5728429fcf81ae48b772c0>;
+    <http://purl.org/dc/terms/publisher> <http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997>;
+    <http://mobi.com/ontologies/catalog#headGraph> <https://mobi.com/records#ba407ad6-3a4e-49ed-bbeb-56acfd32b9f6/HEAD> .
 }
 
 <https://mobi.com/records#0faecb23-c84c-4360-ac17-43bab71596e1> {
   <https://mobi.com/records#0faecb23-c84c-4360-ac17-43bab71596e1> a <http://www.w3.org/2002/07/owl#Thing>,
-      <http://mobi.solutions/ontologies/workflows#WorkflowRecord>, <http://mobi.com/ontologies/catalog#VersionedRecord>,
-      <http://mobi.com/ontologies/catalog#VersionedRDFRecord>, <http://mobi.com/ontologies/catalog#Record>;
+      <http://mobi.com/ontologies/catalog#VersionedRecord>, <http://mobi.com/ontologies/catalog#VersionedRDFRecord>,
+      <http://mobi.com/ontologies/catalog#Record>, <http://mobi.solutions/ontologies/workflows#WorkflowRecord>;
     <http://purl.org/dc/terms/title> "Never Run Workflow";
     <http://purl.org/dc/terms/issued> "2024-04-18T10:21:56.352131-04:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
     <http://purl.org/dc/terms/modified> "2024-04-18T10:21:56.456573-04:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
@@ -74,24 +96,53 @@
     <http://mobi.solutions/ontologies/workflows#active> false .
 }
 
-<https://mobi.com/branches#2575f9bc-7083-43c7-8384-ab95202eeca6> {
-  <https://mobi.com/branches#2575f9bc-7083-43c7-8384-ab95202eeca6> a <http://www.w3.org/2002/07/owl#Thing>,
-      <http://mobi.com/ontologies/catalog#Branch>;
-    <http://purl.org/dc/terms/title> "MASTER";
-    <http://purl.org/dc/terms/description> "The master branch.";
-    <http://purl.org/dc/terms/issued> "2024-04-18T10:26:09.808777-04:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
-    <http://purl.org/dc/terms/modified> "2024-04-18T10:26:09.872992-04:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
-    <http://purl.org/dc/terms/publisher> <http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997>;
-    <http://mobi.com/ontologies/catalog#head> <https://mobi.com/commits#d4d5fd8f5e079d14fc5728429fcf81ae48b772c0> .
-}
-
-<https://mobi.com/additions#49a64990-551e-4b47-84fb-064ea3e3c46c> {
+<https://mobi.com/records#f29eed8e-3d84-424a-b7bb-40eab654580d/HEAD> {
   <http://mobi.solutions/ontologies/workflows/NeverRunWorkflow> a <http://mobi.solutions/ontologies/workflows#Workflow>;
     <http://mobi.solutions/ontologies/workflows#hasAction> <http://mobi.solutions/ontologies/workflows/NeverRunWorkflow/action> .
-  
+
   <http://mobi.solutions/ontologies/workflows/NeverRunWorkflow/action> a <http://mobi.solutions/ontologies/workflows#Action>,
-      <http://mobi.solutions/ontologies/workflows#TestAction>;
+     <http://mobi.solutions/ontologies/workflows#TestAction>;
     <http://mobi.solutions/ontologies/workflows#testMessage> "This is a test message from http://mobi.solutions/ontologies/workflows/NeverRunWorkflow/action" .
+}
+
+<https://mobi.com/deltas#231b3bf4-78c3-479c-bf0a-a74d06fc4214-A> {
+  <http://test.com/workflows-example#WorkflowA> a <http://mobi.solutions/ontologies/workflows#Workflow>;
+    <http://mobi.solutions/ontologies/workflows#hasAction> <http://test.com/workflows-example#WorkflowAAction1>,
+       <http://test.com/workflows-example#WorkflowAAction2>, <http://test.com/workflows-example#WorkflowAHTTPAction1>,
+       <http://test.com/workflows-example#WorkflowAHTTPAction2> .
+
+  <http://test.com/workflows-example#WorkflowAAction1> a <http://mobi.solutions/ontologies/workflows#Action>,
+                                                           <http://mobi.solutions/ontologies/workflows#TestAction>;
+    <http://mobi.solutions/ontologies/workflows#testMessage> "This is a test from Workflow A Action 1" .
+
+  <http://test.com/workflows-example#WorkflowAAction2> a <http://mobi.solutions/ontologies/workflows#Action>,
+                                                           <http://mobi.solutions/ontologies/workflows#TestAction>;
+    <http://mobi.solutions/ontologies/workflows#testMessage> "This is a test from Workflow A Action 2" .
+
+  <http://test.com/workflows-example#WorkflowAHTTPAction1> a <http://mobi.solutions/ontologies/workflows#Action>,
+                                                               <http://mobi.solutions/ontologies/workflows#HTTPRequestAction>;
+    <http://mobi.solutions/ontologies/workflows#hasHttpUrl> "https://jsonplaceholder.typicode.com/posts";
+    <http://mobi.solutions/ontologies/workflows#hasHttpMethod> "POST";
+    <http://mobi.solutions/ontologies/workflows#hasHttpBody> "{\\\\\"title\\\\\": \\\\\"foo\\\\\", \\\\\"body\\\\\": \\\\\"bar\\\\\",\\\\\"userId\\\\\": 1}";
+    <http://mobi.solutions/ontologies/workflows#hasHttpMediaType> "application/json";
+    <http://mobi.solutions/ontologies/workflows#hasHttpTimeout> 45 .
+
+  <http://test.com/workflows-example#WorkflowAHTTPAction2> a <http://mobi.solutions/ontologies/workflows#Action>,
+                                                               <http://mobi.solutions/ontologies/workflows#HTTPRequestAction>;
+    <http://mobi.solutions/ontologies/workflows#hasHttpUrl> "https://jsonplaceholder.typicode.com/postsssssssss";
+    <http://mobi.solutions/ontologies/workflows#hasHttpMethod> "POST";
+    <http://mobi.solutions/ontologies/workflows#hasHttpBody> "{\\\\\"title\\\\\": \\\\\"foo\\\\\", \\\\\"body\\\\\": \\\\\"bar\\\\\",\\\\\"userId\\\\\": 1}";
+    <http://mobi.solutions/ontologies/workflows#hasHttpMediaType> "application/json";
+    <http://mobi.solutions/ontologies/workflows#hasHttpTimeout> 45 .
+}
+
+<https://mobi.com/deltas#0af04982-0376-4767-ac00-3934140c6ffc-A> {
+  <http://test.com/workflows-example#SuccessWorkflow> a <http://mobi.solutions/ontologies/workflows#Workflow>;
+    <http://mobi.solutions/ontologies/workflows#hasAction> <http://test.com/workflows-example#SuccessWorkflowAction> .
+
+  <http://test.com/workflows-example#SuccessWorkflowAction> a <http://mobi.solutions/ontologies/workflows#Action>,
+                                                                <http://mobi.solutions/ontologies/workflows#TestAction>;
+    <http://mobi.solutions/ontologies/workflows#testMessage> "This is a test from Success Workflow Test Action" .
 }
 
 <https://mobi.com/records#c35e4f16-12ff-432c-b700-63290034b291> {
@@ -110,48 +161,20 @@
     <http://mobi.solutions/ontologies/workflows#latestActivity> <http://mobi.com/activities/b735189c-01d4-4049-a85f-c5b619824a2a> .
 }
 
-<https://mobi.com/commits#4d59f4d1bf6921b092eee2e928208dc32e8a7477> {
-  <https://mobi.com/revisions#98a7504f-e16d-495d-bbb9-a332313e2c26> a <http://www.w3.org/2002/07/owl#Thing>,
-      <http://mobi.com/ontologies/catalog#Revision>, <http://www.w3.org/ns/prov#Entity>;
-    <http://mobi.com/ontologies/catalog#additions> <https://mobi.com/additions#98a7504f-e16d-495d-bbb9-a332313e2c26>;
-    <http://mobi.com/ontologies/catalog#deletions> <https://mobi.com/deletions#98a7504f-e16d-495d-bbb9-a332313e2c26> .
-  
-  <https://mobi.com/commits#4d59f4d1bf6921b092eee2e928208dc32e8a7477> a <http://www.w3.org/2002/07/owl#Thing>,
-      <http://mobi.com/ontologies/catalog#Commit>, <http://www.w3.org/ns/prov#Activity>;
-    <http://purl.org/dc/terms/title> "The initial commit.";
-    <http://www.w3.org/ns/prov#wasAssociatedWith> <http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997>;
-    <http://www.w3.org/ns/prov#generated> <https://mobi.com/revisions#98a7504f-e16d-495d-bbb9-a332313e2c26>;
-    <http://www.w3.org/ns/prov#atTime> "2024-04-18T10:24:08.864752-04:00"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
-}
-
-<https://mobi.com/commits#d4d5fd8f5e079d14fc5728429fcf81ae48b772c0> {
-  <https://mobi.com/revisions#239d14dc-07c2-45fa-866b-695a33f76824> a <http://www.w3.org/2002/07/owl#Thing>,
-      <http://mobi.com/ontologies/catalog#Revision>, <http://www.w3.org/ns/prov#Entity>;
-    <http://mobi.com/ontologies/catalog#additions> <https://mobi.com/additions#239d14dc-07c2-45fa-866b-695a33f76824>;
-    <http://mobi.com/ontologies/catalog#deletions> <https://mobi.com/deletions#239d14dc-07c2-45fa-866b-695a33f76824> .
-  
-  <https://mobi.com/commits#d4d5fd8f5e079d14fc5728429fcf81ae48b772c0> a <http://www.w3.org/2002/07/owl#Thing>,
-      <http://mobi.com/ontologies/catalog#Commit>, <http://www.w3.org/ns/prov#Activity>;
-    <http://purl.org/dc/terms/title> "The initial commit.";
-    <http://www.w3.org/ns/prov#wasAssociatedWith> <http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997>;
-    <http://www.w3.org/ns/prov#generated> <https://mobi.com/revisions#239d14dc-07c2-45fa-866b-695a33f76824>;
-    <http://www.w3.org/ns/prov#atTime> "2024-04-18T10:26:09.869547-04:00"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
-}
-
-<https://mobi.com/additions#239d14dc-07c2-45fa-866b-695a33f76824> {
+<https://mobi.com/records#ba407ad6-3a4e-49ed-bbeb-56acfd32b9f6/HEAD> {
   <http://test.com/workflows-example#WorkflowA> a <http://mobi.solutions/ontologies/workflows#Workflow>;
     <http://mobi.solutions/ontologies/workflows#hasAction> <http://test.com/workflows-example#WorkflowAAction1>,
       <http://test.com/workflows-example#WorkflowAAction2>, <http://test.com/workflows-example#WorkflowAHTTPAction1>,
       <http://test.com/workflows-example#WorkflowAHTTPAction2> .
-  
+
   <http://test.com/workflows-example#WorkflowAAction1> a <http://mobi.solutions/ontologies/workflows#Action>,
       <http://mobi.solutions/ontologies/workflows#TestAction>;
     <http://mobi.solutions/ontologies/workflows#testMessage> "This is a test from Workflow A Action 1" .
-  
+
   <http://test.com/workflows-example#WorkflowAAction2> a <http://mobi.solutions/ontologies/workflows#Action>,
       <http://mobi.solutions/ontologies/workflows#TestAction>;
     <http://mobi.solutions/ontologies/workflows#testMessage> "This is a test from Workflow A Action 2" .
-  
+
   <http://test.com/workflows-example#WorkflowAHTTPAction1> a <http://mobi.solutions/ontologies/workflows#Action>,
       <http://mobi.solutions/ontologies/workflows#HTTPRequestAction>;
     <http://mobi.solutions/ontologies/workflows#hasHttpUrl> "https://jsonplaceholder.typicode.com/posts";
@@ -159,7 +182,7 @@
     <http://mobi.solutions/ontologies/workflows#hasHttpBody> "{\\\\\"title\\\\\": \\\\\"foo\\\\\", \\\\\"body\\\\\": \\\\\"bar\\\\\",\\\\\"userId\\\\\": 1}";
     <http://mobi.solutions/ontologies/workflows#hasHttpMediaType> "application/json";
     <http://mobi.solutions/ontologies/workflows#hasHttpTimeout> 45 .
-  
+
   <http://test.com/workflows-example#WorkflowAHTTPAction2> a <http://mobi.solutions/ontologies/workflows#Action>,
       <http://mobi.solutions/ontologies/workflows#HTTPRequestAction>;
     <http://mobi.solutions/ontologies/workflows#hasHttpUrl> "https://jsonplaceholder.typicode.com/postsssssssss";
@@ -167,6 +190,55 @@
     <http://mobi.solutions/ontologies/workflows#hasHttpBody> "{\\\\\"title\\\\\": \\\\\"foo\\\\\", \\\\\"body\\\\\": \\\\\"bar\\\\\",\\\\\"userId\\\\\": 1}";
     <http://mobi.solutions/ontologies/workflows#hasHttpMediaType> "application/json";
     <http://mobi.solutions/ontologies/workflows#hasHttpTimeout> 45 .
+}
+
+<https://mobi.com/commits#4d59f4d1bf6921b092eee2e928208dc32e8a7477> {
+  <https://mobi.com/commits#4d59f4d1bf6921b092eee2e928208dc32e8a7477> a <http://www.w3.org/2002/07/owl#Thing>,
+                                                                          <http://mobi.com/ontologies/catalog#Commit>, <http://www.w3.org/ns/prov#Activity>;
+    <http://purl.org/dc/terms/title> "The initial commit.";
+    <http://www.w3.org/ns/prov#generated> <https://mobi.com/revisions#300be21b-baf1-4425-98d9-96feb54998cc>;
+    <http://www.w3.org/ns/prov#atTime> "2024-04-18T10:24:08.864752-04:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+    <http://www.w3.org/ns/prov#wasAssociatedWith> <http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997>;
+    <http://mobi.com/ontologies/catalog#initialRevision> <https://mobi.com/revisions#0af04982-0376-4767-ac00-3934140c6ffc> .
+
+  <https://mobi.com/revisions#300be21b-baf1-4425-98d9-96feb54998cc> a <http://www.w3.org/2002/07/owl#Thing>,
+                                                                        <http://mobi.com/ontologies/catalog#Revision>, <http://www.w3.org/ns/prov#Entity>;
+    <http://mobi.com/ontologies/catalog#additions> <https://mobi.com/deltas#300be21b-baf1-4425-98d9-96feb54998cc-A>;
+    <http://mobi.com/ontologies/catalog#deletions> <https://mobi.com/deltas#300be21b-baf1-4425-98d9-96feb54998cc-B> .
+
+  <https://mobi.com/revisions#0af04982-0376-4767-ac00-3934140c6ffc> a <http://www.w3.org/2002/07/owl#Thing>,
+                                                                        <http://mobi.com/ontologies/catalog#Revision>, <http://www.w3.org/ns/prov#Entity>;
+    <http://mobi.com/ontologies/catalog#additions> <https://mobi.com/deltas#0af04982-0376-4767-ac00-3934140c6ffc-A>;
+    <http://mobi.com/ontologies/catalog#deletions> <https://mobi.com/deltas#0af04982-0376-4767-ac00-3934140c6ffc-B> .
+}
+
+<https://mobi.com/commits#d4d5fd8f5e079d14fc5728429fcf81ae48b772c0> {
+  <https://mobi.com/commits#d4d5fd8f5e079d14fc5728429fcf81ae48b772c0> a <http://www.w3.org/2002/07/owl#Thing>,
+                                                                          <http://mobi.com/ontologies/catalog#Commit>, <http://www.w3.org/ns/prov#Activity>;
+    <http://purl.org/dc/terms/title> "The initial commit.";
+    <http://www.w3.org/ns/prov#generated> <https://mobi.com/revisions#f7a0fa6e-c82a-421e-af31-c6ecb67d282c>;
+    <http://www.w3.org/ns/prov#atTime> "2024-04-18T10:26:09.869547-04:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+    <http://www.w3.org/ns/prov#wasAssociatedWith> <http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997>;
+    <http://mobi.com/ontologies/catalog#initialRevision> <https://mobi.com/revisions#231b3bf4-78c3-479c-bf0a-a74d06fc4214> .
+
+  <https://mobi.com/revisions#f7a0fa6e-c82a-421e-af31-c6ecb67d282c> a <http://www.w3.org/2002/07/owl#Thing>,
+                                                                        <http://mobi.com/ontologies/catalog#Revision>, <http://www.w3.org/ns/prov#Entity>;
+    <http://mobi.com/ontologies/catalog#additions> <https://mobi.com/deltas#f7a0fa6e-c82a-421e-af31-c6ecb67d282c-A>;
+    <http://mobi.com/ontologies/catalog#deletions> <https://mobi.com/deltas#f7a0fa6e-c82a-421e-af31-c6ecb67d282c-B> .
+
+  <https://mobi.com/revisions#231b3bf4-78c3-479c-bf0a-a74d06fc4214> a <http://www.w3.org/2002/07/owl#Thing>,
+                                                                        <http://mobi.com/ontologies/catalog#Revision>, <http://www.w3.org/ns/prov#Entity>;
+    <http://mobi.com/ontologies/catalog#additions> <https://mobi.com/deltas#231b3bf4-78c3-479c-bf0a-a74d06fc4214-A>;
+    <http://mobi.com/ontologies/catalog#deletions> <https://mobi.com/deltas#231b3bf4-78c3-479c-bf0a-a74d06fc4214-B> .
+}
+
+<https://mobi.com/records#b1f0c202-f7a7-49ed-8bcd-9da21f62992e/HEAD> {
+  <http://test.com/workflows-example#SuccessWorkflow> a <http://mobi.solutions/ontologies/workflows#Workflow>;
+    <http://mobi.solutions/ontologies/workflows#hasAction> <http://test.com/workflows-example#SuccessWorkflowAction> .
+
+  <http://test.com/workflows-example#SuccessWorkflowAction> a <http://mobi.solutions/ontologies/workflows#Action>,
+                                                                <http://mobi.solutions/ontologies/workflows#TestAction>;
+    <http://mobi.solutions/ontologies/workflows#testMessage> "This is a test from Success Workflow Test Action" .
 }
 
 <https://mobi.com/records#7237aaa1-e20a-4a56-baf9-dd6c0ec722c4> {

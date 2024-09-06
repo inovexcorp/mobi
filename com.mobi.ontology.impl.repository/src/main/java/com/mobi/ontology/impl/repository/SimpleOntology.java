@@ -1541,7 +1541,7 @@ public class SimpleOntology implements Ontology {
                 conn.getStatements(null, vf.createIRI(RDF.TYPE.stringValue()),
                         vf.createIRI(OWL.ONTOLOGY.stringValue()),
                         OntologyDatasets.createSystemDefaultNamedGraphIRI(datasetIRI, vf)), mf);
-        return OntologyModels.findFirstOntologyIRI(ontologyDefModel, vf).orElse(datasetIRI);
+        return OntologyModels.findFirstOntologyIRI(ontologyDefModel).orElse(datasetIRI);
     }
 
     /**

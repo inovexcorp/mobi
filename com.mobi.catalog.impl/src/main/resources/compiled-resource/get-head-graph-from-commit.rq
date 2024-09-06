@@ -1,0 +1,31 @@
+PREFIX mcat: <http://mobi.com/ontologies/catalog#>
+
+SELECT DISTINCT ?headGraph
+WHERE {
+    {
+        ?recordId a mcat:Record ;
+            mcat:masterBranch ?masterBranch ;
+            mcat:branch ?branch .
+
+        ?masterBranch a mcat:MasterBranch ;
+            mcat:headGraph ?headGraph .
+
+        ?branch a mcat:Branch ;
+            mcat:head ?headCommit .
+
+        ?headCommit a mcat:Commit ;
+            (mcat:baseCommit | mcat:auxiliaryCommit | mcat:branchCommit)+ ?commit .
+    }
+    UNION
+    {
+        ?recordId a mcat:Record ;
+            mcat:masterBranch ?masterBranch ;
+            mcat:branch ?branch .
+
+        ?masterBranch a mcat:MasterBranch ;
+            mcat:headGraph ?headGraph .
+
+        ?branch a mcat:Branch ;
+            mcat:head ?commit .
+    }
+}

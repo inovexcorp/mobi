@@ -23,8 +23,13 @@ package com.mobi.utils.cli.api;
  * #L%
  */
 
+import java.util.ArrayList;
 import java.util.List;
 
-public interface ConfigRestoreOperation extends RestoreOperation{
+public interface ConfigRestoreOperation extends RestoreOperation {
     List<String> getExcludedFiles();
+
+    default List<String> addConfig() {
+        return new ArrayList<>();
+    }
 }

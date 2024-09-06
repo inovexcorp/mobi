@@ -827,7 +827,7 @@ describe('Ontology State Service', function() {
             });
             service.merge().subscribe(() => {}, () => fail('Observable should have resolved'));
             tick();
-            expect(catalogManagerStub.mergeBranches).toHaveBeenCalledWith(branchId, branchId, recordId, catalogId, service.listItem.merge.resolutions);
+            expect(catalogManagerStub.mergeBranches).toHaveBeenCalledWith(branchId, branchId, recordId, catalogId, service.listItem.merge.resolutions, []);
             expect(service.changeVersion).toHaveBeenCalledWith(recordId, branchId, commitId, undefined, 'Branch Title', true, false, false);
             expect(catalogManagerStub.deleteRecordBranch).toHaveBeenCalledWith(recordId, branchId, catalogId);
             expect(service.deleteBranchState).toHaveBeenCalledWith(recordId, branchId);
@@ -840,7 +840,7 @@ describe('Ontology State Service', function() {
                 expect(response).toEqual(error);
               });
             tick();
-            expect(catalogManagerStub.mergeBranches).toHaveBeenCalledWith(branchId, branchId, recordId, catalogId, service.listItem.merge.resolutions);
+            expect(catalogManagerStub.mergeBranches).toHaveBeenCalledWith(branchId, branchId, recordId, catalogId, service.listItem.merge.resolutions, []);
             expect(service.changeVersion).toHaveBeenCalledWith(recordId, branchId, commitId, undefined, 'Branch Title', true, false, false);
             expect(catalogManagerStub.deleteRecordBranch).toHaveBeenCalledWith(recordId, branchId, catalogId);
             expect(service.deleteBranchState).not.toHaveBeenCalled();
@@ -853,7 +853,7 @@ describe('Ontology State Service', function() {
           service.merge()
             .subscribe(() => {}, () => fail('Observable should have resolved'));
           tick();
-          expect(catalogManagerStub.mergeBranches).toHaveBeenCalledWith(branchId, branchId, recordId, catalogId, service.listItem.merge.resolutions);
+          expect(catalogManagerStub.mergeBranches).toHaveBeenCalledWith(branchId, branchId, recordId, catalogId, service.listItem.merge.resolutions, []);
           expect(service.changeVersion).toHaveBeenCalledWith(recordId, branchId, commitId, undefined, 'Branch Title', true, false, false);
           expect(catalogManagerStub.deleteRecordBranch).not.toHaveBeenCalled();
           expect(service.deleteBranchState).not.toHaveBeenCalled();
@@ -868,7 +868,7 @@ describe('Ontology State Service', function() {
             expect(response).toEqual(error);
           });
         tick();
-        expect(catalogManagerStub.mergeBranches).toHaveBeenCalledWith(branchId, branchId, recordId, catalogId, service.listItem.merge.resolutions);
+        expect(catalogManagerStub.mergeBranches).toHaveBeenCalledWith(branchId, branchId, recordId, catalogId, service.listItem.merge.resolutions, []);
         expect(service.changeVersion).toHaveBeenCalledWith(recordId, branchId, commitId, undefined, 'Branch Title', true, false, false);
         expect(catalogManagerStub.deleteRecordBranch).not.toHaveBeenCalled();
         expect(service.deleteBranchState).not.toHaveBeenCalled();
@@ -884,7 +884,7 @@ describe('Ontology State Service', function() {
           expect(response).toEqual(error);
         });
       tick();
-      expect(catalogManagerStub.mergeBranches).toHaveBeenCalledWith(branchId, branchId, recordId, catalogId, service.listItem.merge.resolutions);
+      expect(catalogManagerStub.mergeBranches).toHaveBeenCalledWith(branchId, branchId, recordId, catalogId, service.listItem.merge.resolutions, []);
       expect(service.changeVersion).not.toHaveBeenCalled();
       expect(catalogManagerStub.deleteRecordBranch).not.toHaveBeenCalled();
       expect(service.deleteBranchState).not.toHaveBeenCalled();

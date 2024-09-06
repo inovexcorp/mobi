@@ -23,14 +23,15 @@ package com.mobi.shapes.api.record;
  * #L%
  */
 
-import com.mobi.catalog.api.ontologies.mcat.Branch;
-import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
+import com.mobi.catalog.api.ontologies.mcat.Commit;
+import com.mobi.catalog.api.ontologies.mcat.MasterBranch;
+import com.mobi.catalog.api.ontologies.mcat.Revision;
 import com.mobi.catalog.api.record.AbstractVersionedRDFRecordService;
 import com.mobi.catalog.api.record.RecordService;
 import com.mobi.catalog.api.record.config.RecordCreateSettings;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
-import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
+import com.mobi.ontology.utils.OntologyModels;
 import com.mobi.shapes.api.ShapesGraphManager;
 import com.mobi.shapes.api.ontologies.shapesgrapheditor.ShapesGraphRecord;
 import org.eclipse.rdf4j.model.IRI;
@@ -44,7 +45,6 @@ import org.osgi.service.component.annotations.Reference;
 
 import java.io.File;
 import java.time.OffsetDateTime;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.Semaphore;
 
@@ -65,32 +65,40 @@ public abstract class AbstractShapesGraphRecordService<T extends ShapesGraphReco
     public T createRecord(User user, RecordOperationConfig config, OffsetDateTime issued, OffsetDateTime modified,
                           RepositoryConnection conn) {
         T record = createRecordObject(config, issued, modified);
-        Branch masterBranch = createMasterBranch(record);
-        InProgressCommit commit = null;
+        MasterBranch masterBranch = createMasterBranch(record);
+        InitialLoad initialLoad = null;
         File shaclFile = null;
         try {
             semaphore.acquire();
             shaclFile = createDataFile(config);
-            IRI catalogIdIRI = valueFactory.createIRI(config.get(RecordCreateSettings.CATALOG_ID));
+            IRI catalogIdIRI = vf.createIRI(config.get(RecordCreateSettings.CATALOG_ID));
             Resource masterBranchId = record.getMasterBranch_resource().orElseThrow(() ->
                     new IllegalStateException("ShaclRecord must have a master Branch"));
-            commit = loadInProgressCommit(user, shaclFile);
+            initialLoad = loadHeadGraph(masterBranch, user, shaclFile);
 
             conn.begin();
             addRecord(record, masterBranch, conn);
-            commitManager.addInProgressCommit(catalogIdIRI, record.getResource(), commit, conn);
+            commitManager.addInProgressCommit(catalogIdIRI, record.getResource(), initialLoad.ipc(), conn);
 
-            setShapesGraphToRecord(record, commit, conn);
+            setShapesGraphToRecord(record, masterBranch, conn);
 
-            versioningManager.commit(catalogIdIRI, record.getResource(), masterBranchId, user,
-                    "The initial commit.", conn);
+            Resource initialCommitIRI = versioningManager.commit(catalogIdIRI, record.getResource(), masterBranchId,
+                    user, "The initial commit.", conn);
+            Commit initialCommit = commitManager.getCommit(initialCommitIRI, conn).orElseThrow(
+                    () -> new IllegalStateException("Could not retrieve commit " + initialCommitIRI.stringValue()));
+            initialCommit.setInitialRevision(initialLoad.initialRevision());
+            initialCommit.getModel().addAll(initialLoad.initialRevision().getModel());
+            thingManager.updateObject(initialCommit, conn);
+
             conn.commit();
             writePolicies(user, record);
             shaclFile.delete();
-        } catch (InterruptedException e) {
-            throw new MobiException(e);
         } catch (Exception e) {
-            handleError(commit, shaclFile, e);
+            Revision revision = null;
+            if (initialLoad != null) {
+                revision = initialLoad.initialRevision();
+            }
+            handleError(masterBranch, revision, shaclFile, e);
         } finally {
             semaphore.release();
         }
@@ -100,21 +108,22 @@ public abstract class AbstractShapesGraphRecordService<T extends ShapesGraphReco
     /**
      * Validates and sets the shapes graph IRI to the ShaclRecord.
      *
-     * @param record the ShaclRecord to set the shapes graph IRI
-     * @param inProgressCommit inProgressCommit with the loaded file
-     * @param conn RepositoryConnection with the transaction
+     * @param record       the ShaclRecord to set the shapes graph IRI
+     * @param masterBranch inProgressCommit with the loaded file
+     * @param conn         RepositoryConnection with the transaction
      */
-    private void setShapesGraphToRecord(T record, InProgressCommit inProgressCommit, RepositoryConnection conn) {
-        IRI additionsGraph = getRevisionGraph(inProgressCommit, true);
-        Model shaclModel = QueryResults.asModel(conn.getStatements(null, RDF.TYPE, OWL.ONTOLOGY, additionsGraph));
+    private void setShapesGraphToRecord(T record, MasterBranch masterBranch, RepositoryConnection conn) {
+        IRI headGraph = branchManager.getHeadGraph(masterBranch);
+        Model shaclModel = QueryResults.asModel(conn.getStatements(null, RDF.TYPE, OWL.ONTOLOGY, headGraph));
+        Model ontologyDefinitions = mf.createEmptyModel();
+        shaclModel.subjects().stream()
+                .map(iri -> QueryResults.asModel(conn.getStatements(iri, null, null, headGraph)))
+                .forEach(ontologyDefinitions::addAll);
 
-        Resource ontologyIRI = shaclModel
-                .filter(null, RDF.TYPE, OWL.ONTOLOGY).stream()
-                .findFirst()
-                .flatMap(statement -> Optional.of(statement.getSubject()))
-                .orElse(valueFactory.createIRI(DEFAULT_PREFIX + UUID.randomUUID()));
+        Resource ontologyIRI = OntologyModels.findFirstOntologyIRI(ontologyDefinitions)
+                .orElse(vf.createIRI(DEFAULT_PREFIX + UUID.randomUUID()));
 
-        conn.add(ontologyIRI,  RDF.TYPE, OWL.ONTOLOGY, additionsGraph);
+        conn.add(ontologyIRI,  RDF.TYPE, OWL.ONTOLOGY, headGraph);
 
         validateShapesGraph(ontologyIRI);
         record.setShapesGraphIRI(ontologyIRI);

@@ -70,17 +70,6 @@ public interface DifferenceManager {
     Difference getCommitDifference(Resource commitId, RepositoryConnection conn);
 
     /**
-     * Builds the Difference based on the provided List of Commit ids. The statements contained in the returned
-     * Difference will have a context that matches the tracked quad. That is, tracked triples will have no context and
-     * tracked quads will have a context that matches the data named graph.
-     *
-     * @param commits The List of Commit ids which are supposed to be contained in the Model in ascending order.
-     * @param conn    The RepositoryConnection which contains the requested Commits.
-     * @return The Difference containing the aggregation of all the Commit additions and deletions.
-     */
-    Difference getCommitDifference(List<Resource> commits, RepositoryConnection conn);
-
-    /**
      * Gets the addition and deletion statements for an entity of a Commit identified by the provided Resource as a
      * Difference. The statements contained in the returned Difference will have a context that matches the tracked
      * uad. That is, tracked triples will have no context and tracked quads will have a context that matches the data

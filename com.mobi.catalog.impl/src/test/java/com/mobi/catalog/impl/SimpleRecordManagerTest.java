@@ -23,6 +23,7 @@ package com.mobi.catalog.impl;
  * #L%
  */
 
+import static com.mobi.catalog.impl.TestResourceUtils.trigRequired;
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertNotSame;
@@ -64,8 +65,6 @@ import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 import org.eclipse.rdf4j.query.MalformedQueryException;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
-import org.eclipse.rdf4j.rio.RDFFormat;
-import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
 import org.junit.After;
 import org.junit.Before;
@@ -75,7 +74,6 @@ import org.junit.rules.ExpectedException;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import java.io.InputStream;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -138,11 +136,6 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
         repo = new MemoryRepositoryWrapper();
         repo.setDelegate(new SailRepository(new MemoryStore()));
         closeable = MockitoAnnotations.openMocks(this);
-
-        try (RepositoryConnection conn = repo.getConnection()) {
-            InputStream testData = getClass().getResourceAsStream("/testCatalogData.trig");
-            conn.add(Rio.parse(testData, "", RDFFormat.TRIG));
-        }
         
         when(configProvider.getRepository()).thenReturn(repo);
         when(configProvider.getLocalCatalogIRI()).thenReturn(ManagerTestConstants.CATALOG_IRI);
@@ -182,6 +175,7 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testFindRecordsReturnsCorrectDataFirstPage() throws Exception {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
         // Setup:
         int limit = 1;
         int offset = 0;
@@ -201,6 +195,7 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testFindRecordsReturnsCorrectDataKeywordFirstPage() throws Exception {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
         // Setup:
         int limit = 1;
         int offset = 0;
@@ -222,6 +217,7 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testFindRecordsReturnsCorrectDataCreatorFirstPage() throws Exception {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
         // Setup:
         int limit = 1;
         int offset = 0;
@@ -243,6 +239,7 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testFindRecordsReturnsCorrectDataSecondPage() throws Exception {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
         // Setup:
         int limit = 1;
         int offset = 1;
@@ -262,6 +259,7 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testFindRecordsReturnsCorrectDataKeywordSecondPage() throws Exception {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
         // Setup:
         int limit = 1;
         int offset = 1;
@@ -283,6 +281,7 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testFindRecordsReturnsCorrectDataCreatorSecondPage() throws Exception {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
         // Setup:
         int limit = 1;
         int offset = 1;
@@ -304,6 +303,7 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testFindRecordsReturnsCorrectDataOnePage() throws Exception {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
         // Setup:
         int limit = 1000;
         int offset = 0;
@@ -323,6 +323,7 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testFindRecordsWithPolicyCheck() throws Exception {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
         // Setup:
         int limit = 1000;
         int offset = 0;
@@ -351,6 +352,7 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testFindRecordsWithPolicyCheckMultiplePages() throws Exception {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
         // Setup:
         int limit = 1;
         int offset = 0;
@@ -418,6 +420,7 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testFindRecordsOrdering() throws Exception {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
         // Setup:
         int limit = 1;
         int offset = 0;
@@ -450,6 +453,7 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testFindRecordsWithSearchText() throws Exception {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
         // given
         int limit = 10;
         int offset = 0;
@@ -468,6 +472,7 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testFindRecordsWithSearchTextKeyword() throws Exception {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
         // given
         int limit = 10;
         int offset = 0;
@@ -487,6 +492,7 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testFindRecordsWithSearchTextCreator() throws Exception {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
         // given
         int limit = 10;
         int offset = 0;
@@ -543,6 +549,7 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testFindRecordsWithTypeFilter() throws Exception {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
         // Setup:
         int limit = 1000;
         int offset = 0;
@@ -655,6 +662,7 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
     /* getKeywords */
     @Test
     public void testGetKeywords() throws Exception {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
         // given
         int limit = 10;
         int offset = 0;
@@ -675,6 +683,7 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testGetKeywordsSearch() throws Exception {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
         // given
         int limit = 10;
         int offset = 0;
@@ -716,6 +725,7 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testGetKeywordsPage1() throws Exception {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
         // given
         int limit = 1;
         int offset = 0;
@@ -736,6 +746,7 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testGetKeywordsPage2() throws Exception {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
         // given
         int limit = 1;
         int offset = 1;
@@ -758,6 +769,7 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testGetRecordIds() throws Exception {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
         try (RepositoryConnection conn = repo.getConnection()) {
             Set<Resource> results = manager.getRecordIds(ManagerTestConstants.CATALOG_IRI, conn);
             verify(thingManager).validateResource(eq(ManagerTestConstants.CATALOG_IRI), eq(VALUE_FACTORY.createIRI(Catalog.TYPE)), any(RepositoryConnection.class));
@@ -864,6 +876,7 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testUpdateRecord() throws Exception {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
         // Setup:
         Record record = recordFactory.createNew(ManagerTestConstants.RECORD_IRI);
         record.setKeyword(Stream.of(VALUE_FACTORY.createLiteral("keyword1")).collect(Collectors.toSet()));
@@ -880,6 +893,7 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testUpdateUnversionedRecord() throws Exception {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
         // Setup:
         UnversionedRecord record = unversionedRecordFactory.createNew(ManagerTestConstants.UNVERSIONED_RECORD_IRI);
         record.setKeyword(Stream.of(VALUE_FACTORY.createLiteral("keyword1")).collect(Collectors.toSet()));
@@ -896,6 +910,7 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testUpdateVersionedRecord() throws Exception {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
         // Setup:
         VersionedRecord record = versionedRecordFactory.createNew(ManagerTestConstants.VERSIONED_RECORD_IRI);
         record.setKeyword(Stream.of(VALUE_FACTORY.createLiteral("keyword1")).collect(Collectors.toSet()));
@@ -912,6 +927,7 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testUpdateVersionedRDFRecord() throws Exception {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
         // Setup:
         VersionedRDFRecord record = versionedRDFRecordFactory.createNew(ManagerTestConstants.VERSIONED_RDF_RECORD_IRI);
         record.setKeyword(Stream.of(VALUE_FACTORY.createLiteral("keyword1")).collect(Collectors.toSet()));
@@ -930,6 +946,7 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testRemoveRecord() {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
         User user = userFactory.createNew(ManagerTestConstants.USER_IRI);
         try (RepositoryConnection conn = repo.getConnection()) {
             manager.removeRecord(ManagerTestConstants.CATALOG_IRI, ManagerTestConstants.RECORD_IRI, user, Record.class, conn);
@@ -941,6 +958,7 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testRemoveVersionedRecord() {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
         User user = userFactory.createNew(ManagerTestConstants.USER_IRI);
         try (RepositoryConnection conn = repo.getConnection()) {
             manager.removeRecord(ManagerTestConstants.CATALOG_IRI, ManagerTestConstants.VERSIONED_RECORD_IRI, user, VersionedRecord.class, conn);
@@ -952,6 +970,7 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testRemoveUnversionedRecord() {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
         User user = userFactory.createNew(ManagerTestConstants.USER_IRI);
         try (RepositoryConnection conn = repo.getConnection()) {
             manager.removeRecord(ManagerTestConstants.CATALOG_IRI, ManagerTestConstants.UNVERSIONED_RECORD_IRI, user, UnversionedRecord.class, conn);
@@ -963,6 +982,7 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testRemoveVersionedRDFRecord() {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
         User user = userFactory.createNew(ManagerTestConstants.USER_IRI);
         try (RepositoryConnection conn = repo.getConnection()) {
             manager.removeRecord(ManagerTestConstants.CATALOG_IRI, ManagerTestConstants.VERSIONED_RDF_RECORD_IRI, user, VersionedRDFRecord.class, conn);
@@ -993,6 +1013,7 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testRemoveRecordUsingMostSpecific() {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
         User user = userFactory.createNew(ManagerTestConstants.USER_IRI);
         try (RepositoryConnection conn = repo.getConnection()) {
             manager.removeRecord(ManagerTestConstants.CATALOG_IRI, ManagerTestConstants.VERSIONED_RDF_RECORD_IRI, user, Record.class, conn);
@@ -1006,6 +1027,7 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testGetRecord() throws Exception {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:
             Optional<Record> result = manager.getRecordOpt(ManagerTestConstants.CATALOG_IRI, ManagerTestConstants.RECORD_IRI, recordFactory, conn);
@@ -1017,6 +1039,7 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testGetUnversionedRecord() throws Exception {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:
             Optional<UnversionedRecord> result = manager.getRecordOpt(ManagerTestConstants.CATALOG_IRI, ManagerTestConstants.UNVERSIONED_RECORD_IRI, unversionedRecordFactory, conn);
@@ -1028,6 +1051,7 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testGetVersionedRecord() throws Exception {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:
             Optional<VersionedRecord> result = manager.getRecordOpt(ManagerTestConstants.CATALOG_IRI, ManagerTestConstants.VERSIONED_RECORD_IRI, versionedRecordFactory, conn);
@@ -1039,6 +1063,7 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testGetVersionedRDFRecord() throws Exception {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:
             Optional<VersionedRDFRecord> result = manager.getRecordOpt(ManagerTestConstants.CATALOG_IRI, ManagerTestConstants.VERSIONED_RDF_RECORD_IRI, versionedRDFRecordFactory, conn);
@@ -1050,6 +1075,7 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testGetRecordWithNoCatalog() {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:
             thrown.expect(IllegalStateException.class);
@@ -1061,6 +1087,7 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testGetRecordFromWrongCatalog() {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
         try (RepositoryConnection conn = repo.getConnection()) {
             Optional<Record> result = manager.getRecordOpt(ManagerTestConstants.CATALOG_DISTRIBUTED_IRI, ManagerTestConstants.RECORD_IRI, recordFactory, conn);
             verify(thingManager).validateResource(eq(ManagerTestConstants.CATALOG_DISTRIBUTED_IRI), eq(catalogFactory.getTypeIRI()), any(RepositoryConnection.class));
@@ -1084,6 +1111,7 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testRecordPathWithMissingRecord() {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
         // Setup:
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage("Record " + ManagerTestConstants.MISSING_IRI + " could not be found");
@@ -1096,6 +1124,7 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testRecordPathWithWrongCatalog() {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
         // Setup:
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage(String.format("Record %s does not belong to Catalog %s", RECORD_NO_CATALOG_IRI, ManagerTestConstants.CATALOG_IRI));
@@ -1109,6 +1138,7 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void getRecordTest() throws Exception {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
         try (RepositoryConnection conn = repo.getConnection()) {
             Record record = manager.getRecord(ManagerTestConstants.CATALOG_IRI, ManagerTestConstants.RECORD_IRI, recordFactory, conn);
             assertFalse(record.getModel().isEmpty());
@@ -1129,6 +1159,7 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void getRecordWithMissingRecord() {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
         // Setup:
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage("Record " + ManagerTestConstants.MISSING_IRI + " could not be found");
@@ -1140,6 +1171,7 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void getRecordWithWrongCatalog() {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
         // Setup:
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage(String.format("Record %s does not belong to Catalog %s", RECORD_NO_CATALOG_IRI, ManagerTestConstants.CATALOG_IRI));
@@ -1165,6 +1197,7 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testExportRecordWithoutList() throws Exception {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
         RecordOperationConfig config = new OperationConfig();
         try (RepositoryConnection conn = repo.getConnection()) {
             manager.export(ManagerTestConstants.RECORD_IRI, config, conn);
@@ -1174,6 +1207,7 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testExportVersionedRecordWithoutList() throws Exception {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
         RecordOperationConfig config = new OperationConfig();
         try (RepositoryConnection conn = repo.getConnection()) {
             manager.export(ManagerTestConstants.VERSIONED_RECORD_IRI, config, conn);
@@ -1184,6 +1218,7 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testExportUnversionedRecordWithoutList() throws Exception {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
         RecordOperationConfig config = new OperationConfig();
         try (RepositoryConnection conn = repo.getConnection()) {
             manager.export(ManagerTestConstants.UNVERSIONED_RECORD_IRI, config, conn);
@@ -1194,6 +1229,7 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testExportVersionedRDFRecordWithoutList() throws Exception {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
         RecordOperationConfig config = new OperationConfig();
         try (RepositoryConnection conn = repo.getConnection()) {
             manager.export(ManagerTestConstants.VERSIONED_RDF_RECORD_IRI, config, conn);
@@ -1204,6 +1240,7 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testExportWithList() throws Exception {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
         RecordOperationConfig config = new OperationConfig();
         config.set(RecordExportSettings.BATCH_EXPORTER, exporter);
         List<Resource> exportList = new ArrayList<>();

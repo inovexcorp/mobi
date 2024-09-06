@@ -556,15 +556,15 @@ public class ShapesGraphRest {
             Model currentModel = currentModelFuture.get();
             Model uploadedModel = uploadedModelFuture.get();
 
-            if (OntologyModels.findFirstOntologyIRI(uploadedModel, vf).isEmpty()) {
-                OntologyModels.findFirstOntologyIRI(currentModel, vf)
+            if (OntologyModels.findFirstOntologyIRI(uploadedModel).isEmpty()) {
+                OntologyModels.findFirstOntologyIRI(currentModel)
                         .ifPresent(iri -> uploadedModel.add(iri, vf.createIRI(RDF.TYPE.stringValue()),
                                 vf.createIRI(OWL.ONTOLOGY.stringValue())));
             }
 
             Difference diff = differenceManager.getDiff(currentModel, uploadedModel);
 
-            if (diff.getAdditions().size() == 0 && diff.getDeletions().size() == 0) {
+            if (diff.getAdditions().isEmpty() && diff.getDeletions().isEmpty()) {
                 return Response.noContent().build();
             }
 

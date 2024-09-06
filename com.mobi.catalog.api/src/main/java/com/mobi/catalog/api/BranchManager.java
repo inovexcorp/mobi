@@ -24,8 +24,10 @@ package com.mobi.catalog.api;
  */
 
 import com.mobi.catalog.api.ontologies.mcat.Branch;
+import com.mobi.catalog.api.ontologies.mcat.MasterBranch;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.rdf.orm.OrmFactory;
+import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 
@@ -128,6 +130,14 @@ public interface BranchManager {
                                                 OrmFactory<T> factory, RepositoryConnection conn);
 
     /**
+     * Retrieves the HEAD graph of the MASTER branch.
+     *
+     * @param masterBranch The MasterBranch to retrieve the HEAD graph from
+     * @return A Resource identifying the HEAD graph of the MASTER branch
+     */
+    IRI getHeadGraph(MasterBranch masterBranch);
+
+    /**
      * Gets the master Branch of the VersionedRDFRecord identified by the provided Resources.
      *
      * @param catalogId            The Resource identifying the Catalog which contains the Record.
@@ -139,7 +149,25 @@ public interface BranchManager {
      * @throws IllegalStateException    Thrown if the Branch could not be found or the VersionedRDFRecord does not have
      *                                  a master Branch.
      */
-    Branch getMasterBranch(Resource catalogId, Resource versionedRDFRecordId, RepositoryConnection conn);
+    MasterBranch getMasterBranch(Resource catalogId, Resource versionedRDFRecordId, RepositoryConnection conn);
+
+    /**
+     * Retrieves the MasterBranch version of the supplied Branch.
+     *
+     * @param branch The branch that is the MasterBranch
+     * @param conn A RepositoryConnection to use for lookup
+     * @return The MasterBranch version of the supplied Branch
+     */
+    MasterBranch getMasterBranch(Branch branch, RepositoryConnection conn);
+
+    /**
+     * Determines if the provided Branch the master branch.
+     *
+     * @param record The VersionedRDFRecord to compare the branch against
+     * @param branch The Branch to check if it is the master branch
+     * @return true if the branch is the master branch, otherwise false
+     */
+    boolean isMasterBranch(VersionedRDFRecord record, Branch branch);
 
     /**
      * Removes the non-master Branch identified by the provided Resources from the repository. If the provided Branch

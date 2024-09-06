@@ -660,7 +660,7 @@ describe('Shapes Graph State service', function() {
           service.listItem.merge.checkbox = true;
           await service.merge()
             .subscribe(() => {
-              expect(catalogManagerStub.mergeBranches).toHaveBeenCalledWith('sourceBranchId', 'targetBranchId', 'recordId', 'catalog', new Difference());
+              expect(catalogManagerStub.mergeBranches).toHaveBeenCalledWith('sourceBranchId', 'targetBranchId', 'recordId', 'catalog', new Difference(), []);
               expect(this.changeVersionSpy).toHaveBeenCalledWith('recordId', 'targetBranchId', 'commitId', undefined, 'branchTitle', true, false, false);
               expect(catalogManagerStub.deleteRecordBranch).toHaveBeenCalledWith('recordId', 'sourceBranchId', catalogId);
             }, () => fail('Observable should have succeeded'));
@@ -669,7 +669,7 @@ describe('Shapes Graph State service', function() {
           service.listItem.merge.checkbox = false;
           await service.merge()
             .subscribe(() => {
-              expect(catalogManagerStub.mergeBranches).toHaveBeenCalledWith('sourceBranchId', 'targetBranchId', 'recordId', 'catalog', new Difference());
+              expect(catalogManagerStub.mergeBranches).toHaveBeenCalledWith('sourceBranchId', 'targetBranchId', 'recordId', 'catalog', new Difference(), []);
               expect(this.changeVersionSpy).toHaveBeenCalledWith('recordId', 'targetBranchId', 'commitId', undefined, 'branchTitle', true, false, false);
               expect(catalogManagerStub.deleteRecordBranch).not.toHaveBeenCalled();
             }, () => fail('Observable should have succeeded'));
@@ -682,7 +682,7 @@ describe('Shapes Graph State service', function() {
             fail('Observable should have errored');
           }, response => {
             expect(response).toEqual('Error');
-            expect(catalogManagerStub.mergeBranches).toHaveBeenCalledWith('sourceBranchId', 'targetBranchId', 'recordId', 'catalog', new Difference());
+            expect(catalogManagerStub.mergeBranches).toHaveBeenCalledWith('sourceBranchId', 'targetBranchId', 'recordId', 'catalog', new Difference(), []);
             expect(this.changeVersionSpy).toHaveBeenCalledWith('recordId', 'targetBranchId', 'commitId', undefined, 'branchTitle', true, false, false);
             expect(catalogManagerStub.deleteRecordBranch).not.toHaveBeenCalled();
           });
@@ -695,7 +695,7 @@ describe('Shapes Graph State service', function() {
           fail('Observable should have rejected');
         }, response => {
           expect(response).toEqual('Error');
-          expect(catalogManagerStub.mergeBranches).toHaveBeenCalledWith('sourceBranchId', 'targetBranchId', 'recordId', 'catalog', new Difference());
+          expect(catalogManagerStub.mergeBranches).toHaveBeenCalledWith('sourceBranchId', 'targetBranchId', 'recordId', 'catalog', new Difference(), []);
           expect(this.changeVersionSpy).not.toHaveBeenCalled();
           expect(catalogManagerStub.deleteRecordBranch).not.toHaveBeenCalled();
           expect(this.changeVersionSpy).not.toHaveBeenCalled();

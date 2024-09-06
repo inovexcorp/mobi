@@ -23,7 +23,9 @@ package com.mobi.etl.api.delimited.record;
  * #L%
  */
 
-import com.mobi.catalog.api.ontologies.mcat.Branch;
+import com.mobi.catalog.api.ontologies.mcat.Commit;
+import com.mobi.catalog.api.ontologies.mcat.MasterBranch;
+import com.mobi.catalog.api.ontologies.mcat.Revision;
 import com.mobi.catalog.api.record.AbstractVersionedRDFRecordService;
 import com.mobi.catalog.api.record.RecordService;
 import com.mobi.catalog.api.record.config.RecordCreateSettings;
@@ -69,32 +71,48 @@ public abstract class AbstractMappingRecordService<T extends MappingRecord>
     public T createRecord(User user, RecordOperationConfig config, OffsetDateTime issued, OffsetDateTime modified,
                           RepositoryConnection conn) {
         T record = createRecordObject(config, issued, modified);
-        Branch masterBranch = createMasterBranch(record);
+        MasterBranch masterBranch = createMasterBranch(record);
         MappingWrapper mapping = createMapping(config);
-        conn.begin();
-        addRecord(record, masterBranch, conn);
 
-        IRI catalogIdIRI = valueFactory.createIRI(config.get(RecordCreateSettings.CATALOG_ID));
+        IRI catalogIdIRI = vf.createIRI(config.get(RecordCreateSettings.CATALOG_ID));
         Resource masterBranchId = record.getMasterBranch_resource().orElseThrow(() ->
                 new IllegalStateException("MappingRecord must have a master Branch"));
         Model model = mapping.getModel();
+        File versionedRdf = null;
+        InitialLoad initialLoad = null;
         try {
             Path tmpFile = Files.createTempFile(null, ".ttl");
             Rio.write(model, Files.newOutputStream(tmpFile), RDFFormat.TURTLE);
-            File file = tmpFile.toFile();
-            commitManager.createInProgressCommit(catalogIdIRI, record.getResource(), user,
-                    tmpFile.toFile(), null, conn);
-            file.delete();
+            versionedRdf = tmpFile.toFile();
+            initialLoad = loadHeadGraph(masterBranch, user, versionedRdf);
+
+            conn.begin();
+            addRecord(record, masterBranch, conn);
+            commitManager.addInProgressCommit(catalogIdIRI, record.getResource(), initialLoad.ipc(), conn);
+            Resource initialCommitIRI = versioningManager.commit(catalogIdIRI, record.getResource(), masterBranchId,
+                    user, "The initial commit.", conn);
+            Commit initialCommit = commitManager.getCommit(initialCommitIRI, conn).orElseThrow(
+                    () -> new IllegalStateException("Could not retrieve commit " + initialCommitIRI.stringValue()));
+            initialCommit.setInitialRevision(initialLoad.initialRevision());
+            initialCommit.getModel().addAll(initialLoad.initialRevision().getModel());
+            thingManager.updateObject(initialCommit, conn);
+
+            conn.commit();
+            writePolicies(user, record);
+            versionedRdf.delete();
         } catch (IOException e) {
             throw new MobiException(e);
+        } catch (Exception e) {
+            Revision revision = null;
+            if (initialLoad != null) {
+                revision = initialLoad.initialRevision();
+            }
+            handleError(masterBranch, revision, versionedRdf, e);
         }
-        versioningManager.commit(catalogIdIRI, record.getResource(), masterBranchId, user,
-                "The initial commit.", conn);
-        conn.commit();
-        writePolicies(user, record);
         return record;
     }
 
+    @Override
     protected Resource writeRecordPolicy(Resource user, Resource recordId, Resource masterBranchId) {
         // Record Policy
         Path recordPolicyPath = Paths.get(System.getProperty("karaf.etc") + File.separator + "policies"

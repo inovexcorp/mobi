@@ -81,17 +81,19 @@ public interface CommitManager {
 
     /**
      * Creates a Commit from the provided InProgressCommit and message whose parents are the passed base and
-     * auxiliary Commit.
+     * auxiliary Commit. Does not update the underlying Revisions (handled by the VersioningServices).
      *
      * @param inProgressCommit The InProgressCommit which is the basis for the created Commit.
      * @param message          The String with the message text associated with the Commit.
      * @param baseCommit       The base Commit for the created Commit. Used for associating the Revisions as well.
      * @param auxCommit        The auxiliary Commit for the created Commit. Used for associating the Revisions as well.
+     * @param masterCommit     Indicates if the new commit has a BaseCommit relation on Master. If so, does not populate
+     *                         revision statements.
      * @return Commit created based on the provided InProgressCommit with the message metadata.
      * @throws IllegalArgumentException If a auxiliary commit is passed, but not a base commit
      */
     Commit createCommit(@Nonnull InProgressCommit inProgressCommit, @Nonnull String message, Commit baseCommit,
-                        Commit auxCommit);
+                        Commit auxCommit, boolean masterCommit);
 
     /**
      * Creates an InProgressCommit which is a Commit that a User is actively working on. Once it is completed, the

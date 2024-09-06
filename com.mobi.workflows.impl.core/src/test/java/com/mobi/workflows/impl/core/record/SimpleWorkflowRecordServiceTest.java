@@ -30,27 +30,13 @@ import static junit.framework.TestCase.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
-import com.mobi.catalog.api.BranchManager;
-import com.mobi.catalog.api.CatalogProvUtils;
-import com.mobi.catalog.api.CommitManager;
-import com.mobi.catalog.api.DifferenceManager;
-import com.mobi.catalog.api.ThingManager;
-import com.mobi.catalog.api.VersionManager;
+import com.mobi.catalog.api.*;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.mergerequest.MergeRequestManager;
-import com.mobi.catalog.api.ontologies.mcat.Branch;
-import com.mobi.catalog.api.ontologies.mcat.Catalog;
-import com.mobi.catalog.api.ontologies.mcat.Commit;
-import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
+import com.mobi.catalog.api.ontologies.mcat.*;
 import com.mobi.catalog.api.ontologies.mcat.Record;
-import com.mobi.catalog.api.ontologies.mcat.Revision;
 import com.mobi.catalog.api.record.config.OperationConfig;
 import com.mobi.catalog.api.record.config.RecordCreateSettings;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
@@ -119,6 +105,7 @@ public class SimpleWorkflowRecordServiceTest extends OrmEnabledTestCase {
     private OrmFactory<User> userFactory = getRequiredOrmFactory(User.class);
     private OrmFactory<DeleteActivity> deleteActivityFactory = getRequiredOrmFactory(DeleteActivity.class);
     private OrmFactory<Branch> branchFactory = getRequiredOrmFactory(Branch.class);
+    private OrmFactory<MasterBranch> masterBranchFactory = getRequiredOrmFactory(MasterBranch.class);
     private OrmFactory<Commit> commitFactory = getRequiredOrmFactory(Commit.class);
 
     private OrmFactory<Revision> revisionFactory = getRequiredOrmFactory(Revision.class);
@@ -134,6 +121,9 @@ public class SimpleWorkflowRecordServiceTest extends OrmEnabledTestCase {
 
     @Mock
     private VersionManager versionManager;
+
+    @Mock
+    private RevisionManager revisionManager;
 
     @Mock
     private DifferenceManager differenceManager;
@@ -193,7 +183,7 @@ public class SimpleWorkflowRecordServiceTest extends OrmEnabledTestCase {
         testRecord.setCatalog(catalogFactory.createNew(catalogId));
         testRecord.setBranch(Collections.singleton(branch));
         testRecord.setBranch(Collections.singleton(branch));
-        testRecord.setMasterBranch(branchFactory.createNew(masterBranchIRI));
+        testRecord.setMasterBranch(masterBranchFactory.createNew(masterBranchIRI)); // TODO FIX
         testRecord.setWorkflowIRI(testIRI);
 
         closeable = MockitoAnnotations.openMocks(this);
@@ -238,6 +228,7 @@ public class SimpleWorkflowRecordServiceTest extends OrmEnabledTestCase {
         recordService.commitManager = commitManager;
         recordService.differenceManager = differenceManager;
         recordService.versionManager = versionManager;
+        recordService.revisionManager = revisionManager;
     }
 
     @After
@@ -284,6 +275,17 @@ public class SimpleWorkflowRecordServiceTest extends OrmEnabledTestCase {
 
     @Test
     public void createWithoutWorkflowIRITest() {
+        Revision revision = mock(Revision.class);
+        when(revision.getAdditions()).thenReturn(Optional.of(getValueFactory().createIRI("http://revision/add")));
+        when(revision.getDeletions()).thenReturn(Optional.of(getValueFactory().createIRI("http://revision/del")));
+        when(revision.getModel()).thenReturn(MODEL_FACTORY.createEmptyModel());
+        when(revisionManager.createRevision(any())).thenReturn(revision);
+        when(revisionManager.getGeneratedRevision(any(Commit.class))).thenReturn(revision);
+
+        Commit initialCommit = commitFactory.createNew(commitIRI);
+        IRI initialCommitIri = getValueFactory().createIRI("http://mobi.com/commit#initial");
+        when(versioningManager.commit(eq(catalogId), any(Resource.class), any(Resource.class), eq(user), eq("The initial commit."), any(RepositoryConnection.class))).thenReturn(initialCommitIri);
+        when(commitManager.getCommit(eq(initialCommitIri), any(RepositoryConnection.class))).thenReturn(Optional.of(initialCommit));
         // Setup:
         RecordOperationConfig config = new OperationConfig();
         Set<String> keywords = Stream.of("keyword1", "keyword2").collect(Collectors.toSet());
@@ -330,6 +332,17 @@ public class SimpleWorkflowRecordServiceTest extends OrmEnabledTestCase {
 
     @Test
     public void createWithWorkflowIRITest() {
+        Revision revision = mock(Revision.class);
+        when(revision.getAdditions()).thenReturn(Optional.of(getValueFactory().createIRI("http://revision/add")));
+        when(revision.getDeletions()).thenReturn(Optional.of(getValueFactory().createIRI("http://revision/del")));
+        when(revision.getModel()).thenReturn(MODEL_FACTORY.createEmptyModel());
+        when(revisionManager.createRevision(any())).thenReturn(revision);
+        when(revisionManager.getGeneratedRevision(any(Commit.class))).thenReturn(revision);
+
+        Commit initialCommit = commitFactory.createNew(commitIRI);
+        IRI initialCommitIri = getValueFactory().createIRI("http://mobi.com/commit#initial");
+        when(versioningManager.commit(eq(catalogId), any(Resource.class), any(Resource.class), eq(user), eq("The initial commit."), any(RepositoryConnection.class))).thenReturn(initialCommitIri);
+        when(commitManager.getCommit(eq(initialCommitIri), any(RepositoryConnection.class))).thenReturn(Optional.of(initialCommit));
         // Setup:
         RecordOperationConfig config = new OperationConfig();
         Set<String> keywords = new LinkedHashSet<>();
@@ -380,6 +393,18 @@ public class SimpleWorkflowRecordServiceTest extends OrmEnabledTestCase {
 
     @Test(expected = IllegalArgumentException.class)
     public void createWithoutInputFileTest() {
+        Revision revision = mock(Revision.class);
+        when(revision.getAdditions()).thenReturn(Optional.of(getValueFactory().createIRI("http://revision/add")));
+        when(revision.getDeletions()).thenReturn(Optional.of(getValueFactory().createIRI("http://revision/del")));
+        when(revision.getModel()).thenReturn(MODEL_FACTORY.createEmptyModel());
+        when(revisionManager.createRevision(any())).thenReturn(revision);
+        when(revisionManager.getGeneratedRevision(any(Commit.class))).thenReturn(revision);
+
+        Commit initialCommit = commitFactory.createNew(commitIRI);
+        IRI initialCommitIri = getValueFactory().createIRI("http://mobi.com/commit#initial");
+        when(versioningManager.commit(eq(catalogId), any(Resource.class), any(Resource.class), eq(user), eq("The initial commit."), any(RepositoryConnection.class))).thenReturn(initialCommitIri);
+        when(commitManager.getCommit(eq(initialCommitIri), any(RepositoryConnection.class))).thenReturn(Optional.of(initialCommit));
+        // Setup:
         RecordOperationConfig config = new OperationConfig();
         Set<String> keywords = new LinkedHashSet<>();
         keywords.add("keyword1");
@@ -481,6 +506,17 @@ public class SimpleWorkflowRecordServiceTest extends OrmEnabledTestCase {
 
     @Test
     public void createWithTrigInFileName() {
+        Revision revision = mock(Revision.class);
+        when(revision.getAdditions()).thenReturn(Optional.of(getValueFactory().createIRI("http://revision/add")));
+        when(revision.getDeletions()).thenReturn(Optional.of(getValueFactory().createIRI("http://revision/del")));
+        when(revision.getModel()).thenReturn(MODEL_FACTORY.createEmptyModel());
+        when(revisionManager.createRevision(any())).thenReturn(revision);
+        when(revisionManager.getGeneratedRevision(any(Commit.class))).thenReturn(revision);
+
+        Commit initialCommit = commitFactory.createNew(commitIRI);
+        IRI initialCommitIri = getValueFactory().createIRI("http://mobi.com/commit#initial");
+        when(versioningManager.commit(eq(catalogId), any(Resource.class), any(Resource.class), eq(user), eq("The initial commit."), any(RepositoryConnection.class))).thenReturn(initialCommitIri);
+        when(commitManager.getCommit(eq(initialCommitIri), any(RepositoryConnection.class))).thenReturn(Optional.of(initialCommit));
         // Setup:
         RecordOperationConfig config = new OperationConfig();
         Set<String> keywords = new LinkedHashSet<>();
@@ -499,7 +535,7 @@ public class SimpleWorkflowRecordServiceTest extends OrmEnabledTestCase {
         try (RepositoryConnection connection = repository.getConnection()) {
             recordService.create(user, config, connection);
         } catch (Exception e) {
-            fail("Exception was thrown");
+            fail("Exception was thrown" + e.getMessage());
         }
     }
 

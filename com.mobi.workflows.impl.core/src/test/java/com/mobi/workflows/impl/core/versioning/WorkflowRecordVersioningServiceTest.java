@@ -24,14 +24,8 @@ package com.mobi.workflows.impl.core.versioning;
  */
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyList;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 import com.mobi.catalog.api.BranchManager;
 import com.mobi.catalog.api.CommitManager;
@@ -39,14 +33,11 @@ import com.mobi.catalog.api.CompiledResourceManager;
 import com.mobi.catalog.api.DifferenceManager;
 import com.mobi.catalog.api.RecordManager;
 import com.mobi.catalog.api.ThingManager;
-import com.mobi.catalog.api.builder.Difference;
-import com.mobi.catalog.api.ontologies.mcat.Branch;
-import com.mobi.catalog.api.ontologies.mcat.Commit;
-import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
-import com.mobi.catalog.api.ontologies.mcat.Revision;
+import com.mobi.catalog.api.ontologies.mcat.*;
 import com.mobi.catalog.config.CatalogConfigProvider;
-import com.mobi.jaas.api.ontologies.usermanagement.User;
+import com.mobi.exception.MobiException;
 import com.mobi.rdf.orm.OrmFactory;
+import com.mobi.rdf.orm.Thing;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import com.mobi.repository.impl.sesame.memory.MemoryRepositoryWrapper;
 import com.mobi.workflows.api.WorkflowManager;
@@ -58,63 +49,57 @@ import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.query.QueryResults;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.eclipse.rdf4j.repository.RepositoryResult;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
+import org.junit.*;
 import org.junit.rules.ExpectedException;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.osgi.framework.BundleContext;
-import org.osgi.framework.ServiceReference;
-import org.osgi.service.event.Event;
-import org.osgi.service.event.EventAdmin;
 
 import java.io.InputStream;
-import java.util.Collections;
 import java.util.Optional;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class WorkflowRecordVersioningServiceTest extends OrmEnabledTestCase {
-    private static ValueFactory vf = getValueFactory();
-    private static OrmFactory<WorkflowRecord> recordFactory;
-
+    private final ValueFactory vf = getValueFactory();
     private AutoCloseable closeable;
     private MemoryRepositoryWrapper repo;
     private WorkflowRecordVersioningService service;
+
+    // OrmFactories
+    private final OrmFactory<WorkflowRecord> recordFactory = getRequiredOrmFactory(WorkflowRecord.class);
     private final OrmFactory<WorkflowRecord> workflowRecordOrmFactory = getRequiredOrmFactory(WorkflowRecord.class);
-    private final OrmFactory<Branch> branchFactory = getRequiredOrmFactory(Branch.class);
+    private final OrmFactory<MasterBranch> masterBranchFactory = getRequiredOrmFactory(MasterBranch.class);
     private final OrmFactory<Commit> commitFactory = getRequiredOrmFactory(Commit.class);
-    private final OrmFactory<Revision> revisionFactory = getRequiredOrmFactory(Revision.class);
-    private final OrmFactory<Workflow> workflowFactory = getRequiredOrmFactory(Workflow.class);
+    // Constant
+    private final IRI recordId = VALUE_FACTORY.createIRI("https://mobi.com/records#NewWorkflowId");
+    private final IRI recordIdHead = VALUE_FACTORY.createIRI("https://mobi.com/records#NewWorkflowId/HEAD");
+    private final IRI catalogId = VALUE_FACTORY.createIRI("http://mobi.com/catalog");
+    private final IRI workflowId = vf.createIRI("http://example.com/workflows/A");
+    private final IRI commitID = getValueFactory().createIRI("https://mobi.com/commits#NewWorkflowIdCommit000");
+    private final IRI newWorkflowIdBranchId = getValueFactory().createIRI("https://mobi.com/branches#NewWorkflowIdBranchId");
+    private final IRI catalogIri = VALUE_FACTORY.createIRI("http://mobi.com/catalog-local");
 
-    private static IRI recordId;
-    private static IRI catalogId;
-    private static IRI workflowId;
-    private final IRI newIRI = VALUE_FACTORY.createIRI("http://example.com/workflows/B");
-    private final IRI typeIRI = VALUE_FACTORY.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI);
-
-    private User user;
+    // Variables
     private WorkflowRecord record;
-    private Branch branch;
+    private Model recordHeadGraph;
+    private MasterBranch masterBranch;
     private Commit commit;
-    private Revision revision;
-    private Workflow workflow;
-    private InProgressCommit inProgressCommit;
-    private Stream<Statement> additions;
 
     @Rule
     public ExpectedException thrown = ExpectedException.none();
 
+    // Mock Variables
     @Mock
     private WorkflowManager workflowManager;
 
+    // BaseVersioningService Dependencies
     @Mock
     private RecordManager recordManager;
 
@@ -134,16 +119,32 @@ public class WorkflowRecordVersioningServiceTest extends OrmEnabledTestCase {
     private CompiledResourceManager compiledResourceManager;
 
     @Mock
-    private EventAdmin eventAdmin;
-
-    @Mock
     private BundleContext context;
 
     @Mock
-    private ServiceReference<EventAdmin> serviceReference;
+    private CatalogConfigProvider configProvider;
 
-    @Mock
-    CatalogConfigProvider configProvider;
+    public Optional<Model> optModel(Resource id, RepositoryConnection conn) {
+        try (RepositoryResult<Statement> repositoryResult = conn.getStatements(null, null, null, id)) {
+            Model model = QueryResults.asModel(repositoryResult, getModelFactory());
+            if (model.isEmpty()) {
+                return Optional.empty();
+            } else {
+                return Optional.of(model);
+            }
+        } catch (Exception e) {
+            throw new MobiException(e);
+        }
+    }
+
+    public <T extends Thing> Optional<T> optObject(Resource id, OrmFactory<T> factory, RepositoryConnection conn) {
+        try (RepositoryResult<Statement> repositoryResult = conn.getStatements(null, null, null, id)) {
+            Model model = QueryResults.asModel(repositoryResult, getModelFactory());
+            return factory.getExisting(id, model);
+        } catch (Exception e) {
+            throw new MobiException(e);
+        }
+    }
 
     @Before
     public void setUp() throws Exception {
@@ -154,54 +155,18 @@ public class WorkflowRecordVersioningServiceTest extends OrmEnabledTestCase {
             InputStream testData = getClass().getResourceAsStream("/testData.trig");
             conn.add(Rio.parse(testData, "", RDFFormat.TRIG));
             conn.commit();
+            record = spy(optObject(recordId, workflowRecordOrmFactory, conn).orElseThrow(() -> new Exception("Can't find record")));
+            recordHeadGraph = optModel(recordIdHead, conn).orElseThrow(() -> new Exception("Can't find record"));
+            commit = spy(optObject(commitID, commitFactory, conn).orElseThrow(() -> new Exception("Can't find commit")));
+            masterBranch = optObject(newWorkflowIdBranchId, masterBranchFactory, conn).orElseThrow(() -> new Exception("Can't find branch"));
         }
-
-        catalogId = vf.createIRI("http://mobi.com/catalog");
-        recordId = vf.createIRI("http://mobi.com/test/records#WorkflowRecord");
-        workflowId = vf.createIRI("http://example.com/workflows/A");
-
-        OrmFactory<User> userFactory = getRequiredOrmFactory(User.class);
-        recordFactory = getRequiredOrmFactory(WorkflowRecord.class);
-        OrmFactory<InProgressCommit> inProgressCommitFactory = getRequiredOrmFactory(InProgressCommit.class);
-
-        user = userFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/users#user"));
-        inProgressCommit = inProgressCommitFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/commits#in-progress-commit"));
-        commit = commitFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/commits#commit"));
-        revision = revisionFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/revisions#revision"));
-        commit.setGenerated(Collections.singleton(revision));
-        commit.setWasAssociatedWith(Collections.singleton(user));
-
-        branch = branchFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/branches#branch"));
-        branch.setHead(commit);
-        record = workflowRecordOrmFactory.createNew(recordId);
-        workflow = workflowFactory.createNew(workflowId);
-        record.setMasterBranch(branch);
-        record.setWorkflowIRI(workflowId);
-        additions = Stream.of(VALUE_FACTORY.createStatement(newIRI, typeIRI, vf.createIRI(Workflow.TYPE)));
-
         closeable = MockitoAnnotations.openMocks(this);
 
         when(configProvider.getRepository()).thenReturn(repo);
-
-        when(recordManager.getRecordOpt(eq(catalogId), eq(recordId), eq(recordFactory), any(RepositoryConnection.class))).thenReturn(Optional.of(record));
-        when(recordManager.getRecord(eq(catalogId), eq(recordId), eq(recordFactory), any(RepositoryConnection.class))).thenReturn(record);
-
-        when(workflowManager.getWorkflow(eq(workflowId))).thenReturn(Optional.ofNullable(workflow));
-
-        when(branchManager.getBranch(any(WorkflowRecord.class), any(Resource.class), eq(branchFactory), any(RepositoryConnection.class))).thenReturn(branch);
-        when(commitManager.getInProgressCommit(any(Resource.class), any(Resource.class), any(RepositoryConnection.class))).thenReturn(inProgressCommit);
-        when(thingManager.getObject(any(Resource.class), eq(commitFactory), any(RepositoryConnection.class))).thenReturn(commit);
-        when(thingManager.getObject(any(Resource.class), eq(workflowRecordOrmFactory), any(RepositoryConnection.class))).thenReturn(record);
-        when(differenceManager.applyDifference(any(), any())).thenAnswer(i -> i.getArgument(1, Difference.class).getAdditions());
-        when(compiledResourceManager.getCompiledResource(anyList(), any(RepositoryConnection.class))).thenReturn(MODEL_FACTORY.createEmptyModel());
-
-        when(commitManager.createCommit(any(InProgressCommit.class), anyString(), any(), any())).thenReturn(commit);
-        when(commitManager.createInProgressCommit(any(User.class))).thenReturn(inProgressCommit);
-
         when(configProvider.getLocalCatalogIRI()).thenReturn(catalogId);
-
-        when(context.getServiceReference(EventAdmin.class)).thenReturn(serviceReference);
-        when(context.getService(serviceReference)).thenReturn(eventAdmin);
+        when(branchManager.getMasterBranch(eq(catalogIri), eq(recordId), any(RepositoryConnection.class))).thenReturn(masterBranch);
+        when(branchManager.getHeadGraph(masterBranch)).thenReturn(recordIdHead);
+        when(configProvider.getLocalCatalogIRI()).thenReturn(catalogIri);
 
         service = new WorkflowRecordVersioningService();
         injectOrmFactoryReferencesIntoService(service);
@@ -222,213 +187,84 @@ public class WorkflowRecordVersioningServiceTest extends OrmEnabledTestCase {
         closeable.close();
     }
 
+    // addMasterCommit, addBranchCommit, mergeIntoMaster, mergeIntoBranch test coverage provided by BaseVersioningServiceTest
+
     @Test
     public void getTypeIRITest() throws Exception {
         assertEquals(WorkflowRecord.TYPE, service.getTypeIRI());
     }
 
-    /* addCommit(Branch, Commit, RepositoryConnection) */
-
     @Test
-    public void addCommitToOtherBranchWithCommitTest() throws Exception {
-        try (RepositoryConnection conn = repo.getConnection()) {
-            // Setup:
-            Branch newBranch = branchFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/branches#new"));
+    public void validateAndUpdateTriggerTest() throws Exception {
+        when(compiledResourceManager.getCompiledResource(eq(commitID), any(RepositoryConnection.class))).thenReturn(recordHeadGraph);
+        when(commitManager.getCommit(eq(commitID), any(RepositoryConnection.class))).thenReturn(Optional.of(commit));
 
-            service.addCommit(record, newBranch, commit, conn);
-            verify(commitManager).addCommit(newBranch, commit, conn);
-            verify(thingManager, times(0)).getObject(record.getResource(), workflowRecordOrmFactory, conn);
-            verify(thingManager, times(0)).getObject(record.getResource(), workflowRecordOrmFactory, conn);
-            verify(workflowManager, times(0)).workflowRecordIriExists(newIRI);
-            assertTrue(record.getWorkflowIRI().isPresent());
-            assertEquals(workflowId, record.getWorkflowIRI().get());
-            verify(thingManager, times(0)).updateObject(record, conn);
-            verify(eventAdmin).postEvent(any(Event.class));
-        }
-    }
-
-    @Test
-    public void addCommitToMasterWithCommitWithNoBaseTest() throws Exception {
-        try (RepositoryConnection conn = repo.getConnection()) {
-            service.addCommit(record, branch, commit, conn);
-            verify(commitManager).addCommit(branch, commit, conn);
-            verify(thingManager, times(0)).getObject(record.getResource(), workflowRecordOrmFactory, conn);
-            verify(workflowManager, times(0)).workflowRecordIriExists(newIRI);
-            assertTrue(record.getWorkflowIRI().isPresent());
-            assertEquals(workflowId, record.getWorkflowIRI().get());
-            verify(thingManager, times(0)).updateObject(record, conn);
-            verify(eventAdmin).postEvent(any(Event.class));
-        }
-    }
-
-    @Test
-    public void addCommitToMasterWithCommitWithBaseAndNewWorkflowIRITest() throws Exception {
-        try (RepositoryConnection conn = repo.getConnection()) {
-            // Setup:
-            commit.setBaseCommit(commitFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/commits#new")));
-
-            service.addCommit(record, branch, commit, conn);
-            verify(commitManager).addCommit(branch, commit, conn);
-            verify(workflowManager).workflowRecordIriExists(newIRI);
-            assertTrue(record.getWorkflowIRI().isPresent());
-            assertEquals(newIRI, record.getWorkflowIRI().get());
-            verify(thingManager).updateObject(record, conn);
-            verify(eventAdmin).postEvent(any(Event.class));
-        }
-    }
-
-
-    @Test
-    public void addCommitToMasterWithCommitWithBaseAndSameWorkflowIRITest() {
-        // Setup:
-        when(workflowManager.workflowRecordIriExists(eq(workflowId))).thenReturn(true);
-        commit.setBaseCommit(commitFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/commits#new")));
-        Revision revisionUsed = revisionFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/revisions#revisionUsed"));
-        commit.setGenerated(Collections.singleton(revisionUsed));
-        thrown.expect(IllegalArgumentException.class);
-        thrown.expectMessage("Workflow ID: " + workflowId + " already exists.");
-        record.setWorkflowIRI(workflowId);
-
-        try (RepositoryConnection conn = repo.getConnection()) {
-            service.addCommit(record, branch, commit, conn);
+        try(RepositoryConnection conn = repo.getConnection()) {
+            service.validateAndUpdateTrigger(record, workflowId, commitID, conn);
         } finally {
-            verify(commitManager, times(0)).addCommit(eq(branch), eq(commit), any(RepositoryConnection.class));
-            verify(workflowManager).workflowRecordIriExists(workflowId);
-            assertTrue(record.getWorkflowIRI().isPresent());
-            assertEquals(workflowId, record.getWorkflowIRI().get());
-            verify(thingManager, times(0)).updateObject(eq(record), any(RepositoryConnection.class));
-            verify(eventAdmin, times(0)).postEvent(any(Event.class));
-        }
-    }
-
-    /* addCommit(Branch, User, String, Model, Model, Commit, Commit, RepositoryConnection)*/
-
-    @Test
-    public void addCommitToOtherBranchWithChangesTest() throws Exception {
-        try (RepositoryConnection conn = repo.getConnection()) {
-            // Setup:
-            Branch newBranch = branchFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/branches#new"));
-            Model additions = MODEL_FACTORY.createEmptyModel();
-            Model deletions = MODEL_FACTORY.createEmptyModel();
-
-            service.addCommit(record, newBranch, user, "Message", additions, deletions, commit, null, conn);
-            verify(commitManager).createInProgressCommit(user);
-            verify(commitManager).createCommit(inProgressCommit, "Message", commit, null);
-            verify(commitManager, times(0)).getCommitChain(any(Resource.class), eq(false), eq(conn));
-            verify(compiledResourceManager, times(0)).getCompiledResource(anyList(), eq(conn));
-            verify(differenceManager, times(0)).applyDifference(any(Model.class), any(Difference.class));
-            verify(thingManager, times(0)).getObject(record.getResource(), workflowRecordOrmFactory, conn);
-            verify(workflowManager, times(0)).workflowRecordIriExists(newIRI);
-            verify(commitManager).updateCommit(commit, additions, deletions, conn);
-            verify(commitManager).addCommit(newBranch, commit, conn);
-            assertTrue(record.getWorkflowIRI().isPresent());
-            assertEquals(workflowId, record.getWorkflowIRI().get());
-            verify(thingManager, times(0)).updateObject(record, conn);
-            verify(eventAdmin).postEvent(any(Event.class));
+            verify(workflowManager).validateWorkflow(any(Model.class));
+            verify(commitManager).getCommit(eq(commitID), any(RepositoryConnection.class));
+            verify(commit, times(1)).getBaseCommit_resource();
         }
     }
 
     @Test
-    public void addCommitToMasterWithChangesAndNoBaseTest() throws Exception {
-        try (RepositoryConnection conn = repo.getConnection()) {
-            // Setup:
-            Model additions = MODEL_FACTORY.createEmptyModel();
-            Model deletions = MODEL_FACTORY.createEmptyModel();
+    public void validateAndUpdateTriggerPresentTest() throws Exception {
+        IRI workflowIri = vf.createIRI("http://example.com/workflows/A");
+        when(compiledResourceManager.getCompiledResource(eq(commitID), any(RepositoryConnection.class))).thenReturn(recordHeadGraph);
+        when(commitManager.getCommit(eq(commitID), any(RepositoryConnection.class))).thenReturn(Optional.of(commit));
+        commit.setProperty(commitID, vf.createIRI("http://mobi.com/ontologies/catalog#baseCommit"));
 
-            service.addCommit(record, branch, user, "Message", additions, deletions, null, null, conn);
-            verify(commitManager).createInProgressCommit(user);
-            verify(commitManager).createCommit(inProgressCommit, "Message", null, null);
-            verify(commitManager, times(0)).getCommitChain(any(Resource.class), eq(false), eq(conn));
-            verify(compiledResourceManager, times(0)).getCompiledResource(anyList(), eq(conn));
-            verify(differenceManager, times(0)).applyDifference(any(Model.class), any(Difference.class));
-            verify(thingManager, times(0)).getObject(record.getResource(), workflowRecordOrmFactory, conn);
-            verify(workflowManager, times(0)).workflowRecordIriExists(newIRI);
-            verify(commitManager).updateCommit(commit, additions, deletions, conn);
-            verify(commitManager).addCommit(branch, commit, conn);
-            assertTrue(record.getWorkflowIRI().isPresent());
-            assertEquals(workflowId, record.getWorkflowIRI().get());
-            verify(thingManager, times(0)).updateObject(record, conn);
-            verify(eventAdmin).postEvent(any(Event.class));
+        Workflow workflowMock = mock(Workflow.class);
+        when(workflowManager.getWorkflow(eq(workflowIri))).thenReturn(Optional.of(workflowMock));
+        try(RepositoryConnection conn = repo.getConnection()) {
+            service.validateAndUpdateTrigger(record, workflowId, commitID, conn);
+        } finally {
+            verify(workflowManager).validateWorkflow(any(Model.class));
+            verify(commitManager).getCommit(eq(commitID), any(RepositoryConnection.class));
+            verify(commit, times(1)).getBaseCommit_resource();
+            verify(workflowManager).getWorkflow(eq(workflowIri));
+            verify(workflowManager).updateTriggerService(eq(record), eq(workflowMock), any(RepositoryConnection.class));
+        }
+    }
+
+    @Test(expected=IllegalStateException.class)
+    public void updateMasterRecordIRINotContainOntologyDefinitionTest() throws Exception {
+        try(RepositoryConnection conn = repo.getConnection()) {
+            conn.clear();
+        }
+        service.updateMasterRecordIRI(record.getResource(), commit, repo.getConnection());
+    }
+
+    @Test(expected=IllegalArgumentException.class)
+    public void updateMasterRecordIRIOntologyIRISameTest() throws Exception {
+        when(workflowManager.workflowRecordIriExists(any(Resource.class))).thenReturn(true);
+        when(thingManager.getObject(eq(record.getResource()), eq(service.workflowRecordFactory), any(RepositoryConnection.class))).thenReturn(record);
+
+        try(RepositoryConnection conn = repo.getConnection()) {
+            record.setWorkflowIRI(getValueFactory().createIRI("http://new"));
+            Mockito.reset(record);
+            service.updateMasterRecordIRI(record.getResource(), commit, conn);
+        } finally {
+            verify(record, never()).setWorkflowIRI(eq(getValueFactory().createIRI("http://new")));
+            verify(thingManager, never()).updateObject(any(WorkflowRecord.class), any(RepositoryConnection.class));
         }
     }
 
     @Test
-    public void addCommitToMasterWithChangesAndBaseAndNoAuxTest() throws Exception {
-        try (RepositoryConnection conn = repo.getConnection()) {
-            // Setup:
-            Model additionsModel = MODEL_FACTORY.createEmptyModel();
-            additionsModel.addAll(additions.collect(Collectors.toSet()));
-            Model deletions = MODEL_FACTORY.createEmptyModel();
+    public void updateMasterRecordIRIOntologyIRITest() throws Exception {
+        IRI newShapeIRI = getValueFactory().createIRI("http://mobi.solutions/ontologies/workflows/NewWorkflow");
+        when(workflowManager.workflowRecordIriExists(any(Resource.class))).thenReturn(false);
+        when(thingManager.getObject(eq(record.getResource()), eq(service.workflowRecordFactory), any(RepositoryConnection.class))).thenReturn(record);
 
-            service.addCommit(record, branch, user, "Message", additionsModel, deletions, commit, null, conn);
-            verify(commitManager).createInProgressCommit(user);
-            verify(commitManager).createCommit(inProgressCommit, "Message", commit, null);
-            verify(commitManager, times(0)).getCommitChain(any(Resource.class), eq(false), eq(conn));
-            verify(compiledResourceManager, times(0)).getCompiledResource(anyList(), eq(conn));
-            verify(differenceManager).applyDifference(any(Model.class), any(Difference.class));
-            verify(workflowManager).workflowRecordIriExists(newIRI);
-            verify(commitManager).updateCommit(commit, additionsModel, deletions, conn);
-            verify(commitManager).addCommit(branch, commit, conn);
-            assertTrue(record.getWorkflowIRI().isPresent());
-            assertEquals(newIRI, record.getWorkflowIRI().get());
-            verify(thingManager).updateObject(record, conn);
-            verify(eventAdmin).postEvent(any(Event.class));
-        }
-    }
-
-    @Test
-    public void addCommitToMasterWithChangesAndBaseAndAuxTest() throws Exception {
-        try (RepositoryConnection conn = repo.getConnection()) {
-            // Setup:
-            Model additionsModel = MODEL_FACTORY.createEmptyModel();
-            additionsModel.addAll(additions.collect(Collectors.toSet()));
-            Model deletions = MODEL_FACTORY.createEmptyModel();
-
-            service.addCommit(record, branch, user, "Message", additionsModel, deletions, commit, commit, conn);
-            verify(commitManager).createInProgressCommit(user);
-            verify(commitManager).createCommit(inProgressCommit, "Message", commit, commit);
-            verify(commitManager, times(2)).getCommitChain(commit.getResource(), false, conn);
-            verify(compiledResourceManager).getCompiledResource(anyList(), eq(conn));
-            verify(differenceManager).applyDifference(any(Model.class), any(Difference.class));
-            verify(workflowManager).workflowRecordIriExists(newIRI);
-            verify(commitManager).updateCommit(commit, additionsModel, deletions, conn);
-            verify(commitManager).addCommit(branch, commit, conn);
-            assertTrue(record.getWorkflowIRI().isPresent());
-            assertEquals(newIRI, record.getWorkflowIRI().get());
-            verify(thingManager).updateObject(record, conn);
-            verify(eventAdmin).postEvent(any(Event.class));
-        }
-    }
-
-    @Test (expected = IllegalArgumentException.class)
-    public void addCommitWithoutIRITest() {
-        try (RepositoryConnection conn = repo.getConnection()) {
-            record.clearWorkflowIRI();
-            service.addCommit(record, branch, commit, conn);
-        }
-    }
-
-    @Test
-    public void addCommitToMasterOfRecordWithoutIRITest() throws Exception {
-        try (RepositoryConnection conn = repo.getConnection()) {
-            // Setup:
-            WorkflowRecord newRecord = workflowRecordOrmFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/records#new"));
-            when(recordManager.getRecord(eq(catalogId), any(Resource.class), eq(workflowRecordOrmFactory), eq(conn))).thenReturn(newRecord);
-            Model additionsModel = MODEL_FACTORY.createEmptyModel();
-            additionsModel.addAll(additions.collect(Collectors.toSet()));
-            Model deletions = MODEL_FACTORY.createEmptyModel();
-
-            thrown.expect(IllegalArgumentException.class);
-            thrown.expectMessage("Workflow Records must have linked workflow");
-
-            try {
-                service.addCommit(record, branch, user, "Message", additionsModel, deletions, commit, null, conn);
-            } finally {
-                verify(commitManager).createInProgressCommit(user);
-                verify(commitManager).createCommit(inProgressCommit, "Message", commit, null);
-                verify(commitManager, times(0)).getCommitChain(any(Resource.class), eq(false), eq(conn));
-                verify(compiledResourceManager, times(0)).getCompiledResource(anyList(), eq(conn));
-            }
+        try(RepositoryConnection conn = repo.getConnection()) {
+            record.setWorkflowIRI(getValueFactory().createIRI("http://new"));
+            Mockito.reset(record);
+            service.updateMasterRecordIRI(record.getResource(), commit, conn);
+        } finally {
+            verify(workflowManager).workflowRecordIriExists(eq(newShapeIRI));
+            verify(record).setWorkflowIRI(eq(newShapeIRI));
+            verify(thingManager).updateObject(any(WorkflowRecord.class), any(RepositoryConnection.class));
         }
     }
 

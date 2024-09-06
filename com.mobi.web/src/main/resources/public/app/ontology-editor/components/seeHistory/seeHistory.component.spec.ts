@@ -55,8 +55,8 @@ describe('See History component', function() {
     let progressSpinnerStub: jasmine.SpyObj<ProgressSpinnerService>;
 
     const commits: Commit[] = [
-        {id: 'http://test.com#1234567890', auxiliary: '', base: '', creator: undefined, message: '', date: ''},
-        {id: 'http://test.com#0987654321', auxiliary: '', base: '', creator: undefined, message: '', date: ''}
+        {id: 'http://test.com#1234567890', auxiliary: '', base: '', branch: '', creator: undefined, message: '', date: ''},
+        {id: 'http://test.com#0987654321', auxiliary: '', base: '', branch: '', creator: undefined, message: '', date: ''}
     ];
     const resource: JSONLDObject = {
         '@id': 'www.test.com',

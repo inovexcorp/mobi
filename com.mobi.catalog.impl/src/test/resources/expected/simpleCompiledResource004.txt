@@ -1,0 +1,162 @@
+====== commit: https://mobi.com/commits#df690842-19a2-463d-810e-8eed8df78b60 ======
+https://mobi.com/ontologies/SimpleMergeExample, http://purl.org/dc/terms/title, SimpleMergeExample, null
+https://mobi.com/ontologies/SimpleMergeExample, http://www.w3.org/1999/02/22-rdf-syntax-ns#type, http://www.w3.org/2002/07/owl#Ontology, null
+
+
+====== commit: https://mobi.com/commits#e1a96215-0b90-4d29-8547-5fc4eca6c58b ======
+https://mobi.com/ontologies/SimpleMergeExample#Class03, http://purl.org/dc/terms/title, Class03, null
+https://mobi.com/ontologies/SimpleMergeExample#Class03, http://www.w3.org/1999/02/22-rdf-syntax-ns#type, http://www.w3.org/2002/07/owl#Class, null
+https://mobi.com/ontologies/SimpleMergeExample, http://purl.org/dc/terms/title, SimpleMergeExample, null
+https://mobi.com/ontologies/SimpleMergeExample, http://www.w3.org/1999/02/22-rdf-syntax-ns#type, http://www.w3.org/2002/07/owl#Ontology, null
+
+
+====== commit: https://mobi.com/commits#bf3979fd-00ee-4378-98e9-ce4b0fa018f7 ======
+https://mobi.com/ontologies/SimpleMergeExample#Class01, http://purl.org/dc/terms/title, Class01, null
+https://mobi.com/ontologies/SimpleMergeExample#Class01, http://www.w3.org/1999/02/22-rdf-syntax-ns#type, http://www.w3.org/2002/07/owl#Class, null
+https://mobi.com/ontologies/SimpleMergeExample#Class02, http://purl.org/dc/terms/title, Class02, null
+https://mobi.com/ontologies/SimpleMergeExample#Class02, http://www.w3.org/1999/02/22-rdf-syntax-ns#type, http://www.w3.org/2002/07/owl#Class, null
+https://mobi.com/ontologies/SimpleMergeExample, http://purl.org/dc/terms/title, SimpleMergeExample, null
+https://mobi.com/ontologies/SimpleMergeExample, http://www.w3.org/1999/02/22-rdf-syntax-ns#type, http://www.w3.org/2002/07/owl#Ontology, null
+
+
+====== commit: https://mobi.com/commits#ontology-simple-id-002-commit-004 ======
+https://mobi.com/ontologies/SimpleMergeExample#Class01, http://purl.org/dc/terms/title, Class01, null
+https://mobi.com/ontologies/SimpleMergeExample#Class01, http://www.w3.org/1999/02/22-rdf-syntax-ns#type, http://www.w3.org/2002/07/owl#Class, null
+https://mobi.com/ontologies/SimpleMergeExample#Class02, http://purl.org/dc/terms/title, Class02, null
+https://mobi.com/ontologies/SimpleMergeExample#Class02, http://www.w3.org/1999/02/22-rdf-syntax-ns#type, http://www.w3.org/2002/07/owl#Class, null
+https://mobi.com/ontologies/SimpleMergeExample#Class03, http://purl.org/dc/terms/title, Class03, null
+https://mobi.com/ontologies/SimpleMergeExample#Class03, http://www.w3.org/1999/02/22-rdf-syntax-ns#type, http://www.w3.org/2002/07/owl#Class, null
+https://mobi.com/ontologies/SimpleMergeExample, http://purl.org/dc/terms/title, SimpleMergeExample, null
+https://mobi.com/ontologies/SimpleMergeExample, http://www.w3.org/1999/02/22-rdf-syntax-ns#type, http://www.w3.org/2002/07/owl#Ontology, null
+
+
+====== commit: https://mobi.com/commits#ontology-simple-id-002-commit-005 ======
+https://mobi.com/ontologies/SimpleMergeExample#Class01, http://purl.org/dc/terms/title, Class01, null
+https://mobi.com/ontologies/SimpleMergeExample#Class01, http://www.w3.org/1999/02/22-rdf-syntax-ns#type, http://www.w3.org/2002/07/owl#Class, null
+https://mobi.com/ontologies/SimpleMergeExample#Class02, http://purl.org/dc/terms/title, Class02, null
+https://mobi.com/ontologies/SimpleMergeExample#Class02, http://www.w3.org/1999/02/22-rdf-syntax-ns#type, http://www.w3.org/2002/07/owl#Class, null
+https://mobi.com/ontologies/SimpleMergeExample#Class03V2, http://purl.org/dc/terms/title, Class03V2, null
+https://mobi.com/ontologies/SimpleMergeExample#Class03V2, http://www.w3.org/1999/02/22-rdf-syntax-ns#type, http://www.w3.org/2002/07/owl#Class, null
+https://mobi.com/ontologies/SimpleMergeExample, http://purl.org/dc/terms/title, SimpleMergeExample, null
+https://mobi.com/ontologies/SimpleMergeExample, http://www.w3.org/1999/02/22-rdf-syntax-ns#type, http://www.w3.org/2002/07/owl#Ontology, null
+
+
+====== commit: https://mobi.com/commits#ef808973-b377-4a10-80f6-dcb3bf0e9b3c ======
+https://mobi.com/ontologies/SimpleMergeExample#Class01, http://purl.org/dc/terms/title, Class01Change, null
+https://mobi.com/ontologies/SimpleMergeExample#Class01, http://www.w3.org/1999/02/22-rdf-syntax-ns#type, http://www.w3.org/2002/07/owl#Class, null
+https://mobi.com/ontologies/SimpleMergeExample#Class02, http://purl.org/dc/terms/title, Class02, null
+https://mobi.com/ontologies/SimpleMergeExample#Class02, http://www.w3.org/1999/02/22-rdf-syntax-ns#type, http://www.w3.org/2002/07/owl#Class, null
+https://mobi.com/ontologies/SimpleMergeExample#Class03V2, http://purl.org/dc/terms/title, Class03V2, null
+https://mobi.com/ontologies/SimpleMergeExample#Class03V2, http://www.w3.org/1999/02/22-rdf-syntax-ns#type, http://www.w3.org/2002/07/owl#Class, null
+https://mobi.com/ontologies/SimpleMergeExample, http://purl.org/dc/terms/title, SimpleMergeExample, null
+https://mobi.com/ontologies/SimpleMergeExample, http://www.w3.org/1999/02/22-rdf-syntax-ns#type, http://www.w3.org/2002/07/owl#Ontology, null
+
+
+====== commit: https://mobi.com/commits#729fd411-7f27-40bb-93cb-fad9a325c338 ======
+https://mobi.com/ontologies/SimpleMergeExample#Class01, http://purl.org/dc/terms/title, Class01Change, null
+https://mobi.com/ontologies/SimpleMergeExample#Class01, http://www.w3.org/1999/02/22-rdf-syntax-ns#type, http://www.w3.org/2002/07/owl#Class, null
+https://mobi.com/ontologies/SimpleMergeExample#Class01, http://www.w3.org/2000/01/rdf-schema#subClassOf, https://mobi.com/ontologies/SimpleMergeExample#Class02, null
+https://mobi.com/ontologies/SimpleMergeExample#Class01, http://www.w3.org/2000/01/rdf-schema#subClassOf, https://mobi.com/ontologies/SimpleMergeExample#Class03V2, null
+https://mobi.com/ontologies/SimpleMergeExample#Class02, http://purl.org/dc/terms/title, Class02, null
+https://mobi.com/ontologies/SimpleMergeExample#Class02, http://www.w3.org/1999/02/22-rdf-syntax-ns#type, http://www.w3.org/2002/07/owl#Class, null
+https://mobi.com/ontologies/SimpleMergeExample#Class03V2, http://purl.org/dc/terms/title, Class03V2, null
+https://mobi.com/ontologies/SimpleMergeExample#Class03V2, http://www.w3.org/1999/02/22-rdf-syntax-ns#type, http://www.w3.org/2002/07/owl#Class, null
+https://mobi.com/ontologies/SimpleMergeExample#Class100, http://purl.org/dc/terms/title, Class100, null
+https://mobi.com/ontologies/SimpleMergeExample#Class100, http://www.w3.org/1999/02/22-rdf-syntax-ns#type, http://www.w3.org/2002/07/owl#Class, null
+https://mobi.com/ontologies/SimpleMergeExample#Class200, http://purl.org/dc/terms/title, Class200, null
+https://mobi.com/ontologies/SimpleMergeExample#Class200, http://www.w3.org/1999/02/22-rdf-syntax-ns#type, http://www.w3.org/2002/07/owl#Class, null
+https://mobi.com/ontologies/SimpleMergeExample#Class300, http://purl.org/dc/terms/title, Class300, null
+https://mobi.com/ontologies/SimpleMergeExample#Class300, http://www.w3.org/1999/02/22-rdf-syntax-ns#type, http://www.w3.org/2002/07/owl#Class, null
+https://mobi.com/ontologies/SimpleMergeExample#Class300, http://www.w3.org/2000/01/rdf-schema#subClassOf, urn:genId, null
+https://mobi.com/ontologies/SimpleMergeExample#someProp, http://purl.org/dc/terms/title, someProp, null
+https://mobi.com/ontologies/SimpleMergeExample#someProp, http://www.w3.org/1999/02/22-rdf-syntax-ns#type, http://www.w3.org/2002/07/owl#DatatypeProperty, null
+https://mobi.com/ontologies/SimpleMergeExample, http://purl.org/dc/terms/contributor, contributor01, null
+https://mobi.com/ontologies/SimpleMergeExample, http://purl.org/dc/terms/contributor, contributor02, null
+https://mobi.com/ontologies/SimpleMergeExample, http://purl.org/dc/terms/contributor, contributor03, null
+https://mobi.com/ontologies/SimpleMergeExample, http://purl.org/dc/terms/title, SimpleMergeExample, null
+https://mobi.com/ontologies/SimpleMergeExample, http://www.w3.org/1999/02/22-rdf-syntax-ns#type, http://www.w3.org/2002/07/owl#Ontology, null
+urn:genId, http://www.w3.org/1999/02/22-rdf-syntax-ns#type, http://www.w3.org/2002/07/owl#Restriction, null
+urn:genId, http://www.w3.org/2002/07/owl#onProperty, https://mobi.com/ontologies/SimpleMergeExample#someProp, null
+urn:genId, http://www.w3.org/2002/07/owl#someValuesFrom, https://mobi.com/ontologies/SimpleMergeExample#Class200, null
+
+
+====== commit: https://mobi.com/commits#2e5d1127-1e03-4e69-85a2-ffbffea44510 ======
+https://mobi.com/ontologies/SimpleMergeExample#Class01, http://purl.org/dc/terms/title, Class01Change, null
+https://mobi.com/ontologies/SimpleMergeExample#Class01, http://www.w3.org/1999/02/22-rdf-syntax-ns#type, http://www.w3.org/2002/07/owl#Class, null
+https://mobi.com/ontologies/SimpleMergeExample#Class01, http://www.w3.org/2000/01/rdf-schema#subClassOf, https://mobi.com/ontologies/SimpleMergeExample#Class02, null
+https://mobi.com/ontologies/SimpleMergeExample#Class01, http://www.w3.org/2000/01/rdf-schema#subClassOf, https://mobi.com/ontologies/SimpleMergeExample#Class03V2, null
+https://mobi.com/ontologies/SimpleMergeExample#Class02, http://purl.org/dc/terms/title, Class02, null
+https://mobi.com/ontologies/SimpleMergeExample#Class02, http://www.w3.org/1999/02/22-rdf-syntax-ns#type, http://www.w3.org/2002/07/owl#Class, null
+https://mobi.com/ontologies/SimpleMergeExample#Class03V2, http://purl.org/dc/terms/title, Class03V2, null
+https://mobi.com/ontologies/SimpleMergeExample#Class03V2, http://www.w3.org/1999/02/22-rdf-syntax-ns#type, http://www.w3.org/2002/07/owl#Class, null
+https://mobi.com/ontologies/SimpleMergeExample#Class100, http://purl.org/dc/terms/title, Class100, null
+https://mobi.com/ontologies/SimpleMergeExample#Class100, http://www.w3.org/1999/02/22-rdf-syntax-ns#type, http://www.w3.org/2002/07/owl#Class, null
+https://mobi.com/ontologies/SimpleMergeExample#Class200, http://purl.org/dc/terms/title, Class200, null
+https://mobi.com/ontologies/SimpleMergeExample#Class200, http://www.w3.org/1999/02/22-rdf-syntax-ns#type, http://www.w3.org/2002/07/owl#Class, null
+https://mobi.com/ontologies/SimpleMergeExample#Class300, http://purl.org/dc/terms/title, Class300, null
+https://mobi.com/ontologies/SimpleMergeExample#Class300, http://www.w3.org/1999/02/22-rdf-syntax-ns#type, http://www.w3.org/2002/07/owl#Class, null
+https://mobi.com/ontologies/SimpleMergeExample#someProp, http://purl.org/dc/terms/title, someProp, null
+https://mobi.com/ontologies/SimpleMergeExample#someProp, http://www.w3.org/1999/02/22-rdf-syntax-ns#type, http://www.w3.org/2002/07/owl#DatatypeProperty, null
+https://mobi.com/ontologies/SimpleMergeExample, http://purl.org/dc/terms/contributor, contributor01, null
+https://mobi.com/ontologies/SimpleMergeExample, http://purl.org/dc/terms/contributor, contributor02, null
+https://mobi.com/ontologies/SimpleMergeExample, http://purl.org/dc/terms/contributor, contributor03, null
+https://mobi.com/ontologies/SimpleMergeExample, http://purl.org/dc/terms/title, SimpleMergeExample, null
+https://mobi.com/ontologies/SimpleMergeExample, http://www.w3.org/1999/02/22-rdf-syntax-ns#type, http://www.w3.org/2002/07/owl#Ontology, null
+
+
+====== commit: https://mobi.com/commits#5c1b960f-e88f-4ec3-a826-92e072c35025 ======
+https://mobi.com/ontologies/SimpleMergeExample#Class01, http://purl.org/dc/terms/title, Class01Change, null
+https://mobi.com/ontologies/SimpleMergeExample#Class01, http://www.w3.org/1999/02/22-rdf-syntax-ns#type, http://www.w3.org/2002/07/owl#Class, null
+https://mobi.com/ontologies/SimpleMergeExample#Class01, http://www.w3.org/2000/01/rdf-schema#subClassOf, https://mobi.com/ontologies/SimpleMergeExample#Class02, null
+https://mobi.com/ontologies/SimpleMergeExample#Class01, http://www.w3.org/2000/01/rdf-schema#subClassOf, https://mobi.com/ontologies/SimpleMergeExample#Class03V2, null
+https://mobi.com/ontologies/SimpleMergeExample#Class02, http://purl.org/dc/terms/title, Class02, null
+https://mobi.com/ontologies/SimpleMergeExample#Class02, http://www.w3.org/1999/02/22-rdf-syntax-ns#type, http://www.w3.org/2002/07/owl#Class, null
+https://mobi.com/ontologies/SimpleMergeExample#Class03V2, http://purl.org/dc/terms/title, Class03V2, null
+https://mobi.com/ontologies/SimpleMergeExample#Class03V2, http://www.w3.org/1999/02/22-rdf-syntax-ns#type, http://www.w3.org/2002/07/owl#Class, null
+https://mobi.com/ontologies/SimpleMergeExample#Class100, http://purl.org/dc/terms/title, Class100, null
+https://mobi.com/ontologies/SimpleMergeExample#Class100, http://www.w3.org/1999/02/22-rdf-syntax-ns#type, http://www.w3.org/2002/07/owl#Class, null
+https://mobi.com/ontologies/SimpleMergeExample#Class200, http://purl.org/dc/terms/title, Class200, null
+https://mobi.com/ontologies/SimpleMergeExample#Class200, http://www.w3.org/1999/02/22-rdf-syntax-ns#type, http://www.w3.org/2002/07/owl#Class, null
+https://mobi.com/ontologies/SimpleMergeExample#Class300, http://purl.org/dc/terms/title, Class300, null
+https://mobi.com/ontologies/SimpleMergeExample#Class300, http://www.w3.org/1999/02/22-rdf-syntax-ns#type, http://www.w3.org/2002/07/owl#Class, null
+https://mobi.com/ontologies/SimpleMergeExample#Class300, http://www.w3.org/2000/01/rdf-schema#subClassOf, urn:genId, null
+https://mobi.com/ontologies/SimpleMergeExample#someProp, http://purl.org/dc/terms/title, someProp, null
+https://mobi.com/ontologies/SimpleMergeExample#someProp, http://www.w3.org/1999/02/22-rdf-syntax-ns#type, http://www.w3.org/2002/07/owl#DatatypeProperty, null
+https://mobi.com/ontologies/SimpleMergeExample, http://purl.org/dc/terms/contributor, contributor01, null
+https://mobi.com/ontologies/SimpleMergeExample, http://purl.org/dc/terms/contributor, contributor02, null
+https://mobi.com/ontologies/SimpleMergeExample, http://purl.org/dc/terms/contributor, contributor03, null
+https://mobi.com/ontologies/SimpleMergeExample, http://purl.org/dc/terms/title, SimpleMergeExample, null
+https://mobi.com/ontologies/SimpleMergeExample, http://www.w3.org/1999/02/22-rdf-syntax-ns#type, http://www.w3.org/2002/07/owl#Ontology, null
+urn:genId, http://www.w3.org/1999/02/22-rdf-syntax-ns#type, http://www.w3.org/2002/07/owl#Restriction, null
+urn:genId, http://www.w3.org/2002/07/owl#onProperty, https://mobi.com/ontologies/SimpleMergeExample#someProp, null
+urn:genId, http://www.w3.org/2002/07/owl#someValuesFrom, https://mobi.com/ontologies/SimpleMergeExample#Class100, null
+
+
+====== commit: https://mobi.com/commits#52ac25f2-f8a8-477a-8ecc-94c31736976b ======
+https://mobi.com/ontologies/SimpleMergeExample#Class01, http://purl.org/dc/terms/title, Class01Change, null
+https://mobi.com/ontologies/SimpleMergeExample#Class01, http://www.w3.org/1999/02/22-rdf-syntax-ns#type, http://www.w3.org/2002/07/owl#Class, null
+https://mobi.com/ontologies/SimpleMergeExample#Class01, http://www.w3.org/2000/01/rdf-schema#subClassOf, https://mobi.com/ontologies/SimpleMergeExample#Class02, null
+https://mobi.com/ontologies/SimpleMergeExample#Class01, http://www.w3.org/2000/01/rdf-schema#subClassOf, https://mobi.com/ontologies/SimpleMergeExample#Class03V2, null
+https://mobi.com/ontologies/SimpleMergeExample#Class02, http://purl.org/dc/terms/title, Class02, null
+https://mobi.com/ontologies/SimpleMergeExample#Class02, http://www.w3.org/1999/02/22-rdf-syntax-ns#type, http://www.w3.org/2002/07/owl#Class, null
+https://mobi.com/ontologies/SimpleMergeExample#Class03V2, http://purl.org/dc/terms/title, Class03V2, null
+https://mobi.com/ontologies/SimpleMergeExample#Class03V2, http://www.w3.org/1999/02/22-rdf-syntax-ns#type, http://www.w3.org/2002/07/owl#Class, null
+https://mobi.com/ontologies/SimpleMergeExample#Class100, http://purl.org/dc/terms/title, Class100, null
+https://mobi.com/ontologies/SimpleMergeExample#Class100, http://www.w3.org/1999/02/22-rdf-syntax-ns#type, http://www.w3.org/2002/07/owl#Class, null
+https://mobi.com/ontologies/SimpleMergeExample#Class200, http://purl.org/dc/terms/title, Class200, null
+https://mobi.com/ontologies/SimpleMergeExample#Class200, http://www.w3.org/1999/02/22-rdf-syntax-ns#type, http://www.w3.org/2002/07/owl#Class, null
+https://mobi.com/ontologies/SimpleMergeExample#Class300, http://purl.org/dc/terms/title, Class300, null
+https://mobi.com/ontologies/SimpleMergeExample#Class300, http://www.w3.org/1999/02/22-rdf-syntax-ns#type, http://www.w3.org/2002/07/owl#Class, null
+https://mobi.com/ontologies/SimpleMergeExample#Class300, http://www.w3.org/2000/01/rdf-schema#subClassOf, urn:genId, null
+https://mobi.com/ontologies/SimpleMergeExample#someProp, http://purl.org/dc/terms/title, someProp, null
+https://mobi.com/ontologies/SimpleMergeExample#someProp, http://www.w3.org/1999/02/22-rdf-syntax-ns#type, http://www.w3.org/2002/07/owl#DatatypeProperty, null
+https://mobi.com/ontologies/SimpleMergeExample, http://purl.org/dc/terms/contributor, contributor01, null
+https://mobi.com/ontologies/SimpleMergeExample, http://purl.org/dc/terms/contributor, contributor02, null
+https://mobi.com/ontologies/SimpleMergeExample, http://purl.org/dc/terms/contributor, contributor03, null
+https://mobi.com/ontologies/SimpleMergeExample, http://purl.org/dc/terms/title, SimpleMergeExample, null
+https://mobi.com/ontologies/SimpleMergeExample, http://www.w3.org/1999/02/22-rdf-syntax-ns#type, http://www.w3.org/2002/07/owl#Ontology, null
+urn:genId, http://www.w3.org/1999/02/22-rdf-syntax-ns#type, http://www.w3.org/2002/07/owl#Restriction, null
+urn:genId, http://www.w3.org/2002/07/owl#onProperty, https://mobi.com/ontologies/SimpleMergeExample#someProp, null
+urn:genId, http://www.w3.org/2002/07/owl#someValuesFrom, https://mobi.com/ontologies/SimpleMergeExample#Class100, null
+
+

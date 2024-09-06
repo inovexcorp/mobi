@@ -36,6 +36,7 @@ import com.mobi.catalog.api.builder.PagedDifference;
 import com.mobi.catalog.api.ontologies.mcat.CommitFactory;
 import com.mobi.catalog.api.ontologies.mcat.InProgressCommitFactory;
 import com.mobi.catalog.api.ontologies.mcat.Revision;
+import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.exception.MobiException;
 import com.mobi.persistence.utils.Bindings;
 import org.apache.commons.io.IOUtils;
@@ -55,14 +56,15 @@ import org.eclipse.rdf4j.query.QueryResults;
 import org.eclipse.rdf4j.query.TupleQuery;
 import org.eclipse.rdf4j.query.TupleQueryResult;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.eclipse.rdf4j.rio.RDFFormat;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -79,22 +81,28 @@ public class SimpleDifferenceManager implements DifferenceManager {
     private static final String GET_PAGED_CHANGES;
     private static final String GET_ADDITIONS_IN_COMMIT;
     private static final String GET_DELETIONS_IN_COMMIT;
+    private static final String COMPARE_GRAPHS;
 
     static {
         try {
             GET_PAGED_CHANGES = IOUtils.toString(
                     Objects.requireNonNull(SimpleDifferenceManager.class
-                            .getResourceAsStream("/get-paged-changes.rq")),
+                            .getResourceAsStream("/difference/get-paged-changes.rq")),
                     StandardCharsets.UTF_8
             );
             GET_ADDITIONS_IN_COMMIT = IOUtils.toString(
                     Objects.requireNonNull(SimpleDifferenceManager.class
-                            .getResourceAsStream("/get-additions-in-commit.rq")),
+                            .getResourceAsStream("/difference/get-additions-in-commit.rq")),
                     StandardCharsets.UTF_8
             );
             GET_DELETIONS_IN_COMMIT = IOUtils.toString(
                     Objects.requireNonNull(SimpleDifferenceManager.class
-                            .getResourceAsStream("/get-deletions-in-commit.rq")),
+                            .getResourceAsStream("/difference/get-deletions-in-commit.rq")),
+                    StandardCharsets.UTF_8
+            );
+            COMPARE_GRAPHS = IOUtils.toString(
+                    Objects.requireNonNull(SimpleDifferenceManager.class
+                            .getResourceAsStream("/difference/compare-graphs.rq")),
                     StandardCharsets.UTF_8
             );
         } catch (IOException e) {
@@ -106,19 +114,22 @@ public class SimpleDifferenceManager implements DifferenceManager {
     final ModelFactory mf = new DynamicModelFactory();
 
     @Reference
+    CatalogConfigProvider configProvider;
+
+    @Reference
     ThingManager thingManager;
 
     @Reference
     RevisionManager revisionManager;
 
     @Reference
+    CommitManager commitManager;
+
+    @Reference
     CompiledResourceManager compiledResourceManager;
 
     @Reference
     InProgressCommitFactory inProgressCommitFactory;
-
-    @Reference
-    CommitManager commitManager;
 
     @Reference
     CommitFactory commitFactory;
@@ -140,7 +151,7 @@ public class SimpleDifferenceManager implements DifferenceManager {
 
     @Override
     public Difference getCommitDifference(Resource commitId, RepositoryConnection conn) {
-        Revision revision = revisionManager.getRevision(commitId, conn);
+        Revision revision = revisionManager.getDisplayRevisionFromCommitId(commitId, conn);
 
         Model addModel = mf.createEmptyModel();
         Model deleteModel = mf.createEmptyModel();
@@ -166,7 +177,8 @@ public class SimpleDifferenceManager implements DifferenceManager {
             conn.getStatements(null, null, null, adds).forEach(statement ->
                     addModel.add(statement.getSubject(), statement.getPredicate(), statement.getObject(), graph));
             conn.getStatements(null, null, null, dels).forEach(statement ->
-                    deleteModel.add(statement.getSubject(), statement.getPredicate(), statement.getObject(), graph));
+                    deleteModel.add(statement.getSubject(), statement.getPredicate(), statement.getObject(),
+                            graph));
         });
 
         return new Difference.Builder()
@@ -175,8 +187,7 @@ public class SimpleDifferenceManager implements DifferenceManager {
                 .build();
     }
 
-    @Override
-    public Difference getCommitDifference(List<Resource> commits, RepositoryConnection conn) {
+    private Difference getCommitDifference(List<Resource> commits, RepositoryConnection conn) {
         Map<Statement, Integer> additions = new HashMap<>();
         Map<Statement, Integer> deletions = new HashMap<>();
         commits.forEach(commitId -> aggregateDifferences(additions, deletions, commitId, conn));
@@ -195,7 +206,7 @@ public class SimpleDifferenceManager implements DifferenceManager {
     @Override
     public Difference getCommitDifferenceForSubject(Resource subjectId, Resource commitId, RepositoryConnection conn) {
         thingManager.validateResource(commitId, commitFactory.getTypeIRI(), conn);
-        Revision revision = revisionManager.getRevision(commitId, conn);
+        Revision revision = revisionManager.getDisplayRevisionFromCommitId(commitId, conn);
 
         Model addModel = mf.createEmptyModel();
         Model deleteModel = mf.createEmptyModel();
@@ -233,7 +244,7 @@ public class SimpleDifferenceManager implements DifferenceManager {
     @Override
     public PagedDifference getCommitDifferencePaged(Resource commitId, int limit, int offset, RepositoryConnection conn) {
         thingManager.validateResource(commitId, commitFactory.getTypeIRI(), conn);
-        Revision revision = revisionManager.getRevision(commitId, conn);
+        Revision revision = revisionManager.getDisplayRevisionFromCommitId(commitId, conn);
 
         Model addModel = mf.createEmptyModel();
         Model deleteModel = mf.createEmptyModel();
@@ -352,86 +363,145 @@ public class SimpleDifferenceManager implements DifferenceManager {
     @Override
     public Set<Conflict> getConflicts(Resource sourceCommitId, Resource targetCommitId, RepositoryConnection conn) {
         final long start = System.currentTimeMillis();
-        // Does not take into account named graphs
         thingManager.validateResource(sourceCommitId, commitFactory.getTypeIRI(), conn);
         thingManager.validateResource(targetCommitId, commitFactory.getTypeIRI(), conn);
 
-        ArrayList<Resource> sourceCommits = new ArrayList<>(commitManager.getCommitChain(sourceCommitId, true, conn));
-        ArrayList<Resource> targetCommits = new ArrayList<>(commitManager.getCommitChain(targetCommitId, true, conn));
-        ArrayList<Resource> commonCommits = new ArrayList<>(sourceCommits);
-        commonCommits.retainAll(targetCommits);
+        List<Resource> sourceCommits = commitManager.getCommitChain(sourceCommitId, false, conn);
+        List<Resource> targetCommits = commitManager.getCommitChain(targetCommitId, false, conn);
+        sourceCommits.retainAll(targetCommits);
+        Resource branchingId = sourceCommits.get(0);
 
-        sourceCommits.removeAll(commonCommits);
-        targetCommits.removeAll(commonCommits);
+        File sourceCompiled = compiledResourceManager.getCompiledResourceFile(sourceCommitId, RDFFormat.TURTLE, conn);
+        File targetCompiled = compiledResourceManager.getCompiledResourceFile(targetCommitId, RDFFormat.TURTLE, conn);
+        File branchingCompiled = compiledResourceManager.getCompiledResourceFile(branchingId, RDFFormat.TURTLE, conn);
 
-        sourceCommits.trimToSize();
-        targetCommits.trimToSize();
+        Resource sourceGraph = vf.createIRI(sourceCommitId.stringValue() + "/diff");
+        Resource targetGraph = vf.createIRI(targetCommitId.stringValue() + "/diff");
+        Resource branchingGraph = vf.createIRI( branchingId.stringValue()+ "/diff");
+        try (RepositoryConnection diffConn = configProvider.getRepository().getConnection()) {
+            diffConn.begin();
+            diffConn.add(sourceCompiled, RDFFormat.TURTLE, sourceGraph);
+            diffConn.add(targetCompiled, RDFFormat.TURTLE, targetGraph);
+            diffConn.add(branchingCompiled, RDFFormat.TURTLE, branchingGraph);
 
-        Difference sourceDiff = getCommitDifference(sourceCommits, conn);
-        Difference targetDiff = getCommitDifference(targetCommits, conn);
+            Model sourceAdds = getDifferenceModel(sourceGraph, branchingGraph, diffConn);
+            Model targetAdds = getDifferenceModel(targetGraph, branchingGraph, diffConn);
 
-        Model sourceAdds = sourceDiff.getAdditions();
-        Set<Resource> sourceAddSubjects = sourceAdds.subjects();
-        Model targetAdds = targetDiff.getAdditions();
-        Set<Resource> targetAddSubjects = targetAdds.subjects();
-        Model sourceDels = sourceDiff.getDeletions();
-        Model targetDels = targetDiff.getDeletions();
+            Model sourceDels = getDifferenceModel(branchingGraph, sourceGraph, diffConn);
+            Model targetDels = getDifferenceModel(branchingGraph, targetGraph, diffConn);
 
-        Set<Conflict> result = new HashSet<>();
-        Model original = compiledResourceManager.getCompiledResource(commonCommits, conn);
+            Set<Resource> sourceAddSubjects = sourceAdds.subjects();
+            Set<Resource> targetAddSubjects = targetAdds.subjects();
 
-        Set<Statement> statementsToRemove = new HashSet<>();
+            Set<Conflict> result = new HashSet<>();
+            Set<Statement> statementsToRemove = new HashSet<>();
 
-        sourceDels.subjects().forEach(subject -> {
-            Model sourceDelSubjectStatements = sourceDels.filter(subject, null, null);
-
-            // Check for modification in left and right
-            sourceDelSubjectStatements.forEach(statement -> {
-                IRI pred = statement.getPredicate();
-                Value obj = statement.getObject();
-
-                if (targetDels.contains(subject, pred, obj)
-                        && sourceAdds.contains(subject, pred, null)
-                        && targetAdds.contains(subject, pred, null)) {
-                    result.add(createConflict(subject, pred, sourceAdds, sourceDels, targetAdds, targetDels));
-                    statementsToRemove.add(statement);
+            sourceAdds.subjects().forEach(subject -> {
+                Model sourceAddSubjectStatements = sourceAdds.filter(subject, null, null);
+                Model duplicateStatements = mf.createEmptyModel();
+                sourceAddSubjectStatements.forEach(statement -> {
+                    IRI pred = statement.getPredicate();
+                    Value obj = statement.getObject();
+                    if (targetAdds.contains(subject, pred, obj)) {
+                        duplicateStatements.add(subject, pred, obj);
+                    }
+                });
+                if (!duplicateStatements.isEmpty()) {
+                    result.add(new Conflict.Builder((IRI) subject)
+                            .leftDifference(new Difference.Builder()
+                                    .additions(duplicateStatements).deletions(mf.createEmptyModel()).build())
+                            .rightDifference(new Difference.Builder()
+                                    .additions(duplicateStatements).deletions(mf.createEmptyModel()).build()).build());
                 }
             });
 
-            // Check for deletion in left and addition in right if there are common parents
-            if (!commonCommits.isEmpty()) {
-                Model targetSubjectAdd = targetAdds.filter(subject, null, null);
-                boolean sourceEntityDeleted = !sourceAddSubjects.contains(subject)
-                        && sourceDelSubjectStatements.equals(original.filter(subject, null, null));
-                boolean targetEntityDeleted = targetDels.containsAll(sourceDelSubjectStatements);
+            sourceDels.subjects().forEach(subject -> {
+                Model sourceDelSubjectStatements = sourceDels.filter(subject, null, null);
 
-                if (sourceEntityDeleted && !targetEntityDeleted && !targetSubjectAdd.isEmpty()) {
-                    result.add(createConflict(subject, null, sourceAdds, sourceDels, targetAdds, targetDels));
-                    statementsToRemove.addAll(targetSubjectAdd);
+                Model duplicateStatements = mf.createEmptyModel();
+                // Check for modification in left and right
+                // Also check for duplicates
+                sourceDelSubjectStatements.forEach(statement -> {
+                    IRI pred = statement.getPredicate();
+                    Value obj = statement.getObject();
+
+                    if (targetDels.contains(subject, pred, obj)
+                            && sourceAdds.contains(subject, pred, null)
+                            && targetAdds.contains(subject, pred, null)) {
+                        result.add(createConflict(subject, pred, sourceAdds, sourceDels, targetAdds, targetDels));
+                        statementsToRemove.add(statement);
+                    } else if (targetDels.contains(subject, pred, obj)) {
+                        duplicateStatements.add(subject, pred, obj);
+                    }
+                });
+
+                if (!duplicateStatements.isEmpty()) {
+                    result.add(new Conflict.Builder((IRI) subject)
+                            .leftDifference(new Difference.Builder()
+                                    .additions(mf.createEmptyModel()).deletions(duplicateStatements).build())
+                            .rightDifference(new Difference.Builder()
+                                    .additions(mf.createEmptyModel()).deletions(duplicateStatements).build()).build());
                 }
+
+                // Check for deletion in left and addition in right if there are common parents
+                if (!sourceCommits.isEmpty()) {
+                    Model targetSubjectAdd = targetAdds.filter(subject, null, null);
+                    boolean sourceEntityDeleted = !sourceAddSubjects.contains(subject)
+                            && sourceDelSubjectStatements.equals(getModelForSubject(subject, branchingGraph, diffConn));
+                    boolean targetEntityDeleted = targetDels.containsAll(sourceDelSubjectStatements);
+
+                    if (sourceEntityDeleted && !targetEntityDeleted && !targetSubjectAdd.isEmpty()) {
+                        result.add(createConflict(subject, null, sourceAdds, sourceDels, targetAdds,
+                                targetDels));
+                        statementsToRemove.addAll(targetSubjectAdd);
+                    }
+                }
+            });
+
+            statementsToRemove.forEach(statement -> Stream.of(sourceAdds, sourceDels, targetAdds, targetDels)
+                    .forEach(model -> model.remove(statement.getSubject(), statement.getPredicate(), null)));
+
+            if (!sourceCommits.isEmpty()) {
+                targetDels.subjects().forEach(subject -> {
+                    // Check for deletion in right and addition in left if there are common parents
+                    Model targetDelSubjectStatements = targetDels.filter(subject, null, null);
+                    Model sourceSubjectAdd = sourceAdds.filter(subject, null, null);
+                    boolean targetEntityDeleted = !targetAddSubjects.contains(subject)
+                            && targetDelSubjectStatements.equals(getModelForSubject(subject, branchingGraph, diffConn));
+                    boolean sourceEntityDeleted = sourceDels.containsAll(targetDelSubjectStatements);
+
+                    if (targetEntityDeleted && !sourceEntityDeleted && !sourceSubjectAdd.isEmpty()) {
+                        result.add(createConflict(subject, null, sourceAdds, sourceDels, targetAdds,
+                                targetDels));
+                    }
+                });
             }
-        });
+            diffConn.rollback();
 
-        statementsToRemove.forEach(statement -> Stream.of(sourceAdds, sourceDels, targetAdds, targetDels)
-                .forEach(model -> model.remove(statement.getSubject(), statement.getPredicate(), null)));
-
-        if (!commonCommits.isEmpty()) {
-            targetDels.subjects().forEach(subject -> {
-                // Check for deletion in right and addition in left if there are common parents
-                Model targetDelSubjectStatements = targetDels.filter(subject, null, null);
-                Model sourceSubjectAdd = sourceAdds.filter(subject, null, null);
-                boolean targetEntityDeleted = !targetAddSubjects.contains(subject)
-                        && targetDelSubjectStatements.equals(original.filter(subject, null, null));
-                boolean sourceEntityDeleted = sourceDels.containsAll(targetDelSubjectStatements);
-
-                if (targetEntityDeleted && !sourceEntityDeleted && !sourceSubjectAdd.isEmpty()) {
-                    result.add(createConflict(subject, null, sourceAdds, sourceDels, targetAdds, targetDels));
-                }
-            });
+            log.trace("getConflicts took {}ms", System.currentTimeMillis() - start);
+            return result;
+        } catch (IOException e) {
+            throw new MobiException(e);
+        } finally {
+            sourceCompiled.delete();
+            targetCompiled.delete();
+            branchingCompiled.delete();
         }
+    }
 
-        log.trace("getConflicts took {}ms", System.currentTimeMillis() - start);
-        return result;
+    private Model getDifferenceModel(Resource graph1, Resource graph2, RepositoryConnection conn) {
+        GraphQuery sourceQuery = conn.prepareGraphQuery(COMPARE_GRAPHS);
+        sourceQuery.setBinding("graph1", graph1);
+        sourceQuery.setBinding("graph2", graph2);
+        return QueryResults.asModel(sourceQuery.evaluate());
+    }
+
+    private Model getModelForSubject(Resource subject, Resource branchingGraph, RepositoryConnection conn) {
+        Model model = mf.createEmptyModel();
+        conn.getStatements(subject, null, null, branchingGraph)
+                .forEach(statement ->
+                        model.add(statement.getSubject(), statement.getPredicate(), statement.getObject()));
+        return model;
     }
 
     @Override

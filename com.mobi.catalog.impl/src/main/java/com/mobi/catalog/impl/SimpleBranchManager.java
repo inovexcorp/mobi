@@ -29,6 +29,8 @@ import com.mobi.catalog.api.RecordManager;
 import com.mobi.catalog.api.ThingManager;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
+import com.mobi.catalog.api.ontologies.mcat.MasterBranch;
+import com.mobi.catalog.api.ontologies.mcat.MasterBranchFactory;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecordFactory;
 import com.mobi.catalog.api.record.RecordService;
@@ -64,6 +66,9 @@ public class SimpleBranchManager implements BranchManager {
 
     @Reference
     BranchFactory branchFactory;
+
+    @Reference
+    MasterBranchFactory masterBranchFactory;
 
     @Reference
     VersionedRDFRecordFactory versionedRDFRecordFactory;
@@ -138,13 +143,30 @@ public class SimpleBranchManager implements BranchManager {
     }
 
     @Override
-    public Branch getMasterBranch(Resource catalogId, Resource versionedRDFRecordId, RepositoryConnection conn) {
+    public IRI getHeadGraph(MasterBranch masterBranch) {
+        return masterBranch.getHeadGraph()
+                .orElseThrow(() -> new IllegalStateException("Master Branch missing HEAD graph"));
+    }
+
+    @Override
+    public MasterBranch getMasterBranch(Resource catalogId, Resource versionedRDFRecordId, RepositoryConnection conn) {
         VersionedRDFRecord record = recordManager.getRecord(catalogId, versionedRDFRecordId, versionedRDFRecordFactory,
                 conn);
         Resource branchId = record.getMasterBranch_resource().orElseThrow(() ->
                 new IllegalStateException("Record " + versionedRDFRecordId
                         + " does not have a master Branch set."));
-        return thingManager.getExpectedObject(branchId, branchFactory, conn);
+        return thingManager.getExpectedObject(branchId, masterBranchFactory, conn);
+    }
+
+    @Override
+    public MasterBranch getMasterBranch(Branch branch, RepositoryConnection conn) {
+        return thingManager.getExpectedObject(branch.getResource(), masterBranchFactory, conn);
+    }
+
+    @Override
+    public boolean isMasterBranch(VersionedRDFRecord record, Branch branch) {
+        Optional<Resource> optMasterBranch = record.getMasterBranch_resource();
+        return optMasterBranch.isPresent() && optMasterBranch.get().equals(branch.getResource());
     }
 
     @Override

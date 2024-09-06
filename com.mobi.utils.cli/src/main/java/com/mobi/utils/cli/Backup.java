@@ -34,6 +34,7 @@ import com.mobi.repository.impl.sesame.memory.MemoryRepositoryConfig;
 import com.mobi.repository.impl.sesame.nativestore.NativeRepositoryConfig;
 import com.mobi.security.policy.api.xacml.XACMLPolicyManager;
 import com.mobi.utils.cli.operations.post.FixWorkflowOntology;
+import com.mobi.utils.cli.utils.RestoreUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.time.StopWatch;
 import org.apache.karaf.shell.api.action.Action;
@@ -213,7 +214,7 @@ public class Backup implements Action {
             watch.stop();
         }
         LOGGER.debug("Finished backup after " + watch.getTime() + "ms");
-        System.out.println("Back up complete at " + outputFile.getAbsolutePath());
+        RestoreUtils.out("Back up complete at " + outputFile.getAbsolutePath(), LOGGER);
         return null;
     }
 
@@ -255,10 +256,10 @@ public class Backup implements Action {
                 final ZipEntry repoZipEntry = new ZipEntry("repos/" + repoId + ".zip");
                 mainZip.putNextEntry(repoZipEntry);
                 mainZip.write(repoOut.toByteArray());
-                System.out.println("Backed up the " + repoId + " repository");
+                RestoreUtils.out("Backed up the " + repoId + " repository", LOGGER);
                 LOGGER.trace("Backed up the " + repoId + " repository");
             } else {
-                System.out.println("Skipping back up of non Native/Memory Repository: " + repoId);
+                RestoreUtils.out("Skipping back up of non Native/Memory Repository: " + repoId, LOGGER);
                 LOGGER.trace("Skipping back up of non Native/Memory Repository: " + repoId);
             }
         } catch (Exception ex) {

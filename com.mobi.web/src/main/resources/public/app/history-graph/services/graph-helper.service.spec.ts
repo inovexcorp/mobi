@@ -43,7 +43,8 @@ describe('GraphHelperService', () => {
           'date': '2023-04-20T12:37:31.78108-04:00',
           'message': 'Merge of 1stBranch into MASTER',
           'base': 'https://mobi.com/commits#a5f39a5b53dc81d222e7a9f03ec955a378b8bdbd',
-          'auxiliary': 'https://mobi.com/commits#f6db5e0ade198fe9b35b458d2986f418ceacfdf5'
+          'auxiliary': 'https://mobi.com/commits#f6db5e0ade198fe9b35b458d2986f418ceacfdf5',
+          'branch': ''
       },
       {
           'id': 'https://mobi.com/commits#f6db5e0ade198fe9b35b458d2986f418ceacfdf5',
@@ -55,7 +56,8 @@ describe('GraphHelperService', () => {
           'date': '2023-04-20T12:37:18.783409-04:00',
           'message': '1st Branch Commit',
           'base': 'https://mobi.com/commits#a5f39a5b53dc81d222e7a9f03ec955a378b8bdbd',
-          'auxiliary': ''
+          'auxiliary': '',
+          'branch': ''
       },
       {
           'id': 'https://mobi.com/commits#a5f39a5b53dc81d222e7a9f03ec955a378b8bdbd',
@@ -67,7 +69,8 @@ describe('GraphHelperService', () => {
           'date': '2023-04-20T12:36:29.981163-04:00',
           'message': '2nd commit on master',
           'base': 'https://mobi.com/commits#873f68a12e218461779fb9ce446af5823c72e711',
-          'auxiliary': ''
+          'auxiliary': '',
+          'branch': ''
       },
       {
           'id': 'https://mobi.com/commits#873f68a12e218461779fb9ce446af5823c72e711',
@@ -79,7 +82,8 @@ describe('GraphHelperService', () => {
           'date': '2023-04-17T09:41:53.351341-04:00',
           'message': 'The initial commit.',
           'base': '',
-          'auxiliary': ''
+          'auxiliary': '',
+          'branch': ''
       }
     ];
   });
@@ -156,7 +160,8 @@ describe('GraphHelperService', () => {
       'date': '2019-07-16T15:28:10+02:00',
       'message': 'testBranch data from testBranch operation on 2019-07-16T15:28:05+02:00',
       'base': 'https://mobi.com/commits#d3e66df8bbb821359840999e23499c40d6231a86',
-      'auxiliary': ''
+      'auxiliary': '',
+      'branch': ''
     };
     const d3e66df8bb = {
       'id': 'https://mobi.com/commits#d3e66df8bbb821359840999e23499c40d6231a86',
@@ -168,7 +173,8 @@ describe('GraphHelperService', () => {
       'date': '2019-07-16T15:28:10+02:00',
       'message': 'The initial commit.',
       'base': '',
-      'auxiliary': ''
+      'auxiliary': '',
+      'branch': ''
     };
     const ff37c927 = {
       'id': 'https://mobi.com/commits#76ff37c927c99a654c056544b05697d7820d549e',
@@ -180,7 +186,8 @@ describe('GraphHelperService', () => {
       'date': '2019-07-16T15:47:56+02:00',
       'message': 'Merge of testBranch/1234_5678 into testBranch',
       'base': 'https://mobi.com/commits#d3e66df8bbb821359840999e23499c40d6231a86',
-      'auxiliary': 'https://mobi.com/commits#d63e59587c8c1662d620dcd11d10ef6b6db085e2'
+      'auxiliary': 'https://mobi.com/commits#d63e59587c8c1662d620dcd11d10ef6b6db085e2',
+      'branch': ''
     };
     const c3ecc7bd52 = {
       'id': 'https://mobi.com/commits#c3ecc7bd5293e8f796d47f8944f2810e566212e5',
@@ -192,7 +199,8 @@ describe('GraphHelperService', () => {
       'date': '2019-07-16T15:50:37+02:00',
       'message': 'Merge of testBranch into MASTER',
       'base': 'https://mobi.com/commits#d3e66df8bbb821359840999e23499c40d6231a86',
-      'auxiliary': 'https://mobi.com/commits#76ff37c927c99a654c056544b05697d7820d549e'
+      'auxiliary': 'https://mobi.com/commits#76ff37c927c99a654c056544b05697d7820d549e',
+      'branch': ''
     };
     const actualSortActions: GitAction[] = service.sortActions([
       {

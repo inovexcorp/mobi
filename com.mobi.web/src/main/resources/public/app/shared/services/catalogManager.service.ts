@@ -1036,10 +1036,11 @@ export class CatalogManagerService {
      * @returns {Observable} An Observable that resolves with the id of the Commit resulting from the merge or rejects with an error
      * message
      */
-    mergeBranches(sourceId: string, targetId: string, recordId: string, catalogId: string, differenceObj: Difference): Observable<string> {
+    mergeBranches(sourceId: string, targetId: string, recordId: string, catalogId: string, differenceObj: Difference, conflicts: Conflict[]): Observable<string> {
         const fd = new FormData();
         fd.append('additions', JSON.stringify(differenceObj.additions));
         fd.append('deletions', JSON.stringify(differenceObj.deletions));
+        fd.append('conflicts', JSON.stringify(conflicts));
         const url = `${this.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/branches/${encodeURIComponent(sourceId)}/conflicts/resolution`;
         return this.spinnerSrv.track(this.http.post(url, fd, {params: createHttpParams({ targetId }), responseType: 'text'}))
             .pipe(catchError(handleError));

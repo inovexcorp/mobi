@@ -49,6 +49,7 @@ import com.mobi.catalog.api.PaginatedSearchResults;
 import com.mobi.catalog.api.RecordManager;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
+import com.mobi.catalog.api.ontologies.mcat.MasterBranch;
 import com.mobi.catalog.api.ontologies.mcat.Record;
 import com.mobi.catalog.api.record.config.RecordCreateSettings;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
@@ -101,11 +102,13 @@ public class DatasetRestTest extends MobiRestTestCXF {
     private AutoCloseable closeable;
     private static final ObjectMapper mapper = new ObjectMapper();
     private OrmFactory<Branch> branchFactory;
+    private OrmFactory<MasterBranch>  masterBranchFactory;
     private DatasetRecord record1;
     private DatasetRecord record2;
     private DatasetRecord record3;
     private Commit commit;
     private Branch branch;
+    private MasterBranch masterBranch;
     private User user;
 
     private IRI errorIRI;
@@ -173,6 +176,7 @@ public class DatasetRestTest extends MobiRestTestCXF {
         commitIRI = vf.createIRI("http://example.com/commit");
 
         branchFactory = getRequiredOrmFactory(Branch.class);
+        masterBranchFactory = getRequiredOrmFactory(MasterBranch.class);
         OrmFactory<User> userFactory = getRequiredOrmFactory(User.class);
         OrmFactory<DatasetRecord> datasetRecordFactory = getRequiredOrmFactory(DatasetRecord.class);
         OrmFactory<Commit> commitFactory = getRequiredOrmFactory(Commit.class);
@@ -186,6 +190,7 @@ public class DatasetRestTest extends MobiRestTestCXF {
         user = userFactory.createNew(vf.createIRI("http://example.com/" + UsernameTestFilter.USERNAME));
         commit = commitFactory.createNew(commitIRI);
         branch = branchFactory.createNew(branchIRI);
+        masterBranch = masterBranchFactory.createNew(branchIRI);
         branch.setHead(commit);
 
         closeable = MockitoAnnotations.openMocks(this);
@@ -207,7 +212,7 @@ public class DatasetRestTest extends MobiRestTestCXF {
         when(recordResults.getPageSize()).thenReturn(10);
         when(recordResults.getTotalSize()).thenReturn(3);
 
-        when(branchManager.getMasterBranch(eq(localIRI), eq(ontologyRecordIRI), any(RepositoryConnection.class))).thenReturn(branch);
+        when(branchManager.getMasterBranch(eq(localIRI), eq(ontologyRecordIRI), any(RepositoryConnection.class))).thenReturn(masterBranch);
         when(recordManager.findRecord(any(Resource.class), any(PaginatedSearchParams.class), any(User.class), any(RepositoryConnection.class))).thenReturn(recordResults);
         when(recordManager.createRecord(any(User.class), any(RecordOperationConfig.class), any(), any(RepositoryConnection.class))).thenReturn(record1);
         when(commitManager.getHeadCommitIRI(eq(branch))).thenReturn(commitIRI);
@@ -221,6 +226,7 @@ public class DatasetRestTest extends MobiRestTestCXF {
     @After
     public void resetMocks() throws Exception {
         closeable.close();
+        Mockito.reset(datasetManager, engineManager, recordManager, branchManager, commitManager, configProvider, service, importService);
     }
 
     /* GET datasets */
@@ -293,6 +299,7 @@ public class DatasetRestTest extends MobiRestTestCXF {
 
     @Test
     public void createDatasetRecordTest() {
+        when(commitManager.getHeadCommitIRI(any(MasterBranch.class))).thenReturn(commitIRI);
         // Setup:
         FormDataMultiPart fd = new FormDataMultiPart().field("title", "title")
                 .field("datasetIRI", "http://example.com/dataset")
@@ -376,8 +383,8 @@ public class DatasetRestTest extends MobiRestTestCXF {
     @Test
     public void createDatasetRecordWithNoHeadCommitTest() {
         // Setup:
-        Branch newBranch = branchFactory.createNew(branchIRI);
-        when(branchManager.getMasterBranch(eq(localIRI), eq(ontologyRecordIRI), any(RepositoryConnection.class))).thenReturn(newBranch);
+//        MasterBranch newBranch = masterBranchFactory.createNew(branchIRI);
+        when(branchManager.getMasterBranch(eq(localIRI), eq(ontologyRecordIRI), any(RepositoryConnection.class))).thenReturn(masterBranch);
         FormDataMultiPart fd = new FormDataMultiPart().field("title", "title")
                 .field("repositoryId", "system")
                 .field("ontologies", ontologyRecordIRI.stringValue());

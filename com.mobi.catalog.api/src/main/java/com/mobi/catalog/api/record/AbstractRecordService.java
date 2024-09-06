@@ -84,7 +84,7 @@ public abstract class AbstractRecordService<T extends Record> implements RecordS
 
     public OrmFactory<T> recordFactory;
 
-    public final ValueFactory valueFactory = new ValidatingValueFactory();
+    public final ValueFactory vf = new ValidatingValueFactory();
 
     @Override
     public T create(User user, RecordOperationConfig config, RepositoryConnection conn) {
@@ -162,33 +162,33 @@ public abstract class AbstractRecordService<T extends Record> implements RecordS
      * @return A {@link Record} of the provided config
      */
     protected T createRecordObject(RecordOperationConfig config, OffsetDateTime issued, OffsetDateTime modified) {
-        T record = recordFactory.createNew(valueFactory.createIRI(Catalogs.RECORD_NAMESPACE + UUID.randomUUID()));
-        Literal titleLiteral = valueFactory.createLiteral(config.get(RecordCreateSettings.RECORD_TITLE));
-        Literal issuedLiteral = valueFactory.createLiteral(issued);
-        Literal modifiedLiteral = valueFactory.createLiteral(modified);
+        T record = recordFactory.createNew(vf.createIRI(Catalogs.RECORD_NAMESPACE + UUID.randomUUID()));
+        Literal titleLiteral = vf.createLiteral(config.get(RecordCreateSettings.RECORD_TITLE));
+        Literal issuedLiteral = vf.createLiteral(issued);
+        Literal modifiedLiteral = vf.createLiteral(modified);
         Set<Value> publishers = config.get(RecordCreateSettings.RECORD_PUBLISHERS).stream()
                 .map(user -> (Value) user.getResource())
                 .collect(Collectors.toSet());
-        IRI catalogIdIRI = valueFactory.createIRI(config.get(RecordCreateSettings.CATALOG_ID));
+        IRI catalogIdIRI = vf.createIRI(config.get(RecordCreateSettings.CATALOG_ID));
         record.setCatalog(catalogFactory.createNew(catalogIdIRI));
 
-        record.setProperty(titleLiteral, valueFactory.createIRI(_Thing.title_IRI));
-        record.setProperty(issuedLiteral, valueFactory.createIRI(_Thing.issued_IRI));
-        record.setProperty(modifiedLiteral, valueFactory.createIRI(_Thing.modified_IRI));
-        record.setProperties(publishers, valueFactory.createIRI(_Thing.publisher_IRI));
+        record.setProperty(titleLiteral, vf.createIRI(_Thing.title_IRI));
+        record.setProperty(issuedLiteral, vf.createIRI(_Thing.issued_IRI));
+        record.setProperty(modifiedLiteral, vf.createIRI(_Thing.modified_IRI));
+        record.setProperties(publishers, vf.createIRI(_Thing.publisher_IRI));
         if (config.get(RecordCreateSettings.RECORD_DESCRIPTION) != null
                 && StringUtils.isNotEmpty(config.get(RecordCreateSettings.RECORD_DESCRIPTION))) {
-            record.setProperty(valueFactory.createLiteral(config.get(RecordCreateSettings.RECORD_DESCRIPTION)),
-                    valueFactory.createIRI(_Thing.description_IRI));
+            record.setProperty(vf.createLiteral(config.get(RecordCreateSettings.RECORD_DESCRIPTION)),
+                    vf.createIRI(_Thing.description_IRI));
         }
         if (config.get(RecordCreateSettings.RECORD_MARKDOWN) != null
                 && StringUtils.isNotEmpty(config.get(RecordCreateSettings.RECORD_MARKDOWN))) {
-            record.setProperty(valueFactory.createLiteral(config.get(RecordCreateSettings.RECORD_MARKDOWN)),
-                    valueFactory.createIRI(DCTERMS.ABSTRACT.stringValue()));
+            record.setProperty(vf.createLiteral(config.get(RecordCreateSettings.RECORD_MARKDOWN)),
+                    vf.createIRI(DCTERMS.ABSTRACT.stringValue()));
         }
         if (config.get(RecordCreateSettings.RECORD_KEYWORDS).size() > 0) {
             record.setKeyword(config.get(RecordCreateSettings.RECORD_KEYWORDS).stream()
-                    .map(valueFactory::createLiteral).collect(Collectors.toSet()));
+                    .map(vf::createLiteral).collect(Collectors.toSet()));
         }
         return record;
     }
@@ -269,10 +269,11 @@ public abstract class AbstractRecordService<T extends Record> implements RecordS
      */
     protected void validateCreationConfig(RecordOperationConfig config) {
         if (config.get(RecordCreateSettings.CATALOG_ID) == null) {
-            throw new IllegalArgumentException("Config parameter " + RecordCreateSettings.CATALOG_ID + " is required.");
+            throw new IllegalArgumentException("Config parameter " + RecordCreateSettings.CATALOG_ID.getKey()
+                    + " is required.");
         }
         if (config.get(RecordCreateSettings.RECORD_PUBLISHERS).isEmpty()) {
-            throw new IllegalArgumentException("Config parameter " + RecordCreateSettings.RECORD_PUBLISHERS
+            throw new IllegalArgumentException("Config parameter " + RecordCreateSettings.RECORD_PUBLISHERS.getKey()
                     + " is required.");
         }
         if (config.get(RecordCreateSettings.RECORD_TITLE) == null) {
@@ -295,13 +296,13 @@ public abstract class AbstractRecordService<T extends Record> implements RecordS
      */
     protected void deletePolicies(T record, RepositoryConnection conn) {
         RepositoryResult<Statement> results = conn.getStatements(null,
-                valueFactory.createIRI(Policy.relatedResource_IRI), record.getResource());
+                vf.createIRI(Policy.relatedResource_IRI), record.getResource());
         if (results.hasNext()) {
             Resource recordPolicyId = results.next().getSubject();
             results.close();
 
             RepositoryResult<Statement> policyPolicyIds = conn.getStatements(null,
-                    valueFactory.createIRI(Policy.relatedResource_IRI), recordPolicyId);
+                    vf.createIRI(Policy.relatedResource_IRI), recordPolicyId);
             if (!policyPolicyIds.hasNext()) {
                 LOGGER.info("Could not find policy policy for record: " + record.getResource()
                         + " with a policyId of: " + recordPolicyId + ". Continuing with record deletion.");

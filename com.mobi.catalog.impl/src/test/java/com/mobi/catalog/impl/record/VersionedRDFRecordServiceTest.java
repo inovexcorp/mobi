@@ -12,12 +12,12 @@ package com.mobi.catalog.impl.record;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
@@ -52,6 +52,7 @@ import com.mobi.catalog.api.ontologies.mcat.Catalog;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.api.ontologies.mcat.Distribution;
 import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
+import com.mobi.catalog.api.ontologies.mcat.MasterBranch;
 import com.mobi.catalog.api.ontologies.mcat.Record;
 import com.mobi.catalog.api.ontologies.mcat.Revision;
 import com.mobi.catalog.api.ontologies.mcat.Tag;
@@ -157,6 +158,7 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
     private OrmFactory<User> userFactory = getRequiredOrmFactory(User.class);
     private OrmFactory<DeleteActivity> deleteActivityFactory = getRequiredOrmFactory(DeleteActivity.class);
     private OrmFactory<Branch> branchFactory = getRequiredOrmFactory(Branch.class);
+    private OrmFactory<MasterBranch> masterBranchFactory = getRequiredOrmFactory(MasterBranch.class);
     private OrmFactory<Commit> commitFactory = getRequiredOrmFactory(Commit.class);
     private OrmFactory<Tag> tagFactory = getRequiredOrmFactory(Tag.class);
     private OrmFactory<Distribution> distributionFactory = getRequiredOrmFactory(Distribution.class);
@@ -240,7 +242,7 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
         testRecord.setVersion(Collections.singleton(tag));
         testRecord.setLatestVersion(tag);
         testRecord.setBranch(Collections.singleton(branch));
-        testRecord.setMasterBranch(branchFactory.createNew(masterBranchIRI));
+        testRecord.setMasterBranch(masterBranchFactory.createNew(masterBranchIRI));
 
         closeable = MockitoAnnotations.openMocks(this);
         when(versioningManager.commit(any(Resource.class), any(Resource.class), any(Resource.class), any(User.class), anyString(), any(RepositoryConnection.class))).thenReturn(commitIRI);
@@ -326,6 +328,17 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
 
     @Test
     public void createRecordTest() throws Exception {
+        Revision revision = mock(Revision.class);
+        when(revision.getAdditions()).thenReturn(Optional.of(getValueFactory().createIRI("http://revision/add")));
+        when(revision.getDeletions()).thenReturn(Optional.of(getValueFactory().createIRI("http://revision/del")));
+        when(revision.getModel()).thenReturn(MODEL_FACTORY.createEmptyModel());
+        when(revisionManager.createRevision(any())).thenReturn(revision);
+        when(revisionManager.getGeneratedRevision(any(Commit.class))).thenReturn(revision);
+        Commit initialCommit = commitFactory.createNew(commitIRI);
+        IRI initialCommitIri = getValueFactory().createIRI("http://mobi.com/commit#initial");
+        when(versioningManager.commit(eq(catalogId), any(Resource.class), any(Resource.class), eq(user), eq("The initial commit."), any(RepositoryConnection.class))).thenReturn(initialCommitIri);
+        when(commitManager.getCommit(eq(initialCommitIri), any(RepositoryConnection.class))).thenReturn(Optional.of(initialCommit));
+
         RecordOperationConfig config = new OperationConfig();
         Set<String> keywords = new LinkedHashSet<>();
         keywords.add("keyword1");
@@ -581,7 +594,7 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
     public void getTypeIRITest() throws Exception {
         assertEquals(VersionedRDFRecord.TYPE, recordService.getTypeIRI());
     }
-    
+
     @Test
     public void deleteBranchTest() throws Exception {
         // Setup:
@@ -597,7 +610,7 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
 
         try (RepositoryConnection conn = repository.getConnection()) {
             setUpDeleteBranchTest(conn);
-            
+
             assertTrue(ConnectionUtils.contains(conn, ManagerTestConstants.VERSIONED_RDF_RECORD_IRI, BRANCH_CATALOG_IRI, ManagerTestConstants.BRANCH_IRI, ManagerTestConstants.VERSIONED_RDF_RECORD_IRI));
             assertTrue(ConnectionUtils.contains(conn, ManagerTestConstants.VERSIONED_RDF_RECORD_IRI, VERSION_CATALOG_IRI, LATEST_TAG_IRI, ManagerTestConstants.VERSIONED_RDF_RECORD_IRI));
             assertTrue(ConnectionUtils.contains(conn, ManagerTestConstants.BRANCH_IRI, HEAD_CATALOG_IRI, commitIdToRemove, ManagerTestConstants.BRANCH_IRI));
@@ -640,7 +653,7 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
 
         try (RepositoryConnection conn = repository.getConnection()) {
             setUpDeleteBranchTest(conn);
-            
+
             assertTrue(ConnectionUtils.contains(conn, ManagerTestConstants.VERSIONED_RDF_RECORD_IRI, BRANCH_CATALOG_IRI, ManagerTestConstants.BRANCH_IRI, ManagerTestConstants.VERSIONED_RDF_RECORD_IRI));
             assertTrue(ConnectionUtils.contains(conn, ManagerTestConstants.VERSIONED_RDF_RECORD_IRI, VERSION_CATALOG_IRI, LATEST_TAG_IRI, ManagerTestConstants.VERSIONED_RDF_RECORD_IRI));
             assertTrue(ConnectionUtils.contains(conn, ManagerTestConstants.BRANCH_IRI, HEAD_CATALOG_IRI, commitIdToRemove, ManagerTestConstants.BRANCH_IRI));
@@ -686,7 +699,7 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
 
         try (RepositoryConnection conn = repository.getConnection()) {
             setUpDeleteBranchTest(conn);
-            
+
             assertTrue(ConnectionUtils.contains(conn, complexRecordIRI, BRANCH_CATALOG_IRI, complexBranchIRI, complexRecordIRI));
             assertTrue(ConnectionUtils.contains(conn, commitA, RDF.TYPE, COMMIT_CATALOG_IRI, commitA));
             assertTrue(ConnectionUtils.contains(conn, commitARevision, ADDITIONS_CATALOG_IRI, commitAAdditions, commitA));
@@ -720,51 +733,12 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
     }
 
     @Test
-    public void deleteBranchWithQuadsTest() throws Exception {
-        // Setup:
-        Resource quadVersionedRecordId = VALUE_FACTORY.createIRI(ManagerTestConstants.RECORDS + "quad-versioned-rdf-record");
-        IRI branchToRemove = VALUE_FACTORY.createIRI("http://mobi.com/test/branches#quad-branch");
-        Resource commit2 = VALUE_FACTORY.createIRI(ManagerTestConstants.COMMITS + "quad-test2");
-        Resource revisionToRemove = VALUE_FACTORY.createIRI(ManagerTestConstants.REVISIONS + "revision2");
-        IRI additionsToRemove = VALUE_FACTORY.createIRI(ManagerTestConstants.ADDITIONS + "quad-test2");
-        IRI deletionsToRemove = VALUE_FACTORY.createIRI(ManagerTestConstants.DELETIONS + "quad-test2");
-        IRI graphAdditionsToRemove = VALUE_FACTORY.createIRI(ManagerTestConstants.ADDITIONS + "quad-test2%00http%3A%2F%2Fmobi.com%2Ftest%2Fgraphs%23quad-graph1");
-        IRI graphDeletionsToRemove = VALUE_FACTORY.createIRI(ManagerTestConstants.DELETIONS + "quad-test2%00http%3A%2F%2Fmobi.com%2Ftest%2Fgraphs%23quad-graph1");
-
-        Branch branch = branchFactory.createNew(branchToRemove);
-        branch.setHead(commitFactory.createNew(commit2));
-
-        try (RepositoryConnection conn = repository.getConnection()) {
-            setUpDeleteBranchTest(conn);
-            
-            assertTrue(ConnectionUtils.contains(conn, quadVersionedRecordId, BRANCH_CATALOG_IRI, branchToRemove, quadVersionedRecordId));
-            assertTrue(ConnectionUtils.contains(conn, commit2, RDF.TYPE, COMMIT_CATALOG_IRI, commit2));
-            assertTrue(ConnectionUtils.contains(conn, revisionToRemove, ADDITIONS_CATALOG_IRI, additionsToRemove, commit2));
-            assertTrue(ConnectionUtils.contains(conn, revisionToRemove, DELETIONS_CATALOG_IRI, deletionsToRemove, commit2));
-            assertTrue(ConnectionUtils.contains(conn, null, null, null, graphAdditionsToRemove));
-            assertTrue(ConnectionUtils.contains(conn, null, null, null, graphDeletionsToRemove));
-
-            Optional<List<Resource>> deletedCommits = recordService.deleteBranch(ManagerTestConstants.CATALOG_IRI, quadVersionedRecordId, branchToRemove, conn);
-
-            assertTrue(deletedCommits.isPresent());
-            assertEquals(1, deletedCommits.get().size());
-            assertEquals(commit2, deletedCommits.get().get(0));
-            assertFalse(ConnectionUtils.contains(conn, quadVersionedRecordId, BRANCH_CATALOG_IRI, branchToRemove, quadVersionedRecordId));
-            assertFalse(ConnectionUtils.contains(conn, commit2, RDF.TYPE, COMMIT_CATALOG_IRI, commit2));
-            assertFalse(ConnectionUtils.contains(conn, revisionToRemove, ADDITIONS_CATALOG_IRI, additionsToRemove, commit2));
-            assertFalse(ConnectionUtils.contains(conn, revisionToRemove, DELETIONS_CATALOG_IRI, deletionsToRemove, commit2));
-            assertFalse(ConnectionUtils.contains(conn, null, null, null, graphAdditionsToRemove));
-            assertFalse(ConnectionUtils.contains(conn, null, null, null, graphDeletionsToRemove));
-        }
-    }
-
-    @Test
     public void deleteBranchWithNoHeadTest() throws Exception {
         // Setup:
         IRI noHeadBranchIRI = VALUE_FACTORY.createIRI("http://mobi.com/test/branches#no-head-branch");
         try (RepositoryConnection conn = repository.getConnection()) {
             setUpDeleteBranchTest(conn);
-            
+
             assertTrue(ConnectionUtils.contains(conn, ManagerTestConstants.VERSIONED_RDF_RECORD_IRI, BRANCH_CATALOG_IRI, noHeadBranchIRI, ManagerTestConstants.VERSIONED_RDF_RECORD_IRI));
 
             Optional<List<Resource>> deletedCommits = recordService.deleteBranch(ManagerTestConstants.CATALOG_IRI, ManagerTestConstants.VERSIONED_RDF_RECORD_IRI, noHeadBranchIRI, conn);
@@ -781,7 +755,7 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
 
         try (RepositoryConnection conn = repository.getConnection()) {
             setUpDeleteBranchTest(conn);
-            
+
             assertTrue(ConnectionUtils.contains(conn, ManagerTestConstants.VERSIONED_RDF_RECORD_IRI, BRANCH_CATALOG_IRI, ManagerTestConstants.BRANCH_IRI, ManagerTestConstants.VERSIONED_RDF_RECORD_IRI));
             assertTrue(ConnectionUtils.contains(conn, ManagerTestConstants.BRANCH_IRI, null, null));
             assertTrue(ConnectionUtils.contains(conn, ManagerTestConstants.VERSIONED_RDF_RECORD_IRI, BRANCH_CATALOG_IRI, ManagerTestConstants.USER_BRANCH_IRI, ManagerTestConstants.VERSIONED_RDF_RECORD_IRI));
@@ -808,7 +782,7 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
 
         try (RepositoryConnection conn = repository.getConnection()) {
             setUpDeleteBranchTest(conn);
-            
+
             assertTrue(ConnectionUtils.contains(conn, ManagerTestConstants.VERSIONED_RDF_RECORD_IRI, BRANCH_CATALOG_IRI, ManagerTestConstants.BRANCH_IRI, ManagerTestConstants.VERSIONED_RDF_RECORD_IRI));
             assertTrue(ConnectionUtils.contains(conn, ManagerTestConstants.BRANCH_IRI, null, null));
             assertTrue(ConnectionUtils.contains(conn, ManagerTestConstants.VERSIONED_RDF_RECORD_IRI, BRANCH_CATALOG_IRI, ManagerTestConstants.USER_BRANCH_IRI, ManagerTestConstants.VERSIONED_RDF_RECORD_IRI));

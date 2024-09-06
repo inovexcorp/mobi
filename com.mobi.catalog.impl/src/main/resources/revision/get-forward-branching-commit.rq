@@ -1,0 +1,34 @@
+PREFIX mcat: <http://mobi.com/ontologies/catalog#>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+
+# Retrieves the forward branching commit / last merge into master
+SELECT ?parent ?time ?isInMaster
+WHERE {
+    ?commit a mcat:Commit ;
+        (mcat:auxiliaryCommit | mcat:branchCommit)+ ?parent .
+
+    {
+        SELECT  ?parent ?time ?isInMaster
+        WHERE {
+            {
+                ?masterHead a mcat:Commit ;
+                    (mcat:baseCommit | mcat:auxiliaryCommit)+ ?parent .
+                ?parent prov:atTime ?time .
+            }
+            UNION
+            {
+                ?masterHead a mcat:Commit ;
+                    prov:atTime ?time .
+                BIND(?masterHead as ?parent)
+            }
+            UNION {
+                ?masterHead a mcat:Commit ;
+                    (mcat:baseCommit | mcat:auxiliaryCommit)+ ?commit .
+                BIND("true" as ?isInMaster)
+            }
+        }
+        ORDER BY DESC(?time)
+    }
+}
+ORDER BY DESC(?isInMaster) DESC(?time)
+LIMIT 1

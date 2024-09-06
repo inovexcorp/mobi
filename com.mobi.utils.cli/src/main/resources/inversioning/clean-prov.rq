@@ -1,0 +1,14 @@
+PREFIX prov: <http://www.w3.org/ns/prov#>
+PREFIX mobiProv: <http://mobi.com/ontologies/prov#>
+
+DELETE {
+    ?activity ?p ?o .
+    ?record ?p2 ?o2 .
+}
+WHERE {
+    ?activity a mobiProv:CreateActivity ;
+        prov:generated ?record ;
+        ?p ?o .
+
+    ?record ?p2 ?o2 .
+}

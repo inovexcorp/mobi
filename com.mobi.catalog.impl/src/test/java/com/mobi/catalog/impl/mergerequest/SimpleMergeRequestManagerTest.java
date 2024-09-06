@@ -96,6 +96,7 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -922,20 +923,21 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
     public void acceptMergeRequestTest() {
         try (RepositoryConnection conn = repo.getConnection()) {
             manager.acceptMergeRequest(request1.getResource(), user1, conn);
+
+            verify(differenceManager).getConflicts(eq(sourceCommit1.getResource()), eq(targetCommit1.getResource()), any(RepositoryConnection.class));
+            verify(versioningManager).merge(LOCAL_CATALOG_IRI, RECORD_1_IRI, SOURCE_BRANCH_1_IRI, TARGET_BRANCH_1_IRI, user1, null, null, new HashMap<>(), conn);
+            verify(thingManager).updateObject(argThat(matches((AcceptedMergeRequest r) -> {
+                boolean hasResource = r.getResource().equals(request1.getResource());
+                boolean hasNoSourceBranch = !r.getSourceBranch_resource().isPresent();
+                boolean hasNoTargetBranch = !r.getTargetBranch_resource().isPresent();
+                boolean hasNoRemoveSource = !r.getRemoveSource().isPresent();
+                boolean hasSourceTitle = r.getSourceBranchTitle().isPresent() && r.getSourceBranchTitle().get().equals(SOURCE_BRANCH_TITLE);
+                boolean hasTargetTitle = r.getTargetBranchTitle().isPresent() && r.getTargetBranchTitle().get().equals(TARGET_BRANCH_TITLE);
+                boolean hasSourceCommit = r.getSourceCommit_resource().isPresent() && r.getSourceCommit_resource().get().equals(sourceCommit1.getResource());
+                boolean hasTargetCommit = r.getTargetCommit_resource().isPresent() && r.getTargetCommit_resource().get().equals(targetCommit1.getResource());
+                return hasResource && hasNoSourceBranch && hasNoTargetBranch && hasNoRemoveSource && hasSourceTitle && hasTargetTitle && hasSourceCommit && hasTargetCommit;
+            })), any(RepositoryConnection.class));
         }
-        verify(differenceManager).getConflicts(eq(sourceCommit1.getResource()), eq(targetCommit1.getResource()), any(RepositoryConnection.class));
-        verify(versioningManager).merge(LOCAL_CATALOG_IRI, RECORD_1_IRI, SOURCE_BRANCH_1_IRI, TARGET_BRANCH_1_IRI, user1, null, null);
-        verify(thingManager).updateObject(argThat(matches((AcceptedMergeRequest r) -> {
-            boolean hasResource = r.getResource().equals(request1.getResource());
-            boolean hasNoSourceBranch = !r.getSourceBranch_resource().isPresent();
-            boolean hasNoTargetBranch = !r.getTargetBranch_resource().isPresent();
-            boolean hasNoRemoveSource = !r.getRemoveSource().isPresent();
-            boolean hasSourceTitle = r.getSourceBranchTitle().isPresent() && r.getSourceBranchTitle().get().equals(SOURCE_BRANCH_TITLE);
-            boolean hasTargetTitle = r.getTargetBranchTitle().isPresent() && r.getTargetBranchTitle().get().equals(TARGET_BRANCH_TITLE);
-            boolean hasSourceCommit = r.getSourceCommit_resource().isPresent() && r.getSourceCommit_resource().get().equals(sourceCommit1.getResource());
-            boolean hasTargetCommit = r.getTargetCommit_resource().isPresent() && r.getTargetCommit_resource().get().equals(targetCommit1.getResource());
-            return hasResource && hasNoSourceBranch && hasNoTargetBranch && hasNoRemoveSource && hasSourceTitle && hasTargetTitle && hasSourceCommit && hasTargetCommit ;
-        })), any(RepositoryConnection.class));
     }
 
     @Test
@@ -946,7 +948,7 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
         try (RepositoryConnection conn = repo.getConnection()) {
             manager.acceptMergeRequest(request3.getResource(), user1, conn);
         }
-        verify(versioningManager, never()).merge(any(Resource.class), any(Resource.class), any(Resource.class), any(Resource.class), any(User.class), any(), any());
+        verify(versioningManager, never()).merge(any(Resource.class), any(Resource.class), any(Resource.class), any(Resource.class), any(User.class), any(), any(), new HashMap<>(), any(RepositoryConnection.class));
     }
 
     @Test
@@ -958,7 +960,7 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
         try (RepositoryConnection conn = repo.getConnection()) {
             manager.acceptMergeRequest(request1.getResource(), user1, conn);
         }
-        verify(versioningManager, never()).merge(any(Resource.class), any(Resource.class), any(Resource.class), any(Resource.class), any(User.class), any(), any());
+        verify(versioningManager, never()).merge(any(Resource.class), any(Resource.class), any(Resource.class), any(Resource.class), any(User.class), any(), any(), new HashMap<>(), any(RepositoryConnection.class));
     }
 
     @Test
@@ -970,7 +972,7 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
         try (RepositoryConnection conn = repo.getConnection()) {
             manager.acceptMergeRequest(request1.getResource(), user1, conn);
         }
-        verify(versioningManager, never()).merge(any(Resource.class), any(Resource.class), any(Resource.class), any(Resource.class), any(User.class), any(), any());
+        verify(versioningManager, never()).merge(any(Resource.class), any(Resource.class), any(Resource.class), any(Resource.class), any(User.class), any(), any(), new HashMap<>(), any(RepositoryConnection.class));
     }
 
     @Test
@@ -982,7 +984,7 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
         try (RepositoryConnection conn = repo.getConnection()) {
             manager.acceptMergeRequest(request1.getResource(), user1, conn);
         }
-        verify(versioningManager, never()).merge(any(Resource.class), any(Resource.class), any(Resource.class), any(Resource.class), any(User.class), any(), any());
+        verify(versioningManager, never()).merge(any(Resource.class), any(Resource.class), any(Resource.class), any(Resource.class), any(User.class), any(), any(), new HashMap<>(), any(RepositoryConnection.class));
     }
 
     @Test
@@ -994,7 +996,7 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
         try (RepositoryConnection conn = repo.getConnection()) {
             manager.acceptMergeRequest(request1.getResource(), user1, conn);
         }
-        verify(versioningManager, never()).merge(any(Resource.class), any(Resource.class), any(Resource.class), any(Resource.class), any(User.class), any(), any());
+        verify(versioningManager, never()).merge(any(Resource.class), any(Resource.class), any(Resource.class), any(Resource.class), any(User.class), any(), any(), new HashMap<>(), any(RepositoryConnection.class));
     }
 
     @Test
@@ -1007,7 +1009,7 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
             manager.acceptMergeRequest(request1.getResource(), user1, conn);
         }
         verify(differenceManager).getConflicts(eq(sourceCommit1.getResource()), eq(targetCommit1.getResource()), any(RepositoryConnection.class));
-        verify(versioningManager, never()).merge(any(Resource.class), any(Resource.class), any(Resource.class), any(Resource.class), any(User.class), any(), any());
+        verify(versioningManager, never()).merge(any(Resource.class), any(Resource.class), any(Resource.class), any(Resource.class), any(User.class), any(), any(), new HashMap<>(), any(RepositoryConnection.class));
         verify(thingManager, never()).updateObject(any(), any(RepositoryConnection.class));
     }
 
@@ -1020,7 +1022,7 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
         try (RepositoryConnection conn = repo.getConnection()) {
             manager.acceptMergeRequest(request1.getResource(), user1, conn);
         }
-        verify(versioningManager, never()).merge(any(Resource.class), any(Resource.class), any(Resource.class), any(Resource.class), any(User.class), any(), any());
+        verify(versioningManager, never()).merge(any(Resource.class), any(Resource.class), any(Resource.class), any(Resource.class), any(User.class), any(), any(), new HashMap<>(), any(RepositoryConnection.class));
     }
 
     @Test
@@ -1032,7 +1034,7 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
         try (RepositoryConnection conn = repo.getConnection()) {
             manager.acceptMergeRequest(request1.getResource(), user1, conn);
         }
-        verify(versioningManager, never()).merge(any(Resource.class), any(Resource.class), any(Resource.class), any(Resource.class), any(User.class), any(), any());
+        verify(versioningManager, never()).merge(any(Resource.class), any(Resource.class), any(Resource.class), any(Resource.class), any(User.class), any(), any(), new HashMap<>(), any(RepositoryConnection.class));
     }
 
     @Test(expected = IllegalArgumentException.class)

@@ -23,6 +23,7 @@ package com.mobi.catalog.impl;
  * #L%
  */
 
+import static com.mobi.catalog.impl.TestResourceUtils.trigRequired;
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertTrue;
@@ -46,8 +47,6 @@ import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
-import org.eclipse.rdf4j.rio.RDFFormat;
-import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
 import org.junit.After;
 import org.junit.Before;
@@ -57,7 +56,6 @@ import org.junit.rules.ExpectedException;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import java.io.InputStream;
 import java.util.Collections;
 import java.util.Set;
 
@@ -90,11 +88,6 @@ public class SimpleDistributionManagerTest extends OrmEnabledTestCase {
         repo = new MemoryRepositoryWrapper();
         repo.setDelegate(new SailRepository(new MemoryStore()));
 
-        try (RepositoryConnection conn = repo.getConnection()) {
-            InputStream testData = getClass().getResourceAsStream("/testCatalogData.trig");
-            conn.add(Rio.parse(testData, "", RDFFormat.TRIG));
-        }
-
         when(configProvider.getRepository()).thenReturn(repo);
 
         recordManager.thingManager = thingManager;
@@ -119,6 +112,7 @@ public class SimpleDistributionManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testGetUnversionedDistributions() throws Exception {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig"); // testCatalogData has outdated structure
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:
             UnversionedRecord record = unversionedRecordFactory.createNew(ManagerTestConstants.UNVERSIONED_RECORD_IRI);
@@ -167,6 +161,7 @@ public class SimpleDistributionManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testUpdateUnversionedDistribution() throws Exception {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig"); // testCatalogData has outdated structure
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:
             Distribution dist = distributionFactory.createNew(ManagerTestConstants.DISTRIBUTION_IRI);
@@ -182,6 +177,7 @@ public class SimpleDistributionManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testRemoveUnversionedDistribution() throws Exception {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig"); // testCatalogData has outdated structure
         // Setup:
         IRI distributionIRI = VALUE_FACTORY.createIRI(UnversionedRecord.unversionedDistribution_IRI);
         try (RepositoryConnection conn = repo.getConnection()) {
@@ -198,6 +194,7 @@ public class SimpleDistributionManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testGetVersionedDistributions() throws Exception {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig"); // testCatalogData has outdated structure
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:
             Version version = versionFactory.createNew(ManagerTestConstants.VERSION_IRI);
@@ -246,6 +243,7 @@ public class SimpleDistributionManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testUpdateVersionedDistribution() throws Exception {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig"); // testCatalogData has outdated structure
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:
             Distribution dist = distributionFactory.createNew(ManagerTestConstants.DISTRIBUTION_IRI);
@@ -261,6 +259,7 @@ public class SimpleDistributionManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testRemoveVersionedDistribution() throws Exception {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig"); // testCatalogData has outdated structure
         // Setup:
         IRI distributionIRI = VALUE_FACTORY.createIRI(Version.versionedDistribution_IRI);
         try (RepositoryConnection conn = repo.getConnection()) {
@@ -288,6 +287,7 @@ public class SimpleDistributionManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testVersionedDistributionPathWithMissingRecord() {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig"); // testCatalogData has outdated structure
         // Setup:
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage("VersionedRecord " + ManagerTestConstants.MISSING_IRI + " could not be found");
@@ -299,6 +299,7 @@ public class SimpleDistributionManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testVersionedDistributionPathWithWrongCatalog() {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig"); // testCatalogData has outdated structure
         // Setup:
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage(String.format("Record %s does not belong to Catalog %s", ManagerTestConstants.VERSIONED_RECORD_NO_CATALOG_IRI, ManagerTestConstants.CATALOG_IRI));
@@ -310,6 +311,7 @@ public class SimpleDistributionManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testVersionedDistributionPathWithWrongRecord() {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig"); // testCatalogData has outdated structure
         // Setup:
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage(String.format("Version %s does not belong to VersionedRecord %s", ManagerTestConstants.LONE_VERSION_IRI, ManagerTestConstants.VERSIONED_RECORD_IRI));
@@ -321,6 +323,7 @@ public class SimpleDistributionManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testVersionedDistributionPathWithMissingVersion() {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig"); // testCatalogData has outdated structure
         // Setup:
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage("Version " + ManagerTestConstants.RANDOM_IRI + " could not be found");
@@ -332,6 +335,7 @@ public class SimpleDistributionManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testVersionedDistributionPathWithWrongVersion() {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig"); // testCatalogData has outdated structure
         // Setup:
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage(String.format("Distribution %s does not belong to Version %s", LONE_DISTRIBUTION_IRI, ManagerTestConstants.VERSION_IRI));
@@ -345,6 +349,7 @@ public class SimpleDistributionManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void getVersionedDistributionTest() {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig"); // testCatalogData has outdated structure
         try (RepositoryConnection conn = repo.getConnection()) {
             Distribution dist = manager.getVersionedDistribution(ManagerTestConstants.CATALOG_IRI, ManagerTestConstants.VERSIONED_RECORD_IRI, ManagerTestConstants.VERSION_IRI, ManagerTestConstants.DISTRIBUTION_IRI, conn);
             assertFalse(dist.getModel().isEmpty());
@@ -365,6 +370,7 @@ public class SimpleDistributionManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void getVersionedDistributionWithMissingRecordTest() {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig"); // testCatalogData has outdated structure
         // Setup:
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage("VersionedRecord " + ManagerTestConstants.MISSING_IRI + " could not be found");
@@ -376,6 +382,7 @@ public class SimpleDistributionManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void getVersionedDistributionWithWrongCatalogTest() {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig"); // testCatalogData has outdated structure
         // Setup:
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage(String.format("Record %s does not belong to Catalog %s", ManagerTestConstants.VERSIONED_RECORD_NO_CATALOG_IRI, ManagerTestConstants.CATALOG_IRI));
@@ -387,6 +394,7 @@ public class SimpleDistributionManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void getVersionedDistributionWithWrongRecordTest() {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig"); // testCatalogData has outdated structure
         // Setup:
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage(String.format("Version %s does not belong to VersionedRecord %s", ManagerTestConstants.LONE_VERSION_IRI, ManagerTestConstants.VERSIONED_RECORD_IRI));
@@ -398,6 +406,7 @@ public class SimpleDistributionManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void getVersionedDistributionWithMissingVersionTest() {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig"); // testCatalogData has outdated structure
         // Setup:
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage("Version " + ManagerTestConstants.RANDOM_IRI + " could not be found");
@@ -409,6 +418,7 @@ public class SimpleDistributionManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void getVersionedDistributionWithWrongVersionTest() {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig"); // testCatalogData has outdated structure
         // Setup:
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage(String.format("Distribution %s does not belong to Version %s", LONE_DISTRIBUTION_IRI, ManagerTestConstants.VERSION_IRI));
@@ -420,6 +430,7 @@ public class SimpleDistributionManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void getMissingVersionedDistributionTest() {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig"); // testCatalogData has outdated structure
         // Setup:
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage("Distribution " + ManagerTestConstants.RANDOM_IRI + " could not be found");
@@ -444,6 +455,7 @@ public class SimpleDistributionManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testUnversionedDistributionPathWithMissingRecord() {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig"); // testCatalogData has outdated structure
         // Setup:
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage("UnversionedRecord " + ManagerTestConstants.MISSING_IRI + " could not be found");
@@ -455,6 +467,7 @@ public class SimpleDistributionManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testUnversionedDistributionPathWithWrongCatalog() {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig"); // testCatalogData has outdated structure
         // Setup:
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage(String.format("Record %s does not belong to Catalog %s", UNVERSIONED_RECORD_NO_CATALOG_IRI, ManagerTestConstants.CATALOG_IRI));
@@ -466,6 +479,7 @@ public class SimpleDistributionManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testUnversionedDistributionPathWithWrongRecord() {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig"); // testCatalogData has outdated structure
         // Setup:
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage(String.format("Distribution %s does not belong to UnversionedRecord %s", LONE_DISTRIBUTION_IRI, ManagerTestConstants.UNVERSIONED_RECORD_IRI));
@@ -479,6 +493,7 @@ public class SimpleDistributionManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void getUnversionedDistributionTest() {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig"); // testCatalogData has outdated structure
         try (RepositoryConnection conn = repo.getConnection()) {
             Distribution dist = manager.getUnversionedDistribution(ManagerTestConstants.CATALOG_IRI, ManagerTestConstants.UNVERSIONED_RECORD_IRI, ManagerTestConstants.DISTRIBUTION_IRI, conn);
             assertFalse(dist.getModel().isEmpty());
@@ -499,6 +514,7 @@ public class SimpleDistributionManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void getUnversionedDistributionWithMissingRecordTest() {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig"); // testCatalogData has outdated structure
         // Setup:
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage("UnversionedRecord " + ManagerTestConstants.MISSING_IRI + " could not be found");
@@ -510,6 +526,7 @@ public class SimpleDistributionManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void getUnversionedDistributionWithWrongCatalogTest() {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig"); // testCatalogData has outdated structure
         // Setup:
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage(String.format("Record %s does not belong to Catalog %s", UNVERSIONED_RECORD_NO_CATALOG_IRI, ManagerTestConstants.CATALOG_IRI));
@@ -521,6 +538,7 @@ public class SimpleDistributionManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void getUnversionedDistributionWithWrongRecordTest() {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig"); // testCatalogData has outdated structure
         // Setup:
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage(String.format("Distribution %s does not belong to UnversionedRecord %s", LONE_DISTRIBUTION_IRI, ManagerTestConstants.UNVERSIONED_RECORD_IRI));
@@ -532,6 +550,7 @@ public class SimpleDistributionManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void getMissingUnversionedDistributionTest() {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig"); // testCatalogData has outdated structure
         // Setup:
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage("Distribution " + ManagerTestConstants.RANDOM_IRI + " could not be found");

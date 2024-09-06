@@ -97,7 +97,8 @@ describe('Create Request component', function() {
             date: 'string',
             message: 'string',
             base: 'string',
-            auxiliary: 'string'
+            auxiliary: 'string',
+            branch: 'string'
         };
     });
 

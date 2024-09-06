@@ -40,14 +40,23 @@ public class OntologyModels {
      * Finds the first OntologyIRI in the provided Model.
      *
      * @param model The Model to filter
-     * @param vf The ValueFactory used to create an IRI
      * @return An Optional IRI of the first OntologyIRI found in the Model
      */
-    public static Optional<IRI> findFirstOntologyIRI(Model model, ValueFactory vf) {
-        Optional<Resource> optionalResource = findFirstSubject(model, vf.createIRI(RDF.TYPE.stringValue()),
-                vf.createIRI(OWL.ONTOLOGY.stringValue()));
-        if (optionalResource.isPresent() && optionalResource.get() instanceof IRI) {
-            return Optional.of((IRI) optionalResource.get());
+    public static Optional<IRI> findFirstOntologyIRI(Model model) {
+        Model ontologyDefs = model.filter(null, RDF.TYPE, OWL.ONTOLOGY);
+        if (!ontologyDefs.isEmpty()) {
+            IRI ontWithMostStatements = null;
+            int size = 0;
+            for (Resource ontologyId : ontologyDefs.subjects()) {
+                int ontologyIdStatementCount = model.filter(ontologyId, null, null).size();
+                if (ontologyIdStatementCount > size && ontologyId instanceof IRI ontologyIRI) {
+                    ontWithMostStatements = ontologyIRI;
+                    size = ontologyIdStatementCount;
+                }
+            }
+            if (ontWithMostStatements != null) {
+                return Optional.of(ontWithMostStatements);
+            }
         }
         return Optional.empty();
     }

@@ -32,6 +32,6 @@ public class Catalogs {
     public static final String IN_PROGRESS_COMMIT_NAMESPACE = "https://mobi.com/in-progress-commits#";
     public static final String COMMIT_NAMESPACE = "https://mobi.com/commits#";
     public static final String REVISION_NAMESPACE = "https://mobi.com/revisions#";
-    public static final String ADDITIONS_NAMESPACE = "https://mobi.com/additions#";
-    public static final String DELETIONS_NAMESPACE = "https://mobi.com/deletions#";
+    public static final String DELTAS_NAMESPACE = "https://mobi.com/deltas#";
+
 }

@@ -23,6 +23,7 @@ package com.mobi.catalog.impl;
  * #L%
  */
 
+import static com.mobi.catalog.impl.TestResourceUtils.trigRequired;
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertTrue;
@@ -41,15 +42,12 @@ import com.mobi.catalog.api.ontologies.mcat.VersionedRecord;
 import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.persistence.utils.ConnectionUtils;
 import com.mobi.rdf.orm.OrmFactory;
-import com.mobi.rdf.orm.Thing;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import com.mobi.repository.impl.sesame.memory.MemoryRepositoryWrapper;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
-import org.eclipse.rdf4j.rio.RDFFormat;
-import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
 import org.junit.After;
 import org.junit.Before;
@@ -58,7 +56,6 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.mockito.MockitoAnnotations;
 
-import java.io.InputStream;
 import java.time.OffsetDateTime;
 import java.util.Collections;
 import java.util.Optional;
@@ -87,11 +84,6 @@ public class SimpleVersionManagerTest extends OrmEnabledTestCase {
         closeable = MockitoAnnotations.openMocks(this);
         repo = new MemoryRepositoryWrapper();
         repo.setDelegate(new SailRepository(new MemoryStore()));
-
-        try (RepositoryConnection conn = repo.getConnection()) {
-            InputStream testData = getClass().getResourceAsStream("/testCatalogData.trig");
-            conn.add(Rio.parse(testData, "", RDFFormat.TRIG));
-        }
         
         recordManager.thingManager = thingManager;
         manager = spy(new SimpleVersionManager());
@@ -111,6 +103,7 @@ public class SimpleVersionManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testGetVersions() throws Exception {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
         // Setup:
         VersionedRecord record = versionedRecordFactory.createNew(ManagerTestConstants.VERSIONED_RECORD_IRI);
         Version version = versionFactory.createNew(ManagerTestConstants.VERSION_IRI);
@@ -179,6 +172,7 @@ public class SimpleVersionManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testUpdateVersion() throws Exception {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
         // Setup:
         Version version = versionFactory.createNew(ManagerTestConstants.VERSION_IRI);
         version.getModel().add(ManagerTestConstants.VERSION_IRI, DCTERMS.TITLE, VALUE_FACTORY.createLiteral("New Title"));
@@ -195,6 +189,7 @@ public class SimpleVersionManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testUpdateTag() throws Exception {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
         // Setup:
         Tag tag = tagFactory.createNew(ManagerTestConstants.TAG_IRI);
         tag.getModel().add(ManagerTestConstants.TAG_IRI, DCTERMS.TITLE, VALUE_FACTORY.createLiteral("New Title"));
@@ -213,6 +208,7 @@ public class SimpleVersionManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testRemoveVersion() throws Exception {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
         // Setup:
         IRI versionIRI = VALUE_FACTORY.createIRI(VersionedRecord.version_IRI);
         IRI latestIRI = VALUE_FACTORY.createIRI(VersionedRecord.latestVersion_IRI);
@@ -282,6 +278,7 @@ public class SimpleVersionManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testVersionPathWithMissingRecord() {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
         // Setup:
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage("VersionedRecord " + ManagerTestConstants.MISSING_IRI + " could not be found");
@@ -293,6 +290,7 @@ public class SimpleVersionManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testVersionPathWithWrongCatalog() {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
         // Setup:
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage(String.format("Record %s does not belong to Catalog %s", ManagerTestConstants.VERSIONED_RECORD_NO_CATALOG_IRI, ManagerTestConstants.CATALOG_IRI));
@@ -304,6 +302,7 @@ public class SimpleVersionManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testVersionPathWithWrongRecord() {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
         // Setup:
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage(String.format("Version %s does not belong to VersionedRecord %s", ManagerTestConstants.LONE_VERSION_IRI, ManagerTestConstants.VERSIONED_RECORD_IRI));
@@ -317,6 +316,7 @@ public class SimpleVersionManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void getVersionTest() {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
         try (RepositoryConnection conn = repo.getConnection()) {
             Version version = manager.getVersion(ManagerTestConstants.CATALOG_IRI, ManagerTestConstants.VERSIONED_RECORD_IRI, ManagerTestConstants.VERSION_IRI, versionFactory, conn);
             assertFalse(version.getModel().isEmpty());
@@ -337,6 +337,7 @@ public class SimpleVersionManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void getVersionWithMissingRecordTest() {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
         // Setup:
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage("VersionedRecord " + ManagerTestConstants.MISSING_IRI + " could not be found");
@@ -348,6 +349,7 @@ public class SimpleVersionManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void getVersionWithWrongCatalogTest() {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
         // Setup:
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage(String.format("Record %s does not belong to Catalog %s", ManagerTestConstants.VERSIONED_RECORD_NO_CATALOG_IRI, ManagerTestConstants.CATALOG_IRI));
@@ -359,6 +361,7 @@ public class SimpleVersionManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void getVersionWithWrongRecordTest() {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
         // Setup:
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage(String.format("Version %s does not belong to VersionedRecord %s", ManagerTestConstants.LONE_VERSION_IRI, ManagerTestConstants.VERSIONED_RECORD_IRI));
@@ -370,6 +373,7 @@ public class SimpleVersionManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void getMissingVersionTest() {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
         // Setup:
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage("Version " + ManagerTestConstants.RANDOM_IRI + " could not be found");
@@ -383,8 +387,8 @@ public class SimpleVersionManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void removeVersionWithObjectTest() throws Exception {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
         // Setup:
-
         Version version = versionFactory.createNew(LATEST_VERSION_IRI);
         version.setVersionedDistribution(Collections.singleton(distributionFactory.createNew(ManagerTestConstants.DISTRIBUTION_IRI)));
         try (RepositoryConnection conn = repo.getConnection()) {
@@ -403,8 +407,8 @@ public class SimpleVersionManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void removeVersionWithResourceTest() throws Exception {
+        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
         // Setup:
-
         Version version = versionFactory.createNew(LATEST_VERSION_IRI);
         version.setVersionedDistribution(Collections.singleton(distributionFactory.createNew(ManagerTestConstants.DISTRIBUTION_IRI)));
         try (RepositoryConnection conn = repo.getConnection()) {

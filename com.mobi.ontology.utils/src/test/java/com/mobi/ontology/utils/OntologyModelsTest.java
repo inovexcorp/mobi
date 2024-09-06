@@ -64,7 +64,7 @@ public class OntologyModelsTest extends OrmEnabledTestCase {
         Model model = mf.createEmptyModel();
         model.add(ontologyIRI, type, vf.createIRI(OWL.ONTOLOGY.stringValue()));
 
-        Optional<IRI> ontologyIRIOpt = OntologyModels.findFirstOntologyIRI(model, vf);
+        Optional<IRI> ontologyIRIOpt = OntologyModels.findFirstOntologyIRI(model);
         assertTrue(ontologyIRIOpt.isPresent());
         assertEquals(ontologyIRI, ontologyIRIOpt.get());
     }
@@ -76,7 +76,7 @@ public class OntologyModelsTest extends OrmEnabledTestCase {
         model.add(vf.createIRI("urn:ontologyIRI2"), type, ontologyObj);
         model.add(vf.createIRI("urn:ontologyIRI3"), type, ontologyObj);
 
-        Optional<IRI> ontologyIRIOpt = OntologyModels.findFirstOntologyIRI(model, vf);
+        Optional<IRI> ontologyIRIOpt = OntologyModels.findFirstOntologyIRI(model);
         assertTrue(ontologyIRIOpt.isPresent());
         assertTrue(ontologyIRIOpt.get().equals(ontologyIRI)
                 || ontologyIRIOpt.get().equals(vf.createIRI("urn:ontologyIRI2"))
@@ -87,7 +87,7 @@ public class OntologyModelsTest extends OrmEnabledTestCase {
     public void findFirstOntologyIRIEmptyModelTest() {
         Model model = mf.createEmptyModel();
 
-        Optional<IRI> ontologyIRIOpt = OntologyModels.findFirstOntologyIRI(model, vf);
+        Optional<IRI> ontologyIRIOpt = OntologyModels.findFirstOntologyIRI(model);
         assertTrue(!ontologyIRIOpt.isPresent());
     }
 

@@ -1,0 +1,44 @@
+PREFIX catalog: <http://mobi.com/ontologies/catalog#>
+
+CONSTRUCT {
+  ?addSubject ?p ?o
+} WHERE {
+  {
+    SELECT DISTINCT ?revisionOfInterest
+    WHERE {
+      {
+        SELECT DISTINCT ?deletionSubject WHERE {
+          VALUES ?revision { %REVISIONLIST% }
+          ?revision catalog:deletions ?deletionsGraph .
+          GRAPH ?deletionsGraph {
+            ?deletionSubject ?p ?o .
+            %SUBJECTLIST%
+          }
+        }
+      }
+
+      VALUES ?revisionOfInterest { %REVISIONLIST% }
+      {
+        ?revisionOfInterest catalog:additions ?additionsGraph .
+
+        GRAPH ?additionsGraph {
+          ?deletionSubject ?p ?o .
+          %SUBJECTLIST%
+        }
+      } UNION {
+        ?revisionOfInterest catalog:deletions ?deletionsGraph .
+
+        GRAPH ?deletionsGraph {
+          ?deletionSubject ?p ?o .
+          %SUBJECTLIST%
+        }
+      }
+    }
+  }
+
+  ?revisionOfInterest catalog:additions ?additionsGraph .
+  GRAPH ?additionsGraph {
+    ?addSubject ?p ?o .
+    %SUBJECTLISTADD%
+  }
+}

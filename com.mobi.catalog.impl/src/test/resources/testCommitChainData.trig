@@ -1,295 +1,505 @@
-@prefix mcat: <http://mobi.com/ontologies/catalog#> .
-@prefix muser: <http://mobi.com/ontologies/user/management#> .
-@prefix dc: <http://purl.org/dc/terms/> .
-@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
-@prefix prov: <http://www.w3.org/ns/prov#> .
-@prefix owl: <http://www.w3.org/2002/07/owl#> .
-@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
-@prefix catalogs: <http://mobi.com/test/catalogs#> .
-@prefix records: <http://mobi.com/test/records#> .
-@prefix branches: <http://mobi.com/test/branches#> .
-@prefix commits: <http://mobi.com/test/commits#> .
-@prefix revisions: <http://mobi.com/test/revisions#> .
-@prefix additions: <https://mobi.com/additions#> .
-@prefix deletions: <https://mobi.com/deletions#> .
-@prefix graphs: <http://mobi.com/test/graphs#> .
-
-# Duplicate Addition From Same Base Commit Test
-
-GRAPH records:duplicate-change-record {
-    records:duplicate-change-record a mcat:VersionedRDFRecord, mcat:VersionedRecord, mcat:Record ;
-        mcat:catalog catalogs:catalog-distributed ;
-        dc:title "Duplicate Change Record" ;
-        dc:description "Description" ;
-        dc:issued "2018-01-01T00:00:00Z"^^xsd:dateTime ;
-        dc:modified "2018-01-01T00:00:00Z"^^xsd:dateTime ;
-        dc:publisher muser:tester ;
-        mcat:branch branches:left-branch ;
-        mcat:branch branches:right-branch1 ;
-        mcat:branch branches:right-branch2 ;
-        mcat:branch branches:right-branch3 ;
-        mcat:branch branches:master-duplicate ;
-        mcat:masterBranch branches:master-duplicate .
+<https://mobi.com/deltas#3749c6fe-0872-4df1-89f0-471e4c9b3dea-A> {
+    <https://mobi.com/ontologies/ClassA#Comment> <http://purl.org/dc/terms/title>
+            "Comment B" .
 }
 
-GRAPH branches:master-duplicate {
-    branches:master-duplicate a mcat:Branch ;
-        dc:title "Duplicate Change Master Branch" ;
-        dc:issued "2018-01-01T00:00:00Z"^^xsd:dateTime ;
-        dc:modified "2018-01-02T00:00:00Z"^^xsd:dateTime ;
-        mcat:head commits:commit-a .
+<http://mobi.com/test/branches#master-duplicate> {
+    <http://mobi.com/test/branches#master-duplicate> a <http://www.w3.org/2002/07/owl#Thing>,
+                                                           <http://mobi.com/ontologies/catalog#MasterBranch>, <http://mobi.com/ontologies/catalog#Branch>;
+        <http://purl.org/dc/terms/title> "MASTER";
+        <http://purl.org/dc/terms/description> "The master branch.";
+        <http://purl.org/dc/terms/issued> "2024-09-04T14:55:51.892985-06:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+        <http://purl.org/dc/terms/modified> "2024-09-04T14:56:09.438735-06:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+        <http://purl.org/dc/terms/publisher> <http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997>;
+        <http://mobi.com/ontologies/catalog#headGraph> <http://mobi.com/test/records#duplicate-change-record/HEAD>;
+        <http://mobi.com/ontologies/catalog#head> <http://mobi.com/test/commits#commit-a> .
 }
 
-GRAPH branches:left-branch {
-    branches:left-branch a mcat:Branch ;
-        dc:title "Left Branch" ;
-        dc:issued "2018-01-03T00:00:00Z"^^xsd:dateTime ;
-        dc:modified "2018-01-07T00:00:00Z"^^xsd:dateTime ;
-        mcat:head commits:commit-d .
+<https://mobi.com/deltas#3749c6fe-0872-4df1-89f0-471e4c9b3dea-B> {
+    <https://mobi.com/ontologies/ClassA#Comment> <http://purl.org/dc/terms/title>
+            "Comment" .
 }
 
-GRAPH branches:right-branch1 {
-    branches:right-branch1 a mcat:Branch ;
-        dc:title "Right Branch" ;
-        dc:issued "2018-01-04T00:00:00Z"^^xsd:dateTime ;
-        dc:modified "2018-01-06T00:00:00Z"^^xsd:dateTime ;
-        mcat:head commits:commit-c .
+<http://mobi.com/test/branches#right-branch3> {
+    <http://mobi.com/test/branches#right-branch3> a <http://www.w3.org/2002/07/owl#Thing>,
+                                                        <http://mobi.com/ontologies/catalog#Branch>;
+        <http://purl.org/dc/terms/title> "Right Branch 3";
+        <http://purl.org/dc/terms/description> "";
+        <http://purl.org/dc/terms/issued> "2024-09-04T14:57:59.868626-06:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+        <http://purl.org/dc/terms/modified> "2024-09-04T14:58:42.956856-06:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+        <http://purl.org/dc/terms/publisher> <http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997>;
+        <http://mobi.com/ontologies/catalog#head> <http://mobi.com/test/commits#commit-f> .
 }
 
-GRAPH branches:right-branch2 {
-    branches:right-branch2 a mcat:Branch ;
-        dc:title "Right Branch" ;
-        dc:issued "2018-01-04T00:00:00Z"^^xsd:dateTime ;
-        dc:modified "2018-01-06T00:00:00Z"^^xsd:dateTime ;
-        mcat:head commits:commit-e .
+<https://mobi.com/deltas#3e1e1c22-eb95-4560-8d05-af9ac9ef097f-B> {
+    <https://mobi.com/ontologies/ClassA#Comment> <http://purl.org/dc/terms/title>
+            "Comment B" .
 }
 
-GRAPH branches:right-branch3 {
-    branches:right-branch3 a mcat:Branch ;
-        dc:title "Right Branch" ;
-        dc:issued "2018-01-04T00:00:00Z"^^xsd:dateTime ;
-        dc:modified "2018-01-06T00:00:00Z"^^xsd:dateTime ;
-        mcat:head commits:commit-f .
+<https://mobi.com/deltas#3e1e1c22-eb95-4560-8d05-af9ac9ef097f-A> {
+    <https://mobi.com/ontologies/ClassA#Comment> <http://purl.org/dc/terms/title>
+            "Comment A" .
 }
 
-GRAPH commits:commit-a {
-    commits:commit-a a mcat:Commit ;
-        dc:title "Initial Commit" ;
-        prov:atTime "2018-01-02T00:00:00Z"^^xsd:dateTime ;
-        prov:generated revisions:commit-a .
+<http://mobi.com/test/commits#commit-d> {
+    <https://mobi.com/revisions#3e1e1c22-eb95-4560-8d05-af9ac9ef097f> a <http://www.w3.org/2002/07/owl#Thing>,
+                                                                            <http://mobi.com/ontologies/catalog#Revision>, <http://www.w3.org/ns/prov#Entity>;
+        <http://mobi.com/ontologies/catalog#additions> <https://mobi.com/deltas#3e1e1c22-eb95-4560-8d05-af9ac9ef097f-A>;
+        <http://mobi.com/ontologies/catalog#deletions> <https://mobi.com/deltas#3e1e1c22-eb95-4560-8d05-af9ac9ef097f-B>;
+        <http://www.w3.org/ns/prov#hadPrimarySource> <https://mobi.com/revisions#3749c6fe-0872-4df1-89f0-471e4c9b3dea> .
 
-    revisions:commit-a a mcat:Revision ;
-        mcat:additions additions:commit-a .
+    <http://mobi.com/test/commits#commit-d> a <http://www.w3.org/2002/07/owl#Thing>,
+                                                  <http://mobi.com/ontologies/catalog#Commit>, <http://www.w3.org/ns/prov#Activity>;
+        <http://purl.org/dc/terms/title> "Commit D";
+        <http://www.w3.org/ns/prov#generated> <https://mobi.com/revisions#3e1e1c22-eb95-4560-8d05-af9ac9ef097f>;
+        <http://www.w3.org/ns/prov#atTime> "2024-09-04T15:00:19.05825-06:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+        <http://www.w3.org/ns/prov#wasAssociatedWith> <http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997>;
+        <http://mobi.com/ontologies/catalog#branchCommit> <http://mobi.com/test/commits#commit-b> .
 }
 
-GRAPH additions:commit-a {
-    <http://mobi.com/test/ontology> a owl:Ontology .
-    <http://mobi.com/test/ClassA> a owl:Class ;
-        rdfs:comment "Comment" .
+<http://mobi.com/test/branches#right-branch1> {
+    <http://mobi.com/test/branches#right-branch1> a <http://www.w3.org/2002/07/owl#Thing>,
+                                                        <http://mobi.com/ontologies/catalog#Branch>;
+        <http://purl.org/dc/terms/title> "Right Branch 1";
+        <http://purl.org/dc/terms/description> "";
+        <http://purl.org/dc/terms/issued> "2024-09-04T14:57:46.340404-06:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+        <http://purl.org/dc/terms/modified> "2024-09-04T14:59:58.732081-06:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+        <http://purl.org/dc/terms/publisher> <http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997>;
+        <http://mobi.com/ontologies/catalog#head> <http://mobi.com/test/commits#commit-c> .
 }
 
-GRAPH commits:commit-b {
-    commits:commit-b a mcat:Commit ;
-        dc:title "Commit B" ;
-        prov:atTime "2018-01-06T00:00:00Z"^^xsd:dateTime ;
-        mcat:baseCommit commits:commit-a ;
-        prov:generated revisions:commit-b .
-
-    revisions:commit-b a mcat:Revision ;
-        mcat:additions additions:comment-b;
-        mcat:deletions deletions:comment .
+<http://mobi.com/catalog-local> {
+    <http://mobi.com/catalog-local> a <http://www.w3.org/2002/07/owl#Thing>, <http://mobi.com/ontologies/catalog#Catalog>;
+        <http://purl.org/dc/terms/title> "Mobi Catalog (Local)";
+        <http://purl.org/dc/terms/description> "The Mobi Catalog records datasets, ontologies, data mappings, and other resources.";
+        <http://purl.org/dc/terms/issued> "2024-09-04T11:54:57.176994-06:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+        <http://purl.org/dc/terms/modified> "2024-09-04T11:54:57.176994-06:00"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
 }
 
-GRAPH commits:commit-c {
-    commits:commit-c a mcat:Commit ;
-        dc:title "Commit C" ;
-        prov:atTime "2018-01-07T00:00:00Z"^^xsd:dateTime ;
-        mcat:baseCommit commits:commit-a ;
-        prov:generated revisions:commit-c .
-
-    revisions:commit-c a mcat:Revision ;
-        mcat:additions additions:comment-b ;
-        mcat:deletions deletions:comment .
+<http://mobi.com/test/branches#left-branch1> {
+    <http://mobi.com/test/branches#left-branch1> a <http://www.w3.org/2002/07/owl#Thing>,
+                                                       <http://mobi.com/ontologies/catalog#Branch>;
+        <http://purl.org/dc/terms/title> "Left Branch";
+        <http://purl.org/dc/terms/description> "";
+        <http://purl.org/dc/terms/issued> "2024-09-04T14:57:38.525008-06:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+        <http://purl.org/dc/terms/modified> "2024-09-04T15:00:19.058562-06:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+        <http://purl.org/dc/terms/publisher> <http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997>;
+        <http://mobi.com/ontologies/catalog#head> <http://mobi.com/test/commits#commit-d> .
 }
 
-GRAPH commits:commit-d {
-    commits:commit-d a mcat:Commit ;
-        dc:title "Commit D" ;
-        prov:atTime "2018-01-08T00:00:00Z"^^xsd:dateTime ;
-        mcat:baseCommit commits:commit-b ;
-        prov:generated revisions:commit-d .
-
-    revisions:commit-d a mcat:Revision ;
-        mcat:additions additions:comment-a ;
-        mcat:deletions deletions:comment-b .
+<https://mobi.com/deltas#fa073ba3-cc60-4181-a793-d0d593ba4ac1-B> {
+    <https://mobi.com/ontologies/ClassA#Comment> <http://purl.org/dc/terms/title>
+            "Comment" .
 }
 
-GRAPH commits:commit-e {
-    commits:commit-e a mcat:Commit ;
-        dc:title "Commit E" ;
-        prov:atTime "2018-01-09T00:00:00Z"^^xsd:dateTime ;
-        mcat:baseCommit commits:commit-a ;
-        prov:generated revisions:commit-e .
-
-    revisions:commit-e a mcat:Revision ;
-        mcat:additions additions:comment-b ;
-        mcat:deletions deletions:comment .
+<http://mobi.com/catalog-distributed> {
+    <http://mobi.com/catalog-distributed> a <http://www.w3.org/2002/07/owl#Thing>, <http://mobi.com/ontologies/catalog#Catalog>;
+        <http://purl.org/dc/terms/title> "Mobi Catalog (Distributed)";
+        <http://purl.org/dc/terms/description> "The Mobi Catalog records datasets, ontologies, data mappings, and other resources.";
+        <http://purl.org/dc/terms/issued> "2024-09-04T11:54:57.175082-06:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+        <http://purl.org/dc/terms/modified> "2024-09-04T11:54:57.175082-06:00"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
 }
 
-GRAPH commits:commit-f {
-    commits:commit-f a mcat:Commit ;
-        dc:title "Commit F" ;
-        prov:atTime "2018-01-05T00:00:00Z"^^xsd:dateTime ;
-        mcat:baseCommit commits:commit-a ;
-        prov:generated revisions:commit-f .
-
-    revisions:commit-f a mcat:Revision ;
-        mcat:additions additions:comment-b ;
-        mcat:deletions deletions:comment .
+<https://mobi.com/deltas#fa073ba3-cc60-4181-a793-d0d593ba4ac1-A> {
+    <https://mobi.com/ontologies/ClassA#Comment> <http://purl.org/dc/terms/title>
+            "Comment B" .
 }
 
-GRAPH additions:comment-b {
-    <http://mobi.com/test/ClassA> rdfs:comment "Comment B" .
+<https://mobi.com/deltas#9b51af5a-7317-44cc-90d6-acfc18d017b5-A> {
+    <https://mobi.com/ontologies/DuplicateChangeRecord> a <http://www.w3.org/2002/07/owl#Ontology>;
+        <http://purl.org/dc/terms/title> "Duplicate Change Record" .
 }
 
-GRAPH additions:comment-a {
-    <http://mobi.com/test/ClassA> rdfs:comment "Comment A" .
+<https://mobi.com/deltas#e7ee0615-aff5-44dd-876f-8867f893432b-A> {
+    <https://mobi.com/ontologies/ClassA#Comment> <http://purl.org/dc/terms/title>
+            "Comment B" .
 }
 
-GRAPH deletions:comment {
-    <http://mobi.com/test/ClassA> rdfs:comment "Comment" .
+<https://mobi.com/deltas#e7ee0615-aff5-44dd-876f-8867f893432b-B> {
+    <https://mobi.com/ontologies/ClassA#Comment> <http://purl.org/dc/terms/title>
+            "Comment" .
 }
 
-GRAPH deletions:comment-b {
-    <http://mobi.com/test/ClassA> rdfs:comment "Comment B" .
+<http://mobi.com/test/commits#commit-b> {
+    <https://mobi.com/revisions#3749c6fe-0872-4df1-89f0-471e4c9b3dea> a <http://www.w3.org/2002/07/owl#Thing>,
+                                                                            <http://mobi.com/ontologies/catalog#Revision>, <http://www.w3.org/ns/prov#Entity>;
+        <http://mobi.com/ontologies/catalog#additions> <https://mobi.com/deltas#3749c6fe-0872-4df1-89f0-471e4c9b3dea-A>;
+        <http://mobi.com/ontologies/catalog#deletions> <https://mobi.com/deltas#3749c6fe-0872-4df1-89f0-471e4c9b3dea-B>;
+        <http://www.w3.org/ns/prov#hadPrimarySource> <https://mobi.com/revisions#78604293-be93-4ce1-add6-4e5e37f43e3a> .
+
+    <http://mobi.com/test/commits#commit-b> a <http://www.w3.org/2002/07/owl#Thing>,
+                                                  <http://mobi.com/ontologies/catalog#Commit>, <http://www.w3.org/ns/prov#Activity>;
+        <http://purl.org/dc/terms/title> "Commit B";
+        <http://www.w3.org/ns/prov#generated> <https://mobi.com/revisions#3749c6fe-0872-4df1-89f0-471e4c9b3dea>;
+        <http://www.w3.org/ns/prov#atTime> "2024-09-04T14:59:17.792945-06:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+        <http://www.w3.org/ns/prov#wasAssociatedWith> <http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997>;
+        <http://mobi.com/ontologies/catalog#branchCommit> <http://mobi.com/test/commits#commit-a> .
+}
+
+<https://mobi.com/deltas#865d9973-ca58-4e33-baba-3af201fdda5d-B> {
+    <https://mobi.com/ontologies/ClassA#Comment> <http://purl.org/dc/terms/title>
+            "Comment" .
+}
+
+<https://mobi.com/deltas#865d9973-ca58-4e33-baba-3af201fdda5d-A> {
+    <https://mobi.com/ontologies/ClassA#Comment> <http://purl.org/dc/terms/title>
+            "Comment B" .
+}
+
+<http://mobi.com/test/branches#right-branch2> {
+    <http://mobi.com/test/branches#right-branch2> a <http://www.w3.org/2002/07/owl#Thing>,
+                                                        <http://mobi.com/ontologies/catalog#Branch>;
+        <http://purl.org/dc/terms/title> "Right Branch 2";
+        <http://purl.org/dc/terms/description> "";
+        <http://purl.org/dc/terms/issued> "2024-09-04T14:57:51.537896-06:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+        <http://purl.org/dc/terms/modified> "2024-09-04T15:00:51.802201-06:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+        <http://purl.org/dc/terms/publisher> <http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997>;
+        <http://mobi.com/ontologies/catalog#head> <http://mobi.com/test/commits#commit-e> .
+}
+
+<http://mobi.com/test/commits#commit-e> {
+    <https://mobi.com/revisions#865d9973-ca58-4e33-baba-3af201fdda5d> a <http://www.w3.org/2002/07/owl#Thing>,
+                                                                            <http://mobi.com/ontologies/catalog#Revision>, <http://www.w3.org/ns/prov#Entity>;
+        <http://mobi.com/ontologies/catalog#additions> <https://mobi.com/deltas#865d9973-ca58-4e33-baba-3af201fdda5d-A>;
+        <http://mobi.com/ontologies/catalog#deletions> <https://mobi.com/deltas#865d9973-ca58-4e33-baba-3af201fdda5d-B>;
+        <http://www.w3.org/ns/prov#hadPrimarySource> <https://mobi.com/revisions#78604293-be93-4ce1-add6-4e5e37f43e3a> .
+
+    <http://mobi.com/test/commits#commit-e> a <http://www.w3.org/2002/07/owl#Thing>,
+                                                  <http://mobi.com/ontologies/catalog#Commit>, <http://www.w3.org/ns/prov#Activity>;
+        <http://purl.org/dc/terms/title> "Commit E";
+        <http://www.w3.org/ns/prov#generated> <https://mobi.com/revisions#865d9973-ca58-4e33-baba-3af201fdda5d>;
+        <http://www.w3.org/ns/prov#atTime> "2024-09-04T15:00:51.801612-06:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+        <http://www.w3.org/ns/prov#wasAssociatedWith> <http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997>;
+        <http://mobi.com/ontologies/catalog#branchCommit> <http://mobi.com/test/commits#commit-a> .
+}
+
+<http://mobi.com/test/commits#commit-a> {
+    <https://mobi.com/revisions#78604293-be93-4ce1-add6-4e5e37f43e3a> a <http://www.w3.org/2002/07/owl#Thing>,
+                                                                            <http://mobi.com/ontologies/catalog#Revision>, <http://www.w3.org/ns/prov#Entity>;
+        <http://mobi.com/ontologies/catalog#additions> <https://mobi.com/deltas#d515f375-4561-42f8-8c5a-107bdf01bb44-A>;
+        <http://mobi.com/ontologies/catalog#deletions> <https://mobi.com/deltas#d515f375-4561-42f8-8c5a-107bdf01bb44-B>;
+        <http://www.w3.org/ns/prov#hadPrimarySource> <https://mobi.com/revisions#352498e0-c325-44dd-8e17-b135d687428a> .
+
+    <http://mobi.com/test/commits#commit-a> a <http://www.w3.org/2002/07/owl#Thing>,
+                                                  <http://mobi.com/ontologies/catalog#Commit>, <http://www.w3.org/ns/prov#Activity>;
+        <http://purl.org/dc/terms/title> "Commit A";
+        <http://www.w3.org/ns/prov#generated> <https://mobi.com/revisions#78604293-be93-4ce1-add6-4e5e37f43e3a>;
+        <http://www.w3.org/ns/prov#atTime> "2024-09-04T14:56:09.438181-06:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+        <http://www.w3.org/ns/prov#wasAssociatedWith> <http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997>;
+        <http://mobi.com/ontologies/catalog#baseCommit> <https://mobi.com/commits#3a1565dc-f805-460e-87bf-02d330760d64> .
 }
 
 
-# Duplicate Addition Without Initial Starting Base Comment
 
-GRAPH records:duplicate-change-record-diff-base {
-    records:duplicate-change-record-diff-base a mcat:VersionedRDFRecord, mcat:VersionedRecord, mcat:Record ;
-        mcat:catalog catalogs:catalog-distributed ;
-        dc:title "Duplicate Change Record Different Base" ;
-        dc:description "Description" ;
-        dc:issued "2018-01-01T00:00:00Z"^^xsd:dateTime ;
-        dc:modified "2018-01-01T00:00:00Z"^^xsd:dateTime ;
-        dc:publisher muser:tester ;
-        mcat:branch branches:left-branch2 ;
-        mcat:branch branches:right-branch4 ;
-        mcat:branch branches:right-branch5 ;
-        mcat:branch branches:right-branch6 ;
-        mcat:branch branches:master-duplicate-no-comment ;
-        mcat:masterBranch branches:master-duplicate-no-comment .
+# Second set of tests
+
+
+
+<http://mobi.com/test/commits#commit-f> {
+    <https://mobi.com/revisions#fa073ba3-cc60-4181-a793-d0d593ba4ac1> a <http://www.w3.org/2002/07/owl#Thing>,
+                                                                            <http://mobi.com/ontologies/catalog#Revision>, <http://www.w3.org/ns/prov#Entity>;
+        <http://mobi.com/ontologies/catalog#additions> <https://mobi.com/deltas#fa073ba3-cc60-4181-a793-d0d593ba4ac1-A>;
+        <http://mobi.com/ontologies/catalog#deletions> <https://mobi.com/deltas#fa073ba3-cc60-4181-a793-d0d593ba4ac1-B>;
+        <http://www.w3.org/ns/prov#hadPrimarySource> <https://mobi.com/revisions#78604293-be93-4ce1-add6-4e5e37f43e3a> .
+
+    <http://mobi.com/test/commits#commit-f> a <http://www.w3.org/2002/07/owl#Thing>,
+                                                  <http://mobi.com/ontologies/catalog#Commit>, <http://www.w3.org/ns/prov#Activity>;
+        <http://purl.org/dc/terms/title> "Commit F";
+        <http://www.w3.org/ns/prov#generated> <https://mobi.com/revisions#fa073ba3-cc60-4181-a793-d0d593ba4ac1>;
+        <http://www.w3.org/ns/prov#atTime> "2024-09-04T14:58:42.956379-06:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+        <http://www.w3.org/ns/prov#wasAssociatedWith> <http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997>;
+        <http://mobi.com/ontologies/catalog#branchCommit> <http://mobi.com/test/commits#commit-a> .
 }
 
-GRAPH branches:master-duplicate-no-comment {
-    branches:master-duplicate a mcat:Branch ;
-        dc:title "Duplicate Change Master Branch" ;
-        dc:issued "2018-01-01T00:00:00Z"^^xsd:dateTime ;
-        dc:modified "2018-01-02T00:00:00Z"^^xsd:dateTime ;
-        mcat:head commits:commit-g .
+<http://mobi.com/test/records#duplicate-change-record/HEAD> {
+    <https://mobi.com/ontologies/DuplicateChangeRecord> a <http://www.w3.org/2002/07/owl#Ontology>;
+        <http://purl.org/dc/terms/title> "Duplicate Change Record" .
+
+    <https://mobi.com/ontologies/ClassA#Comment> a <http://www.w3.org/2002/07/owl#Class>;
+        <http://purl.org/dc/terms/title> "Comment" .
 }
 
-GRAPH branches:left-branch2 {
-    branches:left-branch a mcat:Branch ;
-        dc:title "Left Branch" ;
-        dc:issued "2018-01-03T00:00:00Z"^^xsd:dateTime ;
-        dc:modified "2018-01-07T00:00:00Z"^^xsd:dateTime ;
-        mcat:head commits:commit-d .
+<http://mobi.com/test/records#duplicate-change-record> {
+    <http://mobi.com/test/records#duplicate-change-record> a <http://www.w3.org/2002/07/owl#Thing>, <http://mobi.com/ontologies/catalog#VersionedRecord>,
+                                                                          <http://mobi.com/ontologies/catalog#VersionedRDFRecord>, <http://mobi.com/ontologies/catalog#Record>;
+        <http://purl.org/dc/terms/title> "Duplicate Change Record";
+        <http://purl.org/dc/terms/issued> "2024-09-04T14:55:51.892886-06:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+        <http://purl.org/dc/terms/modified> "2024-09-04T15:00:51.802112-06:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+        <http://mobi.com/ontologies/catalog#catalog> <http://mobi.com/catalog-local>;
+        <http://purl.org/dc/terms/publisher> <http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997>;
+        <http://mobi.com/ontologies/catalog#masterBranch> <http://mobi.com/test/branches#master-duplicate>;
+        <http://mobi.com/ontologies/catalog#branch> <http://mobi.com/test/branches#master-duplicate>,
+                                                        <http://mobi.com/test/branches#left-branch1>, <http://mobi.com/test/branches#right-branch1>,
+                                                        <http://mobi.com/test/branches#right-branch2>, <http://mobi.com/test/branches#right-branch3>;
+        <http://mobi.com/ontologies/ontology-editor#ontologyIRI> <https://mobi.com/ontologies/DuplicateChangeRecord> .
 }
 
-GRAPH branches:right-branch4 {
-    branches:right-branch1 a mcat:Branch ;
-        dc:title "Right Branch" ;
-        dc:issued "2018-01-04T00:00:00Z"^^xsd:dateTime ;
-        dc:modified "2018-01-06T00:00:00Z"^^xsd:dateTime ;
-        mcat:head commits:commit-c .
+<https://mobi.com/deltas#78604293-be93-4ce1-add6-4e5e37f43e3a-A> {
+    <https://mobi.com/ontologies/ClassA#Comment> a <http://www.w3.org/2002/07/owl#Class>;
+        <http://purl.org/dc/terms/title> "Comment" .
 }
 
-GRAPH branches:right-branch5 {
-    branches:right-branch2 a mcat:Branch ;
-        dc:title "Right Branch" ;
-        dc:issued "2018-01-04T00:00:00Z"^^xsd:dateTime ;
-        dc:modified "2018-01-06T00:00:00Z"^^xsd:dateTime ;
-        mcat:head commits:commit-e .
+<https://mobi.com/commits#3a1565dc-f805-460e-87bf-02d330760d64> {
+    <https://mobi.com/commits#3a1565dc-f805-460e-87bf-02d330760d64> a <http://www.w3.org/2002/07/owl#Thing>,
+                                                                          <http://mobi.com/ontologies/catalog#Commit>, <http://www.w3.org/ns/prov#Activity>;
+        <http://purl.org/dc/terms/title> "The initial commit.";
+        <http://www.w3.org/ns/prov#generated> <https://mobi.com/revisions#352498e0-c325-44dd-8e17-b135d687428a>;
+        <http://www.w3.org/ns/prov#atTime> "2024-09-04T14:55:51.897845-06:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+        <http://www.w3.org/ns/prov#wasAssociatedWith> <http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997>;
+        <http://mobi.com/ontologies/catalog#initialRevision> <https://mobi.com/revisions#9b51af5a-7317-44cc-90d6-acfc18d017b5> .
+
+    <https://mobi.com/revisions#352498e0-c325-44dd-8e17-b135d687428a> a <http://www.w3.org/2002/07/owl#Thing>,
+                                                                            <http://mobi.com/ontologies/catalog#Revision>, <http://www.w3.org/ns/prov#Entity>;
+        <http://mobi.com/ontologies/catalog#additions> <https://mobi.com/deltas#78604293-be93-4ce1-add6-4e5e37f43e3a-B>;
+        <http://mobi.com/ontologies/catalog#deletions> <https://mobi.com/deltas#78604293-be93-4ce1-add6-4e5e37f43e3a-A> .
+
+    <https://mobi.com/revisions#9b51af5a-7317-44cc-90d6-acfc18d017b5> a <http://www.w3.org/2002/07/owl#Thing>,
+                                                                            <http://mobi.com/ontologies/catalog#Revision>, <http://www.w3.org/ns/prov#Entity>;
+        <http://mobi.com/ontologies/catalog#additions> <https://mobi.com/deltas#9b51af5a-7317-44cc-90d6-acfc18d017b5-A>;
+        <http://mobi.com/ontologies/catalog#deletions> <https://mobi.com/deltas#9b51af5a-7317-44cc-90d6-acfc18d017b5-B> .
 }
 
-GRAPH branches:right-branch6 {
-    branches:right-branch3 a mcat:Branch ;
-        dc:title "Right Branch" ;
-        dc:issued "2018-01-04T00:00:00Z"^^xsd:dateTime ;
-        dc:modified "2018-01-06T00:00:00Z"^^xsd:dateTime ;
-        mcat:head commits:commit-f .
+<http://mobi.com/test/commits#commit-c> {
+    <https://mobi.com/revisions#e7ee0615-aff5-44dd-876f-8867f893432b> a <http://www.w3.org/2002/07/owl#Thing>,
+                                                                            <http://mobi.com/ontologies/catalog#Revision>, <http://www.w3.org/ns/prov#Entity>;
+        <http://mobi.com/ontologies/catalog#additions> <https://mobi.com/deltas#e7ee0615-aff5-44dd-876f-8867f893432b-A>;
+        <http://mobi.com/ontologies/catalog#deletions> <https://mobi.com/deltas#e7ee0615-aff5-44dd-876f-8867f893432b-B>;
+        <http://www.w3.org/ns/prov#hadPrimarySource> <https://mobi.com/revisions#78604293-be93-4ce1-add6-4e5e37f43e3a> .
+
+    <http://mobi.com/test/commits#commit-c> a <http://www.w3.org/2002/07/owl#Thing>,
+                                                  <http://mobi.com/ontologies/catalog#Commit>, <http://www.w3.org/ns/prov#Activity>;
+        <http://purl.org/dc/terms/title> "Commit C";
+        <http://www.w3.org/ns/prov#generated> <https://mobi.com/revisions#e7ee0615-aff5-44dd-876f-8867f893432b>;
+        <http://www.w3.org/ns/prov#atTime> "2024-09-04T14:59:58.731742-06:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+        <http://www.w3.org/ns/prov#wasAssociatedWith> <http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997>;
+        <http://mobi.com/ontologies/catalog#branchCommit> <http://mobi.com/test/commits#commit-a> .
 }
 
-GRAPH commits:commit-g {
-    commits:commit-g a mcat:Commit ;
-        dc:title "Initial Commit" ;
-        prov:atTime "2018-01-02T00:00:00Z"^^xsd:dateTime ;
-        prov:generated revisions:commit-g .
+<http://mobi.com/test/commits#commit-h> {
+    <https://mobi.com/revisions#0718df9d-48bf-495d-b1d3-ff2cbf110a79> a <http://www.w3.org/2002/07/owl#Thing>,
+                                                                            <http://mobi.com/ontologies/catalog#Revision>, <http://www.w3.org/ns/prov#Entity>;
+        <http://mobi.com/ontologies/catalog#additions> <https://mobi.com/deltas#0718df9d-48bf-495d-b1d3-ff2cbf110a79-A>;
+        <http://mobi.com/ontologies/catalog#deletions> <https://mobi.com/deltas#0718df9d-48bf-495d-b1d3-ff2cbf110a79-B>;
+        <http://www.w3.org/ns/prov#hadPrimarySource> <https://mobi.com/revisions#c19f3597-3bda-434e-b0c5-18e8ccd2face> .
 
-    revisions:commit-g a mcat:Revision ;
-        mcat:additions additions:commit-g .
+    <http://mobi.com/test/commits#commit-h> a <http://www.w3.org/2002/07/owl#Thing>,
+                                                  <http://mobi.com/ontologies/catalog#Commit>, <http://www.w3.org/ns/prov#Activity>;
+        <http://purl.org/dc/terms/title> "Commit H";
+        <http://www.w3.org/ns/prov#generated> <https://mobi.com/revisions#0718df9d-48bf-495d-b1d3-ff2cbf110a79>;
+        <http://www.w3.org/ns/prov#atTime> "2024-09-04T17:05:03.197066-06:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+        <http://www.w3.org/ns/prov#wasAssociatedWith> <http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997>;
+        <http://mobi.com/ontologies/catalog#branchCommit> <http://mobi.com/test/commits#commit-g> .
 }
 
-GRAPH additions:commit-g {
-    <http://mobi.com/test/ontology> a owl:Ontology .
-    <http://mobi.com/test/ClassA> a owl:Class ;
+<http://mobi.com/test/branches#branch2> {
+    <http://mobi.com/test/branches#branch2> a <http://www.w3.org/2002/07/owl#Thing>,
+                                                  <http://mobi.com/ontologies/catalog#Branch>;
+        <http://purl.org/dc/terms/title> "branch 2";
+        <http://purl.org/dc/terms/description> "";
+        <http://purl.org/dc/terms/issued> "2024-09-04T17:00:34.052957-06:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+        <http://purl.org/dc/terms/modified> "2024-09-04T17:05:55.555093-06:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+        <http://purl.org/dc/terms/publisher> <http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997>;
+        <http://mobi.com/ontologies/catalog#head> <http://mobi.com/test/commits#commit-j> .
 }
 
-GRAPH commits:commit-h {
-    commits:commit-h a mcat:Commit ;
-        dc:title "Commit H" ;
-        prov:atTime "2018-01-06T00:00:00Z"^^xsd:dateTime ;
-        mcat:baseCommit commits:commit-g ;
-        prov:generated revisions:commit-h .
-
-    revisions:commit-h a mcat:Revision ;
-        mcat:additions additions:comment-b;
+<https://mobi.com/deltas#ec6dfae6-c5c7-4023-8ecd-760cc1549665-A> {
+    <https://mobi.com/ontologies/ClassA#Comment> <http://purl.org/dc/terms/title>
+            "Comment B" .
 }
 
-GRAPH commits:commit-i {
-    commits:commit-i a mcat:Commit ;
-        dc:title "Commit I" ;
-        prov:atTime "2018-01-07T00:00:00Z"^^xsd:dateTime ;
-        mcat:baseCommit commits:commit-g ;
-        prov:generated revisions:commit-i .
-
-    revisions:commit-i a mcat:Revision ;
-        mcat:additions additions:comment-b ;
+<http://mobi.com/test/branches#branch1> {
+    <http://mobi.com/test/branches#branch1> a <http://www.w3.org/2002/07/owl#Thing>,
+                                                  <http://mobi.com/ontologies/catalog#Branch>;
+        <http://purl.org/dc/terms/title> "branch 1";
+        <http://purl.org/dc/terms/description> "";
+        <http://purl.org/dc/terms/issued> "2024-09-04T17:00:30.134069-06:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+        <http://purl.org/dc/terms/modified> "2024-09-04T17:04:07.941439-06:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+        <http://purl.org/dc/terms/publisher> <http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997>;
+        <http://mobi.com/ontologies/catalog#head> <http://mobi.com/test/commits#commit-l> .
 }
 
-GRAPH commits:commit-j {
-    commits:commit-j a mcat:Commit ;
-        dc:title "Commit J" ;
-        prov:atTime "2018-01-08T00:00:00Z"^^xsd:dateTime ;
-        mcat:baseCommit commits:commit-h ;
-        prov:generated revisions:commit-j .
-
-    revisions:commit-j a mcat:Revision ;
-        mcat:additions additions:comment-a ;
-        mcat:deletions deletions:comment-b .
+<http://mobi.com/test/branches#branch4> {
+    <http://mobi.com/test/branches#branch4> a <http://www.w3.org/2002/07/owl#Thing>,
+                                                  <http://mobi.com/ontologies/catalog#Branch>;
+        <http://purl.org/dc/terms/title> "branch 4";
+        <http://purl.org/dc/terms/description> "";
+        <http://purl.org/dc/terms/issued> "2024-09-04T17:00:48.184838-06:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+        <http://purl.org/dc/terms/modified> "2024-09-04T17:06:22.926316-06:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+        <http://purl.org/dc/terms/publisher> <http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997>;
+        <http://mobi.com/ontologies/catalog#head> <http://mobi.com/test/commits#commit-k> .
 }
 
-GRAPH commits:commit-k {
-    commits:commit-k a mcat:Commit ;
-        dc:title "Commit K" ;
-        prov:atTime "2018-01-09T00:00:00Z"^^xsd:dateTime ;
-        mcat:baseCommit commits:commit-g ;
-        prov:generated revisions:commit-k .
+<http://mobi.com/test/commits#commit-j> {
+    <https://mobi.com/revisions#b10d01ac-6bfd-48a8-a762-4b39bc919ad6> a <http://www.w3.org/2002/07/owl#Thing>,
+                                                                            <http://mobi.com/ontologies/catalog#Revision>, <http://www.w3.org/ns/prov#Entity>;
+        <http://mobi.com/ontologies/catalog#additions> <https://mobi.com/deltas#b10d01ac-6bfd-48a8-a762-4b39bc919ad6-A>;
+        <http://mobi.com/ontologies/catalog#deletions> <https://mobi.com/deltas#b10d01ac-6bfd-48a8-a762-4b39bc919ad6-B>;
+        <http://www.w3.org/ns/prov#hadPrimarySource> <https://mobi.com/revisions#0718df9d-48bf-495d-b1d3-ff2cbf110a79> .
 
-    revisions:commit-k a mcat:Revision ;
-        mcat:additions additions:comment-b ;
+    <http://mobi.com/test/commits#commit-j> a <http://www.w3.org/2002/07/owl#Thing>,
+                                                  <http://mobi.com/ontologies/catalog#Commit>, <http://www.w3.org/ns/prov#Activity>;
+        <http://purl.org/dc/terms/title> "Commit J";
+        <http://www.w3.org/ns/prov#generated> <https://mobi.com/revisions#b10d01ac-6bfd-48a8-a762-4b39bc919ad6>;
+        <http://www.w3.org/ns/prov#atTime> "2024-09-04T17:05:55.554868-06:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+        <http://www.w3.org/ns/prov#wasAssociatedWith> <http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997>;
+        <http://mobi.com/ontologies/catalog#branchCommit> <http://mobi.com/test/commits#commit-h> .
 }
 
-GRAPH commits:commit-l {
-    commits:commit-l a mcat:Commit ;
-        dc:title "Commit L" ;
-        prov:atTime "2018-01-05T00:00:00Z"^^xsd:dateTime ;
-        mcat:baseCommit commits:commit-g ;
-        prov:generated revisions:commit-l .
-
-    revisions:commit-l a mcat:Revision ;
-        mcat:additions additions:comment-b ;
+<http://mobi.com/catalog-local> {
+    <http://mobi.com/catalog-local> a <http://www.w3.org/2002/07/owl#Thing>, <http://mobi.com/ontologies/catalog#Catalog>;
+        <http://purl.org/dc/terms/title> "Mobi Catalog (Local)";
+        <http://purl.org/dc/terms/description> "The Mobi Catalog records datasets, ontologies, data mappings, and other resources.";
+        <http://purl.org/dc/terms/issued> "2024-09-04T11:54:57.176994-06:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+        <http://purl.org/dc/terms/modified> "2024-09-04T11:54:57.176994-06:00"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
 }
+
+<https://mobi.com/deltas#7f425231-cd81-4590-86a4-3a97376914d3-A> {
+    <https://mobi.com/ontologies/ClassA#Comment> <http://purl.org/dc/terms/title>
+            "Comment B" .
+}
+
+<http://mobi.com/catalog-distributed> {
+    <http://mobi.com/catalog-distributed> a <http://www.w3.org/2002/07/owl#Thing>, <http://mobi.com/ontologies/catalog#Catalog>;
+        <http://purl.org/dc/terms/title> "Mobi Catalog (Distributed)";
+        <http://purl.org/dc/terms/description> "The Mobi Catalog records datasets, ontologies, data mappings, and other resources.";
+        <http://purl.org/dc/terms/issued> "2024-09-04T11:54:57.175082-06:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+        <http://purl.org/dc/terms/modified> "2024-09-04T11:54:57.175082-06:00"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
+}
+
+<https://mobi.com/deltas#80d4ca07-4503-404b-9748-84e5498e68bb-A> {
+    <https://mobi.com/ontologies/ClassA#Comment> a <http://www.w3.org/2002/07/owl#Ontology>;
+        <http://purl.org/dc/terms/title> "Duplicate Change Record Different Base" .
+}
+
+<http://mobi.com/test/commits#commit-k> {
+    <https://mobi.com/revisions#7f425231-cd81-4590-86a4-3a97376914d3> a <http://www.w3.org/2002/07/owl#Thing>,
+                                                                            <http://mobi.com/ontologies/catalog#Revision>, <http://www.w3.org/ns/prov#Entity>;
+        <http://mobi.com/ontologies/catalog#additions> <https://mobi.com/deltas#7f425231-cd81-4590-86a4-3a97376914d3-A>;
+        <http://mobi.com/ontologies/catalog#deletions> <https://mobi.com/deltas#7f425231-cd81-4590-86a4-3a97376914d3-B>;
+        <http://www.w3.org/ns/prov#hadPrimarySource> <https://mobi.com/revisions#c19f3597-3bda-434e-b0c5-18e8ccd2face> .
+
+    <http://mobi.com/test/commits#commit-k> a <http://www.w3.org/2002/07/owl#Thing>,
+                                                  <http://mobi.com/ontologies/catalog#Commit>, <http://www.w3.org/ns/prov#Activity>;
+        <http://purl.org/dc/terms/title> "Commit K";
+        <http://www.w3.org/ns/prov#generated> <https://mobi.com/revisions#7f425231-cd81-4590-86a4-3a97376914d3>;
+        <http://www.w3.org/ns/prov#atTime> "2024-09-04T17:06:22.926067-06:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+        <http://www.w3.org/ns/prov#wasAssociatedWith> <http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997>;
+        <http://mobi.com/ontologies/catalog#branchCommit> <http://mobi.com/test/commits#commit-g> .
+}
+
+<http://mobi.com/test/commits#commit-g> {
+    <http://mobi.com/test/commits#commit-g> a <http://www.w3.org/2002/07/owl#Thing>,
+                                                  <http://mobi.com/ontologies/catalog#Commit>, <http://www.w3.org/ns/prov#Activity>;
+        <http://purl.org/dc/terms/title> "Commit G";
+        <http://www.w3.org/ns/prov#generated> <https://mobi.com/revisions#c19f3597-3bda-434e-b0c5-18e8ccd2face>;
+        <http://www.w3.org/ns/prov#atTime> "2024-09-04T17:00:12.398611-06:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+        <http://www.w3.org/ns/prov#wasAssociatedWith> <http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997>;
+        <http://mobi.com/ontologies/catalog#initialRevision> <https://mobi.com/revisions#80d4ca07-4503-404b-9748-84e5498e68bb> .
+
+    <https://mobi.com/revisions#c19f3597-3bda-434e-b0c5-18e8ccd2face> a <http://www.w3.org/2002/07/owl#Thing>,
+                                                                            <http://mobi.com/ontologies/catalog#Revision>, <http://www.w3.org/ns/prov#Entity>;
+        <http://mobi.com/ontologies/catalog#additions> <https://mobi.com/deltas#c19f3597-3bda-434e-b0c5-18e8ccd2face-A>;
+        <http://mobi.com/ontologies/catalog#deletions> <https://mobi.com/deltas#c19f3597-3bda-434e-b0c5-18e8ccd2face-B> .
+
+    <https://mobi.com/revisions#80d4ca07-4503-404b-9748-84e5498e68bb> a <http://www.w3.org/2002/07/owl#Thing>,
+                                                                            <http://mobi.com/ontologies/catalog#Revision>, <http://www.w3.org/ns/prov#Entity>;
+        <http://mobi.com/ontologies/catalog#additions> <https://mobi.com/deltas#80d4ca07-4503-404b-9748-84e5498e68bb-A>;
+        <http://mobi.com/ontologies/catalog#deletions> <https://mobi.com/deltas#80d4ca07-4503-404b-9748-84e5498e68bb-B> .
+}
+
+<https://mobi.com/branches#d672fc26-256f-4346-9f7e-ec40898c4426> {
+    <https://mobi.com/branches#d672fc26-256f-4346-9f7e-ec40898c4426> a <http://www.w3.org/2002/07/owl#Thing>,
+                                                                           <http://mobi.com/ontologies/catalog#MasterBranch>, <http://mobi.com/ontologies/catalog#Branch>;
+        <http://purl.org/dc/terms/title> "MASTER";
+        <http://purl.org/dc/terms/description> "The master branch.";
+        <http://purl.org/dc/terms/issued> "2024-09-04T17:00:12.387596-06:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+        <http://purl.org/dc/terms/modified> "2024-09-04T17:00:12.399008-06:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+        <http://purl.org/dc/terms/publisher> <http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997>;
+        <http://mobi.com/ontologies/catalog#headGraph> <http://mobi.com/test/records#duplicate-change-record-diff-base/HEAD>;
+        <http://mobi.com/ontologies/catalog#head> <http://mobi.com/test/commits#commit-g> .
+}
+
+<https://mobi.com/deltas#4fa3954a-91ab-4275-a9b9-cd59e639f912-A> {
+    <https://mobi.com/ontologies/ClassA#Comment> <http://purl.org/dc/terms/title>
+            "Comment B" .
+}
+
+<https://mobi.com/deltas#0718df9d-48bf-495d-b1d3-ff2cbf110a79-A> {
+    <https://mobi.com/ontologies/ClassA#Comment> <http://purl.org/dc/terms/title>
+            "Comment B" .
+}
+
+<http://mobi.com/test/branches#branch3> {
+    <http://mobi.com/test/branches#branch3> a <http://www.w3.org/2002/07/owl#Thing>,
+                                                  <http://mobi.com/ontologies/catalog#Branch>;
+        <http://purl.org/dc/terms/title> "branch 3";
+        <http://purl.org/dc/terms/description> "";
+        <http://purl.org/dc/terms/issued> "2024-09-04T17:00:42.193166-06:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+        <http://purl.org/dc/terms/modified> "2024-09-04T17:05:39.338138-06:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+        <http://purl.org/dc/terms/publisher> <http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997>;
+        <http://mobi.com/ontologies/catalog#head> <http://mobi.com/test/commits#commit-i> .
+}
+
+<http://mobi.com/test/records#duplicate-change-record-diff-base> {
+    <http://mobi.com/test/records#duplicate-change-record-diff-base> a <http://www.w3.org/2002/07/owl#Thing>,
+                                                                           <http://mobi.com/ontologies/catalog#VersionedRecord>,
+                                                                           <http://mobi.com/ontologies/catalog#VersionedRDFRecord>, <http://mobi.com/ontologies/catalog#Record>;
+        <http://purl.org/dc/terms/title> "Duplicate Change Record Different Base";
+        <http://purl.org/dc/terms/issued> "2024-09-04T17:00:12.387286-06:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+        <http://purl.org/dc/terms/modified> "2024-09-04T17:06:22.926277-06:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+        <http://mobi.com/ontologies/catalog#catalog> <http://mobi.com/catalog-local>;
+        <http://purl.org/dc/terms/publisher> <http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997>;
+        <http://mobi.com/ontologies/catalog#masterBranch> <https://mobi.com/branches#d672fc26-256f-4346-9f7e-ec40898c4426>;
+        <http://mobi.com/ontologies/catalog#branch> <https://mobi.com/branches#d672fc26-256f-4346-9f7e-ec40898c4426>,
+                                                        <http://mobi.com/test/branches#branch1>, <http://mobi.com/test/branches#branch2>,
+                                                        <http://mobi.com/test/branches#branch3>, <http://mobi.com/test/branches#branch4>;
+        <http://mobi.com/ontologies/ontology-editor#ontologyIRI> <https://mobi.com/ontologies/ClassA#Comment> .
+}
+
+<http://mobi.com/test/records#duplicate-change-record-diff-base/HEAD> {
+    <https://mobi.com/ontologies/ClassA#Comment> a <http://www.w3.org/2002/07/owl#Ontology>;
+        <http://purl.org/dc/terms/title> "Duplicate Change Record Different Base" .
+}
+
+<http://mobi.com/test/commits#commit-i> {
+    <https://mobi.com/revisions#ec6dfae6-c5c7-4023-8ecd-760cc1549665> a <http://www.w3.org/2002/07/owl#Thing>,
+                                                                            <http://mobi.com/ontologies/catalog#Revision>, <http://www.w3.org/ns/prov#Entity>;
+        <http://mobi.com/ontologies/catalog#additions> <https://mobi.com/deltas#ec6dfae6-c5c7-4023-8ecd-760cc1549665-A>;
+        <http://mobi.com/ontologies/catalog#deletions> <https://mobi.com/deltas#ec6dfae6-c5c7-4023-8ecd-760cc1549665-B>;
+        <http://www.w3.org/ns/prov#hadPrimarySource> <https://mobi.com/revisions#c19f3597-3bda-434e-b0c5-18e8ccd2face> .
+
+    <http://mobi.com/test/commits#commit-i> a <http://www.w3.org/2002/07/owl#Thing>,
+                                                  <http://mobi.com/ontologies/catalog#Commit>, <http://www.w3.org/ns/prov#Activity>;
+        <http://purl.org/dc/terms/title> "Commit I";
+        <http://www.w3.org/ns/prov#generated> <https://mobi.com/revisions#ec6dfae6-c5c7-4023-8ecd-760cc1549665>;
+        <http://www.w3.org/ns/prov#atTime> "2024-09-04T17:05:39.337584-06:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+        <http://www.w3.org/ns/prov#wasAssociatedWith> <http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997>;
+        <http://mobi.com/ontologies/catalog#branchCommit> <http://mobi.com/test/commits#commit-g> .
+}
+
+<https://mobi.com/deltas#b10d01ac-6bfd-48a8-a762-4b39bc919ad6-A> {
+    <https://mobi.com/ontologies/ClassA#Comment> <http://purl.org/dc/terms/title>
+            "Comment A" .
+}
+
+<http://mobi.com/test/commits#commit-l> {
+    <https://mobi.com/revisions#4fa3954a-91ab-4275-a9b9-cd59e639f912> a <http://www.w3.org/2002/07/owl#Thing>,
+                                                                            <http://mobi.com/ontologies/catalog#Revision>, <http://www.w3.org/ns/prov#Entity>;
+        <http://mobi.com/ontologies/catalog#additions> <https://mobi.com/deltas#4fa3954a-91ab-4275-a9b9-cd59e639f912-A>;
+        <http://mobi.com/ontologies/catalog#deletions> <https://mobi.com/deltas#4fa3954a-91ab-4275-a9b9-cd59e639f912-B>;
+        <http://www.w3.org/ns/prov#hadPrimarySource> <https://mobi.com/revisions#c19f3597-3bda-434e-b0c5-18e8ccd2face> .
+
+    <http://mobi.com/test/commits#commit-l> a <http://www.w3.org/2002/07/owl#Thing>,
+                                                  <http://mobi.com/ontologies/catalog#Commit>, <http://www.w3.org/ns/prov#Activity>;
+        <http://purl.org/dc/terms/title> "Commit L";
+        <http://www.w3.org/ns/prov#generated> <https://mobi.com/revisions#4fa3954a-91ab-4275-a9b9-cd59e639f912>;
+        <http://www.w3.org/ns/prov#atTime> "2024-09-04T17:04:07.941218-06:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+        <http://www.w3.org/ns/prov#wasAssociatedWith> <http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997>;
+        <http://mobi.com/ontologies/catalog#branchCommit> <http://mobi.com/test/commits#commit-g> .
+}
+
+<https://mobi.com/deltas#b10d01ac-6bfd-48a8-a762-4b39bc919ad6-B> {
+    <https://mobi.com/ontologies/ClassA#Comment> <http://purl.org/dc/terms/title>
+            "Comment B" .
+}
+

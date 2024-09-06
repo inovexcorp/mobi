@@ -51,6 +51,7 @@ import com.mobi.catalog.api.ThingManager;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Catalog;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
+import com.mobi.catalog.api.ontologies.mcat.MasterBranch;
 import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
@@ -142,6 +143,7 @@ public class SimpleWorkflowManagerTest extends OrmEnabledTestCase {
     private SimpleWorkflowManager workflowManager;
     private WorkflowRecord workflowRecord;
     private Branch branch;
+    private MasterBranch masterBranch;
     private Commit commit;
     private WorkflowExecutionActivity activity;
     private BinaryFile logFile;
@@ -156,6 +158,7 @@ public class SimpleWorkflowManagerTest extends OrmEnabledTestCase {
     private final OrmFactory<WorkflowExecutionActivity> executionActivityFactory = getRequiredOrmFactory(WorkflowExecutionActivity.class);
     private final OrmFactory<ActionExecution> actionExecutionFactory = getRequiredOrmFactory(ActionExecution.class);
     private final OrmFactory<Branch> branchFactory = getRequiredOrmFactory(Branch.class);
+    private final OrmFactory<MasterBranch> masterBranchFactory = getRequiredOrmFactory(MasterBranch.class);
     private final OrmFactory<Commit> commitFactory = getRequiredOrmFactory(Commit.class);
     private final OrmFactory<BinaryFile> binaryFactory = getRequiredOrmFactory(BinaryFile.class);
     private final OrmFactory<Workflow> workflowFactory = getRequiredOrmFactory(Workflow.class);
@@ -221,11 +224,15 @@ public class SimpleWorkflowManagerTest extends OrmEnabledTestCase {
         branch.setHead(commit);
         branch.setProperty(vf.createLiteral("Test Branch"), vf.createIRI(_Thing.title_IRI));
 
+        masterBranch = masterBranchFactory.createNew(branchIRI);
+        branch.setHead(commit);
+        branch.setProperty(vf.createLiteral("Test Master Branch"), vf.createIRI(_Thing.title_IRI));
+
         workflowRecord = recordFactory.createNew(recordIRI);
         workflowRecord.setProperty(vf.createLiteral("Test Record"), vf.createIRI(_Thing.title_IRI));
         workflowRecord.setCatalog(catalogFactory.createNew(catalogId));
         workflowRecord.setBranch(Collections.singleton(branch));
-        workflowRecord.setMasterBranch(branchFactory.createNew(masterBranchIRI));
+        workflowRecord.setMasterBranch(masterBranchFactory.createNew(masterBranchIRI));
         workflowRecord.setWorkflowIRI(workflowIRI);
 
         try {
@@ -761,7 +768,7 @@ public class SimpleWorkflowManagerTest extends OrmEnabledTestCase {
             conn.add(workflowRecord.getModel(), workflowRecord.getResource());
             conn.add(workflowModel);
         }
-        when(branchManager.getMasterBranch(any(Resource.class), eq(recordIRI), any(RepositoryConnection.class))).thenReturn(branch);
+        when(branchManager.getMasterBranch(any(Resource.class), eq(recordIRI), any(RepositoryConnection.class))).thenReturn(masterBranch);
         when(commitManager.getHeadCommit(any(Resource.class), eq(recordIRI), eq(branchIRI), any(RepositoryConnection.class))).thenReturn(commit);
         when(compiledResourceManager.getCompiledResource(eq(commitIRI), any(RepositoryConnection.class))).thenReturn(workflowModel);
 
@@ -779,7 +786,7 @@ public class SimpleWorkflowManagerTest extends OrmEnabledTestCase {
         try (RepositoryConnection conn = systemRepository.getConnection()) {
             conn.add(workflowRecord.getModel(), workflowRecord.getResource());
         }
-        when(branchManager.getMasterBranch(any(Resource.class), eq(recordIRI), any(RepositoryConnection.class))).thenReturn(branch);
+        when(branchManager.getMasterBranch(any(Resource.class), eq(recordIRI), any(RepositoryConnection.class))).thenReturn(masterBranch);
         when(commitManager.getHeadCommit(any(Resource.class), eq(recordIRI), eq(branchIRI), any(RepositoryConnection.class))).thenReturn(commit);
         when(compiledResourceManager.getCompiledResource(eq(commitIRI), any(RepositoryConnection.class))).thenReturn(workflowRecord.getModel());
 
@@ -891,7 +898,7 @@ public class SimpleWorkflowManagerTest extends OrmEnabledTestCase {
             conn.add(workflowRecord.getModel(), workflowRecord.getResource());
             conn.add(workflowModel);
         }
-        when(branchManager.getMasterBranch(any(Resource.class), eq(recordIRI), any(RepositoryConnection.class))).thenReturn(branch);
+//        when(branchManager.getMasterBranch(any(Resource.class), eq(recordIRI), any(RepositoryConnection.class))).thenReturn(branch);
         when(commitManager.getHeadCommit(any(Resource.class), eq(recordIRI), eq(branchIRI), any(RepositoryConnection.class))).thenReturn(commit);
         when(compiledResourceManager.getCompiledResource(eq(commitIRI), any(RepositoryConnection.class))).thenReturn(workflowModel);
 
@@ -945,7 +952,7 @@ public class SimpleWorkflowManagerTest extends OrmEnabledTestCase {
         //setup
         workflowManager.workflowEngine = workflowEngine;
         workflowManager.workflowFactory = (WorkflowFactory) workflowFactory;
-        when(branchManager.getMasterBranch(any(Resource.class), eq(recordIRI), any(RepositoryConnection.class))).thenReturn(branch);
+        when(branchManager.getMasterBranch(any(Resource.class), eq(recordIRI), any(RepositoryConnection.class))).thenReturn(masterBranch);
         when(commitManager.getHeadCommit(any(Resource.class), eq(recordIRI), eq(branchIRI), any(RepositoryConnection.class))).thenReturn(commit);
         when(compiledResourceManager.getCompiledResource(eq(commitIRI), any(RepositoryConnection.class))).thenReturn(workflowRecord.getModel());
         when(workflowEngine.availableToRun()).thenReturn(false);
@@ -976,7 +983,7 @@ public class SimpleWorkflowManagerTest extends OrmEnabledTestCase {
         //setup
         workflowManager.workflowEngine = workflowEngine;
         workflowManager.workflowFactory = (WorkflowFactory) workflowFactory;
-        when(branchManager.getMasterBranch(any(Resource.class), eq(recordIRI), any(RepositoryConnection.class))).thenReturn(branch);
+        when(branchManager.getMasterBranch(any(Resource.class), eq(recordIRI), any(RepositoryConnection.class))).thenReturn(masterBranch);
         when(commitManager.getHeadCommit(any(Resource.class), eq(recordIRI), eq(branchIRI), any(RepositoryConnection.class))).thenReturn(commit);
         when(compiledResourceManager.getCompiledResource(eq(commitIRI), any(RepositoryConnection.class))).thenReturn(workflowRecord.getModel());
         when(workflowEngine.availableToRun()).thenReturn(true);

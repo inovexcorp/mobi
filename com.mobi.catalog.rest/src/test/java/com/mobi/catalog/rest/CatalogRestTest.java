@@ -34,6 +34,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
@@ -67,6 +68,7 @@ import com.mobi.catalog.api.ontologies.mcat.Catalog;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.api.ontologies.mcat.Distribution;
 import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
+import com.mobi.catalog.api.ontologies.mcat.MasterBranch;
 import com.mobi.catalog.api.ontologies.mcat.Record;
 import com.mobi.catalog.api.ontologies.mcat.Tag;
 import com.mobi.catalog.api.ontologies.mcat.UnversionedRecord;
@@ -132,6 +134,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
     private OrmFactory<Version> versionFactory;
     private OrmFactory<Tag> tagFactory;
     private OrmFactory<Branch> branchFactory;
+    private OrmFactory<MasterBranch> masterBranchFactory;
     private OrmFactory<UserBranch> userBranchFactory;
     private Catalog localCatalog;
     private Catalog distributedCatalog;
@@ -146,6 +149,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
     private List<Commit> testCommits;
     private InProgressCommit testInProgressCommit;
     private Branch testBranch;
+    private MasterBranch testMasterBranch;
     private UserBranch testUserBranch;
     private User user;
     private CreateActivity createActivity;
@@ -260,6 +264,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
         versionFactory = getRequiredOrmFactory(Version.class);
         tagFactory = getRequiredOrmFactory(Tag.class);
         branchFactory = getRequiredOrmFactory(Branch.class);
+        masterBranchFactory = getRequiredOrmFactory(MasterBranch.class);
         userBranchFactory = getRequiredOrmFactory(UserBranch.class);
         OrmFactory<Commit> commitFactory = getRequiredOrmFactory(Commit.class);
         OrmFactory<InProgressCommit> inProgressCommitFactory = getRequiredOrmFactory(InProgressCommit.class);
@@ -277,6 +282,10 @@ public class CatalogRestTest extends MobiRestTestCXF {
         testBranch.setProperty(vf.createLiteral("Title"), vf.createIRI(DCTERMS.TITLE.stringValue()));
         testBranch.setProperty(vf.createLiteral(USER_IRI), vf.createIRI(DCTERMS.PUBLISHER.stringValue()));
         testBranch.setHead(testCommits.get(0));
+        testMasterBranch = masterBranchFactory.createNew(vf.createIRI(BRANCH_IRI));
+        testMasterBranch.setProperty(vf.createLiteral("Title"), vf.createIRI(DCTERMS.TITLE.stringValue()));
+        testMasterBranch.setProperty(vf.createLiteral(USER_IRI), vf.createIRI(DCTERMS.PUBLISHER.stringValue()));
+        testMasterBranch.setHead(testCommits.get(0));
         testUserBranch = userBranchFactory.createNew(vf.createIRI(BRANCH_IRI + "/user"));
         testUserBranch.setProperty(vf.createLiteral("Title"), vf.createIRI(DCTERMS.TITLE.stringValue()));
         testUserBranch.setProperty(vf.createLiteral(USER_IRI), vf.createIRI(DCTERMS.PUBLISHER.stringValue()));
@@ -295,7 +304,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
         testVersionedRecord.setLatestVersion(testVersion);
         testVersionedRecord.setVersion(Collections.singleton(testVersion));
         testVersionedRDFRecord = versionedRDFRecordFactory.createNew(vf.createIRI(RECORD_IRI));
-        testVersionedRDFRecord.setMasterBranch(testBranch);
+        testVersionedRDFRecord.setMasterBranch(testMasterBranch);
         testVersionedRDFRecord.setBranch(Stream.of(testBranch, testUserBranch).collect(Collectors.toSet()));
         testMappingRecord = mappingRecordFactory.createNew(vf.createIRI(RECORD_IRI));
         user = userFactory.createNew(vf.createIRI(USER_IRI));
@@ -356,7 +365,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
         when(branchManager.getBranch(any(Resource.class), any(Resource.class), any(Resource.class), eq(branchFactory), any(RepositoryConnection.class))).thenReturn(testBranch);
         when(branchManager.getBranch(any(Resource.class), any(Resource.class), eq(testUserBranch.getResource()), eq(branchFactory), any(RepositoryConnection.class))).thenReturn(testUserBranch);
         when(branchManager.getBranch(any(Resource.class), any(Resource.class), any(Resource.class), eq(userBranchFactory), any(RepositoryConnection.class))).thenReturn(testUserBranch);
-        when(branchManager.getMasterBranch(any(Resource.class), any(Resource.class), any(RepositoryConnection.class))).thenReturn(testBranch);
+        when(branchManager.getMasterBranch(any(Resource.class), any(Resource.class), any(RepositoryConnection.class))).thenReturn(testMasterBranch);
         when(branchManager.createBranch(anyString(), anyString(), eq(branchFactory))).thenReturn(testBranch);
         when(branchManager.createBranch(anyString(), anyString(), eq(userBranchFactory))).thenReturn(testUserBranch);
         when(commitManager.getCommit(any(Resource.class), any(Resource.class), any(Resource.class), any(Resource.class), any(RepositoryConnection.class))).thenAnswer(i -> {
@@ -384,7 +393,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
         when(commitManager.getCommitChain(any(Resource.class), any(RepositoryConnection.class))).thenReturn(testCommits);
         when(commitManager.getCommitChain(any(Resource.class), any(Resource.class), any(Resource.class), any(RepositoryConnection.class))).thenReturn(testCommits);
         when(commitManager.getDifferenceChain(any(Resource.class), any(Resource.class), any(Resource.class), any(Resource.class), any(RepositoryConnection.class))).thenReturn(testCommits);
-        when(commitManager.createCommit(any(InProgressCommit.class), anyString(), any(Commit.class), any(Commit.class))).thenReturn(testCommits.get(0));
+        when(commitManager.createCommit(any(InProgressCommit.class), anyString(), any(Commit.class), any(Commit.class), anyBoolean())).thenReturn(testCommits.get(0));
         when(commitManager.getHeadCommit(any(Resource.class), any(Resource.class), any(Resource.class), any(RepositoryConnection.class))).thenReturn(testCommits.get(0));
         when(compiledResourceManager.getCompiledResource(any(Resource.class), any(RepositoryConnection.class))).thenReturn(compiledResource);
         when(commitManager.getInProgressCommitOpt(any(Resource.class), any(Resource.class), any(User.class), any(RepositoryConnection.class))).thenReturn(Optional.of(testInProgressCommit));
@@ -395,7 +404,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
         when(recordManager.removeRecord(any(Resource.class), eq(vf.createIRI(RECORD_IRI)), any(User.class), any(Class.class), any(RepositoryConnection.class))).thenReturn(testRecord);
 
         when(versioningManager.commit(any(Resource.class), any(Resource.class), any(Resource.class), any(User.class), anyString(), any(RepositoryConnection.class))).thenReturn(vf.createIRI(COMMIT_IRIS[0]));
-        when(versioningManager.merge(any(), any(), any(), any(), any(), any(), any())).thenReturn(vf.createIRI(COMMIT_IRIS[0]));
+        when(versioningManager.merge(any(), any(), any(), any(), any(), any(), any(), any(), any(RepositoryConnection.class))).thenReturn(vf.createIRI(COMMIT_IRIS[0]));
 
         when(conflict.getIRI()).thenReturn(vf.createIRI(CONFLICT_IRI));
         when(conflict.getLeftDifference()).thenReturn(difference);
@@ -2880,13 +2889,13 @@ public class CatalogRestTest extends MobiRestTestCXF {
                 .queryParam("targetId", BRANCH_IRI).request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(200, response.getStatus());
         assertEquals(response.readEntity(String.class), COMMIT_IRIS[0]);
-        verify(versioningManager).merge(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), eq(vf.createIRI(BRANCH_IRI)), eq(vf.createIRI(BRANCH_IRI)), any(User.class), any(Model.class), any(Model.class));
+        verify(versioningManager).merge(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), eq(vf.createIRI(BRANCH_IRI)), eq(vf.createIRI(BRANCH_IRI)), any(User.class), any(Model.class), any(Model.class), any(), any(RepositoryConnection.class));
     }
 
     @Test
     public void mergeWithIncorrectPathTest() {
         // Setup:
-        doThrow(new IllegalArgumentException()).when(versioningManager).merge(any(), any(), any(), any(), any(), any(), any());
+        doThrow(new IllegalArgumentException()).when(versioningManager).merge(any(), any(), any(), any(), any(), any(), any(), any(), any(RepositoryConnection.class));
         ArrayNode adds = mapper.createArrayNode();
         adds.add(mapper.createObjectNode().put("@id", "http://example.com/add").set("@type", mapper.createArrayNode().add("http://example.com/Add")));
         FormDataMultiPart fd = new FormDataMultiPart();
@@ -2916,7 +2925,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
     @Test
     public void mergeWithErrorTest() {
         // Setup:
-        doThrow(new MobiException()).when(versioningManager).merge(any(), any(), any(), any(), any(), any(), any());
+        doThrow(new MobiException()).when(versioningManager).merge(any(), any(), any(), any(), any(), any(), any(), any(), any(RepositoryConnection.class));
         ArrayNode adds = mapper.createArrayNode();
         adds.add(mapper.createObjectNode().put("@id", "http://example.com/add").set("@type", mapper.createArrayNode().add("http://example.com/Add")));
         FormDataMultiPart fd = new FormDataMultiPart();
@@ -2927,7 +2936,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
                 .queryParam("targetId", BRANCH_IRI).request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(500, response.getStatus());
 
-        doThrow(new IllegalStateException()).when(versioningManager).merge(any(), any(), any(), any(), any(), any(), any());
+        doThrow(new IllegalStateException()).when(versioningManager).merge(any(), any(), any(), any(), any(), any(), any(), any(), any(RepositoryConnection.class));
         response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/conflicts/resolution")
                 .queryParam("targetId", BRANCH_IRI).request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));

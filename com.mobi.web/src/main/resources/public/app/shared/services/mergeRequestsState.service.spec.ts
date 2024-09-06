@@ -668,13 +668,14 @@ describe('Merge Requests State service', function() {
             this.requestObj = Object.assign({}, requestObj);
             this.requestObj.targetBranch = targetBranch;
             this.requestObj.sourceBranch = sourceBranch;
+            this.requestObj.conflicts = [];
         });
         it('if mergeBranches resolves', fakeAsync(function() {
             catalogManagerStub.mergeBranches.and.returnValue(of(null));
             const difference = new Difference();
             service.resolveRequestConflicts(this.requestObj, difference)
                 .subscribe(() => {
-                    expect(catalogManagerStub.mergeBranches).toHaveBeenCalledWith(targetBranch['@id'], sourceBranch['@id'], recordId, catalogId, difference);
+                    expect(catalogManagerStub.mergeBranches).toHaveBeenCalledWith(targetBranch['@id'], sourceBranch['@id'], recordId, catalogId, difference, []);
                     expect(service.setRequestDetails).toHaveBeenCalledWith(this.requestObj);
                 }, () => fail('Observable should have resolved'));
             tick();
@@ -685,7 +686,7 @@ describe('Merge Requests State service', function() {
             service.resolveRequestConflicts(this.requestObj, difference)
                 .subscribe(() => fail('Observable should have rejected'), response => {
                     expect(response).toEqual(error);
-                    expect(catalogManagerStub.mergeBranches).toHaveBeenCalledWith(targetBranch['@id'], sourceBranch['@id'], recordId, catalogId, difference);
+                    expect(catalogManagerStub.mergeBranches).toHaveBeenCalledWith(targetBranch['@id'], sourceBranch['@id'], recordId, catalogId, difference, []);
                     expect(service.setRequestDetails).not.toHaveBeenCalled();
                 });
             tick();

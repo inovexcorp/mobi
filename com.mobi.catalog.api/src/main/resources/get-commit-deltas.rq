@@ -1,0 +1,41 @@
+PREFIX mcat: <http://mobi.com/ontologies/catalog#>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+
+SELECT DISTINCT ?commit ?parent ?fadd ?fdel ?revision ?parentRevision ?time
+WHERE {
+    {
+        # Get the ?sourceHead commits revision and forward deltas
+        ?sourceHead a mcat:Commit ;
+            mcat:branchCommit ?parent;
+            prov:generated ?revision ;
+            prov:atTime ?time .
+
+        ?parent a mcat:Commit ;
+            prov:generated ?parentRevision .
+
+        ?revision mcat:additions ?fadd ;
+            mcat:deletions ?fdel .
+
+        BIND(?sourceHead as ?commit)
+    }
+    UNION
+    {
+        # Get the rest of the chain
+        ?sourceHead a mcat:Commit ;
+            mcat:branchCommit+ ?commit .
+
+        ?commit a mcat:Commit ;
+            mcat:branchCommit ?parent;
+            prov:generated ?revision ;
+            prov:atTime ?time .
+
+        ?parent a mcat:Commit ;
+            prov:generated ?parentRevision .
+
+        ?revision mcat:additions ?fadd ;
+            mcat:deletions ?fdel .
+
+        ?commit prov:atTime ?time .
+    }
+}
+ORDER BY ASC(?time)

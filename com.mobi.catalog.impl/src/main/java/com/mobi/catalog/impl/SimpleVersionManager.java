@@ -67,7 +67,7 @@ public class SimpleVersionManager implements VersionManager {
         try {
             GET_NEW_LATEST_VERSION = IOUtils.toString(
                     Objects.requireNonNull(SimpleVersionManager.class
-                            .getResourceAsStream("/get-new-latest-version.rq")),
+                            .getResourceAsStream("/version/get-new-latest-version.rq")),
                     StandardCharsets.UTF_8
             );
         } catch (IOException e) {

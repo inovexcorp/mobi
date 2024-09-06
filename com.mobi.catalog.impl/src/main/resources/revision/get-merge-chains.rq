@@ -1,0 +1,175 @@
+PREFIX mcat: <http://mobi.com/ontologies/catalog#>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+
+SELECT ?mergeCommit
+    ?type
+    (GROUP_CONCAT(DISTINCT ?parentCommit;separator="|") as ?commits)
+    (GROUP_CONCAT(DISTINCT ?revParent;separator="|") as ?revisions)
+    (SAMPLE(?terminatingCommit) as ?branchingCommit)
+    (COUNT(?isMasterMergeIntoBranchVar) as ?isMasterMergeIntoBranch)
+#    (COUNT(?as) as ?addCount)
+#    (COUNT(?ds) as ?delCount)
+WHERE {
+#    ?mergeCommit mcat:mergeDisplayRevision ?mergeRev .
+#
+#    ?mergeRev mcat:additions ?mergeRevAdd ;
+#        mcat:deletions ?mergeRevDel .
+
+#    OPTIONAL {
+#        GRAPH ?mergeRevAdd {
+#            ?as ?ap ?ao .
+#        }
+#    }
+#
+#    OPTIONAL {
+#        GRAPH ?mergeRevDel {
+#            ?ds ?dp ?do .
+#        }
+#    }
+
+    {
+        SELECT ?mergeCommit ?terminatingCommit ?terminatingCommitTime ?parentCommit ?revParent ?type ?isMasterMergeIntoBranchVar
+        WHERE {
+            # GET AUX CHAINS
+            {
+                # Ensure the commit is in the master branch
+                ?branch mcat:head/(mcat:baseCommit|mcat:auxiliaryCommit)* ?mergeCommit .
+                # Get the revisions for the aux branch
+                ?mergeCommit a mcat:Commit ;
+                    prov:generated/prov:wasDerivedFrom ?auxRevision .
+                # Follow the aux branch revisions until they terminate (signifies a merge)
+                ?auxRevision a mcat:Revision ;
+                    prov:hadPrimarySource+ ?revParent .
+
+                OPTIONAL {
+                    # Find the terminating commit for the aux branch
+                    ?terminatingCommit prov:influenced ?revParent ;
+                        prov:atTime ?terminatingCommitTime .
+                }
+                # Find the parent commit associated with the revision and the time that it occurred
+                ?parentCommit a mcat:Commit ;
+                    prov:generated|prov:influenced ?revParent ;
+                    prov:atTime ?time .
+
+                BIND("AUX" as ?type)
+            }
+            UNION
+            {
+                # Retrieves the revision and commit after the merge commit on the aux branch
+                ?branch mcat:head/(mcat:baseCommit|mcat:auxiliaryCommit)* ?mergeCommit .
+                ?mergeCommit a mcat:Commit ;
+                    prov:generated/prov:wasDerivedFrom ?revParent .
+                ?parentCommit a mcat:Commit ;
+                    prov:generated|prov:influenced|mcat:masterMergeIntoBranchRevision ?revParent ;
+                    prov:atTime ?time .
+
+                OPTIONAL {
+                    # Find the terminating commit for the aux branch
+                    ?terminatingCommit mcat:masterMergeIntoBranchRevision ?revParent ;
+                        prov:atTime ?terminatingCommitTime .
+                    BIND(true as ?isMasterMergeIntoBranchVar)
+                }
+
+                BIND("AUX" as ?type)
+            }
+            UNION
+
+                # GET BASE CHAINS
+            {
+                # Ensure the commit is in the master branch
+                ?branch mcat:head/(mcat:baseCommit|mcat:auxiliaryCommit)* ?mergeCommit .
+                # Get the revisions for the base branch
+                ?mergeCommit a mcat:Commit ;
+                    prov:generated ?baseRevision ;
+                    mcat:auxiliaryCommit ?someAuxCommit;
+                    prov:generated/prov:wasDerivedFrom ?auxRevision .
+                # Follow the aux branch revisions until they terminate (signifies a merge)
+                ?auxRevision a mcat:Revision ;
+                    prov:hadPrimarySource+ ?auxRevParent .
+
+                ?baseRevision a mcat:Revision ;
+                    prov:hadPrimarySource+ ?revParent .
+
+                # Find the terminating commit for the aux branch
+                ?terminatingCommit prov:influenced ?auxRevParent ;
+                    prov:atTime ?terminatingCommitTime .
+
+                # Find the parent commit associated with the revision and the time that it occurred
+                ?parentCommit a mcat:Commit ;
+                    prov:generated|prov:influenced ?revParent ;
+                    prov:atTime ?time .
+
+                # Filter out extra base commits that happened after the terminating commit
+                FILTER (?time >= ?terminatingCommitTime)
+                BIND("BASE" as ?type)
+            }
+            UNION
+
+                # GET AUX CHAIN FOR MERGE OF MASTER BACK INTO A BRANCH
+            {
+                # Ensure the commit is in the master branch
+                ?branch mcat:head/(mcat:baseCommit|mcat:auxiliaryCommit)* ?mergeCommit .
+                # Get the revisions for the base branch
+                ?mergeCommit a mcat:Commit ;
+                    prov:generated ?baseRevision ;
+                    mcat:auxiliaryCommit ?someAuxCommit;
+                    prov:generated/prov:wasDerivedFrom ?auxRevision .
+
+                # Follow the base branch revisions until they terminate (signifies a merge)
+                ?baseRevision a mcat:Revision ;
+                    prov:hadPrimarySource+ ?baseRevParent .
+
+                ?auxRevision a mcat:Revision ;
+                    prov:hadPrimarySource+ ?revParent .
+
+                # Find the terminating commit for the aux branch
+                ?terminatingCommit prov:influenced ?baseRevParent ;
+                    prov:atTime ?terminatingCommitTime .
+
+                # Find the parent commit associated with the revision and the time that it occurred
+                ?parentCommit a mcat:Commit ;
+                    prov:generated|prov:influenced ?revParent ;
+                    prov:atTime ?time .
+
+                # Filter out extra base commits that happened after the terminating commit
+                FILTER (?time >= ?terminatingCommitTime)
+                BIND("AUX" as ?type)
+            }
+
+            UNION
+
+                # GET BASE CHAIN FOR MERGE OF MASTER BACK INTO A BRANCH
+            {
+                # Ensure the commit is in the master branch
+                ?branch mcat:head/(mcat:baseCommit|mcat:auxiliaryCommit)* ?mergeCommit .
+                # Get the revisions for the base branch
+                ?mergeCommit a mcat:Commit ;
+                    prov:generated ?baseRevision ;
+                    mcat:auxiliaryCommit/mcat:masterMergeIntoBranchRevision ?someMergeRevision;
+                    prov:generated/prov:wasDerivedFrom ?auxRevision .
+
+                # Follow the base branch revisions until they terminate (signifies a merge)
+                ?baseRevision a mcat:Revision ;
+                    prov:hadPrimarySource+ ?revParent .
+
+                ?baseRevision a mcat:Revision ;
+                    prov:hadPrimarySource+ ?baseRevParent .
+
+                # Find the terminating commit for the aux branch
+                ?terminatingCommit prov:influenced ?baseRevParent ;
+                    prov:atTime ?terminatingCommitTime .
+
+                # Find the parent commit associated with the revision and the time that it occurred
+                ?parentCommit a mcat:Commit ;
+                    prov:generated|prov:influenced ?revParent ;
+                    prov:atTime ?time .
+
+                # Filter out extra base commits that happened after the terminating commit
+                FILTER (?time >= ?terminatingCommitTime)
+                BIND("BASE" as ?type)
+            }
+        }
+        ORDER BY DESC(?time)
+    }
+}
+GROUP BY ?mergeCommit ?type

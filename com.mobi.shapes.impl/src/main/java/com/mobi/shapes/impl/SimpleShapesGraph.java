@@ -70,13 +70,13 @@ public class SimpleShapesGraph implements ShapesGraph {
 
     @Override
     public Optional<IRI> getShapesGraphId() {
-        return OntologyModels.findFirstOntologyIRI(this.getModel(), vf);
+        return OntologyModels.findFirstOntologyIRI(this.getModel());
     }
 
     @Override
     public Model getShapesGraphContent() {
         Model shapesGraphContent = mf.createEmptyModel();
-        IRI shapesGraphId = OntologyModels.findFirstOntologyIRI(this.getModel(), vf)
+        IRI shapesGraphId = OntologyModels.findFirstOntologyIRI(this.getModel())
                 .orElseThrow(() -> new IllegalStateException("Missing OntologyIRI")); // Check for empty
         this.model.unmodifiable().forEach(statement -> {
             if (!statement.getSubject().equals(shapesGraphId)) {

@@ -413,8 +413,7 @@ export class MergeRequestsStateService {
      * @return {Observable} An Observable indicating the success of the resolution
      */
     resolveRequestConflicts(request: MergeRequest, resolutions: Difference): Observable<null> {
-        return this.cm.mergeBranches(request.targetBranch['@id'], request.sourceBranch['@id'], request.recordIri, 
-          this.catalogId, resolutions)
+        return this.cm.mergeBranches(request.targetBranch['@id'], request.sourceBranch['@id'], request.recordIri, this.catalogId, resolutions, request.conflicts)
             .pipe(switchMap(() => this.setRequestDetails(request)));
     }
     /**

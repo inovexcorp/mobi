@@ -43,7 +43,10 @@ import com.mobi.utils.cli.impl.ManifestFile;
 import com.mobi.utils.cli.impl.PostRestoreOperationHandler;
 import com.mobi.utils.cli.impl.PreRestoreOperationHandler;
 import com.mobi.utils.cli.utils.RestoreUtils;
+import com.mobi.utils.cli.utils.VersionRangeUtils;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.karaf.shell.api.action.Action;
 import org.apache.karaf.shell.api.action.Argument;
 import org.apache.karaf.shell.api.action.Command;
@@ -88,7 +91,7 @@ public class Restore implements Action {
     public static final String CONFIG_PATH = RESTORE_PATH + File.separator + "configurations";
     public static final String MANIFEST_FILE = RESTORE_PATH + File.separator + "manifest.json";
     private final List<String> mobiVersions = Arrays.asList("1.12", "1.13", "1.14", "1.15", "1.16", "1.17",
-            "1.18", "1.19", "1.20", "1.21", "1.22", "2.0", "2.1", "2.2", "2.3", "2.4", "2.5", "3.0", "3.1");
+            "1.18", "1.19", "1.20", "1.21", "1.22", "2.0", "2.1", "2.2", "2.3", "2.4", "2.5", "3.0", "3.1", "4.0");
 
     // Service References
     @Reference
@@ -149,53 +152,51 @@ public class Restore implements Action {
     @Override
     public Object execute() throws Exception {
         try {
-            out(String.format("== Unzipping: %s", backupFilePath.trim()));
+            RestoreUtils.out(String.format("== Unzipping: %s", backupFilePath.trim()), LOGGER);
             RestoreUtils.unzipFile(backupFilePath, RESTORE_PATH);
         } catch (IOException e) {
-            error("Error unzipping backup file: " + e.getMessage(), e);
+            RestoreUtils.error("Error unzipping backup file: " + e.getMessage(), e, LOGGER);
             return null;
         }
 
         ManifestFile manifestFile = ManifestFile.fromJson(MANIFEST_FILE, mobiVersions);
         if (manifestFile.getError().isPresent()) {
-            error(manifestFile.getError().get());
+            RestoreUtils.error(manifestFile.getError().get(), LOGGER);
             return null;
         }
 
         ObjectNode manifestRepos = manifestFile.getRepositories();
         String backupVersion = manifestFile.getVersion();
-        out("== Restoring Version: " + backupVersion);
+        RestoreUtils.out("== Restoring Version: " + backupVersion, LOGGER);
 
         BundleContext xacmlBundleContext = FrameworkUtil.getBundle(XACMLPolicyManager.class).getBundleContext();
 
-        out("== Configuration Stage");
+        RestoreUtils.out("== Configuration Stage", LOGGER);
         copyConfigFiles(xacmlBundleContext, backupVersion);
 
-        out("== Pre-Process Stage");
+        RestoreUtils.out("== Pre-Process Stage", LOGGER);
         restorePreProcess(backupVersion);
 
-        out("== Clearing All Repos");
+        RestoreUtils.out("== Clearing All Repos", LOGGER);
         Set<String> remoteRepos = clearAllRepos(repositoryManager);
 
-        out("== Restoring Manifest Repos");
-        restoreRepositories(manifestRepos, remoteRepos);
+        RestoreUtils.out("== Restoring Manifest Repos", LOGGER);
+        restoreRepositories(manifestRepos, remoteRepos, backupVersion);
 
-        out("== Post-Process Stage");
+        RestoreUtils.out("== Post-Process Stage", LOGGER);
         restorePostProcess(backupVersion);
 
-        out("== Deleting Temporary Restore Directory");
+        RestoreUtils.out("== Deleting Temporary Restore Directory", LOGGER);
         File tempArchive = new File(RESTORE_PATH);
-        boolean deleted = tempArchive.delete();
-        if (!deleted) {
-            out("Temporary restore directory was not deleted properly");
-        }
+        FileUtils.deleteDirectory(tempArchive);
 
-        out("== Restarting XACMLPolicyManager bundle ="); // recreate policies that were deleted
+        RestoreUtils.out("== Restarting XACMLPolicyManager bundle =", LOGGER); // recreate policies that were deleted
         long start = System.currentTimeMillis();
         xacmlBundleContext.getBundle().update();
-        out("== Restarted XACMLPolicyManager bundle. Took:" + (System.currentTimeMillis() - start) + " ms");
+        RestoreUtils.out("== Restarted XACMLPolicyManager bundle. Took:"
+                + (System.currentTimeMillis() - start) + " ms", LOGGER);
 
-        out("== Restarting all services");
+        RestoreUtils.out("== Restarting all services", LOGGER);
         systemService.reboot();
         return null;
     }
@@ -207,18 +208,13 @@ public class Restore implements Action {
             List<String> repoServices = new ArrayList<>();
             File configDir = new File(CONFIG_PATH);
 
+            String repoPrefix = "com.mobi.service.repository";
             // Generate list of repoServices from the repository configuration filenames in the backup
-            File[] repoFiles = configDir.listFiles((dir, name) -> name.contains("com.mobi.service.repository"));
+            File[] repoFiles = configDir.listFiles((dir, name) -> name.contains(repoPrefix));
             if (repoFiles != null) {
                 for (File repoFile : repoFiles) {
                     String filename = repoFile.getName();
-                    StringBuilder sb = new StringBuilder("(&(objectClass=com.mobi.repository.api.OsgiRepository)"
-                            + "(component.name=");
-                    sb.append(filename, 0, filename.indexOf("-"));
-                    sb.append(")(id=");
-                    sb.append(filename, filename.indexOf("-") + 1, filename.indexOf(".cfg"));
-                    sb.append("))");
-                    repoServices.add(sb.toString());
+                    addRepoService(filename, repoServices);
                 }
             }
 
@@ -228,12 +224,25 @@ public class Restore implements Action {
             configRestoreOperations.forEach((ConfigRestoreOperation operation) -> {
                 try {
                     List<String> excludedFiles = operation.getExcludedFiles();
-                    out(String.format("Running Operation %s with priority %s for versions %s,"
-                                    + " excludedFiles count: %s", operation.getClass(), operation.getPriority(),
-                            operation.getVersionRange(), excludedFiles.size()));
-                    blacklistedFiles.addAll(excludedFiles);
+                    if (!excludedFiles.isEmpty()) {
+                        RestoreUtils.out(String.format("Running Operation %s with priority %s for versions %s,"
+                                        + " excludedFiles count: %s", operation.getClass(), operation.getPriority(),
+                                operation.getVersionRange(), excludedFiles.size()), LOGGER);
+                        blacklistedFiles.addAll(excludedFiles);
+                    }
+                    List<String> addedFiles = operation.addConfig();
+                    if (!addedFiles.isEmpty()) {
+                        RestoreUtils.out(String.format("Running Operation %s with priority %s for versions %s,"
+                                        + " added files: %s", operation.getClass(), operation.getPriority(),
+                                operation.getVersionRange(), StringUtils.join(addedFiles, ", ")), LOGGER);
+                        addedFiles.forEach(filename -> {
+                            if (filename.startsWith(repoPrefix)) {
+                                addRepoService(filename, repoServices);
+                            }
+                        });
+                    }
                 } catch (InvalidVersionSpecificationException | MobiException e) {
-                    error(e.getMessage(), e);
+                    RestoreUtils.error(operation, e.getMessage(), e, LOGGER);
                 }
             });
 
@@ -264,12 +273,12 @@ public class Restore implements Action {
                             LOGGER.trace("Skipping restore of file: " + newFileDest.getFileName());
                         }
                     } catch (IOException e) {
-                        LOGGER.error("Could not copy file: " + backupConfig.getFileName());
+                        RestoreUtils.error("Could not copy file: " + backupConfig.getFileName(), LOGGER);
                     }
                 });
             }
-            out(String.format("Waiting %s seconds for services to restart after copying config files",
-                    CONFIG_RESTART_TIMEOUT));
+            RestoreUtils.out(String.format("Waiting %s seconds for services to restart after copying config files",
+                    CONFIG_RESTART_TIMEOUT), LOGGER);
             TimeUnit.SECONDS.sleep(CONFIG_RESTART_TIMEOUT);
             List<String> services = IOUtils.readLines(Objects.requireNonNull(getClass()
                             .getResourceAsStream("/registered-services.txt")),
@@ -283,6 +292,16 @@ public class Restore implements Action {
             }
             throw e;
         }
+    }
+
+    private void addRepoService(String filename, List<String> repoServices) {
+        StringBuilder sb = new StringBuilder("(&(objectClass=com.mobi.repository.api.OsgiRepository)"
+                + "(component.name=");
+        sb.append(filename, 0, filename.indexOf("-"));
+        sb.append(")(id=");
+        sb.append(filename, filename.indexOf("-") + 1, filename.indexOf(".cfg"));
+        sb.append("))");
+        repoServices.add(sb.toString());
     }
 
     /**
@@ -306,7 +325,8 @@ public class Restore implements Action {
         return remoteRepos;
     }
 
-    private void restoreRepositories(ObjectNode manifestRepos, Set<String> remoteRepos) throws IOException {
+    private void restoreRepositories(ObjectNode manifestRepos, Set<String> remoteRepos, String backupVersion)
+            throws IOException {
         // Populate Repositories
         ImportServiceConfig.Builder builder = new ImportServiceConfig.Builder()
                 .continueOnError(false)
@@ -319,16 +339,20 @@ public class Restore implements Action {
             if (!remoteRepos.contains(repoName)) {
                 String repoPath = manifestRepos.get(repoName).asText();
                 String repoDirectoryPath = repoPath.substring(0, repoPath.lastIndexOf(repoName + ".zip"));
-                builder.repository(repoName);
                 File repoFile = new File(RESTORE_PATH + File.separator + repoDirectoryPath + File.separator
                         + repoName + ".trig");
+
+                if (VersionRangeUtils.isPre4Version(backupVersion) && "system".equals(repoName)) {
+                    repoName = "systemTemp";
+                }
+                builder.repository(repoName);
                 long startTime = System.currentTimeMillis();
                 importService.importFile(builder.build(), repoFile);
                 long endTime = System.currentTimeMillis();
-                out(String.format("Data successfully loaded to %s repository. Took %s ms", repoName,
-                        endTime - startTime));
+                RestoreUtils.out(String.format("Data successfully loaded to %s repository. Took %s ms", repoName,
+                        endTime - startTime), LOGGER);
             } else {
-                out("Skipping data load of remote repository " + repoName);
+                RestoreUtils.out("Skipping data load of remote repository " + repoName, LOGGER);
             }
         }
     }
@@ -364,27 +388,12 @@ public class Restore implements Action {
                 long startTime = System.currentTimeMillis();
                 operation.execute();
                 long endTime = System.currentTimeMillis();
-                out(String.format("Executed Operation %s with priority %s for versions %s, took %s ms",
+                RestoreUtils.out(String.format("Executed Operation %s with priority %s for versions %s, took %s ms",
                         operation.getClass(), operation.getPriority(), operation.getVersionRange(),
-                        endTime - startTime));
+                        endTime - startTime), LOGGER);
             } catch (Exception e) {
-                error(e.getMessage(), e);
+                RestoreUtils.error(operation, e.getMessage(), e, LOGGER);
             }
         });
-    }
-
-    private void out(String msg) {
-        LOGGER.trace(msg);
-        System.out.println(msg);
-    }
-
-    private void error(String msg) {
-        LOGGER.error(msg);
-        System.out.println(msg);
-    }
-
-    private void error(String msg, Exception ex) {
-        LOGGER.error(msg, ex);
-        System.out.println(msg);
     }
 }

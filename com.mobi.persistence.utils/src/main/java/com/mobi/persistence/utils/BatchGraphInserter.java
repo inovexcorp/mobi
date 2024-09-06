@@ -33,7 +33,7 @@ import org.eclipse.rdf4j.rio.RDFHandlerException;
 
 public class BatchGraphInserter extends BatchInserter {
 
-    private Resource graph;
+    private Resource[] graph;
 
     private IsolationLevel isolationLevel = IsolationLevels.SNAPSHOT_READ;
 
@@ -43,9 +43,9 @@ public class BatchGraphInserter extends BatchInserter {
      * all the statements are added.
      *
      * @param conn The RepositoryConnection to use to add statements
-     * @param graph The Graph to insert the statements
+     * @param graph The Graphs to insert the statements
      */
-    public BatchGraphInserter(RepositoryConnection conn, Resource graph) {
+    public BatchGraphInserter(RepositoryConnection conn, Resource... graph) {
         super(conn);
         this.graph = graph;
     }
@@ -59,7 +59,7 @@ public class BatchGraphInserter extends BatchInserter {
      * @param graph The Graph to insert the statements
      * @param isolationLevel The IsolationLevel for the transactions
      */
-    public BatchGraphInserter(RepositoryConnection conn, Resource graph, IsolationLevel isolationLevel) {
+    public BatchGraphInserter(RepositoryConnection conn, IsolationLevel isolationLevel, Resource... graph ) {
         super(conn);
         this.graph = graph;
         this.isolationLevel = isolationLevel;
@@ -74,7 +74,7 @@ public class BatchGraphInserter extends BatchInserter {
      * @param batchSize How may statements should be added at a time
      * @param graph The Graph to insert the statements
      */
-    public BatchGraphInserter(RepositoryConnection conn, long batchSize, Resource graph) {
+    public BatchGraphInserter(RepositoryConnection conn, long batchSize, Resource... graph) {
         super(conn, batchSize, false);
         this.graph = graph;
     }
@@ -84,12 +84,13 @@ public class BatchGraphInserter extends BatchInserter {
      * batch chunks of the provided size into the specified graph. The RepositoryConnection will not be closed after
      * all the statements are added.
      *
-     * @param conn The RepositoryConnection to use to add statements
-     * @param batchSize How may statements should be added at a time
-     * @param graph The Graph to insert the statements
+     * @param conn           The RepositoryConnection to use to add statements
+     * @param batchSize      How may statements should be added at a time
      * @param isolationLevel The IsolationLevel for the transactions
+     * @param graph          The Graph to insert the statements
      */
-    public BatchGraphInserter(RepositoryConnection conn, long batchSize, Resource graph, IsolationLevel isolationLevel) {
+    public BatchGraphInserter(RepositoryConnection conn, long batchSize, IsolationLevel isolationLevel,
+                              Resource... graph) {
         super(conn, batchSize, false);
         this.graph = graph;
         this.isolationLevel = isolationLevel;

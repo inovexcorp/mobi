@@ -32,8 +32,6 @@ import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.ontologies.provo.Activity;
-import com.mobi.ontologies.provo.InstantaneousEvent;
 import com.mobi.persistence.utils.api.BNodeService;
 import org.apache.commons.lang3.StringEscapeUtils;
 import org.eclipse.rdf4j.model.Literal;
@@ -41,6 +39,7 @@ import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
+import org.eclipse.rdf4j.model.vocabulary.PROV;
 
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -60,13 +59,15 @@ public class CatalogRestUtils {
      */
     public static ObjectNode createCommitJson(Commit commit, ValueFactory vf, EngineManager engineManager) {
         Literal emptyLiteral = vf.createLiteral("");
-        Value creatorIRI = commit.getProperty(vf.createIRI(Activity.wasAssociatedWith_IRI))
+        Value creatorIRI = commit.getProperty(PROV.WAS_ASSOCIATED_WITH)
                 .orElse(null);
-        Value date = commit.getProperty(vf.createIRI(InstantaneousEvent.atTime_IRI))
+        Value date = commit.getProperty(PROV.AT_TIME)
                 .orElse(emptyLiteral);
-        String message = commit.getProperty(vf.createIRI(DCTERMS.TITLE.stringValue()))
+        String message = commit.getProperty(DCTERMS.TITLE)
                 .orElse(emptyLiteral).stringValue();
         String baseCommit = commit.getProperty(vf.createIRI(Commit.baseCommit_IRI))
+                .orElse(emptyLiteral).stringValue();
+        String branchCommit = commit.getProperty(vf.createIRI(Commit.branchCommit_IRI))
                 .orElse(emptyLiteral).stringValue();
         String auxCommit = commit.getProperty(vf.createIRI(Commit.auxiliaryCommit_IRI))
                 .orElse(emptyLiteral).stringValue();
@@ -87,6 +88,7 @@ public class CatalogRestUtils {
         commitJson.put("date", date.stringValue());
         commitJson.put("message", message);
         commitJson.put("base", baseCommit);
+        commitJson.put("branch", branchCommit);
         commitJson.put("auxiliary", auxCommit);
 
         return commitJson;

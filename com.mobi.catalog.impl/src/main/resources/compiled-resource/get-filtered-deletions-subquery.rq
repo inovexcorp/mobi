@@ -6,23 +6,16 @@ CONSTRUCT {
 } WHERE {
   {
     SELECT DISTINCT ?deletionSubject WHERE {
-      VALUES ?commit { %COMMITLIST% }
-      GRAPH ?commit {
-        ?commit prov:generated ?revision .
-        ?revision catalog:deletions ?deletionsGraph .
-      }
+      VALUES ?revision { %REVISIONLIST% }
+      ?revision catalog:deletions ?deletionsGraph .
       GRAPH ?deletionsGraph {
         ?deletionSubject ?p ?o .
       }
     }
   }
 
-  VALUES ?commit { %THISCOMMIT% }
-
-  GRAPH ?commit {
-    ?commit prov:generated ?revision .
-    ?revision catalog:deletions ?deletionsGraph .
-  }
+  VALUES ?revision { %THISREVISION% }
+  ?revision catalog:deletions ?deletionsGraph .
   GRAPH ?deletionsGraph {
     ?deletionSubject ?p ?o .
   }

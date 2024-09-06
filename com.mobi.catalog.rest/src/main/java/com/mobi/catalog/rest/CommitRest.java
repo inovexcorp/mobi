@@ -42,7 +42,6 @@ import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.persistence.utils.api.BNodeService;
-import com.mobi.rdf.orm.Thing;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.LinksUtils;
 import io.swagger.v3.oas.annotations.Operation;
@@ -277,13 +276,9 @@ public class CommitRest {
             checkStringParam(commitId, "Commit ID is required");
             Model model;
             if (StringUtils.isNotBlank(entityId)) {
-                List<Commit> commits = commitManager.getCommitEntityChain(vf.createIRI(commitId), vf.createIRI(entityId), conn);
-                List<Resource> commitIds = commits.stream().map(Thing::getResource).toList();
-                model = compiledResourceManager.getCompiledResource(commitIds, conn, vf.createIRI(entityId));
+                model = compiledResourceManager.getCompiledResource(vf.createIRI(commitId), conn, vf.createIRI(entityId));
             } else {
-                List<Commit> commits = commitManager.getCommitChain(vf.createIRI(commitId), conn);
-                List<Resource> commitIds = commits.stream().map(Thing::getResource).toList();
-                model = compiledResourceManager.getCompiledResource(commitIds, conn);
+                model = compiledResourceManager.getCompiledResource(vf.createIRI(commitId), conn);
             }
 
             return Response.ok(modelToSkolemizedString(model, RDFFormat.JSONLD, bNodeService))

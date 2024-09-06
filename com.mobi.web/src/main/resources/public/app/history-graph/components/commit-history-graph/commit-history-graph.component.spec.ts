@@ -98,6 +98,7 @@ describe('CommitHistoryGraphComponent', () => {
         date: 'somedate',
         message: 'message',
         base: 'baseHash',
+        branch: 'branch',
         auxiliary: 'auxiliaryHash'
     };
     commits = [commit];

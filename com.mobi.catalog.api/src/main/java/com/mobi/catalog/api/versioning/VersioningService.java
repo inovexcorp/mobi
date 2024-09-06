@@ -24,46 +24,82 @@ package com.mobi.catalog.api.versioning;
  */
 
 
+import com.mobi.catalog.api.builder.Conflict;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
+import com.mobi.catalog.api.ontologies.mcat.MasterBranch;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 
-import javax.annotation.Nullable;
+import java.util.Map;
 
 public interface VersioningService<T extends VersionedRDFRecord> {
+    /**
+     * Adds the provided {@link Commit} to the provided {@link MasterBranch} updating the head Commit. NOTE: This method
+     * is intended to be used for existing InProgressCommits and assumes the additions and deletions statements already
+     * exist in the Repository.
+     *
+     * @param branch  The MastBranch which will get the new Commit.
+     * @param user    The user who has the InProgressCommit to add
+     * @param message The commit message
+     * @param conn    A RepositoryConnection to use for lookup.
+     * @return The Resource identifying the new Commit.
+     */
+    Resource addMasterCommit(VersionedRDFRecord record, MasterBranch branch, User user, String message,
+                             RepositoryConnection conn);
+
     /**
      * Adds the provided {@link Commit} to the provided {@link Branch}, updating the head Commit. NOTE: This method
      * is intended to be used for existing InProgressCommits and assumes the additions and deletions statements already
      * exist in the Repository.
      *
-     * @param branch The Branch which will get the new Commit.
-     * @param commit The Commit to add to the Branch.
-     * @param conn A RepositoryConnection to use for lookup.
+     * @param branch  The Branch which will get the new Commit.
+     * @param user    The user who has the InProgressCommit to add
+     * @param message The commit message
+     * @param conn    A RepositoryConnection to use for lookup.
+     * @return The Resource identifying the new Commit.
      */
-    void addCommit(VersionedRDFRecord record, Branch branch, Commit commit, RepositoryConnection conn);
+    Resource addBranchCommit(VersionedRDFRecord record, Branch branch, User user, String message,
+                             RepositoryConnection conn);
+
+    /**
+     * Adds a new {@link Commit} to the provided {@link Branch} created for the provided {@link User} using the provided
+     * message, addition and deletion {@link Model Models}, and base and auxiliary Commits. NOTE: This method is
+     * intended to be used with merges and assumes no commit or revision data exists in the Repository. //TODO: update docs
+     *
+     * @param sourceBranch The auxiliary Commit for the newCommit.
+     * @param targetBranch The base Commit for the newCommit.
+     * @param user         The User who will be associated with the new Commit.
+     * @param additions    The statements which were added to the named graph.
+     * @param deletions    The statements which were deleted from the named graph.
+     * @param conflictMap
+     * @param conn         A RepositoryConnection to use for lookup.
+     * @return The Resource identifying the new Commit.
+     */
+    Resource mergeIntoMaster(VersionedRDFRecord record, Branch sourceBranch, MasterBranch targetBranch, User user,
+                             Model additions, Model deletions, Map<Resource, Conflict> conflictMap,
+                             RepositoryConnection conn);
 
     /**
      * Adds a new {@link Commit} to the provided {@link Branch} created for the provided {@link User} using the provided
      * message, addition and deletion {@link Model Models}, and base and auxiliary Commits. NOTE: This method is
      * intended to be used with merges and assumes no commit or revision data exists in the Repository.
      *
-     * @param branch The Branch which will get the new Commit.
-     * @param user The User who will be associated with the new Commit.
-     * @param message The String with the message text associated with the Commit.
-     * @param additions The statements which were added to the named graph.
-     * @param deletions The statements which were deleted from the named graph.
-     * @param baseCommit The base Commit for the newCommit.
-     * @param auxCommit The auxiliary Commit for the newCommit.
-     * @param conn A RepositoryConnection to use for lookup.
+     * @param sourceBranch The auxiliary Commit for the newCommit.
+     * @param targetBranch The base Commit for the newCommit.
+     * @param user         The User who will be associated with the new Commit.
+     * @param additions    The statements which were added to the named graph.
+     * @param deletions    The statements which were deleted from the named graph.
+     * @param conflictMap
+     * @param conn         A RepositoryConnection to use for lookup.
      * @return The Resource identifying the new Commit.
      */
-    Resource addCommit(VersionedRDFRecord record, Branch branch, User user, String message, Model additions,
-                       Model deletions, @Nullable Commit baseCommit, @Nullable Commit auxCommit,
-                       RepositoryConnection conn);
+    Resource mergeIntoBranch(VersionedRDFRecord record, Branch sourceBranch, Branch targetBranch, User user,
+                             Model additions, Model deletions, Map<Resource, Conflict> conflictMap,
+                             RepositoryConnection conn);
 
     /**
      * Retrieves the IRI of the type of {@link VersionedRDFRecord} this service versions.

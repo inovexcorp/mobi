@@ -22,6 +22,7 @@ package com.mobi.catalog.impl;
  * #L%
  */
 
+import static com.mobi.catalog.impl.TestResourceUtils.trigRequired;
 import static junit.framework.TestCase.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -34,10 +35,9 @@ import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import com.mobi.repository.impl.sesame.memory.MemoryRepositoryWrapper;
+import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
-import org.eclipse.rdf4j.rio.RDFFormat;
-import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
 import org.junit.After;
 import org.junit.Before;
@@ -46,8 +46,6 @@ import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-
-import java.io.InputStream;
 
 public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
     private AutoCloseable closeable;
@@ -63,20 +61,18 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
     @Mock
     CatalogConfigProvider configProvider;
 
+    private final IRI CATALOG_LOCAL = VALUE_FACTORY.createIRI("http://mobi.com/catalog-local");
+    private final IRI CATALOG_DISTRIBUTED = VALUE_FACTORY.createIRI("http://mobi.com/catalog-distributed");
+
     @Before
     public void setUp() throws Exception {
         repo = new MemoryRepositoryWrapper();
         repo.setDelegate(new SailRepository(new MemoryStore()));
         closeable = MockitoAnnotations.openMocks(this);
 
-        InputStream testData = getClass().getResourceAsStream("/testCatalogData.trig");
-        try (RepositoryConnection conn = repo.getConnection()) {
-            conn.add(Rio.parse(testData, "", RDFFormat.TRIG));
-        }
-
         when(configProvider.getRepository()).thenReturn(repo);
-        when(configProvider.getLocalCatalogIRI()).thenReturn(ManagerTestConstants.CATALOG_IRI);
-        when(configProvider.getDistributedCatalogIRI()).thenReturn(ManagerTestConstants.CATALOG_DISTRIBUTED_IRI);
+        when(configProvider.getLocalCatalogIRI()).thenReturn(CATALOG_LOCAL);
+        when(configProvider.getDistributedCatalogIRI()).thenReturn(CATALOG_DISTRIBUTED);
 
         manager = new SimpleCatalogManager();
         manager.thingManager = thingManager;
@@ -95,10 +91,11 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testGetDistributedCatalog() throws Exception {
+        trigRequired(repo, "/systemRepo/simpleOntology1.trig");
         try (RepositoryConnection conn = repo.getConnection()) {
             Catalog result = manager.getDistributedCatalog(conn);
-            verify(thingManager).getExpectedObject(eq(ManagerTestConstants.CATALOG_DISTRIBUTED_IRI), eq(catalogFactory), any(RepositoryConnection.class));
-            assertEquals(ManagerTestConstants.CATALOG_DISTRIBUTED_IRI, result.getResource());
+            verify(thingManager).getExpectedObject(eq(CATALOG_DISTRIBUTED), eq(catalogFactory), any(RepositoryConnection.class));
+            assertEquals(CATALOG_DISTRIBUTED, result.getResource());
         }
     }
 
@@ -106,10 +103,11 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testGetLocalCatalog() throws Exception {
+        trigRequired(repo, "/systemRepo/simpleOntology1.trig");
         try (RepositoryConnection conn = repo.getConnection()) {
             Catalog result = manager.getLocalCatalog(conn);
-            verify(thingManager).getExpectedObject(eq(ManagerTestConstants.CATALOG_IRI), eq(catalogFactory), any(RepositoryConnection.class));
-            assertEquals(ManagerTestConstants.CATALOG_IRI, result.getResource());
+            verify(thingManager).getExpectedObject(eq(CATALOG_LOCAL), eq(catalogFactory), any(RepositoryConnection.class));
+            assertEquals(CATALOG_LOCAL, result.getResource());
         }
     }
 }

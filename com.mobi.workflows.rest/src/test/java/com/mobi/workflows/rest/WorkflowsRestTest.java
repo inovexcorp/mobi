@@ -58,6 +58,7 @@ import com.mobi.catalog.api.RecordManager;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
+import com.mobi.catalog.api.ontologies.mcat.MasterBranch;
 import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
 import com.mobi.catalog.api.record.config.RecordCreateSettings;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
@@ -139,6 +140,7 @@ public class WorkflowsRestTest extends MobiRestTestCXF {
     private static ModelFactory mf;
     private static CommitManager commitManager;
     private static Branch branch;
+    private static MasterBranch masterBranch;
     private static Commit commit;
     private static CatalogConfigProvider configProvider;
     private static RecordManager recordManager;
@@ -164,6 +166,7 @@ public class WorkflowsRestTest extends MobiRestTestCXF {
 
     private static OrmFactory<WorkflowRecord> recordFactory;
     private static OrmFactory<Branch> branchFactory;
+    private static OrmFactory<MasterBranch> masterBranchFactory;
     private static OrmFactory<Commit> commitFactory;
     private static OrmFactory<WorkflowExecutionActivity> workflowActivityFactory;
     private static OrmFactory<ActionExecution> actionExecutionFactory;
@@ -222,6 +225,7 @@ public class WorkflowsRestTest extends MobiRestTestCXF {
 
         recordFactory = getRequiredOrmFactory(WorkflowRecord.class);
         branchFactory = getRequiredOrmFactory(Branch.class);
+        masterBranchFactory = getRequiredOrmFactory(MasterBranch.class);
         commitFactory = getRequiredOrmFactory(Commit.class);
         workflowActivityFactory = getRequiredOrmFactory(WorkflowExecutionActivity.class);
         actionExecutionFactory = getRequiredOrmFactory(ActionExecution.class);
@@ -247,9 +251,11 @@ public class WorkflowsRestTest extends MobiRestTestCXF {
                 .deletions(deletions)
                 .build();
 
-        branch = branchFactory.createNew(branchId);
         commit = commitFactory.createNew(commitId);
+        branch = branchFactory.createNew(branchId);
         branch.setHead(commit);
+        masterBranch = masterBranchFactory.createNew(branchId);
+        masterBranch.setHead(commit);
 
         // Setup VirtualFileSystem
         SimpleVirtualFilesystemConfig config = mock(SimpleVirtualFilesystemConfig.class);
@@ -289,7 +295,7 @@ public class WorkflowsRestTest extends MobiRestTestCXF {
         Branch branch = branchFactory.createNew(branchId);
         activity = workflowActivityFactory.createNew(activityIRI);
         activity.addProperty(recordId, PROV.USED);
-        record.setMasterBranch(branch);
+        record.setMasterBranch(masterBranchFactory.createNew(branchId));
         record.setWorkflowIRI(workflowId);
         record.setActive(true);
         Commit commit = commitFactory.createNew(commitId);
@@ -308,14 +314,14 @@ public class WorkflowsRestTest extends MobiRestTestCXF {
 
         when(workflowManager.getLogFile(binaryFileId)).thenReturn(binaryFile);
         when(engineManager.retrieveUser(anyString())).thenReturn(Optional.of(user));
-        when(branchManager.getMasterBranch(any(), any(), any(RepositoryConnection.class))).thenReturn(branch);
+//        when(branchManager.getMasterBranch(any(), any(), any(RepositoryConnection.class))).thenReturn(branch);
         when(configProvider.getLocalCatalogIRI()).thenReturn(catalogId);
         when(configProvider.getRepository()).thenReturn(repo);
         when(recordManager.createRecord(any(User.class), any(RecordOperationConfig.class), eq(WorkflowRecord.class),
                 any(RepositoryConnection.class))).thenReturn(record);
         when(commitManager.createInProgressCommit(any(User.class))).thenReturn(inProgressCommit);
         when(commitManager.getInProgressCommitOpt(eq(catalogId), eq(recordId), eq(user), any(RepositoryConnection.class))).thenReturn(Optional.of(inProgressCommit));
-        when(commitManager.createCommit(eq(inProgressCommit), anyString(), any(Commit.class), any(Commit.class))).thenReturn(commit);
+//        when(commitManager.createCommit(eq(inProgressCommit), anyString(), any(Commit.class), any(Commit.class))).thenReturn(commit);
         when(differenceManager.applyInProgressCommit(any(Resource.class), any(Model.class), any(RepositoryConnection.class))).thenAnswer(i -> i.getArgument(1, Model.class));
 
         when(differenceManager.getDiff(any(Model.class), any(Model.class))).thenReturn(difference);
@@ -1063,7 +1069,7 @@ public class WorkflowsRestTest extends MobiRestTestCXF {
 
         when(commitManager.getInProgressCommitOpt(eq(catalogId), eq(recordId),
                 any(User.class), any(RepositoryConnection.class))).thenReturn(Optional.empty());
-        when(branchManager.getMasterBranch(eq(catalogId), eq(recordId), any(RepositoryConnection.class))).thenReturn(branch);
+//        when(branchManager.getMasterBranch(eq(catalogId), eq(recordId), any(RepositoryConnection.class))).thenReturn(branch);
         when(response.getDecision()).thenReturn(Decision.PERMIT);
         FormDataMultiPart fd = new FormDataMultiPart();
         fd.bodyPart("file", "test-workflow.ttl", getClass().getResourceAsStream("/test-workflow.ttl"));
@@ -1087,7 +1093,7 @@ public class WorkflowsRestTest extends MobiRestTestCXF {
                 .thenReturn(workflowModel);
         when(commitManager.getInProgressCommitOpt(eq(catalogId), eq(recordId),
                 any(User.class), any(RepositoryConnection.class))).thenReturn(Optional.empty());
-        when(branchManager.getMasterBranch(eq(catalogId), eq(recordId), any(RepositoryConnection.class))).thenReturn(branch);
+        when(branchManager.getMasterBranch(eq(catalogId), eq(recordId), any(RepositoryConnection.class))).thenReturn(masterBranch);
         when(response.getDecision()).thenReturn(Decision.DENY);
         FormDataMultiPart fd = new FormDataMultiPart();
         fd.bodyPart("file", "test-workflow.ttl", getClass().getResourceAsStream("/test-workflow.ttl"));

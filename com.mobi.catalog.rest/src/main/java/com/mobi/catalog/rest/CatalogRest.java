@@ -35,9 +35,12 @@ import static com.mobi.rest.util.RestUtils.getRDFFormatMimeType;
 import static com.mobi.rest.util.RestUtils.jsonldToDeskolemizedModel;
 import static com.mobi.rest.util.RestUtils.modelToSkolemizedJsonld;
 import static com.mobi.rest.util.RestUtils.modelToSkolemizedString;
+import static com.mobi.rest.util.RestUtils.modelToString;
 import static com.mobi.rest.util.RestUtils.thingToSkolemizedObjectNode;
 import static com.mobi.rest.util.RestUtils.validatePaginationParams;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -1663,8 +1666,8 @@ public class CatalogRest {
             tags = "catalogs",
             summary = "Gets a list of Branches associated with a VersionedRDFRecord identified by the provided IDs",
             responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "List of Branches for the identified VersionedRDFRecord"),
+                    @ApiResponse(responseCode = "200", description = "List of Records that match the search criteria",
+                            content = @Content(schema = @Schema(ref = "#/components/schemas/JsonLdObjects"))),
                     @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId or recordId"
                             + " could not be found"),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
@@ -2019,7 +2022,8 @@ public class CatalogRest {
             responses = {
                     @ApiResponse(responseCode = "200",
                             description = "List of Commits for the identified Branch which represents"
-                                    + " the Commit chain"),
+                                    + " the Commit chain",
+                            content = @Content(schema = @Schema(ref = "#/components/schemas/CommitDataArr"))),
                     @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId, recordId,"
                             + " or branchId could not be found"),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
@@ -2435,13 +2439,18 @@ public class CatalogRest {
             @Parameter(schema = @Schema(type = "string",
                     description = "String of JSON-LD that corresponds to the statements that "
                     + "were deleted in the entity"))
-            @FormParam("deletions") String deletionsJson) {
-        try {
+            @FormParam("deletions") String deletionsJson,
+            @Parameter(schema = @Schema(type = "string",
+                    description = "String of JSON-LD array that corresponds to conflicts associated with the merge"))
+            @FormParam("conflicts") String conflictsJson) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             User activeUser = getActiveUser(servletRequest, engineManager);
             Model additions = StringUtils.isEmpty(additionsJson) ? null : convertJsonld(additionsJson);
             Model deletions = StringUtils.isEmpty(deletionsJson) ? null : convertJsonld(deletionsJson);
+            Map<Resource, Conflict> conflicts = jsonToConflict(conflictsJson);
             Resource newCommitId = versioningManager.merge(vf.createIRI(catalogId), vf.createIRI(recordId),
-                    vf.createIRI(sourceBranchId), vf.createIRI(targetBranchId), activeUser, additions, deletions);
+                    vf.createIRI(sourceBranchId), vf.createIRI(targetBranchId), activeUser, additions, deletions,
+                    conflicts, conn);
             return Response.ok(newCommitId.stringValue()).build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
@@ -2492,7 +2501,7 @@ public class CatalogRest {
             @PathParam("catalogId") String catalogId,
             @Parameter(description = "String representing the VersionedRecord ID", required = true)
             @PathParam("recordId") String recordId,
-            @Parameter(description = "String representing the Branch ID", required = true)
+            @Parameter(description = "String representing the Branch ID")
             @PathParam("branchId") String branchId,
             @Parameter(description = "String representing the Commit ID", required = true)
             @PathParam("commitId") String commitId,
@@ -2500,12 +2509,18 @@ public class CatalogRest {
             @DefaultValue("jsonld") @QueryParam("format") String rdfFormat,
             @Parameter(description = "Boolean value identifying whether the InProgressCommit associated with "
                     + "identified Record should be  applied to the result")
-            @DefaultValue("false") @QueryParam("applyInProgressCommit") boolean apply) {
+            @DefaultValue("false") @QueryParam("applyInProgressCommit") boolean apply,
+            @Parameter(description = "Boolean value identifying whether to skolemize blank nodes")
+            @DefaultValue("true") @QueryParam("skolemize") boolean skolemize) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Resource catalogIRI = vf.createIRI(catalogId);
             Resource recordIRI = vf.createIRI(recordId);
             Resource commitIRI = vf.createIRI(commitId);
-            commitManager.getCommit(catalogIRI, recordIRI, vf.createIRI(branchId), commitIRI, conn);
+            if (StringUtils.isNotEmpty(branchId)) {
+                commitManager.getCommit(catalogIRI, recordIRI, vf.createIRI(branchId), commitIRI, conn);
+            } else {
+                commitManager.getCommit(commitIRI, conn);
+            }
             Model resource = compiledResourceManager.getCompiledResource(commitIRI, conn);
             if (apply) {
                 User activeUser = getActiveUser(servletRequest, engineManager);
@@ -2516,7 +2531,13 @@ public class CatalogRest {
                             conn);
                 }
             }
-            return Response.ok(modelToSkolemizedString(resource, rdfFormat, bNodeService)).build();
+            String result;
+            if (skolemize) {
+                result = modelToSkolemizedString(resource, rdfFormat, bNodeService);
+            } else {
+                result = modelToString(resource, rdfFormat);
+            }
+            return Response.ok(result).build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (IllegalStateException | MobiException ex) {
@@ -2991,6 +3012,40 @@ public class CatalogRest {
         object.set("left", getDifferenceJson(conflict.getLeftDifference(), rdfFormat));
         object.set("right", getDifferenceJson(conflict.getRightDifference(), rdfFormat));
         return object;
+    }
+
+    private Map<Resource, Conflict> jsonToConflict(String conflictsJson) {
+        try {
+            Map<Resource, Conflict> conflictMap = new HashMap<>();
+            if (StringUtils.isBlank(conflictsJson)) {
+                return conflictMap;
+            }
+            JsonNode arrNode = mapper.readTree(conflictsJson);
+            if (arrNode != null && arrNode.isArray()) {
+                for (final JsonNode objNode : arrNode) {
+                    IRI iri = vf.createIRI(objNode.get("iri").asText());
+                    Difference left = getDifference(objNode.get("left"));
+                    Difference right = getDifference(objNode.get("right"));
+                    Conflict conflict = new Conflict.Builder(iri)
+                            .leftDifference(left)
+                            .rightDifference(right)
+                            .build();
+                    conflictMap.put(iri, conflict);
+                }
+            }
+            return conflictMap;
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private Difference getDifference(JsonNode differenceNode) {
+        JsonNode additions = differenceNode.get("additions");
+        JsonNode deletions = differenceNode.get("deletions");
+        return new Difference.Builder()
+                .additions(convertJsonld(additions.toString()))
+                .deletions(convertJsonld(deletions.toString()))
+                .build();
     }
 
     /**

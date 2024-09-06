@@ -38,7 +38,7 @@
                 <info-message *ngIf="!results.length && state.submittedSearch" class="no-match">No datasets match your search text.</info-message>
                 <info-message *ngIf="!results.length && !state.submittedSearch" class="no-results">No datasets are available.</info-message>
                 <div class="w-100 dataset" *ngFor="let datasetDisplay of results; last as lastDataset">
-                    <div class="result-contents" class="d-flex w-100">
+                    <div class="headAndBranch-contents" class="d-flex w-100">
                         <div class="dataset-info flex-1 remove-min-width">
                             <div class="header align-items-center d-flex">
                                 <h3 class="text-truncate" [title]="datasetDisplay.title" [innerHTML]="datasetDisplay.title | highlightText:searchText"></h3>

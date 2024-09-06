@@ -3,12 +3,9 @@ PREFIX prov: <http://www.w3.org/ns/prov#>
 
 SELECT DISTINCT ?s
 WHERE {
-  VALUES ?commit { %COMMITLIST% }
+  VALUES ?revision { %REVISIONLIST% }
 
-  GRAPH ?commit {
-      ?commit prov:generated ?revision .
-      ?revision catalog:deletions ?deletionsGraph .
-  }
+  ?revision catalog:deletions ?deletionsGraph .
 
   GRAPH ?deletionsGraph {
     ?s ?p ?o .

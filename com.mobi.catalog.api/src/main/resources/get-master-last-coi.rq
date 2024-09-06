@@ -1,0 +1,9 @@
+PREFIX mcat: <http://mobi.com/ontologies/catalog#>
+
+SELECT ?commit
+WHERE {
+    ?masterCommitOfInterest mcat:baseCommit+ ?commit .
+
+    FILTER(?commit IN (%MASTERCOMMITS%))
+}
+LIMIT 1

@@ -36,6 +36,8 @@ import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.api.ontologies.mcat.CommitFactory;
 import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
+import com.mobi.catalog.api.ontologies.mcat.MasterBranch;
+import com.mobi.catalog.api.ontologies.mcat.MasterBranchFactory;
 import com.mobi.catalog.api.ontologies.mcat.Revision;
 import com.mobi.catalog.api.ontologies.mcat.RevisionFactory;
 import com.mobi.catalog.api.ontologies.mcat.Tag;
@@ -68,9 +70,7 @@ import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.ModelFactory;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Value;
-import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
-import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.eclipse.rdf4j.query.Binding;
 import org.eclipse.rdf4j.query.BindingSet;
 import org.eclipse.rdf4j.query.QueryResults;
@@ -151,6 +151,9 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
     public BranchFactory branchFactory;
 
     @Reference
+    public MasterBranchFactory masterBranchFactory;
+
+    @Reference
     public MergeRequestManager mergeRequestManager;
 
     @Reference
@@ -183,8 +186,7 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
     @Reference
     public RevisionFactory revisionFactory;
 
-    final ValueFactory vf = new ValidatingValueFactory();
-    final ModelFactory mf = new DynamicModelFactory();
+    protected final ModelFactory mf = new DynamicModelFactory();
 
     @Override
     protected void exportRecord(T record, RecordOperationConfig config, RepositoryConnection conn) {
@@ -200,21 +202,41 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
     public T createRecord(User user, RecordOperationConfig config, OffsetDateTime issued, OffsetDateTime modified,
                           RepositoryConnection conn) {
         T record = createRecordObject(config, issued, modified);
-        Branch masterBranch = createMasterBranch(record);
-        conn.begin();
-        addRecord(record, masterBranch, conn);
-        IRI catalogIdIRI = valueFactory.createIRI(config.get(RecordCreateSettings.CATALOG_ID));
+        MasterBranch masterBranch = createMasterBranch(record);
+
+        IRI catalogIdIRI = vf.createIRI(config.get(RecordCreateSettings.CATALOG_ID));
         Resource masterBranchId = record.getMasterBranch_resource().orElseThrow(() ->
                 new IllegalStateException("VersionedRDFRecord must have a master Branch"));
 
-        File versionedRdf = createDataFile(config);
-        commitManager.createInProgressCommit(catalogIdIRI, record.getResource(), user,
-                versionedRdf, null, conn);
-        versioningManager.commit(catalogIdIRI, record.getResource(), masterBranchId, user,
-                "The initial commit.", conn);
-        versionedRdf.delete();
-        conn.commit();
-        writePolicies(user, record);
+        File versionedRdf = null;
+        InitialLoad initialLoad = null;
+        try {
+            // Initial revision contains uploaded data for queries/rebuilding if necessary
+            versionedRdf = createDataFile(config);
+            initialLoad = loadHeadGraph(masterBranch, user, versionedRdf);
+
+            conn.begin();
+            addRecord(record, masterBranch, conn);
+            commitManager.addInProgressCommit(catalogIdIRI, record.getResource(), initialLoad.ipc, conn);
+
+            Resource initialCommitIRI = versioningManager.commit(catalogIdIRI, record.getResource(), masterBranchId,
+                    user, "The initial commit.", conn);
+            Commit initialCommit = commitManager.getCommit(initialCommitIRI, conn).orElseThrow(
+                    () -> new IllegalStateException("Could not retrieve commit " + initialCommitIRI.stringValue()));
+            initialCommit.setInitialRevision(initialLoad.initialRevision);
+            initialCommit.getModel().addAll(initialLoad.initialRevision.getModel());
+            thingManager.updateObject(initialCommit, conn);
+
+            conn.commit();
+            writePolicies(user, record);
+            versionedRdf.delete();
+        } catch (Exception e) {
+            Revision revision = null;
+            if (initialLoad != null) {
+                revision = initialLoad.initialRevision;
+            }
+            handleError(masterBranch, revision, versionedRdf, e);
+        }
         return record;
     }
 
@@ -336,7 +358,7 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
      * @return The {@link Resource} of the new Policy
      */
     protected Resource addPolicy(String policyString) {
-        XACMLPolicy policy = new XACMLPolicy(policyString, valueFactory);
+        XACMLPolicy policy = new XACMLPolicy(policyString, vf);
         return xacmlPolicyManager.addPolicy(policy);
     }
 
@@ -357,16 +379,18 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
      *
      * @param record The VersionedRDFRecord to add to a MasterBranch
      */
-    protected Branch createMasterBranch(VersionedRDFRecord record) {
-        Branch branch = createBranch("MASTER", "The master branch.");
-        Optional<Value> publisher = record.getProperty(valueFactory.createIRI(_Thing.publisher_IRI));
-        branch.setProperty(publisher.get(), valueFactory.createIRI(_Thing.publisher_IRI));
+    protected MasterBranch createMasterBranch(VersionedRDFRecord record) {
+        MasterBranch branch = createBranch("MASTER", "The master branch.");
+        Optional<Value> publisher = record.getProperty(vf.createIRI(_Thing.publisher_IRI));
+        branch.setProperty(publisher.get(), vf.createIRI(_Thing.publisher_IRI));
         record.setMasterBranch(branch);
         Set<Branch> branches = record.getBranch_resource().stream()
                 .map(branchFactory::createNew)
                 .collect(Collectors.toSet());
         branches.add(branch);
         record.setBranch(branches);
+        String headGraph = record.getResource().stringValue() + "/HEAD";
+        branch.setHeadGraph(vf.createIRI(headGraph));
         return branch;
     }
 
@@ -376,15 +400,15 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
      * @param title       Name of desired branch
      * @param description Short description of the title branch
      */
-    protected Branch createBranch(@Nonnull String title, String description) {
+    protected MasterBranch createBranch(@Nonnull String title, String description) {
         OffsetDateTime now = OffsetDateTime.now();
 
-        Branch branch = branchFactory.createNew(valueFactory.createIRI(Catalogs.BRANCH_NAMESPACE + UUID.randomUUID()));
-        branch.setProperty(valueFactory.createLiteral(title), valueFactory.createIRI(_Thing.title_IRI));
-        branch.setProperty(valueFactory.createLiteral(now), valueFactory.createIRI(_Thing.issued_IRI));
-        branch.setProperty(valueFactory.createLiteral(now), valueFactory.createIRI(_Thing.modified_IRI));
+        MasterBranch branch = masterBranchFactory.createNew(vf.createIRI(Catalogs.BRANCH_NAMESPACE + UUID.randomUUID()));
+        branch.setProperty(vf.createLiteral(title), vf.createIRI(_Thing.title_IRI));
+        branch.setProperty(vf.createLiteral(now), vf.createIRI(_Thing.issued_IRI));
+        branch.setProperty(vf.createLiteral(now), vf.createIRI(_Thing.modified_IRI));
         if (description != null) {
-            branch.setProperty(valueFactory.createLiteral(description), valueFactory.createIRI(_Thing.description_IRI));
+            branch.setProperty(vf.createLiteral(description), vf.createIRI(_Thing.description_IRI));
         }
         return branch;
     }
@@ -434,7 +458,7 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
             conn.clear(graph);
         });
         Set<Resource> inProgressCommitIris = new HashSet<>();
-        conn.getStatements(null, valueFactory.createIRI(InProgressCommit.onVersionedRDFRecord_IRI), recordIri)
+        conn.getStatements(null, vf.createIRI(InProgressCommit.onVersionedRDFRecord_IRI), recordIri)
                 .forEach(result -> inProgressCommitIris.add(result.getSubject()));
         inProgressCommitIris.forEach(resource -> {
             InProgressCommit commit = commitManager.getInProgressCommit(configProvider.getLocalCatalogIRI(), recordIri,
@@ -500,9 +524,9 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
                 Optional<Binding> masterBinding = Optional.ofNullable(bindings.getBinding("master"));
                 Optional<Binding> publisherBinding = Optional.ofNullable(bindings.getBinding("publisher"));
                 if (recordBinding.isPresent() && masterBinding.isPresent() && publisherBinding.isPresent()) {
-                    IRI recordIRI = valueFactory.createIRI(recordBinding.get().getValue().stringValue());
-                    IRI masterIRI = valueFactory.createIRI(masterBinding.get().getValue().stringValue());
-                    IRI userIRI = valueFactory.createIRI(publisherBinding.get().getValue().stringValue());
+                    IRI recordIRI = vf.createIRI(recordBinding.get().getValue().stringValue());
+                    IRI masterIRI = vf.createIRI(masterBinding.get().getValue().stringValue());
+                    IRI userIRI = vf.createIRI(publisherBinding.get().getValue().stringValue());
 
                     String username = engineManager.getUsername(userIRI).orElse("admin");
                     engineManager.retrieveUser(username).ifPresent(user -> writePolicies(user.getResource(), recordIRI,
@@ -512,31 +536,35 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
         }
     }
 
-    protected InProgressCommit loadInProgressCommit(User user, File additionsFile) {
+    protected InitialLoad loadHeadGraph(MasterBranch masterBranch, User user, File additionsFile) {
         InProgressCommit inProgressCommit = commitManager.createInProgressCommit(user);
-        IRI additionsGraph = getRevisionGraph(inProgressCommit, true);
-
+        Revision initialRevision = revisionManager.createRevision(UUID.randomUUID());
+        IRI initRevAddGraph = initialRevision.getAdditions().orElseThrow(
+                () -> new IllegalStateException("Initial revision missing additions graph"));
         try (RepositoryConnection fileConn = configProvider.getRepository().getConnection()) {
             if (additionsFile != null) {
                 RDFFormat format = RDFFiles.getFormatForFileName(additionsFile.getName()).orElseThrow(
                         () -> new IllegalStateException("File does not have valid extension"));
-                BatchGraphInserter inserter = new BatchGraphInserter(fileConn, additionsGraph,
-                        IsolationLevels.READ_UNCOMMITTED);
-                RDFLoader loader = new RDFLoader(new ParserConfig(), valueFactory);
+                IRI headGraph = branchManager.getHeadGraph(masterBranch);
+                BatchGraphInserter inserter = new BatchGraphInserter(fileConn,
+                        IsolationLevels.READ_UNCOMMITTED, headGraph, initRevAddGraph);
+                RDFLoader loader = new RDFLoader(new ParserConfig(), vf);
                 loader.load(additionsFile, null, format, inserter);
 
                 additionsFile.delete();
             }
-            return inProgressCommit;
+            return new InitialLoad(inProgressCommit, initialRevision);
         } catch (Exception e) {
-            clearAdditionsGraph(inProgressCommit);
+            clearHeadGraph(masterBranch, initialRevision);
             throw new MobiException(e);
         }
     }
 
-    protected void handleError(InProgressCommit commit, File file, Exception e) {
-        if (commit != null) {
-            clearAdditionsGraph(commit);
+    protected record InitialLoad(InProgressCommit ipc, Revision initialRevision) {}
+
+    protected void handleError(MasterBranch masterBranch, Revision initialRevision, File file, Exception e) {
+        if (masterBranch != null) {
+            clearHeadGraph(masterBranch, initialRevision);
         }
         if (e.getCause() instanceof RDFParseException && file != null) {
             String format = RDFFiles.getFormatForFileName(file.getName())
@@ -556,26 +584,21 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
         }
     }
 
-    protected IRI getRevisionGraph(InProgressCommit inProgressCommit, boolean additions) {
-        if (inProgressCommit == null) {
-            throw new IllegalArgumentException("Cannot retrieve additions graph from empty commit");
-        }
-        Resource resource = inProgressCommit.getGenerated_resource().stream().findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("Commit does not have a Revision."));
-        Revision revision = revisionFactory.getExisting(resource, inProgressCommit.getModel())
-                .orElseThrow(() -> new IllegalStateException("Could not retrieve expected Revision."));
-        if (additions) {
-            return revision.getAdditions().orElseThrow(() ->
-                    new IllegalStateException("Additions not set on Commit " + inProgressCommit.getResource()));
-        } else {
-            return revision.getDeletions().orElseThrow(() ->
-                    new IllegalStateException("Deletions not set on Commit " + inProgressCommit.getResource()));
-        }
-    }
-
-    protected void clearAdditionsGraph(InProgressCommit inProgressCommit) {
+    protected void clearHeadGraph(MasterBranch masterBranch, Revision initialRevision) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            conn.remove((IRI) null, null, null, getRevisionGraph(inProgressCommit, true));
+            IRI headGraph = branchManager.getHeadGraph(masterBranch);
+
+            if (initialRevision == null) {
+                conn.remove((IRI) null, null, null, headGraph);
+                return;
+            }
+
+            IRI initRevAddGraph = initialRevision.getAdditions().orElseThrow(
+                    () -> new IllegalStateException("Initial revision missing additions graph"));
+            IRI initRevDelGraph = initialRevision.getDeletions().orElseThrow(
+                    () -> new IllegalStateException("Initial revision missing deletions graph"));
+            conn.remove((IRI) null, null, null, headGraph, initRevAddGraph, initRevDelGraph);
+            conn.remove(initialRevision.getResource(), null, null);
         }
     }
 
@@ -593,12 +616,14 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
                     if (!deletedCommits.contains(commitId)) {
                         if (!commitIsReferenced(commitId, deletedCommits, conn)) {
                             // Get Additions/Deletions Graphs
-                            Revision revision = revisionManager.getRevision(commitId, conn);
-                            revision.getAdditions().ifPresent(deltaIRIs::add);
-                            revision.getDeletions().ifPresent(deltaIRIs::add);
-                            revision.getGraphRevision().forEach(graphRevision -> {
-                                graphRevision.getAdditions().ifPresent(deltaIRIs::add);
-                                graphRevision.getDeletions().ifPresent(deltaIRIs::add);
+                            Set<Revision> revisions = revisionManager.getAllRevisionsFromCommitId(commitId, conn);
+                            revisions.forEach(revision -> {
+                                revision.getAdditions().ifPresent(deltaIRIs::add);
+                                revision.getDeletions().ifPresent(deltaIRIs::add);
+                                revision.getGraphRevision().forEach(graphRevision -> {
+                                    graphRevision.getAdditions().ifPresent(deltaIRIs::add);
+                                    graphRevision.getDeletions().ifPresent(deltaIRIs::add);
+                                });
                             });
 
                             // Remove Commit
@@ -646,10 +671,11 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
     private boolean commitIsReferenced(Resource commitId, List<Resource> deletedCommits, RepositoryConnection conn) {
         IRI headCommitIRI = vf.createIRI(Branch.head_IRI);
         IRI baseCommitIRI = vf.createIRI(Commit.baseCommit_IRI);
+        IRI branchCommitIRI = vf.createIRI(Commit.branchCommit_IRI);
         IRI auxiliaryCommitIRI = vf.createIRI(Commit.auxiliaryCommit_IRI);
 
         boolean isHeadCommit = ConnectionUtils.contains(conn, null, headCommitIRI, commitId);
-        boolean isParent = Stream.of(baseCommitIRI, auxiliaryCommitIRI)
+        boolean isParent = Stream.of(baseCommitIRI, branchCommitIRI, auxiliaryCommitIRI)
                 .map(iri -> {
                     List<Resource> temp = new ArrayList<>();
                     conn.getStatements(null, iri, commitId).forEach(statement -> temp.add(statement.getSubject()));

@@ -37,11 +37,17 @@ import org.eclipse.rdf4j.model.ModelFactory;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.RDFHandler;
+import org.eclipse.rdf4j.rio.Rio;
+import org.eclipse.rdf4j.rio.helpers.BufferedGroupingRDFHandler;
 import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -164,6 +170,21 @@ public abstract class OrmEnabledTestCase {
                 .filter(OrmEnabledTestCase::determineIfOrmFactoryReference)
                 // For each ORM factory reference.
                 .forEach(field -> injectApplicableOrmFactory(field, serviceObject, serviceClazz));
+    }
+
+    /**
+     * Dumps the content of a RepositoryConnection into a file in the maven target directory.
+     *
+     * @param filename The name of the file to dump to. Should include `.trig` extension.
+     * @param conn The RepositoryConnection to dump.
+     */
+    public static void dumpRepoToTargetDir(String filename, RepositoryConnection conn) {
+        try (FileOutputStream output = new FileOutputStream("target/" + filename)) {
+            RDFHandler rdfWriter = new BufferedGroupingRDFHandler(Rio.createWriter(RDFFormat.TRIG, output));
+            conn.export(rdfWriter);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 
