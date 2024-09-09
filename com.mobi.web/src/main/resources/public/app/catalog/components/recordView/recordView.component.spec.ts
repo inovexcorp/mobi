@@ -110,6 +110,7 @@ describe('Record View component', function() {
 
         catalogStateStub.selectedRecord = record;
         catalogManagerStub.getRecord.and.returnValue(of([record]));
+        catalogManagerStub.getRecordStatistics.and.returnValue(of([]));
         catalogManagerStub.updateRecord.and.returnValue(of([record]));
     });
 
@@ -134,19 +135,23 @@ describe('Record View component', function() {
         it('if the record is found', function() {
             component.ngOnInit();
             expect(catalogManagerStub.getRecord).toHaveBeenCalledWith(recordId, catalogId);
+            expect(catalogManagerStub.getRecordStatistics).toHaveBeenCalledWith(recordId, catalogId);
             expect(component.setInfo).toHaveBeenCalledWith([record]);
             expect(component.setCanEdit).toHaveBeenCalledWith();
             expect(toastStub.createErrorToast).not.toHaveBeenCalled();
             expect(catalogStateStub.selectedRecord).toEqual(record);
+            expect(component.statistics).toEqual([]);
         });
         it('unless the record is not found', function() {
             catalogManagerStub.getRecord.and.returnValue(throwError('Error message'));
             component.ngOnInit();
             expect(catalogManagerStub.getRecord).toHaveBeenCalledWith(recordId, catalogId);
+            expect(catalogManagerStub.getRecordStatistics).toHaveBeenCalledWith(recordId, catalogId);
             expect(component.setInfo).not.toHaveBeenCalled();
             expect(component.setCanEdit).not.toHaveBeenCalled();
             expect(catalogStateStub.selectedRecord).toBeUndefined();
             expect(toastStub.createErrorToast).toHaveBeenCalledWith('Error message');
+            expect(component.statistics).toEqual([]);
         });
     });
     describe('controller methods', function() {

@@ -1,0 +1,19 @@
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+PREFIX catalog: <http://mobi.com/ontologies/catalog#>
+
+# USAGE: BIND (<RecordId> as ?record)
+SELECT
+  (COUNT(DISTINCT ?individual) AS ?totalIndividuals)
+WHERE {
+  GRAPH ?record {
+    ?record a catalog:Record;
+      catalog:masterBranch ?masterBranch .
+  }
+  GRAPH ?masterBranch {
+    ?masterBranch a catalog:MasterBranch;
+      catalog:headGraph ?headGraph .
+  }
+  GRAPH ?headGraph {
+    ?individual a owl:NamedIndividual .
+  }
+}

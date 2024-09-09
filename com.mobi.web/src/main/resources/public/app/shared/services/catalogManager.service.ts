@@ -53,6 +53,7 @@ import {
 import { EventTypeConstants, EventWithPayload } from '../models/eventWithPayload.interface';
 import { FilterItem } from '../models/filterItem.interface';
 import { FilterType, ListFilter } from '../models/list-filter.interface';
+import { Statistic } from '../models/statistic.interface';
 
 /**
  * @class shared.CatalogManagerService
@@ -266,6 +267,21 @@ export class CatalogManagerService {
      */
     getRecord(recordId: string, catalogId: string): Observable<JSONLDObject[]> {
         return this.spinnerSrv.track(this.http.get<JSONLDObject[]>(`${this.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}`))
+            .pipe(catchError(handleError));
+    }
+
+    /**
+     * Calls the GET /mobirest/catalogs/{catalogId}/records/{recordId} endpoint with the passed
+     * Catalog and Record ids and returns the matching Record Statistics if it exists.
+     *
+     * @param {string} recordId The id of the Record to retrieve
+     * @param {string} catalogId The id of the Catalog with the specified Record
+     * @returns {Observable<Statistic[]>} An Observable that resolves to the array of {@link Statistic}s for the
+     * Record if it exists or is rejected with an error message
+     */
+    getRecordStatistics(recordId: string, catalogId: string): Observable<Statistic[]> {
+        const url = `${this.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/statistics`;
+        return this.spinnerSrv.track(this.http.get<Statistic[]>(url))
             .pipe(catchError(handleError));
     }
 

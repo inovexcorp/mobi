@@ -36,23 +36,40 @@
         <record-view-tabset [record]="record" (updateRecord)="updateRecord($event)" [canEdit]="canEdit"></record-view-tabset>
     </div>
     <div class="record-sidebar col-auto h-100 vertical-scroll">
-        <h3>About this Record</h3>
-        <dl>
-            <dt class="text-muted">Publisher</dt>
-            <dd><entity-publisher [entity]="record"></entity-publisher></dd>
-            <dt class="text-muted">Modified</dt>
-            <dd>{{modified}}</dd>
-            <dt class="text-muted">Issued</dt>
-            <dd>{{issued}}</dd>
-            <dt class="text-muted pt-2">Keywords</dt>
-            <dd class="keyword-description">
-                <catalog-record-keywords [record]="record" [canEdit]="canEdit" (saveEvent)="updateRecord($event)"></catalog-record-keywords>
-            </dd>
-        </dl>
-       
-        <div class="d-flex button-container">
-            <open-record-button [record]="record"></open-record-button>
-            <manage-record-button [record]="record" (manageEvent)="updatePermission($event)"></manage-record-button>
+        <div class="about-record">
+            <h3>About this Record</h3>
+            <dl>
+                <dt class="text-muted">Publisher</dt>
+                <dd><entity-publisher [entity]="record"></entity-publisher></dd>
+                <dt class="text-muted">Modified</dt>
+                <dd>{{modified}}</dd>
+                <dt class="text-muted">Issued</dt>
+                <dd>{{issued}}</dd>
+                <dt class="text-muted pt-2">Keywords</dt>
+                <dd class="keyword-description">
+                    <catalog-record-keywords [record]="record" [canEdit]="canEdit" (saveEvent)="updateRecord($event)"></catalog-record-keywords>
+                </dd>
+            </dl>
+        </div>
+        <div class="statistics">
+            <h3>Statistics</h3>
+            <dl *ngIf="statistics && statistics.length > 0; else noMetrics">
+                <ng-container *ngFor="let statistic of statistics">
+                    <dt class="text-muted" [title]="statistic.description">{{ statistic.name }}</dt>
+                    <dd>{{ statistic.value | number }}</dd>
+                </ng-container>
+            </dl>
+            <ng-template #noMetrics>
+                <div class="mb-3">
+                    No statistics available.
+                </div>
+            </ng-template>
+        </div>
+        <div>
+            <div class="d-flex button-container">
+                <open-record-button [record]="record"></open-record-button>
+                <manage-record-button [record]="record" (manageEvent)="updatePermission($event)"></manage-record-button>
+            </div>
         </div>
     </div>
 </div>

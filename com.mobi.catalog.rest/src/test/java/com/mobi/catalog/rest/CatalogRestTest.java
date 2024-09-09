@@ -39,6 +39,7 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -76,6 +77,9 @@ import com.mobi.catalog.api.ontologies.mcat.UserBranch;
 import com.mobi.catalog.api.ontologies.mcat.Version;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRecord;
+import com.mobi.catalog.api.record.RecordService;
+import com.mobi.catalog.api.record.statistic.Statistic;
+import com.mobi.catalog.api.record.statistic.StatisticDefinition;
 import com.mobi.catalog.api.versioning.VersioningManager;
 import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.etl.api.ontologies.delimited.MappingRecord;
@@ -105,9 +109,9 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -216,20 +220,20 @@ public class CatalogRestTest extends MobiRestTestCXF {
         vf = getValueFactory();
         mf = getModelFactory();
 
-        catalogManager = Mockito.mock(CatalogManager.class);
-        configProvider = Mockito.mock(CatalogConfigProvider.class);
-        versioningManager = Mockito.mock(VersioningManager.class);
-        engineManager = Mockito.mock(EngineManager.class);
+        catalogManager = mock(CatalogManager.class);
+        configProvider = mock(CatalogConfigProvider.class);
+        versioningManager = mock(VersioningManager.class);
+        engineManager = mock(EngineManager.class);
         
-        bNodeService = Mockito.mock(BNodeService.class);
-        provUtils = Mockito.mock(CatalogProvUtils.class);
-        recordManager = Mockito.mock(RecordManager.class);
-        branchManager = Mockito.mock(BranchManager.class);
-        commitManager = Mockito.mock(CommitManager.class);
-        distributionManager = Mockito.mock(DistributionManager.class);
-        versionManager = Mockito.mock(VersionManager.class);
-        differenceManager = Mockito.mock(DifferenceManager.class);
-        compiledResourceManager = Mockito.mock(CompiledResourceManager.class);
+        bNodeService = mock(BNodeService.class);
+        provUtils = mock(CatalogProvUtils.class);
+        recordManager = mock(RecordManager.class);
+        branchManager = mock(BranchManager.class);
+        commitManager = mock(CommitManager.class);
+        distributionManager = mock(DistributionManager.class);
+        versionManager = mock(VersionManager.class);
+        differenceManager = mock(DifferenceManager.class);
+        compiledResourceManager = mock(CompiledResourceManager.class);
 
         rest = new CatalogRest();
         injectOrmFactoryReferencesIntoService(rest);
@@ -857,6 +861,48 @@ public class CatalogRestTest extends MobiRestTestCXF {
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI))
                 .request().put(Entity.json(record.toString()));
         assertEquals(500, response.getStatus());
+    }
+
+    // PUT catalogs/{catalogId}/records/{recordId}/statistics
+
+    @Test
+    public void getRecordStatisticsTest() {
+        RecordService rs = mock(RecordService.class);
+        List<Statistic> statistics = new ArrayList<>();
+        statistics.add(new Statistic(new StatisticDefinition("stat1", "stat1Desc"), 1));
+        when(rs.getStatistics(any(), any())).thenReturn(statistics);
+        when(recordManager.getRecordService(any(), any())).thenReturn(rs);
+
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/statistics")
+                .request().get();
+        assertEquals(200, response.getStatus());
+        verify(recordManager).getRecordOpt(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), recordFactory, conn);
+        try {
+            ArrayNode arr = (ArrayNode) mapper.readTree(response.readEntity(String.class));
+            assertEquals("[{\"name\":\"stat1\",\"description\":\"stat1Desc\",\"value\":1}]", arr.toString());
+        } catch (Exception e) {
+            fail("Expected no exception, but got: " + e.getMessage());
+        }
+    }
+
+    @Test
+    public void getRecordStatisticsNoStatsTest() {
+        RecordService rs = mock(RecordService.class);
+        when(rs.getStatistics(any(), any())).thenReturn(new ArrayList<Statistic>());
+        when(recordManager.getRecordService(any(), any())).thenReturn(rs);
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/statistics")
+                .request().get();
+        assertEquals(204, response.getStatus());
+        verify(recordManager).getRecordOpt(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), recordFactory, conn);
+    }
+
+    @Test
+    public void getRecordStatisticsMissingRecordTest() {
+        when(recordManager.getRecordOpt(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(ERROR_IRI)), any(OrmFactory.class), any(RepositoryConnection.class))).thenReturn(Optional.empty());
+
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(ERROR_IRI) + "/statistics")
+                .request().get();
+        assertEquals(404, response.getStatus());
     }
 
     // GET catalogs/{catalogId}/keywords

@@ -36,18 +36,33 @@
             margin-left: 10px;
         }
     }
+    .about-record {
+        dt {
+            float: left;
+            clear: left;
+            width: 100px;
+        }
+        dd {
+            margin: 0 0 0 110px;
+            padding: 0 0 0.5em 0.5em;
     
-    dt {
-        float: left;
-        clear: left;
-        width: 100px;
+            .keyword-description {
+                padding: 0;
+            }
+        }
+    
     }
-    dd {
-        margin: 0 0 0 110px;
-        padding: 0 0 0.5em 0.5em;
-
-        .keyword-description {
-            padding: 0;
+    .statistics {
+        dt, dd {
+            display: inline-block;
+            width: calc(50% - 0.5rem);
+            margin: 0;
+        }
+        dt {
+            text-align: left;
+        }
+        dt::after {
+            content: ":";
         }
     }
 }

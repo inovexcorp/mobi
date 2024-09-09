@@ -25,6 +25,7 @@ package com.mobi.catalog.api.record;
 
 import com.mobi.catalog.api.ontologies.mcat.Record;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
+import com.mobi.catalog.api.record.statistic.Statistic;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
@@ -89,4 +90,13 @@ public interface RecordService<T extends Record> {
      */
     Optional<List<Resource>> deleteBranch(Resource catalogId, Resource versionedRDFRecordId, Resource branchId,
                                            RepositoryConnection conn);
+
+    /**
+     * Returns a list of statistics
+     *
+     * @param recordId The Resource identifying the Record.
+     * @param conn     A RepositoryConnection to use for lookup.
+     * @return A list of {@link Statistic}
+     */
+    List<Statistic> getStatistics(Resource recordId, RepositoryConnection conn);
 }

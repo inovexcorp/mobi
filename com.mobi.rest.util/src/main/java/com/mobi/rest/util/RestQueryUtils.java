@@ -58,6 +58,7 @@ import org.eclipse.rdf4j.query.MalformedQueryException;
 import org.eclipse.rdf4j.query.QueryLanguage;
 import org.eclipse.rdf4j.query.TupleQuery;
 import org.eclipse.rdf4j.query.TupleQueryResult;
+import org.eclipse.rdf4j.query.explanation.Explanation;
 import org.eclipse.rdf4j.query.impl.MutableTupleQueryResult;
 import org.eclipse.rdf4j.query.parser.ParsedGraphQuery;
 import org.eclipse.rdf4j.query.parser.ParsedOperation;
@@ -558,6 +559,9 @@ public class RestQueryUtils {
         } else {
             QueryResultIO.writeTuple(queryResults, format, os);
         }
+        if (logger.isTraceEnabled()) {
+            logger.trace(query.explain(Explanation.Level.Timed).toString());
+        }
         queryResults.close();
         os.flush();
         os.close();
@@ -577,11 +581,13 @@ public class RestQueryUtils {
 
         if (!StringUtils.isBlank(datasetRecordId)) {
             Resource recordId = valueFactory.createIRI(datasetRecordId);
-
             try (DatasetConnection conn = connectionObjects.getDatasetManager().getConnection(recordId)) {
                 TupleQuery query = conn.prepareTupleQuery(queryString);
                 queryResults = new MutableTupleQueryResult(query.evaluate());
                 // MutableTupleQueryResult - stores the complete query result in memory
+                if (logger.isTraceEnabled()) {
+                    logger.trace(query.explain(Explanation.Level.Timed).toString());
+                }
             }
         } else {
             OsgiRepository repository = connectionObjects.getRepositoryManager().getRepository("system").orElseThrow(() ->
@@ -589,6 +595,9 @@ public class RestQueryUtils {
             try (RepositoryConnection conn = repository.getConnection()) {
                 TupleQuery query = conn.prepareTupleQuery(queryString);
                 queryResults = new MutableTupleQueryResult(query.evaluate());
+                if (logger.isTraceEnabled()) {
+                    logger.trace(query.explain(Explanation.Level.Timed).toString());
+                }
             }
         }
         return queryResults;
