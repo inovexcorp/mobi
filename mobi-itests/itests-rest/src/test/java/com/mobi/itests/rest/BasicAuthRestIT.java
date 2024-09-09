@@ -58,6 +58,7 @@ import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 @RunWith(PaxExam.class)
 @ExamReactorStrategy(PerClass.class)
@@ -65,7 +66,7 @@ public class BasicAuthRestIT extends KarafTestSupport {
 
     private static Boolean setupComplete = false;
 
-    private HttpClientContext context = HttpClientContext.create();
+    private final HttpClientContext context = HttpClientContext.create();
 
     @Override
     public MavenArtifactUrlReference getKarafDistribution() {
@@ -80,7 +81,7 @@ public class BasicAuthRestIT extends KarafTestSupport {
             List<Option> options = new ArrayList<>(Arrays.asList(
                     KarafDistributionOption.editConfigurationFilePut("etc/org.ops4j.pax.web.cfg", "org.osgi.service.http.port.secure", httpsPort),
                     KarafDistributionOption.replaceConfigurationFile("etc/org.ops4j.pax.logging.cfg",
-                            Paths.get(this.getClass().getResource("/etc/org.ops4j.pax.logging.cfg").toURI()).toFile()),
+                            Paths.get(Objects.requireNonNull(this.getClass().getResource("/etc/org.ops4j.pax.logging.cfg")).toURI()).toFile()),
                     KarafDistributionOption.editConfigurationFilePut("etc/com.mobi.security.api.EncryptionService.cfg", "enabled", "false")
             ));
             return OptionUtils.combine(super.config(), options.toArray(new Option[0]));
@@ -105,7 +106,7 @@ public class BasicAuthRestIT extends KarafTestSupport {
 
     @Test
     public void testToken() throws Exception {
-        try (CloseableHttpResponse response = getCatalogs(createHttpClient())) {
+        try (CloseableHttpClient client = createHttpClient(); CloseableHttpResponse response = getCatalogs(client)) {
             assertNotNull(response);
             assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
         } catch (IOException | GeneralSecurityException e) {
@@ -115,7 +116,7 @@ public class BasicAuthRestIT extends KarafTestSupport {
 
     @Test
     public void testNoAuth() throws Exception {
-        try (CloseableHttpResponse response = getCatalogsNoAuth(createHttpClient())) {
+        try (CloseableHttpClient client = createHttpClient(); CloseableHttpResponse response = getCatalogsNoAuth(client)) {
             assertNotNull(response);
             assertEquals(HttpStatus.SC_FORBIDDEN, response.getStatusLine().getStatusCode());
         } catch (IOException | GeneralSecurityException e) {
@@ -125,7 +126,7 @@ public class BasicAuthRestIT extends KarafTestSupport {
 
     @Test
     public void testBasicAuth() throws Exception {
-        try (CloseableHttpResponse response = getCatalogsBasicAuth(createBasicAuthHttpClient(context, Integer.parseInt(RestITUtils.getHttpsPort(configurationAdmin))))) {
+        try (CloseableHttpClient client = createBasicAuthHttpClient(context, Integer.parseInt(RestITUtils.getHttpsPort(configurationAdmin))); CloseableHttpResponse response = getCatalogsBasicAuth(client)) {
             Header[] headers = response.getAllHeaders();
             for (Header header : headers) {
                 System.out.print(header.getName() + ":" + header.getValue());

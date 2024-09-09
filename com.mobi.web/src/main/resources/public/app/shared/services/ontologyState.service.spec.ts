@@ -544,14 +544,14 @@ describe('Ontology State Service', function() {
     describe('first deleting the state', function() {
       describe('then deleting the record', function() {
         it('successfully', async function() {
-          ontologyManagerStub.deleteOntology.and.returnValue(of(null));
+          catalogManagerStub.deleteRecord.and.returnValue(of(null));
           await service.delete(recordId)
             .subscribe(() => {}, () => fail('Observable should have succeeded'));
           expect(this.deleteStateSpy).toHaveBeenCalledWith(recordId);
-          expect(ontologyManagerStub.deleteOntology).toHaveBeenCalledWith(recordId);
+          expect(catalogManagerStub.deleteRecord).toHaveBeenCalledWith(recordId, catalogId);
         });
         it('unless an error occurs', async function() {
-          ontologyManagerStub.deleteOntology.and.returnValue(throwError(error));
+          catalogManagerStub.deleteRecord.and.returnValue(throwError(error));
           await service.delete(recordId)
             .subscribe(() => {
               fail('Observable should have rejected');
@@ -559,7 +559,7 @@ describe('Ontology State Service', function() {
               expect(response).toEqual(error);
             });
           expect(this.deleteStateSpy).toHaveBeenCalledWith(recordId);
-          expect(ontologyManagerStub.deleteOntology).toHaveBeenCalledWith(recordId);
+          expect(catalogManagerStub.deleteRecord).toHaveBeenCalledWith(recordId, catalogId);
         });
       });
       it('unless an error occurs', async function() {
@@ -571,7 +571,7 @@ describe('Ontology State Service', function() {
             expect(response).toEqual(error);
           });
         expect(this.deleteStateSpy).toHaveBeenCalledWith(recordId);
-        expect(ontologyManagerStub.deleteOntology).not.toHaveBeenCalled();
+        expect(catalogManagerStub.deleteRecord).not.toHaveBeenCalled();
       });
     });
   });

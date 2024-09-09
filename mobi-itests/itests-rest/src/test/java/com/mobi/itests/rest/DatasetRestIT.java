@@ -76,6 +76,7 @@ import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import javax.inject.Inject;
 
@@ -89,7 +90,7 @@ public class DatasetRestIT extends KarafTestSupport {
     @Inject
     protected static BundleContext thisBundleContext;
 
-    private HttpClientContext context = HttpClientContext.create();
+    private final HttpClientContext context = HttpClientContext.create();
 
     @Override
     public MavenArtifactUrlReference getKarafDistribution() {
@@ -104,7 +105,7 @@ public class DatasetRestIT extends KarafTestSupport {
             List<Option> options = new ArrayList<>(Arrays.asList(
                     KarafDistributionOption.editConfigurationFilePut("etc/org.ops4j.pax.web.cfg", "org.osgi.service.http.port.secure", httpsPort),
                     KarafDistributionOption.replaceConfigurationFile("etc/org.ops4j.pax.logging.cfg",
-                            Paths.get(this.getClass().getResource("/etc/org.ops4j.pax.logging.cfg").toURI()).toFile()),
+                            Paths.get(Objects.requireNonNull(this.getClass().getResource("/etc/org.ops4j.pax.logging.cfg")).toURI()).toFile()),
                     KarafDistributionOption.editConfigurationFilePut("etc/com.mobi.security.api.EncryptionService.cfg", "enabled", "false"),
                     CoreOptions.vmOptions("-Dcom.sun.xml.bind.v2.runtime.reflect.opt.OptimizedAccessorFactory.noOptimization=true")
             ));
@@ -139,7 +140,7 @@ public class DatasetRestIT extends KarafTestSupport {
 
         // Create Dataset to upload data into
         HttpEntity datasetEntity = createDatasetFormData("Test Dataset");
-        try (CloseableHttpResponse response = createDataset(createHttpClient(), datasetEntity)) {
+        try (CloseableHttpClient client = createHttpClient(); CloseableHttpResponse response = createDataset(client, datasetEntity)) {
             assertEquals(HttpStatus.SC_CREATED, response.getStatusLine().getStatusCode());
             recordId = vf.createIRI(EntityUtils.toString(response.getEntity()));
 
@@ -166,7 +167,7 @@ public class DatasetRestIT extends KarafTestSupport {
 
         // Upload Data to Dataset
         HttpEntity dataEntity = createUploadFormData(DATA_FILE);
-        try (CloseableHttpResponse response = uploadFile(createHttpClient(), recordId, dataEntity)) {
+        try (CloseableHttpClient client = createHttpClient(); CloseableHttpResponse response = uploadFile(client, recordId, dataEntity)) {
             assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
 
             // Assert data in system default named graph

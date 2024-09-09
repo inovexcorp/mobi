@@ -12,12 +12,12 @@ package com.mobi.itests.rest;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
@@ -71,6 +71,7 @@ import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import javax.inject.Inject;
 
 @RunWith(PaxExam.class)
@@ -83,7 +84,7 @@ public class CatalogRestIT extends KarafTestSupport {
     @Inject
     protected static BundleContext thisBundleContext;
 
-    private HttpClientContext context = HttpClientContext.create();
+    private final HttpClientContext context = HttpClientContext.create();
 
     @Override
     public MavenArtifactUrlReference getKarafDistribution() {
@@ -98,7 +99,7 @@ public class CatalogRestIT extends KarafTestSupport {
             List<Option> options = new ArrayList<>(Arrays.asList(
                     KarafDistributionOption.editConfigurationFilePut("etc/org.ops4j.pax.web.cfg", "org.osgi.service.http.port.secure", httpsPort),
                     KarafDistributionOption.replaceConfigurationFile("etc/org.ops4j.pax.logging.cfg",
-                            Paths.get(this.getClass().getResource("/etc/org.ops4j.pax.logging.cfg").toURI()).toFile()),
+                            Paths.get(Objects.requireNonNull(this.getClass().getResource("/etc/org.ops4j.pax.logging.cfg")).toURI()).toFile()),
                     KarafDistributionOption.editConfigurationFilePut("etc/com.mobi.security.api.EncryptionService.cfg", "enabled", "false"),
                     CoreOptions.vmOptions("-Dcom.sun.xml.bind.v2.runtime.reflect.opt.OptimizedAccessorFactory.noOptimization=true")
             ));
@@ -133,7 +134,7 @@ public class CatalogRestIT extends KarafTestSupport {
         String recordId;
         HttpEntity entity = createUploadOntologyFormData("/BlankNodeRestrictionUpdate.ttl", "BlankNodeRestriction");
 
-        try (CloseableHttpResponse response = uploadFile(createHttpClient(), entity)) {
+        try (CloseableHttpClient client = createHttpClient(); CloseableHttpResponse response = uploadFile(client, entity)) {
             assertEquals(HttpStatus.SC_CREATED, response.getStatusLine().getStatusCode());
             String[] ids = parseAndValidateUploadResponse(response);
             recordId = ids[0];
@@ -144,11 +145,11 @@ public class CatalogRestIT extends KarafTestSupport {
         String result = IOUtils.toString(thisBundleContext.getBundle().getEntry("/BlankNodeRestrictionUpdate-inProgressCommit.jsonld").openStream(), StandardCharsets.UTF_8).replaceAll("\\s", "");;
 
         HttpEntity inProgressCommitFormData = createUpdateInProgressCommitFormData(additions, deletions);
-        try (CloseableHttpResponse response = updateInProgressCommit(createHttpClient(), inProgressCommitFormData, recordId)) {
+        try (CloseableHttpClient client = createHttpClient(); CloseableHttpResponse response = updateInProgressCommit(client, inProgressCommitFormData, recordId)) {
             assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
         }
 
-        try (CloseableHttpResponse response = getInProgressCommit(createHttpClient(), recordId)) {
+        try (CloseableHttpClient client = createHttpClient(); CloseableHttpResponse response = getInProgressCommit(client, recordId)) {
             assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
             assertEquals(result, EntityUtils.toString(response.getEntity()));
         }
@@ -180,24 +181,22 @@ public class CatalogRestIT extends KarafTestSupport {
 
     private CloseableHttpResponse updateInProgressCommit(CloseableHttpClient client, HttpEntity entity, String recordId) throws IOException, GeneralSecurityException {
         authenticateUser(context, RestITUtils.getHttpsPort(configurationAdmin));
-        StringBuilder sb = new StringBuilder();
-        sb.append(getBaseUrl(RestITUtils.getHttpsPort(configurationAdmin)));
-        sb.append("/catalogs/http%3A%2F%2Fmobi.com%2Fcatalog-local/records/");
-        sb.append(URLEncoder.encode(recordId, StandardCharsets.UTF_8));
-        sb.append("/in-progress-commit");
-        HttpPut put = new HttpPut(sb.toString());
+        String sb = getBaseUrl(RestITUtils.getHttpsPort(configurationAdmin)) +
+                "/catalogs/http%3A%2F%2Fmobi.com%2Fcatalog-local/records/" +
+                URLEncoder.encode(recordId, StandardCharsets.UTF_8) +
+                "/in-progress-commit";
+        HttpPut put = new HttpPut(sb);
         put.setEntity(entity);
         return client.execute(put, context);
     }
 
     private CloseableHttpResponse getInProgressCommit(CloseableHttpClient client, String recordId) throws IOException, GeneralSecurityException {
         authenticateUser(context, RestITUtils.getHttpsPort(configurationAdmin));
-        StringBuilder sb = new StringBuilder();
-        sb.append(getBaseUrl(RestITUtils.getHttpsPort(configurationAdmin)));
-        sb.append("/catalogs/http%3A%2F%2Fmobi.com%2Fcatalog-local/records/");
-        sb.append(URLEncoder.encode(recordId, StandardCharsets.UTF_8));
-        sb.append("/in-progress-commit");
-        HttpGet get = new HttpGet(sb.toString());
+        String sb = getBaseUrl(RestITUtils.getHttpsPort(configurationAdmin)) +
+                "/catalogs/http%3A%2F%2Fmobi.com%2Fcatalog-local/records/" +
+                URLEncoder.encode(recordId, StandardCharsets.UTF_8) +
+                "/in-progress-commit";
+        HttpGet get = new HttpGet(sb);
         return client.execute(get, context);
     }
 

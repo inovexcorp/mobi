@@ -34,7 +34,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
@@ -445,37 +444,6 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
                 .accept(MediaType.APPLICATION_OCTET_STREAM_TYPE).get();
 
         assertEquals(response.getStatus(), 405);
-    }
-
-    @Test
-    public void deleteShapesGraphRecordTest() {
-        Response response = target().path("shapes-graphs/" + encode(recordId.stringValue())).request()
-                .accept(MediaType.APPLICATION_JSON).delete();
-
-        assertEquals(response.getStatus(), 204);
-        verify(recordManager).removeRecord(eq(catalogId), eq(recordId), eq(user), eq(ShapesGraphRecord.class), any(RepositoryConnection.class));
-    }
-
-    @Test
-    public void deleteShapesGraphRecordIllegalArgumentExceptionTest() {
-        doThrow(IllegalArgumentException.class).when(recordManager).removeRecord(any(), any(), any(), any(), any(RepositoryConnection.class));
-
-        Response response = target().path("shapes-graphs/" + encode(recordId.stringValue())).request()
-                .accept(MediaType.APPLICATION_JSON).delete();
-
-        assertEquals(response.getStatus(), 400);
-        verify(recordManager).removeRecord(eq(catalogId), eq(recordId), eq(user), eq(ShapesGraphRecord.class), any(RepositoryConnection.class));
-    }
-
-    @Test
-    public void deleteShapesGraphRecordIllegalStateExceptionTest() {
-        doThrow(IllegalStateException.class).when(recordManager).removeRecord(any(), any(), any(), any(), any(RepositoryConnection.class));
-
-        Response response = target().path("shapes-graphs/" + encode(recordId.stringValue())).request()
-                .accept(MediaType.APPLICATION_JSON).delete();
-
-        assertEquals(response.getStatus(), 500);
-        verify(recordManager).removeRecord(eq(catalogId), eq(recordId), eq(user), eq(ShapesGraphRecord.class), any(RepositoryConnection.class));
     }
 
     @Test

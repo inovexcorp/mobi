@@ -24,7 +24,6 @@ package com.mobi.itests.platform;
  */
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import com.mobi.security.policy.api.xacml.XACMLPolicyManager;
@@ -44,23 +43,14 @@ import org.ops4j.pax.exam.karaf.options.KarafDistributionOption;
 import org.ops4j.pax.exam.options.MavenArtifactUrlReference;
 import org.ops4j.pax.exam.spi.reactors.ExamReactorStrategy;
 import org.ops4j.pax.exam.spi.reactors.PerClass;
-import org.osgi.framework.Bundle;
-import org.osgi.framework.BundleContext;
-import org.osgi.framework.ServiceReference;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
-import java.util.stream.Stream;
-import javax.inject.Inject;
 
 @RunWith(PaxExam.class)
 @ExamReactorStrategy(PerClass.class)
@@ -78,7 +68,7 @@ public class BalanaIT extends KarafTestSupport {
         try {
             List<Option> options = new ArrayList<>(Arrays.asList(
                     KarafDistributionOption.replaceConfigurationFile("etc/org.ops4j.pax.logging.cfg",
-                            Paths.get(this.getClass().getResource("/etc/org.ops4j.pax.logging.cfg").toURI()).toFile()),
+                            Paths.get(Objects.requireNonNull(this.getClass().getResource("/etc/org.ops4j.pax.logging.cfg")).toURI()).toFile()),
                     KarafDistributionOption.editConfigurationFilePut("etc/com.mobi.security.api.EncryptionService.cfg", "enabled", "false")
             ));
             return OptionUtils.combine(super.config(), options.toArray(new Option[0]));
@@ -101,7 +91,7 @@ public class BalanaIT extends KarafTestSupport {
     public void validateSystemPoliciesLoaded() throws Exception {
         XACMLPolicyManager policyManager = getOsgiService(XACMLPolicyManager.class);
         Set<Resource> policyIds = policyManager.getSystemPolicyIds();
-        assertEquals(5, policyIds.size());
+        assertEquals(7, policyIds.size());
         systemPolicyIds.forEach(systemPolicy -> assertTrue(policyIds.contains(systemPolicy)));
     }
 }

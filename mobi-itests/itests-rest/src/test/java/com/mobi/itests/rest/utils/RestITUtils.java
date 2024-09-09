@@ -47,14 +47,15 @@ import org.osgi.service.cm.ConfigurationAdmin;
 
 import java.io.IOException;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 
 public class RestITUtils {
 
     public static String username = "admin";
     public static String password = "admin";
-    private static String hostUrl = "https://localhost:";
-    private static String path =  "/mobirest";
+    private static final String hostUrl = "https://localhost:";
+    private static final String path =  "/mobirest";
 
     public static CloseableHttpClient createHttpClient() throws GeneralSecurityException {
         SSLContextBuilder builder = new SSLContextBuilder();
@@ -90,8 +91,8 @@ public class RestITUtils {
             int count = 0;
             while (count < 3) {
                 HttpPost post = new HttpPost(getBaseUrl(port) + "/session?password="
-                        + URLEncoder.encode(password, "UTF-8") + "&username="
-                        + URLEncoder.encode(username, "UTF-8"));
+                        + URLEncoder.encode(password, StandardCharsets.UTF_8) + "&username="
+                        + URLEncoder.encode(username, StandardCharsets.UTF_8));
                 CloseableHttpResponse response = client.execute(post, context);
                 assertNotNull(response);
                 status = response.getStatusLine().getStatusCode();

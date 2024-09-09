@@ -371,7 +371,7 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
      */
     delete(recordId: string): Observable<void> {
       return this.deleteState(recordId).pipe(
-        switchMap(() => this.om.deleteOntology(recordId))
+        switchMap(() => this.cm.deleteRecord(recordId, this.catalogId))
       );
     }
     /**

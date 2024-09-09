@@ -63,6 +63,7 @@ import org.osgi.framework.BundleContext;
 
 import java.io.IOException;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
@@ -70,6 +71,7 @@ import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import javax.inject.Inject;
 
 @RunWith(PaxExam.class)
@@ -81,7 +83,7 @@ public class UserRestIT extends KarafTestSupport {
     @Inject
     protected static BundleContext thisBundleContext;
 
-    private HttpClientContext context = HttpClientContext.create();
+    private final HttpClientContext context = HttpClientContext.create();
 
     @Override
     public MavenArtifactUrlReference getKarafDistribution() {
@@ -96,7 +98,7 @@ public class UserRestIT extends KarafTestSupport {
             List<Option> options = new ArrayList<>(Arrays.asList(
                     KarafDistributionOption.editConfigurationFilePut("etc/org.ops4j.pax.web.cfg", "org.osgi.service.http.port.secure", httpsPort),
                     KarafDistributionOption.replaceConfigurationFile("etc/org.ops4j.pax.logging.cfg",
-                            Paths.get(this.getClass().getResource("/etc/org.ops4j.pax.logging.cfg").toURI()).toFile()),
+                            Paths.get(Objects.requireNonNull(this.getClass().getResource("/etc/org.ops4j.pax.logging.cfg")).toURI()).toFile()),
                     KarafDistributionOption.editConfigurationFilePut("etc/com.mobi.security.api.EncryptionService.cfg", "enabled", "false")
             ));
             return OptionUtils.combine(super.config(), options.toArray(new Option[0]));
@@ -142,7 +144,7 @@ public class UserRestIT extends KarafTestSupport {
             assertTrue(ConnectionUtils.contains(conn, userState, null, null));
         }
 
-        try (CloseableHttpResponse response = deleteUser(createHttpClient(), "testuser")) {
+        try (CloseableHttpClient client = createHttpClient(); CloseableHttpResponse response = deleteUser(client, "testuser")) {
             assertNotNull(response);
             assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
         } catch (IOException | GeneralSecurityException e) {
@@ -160,7 +162,7 @@ public class UserRestIT extends KarafTestSupport {
 
     private CloseableHttpResponse deleteUser(CloseableHttpClient client, String username) throws IOException, GeneralSecurityException {
         authenticateUser(context, RestITUtils.getHttpsPort(configurationAdmin));
-        HttpDelete delete = new HttpDelete(getBaseUrl(RestITUtils.getHttpsPort(configurationAdmin)) + "/users/" + URLEncoder.encode(username, "UTF-8"));
+        HttpDelete delete = new HttpDelete(getBaseUrl(RestITUtils.getHttpsPort(configurationAdmin)) + "/users/" + URLEncoder.encode(username, StandardCharsets.UTF_8));
         return client.execute(delete, context);
     }
 }

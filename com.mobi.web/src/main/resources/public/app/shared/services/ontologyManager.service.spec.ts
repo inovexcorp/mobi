@@ -399,24 +399,6 @@ describe('Ontology Manager service', function() {
                 });
         });
     });
-    describe('deleteOntology hits the proper endpoint', function() {
-        it('successfully', function() {
-            service.deleteOntology(recordId)
-                .subscribe(() => {
-                    expect(true).toBeTrue();
-                }, () => fail('Observable should have succeeded'));
-            const request = httpMock.expectOne({url: '/mobirest/ontologies/' + encodeURIComponent(recordId), method: 'DELETE'});
-            request.flush(200);
-        });
-        it('unless an error occurs', function() {
-            service.deleteOntology(recordId)
-                .subscribe(() => fail('Observable should have errored'), response => {
-                    expect(response).toBe(error);
-                });
-            const request = httpMock.expectOne({url: '/mobirest/ontologies/' + encodeURIComponent(recordId), method: 'DELETE'});
-            request.flush('flush', { status: 400, statusText: error });
-        });
-    });
     describe('downloadOntology should call the window.open method properly', function() {
         beforeEach(function () {
             this.url = '/mobirest/ontologies/' + encodeURIComponent(recordId);
