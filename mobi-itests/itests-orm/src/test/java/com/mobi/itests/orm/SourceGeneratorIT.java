@@ -236,11 +236,12 @@ public class SourceGeneratorIT {
 
         final Person person = factory.getExisting(TEST_PERSON, personModel, valueFactory, valueConverterRegistry)
                 .orElseThrow(() -> new RuntimeException("WHAT? No person returned"));
+        assertTrue(person.getName().isPresent());
         assertEquals("Bob", person.getName().get());
         assertEquals(2, person.getNickname().size());
         assertEquals(3, person.getOwns_resource().size());
         assertEquals(1, person.getOwns().size());
         assertTrue(person.getFavoriteCar_resource().isPresent());
-        assertTrue(!person.getFavoriteCar().isPresent());
+        assertFalse(person.getFavoriteCar().isPresent());
     }
 }

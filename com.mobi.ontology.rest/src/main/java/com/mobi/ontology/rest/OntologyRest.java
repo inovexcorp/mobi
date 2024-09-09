@@ -103,7 +103,6 @@ import com.mobi.rest.util.swagger.ErrorObjectSchema;
 import com.mobi.security.policy.api.Decision;
 import com.mobi.security.policy.api.PDP;
 import com.mobi.security.policy.api.Request;
-import com.mobi.security.policy.api.ontologies.policy.Delete;
 import com.mobi.security.policy.api.ontologies.policy.Read;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -451,44 +450,6 @@ public class OntologyRest {
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
-    }
-
-    /**
-     * Deletes the ontology associated with the requested record ID in the requested format.
-     *
-     * @param servletRequest the HttpServletRequest.
-     * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
-     *                    String begins with "_:".
-     * @return OK.
-     */
-    @DELETE
-    @Path("{recordId}")
-    @RolesAllowed("user")
-    @Operation(
-            tags = "ontologies",
-            summary = "Deletes the OntologyRecord with the requested recordId",
-            responses = {
-                    @ApiResponse(responseCode = "200", description = "Response indicating the success"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
-    @ActionId(Delete.TYPE)
-    @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response deleteOntology(
-            @Context HttpServletRequest servletRequest,
-            @Parameter(description = "String representing the Record Resource ID", required = true)
-            @PathParam("recordId") String recordIdStr) {
-        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            recordManager.removeRecord(configProvider.getLocalCatalogIRI(), valueFactory.createIRI(recordIdStr),
-                    getActiveUser(servletRequest, engineManager), OntologyRecord.class, conn);
-        } catch (MobiException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
-        } catch (IllegalArgumentException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
-        }
-        return Response.ok().build();
     }
 
     /**

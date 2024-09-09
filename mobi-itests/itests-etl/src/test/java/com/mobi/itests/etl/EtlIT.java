@@ -64,6 +64,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import javax.inject.Inject;
 
@@ -73,11 +74,6 @@ public class EtlIT extends KarafTestSupport {
 
     private static Boolean setupComplete = false;
     private static File outputFile;
-    private static CatalogConfigProvider configProvider;
-
-    private static RecordManager recordManager;
-    private static EngineManager engineManager;
-    private static Engine rdfEngine;
 
     @Inject
     protected static BundleContext thisBundleContext;
@@ -93,7 +89,7 @@ public class EtlIT extends KarafTestSupport {
         try {
             List<Option> options = new ArrayList<>(Arrays.asList(
                     KarafDistributionOption.replaceConfigurationFile("etc/org.ops4j.pax.logging.cfg",
-                            Paths.get(this.getClass().getResource("/etc/org.ops4j.pax.logging.cfg").toURI()).toFile()),
+                            Paths.get(Objects.requireNonNull(this.getClass().getResource("/etc/org.ops4j.pax.logging.cfg")).toURI()).toFile()),
                     KarafDistributionOption.editConfigurationFilePut("etc/com.mobi.security.api.EncryptionService.cfg", "enabled", "false")
             ));
             return OptionUtils.combine(super.config(), options.toArray(new Option[0]));
@@ -116,10 +112,10 @@ public class EtlIT extends KarafTestSupport {
         waitForService("(&(objectClass=com.mobi.rdf.orm.impl.ThingFactory))", 10000L);
         waitForService("(&(objectClass=com.mobi.rdf.orm.conversion.ValueConverterRegistry))", 10000L);
 
-        configProvider = getOsgiService(CatalogConfigProvider.class);
-        recordManager = getOsgiService(RecordManager.class);
-        engineManager = getOsgiService(EngineManager.class);
-        rdfEngine = getOsgiService(Engine.class, "(engineName=RdfEngine)", 10000L);
+        CatalogConfigProvider configProvider = getOsgiService(CatalogConfigProvider.class);
+        RecordManager recordManager = getOsgiService(RecordManager.class);
+        EngineManager engineManager = getOsgiService(EngineManager.class);
+        Engine rdfEngine = getOsgiService(Engine.class, "(engineName=RdfEngine)", 10000L);
 
         User user = engineManager.retrieveUser(rdfEngine.getEngineName(), "admin")
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));

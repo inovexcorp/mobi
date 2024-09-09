@@ -337,14 +337,14 @@ describe('Shapes Graph State service', function() {
     describe('first deleting the state', function() {
       describe('then deleting the record', function() {
         it('successfully', async function() {
-          shapesGraphManagerStub.deleteShapesGraphRecord.and.returnValue(of(null));
+          catalogManagerStub.deleteRecord.and.returnValue(of(null));
           await service.delete('recordId')
             .subscribe(() => {}, () => fail('Observable should have succeeded'));
           expect(this.deleteStateSpy).toHaveBeenCalledWith('recordId');
-          expect(shapesGraphManagerStub.deleteShapesGraphRecord).toHaveBeenCalledWith('recordId');
+          expect(catalogManagerStub.deleteRecord).toHaveBeenCalledWith('recordId', catalogId);
         });
         it('unless an error occurs', async function() {
-          shapesGraphManagerStub.deleteShapesGraphRecord.and.returnValue(throwError(error));
+          catalogManagerStub.deleteRecord.and.returnValue(throwError(error));
           await service.delete('recordId')
             .subscribe(() => {
               fail('Observable should have rejected');
@@ -352,7 +352,7 @@ describe('Shapes Graph State service', function() {
               expect(response).toEqual(error);
             });
           expect(this.deleteStateSpy).toHaveBeenCalledWith('recordId');
-          expect(shapesGraphManagerStub.deleteShapesGraphRecord).toHaveBeenCalledWith('recordId');
+          expect(catalogManagerStub.deleteRecord).toHaveBeenCalledWith('recordId', catalogId);
         });
       });
       it('unless an error occurs', async function() {
@@ -364,7 +364,7 @@ describe('Shapes Graph State service', function() {
             expect(response).toEqual(error);
           });
         expect(this.deleteStateSpy).toHaveBeenCalledWith('recordId');
-        expect(shapesGraphManagerStub.deleteShapesGraphRecord).not.toHaveBeenCalled();
+        expect(catalogManagerStub.deleteRecord).not.toHaveBeenCalled();
       });
     });
   });

@@ -35,6 +35,8 @@ import static org.junit.Assert.fail;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
+import com.mobi.catalog.api.ontologies.mcat.MasterBranch;
+import com.mobi.catalog.api.ontologies.mcat.Revision;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.itests.rest.utils.RestITUtils;
 import com.mobi.persistence.utils.ConnectionUtils;
@@ -51,10 +53,14 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.util.EntityUtils;
 import org.apache.karaf.itests.KarafTestSupport;
 import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Statement;
+import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
+import org.eclipse.rdf4j.model.vocabulary.RDF;
+import org.eclipse.rdf4j.query.QueryResults;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.RepositoryResult;
 import org.junit.Before;
@@ -74,6 +80,7 @@ import org.osgi.framework.BundleContext;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
@@ -81,6 +88,9 @@ import java.security.GeneralSecurityException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 import javax.inject.Inject;
 
 @RunWith(PaxExam.class)
@@ -93,7 +103,7 @@ public class OntologyRestIT extends KarafTestSupport {
     @Inject
     protected static BundleContext thisBundleContext;
 
-    private HttpClientContext context = HttpClientContext.create();
+    private final HttpClientContext context = HttpClientContext.create();
 
     @Override
     public MavenArtifactUrlReference getKarafDistribution() {
@@ -108,7 +118,7 @@ public class OntologyRestIT extends KarafTestSupport {
             List<Option> options = new ArrayList<>(Arrays.asList(
                     KarafDistributionOption.editConfigurationFilePut("etc/org.ops4j.pax.web.cfg", "org.osgi.service.http.port.secure", httpsPort),
                     KarafDistributionOption.replaceConfigurationFile("etc/org.ops4j.pax.logging.cfg",
-                            Paths.get(this.getClass().getResource("/etc/org.ops4j.pax.logging.cfg").toURI()).toFile()),
+                            Paths.get(Objects.requireNonNull(this.getClass().getResource("/etc/org.ops4j.pax.logging.cfg")).toURI()).toFile()),
                     KarafDistributionOption.editConfigurationFilePut("etc/com.mobi.security.api.EncryptionService.cfg", "enabled", "false"),
                     CoreOptions.vmOptions("-Dcom.sun.xml.bind.v2.runtime.reflect.opt.OptimizedAccessorFactory.noOptimization=true")
             ));
@@ -129,6 +139,7 @@ public class OntologyRestIT extends KarafTestSupport {
         Files.copy(thisBundleContext.getBundle().getEntry("/" + vocabulary).openStream(), Paths.get(vocabulary), StandardCopyOption.REPLACE_EXISTING);
 
         waitForService("(&(objectClass=com.mobi.ontology.impl.core.record.SimpleOntologyRecordService))", 10000L);
+        waitForService("(&(objectClass=com.mobi.ontology.impl.repository.SimpleOntologyManager))", 10000L);
         waitForService("(&(objectClass=com.mobi.jaas.rest.AuthRest))", 10000L);
         waitForService("(&(objectClass=com.mobi.ontology.rest.OntologyRest))", 10000L);
         waitForService("(&(objectClass=com.mobi.rdf.orm.impl.ThingFactory))", 10000L);
@@ -139,24 +150,24 @@ public class OntologyRestIT extends KarafTestSupport {
 
     @Test
     public void testDeleteOntology() throws Exception {
-        Resource additionsGraphIRI;
+        List<Resource> graphs;
         String recordId, branchId, commitId;
         ValueFactory vf = new ValidatingValueFactory();
         HttpEntity entity = createFormData("/test-ontology.ttl", "Test Ontology");
 
-        try (CloseableHttpResponse response = uploadFile(createHttpClient(), entity)) {
+        try (CloseableHttpClient client = createHttpClient(); CloseableHttpResponse response = uploadFile(client, entity)) {
             assertEquals(HttpStatus.SC_CREATED, response.getStatusLine().getStatusCode());
             String[] ids = parseAndValidateUploadResponse(response);
             recordId = ids[0];
             branchId = ids[1];
             commitId = ids[2];
-            additionsGraphIRI = validateOntologyCreated(vf.createIRI(recordId), vf.createIRI(branchId), vf.createIRI(commitId));
+            graphs = validateOntologyCreated(vf.createIRI(recordId), vf.createIRI(branchId), vf.createIRI(commitId));
         }
 
-        try (CloseableHttpResponse response = deleteOntology(createHttpClient(), recordId)) {
+        try (CloseableHttpClient client = createHttpClient(); CloseableHttpResponse response = deleteOntology(client, recordId)) {
             assertNotNull(response);
             assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
-            validateOntologyDeleted(vf.createIRI(recordId), vf.createIRI(branchId), vf.createIRI(commitId), additionsGraphIRI);
+            validateOntologyDeleted(vf.createIRI(recordId), vf.createIRI(branchId), vf.createIRI(commitId), graphs);
         } catch (IOException | GeneralSecurityException e) {
             fail("Exception thrown: " + e.getLocalizedMessage());
         }
@@ -164,24 +175,24 @@ public class OntologyRestIT extends KarafTestSupport {
 
     @Test
     public void testDeleteVocabulary() throws Exception {
-        Resource additionsGraphIRI;
+        List<Resource> graphs;
         String recordId, branchId, commitId;
         ValueFactory vf = new ValidatingValueFactory();
         HttpEntity entity = createFormData("/test-vocabulary.ttl", "Test Vocabulary");
 
-        try (CloseableHttpResponse response = uploadFile(createHttpClient(), entity)) {
+        try (CloseableHttpClient client = createHttpClient(); CloseableHttpResponse response = uploadFile(client, entity)) {
             assertEquals(HttpStatus.SC_CREATED, response.getStatusLine().getStatusCode());
             String[] ids = parseAndValidateUploadResponse(response);
             recordId = ids[0];
             branchId = ids[1];
             commitId = ids[2];
-            additionsGraphIRI = validateOntologyCreated(vf.createIRI(recordId), vf.createIRI(branchId), vf.createIRI(commitId));
+            graphs = validateOntologyCreated(vf.createIRI(recordId), vf.createIRI(branchId), vf.createIRI(commitId));
         }
 
-        try (CloseableHttpResponse response = deleteOntology(createHttpClient(), recordId)) {
+        try (CloseableHttpClient client = createHttpClient(); CloseableHttpResponse response = deleteOntology(client, recordId)) {
             assertNotNull(response);
             assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
-            validateOntologyDeleted(vf.createIRI(recordId), vf.createIRI(branchId), vf.createIRI(commitId), additionsGraphIRI);
+            validateOntologyDeleted(vf.createIRI(recordId), vf.createIRI(branchId), vf.createIRI(commitId), graphs);
         } catch (IOException | GeneralSecurityException e) {
             fail("Exception thrown: " + e.getLocalizedMessage());
         }
@@ -206,7 +217,7 @@ public class OntologyRestIT extends KarafTestSupport {
 
     private CloseableHttpResponse deleteOntology(CloseableHttpClient client, String recordId) throws IOException, GeneralSecurityException {
         authenticateUser(context, RestITUtils.getHttpsPort(configurationAdmin));
-        HttpDelete delete = new HttpDelete(getBaseUrl(RestITUtils.getHttpsPort(configurationAdmin)) + "/ontologies/" + URLEncoder.encode(recordId, "UTF-8"));
+        HttpDelete delete = new HttpDelete(getBaseUrl(RestITUtils.getHttpsPort(configurationAdmin)) + "/catalogs/http%3A%2F%2Fmobi.com%2Fcatalog-local/records/" + URLEncoder.encode(recordId, StandardCharsets.UTF_8));
         return client.execute(delete, context);
     }
 
@@ -225,21 +236,44 @@ public class OntologyRestIT extends KarafTestSupport {
         return new String[]{recordId, branchId, commitId};
     }
 
-    private Resource validateOntologyCreated(Resource recordId, Resource branchId, Resource commitId) {
-        IRI additionsGraphIRI;
+    private List<Resource> validateOntologyCreated(Resource recordId, Resource branchId, Resource commitId) {
+        List<Resource> graphs = new ArrayList<>();
         OsgiRepository repo = getOsgiService(OsgiRepository.class, "id=system", 30000L);
         ValueFactory vf = new ValidatingValueFactory();
         IRI branchIRI = vf.createIRI(VersionedRDFRecord.masterBranch_IRI);
         IRI headIRI = vf.createIRI(Branch.head_IRI);
-        IRI additionsIRI = vf.createIRI("http://mobi.com/ontologies/catalog#additions");
+        IRI headGraphIRI = vf.createIRI(MasterBranch.headGraph_IRI);
+        IRI revisionIRI = vf.createIRI(Revision.TYPE);
+        IRI additionsIRI = vf.createIRI(Revision.additions_IRI);
+        IRI deletionsIRI = vf.createIRI(Revision.deletions_IRI);
 
-        try (RepositoryConnection conn = repo.getConnection()) {
-            RepositoryResult<Statement> stmts = conn.getStatements(null, additionsIRI, null, commitId);
+        try (RepositoryConnection conn = repo.getConnection();
+             RepositoryResult<Statement> headGraphResult = conn.getStatements(branchId, headGraphIRI, null)) {
+            Model revisionDefs = QueryResults.asModel(conn.getStatements(null, RDF.TYPE, revisionIRI, commitId));
+            assertEquals(2, revisionDefs.size()); // Initial revision and generated
+            revisionDefs.subjects().forEach(sub -> {
+                Model additionGraphs = QueryResults.asModel(conn.getStatements(sub, additionsIRI, null, commitId));
+                Model deletionGraphs = QueryResults.asModel(conn.getStatements(sub, deletionsIRI, null, commitId));
+                Set<IRI> addGraphs = additionGraphs.objects()
+                        .stream()
+                        .filter(obj -> obj instanceof IRI)
+                        .map(iri -> (IRI) iri)
+                        .collect(Collectors.toSet());
+                graphs.addAll(addGraphs);
+                Set<IRI> delGraphs = deletionGraphs.objects()
+                        .stream()
+                        .filter(obj -> obj instanceof IRI)
+                        .map(iri -> (IRI) iri)
+                        .collect(Collectors.toSet());
+                graphs.addAll(delGraphs);
+            });
+            Value ontHeadGraphVal = headGraphResult.next().getObject();
+            assertTrue(ontHeadGraphVal instanceof IRI);
+            IRI ontHeadGraph = (IRI) ontHeadGraphVal;
+            Model headGraph = QueryResults.asModel(conn.getStatements(null, null, null, ontHeadGraph));
+            graphs.add(ontHeadGraph);
 
-            assertTrue(stmts.hasNext());
-            additionsGraphIRI = (IRI) stmts.next().getObject();
-            assertTrue(conn.size(additionsGraphIRI) > 0);
-
+            assertFalse(headGraph.isEmpty());
             assertTrue(ConnectionUtils.contains(conn, null, null, null, recordId));
             assertTrue(ConnectionUtils.contains(conn, recordId, null, null));
             assertTrue(ConnectionUtils.contains(conn, recordId, branchIRI, branchId, recordId));
@@ -248,12 +282,11 @@ public class OntologyRestIT extends KarafTestSupport {
             assertTrue(ConnectionUtils.contains(conn, branchId, headIRI, commitId, branchId));
             assertTrue(ConnectionUtils.contains(conn, null, null, null, commitId));
             assertTrue(ConnectionUtils.contains(conn, commitId, null, null));
-            stmts.close();
         }
-        return additionsGraphIRI;
+        return graphs;
     }
 
-    private void validateOntologyDeleted(Resource recordId, Resource branchId, Resource commitId, Resource additionsGraphIRI) {
+    private void validateOntologyDeleted(Resource recordId, Resource branchId, Resource commitId, List<Resource> graphs) {
         OsgiRepository repo = getOsgiService(OsgiRepository.class, "id=system", 30000L);
 
         try (RepositoryConnection conn = repo.getConnection()) {
@@ -263,7 +296,10 @@ public class OntologyRestIT extends KarafTestSupport {
             assertFalse(ConnectionUtils.contains(conn, recordId, null, null));
             assertFalse(ConnectionUtils.contains(conn, null, null, null, commitId));
             assertFalse(ConnectionUtils.contains(conn, commitId, null, null));
-            assertFalse(ConnectionUtils.contains(conn, null, null, null, additionsGraphIRI));
+            assertFalse(graphs.isEmpty());
+            graphs.forEach(graph ->
+                    assertFalse(ConnectionUtils.contains(conn, null, null, null, graph)));
+
         }
     }
 }

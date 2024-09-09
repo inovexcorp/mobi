@@ -280,7 +280,7 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
    */
   delete(recordId: string): Observable<void> {
     return this.deleteState(recordId).pipe(
-      switchMap(() => this.sgm.deleteShapesGraphRecord(recordId))
+      switchMap(() => this.cm.deleteRecord(recordId, this.catalogId))
     );
   }
   /**

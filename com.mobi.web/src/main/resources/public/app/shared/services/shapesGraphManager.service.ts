@@ -89,18 +89,6 @@ export class ShapesGraphManagerService {
         window.open(`${this.prefix}/${encodeURIComponent(rdfDownload.recordId)}?${params.toString()}`);
     }
     /**
-     * Calls the DELETE /mobirest/shapes-graphs/{recordId} endpoint to delete a SHACL shapes graph record. Returns
-     * a Observable that resolves if it was successful and rejects with an error message if it was not.
-     *
-     * @param {string} recordId the iri of the SHACL shapes graph record to delete
-     * @returns {Observable} An Observable that resolves if the request was successful; rejects with a {@link RESTError}
-     *    otherwise
-     */
-    deleteShapesGraphRecord(recordId: string): Observable<void> {
-        return this.spinnerSvc.track(this.http.delete(`${this.prefix}/${encodeURIComponent(recordId)}`))
-            .pipe(catchError(handleErrorObject), map(() => {}));
-    }
-    /**
      * Calls the PUT /mobirest/shapes-graphs/{recordId} endpoint which will update the in-progress commit
      * object to be applied to the shapes graph.
      *

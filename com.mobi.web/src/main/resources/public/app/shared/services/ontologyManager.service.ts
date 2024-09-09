@@ -236,16 +236,6 @@ export class OntologyManagerService {
         );
     }
     /**
-     * Calls the DELETE /mobirest/ontologies/{recordId} endpoint which deletes the ontology.
-     *
-     * @param {string} recordId The id of the Record to be deleted.
-     * @return {Observable} HTTP OK unless there was an error.
-     */
-    deleteOntology(recordId: string): Observable<void> {
-        return this.spinnerSrv.track(this.http.delete(`${this.prefix}/${encodeURIComponent(recordId)}`))
-            .pipe(catchError(handleError), map(() => {}));
-    }
-    /**
      * Calls the GET /mobirest/ontologies/{recordId} endpoint using the `window.open` method which will
      * start a download of the ontology starting at the identified Commit.
      *

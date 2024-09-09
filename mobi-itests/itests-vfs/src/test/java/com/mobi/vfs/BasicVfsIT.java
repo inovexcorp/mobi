@@ -58,6 +58,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Stream;
@@ -86,9 +87,9 @@ public class BasicVfsIT extends KarafTestSupport {
         try {
             List<Option> options = new ArrayList<>(Arrays.asList(
                     KarafDistributionOption.replaceConfigurationFile("etc/org.ops4j.pax.logging.cfg",
-                            Paths.get(this.getClass().getResource("/etc/org.ops4j.pax.logging.cfg").toURI()).toFile()),
+                            Paths.get(Objects.requireNonNull(this.getClass().getResource("/etc/org.ops4j.pax.logging.cfg")).toURI()).toFile()),
                     KarafDistributionOption.replaceConfigurationFile("etc/com.mobi.vfs.basic-system.cfg",
-                            Paths.get(this.getClass().getResource("/etc/com.mobi.vfs.basic-system.cfg").toURI()).toFile()),
+                            Paths.get(Objects.requireNonNull(this.getClass().getResource("/etc/com.mobi.vfs.basic-system.cfg")).toURI()).toFile()),
                     KarafDistributionOption.editConfigurationFilePut("etc/com.mobi.security.api.EncryptionService.cfg", "enabled", "false")
             ));
 
@@ -158,30 +159,32 @@ public class BasicVfsIT extends KarafTestSupport {
     @Test
     public void testBasicFunctionality() throws Exception {
         final VirtualFilesystem service = getOsgiService(VirtualFilesystem.class);
-        VirtualFile file = service.resolveVirtualFile("file://" + System.getProperty("user.dir") + "testFile-"
-                + UUID.randomUUID() + ".txt");
-        file.create();
-        Assert.assertTrue("Virtual file should exist", file.exists());
-        file.delete();
-        Assert.assertFalse("Deleted virtual file should not exist", file.exists());
+        try (VirtualFile file = service.resolveVirtualFile("file://" + System.getProperty("user.dir") + "testFile-"
+                + UUID.randomUUID() + ".txt")) {
+            file.create();
+            Assert.assertTrue("Virtual file should exist", file.exists());
+            file.delete();
+            Assert.assertFalse("Deleted virtual file should not exist", file.exists());
+        }
     }
 
     @Test
     public void testTempFileCreation() throws Exception {
         LOGGER.debug("Testing temporary file creation.");
         final VirtualFilesystem service = getOsgiService(VirtualFilesystem.class);
-        TemporaryVirtualFile tvf = service.createTemporaryVirtualFile(1L, ChronoUnit.SECONDS);
-        LOGGER.debug("Going to create {}", tvf.getIdentifier());
-        //Should not exist.
-        Assert.assertFalse("Temp file shouldn't exist", tvf.exists());
-        tvf.create();
-        //Should exist
-        Assert.assertTrue("Temp file should exist", tvf.exists());
-        LOGGER.debug("Created tmp file exists, going to wait two seconds to ensure it is successfully deleted");
-        Thread.sleep(2000L);
-        // File should be gone
-        Assert.assertFalse("Temp file should not exist anymore", tvf.exists());
-        LOGGER.debug("Temporary file created and deleted as expected");
+        try (TemporaryVirtualFile tvf = service.createTemporaryVirtualFile(1L, ChronoUnit.SECONDS)) {
+            LOGGER.debug("Going to create {}", tvf.getIdentifier());
+            //Should not exist.
+            Assert.assertFalse("Temp file shouldn't exist", tvf.exists());
+            tvf.create();
+            //Should exist
+            Assert.assertTrue("Temp file should exist", tvf.exists());
+            LOGGER.debug("Created tmp file exists, going to wait two seconds to ensure it is successfully deleted");
+            Thread.sleep(2000L);
+            // File should be gone
+            Assert.assertFalse("Temp file should not exist anymore", tvf.exists());
+            LOGGER.debug("Temporary file created and deleted as expected");
+        }
     }
 
     @Test
@@ -189,8 +192,9 @@ public class BasicVfsIT extends KarafTestSupport {
         final String uri = "tmp://what/someFile" + UUID.randomUUID() + ".txt";
         LOGGER.debug("Testing tmp file creation for {}", uri);
         final VirtualFilesystem service = getOsgiService(VirtualFilesystem.class);
-        VirtualFile file = service.resolveVirtualFile(uri);
-        file.create();
-        LOGGER.debug("Created file '{}' successfully");
+        try (VirtualFile file = service.resolveVirtualFile(uri)) {
+            file.create();
+            LOGGER.debug("Created file '{}' successfully", uri);
+        }
     }
 }

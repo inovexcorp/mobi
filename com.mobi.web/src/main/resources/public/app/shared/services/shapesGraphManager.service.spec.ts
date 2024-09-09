@@ -161,28 +161,6 @@ describe('Shapes Graph Manager service', function() {
           request.flush([uploadResponse]);
       });
     });
-    describe('should delete changes on a shapes graph record', function() {
-        it('unless an error occurs', function() {
-            service.deleteShapesGraphRecord(rdfUpdate.recordId)
-                .subscribe(() => fail('Promise should have rejected'), response => {
-                    expect(response).toEqual({
-                        error: '',
-                        errorMessage: error,
-                        errorDetails: []
-                    });
-                });
-            const request = httpMock.expectOne({url: `${service.prefix}/${encodeURIComponent(rdfUpdate.recordId)}`, method: 'DELETE'});
-            request.flush('', { status: 400, statusText: error });
-        });
-        it('successfully', function() {
-            service.deleteShapesGraphRecord(rdfUpdate.recordId)
-                .subscribe(() => {
-                    expect(true).toBeTrue();
-                }, () => fail('Promise should have resolved'));
-            const request = httpMock.expectOne({url: `${service.prefix}/${encodeURIComponent(rdfUpdate.recordId)}`, method: 'DELETE'});
-            request.flush(200);
-        });
-    });
     describe('should retrieve shapes graph content of a shapes graph record', function() {
         it('unless an error occurs', function() {
             service.getShapesGraphContent('record1', 'branch1', 'commit1')

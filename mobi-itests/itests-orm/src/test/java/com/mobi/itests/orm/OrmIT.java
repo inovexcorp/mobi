@@ -23,15 +23,15 @@ package com.mobi.itests.orm;
  * #L%
  */
 
+import com.mobi.rdf.orm.Thing;
+import com.mobi.rdf.orm.conversion.ValueConverterRegistry;
+import com.mobi.rdf.orm.impl.ThingFactory;
+import org.apache.karaf.itests.KarafTestSupport;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.ValueFactory;
-import com.mobi.rdf.orm.Thing;
-import com.mobi.rdf.orm.conversion.ValueConverterRegistry;
-import com.mobi.rdf.orm.impl.ThingFactory;
-import org.apache.karaf.itests.KarafTestSupport;
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.junit.Assert;
 import org.junit.Test;
@@ -53,6 +53,7 @@ import java.math.BigInteger;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.OffsetDateTime;
 import java.time.temporal.ChronoUnit;
@@ -61,6 +62,8 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Stream;
 
 @RunWith(PaxExam.class)
 @ExamReactorStrategy(PerClass.class)
@@ -79,12 +82,14 @@ public class OrmIT extends KarafTestSupport {
         try {
             List<Option> options = new ArrayList<>(Arrays.asList(
                     KarafDistributionOption.replaceConfigurationFile("etc/org.ops4j.pax.logging.cfg",
-                            Paths.get(this.getClass().getResource("/etc/org.ops4j.pax.logging.cfg").toURI()).toFile()),
+                            Paths.get(Objects.requireNonNull(this.getClass().getResource("/etc/org.ops4j.pax.logging.cfg")).toURI()).toFile()),
                     KarafDistributionOption.editConfigurationFilePut("etc/com.mobi.security.api.EncryptionService.cfg", "enabled", "false")
             ));
 
-            Files.list(getFileResource("/etc").toPath()).forEach(path ->
-                    options.add(KarafDistributionOption.replaceConfigurationFile("etc/" + path.getFileName(), path.toFile())));
+            try (Stream<Path> files = Files.list(getFileResource("/etc").toPath())) {
+                files.forEach(path ->
+                        options.add(KarafDistributionOption.replaceConfigurationFile("etc/" + path.getFileName(), path.toFile())));
+            }
             return OptionUtils.combine(super.config(), options.toArray(new Option[0]));
         } catch (Exception e) {
             throw new IllegalStateException(e);

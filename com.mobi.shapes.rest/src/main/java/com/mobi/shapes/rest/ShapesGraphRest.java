@@ -116,7 +116,6 @@ import java.util.concurrent.ExecutionException;
 import javax.annotation.security.RolesAllowed;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
-import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -392,42 +391,6 @@ public class ShapesGraphRest {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
         } catch (MobiException | IllegalStateException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    /**
-     * Deletes the SHACL Shapes Graph record with the associated record ID.
-     *
-     * @param recordIdStr String representing the Record Resource ID. NOTE: Assumes id represents an IRI unless
-     *                    String begins with "_:".
-     * @return A Response identifying whether the SHACL Shapes Graph Record was deleted.
-     */
-    @DELETE
-    @Path("{recordId}")
-    @Produces(MediaType.APPLICATION_JSON)
-    @Operation(
-            tags = "shapes-graphs",
-            summary = "Deletes the SHACL Shapes Graph record with the associated record ID",
-            responses = {
-                    @ApiResponse(responseCode = "204",
-                            description = "The SHACL Shapes Graph record with the requested record ID was deleted"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-            }
-    )
-    @RolesAllowed("user")
-    @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response deleteShapesGraph(@Context HttpServletRequest servletRequest,
-            @Parameter(description = "String representing the Record Resource ID. "
-                    + "NOTE: Assumes id represents an IRI unless String begins with \"_:\"", required = true)
-            @PathParam("recordId") String recordIdStr) {
-        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            recordManager.removeRecord(configProvider.getLocalCatalogIRI(), vf.createIRI(recordIdStr),
-                    getActiveUser(servletRequest, engineManager), ShapesGraphRecord.class, conn);
-            return Response.noContent().build();
-        } catch (IllegalArgumentException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
-        } catch (MobiException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
 

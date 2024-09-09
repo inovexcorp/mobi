@@ -4846,14 +4846,6 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         assertEquals(response.getStatus(), 400);
     }
 
-    @Test
-    public void testDeleteOntology() {
-        Response response = target().path("ontologies/" + encode(recordId.stringValue())).request().delete();
-
-        assertEquals(response.getStatus(), 200);
-        verify(recordManager).removeRecord(eq(catalogId), eq(recordId), eq(user), eq(OntologyRecord.class), any(RepositoryConnection.class));
-    }
-
     // Test upload changes
 
     @Test
