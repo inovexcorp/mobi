@@ -12,7 +12,7 @@
     "verify": "./node_modules/.bin/verify-junit-xml ./target/nightwatch-reports/*/*.xml"
   },
   "devDependencies": {
-    "chromedriver": "125.0.2",
+    "chromedriver": "128.0.0",
     "nightwatch": "3.4.0"
   },
   "author": "",

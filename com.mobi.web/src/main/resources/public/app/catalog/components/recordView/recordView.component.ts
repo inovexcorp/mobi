@@ -32,6 +32,7 @@ import { PolicyEnforcementService } from '../../../shared/services/policyEnforce
 import { ToastService } from '../../../shared/services/toast.service';
 import { getDate, getDctermsValue, getPropertyId, updateDctermsValue } from '../../../shared/utility';
 import { Subject } from 'rxjs';
+import { Statistic } from '../../../shared/models/statistic.interface';
 
 /**
  * @class catalog.RecordViewComponent
@@ -58,20 +59,31 @@ export class RecordViewComponent implements OnInit, OnDestroy {
     modified = '';
     issued = '';
     canEdit = false;
-
+    statistics: Statistic[] = [];
     private _destroySub$ = new Subject<void>();
 
     constructor(public state: CatalogStateService, public cm: CatalogManagerService, public os: OntologyStateService, 
         public pep: PolicyEnforcementService, private toast: ToastService) {}
 
     ngOnInit(): void {
-        this.cm.getRecord(this.state.selectedRecord['@id'], getPropertyId(this.state.selectedRecord, `${CATALOG}catalog`))
+        const selectedRecordId = this.state.selectedRecord['@id'];
+        const catalogId = getPropertyId(this.state.selectedRecord, `${CATALOG}catalog`);
+        this.cm.getRecord(selectedRecordId, catalogId)
             .subscribe((response: JSONLDObject[]) => {
                 this.setInfo(response);
                 this.setCanEdit();
             }, (errorMessage) => {
                 this.toast.createErrorToast(errorMessage);
                 this.state.selectedRecord = undefined;
+            });
+        this.cm.getRecordStatistics(selectedRecordId, catalogId)
+            .subscribe((statistics: Statistic[]) => {
+                if (statistics) {
+                    statistics.forEach(metric => {
+                        metric.name = this._convertToTitleCase(metric.name);
+                    })
+                    this.statistics = statistics;
+                }
             });
     }
     ngOnDestroy(): void {
@@ -88,7 +100,6 @@ export class RecordViewComponent implements OnInit, OnDestroy {
         } else {
             this.toast.createErrorToast('Could not find record: ' + newRecord['@id']);
         }
-        
         this.cm.updateRecord(newRecord['@id'], getPropertyId(this.state.selectedRecord, `${CATALOG}catalog`), this.completeRecord)
             .subscribe((response: JSONLDObject[]) => {
                 this.setInfo(response);
@@ -123,7 +134,7 @@ export class RecordViewComponent implements OnInit, OnDestroy {
                 this.canEdit = false;
             });
     }
-    updatePermission(value:boolean):void {
+    updatePermission(value: boolean):void {
         this.state.editPermissionSelectedRecord = value;
     }
     setInfo(record: JSONLDObject[]): void {
@@ -134,5 +145,10 @@ export class RecordViewComponent implements OnInit, OnDestroy {
         this.description = getDctermsValue(this.record, 'description');
         this.modified = getDate(getDctermsValue(this.record, 'modified'), 'short');
         this.issued = getDate(getDctermsValue(this.record, 'issued'), 'short');
+    }
+    private _convertToTitleCase(str: string): string {
+        return str.replace(/([A-Z])/g, ' $1')
+            .trim()
+            .replace(/^./, str => str.toUpperCase());
     }
 }

@@ -102,7 +102,7 @@ module.exports = {
     },
 
     'Step 7: Search catalog page ASC' : function(browser) {
-        var recordTitles = ['z-catalog-ontology-1' , 'z-catalog-ontology-2' , 'z-catalog-ontology-3' , 'z-catalog-ontology-4' , 'z-catalog-ontology-9p.ttl']
+        var recordTitles = ['z-catalog-ontology-1' , 'z-catalog-ontology-2' , 'z-catalog-ontology-3' , 'z-catalog-ontology-4' , 'z-catalog-ontology-9p.ttl'];
         browser.page.catalogPage().clearCatalogSearchBar();
         browser.page.catalogPage().applySearchText('z-catalog-ontology-');
         browser.page.catalogPage().applyOrderFilter('Title (asc)');
@@ -113,7 +113,7 @@ module.exports = {
     },
 
     'Step 8: Search catalog page DESC' : function(browser) {
-        var recordTitles = ['z-catalog-ontology-9p.ttl', 'z-catalog-ontology-4', 'z-catalog-ontology-3', 'z-catalog-ontology-2', 'z-catalog-ontology-1']
+        var recordTitles = ['z-catalog-ontology-9p.ttl', 'z-catalog-ontology-4', 'z-catalog-ontology-3', 'z-catalog-ontology-2', 'z-catalog-ontology-1'];
         browser.page.catalogPage().clearCatalogSearchBar();
         browser.page.catalogPage().applySearchText('z-catalog-ontology-');
         browser.page.catalogPage().applyOrderFilter('Title (desc)');
@@ -131,16 +131,20 @@ module.exports = {
         browser.page.catalogPage().assertRecordVisible('z-catalog-ontology-1', 1);
     },
 
-    'Step 10: Check metadata of z-catalog-ontology-9p.ttl' : function(browser) {
-        var recordTitles = ['z-catalog-ontology-9p.ttl', 'z-catalog-ontology-4', 'z-catalog-ontology-3', 'z-catalog-ontology-2', 'z-catalog-ontology-1']
+    'Step 10: Ensure z-catalog-ontology-* records are on the catalog page' : function(browser) {
+        var recordTitles = ['z-catalog-ontology-9p.ttl', 'z-catalog-ontology-4', 'z-catalog-ontology-3', 'z-catalog-ontology-2', 'z-catalog-ontology-1'];
         browser.page.catalogPage().clearCatalogSearchBar();
         browser.page.catalogPage().applySearchText('z-catalog-ontology-');
         browser.page.catalogPage().applyOrderFilter('Title (desc)');
         browser.page.catalogPage().finishSearch();
         recordTitles.forEach(function(title, index) {
             browser.page.catalogPage().assertRecordVisible(title, index + 1)
-        })
+        });
+    },
+
+    'Step 11: Open z-catalog-ontology-9p.ttl and check metadata' : function(browser) {
         browser.page.catalogPage().openRecordItem('z-catalog-ontology-9p.ttl');
+        browser.waitForElementNotPresent('#spinner-full');
         browser.getText('xpath', '//catalog-page//record-view//div[contains(@class,"record-sidebar")]//dd[2]', function(result) {
           browser.page.catalogPage().changeRecordFields('z-catalog-ontology-9p.ttl', {'description': 'new description', 'keywords': keywordsList});
           browser.expect.element('//catalog-page//record-view//div[contains(@class,"record-sidebar")]//dd[2]', 'xpath').text.to.not.equal(result.value)
@@ -148,8 +152,8 @@ module.exports = {
         });
     },
 
-    'Step 11: Check metadata of z-catalog-ontology-1' : function(browser) {
-        var recordTitles = ['z-catalog-ontology-9p.ttl', 'z-catalog-ontology-4', 'z-catalog-ontology-3', 'z-catalog-ontology-2', 'z-catalog-ontology-1']
+    'Step 12: Ensure z-catalog-ontology-* records are on the catalog page' : function(browser) {
+        var recordTitles = ['z-catalog-ontology-9p.ttl', 'z-catalog-ontology-4', 'z-catalog-ontology-3', 'z-catalog-ontology-2', 'z-catalog-ontology-1'];
         browser.page.catalogPage().clearCatalogSearchBar();
         browser.page.catalogPage().applySearchText('z-catalog-ontology-');
         browser.page.catalogPage().applyOrderFilter('Title (desc)');
@@ -157,9 +161,13 @@ module.exports = {
         recordTitles.forEach(function(title, index) {
             browser.page.catalogPage().assertRecordVisible(title, index + 1)
         })
+    },
+
+    'Step 13: Open z-catalog-ontology-1 and check metadata' : function(browser) {
+        browser.useCss();
         browser.page.catalogPage().openRecordItem('z-catalog-ontology-1');
-        browser.useCss()
-        browser.expect.element('catalog-page record-view div.record-sidebar manage-record-button button').to.be.present;
+        browser.waitForElementNotPresent('#spinner-full');
+        // Check Branches tab
         browser
             .useXpath()
             .click('//record-view-tabset//mat-tab-header//div[contains(@class,"mat-tab-label-content")][text()[contains(.,"Branches")]]')
@@ -168,10 +176,27 @@ module.exports = {
             .useXpath()
             .waitForElementVisible('//record-view//entity-publisher//span[text()[contains(.,"admin")]]')
             .useCss();
+        // Check record-sidebar 'About this Record'
+        browser
+            .useCss()
+            .assert.elementPresent('.about-record', 'The "About this Record" section is present')
+            .assert.textContains('.about-record dt:nth-of-type(1)', 'Publisher', 'The Publisher is present')
+            .assert.textContains('.about-record .entity-publisher', 'admin', 'The Publisher\'s username is "admin"')
+            .assert.textContains('.about-record dt:nth-of-type(2)', 'Modified', 'The Modified date is present')
+            .assert.textContains('.about-record dt:nth-of-type(3)', 'Issued', 'The Issued date is present')
+            .assert.textContains('.about-record dt:nth-of-type(4)', 'Keywords', 'The Issued date is present')
+            .assert.elementPresent('.about-record .keyword-description', 'The keyword is present');
+        // Check record-sidebar 'statistics'
+        browser
+            .waitForElementVisible('catalog-page record-view div.record-sidebar div.statistics')
+            .assert.elementPresent('catalog-page record-view div.record-sidebar div.statistics', 'The Statistics section is present');
+        // Check Buttons
+        browser.expect.element('catalog-page record-view div.record-sidebar open-record-button button').to.be.present;
+        browser.expect.element('catalog-page record-view div.record-sidebar manage-record-button button').to.be.present;
         browser.page.catalogPage().leaveCatalogRecord(browser);
     },
 
-    'Step 12: Search catalog page one item ASC' : function(browser) {
+    'Step 14: Search catalog page one item ASC' : function(browser) {
         var keywords = ['1,1','1\'1', '\\/', '/\\'];
         browser.page.catalogPage().clearCatalogSearchBar();
         browser.page.catalogPage().applySearchText('z-catalog-ontology-');
@@ -183,24 +208,24 @@ module.exports = {
         browser.page.catalogPage().assertRecordVisible('z-catalog-ontology-9p.ttl', 1);
     },
 
-    'Step 13: The user clicks on the Administration sidebar link' : function(browser) {
+    'Step 15: The user clicks on the Administration sidebar link' : function(browser) {
         browser.globals.switchToPage(browser, 'user-management')
     },
 
-    'Step 14: A new user is created' : function(browser) {
+    'Step 16: A new user is created' : function(browser) {
         browser.page.administrationPage().createUser(newUser);
         browser.globals.wait_for_no_spinners(browser);
     },
 
-    'Step 15: The user successfully logs out' : function(browser) {
+    'Step 17: The user successfully logs out' : function(browser) {
         browser.globals.logout(browser);
     },
 
-    'Step 16: Test logins as the newly created user' : function(browser) {
+    'Step 18: Test logins as the newly created user' : function(browser) {
         browser.globals.login(browser, newUser.username, newUser.password);
     },
 
-    'Step 17: Switch to catalog page' : function(browser) {
+    'Step 19: Switch to catalog page' : function(browser) {
         browser.globals.switchToPage(browser, 'catalog', 'catalog-page records-view')
         browser.globals.wait_for_no_spinners(browser);
         browser.page.catalogPage().waitForElementPresent('@searchBar')

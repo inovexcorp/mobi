@@ -393,6 +393,27 @@ describe('Catalog Manager service', function() {
             request.flush([]);
         });
     });
+    describe('should retrieve Record Statistic', function() {
+        beforeEach(function() {
+            this.url = `${service.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/statistics`;
+        });
+        it('unless an error occurs', function() {
+            service.getRecordStatistics(recordId, catalogId)
+                .subscribe(() => fail('Observable should have rejected'), response => {
+                    expect(response).toEqual(error);
+                });
+            const request = httpMock.expectOne({url: this.url, method: 'GET'});
+            request.flush('flush', { status: 400, statusText: error });
+        });
+        it('successfully', function() {
+            service.getRecordStatistics(recordId, catalogId)
+                .subscribe(response => {
+                    expect(response).toEqual([]);
+                }, () => fail('Observable should have resolved'));
+            const request = httpMock.expectOne({url: this.url, method: 'GET'});
+            request.flush([]);
+        });
+    });
     describe('should create a new Record', function() {
         beforeEach(function() {
             this.url = `${service.prefix}/${encodeURIComponent(catalogId)}/records`;

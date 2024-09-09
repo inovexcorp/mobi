@@ -31,6 +31,7 @@ import com.mobi.catalog.api.ontologies.mcat.Record;
 import com.mobi.catalog.api.record.config.RecordCreateSettings;
 import com.mobi.catalog.api.record.config.RecordExportSettings;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
+import com.mobi.catalog.api.record.statistic.Statistic;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.persistence.utils.BatchExporter;
@@ -286,6 +287,11 @@ public abstract class AbstractRecordService<T extends Record> implements RecordS
     public Optional<List<Resource>> deleteBranch(Resource catalogId, Resource versionedRDFRecordId, Resource branchId,
                                                  RepositoryConnection conn){
         return Optional.empty();
+    }
+
+    @Override
+    public List<Statistic> getStatistics(Resource recordId, RepositoryConnection conn){
+        return List.of();
     }
 
     /**

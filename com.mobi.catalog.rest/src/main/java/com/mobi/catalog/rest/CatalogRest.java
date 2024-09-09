@@ -59,6 +59,8 @@ import com.mobi.catalog.api.builder.Conflict;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.builder.DistributionConfig;
 import com.mobi.catalog.api.builder.KeywordCount;
+import com.mobi.catalog.api.record.statistic.Statistic;
+import com.mobi.catalog.api.record.statistic.StatisticUtils;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Catalog;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
@@ -72,6 +74,7 @@ import com.mobi.catalog.api.ontologies.mcat.Tag;
 import com.mobi.catalog.api.ontologies.mcat.UserBranch;
 import com.mobi.catalog.api.ontologies.mcat.Version;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
+import com.mobi.catalog.api.record.RecordService;
 import com.mobi.catalog.api.versioning.VersioningManager;
 import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.exception.MobiException;
@@ -207,7 +210,6 @@ public class CatalogRest {
 
     @Reference
     protected CommitFactory commitFactory;
-
 
     static {
         Set<String> sortResources = new HashSet<>();
@@ -539,6 +541,59 @@ public class CatalogRest {
             recordManager.updateRecord(vf.createIRI(catalogId), newRecord, conn);
             return Response.ok(modelToSkolemizedJsonld(removeContext(newRecord.getModel()),
                     bNodeService)).build();
+        } catch (IllegalArgumentException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
+        } catch (MobiException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Retrieves statistics for a record from the repository.
+     *
+     * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                  with "_:".
+     * @param recordId String representing the Record ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                 with "_:".
+     * @return Array containing the statistics in JSON format, or a 204 status code if no statistics are found
+     */
+    @GET
+    @Path("{catalogId}/records/{recordId}/statistics")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    @Operation(
+            tags = "catalogs",
+            summary = "Retrieves the Catalog record statistics by its ID",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Array with the contents of the "
+                            + "statistics"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId or recordId "
+                            + "could not be found"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "404", description = "Record could not be found"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
+            }
+    )
+    @ResourceId(type = ValueType.PATH, value = "recordId")
+    public Response getRecordStatistics(
+            @Parameter(description = "String representing the Catalog ID", required = true)
+            @PathParam("catalogId") String catalogId,
+            @Parameter(description = "String representing the Record ID", required = true)
+            @PathParam("recordId") String recordId) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            OrmFactory<Record> factoryOfType = factoryRegistry.getFactoryOfType(Record.class).orElseThrow(() ->
+                    ErrorUtils.sendError("Factory Of Type Record could not be found",
+                            Response.Status.INTERNAL_SERVER_ERROR));
+            Record record = recordManager.getRecordOpt(vf.createIRI(catalogId), vf.createIRI(recordId),
+                    factoryOfType, conn).orElseThrow(() ->
+                    ErrorUtils.sendError("Record " + recordId + " could not be found", Response.Status.NOT_FOUND));
+            RecordService<?> recordService = recordManager.getRecordService(record.getResource(), conn);
+            List<Statistic> statistics = recordService.getStatistics(record.getResource(), conn);
+            if (statistics.isEmpty()) {
+                return Response.status(204).build();
+            } else {
+                return Response.ok(StatisticUtils.statisticsToJson(statistics).toString()).build();
+            }
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (MobiException ex) {

@@ -23,7 +23,7 @@ package com.mobi.ontology.impl.core.record;
  * #L%
  */
 
-import static junit.framework.Assert.assertFalse;
+import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertTrue;
 import static junit.framework.TestCase.fail;
@@ -104,6 +104,7 @@ import org.eclipse.rdf4j.rio.helpers.JSONLDMode;
 import org.eclipse.rdf4j.rio.helpers.JSONLDSettings;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -113,6 +114,7 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.time.OffsetDateTime;
@@ -1042,6 +1044,61 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
             verify(mergeRequestManager).cleanMergeRequests(eq(testIRI), eq(branchIRI), eq("Test Record"),
                     eq(Collections.singletonList(vf.createIRI("http://mobi.com/test/commits#commit"))), any(RepositoryConnection.class));
             assertNotSame(getModifiedIriValue(record), previousModifiedValue);
+        }
+    }
+
+    @Test
+    public void getStatisticsTest() {
+        try (RepositoryConnection conn = repository.getConnection()) {
+            InputStream testData = getClass().getResourceAsStream("/test-data-statistics.trig");
+            conn.add(Rio.parse(testData, "", RDFFormat.TRIG));
+            // Check ont1
+            List<String> statistics = recordService.getStatistics(vf.createIRI("https://mobi.com/records#ont1"), conn)
+                    .stream()
+                    .map((metric) -> String.format("%s:%s", metric.definition().name(), metric.value()))
+                    .toList();
+            String[] expected = new String[]{
+                    "totalClasses:1",
+                    "totalAnnotationProperties:1",
+                    "totalDatatypeProperties:1",
+                    "totalObjectProperties:1",
+                    "totalIndividuals:1",
+                    "ontologyImports:0",
+                    "numberOfUsages:1"
+            };
+            assertEquals(List.of(expected), statistics);
+            // Check ont2
+            List<String> statisticsB = recordService.getStatistics(vf.createIRI("https://mobi.com/records#ont2"), conn)
+                    .stream()
+                    .map((metric) -> String.format("%s:%s", metric.definition().name(), metric.value()))
+                    .toList();
+            String[] expectedB = new String[]{
+                    "totalClasses:0",
+                    "totalAnnotationProperties:0",
+                    "totalDatatypeProperties:0",
+                    "totalObjectProperties:0",
+                    "totalIndividuals:0",
+                    "ontologyImports:1",
+                    "numberOfUsages:0"
+            };
+            assertEquals(List.of(expectedB), statisticsB);
+            // assert3
+            List<String> statisticsC = recordService.getStatistics(vf.createIRI("https://mobi.com/records#NotExist"), conn)
+                    .stream()
+                    .map((metric) -> String.format("%s:%s", metric.definition().name(), metric.value()))
+                    .toList();
+            String[] expectedC = new String[]{
+                    "totalClasses:0",
+                    "totalAnnotationProperties:0",
+                    "totalDatatypeProperties:0",
+                    "totalObjectProperties:0",
+                    "totalIndividuals:0",
+                    "ontologyImports:0",
+                    "numberOfUsages:0"
+            };
+            assertEquals(List.of(expectedC), statisticsC);
+        } catch (IOException | RuntimeException e) {
+            Assert.fail(e.getMessage());
         }
     }
 
