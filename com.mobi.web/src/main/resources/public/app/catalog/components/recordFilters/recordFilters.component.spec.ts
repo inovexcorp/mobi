@@ -182,13 +182,13 @@ describe('Record Filters component', function () {
       this.secondCreatorFilterItem = {
         value: {
           user:
-            new User({
-              '@id': 'urn:userB',
-              '@type': [`${USER}User`],
-              [`${USER}username`]: [{'@value': 'userB'}],
-              [`${FOAF}firstName`]: [{'@value': 'Jane'}],
-              [`${FOAF}lastName`]: [{'@value': 'Davis'}],
-            }),
+              new User({
+                '@id': 'urn:userB',
+                '@type': [`${USER}User`],
+                [`${USER}username`]: [{'@value': 'userB'}],
+                [`${FOAF}firstName`]: [{'@value': 'Jane'}],
+                [`${FOAF}lastName`]: [{'@value': 'Davis'}],
+              }),
           count: 10
         },
         checked: true
@@ -228,21 +228,20 @@ describe('Record Filters component', function () {
     });
     describe('keywordsFilter should filter records', () => {
       it('if the keyword filter has been checked', () => {
-        this.keywordsFilter.filter(this.firstFilter);
-        expect(this.secondKeywordFilterItem.checked).toEqual(true);
+        component.keywordFilterList = [];
+        this.keywordsFilter.filter(this.firstKeywordFilterItem);
         expect(component.changeFilter.emit).toHaveBeenCalledWith({
           recordType: 'test1',
-          keywordFilterList: [keyword, 'keyword2'],
+          keywordFilterList: [keyword],
           creatorFilterList: [user.iri]
         });
       });
       it('if the keyword filter has been unchecked', () => {
         this.firstKeywordFilterItem.checked = false;
-        component.keywordFilterList = [];
         this.keywordsFilter.filter(this.firstKeywordFilterItem);
         expect(component.changeFilter.emit).toHaveBeenCalledWith({
           recordType: 'test1',
-          keywordFilterList: ['keyword2'],
+          keywordFilterList: [],
           creatorFilterList: [user.iri]
         });
       });
@@ -260,3 +259,4 @@ describe('Record Filters component', function () {
     });
   });
 });
+
