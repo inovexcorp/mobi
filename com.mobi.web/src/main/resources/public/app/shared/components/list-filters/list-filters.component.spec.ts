@@ -32,7 +32,7 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 
 import {
   cleanStylesFromDOM
-} from '../../../../../public/test/ts/Shared';
+} from '../../../../test/ts/Shared';
 import { FilterType, ListFilter } from '../../models/list-filter.interface';
 import { SearchableListFilter } from '../../models/searchable-list-filter.interface';
 import { FilterItem } from '../../models/filterItem.interface';

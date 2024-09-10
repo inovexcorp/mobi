@@ -23,7 +23,7 @@
 import { HttpResponse } from '@angular/common/http';
 import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from '@angular/core';
 
-import { forEach, map, filter, includes} from 'lodash';
+import { forEach, map, filter, includes, pull } from 'lodash';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
@@ -169,7 +169,7 @@ export class RecordFiltersComponent implements OnInit, OnChanges, OnDestroy {
             pageable: true,
             searchable: true,
             pagingData: {
-                limit: 12,
+                limit: 10,
                 totalSize: 0,
                 pageIndex: 1,
                 hasNextPage: false
@@ -200,16 +200,16 @@ export class RecordFiltersComponent implements OnInit, OnChanges, OnDestroy {
                 componentContext.cm.getKeywords(componentContext.catalogId, paginatedConfig).pipe(
                     takeUntil(componentContext._destroySub$),
                 ).subscribe((response: HttpResponse<KeywordCount[]>) => {
-                        if (pagingData.pageIndex === 1) {
-                            filterInstance.rawFilterItems = response.body;
-                        } else {
-                            filterInstance.rawFilterItems = filterInstance.rawFilterItems.concat(response.body);
-                        }
-                        filterInstance.setFilterItems();
-                        pagingData['totalSize'] = Number(response.headers.get('x-total-count')) || 0;
-                        pagingData['hasNextPage'] = filterInstance.filterItems.length < pagingData.totalSize;
-                        filterInstance.numChecked = getNumChecked(this.filterItems);
-                    }, error => componentContext.toast.createErrorToast(error));
+                    if (pagingData.pageIndex === 1) {
+                        filterInstance.rawFilterItems = response.body;
+                    } else {
+                        filterInstance.rawFilterItems = filterInstance.rawFilterItems.concat(response.body);
+                    }
+                    filterInstance.setFilterItems();
+                    pagingData['totalSize'] = Number(response.headers.get('x-total-count')) || 0;
+                    pagingData['hasNextPage'] = filterInstance.filterItems.length < pagingData.totalSize;
+                    filterInstance.numChecked = componentContext.keywordFilterList.length;
+                }, error => componentContext.toast.createErrorToast(error));
             },
             getItemText: function(filterItem) {
                 const keywordString = filterItem.value[`${CATALOG}keyword`];
@@ -221,16 +221,16 @@ export class RecordFiltersComponent implements OnInit, OnChanges, OnDestroy {
                     value: keywordObject,
                     checked: includes(componentContext.keywordFilterList, keywordObject[`${CATALOG}keyword`])
                 }));
-                const keywords = filter(componentContext.state.keywordFilterList, keyword => {
-                    return this.filterItems.filter(currentFilterItem => currentFilterItem.value[`${CATALOG}keyword`].indexOf(keyword) !== -1).length;
-                });
-                componentContext.changeFilter.emit({recordType: componentContext.recordTypeFilterItem.value, keywordFilterList: keywords, creatorFilterList: componentContext.creatorFilterList});
             },
-            filter: function() {
-                const checkedKeywordObjects = filter(this.filterItems, currentFilterItem => currentFilterItem.checked);
-                const keywords = map(checkedKeywordObjects, currentFilterItem => currentFilterItem.value[`${CATALOG}keyword`]);
-                componentContext.changeFilter.emit({recordType: componentContext.recordTypeFilterItem.value, keywordFilterList: keywords, creatorFilterList: componentContext.creatorFilterList});
-                this.numChecked = getNumChecked(this.filterItems);
+            filter: function(filterItem: FilterItem) {
+                const changedIdx = componentContext.keywordFilterList.findIndex(checkedKeyword => checkedKeyword === filterItem.value[`${CATALOG}keyword`]);
+                if (changedIdx >= 0) {
+                    componentContext.keywordFilterList.splice(changedIdx, 1);
+                } else {
+                    componentContext.keywordFilterList.push(filterItem.value[`${CATALOG}keyword`]);
+                }
+                componentContext.changeFilter.emit({recordType: componentContext.recordTypeFilterItem.value, keywordFilterList: componentContext.keywordFilterList, creatorFilterList: componentContext.creatorFilterList});
+                this.numChecked = componentContext.keywordFilterList.length;
             }
         };
 
