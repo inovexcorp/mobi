@@ -38,6 +38,7 @@ import { RecordsViewComponent } from './components/recordsView/recordsView.compo
 import { RecordViewComponent } from './components/recordView/recordView.component';
 import { RecordViewTabsetComponent } from './components/recordViewTabset/recordViewTabset.component';
 import { RecordTypeComponent } from './components/recordType/recordType.component';
+import { ClipboardModule } from '@angular/cdk/clipboard';
 
 /**
  * @namespace catalog
@@ -46,7 +47,8 @@ import { RecordTypeComponent } from './components/recordType/recordType.componen
  */
 @NgModule({
     imports: [
-        SharedModule
+        SharedModule,
+        ClipboardModule
     ],
     declarations: [
         BranchListComponent,
