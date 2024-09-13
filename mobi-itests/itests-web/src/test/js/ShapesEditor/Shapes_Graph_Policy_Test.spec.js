@@ -183,7 +183,7 @@ module.exports = {
             .setValue('catalog-page records-view .d-flex .search-form input','semops_shapes')
             .sendKeys('catalog-page records-view .d-flex .search-form input', browser.Keys.ENTER)
             .waitForElementNotPresent('#spinner-full')
-            .click('xpath', '//catalog-page//record-card//mat-card-title//span[text()[contains(., "semops_shapes")]]//ancestor::mat-card')
+            .click('xpath', '//catalog-page//record-card//mat-card-title//span[text()[contains(., "semops_shapes")]]//ancestor::mat-card//button[contains(@class, "view-button")]')
             .waitForElementVisible('catalog-page record-view div.record-body')
             .expect.element('catalog-page record-view div.record-body h2.record-title div.inline-edit').text.to.contain('semops_shapes');
         browser.assert.elementPresent('catalog-page record-view div.record-sidebar manage-record-button button');

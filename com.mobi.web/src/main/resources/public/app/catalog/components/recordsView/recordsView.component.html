@@ -39,7 +39,8 @@
                     <div *ngIf="!records.length">
                         <info-message>No records found</info-message>
                     </div>
-                    <record-card *ngFor="let record of records" [record]="record" (clickCard)="openRecord($event)"></record-card>
+                    <record-card *ngFor="let record of records" [record]="record"
+                                 (viewRecord)="openRecord($event)"></record-card>
                 </div>
                 <div>
                     <mat-paginator [pageIndex]="state.currentRecordPage" [length]="state.totalRecordSize" [pageSize]="state.recordLimit" (page)="getRecordPage($event)"></mat-paginator>

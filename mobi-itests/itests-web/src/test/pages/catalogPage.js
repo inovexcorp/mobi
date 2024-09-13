@@ -56,7 +56,7 @@ const createRecordItemXPathSelector = function(titleOfRecord) {
 const catalogPageCommands = {
     assertRecordVisible: function(recordTitle, index) {
         return this.useXpath()
-            .assert.textContains(`(//catalog-page//record-card//mat-card-title//span)[${index}]`, recordTitle)
+            .assert.textContains(`(//catalog-page//record-card//mat-card-title//span[contains(@class, "title-text")])[${index}]`, recordTitle)
     },
 
     clearCatalogSearchBar: function() {
@@ -121,10 +121,17 @@ const catalogRecordCommands = {
     //openRecordItem is used to open Record item given the title of the record
     openRecordItem: function(titleOfRecord) {
         const recordItemSelector = createRecordItemXPathSelector(titleOfRecord);
-        return this.useCss()
-            .click('xpath', recordItemSelector, function(result) { this.assert.strictEqual(result.status, 0) })
-            .waitForElementVisible('catalog-page record-view div.record-body')
-            .expect.element('catalog-page record-view div.record-body h2.record-title div.inline-edit').text.to.contain(titleOfRecord);
+        const viewButtonSelector = recordItemSelector + '//button[contains(@class, "view-button")]';
+
+        const openCommands = function() {
+            browser.useCss()
+                .click('xpath', recordItemSelector)
+                .expect.element('catalog-page record-view div.record-body').to.not.be.present;
+            browser.click('xpath', viewButtonSelector, function(result) { this.assert.strictEqual(result.status, 0) })
+                .waitForElementVisible('catalog-page record-view div.record-body')
+                .expect.element('catalog-page record-view div.record-body h2.record-title div.inline-edit').text.to.contain(titleOfRecord);
+        }
+        return openCommands();
     },
 
     verifyRecordList: function() {

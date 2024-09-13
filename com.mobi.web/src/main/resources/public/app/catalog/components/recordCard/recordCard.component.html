@@ -20,10 +20,17 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<mat-card class="record-card" (click)="handleClick()" [ngClass]="{'clickable': !!clickCard}">
-    <!-- TODO: Come Angular 9, switch to Angular Material solution for click to copy -->
-    <mat-card-title><span [copy-clipboard]="record['@id']" matTooltip="Copy Record IRI" matTooltipPosition="above">{{title}}</span></mat-card-title>
-    <mat-card-subtitle><record-icon [record]="record"></record-icon> <record-type [record]="record"></record-type> &bull; Updated {{modified | date:'short'}}</mat-card-subtitle>
+<mat-card class="record-card" [ngClass]="{'clickable': !!viewRecord}">
+    <mat-card-title>
+        <span (click)="copyIRI()" class="title-text">
+            {{title}}
+            <button mat-icon-button disableRipple id="copyIcon" matTooltip="Copy Record IRI" matTooltipPosition="above">
+                <mat-icon>content_copy</mat-icon>
+            </button>
+        </span>
+    </mat-card-title>
+    <mat-card-subtitle><record-icon [record]="record"></record-icon>
+        <record-type [record]="record"></record-type> &bull; Updated {{modified | date:'short'}}</mat-card-subtitle>
     <mat-card-content>
         <p class="record-description">{{description}}</p>
         <catalog-record-keywords [record]="record"></catalog-record-keywords>
@@ -31,6 +38,7 @@
     <mat-divider></mat-divider>
     <mat-card-actions class="d-flex">
         <entity-publisher [entity]="record" class="text-muted flex-1 align-self-center"></entity-publisher>
+        <button class="view-button" mat-button color="primary" (click)="handleClick()">View</button>
         <open-record-button [record]="record" [stopProp]="true" [flat]="true"></open-record-button>
     </mat-card-actions>
 </mat-card>

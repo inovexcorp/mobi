@@ -21,9 +21,11 @@
  * #L%
  */
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Clipboard } from '@angular/cdk/clipboard';
 
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { getDctermsValue } from '../../../shared/utility';
+import { ToastService } from '../../../shared/services/toast.service';
 
 /**
  * @class catalog.RecordCardComponent
@@ -44,14 +46,14 @@ import { getDctermsValue } from '../../../shared/utility';
 })
 export class RecordCardComponent implements OnInit {
     @Input() record: JSONLDObject;
-    @Output() clickCard = new EventEmitter<JSONLDObject>();
+    @Output() viewRecord = new EventEmitter<JSONLDObject>();
 
     descriptionLimit = 200;
     title = '';
     description = '';
     modified: Date;
 
-    constructor() {}
+    constructor(private toast: ToastService, private clipboard: Clipboard) {}
 
     ngOnInit(): void {
         this.title = getDctermsValue(this.record, 'title');
@@ -59,6 +61,16 @@ export class RecordCardComponent implements OnInit {
         this.modified = new Date(getDctermsValue(this.record, 'modified'));
     }
     handleClick(): void {
-        this.clickCard.emit(this.record);
+        this.viewRecord.emit(this.record);
+    }
+    copyIRI(): string {
+        const copied = this.clipboard.copy(this.record['@id']);
+        if (copied) {
+            this.toast.createSuccessToast('Copied', {timeOut: 2000});
+            return this.record['@id'];
+        } else {
+            this.toast.createErrorToast('Failed to copy IRI', {timeOut: 2000});
+            return undefined;
+        }
     }
 }

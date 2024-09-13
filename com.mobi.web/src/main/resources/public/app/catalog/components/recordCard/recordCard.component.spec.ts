@@ -27,12 +27,11 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { MockComponent, MockDirective } from 'ng-mocks';
+import { MockComponent, MockProvider } from 'ng-mocks';
 
 import {
     cleanStylesFromDOM,
-} from '../../../../../public/test/ts/Shared';
-import { CopyClipboardDirective } from '../../../shared/directives/copyClipboard/copyClipboard.directive';
+} from '../../../../test/ts/Shared';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { DCTERMS } from '../../../prefixes';
 import { CatalogRecordKeywordsComponent } from '../catalogRecordKeywords/catalogRecordKeywords.component';
@@ -41,11 +40,13 @@ import { OpenRecordButtonComponent } from '../openRecordButton/openRecordButton.
 import { RecordIconComponent } from '../../../shared/components/recordIcon/recordIcon.component';
 import { RecordTypeComponent } from '../recordType/recordType.component';
 import { RecordCardComponent } from './recordCard.component';
+import { ToastService } from '../../../shared/services/toast.service';
 
 describe('Record Card component', function() {
     let component: RecordCardComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<RecordCardComponent>;
+    let nativeElement: HTMLElement;
 
     const dateStr = '2020-01-01';
     const record: JSONLDObject = {
@@ -71,13 +72,16 @@ describe('Record Card component', function() {
                 MockComponent(CatalogRecordKeywordsComponent),
                 MockComponent(EntityPublisherComponent),
                 MockComponent(OpenRecordButtonComponent),
-                MockDirective(CopyClipboardDirective)
+            ],
+            providers: [
+                MockProvider(ToastService),
             ]
         }).compileComponents();
 
         fixture = TestBed.createComponent(RecordCardComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
+        nativeElement = element.nativeElement as HTMLElement;
     });
 
     afterEach(function() {
@@ -110,11 +114,12 @@ describe('Record Card component', function() {
             });
         });
     });
-    it('should call clickCard when the card is clicked', function() {
+    it('should call viewRecord when the view button is clicked', function() {
         component.record = record;
-        spyOn(component.clickCard, 'emit');
-        const card = element.queryAll(By.css('mat-card'))[0];
-        card.triggerEventHandler('click', null);
-        expect(component.clickCard.emit).toHaveBeenCalledWith(record);
+        spyOn(component.viewRecord, 'emit');
+
+        const button: HTMLElement = nativeElement.querySelector('.view-button');
+        button.click();
+        expect(component.viewRecord.emit).toHaveBeenCalledWith(record);
     });
 });
