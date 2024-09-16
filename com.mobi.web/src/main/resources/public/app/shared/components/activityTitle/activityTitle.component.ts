@@ -28,7 +28,7 @@ import { User } from '../../models/user.class';
 import { PROV } from '../../../prefixes';
 import { ProvManagerService } from '../../services/provManager.service';
 import { JSONLDObject } from '../../models/JSONLDObject.interface';
-import { getDctermsValue, getPropertyId } from '../../utility';
+import { getDctermsValue, getEntityName, getPropertyId } from '../../utility';
 
 /**
  * @class home.ActivityTitleComponent
@@ -80,7 +80,7 @@ export class ActivityTitleComponent implements OnInit, OnChanges {
         });
         const entityTitles = get(activity, `['${pred}']`, []).map(idObj => {
             const entity = this.entities.find(obj => obj['@id'] === idObj['@id']);
-            return getDctermsValue(entity, 'title');
+            return getEntityName(entity) || getDctermsValue(entity, 'title');
         });
         this.entitiesStr = entityTitles.join(', ').replace(/,(?!.*,)/gmi, ' and') || '(None)';
     }

@@ -6,6 +6,7 @@ PREFIX dc: <http://purl.org/dc/elements/1.1/>
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 PREFIX skosxl: <http://www.w3.org/2008/05/skos-xl#>
 PREFIX mcat: <http://mobi.com/ontologies/catalog#>
+PREFIX sh: <http://www.w3.org/ns/shacl#>
 
 SELECT DISTINCT (?iri as ?value) ?name WHERE {
   {
@@ -18,9 +19,9 @@ SELECT DISTINCT (?iri as ?value) ?name WHERE {
                 ?iri a %SH_CLASS% .
                 FILTER(ISIRI(?iri))
                 BIND(REPLACE(STR(?iri), "^.*?([_\\\\p{L}][-_\\\\p{L}\\\\p{N}]*)$", "$1") as ?nameOption)
-                BIND(15 as ?propertyOrder)
+                BIND(19 as ?propertyOrder)
               } UNION {
-                VALUES (?property ?propertyOrder) { (rdfs:label 2) (dct:title 4) (dc:title 6) (skos:prefLabel 8) (skos:altLabel 10) }
+                VALUES (?property ?propertyOrder) { (rdfs:label 2) (dct:title 4) (dc:title 6) (skos:prefLabel 8) (skos:altLabel 10) (skosxl:literalForm 12) (sh:name 18) }
                 ?iri a %SH_CLASS% ;
                   ?property ?nameOption .
                 FILTER(ISIRI(?iri))
@@ -32,17 +33,32 @@ SELECT DISTINCT (?iri as ?value) ?name WHERE {
               } UNION {
                 ?iri a %SH_CLASS% ;
                   (skosxl:prefLabel/skosxl:literalForm) ?nameOption .
+                  FILTER(LANGMATCHES(LANG(?nameOption), "EN"))
                 FILTER(ISIRI(?iri))
                 BIND(13 as ?propertyOrder)
               } UNION {
+                    ?iri a %SH_CLASS% ;
+                    (skosxl:prefLabel/skosxl:literalForm) ?nameOption .
+                    FILTER(isIRI(?iri))
+                    BIND(14 as ?propertyOrder)
+              }
+              UNION {
+                  ?iri a %SH_CLASS% ;
+                  (skosxl:altLabel/skosxl:literalForm) ?nameOption .
+                  FILTER(ISIRI(?iri))
+                  FILTER(LANGMATCHES(LANG(?nameOption), "EN"))
+                  BIND(15 as ?propertyOrder)
+              }
+              UNION {
                 ?iri a %SH_CLASS% ;
                   (skosxl:altLabel/skosxl:literalForm) ?nameOption .
                 FILTER(ISIRI(?iri))
-                BIND(14 as ?propertyOrder)
+                BIND(16 as ?propertyOrder)
               }
             } ORDER BY ?propertyOrder
         }
     } GROUP BY ?iri
   }
   BIND(IF(STRBEFORE(?names, "�") = "", ?names, STRBEFORE(?names, "�")) as ?name)
+
 }

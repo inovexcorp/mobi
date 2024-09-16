@@ -5,6 +5,7 @@ PREFIX dcterms: <http://purl.org/dc/terms/>
 PREFIX dc: <http://purl.org/dc/elements/1.1/>
 PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
 PREFIX skos-xl: <http://www.w3.org/2008/05/skos-xl#>
+PREFIX sh: <http://www.w3.org/ns/shacl#>
 
 SELECT
 	?entity
@@ -16,7 +17,7 @@ WHERE {
     WHERE {
       %ENTITIES%
       {
-        VALUES (?property ?propertyOrder) { (rdfs:label 2) (dcterms:title 4) (dc:title 6) (skos:prefLabel 8) (skos:altLabel 10) (skos-xl:literalForm 12) }
+        VALUES (?property ?propertyOrder) { (rdfs:label 2) (dcterms:title 4) (dc:title 6) (skos:prefLabel 8) (skos:altLabel 10) (skos-xl:literalForm 12) (sh:name 18)}
         ?entity ?property ?name .
         FILTER(isIRI(?entity))
         OPTIONAL {

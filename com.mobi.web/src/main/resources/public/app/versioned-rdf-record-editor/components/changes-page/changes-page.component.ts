@@ -28,7 +28,7 @@ import { Commit } from '../../../shared/models/commit.interface';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { ToastService } from '../../../shared/services/toast.service';
-import { condenseCommitId } from '../../../shared/utility';
+import { condenseCommitId, getEntityName } from '../../../shared/utility';
 import { VersionedRdfListItem } from '../../../shared/models/versionedRdfListItem.class';
 import { stateServiceToken } from '../../injection-token';
 import { VersionedRdfState } from '../../../shared/services/versionedRdfState.service';
@@ -88,7 +88,8 @@ export class ChangesPageComponent<TData extends VersionedRdfListItem> implements
         this.setResults(this.size, this.index);
     }
     getEntityName(id: string): string {
-      return this.state.getEntityName(id);
+        const entity = this.__findEntityObject(id, this.additions, this.deletions);
+        return getEntityName(entity);
     }
     setResults(limit: number, offset: number): void {
       this.index = offset;
@@ -114,5 +115,9 @@ export class ChangesPageComponent<TData extends VersionedRdfListItem> implements
         this.state.changeVersion(this.state.listItem.versionedRdfRecord.recordId, null, commit.id, null, 
           condenseCommitId(commit.id), true, false, false)
             .subscribe(() => {}, error => this._toast.createErrorToast(error));
+    }
+
+    private __findEntityObject(id, arr1, arr2) {
+        return [...arr1, ...arr2].find(obj => obj['@id'] === id);
     }
 }

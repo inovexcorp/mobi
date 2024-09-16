@@ -130,13 +130,14 @@ export abstract class VersionedRdfState<T extends VersionedRdfListItem> {
      * @returns {Observable} An Observable with the string namespace to be used for all new IRIs
      */
     abstract getDefaultNamespace(): Observable<string>;
+
     /**
-     * Returns the display name to be used for the entity with the provided IRI in the currently opened listItem.
-     * 
-     * @param {string} entityId The IRI string of the entity to pull the name for
-     * @returns {string} The display name of the entity with the provided IRI
+     * Gets the name of the entity.
+     *
+     * @param {string} entity - The JSONLDObject representing the entity.
+     * @return {string} - The name of the entity.
      */
-    abstract getEntityName(entityId: string): string;
+    abstract getEntityName(entity: string): string;
     /**
      * Returns the singular IRI that represents the content of an VersionedRDFRecord. If no JSON-LD Object of the Record
      * is provided, will pull the identifier IRI from the currently selected listItem.
@@ -165,7 +166,7 @@ export abstract class VersionedRdfState<T extends VersionedRdfListItem> {
     /**
      * Creates a new VersionedRDFRecord of the appropriate type given the provided details. Will create the 
      * VersionedRDFRecord and will open it immediately in the current Versioned RDF editor.
-     * 
+     *
      * @param {RdfUpload} rdfUpload The details of the creation operation to be performed
      * @returns {Observable} An Observable with the returned details of the newly created VersionedRDFRecord; fails 
      *    otherwise
