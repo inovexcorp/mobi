@@ -23,12 +23,15 @@ package com.mobi.catalog.impl.record;
  * #L%
  */
 
+import static com.mobi.persistence.utils.Models.vf;
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertTrue;
+import static junit.framework.TestCase.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -40,6 +43,8 @@ import com.mobi.catalog.api.record.config.OperationConfig;
 import com.mobi.catalog.api.record.config.RecordCreateSettings;
 import com.mobi.catalog.api.record.config.RecordExportSettings;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
+import com.mobi.catalog.api.record.statistic.Statistic;
+import com.mobi.catalog.api.record.statistic.StatisticDefinition;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.persistence.utils.BatchExporter;
@@ -51,12 +56,19 @@ import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.query.QueryEvaluationException;
+import org.eclipse.rdf4j.query.QueryLanguage;
+import org.eclipse.rdf4j.query.TupleQuery;
+import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.RepositoryException;
+import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.rio.helpers.BufferedGroupingRDFHandler;
+import org.eclipse.rdf4j.sail.memory.MemoryStore;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -64,9 +76,12 @@ import org.junit.rules.ExpectedException;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashSet;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -272,5 +287,47 @@ public class SimpleRecordServiceTest extends OrmEnabledTestCase {
     @Test
     public void getTypeIRITest() throws Exception {
         assertEquals(Record.TYPE, recordService.getTypeIRI());
+    }
+
+    @Test
+    public void testGetStatistics() throws QueryEvaluationException {
+        Repository repo = new SailRepository(new MemoryStore());
+        StatisticDefinition statisticDefinition = new StatisticDefinition("statistic1", "desc1");
+
+        try (RepositoryConnection conn = repo.getConnection()) {
+            String testData = IOUtils.toString(Objects.requireNonNull(getClass().getResourceAsStream("/dataset_data.ttl")), StandardCharsets.UTF_8);
+            conn.add(Rio.parse(new ByteArrayInputStream(testData.getBytes()), "", RDFFormat.TURTLE));
+
+            String query = """
+                    SELECT (COUNT(?s) AS ?statistic1)
+                    WHERE {
+                        ?s ?p ?o .
+                    }""";
+
+            Statistic statistic = recordService.getStatistic(vf.createIRI("urn:recordId"), conn, query, statisticDefinition);
+            assertEquals("statistic1", statistic.definition().name());
+            assertEquals("desc1", statistic.definition().description());
+            assertEquals(169, statistic.value());
+        } catch (IOException e) {
+            fail();
+        }
+        repo.shutDown();
+    }
+
+    @Test
+    public void testGetStatisticQueryEvaluationException() throws QueryEvaluationException {
+        // Create mock objects
+        RepositoryConnection conn = mock(RepositoryConnection.class);
+        TupleQuery tupleQuery = mock(TupleQuery.class);
+        // Define test data
+        String query = "SELECT ?statistic1 ?statistic2 WHERE { ?s ?p ?o }";
+        StatisticDefinition statisticDefinition = new StatisticDefinition("statistic1", "desc1");
+
+        // Configure mock behavior
+        when(conn.prepareTupleQuery(QueryLanguage.SPARQL, query)).thenReturn(tupleQuery);
+        when(tupleQuery.evaluate()).thenThrow(QueryEvaluationException.class);
+        // Call the method under test
+        Statistic statistic = recordService.getStatistic(vf.createIRI("urn:recordId"), conn, query, statisticDefinition);
+        Assert.assertNull(statistic);
     }
 }

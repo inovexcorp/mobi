@@ -26,6 +26,8 @@ package com.mobi.dataset.api.record;
 import com.mobi.catalog.api.record.AbstractUnversionedRecordService;
 import com.mobi.catalog.api.record.RecordService;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
+import com.mobi.catalog.api.record.statistic.Statistic;
+import com.mobi.catalog.api.record.statistic.StatisticDefinition;
 import com.mobi.dataset.api.DatasetUtilsService;
 import com.mobi.dataset.api.builder.OntologyIdentifier;
 import com.mobi.dataset.api.record.config.DatasetRecordCreateSettings;
@@ -34,6 +36,7 @@ import com.mobi.dataset.ontology.dataset.DatasetRecord;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.persistence.utils.ResourceUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Resource;
@@ -49,7 +52,10 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -72,6 +78,27 @@ public abstract class DatasetRecordService<T extends DatasetRecord>
     private static final String USER_IRI_BINDING = "%USERIRI%";
     private static final String RECORD_IRI_BINDING = "%RECORDIRI%";
     private static final String ENCODED_RECORD_IRI_BINDING = "%RECORDIRIENCODED%";
+    private static final String TYPE_STATISTIC_QUERY;
+    private static final String TRIPLES_STATISTIC_QUERY;
+    private static final StatisticDefinition TYPE_STATISTIC_DEFINITION;
+    private static final StatisticDefinition TRIPLES_STATISTIC_DEFINITION;
+
+    static {
+        try {
+            TYPE_STATISTIC_QUERY = IOUtils.toString(Objects.requireNonNull(DatasetRecordService.class
+                    .getResourceAsStream("/number-of-types.rq")), StandardCharsets.UTF_8);
+
+            TRIPLES_STATISTIC_QUERY = IOUtils.toString(Objects.requireNonNull(DatasetRecordService.class
+                    .getResourceAsStream("/number-of-triples.rq")), StandardCharsets.UTF_8);
+
+            TYPE_STATISTIC_DEFINITION = new StatisticDefinition(
+                    "totalTypes", "The total number of class types represented in the dataset.");
+            TRIPLES_STATISTIC_DEFINITION = new StatisticDefinition(
+                    "totalTriples", "The total number of triples contained in the dataset.");
+        } catch (IOException e) {
+            throw new MobiException(e);
+        }
+    }
 
     @Override
     public T createRecord(User user, RecordOperationConfig config, OffsetDateTime issued, OffsetDateTime modified,
@@ -139,6 +166,14 @@ public abstract class DatasetRecordService<T extends DatasetRecord>
     protected void deleteRecord(T record, RepositoryConnection conn) {
         super.deleteRecord(record, conn);
         deletePolicies(record, conn);
+    }
+
+    @Override
+    public List<Statistic> getStatistics(Resource recordId, RepositoryConnection conn) {
+        List<Statistic> stats = new ArrayList<>();
+        stats.add(getStatistic(recordId, conn, TYPE_STATISTIC_QUERY, TYPE_STATISTIC_DEFINITION));
+        stats.add(getStatistic(recordId, conn, TRIPLES_STATISTIC_QUERY, TRIPLES_STATISTIC_DEFINITION));
+        return stats;
     }
 
     /**
