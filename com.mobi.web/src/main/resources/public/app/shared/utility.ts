@@ -32,7 +32,7 @@ import * as sha1 from 'js-sha1';
 import { JSONLDObject } from './models/JSONLDObject.interface';
 import { JSONLDId } from './models/JSONLDId.interface';
 import { JSONLDValue } from './models/JSONLDValue.interface';
-import { DC, DCTERMS, RDF, RDFS, SKOS, XSD } from '../prefixes';
+import { DC, DCTERMS, RDF, RDFS, SHACL, SKOS, SKOSXL, XSD } from '../prefixes';
 import { PaginatedConfig } from './models/paginatedConfig.interface';
 import { RESTError } from './models/RESTError.interface';
 import { REGEX } from '../constants';
@@ -43,8 +43,13 @@ import { SHACLFormFieldConfig } from '../shacl-forms/models/shacl-form-field-con
 
 export const entityNameProps = [
   `${RDFS}label`, 
-  `${DCTERMS}title`, 
-  `${DC}title`, 
+  `${DCTERMS}title`,
+  `${DC}title`,
+  `${SKOS}prefLabel`,
+  `${SKOS}altLabel`,
+  `${SKOSXL}altLabel`,
+  `${SKOSXL}literalForm`,
+  `${SHACL}name`,
 ];
 
 // General Utility Methods
@@ -657,9 +662,12 @@ export function condenseCommitId(id: string): string {
  * @param {JSONLDObject} entity The entity you want the name of.
  * @returns {string} The beautified IRI string.
  */
-export function getEntityName(entity: JSONLDObject, props = entityNameProps): string {
-  let result = reduce(props, (tempResult, prop) => tempResult 
-      || _getPrioritizedValue(entity, prop), '');
+export function getEntityName(entity: JSONLDObject): string {
+  let result = reduce(entityNameProps, (tempResult, prop) => {
+    return tempResult
+      || _getPrioritizedValue(entity, prop);
+  }, '');
+
   if (!result && has(entity, '@id')) {
       result = getBeautifulIRI(entity['@id']);
   }
@@ -803,8 +811,27 @@ function _removeValue(entity: JSONLDObject, propertyIRI: string, valueObj: JSONL
 function _convertToString(param: string | number | boolean): string {
   return typeof param === 'string' ? param : '' + param;
 }
-function _getPrioritizedValue(entity, prop) {
-  return get(find(get(entity, `['${prop}']`), {'@language': 'en'}), '@value') || getPropertyValue(entity, prop);
+
+/**
+ * Get the prioritized value of a given property from an entity object.
+ *
+ * @param {JSONLDObject} entity - The entity object.
+ * @param {string} prop - The property to retrieve from the entity object.
+ * @returns {any} - The prioritized value of the property from the entity object.
+ */
+function _getPrioritizedValue(entity: JSONLDObject, prop: string): string {
+  /**
+   * Retrieves the value of a property from an entity based on the given property name.
+   * Represents the language filter for text processing.
+   * Finds entities based on the provided property and language filter.
+   */
+  const foundEntity = find(get(entity, `['${prop}']`), {'@language': 'en'});
+  /**
+   * Retrieves the value of the '@value' property from the found entity.
+   */
+  const valueEntity = get(foundEntity, '@value');
+  // return value entry or property value
+  return valueEntity || getPropertyValue(entity, prop);
 }
 /**
  * Creates a JSON-LD object representing an associated object for the property represented by the provided

@@ -1351,7 +1351,7 @@ export class OntologyManagerService {
      * @returns {string} The beautified IRI string.
      */
     getEntityName(entity: JSONLDObject): string {
-        return getEntityName(entity, this.entityNameProps);
+        return getEntityName(entity);
     }
     /**
      * Gets the provided entity's names. These names are an array of the '@value' values for the entityNameProps.

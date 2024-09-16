@@ -91,6 +91,7 @@ export class MapperStateService {
     PREFIX owl: <http://www.w3.org/2002/07/owl#>
     PREFIX skosxl: <http://www.w3.org/2008/05/skos-xl#>
     PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+    PREFIX sh: <http://www.w3.org/ns/shacl#>
     
     SELECT DISTINCT 
       ?iri
@@ -109,9 +110,9 @@ export class MapperStateService {
                 ?iri a owl:Class .
                 FILTER(ISIRI(?iri))
                 BIND(REPLACE(STR(?iri), "^.*?([_\\\\p{L}][-_\\\\p{L}\\\\p{N}]*)$", "$1") as ?nameOption)
-                BIND(15 as ?propertyOrder)
+                BIND(19 as ?propertyOrder)
               } UNION {
-                VALUES (?property ?propertyOrder) { (rdfs:label 2) (dct:title 4) (dc:title 6) (skos:prefLabel 8) (skos:altLabel 10) }
+                VALUES (?property ?propertyOrder) { (rdfs:label 2) (dct:title 4) (dc:title 6) (skos:prefLabel 8) (skos:altLabel 10) (skosxl:literalForm 12) (sh:name 18) }
                 ?iri a owl:Class ;
                   ?property ?nameOption .
                 FILTER(ISIRI(?iri))
@@ -124,12 +125,24 @@ export class MapperStateService {
                 ?iri a owl:Class ;
                   (skosxl:prefLabel/skosxl:literalForm) ?nameOption .
                 FILTER(ISIRI(?iri))
+                FILTER(LANGMATCHES(LANG(?nameOption), "EN"))
                 BIND(13 as ?propertyOrder)
+              } UNION {
+                ?iri a owl:Class ;
+                  (skosxl:prefLabel/skosxl:literalForm) ?nameOption .
+                FILTER(ISIRI(?iri))
+                BIND(14 as ?propertyOrder)
               } UNION {
                 ?iri a owl:Class ;
                   (skosxl:altLabel/skosxl:literalForm) ?nameOption .
                 FILTER(ISIRI(?iri))
-                BIND(14 as ?propertyOrder)
+                FILTER(LANGMATCHES(LANG(?nameOption), "EN"))
+                BIND(15 as ?propertyOrder)
+              } UNION {
+                ?iri a owl:Class ;
+                  (skosxl:altLabel/skosxl:literalForm) ?nameOption .
+                FILTER(ISIRI(?iri))
+                BIND(16 as ?propertyOrder)
               }
             } ORDER BY ?propertyOrder
           }
@@ -153,6 +166,7 @@ export class MapperStateService {
     PREFIX owl: <http://www.w3.org/2002/07/owl#>
     PREFIX skosxl: <http://www.w3.org/2008/05/skos-xl#>
     PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+    PREFIX sh: <http://www.w3.org/ns/shacl#>
 
     SELECT DISTINCT 
       ?iri
@@ -171,9 +185,9 @@ export class MapperStateService {
                 ?iri a owl:Class .
                 FILTER(ISIRI(?iri))
                 BIND(REPLACE(STR(?iri), "^.*?([_\\\\p{L}][-_\\\\p{L}\\\\p{N}]*)$", "$1") as ?nameOption)
-                BIND(15 as ?propertyOrder)
+                BIND(19 as ?propertyOrder)
               } UNION {
-                VALUES (?property ?propertyOrder) { (rdfs:label 2) (dct:title 4) (dc:title 6) (skos:prefLabel 8) (skos:altLabel 10) }
+                VALUES (?property ?propertyOrder) { (rdfs:label 2) (dct:title 4) (dc:title 6) (skos:prefLabel 8) (skos:altLabel 10) (skosxl:literalForm 12) (sh:name 18) }
                 ?iri a owl:Class ;
                   ?property ?nameOption .
                 FILTER(ISIRI(?iri))
@@ -184,14 +198,26 @@ export class MapperStateService {
                 }
               } UNION {
                 ?iri a owl:Class ;
-                      (skosxl:prefLabel/skosxl:literalForm) ?nameOption .
+                    (skosxl:prefLabel/skosxl:literalForm) ?nameOption .
                 FILTER(ISIRI(?iri))
+                FILTER(LANGMATCHES(LANG(?nameOption), "EN"))
                 BIND(13 as ?propertyOrder)
               } UNION {
                 ?iri a owl:Class ;
-                        (skosxl:altLabel/skosxl:literalForm) ?nameOption .
+                    (skosxl:prefLabel/skosxl:literalForm) ?nameOption .
                 FILTER(ISIRI(?iri))
                 BIND(14 as ?propertyOrder)
+              } UNION {
+                ?iri a owl:Class ;
+                    (skosxl:altLabel/skosxl:literalForm) ?nameOption .
+                FILTER(ISIRI(?iri))
+                FILTER(LANGMATCHES(LANG(?nameOption), "EN"))
+                BIND(15 as ?propertyOrder)
+              } UNION {
+                ?iri a owl:Class ;
+                    (skosxl:altLabel/skosxl:literalForm) ?nameOption .
+                FILTER(ISIRI(?iri))
+                BIND(16 as ?propertyOrder)
               }
             } ORDER BY ?propertyOrder
           }
@@ -214,6 +240,7 @@ export class MapperStateService {
     PREFIX owl: <http://www.w3.org/2002/07/owl#>
     PREFIX skosxl: <http://www.w3.org/2008/05/skos-xl#>
     PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+    PREFIX sh: <http://www.w3.org/ns/shacl#>
     
     SELECT DISTINCT 
       ?iri
@@ -234,14 +261,14 @@ export class MapperStateService {
                 SELECT DISTINCT ?iri ?type
                 WHERE {
                   BIND(<%CLASS%> as ?clazz)
-	                VALUES ?type { owl:DatatypeProperty owl:ObjectProperty owl:AnnotationProperty }
-              	  {
+                  VALUES ?type { owl:DatatypeProperty owl:ObjectProperty owl:AnnotationProperty }
+                {
                     ?iri a ?type .
                     FILTER NOT EXISTS {
-                  	  ?iri rdfs:domain ?domain .
+                    ?iri rdfs:domain ?domain .
                     }
                   } UNION {
-	                  ?clazz rdfs:subClassOf* ?domain .
+                    ?clazz rdfs:subClassOf* ?domain .
                     ?iri a ?type ;
                       rdfs:domain ?domain .
                   } UNION {
@@ -254,11 +281,11 @@ export class MapperStateService {
               }
 
               {
-            	  ?iri a ?type .
+                ?iri a ?type .
                 BIND(REPLACE(STR(?iri), "^.*?([_\\\\p{L}][-_\\\\p{L}\\\\p{N}]*)$", "$1") as ?nameOption)
-                BIND(15 as ?propertyOrder)
+                BIND(19 as ?propertyOrder)
               } UNION {
-                VALUES (?property ?propertyOrder) { (rdfs:label 2) (dct:title 4) (dc:title 6) (skos:prefLabel 8) (skos:altLabel 10) }
+                VALUES (?property ?propertyOrder) { (rdfs:label 2) (dct:title 4) (dc:title 6) (skos:prefLabel 8) (skos:altLabel 10) (skosxl:literalForm 12) (sh:name 18) }
                 ?iri ?property ?nameOption .
                 OPTIONAL {
                   ?iri ?property ?nameOption .
@@ -267,10 +294,18 @@ export class MapperStateService {
                 }
               } UNION {
                 ?iri (skosxl:prefLabel/skosxl:literalForm) ?nameOption .
+                FILTER(LANGMATCHES(LANG(?nameOption), "EN"))
                 BIND(13 as ?propertyOrder)
               } UNION {
-                ?iri (skosxl:altLabel/skosxl:literalForm) ?nameOption .
+                ?iri (skosxl:prefLabel/skosxl:literalForm) ?nameOption .
                 BIND(14 as ?propertyOrder)
+              } UNION {
+                ?iri (skosxl:altLabel/skosxl:literalForm) ?nameOption .
+                FILTER(LANGMATCHES(LANG(?nameOption), "EN"))
+                BIND(15 as ?propertyOrder)
+              } UNION {
+                ?iri (skosxl:altLabel/skosxl:literalForm) ?nameOption .
+                BIND(16 as ?propertyOrder)
               }
             } ORDER BY ?propertyOrder
           }
@@ -300,6 +335,7 @@ export class MapperStateService {
     PREFIX owl: <http://www.w3.org/2002/07/owl#>
     PREFIX skosxl: <http://www.w3.org/2008/05/skos-xl#>
     PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+    PREFIX sh: <http://www.w3.org/ns/shacl#>
     
     SELECT DISTINCT 
       ?iri
@@ -317,11 +353,11 @@ export class MapperStateService {
             WHERE {
               VALUES (?iri ?type) { %IRI% }
               {
-            	  ?iri a ?type .
+                ?iri a ?type .
                 BIND(REPLACE(STR(?iri), "^.*?([_\\\\p{L}][-_\\\\p{L}\\\\p{N}]*)$", "$1") as ?nameOption)
-                BIND(15 as ?propertyOrder)
+                BIND(19 as ?propertyOrder)
               } UNION {
-                VALUES (?property ?propertyOrder) { (rdfs:label 2) (dct:title 4) (dc:title 6) (skos:prefLabel 8) (skos:altLabel 10) }
+                VALUES (?property ?propertyOrder) { (rdfs:label 2) (dct:title 4) (dc:title 6) (skos:prefLabel 8) (skos:altLabel 10) (skosxl:literalForm 12) (sh:name 18) }
                 ?iri a ?type ;
                   ?property ?nameOption .
                 OPTIONAL {
@@ -332,11 +368,21 @@ export class MapperStateService {
               } UNION {
                 ?iri a ?type ;
                   (skosxl:prefLabel/skosxl:literalForm) ?nameOption .
+                FILTER(LANGMATCHES(LANG(?nameOption), "EN"))
                 BIND(13 as ?propertyOrder)
               } UNION {
                 ?iri a ?type ;
-                  (skosxl:altLabel/skosxl:literalForm) ?nameOption .
+                  (skosxl:prefLabel/skosxl:literalForm) ?nameOption .
                 BIND(14 as ?propertyOrder)
+              } UNION {
+                ?iri a ?type ;
+                  (skosxl:altLabel/skosxl:literalForm) ?nameOption .
+                FILTER(LANGMATCHES(LANG(?nameOption), "EN"))
+                BIND(15 as ?propertyOrder)
+              } UNION {
+                ?iri a ?type ;
+                  (skosxl:altLabel/skosxl:literalForm) ?nameOption .
+                BIND(16 as ?propertyOrder)
               }
             } ORDER BY ?propertyOrder
           }

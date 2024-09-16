@@ -31,7 +31,7 @@ import { map, startWith } from 'rxjs/operators';
 
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
-import { getDctermsValue } from '../../../shared/utility';
+import { getDctermsValue, getEntityName } from '../../../shared/utility';
 
 /**
  * @class mapper.ClassMappingSelectComponent
@@ -92,7 +92,7 @@ export class ClassMappingSelectComponent implements OnInit, OnChanges {
         return filteredClassMappings;
     }
     getTitle(classMapping: JSONLDObject): string {
-        return getDctermsValue(classMapping, 'title');
+        return getEntityName(classMapping) || getDctermsValue(classMapping, 'title');
     }
     showClassMappings(): void{
         //Resets the form control, marking it pristine and untouched , and resetting the value.

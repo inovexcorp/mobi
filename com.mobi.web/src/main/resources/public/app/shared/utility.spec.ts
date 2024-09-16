@@ -27,7 +27,7 @@ import { formatDate } from '@angular/common';
 import moment from 'moment/moment';
 import { cloneDeep } from 'lodash';
 
-import { DC, DCTERMS, RDFS, SHACL, SHACL_FORM, SKOS, XSD } from '../prefixes';
+import { DC, DCTERMS, RDFS, SHACL, SHACL_FORM, SKOS, SKOSXL, XSD } from '../prefixes';
 import { REGEX } from '../constants';
 import { JSONLDObject } from './models/JSONLDObject.interface';
 import { SHACLFormFieldConfig } from '../shacl-forms/models/shacl-form-field-config';
@@ -680,6 +680,19 @@ describe('Utility method', () => {
       it('and there is no english version', function() {
         this.entity[`${DCTERMS}title`] = [{ '@value': 'title' }];
         expect(getEntityName(this.entity)).toEqual('title');
+      });
+      describe('returns the  SKOSXL:literalForm,  if present and no rdfs:label or dcterms:title', function () {
+        it('and in english', function () {
+          this.entity[`${SKOSXL}literalForm`] = [{'@value': 'hello', '@language': 'en'}, {
+            '@value': 'hola',
+            '@language': 'es'
+          }];
+          expect(getEntityName(this.entity)).toEqual('hello');
+        });
+        it('and there is no english version', function () {
+          this.entity[`${SKOSXL}literalForm`] = [{'@value': 'Salutos', '@language': 'eo'}];
+          expect(getEntityName(this.entity)).toEqual('Salutos');
+        });
       });
     });
     describe('returns the dc:title if present and no rdfs:label or dcterms:title', function() {
