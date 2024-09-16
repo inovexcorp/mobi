@@ -95,7 +95,7 @@ public interface RecordService<T extends Record> {
      * Returns a list of statistics
      *
      * @param recordId The Resource identifying the Record.
-     * @param conn     A RepositoryConnection to use for lookup.
+     * @param conn A RepositoryConnection to use for lookup.
      * @return A list of {@link Statistic}
      */
     List<Statistic> getStatistics(Resource recordId, RepositoryConnection conn);

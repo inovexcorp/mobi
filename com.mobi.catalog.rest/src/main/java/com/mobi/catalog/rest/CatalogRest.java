@@ -60,7 +60,6 @@ import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.builder.DistributionConfig;
 import com.mobi.catalog.api.builder.KeywordCount;
 import com.mobi.catalog.api.record.statistic.Statistic;
-import com.mobi.catalog.api.record.statistic.StatisticUtils;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Catalog;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
@@ -77,6 +76,9 @@ import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.api.record.RecordService;
 import com.mobi.catalog.api.versioning.VersioningManager;
 import com.mobi.catalog.config.CatalogConfigProvider;
+import com.mobi.dataset.api.DatasetConnection;
+import com.mobi.dataset.api.DatasetManager;
+import com.mobi.dataset.ontology.dataset.DatasetRecord;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
@@ -174,6 +176,9 @@ public class CatalogRest {
 
     @Reference
     protected RecordManager recordManager;
+
+    @Reference
+    public DatasetManager datasetManager;
 
     @Reference
     protected BranchManager branchManager;
@@ -318,7 +323,7 @@ public class CatalogRest {
      *                   dataset).
      * @param offset The offset for the page.
      * @param limit The number of Records to return in one page.
-     * @param asc Whether or not the list should be sorted ascending or descending.
+     * @param asc Whether the list should be sorted ascending or descending.
      * @param searchText The String used to filter out Records.
      * @return List of Records that match the search criteria.
      */
@@ -368,8 +373,7 @@ public class CatalogRest {
             @QueryParam("offset") int offset,
             @Parameter(description = "Number of Records to return in one page", required = true)
             @QueryParam("limit") int limit,
-            @Parameter(description = "Whether or not the list should be sorted ascending or descending",
-                    required = false)
+            @Parameter(description = "Whether or not the list should be sorted ascending or descending")
             @DefaultValue("true") @QueryParam("ascending") boolean asc,
             @Parameter(description = "String used to filter out Records")
             @QueryParam("searchText") String searchText) {
@@ -390,10 +394,10 @@ public class CatalogRest {
             if (searchText != null) {
                 builder.searchText(searchText);
             }
-            if (keywords != null && keywords.size() > 0) {
+            if (keywords != null && !keywords.isEmpty()) {
                 builder.keywords(keywords);
             }
-            if (creators != null && creators.size() > 0) {
+            if (creators != null && !creators.isEmpty()) {
                 builder.creators(creators.stream().map(vf::createIRI).collect(Collectors.toList()));
             }
             PaginatedSearchResults<Record> records = recordManager.findRecord(vf.createIRI(catalogId),
@@ -588,11 +592,18 @@ public class CatalogRest {
                     factoryOfType, conn).orElseThrow(() ->
                     ErrorUtils.sendError("Record " + recordId + " could not be found", Response.Status.NOT_FOUND));
             RecordService<?> recordService = recordManager.getRecordService(record.getResource(), conn);
-            List<Statistic> statistics = recordService.getStatistics(record.getResource(), conn);
+            List<Statistic> statistics;
+            if (recordService.getType() == DatasetRecord.class) {
+                try (DatasetConnection dataConn = datasetManager.getConnection(record.getResource())) {
+                    statistics = recordService.getStatistics(record.getResource(), dataConn);
+                }
+            } else {
+                statistics = recordService.getStatistics(record.getResource(), conn);
+            }
             if (statistics.isEmpty()) {
                 return Response.status(204).build();
             } else {
-                return Response.ok(StatisticUtils.statisticsToJson(statistics).toString()).build();
+                return Response.ok(statisticsToJson(statistics).toString()).build();
             }
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
@@ -686,7 +697,7 @@ public class CatalogRest {
      * @param sort The field with sort order specified.
      * @param offset The offset for the page.
      * @param limit The number of Distributions to return in one page.
-     * @param asc Whether or not the list should be sorted ascending or descending.
+     * @param asc Whether the list should be sorted ascending or descending.
      * @return Response with a list of all the Distributions of the requested UnversionedRecord.
      */
     @GET
@@ -958,7 +969,7 @@ public class CatalogRest {
      * @param sort The field with sort order specified.
      * @param offset The offset for the page.
      * @param limit The number of Versions to return in one page.
-     * @param asc Whether or not the list should be sorted ascending or descending.
+     * @param asc Whether the list should be sorted ascending or descending.
      * @return A list of all the Versions associated with a VersionedRecord.
      */
     @GET
@@ -1371,7 +1382,7 @@ public class CatalogRest {
      * @param sort The field with sort order specified.
      * @param offset The offset for the page.
      * @param limit The number of Distributions to return in one page.
-     * @param asc Whether or not the list should be sorted ascending or descending.
+     * @param asc Whether the list should be sorted ascending or descending.
      * @return Returns a list of Distributions for the identified Version.
      */
     @GET
@@ -1708,8 +1719,8 @@ public class CatalogRest {
      * @param sort The field with sort order specified.
      * @param offset The offset for the page.
      * @param limit The number of Branches to return in one page.
-     * @param asc Whether or not the list should be sorted ascending or descending.
-     * @param applyUserFilter Whether or not the list should be filtered to Branches associated with the user making
+     * @param asc Whether the list should be sorted ascending or descending.
+     * @param applyUserFilter Whether the list should be filtered to Branches associated with the user making
      *                        the request.
      * @return A list of Branches for the identified VersionedRDFRecord.
      */
@@ -1835,7 +1846,7 @@ public class CatalogRest {
                 throw ErrorUtils.sendError("Commit not in Record", Response.Status.BAD_REQUEST);
             }
             Map<String, OrmFactory<? extends Branch>> branchFactories = getBranchFactories();
-            if (typeIRI == null || !branchFactories.keySet().contains(typeIRI)) {
+            if (typeIRI == null || !branchFactories.containsKey(typeIRI)) {
                 throw ErrorUtils.sendError("Invalid Branch type", Response.Status.BAD_REQUEST);
             }
 
@@ -2840,7 +2851,7 @@ public class CatalogRest {
      *                 String begins with "_:".
      * @param additionsJson String of JSON-LD that corresponds to the statements that were added to the entity.
      * @param deletionsJson String of JSON-LD that corresponds to the statements that were deleted in the entity.
-     * @return A Response indicating whether or not the InProgressCommit was updated.
+     * @return A Response indicating whether the InProgressCommit was updated.
      */
     @PUT
     @Path("{catalogId}/records/{recordId}/in-progress-commit")
@@ -3139,5 +3150,16 @@ public class CatalogRest {
         return result;
     }
 
+    protected ArrayNode statisticsToJson(List<Statistic> statistics) {
+        ArrayNode jsonArray = mapper.createArrayNode();
+        for (Statistic statistic : statistics) {
+            ObjectNode statisticsJson = mapper.createObjectNode();
+            statisticsJson.put("name", statistic.definition().name());
+            statisticsJson.put("description", statistic.definition().description());
+            statisticsJson.put("value", statistic.value());
+            jsonArray.add(statisticsJson);
+        }
+        return jsonArray;
+    }
 
 }

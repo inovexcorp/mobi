@@ -25,7 +25,6 @@ package com.mobi.ontology.impl.core.record;
 
 import com.mobi.catalog.api.record.statistic.Statistic;
 import com.mobi.catalog.api.record.statistic.StatisticDefinition;
-import com.mobi.catalog.api.record.statistic.StatisticUtils;
 import com.mobi.catalog.api.record.RecordService;
 import com.mobi.exception.MobiException;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
@@ -223,20 +222,14 @@ public class SimpleOntologyRecordService extends AbstractOntologyRecordService<O
     @Override
     public List<Statistic> getStatistics(Resource recordId, RepositoryConnection conn) {
         List<Statistic> stats = new ArrayList<>();
-        stats.addAll(getStatistic(recordId, conn, STATISTIC_CLASSES, DEFINITION_CLASSES));
-        stats.addAll(getStatistic(recordId, conn, STATISTIC_ANNOTATION_PROPERTIES, DEFINITION_ANNOTATION_PROPERTIES));
-        stats.addAll(getStatistic(recordId, conn, STATISTIC_DATATYPE_PROPERTIES, DEFINITION_DATATYPE_PROPERTIES));
-        stats.addAll(getStatistic(recordId, conn, STATISTIC_OBJECT_PROPERTIES, DEFINITION_OBJECT_PROPERTIES));
-        stats.addAll(getStatistic(recordId, conn, STATISTIC_INDIVIDUAL_PROPERTIES, DEFINITION_INDIVIDUAL_PROPERTIES));
-        stats.addAll(getStatistic(recordId, conn, STATISTIC_ONTOLOGY_IMPORT, DEFINITION_ONTOLOGY_IMPORTS));
-        stats.addAll(getStatistic(recordId, conn, STATISTIC_NUMBER_OF_USAGES, DEFINITION_NUMBER_OF_USAGES));
+        stats.add(getStatistic(recordId, conn, STATISTIC_CLASSES, DEFINITION_CLASSES));
+        stats.add(getStatistic(recordId, conn, STATISTIC_ANNOTATION_PROPERTIES, DEFINITION_ANNOTATION_PROPERTIES));
+        stats.add(getStatistic(recordId, conn, STATISTIC_DATATYPE_PROPERTIES, DEFINITION_DATATYPE_PROPERTIES));
+        stats.add(getStatistic(recordId, conn, STATISTIC_OBJECT_PROPERTIES, DEFINITION_OBJECT_PROPERTIES));
+        stats.add(getStatistic(recordId, conn, STATISTIC_INDIVIDUAL_PROPERTIES, DEFINITION_INDIVIDUAL_PROPERTIES));
+        stats.add(getStatistic(recordId, conn, STATISTIC_ONTOLOGY_IMPORT, DEFINITION_ONTOLOGY_IMPORTS));
+        stats.add(getStatistic(recordId, conn, STATISTIC_NUMBER_OF_USAGES, DEFINITION_NUMBER_OF_USAGES));
         return stats;
-    }
-
-    private static List<Statistic> getStatistic(Resource recordId, RepositoryConnection conn,
-                                                String statisticClasses, StatisticDefinition definitionClasses) {
-        return StatisticUtils.getStatistics(statisticClasses, recordId, new StatisticDefinition[]{definitionClasses}, conn
-        );
     }
 
     protected Set<Resource> getPlatformStateIds(OntologyRecord record, RepositoryConnection conn) {

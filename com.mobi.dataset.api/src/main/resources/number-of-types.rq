@@ -1,0 +1,4 @@
+SELECT (COUNT(DISTINCT ?type) as ?totalTypes)
+WHERE {
+  ?s a ?type .
+}

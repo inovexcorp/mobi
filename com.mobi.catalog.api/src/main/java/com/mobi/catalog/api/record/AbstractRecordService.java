@@ -32,6 +32,7 @@ import com.mobi.catalog.api.record.config.RecordCreateSettings;
 import com.mobi.catalog.api.record.config.RecordExportSettings;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
 import com.mobi.catalog.api.record.statistic.Statistic;
+import com.mobi.catalog.api.record.statistic.StatisticDefinition;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.persistence.utils.BatchExporter;
@@ -49,6 +50,11 @@ import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
+import org.eclipse.rdf4j.query.QueryEvaluationException;
+import org.eclipse.rdf4j.query.QueryLanguage;
+import org.eclipse.rdf4j.query.TupleQuery;
+import org.eclipse.rdf4j.query.TupleQueryResult;
+import org.eclipse.rdf4j.query.explanation.Explanation;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.RepositoryResult;
 import org.osgi.service.component.annotations.Reference;
@@ -60,6 +66,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 /**
@@ -187,7 +194,7 @@ public abstract class AbstractRecordService<T extends Record> implements RecordS
             record.setProperty(vf.createLiteral(config.get(RecordCreateSettings.RECORD_MARKDOWN)),
                     vf.createIRI(DCTERMS.ABSTRACT.stringValue()));
         }
-        if (config.get(RecordCreateSettings.RECORD_KEYWORDS).size() > 0) {
+        if (!config.get(RecordCreateSettings.RECORD_KEYWORDS).isEmpty()) {
             record.setKeyword(config.get(RecordCreateSettings.RECORD_KEYWORDS).stream()
                     .map(vf::createLiteral).collect(Collectors.toSet()));
         }
@@ -290,7 +297,7 @@ public abstract class AbstractRecordService<T extends Record> implements RecordS
     }
 
     @Override
-    public List<Statistic> getStatistics(Resource recordId, RepositoryConnection conn){
+    public List<Statistic> getStatistics(Resource recordId, RepositoryConnection conn) {
         return List.of();
     }
 
@@ -321,5 +328,48 @@ public abstract class AbstractRecordService<T extends Record> implements RecordS
             LOGGER.info("Could not find policy for record: " + record.getResource()
                     + ". Continuing with record deletion.");
         }
+    }
+
+    /**
+     * Executes a SPARQL query on the given repository connection and extracts statistics from the result set.
+     * Assumption: The names of the statistics in the statisticDefinitions array must match
+     * the binding names in the SPARQL query.
+     *
+     * @param query SPARQL query to execute
+     * @param recordId the record ID to bind to the query if not null
+     * @param statisticDefinition  Definition of the statistic to extract from the query result
+     * @param conn  Repository connection to execute the query on
+     *
+     * @return The statistic if one exists
+     */
+    public Statistic getStatistic(Resource recordId, RepositoryConnection conn, String query,
+                                         StatisticDefinition statisticDefinition) {
+        AtomicReference<Statistic> statistic = new AtomicReference<>();
+        try {
+            TupleQuery tupleQuery = conn.prepareTupleQuery(QueryLanguage.SPARQL, query);
+            if (recordId != null) {
+                tupleQuery.setBinding("record", recordId);
+            }
+            try (TupleQueryResult result = tupleQuery.evaluate()) {
+                result.forEach(bindings -> {
+                    Value value = bindings.getValue(statisticDefinition.name());
+                    if (value != null) {
+                        try {
+                            statistic.set(new Statistic(statisticDefinition, Integer.parseInt(value.stringValue())));
+                        } catch (NumberFormatException e) {
+                            LOGGER.trace("Error: Invalid integer value for statistic " + statisticDefinition.name());
+                        }
+                    } else {
+                        LOGGER.trace("Error: Null value for statistic " + statisticDefinition.name());
+                    }
+                });
+            }
+            if (LOGGER.isTraceEnabled()) {
+                LOGGER.trace(tupleQuery.explain(Explanation.Level.Timed).toString());
+            }
+        } catch (QueryEvaluationException e) {
+            LOGGER.error(e.getMessage(), e);
+        }
+        return statistic.get();
     }
 }

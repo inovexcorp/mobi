@@ -82,6 +82,9 @@ import com.mobi.catalog.api.record.statistic.Statistic;
 import com.mobi.catalog.api.record.statistic.StatisticDefinition;
 import com.mobi.catalog.api.versioning.VersioningManager;
 import com.mobi.catalog.config.CatalogConfigProvider;
+import com.mobi.dataset.api.DatasetConnection;
+import com.mobi.dataset.api.DatasetManager;
+import com.mobi.dataset.ontology.dataset.DatasetRecord;
 import com.mobi.etl.api.ontologies.delimited.MappingRecord;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
@@ -186,6 +189,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
     private static CatalogManager catalogManager;
     private static CatalogConfigProvider configProvider;
     private static RecordManager recordManager;
+    private static DatasetManager datasetManager;
     private static BranchManager branchManager;
     private static CommitManager commitManager;
     private static DistributionManager distributionManager;
@@ -221,6 +225,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
         mf = getModelFactory();
 
         catalogManager = mock(CatalogManager.class);
+        datasetManager = mock(DatasetManager.class);
         configProvider = mock(CatalogConfigProvider.class);
         versioningManager = mock(VersioningManager.class);
         engineManager = mock(EngineManager.class);
@@ -240,6 +245,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
         rest.engineManager = engineManager;
         rest.configProvider = configProvider;
         rest.catalogManager = catalogManager;
+        rest.datasetManager = datasetManager;
         rest.factoryRegistry = getOrmFactoryRegistry();
         rest.versioningManager = versioningManager;
         rest.bNodeService = bNodeService;
@@ -877,6 +883,30 @@ public class CatalogRestTest extends MobiRestTestCXF {
                 .request().get();
         assertEquals(200, response.getStatus());
         verify(recordManager).getRecordOpt(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), recordFactory, conn);
+        try {
+            ArrayNode arr = (ArrayNode) mapper.readTree(response.readEntity(String.class));
+            assertEquals("[{\"name\":\"stat1\",\"description\":\"stat1Desc\",\"value\":1}]", arr.toString());
+        } catch (Exception e) {
+            fail("Expected no exception, but got: " + e.getMessage());
+        }
+    }
+
+    @Test
+    public void getDatasetRecordStatisticsTest() {
+        DatasetConnection dataConn = mock(DatasetConnection.class);
+        RecordService rs = mock(RecordService.class);
+        List<Statistic> statistics = new ArrayList<>();
+        statistics.add(new Statistic(new StatisticDefinition("stat1", "stat1Desc"), 1));
+        when(rs.getStatistics(any(), any())).thenReturn(statistics);
+        when(recordManager.getRecordService(any(), any())).thenReturn(rs);
+        when(rs.getType()).thenReturn(DatasetRecord.class);
+        when(datasetManager.getConnection(any(Resource.class))).thenReturn(dataConn);
+
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/statistics")
+                .request().get();
+        assertEquals(200, response.getStatus());
+        verify(recordManager).getRecordOpt(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), recordFactory, conn);
+        verify(datasetManager).getConnection(any(Resource.class));
         try {
             ArrayNode arr = (ArrayNode) mapper.readTree(response.readEntity(String.class));
             assertEquals("[{\"name\":\"stat1\",\"description\":\"stat1Desc\",\"value\":1}]", arr.toString());
@@ -3484,6 +3514,36 @@ public class CatalogRestTest extends MobiRestTestCXF {
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
+    }
+
+    @Test
+    public void testStatisticsToJson() {
+        // Create a list of statistics
+        List<Statistic> statistics = new ArrayList<>();
+        statistics.add(new Statistic(new StatisticDefinition("statistic1", "desc1"), 10));
+        statistics.add(new Statistic(new StatisticDefinition("statistic2", "desc2"), 20));
+        // Convert statistics to JSON
+        ArrayNode jsonArray = rest.statisticsToJson(statistics);
+        // Assert that the JSON array has the correct number of elements
+        assertEquals(2, jsonArray.size());
+        // Assert that the first statistic is correctly represented in the JSON array
+        ObjectNode jsonStatistic1 = (ObjectNode) jsonArray.get(0);
+        assertEquals("statistic1", jsonStatistic1.get("name").asText());
+        assertEquals("desc1", jsonStatistic1.get("description").asText());
+        assertEquals(10, jsonStatistic1.get("value").asInt());
+        // Assert that the second statistic is correctly represented in the JSON array
+        ObjectNode jsonStatistic2 = (ObjectNode) jsonArray.get(1);
+        assertEquals("statistic2", jsonStatistic2.get("name").asText());
+        assertEquals("desc2", jsonStatistic2.get("description").asText());
+        assertEquals(20, jsonStatistic2.get("value").asInt());
+    }
+
+    @Test
+    public void testStatisticToJsonEmptyList() {
+        // Convert an empty list of statistics to JSON
+        ArrayNode jsonArray = rest.statisticsToJson(new ArrayList<>());
+        // Assert that the JSON array is empty
+        assertTrue(jsonArray.isEmpty());
     }
 
     private <T extends Version> void testCreateVersionByType(OrmFactory<T> ormFactory) {
