@@ -69,11 +69,13 @@ import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.Collections;
 import java.util.LinkedHashSet;
@@ -779,6 +781,40 @@ public class SimpleShapesGraphRecordServiceTest extends OrmEnabledTestCase {
             testIdsForStateModel(connection, actualEmpty, actual1, actualEmpty);
             recordService.deleteShapeGraphState(stateRecord02, connection);
             testIdsForStateModel(connection, actualEmpty, actualEmpty, actualEmpty);
+        }
+    }
+
+    @Test
+    public void getStatisticsTest() {
+        MemoryRepositoryWrapper repository = new MemoryRepositoryWrapper();
+        repository.setDelegate(new SailRepository(new MemoryStore()));
+
+        try (RepositoryConnection conn = repository.getConnection()) {
+            InputStream testData = getClass().getResourceAsStream("/statistics-test-data.trig");
+            conn.add(Rio.parse(testData, "", RDFFormat.TRIG));
+            // Check ont1
+            List<String> statistics = recordService.getStatistics(VALUE_FACTORY.createIRI("https://mobi.com/records#af0d06fa-34b4-4f2d-98a5-1edc89966bcf"), conn)
+                    .stream()
+                    .map((metric) -> String.format("%s:%s", metric.definition().name(), metric.value()))
+                    .toList();
+            String[] expected = new String[]{
+                    "totalNodeShapes:2",
+                    "totalImports:1"
+            };
+            assertEquals(List.of(expected), statistics);
+
+            // assert3
+            List<String> statisticsC = recordService.getStatistics(VALUE_FACTORY.createIRI("https://mobi.com/records#non-exists"), conn)
+                    .stream()
+                    .map((metric) -> String.format("%s:%s", metric.definition().name(), metric.value()))
+                    .toList();
+            String[] expectedC = new String[]{
+                    "totalNodeShapes:0",
+                    "totalImports:0"
+            };
+            assertEquals(List.of(expectedC), statisticsC);
+        } catch (IOException | RuntimeException e) {
+            Assert.fail(e.getMessage());
         }
     }
 

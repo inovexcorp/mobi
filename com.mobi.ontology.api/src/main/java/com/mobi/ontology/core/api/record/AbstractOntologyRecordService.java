@@ -31,10 +31,14 @@ import com.mobi.catalog.api.record.AbstractVersionedRDFRecordService;
 import com.mobi.catalog.api.record.RecordService;
 import com.mobi.catalog.api.record.config.RecordCreateSettings;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
+import com.mobi.catalog.api.record.statistic.Statistic;
+import com.mobi.catalog.api.record.statistic.StatisticDefinition;
+import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
+import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
@@ -45,20 +49,110 @@ import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.osgi.service.component.annotations.Reference;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.Semaphore;
 
 public abstract class AbstractOntologyRecordService<T extends OntologyRecord>
         extends AbstractVersionedRDFRecordService<T> implements RecordService<T> {
 
-    @Reference
-    public OntologyManager ontologyManager;
-
     /**
      * Semaphore for protecting ontology IRI uniqueness checks.
      */
     private Semaphore semaphore = new Semaphore(1, true);
+
+    private static final String STATISTIC_ANNOTATION_PROPERTIES;
+    private static final String STATISTIC_CLASSES;
+    private static final String STATISTIC_DATATYPE_PROPERTIES;
+    private static final String STATISTIC_INDIVIDUAL_PROPERTIES;
+    private static final String STATISTIC_NUMBER_OF_USAGES;
+    private static final String STATISTIC_OBJECT_PROPERTIES;
+    private static final String STATISTIC_ONTOLOGY_IMPORT;
+    private static final StatisticDefinition DEFINITION_ANNOTATION_PROPERTIES;
+    private static final StatisticDefinition DEFINITION_CLASSES;
+    private static final StatisticDefinition DEFINITION_DATATYPE_PROPERTIES;
+    private static final StatisticDefinition DEFINITION_INDIVIDUAL_PROPERTIES;
+    private static final StatisticDefinition DEFINITION_NUMBER_OF_USAGES;
+    private static final StatisticDefinition DEFINITION_OBJECT_PROPERTIES;
+    private static final StatisticDefinition DEFINITION_ONTOLOGY_IMPORTS;
+
+    static {
+        try {
+            STATISTIC_ANNOTATION_PROPERTIES = IOUtils.toString(
+                    Objects.requireNonNull(AbstractOntologyRecordService.class
+                            .getResourceAsStream("/statistic/annotation-properties.rq")),
+                    StandardCharsets.UTF_8
+            );
+            DEFINITION_ANNOTATION_PROPERTIES = new StatisticDefinition(
+                    "totalAnnotationProperties",
+                    "The number of unique annotation properties (e.g., comments, labels) defined in the ontology."
+            );
+            STATISTIC_CLASSES = IOUtils.toString(
+                    Objects.requireNonNull(AbstractOntologyRecordService.class
+                            .getResourceAsStream("/statistic/classes.rq")),
+                    StandardCharsets.UTF_8
+            );
+            DEFINITION_CLASSES = new StatisticDefinition(
+                    "totalClasses",
+                    "The number of unique classes defined in the ontology."
+            );
+            STATISTIC_DATATYPE_PROPERTIES = IOUtils.toString(
+                    Objects.requireNonNull(AbstractOntologyRecordService.class
+                            .getResourceAsStream("/statistic/datatype-properties.rq")),
+                    StandardCharsets.UTF_8
+            );
+            DEFINITION_DATATYPE_PROPERTIES = new StatisticDefinition(
+                    "totalDatatypeProperties",
+                    "The number of unique datatype properties (e.g., strings, integers) defined in the ontology."
+            );
+            STATISTIC_INDIVIDUAL_PROPERTIES = IOUtils.toString(
+                    Objects.requireNonNull(AbstractOntologyRecordService.class
+                            .getResourceAsStream("/statistic/individual-properties.rq")),
+                    StandardCharsets.UTF_8
+            );
+            DEFINITION_INDIVIDUAL_PROPERTIES = new StatisticDefinition(
+                    "totalIndividuals",
+                    "The number of unique individuals (e.g., instances of classes) defined in the ontology."
+            );
+            STATISTIC_NUMBER_OF_USAGES = IOUtils.toString(
+                    Objects.requireNonNull(AbstractOntologyRecordService.class
+                            .getResourceAsStream("/statistic/number-of-usages.rq")),
+                    StandardCharsets.UTF_8
+            );
+            DEFINITION_NUMBER_OF_USAGES = new StatisticDefinition(
+                    "numberOfUsages",
+                    "The number of other ontologies that import the current ontology."
+            );
+            STATISTIC_OBJECT_PROPERTIES = IOUtils.toString(
+                    Objects.requireNonNull(AbstractOntologyRecordService.class
+                            .getResourceAsStream("/statistic/object-properties.rq")),
+                    StandardCharsets.UTF_8
+            );
+            DEFINITION_OBJECT_PROPERTIES = new StatisticDefinition(
+                    "totalObjectProperties",
+                    "The number of unique object properties (e.g., relationships between classes) defined in the ontology."
+            );
+            STATISTIC_ONTOLOGY_IMPORT = IOUtils.toString(
+                    Objects.requireNonNull(AbstractOntologyRecordService.class
+                            .getResourceAsStream("/statistic/ontology-import.rq")),
+                    StandardCharsets.UTF_8
+            );
+            DEFINITION_ONTOLOGY_IMPORTS = new StatisticDefinition(
+                    "ontologyImports",
+                    "The number of unique ontologies that are imported by the current ontology."
+            );
+        } catch (IOException e) {
+            throw new MobiException(e);
+        }
+    }
+
+    @Reference
+    public OntologyManager ontologyManager;
 
     @Override
     public T createRecord(User user, RecordOperationConfig config, OffsetDateTime issued, OffsetDateTime modified,
@@ -102,6 +196,19 @@ public abstract class AbstractOntologyRecordService<T extends OntologyRecord>
             semaphore.release();
         }
         return record;
+    }
+    
+    @Override
+    public List<Statistic> getStatistics(Resource recordId, RepositoryConnection conn) {
+        return List.of(
+            getStatistic(recordId, conn, STATISTIC_CLASSES, DEFINITION_CLASSES),
+            getStatistic(recordId, conn, STATISTIC_ANNOTATION_PROPERTIES, DEFINITION_ANNOTATION_PROPERTIES),
+            getStatistic(recordId, conn, STATISTIC_DATATYPE_PROPERTIES, DEFINITION_DATATYPE_PROPERTIES),
+            getStatistic(recordId, conn, STATISTIC_OBJECT_PROPERTIES, DEFINITION_OBJECT_PROPERTIES),
+            getStatistic(recordId, conn, STATISTIC_INDIVIDUAL_PROPERTIES, DEFINITION_INDIVIDUAL_PROPERTIES),
+            getStatistic(recordId, conn, STATISTIC_ONTOLOGY_IMPORT, DEFINITION_ONTOLOGY_IMPORTS),
+            getStatistic(recordId, conn, STATISTIC_NUMBER_OF_USAGES, DEFINITION_NUMBER_OF_USAGES)
+        );
     }
 
     /**

@@ -30,10 +30,14 @@ import com.mobi.catalog.api.record.AbstractVersionedRDFRecordService;
 import com.mobi.catalog.api.record.RecordService;
 import com.mobi.catalog.api.record.config.RecordCreateSettings;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
+import com.mobi.catalog.api.record.statistic.Statistic;
+import com.mobi.catalog.api.record.statistic.StatisticDefinition;
+import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontology.utils.OntologyModels;
 import com.mobi.shapes.api.ShapesGraphManager;
 import com.mobi.shapes.api.ontologies.shapesgrapheditor.ShapesGraphRecord;
+import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
@@ -44,12 +48,22 @@ import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.osgi.service.component.annotations.Reference;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.Semaphore;
 
 public abstract class AbstractShapesGraphRecordService<T extends ShapesGraphRecord>
         extends AbstractVersionedRDFRecordService<T> implements RecordService<T> {
+
+    private static final String NODESHAPES_STATISTIC_QUERY;
+    private static final String IMPORTS_STATISTIC_QUERY;
+    private static final StatisticDefinition NODESHAPES_STATISTIC_DEFINITION;
+    private static final StatisticDefinition IMPORTS_STATISTIC_DEFINITION;
 
     @Reference
     public ShapesGraphManager shapesGraphManager;
@@ -60,6 +74,23 @@ public abstract class AbstractShapesGraphRecordService<T extends ShapesGraphReco
     private final Semaphore semaphore = new Semaphore(1, true);
 
     public static final String DEFAULT_PREFIX = "http://mobi.com/ontologies/shapes-graph/";
+
+    static {
+        try {
+            NODESHAPES_STATISTIC_QUERY = IOUtils.toString(Objects.requireNonNull(AbstractShapesGraphRecordService.class
+                    .getResourceAsStream("/total-node-shapes.rq")), StandardCharsets.UTF_8);
+
+            IMPORTS_STATISTIC_QUERY = IOUtils.toString(Objects.requireNonNull(AbstractShapesGraphRecordService.class
+                    .getResourceAsStream("/total-source-ontologies.rq")), StandardCharsets.UTF_8);
+
+            NODESHAPES_STATISTIC_DEFINITION = new StatisticDefinition(
+                    "totalNodeShapes", "The total number of node shapes in the shapes graph.");
+            IMPORTS_STATISTIC_DEFINITION = new StatisticDefinition(
+                    "totalImports", "The total number of ontologies imported into the shapes graph.");
+        } catch (IOException e) {
+            throw new MobiException(e);
+        }
+    }
 
     @Override
     public T createRecord(User user, RecordOperationConfig config, OffsetDateTime issued, OffsetDateTime modified,
@@ -103,6 +134,14 @@ public abstract class AbstractShapesGraphRecordService<T extends ShapesGraphReco
             semaphore.release();
         }
         return record;
+    }
+
+    @Override
+    public List<Statistic> getStatistics(Resource recordId, RepositoryConnection conn) {
+        return List.of(
+          getStatistic(recordId, conn, NODESHAPES_STATISTIC_QUERY, NODESHAPES_STATISTIC_DEFINITION),
+          getStatistic(recordId, conn, IMPORTS_STATISTIC_QUERY, IMPORTS_STATISTIC_DEFINITION)
+        );
     }
 
     /**
