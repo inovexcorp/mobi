@@ -1,0 +1,180 @@
+<http://mobi.com/data/uhtc/crystalstructure/Cubic> a <http://matonto.org/ontologies/uhtc#CrystalStructure> ;
+                                                   <http://www.w3.org/2000/01/rdf-schema#label> "Cubic" ;
+                                                   <http://matonto.org/ontologies/uhtc#crystalStructureName> "Cubic" .
+
+<http://mobi.com/data/uhtc/crystalstructure/FCC> a <http://matonto.org/ontologies/uhtc#CrystalStructure> ;
+                                                 <http://www.w3.org/2000/01/rdf-schema#label> "FCC" ;
+                                                 <http://matonto.org/ontologies/uhtc#crystalStructureName> "FCC" .
+
+<http://mobi.com/data/uhtc/crystalstructure/Hexagonal> a <http://matonto.org/ontologies/uhtc#CrystalStructure> ;
+                                                       <http://www.w3.org/2000/01/rdf-schema#label> "Hexagonal" ;
+                                                       <http://matonto.org/ontologies/uhtc#crystalStructureName> "Hexagonal" .
+
+<http://mobi.com/data/uhtc/crystalstructure/Polymorphic> a <http://matonto.org/ontologies/uhtc#CrystalStructure> ;
+                                                         <http://www.w3.org/2000/01/rdf-schema#label> "Polymorphic" ;
+                                                         <http://matonto.org/ontologies/uhtc#crystalStructureName> "Polymorphic" .
+
+<http://mobi.com/data/uhtc/material/HfB2> a <http://matonto.org/ontologies/uhtc#Material> ;
+                                          <http://www.w3.org/2000/01/rdf-schema#label> "HfB2" ;
+                                          <http://www.w3.org/2000/01/rdf-schema#comment> "Hafnium diboride is an ultrahigh temperature ceramic composed of hafnium and boron. It has a melting temperature of about 3250 degrees Celsius. It is an unusual ceramic, having relatively high thermal and electrical conductivities, properties it shares with isostructural titanium diborideæandæzirconium diboride. It is a grey, metallic looking material. Hafnium diboride has a hexagonalæcrystalæstructure, aæmolar massæof 200.11 grams per mole, and a density of 10.5 grams per cubic centimeter." ;
+                                          <http://matonto.org/ontologies/uhtc#chemicalFormula> "HfB2" ;
+                                          <http://matonto.org/ontologies/uhtc#crystalStructure> <http://mobi.com/data/uhtc/crystalstructure/Hexagonal> ;
+                                          <http://matonto.org/ontologies/uhtc#density> 1.119E1 ;
+                                          <http://matonto.org/ontologies/uhtc#element> <http://mobi.com/data/uhtc/element/Boron> , <http://mobi.com/data/uhtc/element/Hafnium> ;
+                                          <http://matonto.org/ontologies/uhtc#meltingPoint> 3.38E3 .
+
+<http://mobi.com/data/uhtc/material/HfC> a <http://matonto.org/ontologies/uhtc#Material> ;
+                                         <http://www.w3.org/2000/01/rdf-schema#label> "HfC" ;
+                                         <http://www.w3.org/2000/01/rdf-schema#comment> "Hafnium carbide is a chemical compound of hafnium and carbon. With a melting point of about 3900 C it is one of the most refractory binary compounds known." ;
+                                         <http://matonto.org/ontologies/uhtc#chemicalFormula> "HfC" ;
+                                         <http://matonto.org/ontologies/uhtc#crystalStructure> <http://mobi.com/data/uhtc/crystalstructure/FCC> ;
+                                         <http://matonto.org/ontologies/uhtc#density> 1.276E1 ;
+                                         <http://matonto.org/ontologies/uhtc#element> <http://mobi.com/data/uhtc/element/Carbon> , <http://mobi.com/data/uhtc/element/Hafnium> ;
+                                         <http://matonto.org/ontologies/uhtc#meltingPoint> 3.9E3 .
+
+<http://mobi.com/data/uhtc/material/HfN> a <http://matonto.org/ontologies/uhtc#Material> ;
+                                         <http://www.w3.org/2000/01/rdf-schema#label> "HfN" ;
+                                         <http://www.w3.org/2000/01/rdf-schema#comment> "Hafnium Nitride is an ultrahigh temperature ceramic composed of hafnium and boron." ;
+                                         <http://matonto.org/ontologies/uhtc#chemicalFormula> "HfN" ;
+                                         <http://matonto.org/ontologies/uhtc#crystalStructure> <http://mobi.com/data/uhtc/crystalstructure/FCC> ;
+                                         <http://matonto.org/ontologies/uhtc#density> 1.39E1 ;
+                                         <http://matonto.org/ontologies/uhtc#element> <http://mobi.com/data/uhtc/element/Hafnium> , <http://mobi.com/data/uhtc/element/Nitrogen> ;
+                                         <http://matonto.org/ontologies/uhtc#meltingPoint> 3.385E3 .
+
+<http://mobi.com/data/uhtc/material/SiC> a <http://matonto.org/ontologies/uhtc#Material> ;
+                                         <http://www.w3.org/2000/01/rdf-schema#label> "SiC" ;
+                                         <http://www.w3.org/2000/01/rdf-schema#comment> "Silicon carbide, also known as carborundum, is a compound of silicon and carbon with chemical formula SiC. It occurs in nature as the extremely rare mineral moissanite." ;
+                                         <http://matonto.org/ontologies/uhtc#chemicalFormula> "SiC" ;
+                                         <http://matonto.org/ontologies/uhtc#crystalStructure> <http://mobi.com/data/uhtc/crystalstructure/Polymorphic> ;
+                                         <http://matonto.org/ontologies/uhtc#density> 3.21E0 ;
+                                         <http://matonto.org/ontologies/uhtc#element> <http://mobi.com/data/uhtc/element/Carbon> , <http://mobi.com/data/uhtc/element/Silicon> ;
+                                         <http://matonto.org/ontologies/uhtc#meltingPoint> 2.82E3 .
+
+<http://mobi.com/data/uhtc/material/TaB2> a <http://matonto.org/ontologies/uhtc#Material> ;
+                                          <http://www.w3.org/2000/01/rdf-schema#label> "TaB2" ;
+                                          <http://www.w3.org/2000/01/rdf-schema#comment> "Tantalum borides are compounds of tantalum and boron most remarkable for their extreme hardness." ;
+                                          <http://matonto.org/ontologies/uhtc#chemicalFormula> "TaB2" ;
+                                          <http://matonto.org/ontologies/uhtc#crystalStructure> <http://mobi.com/data/uhtc/crystalstructure/Hexagonal> ;
+                                          <http://matonto.org/ontologies/uhtc#density> 1.254E1 ;
+                                          <http://matonto.org/ontologies/uhtc#element> <http://mobi.com/data/uhtc/element/Boron> , <http://mobi.com/data/uhtc/element/Tantalum> ;
+                                          <http://matonto.org/ontologies/uhtc#meltingPoint> 3.04E3 .
+
+<http://mobi.com/data/uhtc/material/TaC> a <http://matonto.org/ontologies/uhtc#Material> ;
+                                         <http://www.w3.org/2000/01/rdf-schema#label> "TaC" ;
+                                         <http://www.w3.org/2000/01/rdf-schema#comment> "Tantalum carbides form a family of binary chemical compounds of tantalum and carbon with the empirical formula TaC_, where x usually varies between 0.4 and 1." ;
+                                         <http://matonto.org/ontologies/uhtc#chemicalFormula> "TaC" ;
+                                         <http://matonto.org/ontologies/uhtc#crystalStructure> <http://mobi.com/data/uhtc/crystalstructure/Cubic> ;
+                                         <http://matonto.org/ontologies/uhtc#density> 1.45E1 ;
+                                         <http://matonto.org/ontologies/uhtc#element> <http://mobi.com/data/uhtc/element/Carbon> , <http://mobi.com/data/uhtc/element/Tantalum> ;
+                                         <http://matonto.org/ontologies/uhtc#meltingPoint> 3.8E3 .
+
+<http://mobi.com/data/uhtc/material/TaN> a <http://matonto.org/ontologies/uhtc#Material> ;
+                                         <http://www.w3.org/2000/01/rdf-schema#label> "TaN" ;
+                                         <http://www.w3.org/2000/01/rdf-schema#comment> "Tantalum nitride is an inorganic chemical compound. It is sometimes used to create barrier or \"glue\" layers between copper, or other conductive metals, and dielectric insulator films such as thermal oxides." ;
+                                         <http://matonto.org/ontologies/uhtc#chemicalFormula> "TaN" ;
+                                         <http://matonto.org/ontologies/uhtc#crystalStructure> <http://mobi.com/data/uhtc/crystalstructure/Cubic> ;
+                                         <http://matonto.org/ontologies/uhtc#density> 1.43E1 ;
+                                         <http://matonto.org/ontologies/uhtc#element> <http://mobi.com/data/uhtc/element/Nitrogen> , <http://mobi.com/data/uhtc/element/Tantalum> ;
+                                         <http://matonto.org/ontologies/uhtc#meltingPoint> 2.7E3 .
+
+<http://mobi.com/data/uhtc/material/TiB2> a <http://matonto.org/ontologies/uhtc#Material> ;
+                                          <http://www.w3.org/2000/01/rdf-schema#label> "TiB2" ;
+                                          <http://www.w3.org/2000/01/rdf-schema#comment> "Titanium diboride is an extremely hard ceramic which has excellent heat conductivity, oxidation stability and resistance to mechanical erosion." ;
+                                          <http://matonto.org/ontologies/uhtc#chemicalFormula> "TiB2" ;
+                                          <http://matonto.org/ontologies/uhtc#crystalStructure> <http://mobi.com/data/uhtc/crystalstructure/Hexagonal> ;
+                                          <http://matonto.org/ontologies/uhtc#density> 4.52E0 ;
+                                          <http://matonto.org/ontologies/uhtc#element> <http://mobi.com/data/uhtc/element/Boron> , <http://mobi.com/data/uhtc/element/Titanium> ;
+                                          <http://matonto.org/ontologies/uhtc#meltingPoint> 3.225E3 .
+
+<http://mobi.com/data/uhtc/material/TiC> a <http://matonto.org/ontologies/uhtc#Material> ;
+                                         <http://www.w3.org/2000/01/rdf-schema#label> "TiC" ;
+                                         <http://www.w3.org/2000/01/rdf-schema#comment> "Titanium carbide, TiC, is an extremely hard refractory ceramic material, similar to tungsten carbide. It has the appearance of black powder with the sodium chloride crystal structure. As found in nature its crystals range in size from 0.1 to 0.3mm." ;
+                                         <http://matonto.org/ontologies/uhtc#chemicalFormula> "TiC" ;
+                                         <http://matonto.org/ontologies/uhtc#crystalStructure> <http://mobi.com/data/uhtc/crystalstructure/Cubic> ;
+                                         <http://matonto.org/ontologies/uhtc#density> 4.94E0 ;
+                                         <http://matonto.org/ontologies/uhtc#element> <http://mobi.com/data/uhtc/element/Carbon> , <http://mobi.com/data/uhtc/element/Titanium> ;
+                                         <http://matonto.org/ontologies/uhtc#meltingPoint> 3.1E3 .
+
+<http://mobi.com/data/uhtc/material/TiN> a <http://matonto.org/ontologies/uhtc#Material> ;
+                                         <http://www.w3.org/2000/01/rdf-schema#label> "TiN" ;
+                                         <http://www.w3.org/2000/01/rdf-schema#comment> "Titanium nitride is an extremely hard ceramic material, often used as a coating on titanium alloys, steel, carbide, and aluminium components to improve the substrate's surface properties." ;
+                                         <http://matonto.org/ontologies/uhtc#chemicalFormula> "TiN" ;
+                                         <http://matonto.org/ontologies/uhtc#crystalStructure> <http://mobi.com/data/uhtc/crystalstructure/FCC> ;
+                                         <http://matonto.org/ontologies/uhtc#density> 5.39E0 ;
+                                         <http://matonto.org/ontologies/uhtc#element> <http://mobi.com/data/uhtc/element/Nitrogen> , <http://mobi.com/data/uhtc/element/Titanium> ;
+                                         <http://matonto.org/ontologies/uhtc#meltingPoint> 2.95E3 .
+
+<http://mobi.com/data/uhtc/material/ZrB2> a <http://matonto.org/ontologies/uhtc#Material> ;
+                                          <http://www.w3.org/2000/01/rdf-schema#label> "ZrB2" ;
+                                          <http://www.w3.org/2000/01/rdf-schema#comment> "Zirconium diboride is a highly covalent refractory ceramic material with a hexagonal crystal structure. ZrB is an ultra high temperature ceramic with a melting point of 3246 C." ;
+                                          <http://matonto.org/ontologies/uhtc#chemicalFormula> "ZrB2" ;
+                                          <http://matonto.org/ontologies/uhtc#crystalStructure> <http://mobi.com/data/uhtc/crystalstructure/Hexagonal> ;
+                                          <http://matonto.org/ontologies/uhtc#density> 6.1E0 ;
+                                          <http://matonto.org/ontologies/uhtc#element> <http://mobi.com/data/uhtc/element/Boron> , <http://mobi.com/data/uhtc/element/Zirconium> ;
+                                          <http://matonto.org/ontologies/uhtc#meltingPoint> 3.245E3 .
+
+<http://mobi.com/data/uhtc/material/ZrC> a <http://matonto.org/ontologies/uhtc#Material> ;
+                                         <http://www.w3.org/2000/01/rdf-schema#label> "ZrC" ;
+                                         <http://www.w3.org/2000/01/rdf-schema#comment> "Zirconium carbide is an extremely hard refractory ceramic material, commercially used in tool bits for cutting tools. It is usually processed by sintering." ;
+                                         <http://matonto.org/ontologies/uhtc#chemicalFormula> "ZrC" ;
+                                         <http://matonto.org/ontologies/uhtc#crystalStructure> <http://mobi.com/data/uhtc/crystalstructure/FCC> ;
+                                         <http://matonto.org/ontologies/uhtc#density> 6.56E0 ;
+                                         <http://matonto.org/ontologies/uhtc#element> <http://mobi.com/data/uhtc/element/Carbon> , <http://mobi.com/data/uhtc/element/Zirconium> ;
+                                         <http://matonto.org/ontologies/uhtc#meltingPoint> 3.4E3 .
+
+<http://mobi.com/data/uhtc/material/ZrN> a <http://matonto.org/ontologies/uhtc#Material> ;
+                                         <http://www.w3.org/2000/01/rdf-schema#label> "ZrN" ;
+                                         <http://www.w3.org/2000/01/rdf-schema#comment> "Zirconium nitride is an inorganic compound used in a variety of ways due to its properties." ;
+                                         <http://matonto.org/ontologies/uhtc#chemicalFormula> "ZrN" ;
+                                         <http://matonto.org/ontologies/uhtc#crystalStructure> <http://mobi.com/data/uhtc/crystalstructure/FCC> ;
+                                         <http://matonto.org/ontologies/uhtc#density> 7.29E0 ;
+                                         <http://matonto.org/ontologies/uhtc#element> <http://mobi.com/data/uhtc/element/Nitrogen> , <http://mobi.com/data/uhtc/element/Zirconium> ;
+                                         <http://matonto.org/ontologies/uhtc#meltingPoint> 2.95E3 .
+
+<http://mobi.com/data/uhtc/element/Boron> a <http://matonto.org/ontologies/uhtc#Element> ;
+                                          <http://www.w3.org/2000/01/rdf-schema#label> "Boron" ;
+                                          <http://www.w3.org/2000/01/rdf-schema#comment> "Boron is a chemical element with symbol B and atomic number 5. Produced entirely by cosmic ray spallation and supernovae and not by stellar nucleosynthesis, it is a low-abundance element in the Solar system and in the Earth's crust." ;
+                                          <http://matonto.org/ontologies/uhtc#elementName> "Boron" ;
+                                          <http://matonto.org/ontologies/uhtc#symbol> "B" .
+
+<http://mobi.com/data/uhtc/element/Carbon> a <http://matonto.org/ontologies/uhtc#Element> ;
+                                           <http://www.w3.org/2000/01/rdf-schema#label> "Carbon" ;
+                                           <http://www.w3.org/2000/01/rdf-schema#comment> "Carbon (from Latin: carbo \"coal\") is a chemical element with symbol C and atomic number 6. It is nonmetallic and tetravalent—making four electrons available to form covalent chemical bonds. Three isotopes occur naturally, 12C and 13C being stable, while 14C is a radioactive isotope, decaying with a half-life of about 5,730 years.[14] Carbon is one of the few elements known since antiquity." ;
+                                           <http://matonto.org/ontologies/uhtc#elementName> "Carbon" ;
+                                           <http://matonto.org/ontologies/uhtc#symbol> "C" .
+
+<http://mobi.com/data/uhtc/element/Hafnium> a <http://matonto.org/ontologies/uhtc#Element> ;
+                                            <http://www.w3.org/2000/01/rdf-schema#label> "Hafnium" ;
+                                            <http://www.w3.org/2000/01/rdf-schema#comment> "Hafnium is a chemical element with symbol Hf and atomic number 72. A lustrous, silvery gray, tetravalent transition metal, hafnium chemically resembles zirconium and is found in many zirconium minerals." ;
+                                            <http://matonto.org/ontologies/uhtc#elementName> "Hafnium" ;
+                                            <http://matonto.org/ontologies/uhtc#symbol> "Hf" .
+
+<http://mobi.com/data/uhtc/element/Nitrogen> a <http://matonto.org/ontologies/uhtc#Element> ;
+                                             <http://www.w3.org/2000/01/rdf-schema#label> "Nitrogen" ;
+                                             <http://www.w3.org/2000/01/rdf-schema#comment> "Nitrogen is a chemical element with symbol N and atomic number 7. It was first discovered and isolated by Scottish physician Daniel Rutherford in 1772." ;
+                                             <http://matonto.org/ontologies/uhtc#elementName> "Nitrogen" ;
+                                             <http://matonto.org/ontologies/uhtc#symbol> "N" .
+
+<http://mobi.com/data/uhtc/element/Silicon> a <http://matonto.org/ontologies/uhtc#Element> ;
+                                            <http://www.w3.org/2000/01/rdf-schema#label> "Silicon" ;
+                                            <http://www.w3.org/2000/01/rdf-schema#comment> "Silicon is a chemical element with symbol Si and atomic number 14. A hard and brittle crystalline solid with a blue-gray metallic luster, it is a tetravalent metalloid." ;
+                                            <http://matonto.org/ontologies/uhtc#elementName> "Silicon" ;
+                                            <http://matonto.org/ontologies/uhtc#symbol> "Si" .
+
+<http://mobi.com/data/uhtc/element/Tantalum> a <http://matonto.org/ontologies/uhtc#Element> ;
+                                             <http://www.w3.org/2000/01/rdf-schema#label> "Tantalum" ;
+                                             <http://www.w3.org/2000/01/rdf-schema#comment> "Tantalum is a chemical element with symbol Ta and atomic number 73. Previously known as tantalium, its name comes from Tantalus, a villain from Greek mythology." ;
+                                             <http://matonto.org/ontologies/uhtc#elementName> "Tantalum" ;
+                                             <http://matonto.org/ontologies/uhtc#symbol> "Ta" .
+
+<http://mobi.com/data/uhtc/element/Titanium> a <http://matonto.org/ontologies/uhtc#Element> ;
+                                             <http://www.w3.org/2000/01/rdf-schema#label> "Titanium" ;
+                                             <http://www.w3.org/2000/01/rdf-schema#comment> "Titanium is a chemical element with symbol Ti and atomic number 22. It is a lustrous transition metal with a silver color, low density, and high strength. Titanium is resistant to corrosion in sea water, aqua regia, and chlorine." ;
+                                             <http://matonto.org/ontologies/uhtc#elementName> "Titanium" ;
+                                             <http://matonto.org/ontologies/uhtc#symbol> "Ti" .
+
+<http://mobi.com/data/uhtc/element/Zirconium> a <http://matonto.org/ontologies/uhtc#Element> ;
+                                              <http://www.w3.org/2000/01/rdf-schema#label> "Zirconium" ;
+                                              <http://www.w3.org/2000/01/rdf-schema#comment> "Zirconium is a chemical element with symbol Zr and atomic number 40. The name zirconium is taken from the name of the mineral zircon, the most important source of zirconium." ;
+                                              <http://matonto.org/ontologies/uhtc#elementName> "Zirconium" ;
+                                              <http://matonto.org/ontologies/uhtc#symbol> "Zr" .

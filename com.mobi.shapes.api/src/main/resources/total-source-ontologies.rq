@@ -1,0 +1,18 @@
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+PREFIX catalog: <http://mobi.com/ontologies/catalog#>
+
+SELECT (COUNT(distinct ?import) as ?totalImports)
+WHERE {
+  GRAPH ?record {
+    ?record a catalog:Record;
+      catalog:masterBranch ?masterBranch .
+  }
+  GRAPH ?masterBranch {
+    ?masterBranch a catalog:MasterBranch;
+      catalog:headGraph ?headGraph .
+  }
+  GRAPH ?headGraph {
+    ?s a owl:Ontology ;
+      owl:imports ?import .
+  }
+}
