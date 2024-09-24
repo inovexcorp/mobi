@@ -30,7 +30,7 @@ import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.ModelFactory;
 import org.eclipse.rdf4j.model.Resource;
-import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
 
 import java.util.Optional;
 import javax.ws.rs.core.StreamingOutput;
@@ -38,19 +38,15 @@ import javax.ws.rs.core.StreamingOutput;
 public class SimpleShapesGraph implements ShapesGraph {
 
     private Model model;
-    private ValueFactory vf;
-    private ModelFactory mf;
+    private final ModelFactory mf = new DynamicModelFactory();
 
     /**
      * Creates a SimpleShapesGraph object that represents a Shapes Graph.
      *
      * @param model           The {@link Model} containing the data in this Shapes Graph
-     * @param vf              The {@link ValueFactory} used to create Statements
      */
-    public SimpleShapesGraph(Model model, ValueFactory vf, ModelFactory mf) {
+    public SimpleShapesGraph(Model model) {
         this.model = model;
-        this.vf = vf;
-        this.mf = mf;
     }
 
     @Override

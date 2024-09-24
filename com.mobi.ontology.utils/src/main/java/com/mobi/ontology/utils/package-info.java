@@ -1,10 +1,10 @@
-@Version("3.0.1.${build}")
+@Version("1.0.0.${build}")
 
-package com.mobi.ontology.core.api;
+package com.mobi.ontology.utils;
 
 /*-
  * #%L
- * com.mobi.ontology.api
+ * com.mobi.ontology.utils
  * $Id:$
  * $HeadURL:$
  * %%

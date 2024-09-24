@@ -65,6 +65,8 @@ import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
+import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.OWL;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.model.vocabulary.RDFS;
@@ -86,7 +88,7 @@ import org.eclipse.rdf4j.rio.RDFWriter;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.rio.helpers.BasicParserSettings;
 import org.eclipse.rdf4j.rio.helpers.BufferedGroupingRDFHandler;
-import org.eclipse.rdf4j.rio.helpers.TurtleWriterSettings;
+import org.eclipse.rdf4j.rio.turtle.TurtleWriterSettings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -116,8 +118,8 @@ public class SimpleOntology implements Ontology {
 
     private static final Logger LOG = LoggerFactory.getLogger(SimpleOntology.class);
 
-    private final ModelFactory mf;
-    private final ValueFactory vf;
+    private final ValueFactory vf = new ValidatingValueFactory();
+    private final ModelFactory mf = new DynamicModelFactory();
     private final OsgiRepository repository;
     private final DatasetUtilsService dsUtilsService;
     private final OntologyManager ontologyManager;
@@ -274,7 +276,7 @@ public class SimpleOntology implements Ontology {
 
     /**
      * Creates a SimpleOntology object from the provided {@link Model} and stores the Ontology and its imports as
-     * datasets inside of the cacheRepo. Used when the Ontology exists in the Catalog but the Ontology and its imports
+     * datasets inside the cacheRepo. Used when the Ontology exists in the Catalog but the Ontology and its imports
      * don't exist in the cache yet.
      *
      * @param recordCommitKey The key used to retrieve the Ontology from the cache
@@ -287,19 +289,14 @@ public class SimpleOntology implements Ontology {
      * @param dsUtilsService  The {@link DatasetUtilsService} used to manage Ontology Datasets
      * @param importsResolver The {@link ImportsResolver} used to resolve imports from local catalog and from the web
      * @param bNodeService    The {@link BNodeService} used to skolemize Models
-     * @param vf              The {@link ValueFactory} used to create Statements
-     * @param mf              The {@link ModelFactory} used to create Models
      */
     public SimpleOntology(String recordCommitKey, File ontologyFile, OsgiRepository cacheRepo,
                           OntologyManager ontologyManager, ThingManager thingManager,
                           CompiledResourceManager compiledResourceManager,
                           CatalogConfigProvider configProvider, DatasetUtilsService dsUtilsService,
-                          ImportsResolver importsResolver, BNodeService bNodeService,
-                          ValueFactory vf, ModelFactory mf) {
+                          ImportsResolver importsResolver, BNodeService bNodeService) {
         long startTime = getStartTime();
-        this.mf = mf;
-        this.vf = vf;
-        this.datasetIRI = OntologyDatasets.createDatasetIRIFromKey(recordCommitKey, vf);
+        this.datasetIRI = OntologyDatasets.createDatasetIRIFromKey(recordCommitKey);
         this.repository = cacheRepo;
         this.ontologyManager = ontologyManager;
         this.thingManager = thingManager;
@@ -327,18 +324,14 @@ public class SimpleOntology implements Ontology {
      * @param dsUtilsService  The {@link DatasetUtilsService} used to manage Ontology Datasets
      * @param importsResolver The {@link ImportsResolver} used to resolve imports from local catalog and from the web
      * @param bNodeService    The {@link BNodeService} used to skolemize Models
-     * @param vf              The {@link ValueFactory} used to create Statements
-     * @param mf              The {@link ModelFactory} used to create Models
      */
     public SimpleOntology(String recordCommitKey, OsgiRepository cacheRepo, OntologyManager ontologyManager,
                           ThingManager thingManager, CompiledResourceManager compiledResourceManager,
                           CatalogConfigProvider configProvider,
                           DatasetUtilsService dsUtilsService, ImportsResolver importsResolver,
-                          BNodeService bNodeService, ValueFactory vf, ModelFactory mf) {
+                          BNodeService bNodeService) {
         long startTime = getStartTime();
-        this.mf = mf;
-        this.vf = vf;
-        this.datasetIRI = OntologyDatasets.createDatasetIRIFromKey(recordCommitKey, vf);
+        this.datasetIRI = OntologyDatasets.createDatasetIRIFromKey(recordCommitKey);
         this.repository = cacheRepo;
         this.ontologyManager = ontologyManager;
         this.thingManager = thingManager;
@@ -365,7 +358,7 @@ public class SimpleOntology implements Ontology {
             boolean refresh = false;
             List<Resource> defaultGraphs = QueryResults.asList(conn.getDefaultNamedGraphs());
             for (IRI importIri : importsClosure) {
-                IRI importSdNg = OntologyDatasets.createSystemDefaultNamedGraphIRI(getDatasetIRI(importIri), vf);
+                IRI importSdNg = OntologyDatasets.createSystemDefaultNamedGraphIRI(getDatasetIRI(importIri));
                 if (!defaultGraphs.contains(importSdNg) && !unresolvedImports.contains(importIri)) {
                     refresh = true;
                     break;
@@ -393,17 +386,13 @@ public class SimpleOntology implements Ontology {
      * @param dsUtilsService  The {@link DatasetUtilsService} used to manage Ontology Datasets
      * @param importsResolver The {@link ImportsResolver} used to resolve imports from local catalog and from the web
      * @param bNodeService    The {@link BNodeService} used to skolemize Models
-     * @param vf              The {@link ValueFactory} used to create Statements
-     * @param mf              The {@link ModelFactory} used to create Models
      */
     protected SimpleOntology(IRI datasetIRI, OsgiRepository cacheRepo, OntologyManager ontologyManager,
                              ThingManager thingManager, CompiledResourceManager compiledResourceManager,
                              CatalogConfigProvider configProvider,
                              DatasetUtilsService dsUtilsService, ImportsResolver importsResolver,
-                             BNodeService bNodeService, ValueFactory vf, ModelFactory mf) {
+                             BNodeService bNodeService) {
         long startTime = getStartTime();
-        this.mf = mf;
-        this.vf = vf;
         this.datasetIRI = datasetIRI;
         this.repository = cacheRepo;
         this.ontologyManager = ontologyManager;
@@ -420,7 +409,7 @@ public class SimpleOntology implements Ontology {
         try (RepositoryConnection conn = cacheRepo.getConnection()) {
             boolean datasetIriExists = ConnectionUtils.containsContext(conn, datasetIRI);
             boolean datasetSdNgExists = ConnectionUtils.containsContext(conn, 
-                    OntologyDatasets.createSystemDefaultNamedGraphIRI(datasetIRI, vf));
+                    OntologyDatasets.createSystemDefaultNamedGraphIRI(datasetIRI));
             boolean catalogImport = datasetIRI.stringValue().startsWith(OntologyDatasets.DEFAULT_DS_NAMESPACE);
 
             // Fully loaded ontology dataset and SdNg
@@ -445,7 +434,7 @@ public class SimpleOntology implements Ontology {
                 this.unresolvedImports = imports.get(UNRESOLVED_KEY);
             } else { // Import was updated with Catalog version while web versioned exists in cache
                 // Or catalog import whose SDNG has been added to cache but not the dataset graph
-                IRI commitIri = OntologyDatasets.getCommitFromDatasetIRI(datasetIRI, vf);
+                IRI commitIri = OntologyDatasets.getCommitFromDatasetIRI(datasetIRI);
                 File ontologyFile = getCompiledResourceFile(commitIri);
                 Map<String, Set<IRI>> imports = loadOntologyIntoCache(ontologyFile, false);
                 this.importsClosure = imports.get(CLOSURE_KEY);
@@ -468,17 +457,13 @@ public class SimpleOntology implements Ontology {
      * @param dsUtilsService  The {@link DatasetUtilsService} used to manage Ontology Datasets
      * @param importsResolver The {@link ImportsResolver} used to resolve imports from local catalog and from the web
      * @param bNodeService    The {@link BNodeService} used to skolemize Models
-     * @param vf              The {@link ValueFactory} used to create Statements
-     * @param mf              The {@link ModelFactory} used to create Models
      */
-    protected SimpleOntology(IRI datasetIRI, File ontologyFile, OsgiRepository cacheRepo, OntologyManager ontologyManager,
-                             ThingManager thingManager, CompiledResourceManager compiledResourceManager,
-                             CatalogConfigProvider configProvider,
+    protected SimpleOntology(IRI datasetIRI, File ontologyFile, OsgiRepository cacheRepo,
+                             OntologyManager ontologyManager, ThingManager thingManager,
+                             CompiledResourceManager compiledResourceManager, CatalogConfigProvider configProvider,
                              DatasetUtilsService dsUtilsService, ImportsResolver importsResolver,
-                             BNodeService bNodeService, ValueFactory vf, ModelFactory mf) {
+                             BNodeService bNodeService) {
         long startTime = getStartTime();
-        this.mf = mf;
-        this.vf = vf;
         this.datasetIRI = datasetIRI;
         this.repository = cacheRepo;
         this.ontologyManager = ontologyManager;
@@ -659,11 +644,11 @@ public class SimpleOntology implements Ontology {
                 if (ng.stringValue().equals(sdNg.stringValue())) {
                     closure.add(this);
                 } else {
-                    IRI ontIRI = OntologyDatasets.getDatasetIriFromSystemDefaultNamedGraph(ng, vf);
+                    IRI ontIRI = OntologyDatasets.getDatasetIriFromSystemDefaultNamedGraph(ng);
                     IRI ontDatasetIRI = getDatasetIRI(ontIRI);
                     closure.add(new SimpleOntology(ontDatasetIRI, repository, ontologyManager,
                             thingManager, compiledResourceManager, configProvider, dsUtilsService, importsResolver,
-                            bNodeService, vf, mf));
+                            bNodeService));
                 }
             });
             undoApplyDifferenceIfPresent(conn);
@@ -1078,13 +1063,15 @@ public class SimpleOntology implements Ontology {
     @Override
     public TupleQueryResult getTupleQueryResults(String queryString, boolean includeImports) {
         try (DatasetConnection conn = getDatasetConnection()) {
-            return new MutableTupleQueryResult(runQueryOnOntology(queryString, null, "getTupleQueryResults(ontology, queryString)", includeImports, conn));
+            return new MutableTupleQueryResult(runQueryOnOntology(queryString, null,
+                    "getTupleQueryResults(ontology, queryString)", includeImports, conn));
         }
     }
 
     @Override
     public Model getGraphQueryResults(String queryString, boolean includeImports) {
-        return runGraphQueryOnOntology(queryString, null, "getGraphQueryResults(ontology, queryString)", includeImports);
+        return runGraphQueryOnOntology(queryString, null, "getGraphQueryResults(ontology, queryString)",
+                includeImports);
     }
 
     @Override
@@ -1154,15 +1141,16 @@ public class SimpleOntology implements Ontology {
                     assert statements != null;
 
                     if (limit != null) {
-                        limitExceeded = com.mobi.persistence.utils.rio.Rio.write(statements, rdfWriter, limit, skolemizeSH,
-                                removeContextSH);
+                        limitExceeded = com.mobi.persistence.utils.rio.Rio.write(statements, rdfWriter, limit,
+                                skolemizeSH, removeContextSH);
                     } else {
                         com.mobi.persistence.utils.rio.Rio.write(statements, rdfWriter, skolemizeSH,
                                 removeContextSH);
                     }
                 } else {
                     if (limit != null) {
-                        limitExceeded = com.mobi.persistence.utils.rio.Rio.write(statements, rdfWriter, limit, removeContextSH);
+                        limitExceeded = com.mobi.persistence.utils.rio.Rio.write(statements, rdfWriter, limit,
+                                removeContextSH);
                     } else {
                         com.mobi.persistence.utils.rio.Rio.write(statements, rdfWriter, removeContextSH);
                     }
@@ -1350,9 +1338,9 @@ public class SimpleOntology implements Ontology {
             addOntologyToRepo(ontologyFile, datasetIRI, datasetIRI, conn, true);
 
             IRI ontologyIRI = webImport ? datasetIRI : getOntologyIRI(conn);
-            IRI datasetSdNg = OntologyDatasets.createSystemDefaultNamedGraphIRI(datasetIRI, vf);
+            IRI datasetSdNg = OntologyDatasets.createSystemDefaultNamedGraphIRI(datasetIRI);
 
-            // Get all direct imports and begin to process them sequentially, adding each ones direct imports to the
+            // Get all direct imports and begin to process them sequentially, adding each one's direct imports to the
             // list importsToBeProcessed. Through this we essentially recurse through all imports and generate the
             // imports closure for the loaded ontology.
             updateImportTrackers(ontologyIRI, getDirectImports(ontologyIRI, datasetSdNg, conn), processedImports,
@@ -1361,7 +1349,7 @@ public class SimpleOntology implements Ontology {
             for (int i = 0; i < importsToProcess.size(); i++) {
                 IRI importIRI = importsToProcess.get(i);
                 IRI iri = getDatasetIRI(importIRI);
-                IRI sdngIRI = OntologyDatasets.createSystemDefaultNamedGraphIRI(iri, vf);
+                IRI sdngIRI = OntologyDatasets.createSystemDefaultNamedGraphIRI(iri);
 
                 // Import exists in the ontologyCache already
                 if (ConnectionUtils.containsContext(conn, iri) || ConnectionUtils.containsContext(conn, sdngIRI)) {
@@ -1376,7 +1364,7 @@ public class SimpleOntology implements Ontology {
                 if (iri.equals(importIRI)) {
                     // For generating SimpleOntology of a web import already in the cache (with its importsClosure in
                     // the cache as well) we can skip trying to retrieve again and set the importSdNg
-                    importSdNg = OntologyDatasets.createSystemDefaultNamedGraphIRI(importIRI, vf);
+                    importSdNg = OntologyDatasets.createSystemDefaultNamedGraphIRI(importIRI);
                     if (!ConnectionUtils.containsContext(conn, importSdNg)) {
                         Optional<File> webFileOpt = importsResolver.retrieveOntologyFromWebFile(importIRI);
                         if (webFileOpt.isPresent()) {
@@ -1395,8 +1383,8 @@ public class SimpleOntology implements Ontology {
                                 () -> new IllegalStateException("Record " + recordIRI + " must have a head "
                                         + "commit associated with the master branch"));
                     String headKey = OntologyDatasets.createRecordKey(recordIRI, headCommit);
-                    IRI importDatasetIRI = OntologyDatasets.createDatasetIRIFromKey(headKey, vf);
-                    importSdNg = OntologyDatasets.createSystemDefaultNamedGraphIRI(importDatasetIRI, vf);
+                    IRI importDatasetIRI = OntologyDatasets.createDatasetIRIFromKey(headKey);
+                    importSdNg = OntologyDatasets.createSystemDefaultNamedGraphIRI(importDatasetIRI);
 
                     // For generating SimpleOntology of an import already in the cache (with its importsClosure in
                     // the cache as well) we can skip trying to retrieve again and set the importSdNg
@@ -1438,7 +1426,7 @@ public class SimpleOntology implements Ontology {
     private void addOntologyToRepo(@Nullable File ontologyFile, IRI datasetIRI, IRI ontologyIRI,
                                    RepositoryConnection conn, boolean addTimestamp) {
         long start = getStartTime();
-        IRI ontologySdNg = OntologyDatasets.createSystemDefaultNamedGraphIRI(ontologyIRI, vf);
+        IRI ontologySdNg = OntologyDatasets.createSystemDefaultNamedGraphIRI(ontologyIRI);
         // If SdNg exists already, the file is already loaded. When a null ontologyFile is passed, it indicates a web
         // import that has already been loaded into the cache.
         if (!ConnectionUtils.containsContext(conn, ontologySdNg) && ontologyFile != null) {
@@ -1540,7 +1528,7 @@ public class SimpleOntology implements Ontology {
         Model ontologyDefModel = QueryResults.asModel(
                 conn.getStatements(null, vf.createIRI(RDF.TYPE.stringValue()),
                         vf.createIRI(OWL.ONTOLOGY.stringValue()),
-                        OntologyDatasets.createSystemDefaultNamedGraphIRI(datasetIRI, vf)), mf);
+                        OntologyDatasets.createSystemDefaultNamedGraphIRI(datasetIRI)), mf);
         return OntologyModels.findFirstOntologyIRI(ontologyDefModel).orElse(datasetIRI);
     }
 
@@ -1558,7 +1546,7 @@ public class SimpleOntology implements Ontology {
             Optional<Resource> headCommitIRI = getMasterBranchHead(recordIRI.get());
             if (headCommitIRI.isPresent()) {
                 String headKey = OntologyDatasets.createRecordKey(recordIRI.get(), headCommitIRI.get());
-                return OntologyDatasets.createDatasetIRIFromKey(headKey, vf);
+                return OntologyDatasets.createDatasetIRIFromKey(headKey);
             }
         }
         return ontologyIRI;
@@ -1618,7 +1606,7 @@ public class SimpleOntology implements Ontology {
             addedImports.forEach(imported -> {
                 IRI importedDatasetIRI = getDatasetIRI(imported);
                 IRI importedDatasetSdNgIRI =
-                        OntologyDatasets.createSystemDefaultNamedGraphIRI(importedDatasetIRI, vf);
+                        OntologyDatasets.createSystemDefaultNamedGraphIRI(importedDatasetIRI);
                 if (ConnectionUtils.containsContext(repoConn, importedDatasetSdNgIRI)) {
                     createTempImportExistsInCache(importedDatasetIRI, importedDatasetSdNgIRI, conn);
                 } else {
@@ -1689,7 +1677,7 @@ public class SimpleOntology implements Ontology {
                 IRI importDatasetIRI = getDatasetIRI(importIri);
                 SimpleOntology importedOnt = new SimpleOntology(importDatasetIRI, repository, ontologyManager,
                         thingManager, compiledResourceManager, configProvider, dsUtilsService, importsResolver,
-                        bNodeService, vf, mf);
+                        bNodeService);
                 Set<Ontology> ontClosure = importedOnt.getImportsClosure();
 
                 // Add all internal importsClosure IRIs and unresolved IRIs to appropriate sets
@@ -1716,7 +1704,7 @@ public class SimpleOntology implements Ontology {
                     // DatasetIRI doesn't exist for newly updated ontologyIRI
                     conn.addDefaultNamedGraph(conn.getSystemDefaultNamedGraph());
                 } else {
-                    IRI importDatasetSdNg = OntologyDatasets.createSystemDefaultNamedGraphIRI(importDatasetIRI, vf);
+                    IRI importDatasetSdNg = OntologyDatasets.createSystemDefaultNamedGraphIRI(importDatasetIRI);
                     conn.addDefaultNamedGraph(importDatasetSdNg);
                 }
                 conn.add(datasetIRI, vf.createIRI(OWL.IMPORTS.stringValue()), iri, datasetIRI);
@@ -1744,7 +1732,7 @@ public class SimpleOntology implements Ontology {
         }
         Ontology importedOntology = new SimpleOntology(importedDatasetIRI, ontologyFile, repository,
                 ontologyManager, thingManager, compiledResourceManager, configProvider, dsUtilsService, importsResolver,
-                bNodeService, vf, mf);
+                bNodeService);
         updateImportStatements(importedDatasetIRI, importedDatasetSdNg, conn);
     }
 
@@ -1772,7 +1760,7 @@ public class SimpleOntology implements Ontology {
         String recordCommitKey = OntologyDatasets.createRecordKey(recordIRI, masterHead);
         Ontology importedOntology = new SimpleOntology(recordCommitKey, ontologyFile, repository,
                 ontologyManager, thingManager, compiledResourceManager, configProvider, dsUtilsService, importsResolver,
-                bNodeService, vf, mf);
+                bNodeService);
         updateImportStatements(importedDatasetIRI, importedDatasetSdNg, conn);
     }
 
@@ -1792,7 +1780,7 @@ public class SimpleOntology implements Ontology {
         }
         Ontology importedOntology = new SimpleOntology(importedDatasetIRI, repository,
                 ontologyManager, thingManager, compiledResourceManager, configProvider, dsUtilsService, importsResolver,
-                bNodeService, vf, mf);
+                bNodeService);
         updateImportStatements(importedDatasetIRI, importedDatasetSdNg, conn);
     }
 
@@ -1822,7 +1810,7 @@ public class SimpleOntology implements Ontology {
                     conn.add(datasetIRI, vf.createIRI(OWL.IMPORTS.stringValue()), importIRI, datasetIRI);
                     if (!failedImportStatements.contains(importIRI)) {
                         conn.addDefaultNamedGraph(OntologyDatasets.createSystemDefaultNamedGraphIRI(
-                                getDatasetIRI(importIRI), vf));
+                                getDatasetIRI(importIRI)));
                     }
                 });
         failedImportStatements.forEach(importIRI
@@ -1861,7 +1849,7 @@ public class SimpleOntology implements Ontology {
     /**
      * Gets the System currentTimeMillis if log TRACE is enabled.
      *
-     * @return A long representing the system time in milliseconds if log trace is enabled. Otherwise 0L.
+     * @return A long representing the system time in milliseconds if log trace is enabled. Otherwise, 0L.
      */
     private long getStartTime() {
         return LOG.isTraceEnabled() ? System.currentTimeMillis() : 0L;

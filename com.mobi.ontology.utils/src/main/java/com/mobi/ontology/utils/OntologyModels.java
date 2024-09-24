@@ -28,7 +28,6 @@ import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.Value;
-import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.OWL;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 
@@ -66,11 +65,10 @@ public class OntologyModels {
      *
      * @param model The Model to filter
      * @param ontologyIRI The OntologyIRI used to filter
-     * @param vf The ValueFactory used to create an IRI
      * @return An Optional IRI of the first VersionIRI found for the given OntologyIRI
      */
-    public static Optional<IRI> findFirstVersionIRI(Model model, IRI ontologyIRI, ValueFactory vf) {
-        Optional<Value> optionalValue = findFirstObject(model, ontologyIRI, vf.createIRI(OWL.VERSIONIRI.stringValue()));
+    public static Optional<IRI> findFirstVersionIRI(Model model, IRI ontologyIRI) {
+        Optional<Value> optionalValue = findFirstObject(model, ontologyIRI, OWL.VERSIONIRI);
         if (optionalValue.isPresent() && optionalValue.get() instanceof IRI) {
             return Optional.of((IRI) optionalValue.get());
         }

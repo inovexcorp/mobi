@@ -35,10 +35,8 @@ import com.mobi.ontology.utils.imports.ImportsResolver;
 import com.mobi.persistence.utils.api.BNodeService;
 import com.mobi.repository.api.OsgiRepository;
 import com.mobi.repository.api.RepositoryManager;
-import org.eclipse.rdf4j.model.ModelFactory;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
-import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.rio.RDFFormat;
@@ -53,7 +51,6 @@ import java.io.File;
 @Component(service = { SimpleOntologyCreationService.class, OntologyCreationService.class })
 public class SimpleOntologyCreationService implements OntologyCreationService {
     protected final ValueFactory valueFactory = new ValidatingValueFactory();
-    protected final ModelFactory modelFactory = new DynamicModelFactory();
 
     @Reference
     protected DatasetUtilsService dsUtilsService;
@@ -89,8 +86,7 @@ public class SimpleOntologyCreationService implements OntologyCreationService {
 
         String key = String.format("%s&%s", recordId.stringValue(), commitId.stringValue());
         return new SimpleOntology(key, ontologyFile, repository, getOntologyManager(), thingManager,
-                compiledResourceManager, configProvider, dsUtilsService, importsResolver, bNodeService, valueFactory,
-                modelFactory);
+                compiledResourceManager, configProvider, dsUtilsService, importsResolver, bNodeService);
     }
 
     @Override
@@ -100,7 +96,7 @@ public class SimpleOntologyCreationService implements OntologyCreationService {
 
         String key = String.format("%s&%s", recordId.stringValue(), commitId.stringValue());
         return new SimpleOntology(key, repository, getOntologyManager(), thingManager, compiledResourceManager,
-                configProvider, dsUtilsService, importsResolver, bNodeService, valueFactory, modelFactory);
+                configProvider, dsUtilsService, importsResolver, bNodeService);
     }
 
     private OntologyManager getOntologyManager() {

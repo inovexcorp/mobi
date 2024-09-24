@@ -153,7 +153,7 @@ public class OntologyCacheImpl implements OntologyCache {
     public Ontology get(String key) {
         LOG.debug("Retrieving ontology from cache for key " + key);
         requireNotClosed();
-        IRI datasetIRI = OntologyDatasets.createDatasetIRIFromKey(key, vf);
+        IRI datasetIRI = OntologyDatasets.createDatasetIRIFromKey(key);
         try (DatasetConnection dsConn = getDatasetConnection(datasetIRI, false)) {
             return getValueFromRepo(dsConn, key);
         } catch (IllegalArgumentException e) {
@@ -173,7 +173,7 @@ public class OntologyCacheImpl implements OntologyCache {
     @Override
     public boolean containsKey(String key) {
         requireNotClosed();
-        IRI datasetIRI = OntologyDatasets.createDatasetIRIFromKey(key, vf);
+        IRI datasetIRI = OntologyDatasets.createDatasetIRIFromKey(key);
         try (DatasetConnection dsConn = getDatasetConnection(datasetIRI, false)) {
             return true;
         } catch (IllegalArgumentException e) {
@@ -191,9 +191,9 @@ public class OntologyCacheImpl implements OntologyCache {
     public void put(String key, Ontology ontology) {
         LOG.debug("Putting ontology in cache for key " + key);
         requireNotClosed();
-        IRI datasetIRI = OntologyDatasets.createDatasetIRIFromKey(key, vf);
+        IRI datasetIRI = OntologyDatasets.createDatasetIRIFromKey(key);
         try (DatasetConnection dsConn = getDatasetConnection(datasetIRI, true)) {
-            IRI ontNamedGraphIRI = OntologyDatasets.createSystemDefaultNamedGraphIRIFromKey(key, vf);
+            IRI ontNamedGraphIRI = OntologyDatasets.createSystemDefaultNamedGraphIRIFromKey(key);
             putValueInRepo(ontology, ontNamedGraphIRI, dsConn);
         }
 
@@ -213,7 +213,7 @@ public class OntologyCacheImpl implements OntologyCache {
     @Override
     public boolean putIfAbsent(String key, Ontology ontology) {
         requireNotClosed();
-        IRI datasetIRI = OntologyDatasets.createDatasetIRIFromKey(key, vf);
+        IRI datasetIRI = OntologyDatasets.createDatasetIRIFromKey(key);
         try (DatasetConnection dsConn = getDatasetConnection(datasetIRI, false)) {
             return false;
         } catch (IllegalArgumentException e) {
@@ -225,14 +225,14 @@ public class OntologyCacheImpl implements OntologyCache {
     @Override
     public boolean remove(String key) {
         requireNotClosed();
-        IRI datasetIRI = OntologyDatasets.createDatasetIRIFromKey(key, vf);
+        IRI datasetIRI = OntologyDatasets.createDatasetIRIFromKey(key);
         return removeValueFromRepo(datasetIRI);
     }
 
     @Override
     public boolean remove(String key, Ontology ontology) {
         requireNotClosed();
-        IRI datasetIRI = OntologyDatasets.createDatasetIRIFromKey(key, vf);
+        IRI datasetIRI = OntologyDatasets.createDatasetIRIFromKey(key);
         try (DatasetConnection dsConn = getDatasetConnection(datasetIRI, false)) {
             Ontology repoOntology = getValueFromRepo(dsConn, key);
             if (ontology.equals(repoOntology)) {
@@ -250,7 +250,7 @@ public class OntologyCacheImpl implements OntologyCache {
     @Override
     public boolean replace(String key, Ontology ontology, Ontology newOntology) {
         requireNotClosed();
-        IRI datasetIRI = OntologyDatasets.createDatasetIRIFromKey(key, vf);
+        IRI datasetIRI = OntologyDatasets.createDatasetIRIFromKey(key);
         boolean success = false;
         try (DatasetConnection dsConn = getDatasetConnection(datasetIRI, false)) {
             Ontology repoOntology = getValueFromRepo(dsConn, key);
@@ -270,7 +270,7 @@ public class OntologyCacheImpl implements OntologyCache {
     @Override
     public boolean replace(String key, Ontology ontology) {
         requireNotClosed();
-        IRI datasetIRI = OntologyDatasets.createDatasetIRIFromKey(key, vf);
+        IRI datasetIRI = OntologyDatasets.createDatasetIRIFromKey(key);
         boolean success;
         try (DatasetConnection dsConn = getDatasetConnection(datasetIRI, false)) {
             success = removeValueFromRepo(datasetIRI);

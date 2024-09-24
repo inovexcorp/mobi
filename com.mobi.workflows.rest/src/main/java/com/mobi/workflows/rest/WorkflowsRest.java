@@ -49,6 +49,7 @@ import com.mobi.catalog.api.RecordManager;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
+import com.mobi.catalog.api.ontologies.mcat.MasterBranch;
 import com.mobi.catalog.api.ontologies.mcat.Modify;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.api.record.config.OperationConfig;
@@ -59,7 +60,6 @@ import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.ontology.utils.OntologyModels;
 import com.mobi.persistence.utils.BNodeUtils;
 import com.mobi.persistence.utils.RDFFiles;
 import com.mobi.persistence.utils.api.BNodeService;
@@ -106,8 +106,6 @@ import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
-import org.eclipse.rdf4j.model.vocabulary.OWL;
-import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.query.GraphQuery;
 import org.eclipse.rdf4j.query.QueryResults;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
@@ -575,7 +573,7 @@ public class WorkflowsRest {
                 branchId = vf.createIRI(branchIdStr);
                 commitId = commitManager.getHeadCommit(catalogIRI, recordId, branchId, conn).getResource();
             } else {
-                Branch branch = branchManager.getMasterBranch(catalogIRI, recordId, conn);
+                MasterBranch branch = branchManager.getMasterBranch(catalogIRI, recordId, conn);
                 branchId = branch.getResource();
                 Decision canModify = RestUtils.isBranchModifiable(user, (IRI) branchId, recordId, pdp);
                 if (canModify == Decision.DENY) {
@@ -611,22 +609,17 @@ public class WorkflowsRest {
                 log.trace("currentModelFuture took " + (System.currentTimeMillis() - startTimeF));
                 return temp;
             });
-            log.trace("uploadChangesToOntology futures creation took {} ms", System.currentTimeMillis() - startTime);
+            log.trace("uploadChangesToWorkflow futures creation took {} ms", System.currentTimeMillis() - startTime);
 
             Model currentModel = currentModelFuture.get();
             Model uploadedModel = uploadedModelFuture.get();
 
             startTime = System.currentTimeMillis();
-            if (OntologyModels.findFirstOntologyIRI(uploadedModel).isEmpty()) {
-                OntologyModels.findFirstOntologyIRI(currentModel)
-                        .ifPresent(iri -> uploadedModel.add(iri, vf.createIRI(RDF.TYPE.stringValue()),
-                                vf.createIRI(OWL.ONTOLOGY.stringValue())));
-            }
-            log.trace("uploadChangesToOntology futures completion took {} ms", System.currentTimeMillis() - startTime);
+            log.trace("uploadChangesToWorkflow futures completion took {} ms", System.currentTimeMillis() - startTime);
 
             startTime = System.currentTimeMillis();
             Difference diff = differenceManager.getDiff(currentModel, uploadedModel);
-            log.trace("uploadChangesToOntology getDiff took {} ms", System.currentTimeMillis() - startTime);
+            log.trace("uploadChangesToWorkflow getDiff took {} ms", System.currentTimeMillis() - startTime);
 
             if (diff.getAdditions().isEmpty() && diff.getDeletions().isEmpty()) {
                 return Response.noContent().build();
@@ -660,8 +653,8 @@ public class WorkflowsRest {
             throw RestUtils.getErrorObjInternalServerError(ex);
         } finally {
             IOUtils.closeQuietly(fileInputStream);
-            log.trace("uploadChangesToOntology took " + (System.currentTimeMillis() - totalTime));
-            log.trace("uploadChangesToOntology getGarbageCollectionTime {} ms", getGarbageCollectionTime());
+            log.trace("uploadChangesToWorkflow took " + (System.currentTimeMillis() - totalTime));
+            log.trace("uploadChangesToWorkflow getGarbageCollectionTime {} ms", getGarbageCollectionTime());
         }
     }
 

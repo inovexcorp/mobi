@@ -27,9 +27,10 @@ import com.mobi.persistence.utils.ResourceUtils;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 
 public class OntologyDatasets {
-
+    private static final ValueFactory vf = new ValidatingValueFactory();
     public static final String DEFAULT_DS_NAMESPACE = "http://mobi.com/dataset/";
     public static final String SYSTEM_DEFAULT_NG_SUFFIX = "_system_dng";
     public static final String TIMESTAMP_IRI_STRING = "http://mobi.com/ontologies/graph#lastAccessed";
@@ -40,10 +41,9 @@ public class OntologyDatasets {
      * Creates an Ontology Dataset IRI given a cache key. Prepends the dataset namespace to the encoded key.
      *
      * @param key The key associated with an Ontology
-     * @param vf The ValueFactory used to create an IRI
      * @return A Dataset IRI based on the cache key
      */
-    public static IRI createDatasetIRIFromKey(String key, ValueFactory vf) {
+    public static IRI createDatasetIRIFromKey(String key) {
         return vf.createIRI(DEFAULT_DS_NAMESPACE + ResourceUtils.encode(key));
     }
 
@@ -51,10 +51,9 @@ public class OntologyDatasets {
      * Creates a system default named graph IRI for the Ontology Dataset associated with a cache key.
      *
      * @param key The key associated with an Ontology
-     * @param vf The ValueFactory used to create an IRI
      * @return A system default named graph IRI based on the cache key
      */
-    public static IRI createSystemDefaultNamedGraphIRIFromKey(String key, ValueFactory vf) {
+    public static IRI createSystemDefaultNamedGraphIRIFromKey(String key) {
         return vf.createIRI(DEFAULT_DS_NAMESPACE + ResourceUtils.encode(key) + SYSTEM_DEFAULT_NG_SUFFIX);
     }
 
@@ -62,10 +61,9 @@ public class OntologyDatasets {
      * Creates a system default named graph IRI for the provided Ontology Dataset IRI.
      *
      * @param iri The resource associated with an Ontology Dataset
-     * @param vf The ValueFactory used to create an IRI
      * @return A system default named graph IRI based on the Ontology Dataset IRI
      */
-    public static IRI createSystemDefaultNamedGraphIRI(Resource iri, ValueFactory vf) {
+    public static IRI createSystemDefaultNamedGraphIRI(Resource iri) {
         return vf.createIRI(iri.stringValue() + SYSTEM_DEFAULT_NG_SUFFIX);
     }
 
@@ -73,10 +71,9 @@ public class OntologyDatasets {
      * Gets an Ontology Dataset IRI from the provided system default named graph IRI.
      *
      * @param iri The system default named graph IRI
-     * @param vf The ValueFactory used to create an IRI
      * @return The Ontology Dataset IRI associated with the provided system default named graph IRI
      */
-    public static IRI getDatasetIriFromSystemDefaultNamedGraph(Resource iri, ValueFactory vf) {
+    public static IRI getDatasetIriFromSystemDefaultNamedGraph(Resource iri) {
         return vf.createIRI(iri.stringValue().substring(0, iri.stringValue()
                 .lastIndexOf(OntologyDatasets.SYSTEM_DEFAULT_NG_SUFFIX)));
     }
@@ -97,10 +94,9 @@ public class OntologyDatasets {
      * Retrieves the {@link IRI} of the Commit used in the recordKey part of the datasetIri.
      *
      * @param datasetIri The {@link Resource} of the datasetIri that represents a catalog record loaded as a dataset.
-     * @param vf The {@link ValueFactory} used to create an IRI
      * @return The {@link IRI} of a Commit.
      */
-    public static IRI getCommitFromDatasetIRI(Resource datasetIri, ValueFactory vf) {
+    public static IRI getCommitFromDatasetIRI(Resource datasetIri) {
         String encodedKey = datasetIri.stringValue().replace(DEFAULT_DS_NAMESPACE, "");
         String decodedKey = ResourceUtils.decode(encodedKey);
         String[] keyParts = decodedKey.split(CACHE_KEY_SEPARATOR);
