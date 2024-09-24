@@ -63,6 +63,7 @@ import com.mobi.ontology.utils.OntologyModels;
 import com.mobi.persistence.utils.BNodeUtils;
 import com.mobi.persistence.utils.RDFFiles;
 import com.mobi.persistence.utils.api.BNodeService;
+import com.mobi.prov.api.ProvenanceService;
 import com.mobi.rest.security.annotations.ActionAttributes;
 import com.mobi.rest.security.annotations.ActionId;
 import com.mobi.rest.security.annotations.AttributeValue;
@@ -107,9 +108,16 @@ import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.OWL;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
+import org.eclipse.rdf4j.query.GraphQuery;
+import org.eclipse.rdf4j.query.QueryResults;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.RepositoryResult;
+import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFParseException;
+import org.eclipse.rdf4j.rio.RDFWriter;
+import org.eclipse.rdf4j.rio.Rio;
+import org.eclipse.rdf4j.rio.helpers.BasicWriterSettings;
+import org.eclipse.rdf4j.rio.helpers.BufferedGroupingRDFHandler;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.jaxrs.whiteboard.propertytypes.JaxrsResource;
@@ -118,10 +126,13 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -195,12 +206,27 @@ public class WorkflowsRest {
     @Reference
     protected VirtualFilesystem vfs;
 
+    @Reference
+    ProvenanceService provService;
+
     private static final Logger log = LoggerFactory.getLogger(WorkflowsRest.class);
 
     static final Set<String> GET_WORKFLOW_RECORDS_SORT_BY = Stream.of("iri", "title", "issued",
             "modified", "active", "status", "workflowIRI", "executorIri", "executorUsername",
             "executorDisplayName", "startTime", "endTime", "succeeded", "runningTime"
     ).collect(Collectors.toUnmodifiableSet());
+
+    private static final String GET_EXECUTING_ACTIVITIES;
+
+    static {
+        try {
+            GET_EXECUTING_ACTIVITIES = IOUtils.toString(Objects.requireNonNull(
+                            WorkflowsRest.class.getResourceAsStream("/get_executing_activities.rq")),
+                    StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            throw new MobiException(e);
+        }
+    }
 
     /**
      * Retrieves a list of all the Records. An optional type parameter filters the returned Records.
@@ -367,8 +393,7 @@ public class WorkflowsRest {
         } catch (IllegalArgumentException | RDFParseException ex) {
             throw RestUtils.getErrorObjBadRequest(ex);
         } catch (MobiException | IllegalStateException ex) {
-            if (ex instanceof InvalidWorkflowException) {
-                InvalidWorkflowException invalidWorkflowException = (InvalidWorkflowException) ex;
+            if (ex instanceof InvalidWorkflowException invalidWorkflowException) {
                 ObjectNode error = createJsonInvalidWorkflowError(invalidWorkflowException);
                 throw RestUtils.getErrorObjInternalServerError(invalidWorkflowException, error);
             }
@@ -436,6 +461,36 @@ public class WorkflowsRest {
         objectNode.put("title", title);
 
         return Response.status(Response.Status.CREATED).entity(objectNode.toString()).build();
+    }
+
+    /**
+     * Returns a JSON-LD array of WorkflowExecutionActivity instances that are currently running.
+     *
+     * @return A Response object containing the JSON-LD array is successful, or an indication of a failure.
+     */
+    @GET
+    @Path("/executing-activities")
+    @RolesAllowed("user")
+    @Produces(MediaType.APPLICATION_JSON)
+    @Operation(
+            tags = "workflows",
+            summary = "Returns the JSON-LD array of the WorkflowExecutionActivity instances that are current running",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "OK if successful"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "401", description = "User does not have permission"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
+            }
+    )
+    public Response getExecutingActivities() {
+        try {
+            return Response.ok(collectExecutingActivities()).build();
+        } catch (IllegalArgumentException ex) {
+            throw RestUtils.getErrorObjBadRequest(ex);
+        } catch (MobiException | IllegalStateException ex) {
+            throw RestUtils.getErrorObjInternalServerError(ex);
+        }
     }
 
     /**
@@ -647,12 +702,12 @@ public class WorkflowsRest {
             Map<Resource, Model> triggersShaclDefinitions =  this.workflowManager.getTriggerShaclDefinitions();
 
             ObjectNode actions = mapper.createObjectNode();
-            for (Map.Entry<Resource, Model> entry: actionsShaclDefinitions.entrySet()) {
+            for (Map.Entry<Resource, Model> entry : actionsShaclDefinitions.entrySet()) {
                 actions.set(entry.getKey().stringValue(), mapper.readTree(RestUtils.modelToJsonld(entry.getValue())));
             }
 
             ObjectNode trigger = mapper.createObjectNode();
-            for (Map.Entry<Resource, Model> entry: triggersShaclDefinitions.entrySet()) {
+            for (Map.Entry<Resource, Model> entry : triggersShaclDefinitions.entrySet()) {
                 trigger.set(entry.getKey().stringValue(), mapper.readTree(RestUtils.modelToJsonld(entry.getValue())));
             }
 
@@ -1325,5 +1380,18 @@ public class WorkflowsRest {
         objectNode.set("errorDetails", arrayNode);
 
         return objectNode;
+    }
+
+    private String collectExecutingActivities() {
+        try (RepositoryConnection conn = provService.getConnection()) {
+            GraphQuery query = conn.prepareGraphQuery(GET_EXECUTING_ACTIVITIES);
+            Model results = QueryResults.asModel(query.evaluate());
+            // JSON-LD is written without pretty printing because Event data needs to be a single line
+            StringWriter sw = new StringWriter();
+            RDFWriter writer = Rio.createWriter(RDFFormat.JSONLD, sw);
+            writer.getWriterConfig().set(BasicWriterSettings.PRETTY_PRINT, false);
+            Rio.write(results, new BufferedGroupingRDFHandler(writer));
+            return sw.toString();
+        }
     }
 }

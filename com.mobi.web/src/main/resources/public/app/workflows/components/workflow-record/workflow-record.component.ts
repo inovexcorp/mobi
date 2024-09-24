@@ -26,6 +26,7 @@ import { MatSlideToggleChange } from '@angular/material/slide-toggle';
 import { MatDialog } from '@angular/material/dialog';
 
 import { Subscription } from 'rxjs';
+import { switchMap } from 'rxjs/operators';
 import { find, get, sortBy } from 'lodash';
 
 import { CATALOG, DCTERMS, PROV, WORKFLOWS } from '../../../prefixes';
@@ -44,13 +45,12 @@ import { WorkflowUploadChangesModalComponent } from '../workflow-upload-changes-
 import { Difference } from '../../../shared/models/difference.class';
 import { WorkflowSHACLDefinitions } from '../../models/workflow-shacl-definitions.interface';
 import { RESTError } from '../../../shared/models/RESTError.interface';
-import { switchMap } from 'rxjs/operators';
 
 /**
  * @class workflows.WorkflowRecordComponent
  * 
  * Represents a component for displaying workflow details
- * @implements OnInit
+ * @implements OnInit, OnDestroy
  */
 @Component({
   selector: 'app-workflow-record',
@@ -87,12 +87,32 @@ export class WorkflowRecordComponent implements OnInit, OnDestroy {
     });
     this.setRecordBranches();
     this.setShaclDefinitions();
-    this.executionActivityEventsSubscription = this._wm.getExecutionActivitiesEvents().subscribe(activities => {
+    this._wm.getExecutingActivities().subscribe(activities => {
       this._getExecutingWorkflow(activities);
       this.executingActivities = sortBy(
         activities.filter(activity => getPropertyId(activity, `${PROV}used`) === this.record.iri),
         activity => new Date(getPropertyId(activity, `${PROV}startedAtTime`))
       );
+      this.executionActivityEventsSubscription = this._wm.getWorkflowEvents().subscribe(event => {
+        const updatedActivity = event.data[0];
+        const usedWorkflow = getPropertyId(updatedActivity, `${PROV}used`);
+        if (event.type.endsWith('START')) {
+          if (usedWorkflow === this.record.iri) {
+            const idx = this.executingActivities.findIndex(activity => activity['@id'] === updatedActivity['@id']);
+            if (idx < 0) {
+              this.executingActivities = [updatedActivity].concat(this.executingActivities);
+            }
+          }
+          if (!this.runningWorkflows.includes(usedWorkflow)) {
+            this.runningWorkflows = this.runningWorkflows.concat(usedWorkflow);
+          }
+        } else if (event.type.endsWith('END')) {
+          if (usedWorkflow === this.record.iri) {
+            this.executingActivities = this.executingActivities.filter(activity => activity['@id'] !== updatedActivity['@id']);
+          }
+          this.runningWorkflows = this.runningWorkflows.filter(w => w !== usedWorkflow);
+        }
+      });
     });
   }
   ngOnDestroy(): void {
@@ -100,6 +120,11 @@ export class WorkflowRecordComponent implements OnInit, OnDestroy {
       this.executionActivityEventsSubscription.unsubscribe();
     }
   }
+
+  /**
+   * Sets the list of branches of the selected WorkflowRecord (should just be the MASTER branch) and then calls
+   * `setWorkflowRdf` to updated the fetched RDF of the compiled Workflow.
+   */
   setRecordBranches(): void {
     const paginatedConfig: PaginatedConfig = {
       pageIndex: 0,
@@ -129,6 +154,10 @@ export class WorkflowRecordComponent implements OnInit, OnDestroy {
           this._toast.createErrorToast(error);
         });
   }
+  /**
+   * Resets all relevant variables and navigates the user back to the {@link workflows.WorkflowRecordsComponent}. If
+   * the user is in the middle of making changes to the Workflow in edit mode, throws a confirmation modal first.
+   */
   goBack(): void {
     if (this.workflowsState.isEditMode && this.workflowsState.hasChanges) {
       this._dialog.open(ConfirmModalComponent, {
@@ -148,14 +177,11 @@ export class WorkflowRecordComponent implements OnInit, OnDestroy {
       this.workflowsState.hasChanges = false;
     }
   }
-
   /**
    * Updates the status of a workflow.
    *
    * @param {MatSlideToggleChange} $event - The MatSlideToggleChange event object.
    * @param {WorkflowSchema} record Workflow record
-   *
-   * @return {void} - This method does not return any value.
    */
   toggleRecordActive($event: MatSlideToggleChange, record: WorkflowSchema): void {
     const { checked } = $event;
@@ -210,7 +236,6 @@ export class WorkflowRecordComponent implements OnInit, OnDestroy {
       }
     });
   }
-  
   /**
    * Opens a modal dialog to download the workflow.
    * Passes the workflow record to the modal component along with a flag indicating whether to
@@ -229,7 +254,6 @@ export class WorkflowRecordComponent implements OnInit, OnDestroy {
   recordStatus(active: boolean): string {
     return active ? 'Active' : 'Inactive';
   }
-
   /**
    * Toggles the edit mode for the workflow.
    * Updates the state and clears any pending changes.
@@ -244,7 +268,6 @@ export class WorkflowRecordComponent implements OnInit, OnDestroy {
       }
     });
   }
-
   /**
    * Opens a modal dialog for uploading workflow changes.
    * Retrieves the head commit of the branch and opens the upload changes modal with necessary data.
@@ -264,7 +287,10 @@ export class WorkflowRecordComponent implements OnInit, OnDestroy {
       });
     });
   }
-
+  /**
+   * Sets the `workflowRdf` variable to the latest compiled resource on the MASTER branch of the Workflow. Includes any
+   * InProgressCommit changes if present.
+   */
   setWorkflowRdf(): void {
     this.cm.getResource(getPropertyId(this.branch.branch, `${CATALOG}head`), this.record.master, this.record.iri,
       this.catalogId, this.workflowsState.hasChanges
@@ -276,7 +302,10 @@ export class WorkflowRecordComponent implements OnInit, OnDestroy {
       this._toast.createErrorToast(`Issue fetching latest workflow RDF: ${error}`);
     });
   }
-
+  /**
+   * Sets the `shaclDefinitions` variable to the latest Workflow SHACL Shapes data from the backend for use in the
+   * editing experience.
+   */
   setShaclDefinitions(): void {
     this._wm.getShaclDefinitions(true).subscribe(definitions => {
       this.shaclDefinitions = definitions;
@@ -284,7 +313,6 @@ export class WorkflowRecordComponent implements OnInit, OnDestroy {
       this._toast.createErrorToast(`Issue fetching Workflow SHACL definitions: ${error.errorMessage}`);
     });
   }
-
   /**
    * Commits the pending changes to the workflow.
    * If there are pending changes, creates a new branch commit with a commit message.
@@ -304,6 +332,9 @@ export class WorkflowRecordComponent implements OnInit, OnDestroy {
       this.toggleEditMode();
     }
   }
+  /**
+   * Turns on and off and full screen mode of the Workflow visual display.
+   */
   toggleFullscreen(): void {
     this.fullScreenMode = !this.fullScreenMode;
   }

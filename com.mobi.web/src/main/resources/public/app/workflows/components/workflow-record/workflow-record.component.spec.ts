@@ -34,7 +34,7 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MatDialog } from '@angular/material/dialog';
 
 import { MockComponent, MockProvider } from 'ng-mocks';
-import { of, throwError } from 'rxjs';
+import { of, Subject, throwError } from 'rxjs';
 
 import { CATALOG, DCTERMS, PROV, WORKFLOWS } from '../../../prefixes';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
@@ -45,7 +45,7 @@ import { WorkflowDisplayComponent } from '../workflow-display/workflow-display.c
 import { WorkflowsStateService } from '../../services/workflows-state.service';
 import { WorkflowControlsComponent } from '../workflow-controls/workflow-controls.component';
 import { workflow_mocks, workflowRecordJSONLD } from '../../models/mock_data/workflow-mocks';
-import { WorkflowsManagerService } from '../../services/workflows-manager.service';
+import { WorkflowActivitySSEEvent, WorkflowsManagerService } from '../../services/workflows-manager.service';
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
 import { WorkflowDownloadModalComponent } from '../workflow-download-modal/workflow-download-modal.component';
 import { Difference } from '../../../shared/models/difference.class';
@@ -63,6 +63,7 @@ describe('WorkflowRecordComponent', () => {
   let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
   let toastStub: jasmine.SpyObj<ToastService>;
   let matDialog: jasmine.SpyObj<MatDialog>;
+  let $workflowEventsSubject: Subject<WorkflowActivitySSEEvent>;
 
   const catalogId = 'catalogId';
   const branches: JSONLDObject[] = [{
@@ -142,6 +143,7 @@ describe('WorkflowRecordComponent', () => {
     })
     .compileComponents();
 
+    $workflowEventsSubject = new Subject<WorkflowActivitySSEEvent>();
     catalogManagerStub = TestBed.inject(CatalogManagerService) as jasmine.SpyObj<CatalogManagerService>;
     toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
     workflowsManagerStub = TestBed.inject(WorkflowsManagerService) as jasmine.SpyObj<WorkflowsManagerService>;
@@ -149,8 +151,9 @@ describe('WorkflowRecordComponent', () => {
     matDialog = TestBed.inject(MatDialog) as jasmine.SpyObj<MatDialog>;
 
     workflowsStateStub.convertJSONLDToWorkflowSchema.and.returnValue(of(workflow_mocks[0]));
-    workflowsManagerStub.getExecutionActivitiesEvents.and.returnValue(of([activity1, activity2]));
+    workflowsManagerStub.getExecutingActivities.and.returnValue(of([activity1, activity2]));
     workflowsManagerStub.getShaclDefinitions.and.returnValue(of(wfShaclDefinition));
+    workflowsManagerStub.getWorkflowEvents.and.returnValue($workflowEventsSubject.asObservable());
 
     catalogManagerStub.localCatalog = {'@id': catalogId, '@type': []};
     catalogManagerStub.sortOptions = [sortOption];
@@ -175,6 +178,10 @@ describe('WorkflowRecordComponent', () => {
     element = null;
     toastStub = null;
     matDialog = null;
+    if ($workflowEventsSubject) {
+      $workflowEventsSubject.complete();
+      $workflowEventsSubject = null;
+    }
   });
 
   it('should create', () => {
@@ -186,11 +193,92 @@ describe('WorkflowRecordComponent', () => {
     tick();
     expect(catalogManagerStub.getRecord).toHaveBeenCalledWith(workflow_mocks[0].iri, catalogId);
     expect(component.setRecordBranches).toHaveBeenCalledWith();
-    expect(workflowsManagerStub.getExecutionActivitiesEvents).toHaveBeenCalledWith();
+    expect(workflowsManagerStub.getExecutingActivities).toHaveBeenCalledWith();
     expect(component.executingActivities).toEqual([activity1]);
     expect(workflowsStateStub.isEditMode).toBeFalse();
     expect(workflowsStateStub.hasChanges).toBeFalse();
   }));
+  describe('should handle incoming workflow events', () => {
+    beforeEach(() => {
+      spyOn(component, 'setRecordBranches');
+      component.ngOnInit();
+    });
+    describe('if an activity started', () => {
+      it('for the selected workflow', fakeAsync(() => {
+        tick();
+        expect(component.executingActivities).toEqual([activity1]);
+        expect(component.runningWorkflows).toEqual([workflow_mocks[0].iri, 'urn:OtherWorkflow']);
+      
+        const activity: JSONLDObject = {
+          '@id': 'new-activity',
+          '@type': [`${WORKFLOWS}WorkflowExecutionActivity`],
+          [`${PROV}used`]: [{ '@id': workflow_mocks[0].iri }]
+        };
+        const event: WorkflowActivitySSEEvent = {
+          data: [activity],
+          type: 'com/mobi/workflows/activities/START'
+        };
+        $workflowEventsSubject.next(event);
+        tick();
+        expect(component.executingActivities).toEqual([activity, activity1]);
+        expect(component.runningWorkflows).toEqual([workflow_mocks[0].iri, 'urn:OtherWorkflow']);
+      }));
+      it('for another workflow', fakeAsync(() => {
+        tick();
+        expect(component.executingActivities).toEqual([activity1]);
+        expect(component.runningWorkflows).toEqual([workflow_mocks[0].iri, 'urn:OtherWorkflow']);
+      
+        const activity: JSONLDObject = {
+          '@id': 'new-activity',
+          '@type': [`${WORKFLOWS}WorkflowExecutionActivity`],
+          [`${PROV}used`]: [{ '@id': 'urn:AnotherWorkflow' }]
+        };
+        const event: WorkflowActivitySSEEvent = {
+          data: [activity],
+          type: 'com/mobi/workflows/activities/START'
+        };
+        $workflowEventsSubject.next(event);
+        tick();
+        expect(component.executingActivities).toEqual([activity1]);
+        expect(component.runningWorkflows).toEqual([workflow_mocks[0].iri, 'urn:OtherWorkflow', 'urn:AnotherWorkflow']);
+      }));
+    });
+    describe('if an activity ended', () => {
+      it('for the selected workflow', fakeAsync(() => {
+        tick();
+        expect(component.executingActivities).toEqual([activity1]);
+        expect(component.runningWorkflows).toEqual([workflow_mocks[0].iri, 'urn:OtherWorkflow']);
+      
+        const event: WorkflowActivitySSEEvent = {
+          data: [activity1],
+          type: 'com/mobi/workflows/activities/END'
+        };
+        $workflowEventsSubject.next(event);
+        tick();
+        expect(component.executingActivities).toEqual([]);
+        expect(component.runningWorkflows).toEqual(['urn:OtherWorkflow']);
+      }));
+      it('for another workflow', fakeAsync(() => {
+        tick();
+        expect(component.executingActivities).toEqual([activity1]);
+        expect(component.runningWorkflows).toEqual([workflow_mocks[0].iri, 'urn:OtherWorkflow']);
+      
+        const activity: JSONLDObject = {
+          '@id': 'new-activity',
+          '@type': [`${WORKFLOWS}WorkflowExecutionActivity`],
+          [`${PROV}used`]: [{ '@id': 'urn:OtherWorkflow' }]
+        };
+        const event: WorkflowActivitySSEEvent = {
+          data: [activity],
+          type: 'com/mobi/workflows/activities/END'
+        };
+        $workflowEventsSubject.next(event);
+        tick();
+        expect(component.executingActivities).toEqual([activity1]);
+        expect(component.runningWorkflows).toEqual([workflow_mocks[0].iri]);
+      }));
+    });
+  });
   describe('controller methods', () => {
     describe('should retrieve the branches of the workflow record', () => {
       it('successfully', fakeAsync(() => {

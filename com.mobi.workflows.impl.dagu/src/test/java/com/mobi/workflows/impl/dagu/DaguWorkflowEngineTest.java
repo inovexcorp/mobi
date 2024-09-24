@@ -32,7 +32,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -434,7 +433,7 @@ public class DaguWorkflowEngineTest extends OrmEnabledTestCase {
         Model activityModel = activityA.getModel();
         assertEquals(13, activityModel.size());
         verify(provService).updateActivity(eq(activityA));
-        verify(eventAdmin, times(1)).postEvent(any(Event.class));
+        verify(eventAdmin).postEvent(any(Event.class));
 
         Statement endedTriple = activityModel.getStatements(activityIRI,
                        vf.createIRI(WorkflowExecutionActivity.endedAtTime_IRI), null).iterator().next();
@@ -462,7 +461,7 @@ public class DaguWorkflowEngineTest extends OrmEnabledTestCase {
         Model activityModel = activityA.getModel();
         assertEquals(13, activityModel.size());
         verify(provService).updateActivity(eq(activityA));
-        verify(eventAdmin, times(1)).postEvent(any(Event.class));
+        verify(eventAdmin).postEvent(any(Event.class));
 
         Statement endedTriple = activityModel.getStatements(activityIRI,
                 vf.createIRI(WorkflowExecutionActivity.endedAtTime_IRI), null).iterator().next();

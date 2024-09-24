@@ -25,22 +25,19 @@ package com.mobi.workflows.api;
 
 import com.mobi.ontologies.provo.Activity;
 import com.mobi.prov.api.ProvenanceService;
+import com.mobi.sse.SSEUtils;
 import com.mobi.vfs.ontologies.documents.BinaryFile;
 import com.mobi.workflows.api.ontologies.workflows.WorkflowExecutionActivity;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.osgi.service.component.annotations.Reference;
-import org.osgi.service.event.Event;
 import org.osgi.service.event.EventAdmin;
 
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
-
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ThreadPoolExecutor;
 
 public abstract class AbstractWorkflowEngine implements WorkflowEngine {
@@ -74,10 +71,8 @@ public abstract class AbstractWorkflowEngine implements WorkflowEngine {
         executionActivity.addEndedAtTime(OffsetDateTime.now());
         provService.updateActivity(executionActivity);
         // Notify of activity end
-        Map<String, Object> eventProps = new HashMap<>();
-        eventProps.put(WorkflowsTopics.ACTIVITY_PROPERTY_ACTIVITY, executionActivity.getResource());
-        Event event = new Event(WorkflowsTopics.TOPIC_ACTIVITY_END, eventProps);
-        eventAdmin.postEvent(event);
+        SSEUtils.postEvent(eventAdmin, WorkflowsTopics.TOPIC_ACTIVITY_END,
+                executionActivity.getModel().filter(executionActivity.getResource(), null, null));
     }
 
     protected static LocalDateTime verifyStartDate(LocalDateTime priorValue, LocalDateTime newValue) {

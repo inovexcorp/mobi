@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
   #%L
-  com.mobi.workflows.rest
+  sse
   $Id:$
   $HeadURL:$
   %%
@@ -25,22 +25,23 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>com.mobi</groupId>
         <artifactId>mobi-parent</artifactId>
         <version>4.0.0-SNAPSHOT</version>
         <relativePath>../mobi-parent/pom.xml</relativePath>
     </parent>
-    <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>workflows.rest</artifactId>
+    <artifactId>sse</artifactId>
     <name>${project.groupId}.${project.artifactId}</name>
     <packaging>bundle</packaging>
 
     <dependencies>
         <dependency>
-            <groupId>com.github.jsonld-java</groupId>
-            <artifactId>jsonld-java</artifactId>
+            <groupId>com.mobi</groupId>
+            <artifactId>rdf.orm</artifactId>
+            <version>${project.version}</version>
         </dependency>
         <dependency>
             <groupId>org.osgi</groupId>
@@ -59,37 +60,16 @@
             <artifactId>org.osgi.service.jaxrs</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.mobi</groupId>
-            <artifactId>rest.util</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.mobi</groupId>
-            <artifactId>rest.security</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.mobi</groupId>
-            <artifactId>workflows.api</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.mobi</groupId>
-            <artifactId>persistence.utils</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.mobi</groupId>
-            <artifactId>jaas.api</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-lang3</artifactId>
+            <groupId>org.osgi</groupId>
+            <artifactId>org.osgi.service.event</artifactId>
         </dependency>
         <dependency>
             <groupId>javax.ws.rs</groupId>
             <artifactId>javax.ws.rs-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>javax.annotation</groupId>
+            <artifactId>javax.annotation-api</artifactId>
         </dependency>
         <dependency>
             <groupId>io.swagger.core.v3</groupId>
@@ -104,23 +84,14 @@
             <artifactId>swagger-annotations</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.apache.servicemix.bundles</groupId>
-            <artifactId>org.apache.servicemix.bundles.json-lib</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>javax.annotation</groupId>
-            <artifactId>javax.annotation-api</artifactId>
+            <groupId>jakarta.ws.rs</groupId>
+            <artifactId>jakarta.ws.rs-api</artifactId>
+            <scope>compile</scope>
         </dependency>
 
         <dependency>
             <groupId>com.mobi</groupId>
             <artifactId>rest.test.util</artifactId>
-            <version>${project.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.mobi</groupId>
-            <artifactId>repository.impl.sesame</artifactId>
             <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
@@ -133,32 +104,13 @@
             <artifactId>mockito-core</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.mobi</groupId>
-            <artifactId>rdf-orm-test</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.mobi</groupId>
-            <artifactId>ontology.utils</artifactId>
-            <version>${project.version}</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.mobi</groupId>
-            <artifactId>persistence.utils.impl</artifactId>
-            <version>${project.version}</version>
-            <scope>test</scope>
+            <groupId>org.eclipse.rdf4j</groupId>
+            <artifactId>rdf4j-model-api</artifactId>
         </dependency>
     </dependencies>
 
     <build>
         <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <configuration>
-                    <forkCount>1</forkCount>
-                </configuration>
-            </plugin>
             <plugin>
                 <groupId>org.apache.felix</groupId>
                 <artifactId>maven-bundle-plugin</artifactId>
@@ -166,10 +118,10 @@
                 <configuration>
                     <instructions>
                         <Bundle-SymbolicName>${project.groupId}.${project.artifactId}</Bundle-SymbolicName>
-                        <Bundle-Name>Mobi Workflows REST Services</Bundle-Name>
+                        <Bundle-Name>Mobi SSE Services</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Export-Package>
-                            com.mobi.workflows.rest
+                            com.mobi.sse
                         </Export-Package>
                         <Import-Package>
                             !io.swagger.v3.*,
@@ -182,4 +134,5 @@
             </plugin>
         </plugins>
     </build>
+
 </project>

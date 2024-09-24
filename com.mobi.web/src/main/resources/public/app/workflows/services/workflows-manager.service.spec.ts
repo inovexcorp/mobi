@@ -26,7 +26,6 @@ import { MockProvider } from 'ng-mocks';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpErrorResponse } from '@angular/common/http';
 // Libraries
-import EventSource from 'eventsourcemock';
 import { Observable, of, throwError } from 'rxjs';
 // local imports
 import { ProgressSpinnerService } from '../../shared/components/progress-spinner/services/progressSpinner.service';
@@ -42,7 +41,8 @@ import { CatalogManagerService } from '../../shared/services/catalogManager.serv
 import { XACMLDecision } from '../../shared/models/XACMLDecision.interface';
 import { WorkflowRecordConfig } from '../models/workflowRecordConfig.interface';
 import { Difference } from '../../shared/models/difference.class';
-import { WorkflowsManagerService } from './workflows-manager.service';
+import { SSEEvent } from '../../shared/models/sse-event';
+import { WorkflowActivitySSEEvent, WorkflowsManagerService } from './workflows-manager.service';
 
 describe('WorkflowsManagerService', () => {
   let service: WorkflowsManagerService;
@@ -52,7 +52,6 @@ describe('WorkflowsManagerService', () => {
   let policyEnforcementStub: jasmine.SpyObj<PolicyEnforcementService>;
   let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
   let policyManagerStub: jasmine.SpyObj<PolicyManagerService>;
-  let eventSource: EventSource;
 
   const catalogId = 'catalogId';
   const recordId = 'recordId';
@@ -115,8 +114,6 @@ describe('WorkflowsManagerService', () => {
     policyManagerStub = TestBed.inject(PolicyManagerService) as jasmine.SpyObj<PolicyManagerService>;
     catalogManagerStub = TestBed.inject(CatalogManagerService) as jasmine.SpyObj<CatalogManagerService>;
     catalogManagerStub.localCatalog = { '@id': catalogId };
-    eventSource = new EventSource();
-    sseStub.getEventSource.and.returnValue(eventSource);
     progressSpinnerStub.track.and.callFake(ob => ob);
     progressSpinnerStub.trackedRequest.and.callFake(ob => ob);
     service = TestBed.inject(WorkflowsManagerService);
@@ -129,7 +126,6 @@ describe('WorkflowsManagerService', () => {
     policyManagerStub = null;
     sseStub = null;
     policyEnforcementStub = null;
-    eventSource = null;
   });
 
   it('should be created', () => {
@@ -340,31 +336,42 @@ describe('WorkflowsManagerService', () => {
       request.flush(error, { status: 400, statusText: error.errorMessage });
     });
   });
-  describe('should get an Observable of running WorkflowExecutionActivities', () => {
-    it('that correctly handles new data', fakeAsync(() => {
-      service.getExecutionActivitiesEvents().subscribe({
-        next: response => {
-          expect(response).toEqual([activity]);
-        }
+  it('should get an Observable of WorkflowActivitySSEEvents', fakeAsync(() => {
+    const event: WorkflowActivitySSEEvent = {
+      type: 'com/mobi/workflows/activities',
+      data: []
+    };
+    const otherEvent: SSEEvent = {
+      type: 'other',
+      data: []
+    };
+    sseStub.getEvents.and.returnValue(of(event, otherEvent));
+    service.getWorkflowEvents().subscribe({
+      next: response => {
+        expect(response).toEqual(event);
+      }
+    });
+    tick();
+  }));
+  describe('should retrieve currently running WorkflowExecutionActivity instances', () => {
+    let url;
+    beforeEach(() => {
+      url = `${service.workflows_prefix}/executing-activities`;
+    });
+    it('successfully', () => {
+      service.getExecutingActivities().subscribe(response => {
+        expect(response).toEqual([]);
+      }, () => fail('Observable should have resolved'));
+      const request = httpMock.expectOne(req => req.url === url && req.method === 'GET');
+      request.flush([]);
+    });
+    it('unless an error occurs', () => {
+      service.getExecutingActivities().subscribe(() => fail('Observable should have rejected'), response => {
+        expect(response).toEqual(error);
       });
-      const event = new MessageEvent('test', {
-        data: JSON.stringify([activity])
-      });
-      eventSource.emitMessage(event);
-      tick();
-      expect(sseStub.getEventSource).toHaveBeenCalledWith(service.executions_prefix);
-    }));
-    it('that correctly handles an error', fakeAsync(() => {
-      const errorObj = new Error(error.errorMessage);
-      service.getExecutionActivitiesEvents().subscribe({
-        error: response => {
-          expect(response).toEqual(errorObj);
-        }
-      });
-      eventSource.emitError(errorObj);
-      tick();
-      expect(sseStub.getEventSource).toHaveBeenCalledWith(service.executions_prefix);
-    }));
+      const request = httpMock.expectOne(req => req.url === url && req.method === 'GET');
+      request.flush(error, { status: 400, statusText: error.errorMessage });
+    });
   });
   describe('checkMasterBranchPermissions should return appropriate response', function() {
     beforeEach(() => {
