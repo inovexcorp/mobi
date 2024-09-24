@@ -1,10 +1,8 @@
-@Version("2.0.0.${build}")
-
-package com.mobi.workflows.rest;
+package com.mobi.sse;
 
 /*-
  * #%L
- * com.mobi.workflows.rest
+ * sse
  * $Id:$
  * $HeadURL:$
  * %%
@@ -25,4 +23,8 @@ package com.mobi.workflows.rest;
  * #L%
  */
 
-import org.osgi.annotation.versioning.Version;
+public class SSETopics {
+    public static final String TOPIC_NAME = "com/mobi/sse";
+    public static final String PROPERTY_TYPE = "name";
+    public static final String PROPERTY_DATA = "data";
+}

@@ -20,21 +20,71 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Injectable } from '@angular/core';
+import { Injectable, NgZone } from '@angular/core';
+import { Observable } from 'rxjs';
+
+import { REST_PREFIX } from '../../constants';
+import { SSEEvent } from '../models/sse-event';
 
 /**
  * @class shared.SseService
  * 
- * A service that creates EventSource objects based on the provided URL. Separated out for ease of mocking and testing.
+ * A service that creates an EventSource for the main SSE stream of the application. Separated out for ease of mocking 
+ * and testing.
  */
 @Injectable({
   providedIn: 'root'
 })
 export class SseService {
 
-  constructor() { }
+  /**
+   * The internal EventSource object used to listen for server-sent events.
+   * @private
+   * @type {EventSource}
+   */
+  private _eventSource: EventSource;
 
-  getEventSource(url: string): EventSource {
-    return new EventSource(url);
+  /**
+   * Constructor for the SseService.
+   * @param {NgZone} _zone Angular's NgZone service.
+   */
+  constructor(private _zone: NgZone) {}
+
+  /**
+   * Initializes server-sent event listening.
+   */
+  initializeEvents(): void {
+    this._eventSource = new EventSource(`${REST_PREFIX}sse-stream`);
+  }
+
+  /**
+   * Stops server-sent event listening.
+   */
+  stopEvents(): void {
+    if (!this._eventSource) {
+      return;
+    }
+    this._eventSource.close();
+    this._eventSource = null;
+  }
+
+  /**
+   * Returns an Observable that emits the data from the server-sent events.
+   * 
+   * @returns {Observable<SSEEvent>} An Observable that emits the data from the server-sent events.
+   */
+  getEvents(): Observable<SSEEvent> {
+    return new Observable(observer => {
+      this._eventSource.onmessage = event => {
+        this._zone.run(() => {
+          observer.next(JSON.parse(event.data) as SSEEvent);
+        });
+      };
+      this._eventSource.onerror = error => {
+        this._zone.run(() => {
+          observer.error(error);
+        });
+      };
+    });
   }
 }

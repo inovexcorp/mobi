@@ -1,10 +1,6 @@
-@Version("2.0.0.${build}")
-
-package com.mobi.workflows.rest;
-
 /*-
  * #%L
- * com.mobi.workflows.rest
+ * com.mobi.web
  * $Id:$
  * $HeadURL:$
  * %%
@@ -24,5 +20,10 @@ package com.mobi.workflows.rest;
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-
-import org.osgi.annotation.versioning.Version;
+/**
+ * An interface representing an event coming from the main application SSE stream.
+ */
+export interface SSEEvent {
+  type: string,
+  data: any
+}

@@ -90,6 +90,7 @@
         <owlapi.version>5.5.0</owlapi.version>
         <owlapi.rdf4j.version>4.2.0</owlapi.rdf4j.version>
         <poi.version>5.2.3_1</poi.version>
+        <jakarta.version>2.1.6</jakarta.version>
         <!-- These deps are only needed for POI-->
         <log4j.version>2.18.0</log4j.version>
         <commons-compress.version>1.21</commons-compress.version>
@@ -366,6 +367,12 @@
 
 
             <!-- Other Dependencies -->
+            <dependency>
+                <groupId>jakarta.ws.rs</groupId>
+                <artifactId>jakarta.ws.rs-api</artifactId>
+                <version>${jakarta.version}</version>
+                <scope>compile</scope>
+            </dependency>
             <dependency>
                 <groupId>commons-io</groupId>
                 <artifactId>commons-io</artifactId>

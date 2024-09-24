@@ -126,6 +126,7 @@
         <module>com.mobi.workflows.impl.dagu</module>
         <module>com.mobi.workflows.rest</module>
         <module>com.mobi.shacl.form.rest</module>
+        <module>com.mobi.sse</module>
     </modules>
 
     <properties>

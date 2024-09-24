@@ -22,12 +22,13 @@
  */
 import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { MatPaginator, PageEvent } from '@angular/material/paginator';
-import { catchError, map, switchMap, tap } from 'rxjs/operators';
+import { catchError, switchMap, tap } from 'rxjs/operators';
 import { Observable, ReplaySubject, Subscription, combineLatest, forkJoin, of, throwError } from 'rxjs';
 import { DataSource } from '@angular/cdk/collections';
 import { MatDialog } from '@angular/material/dialog';
 import { Sort, SortDirection } from '@angular/material/sort';
 import { MatSlideToggleChange } from '@angular/material/slide-toggle';
+import { ComponentType } from '@angular/cdk/overlay';
 import { get } from 'lodash';
 
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
@@ -43,13 +44,12 @@ import { WorkflowDownloadModalComponent } from '../workflow-download-modal/workf
 import { WorkflowPaginatedConfig } from '../../models/workflow-paginated-config.interface';
 import { WorkflowSchema } from '../../models/workflow-record.interface';
 import { WorkflowTableFilterEvent } from '../../models/workflow-table-filter-event.interface';
-import { WorkflowsManagerService } from '../../services/workflows-manager.service';
+import { WorkflowActivitySSEEvent, WorkflowsManagerService } from '../../services/workflows-manager.service';
 import { WorkflowsStateService } from '../../services/workflows-state.service';
 import { getPropertyId } from '../../../shared/utility';
 import { WorkflowCreationModalComponent } from '../workflow-creation-modal/workflow-creation-modal.component';
 import { RESTError } from '../../../shared/models/RESTError.interface';
 import { WorkflowUploadModalComponent } from '../workflow-upload-modal/workflow-upload-modal.component';
-import { ComponentType } from '@angular/cdk/overlay';
 
 /**
  * Represents the DataSource for Workflows Table
@@ -57,26 +57,26 @@ import { ComponentType } from '@angular/cdk/overlay';
 class WorkflowsDataSource extends DataSource<WorkflowDataRow> {
   public readonly messageNoData = 'No Workflow record found';
   public executingWorkflows = [];
-  private _activityEventDataStream = new ReplaySubject<JSONLDObject[]>();
+  private _activityEventDataStream = new ReplaySubject<WorkflowActivitySSEEvent>();
   private _workflowDataStream = new ReplaySubject<WorkflowDataRow[]>();
   private _length = 0;
   private executionActivitiesSub: Subscription;
+  private _executingActivities: JSONLDObject[] = [];
   public errorMessage: string;
   public infoMessage: string;
   public isWorkflowRunning = false;
   public totalCount = 0;
-  private initialRequest = true;
   
-  constructor(public _wss: WorkflowsStateService, public _wms: WorkflowsManagerService,
-              public paginationConfig: WorkflowPaginatedConfig) {
+  constructor(public _wss: WorkflowsStateService, public _wms: WorkflowsManagerService, 
+      public paginationConfig: WorkflowPaginatedConfig) {
     super();
-    this.executionActivitiesSub = this._wms.getExecutionActivitiesEvents().subscribe((events) => {
-      this._activityEventDataStream.next(events);
-      if (this.initialRequest) {
-        this.initialRequest = false;
-      } else {
+    this._wms.getExecutingActivities().subscribe(activities =>{
+      this._executingActivities = activities;
+      this._activityEventDataStream.next(undefined);
+      this.executionActivitiesSub = this._wms.getWorkflowEvents().subscribe(event => {
+        this._activityEventDataStream.next(event);
         this.retrieveWorkflows(this.paginationConfig).subscribe();
-      }
+      });
     });
   }
   /**
@@ -89,37 +89,39 @@ class WorkflowsDataSource extends DataSource<WorkflowDataRow> {
     return combineLatest([this._workflowDataStream, this._activityEventDataStream]).pipe(
       switchMap((latestResults) => {
         const workflowRecords: WorkflowDataRow[] = latestResults[0];
-        const activityEvents: JSONLDObject[] = latestResults[1];
-        return this.mergeWorkflowRecordActivities(workflowRecords, activityEvents);
+        const activityEvent: WorkflowActivitySSEEvent = latestResults[1];
+        return this.mergeWorkflowRecordActivities(workflowRecords, activityEvent);
       }),
       catchError(err => this.handleError(err))
     );
   }
-  mergeWorkflowRecordActivities(workflowRecords: WorkflowDataRow[], activityEvents: JSONLDObject[]): Observable<WorkflowDataRow[]> {
-    this.isWorkflowRunning = activityEvents.length > 0;
-    const runningWorkflows: WorkflowDataRow[] = workflowRecords.filter(workflow=> workflow.statusDisplay.toLowerCase() === 'started');
-    const actuallyRunningWorkflowIRIs: string[] = [];
-    activityEvents.forEach(activity => {
-      const usedWorkflow = getPropertyId(activity, `${PROV}used`);
-      actuallyRunningWorkflowIRIs.push(usedWorkflow);
-      const foundIndex = workflowRecords.findIndex(workflow => workflow.record.iri === usedWorkflow);
-      if (foundIndex >= 0) {
-        this._wss.updateWorkflowWithActivity(workflowRecords[foundIndex], activity);
+  mergeWorkflowRecordActivities(workflowRecords: WorkflowDataRow[], activityEvent?: WorkflowActivitySSEEvent): Observable<WorkflowDataRow[]> {
+    if (activityEvent) {
+      const updatedActivity = activityEvent.data[0];
+      const usedWorkflow = getPropertyId(updatedActivity, `${PROV}used`);
+      if (activityEvent.type.endsWith('START')) {
+        const idx = this._executingActivities.findIndex(activity => activity['@id'] === updatedActivity['@id']);
+        if (idx < 0) {
+          this._executingActivities.push(updatedActivity);
+          const workflowIdx = workflowRecords.findIndex(workflow => workflow.record.iri === usedWorkflow);
+          if (workflowIdx >= 0) {
+            this._wss.updateWorkflowWithActivity(workflowRecords[workflowIdx], updatedActivity);
+          }
+        }
+      } else if (activityEvent.type.endsWith('END')) {
+        const idx = this._executingActivities.findIndex(activity => activity['@id'] === updatedActivity['@id']);
+        if (idx >= 0) {
+          this._executingActivities.splice(idx, 1);
+          const workflowIdx = workflowRecords.filter(workflow => workflow.statusDisplay.toLowerCase() === 'started')
+            .findIndex(workflow => workflow.record.iri === usedWorkflow);
+          if (workflowIdx >= 0) {
+            this._wss.updateWorkflowWithActivity(workflowRecords[workflowIdx], updatedActivity);
+          }
+        }
       }
-    });
-    const workflowsToUpdate: WorkflowDataRow[] = runningWorkflows
-      .filter(workflow => !actuallyRunningWorkflowIRIs.includes(workflow.record.workflowIRI));
-    if (workflowsToUpdate.length) {
-      return forkJoin(workflowsToUpdate.map(workflow => this._wms.getLatestExecutionActivity(workflow.record.iri, true)))
-        .pipe(map(activities =>{
-          activities.forEach((activity, idx) => {
-            this._wss.updateWorkflowWithActivity(workflowsToUpdate[idx], activity);
-          });
-          return workflowRecords;
-        }));
-    } else {
-      return of(workflowRecords);
     }
+    this.isWorkflowRunning = this._executingActivities.length > 0;
+    return of(workflowRecords);
   }
   /**
    * Retrieves the results with updated columns from the web service.
@@ -320,7 +322,7 @@ export class WorkflowRecordsComponent implements OnInit, OnDestroy {
     this.catalogId = get(this._cms.localCatalog, '@id', '');
     this.paginationConfig.searchText = this.wss.landingPageSearchText;
     this.dataSourceSub = this.dataSource.connect().subscribe((workflows) => {
-      this._getExecutingWorkflows(workflows);
+      this._setExecutingWorkflows(workflows);
       this.selectedWorkflows.forEach((selected, idx) => {
         const visibleWorkflow = workflows.find(workflow => workflow.record.iri === selected.record.iri);
         if (visibleWorkflow) {
@@ -391,13 +393,11 @@ export class WorkflowRecordsComponent implements OnInit, OnDestroy {
       if (result) {
         this._wms.executeWorkflow(workflow.record.iri).subscribe({
           next: () => {
-            this.updateWorkflowRecords();
             this.selectedWorkflows = [];
           },
           error: (error: RESTError) => {
             const message = error.errorMessage ? error.errorMessage : error;
             this._toast.createErrorToast(`Error executing workflow: ${message}`);
-            this.updateWorkflowRecords();
             this.selectedWorkflows.forEach(workflow => {
               workflow.checked = false;
             });
@@ -488,6 +488,7 @@ export class WorkflowRecordsComponent implements OnInit, OnDestroy {
 
   /**
    * Opens a dialog window for either creating a new workflow or uploading a workflow file.
+   * @private
    * 
    * @param component The type of dialog component to open. It should be either WorkflowCreationModalComponent or
    * WorkflowUploadModalComponent.
@@ -600,7 +601,14 @@ export class WorkflowRecordsComponent implements OnInit, OnDestroy {
     });
   }
 
-  _getExecutingWorkflows(workflows: WorkflowDataRow[]): void {
+  /**
+   * Processes the provided list of Workflow Record rows and sets `executingWorkflows` to the record IRIs of the ones
+   * which are currently executing.
+   * 
+   * @private
+   * @param {WorkflowDataRow[]} workflows An array of rows of Workflow Records
+   */
+  private _setExecutingWorkflows(workflows: WorkflowDataRow[]): void {
     this.executingWorkflows = [];
      workflows.forEach(workflow => {
       if (workflow.record.status === 'started') {

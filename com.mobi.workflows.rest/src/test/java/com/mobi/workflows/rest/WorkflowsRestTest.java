@@ -58,8 +58,8 @@ import com.mobi.catalog.api.RecordManager;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
-import com.mobi.catalog.api.ontologies.mcat.MasterBranch;
 import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
+import com.mobi.catalog.api.ontologies.mcat.MasterBranch;
 import com.mobi.catalog.api.record.config.RecordCreateSettings;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
 import com.mobi.catalog.api.record.config.VersionedRDFRecordCreateSettings;
@@ -68,6 +68,7 @@ import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.persistence.utils.impl.SimpleBNodeService;
+import com.mobi.prov.api.ProvenanceService;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.repository.impl.sesame.memory.MemoryRepositoryWrapper;
 import com.mobi.rest.test.util.FormDataMultiPart;
@@ -119,6 +120,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.time.OffsetDateTime;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -127,6 +129,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.ws.rs.client.Entity;
@@ -147,6 +150,7 @@ public class WorkflowsRestTest extends MobiRestTestCXF {
     private static PDP pdp;
     private static WorkflowManager workflowManager;
     private static SimpleBNodeService bNodeService;
+    private static ProvenanceService provService;
     private static com.mobi.security.policy.api.Response response;
     private static BranchManager branchManager;
     private static EngineManager engineManager;
@@ -210,6 +214,7 @@ public class WorkflowsRestTest extends MobiRestTestCXF {
         branchManager = mock(BranchManager.class);
         compiledResourceManager = Mockito.mock(CompiledResourceManager.class);
         response = mock(com.mobi.security.policy.api.Response.class);
+        provService = mock(ProvenanceService.class);
 
         try (RepositoryConnection conn = repo.getConnection()) {
             InputStream stream = new ByteArrayInputStream("<http://mobi.com/branch> <http://mobi.com/ontologies/catalog#head> <http://mobi.com/commit> .".getBytes(StandardCharsets.UTF_8));
@@ -285,6 +290,7 @@ public class WorkflowsRestTest extends MobiRestTestCXF {
         rest.workflowRecordFactory = (WorkflowRecordFactory) recordFactory;
         bNodeService = new SimpleBNodeService();
         rest.bNodeService = bNodeService;
+        rest.provService = provService;
 
         configureServer(rest, new com.mobi.rest.test.util.UsernameTestFilter());
     }
@@ -314,15 +320,14 @@ public class WorkflowsRestTest extends MobiRestTestCXF {
 
         when(workflowManager.getLogFile(binaryFileId)).thenReturn(binaryFile);
         when(engineManager.retrieveUser(anyString())).thenReturn(Optional.of(user));
-//        when(branchManager.getMasterBranch(any(), any(), any(RepositoryConnection.class))).thenReturn(branch);
         when(configProvider.getLocalCatalogIRI()).thenReturn(catalogId);
         when(configProvider.getRepository()).thenReturn(repo);
         when(recordManager.createRecord(any(User.class), any(RecordOperationConfig.class), eq(WorkflowRecord.class),
                 any(RepositoryConnection.class))).thenReturn(record);
         when(commitManager.createInProgressCommit(any(User.class))).thenReturn(inProgressCommit);
         when(commitManager.getInProgressCommitOpt(eq(catalogId), eq(recordId), eq(user), any(RepositoryConnection.class))).thenReturn(Optional.of(inProgressCommit));
-//        when(commitManager.createCommit(eq(inProgressCommit), anyString(), any(Commit.class), any(Commit.class))).thenReturn(commit);
         when(differenceManager.applyInProgressCommit(any(Resource.class), any(Model.class), any(RepositoryConnection.class))).thenAnswer(i -> i.getArgument(1, Model.class));
+        when(provService.getConnection()).thenReturn(repo.getConnection());
 
         when(differenceManager.getDiff(any(Model.class), any(Model.class))).thenReturn(difference);
 
@@ -331,7 +336,7 @@ public class WorkflowsRestTest extends MobiRestTestCXF {
 
     @After
     public void resetMocks() throws Exception {
-        reset(engineManager, configProvider, recordManager,  workflowManager, compiledResourceManager, branchManager, differenceManager, commitManager);
+        reset(engineManager, configProvider, recordManager,  workflowManager, compiledResourceManager, branchManager, differenceManager, commitManager, provService);
         VirtualFile directory = vfs.resolveVirtualFile(fileLocation);
         for (VirtualFile child : directory.getChildren()) {
             child.deleteAll();
@@ -1015,6 +1020,56 @@ public class WorkflowsRestTest extends MobiRestTestCXF {
         assertEquals(responseObject.get("errorMessage").textValue(), "Execution Activity " + activityIRI + " not found");
         assertNotEquals(responseObject.get("errorMessage").textValue(), null);
     }
+    
+    @Test
+    public void testGetExecutingActivities() throws Exception {
+        IRI runningActivityIRI = vf.createIRI("http://test.com/running-activity");
+        IRI finishedActivityIRI = vf.createIRI("http://test.com/finished-activity");
+        OrmFactory<WorkflowExecutionActivity> activityFactory = getRequiredOrmFactory(WorkflowExecutionActivity.class);
+        WorkflowExecutionActivity runningActivity = activityFactory.createNew(runningActivityIRI);
+        runningActivity.setStartedAtTime(Set.of(OffsetDateTime.now()));
+        WorkflowExecutionActivity finishedActivity = activityFactory.createNew(finishedActivityIRI);
+        finishedActivity.setStartedAtTime(Set.of(OffsetDateTime.now()));
+        finishedActivity.setEndedAtTime(Set.of(OffsetDateTime.now().plusSeconds(1000)));
+
+        try (RepositoryConnection conn = repo.getConnection()) {
+            conn.add(runningActivity.getModel());
+            conn.add(finishedActivity.getModel());
+        }
+        
+        Response response = target().path("workflows/executing-activities").request().get();
+        assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
+        ArrayNode responseObject = (ArrayNode) mapper.readTree(response.readEntity(String.class));
+        assertNotNull(responseObject);
+        assertEquals(1, responseObject.size());
+        JsonNode activityJsonld = responseObject.get(0);
+        assertNotNull(activityJsonld);
+        assertEquals(runningActivityIRI.stringValue(), activityJsonld.get("@id").textValue());
+    }
+    
+    @Test
+    public void testGetExecutingActivities400() throws Exception {
+        doThrow(new IllegalArgumentException("Error")).when(provService).getConnection();
+        
+        Response response = target().path("workflows/executing-activities").request().get();
+        assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+        ObjectNode responseObject = getResponse(response);
+        assertEquals(responseObject.get("error").asText(), "IllegalArgumentException");
+        assertEquals(responseObject.get("errorMessage").asText(), "Error");
+        assertNotEquals(responseObject.get("errorDetails"), null);
+    }
+
+    @Test
+    public void testGetExecutingActivities500() throws Exception {
+        doThrow(new IllegalStateException("Error")).when(provService).getConnection();
+
+        Response response = target().path("workflows/executing-activities").request().get();
+        assertEquals(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(), response.getStatus());
+        ObjectNode responseObject = getResponse(response);
+        assertEquals(responseObject.get("error").asText(), "IllegalStateException");
+        assertEquals(responseObject.get("errorMessage").asText(), "Error");
+        assertNotEquals(responseObject.get("errorDetails"), null);
+    }
 
     @Test
     public void testUploadChangesToWorkflow() {
@@ -1032,7 +1087,7 @@ public class WorkflowsRestTest extends MobiRestTestCXF {
                 .request()
                 .put(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
 
-        assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
+        assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
         assertGetUserFromContext();
         verify(compiledResourceManager).getCompiledResource(eq(recordId), eq(branchId), eq(commitId), any(RepositoryConnection.class));
         verify(differenceManager).getDiff(any(Model.class), any(Model.class));
@@ -1058,7 +1113,7 @@ public class WorkflowsRestTest extends MobiRestTestCXF {
                 .request()
                 .put(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
 
-        assertEquals(response.getStatus(), Response.Status.INTERNAL_SERVER_ERROR.getStatusCode());
+        assertEquals(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode(), response.getStatus());
         verify(workflowManager).validateWorkflow(any(Model.class));
     }
 
@@ -1079,7 +1134,7 @@ public class WorkflowsRestTest extends MobiRestTestCXF {
                 .request()
                 .put(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
 
-        assertEquals(response.getStatus(), Response.Status.BAD_REQUEST.getStatusCode());
+        assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
         verify(branchManager, times(0)).getMasterBranch(eq(catalogId), eq(recordId), any(RepositoryConnection.class));
         verify(compiledResourceManager, times(0)).getCompiledResource(eq(recordId), eq(branchId), eq(commitId), any(RepositoryConnection.class));
         verify(differenceManager, times(0)).getDiff(any(Model.class), any(Model.class));
@@ -1125,7 +1180,7 @@ public class WorkflowsRestTest extends MobiRestTestCXF {
                 .request()
                 .put(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
 
-        assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
+        assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
         assertGetUserFromContext();
         verify(commitManager).getHeadCommit(eq(catalogId), eq(recordId), eq(branchId), any(RepositoryConnection.class));
         verify(compiledResourceManager).getCompiledResource(eq(recordId), eq(branchId), eq(commitId), any(RepositoryConnection.class));
@@ -1149,7 +1204,7 @@ public class WorkflowsRestTest extends MobiRestTestCXF {
                 .request()
                 .put(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
 
-        assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
+        assertEquals(Response.Status.OK.getStatusCode(), response.getStatus());
     }
 
     @Test
@@ -1196,7 +1251,7 @@ public class WorkflowsRestTest extends MobiRestTestCXF {
                 .request()
                 .put(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
 
-        assertEquals(response.getStatus(), Response.Status.BAD_REQUEST.getStatusCode());
+        assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
         ObjectNode responseObject = getResponse(response);
         assertEquals(responseObject.get("error").asText(), "IllegalArgumentException");
         assertEquals(responseObject.get("errorMessage").asText(), "TriG data is not supported for upload changes.");

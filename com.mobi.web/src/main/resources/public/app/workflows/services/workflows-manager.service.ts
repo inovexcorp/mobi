@@ -22,12 +22,12 @@
  */
 //Angular
 import { HttpClient, HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Injectable, NgZone } from '@angular/core';
+import { Injectable } from '@angular/core';
 //Lodash
 import { forEach, get, has, isObject } from 'lodash';
 //RxJs
 import { Observable, forkJoin, of } from 'rxjs';
-import { catchError, map, switchMap } from 'rxjs/operators';
+import { catchError, filter, map, switchMap } from 'rxjs/operators';
 //Local
 import { JSONLDObject } from '../../shared/models/JSONLDObject.interface';
 import { PaginatedResponse } from '../models/paginated-response.interface';
@@ -51,6 +51,11 @@ import { XACMLDecision } from '../../shared/models/XACMLDecision.interface';
 import { WorkflowRecordConfig } from '../models/workflowRecordConfig.interface';
 import { WorkflowSHACLDefinitions } from '../models/workflow-shacl-definitions.interface';
 import { Difference } from '../../shared/models/difference.class';
+import { SSEEvent } from '../../shared/models/sse-event';
+
+export interface WorkflowActivitySSEEvent extends SSEEvent {
+  data: JSONLDObject[]
+}
 
 /**
  * WorkflowsManagerService is an angular service class that is responsible for managing workflows.
@@ -64,17 +69,12 @@ export class WorkflowsManagerService {
    * Define the URL for the workflows
    */
   readonly workflows_prefix = `${REST_PREFIX}workflows`;
-  /**
-   * The URL for workflow executions
-   */
-  readonly executions_prefix = `${REST_PREFIX}workflow-executions`;
 
   constructor(private _http: HttpClient, 
     private _spinnerSrv: ProgressSpinnerService, 
     private _polm: PolicyManagerService,
     private _pe: PolicyEnforcementService,
     private _sse: SseService, 
-    private _zone: NgZone,
     public _cm: CatalogManagerService
   ) { }
 
@@ -249,27 +249,27 @@ export class WorkflowsManagerService {
   }
 
   /**
-   * Creates an Observable of an EventSource for the /workflow-executions SSE endpoint that returns events with a
-   * JSON-LD array of the current execution WorkflowExecutionActivities
+   * Retrieves an Observable on the application SSE stream filtered to Workflow Activity events. 
    * 
-   * @returns {Observable} An Observable that emits a JSON-LD array of WorkflowExecutionActivity instances every time
-   *    one starts or stops.
+   * @returns {Observable} An Observable that emits a {@link WorkflowActivitySSEEvent} on both the start and stop of a
+   *    WorkflowExecutionActivity
    */
-  getExecutionActivitiesEvents(): Observable<JSONLDObject[]> {
-    return new Observable(observer => {
-      const source = this._sse.getEventSource(this.executions_prefix);
-      source.onmessage = event => {
-        this._zone.run(() => {
-          observer.next(JSON.parse(event.data) as JSONLDObject[]);
-        });
-      };
-      source.onerror = error => {
-        this._zone.run(() => {
-          observer.error(error);
-        });
-      };
-      return () => source.close();
-    });
+  getWorkflowEvents(): Observable<WorkflowActivitySSEEvent> {
+    return this._sse.getEvents().pipe(
+      filter(event => event.type?.startsWith('com/mobi/workflows/activities')),
+      map(event => event as WorkflowActivitySSEEvent)
+    );
+  }
+
+  /**
+   * Retrieves an Observable of all the currently running WorkflowExecutionActivity objects.
+   * 
+   * @returns {Observable} An Observable of the JSON-LD array of all the running WorkflowExecutionActivities
+   */
+  getExecutingActivities(): Observable<JSONLDObject[]> {
+    const url = `${this.workflows_prefix}/executing-activities`;
+    return this._http.get<JSONLDObject[]>(url)
+      .pipe(catchError(handleErrorObject));
   }
 
   /**

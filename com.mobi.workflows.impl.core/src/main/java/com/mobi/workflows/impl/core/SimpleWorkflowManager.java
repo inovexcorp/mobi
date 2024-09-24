@@ -62,6 +62,7 @@ import com.mobi.security.policy.api.PDP;
 import com.mobi.security.policy.api.Request;
 import com.mobi.security.policy.api.ontologies.policy.Read;
 import com.mobi.security.policy.api.xacml.XACML;
+import com.mobi.sse.SSEUtils;
 import com.mobi.vfs.ontologies.documents.BinaryFile;
 import com.mobi.vfs.ontologies.documents.BinaryFileFactory;
 import com.mobi.workflows.api.PaginatedWorkflowSearchParams;
@@ -904,11 +905,11 @@ public class SimpleWorkflowManager implements WorkflowManager, EventHandler {
         WorkflowExecutionActivity activity = startExecutionActivity(user, workflowRecord);
 
         if (executingWorkflows.contains(workflowId)) {
-            handleStartErrors(workflow, activity, String.format("Workflow %s is already running. please wait and try " +
-                    "again.", workflowId));
+            handleStartErrors(workflow, activity, String.format("Workflow %s is already running. please wait and try "
+                    + "again.", workflowId));
         } else if (!workflowEngine.availableToRun()) {
-            handleStartErrors(workflow, activity, String.format("The limit on executing workflows has been reached. " +
-                    "Cannot run workflow %s.", workflowId));
+            handleStartErrors(workflow, activity, String.format("The limit on executing workflows has been reached. "
+                    + "Cannot run workflow %s.", workflowId));
         } else {
             executingWorkflows.add(workflow.getResource());
             workflowEngine.startWorkflow(workflow, activity);
@@ -956,11 +957,11 @@ public class SimpleWorkflowManager implements WorkflowManager, EventHandler {
                 List<Resource> executingWorkflows = workflowEngine.getExecutingWorkflows();
                 WorkflowExecutionActivity activity = startExecutionActivity(user, workflowRecord);
                 if (executingWorkflows.contains(workflowId)) {
-                    handleStartErrors(workflow, activity, String.format("Workflow %s is already running. please wait " +
-                            "and try again.", workflowId));
+                    handleStartErrors(workflow, activity, String.format("Workflow %s is already running. please wait "
+                            + "and try again.", workflowId));
                 } else if (!workflowEngine.availableToRun()) {
-                    handleStartErrors(workflow, activity, String.format("The limit on executing workflows has been " +
-                            "reached. Cannot run workflow %s.", workflowId));
+                    handleStartErrors(workflow, activity, String.format("The limit on executing workflows has been "
+                            + "reached. Cannot run workflow %s.", workflowId));
                 } else {
                     executingWorkflows.add(workflow.getResource());
                     workflowEngine.startWorkflow(workflow, activity);
@@ -1119,10 +1120,8 @@ public class SimpleWorkflowManager implements WorkflowManager, EventHandler {
 
         provService.addActivity(activity);
         // Notify that an activity has started
-        Map<String, Object> eventProps = new HashMap<>();
-        eventProps.put(WorkflowsTopics.ACTIVITY_PROPERTY_ACTIVITY, activity.getResource());
-        Event event = new Event(WorkflowsTopics.TOPIC_ACTIVITY_START, eventProps);
-        eventAdmin.postEvent(event);
+        SSEUtils.postEvent(eventAdmin, WorkflowsTopics.TOPIC_ACTIVITY_START,
+                activity.getModel().filter(activity.getResource(), null, null));
 
         WorkflowExecutionActivity workflowActivity = workflowExecutionActivityFactory.getExisting(
                 activity.getResource(), activity.getModel()).orElseThrow(() ->

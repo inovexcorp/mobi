@@ -34,8 +34,10 @@ import { MatSlideToggleChange, MatSlideToggleModule } from '@angular/material/sl
 import { MatTableModule } from '@angular/material/table';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
+import { MatSortModule } from '@angular/material/sort';
 
 import { of, Subject, throwError } from 'rxjs';
+import { skip } from 'rxjs/operators';
 import { cloneDeep, forEach } from 'lodash';
 
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
@@ -44,23 +46,22 @@ import { ProgressSpinnerService } from '../../../shared/components/progress-spin
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { PROV, WORKFLOWS } from '../../../prefixes';
 import { WorkflowDataRow } from '../../models/workflow-record-table';
-import { WorkflowsManagerService } from '../../services/workflows-manager.service';
+import { WorkflowActivitySSEEvent, WorkflowsManagerService } from '../../services/workflows-manager.service';
 import { WorkflowsStateService } from '../../services/workflows-state.service';
 import { workflow_data_row_mocks, workflow_mocks } from '../../models/mock_data/workflow-mocks';
 import { WorkflowControlsComponent } from '../workflow-controls/workflow-controls.component';
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
-import { WorkflowRecordsComponent } from './workflow-records.component';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { ToastService } from '../../../shared/services/toast.service';
 import { PolicyManagerService } from '../../../shared/services/policyManager.service';
 import { PolicyEnforcementService } from '../../../shared/services/policyEnforcement.service';
 import { WorkflowDownloadModalComponent } from '../workflow-download-modal/workflow-download-modal.component';
-import { MatSortModule } from '@angular/material/sort';
 import { WorkflowPaginatedConfig } from '../../models/workflow-paginated-config.interface';
 import { WorkflowTableFilterComponent } from '../workflow-table-filter/workflow-table-filter.component';
 import { WorkflowCreationModalComponent } from '../workflow-creation-modal/workflow-creation-modal.component';
 import { RESTError } from '../../../shared/models/RESTError.interface';
 import { WorkflowUploadModalComponent } from '../workflow-upload-modal/workflow-upload-modal.component';
+import { WorkflowRecordsComponent } from './workflow-records.component';
 
 describe('WorkflowRecordsComponent', () => {
   let component: WorkflowRecordsComponent;
@@ -73,7 +74,8 @@ describe('WorkflowRecordsComponent', () => {
   let policyEnforcementStub: jasmine.SpyObj<PolicyEnforcementService>;
   let matDialog: jasmine.SpyObj<MatDialog>;
   let toastStub: jasmine.SpyObj<ToastService>;
-  let executionActivitiesSubject: Subject<JSONLDObject[]>;
+  let $executingActivitiesSubject: Subject<JSONLDObject[]>;
+  let $workflowEventsSubject: Subject<WorkflowActivitySSEEvent>;
 
   const error: RESTError = {
     errorMessage: 'Error message',
@@ -129,7 +131,8 @@ describe('WorkflowRecordsComponent', () => {
       ],
     }).compileComponents();
 
-    executionActivitiesSubject = new Subject<JSONLDObject[]>();
+    $executingActivitiesSubject = new Subject<JSONLDObject[]>();
+    $workflowEventsSubject = new Subject<WorkflowActivitySSEEvent>();
     matDialog = TestBed.inject(MatDialog) as jasmine.SpyObj<MatDialog>;
     workflowsManagerStub = TestBed.inject(WorkflowsManagerService) as jasmine.SpyObj<WorkflowsManagerService>;
     catalogManagerStub = TestBed.inject(CatalogManagerService) as jasmine.SpyObj<CatalogManagerService>;
@@ -142,7 +145,8 @@ describe('WorkflowRecordsComponent', () => {
     workflowsStateStub.getResults.and.returnValue(of({page: [], totalCount: 0}));
 
     workflowManagerStub = TestBed.inject(WorkflowsManagerService) as jasmine.SpyObj<WorkflowsManagerService>;
-    workflowManagerStub.getExecutionActivitiesEvents.and.returnValue(executionActivitiesSubject.asObservable());
+    workflowManagerStub.getExecutingActivities.and.returnValue($executingActivitiesSubject.asObservable());
+    workflowsManagerStub.getWorkflowEvents.and.returnValue($workflowEventsSubject.asObservable());
     workflowManagerStub.checkCreatePermission.and.returnValue(of('Permit'));
 
     fixture = TestBed.createComponent(WorkflowRecordsComponent);
@@ -161,7 +165,14 @@ describe('WorkflowRecordsComponent', () => {
     policyEnforcementStub = null;
     toastStub = null;
     catalogManagerStub = null;
-    executionActivitiesSubject = null;
+    if ($workflowEventsSubject) {
+      $workflowEventsSubject.complete();
+      $workflowEventsSubject = null;
+    }
+    if ($executingActivitiesSubject) {
+      $executingActivitiesSubject.complete();
+      $executingActivitiesSubject = null;
+    }
   });
 
   it('should create', () => {
@@ -242,26 +253,7 @@ describe('WorkflowRecordsComponent', () => {
         expect(errorMsg.nativeElement.textContent).toContain(error.errorMessage);
         expect(component.columnsToDisplay.length).toEqual(8);
       });
-      it('when workflows should be updated based on new activity details', fakeAsync(() => {
-        const runningWorkflow: WorkflowDataRow = {
-          record: {
-            iri: 'urn:workflowARecordIri',
-            title: 'Workflow A',
-            description: '',
-            issued: new Date(),
-            modified: new Date(),
-            workflowIRI: 'urn:workflowA',
-            master: 'urn:workflowAMasterIri',
-            active: true,
-            canModifyMasterBranch: true,
-            canDeleteWorkflow: false,
-          },
-          statusDisplay: 'started',
-          executorDisplay: 'batman',
-          executionIdDisplay: '1234',
-          startTimeDisplay: 'Today',
-          runningTimeDisplay: '(none)',
-        };
+      it('when an activity starts ', fakeAsync(() => {
         const notStartedWorkflow: WorkflowDataRow = {
           record: {
             iri: 'urn:workflowBRecordIri',
@@ -286,22 +278,63 @@ describe('WorkflowRecordsComponent', () => {
           '@type': [`${WORKFLOWS}WorkflowExecutionActivity`],
           [`${PROV}used`]: [{ '@id': notStartedWorkflow.record.iri }]
         };
+        const event: WorkflowActivitySSEEvent = {
+          type: 'com/mobi/workflows/activities/START',
+          data: [runningActivity]
+        };
+        workflowsStateStub.getResults.and.returnValue(of({page: [notStartedWorkflow], totalCount: 1}));
+        $executingActivitiesSubject.next([]);
+        component.dataSource.retrieveWorkflows(paginationConfig).subscribe();
+        component.dataSource.connect().pipe(skip(1)).subscribe(data => {
+          expect(data).toEqual([notStartedWorkflow]);
+          expect(workflowsStateStub.updateWorkflowWithActivity).toHaveBeenCalledWith(notStartedWorkflow, runningActivity);
+          expect(component.dataSource.isWorkflowRunning).toBeTrue();
+        });
+        $workflowEventsSubject.next(event);
+        tick();
+      }));
+      it('when an activity ends', fakeAsync(() => {
+        const runningWorkflow: WorkflowDataRow = {
+          record: {
+            iri: 'urn:workflowARecordIri',
+            title: 'Workflow A',
+            description: '',
+            issued: new Date(),
+            modified: new Date(),
+            workflowIRI: 'urn:workflowA',
+            master: 'urn:workflowAMasterIri',
+            active: true,
+            canModifyMasterBranch: true,
+            canDeleteWorkflow: false,
+          },
+          statusDisplay: 'started',
+          executorDisplay: 'batman',
+          executionIdDisplay: '1234',
+          startTimeDisplay: 'Today',
+          runningTimeDisplay: '(none)',
+        };
         const finishedActivity: JSONLDObject = {
           '@id': 'urn:finishedActivity',
           '@type': [`${WORKFLOWS}WorkflowExecutionActivity`],
-          [`${PROV}used`]: [{ '@id': runningActivity.recordIRI }]
+          [`${PROV}used`]: [{ '@id': runningWorkflow.record.iri }]
         };
-        executionActivitiesSubject.next([runningActivity]);
-        workflowsStateStub.getResults.and.returnValue(of({page: [runningWorkflow, notStartedWorkflow], totalCount: 2}));
-        workflowsManagerStub.getLatestExecutionActivity.and.returnValue(of(finishedActivity));
-        workflowsManagerStub.getExecutionActivitiesEvents.and.returnValue(of([runningActivity]));
+        const event: WorkflowActivitySSEEvent = {
+          type: 'com/mobi/workflows/activities/END',
+          data: [finishedActivity]
+        };
+        workflowsStateStub.getResults.and.returnValue(of({page: [runningWorkflow], totalCount: 1}));
+        $executingActivitiesSubject.next([finishedActivity]);
         component.dataSource.retrieveWorkflows(paginationConfig).subscribe();
-        component.dataSource.connect().subscribe(async (data) => {
-          expect(data).toEqual([runningWorkflow, notStartedWorkflow]);
-          expect(workflowsStateStub.updateWorkflowWithActivity).toHaveBeenCalledWith(notStartedWorkflow, runningActivity);
-          expect(workflowsManagerStub.getLatestExecutionActivity).toHaveBeenCalledWith(runningWorkflow.record.iri, true);
+        component.dataSource.connect().pipe(skip(1)).subscribe(data => {
+          console.log('inside subscribe');
+          expect(data).toEqual([runningWorkflow]);
           expect(workflowsStateStub.updateWorkflowWithActivity).toHaveBeenCalledWith(runningWorkflow, finishedActivity);
+          expect(component.dataSource.isWorkflowRunning).toBeFalse();
         });
+        console.log('First tick');
+        tick();
+        console.log('Event next');
+        $workflowEventsSubject.next(event);
         tick();
       }));
     });
@@ -431,7 +464,7 @@ describe('WorkflowRecordsComponent', () => {
   describe('contains the correct html', function() {
     describe('when datasource has data', () => {
       beforeEach(async () => {
-        executionActivitiesSubject.next([]);
+        $executingActivitiesSubject.next([]);
         workflowsStateStub.getResults.and.returnValue(of({page: workflow_data_row_mocks, totalCount: workflow_data_row_mocks.length}));
         component.ngOnInit();
         fixture.detectChanges();
@@ -466,7 +499,7 @@ describe('WorkflowRecordsComponent', () => {
     });
     describe('when datasource is empty', () => {
       beforeEach(async  () => {
-        executionActivitiesSubject.next([]);
+        $executingActivitiesSubject.next([]);
         component.dataSource.infoMessage = component.dataSource.messageNoData;
         workflowsStateStub.getResults.and.returnValue(of({page: [], totalCount: 0}));
         component.ngOnInit();

@@ -21,11 +21,20 @@
  * #L%
  */
 
-import { Component } from '@angular/core';
+import { Component, OnDestroy } from '@angular/core';
 import { Router } from '@angular/router';
 
+import { SseService } from '../shared/services/sse.service';
+
+/**
+ * @class MainLayoutComponent
+ * 
+ * @description 
+ * `MainLayoutComponent` is a component that renders the main layout of the application after logging in.
+ * It includes a sidebar and a router-outlet.
+ */
 @Component({
-  selector: 'login-layout',
+  selector: 'main-layout',
   template: `
     <div class="h-100" [ngClass]="{'collapsed-nav': collapsedNav}">
         <div class="container-fluid h-100">
@@ -40,7 +49,28 @@ import { Router } from '@angular/router';
   `,
   styles: []
 })
-export class MainLayoutComponent {
-    collapsedNav = false;
-    constructor(public router: Router) {}
+export class MainLayoutComponent implements OnDestroy {
+  /**
+   * This property determines whether the sidebar is collapsed or not.
+   * 
+   * @type {boolean}
+   * @default false
+   */
+  collapsedNav = false;
+  
+  /**
+   * This is the constructor for the main layout component that starts the listener for Server-Sent Events.
+   * @param {Router} router - The Angular router service.
+   * @param {SseService} _sse - The SSEService instance used for Server-Sent Events.
+   */
+  constructor(public router: Router, private _sse: SseService) {
+    this._sse.initializeEvents();
+  }
+
+  /**
+   * Stops the Server-Sent Events on component destroy.
+   */
+  ngOnDestroy(): void {
+    this._sse.stopEvents();
+  }
 }
