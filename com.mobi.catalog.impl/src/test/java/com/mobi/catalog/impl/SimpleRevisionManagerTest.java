@@ -313,8 +313,8 @@ public class SimpleRevisionManagerTest extends OrmEnabledTestCase {
         trigRequired(repo, "/twoBranchesMergedIntoMaster.trig"); // has outdated structure?
         try (RepositoryConnection conn = repo.getConnection()) {
             Resource commit = VALUE_FACTORY.createIRI("https://mobi.com/commits#b158b0b6-c119-4e09-8270-5e775d6b9703");
-            List<Revision> revisions = manager.getRevisionChain(commit, conn);
-            revisions.forEach(rev -> System.out.println(rev.getResource().stringValue()));
+//            List<Revision> revisions = manager.getRevisionChain(commit, conn);
+//            revisions.forEach(rev -> System.out.println(rev.getResource().stringValue()));
         }
     }
 

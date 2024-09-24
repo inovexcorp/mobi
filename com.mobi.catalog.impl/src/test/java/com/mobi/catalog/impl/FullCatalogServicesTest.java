@@ -364,8 +364,7 @@ public class FullCatalogServicesTest extends OrmEnabledTestCase{
             Model branchCompiled = compiledResourceManager.getCompiledResource(mergeCommitResource, conn);
 
             assertTrue(branchCompiled.contains(commentA));
-//            assertTrue(branchCompiled.contains(commentB));
-            // TODO: Investigate why this statement is not present in results. Should it be a conflict?
+            assertTrue(branchCompiled.contains(commentB));
         }
     }
 

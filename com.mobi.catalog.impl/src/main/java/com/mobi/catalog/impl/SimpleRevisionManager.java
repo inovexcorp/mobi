@@ -24,6 +24,7 @@ package com.mobi.catalog.impl;
  */
 
 import com.mobi.catalog.api.Catalogs;
+import com.mobi.catalog.api.RevisionChain;
 import com.mobi.catalog.api.RevisionManager;
 import com.mobi.catalog.api.ThingManager;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
@@ -278,7 +279,7 @@ public class SimpleRevisionManager implements RevisionManager {
     }
 
     @Override
-    public List<Revision> getRevisionChain(Resource commitId, RepositoryConnection conn) {
+    public RevisionChain getRevisionChain(Resource commitId, RepositoryConnection conn) {
         // Verify commitId
         Revision revision = getRevisionFromCommitId(commitId, conn);
         HeadAndBranch headAndBranch = getHeadAndBranch(commitId, conn);
@@ -286,7 +287,7 @@ public class SimpleRevisionManager implements RevisionManager {
         // If the provided commit is the HEAD of master, return the empty revision for commit
         // The stored state graph reflects this commit
         if (headAndBranch.masterHead().equals(commitId)) {
-            return List.of(revision);
+            return new RevisionChain(List.of(revision), List.of());
         }
 
         // If the forwardBranchingCommit does not exist, then the provided commitId exists in the master chain
@@ -324,8 +325,7 @@ public class SimpleRevisionManager implements RevisionManager {
 
         List<Revision> forwardRevisions = getForwardRevisions(commitId, conn);
         handleMasterMergeIntoBranch(revisionList, forwardRevisions, conn);
-        revisionList.addAll(forwardRevisions);
-        return revisionList;
+        return new RevisionChain(revisionList, forwardRevisions);
     }
 
     /**
