@@ -57,6 +57,7 @@ import org.eclipse.rdf4j.query.TupleQuery;
 import org.eclipse.rdf4j.query.TupleQueryResult;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.helpers.BasicParserSettings;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
@@ -379,6 +380,7 @@ public class SimpleDifferenceManager implements DifferenceManager {
         Resource targetGraph = vf.createIRI(targetCommitId.stringValue() + "/diff");
         Resource branchingGraph = vf.createIRI( branchingId.stringValue()+ "/diff");
         try (RepositoryConnection diffConn = configProvider.getRepository().getConnection()) {
+            diffConn.getParserConfig().set(BasicParserSettings.PRESERVE_BNODE_IDS, true);
             diffConn.begin();
             diffConn.add(sourceCompiled, RDFFormat.TURTLE, sourceGraph);
             diffConn.add(targetCompiled, RDFFormat.TURTLE, targetGraph);

@@ -77,8 +77,8 @@ module.exports = {
         browser
             .useCss()
             .click('div.mat-dialog-actions button.mat-primary');
-        browser.globals.dismiss_toast(browser);
         browser.globals.wait_for_no_spinners(browser);
+        browser.globals.dismiss_toast(browser);
     },
 
     'Step 8: Navigate to Discover' : function(browser) {

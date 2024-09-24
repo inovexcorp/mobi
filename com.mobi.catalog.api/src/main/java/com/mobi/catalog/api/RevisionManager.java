@@ -98,11 +98,11 @@ public interface RevisionManager {
     List<Revision> getInfluencedRevisions(Resource commitId, RepositoryConnection conn);
 
     /**
-     * Retrieves the revision chain associated with a given commit ID.
+     * Retrieves the {@link RevisionChain} associated with a given commit ID.
      *
      * @param commitId The Resource identifying the commit
      * @param conn The connection to the repository
-     * @return The revision chain associated with the provided commit ID
+     * @return The {@link RevisionChain} associated with the provided commit ID
      */
-    List<Revision> getRevisionChain(Resource commitId, RepositoryConnection conn);
+    RevisionChain getRevisionChain(Resource commitId, RepositoryConnection conn);
 }

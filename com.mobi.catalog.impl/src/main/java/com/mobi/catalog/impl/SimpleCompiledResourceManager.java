@@ -25,6 +25,7 @@ package com.mobi.catalog.impl;
 
 import com.mobi.catalog.api.CommitManager;
 import com.mobi.catalog.api.CompiledResourceManager;
+import com.mobi.catalog.api.RevisionChain;
 import com.mobi.catalog.api.RevisionManager;
 import com.mobi.catalog.api.ThingManager;
 import com.mobi.catalog.api.ontologies.mcat.CommitFactory;
@@ -63,16 +64,16 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 @Component
 public class SimpleCompiledResourceManager implements CompiledResourceManager {
@@ -193,86 +194,157 @@ public class SimpleCompiledResourceManager implements CompiledResourceManager {
 
     private void buildCompiledResource(Resource commitId, Consumer<Statement> consumer, RepositoryConnection conn,
                                        Resource... subjectIds) {
-        List<Revision> revisionList = revisionManager.getRevisionChain(commitId, conn);
-        List<Resource> revisionIRIs = revisionList.stream()
-                .map(Revision::getResource)
-                .collect(Collectors.toCollection(ArrayList::new));
+        RevisionChain revisionChain = revisionManager.getRevisionChain(commitId, conn);
+        List<Resource> fullIRIs = revisionChain.fullIRIs();
+        List<Resource> reverseIRIs = revisionChain.reverseIRIs();
+        List<Resource> forwardIRIs = revisionChain.forwardIRIs();
         Resource headGraphIRI = getHeadGraph(commitId, conn);
 
-        RepositoryConnection headGraphConn;
         boolean isActive = conn.isActive();
-        if (isActive) {
-            // Need a new RepositoryConnection to rollback changes to HEAD graph if connection is active
-            headGraphConn = configProvider.getRepository().getConnection();
-        } else {
-            headGraphConn = conn;
-        }
+        RepositoryConnection headGraphConn = getConnectionIfActive(isActive, conn);
+        try {
+            // Add temporary pointer to HEAD graph as a revision addition delta
+            Resource tempResource = vf.createIRI("urn:tempRevision/" + UUID.randomUUID());
+            headGraphConn.add(tempResource, vf.createIRI(Revision.additions_IRI), headGraphIRI);
+            fullIRIs.add(0, tempResource);
+            reverseIRIs.add(0, tempResource);
 
-        headGraphConn.begin();
-        // Add temporary pointer to HEAD graph as a revision addition delta
-        Resource tempResource = vf.createIRI("urn:tempRevision/" + UUID.randomUUID());
-        headGraphConn.add(tempResource, vf.createIRI(Revision.additions_IRI), headGraphIRI);
-        revisionIRIs.add(0, tempResource);
+            // Get all subjects in deletions graphs for provided revisions
+            Set<Resource> deletionSubjects = getDeletionSubjects(fullIRIs, headGraphConn, subjectIds);
 
-        // Get all subjects in deletions graphs for provided revisions
-        Set<Resource> deletionSubjects = getDeletionSubjects(revisionIRIs, headGraphConn, subjectIds);
-        // Find all revisions with the subjects in additions or deletions graphs
-        // These are the revisions of interest for comparing changes
-        Set<Resource> revisionsOfInterest = getRevisionsWithDeletionSubjects(revisionIRIs, headGraphConn,
-                deletionSubjects, subjectIds);
+            // Find all revisions with the subjects in additions or deletions graphs
+            // These are the revisions of interest for comparing changes
+            Set<Resource> revisionsOfInterest = getRevisionsWithDeletionSubjects(fullIRIs, headGraphConn,
+                    deletionSubjects, subjectIds);
 
-        if (!deletionSubjects.isEmpty()) {
-            // Write any addition statement in revisionsOfInterest whose subject is NOT a deletionsSubject
-            String additionsFromRoisQueryString = replaceRevisionList(GET_ADDITIONS_FROM_ROIS, revisionsOfInterest);
-            additionsFromRoisQueryString = replaceSubjectList(additionsFromRoisQueryString,
-                    "deletionSubject", "%SUBJECTLIST%", subjectIds);
-            additionsFromRoisQueryString = replaceSubjectList(additionsFromRoisQueryString,
-                    "addSubject", "%SUBJECTLISTADD%", subjectIds);
-
-            GraphQuery additionsInRoiQuery = headGraphConn.prepareGraphQuery(additionsFromRoisQueryString);
-            try (GraphQueryResult result = additionsInRoiQuery.evaluate()) {
-                result.forEach(statement -> {
-                    if (!deletionSubjects.contains(statement.getSubject())) {
-                        consumer.accept(statement);
-                    }
-                });
+            if (!deletionSubjects.isEmpty()) {
+                // Write any addition statement in revisionsOfInterest whose subject is NOT a deletionsSubject
+                writeAdditions(consumer, subjectIds, revisionsOfInterest, headGraphConn, deletionSubjects);
+                Resource tempGraph = vf.createIRI("urn:tempGraph/" + UUID.randomUUID());
+                // Gather and write final statements from all subjects that have deletions
+                prepareDeletionSubjects(reverseIRIs, fullIRIs, tempGraph, forwardIRIs, headGraphConn);
+                writeDeletionSubjects(consumer, subjectIds, headGraphConn, tempGraph);
             }
 
-            // Gather and write final statements from all subjects that have deletions
-            Resource tempGraph = vf.createIRI("urn:tempGraph/" + UUID.randomUUID());
-            revisionIRIs.forEach(revisionId ->
-                    aggregateDifferences(revisionId, revisionIRIs, tempGraph, headGraphConn));
-
-            if (subjectIds.length > 0) {
-                Arrays.stream(subjectIds).forEach(subjectId -> {
-                    headGraphConn.getStatements(subjectId, null, null, tempGraph).forEach(st ->
-                            consumer.accept(vf.createStatement(st.getSubject(), st.getPredicate(), st.getObject())));
-                });
-            } else {
-                headGraphConn.getStatements(null, null, null, tempGraph).forEach(st ->
-                        consumer.accept(vf.createStatement(st.getSubject(), st.getPredicate(), st.getObject())));
+            // Write any revision that has additions that do not contain any subject in a deletions graph
+            writeOtherStatements(consumer, subjectIds, fullIRIs, revisionsOfInterest, headGraphConn);
+        } finally {
+            headGraphConn.rollback();
+            if (isActive) {
+                // Close temporary headGraphConn
+                headGraphConn.close();
             }
         }
+    }
 
-        // Write any revision that has additions that do not contain any subject in a deletions graph
-        List<Resource> revisionsAdditionsOnly = revisionIRIs.stream()
+    /**
+     * Writes the other statements that are not revisions of interest to the specified consumer.
+     *
+     * @param consumer            The consumer function to accept the statements.
+     * @param subjectIds          The array of subject IDs to filter the statements.
+     * @param fullIRIs            The list of full IRIs to filter the statements.
+     * @param revisionsOfInterest The set of revisions of interest to filter the statements.
+     * @param headGraphConn       The repository connection to query the repository.
+     */
+    private void writeOtherStatements(Consumer<Statement> consumer, Resource[] subjectIds, List<Resource> fullIRIs,
+                                      Set<Resource> revisionsOfInterest, RepositoryConnection headGraphConn) {
+        List<Resource> revisionsAdditionsOnly = fullIRIs.stream()
                 .filter(revision -> !revisionsOfInterest.contains(revision))
                 .toList();
         if (!revisionsAdditionsOnly.isEmpty()) {
-            String additionInRevisionQuery =  replaceRevisionList(GET_ADDITIONS_IN_REVISION, revisionsAdditionsOnly);
-            additionInRevisionQuery = replaceSubjectList(additionInRevisionQuery, "s", "%SUBJECTLIST%", subjectIds);
+            String additionInRevisionQuery = replaceRevisionList(GET_ADDITIONS_IN_REVISION, revisionsAdditionsOnly);
+            additionInRevisionQuery = replaceSubjectList(additionInRevisionQuery, "s", "%SUBJECTLIST%",
+                    subjectIds);
             GraphQuery additionsQuery = headGraphConn.prepareGraphQuery(additionInRevisionQuery);
             try (GraphQueryResult result = additionsQuery.evaluate()) {
                 result.forEach(consumer);
             }
         }
+    }
 
-        headGraphConn.rollback();
-
-        if (isActive) {
-            // Close temporary headGraphConn
-            headGraphConn.close();
+    /**
+     * Writes the deletion subjects to the provided consumer.
+     * If subjectIds array is not empty, filters the statements by subjectIds.
+     * Otherwise, retrieves all statements from the tempGraph using headGraphConn.
+     *
+     * @param consumer        The consumer function to accept the deletion subjects.
+     * @param subjectIds      The array of subject IDs to filter the statements.
+     * @param headGraphConn   The repository connection to query the repository.
+     * @param tempGraph       The temporary graph to write the deletion subjects to.
+     */
+    private void writeDeletionSubjects(Consumer<Statement> consumer, Resource[] subjectIds,
+                                       RepositoryConnection headGraphConn, Resource tempGraph) {
+        if (subjectIds.length > 0) {
+            Arrays.stream(subjectIds).forEach(subjectId -> {
+                headGraphConn.getStatements(subjectId, null, null, tempGraph).forEach(st ->
+                        consumer.accept(vf.createStatement(st.getSubject(), st.getPredicate(), st.getObject())));
+            });
+        } else {
+            headGraphConn.getStatements(null, null, null, tempGraph).forEach(st ->
+                    consumer.accept(vf.createStatement(st.getSubject(), st.getPredicate(), st.getObject())));
         }
+    }
+
+    /**
+     * Writes the subjects that have deletions from the given revisions to a temporary graph.
+     *
+     * @param reverseIRIs   The list of reverseIRIs to filter the additions/deletions with.
+     * @param fullIRIs      The list of fullIRIs to filter the additions/deletions with.
+     * @param tempGraph     The temporary graph to write the subjects to.
+     * @param forwardIRIs   The list of forwardIRIs to filter the additions/deletions with.
+     * @param headGraphConn The head repository connection to query the repository.
+     */
+    private void prepareDeletionSubjects(List<Resource> reverseIRIs, List<Resource> fullIRIs,
+                                         Resource tempGraph, List<Resource> forwardIRIs,
+                                         RepositoryConnection headGraphConn) {
+        // Use transaction compilation for reverse deltas
+        reverseIRIs.forEach(revisionId ->
+                aggregateDifferences(revisionId, fullIRIs, tempGraph, headGraphConn));
+        // Use in memory compilation for forward deltas since they get aggregated into a single chain regardless
+        // of forward branch structure. Prevents compilation issues when two branches add the same statement, then
+        // one modifies, and they are merged together.
+        // Gather and write final statements from all subjects that have deletions
+        Map<Statement, Integer> additions = new HashMap<>();
+        Map<Statement, Integer> deletions = new HashMap<>();
+        forwardIRIs.forEach(revisionID ->
+                aggregateDifferences(additions, deletions, revisionID, forwardIRIs, headGraphConn));
+        headGraphConn.remove(deletions.keySet(), tempGraph);
+        headGraphConn.add(additions.keySet(), tempGraph);
+    }
+
+    /**
+     * Writes the additions from the revisions of interest to the provided consumer.Filtered by subjectIds and exclusion
+     * of deletion subjects.
+     *
+     * @param consumer             The consumer function to accept the additions.
+     * @param subjectIds           The array of subject IDs to filter the additions.
+     * @param revisionsOfInterest  The set of revisions of interest to filter the additions.
+     * @param headGraphConn        The repository connection to query the repository.
+     * @param deletionSubjects     The set of deletion subjects to exclude from the additions.
+     */
+    private void writeAdditions(Consumer<Statement> consumer, Resource[] subjectIds, Set<Resource> revisionsOfInterest,
+                                RepositoryConnection headGraphConn, Set<Resource> deletionSubjects) {
+        String additionsFromRoisQueryString = replaceRevisionList(GET_ADDITIONS_FROM_ROIS, revisionsOfInterest);
+        additionsFromRoisQueryString = replaceSubjectList(additionsFromRoisQueryString,
+                "deletionSubject", "%SUBJECTLIST%", subjectIds);
+        additionsFromRoisQueryString = replaceSubjectList(additionsFromRoisQueryString,
+                "addSubject", "%SUBJECTLISTADD%", subjectIds);
+
+        GraphQuery additionsInRoiQuery = headGraphConn.prepareGraphQuery(additionsFromRoisQueryString);
+        try (GraphQueryResult result = additionsInRoiQuery.evaluate()) {
+            result.forEach(statement -> {
+                if (!deletionSubjects.contains(statement.getSubject())) {
+                    consumer.accept(statement);
+                }
+            });
+        }
+    }
+
+    private RepositoryConnection getConnectionIfActive(boolean isActive, RepositoryConnection conn) {
+        // Need a new RepositoryConnection to rollback changes to HEAD graph if connection is active
+        RepositoryConnection headGraphConn = isActive ? configProvider.getRepository().getConnection() : conn;
+        headGraphConn.begin();
+        return headGraphConn;
     }
 
     private Resource getHeadGraph(Resource commitId, RepositoryConnection conn) {
@@ -343,6 +415,26 @@ public class SimpleCompiledResourceManager implements CompiledResourceManager {
     }
 
     /**
+     * Updates the supplied Maps of addition and deletions statements with statements from the additions/deletions
+     * associated with the supplied Revision resource. These additions/deletions are filtered to only include statements
+     * whose subjects are Subjects of Deletions from the provided List of Commits. Addition statements are added to the
+     * additions map if not present. If present, the counter of the times the statement has been added is incremented.
+     * Deletion statements are removed from the additions map if only one exists, if more than one exists the counter is
+     * decremented, otherwise the statements are added to the deletions list.
+     *
+     * @param additions The Map of Statements added to update.
+     * @param deletions The Map of Statements deleted to update.
+     * @param revisionID  The Resource identifying the Revision.
+     * @param revisions   The Set of Revision IRIs to filter the additions/deletions with.
+     * @param conn      The RepositoryConnection to query the repository.
+     */
+    private void aggregateDifferences(Map<Statement, Integer> additions, Map<Statement, Integer> deletions,
+                                      Resource revisionID, List<Resource> revisions, RepositoryConnection conn) {
+        getAdditions(revisionID, revisions, conn).forEach(statement -> updateModels(statement, additions, deletions));
+        getDeletions(revisionID, revisions, conn).forEach(statement -> updateModels(statement, deletions, additions));
+    }
+
+    /**
      * Retrieves the additions for provided revisionId whose subjects are filtered from the provided Revision List.
      * Returns a {@link GraphQueryResult}, an iterator over the returned statements.
      *
@@ -372,5 +464,32 @@ public class SimpleCompiledResourceManager implements CompiledResourceManager {
                 .replace("%REVISIONLIST%","<" + StringUtils.join(revisions, "> <") + ">")
                 .replace("%THISREVISION%", "<" + revisionId.stringValue() + ">"));
         return deletionsQuery.evaluate();
+    }
+
+    /**
+     * Remove the supplied triple from the mapToRemove if one instance of it exists, if more than one, decrement
+     * counter. Otherwise, add the triple to mapToAdd. If one already exists in mapToAdd, increment counter.
+     *
+     * @param statement   The statement to process
+     * @param mapToAdd    The Map of addition statements to track number of times a statement has been added and to add
+     *                    the statement to if it does not exist in mapToRemove
+     * @param mapToRemove The Map of deletion statements to track the number of times a statement has been removed and
+     *                    to remove the statement from if it exists
+     */
+    private void updateModels(Statement statement, Map<Statement, Integer> mapToAdd, Map<Statement,
+            Integer> mapToRemove) {
+        if (mapToRemove.containsKey(statement)) {
+            int count = mapToRemove.get(statement);
+            if (count == 1) {
+                mapToRemove.remove(statement);
+            } else {
+                mapToRemove.put(statement, count - 1);
+            }
+        } else if (mapToAdd.containsKey(statement)) {
+            int count = mapToAdd.get(statement);
+            mapToAdd.put(statement, count + 1);
+        } else {
+            mapToAdd.put(statement, 1);
+        }
     }
 }
