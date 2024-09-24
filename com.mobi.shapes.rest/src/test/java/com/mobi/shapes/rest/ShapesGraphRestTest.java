@@ -176,7 +176,7 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
             conn.add(shaclModel);
         }
 
-        shapesGraph = new SimpleShapesGraph(shaclModel, getValueFactory(), getModelFactory());
+        shapesGraph = new SimpleShapesGraph(shaclModel);
         shapesGraphSpy = Mockito.spy(shapesGraph);
 
         OrmFactory<User> userFactory = getRequiredOrmFactory(User.class);
@@ -868,7 +868,7 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
         when(compiledResourceManager.getCompiledResource(any(Resource.class), any(RepositoryConnection.class))).thenReturn(shaclModel);
         when(compiledResourceManager.getCompiledResource(any(Resource.class), any(Resource.class), any(Resource.class), any(RepositoryConnection.class))).thenReturn(shaclModel);
 
-        ShapesGraph shapesGraph = new SimpleShapesGraph(shaclModel, getValueFactory(), getModelFactory());
+        ShapesGraph shapesGraph = new SimpleShapesGraph(shaclModel);
         ShapesGraph shapesGraphSpy = Mockito.spy(shapesGraph);
 
         when(shapesGraphManager.retrieveShapesGraph(eq(recordId), eq(branchId), eq(commitId)))
@@ -901,7 +901,7 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
         when(compiledResourceManager.getCompiledResource(any(Resource.class), any(RepositoryConnection.class))).thenReturn(shaclModel);
         when(compiledResourceManager.getCompiledResource(any(Resource.class), any(Resource.class), any(Resource.class), any(RepositoryConnection.class))).thenReturn(shaclModel);
 
-        ShapesGraph shapesGraph = new SimpleShapesGraph(shaclModel, getValueFactory(), getModelFactory());
+        ShapesGraph shapesGraph = new SimpleShapesGraph(shaclModel);
         ShapesGraph shapesGraphSpy = Mockito.spy(shapesGraph);
 
         when(shapesGraphManager.retrieveShapesGraphByCommit(eq(commitId)))
@@ -932,7 +932,7 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
         when(compiledResourceManager.getCompiledResource(any(Resource.class), any(RepositoryConnection.class))).thenReturn(shaclModel);
         when(compiledResourceManager.getCompiledResource(any(Resource.class), any(Resource.class), any(Resource.class), any(RepositoryConnection.class))).thenReturn(shaclModel);
 
-        ShapesGraph shapesGraph = new SimpleShapesGraph(shaclModel, getValueFactory(), getModelFactory());
+        ShapesGraph shapesGraph = new SimpleShapesGraph(shaclModel);
         ShapesGraph shapesGraphSpy = Mockito.spy(shapesGraph);
 
         when(shapesGraphManager.retrieveShapesGraph(eq(recordId)))
@@ -962,7 +962,7 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
         when(compiledResourceManager.getCompiledResource(any(Resource.class), any(RepositoryConnection.class))).thenReturn(shaclModel);
         when(compiledResourceManager.getCompiledResource(any(Resource.class), any(Resource.class), any(Resource.class), any(RepositoryConnection.class))).thenReturn(shaclModel);
 
-        ShapesGraph shapesGraph = new SimpleShapesGraph(shaclModel, getValueFactory(), getModelFactory());
+        ShapesGraph shapesGraph = new SimpleShapesGraph(shaclModel);
         ShapesGraph shapesGraphSpy = Mockito.spy(shapesGraph);
 
         when(shapesGraphManager.retrieveShapesGraph(eq(recordId), eq(branchId)))
@@ -994,7 +994,7 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
         when(compiledResourceManager.getCompiledResource(any(Resource.class), any(RepositoryConnection.class))).thenReturn(shaclModel);
         when(compiledResourceManager.getCompiledResource(any(Resource.class), any(Resource.class), any(Resource.class), any(RepositoryConnection.class))).thenReturn(shaclModel);
 
-        ShapesGraph shapesGraph = new SimpleShapesGraph(shaclModel, getValueFactory(), getModelFactory());
+        ShapesGraph shapesGraph = new SimpleShapesGraph(shaclModel);
         ShapesGraph shapesGraphSpy = Mockito.spy(shapesGraph);
         when(shapesGraphManager.retrieveShapesGraph(eq(recordId), eq(branchId), eq(commitId)))
                 .thenReturn(Optional.of(shapesGraphSpy));

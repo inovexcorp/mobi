@@ -26,59 +26,112 @@ package com.mobi.ontology.impl.repository;
 import com.mobi.namespace.api.NamespaceService;
 import com.mobi.namespace.api.ontologies.DefaultOntologyNamespaceApplicationSetting;
 import com.mobi.ontology.core.api.OntologyId;
-import com.mobi.ontology.impl.core.AbstractOntologyId;
+import com.mobi.ontology.core.utils.MobiOntologyException;
+import com.mobi.ontology.utils.OntologyModels;
 import com.mobi.setting.api.SettingService;
 import com.mobi.setting.api.ontologies.setting.ApplicationSetting;
 import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 
 import java.util.Optional;
 import java.util.UUID;
 
+public class SimpleOntologyId implements OntologyId {
 
-public class SimpleOntologyId extends AbstractOntologyId {
-
+    private final Resource identifier;
     private IRI ontologyIRI;
     private IRI versionIRI;
 
-    public static class Builder extends AbstractOntologyId.Builder {
-        public Builder(ValueFactory factory, SettingService<ApplicationSetting> settingService,
+    public static class Builder {
+        private Resource identifier;
+        private IRI ontologyIRI;
+        private IRI versionIRI;
+        private Model model;
+        private final SettingService<ApplicationSetting> settingService;
+        private final NamespaceService namespaceService;
+
+        public Builder(SettingService<ApplicationSetting> settingService,
                        NamespaceService namespaceService) {
             this.settingService = settingService;
             this.namespaceService = namespaceService;
-            this.factory = factory;
         }
 
-        @Override
+        /**
+         * If model is set, will attempt to pull OntologyIRI and VersionIRI from model. Will ignore builder fields for
+         * OntologyIRI and VersionIRI.
+         *
+         * @param model the Model to use to retrieve identifier information
+         * @return SimpleOntologyId Builder
+         */
+        public SimpleOntologyId.Builder model(Model model) {
+            this.model = model;
+            return this;
+        }
+
+        public SimpleOntologyId.Builder id(Resource identifier) {
+            this.identifier = identifier;
+            return this;
+        }
+
+        public SimpleOntologyId.Builder ontologyIRI(IRI ontologyIRI) {
+            this.ontologyIRI = ontologyIRI;
+            return this;
+        }
+
+        public SimpleOntologyId.Builder versionIRI(IRI versionIRI) {
+            this.versionIRI = versionIRI;
+            return this;
+        }
+
         public OntologyId build() {
             return new SimpleOntologyId(this);
         }
     }
 
     private SimpleOntologyId(Builder builder) {
-        setUp(builder);
+        SettingService<ApplicationSetting> settingService = builder.settingService;
+        NamespaceService namespaceService = builder.namespaceService;
 
+        if (builder.model != null) {
+            builder.ontologyIRI = null;
+            builder.versionIRI = null;
+            builder.identifier = null;
+            OntologyModels.findFirstOntologyIRI(builder.model).ifPresent(ontologyIRI
+                    -> builder.ontologyIRI = ontologyIRI);
+            if (builder.ontologyIRI != null) {
+                OntologyModels.findFirstVersionIRI(builder.model, builder.ontologyIRI).ifPresent(versionIRI
+                        -> builder.versionIRI = versionIRI);
+            }
+        }
+
+        if (builder.versionIRI != null && builder.ontologyIRI == null) {
+            throw new MobiOntologyException("ontology IRI must not be null if version IRI is not null");
+        }
+
+        ValueFactory vf = new ValidatingValueFactory();
         if (builder.versionIRI != null) {
-            this.ontologyIRI = factory.createIRI(builder.ontologyIRI.stringValue());
-            this.versionIRI = factory.createIRI(builder.versionIRI.stringValue());
-            this.identifier = factory.createIRI(builder.versionIRI.stringValue());
+            this.ontologyIRI = vf.createIRI(builder.ontologyIRI.stringValue());
+            this.versionIRI = vf.createIRI(builder.versionIRI.stringValue());
+            this.identifier = vf.createIRI(builder.versionIRI.stringValue());
         } else if (builder.ontologyIRI != null) {
-            this.ontologyIRI = factory.createIRI(builder.ontologyIRI.stringValue());
-            this.identifier = factory.createIRI(builder.ontologyIRI.stringValue());
+            this.ontologyIRI = vf.createIRI(builder.ontologyIRI.stringValue());
+            this.identifier = vf.createIRI(builder.ontologyIRI.stringValue());
         } else if (builder.identifier != null) {
             this.identifier = builder.identifier;
         } else {
             String ontologyNamespace;
             Optional<ApplicationSetting> ontologyNamespaceApplicationSetting = settingService.getSettingByType(
-                    factory.createIRI(DefaultOntologyNamespaceApplicationSetting.TYPE));
+                    vf.createIRI(DefaultOntologyNamespaceApplicationSetting.TYPE));
             if (ontologyNamespaceApplicationSetting.isPresent() && ontologyNamespaceApplicationSetting.get()
                     .getHasDataValue().isPresent()) {
                 ontologyNamespace = ontologyNamespaceApplicationSetting.get().getHasDataValue().get().stringValue();
             } else {
                 ontologyNamespace = namespaceService.getDefaultOntologyNamespace();
             }
-            this.identifier = factory.createIRI(ontologyNamespace + UUID.randomUUID());
+            this.identifier = vf.createIRI(ontologyNamespace + UUID.randomUUID());
         }
 
     }

@@ -34,11 +34,7 @@ import com.mobi.shapes.api.ShapesGraph;
 import com.mobi.shapes.api.ShapesGraphManager;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.model.Model;
-import org.eclipse.rdf4j.model.ModelFactory;
 import org.eclipse.rdf4j.model.Resource;
-import org.eclipse.rdf4j.model.ValueFactory;
-import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
-import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.eclipse.rdf4j.query.TupleQuery;
 import org.eclipse.rdf4j.query.TupleQueryResult;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
@@ -47,6 +43,7 @@ import org.osgi.service.component.annotations.Reference;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 import java.util.Optional;
 import javax.annotation.Nonnull;
 
@@ -62,7 +59,7 @@ public class SimpleShapesGraphManager implements ShapesGraphManager {
     static {
         try {
             FIND_SHAPES_GRAPH = IOUtils.toString(
-                    SimpleShapesGraphManager.class.getResourceAsStream("/find-shapes-graph.rq"),
+                    Objects.requireNonNull(SimpleShapesGraphManager.class.getResourceAsStream("/find-shapes-graph.rq")),
                     StandardCharsets.UTF_8
             );
         } catch (IOException e) {
@@ -81,9 +78,6 @@ public class SimpleShapesGraphManager implements ShapesGraphManager {
 
     @Reference
     CompiledResourceManager compiledResourceManager;
-
-    final ValueFactory vf = new ValidatingValueFactory();
-    final ModelFactory mf = new DynamicModelFactory();
 
     @Override
     public boolean shapesGraphIriExists(Resource shapesGraphId) {
@@ -139,6 +133,6 @@ public class SimpleShapesGraphManager implements ShapesGraphManager {
     }
 
     private ShapesGraph getShapesGraphFromModel(Model model) {
-        return new SimpleShapesGraph(model, vf, mf);
+        return new SimpleShapesGraph(model);
     }
 }
