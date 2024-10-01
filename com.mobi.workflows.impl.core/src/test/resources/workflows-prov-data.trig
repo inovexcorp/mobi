@@ -1,0 +1,650 @@
+
+{
+  <http://mobi.com/activities/b631de32-8b90-4932-a98f-663936f6fcaf> a <http://www.w3.org/ns/prov#Activity>,
+      <http://mobi.com/ontologies/prov#CreateActivity>, <http://www.w3.org/2002/07/owl#Thing>;
+    <http://www.w3.org/ns/prov#generated> <https://mobi.com/records#372cde6d-a893-4403-a360-328c53ae731a>;
+    <http://www.w3.org/ns/prov#wasAssociatedWith> <http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997>;
+    <http://www.w3.org/ns/prov#startedAtTime> "2024-10-01T12:12:55.248818-04:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+    <http://www.w3.org/ns/prov#atLocation> "8598bc30-d540-3235-b962-39d3675e7c4c";
+    <http://www.w3.org/ns/prov#endedAtTime> "2024-10-01T12:12:56.399308-04:00"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
+  
+  <https://mobi.com/records#372cde6d-a893-4403-a360-328c53ae731a> a <http://www.w3.org/2002/07/owl#Thing>,
+      <http://www.w3.org/ns/prov#Entity>;
+    <http://www.w3.org/ns/prov#atLocation> "system";
+    <http://www.w3.org/ns/prov#generatedAtTime> "2024-10-01T12:12:56.398619-04:00"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
+  
+  <http://mobi.com/activities/edb14073-08cb-4a18-8e46-bd2237c6554f> a <http://www.w3.org/ns/prov#Activity>,
+      <http://mobi.solutions/ontologies/workflows#WorkflowExecutionActivity>, <http://www.w3.org/2002/07/owl#Thing>;
+    <http://www.w3.org/ns/prov#used> <https://mobi.com/records#372cde6d-a893-4403-a360-328c53ae731a>;
+    <http://mobi.solutions/ontologies/workflows#hasActionExecution> <https://mobi.solutions/workflows/ActionExecution/440a64b4-1df5-4236-b437-ce7d7d91bfd0>,
+      <https://mobi.solutions/workflows/ActionExecution/9d905a44-5fd1-46c8-b2ce-fa07ebff3cd0>;
+    <http://mobi.solutions/ontologies/workflows#succeeded> true;
+    <http://mobi.solutions/ontologies/workflows#logs> <https://mobi.solutions/workflows/log-files/agent_4a142ab4b7b6051b3c160f0e77e9e50617e97225.20241001.12:13:29.938.be35f03d.log>;
+    <http://www.w3.org/ns/prov#wasAssociatedWith> <http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997>;
+    <http://www.w3.org/ns/prov#startedAtTime> "2024-10-01T12:13:29.698698-04:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+    <http://www.w3.org/ns/prov#endedAtTime> "2024-10-01T12:13:39.932969-04:00"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
+  
+  <https://mobi.solutions/workflows/ActionExecution/440a64b4-1df5-4236-b437-ce7d7d91bfd0>
+    a <http://mobi.solutions/ontologies/workflows#ActionExecution>, <http://www.w3.org/2002/07/owl#Thing>;
+    <http://mobi.solutions/ontologies/workflows#succeeded> true;
+    <http://mobi.solutions/ontologies/workflows#logs> <https://mobi.solutions/workflows/log-files/http___mobi.solutions_ontologies_workflows_TestWorkflow_action#d82cd0ba-577b-4f83-aa09-25b67733412a.20241001.12:13:29.939.be35f03d.log>;
+    <http://mobi.solutions/ontologies/workflows#startedAt> "2024-10-01T12:13:29.0-04:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+    <http://mobi.solutions/ontologies/workflows#endedAt> "2024-10-01T12:13:29.0-04:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+    <http://mobi.solutions/ontologies/workflows#aboutAction> <http://mobi.solutions/ontologies/workflows/TestWorkflow/action#d82cd0ba-577b-4f83-aa09-25b67733412a> .
+  
+  <https://mobi.solutions/workflows/log-files/http___mobi.solutions_ontologies_workflows_TestWorkflow_action#d82cd0ba-577b-4f83-aa09-25b67733412a.20241001.12:13:29.939.be35f03d.log>
+    a <http://mobi.com/ontologies/documents#BinaryFile>, <http://www.w3.org/2002/07/owl#Thing>;
+    <http://mobi.com/ontologies/documents#fileName> "http___mobi.solutions_ontologies_workflows_TestWorkflow_action#d82cd0ba-577b-4f83-aa09-25b67733412a.20241001.12:13:29.939.be35f03d.log";
+    <http://mobi.com/ontologies/documents#mimeType> "text/plain";
+    <http://mobi.com/ontologies/documents#retrievalURL> <file:///Users/khalil/Desktop/development/mobi/mobi-distribution/target/mobi-distribution-4.0.0-SNAPSHOT/data/virtualFiles/dagu/4a142ab4b7b6051b3c160f0e77e9e50617e97225/http___mobi.solutions_ontologies_workflows_TestWorkflow_action#d82cd0ba-577b-4f83-aa09-25b67733412a.20241001.12:13:29.939.be35f03d.log> .
+  
+  <https://mobi.solutions/workflows/log-files/agent_4a142ab4b7b6051b3c160f0e77e9e50617e97225.20241001.12:13:29.938.be35f03d.log>
+    a <http://mobi.com/ontologies/documents#BinaryFile>, <http://www.w3.org/2002/07/owl#Thing>;
+    <http://mobi.com/ontologies/documents#fileName> "agent_4a142ab4b7b6051b3c160f0e77e9e50617e97225.20241001.12:13:29.938.be35f03d.log";
+    <http://mobi.com/ontologies/documents#mimeType> "text/plain";
+    <http://mobi.com/ontologies/documents#retrievalURL> <file:///Users/khalil/Desktop/development/mobi/mobi-distribution/target/mobi-distribution-4.0.0-SNAPSHOT/data/virtualFiles/dagu/4a142ab4b7b6051b3c160f0e77e9e50617e97225/agent_4a142ab4b7b6051b3c160f0e77e9e50617e97225.20241001.12:13:29.938.be35f03d.log>;
+    <http://mobi.com/ontologies/documents#size> 4.025E3 .
+  
+  <https://mobi.solutions/workflows/ActionExecution/9d905a44-5fd1-46c8-b2ce-fa07ebff3cd0>
+    a <http://mobi.solutions/ontologies/workflows#ActionExecution>, <http://www.w3.org/2002/07/owl#Thing>;
+    <http://mobi.solutions/ontologies/workflows#succeeded> true;
+    <http://mobi.solutions/ontologies/workflows#logs> <https://mobi.solutions/workflows/log-files/http___mobi.solutions_ontologies_workflows_TestWorkflow_action.20241001.12:13:29.939.be35f03d.log>;
+    <http://mobi.solutions/ontologies/workflows#startedAt> "2024-10-01T12:13:29.0-04:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+    <http://mobi.solutions/ontologies/workflows#endedAt> "2024-10-01T12:13:29.0-04:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+    <http://mobi.solutions/ontologies/workflows#aboutAction> <http://mobi.solutions/ontologies/workflows/TestWorkflow/action> .
+  
+  <https://mobi.solutions/workflows/log-files/http___mobi.solutions_ontologies_workflows_TestWorkflow_action.20241001.12:13:29.939.be35f03d.log>
+    a <http://mobi.com/ontologies/documents#BinaryFile>, <http://www.w3.org/2002/07/owl#Thing>;
+    <http://mobi.com/ontologies/documents#fileName> "http___mobi.solutions_ontologies_workflows_TestWorkflow_action.20241001.12:13:29.939.be35f03d.log";
+    <http://mobi.com/ontologies/documents#mimeType> "text/plain";
+    <http://mobi.com/ontologies/documents#retrievalURL> <file:///Users/khalil/Desktop/development/mobi/mobi-distribution/target/mobi-distribution-4.0.0-SNAPSHOT/data/virtualFiles/dagu/4a142ab4b7b6051b3c160f0e77e9e50617e97225/http___mobi.solutions_ontologies_workflows_TestWorkflow_action.20241001.12:13:29.939.be35f03d.log> .
+  
+  <http://mobi.com/activities/bbef40ac-21d7-471e-b7aa-3563567915b9> a <http://www.w3.org/ns/prov#Activity>,
+      <http://mobi.solutions/ontologies/workflows#WorkflowExecutionActivity>, <http://www.w3.org/2002/07/owl#Thing>;
+    <http://www.w3.org/ns/prov#used> <https://mobi.com/records#372cde6d-a893-4403-a360-328c53ae731a>;
+    <http://mobi.solutions/ontologies/workflows#hasActionExecution> <https://mobi.solutions/workflows/ActionExecution/f1775aee-02a3-4ee2-b6d9-8d8600d9f13c>,
+      <https://mobi.solutions/workflows/ActionExecution/65f944a0-490a-4978-92cb-a02ebcc73e4b>;
+    <http://mobi.solutions/ontologies/workflows#succeeded> true;
+    <http://mobi.solutions/ontologies/workflows#logs> <https://mobi.solutions/workflows/log-files/agent_4a142ab4b7b6051b3c160f0e77e9e50617e97225.20241001.12:13:53.947.a89d65ae.log>;
+    <http://www.w3.org/ns/prov#wasAssociatedWith> <http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997>;
+    <http://www.w3.org/ns/prov#startedAtTime> "2024-10-01T12:13:53.892212-04:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+    <http://www.w3.org/ns/prov#endedAtTime> "2024-10-01T12:14:03.981031-04:00"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
+  
+  <https://mobi.solutions/workflows/ActionExecution/f1775aee-02a3-4ee2-b6d9-8d8600d9f13c>
+    a <http://mobi.solutions/ontologies/workflows#ActionExecution>, <http://www.w3.org/2002/07/owl#Thing>;
+    <http://mobi.solutions/ontologies/workflows#succeeded> true;
+    <http://mobi.solutions/ontologies/workflows#logs> <https://mobi.solutions/workflows/log-files/http___mobi.solutions_ontologies_workflows_TestWorkflow_action.20241001.12:13:53.948.a89d65ae.log>;
+    <http://mobi.solutions/ontologies/workflows#startedAt> "2024-10-01T12:13:53.0-04:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+    <http://mobi.solutions/ontologies/workflows#endedAt> "2024-10-01T12:13:53.0-04:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+    <http://mobi.solutions/ontologies/workflows#aboutAction> <http://mobi.solutions/ontologies/workflows/TestWorkflow/action> .
+  
+  <https://mobi.solutions/workflows/log-files/http___mobi.solutions_ontologies_workflows_TestWorkflow_action.20241001.12:13:53.948.a89d65ae.log>
+    a <http://mobi.com/ontologies/documents#BinaryFile>, <http://www.w3.org/2002/07/owl#Thing>;
+    <http://mobi.com/ontologies/documents#fileName> "http___mobi.solutions_ontologies_workflows_TestWorkflow_action.20241001.12:13:53.948.a89d65ae.log";
+    <http://mobi.com/ontologies/documents#mimeType> "text/plain";
+    <http://mobi.com/ontologies/documents#retrievalURL> <file:///Users/khalil/Desktop/development/mobi/mobi-distribution/target/mobi-distribution-4.0.0-SNAPSHOT/data/virtualFiles/dagu/4a142ab4b7b6051b3c160f0e77e9e50617e97225/http___mobi.solutions_ontologies_workflows_TestWorkflow_action.20241001.12:13:53.948.a89d65ae.log> .
+  
+  <https://mobi.solutions/workflows/log-files/agent_4a142ab4b7b6051b3c160f0e77e9e50617e97225.20241001.12:13:53.947.a89d65ae.log>
+    a <http://mobi.com/ontologies/documents#BinaryFile>, <http://www.w3.org/2002/07/owl#Thing>;
+    <http://mobi.com/ontologies/documents#fileName> "agent_4a142ab4b7b6051b3c160f0e77e9e50617e97225.20241001.12:13:53.947.a89d65ae.log";
+    <http://mobi.com/ontologies/documents#mimeType> "text/plain";
+    <http://mobi.com/ontologies/documents#retrievalURL> <file:///Users/khalil/Desktop/development/mobi/mobi-distribution/target/mobi-distribution-4.0.0-SNAPSHOT/data/virtualFiles/dagu/4a142ab4b7b6051b3c160f0e77e9e50617e97225/agent_4a142ab4b7b6051b3c160f0e77e9e50617e97225.20241001.12:13:53.947.a89d65ae.log>;
+    <http://mobi.com/ontologies/documents#size> 4.025E3 .
+  
+  <https://mobi.solutions/workflows/ActionExecution/65f944a0-490a-4978-92cb-a02ebcc73e4b>
+    a <http://mobi.solutions/ontologies/workflows#ActionExecution>, <http://www.w3.org/2002/07/owl#Thing>;
+    <http://mobi.solutions/ontologies/workflows#succeeded> true;
+    <http://mobi.solutions/ontologies/workflows#logs> <https://mobi.solutions/workflows/log-files/http___mobi.solutions_ontologies_workflows_TestWorkflow_action#d82cd0ba-577b-4f83-aa09-25b67733412a.20241001.12:13:53.948.a89d65ae.log>;
+    <http://mobi.solutions/ontologies/workflows#startedAt> "2024-10-01T12:13:53.0-04:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+    <http://mobi.solutions/ontologies/workflows#endedAt> "2024-10-01T12:13:53.0-04:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+    <http://mobi.solutions/ontologies/workflows#aboutAction> <http://mobi.solutions/ontologies/workflows/TestWorkflow/action#d82cd0ba-577b-4f83-aa09-25b67733412a> .
+  
+  <https://mobi.solutions/workflows/log-files/http___mobi.solutions_ontologies_workflows_TestWorkflow_action#d82cd0ba-577b-4f83-aa09-25b67733412a.20241001.12:13:53.948.a89d65ae.log>
+    a <http://mobi.com/ontologies/documents#BinaryFile>, <http://www.w3.org/2002/07/owl#Thing>;
+    <http://mobi.com/ontologies/documents#fileName> "http___mobi.solutions_ontologies_workflows_TestWorkflow_action#d82cd0ba-577b-4f83-aa09-25b67733412a.20241001.12:13:53.948.a89d65ae.log";
+    <http://mobi.com/ontologies/documents#mimeType> "text/plain";
+    <http://mobi.com/ontologies/documents#retrievalURL> <file:///Users/khalil/Desktop/development/mobi/mobi-distribution/target/mobi-distribution-4.0.0-SNAPSHOT/data/virtualFiles/dagu/4a142ab4b7b6051b3c160f0e77e9e50617e97225/http___mobi.solutions_ontologies_workflows_TestWorkflow_action#d82cd0ba-577b-4f83-aa09-25b67733412a.20241001.12:13:53.948.a89d65ae.log> .
+  
+  <http://mobi.com/activities/b0a681b6-8853-4402-aff6-4ffcae3a2f2a> a <http://www.w3.org/ns/prov#Activity>,
+      <http://mobi.solutions/ontologies/workflows#WorkflowExecutionActivity>, <http://www.w3.org/2002/07/owl#Thing>;
+    <http://www.w3.org/ns/prov#used> <https://mobi.com/records#372cde6d-a893-4403-a360-328c53ae731a>;
+    <http://mobi.solutions/ontologies/workflows#hasActionExecution> <https://mobi.solutions/workflows/ActionExecution/14cd7d79-309b-4fb9-bd08-2695c5a6ebb5>,
+      <https://mobi.solutions/workflows/ActionExecution/4e738bf6-32e2-4d82-ae22-dd2401b45b96>;
+    <http://mobi.solutions/ontologies/workflows#succeeded> true;
+    <http://mobi.solutions/ontologies/workflows#logs> <https://mobi.solutions/workflows/log-files/agent_4a142ab4b7b6051b3c160f0e77e9e50617e97225.20241001.12:14:09.326.2bb3aa15.log>;
+    <http://www.w3.org/ns/prov#wasAssociatedWith> <http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997>;
+    <http://www.w3.org/ns/prov#startedAtTime> "2024-10-01T12:14:09.288396-04:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+    <http://www.w3.org/ns/prov#endedAtTime> "2024-10-01T12:14:19.352798-04:00"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
+  
+  <https://mobi.solutions/workflows/ActionExecution/14cd7d79-309b-4fb9-bd08-2695c5a6ebb5>
+    a <http://mobi.solutions/ontologies/workflows#ActionExecution>, <http://www.w3.org/2002/07/owl#Thing>;
+    <http://mobi.solutions/ontologies/workflows#succeeded> true;
+    <http://mobi.solutions/ontologies/workflows#logs> <https://mobi.solutions/workflows/log-files/http___mobi.solutions_ontologies_workflows_TestWorkflow_action#d82cd0ba-577b-4f83-aa09-25b67733412a.20241001.12:14:09.328.2bb3aa15.log>;
+    <http://mobi.solutions/ontologies/workflows#startedAt> "2024-10-01T12:14:09.0-04:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+    <http://mobi.solutions/ontologies/workflows#endedAt> "2024-10-01T12:14:09.0-04:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+    <http://mobi.solutions/ontologies/workflows#aboutAction> <http://mobi.solutions/ontologies/workflows/TestWorkflow/action#d82cd0ba-577b-4f83-aa09-25b67733412a> .
+  
+  <https://mobi.solutions/workflows/log-files/http___mobi.solutions_ontologies_workflows_TestWorkflow_action#d82cd0ba-577b-4f83-aa09-25b67733412a.20241001.12:14:09.328.2bb3aa15.log>
+    a <http://mobi.com/ontologies/documents#BinaryFile>, <http://www.w3.org/2002/07/owl#Thing>;
+    <http://mobi.com/ontologies/documents#fileName> "http___mobi.solutions_ontologies_workflows_TestWorkflow_action#d82cd0ba-577b-4f83-aa09-25b67733412a.20241001.12:14:09.328.2bb3aa15.log";
+    <http://mobi.com/ontologies/documents#mimeType> "text/plain";
+    <http://mobi.com/ontologies/documents#retrievalURL> <file:///Users/khalil/Desktop/development/mobi/mobi-distribution/target/mobi-distribution-4.0.0-SNAPSHOT/data/virtualFiles/dagu/4a142ab4b7b6051b3c160f0e77e9e50617e97225/http___mobi.solutions_ontologies_workflows_TestWorkflow_action#d82cd0ba-577b-4f83-aa09-25b67733412a.20241001.12:14:09.328.2bb3aa15.log> .
+  
+  <https://mobi.solutions/workflows/log-files/agent_4a142ab4b7b6051b3c160f0e77e9e50617e97225.20241001.12:14:09.326.2bb3aa15.log>
+    a <http://mobi.com/ontologies/documents#BinaryFile>, <http://www.w3.org/2002/07/owl#Thing>;
+    <http://mobi.com/ontologies/documents#fileName> "agent_4a142ab4b7b6051b3c160f0e77e9e50617e97225.20241001.12:14:09.326.2bb3aa15.log";
+    <http://mobi.com/ontologies/documents#mimeType> "text/plain";
+    <http://mobi.com/ontologies/documents#retrievalURL> <file:///Users/khalil/Desktop/development/mobi/mobi-distribution/target/mobi-distribution-4.0.0-SNAPSHOT/data/virtualFiles/dagu/4a142ab4b7b6051b3c160f0e77e9e50617e97225/agent_4a142ab4b7b6051b3c160f0e77e9e50617e97225.20241001.12:14:09.326.2bb3aa15.log>;
+    <http://mobi.com/ontologies/documents#size> 4.025E3 .
+  
+  <https://mobi.solutions/workflows/ActionExecution/4e738bf6-32e2-4d82-ae22-dd2401b45b96>
+    a <http://mobi.solutions/ontologies/workflows#ActionExecution>, <http://www.w3.org/2002/07/owl#Thing>;
+    <http://mobi.solutions/ontologies/workflows#succeeded> true;
+    <http://mobi.solutions/ontologies/workflows#logs> <https://mobi.solutions/workflows/log-files/http___mobi.solutions_ontologies_workflows_TestWorkflow_action.20241001.12:14:09.328.2bb3aa15.log>;
+    <http://mobi.solutions/ontologies/workflows#startedAt> "2024-10-01T12:14:09.0-04:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+    <http://mobi.solutions/ontologies/workflows#endedAt> "2024-10-01T12:14:09.0-04:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+    <http://mobi.solutions/ontologies/workflows#aboutAction> <http://mobi.solutions/ontologies/workflows/TestWorkflow/action> .
+  
+  <https://mobi.solutions/workflows/log-files/http___mobi.solutions_ontologies_workflows_TestWorkflow_action.20241001.12:14:09.328.2bb3aa15.log>
+    a <http://mobi.com/ontologies/documents#BinaryFile>, <http://www.w3.org/2002/07/owl#Thing>;
+    <http://mobi.com/ontologies/documents#fileName> "http___mobi.solutions_ontologies_workflows_TestWorkflow_action.20241001.12:14:09.328.2bb3aa15.log";
+    <http://mobi.com/ontologies/documents#mimeType> "text/plain";
+    <http://mobi.com/ontologies/documents#retrievalURL> <file:///Users/khalil/Desktop/development/mobi/mobi-distribution/target/mobi-distribution-4.0.0-SNAPSHOT/data/virtualFiles/dagu/4a142ab4b7b6051b3c160f0e77e9e50617e97225/http___mobi.solutions_ontologies_workflows_TestWorkflow_action.20241001.12:14:09.328.2bb3aa15.log> .
+  
+  <http://mobi.com/activities/d62451c9-f4b2-449f-a257-dc6d39729a5b> a <http://www.w3.org/ns/prov#Activity>,
+      <http://mobi.com/ontologies/prov#CreateActivity>, <http://www.w3.org/2002/07/owl#Thing>;
+    <http://www.w3.org/ns/prov#generated> <https://mobi.com/records#2ba25fe9-63ee-44b2-a391-80fd8c6d16b4>;
+    <http://www.w3.org/ns/prov#wasAssociatedWith> <http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997>;
+    <http://www.w3.org/ns/prov#startedAtTime> "2024-10-01T12:15:18.401218-04:00"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+    <http://www.w3.org/ns/prov#atLocation> "8598bc30-d540-3235-b962-39d3675e7c4c";
+    <http://www.w3.org/ns/prov#endedAtTime> "2024-10-01T12:15:18.745176-04:00"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
+  
+  <https://mobi.com/records#2ba25fe9-63ee-44b2-a391-80fd8c6d16b4> a <http://www.w3.org/2002/07/owl#Thing>,
+      <http://www.w3.org/ns/prov#Entity>;
+    <http://www.w3.org/ns/prov#atLocation> "system";
+    <http://www.w3.org/ns/prov#generatedAtTime> "2024-10-01T12:15:18.745017-04:00"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
+}
+
+<http://mobi.solutions/ontologies/workflows> {
+  <http://mobi.solutions/ontologies/workflows> a <http://www.w3.org/2002/07/owl#Ontology>;
+    <http://www.w3.org/2002/07/owl#versionIRI> <http://mobi.solutions/ontologies/workflows#1.0>;
+    <http://www.w3.org/2002/07/owl#imports> <http://mobi.com/ontologies/prov>, <http://mobi.com/ontologies/documents>,
+      <http://mobi.com/ontologies/catalog>;
+    <http://www.w3.org/2000/01/rdf-schema#label> "The Mobi Workflows Ontology"@en;
+    <http://www.w3.org/2000/01/rdf-schema#comment> "The Mobi Workflows ontology is designed to represent collections of actions that are triggered manually, by a schedule, or by events occurring in the system."@en;
+    <http://purl.org/dc/terms/creator> _:0b11f2042e6d48abbf9421145239aa1740;
+    <http://xmlns.com/foaf/0.1/maker> _:0b11f2042e6d48abbf9421145239aa1741;
+    <http://purl.org/dc/terms/modified> "2023-08-16"^^<http://www.w3.org/2001/XMLSchema#date> .
+  
+  <http://mobi.solutions/ontologies/workflows#WorkflowRecord> a <http://www.w3.org/2002/07/owl#Class>;
+    <http://www.w3.org/2000/01/rdf-schema#label> "Workflow Record"@en;
+    <http://www.w3.org/2000/01/rdf-schema#comment> "A collection of RDF data that defines a Workflow resource."@en;
+    <http://www.w3.org/2000/01/rdf-schema#subClassOf> <http://mobi.com/ontologies/catalog#VersionedRDFRecord> .
+  
+  <http://mobi.solutions/ontologies/workflows#workflowIRI> a <http://www.w3.org/2002/07/owl#FunctionalProperty>,
+      <http://www.w3.org/2002/07/owl#DatatypeProperty>;
+    <http://www.w3.org/2000/01/rdf-schema#label> "Workflow IRI"@en;
+    <http://www.w3.org/2000/01/rdf-schema#comment> "The latest Workflow IRI on the master branch."@en;
+    <http://www.w3.org/2000/01/rdf-schema#domain> <http://mobi.solutions/ontologies/workflows#WorkflowRecord>;
+    <http://www.w3.org/2000/01/rdf-schema#range> <http://mobi.com/ontologies/mobi#Identifier> .
+  
+  <http://mobi.solutions/ontologies/workflows#Workflow> a <http://www.w3.org/2002/07/owl#Class>,
+      <http://www.w3.org/ns/shacl#NodeShape>, <http://www.w3.org/2000/01/rdf-schema#Class>;
+    <http://www.w3.org/2000/01/rdf-schema#label> "Workflow"@en;
+    <http://www.w3.org/2000/01/rdf-schema#comment> "A specification of a set of actions to execute when triggered."@en;
+    <http://www.w3.org/ns/shacl#property> <http://mobi.solutions/ontologies/workflows#triggerPropertyShape>,
+      <http://mobi.solutions/ontologies/workflows#actionPropertyShape> .
+  
+  <http://mobi.solutions/ontologies/workflows#triggerPropertyShape> a <http://www.w3.org/ns/shacl#PropertyShape>;
+    <http://www.w3.org/ns/shacl#path> <http://mobi.solutions/ontologies/workflows#hasTrigger>;
+    <http://www.w3.org/ns/shacl#maxCount> 1;
+    <http://www.w3.org/ns/shacl#class> <http://mobi.solutions/ontologies/workflows#Trigger> .
+  
+  <http://mobi.solutions/ontologies/workflows#actionPropertyShape> a <http://www.w3.org/ns/shacl#PropertyShape>;
+    <http://www.w3.org/ns/shacl#path> <http://mobi.solutions/ontologies/workflows#hasAction>;
+    <http://www.w3.org/ns/shacl#class> <http://mobi.solutions/ontologies/workflows#Action>;
+    <http://www.w3.org/ns/shacl#minCount> 1 .
+  
+  <http://mobi.solutions/ontologies/workflows#hasTrigger> a <http://www.w3.org/2002/07/owl#FunctionalProperty>,
+      <http://www.w3.org/2002/07/owl#ObjectProperty>;
+    <http://www.w3.org/2000/01/rdf-schema#label> "has trigger"@en;
+    <http://www.w3.org/2000/01/rdf-schema#comment> "A trigger for a specific Workflow."@en;
+    <http://www.w3.org/2000/01/rdf-schema#domain> <http://mobi.solutions/ontologies/workflows#Workflow>;
+    <http://www.w3.org/2000/01/rdf-schema#range> <http://mobi.solutions/ontologies/workflows#Trigger> .
+  
+  <http://mobi.solutions/ontologies/workflows#Trigger> a <http://www.w3.org/2002/07/owl#Class>;
+    <http://www.w3.org/2000/01/rdf-schema#label> "Trigger"@en;
+    <http://www.w3.org/2000/01/rdf-schema#comment> "A specification on when a Workflow should be executed."@en .
+  
+  <http://mobi.solutions/ontologies/workflows#hasAction> a <http://www.w3.org/2002/07/owl#ObjectProperty>;
+    <http://www.w3.org/2000/01/rdf-schema#label> "has action"@en;
+    <http://www.w3.org/2000/01/rdf-schema#comment> "An Action for a specific Workflow."@en;
+    <http://www.w3.org/2000/01/rdf-schema#domain> <http://mobi.solutions/ontologies/workflows#Workflow>;
+    <http://www.w3.org/2000/01/rdf-schema#range> <http://mobi.solutions/ontologies/workflows#Action> .
+  
+  <http://mobi.solutions/ontologies/workflows#Action> a <http://www.w3.org/2002/07/owl#Class>;
+    <http://www.w3.org/2000/01/rdf-schema#label> "Action"@en;
+    <http://www.w3.org/2000/01/rdf-schema#comment> "A set of instructions that should be executed when a Workflow is running."@en .
+  
+  <http://mobi.solutions/ontologies/workflows#latestActivity> a <http://www.w3.org/2002/07/owl#FunctionalProperty>,
+      <http://www.w3.org/2002/07/owl#ObjectProperty>;
+    <http://www.w3.org/2000/01/rdf-schema#label> "latest activity"@en;
+    <http://www.w3.org/2000/01/rdf-schema#comment> "The latest activity carried out by a Workflow Record."@en;
+    <http://www.w3.org/2000/01/rdf-schema#domain> <http://mobi.solutions/ontologies/workflows#WorkflowRecord>;
+    <http://www.w3.org/2000/01/rdf-schema#range> <http://mobi.solutions/ontologies/workflows#WorkflowExecutionActivity> .
+  
+  <http://mobi.solutions/ontologies/workflows#WorkflowExecutionActivity> a <http://www.w3.org/2002/07/owl#Class>;
+    <http://mobi.com/ontologies/prov#actionWord> "executed"@en;
+    <http://purl.org/dc/terms/title> "Workflow Execution Activity"@en;
+    <http://purl.org/dc/terms/description> "A WorkflowExecutionActivity represents an individual run of a Workflow."@en;
+    <http://mobi.com/ontologies/prov#provAction> <http://www.w3.org/ns/prov#used>;
+    <http://www.w3.org/2000/01/rdf-schema#subClassOf> <http://www.w3.org/ns/prov#Activity> .
+  
+  <http://mobi.solutions/ontologies/workflows#active> a <http://www.w3.org/2002/07/owl#FunctionalProperty>,
+      <http://www.w3.org/2002/07/owl#DatatypeProperty>;
+    <http://www.w3.org/2000/01/rdf-schema#label> "active"@en;
+    <http://www.w3.org/2000/01/rdf-schema#comment> "Whether a specific Workflow should execute when triggered."@en;
+    <http://www.w3.org/2000/01/rdf-schema#domain> <http://mobi.solutions/ontologies/workflows#WorkflowRecord>;
+    <http://www.w3.org/2000/01/rdf-schema#range> <http://www.w3.org/2001/XMLSchema#boolean> .
+  
+  <http://mobi.solutions/ontologies/workflows#hasActionExecution> a <http://www.w3.org/2002/07/owl#ObjectProperty>;
+    <http://www.w3.org/2000/01/rdf-schema#label> "has action execution"@en;
+    <http://www.w3.org/2000/01/rdf-schema#comment> "Points to the execution of a particular action."@en;
+    <http://www.w3.org/2000/01/rdf-schema#domain> <http://mobi.solutions/ontologies/workflows#WorkflowExecutionActivity>;
+    <http://www.w3.org/2000/01/rdf-schema#range> <http://mobi.solutions/ontologies/workflows#ActionExecution> .
+  
+  <http://mobi.solutions/ontologies/workflows#ActionExecution> a <http://www.w3.org/2002/07/owl#Class>;
+    <http://purl.org/dc/terms/title> "Action Execution"@en;
+    <http://purl.org/dc/terms/description> "An Action Execution represents the execution of a Workflow Action."@en .
+  
+  <http://mobi.solutions/ontologies/workflows#EventTrigger> a <http://www.w3.org/2002/07/owl#Class>;
+    <http://www.w3.org/2000/01/rdf-schema#label> "Event Trigger"@en;
+    <http://www.w3.org/2000/01/rdf-schema#comment> "A specification for executing a Workflow when an Event occurs in the application."@en;
+    <http://www.w3.org/2000/01/rdf-schema#subClassOf> <http://mobi.solutions/ontologies/workflows#Trigger> .
+  
+  <http://mobi.solutions/ontologies/workflows#TestAction> a <http://www.w3.org/2002/07/owl#Class>,
+      <http://www.w3.org/ns/shacl#NodeShape>, <http://www.w3.org/2000/01/rdf-schema#Class>;
+    <http://www.w3.org/2000/01/rdf-schema#label> "Test Action"@en;
+    <http://www.w3.org/2000/01/rdf-schema#comment> "An action that simply outputs the provided message."@en;
+    <http://www.w3.org/2000/01/rdf-schema#subClassOf> <http://mobi.solutions/ontologies/workflows#Action>;
+    <http://www.w3.org/ns/shacl#property> <http://mobi.solutions/ontologies/workflows#testActionPropertyShape> .
+  
+  <http://mobi.solutions/ontologies/workflows#testActionPropertyShape> a <http://www.w3.org/ns/shacl#PropertyShape>;
+    <http://www.w3.org/ns/shacl#path> <http://mobi.solutions/ontologies/workflows#testMessage>;
+    <http://www.w3.org/ns/shacl#maxCount> 1;
+    <http://www.w3.org/ns/shacl#minCount> 1;
+    <https://mobi.solutions/ontologies/form#usesFormField> <https://mobi.solutions/ontologies/form#TextInput>;
+    <http://www.w3.org/ns/shacl#datatype> <http://www.w3.org/2001/XMLSchema#string> .
+  
+  <http://mobi.solutions/ontologies/workflows#testMessage> a <http://www.w3.org/2002/07/owl#FunctionalProperty>,
+      <http://www.w3.org/2002/07/owl#DatatypeProperty>;
+    <http://www.w3.org/2000/01/rdf-schema#label> "test message"@en;
+    <http://www.w3.org/2000/01/rdf-schema#comment> "A message for a Test Action to output."@en;
+    <http://www.w3.org/2000/01/rdf-schema#domain> <http://mobi.solutions/ontologies/workflows#TestAction>;
+    <http://www.w3.org/2000/01/rdf-schema#range> <http://www.w3.org/2001/XMLSchema#string> .
+  
+  <http://mobi.solutions/ontologies/workflows#HTTPRequestAction> a <http://www.w3.org/2002/07/owl#Class>,
+      <http://www.w3.org/ns/shacl#NodeShape>, <http://www.w3.org/2000/01/rdf-schema#Class>;
+    <http://www.w3.org/2000/01/rdf-schema#label> "HTTP Request Action"@en;
+    <http://www.w3.org/2000/01/rdf-schema#subClassOf> <http://mobi.solutions/ontologies/workflows#Action>;
+    <http://www.w3.org/ns/shacl#property> <http://mobi.solutions/ontologies/workflows#httpUrlPropertyShape>,
+      <http://mobi.solutions/ontologies/workflows#httpMethodPropertyShape>, <http://mobi.solutions/ontologies/workflows#httpBodyPropertyShape>,
+      <http://mobi.solutions/ontologies/workflows#httpMediaTypePropertyShape>, <http://mobi.solutions/ontologies/workflows#httpHeaderPropertyShape>,
+      <http://mobi.solutions/ontologies/workflows#httpTimeoutPropertyShape> .
+  
+  <http://mobi.solutions/ontologies/workflows#httpUrlPropertyShape> a <http://www.w3.org/ns/shacl#PropertyShape>;
+    <http://www.w3.org/ns/shacl#path> <http://mobi.solutions/ontologies/workflows#hasHttpUrl>;
+    <http://www.w3.org/ns/shacl#maxCount> 1;
+    <http://www.w3.org/ns/shacl#minCount> 1;
+    <https://mobi.solutions/ontologies/form#usesFormField> <https://mobi.solutions/ontologies/form#TextInput>;
+    <http://www.w3.org/ns/shacl#datatype> <http://www.w3.org/2001/XMLSchema#string>;
+    <http://www.w3.org/ns/shacl#pattern> "^(https?|ftp):\\/\\/[^\\s\\/$.?#].[^\\s]*$" .
+  
+  <http://mobi.solutions/ontologies/workflows#httpMethodPropertyShape> a <http://www.w3.org/ns/shacl#PropertyShape>;
+    <http://www.w3.org/ns/shacl#path> <http://mobi.solutions/ontologies/workflows#hasHttpMethod>;
+    <http://www.w3.org/ns/shacl#maxCount> 1;
+    <http://www.w3.org/ns/shacl#minCount> 1;
+    <https://mobi.solutions/ontologies/form#usesFormField> <https://mobi.solutions/ontologies/form#DropdownInput>;
+    <http://www.w3.org/ns/shacl#datatype> <http://www.w3.org/2001/XMLSchema#string>;
+    <http://www.w3.org/ns/shacl#in> _:0b11f2042e6d48abbf9421145239aa1742 .
+  
+  <http://mobi.solutions/ontologies/workflows#httpBodyPropertyShape> a <http://www.w3.org/ns/shacl#PropertyShape>;
+    <http://www.w3.org/ns/shacl#path> <http://mobi.solutions/ontologies/workflows#hasHttpBody>;
+    <http://www.w3.org/ns/shacl#maxCount> 1;
+    <http://www.w3.org/ns/shacl#minCount> 0;
+    <https://mobi.solutions/ontologies/form#usesFormField> <https://mobi.solutions/ontologies/form#TextareaInput>;
+    <http://www.w3.org/ns/shacl#datatype> <http://www.w3.org/2001/XMLSchema#string>;
+    <http://www.w3.org/ns/shacl#minLength> 1 .
+  
+  <http://mobi.solutions/ontologies/workflows#httpMediaTypePropertyShape> a <http://www.w3.org/ns/shacl#PropertyShape>;
+    <http://www.w3.org/ns/shacl#path> <http://mobi.solutions/ontologies/workflows#hasHttpMediaType>;
+    <http://www.w3.org/ns/shacl#maxCount> 1;
+    <http://www.w3.org/ns/shacl#minCount> 0;
+    <https://mobi.solutions/ontologies/form#usesFormField> <https://mobi.solutions/ontologies/form#DropdownInput>;
+    <http://www.w3.org/ns/shacl#datatype> <http://www.w3.org/2001/XMLSchema#string>;
+    <http://www.w3.org/ns/shacl#in> _:0b11f2042e6d48abbf9421145239aa1744 .
+  
+  <http://mobi.solutions/ontologies/workflows#httpHeaderPropertyShape> a <http://www.w3.org/ns/shacl#PropertyShape>;
+    <http://www.w3.org/ns/shacl#path> <http://mobi.solutions/ontologies/workflows#hasHeader>;
+    <http://www.w3.org/ns/shacl#minCount> 0;
+    <http://www.w3.org/ns/shacl#node> <http://mobi.solutions/ontologies/workflows#Header> .
+  
+  <http://mobi.solutions/ontologies/workflows#httpTimeoutPropertyShape> a <http://www.w3.org/ns/shacl#PropertyShape>;
+    <http://www.w3.org/ns/shacl#path> <http://mobi.solutions/ontologies/workflows#hasHttpTimeout>;
+    <http://www.w3.org/ns/shacl#maxCount> 1;
+    <http://www.w3.org/ns/shacl#minCount> 0;
+    <https://mobi.solutions/ontologies/form#usesFormField> <https://mobi.solutions/ontologies/form#TextInput>;
+    <http://www.w3.org/ns/shacl#datatype> <http://www.w3.org/2001/XMLSchema#integer>;
+    <http://www.w3.org/ns/shacl#defaultValue> 30;
+    <http://www.w3.org/ns/shacl#minInclusive> 0 .
+  
+  <http://mobi.solutions/ontologies/workflows#hasHttpUrl> a <http://www.w3.org/2002/07/owl#FunctionalProperty>,
+      <http://www.w3.org/2002/07/owl#DatatypeProperty>;
+    <http://www.w3.org/2000/01/rdf-schema#label> "http url"@en;
+    <http://www.w3.org/2000/01/rdf-schema#comment> "The URL of the HTTP request"@en;
+    <http://www.w3.org/2000/01/rdf-schema#domain> <http://mobi.solutions/ontologies/workflows#HTTPRequestAction>;
+    <http://www.w3.org/2000/01/rdf-schema#range> <http://www.w3.org/2001/XMLSchema#string> .
+  
+  <http://mobi.solutions/ontologies/workflows#hasHttpMethod> a <http://www.w3.org/2002/07/owl#FunctionalProperty>,
+      <http://www.w3.org/2002/07/owl#DatatypeProperty>;
+    <http://www.w3.org/2000/01/rdf-schema#label> "http method"@en;
+    <http://www.w3.org/2000/01/rdf-schema#comment> "The method of the HTTP request"@en;
+    <http://www.w3.org/2000/01/rdf-schema#domain> <http://mobi.solutions/ontologies/workflows#HTTPRequestAction>;
+    <http://www.w3.org/2000/01/rdf-schema#range> <http://www.w3.org/2001/XMLSchema#string> .
+  
+  <http://mobi.solutions/ontologies/workflows#hasHttpBody> a <http://www.w3.org/2002/07/owl#FunctionalProperty>,
+      <http://www.w3.org/2002/07/owl#DatatypeProperty>;
+    <http://www.w3.org/2000/01/rdf-schema#label> "http request body"@en;
+    <http://www.w3.org/2000/01/rdf-schema#comment> "The body of the HTTP request"@en;
+    <http://www.w3.org/2000/01/rdf-schema#domain> <http://mobi.solutions/ontologies/workflows#HTTPRequestAction>;
+    <http://www.w3.org/2000/01/rdf-schema#range> <http://www.w3.org/2001/XMLSchema#string> .
+  
+  <http://mobi.solutions/ontologies/workflows#hasHttpMediaType> a <http://www.w3.org/2002/07/owl#FunctionalProperty>,
+      <http://www.w3.org/2002/07/owl#DatatypeProperty>;
+    <http://www.w3.org/2000/01/rdf-schema#label> "media type"@en;
+    <http://www.w3.org/2000/01/rdf-schema#comment> "The media type of the HTTP request"@en;
+    <http://www.w3.org/2000/01/rdf-schema#domain> <http://mobi.solutions/ontologies/workflows#HTTPRequestAction>;
+    <http://www.w3.org/2000/01/rdf-schema#range> <http://www.w3.org/2001/XMLSchema#string> .
+  
+  <http://mobi.solutions/ontologies/workflows#hasHttpTimeout> a <http://www.w3.org/2002/07/owl#FunctionalProperty>,
+      <http://www.w3.org/2002/07/owl#DatatypeProperty>;
+    <http://www.w3.org/2000/01/rdf-schema#label> "http timeout (seconds)"@en;
+    <http://www.w3.org/2000/01/rdf-schema#comment> "The timeout value in seconds of the HTTP request"@en;
+    <http://www.w3.org/2000/01/rdf-schema#domain> <http://mobi.solutions/ontologies/workflows#HTTPRequestAction>;
+    <http://www.w3.org/2000/01/rdf-schema#range> <http://www.w3.org/2001/XMLSchema#integer> .
+  
+  <http://mobi.solutions/ontologies/workflows#hasHeader> a <http://www.w3.org/2002/07/owl#ObjectProperty>;
+    <http://www.w3.org/2000/01/rdf-schema#label> "hasHeader";
+    <http://www.w3.org/2000/01/rdf-schema#domain> <http://mobi.solutions/ontologies/workflows#HTTPRequestAction>;
+    <http://www.w3.org/2000/01/rdf-schema#range> <http://mobi.solutions/ontologies/workflows#Header> .
+  
+  <http://mobi.solutions/ontologies/workflows#Header> a <http://www.w3.org/2002/07/owl#Class>,
+      <http://www.w3.org/ns/shacl#NodeShape>, <http://www.w3.org/2000/01/rdf-schema#Class>;
+    <http://www.w3.org/2000/01/rdf-schema#label> "Header"@en;
+    <http://www.w3.org/ns/shacl#property> <http://mobi.solutions/ontologies/workflows#headerNamePropertyShape>,
+      <http://mobi.solutions/ontologies/workflows#headerValuePropertyShape> .
+  
+  <http://mobi.solutions/ontologies/workflows#headerNamePropertyShape> a <http://www.w3.org/ns/shacl#PropertyShape>;
+    <http://www.w3.org/ns/shacl#path> <http://mobi.solutions/ontologies/workflows#hasHeaderName>;
+    <http://www.w3.org/ns/shacl#maxCount> 1;
+    <http://www.w3.org/ns/shacl#minCount> 1;
+    <https://mobi.solutions/ontologies/form#usesFormField> <https://mobi.solutions/ontologies/form#TextInput>;
+    <http://www.w3.org/ns/shacl#datatype> <http://www.w3.org/2001/XMLSchema#string>;
+    <http://www.w3.org/ns/shacl#name> "Header Name" .
+  
+  <http://mobi.solutions/ontologies/workflows#headerValuePropertyShape> a <http://www.w3.org/ns/shacl#PropertyShape>;
+    <http://www.w3.org/ns/shacl#path> <http://mobi.solutions/ontologies/workflows#hasHeaderValue>;
+    <http://www.w3.org/ns/shacl#maxCount> 1;
+    <http://www.w3.org/ns/shacl#minCount> 1;
+    <https://mobi.solutions/ontologies/form#usesFormField> <https://mobi.solutions/ontologies/form#TextInput>;
+    <http://www.w3.org/ns/shacl#datatype> <http://www.w3.org/2001/XMLSchema#string>;
+    <http://www.w3.org/ns/shacl#name> "Header Value" .
+  
+  <http://mobi.solutions/ontologies/workflows#hasHeaderName> a <http://www.w3.org/2002/07/owl#FunctionalProperty>,
+      <http://www.w3.org/2002/07/owl#DatatypeProperty>;
+    <http://www.w3.org/2000/01/rdf-schema#label> "header name"@en;
+    <http://www.w3.org/2000/01/rdf-schema#comment> "The Key/Name of the Header"@en;
+    <http://www.w3.org/2000/01/rdf-schema#domain> <http://mobi.solutions/ontologies/workflows#Header>;
+    <http://www.w3.org/2000/01/rdf-schema#range> <http://www.w3.org/2001/XMLSchema#string>;
+    <http://www.w3.org/ns/shacl#order> 0 .
+  
+  <http://mobi.solutions/ontologies/workflows#hasHeaderValue> a <http://www.w3.org/2002/07/owl#FunctionalProperty>,
+      <http://www.w3.org/2002/07/owl#DatatypeProperty>;
+    <http://www.w3.org/2000/01/rdf-schema#label> "header value"@en;
+    <http://www.w3.org/2000/01/rdf-schema#comment> "The Value of the Header"@en;
+    <http://www.w3.org/2000/01/rdf-schema#domain> <http://mobi.solutions/ontologies/workflows#Header>;
+    <http://www.w3.org/2000/01/rdf-schema#range> <http://www.w3.org/2001/XMLSchema#string>;
+    <http://www.w3.org/ns/shacl#order> 1 .
+  
+  <http://mobi.solutions/ontologies/workflows#succeeded> a <http://www.w3.org/2002/07/owl#FunctionalProperty>,
+      <http://www.w3.org/2002/07/owl#DatatypeProperty>;
+    <http://www.w3.org/2000/01/rdf-schema#label> "succeeded"@en;
+    <http://www.w3.org/2000/01/rdf-schema#comment> "Whether or not the workflow execution succeeded."@en;
+    <http://www.w3.org/2000/01/rdf-schema#domain> <http://mobi.solutions/ontologies/workflows#WorkflowRecord>,
+      <http://mobi.solutions/ontologies/workflows#WorkflowExecutionActivity>, <http://mobi.solutions/ontologies/workflows#ActionExecution>;
+    <http://www.w3.org/2000/01/rdf-schema#range> <http://www.w3.org/2001/XMLSchema#boolean> .
+  
+  <http://mobi.solutions/ontologies/workflows#logs> a <http://www.w3.org/2002/07/owl#ObjectProperty>;
+    <http://www.w3.org/2000/01/rdf-schema#label> "logs"@en;
+    <http://www.w3.org/2000/01/rdf-schema#comment> "The BinaryFile for the log output from executing a Workflow."@en;
+    <http://www.w3.org/2000/01/rdf-schema#domain> <http://mobi.solutions/ontologies/workflows#WorkflowExecutionActivity>,
+      <http://mobi.solutions/ontologies/workflows#ActionExecution>;
+    <http://www.w3.org/2000/01/rdf-schema#range> <http://mobi.com/ontologies/documents#BinaryFile> .
+  
+  <http://mobi.solutions/ontologies/workflows#startedAt> a <http://www.w3.org/2002/07/owl#FunctionalProperty>,
+      <http://www.w3.org/2002/07/owl#DatatypeProperty>;
+    <http://www.w3.org/2000/01/rdf-schema#label> "started at"@en;
+    <http://www.w3.org/2000/01/rdf-schema#comment> "The timestamp that an executed action took place."@en;
+    <http://www.w3.org/2000/01/rdf-schema#domain> <http://mobi.solutions/ontologies/workflows#ActionExecution>;
+    <http://www.w3.org/2000/01/rdf-schema#range> <http://www.w3.org/2001/XMLSchema#dateTime> .
+  
+  <http://mobi.solutions/ontologies/workflows#endedAt> a <http://www.w3.org/2002/07/owl#FunctionalProperty>,
+      <http://www.w3.org/2002/07/owl#DatatypeProperty>;
+    <http://www.w3.org/2000/01/rdf-schema#label> "ended at"@en;
+    <http://www.w3.org/2000/01/rdf-schema#comment> "The timestamp that an executed action completed."@en;
+    <http://www.w3.org/2000/01/rdf-schema#domain> <http://mobi.solutions/ontologies/workflows#ActionExecution>;
+    <http://www.w3.org/2000/01/rdf-schema#range> <http://www.w3.org/2001/XMLSchema#dateTime> .
+  
+  <http://mobi.solutions/ontologies/workflows#aboutAction> a <http://www.w3.org/2002/07/owl#FunctionalProperty>,
+      <http://www.w3.org/2002/07/owl#ObjectProperty>;
+    <http://www.w3.org/2000/01/rdf-schema#label> "about action"@en;
+    <http://www.w3.org/2000/01/rdf-schema#comment> "The Action that was executed."@en;
+    <http://www.w3.org/2000/01/rdf-schema#domain> <http://mobi.solutions/ontologies/workflows#ActionExecution>;
+    <http://www.w3.org/2000/01/rdf-schema#range> <http://mobi.solutions/ontologies/workflows#Action> .
+  
+  _:0b11f2042e6d48abbf9421145239aa1740 <http://xmlns.com/foaf/0.1/name> "Khalil Savoy" .
+  
+  _:0b11f2042e6d48abbf9421145239aa1741 <http://xmlns.com/foaf/0.1/name> "Mobi";
+    <http://xmlns.com/foaf/0.1/homepage> <https://mobi.inovexcorp.com/> .
+  
+  _:0b11f2042e6d48abbf9421145239aa1742 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first>
+      "GET";
+    <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> _:0b11f2042e6d48abbf9421145239aa1743 .
+  
+  _:0b11f2042e6d48abbf9421145239aa1743 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first>
+      "POST";
+    <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> .
+  
+  _:0b11f2042e6d48abbf9421145239aa1744 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first>
+      "text/plain";
+    <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> _:0b11f2042e6d48abbf9421145239aa1745 .
+  
+  _:0b11f2042e6d48abbf9421145239aa1745 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first>
+      "text/yaml";
+    <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> _:0b11f2042e6d48abbf9421145239aa1746 .
+  
+  _:0b11f2042e6d48abbf9421145239aa1746 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first>
+      "application/json";
+    <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> _:0b11f2042e6d48abbf9421145239aa1747 .
+  
+  _:0b11f2042e6d48abbf9421145239aa1747 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first>
+      "application/owl+xml";
+    <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> _:0b11f2042e6d48abbf9421145239aa1748 .
+  
+  _:0b11f2042e6d48abbf9421145239aa1748 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first>
+      "text/owl-manchester";
+    <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> _:0b11f2042e6d48abbf9421145239aa1749 .
+  
+  _:0b11f2042e6d48abbf9421145239aa1749 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first>
+      "text/owl-functional";
+    <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> _:0b11f2042e6d48abbf9421145239aa1750 .
+  
+  _:0b11f2042e6d48abbf9421145239aa1750 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first>
+      "obo/obo";
+    <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> _:0b11f2042e6d48abbf9421145239aa1751 .
+  
+  _:0b11f2042e6d48abbf9421145239aa1751 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first>
+      "application/n-triples";
+    <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> _:0b11f2042e6d48abbf9421145239aa1752 .
+  
+  _:0b11f2042e6d48abbf9421145239aa1752 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first>
+      "application/rdf+xml";
+    <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> _:0b11f2042e6d48abbf9421145239aa1753 .
+  
+  _:0b11f2042e6d48abbf9421145239aa1753 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first>
+      "application/xml";
+    <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> _:0b11f2042e6d48abbf9421145239aa1754 .
+  
+  _:0b11f2042e6d48abbf9421145239aa1754 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first>
+      "text/xml";
+    <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> _:0b11f2042e6d48abbf9421145239aa1755 .
+  
+  _:0b11f2042e6d48abbf9421145239aa1755 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first>
+      "text/turtle";
+    <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> _:0b11f2042e6d48abbf9421145239aa1756 .
+  
+  _:0b11f2042e6d48abbf9421145239aa1756 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first>
+      "application/x-turtle";
+    <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> _:0b11f2042e6d48abbf9421145239aa1757 .
+  
+  _:0b11f2042e6d48abbf9421145239aa1757 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first>
+      "text/n3";
+    <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> _:0b11f2042e6d48abbf9421145239aa1758 .
+  
+  _:0b11f2042e6d48abbf9421145239aa1758 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first>
+      "text/rdf+n3";
+    <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> _:0b11f2042e6d48abbf9421145239aa1759 .
+  
+  _:0b11f2042e6d48abbf9421145239aa1759 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first>
+      "application/rdf+json";
+    <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> _:0b11f2042e6d48abbf9421145239aa1760 .
+  
+  _:0b11f2042e6d48abbf9421145239aa1760 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first>
+      "application/trig";
+    <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> _:0b11f2042e6d48abbf9421145239aa1761 .
+  
+  _:0b11f2042e6d48abbf9421145239aa1761 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first>
+      "application/x-trig";
+    <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> _:0b11f2042e6d48abbf9421145239aa1762 .
+  
+  _:0b11f2042e6d48abbf9421145239aa1762 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first>
+      "application/x-trigstar";
+    <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> _:0b11f2042e6d48abbf9421145239aa1763 .
+  
+  _:0b11f2042e6d48abbf9421145239aa1763 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first>
+      "application/n-quads";
+    <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> _:0b11f2042e6d48abbf9421145239aa1764 .
+  
+  _:0b11f2042e6d48abbf9421145239aa1764 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first>
+      "text/x-nquads";
+    <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> _:0b11f2042e6d48abbf9421145239aa1765 .
+  
+  _:0b11f2042e6d48abbf9421145239aa1765 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first>
+      "text/nquads";
+    <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> _:0b11f2042e6d48abbf9421145239aa1766 .
+  
+  _:0b11f2042e6d48abbf9421145239aa1766 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first>
+      "application/x-binary-rdf";
+    <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> _:0b11f2042e6d48abbf9421145239aa1767 .
+  
+  _:0b11f2042e6d48abbf9421145239aa1767 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first>
+      "application/vnd.hdt";
+    <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> _:0b11f2042e6d48abbf9421145239aa1768 .
+  
+  _:0b11f2042e6d48abbf9421145239aa1768 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first>
+      "application/x-ld+ndjson";
+    <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> _:0b11f2042e6d48abbf9421145239aa1769 .
+  
+  _:0b11f2042e6d48abbf9421145239aa1769 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first>
+      "application/trix";
+    <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> _:0b11f2042e6d48abbf9421145239aa1770 .
+  
+  _:0b11f2042e6d48abbf9421145239aa1770 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first>
+      "text/x-turtlestar";
+    <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> _:0b11f2042e6d48abbf9421145239aa1771 .
+  
+  _:0b11f2042e6d48abbf9421145239aa1771 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first>
+      "application/x-turtlestar";
+    <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> _:0b11f2042e6d48abbf9421145239aa1772 .
+  
+  _:0b11f2042e6d48abbf9421145239aa1772 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first>
+      "application/ld+json";
+    <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> _:0b11f2042e6d48abbf9421145239aa1773 .
+  
+  _:0b11f2042e6d48abbf9421145239aa1773 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first>
+      "application/sparql-query";
+    <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> .
+}
+
+<http://mobi.com/ontologies/prov> {
+  <http://mobi.com/ontologies/prov> a <http://www.w3.org/2002/07/owl#Ontology>;
+    <http://www.w3.org/2002/07/owl#versionIRI> <http://mobi.com/ontologies/prov#1.0>;
+    <http://www.w3.org/2002/07/owl#imports> <http://www.w3.org/ns/prov#>;
+    <http://www.w3.org/2000/01/rdf-schema#label> "The Mobi Provenance Ontology"@en;
+    <http://www.w3.org/2000/01/rdf-schema#comment> "The Mobi Provenance ontology describes specific types of PROV-O Activities for the application."@en;
+    <http://purl.org/dc/terms/creator> _:0b11f2042e6d48abbf9421145239aa172;
+    <http://xmlns.com/foaf/0.1/maker> _:0b11f2042e6d48abbf9421145239aa173;
+    <http://purl.org/dc/terms/modified> "2017-08-02"^^<http://www.w3.org/2001/XMLSchema#date> .
+  
+  _:0b11f2042e6d48abbf9421145239aa172 <http://xmlns.com/foaf/0.1/name> "Megan Mercer" .
+  
+  _:0b11f2042e6d48abbf9421145239aa173 <http://xmlns.com/foaf/0.1/name> "Mobi";
+    <http://xmlns.com/foaf/0.1/homepage> <https://mobi.inovexcorp.com/> .
+  
+  <http://mobi.com/ontologies/prov#actionWord> a <http://www.w3.org/2002/07/owl#AnnotationProperty>,
+      <http://www.w3.org/2002/07/owl#FunctionalProperty>;
+    <http://www.w3.org/2000/01/rdf-schema#domain> <http://www.w3.org/ns/prov#Activity>;
+    <http://purl.org/dc/terms/title> "Activity Action"@en;
+    <http://purl.org/dc/terms/description> "The action word associated with the Activity type"@en .
+  
+  <http://mobi.com/ontologies/prov#provAction> a <http://www.w3.org/2002/07/owl#FunctionalProperty>,
+      <http://www.w3.org/2002/07/owl#ObjectProperty>;
+    <http://www.w3.org/2000/01/rdf-schema#domain> <http://www.w3.org/ns/prov#Activity>;
+    <http://purl.org/dc/terms/title> "Prov Action"@en;
+    <http://purl.org/dc/terms/description> "The prov action associated with the Activity type"@en .
+  
+  <http://mobi.com/ontologies/prov#CreateActivity> a <http://www.w3.org/2002/07/owl#Class>;
+    <http://mobi.com/ontologies/prov#actionWord> "created"@en;
+    <http://purl.org/dc/terms/title> "Create Activity"@en;
+    <http://purl.org/dc/terms/description> "A CreateActivity represents an event that caused the creation of a new resource. An example would be creating a new Record."@en;
+    <http://mobi.com/ontologies/prov#provAction> <http://www.w3.org/ns/prov#generated>;
+    <http://www.w3.org/2000/01/rdf-schema#subClassOf> <http://www.w3.org/ns/prov#Activity> .
+  
+  <http://mobi.com/ontologies/prov#DeleteActivity> a <http://www.w3.org/2002/07/owl#Class>;
+    <http://mobi.com/ontologies/prov#actionWord> "deleted"@en;
+    <http://purl.org/dc/terms/title> "Delete Activity"@en;
+    <http://purl.org/dc/terms/description> "A DeleteActivity represents an event that caused the deletion of a resource. An example would be deleting a Record."@en;
+    <http://mobi.com/ontologies/prov#provAction> <http://www.w3.org/ns/prov#invalidated>;
+    <http://www.w3.org/2000/01/rdf-schema#subClassOf> <http://www.w3.org/ns/prov#Activity> .
+  
+  <http://mobi.com/ontologies/prov#UpdateActivity> a <http://www.w3.org/2002/07/owl#Class>;
+    <http://mobi.com/ontologies/prov#actionWord> "updated"@en;
+    <http://purl.org/dc/terms/title> "Update Activity"@en;
+    <http://purl.org/dc/terms/description> "An UpdateActivity represents an event that caused a resource to be updated. An example would be when a Record's metadata is updated."@en;
+    <http://mobi.com/ontologies/prov#provAction> <http://www.w3.org/ns/prov#used>;
+    <http://www.w3.org/2000/01/rdf-schema#subClassOf> <http://www.w3.org/ns/prov#Activity> .
+  
+  <http://mobi.com/ontologies/prov#UseActivity> a <http://www.w3.org/2002/07/owl#Class>;
+    <http://mobi.com/ontologies/prov#actionWord> "used"@en;
+    <http://purl.org/dc/terms/title> "Utilization Activity"@en;
+    <http://purl.org/dc/terms/description> "A UseActivity represents an event where a resource was utilized in some process. An example would be when a Mapping is run against some data."@en;
+    <http://mobi.com/ontologies/prov#provAction> <http://www.w3.org/ns/prov#used>;
+    <http://www.w3.org/2000/01/rdf-schema#subClassOf> <http://www.w3.org/ns/prov#Activity> .
+  
+  <http://mobi.com/ontologies/prov#SystemActivity> a <http://www.w3.org/2002/07/owl#Class>;
+    <http://mobi.com/ontologies/prov#actionWord> "interacted with"@en;
+    <http://purl.org/dc/terms/title> "System Activity"@en;
+    <http://purl.org/dc/terms/description> "A SystemActivity represents an event relating to the application as a whole. Examples would be when a user logs in or data is uploaded through the admin command line."@en;
+    <http://mobi.com/ontologies/prov#provAction> <http://www.w3.org/ns/prov#used>;
+    <http://www.w3.org/2000/01/rdf-schema#subClassOf> <http://www.w3.org/ns/prov#Activity> .
+}

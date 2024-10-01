@@ -30,10 +30,15 @@ import com.mobi.catalog.api.record.AbstractVersionedRDFRecordService;
 import com.mobi.catalog.api.record.RecordService;
 import com.mobi.catalog.api.record.config.RecordCreateSettings;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
+import com.mobi.catalog.api.record.statistic.Statistic;
+import com.mobi.catalog.api.record.statistic.StatisticDefinition;
+import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
+import com.mobi.repository.api.OsgiRepository;
 import com.mobi.workflows.api.WorkflowManager;
 import com.mobi.workflows.api.ontologies.workflows.Workflow;
 import com.mobi.workflows.api.ontologies.workflows.WorkflowRecord;
+import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
@@ -43,17 +48,48 @@ import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.osgi.service.component.annotations.Reference;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
+import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.Semaphore;
 
 public abstract class AbstractWorkflowRecordService <T extends WorkflowRecord>
         extends AbstractVersionedRDFRecordService<T> implements RecordService<T> {
 
+    private static final String WORKFLOW_ACTIONS_STATISTICS_QUERY;
+    private static final String WORKFLOW_EXECUTIONS_STATISTICS_QUERY;
+    private static final StatisticDefinition WORKFLOW_ACTIONS_STATISTIC_DEFINITION;
+    private static final StatisticDefinition WORKFLOW_EXECUTIONS_STATISTIC_DEFINITION;
+    private final Semaphore semaphore = new Semaphore(1, true);
+
     @Reference
     public WorkflowManager workflowManager;
 
-    private final Semaphore semaphore = new Semaphore(1, true);
+    @Reference(target = "(id=prov)")
+    public OsgiRepository provRepo;
+
+    static {
+        try {
+            WORKFLOW_ACTIONS_STATISTICS_QUERY = IOUtils.toString(Objects.requireNonNull(
+                    AbstractWorkflowRecordService.class.getResourceAsStream("/number-of-actions.rq")),
+                    StandardCharsets.UTF_8);
+
+            WORKFLOW_EXECUTIONS_STATISTICS_QUERY = IOUtils.toString(Objects.requireNonNull(
+                    AbstractWorkflowRecordService.class.getResourceAsStream("/number-of-executions.rq")),
+                    StandardCharsets.UTF_8);
+
+            WORKFLOW_ACTIONS_STATISTIC_DEFINITION = new StatisticDefinition(
+                    "totalNumberOfActions", "The number of actions the associated workflow contains");
+
+            WORKFLOW_EXECUTIONS_STATISTIC_DEFINITION = new StatisticDefinition(
+                    "totalNumberOfExecutions", "The number of workflow executions");
+        } catch (IOException e) {
+            throw new MobiException(e);
+        }
+    }
 
     @Override
     public T createRecord(User user, RecordOperationConfig config, OffsetDateTime issued, OffsetDateTime modified,
@@ -100,6 +136,19 @@ public abstract class AbstractWorkflowRecordService <T extends WorkflowRecord>
             semaphore.release();
         }
         return record;
+    }
+
+    @Override
+    public List<Statistic> getStatistics(Resource recordId, RepositoryConnection conn) {
+        Statistic actionsStatistic = getStatistic(recordId, conn, WORKFLOW_ACTIONS_STATISTICS_QUERY,
+                WORKFLOW_ACTIONS_STATISTIC_DEFINITION);
+
+        Statistic executionsStatistic;
+        try (RepositoryConnection provConn = provRepo.getConnection()) {
+            executionsStatistic = getStatistic(recordId, provConn, WORKFLOW_EXECUTIONS_STATISTICS_QUERY,
+                    WORKFLOW_EXECUTIONS_STATISTIC_DEFINITION);
+        }
+        return List.of(actionsStatistic, executionsStatistic);
     }
 
     /**

@@ -1,0 +1,6 @@
+PREFIX prov: <http://www.w3.org/ns/prov#>
+
+SELECT (COUNT(DISTINCT ?executions) AS ?totalNumberOfExecutions)
+WHERE {
+  ?executions prov:used ?record .
+}

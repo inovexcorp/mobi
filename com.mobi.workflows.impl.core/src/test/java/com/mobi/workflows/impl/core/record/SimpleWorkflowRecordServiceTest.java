@@ -65,15 +65,21 @@ import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.RepositoryException;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
+import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Collections;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -677,6 +683,60 @@ public class SimpleWorkflowRecordServiceTest extends OrmEnabledTestCase {
         doThrow(RepositoryException.class).when(thingManager).removeObject(any(WorkflowRecord.class), any(RepositoryConnection.class));
         try (RepositoryConnection connection = repository.getConnection()) {
             recordService.delete(testIRI, user, connection);
+        }
+    }
+
+    @Test
+    public void getStatisticsTest() {
+        MemoryRepositoryWrapper repository = new MemoryRepositoryWrapper();
+        repository.setDelegate(new SailRepository(new MemoryStore()));
+
+        MemoryRepositoryWrapper provRepo = new MemoryRepositoryWrapper();
+        provRepo.setDelegate(new SailRepository(new MemoryStore()));
+
+        try (RepositoryConnection conn = repository.getConnection(); RepositoryConnection provConn = provRepo.getConnection()) {
+            InputStream testData = getClass().getResourceAsStream("/workflows-statistics-data.trig");
+            conn.add(Rio.parse(testData, "", RDFFormat.TRIG));
+
+            InputStream provData = getClass().getResourceAsStream("/workflows-prov-data.trig");
+            provConn.add(Rio.parse(provData, "", RDFFormat.TRIG));
+
+            recordService.provRepo = provRepo;
+
+            // Check ont1
+            List<String> statistics = recordService.getStatistics(VALUE_FACTORY.createIRI("https://mobi.com/records#372cde6d-a893-4403-a360-328c53ae731a"), conn)
+                    .stream()
+                    .map((metric) -> String.format("%s:%s", metric.definition().name(), metric.value()))
+                    .toList();
+            String[] expected = new String[]{
+                    "totalNumberOfActions:2",
+                    "totalNumberOfExecutions:3"
+            };
+            assertEquals(List.of(expected), statistics);
+
+            // Check ont1
+            List<String> secondStatistics = recordService.getStatistics(VALUE_FACTORY.createIRI("https://mobi.com/records#2ba25fe9-63ee-44b2-a391-80fd8c6d16b4"), conn)
+                    .stream()
+                    .map((metric) -> String.format("%s:%s", metric.definition().name(), metric.value()))
+                    .toList();
+            String[] secondExpected = new String[]{
+                    "totalNumberOfActions:1",
+                    "totalNumberOfExecutions:0"
+            };
+            assertEquals(List.of(secondExpected), secondStatistics);
+
+            // assert3
+            List<String> statisticsC = recordService.getStatistics(VALUE_FACTORY.createIRI("https://mobi.com/records#non-exists"), conn)
+                    .stream()
+                    .map((metric) -> String.format("%s:%s", metric.definition().name(), metric.value()))
+                    .toList();
+            String[] expectedC = new String[]{
+                    "totalNumberOfActions:0",
+                    "totalNumberOfExecutions:0"
+            };
+            assertEquals(List.of(expectedC), statisticsC);
+        } catch (IOException | RuntimeException e) {
+            Assert.fail(e.getMessage());
         }
     }
 
