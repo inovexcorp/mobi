@@ -1,0 +1,17 @@
+PREFIX sh: <http://www.w3.org/ns/shacl#>
+PREFIX catalog: <http://mobi.com/ontologies/catalog#>
+
+SELECT (COUNT(distinct ?actions) as ?totalNumberOfActions)
+WHERE {
+  GRAPH ?record {
+    ?record a catalog:Record;
+      catalog:masterBranch ?masterBranch .
+  }
+  GRAPH ?masterBranch {
+    ?masterBranch a catalog:MasterBranch;
+      catalog:headGraph ?headGraph .
+  }
+  GRAPH ?headGraph {
+    ?s <http://mobi.solutions/ontologies/workflows#hasAction> ?actions .
+  }
+}
