@@ -708,4 +708,32 @@ describe('SHACLFormFieldComponent', () => {
       expect(element.queryAll(By.css('mat-checkbox.mat-checkbox-disabled')).length).toEqual(0);
     });
   });
+  describe('should create for a NoInput', () => {
+    const propertyShape: JSONLDObject = {
+      '@id': propertyShapeId,
+      '@type': [ `${SHACL}PropertyShape` ],
+      [`${SHACL_FORM}usesFormField`]: [{ '@id': `${SHACL_FORM}NoInput` }],
+      [`${SHACL}path`]: [{ '@id': propertyName }]
+    };
+    it('with no value set', () => {
+      component.formFieldConfig = new SHACLFormFieldConfig(nodeShape, propertyShapeId, [propertyShape]);
+      component.parentFormGroup = new UntypedFormGroup({
+        [propertyName]: new UntypedFormControl('')
+      });
+      fixture.detectChanges();
+      expect(component).toBeTruthy();
+      expect(component.fieldFormControl.value).toEqual('');
+    });
+    it('with no value set and a default', () => {
+      const adjustedPropertyShape = Object.assign({}, propertyShape);
+      adjustedPropertyShape[`${SHACL}defaultValue`] = [{ '@value': 'DEFAULT' }];
+      component.formFieldConfig = new SHACLFormFieldConfig(nodeShape, propertyShapeId, [adjustedPropertyShape]);
+      component.parentFormGroup = new UntypedFormGroup({
+        [propertyName]: new UntypedFormControl('')
+      });
+      fixture.detectChanges();
+      expect(component).toBeTruthy();
+      expect(component.fieldFormControl.value).toEqual('');
+    });
+  });
 });

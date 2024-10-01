@@ -81,7 +81,8 @@ describe('SHACLFormFieldConfig', () => {
     { field: `${SHACL_FORM}CheckboxInput`, type: FieldType.CHECKBOX},
     { field: `${SHACL_FORM}TextareaInput`, type: FieldType.TEXTAREA},
     { field: `${SHACL_FORM}AutocompleteInput`, type: FieldType.AUTOCOMPLETE},
-    { field: `${SHACL_FORM}HiddenTextInput`, type: FieldType.HIDDEN_TEXT}
+    { field: `${SHACL_FORM}HiddenTextInput`, type: FieldType.HIDDEN_TEXT},
+    { field: `${SHACL_FORM}NoInput`, type: FieldType.NO_INPUT}
   ].forEach(test => {
     it(`should create a basic ${test.field} with the precalculated fields set`, () => {
       const propertyShape: JSONLDObject = {
