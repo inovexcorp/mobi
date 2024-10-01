@@ -93,6 +93,8 @@ export class SHACLFormFieldComponent implements OnInit {
         this._setupDropdownOrAutocomplete();
       } else if (this.formFieldConfig.fieldType === FieldType.HIDDEN_TEXT) {
         this._setupHiddenDisplay();
+      } else if (this.formFieldConfig.fieldType === FieldType.NO_INPUT) {
+        // No action required for NO_INPUT
       } else {
         this._setupRadioToggleOrTextual();
       }

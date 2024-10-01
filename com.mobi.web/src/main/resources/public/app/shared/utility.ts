@@ -877,7 +877,7 @@ function _isIRIValue(val: string) {
  */
 function _setJSONLDPropValue(instance: JSONLDObject, config: SHACLFormFieldConfig, value: string): void {
   if (value) {
-    if (_isIRIValue(value) && !config.datatype) {
+    if (_isIRIValue(value) && !config.datatype) { // if you want a literal that has the form of an iri, you need to add a datatype
       setPropertyId(instance, config.property, value);
     } else {
       setPropertyValue(instance, config.property, value, config.datatype);
