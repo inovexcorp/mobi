@@ -1,0 +1,55 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 - 2024 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="search-results row h-100 py-2">
+    <div class="col-lg-10 offset-lg-1 h-100">
+        <div class="row h-100 flex-nowrap">
+            <div class="col-3 vertical-scroll list-filters">
+            </div>
+            <div class="col d-flex flex-column remove-min-width">
+                <div class="search-form d-flex">
+                    <search-bar class="w-100 mt-2" [(bindModel)]="searchText"
+                                (submitEvent)="searchRecords()"></search-bar>
+                </div>
+                <div class="entity-results-list flex-1 vertical-scroll p-2">
+                    <ng-container *ngIf="searchResult | async as results;">
+                        <div *ngIf="results.length === 0 &&  state.paginationConfig.searchText">
+                            <info-message>No entities found containing this search text</info-message>
+                        </div>
+                        <app-search-result-item *ngFor="let entity of results"
+                                                [entity]="entity"></app-search-result-item>
+                    </ng-container>
+                    <div *ngIf="!state.paginationConfig.searchText">
+                        <info-message>No search has been performed</info-message>
+                    </div>
+                </div>
+                <div>
+                    <mat-paginator
+                            [pageIndex]="state.paginationConfig.pageIndex"
+                            [length]="state.totalResultSize"
+                            [pageSize]="state.paginationConfig.limit"
+                            (page)="getResultPage($event)"></mat-paginator>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

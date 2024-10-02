@@ -65,6 +65,10 @@ import { ClipboardModule } from '@angular/cdk/clipboard';
         RecordViewComponent,
         RecordViewTabsetComponent,
         RecordTypeComponent,
+    ],
+  exports: [
+    RecordTypeComponent,
+    RecordCardComponent
     ]
 })
 export class CatalogModule {}

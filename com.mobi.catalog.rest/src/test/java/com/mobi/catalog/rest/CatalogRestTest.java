@@ -41,6 +41,7 @@ import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -77,6 +78,7 @@ import com.mobi.catalog.api.ontologies.mcat.UserBranch;
 import com.mobi.catalog.api.ontologies.mcat.Version;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRecord;
+import com.mobi.catalog.api.record.EntityMetadata;
 import com.mobi.catalog.api.record.RecordService;
 import com.mobi.catalog.api.record.statistic.Statistic;
 import com.mobi.catalog.api.record.statistic.StatisticDefinition;
@@ -118,6 +120,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -203,6 +206,9 @@ public class CatalogRestTest extends MobiRestTestCXF {
 
     @Mock
     private PaginatedSearchResults<Record> recordResults;
+
+    @Mock
+    PaginatedSearchResults<EntityMetadata> entityResults;
 
     @Mock
     private PaginatedSearchResults<KeywordCount> keywordResults;
@@ -538,6 +544,112 @@ public class CatalogRestTest extends MobiRestTestCXF {
         doThrow(new IllegalStateException()).when(catalogManager).getLocalCatalog(any(RepositoryConnection.class));
         response = target().path(CATALOG_URL_LOCAL).request().get();
         assertEquals(500, response.getStatus());
+    }
+
+
+    // GET catalog/{catalogId}/entities
+
+    private List<EntityMetadata> createEntities() {
+        EntityMetadata metadata1 = new EntityMetadata(
+                "http://example.com/entity/1",
+                "EntityName",
+                List.of("Type1", "Type2"),
+                "Sample description",
+                Map.of("source1", "value1", "source2", "value2"),
+                List.of("keyword1", "keyword2"),
+                List.of(
+                        Map.of("key1", "value1"),
+                        Map.of("key2", "value2"),
+                        Map.of("key3", "value3"),
+                        Map.of("key4", "value4"),
+                        Map.of("key5", "value5"),
+                        Map.of("key6", "value6")
+                )
+        );
+        return List.of(metadata1);
+    }
+
+    @Test
+    public void getEntitiesTest() {
+        List<EntityMetadata> entities = createEntities();
+        when(entityResults.getPage()).thenReturn(entities);
+        when(entityResults.getPageNumber()).thenReturn(1);
+        when(entityResults.getPageSize()).thenReturn(10);
+        when(entityResults.getTotalSize()).thenReturn(1);
+
+        when(recordManager.findEntities(any(Resource.class), any(PaginatedSearchParams.class), any(User.class), any(RepositoryConnection.class)))
+                .thenReturn(entityResults);
+
+        Response response = target().path(CATALOG_URL_LOCAL + "/entities")
+                .queryParam("offset", 1)
+                .queryParam("limit", 11)
+                .queryParam("searchText", "test").request().get();
+        assertEquals(200, response.getStatus());
+
+        PaginatedSearchParams.Builder builder = new PaginatedSearchParams.Builder()
+                .searchText("test")
+                .offset(1)
+                .limit(11);
+
+        verify(recordManager).findEntities(vf.createIRI(LOCAL_IRI), builder.build(), user, conn);
+        MultivaluedMap<String, Object> headers = response.getHeaders();
+        assertEquals(headers.get("X-Total-Count").get(0), "" + entityResults.getTotalSize());
+        assertEquals(1, response.getLinks().size());
+        try {
+            ArrayNode result = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
+            assertEquals(result.size(), entityResults.getPage().size());
+            // Test iri field
+            assertEquals("http://example.com/entity/1", result.get(0).get("iri").asText());
+            // Test entityName field
+            assertEquals("EntityName", result.get(0).get("entityName").asText());
+            // Test types field
+            assertTrue(result.get(0).get("types").isArray());
+            assertEquals("Type1", result.get(0).get("types").get(0).asText());
+            assertEquals("Type2", result.get(0).get("types").get(1).asText());
+            // Test description field
+            assertEquals("Sample description", result.get(0).get("description").asText());
+            // Test record field
+            JsonNode record = result.get(0).get("record");
+            assertEquals("value1", record.get("source1").asText());
+            assertEquals("value2", record.get("source2").asText());
+            assertTrue(record.get("keywords").isArray());
+            assertEquals("keyword1", record.get("keywords").get(0).asText());
+            assertEquals("keyword2", record.get("keywords").get(1).asText());
+            // Test matchingAnnotations field
+            JsonNode annotations = result.get(0).get("matchingAnnotations");
+            assertTrue(annotations.isArray());
+            assertEquals("value1", annotations.get(0).get("key1").asText());
+            assertEquals("value2", annotations.get(1).get("key2").asText());
+            assertEquals("value3", annotations.get(2).get("key3").asText());
+            assertEquals("value4", annotations.get(3).get("key4").asText());
+            assertEquals("value5", annotations.get(4).get("key5").asText());
+            // Test totalNumMatchingAnnotations field
+            assertEquals(6, result.get(0).get("totalNumMatchingAnnotations").asInt());
+        } catch (Exception e) {
+            fail("Expected no exception, but got: " + e.getMessage());
+        }
+    }
+
+    @Test
+    public void getEntitiesWithNegativeOffsetTest() {
+        Response response = target().path(CATALOG_URL_LOCAL + "/entities").queryParam("offset", -1).request().get();
+        assertEquals(400, response.getStatus());
+    }
+
+    @Test
+    public void getEntitiesWithNegativeLimitTest() {
+        Response response = target().path(CATALOG_URL_LOCAL + "/entities").queryParam("limit", -1).request().get();
+        assertEquals(400, response.getStatus());
+    }
+
+    @Test
+    public void getEntitiesWithOffsetThatIsTooLargeTest() {
+        // Setup:
+        doThrow(new IllegalArgumentException()).when(recordManager).findEntities(eq(vf.createIRI(LOCAL_IRI)),
+                any(PaginatedSearchParams.class), eq(user), eq(conn));
+
+        Response response = target().path(CATALOG_URL_LOCAL + "/entities").queryParam("offset", 9999).request().get();
+        assertEquals(400, response.getStatus());
     }
 
     // GET catalogs/{catalogId}/records

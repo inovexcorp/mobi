@@ -34,6 +34,8 @@ import com.mobi.catalog.api.ontologies.mcat.Catalog;
 import com.mobi.catalog.api.ontologies.mcat.CatalogFactory;
 import com.mobi.catalog.api.ontologies.mcat.Record;
 import com.mobi.catalog.api.ontologies.mcat.RecordFactory;
+import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
+import com.mobi.catalog.api.record.EntityMetadata;
 import com.mobi.catalog.api.record.RecordService;
 import com.mobi.catalog.api.record.config.RecordExportSettings;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
@@ -52,6 +54,7 @@ import com.mobi.security.policy.api.Request;
 import com.mobi.security.policy.api.ontologies.policy.Read;
 import com.mobi.security.policy.api.xacml.XACML;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.model.Resource;
@@ -61,6 +64,7 @@ import org.eclipse.rdf4j.query.BindingSet;
 import org.eclipse.rdf4j.query.QueryResults;
 import org.eclipse.rdf4j.query.TupleQuery;
 import org.eclipse.rdf4j.query.TupleQueryResult;
+import org.eclipse.rdf4j.query.explanation.Explanation;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
@@ -75,8 +79,10 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -91,6 +97,8 @@ public class SimpleRecordManager implements RecordManager {
     private static final Logger log = LoggerFactory.getLogger(SimpleRecordManager.class);
     private static final String FIND_RECORDS_QUERY;
     private static final String COUNT_RECORDS_QUERY;
+    private static final String GET_ENTITIES_QUERY;
+    private static final String GET_ENTITIES_COUNT_QUERY;
     private static final String GET_KEYWORD_QUERY;
     private static final String GET_KEYWORD_COUNT_QUERY;
     private static final String RECORD_BINDING = "record";
@@ -101,6 +109,14 @@ public class SimpleRecordManager implements RecordManager {
     private static final String TYPE_FILTER_BINDING = "type_filter";
     private static final String SEARCH_BINDING = "search_text";
 
+    private static final String RECORD_TYPE_BINDING = "recordType";
+    private static final String ENTITY_IRI_BINDING = "entityIri";
+    private static final String ENTITY_NAME_BINDING = "entityName";
+    private static final String DESCRIPTION_BINDING = "description";
+    private static final String ENTITY_TYPES_BINDING = "entityTypes";
+    public static final String SEPARATOR_DELIMITER = "�";
+    public static final String PAIR_SEPARATOR_DELIMITER = "��";
+
     static {
         try {
             FIND_RECORDS_QUERY = IOUtils.toString(
@@ -109,6 +125,14 @@ public class SimpleRecordManager implements RecordManager {
             );
             COUNT_RECORDS_QUERY = IOUtils.toString(
                     Objects.requireNonNull(SimpleCatalogManager.class.getResourceAsStream("/record/count-records.rq")),
+                    StandardCharsets.UTF_8
+            );
+            GET_ENTITIES_QUERY = IOUtils.toString(
+                    Objects.requireNonNull(SimpleCatalogManager.class.getResourceAsStream("/record/find-entities.rq")),
+                    StandardCharsets.UTF_8
+            );
+            GET_ENTITIES_COUNT_QUERY = IOUtils.toString(
+                    Objects.requireNonNull(SimpleCatalogManager.class.getResourceAsStream("/record/find-entities-count.rq")),
                     StandardCharsets.UTF_8
             );
             GET_KEYWORD_QUERY = IOUtils.toString(
@@ -188,6 +212,125 @@ public class SimpleRecordManager implements RecordManager {
         if (!exporterIsActive) {
             exporter.endRDF();
         }
+    }
+
+    @Override
+    public PaginatedSearchResults<EntityMetadata> findEntities(Resource catalogId,
+                                                               PaginatedSearchParams searchParams,
+                                                               User user,
+                                                               RepositoryConnection conn) {
+        // Filters down to VersionedRDFRecords that the requesting user can read before searching for entities
+        PaginatedSearchParams searchRecords = new PaginatedSearchParams.Builder()
+                .typeFilter(vf.createIRI(VersionedRDFRecord.TYPE))
+                .build();
+        List<String> viewableRecords = getViewableRecords(catalogId, searchRecords, user, conn);
+
+        if (viewableRecords.isEmpty()) {
+            return SearchResults.emptyResults();
+        }
+        Optional<String> searchTextParam = searchParams.getSearchText();
+        String viewableRecordsConcat  = viewableRecords.stream()
+                .map(record -> String.format("<%s>", record))
+                .collect(Collectors.joining(" "));
+        // Count Query
+        String countQueryStr =  GET_ENTITIES_COUNT_QUERY
+                .replace("%RECORDS%", viewableRecordsConcat);
+        if (log.isTraceEnabled()) {
+            log.trace("Count Query: " + countQueryStr);
+        }
+        TupleQuery countQuery = conn.prepareTupleQuery(countQueryStr);
+        searchTextParam.ifPresent((searchText) -> countQuery.setBinding(SEARCH_BINDING,
+                conn.getValueFactory().createLiteral(searchText)));
+        int totalCount = 0;
+        try(TupleQueryResult countResults = countQuery.evaluate()) {
+            if (countResults.getBindingNames().contains("count") && countResults.hasNext()) {
+                totalCount = Bindings.requiredLiteral(countResults.next(), "count").intValue();
+            }
+            if (log.isTraceEnabled()) {
+                log.trace("Count Query Timings: " + countQuery.explain(Explanation.Level.Timed).toString());
+            }
+        }
+        if (totalCount == 0) {
+            return SearchResults.emptyResults();
+        }
+        int offset = searchParams.getOffset();
+        int limit = searchParams.getLimit().orElse(totalCount);
+
+        if (offset > totalCount) {
+            throw new IllegalArgumentException("Offset exceeds total size");
+        }
+        // Get Entities query
+        String entitiesQueryStr = GET_ENTITIES_QUERY
+                .replace("%RECORDS%", viewableRecordsConcat)
+                .replace("#%LIMIT%", String.format("LIMIT %d", limit))
+                .replace("#%OFFSET%", String.format("OFFSET %d", offset));
+        if (log.isTraceEnabled()) {
+            log.trace("Entities Query: " + entitiesQueryStr);
+        }
+        TupleQuery query = conn.prepareTupleQuery(entitiesQueryStr);
+
+        searchTextParam.ifPresent((searchText) -> query.setBinding(SEARCH_BINDING,
+                conn.getValueFactory().createLiteral(searchText)));
+
+        List<EntityMetadata> entities = new ArrayList<>();
+        // Execute the query
+        try (TupleQueryResult result = query.evaluate()) {
+            result.forEach((BindingSet bindings) -> {
+                entities.add(createEntityMetadata(bindings));
+            });
+            if (log.isTraceEnabled()) {
+                log.trace("Entities Query Timings: " + query.explain(Explanation.Level.Timed).toString());
+            }
+        }
+        // Create SimpleSearchResults
+        int pageNumber = (limit > 0) ? (offset / limit) + 1 : 1;
+        return new SimpleSearchResults<>(entities, totalCount, limit, pageNumber);
+    }
+
+    /**
+     * Creates an {@link EntityMetadata} object based on the provided {@link BindingSet}.
+     *
+     * @param bindings The {@link BindingSet} containing the values for entity metadata.
+     * @return An {@link EntityMetadata} object populated with the values extracted from the binding set.
+     */
+    private static EntityMetadata createEntityMetadata(BindingSet bindings) {
+        String iri = Bindings.requiredResource(bindings, ENTITY_IRI_BINDING).stringValue();
+        String entityName = getValueOrEmptyString(bindings, ENTITY_NAME_BINDING);
+        final List<String> entityTypes;
+        String entityTypeBinding = getValueOrEmptyString(bindings, ENTITY_TYPES_BINDING);
+        if (StringUtils.isBlank(entityTypeBinding)) {
+            entityTypes = List.of();
+        } else {
+            entityTypes =  Arrays.asList(entityTypeBinding.split(SEPARATOR_DELIMITER));
+        }
+        String description = getValueOrEmptyString(bindings, DESCRIPTION_BINDING);
+        Map<String, String> metadataMap = Map.of(
+                "iri", Bindings.requiredResource(bindings, RECORD_BINDING).stringValue(),
+                "title", getValueOrEmptyString(bindings, "recordTitle"),
+                "type", Bindings.requiredResource(bindings, RECORD_TYPE_BINDING).stringValue()
+        );
+        final List<String> recordKeywords;
+        String keywordBindingString = getValueOrEmptyString(bindings, "keywords");
+        if (StringUtils.isBlank(keywordBindingString)) {
+            recordKeywords = List.of();
+        } else {
+            recordKeywords = Arrays.asList(keywordBindingString.split(SEPARATOR_DELIMITER));
+        }
+        List<String> predObjectPairs = Arrays.asList(getValueOrEmptyString(bindings, "predObjects")
+                .split(PAIR_SEPARATOR_DELIMITER));
+        List<Map<String, String>> matchingAnnotations = predObjectPairs.stream().map((String pair) -> {
+            String[] pairSplit = pair.split(SEPARATOR_DELIMITER);
+            Map<String, String> annotationMap = new LinkedHashMap<>();
+            annotationMap.put("prop", pairSplit[0]);
+            annotationMap.put("value", pairSplit[1]);
+            return annotationMap;
+        }).toList();
+        return new EntityMetadata(iri, entityName, entityTypes, description, metadataMap,
+                recordKeywords, matchingAnnotations);
+    }
+
+    private static String getValueOrEmptyString(BindingSet bindings, String bindingName) {
+        return bindings.getValue(bindingName) != null ? bindings.getValue(bindingName).stringValue() : "";
     }
 
     @Override

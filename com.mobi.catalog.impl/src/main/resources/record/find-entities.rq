@@ -1,0 +1,193 @@
+PREFIX catalog: <http://mobi.com/ontologies/catalog#>
+PREFIX dct: <http://purl.org/dc/terms/>
+PREFIX dc: <http://purl.org/dc/elements/1.1/>
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX dcterms: <http://purl.org/dc/terms/>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX skosxl: <http://www.w3.org/2008/05/skos-xl#>
+PREFIX sh: <http://www.w3.org/ns/shacl#>
+
+SELECT DISTINCT
+  ?record
+  (SAMPLE(?recordTitleVal) as ?recordTitle)
+  (SAMPLE(?recordTypeVal) as ?recordType)
+  (GROUP_CONCAT(DISTINCT ?keywordVal; SEPARATOR="�") AS ?keywords)
+
+  ?entityIri
+  (GROUP_CONCAT(DISTINCT ?entityTypeVal; SEPARATOR="�") AS ?entityTypes)
+  (SAMPLE(?finalEntityNamePostFix) as ?entityName)
+  (SAMPLE(LCASE(STR(?finalEntityNamePostFix))) as ?entityNameUni)
+  (SAMPLE(?finalDescription) as ?description)
+  (GROUP_CONCAT(DISTINCT ?po; SEPARATOR="��") AS ?predObjects)
+WHERE {
+  # USAGE:  BIND ("title" as ?search_text)
+  GRAPH ?record {
+    ?record a catalog:VersionedRDFRecord ;
+       catalog:masterBranch ?masterBranch ;
+       dcterms:title ?recordTitleVal .
+
+    ?record a ?recordTypeVal;
+
+    OPTIONAL {
+      ?record catalog:keyword ?keywordVal.
+    }
+    VALUES ?record { %RECORDS% }
+    FILTER (?recordTypeVal NOT IN (
+        owl:Thing,
+        catalog:Record,
+        catalog:VersionedRecord,
+        catalog:VersionedRDFRecord
+      )
+    )
+  }
+  GRAPH ?masterBranch {
+    ?masterBranch a catalog:MasterBranch;
+       catalog:headGraph ?headGraph .
+  }
+  GRAPH ?headGraph {
+    # SEARCH all Objects for search_text
+    ?entityIri ?p ?o .
+    FILTER(
+      !BOUND(?search_text) || isLiteral(?o) && CONTAINS(LCASE(?o), LCASE(?search_text))
+    )
+    # CONCAT Predicate and Object
+    BIND(CONCAT(STR(?p), "�",STR(?o)) as ?po)
+    # Get Entity Types
+    OPTIONAL {
+      ?entityIri a ?entityTypeVal.
+    }
+    # Prioritize the description fields in order
+    OPTIONAL {
+      ?entityIri rdfs:comment ?comment .
+    }
+    OPTIONAL {
+      ?entityIri dct:description ?dctDescription .
+    }
+    OPTIONAL {
+      ?entityIri dc:description ?dcDescription .
+    }
+    BIND(
+      COALESCE(?comment, ?dctDescription, ?dcDescription) AS ?finalDescription
+    )
+    # Prioritize the entity name fields in order
+    OPTIONAL {
+      ?entityIri rdfs:label ?labelEn .
+       FILTER(lang(?labelEn) = "en")
+    }
+    OPTIONAL {
+      ?entityIri rdfs:label ?labelNon .
+    }
+    OPTIONAL {
+      ?entityIri dcterms:title ?dctermsTitleEn .
+      FILTER(lang(?dctermsTitleEn) = "en")
+    }
+    OPTIONAL {
+      ?entityIri dcterms:title ?dctermsTitleNon .
+    }
+    OPTIONAL {
+      ?entityIri dct:title ?dctTitleEn .
+      FILTER(lang(?dctTitleEn) = "en")
+    }
+    OPTIONAL {
+      ?entityIri dct:title ?dctTitleNon .
+    }
+    OPTIONAL {
+      ?entityIri dc:title ?dcTitleEn .
+      FILTER(lang(?dcTitleEn) = "en")
+    }
+    OPTIONAL {
+      ?entityIri dc:title ?dcTitleNon .
+    }
+    OPTIONAL {
+      ?entityIri skos:prefLabel ?skosPrefLabelEn .
+      FILTER(lang(?skosPrefLabelEn) = "en")
+    }
+    OPTIONAL {
+      ?entityIri skos:prefLabel ?skosPrefLabelNon .
+    }
+    OPTIONAL {
+      ?entityIri skos:altLabel ?skosAltLabelEn .
+      FILTER(lang(?skosAltLabelEn) = "en")
+    }
+    OPTIONAL {
+      ?entityIri skos:altLabel ?skosAltLabelNon .
+    }
+    OPTIONAL {
+      ?entityIri skosxl:literalForm ?skosxlLiteralFormEn .
+      FILTER(lang(?skosxlLiteralFormEn) = "en")
+    }
+    OPTIONAL {
+      ?entityIri skosxl:literalForm ?skosxlLiteralFormNon .
+    }
+    OPTIONAL {
+      ?entityIri sh:name ?shNameEn .
+      FILTER(lang(?shNameEn) = "en")
+    }
+    OPTIONAL {
+      ?entityIri sh:name ?shNameNon .
+    }
+    # Bind the final entity name based on the priority
+    BIND(
+      COALESCE(
+       ?labelEn, ?labelNon,
+       ?dctermsTitleEn, ?dctermsTitleNon,
+       ?dctTitleEn, ?dctTitleNon,
+       ?dcTitleEn, ?dcTitleNon,
+       ?skosPrefLabelEn, ?skosPrefLabelNon,
+       ?skosAltLabelEn, ?skosAltLabelNon,
+       ?skosxlLiteralFormEn, ?skosxlLiteralFormNon,
+       ?shNameEn, ?shNameNon
+     ) AS ?finalEntityName
+    )
+    BIND(
+        COALESCE(
+            REPLACE(STR(?entityIri), "^.*[#/](.*)$", "$1"),
+            STR(?entityIri)
+        ) AS ?postfix
+    )
+    # Insert space between lowercase & uppercase or fallback to ?value
+    BIND(
+      COALESCE(
+          REPLACE(?postfix, "([a-z])([A-Z])", "$1 $2"), ?postfix
+      ) AS ?step1
+    )
+    # Insert space after numbers or fallback to previous value
+    BIND(
+        COALESCE(
+            REPLACE(?step1, "([0-9]+)(?!$)", "$1 "), ?step1
+        ) AS ?step2
+    )
+    # Insert space before numbers following letters
+    BIND(
+        COALESCE(
+            REPLACE(?step2, "([a-zA-Z])([0-9]+)", "$1 $2"), ?step2
+        ) AS ?step3
+    )
+    # Space before last uppercase followed by lowercase
+    BIND(
+        COALESCE(
+            REPLACE(?step3, "\\b([A-Z]+)([A-Z])([a-z])", "$1 $2$3"), ?step3
+        ) AS ?beautifiedValueStr
+    )
+    # Uppercase if first character is a letter, Leave it unchanged if it's not a letter
+    BIND(
+        CONCAT(
+            IF(
+                REGEX(SUBSTR(?beautifiedValueStr, 1, 1), "^[a-zA-Z]"),
+                UCASE(SUBSTR(?beautifiedValueStr, 1, 1)),
+                SUBSTR(?beautifiedValueStr, 1, 1)
+            ),
+            SUBSTR(?beautifiedValueStr, 2)
+        ) AS ?beautifiedValue
+    )
+    BIND(
+        COALESCE(?finalEntityName, ?beautifiedValue) AS ?finalEntityNamePostFix
+    )
+  }
+}
+GROUP BY ?entityIri ?record
+ORDER BY ASC(?entityNameUni)
+#%LIMIT%
+#%OFFSET%

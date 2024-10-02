@@ -62,7 +62,7 @@
     "eslint": "^7.6.0",
     "eslint-plugin-angular": "^4.0.1",
     "eslint-plugin-jasmine": "^4.1.2",
-    "font-awesome": "^4.5.0",
+    "font-awesome": "^4.7.0",
     "gridjs": "^4.0.0",
     "gridjs-angular": "^1.2.0",
     "highlight.js": "^9.12.0",
