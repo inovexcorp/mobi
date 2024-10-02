@@ -1,0 +1,101 @@
+# Prefix declarations
+@prefix catalog: <http://mobi.com/ontologies/catalog#> .
+@prefix dct: <http://purl.org/dc/terms/> .
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix skosxl: <http://www.w3.org/2008/05/skos-xl#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+
+@prefix catalogs: <http://mobi.com/test/catalogs#> .
+
+GRAPH catalogs:catalog-distributed {
+    catalogs:catalog-distributed a catalog:Catalog .
+}
+
+GRAPH catalogs:catalog-local {
+    catalogs:catalog-local a catalog:Catalog .
+}
+
+# Example Record 1
+<http://example.org/record1> {
+  <http://example.org/record1> a catalog:VersionedRDFRecord, catalog:OntologyRecord ;
+    catalog:catalog catalogs:catalog-local ;
+    catalog:masterBranch <http://example.org/branch1> ;
+    dcterms:title "Record 1 Title" ;
+
+    dcterms:description "Description" ;
+    dcterms:issued "2016-01-02T00:00:00Z"^^xsd:dateTime ;
+    dcterms:modified "2016-01-03T00:00:00Z"^^xsd:dateTime ;
+
+    catalog:keyword "keyword1" ;
+    catalog:keyword "keyword2" ;
+    a <http://example.org/CustomRecordType> .
+}
+
+<http://example.org/branch1> {
+  <http://example.org/branch1> a catalog:MasterBranch ;
+    catalog:headGraph <http://example.org/headGraph1> .
+}
+
+<http://example.org/headGraph1> {
+  <http://example.org/entity1> a <http://example.org/EntityType1> ;
+    rdfs:comment "This is a comment for entity 1." ;
+    dct:description "This is a dct description for entity 1." ;
+    rdfs:label "Entity 1 Label"@en ;
+    skos:prefLabel "Entity 1 Preferred Label"@en ;
+    <http://example.org/predicate1> "Object 1" ;
+    <http://example.org/predicate2> "Object 2" .
+
+  <http://example.org/entity1b> a <http://example.org/EntityType1> ;
+      rdfs:comment "This is a comment for entity 1b." ;
+      dct:description "This is a dct description for entity 1b." ;
+      rdfs:label "Entity 1b Label"@en ;
+      skos:prefLabel "Entity 1b Preferred Label"@en ;
+      <http://example.org/predicate1> "entity1b-1b" ;
+      <http://example.org/predicate2> "entity1b-2b" .
+
+  <http://example.org/entity1c> a <http://example.org/EntityType1> ;
+      rdfs:comment "This is a comment for entity 1c." ;
+      dct:description "This is a dct description for entity 1c." ;
+      rdfs:label "Entity 1c Label"@en ;
+      skos:prefLabel "Entity 1c Preferred Label"@en ;
+      <http://example.org/predicate1> "entity1c-1c" ;
+      <http://example.org/predicate2> "entity1c-2c" .
+
+  <http://example.org/entity1d> a <http://example.org/EntityType1> ;
+      rdfs:comment "This is a comment for entity 1d." ;
+      dct:description "This is a dct description for entity 1d." ;
+      rdfs:label "Entity 1d Label"@en ;
+      skos:prefLabel "Entity 1d Preferred Label"@en ;
+      <http://example.org/predicate1> "entity1c-1d" ;
+      <http://example.org/predicate2> "entity1c-2d" .
+}
+
+# Example Record 2
+<http://example.org/record2> {
+  <http://example.org/record2> a catalog:VersionedRDFRecord, catalog:OntologyRecord ;
+    catalog:catalog catalogs:catalog-local ;
+    catalog:masterBranch <http://example.org/branch2> ;
+    dcterms:title "Record 2 Title" ;
+    dcterms:description "Description" ;
+    dcterms:issued "2016-01-02T00:00:00Z"^^xsd:dateTime ;
+    dcterms:modified "2016-01-03T00:00:00Z"^^xsd:dateTime ;
+    catalog:keyword "keyword3" ;
+}
+
+<http://example.org/branch2> {
+  <http://example.org/branch2> a catalog:MasterBranch ;
+    catalog:headGraph <http://example.org/headGraph2> .
+}
+
+<http://example.org/headGraph2> {
+  <http://example.org/entity2> a <http://example.org/EntityType2> ;
+    dct:description "This is a description for entity 2." ;
+    rdfs:label "Entity 2 Label"@en ;
+    skos:prefLabel "Entity 2 Preferred Label"@en ;
+    <http://example.org/predicate1> "Object A" ;
+    <http://example.org/predicate2> "Object B" .
+}

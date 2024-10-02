@@ -128,6 +128,45 @@ openAPI:
             type: string
           username:
             type: string
+      Entity:
+        type: object
+        properties:
+          iri:
+            type: string
+            description: The IRI of the entity
+            example: http://example.org/entity1
+          entityName:
+            type: string
+            description: The name of the entity
+            example: Example Entity 1
+          types:
+            type: array
+            items:
+              type: string
+              description: A list of RDF types for the entity
+              example: http://www.w3.org/2000/01/rdf-schema#Class
+          description:
+            type: string
+            nullable: true
+            description: Description of the entity, calculated using a prioritized list of annotations
+            example: This is an example description for Entity 1.
+          sourceRecord:
+            $ref: '#/components/schemas/SourceRecord'
+      SourceRecord:
+        type: object
+        properties:
+          title:
+            type: string
+            description: The title of the source record
+            example: Entity 1 Source Record
+          iri:
+            type: string
+            description: The IRI of the source record
+            example: http://example.org/source-record1
+          type:
+            type: string
+            description: The type of the source record (subclass of VersionedRDFRecord)
+            example: http://example.org/VersionedRDFRecord
 
   security:
     - bearerAuth: [ ]

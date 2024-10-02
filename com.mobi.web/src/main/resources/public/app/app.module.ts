@@ -63,6 +63,7 @@ import { LoginLayoutComponent } from './layouts/login-layout.component';
 import { MainLayoutComponent } from './layouts/main-layout.component';
 import { WorkflowsModule } from './workflows/workflows.module';
 import { AppRoutingModule } from './app-routing.module';
+import { EntitySearchModule } from './entity-search/entity-search.module';
 
 @NgModule({
     imports: [
@@ -78,6 +79,7 @@ import { AppRoutingModule } from './app-routing.module';
         MapperModule,
         HomeModule,
         DiscoverModule,
+        EntitySearchModule,
         OntologyEditorModule,
         OntologyVisualizationModule,
         MergeRequestsModule,

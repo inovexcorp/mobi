@@ -59,6 +59,7 @@ import com.mobi.catalog.api.builder.Conflict;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.builder.DistributionConfig;
 import com.mobi.catalog.api.builder.KeywordCount;
+import com.mobi.catalog.api.record.EntityMetadata;
 import com.mobi.catalog.api.record.statistic.Statistic;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Catalog;
@@ -309,6 +310,69 @@ public class CatalogRest {
             }
         } catch (IllegalStateException | MobiException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Search for existing definitions of an entity across all records.
+     * An optional type parameter filters the returned Entities.  Parameters can be passed to control paging.
+     *
+     * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                  with "_:".
+     * @param offset The offset for the page.
+     * @param limit The number of Records to return in one page.
+     * @param searchText The String used to filter out Records.
+     * @return List of Records that match the search criteria.
+     */
+    @GET
+    @Path("{catalogId}/entities")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("user")
+    @Operation(
+            tags = "catalogs",
+            summary = "Search for existing definitions of an entity across all records",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "List of Entities that match the search criteria",
+                            content = @Content(schema = @Schema(ref = "#/components/schemas/Entity"))),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId could not"
+                            + " be found"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
+            }
+    )
+    public Response getEntities(
+            @Context HttpServletRequest servletRequest,
+            @Context UriInfo uriInfo,
+            @Parameter(description = "String representing the Catalog ID", required = true)
+            @PathParam("catalogId") String catalogId,
+            @Parameter(description = "Offset for the page", required = true)
+            @QueryParam("offset") int offset,
+            @Parameter(description = "Number of Records to return in one page", required = true)
+            @QueryParam("limit") int limit,
+            @Parameter(description = "String used to filter out Records", required = true)
+            @QueryParam("searchText") String searchText) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            LinksUtils.validateParams(limit, offset);
+            User activeUser = getActiveUser(servletRequest, engineManager);
+
+            PaginatedSearchParams.Builder builder = new PaginatedSearchParams.Builder().offset(offset);
+            if (searchText != null) {
+                builder.searchText(searchText);
+            }
+            builder.offset(offset);
+            builder.limit(limit);
+            PaginatedSearchResults<EntityMetadata> searchResults = recordManager.findEntities(vf.createIRI(catalogId),
+                    builder.build(), activeUser, conn);
+
+            ArrayNode entities = mapper.createArrayNode();
+            searchResults.getPage().forEach(entityMetadata->{
+                entities.add(entityMetadata.toObjectNode());
+            });
+            return createPaginatedResponse(uriInfo, entities, searchResults.getTotalSize(), limit, offset);
+        } catch (IllegalArgumentException ex) {
+            throw RestUtils.getErrorObjBadRequest(ex);
+        } catch (MobiException ex) {
+            throw RestUtils.getErrorObjInternalServerError(ex);
         }
     }
 

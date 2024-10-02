@@ -1,0 +1,25 @@
+PREFIX catalog: <http://mobi.com/ontologies/catalog#>
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+
+SELECT
+    (COUNT(DISTINCT ?entityIri) AS ?count)
+WHERE {
+  # USAGE:  BIND ("title" as ?search_text)
+  GRAPH ?record {
+    ?record a catalog:VersionedRDFRecord .
+    ?record a ?recordTypeVal;
+      catalog:masterBranch ?masterBranch .
+    VALUES ?record {%RECORDS%}
+    FILTER (?recordTypeVal NOT IN (owl:Thing, catalog:Record, catalog:VersionedRecord, catalog:VersionedRDFRecord))
+  }
+  GRAPH ?masterBranch {
+    ?masterBranch a catalog:MasterBranch;
+      catalog:headGraph ?headGraph .
+  }
+  GRAPH ?headGraph {
+    ?entityIri ?p ?o .
+    FILTER(
+      !BOUND(?search_text) || isLiteral(?o) && CONTAINS(LCASE(?o), LCASE(?search_text))
+    )
+  }
+}

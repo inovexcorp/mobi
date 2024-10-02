@@ -1,0 +1,55 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 - 2024 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<mat-card class="entity-record clickable">
+    <mat-card-title>
+        <div class="entity-name d-flex align-items-center font-weight-normal">
+           <span>
+               {{ entityName }}
+           </span>
+            <div class="entity-iri d-flex  align-items-center">
+                <span class="text-muted text-center ml-1">
+                    {{ entity.iri }}
+                </span>
+                <mat-icon class="ml-1"
+                          matTooltip="Copy IRI"
+                          matTooltipPosition="above"
+                          [copy-clipboard]="entity.iri">
+                    content_copy
+                </mat-icon>
+            </div>
+        </div>
+    </mat-card-title>
+    <mat-card-subtitle>
+        <div class="entity-type">
+            <span class="font-weight-medium mr-1">Type(s):</span> <span class="font-weight-normal">{{ types }}</span>
+        </div>
+        <div class="entity-record_prop">
+            <span class="font-weight-medium mr-1">Record:</span>
+            <record-icon [record]="record"></record-icon>
+            <span class="entity-record-title text-muted text-center ml-1">{{ entity.record.title }}</span>
+        </div>
+    </mat-card-subtitle>
+    <mat-card-content>
+        <p class="entity-description">{{ entity.description || '(no description)' }}</p>
+    </mat-card-content>
+</mat-card>

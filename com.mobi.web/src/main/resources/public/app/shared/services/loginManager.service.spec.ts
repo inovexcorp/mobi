@@ -49,6 +49,7 @@ import { ToastService } from './toast.service';
 import { YasguiService } from './yasgui.service';
 import { ProvManagerService } from './provManager.service';
 import { LoginManagerService } from './loginManager.service';
+import { EntitySearchStateService } from '../../entity-search/services/entity-search-state.service';
 
 describe('Login Manager service', function() {
     let service: LoginManagerService;
@@ -71,6 +72,7 @@ describe('Login Manager service', function() {
     let userStateStub: jasmine.SpyObj<UserStateService>;
     let yasguiStub: jasmine.SpyObj<YasguiService>;
     let provManagerStub: jasmine.SpyObj<ProvManagerService>;
+    let entitySearchStateStub: jasmine.SpyObj<EntitySearchStateService>;
 
     const error = 'Error Message';
     const user: User = new User({
@@ -104,7 +106,8 @@ describe('Login Manager service', function() {
                 MockProvider(UserStateService),
                 MockProvider(ToastService),
                 MockProvider(YasguiService),
-                MockProvider(ProvManagerService)
+                MockProvider(ProvManagerService),
+                MockProvider(EntitySearchStateService)
             ]
         });
 
@@ -129,6 +132,7 @@ describe('Login Manager service', function() {
         userStateStub = TestBed.inject(UserStateService) as jasmine.SpyObj<UserStateService>;
         yasguiStub = TestBed.inject(YasguiService) as jasmine.SpyObj<YasguiService>;
         provManagerStub = TestBed.inject(ProvManagerService) as jasmine.SpyObj<ProvManagerService>;
+        entitySearchStateStub = TestBed.inject(EntitySearchStateService) as jasmine.SpyObj<EntitySearchStateService>;
 
         progressSpinnerStub.track.and.callFake((ob) => ob);
     });
@@ -154,6 +158,7 @@ describe('Login Manager service', function() {
         userStateStub = null;
         yasguiStub = null;
         provManagerStub = null;
+        entitySearchStateStub = null;
     });
 
     describe('should log into an account', function() {
@@ -241,6 +246,7 @@ describe('Login Manager service', function() {
         expect(catalogStateStub.reset).toHaveBeenCalledWith();
         expect(yasguiStub.reset).toHaveBeenCalledWith();
         expect(provManagerStub.reset).toHaveBeenCalledWith();
+        expect(entitySearchStateStub.reset).toHaveBeenCalledWith();
         expect(service.currentUser).toBe('');
         expect(service.currentUserIRI).toBe('');
         expect(router.navigate).toHaveBeenCalledWith(['/login']);

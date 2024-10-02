@@ -25,6 +25,7 @@ package com.mobi.catalog.api;
 
 import com.mobi.catalog.api.builder.KeywordCount;
 import com.mobi.catalog.api.ontologies.mcat.Record;
+import com.mobi.catalog.api.record.EntityMetadata;
 import com.mobi.catalog.api.record.RecordService;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
@@ -32,6 +33,7 @@ import com.mobi.rdf.orm.OrmFactory;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.eclipse.rdf4j.repository.RepositoryException;
 
 import java.util.List;
 import java.util.Optional;
@@ -70,6 +72,33 @@ public interface RecordManager {
      * @param conn       A RepositoryConnection to use for lookup.
      */
     void export(List<Resource> recordIRIs, RecordOperationConfig config, RepositoryConnection conn);
+
+    /**
+     * Retrieves a paginated list of entities from the repository based on the provided catalog ID and search parameters.
+     * <p>
+     * This method queries the repository for entities that match the specified search criteria and returns the results
+     * in a paginated format. The results are encapsulated in a {@link PaginatedSearchResults} object, which provides
+     * access to the current page of results, as well as metadata about the total number of results and pagination details.
+     *
+     * @param catalogId    The identifier of the catalog from which to retrieve entities. This should be a valid IRI
+     *                     representing the catalog resource.
+     * @param searchParams The search parameters to use for querying entities. This includes pagination details such
+     *                     as page number and page size, as well as any other criteria used for filtering the results.
+     * @param user         The user to check record read permissions for
+     * @param conn         The repository connection used to perform the query. This connection should be established
+     *                     and valid for the duration of the query.
+     * @return A {@link PaginatedSearchResults} object containing the results of the query. The object will include
+     * a list of {@link EntityMetadata} objects representing the entities on the current page, as well as metadata
+     * about the total number of results and pagination.
+     * @throws RepositoryException      If an error occurs while querying the repository. This may include issues with the
+     *                                  connection, query execution, or data retrieval.
+     * @throws IllegalArgumentException If any of the input parameters are invalid. For example, if {@code catalogId} is
+     *                                  null, or if {@code searchParams} contain invalid values such as negative page
+     *                                  numbers or sizes.
+     */
+    PaginatedSearchResults<EntityMetadata> findEntities(Resource catalogId,
+                                                        PaginatedSearchParams searchParams,
+                                                        User user, RepositoryConnection conn);
 
     /**
      * Searches the provided Catalog for Records that match the provided PaginatedSearchParams. Acceptable

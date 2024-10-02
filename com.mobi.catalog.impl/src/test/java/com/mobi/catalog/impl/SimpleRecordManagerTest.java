@@ -29,6 +29,7 @@ import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertNotSame;
 import static junit.framework.TestCase.assertTrue;
 import static junit.framework.TestCase.fail;
+import static org.junit.Assert.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
@@ -45,6 +46,7 @@ import com.mobi.catalog.api.ontologies.mcat.Record;
 import com.mobi.catalog.api.ontologies.mcat.UnversionedRecord;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRecord;
+import com.mobi.catalog.api.record.EntityMetadata;
 import com.mobi.catalog.api.record.RecordService;
 import com.mobi.catalog.api.record.config.OperationConfig;
 import com.mobi.catalog.api.record.config.RecordCreateSettings;
@@ -67,6 +69,7 @@ import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
 import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -1252,5 +1255,154 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
         verify(recordService).export(eq(ManagerTestConstants.RECORD_IRI),  any(OperationConfig.class), any(RepositoryConnection.class));
         verify(versionedRecordService).export(eq(ManagerTestConstants.VERSIONED_RECORD_IRI),  any(OperationConfig.class),
                 any(RepositoryConnection.class));
+    }
+
+    private void mockFindEntities(String ...records) {
+        trigRequired(repo, "/systemRepo/entities001.trig");
+        when(user.getResource()).thenReturn(VALUE_FACTORY.createIRI("http://mobi.com/theUser"));
+        when(pdp.createRequest(any(), any(), any(), any(), any(), any())).thenReturn(request);
+        when(pdp.filter(any(), any(IRI.class))).thenReturn(new HashSet<>(Arrays.asList(records)));
+    }
+
+    @Test
+    public void testFindEntities() throws Exception {
+        String record1 = "http://example.org/record1";
+        String record2 = "http://example.org/record2";
+        mockFindEntities(record1, record2);
+
+        PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder()
+                .searchText("Entity 2")
+                .limit(10)
+                .offset(0)
+                .build();
+        try (RepositoryConnection conn = repo.getConnection()) {
+            PaginatedSearchResults<EntityMetadata> results = manager.findEntities(ManagerTestConstants.CATALOG_IRI,
+                    searchParams, user, conn);
+            assertEquals(10, results.getPageSize());
+            assertEquals(1, results.getTotalSize());
+            assertEquals(1, results.getPageNumber());
+            assertEquals(1, results.getPage().size());
+            // Get the first EntityMetadata from the results
+            EntityMetadata entityMetadata = results.getPage().get(0);
+            assertEquals("http://example.org/entity2", entityMetadata.iri());
+            assertEquals("Entity 2 Label", entityMetadata.entityName());
+            assertEquals(1, entityMetadata.types().size());
+            assertEquals("http://example.org/EntityType2", entityMetadata.types().get(0));
+            assertEquals("This is a description for entity 2.", entityMetadata.description());
+
+            assertNotNull(entityMetadata.sourceRecord());
+            assertEquals("http://example.org/record2", entityMetadata.sourceRecord().get("iri"));
+            assertEquals("Record 2 Title", entityMetadata.sourceRecord().get("title"));
+            assertEquals("http://mobi.com/ontologies/catalog#OntologyRecord", entityMetadata.sourceRecord().get("type"));
+
+            assertEquals(1, entityMetadata.recordKeywords().size());
+            assertEquals("keyword3", entityMetadata.recordKeywords().get(0));
+
+            assertEquals(3, entityMetadata.matchingAnnotations().size());
+            assertEquals("This is a description for entity 2.", entityMetadata.matchingAnnotations().get(0).get("value"));
+            assertEquals("Entity 2 Label", entityMetadata.matchingAnnotations().get(1).get("value"));
+            assertEquals("Entity 2 Preferred Label", entityMetadata.matchingAnnotations().get(2).get("value"));
+        }
+    }
+
+    @Test
+    public void testFindEntitiesPaging() throws Exception {
+        String record1 = "http://example.org/record1";
+        String record2 = "http://example.org/record2";
+        mockFindEntities(record1, record2);
+
+        try (RepositoryConnection conn = repo.getConnection()) {
+            // Test Page 1 with limit of 10
+            PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder()
+                    .searchText("Object")
+                    .limit(10)
+                    .offset(0)
+                    .build();
+            PaginatedSearchResults<EntityMetadata> results = manager.findEntities(ManagerTestConstants.CATALOG_IRI,
+                    searchParams, user, conn);
+            assertEquals(10, results.getPageSize());
+            assertEquals(2, results.getTotalSize());
+            assertEquals(2, results.getPage().size());
+            assertEquals(1, results.getPageNumber());
+            Assert.assertEquals(List.of("http://example.org/entity1", "http://example.org/entity2"),
+                    results.getPage().stream().map(EntityMetadata::iri).toList());
+            Assert.assertEquals(List.of("http://example.org/record1",  "http://example.org/record2"),
+                    results.getPage().stream().map((e) -> e.sourceRecord().get("iri")).toList());
+            // Test Page 1
+            searchParams = new PaginatedSearchParams.Builder()
+                    .searchText("Object")
+                    .limit(1)
+                    .offset(0)
+                    .build();
+            results = manager.findEntities(ManagerTestConstants.CATALOG_IRI,
+                    searchParams, user, conn);
+            assertEquals(1, results.getPageSize());
+            assertEquals(2, results.getTotalSize());
+            assertEquals(1, results.getPage().size());
+            assertEquals(1, results.getPageNumber());
+            Assert.assertEquals(List.of("http://example.org/entity1"),
+                    results.getPage().stream().map(EntityMetadata::iri).toList());
+            Assert.assertEquals(List.of("http://example.org/record1"),
+                    results.getPage().stream().map((e) -> e.sourceRecord().get("iri")).toList());
+            // Test Page 2
+            searchParams = new PaginatedSearchParams.Builder().searchText("Object")
+                    .limit(1).offset(1).build();
+            results = manager.findEntities(ManagerTestConstants.CATALOG_IRI,
+                    searchParams, user, conn);
+            Assert.assertEquals(List.of("http://example.org/entity2"),
+                    results.getPage().stream().map(EntityMetadata::iri).toList());
+            Assert.assertEquals(List.of("http://example.org/record2"),
+                    results.getPage().stream().map((e) -> e.sourceRecord().get("iri")).toList());
+            assertEquals(1, results.getPageSize());
+            assertEquals(2, results.getTotalSize());
+            assertEquals(2, results.getPageNumber());
+            // Test Page 3
+            searchParams = new PaginatedSearchParams.Builder().searchText("Object")
+                    .limit(1).offset(2).build();
+            results = manager.findEntities(ManagerTestConstants.CATALOG_IRI,
+                    searchParams, user, conn);
+            Assert.assertEquals(List.of(),
+                    results.getPage().stream().map(EntityMetadata::iri).toList());
+            assertEquals(1, results.getPageSize());
+            assertEquals(2, results.getTotalSize());
+            assertEquals(3, results.getPageNumber());
+        }
+    }
+
+    @Test
+    public void testFindEntitiesExistsNoPermissions() throws Exception {
+        String record1 = "http://example.org/record1";
+        String record2 = "http://example.org/record2";
+        mockFindEntities(record1, record2);
+        when(pdp.filter(any(), any(IRI.class))).thenReturn(new HashSet<>());
+
+        PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder().searchText("Entity 2")
+                .limit(10).offset(0).build();
+        try (RepositoryConnection conn = repo.getConnection()) {
+            PaginatedSearchResults<EntityMetadata> results = manager.findEntities(ManagerTestConstants.CATALOG_IRI,
+                    searchParams, user, conn);
+            assertTrue(results.getPage().isEmpty());
+            assertEquals(0, results.getPageSize());
+            assertEquals(0, results.getTotalSize());
+            assertEquals(0, results.getPageNumber());
+        }
+    }
+
+    @Test
+    public void testFindEntitiesNotExist() throws Exception {
+        String record1 = "http://example.org/record1";
+        String record2 = "http://example.org/record2";
+        mockFindEntities(record1, record2);
+
+        PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder().searchText("NOT_EXIST")
+                .limit(10).offset(0).build();
+        try (RepositoryConnection conn = repo.getConnection()) {
+            PaginatedSearchResults<EntityMetadata> results = manager.findEntities(ManagerTestConstants.CATALOG_IRI,
+                    searchParams, user, conn);
+            assertTrue(results.getPage().isEmpty());
+            assertEquals(0, results.getPageSize());
+            assertEquals(0, results.getTotalSize());
+            assertEquals(0, results.getPageNumber());
+        }
     }
 }
