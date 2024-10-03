@@ -1,0 +1,17 @@
+PREFIX delim: <http://mobi.com/ontologies/delimited#>
+PREFIX catalog: <http://mobi.com/ontologies/catalog#>
+
+SELECT (COUNT(distinct ?classMapping) as ?totalClassMappings)
+WHERE {
+  GRAPH ?record {
+    ?record a catalog:Record;
+      catalog:masterBranch ?masterBranch .
+  }
+  GRAPH ?masterBranch {
+    ?masterBranch a catalog:MasterBranch;
+      catalog:headGraph ?headGraph .
+  }
+  GRAPH ?headGraph {
+    ?classMapping a delim:ClassMapping ;
+  }
+}

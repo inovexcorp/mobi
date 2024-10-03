@@ -1,0 +1,31 @@
+@prefix delim: <http://mobi.com/ontologies/delimited#> .
+@prefix catalog: <http://mobi.com/ontologies/catalog#> .
+
+<http://example.com/record/1> {
+    <http://example.com/record/1> a catalog:Record ;
+        catalog:masterBranch <http://example.com/masterBranch/1> .
+}
+
+<http://example.com/record/2> {
+    <http://example.com/record/2> a catalog:Record ;
+        catalog:masterBranch <http://example.com/masterBranch/2> .
+}
+
+<http://example.com/masterBranch/1> {
+    <http://example.com/masterBranch/1> a catalog:MasterBranch ;
+        catalog:headGraph <http://example.com/headGraph/1> .
+}
+
+<http://example.com/masterBranch/2> {
+    <http://example.com/masterBranch/2> a catalog:MasterBranch ;
+        catalog:headGraph <http://example.com/headGraph/2> .
+}
+
+<http://example.com/headGraph/1> {
+    <http://example.com/classMapping/1> a delim:ClassMapping .
+    <http://example.com/classMapping/2> a delim:ClassMapping .
+}
+
+<http://example.com/headGraph/2> {
+    <http://example.com/classMapping/3> a delim:ClassMapping .
+}
