@@ -143,7 +143,26 @@ const ontologyStackCommands = {
           .waitForElementVisible('create-object-property-overlay h1.mat-dialog-title')
           .assert.textContains('create-object-property-overlay h1.mat-dialog-title', 'Create New OWL Object Property')
           .waitForElementVisible('create-object-property-overlay mat-form-field input[name="name"]');
-  },
+    },
+
+    removeDatatypeProperty: function(propIRI, propValue, individualIRI) {
+        const propertyValuePath = `//datatype-property-block//value-display//span[text()[contains(., "${propValue}")]]//ancestor::property-values//div[contains(@class, "button-container")]//button[contains(@title, "Delete")]`
+        const deleteCommands = function() {
+            browser.useXpath();
+            browser.waitForElementVisible(`//datatype-property-block//value-display//span[text()[contains(., "${propValue}")]]`);
+            browser.element(propertyValuePath).moveTo(0, 0);
+            browser.element(propertyValuePath).click();
+            browser.waitForElementVisible('//confirm-modal');
+            browser.assert.elementPresent(`//confirm-modal//div//strong[text()[contains(., "${propIRI}")]]`);
+            browser.assert.elementPresent(`//confirm-modal//div//strong[text()[contains(., "${propValue}")]]`);
+            browser.assert.elementPresent(`//confirm-modal//div//strong[text()[contains(., "${individualIRI}")]]`);
+            browser.element('//confirm-modal//button[contains(@class, "mat-primary")]').click();
+            browser.globals.wait_for_no_spinners(browser);
+            browser.useXpath();
+            browser.assert.not.elementPresent(`//datatype-property-block//value-display//span[text()[contains(., "${propValue}")]]`);
+        }
+        return deleteCommands()
+    }
 }
 
 const projectTabCommands = {

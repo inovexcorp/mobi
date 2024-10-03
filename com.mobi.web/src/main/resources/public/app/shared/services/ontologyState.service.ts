@@ -2408,7 +2408,7 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
     getRemovePropOverlayMessage(key: string, index: number): string {
         return `<p>Are you sure you want to remove:<br><strong>${key}</strong></p><p>with value:<br><strong>`
             + `${this.getPropValueDisplay(key, index)}</strong></p><p>from:<br><strong>`
-            + `${this.listItem.selected['@id']}</strong>?</p>`;
+            + `${this.listItem.selected['@id']}</strong> ?</p>`;
     }
     /**
      * Creates a display of the specified property value on the selected entity on the currently selected
