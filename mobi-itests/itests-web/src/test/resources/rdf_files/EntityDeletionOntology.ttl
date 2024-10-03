@@ -14,10 +14,12 @@
 
 <https://mobi.com/ontologies/EntityDeletionOntology#TestIndividual> a <https://mobi.com/ontologies/EntityDeletionOntology#SecondTestClass>,
     <http://www.w3.org/2002/07/owl#NamedIndividual>;
-  <http://purl.org/dc/terms/title> "Test Individual" .
+  <http://purl.org/dc/terms/title> "Test Individual";
+  <https://mobi.com/ontologies/EntityDeletionOntology#testDataProperty> "test value" .
 
 <https://mobi.com/ontologies/EntityDeletionOntology#TestConcept> a <http://www.w3.org/2002/07/owl#NamedIndividual>,
     <http://www.w3.org/2004/02/skos/core#Concept>;
+  <https://mobi.com/ontologies/EntityDeletionOntology#testDataProperty> "test concept value";
   <http://www.w3.org/2004/02/skos/core#prefLabel> "Test Concept" .
 
 <https://mobi.com/ontologies/EntityDeletionOntology#TestScheme> a <http://www.w3.org/2002/07/owl#NamedIndividual>,

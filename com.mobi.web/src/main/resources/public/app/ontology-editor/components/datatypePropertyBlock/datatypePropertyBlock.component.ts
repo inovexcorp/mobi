@@ -89,14 +89,14 @@ export class DatatypePropertyBlockComponent implements OnChanges {
             }
         });
     }
-    showRemovePropertyOverlay(input: {key: string, index: number}): void {
+    showRemovePropertyOverlay(input: {iri: string, index: number}): void {
         this.dialog.open(ConfirmModalComponent,{
             data: {
-                content: `Are you sure you want to clear <strong>${this.os.getRemovePropOverlayMessage(input.key, input.index)}</strong>?`
+                content: `${this.os.getRemovePropOverlayMessage(input.iri, input.index)}`
             }
         }).afterClosed().subscribe((result: boolean) => {
             if (result) {
-                this.os.removeProperty(input.key, input.index).subscribe();
+                this.os.removeProperty(input.iri, input.index).subscribe();
                 this.updatePropertiesFiltered();
             }
         });
