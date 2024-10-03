@@ -31,6 +31,8 @@ import com.mobi.catalog.api.record.RecordService;
 import com.mobi.catalog.api.record.config.RecordCreateSettings;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
 import com.mobi.catalog.api.record.config.VersionedRDFRecordCreateSettings;
+import com.mobi.catalog.api.record.statistic.Statistic;
+import com.mobi.catalog.api.record.statistic.StatisticDefinition;
 import com.mobi.etl.api.delimited.MappingManager;
 import com.mobi.etl.api.delimited.MappingWrapper;
 import com.mobi.etl.api.delimited.record.config.MappingRecordCreateSettings;
@@ -38,6 +40,7 @@ import com.mobi.etl.api.ontologies.delimited.MappingRecord;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.persistence.utils.ResourceUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
@@ -55,9 +58,25 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.OffsetDateTime;
+import java.util.List;
+import java.util.Objects;
 
 public abstract class AbstractMappingRecordService<T extends MappingRecord>
         extends AbstractVersionedRDFRecordService<T> implements RecordService<T> {
+
+    private static final String CLASS_MAPPINGS_STATISTIC_QUERY;
+    private static final StatisticDefinition CLASS_MAPPINGS_STATISTIC_DEFINITION;
+
+    static {
+        try {
+            CLASS_MAPPINGS_STATISTIC_QUERY = IOUtils.toString(Objects.requireNonNull(AbstractMappingRecordService.class
+                    .getResourceAsStream("/total-class-mappings.rq")), StandardCharsets.UTF_8);
+            CLASS_MAPPINGS_STATISTIC_DEFINITION = new StatisticDefinition(
+                    "totalClassMappings", "The total number of Class Mappings.");
+        } catch (IOException e) {
+            throw new MobiException(e);
+        }
+    }
 
     @Reference
     public MappingManager manager;
@@ -131,6 +150,13 @@ public abstract class AbstractMappingRecordService<T extends MappingRecord>
         } catch (IOException e) {
             throw new MobiException("Error writing record policy.", e);
         }
+    }
+
+    @Override
+    public List<Statistic> getStatistics(Resource recordId, RepositoryConnection conn) {
+        return List.of(
+                getStatistic(recordId, conn, CLASS_MAPPINGS_STATISTIC_QUERY, CLASS_MAPPINGS_STATISTIC_DEFINITION)
+        );
     }
 
     private MappingWrapper createMapping(RecordOperationConfig config) {
