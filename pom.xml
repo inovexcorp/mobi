@@ -27,7 +27,7 @@
 
     <groupId>com.mobi</groupId>
     <artifactId>root</artifactId>
-    <version>3.1.0-SNAPSHOT</version>
+    <version>3.1.2-SNAPSHOT</version>
 
     <packaging>pom</packaging>
 
