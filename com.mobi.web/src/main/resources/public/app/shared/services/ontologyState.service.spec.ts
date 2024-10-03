@@ -4873,7 +4873,7 @@ describe('Ontology State Service', function() {
     service.listItem = listItem;
     listItem.selected = {'@id': ''};
     spyOn(service, 'getPropValueDisplay').and.returnValue('value');
-    expect(service.getRemovePropOverlayMessage('key', 0)).toEqual(`<p>Are you sure you want to remove:<br><strong>key</strong></p><p>with value:<br><strong>value</strong></p><p>from:<br><strong>${service.listItem.selected['@id']}</strong>?</p>`);
+    expect(service.getRemovePropOverlayMessage('key', 0)).toEqual(`<p>Are you sure you want to remove:<br><strong>key</strong></p><p>with value:<br><strong>value</strong></p><p>from:<br><strong>${service.listItem.selected['@id']}</strong> ?</p>`);
     expect(service.getPropValueDisplay).toHaveBeenCalledWith('key', 0);
   });
   describe('getPropValueDisplay should return the correct display if the property is', function() {

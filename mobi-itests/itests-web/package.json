@@ -12,8 +12,8 @@
     "verify": "./node_modules/.bin/verify-junit-xml ./target/nightwatch-reports/*/*.xml"
   },
   "devDependencies": {
-    "chromedriver": "125.0.2",
-    "nightwatch": "3.4.0"
+    "chromedriver": "129.0.2",
+    "nightwatch": "3.7.0"
   },
   "author": "",
   "license": "ISC",

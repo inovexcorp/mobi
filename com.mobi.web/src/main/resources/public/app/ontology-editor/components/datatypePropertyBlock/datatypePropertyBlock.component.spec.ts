@@ -163,11 +163,11 @@ describe('Datatype Property Block component', function() {
             expect(matDialog.open).toHaveBeenCalledWith(DatatypePropertyOverlayComponent, { data: data });
         });
         it('should set the correct manager values when opening the Remove Data Property Overlay', function() {
-            component.showRemovePropertyOverlay({key: 'key', index: 1});
+            component.showRemovePropertyOverlay({iri: 'key', index: 1});
             expect(ontologyStateStub.getRemovePropOverlayMessage).toHaveBeenCalledWith('key', 1);
             expect(matDialog.open).toHaveBeenCalledWith(ConfirmModalComponent, { 
                 data: { 
-                    content: `Are you sure you want to clear <strong>${ontologyStateStub.getRemovePropOverlayMessage('key', 1)}</strong>?`
+                    content: `${ontologyStateStub.getRemovePropOverlayMessage('key', 1)}`
                 }
             });
         });
