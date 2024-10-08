@@ -51,6 +51,23 @@
     </mat-card-subtitle>
     <mat-card-content>
         <p class="entity-description">{{ entity.description || '(no description)' }}</p>
+        <div class="annotation-section">
+            <div class="mb-1">
+                <div class="matching-annotations">{{ entity.totalNumMatchingAnnotations || 0 }} Matching Annotations(s)</div>
+                <div *ngIf="entity.totalNumMatchingAnnotations > 5">Only the first 5 matching annotations are shown.</div>
+            </div>
+            <dl class="annotation-list" *ngIf="entity.matchingAnnotations">
+                <ng-container *ngFor="let annotation of entity.matchingAnnotations">
+                    <div class="annotation-item">
+                    <dt>
+                        <span class="prop-name">{{ annotation.propName }}</span>
+                        <span class="text-muted text-center ml-1">{{ annotation.prop }}</span>
+                    </dt>
+                    <dd [title]="annotation.value" [innerHtml]="annotation.matchValue | highlightText:state.paginationConfig.searchText"></dd>
+                    </div>
+                </ng-container>
+            </dl>
+        </div>
     </mat-card-content>
     <mat-divider></mat-divider>
     <mat-card-actions class="d-flex justify-content-end">

@@ -21,15 +21,13 @@
  * #L%
  */
 import { Injectable } from '@angular/core';
-import { HttpResponse } from '@angular/common/http';
-import { EntityRecord } from '../models/entity-record';
-
 import { Observable, of } from 'rxjs';
 import { switchMap } from 'rxjs/operators';
 
+import { EntityRecord } from '../models/entity-record';
 import { PaginatedConfig } from '../../shared/models/paginatedConfig.interface';
-import { DCTERMS } from '../../prefixes';
 import { EntitySearchManagerService } from './entity-search-manager.service';
+
 
 @Injectable({
   providedIn: 'root'
@@ -95,8 +93,8 @@ export class EntitySearchStateService {
     return this.em.getEntities(this.paginationConfig)
       .pipe(
         switchMap(response => {
-          this.setPagination(response);
-          return of(response.body);
+          this.setPagination(response.totalCount);
+          return of(response.page);
         })
       );
   }
@@ -111,12 +109,11 @@ export class EntitySearchStateService {
   }
 
   /**
-   * Sets the pagination state variables based on the information in the passed response from
-   * an HTTP call.
+   * Updates the pagination state variables based on the total number of results.
    *
-   * @param {HttpResponse<EntityRecord[]>} response A response from a paginated HTTP call
+   * @param {number} totalCount - The total number of results returned from a paginated HTTP call.
    */
-  setPagination(response: HttpResponse<EntityRecord[]>): void {
-    this.totalResultSize = Number(response.headers.get('x-total-count')) || 0;
+  setPagination(totalCount: number): void {
+    this.totalResultSize = totalCount;
   }
 }

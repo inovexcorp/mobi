@@ -23,7 +23,6 @@
 import { TestBed } from '@angular/core/testing';
 import { EntitySearchManagerService } from './entity-search-manager.service';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { HttpResponse } from '@angular/common/http';
 
 import { EntityRecord } from '../models/entity-record';
 import { PaginatedConfig } from '../../shared/models/paginatedConfig.interface';
@@ -31,6 +30,7 @@ import { SearchResultsMock } from '../mock-data/search-results.mock';
 import { MockProvider } from 'ng-mocks';
 import { CatalogManagerService } from '../../shared/services/catalogManager.service';
 import { ProgressSpinnerService } from '../../shared/components/progress-spinner/services/progressSpinner.service';
+import { PaginatedResponse } from '../models/paginated-response.interface';
 
 describe('EntitySearchManagerService', () => {
   let service: EntitySearchManagerService;
@@ -85,16 +85,49 @@ describe('EntitySearchManagerService', () => {
         keywords: ['test'],
         creators: ['test']
       };
-
-      service.getEntities(config).subscribe((data: HttpResponse<EntityRecord[]>) => {
-        expect(data.body.length).toBe(4);
-        expect(data.body).toEqual(entities);
-        expect(data.status).toEqual(200);
+      service.getEntities(config).subscribe((response: PaginatedResponse<EntityRecord[]>) => {
+        expect(response.page.length).toBe(4);
+        expect(response.page).toEqual(entities);
       });
-
       const req = httpMock.expectOne(`${url}`);
       expect(req.request.method).toBe('GET');
       req.flush(entities);
+    });
+  });
+
+  describe('Entity Search substring display', () => {
+    const str = 'This is a test string that has a bunch of words with more content.';
+    const tests = [
+      {
+        searchText: 'bunch',
+        expected: '...has a bunch of words...'
+      },
+      {
+        searchText: 'test',
+        expected: '...is a test string that...'
+      },
+      {
+        searchText: 'content',
+        expected: '...with more content.'
+      },
+      {
+        searchText: 'This',
+        expected: 'This is a...'
+      },
+      {
+        searchText: 'string',
+        expected: '...a test string that has...'
+      },
+      {
+        searchText: 'has',
+        expected: '...string that has a bunch...'
+      }
+    ];
+    tests.forEach(test => {
+      it(`should truncate correctly for search "${test.searchText}"`, () => {
+        const result = service.getSubstringMatch(str, test.searchText);
+        expect(result).toEqual(test.expected);
+      });
     });
   });
 });

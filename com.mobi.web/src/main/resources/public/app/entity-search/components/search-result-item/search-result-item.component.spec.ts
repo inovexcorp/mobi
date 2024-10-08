@@ -29,13 +29,15 @@ import { By } from '@angular/platform-browser';
 import { MatCardModule } from '@angular/material/card';
 
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockComponent } from 'ng-mocks';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { DebugElement } from '@angular/core';
 
 import { PrefixationPipe } from '../../../shared/pipes/prefixation.pipe';
+import { HighlightTextPipe } from '../../../shared/pipes/highlightText.pipe';
 import { EntityRecord } from '../../models/entity-record';
 import { SearchResultsMock } from '../../mock-data/search-results.mock';
 import { RecordIconComponent } from '../../../shared/components/recordIcon/recordIcon.component';
+import { EntitySearchStateService } from '../../services/entity-search-state.service';
 import { SearchResultItemComponent } from './search-result-item.component';
 import { OpenRecordButtonComponent } from '../../../catalog/components/openRecordButton/openRecordButton.component';
 
@@ -43,6 +45,7 @@ describe('SearchResultItemComponent', () => {
   let component: SearchResultItemComponent;
   let element: DebugElement;
   let fixture: ComponentFixture<SearchResultItemComponent>;
+  let searchManagerStub: jasmine.SpyObj<EntitySearchStateService>;
 
   const entityRecord: EntityRecord = SearchResultsMock[0];
   const record = {
@@ -55,11 +58,13 @@ describe('SearchResultItemComponent', () => {
     await TestBed.configureTestingModule({
       declarations: [
         SearchResultItemComponent,
+        MockPipe(HighlightTextPipe, (value: string) => value),
         MockComponent(RecordIconComponent),
         MockComponent(OpenRecordButtonComponent)
       ],
       providers: [
-        PrefixationPipe
+        PrefixationPipe,
+        MockProvider(EntitySearchStateService)
       ],
       imports: [
         MatIconModule,
@@ -70,8 +75,14 @@ describe('SearchResultItemComponent', () => {
         MatIconTestingModule
       ]
     })
-      .compileComponents();
+    .compileComponents();
 
+    searchManagerStub = TestBed.inject(EntitySearchStateService) as jasmine.SpyObj<EntitySearchStateService>;
+    searchManagerStub.paginationConfig = {
+      limit: 10,
+      pageIndex: 0,
+      searchText: ''
+    };
     fixture = TestBed.createComponent(SearchResultItemComponent);
     component = fixture.componentInstance;
     element = fixture.debugElement;
@@ -83,6 +94,7 @@ describe('SearchResultItemComponent', () => {
     fixture = null;
     component = null;
     element = null;
+    searchManagerStub = null;
   });
 
   it('should create', () => {
@@ -120,6 +132,27 @@ describe('SearchResultItemComponent', () => {
       expect(recordTitle.textContent.trim()).toBe(entityRecord.record.title);
       const recordIconComponent = element.query(By.directive(RecordIconComponent)).componentInstance;
       expect(recordIconComponent.record).toEqual(record);
+    });
+    it('should display the correct number of matching annotations and annotations list', () => {
+      entityRecord.totalNumMatchingAnnotations = 6;
+      entityRecord.matchingAnnotations = [
+        { propName: 'Entity1Name', prop: 'Entity1', matchValue: 'MatchedValue1', value: 'Value1' },
+        { propName: 'Entity2Name', prop: 'Entity2', matchValue: 'MatchedValue2', value: 'Value2' },
+        { propName: 'Entity3Name', prop: 'Entity3', matchValue: 'MatchedValue3', value: 'Value3' },
+        { propName: 'Entity4Name', prop: 'Entity4', matchValue: 'MatchedValue4', value: 'Value4' },
+        { propName: 'Entity5Name', prop: 'Entity5', matchValue: 'MatchedValue5', value: 'Value5' }
+      ];
+      fixture.detectChanges();
+  
+      const matchingAnnotations = element.query(By.css('.matching-annotations')).nativeElement;
+      const annotationsMessage = element.query(By.css('.annotation-section div:nth-child(2)')).nativeElement;
+      const annotationItems = element.queryAll(By.css('.annotation-item'));
+  
+      expect(matchingAnnotations.textContent.trim()).toEqual('6 Matching Annotations(s)');
+      expect(annotationsMessage.textContent.trim()).toEqual('Only the first 5 matching annotations are shown.');
+      expect(annotationItems.length).toEqual(5);
+      expect(annotationItems[0].queryAll(By.css('.prop-name'))[0].nativeElement.textContent.trim()).toEqual('Entity1Name');
+      expect(annotationItems[0].queryAll(By.css('dd'))[0].nativeElement.textContent.trim()).toEqual('MatchedValue1');
     });
   });
 });

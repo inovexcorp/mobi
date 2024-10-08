@@ -39,7 +39,9 @@ export const SearchResultsMock: EntityRecord[] = [
     matchingAnnotations: [
       {
         prop: 'http://www.w3.org/2000/01/rdf-schema#comment',
-        value: 'A class to demonstrate mistakes made with setting a property domain. The property hasTopping has a domain of Pizza. This means that the reasoner can infer that all individuals using the hasTopping property must be of type Pizza. Because of the restriction on this class, all members of IceCream must use the hasTopping property, and therefore must also be members of Pizza. However, Pizza and IceCream are disjoint, so this causes an inconsistency. If they were not disjoint, IceCream would be inferred to be a subclass of Pizza.'
+        value: 'A class to demonstrate mistakes made with setting a property domain. The property hasTopping has a domain of Pizza. This means that the reasoner can infer that all individuals using the hasTopping property must be of type Pizza. Because of the restriction on this class, all members of IceCream must use the hasTopping property, and therefore must also be members of Pizza. However, Pizza and IceCream are disjoint, so this causes an inconsistency. If they were not disjoint, IceCream would be inferred to be a subclass of Pizza.',
+        propName: 'Comment',
+        matchValue: '...demonstrate mistakes...'
       }
     ],
     totalNumMatchingAnnotations: 1
@@ -60,7 +62,9 @@ export const SearchResultsMock: EntityRecord[] = [
     matchingAnnotations: [
       {
         prop: 'http://www.w3.org/2000/01/rdf-schema#comment',
-        value: 'A class representing different types of cheese used as toppings on pizzas. This class includes various cheese types like mozzarella, cheddar, and parmesan.'
+        value: 'A class representing different types of cheese used as toppings on pizzas. This class includes various cheese types like mozzarella, cheddar, and parmesan.',
+        propName: 'Comment',
+        matchValue: '...different types...'
       }
     ],
     totalNumMatchingAnnotations: 1
@@ -81,7 +85,9 @@ export const SearchResultsMock: EntityRecord[] = [
     matchingAnnotations: [
       {
         prop: 'http://www.w3.org/2000/01/rdf-schema#comment',
-        value: 'A class for different types of tomato sauces used as bases for pizzas. This includes marinara, arrabbiata, and other tomato-based sauces.'
+        value: 'A class for different types of tomato sauces used as bases for pizzas. This includes marinara, arrabbiata, and other tomato-based sauces.',
+        propName: 'Comment',
+        matchValue: '...different types...'
       }
     ],
     totalNumMatchingAnnotations: 1
@@ -102,7 +108,9 @@ export const SearchResultsMock: EntityRecord[] = [
     matchingAnnotations: [
       {
         prop: 'http://www.w3.org/2000/01/rdf-schema#comment',
-        value: 'A class for pepperoni, a popular pizza topping made from cured pork and beef seasoned with paprika or other chili pepper.'
+        value: 'A class for pepperoni, a popular pizza topping made from cured pork and beef seasoned with paprika or other chili pepper.',
+        propName: 'Comment',
+        matchValue: '...popular pizza...'
       }
     ],
     totalNumMatchingAnnotations: 1

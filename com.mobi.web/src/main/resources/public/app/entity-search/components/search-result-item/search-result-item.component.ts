@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, ViewEncapsulation } from '@angular/core';
 
 import { orderBy } from 'lodash';
 
@@ -29,6 +29,7 @@ import { EntityRecord } from '../../models/entity-record';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { PrefixationPipe } from '../../../shared/pipes/prefixation.pipe';
 import { DC } from '../../../prefixes';
+import { EntitySearchStateService } from '../../services/entity-search-state.service';
 
 /**
  * Component for displaying a single search result item.
@@ -40,7 +41,8 @@ import { DC } from '../../../prefixes';
 @Component({
   selector: 'app-search-result-item',
   templateUrl: './search-result-item.component.html',
-  styleUrls: ['./search-result-item.component.scss']
+  styleUrls: ['./search-result-item.component.scss'],
+  encapsulation: ViewEncapsulation.None,
 })
 export class SearchResultItemComponent implements OnInit {
   /**
@@ -101,9 +103,12 @@ export class SearchResultItemComponent implements OnInit {
    * Constructor for the MyClass class.
    *
    * @param {PrefixationPipe} prefixation - The PrefixationPipe instance to be injected.
+   * @param {EntitySearchStateService} state - The EntitySearchStateService instance to be injected.
    * @return {void}
    */
-  constructor(private prefixation: PrefixationPipe) {
+  constructor(
+    private prefixation: PrefixationPipe,
+    public state: EntitySearchStateService) {
   }
 
   /**

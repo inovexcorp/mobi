@@ -81,7 +81,25 @@ module.exports = {
       .assert.attributeEquals('@paginationNext', 'disabled', null)
       .assert.attributeEquals('@paginationPrevious', 'disabled', 'true');
   },
-  'Step 8: Open entity' : function(browser) {
+
+  'Step 8: Verify Matching Annotations': function (browser) {
+    // Step to ensure we are on the entity search page before testing
+    browser.page.entitySearchPage().clearEntitySearchBar();
+    browser.page.entitySearchPage().applySearchText('pizza');
+
+    // Wait for the annotations to be visible
+    browser.waitForElementVisible('app-entity-search-page app-search-results-list mat-card mat-card-title');
+    browser.expect.elements('app-entity-search-page app-search-results-list mat-card mat-card-title').count.to.equal(10);
+    // Verify that the correct number of matching annotations is displayed for the selected entity
+    var expectedAnnotationsCount = 1;
+    browser.expect.elements('app-entity-search-page app-search-results-list app-search-result-item:nth-child(1) mat-card .annotation-section .annotation-list .annotation-item').count.to.equal(expectedAnnotationsCount);
+    browser.expect.element('app-entity-search-page app-search-results-list app-search-result-item:nth-child(1) mat-card .annotation-section:nth-of-type(1) .mb-1 div').text.to.contain('1 Matching Annotations(s)');
+    // Verify that each annotation is displayed correctly for the selected entity
+    browser.expect.element('app-entity-search-page app-search-results-list app-search-result-item:nth-child(1) mat-card .annotation-section .annotation-list .annotation-item:nth-of-type(1) .prop-name').to.be.present;
+    browser.expect.element('app-entity-search-page app-search-results-list app-search-result-item:nth-child(1) mat-card .annotation-section .annotation-list .annotation-item:nth-of-type(1) dd').to.be.present;
+  },
+
+  'Step 9: Open entity' : function(browser) {
     browser.page.entitySearchPage().clearEntitySearchBar();
     browser.page.entitySearchPage().applySearchText('pizza');
     browser.globals.wait_for_no_spinners(browser);

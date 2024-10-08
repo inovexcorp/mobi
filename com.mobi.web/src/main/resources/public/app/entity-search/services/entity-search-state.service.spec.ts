@@ -30,20 +30,14 @@ import { PaginatedConfig } from '../../shared/models/paginatedConfig.interface';
 import { of } from 'rxjs';
 import { EntityRecord } from '../models/entity-record';
 import { SearchResultsMock } from '../mock-data/search-results.mock';
-import { HttpHeaders, HttpResponse } from '@angular/common/http';
+import { PaginatedResponse } from '../models/paginated-response.interface';
 
 describe('EntitySearchStateService', () => {
   let service: EntitySearchStateService;
   let stateManagerStub: jasmine.SpyObj<EntitySearchManagerService>;
 
   const entityRecords: EntityRecord[] = SearchResultsMock;
-  const totalSize = 10;
-  const headers = {'x-total-count': '' + totalSize};
-  const mockResponse = {
-    body: entityRecords,
-    headers: new HttpHeaders(headers)
-  };
-
+  
   beforeEach(() => {
     TestBed.configureTestingModule({
       providers: [
@@ -64,10 +58,11 @@ describe('EntitySearchStateService', () => {
     expect(service).toBeTruthy();
   });
   it('should set results', () => {
-    stateManagerStub.getEntities.and.returnValue(of(new HttpResponse<EntityRecord[]>(mockResponse)));
+    const mockPaginatedResponse: PaginatedResponse<EntityRecord[]> = {page: entityRecords, totalCount: entityRecords.length};
+    stateManagerStub.getEntities.and.returnValue(of(mockPaginatedResponse));
     service.setResults().subscribe(result => {
       expect(result).toEqual(entityRecords);
-      expect(service.totalResultSize).toEqual(10);
+      expect(service.totalResultSize).toEqual(4);
     });
   });
   it('should reset pagination', () => {
