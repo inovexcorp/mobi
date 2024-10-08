@@ -32,11 +32,22 @@ export interface MatchingAnnotations {
    */
   prop: string;
   /**
+   * Property Name.
+   * @type {string}
+   */
+  propName: string;
+  /**
    * Property value.
    *
    * @typedef {string} value
    */
   value: string;
+  /**
+   * Result of search matching for property value .
+   *
+   * @typedef {string} value
+   */
+  matchValue: string;
 }
 
 /**

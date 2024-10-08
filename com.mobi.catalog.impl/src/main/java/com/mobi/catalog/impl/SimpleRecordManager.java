@@ -80,6 +80,7 @@ import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -318,13 +319,17 @@ public class SimpleRecordManager implements RecordManager {
         }
         List<String> predObjectPairs = Arrays.asList(getValueOrEmptyString(bindings, "predObjects")
                 .split(PAIR_SEPARATOR_DELIMITER));
-        List<Map<String, String>> matchingAnnotations = predObjectPairs.stream().map((String pair) -> {
-            String[] pairSplit = pair.split(SEPARATOR_DELIMITER);
-            Map<String, String> annotationMap = new LinkedHashMap<>();
-            annotationMap.put("prop", pairSplit[0]);
-            annotationMap.put("value", pairSplit[1]);
-            return annotationMap;
-        }).toList();
+        List<Map<String, String>> matchingAnnotations = predObjectPairs.stream()
+                .map((String pair) -> {
+                    String[] pairSplit = pair.split(SEPARATOR_DELIMITER);
+                    Map<String, String> annotationMap = new LinkedHashMap<>();
+                    annotationMap.put("prop", pairSplit[0]);
+                    annotationMap.put("propName", IRIUtils.getBeautifulIRILabel(pairSplit[0]));
+                    annotationMap.put("value", pairSplit[1]);
+                    return annotationMap;
+                })
+                .sorted(Comparator.comparing(map -> map.get("prop")))
+                .toList();
         return new EntityMetadata(iri, entityName, entityTypes, description, metadataMap,
                 recordKeywords, matchingAnnotations);
     }

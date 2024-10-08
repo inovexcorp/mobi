@@ -57,3 +57,32 @@
     -webkit-line-clamp: 2;
   }
 }
+
+.annotation-section {
+  margin-top: 2rem;
+  .matching-annotations {
+    font-size: 1.2em;
+  }
+  .annotation-list {
+    .annotation-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      dt {
+        width: 60%;
+        .prop-name {
+          margin-right: .2rem;
+        }
+      }
+      dd {
+        width: 40%;
+        padding-left: 3rem;
+        flex: 1;
+        .highlight-text {
+          font-weight: initial;
+          background-color: var(--yellow);
+        }
+      }
+    }
+  }
+}
