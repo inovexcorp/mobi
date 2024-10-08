@@ -47,12 +47,16 @@ import { ShapesGraphListItem } from '../../../shared/models/shapesGraphListItem.
 import { WorkflowsStateService } from '../../../workflows/services/workflows-state.service';
 import { WorkflowSchema } from '../../../workflows/models/workflow-record.interface';
 import { OpenRecordButtonComponent } from './openRecordButton.component';
+import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
+import { HttpResponse } from '@angular/common/http';
+import { EntityNamesItem } from '../../../shared/models/entityNamesItem.interface';
 
-describe('Open Record Button component', function() {
+describe('Open Record Button component', function () {
   let component: OpenRecordButtonComponent;
   let element: DebugElement;
   let fixture: ComponentFixture<OpenRecordButtonComponent>;
   let catalogStateStub: jasmine.SpyObj<CatalogStateService>;
+  let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
   let mapperStateStub: jasmine.SpyObj<MapperStateService>;
   let ontologyStateStub: jasmine.SpyObj<OntologyStateService>;
   let policyEnforcementStub: jasmine.SpyObj<PolicyEnforcementService>;
@@ -63,10 +67,30 @@ describe('Open Record Button component', function() {
   let router: Router;
 
   const recordId = 'recordId';
+  const error = 'Error message';
   const record: JSONLDObject = {
     '@id': recordId,
     '@type': [`${CATALOG}Record`],
     [`${DCTERMS}title`]: [{ '@value': 'title' }]
+  };
+  const entityRecord: JSONLDObject = {
+    '@id': recordId,
+    '@type': [`${CATALOG}Record`],
+    entityIRI: 'id',
+    [`${CATALOG}masterBranch`]: [{'@id': 'masterBranch'}],
+    [`${DCTERMS}title`]: [{'@value': 'title'}]
+  };
+
+  const entityInfo: EntityNamesItem = {
+    label: 'label',
+    names: ['name'],
+    imported: false,
+    ontologyId: 'id'
+  };
+  const branch: JSONLDObject = {
+    '@id': 'branchId',
+    '@type': [`${CATALOG}Branch`],
+    [`${CATALOG}head`]: [{'@id': 'commitId'}]
   };
 
   beforeEach(async () => {
@@ -77,6 +101,7 @@ describe('Open Record Button component', function() {
       ],
       providers: [
         MockProvider(CatalogStateService),
+        MockProvider(CatalogManagerService),
         MockProvider(ShapesGraphStateService),
         MockProvider(MapperStateService),
         MockProvider(OntologyStateService),
@@ -91,6 +116,7 @@ describe('Open Record Button component', function() {
     component = fixture.componentInstance;
     element = fixture.debugElement;
     catalogStateStub = TestBed.inject(CatalogStateService) as jasmine.SpyObj<CatalogStateService>;
+    catalogManagerStub = TestBed.inject(CatalogManagerService) as jasmine.SpyObj<CatalogManagerService>;
     ontologyStateStub = TestBed.inject(OntologyStateService) as jasmine.SpyObj<OntologyStateService>;
     mapperStateStub = TestBed.inject(MapperStateService) as jasmine.SpyObj<MapperStateService>;
     policyEnforcementStub = TestBed.inject(PolicyEnforcementService) as jasmine.SpyObj<PolicyEnforcementService>;
@@ -101,6 +127,10 @@ describe('Open Record Button component', function() {
     router = TestBed.inject(Router) as jasmine.SpyObj<Router>;
     spyOn(router, 'navigate');
 
+    ontologyStateStub.getEntityByRecordId.and.returnValue(entityInfo);
+    ontologyStateStub.changeVersion.and.returnValue(of(null));
+    catalogManagerStub.getRecords.and.returnValue(of(new HttpResponse<JSONLDObject[]>({body: [entityRecord]})));
+    catalogManagerStub.getRecordMasterBranch.and.callFake(() => of(branch));
     policyEnforcementStub.permit = 'Permit';
     policyEnforcementStub.deny = 'Deny';
   });
@@ -112,6 +142,7 @@ describe('Open Record Button component', function() {
     fixture = null;
     catalogStateStub = null;
     mapperStateStub = null;
+    catalogManagerStub = null;
     ontologyStateStub = null;
     workflowsStateStub = null;
     policyEnforcementStub = null;
@@ -162,6 +193,15 @@ describe('Open Record Button component', function() {
         component.openRecord(this.event);
         expect(component.openWorkflow).toHaveBeenCalledWith();
       });
+      it('Entity Search results is an Ontology Record', function () {
+        component.recordType = `${ONTOLOGYEDITOR}OntologyRecord`;
+        catalogManagerStub.getInProgressCommit.and.returnValue(throwError(error));
+        spyOn(component, 'openOntology');
+        spyOn(component, 'updateEntityRecord');
+        component.openRecord(this.event);
+        expect(component.openOntology).toHaveBeenCalledWith();
+        expect(this.event.stopPropagation).toHaveBeenCalledWith();
+      });
     });
     describe('openOntology navigates to the ontology editor', function() {
       beforeEach(function() {
@@ -202,6 +242,64 @@ describe('Open Record Button component', function() {
           expect(router.navigate).toHaveBeenCalledWith(['/ontology-editor']);
           expect(ontologyStateStub.open).toHaveBeenCalledWith(recordSelect);
           expect(toastStub.createErrorToast).toHaveBeenCalledWith('error');
+        }));
+      });
+    });
+    describe('Entity record openOntology and navigates to the ontology editor', function () {
+      beforeEach(function () {
+        component.record = entityRecord;
+      });
+      it('if it is already open', function () {
+        const listItem = new OntologyListItem();
+        component.isEntityRecord = true;
+        component.hasCommitInProgress = false;
+        listItem.currentVersionTitle = 'Master';
+        listItem.versionedRdfRecord.recordId = entityRecord['@id'];
+        listItem.versionedRdfRecord.branchId = 'masterBranch';
+        ontologyStateStub.list = [listItem];
+        component.openOntology();
+        expect(router.navigate).toHaveBeenCalledWith(['/ontology-editor']);
+        expect(ontologyStateStub.open).not.toHaveBeenCalled();
+        expect(ontologyStateStub.changeVersion).not.toHaveBeenCalled();
+        expect(toastStub.createErrorToast).not.toHaveBeenCalled();
+        expect(ontologyStateStub.listItem).toEqual(listItem);
+      });
+      it('if it is already open and master branch is not selected', function () {
+        const listItem = new OntologyListItem();
+        component.isEntityRecord = true;
+        component.hasCommitInProgress = false;
+        listItem.currentVersionTitle = 'test';
+        listItem.versionedRdfRecord.recordId = record['@id'];
+        listItem.versionedRdfRecord.branchId = '';
+        ontologyStateStub.list = [listItem];
+
+        component.openOntology();
+        expect(router.navigate).toHaveBeenCalledWith(['/ontology-editor']);
+        expect(ontologyStateStub.open).not.toHaveBeenCalled();
+        expect(ontologyStateStub.changeVersion).toHaveBeenCalled();
+        expect(toastStub.createErrorToast).not.toHaveBeenCalled();
+        expect(toastStub.createWarningToast).toHaveBeenCalled();
+        expect(ontologyStateStub.listItem).toEqual(listItem);
+      });
+      describe('if it is not open already', function () {
+        const recordSelect: RecordSelectFiltered = {
+          recordId: 'recordId',
+          title: 'title',
+          description: '',
+          identifierIRI: 'ontologyId'
+        };
+        beforeEach(function () {
+          ontologyStateStub.getIdentifierIRI.and.returnValue('ontologyId');
+        });
+        it('successfully', fakeAsync(function () {
+          component.isEntityRecord = true;
+          component.hasCommitInProgress = true;
+          ontologyStateStub.open.and.returnValue(of(null));
+          component.openOntology();
+          tick();
+          expect(router.navigate).toHaveBeenCalledWith(['/ontology-editor']);
+          expect(ontologyStateStub.open).toHaveBeenCalledWith(recordSelect);
+          expect(toastStub.createWarningToast).toHaveBeenCalled();
         }));
       });
     });

@@ -59,6 +59,7 @@ module.exports = {
     browser.page.entitySearchPage().clearEntitySearchBar();
     browser.page.entitySearchPage().applySearchText('pizza');
     browser.expect.elements('app-entity-search-page app-search-results-list mat-card-title').count.to.equal(10);
+    browser.expect.element('app-entity-search-page app-search-results-list  open-record-button button').to.be.present;
     browser.page.entitySearchPage().verifyRecordList();
   },
   'Step 6:Search entity results': function (browser) {
@@ -80,4 +81,17 @@ module.exports = {
       .assert.attributeEquals('@paginationNext', 'disabled', null)
       .assert.attributeEquals('@paginationPrevious', 'disabled', 'true');
   },
+  'Step 8: Open entity' : function(browser) {
+    browser.page.entitySearchPage().clearEntitySearchBar();
+    browser.page.entitySearchPage().applySearchText('pizza');
+    browser.globals.wait_for_no_spinners(browser);
+    browser.page.entitySearchPage().openRecordItem('BaseDaPizza');
+    browser.globals.wait_for_no_spinners(browser);
+    browser.assert.not.elementPresent('app-entity-search-page app-search-results-list  open-record-button button');
+    browser.waitForElementVisible('selected-details .entity-name')
+      .assert.textContains('selected-details .entity-name', 'BaseDaPizza');
+    browser.globals.switchToPage(browser, 'entity-search', 'app-entity-search-page');
+    browser.waitForElementVisible('app-entity-search-page');
+    browser.waitForElementVisible('app-entity-search-page app-search-results-list');
+  }
 }

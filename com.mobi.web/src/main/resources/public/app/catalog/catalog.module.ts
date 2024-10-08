@@ -46,29 +46,31 @@ import { ClipboardModule } from '@angular/cdk/clipboard';
  * The `catalog` module provides components that make up the Catalog module in the Mobi application.
  */
 @NgModule({
-    imports: [
-        SharedModule,
-        ClipboardModule
-    ],
-    declarations: [
-        BranchListComponent,
-        CatalogPageComponent,
-        CatalogRecordKeywordsComponent,
-        EntityPublisherComponent,
-        OpenRecordButtonComponent,
-        ManageRecordButtonComponent,
-        RecordPermissionViewComponent,
-        RecordCardComponent,
-        RecordFiltersComponent,
-        RecordMarkdownComponent,
-        RecordsViewComponent,
-        RecordViewComponent,
-        RecordViewTabsetComponent,
-        RecordTypeComponent,
-    ],
+  imports: [
+    SharedModule,
+    ClipboardModule
+  ],
+  declarations: [
+    BranchListComponent,
+    CatalogPageComponent,
+    CatalogRecordKeywordsComponent,
+    EntityPublisherComponent,
+    OpenRecordButtonComponent,
+    ManageRecordButtonComponent,
+    RecordPermissionViewComponent,
+    RecordCardComponent,
+    RecordFiltersComponent,
+    RecordMarkdownComponent,
+    RecordsViewComponent,
+    RecordViewComponent,
+    RecordViewTabsetComponent,
+    RecordTypeComponent,
+  ],
   exports: [
     RecordTypeComponent,
-    RecordCardComponent
-    ]
+    RecordCardComponent,
+    OpenRecordButtonComponent
+  ]
 })
-export class CatalogModule {}
+export class CatalogModule {
+}

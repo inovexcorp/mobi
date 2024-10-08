@@ -70,7 +70,7 @@ export class SearchResultItemComponent implements OnInit {
    *
    * @type {EventEmitter<EntityRecord>}
    */
-  @Output() clickEntity = new EventEmitter<EntityRecord>();
+  @Output() clickEntity: EventEmitter<EntityRecord> = new EventEmitter<EntityRecord>();
   /**
    * Record JSON-LD object.
    *
@@ -123,7 +123,8 @@ export class SearchResultItemComponent implements OnInit {
   setRecord(): void {
     this.record = {
       '@id': this.entity.record.iri,
-      '@type': [this.entity.record.type]
+      '@type': [this.entity.record.type],
+      'entityIRI': this.entity.iri
     };
   }
 

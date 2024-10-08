@@ -52,4 +52,8 @@
     <mat-card-content>
         <p class="entity-description">{{ entity.description || '(no description)' }}</p>
     </mat-card-content>
+    <mat-divider></mat-divider>
+    <mat-card-actions class="d-flex justify-content-end">
+        <open-record-button [record]="record" [stopProp]="true" [flat]="true"></open-record-button>
+    </mat-card-actions>
 </mat-card>

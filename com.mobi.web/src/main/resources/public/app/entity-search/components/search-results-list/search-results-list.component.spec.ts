@@ -92,7 +92,6 @@ describe('SearchResultsListComponent', () => {
       fixture.detectChanges();
       expect(searchManagerStub.setResults).not.toHaveBeenCalledWith();
     });
-
     it('should set results on when value is set', () => {
       searchManagerStub.setResults.and.returnValue(of(entityRecords));
       searchManagerStub.paginationConfig.searchText = 'test';
