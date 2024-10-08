@@ -28,6 +28,14 @@ const itemDescriptionSelector = `${itemCssSelector} div.record-body p inline-edi
 const paginationNext = `${searchResultsViewCssSelector} button.mat-paginator-navigation-next`;
 const paginationPrevious = `${searchResultsViewCssSelector} button.mat-paginator-navigation-previous`;
 
+const createRecordItemXPathSelector = function(titleOfRecord) {
+  var selectors = ['//app-entity-search-page//app-search-result-item',
+    '//mat-card-title//span[text()[contains(., "' + titleOfRecord + '")]]',
+    '//ancestor::mat-card'
+  ]
+  return selectors.join('');
+};
+
 const entitySearchPageCommands = {
   assertRecordVisible: function (recordTitle, index) {
     return this.useXpath()
@@ -55,6 +63,17 @@ const entitySearchPageCommands = {
         this.assert.equal(result.status, 0);
         this.assert.equal(result.value, searchText);
       });
+  },
+
+  openRecordItem: function(titleOfRecord) {
+    const recordItemSelector = createRecordItemXPathSelector(titleOfRecord);
+    const openButtonSelector = recordItemSelector + '//open-record-button//button';
+
+    const openCommands = function() {
+      browser.click('xpath', openButtonSelector, function(result) { this.assert.strictEqual(result.status, 0) })
+        .waitForElementNotPresent('app-entity-search-page app-search-results-list')
+    }
+    return openCommands();
   }
 }
 

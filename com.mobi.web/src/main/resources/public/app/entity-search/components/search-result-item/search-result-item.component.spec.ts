@@ -37,7 +37,7 @@ import { EntityRecord } from '../../models/entity-record';
 import { SearchResultsMock } from '../../mock-data/search-results.mock';
 import { RecordIconComponent } from '../../../shared/components/recordIcon/recordIcon.component';
 import { SearchResultItemComponent } from './search-result-item.component';
-import { element } from 'protractor';
+import { OpenRecordButtonComponent } from '../../../catalog/components/openRecordButton/openRecordButton.component';
 
 describe('SearchResultItemComponent', () => {
   let component: SearchResultItemComponent;
@@ -47,14 +47,16 @@ describe('SearchResultItemComponent', () => {
   const entityRecord: EntityRecord = SearchResultsMock[0];
   const record = {
     '@id': entityRecord.record.iri,
-    '@type': [entityRecord.record.type]
+    '@type': [entityRecord.record.type],
+    'entityIRI': 'http://www.co-ode.org/ontologies/pizza/pizza.owl#IceCream'
   };
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       declarations: [
         SearchResultItemComponent,
-        MockComponent(RecordIconComponent)
+        MockComponent(RecordIconComponent),
+        MockComponent(OpenRecordButtonComponent)
       ],
       providers: [
         PrefixationPipe
@@ -100,7 +102,8 @@ describe('SearchResultItemComponent', () => {
     it('for wrapping containers', function () {
       expect(element.queryAll(By.css('.entity-record')).length).toEqual(1);
     });
-    ['mat-card-title', 'mat-card-subtitle', 'mat-card-content', '.entity-iri', 'mat-icon', '.entity-type', '.entity-record_prop', '.entity-description'].forEach(function (test) {
+    ['mat-card-title', 'mat-card-subtitle', 'mat-card-content', '.entity-iri', 'mat-icon', '.entity-type',
+      '.entity-record_prop', '.entity-description', 'open-record-button'].forEach(function (test) {
       it(`with a ${test}`, function () {
         expect(element.queryAll(By.css(test)).length).toEqual(1);
       });
