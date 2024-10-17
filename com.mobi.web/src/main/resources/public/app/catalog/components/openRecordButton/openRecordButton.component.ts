@@ -64,6 +64,7 @@ export class OpenRecordButtonComponent {
   isEntityRecord: boolean;
   hasCommitInProgress: boolean;
   isOpened = false;
+  inProgressMsg = 'Cannot switch branches while there are uncommited changes';
 
   @Input() flat: boolean;
   @Input() stopProp: boolean;
@@ -158,11 +159,33 @@ export class OpenRecordButtonComponent {
     this._router.navigate(['/datasets']);
   }
 
+  /**
+   * Handles a graph record based on the current state of the entity record.
+   * If this is an entity record, it checks for specific conditions and performs actions accordingly.
+   * If it is not an entity record, it simply opens the Shapes Graph.
+   *
+   * @return {void}
+   */
+  handleGraphRecord(): void {
+    if (this.isEntityRecord) {
+      const isMaster = this._sgs.listItem?.versionedRdfRecord.branchId === this._getRecordMasterBranchIri();
+      this.isOpened = !!this._sgs?.listItem?.currentVersionTitle;
+      if (!isMaster && !this.hasCommitInProgress) {
+        this._switchToMasterBranch();
+      } else {
+        if (this.hasCommitInProgress) {
+          this._toast.createWarningToast(this.inProgressMsg);
+        }
+      }
+    }
+  }
+
   openShapesGraph(): void {
     this._router.navigate(['/shapes-graph-editor']);
     const listItem: ShapesGraphListItem = find(this._sgs.list, {versionedRdfRecord: {recordId: this.record['@id']}});
     if (listItem) {
       this._sgs.listItem = listItem;
+      this.handleGraphRecord();
     } else {
       const recordSelect: RecordSelectFiltered = {
         recordId: this.record['@id'],
@@ -170,8 +193,11 @@ export class OpenRecordButtonComponent {
         description: getDctermsValue(this.record, 'description'),
         identifierIRI: this._sgs.getIdentifierIRI(this.record)
       };
-      this._sgs.open(recordSelect).subscribe(() => {
-      }, error => this._toast.createErrorToast(error));
+      this._sgs.open(recordSelect).subscribe(
+        () => {
+          this.handleGraphRecord();
+        },
+        error => this._toast.createErrorToast(error));
     }
   }
 
@@ -185,7 +211,7 @@ export class OpenRecordButtonComponent {
   update(): void {
     this.recordType = this._cs.getRecordType(this.record);
     this.isEntityRecord = Object.prototype.hasOwnProperty.call(this.record, 'entityIRI');
-    if (this.recordType === `${ONTOLOGYEDITOR}OntologyRecord`) {
+    if (this._isOntologyRecord()) {
       const request = {
         resourceId: this.record['@id'],
         actionId: this._pm.actionRead
@@ -224,6 +250,12 @@ export class OpenRecordButtonComponent {
     ).subscribe(this._handleSuccess.bind(this));
   }
 
+  /**
+   * Handle the HTTP error response when trying to commit data.
+   *
+   * @param {HttpErrorResponse} err - The HTTP error response object.
+   * @return {Observable<HttpErrorResponse>} An Observable that emits the HTTP error response.
+   */
   private _handleCommitError(err: HttpErrorResponse): Observable<HttpErrorResponse> {
     if (err.status === 404) {
       this.hasCommitInProgress = false;
@@ -234,7 +266,14 @@ export class OpenRecordButtonComponent {
     }
   }
 
-  private _handleSuccess(data: Difference) {
+  /**
+   * Handles the success response from an API call for a given Difference object.
+   *
+   * @param {Difference} data - The response data containing deletions and additions.
+   *
+   * @return {void}
+   */
+  private _handleSuccess(data: Difference): void {
     if (data && (data?.deletions.length > 0 || data.additions.length > 0)) {
       this.hasCommitInProgress = true;
       this.navigateToRecord();
@@ -262,7 +301,7 @@ export class OpenRecordButtonComponent {
    */
   private _commitInProgressNavigator(): void {
     this._os.goTo(this.record.entityIRI);
-    this._toast.createWarningToast('Can not switch branches while there are uncommited changes');
+    this._toast.createWarningToast(this.inProgressMsg);
   }
 
   /**
@@ -290,7 +329,7 @@ export class OpenRecordButtonComponent {
     const masterBranch = this._getRecordMasterBranchIri();
     this._cm.getRecordMasterBranch(this.record['@id'], this._getCatalogId()).pipe(
       switchMap((branch) => {
-        return this._os.changeVersion(
+        return this._getService().changeVersion(
           recordId,
           masterBranch,
           getPropertyId(branch, `${CATALOG}head`),
@@ -301,17 +340,9 @@ export class OpenRecordButtonComponent {
           false
         );
       })
-    )
-      .subscribe(() => {
-        if (this._getEntityInformation()) {
-          this._os.goTo(this.record.entityIRI);
-          if (this.isOpened) {
-            this._toast.createWarningToast('Master branch has been checked out.');
-          }
-        } else {
-          this._toast.createWarningToast('The entity does not exist in master');
-        }
-      }, error => this._toast.createErrorToast(error));
+    ).subscribe(() => {
+      this._resolveDestination();
+    }, error => this._toast.createErrorToast(error));
   }
 
   /**
@@ -335,5 +366,49 @@ export class OpenRecordButtonComponent {
 
   private _getCatalogId() {
     return get(this._cm.localCatalog, '@id');
+  }
+
+  /**
+   * Checks whether the record type is an OntologyRecord.
+   *
+   * @return {boolean} true if the record type is an OntologyRecord, false otherwise
+   */
+  private _isOntologyRecord(): boolean {
+    return this.recordType === `${ONTOLOGYEDITOR}OntologyRecord`;
+  }
+
+  /**
+   * Retrieve the appropriate service based on the type of record.
+   *
+   * @returns {OntologyStateService|ShapesGraphStateService} The service instance.
+   */
+  private _getService(): OntologyStateService | ShapesGraphStateService {
+    return this._isOntologyRecord() ? this._os : this._sgs;
+  }
+
+  /**
+   * Resolves the destination based on whether the current record is an ontology record or not.
+   * If it is an ontology record, navigates to the entity. Otherwise, opens the shapes graph.
+   * Displays a warning toast if the destination is successfully resolved and the page is opened.
+   *
+   */
+  private _resolveDestination(): void {
+    if (!this._isOntologyRecord()) {
+      this._displayWarningIfEntityOpened();
+    } else if (this._getEntityInformation()) {
+        this._os.goTo(this.record.entityIRI);
+        this._displayWarningIfEntityOpened();
+    } else {
+      this._toast.createWarningToast('The selected entity no longer exists in MASTER');
+    }
+  }
+
+  /**
+   * Method to display a warning toast if entity is opened.
+   */
+  private _displayWarningIfEntityOpened(): void {
+    if (this.isOpened) {
+      this._toast.createWarningToast('Switching to MASTER.');
+    }
   }
 }
