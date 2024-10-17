@@ -129,6 +129,7 @@ describe('Open Record Button component', function () {
 
     ontologyStateStub.getEntityByRecordId.and.returnValue(entityInfo);
     ontologyStateStub.changeVersion.and.returnValue(of(null));
+    shapesGraphStateStub.changeVersion.and.returnValue(of(null));
     catalogManagerStub.getRecords.and.returnValue(of(new HttpResponse<JSONLDObject[]>({body: [entityRecord]})));
     catalogManagerStub.getRecordMasterBranch.and.callFake(() => of(branch));
     policyEnforcementStub.permit = 'Permit';
@@ -271,8 +272,8 @@ describe('Open Record Button component', function () {
         listItem.currentVersionTitle = 'test';
         listItem.versionedRdfRecord.recordId = record['@id'];
         listItem.versionedRdfRecord.branchId = '';
+        component.recordType = `${ONTOLOGYEDITOR}OntologyRecord`;
         ontologyStateStub.list = [listItem];
-
         component.openOntology();
         expect(router.navigate).toHaveBeenCalledWith(['/ontology-editor']);
         expect(ontologyStateStub.open).not.toHaveBeenCalled();
@@ -303,6 +304,48 @@ describe('Open Record Button component', function () {
         }));
       });
     });
+    describe('Entity record ShapeGraphs', function () {
+      beforeEach(function () {
+        component.recordType = `${SHAPESGRAPHEDITOR}ShapesGraphRecord`;
+        component.record = entityRecord;
+      });
+      it('if it is already open', function () {
+        const listItem: ShapesGraphListItem = new ShapesGraphListItem();
+        listItem.versionedRdfRecord.recordId = entityRecord['@id'];
+        component.isEntityRecord = true;
+        component.hasCommitInProgress = false;
+        listItem.currentVersionTitle = 'Master';
+
+        listItem.versionedRdfRecord.branchId = 'masterBranch';
+        shapesGraphStateStub.list = [listItem];
+        fixture.detectChanges();
+        component.openShapesGraph();
+        expect(router.navigate).toHaveBeenCalledWith(['/shapes-graph-editor']);
+        expect(shapesGraphStateStub.open).not.toHaveBeenCalled();
+        expect(toastStub.createErrorToast).not.toHaveBeenCalled();
+        expect(shapesGraphStateStub.listItem).toEqual(listItem);
+      });
+      it('if it is already open and master branch is not selected',   () => {
+        const listItem: ShapesGraphListItem = new ShapesGraphListItem();
+        listItem.versionedRdfRecord.recordId = entityRecord['@id'];
+        component.isEntityRecord = true;
+        component.hasCommitInProgress = false;
+        listItem.currentVersionTitle = 'Master';
+        listItem.versionedRdfRecord.branchId = '';
+        component.isOpened = true;
+
+        shapesGraphStateStub.list = [listItem];
+        fixture.detectChanges();
+        component.openShapesGraph();
+        expect(router.navigate).toHaveBeenCalledWith(['/shapes-graph-editor']);
+        expect(shapesGraphStateStub.open).not.toHaveBeenCalled();
+        expect(shapesGraphStateStub.changeVersion).toHaveBeenCalled();
+        expect(toastStub.createErrorToast).not.toHaveBeenCalled();
+        expect(toastStub.createWarningToast).toHaveBeenCalledWith('Switching to MASTER.');
+        expect(shapesGraphStateStub.listItem).toEqual(listItem);
+      });
+    });
+
     it('openMapping should navigate to the mapping module and select the mapping', function() {
       component.record = record;
       mapperStateStub.paginationConfig = {

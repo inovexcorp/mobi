@@ -24,7 +24,10 @@ var path = require('path');
 var adminUsername = 'admin'
 var adminPassword = 'admin'
 var Onto1 = path.resolve(__dirname + '/../../resources/rdf_files/pizza.owl');
-
+// shapes graph
+var shapes_graph = path.resolve(__dirname + '/../../resources/rdf_files/UHTC_shapes.ttl');
+var shapes_graph_title = 'UHTC_shapes';
+var shapes_graph_update = path.resolve(__dirname + '/../../resources/rdf_files/UHTC_shapes_update.ttl');
 
 module.exports = {
   '@tags': ['sanity', 'entity-search'],
@@ -55,13 +58,13 @@ module.exports = {
   },
 
   'Step 5: Search entity results': function (browser) {
-    var recordTitles = ['Sorvete', 'PizzaVegetarianaEquivalente2', 'PizzaVegetarianaEquivalente1'];
     browser.page.entitySearchPage().clearEntitySearchBar();
     browser.page.entitySearchPage().applySearchText('pizza');
     browser.expect.elements('app-entity-search-page app-search-results-list mat-card-title').count.to.equal(10);
     browser.expect.element('app-entity-search-page app-search-results-list  open-record-button button').to.be.present;
     browser.page.entitySearchPage().verifyRecordList();
   },
+
   'Step 6:Search entity results': function (browser) {
     browser.page.entitySearchPage().useCss()
       .click('@paginationNext');
@@ -73,6 +76,7 @@ module.exports = {
       .assert.attributeEquals('@paginationNext', 'disabled', 'true')
       .assert.attributeEquals('@paginationPrevious', 'disabled', null);
   },
+
   'Step 7: Validate filter resets pagination': function (browser) {
     browser.page.entitySearchPage().clearEntitySearchBar();
     browser.page.entitySearchPage().applySearchText('pizza');
@@ -111,5 +115,75 @@ module.exports = {
     browser.globals.switchToPage(browser, 'entity-search', 'app-entity-search-page');
     browser.waitForElementVisible('app-entity-search-page');
     browser.waitForElementVisible('app-entity-search-page app-search-results-list');
+  },
+
+  'Step 10: Switch to SHACL shapes page': function(browser) {
+    browser.globals.switchToPage(browser, 'shapes-graph-editor', 'shapes-graph-editor-page')
+  },
+
+  'Step 11: Create a new shapes graph': function(browser) {
+    browser.page.shapesEditorPage().uploadShapesGraph(shapes_graph)
+    browser.globals.wait_for_no_spinners(browser)
+  },
+
+  'Step 12: Verify shapes graph presentation': function(browser) {
+    browser
+      .waitForElementVisible('shapes-graph-details')
+      .waitForElementVisible('shapes-graph-properties-block')
+      .waitForElementVisible('div.yate')
+      .page.editorPage()
+      .assert.valueEquals('@editorRecordSelectInput', shapes_graph_title)
+      .assert.valueEquals('@editorBranchSelectInput', 'MASTER');
+    browser
+      .page.shapesEditorPage()
+      .expect.elements('@propertyValues').count.to.equal(3)
+  },
+
+  'Step 13: Create a new branch': function(browser) {
+    browser.page.shapesEditorPage().createBranch('Entity:UHTC Test Branch');
+    browser.globals.wait_for_no_spinners(browser);
+  },
+
+  'Step 14: Verify switching of branches': function(browser) {
+    browser
+      .waitForElementVisible('shapes-graph-details')
+      .waitForElementVisible('shapes-graph-properties-block')
+      .waitForElementVisible('div.yate')
+      .page.editorPage()
+      .assert.valueEquals('@editorRecordSelectInput', shapes_graph_title)
+      .assert.valueEquals('@editorBranchSelectInput', 'Entity:UHTC Test Branch');
+  },
+
+  'Step `15`: Perform a new search': function (browser) {
+    browser.globals.switchToPage(browser, 'entity-search', 'app-entity-search-page');
+    browser.waitForElementVisible('app-entity-search-page')
+    .page.entitySearchPage().clearEntitySearchBar();
+    browser.page.entitySearchPage().applySearchText('materials')
+    .expect.elements('app-entity-search-page app-search-results-list mat-card-title').count.to.equal(1)
+  },
+
+  'Step 16: Open SACHL entity' : function(browser) {
+    browser.globals.wait_for_no_spinners(browser);
+    browser.page.entitySearchPage().openRecordItem('UHTC Shapes Graph');
+    browser.globals.wait_for_no_spinners(browser);
+    browser.assert.not.elementPresent('app-entity-search-page app-search-results-list  open-record-button button');
+    browser.waitForElementVisible('shapes-graph-details .entity-name')
+      .assert.textContains('shapes-graph-details .entity-name', 'UHTC Shapes Graph');
+    browser.page.editorPage().assert.valueEquals('@editorBranchSelectInput', 'MASTER');
+  },
+
+  'Step 17: Upload Changes': function(browser) {
+    browser.page.shapesEditorPage().createBranch('Entity:UHTC Test Branch-2');
+    browser.globals.wait_for_no_spinners(browser);
+    browser.page.shapesEditorPage().uploadChanges(shapes_graph_update);
+    browser.globals.wait_for_no_spinners(browser)
+    browser.globals.switchToPage(browser, 'entity-search', 'app-entity-search-page');
+    browser.page.entitySearchPage().openRecordItem('UHTC Shapes Graph');
+    browser.globals.wait_for_no_spinners(browser);
+    browser.assert.not.elementPresent('app-entity-search-page app-search-results-list  open-record-button button');
+    browser.waitForElementVisible('shapes-graph-details .entity-name')
+      .assert.textContains('shapes-graph-details .entity-name', 'UHTC Shapes Graph');
+    browser.page.editorPage().assert.valueEquals('@editorBranchSelectInput', 'Entity:UHTC Test Branch-2');
   }
+
 }

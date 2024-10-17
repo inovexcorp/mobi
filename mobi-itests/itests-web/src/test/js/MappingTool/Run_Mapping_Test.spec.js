@@ -305,5 +305,23 @@ module.exports = {
             .useXpath()
             .assert.visible('//mat-card//mat-card-title//span[text()[contains(., "Crystal Structure")]]')
             .assert.visible('//mat-card//mat-card-title//span[text()[contains(., "UHTC Material")]]')
+    },
+    // Adding entity search test bellow
+    // since this test doesnt have a page object
+    'Step 26: Perform a new search': function (browser) {
+        browser.globals.switchToPage(browser, 'entity-search', 'app-entity-search-page');
+        browser.waitForElementVisible('app-entity-search-page')
+          .page.entitySearchPage().clearEntitySearchBar();
+        browser.page.entitySearchPage().applySearchText('Density');
+        browser.useCss()
+          .waitForElementVisible('app-entity-search-page app-search-results-list mat-card-title')
+    },
+    'Step 27: Open SACHL entity' : function(browser) {
+        browser.globals.wait_for_no_spinners(browser);
+        browser.click('app-entity-search-page app-search-results-list app-search-result-item:nth-child(2) button')
+        browser.globals.wait_for_no_spinners(browser);
+        browser.assert.not.elementPresent('app-entity-search-page app-search-results-list  open-record-button button');
+        browser.waitForElementVisible('mapping-select-page .mapping-info')
+          .assert.textContains('mapping-select-page .mapping-info h3', 'UHTC material Mapping');
     }
 }
