@@ -58,18 +58,18 @@ const routes: Routes = [
   {
     path: '', component: MainLayoutComponent, canActivate: [AuthenticationGuard], children: [
       {path: '', redirectTo: '/home', pathMatch: 'full'},
-      {path: 'home', component: HomePageComponent, data: {title: 'Home'}},
-      {path: 'catalog', component: CatalogPageComponent, data: {title: 'Catalog'}},
-      {path: 'entity-search', component: EntitySearchPageComponent, data: {title: 'Entity Search'}},
-      {path: 'ontology-editor', component: OntologyEditorPageComponent, data: {title: 'Ontology Editor'}},
-      {path: 'shapes-graph-editor', component: ShapesGraphEditorPageComponent, data: {title: 'Shapes Editor'}},
-      {path: 'workflows', component: WorkflowsComponent, data: {title: 'Workflows'}},
-      {path: 'discover', component: DiscoverPageComponent, data: {title: 'Discover'}},
-      {path: 'mapper', component: MapperPageComponent, data: {title: 'Mapping Tool'}},
-      {path: 'datasets', component: DatasetsPageComponent, data: {title: 'Datasets'}},
-      {path: 'settings', component: SettingsPageComponent, data: {title: 'Settings'}},
-      {path: 'user-management', component: UserManagementPageComponent, data: {title: 'User Management'}},
-      {path: 'merge-requests', component: MergeRequestsPageComponent, data: {title: 'Merge Requests'}}
+      {path: 'home', component: HomePageComponent, canActivate: [AuthenticationGuard], data: {title: 'Home'}},
+      {path: 'catalog', component: CatalogPageComponent, canActivate: [AuthenticationGuard], data: {title: 'Catalog'}},
+      {path: 'entity-search', component: EntitySearchPageComponent, canActivate: [AuthenticationGuard], data: {title: 'Entity Search'}},
+      {path: 'ontology-editor', component: OntologyEditorPageComponent, canActivate: [AuthenticationGuard], data: {title: 'Ontology Editor'}},
+      {path: 'shapes-graph-editor', component: ShapesGraphEditorPageComponent, canActivate: [AuthenticationGuard], data: {title: 'Shapes Editor'}},
+      {path: 'workflows', component: WorkflowsComponent, canActivate: [AuthenticationGuard], data: {title: 'Workflows'}},
+      {path: 'discover', component: DiscoverPageComponent, canActivate: [AuthenticationGuard], data: {title: 'Discover'}},
+      {path: 'mapper', component: MapperPageComponent, canActivate: [AuthenticationGuard], data: {title: 'Mapping Tool'}},
+      {path: 'datasets', component: DatasetsPageComponent, canActivate: [AuthenticationGuard], data: {title: 'Datasets'}},
+      {path: 'settings', component: SettingsPageComponent, canActivate: [AuthenticationGuard], data: {title: 'Settings'}},
+      {path: 'user-management', component: UserManagementPageComponent, canActivate: [AuthenticationGuard], data: {title: 'User Management'}},
+      {path: 'merge-requests', component: MergeRequestsPageComponent, canActivate: [AuthenticationGuard], data: {title: 'Merge Requests'}}
     ]
   }
 ];

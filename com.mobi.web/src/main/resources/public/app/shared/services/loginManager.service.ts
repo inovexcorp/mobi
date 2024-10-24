@@ -49,6 +49,7 @@ import { ToastService } from './toast.service';
 import { ProvManagerService } from './provManager.service';
 import { createHttpParams } from '../utility';
 import { EventWithPayload } from '../models/eventWithPayload.interface';
+import { User } from '../models/user.class';
 
 /**
  * @class shared.LoginManagerService
@@ -57,38 +58,66 @@ import { EventWithPayload } from '../models/eventWithPayload.interface';
  */
 @Injectable()
 export class LoginManagerService {
+  readonly NO_TOKEN_MESSAGE = 'No authentication token detected, redirecting back to login page.';
+  readonly TOKEN_EXPIRED_MESSAGE = 'Authentication token is expired, redirecting back to login page.';
+  readonly SESSION_INVALID_MESSAGE = 'Authentication session is invalid, redirecting back to login page.';
+  /**
+   * The REST API prefix for session-related endpoints.
+   * @type {string}
+   */
   prefix = `${REST_PREFIX}session`;
+  /**
+   * A flag indicating whether the application is in a good state after service initialization.
+   * @type {boolean}
+   */
   weGood = false;
   /**
-   * `currentUser` holds the username of the user that is currently logged into Mobi.
+   * Holds the username of the user currently logged into the application.
    * @type {string}
    */
   currentUser = '';
   /**
-   * `currentUserIRI` holds the IRI of the user that is currently logged into Mobi.
+   * Holds the IRI (Internationalized Resource Identifier) of the user currently logged into the application.
    * @type {string}
    */
   currentUserIRI = '';
-  private _loginManagerActionSubject = new Subject<EventWithPayload>();
-  public loginManagerAction$ = this._loginManagerActionSubject.asObservable();
+  /**
+   * A subject to emit actions related to login management.
+   * This observable is used to notify subscribers of login-related events.
+   * @type {Subject<EventWithPayload>}
+   */
+  private _loginManagerActionSubject: Subject<EventWithPayload> = new Subject<EventWithPayload>();
+  /**
+   * An observable that emits login management actions (e.g., logout events).
+   * @type {Observable<EventWithPayload>}
+   */
+  public loginManagerAction$: Observable<EventWithPayload> = this._loginManagerActionSubject.asObservable();
 
   constructor(private http: HttpClient, private router: Router,
-              private cm: CatalogManagerService,
-              private cs: CatalogStateService, private dm: DatasetManagerService,
-              private ds: DatasetStateService, private dlm: DelimitedManagerService,
-              private dis: DiscoverStateService, private ms: MapperStateService,
-              private mrs: MergeRequestsStateService, private om: OntologyManagerService,
-              private os: OntologyStateService, private sgs: ShapesGraphStateService,
-              private sm: StateManagerService, private um: UserManagerService,
-              private us: UserStateService, private toast: ToastService, private yasgui: YasguiService,
-              private prov: ProvManagerService,
-              private ess: EntitySearchStateService
+    private cm: CatalogManagerService,
+    private cs: CatalogStateService, 
+    private dis: DiscoverStateService, 
+    private dlm: DelimitedManagerService,
+    private dm: DatasetManagerService,
+    private ds: DatasetStateService, 
+    private ess: EntitySearchStateService,
+    private mrs: MergeRequestsStateService, 
+    private ms: MapperStateService,
+    private om: OntologyManagerService,
+    private os: OntologyStateService, 
+    private prov: ProvManagerService,
+    private sgs: ShapesGraphStateService,
+    private sm: StateManagerService, 
+    private toast: ToastService, 
+    private um: UserManagerService,
+    private us: UserStateService, 
+    private yasgui: YasguiService
   ) {
   }
 
   /**
-   * Makes a call to POST /mobirest/session to attempt to log into Mobi using the passed credentials. Returns a
-   * Promise with the success of the log in attempt. If failed, contains an appropriate error message.
+   * Makes a call to POST /mobirest/session to attempt to log into Mobi using the passed credentials. Returns an
+   * Observable with the success of the log in attempt. If failed, contains an appropriate error message.
    *
    * @param {string} username the username to attempt to log in with
    * @param {string} password the password to attempt to log in with
@@ -110,7 +139,7 @@ export class LoginManagerService {
           }
           return from(this.um.getUser(this.currentUser))
             .pipe(
-              map(user => {
+              map((user: User) => {
                 this.currentUserIRI = user.iri;
                 this.currentUser = user.username;
                 this.router.navigate(['/home']);
@@ -135,54 +164,61 @@ export class LoginManagerService {
    * the login page.
    */
   logout(): void {
-    this.weGood = false;
     this.http.delete(this.prefix)
       .subscribe(() => {
-        this._loginManagerActionSubject.next({
-          eventType: 'LOGOUT', payload: {
-            currentUserIRI: this.currentUserIRI,
-            currentUser: this.currentUser
-          }
-        });
-        this.currentUser = '';
-        this.currentUserIRI = '';
-        this.us.reset();
+        this.clearServiceStates();
         this.router.navigate(['/login']);
-        this.ds.reset();
-        this.dlm.reset();
-        this.dis.reset();
-        this.ms.initialize();
-        this.ms.resetEdit();
-        this.mrs.reset();
-        this.os.reset();
-        this.sgs.reset();
-        this.cs.reset();
-        this.yasgui.reset();
-        this.prov.reset();
-        this.ess.reset();
       });
   }
 
   /**
-   * Test whether a user is currently logged in and if not, navigates to the log in page. If a user
-   * is logged in, initializes the {@link shared.CatalogManagerService}, {@link shared.CatalogStateService},
-   * {@link shared.MergeRequestsStateService}, {@link shared.OntologyManagerService},
-   * {@link shared.OntologyStateService}, {@link shared.DatasetManagerService}, {@link shared.StateManagerService},
-   * and the {@link shared.UserManagerService}. Returns an Observable with whether or not a user is logged in.
-   *
-   * @return {Observable} An Observable that resolves if a user is logged in and rejects with the HTTP
-   * response data if no user is logged in.
+   * Clears the states of various services and resets login-related properties.
+   */
+  clearServiceStates(): void {
+    this.weGood = false;
+    this._loginManagerActionSubject.next({
+      eventType: 'LOGOUT', payload: {
+        currentUserIRI: this.currentUserIRI,
+        currentUser: this.currentUser
+      }
+    });
+    this.currentUser = '';
+    this.currentUserIRI = '';
+    // Reset Services
+    this.us.reset();
+    this.ds.reset();
+    this.dlm.reset();
+    this.dis.reset();
+    this.ms.initialize();
+    this.ms.resetEdit();
+    this.mrs.reset();
+    this.os.reset();
+    this.sgs.reset();
+    this.cs.reset();
+    this.yasgui.reset();
+    this.prov.reset();
+    this.ess.reset();
+    this.deleteCookie('mobi_web_token');
+  }
+
+  /**
+   * Test whether a user is currently logged in and if not, navigates to the log in page.
+   * Checks the authentication status of the current user by performing several initialization 
+   * tasks and retrieving user data.
+   * 
+   * @returns {Observable<boolean>} An observable that emits true if the user is authenticated 
+   *          and all services are initialized, or false if an error occurs or the user data is unavailable.
    */
   isAuthenticated(): Observable<boolean> {
     return this.getCurrentLogin().pipe(
-      switchMap((data: string) => {
-        if (!data) {
-          return throwError(data);
+      switchMap((username: string) => {
+        if (!username) {
+          return throwError(username);
         }
         let requests = [
           this.sm.initialize(),
           this.um.initialize(),
-          this.um.getUser(data).pipe(tap(user => {
+          this.um.getUser(username).pipe(tap(user => {
             this.currentUserIRI = user.iri;
             this.currentUser = user.username;
           }))
@@ -203,7 +239,6 @@ export class LoginManagerService {
         if (this.checkMergedAccounts()) {
           this.toast.createWarningToast('Local User Account found. Accounts have been merged.');
         }
-
         return forkJoin(requests);
       }),
       mergeMap(() => {
@@ -211,19 +246,18 @@ export class LoginManagerService {
         return of(true);
       }),
       catchError(() => {
-        this.currentUser = '';
-        this.currentUserIRI = '';
+        this.clearServiceStates();
         return of(false);
       })
     );
   }
 
   /**
-   * Makes a call to GET /mobirest/session to retrieve the user that is currently logged in. Returns a Promise
-   * with the result of the call.
-   *
-   * @return {Observable} An Observable with the response data that resolves if the request was successful; rejects if
-   * unsuccessful
+   * Makes a call to GET /mobirest/session to retrieve the user that is currently logged in.
+   * 
+   * @returns {Observable<string>} An observable that emits the current login username as a string
+   *          if the request is successful, or throws an error if the request fails or returns
+   *          an unexpected status.
    */
   getCurrentLogin(): Observable<string> {
     return this.http.get(this.prefix, {observe: 'response', responseType: 'text'}).pipe(
@@ -256,5 +290,120 @@ export class LoginManagerService {
       }
     });
     return merged;
+  }
+
+  /**
+   * Validates the user's authentication token and session.
+   * If the token is missing, expired, or the session is invalid, 
+   * the user is redirected to the login page and an error message is displayed.
+   *
+   * This method performs the following checks:
+   * - Verifies if the 'mobi_web_token' cookie exists.
+   * - Decodes and checks if the JWT token has expired.
+   * - Confirms if the session is authenticated.
+   *
+   * @returns Observable<boolean> Emits 'true' if the session is valid, otherwise 'false'.
+   */
+   validateSession(): Observable<boolean> {
+    return of(this.getCookie('mobi_web_token')).pipe(
+        switchMap((mobiWebToken: string | null) => this.validateToken(mobiWebToken)),
+        switchMap(validationStatus => this.verifyAuth(validationStatus)),
+        tap(validationResult => this.handleValidationResult(validationResult)),
+        map(({ valid }) => valid)
+    );
+  }
+  private validateToken(mobiWebToken: string | null): Observable<{tokenExists: boolean; isExpired: boolean}> {
+    // Check if the token exists and whether it is expired
+    if (!mobiWebToken) {
+        return of({ tokenExists: false, isExpired: false });
+    }
+    const tokenPayload = this.decodeToken(mobiWebToken);
+    const isExpired = tokenPayload && tokenPayload.exp && (Date.now() >= tokenPayload.exp * 1000);
+    return of({ tokenExists: true, isExpired });
+  }
+  private verifyAuth(validationStatus: {tokenExists: boolean; isExpired: boolean}): Observable<{valid: boolean, tokenExists: boolean, isExpired: boolean}>{
+    // If the token exists and is not expired, check the session
+    const tokenExists = validationStatus.tokenExists;
+    const isExpired = validationStatus.isExpired;
+    if (!validationStatus.tokenExists || validationStatus.isExpired) {
+      return of({ 
+          valid: false, 
+          tokenExists,
+          isExpired
+      });
+    }
+    return this.isAuthenticated().pipe(
+        map((authenticated: boolean) => ({
+            valid: !!authenticated,
+            tokenExists,
+            isExpired
+        })),
+        catchError(() => of({ 
+            valid: false, 
+            tokenExists,
+            isExpired
+        }))
+    );
+  }
+  private handleValidationResult(validationResults: {valid: boolean, tokenExists: boolean, isExpired: boolean}): void {
+    if (!validationResults.valid) {
+      if (!validationResults.tokenExists) {
+          this.toast.createErrorToast(this.NO_TOKEN_MESSAGE);
+      } else if (validationResults.isExpired) {
+          this.toast.createErrorToast(this.TOKEN_EXPIRED_MESSAGE);
+      } else {
+          this.toast.createErrorToast(this.SESSION_INVALID_MESSAGE);
+      }
+      this.clearServiceStates();
+      this.router.navigate(['/login']);
+    }
+  }
+  /**
+   * Decodes a JWT token and returns its payload.
+   * 
+   * This method extracts the payload (the middle part of the JWT) by splitting the token,
+   * decodes the Base64Url-encoded string, and parses it into a JSON object.
+   * 
+   * @param {string} token - The JWT token to decode.
+   * @returns {any} - The decoded payload as a JSON object, or null if decoding fails.
+   * 
+   * @throws Will log an error to the console if the token is invalid or cannot be decoded.
+   */
+  decodeToken(token: string): any {
+    try {
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(atob(base64).split('').map((c) => {
+            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+        }).join(''));
+        return JSON.parse(jsonPayload);
+    } catch (e) {
+        return null;
+    }
+  }
+
+  /**
+   * Retrieves the value of a specified cookie by name.
+   * 
+   * This method searches the `document.cookie` string for a cookie with the given name,
+   * and if found, returns its value. The value is decoded from URL encoding.
+   * If the cookie is not found, the method returns `null`.
+   * 
+   * @param {string} name - The name of the cookie to retrieve.
+   * @returns {string|null} - The value of the cookie if found, otherwise `null`.
+   */
+  getCookie(name: string): string | null {
+      const matches = document.cookie.match(new RegExp(
+          '(?:^|; )' + name.replace(/([\.$?*|{}()[]\/+^])/g, '\\$1') + '=([^;]*)'
+      ));
+      return matches ? decodeURIComponent(matches[1]) : null;
+  }
+
+  /**
+   * Helper function to delete a cookie by name
+   * @param name name of cookie
+   */
+  deleteCookie(name: string): void {
+      document.cookie = `${name}=; Max-Age=-99999999; path=/;`;
   }
 }

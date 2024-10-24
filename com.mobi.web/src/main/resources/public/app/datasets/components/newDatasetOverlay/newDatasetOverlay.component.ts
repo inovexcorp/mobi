@@ -47,6 +47,7 @@ import { OntologyDetails } from '../../models/ontologyDetails.interface';
     templateUrl: './newDatasetOverlay.component.html'
 })
 export class NewDatasetOverlayComponent implements OnInit {
+    readyFlag = false;
     iriPattern = REGEX.IRI;
     error = '';
     createDatasetForm = this.fb.group({
@@ -63,13 +64,50 @@ export class NewDatasetOverlayComponent implements OnInit {
         public dm: DatasetManagerService, private toast: ToastService, private rm: RepositoryManagerService) {}
     
     ngOnInit(): void {
-        this.rm.getRepositories().subscribe(repos => {
-            this.repositories = repos;
+        let nextCalled = false;
+        this.rm.getRepositories().subscribe({ 
+            next: (repos: Repository[]) => {
+                nextCalled = true;
+                this.readyFlag = true;
+                this.repositories = repos;
+            },
+            error: () => {
+                nextCalled = true;
+            },
+            complete: () => {
+                this.closeDialog(!nextCalled);
+            }
         });
     }
-
     create(): void {
-        const recordConfig: DatasetRecordConfig = {
+        const recordConfig: DatasetRecordConfig = this.createDatasetRecord();
+        this.subscribeToDatasetCreation(recordConfig);
+    }
+    closeDialog(closeFlag: boolean): void {
+        if (closeFlag) {
+            this.readyFlag = false;
+            this.dialogRef.close();
+        }
+    }
+    private subscribeToDatasetCreation(recordConfig: DatasetRecordConfig): void {
+        let nextCalled = false;
+        this.dm.createDatasetRecord(recordConfig).subscribe({
+            next: () => {
+                nextCalled = true;
+                this.toast.createSuccessToast('Dataset successfully created');
+                this.dialogRef.close(true);
+            },
+            error: (error) => {
+                nextCalled = true;
+                this.error = error;
+            },
+            complete: () => {
+                this.closeDialog(!nextCalled);
+            }
+        });
+    }
+    private createDatasetRecord(): DatasetRecordConfig {
+        return {
             title: this.createDatasetForm.controls.title.value,
             description: this.createDatasetForm.controls.description.value,
             repositoryId: this.createDatasetForm.controls.repository.value,
@@ -77,10 +115,5 @@ export class NewDatasetOverlayComponent implements OnInit {
             keywords: map(this.createDatasetForm.controls.keywords.value, trim),
             ontologies: map(this.selectedOntologies, 'recordId')
         };
-        this.dm.createDatasetRecord(recordConfig)
-            .subscribe(() => {
-                this.toast.createSuccessToast('Dataset successfully created');
-                this.dialogRef.close(true);
-            }, error => this.error = error);
     }
 }

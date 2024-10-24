@@ -81,6 +81,7 @@ export class CommitInfoOverlayComponent implements OnInit {
         this.dialogRef.close(false);
     }
     retrieveMoreResults(limit: number, offset: number): void {
+        let nextCalled = false;
         this.cm.getDifference(this.data.commit.id, null, limit, offset)
             .pipe(
                 switchMap((response: HttpResponse<CommitDifference>): Observable<EntityNames> => {
@@ -106,7 +107,21 @@ export class CommitInfoOverlayComponent implements OnInit {
                     this.tempDeletions = [];
                     return null;
                 })
-            ).subscribe(() => {}, error => this.toast.createErrorToast(error));
+            ).subscribe({
+                next: () => {
+                    nextCalled = true;
+                }, 
+                error: (error) => {
+                    nextCalled = true;
+                    this.toast.createErrorToast(error);
+                },
+                complete: () => {
+                    if (!nextCalled) {
+                        this.dialogRef.close();
+                    }
+                }
+            });
+
     }
     getEntityName(iri: string): string {
         if (get(this.entityNames, [iri, 'label'])) {

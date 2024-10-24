@@ -88,6 +88,7 @@ describe('Datasets Ontology Picker component', function() {
         fixture = TestBed.createComponent(DatasetsOntologyPickerComponent);
         component = fixture.componentInstance;
         element = fixture.debugElement;
+        component.readyFlag = true;
         catalogManagerStub = TestBed.inject(CatalogManagerService) as jasmine.SpyObj<CatalogManagerService>;
 
         ontology1Record = {

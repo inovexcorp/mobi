@@ -23,8 +23,10 @@
 import { Component, OnInit } from '@angular/core';
 import { UntypedFormBuilder, Validators } from '@angular/forms';
 import { MatDialogRef } from '@angular/material/dialog';
-import { forkJoin } from 'rxjs/internal/observable/forkJoin';
-import { map, trim, uniq } from 'lodash';
+import { trim, map as mapL, uniq } from 'lodash';
+
+import { catchError, map, switchMap } from 'rxjs/operators';
+import { EMPTY, forkJoin } from 'rxjs';
 
 import { REGEX } from '../../../constants';
 import { RESTError } from '../../../shared/models/RESTError.interface';
@@ -94,6 +96,8 @@ export class WorkflowCreationModalComponent implements OnInit {
    * Once permissions are obtained, it closes the dialog with the new workflow data.
    */
   create(): void {
+    let isDialogClosed = false;
+    let requestErrorFlag = false;
     const newWorkflowIri = this.newWorkflowForm.controls.iri.value;
     const actionId = `${newWorkflowIri}/action`;
 
@@ -115,14 +119,13 @@ export class WorkflowCreationModalComponent implements OnInit {
     const newWorkflowRecord: WorkflowRecordConfig = {
       title: this.newWorkflowForm.controls.title.value,
       description: this.newWorkflowForm.controls.description.value,
-      keywords: uniq(map(this.newWorkflowForm.controls.keywords.value, trim)),
+      keywords: uniq(mapL(this.newWorkflowForm.controls.keywords.value, trim)),
       jsonld: [newWorkflow, newAction]
     };
-    this.wms.createWorkflowRecord(newWorkflowRecord)
-      .subscribe((result) => {
+    this.wms.createWorkflowRecord(newWorkflowRecord).pipe(
+      switchMap((result: string) => {
         const masterBranchId = result['branchId'];
         const recordId = result['recordId'];
-
         const newWorkflow: WorkflowSchema = {
           iri: recordId,
           title: newWorkflowRecord.title,
@@ -143,17 +146,35 @@ export class WorkflowCreationModalComponent implements OnInit {
           canModifyMasterBranch: false,
           canDeleteWorkflow: false
         };
-
-        forkJoin({
+        return forkJoin({
           modifyPermission: this.wms.checkMasterBranchPermissions(masterBranchId, recordId),
           deletePermission: this.wms.checkMultiWorkflowDeletePermissions([newWorkflow])
-        }).subscribe(({modifyPermission, deletePermission}) => {
-          newWorkflow.canModifyMasterBranch = modifyPermission;
-          newWorkflow.canDeleteWorkflow = deletePermission.some(permission => permission.decision === 'Permit');
-          this._dialogRef.close({ status: true, newWorkflow: newWorkflow });
-        });
-      }, (error: RESTError) => {
+        }).pipe(
+          map(({modifyPermission, deletePermission}): WorkflowSchema => {
+            return {
+              ...newWorkflow,
+              canModifyMasterBranch: modifyPermission,
+              canDeleteWorkflow: deletePermission.some(permission => permission.decision === 'Permit')
+            };
+          })
+        );
+      }),
+      catchError((error: RESTError) => {
         this.error = error;
-      });
+        requestErrorFlag = true;
+        return EMPTY;
+      })
+    ).subscribe({
+      next: (newWorkflow: WorkflowSchema) => {
+        this._dialogRef.close({ status: true, newWorkflow });
+        isDialogClosed = true;
+      },
+      complete: () => {
+        if (!isDialogClosed && !requestErrorFlag) {
+          this._dialogRef.close({ status: false });
+          isDialogClosed = true;
+        }
+      }
+    });
   }
 }

@@ -90,6 +90,7 @@ export class NewInstanceClassOverlayComponent implements OnInit {
         }
     }
     submit(): void {
+        // TODO Handling closing modal for 401
         this.es.getClassInstanceDetails(this.state.explore.recordId, this.selectedClass.id, {pageIndex: 0, limit: this.state.explore.instanceDetails.limit})
             .subscribe(response => {
                 this.state.explore.creating = true;

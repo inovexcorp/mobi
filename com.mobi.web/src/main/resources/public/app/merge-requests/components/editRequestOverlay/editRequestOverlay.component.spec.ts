@@ -262,10 +262,12 @@ describe('Edit Request Overlay Component', function() {
             expect(element.queryAll(By.css('mat-checkbox')).length).toEqual(0);
 
             mergeRequestsStateStub.selected.sourceTitle = 'source';
+            component['setTitles']();
             fixture.detectChanges();
             expect(element.queryAll(By.css('mat-checkbox')).length).toEqual(1);
 
             mergeRequestsStateStub.selected.sourceTitle = 'MASTER';
+            component['setTitles']();
             fixture.detectChanges();
             expect(element.queryAll(By.css('mat-checkbox')).length).toEqual(0);
         });

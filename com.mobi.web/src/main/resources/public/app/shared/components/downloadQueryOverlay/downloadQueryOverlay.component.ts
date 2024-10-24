@@ -73,6 +73,9 @@ export class DownloadQueryOverlayComponent implements OnInit {
         this.availableOptions = this.options.filter( item => item.queryType === this.queryType );
     }
     download(): void {
+        let isDialogClosed = false;
+        let requestErrorFlag = false;
+
         const fileType = this.downloadResultsForm.controls.fileType.value;
         const fileName = this.downloadResultsForm.controls.fileName.value;
         let request: Observable<ArrayBuffer>;
@@ -81,10 +84,21 @@ export class DownloadQueryOverlayComponent implements OnInit {
         } else {
             request = this.sm.downloadResultsPost(this.data.query, fileType, fileName, this.data.recordId);
         }
-        request.subscribe(() => {
-            this.dialogRef.close();
-        }, error => {
-            this.dialogRef.close(error);
+        request.subscribe({
+            next: () => {
+                this.dialogRef.close();
+                isDialogClosed = true;
+            }, 
+            error: (error) => {
+                requestErrorFlag = true;
+                this.dialogRef.close(error);
+            },
+            complete: () => {
+                if (!isDialogClosed && !requestErrorFlag) {
+                    this.dialogRef.close();
+                    isDialogClosed = true;
+                }
+            }
         });
     }
 }

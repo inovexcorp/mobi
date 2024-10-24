@@ -36,7 +36,11 @@
         <textarea matInput name="description" formControlName="description"></textarea>
     </mat-form-field>
     <keyword-select [parentForm]="editDatasetForm"></keyword-select>
-    <datasets-ontology-picker class="w-100" [(selected)]="selectedOntologies"></datasets-ontology-picker>
+    <datasets-ontology-picker class="w-100" 
+        [readyFlag]="readyFlag"
+        (interceptorErrorDetection)="closeDialog(true)"
+        [(selected)]="selectedOntologies">
+    </datasets-ontology-picker>
 </div>
 <div mat-dialog-actions>
     <button mat-raised-button [mat-dialog-close]="false">Cancel</button>

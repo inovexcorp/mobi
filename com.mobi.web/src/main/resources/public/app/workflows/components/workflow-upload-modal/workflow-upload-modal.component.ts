@@ -20,16 +20,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { Component, Inject, OnInit } from '@angular/core';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+
+import { map as mapL, trim, uniq } from 'lodash';
+import { catchError, map, switchMap } from 'rxjs/operators';
+import { EMPTY, forkJoin } from 'rxjs';
+
 import { WorkflowsManagerService } from '../../services/workflows-manager.service';
 import { WorkflowSchema } from '../../models/workflow-record.interface';
 import { WorkflowRecordConfig } from '../../models/workflowRecordConfig.interface';
 import { RESTError } from '../../../shared/models/RESTError.interface';
-
-import { Component, Inject, OnInit } from '@angular/core';
-import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
-import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { map, trim, uniq } from 'lodash';
-import { forkJoin } from 'rxjs/internal/observable/forkJoin';
 
 @Component({
   selector: 'app-workflow-upload-modal',
@@ -59,19 +61,19 @@ export class WorkflowUploadModalComponent implements OnInit {
   }
 
   submit(): void {
-
+    let isDialogClosed = false;
+    let requestErrorFlag = false;
     const newWorkflowRecord: WorkflowRecordConfig = {
       title: this.uploadWorkflowForm.controls.title.value,
       description: this.uploadWorkflowForm.controls.description.value,
-      keywords: uniq(map(this.uploadWorkflowForm.controls.keywords.value, trim)),
+      keywords: uniq(mapL(this.uploadWorkflowForm.controls.keywords.value, trim)),
       file: this._data.file
     };
-
-    this.wms.createWorkflowRecord(newWorkflowRecord)
-      .subscribe((result) => {
+    this.wms.createWorkflowRecord(newWorkflowRecord).pipe(
+      switchMap(result => {
         const masterBranchId = result['branchId'];
         const recordId = result['recordId'];
-
+    
         const newWorkflow: WorkflowSchema = {
           iri: recordId,
           title: newWorkflowRecord.title,
@@ -92,17 +94,34 @@ export class WorkflowUploadModalComponent implements OnInit {
           canModifyMasterBranch: false,
           canDeleteWorkflow: false
         };
-
-        forkJoin({
+        return forkJoin({
           modifyPermission: this.wms.checkMasterBranchPermissions(masterBranchId, recordId),
           deletePermission: this.wms.checkMultiWorkflowDeletePermissions([newWorkflow])
-        }).subscribe(({ modifyPermission, deletePermission }) => {
-          newWorkflow.canModifyMasterBranch = modifyPermission;
-          newWorkflow.canDeleteWorkflow = deletePermission.some(permission => permission.decision === 'Permit');
-          this._dialogRef.close({ status: true, newWorkflow: newWorkflow });
-        });
-      }, (error: RESTError) => {
+        }).pipe(
+          map(({ modifyPermission, deletePermission }) => {
+            return {
+              ...newWorkflow,
+              canModifyMasterBranch: modifyPermission,
+              canDeleteWorkflow: deletePermission.some(permission => permission.decision === 'Permit')
+            };
+        })
+      )}),
+      catchError((error: RESTError) => {
         this.error = error;
+        requestErrorFlag = true;
+        return EMPTY;
+      })
+    ).subscribe({
+        next: (newWorkflow: WorkflowSchema) => {
+          this._dialogRef.close({ status: true, newWorkflow });
+          isDialogClosed = true;
+        },
+        complete: () => {
+          if (!isDialogClosed && !requestErrorFlag) {
+            this._dialogRef.close({ status: false });
+            isDialogClosed = true;
+          }
+        }
       });
     }
 }

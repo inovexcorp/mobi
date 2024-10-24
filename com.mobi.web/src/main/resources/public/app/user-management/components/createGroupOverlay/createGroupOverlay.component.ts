@@ -65,6 +65,8 @@ export class CreateGroupOverlayComponent implements OnInit {
         return this.createGroupForm.controls.title.hasError('uniqueValue') ? 'This group title has already been taken' : '';
     }
     add(): void {
+        let isDialogClosed = false;
+        let requestErrorFlag = false;
         const newGroup: Group = {
             title: this.createGroupForm.controls.title.value,
             description: this.createGroupForm.controls.description.value,
@@ -75,12 +77,24 @@ export class CreateGroupOverlayComponent implements OnInit {
         if (this.createGroupForm.controls.admin.value) {
             newGroup.roles.push('admin');
         }
-        this.um.addGroup(newGroup)
-            .subscribe(() => {
+        this.um.addGroup(newGroup).subscribe({
+            next: () => {
                 this.toast.createSuccessToast('Group successfully created');
                 this.errorMessage = '';
                 this.dialogRef.close();
-            }, error => this.errorMessage = error);
+                isDialogClosed = true;
+            }, 
+            error: (error) => {
+                requestErrorFlag = true;
+                this.errorMessage = error;
+            },
+            complete: () => {
+                if (!isDialogClosed && !requestErrorFlag) {
+                    this.dialogRef.close();
+                    isDialogClosed = true;
+                }
+            }
+        });
     }
     addMember(member: User): void {
         this.members = this.members.concat([member.username]);

@@ -54,15 +54,40 @@ export class EditUserProfileOverlayComponent {
         }
 
     set(): void {
+        let isDialogClosed = false;
+        let requestErrorFlag = false;
+        const newUser = this.createUser();
+        this.um.updateUser(this.state.selectedUser.username, newUser).subscribe({
+            next: () => {
+                this._onNext(newUser);
+                isDialogClosed = true;
+            }, 
+            error: (error) => {
+                requestErrorFlag = true;
+                this._onError(error);
+            },
+            complete: () => {
+                if (!isDialogClosed && !requestErrorFlag) {
+                    this.dialogRef.close();
+                    isDialogClosed = true;
+                }
+            }
+        });
+    }
+    private createUser() {
         const newUser = new User(this.state.selectedUser.jsonld);
         newUser.firstName = this.editProfileForm.controls.firstName.value;
         newUser.lastName = this.editProfileForm.controls.lastName.value;
         newUser.email = this.editProfileForm.controls.email.value ? 'mailto:' + this.editProfileForm.controls.email.value : '';
-        this.um.updateUser(this.state.selectedUser.username, newUser).subscribe(() => {
-            this.toast.createSuccessToast('User profile successfully saved');
-            this.errorMessage = '';
-            this.state.selectedUser = newUser;
-            this.dialogRef.close();
-        }, error => this.errorMessage = error);
+        return newUser;
+    }
+    private _onNext(newUser: User) {
+        this.toast.createSuccessToast('User profile successfully saved');
+        this.errorMessage = '';
+        this.state.selectedUser = newUser;
+        this.dialogRef.close();
+    }
+    private _onError(error: any) {
+        this.errorMessage = error;
     }
 }

@@ -25,8 +25,8 @@ import { Component, OnInit } from '@angular/core';
 import { UntypedFormBuilder, Validators } from '@angular/forms';
 import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { MatDialogRef } from '@angular/material/dialog';
-import { Observable } from 'rxjs';
-import { debounceTime, map, startWith, switchMap } from 'rxjs/operators';
+import { EMPTY, Observable } from 'rxjs';
+import { catchError, debounceTime, finalize, map, startWith, switchMap, tap } from 'rxjs/operators';
 
 import { DCTERMS } from '../../../prefixes';
 import { DatasetManagerService } from '../../../shared/services/datasetManager.service';
@@ -34,6 +34,8 @@ import { DelimitedManagerService } from '../../../shared/services/delimitedManag
 import { MapperStateService } from '../../../shared/services/mapperState.service';
 import { ToastService } from '../../../shared/services/toast.service';
 import { getDctermsValue } from '../../../shared/utility';
+import { HttpResponse } from '@angular/common/http';
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 
 interface DatasetPreview {
     id: string,
@@ -54,6 +56,9 @@ interface DatasetPreview {
 })
 
 export class RunMappingDatasetOverlayComponent implements OnInit {
+    private readonly DEBOUNCE_TIME = 500;
+    private readonly LIMIT = 100;
+
     errorMessage = '';
     datasetRecordIRI = '';
     runMappingDatasetForm = this.fb.group({
@@ -67,38 +72,60 @@ export class RunMappingDatasetOverlayComponent implements OnInit {
         private toast: ToastService) {}
 
     ngOnInit(): void {
-        this.filteredDatasets = this.runMappingDatasetForm.controls.datasetSelect.valueChanges
-            .pipe(
-                debounceTime(500),
-                startWith<string | DatasetPreview>(''),
-                switchMap(val => {
-                    const searchText = typeof val === 'string' ?
-                        val :
-                        val ?
-                            val.title :
-                            '';
-                    return this.dam.getDatasetRecords({
-                        searchText,
-                        limit: 100,
-                        pageIndex: 0,
-                        sortOption: {
-                            label: 'Title',
-                            field: `${DCTERMS}title`,
-                            asc: true
-                        }
-                    }).pipe(
-                        map(response => {
-                            return response.body.map(arr => {
-                                const record = this.dam.getRecordFromArray(arr);
-                                return {
-                                    id: record['@id'],
-                                    title: getDctermsValue(record, 'title')
-                                };
-                            });
-                        })
-                    );
-                })
-            );
+        this.filteredDatasets = this._initDatasetSelectValueChanges();
+    }
+
+    /**
+     * Initializes the dataset select value changes stream with debouncing and switching logic.
+     * 
+     * This method handles the value changes from the `datasetSelect` control in the form,
+     * applies a debounce time to limit the number of changes being processed,
+     * and then uses a switchMap to process the value changes by invoking `_handleDatasetSelectChange`.
+     * 
+     * @returns {Observable<DatasetPreview[]>} An observable of filtered datasets.
+     */
+    private _initDatasetSelectValueChanges(): Observable<DatasetPreview[]> {
+        return this.runMappingDatasetForm.controls.datasetSelect.valueChanges.pipe(
+            debounceTime(this.DEBOUNCE_TIME),
+            startWith<string | DatasetPreview>(''),
+            switchMap(val => this._handleDatasetSelectChange(val))
+        );
+    }
+    private _handleDatasetSelectChange (val: string | DatasetPreview): Observable<DatasetPreview[]> {
+        let mapExecuted = false;
+        let catchErrorExecuted = false;
+        const searchText = typeof val === 'string' ?
+            val : val ? val.title : '';
+        return this.dam.getDatasetRecords({
+            searchText,
+            limit: this.LIMIT,
+            pageIndex: 0,
+            sortOption: {
+                label: 'Title',
+                field: `${DCTERMS}title`,
+                asc: true
+            }
+        }).pipe(
+            map(response => {
+                mapExecuted = true;
+                return response.body.map(arr => {
+                    const record = this.dam.getRecordFromArray(arr);
+                    return {
+                        id: record['@id'],
+                        title: getDctermsValue(record, 'title')
+                    };
+                });
+            }),
+            catchError(() => {
+                catchErrorExecuted = true; 
+                return [];
+            }),
+            finalize(() => { // Used to detect HttpInterceptor observable.empty events
+                if (!(mapExecuted || catchErrorExecuted)) {
+                    this.dialogRef.close();
+                }
+            })
+        );
     }
     selectDataset(event: MatAutocompleteSelectedEvent): void {
         this.datasetRecordIRI = event.option.value?.id;
@@ -107,24 +134,42 @@ export class RunMappingDatasetOverlayComponent implements OnInit {
         return value ? value.title : '';
     }
     run(): void {
-        if (this.state.editMapping && this.state.isMappingChanged()) {
-            this.state.saveMapping()
-                .subscribe(id => {
-                    this.state.newMapping = false;
-                    return this._runMapping(id);
-                }, error => this._onError(error));
-        } else {
+        let isDialogClosed = false;
+        let requestErrorFlag = false;
+        // If the mapping is in edit mode and changes are detected, save mapping and run it
+        // Otherwise, run the mapping directly
+        const run$: Observable<void> = (this.state.editMapping && this.state.isMappingChanged()) ?
+            this.state.saveMapping().pipe(
+                tap(() => this.state.newMapping = false),
+                switchMap(id => this._runMapping(id)),
+            ) :
             this._runMapping(this.state.selected.record.id);
-        }
+
+        run$.pipe(
+            tap(() => {
+                this.dialogRef.close();
+                isDialogClosed = true;
+            }),
+            catchError(errorMessage => {
+                requestErrorFlag = true;
+                this.errorMessage = errorMessage;
+                return EMPTY;
+            }),
+            finalize(() => {
+                if (!isDialogClosed && !requestErrorFlag) {
+                    this.dialogRef.close();
+                    isDialogClosed = true;
+                }
+            })
+        ).subscribe();
     }
 
-    private _onError(errorMessage: string): void {
-        this.errorMessage = errorMessage;
+    private _runMapping(id: string): Observable<void> {
+        return this.dm.mapAndUpload(id, this.datasetRecordIRI).pipe(
+            tap(() => this._reset()),  // Reset state after successful mapping
+        );
     }
-    private _runMapping(id: string): void {
-        this.dm.mapAndUpload(id, this.datasetRecordIRI)
-            .subscribe(() => this._reset(), error => this._onError(error));
-    }
+    
     private _reset(): void {
         this.errorMessage = '';
         this.state.step = this.state.selectMappingStep;
@@ -132,6 +177,5 @@ export class RunMappingDatasetOverlayComponent implements OnInit {
         this.state.resetEdit();
         this.dm.reset();
         this.toast.createSuccessToast('Successfully ran mapping');
-        this.dialogRef.close();
     }
 }

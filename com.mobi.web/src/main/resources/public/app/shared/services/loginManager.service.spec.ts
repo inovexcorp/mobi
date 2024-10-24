@@ -54,26 +54,27 @@ import { EntitySearchStateService } from '../../entity-search/services/entity-se
 describe('Login Manager service', function() {
     let service: LoginManagerService;
     let httpMock: HttpTestingController;
-    let router: Router;
-    let progressSpinnerStub: jasmine.SpyObj<ProgressSpinnerService>;
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
     let catalogStateStub: jasmine.SpyObj<CatalogStateService>;
     let datasetManagerStub: jasmine.SpyObj<DatasetManagerService>;
     let datasetStateStub: jasmine.SpyObj<DatasetStateService>;
     let delimitedManagerStub: jasmine.SpyObj<DelimitedManagerService>;
     let discoverStateStub: jasmine.SpyObj<DiscoverStateService>;
+    let entitySearchStateStub: jasmine.SpyObj<EntitySearchStateService>;
     let mapperStateStub: jasmine.SpyObj<MapperStateService>;
     let mergeRequestsStateStub: jasmine.SpyObj<MergeRequestsStateService>;
     let ontologyManagerStub: jasmine.SpyObj<OntologyManagerService>;
     let ontologyStateStub: jasmine.SpyObj<OntologyStateService>;
+    let progressSpinnerStub: jasmine.SpyObj<ProgressSpinnerService>;
+    let provManagerStub: jasmine.SpyObj<ProvManagerService>;
+    let router: Router;
     let shapesGraphStateStub: jasmine.SpyObj<ShapesGraphStateService>;
     let stateManagerStub: jasmine.SpyObj<StateManagerService>;
+    let toastServiceStub: jasmine.SpyObj<ToastService>;
     let userManagerStub: jasmine.SpyObj<UserManagerService>;
     let userStateStub: jasmine.SpyObj<UserStateService>;
     let yasguiStub: jasmine.SpyObj<YasguiService>;
-    let provManagerStub: jasmine.SpyObj<ProvManagerService>;
-    let entitySearchStateStub: jasmine.SpyObj<EntitySearchStateService>;
-
+    
     const error = 'Error Message';
     const user: User = new User({
         '@id': 'userIRI',
@@ -86,57 +87,65 @@ describe('Login Manager service', function() {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ HttpClientTestingModule, RouterTestingModule.withRoutes([]) ],
+            imports: [ 
+                HttpClientTestingModule, 
+                RouterTestingModule.withRoutes([])
+            ],
             providers: [
                 LoginManagerService,
-                MockProvider(ProgressSpinnerService),
                 MockProvider(CatalogManagerService),
                 MockProvider(CatalogStateService),
                 MockProvider(DatasetManagerService),
                 MockProvider(DatasetStateService),
                 MockProvider(DelimitedManagerService),
                 MockProvider(DiscoverStateService),
+                MockProvider(EntitySearchStateService),
                 MockProvider(MapperStateService),
                 MockProvider(MergeRequestsStateService),
                 MockProvider(OntologyManagerService),
                 MockProvider(OntologyStateService),
+                MockProvider(ProgressSpinnerService),
+                MockProvider(ProvManagerService),
                 MockProvider(ShapesGraphStateService),
                 MockProvider(StateManagerService),
+                MockProvider(ToastService),
                 MockProvider(UserManagerService),
                 MockProvider(UserStateService),
-                MockProvider(ToastService),
-                MockProvider(YasguiService),
-                MockProvider(ProvManagerService),
-                MockProvider(EntitySearchStateService)
+                MockProvider(YasguiService)
             ]
         });
 
-        service = TestBed.inject(LoginManagerService);
-        router = TestBed.inject(Router) as jasmine.SpyObj<Router>;
-        spyOn(router, 'navigate');
-        progressSpinnerStub = TestBed.inject(ProgressSpinnerService) as jasmine.SpyObj<ProgressSpinnerService>;
-        httpMock = TestBed.inject(HttpTestingController) as jasmine.SpyObj<HttpTestingController>;
         catalogManagerStub = TestBed.inject(CatalogManagerService) as jasmine.SpyObj<CatalogManagerService>;
         catalogStateStub = TestBed.inject(CatalogStateService) as jasmine.SpyObj<CatalogStateService>;
         datasetManagerStub = TestBed.inject(DatasetManagerService) as jasmine.SpyObj<DatasetManagerService>;
         datasetStateStub = TestBed.inject(DatasetStateService) as jasmine.SpyObj<DatasetStateService>;
         delimitedManagerStub = TestBed.inject(DelimitedManagerService) as jasmine.SpyObj<DelimitedManagerService>;
         discoverStateStub = TestBed.inject(DiscoverStateService) as jasmine.SpyObj<DiscoverStateService>;
+        entitySearchStateStub = TestBed.inject(EntitySearchStateService) as jasmine.SpyObj<EntitySearchStateService>;
+        httpMock = TestBed.inject(HttpTestingController) as jasmine.SpyObj<HttpTestingController>;
         mapperStateStub = TestBed.inject(MapperStateService) as jasmine.SpyObj<MapperStateService>;
         mergeRequestsStateStub = TestBed.inject(MergeRequestsStateService) as jasmine.SpyObj<MergeRequestsStateService>;
         ontologyManagerStub = TestBed.inject(OntologyManagerService) as jasmine.SpyObj<OntologyManagerService>;
         ontologyStateStub = TestBed.inject(OntologyStateService) as jasmine.SpyObj<OntologyStateService>;
+        progressSpinnerStub = TestBed.inject(ProgressSpinnerService) as jasmine.SpyObj<ProgressSpinnerService>;
+        progressSpinnerStub.track.and.callFake((ob) => ob);
+        provManagerStub = TestBed.inject(ProvManagerService) as jasmine.SpyObj<ProvManagerService>;
+        router = TestBed.inject(Router) as jasmine.SpyObj<Router>;
+        spyOn(router, 'navigate');
         shapesGraphStateStub = TestBed.inject(ShapesGraphStateService) as jasmine.SpyObj<ShapesGraphStateService>;
         stateManagerStub = TestBed.inject(StateManagerService) as jasmine.SpyObj<StateManagerService>;
+        toastServiceStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
         userManagerStub = TestBed.inject(UserManagerService) as jasmine.SpyObj<UserManagerService>;
         userStateStub = TestBed.inject(UserStateService) as jasmine.SpyObj<UserStateService>;
         yasguiStub = TestBed.inject(YasguiService) as jasmine.SpyObj<YasguiService>;
-        provManagerStub = TestBed.inject(ProvManagerService) as jasmine.SpyObj<ProvManagerService>;
-        entitySearchStateStub = TestBed.inject(EntitySearchStateService) as jasmine.SpyObj<EntitySearchStateService>;
 
-        progressSpinnerStub.track.and.callFake((ob) => ob);
+        service = TestBed.inject(LoginManagerService);
     });
     afterEach(function() {
+        Object.defineProperty(document, 'cookie', {
+            value: '',
+            writable: true
+        });
         cleanStylesFromDOM();
         service = null;
         httpMock = null;
@@ -363,5 +372,157 @@ describe('Login Manager service', function() {
                 expect(service.checkMergedAccounts).toHaveBeenCalledWith();
             }));
         });
+    });
+    describe('validateSession', () => {
+        it('should return false and redirect if no token is present', (done) => {
+            spyOn(service, 'getCookie').and.returnValue(null);
+            spyOn(service, 'clearServiceStates');
+    
+            service.validateSession().subscribe((result) => {
+              expect(result).toBeFalse();
+              expect(toastServiceStub.createErrorToast).toHaveBeenCalledWith(service.NO_TOKEN_MESSAGE);
+              expect(service.clearServiceStates).toHaveBeenCalled();
+              expect(router.navigate).toHaveBeenCalledWith(['/login']);
+              done();
+            });
+        });
+          it('should return false and redirect if token is expired', (done) => {
+            const expiredTokenPayload = { exp: (Date.now() / 1000) - 3600 }; // Token that expired
+            spyOn(service, 'getCookie').and.returnValue('expired_token');
+            spyOn(service, 'decodeToken').and.returnValue(expiredTokenPayload);
+            spyOn(service, 'clearServiceStates');
+        
+            service.validateSession().subscribe((result) => {
+              expect(result).toBeFalse();
+              expect(toastServiceStub.createErrorToast).toHaveBeenCalledWith(service.TOKEN_EXPIRED_MESSAGE);
+              expect(service.clearServiceStates).toHaveBeenCalled();
+              expect(router.navigate).toHaveBeenCalledWith(['/login']);
+              done();
+            });
+          });
+          it('should return false and redirect if session is invalid', (done) => {
+            const validTokenPayload = { exp: (Date.now() / 1000) + 3600 }; // Token that expires
+            spyOn(service, 'getCookie').and.returnValue('valid_token');
+            spyOn(service, 'decodeToken').and.returnValue(validTokenPayload);
+            spyOn(service, 'isAuthenticated').and.returnValue(of(false));
+            spyOn(service, 'clearServiceStates');
+    
+            service.validateSession().subscribe((result) => {
+              expect(result).toBeFalse();
+              expect(toastServiceStub.createErrorToast).toHaveBeenCalledWith(service.SESSION_INVALID_MESSAGE);
+              expect(service.clearServiceStates).toHaveBeenCalled();
+              expect(router.navigate).toHaveBeenCalledWith(['/login']);
+              done();
+            });
+          });
+          it('should return true if the token is valid and session is authenticated', (done) => {
+            const validTokenPayload = { exp: (Date.now() / 1000) + 3600 }; // Token that expires in 1 hour
+            spyOn(service, 'getCookie').and.returnValue('valid_token');
+            spyOn(service, 'decodeToken').and.returnValue(validTokenPayload);
+            spyOn(service, 'isAuthenticated').and.returnValue(of(true));
+            spyOn(service, 'clearServiceStates');
+    
+            service.validateSession().subscribe((result) => {
+              expect(result).toBeTrue();
+              expect(toastServiceStub.createErrorToast).not.toHaveBeenCalled();
+              expect(service.clearServiceStates).not.toHaveBeenCalled();
+              expect(router.navigate).not.toHaveBeenCalled();
+              done();
+            });
+          });
+    });
+    describe('getCookie', () => {
+        it('should return the value of a cookie if it exists', () => {
+            const mockCookie = 'mobi_web_token=example_value';
+            Object.defineProperty(document, 'cookie', {
+              value: mockCookie,
+              writable: true
+            });
+    
+            const result = service.getCookie('mobi_web_token');
+            expect(result).toBe('example_value');
+        });
+        it('should return null if the cookie does not exist', () => {
+            Object.defineProperty(document, 'cookie', {
+                value: 'other_cookie=value',
+                writable: true
+            });
+    
+            const result = service.getCookie('mobi_web_token');
+            expect(result).toBeNull();
+        });
+        it('should decode a URL-encoded cookie value', () => {
+            const mockCookie = 'mobi_web_token=example%20value';
+            Object.defineProperty(document, 'cookie', {
+                value: mockCookie,
+                writable: true
+            });
+    
+            const result = service.getCookie('mobi_web_token');
+            expect(result).toBe('example value');
+        });
+        it('should return null if document.cookie is empty', () => {
+            Object.defineProperty(document, 'cookie', {
+                value: '',
+                writable: true
+            });
+    
+            const result = service.getCookie('mobi_web_token');
+            expect(result).toBeNull();
+        });
+    });
+    describe('deleteCookie', () => {
+        it('should delete a cookie by setting the cookie value with a negative Max-Age', () => {
+            Object.defineProperty(document, 'cookie', {
+                value: 'mobi_web_token=; path=/;',
+                writable: true
+            });
+            expect(document.cookie).toEqual('mobi_web_token=; path=/;');
+            service.deleteCookie('mobi_web_token');
+            expect(document.cookie).toEqual('mobi_web_token=; Max-Age=-99999999; path=/;');
+        });
+        it('should delete another cookie by name', () => {
+            Object.defineProperty(document, 'cookie', {
+                value: '',
+                writable: true
+            });
+            service.deleteCookie('another_cookie');
+            expect(document.cookie).toEqual('another_cookie=; Max-Age=-99999999; path=/;');
+        });
+    });
+    describe('decodeToken', () => {
+        it('should correctly decode a valid JWT token', () => {
+            const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.' +
+                          'eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.' +
+                          'SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c';
+            const expectedPayload = {
+              sub: '1234567890',
+              name: 'John Doe',
+              iat: 1516239022
+            };
+            const decoded = service.decodeToken(token);
+            expect(decoded).toEqual(expectedPayload);
+          });
+          it('should return null for an invalid token', () => {
+            const invalidToken = 'invalid.token';
+        
+            const decoded = service.decodeToken(invalidToken);
+            expect(decoded).toBeNull();
+          });
+          it('should return null when token is malformed or corrupted', () => {
+            const malformedToken = 'eyJhbGciOiJIUzI1NiJ9.this_is_not_base64...';
+        
+            const decoded = service.decodeToken(malformedToken);
+            expect(decoded).toBeNull();
+          });
+          it('should return null when atob throws an error', () => {
+            spyOn(window, 'atob').and.throwError('InvalidCharacterError');
+            const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.' +
+                          'eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.' +
+                          'SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c';
+            
+            const decoded = service.decodeToken(token);
+            expect(decoded).toBeNull();
+          });
     });
 });

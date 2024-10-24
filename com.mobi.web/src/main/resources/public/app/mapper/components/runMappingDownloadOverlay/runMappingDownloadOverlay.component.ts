@@ -71,7 +71,6 @@ export class RunMappingDownloadOverlayComponent implements OnInit {
     }
     private _runMapping(id: string): void {
         this.dm.mapAndDownload(id, this.runMappingDownloadForm.controls.serialization.value, this.runMappingDownloadForm.controls.fileName.value);
-        this.toast.createSuccessToast('Successfully ran mapping');
         this._reset();
     }
     private _reset(): void {
@@ -80,6 +79,7 @@ export class RunMappingDownloadOverlayComponent implements OnInit {
         this.state.initialize();
         this.state.resetEdit();
         this.dm.reset();
+        this.toast.createSuccessToast('Successfully ran mapping');
         this.dialogRef.close();
     }
 }

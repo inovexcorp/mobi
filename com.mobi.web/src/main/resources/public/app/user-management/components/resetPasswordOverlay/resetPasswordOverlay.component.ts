@@ -46,15 +46,33 @@ export class ResetPasswordOverlayComponent {
         unmaskPassword: ['', [Validators.required]],
     });
 
-    constructor(private dialogRef: MatDialogRef<ResetPasswordOverlayComponent>, private fb: UntypedFormBuilder,
-        private state: UserStateService, private um: UserManagerService, private toast: ToastService) {}
+    constructor(private dialogRef: MatDialogRef<ResetPasswordOverlayComponent>, 
+        private fb: UntypedFormBuilder,
+        private state: UserStateService, 
+        private um: UserManagerService, 
+        private toast: ToastService) {}
 
     set(): void {
+        let isDialogClosed = false;
+        let requestErrorFlag = false;
         this.um.resetPassword(this.state.selectedUser.username, this.resetPasswordForm.controls.unmaskPassword.value)
-            .subscribe(() => {
-                this.toast.createSuccessToast('Password successfully reset');
-                this.errorMessage = '';
-                this.dialogRef.close();
-            }, error => this.errorMessage = error);
+            .subscribe({
+                next: () => {
+                    this.toast.createSuccessToast('Password successfully reset');
+                    this.errorMessage = '';
+                    this.dialogRef.close();
+                    isDialogClosed = true;
+                }, 
+                error: (error) => {
+                    requestErrorFlag = true;
+                    this.errorMessage = error;
+                },
+                complete: () => {
+                    if (!isDialogClosed && !requestErrorFlag) {
+                        this.dialogRef.close();
+                        isDialogClosed = true;
+                    }
+                }
+            });
     }
 }
