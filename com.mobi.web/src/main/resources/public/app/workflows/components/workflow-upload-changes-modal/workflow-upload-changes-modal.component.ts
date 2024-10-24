@@ -22,6 +22,7 @@
  */
 import { Component, Inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { HttpResponse } from '@angular/common/http';
 
 import { RESTError } from '../../../shared/models/RESTError.interface';
 import { WorkflowsManagerService } from '../../services/workflows-manager.service';
@@ -34,9 +35,11 @@ export class WorkflowUploadChangesModalComponent {
   error: RESTError;
   file = undefined;
 
-  constructor(private _dialogRef: MatDialogRef<WorkflowUploadChangesModalComponent>, private _wms: WorkflowsManagerService,
+  constructor(
+    private _dialogRef: MatDialogRef<WorkflowUploadChangesModalComponent>, 
+    private _wms: WorkflowsManagerService,
     @Inject(MAT_DIALOG_DATA) public data: { recordId: string, branchId: string, commitId: string }) {
-   }
+  }
 
   /**
    * Submits the changes by committing them using WorkflowsRest.
@@ -44,18 +47,36 @@ export class WorkflowUploadChangesModalComponent {
    * Closes the dialog on successful upload or sets the error message on upload failure.
    */
   submit(): void {
-    this._wms.uploadChanges(this.data.recordId, this.data.branchId, this.data.commitId, this.file).subscribe((response) => {
-      this._dialogRef.close(response);
-    }, errorObj => {
-      if (typeof errorObj === 'string') {
-        this.error = {
-          error: '',
-          errorDetails: [],
-          errorMessage: errorObj
-        };
-      } else {
-        this.error = errorObj;
+    let isDialogClosed = false;
+    let requestErrorFlag = false;
+    this._wms.uploadChanges(this.data.recordId, this.data.branchId, this.data.commitId, this.file)
+      .subscribe({
+        next: (response: HttpResponse<string>) => {
+          this._dialogRef.close(response);
+          isDialogClosed = true;
+        },
+        error: (errorObj) => {
+          requestErrorFlag = true;
+          this._onError(errorObj);
+        },
+        complete: () => {
+          if (!isDialogClosed && !requestErrorFlag) {
+            this._dialogRef.close();
+            isDialogClosed = true;
+          }
+        }
       }
-    });
+    );
+  }
+  private _onError(errorObj: any): void {
+    if (typeof errorObj === 'string') {
+      this.error = {
+        error: '',
+        errorDetails: [],
+        errorMessage: errorObj
+      };
+    } else {
+      this.error = errorObj;
+    }
   }
 }

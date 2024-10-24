@@ -45,21 +45,38 @@ export class EditGroupInfoOverlayComponent {
     editGroupInfoForm: UntypedFormGroup;
     errorMessage = '';
 
-    constructor(private dialogRef: MatDialogRef<EditGroupInfoOverlayComponent>, private fb: UntypedFormBuilder,
-        private state: UserStateService, private um: UserManagerService) {
+    constructor(private dialogRef: MatDialogRef<EditGroupInfoOverlayComponent>, 
+        private fb: UntypedFormBuilder,
+        private state: UserStateService, 
+        private um: UserManagerService) {
             this.editGroupInfoForm = this.fb.group({
                 description: [this.state.selectedGroup.description]
             });
     }
     
     set(): void {
+        let isDialogClosed = false;
+        let requestErrorFlag = false;
         const newGroup: Group = Object.assign({}, this.state.selectedGroup);
         newGroup.description = this.editGroupInfoForm.controls.description.value;
         updateDctermsValue(newGroup.jsonld, 'description', newGroup.description);
-        this.um.updateGroup(this.state.selectedGroup.title, newGroup).subscribe(() => {
-            this.errorMessage = '';
-            this.state.selectedGroup = find(this.um.groups, {title: newGroup.title});
-            this.dialogRef.close();
-        }, error => this.errorMessage = error);
+        this.um.updateGroup(this.state.selectedGroup.title, newGroup).subscribe({
+            next: () => {
+                this.errorMessage = '';
+                this.state.selectedGroup = find(this.um.groups, {title: newGroup.title});
+                this.dialogRef.close();
+                isDialogClosed = true;
+            }, 
+            error: (error) => {
+                requestErrorFlag = true;
+                this.errorMessage = error;
+            },
+            complete: () => {
+                if (!isDialogClosed && !requestErrorFlag) {
+                    this.dialogRef.close();
+                    isDialogClosed = true;
+                }
+            }
+        });
     }
 }

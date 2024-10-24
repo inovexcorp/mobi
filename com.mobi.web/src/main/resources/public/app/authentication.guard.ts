@@ -20,27 +20,31 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Router, CanActivate } from '@angular/router';
+import { CanActivate } from '@angular/router';
 import { Injectable } from '@angular/core';
-import { map, take } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 
 import { LoginManagerService } from './shared/services/loginManager.service';
 
+/**
+ * AuthenticationGuard is a route guard that protects routes from unauthorized access
+ * by checking the user's authentication status. If the user is not authenticated,
+ * they are redirected to the login page.
+ */
 @Injectable()
 export class AuthenticationGuard implements CanActivate {
-    constructor(private loginManagerService: LoginManagerService, private router: Router) {}
-
+    constructor(private loginManagerService: LoginManagerService) {}
+    /**
+     * Checks to see if Authentication token is valid.
+     * 
+     * Checks: 
+     * - If mobi_web_token cookie exist
+     * - If mobi_web_token JWT token is expired
+     * - If session is valid
+     * 
+     * @returns Observable<boolean> Returns true if Authentication token is valid, false if it is not valid
+     */
     canActivate(): Observable<boolean> {
-        return this.loginManagerService.isAuthenticated().pipe(
-            take(1),
-            map((isAuthenticated: boolean) => {
-                if (!isAuthenticated) {
-                    this.router.navigate(['/login']);
-                    return false;
-                }
-                return true;
-            })
-        );
+        return this.loginManagerService.validateSession();
     }
 }

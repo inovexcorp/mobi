@@ -33,16 +33,16 @@
     </mat-form-field>
     <dl class="source-details">
         <dt class="text-muted">In Record</dt>
-        <dd class="text-truncate" [title]="state.selected.recordTitle">{{state.selected.recordTitle}}</dd>
+        <dd class="text-truncate" [title]="recordTitle">{{recordTitle}}</dd>
         <dt class="text-muted">Branch</dt>
-        <dd class="text-truncate" [title]="state.selected.sourceTitle">{{state.selected.sourceTitle}}</dd>
+        <dd class="text-truncate" [title]="sourceTitle">{{sourceTitle}}</dd>
         <dt class="text-muted">Into</dt>
         <dd>
             <branch-select class="select-branch w-100" [(model)]="targetBranch" [required]="true" [branches]="branches"></branch-select>
         </dd>
     </dl>
     <assignee-input [(selected)]="assignees" [parentForm]="editRequestForm"></assignee-input>
-    <mat-checkbox *ngIf="state.selected.sourceTitle !== 'MASTER'" class="remove-source" formControlName="removeSource">Remove {{state.selected.sourceTitle}} after merge</mat-checkbox>
+    <mat-checkbox *ngIf="sourceTitle !== 'MASTER'" class="remove-source" formControlName="removeSource">Remove {{sourceTitle}} after merge</mat-checkbox>
 </div>
 <div mat-dialog-actions>
     <button mat-raised-button [mat-dialog-close]="false">Cancel</button>

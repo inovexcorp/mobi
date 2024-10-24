@@ -46,8 +46,11 @@
         </mat-select>
         <mat-hint>This value cannot be changed after creation</mat-hint>
     </mat-form-field>
-
-    <datasets-ontology-picker class="w-100" [(selected)]="selectedOntologies"></datasets-ontology-picker>
+    <datasets-ontology-picker class="w-100" 
+        [readyFlag]="readyFlag"
+        (interceptorErrorDetection)="closeDialog(true)"
+        [(selected)]="selectedOntologies">
+    </datasets-ontology-picker>
 </div>
 <div mat-dialog-actions>
     <button mat-raised-button [mat-dialog-close]="">Cancel</button>

@@ -65,6 +65,8 @@ export class CreateUserOverlayComponent {
             this.createUserForm.controls.username.hasError('pattern') ? 'Invalid username' : '';
     }
     add(): void {
+        let isDialogClosed = false;
+        let requestErrorFlag = false;
         const newUser: NewUserConfig = {
             roles: ['user'],
             username: this.createUserForm.controls.username.value,
@@ -76,11 +78,23 @@ export class CreateUserOverlayComponent {
         if (this.createUserForm.controls.admin.value) {
             newUser.roles.push('admin');
         }
-        this.um.addUser(newUser)
-            .subscribe(() => {
+        this.um.addUser(newUser).subscribe({
+            next: () => {
                 this.toast.createSuccessToast('User successfully created');
                 this.errorMessage = '';
                 this.dialogRef.close();
-            }, error => this.errorMessage = error);
+                isDialogClosed = true;
+            }, 
+            error: (error) => {
+                requestErrorFlag = true;
+                this.errorMessage = error;
+            },
+            complete: () => {
+                if (!isDialogClosed && !requestErrorFlag) {
+                    this.dialogRef.close();
+                    isDialogClosed = true;
+                }
+            }
+        });
     }
 }

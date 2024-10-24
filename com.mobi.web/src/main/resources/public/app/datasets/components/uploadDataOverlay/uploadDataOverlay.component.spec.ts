@@ -111,7 +111,8 @@ describe('Upload Data Overlay component', function() {
             it('unless an error occurs', fakeAsync(function() {
                 datasetManagerStub.uploadData.and.callFake(() => throwError('Error Message'));
                 component.submit();
-                tick();
+                tick(1); // next
+                tick(1); // complete
                 expect(datasetManagerStub.uploadData).toHaveBeenCalledWith(recordId, component.fileObj, true);
                 expect(toastStub.createSuccessToast).not.toHaveBeenCalled();
                 expect(matDialogRef.close).not.toHaveBeenCalled();
@@ -123,7 +124,8 @@ describe('Upload Data Overlay component', function() {
                 component.fileObj = new File([''], '');
                 component.submit();
                 expect(component.importing).toEqual(true);
-                tick(1);
+                tick(1); // next
+                tick(1); // complete
                 expect(datasetManagerStub.uploadData).toHaveBeenCalledWith(recordId, component.fileObj, true);
                 expect(component.importing).toEqual(false);
                 expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));

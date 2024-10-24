@@ -20,11 +20,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Injectable } from '@angular/core';
+import { Injectable, Injector, NgZone } from '@angular/core';
 import { merge } from 'lodash';
 import * as Yasgui from '@triply/yasgui/build/yasgui.min.js';
 import { PersistedJson } from '@triply/yasgui/build/ts/src/PersistentConfig';
 import { MatDialog } from '@angular/material/dialog';
+import { Router } from '@angular/router';
 
 import * as YasrTurtlePlugin from '../../vendor/YASGUI/plugins/turtle/turtle';
 import * as YasrRdfXmlPlugin from '../../vendor/YASGUI/plugins/rdfXml/rdfXml';
@@ -34,6 +35,8 @@ import { REST_PREFIX } from '../../constants';
 import { DownloadQueryOverlayComponent } from '../components/downloadQueryOverlay/downloadQueryOverlay.component';
 import { ToastService } from './toast.service';
 import { YasguiQuery } from '../models/yasguiQuery.class';
+import { LoginManagerService } from './loginManager.service';
+
 
 /**
  * @class shared.YasguiService
@@ -59,8 +62,13 @@ export class YasguiService {
     hasInitialized = false;
     yasguiQuery: YasguiQuery;
     isOntology = false;
-
-    constructor(private matDialog: MatDialog, private toast: ToastService) {}
+    
+    constructor(private matDialog: MatDialog,
+        private injector: Injector,
+        private router: Router,
+        private ngZone: NgZone,
+        private toast: ToastService) {
+        }
 
     initYasgui(element: HTMLElement, config: any = {}, query: YasguiQuery, isOntology = false) : void{
         this.yasguiQuery = query;
@@ -140,6 +148,19 @@ export class YasguiService {
         Yasgui.Yasr.defaults.pluginOrder = [ 'table', 'turtle' , 'rdfXml', 'jsonLD'];
     }
     
+    private _setYasguiResponseAndExecutionTime(response: any, duration: number): void {
+        this.yasguiQuery.response = response;
+        this.yasguiQuery.executionTime = duration;
+    }
+    private _handleErrorResponse(response: any, duration: number): void {
+        const loginManagerService = this.injector.get(LoginManagerService);
+        loginManagerService.validateSession().subscribe((valid) => {
+            if (valid) {
+                this._setYasguiResponseAndExecutionTime(response, duration);
+            }
+        });
+    }
+
     // Register event listeners
     private _initEvents() {
         const tab = this.yasgui.getTab();
@@ -160,8 +181,15 @@ export class YasguiService {
         });
 
         tab.yasqe.on('queryResponse', (instance, response: any, duration: number) => {
-            this.yasguiQuery.response = response;
-            this.yasguiQuery.executionTime = duration;
+            if (response instanceof Error && 'status' in response) {
+                if (response['status'] === 401) {
+                    this._handleErrorResponse(response, duration);
+                } else {
+                    this._setYasguiResponseAndExecutionTime(response, duration);
+                }
+            } else {
+                this._setYasguiResponseAndExecutionTime(response, duration);
+            }
         });
 
         const downloadIcon = this.yasrRootElement.querySelector('.yasr_downloadIcon');

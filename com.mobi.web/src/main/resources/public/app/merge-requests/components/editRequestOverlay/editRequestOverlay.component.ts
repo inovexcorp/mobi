@@ -50,53 +50,94 @@ import { User } from '../../../shared/models/user.class';
     styleUrls: ['./editRequestOverlay.component.scss']
 })
 export class EditRequestOverlayComponent implements OnInit {
+    recordTitle = '';
+    sourceTitle = '';
     branches = [];
     errorMessage = '';
     assignees: User[] = [];
     targetBranch: JSONLDObject;
-    editRequestForm: UntypedFormGroup;
+    editRequestForm: UntypedFormGroup = this.fb.group({
+        title: ['', [ Validators.required ]],
+        description: [''],
+        assignees: [''],
+        removeSource: ['']
+    });
 
     constructor(private dialogRef: MatDialogRef<EditRequestOverlayComponent>, private fb: UntypedFormBuilder,
         public state: MergeRequestsStateService, public mm: MergeRequestManagerService,
         public cm: CatalogManagerService, public um: UserManagerService, private toast: ToastService) {}
     
     ngOnInit(): void {
+        this.setTitles();
         this._initRequestConfig();
+        let nextCalled = false;
+        let requestErrorFlag = false;
         this.cm.getRecordBranches(this.state.selected.recordIri, get(this.cm.localCatalog, '@id'))
-            .subscribe((response: HttpResponse<JSONLDObject[]>) => {
-                this.branches = response.body;
-            }, error => {
-                this.toast.createErrorToast(error);
-                this.branches = [];
+            .subscribe({
+                next: (response: HttpResponse<JSONLDObject[]>) => {
+                    this.branches = response.body;
+                    nextCalled = true;
+                }, 
+                error: (error) => {
+                    requestErrorFlag = true;
+                    this.toast.createErrorToast(error);
+                    this.branches = [];
+                },
+                complete: () => {
+                    if (!nextCalled && !requestErrorFlag) {
+                        this.branches = [];
+                        this.dialogRef.close();
+                    }
+                }
             });
-    } 
-    submit(): void {
-        const jsonld = this._getMergeRequestJson();
-        const emptyObject: JSONLDObject = {'@id': ''};
-        this.mm.updateRequest(jsonld['@id'], jsonld)
-            .subscribe(() => {
-                const recordTitle = this.state.selected.recordTitle;
-                this.toast.createSuccessToast('Successfully updated request');
-                this.state.selected = this.state.getRequestObj(jsonld);
-                this.state.selected.recordTitle = recordTitle;
-                this.state.setRequestDetails(this.state.selected)
-                  .subscribe(() => {}, error => this.toast.createErrorToast(error));
-                this.state.selected.sourceBranch = Object.prototype.hasOwnProperty.call(this.state.selected,'sourceBranch')
-                    ? this.state.selected.sourceBranch : emptyObject;
-
-                this.dialogRef.close({closed: true});
-            }, error => this.errorMessage = error);
     }
-
+    private setTitles() {
+        this.recordTitle = this.state.selected.recordTitle;
+        this.sourceTitle = this.state.selected.sourceTitle;
+    }
+    submit(): void {
+        let isDialogClosed = false;
+        let requestErrorFlag = false;
+        const jsonld = this._getMergeRequestJson();
+       
+        this.mm.updateRequest(jsonld['@id'], jsonld)
+            .subscribe({
+                next: () => {
+                    this._handleUpdateRequestSession(jsonld);
+                    isDialogClosed = true;
+                }, 
+                error: (error) => {
+                    requestErrorFlag = true;
+                    this.errorMessage = error;
+                },
+                complete: () => {
+                    if (!isDialogClosed && !requestErrorFlag) {
+                        this.dialogRef.close({closed: true});
+                        isDialogClosed = true;
+                    }
+                }
+            });
+    }
+    private _handleUpdateRequestSession(jsonld: JSONLDObject) {
+        const emptyObject: JSONLDObject = {'@id': ''};
+        const recordTitle = this.state.selected.recordTitle;
+        this.toast.createSuccessToast('Successfully updated request');
+        this.state.selected = this.state.getRequestObj(jsonld);
+        this.state.selected.recordTitle = recordTitle;
+        this.state.setRequestDetails(this.state.selected)
+            .subscribe(() => { }, error => this.toast.createErrorToast(error));
+        this.state.selected.sourceBranch = Object.prototype.hasOwnProperty.call(this.state.selected, 'sourceBranch')
+            ? this.state.selected.sourceBranch : emptyObject;
+        this.dialogRef.close({ closed: true });
+    }
     private _initRequestConfig(): void {
-        this.editRequestForm = this.fb.group({
-            title: [this.state.selected.title, [ Validators.required ]],
-            description: [this.state.selected.description === 'No description' ? '' : this.state.selected.description],
-            assignees: [''],
-            removeSource: [this.state.selected.removeSource]
+        this.editRequestForm.patchValue({
+            title: this.state.selected.title,
+            description: this.state.selected.description === 'No description' ? '' : this.state.selected.description,
+            assignees: '',
+            removeSource: this.state.selected.removeSource
         });
         this.targetBranch = Object.assign({}, this.state.selected.targetBranch);
-
         this.assignees = this.state.selected.assignees;
     }
     private _getMergeRequestJson(): JSONLDObject {

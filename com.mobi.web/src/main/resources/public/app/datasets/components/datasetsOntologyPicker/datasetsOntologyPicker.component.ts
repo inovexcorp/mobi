@@ -51,7 +51,6 @@ export class DatasetsOntologyPickerComponent implements OnChanges {
     catalogId = '';
     error = '';
     ontologies: OntologyDetails[] = [];
-    spinnerId = 'datasets-ontology-picker';
     ontologySearchConfig: PaginatedConfig = {
         pageIndex: 0,
         sortOption: undefined,
@@ -60,8 +59,10 @@ export class DatasetsOntologyPickerComponent implements OnChanges {
         searchText: ''
     };
 
+    @Input() readyFlag: boolean; // Wait for parent component to set ready flag
     @Input() selected: OntologyDetails[];
     @Output() selectedChange = new EventEmitter<OntologyDetails[]>();
+    @Output() interceptorErrorDetection  = new EventEmitter<void>();
 
     @ViewChild('datasetOntologies', { static: true }) datasetOntologies: ElementRef;
 
@@ -77,11 +78,28 @@ export class DatasetsOntologyPickerComponent implements OnChanges {
         return getPropertyId(record, `${ONTOLOGYEDITOR}ontologyIRI`);
     }
     setOntologies(): void {
-        this.spinnerSvc.startLoadingForComponent(this.datasetOntologies, 30);
-        this.cm.getRecords(this.catalogId, this.ontologySearchConfig, true)
-            .pipe(finalize(() => this.spinnerSvc.finishLoadingForComponent(this.datasetOntologies)))
-            .subscribe((response: HttpResponse<JSONLDObject[]>) => this.parseOntologyResults(response),
-            error => this._onError(error));
+        if (this.readyFlag) {
+            let nextCalled = false;
+            this.spinnerSvc.startLoadingForComponent(this.datasetOntologies, 30);
+            this.cm.getRecords(this.catalogId, this.ontologySearchConfig, true)
+                .pipe(
+                    finalize(() => this.spinnerSvc.finishLoadingForComponent(this.datasetOntologies))
+                ).subscribe({
+                    next: (response: HttpResponse<JSONLDObject[]>) => {
+                        nextCalled = true;
+                        this.parseOntologyResults(response);
+                    }, 
+                    error: (error) => {
+                        nextCalled = true;
+                        this._onError(error)
+                    },
+                    complete: () => {
+                        if (!nextCalled) {
+                            this.interceptorErrorDetection.emit()
+                        }
+                    }
+                });
+        }
     }
     selectedUpdate(event: MatSelectionListChange): void {
         this.toggleOntology(event.options[0].value);
@@ -110,7 +128,7 @@ export class DatasetsOntologyPickerComponent implements OnChanges {
         this.selectedChange.emit(this.selected);
     }
 
-    private _onError(errorMessage) {
+    private _onError(errorMessage: string): void {
         this.ontologies = [];
         this.error = errorMessage;
         this.spinnerSvc.finishLoadingForComponent(this.datasetOntologies);

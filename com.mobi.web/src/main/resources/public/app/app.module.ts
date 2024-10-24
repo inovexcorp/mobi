@@ -23,7 +23,7 @@
 
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
-import { HttpClientModule } from '@angular/common/http';
+import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { ToastrModule } from 'ngx-toastr';
 
@@ -64,6 +64,7 @@ import { MainLayoutComponent } from './layouts/main-layout.component';
 import { WorkflowsModule } from './workflows/workflows.module';
 import { AppRoutingModule } from './app-routing.module';
 import { EntitySearchModule } from './entity-search/entity-search.module';
+import { AuthInterceptor } from './auth.interceptor';
 
 @NgModule({
     imports: [
@@ -94,7 +95,13 @@ import { EntitySearchModule } from './entity-search/entity-search.module';
         LoginLayoutComponent,
         MainLayoutComponent
     ],
-    providers: [],
+    providers: [
+        {
+            provide: HTTP_INTERCEPTORS,
+            useClass: AuthInterceptor,
+            multi: true
+        }
+    ],
     bootstrap: [ AppComponent ]
 })
 export class AppModule {
