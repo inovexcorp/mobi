@@ -40,6 +40,7 @@ import { RecordIconComponent } from '../../../shared/components/recordIcon/recor
 import { EntitySearchStateService } from '../../services/entity-search-state.service';
 import { SearchResultItemComponent } from './search-result-item.component';
 import { OpenRecordButtonComponent } from '../../../catalog/components/openRecordButton/openRecordButton.component';
+import { MatDividerModule } from '@angular/material/divider';
 
 describe('SearchResultItemComponent', () => {
   let component: SearchResultItemComponent;
@@ -72,7 +73,8 @@ describe('SearchResultItemComponent', () => {
         MatCardModule,
         MatTooltipModule,
         ClipboardModule,
-        MatIconTestingModule
+        MatIconTestingModule,
+        MatDividerModule
       ]
     })
     .compileComponents();
@@ -148,7 +150,7 @@ describe('SearchResultItemComponent', () => {
       const annotationsMessage = element.query(By.css('.annotation-section div:nth-child(2)')).nativeElement;
       const annotationItems = element.queryAll(By.css('.annotation-item'));
   
-      expect(matchingAnnotations.textContent.trim()).toEqual('6 Matching Annotations(s)');
+      expect(matchingAnnotations.textContent.trim()).toEqual('6 Matching Annotation(s)');
       expect(annotationsMessage.textContent.trim()).toEqual('Only the first 5 matching annotations are shown.');
       expect(annotationItems.length).toEqual(5);
       expect(annotationItems[0].queryAll(By.css('.prop-name'))[0].nativeElement.textContent.trim()).toEqual('Entity1Name');

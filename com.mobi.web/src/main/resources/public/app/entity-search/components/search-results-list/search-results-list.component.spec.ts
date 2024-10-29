@@ -38,12 +38,17 @@ import { EntityRecord } from '../../models/entity-record';
 import { SearchResultsMock } from '../../mock-data/search-results.mock';
 import { DCTERMS } from '../../../prefixes';
 import { SearchResultsListComponent } from './search-results-list.component';
+import { CatalogStateService } from '../../../shared/services/catalogState.service';
+import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
+import { EntitySearchFiltersComponent } from '../entity-search-filters/entity-search-filters.component';
+import { SearchResultItemComponent } from '../search-result-item/search-result-item.component';
 
 describe('SearchResultsListComponent', () => {
   let component: SearchResultsListComponent;
   let fixture: ComponentFixture<SearchResultsListComponent>;
   let element: DebugElement;
-  let searchManagerStub: jasmine.SpyObj<EntitySearchStateService>;
+  let searchStateStub: jasmine.SpyObj<EntitySearchStateService>;
+  let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
 
   const entityRecords: EntityRecord[] = SearchResultsMock;
 
@@ -53,11 +58,14 @@ describe('SearchResultsListComponent', () => {
         SearchResultsListComponent,
         MockComponent(RecordIconComponent),
         MockComponent(SearchBarComponent),
-        MockComponent(SearchBarComponent),
+        MockComponent(SearchResultItemComponent),
+        MockComponent(EntitySearchFiltersComponent),
         MockComponent(InfoMessageComponent),
       ],
       providers: [
         MockProvider(EntitySearchStateService),
+        MockProvider(CatalogStateService),
+        MockProvider(CatalogManagerService)
       ],
       imports: [
         NoopAnimationsModule,
@@ -69,8 +77,13 @@ describe('SearchResultsListComponent', () => {
     fixture = TestBed.createComponent(SearchResultsListComponent);
     component = fixture.componentInstance;
     element = fixture.debugElement;
-    searchManagerStub = TestBed.inject(EntitySearchStateService) as jasmine.SpyObj<EntitySearchStateService>;
-    searchManagerStub.paginationConfig = {
+    catalogManagerStub = TestBed.inject(CatalogManagerService) as jasmine.SpyObj<CatalogManagerService>;
+    catalogManagerStub.localCatalog = {
+      '@id': 'http://mobi.com/catalog-local',
+      '@type': ['http://mobi.com/catalog-local']
+    };
+    searchStateStub = TestBed.inject(EntitySearchStateService) as jasmine.SpyObj<EntitySearchStateService>;
+    searchStateStub.paginationConfig = {
       limit: 10,
       pageIndex: 0,
       searchText: '',
@@ -90,14 +103,14 @@ describe('SearchResultsListComponent', () => {
     it('when no value is specify', () => {
       component.ngOnInit();
       fixture.detectChanges();
-      expect(searchManagerStub.setResults).not.toHaveBeenCalledWith();
+      expect(searchStateStub.setResults).not.toHaveBeenCalledWith('http://mobi.com/catalog-local');
     });
     it('should set results on when value is set', () => {
-      searchManagerStub.setResults.and.returnValue(of(entityRecords));
-      searchManagerStub.paginationConfig.searchText = 'test';
+      searchStateStub.setResults.and.returnValue(of(entityRecords));
+      searchStateStub.paginationConfig.searchText = 'test';
       component.ngOnInit();
       fixture.detectChanges();
-      expect(searchManagerStub.setResults).toHaveBeenCalledWith();
+      expect(searchStateStub.setResults).toHaveBeenCalledWith('http://mobi.com/catalog-local');
       expect(component.searchResult).toBeDefined();
       component.searchResult.subscribe(searchResult => {
         expect(searchResult).toBeDefined();
@@ -109,16 +122,16 @@ describe('SearchResultsListComponent', () => {
 
   it('should reset pagination and load data on searchRecords', () => {
     component.searchRecords();
-    expect(searchManagerStub.resetPagination).toHaveBeenCalledWith();
+    expect(searchStateStub.resetPagination).toHaveBeenCalledWith();
   });
   it('should set results on getResultPage', () => {
-    searchManagerStub.setResults.and.returnValue(of(entityRecords));
-    searchManagerStub.paginationConfig.searchText = 'test';
+    searchStateStub.setResults.and.returnValue(of(entityRecords));
+    searchStateStub.paginationConfig.searchText = 'test';
     const pageEvent = new PageEvent();
     pageEvent.pageIndex = 0;
 
     component.getResultPage(pageEvent);
-    expect(searchManagerStub.setResults).toHaveBeenCalledWith();
+    expect(searchStateStub.setResults).toHaveBeenCalledWith('http://mobi.com/catalog-local');
   });
 
   describe('contains the correct html', function () {
@@ -131,8 +144,8 @@ describe('SearchResultsListComponent', () => {
       });
     });
     it('should display a list', async () => {
-      searchManagerStub.setResults.and.returnValue(of(entityRecords));
-      searchManagerStub.paginationConfig.searchText = 'test';
+      searchStateStub.setResults.and.returnValue(of(entityRecords));
+      searchStateStub.paginationConfig.searchText = 'test';
       component.ngOnInit();
       fixture.detectChanges();
       expect(element.queryAll(By.css('app-search-result-item')).length).toEqual(entityRecords.length);

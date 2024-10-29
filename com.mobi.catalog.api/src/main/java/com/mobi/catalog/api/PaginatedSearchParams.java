@@ -35,7 +35,7 @@ import java.util.Optional;
  */
 public class PaginatedSearchParams {
     private final String searchText;
-    private final Resource typeFilter;
+    private final List<Resource> typeFilter;
     private final List<Resource> creators;
     private final List<String> keywords;
     private final Resource sortBy;
@@ -58,7 +58,7 @@ public class PaginatedSearchParams {
         return Optional.ofNullable(searchText);
     }
 
-    public Optional<Resource> getTypeFilter() {
+    public Optional<List<Resource>> getTypeFilter() {
         return Optional.ofNullable(typeFilter);
     }
 
@@ -91,7 +91,7 @@ public class PaginatedSearchParams {
         private int offset = 0;
         private Resource sortBy = null;
         private String searchText = null;
-        private Resource typeFilter = null;
+        private List<Resource> typeFilter = null;
         private List<String> keywords = null;
         private List<Resource> creators = null;
         private Boolean ascending = null;
@@ -118,8 +118,8 @@ public class PaginatedSearchParams {
             return this;
         }
 
-        public Builder typeFilter(Resource val) {
-            this.typeFilter = val;
+        public Builder typeFilter(List<Resource> types) {
+            this.typeFilter = types;
             return this;
         }
 

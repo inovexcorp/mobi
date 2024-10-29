@@ -196,7 +196,7 @@ describe('Mapping Config Overlay component', function() {
         it('for the configuration for getting ontology records', function() {
             expect(component.recordsConfig.pageIndex).toEqual(0);
             expect(component.recordsConfig.sortOption).toEqual(sortOption);
-            expect(component.recordsConfig.type).toEqual(`${ONTOLOGYEDITOR}OntologyRecord`);
+            expect(component.recordsConfig.type).toEqual([`${ONTOLOGYEDITOR}OntologyRecord`]);
             expect(component.recordsConfig.limit).toEqual(100);
             expect(component.recordsConfig.searchText).toEqual('');
         });

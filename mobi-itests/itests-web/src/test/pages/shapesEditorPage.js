@@ -35,7 +35,7 @@ const shapesEditorCommands = {
     },
 
     uploadShapesGraph: function(shapes_file) {
-        return this.api.page.editorPage().uploadRecord(parentEl, shapes_file);;
+        return this.api.page.editorPage().uploadRecord(parentEl, shapes_file);
     },
 
     searchForShapesGraph: function(title) {
@@ -88,6 +88,16 @@ const shapesEditorCommands = {
 
     toggleChangesPage: function(open = true) {
         return this.api.page.editorPage().toggleChangesPage(parentEl, open);
+    },
+
+    verifyShapesEditorPage: function(shapes_graph_title, branchTitle) {
+        return this.api
+            .waitForElementVisible('shapes-graph-details')
+            .waitForElementVisible('shapes-graph-properties-block')
+            .waitForElementVisible('div.yate')
+            .page.editorPage()
+            .assert.valueEquals('@editorRecordSelectInput', shapes_graph_title)
+            .assert.valueEquals('@editorBranchSelectInput', branchTitle);
     }
 }
 

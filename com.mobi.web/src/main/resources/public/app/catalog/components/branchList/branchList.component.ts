@@ -22,9 +22,9 @@
  */
 import { HttpResponse } from '@angular/common/http';
 import { Component, Input } from '@angular/core';
-import { isEmpty, find, includes, get } from 'lodash';
+import { isEmpty, find } from 'lodash';
 
-import { CATALOG, DCTERMS, SHAPESGRAPHEDITOR } from '../../../prefixes';
+import { CATALOG, DCTERMS } from '../../../prefixes';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { PaginatedConfig } from '../../../shared/models/paginatedConfig.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';

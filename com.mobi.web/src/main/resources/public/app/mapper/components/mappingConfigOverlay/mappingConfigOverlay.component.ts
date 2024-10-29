@@ -84,7 +84,7 @@ export class MappingConfigOverlayComponent implements OnInit {
     recordsConfig = {
         pageIndex: 0,
         sortOption: find(this.cm.sortOptions, {field: `${DCTERMS}title`, asc: true}),
-        type: `${ONTOLOGYEDITOR}OntologyRecord`,
+        type: [`${ONTOLOGYEDITOR}OntologyRecord`],
         limit: 100,
         searchText: ''
     };

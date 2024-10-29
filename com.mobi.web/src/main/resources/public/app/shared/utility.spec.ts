@@ -67,9 +67,14 @@ import {
   setPropertyId,
   setPropertyValue,
   updateDctermsValue,
-  runningTime, toFormattedDateString, orNone, getStatus, getEntityName,
+  runningTime,
+  toFormattedDateString,
+  orNone,
+  getStatus,
+  getEntityName,
   addLanguageToAnnotations,
-  getShaclGeneratedData
+  getShaclGeneratedData,
+  getSubstringMatch
 } from './utility';
 
 describe('Utility method', () => {
@@ -838,5 +843,41 @@ describe('Utility method', () => {
     expect(multiComplexNode3['@type']).toEqual([subNodeShape2['@id']]);
     expect(multiComplexNode3[multiComplexPropA]).toEqual([ { '@value': 'http://example.com/3' } ]);
     expect(multiComplexNode3[multiComplexPropB]).toBeUndefined();
+  });
+
+  describe('getSubstringMatch helper method', () => {
+    const str = 'This is a test string that has a bunch of words with more content.';
+    const tests = [
+      {
+        searchText: 'bunch',
+        expected: '...has a bunch of words...'
+      },
+      {
+        searchText: 'test',
+        expected: '...is a test string that...'
+      },
+      {
+        searchText: 'content',
+        expected: '...with more content.'
+      },
+      {
+        searchText: 'This',
+        expected: 'This is a...'
+      },
+      {
+        searchText: 'string',
+        expected: '...a test string that has...'
+      },
+      {
+        searchText: 'has',
+        expected: '...string that has a bunch...'
+      }
+    ];
+    tests.forEach(test => {
+      it(`should find and truncate appropriate text "${test.searchText}"`, () => {
+        const result = getSubstringMatch(str, test.searchText);
+        expect(result).toEqual(test.expected);
+      });
+    });
   });
 });

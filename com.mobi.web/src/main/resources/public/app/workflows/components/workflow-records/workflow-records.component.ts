@@ -35,7 +35,7 @@ import { CatalogManagerService } from '../../../shared/services/catalogManager.s
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { PROV } from '../../../prefixes';
-import { PaginatedResponse } from '../../models/paginated-response.interface';
+import { PaginatedResponse } from '../../../shared/models/paginated-response.interface';
 import { PolicyEnforcementService } from '../../../shared/services/policyEnforcement.service';
 import { SortOption } from '../../../shared/models/sortOption.interface';
 import { ToastService } from '../../../shared/services/toast.service';

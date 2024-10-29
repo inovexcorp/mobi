@@ -24,7 +24,13 @@
     <div class="col-lg-10 offset-lg-1 h-100">
         <div class="row h-100 flex-nowrap">
             <div class="col-3 vertical-scroll">
-                <record-filters [catalogId]="catalogId" [recordType]="state.recordFilterType" [keywordFilterList]="state.keywordFilterList" [creatorFilterList]="state.creatorFilterList" (changeFilter)="changeFilter($event)"></record-filters>
+                <record-filters
+                        [catalogId]="catalogId"
+                        [recordType]="state.recordFilterType"
+                        [keywordFilterList]="state.keywordFilterList"
+                        [creatorFilterList]="state.creatorFilterList"
+                        (changeFilter)="changeFilter($event)">
+                </record-filters>
             </div>
             <div class="col d-flex flex-column remove-min-width">
                 <div class="search-form d-flex">

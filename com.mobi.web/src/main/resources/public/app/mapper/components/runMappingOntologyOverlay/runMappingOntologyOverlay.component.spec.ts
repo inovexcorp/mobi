@@ -177,7 +177,7 @@ describe('Run Mapping Ontology Overlay component', function() {
                 expect(catalogManagerStub.getRecords).toHaveBeenCalledWith(catalogId, {
                     searchText: 'text',
                     limit: 50,
-                    type: `${ONTOLOGYEDITOR}OntologyRecord`,
+                    type: [`${ONTOLOGYEDITOR}OntologyRecord`],
                     sortOption
                 }, true);
                 expect(component.getOntologyIRI).toHaveBeenCalledWith(record);
@@ -193,7 +193,7 @@ describe('Run Mapping Ontology Overlay component', function() {
                 expect(catalogManagerStub.getRecords).toHaveBeenCalledWith(catalogId, {
                     searchText: 'title',
                     limit: 50,
-                    type: `${ONTOLOGYEDITOR}OntologyRecord`,
+                    type: [`${ONTOLOGYEDITOR}OntologyRecord`],
                     sortOption
                 }, true);
                 expect(component.getOntologyIRI).toHaveBeenCalledWith(record);
@@ -208,7 +208,7 @@ describe('Run Mapping Ontology Overlay component', function() {
                 expect(catalogManagerStub.getRecords).toHaveBeenCalledWith(catalogId, {
                     searchText: '',
                     limit: 50,
-                    type: `${ONTOLOGYEDITOR}OntologyRecord`,
+                    type: [`${ONTOLOGYEDITOR}OntologyRecord`],
                     sortOption
                 }, true);
                 expect(component.getOntologyIRI).toHaveBeenCalledWith(record);

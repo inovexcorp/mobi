@@ -427,7 +427,7 @@ export class MapperStateService {
         limit: 10,
         pageIndex: 0,
         searchText: '',
-        type: `${DELIM}MappingRecord`,
+        type: [`${DELIM}MappingRecord`],
         sortOption: {
             field: `${DCTERMS}title`,
             label: 'Title',

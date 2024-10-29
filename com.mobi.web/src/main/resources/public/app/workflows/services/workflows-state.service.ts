@@ -46,7 +46,7 @@ import { EventWithPayload } from '../../shared/models/eventWithPayload.interface
 import { WorkflowSchema } from '../models/workflow-record.interface';
 import { WorkflowStatus } from '../models/workflow-status.type';
 import { WorkflowExecutionActivityDisplayI } from '../models/workflow-execution-activity.interface';
-import { PaginatedResponse } from '../models/paginated-response.interface';
+import { PaginatedResponse } from '../../shared/models/paginated-response.interface';
 
 @Injectable({
   providedIn: 'root'

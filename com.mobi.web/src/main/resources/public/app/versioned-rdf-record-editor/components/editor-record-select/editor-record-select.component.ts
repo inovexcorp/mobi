@@ -86,7 +86,7 @@ export class EditorRecordSelectComponent<TData extends VersionedRdfListItem> imp
 
   recordSearchConfig: PaginatedConfig = {
     sortOption: find(this._cm.sortOptions, {field: `${DCTERMS}title`, asc: true}),
-    type: this._state.type
+    type: [this._state.type]
   };
   spinnerId = `${this.typeName}-editor-record-select`;
 

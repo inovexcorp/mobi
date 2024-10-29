@@ -30,7 +30,7 @@ import { Observable, forkJoin, of } from 'rxjs';
 import { catchError, filter, map, switchMap } from 'rxjs/operators';
 //Local
 import { JSONLDObject } from '../../shared/models/JSONLDObject.interface';
-import { PaginatedResponse } from '../models/paginated-response.interface';
+import { PaginatedResponse } from '../../shared/models/paginated-response.interface';
 import { ProgressSpinnerService } from '../../shared/components/progress-spinner/services/progressSpinner.service';
 import { REST_PREFIX } from '../../constants';
 import { SseService } from '../../shared/services/sse.service';

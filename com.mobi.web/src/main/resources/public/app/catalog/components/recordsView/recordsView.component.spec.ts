@@ -181,7 +181,7 @@ describe('Records View component', function() {
                     pageIndex: catalogStateStub.currentRecordPage,
                     limit: catalogStateStub.recordLimit,
                     sortOption: sortOption,
-                    type: this.recordType,
+                    type: [this.recordType],
                     searchText: this.searchText,
                     keywords: this.keywords,
                     creators: this.creators

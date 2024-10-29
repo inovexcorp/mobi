@@ -789,6 +789,69 @@ export function getShaclGeneratedData(instance: JSONLDObject, configs: SHACLForm
   return genData;
 }
 
+/**
+ * Finds and returns a portion of a string that contains the first occurrence of the matching substring,
+ * along with two words before and two words after the match. If more than two words exist before or
+ * after the match, the result is truncated with ellipses.
+ *
+ * - If there are 2 or fewer words before or after the match, no ellipsis is added.
+ * - If there are more than 2 words before or after the match, ellipses are added to the truncated result.
+ *
+ * Note: searchText could be `word`, `word word`, `word word word`
+ *
+ * @param {string} originalString - The original string where the search will be performed.
+ * @param {string} searchText - The substring to search for within the original string.
+ *
+ * @returns {string} - A truncated string that displays 2 words before and 2 words after the first
+ * occurrence of the matching substring. If truncation occurs, ellipses are added before or after
+ * the matched section.
+ */
+export function getSubstringMatch(originalString: string, searchText: string): string {
+    const startIdx = originalString.toLowerCase().indexOf(searchText.toLowerCase().trim());
+    if (startIdx < 0) {
+        return ''; // No matches
+    }
+    const endIdx = startIdx + searchText.length; // End Index of searchText in the originalString
+    const tokenRegex = /[^\s]+(\s*)/g;
+    const words = originalString.match(tokenRegex) || []; // Array of Words
+    let firstWordMatchIdx = -1;
+    let wordMatches = 0;
+    let currentIdx = 0;
+    // Loop over the words to update the wordsFlag array
+    for (let i = 0; i < words.length; i++) {
+        const wordStartIdx = currentIdx;
+        const wordEndIdx = currentIdx + words[i].length;
+        // Check if the start of the word is within the searchText range
+        const isStartWithinRange = wordStartIdx >= startIdx && wordStartIdx < endIdx;
+        // Check if the end of the word is within the searchText range
+        const isEndWithinRange = wordEndIdx > startIdx && wordEndIdx <= endIdx;
+        // Check if the word fully contains the searchText range
+        const doesWordContainRange = wordStartIdx <= startIdx && wordEndIdx >= endIdx;
+        if (isStartWithinRange || isEndWithinRange || doesWordContainRange) {
+            wordMatches += 1;
+            if (firstWordMatchIdx === -1) {
+                firstWordMatchIdx = i;
+            }
+        }
+        currentIdx += words[i].length;  // Move currentIdx forward to account for the next word and its spaces
+    }
+    if (firstWordMatchIdx < 0) {
+        return ''; // No matches
+    }
+    // Get index of two words before matching substring
+    const leftSideIdx = Math.max(0, firstWordMatchIdx - (2 - Math.min(wordMatches-1, 1) ));
+    // Get index of two words after matching substring
+    const rightSideIdx = Math.min(words.length - 1, firstWordMatchIdx + (2 + Math.min(wordMatches-1, 1) ));
+    let slicedWords = words.slice(leftSideIdx, rightSideIdx + 1).join('').trim();
+    if (leftSideIdx > 0) {
+        slicedWords = `...${slicedWords}`;
+    }
+    if (rightSideIdx < words.length -1) {
+        slicedWords = `${slicedWords}...`;
+    }
+    return slicedWords;
+}
+
 // Private Functions
 function _setValue(entity: JSONLDObject, propertyIRI: string, valueObj: JSONLDId|JSONLDValue): void {
   if (has(entity, `['${propertyIRI}']`)) {

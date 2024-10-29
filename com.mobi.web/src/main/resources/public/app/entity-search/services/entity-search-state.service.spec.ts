@@ -23,35 +23,36 @@
 import { TestBed } from '@angular/core/testing';
 
 import { EntitySearchStateService } from './entity-search-state.service';
-import { EntitySearchManagerService } from './entity-search-manager.service';
 import { MockProvider } from 'ng-mocks';
 
 import { PaginatedConfig } from '../../shared/models/paginatedConfig.interface';
 import { of } from 'rxjs';
 import { EntityRecord } from '../models/entity-record';
 import { SearchResultsMock } from '../mock-data/search-results.mock';
-import { PaginatedResponse } from '../models/paginated-response.interface';
+import { PaginatedResponse } from '../../shared/models/paginated-response.interface';
+import { CatalogManagerService } from '../../shared/services/catalogManager.service';
+import { CATALOG } from '../../prefixes';
 
 describe('EntitySearchStateService', () => {
   let service: EntitySearchStateService;
-  let stateManagerStub: jasmine.SpyObj<EntitySearchManagerService>;
+  let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
 
   const entityRecords: EntityRecord[] = SearchResultsMock;
   
   beforeEach(() => {
     TestBed.configureTestingModule({
       providers: [
-        MockProvider(EntitySearchManagerService)
+        MockProvider(CatalogManagerService)
       ]
     });
 
     service = TestBed.inject(EntitySearchStateService);
-    stateManagerStub = TestBed.inject(EntitySearchManagerService) as jasmine.SpyObj<EntitySearchManagerService>;
+    catalogManagerStub = TestBed.inject(CatalogManagerService) as jasmine.SpyObj<CatalogManagerService>;
   });
 
   afterEach(function () {
     service = null;
-    stateManagerStub = null;
+    catalogManagerStub = null;
   });
 
   it('should be created', () => {
@@ -59,8 +60,8 @@ describe('EntitySearchStateService', () => {
   });
   it('should set results', () => {
     const mockPaginatedResponse: PaginatedResponse<EntityRecord[]> = {page: entityRecords, totalCount: entityRecords.length};
-    stateManagerStub.getEntities.and.returnValue(of(mockPaginatedResponse));
-    service.setResults().subscribe(result => {
+    catalogManagerStub.getEntities.and.returnValue(of(mockPaginatedResponse));
+    service.setResults('http://mobi.com/catalog-local').subscribe(result => {
       expect(result).toEqual(entityRecords);
       expect(service.totalResultSize).toEqual(4);
     });
@@ -78,10 +79,18 @@ describe('EntitySearchStateService', () => {
     } as PaginatedConfig;
     service.totalResultSize = 10;
 
+    service.selectedRecordTypes = [
+      `${CATALOG}Record`,
+      `${CATALOG}UnversionedRecord`,
+      `${CATALOG}VersionedRecord`,
+      `${CATALOG}VersionedRDFRecord`
+    ];
+
     service.reset();
 
     expect(service.paginationConfig.pageIndex).toBe(0);
     expect(service.paginationConfig.searchText).toBe('');
     expect(service.totalResultSize).toBe(0);
+    expect(service.selectedRecordTypes).toEqual([]);
   });
 });
