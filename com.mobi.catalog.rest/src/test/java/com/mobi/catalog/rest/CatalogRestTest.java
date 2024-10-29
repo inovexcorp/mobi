@@ -587,6 +587,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
 
         PaginatedSearchParams.Builder builder = new PaginatedSearchParams.Builder()
                 .searchText("test")
+                .typeFilter(List.of(vf.createIRI(VersionedRDFRecord.TYPE)))
                 .offset(1)
                 .limit(11);
 
@@ -666,7 +667,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
 
         PaginatedSearchParams.Builder builder = new PaginatedSearchParams.Builder()
                 .searchText("test")
-                .typeFilter(vf.createIRI("http://mobi.com/ontologies/catalog#Record"))
+                .typeFilter(List.of(vf.createIRI("http://mobi.com/ontologies/catalog#Record")))
                 .sortBy(vf.createIRI("http://purl.org/dc/terms/title"))
                 .offset(0)
                 .limit(10)
@@ -702,7 +703,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
 
         PaginatedSearchParams.Builder builder = new PaginatedSearchParams.Builder()
                 .searchText("test")
-                .typeFilter(vf.createIRI("http://mobi.com/ontologies/catalog#Record"))
+                .typeFilter(List.of(vf.createIRI("http://mobi.com/ontologies/catalog#Record")))
                 .keywords(Stream.of("k1", "k2", "k3", "k4,5").collect(Collectors.toList()))
                 .sortBy(vf.createIRI("http://purl.org/dc/terms/title"))
                 .offset(0)
@@ -737,7 +738,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
 
         PaginatedSearchParams.Builder builder = new PaginatedSearchParams.Builder()
                 .searchText("test")
-                .typeFilter(vf.createIRI("http://mobi.com/ontologies/catalog#Record"))
+                .typeFilter(List.of(vf.createIRI("http://mobi.com/ontologies/catalog#Record")))
                 .creators(Stream.of(vf.createIRI(USER_IRI), vf.createIRI("http://test.com/anotherUser")).collect(Collectors.toList()))
                 .sortBy(vf.createIRI("http://purl.org/dc/terms/title"))
                 .offset(0)

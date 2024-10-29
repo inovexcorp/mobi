@@ -26,8 +26,7 @@ import { switchMap } from 'rxjs/operators';
 
 import { EntityRecord } from '../models/entity-record';
 import { PaginatedConfig } from '../../shared/models/paginatedConfig.interface';
-import { EntitySearchManagerService } from './entity-search-manager.service';
-
+import { CatalogManagerService } from '../../shared/services/catalogManager.service';
 
 @Injectable({
   providedIn: 'root'
@@ -43,6 +42,7 @@ export class EntitySearchStateService {
     limit: 10,
     pageIndex: 0,
     searchText: '',
+    type: []
   };
   /**
    * `totalRecordSize` holds an integer for the total number of entity search result in the latest query on the
@@ -55,16 +55,10 @@ export class EntitySearchStateService {
    * {@link entitySearch.SearchResultsListComponent}.
    * @type {SortOption}
    */
-  /**
-   /**
-   * `selectedRecord` holds the currently selected entity Record object that is being viewed in the
-   * {@link entitySearch.SearchResultsListComponent}.
-   * @type {EntityRecord}
-   */
-  selectedRecord: EntityRecord = undefined;
 
-  constructor(private em: EntitySearchManagerService) {
-  }
+  selectedRecordTypes: string[] = [];
+
+  constructor(private cm: CatalogManagerService) {}
 
   /**
    * Resets the pagination config to its initial state.
@@ -73,30 +67,23 @@ export class EntitySearchStateService {
    */
   reset(): void {
     this.resetPagination();
-  }
-
-  /**
-   * Initializes necessary values for EntityManager.
-   *
-   * @return {void}
-   */
-  init(): void {
-    this.em.initialize();
+    this.selectedRecordTypes = [];
   }
 
   /**
    * Sets the results of the dataset by making a request to the server.
    *
+   * @param {string} catalogId The id of the Catalog to retrieve entities from
    * @return {Observable<EntityRecord[]>} An observable stream that emits an array of Dataset objects.
    */
-  setResults(): Observable<EntityRecord[]> {
-    return this.em.getEntities(this.paginationConfig)
-      .pipe(
-        switchMap(response => {
-          this.setPagination(response.totalCount);
-          return of(response.page);
-        })
-      );
+  setResults(catalogId: string): Observable<EntityRecord[]> {
+    return this.cm.getEntities(catalogId, this.paginationConfig)
+        .pipe(
+            switchMap(response => {
+              this.totalResultSize = response.totalCount;
+              return of(response.page);
+            })
+        );
   }
 
   /**
@@ -105,15 +92,7 @@ export class EntitySearchStateService {
   resetPagination(): void {
     this.paginationConfig.pageIndex = 0;
     this.paginationConfig.searchText = '';
+    this.paginationConfig.type = [];
     this.totalResultSize = 0;
-  }
-
-  /**
-   * Updates the pagination state variables based on the total number of results.
-   *
-   * @param {number} totalCount - The total number of results returned from a paginated HTTP call.
-   */
-  setPagination(totalCount: number): void {
-    this.totalResultSize = totalCount;
   }
 }

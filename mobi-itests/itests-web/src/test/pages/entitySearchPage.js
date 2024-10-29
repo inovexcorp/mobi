@@ -78,7 +78,7 @@ const entitySearchPageCommands = {
 }
 
 const entitySearchResults = {
-  verifyRecordList: function () {
+  verifyRecordListView: function () {
     const verifyCommands = function () {
       this.expect.element(`${searchResultsViewCssSelector} div.col.d-flex.flex-column`).to.be.present;
       this.expect.element(`${searchResultsViewCssSelector} div.col.d-flex.flex-column mat-paginator`).to.be.present;

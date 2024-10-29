@@ -90,7 +90,7 @@ export class RunMappingOntologyOverlayComponent implements OnInit {
                             '';
                     const paginatedConfig = {
                         limit: 50,
-                        type: `${ONTOLOGYEDITOR}OntologyRecord`,
+                        type: [`${ONTOLOGYEDITOR}OntologyRecord`],
                         sortOption: find(this.cm.sortOptions, {field: `${DCTERMS}title`, asc: true}),
                         searchText
                     };

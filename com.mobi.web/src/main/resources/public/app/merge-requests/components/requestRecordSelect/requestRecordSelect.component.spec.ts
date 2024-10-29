@@ -174,7 +174,7 @@ describe('Request Record Select component', function() {
         spyOn(component, 'setInitialRecords');
         component.ngOnInit();
         expect(component.catalogId).toEqual(catalogId);
-        expect(component.config.type).toEqual(`${CATALOG}VersionedRDFRecord`);
+        expect(component.config.type).toEqual([`${CATALOG}VersionedRDFRecord`]);
         expect(component.config.sortOption).toEqual(sortOption);
         expect(component.setInitialRecords).toHaveBeenCalledWith();
     });

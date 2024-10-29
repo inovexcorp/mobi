@@ -28,12 +28,14 @@ import { SearchResultsListComponent } from './components/search-results-list/sea
 import { SearchResultItemComponent } from './components/search-result-item/search-result-item.component';
 import { SharedModule } from '../shared/shared.module';
 import { CatalogModule } from '../catalog/catalog.module';
+import { EntitySearchFiltersComponent } from './components/entity-search-filters/entity-search-filters.component';
 
 @NgModule({
   declarations: [
     EntitySearchPageComponent,
     SearchResultsListComponent,
     SearchResultItemComponent,
+    EntitySearchFiltersComponent,
   ],
   imports: [
     CommonModule,

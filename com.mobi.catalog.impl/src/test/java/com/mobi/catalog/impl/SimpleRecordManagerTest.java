@@ -12,12 +12,12 @@ package com.mobi.catalog.impl;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
@@ -139,7 +139,7 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
         repo = new MemoryRepositoryWrapper();
         repo.setDelegate(new SailRepository(new MemoryStore()));
         closeable = MockitoAnnotations.openMocks(this);
-        
+
         when(configProvider.getRepository()).thenReturn(repo);
         when(configProvider.getLocalCatalogIRI()).thenReturn(ManagerTestConstants.CATALOG_IRI);
         when(configProvider.getDistributedCatalogIRI()).thenReturn(ManagerTestConstants.CATALOG_DISTRIBUTED_IRI);
@@ -556,8 +556,8 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
         // Setup:
         int limit = 1000;
         int offset = 0;
-        PaginatedSearchParams versionedSearchParams = new PaginatedSearchParams.Builder().limit(limit).offset(offset).typeFilter(versionedRecordFactory.getTypeIRI()).build();
-        PaginatedSearchParams unversionedSearchParams = new PaginatedSearchParams.Builder().limit(limit).offset(offset).typeFilter(unversionedRecordFactory.getTypeIRI()).build();
+        PaginatedSearchParams versionedSearchParams = new PaginatedSearchParams.Builder().limit(limit).offset(offset).typeFilter(List.of(versionedRecordFactory.getTypeIRI())).build();
+        PaginatedSearchParams unversionedSearchParams = new PaginatedSearchParams.Builder().limit(limit).offset(offset).typeFilter(List.of(unversionedRecordFactory.getTypeIRI())).build();
         PaginatedSearchParams fullSearchParams = new PaginatedSearchParams.Builder().limit(limit).offset(offset).build();
 
         try (RepositoryConnection conn = repo.getConnection()) {
@@ -1258,7 +1258,7 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
     }
 
     private void mockFindEntities(String ...records) {
-        trigRequired(repo, "/systemRepo/entities001.trig");
+        trigRequired(repo, "/systemRepo/entity_test_data.trig");
         when(user.getResource()).thenReturn(VALUE_FACTORY.createIRI("http://mobi.com/theUser"));
         when(pdp.createRequest(any(), any(), any(), any(), any(), any())).thenReturn(request);
         when(pdp.filter(any(), any(IRI.class))).thenReturn(new HashSet<>(Arrays.asList(records)));
@@ -1271,9 +1271,54 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
         mockFindEntities(record1, record2);
 
         PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder()
-                .searchText("Entity 2")
+                .searchText("Entity")
                 .limit(10)
                 .offset(0)
+                .build();
+        try (RepositoryConnection conn = repo.getConnection()) {
+            PaginatedSearchResults<EntityMetadata> results = manager.findEntities(ManagerTestConstants.CATALOG_IRI,
+                    searchParams, user, conn);
+            assertEquals(10, results.getPageSize());
+            assertEquals(5, results.getTotalSize());
+            assertEquals(1, results.getPageNumber());
+            assertEquals(5, results.getPage().size());
+            // Get the first EntityMetadata from the results
+            EntityMetadata entityMetadata = results.getPage().get(0);
+            assertEquals("http://example.org/entity1", entityMetadata.iri());
+            assertEquals("Entity 1 Label", entityMetadata.entityName());
+            assertEquals(1, entityMetadata.types().size());
+            assertEquals("http://example.org/EntityType1", entityMetadata.types().get(0));
+            assertEquals("This is a comment for entity 1.", entityMetadata.description());
+
+            assertNotNull(entityMetadata.sourceRecord());
+            assertEquals("http://example.org/record1", entityMetadata.sourceRecord().get("iri"));
+            assertEquals("Record 1 Title", entityMetadata.sourceRecord().get("title"));
+            assertEquals("http://mobi.com/ontologies/ontology-editor#OntologyRecord", entityMetadata.sourceRecord().get("type"));
+
+            assertEquals(2, entityMetadata.recordKeywords().size());
+            assertEquals("keyword1", entityMetadata.recordKeywords().get(0));
+            assertEquals("keyword2", entityMetadata.recordKeywords().get(1));
+
+            assertEquals(4, entityMetadata.matchingAnnotations().size());
+            assertEquals("This is a dct description for entity 1.", entityMetadata.matchingAnnotations().get(0).get("value"));
+            assertEquals("This is a comment for entity 1.", entityMetadata.matchingAnnotations().get(1).get("value"));
+            assertEquals("Entity 1 Label", entityMetadata.matchingAnnotations().get(2).get("value"));
+            assertEquals("Entity 1 Preferred Label", entityMetadata.matchingAnnotations().get(3).get("value"));
+        }
+    }
+
+    @Test
+    public void testFindEntitiesWithTypeConstraint() throws Exception {
+        String record1 = "http://example.org/record1";
+        String record2 = "http://example.org/record2";
+        mockFindEntities(record1, record2);
+        when(pdp.filter(any(), any(IRI.class))).thenReturn(new HashSet<>(List.of(record2)));
+
+        PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder()
+                .searchText("Entity")
+                .limit(10)
+                .offset(0)
+                .typeFilter(List.of(VALUE_FACTORY.createIRI("http://mobi.solutions/ontologies/workflows#WorkflowRecord")))
                 .build();
         try (RepositoryConnection conn = repo.getConnection()) {
             PaginatedSearchResults<EntityMetadata> results = manager.findEntities(ManagerTestConstants.CATALOG_IRI,
@@ -1293,7 +1338,7 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
             assertNotNull(entityMetadata.sourceRecord());
             assertEquals("http://example.org/record2", entityMetadata.sourceRecord().get("iri"));
             assertEquals("Record 2 Title", entityMetadata.sourceRecord().get("title"));
-            assertEquals("http://mobi.com/ontologies/catalog#OntologyRecord", entityMetadata.sourceRecord().get("type"));
+            assertEquals("http://mobi.solutions/ontologies/workflows#WorkflowRecord", entityMetadata.sourceRecord().get("type"));
 
             assertEquals(1, entityMetadata.recordKeywords().size());
             assertEquals("keyword3", entityMetadata.recordKeywords().get(0));

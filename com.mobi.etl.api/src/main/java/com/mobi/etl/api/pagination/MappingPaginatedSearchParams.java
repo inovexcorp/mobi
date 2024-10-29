@@ -28,11 +28,13 @@ import com.mobi.etl.api.ontologies.delimited.MappingRecord;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
 
+import java.util.List;
+
 public class MappingPaginatedSearchParams {
     private PaginatedSearchParams.Builder builder;
 
     public MappingPaginatedSearchParams(ValueFactory valueFactory) {
-        builder = new PaginatedSearchParams.Builder().typeFilter(valueFactory.createIRI(MappingRecord.TYPE));
+        builder = new PaginatedSearchParams.Builder().typeFilter(List.of(valueFactory.createIRI(MappingRecord.TYPE)));
     }
 
     public MappingPaginatedSearchParams setOffset(int offset) {

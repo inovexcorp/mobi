@@ -33,7 +33,7 @@ export interface PaginatedConfig {
     pageIndex?: number,
     sortOption?: SortOption,
     searchText?: string,
-    type?: string,
+    type?: string[],
     keywords?: string[],
     creators?: string[],
 }

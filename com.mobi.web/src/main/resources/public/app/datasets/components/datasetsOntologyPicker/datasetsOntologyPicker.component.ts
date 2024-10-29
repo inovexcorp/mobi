@@ -54,7 +54,7 @@ export class DatasetsOntologyPickerComponent implements OnChanges {
     ontologySearchConfig: PaginatedConfig = {
         pageIndex: 0,
         sortOption: undefined,
-        type: '',
+        type: [],
         limit: 100,
         searchText: ''
     };
@@ -71,7 +71,7 @@ export class DatasetsOntologyPickerComponent implements OnChanges {
     ngOnChanges(): void {
         this.catalogId = get(this.cm.localCatalog, '@id');
         this.ontologySearchConfig.sortOption = find(this.cm.sortOptions, {field: `${DCTERMS}title`, asc: true});
-        this.ontologySearchConfig.type = `${ONTOLOGYEDITOR}OntologyRecord`;
+        this.ontologySearchConfig.type = [`${ONTOLOGYEDITOR}OntologyRecord`];
         this.setOntologies();
     }
     getOntologyIRI(record: JSONLDObject): string {

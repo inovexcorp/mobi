@@ -154,7 +154,7 @@ describe('Datasets Ontology Picker component', function() {
         expect(component.ontologySearchConfig).toEqual({
             pageIndex: 0,
             sortOption: undefined,
-            type: `${ONTOLOGYEDITOR}OntologyRecord`,
+            type: [`${ONTOLOGYEDITOR}OntologyRecord`],
             limit: 100,
             searchText: ''
         });

@@ -350,7 +350,9 @@ public class CatalogRest {
             @Parameter(description = "Number of Records to return in one page", required = true)
             @QueryParam("limit") int limit,
             @Parameter(description = "String used to filter out Records", required = true)
-            @QueryParam("searchText") String searchText) {
+            @QueryParam("searchText") String searchText,
+            @Parameter(description = "List of record types to filter over")
+            @QueryParam("type") List<String> recordTypes) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             LinksUtils.validateParams(limit, offset);
             User activeUser = getActiveUser(servletRequest, engineManager);
@@ -358,6 +360,11 @@ public class CatalogRest {
             PaginatedSearchParams.Builder builder = new PaginatedSearchParams.Builder().offset(offset);
             if (searchText != null) {
                 builder.searchText(searchText);
+            }
+            if (recordTypes != null && !recordTypes.isEmpty()) {
+                builder.typeFilter(recordTypes.stream().map(vf::createIRI).collect(Collectors.toList()));
+            } else {
+                builder.typeFilter(List.of(vf.createIRI(VersionedRDFRecord.TYPE)));
             }
             builder.offset(offset);
             builder.limit(limit);
@@ -453,7 +460,7 @@ public class CatalogRest {
                 builder.sortBy(vf.createIRI(sort));
             }
             if (recordType != null) {
-                builder.typeFilter(vf.createIRI(recordType));
+                builder.typeFilter(List.of(vf.createIRI(recordType)));
             }
             if (searchText != null) {
                 builder.searchText(searchText);

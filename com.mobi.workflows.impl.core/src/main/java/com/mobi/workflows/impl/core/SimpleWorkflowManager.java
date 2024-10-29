@@ -342,7 +342,7 @@ public class SimpleWorkflowManager implements WorkflowManager, EventHandler {
         log.debug("Initializing Workflow TriggerServices for " + triggerType);
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             PaginatedSearchParams.Builder builder = new PaginatedSearchParams.Builder().ascending(true);
-            builder.typeFilter(vf.createIRI(WorkflowRecord.TYPE));
+            builder.typeFilter(List.of(vf.createIRI(WorkflowRecord.TYPE)));
             List<Record> records = recordManager.findRecord(configProvider.getLocalCatalogIRI(),
                     builder.build(), conn).getPage();
 

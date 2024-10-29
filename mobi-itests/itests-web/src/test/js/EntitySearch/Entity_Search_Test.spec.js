@@ -62,7 +62,7 @@ module.exports = {
     browser.page.entitySearchPage().applySearchText('pizza');
     browser.expect.elements('app-entity-search-page app-search-results-list mat-card-title').count.to.equal(10);
     browser.expect.element('app-entity-search-page app-search-results-list  open-record-button button').to.be.present;
-    browser.page.entitySearchPage().verifyRecordList();
+    browser.page.entitySearchPage().verifyRecordListView();
   },
 
   'Step 6:Search entity results': function (browser) {
@@ -97,7 +97,7 @@ module.exports = {
     // Verify that the correct number of matching annotations is displayed for the selected entity
     var expectedAnnotationsCount = 1;
     browser.expect.elements('app-entity-search-page app-search-results-list app-search-result-item:nth-child(1) mat-card .annotation-section .annotation-list .annotation-item').count.to.equal(expectedAnnotationsCount);
-    browser.expect.element('app-entity-search-page app-search-results-list app-search-result-item:nth-child(1) mat-card .annotation-section:nth-of-type(1) .mb-1 div').text.to.contain('1 Matching Annotations(s)');
+    browser.expect.element('app-entity-search-page app-search-results-list app-search-result-item:nth-child(1) mat-card .annotation-section:nth-of-type(1) .mb-1 div').text.to.contain('1 Matching Annotation(s)');
     // Verify that each annotation is displayed correctly for the selected entity
     browser.expect.element('app-entity-search-page app-search-results-list app-search-result-item:nth-child(1) mat-card .annotation-section .annotation-list .annotation-item:nth-of-type(1) .prop-name').to.be.present;
     browser.expect.element('app-entity-search-page app-search-results-list app-search-result-item:nth-child(1) mat-card .annotation-section .annotation-list .annotation-item:nth-of-type(1) dd').to.be.present;

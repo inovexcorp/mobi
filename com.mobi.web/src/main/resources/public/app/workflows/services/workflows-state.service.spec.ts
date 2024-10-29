@@ -40,7 +40,7 @@ import { WorkflowsManagerService } from './workflows-manager.service';
 import { LoginManagerService } from '../../shared/services/loginManager.service';
 import { EventWithPayload } from '../../shared/models/eventWithPayload.interface';
 import { WorkflowStatus } from '../models/workflow-status.type';
-import { PaginatedResponse } from '../models/paginated-response.interface';
+import { PaginatedResponse } from '../../shared/models/paginated-response.interface';
 import { WorkflowPaginatedConfig } from '../models/workflow-paginated-config.interface';
 import { WorkflowDataRow } from '../models/workflow-record-table';
 import { WorkflowsStateService } from './workflows-state.service';

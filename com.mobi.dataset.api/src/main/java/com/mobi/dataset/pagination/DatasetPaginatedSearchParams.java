@@ -28,11 +28,13 @@ import com.mobi.dataset.ontology.dataset.DatasetRecord;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
 
+import java.util.List;
+
 public class DatasetPaginatedSearchParams {
     private PaginatedSearchParams.Builder builder;
 
     public DatasetPaginatedSearchParams(ValueFactory valueFactory) {
-        builder = new PaginatedSearchParams.Builder().typeFilter(valueFactory.createIRI(DatasetRecord.TYPE));
+        builder = new PaginatedSearchParams.Builder().typeFilter(List.of(valueFactory.createIRI(DatasetRecord.TYPE)));
     }
 
     public DatasetPaginatedSearchParams setOffset(int offset) {

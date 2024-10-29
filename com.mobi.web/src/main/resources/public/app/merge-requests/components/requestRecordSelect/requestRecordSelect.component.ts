@@ -51,7 +51,7 @@ export class RequestRecordSelectComponent implements OnInit {
     mergeRequestRecords: MergeRequestRecord[] = [];
     totalSize = 0;
     config: PaginatedConfig = {
-        type: CATALOG + 'VersionedRDFRecord',
+        type: [CATALOG + 'VersionedRDFRecord'],
         limit: 20,
         searchText: '',
         sortOption: undefined,

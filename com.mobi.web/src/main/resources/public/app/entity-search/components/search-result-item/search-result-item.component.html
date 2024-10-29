@@ -23,7 +23,7 @@
 <mat-card class="entity-record clickable">
     <mat-card-title>
         <div class="entity-name d-flex align-items-center font-weight-normal">
-           <span>
+           <span class="text-truncate mr-1">
                {{ entityName }}
            </span>
             <div class="entity-iri d-flex  align-items-center">
@@ -53,7 +53,7 @@
         <p class="entity-description">{{ entity.description || '(no description)' }}</p>
         <div class="annotation-section">
             <div class="mb-1">
-                <div class="matching-annotations">{{ entity.totalNumMatchingAnnotations || 0 }} Matching Annotations(s)</div>
+                <div class="matching-annotations">{{ entity.totalNumMatchingAnnotations || 0 }} Matching Annotation(s)</div>
                 <div *ngIf="entity.totalNumMatchingAnnotations > 5">Only the first 5 matching annotations are shown.</div>
             </div>
             <dl class="annotation-list" *ngIf="entity.matchingAnnotations">

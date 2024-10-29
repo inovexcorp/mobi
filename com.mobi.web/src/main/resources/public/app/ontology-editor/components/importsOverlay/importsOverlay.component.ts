@@ -66,7 +66,7 @@ export class ImportsOverlayComponent implements OnInit {
     getOntologyConfig: PaginatedConfig = {
         pageIndex: 0,
         limit: 100,
-        type: `${ONTOLOGYEDITOR}OntologyRecord`,
+        type: [`${ONTOLOGYEDITOR}OntologyRecord`],
         sortOption: undefined,
         searchText: ''
     };

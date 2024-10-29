@@ -21,7 +21,7 @@ GRAPH catalogs:catalog-local {
 
 # Example Record 1
 <http://example.org/record1> {
-  <http://example.org/record1> a catalog:VersionedRDFRecord, catalog:OntologyRecord ;
+  <http://example.org/record1> a catalog:Record, catalog:VersionedRDFRecord, <http://mobi.com/ontologies/ontology-editor#OntologyRecord> ;
     catalog:catalog catalogs:catalog-local ;
     catalog:masterBranch <http://example.org/branch1> ;
     dcterms:title "Record 1 Title" ;
@@ -31,8 +31,7 @@ GRAPH catalogs:catalog-local {
     dcterms:modified "2016-01-03T00:00:00Z"^^xsd:dateTime ;
 
     catalog:keyword "keyword1" ;
-    catalog:keyword "keyword2" ;
-    a <http://example.org/CustomRecordType> .
+    catalog:keyword "keyword2" .
 }
 
 <http://example.org/branch1> {
@@ -76,7 +75,7 @@ GRAPH catalogs:catalog-local {
 
 # Example Record 2
 <http://example.org/record2> {
-  <http://example.org/record2> a catalog:VersionedRDFRecord, catalog:OntologyRecord ;
+  <http://example.org/record2> a catalog:Record, catalog:VersionedRDFRecord, <http://mobi.solutions/ontologies/workflows#WorkflowRecord> ;
     catalog:catalog catalogs:catalog-local ;
     catalog:masterBranch <http://example.org/branch2> ;
     dcterms:title "Record 2 Title" ;

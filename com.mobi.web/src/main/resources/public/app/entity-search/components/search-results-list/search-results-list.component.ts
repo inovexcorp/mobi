@@ -21,12 +21,15 @@
  * #L%
  */
 import { Component, OnInit } from '@angular/core';
+import { PageEvent } from '@angular/material/paginator';
 
+import { get } from 'lodash';
 import { Observable, of } from 'rxjs';
 
-import { PageEvent } from '@angular/material/paginator';
 import { EntityRecord } from '../../models/entity-record';
 import { EntitySearchStateService } from '../../services/entity-search-state.service';
+import { CatalogStateService } from '../../../shared/services/catalogState.service';
+import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 
 /**
  * The SearchResultsListComponent represents a component that displays search results.
@@ -37,24 +40,15 @@ import { EntitySearchStateService } from '../../services/entity-search-state.ser
   templateUrl: './search-results-list.component.html'
 })
 export class SearchResultsListComponent implements OnInit {
-  /**
-   * An Observable of an array of EntityRecord objects.
-   *
-   * @typedef {Observable<EntityRecord[]>} searchResult
-   */
+  records = [];
+  catalogId = '';
   searchResult: Observable<EntityRecord[]>;
-  /**
-   * Search text that is used to perform a search query.
-   *
-   * @typedef {string} searchText
-   */
   searchText: string;
 
-  constructor(public state: EntitySearchStateService) {
-  }
+  constructor(public state: EntitySearchStateService, private cm: CatalogManagerService) {}
 
   ngOnInit(): void {
-    this.state.init();
+    this.catalogId = get(this.cm.localCatalog, '@id', '');
     this.searchText = this.state.paginationConfig.searchText;
     this.loadData();
   }
@@ -67,16 +61,7 @@ export class SearchResultsListComponent implements OnInit {
    */
   getResultPage(pageEvent: PageEvent): void {
     this.state.paginationConfig.pageIndex = pageEvent.pageIndex;
-    this.setResults();
-  }
-
-  /**
-   * Sets the search results.
-   *
-   * @return {void} - This method does not return anything.
-   */
-  setResults(): void {
-    this.searchResult = this.state.setResults();
+    this.searchResult = this.state.setResults(this.catalogId);
   }
 
   /**
@@ -88,6 +73,20 @@ export class SearchResultsListComponent implements OnInit {
    */
   searchRecords(): void {
     this.state.resetPagination();
+    this.state.paginationConfig.type = this.state.selectedRecordTypes;
+    this.loadData();
+  }
+
+  /**
+   * Updates the filter criteria for the data and reloads the data accordingly.
+   *
+   * @param {Object} changeDetails - The details of the filter change.
+   * @param {string[]} changeDetails.chosenTypes - The new list of chosen types for filtering the data.
+   * @return {void}
+   */
+  changeFilter(changeDetails: {chosenTypes: string[]}): void {
+    this.state.resetPagination();
+    this.state.paginationConfig.type = changeDetails.chosenTypes;
     this.loadData();
   }
 
@@ -97,7 +96,7 @@ export class SearchResultsListComponent implements OnInit {
   private loadData(): void {
     if (this.searchText) {
       this.state.paginationConfig.searchText = this.searchText;
-      this.setResults();
+      this.searchResult = this.state.setResults(this.catalogId);
     } else {
       //clear result
       this.searchResult = of([]);

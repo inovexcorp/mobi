@@ -23,10 +23,10 @@
 import { Component } from '@angular/core';
 
 /**
- * Represents the Entity Search Page component.
+ * EntitySearchPageComponent is responsible for displaying and handling the entity search page.
+ * This component allows users to search for various entities and display the results.
  *
- * @class
- * @constructor
+ * @class entity-search.EntitySearchPageComponent
  */
 @Component({
   selector: 'app-entity-search-page',
@@ -39,6 +39,5 @@ export class EntitySearchPageComponent {
    *
    * @constructor
    */
-  constructor() {
-  }
+  constructor() {}
 }

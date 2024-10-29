@@ -48,12 +48,15 @@ import {
     getDctermsValue,
     handleError,
     handleErrorObject,
-    paginatedConfigToHttpParams
+    paginatedConfigToHttpParams,
+    getSubstringMatch
 } from '../utility';
 import { EventTypeConstants, EventWithPayload } from '../models/eventWithPayload.interface';
 import { FilterItem } from '../models/filterItem.interface';
 import { FilterType, ListFilter } from '../models/list-filter.interface';
 import { Statistic } from '../models/statistic.interface';
+import { EntityRecord, MatchingAnnotations } from '../../entity-search/models/entity-record';
+import { PaginatedResponse } from '../models/paginated-response.interface';
 
 /**
  * @class shared.CatalogManagerService
@@ -237,8 +240,10 @@ export class CatalogManagerService {
         if (get(paginatedConfig, 'searchText')) {
             params = params.set('searchText', paginatedConfig.searchText);
         }
-        if (get(paginatedConfig, 'type')) {
-            params = params.set('type', paginatedConfig.type);
+        if (get(paginatedConfig, 'type', undefined)) {
+            paginatedConfig.type.forEach(type => {
+                params = params.append('type', type);
+            });
         }
         if (get(paginatedConfig, 'keywords')) {
             paginatedConfig.keywords.forEach(keyword => {
@@ -1335,9 +1340,54 @@ export class CatalogManagerService {
                         }
                     }
                 }
-              this.numChecked = getNumChecked(this.filterItems);
+                this.numChecked = getNumChecked(this.filterItems);
             }
         };
+    }
+
+    /**
+     * Retrieves entities based on the provided configuration.
+     *
+     * @param {string} catalogId The id of the Catalog to retrieve entities from
+     * @param {PaginatedConfig} config - The configuration for retrieving entities.
+     * @returns {Observable<HttpResponse<EntityRecord[]>>} - The observable containing the HTTP response with the retrieved JSONLDObject entities.
+     */
+    getEntities(catalogId: string, config: PaginatedConfig): Observable<PaginatedResponse<EntityRecord[]>> {
+        let params = paginatedConfigToHttpParams(config);
+        if (get(config, 'type', undefined)) {
+            config.type.forEach(type => {
+                params = params.append('type', type);
+            });
+        }
+        if (config.searchText) {
+            params = params.set('searchText', config.searchText.trim());
+        }
+        const url = `${this.prefix}/${encodeURIComponent(catalogId)}/entities`;
+        const request = this.http.get<EntityRecord[]>(url, {params, observe: 'response'});
+        return this.spinnerSrv.track(request)
+            .pipe(
+                catchError(handleError),
+                map((response: HttpResponse<EntityRecord[]>): PaginatedResponse<EntityRecord[]> => {
+                    let entityRecords = [];
+                    if (response.body) {
+                        entityRecords = response.body.map((entityRecord: EntityRecord) => {
+                            if (entityRecord.matchingAnnotations) {
+                                entityRecord.matchingAnnotations = entityRecord.matchingAnnotations.map((matchingAnnotations: MatchingAnnotations) => {
+                                    if (matchingAnnotations.value && config.searchText) {
+                                        matchingAnnotations.matchValue = getSubstringMatch(matchingAnnotations.value, config.searchText);
+                                    }
+                                    return matchingAnnotations;
+                                });
+                            }
+                            return entityRecord;
+                        });
+                    }
+                    return {
+                        totalCount: Number(response.headers.get('x-total-count')) || 0,
+                        page: entityRecords
+                    };
+                })
+            );
     }
 
     private _createVersion(recordId: string, catalogId: string, versionConfig: NewConfig): Observable<string> {

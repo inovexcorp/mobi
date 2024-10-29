@@ -97,7 +97,7 @@ export class RecordsViewComponent implements OnInit, OnDestroy {
             pageIndex: this.state.currentRecordPage,
             limit: this.state.recordLimit,
             sortOption,
-            type: recordType,
+            type: recordType ? [recordType] : undefined,
             searchText,
             keywords: keywordFilterList,
             creators: creatorFilterList,

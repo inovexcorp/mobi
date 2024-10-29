@@ -107,7 +107,6 @@ public class SimpleRecordManager implements RecordManager {
     private static final String KEYWORD_BINDING = "keyword";
     private static final String RECORD_COUNT_BINDING = "record_count";
     private static final String KEYWORD_COUNT_BINDING = "keyword_count";
-    private static final String TYPE_FILTER_BINDING = "type_filter";
     private static final String SEARCH_BINDING = "search_text";
 
     private static final String RECORD_TYPE_BINDING = "recordType";
@@ -220,10 +219,18 @@ public class SimpleRecordManager implements RecordManager {
                                                                PaginatedSearchParams searchParams,
                                                                User user,
                                                                RepositoryConnection conn) {
-        // Filters down to VersionedRDFRecords that the requesting user can read before searching for entities
-        PaginatedSearchParams searchRecords = new PaginatedSearchParams.Builder()
-                .typeFilter(vf.createIRI(VersionedRDFRecord.TYPE))
-                .build();
+
+        PaginatedSearchParams searchRecords;
+        if (searchParams.getTypeFilter().isPresent()) {
+            searchRecords = new PaginatedSearchParams.Builder()
+                    .typeFilter(searchParams.getTypeFilter().get())
+                    .build();
+        } else {
+            searchRecords = new PaginatedSearchParams.Builder()
+                    .typeFilter(List.of(vf.createIRI(VersionedRDFRecord.TYPE)))
+                    .build();
+        }
+
         List<String> viewableRecords = getViewableRecords(catalogId, searchRecords, user, conn);
 
         if (viewableRecords.isEmpty()) {
@@ -341,15 +348,13 @@ public class SimpleRecordManager implements RecordManager {
     @Override
     public PaginatedSearchResults<Record> findRecord(Resource catalogId, PaginatedSearchParams searchParams,
                                                      RepositoryConnection conn) {
-        Optional<Resource> typeParam = searchParams.getTypeFilter();
         Optional<String> searchTextParam = searchParams.getSearchText();
 
         String queryStr = replaceRecordsFilter(new ArrayList<>(), COUNT_RECORDS_QUERY);
         // Get Total Count
-        TupleQuery countQuery = conn.prepareTupleQuery(replaceCreatorFilter(searchParams,
-                replaceKeywordFilter(searchParams, queryStr)));
+        TupleQuery countQuery = conn.prepareTupleQuery(replaceRecordTypeFilter(searchParams,
+                replaceCreatorFilter(searchParams, replaceKeywordFilter(searchParams, queryStr))));
         countQuery.setBinding(CATALOG_BINDING, catalogId);
-        typeParam.ifPresent(resource -> countQuery.setBinding(TYPE_FILTER_BINDING, resource));
         searchTextParam.ifPresent(s -> countQuery.setBinding(SEARCH_BINDING, vf.createLiteral(s)));
 
         TupleQueryResult countResults = countQuery.evaluate();
@@ -389,7 +394,8 @@ public class SimpleRecordManager implements RecordManager {
         }
 
         Function<String, String> queryFunc = querySuffix -> {
-            String queryString = replaceKeywordFilter(searchParams, FIND_RECORDS_QUERY + querySuffix);
+            String queryString = replaceRecordTypeFilter(searchParams,
+                    replaceKeywordFilter(searchParams, FIND_RECORDS_QUERY + querySuffix));
             queryString = replaceCreatorFilter(searchParams, queryString);
             queryString = replaceRecordsFilter(viewableRecords, queryString);
             log.debug("Query String:\n" + queryString);
@@ -519,16 +525,13 @@ public class SimpleRecordManager implements RecordManager {
 
     protected List<String> getViewableRecords(Resource catalogId, PaginatedSearchParams searchParams, User user,
                                            RepositoryConnection conn) {
-        Optional<Resource> typeParam = searchParams.getTypeFilter();
-
-        String queryString = replaceRecordsFilter(new ArrayList<>(), replaceCreatorFilter(searchParams,
-                replaceKeywordFilter(searchParams, FIND_RECORDS_QUERY)));
+        String queryString = replaceRecordTypeFilter(searchParams, replaceRecordsFilter(new ArrayList<>(),
+                replaceCreatorFilter(searchParams, replaceKeywordFilter(searchParams, FIND_RECORDS_QUERY))));
 
         log.debug("Query String:\n" + queryString);
 
         TupleQuery query = conn.prepareTupleQuery(queryString);
         query.setBinding(CATALOG_BINDING, catalogId);
-        typeParam.ifPresent(resource -> query.setBinding(TYPE_FILTER_BINDING, resource));
         searchParams.getSearchText().ifPresent(searchText ->
                 query.setBinding(SEARCH_BINDING, vf.createLiteral(searchText)));
 
@@ -614,6 +617,18 @@ public class SimpleRecordManager implements RecordManager {
         return queryString;
     }
 
+    protected String replaceRecordTypeFilter(PaginatedSearchParams searchParams, String queryString) {
+        if (searchParams.getTypeFilter().isPresent()) {
+            StringBuilder recordTypeFilter = new StringBuilder();
+            String recordTypes = searchParams.getTypeFilter().get().stream()
+                    .map(iri -> "<" + iri + ">").collect(Collectors.joining(","));
+            queryString = queryString.replace("%RECORD_TYPE_FILTER%", recordTypes);
+        } else {
+            queryString = queryString.replace("%RECORD_TYPE_FILTER%", "<" + Record.TYPE + ">");
+        }
+        return queryString;
+    }
+
     /**
      * Creates the base for the sorting options Object.
      */
@@ -654,13 +669,11 @@ public class SimpleRecordManager implements RecordManager {
 
         String queryString = queryFunc.apply(querySuffix.toString());
 
-        TupleQuery query = conn.prepareTupleQuery(queryString);
+        TupleQuery query = conn.prepareTupleQuery(replaceRecordTypeFilter(searchParams, queryString));
         query.setBinding(CATALOG_BINDING, catalogId);
 
-        Optional<Resource> typeParam = searchParams.getTypeFilter();
         Optional<String> searchTextParam = searchParams.getSearchText();
 
-        typeParam.ifPresent(resource -> query.setBinding(TYPE_FILTER_BINDING, resource));
         searchTextParam.ifPresent(searchText -> query.setBinding(SEARCH_BINDING, vf.createLiteral(searchText)));
 
         log.debug("Query Plan:\n" + query);

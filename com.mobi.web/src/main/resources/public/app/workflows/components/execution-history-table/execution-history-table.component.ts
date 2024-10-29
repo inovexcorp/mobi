@@ -28,7 +28,7 @@ import { Observable, forkJoin, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { some } from 'lodash';
 
-import { PaginatedResponse } from '../../models/paginated-response.interface';
+import { PaginatedResponse } from '../../../shared/models/paginated-response.interface';
 import { WorkflowExecutionActivityDisplayI } from '../../models/workflow-execution-activity.interface';
 import { WorkflowPaginatedConfig } from '../../models/workflow-paginated-config.interface';
 import { WorkflowTableFilterEvent } from '../../models/workflow-table-filter-event.interface';

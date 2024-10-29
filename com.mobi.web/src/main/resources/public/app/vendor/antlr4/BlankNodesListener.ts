@@ -28,7 +28,6 @@ import { OWL, RDF, RDFS, XSD } from '../../prefixes';
 import { JSONLDObject } from '../../shared/models/JSONLDObject.interface';
 import { getSkolemizedIRI, setPropertyId } from '../../shared/utility';
 
-
 class BlankNodesListener implements MOSListener {
     arr: JSONLDObject[];
     localNames: {[key: string]: string};
