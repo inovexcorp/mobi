@@ -184,6 +184,29 @@ module.exports = {
     browser.waitForElementVisible('shapes-graph-details .entity-name')
       .assert.textContains('shapes-graph-details .entity-name', 'UHTC Shapes Graph');
     browser.page.editorPage().assert.valueEquals('@editorBranchSelectInput', 'Entity:UHTC Test Branch-2');
+  },
+  'Step 18: Navigate to Workflows page' : function(browser) {
+    browser.globals.switchToPage(browser, 'workflows', 'app-workflow-records');
+  },
+  'Step 19: Create Workflows': function(browser) {
+    browser.page.workflowsPage().createWorkflow('Entity:Workflow')
+      .returnToLanding();
+    browser.globals.wait_for_no_spinners(browser);
+  },
+  'Step 20: Perform a new search': function (browser) {
+    browser.globals.switchToPage(browser, 'entity-search', 'app-entity-search-page');
+    browser.waitForElementVisible('app-entity-search-page')
+      .page.entitySearchPage().clearEntitySearchBar();
+    browser.page.entitySearchPage().applySearchText('action');
+    browser.useCss()
+      .waitForElementVisible('app-entity-search-page app-search-results-list mat-card-title')
+  },
+  'Step 21: Open Workflow entity' : function(browser) {
+    browser.globals.wait_for_no_spinners(browser);
+    browser.click('app-entity-search-page app-search-results-list app-search-result-item:nth-child(1) button')
+    browser.globals.wait_for_no_spinners(browser);
+    browser.assert.not.elementPresent('app-entity-search-page app-search-results-list  open-record-button button');
+    browser.waitForElementVisible('app-workflow-record .workflow-record-header .record-title')
+      .assert.textContains('app-workflow-record .workflow-record-header .record-title', 'Entity:Workflow');
   }
-
 }

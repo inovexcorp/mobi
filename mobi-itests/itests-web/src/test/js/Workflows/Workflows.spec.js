@@ -283,7 +283,7 @@ module.exports = {
             .click('app-workflows .mat-tab-labels > div:nth-child(2)')
         browser.globals.wait_for_no_spinners(browser);
         browser.globals.switchToPage(browser, 'catalog', 'div.catalog-page')
-        browser.globals.switchToPage(browser, 'workflows');   
+        browser.globals.switchToPage(browser, 'workflows');
         browser.globals.wait_for_no_spinners(browser);
         browser.page.workflowsPage()
             .assert.visible('@editIcon');
@@ -305,6 +305,6 @@ module.exports = {
             .click('app-workflows .mat-tab-labels > div:nth-child(2)');
         browser.globals.wait_for_no_spinners(browser);
         browser.useXpath()
-            .assert.visible('//*[contains(text(), "new Workflow Changes")]');
+            .assert.visible('//*[contains(text(), "test-workflow")]');
     }
 }
