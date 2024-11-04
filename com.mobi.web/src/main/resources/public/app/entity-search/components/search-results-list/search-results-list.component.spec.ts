@@ -38,6 +38,7 @@ import { EntityRecord } from '../../models/entity-record';
 import { SearchResultsMock } from '../../mock-data/search-results.mock';
 import { DCTERMS } from '../../../prefixes';
 import { SearchResultsListComponent } from './search-results-list.component';
+import { RouterTestingModule } from '@angular/router/testing';
 import { CatalogStateService } from '../../../shared/services/catalogState.service';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { EntitySearchFiltersComponent } from '../entity-search-filters/entity-search-filters.component';
@@ -69,7 +70,8 @@ describe('SearchResultsListComponent', () => {
       ],
       imports: [
         NoopAnimationsModule,
-        MatPaginatorModule
+        MatPaginatorModule,
+        RouterTestingModule.withRoutes([])
       ]
     })
       .compileComponents();

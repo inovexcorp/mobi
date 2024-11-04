@@ -28,6 +28,8 @@ import { Observable, of } from 'rxjs';
 
 import { EntityRecord } from '../../models/entity-record';
 import { EntitySearchStateService } from '../../services/entity-search-state.service';
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { Router } from '@angular/router';
 import { CatalogStateService } from '../../../shared/services/catalogState.service';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 
@@ -45,7 +47,9 @@ export class SearchResultsListComponent implements OnInit {
   searchResult: Observable<EntityRecord[]>;
   searchText: string;
 
-  constructor(public state: EntitySearchStateService, private cm: CatalogManagerService) {}
+  constructor(public state: EntitySearchStateService, public catalogState: CatalogStateService, private _router: Router,
+              private cm: CatalogManagerService) {
+  }
 
   ngOnInit(): void {
     this.catalogId = get(this.cm.localCatalog, '@id', '');
@@ -61,6 +65,26 @@ export class SearchResultsListComponent implements OnInit {
    */
   getResultPage(pageEvent: PageEvent): void {
     this.state.paginationConfig.pageIndex = pageEvent.pageIndex;
+    this.setResults();
+  }
+
+  /**
+   * Open the associated record in the catalog.
+   *
+   * @param {JSONLDObject} record - The record to open in the catalog.
+   * @return {void}
+   */
+  openRecord(record: JSONLDObject): void {
+    this.catalogState.selectedRecord = record;
+    this._router.navigate(['/catalog']);
+  }
+
+  /**
+   * Sets the search results.
+   *
+   * @return {void} - This method does not return anything.
+   */
+  setResults(): void {
     this.searchResult = this.state.setResults(this.catalogId);
   }
 

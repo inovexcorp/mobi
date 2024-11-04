@@ -74,6 +74,19 @@ const entitySearchPageCommands = {
         .waitForElementNotPresent('app-entity-search-page app-search-results-list')
     }
     return openCommands();
+  },
+
+  viewRecord: function(titleOfEntity, titleOfRecord) {
+    const recordItemSelector = createRecordItemXPathSelector(titleOfEntity);
+    const viewRecordSelector = recordItemSelector + '//button[contains(@class, "view-button")]';
+
+    const viewCommands = function() {
+      browser.click('xpath', viewRecordSelector, function(result) { this.assert.strictEqual(result.status, 0) })
+          .waitForElementNotPresent('app-entity-search-page app-search-results-list')
+          .waitForElementVisible('catalog-page record-view div.record-body')
+          .expect.element('catalog-page record-view div.record-body h2.record-title div.inline-edit').text.to.contain(titleOfRecord);
+    }
+    return viewCommands();
   }
 }
 
