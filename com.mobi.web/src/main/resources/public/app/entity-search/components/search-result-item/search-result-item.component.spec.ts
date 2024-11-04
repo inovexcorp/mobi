@@ -40,6 +40,7 @@ import { RecordIconComponent } from '../../../shared/components/recordIcon/recor
 import { EntitySearchStateService } from '../../services/entity-search-state.service';
 import { SearchResultItemComponent } from './search-result-item.component';
 import { OpenRecordButtonComponent } from '../../../catalog/components/openRecordButton/openRecordButton.component';
+import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { MatDividerModule } from '@angular/material/divider';
 
 describe('SearchResultItemComponent', () => {
@@ -65,7 +66,8 @@ describe('SearchResultItemComponent', () => {
       ],
       providers: [
         PrefixationPipe,
-        MockProvider(EntitySearchStateService)
+        MockProvider(EntitySearchStateService),
+        MockProvider(CatalogManagerService)
       ],
       imports: [
         MatIconModule,
@@ -116,6 +118,13 @@ describe('SearchResultItemComponent', () => {
     it('for wrapping containers', function () {
       expect(element.queryAll(By.css('.entity-record')).length).toEqual(1);
     });
+    it('back-sidebar button', () => {
+        expect(element.queryAll(By.css('.entity-record')).length).toEqual(1);
+        spyOn(component, 'handleClick');
+        const button = element.queryAll(By.css('button.view-button'))[0];
+        button.triggerEventHandler('click', null);
+        expect(component.handleClick).toHaveBeenCalledWith();
+      });
     ['mat-card-title', 'mat-card-subtitle', 'mat-card-content', '.entity-iri', 'mat-icon', '.entity-type',
       '.entity-record_prop', '.entity-description', 'open-record-button'].forEach(function (test) {
       it(`with a ${test}`, function () {

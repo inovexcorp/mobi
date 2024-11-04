@@ -117,16 +117,28 @@ module.exports = {
     browser.waitForElementVisible('app-entity-search-page app-search-results-list');
   },
 
-  'Step 10: Switch to SHACL shapes page': function(browser) {
+  'Step 10: View a record' : function(browser) {
+    browser.page.entitySearchPage().clearEntitySearchBar();
+    browser.page.entitySearchPage().applySearchText('pizza');
+    browser.globals.wait_for_no_spinners(browser);
+    browser.page.entitySearchPage().viewRecord('BaseDaPizza', 'pizza');
+    browser.globals.wait_for_no_spinners(browser);
+    browser.assert.not.elementPresent('app-entity-search-page app-search-results-list  open-record-button button');
+    browser.globals.switchToPage(browser, 'entity-search', 'app-entity-search-page');
+    browser.waitForElementVisible('app-entity-search-page');
+    browser.waitForElementVisible('app-entity-search-page app-search-results-list');
+  },
+
+  'Step 11: Switch to SHACL shapes page': function(browser) {
     browser.globals.switchToPage(browser, 'shapes-graph-editor', 'shapes-graph-editor-page')
   },
 
-  'Step 11: Create a new shapes graph': function(browser) {
+  'Step 12: Create a new shapes graph': function(browser) {
     browser.page.shapesEditorPage().uploadShapesGraph(shapes_graph)
     browser.globals.wait_for_no_spinners(browser)
   },
 
-  'Step 12: Verify shapes graph presentation': function(browser) {
+  'Step 13: Verify shapes graph presentation': function(browser) {
     browser
       .waitForElementVisible('shapes-graph-details')
       .waitForElementVisible('shapes-graph-properties-block')
@@ -139,12 +151,12 @@ module.exports = {
       .expect.elements('@propertyValues').count.to.equal(3)
   },
 
-  'Step 13: Create a new branch': function(browser) {
+  'Step 14: Create a new branch': function(browser) {
     browser.page.shapesEditorPage().createBranch('Entity:UHTC Test Branch');
     browser.globals.wait_for_no_spinners(browser);
   },
 
-  'Step 14: Verify switching of branches': function(browser) {
+  'Step 15: Verify switching of branches': function(browser) {
     browser
       .waitForElementVisible('shapes-graph-details')
       .waitForElementVisible('shapes-graph-properties-block')
@@ -154,7 +166,7 @@ module.exports = {
       .assert.valueEquals('@editorBranchSelectInput', 'Entity:UHTC Test Branch');
   },
 
-  'Step `15`: Perform a new search': function (browser) {
+  'Step `16`: Perform a new search': function (browser) {
     browser.globals.switchToPage(browser, 'entity-search', 'app-entity-search-page');
     browser.waitForElementVisible('app-entity-search-page')
     .page.entitySearchPage().clearEntitySearchBar();
@@ -162,7 +174,7 @@ module.exports = {
     .expect.elements('app-entity-search-page app-search-results-list mat-card-title').count.to.equal(1)
   },
 
-  'Step 16: Open SACHL entity' : function(browser) {
+  'Step 17: Open SHACL entity' : function(browser) {
     browser.globals.wait_for_no_spinners(browser);
     browser.page.entitySearchPage().openRecordItem('UHTC Shapes Graph');
     browser.globals.wait_for_no_spinners(browser);
@@ -172,7 +184,7 @@ module.exports = {
     browser.page.editorPage().assert.valueEquals('@editorBranchSelectInput', 'MASTER');
   },
 
-  'Step 17: Upload Changes': function(browser) {
+  'Step 18: Upload Changes': function(browser) {
     browser.page.shapesEditorPage().createBranch('Entity:UHTC Test Branch-2');
     browser.globals.wait_for_no_spinners(browser);
     browser.page.shapesEditorPage().uploadChanges(shapes_graph_update);
@@ -185,15 +197,15 @@ module.exports = {
       .assert.textContains('shapes-graph-details .entity-name', 'UHTC Shapes Graph');
     browser.page.editorPage().assert.valueEquals('@editorBranchSelectInput', 'Entity:UHTC Test Branch-2');
   },
-  'Step 18: Navigate to Workflows page' : function(browser) {
+  'Step 19: Navigate to Workflows page' : function(browser) {
     browser.globals.switchToPage(browser, 'workflows', 'app-workflow-records');
   },
-  'Step 19: Create Workflows': function(browser) {
+  'Step 20: Create Workflows': function(browser) {
     browser.page.workflowsPage().createWorkflow('Entity:Workflow')
       .returnToLanding();
     browser.globals.wait_for_no_spinners(browser);
   },
-  'Step 20: Perform a new search': function (browser) {
+  'Step 21: Perform a new search': function (browser) {
     browser.globals.switchToPage(browser, 'entity-search', 'app-entity-search-page');
     browser.waitForElementVisible('app-entity-search-page')
       .page.entitySearchPage().clearEntitySearchBar();
@@ -201,7 +213,7 @@ module.exports = {
     browser.useCss()
       .waitForElementVisible('app-entity-search-page app-search-results-list mat-card-title')
   },
-  'Step 21: Open Workflow entity' : function(browser) {
+  'Step 22: Open Workflow entity' : function(browser) {
     browser.globals.wait_for_no_spinners(browser);
     browser.click('app-entity-search-page app-search-results-list app-search-result-item:nth-child(1) button')
     browser.globals.wait_for_no_spinners(browser);

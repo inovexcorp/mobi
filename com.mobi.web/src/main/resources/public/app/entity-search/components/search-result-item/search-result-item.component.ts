@@ -22,14 +22,15 @@
  */
 import { Component, EventEmitter, Input, OnInit, Output, ViewEncapsulation } from '@angular/core';
 
-import { orderBy } from 'lodash';
+import { cloneDeep, get, orderBy } from 'lodash';
 
 import { getBeautifulIRI, getEntityName } from '../../../shared/utility';
 import { EntityRecord } from '../../models/entity-record';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { PrefixationPipe } from '../../../shared/pipes/prefixation.pipe';
-import { DC } from '../../../prefixes';
+import { CATALOG, DC } from '../../../prefixes';
 import { EntitySearchStateService } from '../../services/entity-search-state.service';
+import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 
 /**
  * Component for displaying a single search result item.
@@ -73,6 +74,8 @@ export class SearchResultItemComponent implements OnInit {
    * @type {EventEmitter<EntityRecord>}
    */
   @Output() clickEntity: EventEmitter<EntityRecord> = new EventEmitter<EntityRecord>();
+
+  @Output() viewRecord = new EventEmitter<JSONLDObject>();
   /**
    * Record JSON-LD object.
    *
@@ -108,7 +111,8 @@ export class SearchResultItemComponent implements OnInit {
    */
   constructor(
     private prefixation: PrefixationPipe,
-    public state: EntitySearchStateService) {
+    public state: EntitySearchStateService,
+    public cm: CatalogManagerService) {
   }
 
   /**
@@ -131,6 +135,17 @@ export class SearchResultItemComponent implements OnInit {
       '@type': [this.entity.record.type],
       'entityIRI': this.entity.iri
     };
+  }
+
+  /**
+   * Initiates the parent component to open the record in the catalog.
+   */
+  handleClick(): void {
+    const recordCopy = cloneDeep(this.record);
+    recordCopy[`${CATALOG}catalog`] = [{
+        '@id': get(this.cm.localCatalog, '@id', '')
+    }];
+    this.viewRecord.emit(recordCopy);
   }
 
   /**
