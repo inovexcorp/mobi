@@ -22,16 +22,15 @@
  */
 import { TestBed } from '@angular/core/testing';
 
-import { EntitySearchStateService } from './entity-search-state.service';
 import { MockProvider } from 'ng-mocks';
+import { of } from 'rxjs';
 
 import { PaginatedConfig } from '../../shared/models/paginatedConfig.interface';
-import { of } from 'rxjs';
 import { EntityRecord } from '../models/entity-record';
 import { SearchResultsMock } from '../mock-data/search-results.mock';
 import { PaginatedResponse } from '../../shared/models/paginated-response.interface';
 import { CatalogManagerService } from '../../shared/services/catalogManager.service';
-import { CATALOG } from '../../prefixes';
+import { EntitySearchStateService } from './entity-search-state.service';
 
 describe('EntitySearchStateService', () => {
   let service: EntitySearchStateService;
@@ -79,18 +78,10 @@ describe('EntitySearchStateService', () => {
     } as PaginatedConfig;
     service.totalResultSize = 10;
 
-    service.selectedRecordTypes = [
-      `${CATALOG}Record`,
-      `${CATALOG}UnversionedRecord`,
-      `${CATALOG}VersionedRecord`,
-      `${CATALOG}VersionedRDFRecord`
-    ];
-
     service.reset();
-
-    expect(service.paginationConfig.pageIndex).toBe(0);
-    expect(service.paginationConfig.searchText).toBe('');
-    expect(service.totalResultSize).toBe(0);
-    expect(service.selectedRecordTypes).toEqual([]);
+    expect(service.paginationConfig.pageIndex).toEqual(0);
+    expect(service.paginationConfig.searchText).toEqual('');
+    expect(service.paginationConfig.type).toEqual([]);
+    expect(service.totalResultSize).toEqual(0);
   });
 });

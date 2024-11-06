@@ -27,11 +27,14 @@ var Onto1 = path.resolve(__dirname + '/../../resources/rdf_files/shacl.ttl');
 // shapes graph
 var shapes_graph = path.resolve(__dirname + '/../../resources/rdf_files/UHTC_shapes.ttl');
 
-var filterItem = '//app-entity-search-page//app-entity-search-filters//mat-expansion-panel//div//label//span'
-var checkboxStatusItem = '//app-entity-search-page//app-entity-search-filters//mat-expansion-panel//div//label//input[@aria-checked="true"]/ancestor-or-self::mat-checkbox//label//span'
+var filterItem = '//app-entity-search-page//app-entity-search-filters//mat-expansion-panel//div//label//span';
+var checkboxStatusItem = '//app-entity-search-page//app-entity-search-filters//mat-expansion-panel//div//label//input[@aria-checked="true"]/ancestor-or-self::mat-checkbox//label//span';
+
+var chipList = '//app-entity-search-page//app-filters-selected-list//mat-chip-list';
+var chipItem = chipList + '//span[text()[contains(.,"Shapes Graph Record")]]';
 
 module.exports = {
-    '@tags': ['sanity', 'entity-search'],
+    '@tags': ['sanity', 'entity-search', 'entity-search-filters'],
 
     'Step 1: Initial Setup': function (browser) {
         browser.globals.initial_steps(browser, adminUsername, adminPassword)
@@ -98,7 +101,23 @@ module.exports = {
         browser.page.entitySearchPage().verifyRecordListView();
     },
 
-    'Step 10: Navigate Away and Back': function (browser) {
+    'Step 10: Verify selected filter chip list': function (browser) {
+        browser
+          .useXpath()
+          .waitForElementVisible(chipList)
+          .assert.elementsCount(chipItem, 1);
+        browser
+          .click(chipList + '//mat-icon')
+        browser.globals.wait_for_no_spinners(browser)
+        browser
+          .useXpath()
+          .assert.not.elementPresent(chipItem)
+          .click(filterItem + '[text()[contains(.,"Shapes Graph Record")]]')
+          .waitForElementVisible(chipList)
+          .assert.elementsCount(chipItem, 1);
+    },
+
+    'Step 11: Navigate Away and Back': function (browser) {
         browser.globals.switchToPage(browser, 'shapes-graph-editor', 'shapes-graph-editor-page')
         browser.globals.wait_for_no_spinners(browser)
         browser.globals.switchToPage(browser, 'entity-search', 'app-entity-search-page');
@@ -111,13 +130,13 @@ module.exports = {
             .assert.visible(checkboxStatusItem + '[text()[contains(.,"Shapes Graph Record")]]')
     },
 
-    'Step 11: Logout and Log Back In': function (browser) {
+    'Step 12: Logout and Log Back In': function (browser) {
         browser.useCss()
         browser.globals.logout(browser)
         browser.globals.initial_steps(browser, adminUsername, adminPassword)
     },
 
-    'Step 12: Verify Cleared State': function (browser) {
+    'Step 13: Verify Cleared State': function (browser) {
         browser.globals.switchToPage(browser, 'entity-search', 'app-entity-search-page');
         browser
             .waitForElementVisible('app-entity-search-page info-message p')
@@ -131,7 +150,7 @@ module.exports = {
             .assert.not.elementPresent(checkboxStatusItem + '[text()[contains(.,"Mapping Record")]]')
     },
 
-    'Step 13: Ensure Selected types are Not still Being Stored': function (browser) {
+    'Step 14: Ensure Selected types are Not still Being Stored': function (browser) {
         browser.page.entitySearchPage().applySearchText('shapes');
         browser.assert.elementsCount('app-entity-search-page app-search-results-list mat-card-title',10);
         browser.expect.element('app-entity-search-page app-search-results-list open-record-button button').to.be.present;

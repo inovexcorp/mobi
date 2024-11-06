@@ -13,17 +13,19 @@
  * 
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
  * GNU General Public License for more details.
  * 
  * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * along with this program. If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
 import { HttpResponse } from '@angular/common/http';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { PageEvent } from '@angular/material/paginator';
 import { get } from 'lodash';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { PaginatedConfig } from '../../../shared/models/paginatedConfig.interface';
@@ -31,8 +33,9 @@ import { SortOption } from '../../../shared/models/sortOption.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { CatalogStateService } from '../../../shared/services/catalogState.service';
 import { ToastService } from '../../../shared/services/toast.service';
-import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { FilterItem } from '../../../shared/models/filterItem.interface';
+import { CATALOG } from '../../../prefixes';
+import { SelectedRecordFilters } from '../../models/selected-record-filters.interface';
 
 /**
  * @class catalog.RecordsViewComponent
@@ -44,75 +47,75 @@ import { takeUntil } from 'rxjs/operators';
  * {@link shared.CatalogStateService} when clicked.
  */
 @Component({
-    selector: 'records-view',
-    templateUrl: './recordsView.component.html',
-    styleUrls: ['./recordsView.component.scss']
+  selector: 'records-view',
+  templateUrl: './recordsView.component.html',
+  styleUrls: ['./recordsView.component.scss']
 })
 export class RecordsViewComponent implements OnInit, OnDestroy {
-    records = [];
-    catalogId = '';
+  records = [];
+  catalogId = '';
 
-    private _destroySub$ = new Subject<void>();
-    
-    constructor(public state: CatalogStateService, public cm: CatalogManagerService, public toast: ToastService) {}
+  private _destroySub$ = new Subject<void>();
+  
+  constructor(public state: CatalogStateService, public cm: CatalogManagerService, private _toast: ToastService) {}
 
-    ngOnInit(): void {
-        this.catalogId = get(this.cm.localCatalog, '@id', '');
-        this.state.currentRecordPage = 0;
-        this.setRecords(this.state.recordSearchText, this.state.recordFilterType, this.state.keywordFilterList, 
-          this.state.creatorFilterList, this.state.recordSortOption);
-    }
-    ngOnDestroy(): void {
-        this._destroySub$.next();
-        this._destroySub$.complete();
-    }
-    openRecord(record: JSONLDObject): void {
-        this.state.selectedRecord = record;
-    }
-    changeSort(): void {
-        this.state.currentRecordPage = 0;
-        this.setRecords(this.state.recordSearchText, this.state.recordFilterType, this.state.keywordFilterList, 
-          this.state.creatorFilterList, this.state.recordSortOption);
-    }
-    changeFilter(changeDetails: {recordType: string, keywordFilterList: string[], creatorFilterList: string[]}): void {
-        this.state.currentRecordPage = 0;
-        this.setRecords(this.state.recordSearchText, changeDetails.recordType, changeDetails.keywordFilterList, 
-          changeDetails.creatorFilterList, this.state.recordSortOption);
-    }
-    searchRecords(): void {
-        this.search(this.state.recordSearchText);
-    }
-    search(searchText: string): void {
-        this.state.currentRecordPage = 0;
-        this.setRecords(searchText, this.state.recordFilterType, this.state.keywordFilterList, 
-          this.state.creatorFilterList, this.state.recordSortOption);
-    }
-    getRecordPage(pageEvent: PageEvent): void {
-        this.state.currentRecordPage = pageEvent.pageIndex;
-        this.setRecords(this.state.recordSearchText, this.state.recordFilterType, this.state.keywordFilterList, 
-          this.state.creatorFilterList, this.state.recordSortOption);
-      }
-    setRecords(searchText: string, recordType: string, keywordFilterList: string[], creatorFilterList: string[], sortOption: SortOption): void {
-        const paginatedConfig: PaginatedConfig = {
-            pageIndex: this.state.currentRecordPage,
-            limit: this.state.recordLimit,
-            sortOption,
-            type: recordType ? [recordType] : undefined,
-            searchText,
-            keywords: keywordFilterList,
-            creators: creatorFilterList,
-        };
+  ngOnInit(): void {
+    this.catalogId = get(this.cm.localCatalog, '@id', '');
+    this.state.currentRecordPage = 0;
+    this.setRecords(this.state.recordSearchText, this.state.recordFilterType, this.state.keywordFilterList, 
+      this.state.creatorFilterList, this.state.recordSortOption);
+  }
+  ngOnDestroy(): void {
+    this._destroySub$.next();
+    this._destroySub$.complete();
+  }
+  openRecord(record: JSONLDObject): void {
+    this.state.selectedRecord = record;
+  }
+  changeSort(): void {
+    this.state.currentRecordPage = 0;
+    this.setRecords(this.state.recordSearchText, this.state.recordFilterType, this.state.keywordFilterList, 
+      this.state.creatorFilterList, this.state.recordSortOption);
+  }
+  changeFilter(changeDetails: SelectedRecordFilters): void {
+    this.state.currentRecordPage = 0;
+    this.setRecords(this.state.recordSearchText, changeDetails.recordType, changeDetails.keywordFilterList, 
+      changeDetails.creatorFilterList, this.state.recordSortOption);
+  }
+  searchRecords(): void {
+    this.search(this.state.recordSearchText);
+  }
+  search(searchText: string): void {
+    this.state.currentRecordPage = 0;
+    this.setRecords(searchText, this.state.recordFilterType, this.state.keywordFilterList, 
+      this.state.creatorFilterList, this.state.recordSortOption);
+  }
+  getRecordPage(pageEvent: PageEvent): void {
+    this.state.currentRecordPage = pageEvent.pageIndex;
+    this.setRecords(this.state.recordSearchText, this.state.recordFilterType, this.state.keywordFilterList, 
+      this.state.creatorFilterList, this.state.recordSortOption);
+  }
+  setRecords(searchText: string, recordType: FilterItem, keywordFilterList: FilterItem[], creatorFilterList: FilterItem[], sortOption: SortOption): void {
+    const paginatedConfig: PaginatedConfig = {
+      pageIndex: this.state.currentRecordPage,
+      limit: this.state.recordLimit,
+      sortOption,
+      type: recordType ? [recordType.value] : undefined,
+      searchText,
+      keywords: keywordFilterList ? keywordFilterList.map(item => item.value[`${CATALOG}keyword`]) : undefined,
+      creators: creatorFilterList ? creatorFilterList.map(item => item.value['user'].iri): undefined,
+    };
 
-        this.cm.getRecords(this.catalogId, paginatedConfig).pipe(
-            takeUntil(this._destroySub$),
-        ).subscribe((response: HttpResponse<JSONLDObject[]>) => {
-                this.state.recordFilterType = recordType;
-                this.state.keywordFilterList = keywordFilterList;
-                this.state.creatorFilterList = creatorFilterList;
-                this.state.recordSearchText = searchText;
-                this.state.recordSortOption = sortOption;
-                this.records = response.body;
-                this.state.totalRecordSize = Number(response.headers.get('x-total-count')) || 0;
-            }, this.toast.createErrorToast);
-    }
+    this.cm.getRecords(this.catalogId, paginatedConfig).pipe(
+      takeUntil(this._destroySub$),
+    ).subscribe((response: HttpResponse<JSONLDObject[]>) => {
+        this.state.recordFilterType = recordType;
+        this.state.keywordFilterList = keywordFilterList;
+        this.state.creatorFilterList = creatorFilterList;
+        this.state.recordSearchText = searchText;
+        this.state.recordSortOption = sortOption;
+        this.records = response.body;
+        this.state.totalRecordSize = Number(response.headers.get('x-total-count')) || 0;
+      }, this._toast.createErrorToast);
+  }
 }

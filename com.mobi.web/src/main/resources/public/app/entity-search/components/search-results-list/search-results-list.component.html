@@ -24,13 +24,19 @@
     <div class="col-lg-10 offset-lg-1 h-100">
         <div class="row h-100 flex-nowrap">
             <div class="col-3 vertical-scroll list-filters">
-                <app-entity-search-filters (changeFilter)="changeFilter($event)"></app-entity-search-filters>
+                  <app-entity-search-filters
+                        (changeFilter)="changeFilter($event)"
+                        [typeFilters]="selectedFilters.chosenTypes"></app-entity-search-filters>
             </div>
             <div class="col d-flex flex-column remove-min-width">
                 <div class="search-form d-flex">
                     <search-bar class="w-100 mt-2" [(bindModel)]="searchText"
                                 (submitEvent)="searchRecords()"></search-bar>
                 </div>
+                <app-filters-selected-list
+                        (selectedFiltersChange)="changeFilter($event)"
+                        [selectedFilters]="selectedFilters"
+                ></app-filters-selected-list>
                 <div class="entity-results-list flex-1 vertical-scroll p-2">
                     <ng-container *ngIf="searchResult | async as results;">
                         <div *ngIf="results.length === 0 &&  state.paginationConfig.searchText">

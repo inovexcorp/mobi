@@ -38,7 +38,6 @@ export interface ListFilter {
   filterItems: FilterItem[], // The displayed list of filter items
   numChecked: number, // The number of items checked
   onInit: () => void, // To be called when the filter first loads
-  getItemText: (filterItem: FilterItem) => string, // Gets the display text of the filter
   getItemTooltip?: (filterItem: FilterItem) => string // Gets the display text of the filter for tooltip
   setFilterItems: () => void, // Sets the list of filter items
   filter: (filterItem: FilterItem) => void // Executes the represented filter optionally using a specific provided

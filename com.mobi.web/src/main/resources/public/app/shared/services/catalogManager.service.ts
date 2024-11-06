@@ -1295,14 +1295,15 @@ export class CatalogManagerService {
     /**
      * Returns a ListFilter object for filtering record types.
      *
-     * @param {FilterItem} recordFilterItem - The currently selected record type filter item.
-     * @param {(value: string) => void} [emitterCall] - An optional callback function to be called when a filter item is selected.
+     * @param {Function} isSelectedCall - The callback function to determine whether a filter item is currently selected.
+     * @param {Function} [emitterCall] - An optional callback function to be called when a filter item is selected.
      * @returns {ListFilter} - The generated ListFilter object.
      */
-    getRecordTypeFilter(recordFilterItem: FilterItem, emitterCall?: (value: string) => void): ListFilter {
-        const filterItems = this.recordTypes.map( type => ({
+    getRecordTypeFilter(isSelectedCall: (value: string) => boolean, emitterCall?: (item: FilterItem) => void): ListFilter {
+        const filterItems = this.recordTypes.map(type => ({
             value: type,
-            checked: type === recordFilterItem.value,
+            display: getBeautifulIRI(type),
+            checked: isSelectedCall(type),
         } as FilterItem));
 
         const getNumChecked = (items => items.filter(item => item.checked).length);
@@ -1316,27 +1317,23 @@ export class CatalogManagerService {
             searchable: false,
             filterItems,
             onInit: function() {
-                this.setFilterItems();
                 this.numChecked = getNumChecked(this.filterItems);
-            },
-            getItemText: function(filterItem: FilterItem) {
-                return getBeautifulIRI(filterItem.value);
             },
             setFilterItems: () => {},
             filter: function(filterItem: FilterItem) {
                 if (filterItem.checked) {
-                    forEach(this.filterItems, typeFilter => {
+                    this.filterItems.forEach(typeFilter => {
                         if (typeFilter.value !== filterItem.value) {
                             typeFilter.checked = false;
                         }
                     });
                     if (emitterCall) {
-                        emitterCall(filterItem.value);
+                        emitterCall(filterItem);
                     }
                 } else {
-                    if (recordFilterItem.value === filterItem.value) {
+                  if (isSelectedCall(filterItem.value)) {
                         if (emitterCall) {
-                            emitterCall('');
+                            emitterCall(undefined);
                         }
                     }
                 }

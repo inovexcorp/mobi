@@ -35,12 +35,11 @@ import { JSONLDObject } from '../models/JSONLDObject.interface';
 import { SortOption } from '../models/sortOption.interface';
 import { CATALOG, DCTERMS } from '../../prefixes';
 import { RESTError } from '../models/RESTError.interface';
-import { CatalogManagerService } from './catalogManager.service';
-import { FilterItem } from '../models/filterItem.interface';
 import { EntityRecord } from '../../entity-search/models/entity-record';
 import { SearchResultsMock } from '../../entity-search/mock-data/search-results.mock';
 import { PaginatedConfig } from '../models/paginatedConfig.interface';
 import { PaginatedResponse } from '../models/paginated-response.interface';
+import { CatalogManagerService } from './catalogManager.service';
 
 describe('Catalog Manager service', function() {
   let service: CatalogManagerService;
@@ -1972,7 +1971,7 @@ describe('Catalog Manager service', function() {
   describe('should find entities that match search text', () => {
     it('successfully', () => {
       const entities: EntityRecord[] = SearchResultsMock;
-      this.url = `${service.prefix}/${encodeURIComponent(catalogId)}/entities`;
+      const url = `${service.prefix}/${encodeURIComponent(catalogId)}/entities`;
       const config: PaginatedConfig = {
         offset: 0,
         infer: false,
@@ -1988,7 +1987,7 @@ describe('Catalog Manager service', function() {
         expect(response.page.length).toBe(4);
         expect(response.page).toEqual(entities);
       });
-      const req = httpMock.expectOne(req => req.url === this.url && req.method === 'GET');
+      const req = httpMock.expectOne(req => req.url === url && req.method === 'GET');
       expect(req.request.params.get('limit')).toEqual('5');
       expect(req.request.params.get('offset')).toEqual('0');
       expect(req.request.params.getAll('type')).toEqual(['test type']);
@@ -2051,33 +2050,36 @@ describe('Catalog Manager service', function() {
     emptyObj['@type'].push(`${CATALOG}Test`);
     expect(service.isCommit(emptyObj)).toEqual(true);
   });
-  describe('recordTypeFilter', function() {
-    beforeEach(function() {
-      this.recordTypeFilterItem = {
-        value: 'test1',
-        checked: false
-      } as FilterItem;
-      this.firstRecordFilterItem = {value: 'test1', checked: true};
-      this.secondRecordFilterItem = {value: 'test2', checked: true};
-      this.emitterCall = (value) => {};
-      spyOn(this, 'emitterCall');
-      this.recordTypeFilter = service.getRecordTypeFilter(this.recordTypeFilterItem, this.emitterCall);
-      this.recordTypeFilter.filterItems = [this.firstRecordFilterItem, this.secondRecordFilterItem];
+  describe('recordTypeFilter', () => {
+    const isSelectedCall = (value) => value === 'test1';
+    const emitterCall = jasmine.createSpy('emitterCall');
+    beforeEach(() => {
+      emitterCall.calls.reset();
+      service.recordTypes = ['test1', 'test2'];
     });
-    describe('should filter records', function() {
-      it('if the filter has been checked', function() {
-        this.recordTypeFilter.filter(this.firstRecordFilterItem);
-        expect(this.secondRecordFilterItem.checked).toEqual(false);
-        expect(this.emitterCall).toHaveBeenCalled();
+    describe('should filter records', () => {
+      it('if the filter has been checked', () => {
+        const recordTypeFilter = service.getRecordTypeFilter(isSelectedCall, emitterCall);
+        expect(recordTypeFilter.filterItems[0].checked).toEqual(true);
+        expect(recordTypeFilter.filterItems[1].checked).toEqual(false);
+        
+        recordTypeFilter.filterItems[1].checked = true;
+        recordTypeFilter.filter(recordTypeFilter.filterItems[1]);
+        expect(recordTypeFilter.filterItems[0].checked).toEqual(false);
+        expect(recordTypeFilter.filterItems[1].checked).toEqual(true);
+        expect(emitterCall).toHaveBeenCalledWith(recordTypeFilter.filterItems[1]);
       });
-      it('if the filter has been unchecked', function() {
-        this.firstRecordFilterItem.checked = false;
-        this.recordTypeFilter.filter(this.firstRecordFilterItem);
-        expect(this.emitterCall).toHaveBeenCalled();
+      it('if the filter has been unchecked', () => {
+        const recordTypeFilter = service.getRecordTypeFilter(isSelectedCall, emitterCall);
+        expect(recordTypeFilter.filterItems[0].checked).toEqual(true);
+        expect(recordTypeFilter.filterItems[1].checked).toEqual(false);
+
+        recordTypeFilter.filterItems[0].checked = false;
+        recordTypeFilter.filter(recordTypeFilter.filterItems[0]);
+        expect(recordTypeFilter.filterItems[0].checked).toEqual(false);
+        expect(recordTypeFilter.filterItems[1].checked).toEqual(false);
+        expect(emitterCall).toHaveBeenCalledWith(undefined);
       });
-    });
-    it('filter text method returns correctly', function() {
-      expect(this.recordTypeFilter.getItemText(this.firstRecordFilterItem)).toEqual('Test 1');
     });
   });
 });

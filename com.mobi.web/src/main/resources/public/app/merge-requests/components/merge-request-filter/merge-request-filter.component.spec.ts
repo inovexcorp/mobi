@@ -38,6 +38,7 @@ import { UserCount } from '../../../shared/models/user-count.interface';
 import { SearchableListFilter } from '../../../shared/models/searchable-list-filter.interface';
 import { MergeRequestFilterComponent } from './merge-request-filter.component';
 import { RecordCount } from '../../../shared/models/record-count.interface';
+import { FilterItem } from '../../../shared/models/filterItem.interface';
 
 describe('MergeRequestFilterComponent', () => {
   let component: MergeRequestFilterComponent;
@@ -125,10 +126,10 @@ describe('MergeRequestFilterComponent', () => {
     it('with request status filter', () => {
       const mergeRequestFilter = component.filters[0];
       expect(mergeRequestFilter).toBeTruthy();
-      const expectedFilterItems = [
-        { checked: true, value: 'Open' },
-        { checked: false, value: 'Accepted' },
-        { checked: false, value: 'Closed'}
+      const expectedFilterItems: FilterItem[] = [
+        { checked: true, display: 'Open', value: 'Open' },
+        { checked: false, display: 'Accepted', value: 'Accepted' },
+        { checked: false, display: 'Closed', value: 'Closed' }
       ];
       expect(mergeRequestFilter.title).toEqual('Request Status');
       expect(mergeRequestFilter.filterItems).toEqual(expectedFilterItems);
@@ -137,9 +138,9 @@ describe('MergeRequestFilterComponent', () => {
       tick();
       const creatorFilter = component.filters[1] as SearchableListFilter;
       expect(creatorFilter).toBeTruthy();
-      const expectedFilterItems = [
-        { checked: true, value: adminCount },
-        { checked: false, value: batmanCount }
+      const expectedFilterItems: FilterItem[] = [
+        { checked: true, display: `${adminCount.name} (${adminCount.count})`, value: adminCount },
+        { checked: false, display: `${batmanCount.name} (${batmanCount.count})`, value: batmanCount }
       ];
       expect(creatorFilter.title).toEqual('Creators');
       expect(creatorFilter.rawFilterItems).toEqual([adminCount, batmanCount]);
@@ -157,9 +158,9 @@ describe('MergeRequestFilterComponent', () => {
       tick();
       const assigneeFilter = component.filters[2] as SearchableListFilter;
       expect(assigneeFilter).toBeTruthy();
-      const expectedFilterItems = [
-        { checked: true, value: adminCount },
-        { checked: false, value: batmanCount }
+      const expectedFilterItems: FilterItem[] = [
+        { checked: true, display: `${adminCount.name} (${adminCount.count})`, value: adminCount },
+        { checked: false, display: `${batmanCount.name} (${batmanCount.count})`, value: batmanCount }
       ];
       expect(assigneeFilter.title).toEqual('Assignees');
       expect(assigneeFilter.rawFilterItems).toEqual([adminCount, batmanCount]);
@@ -177,9 +178,9 @@ describe('MergeRequestFilterComponent', () => {
       tick();
       const recordFilter = component.filters[3] as SearchableListFilter;
       expect(recordFilter).toBeTruthy();
-      const expectedFilterItems = [
-        { checked: true, value: animalCount },
-        { checked: false, value: pizzaCount }
+      const expectedFilterItems: FilterItem[] = [
+        { checked: true, display: `${animalCount.title} (${animalCount.count})`, value: animalCount },
+        { checked: false, display: `${pizzaCount.title} (${pizzaCount.count})`, value: pizzaCount }
       ];
       expect(recordFilter.title).toEqual('Records');
       expect(recordFilter.rawFilterItems).toEqual([animalCount, pizzaCount]);

@@ -27,6 +27,7 @@ import { CATALOG, DATASET, DCTERMS, DELIM, ONTOLOGYEDITOR, SHAPESGRAPHEDITOR, WO
 import { JSONLDObject } from '../models/JSONLDObject.interface';
 import { SortOption } from '../models/sortOption.interface';
 import { CatalogManagerService } from './catalogManager.service';
+import { FilterItem } from '../models/filterItem.interface';
 
 /**
  * @class shared.CatalogStateService
@@ -65,28 +66,28 @@ export class CatalogStateService {
      */
     recordSortOption: SortOption = undefined;
     /**
-     * `recordFilterType` holds the IRI of a catalog Record type to be used to filter the results in the
-     * {@link catalog.RecordsViewComponent}.
-     * @type {string}
+     * `recordFilterType` holds a {@link shared.FilterItem} representing the IRI of a catalog Record type to be used to
+     * filter the results in the {@link catalog.RecordsViewComponent}.
+     * @type {FilterItem}
      */
-    recordFilterType = '';
+    recordFilterType: FilterItem = undefined;
     /**
-     * `keywordFilterList` holds a list of keyword string values to be used to filter the results in the
-     * {@link catalog.RecordsViewComponent}.
-     * @type {string[]}
+     * `keywordFilterList` holds a list of {@link shared.FilterItem}s representing keywords to be used to filter the
+     * results in the {@link catalog.RecordsViewComponent}.
+     * @type {FilterItem[]}
      */
-    keywordFilterList = [];
+    keywordFilterList: FilterItem[] = [];
     /**
      * `keywordSearchText` holds a keyword search string for {@link catalog.RecordsViewComponent}.
      * @type {string}
      */
     keywordSearchText = '';
     /**
-     * `creatorFilterList` holds a list of User IRI string values to be used to filter the results in the
-     * {@link catalog.RecordsViewComponent}.
-     * @type {string[]}
+     * `creatorFilterList` holds a list of {@link shared.FilterItem}s representing Users to be used to filter the
+     * results in the {@link catalog.RecordsViewComponent}.
+     * @type {FilterItem[]}
      */
-    creatorFilterList = [];
+    creatorFilterList: FilterItem[] = [];
     /**
      * `creatorSearchText` holds a creator search string for {@link catalog.RecordsViewComponent}.
      * @type {string}
@@ -159,7 +160,7 @@ export class CatalogStateService {
     reset(): void {
         this.totalRecordSize = 0;
         this.currentRecordPage = 1;
-        this.recordFilterType = '';
+        this.recordFilterType = undefined;
         this.keywordFilterList = [];
         this.keywordSearchText = '';
         this.creatorFilterList = [];
