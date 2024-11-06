@@ -23,35 +23,28 @@ package com.mobi.catalog.impl;
  * #L%
  */
 
-import static com.mobi.catalog.impl.TestResourceUtils.trigRequired;
-import static junit.framework.TestCase.assertTrue;
-import static org.junit.Assert.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doReturn;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.Mockito.spy;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.config.CatalogConfigProvider;
-import com.mobi.jaas.engines.RdfEngine;
-import com.mobi.persistence.utils.Models;
-import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import com.mobi.repository.impl.sesame.memory.MemoryRepositoryWrapper;
-import org.apache.commons.io.IOUtils;
-import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Statement;
+import org.eclipse.rdf4j.model.util.Models;
+import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
+import org.eclipse.rdf4j.model.vocabulary.OWL;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
+import org.eclipse.rdf4j.model.vocabulary.RDFS;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -60,10 +53,7 @@ import org.mockito.MockitoAnnotations;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.List;
-import java.util.Objects;
+import java.io.InputStream;
 import java.util.function.Function;
 
 public class SimpleCompiledResourceManagerTest extends OrmEnabledTestCase {
@@ -79,11 +69,8 @@ public class SimpleCompiledResourceManagerTest extends OrmEnabledTestCase {
     private AutoCloseable closeable;
     private SimpleCompiledResourceManager manager;
     private MemoryRepositoryWrapper repo;
+    private Model dcterms;
 
-    private final OrmFactory<Commit> commitFactory = getRequiredOrmFactory(Commit.class);
-//    private final Us thingManager = spy(new SimpleThingManager());
-
-    private final RdfEngine rdfEngine = new RdfEngine();
     private final SimpleThingManager thingManager = spy(new SimpleThingManager());
     private final SimpleCommitManager commitManager = spy(new SimpleCommitManager());
     private final SimpleRevisionManager revisionManager = spy(new SimpleRevisionManager());
@@ -94,16 +81,20 @@ public class SimpleCompiledResourceManagerTest extends OrmEnabledTestCase {
     CatalogConfigProvider configProvider;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUpTest() throws Exception {
         closeable = MockitoAnnotations.openMocks(this);
         repo = new MemoryRepositoryWrapper();
         repo.setDelegate(new SailRepository(new MemoryStore()));
+
+        InputStream in = this.getClass().getResourceAsStream("/testCatalogData/ontologyRecord/conflictBranches/dcterms.ttl");
+        dcterms = Rio.parse(in, RDFFormat.TURTLE);
 
         when(configProvider.getRepository()).thenReturn(repo);
         when(configProvider.getLocalCatalogIRI()).thenReturn(ManagerTestConstants.CATALOG_IRI);
 
         recordManager.thingManager = thingManager;
         branchManager.recordManager = recordManager;
+        branchManager.thingManager = thingManager;
         commitManager.branchManager = branchManager;
         commitManager.thingManager = thingManager;
         revisionManager.thingManager = thingManager;
@@ -119,295 +110,636 @@ public class SimpleCompiledResourceManagerTest extends OrmEnabledTestCase {
     }
 
     @After
-    public void reset() throws Exception {
+    public void resetTest() throws Exception {
         closeable.close();
         repo.shutDown();
         Mockito.reset(configProvider, thingManager, commitManager, revisionManager, branchManager, recordManager);
     }
     
-    /* getCompiledResource */
+    /* getCompiledResource - no branch */
 
     @Test
-    public void testGetCompiledResourceWithList() throws Exception {
-        // Setup:
-        Model expected = MODEL_FACTORY.createEmptyModel();
-        expected.add(VALUE_FACTORY.createIRI("http://mobi.com/test/ontology"), RDF.TYPE, VALUE_FACTORY.createIRI("http://www.w3.org/2002/07/owl#Ontology"));
-        doReturn(expected).when(manager).getCompiledResource(eq(VALUE_FACTORY.createIRI("http://mobi.com/test/ontology")), any(RepositoryConnection.class));
+    public void getCompiledResourceOneCommitInitialTestTest() throws Exception {
+        addData(repo, "/testCatalogData/ontologyRecord/conflictBranches/conflictBranchesInitialCommit.trig", RDFFormat.TRIG);
+        validateModel(ManagerTestConstants.INITIAL_COMMIT);
+        validateFile(ManagerTestConstants.INITIAL_COMMIT);
+        validateInvalidPath(ManagerTestConstants.INITIAL_COMMIT);
+        validateValidPath(ManagerTestConstants.CONFLICT_MASTER, ManagerTestConstants.INITIAL_COMMIT);
+    }
 
+    @Test
+    public void getCompiledResourceMasterInitialCommitNoMergesTest() throws Exception {
+        addData(repo, "/testCatalogData/ontologyRecord/conflictBranches/conflictBranchesSetup.trig", RDFFormat.TRIG);
+        validateModel(ManagerTestConstants.INITIAL_COMMIT);
+        validateFile(ManagerTestConstants.INITIAL_COMMIT);
+        validateInvalidPath(ManagerTestConstants.INITIAL_COMMIT);
+        validateValidPath(ManagerTestConstants.CONFLICT_MASTER, ManagerTestConstants.INITIAL_COMMIT);
+    }
+
+    @Test
+    public void getCompiledResourceMasterHeadNoMergesTest() throws Exception {
+        addData(repo, "/testCatalogData/ontologyRecord/conflictBranches/conflictBranchesSetup.trig", RDFFormat.TRIG);
+        updateDcDiffCommitChange();
+        updateDcMasterCommitChange();
+        validateModel(ManagerTestConstants.MASTER_CHANGE_DUPLICATE_ADD_DEL);
+        validateFile(ManagerTestConstants.MASTER_CHANGE_DUPLICATE_ADD_DEL);
+        validateInvalidPath(ManagerTestConstants.MASTER_CHANGE_DUPLICATE_ADD_DEL);
+        validateValidPath(ManagerTestConstants.CONFLICT_MASTER, ManagerTestConstants.MASTER_CHANGE_DUPLICATE_ADD_DEL);
+    }
+
+    @Test
+    public void getCompiledResourceBranchHeadNoMergesTest() throws Exception {
+        addData(repo, "/testCatalogData/ontologyRecord/conflictBranches/conflictBranchesSetup.trig", RDFFormat.TRIG);
+        updateDcB1Change();
+        validateModel(ManagerTestConstants.B1_CHANGE_SUBPRED);
+        validateFile(ManagerTestConstants.B1_CHANGE_SUBPRED);
+        validateInvalidPath(ManagerTestConstants.B1_CHANGE_SUBPRED);
+        validateValidPath(ManagerTestConstants.CONFLICT_B1, ManagerTestConstants.B1_CHANGE_SUBPRED);
+    }
+
+    @Test
+    public void getCompiledResourceMasterChainCommitNoMergesTest() throws Exception {
+        addData(repo, "/testCatalogData/ontologyRecord/conflictBranches/conflictBranchesSetup.trig", RDFFormat.TRIG);
+        updateDcDiffCommitChange();
+        validateModel(ManagerTestConstants.DIFF_COMMIT_MASTER);
+        validateFile(ManagerTestConstants.DIFF_COMMIT_MASTER);
+        validateInvalidPath(ManagerTestConstants.DIFF_COMMIT_MASTER);
+        validateValidPath(ManagerTestConstants.CONFLICT_MASTER, ManagerTestConstants.DIFF_COMMIT_MASTER);
+    }
+
+    @Test
+    public void getCompiledResourceBranchChainCommitNoMergesTest() throws Exception {
+        addData(repo, "/testCatalogData/ontologyRecord/conflictBranches/conflictBranchesSetup.trig", RDFFormat.TRIG);
+        updateDcDiffCommitChange();
+        updateDcB5Change();
+        validateModel(ManagerTestConstants.B5_CHANGE_DELETED_ENTITIES_MODIFIED);
+        validateFile(ManagerTestConstants.B5_CHANGE_DELETED_ENTITIES_MODIFIED);
+        validateInvalidPath(ManagerTestConstants.B5_CHANGE_DELETED_ENTITIES_MODIFIED);
+        validateValidPath(ManagerTestConstants.CONFLICT_B5, ManagerTestConstants.B5_CHANGE_DELETED_ENTITIES_MODIFIED);
+    }
+
+    // FORWARD Merges
+
+    @Test
+    public void getCompiledResourceMasterInitialCommitFwMergesTest() throws Exception {
+        addData(repo, "/testCatalogData/ontologyRecord/conflictBranches/conflictBranchesInitialMerge.trig", RDFFormat.TRIG);
+        validateModel(ManagerTestConstants.INITIAL_COMMIT);
+        validateFile(ManagerTestConstants.INITIAL_COMMIT);
+        validateInvalidPath(ManagerTestConstants.INITIAL_COMMIT);
+        validateValidPath(ManagerTestConstants.CONFLICT_MASTER, ManagerTestConstants.INITIAL_COMMIT);
+    }
+
+    @Test
+    public void getCompiledResourceMasterHeadFwMergesTest() throws Exception {
+        addData(repo, "/testCatalogData/ontologyRecord/conflictBranches/conflictBranchesInitialMerge.trig", RDFFormat.TRIG);
+        updateDcDiffCommitChange();
+        updateDcMasterCommitChange();
+        validateModel(ManagerTestConstants.MASTER_CHANGE_DUPLICATE_ADD_DEL);
+        validateFile(ManagerTestConstants.MASTER_CHANGE_DUPLICATE_ADD_DEL);
+        validateInvalidPath(ManagerTestConstants.MASTER_CHANGE_DUPLICATE_ADD_DEL);
+        validateValidPath(ManagerTestConstants.CONFLICT_MASTER, ManagerTestConstants.MASTER_CHANGE_DUPLICATE_ADD_DEL);
+    }
+
+    @Test
+    public void getCompiledResourceBranchHeadFwMergesTest() throws Exception {
+        addData(repo, "/testCatalogData/ontologyRecord/conflictBranches/conflictBranchesInitialMerge.trig", RDFFormat.TRIG);
+        updateDcB1Change();
+        validateModel(ManagerTestConstants.B1_CHANGE_SUBPRED);
+        validateFile(ManagerTestConstants.B1_CHANGE_SUBPRED);
+        validateInvalidPath(ManagerTestConstants.B1_CHANGE_SUBPRED);
+        validateValidPath(ManagerTestConstants.CONFLICT_B1, ManagerTestConstants.B1_CHANGE_SUBPRED);
+    }
+
+    @Test
+    public void getCompiledResourceMasterChainCommitFwMergesTest() throws Exception {
+        addData(repo, "/testCatalogData/ontologyRecord/conflictBranches/conflictBranchesInitialMerge.trig", RDFFormat.TRIG);
+        updateDcDiffCommitChange();
+        validateModel(ManagerTestConstants.DIFF_COMMIT_MASTER);
+        validateFile(ManagerTestConstants.DIFF_COMMIT_MASTER);
+        validateInvalidPath(ManagerTestConstants.DIFF_COMMIT_MASTER);
+        validateValidPath(ManagerTestConstants.CONFLICT_MASTER, ManagerTestConstants.DIFF_COMMIT_MASTER);
+    }
+
+    @Test
+    public void getCompiledResourceBranchChainCommitFwMergesTest() throws Exception {
+        addData(repo, "/testCatalogData/ontologyRecord/conflictBranches/conflictBranchesInitialMerge.trig", RDFFormat.TRIG);
+        updateDcDiffCommitChange();
+        updateDcB5Change();
+        validateModel(ManagerTestConstants.B5_CHANGE_DELETED_ENTITIES_MODIFIED);
+        validateFile(ManagerTestConstants.B5_CHANGE_DELETED_ENTITIES_MODIFIED);
+        validateInvalidPath(ManagerTestConstants.B5_CHANGE_DELETED_ENTITIES_MODIFIED);
+        validateValidPath(ManagerTestConstants.CONFLICT_B5, ManagerTestConstants.B5_CHANGE_DELETED_ENTITIES_MODIFIED);
+    }
+    
+    // FORWARD MERGE COMMITS
+
+    @Test
+    public void getCompiledResourceB2IntoB1MergeCommitFwMergesTest() throws Exception {
+        addData(repo, "/testCatalogData/ontologyRecord/conflictBranches/conflictBranchesInitialMerge.trig", RDFFormat.TRIG);
+        updateDcB1Change();
+        updateDcB2Change();
+        updateDcB2IntoB1Resolution();
+        validateModel(ManagerTestConstants.B2_INTO_B1_SUBPRED);
+        validateFile(ManagerTestConstants.B2_INTO_B1_SUBPRED);
+        validateInvalidPath(ManagerTestConstants.B2_INTO_B1_SUBPRED);
+        validateValidPath(ManagerTestConstants.CONFLICT_B1, ManagerTestConstants.B2_INTO_B1_SUBPRED);
+    }
+
+    @Test
+    public void getCompiledResourceMasterIntoB4MergeCommitFwMergesTest() throws Exception {
+        addData(repo, "/testCatalogData/ontologyRecord/conflictBranches/conflictBranchesInitialMerge.trig", RDFFormat.TRIG);
+        updateDcB4Change();
+        updateDcDiffCommitChange();
+        // No need to add the below changes since the state at the commit should be just the duplicate adds/dels
+        // plus the diff commit change.
+        // updateDcMasterCommitChange();
+        // updateDcMasterIntoB4Resolution();
+        validateModel(ManagerTestConstants.MASTER_INTO_B4_DUPLICATE);
+        validateFile(ManagerTestConstants.MASTER_INTO_B4_DUPLICATE);
+        validateInvalidPath(ManagerTestConstants.MASTER_INTO_B4_DUPLICATE);
+        validateValidPath(ManagerTestConstants.CONFLICT_B4, ManagerTestConstants.MASTER_INTO_B4_DUPLICATE);
+    }
+
+    @Test
+    public void getCompiledResourceB3IntoB5MergeCommitFwMergesTest() throws Exception {
+        addData(repo, "/testCatalogData/ontologyRecord/conflictBranches/conflictBranchesInitialMerge.trig", RDFFormat.TRIG);
+        updateDcB3Change();
+        updateDcDiffCommitChange();
+        updateDcB5Change();
+        updateDcB3IntoB5Resolution();
+        validateModel(ManagerTestConstants.B3_INTO_B5_DELETED);
+        validateFile(ManagerTestConstants.B3_INTO_B5_DELETED);
+        validateInvalidPath(ManagerTestConstants.B3_INTO_B5_DELETED);
+        validateValidPath(ManagerTestConstants.CONFLICT_B5, ManagerTestConstants.B3_INTO_B5_DELETED);
+    }
+
+    // b1IntoMaster final merge
+
+    @Test
+    public void getCompiledResourceMasterInitialCommitB1BackIntoMasterTest() throws Exception {
+        addData(repo, "/testCatalogData/ontologyRecord/conflictBranches/b1IntoMaster.trig", RDFFormat.TRIG);
+        validateModel(ManagerTestConstants.INITIAL_COMMIT);
+        validateFile(ManagerTestConstants.INITIAL_COMMIT);
+        validateInvalidPath(ManagerTestConstants.INITIAL_COMMIT);
+        validateValidPath(ManagerTestConstants.CONFLICT_MASTER, ManagerTestConstants.INITIAL_COMMIT);
+    }
+
+    @Test
+    public void getCompiledResourceMasterHeadCommitB1BackIntoMasterTest() throws Exception {
+        addData(repo, "/testCatalogData/ontologyRecord/conflictBranches/b1IntoMaster.trig", RDFFormat.TRIG);
+        updateDcB1Change();
+        updateDcB2Change();
+        updateDcDiffCommitChange();
+        updateDcMasterCommitChange();
+        updateDcB2IntoB1Resolution();
+        validateModel(ManagerTestConstants.FINAL_B1_INTO_MASTER);
+        validateFile(ManagerTestConstants.FINAL_B1_INTO_MASTER);
+        validateInvalidPath(ManagerTestConstants.FINAL_B1_INTO_MASTER);
+        validateValidPath(ManagerTestConstants.CONFLICT_MASTER, ManagerTestConstants.FINAL_B1_INTO_MASTER);
+    }
+
+    @Test
+    public void getCompiledResourceB1Merged_MasterChangeCommitTest() throws Exception {
+        addData(repo, "/testCatalogData/ontologyRecord/conflictBranches/b1IntoMaster.trig", RDFFormat.TRIG);
+        updateDcDiffCommitChange();
+        updateDcMasterCommitChange();
+        validateModel(ManagerTestConstants.MASTER_CHANGE_DUPLICATE_ADD_DEL);
+        validateFile(ManagerTestConstants.MASTER_CHANGE_DUPLICATE_ADD_DEL);
+        validateInvalidPath(ManagerTestConstants.MASTER_CHANGE_DUPLICATE_ADD_DEL);
+        validateValidPath(ManagerTestConstants.CONFLICT_MASTER, ManagerTestConstants.MASTER_CHANGE_DUPLICATE_ADD_DEL);
+    }
+
+    @Test
+    public void getCompiledResourceB1Merged_B1CommitTest() throws Exception {
+        addData(repo, "/testCatalogData/ontologyRecord/conflictBranches/b1IntoMaster.trig", RDFFormat.TRIG);
+        updateDcB1Change();
+        validateModel(ManagerTestConstants.B1_CHANGE_SUBPRED);
+        validateFile(ManagerTestConstants.B1_CHANGE_SUBPRED);
+        validateInvalidPath(ManagerTestConstants.B1_CHANGE_SUBPRED);
+        validateValidPath(ManagerTestConstants.CONFLICT_MASTER, ManagerTestConstants.B1_CHANGE_SUBPRED);
+    }
+
+    @Test
+    public void getCompiledResourceB1Merged_B2CommitTest() throws Exception {
+        addData(repo, "/testCatalogData/ontologyRecord/conflictBranches/b1IntoMaster.trig", RDFFormat.TRIG);
+        updateDcB2Change();
+        validateModel(ManagerTestConstants.B2_CHANGE_SUBPRED);
+        validateFile(ManagerTestConstants.B2_CHANGE_SUBPRED);
+        validateInvalidPath(ManagerTestConstants.B2_CHANGE_SUBPRED);
+        validateValidPath(ManagerTestConstants.CONFLICT_B2, ManagerTestConstants.B2_CHANGE_SUBPRED);
+    }
+
+    @Test
+    public void getCompiledResourceB1Merged_B2B1MergeCommitTest() throws Exception {
+        addData(repo, "/testCatalogData/ontologyRecord/conflictBranches/b1IntoMaster.trig", RDFFormat.TRIG);
+        updateDcB1Change();
+        updateDcB2Change();
+        updateDcB2IntoB1Resolution();
+        validateModel(ManagerTestConstants.B2_INTO_B1_SUBPRED);
+        validateFile(ManagerTestConstants.B2_INTO_B1_SUBPRED);
+        validateInvalidPath(ManagerTestConstants.B2_INTO_B1_SUBPRED);
+        validateValidPath(ManagerTestConstants.CONFLICT_MASTER, ManagerTestConstants.B2_INTO_B1_SUBPRED);
+    }
+
+    @Test
+    public void getCompiledResourceB1Merged_B3CommitTest() throws Exception {
+        addData(repo, "/testCatalogData/ontologyRecord/conflictBranches/b1IntoMaster.trig", RDFFormat.TRIG);
+        updateDcB3Change();
+        validateModel(ManagerTestConstants.B3_CHANGE_DELETED_ENTITIES);
+        validateFile(ManagerTestConstants.B3_CHANGE_DELETED_ENTITIES);
+        validateInvalidPath(ManagerTestConstants.B3_CHANGE_DELETED_ENTITIES);
+        validateValidPath(ManagerTestConstants.CONFLICT_B3, ManagerTestConstants.B3_CHANGE_DELETED_ENTITIES);
+    }
+
+    @Test
+    public void getCompiledResourceB1Merged_B4CommitTest() throws Exception {
+        addData(repo, "/testCatalogData/ontologyRecord/conflictBranches/b1IntoMaster.trig", RDFFormat.TRIG);
+        updateDcB4Change();
+        validateModel(ManagerTestConstants.B4_CHANGE_DUPLICATE_ADD_DEL);
+        validateFile(ManagerTestConstants.B4_CHANGE_DUPLICATE_ADD_DEL);
+        validateInvalidPath(ManagerTestConstants.B4_CHANGE_DUPLICATE_ADD_DEL);
+        validateValidPath(ManagerTestConstants.CONFLICT_B4, ManagerTestConstants.B4_CHANGE_DUPLICATE_ADD_DEL);
+    }
+
+    @Test
+    public void getCompiledResourceB1Merged_B5CommitTest() throws Exception {
+        addData(repo, "/testCatalogData/ontologyRecord/conflictBranches/b1IntoMaster.trig", RDFFormat.TRIG);
+        updateDcDiffCommitChange();
+        updateDcB5Change();
+        validateModel(ManagerTestConstants.B5_CHANGE_DELETED_ENTITIES_MODIFIED);
+        validateFile(ManagerTestConstants.B5_CHANGE_DELETED_ENTITIES_MODIFIED);
+        validateInvalidPath(ManagerTestConstants.B5_CHANGE_DELETED_ENTITIES_MODIFIED);
+        validateValidPath(ManagerTestConstants.CONFLICT_B5, ManagerTestConstants.B5_CHANGE_DELETED_ENTITIES_MODIFIED);
+    }
+
+    @Test
+    public void getCompiledResourceB1Merged_B3IntoB5MergeCommitTest() throws Exception {
+        addData(repo, "/testCatalogData/ontologyRecord/conflictBranches/b1IntoMaster.trig", RDFFormat.TRIG);
+        updateDcB3Change();
+        updateDcDiffCommitChange();
+        updateDcB5Change();
+        updateDcB3IntoB5Resolution();
+        validateModel(ManagerTestConstants.B3_INTO_B5_DELETED);
+        validateFile(ManagerTestConstants.B3_INTO_B5_DELETED);
+        validateInvalidPath(ManagerTestConstants.B3_INTO_B5_DELETED);
+        validateValidPath(ManagerTestConstants.CONFLICT_B5, ManagerTestConstants.B3_INTO_B5_DELETED);
+    }
+
+    @Test
+    public void getCompiledResourceB1Merged_MasterIntoB4MergeCommitTest() throws Exception {
+        addData(repo, "/testCatalogData/ontologyRecord/conflictBranches/b1IntoMaster.trig", RDFFormat.TRIG);
+        updateDcB4Change();
+        validateModel(ManagerTestConstants.B4_CHANGE_DUPLICATE_ADD_DEL);
+        validateFile(ManagerTestConstants.B4_CHANGE_DUPLICATE_ADD_DEL);
+        validateInvalidPath(ManagerTestConstants.B4_CHANGE_DUPLICATE_ADD_DEL);
+        validateValidPath(ManagerTestConstants.CONFLICT_B4, ManagerTestConstants.B4_CHANGE_DUPLICATE_ADD_DEL);
+    }
+
+    // b4IntoMaster final merge
+
+    @Test
+    public void getCompiledResourceMasterInitialCommitB4BackIntoMasterTest() throws Exception {
+        addData(repo, "/testCatalogData/ontologyRecord/conflictBranches/b4IntoMaster.trig", RDFFormat.TRIG);
+        validateModel(ManagerTestConstants.INITIAL_COMMIT);
+        validateFile(ManagerTestConstants.INITIAL_COMMIT);
+        validateInvalidPath(ManagerTestConstants.INITIAL_COMMIT);
+        validateValidPath(ManagerTestConstants.CONFLICT_MASTER, ManagerTestConstants.INITIAL_COMMIT);
+    }
+
+    @Test
+    public void getCompiledResourceMasterHeadCommitB4BackIntoMasterTest() throws Exception {
+        addData(repo, "/testCatalogData/ontologyRecord/conflictBranches/b4IntoMaster.trig", RDFFormat.TRIG);
+        updateDcB4Change();
+        updateDcDiffCommitChange();
+        // No need to add the below changes since the state at the commit should be just the duplicate adds/dels
+        // plus the diff commit change.
+        // updateDcMasterCommitChange();
+        // updateDcMasterIntoB4Resolution();
+        validateModel(ManagerTestConstants.FINAL_B4_INTO_MASTER);
+        validateFile(ManagerTestConstants.FINAL_B4_INTO_MASTER);
+        validateInvalidPath(ManagerTestConstants.FINAL_B4_INTO_MASTER);
+        validateValidPath(ManagerTestConstants.CONFLICT_MASTER, ManagerTestConstants.FINAL_B4_INTO_MASTER);
+    }
+
+    @Test
+    public void getCompiledResourceB4Merged_MasterChangeCommitTest() throws Exception {
+        addData(repo, "/testCatalogData/ontologyRecord/conflictBranches/b4IntoMaster.trig", RDFFormat.TRIG);
+        updateDcDiffCommitChange();
+        updateDcMasterCommitChange();
+        validateModel(ManagerTestConstants.MASTER_CHANGE_DUPLICATE_ADD_DEL);
+        validateFile(ManagerTestConstants.MASTER_CHANGE_DUPLICATE_ADD_DEL);
+        validateInvalidPath(ManagerTestConstants.MASTER_CHANGE_DUPLICATE_ADD_DEL);
+        validateValidPath(ManagerTestConstants.CONFLICT_MASTER, ManagerTestConstants.MASTER_CHANGE_DUPLICATE_ADD_DEL);
+    }
+
+    @Test
+    public void getCompiledResourceB4Merged_B1CommitTest() throws Exception {
+        addData(repo, "/testCatalogData/ontologyRecord/conflictBranches/b4IntoMaster.trig", RDFFormat.TRIG);
+        updateDcB1Change();
+        validateModel(ManagerTestConstants.B1_CHANGE_SUBPRED);
+        validateFile(ManagerTestConstants.B1_CHANGE_SUBPRED);
+        validateInvalidPath(ManagerTestConstants.B1_CHANGE_SUBPRED);
+        validateValidPath(ManagerTestConstants.CONFLICT_B1, ManagerTestConstants.B1_CHANGE_SUBPRED);
+    }
+
+    @Test
+    public void getCompiledResourceB4Merged_B2CommitTest() throws Exception {
+        addData(repo, "/testCatalogData/ontologyRecord/conflictBranches/b4IntoMaster.trig", RDFFormat.TRIG);
+        updateDcB2Change();
+        validateModel(ManagerTestConstants.B2_CHANGE_SUBPRED);
+        validateFile(ManagerTestConstants.B2_CHANGE_SUBPRED);
+        validateInvalidPath(ManagerTestConstants.B2_CHANGE_SUBPRED);
+        validateValidPath(ManagerTestConstants.CONFLICT_B2, ManagerTestConstants.B2_CHANGE_SUBPRED);
+    }
+
+    @Test
+    public void getCompiledResourceB4Merged_B2B1MergeCommitTest() throws Exception {
+        addData(repo, "/testCatalogData/ontologyRecord/conflictBranches/b4IntoMaster.trig", RDFFormat.TRIG);
+        updateDcB1Change();
+        updateDcB2Change();
+        updateDcB2IntoB1Resolution();
+        validateModel(ManagerTestConstants.B2_INTO_B1_SUBPRED);
+        validateFile(ManagerTestConstants.B2_INTO_B1_SUBPRED);
+        validateInvalidPath(ManagerTestConstants.B2_INTO_B1_SUBPRED);
+        validateValidPath(ManagerTestConstants.CONFLICT_B1, ManagerTestConstants.B2_INTO_B1_SUBPRED);
+    }
+
+    @Test
+    public void getCompiledResourceB4Merged_B3CommitTest() throws Exception {
+        addData(repo, "/testCatalogData/ontologyRecord/conflictBranches/b4IntoMaster.trig", RDFFormat.TRIG);
+        updateDcB3Change();
+        validateModel(ManagerTestConstants.B3_CHANGE_DELETED_ENTITIES);
+        validateFile(ManagerTestConstants.B3_CHANGE_DELETED_ENTITIES);
+        validateInvalidPath(ManagerTestConstants.B3_CHANGE_DELETED_ENTITIES);
+        validateValidPath(ManagerTestConstants.CONFLICT_B3, ManagerTestConstants.B3_CHANGE_DELETED_ENTITIES);
+    }
+
+    @Test
+    public void getCompiledResourceB4Merged_B4CommitTest() throws Exception {
+        addData(repo, "/testCatalogData/ontologyRecord/conflictBranches/b4IntoMaster.trig", RDFFormat.TRIG);
+        updateDcB4Change();
+        validateModel(ManagerTestConstants.B4_CHANGE_DUPLICATE_ADD_DEL);
+        validateFile(ManagerTestConstants.B4_CHANGE_DUPLICATE_ADD_DEL);
+        validateInvalidPath(ManagerTestConstants.B4_CHANGE_DUPLICATE_ADD_DEL);
+        validateValidPath(ManagerTestConstants.CONFLICT_MASTER, ManagerTestConstants.B4_CHANGE_DUPLICATE_ADD_DEL);
+    }
+
+    @Test
+    public void getCompiledResourceB4Merged_B5CommitTest() throws Exception {
+        addData(repo, "/testCatalogData/ontologyRecord/conflictBranches/b4IntoMaster.trig", RDFFormat.TRIG);
+        updateDcDiffCommitChange();
+        updateDcB5Change();
+        validateModel(ManagerTestConstants.B5_CHANGE_DELETED_ENTITIES_MODIFIED);
+        validateFile(ManagerTestConstants.B5_CHANGE_DELETED_ENTITIES_MODIFIED);
+        validateInvalidPath(ManagerTestConstants.B5_CHANGE_DELETED_ENTITIES_MODIFIED);
+        validateValidPath(ManagerTestConstants.CONFLICT_B5, ManagerTestConstants.B5_CHANGE_DELETED_ENTITIES_MODIFIED);
+    }
+
+    @Test
+    public void getCompiledResourceB4Merged_B3IntoB5MergeCommitTest() throws Exception {
+        addData(repo, "/testCatalogData/ontologyRecord/conflictBranches/b4IntoMaster.trig", RDFFormat.TRIG);
+        updateDcB3Change();
+        updateDcDiffCommitChange();
+        updateDcB5Change();
+        updateDcB3IntoB5Resolution();
+        validateModel(ManagerTestConstants.B3_INTO_B5_DELETED);
+        validateFile(ManagerTestConstants.B3_INTO_B5_DELETED);
+        validateInvalidPath(ManagerTestConstants.B3_INTO_B5_DELETED);
+        validateValidPath(ManagerTestConstants.CONFLICT_B5, ManagerTestConstants.B3_INTO_B5_DELETED);
+    }
+
+    @Test
+    public void getCompiledResourceB4Merged_MasterIntoB4MergeCommitTest() throws Exception {
+        addData(repo, "/testCatalogData/ontologyRecord/conflictBranches/b4IntoMaster.trig", RDFFormat.TRIG);
+        updateDcB4Change();
+        validateModel(ManagerTestConstants.B4_CHANGE_DUPLICATE_ADD_DEL);
+        validateFile(ManagerTestConstants.B4_CHANGE_DUPLICATE_ADD_DEL);
+        validateInvalidPath(ManagerTestConstants.B4_CHANGE_DUPLICATE_ADD_DEL);
+        validateValidPath(ManagerTestConstants.CONFLICT_MASTER, ManagerTestConstants.B4_CHANGE_DUPLICATE_ADD_DEL);
+    }
+
+    // b5IntoMaster final merge
+
+    @Test
+    public void getCompiledResourceMasterInitialCommitB5BackIntoMasterTest() throws Exception {
+        addData(repo, "/testCatalogData/ontologyRecord/conflictBranches/b5IntoMaster.trig", RDFFormat.TRIG);
+        validateModel(ManagerTestConstants.INITIAL_COMMIT);
+        validateFile(ManagerTestConstants.INITIAL_COMMIT);
+        validateInvalidPath(ManagerTestConstants.INITIAL_COMMIT);
+        validateValidPath(ManagerTestConstants.CONFLICT_MASTER, ManagerTestConstants.INITIAL_COMMIT);
+    }
+
+    @Test
+    public void getCompiledResourceMasterHeadCommitB5BackIntoMasterTest() throws Exception {
+        addData(repo, "/testCatalogData/ontologyRecord/conflictBranches/b5IntoMaster.trig", RDFFormat.TRIG);
+        updateDcB3Change();
+        updateDcDiffCommitChange();
+        updateDcMasterCommitChange();
+        updateDcB5Change();
+        updateDcB3IntoB5Resolution();
+        validateModel(ManagerTestConstants.FINAL_B5_INTO_MASTER);
+        validateFile(ManagerTestConstants.FINAL_B5_INTO_MASTER);
+        validateInvalidPath(ManagerTestConstants.FINAL_B5_INTO_MASTER);
+        validateValidPath(ManagerTestConstants.CONFLICT_MASTER, ManagerTestConstants.FINAL_B5_INTO_MASTER);
+    }
+
+    @Test
+    public void getCompiledResourceB5Merged_MasterChangeCommitTest() throws Exception {
+        addData(repo, "/testCatalogData/ontologyRecord/conflictBranches/b5IntoMaster.trig", RDFFormat.TRIG);
+        updateDcDiffCommitChange();
+        updateDcMasterCommitChange();
+        validateModel(ManagerTestConstants.MASTER_CHANGE_DUPLICATE_ADD_DEL);
+        validateFile(ManagerTestConstants.MASTER_CHANGE_DUPLICATE_ADD_DEL);
+        validateInvalidPath(ManagerTestConstants.MASTER_CHANGE_DUPLICATE_ADD_DEL);
+        validateValidPath(ManagerTestConstants.CONFLICT_MASTER, ManagerTestConstants.MASTER_CHANGE_DUPLICATE_ADD_DEL);
+    }
+
+    @Test
+    public void getCompiledResourceB5Merged_B1CommitTest() throws Exception {
+        addData(repo, "/testCatalogData/ontologyRecord/conflictBranches/b5IntoMaster.trig", RDFFormat.TRIG);
+        updateDcB1Change();
+        validateModel(ManagerTestConstants.B1_CHANGE_SUBPRED);
+        validateFile(ManagerTestConstants.B1_CHANGE_SUBPRED);
+        validateInvalidPath(ManagerTestConstants.B1_CHANGE_SUBPRED);
+        validateValidPath(ManagerTestConstants.CONFLICT_B1, ManagerTestConstants.B1_CHANGE_SUBPRED);
+    }
+
+    @Test
+    public void getCompiledResourceB5Merged_B2CommitTest() throws Exception {
+        addData(repo, "/testCatalogData/ontologyRecord/conflictBranches/b5IntoMaster.trig", RDFFormat.TRIG);
+        updateDcB2Change();
+        validateModel(ManagerTestConstants.B2_CHANGE_SUBPRED);
+        validateFile(ManagerTestConstants.B2_CHANGE_SUBPRED);
+        validateInvalidPath(ManagerTestConstants.B2_CHANGE_SUBPRED);
+        validateValidPath(ManagerTestConstants.CONFLICT_B2, ManagerTestConstants.B2_CHANGE_SUBPRED);
+    }
+
+    @Test
+    public void getCompiledResourceB5Merged_B2B1MergeCommitTest() throws Exception {
+        addData(repo, "/testCatalogData/ontologyRecord/conflictBranches/b5IntoMaster.trig", RDFFormat.TRIG);
+        updateDcB1Change();
+        updateDcB2Change();
+        updateDcB2IntoB1Resolution();
+        validateModel(ManagerTestConstants.B2_INTO_B1_SUBPRED);
+        validateFile(ManagerTestConstants.B2_INTO_B1_SUBPRED);
+        validateInvalidPath(ManagerTestConstants.B2_INTO_B1_SUBPRED);
+        validateValidPath(ManagerTestConstants.CONFLICT_B1, ManagerTestConstants.B2_INTO_B1_SUBPRED);
+    }
+
+    @Test
+    public void getCompiledResourceB5Merged_B3CommitTest() throws Exception {
+        addData(repo, "/testCatalogData/ontologyRecord/conflictBranches/b5IntoMaster.trig", RDFFormat.TRIG);
+        updateDcB3Change();
+        validateModel(ManagerTestConstants.B3_CHANGE_DELETED_ENTITIES);
+        validateFile(ManagerTestConstants.B3_CHANGE_DELETED_ENTITIES);
+        validateInvalidPath(ManagerTestConstants.B3_CHANGE_DELETED_ENTITIES);
+        validateValidPath(ManagerTestConstants.CONFLICT_B3, ManagerTestConstants.B3_CHANGE_DELETED_ENTITIES);
+    }
+
+    @Test
+    public void getCompiledResourceB5Merged_B4CommitTest() throws Exception {
+        addData(repo, "/testCatalogData/ontologyRecord/conflictBranches/b5IntoMaster.trig", RDFFormat.TRIG);
+        updateDcB4Change();
+        validateModel(ManagerTestConstants.B4_CHANGE_DUPLICATE_ADD_DEL);
+        validateFile(ManagerTestConstants.B4_CHANGE_DUPLICATE_ADD_DEL);
+        validateInvalidPath(ManagerTestConstants.B4_CHANGE_DUPLICATE_ADD_DEL);
+        validateValidPath(ManagerTestConstants.CONFLICT_B4, ManagerTestConstants.B4_CHANGE_DUPLICATE_ADD_DEL);
+    }
+
+    @Test
+    public void getCompiledResourceB5Merged_B5CommitTest() throws Exception {
+        addData(repo, "/testCatalogData/ontologyRecord/conflictBranches/b5IntoMaster.trig", RDFFormat.TRIG);
+        updateDcDiffCommitChange();
+        updateDcB5Change();
+        validateModel(ManagerTestConstants.B5_CHANGE_DELETED_ENTITIES_MODIFIED);
+        validateFile(ManagerTestConstants.B5_CHANGE_DELETED_ENTITIES_MODIFIED);
+        validateInvalidPath(ManagerTestConstants.B5_CHANGE_DELETED_ENTITIES_MODIFIED);
+        validateValidPath(ManagerTestConstants.CONFLICT_MASTER, ManagerTestConstants.B5_CHANGE_DELETED_ENTITIES_MODIFIED);
+    }
+
+    @Test
+    public void getCompiledResourceB5Merged_B3IntoB5MergeCommitTest() throws Exception {
+        addData(repo, "/testCatalogData/ontologyRecord/conflictBranches/b5IntoMaster.trig", RDFFormat.TRIG);
+        updateDcB3Change();
+        updateDcDiffCommitChange();
+        updateDcB5Change();
+        updateDcB3IntoB5Resolution();
+        validateModel(ManagerTestConstants.B3_INTO_B5_DELETED);
+        validateFile(ManagerTestConstants.B3_INTO_B5_DELETED);
+        validateInvalidPath(ManagerTestConstants.B3_INTO_B5_DELETED);
+        validateValidPath(ManagerTestConstants.CONFLICT_MASTER, ManagerTestConstants.B3_INTO_B5_DELETED);
+    }
+
+    @Test
+    public void getCompiledResourceB5Merged_MasterIntoB4MergeCommitTest() throws Exception {
+        addData(repo, "/testCatalogData/ontologyRecord/conflictBranches/b5IntoMaster.trig", RDFFormat.TRIG);
+        updateDcB4Change();
+        validateModel(ManagerTestConstants.B4_CHANGE_DUPLICATE_ADD_DEL);
+        validateFile(ManagerTestConstants.B4_CHANGE_DUPLICATE_ADD_DEL);
+        validateInvalidPath(ManagerTestConstants.B4_CHANGE_DUPLICATE_ADD_DEL);
+        validateValidPath(ManagerTestConstants.CONFLICT_B4, ManagerTestConstants.B4_CHANGE_DUPLICATE_ADD_DEL);
+    }
+
+    private void validateModel(Resource commitId) {
         try (RepositoryConnection conn = repo.getConnection()) {
-            Model result = manager.getCompiledResource(VALUE_FACTORY.createIRI("http://mobi.com/test/ontology"), conn);
-            verify(manager).getCompiledResource(eq(VALUE_FACTORY.createIRI("http://mobi.com/test/ontology")), any(RepositoryConnection.class));
-            result.forEach(statement -> assertTrue(expected.contains(statement)));
+            Model compiled = manager.getCompiledResource(commitId, conn);
+            assertTrue(Models.isomorphic(compiled, dcterms));
         }
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    public void testGetCompiledResourceWithNull() throws Exception {
-        // Setup:
+    private void validateFile(Resource commitId) throws Exception {
         try (RepositoryConnection conn = repo.getConnection()) {
-            manager.getCompiledResource(null, conn);
-        } finally {
-            verify(thingManager).validateResource(eq(null), any(), any(RepositoryConnection.class));
-            verify(manager).getCompiledResource(eq(null), any(RepositoryConnection.class));
-        }
-    }
-
-    @Test
-    public void testGetCompiledResourceWithUnmergedPast() throws Exception {
-        // Setup:
-        Resource commitId = VALUE_FACTORY.createIRI(ManagerTestConstants.COMMITS + "test0");
-        Model expected = MODEL_FACTORY.createEmptyModel();
-        expected.add(VALUE_FACTORY.createIRI("http://mobi.com/test/ontology"), RDF.TYPE, VALUE_FACTORY.createIRI("http://www.w3.org/2002/07/owl#Ontology"));
-        doReturn(expected).when(manager).getCompiledResource(eq(commitId), any(RepositoryConnection.class));
-
-        try (RepositoryConnection conn = repo.getConnection()) {
-            Model result = manager.getCompiledResource(commitId, conn);
-            verify(manager).getCompiledResource(eq(commitId), any(RepositoryConnection.class));
-            result.forEach(statement -> assertTrue(expected.contains(statement)));
-        }
-    }
-
-    @Test
-    public void testGetCompiledResourceWithPathAndUnmergedPast() throws Exception {
-//        // Setup:
-//        Resource commitId = VALUE_FACTORY.createIRI(ManagerTestConstants.COMMITS + "commitA1");
-//
-//        try (RepositoryConnection conn = repo.getConnection()) {
-//            manager.getCompiledResource(ManagerTestConstants.VERSIONED_RDF_RECORD_IRI, ManagerTestConstants.BRANCH_IRI, commitId, conn);
-//            verify(commitManager).validateCommitPath(eq(ManagerTestConstants.CATALOG_IRI), eq(ManagerTestConstants.VERSIONED_RDF_RECORD_IRI), eq(ManagerTestConstants.BRANCH_IRI), eq(commitId), any(RepositoryConnection.class));
-//            verify(manager).getCompiledResource(any(Resource.class), any(RepositoryConnection.class));
-//        }
-    }
-
-    /* getCompiledResource(Resource, RepositoryConnection) */
-
-    @Test
-    public void simpleCompiledResource001Test() throws IOException {
-        trigRequired(repo, "/systemRepo/differenceSimple001.trig");
-        String[] commitsToCompare = new String[] {
-                "https://mobi.com/commits#5c60742e-515e-4c91-8e71-2daf31fc235c",
-                "https://mobi.com/commits#2cf9b3e3-ddbb-41bb-b9cd-c8401cf2aaa1",
-                "https://mobi.com/commits#3b4f2bf0-4523-482c-a8b3-43623db57333"
-        };
-        getCompiledResourceCompareToFile(commitsToCompare, "/expected/simpleCompiledResource001.txt");
-    }
-
-    @Test
-    public void simpleCompiledResource002Test() throws IOException {
-        trigRequired(repo, "/systemRepo/mergingSimple002.trig");
-        String[] commitsToCompare = new String[] {
-                "https://mobi.com/commits#d184b5da-cc66-41f0-8be4-fa94bf773dec",
-                "https://mobi.com/commits#f15f3967-2b8f-4431-b4fd-0e4b888f5de2",
-                "https://mobi.com/commits#e08f32de-1917-4bc8-89a7-2180521e4762",
-                "https://mobi.com/commits#6d5096b4-169e-48d2-ab3b-c0bd1adbe3b7",
-                "https://mobi.com/commits#b3b16bf5-a484-4ec7-ae66-973f070bc9b5",
-                "https://mobi.com/commits#8c8d2221-d72b-442d-a4f6-9793cc31e5a8",
-                "https://mobi.com/commits#edfeb5d5-dc0f-46b2-a420-9b4161f00699",
-                "https://mobi.com/commits#d3153bf3-ccbe-44cc-a479-8c7d671256cc",
-                "https://mobi.com/commits#5dddf67e-23a4-4c5a-94c5-e4c6c466eee2",
-                "https://mobi.com/commits#cf9ad171-36f7-4106-aea2-1e552e15059b",
-                "https://mobi.com/commits#21a7ad3b-f3c5-4dc0-8633-4433c8f00920",
-                "https://mobi.com/commits#8259b01b-a229-430d-ab0f-e53315a96aaf",
-                "https://mobi.com/commits#b6af0da2-7335-4624-ac13-7c846b052725",
-                "https://mobi.com/commits#ebbdae8d-3c06-4ae7-8ff2-43588fc16001"
-        };
-        getCompiledResourceCompareToFile(commitsToCompare, "/expected/simpleCompiledResource002.txt");
-    }
-
-    @Test
-    public void twoBranchesMergedIntoMaster001Test() throws Exception {
-        trigRequired(repo, "/twoBranchesMergedIntoMaster.trig");
-
-        String[] commitsToCompare = new String[] {
-                "https://mobi.com/commits#b158b0b6-c119-4e09-8270-5e775d6b9703",
-        };
-        getCompiledResourceCompareToFile(commitsToCompare, "/expected/twoBranchesMergedIntoMaster001.txt");
-    }
-
-    @Test()
-    public void simpleCompiledResource004Test() {
-        trigRequired(repo, "/systemRepo/differenceSimple001.trig");
-
-        String[] commitsToCompare = new String[] {
-                "https://mobi.com/commits#df690842-19a2-463d-810e-8eed8df78b60",
-                "https://mobi.com/commits#e1a96215-0b90-4d29-8547-5fc4eca6c58b",
-                "https://mobi.com/commits#bf3979fd-00ee-4378-98e9-ce4b0fa018f7",
-                "https://mobi.com/commits#ontology-simple-id-002-commit-004",
-                "https://mobi.com/commits#ontology-simple-id-002-commit-005",
-                "https://mobi.com/commits#ef808973-b377-4a10-80f6-dcb3bf0e9b3c",
-                "https://mobi.com/commits#729fd411-7f27-40bb-93cb-fad9a325c338",
-                "https://mobi.com/commits#2e5d1127-1e03-4e69-85a2-ffbffea44510",
-                "https://mobi.com/commits#5c1b960f-e88f-4ec3-a826-92e072c35025",
-                "https://mobi.com/commits#52ac25f2-f8a8-477a-8ecc-94c31736976b"
-        };
-        // TODO FIX FILE OUTPUT
-        getCompiledResourceCompareToFile(commitsToCompare, "/expected/simpleCompiledResource004.txt");
-    }
-
-    /* getCompiledResourceFile(Resource, RDFFormat, RepositoryConnection) */
-
-    @Test
-    public void simpleCompiledResource001FileTest() throws IOException {
-        trigRequired(repo, "/systemRepo/differenceSimple001.trig");
-        String[] commitsToCompare = new String[] {
-                "https://mobi.com/commits#5c60742e-515e-4c91-8e71-2daf31fc235c",
-                "https://mobi.com/commits#2cf9b3e3-ddbb-41bb-b9cd-c8401cf2aaa1",
-                "https://mobi.com/commits#3b4f2bf0-4523-482c-a8b3-43623db57333"
-        };
-        getCompiledResourceFileCompareToFile(commitsToCompare, "/expected/simpleCompiledResource001.txt");
-    }
-
-    @Test
-    public void simpleCompiledResource002FileTest() throws IOException {
-        trigRequired(repo, "/systemRepo/mergingSimple002.trig");
-        String[] commitsToCompare = new String[] {
-                "https://mobi.com/commits#d184b5da-cc66-41f0-8be4-fa94bf773dec",
-                "https://mobi.com/commits#f15f3967-2b8f-4431-b4fd-0e4b888f5de2",
-                "https://mobi.com/commits#e08f32de-1917-4bc8-89a7-2180521e4762",
-                "https://mobi.com/commits#6d5096b4-169e-48d2-ab3b-c0bd1adbe3b7",
-                "https://mobi.com/commits#b3b16bf5-a484-4ec7-ae66-973f070bc9b5",
-                "https://mobi.com/commits#8c8d2221-d72b-442d-a4f6-9793cc31e5a8",
-                "https://mobi.com/commits#edfeb5d5-dc0f-46b2-a420-9b4161f00699",
-                "https://mobi.com/commits#d3153bf3-ccbe-44cc-a479-8c7d671256cc",
-                "https://mobi.com/commits#5dddf67e-23a4-4c5a-94c5-e4c6c466eee2",
-                "https://mobi.com/commits#cf9ad171-36f7-4106-aea2-1e552e15059b",
-                "https://mobi.com/commits#21a7ad3b-f3c5-4dc0-8633-4433c8f00920",
-                "https://mobi.com/commits#8259b01b-a229-430d-ab0f-e53315a96aaf",
-                "https://mobi.com/commits#b6af0da2-7335-4624-ac13-7c846b052725",
-                "https://mobi.com/commits#ebbdae8d-3c06-4ae7-8ff2-43588fc16001"
-        };
-        getCompiledResourceFileCompareToFile(commitsToCompare, "/expected/simpleCompiledResource002.txt");
-    }
-
-    @Test
-    public void twoBranchesMergedIntoMaster001FileTest() throws Exception {
-        trigRequired(repo, "/twoBranchesMergedIntoMaster.trig");
-
-        String[] commitsToCompare = new String[] {
-                "https://mobi.com/commits#b158b0b6-c119-4e09-8270-5e775d6b9703",
-        };
-        getCompiledResourceFileCompareToFile(commitsToCompare, "/expected/twoBranchesMergedIntoMaster001.txt");
-    }
-
-    /* getCompiledResourceFile(Resource, RDFFormat, RepositoryConnection, Resource...) */
-
-    @Test
-    public void simpleCompiledResource002EntityFileTest() throws IOException {
-        trigRequired(repo, "/systemRepo/mergingSimple002.trig");
-        String[] commitsToCompare = new String[] {
-                "https://mobi.com/commits#d184b5da-cc66-41f0-8be4-fa94bf773dec,https://mobi.com/ontologies/SimpleMergeOntology",
-                "https://mobi.com/commits#d184b5da-cc66-41f0-8be4-fa94bf773dec,https://mobi.com/ontologies/SimpleMergeOntologyNotExist",
-                "https://mobi.com/commits#f15f3967-2b8f-4431-b4fd-0e4b888f5de2,https://mobi.com/ontologies/SimpleMergeOntology#Class001",
-                "https://mobi.com/commits#e08f32de-1917-4bc8-89a7-2180521e4762,https://mobi.com/ontologies/SimpleMergeOntology#Class002",
-                "https://mobi.com/commits#6d5096b4-169e-48d2-ab3b-c0bd1adbe3b7,https://mobi.com/ontologies/SimpleMergeOntology#Class003",
-                "https://mobi.com/commits#b3b16bf5-a484-4ec7-ae66-973f070bc9b5,https://mobi.com/ontologies/SimpleMergeOntology#Class003",
-                "https://mobi.com/commits#8c8d2221-d72b-442d-a4f6-9793cc31e5a8,https://mobi.com/ontologies/SimpleMergeOntology#Class04",
-                "https://mobi.com/commits#edfeb5d5-dc0f-46b2-a420-9b4161f00699,https://mobi.com/ontologies/SimpleMergeOntology#Class001",
-                "https://mobi.com/commits#d3153bf3-ccbe-44cc-a479-8c7d671256cc,https://mobi.com/ontologies/SimpleMergeOntology#Class001",
-                "https://mobi.com/commits#5dddf67e-23a4-4c5a-94c5-e4c6c466eee2,https://mobi.com/ontologies/SimpleMergeOntology#Class04V2",
-                "https://mobi.com/commits#cf9ad171-36f7-4106-aea2-1e552e15059b,https://mobi.com/ontologies/SimpleMergeOntology#dataProperty01",
-                "https://mobi.com/commits#21a7ad3b-f3c5-4dc0-8633-4433c8f00920,https://mobi.com/ontologies/SimpleMergeOntology",
-                "https://mobi.com/commits#8259b01b-a229-430d-ab0f-e53315a96aaf,https://mobi.com/ontologies/SimpleMergeOntology#Class001",
-                "https://mobi.com/commits#b6af0da2-7335-4624-ac13-7c846b052725,https://mobi.com/ontologies/SimpleMergeOntology#Class003V2",
-                "https://mobi.com/commits#ebbdae8d-3c06-4ae7-8ff2-43588fc16001,https://mobi.com/ontologies/SimpleMergeOntology#Class001"
-        };
-        getCompiledResourceEntityCompareToFile(commitsToCompare, "/expected/simpleCompiledResource002Filter.txt");
-    }
-
-    /* getCompiledResource(List<Resource>, RepositoryConnection, Resource... subjectIds) */
-
-    @Test
-    public void getCompiledResourceWithIdEntityIdsTest() {
-        trigRequired(repo, "/systemRepo/differenceSimple001.trig");
-        try (RepositoryConnection conn = repo.getConnection()) {
-            // Setup:
-            // COMMIT COMPARISON
-//            compareCompileResourcesWithEntityIriIteration(SimpleMergeOntology.commit001, SimpleMergeOntology.commit001Compiled(), conn);
-//            // COMMIT COMPARISON
-//            compareCompileResourcesWithEntityIriIteration(SimpleMergeOntology.commit002, SimpleMergeOntology.commit002Compiled(), conn);
-//            // COMMIT COMPARISON - Create Branch
-//            compareCompileResourcesWithEntityIriIteration(SimpleMergeOntology.commit002Branch, SimpleMergeOntology.commit002BranchCompiled(), conn);
-//            // COMMIT COMPARISON - Branch was merged into master
-//            compareCompileResourcesWithEntityIriIteration(SimpleMergeOntology.commit004, SimpleMergeOntology.commit004Compiled(), conn);
-//            // COMMIT COMPARISON
-//            compareCompileResourcesWithEntityIriIteration(SimpleMergeOntology.commit005, SimpleMergeOntology.commit005Compiled(), conn);
-//            // COMMIT COMPARISON - Change Entity
-//            compareCompileResourcesWithEntityIriIteration(SimpleMergeOntology.commit006, SimpleMergeOntology.commit006Compiled(), conn);
-//            // COMMIT COMPARISON
-//            compareCompileResourcesWithEntityIriIteration(SimpleMergeOntology.commit007, SimpleMergeOntology.commit007Compiled(), conn);
-//            // COMMIT COMPARISON
-//            compareCompileResourcesWithEntityIriIteration(SimpleMergeOntology.commit008, SimpleMergeOntology.commit008Compiled(), conn);
-//            // COMMIT COMPARISON
-//            compareCompileResourcesWithEntityIriIteration(SimpleMergeOntology.commit009Branch, SimpleMergeOntology.commit009BranchCompiled(), conn);
-//            // COMMIT COMPARISON
-//            compareCompileResourcesWithEntityIriIteration(SimpleMergeOntology.commit010, SimpleMergeOntology.getExpected010(), conn);
-        }
-    }
-
-    /* === HELPER METHODS === */
-
-    private void getCompiledResourceCompareToFile(String[] commitsToCompare, String expectedFilePath) {
-        String expected = null;
-        try {
-            expected = IOUtils.toString(Objects.requireNonNull(this.getClass().getResourceAsStream(expectedFilePath)), StandardCharsets.UTF_8);
-        } catch (IOException e) {
-            Assert.fail(e.getMessage());
-        }
-        try (RepositoryConnection conn = repo.getConnection()) {
-            StringBuilder actualResults = new StringBuilder();
-            for (String commitToCompare : commitsToCompare) {
-                Model actualModel = manager.getCompiledResource(getValueFactory().createIRI(commitToCompare), conn);
-                List<String> actual = actualModel.stream().map(STATEMENT_STRING_FUNCTION).sorted().toList();
-                actualResults.append("====== commit: ").append(commitToCompare).append(" ======\n");
-                actualResults.append(String.join("\n", actual)).append("\n").append("\n").append("\n");
+            File file = manager.getCompiledResourceFile(commitId, RDFFormat.TURTLE, conn);
+            Model compiled = Rio.parse(new FileInputStream(file), RDFFormat.TURTLE);
+            boolean deleted = file.delete();
+            if (!deleted) {
+                fail();
             }
-            assertEquals(expected, actualResults.toString());
+            assertTrue(Models.isomorphic(compiled, dcterms));
         }
     }
-
-    private void getCompiledResourceEntityCompareToFile(String[] commitsToCompareWithEntity, String expectedFilePath) {
-        String expected = null;
-        try {
-            expected = IOUtils.toString(Objects.requireNonNull(this.getClass().getResourceAsStream(expectedFilePath)), StandardCharsets.UTF_8);
-        } catch (IOException e) {
-            Assert.fail(e.getMessage());
-        }
+    
+    private void validateInvalidPath(Resource commitId) throws Exception {
         try (RepositoryConnection conn = repo.getConnection()) {
-            StringBuilder actualResults = new StringBuilder();
-            for (String commitToCompareWithEntity : commitsToCompareWithEntity) {
-                String commitToCompare = commitToCompareWithEntity.substring(0, commitToCompareWithEntity.indexOf(","));
-                String entityId = commitToCompareWithEntity.substring(commitToCompareWithEntity.indexOf(",") + 1);
-
-                Model actualModel = manager.getCompiledResource(getValueFactory().createIRI(commitToCompare), conn, new IRI[]{getValueFactory().createIRI(entityId)});
-                List<String> actual = actualModel.stream().map(STATEMENT_STRING_FUNCTION).sorted().toList();
-                actualResults.append("====== commit: ").append(commitToCompare).append(" Filter: ").append(entityId).append(" ======\n");
-                actualResults.append(String.join("\n", actual)).append("\n").append("\n").append("\n");
-            }
-            assertEquals(expected, actualResults.toString());
+            Model compiled = manager.getCompiledResource(VALUE_FACTORY.createIRI("urn:record"), VALUE_FACTORY.createIRI("urn:branch"), commitId, conn);
+        } catch (IllegalArgumentException e) {
+            assertTrue(true);
+        } catch (Exception e) {
+            fail();
         }
     }
-
-    private void getCompiledResourceFileCompareToFile(String[] commitsToCompare, String expectedFilePath) {
-        String expected = null;
-        try {
-            expected = IOUtils.toString(Objects.requireNonNull(this.getClass().getResourceAsStream(expectedFilePath)), StandardCharsets.UTF_8);
-        } catch (IOException e) {
-            Assert.fail(e.getMessage());
-        }
+    
+    private void validateValidPath(Resource branchId, Resource commitId) throws Exception {
         try (RepositoryConnection conn = repo.getConnection()) {
-            StringBuilder actualResults = new StringBuilder();
-            for (String commitToCompare : commitsToCompare) {
-                File fileA = manager.getCompiledResourceFile(getValueFactory().createIRI(commitToCompare), RDFFormat.TURTLE, conn);
-                Model actualModel = Models.createModel(new FileInputStream(fileA));
-                assert fileA.delete();
-                List<String> actual = actualModel.stream().map(STATEMENT_STRING_FUNCTION).sorted().toList();
-                actualResults.append("====== commit: ").append(commitToCompare).append(" ======\n");
-                actualResults.append(String.join("\n", actual)).append("\n").append("\n").append("\n");
-            }
-            assertEquals(expected, actualResults.toString());
-        } catch (IOException e) {
-            Assert.fail(e.getMessage());
+            Model compiled = manager.getCompiledResource(ManagerTestConstants.CONFLICT_RECORD, branchId, commitId, conn);
+            assertTrue(Models.isomorphic(compiled, dcterms));
         }
     }
 
+    // Refer to `/testCatalogData/ontologyRecord/conflictBranches/conflictBranchesSetup.svg` and
+    // `/testCatalogData/ontologyRecord/conflictBranches/conflictBranchesInitialMerge.svg` for structure context
+    private void updateDcB1Change() {
+        // 8240c71405
+        dcterms.add(ManagerTestConstants.B1_ADD);
+        dcterms.remove(ManagerTestConstants.B1_B2_DEL);
+    }
+
+    private void updateDcB2Change() {
+        // f61f532171
+        dcterms.add(ManagerTestConstants.B2_ADD);
+        dcterms.remove(ManagerTestConstants.B1_B2_DEL);
+    }
+
+    private void updateDcB3Change() {
+        // e51626992b
+        dcterms.remove(DCTERMS.BIBLIOGRAPHIC_RESOURCE, null, null);
+        dcterms.remove(DCTERMS.FREQUENCY, null, null);
+        dcterms.remove(DCTERMS.BIBLIOGRAPHIC_CITATION, RDFS.DOMAIN, DCTERMS.BIBLIOGRAPHIC_RESOURCE);
+        dcterms.remove(DCTERMS.ACCRUAL_PERIODICITY, RDFS.RANGE, DCTERMS.FREQUENCY);
+    }
+
+    private void updateDcB4Change() {
+        // 05532d7199
+        dcterms.add(ManagerTestConstants.M_B4_DUP_ADD);
+        dcterms.remove(ManagerTestConstants.M_B4_DUP_DEL);
+    }
+
+    private void updateDcB5Change() {
+        // 9b7dd215de
+        dcterms.remove(DCTERMS.FREQUENCY, RDFS.COMMENT, VALUE_FACTORY.createLiteral("A rate at which something recurs.", "en"));
+        dcterms.add(DCTERMS.FREQUENCY, RDFS.COMMENT, VALUE_FACTORY.createLiteral("Comment modification (addition/deletion) for full delete conflict", "en"));
+        dcterms.add(DCTERMS.BIBLIOGRAPHIC_RESOURCE, DCTERMS.DESCRIPTION, VALUE_FACTORY.createLiteral("Description addition for full delete conflict"));
+    }
+
+    private void updateDcDiffCommitChange() {
+        // 621a8ade67
+        dcterms.add(VALUE_FACTORY.createIRI("http://purl.org/dc/terms/#ExtraClassForDiffCommitCase"), RDF.TYPE, OWL.CLASS);
+        dcterms.add(VALUE_FACTORY.createIRI("http://purl.org/dc/terms/#ExtraClassForDiffCommitCase"), DCTERMS.TITLE, VALUE_FACTORY.createLiteral("Extra Class for Diff Commit Case"));
+    }
+
+    private void updateDcMasterCommitChange() {
+        // 93c7d13a16
+        dcterms.add(ManagerTestConstants.M_B4_DUP_ADD);
+        dcterms.remove(ManagerTestConstants.M_B4_DUP_DEL);
+    }
+
+    private void updateDcB2IntoB1Resolution() {
+        // 47d1bc3832
+        dcterms.remove(ManagerTestConstants.B1_ADD);
+    }
+
+    private void updateDcMasterIntoB4Resolution() {
+        // 67c0329bd7
+        dcterms.add(ManagerTestConstants.M_B4_DUP_DEL);
+        dcterms.remove(ManagerTestConstants.M_B4_DUP_ADD);
+    }
+
+    private void updateDcB3IntoB5Resolution() throws Exception {
+        // d0ff0ed204f
+        dcterms.remove(DCTERMS.BIBLIOGRAPHIC_RESOURCE, DCTERMS.DESCRIPTION, VALUE_FACTORY.createLiteral("Description addition for full delete conflict"));
+        InputStream in = this.getClass().getResourceAsStream("/testCatalogData/ontologyRecord/conflictBranches/dcterms.ttl");
+        Model dctermsCopy = Rio.parse(in, RDFFormat.TURTLE);
+        dcterms.addAll(dctermsCopy.filter(DCTERMS.FREQUENCY, null, null));
+        dcterms.remove(DCTERMS.FREQUENCY, RDFS.COMMENT, VALUE_FACTORY.createLiteral("A rate at which something recurs.", "en"));
+    }
 }

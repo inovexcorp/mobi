@@ -23,7 +23,6 @@ package com.mobi.catalog.impl;
  * #L%
  */
 
-import static com.mobi.catalog.impl.TestResourceUtils.trigRequired;
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertTrue;
@@ -48,6 +47,7 @@ import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
+import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
 import org.junit.After;
 import org.junit.Before;
@@ -80,7 +80,7 @@ public class SimpleVersionManagerTest extends OrmEnabledTestCase {
     public ExpectedException thrown = ExpectedException.none();
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         closeable = MockitoAnnotations.openMocks(this);
         repo = new MemoryRepositoryWrapper();
         repo.setDelegate(new SailRepository(new MemoryStore()));
@@ -103,7 +103,7 @@ public class SimpleVersionManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testGetVersions() throws Exception {
-        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
+        addData(repo, "/testCatalogData/versionedRecord/versionedRecord.trig", RDFFormat.TRIG);
         // Setup:
         VersionedRecord record = versionedRecordFactory.createNew(ManagerTestConstants.VERSIONED_RECORD_IRI);
         Version version = versionFactory.createNew(ManagerTestConstants.VERSION_IRI);
@@ -158,13 +158,14 @@ public class SimpleVersionManagerTest extends OrmEnabledTestCase {
 
     @Test(expected = IllegalArgumentException.class)
     public void testAddVersionWithTakenResource() {
+        addData(repo, "/testCatalogData/versionedRecord/versionedRecord.trig", RDFFormat.TRIG);
+
         // Setup:
         Version version = versionFactory.createNew(ManagerTestConstants.VERSION_IRI);
 
         try (RepositoryConnection conn = repo.getConnection()) {
             manager.addVersion(ManagerTestConstants.CATALOG_IRI, ManagerTestConstants.VERSIONED_RECORD_IRI, version, conn);
             verify(thingManager, times(0)).addObject(eq(version), any(RepositoryConnection.class));
-            verify(thingManager).throwAlreadyExists(ManagerTestConstants.VERSION_IRI, distributionFactory);
         }
     }
 
@@ -172,7 +173,8 @@ public class SimpleVersionManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testUpdateVersion() throws Exception {
-        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
+        addData(repo, "/testCatalogData/versionedRecord/versionedRecord.trig", RDFFormat.TRIG);
+
         // Setup:
         Version version = versionFactory.createNew(ManagerTestConstants.VERSION_IRI);
         version.getModel().add(ManagerTestConstants.VERSION_IRI, DCTERMS.TITLE, VALUE_FACTORY.createLiteral("New Title"));
@@ -189,7 +191,8 @@ public class SimpleVersionManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testUpdateTag() throws Exception {
-        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
+        addData(repo, "/testCatalogData/versionedRdfRecord/versionedRdfRecord.trig", RDFFormat.TRIG);
+
         // Setup:
         Tag tag = tagFactory.createNew(ManagerTestConstants.TAG_IRI);
         tag.getModel().add(ManagerTestConstants.TAG_IRI, DCTERMS.TITLE, VALUE_FACTORY.createLiteral("New Title"));
@@ -208,7 +211,8 @@ public class SimpleVersionManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testRemoveVersion() throws Exception {
-        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
+        addData(repo, "/testCatalogData/versionedRecord/versionedRecord.trig", RDFFormat.TRIG);
+
         // Setup:
         IRI versionIRI = VALUE_FACTORY.createIRI(VersionedRecord.version_IRI);
         IRI latestIRI = VALUE_FACTORY.createIRI(VersionedRecord.latestVersion_IRI);
@@ -229,6 +233,8 @@ public class SimpleVersionManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void getLatestVersion() throws Exception {
+        addData(repo, "/testCatalogData/versionedRecord/versionedRecord.trig", RDFFormat.TRIG);
+
         // Setup:
         VersionedRecord record = versionedRecordFactory.createNew(ManagerTestConstants.VERSIONED_RECORD_IRI);
         Version version = versionFactory.createNew(LATEST_VERSION_IRI);
@@ -247,6 +253,8 @@ public class SimpleVersionManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void getLatestTag() throws Exception {
+        addData(repo, "/testCatalogData/versionedRdfRecord/versionedRdfRecord.trig", RDFFormat.TRIG);
+
         // Setup:
         VersionedRDFRecord record = versionedRDFRecordFactory.createNew(ManagerTestConstants.VERSIONED_RDF_RECORD_IRI);
         Tag tag = tagFactory.createNew(ManagerTestConstants.TAG_IRI);
@@ -267,6 +275,8 @@ public class SimpleVersionManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testVersionPathWithMissingCatalog() {
+        addData(repo, "/testCatalogData/versionedRecord/versionedRecordNoCatalog.trig", RDFFormat.TRIG);
+
         // Setup:
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage("Catalog " + ManagerTestConstants.MISSING_IRI + " could not be found");
@@ -278,7 +288,8 @@ public class SimpleVersionManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testVersionPathWithMissingRecord() {
-        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
+        addData(repo, "/testCatalogData/versionedRecord/versionedRecord.trig", RDFFormat.TRIG);
+
         // Setup:
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage("VersionedRecord " + ManagerTestConstants.MISSING_IRI + " could not be found");
@@ -290,7 +301,9 @@ public class SimpleVersionManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testVersionPathWithWrongCatalog() {
-        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
+        addData(repo, "/testCatalogData/versionedRecord/versionedRecord.trig", RDFFormat.TRIG);
+        addData(repo, "/testCatalogData/versionedRecord/versionedRecordNoCatalog.trig", RDFFormat.TRIG);
+
         // Setup:
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage(String.format("Record %s does not belong to Catalog %s", ManagerTestConstants.VERSIONED_RECORD_NO_CATALOG_IRI, ManagerTestConstants.CATALOG_IRI));
@@ -302,7 +315,8 @@ public class SimpleVersionManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testVersionPathWithWrongRecord() {
-        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
+        addData(repo, "/testCatalogData/versionedRecord/versionedRecord.trig", RDFFormat.TRIG);
+
         // Setup:
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage(String.format("Version %s does not belong to VersionedRecord %s", ManagerTestConstants.LONE_VERSION_IRI, ManagerTestConstants.VERSIONED_RECORD_IRI));
@@ -316,7 +330,7 @@ public class SimpleVersionManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void getVersionTest() {
-        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
+        addData(repo, "/testCatalogData/versionedRecord/versionedRecord.trig", RDFFormat.TRIG);
         try (RepositoryConnection conn = repo.getConnection()) {
             Version version = manager.getVersion(ManagerTestConstants.CATALOG_IRI, ManagerTestConstants.VERSIONED_RECORD_IRI, ManagerTestConstants.VERSION_IRI, versionFactory, conn);
             assertFalse(version.getModel().isEmpty());
@@ -326,6 +340,8 @@ public class SimpleVersionManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void getVersionWithMissingCatalogTest() {
+        addData(repo, "/testCatalogData/versionedRecord/versionedRecordNoCatalog.trig", RDFFormat.TRIG);
+
         // Setup:
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage("Catalog " + ManagerTestConstants.MISSING_IRI + " could not be found");
@@ -337,7 +353,8 @@ public class SimpleVersionManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void getVersionWithMissingRecordTest() {
-        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
+        addData(repo, "/testCatalogData/versionedRecord/versionedRecord.trig", RDFFormat.TRIG);
+
         // Setup:
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage("VersionedRecord " + ManagerTestConstants.MISSING_IRI + " could not be found");
@@ -349,7 +366,9 @@ public class SimpleVersionManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void getVersionWithWrongCatalogTest() {
-        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
+        addData(repo, "/testCatalogData/versionedRecord/versionedRecordNoCatalog.trig", RDFFormat.TRIG);
+        addData(repo, "/testCatalogData/versionedRecord/versionedRecord.trig", RDFFormat.TRIG);
+
         // Setup:
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage(String.format("Record %s does not belong to Catalog %s", ManagerTestConstants.VERSIONED_RECORD_NO_CATALOG_IRI, ManagerTestConstants.CATALOG_IRI));
@@ -361,7 +380,8 @@ public class SimpleVersionManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void getVersionWithWrongRecordTest() {
-        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
+        addData(repo, "/testCatalogData/versionedRecord/versionedRecord.trig", RDFFormat.TRIG);
+
         // Setup:
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage(String.format("Version %s does not belong to VersionedRecord %s", ManagerTestConstants.LONE_VERSION_IRI, ManagerTestConstants.VERSIONED_RECORD_IRI));
@@ -373,7 +393,8 @@ public class SimpleVersionManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void getMissingVersionTest() {
-        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
+        addData(repo, "/testCatalogData/versionedRecord/versionedRecordMissingVersion.trig", RDFFormat.TRIG);
+
         // Setup:
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage("Version " + ManagerTestConstants.RANDOM_IRI + " could not be found");
@@ -387,7 +408,8 @@ public class SimpleVersionManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void removeVersionWithObjectTest() throws Exception {
-        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
+        addData(repo, "/testCatalogData/versionedRecord/versionedRecord.trig", RDFFormat.TRIG);
+
         // Setup:
         Version version = versionFactory.createNew(LATEST_VERSION_IRI);
         version.setVersionedDistribution(Collections.singleton(distributionFactory.createNew(ManagerTestConstants.DISTRIBUTION_IRI)));
@@ -407,7 +429,8 @@ public class SimpleVersionManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void removeVersionWithResourceTest() throws Exception {
-        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
+        addData(repo, "/testCatalogData/versionedRecord/versionedRecord.trig", RDFFormat.TRIG);
+
         // Setup:
         Version version = versionFactory.createNew(LATEST_VERSION_IRI);
         version.setVersionedDistribution(Collections.singleton(distributionFactory.createNew(ManagerTestConstants.DISTRIBUTION_IRI)));

@@ -68,7 +68,6 @@ public class SimpleVersioningManagerTest extends OrmEnabledTestCase {
     private final OrmFactory<Branch> branchFactory = getRequiredOrmFactory(Branch.class);
     private final OrmFactory<MasterBranch> masterBranchFactory = getRequiredOrmFactory(MasterBranch.class);
     private final OrmFactory<Commit> commitFactory = getRequiredOrmFactory(Commit.class);
-    private final OrmFactory<InProgressCommit> inProgressCommitFactory = getRequiredOrmFactory(InProgressCommit.class);
 
     private final IRI CATALOG_IRI = VALUE_FACTORY.createIRI("http://test.com#catalog");
     private User user;
@@ -114,7 +113,6 @@ public class SimpleVersioningManagerTest extends OrmEnabledTestCase {
         commit = commitFactory.createNew(VALUE_FACTORY.createIRI("http://test.com#commit"));
         sourceBranch.setHead(commit);
         targetBranch.setHead(commit);
-//        inProgressCommit = inProgressCommitFactory.createNew(VALUE_FACTORY.createIRI("http://test.com#in-progress-commit"));
 
         closeable = MockitoAnnotations.openMocks(this);
 
@@ -189,9 +187,7 @@ public class SimpleVersioningManagerTest extends OrmEnabledTestCase {
         verify(baseService).addMasterCommit(eq(ontologyRecord), eq(masterBranch), eq(user),  eq("Message"), any(RepositoryConnection.class));
         assertEquals(commit.getResource(), result);
     }
-
-    // TODO addBranchCommit
-
+    
     /* merge(Resource, Resource, Resource, Resource, User, Model, Model) */
 
     @Test

@@ -1,0 +1,15 @@
+@prefix dc: <http://purl.org/dc/terms/> .
+@prefix records: <http://mobi.com/test/records#> .
+@prefix mcat: <http://mobi.com/ontologies/catalog#> .
+@prefix muser: <http://mobi.com/ontologies/user/management#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+GRAPH records:versioned-record-no-catalog {
+    records:versioned-record-no-catalog a mcat:VersionedRecord, mcat:Record ;
+        dc:title "Versioned Record No Catalog" ;
+        dc:description "Description" ;
+        dc:issued "2015-01-01T00:00:00Z"^^xsd:dateTime ;
+        dc:modified "2016-12-02T00:00:00Z"^^xsd:dateTime ;
+        dc:publisher muser:tester ;
+        mcat:keyword "111" .
+}

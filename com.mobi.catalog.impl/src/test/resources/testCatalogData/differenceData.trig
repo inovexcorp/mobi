@@ -1,0 +1,858 @@
+@prefix deltas: <https://mobi.com/deltas#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix branches: <http://mobi.com/test/branches#> .
+@prefix mcat: <http://mobi.com/ontologies/catalog#> .
+@prefix commits: <http://mobi.com/test/commits#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix catalogs: <http://mobi.com/test/catalogs#> .
+@prefix records: <http://mobi.com/test/records#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix ontEdit: <http://mobi.com/ontologies/ontology-editor#> .
+@prefix revisions: <https://mobi.com/test/revisions#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix muser: <http://mobi.com/ontologies/user/management#> .
+@prefix users: <http://mobi.com/test/users#> .
+@prefix ns13: <https://mobi.com/records#868ee159-7ec5-437f-b0b4-f7c083497864/> .
+@prefix ns14: <https://mobi.com/records#922ef1ed-5820-4c8e-901f-57237ef7716e/> .
+@prefix ns8: <https://mobi.com/records#a0ed1b1b-5bc6-4feb-b980-d204753dde15/> .
+@prefix ns9: <https://mobi.com/records#5042fad8-9e1c-45c8-895d-046047a50229/> .
+@prefix ns10: <https://mobi.com/records#3e6cfc67-9d82-43a5-84b1-f9a0caec3e48/> .
+@prefix ns11: <https://mobi.com/records#1ca40056-a1c7-403a-aeaf-2c218bf3960e/> .
+
+GRAPH records:conflict-1 {
+    records:conflict-1 a
+            mcat:Record,
+            mcat:VersionedRDFRecord,
+            mcat:VersionedRecord ;
+        mcat:branch
+            branches:branch1,
+            branches:master1 ;
+        mcat:catalog catalogs:catalog-local ;
+        mcat:masterBranch branches:master1 ;
+        dcterms:description "Description" ;
+        dcterms:issued "2016-03-01T00:00:00+00:00"^^xsd:dateTime ;
+        dcterms:modified "2016-01-02T00:00:00+00:00"^^xsd:dateTime ;
+        dcterms:title "Conflict 1" .
+}
+
+GRAPH deltas:e1ea1aba-8b9e-42b6-98a7-ce2389143581-B {
+    <http://test.com#sub> dcterms:description "Description" .
+}
+
+GRAPH records:conflict-3 {
+    records:conflict-3 a
+            mcat:Record,
+            mcat:VersionedRDFRecord,
+            mcat:VersionedRecord ;
+        mcat:branch
+            branches:branch3,
+            branches:master3 ;
+        mcat:catalog catalogs:catalog-local ;
+        mcat:masterBranch branches:master3 ;
+        dcterms:description "Description" ;
+        dcterms:issued "2016-03-01T00:00:00+00:00"^^xsd:dateTime ;
+        dcterms:modified "2016-01-02T00:00:00+00:00"^^xsd:dateTime ;
+        dcterms:title "Conflict 3" .
+}
+
+GRAPH records:conflict-2 {
+    records:conflict-2 a
+            mcat:Record,
+            mcat:VersionedRDFRecord,
+            mcat:VersionedRecord ;
+        mcat:branch
+            branches:branch2,
+            branches:master2 ;
+        mcat:catalog catalogs:catalog-local ;
+        mcat:masterBranch branches:master2 ;
+        dcterms:description "Description" ;
+        dcterms:issued "2016-03-01T00:00:00+00:00"^^xsd:dateTime ;
+        dcterms:modified "2016-01-02T00:00:00+00:00"^^xsd:dateTime ;
+        dcterms:title "Conflict 2" .
+}
+
+GRAPH records:conflict-5 {
+    records:conflict-5 a
+            mcat:Record,
+            mcat:VersionedRDFRecord,
+            mcat:VersionedRecord ;
+        mcat:branch
+            branches:branch5,
+            branches:master5 ;
+        mcat:catalog catalogs:catalog-local ;
+        mcat:masterBranch branches:master5 ;
+        dcterms:description "Description" ;
+        dcterms:issued "2016-03-01T00:00:00+00:00"^^xsd:dateTime ;
+        dcterms:modified "2016-01-02T00:00:00+00:00"^^xsd:dateTime ;
+        dcterms:title "Conflict 5" .
+}
+
+GRAPH deltas:af8d136b-ffb8-47d4-9af2-a613cd8aaf63-A {
+    <http://test.com#sub> dcterms:description "Description" .
+}
+
+GRAPH records:conflict-7 {
+    records:conflict-7 a
+            mcat:Record,
+            mcat:VersionedRDFRecord,
+            mcat:VersionedRecord ;
+        mcat:branch branches:master7 ;
+        mcat:catalog catalogs:catalog-local ;
+        mcat:masterBranch branches:master7 ;
+        dcterms:description "Description" ;
+        dcterms:issued "2016-03-01T00:00:00+00:00"^^xsd:dateTime ;
+        dcterms:modified "2016-01-02T00:00:00+00:00"^^xsd:dateTime ;
+        dcterms:title "Conflict 7" .
+}
+
+GRAPH records:conflict-6 {
+    records:conflict-6 a
+            mcat:Record,
+            mcat:VersionedRDFRecord,
+            mcat:VersionedRecord ;
+        mcat:branch
+            branches:branch6,
+            branches:master6 ;
+        mcat:catalog catalogs:catalog-local ;
+        mcat:masterBranch branches:master6 ;
+        dcterms:description "Description" ;
+        dcterms:issued "2016-03-01T00:00:00+00:00"^^xsd:dateTime ;
+        dcterms:modified "2016-01-02T00:00:00+00:00"^^xsd:dateTime ;
+        dcterms:title "Conflict 6" .
+}
+
+GRAPH deltas:33f25faf-dc6f-4ec0-8044-e4c295749515-B {
+    <http://test.com#sub> dcterms:title "Title" .
+}
+
+GRAPH deltas:33f25faf-dc6f-4ec0-8044-e4c295749515-A {
+    <http://test.com#sub> dcterms:title "New Title" .
+}
+
+GRAPH deltas:8f369b0f-acfd-4333-b284-be48534c66b7-B {
+    <http://test.com#sub> dcterms:title "Title" .
+}
+
+GRAPH deltas:8f369b0f-acfd-4333-b284-be48534c66b7-A {
+    <http://test.com#sub> dcterms:title "New Title 1" .
+}
+
+GRAPH deltas:0bb411fd-5c61-47f0-b8db-3d0f5239f133-A {
+    <http://test.com#sub> a owl:Class ;
+        dcterms:title "Title" .
+}
+
+GRAPH deltas:0ba57e93-eb30-4584-a74b-7b4159f2a0a1-A {
+    <http://test.com#sub> a <http://test.com#Type> .
+}
+
+GRAPH deltas:9e64cb78-f38f-4ab5-9f30-462919be66b7-B {
+    <http://test.com#sub> dcterms:title "Title" .
+}
+
+GRAPH commits:conflict3-0 {
+    commits:conflict3-0 a
+            mcat:Commit,
+            owl:Thing,
+            prov:Activity ;
+        mcat:initialRevision revisions:97afea0d-1b1f-4b4d-b394-a4452415d5f2 ;
+        dcterms:title "Commit Conflict 3-0" ;
+        prov:atTime "2016-03-01T00:00:00+00:00"^^xsd:dateTime ;
+        prov:generated revisions:7e284836-1ab7-4bc7-8949-1bef45317444 ;
+        prov:wasAssociatedWith users:taken .
+
+    revisions:7e284836-1ab7-4bc7-8949-1bef45317444 a
+            mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:8f369b0f-acfd-4333-b284-be48534c66b7-B ;
+        mcat:deletions deltas:8f369b0f-acfd-4333-b284-be48534c66b7-A .
+
+    revisions:97afea0d-1b1f-4b4d-b394-a4452415d5f2 a
+            mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:97afea0d-1b1f-4b4d-b394-a4452415d5f2-A ;
+        mcat:deletions deltas:97afea0d-1b1f-4b4d-b394-a4452415d5f2-B .
+}
+
+GRAPH commits:conflict2-2 {
+    commits:conflict2-2 a
+            mcat:Commit,
+            owl:Thing,
+            prov:Activity ;
+        mcat:branchCommit commits:conflict2-0 ;
+        dcterms:title "Commit Conflict 2-2" ;
+        prov:atTime "2016-03-03T00:02:00+00:00"^^xsd:dateTime ;
+        prov:generated revisions:30c02f17-1a9f-4cb3-b66d-71c00bc21ab2 ;
+        prov:wasAssociatedWith users:taken .
+
+    revisions:30c02f17-1a9f-4cb3-b66d-71c00bc21ab2 a
+            mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:30c02f17-1a9f-4cb3-b66d-71c00bc21ab2-A ;
+        mcat:deletions deltas:30c02f17-1a9f-4cb3-b66d-71c00bc21ab2-B ;
+        prov:hadPrimarySource revisions:76f007fe-66e9-4b48-a107-2d75eefc5967 .
+}
+
+GRAPH branches:master2 {
+    branches:master2 a
+            mcat:Branch,
+            mcat:MasterBranch ;
+        mcat:head commits:conflict2-1 ;
+        mcat:headGraph ns14:HEAD ;
+        dcterms:issued "2016-03-01T00:00:00+00:00"^^xsd:dateTime ;
+        dcterms:modified "2016-01-02T00:00:00+00:00"^^xsd:dateTime ;
+        dcterms:title "Master Branch" .
+}
+
+GRAPH commits:conflict2-0 {
+    commits:conflict2-0 a
+            mcat:Commit,
+            owl:Thing,
+            prov:Activity ;
+        mcat:initialRevision revisions:caa45d7c-c077-4f20-b3a5-68772069d027 ;
+        dcterms:title "Commit Conflict 2-0" ;
+        prov:atTime "2016-03-01T00:00:00+00:00"^^xsd:dateTime ;
+        prov:generated revisions:76f007fe-66e9-4b48-a107-2d75eefc5967 ;
+        prov:wasAssociatedWith users:taken .
+
+    revisions:76f007fe-66e9-4b48-a107-2d75eefc5967 a
+            mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:60ebe343-d1e9-48df-9410-6775c2dedfec-B ;
+        mcat:deletions deltas:60ebe343-d1e9-48df-9410-6775c2dedfec-A .
+
+    revisions:caa45d7c-c077-4f20-b3a5-68772069d027 a
+            mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:caa45d7c-c077-4f20-b3a5-68772069d027-A ;
+        mcat:deletions deltas:caa45d7c-c077-4f20-b3a5-68772069d027-B .
+}
+
+GRAPH commits:conflict2-1 {
+    commits:conflict2-1 a
+            mcat:Commit,
+            owl:Thing,
+            prov:Activity ;
+        mcat:baseCommit commits:conflict2-0 ;
+        dcterms:title "Commit Conflict 2-1" ;
+        prov:atTime "2016-03-02T00:01:00+00:00"^^xsd:dateTime ;
+        prov:generated revisions:60ebe343-d1e9-48df-9410-6775c2dedfec ;
+        prov:wasAssociatedWith users:taken .
+
+    revisions:60ebe343-d1e9-48df-9410-6775c2dedfec a
+            mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:fe710c17-25cc-4089-ac4b-e0876dff4199-A ;
+        mcat:deletions deltas:fe710c17-25cc-4089-ac4b-e0876dff4199-B ;
+        prov:hadPrimarySource revisions:76f007fe-66e9-4b48-a107-2d75eefc5967 .
+}
+
+GRAPH deltas:caa45d7c-c077-4f20-b3a5-68772069d027-A {
+    <http://test.com#sub> a owl:Class ;
+        dcterms:title "Original" .
+}
+
+GRAPH ns9:HEAD {
+    <http://test.com#sub> a owl:Class ;
+        dcterms:title "New Title 1" .
+}
+
+GRAPH commits:conflict7-0 {
+    commits:conflict7-0 a
+            mcat:Commit,
+            owl:Thing,
+            prov:Activity ;
+        mcat:initialRevision revisions:5e6b0bf2-27b2-4dc3-9051-418f4fcbe7e1 ;
+        dcterms:title "Commit Conflict 7-0" ;
+        prov:atTime "2016-03-01T00:00:00+00:00"^^xsd:dateTime ;
+        prov:generated revisions:945507d2-5f9f-451e-bee5-6e33950aebfe ;
+        prov:wasAssociatedWith users:taken .
+
+    revisions:5e6b0bf2-27b2-4dc3-9051-418f4fcbe7e1 a
+            mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:5e6b0bf2-27b2-4dc3-9051-418f4fcbe7e1-A ;
+        mcat:deletions deltas:5e6b0bf2-27b2-4dc3-9051-418f4fcbe7e1-B .
+
+    revisions:945507d2-5f9f-451e-bee5-6e33950aebfe a
+            mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:4f588b11-37bc-41d1-86f8-efe21a11898a-B ;
+        mcat:deletions deltas:4f588b11-37bc-41d1-86f8-efe21a11898a-A .
+}
+
+GRAPH records:conflict-4 {
+    records:conflict-4 a
+            mcat:Record,
+            mcat:VersionedRDFRecord,
+            mcat:VersionedRecord ;
+        mcat:branch
+            branches:branch4,
+            branches:master4 ;
+        mcat:catalog catalogs:catalog-local ;
+        mcat:masterBranch branches:master4 ;
+        dcterms:description "Description" ;
+        dcterms:issued "2016-03-01T00:00:00+00:00"^^xsd:dateTime ;
+        dcterms:modified "2016-01-02T00:00:00+00:00"^^xsd:dateTime ;
+        dcterms:title "Conflict 4" .
+}
+
+GRAPH branches:branch6 {
+    branches:branch6 a mcat:Branch ;
+        mcat:head commits:conflict6-2 ;
+        dcterms:modified "2016-03-03T00:02:00+00:00"^^xsd:dateTime ;
+        dcterms:title "Branch" .
+}
+
+GRAPH ns11:HEAD {
+    <http://test.com#sub> a owl:Class ;
+        dcterms:title
+            "New Title",
+            "Title" .
+}
+
+GRAPH deltas:521552be-e360-4044-a86f-e64a2e4d301d-A {
+    <http://test.com#sub> dcterms:title "New Title 2" .
+}
+
+GRAPH deltas:30c02f17-1a9f-4cb3-b66d-71c00bc21ab2-B {
+    <http://test.com#sub> a owl:Class ;
+        dcterms:title "Original" .
+}
+
+GRAPH branches:master4 {
+    branches:master4 a
+            mcat:Branch,
+            mcat:MasterBranch ;
+        mcat:head commits:conflict4-1 ;
+        mcat:headGraph ns8:HEAD ;
+        dcterms:issued "2016-03-01T00:00:00+00:00"^^xsd:dateTime ;
+        dcterms:modified "2016-01-02T00:00:00+00:00"^^xsd:dateTime ;
+        dcterms:title "Master Branch" .
+}
+
+GRAPH deltas:229eefb4-fd59-4761-a3fc-3b02cdf0367e-A {
+    <http://test.com#sub> dcterms:description "Description" .
+}
+
+GRAPH branches:master6 {
+    branches:master6 a
+            mcat:Branch,
+            mcat:MasterBranch ;
+        mcat:head commits:conflict6-1 ;
+        mcat:headGraph ns11:HEAD ;
+        dcterms:issued "2016-03-01T00:00:00+00:00"^^xsd:dateTime ;
+        dcterms:modified "2016-01-02T00:00:00+00:00"^^xsd:dateTime ;
+        dcterms:title "Master Branch" .
+}
+
+GRAPH branches:master7 {
+    branches:master7 a
+            mcat:Branch,
+            mcat:MasterBranch ;
+        mcat:head commits:conflict7-1 ;
+        mcat:headGraph ns10:HEAD ;
+        dcterms:issued "2016-03-01T00:00:00+00:00"^^xsd:dateTime ;
+        dcterms:modified "2016-01-02T00:00:00+00:00"^^xsd:dateTime ;
+        dcterms:title "Master Branch" .
+}
+
+GRAPH ns8:HEAD {
+    <http://test.com#sub> a owl:Class ;
+        dcterms:title "New Title" .
+}
+
+GRAPH branches:master3 {
+    branches:master3 a
+            mcat:Branch,
+            mcat:MasterBranch ;
+        mcat:head commits:conflict3-1 ;
+        mcat:headGraph ns9:HEAD ;
+        dcterms:issued "2016-03-01T00:00:00+00:00"^^xsd:dateTime ;
+        dcterms:modified "2016-01-02T00:00:00+00:00"^^xsd:dateTime ;
+        dcterms:title "Master Branch" .
+}
+
+GRAPH ns10:HEAD {
+    <http://test.com#sub> dcterms:title
+            "New Title",
+            "Title" .
+}
+
+GRAPH branches:branch4 {
+    branches:branch4 a mcat:Branch ;
+        mcat:head commits:conflict4-3 ;
+        dcterms:modified "2016-03-03T00:02:00+00:00"^^xsd:dateTime ;
+        dcterms:title "Branch" .
+}
+
+GRAPH branches:branch5 {
+    branches:branch5 a mcat:Branch ;
+        mcat:head commits:conflict5-2 ;
+        dcterms:modified "2016-03-03T00:02:00+00:00"^^xsd:dateTime ;
+        dcterms:title "Branch" .
+}
+
+GRAPH branches:branch2 {
+    branches:branch2 a mcat:Branch ;
+        mcat:head commits:conflict2-2 ;
+        dcterms:modified "2016-03-03T00:02:00+00:00"^^xsd:dateTime ;
+        dcterms:title "Branch" .
+}
+
+GRAPH branches:master1 {
+    branches:master1 a
+            mcat:Branch,
+            mcat:MasterBranch ;
+        mcat:head commits:conflict1-1 ;
+        mcat:headGraph <https://mobi.com/records#772e1661-9c94-4a88-9a3a-ab67d610fc41/HEAD> ;
+        dcterms:issued "2016-03-01T00:00:00+00:00"^^xsd:dateTime ;
+        dcterms:modified "2016-01-02T00:00:00+00:00"^^xsd:dateTime ;
+        dcterms:title "Master Branch" .
+}
+
+GRAPH branches:branch1 {
+    branches:branch1 a mcat:Branch ;
+        mcat:head commits:conflict1-2 ;
+        dcterms:modified "2016-03-03T00:02:00+00:00"^^xsd:dateTime ;
+        dcterms:title "Branch" .
+}
+
+GRAPH branches:master5 {
+    branches:master5 a
+            mcat:Branch,
+            mcat:MasterBranch ;
+        mcat:head commits:conflict5-1 ;
+        mcat:headGraph ns13:HEAD ;
+        dcterms:issued "2016-03-01T00:00:00+00:00"^^xsd:dateTime ;
+        dcterms:modified "2016-01-02T00:00:00+00:00"^^xsd:dateTime ;
+        dcterms:title "Master Branch" .
+}
+
+GRAPH branches:branch3 {
+    branches:branch3 a mcat:Branch ;
+        mcat:head commits:conflict3-2 ;
+        dcterms:modified "2016-03-03T00:02:00+00:00"^^xsd:dateTime ;
+        dcterms:title "Branch" .
+}
+
+GRAPH commits:conflict5-1 {
+    commits:conflict5-1 a
+            mcat:Commit,
+            owl:Thing,
+            prov:Activity ;
+        mcat:baseCommit commits:conflict5-0 ;
+        dcterms:title "Commit Conflict 5-1" ;
+        prov:atTime "2016-03-02T00:01:00+00:00"^^xsd:dateTime ;
+        prov:generated revisions:af8d136b-ffb8-47d4-9af2-a613cd8aaf63 ;
+        prov:wasAssociatedWith users:taken .
+
+    revisions:af8d136b-ffb8-47d4-9af2-a613cd8aaf63 a
+            mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:c95c9d64-3047-40f6-a36b-b76ee5be810d-A ;
+        mcat:deletions deltas:c95c9d64-3047-40f6-a36b-b76ee5be810d-B ;
+        prov:hadPrimarySource revisions:6a214c5e-5452-427b-b974-8b5f8c28cc08 .
+}
+
+GRAPH deltas:5e6b0bf2-27b2-4dc3-9051-418f4fcbe7e1-A {
+    <http://test.com#sub> dcterms:title "Title" .
+}
+
+GRAPH deltas:90b31df2-6bb7-4e78-8e25-1b1fa9f93123-A {
+    <http://test.com#sub> dcterms:title "Title" .
+}
+
+GRAPH ns13:HEAD {
+    <http://test.com#sub> dcterms:description "Description" ;
+        dcterms:title "Title" .
+}
+
+GRAPH deltas:4f588b11-37bc-41d1-86f8-efe21a11898a-A {
+    <http://test.com#sub> dcterms:title "New Title" .
+}
+
+GRAPH deltas:ae7f2464-a774-4709-963a-21a839c8af4e-A {
+    <http://test.com#sub> a owl:Class .
+}
+
+GRAPH deltas:7241cb91-e5ec-450a-828d-d14407d6599f-A {
+    <http://test.com#sub> dcterms:title "New Title" .
+}
+
+GRAPH deltas:60ebe343-d1e9-48df-9410-6775c2dedfec-A {
+    <http://test.com#sub> dcterms:title "Title" .
+}
+
+GRAPH deltas:af1c07b3-6b90-4b83-b4d1-907bdb969e1c-B {
+    <http://test.com#sub> dcterms:title "New Title" .
+}
+
+GRAPH deltas:60ebe343-d1e9-48df-9410-6775c2dedfec-B {
+    <http://test.com#sub> dcterms:title "Original" .
+}
+
+GRAPH deltas:0ef17bf4-134c-48d8-9a85-399136a7db1e-A {
+    <http://test.com#sub> dcterms:title "New Title" .
+}
+
+GRAPH commits:conflict5-0 {
+    commits:conflict5-0 a
+            mcat:Commit,
+            owl:Thing,
+            prov:Activity ;
+        mcat:initialRevision revisions:90b31df2-6bb7-4e78-8e25-1b1fa9f93123 ;
+        dcterms:title "Commit Conflict 5-0" ;
+        prov:atTime "2016-03-01T00:00:00+00:00"^^xsd:dateTime ;
+        prov:generated revisions:6a214c5e-5452-427b-b974-8b5f8c28cc08 ;
+        prov:wasAssociatedWith users:taken .
+
+    revisions:6a214c5e-5452-427b-b974-8b5f8c28cc08 a
+            mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:af8d136b-ffb8-47d4-9af2-a613cd8aaf63-B ;
+        mcat:deletions deltas:af8d136b-ffb8-47d4-9af2-a613cd8aaf63-A .
+
+    revisions:90b31df2-6bb7-4e78-8e25-1b1fa9f93123 a
+            mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:90b31df2-6bb7-4e78-8e25-1b1fa9f93123-A ;
+        mcat:deletions deltas:90b31df2-6bb7-4e78-8e25-1b1fa9f93123-B .
+}
+
+GRAPH commits:conflict5-2 {
+    commits:conflict5-2 a
+            mcat:Commit,
+            owl:Thing,
+            prov:Activity ;
+        mcat:branchCommit commits:conflict5-0 ;
+        dcterms:title "Commit Conflict 5-2" ;
+        prov:atTime "2016-03-03T00:02:00+00:00"^^xsd:dateTime ;
+        prov:generated revisions:33f25faf-dc6f-4ec0-8044-e4c295749515 ;
+        prov:wasAssociatedWith users:taken .
+
+    revisions:33f25faf-dc6f-4ec0-8044-e4c295749515 a
+            mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:33f25faf-dc6f-4ec0-8044-e4c295749515-A ;
+        mcat:deletions deltas:33f25faf-dc6f-4ec0-8044-e4c295749515-B ;
+        prov:hadPrimarySource revisions:6a214c5e-5452-427b-b974-8b5f8c28cc08 .
+}
+
+GRAPH deltas:521552be-e360-4044-a86f-e64a2e4d301d-B {
+    <http://test.com#sub> dcterms:title "Title" .
+}
+
+GRAPH deltas:dedb2142-a44b-4005-bccf-0bac37d2cb7f-A {
+    <http://test.com#sub> dcterms:title "New Title" .
+}
+
+GRAPH commits:conflict6-2 {
+    commits:conflict6-2 a
+            mcat:Commit,
+            owl:Thing,
+            prov:Activity ;
+        mcat:branchCommit commits:conflict6-0 ;
+        dcterms:title "Commit Conflict 6-2" ;
+        prov:atTime "2016-03-03T00:02:00+00:00"^^xsd:dateTime ;
+        prov:generated revisions:9e64cb78-f38f-4ab5-9f30-462919be66b7 ;
+        prov:wasAssociatedWith users:taken .
+
+    revisions:9e64cb78-f38f-4ab5-9f30-462919be66b7 a
+            mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:9e64cb78-f38f-4ab5-9f30-462919be66b7-A ;
+        mcat:deletions deltas:9e64cb78-f38f-4ab5-9f30-462919be66b7-B ;
+        prov:hadPrimarySource revisions:66420cd9-162a-4dd5-a8a3-f442be946fcb .
+}
+
+GRAPH commits:conflict3-2 {
+    commits:conflict3-2 a
+            mcat:Commit,
+            owl:Thing,
+            prov:Activity ;
+        mcat:branchCommit commits:conflict3-0 ;
+        dcterms:title "Commit Conflict 3-2" ;
+        prov:atTime "2016-03-03T00:02:00+00:00"^^xsd:dateTime ;
+        prov:generated revisions:521552be-e360-4044-a86f-e64a2e4d301d ;
+        prov:wasAssociatedWith users:taken .
+
+    revisions:521552be-e360-4044-a86f-e64a2e4d301d a
+            mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:521552be-e360-4044-a86f-e64a2e4d301d-A ;
+        mcat:deletions deltas:521552be-e360-4044-a86f-e64a2e4d301d-B ;
+        prov:hadPrimarySource revisions:7e284836-1ab7-4bc7-8949-1bef45317444 .
+}
+
+GRAPH commits:conflict3-1 {
+    commits:conflict3-1 a
+            mcat:Commit,
+            owl:Thing,
+            prov:Activity ;
+        mcat:baseCommit commits:conflict3-0 ;
+        dcterms:title "Commit Conflict 3-1" ;
+        prov:atTime "2016-03-02T00:01:00+00:00"^^xsd:dateTime ;
+        prov:generated revisions:8f369b0f-acfd-4333-b284-be48534c66b7 ;
+        prov:wasAssociatedWith users:taken .
+
+    revisions:8f369b0f-acfd-4333-b284-be48534c66b7 a
+            mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:0c5f6a55-b296-4f5e-8dbe-81e4cc33305c-A ;
+        mcat:deletions deltas:0c5f6a55-b296-4f5e-8dbe-81e4cc33305c-B ;
+        prov:hadPrimarySource revisions:7e284836-1ab7-4bc7-8949-1bef45317444 .
+}
+
+GRAPH commits:conflict6-1 {
+    commits:conflict6-1 a
+            mcat:Commit,
+            owl:Thing,
+            prov:Activity ;
+        mcat:baseCommit commits:conflict6-0 ;
+        dcterms:title "Commit Conflict 6-1" ;
+        prov:atTime "2016-03-02T00:01:00+00:00"^^xsd:dateTime ;
+        prov:generated revisions:7241cb91-e5ec-450a-828d-d14407d6599f ;
+        prov:wasAssociatedWith users:taken .
+
+    revisions:7241cb91-e5ec-450a-828d-d14407d6599f a
+            mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:92b16005-3dab-48d1-8351-70b3c042844e-A ;
+        mcat:deletions deltas:92b16005-3dab-48d1-8351-70b3c042844e-B ;
+        prov:hadPrimarySource revisions:66420cd9-162a-4dd5-a8a3-f442be946fcb .
+}
+
+GRAPH commits:conflict1-1 {
+    commits:conflict1-1 a
+            mcat:Commit,
+            owl:Thing,
+            prov:Activity ;
+        mcat:baseCommit commits:conflict1-0 ;
+        dcterms:title "Commit Conflict 1-1" ;
+        prov:atTime "2016-03-02T00:01:00+00:00"^^xsd:dateTime ;
+        prov:generated revisions:e1ea1aba-8b9e-42b6-98a7-ce2389143581 ;
+        prov:wasAssociatedWith users:taken .
+
+    revisions:e1ea1aba-8b9e-42b6-98a7-ce2389143581 a
+            mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:342feb3c-9953-4295-932f-312ec606e0f5-A ;
+        mcat:deletions deltas:342feb3c-9953-4295-932f-312ec606e0f5-B ;
+        prov:hadPrimarySource revisions:a225e5fc-5962-4ad6-8b7c-aeaba9588c07 .
+}
+
+GRAPH commits:conflict1-0 {
+    commits:conflict1-0 a
+            mcat:Commit,
+            owl:Thing,
+            prov:Activity ;
+        mcat:initialRevision revisions:229eefb4-fd59-4761-a3fc-3b02cdf0367e ;
+        dcterms:title "Commit Conflict 1-0" ;
+        prov:atTime "2016-03-01T00:00:00+00:00"^^xsd:dateTime ;
+        prov:generated revisions:a225e5fc-5962-4ad6-8b7c-aeaba9588c07 ;
+        prov:wasAssociatedWith users:taken .
+
+    revisions:229eefb4-fd59-4761-a3fc-3b02cdf0367e a
+            mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:229eefb4-fd59-4761-a3fc-3b02cdf0367e-A ;
+        mcat:deletions deltas:229eefb4-fd59-4761-a3fc-3b02cdf0367e-B .
+
+    revisions:a225e5fc-5962-4ad6-8b7c-aeaba9588c07 a
+            mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:e1ea1aba-8b9e-42b6-98a7-ce2389143581-B ;
+        mcat:deletions deltas:e1ea1aba-8b9e-42b6-98a7-ce2389143581-A .
+}
+
+GRAPH commits:conflict7-1 {
+    commits:conflict7-1 a
+            mcat:Commit,
+            owl:Thing,
+            prov:Activity ;
+        mcat:baseCommit commits:conflict7-0 ;
+        dcterms:title "Commit Conflict 7-1" ;
+        prov:atTime "2016-03-02T00:01:00+00:00"^^xsd:dateTime ;
+        prov:generated revisions:4f588b11-37bc-41d1-86f8-efe21a11898a ;
+        prov:wasAssociatedWith users:taken .
+
+    revisions:4f588b11-37bc-41d1-86f8-efe21a11898a a
+            mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:01c08977-1e6f-45e0-946b-41faa1de8601-A ;
+        mcat:deletions deltas:01c08977-1e6f-45e0-946b-41faa1de8601-B ;
+        prov:hadPrimarySource revisions:945507d2-5f9f-451e-bee5-6e33950aebfe .
+}
+
+GRAPH commits:conflict1-2 {
+    commits:conflict1-2 a
+            mcat:Commit,
+            owl:Thing,
+            prov:Activity ;
+        mcat:branchCommit commits:conflict1-0 ;
+        dcterms:title "Commit Conflict 1-2" ;
+        prov:atTime "2016-03-03T00:02:00+00:00"^^xsd:dateTime ;
+        prov:generated revisions:0ba57e93-eb30-4584-a74b-7b4159f2a0a1 ;
+        prov:wasAssociatedWith users:taken .
+
+    revisions:0ba57e93-eb30-4584-a74b-7b4159f2a0a1 a
+            mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:0ba57e93-eb30-4584-a74b-7b4159f2a0a1-A ;
+        mcat:deletions deltas:0ba57e93-eb30-4584-a74b-7b4159f2a0a1-B ;
+        prov:hadPrimarySource revisions:a225e5fc-5962-4ad6-8b7c-aeaba9588c07 .
+}
+
+GRAPH ns14:HEAD {
+    <http://test.com#sub> a owl:Class ;
+        dcterms:title "Title" .
+}
+
+GRAPH commits:conflict4-0 {
+    commits:conflict4-0 a
+            mcat:Commit,
+            owl:Thing,
+            prov:Activity ;
+        mcat:initialRevision revisions:ae7f2464-a774-4709-963a-21a839c8af4e ;
+        dcterms:title "Commit Conflict 4-0" ;
+        prov:atTime "2016-03-01T00:00:00+00:00"^^xsd:dateTime ;
+        prov:generated revisions:048fd799-d1b9-4663-ade5-540c53b54096 ;
+        prov:wasAssociatedWith users:taken .
+
+    revisions:048fd799-d1b9-4663-ade5-540c53b54096 a
+            mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:dedb2142-a44b-4005-bccf-0bac37d2cb7f-B ;
+        mcat:deletions deltas:dedb2142-a44b-4005-bccf-0bac37d2cb7f-A .
+
+    revisions:ae7f2464-a774-4709-963a-21a839c8af4e a
+            mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:ae7f2464-a774-4709-963a-21a839c8af4e-A ;
+        mcat:deletions deltas:ae7f2464-a774-4709-963a-21a839c8af4e-B .
+}
+
+GRAPH commits:conflict4-1 {
+    commits:conflict4-1 a
+            mcat:Commit,
+            owl:Thing,
+            prov:Activity ;
+        mcat:baseCommit commits:conflict4-0 ;
+        dcterms:title "Commit Conflict 4-1" ;
+        prov:atTime "2016-03-02T00:01:00+00:00"^^xsd:dateTime ;
+        prov:generated revisions:dedb2142-a44b-4005-bccf-0bac37d2cb7f ;
+        prov:wasAssociatedWith users:taken .
+
+    revisions:dedb2142-a44b-4005-bccf-0bac37d2cb7f a
+            mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:bb19d0bc-4a9c-4705-8d3b-39b8ab38812d-A ;
+        mcat:deletions deltas:bb19d0bc-4a9c-4705-8d3b-39b8ab38812d-B ;
+        prov:hadPrimarySource revisions:048fd799-d1b9-4663-ade5-540c53b54096 .
+}
+
+GRAPH commits:conflict4-2 {
+    commits:conflict4-2 a
+            mcat:Commit,
+            owl:Thing,
+            prov:Activity ;
+        mcat:branchCommit commits:conflict4-0 ;
+        dcterms:title "Commit Conflict 4-2" ;
+        prov:atTime "2016-03-03T00:02:00+00:00"^^xsd:dateTime ;
+        prov:generated revisions:0ef17bf4-134c-48d8-9a85-399136a7db1e ;
+        prov:wasAssociatedWith users:taken .
+
+    revisions:0ef17bf4-134c-48d8-9a85-399136a7db1e a
+            mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:0ef17bf4-134c-48d8-9a85-399136a7db1e-A ;
+        mcat:deletions deltas:0ef17bf4-134c-48d8-9a85-399136a7db1e-B ;
+        prov:hadPrimarySource revisions:048fd799-d1b9-4663-ade5-540c53b54096 .
+}
+
+GRAPH commits:conflict4-3 {
+    commits:conflict4-3 a
+            mcat:Commit,
+            owl:Thing,
+            prov:Activity ;
+        mcat:branchCommit commits:conflict4-2 ;
+        dcterms:title "Commit Conflict 4-3" ;
+        prov:atTime "2016-03-04T00:03:00+00:00"^^xsd:dateTime ;
+        prov:generated revisions:af1c07b3-6b90-4b83-b4d1-907bdb969e1c ;
+        prov:wasAssociatedWith users:taken .
+
+    revisions:af1c07b3-6b90-4b83-b4d1-907bdb969e1c a
+            mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:af1c07b3-6b90-4b83-b4d1-907bdb969e1c-A ;
+        mcat:deletions deltas:af1c07b3-6b90-4b83-b4d1-907bdb969e1c-B ;
+        prov:hadPrimarySource revisions:0ef17bf4-134c-48d8-9a85-399136a7db1e .
+}
+
+GRAPH catalogs:catalog-local {
+    catalogs:catalog-local a
+            mcat:Catalog,
+            owl:Thing ;
+        dcterms:description "The Mobi Catalog records datasets, ontologies, data mappings, and other resources." ;
+        dcterms:issued "2024-10-28T15:12:22.373458+00:00"^^xsd:dateTime ;
+        dcterms:modified "2024-10-28T15:12:22.373458+00:00"^^xsd:dateTime ;
+        dcterms:title "Mobi Catalog (Local)" .
+}
+
+GRAPH deltas:97afea0d-1b1f-4b4d-b394-a4452415d5f2-A {
+    <http://test.com#sub> a owl:Class ;
+        dcterms:title "Title" .
+}
+
+GRAPH commits:conflict6-0 {
+    commits:conflict6-0 a
+            mcat:Commit,
+            owl:Thing,
+            prov:Activity ;
+        mcat:initialRevision revisions:0bb411fd-5c61-47f0-b8db-3d0f5239f133 ;
+        dcterms:title "Commit Conflict 6-0" ;
+        prov:atTime "2016-03-01T00:00:00+00:00"^^xsd:dateTime ;
+        prov:generated revisions:66420cd9-162a-4dd5-a8a3-f442be946fcb ;
+        prov:wasAssociatedWith users:taken .
+
+    revisions:0bb411fd-5c61-47f0-b8db-3d0f5239f133 a
+            mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:0bb411fd-5c61-47f0-b8db-3d0f5239f133-A ;
+        mcat:deletions deltas:0bb411fd-5c61-47f0-b8db-3d0f5239f133-B .
+
+    revisions:66420cd9-162a-4dd5-a8a3-f442be946fcb a
+            mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:7241cb91-e5ec-450a-828d-d14407d6599f-B ;
+        mcat:deletions deltas:7241cb91-e5ec-450a-828d-d14407d6599f-A .
+}

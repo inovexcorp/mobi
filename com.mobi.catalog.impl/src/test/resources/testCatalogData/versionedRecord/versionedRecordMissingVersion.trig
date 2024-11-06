@@ -1,0 +1,32 @@
+@prefix dc: <http://purl.org/dc/terms/> .
+@prefix records: <http://mobi.com/test/records#> .
+@prefix mcat: <http://mobi.com/ontologies/catalog#> .
+@prefix muser: <http://mobi.com/ontologies/user/management#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix catalogs: <http://mobi.com/test/catalogs#> .
+@prefix versions: <http://mobi.com/test/versions#> .
+
+GRAPH records:versioned-record-missing-version {
+    records:versioned-record-missing-version a mcat:VersionedRecord, mcat:Record ;
+        mcat:catalog catalogs:catalog-local ;
+        dc:title "Versioned Record Missing Version" ;
+        dc:description "Description" ;
+        dc:issued "2016-02-01T00:00:00Z"^^xsd:dateTime ;
+        dc:modified "2016-12-02T00:00:00Z"^^xsd:dateTime ;
+        dc:publisher muser:tester ;
+        mcat:keyword "222";
+        mcat:version <http://mobi.com/test#random> ;
+        mcat:version versions:version-missing-distribution .
+}
+
+GRAPH versions:version-missing-distribution {
+    versions:version-missing-distribution a mcat:Version ;
+        dc:title "Version Missing Distribution" ;
+        dc:issued "2016-03-01T00:00:00Z"^^xsd:dateTime ;
+        dc:modified "2016-11-11T00:00:00Z"^^xsd:dateTime ;
+        mcat:versionedDistribution <http://mobi.com/test#random> .
+}
+
+GRAPH catalogs:catalog-local {
+    catalogs:catalog-local a mcat:Catalog .
+}

@@ -307,7 +307,7 @@ public class SimpleCompiledResourceManager implements CompiledResourceManager {
         Map<Statement, Integer> additions = new HashMap<>();
         Map<Statement, Integer> deletions = new HashMap<>();
         forwardIRIs.forEach(revisionID ->
-                aggregateDifferences(additions, deletions, revisionID, forwardIRIs, headGraphConn));
+                aggregateDifferences(additions, deletions, revisionID, fullIRIs, headGraphConn));
         headGraphConn.remove(deletions.keySet(), tempGraph);
         headGraphConn.add(additions.keySet(), tempGraph);
     }

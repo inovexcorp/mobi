@@ -309,21 +309,31 @@ public class SimpleRevisionManager implements RevisionManager {
         // (on the direct master chain) or the masterCommitOfInterest
         List<Revision> revisionList = new ArrayList<>();
         Set<Resource> revisionResourceSet = new HashSet<>();
+        List<Revision> forwardRevisions = getForwardRevisions(commitId, conn);
         for (Map.Entry<Resource, Resource> commitToRevision : masterChainMap.entrySet()) {
+            // Get the commit and revision for the direct master chain node
             Resource masterCommit = commitToRevision.getKey();
             Resource masterRevision = commitToRevision.getValue();
 
+            // If the revision has already been processed move to the next commit
             if (revisionResourceSet.contains(masterRevision)) {
                 continue;
             }
+            
+            // Add the revision
+            // If it is a merge commit then recurse down the chains
             boolean done = traverseRevisions(revisionList, revisionResourceSet, masterCommit, masterRevision,
                     mergeChainsMap, masterCommitOfInterest, conn);
-            if (done || masterCommitOfInterest.equals(masterCommit)) {
+
+            if ((done || masterCommitOfInterest.equals(masterCommit))
+                    && (!forwardRevisions.isEmpty() || masterChainMap.containsKey(masterCommitOfInterest))) {
+                // If the commit of interest has been reached then exit loop
+                // Unless there are forwards revisions or the master chain has the master COI
+                //      - Need to continue in this case to apply deltas from master
                 break;
             }
         }
 
-        List<Revision> forwardRevisions = getForwardRevisions(commitId, conn);
         handleMasterMergeIntoBranch(revisionList, forwardRevisions, conn);
         return new RevisionChain(revisionList, forwardRevisions);
     }

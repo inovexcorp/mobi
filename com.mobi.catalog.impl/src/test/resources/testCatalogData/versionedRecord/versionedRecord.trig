@@ -1,0 +1,48 @@
+@prefix dc: <http://purl.org/dc/terms/> .
+@prefix records: <http://mobi.com/test/records#> .
+@prefix mcat: <http://mobi.com/ontologies/catalog#> .
+@prefix muser: <http://mobi.com/ontologies/user/management#> .
+@prefix catalogs: <http://mobi.com/test/catalogs#> .
+@prefix distributions: <http://mobi.com/test/distributions#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix users: <http://mobi.com/test/users#> .
+@prefix versions: <http://mobi.com/test/versions#> .
+
+GRAPH records:versioned-record {
+    records:versioned-record a mcat:VersionedRecord, mcat:Record ;
+        mcat:catalog catalogs:catalog-local ;
+        dc:title "Versioned Record" ;
+        dc:description "Description" ;
+        dc:issued "2017-03-03T00:00:00Z"^^xsd:dateTime ;
+        dc:modified "2016-12-02T00:00:00Z"^^xsd:dateTime ;
+        dc:publisher users:taken ;
+        mcat:keyword "111" ;
+        mcat:version versions:version ;
+        mcat:version versions:latest-version ;
+        mcat:latestVersion versions:latest-version .
+}
+
+GRAPH catalogs:catalog-local {
+    catalogs:catalog-local a mcat:Catalog .
+}
+
+GRAPH versions:version {
+    versions:version a mcat:Version ;
+        dc:title "Version" ;
+        dc:issued "2016-03-01T00:00:00Z"^^xsd:dateTime ;
+        dc:modified "2016-11-11T00:00:00Z"^^xsd:dateTime ;
+        mcat:versionedDistribution distributions:distribution .
+}
+
+GRAPH distributions:distribution {
+    distributions:distribution a mcat:Distribution ;
+        dc:title "Distribution" ;
+}
+
+GRAPH versions:latest-version {
+    versions:latest-version a mcat:Version ;
+        dc:title "Latest Version" ;
+        dc:issued "2016-03-01T00:00:00Z"^^xsd:dateTime ;
+        dc:modified "2016-11-11T00:00:00Z"^^xsd:dateTime ;
+        mcat:versionedDistribution distributions:distribution .
+}

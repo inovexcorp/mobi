@@ -1,0 +1,189 @@
+@prefix commits: <http://mobi.com/test/commits#> .
+@prefix mcat: <http://mobi.com/ontologies/catalog#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix deltas: <https://mobi.com/deltas#> .
+@prefix ns6: <https://mobi.com/records#615c3169-1d32-4ed4-bb3f-b72abf643ff7/> .
+@prefix records: <http://mobi.com/test/records#> .
+@prefix catalogs: <http://mobi.com/test/catalogs#> .
+@prefix branches: <http://mobi.com/test/branches#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix revisions: <https://mobi.com/test/revisions#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix muser: <http://mobi.com/ontologies/user/management#> .
+
+GRAPH <https://mobi.com/records#615c3169-1d32-4ed4-bb3f-b72abf643ff7/HEAD> {
+    <http://mobi.com/test/ClassC> a owl:Class .
+
+    <http://mobi.com/test/ontology> a owl:Ontology .
+}
+
+# Complex Commit History Deletion Test
+
+GRAPH catalogs:catalog-local {
+    catalogs:catalog-local a mcat:Catalog .
+}
+
+GRAPH records:complex-record {
+    records:complex-record a
+            mcat:Record,
+            mcat:VersionedRDFRecord,
+            mcat:VersionedRecord ;
+        mcat:branch
+            branches:complex-branch,
+            branches:complex-master ;
+        mcat:catalog catalogs:catalog-local ;
+        mcat:masterBranch branches:complex-master ;
+        dcterms:description "Description" ;
+        dcterms:issued "2018-01-01T00:00:00+00:00"^^xsd:dateTime ;
+        dcterms:modified "2018-01-01T00:00:00+00:00"^^xsd:dateTime ;
+        dcterms:publisher muser:tester ;
+        dcterms:title "Complex History Record" .
+}
+
+# Complex master
+GRAPH branches:complex-master {
+    branches:complex-master a
+            mcat:Branch,
+            mcat:MasterBranch ;
+        mcat:head commits:complex-b ;
+        mcat:headGraph <https://mobi.com/records#615c3169-1d32-4ed4-bb3f-b72abf643ff7/HEAD> ;
+        dcterms:issued "2018-01-01T00:00:00+00:00"^^xsd:dateTime ;
+        dcterms:modified "2018-01-01T00:00:00+00:00"^^xsd:dateTime ;
+        dcterms:title "Complex Master Branch" .
+}
+
+GRAPH commits:complex-b {
+    commits:complex-b a
+            mcat:Commit,
+            owl:Thing,
+            prov:Activity ;
+        mcat:baseCommit commits:complex-d ;
+        dcterms:title "Complex Commit B" ;
+        prov:atTime "2018-01-03T00:00:00+00:00"^^xsd:dateTime ;
+        prov:generated revisions:956044b6-1f7e-4d90-b804-9bce32122f87 ;
+        prov:wasAssociatedWith muser:tester .
+
+    revisions:956044b6-1f7e-4d90-b804-9bce32122f87 a
+            mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:83620c22-2b0c-48ee-9b2d-bc6afc3df5db-A ;
+        mcat:deletions deltas:83620c22-2b0c-48ee-9b2d-bc6afc3df5db-B ;
+        prov:hadPrimarySource revisions:05f31a5b-1414-413f-8b82-fc5135a9be40 .
+}
+
+GRAPH commits:complex-d {
+    commits:complex-d a
+            mcat:Commit,
+            owl:Thing,
+            prov:Activity ;
+        mcat:initialRevision revisions:61ffe478-09df-4773-a46f-37415cabb632 ;
+        dcterms:title "Complex Commit D" ;
+        prov:atTime "2018-01-01T00:00:00+00:00"^^xsd:dateTime ;
+        prov:generated revisions:05f31a5b-1414-413f-8b82-fc5135a9be40 ;
+        prov:wasAssociatedWith muser:tester .
+
+    revisions:05f31a5b-1414-413f-8b82-fc5135a9be40 a
+            mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:956044b6-1f7e-4d90-b804-9bce32122f87-B ;
+        mcat:deletions deltas:956044b6-1f7e-4d90-b804-9bce32122f87-A .
+
+    revisions:61ffe478-09df-4773-a46f-37415cabb632 a
+            mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:61ffe478-09df-4773-a46f-37415cabb632-A ;
+        mcat:deletions deltas:61ffe478-09df-4773-a46f-37415cabb632-B .
+}
+
+GRAPH deltas:956044b6-1f7e-4d90-b804-9bce32122f87-A {
+    <http://mobi.com/test/ClassC> a owl:Class .
+}
+
+GRAPH deltas:61ffe478-09df-4773-a46f-37415cabb632-A {
+    <http://mobi.com/test/ontology> a owl:Ontology .
+}
+
+# Complex branch
+GRAPH branches:complex-branch {
+    branches:complex-branch a mcat:Branch ;
+        mcat:head commits:complex-a ;
+        dcterms:issued "2018-01-01T00:00:00+00:00"^^xsd:dateTime ;
+        dcterms:modified "2018-01-01T00:00:00+00:00"^^xsd:dateTime ;
+        dcterms:title "Complex Branch" .
+}
+
+GRAPH commits:complex-a {
+    commits:complex-a a
+            mcat:Commit,
+            owl:Thing,
+            prov:Activity ;
+        mcat:auxiliaryCommit commits:complex-b ;
+        mcat:branchCommit commits:complex-c ;
+        mcat:forwardMergeAuxRevision revisions:aa2729ff-d50b-4b56-9858-51a59a0d6791 ;
+        mcat:forwardMergeBaseRevision revisions:b7181116-d600-406b-9ca0-343ee422b2a4 ;
+        mcat:mergeDisplayRevision revisions:dfeb15db-8534-433c-9671-083b7c4849d7 ;
+        dcterms:title "Complex Commit A" ;
+        prov:atTime "2018-01-04T00:00:00+00:00"^^xsd:dateTime ;
+        prov:generated revisions:6590b2e9-05bf-4137-9284-3f955716e9d2 ;
+        prov:wasAssociatedWith muser:tester .
+
+    revisions:6590b2e9-05bf-4137-9284-3f955716e9d2 a
+            mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:6590b2e9-05bf-4137-9284-3f955716e9d2-A ;
+        mcat:deletions deltas:6590b2e9-05bf-4137-9284-3f955716e9d2-B ;
+        prov:hadPrimarySource revisions:1bc7c69b-33a4-467e-8454-1eb1b5149298 ;
+        prov:wasDerivedFrom revisions:956044b6-1f7e-4d90-b804-9bce32122f87 .
+
+    revisions:aa2729ff-d50b-4b56-9858-51a59a0d6791 a
+            mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:aa2729ff-d50b-4b56-9858-51a59a0d6791-A ;
+        mcat:deletions deltas:aa2729ff-d50b-4b56-9858-51a59a0d6791-B .
+
+    revisions:b7181116-d600-406b-9ca0-343ee422b2a4 a
+            mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:b7181116-d600-406b-9ca0-343ee422b2a4-A ;
+        mcat:deletions deltas:b7181116-d600-406b-9ca0-343ee422b2a4-B .
+
+    revisions:dfeb15db-8534-433c-9671-083b7c4849d7 a
+            mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:dfeb15db-8534-433c-9671-083b7c4849d7-A ;
+        mcat:deletions deltas:dfeb15db-8534-433c-9671-083b7c4849d7-B .
+}
+
+GRAPH commits:complex-c {
+    commits:complex-c a
+            mcat:Commit,
+            owl:Thing,
+            prov:Activity ;
+        mcat:branchCommit commits:complex-d ;
+        dcterms:title "Complex Commit C" ;
+        prov:atTime "2018-01-02T00:00:00+00:00"^^xsd:dateTime ;
+        prov:generated revisions:1bc7c69b-33a4-467e-8454-1eb1b5149298 ;
+        prov:wasAssociatedWith muser:tester .
+
+    revisions:1bc7c69b-33a4-467e-8454-1eb1b5149298 a
+            mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:1bc7c69b-33a4-467e-8454-1eb1b5149298-A ;
+        mcat:deletions deltas:1bc7c69b-33a4-467e-8454-1eb1b5149298-B ;
+        prov:hadPrimarySource revisions:05f31a5b-1414-413f-8b82-fc5135a9be40 .
+}
+
+GRAPH deltas:1bc7c69b-33a4-467e-8454-1eb1b5149298-A {
+    <http://mobi.com/test/ClassA> a owl:Class .
+
+    <http://mobi.com/test/ClassB> a owl:Class .
+}
