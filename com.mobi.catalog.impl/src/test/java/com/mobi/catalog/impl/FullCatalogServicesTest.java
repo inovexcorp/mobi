@@ -29,8 +29,6 @@ import static org.mockito.Mockito.when;
 
 import com.mobi.catalog.api.builder.Conflict;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
-import com.mobi.catalog.api.ontologies.mcat.Commit;
-import com.mobi.catalog.api.ontologies.mcat.Revision;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.catalog.impl.versioning.SimpleVersioningService;
@@ -63,18 +61,15 @@ import java.util.Set;
 public class FullCatalogServicesTest extends OrmEnabledTestCase{
     private AutoCloseable closeable;
     private MemoryRepositoryWrapper repo;
-    private OrmFactory<Branch> branchFactory = getRequiredOrmFactory(Branch.class);
-    private OrmFactory<Commit> commitFactory = getRequiredOrmFactory(Commit.class);
-    private OrmFactory<User> userFactory = getRequiredOrmFactory(User.class);
-    private OrmFactory<Revision> revisionFactory = getRequiredOrmFactory(Revision.class);
-    private OrmFactory<VersionedRDFRecord> versionedRDFRecordFactory = getRequiredOrmFactory(VersionedRDFRecord.class);
+    private final OrmFactory<Branch> branchFactory = getRequiredOrmFactory(Branch.class);
+    private final OrmFactory<User> userFactory = getRequiredOrmFactory(User.class);
+    private final OrmFactory<VersionedRDFRecord> versionedRDFRecordFactory = getRequiredOrmFactory(VersionedRDFRecord.class);
 
     private Statement initialComment;
     private Statement commentA;
     private Statement commentB;
 
     private final IRI USER_IRI = VALUE_FACTORY.createIRI("http://mobi.com/test#user");
-    private final IRI PROV_AT_TIME = VALUE_FACTORY.createIRI("http://www.w3.org/ns/prov#atTime");
     private final String COMMITS = "http://mobi.com/test/commits#";
     private final IRI CATALOG_ID = VALUE_FACTORY.createIRI("http://mobi.com/catalog-local");
 
@@ -293,12 +288,10 @@ public class FullCatalogServicesTest extends OrmEnabledTestCase{
             Map<Resource, Conflict> conflicts = createConflictMap(differenceManager.getConflicts(commitJIri, commitIIri, conn));
             Resource mergeCommitResource = versioningService.mergeIntoBranch(record, leftBranch, rightBranch, userFactory.createNew(USER_IRI), MODEL_FACTORY.createEmptyModel(), MODEL_FACTORY.createEmptyModel(), conflicts, conn);
 
-            List<Resource> commitsFromMerge = commitManager.getCommitChain(mergeCommitResource, true, conn);
             Model branchCompiled = compiledResourceManager.getCompiledResource(mergeCommitResource, conn);
 
             assertTrue(branchCompiled.contains(commentA));
-//            assertTrue(branchCompiled.contains(commentB));
-            // TODO: Investigate why this statement is not present in results. Should it be a conflict?
+            assertTrue(branchCompiled.contains(commentB));
         }
     }
 
@@ -327,7 +320,6 @@ public class FullCatalogServicesTest extends OrmEnabledTestCase{
             Map<Resource, Conflict> conflicts = createConflictMap(differenceManager.getConflicts(commitJIri, commitKIri, conn));
             Resource mergeCommitResource = versioningService.mergeIntoBranch(record, leftBranch, rightBranch, userFactory.createNew(USER_IRI), MODEL_FACTORY.createEmptyModel(), MODEL_FACTORY.createEmptyModel(), conflicts, conn);
 
-            List<Resource> commitsFromMerge = commitManager.getCommitChain(mergeCommitResource, true, conn);
             Model branchCompiled = compiledResourceManager.getCompiledResource(mergeCommitResource, conn);
 
             assertTrue(branchCompiled.contains(commentA));
@@ -360,7 +352,6 @@ public class FullCatalogServicesTest extends OrmEnabledTestCase{
             Map<Resource, Conflict> conflicts = createConflictMap(differenceManager.getConflicts(commitJIri, commitLIri, conn));
             Resource mergeCommitResource = versioningService.mergeIntoBranch(record, leftBranch, rightBranch, userFactory.createNew(USER_IRI), MODEL_FACTORY.createEmptyModel(), MODEL_FACTORY.createEmptyModel(), conflicts, conn);
 
-            List<Resource> commitsFromMerge = commitManager.getCommitChain(mergeCommitResource, true, conn);
             Model branchCompiled = compiledResourceManager.getCompiledResource(mergeCommitResource, conn);
 
             assertTrue(branchCompiled.contains(commentA));

@@ -1,0 +1,24 @@
+@prefix dc: <http://purl.org/dc/terms/> .
+@prefix records: <http://mobi.com/test/records#> .
+@prefix catalogs: <http://mobi.com/test/catalogs#> .
+@prefix users: <http://mobi.com/test/users#> .
+@prefix mcat: <http://mobi.com/ontologies/catalog#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+GRAPH records:record {
+    records:record a mcat:Record ;
+        mcat:catalog catalogs:catalog-local ;
+        dc:title "Record" ;
+        dc:description "Description" ;
+        dc:issued "2016-01-02T00:00:00Z"^^xsd:dateTime ;
+        dc:modified "2016-01-03T00:00:00Z"^^xsd:dateTime ;
+        dc:publisher users:taken .
+}
+
+GRAPH catalogs:catalog-local {
+    catalogs:catalog-local a mcat:Catalog .
+}
+
+GRAPH catalogs:catalog-distributed {
+    catalogs:catalog-distributed a mcat:Catalog .
+}

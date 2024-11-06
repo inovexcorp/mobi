@@ -176,7 +176,7 @@ public class OntologyRecordVersioningServiceTest extends OrmEnabledTestCase {
 
     @Test(expected=IllegalStateException.class)
     public void updateMasterRecordIRINotContainOntologyDefinitionTest() throws Exception {
-        try(RepositoryConnection conn = repo.getConnection()) {
+        try (RepositoryConnection conn = repo.getConnection()) {
             conn.clear();
         }
         service.updateMasterRecordIRI(record.getResource(), commit, repo.getConnection());

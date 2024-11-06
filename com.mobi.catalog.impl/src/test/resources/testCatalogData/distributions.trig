@@ -1,0 +1,35 @@
+@prefix mcat: <http://mobi.com/ontologies/catalog#> .
+@prefix dc: <http://purl.org/dc/terms/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix records: <http://mobi.com/test/records#> .
+@prefix distributions: <http://mobi.com/test/distributions#> .
+@prefix versions: <http://mobi.com/test/versions#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+
+GRAPH <http://mobi.com/test#empty> { }
+
+GRAPH <http://mobi.com/test#random> {
+    <http://mobi.com/test#random> dc:title "Title" .
+}
+
+GRAPH <http://mobi.com/test#different> {
+    <http://mobi.com/test#different> a owl:Class .
+}
+
+GRAPH distributions:distribution {
+    distributions:distribution a mcat:Distribution ;
+        dc:title "Distribution" ;
+}
+
+GRAPH distributions:lone-distribution {
+    distributions:lone-distribution a mcat:Distribution ;
+        dc:title "Lone Distribution" ;
+}
+
+
+GRAPH versions:lone-version {
+    versions:lone-version a mcat:Version ;
+        dc:title "Lone Version" ;
+        dc:issued "2016-03-01T00:00:00Z"^^xsd:dateTime ;
+        dc:modified "2016-11-11T00:00:00Z"^^xsd:dateTime .
+}

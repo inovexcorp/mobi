@@ -1,0 +1,57 @@
+@prefix mcat: <http://mobi.com/ontologies/catalog#> .
+@prefix muser: <http://mobi.com/ontologies/user/management#> .
+@prefix dc: <http://purl.org/dc/terms/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix catalogs: <http://mobi.com/test/catalogs#> .
+@prefix records: <http://mobi.com/test/records#> .
+@prefix distributions: <http://mobi.com/test/distributions#> .
+@prefix versions: <http://mobi.com/test/versions#> .
+@prefix branches: <http://mobi.com/test/branches#> .
+@prefix commits: <http://mobi.com/test/commits#> .
+@prefix revisions: <http://mobi.com/test/revisions#> .
+@prefix users: <http://mobi.com/test/users#> .
+@prefix additions: <https://mobi.com/additions#> .
+@prefix deletions: <https://mobi.com/deletions#> .
+@prefix graphs: <http://mobi.com/test/graphs#> .
+@prefix mergereqs: <http://mobi.com/ontologies/merge-requests#> .
+@prefix ontedit: <http://mobi.com/ontologies/ontology-editor#> .
+
+GRAPH commits:commit-no-additions {
+    commits:commit-no-additions a mcat:Commit ;
+        dc:title "Commit" ;
+        prov:atTime "2016-03-01T00:00:00Z"^^xsd:dateTime ;
+        prov:generated revisions:revision-no-additions .
+
+    revisions:revision-no-additions a mcat:Revision ;
+        mcat:deletions deletions:commit-no-additions .
+}
+
+GRAPH commits:commit-no-deletions {
+    commits:commit-no-deletions a mcat:Commit ;
+        dc:title "Commit" ;
+        prov:atTime "2016-03-01T00:00:00Z"^^xsd:dateTime ;
+        prov:generated revisions:revision-no-deletions .
+
+    revisions:revision-no-deletions a mcat:Revision ;
+        mcat:additions additions:commit-no-deletions .
+}
+
+GRAPH commits:testLoner {
+    commits:testLoner a mcat:Commit ;
+        dc:title "Commit Test Loner" ;
+        prov:atTime "2017-12-05T09:14:34:00Z"^^xsd:dateTime ;
+        prov:generated revisions:testLoner .
+
+    revisions:testLoner a mcat:Revision ;
+        mcat:additions additions:testLoner ;
+        mcat:deletions deletions:testLoner .
+}
+
+GRAPH additions:testLoner {
+    <http://mobi.com/test/ontology> dc:title "Test Loner Title" .
+}
+
+GRAPH deletions:testLoner {
+}

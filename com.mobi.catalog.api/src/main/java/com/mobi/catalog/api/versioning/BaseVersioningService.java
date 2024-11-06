@@ -570,7 +570,16 @@ public abstract class BaseVersioningService<T extends VersionedRDFRecord> implem
                     // Duplicate deletions
                     conn.add(left.getDeletions().filter(subject, null, null), base.additionsIRI, aux.additionsIRI);
                     duplicateAddsToRemove.addAll(left.getDeletions().filter(subject, null, null));
-                    additions.addAll(duplicateAddsToRemove); // TODO: should this be duplicateAddsToRemove????
+                    additions.addAll(duplicateAddsToRemove);
+                } else if (hasDuplicateAdds && hasDuplicateDels) {
+                    // Duplicate additions
+                    conn.add(left.getAdditions().filter(subject, null, null), base.deletionsIRI, aux.deletionsIRI);
+                    duplicateDelsToRemove.addAll(left.getAdditions().filter(subject, null, null));
+                    deletions.addAll(duplicateDelsToRemove);
+                    // Duplicate deletions
+                    conn.add(left.getDeletions().filter(subject, null, null), base.additionsIRI, aux.additionsIRI);
+                    duplicateAddsToRemove.addAll(left.getDeletions().filter(subject, null, null));
+                    additions.addAll(duplicateAddsToRemove);
                 } else if (isSubPredConflict) {
                     // If both differences in conflict has additions AND deletions that contain the subject,
                     // then it is a sub/pred conflict

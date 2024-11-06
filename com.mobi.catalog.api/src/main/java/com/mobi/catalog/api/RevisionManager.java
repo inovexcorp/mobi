@@ -53,7 +53,7 @@ public interface RevisionManager {
     Revision getRevision(Resource revisionId, RepositoryConnection conn);
 
     /**
-     * Gets the Revision associated with the provided commit Resource.
+     * Gets the prov:generated Revision associated with the provided commit Resource.
      *
      * @param commitId The Resource identifying the commit
      * @param conn     The connection to the repository

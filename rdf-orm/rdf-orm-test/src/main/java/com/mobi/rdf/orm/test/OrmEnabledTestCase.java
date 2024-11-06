@@ -34,9 +34,11 @@ import com.mobi.rdf.orm.impl.OrmFactoryRegistryImpl;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang3.reflect.FieldUtils;
 import org.eclipse.rdf4j.model.ModelFactory;
+import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
+import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFHandler;
@@ -101,6 +103,25 @@ public abstract class OrmEnabledTestCase {
                 .peek(OrmEnabledTestCase::initOrmFactory)
                 .peek(VALUE_CONVERTER_REGISTRY::registerValueConverter)
                 .forEach(OrmEnabledTestCase::registerOrmFactory);
+    }
+
+    /**
+     * Loads a file from test resources into the provided repository.
+     *
+     * @param repository The repository to load data into
+     * @param file The filename to load
+     * @param rdfFormat The RDFFormat of the file
+     * @param contexts Optional contexts to load data into
+     */
+    public void addData(Repository repository, String file, RDFFormat rdfFormat, Resource... contexts) {
+        try (RepositoryConnection conn = repository.getConnection()) {
+            InputStream testCatalog = getClass().getResourceAsStream(file);
+            try {
+                conn.add(testCatalog, rdfFormat, contexts);
+            } catch (IOException e) {
+                Assert.fail(e.getMessage());
+            }
+        }
     }
 
     /**

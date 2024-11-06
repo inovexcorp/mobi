@@ -1,0 +1,16 @@
+<http://mobi.com/catalog-local> {
+    <http://mobi.com/catalog-local> a <http://mobi.com/ontologies/catalog#Catalog>, <http://www.w3.org/2002/07/owl#Thing>;
+        <http://purl.org/dc/terms/title> "Mobi Catalog (Local)";
+        <http://purl.org/dc/terms/description> "The Mobi Catalog records datasets, ontologies, data mappings, and other resources.";
+        <http://purl.org/dc/terms/issued> "2024-10-07T03:13:31.750480209Z"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+        <http://purl.org/dc/terms/modified> "2024-10-07T03:13:31.750480209Z"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
+}
+
+<http://mobi.com/catalog-distributed> {
+    <http://mobi.com/catalog-distributed> a <http://mobi.com/ontologies/catalog#Catalog>,
+                                                <http://www.w3.org/2002/07/owl#Thing>;
+        <http://purl.org/dc/terms/title> "Mobi Catalog (Distributed)";
+        <http://purl.org/dc/terms/description> "The Mobi Catalog records datasets, ontologies, data mappings, and other resources.";
+        <http://purl.org/dc/terms/issued> "2024-10-07T03:13:31.741144501Z"^^<http://www.w3.org/2001/XMLSchema#dateTime>;
+        <http://purl.org/dc/terms/modified> "2024-10-07T03:13:31.741144501Z"^^<http://www.w3.org/2001/XMLSchema#dateTime> .
+}

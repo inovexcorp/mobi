@@ -22,7 +22,6 @@ package com.mobi.catalog.impl;
  * #L%
  */
 
-import static com.mobi.catalog.impl.TestResourceUtils.trigRequired;
 import static junit.framework.TestCase.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -38,6 +37,7 @@ import com.mobi.repository.impl.sesame.memory.MemoryRepositoryWrapper;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
+import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
 import org.junit.After;
 import org.junit.Before;
@@ -69,6 +69,7 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
         repo = new MemoryRepositoryWrapper();
         repo.setDelegate(new SailRepository(new MemoryStore()));
         closeable = MockitoAnnotations.openMocks(this);
+        addData(repo, "/testCatalogData/catalog.trig", RDFFormat.TRIG);
 
         when(configProvider.getRepository()).thenReturn(repo);
         when(configProvider.getLocalCatalogIRI()).thenReturn(CATALOG_LOCAL);
@@ -91,7 +92,6 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testGetDistributedCatalog() throws Exception {
-        trigRequired(repo, "/systemRepo/simpleOntology1.trig");
         try (RepositoryConnection conn = repo.getConnection()) {
             Catalog result = manager.getDistributedCatalog(conn);
             verify(thingManager).getExpectedObject(eq(CATALOG_DISTRIBUTED), eq(catalogFactory), any(RepositoryConnection.class));
@@ -103,7 +103,6 @@ public class SimpleCatalogManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testGetLocalCatalog() throws Exception {
-        trigRequired(repo, "/systemRepo/simpleOntology1.trig");
         try (RepositoryConnection conn = repo.getConnection()) {
             Catalog result = manager.getLocalCatalog(conn);
             verify(thingManager).getExpectedObject(eq(CATALOG_LOCAL), eq(catalogFactory), any(RepositoryConnection.class));

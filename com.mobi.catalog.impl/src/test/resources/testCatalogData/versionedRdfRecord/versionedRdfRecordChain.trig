@@ -1,0 +1,354 @@
+@prefix deltas: <https://mobi.com/deltas#> .
+@prefix versions: <http://mobi.com/test/versions#> .
+@prefix branches: <http://mobi.com/test/branches#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix commits: <http://mobi.com/test/commits#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix mcat: <http://mobi.com/ontologies/catalog#> .
+@prefix mergereqs: <http://mobi.com/ontologies/merge-requests#> .
+@prefix catalogs: <http://mobi.com/test/catalogs#> .
+@prefix records: <http://mobi.com/test/records#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix revisions: <https://mobi.com/test/revisions#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix muser: <http://mobi.com/ontologies/user/management#> .
+@prefix dc: <http://purl.org/dc/terms/> .
+@prefix users: <http://mobi.com/test/users#> .
+@prefix ns11: <https://mobi.com/records#f6289d32-cd43-4d39-9629-ab653428da88/> .
+
+deltas:c749eea6-92ad-4657-9e85-de3af05fec3a-A {
+    <http://mobi.com/test/class> dcterms:title "Class Title 2" .
+
+    <http://mobi.com/test/ontology> dcterms:title "Test 2 Title" .
+}
+
+deltas:c749eea6-92ad-4657-9e85-de3af05fec3a-B {
+    <http://mobi.com/test/class> dcterms:title "Class Title 1" .
+
+    <http://mobi.com/test/ontology> dcterms:title "Test 1 Title" .
+}
+
+commits:test5a {
+    commits:test5a a
+            mcat:Commit,
+            owl:Thing,
+            prov:Activity ;
+        mcat:branchCommit commits:test3 ;
+        dcterms:title "Commit Test 5a" ;
+        prov:atTime "2016-03-01T00:06:00+00:00"^^xsd:dateTime ;
+        prov:generated revisions:e874bbd6-fb84-4c4f-9635-4d375eee4f87 ;
+        prov:wasAssociatedWith <http://mobi.com/test/users#tester> .
+
+    revisions:e874bbd6-fb84-4c4f-9635-4d375eee4f87 a
+            mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:e874bbd6-fb84-4c4f-9635-4d375eee4f87-A ;
+        mcat:deletions deltas:e874bbd6-fb84-4c4f-9635-4d375eee4f87-B ;
+        prov:hadPrimarySource revisions:45e72d6d-9097-41c7-8b03-c8a799d5b973 .
+}
+
+branches:branch1 {
+    branches:branch1 a mcat:Branch ;
+        mcat:head commits:test3 ;
+        dcterms:issued "2016-03-01T00:00:00+00:00"^^xsd:dateTime ;
+        dcterms:modified "2016-01-02T00:00:00+00:00"^^xsd:dateTime ;
+        dcterms:title "Branch1" .
+}
+
+branches:branch2 {
+    branches:branch2 a mcat:Branch ;
+        mcat:head commits:test5a ;
+        dcterms:issued "2016-03-01T00:00:00+00:00"^^xsd:dateTime ;
+        dcterms:modified "2016-01-02T00:00:00+00:00"^^xsd:dateTime ;
+        dcterms:title "Branch2" .
+}
+
+records:versioned-rdf-record-chain {
+    records:versioned-rdf-record-chain a
+            mcat:Record,
+            mcat:VersionedRDFRecord,
+            mcat:VersionedRecord ;
+        mcat:branch
+            branches:branch1,
+            branches:branch2,
+            branches:master ;
+        mcat:catalog <http://mobi.com/test/catalogs#catalog-local> ;
+        mcat:masterBranch branches:master ;
+        dcterms:description "Description" ;
+        dcterms:issued "2017-01-01T00:00:00+00:00"^^xsd:dateTime ;
+        dcterms:modified "2017-05-01T00:00:00+00:00"^^xsd:dateTime ;
+        dcterms:publisher <http://mobi.com/ontologies/user/management#tester> ;
+        dcterms:title "Versioned RDF Record Chain" .
+}
+
+ns11:HEAD {
+    <http://mobi.com/test/class> dcterms:title "Class Title 2" .
+
+    <http://mobi.com/test/class0> a owl:Class .
+
+    <http://mobi.com/test/ontology> a owl:Ontology ;
+        dcterms:title "Test 4 Title" .
+}
+
+deltas:6bdb10bb-fc61-4909-8a56-177320f4bdb4-B {
+    <http://mobi.com/test/ontology> dcterms:title "Test 4 Title" .
+}
+
+deltas:45e72d6d-9097-41c7-8b03-c8a799d5b973-A {
+    <http://mobi.com/test/ontology> dcterms:title "Test 3 Title" .
+}
+
+deltas:45e72d6d-9097-41c7-8b03-c8a799d5b973-B {
+    <http://mobi.com/test/class> a owl:Class .
+}
+
+deltas:d472c229-6fc6-4bae-a2e8-794df5b58a12-B {
+    <http://mobi.com/test/ontology> dcterms:title "Test 4 Title" .
+}
+
+deltas:d472c229-6fc6-4bae-a2e8-794df5b58a12-A {
+    <http://mobi.com/test/ontology> dcterms:title "Test 2 Title" .
+}
+
+deltas:76382817-24e6-43ed-9b81-166c11d0d93b-B {
+    <http://mobi.com/test/ontology> dcterms:title "Test 0 Title" .
+}
+
+deltas:76382817-24e6-43ed-9b81-166c11d0d93b-A {
+    <http://mobi.com/test/ontology> dcterms:title "Test 1 Title" .
+}
+
+commits:test4b {
+    commits:test4b a
+            mcat:Commit,
+            owl:Thing,
+            prov:Activity ;
+        mcat:branchCommit commits:test2 ;
+        dcterms:title "Commit Test 4b" ;
+        prov:atTime "2016-03-01T00:04:00+00:00"^^xsd:dateTime ;
+        prov:generated revisions:d882ed85-a3f1-4afa-a741-e528bbb6550f ;
+        prov:wasAssociatedWith <http://mobi.com/test/users#tester> .
+
+    revisions:d882ed85-a3f1-4afa-a741-e528bbb6550f a
+            mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:d882ed85-a3f1-4afa-a741-e528bbb6550f-A ;
+        mcat:deletions deltas:d882ed85-a3f1-4afa-a741-e528bbb6550f-B ;
+        prov:hadPrimarySource revisions:c749eea6-92ad-4657-9e85-de3af05fec3a .
+}
+
+commits:test4a {
+    commits:test4a a
+            mcat:Commit,
+            owl:Thing,
+            prov:Activity ;
+        mcat:baseCommit commits:test2 ;
+        dcterms:title "Commit Test 4a" ;
+        prov:atTime "2016-03-01T00:03:00+00:00"^^xsd:dateTime ;
+        prov:generated revisions:0b34297c-cfa8-4ce9-9f1a-5e1d10086af3 ;
+        prov:wasAssociatedWith <http://mobi.com/test/users#tester> .
+
+    revisions:0b34297c-cfa8-4ce9-9f1a-5e1d10086af3 a
+            mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:87a72c4f-7ec7-4f30-b39a-78a010618115-A ;
+        mcat:deletions deltas:87a72c4f-7ec7-4f30-b39a-78a010618115-B ;
+        prov:hadPrimarySource revisions:c749eea6-92ad-4657-9e85-de3af05fec3a .
+}
+
+deltas:d882ed85-a3f1-4afa-a741-e528bbb6550f-B {
+    <http://mobi.com/test/ontology> dcterms:title "Test 2 Title" .
+}
+
+deltas:d882ed85-a3f1-4afa-a741-e528bbb6550f-A {
+    <http://mobi.com/test/ontology> dcterms:title "Test 4 Title" .
+}
+
+deltas:e874bbd6-fb84-4c4f-9635-4d375eee4f87-A {
+    <http://mobi.com/test/class> a owl:Class .
+
+    <http://mobi.com/test/ontology> dcterms:title "Test 5a Title" .
+}
+
+branches:master {
+    branches:master a
+            mcat:Branch,
+            mcat:MasterBranch ;
+        mcat:head commits:test4a ;
+        mcat:headGraph ns11:HEAD ;
+        dcterms:issued "2016-03-01T00:00:00+00:00"^^xsd:dateTime ;
+        dcterms:modified "2016-01-02T00:00:00+00:00"^^xsd:dateTime ;
+        dcterms:title "Master Branch" .
+}
+
+commits:test1 {
+    commits:test1 a
+            mcat:Commit,
+            owl:Thing,
+            prov:Activity ;
+        mcat:baseCommit commits:test0 ;
+        dcterms:title "Commit Test 1" ;
+        prov:atTime "2016-03-01T00:01:00+00:00"^^xsd:dateTime ;
+        prov:generated revisions:76382817-24e6-43ed-9b81-166c11d0d93b ;
+        prov:wasAssociatedWith <http://mobi.com/test/users#tester> .
+
+    revisions:76382817-24e6-43ed-9b81-166c11d0d93b a
+            mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:c749eea6-92ad-4657-9e85-de3af05fec3a-B ;
+        mcat:deletions deltas:c749eea6-92ad-4657-9e85-de3af05fec3a-A ;
+        prov:hadPrimarySource revisions:90e97f4f-418e-4a2d-a57a-bc6c63477b34 .
+}
+
+commits:test0 {
+    commits:test0 a
+            mcat:Commit,
+            owl:Thing,
+            prov:Activity ;
+        mcat:initialRevision revisions:ba9e97d5-01ac-4fc9-be71-98f64cfdabb7 ;
+        dcterms:title "Commit Test 0" ;
+        prov:atTime "2016-03-01T00:00:00+00:00"^^xsd:dateTime ;
+        prov:generated revisions:90e97f4f-418e-4a2d-a57a-bc6c63477b34 ;
+        prov:wasAssociatedWith <http://mobi.com/test/users#tester> .
+
+    revisions:90e97f4f-418e-4a2d-a57a-bc6c63477b34 a
+            mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:76382817-24e6-43ed-9b81-166c11d0d93b-B ;
+        mcat:deletions deltas:76382817-24e6-43ed-9b81-166c11d0d93b-A .
+
+    revisions:ba9e97d5-01ac-4fc9-be71-98f64cfdabb7 a
+            mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:ba9e97d5-01ac-4fc9-be71-98f64cfdabb7-A ;
+        mcat:deletions deltas:ba9e97d5-01ac-4fc9-be71-98f64cfdabb7-B .
+}
+
+commits:test3 {
+    commits:test3 a
+            mcat:Commit,
+            owl:Thing,
+            prov:Activity ;
+        mcat:auxiliaryCommit commits:test4a ;
+        mcat:branchCommit commits:test4b ;
+        mcat:forwardMergeAuxRevision revisions:d472c229-6fc6-4bae-a2e8-794df5b58a12 ;
+        mcat:forwardMergeBaseRevision revisions:6bdb10bb-fc61-4909-8a56-177320f4bdb4 ;
+        mcat:mergeDisplayRevision revisions:bbae4667-4cc7-4db9-a38f-89a379c9ab25 ;
+        dcterms:title "Commit Test 3" ;
+        prov:atTime "2016-03-01T00:05:00+00:00"^^xsd:dateTime ;
+        prov:generated revisions:45e72d6d-9097-41c7-8b03-c8a799d5b973 ;
+        prov:wasAssociatedWith <http://mobi.com/test/users#tester> .
+
+    revisions:45e72d6d-9097-41c7-8b03-c8a799d5b973 a
+            mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:45e72d6d-9097-41c7-8b03-c8a799d5b973-A ;
+        mcat:deletions deltas:45e72d6d-9097-41c7-8b03-c8a799d5b973-B ;
+        prov:hadPrimarySource revisions:d882ed85-a3f1-4afa-a741-e528bbb6550f ;
+        prov:wasDerivedFrom revisions:0b34297c-cfa8-4ce9-9f1a-5e1d10086af3 .
+
+    revisions:6bdb10bb-fc61-4909-8a56-177320f4bdb4 a
+            mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:6bdb10bb-fc61-4909-8a56-177320f4bdb4-A ;
+        mcat:deletions deltas:6bdb10bb-fc61-4909-8a56-177320f4bdb4-B .
+
+    revisions:bbae4667-4cc7-4db9-a38f-89a379c9ab25 a
+            mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:bbae4667-4cc7-4db9-a38f-89a379c9ab25-A ;
+        mcat:deletions deltas:bbae4667-4cc7-4db9-a38f-89a379c9ab25-B .
+
+    revisions:d472c229-6fc6-4bae-a2e8-794df5b58a12 a
+            mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:d472c229-6fc6-4bae-a2e8-794df5b58a12-A ;
+        mcat:deletions deltas:d472c229-6fc6-4bae-a2e8-794df5b58a12-B .
+}
+
+commits:test2 {
+    commits:test2 a
+            mcat:Commit,
+            owl:Thing,
+            prov:Activity ;
+        mcat:baseCommit commits:test1 ;
+        dcterms:title "Commit Test 2" ;
+        prov:atTime "2016-03-01T00:02:00+00:00"^^xsd:dateTime ;
+        prov:generated revisions:c749eea6-92ad-4657-9e85-de3af05fec3a ;
+        prov:wasAssociatedWith <http://mobi.com/test/users#tester> .
+
+    revisions:c749eea6-92ad-4657-9e85-de3af05fec3a a
+            mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:0b34297c-cfa8-4ce9-9f1a-5e1d10086af3-B ;
+        mcat:deletions deltas:0b34297c-cfa8-4ce9-9f1a-5e1d10086af3-A ;
+        prov:hadPrimarySource revisions:76382817-24e6-43ed-9b81-166c11d0d93b .
+}
+
+deltas:bbae4667-4cc7-4db9-a38f-89a379c9ab25-B {
+    <http://mobi.com/test/class> a owl:Class .
+
+    <http://mobi.com/test/ontology> dcterms:title "Test 4 Title" .
+}
+
+deltas:bbae4667-4cc7-4db9-a38f-89a379c9ab25-A {
+    <http://mobi.com/test/ontology> dcterms:title
+            "Test 2 Title",
+            "Test 3 Title" .
+}
+
+deltas:ba9e97d5-01ac-4fc9-be71-98f64cfdabb7-A {
+    <http://mobi.com/test/class0> a owl:Class .
+
+    <http://mobi.com/test/ontology> a owl:Ontology ;
+        dcterms:title "Test 0 Title" .
+}
+
+deltas:6bdb10bb-fc61-4909-8a56-177320f4bdb4-A {
+    <http://mobi.com/test/ontology> dcterms:title "Test 2 Title" .
+}
+
+deltas:bd2ccbc4-5b27-4eb2-9d31-3441b22b2f99-A {
+    <http://mobi.com/test/ontology> dcterms:title "Test 2 Title" .
+}
+
+deltas:bd2ccbc4-5b27-4eb2-9d31-3441b22b2f99-B {
+    <http://mobi.com/test/ontology> dcterms:title "Test 4 Title" .
+}
+
+deltas:0b34297c-cfa8-4ce9-9f1a-5e1d10086af3-A {
+    <http://mobi.com/test/ontology> dcterms:title "Test 4 Title" .
+}
+
+catalogs:catalog-local {
+    catalogs:catalog-local a
+            mcat:Catalog,
+            owl:Thing ;
+        dcterms:description "The Mobi Catalog records datasets, ontologies, data mappings, and other resources." ;
+        dcterms:issued "2024-10-28T17:58:04.640440+00:00"^^xsd:dateTime ;
+        dcterms:modified "2024-10-28T17:58:04.640440+00:00"^^xsd:dateTime ;
+        dcterms:title "Mobi Catalog (Local)" .
+}
+
+deltas:0b34297c-cfa8-4ce9-9f1a-5e1d10086af3-B {
+    <http://mobi.com/test/ontology> dcterms:title "Test 2 Title" .
+}
+
+deltas:74c351f5-eeae-414a-9551-5e942b66a14d-B {
+    <http://mobi.com/test/ontology> dcterms:title "Test 4 Title" .
+}
+
+deltas:74c351f5-eeae-414a-9551-5e942b66a14d-A {
+    <http://mobi.com/test/ontology> dcterms:title "Test 2 Title" .
+}

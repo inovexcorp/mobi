@@ -397,6 +397,8 @@ public class SimpleDifferenceManager implements DifferenceManager {
 
             Set<Conflict> result = new HashSet<>();
             Set<Statement> statementsToRemove = new HashSet<>();
+            Map<Resource, Model> duplicateAdds = new HashMap<>();
+            Map<Resource, Model> duplicateDels = new HashMap<>();
 
             sourceAdds.subjects().forEach(subject -> {
                 Model sourceAddSubjectStatements = sourceAdds.filter(subject, null, null);
@@ -408,12 +410,10 @@ public class SimpleDifferenceManager implements DifferenceManager {
                         duplicateStatements.add(subject, pred, obj);
                     }
                 });
+
+                // Indicates duplicate additions conflict
                 if (!duplicateStatements.isEmpty()) {
-                    result.add(new Conflict.Builder((IRI) subject)
-                            .leftDifference(new Difference.Builder()
-                                    .additions(duplicateStatements).deletions(mf.createEmptyModel()).build())
-                            .rightDifference(new Difference.Builder()
-                                    .additions(duplicateStatements).deletions(mf.createEmptyModel()).build()).build());
+                    duplicateAdds.put(subject, duplicateStatements);
                 }
             });
 
@@ -438,11 +438,7 @@ public class SimpleDifferenceManager implements DifferenceManager {
                 });
 
                 if (!duplicateStatements.isEmpty()) {
-                    result.add(new Conflict.Builder((IRI) subject)
-                            .leftDifference(new Difference.Builder()
-                                    .additions(mf.createEmptyModel()).deletions(duplicateStatements).build())
-                            .rightDifference(new Difference.Builder()
-                                    .additions(mf.createEmptyModel()).deletions(duplicateStatements).build()).build());
+                    duplicateDels.put(subject, duplicateStatements);
                 }
 
                 // Check for deletion in left and addition in right if there are common parents
@@ -478,6 +474,28 @@ public class SimpleDifferenceManager implements DifferenceManager {
                     }
                 });
             }
+
+            Set<Resource> resultResources = result.stream().map(Conflict::getIRI).collect(Collectors.toSet());
+            duplicateAdds.keySet().forEach(subject -> {
+                if (!resultResources.contains(subject)) {
+                    result.add(new Conflict.Builder((IRI) subject)
+                            .leftDifference(new Difference.Builder()
+                                    .additions(duplicateAdds.get(subject)).deletions(mf.createEmptyModel()).build())
+                            .rightDifference(new Difference.Builder()
+                                    .additions(duplicateAdds.get(subject)).deletions(mf.createEmptyModel()).build())
+                            .build());
+                }
+            });
+            duplicateDels.keySet().forEach(subject -> {
+                if (!resultResources.contains(subject)) {
+                    result.add(new Conflict.Builder((IRI) subject)
+                            .leftDifference(new Difference.Builder()
+                                    .additions(mf.createEmptyModel()).deletions(duplicateDels.get(subject)).build())
+                            .rightDifference(new Difference.Builder()
+                                    .additions(mf.createEmptyModel()).deletions(duplicateDels.get(subject)).build())
+                            .build());
+                }
+            });
             diffConn.rollback();
 
             log.trace("getConflicts took {}ms", System.currentTimeMillis() - start);

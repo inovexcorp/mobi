@@ -23,7 +23,6 @@ package com.mobi.catalog.impl;
  * #L%
  */
 
-import static com.mobi.catalog.impl.TestResourceUtils.trigRequired;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -41,6 +40,7 @@ import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.query.QueryResults;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
+import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
 import org.junit.Before;
 import org.junit.Rule;
@@ -108,7 +108,7 @@ public class SimpleThingManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void updateObjectTest() throws Exception {
-        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
+        addData(repo, "/testCatalogData/record/record.trig", RDFFormat.TRIG);
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:
             assertTrue(ConnectionUtils.contains(conn, null, null, null, ManagerTestConstants.RECORD_IRI));
@@ -124,7 +124,7 @@ public class SimpleThingManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void optObjectTest() throws Exception {
-        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
+        addData(repo, "/testCatalogData/record/record.trig", RDFFormat.TRIG);
         try (RepositoryConnection conn = repo.getConnection()) {
             assertFalse(service.optObject(ManagerTestConstants.MISSING_IRI, recordFactory, conn).isPresent());
             assertFalse(service.optObject(ManagerTestConstants.EMPTY_IRI, recordFactory, conn).isPresent());
@@ -138,7 +138,7 @@ public class SimpleThingManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void getObjectTest() {
-        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
+        addData(repo, "/testCatalogData/record/record.trig", RDFFormat.TRIG);
         try (RepositoryConnection conn = repo.getConnection()) {
             Record record = service.getExpectedObject(ManagerTestConstants.RECORD_IRI, recordFactory, conn);
             assertFalse(record.getModel().isEmpty());
@@ -170,7 +170,7 @@ public class SimpleThingManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void getExpectedObjectTest() {
-        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
+        addData(repo, "/testCatalogData/record/record.trig", RDFFormat.TRIG);
         try (RepositoryConnection conn = repo.getConnection()) {
             Record record = service.getObject(ManagerTestConstants.RECORD_IRI, recordFactory, conn);
             assertFalse(record.getModel().isEmpty());
@@ -202,7 +202,7 @@ public class SimpleThingManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void removeTest() throws Exception {
-        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
+        addData(repo, "/testCatalogData/record/record.trig", RDFFormat.TRIG);
         try (RepositoryConnection conn = repo.getConnection()) {
             assertTrue(ConnectionUtils.contains(conn, null, null, null, ManagerTestConstants.RECORD_IRI));
             service.remove(ManagerTestConstants.RECORD_IRI, conn);
@@ -214,7 +214,7 @@ public class SimpleThingManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void removeObjectTest() throws Exception {
-        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
+        addData(repo, "/testCatalogData/record/record.trig", RDFFormat.TRIG);
         try (RepositoryConnection conn = repo.getConnection()) {
             assertTrue(ConnectionUtils.contains(conn, null, null, null, ManagerTestConstants.RECORD_IRI));
             service.removeObject(recordFactory.createNew(ManagerTestConstants.RECORD_IRI), conn);
@@ -226,7 +226,7 @@ public class SimpleThingManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void removeObjectWithRelationshipTest() throws Exception {
-        trigRequired(repo, "/systemRepo/simpleDistribution.trig");
+        addData(repo, "/testCatalogData/versionedRdfRecord/versionedRdfRecord.trig", RDFFormat.TRIG);
         try (RepositoryConnection conn = repo.getConnection()) {
             assertTrue(ConnectionUtils.contains(conn, null, null, null, ManagerTestConstants.BRANCH_IRI));
             service.removeObjectWithRelationship(ManagerTestConstants.BRANCH_IRI, ManagerTestConstants.VERSIONED_RDF_RECORD_IRI, VersionedRDFRecord.branch_IRI, conn);

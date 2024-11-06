@@ -1,0 +1,375 @@
+@prefix deltas: <https://mobi.com/deltas#> .
+@prefix versions: <http://mobi.com/test/versions#> .
+@prefix branches: <http://mobi.com/test/branches#> .
+@prefix dcterms: <http://purl.org/dc/terms/> .
+@prefix commits: <http://mobi.com/test/commits#> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix mcat: <http://mobi.com/ontologies/catalog#> .
+@prefix mergereqs: <http://mobi.com/ontologies/merge-requests#> .
+@prefix catalogs: <http://mobi.com/test/catalogs#> .
+@prefix records: <http://mobi.com/test/records#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix revisions: <https://mobi.com/test/revisions#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix muser: <http://mobi.com/ontologies/user/management#> .
+@prefix dc: <http://purl.org/dc/terms/> .
+@prefix users: <http://mobi.com/test/users#> .
+
+GRAPH <https://mobi.com/records#42b2fbb8-8b27-45b1-b7f2-49662fed353b/HEAD> {
+    <http://mobi.com/test/class> dcterms:title "Class Title 2" .
+
+    <http://mobi.com/test/class0> a owl:Class .
+
+    <http://mobi.com/test/ontology> a owl:Ontology ;
+        dcterms:title "Test 4 Title" .
+}
+
+GRAPH records:versioned-rdf-record {
+    records:versioned-rdf-record a
+            mcat:Record,
+            mcat:VersionedRDFRecord,
+            mcat:VersionedRecord ;
+        mcat:branch
+            branches:branch,
+            branches:master,
+            branches:no-head-branch,
+            branches:user-branch ;
+        mcat:catalog catalogs:catalog-local ;
+        mcat:keyword "222" ;
+        mcat:latestVersion versions:latest-tag ;
+        mcat:masterBranch branches:master ;
+        mcat:version
+            versions:latest-tag,
+            versions:tag ;
+        dcterms:description "Description" ;
+        dcterms:issued "2017-01-01T00:00:00+00:00"^^xsd:dateTime ;
+        dcterms:modified "2017-05-01T00:00:00+00:00"^^xsd:dateTime ;
+        dcterms:publisher muser:tester ;
+        dcterms:title "Versioned RDF Record" .
+}
+
+GRAPH catalogs:catalog-local {
+    catalogs:catalog-local a mcat:Catalog .
+}
+
+GRAPH versions:tag {
+    versions:tag a
+            mcat:Tag,
+            mcat:Version ;
+        mcat:commit commits:test2 .
+}
+
+GRAPH versions:latest-tag {
+    versions:latest-tag a
+            mcat:Tag,
+            mcat:Version ;
+        mcat:commit commits:commitA1 .
+}
+
+GRAPH branches:user-branch {
+    branches:user-branch a
+            mcat:Branch,
+            mcat:UserBranch ;
+        mcat:createdFrom branches:branch ;
+        dcterms:title "user-branch" .
+}
+
+GRAPH branches:no-head-branch {
+    branches:no-head-branch a mcat:Branch ;
+        dcterms:title "no-head-branch" .
+}
+
+# Master Branch
+GRAPH branches:master {
+    branches:master a
+            mcat:Branch,
+            mcat:MasterBranch ;
+        mcat:head commits:test4a ;
+        mcat:headGraph <https://mobi.com/records#42b2fbb8-8b27-45b1-b7f2-49662fed353b/HEAD> ;
+        dcterms:issued "2016-03-01T00:00:00+00:00"^^xsd:dateTime ;
+        dcterms:modified "2016-01-02T00:00:00+00:00"^^xsd:dateTime ;
+        dcterms:title "Master Branch" .
+}
+
+GRAPH commits:test4a {
+    commits:test4a a
+            mcat:Commit,
+            owl:Thing,
+            prov:Activity ;
+        mcat:baseCommit commits:test2 ;
+        dcterms:title "Commit Test 4a" ;
+        prov:atTime "2016-03-01T00:03:00+00:00"^^xsd:dateTime ;
+        prov:generated revisions:74d02196-3d30-4105-96c0-d28d366b7641 ;
+        prov:wasAssociatedWith muser:tester .
+
+    revisions:74d02196-3d30-4105-96c0-d28d366b7641 a
+            mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:787d7127-a176-490a-b511-ee281be9671f-A ;
+        mcat:deletions deltas:787d7127-a176-490a-b511-ee281be9671f-B ;
+        prov:hadPrimarySource revisions:cb10a424-60de-431f-a88c-915351f87b07 .
+}
+
+GRAPH commits:test2 {
+    commits:test2 a
+            mcat:Commit,
+            owl:Thing,
+            prov:Activity ;
+        mcat:baseCommit commits:test1 ;
+        dcterms:title "Commit Test 2" ;
+        prov:atTime "2016-03-01T00:02:00+00:00"^^xsd:dateTime ;
+        prov:generated revisions:cb10a424-60de-431f-a88c-915351f87b07 ;
+        prov:wasAssociatedWith muser:tester .
+
+    revisions:cb10a424-60de-431f-a88c-915351f87b07 a
+            mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:74d02196-3d30-4105-96c0-d28d366b7641-B ;
+        mcat:deletions deltas:74d02196-3d30-4105-96c0-d28d366b7641-A ;
+        prov:hadPrimarySource revisions:321a2397-5e26-4452-a4d2-eac56e3a242d .
+}
+
+GRAPH deltas:74d02196-3d30-4105-96c0-d28d366b7641-B {
+    <http://mobi.com/test/ontology> dcterms:title "Test 2 Title" .
+}
+
+GRAPH deltas:74d02196-3d30-4105-96c0-d28d366b7641-A {
+    <http://mobi.com/test/ontology> dcterms:title "Test 4 Title" .
+}
+
+GRAPH commits:test1 {
+    commits:test1 a
+            mcat:Commit,
+            owl:Thing,
+            prov:Activity ;
+        mcat:baseCommit commits:test0 ;
+        dcterms:title "Commit Test 1" ;
+        prov:atTime "2016-03-01T00:01:00+00:00"^^xsd:dateTime ;
+        prov:generated revisions:321a2397-5e26-4452-a4d2-eac56e3a242d ;
+        prov:wasAssociatedWith muser:tester .
+
+    revisions:321a2397-5e26-4452-a4d2-eac56e3a242d a
+            mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:cb10a424-60de-431f-a88c-915351f87b07-B ;
+        mcat:deletions deltas:cb10a424-60de-431f-a88c-915351f87b07-A ;
+        prov:hadPrimarySource revisions:4daf3593-d89e-4054-b40c-9521ece64612 .
+}
+
+GRAPH deltas:cb10a424-60de-431f-a88c-915351f87b07-B {
+    <http://mobi.com/test/class> dcterms:title "Class Title 1" .
+
+    <http://mobi.com/test/ontology> dcterms:title "Test 1 Title" .
+}
+
+GRAPH deltas:cb10a424-60de-431f-a88c-915351f87b07-A {
+    <http://mobi.com/test/class> dcterms:title "Class Title 2" .
+
+    <http://mobi.com/test/ontology> dcterms:title "Test 2 Title" .
+}
+
+GRAPH commits:test0 {
+    commits:test0 a
+            mcat:Commit,
+            owl:Thing,
+            prov:Activity ;
+        mcat:initialRevision revisions:cbb1f50f-d31e-48fa-bfd8-08659f0d7529 ;
+        dcterms:title "Commit Test 0" ;
+        prov:atTime "2016-03-01T00:00:00+00:00"^^xsd:dateTime ;
+        prov:generated revisions:4daf3593-d89e-4054-b40c-9521ece64612 ;
+        prov:wasAssociatedWith muser:tester .
+
+    revisions:4daf3593-d89e-4054-b40c-9521ece64612 a
+            mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:321a2397-5e26-4452-a4d2-eac56e3a242d-B ;
+        mcat:deletions deltas:321a2397-5e26-4452-a4d2-eac56e3a242d-A .
+
+    revisions:cbb1f50f-d31e-48fa-bfd8-08659f0d7529 a
+            mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:cbb1f50f-d31e-48fa-bfd8-08659f0d7529-A ;
+        mcat:deletions deltas:cbb1f50f-d31e-48fa-bfd8-08659f0d7529-B .
+}
+
+GRAPH deltas:321a2397-5e26-4452-a4d2-eac56e3a242d-B {
+    <http://mobi.com/test/ontology> dcterms:title "Test 0 Title" .
+}
+
+GRAPH deltas:321a2397-5e26-4452-a4d2-eac56e3a242d-A {
+    <http://mobi.com/test/ontology> dcterms:title "Test 1 Title" .
+}
+
+GRAPH deltas:cbb1f50f-d31e-48fa-bfd8-08659f0d7529-A {
+    <http://mobi.com/test/class0> a owl:Class .
+
+    <http://mobi.com/test/ontology> a owl:Ontology ;
+        dcterms:title "Test 0 Title" .
+}
+
+# Branch
+GRAPH branches:branch {
+    branches:branch a mcat:Branch ;
+        mcat:head commits:commitA1 ;
+        dcterms:modified "2017-05-01T00:00:00+00:00"^^xsd:dateTime ;
+        dcterms:title "branch" .
+}
+
+GRAPH commits:commitA1 {
+    commits:commitA1 a
+            mcat:Commit,
+            owl:Thing,
+            prov:Activity ;
+        mcat:branchCommit commits:commitA0 ;
+        dcterms:title "Commit A1" ;
+        prov:atTime "2018-01-02T00:00:00+00:00"^^xsd:dateTime ;
+        prov:generated revisions:ad37fba0-9a3b-4997-961f-e9d2b156c8b8 ;
+        prov:wasAssociatedWith muser:tester .
+
+    revisions:ad37fba0-9a3b-4997-961f-e9d2b156c8b8 a
+            mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:ad37fba0-9a3b-4997-961f-e9d2b156c8b8-A ;
+        mcat:deletions deltas:ad37fba0-9a3b-4997-961f-e9d2b156c8b8-B ;
+        prov:hadPrimarySource revisions:3867494f-1288-4cc8-bb4a-3e4185519b69 .
+}
+
+GRAPH deltas:ad37fba0-9a3b-4997-961f-e9d2b156c8b8-A {
+    <http://mobi.com/test/class0> a owl:Class .
+}
+
+GRAPH commits:commitA0 {
+    commits:commitA0 a
+            mcat:Commit,
+            owl:Thing,
+            prov:Activity ;
+        mcat:branchCommit commits:test0 ;
+        dcterms:title "Commit A0" ;
+        prov:atTime "2018-01-01T00:00:00+00:00"^^xsd:dateTime ;
+        prov:generated revisions:3867494f-1288-4cc8-bb4a-3e4185519b69 ;
+        prov:wasAssociatedWith muser:tester .
+
+    revisions:3867494f-1288-4cc8-bb4a-3e4185519b69 a
+            mcat:Revision,
+            owl:Thing,
+            prov:Entity ;
+        mcat:additions deltas:3867494f-1288-4cc8-bb4a-3e4185519b69-A ;
+        mcat:deletions deltas:3867494f-1288-4cc8-bb4a-3e4185519b69-B ;
+        prov:hadPrimarySource revisions:4daf3593-d89e-4054-b40c-9521ece64612 .
+}
+
+GRAPH deltas:3867494f-1288-4cc8-bb4a-3e4185519b69-A {
+    <http://mobi.com/test/ontology> dcterms:title "A0 title" .
+}
+
+# MergeRequests
+
+GRAPH mergereqs:mergereq {
+    mergereqs:mergereq a
+            mergereqs:MergeRequest,
+            owl:Thing ;
+        mergereqs:assignee muser:tester ;
+        mergereqs:onRecord records:versioned-rdf-record ;
+        mergereqs:removeSource false ;
+        mergereqs:sourceBranch branches:branch ;
+        mergereqs:targetBranch branches:master ;
+        dcterms:creator muser:tester ;
+        dcterms:description "MergeRequest Description" ;
+        dcterms:issued "2016-01-01T00:00:00+00:00"^^xsd:dateTime ;
+        dcterms:modified "2016-03-10T00:00:00+00:00"^^xsd:dateTime ;
+        dcterms:title "MergeRequest Title" .
+}
+
+GRAPH mergereqs:mergereq2 {
+    mergereqs:mergereq2 a
+            mergereqs:MergeRequest,
+            owl:Thing ;
+        mergereqs:assignee muser:tester ;
+        mergereqs:onRecord records:versioned-rdf-record ;
+        mergereqs:removeSource true ;
+        mergereqs:sourceBranch branches:master ;
+        mergereqs:targetBranch branches:branch ;
+        dcterms:creator muser:tester ;
+        dcterms:description "MergeRequest Description" ;
+        dcterms:issued "2016-01-01T00:00:00+00:00"^^xsd:dateTime ;
+        dcterms:modified "2016-03-10T00:00:00+00:00"^^xsd:dateTime ;
+        dcterms:title "MergeRequest Title" .
+}
+
+GRAPH commits:in-progress-commit {
+    commits:in-progress-commit a mcat:Commit, mcat:InProgressCommit ;
+        dc:title "In Progress Commit" ;
+        prov:generated revisions:in-progress-commit ;
+        prov:wasAssociatedWith users:user2 ;
+        mcat:onVersionedRDFRecord records:versioned-rdf-record .
+
+    revisions:in-progress-commit a mcat:Revision ;
+        mcat:additions deltas:in-progress-commit-A ;
+        mcat:deletions deltas:in-progress-commit-B .
+}
+
+GRAPH deltas:in-progress-commit-A {
+    <http://mobi.com/test/add> dc:title "Add" ;
+}
+
+GRAPH deltas:in-progress-commit-B {
+    <http://mobi.com/test/delete> dc:title "Delete" ;
+}
+
+GRAPH commits:in-progress-commit-no-record {
+    commits:in-progress-commit-no-record a mcat:Commit, mcat:InProgressCommit ;
+        dc:title "In Progress Commit No Record" ;
+        prov:generated revisions:in-progress-commit-no-record ;
+        prov:wasAssociatedWith users:taken .
+
+    revisions:in-progress-commit-no-record a mcat:Revision ;
+        mcat:additions deltas:in-progress-commit-referenced-A ;
+        mcat:deletions deltas:in-progress-commit-referenced-B .
+}
+
+GRAPH commits:in-progress-commit-referenced {
+    commits:in-progress-commit-referenced a mcat:InProgressCommit, mcat:Commit ;
+        dc:title "In Progress Commit Referenced" ;
+        prov:atTime "2016-03-01T00:00:00Z"^^xsd:dateTime ;
+        prov:generated revisions:in-progress-commit-referenced ;
+        prov:wasAssociatedWith users:taken ;
+        mcat:onVersionedRDFRecord records:versioned-rdf-record .
+
+    revisions:in-progress-commit-referenced a mcat:Revision ;
+        mcat:additions deltas:in-progress-commit-referenced-A ;
+        mcat:deletions deltas:in-progress-commit-referenced-B .
+}
+
+GRAPH deltas:in-progress-commit-referenced-A {
+    <http://mobi.com/test/add> dc:title "Add" ;
+}
+
+GRAPH deltas:in-progress-commit-referenced-B {
+    <http://mobi.com/test/delete> dc:title "Delete" ;
+}
+
+# Not in a record or branch. Used in CommitManager tests
+GRAPH commits:commit {
+    commits:commit a mcat:Commit ;
+        dc:title "Commit" ;
+        prov:atTime "2016-03-01T00:00:00Z"^^xsd:dateTime ;
+        prov:generated revisions:revision .
+
+    revisions:revision a mcat:Revision ;
+        mcat:additions deltas:commit-A ;
+        mcat:deletions deltas:commit-B .
+}
+
+GRAPH deltas:commit-A {
+    <http://mobi.com/test/add> dc:title "Add" ;
+}
+
+GRAPH deltas:commit-B {
+    <http://mobi.com/test/delete> dc:title "Delete" ;
+}

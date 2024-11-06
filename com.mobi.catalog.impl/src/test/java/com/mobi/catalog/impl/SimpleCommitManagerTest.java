@@ -1,5 +1,5 @@
 package com.mobi.catalog.impl;
-//
+
 /*-
  * #%L
  * com.mobi.catalog.impl
@@ -22,18 +22,30 @@ package com.mobi.catalog.impl;
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-//
-import static com.mobi.catalog.impl.TestResourceUtils.trigRequired;
+
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertNotSame;
 import static junit.framework.TestCase.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
-import com.mobi.catalog.api.ontologies.mcat.*;
+import com.mobi.catalog.api.ontologies.mcat.Branch;
+import com.mobi.catalog.api.ontologies.mcat.Commit;
+import com.mobi.catalog.api.ontologies.mcat.CommitFactory;
+import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
 import com.mobi.catalog.api.ontologies.mcat.Record;
+import com.mobi.catalog.api.ontologies.mcat.Revision;
+import com.mobi.catalog.api.ontologies.mcat.Tag;
+import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
+import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecordFactory;
 import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.dcterms._Thing;
@@ -50,15 +62,14 @@ import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
-import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.model.vocabulary.RDFS;
 import org.eclipse.rdf4j.query.QueryResults;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.RepositoryResult;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
+import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
 import org.junit.After;
-import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -66,9 +77,6 @@ import org.junit.rules.ExpectedException;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -101,8 +109,6 @@ public class SimpleCommitManagerTest extends OrmEnabledTestCase {
     private final IRI PROV_WAS_DERIVED_FROM = VALUE_FACTORY.createIRI(Entity.wasDerivedFrom_IRI);
     private final IRI PROV_WAS_INFORMED_BY = VALUE_FACTORY.createIRI(Activity.wasInformedBy_IRI);
 
-    private final IRI CATALOG_LOCAL = VALUE_FACTORY.createIRI("http://mobi.com/catalog-local");
-
     @Rule
     public ExpectedException thrown = ExpectedException.none();
 
@@ -110,10 +116,12 @@ public class SimpleCommitManagerTest extends OrmEnabledTestCase {
     CatalogConfigProvider configProvider;
 
     @Before
-    public void setUp() throws Exception {
+    public void setUp() {
         closeable = MockitoAnnotations.openMocks(this);
         repo = new MemoryRepositoryWrapper();
         repo.setDelegate(new SailRepository(new MemoryStore()));
+
+        addData(repo, "/testCatalogData/versionedRdfRecord/versionedRdfRecord.trig", RDFFormat.TRIG);
 
         when(configProvider.getRepository()).thenReturn(repo);
         when(configProvider.getLocalCatalogIRI()).thenReturn(ManagerTestConstants.CATALOG_IRI);
@@ -122,11 +130,9 @@ public class SimpleCommitManagerTest extends OrmEnabledTestCase {
         branchManager.recordManager = recordManager;
         branchManager.versionedRDFRecordFactory = (VersionedRDFRecordFactory) versionedRDFRecordFactory;
         branchManager.thingManager = thingManager;
-        branchManager.branchFactory = (BranchFactory) branchFactory;
         recordManager.thingManager = thingManager;
         revisionManager.thingManager = thingManager;
         versionManager.recordManager = recordManager;
-
         manager = spy(new SimpleCommitManager());
         manager.thingManager = thingManager;
         manager.branchManager = branchManager;
@@ -138,7 +144,7 @@ public class SimpleCommitManagerTest extends OrmEnabledTestCase {
         injectOrmFactoryReferencesIntoService(revisionManager);
         injectOrmFactoryReferencesIntoService(recordManager);
     }
-    
+
     @After
     public void reset() throws Exception {
         closeable.close();
@@ -294,7 +300,7 @@ public class SimpleCommitManagerTest extends OrmEnabledTestCase {
     public void testCreateInProgressCommit() throws Exception {
         // Setup:
         User user = userFactory.createNew(ManagerTestConstants.USER_IRI);
-        // InProgressCommit
+
         InProgressCommit result = manager.createInProgressCommit(user);
         assertTrue(result.getProperty(PROV_WAS_ASSOCIATED_WITH).isPresent());
         assertEquals(ManagerTestConstants.USER_IRI.stringValue(), result.getProperty(PROV_WAS_ASSOCIATED_WITH).get().stringValue());
@@ -322,12 +328,11 @@ public class SimpleCommitManagerTest extends OrmEnabledTestCase {
     */
     @Test
     public void testCreateInProgressCommitWithFiles() throws Exception {
-        trigRequired(repo,"/systemRepo/simpleOntology1.trig");
-        IRI ontologyIRI = VALUE_FACTORY.createIRI("https://mobi.com/records#simple-ontology-01");
-        User user = userFactory.createNew(ManagerTestConstants.USER3_IRI);
         // Setup:
+        User user = userFactory.createNew(ManagerTestConstants.USER3_IRI);
+
         try (RepositoryConnection conn = repo.getConnection()) {
-            InProgressCommit result = manager.createInProgressCommit(CATALOG_LOCAL, ontologyIRI, user, null, null, conn);
+            InProgressCommit result = manager.createInProgressCommit(ManagerTestConstants.CATALOG_IRI, ManagerTestConstants.VERSIONED_RDF_RECORD_IRI, user, null, null, conn);
             assertTrue(result.getProperty(PROV_WAS_ASSOCIATED_WITH).isPresent());
             assertEquals(ManagerTestConstants.USER3_IRI.stringValue(), result.getProperty(PROV_WAS_ASSOCIATED_WITH).get().stringValue());
             assertTrue(result.getProperty(PROV_GENERATED).isPresent());
@@ -345,17 +350,13 @@ public class SimpleCommitManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testUpdateInProgressCommit() throws Exception {
-        trigRequired(repo, "/systemRepo/simpleOntology1.trig");
-        IRI ontologyIRI = VALUE_FACTORY.createIRI("https://mobi.com/records#simple-ontology-01");
-        User user = userFactory.createNew(ManagerTestConstants.USER3_IRI);
-        IRI inProgressCommit = VALUE_FACTORY.createIRI("https://mobi.com/in-progress-commits#1c5bed2c-0634-4824-aa2c-a52e89bcfcfa");
         // Setup:
         Model additions = MODEL_FACTORY.createEmptyModel();
         Model deletions = MODEL_FACTORY.createEmptyModel();
 
         try (RepositoryConnection conn  = repo.getConnection()) {
-            manager.updateInProgressCommit(CATALOG_LOCAL, ontologyIRI, inProgressCommit, additions, deletions, conn);
-            verify(manager).validateInProgressCommit(eq(CATALOG_LOCAL), eq(ontologyIRI), eq(inProgressCommit), any(RepositoryConnection.class));
+            manager.updateInProgressCommit(ManagerTestConstants.CATALOG_IRI, ManagerTestConstants.VERSIONED_RDF_RECORD_IRI, ManagerTestConstants.IN_PROGRESS_COMMIT_IRI, additions, deletions, conn);
+            verify(manager).validateInProgressCommit(eq(ManagerTestConstants.CATALOG_IRI), eq(ManagerTestConstants.VERSIONED_RDF_RECORD_IRI), eq(ManagerTestConstants.IN_PROGRESS_COMMIT_IRI), any(RepositoryConnection.class));
             verify(manager).updateCommit(any(Resource.class), any(Revision.class), eq(additions), eq(deletions), any(RepositoryConnection.class));
         }
     }
@@ -364,18 +365,15 @@ public class SimpleCommitManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testUpdateInProgressCommitWithUser() throws Exception {
-        trigRequired(repo, "/systemRepo/simpleOntology1.trig");
-        IRI ontologyIRI = VALUE_FACTORY.createIRI("https://mobi.com/records#simple-ontology-01");
-        IRI adminUserIri = VALUE_FACTORY.createIRI("http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997");
-        User adminUser = userFactory.createNew(adminUserIri);
         // Setup:
+        User user = userFactory.createNew(ManagerTestConstants.USER_IRI);
         Model additions = MODEL_FACTORY.createEmptyModel();
         Model deletions = MODEL_FACTORY.createEmptyModel();
 
         try (RepositoryConnection conn  = repo.getConnection()) {
-            manager.updateInProgressCommit(CATALOG_LOCAL, ontologyIRI, adminUser, additions, deletions, conn);
-            verify(recordManager).validateRecord(eq(CATALOG_LOCAL), eq(ontologyIRI), eq(versionedRDFRecordFactory.getTypeIRI()), any(RepositoryConnection.class));
-            verify(manager).getInProgressCommitIRI(eq(ontologyIRI), eq(adminUserIri), any(RepositoryConnection.class));
+            manager.updateInProgressCommit(ManagerTestConstants.CATALOG_IRI, ManagerTestConstants.VERSIONED_RDF_RECORD_IRI, user, additions, deletions, conn);
+            verify(recordManager).validateRecord(eq(ManagerTestConstants.CATALOG_IRI), eq(ManagerTestConstants.VERSIONED_RDF_RECORD_IRI), eq(versionedRDFRecordFactory.getTypeIRI()), any(RepositoryConnection.class));
+            verify(manager).getInProgressCommitIRI(eq(ManagerTestConstants.VERSIONED_RDF_RECORD_IRI), eq(ManagerTestConstants.USER_IRI), any(RepositoryConnection.class));
             verify(manager).updateCommit(any(Commit.class), eq(additions), eq(deletions), any(RepositoryConnection.class));
         }
     }
@@ -384,45 +382,19 @@ public class SimpleCommitManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testAddInProgressCommit() throws Exception {
-        trigRequired(repo, "/systemRepo/simpleOntology1.trig");
-        IRI ontologyIRI = VALUE_FACTORY.createIRI("https://mobi.com/records#simple-ontology-01");
-        IRI userIri = VALUE_FACTORY.createIRI("http://mobi.com/users/user01");
-        User user = userFactory.createNew(userIri);
         // Setup:
+        User user = userFactory.createNew(ManagerTestConstants.USER_IRI);
         InProgressCommit commit = inProgressCommitFactory.createNew(ManagerTestConstants.NEW_IRI);
-        commit.setProperty(user.getResource(), PROV_WAS_ASSOCIATED_WITH);
+        commit.setProperty(user.getResource(), VALUE_FACTORY.createIRI(Activity.wasAssociatedWith_IRI));
         doReturn(Optional.empty()).when(manager).getInProgressCommitIRI(eq(ManagerTestConstants.VERSIONED_RDF_RECORD_IRI), eq(ManagerTestConstants.USER_IRI), any(RepositoryConnection.class));
 
         try (RepositoryConnection conn = repo.getConnection()) {
-            manager.addInProgressCommit(CATALOG_LOCAL, ontologyIRI, commit, conn);
-            verify(manager).getInProgressCommitIRI(eq(ontologyIRI), eq(userIri), any(RepositoryConnection.class));
-            verify(recordManager).getRecord(eq(CATALOG_LOCAL), eq(ontologyIRI), eq(versionedRDFRecordFactory), any(RepositoryConnection.class));
+            manager.addInProgressCommit(ManagerTestConstants.CATALOG_IRI, ManagerTestConstants.VERSIONED_RDF_RECORD_IRI, commit, conn);
+            verify(manager).getInProgressCommitIRI(eq(ManagerTestConstants.VERSIONED_RDF_RECORD_IRI), eq(ManagerTestConstants.USER_IRI), any(RepositoryConnection.class));
+            verify(recordManager).getRecord(eq(ManagerTestConstants.CATALOG_IRI), eq(ManagerTestConstants.VERSIONED_RDF_RECORD_IRI), eq(versionedRDFRecordFactory), any(RepositoryConnection.class));
             verify(thingManager).addObject(eq(commit), any(RepositoryConnection.class));
             assertTrue(commit.getOnVersionedRDFRecord_resource().isPresent());
-            assertEquals(ontologyIRI, commit.getOnVersionedRDFRecord_resource().get());
-        }
-    }
-
-    @Test
-    public void testAddInProgressCommitAlready() throws Exception {
-        trigRequired(repo, "/systemRepo/simpleOntology1.trig");
-        IRI ontologyIRI = VALUE_FACTORY.createIRI("https://mobi.com/records#simple-ontology-01");
-        IRI userIri = VALUE_FACTORY.createIRI("http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997");
-        User user = userFactory.createNew(userIri);
-        // Setup:
-        InProgressCommit commit = inProgressCommitFactory.createNew(ManagerTestConstants.NEW_IRI);
-        commit.setProperty(user.getResource(), PROV_WAS_ASSOCIATED_WITH);
-
-        thrown.expect(IllegalStateException.class);
-        thrown.expectMessage("User " + userIri + " already has an InProgressCommit for Record " + ontologyIRI);
-
-        try (RepositoryConnection conn = repo.getConnection()) {
-            manager.addInProgressCommit(CATALOG_LOCAL, ontologyIRI, commit, conn);
-            verify(manager).getInProgressCommitIRI(eq(ontologyIRI), eq(userIri), any(RepositoryConnection.class));
-            verify(recordManager).getRecord(eq(CATALOG_LOCAL), eq(ontologyIRI), eq(versionedRDFRecordFactory), any(RepositoryConnection.class));
-            verify(thingManager).addObject(eq(commit), any(RepositoryConnection.class));
-            assertTrue(commit.getOnVersionedRDFRecord_resource().isPresent());
-            assertEquals(ontologyIRI, commit.getOnVersionedRDFRecord_resource().get());
+            assertEquals(ManagerTestConstants.VERSIONED_RDF_RECORD_IRI, commit.getOnVersionedRDFRecord_resource().get());
         }
     }
 
@@ -443,7 +415,7 @@ public class SimpleCommitManagerTest extends OrmEnabledTestCase {
     public void testAddInProgressCommitWhenYouAlreadyHaveOne() {
         // Setup:
         InProgressCommit commit = inProgressCommitFactory.createNew(ManagerTestConstants.NEW_IRI);
-        commit.setProperty(ManagerTestConstants.USER_IRI, PROV_WAS_ASSOCIATED_WITH);
+        commit.setProperty(ManagerTestConstants.USER_IRI, VALUE_FACTORY.createIRI(Activity.wasAssociatedWith_IRI));
         doReturn(Optional.of(ManagerTestConstants.NEW_IRI)).when(manager).getInProgressCommitIRI(eq(ManagerTestConstants.VERSIONED_RDF_RECORD_IRI), eq(ManagerTestConstants.USER_IRI), any(RepositoryConnection.class));
         thrown.expect(IllegalStateException.class);
         thrown.expectMessage("User " + ManagerTestConstants.USER_IRI + " already has an InProgressCommit for Record " + ManagerTestConstants.VERSIONED_RDF_RECORD_IRI);
@@ -457,7 +429,7 @@ public class SimpleCommitManagerTest extends OrmEnabledTestCase {
     @Test(expected = IllegalArgumentException.class)
     public void testAddInProgressCommitWithTakenResource() {
         InProgressCommit commit = inProgressCommitFactory.createNew(ManagerTestConstants.IN_PROGRESS_COMMIT_IRI);
-        commit.setProperty(ManagerTestConstants.USER_IRI, PROV_WAS_ASSOCIATED_WITH);
+        commit.setProperty(ManagerTestConstants.USER_IRI, VALUE_FACTORY.createIRI(Activity.wasAssociatedWith_IRI));
         doReturn(Optional.empty()).when(manager).getInProgressCommitIRI(eq(ManagerTestConstants.VERSIONED_RDF_RECORD_IRI), eq(ManagerTestConstants.USER_IRI), any(RepositoryConnection.class));
 
         try (RepositoryConnection conn = repo.getConnection()) {
@@ -471,24 +443,21 @@ public class SimpleCommitManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testGetCommitThatIsNotTheHead() throws Exception {
-        trigRequired(repo, "/systemRepo/simpleOntology1.trig");
-        IRI ontologyIRI = VALUE_FACTORY.createIRI("https://mobi.com/records#simple-ontology-01");
         // Setup:
         Resource headId = VALUE_FACTORY.createIRI(ManagerTestConstants.COMMITS + "test4a");
         Resource commitId = VALUE_FACTORY.createIRI(ManagerTestConstants.COMMITS + "test0");
-        IRI masterBranchIri = VALUE_FACTORY.createIRI("https://mobi.com/branches#0e837d83-4783-46a9-b57f-b2a2116ab70c");
-        Branch branch = branchFactory.createNew(masterBranchIri);
+        Branch branch = branchFactory.createNew(ManagerTestConstants.MASTER_BRANCH_IRI);
         Commit commit = commitFactory.createNew(commitId);
         doReturn(headId).when(manager).getHeadCommitIRI(branch);
-        doReturn(branch).when(thingManager).getExpectedObject(eq(masterBranchIri), eq(branchFactory), any(RepositoryConnection.class));
+        doReturn(branch).when(thingManager).getExpectedObject(eq(ManagerTestConstants.MASTER_BRANCH_IRI), eq(branchFactory), any(RepositoryConnection.class));
         doReturn(commit).when(thingManager).getExpectedObject(eq(commitId), eq(commitFactory), any(RepositoryConnection.class));
-        doReturn(true).when(manager).commitInBranch(eq(masterBranchIri), eq(commitId), any(RepositoryConnection.class));
-        doReturn(Stream.of(headId, commitId).collect(Collectors.toList())).when(manager).getCommitChain(eq(headId), eq(false), any(RepositoryConnection.class));
+        doReturn(true).when(manager).commitInBranch(eq(ManagerTestConstants.MASTER_BRANCH_IRI), eq(commitId), any(RepositoryConnection.class));
+        doReturn(Stream.of(headId, commitId).toList()).when(manager).getCommitChain(eq(headId), eq(false), any(RepositoryConnection.class));
 
         try (RepositoryConnection conn  = repo.getConnection()) {
-            Optional<Commit> result = manager.getCommit(CATALOG_LOCAL, ontologyIRI, masterBranchIri, commitId, conn);
-            verify(branchManager).validateBranch(eq(CATALOG_LOCAL), eq(ontologyIRI), eq(masterBranchIri), any(RepositoryConnection.class));
-            verify(manager).commitInBranch(eq(masterBranchIri), eq(commitId), any(RepositoryConnection.class));
+            Optional<Commit> result = manager.getCommit(ManagerTestConstants.CATALOG_IRI, ManagerTestConstants.VERSIONED_RDF_RECORD_IRI, ManagerTestConstants.MASTER_BRANCH_IRI, commitId, conn);
+            verify(branchManager).validateBranch(eq(ManagerTestConstants.CATALOG_IRI), eq(ManagerTestConstants.VERSIONED_RDF_RECORD_IRI), eq(ManagerTestConstants.MASTER_BRANCH_IRI), any(RepositoryConnection.class));
+            verify(manager).commitInBranch(eq(ManagerTestConstants.MASTER_BRANCH_IRI), eq(commitId), any(RepositoryConnection.class));
             verify(thingManager).getExpectedObject(eq(commitId), eq(commitFactory), any(RepositoryConnection.class));
             assertTrue(result.isPresent());
             assertEquals(commit, result.get());
@@ -512,22 +481,19 @@ public class SimpleCommitManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testGetCommitThatIsTheHead() throws Exception {
-        trigRequired(repo, "/systemRepo/simpleOntology1.trig");
-        IRI ontologyIRI = VALUE_FACTORY.createIRI("https://mobi.com/records#simple-ontology-01");
         // Setup:
         Resource commitId = VALUE_FACTORY.createIRI(ManagerTestConstants.COMMITS + "test4a");
-        IRI masterBranchIri = VALUE_FACTORY.createIRI("https://mobi.com/branches#0e837d83-4783-46a9-b57f-b2a2116ab70c");
-        Branch branch = branchFactory.createNew(masterBranchIri);
+        Branch branch = branchFactory.createNew(ManagerTestConstants.MASTER_BRANCH_IRI);
         Commit commit = commitFactory.createNew(commitId);
         doReturn(commitId).when(manager).getHeadCommitIRI(branch);
-        doReturn(branch).when(thingManager).getExpectedObject(eq(masterBranchIri), eq(branchFactory), any(RepositoryConnection.class));
+        doReturn(branch).when(thingManager).getExpectedObject(eq(ManagerTestConstants.MASTER_BRANCH_IRI), eq(branchFactory), any(RepositoryConnection.class));
         doReturn(commit).when(thingManager).getExpectedObject(eq(commitId), eq(commitFactory), any(RepositoryConnection.class));
-        doReturn(true).when(manager).commitInBranch(eq(masterBranchIri), eq(commitId), any(RepositoryConnection.class));
+        doReturn(true).when(manager).commitInBranch(eq(ManagerTestConstants.MASTER_BRANCH_IRI), eq(commitId), any(RepositoryConnection.class));
 
         try (RepositoryConnection conn  = repo.getConnection()) {
-            Optional<Commit> result = manager.getCommit(CATALOG_LOCAL, ontologyIRI, masterBranchIri, commitId, conn);
-            verify(branchManager).validateBranch(eq(CATALOG_LOCAL), eq(ontologyIRI), eq(masterBranchIri), any(RepositoryConnection.class));
-            verify(manager).commitInBranch(eq(masterBranchIri), eq(commitId), any(RepositoryConnection.class));
+            Optional<Commit> result = manager.getCommit(ManagerTestConstants.CATALOG_IRI, ManagerTestConstants.VERSIONED_RDF_RECORD_IRI, ManagerTestConstants.MASTER_BRANCH_IRI, commitId, conn);
+            verify(branchManager).validateBranch(eq(ManagerTestConstants.CATALOG_IRI), eq(ManagerTestConstants.VERSIONED_RDF_RECORD_IRI), eq(ManagerTestConstants.MASTER_BRANCH_IRI), any(RepositoryConnection.class));
+            verify(manager).commitInBranch(eq(ManagerTestConstants.MASTER_BRANCH_IRI), eq(commitId), any(RepositoryConnection.class));
             verify(thingManager).getExpectedObject(eq(commitId), eq(commitFactory), any(RepositoryConnection.class));
             verify(manager, times(0)).getCommitChain(eq(commitId), eq(false), any(RepositoryConnection.class));
             assertTrue(result.isPresent());
@@ -535,10 +501,8 @@ public class SimpleCommitManagerTest extends OrmEnabledTestCase {
         }
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testGetCommitThatDoesNotBelongToBranch() {
-        trigRequired(repo, "/systemRepo/simpleOntology1.trig");
-        IRI ontologyIRI = VALUE_FACTORY.createIRI("https://mobi.com/records#simple-ontology-01");
         // Setup:
         Resource headId = VALUE_FACTORY.createIRI(ManagerTestConstants.COMMITS + "test4a");
         Branch branch = branchFactory.createNew(ManagerTestConstants.MASTER_BRANCH_IRI);
@@ -547,12 +511,10 @@ public class SimpleCommitManagerTest extends OrmEnabledTestCase {
         doReturn(false).when(manager).commitInBranch(eq(ManagerTestConstants.MASTER_BRANCH_IRI), eq(ManagerTestConstants.COMMIT_IRI), any(RepositoryConnection.class));
 
         try (RepositoryConnection conn  = repo.getConnection()) {
-            Optional<Commit> result = manager.getCommit(CATALOG_LOCAL, ontologyIRI, ManagerTestConstants.MASTER_BRANCH_IRI, ManagerTestConstants.COMMIT_IRI, conn);
-
-            assertFalse(result.isPresent());
-        } finally {
-            verify(branchManager).validateBranch(eq(CATALOG_LOCAL), eq(ontologyIRI), eq(ManagerTestConstants.MASTER_BRANCH_IRI), any(RepositoryConnection.class));
+            Optional<Commit> result = manager.getCommit(ManagerTestConstants.CATALOG_IRI, ManagerTestConstants.VERSIONED_RDF_RECORD_IRI, ManagerTestConstants.MASTER_BRANCH_IRI, ManagerTestConstants.COMMIT_IRI, conn);
+            verify(branchManager).validateBranch(eq(ManagerTestConstants.CATALOG_IRI), eq(ManagerTestConstants.VERSIONED_RDF_RECORD_IRI), eq(ManagerTestConstants.MASTER_BRANCH_IRI), any(RepositoryConnection.class));
             verify(thingManager, times(0)).getExpectedObject(eq(ManagerTestConstants.COMMIT_IRI), eq(commitFactory), any(RepositoryConnection.class));
+            assertFalse(result.isPresent());
         }
     }
 
@@ -560,7 +522,6 @@ public class SimpleCommitManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void getHeadCommit() throws Exception {
-        trigRequired(repo, "/testCatalogData.trig"); // testCatalogData has outdated structure
         // Setup:
         Resource commitId = VALUE_FACTORY.createIRI(ManagerTestConstants.COMMITS + "test4a");
         Branch branch = branchFactory.createNew(ManagerTestConstants.BRANCH_IRI);
@@ -582,7 +543,6 @@ public class SimpleCommitManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void getHeadCommitFromBranchTest() throws Exception {
-        trigRequired(repo, "/testCatalogData.trig"); // testCatalogData has outdated structure
         Branch branch = branchFactory.createNew(ManagerTestConstants.BRANCH_IRI);
         branch.setHead(commitFactory.createNew(ManagerTestConstants.COMMIT_IRI));
         try (RepositoryConnection conn  = repo.getConnection()) {
@@ -619,7 +579,6 @@ public class SimpleCommitManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testGetInProgressCommitWithUser() throws Exception {
-        trigRequired(repo, "/testCatalogData.trig"); // testCatalogData has outdated structure
         // Setup:
         User user = userFactory.createNew(ManagerTestConstants.USER_IRI);
         InProgressCommit commit = inProgressCommitFactory.createNew(ManagerTestConstants.IN_PROGRESS_COMMIT_IRI);
@@ -638,7 +597,6 @@ public class SimpleCommitManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testGetInProgressCommitForUserWithoutOne() {
-        trigRequired(repo, "/testCatalogData.trig"); // testCatalogData has outdated structure
         // Setup:
         User user = userFactory.createNew(ManagerTestConstants.USER_IRI);
         doReturn(Optional.empty()).when(manager).getInProgressCommitIRI(eq(ManagerTestConstants.VERSIONED_RDF_RECORD_IRI), eq(user.getResource()), any(RepositoryConnection.class));
@@ -656,20 +614,18 @@ public class SimpleCommitManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testGetInProgressCommitByUser() throws Exception {
-        trigRequired(repo, "/testCatalogData.trig"); // testCatalogData has outdated structure
         // Setup:
         User user = userFactory.createNew(ManagerTestConstants.USER_IRI);
 
         try (RepositoryConnection conn  = repo.getConnection()) {
             List<InProgressCommit> result = manager.getInProgressCommits(user, conn);
             verify(thingManager).getExpectedObject(eq(ManagerTestConstants.IN_PROGRESS_COMMIT_NO_RECORD_IRI), eq(inProgressCommitFactory), any(RepositoryConnection.class));
-            assertEquals(3, result.size());
+            assertEquals(2, result.size());
         }
     }
 
     @Test
     public void testGetInProgressCommitByUserNoResults() throws Exception {
-        trigRequired(repo, "/testCatalogData.trig"); // testCatalogData has outdated structure
         // Setup:
         User user = userFactory.createNew(VALUE_FACTORY.createIRI("urn:user"));
 
@@ -684,7 +640,6 @@ public class SimpleCommitManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testRemoveInProgressCommitWithUser() throws Exception {
-        trigRequired(repo, "/testCatalogData.trig"); // testCatalogData has outdated structure
         // Setup:
         User user = userFactory.createNew(ManagerTestConstants.USER_IRI);
         InProgressCommit commit = inProgressCommitFactory.createNew(ManagerTestConstants.IN_PROGRESS_COMMIT_IRI);
@@ -702,7 +657,6 @@ public class SimpleCommitManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testRemoveInProgressCommitByResource() throws Exception {
-        trigRequired(repo, "/testCatalogData.trig"); // testCatalogData has outdated structure
         // Setup:
         InProgressCommit commit = inProgressCommitFactory.createNew(ManagerTestConstants.IN_PROGRESS_COMMIT_IRI);
         doReturn(commit).when(thingManager).getObject(eq(ManagerTestConstants.IN_PROGRESS_COMMIT_IRI), eq(inProgressCommitFactory), any(RepositoryConnection.class));
@@ -728,7 +682,6 @@ public class SimpleCommitManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testGetTaggedCommit() throws Exception {
-        trigRequired(repo, "/testCatalogData.trig"); // testCatalogData has outdated structure
         // Setup:
         Tag tag = tagFactory.createNew(ManagerTestConstants.TAG_IRI);
         Commit commit = commitFactory.createNew(ManagerTestConstants.COMMIT_IRI);
@@ -747,8 +700,6 @@ public class SimpleCommitManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void isCommitBranchHeadTest() {
-        trigRequired(repo, "/testCatalogData.trig"); // testCatalogData has outdated structure
-        // Setup:
         Resource commitId = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#commitA1");
         try (RepositoryConnection conn = repo.getConnection()) {
             assertTrue(manager.commitInBranch(ManagerTestConstants.BRANCH_IRI, commitId, conn));
@@ -757,8 +708,6 @@ public class SimpleCommitManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void isCommitBranchNotHeadTest() {
-        trigRequired(repo, "/testCatalogData.trig"); // testCatalogData has outdated structure
-        // Setup:
         Resource commitId = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#commitA0");
         try (RepositoryConnection conn = repo.getConnection()) {
             assertTrue(manager.commitInBranch(ManagerTestConstants.BRANCH_IRI, commitId, conn));
@@ -767,8 +716,6 @@ public class SimpleCommitManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void isCommitBranchNotTest() {
-        trigRequired(repo, "/testCatalogData.trig"); // testCatalogData has outdated structure
-        // Setup:
         Resource commitId = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test4a");
         try (RepositoryConnection conn = repo.getConnection()) {
             assertFalse(manager.commitInBranch(ManagerTestConstants.BRANCH_IRI, commitId, conn));
@@ -790,7 +737,6 @@ public class SimpleCommitManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testInProgressCommitPathWithMissingRecord() {
-        trigRequired(repo, "/testCatalogData.trig"); // testCatalogData has outdated structure
         // Setup:
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage("VersionedRDFRecord " + ManagerTestConstants.MISSING_IRI + " could not be found");
@@ -802,7 +748,8 @@ public class SimpleCommitManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testInProgressCommitPathWithWrongCatalog() {
-        trigRequired(repo, "/testCatalogData.trig"); // testCatalogData has outdated structure
+        addData(repo, "/testCatalogData/versionedRdfRecord/versionedRdfRecordNoCatalog.trig", RDFFormat.TRIG);
+
         // Setup:
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage(String.format("Record %s does not belong to Catalog %s", ManagerTestConstants.VERSIONED_RDF_RECORD_NO_CATALOG_IRI, ManagerTestConstants.CATALOG_IRI));
@@ -814,7 +761,6 @@ public class SimpleCommitManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testMissingInProgressCommitPath() {
-        trigRequired(repo, "/testCatalogData.trig"); // testCatalogData has outdated structure
         // Setup:
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage("InProgressCommit " + ManagerTestConstants.MISSING_IRI + " could not be found");
@@ -826,7 +772,6 @@ public class SimpleCommitManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testInProgressCommitPathWithoutRecordSet() {
-        trigRequired(repo, "/testCatalogData.trig"); // testCatalogData has outdated structure
         // Setup:
         thrown.expect(IllegalStateException.class);
         thrown.expectMessage("Record was not set on InProgressCommit " + ManagerTestConstants.IN_PROGRESS_COMMIT_NO_RECORD_IRI);
@@ -838,7 +783,8 @@ public class SimpleCommitManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void testInProgressCommitPathWithWrongRecord() {
-        trigRequired(repo, "/testCatalogData.trig"); // testCatalogData has outdated structure
+        addData(repo, "/testCatalogData/versionedRdfRecord/versionedRdfRecordMissingBranch.trig", RDFFormat.TRIG);
+
         // Setup:
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage(String.format("InProgressCommit %s does not belong to VersionedRDFRecord %s", ManagerTestConstants.IN_PROGRESS_COMMIT_IRI, ManagerTestConstants.VERSIONED_RDF_RECORD_MISSING_BRANCH_IRI));
@@ -852,7 +798,6 @@ public class SimpleCommitManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void getInProgressCommitWithUserTest() {
-        trigRequired(repo, "/testCatalogData.trig"); // testCatalogData has outdated structure
         try (RepositoryConnection conn = repo.getConnection()) {
             InProgressCommit commit = manager.getInProgressCommit(ManagerTestConstants.VERSIONED_RDF_RECORD_IRI, ManagerTestConstants.USER2_IRI, conn);
             assertFalse(commit.getModel().isEmpty());
@@ -875,7 +820,6 @@ public class SimpleCommitManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void getInProgressCommitWithPathTest() {
-        trigRequired(repo, "/testCatalogData.trig"); // testCatalogData has outdated structure
         try (RepositoryConnection conn = repo.getConnection()) {
             InProgressCommit commit = manager.getInProgressCommit(ManagerTestConstants.CATALOG_IRI, ManagerTestConstants.VERSIONED_RDF_RECORD_IRI, ManagerTestConstants.IN_PROGRESS_COMMIT_IRI, conn);
             assertFalse(commit.getModel().isEmpty());
@@ -896,7 +840,6 @@ public class SimpleCommitManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void getInProgressCommitWithPathAndMissingRecordTest() {
-        trigRequired(repo, "/testCatalogData.trig"); // testCatalogData has outdated structure
         // Setup:
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage("VersionedRDFRecord " + ManagerTestConstants.MISSING_IRI + " could not be found");
@@ -908,7 +851,8 @@ public class SimpleCommitManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void getInProgressCommitWithPathAndWrongCatalogTest() {
-        trigRequired(repo, "/testCatalogData.trig"); // testCatalogData has outdated structure
+        addData(repo, "/testCatalogData/versionedRdfRecord/versionedRdfRecordNoCatalog.trig", RDFFormat.TRIG);
+
         // Setup:
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage(String.format("Record %s does not belong to Catalog %s", ManagerTestConstants.VERSIONED_RDF_RECORD_NO_CATALOG_IRI, ManagerTestConstants.CATALOG_IRI));
@@ -920,7 +864,6 @@ public class SimpleCommitManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void getMissingInProgressCommitWithPathTest() {
-        trigRequired(repo, "/testCatalogData.trig"); // testCatalogData has outdated structure
         // Setup:
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage("InProgressCommit " + ManagerTestConstants.MISSING_IRI + " could not be found");
@@ -932,7 +875,6 @@ public class SimpleCommitManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void getInProgressCommitWithPathWithoutRecordSetTest() {
-        trigRequired(repo, "/testCatalogData.trig"); // testCatalogData has outdated structure
         // Setup:
         thrown.expect(IllegalStateException.class);
         thrown.expectMessage("Record was not set on InProgressCommit " + ManagerTestConstants.IN_PROGRESS_COMMIT_NO_RECORD_IRI);
@@ -944,7 +886,8 @@ public class SimpleCommitManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void getInProgressCommitWithPathAndWrongRecordTest() {
-        trigRequired(repo, "/testCatalogData.trig"); // testCatalogData has outdated structure
+        addData(repo, "/testCatalogData/versionedRdfRecord/versionedRdfRecordMissingBranch.trig", RDFFormat.TRIG);
+
         // Setup:
         thrown.expect(IllegalArgumentException.class);
         thrown.expectMessage("InProgressCommit " + ManagerTestConstants.IN_PROGRESS_COMMIT_IRI + " does not belong to VersionedRDFRecord " + ManagerTestConstants.VERSIONED_RDF_RECORD_MISSING_BRANCH_IRI);
@@ -958,7 +901,6 @@ public class SimpleCommitManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void getInProgressCommitIRITest() {
-        trigRequired(repo, "/testCatalogData.trig"); // testCatalogData has outdated structure
         try (RepositoryConnection conn = repo.getConnection()) {
             Optional<Resource> iri = manager.getInProgressCommitIRI(ManagerTestConstants.VERSIONED_RDF_RECORD_IRI, ManagerTestConstants.USER2_IRI, conn);
             assertTrue(iri.isPresent());
@@ -978,7 +920,6 @@ public class SimpleCommitManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void removeInProgressCommitTest() {
-        trigRequired(repo, "/testCatalogData.trig"); // testCatalogData has outdated structure
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:
             InProgressCommit commit = getThing(ManagerTestConstants.IN_PROGRESS_COMMIT_IRI, inProgressCommitFactory, conn);
@@ -996,7 +937,6 @@ public class SimpleCommitManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void removeInProgressCommitWithReferencedChangesTest() {
-        trigRequired(repo, "/testCatalogData.trig"); // testCatalogData has outdated structure
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:
             InProgressCommit commit = inProgressCommitFactory.createNew(VALUE_FACTORY.createIRI("http://mobi.com/test/commits#in-progress-commit-referenced"));
@@ -1019,7 +959,6 @@ public class SimpleCommitManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void updateCommitWithCommitTest() {
-        trigRequired(repo, "/testCatalogData.trig"); // testCatalogData has outdated structure
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:
             Commit commit = getThing(ManagerTestConstants.COMMIT_IRI, commitFactory, conn);
@@ -1049,7 +988,6 @@ public class SimpleCommitManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void updateCommitWithCommitAndDuplicatesTest() {
-        trigRequired(repo, "/testCatalogData.trig"); // testCatalogData has outdated structure
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:
             Commit commit = getThing(ManagerTestConstants.COMMIT_IRI, commitFactory, conn);
@@ -1077,7 +1015,6 @@ public class SimpleCommitManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void updateCommitWithCommitNullAdditionsTest() {
-        trigRequired(repo, "/testCatalogData.trig"); // testCatalogData has outdated structure
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:
             Commit commit = getThing(ManagerTestConstants.COMMIT_IRI, commitFactory, conn);
@@ -1106,7 +1043,6 @@ public class SimpleCommitManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void updateCommitWithCommitNullDeletionsTest() {
-        trigRequired(repo, "/testCatalogData.trig"); // testCatalogData has outdated structure
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:
             Commit commit = getThing(ManagerTestConstants.COMMIT_IRI, commitFactory, conn);
@@ -1135,7 +1071,8 @@ public class SimpleCommitManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void updateCommitWithCommitWithoutAdditionsSetTest() {
-        trigRequired(repo, "/testCatalogData.trig"); // testCatalogData has outdated structure
+        addData(repo, "/testCatalogData/commits.trig", RDFFormat.TRIG);
+
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:
             Commit commit = getThing(ManagerTestConstants.COMMIT_NO_ADDITIONS_IRI, commitFactory, conn);
@@ -1148,7 +1085,8 @@ public class SimpleCommitManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void updateCommitWithCommitWithoutDeletionsSetTest() {
-        trigRequired(repo, "/testCatalogData.trig"); // testCatalogData has outdated structure
+        addData(repo, "/testCatalogData/commits.trig", RDFFormat.TRIG);
+
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:
             Commit commit = getThing(ManagerTestConstants.COMMIT_NO_DELETIONS_IRI, commitFactory, conn);
@@ -1159,75 +1097,10 @@ public class SimpleCommitManagerTest extends OrmEnabledTestCase {
         }
     }
 
-    @Test
-    public void updateCommitWithCommitAndQuadsTest() {
-        trigRequired(repo, "/testCatalogData.trig"); // testCatalogData has outdated structure
-        try (RepositoryConnection conn = repo.getConnection()) {
-            // Setup:
-            Commit commit = getThing(VALUE_FACTORY.createIRI(ManagerTestConstants.COMMITS + "quad-test1"), commitFactory, conn);
-
-            Resource graph1 = VALUE_FACTORY.createIRI(ManagerTestConstants.GRAPHS + "quad-graph1");
-            Resource graphTest = VALUE_FACTORY.createIRI(ManagerTestConstants.GRAPHS + "quad-graph-test");
-
-            Statement addQuad = VALUE_FACTORY.createStatement(VALUE_FACTORY.createIRI("https://mobi.com/test"), DCTERMS.TITLE, VALUE_FACTORY.createLiteral("Title"), graphTest);
-            Statement addAndDeleteQuad = VALUE_FACTORY.createStatement(VALUE_FACTORY.createIRI("https://mobi.com/test"), DCTERMS.DESCRIPTION, VALUE_FACTORY.createLiteral("Description"), graph1);
-            Statement deleteQuad = VALUE_FACTORY.createStatement(VALUE_FACTORY.createIRI("https://mobi.com/test/object2"), RDFS.LABEL, VALUE_FACTORY.createLiteral("Label"), graph1);
-            Statement existingAddQuad = VALUE_FACTORY.createStatement(VALUE_FACTORY.createIRI("http://mobi.com/test/object2"), DCTERMS.TITLE, VALUE_FACTORY.createLiteral("Test 1 Title"), graph1);
-            Model additions = MODEL_FACTORY.createEmptyModel();
-            additions.addAll(Stream.of(addQuad, addAndDeleteQuad).collect(Collectors.toSet()));
-            Model deletions = MODEL_FACTORY.createEmptyModel();
-            deletions.addAll(Stream.of(addAndDeleteQuad, deleteQuad, existingAddQuad).collect(Collectors.toSet()));
-
-
-            String ADDITIONS_NAMESPACE = "https://mobi.com/additions#"; // TODO CORRECT NAMESPACE?
-            String DELETIONS_NAMESPACE = "https://mobi.com/deletions#"; // TODO CORRECT NAMESPACE?
-
-            Resource additionsGraph = VALUE_FACTORY.createIRI(ADDITIONS_NAMESPACE + "quad-test1");
-            Resource deletionsGraph = VALUE_FACTORY.createIRI(DELETIONS_NAMESPACE + "quad-test1");
-            Statement expAdd1 = VALUE_FACTORY.createStatement(VALUE_FACTORY.createIRI("http://mobi.com/test/object1"), DCTERMS.TITLE, VALUE_FACTORY.createLiteral("Test 1 Title"), additionsGraph);
-            Statement expDel1 = VALUE_FACTORY.createStatement(VALUE_FACTORY.createIRI("http://mobi.com/test/object1"), DCTERMS.TITLE, VALUE_FACTORY.createLiteral("Test 0 Title"), deletionsGraph);
-
-            Resource additionsGraph1 = VALUE_FACTORY.createIRI(ADDITIONS_NAMESPACE + "quad-test1%00http%3A%2F%2Fmobi.com%2Ftest%2Fgraphs%23quad-graph1");
-            Resource deletionsGraph1 = VALUE_FACTORY.createIRI(DELETIONS_NAMESPACE + "quad-test1%00http%3A%2F%2Fmobi.com%2Ftest%2Fgraphs%23quad-graph1");
-            Statement expAddGraph1 = VALUE_FACTORY.createStatement(VALUE_FACTORY.createIRI("http://mobi.com/test/object2"), RDF.TYPE, ManagerTestConstants.OWL_THING, additionsGraph1);
-            Statement expDelGraph1 = VALUE_FACTORY.createStatement(VALUE_FACTORY.createIRI("https://mobi.com/test/object2"), RDFS.LABEL, VALUE_FACTORY.createLiteral("Label"), deletionsGraph1);
-
-            Resource additionsGraphTest = VALUE_FACTORY.createIRI(ADDITIONS_NAMESPACE + "quad-test1%00http%3A%2F%2Fmobi.com%2Ftest%2Fgraphs%23quad-graph-test");
-            Resource deletionsGraphTest = VALUE_FACTORY.createIRI(DELETIONS_NAMESPACE + "quad-test1%00http%3A%2F%2Fmobi.com%2Ftest%2Fgraphs%23quad-graph-test");
-            Statement expAddGraphTest = VALUE_FACTORY.createStatement(VALUE_FACTORY.createIRI("https://mobi.com/test"), DCTERMS.TITLE, VALUE_FACTORY.createLiteral("Title"), additionsGraphTest);
-
-            manager.updateCommit(commit, additions, deletions, conn);
-
-            List<Statement> adds = QueryResults.asList(conn.getStatements(null, null, null, additionsGraph));
-            assertEquals(1, adds.size());
-            assertTrue(adds.contains(expAdd1));
-
-            List<Statement> dels = QueryResults.asList(conn.getStatements(null, null, null, deletionsGraph));
-            assertEquals(1, dels.size());
-            assertTrue(dels.contains(expDel1));
-
-            List<Statement> addsGraph1 = QueryResults.asList(conn.getStatements(null, null, null, additionsGraph1));
-            assertEquals(1, addsGraph1.size());
-            assertTrue(addsGraph1.contains(expAddGraph1));
-
-            List<Statement> delsGraph1 = QueryResults.asList(conn.getStatements(null, null, null, deletionsGraph1));
-            assertEquals(1, delsGraph1.size());
-            assertTrue(delsGraph1.contains(expDelGraph1));
-
-            List<Statement> addsGraphTest = QueryResults.asList(conn.getStatements(null, null, null, additionsGraphTest));
-            assertEquals(0, addsGraphTest.size()); // TODO VALIDATE
-            assertFalse(addsGraphTest.contains(expAddGraphTest));
-
-            List<Statement> delsGraphTest = QueryResults.asList(conn.getStatements(null, null, null, deletionsGraphTest));
-            assertEquals(0, delsGraphTest.size());
-        }
-    }
-
     /* updateCommit(Resource, Model, Model, RepositoryConnection) */
 
     @Test
     public void updateCommitWithResourceTest() {
-        trigRequired(repo, "/testCatalogData.trig"); // testCatalogData has outdated structure
         // Setup:
         Resource additionId = getAdditionsResource(ManagerTestConstants.COMMIT_IRI);
         Resource deletionId = getDeletionsResource(ManagerTestConstants.COMMIT_IRI);
@@ -1256,7 +1129,6 @@ public class SimpleCommitManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void updateCommitWithResourceAndDuplicatesTest() {
-        trigRequired(repo, "/testCatalogData.trig"); // testCatalogData has outdated structure
         // Setup:
         Resource additionId = getAdditionsResource(ManagerTestConstants.COMMIT_IRI);
         Resource deletionId = getDeletionsResource(ManagerTestConstants.COMMIT_IRI);
@@ -1283,8 +1155,8 @@ public class SimpleCommitManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void updateCommitWithResourceWithoutAdditionsSetTest() {
-        trigRequired(repo, "/testCatalogData.trig"); // testCatalogData has outdated structure
         // Setup:
+        addData(repo, "/testCatalogData/commits.trig", RDFFormat.TRIG);
         thrown.expect(IllegalStateException.class);
         thrown.expectMessage("Additions not set on Commit " + ManagerTestConstants.COMMIT_NO_ADDITIONS_IRI);
 
@@ -1295,8 +1167,8 @@ public class SimpleCommitManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void updateCommitWithResourceWithoutDeletionsSetTest() {
-        trigRequired(repo, "/testCatalogData.trig"); // testCatalogData has outdated structure
         // Setup:
+        addData(repo, "/testCatalogData/commits.trig", RDFFormat.TRIG);
         thrown.expect(IllegalStateException.class);
         thrown.expectMessage("Deletions not set on Commit " + ManagerTestConstants.COMMIT_NO_DELETIONS_IRI);
 
@@ -1309,7 +1181,6 @@ public class SimpleCommitManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void addCommitTest() {
-        trigRequired(repo, "/testCatalogData.trig"); // testCatalogData has outdated structure
         // Setup:
         IRI newIRI = VALUE_FACTORY.createIRI("http://mobi.com/test#new");
         IRI headCommitIRI = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#commitA1");
@@ -1317,7 +1188,10 @@ public class SimpleCommitManagerTest extends OrmEnabledTestCase {
 
         Commit commit = commitFactory.createNew(newIRI);
         try (RepositoryConnection conn = repo.getConnection()) {
-            Record record = recordManager.getRecord(ManagerTestConstants.CATALOG_IRI, ManagerTestConstants.SIMPLE_VERSIONED_RDF_RECORD_IRI, recordFactory, conn);
+            conn.clear();
+            addData(repo, "/testCatalogData/ontologyRecord/simpleVersionedRdfRecord.trig", RDFFormat.TRIG);
+
+            recordManager.getRecord(ManagerTestConstants.CATALOG_IRI, ManagerTestConstants.SIMPLE_VERSIONED_RDF_RECORD_IRI, recordFactory, conn);
             String previousRecordModDate = getModifiedIriValue(ManagerTestConstants.SIMPLE_VERSIONED_RDF_RECORD_IRI, conn);
 
             Branch branch = branchManager.getBranch(ManagerTestConstants.CATALOG_IRI, ManagerTestConstants.SIMPLE_VERSIONED_RDF_RECORD_IRI, ManagerTestConstants.BRANCH_IRI, branchFactory, conn);
@@ -1339,7 +1213,6 @@ public class SimpleCommitManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void addCommitWithTakenResourceTest() {
-        trigRequired(repo, "/testCatalogData.trig"); // testCatalogData has outdated structure
         // Setup:
         Branch branch = branchFactory.createNew(ManagerTestConstants.BRANCH_IRI);
         Commit commit = commitFactory.createNew(ManagerTestConstants.COMMIT_IRI);
@@ -1355,7 +1228,6 @@ public class SimpleCommitManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void addChangesTest() {
-        trigRequired(repo, "/testCatalogData.trig"); // testCatalogData has outdated structure
         try (RepositoryConnection conn = repo.getConnection()) {
             // Setup:
             Resource additionId = getAdditionsResource(ManagerTestConstants.COMMIT_IRI);
@@ -1379,8 +1251,9 @@ public class SimpleCommitManagerTest extends OrmEnabledTestCase {
 
     @Test
     public void getCommitChainDescTest() {
-        trigRequired(repo, "/testCatalogData.trig"); // testCatalogData has outdated structure
         try (RepositoryConnection conn = repo.getConnection()) {
+            conn.clear();
+            addData(repo, "/testCatalogData/versionedRdfRecord/versionedRdfRecordChain.trig", RDFFormat.TRIG);
             // Setup:
             List<Resource> expect = Stream.of(VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test3"),
                     VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test4b"),
@@ -1391,74 +1264,74 @@ public class SimpleCommitManagerTest extends OrmEnabledTestCase {
             Resource commitId = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test3");
 
             List<Resource> result = manager.getCommitChain(commitId, false, conn);
-            Assert.assertEquals(expect, result);
+            assertEquals(expect, result);
         }
     }
 
     @Test
     public void getCommitChainAscTest() {
-        trigRequired(repo, "/testCatalogData.trig"); // testCatalogData has outdated structure
         try (RepositoryConnection conn = repo.getConnection()) {
+            conn.clear();
+            addData(repo, "/testCatalogData/versionedRdfRecord/versionedRdfRecordChain.trig", RDFFormat.TRIG);
             // Setup:
+            List<Resource> expect = Stream.of(VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test0"),
+                    VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test1"),
+                    VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test2"),
+                    VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test4a"),
+                    VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test4b"),
+                    VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test3")).collect(Collectors.toList());
             Resource commitId = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test3");
 
             List<Resource> result = manager.getCommitChain(commitId, true, conn);
-            List<Resource> expect = createIris("http://mobi.com/test/commits#test0",
-                    "http://mobi.com/test/commits#test1",
-                    "http://mobi.com/test/commits#test2",
-                    "http://mobi.com/test/commits#test4a",
-                    "http://mobi.com/test/commits#test4b",
-                    "http://mobi.com/test/commits#test3");
-            Assert.assertEquals(expect, result);
+            assertEquals(expect, result);
         }
     }
 
     @Test
     public void getCommitChainEntityTest() {
-        trigRequired(repo, "/testCatalogData.trig"); // testCatalogData has outdated structure
         try (RepositoryConnection conn = repo.getConnection()) {
+            conn.clear();
+            addData(repo, "/testCatalogData/versionedRdfRecord/versionedRdfRecordChain.trig", RDFFormat.TRIG);
             // Setup:
+            List<Resource> expect = Stream.of(VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test3"),
+                    VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test2")).collect(Collectors.toList());
             Resource commitId = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test3");
             Resource entityId = VALUE_FACTORY.createIRI("http://mobi.com/test/class");
 
             List<Commit> result = manager.getCommitEntityChain(commitId, entityId, conn);
-            List<Resource> expect = createIris("http://mobi.com/test/commits#test3",
-                    "http://mobi.com/test/commits#test4b",
-                    "http://mobi.com/test/commits#test4a",
-                    "http://mobi.com/test/commits#test2",
-                    "http://mobi.com/test/commits#test1",
-                    "http://mobi.com/test/commits#test0");
-            Assert.assertEquals(expect, result.stream().map(Thing::getResource).toList()); // TODO VALIDATE
+            assertEquals(expect, result.stream().map(Thing::getResource).toList());
         }
     }
 
     @Test
     public void getEmptyCommitChainEntityTest() {
-        trigRequired(repo, "/testCatalogData.trig"); // testCatalogData has outdated structure
         try (RepositoryConnection conn = repo.getConnection()) {
+            conn.clear();
+            addData(repo, "/testCatalogData/versionedRdfRecord/versionedRdfRecordChain.trig", RDFFormat.TRIG);
             // Setup:
             Resource commitId = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test5a");
             Resource entityId = VALUE_FACTORY.createIRI("http://mobi.com/test/noClass");
 
             List<Commit> result = manager.getCommitEntityChain(commitId, entityId, conn);
-            Assert.assertEquals(0, result.size());
+            assertEquals(0, result.size());
         }
     }
 
     @Test
     public void getCommitChainMissingCommitTest() {
         try (RepositoryConnection conn = repo.getConnection()) {
+            conn.clear();
+            addData(repo, "/testCatalogData/versionedRdfRecord/versionedRdfRecordChain.trig", RDFFormat.TRIG);
             // Setup:
             Resource commitId = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#error");
 
             List<Resource> result = manager.getCommitChain(commitId, true, conn);
-            Assert.assertEquals(1, result.size());
+            assertEquals(1, result.size());
         }
     }
 
     @Test
     public void testGetDifferenceChain() {
-        trigRequired(repo, "/testCatalogData.trig"); // testCatalogData has outdated structure
         // Setup:
         List<Resource> commitChain = Stream.of(VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test0"),
                 VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test1"),
@@ -1474,51 +1347,53 @@ public class SimpleCommitManagerTest extends OrmEnabledTestCase {
         Collections.reverse(expected);
 
         try (RepositoryConnection conn = repo.getConnection()) {
+            conn.clear();
+            addData(repo, "/testCatalogData/versionedRdfRecord/versionedRdfRecordChain.trig", RDFFormat.TRIG);
             List<Resource> actual = manager.getDifferenceChain(sourceId, targetId, false, conn);
 
-            Assert.assertEquals(expected, actual);
+            assertEquals(expected, actual);
         }
     }
 
     @Test
     public void testGetDifferenceEntityChain() {
-        trigRequired(repo, "/testCatalogData.trig"); // testCatalogData has outdated structure
         // Setup:
+        List<Resource> expected = Stream.of(VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test3"),
+                VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test2")).collect(Collectors.toList());
         Resource sourceId = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test3");
         Resource targetId = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test0");
         Resource entityId = VALUE_FACTORY.createIRI("http://mobi.com/test/class");
 
         try (RepositoryConnection conn = repo.getConnection()) {
+            conn.clear();
+            addData(repo, "/testCatalogData/versionedRdfRecord/versionedRdfRecordChain.trig", RDFFormat.TRIG);
             List<Resource> actual = manager.getCommitEntityChain(sourceId, targetId, entityId, conn)
                     .stream()
                     .map(Thing::getResource)
                     .toList();
 
-            List<Resource> expected = createIris("http://mobi.com/test/commits#test3",
-                    "http://mobi.com/test/commits#test4b", "http://mobi.com/test/commits#test4a",
-                    "http://mobi.com/test/commits#test2", "http://mobi.com/test/commits#test1");
-            Assert.assertEquals(expected, actual); // TODO VALIDATE
+            assertEquals(expected, actual);
         }
     }
 
     @Test
     public void testGetDifferenceEntityChainEmpty() {
-        trigRequired(repo, "/testCatalogData.trig"); // testCatalogData has outdated structure
         // Setup:
         Resource sourceId = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test3");
         Resource targetId = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test0");
         Resource entityId = VALUE_FACTORY.createIRI("http://mobi.com/test/class5");
 
         try (RepositoryConnection conn = repo.getConnection()) {
+            conn.clear();
+            addData(repo, "/testCatalogData/versionedRdfRecord/versionedRdfRecordChain.trig", RDFFormat.TRIG);
             List<Commit> actual = manager.getCommitEntityChain(sourceId, targetId, entityId, conn);
 
-            Assert.assertEquals(0, actual.size());
+            assertEquals(0, actual.size());
         }
     }
 
     @Test
     public void testGetDifferenceChainCommonParent() {
-        trigRequired(repo, "/testCatalogData.trig"); // testCatalogData has outdated structure
         // Setup:
         List<Resource> commitChain = Stream.of(VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test0"),
                 VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test1"),
@@ -1531,9 +1406,12 @@ public class SimpleCommitManagerTest extends OrmEnabledTestCase {
         Collections.reverse(commitChain);
 
         try (RepositoryConnection conn = repo.getConnection()) {
+            conn.clear();
+            addData(repo, "/testCatalogData/versionedRdfRecord/versionedRdfRecordChain.trig", RDFFormat.TRIG);
+            addData(repo, "/testCatalogData/commits.trig", RDFFormat.TRIG);
             List<Resource> actual = manager.getDifferenceChain(sourceId, targetId, false, conn);
 
-            Assert.assertEquals(actual, commitChain);
+            assertEquals(actual, commitChain);
         }
     }
 
@@ -1546,13 +1424,14 @@ public class SimpleCommitManagerTest extends OrmEnabledTestCase {
         thrown.expectMessage(String.format("Commit %s could not be found", sourceId.stringValue()));
 
         try (RepositoryConnection conn = repo.getConnection()) {
-            List<Resource> actual = manager.getDifferenceChain(sourceId, targetId, false, conn);
+            conn.clear();
+            addData(repo, "/testCatalogData/versionedRdfRecord/versionedRdfRecordChain.trig", RDFFormat.TRIG);
+            manager.getDifferenceChain(sourceId, targetId, false, conn);
         }
     }
 
     @Test
     public void doesDifferenceChainTargetCommitExist() {
-        trigRequired(repo, "/testCatalogData.trig"); // testCatalogData has outdated structure
         // Setup:
         Resource sourceId = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#test4a");
         Resource targetId = VALUE_FACTORY.createIRI("http://mobi.com/test/commits#fake");
@@ -1560,7 +1439,9 @@ public class SimpleCommitManagerTest extends OrmEnabledTestCase {
         thrown.expectMessage(String.format("Commit %s could not be found", targetId.stringValue()));
 
         try (RepositoryConnection conn = repo.getConnection()) {
-            List<Resource> actual = manager.getDifferenceChain(sourceId, targetId, false, conn);
+            conn.clear();
+            addData(repo, "/testCatalogData/versionedRdfRecord/versionedRdfRecordChain.trig", RDFFormat.TRIG);
+            manager.getDifferenceChain(sourceId, targetId, false, conn);
         }
     }
 
@@ -1584,27 +1465,17 @@ public class SimpleCommitManagerTest extends OrmEnabledTestCase {
         manager.getHeadCommitIRI(branch);
     }
 
-    // HELPER METHODS //
-    
-    private static IRI getAdditionsResource(IRI commitId) {
-        return VALUE_FACTORY.createIRI(ManagerTestConstants.ADDITIONS + commitId.getLocalName());
+    private IRI getAdditionsResource(IRI commitId) {
+        return VALUE_FACTORY.createIRI(ManagerTestConstants.DELTAS + commitId.getLocalName() + "-A");
     }
 
-    private static IRI getDeletionsResource(IRI commitId) {
-        return VALUE_FACTORY.createIRI(ManagerTestConstants.DELETIONS + commitId.getLocalName());
+    private IRI getDeletionsResource(IRI commitId) {
+        return VALUE_FACTORY.createIRI(ManagerTestConstants.DELTAS + commitId.getLocalName() + "-B");
     }
 
     private <T extends Thing> T getThing(Resource thingId, OrmFactory<T> factory, RepositoryConnection conn) {
         Model thingModel = QueryResults.asModel(conn.getStatements(null, null, null, thingId), MODEL_FACTORY);
         return factory.getExisting(thingId, thingModel).get();
-    }
-
-    private static IRI getQuadAdditionsResource(IRI commitId, String graph) throws Exception {
-        return VALUE_FACTORY.createIRI(ManagerTestConstants.ADDITIONS + commitId.getLocalName() + "%00" + URLEncoder.encode(graph, StandardCharsets.UTF_8));
-    }
-
-    private static IRI getQuadDeletionsResource(IRI commitId, String graph) throws Exception {
-        return VALUE_FACTORY.createIRI(ManagerTestConstants.DELETIONS + commitId.getLocalName() + "%00" + URLEncoder.encode(graph, StandardCharsets.UTF_8));
     }
 
     private String getModifiedIriValue(IRI entity, RepositoryConnection conn) {
@@ -1614,9 +1485,5 @@ public class SimpleCommitManagerTest extends OrmEnabledTestCase {
         String modifiedIri = statements.next().toString();
         statements.close();
         return modifiedIri;
-    }
-
-    private static List<Resource> createIris(String... iris) {
-        return Arrays.stream(iris).map(VALUE_FACTORY::createIRI).collect(Collectors.toList());
     }
 }
