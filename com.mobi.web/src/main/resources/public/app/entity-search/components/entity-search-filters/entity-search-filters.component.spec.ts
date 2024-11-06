@@ -21,96 +21,98 @@
  * #L%
  */
 import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { MockComponent } from 'ng-mocks';
+import { cloneDeep } from 'lodash';
 
-import { MockComponent, MockProvider } from 'ng-mocks';
-
-import { EntitySearchFiltersComponent } from './entity-search-filters.component';
-import { CatalogStateService } from '../../../shared/services/catalogState.service';
-import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
-import { EntitySearchStateService } from '../../services/entity-search-state.service';
 import { DELIM, ONTOLOGYEDITOR, SHAPESGRAPHEDITOR, WORKFLOWS } from '../../../prefixes';
 import { ListFilter } from '../../../shared/models/list-filter.interface';
 import { ListFiltersComponent } from '../../../shared/components/list-filters/list-filters.component';
+import { FilterItem } from '../../../shared/models/filterItem.interface';
+import { EntitySearchFiltersComponent } from './entity-search-filters.component';
 
 describe('Entity Search Filters component', () => {
   let component: EntitySearchFiltersComponent;
   let fixture: ComponentFixture<EntitySearchFiltersComponent>;
-  let entityStateStub: jasmine.SpyObj<EntitySearchStateService>;
 
   let recordTypeFilter: ListFilter;
+
+  const ontRecordFilterItem: FilterItem = {
+    value: `${ONTOLOGYEDITOR}OntologyRecord`,
+    display: 'Ontology Record',
+    checked: true
+  };
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       declarations: [
         EntitySearchFiltersComponent,
         MockComponent(ListFiltersComponent)
-      ],
-      providers: [
-        MockProvider(CatalogStateService),
-        MockProvider(CatalogManagerService)
       ]
-    })
-    .compileComponents();
+    }).compileComponents();
 
     fixture = TestBed.createComponent(EntitySearchFiltersComponent);
-    entityStateStub = TestBed.inject(EntitySearchStateService) as jasmine.SpyObj<EntitySearchStateService>;
     component = fixture.componentInstance;
     fixture.detectChanges();
   });
 
   afterEach(() => {
     component = null;
-    entityStateStub = null;
     fixture = null;
     recordTypeFilter = null;
   });
 
   describe('initializes correctly', () => {
     beforeEach(() => {
-      entityStateStub.selectedRecordTypes = [`${ONTOLOGYEDITOR}OntologyRecord`];
+      component.typeFilters = [ontRecordFilterItem];
       spyOn(component.changeFilter, 'emit');
       component.ngOnInit();
       recordTypeFilter = component.filters[0];
     });
     it('with recordTypeFilter', () => {
-      const expectedFilterItems = [
-        {value: `${ONTOLOGYEDITOR}OntologyRecord`, checked: true},
-        {value: `${WORKFLOWS}WorkflowRecord`, checked: false},
-        {value: `${DELIM}MappingRecord`, checked: false},
-        {value: `${SHAPESGRAPHEDITOR}ShapesGraphRecord`, checked: false},
+      const expectedFilterItems: FilterItem[] = [
+        ontRecordFilterItem,
+        {value: `${WORKFLOWS}WorkflowRecord`, display: 'Workflow Record', checked: false},
+        {value: `${DELIM}MappingRecord`, display: 'Mapping Record', checked: false},
+        {value: `${SHAPESGRAPHEDITOR}ShapesGraphRecord`, display: 'Shapes Graph Record', checked: false},
       ];
 
       component.ngOnInit();
-      expect(recordTypeFilter.title).toEqual('Record Type');
       expect(recordTypeFilter.filterItems).toEqual(expectedFilterItems);
     });
   });
   describe('has working filter methods', () => {
     beforeEach(() => {
       spyOn(component.changeFilter, 'emit');
-      entityStateStub.selectedRecordTypes = [`${ONTOLOGYEDITOR}OntologyRecord`];
+      component.typeFilters = [ontRecordFilterItem];
       component.ngOnInit();
       recordTypeFilter = component.filters[0];
     });
     describe('for the recordTypeFilter', () => {
       it('if the item has been checked', () => {
-        const clickedFilterItem = {value: `${WORKFLOWS}WorkflowRecord`, checked: true};
+        const clickedFilterItem: FilterItem = {value: `${WORKFLOWS}WorkflowRecord`, display: 'Workflow Record', checked: true};
         recordTypeFilter.filter(clickedFilterItem);
 
-        expect(component.changeFilter.emit).toHaveBeenCalledWith({chosenTypes: [
-            `${ONTOLOGYEDITOR}OntologyRecord`,
-            `${WORKFLOWS}WorkflowRecord`
-          ]});
-
-        expect(entityStateStub.selectedRecordTypes.length).toEqual(2);
+        expect(component.changeFilter.emit).toHaveBeenCalledWith({
+          chosenTypes: [ontRecordFilterItem, clickedFilterItem]
+        });
       });
-      it('if the item has not been checked', () => {
-        const clickedFilterItem = {value: `${ONTOLOGYEDITOR}OntologyRecord`, checked: false};
+      it('if the item was unchecked', () => {
+        const clickedFilterItem = cloneDeep(ontRecordFilterItem);
+        clickedFilterItem.checked = false;
         recordTypeFilter.filter(clickedFilterItem);
 
-        expect(entityStateStub.selectedRecordTypes.length).toEqual(0);
         expect(component.changeFilter.emit).toHaveBeenCalledWith({chosenTypes: []});
       });
+    });
+    it('should update the selectedRecordTypes and numChecked on updateList call', () => {
+      const ontologyRecordActualItem = recordTypeFilter.filterItems.find(item => item.value === `${ONTOLOGYEDITOR}OntologyRecord`);
+      expect(ontologyRecordActualItem).toBeDefined();
+      expect(ontologyRecordActualItem.checked).toBeTrue();
+      expect(recordTypeFilter.numChecked).toEqual(1);
+
+      component.updateFilterList([], [ontRecordFilterItem]);
+      expect(ontologyRecordActualItem.checked).toBeFalse();
+      expect(recordTypeFilter.numChecked).toEqual(0);
     });
   });
 });

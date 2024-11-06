@@ -22,6 +22,7 @@
  */
 import { Component, OnInit } from '@angular/core';
 import { PageEvent } from '@angular/material/paginator';
+import { Router } from '@angular/router';
 
 import { get } from 'lodash';
 import { Observable, of } from 'rxjs';
@@ -29,9 +30,10 @@ import { Observable, of } from 'rxjs';
 import { EntityRecord } from '../../models/entity-record';
 import { EntitySearchStateService } from '../../services/entity-search-state.service';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
-import { Router } from '@angular/router';
 import { CatalogStateService } from '../../../shared/services/catalogState.service';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
+import { getBeautifulIRI } from '../../../shared/utility';
+import { SelectedEntityFilters } from '../../models/selected-entity-filters.interface';
 
 /**
  * The SearchResultsListComponent represents a component that displays search results.
@@ -46,15 +48,17 @@ export class SearchResultsListComponent implements OnInit {
   catalogId = '';
   searchResult: Observable<EntityRecord[]>;
   searchText: string;
+  selectedFilters: SelectedEntityFilters;
 
   constructor(public state: EntitySearchStateService, public catalogState: CatalogStateService, private _router: Router,
-              private cm: CatalogManagerService) {
+              private _cm: CatalogManagerService) {
   }
 
   ngOnInit(): void {
-    this.catalogId = get(this.cm.localCatalog, '@id', '');
+    this.catalogId = get(this._cm.localCatalog, '@id', '');
     this.searchText = this.state.paginationConfig.searchText;
-    this.loadData();
+    this._initializeSelectedFilters();
+    this._loadData();
   }
 
   /**
@@ -97,8 +101,7 @@ export class SearchResultsListComponent implements OnInit {
    */
   searchRecords(): void {
     this.state.resetPagination();
-    this.state.paginationConfig.type = this.state.selectedRecordTypes;
-    this.loadData();
+    this._loadData();
   }
 
   /**
@@ -108,16 +111,38 @@ export class SearchResultsListComponent implements OnInit {
    * @param {string[]} changeDetails.chosenTypes - The new list of chosen types for filtering the data.
    * @return {void}
    */
-  changeFilter(changeDetails: {chosenTypes: string[]}): void {
+  changeFilter(changeDetails: SelectedEntityFilters): void {
     this.state.resetPagination();
-    this.state.paginationConfig.type = changeDetails.chosenTypes;
-    this.loadData();
+    this._setPaginationFilters(changeDetails);
+    this.selectedFilters = changeDetails;
+    this._loadData();
   }
 
   /**
+   * Initializes the selected filters list based on the values from the state service.
+   */
+  private _initializeSelectedFilters() {
+    this.selectedFilters = {
+      chosenTypes: this.state?.paginationConfig?.type ? this.state?.paginationConfig?.type.map(type => ({
+        value: type,
+        display: getBeautifulIRI(type),
+        checked: true
+      })) : []
+    };
+  }
+  /**
+   * Updates the pagination config on the state service to align with the provided new filter values.
+   * 
+   * @param {SelectedEntityFilters} filters New filter values coming from the
+   *    {@link entity-search.EntitySearchFiltersComponent}.
+   */
+  private _setPaginationFilters(filters: SelectedEntityFilters): void {
+    this.state.paginationConfig.type = filters.chosenTypes.map(item => item.value);
+  }
+  /**
    * Loads data based on the searchText value.
    */
-  private loadData(): void {
+  private _loadData(): void {
     if (this.searchText) {
       this.state.paginationConfig.searchText = this.searchText;
       this.searchResult = this.state.setResults(this.catalogId);

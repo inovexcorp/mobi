@@ -62,6 +62,7 @@ export class MergeRequestFilterComponent implements OnInit, OnDestroy {
     { value: 'closed', label: 'Closed'}
   ];
   @Input() updateFilters: Observable<void>;
+  // TODO: Come back later and change this to follow the new paradigm of SelectedFilterItems
   @Output() changeFilter = new EventEmitter<MergeRequestFilterEvent>();
 
   private _destroySub$ = new Subject<void>();
@@ -83,14 +84,12 @@ export class MergeRequestFilterComponent implements OnInit, OnDestroy {
       onInit: function() {
         this.setFilterItems();
       },
-      getItemText: function(filterItem: FilterItem) {
-        return getBeautifulIRI(filterItem.value);
-      },
       setFilterItems: function() {
         this.filterItems = componentContext.requestStatusOptions.map(item => {
           statusOptionMap[item.label] = item.value;
           return {
             value: item.label,
+            display: getBeautifulIRI(item.label),
             checked: item.value === componentContext._state.acceptedFilter
           };
         });
@@ -133,10 +132,6 @@ export class MergeRequestFilterComponent implements OnInit, OnDestroy {
         this.numChecked = componentContext._state.creators.length;
         this.nextPage();
       },
-      getItemText: function(filterItem: FilterItem): string {
-        const userCount = filterItem.value as UserCount;
-        return `${userCount.name} (${userCount.count})`;
-      },
       getItemTooltip: function(filterItem: FilterItem): string {
         const userCount = filterItem.value as UserCount;
         const user = componentContext._state.getUser(userCount.user);
@@ -145,6 +140,7 @@ export class MergeRequestFilterComponent implements OnInit, OnDestroy {
       setFilterItems: function(): void {
         this.filterItems = this.rawFilterItems.map(userCount => ({
           value: userCount,
+          display: `${userCount.name} (${userCount.count})`,
           checked: componentContext._state.creators.findIndex(iri => iri === (userCount as UserCount).user) >= 0
         }));
       },
@@ -214,13 +210,10 @@ export class MergeRequestFilterComponent implements OnInit, OnDestroy {
           this.numChecked = componentContext._state.records.length;
           this.nextPage();
         },
-        getItemText: function(filterItem: FilterItem): string {
-          const recordCount = filterItem.value as RecordCount;
-          return `${recordCount.title} (${recordCount.count})`;
-        },
         setFilterItems: function(): void {
           this.filterItems = this.rawFilterItems.map(recordCount => ({
             value: recordCount,
+            display: `${recordCount.title} (${recordCount.count})`,
             checked: componentContext._state.records.findIndex(iri => iri === (recordCount as RecordCount).record) >= 0
           }));
         },
@@ -290,10 +283,6 @@ export class MergeRequestFilterComponent implements OnInit, OnDestroy {
         this.numChecked = componentContext._state.assignees.length;
         this.nextPage();
       },
-      getItemText: function(filterItem: FilterItem): string {
-        const userCount = filterItem.value as UserCount;
-        return `${userCount.name} (${userCount.count})`;
-      },
       getItemTooltip: function(filterItem: FilterItem): string {
         const userCount = filterItem.value as UserCount;
         const user = componentContext._state.getUser(userCount.user);
@@ -302,6 +291,7 @@ export class MergeRequestFilterComponent implements OnInit, OnDestroy {
       setFilterItems: function(): void {
         this.filterItems = this.rawFilterItems.map(userCount => ({
           value: userCount,
+          display: `${userCount.name} (${userCount.count})`,
           checked: componentContext._state.assignees.findIndex(iri => iri === (userCount as UserCount).user) >= 0
         }));
       },

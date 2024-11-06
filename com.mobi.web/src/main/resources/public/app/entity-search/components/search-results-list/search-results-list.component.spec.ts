@@ -26,6 +26,7 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { EntitySearchStateService } from '../../services/entity-search-state.service';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { By } from '@angular/platform-browser';
+import { RouterTestingModule } from '@angular/router/testing';
 
 import { MockComponent, MockProvider } from 'ng-mocks';
 
@@ -37,12 +38,14 @@ import { InfoMessageComponent } from '../../../shared/components/infoMessage/inf
 import { EntityRecord } from '../../models/entity-record';
 import { SearchResultsMock } from '../../mock-data/search-results.mock';
 import { DCTERMS } from '../../../prefixes';
-import { SearchResultsListComponent } from './search-results-list.component';
-import { RouterTestingModule } from '@angular/router/testing';
 import { CatalogStateService } from '../../../shared/services/catalogState.service';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { EntitySearchFiltersComponent } from '../entity-search-filters/entity-search-filters.component';
 import { SearchResultItemComponent } from '../search-result-item/search-result-item.component';
+import {
+  FiltersSelectedListComponent
+} from '../../../shared/components/filters-selected-list/filters-selected-list.component';
+import { SearchResultsListComponent } from './search-results-list.component';
 
 describe('SearchResultsListComponent', () => {
   let component: SearchResultsListComponent;
@@ -61,6 +64,7 @@ describe('SearchResultsListComponent', () => {
         MockComponent(SearchBarComponent),
         MockComponent(SearchResultItemComponent),
         MockComponent(EntitySearchFiltersComponent),
+        MockComponent(FiltersSelectedListComponent),
         MockComponent(InfoMessageComponent),
       ],
       providers: [
@@ -73,8 +77,7 @@ describe('SearchResultsListComponent', () => {
         MatPaginatorModule,
         RouterTestingModule.withRoutes([])
       ]
-    })
-      .compileComponents();
+    }).compileComponents();
 
     fixture = TestBed.createComponent(SearchResultsListComponent);
     component = fixture.componentInstance;
@@ -140,7 +143,7 @@ describe('SearchResultsListComponent', () => {
     it('for wrapping containers', function () {
       expect(element.queryAll(By.css('.search-results')).length).toEqual(1);
     });
-    ['.entity-results-list', 'search-bar', 'info-message', 'mat-paginator'].forEach(function (test) {
+    ['.entity-results-list', 'search-bar', 'info-message', 'mat-paginator','app-filters-selected-list'].forEach(function (test) {
       it(`with a ${test}`, function () {
         expect(element.queryAll(By.css(test)).length).toEqual(1);
       });

@@ -35,7 +35,6 @@ import {
 } from '../../../../test/ts/Shared';
 import { FilterType, ListFilter } from '../../models/list-filter.interface';
 import { SearchableListFilter } from '../../models/searchable-list-filter.interface';
-import { FilterItem } from '../../models/filterItem.interface';
 import { SearchBarComponent } from '../searchBar/searchBar.component';
 import { InfoMessageComponent } from '../infoMessage/infoMessage.component';
 import { ListFiltersComponent } from './list-filters.component';
@@ -78,15 +77,12 @@ describe('ListFiltersComponent', () => {
       pageable: false,
       searchable: false,
       filterItems: [
-        { value: 'Radio 1', checked: true },
-        { value: 'Radio 2', checked: false }
+        { value: 'Radio 1', display: 'Radio 1', checked: true },
+        { value: 'Radio 2', display: 'Radio 2', checked: false }
       ],
       numChecked: 0,
       onInit: function(): void {
         throw new Error('Function not implemented.');
-      },
-      getItemText: function(filterItem: FilterItem): string {
-        return filterItem.value;
       },
       setFilterItems: function(): void {
         throw new Error('Function not implemented.');
@@ -100,15 +96,12 @@ describe('ListFiltersComponent', () => {
       pageable: false,
       searchable: false,
       filterItems: [
-        { value: 'Checkbox A', checked: true },
-        { value: 'Checkbox B', checked: false },
+        { value: 'Checkbox A', display: 'Checkbox A', checked: true },
+        { value: 'Checkbox B', display: 'Checkbox A', checked: false },
       ],
       numChecked: 1,
       onInit: function(): void {
         throw new Error('Function not implemented.');
-      },
-      getItemText: function(filterItem: FilterItem): string {
-        return filterItem.value;
       },
       setFilterItems: function(): void {
         throw new Error('Function not implemented.');
@@ -128,9 +121,6 @@ describe('ListFiltersComponent', () => {
       onInit: function(): void {
         throw new Error('Function not implemented.');
       },
-      getItemText: function(filterItem: FilterItem): string {
-        return filterItem.value;
-      },
       setFilterItems: function(): void {
         throw new Error('Function not implemented.');
       },
@@ -145,11 +135,11 @@ describe('ListFiltersComponent', () => {
       pageable: true,
       searchable: true,
       filterItems: [
-        { value: 'Searchable A', checked: false },
-        { value: 'Searchable B', checked: false },
-        { value: 'Searchable C', checked: false },
-        { value: 'Searchable D', checked: false },
-        { value: 'Searchable E', checked: false },
+        { value: 'Searchable A', display: 'Searchable A', checked: false },
+        { value: 'Searchable B', display: 'Searchable A', checked: false },
+        { value: 'Searchable C', display: 'Searchable A', checked: false },
+        { value: 'Searchable D', display: 'Searchable A', checked: false },
+        { value: 'Searchable E', display: 'Searchable A', checked: false },
       ],
       numChecked: 0,
       pagingData: {
@@ -165,9 +155,6 @@ describe('ListFiltersComponent', () => {
       nextPage: jasmine.createSpy('nextPage'),
       onInit: function(): void {
         throw new Error('Function not implemented.');
-      },
-      getItemText: function (filterItem: FilterItem): string {
-        return filterItem.value;
       },
       setFilterItems: function (): void {
         throw new Error('Function not implemented.');
