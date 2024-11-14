@@ -29,6 +29,7 @@ import org.eclipse.rdf4j.rio.RDFParser;
 import org.eclipse.rdf4j.rio.RDFWriter;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.rio.helpers.ParseErrorLogger;
+import org.eclipse.rdf4j.rio.helpers.TurtleParserSettings;
 import org.obolibrary.obo2owl.OWLAPIObo2Owl;
 import org.obolibrary.oboformat.model.OBODoc;
 import org.obolibrary.oboformat.parser.OBOFormatParser;
@@ -156,7 +157,9 @@ public class OwlApiUtils {
         RDFWriter rdfWriter = Rio.createWriter(destFormat, Files.newOutputStream(path));
         parser.setRDFHandler(rdfWriter);
         parser.setParseErrorListener(new ParseErrorLogger());
-        parser.setParserConfig(new ParserConfig());
+        ParserConfig config = new ParserConfig();
+        config.set(TurtleParserSettings.ACCEPT_TURTLESTAR, false);
+        parser.setParserConfig(config);
         parser.parse(rdfData, "");
     }
 

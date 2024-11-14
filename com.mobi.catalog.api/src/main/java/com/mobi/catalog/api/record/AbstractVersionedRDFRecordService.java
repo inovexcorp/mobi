@@ -82,6 +82,7 @@ import org.eclipse.rdf4j.rio.ParserConfig;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFParseException;
 import org.eclipse.rdf4j.rio.Rio;
+import org.eclipse.rdf4j.rio.turtle.TurtleParserSettings;
 import org.osgi.service.component.annotations.Reference;
 
 import java.io.File;
@@ -254,7 +255,7 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
             RDFFormat format = RDFFiles.getFormatForFileName(fileName)
                     .orElseThrow(() -> new IllegalArgumentException("Could not retrieve RDFFormat for file name "
                             + fileName));
-            if (format.equals(RDFFormat.TRIG)) {
+            if (format.equals(RDFFormat.TRIG) || format.equals(RDFFormat.TRIGSTAR)) {
                 throw new IllegalArgumentException("TriG data is not supported for upload.");
             }
             File tempFile = RDFFiles.writeStreamToTempFile(inputStream, format);
@@ -548,7 +549,9 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
                 IRI headGraph = branchManager.getHeadGraph(masterBranch);
                 BatchGraphInserter inserter = new BatchGraphInserter(fileConn,
                         IsolationLevels.READ_UNCOMMITTED, headGraph, initRevAddGraph);
-                RDFLoader loader = new RDFLoader(new ParserConfig(), vf);
+                ParserConfig config = new ParserConfig();
+                config.set(TurtleParserSettings.ACCEPT_TURTLESTAR, false);
+                RDFLoader loader = new RDFLoader(config, vf);
                 loader.load(additionsFile, null, format, inserter);
 
                 additionsFile.delete();

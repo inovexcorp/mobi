@@ -35,6 +35,7 @@ import org.eclipse.rdf4j.rio.RDFParser;
 import org.eclipse.rdf4j.rio.RDFParserRegistry;
 import org.eclipse.rdf4j.rio.RDFWriter;
 import org.eclipse.rdf4j.rio.Rio;
+import org.eclipse.rdf4j.rio.turtle.TurtleParserSettings;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -125,12 +126,17 @@ public class RDFFiles {
                     .orElseThrow(() -> new IllegalArgumentException("Could not retrieve RDFFormat for file name "
                             + tempFile.getName()));
 
+            if (sourceFormat.equals(RDFFormat.TURTLESTAR) || sourceFormat.equals(RDFFormat.TRIGSTAR)) {
+                throw new IllegalStateException("RDF* not supported");
+            }
+
             ParsedFile parsedFile = new ParsedFile();
             boolean success;
             if (owlFormats.contains(sourceFormat)) {
                 success = parseOWLFormats(sourceFormat, destFormat, tempFile, path, parsedFile);
             } else {
                 RDFParser rdfParser = Rio.createParser(sourceFormat);
+                rdfParser.getParserConfig().set(TurtleParserSettings.ACCEPT_TURTLESTAR, false);
                 success = tryParse(tempFile, rdfParser, destFormat, path, parsedFile);
             }
             if (!success && sourceFormat.equals(RDFFiles.OWL_XML)) {

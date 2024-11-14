@@ -98,6 +98,7 @@ import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.RepositoryException;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.RDFParseException;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.rio.WriterConfig;
 import org.eclipse.rdf4j.rio.helpers.JSONLDMode;
@@ -879,6 +880,114 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         try (RepositoryConnection connection = repository.getConnection()) {
             recordService.create(user, config, connection);
         }
+    }
+
+    @Test (expected = RDFParseException.class)
+    public void createRdfStarWithTtlExtensionTest() throws Exception {
+        // Setup:
+        mockCreateRevision();
+        RecordOperationConfig config = new OperationConfig();
+        Set<String> keywords = new LinkedHashSet<>();
+        keywords.add("keyword1");
+        keywords.add("keyword2");
+        Set<User> users = new LinkedHashSet<>();
+        users.add(user);
+        config.set(RecordCreateSettings.CATALOG_ID, catalogId.stringValue());
+        config.set(VersionedRDFRecordCreateSettings.INPUT_STREAM, getClass().getResourceAsStream("/star.ttl"));
+        config.set(VersionedRDFRecordCreateSettings.FILE_NAME, "/star.ttl");
+        config.set(RecordCreateSettings.RECORD_TITLE, "TestTitle");
+        config.set(RecordCreateSettings.RECORD_DESCRIPTION, "TestTitle");
+        config.set(RecordCreateSettings.RECORD_KEYWORDS, keywords);
+        config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
+        // When:
+        try (RepositoryConnection connection = repository.getConnection()) {
+            recordService.create(user, config, connection);
+        } catch(IllegalArgumentException e) {
+            assertEquals("RDF* data is not supported for upload.", e.getMessage());
+            throw e;
+        }
+        fail("RDFParseException was not thrown");
+    }
+
+    @Test (expected = RDFParseException.class)
+    public void createRdfStarWithTtlsExtensionTest() throws Exception {
+        // Setup:
+        mockCreateRevision();
+        RecordOperationConfig config = new OperationConfig();
+        Set<String> keywords = new LinkedHashSet<>();
+        keywords.add("keyword1");
+        keywords.add("keyword2");
+        Set<User> users = new LinkedHashSet<>();
+        users.add(user);
+        config.set(RecordCreateSettings.CATALOG_ID, catalogId.stringValue());
+        config.set(VersionedRDFRecordCreateSettings.INPUT_STREAM, getClass().getResourceAsStream("/star.ttl"));
+        config.set(VersionedRDFRecordCreateSettings.FILE_NAME, "/star.ttl");
+        config.set(RecordCreateSettings.RECORD_TITLE, "TestTitle");
+        config.set(RecordCreateSettings.RECORD_DESCRIPTION, "TestTitle");
+        config.set(RecordCreateSettings.RECORD_KEYWORDS, keywords);
+        config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
+        // When:
+        try (RepositoryConnection connection = repository.getConnection()) {
+            recordService.create(user, config, connection);
+        } catch(IllegalArgumentException e) {
+            assertEquals("RDF* data is not supported for upload.", e.getMessage());
+            throw e;
+        }
+        fail("RDFParseException was not thrown");
+    }
+
+    @Test (expected = IllegalArgumentException.class)
+    public void createRdfStarWithTrigExtensionTest() throws Exception {
+        // Setup:
+        mockCreateRevision();
+        RecordOperationConfig config = new OperationConfig();
+        Set<String> keywords = new LinkedHashSet<>();
+        keywords.add("keyword1");
+        keywords.add("keyword2");
+        Set<User> users = new LinkedHashSet<>();
+        users.add(user);
+        config.set(RecordCreateSettings.CATALOG_ID, catalogId.stringValue());
+        config.set(VersionedRDFRecordCreateSettings.INPUT_STREAM, getClass().getResourceAsStream("/star.trig"));
+        config.set(VersionedRDFRecordCreateSettings.FILE_NAME, "/star.trig");
+        config.set(RecordCreateSettings.RECORD_TITLE, "TestTitle");
+        config.set(RecordCreateSettings.RECORD_DESCRIPTION, "TestTitle");
+        config.set(RecordCreateSettings.RECORD_KEYWORDS, keywords);
+        config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
+        // When:
+        try (RepositoryConnection connection = repository.getConnection()) {
+            recordService.create(user, config, connection);
+        } catch(IllegalArgumentException e) {
+            assertEquals("TriG data is not supported for upload.", e.getMessage());
+            throw e;
+        }
+        fail("IllegalArgumentException was not thrown");
+    }
+
+    @Test (expected = IllegalArgumentException.class)
+    public void createRdfStarWithTrigsExtensionTest() throws Exception {
+        // Setup:
+        mockCreateRevision();
+        RecordOperationConfig config = new OperationConfig();
+        Set<String> keywords = new LinkedHashSet<>();
+        keywords.add("keyword1");
+        keywords.add("keyword2");
+        Set<User> users = new LinkedHashSet<>();
+        users.add(user);
+        config.set(RecordCreateSettings.CATALOG_ID, catalogId.stringValue());
+        config.set(VersionedRDFRecordCreateSettings.INPUT_STREAM, getClass().getResourceAsStream("/star.trigs"));
+        config.set(VersionedRDFRecordCreateSettings.FILE_NAME, "/star.trigs");
+        config.set(RecordCreateSettings.RECORD_TITLE, "TestTitle");
+        config.set(RecordCreateSettings.RECORD_DESCRIPTION, "TestTitle");
+        config.set(RecordCreateSettings.RECORD_KEYWORDS, keywords);
+        config.set(RecordCreateSettings.RECORD_PUBLISHERS, users);
+        // When:
+        try (RepositoryConnection connection = repository.getConnection()) {
+            recordService.create(user, config, connection);
+        } catch(IllegalArgumentException e) {
+            assertEquals("TriG data is not supported for upload.", e.getMessage());
+            throw e;
+        }
+        fail("IllegalArgumentException was not thrown");
     }
 
     @Test

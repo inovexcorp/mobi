@@ -260,4 +260,56 @@ class RDFImportSpec extends Specification {
         then:
         (1.._) * conn.add(*_)
     }
+
+    def "Imports rdf* ttl file to graph in repository without format"() {
+        setup:
+        def config = new ImportServiceConfig.Builder().continueOnError(false).repository(repoId).build()
+        def graph = vf.createIRI("urn:graph");
+        def starFile = new File(this.getClass().getResource("/importer/star.ttl").toURI())
+
+        when:
+        service.importFile(config, starFile, graph)
+
+        then:
+        thrown(RDFParseException.class)
+    }
+
+    def "Imports rdf* ttls file to graph in repository without format"() {
+        setup:
+        def config = new ImportServiceConfig.Builder().continueOnError(false).repository(repoId).build()
+        def graph = vf.createIRI("urn:graph");
+        def starFile = new File(this.getClass().getResource("/importer/star.ttls").toURI())
+
+        when:
+        service.importFile(config, starFile, graph)
+
+        then:
+        thrown(IllegalStateException.class)
+    }
+
+    def "Imports rdf* trig file to graph in repository without format"() {
+        setup:
+        def config = new ImportServiceConfig.Builder().continueOnError(false).repository(repoId).build()
+        def graph = vf.createIRI("urn:graph");
+        def starFile = new File(this.getClass().getResource("/importer/star.trig").toURI())
+
+        when:
+        service.importFile(config, starFile, graph)
+
+        then:
+        thrown(RDFParseException.class)
+    }
+
+    def "Imports rdf* trigs file to graph in repository without format"() {
+        setup:
+        def config = new ImportServiceConfig.Builder().continueOnError(false).repository(repoId).build()
+        def graph = vf.createIRI("urn:graph");
+        def starFile = new File(this.getClass().getResource("/importer/star.trigs").toURI())
+
+        when:
+        service.importFile(config, starFile, graph)
+
+        then:
+        thrown(IllegalStateException.class)
+    }
 }
