@@ -1,0 +1,10 @@
+@prefix ex: <http://example.org/> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+ex:graph {
+    # Basic triples
+    ex:JohnDoe ex:worksAt ex:CompanyX .
+
+    # RDF* triples
+    <<ex:JohnDoe ex:worksAt ex:CompanyX>> ex:since "2022-01-01"^^xsd:date .
+}

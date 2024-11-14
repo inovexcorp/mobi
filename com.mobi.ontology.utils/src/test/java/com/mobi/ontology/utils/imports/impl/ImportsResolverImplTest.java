@@ -229,10 +229,59 @@ public class ImportsResolverImplTest extends OrmEnabledTestCase {
     }
 
     @Test
+    public void retrieveOntologyFromWebRDFStarTtlTest() throws Exception {
+        String url = "http://www.w3.org/star";
+        addMockConnections(url, "/star.ttl");
+        assertModelFromWebEmpty(url);
+    }
+
+    @Test
+    public void retrieveOntologyFromWebRDFStarTtlsTest() throws Exception {
+        String url = "http://www.w3.org/star";
+        addMockConnections(url, "/star.ttls");
+        assertModelFromWebEmpty(url);
+    }
+
+    @Test
+    public void retrieveOntologyFromWebRDFStarTrigTest() throws Exception {
+        String url = "http://www.w3.org/star";
+        addMockConnections(url, "/star.trig");
+        assertModelFromWebEmpty(url);
+    }
+
+    @Test
+    public void retrieveOntologyFromWebRDFStarTrigsTest() throws Exception {
+        String url = "http://www.w3.org/star";
+        addMockConnections(url, "/star.trigs");
+        assertModelFromWebEmpty(url);
+    }
+
+    @Test
     public void retrieveOntologyFromWebWithExtensionTest() throws Exception {
         String url = "http://www.w3.org/2004/02/skos/core.rdf";
         addMockConnections(url, "/skos.rdf");
         assertModelFromWebPresent(url);
+    }
+
+    @Test
+    public void retrieveOntologyFromWebRDFStarWithTtlExtensionTest() throws Exception {
+        String url = "http://www.w3.org/star.ttl";
+        addMockConnections(url, "/star.ttl");
+        assertModelFromWebEmpty(url);
+    }
+
+    @Test
+    public void retrieveOntologyFromWebRDFStarWithTtlsExtensionTest() throws Exception {
+        String url = "http://www.w3.org/star.ttls";
+        addMockConnections(url, "/star.ttls");
+        assertModelFromWebEmpty(url);
+    }
+
+    @Test
+    public void retrieveOntologyFromWebRDFStarWithTrigExtensionTest() throws Exception {
+        String url = "http://www.w3.org/star.trig";
+        addMockConnections(url, "/star.trig");
+        assertModelFromWebEmpty(url);
     }
 
     @Test

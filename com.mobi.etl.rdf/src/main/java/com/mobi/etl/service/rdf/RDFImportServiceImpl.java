@@ -23,25 +23,26 @@ package com.mobi.etl.service.rdf;
  * #L%
  */
 
-import com.mobi.repository.api.OsgiRepository;
-import org.eclipse.rdf4j.model.Model;
-import org.eclipse.rdf4j.model.Resource;
-import org.eclipse.rdf4j.repository.Repository;
-import org.eclipse.rdf4j.repository.RepositoryConnection;
-import org.osgi.service.component.annotations.Component;
-import org.osgi.service.component.annotations.Reference;
-import org.osgi.service.component.annotations.ReferenceCardinality;
-import org.osgi.service.component.annotations.ReferencePolicy;
 import com.mobi.dataset.api.DatasetManager;
 import com.mobi.etl.api.config.rdf.ImportServiceConfig;
 import com.mobi.etl.api.rdf.RDFImportService;
 import com.mobi.persistence.utils.BatchGraphInserter;
 import com.mobi.persistence.utils.BatchInserter;
+import com.mobi.repository.api.OsgiRepository;
+import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.repository.Repository;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.rio.ParserConfig;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFParser;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.rio.helpers.BasicParserSettings;
+import org.eclipse.rdf4j.rio.turtle.TurtleParserSettings;
+import org.osgi.service.component.annotations.Component;
+import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.component.annotations.ReferenceCardinality;
+import org.osgi.service.component.annotations.ReferencePolicy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -168,7 +169,12 @@ public class RDFImportServiceImpl implements RDFImportService {
     private void importInputStream(RepositoryConnection conn, ImportServiceConfig config, @Nonnull InputStream stream,
                                    @Nonnull RDFFormat format, Resource graph, boolean cleanGraphs) throws IOException {
         RDFParser parser = Rio.createParser(format);
+        if (parser.getRDFFormat().equals(RDFFormat.TURTLESTAR) || parser.getRDFFormat().equals(RDFFormat.TRIGSTAR)) {
+            throw new IllegalStateException("RDF* not supported");
+        }
+
         ParserConfig parserConfig = new ParserConfig();
+        parserConfig.set(TurtleParserSettings.ACCEPT_TURTLESTAR, false);
         parserConfig.set(BasicParserSettings.FAIL_ON_UNKNOWN_LANGUAGES, true);
         if (config.getContinueOnError()) {
             parserConfig.addNonFatalError(BasicParserSettings.FAIL_ON_UNKNOWN_DATATYPES);

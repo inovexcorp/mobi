@@ -173,6 +173,50 @@ class ModelsSpec extends Specification{
         thrown(IllegalArgumentException.class)
     }
 
+    def "createModel for rdf star ttls format throws an Exception"() {
+        setup:
+        def input = getClass().getResourceAsStream("/star.ttls")
+
+        when:
+        Models.createModel(input)
+
+        then:
+        thrown(IllegalArgumentException.class)
+    }
+
+    def "createModel for rdf star ttl format throws an Exception"() {
+        setup:
+        def input = getClass().getResourceAsStream("/star.ttl")
+
+        when:
+        Models.createModel(input)
+
+        then:
+        thrown(IllegalArgumentException.class)
+    }
+
+    def "createModel for rdf star trig format throws an Exception"() {
+        setup:
+        def input = getClass().getResourceAsStream("/star.trig")
+
+        when:
+        Models.createModel(input)
+
+        then:
+        thrown(IllegalArgumentException.class)
+    }
+
+    def "createModel for rdf star trigs format throws an Exception"() {
+        setup:
+        def input = getClass().getResourceAsStream("/star.trigs")
+
+        when:
+        Models.createModel(input)
+
+        then:
+        thrown(IllegalArgumentException.class)
+    }
+
     def "createModel for invalid language tags throws an Exception"() {
         setup:
         def input = getClass().getResourceAsStream("/invalidlanguage.owl")

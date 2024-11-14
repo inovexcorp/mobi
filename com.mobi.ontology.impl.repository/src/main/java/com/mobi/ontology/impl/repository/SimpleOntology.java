@@ -88,6 +88,7 @@ import org.eclipse.rdf4j.rio.RDFWriter;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.rio.helpers.BasicParserSettings;
 import org.eclipse.rdf4j.rio.helpers.BufferedGroupingRDFHandler;
+import org.eclipse.rdf4j.rio.turtle.TurtleParserSettings;
 import org.eclipse.rdf4j.rio.turtle.TurtleWriterSettings;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -1456,6 +1457,7 @@ public class SimpleOntology implements Ontology {
                 InputStream is = new FileInputStream(ontologyFile)) {
             RDFParser parser = Rio.createParser(RDFFormat.TURTLE);
             ParserConfig parserConfig = new ParserConfig();
+            parserConfig.set(TurtleParserSettings.ACCEPT_TURTLESTAR, false);
             parserConfig.set(BasicParserSettings.FAIL_ON_UNKNOWN_LANGUAGES, true);
             parserConfig.set(BasicParserSettings.VERIFY_LANGUAGE_TAGS, false);
             parserConfig.set(BasicParserSettings.VERIFY_RELATIVE_URIS, false);

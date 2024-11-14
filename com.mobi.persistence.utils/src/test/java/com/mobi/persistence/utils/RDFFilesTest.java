@@ -29,6 +29,7 @@ import static org.junit.Assert.assertTrue;
 
 import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.RDFParseException;
 import org.junit.Test;
 
 import java.io.File;
@@ -146,6 +147,42 @@ public class RDFFilesTest {
         assertEquals(RDFFormat.RDFXML, RDFFiles.getFormatForFileName(serializedFile.getName()).get());
         assertFalse(tempFile.exists());
         serializedFile.delete();
+    }
+
+    @Test(expected = RDFParseException.class)
+    public void parseFileToFormatRDFStar_ttl_Test() throws Exception {
+        Path tempFilePath = Files.createTempFile(null, ".ttl");
+        Path file = Paths.get("src", "test", "resources", "star.ttl");
+        Files.copy(file, tempFilePath, StandardCopyOption.REPLACE_EXISTING);
+        File tempFile = tempFilePath.toFile();
+        RDFFiles.parseFileToFileFormat(tempFile, RDFFormat.TURTLE);
+    }
+
+    @Test(expected = RDFParseException.class)
+    public void parseFileToFormatRDFStar_ttls_Test() throws Exception {
+        Path tempFilePath = Files.createTempFile(null, ".ttl");
+        Path file = Paths.get("src", "test", "resources", "star.ttls");
+        Files.copy(file, tempFilePath, StandardCopyOption.REPLACE_EXISTING);
+        File tempFile = tempFilePath.toFile();
+        RDFFiles.parseFileToFileFormat(tempFile, RDFFormat.TURTLE);
+    }
+
+    @Test(expected = RDFParseException.class)
+    public void parseFileToFormatRDFStar_trig_Test() throws Exception {
+        Path tempFilePath = Files.createTempFile(null, ".ttl");
+        Path file = Paths.get("src", "test", "resources", "star.trig");
+        Files.copy(file, tempFilePath, StandardCopyOption.REPLACE_EXISTING);
+        File tempFile = tempFilePath.toFile();
+        RDFFiles.parseFileToFileFormat(tempFile, RDFFormat.TURTLE);
+    }
+
+    @Test(expected = RDFParseException.class)
+    public void parseFileToFormatRDFStar_trigs_Test() throws Exception {
+        Path tempFilePath = Files.createTempFile(null, ".ttl");
+        Path file = Paths.get("src", "test", "resources", "star.trigs");
+        Files.copy(file, tempFilePath, StandardCopyOption.REPLACE_EXISTING);
+        File tempFile = tempFilePath.toFile();
+        RDFFiles.parseFileToFileFormat(tempFile, RDFFormat.TURTLE);
     }
 
     @Test

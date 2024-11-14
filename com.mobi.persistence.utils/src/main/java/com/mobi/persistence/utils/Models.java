@@ -32,7 +32,13 @@ import org.eclipse.rdf4j.model.BNode;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.ModelFactory;
+import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.Value;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
 import org.eclipse.rdf4j.model.impl.LinkedHashModel;
+import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
+import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.rio.ParserConfig;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFParseException;
@@ -43,6 +49,7 @@ import org.eclipse.rdf4j.rio.helpers.ParseErrorLogger;
 import org.eclipse.rdf4j.rio.helpers.StatementCollector;
 import org.eclipse.rdf4j.rio.rdfxml.RDFXMLParser;
 import org.eclipse.rdf4j.rio.turtle.TurtleParser;
+import org.eclipse.rdf4j.rio.turtle.TurtleParserSettings;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
@@ -60,12 +67,6 @@ import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
-import org.eclipse.rdf4j.model.ValueFactory;
-import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
-import org.eclipse.rdf4j.model.Resource;
-import org.eclipse.rdf4j.model.vocabulary.RDF;
-import org.eclipse.rdf4j.model.Value;
-import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
 
 public class Models {
     protected static final Map<String, List<RDFParser>> preferredExtensionParsers;
@@ -225,8 +226,10 @@ public class Models {
         parser.setRDFHandler(collector);
         parser.setParseErrorListener(new ParseErrorLogger());
         ParserConfig parserConfig = new ParserConfig();
+        setTurtleParserSettings(parser.getParserConfig());
         parserConfig.set(BasicParserSettings.VERIFY_LANGUAGE_TAGS, true);
         parserConfig.set(BasicParserSettings.FAIL_ON_UNKNOWN_LANGUAGES, true);
+        parserConfig.set(TurtleParserSettings.ACCEPT_TURTLESTAR, false);
         parser.setParserConfig(parserConfig);
         parser.parse(rdfData, "");
         return new LinkedHashModel(collector.getStatements());
@@ -375,11 +378,15 @@ public class Models {
     private static ParsedModel getTurtleFromPath(Path path, StatementCollector collector, String rdfFormatName)
             throws IOException {
         RDFParser parser = new TurtleParser();
+        setTurtleParserSettings(parser.getParserConfig());
         parser.setRDFHandler(collector);
         parser.setParseErrorListener(new ParseErrorLogger());
-        parser.setParserConfig(new ParserConfig());
         parser.parse(Files.newInputStream(path), "");
         return new ParsedModel(new LinkedHashModel(collector.getStatements()), rdfFormatName);
+    }
+
+    private static void setTurtleParserSettings(ParserConfig parserConfig) {
+        parserConfig.set(TurtleParserSettings.ACCEPT_TURTLESTAR, false);
     }
 
     /**
