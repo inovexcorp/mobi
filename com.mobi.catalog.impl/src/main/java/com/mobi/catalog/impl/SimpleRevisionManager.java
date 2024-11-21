@@ -95,6 +95,7 @@ public class SimpleRevisionManager implements RevisionManager {
     private static final String IS_COI_DOWN_BASE;
     private static final String ASK_CONFLICT_ADDS;
     private static final String ASK_CONFLICT_DELS;
+    private static final String REVISION_ERROR_MESSAGE = "Could not retrieve revision from Commit.";
 
     static {
         try {
@@ -258,7 +259,7 @@ public class SimpleRevisionManager implements RevisionManager {
         Resource revisionResource = commit.getGenerated_resource().stream().findFirst()
                 .orElseThrow(() -> new IllegalStateException("Commit does not have a Revision"));
         return revisionFactory.getExisting(revisionResource, commit.getModel().filter(revisionResource, null, null))
-                .orElseThrow(() -> new IllegalStateException("Could not retrieve revision from Commit."));
+                .orElseThrow(() -> new IllegalStateException(REVISION_ERROR_MESSAGE));
     }
 
     @Override
@@ -485,7 +486,7 @@ public class SimpleRevisionManager implements RevisionManager {
         Resource revisionResource = commit.getInitialRevision_resource().stream().findFirst()
                 .orElseThrow(() -> new IllegalStateException("Commit does not have an initial Revision"));
         return revisionFactory.getExisting(revisionResource, commit.getModel().filter(revisionResource, null, null))
-                .orElseThrow(() -> new IllegalStateException("Could not retrieve revision from Commit."));
+                .orElseThrow(() -> new IllegalStateException(REVISION_ERROR_MESSAGE));
     }
 
     private void handleMasterMergeIntoBranch(List<Revision> revisionList, List<Revision> forwardRevisions,
@@ -775,7 +776,7 @@ public class SimpleRevisionManager implements RevisionManager {
     private Revision getRevisionFromCommitId(Resource commitId, Resource revisionId, RepositoryConnection conn) {
         Commit commit = thingManager.getObject(commitId, commitFactory, conn);
         return revisionFactory.getExisting(revisionId, commit.getModel().filter(revisionId, null, null))
-                .orElseThrow(() -> new IllegalStateException("Could not retrieve revision from Commit."));
+                .orElseThrow(() -> new IllegalStateException(REVISION_ERROR_MESSAGE));
     }
 
     /**
