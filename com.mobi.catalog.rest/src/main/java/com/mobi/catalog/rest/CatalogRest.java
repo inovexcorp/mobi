@@ -162,6 +162,9 @@ public class CatalogRest {
     private static final Logger LOG = LoggerFactory.getLogger(CatalogRest.class);
     private static final Set<String> SORT_RESOURCES;
     private static final ObjectMapper mapper = new ObjectMapper();
+    private static final String COULD_NOT_BE_FOUND = " could not be found";
+    private static final String COMMIT = "Commit ";
+    private static final String DELETIONS = "deletions";
 
     private final ValueFactory vf = new ValidatingValueFactory();
     private final ModelFactory mf = new DynamicModelFactory();
@@ -517,7 +520,7 @@ public class CatalogRest {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Record record = recordManager.getRecordOpt(vf.createIRI(catalogId), vf.createIRI(recordId),
                     factoryRegistry.getFactoryOfType(Record.class).get(), conn).orElseThrow(() ->
-                    ErrorUtils.sendError("Record " + recordId + " could not be found", Response.Status.NOT_FOUND));
+                    ErrorUtils.sendError("Record " + recordId + COULD_NOT_BE_FOUND, Response.Status.NOT_FOUND));
             return Response.ok(modelToSkolemizedJsonld(removeContext(record.getModel()),
                     bNodeService)).build();
         } catch (IllegalArgumentException ex) {
@@ -661,7 +664,7 @@ public class CatalogRest {
                             Response.Status.INTERNAL_SERVER_ERROR));
             Record record = recordManager.getRecordOpt(vf.createIRI(catalogId), vf.createIRI(recordId),
                     factoryOfType, conn).orElseThrow(() ->
-                    ErrorUtils.sendError("Record " + recordId + " could not be found", Response.Status.NOT_FOUND));
+                    ErrorUtils.sendError("Record " + recordId + COULD_NOT_BE_FOUND, Response.Status.NOT_FOUND));
             RecordService<?> recordService = recordManager.getRecordService(record.getResource(), conn);
             List<Statistic> statistics;
             if (recordService.getType() == DatasetRecord.class) {
@@ -1221,7 +1224,7 @@ public class CatalogRest {
             IRI commitIri = vf.createIRI(commitId);
             IRI tagIri = vf.createIRI(iri);
             if (!commitManager.commitInRecord(recordIri, commitIri, conn)) {
-                throw new IllegalArgumentException("Commit " + commitId + " is not in record " + recordId);
+                throw new IllegalArgumentException(COMMIT + commitId + " is not in record " + recordId);
             }
 
             OrmFactory<Tag> factory = factoryRegistry.getFactoryOfType(Tag.class).orElseThrow(() ->
@@ -1806,7 +1809,7 @@ public class CatalogRest {
                     @ApiResponse(responseCode = "200", description = "List of Records that match the search criteria",
                             content = @Content(schema = @Schema(ref = "#/components/schemas/JsonLdObjects"))),
                     @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId or recordId"
-                            + " could not be found"),
+                            + COULD_NOT_BE_FOUND),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
@@ -1883,7 +1886,7 @@ public class CatalogRest {
                     @ApiResponse(responseCode = "201",
                             description = "Response with the IRI string of the created Branch"),
                     @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId or recordId"
-                            + " could not be found"),
+                            + COULD_NOT_BE_FOUND),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
@@ -1925,7 +1928,7 @@ public class CatalogRest {
             newBranch.setProperty(getActiveUser(servletRequest, engineManager).getResource(),
                     vf.createIRI(DCTERMS.PUBLISHER.stringValue()));
             Commit newCommit = commitManager.getCommit(commitIri, conn)
-                    .orElseThrow(() -> ErrorUtils.sendError("Commit " + commitId + " could not be found",
+                    .orElseThrow(() -> ErrorUtils.sendError(COMMIT + commitId + COULD_NOT_BE_FOUND,
                             Response.Status.BAD_REQUEST));
             newBranch.setHead(newCommit);
             branchManager.addBranch(vf.createIRI(catalogId), vf.createIRI(recordId), newBranch, conn);
@@ -1957,7 +1960,7 @@ public class CatalogRest {
                     @ApiResponse(responseCode = "200",
                             description = "Master Branch for the identified VersionedRDFRecord"),
                     @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId or recordId"
-                            + " could not be found"),
+                            + COULD_NOT_BE_FOUND),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
@@ -2371,7 +2374,7 @@ public class CatalogRest {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Commit commit = commitManager.getCommit(vf.createIRI(catalogId), vf.createIRI(recordId),
                     vf.createIRI(branchId), vf.createIRI(commitId), conn).orElseThrow(() ->
-                    ErrorUtils.sendError("Commit " + commitId + " could not be found", Response.Status.NOT_FOUND));
+                    ErrorUtils.sendError(COMMIT + commitId + COULD_NOT_BE_FOUND, Response.Status.NOT_FOUND));
             return createCommitResponse(commit, differenceManager.getCommitDifference(commit.getResource(), conn),
                     format, bNodeService);
         } catch (IllegalArgumentException ex) {
@@ -2576,7 +2579,7 @@ public class CatalogRest {
             @Parameter(schema = @Schema(type = "string",
                     description = "String of JSON-LD that corresponds to the statements that "
                     + "were deleted in the entity"))
-            @FormParam("deletions") String deletionsJson,
+            @FormParam(DELETIONS) String deletionsJson,
             @Parameter(schema = @Schema(type = "string",
                     description = "String of JSON-LD array that corresponds to conflicts associated with the merge"))
             @FormParam("conflicts") String conflictsJson) {
@@ -2792,7 +2795,7 @@ public class CatalogRest {
                             description = "Response indicating whether the InProgressCommit"
                                    +  " was created successfully"),
                     @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId or recordId"
-                            + " could not be found"),
+                            + COULD_NOT_BE_FOUND),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
@@ -2838,7 +2841,7 @@ public class CatalogRest {
                     @ApiResponse(responseCode = "200",
                             description = "Response with the changes from the specific InProgressCommit"),
                     @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId or recordId"
-                            + " could not be found"),
+                            + COULD_NOT_BE_FOUND),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
@@ -2889,7 +2892,7 @@ public class CatalogRest {
                             description = "Response indicating whether the InProgressCommit "
                                     + "was deleted successfully"),
                     @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId or recordId"
-                            + " could not be found"),
+                            + COULD_NOT_BE_FOUND),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
@@ -2937,7 +2940,7 @@ public class CatalogRest {
             responses = {
                     @ApiResponse(responseCode = "200", description = "InProgressCommit was updated"),
                     @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId or recordId"
-                            + " could not be found"),
+                            + COULD_NOT_BE_FOUND),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
@@ -2957,7 +2960,7 @@ public class CatalogRest {
             @Parameter(schema = @Schema(type = "string",
                     description = "String of JSON-LD that corresponds to the statements that"
                     + " were deleted in the entity", required = true))
-            @FormParam("deletions") String deletionsJson) {
+            @FormParam(DELETIONS) String deletionsJson) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             User activeUser = getActiveUser(servletRequest, engineManager);
             Model additions = StringUtils.isEmpty(additionsJson) ? null : convertJsonld(additionsJson);
@@ -3065,12 +3068,12 @@ public class CatalogRest {
             if (format.equals("jsonld")) {
                 differenceJson.set("additions", mapper.readTree(modelToSkolemizedString(difference.getAdditions(),
                         format, bNodeService)));
-                differenceJson.set("deletions", mapper.readTree(modelToSkolemizedString(difference.getDeletions(),
+                differenceJson.set(DELETIONS, mapper.readTree(modelToSkolemizedString(difference.getDeletions(),
                         format, bNodeService)));
             } else {
                 differenceJson.put("additions", modelToSkolemizedString(difference.getAdditions(),
                         format, bNodeService));
-                differenceJson.put("deletions", modelToSkolemizedString(difference.getDeletions(),
+                differenceJson.put(DELETIONS, modelToSkolemizedString(difference.getDeletions(),
                         format, bNodeService));
             }
             return differenceJson;
@@ -3178,7 +3181,7 @@ public class CatalogRest {
 
     private Difference getDifference(JsonNode differenceNode) {
         JsonNode additions = differenceNode.get("additions");
-        JsonNode deletions = differenceNode.get("deletions");
+        JsonNode deletions = differenceNode.get(DELETIONS);
         return new Difference.Builder()
                 .additions(convertJsonld(additions.toString()))
                 .deletions(convertJsonld(deletions.toString()))
