@@ -2,6 +2,7 @@ image: gitlab.inovexcorp.com:4567/matonto/mobi-ci-container:feature-java-17
 
 stages:
   - test
+  - quality
   - build-distribution
   - test-functional
   - deploy
@@ -90,6 +91,44 @@ unit_test_web:
     paths:
       - .m2/repository/com/mobi/web
   retry: 1
+
+# sonarqube static code analysis - https://sonarqube.inovexcorp.com/dashboard?id=mobi
+sonarqube:
+  # Execute job as part of the test stage.
+  stage: quality
+  # Don't fail the pipeline if the job fails :)
+  allow_failure: true
+  # Only run if it's a commit to a tag with the release pattern.
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v(\d+)\.(\d+)\.(\d+)$/'
+    - if: '$SONAR_SCAN'
+      when: manual
+  variables:
+    SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"  # Defines the location of the analysis task cache
+    GIT_DEPTH: "0"  # Tells git to fetch all the branches of the project, required by the analysis task
+  # Leverages existing m2 cache as well as a sonar data cache specific to the project.
+  cache:
+    - key: "${CI_JOB_NAME}-sonar"
+      paths:
+        - .sonar/cache
+    - key: maven-cache
+      paths:
+        - .m2/repository/[a-b]*
+        - .m2/repository/[d-z]*
+        - .m2/repository/com/[a-l]*
+        - .m2/repository/com/[n-z]*
+  artifacts:
+    name: ${CI_BUILD}
+    expire_in: 3 days
+    paths:
+      - target/quality_check.log
+  # Use maven to execute static sonarqube code coverage -- leverages CI/CD variables for token and host information.
+  script:
+    - echo "Starting SonarQube quality check... Logs are stored as an artifact of this job upon completion"
+    - keytool -import -alias sonarqube -keystore "$JAVA_HOME/lib/security/cacerts" -file ${SONAR_CERT} -noprompt -storepass changeit
+    - mvn $MAVEN_THREADED $MAVEN_CLI_OPTS verify sonar:sonar -Pcoverage
+    - echo "SonarQube quality check complete... See artifact attached to this job for more details"
+
 
 # builds a distribution to be used by integration and functional tests
 build_distribution:
