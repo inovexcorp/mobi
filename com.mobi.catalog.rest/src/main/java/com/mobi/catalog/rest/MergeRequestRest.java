@@ -124,6 +124,9 @@ public class MergeRequestRest {
     private final Logger log = LoggerFactory.getLogger(MergeRequestRest.class);
     private final ValueFactory vf = new ValidatingValueFactory();
     private static final ObjectMapper mapper = new ObjectMapper();
+    private static final String COULD_NOT_BE_FOUND = " could not be found";
+    private static final String MERGE_REQUEST = "Merge Request ";
+    private static final String COMMENT = "Comment ";
 
     private MergeRequestManager manager;
     private CatalogConfigProvider configProvider;
@@ -568,7 +571,7 @@ public class MergeRequestRest {
         Resource requestIdResource = createIRI(requestId, vf);
         try {
             MergeRequest request = manager.getMergeRequest(requestIdResource).orElseThrow(() ->
-                    ErrorUtils.sendError("Merge Request " + requestId + " could not be found",
+                    ErrorUtils.sendError(MERGE_REQUEST + requestId + COULD_NOT_BE_FOUND,
                             Response.Status.NOT_FOUND));
             String json = groupedModelToString(request.getModel(), getRDFFormat("jsonld"));
             return Response.ok(getObjectFromJsonld(json)).build();
@@ -665,7 +668,7 @@ public class MergeRequestRest {
                     .collect(Collectors.toUnmodifiableList());
 
             if (types.isEmpty()) {
-                throw new MobiNotFoundException("Merge Request " + requestId + " could not be found");
+                throw new MobiNotFoundException(MERGE_REQUEST + requestId + COULD_NOT_BE_FOUND);
             }
             if (types.contains(ClosedMergeRequest.TYPE)) {
                 status = "closed";
@@ -779,7 +782,7 @@ public class MergeRequestRest {
             manager.deleteMergeRequest(requestIdResource);
             return Response.ok().build();
         } catch (IllegalArgumentException ex) {
-            throw ErrorUtils.sendError(ex,"Merge Request " + requestId + " could not be found",
+            throw ErrorUtils.sendError(ex,MERGE_REQUEST + requestId + COULD_NOT_BE_FOUND,
                     Response.Status.NOT_FOUND);
         } catch (IllegalStateException | MobiException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
@@ -797,7 +800,7 @@ public class MergeRequestRest {
      */
     protected boolean checkMergeRequestManagePermissions(Resource requestId, User activeUser) {
         MergeRequest mergeRequest = manager.getMergeRequest(requestId).orElseThrow(() ->
-                ErrorUtils.sendError("Merge Request " + requestId + " could not be found",
+                ErrorUtils.sendError(MERGE_REQUEST + requestId + COULD_NOT_BE_FOUND,
                         Response.Status.NOT_FOUND));
         boolean accessDenied = true;
 
@@ -901,10 +904,10 @@ public class MergeRequestRest {
             @PathParam("commentId") String commentId) {
         try {
             manager.getMergeRequest(createIRI(requestId, vf)).orElseThrow(() ->
-                    ErrorUtils.sendError("MergeRequest " + requestId + " could not be found",
+                    ErrorUtils.sendError(MERGE_REQUEST + requestId + COULD_NOT_BE_FOUND,
                             Response.Status.NOT_FOUND));
             Comment comment = manager.getComment(createIRI(commentId, vf)).orElseThrow(() ->
-                    ErrorUtils.sendError("Comment " + commentId + " could not be found",
+                    ErrorUtils.sendError(COMMENT + commentId + COULD_NOT_BE_FOUND,
                             Response.Status.NOT_FOUND));
             String json = groupedModelToString(comment.getModel(), getRDFFormat("jsonld"));
             return Response.ok(getObjectFromJsonld(json)).build();
@@ -1010,12 +1013,12 @@ public class MergeRequestRest {
             @Parameter(description = "String representing the new description of the updated Comment", required = true)
                     String newCommentStr) {
         manager.getMergeRequest(createIRI(requestId, vf)).orElseThrow(() ->
-                ErrorUtils.sendError("MergeRequest " + requestId + " could not be found",
+                ErrorUtils.sendError(MERGE_REQUEST + requestId + COULD_NOT_BE_FOUND,
                         Response.Status.NOT_FOUND));
 
         Resource commentIdResource = createIRI(commentId, vf);
         Comment comment = manager.getComment(commentIdResource).orElseThrow(() ->
-                ErrorUtils.sendError("Comment " + commentId + " could not be found",
+                ErrorUtils.sendError(COMMENT + commentId + COULD_NOT_BE_FOUND,
                         Response.Status.BAD_REQUEST));
         checkStringParam(newCommentStr, "Comment string is required");
 
@@ -1070,10 +1073,10 @@ public class MergeRequestRest {
         try {
             Resource commentIRI = createIRI(commentId, vf);
             manager.getMergeRequest(createIRI(requestId, vf)).orElseThrow(() ->
-                    ErrorUtils.sendError("Comment " + requestId + " could not be found",
+                    ErrorUtils.sendError(COMMENT + requestId + COULD_NOT_BE_FOUND,
                             Response.Status.NOT_FOUND));
             Comment comment = manager.getComment(commentIRI).orElseThrow(() ->
-                    ErrorUtils.sendError("Comment " + commentId + " could not be found",
+                    ErrorUtils.sendError(COMMENT + commentId + COULD_NOT_BE_FOUND,
                             Response.Status.NOT_FOUND));
             Optional<org.eclipse.rdf4j.model.Value> commentUser = comment.getProperty(vf.createIRI(_Thing.creator_IRI));
             User user = getActiveUser(servletRequest, engineManager);
