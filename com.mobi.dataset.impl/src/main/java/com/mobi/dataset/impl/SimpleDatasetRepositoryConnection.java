@@ -89,6 +89,7 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
     private static final String GET_OPERATION_DATASET_GRAPHS;
     private static final String DATSET_BINDING = "dataset";
     private static final String GRAPH_BINDING = "graph";
+    private static final String NOT_YET_IMPLEMENTED = "Not yet implemented.";
 
     private static final Logger log = LoggerFactory.getLogger(SimpleDatasetRepositoryConnection.class);
 
@@ -338,12 +339,12 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
 
     @Override
     public Query prepareQuery(String query) throws RepositoryException, MalformedQueryException {
-        throw new NotImplementedException("Not yet implemented.");
+        throw new NotImplementedException(NOT_YET_IMPLEMENTED);
     }
 
     @Override
     public Query prepareQuery(QueryLanguage language, String query, String baseURI) throws RepositoryException, MalformedQueryException {
-        throw new NotImplementedException("Not yet implemented.");
+        throw new NotImplementedException(NOT_YET_IMPLEMENTED);
     }
 
     @Override
@@ -394,23 +395,23 @@ public class SimpleDatasetRepositoryConnection extends RepositoryConnectionWrapp
 
     @Override
     public BooleanQuery prepareBooleanQuery(String query) throws RepositoryException, MalformedQueryException {
-        throw new NotImplementedException("Not yet implemented.");
+        throw new NotImplementedException(NOT_YET_IMPLEMENTED);
     }
 
     @Override
     public BooleanQuery prepareBooleanQuery(QueryLanguage language, String query, String baseURI) throws RepositoryException,
             MalformedQueryException {
-        throw new NotImplementedException("Not yet implemented.");
+        throw new NotImplementedException(NOT_YET_IMPLEMENTED);
     }
 
     @Override
     public Update prepareUpdate(String update) throws RepositoryException, MalformedQueryException {
-        throw new NotImplementedException("Not yet implemented.");
+        throw new NotImplementedException(NOT_YET_IMPLEMENTED);
     }
 
     @Override
     public Update prepareUpdate(QueryLanguage language, String update, String baseURI) throws RepositoryException, MalformedQueryException {
-        throw new NotImplementedException("Not yet implemented.");
+        throw new NotImplementedException(NOT_YET_IMPLEMENTED);
     }
 
     @Override
