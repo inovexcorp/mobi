@@ -93,6 +93,8 @@ import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import static org.eclipse.rdf4j.common.iteration.Iterations.asSet;
+
 @Component
 public class SimpleCommitManager implements CommitManager {
 
@@ -109,6 +111,8 @@ public class SimpleCommitManager implements CommitManager {
     private static final String COMMIT_IN_RECORD;
     private static final String GET_COMMIT_CHAIN;
     private static final String GET_COMMIT_ENTITY_CHAIN;
+    private static final String ADDITIONS_NOT_SET_ON_COMMIT = "Additions not set on Commit ";
+    private static final String DELETIONS_NOT_SET_ON_COMMIT = "Deletions not set on Commit ";
 
     static {
         try {
@@ -298,9 +302,9 @@ public class SimpleCommitManager implements CommitManager {
         Revision revision = revisionFactory.getExisting(resource, inProgressCommit.getModel())
                 .orElseThrow(() -> new IllegalStateException("Could not retrieve expected Revision."));
         IRI additionsGraph = revision.getAdditions().orElseThrow(() ->
-                new IllegalStateException("Additions not set on Commit " + inProgressCommit.getResource()));
+                new IllegalStateException(ADDITIONS_NOT_SET_ON_COMMIT + inProgressCommit.getResource()));
         IRI deletionsGraph = revision.getDeletions().orElseThrow(() ->
-                new IllegalStateException("Deletions not set on Commit " + inProgressCommit.getResource()));
+                new IllegalStateException(DELETIONS_NOT_SET_ON_COMMIT + inProgressCommit.getResource()));
 
         try {
             if (additionsFile != null) {
@@ -640,9 +644,9 @@ public class SimpleCommitManager implements CommitManager {
         });
 
         IRI additionsGraph = revision.getAdditions().orElseThrow(() ->
-                new IllegalStateException("Additions not set on Commit " + commitId));
+                new IllegalStateException(ADDITIONS_NOT_SET_ON_COMMIT + commitId));
         IRI deletionsGraph = revision.getDeletions().orElseThrow(() ->
-                new IllegalStateException("Deletions not set on Commit " + commitId));
+                new IllegalStateException(DELETIONS_NOT_SET_ON_COMMIT + commitId));
 
         Model filteredAdditions = additions == null ? null : additions.filter(null, null, null, (Resource) null);
         Model filteredDeletions = deletions == null ? null : deletions.filter(null, null, null, (Resource) null);
@@ -664,10 +668,10 @@ public class SimpleCommitManager implements CommitManager {
                         .orElseThrow(() -> new IllegalStateException("Could not retrieve expected GraphRevision."));
 
                 IRI adds = graphRevision.getAdditions().orElseThrow(() ->
-                        new IllegalStateException("Additions not set on Commit " + commitId + " for graph "
+                        new IllegalStateException(ADDITIONS_NOT_SET_ON_COMMIT + commitId + " for graph "
                                 + modifiedGraph));
                 IRI dels = graphRevision.getDeletions().orElseThrow(() ->
-                        new IllegalStateException("Deletions not set on Commit " + commitId + " for graph "
+                        new IllegalStateException(DELETIONS_NOT_SET_ON_COMMIT + commitId + " for graph "
                                 + modifiedGraph));
 
                 Model filteredGraphAdditions = additions == null ? null :

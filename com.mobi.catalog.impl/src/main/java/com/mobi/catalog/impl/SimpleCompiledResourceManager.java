@@ -86,6 +86,8 @@ public class SimpleCompiledResourceManager implements CompiledResourceManager {
     private static final String GET_ADDITIONS_IN_REVISION;
     private static final String GET_FILTERED_ADDITIONS_SUBQUERY;
     private static final String GET_FILTERED_DELETIONS_SUBQUERY;
+    private static final String SUBJECT_LIST = "%SUBJECTLIST%";
+    private static final String REVISION_LIST = "%REVISIONLIST%";
 
     static {
         try {
@@ -253,7 +255,7 @@ public class SimpleCompiledResourceManager implements CompiledResourceManager {
                 .toList();
         if (!revisionsAdditionsOnly.isEmpty()) {
             String additionInRevisionQuery = replaceRevisionList(GET_ADDITIONS_IN_REVISION, revisionsAdditionsOnly);
-            additionInRevisionQuery = replaceSubjectList(additionInRevisionQuery, "s", "%SUBJECTLIST%",
+            additionInRevisionQuery = replaceSubjectList(additionInRevisionQuery, "s", SUBJECT_LIST,
                     subjectIds);
             GraphQuery additionsQuery = headGraphConn.prepareGraphQuery(additionInRevisionQuery);
             try (GraphQueryResult result = additionsQuery.evaluate()) {
@@ -326,7 +328,7 @@ public class SimpleCompiledResourceManager implements CompiledResourceManager {
                                 RepositoryConnection headGraphConn, Set<Resource> deletionSubjects) {
         String additionsFromRoisQueryString = replaceRevisionList(GET_ADDITIONS_FROM_ROIS, revisionsOfInterest);
         additionsFromRoisQueryString = replaceSubjectList(additionsFromRoisQueryString,
-                "deletionSubject", "%SUBJECTLIST%", subjectIds);
+                "deletionSubject", SUBJECT_LIST, subjectIds);
         additionsFromRoisQueryString = replaceSubjectList(additionsFromRoisQueryString,
                 "addSubject", "%SUBJECTLISTADD%", subjectIds);
 
@@ -362,7 +364,7 @@ public class SimpleCompiledResourceManager implements CompiledResourceManager {
                                                 Resource... subjectIds) {
         Set<Resource> deletionSubjects = new HashSet<>();
         String query = replaceRevisionList(GET_SUBJECTS_WITH_DELETIONS, revisions);
-        query = replaceSubjectList(query, "s", "%SUBJECTLIST%", subjectIds);
+        query = replaceSubjectList(query, "s", SUBJECT_LIST, subjectIds);
         TupleQuery subjectsQuery = conn.prepareTupleQuery(query);
         try (TupleQueryResult result = subjectsQuery.evaluate()) {
             result.forEach(bindings ->
@@ -372,7 +374,7 @@ public class SimpleCompiledResourceManager implements CompiledResourceManager {
     }
 
     private String replaceRevisionList(String query, Collection<Resource> revisions) {
-        return query.replace("%REVISIONLIST%", "<" + StringUtils.join(revisions, "> <") + ">");
+        return query.replace(REVISION_LIST, "<" + StringUtils.join(revisions, "> <") + ">");
     }
 
     private String replaceSubjectList(String query, String binding, String target, Resource... subjectIds) {
@@ -390,7 +392,7 @@ public class SimpleCompiledResourceManager implements CompiledResourceManager {
         Set<Resource> revisionsOfInterest = new HashSet<>();
         if (!deletionSubjects.isEmpty()) {
             String query = replaceRevisionList(GET_REVISIONS_WITH_SUBJECT, revisions);
-            query = replaceSubjectList(query, "deletionSubject", "%SUBJECTLIST%", subjectIds);
+            query = replaceSubjectList(query, "deletionSubject", SUBJECT_LIST, subjectIds);
             TupleQuery revisionsQuery = conn.prepareTupleQuery(query);
             try (TupleQueryResult result = revisionsQuery.evaluate()) {
                 result.forEach(bindingSet ->
@@ -445,7 +447,7 @@ public class SimpleCompiledResourceManager implements CompiledResourceManager {
      */
     private GraphQueryResult getAdditions(Resource revisionId, List<Resource> revisions, RepositoryConnection conn) {
         GraphQuery additionsQuery = conn.prepareGraphQuery(GET_FILTERED_ADDITIONS_SUBQUERY
-                .replace("%REVISIONLIST%","<" + StringUtils.join(revisions, "> <") + ">")
+                .replace(REVISION_LIST,"<" + StringUtils.join(revisions, "> <") + ">")
                 .replace("%THISREVISION%", "<" + revisionId.stringValue() + ">"));
         return additionsQuery.evaluate();
     }
@@ -461,7 +463,7 @@ public class SimpleCompiledResourceManager implements CompiledResourceManager {
      */
     private GraphQueryResult getDeletions(Resource revisionId, List<Resource> revisions, RepositoryConnection conn) {
         GraphQuery deletionsQuery = conn.prepareGraphQuery(GET_FILTERED_DELETIONS_SUBQUERY
-                .replace("%REVISIONLIST%","<" + StringUtils.join(revisions, "> <") + ">")
+                .replace(REVISION_LIST,"<" + StringUtils.join(revisions, "> <") + ">")
                 .replace("%THISREVISION%", "<" + revisionId.stringValue() + ">"));
         return deletionsQuery.evaluate();
     }

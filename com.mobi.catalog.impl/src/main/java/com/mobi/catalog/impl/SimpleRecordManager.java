@@ -114,8 +114,14 @@ public class SimpleRecordManager implements RecordManager {
     private static final String ENTITY_NAME_BINDING = "entityName";
     private static final String DESCRIPTION_BINDING = "description";
     private static final String ENTITY_TYPES_BINDING = "entityTypes";
+    private static final String SERVICE_FOR_FACTORY = "Service for factory ";
+    private static final String UNAVAILABLE_OR_DOESNT_EXIST = " is unavailable or doesn't exist.";
+    private static final String OFFSET_EXCEEDS = "Offset exceeds total size";
+    private static final String QUERY_STRING = "Query String:\n";
+    private static final String MODIFIED = "modified";
     public static final String SEPARATOR_DELIMITER = "�";
     public static final String PAIR_SEPARATOR_DELIMITER = "��";
+
 
     static {
         try {
@@ -189,8 +195,8 @@ public class SimpleRecordManager implements RecordManager {
     public <T extends Record> T createRecord(User user, RecordOperationConfig config, Class<T> recordClass,
                                              RepositoryConnection conn) {
         RecordService<T> recordService = Optional.ofNullable(getRecordService(recordClass))
-                .orElseThrow(() -> new IllegalArgumentException("Service for factory " + recordClass.toString()
-                        + " is unavailable or doesn't exist."));
+                .orElseThrow(() -> new IllegalArgumentException(SERVICE_FOR_FACTORY + recordClass.toString()
+                        + UNAVAILABLE_OR_DOESNT_EXIST));
         return recordService.create(user, config, conn);
     }
 
@@ -265,7 +271,7 @@ public class SimpleRecordManager implements RecordManager {
         int limit = searchParams.getLimit().orElse(totalCount);
 
         if (offset > totalCount) {
-            throw new IllegalArgumentException("Offset exceeds total size");
+            throw new IllegalArgumentException(OFFSET_EXCEEDS);
         }
         // Get Entities query
         String entitiesQueryStr = GET_ENTITIES_QUERY
@@ -375,7 +381,7 @@ public class SimpleRecordManager implements RecordManager {
         Function<String, String> queryFunc = querySuffix -> {
             String queryString = replaceRecordsFilter(new ArrayList<>(), replaceCreatorFilter(searchParams,
                     replaceKeywordFilter(searchParams, FIND_RECORDS_QUERY + querySuffix)));
-            log.debug("Query String:\n" + queryString);
+            log.debug(QUERY_STRING + queryString);
             return queryString;
         };
 
@@ -398,7 +404,7 @@ public class SimpleRecordManager implements RecordManager {
                     replaceKeywordFilter(searchParams, FIND_RECORDS_QUERY + querySuffix));
             queryString = replaceCreatorFilter(searchParams, queryString);
             queryString = replaceRecordsFilter(viewableRecords, queryString);
-            log.debug("Query String:\n" + queryString);
+            log.debug(QUERY_STRING + queryString);
             return queryString;
         };
 
@@ -420,11 +426,11 @@ public class SimpleRecordManager implements RecordManager {
         int offset = searchParams.getOffset();
         int limit = searchParams.getLimit().orElse(totalCount);
         if (offset > totalCount) {
-            throw new IllegalArgumentException("Offset exceeds total size");
+            throw new IllegalArgumentException(OFFSET_EXCEEDS);
         }
         String queryString = GET_KEYWORD_QUERY + "\nLIMIT " + limit + "\nOFFSET " + offset;
 
-        log.debug("Query String:\n" + queryString);
+        log.debug(QUERY_STRING + queryString);
 
         TupleQuery query = conn.prepareTupleQuery(queryString);
         query.setBinding(CATALOG_BINDING, catalogId);
@@ -484,8 +490,8 @@ public class SimpleRecordManager implements RecordManager {
     public RecordService<? extends Record> getRecordService(Resource recordId, RepositoryConnection conn) {
         OrmFactory<? extends Record> factory = getFactory(recordId, conn, false);
         return Optional.ofNullable(getRecordService(factory.getType()))
-                .orElseThrow(() -> new IllegalArgumentException("Service for factory " + factory.getType().toString()
-                        + " is unavailable or doesn't exist."));
+                .orElseThrow(() -> new IllegalArgumentException(SERVICE_FOR_FACTORY + factory.getType().toString()
+                        + UNAVAILABLE_OR_DOESNT_EXIST));
     }
 
     @Override
@@ -498,8 +504,8 @@ public class SimpleRecordManager implements RecordManager {
             service = (RecordService<T>) getRecordService(serviceType.getType());
         } else {
             if (!serviceType.getType().equals(recordClass)) {
-                throw new IllegalArgumentException("Service for factory " + recordClass
-                        + " is unavailable or doesn't exist.");
+                throw new IllegalArgumentException(SERVICE_FOR_FACTORY + recordClass
+                        + UNAVAILABLE_OR_DOESNT_EXIST);
             }
             service = getRecordService(recordClass);
         }
@@ -528,7 +534,7 @@ public class SimpleRecordManager implements RecordManager {
         String queryString = replaceRecordTypeFilter(searchParams, replaceRecordsFilter(new ArrayList<>(),
                 replaceCreatorFilter(searchParams, replaceKeywordFilter(searchParams, FIND_RECORDS_QUERY))));
 
-        log.debug("Query String:\n" + queryString);
+        log.debug(QUERY_STRING + queryString);
 
         TupleQuery query = conn.prepareTupleQuery(queryString);
         query.setBinding(CATALOG_BINDING, catalogId);
@@ -633,7 +639,7 @@ public class SimpleRecordManager implements RecordManager {
      * Creates the base for the sorting options Object.
      */
     private void createSortingOptions() {
-        sortingOptions.put(vf.createIRI(_Thing.modified_IRI), "modified");
+        sortingOptions.put(vf.createIRI(_Thing.modified_IRI), MODIFIED);
         sortingOptions.put(vf.createIRI(_Thing.issued_IRI), "issued");
         sortingOptions.put(vf.createIRI(_Thing.title_IRI), "title");
     }
@@ -648,16 +654,16 @@ public class SimpleRecordManager implements RecordManager {
         int limit = searchParams.getLimit().orElse(totalCount);
 
         if (offset > totalCount) {
-            throw new IllegalArgumentException("Offset exceeds total size");
+            throw new IllegalArgumentException(OFFSET_EXCEEDS);
         }
 
         StringBuilder querySuffix = new StringBuilder("\nORDER BY ");
         Resource sortByParam = searchParams.getSortBy().orElse(vf.createIRI(_Thing.modified_IRI));
         StringBuilder binding = new StringBuilder();
         if (sortByParam.equals(vf.createIRI(_Thing.title_IRI))) {
-            binding.append("lcase(?").append(sortingOptions.getOrDefault(sortByParam, "modified")).append(")");
+            binding.append("lcase(?").append(sortingOptions.getOrDefault(sortByParam, MODIFIED)).append(")");
         } else {
-            binding.append("?").append(sortingOptions.getOrDefault(sortByParam, "modified"));
+            binding.append("?").append(sortingOptions.getOrDefault(sortByParam, MODIFIED));
         }
         Optional<Boolean> ascendingParam = searchParams.getAscending();
         if (ascendingParam.isPresent() && ascendingParam.get()) {

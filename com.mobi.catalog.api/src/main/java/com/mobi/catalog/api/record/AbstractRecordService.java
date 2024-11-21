@@ -77,6 +77,8 @@ import java.util.stream.Collectors;
 public abstract class AbstractRecordService<T extends Record> implements RecordService<T> {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(AbstractRecordService.class);
+    private static final String CONFIG_PARAMETER = "Config parameter ";
+    private static final String IS_REQUIRED = " is required.";
 
     @Reference
     public CatalogProvUtils provUtils;
@@ -275,18 +277,19 @@ public abstract class AbstractRecordService<T extends Record> implements RecordS
      *
      * @param config The {@link RecordOperationConfig} to validate settings
      */
+
     protected void validateCreationConfig(RecordOperationConfig config) {
         if (config.get(RecordCreateSettings.CATALOG_ID) == null) {
-            throw new IllegalArgumentException("Config parameter " + RecordCreateSettings.CATALOG_ID.getKey()
-                    + " is required.");
+            throw new IllegalArgumentException(CONFIG_PARAMETER + RecordCreateSettings.CATALOG_ID.getKey()
+                    + IS_REQUIRED);
         }
         if (config.get(RecordCreateSettings.RECORD_PUBLISHERS).isEmpty()) {
-            throw new IllegalArgumentException("Config parameter " + RecordCreateSettings.RECORD_PUBLISHERS.getKey()
-                    + " is required.");
+            throw new IllegalArgumentException(CONFIG_PARAMETER + RecordCreateSettings.RECORD_PUBLISHERS.getKey()
+                    + IS_REQUIRED);
         }
         if (config.get(RecordCreateSettings.RECORD_TITLE) == null) {
-            throw new IllegalArgumentException("Config parameter " + RecordCreateSettings.RECORD_TITLE.getKey()
-                    + " is required.");
+            throw new IllegalArgumentException(CONFIG_PARAMETER + RecordCreateSettings.RECORD_TITLE.getKey()
+                    + IS_REQUIRED);
         }
     }
 

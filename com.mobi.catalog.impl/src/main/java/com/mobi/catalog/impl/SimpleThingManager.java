@@ -44,6 +44,7 @@ import java.util.Optional;
 
 @Component
 public class SimpleThingManager implements ThingManager {
+    private static final String COULD_NOT_BE_FOUND = " could not be found";
 
     final ValueFactory vf = new ValidatingValueFactory();
     final ModelFactory mf = new DynamicModelFactory();
@@ -56,13 +57,13 @@ public class SimpleThingManager implements ThingManager {
     @Override
     public <T extends Thing> T getExpectedObject(Resource id, OrmFactory<T> factory, RepositoryConnection conn) {
         return optObject(id, factory, conn).orElseThrow(() ->
-                new IllegalStateException(factory.getTypeIRI().getLocalName() + " " + id + " could not be found"));
+                new IllegalStateException(factory.getTypeIRI().getLocalName() + " " + id + COULD_NOT_BE_FOUND));
     }
 
     @Override
     public <T extends Thing> T getObject(Resource id, OrmFactory<T> factory, RepositoryConnection conn) {
         return optObject(id, factory, conn).orElseThrow(() ->
-                new IllegalArgumentException(factory.getTypeIRI().getLocalName() + " " + id + " could not be found"));
+                new IllegalArgumentException(factory.getTypeIRI().getLocalName() + " " + id + COULD_NOT_BE_FOUND));
     }
 
     @Override
@@ -121,7 +122,7 @@ public class SimpleThingManager implements ThingManager {
     public void validateResource(Resource resource, IRI classId, RepositoryConnection conn) {
         if (!ConnectionUtils.contains(conn, resource, vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI),
                 classId, resource)) {
-            throw new IllegalArgumentException(classId.getLocalName() + " " + resource + " could not be found");
+            throw new IllegalArgumentException(classId.getLocalName() + " " + resource + COULD_NOT_BE_FOUND);
         }
     }
 }

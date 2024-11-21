@@ -83,7 +83,9 @@ public class SimpleDifferenceManager implements DifferenceManager {
     private static final String GET_ADDITIONS_IN_COMMIT;
     private static final String GET_DELETIONS_IN_COMMIT;
     private static final String COMPARE_GRAPHS;
-
+    private static final String ADDITIONS_NOT_SET_ON_COMMIT = "Additions not set on Commit ";
+    private static final String DELETIONS_NOT_SET_ON_COMMIT = "Deletions not set on Commit ";
+    private static final String DIFF = "/diff";
     static {
         try {
             GET_PAGED_CHANGES = IOUtils.toString(
@@ -158,9 +160,9 @@ public class SimpleDifferenceManager implements DifferenceManager {
         Model deleteModel = mf.createEmptyModel();
 
         IRI additionsGraph = revision.getAdditions().orElseThrow(() ->
-                new IllegalStateException("Additions not set on Commit " + commitId));
+                new IllegalStateException(ADDITIONS_NOT_SET_ON_COMMIT + commitId));
         IRI deletionsGraph = revision.getDeletions().orElseThrow(() ->
-                new IllegalStateException("Deletions not set on Commit " + commitId));
+                new IllegalStateException(DELETIONS_NOT_SET_ON_COMMIT + commitId));
 
         conn.getStatements(null, null, null, additionsGraph).forEach(statement ->
                 addModel.add(statement.getSubject(), statement.getPredicate(), statement.getObject()));
@@ -171,9 +173,9 @@ public class SimpleDifferenceManager implements DifferenceManager {
             Resource graph = graphRevision.getRevisionedGraph().orElseThrow(() ->
                     new IllegalStateException("GraphRevision missing Revisioned Graph."));
             IRI adds = graphRevision.getAdditions().orElseThrow(() ->
-                    new IllegalStateException("Additions not set on Commit " + commitId));
+                    new IllegalStateException(ADDITIONS_NOT_SET_ON_COMMIT + commitId));
             IRI dels = graphRevision.getDeletions().orElseThrow(() ->
-                    new IllegalStateException("Deletions not set on Commit " + commitId));
+                    new IllegalStateException(DELETIONS_NOT_SET_ON_COMMIT + commitId));
 
             conn.getStatements(null, null, null, adds).forEach(statement ->
                     addModel.add(statement.getSubject(), statement.getPredicate(), statement.getObject(), graph));
@@ -213,9 +215,9 @@ public class SimpleDifferenceManager implements DifferenceManager {
         Model deleteModel = mf.createEmptyModel();
 
         IRI additionsGraph = revision.getAdditions().orElseThrow(() ->
-                new IllegalStateException("Additions not set on Commit " + commitId));
+                new IllegalStateException(ADDITIONS_NOT_SET_ON_COMMIT + commitId));
         IRI deletionsGraph = revision.getDeletions().orElseThrow(() ->
-                new IllegalStateException("Deletions not set on Commit " + commitId));
+                new IllegalStateException(DELETIONS_NOT_SET_ON_COMMIT + commitId));
 
         conn.getStatements(subjectId, null, null, additionsGraph).forEach(statement ->
                 addModel.add(statement.getSubject(), statement.getPredicate(), statement.getObject()));
@@ -226,9 +228,9 @@ public class SimpleDifferenceManager implements DifferenceManager {
             Resource graph = graphRevision.getRevisionedGraph().orElseThrow(() ->
                     new IllegalStateException("GraphRevision missing Revisioned Graph."));
             IRI adds = graphRevision.getAdditions().orElseThrow(() ->
-                    new IllegalStateException("Additions not set on Commit " + commitId));
+                    new IllegalStateException(ADDITIONS_NOT_SET_ON_COMMIT + commitId));
             IRI dels = graphRevision.getDeletions().orElseThrow(() ->
-                    new IllegalStateException("Deletions not set on Commit " + commitId));
+                    new IllegalStateException(DELETIONS_NOT_SET_ON_COMMIT + commitId));
 
             conn.getStatements(subjectId, null, null, adds).forEach(statement ->
                     addModel.add(statement.getSubject(), statement.getPredicate(), statement.getObject(), graph));
@@ -251,9 +253,9 @@ public class SimpleDifferenceManager implements DifferenceManager {
         Model deleteModel = mf.createEmptyModel();
 
         IRI additionsGraph = revision.getAdditions().orElseThrow(() ->
-                new IllegalStateException("Additions not set on Commit " + commitId));
+                new IllegalStateException(ADDITIONS_NOT_SET_ON_COMMIT + commitId));
         IRI deletionsGraph = revision.getDeletions().orElseThrow(() ->
-                new IllegalStateException("Deletions not set on Commit " + commitId));
+                new IllegalStateException(DELETIONS_NOT_SET_ON_COMMIT + commitId));
 
         String queryString = GET_PAGED_CHANGES.replace("%ADDITIONS_GRAPH%", "<" + additionsGraph.stringValue() + ">");
         queryString = queryString.replace("%DELETIONS_GRAPH%", "<" + deletionsGraph.stringValue() + ">");
@@ -376,9 +378,9 @@ public class SimpleDifferenceManager implements DifferenceManager {
         File targetCompiled = compiledResourceManager.getCompiledResourceFile(targetCommitId, RDFFormat.TURTLE, conn);
         File branchingCompiled = compiledResourceManager.getCompiledResourceFile(branchingId, RDFFormat.TURTLE, conn);
 
-        Resource sourceGraph = vf.createIRI(sourceCommitId.stringValue() + "/diff");
-        Resource targetGraph = vf.createIRI(targetCommitId.stringValue() + "/diff");
-        Resource branchingGraph = vf.createIRI( branchingId.stringValue()+ "/diff");
+        Resource sourceGraph = vf.createIRI(sourceCommitId.stringValue() + DIFF);
+        Resource targetGraph = vf.createIRI(targetCommitId.stringValue() + DIFF);
+        Resource branchingGraph = vf.createIRI( branchingId.stringValue()+ DIFF);
         try (RepositoryConnection diffConn = configProvider.getRepository().getConnection()) {
             diffConn.getParserConfig().set(BasicParserSettings.PRESERVE_BNODE_IDS, true);
             diffConn.begin();

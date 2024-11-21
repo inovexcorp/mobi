@@ -112,6 +112,9 @@ public abstract class BaseVersioningService<T extends VersionedRDFRecord> implem
     private static final String GET_BRANCHING_COMMIT_MASTER;
     private static final String GET_BRANCHING_COMMIT_FORWARD;
     private static final String GET_COMMIT_DELTAS;
+    private static final String SOURCE_HEAD = "sourceHead";
+    private static final String ADDITIONS = "Additions";
+    private static final String DELETIONS = "Deletions";
     protected final ValueFactory vf = new ValidatingValueFactory();
     protected final ModelFactory mf = new DynamicModelFactory();
 
@@ -240,7 +243,7 @@ public abstract class BaseVersioningService<T extends VersionedRDFRecord> implem
                                RepositoryConnection conn) {
         Resource branchingResource = getBranchingCommit(baseCommitIRI, auxCommitIRI, GET_BRANCHING_COMMIT_MASTER, conn);
         TupleQuery getCommitDeltas = conn.prepareTupleQuery(GET_COMMIT_DELTAS);
-        getCommitDeltas.setBinding("sourceHead", auxCommitIRI);
+        getCommitDeltas.setBinding(SOURCE_HEAD, auxCommitIRI);
         try (TupleQueryResult deltaResult = getCommitDeltas.evaluate()) {
             deltaResult.forEach(bindings -> handleCommitDeltas(bindings, branchingResource, headGraph, conn));
         }
@@ -268,8 +271,8 @@ public abstract class BaseVersioningService<T extends VersionedRDFRecord> implem
         commitModel.remove(commitRevisionIRI, addIRI, null);
         commitModel.remove(commitRevisionIRI, delIRI, null);
 
-        IRI conflictAddGraph = getDeltaValue(newRevision.getAdditions(), "Additions", newRevision.getResource());
-        IRI conflictDelGraph = getDeltaValue(newRevision.getDeletions(), "Deletions", newRevision.getResource());
+        IRI conflictAddGraph = getDeltaValue(newRevision.getAdditions(), ADDITIONS, newRevision.getResource());
+        IRI conflictDelGraph = getDeltaValue(newRevision.getDeletions(), DELETIONS, newRevision.getResource());
         commitModel.add(commitRevisionIRI, addIRI, conflictDelGraph);
         commitModel.add(commitRevisionIRI, delIRI, conflictAddGraph);
         thingManager.updateObject(commit, conn);
@@ -280,7 +283,7 @@ public abstract class BaseVersioningService<T extends VersionedRDFRecord> implem
         // Figure out what commit the source branch (auxCommit) originally diverged from the target branch (baseCommit)
         TupleQuery getBranchingCommit = conn.prepareTupleQuery(query);
         getBranchingCommit.setBinding("targetHead", baseCommitIRI);
-        getBranchingCommit.setBinding("sourceHead", auxCommitIRI);
+        getBranchingCommit.setBinding(SOURCE_HEAD, auxCommitIRI);
         try (TupleQueryResult branchingCommitResult = getBranchingCommit.evaluate()) {
             Optional<BindingSet> bindingSet = branchingCommitResult
                     .stream()
@@ -330,7 +333,7 @@ public abstract class BaseVersioningService<T extends VersionedRDFRecord> implem
                 Resource forwardBranchingResource = getBranchingCommit(commit.getResource(),
                         auxCommit.getResource(), GET_BRANCHING_COMMIT_FORWARD, conn);
                 TupleQuery getCommitDeltas = conn.prepareTupleQuery(GET_COMMIT_DELTAS);
-                getCommitDeltas.setBinding("sourceHead", auxCommit.getResource());
+                getCommitDeltas.setBinding(SOURCE_HEAD, auxCommit.getResource());
                 try (TupleQueryResult deltaResult = getCommitDeltas.evaluate()) {
                     deltaResult.forEach(forwardBindings ->
                             handleCommitDeltas(forwardBindings, forwardBranchingResource, headGraph, conn));
@@ -358,15 +361,15 @@ public abstract class BaseVersioningService<T extends VersionedRDFRecord> implem
                         () -> new IllegalStateException("Forward merge commit does not contain a baseCommit"));
                 Commit baseCommit = getHeadCommit(commitBaseCommitResource, conn);
                 if (baseCommit.getResource().equals(branchingResource)) {
-                    addInfluencedRevision(commit, baseCommit, getDeltaValue(forwardMergeBaseRevision.getAdditions(), "Additions",
-                            forwardMergeBaseRevision.getResource()), getDeltaValue(forwardMergeBaseRevision.getDeletions(), "Deletions",
+                    addInfluencedRevision(commit, baseCommit, getDeltaValue(forwardMergeBaseRevision.getAdditions(), ADDITIONS,
+                            forwardMergeBaseRevision.getResource()), getDeltaValue(forwardMergeBaseRevision.getDeletions(), DELETIONS,
                             forwardMergeBaseRevision.getResource()), commitRevision, conn);
                 } else {
                     Revision baseCommitRevision = revisionManager.getRevisionFromCommitId(commitBaseCommitResource,
                             conn);
-                    baseCommitRevision.setDeletions(getDeltaValue(forwardMergeBaseRevision.getAdditions(), "Additions",
+                    baseCommitRevision.setDeletions(getDeltaValue(forwardMergeBaseRevision.getAdditions(), ADDITIONS,
                             forwardMergeBaseRevision.getResource()));
-                    baseCommitRevision.setAdditions(getDeltaValue(forwardMergeBaseRevision.getDeletions(), "Deletions",
+                    baseCommitRevision.setAdditions(getDeltaValue(forwardMergeBaseRevision.getDeletions(), DELETIONS,
                             forwardMergeBaseRevision.getResource()));
                     baseCommit.getModel().remove(baseCommitRevision.getResource(), null, null);
                     baseCommit.getModel().addAll(baseCommitRevision.getModel());
@@ -384,9 +387,9 @@ public abstract class BaseVersioningService<T extends VersionedRDFRecord> implem
                 if (auxCommit.getBaseCommit_resource().isPresent() && !auxIsForwardCommit) {
                     // Merge of master into forward branch
                     auxCommitRevision = revisionManager.createRevision(UUID.randomUUID());
-                    auxCommitRevision.setDeletions(getDeltaValue(forwardMergeAuxRevision.getAdditions(), "Additions",
+                    auxCommitRevision.setDeletions(getDeltaValue(forwardMergeAuxRevision.getAdditions(), ADDITIONS,
                             forwardMergeAuxRevision.getResource()));
-                    auxCommitRevision.setAdditions(getDeltaValue(forwardMergeAuxRevision.getDeletions(), "Deletions",
+                    auxCommitRevision.setAdditions(getDeltaValue(forwardMergeAuxRevision.getDeletions(), DELETIONS,
                             forwardMergeAuxRevision.getResource()));
                     auxCommit.getModel().addAll(auxCommitRevision.getModel());
                     auxCommit.setMasterMergeIntoBranchRevision(auxCommitRevision);
@@ -394,9 +397,9 @@ public abstract class BaseVersioningService<T extends VersionedRDFRecord> implem
                     // Normal branch merge
                     auxCommitRevision = revisionManager.getRevisionFromCommitId(commitAuxCommitResource,
                             conn);
-                    auxCommitRevision.setDeletions(getDeltaValue(forwardMergeAuxRevision.getAdditions(), "Additions",
+                    auxCommitRevision.setDeletions(getDeltaValue(forwardMergeAuxRevision.getAdditions(), ADDITIONS,
                             forwardMergeAuxRevision.getResource()));
-                    auxCommitRevision.setAdditions(getDeltaValue(forwardMergeAuxRevision.getDeletions(), "Deletions",
+                    auxCommitRevision.setAdditions(getDeltaValue(forwardMergeAuxRevision.getDeletions(), DELETIONS,
                             forwardMergeAuxRevision.getResource()));
                     auxCommit.getModel().remove(auxCommitRevision.getResource(), null, null);
                     auxCommit.getModel().addAll(auxCommitRevision.getModel());
@@ -415,9 +418,9 @@ public abstract class BaseVersioningService<T extends VersionedRDFRecord> implem
                 removeGraphs = true;
 
                 // Update MasterBranch HEAD graph with display revision differences
-                IRI commitRevAddGraph = getDeltaValue(commitRevision.getAdditions(), "Additions",
+                IRI commitRevAddGraph = getDeltaValue(commitRevision.getAdditions(), ADDITIONS,
                         commitRevision.getResource());
-                IRI commitRevDelGraph = getDeltaValue(commitRevision.getDeletions(), "Deletions",
+                IRI commitRevDelGraph = getDeltaValue(commitRevision.getDeletions(), DELETIONS,
                         commitRevision.getResource());
                 conn.add(conn.getStatements(null, null, null, commitRevAddGraph), headGraph);
                 conn.remove(conn.getStatements(null, null, null, commitRevDelGraph), headGraph);
@@ -507,9 +510,9 @@ public abstract class BaseVersioningService<T extends VersionedRDFRecord> implem
             newCommit.getModel().addAll(mergeRevisions.aux.getModel());
             newCommit.setMergeDisplayRevision(mergeRevisions.display);
             newCommit.getModel().addAll(mergeRevisions.display.getModel());
-            IRI additionsGraph = getDeltaValue(newCommitRevision.getAdditions(), "Additions",
+            IRI additionsGraph = getDeltaValue(newCommitRevision.getAdditions(), ADDITIONS,
                     newCommitRevision.getResource());
-            IRI deletionsGraph = getDeltaValue(newCommitRevision.getDeletions(), "Deletions",
+            IRI deletionsGraph = getDeltaValue(newCommitRevision.getDeletions(), DELETIONS,
                     newCommitRevision.getResource());
             additions.removeAll(mergeRevisions.keptEntityDoNotAdd);
             additions.removeAll(mergeRevisions.duplicateAddsToRemove);
