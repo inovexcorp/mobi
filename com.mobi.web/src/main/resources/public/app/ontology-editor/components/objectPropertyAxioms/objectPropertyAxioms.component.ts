@@ -21,16 +21,17 @@
  * #L%
  */
 import { has, map, sortBy } from 'lodash';
-import { first } from 'rxjs/operators';
+import { EMPTY, EmptyError, throwError } from 'rxjs';
+import { catchError, first } from 'rxjs/operators';
 import { Component, Input, OnChanges } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 
-import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
-import { RDFS } from '../../../prefixes';
 import { JSONLDId } from '../../../shared/models/JSONLDId.interface';
-import { PropertyManagerService } from '../../../shared/services/propertyManager.service';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import { PropertyManagerService } from '../../../shared/services/propertyManager.service';
+import { RDFS } from '../../../prefixes';
 import { isBlankNodeId } from '../../../shared/utility';
 
 /**
@@ -63,7 +64,16 @@ export class ObjectPropertyAxiomsComponent implements OnChanges{
         }).afterClosed().subscribe(result => {
             if (result) {
                 this.os.removeProperty(event.iri, event.index)
-                    .pipe(first())
+                    .pipe(
+                        first(),
+                        catchError(err => {
+                            // Check is used to handle the case where an EMPTY Observable is returned from http interceptor
+                            if (err instanceof EmptyError) {
+                              return EMPTY;
+                            }
+                            return throwError(err);
+                        })
+                    )
                     .subscribe((res) => {
                         this.removeFromHierarchy(event.iri, res as JSONLDId);
                     });

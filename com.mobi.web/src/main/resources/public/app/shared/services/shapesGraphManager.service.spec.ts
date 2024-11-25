@@ -22,21 +22,25 @@
  */
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
+import { HttpParams } from '@angular/common/http';
 import { MockProvider } from 'ng-mocks';
+import { of } from 'rxjs';
 import { cloneDeep } from 'lodash';
 
 import { cleanStylesFromDOM } from '../../../test/ts/Shared';
-import { RdfUpload } from '../models/rdfUpload.interface';
-import { VersionedRdfUploadResponse } from '../models/versionedRdfUploadResponse.interface';
+import { PolicyEnforcementService } from './policyEnforcement.service';
+import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
 import { RdfDownload } from '../models/rdfDownload.interface';
 import { RdfUpdate } from '../models/rdfUpdate.interface';
-import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
+import { RdfUpload } from '../models/rdfUpload.interface';
+import { VersionedRdfUploadResponse } from '../models/versionedRdfUploadResponse.interface';
 import { ShapesGraphManagerService } from './shapesGraphManager.service';
 
 describe('Shapes Graph Manager service', function() {
     let service: ShapesGraphManagerService;
     let httpMock: HttpTestingController;
     let progressSpinnerStub: jasmine.SpyObj<ProgressSpinnerService>;
+    let policyEnforcementStub: jasmine.SpyObj<PolicyEnforcementService>;
 
     const error = 'Error Message';
     const file: File = new File([''], 'filename', { type: 'text/html' });
@@ -67,12 +71,17 @@ describe('Shapes Graph Manager service', function() {
             providers: [
                 ShapesGraphManagerService,
                 MockProvider(ProgressSpinnerService),
+                MockProvider(PolicyEnforcementService)
             ]
         });
 
         service = TestBed.inject(ShapesGraphManagerService);
         httpMock = TestBed.inject(HttpTestingController) as jasmine.SpyObj<HttpTestingController>;
         progressSpinnerStub = TestBed.inject(ProgressSpinnerService) as jasmine.SpyObj<ProgressSpinnerService>;
+        policyEnforcementStub = TestBed.inject(PolicyEnforcementService) as jasmine.SpyObj<PolicyEnforcementService>;
+        policyEnforcementStub.permit = 'Permit';
+        policyEnforcementStub.deny = 'Deny';
+        policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.permit));
 
         rdfDownload = {
             recordId: 'record1',
@@ -90,6 +99,7 @@ describe('Shapes Graph Manager service', function() {
         service = null;
         httpMock = null;
         progressSpinnerStub = null;
+        rdfDownload = null;
     });
 
     afterEach(() => {
@@ -184,21 +194,70 @@ describe('Shapes Graph Manager service', function() {
             spyOn(window, 'open');
         });
         it('with all fields set', function() {
+            const params = new HttpParams({
+                fromObject: {
+                    branchId: 'branch1',
+                    commitId: 'commit1',
+                    rdfFormat: 'turtle',
+                    fileName: 'filename',
+                    applyInProgressCommit: false
+                }
+            });
             service.downloadShapesGraph(rdfDownload);
 
-            expect(window.open).toHaveBeenCalledWith(`${service.prefix}/${encodeURIComponent(rdfDownload.recordId)}?branchId=branch1&commitId=commit1&rdfFormat=turtle&fileName=filename&applyInProgressCommit=false`);
+            expect(window.open).toHaveBeenCalledWith(`${service.prefix}/${encodeURIComponent(rdfDownload.recordId)}?${params.toString()}`);
+        });
+        it('with rdfFormat not set', function() {
+            const params = new HttpParams({
+                fromObject: {
+                    branchId: 'branch1',
+                    commitId: 'commit1',
+                    rdfFormat: 'jsonld',
+                    fileName: 'filename',
+                    applyInProgressCommit: false
+                }
+            });
+            rdfDownload.rdfFormat = undefined;
+            service.downloadShapesGraph(rdfDownload);
+
+            expect(window.open).toHaveBeenCalledWith(`${service.prefix}/${encodeURIComponent(rdfDownload.recordId)}?${params.toString()}`);
+        });
+        it('with fileName not set', function() {
+            const params = new HttpParams({
+                fromObject: {
+                    branchId: 'branch1',
+                    commitId: 'commit1',
+                    rdfFormat: 'turtle',
+                    fileName: 'shapesGraph',
+                    applyInProgressCommit: false
+                }
+            });
+            rdfDownload.fileName = undefined;
+            service.downloadShapesGraph(rdfDownload);
+
+            expect(window.open).toHaveBeenCalledWith(`${service.prefix}/${encodeURIComponent(rdfDownload.recordId)}?${params.toString()}`);
+        });
+    });
+    describe('should not download a shapes graph record when permission is denied', function() {
+        beforeEach(function() {
+            policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.deny));
+            spyOn(window, 'open');
+        });
+        it('with all fields set', function() {
+            service.downloadShapesGraph(rdfDownload);
+            expect(window.open).not.toHaveBeenCalledWith();
         });
         it('with rdfFormat not set', function() {
             rdfDownload.rdfFormat = undefined;
             service.downloadShapesGraph(rdfDownload);
 
-            expect(window.open).toHaveBeenCalledWith(`${service.prefix}/${encodeURIComponent(rdfDownload.recordId)}?branchId=branch1&commitId=commit1&rdfFormat=jsonld&fileName=filename&applyInProgressCommit=false`);
+            expect(window.open).not.toHaveBeenCalledWith();
         });
         it('with fileName not set', function() {
             rdfDownload.fileName = undefined;
             service.downloadShapesGraph(rdfDownload);
 
-            expect(window.open).toHaveBeenCalledWith(`${service.prefix}/${encodeURIComponent(rdfDownload.recordId)}?branchId=branch1&commitId=commit1&rdfFormat=turtle&fileName=shapesGraph&applyInProgressCommit=false`);
+            expect(window.open).not.toHaveBeenCalledWith();
         });
     });
 });

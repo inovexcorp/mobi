@@ -56,9 +56,17 @@ export class ObjectPropertyBlockComponent implements OnChanges {
     ngOnChanges(): void {
         this.updatePropertiesFiltered();
     }
-    updatePropertiesFiltered(): void{
-        this.objectProperties = Object.keys(this.os.listItem.objectProperties.iris);
-        this.objectPropertiesFiltered = sortBy(this.objectProperties.filter(prop => has(this.os.listItem.selected, prop)), iri => this.os.getEntityName(iri));
+    updatePropertiesFiltered(): void {
+        if (this.os.listItem?.objectProperties?.iris) {
+            this.objectProperties = Object.keys(this.os.listItem.objectProperties.iris);
+        } else {
+            this.objectProperties = [];
+        }
+        if (this.os.listItem?.selected) {
+            this.objectPropertiesFiltered = sortBy(this.objectProperties.filter(prop => has(this.os.listItem.selected, prop)), iri => this.os.getEntityName(iri));
+        } else {
+            this.objectPropertiesFiltered = [];
+        }
     }
     openAddObjectPropOverlay(): void {
         this.dialog.open(ObjectPropertyOverlayComponent).afterClosed().subscribe(() => {

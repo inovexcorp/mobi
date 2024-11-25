@@ -26,21 +26,6 @@ import { difference, find, forEach, get, has } from 'lodash';
 import { catchError, map, mergeMap, switchMap, tap } from 'rxjs/operators';
 import { forkJoin, Observable, of, Subject, throwError } from 'rxjs';
 
-import { REST_PREFIX } from '../../constants';
-import { CommitDifference } from '../models/commitDifference.interface';
-import { Commit } from '../models/commit.interface';
-import { JSONLDObject } from '../models/JSONLDObject.interface';
-import { Difference } from '../models/difference.class';
-import { Conflict } from '../models/conflict.interface';
-import { SortOption } from '../models/sortOption.interface';
-import { PaginatedConfig } from '../models/paginatedConfig.interface';
-import { NewConfig } from '../models/newConfig.interface';
-import { RecordConfig } from '../models/recordConfig.interface';
-import { DistributionConfig } from '../models/distributionConfig.interface';
-import { TagConfig } from '../models/tagConfig.interface';
-import { KeywordCount } from '../models/keywordCount.interface';
-import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
-import { CATALOG, DCTERMS } from '../../prefixes';
 import {
     condenseCommitId,
     createHttpParams,
@@ -51,12 +36,29 @@ import {
     paginatedConfigToHttpParams,
     getSubstringMatch
 } from '../utility';
+import { CATALOG, DCTERMS, POLICY } from '../../prefixes';
+import { Commit } from '../models/commit.interface';
+import { CommitDifference } from '../models/commitDifference.interface';
+import { Conflict } from '../models/conflict.interface';
+import { Difference } from '../models/difference.class';
+import { DistributionConfig } from '../models/distributionConfig.interface';
+import { EntityRecord, MatchingAnnotations } from '../../entity-search/models/entity-record';
 import { EventTypeConstants, EventWithPayload } from '../models/eventWithPayload.interface';
 import { FilterItem } from '../models/filterItem.interface';
 import { FilterType, ListFilter } from '../models/list-filter.interface';
-import { Statistic } from '../models/statistic.interface';
-import { EntityRecord, MatchingAnnotations } from '../../entity-search/models/entity-record';
+import { JSONLDObject } from '../models/JSONLDObject.interface';
+import { KeywordCount } from '../models/keywordCount.interface';
+import { NewConfig } from '../models/newConfig.interface';
+import { PaginatedConfig } from '../models/paginatedConfig.interface';
 import { PaginatedResponse } from '../models/paginated-response.interface';
+import { PolicyEnforcementService } from './policyEnforcement.service';
+import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
+import { REST_PREFIX } from '../../constants';
+import { RecordConfig } from '../models/recordConfig.interface';
+import { SortOption } from '../models/sortOption.interface';
+import { Statistic } from '../models/statistic.interface';
+import { TagConfig } from '../models/tagConfig.interface';
+import { XACMLRequest } from '../models/XACMLRequest.interface';
 
 /**
  * @class shared.CatalogManagerService
@@ -69,7 +71,11 @@ export class CatalogManagerService {
     prefix = `${REST_PREFIX}catalogs`;
     commitsPrefix = `${REST_PREFIX}commits`;
 
-    constructor(private http: HttpClient, private spinnerSrv : ProgressSpinnerService) {}
+    constructor(
+        private http: HttpClient, 
+        private spinnerSrv: ProgressSpinnerService,
+        private pep: PolicyEnforcementService
+    ) {}
 
     // Only the service has access to the subject
     private _catalogManagerActionSubject = new Subject<EventWithPayload>();
@@ -1125,7 +1131,18 @@ export class CatalogManagerService {
             format: format,
             fileName: fileName
         });
-        window.open(`${this.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/branches/${encodeURIComponent(branchId)}/commits/${encodeURIComponent(commitId)}/resource?${params.toString()}`);
+        const url = `${this.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/branches/${encodeURIComponent(branchId)}/commits/${encodeURIComponent(commitId)}/resource?${params.toString()}`;
+        const readRequest: XACMLRequest = {
+            resourceId: recordId,
+            actionId: `${POLICY}Read`
+        };
+        this.pep.evaluateRequest(readRequest).pipe(
+            map(currentPermissions => currentPermissions === this.pep.permit)
+        ).subscribe((isPermit) => {
+            if (isPermit) {
+                window.open(url);
+            }
+        });
     }
 
     /**

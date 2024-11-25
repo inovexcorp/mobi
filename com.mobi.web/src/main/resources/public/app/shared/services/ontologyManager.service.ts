@@ -44,7 +44,7 @@ import { HttpClient, HttpErrorResponse, HttpHeaders, HttpResponse } from '@angul
 import { CatalogManagerService } from './catalogManager.service';
 import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
 import { REST_PREFIX } from '../../constants';
-import { DC, ONTOLOGYEDITOR, OWL, RDFS, SKOS, SKOSXL } from '../../prefixes';
+import { DC, ONTOLOGYEDITOR, OWL, POLICY, RDFS, SKOS, SKOSXL } from '../../prefixes';
 import { VocabularyStuff } from '../models/vocabularyStuff.interface';
 import { OntologyStuff } from '../models/ontologyStuff.interface';
 import { PropertyToRanges } from '../models/propertyToRanges.interface';
@@ -70,6 +70,8 @@ import {
 import { OBJ_PROPERTY_VALUES_QUERY } from '../../queries';
 import { RdfUpload } from '../models/rdfUpload.interface';
 import { VersionedRdfUploadResponse } from '../models/versionedRdfUploadResponse.interface';
+import { XACMLRequest } from '../models/XACMLRequest.interface';
+import { PolicyEnforcementService } from './policyEnforcement.service';
 
 /**
  * @class shared.OntologyManagerService
@@ -83,7 +85,10 @@ export class OntologyManagerService {
     catalogId = '';
     prefix = `${REST_PREFIX}ontologies`;
 
-    constructor(private http: HttpClient, private cm: CatalogManagerService, 
+    constructor(
+        private http: HttpClient, 
+        private cm: CatalogManagerService,
+        private pep: PolicyEnforcementService,
         private spinnerSrv: ProgressSpinnerService) {}
 
     /**
@@ -255,7 +260,18 @@ export class OntologyManagerService {
             fileName: fileName || 'ontology',
             applyInProgressCommit
         });
-        window.open(`${this.prefix}/${encodeURIComponent(recordId)}?${params.toString()}`);
+        const url = `${this.prefix}/${encodeURIComponent(recordId)}?${params.toString()}`;
+        const readRequest: XACMLRequest = {
+            resourceId: recordId,
+            actionId: `${POLICY}Read`
+        };
+        this.pep.evaluateRequest(readRequest).pipe(
+            map(currentPermissions => currentPermissions === this.pep.permit)
+        ).subscribe((isPermit) => {
+            if (isPermit) {
+                window.open(url);
+            }
+        });
     }
     /**
      * 
@@ -343,6 +359,9 @@ export class OntologyManagerService {
      * various entity types. 
      */
     getIris(recordId: string, branchId: string, commitId: string): Observable<IriList> {
+        if (!recordId) {
+            return throwError('RecordId is empty');
+        }
         const params = { branchId, commitId };
         return this.spinnerSrv.track(this.http.get<IriList>(`${this.prefix}/${encodeURIComponent(recordId)}/iris`, 
           {params: createHttpParams(params)}))
@@ -363,6 +382,9 @@ export class OntologyManagerService {
      */
     getImportedIris(recordId: string, branchId: string, commitId: string, applyInProgressCommit = true, 
       isTracked = false): Observable<IriList[]> {
+        if (!recordId) {
+            return throwError('RecordId is empty');
+        }
         const params = { branchId, commitId, applyInProgressCommit };
         const url = `${this.prefix}/${encodeURIComponent(recordId)}/imported-iris`;
         const request = this.http.get<IriList[]>(url, {params: createHttpParams(params)});

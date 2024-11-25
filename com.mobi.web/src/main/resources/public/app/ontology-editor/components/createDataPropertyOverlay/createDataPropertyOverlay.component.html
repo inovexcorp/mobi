@@ -38,8 +38,8 @@
             <mat-checkbox [formControlName]="i">{{ characteristic.displayText }}</mat-checkbox>
         </ng-container>
     </div>
-    <iri-select-ontology [(selected)]="selectedDomains" displayText="Domain" [selectList]="os.listItem.classes.iris" ></iri-select-ontology>
-    <iri-select-ontology [(selected)]="selectedRanges" displayText="Range" [selectList]="os.listItem.dataPropertyRange"></iri-select-ontology>
+    <iri-select-ontology [(selected)]="selectedDomains" displayText="Domain" [selectList]="classIris" ></iri-select-ontology>
+    <iri-select-ontology [(selected)]="selectedRanges" displayText="Range" [selectList]="dataPropertyRanges"></iri-select-ontology>
     <super-property-select [(selected)]="selectedSubProperties" key="dataProperties"></super-property-select>
 </form>
 <div mat-dialog-actions>

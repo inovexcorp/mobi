@@ -173,7 +173,7 @@ export class AxiomOverlayComponent implements OnInit {
             }
             const valueObjs = addedValues.map(value => ({'@id': value}));
             this.os.addToAdditions(this.os.listItem.versionedRdfRecord.recordId, {'@id': this.os.listItem.selected['@id'], [axiom]: valueObjs});
-            this.os.saveCurrentChanges().pipe(first())
+            this.os.saveCurrentChanges()
                 .subscribe(() => {
                     this.os.listItem.selected = cloneDeep(this.os.listItem.selected); // Needed to trigger component input watchers
                     let returnValues = [];

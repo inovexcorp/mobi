@@ -472,7 +472,17 @@ export class WorkflowsManagerService {
    */
   downloadExecutionLogs(workflowRecordIRI: string, activityIRI: string): void {
     const url = `${this._buildWorkflowExecutionUrl(workflowRecordIRI, activityIRI)}/logs`;
-    window.open(url);
+    const readRequest: XACMLRequest = {
+        resourceId: workflowRecordIRI,
+        actionId: `${POLICY}Read`
+    };
+    this._pe.evaluateRequest(readRequest).pipe(
+        map(currentPermissions => currentPermissions === this._pe.permit)
+    ).subscribe((isPermit) => {
+        if (isPermit) {
+            window.open(url);
+        }
+    });
   }
 
   /**
@@ -517,7 +527,17 @@ export class WorkflowsManagerService {
    */
   downloadSpecificLog(workflowRecordIRI: string, activityIRI: string, logIRI: string): void {
     const url = `${this._buildWorkflowExecutionUrl(workflowRecordIRI, activityIRI)}/logs/${encodeURIComponent(logIRI)}`;
-    window.open(url);
+    const readRequest: XACMLRequest = {
+      resourceId: workflowRecordIRI,
+      actionId: `${POLICY}Read`
+    };
+    this._pe.evaluateRequest(readRequest).pipe(
+        map(currentPermissions => currentPermissions === this._pe.permit)
+    ).subscribe((isPermit) => {
+        if (isPermit) {
+            window.open(url);
+        }
+    });
   }
 
   /**

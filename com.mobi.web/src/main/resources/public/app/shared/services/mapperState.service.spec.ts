@@ -1081,6 +1081,21 @@ describe('Mapper State service', function() {
             expect(ontologyManagerStub.getIris).toHaveBeenCalledWith(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId);
             expect(ontologyManagerStub.getImportedIris).toHaveBeenCalledWith(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId);
         });
+        it('unless an getSourceOntologyInfo return empty data ', async function() {
+            const ontInfo: MappingOntologyInfo = {
+                recordId: '',
+                branchId: '',
+                commitId: ''
+            };
+            mappingStub.getSourceOntologyInfo.and.returnValue(ontInfo);
+            ontologyManagerStub.getImportedIris.and.returnValue(of([importedIRIs]));
+            await service.setIriMap().subscribe(() => fail('Observable should have failed'), result => {
+                expect(result).toEqual('SourceOntologyInfo recordId, branchId, and commitId are empty');
+            });
+            expect(mappingStub.getSourceOntologyInfo).toHaveBeenCalledWith();
+            expect(ontologyManagerStub.getIris).not.toHaveBeenCalledWith(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId);
+            expect(ontologyManagerStub.getImportedIris).not.toHaveBeenCalledWith(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId);
+        });
         it('unless an error occurs with getImportedIris', async function() {
             ontologyManagerStub.getImportedIris.and.returnValue(throwError(error));
             await service.setIriMap().subscribe(() => fail('Observable should have failed'), result => {

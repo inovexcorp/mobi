@@ -156,7 +156,9 @@ export class MergeRequestViewComponent implements OnInit, OnDestroy {
             })
         ).subscribe({
             next: () => {
-                this.currentAssignees = this.state.selected.assignees.slice();
+                if (this.state.selected) {
+                    this.currentAssignees = this.state.selected.assignees.slice();
+                }
             }, 
             error: () => {
                 this.setButtonsStatus(false);
@@ -330,7 +332,7 @@ export class MergeRequestViewComponent implements OnInit, OnDestroy {
     editRequest(): void {
         const dialogRef = this.dialog.open(EditRequestOverlayComponent);
         dialogRef.afterClosed().subscribe(result => {
-            if (result?.closed) {
+            if (result?.closed && this.state.selected) {
                 this.currentAssignees = this.state.selected.assignees.slice();
             }
         });

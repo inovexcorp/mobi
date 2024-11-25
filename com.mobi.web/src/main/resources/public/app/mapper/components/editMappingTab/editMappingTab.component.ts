@@ -96,10 +96,18 @@ export class EditMappingTabComponent implements OnInit, OnDestroy {
         this.setClassMappings();
     }
     setOntologyTitle(): void {
-      this.ontologyTitle = getDctermsValue(this.state.selected.ontology, 'title') || '(None Specified)';
+      if (this.state.selected?.ontology) {
+        this.ontologyTitle = getDctermsValue(this.state.selected.ontology, 'title') || '(None Specified)';
+      } else {
+        this.ontologyTitle = '(None Specified)';
+      }
     }
     setClassMappings(): void {
+      if (this.state.selected?.mapping) {
         this.classMappings = this.state.selected.mapping.getAllClassMappings();
+      } else {
+        this.classMappings = [];
+      }
     }
     openRunMappingDownload(): void {
         this.dialog.open(RunMappingDownloadOverlayComponent);

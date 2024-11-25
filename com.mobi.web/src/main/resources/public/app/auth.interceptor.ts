@@ -21,6 +21,7 @@
  * #L%
  */
 import { Injectable, Injector, NgZone } from '@angular/core';
+import { Router } from '@angular/router';
 import {
   HttpRequest,
   HttpHandler,
@@ -38,13 +39,17 @@ import { LoginManagerService } from './shared/services/loginManager.service';
 export class AuthInterceptor implements HttpInterceptor {
   private loginManagerService: LoginManagerService;
 
-  constructor(private injector: Injector, private ngZone: NgZone) {}
+  constructor(
+    private injector: Injector,
+    private router: Router,
+    private ngZone: NgZone) {}
 
   intercept(request: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
     this.injectDependencies();
+    const routerStateSnapshot = this.router.routerState.snapshot;
     return next.handle(request).pipe(
       catchError((error: HttpErrorResponse) => {
-          if (error.status === HttpStatusCode.Unauthorized) {
+          if (error.status === HttpStatusCode.Unauthorized && routerStateSnapshot.url !== '/login') {
               return this.ngZone.run(() => {
                   return this.loginManagerService.validateSession().pipe(
                       switchMap((isValid: boolean) => {

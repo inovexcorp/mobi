@@ -83,6 +83,7 @@ export class AnnotationOverlayComponent implements OnInit {
     });
     isIRIProperty = false;
     filteredAnnotations: Observable<AnnotationGroup[]>;
+    dataPropertyRanges: {[key: string]: string} = {}; 
 
     constructor(private fb: UntypedFormBuilder, private dialogRef: MatDialogRef<AnnotationOverlayComponent>, 
         @Inject(MAT_DIALOG_DATA) public data: PropertyOverlayDataOptions,
@@ -93,6 +94,9 @@ export class AnnotationOverlayComponent implements OnInit {
         if (this.data.isIRIProperty) {
             this.isIRIProperty = this.data.isIRIProperty;
             this.annotationForm.controls.value.setValidators([Validators.required, Validators.pattern(REGEX.IRI)]);
+        }
+        if (this.os.listItem?.dataPropertyRange) {
+            this.dataPropertyRanges = this.os.listItem.dataPropertyRange;
         }
         this.annotations = union(Object.keys(this.os.listItem.annotations.iris), this.pm.defaultAnnotations, this.pm.owlAnnotations);
         this.filteredAnnotations = this.annotationForm.controls.annotation.valueChanges.pipe(

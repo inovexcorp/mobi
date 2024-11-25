@@ -138,6 +138,8 @@ export class WorkflowsStateService {
     this.selectedActivity = undefined;
     this.selectedLogFileIRI = '';
     this.selectedWorkflowRdf = [];
+    this.isEditMode = false;
+    this.hasChanges = false;
   }
   /**
    * Calls the appropriate {@link ./WorkflowsManagerService} method to retrieve results of a Workflows query.

@@ -72,6 +72,7 @@ interface PropertyOption {
     templateUrl: './ontologyPropertyOverlay.component.html'
 })
 export class OntologyPropertyOverlayComponent implements OnInit {
+    dataPropertyRanges: {[key: string]: string} = {};
     deprecatedIri = `${OWL}deprecated`;
     iriPattern = REGEX.IRI;
     annotations = [];
@@ -100,6 +101,9 @@ export class OntologyPropertyOverlayComponent implements OnInit {
             startWith(''),
             map(value => this.filter(value || ''))
         );
+        if (this.os.listItem?.dataPropertyRange) {
+            this.dataPropertyRanges = this.os.listItem.dataPropertyRange;
+        }
         if (this.data.editing) {
             this.propertyForm.controls.property.setValue(this.data.property);
             this.propertyForm.controls.property.disable();

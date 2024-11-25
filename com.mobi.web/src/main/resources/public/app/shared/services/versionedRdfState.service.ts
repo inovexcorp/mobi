@@ -263,13 +263,17 @@ export abstract class VersionedRdfState<T extends VersionedRdfListItem> {
      * @returns {boolean} True if the current user is allowed to modify the current state; false otherwise
      */
     canModify(): boolean {
-      if (!this.listItem.versionedRdfRecord.branchId) {
-        return false;
-      }
-      if (this.listItem.masterBranchIri === this.listItem.versionedRdfRecord.branchId) {
-        return this.listItem.userCanModifyMaster;
+      if (this.listItem) {
+        if (!this.listItem.versionedRdfRecord.branchId) {
+          return false;
+        }
+        if (this.listItem.masterBranchIri === this.listItem.versionedRdfRecord.branchId) {
+          return this.listItem.userCanModifyMaster;
+        } else {
+          return this.listItem.userCanModify;
+        }
       } else {
-        return this.listItem.userCanModify;
+        return false; // This occurs when auth interceptor clears the state
       }
     }
     /**

@@ -28,30 +28,30 @@ import { HttpErrorResponse } from '@angular/common/http';
 // Libraries
 import { Observable, of, throwError } from 'rxjs';
 // local imports
-import { ProgressSpinnerService } from '../../shared/components/progress-spinner/services/progressSpinner.service';
-import { WorkflowPaginatedConfig } from '../models/workflow-paginated-config.interface';
-import { SseService } from '../../shared/services/sse.service';
-import { JSONLDObject } from '../../shared/models/JSONLDObject.interface';
 import { CATALOG, WORKFLOWS } from '../../prefixes';
-import { RESTError } from '../../shared/models/RESTError.interface';
-import { workflow_mocks, workflowRecordJSONLD } from '../models/mock_data/workflow-mocks';
+import { CatalogManagerService } from '../../shared/services/catalogManager.service';
+import { Difference } from '../../shared/models/difference.class';
+import { JSONLDObject } from '../../shared/models/JSONLDObject.interface';
 import { PolicyEnforcementService } from '../../shared/services/policyEnforcement.service';
 import { PolicyManagerService } from '../../shared/services/policyManager.service';
-import { CatalogManagerService } from '../../shared/services/catalogManager.service';
-import { XACMLDecision } from '../../shared/models/XACMLDecision.interface';
-import { WorkflowRecordConfig } from '../models/workflowRecordConfig.interface';
-import { Difference } from '../../shared/models/difference.class';
+import { ProgressSpinnerService } from '../../shared/components/progress-spinner/services/progressSpinner.service';
+import { RESTError } from '../../shared/models/RESTError.interface';
 import { SSEEvent } from '../../shared/models/sse-event';
-import { WorkflowActivitySSEEvent, WorkflowsManagerService } from './workflows-manager.service';
+import { SseService } from '../../shared/services/sse.service';
+import { workflow_mocks, workflowRecordJSONLD } from '../models/mock_data/workflow-mocks';
+import { WorkflowPaginatedConfig } from '../models/workflow-paginated-config.interface';
+import { WorkflowRecordConfig } from '../models/workflowRecordConfig.interface';
+import { XACMLDecision } from '../../shared/models/XACMLDecision.interface';
+import { WorkflowsManagerService, WorkflowActivitySSEEvent } from './workflows-manager.service';
 
 describe('WorkflowsManagerService', () => {
   let service: WorkflowsManagerService;
   let httpMock: HttpTestingController;
+  let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
+  let policyEnforcementStub: jasmine.SpyObj<PolicyEnforcementService>;
+  let policyManagerStub: jasmine.SpyObj<PolicyManagerService>;
   let progressSpinnerStub: jasmine.SpyObj<ProgressSpinnerService>;
   let sseStub: jasmine.SpyObj<SseService>;
-  let policyEnforcementStub: jasmine.SpyObj<PolicyEnforcementService>;
-  let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
-  let policyManagerStub: jasmine.SpyObj<PolicyManagerService>;
 
   const catalogId = 'catalogId';
   const recordId = 'recordId';
@@ -110,7 +110,9 @@ describe('WorkflowsManagerService', () => {
     progressSpinnerStub = TestBed.inject(ProgressSpinnerService) as jasmine.SpyObj<ProgressSpinnerService>;
     sseStub = TestBed.inject(SseService) as jasmine.SpyObj<SseService>;
     policyEnforcementStub = TestBed.inject(PolicyEnforcementService) as jasmine.SpyObj<PolicyEnforcementService>;
-    policyEnforcementStub.evaluateRequest.and.returnValue(of('Permit'));
+    policyEnforcementStub.permit = 'Permit';
+    policyEnforcementStub.deny = 'Deny';
+    policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.permit));
     policyManagerStub = TestBed.inject(PolicyManagerService) as jasmine.SpyObj<PolicyManagerService>;
     catalogManagerStub = TestBed.inject(CatalogManagerService) as jasmine.SpyObj<CatalogManagerService>;
     catalogManagerStub.localCatalog = { '@id': catalogId };
@@ -533,6 +535,12 @@ describe('WorkflowsManagerService', () => {
     service.downloadExecutionLogs(workflowId, activity['@id']);
     expect(window.open).toHaveBeenCalledWith(`${service.workflows_prefix}/${encodeURIComponent(workflowId)}/executions/${encodeURIComponent(activity['@id'])}/logs`);
   });
+  it('should not download the workflow execution logs when permission is denied', () => {
+    policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.deny));
+    spyOn(window, 'open');
+    service.downloadExecutionLogs(workflowId, activity['@id']);
+    expect(window.open).not.toHaveBeenCalledWith(`${service.workflows_prefix}/${encodeURIComponent(workflowId)}/executions/${encodeURIComponent(activity['@id'])}/logs`);
+  });
   describe('uploadChanges', () => {
     it('should upload changes successfully', () => {
       const branchId = 'branchId';
@@ -607,6 +615,12 @@ describe('WorkflowsManagerService', () => {
     spyOn(window, 'open');
     service.downloadSpecificLog(workflowId, activity['@id'], logId);
     expect(window.open).toHaveBeenCalledWith(`${service.workflows_prefix}/${encodeURIComponent(workflowId)}/executions/${encodeURIComponent(activity['@id'])}/logs/${encodeURIComponent(logId)}`);
+  });
+  it('should not download a specific workflow log when permission is denied', () => {
+    policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.deny));
+    spyOn(window, 'open');
+    service.downloadSpecificLog(workflowId, activity['@id'], logId);
+    expect(window.open).not.toHaveBeenCalledWith(`${service.workflows_prefix}/${encodeURIComponent(workflowId)}/executions/${encodeURIComponent(activity['@id'])}/logs/${encodeURIComponent(logId)}`);
   });
   describe('should update a WorkflowRecord InProgressCommit', () => {
     const diff = new Difference();

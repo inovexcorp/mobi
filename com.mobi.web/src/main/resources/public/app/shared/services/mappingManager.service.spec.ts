@@ -24,15 +24,17 @@ import { HttpParams } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { MockPipe, MockProvider } from 'ng-mocks';
+import { of } from 'rxjs';
 
 import {
     cleanStylesFromDOM,
 } from '../../../test/ts/Shared';
+import { CamelCasePipe } from '../pipes/camelCase.pipe';
 import { DELIM, MAPPINGS } from '../../prefixes';
-import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
 import { JSONLDObject } from '../models/JSONLDObject.interface';
 import { Mapping } from '../models/mapping.class';
-import { CamelCasePipe } from '../pipes/camelCase.pipe';
+import { PolicyEnforcementService } from './policyEnforcement.service';
+import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
 import { MappingManagerService } from './mappingManager.service';
 
 describe('Mapping Manager service', function() {
@@ -40,6 +42,7 @@ describe('Mapping Manager service', function() {
     let progressSpinnerStub: jasmine.SpyObj<ProgressSpinnerService>;
     let camelCaseStub: jasmine.SpyObj<CamelCasePipe>;
     let httpMock: HttpTestingController;
+    let policyEnforcementStub: jasmine.SpyObj<PolicyEnforcementService>;
 
     const error = 'Error Message';
     const recordId = 'http://mobi.com/records/test';
@@ -52,6 +55,7 @@ describe('Mapping Manager service', function() {
             providers: [
                 MappingManagerService,
                 MockProvider(ProgressSpinnerService),
+                MockProvider(PolicyEnforcementService),
                 {provide: CamelCasePipe, useClass: MockPipe(CamelCasePipe)},
             ]
         });
@@ -60,6 +64,10 @@ describe('Mapping Manager service', function() {
         progressSpinnerStub = TestBed.inject(ProgressSpinnerService) as jasmine.SpyObj<ProgressSpinnerService>;
         camelCaseStub = TestBed.inject(CamelCasePipe) as jasmine.SpyObj<CamelCasePipe>;
         httpMock = TestBed.inject(HttpTestingController) as jasmine.SpyObj<HttpTestingController>;
+        policyEnforcementStub = TestBed.inject(PolicyEnforcementService) as jasmine.SpyObj<PolicyEnforcementService>;
+        policyEnforcementStub.deny = 'Deny';
+        policyEnforcementStub.permit = 'Permit';
+        policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.permit));
 
         mappingStub = jasmine.createSpyObj('Mapping', [
             'getJsonld',
@@ -84,6 +92,7 @@ describe('Mapping Manager service', function() {
         camelCaseStub = null;
         httpMock = null;
         mappingStub = null;
+        policyEnforcementStub = null;
     });
 
     describe('should upload a mapping', function() {
@@ -161,6 +170,31 @@ describe('Mapping Manager service', function() {
             });
             service.downloadMapping(recordId);
             expect(window.open).toHaveBeenCalledWith(`${this.url}?${params.toString()}`);
+        });
+    });
+    describe('should not download a mapping by id with the', function() {
+        beforeEach(function() {
+            policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.deny));
+            this.url = `${service.prefix}/${encodeURIComponent(recordId)}`;
+            spyOn(window, 'open');
+        });
+        it('provided format when permission denied', function() {
+            const params = new HttpParams({
+                fromObject: {
+                    format: 'turtle',
+                }
+            });
+            service.downloadMapping(recordId, 'turtle');
+            expect(window.open).not.toHaveBeenCalledWith(`${this.url}?${params.toString()}`);
+        });
+        it('default format when permission denied', function() {
+            const params = new HttpParams({
+                fromObject: {
+                    format: 'jsonld',
+                }
+            });
+            service.downloadMapping(recordId);
+            expect(window.open).not.toHaveBeenCalledWith(`${this.url}?${params.toString()}`);
         });
     });
     describe('should delete a mapping by id', function() {

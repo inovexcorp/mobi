@@ -47,10 +47,10 @@ import { addLanguageToAnnotations } from '../../../shared/utility';
     templateUrl: './createConceptSchemeOverlay.component.html'
 })
 export class CreateConceptSchemeOverlayComponent implements OnInit {
-    iriHasChanged = false;
+    conceptIris: {[key: string]: string} = {};
     duplicateCheck = true;
+    iriHasChanged = false;
     iriPattern = REGEX.IRI;
-    
     hasConcepts = false;
     selectedConcepts: string[] = [];
 
@@ -70,6 +70,9 @@ export class CreateConceptSchemeOverlayComponent implements OnInit {
         this.createForm.controls.iri.setValue(this.os.getDefaultPrefix());
         this.createForm.controls.title.valueChanges.subscribe(newVal => this.nameChanged(newVal));
         this.hasConcepts = !!Object.keys(this.os.listItem.concepts.iris).length;
+        if (this.os.listItem?.concepts?.iris) {
+            this.conceptIris = this.os.listItem.concepts.iris;
+        }
     }
     nameChanged(newName: string): void {
         if (!this.iriHasChanged) {

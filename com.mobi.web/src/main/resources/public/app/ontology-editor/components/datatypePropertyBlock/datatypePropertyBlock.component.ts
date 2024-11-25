@@ -55,8 +55,16 @@ export class DatatypePropertyBlockComponent implements OnChanges {
         this.updatePropertiesFiltered();
     }
     updatePropertiesFiltered(): void {
-        this.dataProperties = Object.keys(this.os.listItem.dataProperties.iris);
-        this.dataPropertiesFiltered = sortBy(this.dataProperties.filter(prop => has(this.os.listItem.selected, prop)), iri => this.os.getEntityName(iri));
+        if (this.os.listItem?.dataProperties?.iris) {
+            this.dataProperties = Object.keys(this.os.listItem.dataProperties.iris);
+        } else {
+            this.dataProperties = [];
+        }
+        if (this.os.listItem?.selected) {
+            this.dataPropertiesFiltered = sortBy(this.dataProperties.filter(prop => has(this.os.listItem.selected, prop)), iri => this.os.getEntityName(iri));
+        } else {
+            this.dataPropertiesFiltered = [];
+        }
     }
     openAddDataPropOverlay(): void {
         const data = {

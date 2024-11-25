@@ -1733,8 +1733,11 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
      * @returns {boolean} True if the selected IRI is imported; false otherwise
      */
     isSelectedImported(listItem: OntologyListItem = this.listItem): boolean {
-        const iri = get(listItem.selected, '@id', '');
-        return iri ? this.isImported(iri, listItem) : false;
+        if (listItem && listItem.selected) {
+            const iri = get(listItem.selected, '@id', '');
+            return iri ? this.isImported(iri, listItem) : false;
+        }
+        return false; // This occurs when auth interceptor clears the state
     }
     /**
      * Method to collapse all of the nodes in hierarchy flat list under following tabs in the provided

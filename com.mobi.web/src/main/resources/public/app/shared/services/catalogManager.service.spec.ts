@@ -28,23 +28,25 @@ import { MockProvider } from 'ng-mocks';
 import { Observable, of, throwError } from 'rxjs';
 
 import { cleanStylesFromDOM } from '../../../test/ts/Shared';
-import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
+import { CATALOG, DCTERMS } from '../../prefixes';
 import { CommitDifference } from '../models/commitDifference.interface';
 import { Difference } from '../models/difference.class';
-import { JSONLDObject } from '../models/JSONLDObject.interface';
-import { SortOption } from '../models/sortOption.interface';
-import { CATALOG, DCTERMS } from '../../prefixes';
-import { RESTError } from '../models/RESTError.interface';
 import { EntityRecord } from '../../entity-search/models/entity-record';
-import { SearchResultsMock } from '../../entity-search/mock-data/search-results.mock';
+import { JSONLDObject } from '../models/JSONLDObject.interface';
 import { PaginatedConfig } from '../models/paginatedConfig.interface';
 import { PaginatedResponse } from '../models/paginated-response.interface';
+import { PolicyEnforcementService } from './policyEnforcement.service';
+import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
+import { RESTError } from '../models/RESTError.interface';
+import { SearchResultsMock } from '../../entity-search/mock-data/search-results.mock';
+import { SortOption } from '../models/sortOption.interface';
 import { CatalogManagerService } from './catalogManager.service';
 
 describe('Catalog Manager service', function() {
   let service: CatalogManagerService;
   let httpMock: HttpTestingController;
   let progressSpinnerStub: jasmine.SpyObj<ProgressSpinnerService>;
+  let policyEnforcementStub: jasmine.SpyObj<PolicyEnforcementService>;
 
   const error = 'Error Message';
   const errorObj: RESTError = {
@@ -71,15 +73,19 @@ describe('Catalog Manager service', function() {
       providers: [
         CatalogManagerService,
         MockProvider(ProgressSpinnerService),
+        MockProvider(PolicyEnforcementService)
       ]
     });
 
     service = TestBed.inject(CatalogManagerService);
     httpMock = TestBed.inject(HttpTestingController) as jasmine.SpyObj<HttpTestingController>;
     progressSpinnerStub = TestBed.inject(ProgressSpinnerService) as jasmine.SpyObj<ProgressSpinnerService>;
-
     progressSpinnerStub.track.and.callFake((ob) => ob);
     progressSpinnerStub.trackedRequest.and.callFake((ob, tracked) => tracked ? ob : progressSpinnerStub.track(ob));
+    policyEnforcementStub = TestBed.inject(PolicyEnforcementService) as jasmine.SpyObj<PolicyEnforcementService>;
+    policyEnforcementStub.deny = 'Deny';
+    policyEnforcementStub.permit = 'Permit';
+    policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.permit));
   });
 
   afterEach(function() {
@@ -87,6 +93,7 @@ describe('Catalog Manager service', function() {
     service = null;
     httpMock = null;
     progressSpinnerStub = null;
+    policyEnforcementStub = null;
   });
 
   afterEach(() => {
@@ -1859,6 +1866,18 @@ describe('Catalog Manager service', function() {
       });
       service.downloadResource(commitId, branchId, recordId, catalogId, true, 'turtle', 'test');
       expect(window.open).toHaveBeenCalledWith(`${this.url}?${params.toString()}`);
+    });
+    it('with a optional params when permissions is denied', function() {
+      policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.deny));
+      const params = new HttpParams({
+        fromObject: {
+          applyInProgressCommit: 'true',
+          format: 'turtle',
+          fileName: 'test'
+        }
+      });
+      service.downloadResource(commitId, branchId, recordId, catalogId, true, 'turtle', 'test');
+      expect(window.open).not.toHaveBeenCalledWith(`${this.url}?${params.toString()}`);
     });
     it('without a optional params', function() {
       const params = new HttpParams({

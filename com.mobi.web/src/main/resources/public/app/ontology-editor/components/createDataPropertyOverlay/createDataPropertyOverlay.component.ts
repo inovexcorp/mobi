@@ -56,12 +56,14 @@ interface CharacteristicI {
     templateUrl: './createDataPropertyOverlay.component.html'
 })
 export class CreateDataPropertyOverlayComponent implements OnInit {
+    classIris: {[key: string]: string} = {};
     characteristics: CharacteristicI[] = [
         {
             typeIRI: `${OWL}FunctionalProperty`,
             displayText: 'Functional Property',
         }
     ];
+    dataPropertyRanges: {[key: string]: string} = {};
     iriHasChanged = false;
     duplicateCheck = true;
     iriPattern = REGEX.IRI;
@@ -69,7 +71,6 @@ export class CreateDataPropertyOverlayComponent implements OnInit {
     selectedDomains: string[] = [];
     selectedRanges: string[] = [];
     selectedSubProperties: JSONLDId[] = [];
-   
     createForm = this.fb.group({
         iri: ['', [Validators.required, Validators.pattern(this.iriPattern), this.os.getDuplicateValidator()]],
         title: ['', [ Validators.required, noWhitespaceValidator()]],
@@ -86,6 +87,12 @@ export class CreateDataPropertyOverlayComponent implements OnInit {
     ngOnInit(): void {
         this.createForm.controls.iri.setValue(this.os.getDefaultPrefix());
         this.createForm.controls.title.valueChanges.subscribe(newVal => this.nameChanged(newVal));
+        if (this.os.listItem?.dataPropertyRange) {
+            this.dataPropertyRanges = this.os.listItem.dataPropertyRange;
+        }
+        if (this.os.listItem?.classes?.iris) {
+            this.classIris = this.os.listItem.classes.iris;
+        }
     }
     nameChanged(newName: string): void {
         if (!this.iriHasChanged) {
