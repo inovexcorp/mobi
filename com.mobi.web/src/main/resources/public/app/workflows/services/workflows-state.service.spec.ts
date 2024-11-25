@@ -28,21 +28,21 @@ import { MockProvider } from 'ng-mocks';
 import { Subject, of, throwError } from 'rxjs';
 import { cloneDeep } from 'lodash';
 //local
-import { ProgressSpinnerService } from '../../shared/components/progress-spinner/services/progressSpinner.service';
-import { WorkflowSchema } from '../models/workflow-record.interface';
-import { condenseCommitId, runningTime, toFormattedDateString } from '../../shared/utility';
-import { workflow_data_row_mocks, workflow_mocks } from '../models/mock_data/workflow-mocks';
-import { User } from '../../shared/models/user.class';
 import { CATALOG, DCTERMS, PROV, USER, WORKFLOWS } from '../../prefixes';
-import { UserManagerService } from '../../shared/services/userManager.service';
-import { JSONLDObject } from '../../shared/models/JSONLDObject.interface';
-import { WorkflowsManagerService } from './workflows-manager.service';
-import { LoginManagerService } from '../../shared/services/loginManager.service';
+import { condenseCommitId, runningTime, toFormattedDateString } from '../../shared/utility';
 import { EventWithPayload } from '../../shared/models/eventWithPayload.interface';
-import { WorkflowStatus } from '../models/workflow-status.type';
+import { JSONLDObject } from '../../shared/models/JSONLDObject.interface';
+import { LoginManagerService } from '../../shared/services/loginManager.service';
 import { PaginatedResponse } from '../../shared/models/paginated-response.interface';
-import { WorkflowPaginatedConfig } from '../models/workflow-paginated-config.interface';
+import { ProgressSpinnerService } from '../../shared/components/progress-spinner/services/progressSpinner.service';
+import { User } from '../../shared/models/user.class';
+import { UserManagerService } from '../../shared/services/userManager.service';
+import { workflow_data_row_mocks, workflow_mocks } from '../models/mock_data/workflow-mocks';
 import { WorkflowDataRow } from '../models/workflow-record-table';
+import { WorkflowPaginatedConfig } from '../models/workflow-paginated-config.interface';
+import { WorkflowSchema } from '../models/workflow-record.interface';
+import { WorkflowsManagerService } from './workflows-manager.service';
+import { WorkflowStatus } from '../models/workflow-status.type';
 import { WorkflowsStateService } from './workflows-state.service';
 
 describe('WorkflowsStateService', () => {

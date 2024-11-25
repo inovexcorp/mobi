@@ -29,13 +29,15 @@ import {
 import { Observable } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 
-import { REST_PREFIX } from '../../constants';
-import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
-import { JSONLDObject } from '../models/JSONLDObject.interface';
 import { CamelCasePipe } from '../pipes/camelCase.pipe';
-import { DELIM, MAPPINGS } from '../../prefixes';
+import { DELIM, MAPPINGS, POLICY } from '../../prefixes';
+import { JSONLDObject } from '../models/JSONLDObject.interface';
 import { Mapping } from '../models/mapping.class';
+import { PolicyEnforcementService } from './policyEnforcement.service';
+import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
+import { REST_PREFIX } from '../../constants';
 import { RecordConfig } from '../models/recordConfig.interface';
+import { XACMLRequest } from '../models/XACMLRequest.interface';
 import { createHttpParams, handleError } from '../utility';
 
 /**
@@ -48,10 +50,12 @@ import { createHttpParams, handleError } from '../utility';
 export class MappingManagerService {
     prefix = `${REST_PREFIX}mappings`;
 
-    constructor(private http: HttpClient, private spinnerSvc: ProgressSpinnerService, 
-        private camelCase: CamelCasePipe) {}
+    constructor(
+        private camelCase: CamelCasePipe,
+        private http: HttpClient, 
+        private spinnerSvc: ProgressSpinnerService,
+        private pep: PolicyEnforcementService) {}
 
-    // REST calls
     /**
      * Calls the POST /mobirest/mappings endpoint which uploads a mapping to the Mobi
      * repository with a generated IRI. Returns An observable with the IRI of the newly uploaded
@@ -93,7 +97,18 @@ export class MappingManagerService {
         const params = createHttpParams({
             format: format || 'jsonld'
         });
-        window.open(`${this.prefix}/${encodeURIComponent(mappingId)}?${params.toString()}`);
+        const url = `${this.prefix}/${encodeURIComponent(mappingId)}?${params.toString()}`;
+        const readRequest: XACMLRequest = {
+            resourceId: mappingId,
+            actionId: `${POLICY}Read`
+        };
+        this.pep.evaluateRequest(readRequest).pipe(
+            map(currentPermissions => currentPermissions === this.pep.permit)
+        ).subscribe((isPermit) => {
+            if (isPermit) {
+                window.open(url);
+            }
+        });
     }
     /**
      * Calls the DELETE /mobirest/mappings/{mappingName} endpoint which deleted the specified

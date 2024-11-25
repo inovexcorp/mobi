@@ -24,30 +24,25 @@ import { NgModule } from '@angular/core';
 import { Routes, RouterModule } from '@angular/router';
 import { APP_BASE_HREF, HashLocationStrategy, LocationStrategy } from '@angular/common';
 
-import { HomePageComponent } from './home/components/homePage/homePage.component';
-import { DiscoverPageComponent } from './discover/components/discoverPage/discoverPage.component';
-import {
-  OntologyEditorPageComponent
-} from './ontology-editor/components/ontologyEditorPage/ontologyEditorPage.component';
-import { CatalogPageComponent } from './catalog/components/catalogPage/catalogPage.component';
-import {
-  ShapesGraphEditorPageComponent
-} from './shapes-graph-editor/components/shapesGraphEditorPage/shapesGraphEditorPage.component';
-import { MapperPageComponent } from './mapper/components/mapperPage/mapperPage.component';
-import { SettingsPageComponent } from './settings/components/settingsPage/settingsPage.component';
-import {
-  UserManagementPageComponent
-} from './user-management/components/userManagementPage/userManagementPage.component';
-import { DatasetsPageComponent } from './datasets/components/datasetsPage/datasetsPage.component';
-import { MergeRequestsPageComponent } from './merge-requests/components/mergeRequestsPage/mergeRequestsPage.component';
+import { AlreadyAuthenticatedGuard } from './alreadyAuthenticated.guard';
 import { AuthenticationGuard } from './authentication.guard';
+import { AuthenticationHomeGuard } from './authenticationHome.guard';
+import { CatalogPageComponent } from './catalog/components/catalogPage/catalogPage.component';
+import { DatasetsPageComponent } from './datasets/components/datasetsPage/datasetsPage.component';
+import { DiscoverPageComponent } from './discover/components/discoverPage/discoverPage.component';
+import { EntitySearchPageComponent } from './entity-search/components/entity-search-page/entity-search-page.component';
+import { HomePageComponent } from './home/components/homePage/homePage.component';
+import { LoginLayoutComponent } from './layouts/login-layout.component';
 import { LoginPageComponent } from './login/components/loginPage/loginPage.component';
 import { MainLayoutComponent } from './layouts/main-layout.component';
-import { LoginLayoutComponent } from './layouts/login-layout.component';
-import { AlreadyAuthenticatedGuard } from './alreadyAuthenticated.guard';
+import { MapperPageComponent } from './mapper/components/mapperPage/mapperPage.component';
+import { MergeRequestsPageComponent } from './merge-requests/components/mergeRequestsPage/mergeRequestsPage.component';
+import { OntologyEditorPageComponent } from './ontology-editor/components/ontologyEditorPage/ontologyEditorPage.component';
 import { PERSPECTIVES } from './shared/models/routePerspective.interface';
+import { SettingsPageComponent } from './settings/components/settingsPage/settingsPage.component';
+import { ShapesGraphEditorPageComponent } from './shapes-graph-editor/components/shapesGraphEditorPage/shapesGraphEditorPage.component';
+import { UserManagementPageComponent } from './user-management/components/userManagementPage/userManagementPage.component';
 import { WorkflowsComponent } from './workflows/components/workflows/workflows.component';
-import { EntitySearchPageComponent } from './entity-search/components/entity-search-page/entity-search-page.component';
 
 const routes: Routes = [
   {
@@ -56,7 +51,7 @@ const routes: Routes = [
     ]
   },
   {
-    path: '', component: MainLayoutComponent, canActivate: [AuthenticationGuard], children: [
+    path: '', component: MainLayoutComponent, canActivate: [AuthenticationHomeGuard], children: [
       {path: '', redirectTo: '/home', pathMatch: 'full'},
       {path: 'home', component: HomePageComponent, canActivate: [AuthenticationGuard], data: {title: 'Home'}},
       {path: 'catalog', component: CatalogPageComponent, canActivate: [AuthenticationGuard], data: {title: 'Catalog'}},
@@ -95,6 +90,7 @@ const routes: Routes = [
       ]
     },
     AuthenticationGuard,
+    AuthenticationHomeGuard,
     AlreadyAuthenticatedGuard
   ]
 })

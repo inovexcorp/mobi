@@ -26,30 +26,31 @@ import { Router } from '@angular/router';
 import { RouterTestingModule } from '@angular/router/testing';
 import { MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
+import { MatDialog } from '@angular/material/dialog';
 
-import { cleanStylesFromDOM } from '../../../test/ts/Shared';
-import { FOAF, USER } from '../../prefixes';
-import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
-import { User } from '../models/user.class';
 import { CatalogManagerService } from './catalogManager.service';
 import { CatalogStateService } from './catalogState.service';
+import { cleanStylesFromDOM } from '../../../test/ts/Shared';
 import { DatasetManagerService } from './datasetManager.service';
 import { DatasetStateService } from './datasetState.service';
 import { DelimitedManagerService } from './delimitedManager.service';
 import { DiscoverStateService } from './discoverState.service';
+import { EntitySearchStateService } from '../../entity-search/services/entity-search-state.service';
+import { FOAF, USER } from '../../prefixes';
 import { MapperStateService } from './mapperState.service';
 import { MergeRequestsStateService } from './mergeRequestsState.service';
 import { OntologyManagerService } from './ontologyManager.service';
 import { OntologyStateService } from './ontologyState.service';
+import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
+import { ProvManagerService } from './provManager.service';
 import { ShapesGraphStateService } from './shapesGraphState.service';
 import { StateManagerService } from './stateManager.service';
+import { ToastService } from './toast.service';
+import { User } from '../models/user.class';
 import { UserManagerService } from './userManager.service';
 import { UserStateService } from './userState.service';
-import { ToastService } from './toast.service';
 import { YasguiService } from './yasgui.service';
-import { ProvManagerService } from './provManager.service';
 import { LoginManagerService } from './loginManager.service';
-import { EntitySearchStateService } from '../../entity-search/services/entity-search-state.service';
 
 describe('Login Manager service', function() {
     let service: LoginManagerService;
@@ -93,6 +94,7 @@ describe('Login Manager service', function() {
             ],
             providers: [
                 LoginManagerService,
+                MockProvider(MatDialog),
                 MockProvider(CatalogManagerService),
                 MockProvider(CatalogStateService),
                 MockProvider(DatasetManagerService),
@@ -378,58 +380,115 @@ describe('Login Manager service', function() {
             spyOn(service, 'getCookie').and.returnValue(null);
             spyOn(service, 'clearServiceStates');
     
-            service.validateSession().subscribe((result) => {
-              expect(result).toBeFalse();
-              expect(toastServiceStub.createErrorToast).toHaveBeenCalledWith(service.NO_TOKEN_MESSAGE);
-              expect(service.clearServiceStates).toHaveBeenCalled();
-              expect(router.navigate).toHaveBeenCalledWith(['/login']);
-              done();
+            service.validateSession(true).subscribe((result) => {
+                expect(result).toBeFalse();
+                expect(toastServiceStub.createErrorToast).toHaveBeenCalledWith(service.NO_TOKEN_MESSAGE);
+                expect(service.clearServiceStates).toHaveBeenCalled();
+                expect(router.navigate).toHaveBeenCalledWith(['/login']);
+                done();
             });
         });
-          it('should return false and redirect if token is expired', (done) => {
+        it('should return false and redirect if no token is present and should not show toast', (done) => {
+            spyOn(service, 'getCookie').and.returnValue(null);
+            spyOn(service, 'clearServiceStates');
+    
+            service.validateSession(false).subscribe((result) => {
+                expect(result).toBeFalse();
+                expect(toastServiceStub.createErrorToast).not.toHaveBeenCalledWith(service.NO_TOKEN_MESSAGE);
+                expect(service.clearServiceStates).toHaveBeenCalled();
+                expect(router.navigate).toHaveBeenCalledWith(['/login']);
+                done();
+            });
+        });
+        it('should return false and redirect if token is expired', (done) => {
             const expiredTokenPayload = { exp: (Date.now() / 1000) - 3600 }; // Token that expired
             spyOn(service, 'getCookie').and.returnValue('expired_token');
             spyOn(service, 'decodeToken').and.returnValue(expiredTokenPayload);
             spyOn(service, 'clearServiceStates');
         
-            service.validateSession().subscribe((result) => {
-              expect(result).toBeFalse();
-              expect(toastServiceStub.createErrorToast).toHaveBeenCalledWith(service.TOKEN_EXPIRED_MESSAGE);
-              expect(service.clearServiceStates).toHaveBeenCalled();
-              expect(router.navigate).toHaveBeenCalledWith(['/login']);
-              done();
+            service.validateSession(true).subscribe((result) => {
+                expect(result).toBeFalse();
+                expect(toastServiceStub.createErrorToast).toHaveBeenCalledWith(service.TOKEN_EXPIRED_MESSAGE);
+                expect(service.clearServiceStates).toHaveBeenCalled();
+                expect(router.navigate).toHaveBeenCalledWith(['/login']);
+                done();
             });
-          });
-          it('should return false and redirect if session is invalid', (done) => {
+        });
+        it('should return false and redirect if token is expired and should not show toast', (done) => {
+            const expiredTokenPayload = { exp: (Date.now() / 1000) - 3600 }; // Token that expired
+            spyOn(service, 'getCookie').and.returnValue('expired_token');
+            spyOn(service, 'decodeToken').and.returnValue(expiredTokenPayload);
+            spyOn(service, 'clearServiceStates');
+        
+            service.validateSession(false).subscribe((result) => {
+                expect(result).toBeFalse();
+                expect(toastServiceStub.createErrorToast).not.toHaveBeenCalledWith(service.TOKEN_EXPIRED_MESSAGE);
+                expect(service.clearServiceStates).toHaveBeenCalled();
+                expect(router.navigate).toHaveBeenCalledWith(['/login']);
+                done();
+            });
+        });
+        it('should return false and redirect if session is invalid', (done) => {
             const validTokenPayload = { exp: (Date.now() / 1000) + 3600 }; // Token that expires
             spyOn(service, 'getCookie').and.returnValue('valid_token');
             spyOn(service, 'decodeToken').and.returnValue(validTokenPayload);
             spyOn(service, 'isAuthenticated').and.returnValue(of(false));
             spyOn(service, 'clearServiceStates');
     
-            service.validateSession().subscribe((result) => {
-              expect(result).toBeFalse();
-              expect(toastServiceStub.createErrorToast).toHaveBeenCalledWith(service.SESSION_INVALID_MESSAGE);
-              expect(service.clearServiceStates).toHaveBeenCalled();
-              expect(router.navigate).toHaveBeenCalledWith(['/login']);
-              done();
+            service.validateSession(true).subscribe((result) => {
+                expect(result).toBeFalse();
+                expect(toastServiceStub.createErrorToast).toHaveBeenCalledWith(service.SESSION_INVALID_MESSAGE);
+                expect(service.clearServiceStates).toHaveBeenCalled();
+                expect(router.navigate).toHaveBeenCalledWith(['/login']);
+                done();
             });
-          });
-          it('should return true if the token is valid and session is authenticated', (done) => {
+        });
+        it('should return false and redirect if session is invalid and should not show toast', (done) => {
+            const validTokenPayload = { exp: (Date.now() / 1000) + 3600 }; // Token that expires
+            spyOn(service, 'getCookie').and.returnValue('valid_token');
+            spyOn(service, 'decodeToken').and.returnValue(validTokenPayload);
+            spyOn(service, 'isAuthenticated').and.returnValue(of(false));
+            spyOn(service, 'clearServiceStates');
+    
+            service.validateSession(false).subscribe((result) => {
+                expect(result).toBeFalse();
+                expect(toastServiceStub.createErrorToast).not.toHaveBeenCalledWith(service.SESSION_INVALID_MESSAGE);
+                expect(service.clearServiceStates).toHaveBeenCalled();
+                expect(router.navigate).toHaveBeenCalledWith(['/login']);
+                done();
+            });
+        });
+
+        it('should return true if the token is valid and session is authenticated', (done) => {
             const validTokenPayload = { exp: (Date.now() / 1000) + 3600 }; // Token that expires in 1 hour
             spyOn(service, 'getCookie').and.returnValue('valid_token');
             spyOn(service, 'decodeToken').and.returnValue(validTokenPayload);
             spyOn(service, 'isAuthenticated').and.returnValue(of(true));
             spyOn(service, 'clearServiceStates');
     
-            service.validateSession().subscribe((result) => {
-              expect(result).toBeTrue();
-              expect(toastServiceStub.createErrorToast).not.toHaveBeenCalled();
-              expect(service.clearServiceStates).not.toHaveBeenCalled();
-              expect(router.navigate).not.toHaveBeenCalled();
-              done();
+            service.validateSession(true).subscribe((result) => {
+                expect(result).toBeTrue();
+                expect(toastServiceStub.createErrorToast).not.toHaveBeenCalled();
+                expect(service.clearServiceStates).not.toHaveBeenCalled();
+                expect(router.navigate).not.toHaveBeenCalled();
+                done();
             });
-          });
+        });
+        it('should return true if the token is valid and session is authenticated and should not show toast', (done) => {
+            const validTokenPayload = { exp: (Date.now() / 1000) + 3600 }; // Token that expires in 1 hour
+            spyOn(service, 'getCookie').and.returnValue('valid_token');
+            spyOn(service, 'decodeToken').and.returnValue(validTokenPayload);
+            spyOn(service, 'isAuthenticated').and.returnValue(of(true));
+            spyOn(service, 'clearServiceStates');
+    
+            service.validateSession(false).subscribe((result) => {
+                expect(result).toBeTrue();
+                expect(toastServiceStub.createErrorToast).not.toHaveBeenCalled();
+                expect(service.clearServiceStates).not.toHaveBeenCalled();
+                expect(router.navigate).not.toHaveBeenCalled();
+                done();
+            });
+        });
     });
     describe('getCookie', () => {
         it('should return the value of a cookie if it exists', () => {

@@ -25,15 +25,15 @@ import { UntypedFormBuilder, Validators } from '@angular/forms';
 import { MatDialogRef } from '@angular/material/dialog';
 import { unset, map } from 'lodash';
 
-import { OntologyStateService } from '../../../shared/services/ontologyState.service';
-import { DCTERMS, OWL, RDFS } from '../../../prefixes';
-import { CamelCasePipe } from '../../../shared/pipes/camelCase.pipe';
-import { REGEX } from '../../../constants';
-import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
-import { splitIRI } from '../../../shared/pipes/splitIRI.pipe';
-import { JSONLDId } from '../../../shared/models/JSONLDId.interface';
-import { noWhitespaceValidator } from '../../../shared/validators/noWhitespace.validator';
 import { addLanguageToAnnotations } from '../../../shared/utility';
+import { CamelCasePipe } from '../../../shared/pipes/camelCase.pipe';
+import { DCTERMS, OWL, RDFS } from '../../../prefixes';
+import { JSONLDId } from '../../../shared/models/JSONLDId.interface';
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { noWhitespaceValidator } from '../../../shared/validators/noWhitespace.validator';
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import { REGEX } from '../../../constants';
+import { splitIRI } from '../../../shared/pipes/splitIRI.pipe';
 
 interface CharacteristicI { 
     typeIRI: string, 
@@ -82,11 +82,11 @@ export class CreateObjectPropertyOverlayComponent implements OnInit {
             displayText: 'Irreflexive Property',
         }
     ];
-
     iriHasChanged = false;
     duplicateCheck = true;
     iriPattern = REGEX.IRI;
 
+    classesIris: {[key: string]: string} = {};
     selectedDomains: string[] = [];
     selectedRanges: string[] = [];
     selectedSubProperties: JSONLDId[] = [];
@@ -107,6 +107,9 @@ export class CreateObjectPropertyOverlayComponent implements OnInit {
     ngOnInit(): void {
         this.createForm.controls.iri.setValue(this.os.getDefaultPrefix());
         this.createForm.controls.name.valueChanges.subscribe(newVal => this.nameChanged(newVal));
+        if (this.os.listItem?.classes?.iris) {
+            this.classesIris = this.os.listItem.classes.iris;
+        }
     }
     nameChanged(newName: string): void {
         if (!this.iriHasChanged) {

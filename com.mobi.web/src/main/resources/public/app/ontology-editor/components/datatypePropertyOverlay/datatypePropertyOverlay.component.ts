@@ -60,13 +60,14 @@ interface PropOption {
 export class DatatypePropertyOverlayComponent implements OnInit {
     dataProperties: string[] = [];
     dataPropertiesFiltered: Observable<PropGrouping[]>;
+    dataPropertyRanges: {[key: string]: string} = {}; 
     propertyType: string[] = []; // Array but only expect one value
     propertyForm = this.fb.group({
         propertySelect: ['', Validators.required],
         propertyValue: ['', [Validators.required, datatype(() => this.propertyType[0])]],
         language: ['']
     })
-
+    
     constructor(private dialogRef: MatDialogRef<DatatypePropertyOverlayComponent>,
                 public os: OntologyStateService,
                 private pm: PropertyManagerService,
@@ -95,6 +96,9 @@ export class DatatypePropertyOverlayComponent implements OnInit {
         } else {
             // Should already be enabled on startup, mostly here for test purposes
             this.propertyForm.controls.propertySelect.enable();
+        }
+        if (this.os.listItem?.dataPropertyRange) {
+            this.dataPropertyRanges = this.os.listItem.dataPropertyRange;
         }
     }
     filter(searchText: string): PropGrouping[] {

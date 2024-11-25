@@ -27,21 +27,19 @@ import { By } from '@angular/platform-browser';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 
-import {
-  cleanStylesFromDOM,
-} from '../../../../../public/test/ts/Shared';
-import { KeywordCount } from '../../../shared/models/keywordCount.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { CatalogStateService } from '../../../shared/services/catalogState.service';
-import { ToastService } from '../../../shared/services/toast.service';
-import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { cleanStylesFromDOM } from '../../../../../public/test/ts/Shared';
 import { DCTERMS, FOAF, USER } from '../../../prefixes';
-import { UserManagerService } from '../../../shared/services/userManager.service';
-import { User } from '../../../shared/models/user.class';
 import { FilterItem } from '../../../shared/models/filterItem.interface';
 import { FilterType } from '../../../shared/models/list-filter.interface';
-import { ListFiltersComponent } from '../../../shared/components/list-filters/list-filters.component';
 import { getBeautifulIRI } from '../../../shared/utility';
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { KeywordCount } from '../../../shared/models/keywordCount.interface';
+import { ListFiltersComponent } from '../../../shared/components/list-filters/list-filters.component';
+import { ToastService } from '../../../shared/services/toast.service';
+import { User } from '../../../shared/models/user.class';
+import { UserManagerService } from '../../../shared/services/userManager.service';
 import { RecordFiltersComponent } from './recordFilters.component';
 
 describe('Record Filters component', function () {

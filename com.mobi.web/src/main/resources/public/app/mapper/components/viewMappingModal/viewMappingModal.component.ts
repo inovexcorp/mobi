@@ -33,10 +33,13 @@ import { getDctermsValue } from '../../../shared/utility';
 export class ViewMappingModalComponent implements OnInit {
     ontologyTitle: string;
 
-    constructor(@Inject(MAT_DIALOG_DATA) public data: {state: MappingState}) {
-
-    }
+    constructor(@Inject(MAT_DIALOG_DATA) public data: {state: MappingState}) {}
+    
     ngOnInit(): void {
-        this.ontologyTitle = getDctermsValue(this.data.state.ontology, 'title');
+        if (this.data.state?.ontology) {
+            this.ontologyTitle = getDctermsValue(this.data.state.ontology, 'title');
+        } else {
+            this.ontologyTitle = ''
+        }
     }
 }

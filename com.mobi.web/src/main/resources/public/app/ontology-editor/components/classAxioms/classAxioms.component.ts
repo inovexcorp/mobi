@@ -22,16 +22,17 @@
  */
 import { Component, OnChanges, Input} from '@angular/core';
 import { has, map, sortBy } from 'lodash';
-import { first } from 'rxjs/operators';
+import { EMPTY, EmptyError, throwError } from 'rxjs';
+import { catchError, first } from 'rxjs/operators';
 import { MatDialog } from '@angular/material/dialog';
 
-import { OntologyStateService } from '../../../shared/services/ontologyState.service';
-import { RDFS } from '../../../prefixes';
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
-import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
-import { PropertyManagerService } from '../../../shared/services/propertyManager.service';
-import { JSONLDId } from '../../../shared/models/JSONLDId.interface';
 import { isBlankNodeId } from '../../../shared/utility';
+import { JSONLDId } from '../../../shared/models/JSONLDId.interface';
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import { PropertyManagerService } from '../../../shared/services/propertyManager.service';
+import { RDFS } from '../../../prefixes';
 
 /**
  * @class ontology-editor.ClassAxiomsComponent
@@ -66,8 +67,16 @@ export class ClassAxiomsComponent implements OnChanges {
         }).afterClosed().subscribe(result => {
             if (result) {
                 this.os.removeProperty(event.iri, event.index)
-                    .pipe(first())
-                    .subscribe( (res) => {
+                    .pipe(
+                        first(),
+                        catchError(err => {
+                            // Check is used to handle the case where an EMPTY Observable is returned from http interceptor
+                            if (err instanceof EmptyError) {
+                              return EMPTY;
+                            }
+                            return throwError(err);
+                        })
+                    ).subscribe( (res) => {
                         this.updateAxioms();
                         this.removeFromHierarchy(event.iri, res as JSONLDId);
                     });

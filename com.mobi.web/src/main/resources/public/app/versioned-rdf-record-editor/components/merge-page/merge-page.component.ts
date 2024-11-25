@@ -91,7 +91,7 @@ export class MergePageComponent<TData extends VersionedRdfListItem> implements O
       }, error => this._toast.createErrorToast(error));
   }
   ngOnDestroy(): void {
-    if (this.state.listItem.merge) {
+    if (this.state.listItem && this.state.listItem.merge) {
       this.state.listItem.merge.difference = undefined;
       this.state.listItem.merge.startIndex = 0;
     }

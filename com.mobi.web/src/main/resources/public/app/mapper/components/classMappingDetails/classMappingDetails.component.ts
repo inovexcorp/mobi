@@ -197,32 +197,34 @@ export class ClassMappingDetailsComponent {
         this.setPropMappings();
     }
     setPropMappings(): void {
-        this.propMappings = this.state.selected.mapping.getPropMappingsByClass(this.classMappingId).map(propMapping => {
-            const propMappingPreview: PropMappingPreview = {
-                jsonld: propMapping,
-                isInvalid: this.isInvalid(propMapping),
-                title: getDctermsValue(propMapping, 'title')
-            };
-            if (this.mm.isDataMapping(propMapping)) {
-                propMappingPreview.dataMappingInfo = {
-                    value: this.getPropValue(propMapping),
-                    preview: this.getDataValuePreview(propMapping),
-                    datatype: this.getDatatypePreview(propMapping),
+        if (this.state.selected) {
+            this.propMappings = this.state.selected.mapping.getPropMappingsByClass(this.classMappingId).map(propMapping => {
+                const propMappingPreview: PropMappingPreview = {
+                    jsonld: propMapping,
+                    isInvalid: this.isInvalid(propMapping),
+                    title: getDctermsValue(propMapping, 'title')
                 };
-                const languageTag = this.getLanguageTag(propMapping);
-                if (languageTag) {
-                    propMappingPreview.language = {
-                        preview: this.getLanguagePreview(propMapping),
-                        tag: languageTag
+                if (this.mm.isDataMapping(propMapping)) {
+                    propMappingPreview.dataMappingInfo = {
+                        value: this.getPropValue(propMapping),
+                        preview: this.getDataValuePreview(propMapping),
+                        datatype: this.getDatatypePreview(propMapping),
+                    };
+                    const languageTag = this.getLanguageTag(propMapping);
+                    if (languageTag) {
+                        propMappingPreview.language = {
+                            preview: this.getLanguagePreview(propMapping),
+                            tag: languageTag
+                        };
+                    }
+                } else if (this.mm.isObjectMapping(propMapping)) {
+                    propMappingPreview.objectMappingInfo = {
+                        value: this.getPropValue(propMapping)
                     };
                 }
-            } else if (this.mm.isObjectMapping(propMapping)) {
-                propMappingPreview.objectMappingInfo = {
-                    value: this.getPropValue(propMapping)
-                };
-            }
-            return propMappingPreview;
-        });
-        this.propMappings.sort((propMapping1, propMapping2) => propMapping1.title.localeCompare(propMapping2.title));
+                return propMappingPreview;
+            });
+            this.propMappings.sort((propMapping1, propMapping2) => propMapping1.title.localeCompare(propMapping2.title));
+        }
     }
 }

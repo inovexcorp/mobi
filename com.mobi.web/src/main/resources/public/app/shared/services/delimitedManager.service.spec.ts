@@ -24,18 +24,21 @@ import { HttpParams } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
+import { of } from 'rxjs';
 
 import {
     cleanStylesFromDOM
 } from '../../../test/ts/Shared';
 import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
+import { PolicyEnforcementService } from './policyEnforcement.service';
 import { DelimitedManagerService } from './delimitedManager.service';
 
 describe('Delimited Manager service', function() {
     let service: DelimitedManagerService;
     let httpMock: HttpTestingController;
     let progressSpinnerStub: jasmine.SpyObj<ProgressSpinnerService>;
-
+    let policyEnforcementStub: jasmine.SpyObj<PolicyEnforcementService>;
+    
     const error = 'Error Message';
     const mappingRecordIRI = 'http://test.org/mapping';
     const datasetRecordIRI = 'http://test.org/record';
@@ -48,13 +51,17 @@ describe('Delimited Manager service', function() {
             providers: [
                 DelimitedManagerService,
                 MockProvider(ProgressSpinnerService),
+                MockProvider(PolicyEnforcementService)
             ]
         });
 
         service = TestBed.inject(DelimitedManagerService);
         progressSpinnerStub = TestBed.inject(ProgressSpinnerService) as jasmine.SpyObj<ProgressSpinnerService>;
         httpMock = TestBed.inject(HttpTestingController) as jasmine.SpyObj<HttpTestingController>;
-        
+        policyEnforcementStub = TestBed.inject(PolicyEnforcementService) as jasmine.SpyObj<PolicyEnforcementService>;
+        policyEnforcementStub.deny = 'Deny';
+        policyEnforcementStub.permit = 'Permit';
+        policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.permit));
         service.fileName = 'test';
         service.separator = ',';
         service.containsHeaders = true;
@@ -65,6 +72,7 @@ describe('Delimited Manager service', function() {
         service = null;
         httpMock = null;
         progressSpinnerStub = null;
+        policyEnforcementStub = null;
     });
 
     describe('should upload a delimited file', function() {
@@ -139,6 +147,23 @@ describe('Delimited Manager service', function() {
         });
         service.mapAndDownload(mappingRecordIRI, format, fileName);
         expect(window.open).toHaveBeenCalledWith(`${service.prefix}/${encodeURIComponent(service.fileName)}/map?${params.toString()}`);
+    });
+    it('should not return mapped data from an uploaded delimited file when permission denied', function() {
+        policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.deny));
+        spyOn(window, 'open');
+        const fileName = 'test';
+        const format = 'jsonld';
+        const params = new HttpParams({
+            fromObject: {
+                containsHeaders: '' + service.containsHeaders,
+                separator: service.separator,
+                format,
+                mappingRecordIRI,
+                fileName
+            }
+        });
+        service.mapAndDownload(mappingRecordIRI, format, fileName);
+        expect(window.open).not.toHaveBeenCalledWith(`${service.prefix}/${encodeURIComponent(service.fileName)}/map?${params.toString()}`);
     });
     describe('should return a preview of mapped data from an uploaded delimited file', function() {
         beforeEach(function () {

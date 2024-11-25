@@ -28,15 +28,15 @@ import { MatDialog } from '@angular/material/dialog';
 import { of } from 'rxjs';
 import { MockComponent, MockProvider } from 'ng-mocks';
 
-import { SharedModule } from '../../../shared/shared.module';
-import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { cleanStylesFromDOM } from '../../../../test/ts/Shared';
-import { RDFS } from '../../../prefixes';
-import { PropertyValuesComponent } from '../propertyValues/propertyValues.component';
-import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
-import { PropertyManagerService } from '../../../shared/services/propertyManager.service';
 import { JSONLDId } from '../../../shared/models/JSONLDId.interface';
+import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import { PropertyManagerService } from '../../../shared/services/propertyManager.service';
+import { PropertyValuesComponent } from '../propertyValues/propertyValues.component';
+import { RDFS } from '../../../prefixes';
+import { SharedModule } from '../../../shared/shared.module';
 import { ClassAxiomsComponent } from './classAxioms.component';
 
 describe('Class Axioms component', function() {

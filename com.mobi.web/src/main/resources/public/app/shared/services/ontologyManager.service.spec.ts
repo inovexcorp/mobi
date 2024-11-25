@@ -25,21 +25,22 @@ import { TestBed } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
 import { HttpParams, HttpHeaders } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { Observable } from 'rxjs';
+import { Observable, of } from 'rxjs';
 
-import { OWL, ONTOLOGYEDITOR, SKOS, RDFS, DCTERMS, DC, SKOSXL } from '../../prefixes';
-import { cleanStylesFromDOM } from '../../../test/ts/Shared';
-import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
-import { VocabularyStuff } from '../models/vocabularyStuff.interface';
-import { PropertyToRanges } from '../models/propertyToRanges.interface';
-import { OntologyStuff } from '../models/ontologyStuff.interface';
-import { JSONLDObject } from '../models/JSONLDObject.interface';
 import { CatalogManagerService } from './catalogManager.service';
+import { cleanStylesFromDOM } from '../../../test/ts/Shared';
+import { DC, DCTERMS, OWL, ONTOLOGYEDITOR, SKOS, SKOSXL, RDFS } from '../../prefixes';
 import { GroupQueryResults } from '../models/groupQueryResults.interface';
-import { RESTError } from '../models/RESTError.interface';
-import { OntologyDocument } from '../models/ontologyDocument.interface';
-import { SPARQLSelectResults } from '../models/sparqlSelectResults.interface';
+import { JSONLDObject } from '../models/JSONLDObject.interface';
 import { OBJ_PROPERTY_VALUES_QUERY } from '../../queries';
+import { OntologyDocument } from '../models/ontologyDocument.interface';
+import { OntologyStuff } from '../models/ontologyStuff.interface';
+import { PolicyEnforcementService } from './policyEnforcement.service';
+import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
+import { PropertyToRanges } from '../models/propertyToRanges.interface';
+import { RESTError } from '../models/RESTError.interface';
+import { SPARQLSelectResults } from '../models/sparqlSelectResults.interface';
+import { VocabularyStuff } from '../models/vocabularyStuff.interface';
 import { OntologyManagerService } from './ontologyManager.service';
 
 describe('Ontology Manager service', function() {
@@ -49,6 +50,7 @@ describe('Ontology Manager service', function() {
     let httpMock: HttpTestingController;
     let vocabularyStuffObj: VocabularyStuff;
     let ontologyStuffObj: OntologyStuff;
+    let policyEnforcementStub: jasmine.SpyObj<PolicyEnforcementService>;
 
     const emptyObj: JSONLDObject = {'@id': 'test'};
     const selectQuery = 'select * where {?s ?p ?o}';
@@ -221,6 +223,7 @@ describe('Ontology Manager service', function() {
                 OntologyManagerService,
                 MockProvider(CatalogManagerService),
                 MockProvider(ProgressSpinnerService),
+                MockProvider(PolicyEnforcementService)
             ]
         });
 
@@ -228,6 +231,10 @@ describe('Ontology Manager service', function() {
         catalogManagerStub = TestBed.inject(CatalogManagerService) as jasmine.SpyObj<CatalogManagerService>;
         progressSpinnerStub = TestBed.inject(ProgressSpinnerService) as jasmine.SpyObj<ProgressSpinnerService>;
         httpMock = TestBed.inject(HttpTestingController) as jasmine.SpyObj<HttpTestingController>;
+        policyEnforcementStub = TestBed.inject(PolicyEnforcementService) as jasmine.SpyObj<PolicyEnforcementService>;
+        policyEnforcementStub.deny = 'Deny';
+        policyEnforcementStub.permit = 'Permit';
+        policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.permit));
 
         catalogManagerStub.localCatalog = {'@id': catalogId};
         service.initialize();
@@ -273,6 +280,7 @@ describe('Ontology Manager service', function() {
         httpMock = null;
         catalogManagerStub = null;
         progressSpinnerStub = null;
+        policyEnforcementStub = null;
     });
 
     describe('uploadOntology hits the proper endpoint', function() {
@@ -401,7 +409,7 @@ describe('Ontology Manager service', function() {
     });
     describe('downloadOntology should call the window.open method properly', function() {
         beforeEach(function () {
-            this.url = '/mobirest/ontologies/' + encodeURIComponent(recordId);
+            this.url = `/mobirest/ontologies/${encodeURIComponent(recordId)}`;
             spyOn(window, 'open');
         });
         it('with a format and no fileName', function() {
@@ -470,6 +478,78 @@ describe('Ontology Manager service', function() {
             expect(window.open).toHaveBeenCalledWith(`${this.url}?${params.toString()}`);
         });
     });
+    describe('downloadOntology should not call the window.open method properly when permission is denied', function() {
+        beforeEach(function () {
+            policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.deny));
+            this.url = `/mobirest/ontologies/${encodeURIComponent(recordId)}`;
+            spyOn(window, 'open');
+        });
+        it('with a format and no fileName', function() {
+            const params = new HttpParams({
+                fromObject: {
+                    branchId,
+                    commitId,
+                    rdfFormat: 'turtle',
+                    fileName: 'ontology',
+                    applyInProgressCommit: true
+                }
+            });
+            service.downloadOntology(recordId, branchId, commitId, 'turtle');
+            expect(window.open).not.toHaveBeenCalledWith(`${this.url}?${params.toString()}`);
+        });
+        it('without a format or a fileName', function() {
+            const params = new HttpParams({
+                fromObject: {
+                    branchId,
+                    commitId,
+                    rdfFormat: 'jsonld',
+                    fileName: 'ontology',
+                    applyInProgressCommit: true
+                }
+            });
+            service.downloadOntology(recordId, branchId, commitId);
+            expect(window.open).not.toHaveBeenCalledWith(`${this.url}?${params.toString()}`);
+        });
+        it('with a format and fileName', function() {
+            const params = new HttpParams({
+                fromObject: {
+                    branchId,
+                    commitId,
+                    rdfFormat: 'turtle',
+                    fileName: 'fileName',
+                    applyInProgressCommit: true
+                }
+            });
+            service.downloadOntology(recordId, branchId, commitId, 'turtle', 'fileName');
+            expect(window.open).not.toHaveBeenCalledWith(`${this.url}?${params.toString()}`);
+        });
+        it('without a format and with a fileName', function() {
+            const params = new HttpParams({
+                fromObject: {
+                    branchId,
+                    commitId,
+                    rdfFormat: 'jsonld',
+                    fileName: 'fileName',
+                    applyInProgressCommit: true
+                }
+            });
+            service.downloadOntology(recordId, branchId, commitId, undefined, 'fileName');
+            expect(window.open).not.toHaveBeenCalledWith(`${this.url}?${params.toString()}`);
+        });
+        it('without applying the inProgressCommit', function() {
+            const params = new HttpParams({
+                fromObject: {
+                    branchId,
+                    commitId,
+                    rdfFormat: 'turtle',
+                    fileName: 'fileName',
+                    applyInProgressCommit: false
+                }
+            });
+            service.downloadOntology(recordId, branchId, commitId, 'turtle', 'fileName', false);
+            expect(window.open).not.toHaveBeenCalledWith(`${this.url}?${params.toString()}`);
+        });
+    });
     describe('getOntology hits the proper endpoint', function() {
         it('unless an error occurs', function() {
             service.getOntology(recordId, branchId, commitId, format, false, false, true)
@@ -531,7 +611,7 @@ describe('Ontology Manager service', function() {
 
                 expect((request.request.params).get('branchId').toString()).toEqual(branchId);
                 expect((request.request.params).get('commitId')).toEqual(commitId);
-                request.flush('flush', { status: 400, statusText: error });    
+                request.flush('flush', { status: 400, statusText: error });
             });
             it('successfully', function() {
                 service.getVocabularyStuff(recordId, branchId, commitId)

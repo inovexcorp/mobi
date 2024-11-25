@@ -34,6 +34,9 @@ import { RdfUpdate } from '../models/rdfUpdate.interface';
 import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
 import { createHttpParams, handleError, handleErrorObject } from '../utility';
 import { JSONLDObject } from '../models/JSONLDObject.interface';
+import { XACMLRequest } from '../models/XACMLRequest.interface';
+import { POLICY } from '../../prefixes';
+import { PolicyEnforcementService } from './policyEnforcement.service';
 
 /**
  * @class shared.ShapesGraphManagerService
@@ -45,7 +48,10 @@ import { JSONLDObject } from '../models/JSONLDObject.interface';
 export class ShapesGraphManagerService {
     prefix = `${REST_PREFIX}shapes-graphs`;
 
-    constructor(private http: HttpClient, private spinnerSvc: ProgressSpinnerService) {}
+    constructor(
+        private http: HttpClient,
+        private pep: PolicyEnforcementService,
+        private spinnerSvc: ProgressSpinnerService) {}
 
     /**
      * Calls the POST /mobirest/shapes-graphs endpoint to upload a SHACL shapes graph to Mobi. Returns a Observable that
@@ -86,7 +92,19 @@ export class ShapesGraphManagerService {
             fileName: rdfDownload.fileName || 'shapesGraph',
             applyInProgressCommit: rdfDownload.applyInProgressCommit || false
         });
-        window.open(`${this.prefix}/${encodeURIComponent(rdfDownload.recordId)}?${params.toString()}`);
+        const url = `${this.prefix}/${encodeURIComponent(rdfDownload.recordId)}?${params.toString()}`;
+        const readRequest: XACMLRequest = {
+            resourceId: rdfDownload.recordId,
+            actionId: `${POLICY}Read`
+        };
+        this.pep.evaluateRequest(readRequest).pipe(
+            map(currentPermissions => currentPermissions === this.pep.permit)
+        ).subscribe((isPermit) => {
+            if (isPermit) {
+                window.open(url);
+            }
+        });
+
     }
     /**
      * Calls the PUT /mobirest/shapes-graphs/{recordId} endpoint which will update the in-progress commit

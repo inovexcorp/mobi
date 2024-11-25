@@ -20,7 +20,7 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<h1 mat-dialog-title class="text-truncate">{{state.selected.record ? state.selected.record.title : state.selected.config.title}} Configuration</h1>
+<h1 mat-dialog-title class="text-truncate">{{state.selected?.record ? state.selected.record.title : (state.selected?.config ? state.selected.config.title : '')}} Configuration</h1>
 <div mat-dialog-content>
     <error-display *ngIf="errorMessage">{{errorMessage}}</error-display>
     <error-display *ngIf="recordsErrorMessage">{{recordsErrorMessage}}</error-display>

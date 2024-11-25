@@ -28,7 +28,7 @@
         <input matInput type="text" name="name" formControlName="title" required focus/>
     </mat-form-field>
     <advanced-language-select [parentForm]="createForm"></advanced-language-select>
-    <iri-select-ontology *ngIf="hasConcepts" [(selected)]="selectedConcepts" [displayText]="'Select Concept(s)'" [selectList]="os.listItem.concepts.iris"></iri-select-ontology>
+    <iri-select-ontology *ngIf="hasConcepts" [(selected)]="selectedConcepts" [displayText]="'Select Concept(s)'" [selectList]="conceptIris"></iri-select-ontology>
 </form>
 <div mat-dialog-actions>
     <button mat-raised-button [mat-dialog-close]="false">Cancel</button>

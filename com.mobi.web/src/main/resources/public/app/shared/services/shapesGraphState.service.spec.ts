@@ -20,44 +20,44 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
-import { MockProvider } from 'ng-mocks';
-import { Subject, of, throwError } from 'rxjs';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { HttpResponse } from '@angular/common/http';
+
+import { MockProvider } from 'ng-mocks';
+import { Subject, of, throwError } from 'rxjs';
 
 import {
     cleanStylesFromDOM
 } from '../../../test/ts/Shared';
+import { CatalogDetails } from './versionedRdfState.service';
+import { CatalogManagerService } from './catalogManager.service';
 import { DCTERMS, SHAPESGRAPHEDITOR } from '../../prefixes';
-import { RecordSelectFiltered } from '../../versioned-rdf-record-editor/models/record-select-filtered.interface';
 import { Difference } from '../models/difference.class';
+import { EventWithPayload } from '../models/eventWithPayload.interface';
+import { JSONLDObject } from '../models/JSONLDObject.interface';
+import { MergeRequestManagerService } from './mergeRequestManager.service';
+import { PolicyEnforcementService } from './policyEnforcement.service';
+import { PolicyManagerService } from './policyManager.service';
+import { RdfDownload } from '../models/rdfDownload.interface';
+import { RdfUpdate } from '../models/rdfUpdate.interface';
 import { RdfUpload } from '../models/rdfUpload.interface';
+import { RecordSelectFiltered } from '../../versioned-rdf-record-editor/models/record-select-filtered.interface';
 import { ShapesGraphListItem } from '../models/shapesGraphListItem.class';
+import { ShapesGraphManagerService } from './shapesGraphManager.service';
+import { StateManagerService } from './stateManager.service';
+import { ToastService } from './toast.service';
 import { VersionedRdfStateBase } from '../models/versionedRdfStateBase.interface';
 import { VersionedRdfUploadResponse } from '../models/versionedRdfUploadResponse.interface';
-import { CatalogManagerService } from './catalogManager.service';
-import { ShapesGraphManagerService } from './shapesGraphManager.service';
-import { PolicyManagerService } from './policyManager.service';
-import { StateManagerService } from './stateManager.service';
-import { PolicyEnforcementService } from './policyEnforcement.service';
-import { ToastService } from './toast.service';
-import { MergeRequestManagerService } from './mergeRequestManager.service';
-import { EventWithPayload } from '../models/eventWithPayload.interface';
-import { CatalogDetails } from './versionedRdfState.service';
-import { RdfDownload } from '../models/rdfDownload.interface';
-import { JSONLDObject } from '../models/JSONLDObject.interface';
-import { RdfUpdate } from '../models/rdfUpdate.interface';
 import { ShapesGraphStateService } from './shapesGraphState.service';
 
 describe('Shapes Graph State service', function() {
   let service: ShapesGraphStateService;
-  let shapesGraphManagerStub: jasmine.SpyObj<ShapesGraphManagerService>;
   let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
   let mergeRequestManagerServiceStub: jasmine.SpyObj<MergeRequestManagerService>;
-  let toastStub: jasmine.SpyObj<ToastService>;
   let policyEnforcementStub: jasmine.SpyObj<PolicyEnforcementService>;
+  let shapesGraphManagerStub: jasmine.SpyObj<ShapesGraphManagerService>;
+  let toastStub: jasmine.SpyObj<ToastService>;
   let _catalogManagerActionSubject: Subject<EventWithPayload>;
   let _mergeRequestManagerActionSubject: Subject<EventWithPayload>;
 
@@ -74,16 +74,18 @@ describe('Shapes Graph State service', function() {
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule],
+      imports: [
+        HttpClientTestingModule
+      ],
       providers: [
         ShapesGraphStateService,
         MockProvider(CatalogManagerService),
-        MockProvider(PolicyManagerService),
-        MockProvider(StateManagerService),
-        MockProvider(ShapesGraphManagerService),
-        MockProvider(ToastService),
-        MockProvider(PolicyEnforcementService),
         MockProvider(MergeRequestManagerService),
+        MockProvider(PolicyEnforcementService),
+        MockProvider(PolicyManagerService),
+        MockProvider(ShapesGraphManagerService),
+        MockProvider(StateManagerService),
+        MockProvider(ToastService)
       ]
     });
     shapesGraphManagerStub = TestBed.inject(ShapesGraphManagerService) as jasmine.SpyObj<ShapesGraphManagerService>;
@@ -91,6 +93,8 @@ describe('Shapes Graph State service', function() {
     policyEnforcementStub = TestBed.inject(PolicyEnforcementService) as jasmine.SpyObj<PolicyEnforcementService>;
     policyEnforcementStub.permit = 'Permit';
     policyEnforcementStub.deny = 'Deny';
+    policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.permit));
+
     mergeRequestManagerServiceStub = TestBed.inject(MergeRequestManagerService) as jasmine.SpyObj<MergeRequestManagerService>;
     toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
     catalogManagerStub = TestBed.inject(CatalogManagerService) as jasmine.SpyObj<CatalogManagerService>;

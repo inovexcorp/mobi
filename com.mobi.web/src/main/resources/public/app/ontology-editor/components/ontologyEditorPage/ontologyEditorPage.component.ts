@@ -49,7 +49,6 @@ export class OntologyEditorPageComponent implements OnDestroy {
     constructor(public state: OntologyStateService) {}
     
     ngOnDestroy(): void {
-        this.state.toast.clearToast();
         this.state.snackBar.dismiss();
     }
 }

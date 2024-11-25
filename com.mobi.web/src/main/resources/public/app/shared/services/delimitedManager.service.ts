@@ -30,6 +30,9 @@ import { ProgressSpinnerService } from '../components/progress-spinner/services/
 import { REST_PREFIX } from '../../constants';
 import { JSONLDObject } from '../models/JSONLDObject.interface';
 import { createHttpParams, handleError } from '../utility';
+import { XACMLRequest } from '../models/XACMLRequest.interface';
+import { PolicyEnforcementService } from './policyEnforcement.service';
+import { POLICY } from '../../prefixes';
 
 /**
  * @class shared.DelimitedManagerService
@@ -41,7 +44,11 @@ import { createHttpParams, handleError } from '../utility';
 export class DelimitedManagerService {
     prefix = `${REST_PREFIX}/delimited-files`;
     
-    constructor(private http: HttpClient, private spinnerSvc: ProgressSpinnerService) {}
+    constructor(
+        private http: HttpClient, 
+        private spinnerSvc: ProgressSpinnerService,
+        private pep: PolicyEnforcementService
+    ) {}
 
     /**
      * An array of a preview of delimited data. Set by the POST /mobirest/delimited-files endpoint.
@@ -187,7 +194,18 @@ export class DelimitedManagerService {
             mappingRecordIRI,
             fileName
         });
-        window.open(`${this.prefix}/${encodeURIComponent(this.fileName)}/map?${params.toString()}`);
+        const url = `${this.prefix}/${encodeURIComponent(this.fileName)}/map?${params.toString()}`;
+        const readRequest: XACMLRequest = {
+            resourceId: mappingRecordIRI,
+            actionId: `${POLICY}Read`
+        };
+        this.pep.evaluateRequest(readRequest).pipe(
+            map(currentPermissions => currentPermissions === this.pep.permit)
+        ).subscribe((isPermit) => {
+            if (isPermit) {
+                window.open(url);
+            }
+        });
     }
     /**
      * Calls the POST /mobirest/delimited-files/{fileName}/map to map the data of an uploaded delimited file

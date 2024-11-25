@@ -35,7 +35,7 @@ import {
     nth,
     last
 } from 'lodash';
-import { Observable, forkJoin, of } from 'rxjs';
+import { Observable, forkJoin, of, throwError } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
 import { DATA, DCTERMS, DELIM, ONTOLOGYEDITOR, OWL, RDFS } from '../../prefixes';
 import { Difference } from '../models/difference.class';
@@ -953,6 +953,9 @@ export class MapperStateService {
      */
     setIriMap(): Observable<null> {
         const ontInfo = this.selected.mapping.getSourceOntologyInfo();
+        if (!ontInfo?.recordId && !ontInfo?.branchId && !ontInfo?.commitId) {
+          return throwError('SourceOntologyInfo recordId, branchId, and commitId are empty');
+        }
         const ontIri = getPropertyId(this.selected.ontology, `${ONTOLOGYEDITOR}ontologyIRI`);
         return forkJoin([
             this.om.getIris(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId),

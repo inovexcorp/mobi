@@ -27,29 +27,30 @@ import { forkJoin, from, Observable, of, Subject, throwError } from 'rxjs';
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
+import { MatDialog } from '@angular/material/dialog';
 
 import { CatalogManagerService } from './catalogManager.service';
 import { CatalogStateService } from './catalogState.service';
+import { createHttpParams } from '../utility';
 import { DatasetManagerService } from './datasetManager.service';
 import { DatasetStateService } from './datasetState.service';
 import { DelimitedManagerService } from './delimitedManager.service';
 import { DiscoverStateService } from './discoverState.service';
+import { EntitySearchStateService } from '../../entity-search/services/entity-search-state.service';
+import { EventWithPayload } from '../models/eventWithPayload.interface';
 import { MapperStateService } from './mapperState.service';
 import { MergeRequestsStateService } from './mergeRequestsState.service';
 import { OntologyManagerService } from './ontologyManager.service';
+import { OntologyStateService } from './ontologyState.service';
+import { ProvManagerService } from './provManager.service';
+import { REST_PREFIX } from '../../constants';
 import { ShapesGraphStateService } from './shapesGraphState.service';
 import { StateManagerService } from './stateManager.service';
+import { ToastService } from './toast.service';
+import { User } from '../models/user.class';
 import { UserManagerService } from './userManager.service';
 import { UserStateService } from './userState.service';
 import { YasguiService } from './yasgui.service';
-import { OntologyStateService } from './ontologyState.service';
-import { EntitySearchStateService } from '../../entity-search/services/entity-search-state.service';
-import { REST_PREFIX } from '../../constants';
-import { ToastService } from './toast.service';
-import { ProvManagerService } from './provManager.service';
-import { createHttpParams } from '../utility';
-import { EventWithPayload } from '../models/eventWithPayload.interface';
-import { User } from '../models/user.class';
 
 /**
  * @class shared.LoginManagerService
@@ -102,6 +103,7 @@ export class LoginManagerService {
     private ds: DatasetStateService, 
     private ess: EntitySearchStateService,
     private mrs: MergeRequestsStateService, 
+    private dialog: MatDialog,
     private ms: MapperStateService,
     private om: OntologyManagerService,
     private os: OntologyStateService, 
@@ -302,16 +304,18 @@ export class LoginManagerService {
    * - Decodes and checks if the JWT token has expired.
    * - Confirms if the session is authenticated.
    *
+   * @param showToast - A boolean flag to determine if a toast message should be shown on validation result (default is true).
    * @returns Observable<boolean> Emits 'true' if the session is valid, otherwise 'false'.
    */
-   validateSession(): Observable<boolean> {
+   validateSession(showToast = true): Observable<boolean> {
     return of(this.getCookie('mobi_web_token')).pipe(
         switchMap((mobiWebToken: string | null) => this.validateToken(mobiWebToken)),
         switchMap(validationStatus => this.verifyAuth(validationStatus)),
-        tap(validationResult => this.handleValidationResult(validationResult)),
+        tap(validationResult => this.handleValidationResult(validationResult, showToast)),
         map(({ valid }) => valid)
     );
   }
+
   private validateToken(mobiWebToken: string | null): Observable<{tokenExists: boolean; isExpired: boolean}> {
     // Check if the token exists and whether it is expired
     if (!mobiWebToken) {
@@ -321,6 +325,7 @@ export class LoginManagerService {
     const isExpired = tokenPayload && tokenPayload.exp && (Date.now() >= tokenPayload.exp * 1000);
     return of({ tokenExists: true, isExpired });
   }
+
   private verifyAuth(validationStatus: {tokenExists: boolean; isExpired: boolean}): Observable<{valid: boolean, tokenExists: boolean, isExpired: boolean}>{
     // If the token exists and is not expired, check the session
     const tokenExists = validationStatus.tokenExists;
@@ -345,16 +350,20 @@ export class LoginManagerService {
         }))
     );
   }
-  private handleValidationResult(validationResults: {valid: boolean, tokenExists: boolean, isExpired: boolean}): void {
+
+  private handleValidationResult(validationResults: {valid: boolean, tokenExists: boolean, isExpired: boolean}, showToast: boolean): void {
     if (!validationResults.valid) {
-      if (!validationResults.tokenExists) {
+      if (showToast) {
+        if (!validationResults.tokenExists) {
           this.toast.createErrorToast(this.NO_TOKEN_MESSAGE);
-      } else if (validationResults.isExpired) {
-          this.toast.createErrorToast(this.TOKEN_EXPIRED_MESSAGE);
-      } else {
-          this.toast.createErrorToast(this.SESSION_INVALID_MESSAGE);
+        } else if (validationResults.isExpired) {
+            this.toast.createErrorToast(this.TOKEN_EXPIRED_MESSAGE);
+        } else {
+            this.toast.createErrorToast(this.SESSION_INVALID_MESSAGE);
+        }
       }
       this.clearServiceStates();
+      this.dialog.closeAll();
       this.router.navigate(['/login']);
     }
   }
