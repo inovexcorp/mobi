@@ -1,0 +1,18 @@
+PREFIX mcat: <http://mobi.com/ontologies/catalog#>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+
+SELECT ?terminatingCommit ?terminatingTime
+WHERE {
+    # Get the revisions for the base branch
+    ?mergeCommit a mcat:Commit ;
+        prov:generated/prov:wasDerivedFrom ?auxRevision ;
+        prov:generated ?baseRevision .
+
+    # Find master merge back revision
+    ?masterCommit mcat:masterMergeIntoBranchRevision ?auxRevision .
+    # Find the terminating commit for the aux branch
+    ?baseRevision a mcat:Revision ;
+        prov:hadPrimarySource+ ?baseRevParent .
+    ?terminatingCommit prov:influenced ?baseRevParent ;
+        prov:atTime ?terminatingTime .
+}

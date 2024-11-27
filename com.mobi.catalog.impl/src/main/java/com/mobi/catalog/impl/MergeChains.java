@@ -38,9 +38,8 @@ public class MergeChains {
     private boolean conflictMerge = false;
     private LinkedHashMap<Resource, Resource> auxCommitToRevision = new LinkedHashMap<>();
     private LinkedHashMap<Resource, Resource> baseCommitToRevision = new LinkedHashMap<>();
-    public MergeChains(Resource mergeCommit, Resource branchingCommit) {
+    public MergeChains(Resource mergeCommit) {
         this.mergeCommit = mergeCommit;
-        this.branchingCommit = branchingCommit;
     }
 
     public Resource getMergeCommit() {

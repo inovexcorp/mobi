@@ -1,0 +1,14 @@
+PREFIX mcat: <http://mobi.com/ontologies/catalog#>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+
+SELECT ?mergeCommit
+WHERE {
+    ?branch mcat:head/(mcat:baseCommit|mcat:auxiliaryCommit)* ?mergeCommit .
+
+    ?mergeCommit a mcat:Commit;
+        mcat:baseCommit ?base ;
+        mcat:auxiliaryCommit ?aux ;
+        prov:atTime ?mergeCommitTime .
+
+    FILTER IF(BOUND(?previousMergeTime), ?mergeCommitTime > ?previousMergeTime, true)
+}

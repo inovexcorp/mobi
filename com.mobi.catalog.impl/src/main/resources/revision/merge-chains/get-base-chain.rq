@@ -1,0 +1,24 @@
+PREFIX mcat: <http://mobi.com/ontologies/catalog#>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+
+SELECT ?parentCommit ?revParent
+WHERE {
+    # GET BASE CHAINS
+    # Get the revisions for the base branch
+    ?mergeCommit a mcat:Commit ;
+        prov:generated ?baseRevision ;
+        prov:atTime ?mergeCommitTime .
+
+    ?baseRevision a mcat:Revision ;
+        prov:hadPrimarySource+ ?revParent .
+
+    # Find the parent commit associated with the revision and the time that it occurred
+    ?parentCommit a mcat:Commit ;
+        prov:generated|prov:influenced ?revParent ;
+        prov:atTime ?time .
+
+    # Filter out extra base commits that happened after the terminating commit
+    FILTER (?time >= ?terminatingTime)
+    FILTER IF(BOUND(?previousMergeTime), ?mergeCommitTime >= ?previousMergeTime, true)
+}
+ORDER BY DESC(?time)
