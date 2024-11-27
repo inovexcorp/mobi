@@ -1,0 +1,38 @@
+PREFIX mcat: <http://mobi.com/ontologies/catalog#>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+
+SELECT ?parentCommit ?revParent
+WHERE {
+    # GET AUX CHAINS
+    {
+        # Get the revisions for the aux branch
+        ?mergeCommit a mcat:Commit ;
+            prov:generated/prov:wasDerivedFrom ?auxRevision ;
+            prov:atTime ?mergeCommitTime .
+        # Follow the aux branch revisions until they terminate (signifies a merge)
+        ?auxRevision a mcat:Revision ;
+            prov:hadPrimarySource+ ?revParent .
+
+        # Find the parent commit associated with the revision and the time that it occurred
+        ?parentCommit a mcat:Commit ;
+            prov:generated|prov:influenced ?revParent ;
+            prov:atTime ?time .
+        # Filter out extra base commits that happened after the terminating commit
+        FILTER (?time >= ?terminatingTime)
+        FILTER IF(BOUND(?previousMergeTime), ?mergeCommitTime >= ?previousMergeTime, true)
+    }
+    UNION
+    {
+        # Retrieves the revision and commit after the merge commit on the aux branch
+        ?mergeCommit a mcat:Commit ;
+            prov:generated/prov:wasDerivedFrom ?revParent ;
+            prov:atTime ?mergeCommitTime .
+        ?parentCommit a mcat:Commit ;
+            prov:generated|prov:influenced|mcat:masterMergeIntoBranchRevision ?revParent ;
+            prov:atTime ?time .
+        FILTER (?time >= ?terminatingTime)
+        FILTER IF(BOUND(?previousMergeTime), ?mergeCommitTime >= ?previousMergeTime, true)
+    }
+}
+ORDER BY DESC(?time)
+

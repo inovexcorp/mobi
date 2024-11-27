@@ -378,7 +378,7 @@ public class InversioningMigration implements PostRestoreOperation {
                     conflictMap = differenceManager.getConflicts(commitData.aux.get(), commitData.base, sysConn)
                             .stream().collect(Collectors.toMap(Conflict::getIRI, Function.identity()));
 
-                    LOGGER.debug("Merging commit %s of %s into %s ", commitData.commit,
+                    LOGGER.debug("Merging commit {} of {} into {} ", commitData.commit,
                             commitData.aux.get().stringValue(), commitData.base.stringValue());
                     Resource mergeCommit = versioningManager.merge(catalogIRI, recordIRI, source, target, admin,
                             deltaModels.additions, deltaModels.deletions, conflictMap, sysConn);
@@ -507,7 +507,7 @@ public class InversioningMigration implements PostRestoreOperation {
                     .toList();
 
             contexts.forEach(context -> {
-                LOGGER.debug("Writing graph " + context.stringValue());
+                LOGGER.debug("Writing graph {}", context.stringValue());
                 RepositoryResult<Statement> statements = tempConn.getStatements(null, null, null, context);
                 sysConn.begin(IsolationLevels.NONE);
                 sysConn.add(statements);
@@ -607,7 +607,7 @@ public class InversioningMigration implements PostRestoreOperation {
     private void addCommit(CommitData commitData, User admin, Resource catalogIRI, Resource recordIRI,
                            Resource branchIRI, RepositoryConnection tempConn, RepositoryConnection sysConn) {
         try {
-            LOGGER.debug("Adding commit: %s", commitData.commit.stringValue());
+            LOGGER.debug("Adding commit: {}", commitData.commit.stringValue());
             Path additionsPath = writeToFile(RDFFormat.TURTLE, tempConn, commitData.additions);
             Path deletionsPath = writeToFile(RDFFormat.TURTLE, tempConn, commitData.deletions);
 

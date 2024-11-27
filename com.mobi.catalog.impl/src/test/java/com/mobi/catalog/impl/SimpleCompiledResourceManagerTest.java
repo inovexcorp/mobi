@@ -41,6 +41,7 @@ import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.model.vocabulary.RDFS;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
+import org.eclipse.rdf4j.repository.util.RepositoryUtil;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
@@ -643,6 +644,11 @@ public class SimpleCompiledResourceManagerTest extends OrmEnabledTestCase {
     private void validateModel(Resource commitId) {
         try (RepositoryConnection conn = repo.getConnection()) {
             Model compiled = manager.getCompiledResource(commitId, conn);
+
+            Model m1 = MODEL_FACTORY.createEmptyModel();
+            m1.addAll(RepositoryUtil.difference(compiled, dcterms));
+            Model m2 = MODEL_FACTORY.createEmptyModel();
+            m2.addAll(RepositoryUtil.difference(dcterms, compiled));
             assertTrue(Models.isomorphic(compiled, dcterms));
         }
     }

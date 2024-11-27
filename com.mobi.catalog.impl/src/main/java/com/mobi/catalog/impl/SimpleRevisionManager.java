@@ -71,6 +71,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -82,11 +83,19 @@ public class SimpleRevisionManager implements RevisionManager {
     private static final String HEAD_COMMIT_BINDING = "headCommit";
     private static final String MASTER_BRANCH_BINDING = "masterBranch";
     private static final String MASTER_HEAD_BINDING = "masterHead";
+    private static final String TERMINATING_TIME_BINDING = "terminatingTime";
     private static final String PARENT_BINDING = "parent";
     private static final String REVISION_BINDING = "revision";
+    private static final String PREVIOUS_MERGE_TIME_BINDING = "previousMergeTime";
     private static final String GET_MASTER_CHAIN;
     private static final String GET_MASTER_HEAD;
-    private static final String GET_MERGE_CHAINS;
+    private static final String GET_MERGE_COMMITS;
+    private static final String GET_BASE_CHAIN;
+    private static final String GET_BASE_CHAIN_MASTER_MERGE;
+    private static final String GET_AUX_CHAIN;
+    private static final String GET_TERMINATING_COMMIT;
+    private static final String GET_TERMINATING_COMMIT_MASTER_MERGE;
+    private static final String GET_COMMIT_TIME;
     private static final String IS_BRANCH_COMMIT;
     private static final String GET_FORWARD_REVISION_CHAIN;
     private static final String GET_FORWARD_BRANCHING_COMMIT;
@@ -109,9 +118,40 @@ public class SimpleRevisionManager implements RevisionManager {
                             .getResourceAsStream("/revision/get-master-head.rq")),
                     StandardCharsets.UTF_8
             );
-            GET_MERGE_CHAINS = IOUtils.toString(
+            GET_MERGE_COMMITS = IOUtils.toString(
                     Objects.requireNonNull(SimpleRevisionManager.class
-                            .getResourceAsStream("/revision/get-merge-chains.rq")),
+                            .getResourceAsStream("/revision/merge-chains/get-merge-commits.rq")),
+                    StandardCharsets.UTF_8
+            );
+            GET_BASE_CHAIN = IOUtils.toString(
+                    Objects.requireNonNull(SimpleRevisionManager.class
+                            .getResourceAsStream("/revision/merge-chains/get-base-chain.rq")),
+                    StandardCharsets.UTF_8
+            );
+            GET_BASE_CHAIN_MASTER_MERGE = IOUtils.toString(
+                    Objects.requireNonNull(SimpleRevisionManager.class
+                            .getResourceAsStream("/revision/merge-chains/get-base-chain-master-merge.rq")),
+                    StandardCharsets.UTF_8
+            );
+            GET_AUX_CHAIN = IOUtils.toString(
+                    Objects.requireNonNull(SimpleRevisionManager.class
+                            .getResourceAsStream("/revision/merge-chains/get-aux-chain.rq")),
+                    StandardCharsets.UTF_8
+            );
+            GET_TERMINATING_COMMIT = IOUtils.toString(
+                    Objects.requireNonNull(SimpleRevisionManager.class
+                            .getResourceAsStream("/revision/merge-chains/get-terminating-commit.rq")),
+                    StandardCharsets.UTF_8
+            );
+            GET_TERMINATING_COMMIT_MASTER_MERGE = IOUtils.toString(
+                    Objects.requireNonNull(SimpleRevisionManager.class
+                            .getResourceAsStream(
+                                    "/revision/merge-chains/get-terminating-commit-master-merge.rq")),
+                    StandardCharsets.UTF_8
+            );
+            GET_COMMIT_TIME = IOUtils.toString(
+                    Objects.requireNonNull(SimpleRevisionManager.class
+                            .getResourceAsStream("/revision/merge-chains/get-commit-time.rq")),
                     StandardCharsets.UTF_8
             );
             IS_BRANCH_COMMIT = IOUtils.toString(
@@ -668,69 +708,134 @@ public class SimpleRevisionManager implements RevisionManager {
      */
     private Map<Resource, MergeChains> getMergeChainsMap(Resource masterBranch, Resource previousMasterMerge,
                                                          RepositoryConnection conn) {
+        Optional<Value> timeOpt = getTime(previousMasterMerge, conn);
+        Set<Resource> mergeCommits = getMergeCommits(masterBranch, timeOpt, conn);
         // Get merge commit chains
         Map<Resource, MergeChains> mergeChainsMap = new HashMap<>(); // Stores the merge commit to aux/base chains
-        TupleQuery getBranchingCommits = conn.prepareTupleQuery(GET_MERGE_CHAINS);
-        getBranchingCommits.setBinding(BRANCH_BINDING, masterBranch);
 
-        Set<Resource> commitsToIgnore = new HashSet<>();
-        try (TupleQueryResult getBranchingCommitsResult = getBranchingCommits.evaluate()) {
-            getBranchingCommitsResult.forEach(bindings -> {
-                // Retrieve values from bindings
-                Resource mergeCommit = Bindings.requiredResource(bindings, MERGE_COMMIT_BINDING);
-                Resource branchingCommit = Bindings.requiredResource(bindings, "branchingCommit");
+        mergeCommits.forEach(commit -> {
+            TerminatingResult terminatingResult = getTerminating(commit, conn);
+            TupleQuery getBaseChains = terminatingResult.isMasterMergeIntoBranch ?
+                    conn.prepareTupleQuery(GET_BASE_CHAIN) : conn.prepareTupleQuery(GET_BASE_CHAIN_MASTER_MERGE);
+            getBaseChains.setBinding(MERGE_COMMIT_BINDING, commit);
+            getBaseChains.setBinding(TERMINATING_TIME_BINDING, terminatingResult.time);
+            TupleQuery getAuxChains = conn.prepareTupleQuery(GET_AUX_CHAIN);
+            getAuxChains.setBinding(MERGE_COMMIT_BINDING, commit);
+            getAuxChains.setBinding(TERMINATING_TIME_BINDING, terminatingResult.time);
 
-                // Type identifies if the chain is a base chain or an aux chain
-                String type = Bindings.requiredLiteral(bindings, "type").stringValue();
-                MergeChains chains = mergeChainsMap
-                        .getOrDefault(mergeCommit, new MergeChains(mergeCommit, branchingCommit));
+            if (timeOpt.isPresent()) {
+                getBaseChains.setBinding(PREVIOUS_MERGE_TIME_BINDING, timeOpt.get());
+                getAuxChains.setBinding(PREVIOUS_MERGE_TIME_BINDING, timeOpt.get());
+            }
 
-                // Get the Commits and Revisions for the chain
-                String revisionsStr = Bindings.requiredLiteral(bindings, "revisions").stringValue();
-                List<Resource> revisionList = getList(revisionsStr);
-                String commitsStr = Bindings.requiredLiteral(bindings, "commits").stringValue();
-                List<Resource> commitList = getList(commitsStr);
-                if (revisionList.size() != commitList.size()) {
-                    throw new IllegalStateException("Mismatched commit to revision count for "
-                            + mergeCommit.stringValue());
-                }
+            try (TupleQueryResult getBaseChainsResult = getBaseChains.evaluate();
+                 TupleQueryResult getAuxChainsResult = getAuxChains.evaluate()) {
+                getBaseChainsResult.forEach(getBindingSetConsumer(commit, mergeChainsMap, true));
+                getAuxChainsResult.forEach(getBindingSetConsumer(commit, mergeChainsMap, false));
+            }
 
-                // If there is a previous merge of master for the commit being calculated, then filter the lists
-                // to not process results after that commit
-                if (previousMasterMerge != null) {
-                    int index = commitList.indexOf(previousMasterMerge);
-                    if (index >= 0) {
-                        List<Resource> ignore = commitList.subList(index + 1, commitList.size());
-                        commitsToIgnore.add(previousMasterMerge);
-                        commitsToIgnore.addAll(ignore);
-                        ignore.clear();
-                        revisionList.subList(index + 1, revisionList.size()).clear();
+            MergeChains mergeChains = mergeChainsMap.get(commit);
+            filterChain(mergeChains.getBaseCommitToRevision(), previousMasterMerge);
+            filterChain(mergeChains.getAuxCommitToRevision(), previousMasterMerge);
+
+            mergeChains.setBranchingCommit(terminatingResult.branchingCommit);
+            mergeChains.setAuxMasterMergeIntoBranch(terminatingResult.isMasterMergeIntoBranch);
+            mergeChainsMap.put(commit, mergeChains);
+        });
+
+        mergeChainsMap.values().forEach(mergeChains -> setConflictMerge(mergeChains, mergeChains.getMergeCommit(), conn));
+
+        // If the previousMasterMerge was set, we can remove any MergeChains after the previousMasterMerge
+        return mergeChainsMap;
+    }
+
+    private TerminatingResult getTerminating(Resource commit, RepositoryConnection conn) {
+        TupleQuery getTerminatingCommit = conn.prepareTupleQuery(GET_TERMINATING_COMMIT);
+        getTerminatingCommit.setBinding(MERGE_COMMIT_BINDING, commit);
+
+        try (TupleQueryResult result = getTerminatingCommit.evaluate()) {
+            if (result.hasNext()) {
+                BindingSet bindingSet = result.next();
+                return new TerminatingResult(Bindings.requiredResource(bindingSet, "terminatingCommit"),
+                        Bindings.requiredLiteral(bindingSet, TERMINATING_TIME_BINDING),
+                        false);
+            } else {
+                TupleQuery getTerminatingCommitMaster = conn.prepareTupleQuery(GET_TERMINATING_COMMIT_MASTER_MERGE);
+                getTerminatingCommitMaster.setBinding(MERGE_COMMIT_BINDING, commit);
+                try (TupleQueryResult masterResult = getTerminatingCommitMaster.evaluate()) {
+                    if (masterResult.hasNext()) {
+                        BindingSet bindingSet = masterResult.next();
+                        return new TerminatingResult(Bindings.requiredResource(bindingSet, "terminatingCommit"),
+                                Bindings.requiredLiteral(bindingSet, TERMINATING_TIME_BINDING),
+                                true);
                     }
                 }
-
-                // Build Maps of Commit to Revision
-                LinkedHashMap<Resource, Resource> commitToRevision = new LinkedHashMap<>();
-                for (int i = 0; i < revisionList.size(); i++) {
-                    commitToRevision.put(commitList.get(i), revisionList.get(i));
-                }
-
-                Value isMasterMergeIntoBranch = Bindings.requiredLiteral(bindings, "isMasterMergeIntoBranch");
-                chains.setAuxMasterMergeIntoBranch(Integer.parseInt(isMasterMergeIntoBranch.stringValue()) > 0);
-
-                setConflictMerge(chains, mergeCommit, conn);
-
-                if ("AUX".equals(type)) {
-                    chains.setAuxCommitToRevision(commitToRevision);
-                }
-                if ("BASE".equals(type)) {
-                    chains.setBaseCommitToRevision(commitToRevision);
-                }
-                mergeChainsMap.put(mergeCommit, chains);
-            });
+            }
         }
-        // If the previousMasterMerge was set, we can remove any MergeChains after the previousMasterMerge
-        commitsToIgnore.forEach(mergeChainsMap::remove);
-        return mergeChainsMap;
+        throw new IllegalStateException("Could not find terminating commit time for " + commit.stringValue());
+    }
+
+    private record TerminatingResult(Resource branchingCommit, Value time, boolean isMasterMergeIntoBranch) {}
+
+    private Optional<Value> getTime(Resource commit, RepositoryConnection conn) {
+        if (commit != null) {
+            TupleQuery getTime = conn.prepareTupleQuery(GET_COMMIT_TIME);
+            getTime.setBinding(COMMIT_BINDING, commit);
+
+            try (TupleQueryResult result = getTime.evaluate()) {
+                if (result.hasNext()) {
+                    return Optional.of(Bindings.requiredLiteral(result.next(), "time"));
+                }
+            }
+        }
+        return Optional.empty();
+    }
+
+    private void filterChain(LinkedHashMap<Resource, Resource> chain, Resource previousMasterMerge) {
+        if (previousMasterMerge != null) {
+            if (chain.containsKey(previousMasterMerge)) {
+                List<Resource> commitList = new ArrayList<>(chain.keySet());
+                int index = commitList.indexOf(previousMasterMerge);
+                if (index >= 0) {
+                    List<Resource> ignore = commitList.subList(index + 1, commitList.size());
+                    ignore.forEach(chain::remove);
+                }
+            }
+        }
+    }
+
+    private Consumer<BindingSet> getBindingSetConsumer(Resource mergeCommit, Map<Resource, MergeChains> mergeChainsMap,
+                                                       boolean isBase) {
+        return bindings -> {
+            // Get the Commits and Revisions for the chain
+            Resource revision = Bindings.requiredResource(bindings, "revParent");
+            Resource commit = Bindings.requiredResource(bindings, "parentCommit");
+
+            MergeChains chains = mergeChainsMap.getOrDefault(mergeCommit, new MergeChains(mergeCommit));
+            if (isBase) {
+                chains.getBaseCommitToRevision().put(commit, revision);
+            } else {
+                chains.getAuxCommitToRevision().put(commit, revision);
+            }
+            mergeChainsMap.putIfAbsent(mergeCommit, chains);
+        };
+    }
+
+    private Set<Resource> getMergeCommits(Resource masterBranch, Optional<Value> previousMergeTimeOpt,
+                                          RepositoryConnection conn) {
+        // Get merge commits
+        TupleQuery getMergeCommits = conn.prepareTupleQuery(GET_MERGE_COMMITS);
+        getMergeCommits.setBinding(BRANCH_BINDING, masterBranch);
+        if (previousMergeTimeOpt.isPresent()) {
+            getMergeCommits.setBinding(PREVIOUS_MERGE_TIME_BINDING, previousMergeTimeOpt.get());
+        }
+
+        Set<Resource> mergeCommits = new HashSet<>();
+        try (TupleQueryResult getMergeCommitsResult = getMergeCommits.evaluate()) {
+            getMergeCommitsResult.forEach(bindingSet
+                    -> mergeCommits.add(Bindings.requiredResource(bindingSet, MERGE_COMMIT_BINDING)));
+        }
+        return mergeCommits;
     }
 
     /**
