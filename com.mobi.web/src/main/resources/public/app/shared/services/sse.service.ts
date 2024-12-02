@@ -21,7 +21,7 @@
  * #L%
  */
 import { Injectable, NgZone } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, ReplaySubject } from 'rxjs';
 
 import { REST_PREFIX } from '../../constants';
 import { SSEEvent } from '../models/sse-event';
@@ -45,6 +45,34 @@ export class SseService {
   private _eventSource: EventSource;
 
   /**
+   * A Subject that will emit whenever an event is received from the EventSource.
+   * @private
+   * @type {ReplaySubject}
+   */
+  private _eventSubject = new ReplaySubject<SSEEvent>();
+
+  /**
+   * The number of seconds to wait before trying to reconnect to the event stream again. Will double on every retry.
+   * @private
+   * @type {number}
+   */
+  private _reconnectFrequencySec = 1;
+
+  /**
+   * The timeout function for reconnecting to the event stream. Will be cleared and reset on every attempt.
+   * @private
+   * @type {NodeJS.Timer}
+   */
+  private _reconnectTimeout: NodeJS.Timer;
+
+  /**
+   * The maximum number of seconds to try to reconnect to the event stream.
+   * @private
+   * @type {number}
+   */
+  private readonly SSE_RECONNECT_UPPER_LIMIT = 64;
+
+  /**
    * Constructor for the SseService.
    * @param {NgZone} _zone Angular's NgZone service.
    */
@@ -54,7 +82,25 @@ export class SseService {
    * Initializes server-sent event listening.
    */
   initializeEvents(): void {
+    if (this._eventSource) {
+      this.stopEvents();
+    }
     this._eventSource = new EventSource(`${REST_PREFIX}sse-stream`);
+    // Process connection opened
+    this._eventSource.onopen = () => {
+      this._reconnectFrequencySec = 1;
+    };
+    // Handle incoming event
+    this._eventSource.onmessage = (event: MessageEvent) => {
+      this._zone.run(() => {
+        this._processEvent(event.data);
+      });
+    };
+    // Reconnect on error
+    this._eventSource.onerror = error => {
+      console.error(error);
+      this._reconnectOnError();
+    };
   }
 
   /**
@@ -74,17 +120,23 @@ export class SseService {
    * @returns {Observable<SSEEvent>} An Observable that emits the data from the server-sent events.
    */
   getEvents(): Observable<SSEEvent> {
-    return new Observable(observer => {
-      this._eventSource.onmessage = event => {
-        this._zone.run(() => {
-          observer.next(JSON.parse(event.data) as SSEEvent);
-        });
-      };
-      this._eventSource.onerror = error => {
-        this._zone.run(() => {
-          observer.error(error);
-        });
-      };
-    });
+    return this._eventSubject.asObservable();
+  }
+
+  private _processEvent(data: any): void {
+    this._eventSubject.next(JSON.parse(data) as SSEEvent);
+  }
+
+  private _reconnectOnError(): void {
+    const self = this;
+    this.stopEvents();
+    clearTimeout(this._reconnectTimeout);
+    this._reconnectTimeout = setTimeout(() => {
+      self.initializeEvents();
+      self._reconnectFrequencySec *= 2;
+      if (self._reconnectFrequencySec >= self.SSE_RECONNECT_UPPER_LIMIT) {
+        self._reconnectFrequencySec = self.SSE_RECONNECT_UPPER_LIMIT;
+      }
+    }, this._reconnectFrequencySec * 1000);
   }
 }

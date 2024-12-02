@@ -80,18 +80,22 @@ describe('SseService', () => {
       eventSourceMock.emitMessage(event);
       tick();
     }));
-    it('that correctly handles errors', fakeAsync(() => {
+    it('that does not stop on errors', fakeAsync(() => {
       const eventSourceMock: EventSource = (service as any)['_eventSource'];
       expect(eventSourceMock).toBeTruthy();
       const errorObj = new Error('Error message');
+      spyOn(service, 'stopEvents').and.callThrough();
 
       service.getEvents().subscribe({
-        error: response => {
-          expect(response).toEqual(errorObj);
+        error: () => {
+          fail('Observable should not have errored');
         }
       });
       eventSourceMock.emitError(errorObj);
-      tick();
+      tick(2000);
+      expect(service.stopEvents).toHaveBeenCalledWith();
+      expect((service as any)['_eventSource']).not.toBeNull();
+      expect((service as any)['_eventSource']).not.toEqual(eventSourceMock);
     }));
   });
 });
