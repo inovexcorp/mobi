@@ -57,7 +57,8 @@ describe('FiltersSelectedListComponent', () => {
     element = fixture.debugElement;
     selectedFilters = {
       Filter1: item1,
-      Filter2: [item2, item3]
+      Filter2: [item2, item3],
+      Filter3: undefined
     };
     component.selectedFilters = selectedFilters;
     fixture.detectChanges();
@@ -91,7 +92,8 @@ describe('FiltersSelectedListComponent', () => {
         expect(element.queryAll(By.css('mat-chip')).length).toEqual(3);
         const expectedSelectedFilters: SelectedFilterItems = {
           Filter1: undefined,
-          Filter2: [item2, item3]
+          Filter2: [item2, item3],
+          Filter3: undefined
         };
         
         component.removeFilter(component.filterChips[0], 0);
@@ -106,7 +108,8 @@ describe('FiltersSelectedListComponent', () => {
         expect(element.queryAll(By.css('mat-chip')).length).toEqual(3);
         const expectedSelectedFilters: SelectedFilterItems = {
           Filter1: item1,
-          Filter2: [item3]
+          Filter2: [item3],
+          Filter3: undefined
         };
         
         component.removeFilter(component.filterChips[1], 1);
@@ -116,6 +119,23 @@ describe('FiltersSelectedListComponent', () => {
         fixture.detectChanges();
         expect(element.queryAll(By.css('mat-chip')).length).toEqual(2);
       });
+    });
+    it('should reset all selected filters', () => {
+      spyOn(component.selectedFiltersChange, 'emit');
+      expect(component.filterChips).toContain(jasmine.objectContaining({item: item1}));
+      expect(element.queryAll(By.css('mat-chip')).length).toEqual(3);
+      const expectedSelectedFilters: SelectedFilterItems = {
+        Filter1: undefined,
+        Filter2: [],
+        Filter3: undefined
+      };
+
+      component.reset();
+      expect(component.filterChips).toEqual([]);
+      expect(component.selectedFilters).toEqual(expectedSelectedFilters);
+      expect(component.selectedFiltersChange.emit).toHaveBeenCalledWith(expectedSelectedFilters);
+      fixture.detectChanges();
+      expect(element.queryAll(By.css('mat-chip')).length).toEqual(0);
     });
   });
   describe('contains the correct html', function() {

@@ -41,21 +41,7 @@ var recordTypeFilters = ['Dataset Record', 'Mapping Record', 'Ontology Record', 
     'Unversioned Record', 'Versioned RDF Record', 'Versioned Record', 'Workflow Record']
 
 var keywordsList = ['1', '1,1', '1\'1', '1"1', 'keyword2', '\\/', '/\\' ];
-
-var createRecordFiltersXPathSelector = function(filterTypeHeader, filterType) {
-    var selectors = ['//catalog-page',
-        '//records-view//record-filters//div[contains(@class, "record-filters")]//mat-expansion-panel-header',
-        '//mat-panel-title[contains(@class, "mat-expansion-panel-header-title")][text()[contains(.,"' + filterTypeHeader + '")]]//ancestor::mat-expansion-panel',
-        '//div[contains(@class, "mat-expansion-panel-content")]',
-        '//div[contains(@class, "filter-option")]//mat-checkbox']
-    if (filterType) {
-        selectors = selectors.concat([
-            '//span[contains(@class, "mat-checkbox-label")][text()[contains(., "' + filterType + '")]]',
-            '//ancestor::mat-checkbox//label[contains(@class, "mat-checkbox-layout")]'
-        ])
-    }
-    return selectors.join('');
-};
+var selectedKeywords = ['1,1','1\'1', '\\/', '/\\'];
 
 module.exports = {
     '@tags': ['sanity', 'catalog'],
@@ -75,16 +61,14 @@ module.exports = {
     'Step 3: Switch to catalog page' : function(browser) {
         browser.globals.switchToPage(browser, 'catalog', 'catalog-page records-view')
         browser.page.catalogPage().waitForElementPresent('@filterSelector')
+    },
+      
+    'Step 4: Verify Catalog Filters' : function(browser) {
         browser.expect.elements('catalog-page records-view record-filters div.record-filters mat-expansion-panel-header mat-panel-title').count.to.equal(3);
         browser.expect.element('catalog-page records-view record-filters info-message p').text.to.contain('No Keywords available');
-    },
-
-    'Step 4: Verify Catalog Filters' : function(browser) {
-        browser.useXpath()
-        recordTypeFilters.forEach(function(type) {
-            var filterCss = createRecordFiltersXPathSelector('Record Type', type);
-            browser.assert.visible(filterCss);
-        })
+        browser.page.catalogPage().verifyFilterItems('Record Type', recordTypeFilters);
+        browser.page.catalogPage().verifyFilterItems('Creators', [adminUsername]);
+        browser.page.catalogPage().assertNumFilterChips(0);
     },
 
     'Step 5: Verify Record List' : function(browser) {
@@ -96,7 +80,6 @@ module.exports = {
         browser.page.catalogPage().clearCatalogSearchBar();
         browser.page.catalogPage().applySearchText('does-not-exist-record');
         browser.page.catalogPage().applyOrderFilter('Title (asc)');
-        browser.page.catalogPage().finishSearch();
         browser.waitForElementVisible('catalog-page records-view div.results-list info-message');
         browser.expect.element('catalog-page records-view div.results-list info-message p').text.to.contain('No records found');
     },
@@ -106,7 +89,6 @@ module.exports = {
         browser.page.catalogPage().clearCatalogSearchBar();
         browser.page.catalogPage().applySearchText('z-catalog-ontology-');
         browser.page.catalogPage().applyOrderFilter('Title (asc)');
-        browser.page.catalogPage().finishSearch();
         recordTitles.forEach(function(title, index) {
             browser.page.catalogPage().assertRecordVisible(title, index + 1)
         })
@@ -117,7 +99,6 @@ module.exports = {
         browser.page.catalogPage().clearCatalogSearchBar();
         browser.page.catalogPage().applySearchText('z-catalog-ontology-');
         browser.page.catalogPage().applyOrderFilter('Title (desc)');
-        browser.page.catalogPage().finishSearch();
         recordTitles.forEach(function(title, index) {
             browser.page.catalogPage().assertRecordVisible(title, index + 1)
         })
@@ -127,7 +108,6 @@ module.exports = {
         browser.page.catalogPage().clearCatalogSearchBar();
         browser.page.catalogPage().applySearchText('z-catalog-ontology-1');
         browser.page.catalogPage().applyOrderFilter('Title (asc)');
-        browser.page.catalogPage().finishSearch();
         browser.page.catalogPage().assertRecordVisible('z-catalog-ontology-1', 1);
     },
 
@@ -136,7 +116,6 @@ module.exports = {
         browser.page.catalogPage().clearCatalogSearchBar();
         browser.page.catalogPage().applySearchText('z-catalog-ontology-');
         browser.page.catalogPage().applyOrderFilter('Title (desc)');
-        browser.page.catalogPage().finishSearch();
         recordTitles.forEach(function(title, index) {
             browser.page.catalogPage().assertRecordVisible(title, index + 1)
         });
@@ -157,7 +136,6 @@ module.exports = {
         browser.page.catalogPage().clearCatalogSearchBar();
         browser.page.catalogPage().applySearchText('z-catalog-ontology-');
         browser.page.catalogPage().applyOrderFilter('Title (desc)');
-        browser.page.catalogPage().finishSearch();
         recordTitles.forEach(function(title, index) {
             browser.page.catalogPage().assertRecordVisible(title, index + 1)
         })
@@ -196,36 +174,54 @@ module.exports = {
         browser.page.catalogPage().leaveCatalogRecord(browser);
     },
 
-    'Step 14: Search catalog page one item ASC' : function(browser) {
-        var keywords = ['1,1','1\'1', '\\/', '/\\'];
+    'Step 14: Filter catalog page with keywords' : function(browser) {
         browser.page.catalogPage().clearCatalogSearchBar();
         browser.page.catalogPage().applySearchText('z-catalog-ontology-');
         browser.page.catalogPage().applyOrderFilter('Title (asc)');
-        keywords.forEach(function(keyword) {
+        selectedKeywords.forEach(function(keyword) {
             browser.page.catalogPage().applyKeywordFilter(keyword);
+            browser.globals.wait_for_no_spinners(browser)
         });
-        browser.page.catalogPage().finishSearch();
         browser.page.catalogPage().assertRecordVisible('z-catalog-ontology-9p.ttl', 1);
+        selectedKeywords.forEach(function(keyword) {
+            browser.page.catalogPage().verifyFilterItemCheckedState(keyword, true);
+            browser.page.catalogPage().assertFilterChipExists(keyword);
+        });
     },
 
-    'Step 15: The user clicks on the Administration sidebar link' : function(browser) {
+    'Step 15: Verify removing filter chip removes filter' : function(browser) {
+        var keyword = selectedKeywords[0];
+        browser.page.catalogPage().removeFilterChip(keyword);
+        browser.globals.wait_for_no_spinners(browser)
+        browser.page.catalogPage().assertNumFilterChips(selectedKeywords.length - 1);
+        browser.page.catalogPage().verifyFilterItemCheckedState(keyword, false);
+    },
+
+    'Step 16: Verify reset button clears filter chips' : function(browser) {
+        browser.page.catalogPage().resetFilters();
+        browser.globals.wait_for_no_spinners(browser)
+        browser.page.catalogPage().assertNumFilterChips(0);
+        browser.expect.element('input.mat-checkbox-input[aria-checked=true]').to.not.be.present;
+    },
+
+    'Step 17: The user clicks on the Administration sidebar link' : function(browser) {
         browser.globals.switchToPage(browser, 'user-management')
     },
 
-    'Step 16: A new user is created' : function(browser) {
+    'Step 18: A new user is created' : function(browser) {
         browser.page.administrationPage().createUser(newUser);
         browser.globals.wait_for_no_spinners(browser);
     },
 
-    'Step 17: The user successfully logs out' : function(browser) {
+    'Step 19: The user successfully logs out' : function(browser) {
         browser.globals.logout(browser);
     },
 
-    'Step 18: Test logins as the newly created user' : function(browser) {
+    'Step 20: Test logins as the newly created user' : function(browser) {
         browser.globals.login(browser, newUser.username, newUser.password);
     },
 
-    'Step 19: Switch to catalog page' : function(browser) {
+    'Step 21: Switch to catalog page' : function(browser) {
         browser.globals.switchToPage(browser, 'catalog', 'catalog-page records-view')
         browser.globals.wait_for_no_spinners(browser);
         browser.page.catalogPage().waitForElementPresent('@searchBar')
@@ -236,5 +232,4 @@ module.exports = {
         browser.globals.wait_for_no_spinners(browser);
         browser.assert.not.elementPresent('catalog-page record-view div.record-sidebar manage-record-button button');
     }
-
 }

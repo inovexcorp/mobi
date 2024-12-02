@@ -26,7 +26,7 @@ import {
   Input,
   Output,
 } from '@angular/core';
-import { without } from 'lodash';
+import { isEqual } from 'lodash';
 
 import { FilterItem, SelectedFilterItems } from '../../models/filterItem.interface';
 
@@ -41,7 +41,8 @@ interface FilterChip {
  * This component is used to display a list of selected filters from an instance of {@link shared.ListFiltersComponent}
  * as a list of chips and allows users to remove filters.
  * 
- * @param {SelectedFilterItems} selectedFilters 
+ * @param {SelectedFilterItems} selectedFilters An object of filters from a parent component with their selected
+ *    FilterItem(s) to be displayed
  */
 @Component({
   selector: 'app-filters-selected-list',
@@ -64,7 +65,7 @@ export class FiltersSelectedListComponent {
         selected.forEach(item => {
           this._filterChips.push({ item, key });
         });
-      } else {
+      } else if (selected) {
         this._filterChips.push({ item: selected, key });
       }
     });
@@ -91,12 +92,28 @@ export class FiltersSelectedListComponent {
     this._filterChips.splice(index, 1);
     const filterValue = this.selectedFilters[chip.key];
     if (Array.isArray(filterValue)) {
-      this.selectedFilters[chip.key] = without(filterValue, chip.item);
+      // isEqual required as object references can get wonky
+      this.selectedFilters[chip.key] = filterValue.filter(val => !isEqual(val, chip.item));
     } else {
       this.selectedFilters[chip.key] = undefined;
     }
     // we can replace this by adding an action.
     // for example  this.store.dispatch(FilterActions.RemoveFilter({ payload: filter }));
+    this.selectedFiltersChange.emit(this.selectedFilters);
+  }
+
+  /**
+   * Removes all selected filter items from all filters in `selectedFilters`, clearing out the chips as well.
+   */
+  reset(): void {
+    this._filterChips = [];
+    Object.keys(this.selectedFilters).forEach(key => {
+      if (Array.isArray(this.selectedFilters[key])) {
+        this.selectedFilters[key] = [];
+      } else {
+        this.selectedFilters[key] = undefined;
+      }
+    });
     this.selectedFiltersChange.emit(this.selectedFilters);
   }
 }

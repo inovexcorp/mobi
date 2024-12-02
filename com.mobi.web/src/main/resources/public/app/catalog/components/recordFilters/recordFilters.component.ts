@@ -21,9 +21,9 @@
  * #L%
  */
 import { HttpResponse } from '@angular/common/http';
-import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnDestroy, OnInit, Output, SimpleChanges } from '@angular/core';
 
-import { forEach, map } from 'lodash';
+import { map } from 'lodash';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
@@ -58,9 +58,12 @@ import { SelectedRecordFilters } from '../../models/selected-record-filters.inte
   templateUrl: './recordFilters.component.html',
   styleUrls: ['./recordFilters.component.scss']
 })
-export class RecordFiltersComponent implements OnInit, OnDestroy {
+export class RecordFiltersComponent implements OnInit, OnChanges, OnDestroy {
   filters: ListFilter[] = [];
   private _destroySub$ = new Subject<void>();
+  readonly recordTypeFilterIndex = 0;
+  readonly creatorFilterIndex = 1;
+  readonly keywordFilterIndex = 2;
   
   @Input() catalogId: string;
   @Input() recordType: FilterItem;
@@ -224,15 +227,60 @@ export class RecordFiltersComponent implements OnInit, OnDestroy {
     };
 
     this.filters = [recordTypeFilter, creatorFilter, keywordsFilter];
-    forEach(this.filters, filter => {
+    this.filters.forEach(filter => {
       if ('onInit' in filter) {
         filter.onInit();
       }
     });
   }
 
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes?.recordType && !changes.recordType.isFirstChange() && !changes.recordType.currentValue) {
+      this.updateFilterValue(this.recordTypeFilterIndex);
+    }
+    if (changes?.keywordFilterList) {
+      this.updateFilterList(this.keywordFilterIndex, changes.keywordFilterList.currentValue, changes.keywordFilterList.previousValue);
+    }
+    if (changes?.creatorFilterList) {
+      this.updateFilterList(this.creatorFilterIndex, changes.creatorFilterList.currentValue, changes.creatorFilterList.previousValue);
+    }
+  }
+
   ngOnDestroy(): void {
     this._destroySub$.next();
     this._destroySub$.complete();
+  }
+
+  /**
+   * Updates a single value type filter by unselecting the current value. Only used for clearing out the value.
+   * 
+   * @param {number} filterIndex The index of the filter to update in the `filters` array
+   */
+  updateFilterValue(filterIndex: number): void {
+    const filter = this.filters[filterIndex];
+    filter.filterItems.forEach(item => {
+      item.checked = false;
+    });
+    filter.numChecked = 0;
+  }
+
+  /**
+   * Updates a list type filter based on the current values and previous values provided. Only handles removed values
+   * as that is the only use case expected.
+   *
+   * @param {number} filterIndex The index of the filter to update in the `filters` array
+   * @param {FilterItem[]} currentValue The current list of selected type filters
+   * @param {FilterItem[]} previousValue The previous list of selected type filters
+   */
+  updateFilterList(filterIndex: number, currentValue: FilterItem[], previousValue: FilterItem[]): void {
+    if (currentValue?.length < previousValue?.length) {
+      const filter = this.filters[filterIndex];
+      filter.filterItems
+        .filter(item => currentValue.findIndex(updatedItem => updatedItem.value === item.value) < 0 && item.checked)
+        .forEach(item => {
+          item.checked = false;
+        });
+        filter.numChecked = currentValue.length;
+    }
   }
 }

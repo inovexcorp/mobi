@@ -42,8 +42,9 @@ import { SelectedRecordFilters } from '../../models/selected-record-filters.inte
  *
  * A component which creates a div with a Bootstrap `row` containing a list of Records in the Mobi instance. The list
  * can be sorted using a {@link catalog.SortOptionsComponent}, searched using a {@link catalog.SearchBarComponent}, and
- * filtered using a {@link catalog.RecordFiltersComponent}. The list is also paginated with a `mat-paginator`. Each
- * Record is displayed using a {@link catalog.RecordCardComponent} that will select the Record it in the
+ * filtered using a {@link catalog.RecordFiltersComponent}. The currently selected filters are displayed with a
+ * {@link shared.FiltersSelectedListComponent}/ The list is also paginated with a `mat-paginator`. Each Record is
+ * displayed using a {@link catalog.RecordCardComponent} that will select the Record it in the
  * {@link shared.CatalogStateService} when clicked.
  */
 @Component({
@@ -54,6 +55,7 @@ import { SelectedRecordFilters } from '../../models/selected-record-filters.inte
 export class RecordsViewComponent implements OnInit, OnDestroy {
   records = [];
   catalogId = '';
+  selectedFilters: SelectedRecordFilters;
 
   private _destroySub$ = new Subject<void>();
   
@@ -62,6 +64,7 @@ export class RecordsViewComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.catalogId = get(this.cm.localCatalog, '@id', '');
     this.state.currentRecordPage = 0;
+    this._initializeSelectedFilters();
     this.setRecords(this.state.recordSearchText, this.state.recordFilterType, this.state.keywordFilterList, 
       this.state.creatorFilterList, this.state.recordSortOption);
   }
@@ -79,6 +82,8 @@ export class RecordsViewComponent implements OnInit, OnDestroy {
   }
   changeFilter(changeDetails: SelectedRecordFilters): void {
     this.state.currentRecordPage = 0;
+    this._cleanSelectedFilters(changeDetails);
+    this.selectedFilters = changeDetails;
     this.setRecords(this.state.recordSearchText, changeDetails.recordType, changeDetails.keywordFilterList, 
       changeDetails.creatorFilterList, this.state.recordSortOption);
   }
@@ -117,5 +122,34 @@ export class RecordsViewComponent implements OnInit, OnDestroy {
         this.records = response.body;
         this.state.totalRecordSize = Number(response.headers.get('x-total-count')) || 0;
       }, this._toast.createErrorToast);
+  }
+
+  /**
+   * Initializes the selected filters list based on the values from the state service.
+   */
+  private _initializeSelectedFilters() {
+    this.selectedFilters = {
+      recordType: this.state.recordFilterType,
+      keywordFilterList: this.state.keywordFilterList,
+      creatorFilterList: this.state.creatorFilterList
+    };
+  }
+
+  /**
+   * Removes the record counts from the filter item display fields so that the selected filter chips don't include them.
+   * 
+   * @param {SelectedRecordFilters} selectedFilters The selected filters to clean up
+   */
+  private _cleanSelectedFilters(selectedFilters: SelectedRecordFilters): void {
+    selectedFilters.creatorFilterList = selectedFilters.creatorFilterList.map(item => ({
+      value: item.value,
+      checked: item.checked,
+      display: item.display.replace(/ \(\d+\)/, '')
+    }));
+    selectedFilters.keywordFilterList = selectedFilters.keywordFilterList.map(item => ({
+      value: item.value,
+      checked: item.checked,
+      display: item.display.replace(/ \(\d+\)/, '')
+    }));
   }
 }

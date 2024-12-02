@@ -48,7 +48,7 @@ import { SelectedEntityFilters } from '../../models/selected-entity-filters.inte
 })
 export class EntitySearchFiltersComponent implements OnInit, OnChanges {
   filters: ListFilter[] = [];
-  recordFilterIndex = 0;
+  readonly recordFilterIndex = 0;
 
   @Input() typeFilters: FilterItem[] = [];
   @Output() changeFilter = new EventEmitter<SelectedEntityFilters>();

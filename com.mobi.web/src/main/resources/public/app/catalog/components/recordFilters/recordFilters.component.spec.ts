@@ -26,6 +26,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
+import { cloneDeep } from 'lodash';
 
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { CatalogStateService } from '../../../shared/services/catalogState.service';
@@ -206,8 +207,8 @@ describe('Record Filters component', function () {
     const secondKeywordFilterItem: FilterItem = {value: keywordObject('keyword2', 7), display: 'keyword2 (7)', checked: true};
     beforeEach(() => {
       component.ngOnInit();
-      component.filters[1].filterItems = [firstCreatorFilterItem];
-      component.filters[2].filterItems = [firstKeywordFilterItem];
+      component.filters[1].filterItems = [cloneDeep(firstCreatorFilterItem)];
+      component.filters[2].filterItems = [cloneDeep(firstKeywordFilterItem)];
       spyOn(component.changeFilter, 'emit');
     });
     describe('creatorTypeFilter should filter records', () => {
@@ -254,6 +255,30 @@ describe('Record Filters component', function () {
         });
         expect(component.filters[2].numChecked).toEqual(0);
       });
+    });
+    it('should update a filter\'s selected item and numChecked on updateValue call', () => {
+      const recordTypeFilter = component.filters[0];
+      expect(recordTypeFilter).toBeDefined();
+      expect(recordTypeFilter.filterItems.length).toEqual(catalogManagerStub.recordTypes.length);
+      const actualFilterItem = recordTypeFilter.filterItems[0];
+      actualFilterItem.checked = true;
+      recordTypeFilter.numChecked = 1;
+
+      component.updateFilterValue(component.recordTypeFilterIndex);
+      expect(actualFilterItem.checked).toBeFalse();
+      expect(recordTypeFilter.numChecked).toEqual(0);
+    });
+    it('should update a filter\'s selected items and numChecked on updateList call', () => {
+      const creatorFilter = component.filters[1];
+      expect(creatorFilter).toBeDefined();
+      expect(creatorFilter.filterItems).toEqual([firstCreatorFilterItem]);
+      const actualFilterItem = creatorFilter.filterItems[0];
+      expect(actualFilterItem.checked).toBeTrue();
+      expect(creatorFilter.numChecked).toEqual(1);
+
+      component.updateFilterList(component.creatorFilterIndex, [], [firstCreatorFilterItem]);
+      expect(actualFilterItem.checked).toBeFalse();
+      expect(creatorFilter.numChecked).toEqual(0);
     });
   });
   describe('contains the correct html', () => {

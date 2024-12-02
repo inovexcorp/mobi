@@ -27,12 +27,36 @@ const itemTitleSelector = `${itemCssSelector} div.record-body h2.record-title di
 const itemDescriptionSelector = `${itemCssSelector} div.record-body p inline-edit`;
 const paginationNext = `${searchResultsViewCssSelector} button.mat-paginator-navigation-next`;
 const paginationPrevious = `${searchResultsViewCssSelector} button.mat-paginator-navigation-previous`;
+const selectedFilterChipList = 'app-entity-search-page app-filters-selected-list mat-chip-list';
+const selectedFilterChipListXpath = '//app-entity-search-page//app-filters-selected-list//mat-chip-list';
+const filterItemXpath = '//app-entity-search-page//app-entity-search-filters//mat-expansion-panel//div//label//span';
 
-const createRecordItemXPathSelector = function(titleOfRecord) {
+const createRecordItemXPathSelector = function(titleOfEntity, titleOfRecord) {
   var selectors = ['//app-entity-search-page//app-search-result-item',
-    '//mat-card-title//span[text()[contains(., "' + titleOfRecord + '")]]',
+    `//mat-card-title//span[text()[contains(., "${titleOfEntity}")]]`,
     '//ancestor::mat-card'
-  ]
+  ];
+  if (titleOfRecord) {
+    selectors = selectors.concat([
+      `//mat-card-subtitle//span[text()[contains(.,"${titleOfRecord}")]]`,
+      '//ancestor::mat-card'
+    ]);
+  }
+  return selectors.join('');
+};
+
+const createFiltersXPathSelector = function(filterTypeHeader, filterType) {
+  var selectors = ['//app-entity-search-page',
+      '//app-entity-search-filters//div[contains(@class, "entity-search-filters")]//mat-expansion-panel-header',
+      '//mat-panel-title[contains(@class, "mat-expansion-panel-header-title")][text()[contains(.,"' + filterTypeHeader + '")]]//ancestor::mat-expansion-panel',
+      '//div[contains(@class, "mat-expansion-panel-content")]',
+      '//div[contains(@class, "filter-option")]//mat-checkbox']
+  if (filterType) {
+      selectors = selectors.concat([
+          '//span[contains(@class, "mat-checkbox-label")][text()[contains(., "' + filterType + '")]]',
+          '//ancestor::mat-checkbox//label[contains(@class, "mat-checkbox-layout")]'
+      ])
+  }
   return selectors.join('');
 };
 
@@ -65,8 +89,67 @@ const entitySearchPageCommands = {
       });
   },
 
-  openRecordItem: function(titleOfRecord) {
-    const recordItemSelector = createRecordItemXPathSelector(titleOfRecord);
+  verifyFilterItems: function(filterName, items) {
+      items.forEach(function(item) {
+          var filterCss = createFiltersXPathSelector(filterName, item);
+          this.useXpath()
+            .waitForElementVisible(filterCss);
+      }.bind(this));
+  },
+
+  toggleFilterItem: function(filterName, itemName) {
+      var filterXPathSelector = createFiltersXPathSelector(filterName, itemName);
+
+      return this.assert.elementPresent({selector: filterXPathSelector, locateStrategy: 'xpath'})
+          .click('xpath', filterXPathSelector, function (result) {
+                  this.assert.strictEqual(result.status, 0)
+              })
+          .waitForElementNotPresent('#spinner-full')
+  },
+
+  verifyFilterItemCheckedState: function(filterItemName, isChecked) {
+      const checkbox = `${filterItemXpath}[text()[contains(.,"${filterItemName}")]]/preceding-sibling::span//input`;
+      return this.useXpath()
+          .waitForElementVisible(`${checkbox}[@aria-checked="${isChecked ? 'true' : 'false'}"]`)
+  },
+
+  assertNumFilterChips: function(num) {
+      if (num === 0) {
+          return this.useCss()
+              .waitForElementVisible(selectedFilterChipList)
+              .expect.element(`${selectedFilterChipList} mat-chip`).to.not.be.present;
+      }
+      return this.useCss()
+          .waitForElementVisible(selectedFilterChipList)
+          .assert.elementsCount(`${selectedFilterChipList} mat-chip`, num);
+  },
+
+  assertFilterChipExists: function(chipName) {
+      return this.useCss()
+          .waitForElementVisible(selectedFilterChipList)
+          .useXpath()
+          .assert.visible(`${selectedFilterChipListXpath}//span[text()[contains(.,"${chipName}")]]`);
+  },
+
+  removeFilterChip: function(chipName) {
+      const iconXPath = `${selectedFilterChipListXpath}//span[text()[contains(.,"${chipName}")]]/following-sibling::mat-icon`;
+      return this.useCss()
+          .waitForElementVisible(selectedFilterChipList)
+          .useXpath()
+          .waitForElementVisible(iconXPath)
+          .click(iconXPath)
+          .waitForElementNotPresent(iconXPath);
+  },
+
+  resetFilters: function() {
+      const button = `${searchResultsViewCssSelector} app-filters-selected-list .reset-button-container button`;
+      return this.useCss()
+          .waitForElementVisible(button)
+          .click(button);
+  },
+
+  openRecordItem: function(titleOfEntity, titleOfRecord) {
+    const recordItemSelector = createRecordItemXPathSelector(titleOfEntity, titleOfRecord);
     const openButtonSelector = recordItemSelector + '//open-record-button//button';
 
     const openCommands = function() {

@@ -27,11 +27,7 @@ var Onto1 = path.resolve(__dirname + '/../../resources/rdf_files/shacl.ttl');
 // shapes graph
 var shapes_graph = path.resolve(__dirname + '/../../resources/rdf_files/UHTC_shapes.ttl');
 
-var filterItem = '//app-entity-search-page//app-entity-search-filters//mat-expansion-panel//div//label//span';
-var checkboxStatusItem = '//app-entity-search-page//app-entity-search-filters//mat-expansion-panel//div//label//input[@aria-checked="true"]/ancestor-or-self::mat-checkbox//label//span';
-
-var chipList = '//app-entity-search-page//app-filters-selected-list//mat-chip-list';
-var chipItem = chipList + '//span[text()[contains(.,"Shapes Graph Record")]]';
+var recordTypeFilters = ['Ontology Record', 'Shapes Graph Record', 'Mapping Record', 'Workflow Record'];
 
 module.exports = {
     '@tags': ['sanity', 'entity-search', 'entity-search-filters'],
@@ -66,94 +62,109 @@ module.exports = {
 
     'Step 6: Switch to Entity Shapes page': function (browser) {
         browser.globals.switchToPage(browser, 'entity-search', 'app-entity-search-page');
-        browser
+        browser.useCss()
             .waitForElementVisible('app-entity-search-page info-message p')
             .expect.element('app-entity-search-page app-search-results-list info-message p').text.to.contain('No search has been performed');
     },
 
     'Step 7: Verify Filter Appearance': function (browser) {
-        browser
-            .waitForElementVisible('app-entity-search-page app-entity-search-filters app-list-filters')
-            .useXpath()
-            .waitForElementVisible(filterItem + '[text()[contains(.,"Ontology Record")]]')
+        browser.page.entitySearchPage().verifyFilterItems('Record Type', recordTypeFilters);
+        browser.page.entitySearchPage().assertNumFilterChips(0);
     },
 
     'Step 8: Verify No Search Filter Logic': function (browser) {
-        browser.click(filterItem + '[text()[contains(.,"Ontology Record")]]')
+        browser.page.entitySearchPage().toggleFilterItem('Record Type', 'Ontology Record')
         browser.globals.wait_for_no_spinners(browser)
-        browser
-            .useCss()
+        browser.page.entitySearchPage().verifyFilterItemCheckedState('Ontology Record', true);
+        browser.page.entitySearchPage().assertNumFilterChips(1);
+        browser.page.entitySearchPage().assertFilterChipExists('Ontology Record');
+        browser.useCss()
             .expect.element('app-entity-search-page app-search-results-list info-message p').text.to.contain('No search has been performed');
-        browser
-            .useXpath()
-            .click(filterItem + '[text()[contains(.,"Ontology Record")]]')
+        
+        browser.page.entitySearchPage().toggleFilterItem('Record Type', 'Ontology Record')
+        browser.globals.wait_for_no_spinners(browser)
+        browser.page.entitySearchPage().verifyFilterItemCheckedState('Ontology Record', false);
+        browser.page.entitySearchPage().assertNumFilterChips(0);
     },
 
     'Step 9: Apply Search Text & validate results': function (browser) {
         browser.page.entitySearchPage().applySearchText('shapes');
-        browser.assert.elementsCount('app-entity-search-page app-search-results-list mat-card-title', 10);
-        browser
-            .useXpath()
-            .click(filterItem + '[text()[contains(.,"Shapes Graph Record")]]')
-            .useCss()
-        browser.assert.elementsCount('app-entity-search-page app-search-results-list mat-card-title', 2);
-        browser.expect.element('app-entity-search-page app-search-results-list open-record-button button').to.be.present;
+        browser.globals.wait_for_no_spinners(browser)
+        browser.useCss().assert.elementsCount('app-entity-search-page app-search-results-list mat-card-title', 10);
+        
+        browser.page.entitySearchPage().toggleFilterItem('Record Type', 'Shapes Graph Record')
+        browser.globals.wait_for_no_spinners(browser)
+        browser.page.entitySearchPage().verifyFilterItemCheckedState('Shapes Graph Record', true);
+        browser.page.entitySearchPage().assertNumFilterChips(1);
+        browser.page.entitySearchPage().assertFilterChipExists('Shapes Graph Record');
+        browser.useCss().assert.elementsCount('app-entity-search-page app-search-results-list mat-card-title', 2);
+        browser.useCss().expect.element('app-entity-search-page app-search-results-list open-record-button button').to.be.present;
         browser.page.entitySearchPage().verifyRecordListView();
     },
 
-    'Step 10: Verify selected filter chip list': function (browser) {
-        browser
-          .useXpath()
-          .waitForElementVisible(chipList)
-          .assert.elementsCount(chipItem, 1);
-        browser
-          .click(chipList + '//mat-icon')
+    'Step 10: Verify removing filter chip removes filter': function (browser) {
+        browser.page.entitySearchPage().removeFilterChip('Shapes Graph Record');
         browser.globals.wait_for_no_spinners(browser)
-        browser
-          .useXpath()
-          .assert.not.elementPresent(chipItem)
-          .click(filterItem + '[text()[contains(.,"Shapes Graph Record")]]')
-          .waitForElementVisible(chipList)
-          .assert.elementsCount(chipItem, 1);
+        browser.page.entitySearchPage().assertNumFilterChips(0);
+        browser.page.entitySearchPage().verifyFilterItemCheckedState('Shapes Graph Record', false);
+        browser.useCss().assert.elementsCount('app-entity-search-page app-search-results-list mat-card-title', 10);
+        
+        // Toggle filters on for the reset test next
+        browser.page.entitySearchPage().toggleFilterItem('Record Type', 'Ontology Record')
+        browser.globals.wait_for_no_spinners(browser)
+        browser.page.entitySearchPage().toggleFilterItem('Record Type', 'Shapes Graph Record')
+        browser.globals.wait_for_no_spinners(browser)
+        browser.page.entitySearchPage().assertNumFilterChips(2);
+        browser.page.entitySearchPage().verifyFilterItemCheckedState('Ontology Record', true);
+        browser.page.entitySearchPage().verifyFilterItemCheckedState('Shapes Graph Record', true);
     },
 
-    'Step 11: Navigate Away and Back': function (browser) {
+    'Step 11: Verify reset button clears filter chips' : function(browser) {
+        browser.page.entitySearchPage().resetFilters();
+        browser.globals.wait_for_no_spinners(browser)
+        browser.page.entitySearchPage().assertNumFilterChips(0);
+        browser.page.entitySearchPage().verifyFilterItemCheckedState('Ontology Record', false);
+        browser.page.entitySearchPage().verifyFilterItemCheckedState('Shapes Graph Record', false);
+        browser.useCss().assert.elementsCount('app-entity-search-page app-search-results-list mat-card-title', 10);
+
+        // Toggle filter on for the navigation test
+        browser.page.entitySearchPage().toggleFilterItem('Record Type', 'Shapes Graph Record')
+        browser.globals.wait_for_no_spinners(browser)
+        browser.page.entitySearchPage().assertNumFilterChips(1);
+    },
+
+    'Step 12: Navigate Away and Back': function (browser) {
         browser.globals.switchToPage(browser, 'shapes-graph-editor', 'shapes-graph-editor-page')
         browser.globals.wait_for_no_spinners(browser)
         browser.globals.switchToPage(browser, 'entity-search', 'app-entity-search-page');
         browser.globals.wait_for_no_spinners(browser)
-        browser.assert.elementsCount('app-entity-search-page app-search-results-list mat-card-title', 2);
-        browser.expect.element('app-entity-search-page app-search-results-list open-record-button button').to.be.present;
-        browser
-            .useXpath()
-            .assert.not.elementPresent(checkboxStatusItem + '[text()[contains(.,"Ontology Record")]]')
-            .assert.visible(checkboxStatusItem + '[text()[contains(.,"Shapes Graph Record")]]')
+        browser.useCss().assert.elementsCount('app-entity-search-page app-search-results-list mat-card-title', 2);
+        browser.useCss().expect.element('app-entity-search-page app-search-results-list open-record-button button').to.be.present;
+        browser.page.entitySearchPage().assertNumFilterChips(1);
+        browser.page.entitySearchPage().verifyFilterItemCheckedState('Ontology Record', false);
+        browser.page.entitySearchPage().verifyFilterItemCheckedState('Shapes Graph Record', true);
     },
 
-    'Step 12: Logout and Log Back In': function (browser) {
+    'Step 13: Logout and Log Back In': function (browser) {
         browser.useCss()
         browser.globals.logout(browser)
         browser.globals.initial_steps(browser, adminUsername, adminPassword)
     },
 
-    'Step 13: Verify Cleared State': function (browser) {
+    'Step 14: Verify Cleared State': function (browser) {
         browser.globals.switchToPage(browser, 'entity-search', 'app-entity-search-page');
-        browser
+        browser.useCss()
             .waitForElementVisible('app-entity-search-page info-message p')
             .expect.element('app-entity-search-page app-search-results-list info-message p').text.to.contain('No search has been performed');
-        browser.assert.not.elementPresent('app-entity-search-page app-search-results-list mat-card-title');
-        browser
-            .useXpath()
-            .assert.not.elementPresent(checkboxStatusItem + '[text()[contains(.,"Ontology Record")]]')
-            .assert.not.elementPresent(checkboxStatusItem + '[text()[contains(.,"Shapes Graph Record")]]')
-            .assert.not.elementPresent(checkboxStatusItem + '[text()[contains(.,"Workflow Record")]]')
-            .assert.not.elementPresent(checkboxStatusItem + '[text()[contains(.,"Mapping Record")]]')
+        browser.useCss().assert.not.elementPresent('app-entity-search-page app-search-results-list mat-card-title');
+        browser.page.entitySearchPage().assertNumFilterChips(0);
+        browser.useCss().expect.element('input.mat-checkbox-input[aria-checked=true]').to.not.be.present;
     },
 
-    'Step 14: Ensure Selected types are Not still Being Stored': function (browser) {
+    'Step 15: Ensure Selected types are not still Being Stored': function (browser) {
         browser.page.entitySearchPage().applySearchText('shapes');
-        browser.assert.elementsCount('app-entity-search-page app-search-results-list mat-card-title',10);
-        browser.expect.element('app-entity-search-page app-search-results-list open-record-button button').to.be.present;
+        browser.useCss().assert.elementsCount('app-entity-search-page app-search-results-list mat-card-title', 10);
+        browser.useCss().expect.element('app-entity-search-page app-search-results-list open-record-button button').to.be.present;
         browser.page.entitySearchPage().verifyRecordListView();
     },
 }

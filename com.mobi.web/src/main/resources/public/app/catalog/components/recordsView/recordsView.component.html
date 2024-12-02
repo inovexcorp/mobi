@@ -41,6 +41,10 @@
                         </mat-select>
                     </mat-form-field>
                 </div>
+                <app-filters-selected-list
+                        (selectedFiltersChange)="changeFilter($event)"
+                        [selectedFilters]="selectedFilters"
+                ></app-filters-selected-list>
                 <div class="results-list flex-1 vertical-scroll p-2">
                     <div *ngIf="!records.length">
                         <info-message>No records found</info-message>
