@@ -48,6 +48,7 @@ import { RecordFiltersComponent } from '../recordFilters/recordFilters.component
 import { CATALOG } from '../../../prefixes';
 import { FilterItem } from '../../../shared/models/filterItem.interface';
 import { SelectedRecordFilters } from '../../models/selected-record-filters.interface';
+import { FiltersSelectedListComponent } from '../../../shared/components/filters-selected-list/filters-selected-list.component';
 import { RecordsViewComponent } from './recordsView.component';
 
 describe('Records View component', () => {
@@ -88,7 +89,8 @@ describe('Records View component', () => {
         MockComponent(InfoMessageComponent),
         MockComponent(RecordFiltersComponent),
         MockComponent(RecordCardComponent),
-        MockComponent(SearchBarComponent)
+        MockComponent(SearchBarComponent),
+        MockComponent(FiltersSelectedListComponent)
       ],
       providers: [
         MockProvider(CatalogManagerService),
@@ -125,6 +127,18 @@ describe('Records View component', () => {
       expect(component.setRecords).toHaveBeenCalledWith(catalogStateStub.recordSearchText, catalogStateStub.recordFilterType, catalogStateStub.keywordFilterList, catalogStateStub.creatorFilterList, catalogStateStub.recordSortOption);
       expect(catalogStateStub.currentRecordPage).toEqual(0);
     });
+    it('with the currently selected record filters', () => {
+      spyOn(component, 'setRecords');
+      catalogStateStub.recordFilterType = { value: 'test', display: '', checked: true };
+      catalogStateStub.keywordFilterList = [{ value: 'keyword1', display: '', checked: true }];
+      catalogStateStub.creatorFilterList = [{ value: 'urn:userA', display: '', checked: true }];
+      component.ngOnInit();
+      expect(component.selectedFilters).toEqual({
+        recordType: catalogStateStub.recordFilterType, 
+        keywordFilterList: catalogStateStub.keywordFilterList, 
+        creatorFilterList: catalogStateStub.creatorFilterList
+      });
+    });
   });
   describe('controller methods', () => {
     it('should open a Record', () => {
@@ -142,10 +156,14 @@ describe('Records View component', () => {
       spyOn(component, 'setRecords');
       const selectedFilters: SelectedRecordFilters = {
         recordType: { value: 'test', display: '', checked: true }, 
-        keywordFilterList: [{ value: 'keyword1', display: '', checked: true }], 
-        creatorFilterList: [{ value: 'urn:userA', display: '', checked: true }]
+        keywordFilterList: [{ value: 'keyword1', display: 'keyword1 (1)', checked: true }], 
+        creatorFilterList: [{ value: 'urn:userA', display: 'UserA (2)', checked: true }]
       };
       component.changeFilter(selectedFilters);
+      expect(component.selectedFilters).toBeDefined();
+      expect(component.selectedFilters.recordType).toEqual(selectedFilters.recordType);
+      expect(component.selectedFilters.keywordFilterList).toEqual([{ value: 'keyword1', display: 'keyword1', checked: true }]);
+      expect(component.selectedFilters.creatorFilterList).toEqual([{ value: 'urn:userA', display: 'UserA', checked: true }]);
       expect(catalogStateStub.currentRecordPage).toEqual(0);
       expect(component.setRecords).toHaveBeenCalledWith(catalogStateStub.recordSearchText, selectedFilters.recordType, selectedFilters.keywordFilterList, selectedFilters.creatorFilterList, catalogStateStub.recordSortOption);
     });

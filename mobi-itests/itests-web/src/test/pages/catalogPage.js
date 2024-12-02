@@ -27,6 +27,9 @@ const recordsViewSearchBarCssSelector = `${recordsViewCssSelector} .d-flex .sear
 const recordBodyTitleSelector = `${recordViewCssSelector} div.record-body h2.record-title div.inline-edit`;
 const recordBodyDescriptionSelector = `${recordViewCssSelector} div.record-body p inline-edit`;
 const recordManageButtonSelector = `${recordViewCssSelector} div.record-sidebar manage-record-button button`;
+const selectedFilterChipList = `${recordsViewCssSelector} app-filters-selected-list mat-chip-list`;
+const selectedFilterChipListXpath = '//catalog-page//records-view//app-filters-selected-list//mat-chip-list';
+const filterItemXpath = '//catalog-page//record-filters//mat-expansion-panel//div//label//span';
 
 var createRecordFiltersXPathSelector = function(filterTypeHeader, filterType) {
     var selectors = ['//catalog-page',
@@ -68,6 +71,49 @@ const catalogPageCommands = {
             .expect.element(recordsViewSearchBarCssSelector).text.to.contain('');
     },
 
+    verifyFilterItems: function(filterName, items) {
+        items.forEach(function(item) {
+            var filterCss = createRecordFiltersXPathSelector(filterName, item);
+            this.useXpath()
+              .waitForElementVisible(filterCss);
+        }.bind(this));
+    },
+
+    assertNumFilterChips: function(num) {
+        if (num === 0) {
+            return this.useCss()
+                .waitForElementVisible(selectedFilterChipList)
+                .expect.element(`${selectedFilterChipList} mat-chip`).to.not.be.present;
+        }
+        return this.useCss()
+            .waitForElementVisible(selectedFilterChipList)
+            .assert.elementsCount(`${selectedFilterChipList} mat-chip`, num);
+    },
+
+    assertFilterChipExists: function(chipName) {
+        return this.useCss()
+            .waitForElementVisible(selectedFilterChipList)
+            .useXpath()
+            .assert.visible(`${selectedFilterChipListXpath}//span[text()[contains(.,"${chipName}")]]`);
+    },
+
+    removeFilterChip: function(chipName) {
+        const iconXPath = `${selectedFilterChipListXpath}//span[text()[contains(.,"${chipName}")]]/following-sibling::mat-icon`;
+        return this.useCss()
+            .waitForElementVisible(selectedFilterChipList)
+            .useXpath()
+            .waitForElementVisible(iconXPath)
+            .click(iconXPath)
+            .waitForElementNotPresent(iconXPath);
+    },
+
+    resetFilters: function() {
+        const button = `${recordsViewCssSelector} app-filters-selected-list .reset-button-container button`;
+        return this.useCss()
+            .waitForElementVisible(button)
+            .click(button);
+    },
+
     applySearchText: function(searchText) {
         return this.useCss()
             .waitForElementVisible(recordsViewSearchBarCssSelector)
@@ -87,6 +133,12 @@ const catalogPageCommands = {
             .waitForElementVisible('xpath', '//div[contains(@class, "mat-select-panel")]//mat-option')
             .click('xpath', '//div[contains(@class, "mat-select-panel")]//mat-option//span[contains(@class,"mat-option-text")][text()[contains(., "' + orderString + '")]]')
             .waitForElementNotPresent('#spinner-full');
+    },
+
+    verifyFilterItemCheckedState: function(filterItemName, isChecked) {
+        const checkbox = `${filterItemXpath}[text()[contains(.,"${filterItemName}")]]/preceding-sibling::span//input`;
+        return this.useXpath()
+            .waitForElementVisible(`${checkbox}[@aria-checked="${isChecked ? 'true' : 'false'}"]`)
     },
 
     applyKeywordFilter: function(keyword) {
@@ -196,7 +248,8 @@ module.exports = {
         searchBar: recordsViewSearchBarCssSelector,
         recordTitle: recordBodyTitleSelector,
         recordDescription: recordBodyDescriptionSelector,
-        recordManageButton: recordManageButtonSelector
+        recordManageButton: recordManageButtonSelector,
+        selectedFilterChipList: selectedFilterChipList
     },
     commands: [catalogPageCommands, catalogRecordCommands]
 }

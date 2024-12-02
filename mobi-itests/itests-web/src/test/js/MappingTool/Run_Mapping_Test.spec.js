@@ -290,7 +290,6 @@ module.exports = {
         browser.globals.switchToPage(browser, 'discover', 'discover-page');
         browser.globals.wait_for_no_spinners(browser)
         browser
-            // .click('xpath', '//div//ul//a[@class="nav-link"][@href="#/discover"]')
             .click('dataset-select mat-form-field')
             .waitForElementVisible('dataset-select mat-form-field')
             .useXpath()
@@ -306,22 +305,22 @@ module.exports = {
             .assert.visible('//mat-card//mat-card-title//span[text()[contains(., "Crystal Structure")]]')
             .assert.visible('//mat-card//mat-card-title//span[text()[contains(., "UHTC Material")]]')
     },
-    // Adding entity search test bellow
-    // since this test doesnt have a page object
-    'Step 26: Perform a new search': function (browser) {
+    // Adding entity search test below
+    // since this test doesn't have a page object
+    'Step 26: Perform a new entity search for the mapping': function (browser) {
         browser.globals.switchToPage(browser, 'entity-search', 'app-entity-search-page');
         browser.waitForElementVisible('app-entity-search-page')
-          .page.entitySearchPage().clearEntitySearchBar();
+            .page.entitySearchPage().clearEntitySearchBar();
         browser.page.entitySearchPage().applySearchText('Density');
         browser.useCss()
-          .waitForElementVisible('app-entity-search-page app-search-results-list mat-card-title')
+            .waitForElementVisible('app-entity-search-page app-search-results-list mat-card-title')
     },
-    'Step 27: Open SACHL entity' : function(browser) {
+    'Step 27: Open Mapping from entity search result' : function(browser) {
         browser.globals.wait_for_no_spinners(browser);
-        browser.click('app-entity-search-page app-search-results-list app-search-result-item:nth-child(2) button')
+        browser.page.entitySearchPage().openRecordItem('Density', 'UHTC material Mapping');
         browser.globals.wait_for_no_spinners(browser);
-        browser.assert.not.elementPresent('app-entity-search-page app-search-results-list  open-record-button button');
+        browser.assert.not.elementPresent('app-entity-search-page app-search-results-list open-record-button button');
         browser.waitForElementVisible('mapping-select-page .mapping-info')
-          .assert.textContains('mapping-select-page .mapping-info h3', 'UHTC material Mapping');
+            .assert.textContains('mapping-select-page .mapping-info h3', 'UHTC material Mapping');
     }
 }

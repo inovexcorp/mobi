@@ -192,7 +192,7 @@ module.exports = {
     browser.globals.switchToPage(browser, 'entity-search', 'app-entity-search-page');
     browser.page.entitySearchPage().openRecordItem('UHTC Shapes Graph');
     browser.globals.wait_for_no_spinners(browser);
-    browser.assert.not.elementPresent('app-entity-search-page app-search-results-list  open-record-button button');
+    browser.assert.not.elementPresent('app-entity-search-page app-search-results-list open-record-button button');
     browser.waitForElementVisible('shapes-graph-details .entity-name')
       .assert.textContains('shapes-graph-details .entity-name', 'UHTC Shapes Graph');
     browser.page.editorPage().assert.valueEquals('@editorBranchSelectInput', 'Entity:UHTC Test Branch-2');
@@ -215,9 +215,9 @@ module.exports = {
   },
   'Step 22: Open Workflow entity' : function(browser) {
     browser.globals.wait_for_no_spinners(browser);
-    browser.click('app-entity-search-page app-search-results-list app-search-result-item:nth-child(1) button')
+    browser.page.entitySearchPage().openRecordItem('Action');
     browser.globals.wait_for_no_spinners(browser);
-    browser.assert.not.elementPresent('app-entity-search-page app-search-results-list  open-record-button button');
+    browser.assert.not.elementPresent('app-entity-search-page app-search-results-list open-record-button button');
     browser.waitForElementVisible('app-workflow-record .workflow-record-header .record-title')
       .assert.textContains('app-workflow-record .workflow-record-header .record-title', 'Entity:Workflow');
   }

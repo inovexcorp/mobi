@@ -21,7 +21,7 @@
  #L%
  -->
 <div class="filters-selected-list filter-chips d-flex">
-  <mat-chip-list>
+  <mat-chip-list class="flex-1 remove-min-width">
     <mat-chip *ngFor="let chip of filterChips; index as i"
          [removable]="true"
          (removed)="removeFilter(chip, i)">
@@ -31,4 +31,7 @@
       <mat-icon matChipRemove>cancel</mat-icon>
     </mat-chip>
   </mat-chip-list>
+  <div class="reset-button-container">
+    <button type="button" mat-button color="primary" (click)="reset()" [disabled]="!filterChips.length">Reset</button>
+  </div>
 </div>
