@@ -41,7 +41,7 @@ import { of, throwError } from 'rxjs';
 
 import { cleanStylesFromDOM } from '../../../../../public/test/ts/Shared';
 import { OntologyDetails } from '../../../datasets/models/ontologyDetails.interface';
-import { DCTERMS, ONTOLOGYEDITOR, OWL } from '../../../prefixes';
+import { CATALOG, DCTERMS, OWL } from '../../../prefixes';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
 import { InfoMessageComponent } from '../../../shared/components/infoMessage/infoMessage.component';
 import { ProgressSpinnerService } from '../../../shared/components/progress-spinner/services/progressSpinner.service';
@@ -75,7 +75,7 @@ describe('Imports Overlay component', function() {
     const ontologyRecord: JSONLDObject = {
         '@id': recordId,
         [`${DCTERMS}title`]: [{ '@value': 'title' }],
-        [`${ONTOLOGYEDITOR}ontologyIRI`]: [{ '@id': ontologyIRI }]
+        [`${CATALOG}trackedIdentifier`]: [{ '@id': ontologyIRI }]
     };
     const ontologyDetails: OntologyDetails = {
         recordId,
@@ -262,7 +262,7 @@ describe('Imports Overlay component', function() {
                 expect(component.serverError).toEqual(error);
             }));
             it('successfully', fakeAsync(function() {
-                spyOn(component, 'getOntologyIRI').and.returnValue(ontologyIRI);
+                ontologyStateStub.getIdentifierIRI.and.returnValue(ontologyIRI);
                 const ontology2 = {'@id': 'ontology2'};
                 const ontology3 = {
                   '@id': 'ontology3',
@@ -307,9 +307,6 @@ describe('Imports Overlay component', function() {
                 expect(ontology.selected).toBe(true);
                 expect(component.selectedOntologies).toEqual([ontology]);
             });
-        });
-        it('should get the ontology IRI of an OntologyRecord', function() {
-            expect(component.getOntologyIRI(ontologyRecord)).toEqual(ontologyIRI);
         });
         describe('should update the appropriate variables if clicking the', function() {
             beforeEach(function() {

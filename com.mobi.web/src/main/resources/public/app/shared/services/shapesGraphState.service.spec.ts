@@ -32,7 +32,7 @@ import {
 } from '../../../test/ts/Shared';
 import { CatalogDetails } from './versionedRdfState.service';
 import { CatalogManagerService } from './catalogManager.service';
-import { DCTERMS, SHAPESGRAPHEDITOR } from '../../prefixes';
+import { CATALOG, DCTERMS } from '../../prefixes';
 import { Difference } from '../models/difference.class';
 import { EventWithPayload } from '../models/eventWithPayload.interface';
 import { JSONLDObject } from '../models/JSONLDObject.interface';
@@ -137,7 +137,7 @@ describe('Shapes Graph State service', function() {
     it('if provided JSON-LD', function() {
       expect(service.getIdentifierIRI({
         '@id': 'recordId', 
-        [`${SHAPESGRAPHEDITOR}shapesGraphIRI`]: [{ '@id': 'shapesGraphIRI' }]
+        [`${CATALOG}trackedIdentifier`]: [{ '@id': 'shapesGraphIRI' }]
       })).toEqual('shapesGraphIRI');
     });
     it('from the current listItem', function() {

@@ -39,7 +39,7 @@ import { of, throwError } from 'rxjs';
 import {
     cleanStylesFromDOM,
 } from '../../../../../public/test/ts/Shared';
-import { DCTERMS, ONTOLOGYEDITOR } from '../../../prefixes';
+import { CATALOG, DCTERMS, ONTOLOGYEDITOR } from '../../../prefixes';
 import { BranchSelectComponent } from '../../../shared/components/branchSelect/branchSelect.component';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
 import { Difference } from '../../../shared/models/difference.class';
@@ -77,7 +77,7 @@ describe('Run Mapping Ontology Overlay component', function() {
     const record: JSONLDObject = {
       '@id': recordId,
       [`${DCTERMS}title`]: [{ '@value': 'title' }],
-      [`${ONTOLOGYEDITOR}ontologyIRI`]: [{ '@id': ontologyIRI }]
+      [`${CATALOG}trackedIdentifier`]: [{ '@id': ontologyIRI }]
     };
     const branch: JSONLDObject = {
       '@id': branchId,

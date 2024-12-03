@@ -95,6 +95,7 @@ import com.mobi.ontology.impl.repository.SimpleIndividual;
 import com.mobi.ontology.impl.repository.SimpleObjectProperty;
 import com.mobi.ontology.rest.json.EntityNames;
 import com.mobi.ontology.utils.cache.OntologyCache;
+import com.mobi.ontology.utils.imports.ImportsResolver;
 import com.mobi.persistence.utils.impl.SimpleBNodeService;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.repository.base.OsgiRepositoryWrapper;
@@ -247,6 +248,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
     private static EngineManager engineManager;
     private static OntologyCache ontologyCache;
     private static SimpleBNodeService bNodeService;
+    private static ImportsResolver importsResolver;
     private static PDP pdp;
 
     @Mock
@@ -284,6 +286,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         configProvider = Mockito.mock(CatalogConfigProvider.class);
         ontologyManager = Mockito.mock(OntologyManager.class);
         engineManager = Mockito.mock(EngineManager.class);
+        importsResolver = Mockito.mock(ImportsResolver.class);
         pdp = Mockito.mock(PDP.class);
 
         ontologyCache = Mockito.mock(OntologyCache.class);
@@ -298,6 +301,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         rest.compiledResourceManager = compiledResourceManager;
         rest.engineManager = engineManager;
         rest.ontologyCache = ontologyCache;
+        rest.importsResolver = importsResolver;
         rest.pdp = pdp;
 
         bNodeService = new SimpleBNodeService();
@@ -394,7 +398,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         basicHierarchyResults = getResource("/basic-hierarchy.json");
         propertyToRanges = getResource("/propertyToRanges.json");
 
-        record.setOntologyIRI(ontologyIRI);
+        record.setTrackedIdentifier(ontologyIRI);
         missingIRI = vf.createIRI("http://mobi.com/missing");
         Resource class1b = vf.createIRI("http://mobi.com/ontology#Class1b");
         IRI subClassOf = vf.createIRI("http://www.w3.org/2000/01/rdf-schema#subClassOf");
@@ -6977,8 +6981,8 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
     @Test
     public void testGetOntologyFromIRI() {
         when(response.getDecision()).thenReturn(Decision.PERMIT);
-        when(ontologyManager.getOntologyRecordResource(any(Resource.class))).thenReturn(Optional.of(recordId));
-        when(ontologyManager.retrieveOntologyByIRI(any(Resource.class))).thenReturn(Optional.of(ontology));
+        when(importsResolver.getRecordIRIFromOntologyIRI(any(Resource.class))).thenReturn(Optional.of(recordId));
+        when(ontologyManager.retrieveOntology(any(Resource.class))).thenReturn(Optional.of(ontology));
 
         Response response = target().path("ontologies/ontology/" + encode(recordId.stringValue())).request()
                 .accept(MediaType.APPLICATION_OCTET_STREAM_TYPE).get();
@@ -6989,8 +6993,8 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
     @Test
     public void testGetOntologyFromIRIWithFormat() {
         when(response.getDecision()).thenReturn(Decision.PERMIT);
-        when(ontologyManager.getOntologyRecordResource(any(Resource.class))).thenReturn(Optional.of(recordId));
-        when(ontologyManager.retrieveOntologyByIRI(any(Resource.class))).thenReturn(Optional.of(ontology));
+        when(importsResolver.getRecordIRIFromOntologyIRI(any(Resource.class))).thenReturn(Optional.of(recordId));
+        when(ontologyManager.retrieveOntology(any(Resource.class))).thenReturn(Optional.of(ontology));
 
         Response response = target().path("ontologies/ontology/" + encode(recordId.stringValue()))
                 .queryParam("format", "jsonld").request().get();
@@ -7001,8 +7005,8 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
     @Test
     public void testGetOntologyFromIRIwithFileExtension() {
         when(response.getDecision()).thenReturn(Decision.PERMIT);
-        when(ontologyManager.getOntologyRecordResource(any(Resource.class))).thenReturn(Optional.of(recordId));
-        when(ontologyManager.retrieveOntologyByIRI(any(Resource.class))).thenReturn(Optional.of(ontology));
+        when(importsResolver.getRecordIRIFromOntologyIRI(any(Resource.class))).thenReturn(Optional.of(recordId));
+        when(ontologyManager.retrieveOntology(any(Resource.class))).thenReturn(Optional.of(ontology));
 
         Response response = target().path("ontologies/ontology/" + encode(recordId.stringValue()) + ".jsonld")
                 .request().get();
@@ -7012,7 +7016,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
 
     @Test
     public void testGetOntologyFromIRINoPermissions() {
-        when(ontologyManager.getOntologyRecordResource(any(Resource.class))).thenReturn(Optional.of(recordId));
+        when(importsResolver.getRecordIRIFromOntologyIRI(any(Resource.class))).thenReturn(Optional.of(recordId));
         when(response.getDecision()).thenReturn(Decision.DENY);
 
         Response response = target().path("ontologies/ontology/" + encode(recordId.stringValue()))
@@ -7024,7 +7028,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
     @Test
     public void testGetOntologyFromIRINoRecord() {
         when(response.getDecision()).thenReturn(Decision.PERMIT);
-        when(ontologyManager.getOntologyRecordResource(any(Resource.class))).thenReturn(Optional.empty());
+        when(importsResolver.getRecordIRIFromOntologyIRI(any(Resource.class))).thenReturn(Optional.empty());
 
         Response response = target().path("ontologies/ontology/" + encode("https://www.non-exists.com")).request()
                 .accept(MediaType.APPLICATION_OCTET_STREAM_TYPE).get();
@@ -7035,7 +7039,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
     @Test
     public void testGetOntologyFromIRIInvalidIRI() {
         when(response.getDecision()).thenReturn(Decision.PERMIT);
-        when(ontologyManager.getOntologyRecordResource(any(Resource.class))).thenReturn(Optional.empty());
+        when(importsResolver.getRecordIRIFromOntologyIRI(any(Resource.class))).thenReturn(Optional.empty());
 
         Response response = target().path("ontologies/ontology/" + encode("www.non-exists.com")).request()
                 .accept(MediaType.APPLICATION_OCTET_STREAM_TYPE).get();

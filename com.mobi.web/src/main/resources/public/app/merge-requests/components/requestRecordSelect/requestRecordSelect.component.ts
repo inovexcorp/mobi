@@ -58,9 +58,9 @@ export class RequestRecordSelectComponent implements OnInit {
         pageIndex: 0
     };
     versionedRDFRecordIriMapping = {
-        [ONTOLOGYEDITOR + 'OntologyRecord']: ONTOLOGYEDITOR + 'ontologyIRI',
-        [DELIM + 'MappingRecord']: 'id',
-        [SHAPESGRAPHEDITOR + 'ShapesGraphRecord']: SHAPESGRAPHEDITOR + 'shapesGraphIRI',
+        [`${ONTOLOGYEDITOR}OntologyRecord`]: `${CATALOG}trackedIdentifier`,
+        [`${DELIM}MappingRecord`]: 'id',
+        [`${SHAPESGRAPHEDITOR}ShapesGraphRecord`]: `${CATALOG}trackedIdentifier`,
         'default': 'id'
     };
 
@@ -99,7 +99,7 @@ export class RequestRecordSelectComponent implements OnInit {
     }
     _mapToMergeRequestRecord(jsonldrecord: JSONLDObject): MergeRequestRecord {
         const recordType = find(Object.keys(this.versionedRDFRecordIriMapping), type => includes(get(jsonldrecord, '@type', []), type)) || CATALOG + 'Record';
-        const iriMapping = this.versionedRDFRecordIriMapping['type' === CATALOG + 'Record' ? 'default' : recordType]
+        const iriMapping = this.versionedRDFRecordIriMapping['type' === CATALOG + 'Record' ? 'default' : recordType];
         const mergeRequestRecord: MergeRequestRecord = {
             jsonld: jsonldrecord,
             recordTypeIri: recordType,

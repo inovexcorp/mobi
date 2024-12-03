@@ -23,13 +23,16 @@ package com.mobi.ontology.utils.imports.impl;
  * #L%
  */
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
@@ -37,6 +40,7 @@ import static org.mockito.Mockito.when;
 import com.mobi.catalog.api.CompiledResourceManager;
 import com.mobi.catalog.api.ThingManager;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
+import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.ontology.core.api.OntologyManager;
@@ -52,6 +56,7 @@ import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.ModelFactory;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.rio.RDFFormat;
@@ -145,6 +150,12 @@ public class ImportsResolverImplTest extends OrmEnabledTestCase {
         repo.setDelegate(new SailRepository(new MemoryStore()));
         when(repo.getRepositoryID()).thenReturn("repoCacheId");
 
+        try (RepositoryConnection conn = repo.getConnection()) {
+            conn.add(recordIRI, RDF.TYPE, vf.createIRI(VersionedRDFRecord.TYPE));
+            conn.add(recordIRI, vf.createIRI(VersionedRDFRecord.catalog_IRI), catalogIRI);
+            conn.add(recordIRI, vf.createIRI(VersionedRDFRecord.trackedIdentifier_IRI), ontologyIRI);
+        }
+
         when(record.getMasterBranch_resource()).thenReturn(Optional.of(branchIRI));
         when(masterBranch.getHead_resource()).thenReturn(Optional.of(headCommitIRI));
 
@@ -152,9 +163,8 @@ public class ImportsResolverImplTest extends OrmEnabledTestCase {
         when(configProvider.getRepository()).thenReturn(repo);
         when(thingManager.getExpectedObject(eq(recordIRI), eq(versionedRdfRecordFactory), any(RepositoryConnection.class))).thenReturn(record);
         when(thingManager.getExpectedObject(eq(branchIRI), eq(branchFactory), any(RepositoryConnection.class))).thenReturn(masterBranch);
-        when(ontologyManager.getOntologyRecordResource(any(Resource.class))).thenReturn(Optional.empty());
-        when(ontologyManager.getOntologyRecordResource(eq(ontologyIRI))).thenReturn(Optional.of(recordIRI));
-        when(ontologyManager.getOntologyRecordResource(eq(vf.createIRI("urn:localOntology")))).thenReturn(Optional.of(recordIRI));
+        when(thingManager.optObject(any(Resource.class), eq(versionedRdfRecordFactory), any(RepositoryConnection.class))).thenReturn(Optional.empty());
+        when(thingManager.optObject(eq(recordIRI), eq(versionedRdfRecordFactory), any(RepositoryConnection.class))).thenReturn(Optional.of(record));
 
         when(compiledResourceManager.getCompiledResourceFile(eq(headCommitIRI), eq(RDFFormat.TURTLE), any(RepositoryConnection.class))).thenReturn(Paths.get(getClass().getResource("/Ontology.ttl").getPath()).toFile());
 
@@ -171,6 +181,8 @@ public class ImportsResolverImplTest extends OrmEnabledTestCase {
         closeable.close();
         httpUrlStreamHandler.resetConnections();
     }
+
+    // retrieveOntologyFromWebFile(Resource resource)
 
     @Test
     public void retrieveOntologyFromWebRdfTest() throws Exception {
@@ -329,17 +341,18 @@ public class ImportsResolverImplTest extends OrmEnabledTestCase {
         assertModelFromWebPresent(url);
     }
 
+    // retrieveOntologyLocalFile(Resource ontologyIRI)
+
     @Test
     public void retrieveOntologyLocalFileTest() {
-        IRI iri = vf.createIRI("urn:localOntology");
-        Optional<File> local = resolver.retrieveOntologyLocalFile(iri, ontologyManager);
+        Optional<File> local = resolver.retrieveOntologyLocalFile(ontologyIRI);
         assertTrue(local.isPresent());
     }
 
     @Test
     public void retrieveOntologyLocalFileDoesNotExistTest() {
-        IRI iri = vf.createIRI("urn:localOntology1");
-        Optional<File> local = resolver.retrieveOntologyLocalFile(iri, ontologyManager);
+        IRI iri = vf.createIRI("urn:localOntology");
+        Optional<File> local = resolver.retrieveOntologyLocalFile(iri);
         assertFalse(local.isPresent());
     }
 
@@ -347,9 +360,62 @@ public class ImportsResolverImplTest extends OrmEnabledTestCase {
     public void retrieveOntologyLocalFileMasterDoesNotExistTest() {
         when(masterBranch.getHead_resource()).thenReturn(Optional.empty());
 
-        IRI iri = vf.createIRI("urn:localOntology");
-        Optional<File> local = resolver.retrieveOntologyLocalFile(iri, ontologyManager);
+        Optional<File> local = resolver.retrieveOntologyLocalFile(ontologyIRI);
         assertFalse(local.isPresent());
+    }
+
+    // retrieveOntologyLocalFileFromRecordIRI(Resource recordIRI)
+
+    @Test
+    public void retrieveOntologyLocalFileFromRecordIRITest() {
+        Optional<File> local = resolver.retrieveOntologyLocalFileFromRecordIRI(recordIRI);
+        assertTrue(local.isPresent());
+    }
+
+    @Test
+    public void retrieveOntologyLocalFileFromRecordIRIDoesNotExistTest() {
+        IRI iri = vf.createIRI("urn:recordA");
+        Optional<File> local = resolver.retrieveOntologyLocalFileFromRecordIRI(iri);
+        assertFalse(local.isPresent());
+    }
+
+    @Test
+    public void retrieveOntologyLocalFileFromRecordIRIMasterDoesNotExistTest() {
+        when(masterBranch.getHead_resource()).thenReturn(Optional.empty());
+
+        Optional<File> local = resolver.retrieveOntologyLocalFileFromRecordIRI(recordIRI);
+        assertFalse(local.isPresent());
+    }
+
+    // retrieveOntologyLocalFileFromCommitIRI(Resource commitIRI)
+
+    @Test
+    public void retrieveOntologyLocalFileFromCommitIRITest() {
+        File local = resolver.retrieveOntologyLocalFileFromCommitIRI(headCommitIRI);
+        assertEquals("Ontology.ttl", local.getName());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void retrieveOntologyLocalFileFromCommitIRIDoesNotExistTest() {
+        IRI iri = vf.createIRI("urn:badCommit");
+        doThrow(new IllegalArgumentException()).when(thingManager).validateResource(eq(iri), eq(vf.createIRI(Commit.TYPE)), any(RepositoryConnection.class));
+        resolver.retrieveOntologyLocalFileFromCommitIRI(iri);
+        fail("Method should have thrown an IllegalArgumentException");
+    }
+
+    // getRecordIRIFromOntologyIRI(Resource ontologyIRI)
+
+    @Test
+    public void getRecordIRIFromOntologyIRITest() {
+        Optional<Resource> result = resolver.getRecordIRIFromOntologyIRI(ontologyIRI);
+        assertTrue(result.isPresent());
+        assertEquals(recordIRI, result.get());
+    }
+
+    @Test
+    public void getRecordIRIFromOntologyIRIDoesNotExistTest() {
+        Optional<Resource> result = resolver.getRecordIRIFromOntologyIRI(vf.createIRI("urn:localOntology"));
+        assertFalse(result.isPresent());
     }
 
     private void assertModelFromWebPresent(String url) {

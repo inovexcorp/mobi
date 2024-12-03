@@ -1,0 +1,22 @@
+PREFIX mcat: <http://mobi.com/ontologies/catalog#>
+PREFIX ontedit: <http://mobi.com/ontologies/ontology-editor#>
+PREFIX shaedit: <http://mobi.com/ontologies/shapes-graph-editor#>
+
+DELETE {
+    GRAPH ?record {
+        ?record ?pred ?identifier .
+    }
+}
+INSERT {
+    GRAPH ?record {
+        ?record mcat:trackedIdentifier ?identifier .
+    }
+}
+WHERE {
+    VALUES (?type ?pred) {
+        ( ontedit:OntologyRecord ontedit:ontologyIRI )
+        ( shaedit:ShapesGraphRecord shaedit:shapesGraphIRI )
+    }
+    ?record a mcat:VersionedRDFRecord, ?type ;
+        ?pred ?identifier .
+}

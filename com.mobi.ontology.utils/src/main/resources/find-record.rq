@@ -1,0 +1,8 @@
+PREFIX mcat: <http://mobi.com/ontologies/catalog#>
+
+SELECT ?record
+WHERE {
+	?record a mcat:VersionedRDFRecord ;
+        mcat:catalog ?catalog ;
+        mcat:trackedIdentifier ?ontologyIRI .
+}

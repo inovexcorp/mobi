@@ -31,8 +31,8 @@ import static org.mockito.Mockito.mockConstruction;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.mobi.catalog.api.CompiledResourceManager;
-import com.mobi.catalog.api.ThingManager;
+import com.mobi.catalog.api.BranchManager;
+import com.mobi.catalog.api.CommitManager;
 import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.dataset.api.DatasetUtilsService;
 import com.mobi.ontology.core.api.OntologyManager;
@@ -77,10 +77,10 @@ public class SimpleOntologyCreationServiceTest extends OrmEnabledTestCase {
     RepositoryManager repositoryManager;
 
     @Mock
-    ThingManager thingManager;
+    BranchManager branchManager;
 
     @Mock
-    CompiledResourceManager compiledResourceManager;
+    CommitManager commitManager;
 
     @Mock
     OsgiRepository catalogRepo;
@@ -121,9 +121,10 @@ public class SimpleOntologyCreationServiceTest extends OrmEnabledTestCase {
         service.dsUtilsService = dsUtilsService;
         service.bNodeService = bNodeService;
         service.repositoryManager = repositoryManager;
-        service.thingManager = thingManager;
+        service.branchManager = branchManager;
+        service.commitManager = commitManager;
+        service.importsResolver = importsResolver;
         service.configProvider = configProvider;
-        service.compiledResourceManager = compiledResourceManager;
     }
 
     @After

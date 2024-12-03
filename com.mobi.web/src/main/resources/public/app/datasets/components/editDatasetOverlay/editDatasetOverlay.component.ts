@@ -27,7 +27,7 @@ import { map, get, sortBy, remove, difference, includes, forEach, concat, find, 
 import { forkJoin, Observable, of, Subject } from 'rxjs';
 import { catchError, switchMap, takeUntil, tap } from 'rxjs/operators';
 
-import { CATALOG, DATASET, ONTOLOGYEDITOR } from '../../../prefixes';
+import { CATALOG, DATASET } from '../../../prefixes';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { Repository } from '../../../shared/models/repository.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
@@ -126,7 +126,7 @@ export class EditDatasetOverlayComponent implements OnInit {
         });
     }
     getOntologyIRI(record: JSONLDObject): string {
-        return getPropertyId(record, `${ONTOLOGYEDITOR}ontologyIRI`);
+        return getPropertyId(record, `${CATALOG}trackedIdentifier`);
     }
     update(): void {
         const newRecord = cloneDeep(this.state.selectedDataset.record);

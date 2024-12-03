@@ -5,4 +5,4 @@
     mcat:catalog <http://mobi.com/catalog> ;
     mcat:branch <http://mobi.com/branch> ;
     mcat:masterBranch <http://mobi.com/branch> ;
-    ontedit:ontologyIRI <http://mobi.com/ontology> .
+    mcat:trackedIdentifier <http://mobi.com/ontology> .

@@ -86,7 +86,7 @@
     <http://mobi.com/ontologies/catalog#keyword> "main";
     <http://mobi.com/ontologies/catalog#masterBranch> <https://mobi.com/branches#ad672021-17d5-42c1-b163-cb190f41864f>;
     <http://mobi.com/ontologies/catalog#branch> <https://mobi.com/branches#ad672021-17d5-42c1-b163-cb190f41864f>;
-    <http://mobi.com/ontologies/ontology-editor#ontologyIRI> <https://mobi.com/ontologies/A> .
+    <http://mobi.com/ontologies/catalog#trackedIdentifier> <https://mobi.com/ontologies/A> .
 }
 
 <https://mobi.com/commits#17b5b78e-40af-44c1-8c48-d1b6b768cb2c> {
@@ -192,7 +192,7 @@
     <http://purl.org/dc/terms/publisher> <http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997>;
     <http://mobi.com/ontologies/catalog#masterBranch> <https://mobi.com/branches#cb4a38f9-2d9f-4b34-981b-79b103a0e2c7>;
     <http://mobi.com/ontologies/catalog#branch> <https://mobi.com/branches#cb4a38f9-2d9f-4b34-981b-79b103a0e2c7>;
-    <http://mobi.com/ontologies/ontology-editor#ontologyIRI> <https://mobi.com/ontologies/B> .
+    <http://mobi.com/ontologies/catalog#trackedIdentifier> <https://mobi.com/ontologies/B> .
 }
 
 <https://mobi.com/records#ont2/HEAD> {

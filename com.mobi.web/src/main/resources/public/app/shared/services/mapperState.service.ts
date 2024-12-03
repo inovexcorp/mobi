@@ -37,7 +37,7 @@ import {
 } from 'lodash';
 import { Observable, forkJoin, of, throwError } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
-import { DATA, DCTERMS, DELIM, ONTOLOGYEDITOR, OWL, RDFS } from '../../prefixes';
+import { CATALOG, DATA, DCTERMS, DELIM, OWL, RDFS } from '../../prefixes';
 import { Difference } from '../models/difference.class';
 
 import { JSONLDObject } from '../models/JSONLDObject.interface';
@@ -956,7 +956,7 @@ export class MapperStateService {
         if (!ontInfo?.recordId && !ontInfo?.branchId && !ontInfo?.commitId) {
           return throwError('SourceOntologyInfo recordId, branchId, and commitId are empty');
         }
-        const ontIri = getPropertyId(this.selected.ontology, `${ONTOLOGYEDITOR}ontologyIRI`);
+        const ontIri = getPropertyId(this.selected.ontology, `${CATALOG}trackedIdentifier`);
         return forkJoin([
             this.om.getIris(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId),
             this.om.getImportedIris(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId)

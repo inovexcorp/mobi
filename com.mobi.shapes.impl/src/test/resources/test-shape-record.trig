@@ -26,7 +26,7 @@
     <http://mobi.com/ontologies/catalog#masterBranch> <https://mobi.com/branches#8953aadc-db08-44c4-ada2-d37cbb8de32d>;
     <http://purl.org/dc/terms/publisher> <http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997>;
     <http://mobi.com/ontologies/catalog#keyword> "keyword1", "keyword2", "keyword3";
-    <http://mobi.com/ontologies/shapes-graph-editor#shapesGraphIRI> <http://mobi.com/ontologies/shapes-graph/test-shape-record> .
+    <http://mobi.com/ontologies/catalog#trackedIdentifier> <http://mobi.com/ontologies/shapes-graph/test-shape-record> .
 }
 
 <https://mobi.com/branches#8953aadc-db08-44c4-ada2-d37cbb8de32d> {

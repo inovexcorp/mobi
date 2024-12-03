@@ -30,14 +30,17 @@ import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecordFactory;
 import com.mobi.catalog.config.CatalogConfigProvider;
-import com.mobi.ontology.core.api.OntologyManager;
+import com.mobi.exception.MobiException;
 import com.mobi.ontology.utils.imports.ImportsResolver;
 import com.mobi.ontology.utils.imports.ImportsResolverConfig;
+import com.mobi.persistence.utils.Bindings;
 import com.mobi.persistence.utils.RDFFiles;
-
+import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
+import org.eclipse.rdf4j.query.TupleQuery;
+import org.eclipse.rdf4j.query.TupleQueryResult;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.osgi.service.component.annotations.Activate;
@@ -53,7 +56,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -71,9 +76,25 @@ public class ImportsResolverImpl implements ImportsResolver {
     private int connectionTimeout;
     private int readTimeout;
     private String acceptHeaders;
-    private Set<String> contentTypes = new HashSet<>();
+    private final Set<String> contentTypes = new HashSet<>();
 
     static final String COMPONENT_NAME = "com.mobi.ontology.utils.imports.ImportsResolver";
+
+    protected static final String FIND_RECORD;
+    protected static final String ONTOLOGY_IRI = "ontologyIRI";
+    protected static final String CATALOG = "catalog";
+    protected static final String RECORD = "record";
+
+    static {
+        try {
+            FIND_RECORD = IOUtils.toString(
+                    Objects.requireNonNull(ImportsResolverImpl.class.getResourceAsStream("/find-record.rq")),
+                    StandardCharsets.UTF_8
+            );
+        } catch (IOException e) {
+            throw new MobiException(e);
+        }
+    }
 
     @Reference
     ThingManager thingManager;
@@ -184,21 +205,48 @@ public class ImportsResolverImpl implements ImportsResolver {
     }
 
     @Override
-    public Optional<File> retrieveOntologyLocalFile(Resource ontologyIRI, OntologyManager ontologyManager) {
+    public Optional<File> retrieveOntologyLocalFile(Resource ontologyIRI) {
         Long startTime = getStartTime();
         try {
-            Optional<Resource> recordIRIOpt = ontologyManager.getOntologyRecordResource(ontologyIRI);
+            Optional<Resource> recordIRIOpt = getRecordIRIFromOntologyIRI(ontologyIRI);
             if (recordIRIOpt.isPresent()) {
-                Resource recordIRI = recordIRIOpt.get();
-                Optional<Resource> masterHead = getMasterBranchHead(recordIRI);
-                if (masterHead.isPresent()) {
-                    File file = getCompiledResourceFile(masterHead.get());
-                    return Optional.of(file);
-                }
+                return retrieveOntologyLocalFileFromRecordIRI(recordIRIOpt.get());
             }
             return Optional.empty();
         } finally {
             logDebug("Retrieving ontology from local catalog", startTime);
+        }
+    }
+
+    @Override
+    public Optional<File> retrieveOntologyLocalFileFromRecordIRI(Resource recordIRI) {
+        Optional<Resource> masterHead = getMasterBranchHead(recordIRI);
+        if (masterHead.isPresent()) {
+            File file = getCompiledResourceFile(masterHead.get());
+            return Optional.of(file);
+        }
+        return Optional.empty();
+    }
+
+    @Override
+    public File retrieveOntologyLocalFileFromCommitIRI(Resource commitIRI) {
+        return getCompiledResourceFile(commitIRI);
+    }
+
+    @Override
+    public Optional<Resource> getRecordIRIFromOntologyIRI(Resource ontologyIRI) {
+        try (RepositoryConnection conn = catalogConfigProvider.getRepository().getConnection()) {
+            TupleQuery query = conn.prepareTupleQuery(FIND_RECORD);
+            query.setBinding(ONTOLOGY_IRI, ontologyIRI);
+            query.setBinding(CATALOG, catalogConfigProvider.getLocalCatalogIRI());
+            TupleQueryResult result = query.evaluate();
+            if (!result.hasNext()) {
+                result.close();
+                return Optional.empty();
+            }
+            Optional<Resource> recordIRIOpt = Optional.of(Bindings.requiredResource(result.next(), RECORD));
+            result.close();
+            return recordIRIOpt;
         }
     }
 
@@ -219,8 +267,11 @@ public class ImportsResolverImpl implements ImportsResolver {
 
     private Optional<Resource> getMasterBranchHead(Resource recordIRI) {
         try (RepositoryConnection conn = catalogConfigProvider.getRepository().getConnection()) {
-            VersionedRDFRecord record = thingManager.getExpectedObject(recordIRI, versionedRDFRecordFactory, conn);
-            Resource branchId = record.getMasterBranch_resource().orElseThrow(() ->
+            Optional<VersionedRDFRecord> record = thingManager.optObject(recordIRI, versionedRDFRecordFactory, conn);
+            if (record.isEmpty()) {
+                return Optional.empty();
+            }
+            Resource branchId = record.get().getMasterBranch_resource().orElseThrow(() ->
                     new IllegalStateException("Record " + recordIRI + " does not have a master Branch set."));
             return thingManager.getExpectedObject(branchId, branchFactory, conn).getHead_resource();
         }

@@ -23,6 +23,11 @@ package com.mobi.utils.cli.operations.post;
  * #L%
  */
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+
 import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.platform.config.api.state.StateManager;
 import com.mobi.repository.impl.sesame.memory.MemoryRepositoryWrapper;
@@ -42,13 +47,7 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
 
 public class ClearOntologyEditorStateTest {
     private AutoCloseable closeable;
@@ -103,7 +102,7 @@ public class ClearOntologyEditorStateTest {
                 "2.3;false",
                 "2.4;false",
                 "2.5;false"
-        ).collect(Collectors.toUnmodifiableList());
+        ).toList();
         List<String> actualVersionCheck = CliTestUtils.runVersionCheck(operation, expectedVersions);
         Assert.assertEquals(expectedVersions, actualVersionCheck);
     }

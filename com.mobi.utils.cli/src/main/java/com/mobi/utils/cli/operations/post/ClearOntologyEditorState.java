@@ -80,7 +80,7 @@ public class ClearOntologyEditorState implements PostRestoreOperation {
                 LOGGER.debug(String.format("Remove state statement: %s", statement.getSubject()));
                 stateManager.deleteState(statement.getSubject());
             });
-            LOGGER.debug("Remove state statements");
+            LOGGER.debug("Removed state statements");
         }
     }
 

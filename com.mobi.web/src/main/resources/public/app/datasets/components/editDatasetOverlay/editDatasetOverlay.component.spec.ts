@@ -78,7 +78,7 @@ describe('Edit Dataset Overlay component', function() {
       '@id': ontologyRecordId1,
       '@type': [`${ONTOLOGYEDITOR}OntologyRecord`],
       [`${DCTERMS}title`]: [{ '@value': 'title' }],
-      [`${ONTOLOGYEDITOR}ontologyIRI`]: [{ '@id': 'ontology' }]
+      [`${CATALOG}trackedIdentifier`]: [{ '@id': 'ontology' }]
     };
     const dataset: Dataset = { record, identifiers: [
       {'@id': 'bnode1', [`${DATASET}linksToRecord`]: [{ '@id': ontologyRecordId1 }]},

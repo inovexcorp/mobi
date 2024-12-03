@@ -86,6 +86,7 @@ import com.mobi.ontology.rest.json.EntityNames;
 import com.mobi.ontology.utils.OntologyModels;
 import com.mobi.ontology.utils.OntologyUtils;
 import com.mobi.ontology.utils.cache.OntologyCache;
+import com.mobi.ontology.utils.imports.ImportsResolver;
 import com.mobi.persistence.utils.BNodeUtils;
 import com.mobi.persistence.utils.Bindings;
 import com.mobi.persistence.utils.JSONQueryResults;
@@ -233,6 +234,9 @@ public class OntologyRest {
 
     @Reference
     protected PDP pdp;
+
+    @Reference
+    protected ImportsResolver importsResolver;
 
     private static final Logger log = LoggerFactory.getLogger(OntologyRest.class);
     private static final ObjectMapper mapper = new ObjectMapper();
@@ -4262,12 +4266,12 @@ public class OntologyRest {
     ) {
         try {
             IRI ontIRI = vf.createIRI(ontologyIRI);
-            Optional<Resource> ontologyRecord = this.ontologyManager.getOntologyRecordResource(ontIRI);
+            Optional<Resource> ontologyRecord = this.importsResolver.getRecordIRIFromOntologyIRI(ontIRI);
 
             if (ontologyRecord.isEmpty()) {
                 String fileExt = "." + RDFFiles.getFileExtension(ontologyIRI);
                 ontIRI = vf.createIRI(ontologyIRI.replaceFirst(fileExt, ""));
-                ontologyRecord = this.ontologyManager.getOntologyRecordResource(ontIRI);
+                ontologyRecord = this.importsResolver.getRecordIRIFromOntologyIRI(ontIRI);
             }
 
             if (ontologyRecord.isPresent()) {
@@ -4279,7 +4283,7 @@ public class OntologyRest {
                             RDFFiles.getFormatForFileName(ontologyIRI).isPresent()
                                     ? RDFFiles.getFormatForFileName(ontologyIRI).get().getName() : "turtle");
 
-                    Ontology ontology = this.ontologyManager.retrieveOntologyByIRI(ontIRI).orElseThrow(
+                    Ontology ontology = this.ontologyManager.retrieveOntology(recordIRI).orElseThrow(
                             () -> new IllegalStateException("Expected Ontology object to be present")
                     );
 
@@ -5166,7 +5170,7 @@ public class OntologyRest {
         }
 
         ObjectNode objectNode = mapper.createObjectNode();
-        Resource ontologyIRI = record.getOntologyIRI().orElseThrow(() ->
+        Resource ontologyIRI = record.getTrackedIdentifier().orElseThrow(() ->
                 new IllegalStateException("Ontology IRI must be present"));
         objectNode.put("ontologyId", ontologyIRI.toString());
         objectNode.put("recordId", record.getResource().stringValue());

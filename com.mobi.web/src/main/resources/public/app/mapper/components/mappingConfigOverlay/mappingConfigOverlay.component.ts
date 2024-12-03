@@ -140,7 +140,7 @@ export class MappingConfigOverlayComponent implements OnInit {
         this.setOntologies();
     }
     getOntologyIRI(record: JSONLDObject): string {
-        return getPropertyId(record, `${ONTOLOGYEDITOR}ontologyIRI`);
+        return getPropertyId(record, `${CATALOG}trackedIdentifier`);
     }
     ontologyChange(event: MatSelectionListChange): void {
         this.toggleOntology(event.options[0].value);

@@ -41,6 +41,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 
 @Component(
         service = { CleanCatalogDefault.class, PostRestoreOperation.class }
@@ -55,19 +56,23 @@ public class CleanCatalogDefault implements PostRestoreOperation {
     static {
         try {
             CLEAN_DANGLING_ADDITIONS_DELETIONS = IOUtils.toString(
-                    CleanCatalogDefault.class.getResourceAsStream("/clearDanglingAdditionsDeletions.rq"),
+                    Objects.requireNonNull(CleanCatalogDefault.class
+                            .getResourceAsStream("/clearDanglingAdditionsDeletions.rq")),
                     StandardCharsets.UTF_8
             );
             CLEAR_INPROGRESS_COMMIT_NO_RECORD = IOUtils.toString(
-                    CleanCatalogDefault.class.getResourceAsStream("/clearInProgressCommitNoRecord.rq"),
+                    Objects.requireNonNull(CleanCatalogDefault.class
+                            .getResourceAsStream("/clearInProgressCommitNoRecord.rq")),
                     StandardCharsets.UTF_8
             );
             CLEAR_INPROGRESS_COMMIT_NO_USER = IOUtils.toString(
-                    CleanCatalogDefault.class.getResourceAsStream("/clearInProgressCommitNoUser.rq"),
+                    Objects.requireNonNull(CleanCatalogDefault.class
+                            .getResourceAsStream("/clearInProgressCommitNoUser.rq")),
                     StandardCharsets.UTF_8
             );
             SEARCH_STATE_INSTANCES_NO_USER = IOUtils.toString(
-                    CleanCatalogDefault.class.getResourceAsStream("/searchStateInstanceNoUser.rq"),
+                    Objects.requireNonNull(CleanCatalogDefault.class
+                            .getResourceAsStream("/searchStateInstanceNoUser.rq")),
                     StandardCharsets.UTF_8
             );
         } catch (IOException e) {
@@ -100,10 +105,10 @@ public class CleanCatalogDefault implements PostRestoreOperation {
     public void execute() {
         LOGGER.debug(getClass().getSimpleName() + " execute");
         try (RepositoryConnection conn = config.getRepository().getConnection()) {
-            LOGGER.debug("Remove All In progress Commits where User doesn’t exist");
+            LOGGER.debug("Remove All In progress Commits where User does not exist");
             conn.prepareUpdate(CLEAR_INPROGRESS_COMMIT_NO_USER).execute();
 
-            LOGGER.debug("Remove In Progress Commits where Record doesn’t exist");
+            LOGGER.debug("Remove In Progress Commits where Record does not exist");
             conn.prepareUpdate(CLEAR_INPROGRESS_COMMIT_NO_RECORD).execute();
 
             LOGGER.debug("Remove Addition and Deletion Graphs with no Revision");

@@ -481,7 +481,7 @@ public class InversioningMigration implements PostRestoreOperation {
 
     @Override
     public Integer getPriority() {
-        return 1;
+        return 2;
     }
 
     @Override

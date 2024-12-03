@@ -94,7 +94,7 @@
 #      <https://mobi.com/branches#6f3119a9-180b-473f-9e3e-22200ea9eb0e>;
 #    <http://mobi.com/ontologies/catalog#catalog> <http://mobi.com/catalog-local>;
 #    <http://mobi.com/ontologies/catalog#masterBranch> <https://mobi.com/branches#784982c5-6d1c-412a-bad7-659006b082b5>;
-#    <http://mobi.com/ontologies/ontology-editor#ontologyIRI> <https://mobi.com/ontologies/8/2021/Ont02>;
+#    <http://mobi.com/ontologies/catalog#trackedIdentifier> <https://mobi.com/ontologies/8/2021/Ont02>;
 #    <http://purl.org/dc/terms/publisher> <http://mobi.com/users/00028> .
 #}
 
@@ -127,7 +127,7 @@
     <http://mobi.com/ontologies/catalog#branch> <https://mobi.com/branches#89d78710-c98a-4da9-b5a2-6d4d4408aea8>;
     <http://mobi.com/ontologies/catalog#catalog> <http://mobi.com/catalog-local>;
     <http://mobi.com/ontologies/catalog#masterBranch> <https://mobi.com/branches#89d78710-c98a-4da9-b5a2-6d4d4408aea8>;
-    <http://mobi.com/ontologies/ontology-editor#ontologyIRI> <https://mobi.com/ontologies/8/2021/Ont01>;
+    <http://mobi.com/ontologies/catalog#trackedIdentifier> <https://mobi.com/ontologies/8/2021/Ont01>;
     <http://purl.org/dc/terms/publisher> <http://mobi.com/users/00029> .
 }
 
@@ -210,7 +210,7 @@
     <http://mobi.com/ontologies/catalog#branch> <https://mobi.com/branches#1f7aa751-4a1c-44a3-b25e-94d106f6b2d6>;
     <http://mobi.com/ontologies/catalog#catalog> <http://mobi.com/catalog-local>;
     <http://mobi.com/ontologies/catalog#masterBranch> <https://mobi.com/branches#1f7aa751-4a1c-44a3-b25e-94d106f6b2d6>;
-    <http://mobi.com/ontologies/ontology-editor#ontologyIRI> <https://mobi.com/ontologies/8/2021/Ont06>;
+    <http://mobi.com/ontologies/catalog#trackedIdentifier> <https://mobi.com/ontologies/8/2021/Ont06>;
     <http://purl.org/dc/terms/publisher> <http://mobi.com/users/0b7f849446d3383546d15a480966084442cd2193> .
 }
 

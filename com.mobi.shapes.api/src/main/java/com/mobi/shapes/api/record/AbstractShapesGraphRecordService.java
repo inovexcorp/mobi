@@ -165,7 +165,7 @@ public abstract class AbstractShapesGraphRecordService<T extends ShapesGraphReco
         conn.add(ontologyIRI,  RDF.TYPE, OWL.ONTOLOGY, headGraph);
 
         validateShapesGraph(ontologyIRI);
-        record.setShapesGraphIRI(ontologyIRI);
+        record.setTrackedIdentifier(ontologyIRI);
         thingManager.updateObject(record, conn);
     }
 

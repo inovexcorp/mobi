@@ -324,46 +324,6 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
         manager.applyChanges(ontology, inProgressCommit);
     }
 
-    // Testing retrieveOntologyByIRI
-
-    @Test
-    public void testRetrieveOntologyByIRIThatDoesNotExist() {
-        Optional<Ontology> result = manager.retrieveOntologyByIRI(missingIRI);
-        assertFalse(result.isPresent());
-    }
-
-    @Test
-    public void testRetrieveOntologyByIRIWithCacheMiss() {
-        // Setup
-        MasterBranch branch = masterBranchFactory.createNew(branchIRI);
-        branch.setHead(commitFactory.createNew(commitIRI));
-        when(branchManager.getMasterBranch(eq(catalogIRI), eq(recordIRI), any(RepositoryConnection.class))).thenReturn(branch);
-        when(compiledResourceManager.getCompiledResourceFile(eq(commitIRI), eq(RDFFormat.NQUADS), any(RepositoryConnection.class))).thenReturn(file);
-
-        Optional<Ontology> result = manager.retrieveOntologyByIRI(ontologyIRI);
-        assertTrue(result.isPresent());
-        assertNotNull(result.get());
-        assertNotEquals(ontology, result.get());
-        String key = ontologyCache.generateKey(recordIRI.stringValue(), commitIRI.stringValue());
-        verify(ontologyCache).containsKey(eq(key));
-    }
-
-    @Test
-    public void testRetrieveOntologyByIRIWithCacheHit() {
-        // Setup
-        MasterBranch branch = masterBranchFactory.createNew(branchIRI);
-        branch.setHead(commitFactory.createNew(commitIRI));
-        String key = ontologyCache.generateKey(recordIRI.stringValue(), commitIRI.stringValue());
-        when(branchManager.getMasterBranch(eq(catalogIRI), eq(recordIRI), any(RepositoryConnection.class))).thenReturn(branch);
-        when(compiledResourceManager.getCompiledResource(eq(commitIRI), any(RepositoryConnection.class))).thenReturn(MODEL_FACTORY.createEmptyModel());
-        when(ontologyCache.containsKey(key)).thenReturn(true);
-
-        Optional<Ontology> result = manager.retrieveOntologyByIRI(ontologyIRI);
-        assertTrue(result.isPresent());
-        verify(ontologyCache).containsKey(eq(key));
-        verify(ontologyCache, times(0)).put(eq(key), eq(result.get()));
-    }
-
     // Testing retrieveOntology(Resource recordId)
 
     @Test(expected = IllegalArgumentException.class)

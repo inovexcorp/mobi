@@ -54,7 +54,8 @@ public class FixWorkflowOntology implements PostRestoreOperation {
     static {
         try {
             FIX_DANGLING_WORKFLOW_EXECUTIONS = IOUtils.toString(
-                    Objects.requireNonNull(FixWorkflowOntology.class.getResourceAsStream("/fixUnfinishedWorkflowExecutions.rq")),
+                    Objects.requireNonNull(FixWorkflowOntology.class
+                            .getResourceAsStream("/fixUnfinishedWorkflowExecutions.rq")),
                     StandardCharsets.UTF_8
             );
         } catch (IOException e) {
@@ -83,6 +84,7 @@ public class FixWorkflowOntology implements PostRestoreOperation {
 
     @Override
     public void execute() {
+        LOGGER.debug(getClass().getSimpleName() + " execute");
         try (RepositoryConnection conn = provRepo.getConnection()) {
             conn.clear(vf.createIRI("http://mobi.solutions/ontologies/worklows"));
             conn.prepareUpdate(FIX_DANGLING_WORKFLOW_EXECUTIONS).execute();

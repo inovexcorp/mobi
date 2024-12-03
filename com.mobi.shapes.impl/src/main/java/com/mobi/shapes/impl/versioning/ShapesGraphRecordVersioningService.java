@@ -78,7 +78,7 @@ public class ShapesGraphRecordVersioningService extends BaseVersioningService<Sh
             throw new IllegalStateException("Ontology does not contain an ontology definition");
         }
         ShapesGraphRecord record = thingManager.getObject(recordId, shapesGraphRecordFactory, conn);
-        Resource existingOntologyIRI = record.getShapesGraphIRI()
+        Resource existingOntologyIRI = record.getTrackedIdentifier()
                 .orElseThrow(() -> new IllegalStateException("ShapesGraphRecord " + recordId.stringValue()
                         + " does not have an ontologyIRI"));
         Model ontologyDefinitions = mf.createEmptyModel();
@@ -90,14 +90,14 @@ public class ShapesGraphRecordVersioningService extends BaseVersioningService<Sh
 
         if (!currentOntologyIRI.equals(existingOntologyIRI)) {
             assertShapesGraphIRIUniqueness(currentOntologyIRI);
-            record.setShapesGraphIRI(currentOntologyIRI);
+            record.setTrackedIdentifier(currentOntologyIRI);
             thingManager.updateObject(record, conn);
         }
     }
 
     private void assertShapesGraphIRIUniqueness(Resource shapesGraphIRI) {
         if (shapesGraphManager.shapesGraphIriExists(shapesGraphIRI)) {
-            throw new IllegalArgumentException("Shapes Graph already exists with IRI " + shapesGraphIRI);
+            throw new IllegalArgumentException("A Record already exists with tracked IRI " + shapesGraphIRI);
         }
     }
 }

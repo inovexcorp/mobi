@@ -26,10 +26,20 @@ package com.mobi.ontology.impl.core.versioning;
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
-import com.mobi.catalog.api.*;
-import com.mobi.catalog.api.ontologies.mcat.*;
+import com.mobi.catalog.api.BranchManager;
+import com.mobi.catalog.api.CommitManager;
+import com.mobi.catalog.api.CompiledResourceManager;
+import com.mobi.catalog.api.DifferenceManager;
+import com.mobi.catalog.api.RevisionManager;
+import com.mobi.catalog.api.ThingManager;
+import com.mobi.catalog.api.ontologies.mcat.Commit;
+import com.mobi.catalog.api.ontologies.mcat.MasterBranch;
 import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.exception.MobiException;
 import com.mobi.ontology.core.api.OntologyId;
@@ -52,7 +62,10 @@ import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.ExpectedException;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
@@ -190,12 +203,12 @@ public class OntologyRecordVersioningServiceTest extends OrmEnabledTestCase {
         when(ontologyManager.ontologyIriExists(newIRI)).thenReturn(true);
         when(thingManager.getObject(eq(record.getResource()), eq(service.ontologyRecordFactory), any(RepositoryConnection.class))).thenReturn(record);
 
-        try(RepositoryConnection conn = repo.getConnection()) {
+        try (RepositoryConnection conn = repo.getConnection()) {
             service.updateMasterRecordIRI(record.getResource(), commit, conn);
         } finally {
             verify(ontologyCache).clearCacheImports(originalOntologyIRI);
             verify(ontologyManager).ontologyIriExists(eq(newIRI));
-            verify(record, never()).setOntologyIRI(eq(newIRI));
+            verify(record, never()).setTrackedIdentifier(eq(newIRI));
             verify(thingManager, never()).updateObject(any(OntologyRecord.class), any(RepositoryConnection.class));
             verify(ontologyCache, never()).clearCacheImports(newIRI);
         }
@@ -214,7 +227,7 @@ public class OntologyRecordVersioningServiceTest extends OrmEnabledTestCase {
         } finally {
             verify(ontologyCache).clearCacheImports(originalOntologyIRI);
             verify(ontologyManager).ontologyIriExists(eq(newIRI));
-            verify(record).setOntologyIRI(eq(newIRI));
+            verify(record).setTrackedIdentifier(eq(newIRI));
             verify(thingManager).updateObject(any(OntologyRecord.class), any(RepositoryConnection.class));
             verify(ontologyCache).clearCacheImports(newIRI);
         }

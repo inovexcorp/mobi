@@ -39,7 +39,7 @@ import { CatalogManagerService } from '../../../shared/services/catalogManager.s
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { PropertyManagerService } from '../../../shared/services/propertyManager.service';
 import { ToastService } from '../../../shared/services/toast.service';
-import { getDctermsValue, getPropertyId } from '../../../shared/utility';
+import { getDctermsValue } from '../../../shared/utility';
 
 /**
  * @class ontology-editor.ImportsOverlayComponent
@@ -124,9 +124,6 @@ export class ImportsOverlayComponent implements OnInit {
             }
         }
     }
-    getOntologyIRI(record: JSONLDObject): string {
-        return getPropertyId(record, `${ONTOLOGYEDITOR}ontologyIRI`);
-    }
     addImport(): void {
         if (this.tabIndex === 0) {
             this.http.get('/mobirest/imported-ontologies/' + encodeURIComponent(this.importForm.controls.url.value))
@@ -168,7 +165,7 @@ export class ImportsOverlayComponent implements OnInit {
         this.serverError = '';
         this.ontologies = map(filter(response.body, record => this._isOntologyUnused(record)), record => ({
             recordId: record['@id'],
-            ontologyIRI: this.getOntologyIRI(record),
+            ontologyIRI: this.os.getIdentifierIRI(record),
             title: getDctermsValue(record, 'title'),
             selected: false,
             jsonld: record
@@ -182,7 +179,7 @@ export class ImportsOverlayComponent implements OnInit {
         }
     }
     private _isOntologyUnused(ontologyRecord: JSONLDObject): boolean {
-        return ontologyRecord['@id'] !== this.os.listItem.versionedRdfRecord.recordId && !includes(this.os.listItem.importedOntologyIds, this.getOntologyIRI(ontologyRecord));
+        return ontologyRecord['@id'] !== this.os.listItem.versionedRdfRecord.recordId && !includes(this.os.listItem.importedOntologyIds, this.os.getIdentifierIRI(ontologyRecord));
     }
     private _onError(errorMessage: string, tabIndex: number) {
         if (tabIndex === 0) {

@@ -23,7 +23,6 @@ package com.mobi.ontology.utils.imports;
  * #L%
  */
 
-import com.mobi.ontology.core.api.OntologyManager;
 import org.eclipse.rdf4j.model.Resource;
 
 import java.io.File;
@@ -40,10 +39,35 @@ public interface ImportsResolver {
     Optional<File> retrieveOntologyFromWebFile(Resource ontologyIRI);
 
     /**
-     * Attempts to retrieve an ontology from the local catalog given an IRI.
+     * Attempts to retrieve an ontology file from the local catalog given an ontology IRI.
+     *
      * @param ontologyIRI The IRI of the Ontology to resolve from the local catalog
-     * @param ontologyManager The OntologyManager used to check if the IRI exists in the catalog
      * @return An Optional of the File representing the ontology of the provided IRI
      */
-    Optional<File> retrieveOntologyLocalFile(Resource ontologyIRI, OntologyManager ontologyManager);
+    Optional<File> retrieveOntologyLocalFile(Resource ontologyIRI);
+
+    /**
+     * Attempts to retrieve an ontology file from the local catalog given a Record IRI.
+     *
+     * @param recordIRI The IRI of the VersionedRDFRecord to generate the File from
+     * @return An Optional of the File representing the ontology tracked by the provided Record IRI
+     */
+    Optional<File> retrieveOntologyLocalFileFromRecordIRI(Resource recordIRI);
+
+    /**
+     * Retrieves an ontology file from a given Commit IRI. Assumes the Commit is present.
+     *
+     * @param commitIRI The IRI of the Commit to generate the File from
+     * @return A File representing the ontology tracked by the provided Record IRI
+     * @throws IllegalArgumentException if the Commit does not exist.
+     */
+    File retrieveOntologyLocalFileFromCommitIRI(Resource commitIRI);
+
+    /**
+     * Attempts to find a VersionedRDFRecord that tracks the provided ontology IRI and if found, returns the Record IRI.
+     *
+     * @param ontologyIRI The IRI of the Ontology to search the local catalog for
+     * @return An Optional of the Record IRI that tracks the provided Ontology IRI
+     */
+    Optional<Resource> getRecordIRIFromOntologyIRI(Resource ontologyIRI);
 }

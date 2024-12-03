@@ -1,0 +1,11 @@
+PREFIX ontedit: <http://mobi.com/ontologies/ontology-editor#>
+PREFIX shaedit: <http://mobi.com/ontologies/shapes-graph-editor#>
+
+SELECT DISTINCT ?ontologyRecord ?shapesRecord ?ontologyIRI
+WHERE {
+    ?ontologyRecord a ontedit:OntologyRecord ;
+        ontedit:ontologyIRI ?ontologyIRI .
+
+    ?shapesRecord a shaedit:ShapesGraphRecord ;
+        shaedit:shapesGraphIRI ?ontologyIRI .
+}

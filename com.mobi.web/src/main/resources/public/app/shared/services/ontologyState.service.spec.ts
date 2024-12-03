@@ -29,7 +29,7 @@ import { map as rxjsMap, tap } from 'rxjs/operators';
 import { ElementRef } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
-import { CATALOG, DCTERMS, ONTOLOGYEDITOR, OWL, RDF, RDFS, SKOS, XSD } from '../../prefixes';
+import { CATALOG, DCTERMS, OWL, RDF, RDFS, SKOS, XSD } from '../../prefixes';
 import { Difference } from '../models/difference.class';
 import { HierarchyNode } from '../models/hierarchyNode.interface';
 import { VocabularyStuff } from '../models/vocabularyStuff.interface';
@@ -302,7 +302,7 @@ describe('Ontology State Service', function() {
     it('if provided JSON-LD', function() {
       expect(service.getIdentifierIRI({
         '@id': 'recordId', 
-        [`${ONTOLOGYEDITOR}ontologyIRI`]: [{ '@id': 'ontologyIRI' }]
+        [`${CATALOG}trackedIdentifier`]: [{ '@id': 'ontologyIRI' }]
       })).toEqual('ontologyIRI');
     });
     it('from the current listItem', function() {

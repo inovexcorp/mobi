@@ -64,7 +64,7 @@ public abstract class AbstractOntologyRecordService<T extends OntologyRecord>
     /**
      * Semaphore for protecting ontology IRI uniqueness checks.
      */
-    private Semaphore semaphore = new Semaphore(1, true);
+    private final Semaphore semaphore = new Semaphore(1, true);
 
     private static final String STATISTIC_ANNOTATION_PROPERTIES;
     private static final String STATISTIC_CLASSES;
@@ -249,7 +249,7 @@ public abstract class AbstractOntologyRecordService<T extends OntologyRecord>
             }
         }
         validateOntology(ontologyIRI);
-        record.setOntologyIRI(ontologyIRI);
+        record.setTrackedIdentifier(ontologyIRI);
         thingManager.updateObject(record, conn);
     }
 

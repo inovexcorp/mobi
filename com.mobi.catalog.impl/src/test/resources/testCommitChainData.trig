@@ -231,7 +231,7 @@
         <http://mobi.com/ontologies/catalog#branch> <http://mobi.com/test/branches#master-duplicate>,
                                                         <http://mobi.com/test/branches#left-branch1>, <http://mobi.com/test/branches#right-branch1>,
                                                         <http://mobi.com/test/branches#right-branch2>, <http://mobi.com/test/branches#right-branch3>;
-        <http://mobi.com/ontologies/ontology-editor#ontologyIRI> <https://mobi.com/ontologies/DuplicateChangeRecord> .
+        <http://mobi.com/ontologies/catalog#trackedIdentifier> <https://mobi.com/ontologies/DuplicateChangeRecord> .
 }
 
 <https://mobi.com/deltas#78604293-be93-4ce1-add6-4e5e37f43e3a-A> {
@@ -453,7 +453,7 @@
         <http://mobi.com/ontologies/catalog#branch> <https://mobi.com/branches#d672fc26-256f-4346-9f7e-ec40898c4426>,
                                                         <http://mobi.com/test/branches#branch1>, <http://mobi.com/test/branches#branch2>,
                                                         <http://mobi.com/test/branches#branch3>, <http://mobi.com/test/branches#branch4>;
-        <http://mobi.com/ontologies/ontology-editor#ontologyIRI> <https://mobi.com/ontologies/ClassA#Comment> .
+        <http://mobi.com/ontologies/catalog#trackedIdentifier> <https://mobi.com/ontologies/ClassA#Comment> .
 }
 
 <http://mobi.com/test/records#duplicate-change-record-diff-base/HEAD> {

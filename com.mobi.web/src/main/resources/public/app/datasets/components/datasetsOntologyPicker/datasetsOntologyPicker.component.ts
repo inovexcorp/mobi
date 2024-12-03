@@ -26,7 +26,7 @@ import { MatSelectionListChange } from '@angular/material/list';
 import { find, get, some, sortBy, filter } from 'lodash';
 import { finalize } from 'rxjs/operators';
 
-import { DCTERMS, ONTOLOGYEDITOR } from '../../../prefixes';
+import { CATALOG, DCTERMS, ONTOLOGYEDITOR } from '../../../prefixes';
 import { ProgressSpinnerService } from '../../../shared/components/progress-spinner/services/progressSpinner.service';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { PaginatedConfig } from '../../../shared/models/paginatedConfig.interface';
@@ -75,7 +75,7 @@ export class DatasetsOntologyPickerComponent implements OnChanges {
         this.setOntologies();
     }
     getOntologyIRI(record: JSONLDObject): string {
-        return getPropertyId(record, `${ONTOLOGYEDITOR}ontologyIRI`);
+        return getPropertyId(record, `${CATALOG}trackedIdentifier`);
     }
     setOntologies(): void {
         if (this.readyFlag) {
