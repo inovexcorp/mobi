@@ -62,24 +62,6 @@ public interface OntologyManager {
     boolean ontologyIriExists(Resource ontologyIRI);
 
     /**
-     * Gets the Record id of the OntologyRecord with the passed ontology IRI if found in the Catalog.
-     *
-     * @param ontologyIRI An ontology IRI that should be set on an OntologyRecord in the Catalog.
-     * @return An Optional of the Record Resource id if found, otherwise Optional.empty()
-     * @throws IllegalStateException If the system Repository could not be found.
-     */
-    Optional<Resource> getOntologyRecordResource(@Nonnull Resource ontologyIRI);
-
-    /**
-     * Retrieves an Ontology using an ontology IRI.
-     *
-     * @param ontologyIRI The IRI of the ontology the OntologyRecord represents.
-     * @return Returns an Optional of the Ontology if found, otherwise Optional.empty().
-     * @throws IllegalStateException If the system Repository could not be found.
-     */
-    Optional<Ontology> retrieveOntologyByIRI(@Nonnull Resource ontologyIRI);
-
-    /**
      * Retrieves an Ontology using a record id and the head commit of its MASTER branch.
      *
      * @param recordId the record id for the OntologyRecord you want to retrieve.

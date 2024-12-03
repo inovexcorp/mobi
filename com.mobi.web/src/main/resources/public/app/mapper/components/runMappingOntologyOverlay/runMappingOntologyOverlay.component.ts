@@ -29,7 +29,7 @@ import { find, get } from 'lodash';
 import { Observable } from 'rxjs';
 import { debounceTime, map, startWith, switchMap } from 'rxjs/operators';
 
-import { DCTERMS, ONTOLOGYEDITOR } from '../../../prefixes';
+import { CATALOG, DCTERMS, ONTOLOGYEDITOR } from '../../../prefixes';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { DelimitedManagerService } from '../../../shared/services/delimitedManager.service';
@@ -117,7 +117,7 @@ export class RunMappingOntologyOverlayComponent implements OnInit {
         }
     }
     getOntologyIRI(ontology: JSONLDObject): string {
-        return getPropertyId(ontology, `${ONTOLOGYEDITOR}ontologyIRI`);
+        return getPropertyId(ontology, `${CATALOG}trackedIdentifier`);
     }
     run(): void {
         if (this.state.editMapping && this.state.isMappingChanged()) {

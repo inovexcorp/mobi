@@ -66,10 +66,10 @@ describe('Request Record Select component', function() {
         description: 'description',
         jsonld: {
             '@id': 'ontologyRecordId',
-            '@type':[`${CATALOG}VersionedRDFRecord`, `${ONTOLOGYEDITOR}OntologyRecord`],
+            '@type': [`${CATALOG}VersionedRDFRecord`, `${ONTOLOGYEDITOR}OntologyRecord`],
             [`${DCTERMS}title`]: [{ '@value': 'title' }],
             [`${DCTERMS}description`]: [{ '@value': 'description' }],
-            [`${ONTOLOGYEDITOR}ontologyIRI`]: [{ '@id': 'ontologyIRI' }]
+            [`${CATALOG}trackedIdentifier`]: [{ '@id': 'ontologyIRI' }]
         } 
     };
     const shapeGraphMergeRequestRecord: MergeRequestRecord = {
@@ -79,10 +79,10 @@ describe('Request Record Select component', function() {
         description: 'description',
         jsonld: {
             '@id': 'shapeRecordId',
-            '@type':[`${CATALOG}VersionedRDFRecord`, `${SHAPESGRAPHEDITOR}ShapesGraphRecord`],
+            '@type': [`${CATALOG}VersionedRDFRecord`, `${SHAPESGRAPHEDITOR}ShapesGraphRecord`],
             [`${DCTERMS}title`]: [{ '@value': 'title' }],
             [`${DCTERMS}description`]: [{ '@value': 'description' }],
-            [`${SHAPESGRAPHEDITOR}shapesGraphIRI`]: [{"@id": "http://www.w3.org/ns/shacl#"}]
+            [`${CATALOG}trackedIdentifier`]: [{'@id': 'http://www.w3.org/ns/shacl#'}]
         } 
     };
     const mappingMergeRequestRecord: MergeRequestRecord = {
@@ -92,7 +92,7 @@ describe('Request Record Select component', function() {
         description: 'description',
         jsonld: {
             '@id': 'mappingRecordId',
-            '@type':[`${CATALOG}VersionedRDFRecord`, `${DELIM}MappingRecord`],
+            '@type': [`${CATALOG}VersionedRDFRecord`, `${DELIM}MappingRecord`],
             [`${DCTERMS}title`]: [{ '@value': 'title' }],
             [`${DCTERMS}description`]: [{ '@value': 'description' }]
         } 

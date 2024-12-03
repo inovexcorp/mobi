@@ -82,6 +82,12 @@
     rdfs:label "Versioned RDF Record"@en;
     rdfs:comment "A catalog Record for an RDF resource that is versioned."@en.
 
+:trackedIdentifier a owl:DatatypeProperty, owl:FunctionalProperty;
+    rdfs:label "tracked identifier"@en;
+    rdfs:comment "The latest identifier within the data being tracked by the record."@en;
+    rdfs:domain :VersionedRDFRecord;
+    rdfs:range <http://mobi.com/ontologies/mobi#Identifier> .
+
 :branch a owl:ObjectProperty;
     rdfs:label "branch"@en;
     rdfs:comment "A Branch of the described Versioned RDF Record."@en;

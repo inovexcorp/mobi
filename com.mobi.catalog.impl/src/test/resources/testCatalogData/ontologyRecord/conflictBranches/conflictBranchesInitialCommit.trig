@@ -34,7 +34,7 @@ GRAPH records:1f6e9afa-8999-4ec6-9b10-cd3eec126766 {
             branches:7efe8089-ab0e-421f-9f83-6b4302b69143;
         mcat:catalog catalogs:catalog-local ;
         mcat:masterBranch branches:7efe8089-ab0e-421f-9f83-6b4302b69143 ;
-        ontedit:ontologyIRI dcterms: ;
+        mcat:trackedIdentifier dcterms: ;
         dcterms:issued "2024-10-01T15:38:01.657447+00:00"^^xsd:dateTime ;
         dcterms:modified "2024-10-03T14:54:44.385790+00:00"^^xsd:dateTime ;
         dcterms:publisher users:taken ;

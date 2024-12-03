@@ -268,7 +268,7 @@ _:genid-bb6e4a2fe0fb4e68a573be9c24c10c1a17-8E1407F04E31B1D8C86BD77D693ABF45 <htt
     <http://purl.org/dc/terms/publisher> <http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997>;
     <http://mobi.com/ontologies/catalog#masterBranch> <https://mobi.com/branches#e9fabcc5-369b-48bb-84e6-b88b23e47c0b>;
     <http://mobi.com/ontologies/catalog#branch> <https://mobi.com/branches#e9fabcc5-369b-48bb-84e6-b88b23e47c0b>;
-        <http://mobi.com/ontologies/shapes-graph-editor#shapesGraphIRI> <http://matonto.org/ontologies/uhtc/shapes-graph> .
+        <http://mobi.com/ontologies/catalog#trackedIdentifier> <http://matonto.org/ontologies/uhtc/shapes-graph> .
 }
 
 <https://mobi.com/branches#e9fabcc5-369b-48bb-84e6-b88b23e47c0b> {

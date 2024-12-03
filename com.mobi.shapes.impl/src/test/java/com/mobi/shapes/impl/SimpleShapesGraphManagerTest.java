@@ -38,6 +38,7 @@ import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.api.ontologies.mcat.MasterBranch;
 import com.mobi.catalog.config.CatalogConfigProvider;
+import com.mobi.ontology.utils.imports.ImportsResolver;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.repository.impl.sesame.memory.MemoryRepositoryWrapper;
 import com.mobi.shapes.api.ShapesGraph;
@@ -89,6 +90,9 @@ public class SimpleShapesGraphManagerTest extends OrmEnabledTestCase {
     @Mock
     CompiledResourceManager compiledResourceManager;
 
+    @Mock
+    ImportsResolver importsResolver;
+
     @Before
     public void setUp() throws Exception {
         closeable = MockitoAnnotations.openMocks(this);
@@ -114,10 +118,13 @@ public class SimpleShapesGraphManagerTest extends OrmEnabledTestCase {
 
         when(configProvider.getLocalCatalogIRI()).thenReturn(catalogIri);
         when(configProvider.getRepository()).thenReturn(repo);
+        when(importsResolver.getRecordIRIFromOntologyIRI(any(Resource.class))).thenReturn(Optional.empty());
+        when(importsResolver.getRecordIRIFromOntologyIRI(testShapeIri)).thenReturn(Optional.of(vf.createIRI("https://mobi.com/records#12556100-696c-4a38-b5ba-646ca0d99f99")));
         manager.configProvider = configProvider;
         manager.commitManager = commitManager;
         manager.branchManager = branchManager;
         manager.compiledResourceManager = compiledResourceManager;
+        manager.importsResolver = importsResolver;
     }
 
     private void trigFile() throws IOException {
@@ -138,8 +145,7 @@ public class SimpleShapesGraphManagerTest extends OrmEnabledTestCase {
         trigFile();
         boolean exists = manager.shapesGraphIriExists(testShapeIri);
         assertTrue(exists);
-        verify(configProvider).getRepository();
-        verify(configProvider).getLocalCatalogIRI();
+        verify(importsResolver).getRecordIRIFromOntologyIRI(testShapeIri);
     }
 
     @Test
@@ -148,8 +154,7 @@ public class SimpleShapesGraphManagerTest extends OrmEnabledTestCase {
         Resource newShapeIri = vf.createIRI("urn:testShapeIriThatDoesNotExistInRepo");
         boolean exists = manager.shapesGraphIriExists(newShapeIri);
         assertFalse(exists);
-        verify(configProvider).getRepository();
-        verify(configProvider).getLocalCatalogIRI();
+        verify(importsResolver).getRecordIRIFromOntologyIRI(newShapeIri);
     }
 
     // Testing retrieveShapesGraph(Resource recordId)

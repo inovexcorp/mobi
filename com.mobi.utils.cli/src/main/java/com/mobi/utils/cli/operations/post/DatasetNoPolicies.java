@@ -47,7 +47,8 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Objects;
+import java.util.Optional;
 
 @Component(
         service = { DatasetNoPolicies.class, PostRestoreOperation.class }
@@ -59,7 +60,7 @@ public class DatasetNoPolicies implements PostRestoreOperation {
     static {
         try {
             FIND_DATASET_NO_POLICIES = IOUtils.toString(
-                    Restore.class.getResourceAsStream("/findDatasetNoPolicy.rq"),
+                    Objects.requireNonNull(Restore.class.getResourceAsStream("/findDatasetNoPolicy.rq")),
                     StandardCharsets.UTF_8
             );
         } catch (IOException e) {
@@ -87,7 +88,7 @@ public class DatasetNoPolicies implements PostRestoreOperation {
     }
 
     @Override
-    public VersionRange getVersionRange () throws InvalidVersionSpecificationException {
+    public VersionRange getVersionRange() throws InvalidVersionSpecificationException {
         return VersionRange.createFromVersionSpec("(0.1,]"); // All Versions
     }
 
@@ -99,7 +100,6 @@ public class DatasetNoPolicies implements PostRestoreOperation {
 
     /**
      * Create Dataset Policies for datasets that do not have polices.
-     * <p>
      * Steps:
      * - Find all dataset records that does not have policies
      * - Create dataset policies for those records
@@ -114,9 +114,9 @@ public class DatasetNoPolicies implements PostRestoreOperation {
 
         List<DatasetRecord> datasetRecords = datasetResources.stream()
                 .map(resource -> datasetManager.getDatasetRecord(resource))
-                .filter(datasetRecord -> datasetRecord.isPresent())
-                .map(datasetRecordOptional -> datasetRecordOptional.get())
-                .collect(Collectors.toList());
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .toList();
 
         for (DatasetRecord datasetRecord : datasetRecords) {
             LOGGER.debug(String.format("Overwriting DatasetRecord Policy for %s", datasetRecord.getResource()));
@@ -126,9 +126,10 @@ public class DatasetNoPolicies implements PostRestoreOperation {
 
     protected List<Resource> getDatasetNoPolicyResources(RepositoryConnection conn) {
         List<Resource> datasetResources = new ArrayList<>();
-        TupleQueryResult results = conn.prepareTupleQuery(FIND_DATASET_NO_POLICIES).evaluate();
-        results.forEach(bindingSet -> datasetResources.add(Bindings.requiredResource(bindingSet, "datasetRecord")));
-        return datasetResources;
+        try (TupleQueryResult results = conn.prepareTupleQuery(FIND_DATASET_NO_POLICIES).evaluate()) {
+            results.forEach(bindingSet -> datasetResources.add(Bindings.requiredResource(bindingSet, "datasetRecord")));
+            return datasetResources;
+        }
     }
 
 }

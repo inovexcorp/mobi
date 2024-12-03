@@ -6,7 +6,7 @@ GRAPH <https://mobi.com/record/test-local-imports-3> {
        mcat:catalog <http://mobi.com/catalog> ;
        mcat:branch <http://mobi.com/branch/test-local-imports-3/master> ;
        mcat:masterBranch <http://mobi.com/branch/test-local-imports-3/master> ;
-       ontedit:ontologyIRI <http://mobi.com/ontology/test-local-imports-3> .
+       mcat:trackedIdentifier <http://mobi.com/ontology/test-local-imports-3> .
 }
 
 GRAPH <http://mobi.com/branch/test-local-imports-3/master> {
@@ -23,7 +23,7 @@ GRAPH <https://mobi.com/record/test-local-imports-2> {
        mcat:catalog <http://mobi.com/catalog> ;
        mcat:branch <http://mobi.com/branch/test-local-imports-2/master> ;
        mcat:masterBranch <http://mobi.com/branch/test-local-imports-2/master> ;
-       ontedit:ontologyIRI <http://mobi.com/ontology/test-local-imports-2> .
+       mcat:trackedIdentifier <http://mobi.com/ontology/test-local-imports-2> .
 }
 
 GRAPH <http://mobi.com/branch/test-local-imports-2/master> {
@@ -40,7 +40,7 @@ GRAPH <https://mobi.com/record/dcterms> {
         mcat:catalog <http://mobi.com/catalog> ;
         mcat:branch <https://mobi.com/branch/dcterms/master> ;
         mcat:masterBranch <https://mobi.com/branch/dcterms/master> ;
-        ontedit:ontologyIRI <http://purl.org/dc/terms/> .
+        mcat:trackedIdentifier <http://purl.org/dc/terms/> .
 }
 
 GRAPH <https://mobi.com/branch/dcterms/master> {

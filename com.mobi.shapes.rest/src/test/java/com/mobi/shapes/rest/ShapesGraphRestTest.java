@@ -210,7 +210,7 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
         branch = branchFactory.createNew(branchId);
         masterBranch = masterBranchFactory.createNew(branchId);
         record.setMasterBranch(masterBranch);
-        record.setShapesGraphIRI(shapesGraphId);
+        record.setTrackedIdentifier(shapesGraphId);
         commit = commitFactory.createNew(commitId);
         branch.setHead(commit);
 

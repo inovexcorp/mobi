@@ -40,7 +40,7 @@
     <http://purl.org/dc/terms/publisher> <http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997>;
     <http://mobi.com/ontologies/catalog#masterBranch> <https://mobi.com/branches#4af41c5a-1013-4537-8e21-274206e13202>;
     <http://mobi.com/ontologies/catalog#branch> <https://mobi.com/branches#4af41c5a-1013-4537-8e21-274206e13202>;
-    <http://mobi.com/ontologies/ontology-editor#ontologyIRI> <http://mobi.com/ontology/z-catalog-ontology-9p> .
+    <http://mobi.com/ontologies/catalog#trackedIdentifier> <http://mobi.com/ontology/z-catalog-ontology-9p> .
 }
 
 <https://mobi.com/records#bab27341-bf30-4262-8d0b-42db709bcc3a/HEAD> {

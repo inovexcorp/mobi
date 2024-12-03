@@ -28,7 +28,7 @@ import { of, throwError } from 'rxjs';
 import {
     cleanStylesFromDOM,
 } from '../../../test/ts/Shared';
-import { DATA, DCTERMS, DELIM, ONTOLOGYEDITOR, OWL, XSD } from '../../prefixes';
+import { CATALOG, DATA, DCTERMS, DELIM, OWL, XSD } from '../../prefixes';
 import { Difference } from '../models/difference.class';
 import { JSONLDObject } from '../models/JSONLDObject.interface';
 import { Mapping } from '../models/mapping.class';
@@ -1067,7 +1067,7 @@ describe('Mapper State service', function() {
         beforeEach(function() {
             service.selected.ontology = {
                 '@id': ontInfo.recordId,
-                [`${ONTOLOGYEDITOR}ontologyIRI`]: [{ '@id': ontologyId }]
+                [`${CATALOG}trackedIdentifier`]: [{ '@id': ontologyId }]
             };
             ontologyManagerStub.getIris.and.returnValue(of(iris));
         });

@@ -174,11 +174,11 @@ public class ShapesGraphRecordVersioningServiceTest extends OrmEnabledTestCase {
         when(thingManager.getObject(eq(record.getResource()), eq(service.shapesGraphRecordFactory), any(RepositoryConnection.class))).thenReturn(record);
 
         try(RepositoryConnection conn = repo.getConnection()) {
-            record.setShapesGraphIRI(getValueFactory().createIRI("http://new"));
+            record.setTrackedIdentifier(getValueFactory().createIRI("http://new"));
             Mockito.reset(record);
             service.updateMasterRecordIRI(record.getResource(), commit, conn);
         } finally {
-            verify(record, never()).setShapesGraphIRI(eq(getValueFactory().createIRI("http://new")));
+            verify(record, never()).setTrackedIdentifier(eq(getValueFactory().createIRI("http://new")));
             verify(thingManager, never()).updateObject(any(ShapesGraphRecord.class), any(RepositoryConnection.class));
         }
     }
@@ -190,14 +190,13 @@ public class ShapesGraphRecordVersioningServiceTest extends OrmEnabledTestCase {
         when(thingManager.getObject(eq(record.getResource()), eq(service.shapesGraphRecordFactory), any(RepositoryConnection.class))).thenReturn(record);
 
         try(RepositoryConnection conn = repo.getConnection()) {
-            record.setShapesGraphIRI(getValueFactory().createIRI("http://new"));
+            record.setTrackedIdentifier(getValueFactory().createIRI("http://new"));
             Mockito.reset(record);
             service.updateMasterRecordIRI(record.getResource(), commit, conn);
         } finally {
             verify(shapesGraphManager).shapesGraphIriExists(eq(newShapeIRI));
-            verify(record).setShapesGraphIRI(eq(newShapeIRI));
+            verify(record).setTrackedIdentifier(eq(newShapeIRI));
             verify(thingManager).updateObject(any(ShapesGraphRecord.class), any(RepositoryConnection.class));
         }
     }
-
 }

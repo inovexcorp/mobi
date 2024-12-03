@@ -101,7 +101,7 @@ describe('Datasets Ontology Picker component', function() {
                 [`${CATALOG}branch`]: [{ '@id': 'ontology1Branch' }],
                 [`${CATALOG}catalog`]: [{ '@id': catalogId }],
                 [`${CATALOG}masterBranch`]: [{ '@id': 'ontology1Branch' }],
-                [`${ONTOLOGYEDITOR}ontologyIRI`]: [{ '@id': 'ontology1' }],
+                [`${CATALOG}trackedIdentifier`]: [{ '@id': 'ontology1' }],
                 [`${DCTERMS}description`]: [{ '@value': '' }],
                 [`${DCTERMS}issued`]: [{
                         '@type': `${XSD}dateTime`,
@@ -122,7 +122,7 @@ describe('Datasets Ontology Picker component', function() {
                 [`${CATALOG}branch`]: [{ '@id': 'ontology2Branch' }],
                 [`${CATALOG}catalog`]: [{ '@id': catalogId }],
                 [`${CATALOG}masterBranch`]: [{ '@id': 'ontology2Branch' }],
-                [`${ONTOLOGYEDITOR}ontologyIRI`]: [{ '@id': 'ontology2' }],
+                [`${CATALOG}trackedIdentifier`]: [{ '@id': 'ontology2' }],
                 [`${DCTERMS}description`]: [{ '@value': '' }],
                 [`${DCTERMS}issued`]: [{
                         '@type': `${XSD}dateTime`,

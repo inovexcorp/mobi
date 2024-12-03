@@ -309,7 +309,7 @@ public class ShapesGraphRest {
             commitStmt.close();
 
             ObjectNode objectNode = mapper.createObjectNode();
-            objectNode.put("shapesGraphId", record.getShapesGraphIRI().orElseThrow(() ->
+            objectNode.put("shapesGraphId", record.getTrackedIdentifier().orElseThrow(() ->
                     new IllegalStateException("ShapesGraphRecord must have a Shapes Graph IRI")).toString());
             objectNode.put("recordId", record.getResource().stringValue());
             objectNode.put("branchId", branchId.toString());

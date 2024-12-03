@@ -42,17 +42,14 @@ import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecordFactory;
 import com.mobi.ontology.utils.cache.OntologyCache;
-import com.mobi.persistence.utils.Bindings;
+import com.mobi.ontology.utils.imports.ImportsResolver;
 import com.mobi.setting.api.SettingService;
 import com.mobi.setting.api.ontologies.setting.ApplicationSetting;
-import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
-import org.eclipse.rdf4j.query.TupleQuery;
-import org.eclipse.rdf4j.query.TupleQueryResult;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
@@ -62,9 +59,6 @@ import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.Objects;
 import java.util.Optional;
 import javax.annotation.Nonnull;
 
@@ -77,22 +71,6 @@ public class SimpleOntologyManager implements OntologyManager {
     protected Logger log;
     protected final ValueFactory valueFactory = new ValidatingValueFactory();
     static final String COMPONENT_NAME = "com.mobi.ontology.impl.repository.OntologyManager";
-
-    protected static final String FIND_ONTOLOGY;
-    protected static final String ONTOLOGY_IRI = "ontologyIRI";
-    protected static final String CATALOG = "catalog";
-    protected static final String RECORD = "record";
-
-    static {
-        try {
-            FIND_ONTOLOGY = IOUtils.toString(
-                    Objects.requireNonNull(SimpleOntologyManager.class.getResourceAsStream("/find-ontology.rq")),
-                    StandardCharsets.UTF_8
-            );
-        } catch (IOException e) {
-            throw new MobiException(e);
-        }
-    }
 
     @Reference
     public OntologyRecordFactory ontologyRecordFactory;
@@ -133,6 +111,8 @@ public class SimpleOntologyManager implements OntologyManager {
     @Reference
     protected OntologyCreationService ontologyCreationService;
 
+    @Reference
+    protected ImportsResolver importsResolver;
 
     public SimpleOntologyManager() {
     }
@@ -178,40 +158,7 @@ public class SimpleOntologyManager implements OntologyManager {
 
     @Override
     public boolean ontologyIriExists(Resource ontologyIRI) {
-        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            TupleQuery query = conn.prepareTupleQuery(FIND_ONTOLOGY);
-            query.setBinding(ONTOLOGY_IRI, ontologyIRI);
-            query.setBinding(CATALOG, configProvider.getLocalCatalogIRI());
-            TupleQueryResult result = query.evaluate();
-            boolean exists = result.hasNext();
-            result.close();
-            return exists;
-        }
-    }
-
-    @Override
-    public Optional<Resource> getOntologyRecordResource(@Nonnull Resource ontologyIRI) {
-        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            TupleQuery query = conn.prepareTupleQuery(FIND_ONTOLOGY);
-            query.setBinding(ONTOLOGY_IRI, ontologyIRI);
-            query.setBinding(CATALOG, configProvider.getLocalCatalogIRI());
-            TupleQueryResult result = query.evaluate();
-            if (!result.hasNext()) {
-                return Optional.empty();
-            }
-            Optional<Resource> ontologyResourceOpt = Optional.of(Bindings.requiredResource(result.next(), RECORD));
-            result.close();
-            return ontologyResourceOpt;
-        }
-    }
-
-    @Override
-    public Optional<Ontology> retrieveOntologyByIRI(@Nonnull Resource ontologyIRI) {
-        long start = getStartTime();
-        Optional<Ontology> ontology = getOntologyRecordResource(ontologyIRI)
-                .flatMap(this::retrieveOntologyWithRecordId);
-        logTrace("retrieveOntology(ontologyIRI)", start);
-        return ontology;
+        return importsResolver.getRecordIRIFromOntologyIRI(ontologyIRI).isPresent();
     }
 
     @Override
@@ -226,8 +173,8 @@ public class SimpleOntologyManager implements OntologyManager {
     public Optional<Ontology> retrieveOntology(@Nonnull Resource recordId, @Nonnull Resource branchId) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             long start = getStartTime();
-            Optional<Ontology> result = branchManager.getBranchOpt(configProvider.getLocalCatalogIRI(), recordId, branchId,
-                    branchFactory, conn).flatMap(branch -> getOntology(recordId, getHeadOfBranch(branch)));
+            Optional<Ontology> result = branchManager.getBranchOpt(configProvider.getLocalCatalogIRI(), recordId,
+                    branchId, branchFactory, conn).flatMap(branch -> getOntology(recordId, getHeadOfBranch(branch)));
             logTrace("retrieveOntology(recordId, branchId)", start);
             return result;
         }
@@ -285,7 +232,10 @@ public class SimpleOntologyManager implements OntologyManager {
 
     @Override
     public OntologyId createOntologyId(IRI ontologyIRI, IRI versionIRI) {
-        return new SimpleOntologyId.Builder(settingService, namespaceService).ontologyIRI(ontologyIRI).versionIRI(versionIRI).build();
+        return new SimpleOntologyId.Builder(settingService, namespaceService)
+                .ontologyIRI(ontologyIRI)
+                .versionIRI(versionIRI)
+                .build();
     }
 
     @Override

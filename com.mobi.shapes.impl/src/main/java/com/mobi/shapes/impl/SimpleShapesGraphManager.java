@@ -29,21 +29,15 @@ import com.mobi.catalog.api.CompiledResourceManager;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
 import com.mobi.catalog.config.CatalogConfigProvider;
-import com.mobi.exception.MobiException;
+import com.mobi.ontology.utils.imports.ImportsResolver;
 import com.mobi.shapes.api.ShapesGraph;
 import com.mobi.shapes.api.ShapesGraphManager;
-import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
-import org.eclipse.rdf4j.query.TupleQuery;
-import org.eclipse.rdf4j.query.TupleQueryResult;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.Objects;
 import java.util.Optional;
 import javax.annotation.Nonnull;
 
@@ -51,21 +45,6 @@ import javax.annotation.Nonnull;
         service = { SimpleShapesGraphManager.class, ShapesGraphManager.class }
 )
 public class SimpleShapesGraphManager implements ShapesGraphManager {
-
-    private static final String SHAPES_GRAPH_IRI = "shapesGraphIRI";
-    private static final String CATALOG = "catalog";
-    private static final String FIND_SHAPES_GRAPH;
-
-    static {
-        try {
-            FIND_SHAPES_GRAPH = IOUtils.toString(
-                    Objects.requireNonNull(SimpleShapesGraphManager.class.getResourceAsStream("/find-shapes-graph.rq")),
-                    StandardCharsets.UTF_8
-            );
-        } catch (IOException e) {
-            throw new MobiException(e);
-        }
-    }
 
     @Reference
     CatalogConfigProvider configProvider;
@@ -79,17 +58,12 @@ public class SimpleShapesGraphManager implements ShapesGraphManager {
     @Reference
     CompiledResourceManager compiledResourceManager;
 
+    @Reference
+    ImportsResolver importsResolver;
+
     @Override
     public boolean shapesGraphIriExists(Resource shapesGraphId) {
-        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            TupleQuery query = conn.prepareTupleQuery(FIND_SHAPES_GRAPH);
-            query.setBinding(SHAPES_GRAPH_IRI, shapesGraphId);
-            query.setBinding(CATALOG, configProvider.getLocalCatalogIRI());
-            TupleQueryResult result = query.evaluate();
-            boolean exists = result.hasNext();
-            result.close();
-            return exists;
-        }
+        return importsResolver.getRecordIRIFromOntologyIRI(shapesGraphId).isPresent();
     }
 
     @Override

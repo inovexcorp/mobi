@@ -39,6 +39,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 
 @Component(
         service = { ClearPolicyStatements.class, PostRestoreOperation.class }
@@ -50,7 +51,7 @@ public class ClearPolicyStatements implements PostRestoreOperation {
     static {
         try {
             CLEAR_POLICY_STATEMENTS = IOUtils.toString(
-                    Restore.class.getResourceAsStream("/clearPolicyStatements.rq"),
+                    Objects.requireNonNull(Restore.class.getResourceAsStream("/clearPolicyStatements.rq")),
                     StandardCharsets.UTF_8
             );
         } catch (IOException e) {

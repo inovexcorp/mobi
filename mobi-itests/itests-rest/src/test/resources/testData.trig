@@ -86,7 +86,7 @@
       <https://mobi.com/branches#35de6940-7e64-496b-8e56-3d1d9e60f5da>;
     <http://mobi.com/ontologies/catalog#catalog> <http://mobi.com/catalog-local>;
     <http://mobi.com/ontologies/catalog#masterBranch> <https://mobi.com/branches#0766ae42-4af1-4482-8f5f-74c688561fa7>;
-    <http://mobi.com/ontologies/ontology-editor#ontologyIRI> <https://mobi.com/ontologies/8/2021/TestOntology>;
+    <http://mobi.com/ontologies/catalog#trackedIdentifier> <https://mobi.com/ontologies/8/2021/TestOntology>;
     <http://purl.org/dc/terms/publisher> <http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997> .
 }
 

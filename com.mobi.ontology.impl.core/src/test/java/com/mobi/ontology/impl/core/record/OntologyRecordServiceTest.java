@@ -158,17 +158,17 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
     private Revision revision;
     private IRI revisionIRI;
 
-    private OrmFactory<Branch> branchFactory = spy(getRequiredOrmFactory(Branch.class));
-    private OrmFactory<MasterBranch> masterBranchFactory = spy(getRequiredOrmFactory(MasterBranch.class));
-    private OrmFactory<Catalog> catalogFactory = spy(getRequiredOrmFactory(Catalog.class));
-    private OrmFactory<Commit> commitFactory = spy(getRequiredOrmFactory(Commit.class));
-    private OrmFactory<DeleteActivity> deleteActivityFactory = spy(getRequiredOrmFactory(DeleteActivity.class));
-    private OrmFactory<Distribution> distributionFactory = spy(getRequiredOrmFactory(Distribution.class));
-    private OrmFactory<OntologyRecord> recordFactory = spy(getRequiredOrmFactory(OntologyRecord.class));
-    private OrmFactory<Revision> revisionFactory = spy(getRequiredOrmFactory(Revision.class));
-    private OrmFactory<Tag> tagFactory = spy(getRequiredOrmFactory(Tag.class));
-    private OrmFactory<User> userFactory = spy(getRequiredOrmFactory(User.class));
-    private OrmFactory<VersionedRDFRecord> versionedRDFRecordFactory = spy(getRequiredOrmFactory(VersionedRDFRecord.class));
+    private final OrmFactory<Branch> branchFactory = spy(getRequiredOrmFactory(Branch.class));
+    private final OrmFactory<MasterBranch> masterBranchFactory = spy(getRequiredOrmFactory(MasterBranch.class));
+    private final OrmFactory<Catalog> catalogFactory = spy(getRequiredOrmFactory(Catalog.class));
+    private final OrmFactory<Commit> commitFactory = spy(getRequiredOrmFactory(Commit.class));
+    private final OrmFactory<DeleteActivity> deleteActivityFactory = spy(getRequiredOrmFactory(DeleteActivity.class));
+    private final OrmFactory<Distribution> distributionFactory = spy(getRequiredOrmFactory(Distribution.class));
+    private final OrmFactory<OntologyRecord> recordFactory = spy(getRequiredOrmFactory(OntologyRecord.class));
+    private final OrmFactory<Revision> revisionFactory = spy(getRequiredOrmFactory(Revision.class));
+    private final OrmFactory<Tag> tagFactory = spy(getRequiredOrmFactory(Tag.class));
+    private final OrmFactory<User> userFactory = spy(getRequiredOrmFactory(User.class));
+    private final OrmFactory<VersionedRDFRecord> versionedRDFRecordFactory = spy(getRequiredOrmFactory(VersionedRDFRecord.class));
 
     private ValueFactory vf;
 
@@ -284,7 +284,7 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         testRecord.setLatestVersion(tag);
         testRecord.setBranch(Collections.singleton(branch));
         testRecord.setMasterBranch(masterBranchFactory.createNew(masterBranchIRI));
-        testRecord.setOntologyIRI(testIRI);
+        testRecord.setTrackedIdentifier(testIRI);
 
         closeable = MockitoAnnotations.openMocks(this);
         when(ontologyId1.getOntologyIRI()).thenReturn(Optional.empty());
@@ -449,7 +449,7 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         assertEquals(1, ontologyRecord.getBranch_resource().size());
         Optional<Resource> optMasterBranch = ontologyRecord.getMasterBranch_resource();
         assertTrue(optMasterBranch.isPresent());
-        Optional<Resource> optOntologyIri = ontologyRecord.getOntologyIRI();
+        Optional<Resource> optOntologyIri = ontologyRecord.getTrackedIdentifier();
         assertTrue(optOntologyIri.isPresent());
         assertEquals(importedOntologyIRI.stringValue(), optOntologyIri.get().stringValue());
 
@@ -507,7 +507,7 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         assertEquals(1, ontologyRecord.getBranch_resource().size());
         Optional<Resource> optMasterBranch = ontologyRecord.getMasterBranch_resource();
         assertTrue(optMasterBranch.isPresent());
-        Optional<Resource> optOntologyIri = ontologyRecord.getOntologyIRI();
+        Optional<Resource> optOntologyIri = ontologyRecord.getTrackedIdentifier();
         assertTrue(optOntologyIri.isPresent());
         assertEquals(importedOntologyIRI.stringValue(), optOntologyIri.get().stringValue());
 
@@ -663,7 +663,7 @@ public class OntologyRecordServiceTest extends OrmEnabledTestCase {
         assertEquals(1, ontologyRecord.getBranch_resource().size());
         Optional<Resource> optMasterBranch = ontologyRecord.getMasterBranch_resource();
         assertTrue(optMasterBranch.isPresent());
-        Optional<Resource> optOntologyIri = ontologyRecord.getOntologyIRI();
+        Optional<Resource> optOntologyIri = ontologyRecord.getTrackedIdentifier();
         assertTrue(optOntologyIri.isPresent());
         assertEquals(importedOntologyIRI.stringValue(), optOntologyIri.get().stringValue());
 

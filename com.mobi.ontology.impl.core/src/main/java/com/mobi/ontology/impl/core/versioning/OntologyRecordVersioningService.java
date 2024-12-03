@@ -82,7 +82,7 @@ public class OntologyRecordVersioningService extends BaseVersioningService<Ontol
             throw new IllegalStateException("Ontology does not contain an ontology definition");
         }
         OntologyRecord record = thingManager.getObject(recordId, ontologyRecordFactory, conn);
-        Resource existingOntologyIRI = record.getOntologyIRI()
+        Resource existingOntologyIRI = record.getTrackedIdentifier()
                 .orElseThrow(() -> new IllegalStateException("OntologyRecord " + recordId.stringValue()
                         + " does not have an ontologyIRI"));
         Model ontologyDefinitions = mf.createEmptyModel();
@@ -95,7 +95,7 @@ public class OntologyRecordVersioningService extends BaseVersioningService<Ontol
         if (!currentOntologyIRI.equals(existingOntologyIRI)) {
             ontologyCache.clearCacheImports(existingOntologyIRI);
             testOntologyIRIUniqueness(currentOntologyIRI);
-            record.setOntologyIRI(currentOntologyIRI);
+            record.setTrackedIdentifier(currentOntologyIRI);
             thingManager.updateObject(record, conn);
             ontologyCache.clearCacheImports(currentOntologyIRI);
         }
@@ -103,7 +103,7 @@ public class OntologyRecordVersioningService extends BaseVersioningService<Ontol
 
     private void testOntologyIRIUniqueness(Resource ontologyIRI) {
         if (ontologyManager.ontologyIriExists(ontologyIRI)) {
-            throw new IllegalArgumentException("Ontology already exists with IRI " + ontologyIRI);
+            throw new IllegalArgumentException("A Record already exists with tracked IRI " + ontologyIRI);
         }
     }
 }

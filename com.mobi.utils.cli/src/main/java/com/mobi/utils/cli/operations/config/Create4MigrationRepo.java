@@ -33,14 +33,17 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Component(
-        service = { Create3MigrationRepo.class, ConfigRestoreOperation.class }
+        service = { Create4MigrationRepo.class, ConfigRestoreOperation.class }
 )
-public class Create3MigrationRepo implements ConfigRestoreOperation {
+public class Create4MigrationRepo implements ConfigRestoreOperation {
 
     @Override
     public List<String> getExcludedFiles() {
@@ -51,9 +54,11 @@ public class Create3MigrationRepo implements ConfigRestoreOperation {
     public List<String> addConfig() {
         try {
             String tempConfig = "com.mobi.service.repository.native-systemTemp.cfg";
-            InputStream stream = getClass().getResourceAsStream("/" + tempConfig);
-            Files.copy(stream, Paths.get(System.getProperty("karaf.etc") + File.separator + tempConfig));
-            return List.of(tempConfig);
+            try (InputStream stream = getClass().getResourceAsStream("/" + tempConfig)) {
+                Path path = Paths.get(System.getProperty("karaf.etc") + File.separator + tempConfig);
+                Files.copy(Objects.requireNonNull(stream), path, StandardCopyOption.REPLACE_EXISTING);
+                return List.of(tempConfig);
+            }
         } catch (IOException e) {
             throw new MobiException("Could not copy temp repo config for 3.0 migration", e);
         }

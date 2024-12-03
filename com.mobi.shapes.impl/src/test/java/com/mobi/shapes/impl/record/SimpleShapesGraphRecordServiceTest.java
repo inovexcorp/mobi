@@ -30,13 +30,32 @@ import static junit.framework.TestCase.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
-import com.mobi.catalog.api.*;
+import com.mobi.catalog.api.BranchManager;
+import com.mobi.catalog.api.CatalogProvUtils;
+import com.mobi.catalog.api.CommitManager;
+import com.mobi.catalog.api.DifferenceManager;
+import com.mobi.catalog.api.RevisionManager;
+import com.mobi.catalog.api.ThingManager;
+import com.mobi.catalog.api.VersionManager;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.mergerequest.MergeRequestManager;
-import com.mobi.catalog.api.ontologies.mcat.*;
+import com.mobi.catalog.api.ontologies.mcat.Branch;
+import com.mobi.catalog.api.ontologies.mcat.Catalog;
+import com.mobi.catalog.api.ontologies.mcat.Commit;
+import com.mobi.catalog.api.ontologies.mcat.Distribution;
+import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
+import com.mobi.catalog.api.ontologies.mcat.MasterBranch;
 import com.mobi.catalog.api.ontologies.mcat.Record;
+import com.mobi.catalog.api.ontologies.mcat.Revision;
+import com.mobi.catalog.api.ontologies.mcat.Tag;
 import com.mobi.catalog.api.record.config.OperationConfig;
 import com.mobi.catalog.api.record.config.RecordCreateSettings;
 import com.mobi.catalog.api.record.config.RecordOperationConfig;
@@ -112,17 +131,16 @@ public class SimpleShapesGraphRecordServiceTest extends OrmEnabledTestCase {
     private Tag tag;
     private MemoryRepositoryWrapper repository;
 
-    private OrmFactory<ShapesGraphRecord> recordFactory = getRequiredOrmFactory(ShapesGraphRecord.class);
-    private OrmFactory<Catalog> catalogFactory = getRequiredOrmFactory(Catalog.class);
-    private OrmFactory<User> userFactory = getRequiredOrmFactory(User.class);
-    private OrmFactory<DeleteActivity> deleteActivityFactory = getRequiredOrmFactory(DeleteActivity.class);
-    private OrmFactory<Branch> branchFactory = getRequiredOrmFactory(Branch.class);
-    private OrmFactory<MasterBranch> masterBranchFactory = getRequiredOrmFactory(MasterBranch.class);
-    private OrmFactory<Commit> commitFactory = getRequiredOrmFactory(Commit.class);
-    private OrmFactory<Tag> tagFactory = getRequiredOrmFactory(Tag.class);
-    private OrmFactory<Distribution> distributionFactory = getRequiredOrmFactory(Distribution.class);
-
-    private OrmFactory<Revision> revisionFactory = getRequiredOrmFactory(Revision.class);
+    private final OrmFactory<ShapesGraphRecord> recordFactory = getRequiredOrmFactory(ShapesGraphRecord.class);
+    private final OrmFactory<Catalog> catalogFactory = getRequiredOrmFactory(Catalog.class);
+    private final OrmFactory<User> userFactory = getRequiredOrmFactory(User.class);
+    private final OrmFactory<DeleteActivity> deleteActivityFactory = getRequiredOrmFactory(DeleteActivity.class);
+    private final OrmFactory<Branch> branchFactory = getRequiredOrmFactory(Branch.class);
+    private final OrmFactory<MasterBranch> masterBranchFactory = getRequiredOrmFactory(MasterBranch.class);
+    private final OrmFactory<Commit> commitFactory = getRequiredOrmFactory(Commit.class);
+    private final OrmFactory<Tag> tagFactory = getRequiredOrmFactory(Tag.class);
+    private final OrmFactory<Distribution> distributionFactory = getRequiredOrmFactory(Distribution.class);
+    private final OrmFactory<Revision> revisionFactory = getRequiredOrmFactory(Revision.class);
 
     @Mock
     private ThingManager thingManager;
@@ -211,7 +229,7 @@ public class SimpleShapesGraphRecordServiceTest extends OrmEnabledTestCase {
         testRecord.setLatestVersion(tag);
         testRecord.setBranch(Collections.singleton(branch));
         testRecord.setMasterBranch(masterBranchFactory.createNew(masterBranchIRI));
-        testRecord.setShapesGraphIRI(testIRI);
+        testRecord.setTrackedIdentifier(testIRI);
 
         closeable = MockitoAnnotations.openMocks(this);
         when(versioningManager.commit(any(Resource.class), any(Resource.class), any(Resource.class), any(User.class), anyString(), any(RepositoryConnection.class))).thenReturn(commitIRI);
@@ -348,7 +366,7 @@ public class SimpleShapesGraphRecordServiceTest extends OrmEnabledTestCase {
         assertEquals(1, shaclRecord.getBranch_resource().size());
         Optional<Resource> optMasterBranch = shaclRecord.getMasterBranch_resource();
         assertTrue(optMasterBranch.isPresent());
-        Optional<Resource> optShapesGraphIri = shaclRecord.getShapesGraphIRI();
+        Optional<Resource> optShapesGraphIri = shaclRecord.getTrackedIdentifier();
         assertTrue(optShapesGraphIri.isPresent());
         assertTrue(optShapesGraphIri.get().stringValue().startsWith(SimpleShapesGraphRecordService.DEFAULT_PREFIX));
         
@@ -409,7 +427,7 @@ public class SimpleShapesGraphRecordServiceTest extends OrmEnabledTestCase {
         assertEquals(1, shaclRecord.getBranch_resource().size());
         Optional<Resource> optMasterBranch = shaclRecord.getMasterBranch_resource();
         assertTrue(optMasterBranch.isPresent());
-        Optional<Resource> optShapesGraphIri = shaclRecord.getShapesGraphIRI();
+        Optional<Resource> optShapesGraphIri = shaclRecord.getTrackedIdentifier();
         assertTrue(optShapesGraphIri.isPresent());
         assertEquals("urn:testOntology", optShapesGraphIri.get().stringValue());
 
@@ -468,7 +486,7 @@ public class SimpleShapesGraphRecordServiceTest extends OrmEnabledTestCase {
         assertEquals(1, shaclRecord.getBranch_resource().size());
         Optional<Resource> optMasterBranch = shaclRecord.getMasterBranch_resource();
         assertTrue(optMasterBranch.isPresent());
-        Optional<Resource> optShapesGraphIri = shaclRecord.getShapesGraphIRI();
+        Optional<Resource> optShapesGraphIri = shaclRecord.getTrackedIdentifier();
         assertTrue(optShapesGraphIri.isPresent());
         assertTrue(optShapesGraphIri.get().stringValue().startsWith(SimpleShapesGraphRecordService.DEFAULT_PREFIX));
 

@@ -174,7 +174,7 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
    * is provided, will pull the identifier IRI from the currently selected listItem.
    */
   getIdentifierIRI(record?: JSONLDObject): string {
-    return record ? getPropertyId(record, `${SHAPESGRAPHEDITOR}shapesGraphIRI`) : this.listItem.shapesGraphId;
+    return record ? getPropertyId(record, `${CATALOG}trackedIdentifier`) : this.listItem.shapesGraphId;
   }
   /**
    * Opens the ShapesGraphRecord identified by the provided details in the Shapes Editor.

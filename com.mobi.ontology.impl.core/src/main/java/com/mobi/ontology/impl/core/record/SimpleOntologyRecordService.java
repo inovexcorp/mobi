@@ -42,6 +42,7 @@ import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
 import org.eclipse.rdf4j.query.QueryResults;
 import org.eclipse.rdf4j.query.TupleQuery;
+import org.eclipse.rdf4j.query.TupleQueryResult;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
@@ -54,8 +55,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 
 @Component(
@@ -119,11 +120,11 @@ public class SimpleOntologyRecordService extends AbstractOntologyRecordService<O
      * Delete Ontology State.  When an OntologyRecord is deleted, all State data associated with that
      * Record is deleted from the application for all users.
      */
-    protected void deleteOntologyState(OntologyRecord record, RepositoryConnection conn){
+    protected void deleteOntologyState(OntologyRecord record, RepositoryConnection conn) {
         long start = getStartTime();
         List<Model> states = getAllStateModelsForRecord(record, conn);
         List<Statement> statementsToRemove = new ArrayList<>();
-        for (Model stateModel: states) {
+        for (Model stateModel : states) {
             statementsToRemove.addAll(stateModel);
         }
         conn.remove(statementsToRemove);
@@ -146,29 +147,31 @@ public class SimpleOntologyRecordService extends AbstractOntologyRecordService<O
         String query = FIND_PLATFORM_STATES_FOR_ONTOLOGY_RECORD.replace("%RECORDIRI%",
                 record.getResource().stringValue());
         TupleQuery stateQuery = conn.prepareTupleQuery(query);
-        stateQuery.evaluate().forEach(bindings ->
-                statePlatformIds.add((Bindings.requiredResource(bindings, "state"))));
+        try (TupleQueryResult result = stateQuery.evaluate()) {
+            result.forEach(bindings -> statePlatformIds.add((Bindings.requiredResource(bindings, "state"))));
+        }
         return statePlatformIds;
     }
 
     /**
-     * Get ApplicationState and the ResourceModel of each ApplicationState as models
+     * Get ApplicationState and the ResourceModel of each ApplicationState as models.
+     *
      * @param record OntologyRecord
      * @param conn RepositoryConnection
-     * @return List<Model> all state models
+     * @return List of all state models
      */
     protected List<Model> getAllStateModelsForRecord(OntologyRecord record, RepositoryConnection conn) {
         Set<Resource> platformStateIds = getPlatformStateIds(record, conn);
         List<Model> states = new ArrayList<>();
         List<Model> stateResourceModels = new ArrayList<>();
 
-        for (Resource recordId: platformStateIds) {
+        for (Resource recordId : platformStateIds) {
             Model model = QueryResults.asModel(conn.getStatements(recordId, null, null), mf);
             states.add(model);
 
             State state = stateFactory.getExisting(recordId, model).orElseThrow(()
                     -> new IllegalArgumentException("Record " + recordId + " does not exist"));
-            for (Resource stateResourceId: state.getStateResource()) {
+            for (Resource stateResourceId : state.getStateResource()) {
                 Model stateResourceModel = QueryResults.asModel(conn.getStatements(stateResourceId, null, null), mf);
                 stateResourceModels.add(stateResourceModel);
             }
@@ -185,7 +188,7 @@ public class SimpleOntologyRecordService extends AbstractOntologyRecordService<O
      */
     protected void clearOntologyCache(OntologyRecord record) {
         ontologyCache.clearCache(record.getResource());
-        record.getOntologyIRI().ifPresent(ontologyCache::clearCacheImports);
+        record.getTrackedIdentifier().ifPresent(ontologyCache::clearCacheImports);
     }
 
     private long getStartTime() {

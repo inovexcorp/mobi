@@ -277,7 +277,7 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
      * pull the identifier IRI from the currently selected listItem.
      */
     getIdentifierIRI(record?: JSONLDObject): string {
-      return record ? getPropertyId(record, `${ONTOLOGYEDITOR}ontologyIRI`) : this.listItem.ontologyId;
+      return record ? getPropertyId(record, `${CATALOG}trackedIdentifier`) : this.listItem.ontologyId;
     }
     /**
      * Opens the OntologyRecord identified by the provided details in the Ontology Editor.

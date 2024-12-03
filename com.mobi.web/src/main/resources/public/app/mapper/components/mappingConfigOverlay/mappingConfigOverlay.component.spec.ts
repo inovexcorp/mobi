@@ -86,7 +86,7 @@ describe('Mapping Config Overlay component', function() {
       [`${DCTERMS}title`]: [{ '@value': 'title' }],
       [`${DCTERMS}description`]: [{ '@value': 'description' }],
       [`${DCTERMS}modified`]: [{ '@value': DATE_STR }],
-      [`${ONTOLOGYEDITOR}ontologyIRI`]: [{ '@id': 'ontology' }]
+      [`${CATALOG}trackedIdentifier`]: [{ '@id': 'ontology' }]
     };
     const ontologyInfo: MappingOntologyInfo = {
         recordId: ontologyRecord['@id'],

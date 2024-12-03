@@ -35,6 +35,7 @@ import com.mobi.repository.impl.sesame.nativestore.NativeRepositoryConfig;
 import com.mobi.security.api.EncryptionService;
 import com.mobi.security.policy.api.xacml.XACMLPolicyManager;
 import com.mobi.utils.cli.api.ConfigRestoreOperation;
+import com.mobi.utils.cli.api.EndRestoreException;
 import com.mobi.utils.cli.api.ExecutableRestoreOperation;
 import com.mobi.utils.cli.api.PostRestoreOperation;
 import com.mobi.utils.cli.api.PreRestoreOperation;
@@ -169,36 +170,43 @@ public class Restore implements Action {
         String backupVersion = manifestFile.getVersion();
         RestoreUtils.out("== Restoring Version: " + backupVersion, LOGGER);
 
-        BundleContext xacmlBundleContext = FrameworkUtil.getBundle(XACMLPolicyManager.class).getBundleContext();
+        try {
+            BundleContext xacmlBundleContext = FrameworkUtil.getBundle(XACMLPolicyManager.class).getBundleContext();
 
-        RestoreUtils.out("== Configuration Stage", LOGGER);
-        copyConfigFiles(xacmlBundleContext, backupVersion);
+            RestoreUtils.out("== Configuration Stage", LOGGER);
+            copyConfigFiles(xacmlBundleContext, backupVersion);
 
-        RestoreUtils.out("== Pre-Process Stage", LOGGER);
-        restorePreProcess(backupVersion);
+            RestoreUtils.out("== Pre-Process Stage", LOGGER);
+            restorePreProcess(backupVersion);
 
-        RestoreUtils.out("== Clearing All Repos", LOGGER);
-        Set<String> remoteRepos = clearAllRepos(repositoryManager);
+            RestoreUtils.out("== Clearing All Repos", LOGGER);
+            Set<String> remoteRepos = clearAllRepos(repositoryManager);
 
-        RestoreUtils.out("== Restoring Manifest Repos", LOGGER);
-        restoreRepositories(manifestRepos, remoteRepos, backupVersion);
+            RestoreUtils.out("== Restoring Manifest Repos", LOGGER);
+            restoreRepositories(manifestRepos, remoteRepos, backupVersion);
 
-        RestoreUtils.out("== Post-Process Stage", LOGGER);
-        restorePostProcess(backupVersion);
+            RestoreUtils.out("== Post-Process Stage", LOGGER);
+            restorePostProcess(backupVersion);
 
-        RestoreUtils.out("== Deleting Temporary Restore Directory", LOGGER);
-        File tempArchive = new File(RESTORE_PATH);
-        FileUtils.deleteDirectory(tempArchive);
+            RestoreUtils.out("== Deleting Temporary Restore Directory", LOGGER);
+            File tempArchive = new File(RESTORE_PATH);
+            FileUtils.deleteDirectory(tempArchive);
 
-        RestoreUtils.out("== Restarting XACMLPolicyManager bundle =", LOGGER); // recreate policies that were deleted
-        long start = System.currentTimeMillis();
-        xacmlBundleContext.getBundle().update();
-        RestoreUtils.out("== Restarted XACMLPolicyManager bundle. Took:"
-                + (System.currentTimeMillis() - start) + " ms", LOGGER);
+            RestoreUtils.out("== Restarting XACMLPolicyManager bundle =", LOGGER); // recreate policies that were deleted
+            long start = System.currentTimeMillis();
+            xacmlBundleContext.getBundle().update();
+            RestoreUtils.out("== Restarted XACMLPolicyManager bundle. Took:"
+                    + (System.currentTimeMillis() - start) + " ms", LOGGER);
 
-        RestoreUtils.out("== Restarting all services", LOGGER);
-        systemService.reboot();
-        return null;
+            RestoreUtils.out("== Restarting all services", LOGGER);
+            systemService.reboot();
+            return null;
+        } catch (EndRestoreException e) {
+            RestoreUtils.out("== Deleting Temporary Restore Directory", LOGGER);
+            File tempArchive = new File(RESTORE_PATH);
+            FileUtils.deleteDirectory(tempArchive);
+            return null;
+        }
     }
 
     private void copyConfigFiles(BundleContext bundleContext, String version) throws IOException, InterruptedException,
@@ -361,8 +369,9 @@ public class Restore implements Action {
      * Restore Pre-Process.
      *
      * @param backupVersion Backup Version
+     * @throws EndRestoreException If an executed operation had non-recoverable error
      */
-    private void restorePreProcess(String backupVersion) {
+    private void restorePreProcess(String backupVersion) throws EndRestoreException {
         List<PreRestoreOperation> preRestoreOperations = preRestoreOperationHandler.getOperations(backupVersion);
         executeRestoreOperations(preRestoreOperations);
     }
@@ -371,8 +380,9 @@ public class Restore implements Action {
      * Restore Process Post-processing.
      *
      * @param backupVersion Backup Version
+     * @throws EndRestoreException If an executed operation had non-recoverable error
      */
-    protected void restorePostProcess(String backupVersion) {
+    protected void restorePostProcess(String backupVersion) throws EndRestoreException {
         List<PostRestoreOperation> postRestoreOperations = postRestoreOperationHandler.getOperations(backupVersion);
         executeRestoreOperations(postRestoreOperations);
     }
@@ -381,8 +391,10 @@ public class Restore implements Action {
      * Execute list of ExecutableRestoreOperation.
      *
      * @param executableRestoreOperation List of ExecutableRestore Operations
+     * @throws EndRestoreException If an executed operation had non-recoverable error
      */
-    private void executeRestoreOperations(List<? extends ExecutableRestoreOperation> executableRestoreOperation) {
+    private void executeRestoreOperations(List<? extends ExecutableRestoreOperation> executableRestoreOperation)
+            throws EndRestoreException {
         executableRestoreOperation.forEach((ExecutableRestoreOperation operation) -> {
             try {
                 long startTime = System.currentTimeMillis();
@@ -391,6 +403,9 @@ public class Restore implements Action {
                 RestoreUtils.out(String.format("Executed Operation %s with priority %s for versions %s, took %s ms",
                         operation.getClass(), operation.getPriority(), operation.getVersionRange(),
                         endTime - startTime), LOGGER);
+            } catch (EndRestoreException e) {
+                RestoreUtils.error(operation, e.getMessage(), e, LOGGER);
+                throw e;
             } catch (Exception e) {
                 RestoreUtils.error(operation, e.getMessage(), e, LOGGER);
             }

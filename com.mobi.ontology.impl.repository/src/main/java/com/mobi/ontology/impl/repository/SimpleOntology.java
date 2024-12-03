@@ -23,10 +23,10 @@ package com.mobi.ontology.impl.repository;
  * #L%
  */
 
-import com.mobi.catalog.api.CompiledResourceManager;
-import com.mobi.catalog.api.ThingManager;
+import com.mobi.catalog.api.BranchManager;
+import com.mobi.catalog.api.CommitManager;
 import com.mobi.catalog.api.builder.Difference;
-import com.mobi.catalog.api.ontologies.mcat.Commit;
+import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.dataset.api.DatasetConnection;
 import com.mobi.dataset.api.DatasetUtilsService;
@@ -124,11 +124,11 @@ public class SimpleOntology implements Ontology {
     private final OsgiRepository repository;
     private final DatasetUtilsService dsUtilsService;
     private final OntologyManager ontologyManager;
-    private final ThingManager thingManager;
-    private final CompiledResourceManager compiledResourceManager;
     private final CatalogConfigProvider configProvider;
     private final ImportsResolver importsResolver;
     private final BNodeService bNodeService;
+    private final BranchManager branchManager;
+    private final CommitManager commitManager;
     private final IRI datasetIRI;
     private Set<IRI> importsClosure;
     private Set<IRI> unresolvedImports;
@@ -284,28 +284,27 @@ public class SimpleOntology implements Ontology {
      * @param ontologyFile    The {@link File} of RDF to load into cache
      * @param cacheRepo       The {@link OsgiRepository} to use as a cache
      * @param ontologyManager The {@link OntologyManager} used to retrieve Ontology information
-     * @param thingManager    The {@link ThingManager} used to retrieve Record information
-     * @param compiledResourceManager The {@link CompiledResourceManager} to generate the compiled resource
      * @param configProvider  The {@link CatalogConfigProvider} used to retrieve the local catalog IRI
      * @param dsUtilsService  The {@link DatasetUtilsService} used to manage Ontology Datasets
      * @param importsResolver The {@link ImportsResolver} used to resolve imports from local catalog and from the web
      * @param bNodeService    The {@link BNodeService} used to skolemize Models
+     * @param branchManager   The {@link BranchManager} used to retrieve Branch details
+     * @param commitManager   The {@link CommitManager} used to retrieve Commit details
      */
     public SimpleOntology(String recordCommitKey, File ontologyFile, OsgiRepository cacheRepo,
-                          OntologyManager ontologyManager, ThingManager thingManager,
-                          CompiledResourceManager compiledResourceManager,
-                          CatalogConfigProvider configProvider, DatasetUtilsService dsUtilsService,
-                          ImportsResolver importsResolver, BNodeService bNodeService) {
+                          OntologyManager ontologyManager, CatalogConfigProvider configProvider,
+                          DatasetUtilsService dsUtilsService, ImportsResolver importsResolver,
+                          BNodeService bNodeService, BranchManager branchManager, CommitManager commitManager) {
         long startTime = getStartTime();
         this.datasetIRI = OntologyDatasets.createDatasetIRIFromKey(recordCommitKey);
         this.repository = cacheRepo;
         this.ontologyManager = ontologyManager;
-        this.thingManager = thingManager;
-        this.compiledResourceManager = compiledResourceManager;
         this.configProvider = configProvider;
         this.dsUtilsService = dsUtilsService;
         this.importsResolver = importsResolver;
         this.bNodeService = bNodeService;
+        this.branchManager = branchManager;
+        this.commitManager = commitManager;
 
         Map<String, Set<IRI>> imports = loadOntologyIntoCache(ontologyFile, false);
         this.importsClosure = imports.get(CLOSURE_KEY);
@@ -319,28 +318,27 @@ public class SimpleOntology implements Ontology {
      * @param recordCommitKey The key used to retrieve the Ontology from the cache
      * @param cacheRepo       The {@link OsgiRepository} to use as a cache
      * @param ontologyManager The {@link OntologyManager} used to retrieve Ontology information
-     * @param thingManager    The {@link ThingManager} used to retrieve Record information
-     * @param compiledResourceManager The {@link CompiledResourceManager} to generate the compiled resource
      * @param configProvider  The {@link CatalogConfigProvider} used to retrieve the local catalog IRI
      * @param dsUtilsService  The {@link DatasetUtilsService} used to manage Ontology Datasets
      * @param importsResolver The {@link ImportsResolver} used to resolve imports from local catalog and from the web
      * @param bNodeService    The {@link BNodeService} used to skolemize Models
+     * @param branchManager   The {@link BranchManager} used to retrieve Branch details
+     * @param commitManager   The {@link CommitManager} used to retrieve Commit details
      */
     public SimpleOntology(String recordCommitKey, OsgiRepository cacheRepo, OntologyManager ontologyManager,
-                          ThingManager thingManager, CompiledResourceManager compiledResourceManager,
-                          CatalogConfigProvider configProvider,
-                          DatasetUtilsService dsUtilsService, ImportsResolver importsResolver,
-                          BNodeService bNodeService) {
+                          CatalogConfigProvider configProvider, DatasetUtilsService dsUtilsService,
+                          ImportsResolver importsResolver, BNodeService bNodeService, BranchManager branchManager,
+                          CommitManager commitManager) {
         long startTime = getStartTime();
         this.datasetIRI = OntologyDatasets.createDatasetIRIFromKey(recordCommitKey);
         this.repository = cacheRepo;
         this.ontologyManager = ontologyManager;
-        this.thingManager = thingManager;
-        this.compiledResourceManager = compiledResourceManager;
         this.configProvider = configProvider;
         this.dsUtilsService = dsUtilsService;
         this.importsResolver = importsResolver;
         this.bNodeService = bNodeService;
+        this.branchManager = branchManager;
+        this.commitManager = commitManager;
 
         importsClosure = new HashSet<>();
         unresolvedImports = new HashSet<>();
@@ -381,28 +379,27 @@ public class SimpleOntology implements Ontology {
      * @param datasetIRI      The {@link IRI} of the datasetIRI of the imported Ontology
      * @param cacheRepo       The {@link OsgiRepository} to use as a cache
      * @param ontologyManager The {@link OntologyManager} used to retrieve Ontology information
-     * @param thingManager    The {@link ThingManager} used to retrieve Record information
-     * @param compiledResourceManager The {@link CompiledResourceManager} to generate the compiled resource
      * @param configProvider  The {@link CatalogConfigProvider} used to retrieve the local catalog IRI
      * @param dsUtilsService  The {@link DatasetUtilsService} used to manage Ontology Datasets
      * @param importsResolver The {@link ImportsResolver} used to resolve imports from local catalog and from the web
      * @param bNodeService    The {@link BNodeService} used to skolemize Models
+     * @param branchManager   The {@link BranchManager} used to retrieve Branch details
+     * @param commitManager   The {@link CommitManager} used to retrieve Commit details
      */
     protected SimpleOntology(IRI datasetIRI, OsgiRepository cacheRepo, OntologyManager ontologyManager,
-                             ThingManager thingManager, CompiledResourceManager compiledResourceManager,
-                             CatalogConfigProvider configProvider,
-                             DatasetUtilsService dsUtilsService, ImportsResolver importsResolver,
-                             BNodeService bNodeService) {
+                             CatalogConfigProvider configProvider, DatasetUtilsService dsUtilsService,
+                             ImportsResolver importsResolver, BNodeService bNodeService, BranchManager branchManager,
+                             CommitManager commitManager) {
         long startTime = getStartTime();
         this.datasetIRI = datasetIRI;
         this.repository = cacheRepo;
         this.ontologyManager = ontologyManager;
-        this.thingManager = thingManager;
-        this.compiledResourceManager = compiledResourceManager;
         this.configProvider = configProvider;
         this.dsUtilsService = dsUtilsService;
         this.importsResolver = importsResolver;
         this.bNodeService = bNodeService;
+        this.branchManager = branchManager;
+        this.commitManager = commitManager;
 
         importsClosure = new HashSet<>();
         unresolvedImports = new HashSet<>();
@@ -436,7 +433,7 @@ public class SimpleOntology implements Ontology {
             } else { // Import was updated with Catalog version while web versioned exists in cache
                 // Or catalog import whose SDNG has been added to cache but not the dataset graph
                 IRI commitIri = OntologyDatasets.getCommitFromDatasetIRI(datasetIRI);
-                File ontologyFile = getCompiledResourceFile(commitIri);
+                File ontologyFile = importsResolver.retrieveOntologyLocalFileFromCommitIRI(commitIri);
                 Map<String, Set<IRI>> imports = loadOntologyIntoCache(ontologyFile, false);
                 this.importsClosure = imports.get(CLOSURE_KEY);
                 this.unresolvedImports = imports.get(UNRESOLVED_KEY);
@@ -452,28 +449,27 @@ public class SimpleOntology implements Ontology {
      * @param ontologyFile    The {@link File} of RDF to load into cache
      * @param cacheRepo       The {@link OsgiRepository} to use as a cache
      * @param ontologyManager The {@link OntologyManager} used to retrieve Ontology information
-     * @param thingManager    The {@link ThingManager} used to retrieve Record information
-     * @param compiledResourceManager The {@link CompiledResourceManager} to generate the compiled resource
      * @param configProvider  The {@link CatalogConfigProvider} used to retrieve the local catalog IRI
      * @param dsUtilsService  The {@link DatasetUtilsService} used to manage Ontology Datasets
      * @param importsResolver The {@link ImportsResolver} used to resolve imports from local catalog and from the web
      * @param bNodeService    The {@link BNodeService} used to skolemize Models
+     * @param branchManager   The {@link BranchManager} used to retrieve Branch details
+     * @param commitManager   The {@link CommitManager} used to retrieve Commit details
      */
     protected SimpleOntology(IRI datasetIRI, File ontologyFile, OsgiRepository cacheRepo,
-                             OntologyManager ontologyManager, ThingManager thingManager,
-                             CompiledResourceManager compiledResourceManager, CatalogConfigProvider configProvider,
+                             OntologyManager ontologyManager, CatalogConfigProvider configProvider,
                              DatasetUtilsService dsUtilsService, ImportsResolver importsResolver,
-                             BNodeService bNodeService) {
+                             BNodeService bNodeService, BranchManager branchManager, CommitManager commitManager) {
         long startTime = getStartTime();
         this.datasetIRI = datasetIRI;
         this.repository = cacheRepo;
         this.ontologyManager = ontologyManager;
-        this.thingManager = thingManager;
-        this.compiledResourceManager = compiledResourceManager;
         this.configProvider = configProvider;
         this.dsUtilsService = dsUtilsService;
         this.importsResolver = importsResolver;
         this.bNodeService = bNodeService;
+        this.branchManager = branchManager;
+        this.commitManager = commitManager;
 
         Map<String, Set<IRI>> importsMap = loadOntologyIntoCache(ontologyFile, true);
         this.importsClosure = importsMap.get(CLOSURE_KEY);
@@ -647,9 +643,8 @@ public class SimpleOntology implements Ontology {
                 } else {
                     IRI ontIRI = OntologyDatasets.getDatasetIriFromSystemDefaultNamedGraph(ng);
                     IRI ontDatasetIRI = getDatasetIRI(ontIRI);
-                    closure.add(new SimpleOntology(ontDatasetIRI, repository, ontologyManager,
-                            thingManager, compiledResourceManager, configProvider, dsUtilsService, importsResolver,
-                            bNodeService));
+                    closure.add(new SimpleOntology(ontDatasetIRI, repository, ontologyManager, configProvider,
+                            dsUtilsService, importsResolver, bNodeService, branchManager, commitManager));
                 }
             });
             undoApplyDifferenceIfPresent(conn);
@@ -1377,12 +1372,10 @@ public class SimpleOntology implements Ontology {
                         }
                     }
                 } else { // Import exists in catalog
-                    Resource recordIRI = ontologyManager.getOntologyRecordResource(importIRI).orElseThrow(
+                    Resource recordIRI = importsResolver.getRecordIRIFromOntologyIRI(importIRI).orElseThrow(
                             () -> new IllegalStateException("Imported IRI " + importIRI + " must be associated with"
                                     + "a catalog record"));
-                    Resource headCommit = getMasterBranchHead(recordIRI).orElseThrow(
-                                () -> new IllegalStateException("Record " + recordIRI + " must have a head "
-                                        + "commit associated with the master branch"));
+                    Resource headCommit = getMasterBranchHead(recordIRI);
                     String headKey = OntologyDatasets.createRecordKey(recordIRI, headCommit);
                     IRI importDatasetIRI = OntologyDatasets.createDatasetIRIFromKey(headKey);
                     importSdNg = OntologyDatasets.createSystemDefaultNamedGraphIRI(importDatasetIRI);
@@ -1390,7 +1383,7 @@ public class SimpleOntology implements Ontology {
                     // For generating SimpleOntology of an import already in the cache (with its importsClosure in
                     // the cache as well) we can skip trying to retrieve again and set the importSdNg
                     if (!ConnectionUtils.containsContext(conn, importSdNg)) {
-                        File catalogOntFile = getCompiledResourceFile(headCommit);
+                        File catalogOntFile = importsResolver.retrieveOntologyLocalFileFromCommitIRI(headCommit);
                         addOntologyToRepo(catalogOntFile, datasetIRI, importDatasetIRI, conn, false);
                     }
                 }
@@ -1543,13 +1536,11 @@ public class SimpleOntology implements Ontology {
      * @return The datasetIRI if the ontologyIRI exists in the catalog. Otherwise, the ontologyIRI
      */
     private IRI getDatasetIRI(IRI ontologyIRI) {
-        Optional<Resource> recordIRI = ontologyManager.getOntologyRecordResource(ontologyIRI);
+        Optional<Resource> recordIRI = importsResolver.getRecordIRIFromOntologyIRI(ontologyIRI);
         if (recordIRI.isPresent()) {
-            Optional<Resource> headCommitIRI = getMasterBranchHead(recordIRI.get());
-            if (headCommitIRI.isPresent()) {
-                String headKey = OntologyDatasets.createRecordKey(recordIRI.get(), headCommitIRI.get());
-                return OntologyDatasets.createDatasetIRIFromKey(headKey);
-            }
+            Resource headCommitIRI = getMasterBranchHead(recordIRI.get());
+            String headKey = OntologyDatasets.createRecordKey(recordIRI.get(), headCommitIRI);
+            return OntologyDatasets.createDatasetIRIFromKey(headKey);
         }
         return ontologyIRI;
     }
@@ -1612,7 +1603,7 @@ public class SimpleOntology implements Ontology {
                 if (ConnectionUtils.containsContext(repoConn, importedDatasetSdNgIRI)) {
                     createTempImportExistsInCache(importedDatasetIRI, importedDatasetSdNgIRI, conn);
                 } else {
-                    Optional<File> localFile = importsResolver.retrieveOntologyLocalFile(imported, ontologyManager);
+                    Optional<File> localFile = importsResolver.retrieveOntologyLocalFile(imported);
                     if (localFile.isPresent()) {
                         createTempImportNotInCacheLocal(importedDatasetIRI, importedDatasetSdNgIRI, localFile.get(),
                                 imported, conn);
@@ -1678,8 +1669,7 @@ public class SimpleOntology implements Ontology {
             directImports.forEach(importIri -> {
                 IRI importDatasetIRI = getDatasetIRI(importIri);
                 SimpleOntology importedOnt = new SimpleOntology(importDatasetIRI, repository, ontologyManager,
-                        thingManager, compiledResourceManager, configProvider, dsUtilsService, importsResolver,
-                        bNodeService);
+                        configProvider, dsUtilsService, importsResolver, bNodeService, branchManager, commitManager);
                 Set<Ontology> ontClosure = importedOnt.getImportsClosure();
 
                 // Add all internal importsClosure IRIs and unresolved IRIs to appropriate sets
@@ -1733,8 +1723,8 @@ public class SimpleOntology implements Ontology {
                     + importedDatasetIRI.stringValue());
         }
         Ontology importedOntology = new SimpleOntology(importedDatasetIRI, ontologyFile, repository,
-                ontologyManager, thingManager, compiledResourceManager, configProvider, dsUtilsService, importsResolver,
-                bNodeService);
+                ontologyManager, configProvider, dsUtilsService, importsResolver, bNodeService, branchManager,
+                commitManager);
         updateImportStatements(importedDatasetIRI, importedDatasetSdNg, conn);
     }
 
@@ -1755,14 +1745,13 @@ public class SimpleOntology implements Ontology {
             LOG.trace("Adding import for inProgressCommit for dataset not in cache from catalog"
                     + importedDatasetIRI.stringValue());
         }
-        Resource recordIRI = ontologyManager.getOntologyRecordResource(imported).orElseThrow(
+        Resource recordIRI = importsResolver.getRecordIRIFromOntologyIRI(imported).orElseThrow(
                 () -> new IllegalStateException("Record must exist in catalog"));
-        Resource masterHead = getMasterBranchHead(recordIRI).orElseThrow(() ->
-                new IllegalStateException("Commit must exist in catalog"));
+        Resource masterHead = getMasterBranchHead(recordIRI);
         String recordCommitKey = OntologyDatasets.createRecordKey(recordIRI, masterHead);
         Ontology importedOntology = new SimpleOntology(recordCommitKey, ontologyFile, repository,
-                ontologyManager, thingManager, compiledResourceManager, configProvider, dsUtilsService, importsResolver,
-                bNodeService);
+                ontologyManager, configProvider, dsUtilsService, importsResolver, bNodeService, branchManager,
+                commitManager);
         updateImportStatements(importedDatasetIRI, importedDatasetSdNg, conn);
     }
 
@@ -1781,8 +1770,8 @@ public class SimpleOntology implements Ontology {
                     + importedDatasetIRI.stringValue());
         }
         Ontology importedOntology = new SimpleOntology(importedDatasetIRI, repository,
-                ontologyManager, thingManager, compiledResourceManager, configProvider, dsUtilsService, importsResolver,
-                bNodeService);
+                ontologyManager, configProvider, dsUtilsService, importsResolver, bNodeService, branchManager,
+                commitManager);
         updateImportStatements(importedDatasetIRI, importedDatasetSdNg, conn);
     }
 
@@ -1870,7 +1859,7 @@ public class SimpleOntology implements Ontology {
     }
 
     /**
-     *  Checks to see if entities are subclassing each other in a circular manner
+     *  Checks to see if entities are subclassing each other in a circular manner.
      *
      * @param parentMap A map that contains the most up-to-date parent-to-child relationships
      * @param parentIRI The parent entity in a parent/child set
@@ -1912,23 +1901,10 @@ public class SimpleOntology implements Ontology {
         return result;
     }
 
-    private File getCompiledResourceFile(Resource commitIRI) {
+    private Resource getMasterBranchHead(Resource recordIRI) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            thingManager.validateResource(commitIRI, vf.createIRI(Commit.TYPE), conn);
-            return compiledResourceManager.getCompiledResourceFile(commitIRI, RDFFormat.TURTLE, conn);
-        }
-    }
-
-    private Optional<Resource> getMasterBranchHead(Resource recordIRI) {
-        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            TupleQuery query = conn.prepareTupleQuery(GET_MASTER_HEAD);
-            query.setBinding(RECORD_BINDING, recordIRI);
-            try (TupleQueryResult result = query.evaluate()) {
-                if (!result.hasNext()) {
-                    return Optional.empty();
-                }
-                return Optional.of(Bindings.requiredResource(result.next(), "head"));
-            }
+            Branch masterBranch = branchManager.getMasterBranch(configProvider.getLocalCatalogIRI(), recordIRI, conn);
+            return commitManager.getHeadCommitIRI(masterBranch);
         }
     }
 }

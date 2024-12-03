@@ -1,9 +1,0 @@
-DELETE {
-      ?activity a <http://mobi.com/ontologies/anzo/publish/prov#AnzoSkosPublishActivity>, <http://mobi.com/ontologies/anzo/publish/prov#AnzoPublishActivity> .
-}
-INSERT {
-      ?activity <http://mobi.com/ontologies/setting#publishType> "Publish to Anzo as SKOS Dataset" .
-}
-WHERE {
-      ?activity a <http://mobi.com/ontologies/anzo/publish/prov#AnzoSkosPublishActivity>, <http://mobi.com/ontologies/anzo/publish/prov#AnzoPublishActivity> .
-}
