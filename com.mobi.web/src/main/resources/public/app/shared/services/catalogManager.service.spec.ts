@@ -1999,7 +1999,7 @@ describe('Catalog Manager service', function() {
         sortOption: undefined,
         searchText: 'test',
         type: ['test type'],
-        keywords: ['test'],
+        keywords: ['keyword1', 'keywords2'],
         creators: ['test']
       };
       service.getEntities(catalogId, config).subscribe((response: PaginatedResponse<EntityRecord[]>) => {
@@ -2009,6 +2009,7 @@ describe('Catalog Manager service', function() {
       const req = httpMock.expectOne(req => req.url === url && req.method === 'GET');
       expect(req.request.params.get('limit')).toEqual('5');
       expect(req.request.params.get('offset')).toEqual('0');
+      expect(req.request.params.getAll('keywords')).toEqual(['keyword1', 'keywords2']);
       expect(req.request.params.getAll('type')).toEqual(['test type']);
       req.flush(entities);
     });

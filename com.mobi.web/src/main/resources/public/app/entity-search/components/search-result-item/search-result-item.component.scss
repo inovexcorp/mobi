@@ -25,6 +25,13 @@
 .entity {
   &-record {
     margin-bottom: 0.5rem !important;
+    .entity-record-title {
+      max-width: 15rem;
+    }
+    .keyword-text {
+      @include textOverflow();
+      max-width: 15rem;
+    }
   }
 
   &.clickable:hover {
@@ -57,7 +64,10 @@
     -webkit-line-clamp: 2;
   }
 }
-
+.entity-record-group {
+  width: 50%;
+  word-break: break-all;
+}
 .annotation-section {
   margin-top: 2rem;
   .matching-annotations {

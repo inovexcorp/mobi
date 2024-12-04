@@ -24,9 +24,11 @@
     <div class="col-lg-10 offset-lg-1 h-100">
         <div class="row h-100 flex-nowrap">
             <div class="col-3 vertical-scroll list-filters">
-                  <app-entity-search-filters
-                        (changeFilter)="changeFilter($event)"
-                        [typeFilters]="selectedFilters.chosenTypes"></app-entity-search-filters>
+                <app-entity-search-filters
+                    (changeFilter)="changeFilter($event)"
+                    [typeFilters]="selectedFilters.chosenTypes"
+                    [keywordFilterItems]="selectedFilters.keywordFilterItems">
+                </app-entity-search-filters>
             </div>
             <div class="col d-flex flex-column remove-min-width">
                 <div class="search-form d-flex">

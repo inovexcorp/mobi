@@ -47,7 +47,8 @@ export class EntitySearchStateService {
     limit: 10,
     pageIndex: 0,
     searchText: '',
-    type: []
+    type: [],
+    keywords: []
   };
   /**
    * `totalRecordSize` holds an integer for the total number of entity search result in the latest query on the
@@ -55,6 +56,11 @@ export class EntitySearchStateService {
    * @type {number}
    */
   totalResultSize = 0;
+  /**
+   * `keywordSearchText` holds a keyword search string.
+   * @type {string}
+   */
+  keywordSearchText = '';
 
   constructor(private _cm: CatalogManagerService) {}
 
@@ -64,6 +70,8 @@ export class EntitySearchStateService {
   reset(): void {
     this.resetPagination();
     this.paginationConfig.type = [];
+    this.paginationConfig.keywords = [];
+    this.keywordSearchText = '';
   }
 
   /**

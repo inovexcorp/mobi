@@ -25,7 +25,7 @@
     <mat-chip *ngFor="let chip of filterChips; index as i"
          [removable]="true"
          (removed)="removeFilter(chip, i)">
-      <span class="filter-value text-truncate">
+      <span class="filter-value text-truncate" [title]="chip.item.display">
         {{ chip.item.display }}
       </span>
       <mat-icon matChipRemove>cancel</mat-icon>

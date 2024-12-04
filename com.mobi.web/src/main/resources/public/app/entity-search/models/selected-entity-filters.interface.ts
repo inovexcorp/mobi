@@ -26,5 +26,6 @@ import { FilterItem, SelectedFilterItems } from '../../shared/models/filterItem.
  * Represents a specific set of selected filters from the {@link catalog.EntitySearchFiltersComponent}.
  */
 export interface SelectedEntityFilters extends SelectedFilterItems {
-  chosenTypes: FilterItem[],
+  chosenTypes: FilterItem[];
+  keywordFilterItems: FilterItem[];
 }

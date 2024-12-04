@@ -25,11 +25,11 @@ import { TestBed } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 
-import { PaginatedConfig } from '../../shared/models/paginatedConfig.interface';
-import { EntityRecord } from '../models/entity-record';
-import { SearchResultsMock } from '../mock-data/search-results.mock';
-import { PaginatedResponse } from '../../shared/models/paginated-response.interface';
 import { CatalogManagerService } from '../../shared/services/catalogManager.service';
+import { EntityRecord } from '../models/entity-record';
+import { PaginatedConfig } from '../../shared/models/paginatedConfig.interface';
+import { PaginatedResponse } from '../../shared/models/paginated-response.interface';
+import { SearchResultsMock } from '../mock-data/search-results.mock';
 import { EntitySearchStateService } from './entity-search-state.service';
 
 describe('EntitySearchStateService', () => {
@@ -70,6 +70,7 @@ describe('EntitySearchStateService', () => {
       limit: 10,
       pageIndex: 1,
       searchText: 'test',
+      keywords: ['keyword1'],
       sortOption: {
         field: 'field',
         label: 'label',
@@ -77,11 +78,14 @@ describe('EntitySearchStateService', () => {
       }
     } as PaginatedConfig;
     service.totalResultSize = 10;
+    service.keywordSearchText = "keywordSearch";
 
     service.reset();
     expect(service.paginationConfig.pageIndex).toEqual(0);
     expect(service.paginationConfig.searchText).toEqual('');
     expect(service.paginationConfig.type).toEqual([]);
+    expect(service.paginationConfig.keywords).toEqual([]);
     expect(service.totalResultSize).toEqual(0);
+    expect(service.keywordSearchText).toEqual('');
   });
 });
