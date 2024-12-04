@@ -47,14 +47,16 @@ module.exports = {
   'Step 3: Switch to entity search page': function (browser) {
     browser.globals.switchToPage(browser, 'entity-search', 'app-entity-search-page');
     browser.waitForElementVisible('app-entity-search-page')
-      .expect.element('app-entity-search-page app-search-results-list info-message p').text.to.contain('No search has been performed');
+      .expect.element('app-entity-search-page app-search-results-list div.entity-results-list div info-message p').text.to.contain('No search has been performed');
+    browser.waitForElementVisible('app-entity-search-page')
+      .expect.element('app-entity-search-page app-search-results-list div.list-filters app-entity-search-filters app-list-filters div info-message p').text.to.contain('No Keywords available');
   },
 
   'Step 4: Search entity page Empty': function (browser) {
     browser.page.entitySearchPage().clearEntitySearchBar();
     browser.page.entitySearchPage().applySearchText('does-not-exist-record');
     browser.waitForElementVisible('app-entity-search-page app-search-results-list info-message')
-      .expect.element('app-entity-search-page app-search-results-list info-message p').text.to.contain('No entities found containing this search text');
+      .expect.element('app-entity-search-page app-search-results-list div.entity-results-list div info-message p').text.to.contain('No entities found containing this search text');
   },
 
   'Step 5: Search entity results': function (browser) {

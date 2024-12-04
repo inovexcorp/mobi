@@ -50,8 +50,10 @@ export class SearchResultsListComponent implements OnInit {
   searchText: string;
   selectedFilters: SelectedEntityFilters;
 
-  constructor(public state: EntitySearchStateService, public catalogState: CatalogStateService, private _router: Router,
-              private _cm: CatalogManagerService) {
+  constructor(public state: EntitySearchStateService, 
+    public catalogState: CatalogStateService, 
+    private _router: Router,
+    private _cm: CatalogManagerService) {
   }
 
   ngOnInit(): void {
@@ -123,9 +125,14 @@ export class SearchResultsListComponent implements OnInit {
    */
   private _initializeSelectedFilters() {
     this.selectedFilters = {
-      chosenTypes: this.state?.paginationConfig?.type ? this.state?.paginationConfig?.type.map(type => ({
+      chosenTypes: this.state.paginationConfig?.type ? this.state.paginationConfig?.type.map(type => ({
         value: type,
         display: getBeautifulIRI(type),
+        checked: true
+      })) : [],
+      keywordFilterItems: this.state.paginationConfig?.keywords ? this.state.paginationConfig?.keywords.map(keyword => ({
+        value: keyword,
+        display: keyword,
         checked: true
       })) : []
     };
@@ -138,6 +145,7 @@ export class SearchResultsListComponent implements OnInit {
    */
   private _setPaginationFilters(filters: SelectedEntityFilters): void {
     this.state.paginationConfig.type = filters.chosenTypes.map(item => item.value);
+    this.state.paginationConfig.keywords = filters.keywordFilterItems.map(item => item.value);
   }
   /**
    * Loads data based on the searchText value.
@@ -147,8 +155,7 @@ export class SearchResultsListComponent implements OnInit {
       this.state.paginationConfig.searchText = this.searchText;
       this.searchResult = this.state.setResults(this.catalogId);
     } else {
-      //clear result
-      this.searchResult = of([]);
+      this.searchResult = of([]);  //clear result
     }
   }
 }

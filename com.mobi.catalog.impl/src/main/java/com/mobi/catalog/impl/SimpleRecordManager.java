@@ -226,18 +226,16 @@ public class SimpleRecordManager implements RecordManager {
                                                                User user,
                                                                RepositoryConnection conn) {
 
-        PaginatedSearchParams searchRecords;
+        PaginatedSearchParams.Builder searchRecordsBuilder = new PaginatedSearchParams.Builder();
         if (searchParams.getTypeFilter().isPresent()) {
-            searchRecords = new PaginatedSearchParams.Builder()
-                    .typeFilter(searchParams.getTypeFilter().get())
-                    .build();
+            searchRecordsBuilder.typeFilter(searchParams.getTypeFilter().get());
         } else {
-            searchRecords = new PaginatedSearchParams.Builder()
-                    .typeFilter(List.of(vf.createIRI(VersionedRDFRecord.TYPE)))
-                    .build();
+            searchRecordsBuilder.typeFilter(List.of(vf.createIRI(VersionedRDFRecord.TYPE)));
         }
-
-        List<String> viewableRecords = getViewableRecords(catalogId, searchRecords, user, conn);
+        if (searchParams.getKeywords().isPresent()) {
+            searchRecordsBuilder.keywords(searchParams.getKeywords().get());
+        }
+        List<String> viewableRecords = getViewableRecords(catalogId, searchRecordsBuilder.build(), user, conn);
 
         if (viewableRecords.isEmpty()) {
             return SearchResults.emptyResults();
@@ -247,7 +245,7 @@ public class SimpleRecordManager implements RecordManager {
                 .map(record -> String.format("<%s>", record))
                 .collect(Collectors.joining(" "));
         // Count Query
-        String countQueryStr =  GET_ENTITIES_COUNT_QUERY
+        String countQueryStr = GET_ENTITIES_COUNT_QUERY
                 .replace("%RECORDS%", viewableRecordsConcat);
         if (log.isTraceEnabled()) {
             log.trace("Count Query: " + countQueryStr);
@@ -625,7 +623,6 @@ public class SimpleRecordManager implements RecordManager {
 
     protected String replaceRecordTypeFilter(PaginatedSearchParams searchParams, String queryString) {
         if (searchParams.getTypeFilter().isPresent()) {
-            StringBuilder recordTypeFilter = new StringBuilder();
             String recordTypes = searchParams.getTypeFilter().get().stream()
                     .map(iri -> "<" + iri + ">").collect(Collectors.joining(","));
             queryString = queryString.replace("%RECORD_TYPE_FILTER%", recordTypes);

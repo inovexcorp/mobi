@@ -29,6 +29,7 @@
     }
     .keyword-text {
         @include textOverflow();
+        max-width: 15rem;
     }
     .static-area {
         padding: 0.5em 0 0.5em 0.5em;

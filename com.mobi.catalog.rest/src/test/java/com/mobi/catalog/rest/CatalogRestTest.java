@@ -582,11 +582,14 @@ public class CatalogRestTest extends MobiRestTestCXF {
         Response response = target().path(CATALOG_URL_LOCAL + "/entities")
                 .queryParam("offset", 1)
                 .queryParam("limit", 11)
+                .queryParam("keywords", "keyword1")
+                .queryParam("keywords", "keyword2")
                 .queryParam("searchText", "test").request().get();
         assertEquals(200, response.getStatus());
 
         PaginatedSearchParams.Builder builder = new PaginatedSearchParams.Builder()
                 .searchText("test")
+                .keywords(List.of("keyword1", "keyword2"))
                 .typeFilter(List.of(vf.createIRI(VersionedRDFRecord.TYPE)))
                 .offset(1)
                 .limit(11);

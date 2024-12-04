@@ -1358,6 +1358,95 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
     }
 
     @Test
+    public void testFindEntitiesWithTypeNotExistConstraint() throws Exception {
+        String record1 = "http://example.org/record1";
+        String record2 = "http://example.org/record2";
+        mockFindEntities(record1, record2);
+        when(pdp.filter(any(), any(IRI.class))).thenReturn(new HashSet<>(List.of(record2)));
+
+        PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder()
+                .searchText("Entity")
+                .limit(10)
+                .offset(0)
+                .typeFilter(List.of(VALUE_FACTORY.createIRI("urn:notExist")))
+                .build();
+        try (RepositoryConnection conn = repo.getConnection()) {
+            PaginatedSearchResults<EntityMetadata> results = manager.findEntities(ManagerTestConstants.CATALOG_IRI,
+                    searchParams, user, conn);
+            assertEquals(0, results.getPageSize());
+            assertEquals(0, results.getTotalSize());
+            assertEquals(0, results.getPageNumber());
+            assertEquals(0, results.getPage().size());
+        }
+    }
+
+    @Test
+    public void testFindEntitiesWithKeywordConstraint() throws Exception {
+        String record1 = "http://example.org/record1";
+        String record2 = "http://example.org/record2";
+        mockFindEntities(record1, record2);
+        when(pdp.filter(any(), any(IRI.class))).thenReturn(new HashSet<>(List.of(record2)));
+
+        PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder()
+                .searchText("Entity")
+                .limit(10)
+                .offset(0)
+                .keywords(List.of("keyword3"))
+                .build();
+        try (RepositoryConnection conn = repo.getConnection()) {
+            PaginatedSearchResults<EntityMetadata> results = manager.findEntities(ManagerTestConstants.CATALOG_IRI,
+                    searchParams, user, conn);
+            assertEquals(10, results.getPageSize());
+            assertEquals(1, results.getTotalSize());
+            assertEquals(1, results.getPageNumber());
+            assertEquals(1, results.getPage().size());
+            // Get the first EntityMetadata from the results
+            EntityMetadata entityMetadata = results.getPage().get(0);
+            assertEquals("http://example.org/entity2", entityMetadata.iri());
+            assertEquals("Entity 2 Label", entityMetadata.entityName());
+            assertEquals(1, entityMetadata.types().size());
+            assertEquals("http://example.org/EntityType2", entityMetadata.types().get(0));
+            assertEquals("This is a description for entity 2.", entityMetadata.description());
+
+            assertNotNull(entityMetadata.sourceRecord());
+            assertEquals("http://example.org/record2", entityMetadata.sourceRecord().get("iri"));
+            assertEquals("Record 2 Title", entityMetadata.sourceRecord().get("title"));
+            assertEquals("http://mobi.solutions/ontologies/workflows#WorkflowRecord", entityMetadata.sourceRecord().get("type"));
+
+            assertEquals(1, entityMetadata.recordKeywords().size());
+            assertEquals("keyword3", entityMetadata.recordKeywords().get(0));
+
+            assertEquals(3, entityMetadata.matchingAnnotations().size());
+            assertEquals("This is a description for entity 2.", entityMetadata.matchingAnnotations().get(0).get("value"));
+            assertEquals("Entity 2 Label", entityMetadata.matchingAnnotations().get(1).get("value"));
+            assertEquals("Entity 2 Preferred Label", entityMetadata.matchingAnnotations().get(2).get("value"));
+        }
+    }
+
+    @Test
+    public void testFindEntitiesWithKeywordNotExistConstraint() throws Exception {
+        String record1 = "http://example.org/record1";
+        String record2 = "http://example.org/record2";
+        mockFindEntities(record1, record2);
+        when(pdp.filter(any(), any(IRI.class))).thenReturn(new HashSet<>(List.of(record2)));
+
+        PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder()
+                .searchText("Entity")
+                .limit(10)
+                .offset(0)
+                .keywords(List.of("NotExist"))
+                .build();
+        try (RepositoryConnection conn = repo.getConnection()) {
+            PaginatedSearchResults<EntityMetadata> results = manager.findEntities(ManagerTestConstants.CATALOG_IRI,
+                    searchParams, user, conn);
+            assertEquals(0, results.getPageSize());
+            assertEquals(0, results.getTotalSize());
+            assertEquals(0, results.getPageNumber());
+            assertEquals(0, results.getPage().size());
+        }
+    }
+
+    @Test
     public void testFindEntitiesPaging() throws Exception {
         String record1 = "http://example.org/record1";
         String record2 = "http://example.org/record2";

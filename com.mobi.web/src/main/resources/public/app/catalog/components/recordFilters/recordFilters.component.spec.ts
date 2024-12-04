@@ -117,9 +117,6 @@ describe('Record Filters component', function () {
         filterItems,
         onInit: () => {
         },
-        getItemText: (filterItem: FilterItem) => {
-          return '';
-        },
         setFilterItems: () => {
         },
         filter: (filterItem: FilterItem) => {

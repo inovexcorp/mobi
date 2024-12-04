@@ -1373,6 +1373,11 @@ export class CatalogManagerService {
                 params = params.append('type', type);
             });
         }
+        if (get(config, 'keywords')) {
+            config.keywords.forEach(keyword => {
+                params = params.append('keywords', keyword);
+            });
+        }
         if (config.searchText) {
             params = params.set('searchText', config.searchText.trim());
         }

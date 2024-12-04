@@ -32,7 +32,7 @@
         <div class="static-area" *ngIf="!canEdit || !edit" (click)="edit = true" [ngClass]="{'hover-area': canEdit}" title="{{canEdit ? 'Click to edit' : undefined}}">
             <span *ngIf="keywords.length === 0">(No keywords specified)</span>
             <mat-chip-list>
-                <mat-chip *ngFor="let keyword of keywords"><span class="keyword-text">{{keyword}}</span></mat-chip>
+                <mat-chip *ngFor="let keyword of keywords"><span class="keyword-text" [title]="keyword">{{keyword}}</span></mat-chip>
             </mat-chip-list>
         </div>
     </form>

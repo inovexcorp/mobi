@@ -43,10 +43,17 @@
         <div class="entity-type">
             <span class="font-weight-medium mr-1">Type(s):</span> <span class="font-weight-normal">{{ types }}</span>
         </div>
-        <div class="entity-record_prop">
-            <span class="font-weight-medium mr-1">Record:</span>
-            <record-icon [record]="record"></record-icon>
-            <span class="entity-record-title text-muted text-center ml-1">{{ entity.record.title }}</span>
+        <div class="entity-record_prop d-flex flex-row">
+            <div class="mr-2 entity-record-group">
+                <span class="font-weight-medium mr-1">Record:</span>
+                <record-icon [record]="record"></record-icon>
+                <span class="entity-record-title text-muted text-center ml-1">{{ entity.record.title }}</span>
+            </div>
+            <div class="flex-fill">
+                <mat-chip-list>
+                    <mat-chip class="mat-chip-keyword" *ngFor="let keyword of entity.record.keywords"><span class="keyword-text" [title]="keyword">{{keyword}}</span></mat-chip>
+                </mat-chip-list>
+            </div>
         </div>
     </mat-card-subtitle>
     <mat-card-content>

@@ -21,24 +21,38 @@
  * #L%
  */
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockComponent } from 'ng-mocks';
+import { HttpHeaders, HttpResponse } from '@angular/common/http';
+import { MockComponent, MockProvider } from 'ng-mocks';
+import { of } from 'rxjs';
 import { cloneDeep } from 'lodash';
 
+import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { DELIM, ONTOLOGYEDITOR, SHAPESGRAPHEDITOR, WORKFLOWS } from '../../../prefixes';
+import { EntitySearchStateService } from '../../services/entity-search-state.service';
+import { FilterItem } from '../../../shared/models/filterItem.interface';
+import { KeywordCount } from '../../../shared/models/keywordCount.interface';
 import { ListFilter } from '../../../shared/models/list-filter.interface';
 import { ListFiltersComponent } from '../../../shared/components/list-filters/list-filters.component';
-import { FilterItem } from '../../../shared/models/filterItem.interface';
+import { SearchableListFilter } from '../../../shared/models/searchable-list-filter.interface';
+import { SelectedEntityFilters } from '../../models/selected-entity-filters.interface';
 import { EntitySearchFiltersComponent } from './entity-search-filters.component';
 
 describe('Entity Search Filters component', () => {
   let component: EntitySearchFiltersComponent;
   let fixture: ComponentFixture<EntitySearchFiltersComponent>;
+  let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
 
   let recordTypeFilter: ListFilter;
+  let keywordsFilter: SearchableListFilter;
 
   const ontRecordFilterItem: FilterItem = {
     value: `${ONTOLOGYEDITOR}OntologyRecord`,
     display: 'Ontology Record',
+    checked: true
+  };
+  const keyword1FilterItem: FilterItem = {
+    value: 'keyword1',
+    display: 'keyword1',
     checked: true
   };
 
@@ -47,11 +61,29 @@ describe('Entity Search Filters component', () => {
       declarations: [
         EntitySearchFiltersComponent,
         MockComponent(ListFiltersComponent)
+      ],
+      providers: [
+        MockProvider(EntitySearchStateService),
+        MockProvider(CatalogManagerService),
       ]
     }).compileComponents();
 
     fixture = TestBed.createComponent(EntitySearchFiltersComponent);
     component = fixture.componentInstance;
+    catalogManagerStub = TestBed.inject(CatalogManagerService) as jasmine.SpyObj<CatalogManagerService>;
+
+    const keywordObject = function (keyword, count): KeywordCount {
+      return {['http://mobi.com/ontologies/catalog#keyword']: keyword, 'count': count};
+    };
+    const keyword = 'keyword1';
+    const keywords = [keywordObject(keyword, 6)];
+    const totalSize = 1;
+    const headers = {'x-total-count': '' + totalSize};
+    catalogManagerStub.getKeywords.and.returnValue(of(new HttpResponse<KeywordCount[]>({
+      body: keywords,
+      headers: new HttpHeaders(headers)
+    })));
+
     fixture.detectChanges();
   });
 
@@ -59,6 +91,7 @@ describe('Entity Search Filters component', () => {
     component = null;
     fixture = null;
     recordTypeFilter = null;
+    keywordsFilter = null;
   });
 
   describe('initializes correctly', () => {
@@ -66,7 +99,8 @@ describe('Entity Search Filters component', () => {
       component.typeFilters = [ontRecordFilterItem];
       spyOn(component.changeFilter, 'emit');
       component.ngOnInit();
-      recordTypeFilter = component.filters[0];
+      recordTypeFilter = component.filters[component.recordFilterIndex];
+      keywordsFilter = component.filters[component.keywordFilterIndex] as SearchableListFilter;
     });
     it('with recordTypeFilter', () => {
       const expectedFilterItems: FilterItem[] = [
@@ -79,29 +113,68 @@ describe('Entity Search Filters component', () => {
       component.ngOnInit();
       expect(recordTypeFilter.filterItems).toEqual(expectedFilterItems);
     });
+    it('with keywordFilterItems filter', () => {
+      const expectedFilterItems: FilterItem[] = [
+        {value: `keyword1`, display: 'keyword1', checked: false},
+      ];
+
+      component.ngOnInit();
+      expect(keywordsFilter.filterItems).toEqual(expectedFilterItems);
+    });
   });
   describe('has working filter methods', () => {
     beforeEach(() => {
       spyOn(component.changeFilter, 'emit');
-      component.typeFilters = [ontRecordFilterItem];
+      component.typeFilters = [cloneDeep(ontRecordFilterItem)];
+      component.keywordFilterItems = [cloneDeep(keyword1FilterItem)];
       component.ngOnInit();
-      recordTypeFilter = component.filters[0];
+      recordTypeFilter = component.filters[component.recordFilterIndex];
+      keywordsFilter = component.filters[component.keywordFilterIndex] as SearchableListFilter;
     });
     describe('for the recordTypeFilter', () => {
       it('if the item has been checked', () => {
         const clickedFilterItem: FilterItem = {value: `${WORKFLOWS}WorkflowRecord`, display: 'Workflow Record', checked: true};
         recordTypeFilter.filter(clickedFilterItem);
 
-        expect(component.changeFilter.emit).toHaveBeenCalledWith({
-          chosenTypes: [ontRecordFilterItem, clickedFilterItem]
-        });
+        const expectedChangeFilter: SelectedEntityFilters = { 
+          chosenTypes: [ontRecordFilterItem, clickedFilterItem], 
+          keywordFilterItems: [keyword1FilterItem] 
+        };
+        expect(component.changeFilter.emit).toHaveBeenCalledWith(expectedChangeFilter);
       });
       it('if the item was unchecked', () => {
         const clickedFilterItem = cloneDeep(ontRecordFilterItem);
         clickedFilterItem.checked = false;
         recordTypeFilter.filter(clickedFilterItem);
 
-        expect(component.changeFilter.emit).toHaveBeenCalledWith({chosenTypes: []});
+        const expectedChangeFilter: SelectedEntityFilters = {
+          chosenTypes: [], 
+          keywordFilterItems: [keyword1FilterItem]
+        };
+        expect(component.changeFilter.emit).toHaveBeenCalledWith(expectedChangeFilter);
+      });
+    });
+    describe('for the keywordsFilter', () => {
+      it('if the item has been checked', () => {
+        const clickedFilterItem: FilterItem = {value: `keyword2`, display: 'keyword2', checked: true};
+        keywordsFilter.filter(clickedFilterItem);
+
+        const expectedChangeFilter: SelectedEntityFilters = { 
+          chosenTypes: [ontRecordFilterItem], 
+          keywordFilterItems: [keyword1FilterItem, clickedFilterItem] 
+        };
+        expect(component.changeFilter.emit).toHaveBeenCalledWith(expectedChangeFilter);
+      });
+      it('if the item was unchecked', () => {
+        const clickedFilterItem = cloneDeep(keyword1FilterItem);
+        clickedFilterItem.checked = false;
+        keywordsFilter.filter(clickedFilterItem);
+
+        const expectedChangeFilter: SelectedEntityFilters = {
+          chosenTypes: [ontRecordFilterItem], 
+          keywordFilterItems: []
+        };
+        expect(component.changeFilter.emit).toHaveBeenCalledWith(expectedChangeFilter);
       });
     });
     it('should update the selectedRecordTypes and numChecked on updateList call', () => {
@@ -110,9 +183,19 @@ describe('Entity Search Filters component', () => {
       expect(ontologyRecordActualItem.checked).toBeTrue();
       expect(recordTypeFilter.numChecked).toEqual(1);
 
-      component.updateFilterList([], [ontRecordFilterItem]);
+      component.updateFilterList(component.recordFilterIndex, [], [ontRecordFilterItem]);
       expect(ontologyRecordActualItem.checked).toBeFalse();
       expect(recordTypeFilter.numChecked).toEqual(0);
+    });
+    it('should update the selectedKeyword and numChecked on updateList call', () => {
+      const keywordActualItem = keywordsFilter.filterItems.find(item => item.value === 'keyword1');
+      expect(keywordActualItem).toBeDefined();
+      expect(keywordActualItem.checked).toBeTrue();
+      expect(keywordsFilter.numChecked).toEqual(1);
+
+      component.updateFilterList(component.keywordFilterIndex, [], [{value: 'keyword1', checked: false, display: 'keyword1'}]);
+      expect(keywordActualItem.checked).toBeFalse();
+      expect(keywordsFilter.numChecked).toEqual(0);
     });
   });
 });

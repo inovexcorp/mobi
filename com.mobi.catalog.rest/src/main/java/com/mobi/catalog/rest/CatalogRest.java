@@ -355,12 +355,16 @@ public class CatalogRest {
             @Parameter(description = "String used to filter out Records", required = true)
             @QueryParam("searchText") String searchText,
             @Parameter(description = "List of record types to filter over")
-            @QueryParam("type") List<String> recordTypes) {
+            @QueryParam("type") List<String> recordTypes,
+            @Parameter(description = "List of keywords")
+            @QueryParam("keywords") List<String> keywords) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             LinksUtils.validateParams(limit, offset);
             User activeUser = getActiveUser(servletRequest, engineManager);
 
-            PaginatedSearchParams.Builder builder = new PaginatedSearchParams.Builder().offset(offset);
+            PaginatedSearchParams.Builder builder = new PaginatedSearchParams.Builder();
+            builder.offset(offset);
+            builder.limit(limit);
             if (searchText != null) {
                 builder.searchText(searchText);
             }
@@ -369,8 +373,9 @@ public class CatalogRest {
             } else {
                 builder.typeFilter(List.of(vf.createIRI(VersionedRDFRecord.TYPE)));
             }
-            builder.offset(offset);
-            builder.limit(limit);
+            if (keywords != null && !keywords.isEmpty()) {
+                builder.keywords(keywords);
+            }
             PaginatedSearchResults<EntityMetadata> searchResults = recordManager.findEntities(vf.createIRI(catalogId),
                     builder.build(), activeUser, conn);
 
