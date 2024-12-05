@@ -67,6 +67,7 @@ public interface OntologyManager {
      * @param recordId the record id for the OntologyRecord you want to retrieve.
      * @return Returns an Optional of the Ontology if found, otherwise Optional.empty().
      * @throws MobiOntologyCreationException If the ontology can't be created.
+     * @throws IllegalArgumentException If the record is not an OntologyRecord.
      */
     Optional<Ontology> retrieveOntology(@Nonnull Resource recordId);
 
@@ -77,7 +78,7 @@ public interface OntologyManager {
      * @param branchId the branch id for the Branch you want to retrieve.
      * @return an Optional of the Ontology if found, otherwise Optional.empty().
      * @throws MobiOntologyCreationException If the ontology can't be created.
-     * @throws IllegalArgumentException If the branch cannot be found.
+     * @throws IllegalArgumentException If the branch cannot be found or the record is not an OntologyRecord.
      */
     Optional<Ontology> retrieveOntology(@Nonnull Resource recordId, @Nonnull Resource branchId);
 
@@ -89,7 +90,7 @@ public interface OntologyManager {
      * @param commitId the commit id for the Commit you want to retrieve.
      * @return an Optional of the Ontology if found, otherwise Optional.empty().
      * @throws MobiOntologyCreationException If the ontology can't be created.
-     * @throws IllegalArgumentException Id the branch or commit cannot be found.
+     * @throws IllegalArgumentException Id the branch or commit cannot be found or the record is not an OntologyRecord.
      */
     Optional<Ontology> retrieveOntology(@Nonnull Resource recordId, @Nonnull Resource branchId,
                                         @Nonnull Resource commitId);
@@ -101,7 +102,7 @@ public interface OntologyManager {
      * @param commitId the commit id for the Commit you want to retrieve.
      * @return an Optional of the Ontology if found, otherwise Optional.empty().
      * @throws MobiOntologyCreationException If the ontology can't be created.
-     * @throws IllegalArgumentException If the record cannot be found.
+     * @throws IllegalArgumentException If the record cannot be found or the record is not an OntologyRecord.
      */
     Optional<Ontology> retrieveOntologyByCommit(@Nonnull Resource recordId, @Nonnull Resource commitId);
 

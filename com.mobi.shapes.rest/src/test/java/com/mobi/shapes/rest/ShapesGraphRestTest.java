@@ -31,6 +31,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
@@ -61,6 +62,8 @@ import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
+import com.mobi.ontology.core.api.Ontology;
+import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.persistence.utils.impl.SimpleBNodeService;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.repository.impl.sesame.memory.MemoryRepositoryWrapper;
@@ -81,6 +84,10 @@ import org.eclipse.rdf4j.model.ModelFactory;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
+import org.eclipse.rdf4j.query.GraphQuery;
+import org.eclipse.rdf4j.query.GraphQueryResult;
+import org.eclipse.rdf4j.query.QueryResults;
+import org.eclipse.rdf4j.repository.Repository;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.rio.RDFFormat;
@@ -100,6 +107,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Objects;
@@ -170,13 +178,20 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
         request = mock(Request.class);
         response = mock(com.mobi.security.policy.api.Response.class);
 
+        catalogId = vf.createIRI("http://mobi.com/catalog");
+        recordId = vf.createIRI("http://mobi.com/shaclRecord1");
+        shapesGraphId = vf.createIRI("http://mobi.com/shapes-graph-id");
+        branchId = vf.createIRI("http://mobi.com/branch");
+        commitId = vf.createIRI("http://mobi.com/commit");
+        inProgressCommitId = vf.createIRI("http://mobi.com/in-progress-commit");
+
         try (RepositoryConnection conn = repo.getConnection()) {
-            InputStream stream = new ByteArrayInputStream("<http://mobi.com/branch> <http://mobi.com/ontologies/catalog#head> <http://mobi.com/commit> .".getBytes(StandardCharsets.UTF_8));
+            InputStream stream = new ByteArrayInputStream("<http://mobi.com/branch> <http://mobi.com/ontologies/catalog#head> <http://mobi.com/commit> . <http://mobi.com/shapes-graph-id> a <http://www.w3.org/2002/07/owl#Ontology> .".getBytes(StandardCharsets.UTF_8));
             shaclModel = Rio.parse(stream, "", RDFFormat.TRIG);
             conn.add(shaclModel);
         }
 
-        shapesGraph = new SimpleShapesGraph(shaclModel);
+        shapesGraph = createMockShapesGraph(repo, shaclModel, shapesGraphId);
         shapesGraphSpy = Mockito.spy(shapesGraph);
 
         OrmFactory<User> userFactory = getRequiredOrmFactory(User.class);
@@ -188,12 +203,6 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
         commitFactory = getRequiredOrmFactory(Commit.class);
         OrmFactory<InProgressCommit> inProgressCommitFactory = getRequiredOrmFactory(InProgressCommit.class);
 
-        catalogId = vf.createIRI("http://mobi.com/catalog");
-        recordId = vf.createIRI("http://mobi.com/shaclRecord1");
-        shapesGraphId = vf.createIRI("http://mobi.com/shapes-graph-id");
-        branchId = vf.createIRI("http://mobi.com/branch");
-        commitId = vf.createIRI("http://mobi.com/commit");
-        inProgressCommitId = vf.createIRI("http://mobi.com/in-progress-commit");
         inProgressCommit = inProgressCommitFactory.createNew(inProgressCommitId);
 
         IRI titleIRI = vf.createIRI(DCTERMS.TITLE.stringValue());
@@ -375,7 +384,7 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
         assertEquals(response.getStatus(), 200);
         verify(shapesGraphManager).retrieveShapesGraph(eq(recordId), eq(branchId), eq(commitId));
         verify(commitManager).getInProgressCommitOpt(eq(catalogId), eq(recordId), eq(user), any(RepositoryConnection.class));
-        verify(differenceManager).applyInProgressCommit(eq(inProgressCommitId), any(Model.class), any(RepositoryConnection.class));
+        verify(shapesGraphManager).applyChanges(shapesGraphSpy, inProgressCommit);
     }
 
     @Test
@@ -396,7 +405,7 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
 
     @Test
     public void downloadShapesGraphFileWithCommitIdAndMissingBranchIdTest() {
-        when(shapesGraphManager.retrieveShapesGraphByCommit(eq(commitId)))
+        when(shapesGraphManager.retrieveShapesGraphByCommit(eq(recordId), eq(commitId)))
                 .thenReturn(Optional.of(shapesGraphSpy));
 
         Response response = target().path("shapes-graphs/" + encode(recordId.stringValue()))
@@ -404,9 +413,9 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
                 .request().accept(MediaType.APPLICATION_OCTET_STREAM_TYPE).get();
 
         assertEquals(response.getStatus(), 200);
-        verify(shapesGraphManager).retrieveShapesGraphByCommit(eq(commitId));
+        verify(shapesGraphManager).retrieveShapesGraphByCommit(eq(recordId), eq(commitId));
         verify(commitManager).getInProgressCommitOpt(eq(catalogId), eq(recordId), eq(user), any(RepositoryConnection.class));
-        verify(differenceManager).applyInProgressCommit(eq(inProgressCommitId), any(Model.class), any(RepositoryConnection.class));
+        verify(shapesGraphManager).applyChanges(shapesGraphSpy, inProgressCommit);
     }
 
     @Test
@@ -421,7 +430,7 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
         assertEquals(response.getStatus(), 200);
         verify(shapesGraphManager).retrieveShapesGraph(eq(recordId), eq(branchId));
         verify(commitManager).getInProgressCommitOpt(eq(catalogId), eq(recordId), eq(user), any(RepositoryConnection.class));
-        verify(differenceManager).applyInProgressCommit(eq(inProgressCommitId), any(Model.class), any(RepositoryConnection.class));
+        verify(shapesGraphManager).applyChanges(shapesGraphSpy, inProgressCommit);
     }
 
     @Test
@@ -435,7 +444,7 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
         assertEquals(response.getStatus(), 200);
         verify(shapesGraphManager).retrieveShapesGraph(eq(recordId));
         verify(commitManager).getInProgressCommitOpt(eq(catalogId), eq(recordId), eq(user), any(RepositoryConnection.class));
-        verify(differenceManager).applyInProgressCommit(eq(inProgressCommitId), any(Model.class), any(RepositoryConnection.class));
+        verify(shapesGraphManager).applyChanges(shapesGraphSpy, inProgressCommit);
     }
 
     @Test
@@ -682,7 +691,7 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
 
     @Test
     public void testGetEntityWithCommitId() {
-        when(shapesGraphManager.retrieveShapesGraphByCommit(eq(commitId)))
+        when(shapesGraphManager.retrieveShapesGraphByCommit(eq(recordId), eq(commitId)))
                 .thenReturn(Optional.of(shapesGraphSpy));
         when(commitManager.getInProgressCommitOpt(eq(catalogId), eq(recordId),
                 any(User.class), any(RepositoryConnection.class))).thenReturn(Optional.empty());
@@ -696,7 +705,7 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
         assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
         verify(commitManager).getInProgressCommitOpt(eq(catalogId), eq(recordId),
                 any(User.class), any(RepositoryConnection.class));
-        verify(shapesGraphManager).retrieveShapesGraphByCommit(eq(commitId));
+        verify(shapesGraphManager).retrieveShapesGraphByCommit(eq(recordId), eq(commitId));
         verify(shapesGraphSpy).getEntity(vf.createIRI("urn:test"));
     }
 
@@ -755,8 +764,7 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
         assertGetUserFromContext();
         verify(commitManager).getInProgressCommitOpt(eq(catalogId), eq(recordId), any(User.class), any(RepositoryConnection.class));
         verify(shapesGraphManager).retrieveShapesGraph(eq(recordId), eq(branchId), eq(commitId));
-        verify(differenceManager).applyInProgressCommit(eq(inProgressCommit.getResource()),
-                eq(shaclModel), any(RepositoryConnection.class));
+        verify(shapesGraphManager).applyChanges(shapesGraphSpy, inProgressCommit);
         verify(shapesGraphSpy).getEntity(vf.createIRI("urn:test"));
     }
 
@@ -783,7 +791,7 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
     @Test
     public void testGetShapesGraphIdWithCommitId() {
         when(shapesGraphSpy.getShapesGraphId()).thenReturn(Optional.of(getValueFactory().createIRI("urn:test")));
-        when(shapesGraphManager.retrieveShapesGraphByCommit(eq(commitId)))
+        when(shapesGraphManager.retrieveShapesGraphByCommit(eq(recordId), eq(commitId)))
                 .thenReturn(Optional.of(shapesGraphSpy));
         when(commitManager.getInProgressCommitOpt(eq(catalogId), eq(recordId),
                 any(User.class), any(RepositoryConnection.class))).thenReturn(Optional.empty());
@@ -796,7 +804,7 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
         assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
         verify(commitManager).getInProgressCommitOpt(eq(catalogId), eq(recordId),
                 any(User.class), any(RepositoryConnection.class));
-        verify(shapesGraphManager).retrieveShapesGraphByCommit(eq(commitId));
+        verify(shapesGraphManager).retrieveShapesGraphByCommit(eq(recordId), eq(commitId));
     }
 
     @Test
@@ -852,25 +860,11 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
         assertGetUserFromContext();
         verify(commitManager).getInProgressCommitOpt(eq(catalogId), eq(recordId), any(User.class), any(RepositoryConnection.class));
         verify(shapesGraphManager).retrieveShapesGraph(eq(recordId), eq(branchId), eq(commitId));
-        verify(differenceManager).applyInProgressCommit(eq(inProgressCommit.getResource()),
-                eq(shaclModel), any(RepositoryConnection.class));
+        verify(shapesGraphManager).applyChanges(shapesGraphSpy, inProgressCommit);
     }
 
     @Test
     public void testGetShapesGraphContent() throws IOException {
-        Model shaclModel;
-        try (RepositoryConnection conn = repo.getConnection()) {
-            InputStream stream = new ByteArrayInputStream("<http://mobi.com/blah> a <http://www.w3.org/2002/07/owl#Ontology> .".getBytes(StandardCharsets.UTF_8));
-            shaclModel = Rio.parse(stream, "", RDFFormat.TRIG);
-
-            conn.add(shaclModel);
-        }
-        when(compiledResourceManager.getCompiledResource(any(Resource.class), any(RepositoryConnection.class))).thenReturn(shaclModel);
-        when(compiledResourceManager.getCompiledResource(any(Resource.class), any(Resource.class), any(Resource.class), any(RepositoryConnection.class))).thenReturn(shaclModel);
-
-        ShapesGraph shapesGraph = new SimpleShapesGraph(shaclModel);
-        ShapesGraph shapesGraphSpy = Mockito.spy(shapesGraph);
-
         when(shapesGraphManager.retrieveShapesGraph(eq(recordId), eq(branchId), eq(commitId)))
                 .thenReturn(Optional.of(shapesGraphSpy));
         when(commitManager.getInProgressCommitOpt(eq(catalogId), eq(recordId),
@@ -886,25 +880,12 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
         assertGetUserFromContext();
         verify(commitManager).getInProgressCommitOpt(eq(catalogId), eq(recordId), any(User.class), any(RepositoryConnection.class));
         verify(shapesGraphManager).retrieveShapesGraph(eq(recordId), eq(branchId), eq(commitId));
-        verify(shapesGraphSpy).serializeShapesGraph("turtle");
+        verify(shapesGraphSpy).serializeShapesGraphContent("turtle");
     }
 
     @Test
     public void testGetShapesGraphContentWithoutBranchId() throws IOException {
-        Model shaclModel;
-        try (RepositoryConnection conn = repo.getConnection()) {
-            InputStream stream = new ByteArrayInputStream("<http://mobi.com/blah> a <http://www.w3.org/2002/07/owl#Ontology> .".getBytes(StandardCharsets.UTF_8));
-            shaclModel = Rio.parse(stream, "", RDFFormat.TRIG);
-
-            conn.add(shaclModel);
-        }
-        when(compiledResourceManager.getCompiledResource(any(Resource.class), any(RepositoryConnection.class))).thenReturn(shaclModel);
-        when(compiledResourceManager.getCompiledResource(any(Resource.class), any(Resource.class), any(Resource.class), any(RepositoryConnection.class))).thenReturn(shaclModel);
-
-        ShapesGraph shapesGraph = new SimpleShapesGraph(shaclModel);
-        ShapesGraph shapesGraphSpy = Mockito.spy(shapesGraph);
-
-        when(shapesGraphManager.retrieveShapesGraphByCommit(eq(commitId)))
+        when(shapesGraphManager.retrieveShapesGraphByCommit(eq(recordId), eq(commitId)))
                 .thenReturn(Optional.of(shapesGraphSpy));
         when(commitManager.getInProgressCommitOpt(eq(catalogId), eq(recordId),
                 any(User.class), any(RepositoryConnection.class))).thenReturn(Optional.empty());
@@ -917,24 +898,11 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
         assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
         verify(commitManager).getInProgressCommitOpt(eq(catalogId), eq(recordId),
                 any(User.class), any(RepositoryConnection.class));
-        verify(shapesGraphManager).retrieveShapesGraphByCommit(eq(commitId));
+        verify(shapesGraphManager).retrieveShapesGraphByCommit(eq(recordId), eq(commitId));
     }
 
     @Test
     public void testGetShapesGraphContentWithoutBranchOrCommitId() throws IOException {
-        Model shaclModel;
-        try (RepositoryConnection conn = repo.getConnection()) {
-            InputStream stream = new ByteArrayInputStream("<http://mobi.com/blah> a <http://www.w3.org/2002/07/owl#Ontology> .".getBytes(StandardCharsets.UTF_8));
-            shaclModel = Rio.parse(stream, "", RDFFormat.TRIG);
-
-            conn.add(shaclModel);
-        }
-        when(compiledResourceManager.getCompiledResource(any(Resource.class), any(RepositoryConnection.class))).thenReturn(shaclModel);
-        when(compiledResourceManager.getCompiledResource(any(Resource.class), any(Resource.class), any(Resource.class), any(RepositoryConnection.class))).thenReturn(shaclModel);
-
-        ShapesGraph shapesGraph = new SimpleShapesGraph(shaclModel);
-        ShapesGraph shapesGraphSpy = Mockito.spy(shapesGraph);
-
         when(shapesGraphManager.retrieveShapesGraph(eq(recordId)))
                 .thenReturn(Optional.of(shapesGraphSpy));
         when(commitManager.getInProgressCommitOpt(eq(catalogId), eq(recordId),
@@ -952,19 +920,6 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
 
     @Test
     public void testGetShapesGraphContentWithoutCommitId() throws IOException {
-        Model shaclModel;
-        try (RepositoryConnection conn = repo.getConnection()) {
-            InputStream stream = new ByteArrayInputStream("<http://mobi.com/blah> a <http://www.w3.org/2002/07/owl#Ontology> .".getBytes(StandardCharsets.UTF_8));
-            shaclModel = Rio.parse(stream, "", RDFFormat.TRIG);
-
-            conn.add(shaclModel);
-        }
-        when(compiledResourceManager.getCompiledResource(any(Resource.class), any(RepositoryConnection.class))).thenReturn(shaclModel);
-        when(compiledResourceManager.getCompiledResource(any(Resource.class), any(Resource.class), any(Resource.class), any(RepositoryConnection.class))).thenReturn(shaclModel);
-
-        ShapesGraph shapesGraph = new SimpleShapesGraph(shaclModel);
-        ShapesGraph shapesGraphSpy = Mockito.spy(shapesGraph);
-
         when(shapesGraphManager.retrieveShapesGraph(eq(recordId), eq(branchId)))
                 .thenReturn(Optional.of(shapesGraphSpy));
         when(commitManager.getInProgressCommitOpt(eq(catalogId), eq(recordId),
@@ -979,23 +934,11 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
         verify(commitManager).getInProgressCommitOpt(eq(catalogId), eq(recordId),
                 any(User.class), any(RepositoryConnection.class));
         verify(shapesGraphManager).retrieveShapesGraph(eq(recordId), eq(branchId));
-        verify(shapesGraphSpy).serializeShapesGraph(eq("turtle"));
+        verify(shapesGraphSpy).serializeShapesGraphContent(eq("turtle"));
     }
 
     @Test
     public void testGetShapesGraphContentWithExistingInProgressCommit() throws IOException {
-        Model shaclModel;
-        try (RepositoryConnection conn = repo.getConnection()) {
-            InputStream stream = new ByteArrayInputStream("<http://mobi.com/blah> a <http://www.w3.org/2002/07/owl#Ontology> .".getBytes(StandardCharsets.UTF_8));
-            shaclModel = Rio.parse(stream, "", RDFFormat.TRIG);
-
-            conn.add(shaclModel);
-        }
-        when(compiledResourceManager.getCompiledResource(any(Resource.class), any(RepositoryConnection.class))).thenReturn(shaclModel);
-        when(compiledResourceManager.getCompiledResource(any(Resource.class), any(Resource.class), any(Resource.class), any(RepositoryConnection.class))).thenReturn(shaclModel);
-
-        ShapesGraph shapesGraph = new SimpleShapesGraph(shaclModel);
-        ShapesGraph shapesGraphSpy = Mockito.spy(shapesGraph);
         when(shapesGraphManager.retrieveShapesGraph(eq(recordId), eq(branchId), eq(commitId)))
                 .thenReturn(Optional.of(shapesGraphSpy));
 
@@ -1009,9 +952,8 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
         assertGetUserFromContext();
         verify(commitManager).getInProgressCommitOpt(eq(catalogId), eq(recordId), any(User.class), any(RepositoryConnection.class));
         verify(shapesGraphManager).retrieveShapesGraph(eq(recordId), eq(branchId), eq(commitId));
-        verify(differenceManager).applyInProgressCommit(eq(inProgressCommit.getResource()),
-                eq(shaclModel), any(RepositoryConnection.class));
-        verify(shapesGraphSpy).serializeShapesGraph(eq("turtle"));
+        verify(shapesGraphManager).applyChanges(shapesGraphSpy, inProgressCommit);
+        verify(shapesGraphSpy).serializeShapesGraphContent(eq("turtle"));
     }
 
     private ObjectNode getResponse(Response response) {
@@ -1024,5 +966,30 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
 
     private void assertGetUserFromContext() {
         verify(engineManager, atLeastOnce()).retrieveUser(anyString());
+    }
+
+    private static ShapesGraph createMockShapesGraph(Repository repo, Model model, IRI shapesGraphId) {
+        Ontology mockOntology = Mockito.mock(Ontology.class);
+        OntologyId mockOntologyId = Mockito.mock(OntologyId.class);
+        when(mockOntologyId.getOntologyIRI()).thenReturn(Optional.of(shapesGraphId));
+        when(mockOntology.getOntologyId()).thenReturn(mockOntologyId);
+        when(mockOntology.asModel()).thenReturn(model);
+        when(mockOntology.getGraphQueryResults(anyString(), anyBoolean())).thenAnswer(i -> {
+            try (RepositoryConnection conn = repo.getConnection()) {
+                GraphQuery query = conn.prepareGraphQuery(i.getArgument(0));
+                return QueryResults.asModel(query.evaluate(), mf);
+            }
+        });
+        when(mockOntology.getGraphQueryResultsStream(anyString(), anyBoolean(), any(RDFFormat.class), anyBoolean(), any(OutputStream.class))).thenAnswer(i -> {
+            try (RepositoryConnection conn = repo.getConnection()) {
+                GraphQuery query = conn.prepareGraphQuery(i.getArgument(0));
+                try (GraphQueryResult result = query.evaluate()) {
+                    RDFWriter rdfWriter = Rio.createWriter(i.getArgument(2), (OutputStream) i.getArgument(4));
+                    Rio.write(result, rdfWriter);
+                    return i.getArgument(4);
+                }
+            }
+        });
+        return new SimpleShapesGraph(mockOntology);
     }
 }

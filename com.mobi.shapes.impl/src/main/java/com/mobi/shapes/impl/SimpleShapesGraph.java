@@ -23,69 +23,92 @@ package com.mobi.shapes.impl;
  * #L%
  */
 
-import com.mobi.ontology.utils.OntologyModels;
+import com.mobi.ontology.core.api.Ontology;
 import com.mobi.rest.util.RestUtils;
 import com.mobi.shapes.api.ShapesGraph;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
-import org.eclipse.rdf4j.model.ModelFactory;
 import org.eclipse.rdf4j.model.Resource;
-import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
 
 import java.util.Optional;
 import javax.ws.rs.core.StreamingOutput;
 
 public class SimpleShapesGraph implements ShapesGraph {
 
-    private Model model;
-    private final ModelFactory mf = new DynamicModelFactory();
+    private final Ontology ontology;
+
+    private static final String GET_ENTITY_QUERY = """
+            CONSTRUCT {
+              <%IRI%> ?p ?o .
+            }
+            WHERE {
+              <%IRI%> ?p ?o .
+            }""";
+    private static final String SHAPES_GRAPH_CONTENT_QUERY = """
+            CONSTRUCT {
+                ?s ?p ?o .
+            }
+            WHERE {
+                ?s ?p ?o .
+                FILTER (?s != <%IRI%>)
+            }
+            """;
+    private static final String IRI_REPLACE = "%IRI%";
 
     /**
      * Creates a SimpleShapesGraph object that represents a Shapes Graph.
      *
-     * @param model           The {@link Model} containing the data in this Shapes Graph
+     * @param ontology           The {@link Ontology} containing the data in this Shapes Graph
      */
-    public SimpleShapesGraph(Model model) {
-        this.model = model;
+    public SimpleShapesGraph(Ontology ontology) {
+        this.ontology = ontology;
     }
 
     @Override
     public Model getModel() {
-        return this.model;
-    }
-
-    @Override
-    public void setModel(Model model) {
-        this.model = model;
+        return this.ontology.asModel();
     }
 
     @Override
     public Model getEntity(Resource subjectId) {
-        return this.model.filter(subjectId, null, null);
+        return this.ontology.getGraphQueryResults(GET_ENTITY_QUERY.replace(IRI_REPLACE, subjectId.stringValue()),
+                false);
     }
 
     @Override
     public Optional<IRI> getShapesGraphId() {
-        return OntologyModels.findFirstOntologyIRI(this.getModel());
+        return this.ontology.getOntologyId().getOntologyIRI();
     }
 
     @Override
     public Model getShapesGraphContent() {
-        Model shapesGraphContent = mf.createEmptyModel();
-        IRI shapesGraphId = OntologyModels.findFirstOntologyIRI(this.getModel())
-                .orElseThrow(() -> new IllegalStateException("Missing OntologyIRI")); // Check for empty
-        this.model.unmodifiable().forEach(statement -> {
-            if (!statement.getSubject().equals(shapesGraphId)) {
-                shapesGraphContent.add(statement);
-            }
-        });
-        return shapesGraphContent;
+        IRI shapesGraphId = this.getShapesGraphId().orElseThrow(() ->
+                new IllegalStateException("Missing Shapes Graph OntologyIRI"));
+        return this.ontology.getGraphQueryResults(
+                SHAPES_GRAPH_CONTENT_QUERY.replace(IRI_REPLACE, shapesGraphId.stringValue()), false);
     }
 
     @Override
     public StreamingOutput serializeShapesGraph(String format) {
+        return output -> {
+            switch (format.toLowerCase()) {
+                case "rdf/xml" -> this.ontology.asRdfXml(output);
+                case "turtle" -> ontology.asTurtle(output);
+                default -> ontology.asJsonLD(false, output);
+            }
+        };
+    }
+
+    @Override
+    public StreamingOutput serializeShapesGraphContent(String format) {
+        IRI shapesGraphId = this.getShapesGraphId().orElseThrow(() ->
+                new IllegalStateException("Missing Shapes Graph OntologyIRI"));
+        String query = SHAPES_GRAPH_CONTENT_QUERY.replace(IRI_REPLACE, shapesGraphId.stringValue());
         return outputStream ->
-                RestUtils.groupedModelToOutputStream(this.getShapesGraphContent(), RestUtils.getRDFFormat(format),
-                        outputStream);
+                this.ontology.getGraphQueryResultsStream(query, false, RestUtils.getRDFFormat(format), false, outputStream);
+    }
+
+    protected Ontology getOntology() {
+        return this.ontology;
     }
 }

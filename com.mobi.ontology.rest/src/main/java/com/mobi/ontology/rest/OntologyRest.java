@@ -152,12 +152,9 @@ import org.osgi.service.jaxrs.whiteboard.propertytypes.JaxrsResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -516,12 +513,7 @@ public class OntologyRest {
                     applyInProgressCommit, conn)
                     .orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
                             Response.Status.BAD_REQUEST));
-            StreamingOutput stream = os -> {
-                Writer writer = new BufferedWriter(new OutputStreamWriter(os));
-                writer.write(getOntologyAsRdf(ontology, rdfFormat, false));
-                writer.flush();
-                writer.close();
-            };
+            StreamingOutput stream = getOntologyAsRdfStream(ontology, rdfFormat, false);
             return Response.ok(stream).header("Content-Disposition", "attachment;filename=" + fileName
                     + "." + getRDFFormatFileExtension(rdfFormat)).header("Content-Type",
                     getRDFFormatMimeType(rdfFormat)).build();
@@ -4936,6 +4928,26 @@ public class OntologyRest {
                 return outputStream.toString();
             }
         }
+    }
+
+    /**
+     * Gets the requested serialization of the provided Ontology.
+     *
+     * @param ontology  the Ontology you want to serialize in a different format.
+     * @param rdfFormat the format you want.
+     * @param skolemize whether the Ontology should be skoelmized before serialized (NOTE: only applies to
+     *                  serializing as JSON-LD)
+     * @return A String containing the newly serialized Ontology.
+     */
+    private StreamingOutput getOntologyAsRdfStream(Ontology ontology, String rdfFormat, boolean skolemize) {
+        return output -> {
+            switch (rdfFormat.toLowerCase()) {
+                case "rdf/xml" -> ontology.asRdfXml(output);
+                case "owl/xml" -> ontology.asOwlXml(output);
+                case "turtle" -> ontology.asTurtle(output);
+                default -> ontology.asJsonLD(skolemize, output);
+            }
+        };
     }
 
     /**

@@ -327,6 +327,14 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
     // Testing retrieveOntology(Resource recordId)
 
     @Test(expected = IllegalArgumentException.class)
+    public void testRetrieveOntologyWithNonOntologyRecord() {
+        // Setup:
+        doThrow(new IllegalArgumentException()).when(recordManager).validateRecord(any(Resource.class), any(Resource.class), any(IRI.class), any(RepositoryConnection.class));
+
+        manager.retrieveOntology(recordIRI);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
     public void testRetrieveOntologyWithMissingIdentifier() {
         manager.retrieveOntology(missingIRI);
     }
@@ -381,7 +389,6 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
         branch.setHead(commitFactory.createNew(commitIRI));
         String key = ontologyCache.generateKey(recordIRI.stringValue(), commitIRI.stringValue());
         when(branchManager.getMasterBranch(eq(catalogIRI), eq(recordIRI), any(RepositoryConnection.class))).thenReturn(branch);
-        when(compiledResourceManager.getCompiledResource(eq(commitIRI), any(RepositoryConnection.class))).thenReturn(MODEL_FACTORY.createEmptyModel());
         when(ontologyCache.containsKey(key)).thenReturn(true);
         when(ontologyCache.get(key)).thenReturn(ontology);
 
@@ -392,6 +399,14 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
     }
 
     // Testing retrieveOntology(Resource recordId, Resource branchId)
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testRetrieveOntologyUsingABranchWithNonOntologyRecord() {
+        // Setup:
+        doThrow(new IllegalArgumentException()).when(recordManager).validateRecord(any(Resource.class), any(Resource.class), any(IRI.class), any(RepositoryConnection.class));
+
+        manager.retrieveOntology(recordIRI, branchIRI);
+    }
 
     @Test(expected = IllegalArgumentException.class)
     public void testRetrieveOntologyUsingABranchWithMissingIdentifier() throws Exception {
@@ -457,7 +472,6 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
         branch.setHead(commitFactory.createNew(commitIRI));
         String key = ontologyCache.generateKey(recordIRI.stringValue(), commitIRI.stringValue());
         when(branchManager.getBranchOpt(eq(catalogIRI), eq(recordIRI), eq(branchIRI), eq(branchFactory), any(RepositoryConnection.class))).thenReturn(Optional.of(branch));
-        when(compiledResourceManager.getCompiledResource(eq(commitIRI), any(RepositoryConnection.class))).thenReturn(MODEL_FACTORY.createEmptyModel());
         when(ontologyCache.containsKey(key)).thenReturn(true);
         when(ontologyCache.get(key)).thenReturn(ontology);
 
@@ -468,6 +482,14 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
     }
 
     // Testing retrieveOntology(Resource recordId, Resource branchId, Resource commitId)
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testRetrieveOntologyUsingACommitWithNonOntologyRecord() {
+        // Setup:
+        doThrow(new IllegalArgumentException()).when(recordManager).validateRecord(any(Resource.class), any(Resource.class), any(IRI.class), any(RepositoryConnection.class));
+
+        manager.retrieveOntology(recordIRI, branchIRI, commitIRI);
+    }
 
     @Test(expected = IllegalArgumentException.class)
     public void testRetrieveOntologyUsingACommitWithMissingIdentifier() throws Exception {
@@ -521,10 +543,62 @@ public class SimpleOntologyManagerTest extends OrmEnabledTestCase {
         Commit commit = commitFactory.createNew(commitIRI);
         String key = ontologyCache.generateKey(recordIRI.stringValue(), commitIRI.stringValue());
         when(commitManager.getCommit(eq(catalogIRI), eq(recordIRI), eq(branchIRI), eq(commitIRI), any(RepositoryConnection.class))).thenReturn(Optional.of(commit));
-        when(compiledResourceManager.getCompiledResource(eq(commitIRI), any(RepositoryConnection.class))).thenReturn(MODEL_FACTORY.createEmptyModel());
         when(ontologyCache.containsKey(key)).thenReturn(true);
 
         Optional<Ontology> optionalOntology = manager.retrieveOntology(recordIRI, branchIRI, commitIRI);
+        assertTrue(optionalOntology.isPresent());
+        verify(ontologyCache, times(0)).put(eq(key), eq(optionalOntology.get()));
+    }
+
+    // Testing retrieveOntologyByCommit(Resource recordId, Resource commitId)
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testRetrieveOntologyByCommitWithNonOntologyRecord() {
+        // Setup:
+        doThrow(new IllegalArgumentException()).when(recordManager).validateRecord(any(Resource.class), any(Resource.class), any(IRI.class), any(RepositoryConnection.class));
+
+        manager.retrieveOntologyByCommit(recordIRI, commitIRI);
+    }
+
+    @Test
+    public void testRetrieveOntologyByCommitThatDoesNotBelong() {
+        // Setup:
+        when(commitManager.commitInRecord(eq(recordIRI), eq(missingIRI), any(RepositoryConnection.class))).thenReturn(false);
+
+        Optional<Ontology> result = manager.retrieveOntologyByCommit(recordIRI, missingIRI);
+        assertTrue(result.isEmpty());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testRetrieveOntologyByCommitWhenCompiledResourceCannotBeFound() {
+        // Setup:
+        when(commitManager.commitInRecord(eq(recordIRI), eq(commitIRI), any(RepositoryConnection.class))).thenReturn(true);
+        doThrow(new IllegalArgumentException()).when(ontologyCreationService).createOntologyFromCommit(any(), any());
+
+        manager.retrieveOntologyByCommit(recordIRI, commitIRI);
+    }
+
+    @Test
+    public void testRetrieveOntologyByCommitCacheMiss() {
+        // Setup:
+        when(commitManager.commitInRecord(eq(recordIRI), eq(commitIRI), any(RepositoryConnection.class))).thenReturn(true);
+
+        Optional<Ontology> optionalOntology = manager.retrieveOntologyByCommit(recordIRI, commitIRI);
+        assertTrue(optionalOntology.isPresent());
+        assertNotNull(optionalOntology.get());
+        assertNotEquals(ontology, optionalOntology.get());
+        String key = ontologyCache.generateKey(recordIRI.stringValue(), commitIRI.stringValue());
+        verify(ontologyCache).containsKey(eq(key));
+    }
+
+    @Test
+    public void testRetrieveOntologyByCommitCacheHit() {
+        // Setup:
+        when(commitManager.commitInRecord(eq(recordIRI), eq(commitIRI), any(RepositoryConnection.class))).thenReturn(true);
+        String key = ontologyCache.generateKey(recordIRI.stringValue(), commitIRI.stringValue());
+        when(ontologyCache.containsKey(key)).thenReturn(true);
+
+        Optional<Ontology> optionalOntology = manager.retrieveOntologyByCommit(recordIRI, commitIRI);
         assertTrue(optionalOntology.isPresent());
         verify(ontologyCache, times(0)).put(eq(key), eq(optionalOntology.get()));
     }
