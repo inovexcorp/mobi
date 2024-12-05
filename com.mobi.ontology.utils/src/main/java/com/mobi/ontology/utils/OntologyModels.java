@@ -34,7 +34,6 @@ import org.eclipse.rdf4j.model.vocabulary.RDF;
 import java.util.Optional;
 
 public class OntologyModels {
-
     /**
      * Finds the first OntologyIRI in the provided Model.
      *

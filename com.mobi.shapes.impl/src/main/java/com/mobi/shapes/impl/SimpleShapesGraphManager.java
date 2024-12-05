@@ -25,18 +25,27 @@ package com.mobi.shapes.impl;
 
 import com.mobi.catalog.api.BranchManager;
 import com.mobi.catalog.api.CommitManager;
-import com.mobi.catalog.api.CompiledResourceManager;
+import com.mobi.catalog.api.RecordManager;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
+import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
 import com.mobi.catalog.config.CatalogConfigProvider;
+import com.mobi.ontology.core.api.Ontology;
+import com.mobi.ontology.core.api.OntologyCreationService;
+import com.mobi.ontology.core.api.OntologyManager;
+import com.mobi.ontology.utils.cache.OntologyCache;
 import com.mobi.ontology.utils.imports.ImportsResolver;
 import com.mobi.shapes.api.ShapesGraph;
 import com.mobi.shapes.api.ShapesGraphManager;
-import org.eclipse.rdf4j.model.Model;
+import com.mobi.shapes.api.ontologies.shapesgrapheditor.ShapesGraphRecord;
 import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
 import javax.annotation.Nonnull;
@@ -45,9 +54,14 @@ import javax.annotation.Nonnull;
         service = { SimpleShapesGraphManager.class, ShapesGraphManager.class }
 )
 public class SimpleShapesGraphManager implements ShapesGraphManager {
+    private static final Logger log = LoggerFactory.getLogger(SimpleShapesGraphManager.class);
+    protected final ValueFactory vf = new ValidatingValueFactory();
 
     @Reference
     CatalogConfigProvider configProvider;
+
+    @Reference
+    RecordManager recordManager;
 
     @Reference
     BranchManager branchManager;
@@ -56,10 +70,16 @@ public class SimpleShapesGraphManager implements ShapesGraphManager {
     CommitManager commitManager;
 
     @Reference
-    CompiledResourceManager compiledResourceManager;
+    ImportsResolver importsResolver;
 
     @Reference
-    ImportsResolver importsResolver;
+    OntologyManager ontologyManager;
+
+    @Reference
+    OntologyCache ontologyCache;
+
+    @Reference
+    OntologyCreationService ontologyCreationService;
 
     @Override
     public boolean shapesGraphIriExists(Resource shapesGraphId) {
@@ -68,37 +88,85 @@ public class SimpleShapesGraphManager implements ShapesGraphManager {
 
     @Override
     public Optional<ShapesGraph> retrieveShapesGraph(@Nonnull Resource recordId) {
+        long start = getStartTime();
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            recordManager.validateRecord(configProvider.getLocalCatalogIRI(), recordId,
+                    vf.createIRI(ShapesGraphRecord.TYPE), conn);
             Branch masterBranch = branchManager.getMasterBranch(configProvider.getLocalCatalogIRI(), recordId, conn);
-            return Optional.of(
-                    getShapesGraphFromModel(compiledResourceManager.getCompiledResource(getHeadOfBranch(masterBranch),
-                            conn)));
+            Optional<ShapesGraph> result = getShapesGraph(recordId, getHeadOfBranch(masterBranch));
+            logTrace("retrieveShapesGraph(recordId)", start);
+            return result;
         }
     }
 
     @Override
     public Optional<ShapesGraph> retrieveShapesGraph(@Nonnull Resource recordId, @Nonnull Resource branchId) {
+        long start = getStartTime();
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            recordManager.validateRecord(configProvider.getLocalCatalogIRI(), recordId,
+                    vf.createIRI(ShapesGraphRecord.TYPE), conn);
             Commit commit = commitManager.getHeadCommit(configProvider.getLocalCatalogIRI(), recordId, branchId, conn);
-            return Optional.of(getShapesGraphFromModel(compiledResourceManager.getCompiledResource(commit.getResource(),
-                    conn)));
+            Optional<ShapesGraph> result = getShapesGraph(recordId, commit.getResource());
+            logTrace("retrieveShapesGraph(recordId, branchId)", start);
+            return result;
         }
     }
 
     @Override
     public Optional<ShapesGraph> retrieveShapesGraph(@Nonnull Resource recordId, @Nonnull Resource branchId,
                                                      @Nonnull Resource commitId) {
+        long start = getStartTime();
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            Model compiledResource = compiledResourceManager.getCompiledResource(recordId, branchId, commitId, conn);
-            return Optional.of(getShapesGraphFromModel(compiledResource));
+            recordManager.validateRecord(configProvider.getLocalCatalogIRI(), recordId,
+                    vf.createIRI(ShapesGraphRecord.TYPE), conn);
+            commitManager.validateCommitPath(configProvider.getLocalCatalogIRI(), recordId, branchId, commitId, conn);
+            Optional<ShapesGraph> result = getShapesGraph(recordId, commitId);
+            logTrace("retrieveShapesGraph(recordId, branchId, commitId)", start);
+            return result;
         }
     }
 
     @Override
-    public Optional<ShapesGraph> retrieveShapesGraphByCommit(@Nonnull Resource commitId) {
+    public Optional<ShapesGraph> retrieveShapesGraphByCommit(@Nonnull Resource recordId, @Nonnull Resource commitId) {
+        long start = getStartTime();
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            return Optional.of(getShapesGraphFromModel(compiledResourceManager.getCompiledResource(commitId, conn)));
+            recordManager.validateRecord(configProvider.getLocalCatalogIRI(), recordId,
+                    vf.createIRI(ShapesGraphRecord.TYPE), conn);
+            Optional<ShapesGraph> result = commitManager.commitInRecord(recordId, commitId, conn)
+                    ? getShapesGraph(recordId, commitId)
+                    : Optional.empty();
+            logTrace("retrieveShapesGraphByCommit(recordId, commitId)", start);
+            return result;
         }
+    }
+
+    @Override
+    public void applyChanges(ShapesGraph shapesGraph, InProgressCommit inProgressCommit) {
+        ontologyManager.applyChanges(((SimpleShapesGraph) shapesGraph).getOntology(), inProgressCommit);
+    }
+
+    private Optional<ShapesGraph> getShapesGraph(@Nonnull Resource recordId, @Nonnull Resource commitId) {
+        return getOntology(recordId, commitId).map(this::getShapesGraphFromOntology);
+    }
+
+    private ShapesGraph getShapesGraphFromOntology(Ontology ontology) {
+        return new SimpleShapesGraph(ontology);
+    }
+
+    private Optional<Ontology> getOntology(@Nonnull Resource recordId, @Nonnull Resource commitId) {
+        Optional<Ontology> result;
+        String key = ontologyCache.generateKey(recordId.stringValue(), commitId.stringValue());
+
+        if (ontologyCache.containsKey(key)) {
+            log.trace("cache hit");
+            result = Optional.of(ontologyCreationService.createOntology(recordId, commitId));
+        } else {
+            log.trace("cache miss");
+            // Operation puts the ontology in the cache on construction
+            final Ontology ontology = ontologyCreationService.createOntologyFromCommit(recordId, commitId);
+            result = Optional.of(ontology);
+        }
+        return result;
     }
 
     private Resource getHeadOfBranch(Branch branch) {
@@ -106,7 +174,13 @@ public class SimpleShapesGraphManager implements ShapesGraphManager {
                 new IllegalStateException("Branch " + branch.getResource() + "has no head Commit set."));
     }
 
-    private ShapesGraph getShapesGraphFromModel(Model model) {
-        return new SimpleShapesGraph(model);
+    private long getStartTime() {
+        return log.isTraceEnabled() ? System.currentTimeMillis() : 0L;
+    }
+
+    private void logTrace(String methodName, Long start) {
+        if (log.isTraceEnabled()) {
+            log.trace(String.format(methodName + " complete in %d ms", System.currentTimeMillis() - start));
+        }
     }
 }

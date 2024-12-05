@@ -40,7 +40,7 @@ import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyCreationService;
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.api.OntologyManager;
-import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecordFactory;
+import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
 import com.mobi.ontology.utils.cache.OntologyCache;
 import com.mobi.ontology.utils.imports.ImportsResolver;
 import com.mobi.setting.api.SettingService;
@@ -71,9 +71,6 @@ public class SimpleOntologyManager implements OntologyManager {
     protected Logger log;
     protected final ValueFactory valueFactory = new ValidatingValueFactory();
     static final String COMPONENT_NAME = "com.mobi.ontology.impl.repository.OntologyManager";
-
-    @Reference
-    public OntologyRecordFactory ontologyRecordFactory;
 
     @Reference
     public BranchFactory branchFactory;
@@ -134,12 +131,11 @@ public class SimpleOntologyManager implements OntologyManager {
 
     @Override
     public Ontology applyChanges(Ontology ontology, Difference difference) {
-        if (ontology instanceof SimpleOntology) {
-            SimpleOntology simpleOntology = (SimpleOntology) ontology;
+        if (ontology instanceof SimpleOntology simpleOntology) {
             simpleOntology.setDifference(difference);
             return simpleOntology;
         } else {
-            throw new MobiException("Ontology must be a " + SimpleOntology.class.toString());
+            throw new MobiException("Ontology must be a " + SimpleOntology.class);
         }
     }
 
@@ -164,15 +160,22 @@ public class SimpleOntologyManager implements OntologyManager {
     @Override
     public Optional<Ontology> retrieveOntology(@Nonnull Resource recordId) {
         long start = getStartTime();
-        Optional<Ontology> result = retrieveOntologyWithRecordId(recordId);
-        logTrace("retrieveOntology(recordId)", start);
-        return result;
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            recordManager.validateRecord(configProvider.getLocalCatalogIRI(), recordId,
+                    valueFactory.createIRI(OntologyRecord.TYPE), conn);
+            Branch masterBranch = branchManager.getMasterBranch(configProvider.getLocalCatalogIRI(), recordId, conn);
+            Optional<Ontology> result = getOntology(recordId, getHeadOfBranch(masterBranch));
+            logTrace("retrieveOntology(recordId)", start);
+            return result;
+        }
     }
 
     @Override
     public Optional<Ontology> retrieveOntology(@Nonnull Resource recordId, @Nonnull Resource branchId) {
+        long start = getStartTime();
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            long start = getStartTime();
+            recordManager.validateRecord(configProvider.getLocalCatalogIRI(), recordId,
+                    valueFactory.createIRI(OntologyRecord.TYPE), conn);
             Optional<Ontology> result = branchManager.getBranchOpt(configProvider.getLocalCatalogIRI(), recordId,
                     branchId, branchFactory, conn).flatMap(branch -> getOntology(recordId, getHeadOfBranch(branch)));
             logTrace("retrieveOntology(recordId, branchId)", start);
@@ -186,6 +189,8 @@ public class SimpleOntologyManager implements OntologyManager {
         long start = getStartTime();
 
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            recordManager.validateRecord(configProvider.getLocalCatalogIRI(), recordId,
+                    valueFactory.createIRI(OntologyRecord.TYPE), conn);
             Optional<Ontology> result = commitManager.getCommit(configProvider.getLocalCatalogIRI(), recordId, branchId,
                     commitId, conn).flatMap(commit -> getOntology(recordId, commitId));
 
@@ -196,13 +201,15 @@ public class SimpleOntologyManager implements OntologyManager {
 
     @Override
     public Optional<Ontology> retrieveOntologyByCommit(@Nonnull Resource recordId, @Nonnull Resource commitId) {
+        long start = getStartTime();
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             recordManager.validateRecord(configProvider.getLocalCatalogIRI(), recordId,
-                    ontologyRecordFactory.getTypeIRI(), conn);
-            if (commitManager.commitInRecord(recordId, commitId, conn)) {
-                return getOntology(recordId, commitId);
-            }
-            return Optional.empty();
+                    valueFactory.createIRI(OntologyRecord.TYPE), conn);
+            Optional<Ontology> result = commitManager.commitInRecord(recordId, commitId, conn)
+                    ? getOntology(recordId, commitId)
+                    : Optional.empty();
+            logTrace("retrieveOntologyByCommit(recordId, commitId)", start);
+            return result;
         }
     }
 
@@ -262,14 +269,6 @@ public class SimpleOntologyManager implements OntologyManager {
     private Resource getHeadOfBranch(Branch branch) {
         return branch.getHead_resource().orElseThrow(() ->
                 new IllegalStateException("Branch " + branch.getResource() + "has no head Commit set."));
-    }
-
-
-    private Optional<Ontology> retrieveOntologyWithRecordId(Resource recordId) {
-        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            Branch masterBranch = branchManager.getMasterBranch(configProvider.getLocalCatalogIRI(), recordId, conn);
-            return getOntology(recordId, getHeadOfBranch(masterBranch));
-        }
     }
 
     private long getStartTime() {

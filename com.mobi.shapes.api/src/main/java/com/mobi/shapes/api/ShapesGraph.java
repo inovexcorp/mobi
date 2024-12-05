@@ -40,13 +40,6 @@ public interface ShapesGraph {
     Model getModel();
 
     /**
-     * Sets the model containing the contents of the Shapes Graph.
-     *
-     * @param model The {@link Model} containing the data in this Shapes Graph
-     */
-    void setModel(Model model);
-
-    /**
      * Retrieves the model containing all Statements in the Shapes Graph with the passed in subjectId.
      *
      * @param subjectId The {@link Resource} to retrieve statements for.
@@ -67,14 +60,23 @@ public interface ShapesGraph {
      * Graph IRI.
      *
      * @return The model containing all Statements in the Shapes Graph except for statements with a subjectID of the
-     * Shapes Graph IRI.
+     *      Shapes Graph IRI.
      */
     Model getShapesGraphContent();
 
     /**
-     * Retrieves a serialization of the Shapes Graph except for statements with a subjectID of the Shapes Graph IRI.
+     * Retrieves a serialization of the entire Shapes Graph including statements with a subject of the Shapes Graph IRI.
      *
-     * @return The serialization of the Shapes Graph except for statements with a subjectID of the Shapes Graph IRI.
+     * @param format The string identifier of the RDF format to serialize the RDF as
+     * @return The serialization of the Shapes Graph including statements with a subject of the Shapes Graph IRI.
      */
     StreamingOutput serializeShapesGraph(String format);
+
+    /**
+     * Retrieves a serialization of the Shapes Graph except for statements with a subject of the Shapes Graph IRI.
+     *
+     * @param format The string identifier of the RDF format to serialize the RDF as
+     * @return The serialization of the Shapes Graph except for statements with a subject of the Shapes Graph IRI.
+     */
+    StreamingOutput serializeShapesGraphContent(String format);
 }

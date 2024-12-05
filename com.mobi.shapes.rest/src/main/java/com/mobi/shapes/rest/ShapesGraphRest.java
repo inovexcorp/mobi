@@ -89,12 +89,7 @@ import org.eclipse.rdf4j.model.vocabulary.OWL;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.RepositoryResult;
-import org.eclipse.rdf4j.rio.RDFFormat;
-import org.eclipse.rdf4j.rio.RDFHandler;
-import org.eclipse.rdf4j.rio.RDFHandlerException;
 import org.eclipse.rdf4j.rio.RDFParseException;
-import org.eclipse.rdf4j.rio.Rio;
-import org.eclipse.rdf4j.rio.helpers.BufferedGroupingRDFHandler;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.jaxrs.whiteboard.propertytypes.JaxrsResource;
@@ -102,7 +97,6 @@ import org.osgi.service.jaxrs.whiteboard.propertytypes.JaxrsResource;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
@@ -382,8 +376,7 @@ public class ShapesGraphRest {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             ShapesGraph shapesGraph = getShapesGraph(recordIdStr, branchIdStr, commitIdStr, applyInProgressCommit,
                     servletRequest, conn);
-            StreamingOutput output = outputStream ->
-                    writeShapesGraphToStream(shapesGraph.getModel(), RestUtils.getRDFFormat(rdfFormat), outputStream);
+            StreamingOutput output = shapesGraph.serializeShapesGraph(rdfFormat);
             return Response.ok(output).header("Content-Disposition", "attachment;filename=" + fileName
                     + "." + getRDFFormatFileExtension(rdfFormat)).header("Content-Type",
                     getRDFFormatMimeType(rdfFormat)).build();
@@ -683,7 +676,7 @@ public class ShapesGraphRest {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             ShapesGraph shapesGraph = getShapesGraph(recordIdStr, branchIdStr, commitIdStr, applyInProgressCommit,
                     servletRequest, conn);
-            return Response.ok(shapesGraph.serializeShapesGraph(format)).build();
+            return Response.ok(shapesGraph.serializeShapesGraphContent(format)).build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (MobiException | IllegalStateException ex) {
@@ -784,7 +777,8 @@ public class ShapesGraphRest {
             shapesGraphOpt = shapesGraphManager.retrieveShapesGraph(vf.createIRI(recordIdStr),
                     vf.createIRI(branchIdStr));
         } else if (StringUtils.isNotBlank(commitIdStr)) {
-            shapesGraphOpt = shapesGraphManager.retrieveShapesGraphByCommit(vf.createIRI(commitIdStr));
+            shapesGraphOpt = shapesGraphManager.retrieveShapesGraphByCommit(vf.createIRI(recordIdStr),
+                    vf.createIRI(commitIdStr));
         } else {
             shapesGraphOpt = shapesGraphManager.retrieveShapesGraph((vf.createIRI(recordIdStr)));
         }
@@ -797,9 +791,8 @@ public class ShapesGraphRest {
             Optional<InProgressCommit> inProgressCommitOpt = commitManager.getInProgressCommitOpt(
                     configProvider.getLocalCatalogIRI(), vf.createIRI(recordIdStr), user, conn);
 
-            inProgressCommitOpt.ifPresent(inProgressCommit -> shapesGraph.setModel(
-                    differenceManager.applyInProgressCommit(inProgressCommit.getResource(),
-                            shapesGraphOpt.get().getModel(), conn)));
+            inProgressCommitOpt.ifPresent(inProgressCommit -> shapesGraphManager.applyChanges(shapesGraphOpt.get(),
+                    inProgressCommit));
         }
 
         return shapesGraph;
@@ -810,22 +803,6 @@ public class ShapesGraphRest {
         // Load existing ontology into a skolemized model
         return bNodeService.deterministicSkolemize(
                 compiledResourceManager.getCompiledResource(recordId, branchId, commitId, conn), bNodesMap);
-    }
-
-    /**
-     * Writes to the SHACL Shapes Graph in the provided RDFFormat to an {@link OutputStream}.
-     *
-     * @param model The {@link Model} to write to the OutputStream.
-     * @param format The {@link RDFFormat} to write to the OutputStream.
-     * @param outputStream The {@link OutputStream} to write to.
-     */
-    private void writeShapesGraphToStream(Model model, RDFFormat format, OutputStream outputStream) {
-        try {
-            RDFHandler rdfWriter = new BufferedGroupingRDFHandler(Rio.createWriter(format, outputStream));
-            com.mobi.persistence.utils.rio.Rio.write(model, rdfWriter);
-        } catch (RDFHandlerException e) {
-            throw new MobiException("Error while writing SHACL Shapes Graph.");
-        }
     }
 
     private Model getUploadedModel(InputStream fileInputStream, String fileExtension, Map<BNode, IRI> bNodesMap)

@@ -23,6 +23,7 @@ package com.mobi.shapes.api;
  * #L%
  */
 
+import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
 import org.eclipse.rdf4j.model.Resource;
 
 import java.util.Optional;
@@ -75,8 +76,18 @@ public interface ShapesGraphManager {
      * Collects a {@link ShapesGraph} specified by the passed IRI {@link Resource Resources} for a
      * {@link com.mobi.catalog.api.ontologies.mcat.Commit} from the repository if it exists.
      *
+     * @param recordId the IRI {@link Resource} for a
+     *      {@link com.mobi.shapes.api.ontologies.shapesgrapheditor.ShapesGraphRecord}
      * @param commitId the IRI {@link Resource} for a {@link com.mobi.catalog.api.ontologies.mcat.Commit}
      * @return an {@link Optional} with a Shapes Graph with the mapping RDF if it was found
      */
-    Optional<ShapesGraph> retrieveShapesGraphByCommit(@Nonnull Resource commitId);
+    Optional<ShapesGraph> retrieveShapesGraphByCommit(@Nonnull Resource recordId, @Nonnull Resource commitId);
+
+    /**
+     * Applies the changes in the InProgressCommit to the provided ShapesGraph, mutating the object.
+     *
+     * @param shapesGraph the ShapesGraph to apply the Difference to
+     * @param inProgressCommit the InProgressCommit with changes made to the shapes graph
+     */
+    void applyChanges(ShapesGraph shapesGraph, InProgressCommit inProgressCommit);
 }
