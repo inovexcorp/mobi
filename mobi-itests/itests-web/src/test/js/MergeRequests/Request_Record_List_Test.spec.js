@@ -33,15 +33,6 @@ var shapes_mr_test = path.resolve( __dirname + '/../../resources/rdf_files/shape
 var shapes_mr_test_change = path.resolve(__dirname + '/../../resources/rdf_files/shapes_mr_test_change_001.ttl');
 
 var ontology001_title = 'ontMrTest001';
-var ontology001_title_changed = '';
-var ontology001_desc = '';
-
-var iconMappings = {
-    'http://mobi.com/ontologies/ontology-editor#OntologyRecord': 'fa-sitemap',
-    'http://mobi.com/ontologies/dataset#DatasetRecord': 'fa-database',
-    'http://mobi.com/ontologies/delimited#MappingRecord': 'fa-map',
-    'http://mobi.com/ontologies/shapes-graph-editor#ShapesGraphRecord': 'mat rule'
-};
 
 /**
  * Functional Test for Merge Request Module
@@ -51,7 +42,7 @@ var iconMappings = {
  *   all VersionedRdfRecord instances in the application, including Shapes Records
  */
 module.exports = {
-    '@tags': ['ontology-editor', 'shapes-editor', 'sanity', 'merge-request'],
+    '@tags': ['ontology-editor', 'shapes-editor', 'sanity', 'merge-requests'],
 
     'Step 1: Initial Setup': function(browser) {
         browser.globals.initial_steps(browser, adminUsername, adminPassword)

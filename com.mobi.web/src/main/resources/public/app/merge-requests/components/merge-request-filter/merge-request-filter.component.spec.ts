@@ -26,6 +26,7 @@ import { By } from '@angular/platform-browser';
 import { Subject, of } from 'rxjs';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { MockComponent, MockProvider } from 'ng-mocks';
+import { cloneDeep } from 'lodash';
 
 import {
   cleanStylesFromDOM
@@ -36,9 +37,9 @@ import { ToastService } from '../../../shared/services/toast.service';
 import { MergeRequestManagerService } from '../../../shared/services/mergeRequestManager.service';
 import { UserCount } from '../../../shared/models/user-count.interface';
 import { SearchableListFilter } from '../../../shared/models/searchable-list-filter.interface';
-import { MergeRequestFilterComponent } from './merge-request-filter.component';
 import { RecordCount } from '../../../shared/models/record-count.interface';
 import { FilterItem } from '../../../shared/models/filterItem.interface';
+import { MergeRequestFilterComponent } from './merge-request-filter.component';
 
 describe('MergeRequestFilterComponent', () => {
   let component: MergeRequestFilterComponent;
@@ -58,16 +59,22 @@ describe('MergeRequestFilterComponent', () => {
     count: 5
   };
   const animalCount: RecordCount = {
-      record: 'animalRecord',
-      title: 'Animal Ontology',
-      count: 1
+    record: 'animalRecord',
+    title: 'Animal Ontology',
+    count: 1
   };
   const pizzaCount: RecordCount = {
     record: 'pizzaRecord',
     title: 'Pizza Ontology',
     count: 5
-};
-  const updateFiltersSubject: Subject<void> = new Subject<void>();
+  };
+  const openStatusFilterItem: FilterItem = {
+    value: 'open',
+    display: 'Open',
+    checked: true
+  };
+  const reloadFiltersSubject: Subject<void> = new Subject<void>();
+  const updateFilterValuesSubject: Subject<void> = new Subject<void>();
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -85,12 +92,25 @@ describe('MergeRequestFilterComponent', () => {
     fixture = TestBed.createComponent(MergeRequestFilterComponent);
     component = fixture.componentInstance;
     element = fixture.debugElement;
-    component.updateFilters = updateFiltersSubject.asObservable();
+    component.reloadFilters = reloadFiltersSubject.asObservable();
+    component.updateFilterValues = updateFilterValuesSubject.asObservable();
     mergeRequestsStateStub = TestBed.inject(MergeRequestsStateService) as jasmine.SpyObj<MergeRequestsStateService>;
-    mergeRequestsStateStub.acceptedFilter = 'open';
-    mergeRequestsStateStub.creators = [adminCount.user];
-    mergeRequestsStateStub.assignees = [adminCount.user];
-    mergeRequestsStateStub.records = [animalCount.record];
+    mergeRequestsStateStub.requestStatus = openStatusFilterItem;
+    mergeRequestsStateStub.creators = [{
+      value: adminCount,
+      display: adminCount.name,
+      checked: true
+    }];
+    mergeRequestsStateStub.assignees = [{
+      value: adminCount,
+      display: adminCount.name,
+      checked: true
+    }];
+    mergeRequestsStateStub.records = [{
+      value: animalCount,
+      display: animalCount.title,
+      checked: true
+    }];
     mergeRequestManagerStub = TestBed.inject(MergeRequestManagerService) as jasmine.SpyObj<MergeRequestManagerService>;
     mergeRequestManagerStub.getCreators.and.returnValue(of(new HttpResponse<UserCount[]>({
       body: [adminCount, batmanCount],
@@ -127,9 +147,9 @@ describe('MergeRequestFilterComponent', () => {
       const mergeRequestFilter = component.filters[0];
       expect(mergeRequestFilter).toBeTruthy();
       const expectedFilterItems: FilterItem[] = [
-        { checked: true, display: 'Open', value: 'Open' },
-        { checked: false, display: 'Accepted', value: 'Accepted' },
-        { checked: false, display: 'Closed', value: 'Closed' }
+        { checked: true, display: 'Open', value: 'open' },
+        { checked: false, display: 'Accepted', value: 'accepted' },
+        { checked: false, display: 'Closed', value: 'closed' }
       ];
       expect(mergeRequestFilter.title).toEqual('Request Status');
       expect(mergeRequestFilter.filterItems).toEqual(expectedFilterItems);
@@ -211,7 +231,7 @@ describe('MergeRequestFilterComponent', () => {
         statusFilter.filter(openStatus);
         expect(acceptedStatus.checked).toEqual(false);
         expect(component.changeFilter.emit).toHaveBeenCalledWith({
-          requestStatus: 'open',
+          requestStatus: openStatus,
           creators: mergeRequestsStateStub.creators,
           assignees: mergeRequestsStateStub.assignees,
           records: mergeRequestsStateStub.records
@@ -228,7 +248,7 @@ describe('MergeRequestFilterComponent', () => {
         statusFilter.filter(acceptedStatus);
         expect(openStatus.checked).toEqual(false);
         expect(component.changeFilter.emit).toHaveBeenCalledWith({
-          requestStatus: 'accepted',
+          requestStatus: acceptedStatus,
           creators: mergeRequestsStateStub.creators,
           assignees: mergeRequestsStateStub.assignees,
           records: mergeRequestsStateStub.records
@@ -244,8 +264,8 @@ describe('MergeRequestFilterComponent', () => {
           creatorFilter.filter(null);
           expect(creatorFilter.numChecked).toEqual(creatorFilter.filterItems.length);
           expect(component.changeFilter.emit).toHaveBeenCalledWith({
-            requestStatus: mergeRequestsStateStub.acceptedFilter,
-            creators: [adminCount.user, batmanCount.user],
+            requestStatus: mergeRequestsStateStub.requestStatus,
+            creators: creatorFilter.filterItems,
             assignees: mergeRequestsStateStub.assignees,
             records: mergeRequestsStateStub.records
           });
@@ -253,25 +273,32 @@ describe('MergeRequestFilterComponent', () => {
         it('and some are checked', () => {
           const creatorFilter = component.filters[1];
           expect(creatorFilter).toBeTruthy();
+          const adminItem = creatorFilter.filterItems.find(item => item.value.user === adminCount.user);
+          expect(adminItem).toBeTruthy();
           creatorFilter.filter(null);
           expect(creatorFilter.numChecked).toEqual(1);
           expect(component.changeFilter.emit).toHaveBeenCalledWith({
-            requestStatus: mergeRequestsStateStub.acceptedFilter,
-            creators: [adminCount.user],
+            requestStatus: mergeRequestsStateStub.requestStatus,
+            creators: [adminItem],
             assignees: mergeRequestsStateStub.assignees,
             records: mergeRequestsStateStub.records
           });
         });
       });
       it('if not all selected creators are visible', () => {
-        mergeRequestsStateStub.creators = [adminCount.user, 'superman'];
+        mergeRequestsStateStub.creators = [
+          { value: adminCount, display: adminCount.name, checked: true },
+          { value: { user: 'superman' }, display: '', checked: true }
+        ];
         const creatorFilter = component.filters[1];
         expect(creatorFilter).toBeTruthy();
+        const adminItem = creatorFilter.filterItems.find(item => item.value.user === adminCount.user);
+        expect(adminItem).toBeTruthy();
         creatorFilter.filter(null);
         expect(creatorFilter.numChecked).toEqual(2);
         expect(component.changeFilter.emit).toHaveBeenCalledWith({
-          requestStatus: mergeRequestsStateStub.acceptedFilter,
-          creators: [adminCount.user, 'superman'],
+          requestStatus: mergeRequestsStateStub.requestStatus,
+          creators: [adminItem, { value: { user: 'superman' }, display: '', checked: true }],
           assignees: mergeRequestsStateStub.assignees,
           records: mergeRequestsStateStub.records
         });
@@ -286,35 +313,42 @@ describe('MergeRequestFilterComponent', () => {
           assigneeFilter.filter(null);
           expect(assigneeFilter.numChecked).toEqual(assigneeFilter.filterItems.length);
           expect(component.changeFilter.emit).toHaveBeenCalledWith({
-            requestStatus: mergeRequestsStateStub.acceptedFilter,
+            requestStatus: mergeRequestsStateStub.requestStatus,
             creators: mergeRequestsStateStub.creators,
-            assignees: [adminCount.user, batmanCount.user],
+            assignees: assigneeFilter.filterItems,
             records: mergeRequestsStateStub.records
           });
         });
         it('and some are checked', () => {
           const assigneeFilter = component.filters[2];
           expect(assigneeFilter).toBeTruthy();
+          const adminItem = assigneeFilter.filterItems.find(item => item.value.user === adminCount.user);
+          expect(adminItem).toBeTruthy();
           assigneeFilter.filter(null);
           expect(assigneeFilter.numChecked).toEqual(1);
           expect(component.changeFilter.emit).toHaveBeenCalledWith({
-            requestStatus: mergeRequestsStateStub.acceptedFilter,
+            requestStatus: mergeRequestsStateStub.requestStatus,
             creators: mergeRequestsStateStub.creators,
-            assignees: [adminCount.user],
+            assignees: [adminItem],
             records: mergeRequestsStateStub.records
           });
         });
       });
       it('if not all selected assignees are visible', () => {
-        mergeRequestsStateStub.assignees = [adminCount.user, 'superman'];
+        mergeRequestsStateStub.assignees = [
+          { value: adminCount, display: adminCount.name, checked: true },
+          { value: { user: 'superman' }, display: '', checked: true }
+        ];
         const assigneeFilter = component.filters[2];
         expect(assigneeFilter).toBeTruthy();
+        const adminItem = assigneeFilter.filterItems.find(item => item.value.user === adminCount.user);
+        expect(adminItem).toBeTruthy();
         assigneeFilter.filter(null);
         expect(assigneeFilter.numChecked).toEqual(2);
         expect(component.changeFilter.emit).toHaveBeenCalledWith({
-          requestStatus: mergeRequestsStateStub.acceptedFilter,
+          requestStatus: mergeRequestsStateStub.requestStatus,
           creators: mergeRequestsStateStub.creators,
-          assignees: [adminCount.user, 'superman'],
+          assignees: [adminItem, { value: { user: 'superman' }, display: '', checked: true }],
           records: mergeRequestsStateStub.records
         });
       });
@@ -328,38 +362,70 @@ describe('MergeRequestFilterComponent', () => {
           recordFilter.filter(null);
           expect(recordFilter.numChecked).toEqual(recordFilter.filterItems.length);
           expect(component.changeFilter.emit).toHaveBeenCalledWith({
-            requestStatus: mergeRequestsStateStub.acceptedFilter,
+            requestStatus: mergeRequestsStateStub.requestStatus,
             creators: mergeRequestsStateStub.creators,
-            assignees: [ 'admin' ],
-            records: [animalCount.record, pizzaCount.record]
+            assignees: mergeRequestsStateStub.assignees,
+            records: recordFilter.filterItems
           });
         });
         it('and some are checked', () => {
           const recordFilter = component.filters[3];
           expect(recordFilter).toBeTruthy();
+          const animalItem = recordFilter.filterItems.find(item => item.value.record === animalCount.record);
+          expect(animalItem).toBeTruthy();
           recordFilter.filter(null);
           expect(recordFilter.numChecked).toEqual(1);
           expect(component.changeFilter.emit).toHaveBeenCalledWith({
-            requestStatus: mergeRequestsStateStub.acceptedFilter,
+            requestStatus: mergeRequestsStateStub.requestStatus,
             creators: mergeRequestsStateStub.creators,
-            assignees: [ 'admin' ],
-            records: [animalCount.record]
+            assignees: mergeRequestsStateStub.assignees,
+            records: [animalItem]
           });
         });
       });
       it('if not all selected creators are visible', () => {
-        mergeRequestsStateStub.records = [animalCount.record, 'medicine'];
+        mergeRequestsStateStub.records = [
+          { value: animalCount, display: '', checked: true },
+          { value: { record: 'medicine' }, display: '', checked: true }
+        ];
         const recordFilter = component.filters[3];
         expect(recordFilter).toBeTruthy();
+        const animalItem = recordFilter.filterItems.find(item => item.value.record === animalCount.record);
+          expect(animalItem).toBeTruthy();
         recordFilter.filter(null);
         expect(recordFilter.numChecked).toEqual(2);
         expect(component.changeFilter.emit).toHaveBeenCalledWith({
-          requestStatus: mergeRequestsStateStub.acceptedFilter,
-          assignees: [ 'admin' ],
+          requestStatus: mergeRequestsStateStub.requestStatus,
           creators: mergeRequestsStateStub.creators,
-          records: [animalCount.record, 'medicine']
+          assignees: mergeRequestsStateStub.assignees,
+          records: [animalItem, { value: { record: 'medicine' }, display: '', checked: true }]
         });
       });
+    });
+    it('should update the checked filter items based on the latest values on the state service', () => {
+      // Setup situation where filter has a checked item not in the state list
+      component.filters[1].numChecked = 2;
+      const creatorBatmanItem = component.filters[1].filterItems.find(item => item.value.user === batmanCount.user);
+      expect(creatorBatmanItem).toBeTruthy();
+      creatorBatmanItem.checked = true;
+      component.filters[2].numChecked = 2;
+      const assigneeBatmanItem = component.filters[2].filterItems.find(item => item.value.user === batmanCount.user);
+      expect(assigneeBatmanItem).toBeTruthy();
+      assigneeBatmanItem.checked = true;
+      component.filters[3].numChecked = 2;
+      const recordPizzaItem = component.filters[3].filterItems.find(item => item.value.record === pizzaCount.record);
+      expect(recordPizzaItem).toBeTruthy();
+      recordPizzaItem.checked = true;
+      const statusFilterItems = cloneDeep(component.filters[0].filterItems);
+
+      component.handleRemovedFilters();
+      expect(component.filters[0].filterItems).toEqual(statusFilterItems);
+      expect(component.filters[1].numChecked).toEqual(1);
+      expect(creatorBatmanItem.checked).toBeFalse();
+      expect(component.filters[2].numChecked).toEqual(1);
+      expect(assigneeBatmanItem.checked).toBeFalse();
+      expect(component.filters[3].numChecked).toEqual(1);
+      expect(recordPizzaItem.checked).toBeFalse();
     });
   });
   describe('contains the correct html', () => {

@@ -23,7 +23,8 @@
 <div class="merge-request-list row h-100">
     <div class="col-3 h-100 vertical-scroll">
         <merge-request-filter 
-            [updateFilters]="updateFiltersSubject.asObservable()" 
+            [reloadFilters]="reloadFiltersSubject.asObservable()" 
+            [updateFilterValues]="updateFilterValuesSubject.asObservable()" 
             (changeFilter)="changeFilter($event)">
         </merge-request-filter>
     </div>
@@ -37,6 +38,10 @@
             </mat-form-field>
             <button type="button" mat-raised-button color="primary" class="new-request-btn ml-2" (click)="state.startCreate()">New Request</button>
         </div>
+        <app-filters-selected-list
+                (selectedFiltersChange)="removeFilters($event)"
+                [selectedFilters]="selectedFilters"
+        ></app-filters-selected-list>
         <div class="flex-1 remove-min-height overflow-auto">
             <info-message *ngIf="!state.requests || state.requests.length === 0">No requests found</info-message>
             <div class="request padding" *ngFor="let request of state.requests; last as lastRequest" (click)="state.selected = request">
@@ -48,7 +53,7 @@
                                 {{request.title}}
                             </span>
                         </h3>
-                        <p class="request-info"><small>Created on {{request.date}} by <span title="Username: {{request.creator.username}}">{{request.creator.displayName}}</span></small></p>
+                        <p class="request-info"><small>Created on {{request.date}} by <span title="Username: {{request.creator?.username || '[Not Available]'}}">{{request.creator?.displayName || '[Not Available]'}}</span></small></p>
                         <dl>
                             <dt class="text-muted">Record</dt>
                             <dd class="text-truncate" [title]="request.recordTitle">{{request.recordTitle}}</dd>

@@ -21,18 +21,43 @@
  * #L%
  */
 const mergeRequestPage = 'merge-requests-page ';
-const mergeRequestPageList=  mergeRequestPage + 'merge-request-list';
-const mergeRequestPageForm = mergeRequestPage  + '.search-container';
-const mergeRequestSearch =  mergeRequestPageForm + ' input';
-const mergeRequestSort =  mergeRequestPageForm + ' mat-select';
-const mergeRequestFilters = mergeRequestPage  + 'merge-request-filter';
-const mergeRequestPaginator = mergeRequestPage + '.merge-request-paginator mat-paginator';
+const mergeRequestPageList = `${mergeRequestPage}merge-request-list`;
+const mergeRequestPageForm = `${mergeRequestPage}.search-container`;
+const mergeRequestSearch = `${mergeRequestPageForm} input`;
+const mergeRequestSort = `${mergeRequestPageForm} mat-select`;
+const mergeRequestFilters = `${mergeRequestPage}merge-request-filter`;
+const mergeRequestPaginator = `${mergeRequestPage}.merge-request-paginator mat-paginator`;
+const selectedFilterChipList = `${mergeRequestPageList} app-filters-selected-list mat-chip-list`;
+const selectedFilterChipListXpath = '//merge-requests-page//merge-request-list//app-filters-selected-list//mat-chip-list';
+
+var createFilterXPathSelector = function(filterTypeHeader, filterOption) {
+  var selectors = ['//merge-requests-page',
+      '//merge-request-filter//div[contains(@class, "merge-request-filter")]//mat-expansion-panel-header',
+      `//mat-panel-title[contains(@class, "mat-expansion-panel-header-title")][text()[contains(.,"${filterTypeHeader}")]]//ancestor::mat-expansion-panel`,
+      '//div[contains(@class, "mat-expansion-panel-content")]'
+  ];
+  if (filterOption) {
+      if (filterTypeHeader === 'Request Status') {
+          selectors = selectors.concat([
+              '//div[contains(@class, "filter-option")]//mat-radio-group//mat-radio-button',
+              `//span[contains(@class, "mat-radio-label")][text()[contains(., "${filterOption}")]]`,
+          ]);
+      } else {
+          selectors = selectors.concat([
+              '//div[contains(@class, "filter-option")]//mat-checkbox',
+              `//span[contains(@class, "mat-checkbox-label")][text()[contains(., "${filterOption}")]]`,
+              '//ancestor::mat-checkbox//label[contains(@class, "mat-checkbox-layout")]'
+          ]);
+      }
+  }
+  return selectors.join('');
+}
 
 const mergeRequestPageCommands = {
     verifyRecordFilters: function () {
         return this.useCss()
             .waitForElementPresent(mergeRequestFilters)
-            .expect.elements(mergeRequestFilters + ' mat-expansion-panel-header mat-panel-title').count.to.equal(4);
+            .expect.elements(`${mergeRequestFilters} mat-expansion-panel-header mat-panel-title`).count.to.equal(4);
     },
 
     verifyMergeRequestList: function () {
@@ -66,15 +91,82 @@ const mergeRequestPageCommands = {
 
     assertMatCardTitle: function (title) {
         return this.useXpath()
-            .waitForElementVisible('//merge-requests-page//create-request//request-record-select//mat-card//mat-card-title[contains(text(),"' + title + '")]')
+            .waitForElementVisible(`//merge-requests-page//create-request//request-record-select//mat-card//mat-card-title[contains(text(),"${title}")]`)
     },
 
     changeStatusType: function (status) {
-        var statusXpath = '//merge-request-list//merge-request-filter//mat-expansion-panel//mat-panel-title[text()[contains(.,"Request Status")]]//ancestor::mat-expansion-panel//mat-radio-button//span[text()[contains(.,"' + status +'")]]'
+        var statusXpath = `//merge-request-list//merge-request-filter//mat-expansion-panel//mat-panel-title[text()[contains(.,"Request Status")]]//ancestor::mat-expansion-panel//mat-radio-button//span[text()[contains(.,"${status}")]]`
         return this.useXpath()
             .waitForElementVisible(statusXpath)
             .click(statusXpath)
-    }
+    },
+
+    verifyFilterHeader: function(filterName) {
+      const filterXpathSelector = createFilterXPathSelector(filterName);
+      return this.assert.elementPresent({ selector: filterXpathSelector, locateStrategy: 'xpath' });
+    },
+
+    searchFilterList: function(filterName, searchText) {
+        const filterSearchXPathSelector = `${createFilterXPathSelector(filterName)}//input`;
+        this.assert.elementPresent({ selector: filterSearchXPathSelector, locateStrategy: 'xpath' });
+        return this.useXpath()
+            .sendKeys(filterSearchXPathSelector, [searchText, browser.Keys.ENTER])
+            .useCss()
+            .waitForElementNotPresent('#spinner-full');
+    },
+
+    toggleFilterItem: function(filterName, itemName) {
+        var filterXPathSelector = createFilterXPathSelector(filterName, itemName);
+
+        return this.assert.elementPresent({selector: filterXPathSelector, locateStrategy: 'xpath'})
+            .click('xpath', filterXPathSelector, function (result) {
+                this.assert.strictEqual(result.status, 0)
+            })
+            .waitForElementNotPresent('#spinner-full')
+    },
+
+    verifyFilterItems: function(filterName, items) {
+        items.forEach(function(item) {
+            var filterCss = createFilterXPathSelector(filterName, item);
+            this.useXpath()
+              .waitForElementVisible(filterCss);
+        }.bind(this));
+    },
+
+    assertNumFilterChips: function(num) {
+        if (num === 0) {
+            return this.useCss()
+                .waitForElementVisible(selectedFilterChipList)
+                .expect.element(`${selectedFilterChipList} mat-chip`).to.not.be.present;
+        }
+        return this.useCss()
+            .waitForElementVisible(selectedFilterChipList)
+            .assert.elementsCount(`${selectedFilterChipList} mat-chip`, num);
+    },
+
+    assertFilterChipExists: function(chipName) {
+        return this.useCss()
+            .waitForElementVisible(selectedFilterChipList)
+            .useXpath()
+            .assert.visible(`${selectedFilterChipListXpath}//span[text()[contains(.,"${chipName}")]]`);
+    },
+
+    removeFilterChip: function(chipName) {
+        const iconXPath = `${selectedFilterChipListXpath}//span[text()[contains(.,"${chipName}")]]/following-sibling::mat-icon`;
+        return this.useCss()
+            .waitForElementVisible(selectedFilterChipList)
+            .useXpath()
+            .waitForElementVisible(iconXPath)
+            .click(iconXPath)
+            .waitForElementNotPresent(iconXPath);
+    },
+
+    resetFilters: function() {
+        const button = `${mergeRequestPageList} app-filters-selected-list .reset-button-container button`;
+        return this.useCss()
+            .waitForElementVisible(button)
+            .click(button);
+    },
 }
 
 const mergeRequestCommands = {

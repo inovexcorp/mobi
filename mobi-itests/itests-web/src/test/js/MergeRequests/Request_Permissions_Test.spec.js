@@ -71,7 +71,7 @@ var masterBranchTitle = 'MASTER';
 // TODO Change Functional test to meet above ACS
 module.exports = {
 
-    '@tags': ['ontology-editor', 'sanity', 'merge-request'],
+    '@tags': ['ontology-editor', 'sanity', 'merge-requests'],
 
     'Step 1: Initial Setup' : function(browser) {
         browser.globals.initial_steps(browser, adminUser.username, adminUser.password)
