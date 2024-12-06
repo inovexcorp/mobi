@@ -115,7 +115,7 @@ export class UsersPageComponent implements OnInit {
         request.subscribe( ()=> noop, this.toast.createErrorToast);
     }
     setUserGroups(): void {
-        this.groups = filter(this.um.groups, group => includes(group.members, this.state.selectedUser.username));
+        this.groups = filter(this.um.groups, group => includes(group.members, this.state.selectedUser?.username));
     }
     goToGroup(group: Group): void {
         this.state.selectedGroup = group;

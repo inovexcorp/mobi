@@ -28,22 +28,6 @@ var ontology01 = {
     description: 'myDescription'
 };
 
-var createFilterXPathSelector = function(filterTypeHeader, filterOption) {
-    var selectors = ['//merge-requests-page',
-        '//merge-request-filter//div[contains(@class, "merge-request-filter")]//mat-expansion-panel-header',
-        '//mat-panel-title[contains(@class, "mat-expansion-panel-header-title")][text()[contains(.,"' + filterTypeHeader + '")]]//ancestor::mat-expansion-panel',
-        '//div[contains(@class, "mat-expansion-panel-content")]'
-    ];
-    if (filterOption) {
-        selectors = selectors.concat([
-            '//div[contains(@class, "filter-option")]//mat-checkbox',
-            '//span[contains(@class, "mat-checkbox-label")][text()[contains(., "' + filterOption + '")]]',
-            '//ancestor::mat-checkbox//label[contains(@class, "mat-checkbox-layout")]'
-        ]);
-    }
-    return selectors.join('');
-}
-
 /**
  * Functional Test for Merge Request Module
  * 
@@ -51,7 +35,7 @@ var createFilterXPathSelector = function(filterTypeHeader, filterOption) {
  * - Merging with and without branch removal
  */
 module.exports = {
-    '@tags': ['ontology-editor', 'sanity', 'merge-request'],
+    '@tags': ['ontology-editor', 'sanity', 'merge-requests'],
 
     'Step 1: Initial Setup': function(browser) {
         browser.globals.initial_steps(browser, adminUsername, adminPassword);
@@ -297,98 +281,86 @@ module.exports = {
 
     'Step 24: Ensure the request status filter works': function(browser) {
         // Confirm the status filter is present
-        var clickFunc = function(result) { this.assert.strictEqual(result.status, 0) };
-        var statusFilterXPathSelector = createFilterXPathSelector('Request Status');
-        browser.assert.elementPresent({ selector: statusFilterXPathSelector, locateStrategy: 'xpath' });
+        browser.page.mergeRequestPage().verifyFilterHeader('Request Status');
 
         // Verify the correct amount of options is available
-        var radioButtonSelector = '//div[contains(@class, "filter-option")]//mat-radio-group//mat-radio-button';
-        var statusFilterElementSelector = statusFilterXPathSelector +  radioButtonSelector;
-        browser.assert.elementsCount({ selector: statusFilterElementSelector, locateStrategy: 'xpath' }, 3)
+        var statusOptions = ['Open', 'Closed', 'Accepted'];
+        browser.page.mergeRequestPage().verifyFilterItems('Request Status', statusOptions)
 
         // Select the closed status filter
-        var closedRadioLabelSelector = '//span[contains(@class, "mat-radio-label")][text()[contains(., "Closed")]]';
-        var openRadioLabelSelector = '//span[contains(@class, "mat-radio-label")][text()[contains(., "Open")]]';
-        var acceptedRadioLabelSelector = '//span[contains(@class, "mat-radio-label")][text()[contains(., "Accepted")]]';
-        var closedStatusFilterXPathSelector = statusFilterElementSelector + closedRadioLabelSelector;
-        browser.assert.elementPresent({ selector: closedStatusFilterXPathSelector, locateStrategy: 'xpath' });
-        browser.click('xpath', closedStatusFilterXPathSelector, clickFunc);
+        browser.page.mergeRequestPage().changeStatusType('Closed');
         browser.globals.wait_for_no_spinners(browser);
+        browser.page.mergeRequestPage().assertNumFilterChips(0);
         browser.useCss()
             .expect.element('div.merge-request-list info-message p').text.to.contain('No requests found');
 
-        //select the accepted status filter
-        var acceptedStatusFilterXPathSelector = statusFilterElementSelector + acceptedRadioLabelSelector;
+        // Select the accepted status filter
         var acceptedRequestXPath = '//merge-request-list//div//span[contains(@class, "request-info-title")][text()[contains(., "newBranchTitle2")]]'
-        browser.assert.elementPresent({ selector: acceptedStatusFilterXPathSelector, locateStrategy: 'xpath' });
-        browser.click('xpath', acceptedStatusFilterXPathSelector, clickFunc);
+        browser.page.mergeRequestPage().changeStatusType('Accepted');
         browser.globals.wait_for_no_spinners(browser);
+        browser.page.mergeRequestPage().assertNumFilterChips(0);
         browser.useXpath()
             .assert.elementPresent(acceptedRequestXPath)
 
         // Select the open status filter
-        browser.click('xpath', statusFilterElementSelector + openRadioLabelSelector, clickFunc);
+        browser.page.mergeRequestPage().changeStatusType('Open');
         browser.globals.wait_for_no_spinners(browser);
+        browser.page.mergeRequestPage().assertNumFilterChips(0);
     },
 
     'Step 25: Filter the merge request list by creator': function(browser) {
         // Confirm the Creator filter is present
-        var clickFunc = function(result) { this.assert.strictEqual(result.status, 0) };
-        var creatorFilterXPathSelector = createFilterXPathSelector('Creators');
-        browser.assert.elementPresent({ selector: creatorFilterXPathSelector, locateStrategy: 'xpath' });
+        browser.page.mergeRequestPage().verifyFilterHeader('Creators');
+
         // Submit a search of the creator filter
-        var creatorSearchXPathSelector = creatorFilterXPathSelector + '//input';
-        browser.assert.elementPresent({ selector: creatorSearchXPathSelector, locateStrategy: 'xpath' });
-        browser
-            .useXpath()
-            .sendKeys(creatorSearchXPathSelector, ['ad', browser.Keys.ENTER])
-            .useCss()
-            .waitForElementNotPresent('#spinner-full');
+        browser.page.mergeRequestPage().searchFilterList('Creators', 'ad');
+        browser.globals.wait_for_no_spinners(browser);
 
         // Select the admin creator filter
-        var adminCreatorFilterXPathSelector = createFilterXPathSelector('Creators', adminUsername + ' (2)');
-        browser.assert.elementPresent({ selector: adminCreatorFilterXPathSelector, locateStrategy: 'xpath' });
-        browser.click('xpath', adminCreatorFilterXPathSelector, clickFunc);
+        browser.page.mergeRequestPage().toggleFilterItem('Creators', adminUsername + ' (2)');
         browser.globals.wait_for_no_spinners(browser);
-        browser
-            .useCss()
+        browser.page.mergeRequestPage().assertNumFilterChips(1);
+        browser.page.mergeRequestPage().assertFilterChipExists(adminUsername);
+        browser.useCss()
             .assert.textContains('div.request-contents .details h3', 'newBranchTitle3Removal');
 
         // Unselect the admin creator filter
-        browser.click('xpath', adminCreatorFilterXPathSelector, clickFunc);
+        browser.page.mergeRequestPage().toggleFilterItem('Creators', adminUsername + ' (2)');
         browser.globals.wait_for_no_spinners(browser);
+        browser.page.mergeRequestPage().assertNumFilterChips(0);
     },
 
     'Step 26: Filter the merge request list by assignee': function(browser) {
         // Confirm the Creator filter is present
-        var clickFunc = function(result) { this.assert.strictEqual(result.status, 0) };
-        var assigneeFilterXPathSelector = createFilterXPathSelector('Assignees');
-        browser.assert.elementPresent({ selector: assigneeFilterXPathSelector, locateStrategy: 'xpath' });
+        browser.page.mergeRequestPage().verifyFilterHeader('Assignees');
 
         // Submit a search of the assignee filter
-        var assigneeSearchXPathSelector = assigneeFilterXPathSelector + '//input';
-        browser.assert.elementPresent({ selector: assigneeSearchXPathSelector, locateStrategy: 'xpath' });
-        browser
-            .useXpath()
-            .sendKeys(assigneeSearchXPathSelector, ['ad', browser.Keys.ENTER])
-            .useCss()
-            .waitForElementNotPresent('#spinner-full');
+        browser.page.mergeRequestPage().searchFilterList('Assignees', 'ad');
 
         // Select the admin creator filter
-        var adminAssigneeFilterXPathSelector = createFilterXPathSelector('Assignee', adminUsername + ' (1)');
-        browser.assert.elementPresent({ selector: adminAssigneeFilterXPathSelector, locateStrategy: 'xpath' });
-        browser.click('xpath', adminAssigneeFilterXPathSelector, clickFunc);
+        browser.page.mergeRequestPage().toggleFilterItem('Assignee', adminUsername + ' (1)');
         browser.globals.wait_for_no_spinners(browser);
-        browser
-            .useCss()
+        browser.page.mergeRequestPage().assertNumFilterChips(1);
+        browser.page.mergeRequestPage().assertFilterChipExists(adminUsername);
+        browser.useCss()
             .assert.textContains('div.request-contents .details h3', 'newBranchTitle3Removal');
 
-        // Unselect the admin creator filter
-        browser.click('xpath', adminAssigneeFilterXPathSelector, clickFunc);
-        browser.globals.wait_for_no_spinners(browser);
+        // Keep admin creator selected for reset test nextUnselect the admin creator filter
     },
 
-    'Step 27: Search the merge request list': function(browser) {
+    'Step 27: Reset button clears chips': function(browser) {
+      // Add another filter for reset test
+      browser.page.mergeRequestPage().toggleFilterItem('Creators', adminUsername);
+      browser.globals.wait_for_no_spinners(browser);
+      browser.page.mergeRequestPage().assertNumFilterChips(2);
+
+      // Reset filters
+      browser.page.mergeRequestPage().resetFilters();
+      browser.globals.wait_for_no_spinners(browser);
+      browser.page.mergeRequestPage().assertNumFilterChips(0);
+    },
+
+    'Step 28: Search the merge request list': function(browser) {
         // Test no requests are shown
         browser.page.mergeRequestPage().searchList('NONE');
         browser.waitForElementVisible('div.merge-request-list info-message');
@@ -399,7 +371,7 @@ module.exports = {
         browser.assert.textContains('div.request-contents .details h3', 'newBranchTitle3Removal')
     },
 
-    'Step 28: Accept the merge request': function(browser) {
+    'Step 29: Accept the merge request': function(browser) {
         browser.page.mergeRequestPage().selectRequest('newBranchTitle3Removal');
         browser.globals.wait_for_no_spinners(browser);
         browser.page.mergeRequestPage().acceptRequest();

@@ -102,8 +102,8 @@ const entitySearchPageCommands = {
 
       return this.assert.elementPresent({selector: filterXPathSelector, locateStrategy: 'xpath'})
           .click('xpath', filterXPathSelector, function (result) {
-                  this.assert.strictEqual(result.status, 0)
-              })
+              this.assert.strictEqual(result.status, 0)
+          })
           .waitForElementNotPresent('#spinner-full')
   },
 

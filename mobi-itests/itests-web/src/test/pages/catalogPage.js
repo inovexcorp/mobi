@@ -146,8 +146,8 @@ const catalogPageCommands = {
 
         return this.assert.elementPresent({selector: keywordFilterXPathSelector, locateStrategy: 'xpath'})
             .click('xpath', keywordFilterXPathSelector, function (result) {
-                    this.assert.strictEqual(result.status, 0)
-                })
+                this.assert.strictEqual(result.status, 0)
+            })
             .waitForElementNotPresent('#spinner-full')
     },
 
