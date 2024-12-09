@@ -150,7 +150,7 @@ export class PropertyTreeComponent implements OnInit, OnChanges, OnDestroy, Afte
         }
     }
     clickItem(entityIRI: string): void {
-        this.os.selectItem(entityIRI).pipe(first()).toPromise();
+        this.os.selectItem(entityIRI).subscribe();
     }
     onKeyup(): void {
         this.filterText = this.searchText;
