@@ -143,7 +143,7 @@ export class HierarchyTreeComponent implements OnInit, OnChanges, OnDestroy, Aft
         }
     }
     clickItem(entityIRI: string): void {
-        this.os.selectItem(entityIRI).pipe(first()).toPromise();
+        this.os.selectItem(entityIRI).subscribe();
     }
     onKeyup(): void {
         this.filterText = this.searchText;
