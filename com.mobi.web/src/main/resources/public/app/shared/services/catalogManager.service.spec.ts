@@ -1988,20 +1988,32 @@ describe('Catalog Manager service', function() {
     });
   });
   describe('should find entities that match search text', () => {
+    const config: PaginatedConfig = {
+      offset: 0,
+      infer: false,
+      limit: 5,
+      pageIndex: 1,
+      sortOption: undefined,
+      searchText: 'test',
+      type: ['test type'],
+      keywords: ['keyword1', 'keywords2'],
+      creators: ['test']
+    };
+    it('unless an error occurs', () => {
+      const url = `${service.prefix}/${encodeURIComponent(catalogId)}/entities`;
+      service.getEntities(catalogId, config).subscribe(() => fail('Observable should have rejected'), response => {
+        expect(response).toEqual(errorObj);
+      });
+      const req = httpMock.expectOne(req => req.url === url && req.method === 'GET');
+      expect(req.request.params.get('limit')).toEqual('5');
+      expect(req.request.params.get('offset')).toEqual('0');
+      expect(req.request.params.getAll('keywords')).toEqual(['keyword1', 'keywords2']);
+      expect(req.request.params.getAll('type')).toEqual(['test type']);
+      req.flush(errorObj, { status: 400, statusText: error });
+    });
     it('successfully', () => {
       const entities: EntityRecord[] = SearchResultsMock;
       const url = `${service.prefix}/${encodeURIComponent(catalogId)}/entities`;
-      const config: PaginatedConfig = {
-        offset: 0,
-        infer: false,
-        limit: 5,
-        pageIndex: 1,
-        sortOption: undefined,
-        searchText: 'test',
-        type: ['test type'],
-        keywords: ['keyword1', 'keywords2'],
-        creators: ['test']
-      };
       service.getEntities(catalogId, config).subscribe((response: PaginatedResponse<EntityRecord[]>) => {
         expect(response.page.length).toBe(4);
         expect(response.page).toEqual(entities);

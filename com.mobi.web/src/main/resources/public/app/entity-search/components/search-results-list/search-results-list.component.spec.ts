@@ -20,21 +20,20 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Component, DebugElement } from '@angular/core';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { DebugElement } from '@angular/core';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { EntitySearchStateService } from '../../services/entity-search-state.service';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { By } from '@angular/platform-browser';
-import { Router } from '@angular/router';
-import { RouterTestingModule } from '@angular/router/testing';
 
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 
+import { cleanStylesFromDOM } from '../../../../test/ts/Shared';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { CatalogStateService } from '../../../shared/services/catalogState.service';
-import { DCTERMS } from '../../../prefixes';
+import { CATALOG, DCTERMS, ONTOLOGYEDITOR } from '../../../prefixes';
 import { EntityRecord } from '../../models/entity-record';
 import { EntitySearchFiltersComponent } from '../entity-search-filters/entity-search-filters.component';
 import { FiltersSelectedListComponent } from '../../../shared/components/filters-selected-list/filters-selected-list.component';
@@ -46,22 +45,15 @@ import { SearchResultsMock } from '../../mock-data/search-results.mock';
 import { SelectedEntityFilters } from '../../models/selected-entity-filters.interface';
 import { SearchResultsListComponent } from './search-results-list.component';
 
-// Dummy component for testing
-@Component({
-  template: '',
-})
-class DummyComponent {}
-
 describe('SearchResultsListComponent', () => {
   let component: SearchResultsListComponent;
   let fixture: ComponentFixture<SearchResultsListComponent>;
   let element: DebugElement;
   let searchStateStub: jasmine.SpyObj<EntitySearchStateService>;
   let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
-  let catalogStateServiceStub: jasmine.SpyObj<CatalogStateService>;
-  let router: Router;
   
   const entityRecords: EntityRecord[] = SearchResultsMock;
+  const catalogId = 'http://mobi.com/catalog-local';
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -81,18 +73,15 @@ describe('SearchResultsListComponent', () => {
       ],
       imports: [
         NoopAnimationsModule,
-        MatPaginatorModule,
-        RouterTestingModule.withRoutes([{ path: 'catalog', component: DummyComponent}])
+        MatPaginatorModule
       ]
     }).compileComponents();
 
-    router = TestBed.inject(Router);
     catalogManagerStub = TestBed.inject(CatalogManagerService) as jasmine.SpyObj<CatalogManagerService>;
     catalogManagerStub.localCatalog = {
-      '@id': 'http://mobi.com/catalog-local',
-      '@type': ['http://mobi.com/catalog-local']
+      '@id': catalogId,
+      '@type': [`${CATALOG}Catalog`]
     };
-    catalogStateServiceStub = TestBed.inject(CatalogStateService) as jasmine.SpyObj<CatalogStateService>;
     searchStateStub = TestBed.inject(EntitySearchStateService) as jasmine.SpyObj<EntitySearchStateService>;
     searchStateStub.paginationConfig = {
       limit: 10,
@@ -110,29 +99,42 @@ describe('SearchResultsListComponent', () => {
     fixture.detectChanges();
   });
 
+  afterEach(() => {
+    cleanStylesFromDOM();
+    fixture = null;
+    component = null;
+    element = null;
+    catalogManagerStub = null;
+    searchStateStub = null;
+  });
+
   it('should create', () => {
     expect(component).toBeTruthy();
   });
-  describe('should initialize with the correct values', function () {
-    it('when no value is specify', () => {
-      component.ngOnInit();
-      fixture.detectChanges();
-      expect(searchStateStub.setResults).not.toHaveBeenCalledWith('http://mobi.com/catalog-local');
+  it('should initialize with the correct values', fakeAsync(() => {
+    searchStateStub.currentResults = entityRecords;
+    searchStateStub.paginationConfig.searchText = 'test';
+    searchStateStub.paginationConfig.type = [`${ONTOLOGYEDITOR}OntologyRecord`];
+    searchStateStub.paginationConfig.keywords = ['keyword1', 'keyword2'];
+    component.ngOnInit();
+    fixture.detectChanges();
+    expect(component.searchText).toEqual('test');
+    expect(component.selectedFilters).toEqual({
+      chosenTypes: [{ value: `${ONTOLOGYEDITOR}OntologyRecord`, display: 'Ontology Record', checked: true }],
+      keywordFilterItems: [
+        { value: 'keyword1', display: 'keyword1', checked: true },
+        { value: 'keyword2', display: 'keyword2', checked: true }
+      ]
     });
-    it('should set results on when value is set', () => {
-      searchStateStub.setResults.and.returnValue(of(entityRecords));
-      searchStateStub.paginationConfig.searchText = 'test';
-      component.ngOnInit();
-      fixture.detectChanges();
-      expect(searchStateStub.setResults).toHaveBeenCalledWith('http://mobi.com/catalog-local');
-      expect(component.searchResult).toBeDefined();
-      component.searchResult.subscribe(searchResult => {
-        expect(searchResult).toBeDefined();
-        expect(searchResult.length).toEqual(entityRecords.length);
-        expect(searchResult).toEqual(entityRecords);
-      });
+    expect(searchStateStub.setResults).not.toHaveBeenCalled();
+    expect(component.searchResult).toBeDefined();
+    component.searchResult.subscribe(searchResult => {
+      expect(searchResult).toBeDefined();
+      expect(searchResult.length).toEqual(entityRecords.length);
+      expect(searchResult).toEqual(entityRecords);
     });
-  });
+    tick();
+  }));
   describe('controller method', function () {
     it('should set results on getResultPage', () => {
       searchStateStub.setResults.and.returnValue(of(entityRecords));
@@ -141,7 +143,7 @@ describe('SearchResultsListComponent', () => {
       pageEvent.pageIndex = 0;
   
       component.getResultPage(pageEvent);
-      expect(searchStateStub.setResults).toHaveBeenCalledWith('http://mobi.com/catalog-local');
+      expect(searchStateStub.setResults).toHaveBeenCalledWith(catalogId);
     });
     it('should set pagination filters and reload data on changeFilter', () => {
       component.searchText = 'searchText';
@@ -150,28 +152,21 @@ describe('SearchResultsListComponent', () => {
         keywordFilterItems: [{ value: 'keyword1',  display: 'keyword1', checked: false }],
       };
       component.changeFilter(filters);
-      expect(searchStateStub.resetPagination).toHaveBeenCalled();
+      expect(searchStateStub.resetPagination).toHaveBeenCalledWith();
       expect(searchStateStub.paginationConfig.type).toEqual(['type1']);
       expect(searchStateStub.paginationConfig.keywords).toEqual(['keyword1']);
-      expect(searchStateStub.setResults).toHaveBeenCalledWith('http://mobi.com/catalog-local');
-    });
-    it('should open a record in the catalog on openRecord', () => {
-      const navigateSpy = spyOn(router, 'navigate');
-      const record = { '@id': 'mockRecord' };
-      component.openRecord(record);
-      expect(catalogStateServiceStub.selectedRecord).toBe(record);
-      expect(navigateSpy).toHaveBeenCalledWith(['/catalog']);
+      expect(searchStateStub.setResults).toHaveBeenCalledWith(catalogId);
     });
     it('should reset pagination and load data on searchRecords', () => {
       spyOn<any>(component, '_loadData');
       component.searchRecords();
-      expect(searchStateStub.resetPagination).toHaveBeenCalled();
-      expect(component['_loadData']).toHaveBeenCalled();
+      expect(searchStateStub.resetPagination).toHaveBeenCalledWith();
+      expect(component['_loadData']).toHaveBeenCalledWith();
     });
     it('should load data when searchText is present', () => {
       component.searchText = 'test';
       component['_loadData']();
-      expect(searchStateStub.setResults).toHaveBeenCalledWith('http://mobi.com/catalog-local');
+      expect(searchStateStub.setResults).toHaveBeenCalledWith(catalogId);
     });
     it('should clear results when searchText is not present', () => {
       component.searchText = '';
@@ -185,7 +180,7 @@ describe('SearchResultsListComponent', () => {
       searchStateStub.paginationConfig = { pageIndex: 0 } as any;
       component.getResultPage(pageEvent);
       expect(searchStateStub.paginationConfig.pageIndex).toBe(2);
-      expect(searchStateStub.setResults).toHaveBeenCalledWith('http://mobi.com/catalog-local');
+      expect(searchStateStub.setResults).toHaveBeenCalledWith(catalogId);
     });
   });
   describe('contains the correct html', function () {
@@ -198,9 +193,9 @@ describe('SearchResultsListComponent', () => {
       });
     });
     it('should display a list', async () => {
-      searchStateStub.setResults.and.returnValue(of(entityRecords));
-      searchStateStub.paginationConfig.searchText = 'test';
       component.ngOnInit();
+      component.searchText = 'test';
+      component.searchResult = of(entityRecords);
       fixture.detectChanges();
       expect(element.queryAll(By.css('app-search-result-item')).length).toEqual(entityRecords.length);
     });

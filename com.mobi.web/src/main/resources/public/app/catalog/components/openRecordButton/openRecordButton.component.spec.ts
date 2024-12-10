@@ -22,11 +22,13 @@
 */
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { MockProvider } from 'ng-mocks';
+import { HttpErrorResponse } from '@angular/common/http';
 import { By } from '@angular/platform-browser';
-import { of, throwError } from 'rxjs';
 import { RouterTestingModule } from '@angular/router/testing';
 import { Router } from '@angular/router';
+
+import { MockProvider } from 'ng-mocks';
+import { of, throwError } from 'rxjs';
 
 import {
   cleanStylesFromDOM,
@@ -46,10 +48,11 @@ import { RecordSelectFiltered } from '../../../versioned-rdf-record-editor/model
 import { ShapesGraphListItem } from '../../../shared/models/shapesGraphListItem.class';
 import { WorkflowsStateService } from '../../../workflows/services/workflows-state.service';
 import { WorkflowSchema } from '../../../workflows/models/workflow-record.interface';
-import { OpenRecordButtonComponent } from './openRecordButton.component';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
-import { HttpResponse } from '@angular/common/http';
 import { EntityNamesItem } from '../../../shared/models/entityNamesItem.interface';
+import { DatasetStateService } from '../../../shared/services/datasetState.service';
+import { Difference } from '../../../shared/models/difference.class';
+import { OpenRecordButtonComponent } from './openRecordButton.component';
 
 describe('Open Record Button component', function () {
   let component: OpenRecordButtonComponent;
@@ -57,6 +60,7 @@ describe('Open Record Button component', function () {
   let fixture: ComponentFixture<OpenRecordButtonComponent>;
   let catalogStateStub: jasmine.SpyObj<CatalogStateService>;
   let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
+  let datasetStateStub: jasmine.SpyObj<DatasetStateService>;
   let mapperStateStub: jasmine.SpyObj<MapperStateService>;
   let ontologyStateStub: jasmine.SpyObj<OntologyStateService>;
   let policyEnforcementStub: jasmine.SpyObj<PolicyEnforcementService>;
@@ -67,6 +71,7 @@ describe('Open Record Button component', function () {
   let router: Router;
 
   const recordId = 'recordId';
+  const catalogId = 'http://mobi.com/catalog-local';
   const error = 'Error message';
   const record: JSONLDObject = {
     '@id': recordId,
@@ -103,6 +108,7 @@ describe('Open Record Button component', function () {
         MockProvider(CatalogStateService),
         MockProvider(CatalogManagerService),
         MockProvider(ShapesGraphStateService),
+        MockProvider(DatasetStateService),
         MockProvider(MapperStateService),
         MockProvider(OntologyStateService),
         MockProvider(WorkflowsStateService),
@@ -117,7 +123,12 @@ describe('Open Record Button component', function () {
     element = fixture.debugElement;
     catalogStateStub = TestBed.inject(CatalogStateService) as jasmine.SpyObj<CatalogStateService>;
     catalogManagerStub = TestBed.inject(CatalogManagerService) as jasmine.SpyObj<CatalogManagerService>;
+    catalogManagerStub.localCatalog = {
+      '@id': catalogId,
+      '@type': [`${CATALOG}Catalog`]
+    };
     ontologyStateStub = TestBed.inject(OntologyStateService) as jasmine.SpyObj<OntologyStateService>;
+    datasetStateStub = TestBed.inject(DatasetStateService) as jasmine.SpyObj<DatasetStateService>;
     mapperStateStub = TestBed.inject(MapperStateService) as jasmine.SpyObj<MapperStateService>;
     policyEnforcementStub = TestBed.inject(PolicyEnforcementService) as jasmine.SpyObj<PolicyEnforcementService>;
     policyManagerStub = TestBed.inject(PolicyManagerService) as jasmine.SpyObj<PolicyManagerService>;
@@ -130,10 +141,11 @@ describe('Open Record Button component', function () {
     ontologyStateStub.getEntityByRecordId.and.returnValue(entityInfo);
     ontologyStateStub.changeVersion.and.returnValue(of(null));
     shapesGraphStateStub.changeVersion.and.returnValue(of(null));
-    catalogManagerStub.getRecords.and.returnValue(of(new HttpResponse<JSONLDObject[]>({body: [entityRecord]})));
+    catalogManagerStub.getRecord.and.returnValue(of([entityRecord]));
     catalogManagerStub.getRecordMasterBranch.and.callFake(() => of(branch));
     policyEnforcementStub.permit = 'Permit';
     policyEnforcementStub.deny = 'Deny';
+    policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.permit));
   });
 
   afterEach(function() {
@@ -142,6 +154,7 @@ describe('Open Record Button component', function () {
     element = null;
     fixture = null;
     catalogStateStub = null;
+    datasetStateStub = null;
     mapperStateStub = null;
     catalogManagerStub = null;
     ontologyStateStub = null;
@@ -152,200 +165,201 @@ describe('Open Record Button component', function () {
   });
 
   it('should initialize correctly on record change', function() {
-    spyOn(component, 'update');
+    spyOn(component, 'handleRecordUpdate');
     component.record = record;
-    expect(component.update).toHaveBeenCalledWith();
+    expect(component.handleRecordUpdate).toHaveBeenCalledWith();
   });
   describe('controller methods', function() {
-    describe('openRecord calls the correct method when record is a', function() {
+    describe('openRecord calls the correct method', function() {
       beforeEach(function() {
         component.stopProp = true;
         this.event = new MouseEvent('click');
         spyOn(this.event, 'stopPropagation');
+        spyOn(component, 'updateEntityRecord');
+        spyOn(component, 'navigateToRecord');
+        component.record = record;
       });
+      it('unless the user cannot read the record', fakeAsync(function() {
+        policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.deny));
+        component.openRecord(this.event);
+        tick();
+        expect(this.event.stopPropagation).toHaveBeenCalledWith();
+        expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({
+          resourceId: record['@id'],
+          actionId: policyManagerStub.actionRead
+        });
+        expect(toastStub.createErrorToast).toHaveBeenCalledWith(jasmine.any(String));
+        expect(component.updateEntityRecord).not.toHaveBeenCalled();
+        expect(component.navigateToRecord).not.toHaveBeenCalled();
+      }));
+      describe('if the user can read the record', function() {
+        it('and the component is on the Catalog page', fakeAsync(function() {
+          component.isEntityRecord = false;
+          component.openRecord(this.event);
+          tick();
+          expect(this.event.stopPropagation).toHaveBeenCalledWith();
+          expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({
+            resourceId: record['@id'],
+            actionId: policyManagerStub.actionRead
+          });
+          expect(toastStub.createErrorToast).not.toHaveBeenCalled();
+          expect(component.updateEntityRecord).not.toHaveBeenCalled();
+          expect(component.navigateToRecord).toHaveBeenCalledWith();
+        }));
+        it('and the component is on the Entity Search page', fakeAsync(function() {
+          component.isEntityRecord = true;
+          component.openRecord(this.event);
+          tick();
+          expect(this.event.stopPropagation).toHaveBeenCalledWith();
+          expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({
+            resourceId: record['@id'],
+            actionId: policyManagerStub.actionRead
+          });
+          expect(toastStub.createErrorToast).not.toHaveBeenCalled();
+          expect(component.updateEntityRecord).toHaveBeenCalledWith();
+          expect(component.navigateToRecord).not.toHaveBeenCalled();
+        }));
+      });
+    });
+    describe('navigateToRecord calls the correct method when record is a', function() {
       it('OntologyRecord', function() {
         component.recordType = `${ONTOLOGYEDITOR}OntologyRecord`;
         spyOn(component, 'openOntology');
-        component.openRecord(this.event);
+        component.navigateToRecord();
         expect(component.openOntology).toHaveBeenCalledWith();
-        expect(this.event.stopPropagation).toHaveBeenCalledWith();
       });
       it('MappingRecord', function() {
         component.recordType = `${DELIM}MappingRecord`;
         spyOn(component, 'openMapping');
-        component.openRecord(this.event);
+        component.navigateToRecord();
         expect(component.openMapping).toHaveBeenCalledWith();
       });
       it('DatasetRecord', function() {
         component.recordType = `${DATASET}DatasetRecord`;
         spyOn(component, 'openDataset');
-        component.openRecord(this.event);
+        component.navigateToRecord();
         expect(component.openDataset).toHaveBeenCalledWith();
       });
       it('ShapesGraphRecord', function() {
         component.recordType = `${SHAPESGRAPHEDITOR}ShapesGraphRecord`;
         spyOn(component, 'openShapesGraph');
-        component.openRecord(this.event);
+        component.navigateToRecord();
         expect(component.openShapesGraph).toHaveBeenCalledWith();
       });
       it('WorkflowRecord', function() {
         component.recordType = `${WORKFLOWS}WorkflowRecord`;
         spyOn(component, 'openWorkflow');
-        component.openRecord(this.event);
+        component.navigateToRecord();
         expect(component.openWorkflow).toHaveBeenCalledWith();
       });
-      it('Entity Search results is an Ontology Record', function () {
-        component.recordType = `${ONTOLOGYEDITOR}OntologyRecord`;
-        catalogManagerStub.getInProgressCommit.and.returnValue(throwError(error));
-        spyOn(component, 'openOntology');
-        spyOn(component, 'updateEntityRecord');
-        component.openRecord(this.event);
-        expect(component.openOntology).toHaveBeenCalledWith();
-        expect(this.event.stopPropagation).toHaveBeenCalledWith();
+      it('an unknown type', function () {
+        component.recordType = 'unknown';
+        component.navigateToRecord();
+        expect(toastStub.createWarningToast).toHaveBeenCalledWith(jasmine.stringContaining('No module'));
       });
     });
     describe('openOntology navigates to the ontology editor', function() {
-      beforeEach(function() {
-        component.record = record;
-      });
-      it('if it is already open', function() {
-        const listItem = new OntologyListItem();
-        listItem.versionedRdfRecord.recordId = record['@id'];
-        ontologyStateStub.list = [listItem];
-        component.openOntology();
-        expect(router.navigate).toHaveBeenCalledWith(['/ontology-editor']);
-        expect(ontologyStateStub.open).not.toHaveBeenCalled();
-        expect(toastStub.createErrorToast).not.toHaveBeenCalled();
-        expect(ontologyStateStub.listItem).toEqual(listItem);
-      });
-      describe('if it is not open already', function() {
-        const recordSelect: RecordSelectFiltered = {
-          recordId: 'recordId',
-          title: 'title',
-          description: '',
-          identifierIRI: 'ontologyId'
-        };
+      describe('if the component is in the Catalog page', function() {
         beforeEach(function() {
-          ontologyStateStub.getIdentifierIRI.and.returnValue('ontologyId');
+          component.record = record;
         });
-        it('successfully', fakeAsync(function() {
-          ontologyStateStub.open.and.returnValue(of(null));
+        it('if it is already open', function() {
+          const listItem = new OntologyListItem();
+          listItem.versionedRdfRecord.recordId = record['@id'];
+          ontologyStateStub.list = [listItem];
           component.openOntology();
-          tick();
           expect(router.navigate).toHaveBeenCalledWith(['/ontology-editor']);
-          expect(ontologyStateStub.open).toHaveBeenCalledWith(recordSelect);
+          expect(ontologyStateStub.open).not.toHaveBeenCalled();
           expect(toastStub.createErrorToast).not.toHaveBeenCalled();
-        }));
-        it('unless an error occurs', fakeAsync(function() {
-          ontologyStateStub.open.and.returnValue(throwError('error'));
-          component.openOntology();
-          tick();
-          expect(router.navigate).toHaveBeenCalledWith(['/ontology-editor']);
-          expect(ontologyStateStub.open).toHaveBeenCalledWith(recordSelect);
-          expect(toastStub.createErrorToast).toHaveBeenCalledWith('error');
-        }));
-      });
-    });
-    describe('Entity record openOntology and navigates to the ontology editor', function () {
-      beforeEach(function () {
-        component.record = entityRecord;
-      });
-      it('if it is already open', function () {
-        const listItem = new OntologyListItem();
-        component.isEntityRecord = true;
-        component.hasCommitInProgress = false;
-        listItem.currentVersionTitle = 'Master';
-        listItem.versionedRdfRecord.recordId = entityRecord['@id'];
-        listItem.versionedRdfRecord.branchId = 'masterBranch';
-        ontologyStateStub.list = [listItem];
-        component.openOntology();
-        expect(router.navigate).toHaveBeenCalledWith(['/ontology-editor']);
-        expect(ontologyStateStub.open).not.toHaveBeenCalled();
-        expect(ontologyStateStub.changeVersion).not.toHaveBeenCalled();
-        expect(toastStub.createErrorToast).not.toHaveBeenCalled();
-        expect(ontologyStateStub.listItem).toEqual(listItem);
-      });
-      it('if it is already open and master branch is not selected', function () {
-        const listItem = new OntologyListItem();
-        component.isEntityRecord = true;
-        component.hasCommitInProgress = false;
-        listItem.currentVersionTitle = 'test';
-        listItem.versionedRdfRecord.recordId = record['@id'];
-        listItem.versionedRdfRecord.branchId = '';
-        component.recordType = `${ONTOLOGYEDITOR}OntologyRecord`;
-        ontologyStateStub.list = [listItem];
-        component.openOntology();
-        expect(router.navigate).toHaveBeenCalledWith(['/ontology-editor']);
-        expect(ontologyStateStub.open).not.toHaveBeenCalled();
-        expect(ontologyStateStub.changeVersion).toHaveBeenCalled();
-        expect(toastStub.createErrorToast).not.toHaveBeenCalled();
-        expect(toastStub.createWarningToast).toHaveBeenCalled();
-        expect(ontologyStateStub.listItem).toEqual(listItem);
-      });
-      describe('if it is not open already', function () {
-        const recordSelect: RecordSelectFiltered = {
-          recordId: 'recordId',
-          title: 'title',
-          description: '',
-          identifierIRI: 'ontologyId'
-        };
-        beforeEach(function () {
-          ontologyStateStub.getIdentifierIRI.and.returnValue('ontologyId');
+          expect(ontologyStateStub.listItem).toEqual(listItem);
         });
-        it('successfully', fakeAsync(function () {
+        describe('if it is not open already', function() {
+          const recordSelect: RecordSelectFiltered = {
+            recordId: 'recordId',
+            title: 'title',
+            description: '',
+            identifierIRI: 'ontologyId'
+          };
+          beforeEach(function() {
+            ontologyStateStub.getIdentifierIRI.and.returnValue('ontologyId');
+          });
+          it('successfully', fakeAsync(function() {
+            ontologyStateStub.open.and.returnValue(of(null));
+            component.openOntology();
+            tick();
+            expect(router.navigate).toHaveBeenCalledWith(['/ontology-editor']);
+            expect(ontologyStateStub.open).toHaveBeenCalledWith(recordSelect);
+            expect(toastStub.createErrorToast).not.toHaveBeenCalled();
+          }));
+          it('unless an error occurs', fakeAsync(function() {
+            ontologyStateStub.open.and.returnValue(throwError('error'));
+            component.openOntology();
+            tick();
+            expect(router.navigate).toHaveBeenCalledWith(['/ontology-editor']);
+            expect(ontologyStateStub.open).toHaveBeenCalledWith(recordSelect);
+            expect(toastStub.createErrorToast).toHaveBeenCalledWith('error');
+          }));
+        });
+      });
+      describe('if the component is in the Entity Search page', function() {
+        beforeEach(function () {
+          component.record = entityRecord;
+        });
+        it('if it is already open', function () {
+          const listItem = new OntologyListItem();
           component.isEntityRecord = true;
-          component.hasCommitInProgress = true;
-          ontologyStateStub.open.and.returnValue(of(null));
+          component.hasCommitInProgress = false;
+          listItem.currentVersionTitle = 'Master';
+          listItem.versionedRdfRecord.recordId = entityRecord['@id'];
+          listItem.versionedRdfRecord.branchId = 'masterBranch';
+          ontologyStateStub.list = [listItem];
           component.openOntology();
-          tick();
           expect(router.navigate).toHaveBeenCalledWith(['/ontology-editor']);
-          expect(ontologyStateStub.open).toHaveBeenCalledWith(recordSelect);
+          expect(ontologyStateStub.open).not.toHaveBeenCalled();
+          expect(ontologyStateStub.changeVersion).not.toHaveBeenCalled();
+          expect(toastStub.createErrorToast).not.toHaveBeenCalled();
+          expect(ontologyStateStub.listItem).toEqual(listItem);
+        });
+        it('if it is already open and master branch is not selected', function () {
+          const listItem = new OntologyListItem();
+          component.isEntityRecord = true;
+          component.hasCommitInProgress = false;
+          listItem.currentVersionTitle = 'test';
+          listItem.versionedRdfRecord.recordId = record['@id'];
+          listItem.versionedRdfRecord.branchId = '';
+          component.recordType = `${ONTOLOGYEDITOR}OntologyRecord`;
+          ontologyStateStub.list = [listItem];
+          component.openOntology();
+          expect(router.navigate).toHaveBeenCalledWith(['/ontology-editor']);
+          expect(ontologyStateStub.open).not.toHaveBeenCalled();
+          expect(ontologyStateStub.changeVersion).toHaveBeenCalled();
+          expect(toastStub.createErrorToast).not.toHaveBeenCalled();
           expect(toastStub.createWarningToast).toHaveBeenCalled();
-        }));
+          expect(ontologyStateStub.listItem).toEqual(listItem);
+        });
+        describe('if it is not open already', function () {
+          const recordSelect: RecordSelectFiltered = {
+            recordId: 'recordId',
+            title: 'title',
+            description: '',
+            identifierIRI: 'ontologyId'
+          };
+          beforeEach(function () {
+            ontologyStateStub.getIdentifierIRI.and.returnValue('ontologyId');
+          });
+          it('successfully', fakeAsync(function () {
+            component.isEntityRecord = true;
+            component.hasCommitInProgress = true;
+            ontologyStateStub.open.and.returnValue(of(null));
+            component.openOntology();
+            tick();
+            expect(router.navigate).toHaveBeenCalledWith(['/ontology-editor']);
+            expect(ontologyStateStub.open).toHaveBeenCalledWith(recordSelect);
+            expect(toastStub.createWarningToast).toHaveBeenCalled();
+          }));
+        });
       });
     });
-    describe('Entity record ShapeGraphs', function () {
-      beforeEach(function () {
-        component.recordType = `${SHAPESGRAPHEDITOR}ShapesGraphRecord`;
-        component.record = entityRecord;
-      });
-      it('if it is already open', function () {
-        const listItem: ShapesGraphListItem = new ShapesGraphListItem();
-        listItem.versionedRdfRecord.recordId = entityRecord['@id'];
-        component.isEntityRecord = true;
-        component.hasCommitInProgress = false;
-        listItem.currentVersionTitle = 'Master';
-
-        listItem.versionedRdfRecord.branchId = 'masterBranch';
-        shapesGraphStateStub.list = [listItem];
-        fixture.detectChanges();
-        component.openShapesGraph();
-        expect(router.navigate).toHaveBeenCalledWith(['/shapes-graph-editor']);
-        expect(shapesGraphStateStub.open).not.toHaveBeenCalled();
-        expect(toastStub.createErrorToast).not.toHaveBeenCalled();
-        expect(shapesGraphStateStub.listItem).toEqual(listItem);
-      });
-      it('if it is already open and master branch is not selected',   () => {
-        const listItem: ShapesGraphListItem = new ShapesGraphListItem();
-        listItem.versionedRdfRecord.recordId = entityRecord['@id'];
-        component.isEntityRecord = true;
-        component.hasCommitInProgress = false;
-        listItem.currentVersionTitle = 'Master';
-        listItem.versionedRdfRecord.branchId = '';
-        component.isOpened = true;
-
-        shapesGraphStateStub.list = [listItem];
-        fixture.detectChanges();
-        component.openShapesGraph();
-        expect(router.navigate).toHaveBeenCalledWith(['/shapes-graph-editor']);
-        expect(shapesGraphStateStub.open).not.toHaveBeenCalled();
-        expect(shapesGraphStateStub.changeVersion).toHaveBeenCalled();
-        expect(toastStub.createErrorToast).not.toHaveBeenCalled();
-        expect(toastStub.createWarningToast).toHaveBeenCalledWith('Switching to MASTER.');
-        expect(shapesGraphStateStub.listItem).toEqual(listItem);
-      });
-    });
-
     it('openMapping should navigate to the mapping module and select the mapping', function() {
       component.record = record;
       mapperStateStub.paginationConfig = {
@@ -356,49 +370,97 @@ describe('Open Record Button component', function () {
       expect(router.navigate).toHaveBeenCalledWith(['/mapper']);
     });
     it('openDataset navigates to the dataset module', function() {
+      component.record = record;
+      datasetStateStub.paginationConfig = {
+        searchText: ''
+      };
       component.openDataset();
+      expect(datasetStateStub.paginationConfig.searchText).toEqual('title');
       expect(router.navigate).toHaveBeenCalledWith(['/datasets']);
     });
     describe('openShapesGraphRecord navigates to the shapes editor', function() {
-      beforeEach(function() {
-        component.record = record;
-      });
-      it('if it is already open', function() {
-        const listItem = new ShapesGraphListItem();
-        listItem.versionedRdfRecord.recordId = record['@id'];
-        shapesGraphStateStub.list = [listItem];
-        component.openShapesGraph();
-        expect(router.navigate).toHaveBeenCalledWith(['/shapes-graph-editor']);
-        expect(shapesGraphStateStub.open).not.toHaveBeenCalled();
-        expect(toastStub.createErrorToast).not.toHaveBeenCalled();
-        expect(shapesGraphStateStub.listItem).toEqual(listItem);
-      });
-      describe('if it is not open already', function() {
-        const recordSelect: RecordSelectFiltered = {
-          recordId: 'recordId',
-          title: 'title',
-          description: '',
-          identifierIRI: 'shapesGraphId'
-        };
+      describe('if the component is in the Catalog page', function() {
         beforeEach(function() {
-          shapesGraphStateStub.getIdentifierIRI.and.returnValue('shapesGraphId');
+          component.record = record;
         });
-        it('successfully', fakeAsync(function() {
-          shapesGraphStateStub.open.and.returnValue(of(null));
+        it('if it is already open', function() {
+          const listItem = new ShapesGraphListItem();
+          listItem.versionedRdfRecord.recordId = record['@id'];
+          shapesGraphStateStub.list = [listItem];
           component.openShapesGraph();
-          tick();
           expect(router.navigate).toHaveBeenCalledWith(['/shapes-graph-editor']);
-          expect(shapesGraphStateStub.open).toHaveBeenCalledWith(recordSelect);
+          expect(shapesGraphStateStub.open).not.toHaveBeenCalled();
           expect(toastStub.createErrorToast).not.toHaveBeenCalled();
-        }));
-        it('unless an error occurs', fakeAsync(function() {
-          shapesGraphStateStub.open.and.returnValue(throwError('error'));
+          expect(shapesGraphStateStub.listItem).toEqual(listItem);
+        });
+        describe('if it is not open already', function() {
+          const recordSelect: RecordSelectFiltered = {
+            recordId: 'recordId',
+            title: 'title',
+            description: '',
+            identifierIRI: 'shapesGraphId'
+          };
+          beforeEach(function() {
+            shapesGraphStateStub.getIdentifierIRI.and.returnValue('shapesGraphId');
+          });
+          it('successfully', fakeAsync(function() {
+            shapesGraphStateStub.open.and.returnValue(of(null));
+            component.openShapesGraph();
+            tick();
+            expect(router.navigate).toHaveBeenCalledWith(['/shapes-graph-editor']);
+            expect(shapesGraphStateStub.open).toHaveBeenCalledWith(recordSelect);
+            expect(toastStub.createErrorToast).not.toHaveBeenCalled();
+          }));
+          it('unless an error occurs', fakeAsync(function() {
+            shapesGraphStateStub.open.and.returnValue(throwError('error'));
+            component.openShapesGraph();
+            tick();
+            expect(router.navigate).toHaveBeenCalledWith(['/shapes-graph-editor']);
+            expect(shapesGraphStateStub.open).toHaveBeenCalledWith(recordSelect);
+            expect(toastStub.createErrorToast).toHaveBeenCalledWith('error');
+          }));
+        });
+      });
+      describe('if the component is in the Entity Search page', function() {
+        beforeEach(function () {
+          component.recordType = `${SHAPESGRAPHEDITOR}ShapesGraphRecord`;
+          component.record = entityRecord;
+        });
+        it('if it is already open', function () {
+          const listItem: ShapesGraphListItem = new ShapesGraphListItem();
+          listItem.versionedRdfRecord.recordId = entityRecord['@id'];
+          component.isEntityRecord = true;
+          component.hasCommitInProgress = false;
+          listItem.currentVersionTitle = 'Master';
+  
+          listItem.versionedRdfRecord.branchId = 'masterBranch';
+          shapesGraphStateStub.list = [listItem];
+          fixture.detectChanges();
           component.openShapesGraph();
-          tick();
           expect(router.navigate).toHaveBeenCalledWith(['/shapes-graph-editor']);
-          expect(shapesGraphStateStub.open).toHaveBeenCalledWith(recordSelect);
-          expect(toastStub.createErrorToast).toHaveBeenCalledWith('error');
-        }));
+          expect(shapesGraphStateStub.open).not.toHaveBeenCalled();
+          expect(toastStub.createErrorToast).not.toHaveBeenCalled();
+          expect(shapesGraphStateStub.listItem).toEqual(listItem);
+        });
+        it('if it is already open and master branch is not selected',   () => {
+          const listItem: ShapesGraphListItem = new ShapesGraphListItem();
+          listItem.versionedRdfRecord.recordId = entityRecord['@id'];
+          component.isEntityRecord = true;
+          component.hasCommitInProgress = false;
+          listItem.currentVersionTitle = 'Master';
+          listItem.versionedRdfRecord.branchId = '';
+          component.isOpened = true;
+  
+          shapesGraphStateStub.list = [listItem];
+          fixture.detectChanges();
+          component.openShapesGraph();
+          expect(router.navigate).toHaveBeenCalledWith(['/shapes-graph-editor']);
+          expect(shapesGraphStateStub.open).not.toHaveBeenCalled();
+          expect(shapesGraphStateStub.changeVersion).toHaveBeenCalled();
+          expect(toastStub.createErrorToast).not.toHaveBeenCalled();
+          expect(toastStub.createWarningToast).toHaveBeenCalledWith('Switching to MASTER.');
+          expect(shapesGraphStateStub.listItem).toEqual(listItem);
+        });
       });
     });
     it('openWorkflow navigates to the workflows module ', fakeAsync(() => {
@@ -418,38 +480,84 @@ describe('Open Record Button component', function () {
       expect(workflowsStateStub.selectedRecord).toEqual(schema);
       expect(router.navigate).toHaveBeenCalledWith(['/workflows']);
     }));
-    describe('update set the appropriate variables', function() {
+    describe('handleRecordUpdate sets the appropriate variables', function() {
       beforeEach(function() {
+        catalogStateStub.getRecordType.and.returnValue('Test');
         component.record = record;
       });
-      it('when it is not an ontology record', function() {
-        catalogStateStub.getRecordType.and.returnValue('Test');
-        component.update();
+      it('if the user can view the record', fakeAsync(function() {
+        component.handleRecordUpdate();
+        tick();
         expect(component.recordType).toEqual('Test');
         expect(component.showButton).toEqual(true);
-        expect(policyEnforcementStub.evaluateRequest).not.toHaveBeenCalled();
-      });
-      describe('when it is an ontology record and', function() {
-        beforeEach(function() {
-          catalogStateStub.getRecordType.and.returnValue(`${ONTOLOGYEDITOR}OntologyRecord`);
+        expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({
+          resourceId: record['@id'],
+          actionId: policyManagerStub.actionRead
         });
-        it('the user can view', fakeAsync(function() {
-          policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.permit));
-          component.update();
-          tick();
-          expect(component.recordType).toEqual(`${ONTOLOGYEDITOR}OntologyRecord`);
-          expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({resourceId: recordId, actionId: policyManagerStub.actionRead});
-          expect(component.showButton).toEqual(true);
-        }));
-        it('the user cannot view', fakeAsync(function() {
-          policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.deny));
-          component.update();
-          tick();
-          expect(component.recordType).toEqual(`${ONTOLOGYEDITOR}OntologyRecord`);
-          expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({resourceId: recordId, actionId: policyManagerStub.actionRead});
-          expect(component.showButton).toEqual(false);
-        }));
+      }));
+      it('if the user cannot view the record', fakeAsync(function() {
+        policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.deny));
+        component.handleRecordUpdate();
+        tick();
+        expect(component.recordType).toEqual('Test');
+        expect(component.showButton).toEqual(false);
+        expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({
+          resourceId: record['@id'],
+          actionId: policyManagerStub.actionRead
+        });
+      }));
+    });
+    describe('updateEntityRecord should fetch full metadata for a record when component is in the Entity Search page', function() {
+      beforeEach(() => {
+        component.record = {
+          '@id': entityRecord['@id']
+        };
+        spyOn(component, 'navigateToRecord');
       });
+      it('unless an error occurs', fakeAsync(function() {
+        catalogManagerStub.getRecord.and.returnValue(throwError(error));
+        component.updateEntityRecord();
+        tick();
+        expect(catalogManagerStub.getRecord).toHaveBeenCalledWith(entityRecord['@id'], catalogId);
+        expect(component.record).toEqual({'@id': entityRecord['@id']});
+        expect(toastStub.createErrorToast).toHaveBeenCalledWith(jasmine.stringContaining('Error fetching'));
+        expect(catalogManagerStub.getInProgressCommit).not.toHaveBeenCalled();
+        expect(component.hasCommitInProgress).toBeUndefined();
+        expect(component.navigateToRecord).not.toHaveBeenCalled();
+      }));
+      it('unless no record data is returned', fakeAsync(function() {
+        catalogManagerStub.getRecord.and.returnValue(of([]));
+        component.updateEntityRecord();
+        tick();
+        expect(catalogManagerStub.getRecord).toHaveBeenCalledWith(entityRecord['@id'], catalogId);
+        expect(component.record).toEqual({'@id': entityRecord['@id']});
+        expect(toastStub.createErrorToast).toHaveBeenCalledWith(jasmine.stringContaining('empty'));
+        expect(catalogManagerStub.getInProgressCommit).not.toHaveBeenCalled();
+        expect(component.hasCommitInProgress).toBeUndefined();
+        expect(component.navigateToRecord).not.toHaveBeenCalled();
+      }));
+      it('if no in progress commit is found', fakeAsync(function() {
+        catalogManagerStub.getInProgressCommit.and.returnValue(throwError(new HttpErrorResponse({status: 404})));
+        component.updateEntityRecord();
+        tick();
+        expect(catalogManagerStub.getRecord).toHaveBeenCalledWith(entityRecord['@id'], catalogId);
+        expect(component.record).toEqual(entityRecord);
+        expect(toastStub.createErrorToast).not.toHaveBeenCalled();
+        expect(catalogManagerStub.getInProgressCommit).toHaveBeenCalledWith(entityRecord['@id'], catalogId);
+        expect(component.hasCommitInProgress).toBeFalse();
+        expect(component.navigateToRecord).toHaveBeenCalledWith();
+      }));
+      it('if an in progress commit is found', fakeAsync(function() {
+        catalogManagerStub.getInProgressCommit.and.returnValue(of(new Difference([{'@id': 'add'}])));
+        component.updateEntityRecord();
+        tick();
+        expect(catalogManagerStub.getRecord).toHaveBeenCalledWith(entityRecord['@id'], catalogId);
+        expect(component.record).toEqual(entityRecord);
+        expect(toastStub.createErrorToast).not.toHaveBeenCalled();
+        expect(catalogManagerStub.getInProgressCommit).toHaveBeenCalledWith(entityRecord['@id'], catalogId);
+        expect(component.hasCommitInProgress).toBeTrue();
+        expect(component.navigateToRecord).toHaveBeenCalledWith();
+      }));
     });
   });
   describe('contains the correct html', function() {

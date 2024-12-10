@@ -256,6 +256,8 @@ const editorCommands = {
         return this.useCss()
             .waitForElementVisible(parentEl)
             .waitForElementVisible(`${parentEl} ${editorTopBar}`)
+            // Pause added because otherwise the modal was closing before it could be found for some reason
+            .pause(1000)
             .click(`${parentEl} ${editorTopBar} button.commit`)
             .waitForElementVisible('app-commit-modal')
             .waitForElementVisible('app-commit-modal textarea')

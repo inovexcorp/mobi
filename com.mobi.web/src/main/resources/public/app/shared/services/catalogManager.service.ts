@@ -22,23 +22,24 @@
  */
 import { HttpClient, HttpHeaders, HttpParams, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
+
 import { difference, find, forEach, get, has } from 'lodash';
 import { catchError, map, mergeMap, switchMap, tap } from 'rxjs/operators';
 import { forkJoin, Observable, of, Subject, throwError } from 'rxjs';
 
+import { CATALOG, DCTERMS, POLICY } from '../../prefixes';
+import { Commit } from '../models/commit.interface';
+import { CommitDifference } from '../models/commitDifference.interface';
 import {
     condenseCommitId,
     createHttpParams,
     getBeautifulIRI,
     getDctermsValue,
+    getSubstringMatch,
     handleError,
     handleErrorObject,
-    paginatedConfigToHttpParams,
-    getSubstringMatch
+    paginatedConfigToHttpParams
 } from '../utility';
-import { CATALOG, DCTERMS, POLICY } from '../../prefixes';
-import { Commit } from '../models/commit.interface';
-import { CommitDifference } from '../models/commitDifference.interface';
 import { Conflict } from '../models/conflict.interface';
 import { Difference } from '../models/difference.class';
 import { DistributionConfig } from '../models/distributionConfig.interface';
@@ -1385,7 +1386,7 @@ export class CatalogManagerService {
         const request = this.http.get<EntityRecord[]>(url, {params, observe: 'response'});
         return this.spinnerSrv.track(request)
             .pipe(
-                catchError(handleError),
+                catchError(handleErrorObject),
                 map((response: HttpResponse<EntityRecord[]>): PaginatedResponse<EntityRecord[]> => {
                     let entityRecords = [];
                     if (response.body) {

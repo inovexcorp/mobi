@@ -1500,13 +1500,12 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
             // Test Page 3
             searchParams = new PaginatedSearchParams.Builder().searchText("Object")
                     .limit(1).offset(2).build();
-            results = manager.findEntities(ManagerTestConstants.CATALOG_IRI,
-                    searchParams, user, conn);
-            Assert.assertEquals(List.of(),
-                    results.getPage().stream().map(EntityMetadata::iri).toList());
-            assertEquals(1, results.getPageSize());
-            assertEquals(2, results.getTotalSize());
-            assertEquals(3, results.getPageNumber());
+            try {
+                manager.findEntities(ManagerTestConstants.CATALOG_IRI,
+                        searchParams, user, conn);
+            } catch (IllegalArgumentException ex) {
+                assertEquals("Offset exceeds total size", ex.getMessage());
+            }
         }
     }
 

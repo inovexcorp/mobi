@@ -22,16 +22,13 @@
  */
 import { Component, OnInit } from '@angular/core';
 import { PageEvent } from '@angular/material/paginator';
-import { Router } from '@angular/router';
 
 import { get } from 'lodash';
 import { Observable, of } from 'rxjs';
 
+import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { EntityRecord } from '../../models/entity-record';
 import { EntitySearchStateService } from '../../services/entity-search-state.service';
-import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
-import { CatalogStateService } from '../../../shared/services/catalogState.service';
-import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { getBeautifulIRI } from '../../../shared/utility';
 import { SelectedEntityFilters } from '../../models/selected-entity-filters.interface';
 
@@ -51,8 +48,6 @@ export class SearchResultsListComponent implements OnInit {
   selectedFilters: SelectedEntityFilters;
 
   constructor(public state: EntitySearchStateService, 
-    public catalogState: CatalogStateService, 
-    private _router: Router,
     private _cm: CatalogManagerService) {
   }
 
@@ -60,14 +55,13 @@ export class SearchResultsListComponent implements OnInit {
     this.catalogId = get(this._cm.localCatalog, '@id', '');
     this.searchText = this.state.paginationConfig.searchText;
     this._initializeSelectedFilters();
-    this._loadData();
+    this.searchResult = of(this.state.currentResults);
   }
 
   /**
    * Update the result page based on a given page event.
    *
    * @param {PageEvent} pageEvent - The page event that triggered the update.
-   * @return {void}
    */
   getResultPage(pageEvent: PageEvent): void {
     this.state.paginationConfig.pageIndex = pageEvent.pageIndex;
@@ -75,31 +69,14 @@ export class SearchResultsListComponent implements OnInit {
   }
 
   /**
-   * Open the associated record in the catalog.
-   *
-   * @param {JSONLDObject} record - The record to open in the catalog.
-   * @return {void}
-   */
-  openRecord(record: JSONLDObject): void {
-    this.catalogState.selectedRecord = record;
-    this._router.navigate(['/catalog']);
-  }
-
-  /**
    * Sets the search results.
-   *
-   * @return {void} - This method does not return anything.
    */
   setResults(): void {
     this.searchResult = this.state.setResults(this.catalogId);
   }
 
   /**
-   * Searches for records.
-   *
-   * This method resets the pagination state and loads data.
-   *
-   * @return {void}
+   * This method resets the pagination state and searches for records.
    */
   searchRecords(): void {
     this.state.resetPagination();
@@ -109,9 +86,8 @@ export class SearchResultsListComponent implements OnInit {
   /**
    * Updates the filter criteria for the data and reloads the data accordingly.
    *
-   * @param {Object} changeDetails - The details of the filter change.
+   * @param {SelectedEntityFilters} changeDetails - The details of the filter change.
    * @param {string[]} changeDetails.chosenTypes - The new list of chosen types for filtering the data.
-   * @return {void}
    */
   changeFilter(changeDetails: SelectedEntityFilters): void {
     this.state.resetPagination();
@@ -122,6 +98,8 @@ export class SearchResultsListComponent implements OnInit {
 
   /**
    * Initializes the selected filters list based on the values from the state service.
+   * 
+   * @private
    */
   private _initializeSelectedFilters() {
     this.selectedFilters = {
@@ -140,6 +118,7 @@ export class SearchResultsListComponent implements OnInit {
   /**
    * Updates the pagination config on the state service to align with the provided new filter values.
    * 
+   * @private
    * @param {SelectedEntityFilters} filters New filter values coming from the
    *    {@link entity-search.EntitySearchFiltersComponent}.
    */
@@ -149,6 +128,8 @@ export class SearchResultsListComponent implements OnInit {
   }
   /**
    * Loads data based on the searchText value.
+   * 
+   * @private
    */
   private _loadData(): void {
     if (this.searchText) {

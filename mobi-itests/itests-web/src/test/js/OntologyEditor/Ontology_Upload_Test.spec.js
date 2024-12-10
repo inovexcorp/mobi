@@ -84,37 +84,25 @@ module.exports = {
     },
 
     'Step 6: Click classes tab' : function(browser) {
-        browser
-            .useXpath().waitForElementVisible('//mat-tab-header//div[text()[contains(., "Classes")]]')
-            .click('xpath', '//mat-tab-header//div[text()[contains(., "Classes")]]')
+        browser.page.ontologyEditorPage().openClassesTab();
     },
 
     'Step 7: Check for Ontology classes' : function(browser) {
-        browser
-            .useCss().waitForElementVisible('div.tree')
-            .useXpath()
-            .waitForElementVisible({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 0")]]'})
-            .waitForElementVisible({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 2")]]'})
-            .click('xpath', '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 2")]]//ancestor::a/i[contains(@class, "fa-plus-square-o")]')
-            .waitForElementVisible({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 1")]]'})
+        browser.page.ontologyEditorPage()
+            .verifyItemVisible('Class 0')
+            .verifyItemVisible('Class 2')
+            .expandItem('Class 2')
+            .verifyItemVisible('Class 1')
             .assert.attributeContains('//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 1")]]//ancestor::tree-item', 'data-path-to', 'test-local-imports-2#Class2.http://mobi.com/ontology/test-local-imports-1#Class1')
-            .waitForElementVisible({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 3")]]'})
+            .verifyItemVisible('Class 3');
     },
 
     'Step 8: Search for a class in the classes tab' : function(browser) {
-        browser
-            .useXpath()
-            .waitForElementVisible('//mat-tab-header//div[text()[contains(., "Search")]]')
-            .click('xpath', '//mat-tab-header//div[text()[contains(., "Search")]]')
-            .useCss()
-            .waitForElementVisible('search-bar input.search-bar-input.ng-valid')
-            .click('search-bar input.search-bar-input.ng-valid')
-            .setValue('search-bar input.search-bar-input', 'Class 0')
-            .sendKeys('search-bar input.search-bar-input', browser.Keys.ENTER)
-            .waitForElementVisible({locateStrategy: 'xpath', selector: '//tree-item//span[text()[contains(.,"Class 0")]]'})
-            .useXpath()
-            .click('//tree-item//span[text()[contains(.,"Class 0")]]')
-            .waitForElementVisible('//span[@class[contains(.,"value-display")]]//mark[text()[contains(.,"Class 0")]]')
+        browser.page.ontologyEditorPage()
+            .openSearchTab()
+            .executeSearch('Class 0');
+        browser.page.ontologyEditorPage()
+            .selectSearchResult('Class 0')
     },
 
     'Step 9: Open an Ontology called test-class-empty-label' : function(browser) {
@@ -124,15 +112,10 @@ module.exports = {
     },
 
     'Step 12: Click classes tab' : function(browser) {
-        browser
-            .useXpath().waitForElementVisible('//mat-tab-header//div[text()[contains(., "Classes")]]')
-            .click('xpath', '//mat-tab-header//div[text()[contains(., "Classes")]]')
+        browser.page.ontologyEditorPage().openClassesTab();
     },
 
     'Step 13: Check for Ontology classes' : function(browser) {
-        browser
-            .useCss().waitForElementVisible('div.tree')
-            .useXpath()
-            .waitForElementVisible({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 1")]]'})
+        browser.page.ontologyEditorPage().verifyItemVisible('Class 1');
     }
 }

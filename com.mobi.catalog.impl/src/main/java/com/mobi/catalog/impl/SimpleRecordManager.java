@@ -268,7 +268,7 @@ public class SimpleRecordManager implements RecordManager {
         int offset = searchParams.getOffset();
         int limit = searchParams.getLimit().orElse(totalCount);
 
-        if (offset > totalCount) {
+        if (offset >= totalCount) {
             throw new IllegalArgumentException(OFFSET_EXCEEDS);
         }
         // Get Entities query

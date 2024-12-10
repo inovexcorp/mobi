@@ -40,20 +40,12 @@ module.exports = {
     },
 
     'Step 3: Click classes tab': function(browser) {
-        browser
-            .useXpath().waitForElementVisible('//mat-tab-header//div[text()[contains(., "Classes")]]')
-            .click('xpath', '//mat-tab-header//div[text()[contains(., "Classes")]]')
+        browser.page.ontologyEditorPage()
+            .openClassesTab();
     },
 
     'Step 4: Open for Ontology class': function(browser) {
-        browser
-            .useCss().waitForElementVisible('div.tree')
-            .useXpath()
-            .waitForElementVisible({
-                locateStrategy: 'xpath',
-                selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "MainClass")]]'
-            })
-            .click('xpath', '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "MainClass")]]')
+        browser.page.ontologyEditorPage().selectItem('MainClass');
     },
 
     'Step 5: Delete Axiom for Ontology class': function(browser) {

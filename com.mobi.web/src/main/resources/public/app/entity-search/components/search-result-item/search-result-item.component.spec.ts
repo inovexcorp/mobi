@@ -20,35 +20,52 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { MatIconModule } from '@angular/material/icon';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { ClipboardModule } from '@angular/cdk/clipboard';
-import { MatIconTestingModule } from '@angular/material/icon/testing';
-import { By } from '@angular/platform-browser';
-import { MatCardModule } from '@angular/material/card';
-
+import { Component, DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
-import { DebugElement } from '@angular/core';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { By } from '@angular/platform-browser';
+import { ClipboardModule } from '@angular/cdk/clipboard';
+import { Router } from '@angular/router';
+import { RouterTestingModule } from '@angular/router/testing';
+import { MatIconModule } from '@angular/material/icon';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatIconTestingModule } from '@angular/material/icon/testing';
+import { MatCardModule } from '@angular/material/card';
+import { MatDividerModule } from '@angular/material/divider';
+import { MatChipsModule } from '@angular/material/chips';
 
+import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
+
+import { cleanStylesFromDOM } from '../../../../test/ts/Shared';
 import { PrefixationPipe } from '../../../shared/pipes/prefixation.pipe';
 import { HighlightTextPipe } from '../../../shared/pipes/highlightText.pipe';
 import { EntityRecord } from '../../models/entity-record';
 import { SearchResultsMock } from '../../mock-data/search-results.mock';
 import { RecordIconComponent } from '../../../shared/components/recordIcon/recordIcon.component';
 import { EntitySearchStateService } from '../../services/entity-search-state.service';
-import { SearchResultItemComponent } from './search-result-item.component';
 import { OpenRecordButtonComponent } from '../../../catalog/components/openRecordButton/openRecordButton.component';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
-import { MatDividerModule } from '@angular/material/divider';
+import { CatalogStateService } from '../../../shared/services/catalogState.service';
+import { CopyClipboardDirective } from '../../../shared/directives/copyClipboard/copyClipboard.directive';
+import { CATALOG } from '../../../prefixes';
+import { SearchResultItemComponent } from './search-result-item.component';
+
+// Dummy component for testing
+@Component({
+  template: '',
+})
+class DummyComponent {}
 
 describe('SearchResultItemComponent', () => {
   let component: SearchResultItemComponent;
   let element: DebugElement;
   let fixture: ComponentFixture<SearchResultItemComponent>;
   let searchManagerStub: jasmine.SpyObj<EntitySearchStateService>;
+  let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
+  let catalogStateStub: jasmine.SpyObj<CatalogStateService>;
+  let router: Router;
 
+  const catalogId = 'http://mobi.com/catalog-local';
   const entityRecord: EntityRecord = SearchResultsMock[0];
   const record = {
     '@id': entityRecord.record.iri,
@@ -62,12 +79,14 @@ describe('SearchResultItemComponent', () => {
         SearchResultItemComponent,
         MockPipe(HighlightTextPipe, (value: string) => value),
         MockComponent(RecordIconComponent),
-        MockComponent(OpenRecordButtonComponent)
+        MockComponent(OpenRecordButtonComponent),
+        MockDirective(CopyClipboardDirective)
       ],
       providers: [
         PrefixationPipe,
         MockProvider(EntitySearchStateService),
-        MockProvider(CatalogManagerService)
+        MockProvider(CatalogManagerService),
+        MockProvider(CatalogStateService)
       ],
       imports: [
         MatIconModule,
@@ -76,11 +95,20 @@ describe('SearchResultItemComponent', () => {
         MatTooltipModule,
         ClipboardModule,
         MatIconTestingModule,
-        MatDividerModule
+        MatDividerModule,
+        MatChipsModule,
+        RouterTestingModule.withRoutes([{ path: 'catalog', component: DummyComponent}])
       ]
     })
     .compileComponents();
 
+    router = TestBed.inject(Router);
+    catalogManagerStub = TestBed.inject(CatalogManagerService) as jasmine.SpyObj<CatalogManagerService>;
+    catalogManagerStub.localCatalog = {
+      '@id': catalogId,
+      '@type': [`${CATALOG}Catalog`]
+    };
+    catalogStateStub = TestBed.inject(CatalogStateService) as jasmine.SpyObj<CatalogStateService>;
     searchManagerStub = TestBed.inject(EntitySearchStateService) as jasmine.SpyObj<EntitySearchStateService>;
     searchManagerStub.paginationConfig = {
       limit: 10,
@@ -95,10 +123,14 @@ describe('SearchResultItemComponent', () => {
   });
 
   afterEach(() => {
+    cleanStylesFromDOM();
     fixture = null;
     component = null;
     element = null;
     searchManagerStub = null;
+    catalogManagerStub = null;
+    catalogStateStub = null;
+    router = null;
   });
 
   it('should create', () => {
@@ -113,6 +145,15 @@ describe('SearchResultItemComponent', () => {
       expect(component.record).toEqual(record);
       expect(component.types).toEqual('owl:Class');
     });
+    it('should open a record in the catalog on viewRecord', () => {
+      const navigateSpy = spyOn(router, 'navigate');
+      component.viewRecord();
+      Object.keys(record).forEach(key => {
+        expect(catalogStateStub.selectedRecord[key]).toEqual(record[key]);
+      });
+      expect(catalogStateStub.selectedRecord[`${CATALOG}catalog`]).toEqual([{ '@id': catalogId }]);
+      expect(navigateSpy).toHaveBeenCalledWith(['/catalog']);
+    });
   });
   describe('contains the correct html', function () {
     it('for wrapping containers', function () {
@@ -120,10 +161,10 @@ describe('SearchResultItemComponent', () => {
     });
     it('back-sidebar button', () => {
         expect(element.queryAll(By.css('.entity-record')).length).toEqual(1);
-        spyOn(component, 'handleClick');
+        spyOn(component, 'viewRecord');
         const button = element.queryAll(By.css('button.view-button'))[0];
         button.triggerEventHandler('click', null);
-        expect(component.handleClick).toHaveBeenCalledWith();
+        expect(component.viewRecord).toHaveBeenCalledWith();
       });
     ['mat-card-title', 'mat-card-subtitle', 'mat-card-content', '.entity-iri', 'mat-icon', '.entity-type',
       '.entity-record_prop', '.entity-description', 'open-record-button'].forEach(function (test) {

@@ -104,20 +104,14 @@ module.exports = {
     },
 
     'Step 7: Verify class was created' : function(browser) {
-        browser
-            .useXpath()
-            .waitForElementVisible('//mat-tab-header//div[text()[contains(.,"Classes")]]')
-            .click('//mat-tab-header//div[text()[contains(.,"Classes")]]');
-        browser.globals.wait_for_no_spinners(browser);
-        browser
-            .useXpath()
-            .assert.visible('//class-hierarchy-block//tree-item//span[text()[contains(.,"Class A")]]')
+        browser.page.ontologyEditorPage()
+            .openClassesTab()
+            .verifyItemVisible('Class A');
     },
 
     'Step 8: Verify new class IRI is correct' : function(browser) {
-        browser
-            .useXpath()
-            .click('//class-hierarchy-block//tree-item//span[text()[contains(.,"Class A")]]')
+        browser.page.ontologyEditorPage()
+            .selectItem('Class A')
             .useCss()
             .waitForElementVisible('static-iri div.static-iri')
             .assert.textContains('static-iri div.static-iri span strong', 'http://www.ontologyrepository.com/CommonCoreOntologies/ClassA')

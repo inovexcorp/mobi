@@ -21,12 +21,15 @@
  * #L%
  */
 import { Injectable } from '@angular/core';
-import { Observable, of } from 'rxjs';
-import { switchMap } from 'rxjs/operators';
 
+import { Observable, of, throwError } from 'rxjs';
+import { catchError, switchMap } from 'rxjs/operators';
+
+import { CatalogManagerService } from '../../shared/services/catalogManager.service';
 import { EntityRecord } from '../models/entity-record';
 import { PaginatedConfig } from '../../shared/models/paginatedConfig.interface';
-import { CatalogManagerService } from '../../shared/services/catalogManager.service';
+import { RESTError } from '../../shared/models/RESTError.interface';
+import { ToastService } from '../../shared/services/toast.service';
 
 /**
  * @class entity-search.EntitySearchStateService
@@ -61,8 +64,13 @@ export class EntitySearchStateService {
    * @type {string}
    */
   keywordSearchText = '';
+  /**
+   * Cached list of the current page of results, if any.
+   * @type {EntityRecord[]}
+   */
+  currentResults: EntityRecord[] = [];
 
-  constructor(private _cm: CatalogManagerService) {}
+  constructor(private _cm: CatalogManagerService, private _toast: ToastService) {}
 
   /**
    * Resets the pagination config to its initial state.
@@ -72,6 +80,7 @@ export class EntitySearchStateService {
     this.paginationConfig.type = [];
     this.paginationConfig.keywords = [];
     this.keywordSearchText = '';
+    this.currentResults = [];
   }
 
   /**
@@ -82,12 +91,21 @@ export class EntitySearchStateService {
    */
   setResults(catalogId: string): Observable<EntityRecord[]> {
     return this._cm.getEntities(catalogId, this.paginationConfig)
-        .pipe(
-            switchMap(response => {
-              this.totalResultSize = response.totalCount;
-              return of(response.page);
-            })
-        );
+      .pipe(
+        catchError((errorObj: RESTError) => {
+          if (errorObj.errorMessage === 'Offset exceeds total size') {
+            this._toast.createErrorToast('Requested page does not exist. Retrieving the first page of results');
+            this.paginationConfig.pageIndex = 0;
+            return this._cm.getEntities(catalogId, this.paginationConfig);
+          }
+          return throwError(errorObj);
+        }),
+        switchMap(response => {
+          this.totalResultSize = response.totalCount;
+          this.currentResults = response.page;
+          return of(response.page);
+        })
+      );
   }
 
   /**
