@@ -161,12 +161,9 @@ module.exports = {
     },
 
     'Step 16: Verify class was created': function(browser) {
-        browser
-            .useXpath()
-            .waitForElementVisible('//mat-tab-header//div[text()[contains(.,"Classes")]]')
-            .click('//mat-tab-header//div[text()[contains(.,"Classes")]]')
-            .assert.visible('//class-hierarchy-block//tree-item//span[text()[contains(.,"firstClass")]]')
-            .useCss();
+        browser.page.ontologyEditorPage()
+            .openClassesTab()
+            .verifyItemVisible('firstClass');
     },
 
     'Step 17: Verify changes are shown': function(browser) {
@@ -174,7 +171,11 @@ module.exports = {
         browser
             .useCss()
             .waitForElementVisible('app-changes-page div.changes-info button.mat-warn')
-            .expect.elements('app-changes-page mat-expansion-panel').count.to.equal(10);
+            // Used selector object because it was determined to use xpath despite the useCss right before...
+            .expect.elements({
+              locateStrategy: 'css selector',
+              selector: 'app-changes-page mat-expansion-panel'
+            }).count.to.equal(10);
         browser
             .useCss()
             .waitForElementVisible('app-changes-page mat-expansion-panel mat-panel-title[title*="firstClass"]')

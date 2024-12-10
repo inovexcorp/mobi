@@ -24,6 +24,14 @@
 const parentEl = 'ontology-editor-page';
 const ontologyListPageCss = 'ontology-editor-page open-ontology-tab';
 
+const openTab = function(browser, tabName, selectorToConfirm) {
+    return browser.useXpath()
+        .waitForElementVisible(`//mat-tab-header//div[text()[contains(.,"${tabName}")]]`)
+        .click(`//mat-tab-header//div[text()[contains(.,"${tabName}")]]`)
+        .useCss()
+        .waitForElementPresent(selectorToConfirm);
+}
+
 const ontologyEditorCommands = {
     openRecordSelect: function() {
         return this.api.page.editorPage().openRecordSelect(parentEl);
@@ -167,10 +175,7 @@ const ontologyStackCommands = {
 
 const projectTabCommands = {
     openProjectTab: function() {
-        browser
-          .useXpath()
-          .waitForElementVisible('//mat-tab-header//div[text()[contains(.,"Project")]]')
-          .click('//mat-tab-header//div[text()[contains(.,"Project")]]');
+        return openTab(this, 'Project');
     },
 
     onProjectTab: function() {
@@ -209,7 +214,7 @@ const projectTabCommands = {
     },
 
     addServerImport: function(import_title) {
-        this.useCss()
+        return this.useCss()
             .click('.imports-block a.fa-plus') // clicking this opens imports-overlay
             .waitForElementVisible('imports-overlay')
             .waitForElementVisible('xpath', '//imports-overlay//div[text()[contains(.,"On Server")]]')
@@ -226,12 +231,145 @@ const projectTabCommands = {
     }
 }
 
-// TODO: Add helper methods for opening different tabs
+const classesTabCommands = {
+    openClassesTab: function() {
+        return openTab(this, 'Classes', 'div.classes-tab class-hierarchy-block');
+    }
+}
+
+const propertiesTabCommands = {
+    openPropertiesTab: function() {
+        return openTab(this, 'Properties', 'div.properties-tab property-hierarchy-block');
+    },
+
+    openDataPropertiesFolder: function() {
+        const dataPropertiesTreeXPath = '//property-tree//i[contains(@class, "fa-folder")]//following-sibling::span[text()[contains(., "Data Properties")]]'
+        return this.useCss()
+            .waitForElementPresent('div.properties-tab property-hierarchy-block')
+            .useXpath()
+            .waitForElementVisible(dataPropertiesTreeXPath)
+            .click(dataPropertiesTreeXPath)
+    },
+
+    openObjectPropertiesFolder: function() {
+      const dataPropertiesTreeXPath = '//property-tree//i[contains(@class, "fa-folder")]//following-sibling::span[text()[contains(., "Object Properties")]]'
+      return this.useCss()
+          .waitForElementPresent('div.properties-tab property-hierarchy-block')
+          .useXpath()
+          .waitForElementVisible(dataPropertiesTreeXPath)
+          .click(dataPropertiesTreeXPath)
+  }
+}
+
+const individualsTabCommands = {
+    openIndividualsTab: function() {
+        return openTab(this, 'Individuals', 'div.individuals-tab individual-hierarchy-block');
+    },
+
+    openIndividualTreeFolder: function(folderName) {
+        return this.useCss()
+            .waitForElementVisible('div.tree')
+            .useXpath()
+            .waitForElementVisible(`//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "${folderName}")]]`)
+            .click('xpath', `//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "${folderName}")]]`);
+    }
+}
+
+const conceptsTabCommands = {
+    openConceptsTab: function() {
+        return openTab(this, 'Concepts', 'div.concepts-tab concept-hierarchy-block');
+    },
+}
+
+const schemesTabCommands = {
+    openSchemesTab: function() {
+        return openTab(this, 'Schemes', 'div.concept-schemes-tab concept-scheme-hierarchy-block');
+    },
+}
+
+const hierarchyTreeCommands = {
+    verifyItemVisible: function(itemName) {
+        return this.useCss()
+            .waitForElementVisible('div.tree')
+            .useXpath()
+            .waitForElementVisible(`//div[contains(@class, "tree-item-wrapper")]//span[text()="${itemName}"]`)
+    },
+
+    verifyItemNotVisible: function(itemName) {
+        return this.useCss()
+            .waitForElementVisible('div.tree')
+            .useXpath()
+            .assert.not.elementPresent({locateStrategy: 'xpath', selector: `//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "${itemName}")]]`})
+    },
+
+    expandItem: function(itemName) {
+        return this.useCss()
+            .waitForElementVisible('div.tree')
+            .useXpath()
+            .click('xpath', `//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "${itemName}")]]//ancestor::a/i[contains(@class, "fa-plus-square-o")]`)
+    },
+
+    selectItem: function(itemName) {
+        this.verifyItemVisible(itemName)
+            .click('xpath', `//div[contains(@class, "tree-item-wrapper")]//span[text()="${itemName}"]`);
+        return this.verifySelectedEntity(itemName);
+    },
+
+    verifySelectedEntity: function(itemName) {
+        return this.useXpath()
+            .waitForElementVisible(`//div[contains(@class, "selected-header")]//div[contains(@class, "selected-heading")]//span[text()[contains(.,"${itemName}")]]`);
+    },
+
+    deleteSelectedEntity: function(itemName) {
+        return this.verifySelectedEntity(itemName)
+            .waitForElementVisible('//div[contains(@class, "selected-header")]//button//span[text()[contains(., "Delete")]]')
+            .click('//div[contains(@class, "selected-header")]//button//span[text()[contains(., "Delete")]]')
+            .useCss()
+            .waitForElementVisible('confirm-modal')
+            .waitForElementVisible('confirm-modal button.mat-primary')
+            .click('confirm-modal button.mat-primary')
+            .useCss()
+            .api.globals.wait_for_no_spinners(this);
+    },
+
+    verifyDeletedEntity: function(itemName) {
+        return this.useCss()
+            .waitForElementVisible('div.tree')
+            .useXpath()
+            .waitForElementNotPresent(`//div[contains(@class, "tree-item-wrapper")]//span[text()="${itemName}"]`)
+    }
+}
+
+const searchTabCommands = {
+    openSearchTab: function() {
+        return openTab(this, 'Search', 'search-bar input.search-bar-input.ng-valid');
+    },
+
+    executeSearch: function(searchText) {
+        return this.useCss()
+            .waitForElementVisible('search-bar input.search-bar-input.ng-valid')
+            .click('search-bar input.search-bar-input.ng-valid')
+            .setValue('search-bar input.search-bar-input', searchText)
+            .sendKeys('search-bar input.search-bar-input', browser.Keys.ENTER)
+            .api.globals.wait_for_no_spinners(this);
+    },
+
+    selectSearchResult: function(resultName) {
+        this.useCss()
+            .waitForElementVisible('ul.tree')
+            .useXpath()
+            .waitForElementVisible(`//tree-item//span[text()[contains(.,"${resultName}")]]`)
+            .click(`//tree-item//span[text()[contains(.,"${resultName}")]]`)
+            .api.globals.wait_for_no_spinners(this);
+        return this.useXpath()
+            .waitForElementVisible(`//span[@class[contains(.,"value-display")]]//mark[text()[contains(.,"${resultName}")]]`)
+    }
+}
 
 module.exports = {
     elements: {
         page: ontologyListPageCss
     },
-    commands: [ontologyEditorCommands, ontologyStackCommands, projectTabCommands],
+    commands: [ontologyEditorCommands, ontologyStackCommands, projectTabCommands, classesTabCommands, hierarchyTreeCommands, individualsTabCommands, conceptsTabCommands, propertiesTabCommands, schemesTabCommands, searchTabCommands],
 }
 

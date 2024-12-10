@@ -76,19 +76,11 @@ module.exports = {
     },
 
     'Step 7: Click the concepts tab and ensure hierarchy block is showing' : function(browser) {
-        // 'const' is available in ES6
-        var conceptTabXpath = '//mat-tab-header//div[text()[contains(., "Concepts")]]';
         browser.page.ontologyEditorPage().closeOntology('test-local-imports-2');
         browser.globals.wait_for_no_spinners(browser);  
         browser.page.ontologyEditorPage().openOntology('test-local-imports-2');
         browser.globals.wait_for_no_spinners(browser);  
-        browser
-            .useXpath()
-            .waitForElementVisible(conceptTabXpath)
-            .waitForElementVisible(conceptTabXpath)
-            .click('xpath', conceptTabXpath)
-            .useCss()
-            .waitForElementPresent('div.concepts-tab concept-hierarchy-block')
+        browser.page.ontologyEditorPage().openConceptsTab();
     },
 
     'Step 8: Check for Imported Concept' : function(browser) {
@@ -102,54 +94,31 @@ module.exports = {
     },
 
     'Step 9: Click the properties tab and ensure hierarchy block is showing' : function(browser) {
-        var propertiesTabXpath = '//mat-tab-header//div[text()[contains(., "Properties")]]'
-        browser
-            .useXpath()
-            .waitForElementVisible(propertiesTabXpath)
-            .click('xpath', propertiesTabXpath)
-            .useCss()
-            .waitForElementPresent('div.properties-tab property-hierarchy-block')
+        browser.page.ontologyEditorPage().openPropertiesTab();
     },
     
     'Step 10: Click on Object Properties and ensure that correct object properties are on page' : function(browser) {
-        var objectPropertiesTreeXPath = '//property-tree//i[contains(@class, "fa-folder")]//following-sibling::span[text()[contains(., "Object Properties")]]'
         // click on 'Object Property 0' and ensure that selected-property has right property
-        browser
-            .useCss()
-            .waitForElementPresent('div.properties-tab property-hierarchy-block')
-            .useXpath()
-            .waitForElementVisible(objectPropertiesTreeXPath)
-            .click(objectPropertiesTreeXPath)
-            .waitForElementVisible('//property-tree//tree-item//span[text()[contains(., "Object Property 0")]]')
-            .waitForElementVisible('//property-tree//tree-item//span[text()[contains(., "Object Property 1")]]')
-            .waitForElementVisible('//property-tree//tree-item//span[text()[contains(., "Object Property 2")]]')
+        browser.page.ontologyEditorPage()
+            .openObjectPropertiesFolder()
+            .verifyItemVisible('Object Property 0')
+            .verifyItemVisible('Object Property 1')
+            .verifyItemVisible('Object Property 2')
     },
 
     'Step 11: Click on Data Properties and ensure that correct Data properties are on page' : function(browser) {
-        var objectPropertiesTreeXPath = '//property-tree//i[contains(@class, "fa-folder")]//following-sibling::span[text()[contains(., "Data Properties")]]'
         // click on 'Object Property 0' and ensure that selected-property has right property
-        browser
-            .useCss()
-            .waitForElementPresent('div.properties-tab property-hierarchy-block')
-            .useXpath()
-            .waitForElementVisible(objectPropertiesTreeXPath)
-            .click(objectPropertiesTreeXPath)
-            .waitForElementVisible('//property-tree//tree-item//span[text()[contains(., "Data Property 0")]]')
-            .waitForElementVisible('//property-tree//tree-item//span[text()[contains(., "Data Property 1")]]')
-            .waitForElementVisible('//property-tree//tree-item//span[text()[contains(., "Data Property 2")]]')
-            .click('//property-tree//tree-item//span[text()[contains(., "Data Property 0")]]')
-            .useCss()
-            .waitForElementVisible('properties-tab .selected-property')
-            .useXpath()
-            .waitForElementVisible('//selected-details//span[contains(@class, "entity-name")][text()[contains(., "Data Property 0")]]')
+        browser.page.ontologyEditorPage()
+            .openDataPropertiesFolder()
+            .verifyItemVisible('Data Property 0')
+            .verifyItemVisible('Data Property 1')
+            .verifyItemVisible('Data Property 2')
+            .selectItem('Data Property 0');
     },
 
     'Step 12: Open Axiom Overlay for Data Property 0' : function(browser) {
         browser
-            .useCss()
-            .waitForElementVisible('properties-tab .selected-property')
             .useXpath()
-            .waitForElementVisible('//selected-details//span[contains(@class, "entity-name")][text()[contains(., "Data Property 0")]]')
             .click('//div[contains(@class, "section-header")]//h5[text()[contains(., "Axioms")]]//following-sibling::a[contains(@class, "fa-plus")]') // opens overlay
             .useCss()
             .waitForElementPresent('axiom-overlay')
@@ -249,13 +218,7 @@ module.exports = {
     },
 
     'Step 19: Click the concepts tab' : function(browser) {
-        var conceptTabXpath = '//mat-tab-header//div[text()[contains(., "Concepts")]]';
-        browser
-            .useXpath()
-            .waitForElementVisible(conceptTabXpath)
-            .click('xpath', conceptTabXpath)
-            .useCss()
-            .waitForElementPresent('div.concepts-tab concept-hierarchy-block')
+        browser.page.ontologyEditorPage().openConceptsTab();
     },
 
     'Step 20: Check for Imported Concept' : function(browser) {

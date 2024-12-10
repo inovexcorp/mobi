@@ -25,6 +25,7 @@ const itemCssSelector = 'app-entity-search-page app-search-results-list app-sear
 const searchBarCssSelector = `${searchResultsViewCssSelector} .d-flex .search-form input`;
 const itemTitleSelector = `${itemCssSelector} div.record-body h2.record-title div.inline-edit`;
 const itemDescriptionSelector = `${itemCssSelector} div.record-body p inline-edit`;
+const paginationLabel = `${searchResultsViewCssSelector} .mat-paginator-range-label`;
 const paginationNext = `${searchResultsViewCssSelector} button.mat-paginator-navigation-next`;
 const paginationPrevious = `${searchResultsViewCssSelector} button.mat-paginator-navigation-previous`;
 const selectedFilterChipList = 'app-entity-search-page app-filters-selected-list mat-chip-list';
@@ -61,9 +62,10 @@ const createFiltersXPathSelector = function(filterTypeHeader, filterType) {
 };
 
 const entitySearchPageCommands = {
-  assertRecordVisible: function (recordTitle, index) {
+  assertResultVisible: function (titleOfEntity) {
+    const resultSelector = createRecordItemXPathSelector(titleOfEntity);
     return this.useXpath()
-      .assert.textContains(`(//app-entity-search-page//app-search-results-list//mat-card-title//div//span)[${index}]`, recordTitle)
+      .waitForElementVisible(resultSelector);
   },
 
   clearEntitySearchBar: function () {
@@ -191,6 +193,7 @@ module.exports = {
     searchBar: searchBarCssSelector,
     paginationNext: paginationNext,
     paginationPrevious: paginationPrevious,
+    paginationLabel: paginationLabel,
     entityTitle: itemTitleSelector,
     entityDescription: itemDescriptionSelector
   },

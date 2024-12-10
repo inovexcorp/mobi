@@ -161,11 +161,9 @@ module.exports = {
     },
 
     'Step 14: Verify class was created': function(browser) {
-        browser
-            .useXpath()
-            .waitForElementVisible('//mat-tab-header//div[text()[contains(.,"Classes")]]')
-            .click('//mat-tab-header//div[text()[contains(.,"Classes")]]')
-            .assert.visible('//class-hierarchy-block//tree-item//span[text()[contains(.,"firstClass")]]')
+        browser.page.ontologyEditorPage()
+            .openClassesTab()
+            .verifyItemVisible('firstClass');
     },
 
     'Step 15: Commit new classes' : function(browser) {

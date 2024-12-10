@@ -44,8 +44,7 @@
                         <div *ngIf="results.length === 0 &&  state.paginationConfig.searchText">
                             <info-message>No entities found containing this search text</info-message>
                         </div>
-                        <app-search-result-item *ngFor="let entity of results"
-                                                [entity]="entity" (viewRecord)="openRecord($event)"></app-search-result-item>
+                        <app-search-result-item *ngFor="let entity of results" [entity]="entity"></app-search-result-item>
                     </ng-container>
                     <div *ngIf="!state.paginationConfig.searchText">
                         <info-message>No search has been performed</info-message>

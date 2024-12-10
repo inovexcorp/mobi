@@ -1,0 +1,73 @@
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix : <http://mobi.solutions/ontology/entity-search_test#> .
+
+:TestOntology a owl:Ontology ;
+  rdfs:label "Test Ontology" ;
+  rdfs:comment "A test ontology for the Entity Search page that is prepared for validating state when edits are made to records after a search has been performed" .
+
+:ClassA a owl:Class ;
+  rdfs:label "Class A" .
+
+:ClassB a owl:Class ;
+  rdfs:label "Class B" .
+
+:ClassC a owl:Class ;
+  rdfs:label "Class C" .
+
+:ClassD a owl:Class ;
+  rdfs:label "Class D" .
+
+:ClassE a owl:Class ;
+  rdfs:label "Class E" .
+
+:ClassF a owl:Class ;
+  rdfs:label "Class F" .
+
+:ClassG a owl:Class ;
+  rdfs:label "Class G" .
+
+:ClassH a owl:Class ;
+  rdfs:label "Class H" .
+
+:ClassI a owl:Class ;
+  rdfs:label "Class I" .
+
+:ClassJ a owl:Class ;
+  rdfs:label "Class J" .
+
+:ClassK a owl:Class ;
+  rdfs:label "Class K" .
+
+:ClassL a owl:Class ;
+  rdfs:label "Class L" .
+
+:ClassM a owl:Class ;
+  rdfs:label "Class M" .
+
+:ClassN a owl:Class ;
+  rdfs:label "Class N" .
+
+:ClassO a owl:Class ;
+  rdfs:label "Class O" .
+
+:ClassP a owl:Class ;
+  rdfs:label "Class P" .
+
+:ClassQ a owl:Class ;
+  rdfs:label "Class Q" .
+
+:ClassR a owl:Class ;
+  rdfs:label "Class R" .
+
+:ClassS a owl:Class ;
+  rdfs:label "Class S" .
+
+:ClassT a owl:Class ;
+  rdfs:label "Class T" .
+
+:ClassU a owl:Class ;
+  rdfs:label "Class U" .
+
+:ClassV a owl:Class ;
+  rdfs:label "Class V" .

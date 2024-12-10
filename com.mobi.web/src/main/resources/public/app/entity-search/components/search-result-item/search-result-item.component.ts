@@ -21,16 +21,18 @@
  * #L%
  */
 import { Component, EventEmitter, Input, OnInit, Output, ViewEncapsulation } from '@angular/core';
+import { Router } from '@angular/router';
 
 import { cloneDeep, get, orderBy } from 'lodash';
 
-import { getBeautifulIRI, getEntityName } from '../../../shared/utility';
+import { CATALOG, DC } from '../../../prefixes';
+import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
+import { CatalogStateService } from '../../../shared/services/catalogState.service';
 import { EntityRecord } from '../../models/entity-record';
+import { EntitySearchStateService } from '../../services/entity-search-state.service';
+import { getEntityName } from '../../../shared/utility';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { PrefixationPipe } from '../../../shared/pipes/prefixation.pipe';
-import { CATALOG, DC } from '../../../prefixes';
-import { EntitySearchStateService } from '../../services/entity-search-state.service';
-import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 
 /**
  * Component for displaying a single search result item.
@@ -58,6 +60,16 @@ export class SearchResultItemComponent implements OnInit {
    */
   types: string;
   /**
+   * Record JSON-LD object.
+   *
+   * @typedef {Object} JSONLDObject
+   * @property {string} "@context" - The context of the object.
+   * @property {string} "@type" - The type of the object.
+   * @property {Object} properties - The properties of the object.
+   */
+  record: JSONLDObject;
+  
+  /**
    * Represents an entity record.
    *
    * @typedef {Object} EntityRecord
@@ -75,44 +87,21 @@ export class SearchResultItemComponent implements OnInit {
    */
   @Output() clickEntity: EventEmitter<EntityRecord> = new EventEmitter<EntityRecord>();
 
-  @Output() viewRecord = new EventEmitter<JSONLDObject>();
   /**
-   * Record JSON-LD object.
+   * Constructor for the SearchResultItemComponent class.
    *
-   * @typedef {Object} JSONLDObject
-   * @property {string} "@context" - The context of the object.
-   * @property {string} "@type" - The type of the object.
-   * @property {Object} properties - The properties of the object.
-   */
-  record: JSONLDObject;
-  /**
-   * Retrieves the name of the entity.
-   *
-   * @returns {string} The name of the entity.
-   */
-  protected readonly getEntityName = getEntityName;
-  /**
-   * Returns the beautiful IRI (Internationalized Resource Identifier) based on the specified parameters.
-   *
-   * @function getBeautifulIRI
-   * @param {string} parameter1 - The first parameter.
-   * @param {number} parameter2 - The second parameter.
-   * @returns {string} - The beautiful IRI.
-   * @throws {Error} - If the parameters are invalid.
-   */
-  protected readonly getBeautifulIRI = getBeautifulIRI;
-
-  /**
-   * Constructor for the MyClass class.
-   *
-   * @param {PrefixationPipe} prefixation - The PrefixationPipe instance to be injected.
    * @param {EntitySearchStateService} state - The EntitySearchStateService instance to be injected.
-   * @return {void}
+   * @param {PrefixationPipe} _prefixation - The PrefixationPipe instance to be injected.
+   * @param {CatalogManagerService} _cm - The CatalogManagerService instance to be injected.
+   * @param {CatalogStateService} _cs - The CatalogStateService instance to be injected.
+   * @param {Router} _router - The Router instance to be injected.
    */
   constructor(
-    private prefixation: PrefixationPipe,
     public state: EntitySearchStateService,
-    public cm: CatalogManagerService) {
+    private _prefixation: PrefixationPipe,
+    private _cm: CatalogManagerService,
+    private _cs: CatalogStateService, 
+    private _router: Router) {
   }
 
   /**
@@ -138,28 +127,27 @@ export class SearchResultItemComponent implements OnInit {
   }
 
   /**
-   * Initiates the parent component to open the record in the catalog.
+   * Opens the parent record of the entity in the catalog.
    */
-  handleClick(): void {
+  viewRecord(): void {
     const recordCopy = cloneDeep(this.record);
     recordCopy[`${CATALOG}catalog`] = [{
-        '@id': get(this.cm.localCatalog, '@id', '')
+        '@id': get(this._cm.localCatalog, '@id', '')
     }];
-    this.viewRecord.emit(recordCopy);
+    
+    this._cs.selectedRecord = recordCopy;
+    this._router.navigate(['/catalog']);
   }
 
   /**
-   * Sets the types for the entity.
+   * This method sets the types for the entity by transforming each type using the prefixation function,
+   * ordering them alphabetically, and joining them into a string separated by commas.
    *
    * @private
-   *
-   * @description This method sets the types for the entity by transforming each type using the prefixation function,
-   * ordering them alphabetically, and joining them into a string separated by commas.
    */
   private setTypes(): void {
-    this.types = orderBy(this.entity.types.map(t => {
-      return this.prefixation.transform(t);
-    })).join(', ');
+    this.types = orderBy(this.entity.types.map(t => this._prefixation.transform(t)))
+      .join(', ');
   }
 
   /**
@@ -168,7 +156,7 @@ export class SearchResultItemComponent implements OnInit {
    * @private
    */
   private setEntityName() {
-    this.entityName = this.getEntityName({
+    this.entityName = getEntityName({
       '@id': this.entity.iri,
       [`${DC}title`]: [{'@value': this.entity.entityName}]
     });

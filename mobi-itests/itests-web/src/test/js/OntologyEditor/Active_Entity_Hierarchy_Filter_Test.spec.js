@@ -49,32 +49,24 @@ module.exports = {
     },
 
     'Step 4: Click classes tab' : function(browser) {
-        browser
-            .waitForElementVisible('mat-tab-header div.mat-tab-label-content')
-            .click('xpath', '//mat-tab-header//div[text()[contains(., "Classes")]]')
+        browser.page.ontologyEditorPage().openClassesTab();
     },
 
     'Step 5: Check for Ontology classes' : function(browser) {
-        browser
-            .waitForElementVisible('div.tree')
-            .useXpath()
-            .waitForElementVisible({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 0")]]'})
-            .waitForElementVisible({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 2")]]'})
-            .waitForElementVisible({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 3")]]'})
-            .waitForElementVisible({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Other Class")]]'})
-            .assert.not.elementPresent({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 1")]]'})
+        browser.page.ontologyEditorPage()
+            .verifyItemVisible('Class 0')
+            .verifyItemVisible('Class 2')
+            .verifyItemVisible('Class 3')
+            .verifyItemVisible('Other Class')
+            .verifyItemNotVisible('Class 1')
     },
 
     'Step 6: Click on an imported class' : function(browser) {
-        browser
-            .useCss()
-            .click('xpath', '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Other Class")]]//parent::a')
-            .waitForElementVisible('selected-details .entity-name')
-            .assert.textContains('selected-details .entity-name', 'Other Class')
+        browser.page.ontologyEditorPage().selectItem('Other Class');
     },
 
     'Step 7: Apply the Active Entity Filter' : function(browser) {
-        browser
+        browser.useCss()
             .waitForElementVisible('.hierarchy-filter a')
             .click('.hierarchy-filter a')
             .waitForElementVisible({locateStrategy: 'xpath', selector: '//class-hierarchy-block//hierarchy-tree//hierarchy-filter'})
@@ -85,29 +77,27 @@ module.exports = {
     },
 
     'Step 8: Ensure that imported entities have been filtered out' : function(browser) {
-        browser
-            .waitForElementNotPresent({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 3")]]'})
-            .waitForElementNotPresent({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Other Class")]]'})
+        browser.page.ontologyEditorPage()
+            .verifyItemNotVisible('Class 3')
+            .verifyItemNotVisible('Other Class')
     },
 
     'Step 9: Ensure that all active entities are visible' : function(browser) {
-        browser
-            .waitForElementVisible({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 1")]]'})
-            .assert.visible({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 0")]]'})
+        browser.page.ontologyEditorPage()
+            .verifyItemVisible('Class 1')
+            .verifyItemVisible('Class 0')
     },
 
     'Step 10: Ensure that imported parents of active entities are visible' : function(browser) {
-        browser
-            .assert.visible({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 2")]]'})
+        browser.page.ontologyEditorPage().verifyItemVisible('Class 2');
     },
 
     'Step 11: Ensure the selected entity view is still visible to the user, even if the entity is filtered out of the active list.': function(browser) {
-        browser
-            .assert.textContains('selected-details .entity-name', 'Other Class')
+        browser.page.ontologyEditorPage().verifySelectedEntity('Other Class');
     },
 
     'Step 12: Remove the Active Entity filter' : function(browser) {
-        browser
+        browser.useCss()
             .waitForElementVisible('.hierarchy-filter a')
             .click('.hierarchy-filter a')
             .waitForElementVisible({locateStrategy: 'xpath', selector: '//class-hierarchy-block//hierarchy-tree//hierarchy-filter'})
@@ -118,18 +108,16 @@ module.exports = {
     },
 
     'Step 13: Verify the Active Entity filtered state was applied to the pre-filtered state' : function(browser) {
-        browser
-            .useXpath()
-            .waitForElementVisible({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 0")]]'})
-            .waitForElementVisible({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 2")]]'})
-            .waitForElementVisible({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 3")]]'})
-            .waitForElementVisible({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Other Class")]]'})
-            .waitForElementVisible({locateStrategy: 'xpath', selector: '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Class 1")]]'})
+        browser.page.ontologyEditorPage()
+            .verifyItemVisible('Class 0')
+            .verifyItemVisible('Class 2')
+            .verifyItemVisible('Class 3')
+            .verifyItemVisible('Other Class')
+            .verifyItemVisible('Class 1');
     },
 
     'Step 14: Verify that a message is displayed when no entities match the filter criteria' : function(browser) {
-        browser
-            .useCss()
+        browser.useCss()
             .assert.visible('search-bar input')
             .setValue('search-bar input', '3')
             .sendKeys('search-bar input', browser.Keys.ENTER)

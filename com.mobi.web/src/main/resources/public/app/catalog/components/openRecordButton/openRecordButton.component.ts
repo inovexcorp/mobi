@@ -21,29 +21,31 @@
  * #L%
  */
 import { Component, Input } from '@angular/core';
-import { find, get } from 'lodash';
 import { Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
-import { catchError, switchMap } from 'rxjs/operators';
 
-import { RecordSelectFiltered } from '../../../versioned-rdf-record-editor/models/record-select-filtered.interface';
-import { CatalogStateService } from '../../../shared/services/catalogState.service';
-import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
-import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
-import { MapperStateService } from '../../../shared/services/mapperState.service';
+import { find, get } from 'lodash';
+import { EMPTY, Observable } from 'rxjs';
+import { catchError, map, switchMap } from 'rxjs/operators';
+
 import { CATALOG, DATASET, DELIM, ONTOLOGYEDITOR, SHAPESGRAPHEDITOR, WORKFLOWS } from '../../../prefixes';
-import { OntologyStateService } from '../../../shared/services/ontologyState.service';
-import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
-import { PolicyEnforcementService } from '../../../shared/services/policyEnforcement.service';
-import { ToastService } from '../../../shared/services/toast.service';
-import { PolicyManagerService } from '../../../shared/services/policyManager.service';
-import { getDctermsValue, getPropertyId, handleError } from '../../../shared/utility';
-import { ShapesGraphListItem } from '../../../shared/models/shapesGraphListItem.class';
-import { WorkflowsStateService } from '../../../workflows/services/workflows-state.service';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
+import { CatalogStateService } from '../../../shared/services/catalogState.service';
+import { DatasetStateService } from '../../../shared/services/datasetState.service';
 import { Difference } from '../../../shared/models/difference.class';
 import { EntityNamesItem } from '../../../shared/models/entityNamesItem.interface';
+import { getDctermsValue, getPropertyId, handleError } from '../../../shared/utility';
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { MapperStateService } from '../../../shared/services/mapperState.service';
+import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import { PolicyEnforcementService } from '../../../shared/services/policyEnforcement.service';
+import { PolicyManagerService } from '../../../shared/services/policyManager.service';
+import { RecordSelectFiltered } from '../../../versioned-rdf-record-editor/models/record-select-filtered.interface';
+import { ShapesGraphListItem } from '../../../shared/models/shapesGraphListItem.class';
+import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
+import { ToastService } from '../../../shared/services/toast.service';
+import { WorkflowsStateService } from '../../../workflows/services/workflows-state.service';
 
 /**
  * @class catalog.OpenRecordButtonComponent
@@ -64,7 +66,7 @@ export class OpenRecordButtonComponent {
   isEntityRecord: boolean;
   hasCommitInProgress: boolean;
   isOpened = false;
-  inProgressMsg = 'Cannot switch branches while there are uncommited changes';
+  inProgressMsg = 'Cannot switch branches while there are uncommitted changes';
 
   @Input() flat: boolean;
   @Input() stopProp: boolean;
@@ -72,6 +74,7 @@ export class OpenRecordButtonComponent {
   constructor(private _router: Router,
               private _cm: CatalogManagerService,
               private _cs: CatalogStateService,
+              private _ds: DatasetStateService,
               private _ms: MapperStateService,
               private _os: OntologyStateService,
               private _pep: PolicyEnforcementService,
@@ -89,25 +92,38 @@ export class OpenRecordButtonComponent {
 
   @Input() set record(value: JSONLDObject) {
     this._record = value;
-    this.update();
+    this.handleRecordUpdate();
   }
 
+  /**
+   * Method that gets called when the button is clicked. Handles if the button should stop propagation. Checks record
+   * read permission before attempting to open and calls different methods depending on whether the button is used in 
+   * the Catalog or Entity Search pages.
+   * 
+   * @param {MouseEvent} event The click event.
+   */
   openRecord(event: MouseEvent): void {
-
     if (this.stopProp) {
       event.stopPropagation();
     }
 
-    if (this.isEntityRecord) {
-      this.updateEntityRecord();
-    } else {
-      this.navigateToRecord();
-    }
+    this._canRead().subscribe(canRead => {
+      if (canRead) {
+        if (this.isEntityRecord) {
+          this.updateEntityRecord();
+        } else {
+          this.navigateToRecord();
+        }
+      } else {
+        this._toast.createErrorToast('You do not have permission to read this record. Please refresh your search '
+          + 'results');
+      }
+    });
   }
 
   /**
-   * Navigates to the specified record type based on the value of this.recordType.
-   * Opens the corresponding module or displays a warning if no module is available.
+   * Navigates to the module for the record based on the value of recordType. Displays a warning if no module is
+   * available.
    */
   navigateToRecord(): void {
     switch (this.recordType) {
@@ -127,16 +143,20 @@ export class OpenRecordButtonComponent {
         this.openWorkflow();
         break;
       default:
-        this._toast.createWarningToast('No module for record type ' + this.recordType);
+        this._toast.createWarningToast(`No module for record type ${this.recordType}`);
     }
   }
 
+  /**
+   * Opens an Ontology Record by navigating to the module and either opening the record or just selecting it if already
+   * opened.
+   */
   openOntology(): void {
     this._router.navigate(['/ontology-editor']);
     const listItem: OntologyListItem = find(this._os.list, {versionedRdfRecord: {recordId: this.record['@id']}});
     if (listItem) {
       this._os.listItem = listItem;
-      this._handleEntityRecords();
+      this._handleOntologyRecord();
     } else {
       const recordSelect: RecordSelectFiltered = {
         recordId: this.record['@id'],
@@ -145,28 +165,160 @@ export class OpenRecordButtonComponent {
         identifierIRI: this._os.getIdentifierIRI(this.record)
       };
       this._os.open(recordSelect).subscribe(() => {
-        this._handleEntityRecords();
+        this._handleOntologyRecord();
       }, error => this._toast.createErrorToast(error));
     }
   }
 
+  /**
+   * Opens a MappingRecord by navigating to the module and searching for the record's title.
+   */
   openMapping(): void {
     this._ms.paginationConfig.searchText = getDctermsValue(this.record, 'title');
     this._router.navigate(['/mapper']);
   }
 
+  /**
+   * Opens a DatasetRecord by navigating to the module and searching for the record's title.
+   */
   openDataset(): void {
+    this._ds.paginationConfig.searchText = getDctermsValue(this.record, 'title');
     this._router.navigate(['/datasets']);
   }
 
   /**
-   * Handles a graph record based on the current state of the entity record.
-   * If this is an entity record, it checks for specific conditions and performs actions accordingly.
-   * If it is not an entity record, it simply opens the Shapes Graph.
-   *
-   * @return {void}
+   * Opens a Shapes Graph Record by navigating to the module and either opening the record or just selecting it if
+   * already opened.
    */
-  handleGraphRecord(): void {
+  openShapesGraph(): void {
+    this._router.navigate(['/shapes-graph-editor']);
+    const listItem: ShapesGraphListItem = find(this._sgs.list, {versionedRdfRecord: {recordId: this.record['@id']}});
+    if (listItem) {
+      this._sgs.listItem = listItem;
+      this._handleShapesGraphRecord();
+    } else {
+      const recordSelect: RecordSelectFiltered = {
+        recordId: this.record['@id'],
+        title: getDctermsValue(this.record, 'title'),
+        description: getDctermsValue(this.record, 'description'),
+        identifierIRI: this._sgs.getIdentifierIRI(this.record)
+      };
+      this._sgs.open(recordSelect).subscribe(
+        () => {
+          this._handleShapesGraphRecord();
+        },
+        error => this._toast.createErrorToast(error));
+    }
+  }
+
+  /**
+   * Opens a WorkflowRecord by navigating to the module and selecting the record.
+   */
+  openWorkflow(): void {
+    this._wss.convertJSONLDToWorkflowSchema(this.record).subscribe(schema => {
+      this._wss.selectedRecord = schema;
+      this._router.navigate(['/workflows']);
+    });
+  }
+
+  /**
+   * Updates variables on the component based on the provided record. Meant to be called when the input record changes.
+   */
+  handleRecordUpdate(): void {
+    this.recordType = this._cs.getRecordType(this.record);
+    this.isEntityRecord = Object.prototype.hasOwnProperty.call(this.record, 'entityIRI');
+    this._canRead().subscribe(canRead => {
+      this.showButton = canRead;
+    });
+  }
+
+  /**
+   * Updates the record provided by the Entity Search page with the rest of the Record metadata from the backend then
+   * proceeds with opening the record in the appropriate module.
+   */
+  updateEntityRecord(): void {
+    const recordId = this.record['@id'];
+    const catalogId = this._getCatalogId();
+    this._cm.getRecord(recordId, catalogId).pipe(
+      switchMap(recordArr => {
+        if (recordArr && recordArr.length > 0) {
+          this.record = {...this.record, ...recordArr[0]};
+          return this._cm.getInProgressCommit(recordId, catalogId)
+            .pipe(
+              catchError((error) => this._handleCommitError(error))
+            );
+        } else {
+          this._toast.createErrorToast('Fetched record data was empty. Please refresh your search results and '
+            + 'try again');
+          return EMPTY;
+        }
+      })
+    ).subscribe({
+      next: diff => this._handleUpdateEntityRecordSuccess(diff),
+      error: errorMsg => {
+        this._toast.createErrorToast(`Error fetching record: ${errorMsg}`);
+      }
+    });
+  }
+
+  /**
+   * Handle the HTTP error response when trying to commit data. If there is no In Progress Commit, navigates to the
+   * record.
+   *
+   * @param {HttpErrorResponse} err - The HTTP error response object.
+   * @return {Observable} An Observable that errors with the HTTP error response or an EMPTY Observable.
+   */
+  private _handleCommitError(err: HttpErrorResponse): Observable<never> {
+    if (err.status === 404) {
+      this.hasCommitInProgress = false;
+      this.navigateToRecord();
+      // Stop subsequent requests
+      return EMPTY;
+    } else {
+      return handleError(err);
+    }
+  }
+
+  /**
+   * Handles the success response from the updateEntityRecord observables given a nullable Difference object.
+   * A null Difference indicates no further processing is necessary, either due to an error or because the record has
+   * already been opened. If the Difference is not null and has changes, opens the record.
+   *
+   * @private
+   * @param {Difference} data - The response data containing deletions and additions.
+   */
+  private _handleUpdateEntityRecordSuccess(data: Difference): void {
+    if (data.deletions.length > 0 || data.additions.length > 0) {
+      this.hasCommitInProgress = true;
+      this.navigateToRecord();
+    }
+  }
+
+  /**
+   * Handles opening an OntologyRecord based on whether the component is in the Catalog or Entity Search page.
+   * If on the Entity Search page, it checks for specific conditions and performs actions accordingly.
+   * If on the Catalog page, it does nothing.
+   *
+   * @private
+   */
+  private _handleOntologyRecord(): void {
+    if (this.isEntityRecord) {
+      if (this.hasCommitInProgress) {
+        this._commitInProgressNavigator();
+      } else {
+        this._navigateToEntity();
+      }
+    }
+  }
+
+  /**
+   * Handles opening a ShapesGraphRecord based whether the component is in the Catalog or Entity Search page.
+   * If on the Entity Search page, it checks for specific conditions and performs actions accordingly.
+   * If on the Catalog page, it does nothing.
+   * 
+   * @private
+   */
+  private _handleShapesGraphRecord(): void {
     if (this.isEntityRecord) {
       const isMaster = this._sgs.listItem?.versionedRdfRecord.branchId === this._getRecordMasterBranchIri();
       this.isOpened = !!this._sgs?.listItem?.currentVersionTitle;
@@ -180,124 +332,10 @@ export class OpenRecordButtonComponent {
     }
   }
 
-  openShapesGraph(): void {
-    this._router.navigate(['/shapes-graph-editor']);
-    const listItem: ShapesGraphListItem = find(this._sgs.list, {versionedRdfRecord: {recordId: this.record['@id']}});
-    if (listItem) {
-      this._sgs.listItem = listItem;
-      this.handleGraphRecord();
-    } else {
-      const recordSelect: RecordSelectFiltered = {
-        recordId: this.record['@id'],
-        title: getDctermsValue(this.record, 'title'),
-        description: getDctermsValue(this.record, 'description'),
-        identifierIRI: this._sgs.getIdentifierIRI(this.record)
-      };
-      this._sgs.open(recordSelect).subscribe(
-        () => {
-          this.handleGraphRecord();
-        },
-        error => this._toast.createErrorToast(error));
-    }
-  }
-
-  openWorkflow(): void {
-    this._wss.convertJSONLDToWorkflowSchema(this.record).subscribe(schema => {
-      this._wss.selectedRecord = schema;
-      this._router.navigate(['/workflows']);
-    });
-  }
-
-  update(): void {
-    this.recordType = this._cs.getRecordType(this.record);
-    this.isEntityRecord = Object.prototype.hasOwnProperty.call(this.record, 'entityIRI');
-    if (this._isOntologyRecord()) {
-      const request = {
-        resourceId: this.record['@id'],
-        actionId: this._pm.actionRead
-      };
-      this._pep.evaluateRequest(request).subscribe(decision => {
-        this.showButton = decision !== this._pep.deny;
-      });
-    } else {
-      this.showButton = true;
-    }
-  }
-
-  /**
-   * Updates the entity record.
-   */
-  updateEntityRecord(): void {
-    const recordId = this.record['@id'];
-    const catalogId = this._getCatalogId();
-    this._cm.getRecord(recordId, catalogId).pipe(
-      switchMap((records) => {
-        if (records && records.length > 0) {
-          this.record = {...this.record, ...records[0]};
-          return this._cm.getInProgressCommit(recordId, catalogId)
-            .pipe(
-              catchError((error) => this._handleCommitError(error))
-            );
-        } else {
-          return of(null);
-        }
-      }),
-      catchError((response: HttpErrorResponse) => {
-        console.error('Error fetching record:');
-        // Stop subsequent requests if fetching record fails
-        return of(null);
-      })
-    ).subscribe(this._handleSuccess.bind(this));
-  }
-
-  /**
-   * Handle the HTTP error response when trying to commit data.
-   *
-   * @param {HttpErrorResponse} err - The HTTP error response object.
-   * @return {Observable<HttpErrorResponse>} An Observable that emits the HTTP error response.
-   */
-  private _handleCommitError(err: HttpErrorResponse): Observable<HttpErrorResponse> {
-    if (err.status === 404) {
-      this.hasCommitInProgress = false;
-      this.navigateToRecord();
-      return of(null);
-    } else {
-      return handleError(err);
-    }
-  }
-
-  /**
-   * Handles the success response from an API call for a given Difference object.
-   *
-   * @param {Difference} data - The response data containing deletions and additions.
-   *
-   * @return {void}
-   */
-  private _handleSuccess(data: Difference): void {
-    if (data && (data?.deletions.length > 0 || data.additions.length > 0)) {
-      this.hasCommitInProgress = true;
-      this.navigateToRecord();
-    }
-  }
-
-  /**
-   * Handles entity records.
-   *
-   * @private
-   * @return {void}
-   */
-  private _handleEntityRecords(): void {
-    if (this.isEntityRecord) {
-      if (this.hasCommitInProgress) {
-        this._commitInProgressNavigator();
-      } else {
-        this._navigateToEntity();
-      }
-    }
-  }
-
   /**
    * Method to navigate to in-progress items and show error toast if pending changes exist.
+   * 
+   * @private
    */
   private _commitInProgressNavigator(): void {
     this._os.goTo(this.record.entityIRI);
@@ -306,6 +344,8 @@ export class OpenRecordButtonComponent {
 
   /**
    * Navigates to the provided service's entity based on certain conditions.
+   * 
+   * @private
    */
   private _navigateToEntity(): void {
     const isMaster = this._os.listItem?.versionedRdfRecord.branchId === this._getRecordMasterBranchIri();
@@ -322,7 +362,8 @@ export class OpenRecordButtonComponent {
 
   /**
    * Switches the current record to the master branch version using the specified service.
-   * @return {void}
+   * 
+   * @private
    */
   private _switchToMasterBranch(): void {
     const recordId = this.record['@id'];
@@ -346,8 +387,9 @@ export class OpenRecordButtonComponent {
   }
 
   /**
-   * Confirms the existence of an entity based on the provided service.
+   * Retrieves information about the entity on the record using the OntologyStateService.
    *
+   * @private
    * @return {EntityNamesItem} - The entity information if found.
    */
   private _getEntityInformation(): EntityNamesItem {
@@ -358,19 +400,26 @@ export class OpenRecordButtonComponent {
    * Gets the IRI of the master branch for the record.
    *
    * @private
-   * @return {void} The IRI of the master branch.
+   * @return {string} The IRI of the master branch.
    */
   private _getRecordMasterBranchIri(): string {
     return this.record[`${CATALOG}masterBranch`][0]['@id'];
   }
 
-  private _getCatalogId() {
+  /**
+   * Gets the ID of the local catalog from the CatalogManagerService.
+   * 
+   * @private
+   * @return {string} The IRI of the local catalog.
+   */
+  private _getCatalogId(): string {
     return get(this._cm.localCatalog, '@id');
   }
 
   /**
    * Checks whether the record type is an OntologyRecord.
    *
+   * @private
    * @return {boolean} true if the record type is an OntologyRecord, false otherwise
    */
   private _isOntologyRecord(): boolean {
@@ -378,8 +427,9 @@ export class OpenRecordButtonComponent {
   }
 
   /**
-   * Retrieve the appropriate service based on the type of record.
+   * Retrieves the appropriate state service based on the type of record.
    *
+   * @private
    * @returns {OntologyStateService|ShapesGraphStateService} The service instance.
    */
   private _getService(): OntologyStateService | ShapesGraphStateService {
@@ -387,10 +437,12 @@ export class OpenRecordButtonComponent {
   }
 
   /**
+   * ONLY USED FOR ONTOLOGY RECORDS AND SHAPES GRAPH RECORDS.
    * Resolves the destination based on whether the current record is an ontology record or not.
    * If it is an ontology record, navigates to the entity. Otherwise, opens the shapes graph.
    * Displays a warning toast if the destination is successfully resolved and the page is opened.
    *
+   * @private
    */
   private _resolveDestination(): void {
     if (!this._isOntologyRecord()) {
@@ -405,10 +457,27 @@ export class OpenRecordButtonComponent {
 
   /**
    * Method to display a warning toast if entity is opened.
+   * 
+   * @private
    */
   private _displayWarningIfEntityOpened(): void {
     if (this.isOpened) {
       this._toast.createWarningToast('Switching to MASTER.');
     }
+  }
+
+  /**
+   * Checks whether the current user can read the record and returns an Observable with the boolean result.
+   * 
+   * @private
+   * @returns {Observable} Resolves to true if the user can read the record or false if otherwise.
+   */
+  private _canRead(): Observable<boolean> {
+    const request = {
+      resourceId: this.record['@id'],
+      actionId: this._pm.actionRead
+    };
+    return this._pep.evaluateRequest(request)
+      .pipe(map(decision => decision !== this._pep.deny));
   }
 }

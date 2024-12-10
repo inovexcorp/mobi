@@ -49,14 +49,9 @@ module.exports = {
     },
 
     'Step 6: Verify class was created': function(browser) {
-        browser
-            .useXpath()
-            .waitForElementVisible('//mat-tab-header//div[text()[contains(.,"Classes")]]')
-            .click('//mat-tab-header//div[text()[contains(.,"Classes")]]')
-        browser.globals.wait_for_no_spinners(browser);
-        browser
-            .useXpath()
-            .assert.visible('//class-hierarchy-block//tree-item//span[text()[contains(.,"class A")]]')
+        browser.page.ontologyEditorPage()
+            .openClassesTab()
+            .verifyItemVisible('class A');
     },
 
     'Step 7: Commit Changes': function(browser) {
@@ -85,12 +80,10 @@ module.exports = {
 
         browser.page.ontologyEditorPage().toggleChangesPage(false);
         browser.globals.wait_for_no_spinners(browser);
-        browser
+        browser.page.ontologyEditorPage()
+            .openClassesTab()
+            .selectItem('class A')
             .useXpath()
-            .waitForElementVisible('//mat-tab-header//div[text()[contains(.,"Classes")]]')
-            .click('//mat-tab-header//div[text()[contains(.,"Classes")]]')
-            .waitForElementVisible('//class-hierarchy-block//tree-item//span[text()[contains(.,"class A")]]')
-            .click('//class-hierarchy-block//tree-item//span[text()[contains(.,"class A")]]')
             .waitForElementVisible(classTitleSelector)
             .moveToElement(classTitleSelector, 0, 0)
             .waitForElementVisible(annotationSelector)
@@ -105,10 +98,9 @@ module.exports = {
 
     'Step 10: Verify Changes to Class': function(browser) {
         browser.globals.wait_for_no_spinners(browser);
-        browser
-            .useXpath()
-            .assert.visible('//class-hierarchy-block//tree-item//span[text()[contains(.,"A Edited")]]')
-            .assert.visible('//value-display//div//span[text()[contains(.,"A Edited")]]')
+        browser.page.ontologyEditorPage()
+            .verifyItemVisible('A Edited')
+            .verifySelectedEntity('A Edited');
     },
 
     'Step 11: Commit Changes': function(browser) {
@@ -140,12 +132,11 @@ module.exports = {
     },
 
     'Step 14: Verify Presentation of Class A' : function(browser) {
-        browser
+        browser.page.ontologyEditorPage()
+            .openClassesTab()
+            .verifyItemNotVisible('class A')
+            .selectItem('A Edited')
             .useXpath()
-            .waitForElementVisible('//mat-tab-header//div[text()[contains(.,"Classes")]]')
-            .click('//mat-tab-header//div[text()[contains(.,"Classes")]]')
-            .waitForElementVisible('//class-hierarchy-block//tree-item//span[text()[contains(.,"A Edited")]]')
-            .click('//class-hierarchy-block//tree-item//span[text()[contains(.,"A Edited")]]')
             .assert.visible('//value-display//div//span[text() = "A Edited"]//ancestor::property-values//p[text()[contains(.,"Title")]]')
             .assert.not.elementPresent('//value-display//div//span[text()[contains(.,"Class A")]]//ancestor::property-values//p[text()[contains(.,"Title")]]')
     }

@@ -40,46 +40,24 @@ module.exports = {
     },
 
     'Step 3: Click classes tab & open class': function(browser) {
-        browser
-            .useXpath().waitForElementVisible('//mat-tab-header//div[text()[contains(., "Classes")]]')
-            .click('xpath', '//mat-tab-header//div[text()[contains(., "Classes")]]')
-        browser
-            .useCss().waitForElementVisible('div.tree')
-            .useXpath()
-            .waitForElementVisible('//div[contains(@class, "tree-item-wrapper")]//span[text()="Test Class"]')
-            .click('xpath', '//div[contains(@class, "tree-item-wrapper")]//span[text()="Test Class"]')
+        browser.page.ontologyEditorPage()
+            .openClassesTab()
+            .selectItem('Test Class');
     },
 
     'Step 4: Delete ontology class': function(browser) {
-        browser
-            .useCss().waitForElementVisible('div.tree')
-            .useXpath()
-            .waitForElementVisible('//div[contains(@class, "selected-header")]//button//span[text()[contains(., "Delete")]]')
-            .click('//div[contains(@class, "selected-header")]//button//span[text()[contains(., "Delete")]]')
-            .waitForElementVisible('//confirm-modal')
-            .click('css selector', 'confirm-modal div.mat-dialog-actions button.mat-primary')
+        browser.page.ontologyEditorPage().deleteSelectedEntity('Test Class');
     },
 
     'Step 5: Verify class deletion': function(browser) {
-        browser.globals.wait_for_no_spinners(browser)
-        browser
-            .useCss()
-            .waitForElementVisible('div.tree')
-            .useXpath()
-            .waitForElementNotPresent('//div[contains(@class, "tree-item-wrapper")]//span[text()="Test Class"]')
+        browser.page.ontologyEditorPage().verifyDeletedEntity('Test Class')
     },
 
     'Step 6: Click individuals tab & open individual': function(browser) {
-        browser
-            .useXpath().waitForElementVisible('//mat-tab-header//div[text()[contains(., "Classes")]]')
-            .click('xpath', '//mat-tab-header//div[text()[contains(., "Individuals")]]')
-        browser
-            .useCss().waitForElementVisible('div.tree')
-            .useXpath()
-            .waitForElementVisible('//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Second Test Class")]]')
-            .click('xpath', '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Second Test Class")]]')
-            .waitForElementVisible('//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Test Individual")]]')
-            .click('xpath', '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Test Individual")]]')
+        browser.page.ontologyEditorPage()
+            .openIndividualsTab()
+            .openIndividualTreeFolder('Second Test Class')
+            .selectItem('Test Individual');
     },
 
     'Step 7: Ensure datatype properties can be deleted': function(browser) {
@@ -89,33 +67,17 @@ module.exports = {
     },
 
     'Step 8: Delete ontology individual': function(browser) {
-        browser
-            .useCss().waitForElementVisible('div.tree')
-            .useXpath()
-            .waitForElementVisible('//div[contains(@class, "selected-header")]//button//span[text()[contains(., "Delete")]]')
-            .click('//div[contains(@class, "selected-header")]//button//span[text()[contains(., "Delete")]]')
-            .waitForElementVisible('//confirm-modal')
-            .click('css selector', 'confirm-modal div.mat-dialog-actions button.mat-primary')
+        browser.page.ontologyEditorPage().deleteSelectedEntity('Test Individual');
     },
 
     'Step 9: Verify individual deletion': function(browser) {
-        browser.globals.wait_for_no_spinners(browser)
-        browser
-            .useCss()
-            .waitForElementVisible('div.tree')
-            .useXpath()
-            .waitForElementNotPresent('//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Test Individual")]]')
+        browser.page.ontologyEditorPage().verifyDeletedEntity('Test Individual')
     },
 
     'Step 10 : Click concepts tab & open concept': function(browser) {
-        browser
-            .useXpath().waitForElementVisible('//mat-tab-header//div[text()[contains(., "Classes")]]')
-            .click('xpath', '//mat-tab-header//div[text()[contains(., "Concepts")]]')
-        browser
-            .useCss().waitForElementVisible('div.tree')
-            .useXpath()
-            .waitForElementVisible('//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Test Concept")]]')
-            .click('xpath', '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Test Concept")]]')
+        browser.page.ontologyEditorPage()
+            .openConceptsTab()
+            .selectItem('Test Concept');
     },
 
     'Step 11: Ensure datatype properties can be deleted': function(browser) {
@@ -151,83 +113,39 @@ module.exports = {
     },
 
     'Step 14: Delete ontology concept': function(browser) {
-        browser
-            .useCss().waitForElementVisible('div.tree')
-            .useXpath()
-            .waitForElementVisible('//div[contains(@class, "selected-header")]//button//span[text()[contains(., "Delete")]]')
-            .click('//div[contains(@class, "selected-header")]//button//span[text()[contains(., "Delete")]]')
-            .waitForElementVisible('//confirm-modal')
-            .click('css selector', 'confirm-modal div.mat-dialog-actions button.mat-primary')
-            .pause(2000)
+        browser.page.ontologyEditorPage().deleteSelectedEntity('Test Concept');
     },
 
     'Step 15: Verify concept deletion': function(browser) {
-        browser.globals.wait_for_no_spinners(browser)
-        browser
-            .useXpath()
-            .waitForElementNotPresent('//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Test Concept")]]')
+        browser.page.ontologyEditorPage().verifyDeletedEntity('Test Concept')
     },
 
     'Step 16: Click properties tab & open property': function(browser) {
-        var propertiesTabXpath = '//mat-tab-header//div[text()[contains(., "Properties")]]'
-        var dataPropertiesTreeXPath = '//property-tree//i[contains(@class, "fa-folder")]//following-sibling::span[text()[contains(., "Data Properties")]]'
-        browser
-            .useXpath()
-            .waitForElementVisible(propertiesTabXpath)
-            .click('xpath', propertiesTabXpath)
-            .useCss()
-            .waitForElementPresent('div.properties-tab property-hierarchy-block')
-            .useXpath()
-            .waitForElementVisible(dataPropertiesTreeXPath)
-            .click(dataPropertiesTreeXPath)
-            .waitForElementVisible('//property-tree//tree-item//span[text()[contains(., "Test Data Property")]]')
-            .click('xpath', '//property-tree//tree-item//span[text()[contains(., "Test Data Property")]]')
+        browser.page.ontologyEditorPage()
+            .openPropertiesTab()
+            .openDataPropertiesFolder()
+            .selectItem('Test Data Property');
     },
 
     'Step 17: Delete ontology property': function(browser) {
-        browser
-            .useCss().waitForElementVisible('div.tree')
-            .useXpath()
-            .waitForElementVisible('//div[contains(@class, "selected-header")]//button//span[text()[contains(., "Delete")]]')
-            .click('//div[contains(@class, "selected-header")]//button//span[text()[contains(., "Delete")]]')
-            .waitForElementVisible('//confirm-modal')
-            .click('css selector', 'confirm-modal div.mat-dialog-actions button.mat-primary')
+        browser.page.ontologyEditorPage().deleteSelectedEntity('Test Data Property');
     },
 
     'Step 18: Verify property deletion': function(browser) {
-        browser.globals.wait_for_no_spinners(browser)
-        browser
-            .useCss()
-            .waitForElementVisible('div.tree')
-            .useXpath()
-            .waitForElementNotPresent('//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Test Data Property")]]')
+        browser.page.ontologyEditorPage().verifyDeletedEntity('Test Data Property')
     },
 
     'Step 19: Click schemes tab & open scheme': function(browser) {
-        browser
-            .useXpath().waitForElementVisible('//mat-tab-header//div[text()[contains(., "Classes")]]')
-            .click('xpath', '//mat-tab-header//div[text()[contains(., "Schemes")]]')
-        browser
-            .useCss().waitForElementVisible('div.tree')
-            .useXpath()
-            .waitForElementVisible('//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Test Scheme")]]')
-            .click('xpath', '//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Test Scheme")]]')
+        browser.page.ontologyEditorPage()
+            .openSchemesTab()
+            .selectItem('Test Scheme');
     },
 
     'Step 20: Delete ontology scheme': function(browser) {
-        browser
-            .useCss().waitForElementVisible('div.tree')
-            .useXpath()
-            .waitForElementVisible('//div[contains(@class, "selected-header")]//button//span[text()[contains(., "Delete")]]')
-            .click('//div[contains(@class, "selected-header")]//button//span[text()[contains(., "Delete")]]')
-            .waitForElementVisible('//confirm-modal')
-            .click('css selector', 'confirm-modal div.mat-dialog-actions button.mat-primary')
+        browser.page.ontologyEditorPage().deleteSelectedEntity('Test Scheme');
     },
 
     'Step 21: Verify scheme deletion': function(browser) {
-        browser.globals.wait_for_no_spinners(browser)
-        browser
-            .useXpath()
-            .waitForElementNotPresent('//div[contains(@class, "tree-item-wrapper")]//span[text()[contains(., "Test Scheme")]]')
+        browser.page.ontologyEditorPage().verifyDeletedEntity('Test Scheme')
     },
 }
