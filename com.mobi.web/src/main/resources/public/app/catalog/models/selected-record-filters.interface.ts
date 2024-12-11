@@ -26,7 +26,7 @@ import { FilterItem, SelectedFilterItems } from '../../shared/models/filterItem.
  * Represents a specific set of selected filters from the {@link catalog.RecordFiltersComponent}.
  */
 export interface SelectedRecordFilters extends SelectedFilterItems {
-  recordType: FilterItem,
+  recordTypeFilterList: FilterItem[],
   keywordFilterList: FilterItem[],
   creatorFilterList: FilterItem[]
 }

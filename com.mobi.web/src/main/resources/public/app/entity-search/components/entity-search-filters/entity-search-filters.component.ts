@@ -22,16 +22,16 @@
  */
 import { Component, EventEmitter, OnInit, OnChanges, SimpleChanges, Output, Input, OnDestroy } from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
+
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { get, remove } from 'lodash';
+import { get } from 'lodash';
 
-import { CATALOG, DELIM, ONTOLOGYEDITOR, SHAPESGRAPHEDITOR, WORKFLOWS } from '../../../prefixes';
+import { CATALOG } from '../../../prefixes';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { EntitySearchStateService } from '../../services/entity-search-state.service';
 import { FilterItem } from '../../../shared/models/filterItem.interface';
 import { FilterType, ListFilter } from '../../../shared/models/list-filter.interface';
-import { getBeautifulIRI } from '../../../shared/utility';
 import { KeywordCount } from '../../../shared/models/keywordCount.interface';
 import { SearchableListFilter } from '../../../shared/models/searchable-list-filter.interface';
 import { SelectedEntityFilters } from '../../models/selected-entity-filters.interface';
@@ -54,13 +54,6 @@ import { SelectedEntityFilters } from '../../models/selected-entity-filters.inte
   templateUrl: './entity-search-filters.component.html',
 })
 export class EntitySearchFiltersComponent implements OnInit, OnChanges, OnDestroy {
-  // TODO: Pull this from the backend rather than being hardcoded
-  readonly recordTypes = [
-    `${ONTOLOGYEDITOR}OntologyRecord`,
-    `${WORKFLOWS}WorkflowRecord`,
-    `${DELIM}MappingRecord`,
-    `${SHAPESGRAPHEDITOR}ShapesGraphRecord`
-  ];
   readonly recordFilterIndex = 0;
   readonly keywordFilterIndex = 1;
   _destroySub$ = new Subject<void>();
@@ -78,47 +71,23 @@ export class EntitySearchFiltersComponent implements OnInit, OnChanges, OnDestro
 
   ngOnInit(): void {
     this.catalogId = get(this._cm.localCatalog, '@id', '');
-    const recordTypeFilterItems = this.recordTypes.map( type => ({
-      value: type,
-      display: getBeautifulIRI(type),
-      checked: this.typeFilters.findIndex(item => item.value === type) >= 0,
-    } as FilterItem));
 
     const componentContext = this;
 
-    const recordTypeFilter: ListFilter = {
-      title: 'Record Type',
-      type: FilterType.CHECKBOX,
-      numChecked: 0,
-      hide: false,
-      pageable: false,
-      searchable: false,
-      filterItems: recordTypeFilterItems,
-      onInit: function () {
-        this.numChecked = componentContext.typeFilters.length;
-      },
-      setFilterItems: function () { },
-      filter: function (filterItem: FilterItem) {
-        if (filterItem.checked) {
-          componentContext.typeFilters.push(filterItem);
-        } else {
-          remove(componentContext.typeFilters, typeFilter => typeFilter.value === filterItem.value);
-        }
-        this.numChecked = componentContext.typeFilters.length;
-        componentContext.changeFilter.emit({ 
-          chosenTypes: componentContext.typeFilters, 
-          keywordFilterItems: componentContext.keywordFilterItems
-        });
-      },
-      reset: function () {
-        componentContext.typeFilters = [];
-        componentContext.changeFilter.emit({
-          chosenTypes: componentContext.typeFilters,
-          keywordFilterItems: componentContext.keywordFilterItems
-        });
-        this.numChecked = componentContext.typeFilters.length;
-      }
+    const recordTypeFilter: ListFilter = this._cm.getRecordTypeFilter(
+      (value) => this.typeFilters.findIndex(item => item.value === value) >= 0,
+      (items) => componentContext.changeFilter.emit({chosenTypes: items, keywordFilterItems: componentContext.keywordFilterItems}),
+      `${CATALOG}VersionedRDFRecord`
+    );
+    recordTypeFilter.reset = function () {
+      componentContext.typeFilters = [];
+      componentContext.changeFilter.emit({
+        chosenTypes: componentContext.typeFilters,
+        keywordFilterItems: componentContext.keywordFilterItems
+      });
+      this.numChecked = componentContext.typeFilters.length;
     };
+
     const keywordsFilter: SearchableListFilter = {
       title: 'Keywords',
       type: FilterType.CHECKBOX,

@@ -23,7 +23,7 @@
 import { HttpClient, HttpHeaders, HttpParams, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 
-import { difference, find, forEach, get, has } from 'lodash';
+import { difference, find, forEach, get, has, without } from 'lodash';
 import { catchError, map, mergeMap, switchMap, tap } from 'rxjs/operators';
 import { forkJoin, Observable, of, Subject, throwError } from 'rxjs';
 
@@ -100,11 +100,11 @@ export class CatalogManagerService {
      */
     sortOptions: SortOption[] = [];
     /**
-     * `recordTypes` contains a list of IRI strings of all types of records contained in both Catalogs. This list is
-     * populated by the `initialize` method.
-     * @type {string[]}
+     * `recordTypes` contains an object of IRI strings of all types of records contained in both Catalogs to arrays of
+     * the IRIs of their superclasses. This object is populated by the `initialize` method.
+     * @type {{[key: string]: string[]}}
      */
-    recordTypes: string[] = [];
+    recordTypes: {[key: string]: string[]} = {};
     /**
      * `localCatalog` contains the JSON-LD object for the local Catalog in Mobi. It is populated by
      * the `initialize` method.
@@ -172,8 +172,10 @@ export class CatalogManagerService {
      * @returns {Observable<string[]>} An Observable that resolves to an array of the IRIs for all record types in the
      * catalog
      */
-    getRecordTypes(): Observable<string[]> {
-        return this.spinnerSrv.track(this.http.get<string[]>(`${this.prefix}/record-types`))
+    getRecordTypes(): Observable<{[key: string]: string[]}> {
+    // getRecordTypes(): Observable<string[]> {
+        return this.spinnerSrv.track(this.http.get<{[key: string]: string[]}>(`${this.prefix}/record-types`))
+        // return this.spinnerSrv.track(this.http.get<string[]>(`${this.prefix}/record-types`))
             .pipe(catchError(handleError));
     }
 
@@ -1305,20 +1307,33 @@ export class CatalogManagerService {
      * @returns {string} The IRI string of the specific Record type
      */
     getType(record: JSONLDObject): string {
-        const type = difference(this.recordTypes, this.coreRecordTypes)
+        const type = difference(Object.keys(this.recordTypes), this.coreRecordTypes)
             .find(type => get(record, '@type', []).includes(type));
         return type || `${CATALOG}Record`;
+    }
+
+    /**
+     * Returns a list of Record type IRIs that are subclasses of the provided type identified by its IRI.
+     * 
+     * @param {string} parentType The IRI of a Record type
+     * @returns {string[]} An array of subclass Record types
+     */
+    getSubRecordTypes(parentType: string): string[] {
+        return Object.keys(this.recordTypes)
+            .filter(type => this.recordTypes[type].includes(parentType));
     }
 
     /**
      * Returns a ListFilter object for filtering record types.
      *
      * @param {Function} isSelectedCall - The callback function to determine whether a filter item is currently selected.
-     * @param {Function} [emitterCall] - An optional callback function to be called when a filter item is selected.
+     * @param {Function} emitterCall - A callback function to be called when a filter item is selected.
+     * @param {string} [parentType] - An optional Record type IRI such that only its subclasses are options
      * @returns {ListFilter} - The generated ListFilter object.
      */
-    getRecordTypeFilter(isSelectedCall: (value: string) => boolean, emitterCall?: (item: FilterItem) => void): ListFilter {
-        const filterItems = this.recordTypes.map(type => ({
+    getRecordTypeFilter(isSelectedCall: (value: string) => boolean, emitterCall: (items: FilterItem[]) => void, parentType?: string): ListFilter {
+        const types = parentType ? this.getSubRecordTypes(parentType) : without(Object.keys(this.recordTypes), `${CATALOG}Record`);
+        const filterItems = types.map(type => ({
             value: type,
             display: getBeautifulIRI(type),
             checked: isSelectedCall(type),
@@ -1338,24 +1353,9 @@ export class CatalogManagerService {
                 this.numChecked = getNumChecked(this.filterItems);
             },
             setFilterItems: () => {},
-            filter: function(filterItem: FilterItem) {
-                if (filterItem.checked) {
-                    this.filterItems.forEach(typeFilter => {
-                        if (typeFilter.value !== filterItem.value) {
-                            typeFilter.checked = false;
-                        }
-                    });
-                    if (emitterCall) {
-                        emitterCall(filterItem);
-                    }
-                } else {
-                  if (isSelectedCall(filterItem.value)) {
-                        if (emitterCall) {
-                            emitterCall(undefined);
-                        }
-                    }
-                }
+            filter: function() {
                 this.numChecked = getNumChecked(this.filterItems);
+                emitterCall(this.filterItems.filter(item => item.checked));
             }
         };
     }

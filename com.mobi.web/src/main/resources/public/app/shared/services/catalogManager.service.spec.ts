@@ -107,7 +107,7 @@ describe('Catalog Manager service', function() {
       service.initialize()
         .subscribe(() => fail('Observable should have rejected'), response => {
           expect(response).toEqual('Error in catalogManager initialization');
-          expect(service.recordTypes).toEqual([]);
+          expect(service.recordTypes).toEqual({});
           expect(service.localCatalog).toBeUndefined();
           expect(service.distributedCatalog).toBeUndefined();
           expect(service.sortOptions).toEqual([]);
@@ -116,12 +116,12 @@ describe('Catalog Manager service', function() {
       tick();
     }));
     it('unless an error occurs with the catalogs call', function() {
-      spyOn(service, 'getRecordTypes').and.returnValue(of([]));
+      spyOn(service, 'getRecordTypes').and.returnValue(of({}));
       spyOn(service, 'getSortOptions').and.returnValue(of([]));
       service.initialize()
         .subscribe(() => fail('Observable should have rejected'), response => {
           expect(response).toEqual('Error in catalogManager initialization');
-          expect(service.recordTypes).toEqual([]);
+          expect(service.recordTypes).toEqual({});
           expect(service.localCatalog).toBeUndefined();
           expect(service.distributedCatalog).toBeUndefined();
           expect(service.sortOptions).toEqual([]);
@@ -131,7 +131,10 @@ describe('Catalog Manager service', function() {
     });
     describe('successfully', function() {
       beforeEach(function() {
-        this.types = ['type1', 'type2'];
+        this.types = {
+          type1: [],
+          type2: []
+        };
         this.sortOptions = ['sort1', 'sort2'];
         spyOn(service, 'getRecordTypes').and.returnValue(of(this.types));
         spyOn(service, 'getSortOptions').and.returnValue(of(this.sortOptions));
@@ -174,10 +177,10 @@ describe('Catalog Manager service', function() {
   it('should get the IRIs for all record types', function() {
     service.getRecordTypes()
       .subscribe(value => {
-        expect(value).toEqual([]);
+        expect(value).toEqual({});
       }, () => fail('Observable should have resolved'));
     const request = httpMock.expectOne({url: `${service.prefix}/record-types`, method: 'GET'});
-    request.flush([]);
+    request.flush({});
   });
   it('should get the IRIs for all sort options', function() {
     service.getSortOptions()
@@ -2082,35 +2085,110 @@ describe('Catalog Manager service', function() {
     emptyObj['@type'].push(`${CATALOG}Test`);
     expect(service.isCommit(emptyObj)).toEqual(true);
   });
+  it('should determine the type of a record JSON-LD object', () => {
+    service.recordTypes = {
+      'urn:test1': [],
+      'urn:test2': [],
+    };
+    const recordObject = { '@id': 'urn:record', '@type': [] };
+    expect(service.getType(recordObject)).toEqual(`${CATALOG}Record`);
+    recordObject['@type'] = ['urn:type'];
+    expect(service.getType(recordObject)).toEqual(`${CATALOG}Record`);
+    recordObject['@type'] = [`${CATALOG}Record`];
+    expect(service.getType(recordObject)).toEqual(`${CATALOG}Record`);
+    recordObject['@type'] = [`${CATALOG}UnversionedRecord`];
+    expect(service.getType(recordObject)).toEqual(`${CATALOG}Record`);
+    recordObject['@type'] = [`${CATALOG}UnversionedRecord`, 'urn:type'];
+    expect(service.getType(recordObject)).toEqual(`${CATALOG}Record`);
+    recordObject['@type'] = [`${CATALOG}UnversionedRecord`, 'urn:test1'];
+    expect(service.getType(recordObject)).toEqual('urn:test1');
+    recordObject['@type'] = [`${CATALOG}UnversionedRecord`, 'urn:test1', 'urn:test2'];
+    expect(service.getType(recordObject)).toEqual('urn:test1');
+  });
+  it('should fetch the list of subclass IRIs given a parent record type IRI', () => {
+    service.recordTypes = {
+      [`${CATALOG}Record`]: [],
+      [`${CATALOG}UnversionedRecord`]: [`${CATALOG}Record`],
+      [`${CATALOG}VersionedRecord`]: [`${CATALOG}Record`],
+      [`${CATALOG}VersionedRDFRecord`]: [`${CATALOG}Record`, `${CATALOG}VersionedRecord`],
+      'urn:test1': [`${CATALOG}Record`, `${CATALOG}UnversionedRecord`],
+      'urn:test2': [`${CATALOG}Record`, `${CATALOG}VersionedRecord`],
+      'urn:test3': [`${CATALOG}Record`, `${CATALOG}VersionedRecord`, `${CATALOG}VersionedRDFRecord`],
+    };
+    expect(service.getSubRecordTypes('error')).toEqual([]);
+    expect(service.getSubRecordTypes(`${CATALOG}Record`)).toEqual([`${CATALOG}UnversionedRecord`, `${CATALOG}VersionedRecord`, `${CATALOG}VersionedRDFRecord`, 'urn:test1', 'urn:test2', 'urn:test3']);
+    expect(service.getSubRecordTypes(`${CATALOG}UnversionedRecord`)).toEqual(['urn:test1']);
+    expect(service.getSubRecordTypes(`${CATALOG}VersionedRecord`)).toEqual([`${CATALOG}VersionedRDFRecord`, 'urn:test2', 'urn:test3']);
+    expect(service.getSubRecordTypes(`${CATALOG}VersionedRDFRecord`)).toEqual(['urn:test3']);
+    expect(service.getSubRecordTypes('urn:test1')).toEqual([]);
+  });
   describe('recordTypeFilter', () => {
-    const isSelectedCall = (value) => value === 'test1';
+    const isSelectedCall = (value) => value === 'urn:test1';
     const emitterCall = jasmine.createSpy('emitterCall');
     beforeEach(() => {
+      service.recordTypes = {
+        [`${CATALOG}Record`]: [],
+        [`${CATALOG}UnversionedRecord`]: [`${CATALOG}Record`],
+        [`${CATALOG}VersionedRecord`]: [`${CATALOG}Record`],
+        [`${CATALOG}VersionedRDFRecord`]: [`${CATALOG}Record`, `${CATALOG}VersionedRecord`],
+        'urn:test1': [`${CATALOG}Record`, `${CATALOG}UnversionedRecord`],
+        'urn:test2': [`${CATALOG}Record`, `${CATALOG}VersionedRecord`],
+        'urn:test3': [`${CATALOG}Record`, `${CATALOG}VersionedRecord`, `${CATALOG}VersionedRDFRecord`],
+      };
       emitterCall.calls.reset();
-      service.recordTypes = ['test1', 'test2'];
+    });
+    describe('should have the correct filter options', () => {
+      it('if no parent type was provided', () => {
+        const recordTypeFilter = service.getRecordTypeFilter(isSelectedCall, emitterCall);
+        expect(recordTypeFilter.filterItems.length).toEqual(6);
+        expect(recordTypeFilter.filterItems.findIndex(item => item.value === `${CATALOG}Record`)).toBeLessThan(0);
+      });
+      it('if a parent type was provided', () => {
+        const recordTypeFilter = service.getRecordTypeFilter(isSelectedCall, emitterCall, `${CATALOG}VersionedRecord`);
+        expect(recordTypeFilter.filterItems.length).toEqual(3);
+        expect(recordTypeFilter.filterItems.map(item => item.value)).toEqual([`${CATALOG}VersionedRDFRecord`, 'urn:test2', 'urn:test3']);
+      });
     });
     describe('should filter records', () => {
       it('if the filter has been checked', () => {
         const recordTypeFilter = service.getRecordTypeFilter(isSelectedCall, emitterCall);
-        expect(recordTypeFilter.filterItems[0].checked).toEqual(true);
-        expect(recordTypeFilter.filterItems[1].checked).toEqual(false);
+        recordTypeFilter.filterItems.forEach(item => {
+          if (isSelectedCall(item.value)) {
+            expect(item.checked).toBeTrue();
+          } else {
+            expect(item.checked).toBeFalse();
+          }
+        });
         
-        recordTypeFilter.filterItems[1].checked = true;
-        recordTypeFilter.filter(recordTypeFilter.filterItems[1]);
-        expect(recordTypeFilter.filterItems[0].checked).toEqual(false);
-        expect(recordTypeFilter.filterItems[1].checked).toEqual(true);
-        expect(emitterCall).toHaveBeenCalledWith(recordTypeFilter.filterItems[1]);
+        const test1Item = recordTypeFilter.filterItems.find(item => item.value === 'urn:test1');
+        const item = recordTypeFilter.filterItems.find(item => item.value === `${CATALOG}VersionedRDFRecord`);
+        item.checked = true;
+        recordTypeFilter.filter(item);
+        recordTypeFilter.filterItems.forEach(item => {
+          if (item.value === `${CATALOG}VersionedRDFRecord` || isSelectedCall(item.value)) {
+            expect(item.checked).toBeTrue();
+          } else {
+            expect(item.checked).toBeFalse();
+          }
+        });
+        expect(recordTypeFilter.numChecked).toEqual(2);
+        expect(emitterCall).toHaveBeenCalledWith([item, test1Item]);
       });
       it('if the filter has been unchecked', () => {
         const recordTypeFilter = service.getRecordTypeFilter(isSelectedCall, emitterCall);
-        expect(recordTypeFilter.filterItems[0].checked).toEqual(true);
-        expect(recordTypeFilter.filterItems[1].checked).toEqual(false);
+        recordTypeFilter.filterItems.forEach(item => {
+          if (isSelectedCall(item.value)) {
+            expect(item.checked).toBeTrue();
+          } else {
+            expect(item.checked).toBeFalse();
+          }
+        });
 
-        recordTypeFilter.filterItems[0].checked = false;
-        recordTypeFilter.filter(recordTypeFilter.filterItems[0]);
-        expect(recordTypeFilter.filterItems[0].checked).toEqual(false);
-        expect(recordTypeFilter.filterItems[1].checked).toEqual(false);
-        expect(emitterCall).toHaveBeenCalledWith(undefined);
+        const item = recordTypeFilter.filterItems.find(item => isSelectedCall(item.value));
+        item.checked = false;
+        recordTypeFilter.filter(item);
+        expect(recordTypeFilter.filterItems.every(item => !item.checked)).toBeTrue();
+        expect(emitterCall).toHaveBeenCalledWith([]);
       });
     });
   });

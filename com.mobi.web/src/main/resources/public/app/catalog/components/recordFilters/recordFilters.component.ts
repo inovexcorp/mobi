@@ -13,11 +13,11 @@
  * 
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  * 
  * You should have received a copy of the GNU Affero General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
 import { HttpResponse } from '@angular/common/http';
@@ -46,11 +46,11 @@ import { UserManagerService } from '../../../shared/services/userManager.service
  * performed on catalog Records. Each filter option has a checkbox to indicate whether that filter is active.
  * 
  * @param {Function} changeFilter A function that is called with a {@link catalog.SelectedRecordFilters} representing
- * the updated values for each filter. This function should update the `recordType`, `keywordFilterList`, and
+ * the updated values for each filter. This function should update the `recordTypeFilterList`, `keywordFilterList`, and
  * `creatorFilterList` bindings.
- * @param {FilterItem} recordType The selected record type filter item.
- * @param {FilterItem[]} keywordFilterList The selected keywords list of filter items.
- * @param {FilterItem[]} creatorFilterList The selected creators list of filter items.
+ * @param {FilterItem[]} recordTypes The selected record type filter items.
+ * @param {FilterItem[]} keywords The selected keywords list of filter items.
+ * @param {FilterItem[]} creators The selected creators list of filter items.
  * @param {string} catalogId The catalog ID.
  */
 @Component({
@@ -66,9 +66,9 @@ export class RecordFiltersComponent implements OnInit, OnChanges, OnDestroy {
   readonly keywordFilterIndex = 2;
   
   @Input() catalogId: string;
-  @Input() recordType: FilterItem;
-  @Input() keywordFilterList: FilterItem[];
-  @Input() creatorFilterList: FilterItem[];
+  @Input() recordTypes: FilterItem[] = [];
+  @Input() keywords: FilterItem[] = [];
+  @Input() creators: FilterItem[] = [];
   @Output() changeFilter = new EventEmitter<SelectedRecordFilters>();
 
   constructor(public state: CatalogStateService, public cm: CatalogManagerService, private _toast: ToastService, 
@@ -77,14 +77,14 @@ export class RecordFiltersComponent implements OnInit, OnChanges, OnDestroy {
   ngOnInit(): void {
     const componentContext = this;
     const recordTypeFilter: ListFilter = this.cm.getRecordTypeFilter(
-      (value) => value === this.recordType?.value, 
-      (item) => componentContext.changeFilter.emit({recordType: item, keywordFilterList: componentContext.keywordFilterList, creatorFilterList: componentContext.creatorFilterList})
+      (value) => this.recordTypes.findIndex(item => item.value === value) >= 0,
+      (items) => componentContext.changeFilter.emit({recordTypeFilterList: items, keywordFilterList: componentContext.keywords, creatorFilterList: componentContext.creators})
     );
     recordTypeFilter.reset = function() {
       componentContext.changeFilter.emit({
-        recordType: undefined,
-        keywordFilterList: componentContext.keywordFilterList,
-        creatorFilterList: componentContext.creatorFilterList
+        recordTypeFilterList: [],
+        keywordFilterList: componentContext.keywords,
+        creatorFilterList: componentContext.creators
       });
       this.numChecked = 0;
     };
@@ -151,7 +151,7 @@ export class RecordFiltersComponent implements OnInit, OnChanges, OnDestroy {
             return {
               value: { user, count },
               display: `${user.displayName} (${count})`,
-              checked: componentContext.creatorFilterList.findIndex(item => item.value.user.iri === userIri) >= 0
+              checked: componentContext.creators.findIndex(item => item.value.user.iri === userIri) >= 0
             };
           }).sort((item1, item2) => item1.value.user.username.localeCompare(item2.value.user.username));
           filterInstance.nextPage();
@@ -161,16 +161,16 @@ export class RecordFiltersComponent implements OnInit, OnChanges, OnDestroy {
       filter: function() {
         const checkedCreatorObjects = this.filterItems.filter(currentFilterItem => currentFilterItem.checked);
         componentContext.changeFilter.emit({
-          recordType: componentContext.recordType, 
-          keywordFilterList: componentContext.keywordFilterList, 
+          recordTypeFilterList: componentContext.recordTypes, 
+          keywordFilterList: componentContext.keywords, 
           creatorFilterList: checkedCreatorObjects
         });
         this.numChecked = getNumChecked(this.filterItems);
       },
       reset: function() {
         componentContext.changeFilter.emit({
-          recordType: componentContext.recordType, 
-          keywordFilterList: componentContext.keywordFilterList, 
+          recordTypeFilterList: componentContext.recordTypes, 
+          keywordFilterList: componentContext.keywords, 
           creatorFilterList: []
         });
         this.numChecked = 0;
@@ -224,7 +224,7 @@ export class RecordFiltersComponent implements OnInit, OnChanges, OnDestroy {
           filterInstance.setFilterItems();
           pagingData['totalSize'] = Number(response.headers.get('x-total-count')) || 0;
           pagingData['hasNextPage'] = filterInstance.filterItems.length < pagingData.totalSize;
-          filterInstance.numChecked = componentContext.keywordFilterList.length;
+          filterInstance.numChecked = componentContext.keywords.length;
         }, error => componentContext._toast.createErrorToast(error));
       },
       getItemTooltip: function(filterItem: FilterItem) {
@@ -234,28 +234,28 @@ export class RecordFiltersComponent implements OnInit, OnChanges, OnDestroy {
         this.filterItems = map(this.rawFilterItems, keywordObject => ({
           value: keywordObject,
           display: `${keywordObject[`${CATALOG}keyword`]} (${keywordObject['count']})`,
-          checked: componentContext.keywordFilterList.findIndex(item => item.value[`${CATALOG}keyword`] === keywordObject[`${CATALOG}keyword`]) >= 0
+          checked: componentContext.keywords.findIndex(item => item.value[`${CATALOG}keyword`] === keywordObject[`${CATALOG}keyword`]) >= 0
         }));
       },
       filter: function(filterItem: FilterItem) {
-        const changedIdx = componentContext.keywordFilterList.findIndex(checkedKeyword => checkedKeyword.value[`${CATALOG}keyword`] === filterItem.value[`${CATALOG}keyword`]);
+        const changedIdx = componentContext.keywords.findIndex(checkedKeyword => checkedKeyword.value[`${CATALOG}keyword`] === filterItem.value[`${CATALOG}keyword`]);
         if (changedIdx >= 0) {
-          componentContext.keywordFilterList.splice(changedIdx, 1);
+          componentContext.keywords.splice(changedIdx, 1);
         } else {
-          componentContext.keywordFilterList.push(filterItem);
+          componentContext.keywords.push(filterItem);
         }
         componentContext.changeFilter.emit({
-          recordType: componentContext.recordType, 
-          keywordFilterList: componentContext.keywordFilterList, 
-          creatorFilterList: componentContext.creatorFilterList
+          recordTypeFilterList: componentContext.recordTypes, 
+          keywordFilterList: componentContext.keywords, 
+          creatorFilterList: componentContext.creators
         });
-        this.numChecked = componentContext.keywordFilterList.length;
+        this.numChecked = componentContext.keywords.length;
       },
       reset: function() {
         componentContext.changeFilter.emit({
-          recordType: componentContext.recordType, 
+          recordTypeFilterList: componentContext.recordTypes, 
           keywordFilterList: [],
-          creatorFilterList: componentContext.creatorFilterList
+          creatorFilterList: componentContext.creators
         });
         this.numChecked = 0;
       }
@@ -270,33 +270,20 @@ export class RecordFiltersComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes?.recordType && !changes.recordType.isFirstChange() && !changes.recordType.currentValue) {
-      this.updateFilterValue(this.recordTypeFilterIndex);
+    if (changes?.recordTypes) {
+      this.updateFilterList(this.recordTypeFilterIndex, changes.recordTypes.currentValue, changes.recordTypes.previousValue);
     }
-    if (changes?.keywordFilterList) {
-      this.updateFilterList(this.keywordFilterIndex, changes.keywordFilterList.currentValue, changes.keywordFilterList.previousValue);
+    if (changes?.keywords) {
+      this.updateFilterList(this.keywordFilterIndex, changes.keywords.currentValue, changes.keywords.previousValue);
     }
-    if (changes?.creatorFilterList) {
-      this.updateFilterList(this.creatorFilterIndex, changes.creatorFilterList.currentValue, changes.creatorFilterList.previousValue);
+    if (changes?.creators) {
+      this.updateFilterList(this.creatorFilterIndex, changes.creators.currentValue, changes.creators.previousValue);
     }
   }
 
   ngOnDestroy(): void {
     this._destroySub$.next();
     this._destroySub$.complete();
-  }
-
-  /**
-   * Updates a single value type filter by unselecting the current value. Only used for clearing out the value.
-   * 
-   * @param {number} filterIndex The index of the filter to update in the `filters` array
-   */
-  updateFilterValue(filterIndex: number): void {
-    const filter = this.filters[filterIndex];
-    filter.filterItems.forEach(item => {
-      item.checked = false;
-    });
-    filter.numChecked = 0;
   }
 
   /**

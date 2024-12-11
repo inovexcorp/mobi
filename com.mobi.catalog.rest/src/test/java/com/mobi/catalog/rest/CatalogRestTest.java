@@ -118,6 +118,7 @@ import org.mockito.MockitoAnnotations;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -3602,13 +3603,15 @@ public class CatalogRestTest extends MobiRestTestCXF {
         Response response = target().path("catalogs/record-types").request().get();
         assertEquals(200, response.getStatus());
         try {
-            ArrayNode array = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
-            assertEquals(5, array.size());
-            assertTrue(arrayContains(array, recordFactory.getTypeIRI().stringValue()));
-            assertTrue(arrayContains(array, unversionedRecordFactory.getTypeIRI().stringValue()));
-            assertTrue(arrayContains(array, versionedRecordFactory.getTypeIRI().stringValue()));
-            assertTrue(arrayContains(array, versionedRDFRecordFactory.getTypeIRI().stringValue()));
-            assertTrue(arrayContains(array, mappingRecordFactory.getTypeIRI().stringValue()));
+            ObjectNode result = mapper.readValue(response.readEntity(String.class), ObjectNode.class);
+            assertEquals(5, result.size());
+            Stream.of(recordFactory, unversionedRecordFactory, versionedRecordFactory, versionedRDFRecordFactory, mappingRecordFactory).forEach(factory -> {
+                String typeIRI = factory.getTypeIRI().stringValue();
+                assertTrue(result.has(typeIRI));
+                JsonNode val = result.get(typeIRI);
+                assertTrue(val.isArray());
+                assertEquals(factory.getParentTypeIRIs().stream().map(IRI::stringValue).collect(Collectors.toSet()), convertArrayNodeToSet((ArrayNode) val));
+            });
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
@@ -3734,5 +3737,13 @@ public class CatalogRestTest extends MobiRestTestCXF {
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
+    }
+
+    private Set<String> convertArrayNodeToSet(ArrayNode arrayNode) {
+        Set<String> set = new HashSet<>();
+        arrayNode.forEach(el -> {
+            set.add(el.asText());
+        });
+        return set;
     }
 }

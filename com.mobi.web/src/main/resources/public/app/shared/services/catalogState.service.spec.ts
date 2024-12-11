@@ -23,11 +23,9 @@
 import { TestBed } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
 
-import {
-  cleanStylesFromDOM
-} from '../../../test/ts/Shared';
 import { CATALOG, DATASET, DCTERMS, DELIM, ONTOLOGYEDITOR, SHAPESGRAPHEDITOR, WORKFLOWS } from '../../prefixes';
 import { CatalogManagerService } from './catalogManager.service';
+import { cleanStylesFromDOM } from '../../../test/ts/Shared';
 import { CatalogStateService } from './catalogState.service';
 
 describe('Catalog State service', () => {
@@ -66,7 +64,7 @@ describe('Catalog State service', () => {
     spyOn(service, 'initializeRecordSortOption');
     service.totalRecordSize = 10;
     service.currentRecordPage = 10;
-    service.recordFilterType = { value: 'test', display: '', checked: true };
+    service.recordTypeFilterList = [{ value: 'test', display: '', checked: true }];
     service.recordSearchText = 'test';
     service.keywordFilterList = [{ value: 'keyword1', display: '', checked: true}];
     service.keywordSearchText = 'key';
@@ -77,7 +75,7 @@ describe('Catalog State service', () => {
     expect(service.totalRecordSize).toEqual(0);
     expect(service.currentRecordPage).toEqual(1);
     expect(service.initializeRecordSortOption).toHaveBeenCalledWith();
-    expect(service.recordFilterType).toEqual(undefined);
+    expect(service.recordTypeFilterList).toEqual([]);
     expect(service.recordSearchText).toEqual('');
     expect(service.keywordFilterList).toEqual([]);
     expect(service.keywordSearchText).toEqual('');

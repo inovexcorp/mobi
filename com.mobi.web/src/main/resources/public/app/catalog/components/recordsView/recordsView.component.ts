@@ -20,22 +20,23 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { HttpResponse } from '@angular/common/http';
 import { Component, OnInit, OnDestroy } from '@angular/core';
+import { HttpResponse } from '@angular/common/http';
 import { PageEvent } from '@angular/material/paginator';
+
 import { get } from 'lodash';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
-import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
-import { PaginatedConfig } from '../../../shared/models/paginatedConfig.interface';
-import { SortOption } from '../../../shared/models/sortOption.interface';
+import { CATALOG } from '../../../prefixes';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { CatalogStateService } from '../../../shared/services/catalogState.service';
-import { ToastService } from '../../../shared/services/toast.service';
 import { FilterItem } from '../../../shared/models/filterItem.interface';
-import { CATALOG } from '../../../prefixes';
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { PaginatedConfig } from '../../../shared/models/paginatedConfig.interface';
 import { SelectedRecordFilters } from '../../models/selected-record-filters.interface';
+import { SortOption } from '../../../shared/models/sortOption.interface';
+import { ToastService } from '../../../shared/services/toast.service';
 
 /**
  * @class catalog.RecordsViewComponent
@@ -65,7 +66,7 @@ export class RecordsViewComponent implements OnInit, OnDestroy {
     this.catalogId = get(this.cm.localCatalog, '@id', '');
     this.state.currentRecordPage = 0;
     this._initializeSelectedFilters();
-    this.setRecords(this.state.recordSearchText, this.state.recordFilterType, this.state.keywordFilterList, 
+    this.setRecords(this.state.recordSearchText, this.state.recordTypeFilterList, this.state.keywordFilterList, 
       this.state.creatorFilterList, this.state.recordSortOption);
   }
   ngOnDestroy(): void {
@@ -77,14 +78,14 @@ export class RecordsViewComponent implements OnInit, OnDestroy {
   }
   changeSort(): void {
     this.state.currentRecordPage = 0;
-    this.setRecords(this.state.recordSearchText, this.state.recordFilterType, this.state.keywordFilterList, 
+    this.setRecords(this.state.recordSearchText, this.state.recordTypeFilterList, this.state.keywordFilterList, 
       this.state.creatorFilterList, this.state.recordSortOption);
   }
   changeFilter(changeDetails: SelectedRecordFilters): void {
     this.state.currentRecordPage = 0;
     this._cleanSelectedFilters(changeDetails);
     this.selectedFilters = changeDetails;
-    this.setRecords(this.state.recordSearchText, changeDetails.recordType, changeDetails.keywordFilterList, 
+    this.setRecords(this.state.recordSearchText, changeDetails.recordTypeFilterList, changeDetails.keywordFilterList, 
       changeDetails.creatorFilterList, this.state.recordSortOption);
   }
   searchRecords(): void {
@@ -92,21 +93,21 @@ export class RecordsViewComponent implements OnInit, OnDestroy {
   }
   search(searchText: string): void {
     this.state.currentRecordPage = 0;
-    this.setRecords(searchText, this.state.recordFilterType, this.state.keywordFilterList, 
+    this.setRecords(searchText, this.state.recordTypeFilterList, this.state.keywordFilterList, 
       this.state.creatorFilterList, this.state.recordSortOption);
   }
   getRecordPage(pageEvent: PageEvent): void {
     this.state.currentRecordPage = pageEvent.pageIndex;
-    this.setRecords(this.state.recordSearchText, this.state.recordFilterType, this.state.keywordFilterList, 
+    this.setRecords(this.state.recordSearchText, this.state.recordTypeFilterList, this.state.keywordFilterList, 
       this.state.creatorFilterList, this.state.recordSortOption);
   }
-  setRecords(searchText: string, recordType: FilterItem, keywordFilterList: FilterItem[], creatorFilterList: FilterItem[], sortOption: SortOption): void {
+  setRecords(searchText: string, recordTypeFilterList: FilterItem[], keywordFilterList: FilterItem[], creatorFilterList: FilterItem[], sortOption: SortOption): void {
     const paginatedConfig: PaginatedConfig = {
       pageIndex: this.state.currentRecordPage,
       limit: this.state.recordLimit,
       sortOption,
-      type: recordType ? [recordType.value] : undefined,
       searchText,
+      type: recordTypeFilterList ? recordTypeFilterList.map(item => item.value) : undefined,
       keywords: keywordFilterList ? keywordFilterList.map(item => item.value[`${CATALOG}keyword`]) : undefined,
       creators: creatorFilterList ? creatorFilterList.map(item => item.value['user'].iri): undefined,
     };
@@ -114,7 +115,7 @@ export class RecordsViewComponent implements OnInit, OnDestroy {
     this.cm.getRecords(this.catalogId, paginatedConfig).pipe(
       takeUntil(this._destroySub$),
     ).subscribe((response: HttpResponse<JSONLDObject[]>) => {
-        this.state.recordFilterType = recordType;
+        this.state.recordTypeFilterList = recordTypeFilterList;
         this.state.keywordFilterList = keywordFilterList;
         this.state.creatorFilterList = creatorFilterList;
         this.state.recordSearchText = searchText;
@@ -129,7 +130,7 @@ export class RecordsViewComponent implements OnInit, OnDestroy {
    */
   private _initializeSelectedFilters() {
     this.selectedFilters = {
-      recordType: this.state.recordFilterType,
+      recordTypeFilterList: this.state.recordTypeFilterList,
       keywordFilterList: this.state.keywordFilterList,
       creatorFilterList: this.state.creatorFilterList
     };
