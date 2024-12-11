@@ -44,4 +44,26 @@ export class ListFiltersComponent {
   @Input() filters: ListFilter[];
 
   constructor() { }
+
+  /**
+   * Resets the specified filter to its default state.
+   * 
+   * This method prevents the default behavior and stops the propagation of the pointer event. 
+   * It checks if the `reset` method exists on the provided `currentFilter` object and invokes it 
+   * to reset the filter.
+   *  
+   * @param {PointerEvent} event - The pointer event triggered by user interaction, such as a click.
+   *   Preventing the default behavior ensures that the reset action does not cause unintended side effects.
+   * @param {ListFilter} currentFilter - The filter to reset. This object must implement a `reset` method
+   *   for this action to work.
+   * 
+   * @returns {void}
+   */
+  reset(event: PointerEvent, currentFilter: ListFilter) {
+    event.preventDefault();
+    event.stopPropagation();
+    if (Object.prototype.hasOwnProperty.call(currentFilter, 'reset')) {
+      currentFilter.reset();
+    }
+  }
 }

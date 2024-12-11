@@ -40,6 +40,7 @@ export interface ListFilter {
   onInit: () => void, // To be called when the filter first loads
   getItemTooltip?: (filterItem: FilterItem) => string // Gets the display text of the filter for tooltip
   setFilterItems: () => void, // Sets the list of filter items
-  filter: (filterItem: FilterItem) => void // Executes the represented filter optionally using a specific provided
-                                           //filter item. If checkbox, expected to update the numChecked variables
+  filter: (filterItem: FilterItem) => void, // Executes the represented filter optionally using a specific provided
+                                            //filter item. If checkbox, expected to update the numChecked variables
+  reset?: () => void // To be called when checkbox filter should be all cleared
 }

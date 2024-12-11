@@ -24,7 +24,14 @@
   <mat-expansion-panel class="mat-elevation-z0" *ngFor="let currentFilter of filters" [expanded]="!currentFilter.hide">
       <mat-expansion-panel-header>
           <mat-panel-title>
-              {{ currentFilter.title }}<span class="checkbox-count ml-1" *ngIf="currentFilter.type === FilterType.CHECKBOX && currentFilter.numChecked > 0"> ({{currentFilter.numChecked}})</span>
+            <div class="d-flex flex-row">
+              <div class="filter-panel-title align-self-center">
+                {{ currentFilter.title }}<span class="checkbox-count ml-1" *ngIf="currentFilter.type === FilterType.CHECKBOX && currentFilter.numChecked > 0"> ({{currentFilter.numChecked}})</span>
+              </div>
+              <div class="filter-reset-button-container" *ngIf="currentFilter.type === FilterType.CHECKBOX && currentFilter.hasOwnProperty('reset')">
+                <button type="button" mat-button color="primary" (click)="reset($event, currentFilter)" [disabled]="currentFilter.numChecked == 0">Reset</button>
+              </div>
+            </div>
           </mat-panel-title>
       </mat-expansion-panel-header>
       <div class="filter-options">
@@ -53,10 +60,10 @@
               <div *ngIf="currentFilter.type === FilterType.CHECKBOX" class="filter-checkbox-items">
                   <div class="filter-option my-2" *ngFor="let filterItem of currentFilter.filterItems">
                     <ng-template [ngIf]="currentFilter.hasOwnProperty('getItemTooltip')" [ngIfElse]="checkboxNoToolTip">
-                        <mat-checkbox [(ngModel)]="filterItem.checked" (change)="currentFilter.filter(filterItem)" [title]="currentFilter.getItemTooltip(filterItem)">{{ filterItem.display }}</mat-checkbox>
+                        <mat-checkbox class="filter-option-checkbox" [(ngModel)]="filterItem.checked" (change)="currentFilter.filter(filterItem)" [title]="currentFilter.getItemTooltip(filterItem)">{{ filterItem.display }}</mat-checkbox>
                     </ng-template>
                     <ng-template #checkboxNoToolTip>
-                        <mat-checkbox [(ngModel)]="filterItem.checked" (change)="currentFilter.filter(filterItem)">{{ filterItem.display }}</mat-checkbox>
+                        <mat-checkbox class="filter-option-checkbox" [(ngModel)]="filterItem.checked" (change)="currentFilter.filter(filterItem)">{{ filterItem.display }}</mat-checkbox>
                     </ng-template>
                   </div>
               </div>

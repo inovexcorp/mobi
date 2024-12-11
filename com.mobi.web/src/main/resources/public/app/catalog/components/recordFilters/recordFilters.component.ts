@@ -28,16 +28,16 @@ import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
 import { CATALOG, DCTERMS } from '../../../prefixes';
-import { KeywordCount } from '../../../shared/models/keywordCount.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { CatalogStateService } from '../../../shared/services/catalogState.service';
-import { ToastService } from '../../../shared/services/toast.service';
 import { FilterItem } from '../../../shared/models/filterItem.interface'; 
-import { UserManagerService } from '../../../shared/services/userManager.service';
 import { FilterType, ListFilter } from '../../../shared/models/list-filter.interface';
-import { SearchableListFilter } from '../../../shared/models/searchable-list-filter.interface';
 import { getPropertyId } from '../../../shared/utility';
+import { KeywordCount } from '../../../shared/models/keywordCount.interface';
+import { SearchableListFilter } from '../../../shared/models/searchable-list-filter.interface';
 import { SelectedRecordFilters } from '../../models/selected-record-filters.interface';
+import { ToastService } from '../../../shared/services/toast.service';
+import { UserManagerService } from '../../../shared/services/userManager.service';
 
 /**
  * @class catalog.RecordFiltersComponent
@@ -80,6 +80,14 @@ export class RecordFiltersComponent implements OnInit, OnChanges, OnDestroy {
       (value) => value === this.recordType?.value, 
       (item) => componentContext.changeFilter.emit({recordType: item, keywordFilterList: componentContext.keywordFilterList, creatorFilterList: componentContext.creatorFilterList})
     );
+    recordTypeFilter.reset = function() {
+      componentContext.changeFilter.emit({
+        recordType: undefined,
+        keywordFilterList: componentContext.keywordFilterList,
+        creatorFilterList: componentContext.creatorFilterList
+      });
+      this.numChecked = 0;
+    };
     const getNumChecked = (items => items.filter(item => item.checked).length);
 
     const creatorFilter: SearchableListFilter = {
@@ -152,8 +160,20 @@ export class RecordFiltersComponent implements OnInit, OnChanges, OnDestroy {
       },
       filter: function() {
         const checkedCreatorObjects = this.filterItems.filter(currentFilterItem => currentFilterItem.checked);
-        componentContext.changeFilter.emit({recordType: componentContext.recordType, keywordFilterList: componentContext.keywordFilterList, creatorFilterList: checkedCreatorObjects});
+        componentContext.changeFilter.emit({
+          recordType: componentContext.recordType, 
+          keywordFilterList: componentContext.keywordFilterList, 
+          creatorFilterList: checkedCreatorObjects
+        });
         this.numChecked = getNumChecked(this.filterItems);
+      },
+      reset: function() {
+        componentContext.changeFilter.emit({
+          recordType: componentContext.recordType, 
+          keywordFilterList: componentContext.keywordFilterList, 
+          creatorFilterList: []
+        });
+        this.numChecked = 0;
       }
     };
 
@@ -207,6 +227,9 @@ export class RecordFiltersComponent implements OnInit, OnChanges, OnDestroy {
           filterInstance.numChecked = componentContext.keywordFilterList.length;
         }, error => componentContext._toast.createErrorToast(error));
       },
+      getItemTooltip: function(filterItem: FilterItem) {
+        return `${filterItem.value[`${CATALOG}keyword`]} (${filterItem.value['count']})`;
+      },
       setFilterItems: function() {
         this.filterItems = map(this.rawFilterItems, keywordObject => ({
           value: keywordObject,
@@ -221,8 +244,20 @@ export class RecordFiltersComponent implements OnInit, OnChanges, OnDestroy {
         } else {
           componentContext.keywordFilterList.push(filterItem);
         }
-        componentContext.changeFilter.emit({recordType: componentContext.recordType, keywordFilterList: componentContext.keywordFilterList, creatorFilterList: componentContext.creatorFilterList});
+        componentContext.changeFilter.emit({
+          recordType: componentContext.recordType, 
+          keywordFilterList: componentContext.keywordFilterList, 
+          creatorFilterList: componentContext.creatorFilterList
+        });
         this.numChecked = componentContext.keywordFilterList.length;
+      },
+      reset: function() {
+        componentContext.changeFilter.emit({
+          recordType: componentContext.recordType, 
+          keywordFilterList: [],
+          creatorFilterList: componentContext.creatorFilterList
+        });
+        this.numChecked = 0;
       }
     };
 

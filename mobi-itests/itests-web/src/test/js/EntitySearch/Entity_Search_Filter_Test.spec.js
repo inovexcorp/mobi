@@ -83,7 +83,31 @@ module.exports = {
         browser.page.entitySearchPage().assertNumFilterChips(0);
     },
 
-    'Step 9: Verify No Search Filter Logic': function (browser) {
+    'Step 9: Verify Reset Button for Filters': function (browser) {
+        // Toggle Filters ON
+        browser.page.entitySearchPage().toggleFilterItem('Record Type', 'Ontology Record');
+        browser.globals.wait_for_no_spinners(browser);
+        browser.page.entitySearchPage().toggleFilterItem('Keywords', 'shacl1');
+        browser.globals.wait_for_no_spinners(browser);
+        // Validate Filters
+        browser.page.entitySearchPage().verifyFilterItemCheckedState('Ontology Record', true);
+        browser.page.entitySearchPage().verifyFilterItemCheckedState('shacl1', true);
+        browser.page.entitySearchPage().assertNumFilterChips(2);
+        // Check Filters List
+        browser.page.entitySearchPage().assertFilterChipExists('Ontology Record');
+        browser.page.entitySearchPage().assertFilterChipExists('shacl1');
+        // RESET button
+        browser.page.entitySearchPage().resetFilter('Record Type');
+        browser.globals.wait_for_no_spinners(browser);
+        browser.page.entitySearchPage().resetFilter('Keywords');
+        browser.globals.wait_for_no_spinners(browser);
+        // Validate that filters was cleared
+        browser.page.entitySearchPage().verifyFilterItemCheckedState('Ontology Record', false);
+        browser.page.entitySearchPage().verifyFilterItemCheckedState('shacl1', false);
+        browser.page.entitySearchPage().assertNumFilterChips(0);
+    },
+
+    'Step 10: Verify No Search Filter Logic': function (browser) {
         // Toggle Filters ON
         browser.page.entitySearchPage().toggleFilterItem('Record Type', 'Ontology Record');
         browser.globals.wait_for_no_spinners(browser);
@@ -109,7 +133,7 @@ module.exports = {
         browser.page.entitySearchPage().assertNumFilterChips(0);
     },
 
-    'Step 10: Apply Search Text & validate results': function (browser) {
+    'Step 11: Apply Search Text & validate results': function (browser) {
         // Search Page without filters
         browser.page.entitySearchPage().applySearchText('shapes');
         browser.globals.wait_for_no_spinners(browser);
@@ -134,7 +158,7 @@ module.exports = {
         browser.page.entitySearchPage().verifyRecordListView();
     },
 
-    'Step 11: Verify removing filter chip removes filter': function (browser) {
+    'Step 12: Verify removing filter chip removes filter': function (browser) {
         browser.page.entitySearchPage().removeFilterChip('Shapes Graph Record');
         browser.page.entitySearchPage().removeFilterChip('shacl1');
         browser.globals.wait_for_no_spinners(browser);
@@ -153,7 +177,7 @@ module.exports = {
         browser.page.entitySearchPage().verifyFilterItemCheckedState('Shapes Graph Record', true);
     },
 
-    'Step 12: Verify reset button clears filter chips' : function(browser) {
+    'Step 13: Verify reset button clears filter chips' : function(browser) {
         browser.page.entitySearchPage().resetFilters();
         browser.globals.wait_for_no_spinners(browser);
         browser.page.entitySearchPage().assertNumFilterChips(0);
@@ -169,7 +193,7 @@ module.exports = {
         browser.page.entitySearchPage().assertNumFilterChips(1);
     },
 
-    'Step 13: Navigate Away and Back': function (browser) {
+    'Step 14: Navigate Away and Back': function (browser) {
         browser.globals.switchToPage(browser, 'shapes-graph-editor', 'shapes-graph-editor-page')
         browser.globals.wait_for_no_spinners(browser);
         browser.globals.switchToPage(browser, 'entity-search', 'app-entity-search-page');
@@ -186,13 +210,13 @@ module.exports = {
         browser.page.entitySearchPage().assertNumFilterChips(2);
     },
 
-    'Step 14: Logout and Log Back In': function (browser) {
+    'Step 15: Logout and Log Back In': function (browser) {
         browser.useCss();
         browser.globals.logout(browser);
         browser.globals.initial_steps(browser, adminUsername, adminPassword);
     },
 
-    'Step 15: Verify Cleared State': function (browser) {
+    'Step 16: Verify Cleared State': function (browser) {
         browser.globals.switchToPage(browser, 'entity-search', 'app-entity-search-page');
         browser.useCss()
             .waitForElementVisible('app-entity-search-page info-message p')
@@ -209,7 +233,7 @@ module.exports = {
         browser.useCss().expect.element('input.mat-checkbox-input[aria-checked=true]').to.not.be.present;
     },
 
-    'Step 16: Ensure Selected types are not still Being Stored': function (browser) {
+    'Step 17: Ensure Selected types are not still Being Stored': function (browser) {
         browser.page.entitySearchPage().applySearchText('shapes');
         browser.useCss().assert.elementsCount('app-entity-search-page app-search-results-list mat-card-title', 10);
         browser.useCss().expect.element('app-entity-search-page app-search-results-list open-record-button button').to.be.present;

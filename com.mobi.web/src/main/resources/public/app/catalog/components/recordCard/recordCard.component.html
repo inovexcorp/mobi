@@ -22,12 +22,14 @@
   -->
 <mat-card class="record-card" [ngClass]="{'clickable': !!viewRecord}">
     <mat-card-title>
-        <span (click)="copyIRI()" class="title-text">
-            {{title}}
+        <div class="title-text-container d-flex">
+            <span class="title-text mr-2" [title]="title" (click)="copyIRI()">
+                {{title}}
+            </span>
             <button mat-icon-button disableRipple id="copyIcon" matTooltip="Copy Record IRI" matTooltipPosition="above">
                 <mat-icon>content_copy</mat-icon>
             </button>
-        </span>
+        </div>
     </mat-card-title>
     <mat-card-subtitle><record-icon [record]="record"></record-icon>
         <record-type [record]="record"></record-type> &bull; Updated {{modified | date:'short'}}</mat-card-subtitle>

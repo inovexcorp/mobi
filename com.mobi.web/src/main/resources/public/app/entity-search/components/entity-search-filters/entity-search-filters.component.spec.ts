@@ -177,6 +177,24 @@ describe('Entity Search Filters component', () => {
         expect(component.changeFilter.emit).toHaveBeenCalledWith(expectedChangeFilter);
       });
     });
+    describe('reset methods', () => {
+      it('should reset record type filter', () => {
+        recordTypeFilter.reset();
+        const expectedChangeFilter: SelectedEntityFilters = {
+          chosenTypes: [], 
+          keywordFilterItems: [keyword1FilterItem]
+        };
+        expect(component.changeFilter.emit).toHaveBeenCalledWith(expectedChangeFilter);
+      });
+      it('should reset keywordsFilter', () => {
+        keywordsFilter.reset();
+        const expectedChangeFilter: SelectedEntityFilters = {
+          chosenTypes: [ontRecordFilterItem], 
+          keywordFilterItems: []
+        };
+        expect(component.changeFilter.emit).toHaveBeenCalledWith(expectedChangeFilter);
+      });
+    });
     it('should update the selectedRecordTypes and numChecked on updateList call', () => {
       const ontologyRecordActualItem = recordTypeFilter.filterItems.find(item => item.value === `${ONTOLOGYEDITOR}OntologyRecord`);
       expect(ontologyRecordActualItem).toBeDefined();
