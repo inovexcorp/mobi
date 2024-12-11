@@ -395,3 +395,21 @@ login-layout, main-layout {
   width: 15px;
   height: 15px;
 }
+
+// List Filters
+.list-filters {
+    .filter-option {
+        .filter-option-checkbox {
+            display: flex;
+            .mat-checkbox-layout {
+                width: 100% !important;
+                .mat-checkbox-label {
+                    flex: 1;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    width: 100% !important;
+                }
+            }
+        }
+    }
+}

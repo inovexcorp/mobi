@@ -49,7 +49,7 @@ const createRecordItemXPathSelector = function(titleOfEntity, titleOfRecord) {
 const createFiltersXPathSelector = function(filterTypeHeader, filterType) {
   var selectors = ['//app-entity-search-page',
       '//app-entity-search-filters//div[contains(@class, "entity-search-filters")]//mat-expansion-panel-header',
-      '//mat-panel-title[contains(@class, "mat-expansion-panel-header-title")][text()[contains(.,"' + filterTypeHeader + '")]]//ancestor::mat-expansion-panel',
+      `//mat-panel-title//div[contains(@class, "filter-panel-title") and contains(text(), '${filterTypeHeader}')]//ancestor::mat-expansion-panel`,
       '//div[contains(@class, "mat-expansion-panel-content")]',
       '//div[contains(@class, "filter-option")]//mat-checkbox']
   if (filterType) {
@@ -141,6 +141,13 @@ const entitySearchPageCommands = {
           .waitForElementVisible(iconXPath)
           .click(iconXPath)
           .waitForElementNotPresent(iconXPath);
+  },
+
+  resetFilter: function(filterTitle) {
+    const buttonXpath = `//mat-panel-title//div[contains(@class, 'filter-panel-title') and contains(text(), '${filterTitle}')]/ancestor::mat-panel-title//button`;
+    return this.useXpath()
+      .waitForElementVisible(buttonXpath)
+      .click(buttonXpath);
   },
 
   resetFilters: function() {

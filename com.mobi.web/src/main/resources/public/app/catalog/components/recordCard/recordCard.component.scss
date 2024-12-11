@@ -36,8 +36,13 @@
         -webkit-line-clamp: 2;
     }
 
-    .title-text {
-        cursor: auto;
+    .title-text-container {
+        .title-text {
+            width: fit-content;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            cursor: auto;
+        }
     }
 
     button.mat-icon-button {

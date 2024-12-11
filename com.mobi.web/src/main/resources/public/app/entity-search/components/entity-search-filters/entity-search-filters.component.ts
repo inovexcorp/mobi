@@ -109,6 +109,14 @@ export class EntitySearchFiltersComponent implements OnInit, OnChanges, OnDestro
           chosenTypes: componentContext.typeFilters, 
           keywordFilterItems: componentContext.keywordFilterItems
         });
+      },
+      reset: function () {
+        componentContext.typeFilters = [];
+        componentContext.changeFilter.emit({
+          chosenTypes: componentContext.typeFilters,
+          keywordFilterItems: componentContext.keywordFilterItems
+        });
+        this.numChecked = componentContext.typeFilters.length;
       }
     };
     const keywordsFilter: SearchableListFilter = {
@@ -161,6 +169,9 @@ export class EntitySearchFiltersComponent implements OnInit, OnChanges, OnDestro
           filterInstance.numChecked = componentContext.keywordFilterItems.length;
         });
       },
+      getItemTooltip: function(filterItem: FilterItem) {
+        return filterItem.value;
+      },
       setFilterItems: function() {
         this.filterItems = this.rawFilterItems.map((keywordObject: KeywordCount) => ({
           value: `${keywordObject[`${CATALOG}keyword`]}`,
@@ -175,6 +186,14 @@ export class EntitySearchFiltersComponent implements OnInit, OnChanges, OnDestro
         } else {
           componentContext.keywordFilterItems.push(filterItem);
         }
+        componentContext.changeFilter.emit({
+          chosenTypes: componentContext.typeFilters,
+          keywordFilterItems: componentContext.keywordFilterItems
+        });
+        this.numChecked = componentContext.keywordFilterItems.length;
+      },
+      reset: function () {
+        componentContext.keywordFilterItems = [];
         componentContext.changeFilter.emit({
           chosenTypes: componentContext.typeFilters,
           keywordFilterItems: componentContext.keywordFilterItems

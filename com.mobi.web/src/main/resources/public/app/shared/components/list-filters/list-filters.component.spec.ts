@@ -23,20 +23,20 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
 import { By } from '@angular/platform-browser';
-import { MockComponent } from 'ng-mocks';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatRadioModule } from '@angular/material/radio';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 
-import {
-  cleanStylesFromDOM
-} from '../../../../test/ts/Shared';
+import { MockComponent } from 'ng-mocks';
+
+import { cleanStylesFromDOM } from '../../../../test/ts/Shared';
+import { FilterItem } from '../../models/filterItem.interface';
 import { FilterType, ListFilter } from '../../models/list-filter.interface';
+import { InfoMessageComponent } from '../infoMessage/infoMessage.component';
 import { SearchableListFilter } from '../../models/searchable-list-filter.interface';
 import { SearchBarComponent } from '../searchBar/searchBar.component';
-import { InfoMessageComponent } from '../infoMessage/infoMessage.component';
 import { ListFiltersComponent } from './list-filters.component';
 
 describe('ListFiltersComponent', () => {
@@ -159,9 +159,20 @@ describe('ListFiltersComponent', () => {
       setFilterItems: function (): void {
         throw new Error('Function not implemented.');
       },
-      filter: jasmine.createSpy('filter')
+      filter: jasmine.createSpy('filter'),
+      reset() {
+        this.filterItems.forEach((element: FilterItem) => {
+          element.checked = false; 
+        });
+        this.numChecked = 0;
+      },
     };
-    component.filters = [radioFilter, simpleCheckboxFilter, emptyCheckboxFilter, searchableCheckboxFilter];
+    component.filters = [
+      radioFilter,
+      simpleCheckboxFilter,
+      emptyCheckboxFilter,
+      searchableCheckboxFilter
+    ];
     fixture.detectChanges();
   });
 
@@ -179,6 +190,25 @@ describe('ListFiltersComponent', () => {
   it('should create', () => {
     expect(component).toBeTruthy();
   });
+  describe('controllers method', () => {
+    it('should reset the filter when reset method is called', () => {
+      const event = jasmine.createSpyObj('PointerEvent', ['preventDefault', 'stopPropagation']);
+      const mockFilter: Partial<ListFilter> = {
+        reset: jasmine.createSpy('reset'),
+      };
+      component.reset(event as PointerEvent, mockFilter as ListFilter);
+      expect(event.preventDefault).toHaveBeenCalled();
+      expect(event.stopPropagation).toHaveBeenCalled();
+      expect(mockFilter.reset).toHaveBeenCalled();
+    });
+    it('should not throw error if reset method is not available on filter', () => {
+      const event = jasmine.createSpyObj('PointerEvent', ['preventDefault', 'stopPropagation']);
+      const mockFilter: Partial<ListFilter> = {};
+      expect(() => component.reset(event as PointerEvent, mockFilter as ListFilter)).not.toThrow();
+      expect(event.preventDefault).toHaveBeenCalled();
+      expect(event.stopPropagation).toHaveBeenCalled();
+    });
+  });
   describe('contains the correct html', () => {
     it('for wrapping containers', function() {
         expect(element.queryAll(By.css('.list-filters')).length).toEqual(1);
@@ -189,9 +219,10 @@ describe('ListFiltersComponent', () => {
     it('for a radio type filter', () => {
       const panel = element.queryAll(By.css('mat-expansion-panel'))[0];
       expect(panel).toBeTruthy();
-      const panelTitle = panel.queryAll(By.css('mat-panel-title'))[0];
+      const panelTitle = panel.queryAll(By.css('mat-panel-title .filter-panel-title'))[0];
       expect(panelTitle).toBeTruthy();
       expect(panelTitle.nativeElement.textContent.trim()).toEqual(radioFilter.title);
+      expect(panel.queryAll(By.css('mat-panel-title .filter-reset-button-container')).length).toEqual(0);
       expect(panel.queryAll(By.css('search-bar')).length).toEqual(0);
       expect(panel.queryAll(By.css('info-message')).length).toEqual(0);
       expect(panel.queryAll(By.css('.filter-radio-items')).length).toEqual(1);
@@ -202,9 +233,10 @@ describe('ListFiltersComponent', () => {
     it('for a simple checkbox filter', () => {
       const panel = element.queryAll(By.css('mat-expansion-panel'))[1];
       expect(panel).toBeTruthy();
-      const panelTitle = panel.queryAll(By.css('mat-panel-title'))[0];
+      const panelTitle = panel.queryAll(By.css('mat-panel-title .filter-panel-title'))[0];
       expect(panelTitle).toBeTruthy();
       expect(panelTitle.nativeElement.textContent.trim()).toEqual(`${simpleCheckboxFilter.title} (${simpleCheckboxFilter.numChecked})`);
+      expect(panel.queryAll(By.css('mat-panel-title .filter-reset-button-container')).length).toEqual(0);
       expect(panel.queryAll(By.css('search-bar')).length).toEqual(0);
       expect(panel.queryAll(By.css('info-message')).length).toEqual(0);
       expect(panel.queryAll(By.css('.filter-radio-items')).length).toEqual(0);
@@ -215,9 +247,10 @@ describe('ListFiltersComponent', () => {
     it('for an empty checkbox filter', () => {
       const panel = element.queryAll(By.css('mat-expansion-panel'))[2];
       expect(panel).toBeTruthy();
-      const panelTitle = panel.queryAll(By.css('mat-panel-title'))[0];
+      const panelTitle = panel.queryAll(By.css('mat-panel-title .filter-panel-title'))[0];
       expect(panelTitle).toBeTruthy();
       expect(panelTitle.nativeElement.textContent.trim()).toEqual(emptyCheckboxFilter.title);
+      expect(panel.queryAll(By.css('mat-panel-title .filter-reset-button-container')).length).toEqual(0);
       expect(panel.queryAll(By.css('search-bar')).length).toEqual(0);
       expect(panel.queryAll(By.css('info-message')).length).toEqual(1);
       expect(panel.queryAll(By.css('.filter-radio-items')).length).toEqual(0);
@@ -228,9 +261,10 @@ describe('ListFiltersComponent', () => {
     it('for a searchable checkbox', () => {
       const panel = element.queryAll(By.css('mat-expansion-panel'))[3];
       expect(panel).toBeTruthy();
-      const panelTitle = panel.queryAll(By.css('mat-panel-title'))[0];
+      const panelTitle = panel.queryAll(By.css('mat-panel-title .filter-panel-title'))[0];
       expect(panelTitle).toBeTruthy();
       expect(panelTitle.nativeElement.textContent.trim()).toEqual(searchableCheckboxFilter.title);
+      expect(panel.queryAll(By.css('mat-panel-title .filter-reset-button-container')).length).toEqual(1);
       expect(panel.queryAll(By.css('search-bar')).length).toEqual(1);
       expect(panel.queryAll(By.css('info-message')).length).toEqual(0);
       expect(panel.queryAll(By.css('.filter-radio-items')).length).toEqual(0);
@@ -246,4 +280,34 @@ describe('ListFiltersComponent', () => {
       expect(searchableCheckboxFilter.nextPage).toHaveBeenCalledWith();
     });
   });
+  describe('contains correct html bindings', () => {
+    it('should call reset method when the reset button is clicked', () => {
+      spyOn(searchableCheckboxFilter, 'reset');
+      searchableCheckboxFilter.numChecked = 2;
+      component.filters = [searchableCheckboxFilter];
+      fixture.detectChanges();
+
+      const resetButton = fixture.debugElement.query(By.css('mat-panel-title .filter-reset-button-container button[mat-button]'));
+      resetButton.triggerEventHandler('click', new PointerEvent('click'));
+      expect(searchableCheckboxFilter.reset).toHaveBeenCalled();
+    });
+    it('should disable the reset button when numChecked is 0', () => {
+      searchableCheckboxFilter.numChecked = 0;
+      component.filters = [searchableCheckboxFilter];
+      fixture.detectChanges();
+
+      const resetButton = fixture.debugElement.query(By.css('mat-panel-title .filter-reset-button-container button[mat-button]'));
+      const isDisabled = resetButton.properties['disabled'];
+      expect(isDisabled).toBeTrue();
+    });
+    it('should enable the reset button when numChecked is greater than 0', () => {
+      searchableCheckboxFilter.numChecked = 3;
+      component.filters = [searchableCheckboxFilter];
+      fixture.detectChanges();
+
+      const resetButton = fixture.debugElement.query(By.css('mat-panel-title .filter-reset-button-container button[mat-button]'));
+      const isDisabled = resetButton.properties['disabled'];
+      expect(isDisabled).toBeFalse();
+    });
+  })
 });

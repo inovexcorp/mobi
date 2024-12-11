@@ -38,6 +38,7 @@ import { getBeautifulIRI } from '../../../shared/utility';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { KeywordCount } from '../../../shared/models/keywordCount.interface';
 import { ListFiltersComponent } from '../../../shared/components/list-filters/list-filters.component';
+import { SelectedRecordFilters } from '../../models/selected-record-filters.interface';
 import { ToastService } from '../../../shared/services/toast.service';
 import { User } from '../../../shared/models/user.class';
 import { UserManagerService } from '../../../shared/services/userManager.service';
@@ -69,6 +70,21 @@ describe('Record Filters component', function () {
     [`${DCTERMS}publisher`]: [{'@id': user.iri}]
   }];
   const keywords = [keywordObject(keyword, 6)];
+  const keywordFilterItem: FilterItem = {
+    value: keywords[0],
+    display: `${keyword} (${keywords[0].count})`,
+    checked: true
+  };
+  const creatorFilterItem: FilterItem = {
+    value: { user, count: 1 },
+    display: `${user.displayName} (1)`,
+    checked: true
+  };
+  const recordTypeFilterItem = {
+    value: 'test1',
+    display: 'Test 1',
+    checked: true
+  };
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -128,21 +144,9 @@ describe('Record Filters component', function () {
     userManagerStub.filterUsers.and.callFake((users) => users);
 
     component.catalogId = catalogId;
-    component.recordType = {
-      value: 'test1',
-      display: 'Test 1',
-      checked: true
-    };
-    component.keywordFilterList = [{
-      value: keywords[0],
-      display: `${keyword} (${keywords[0].count})`,
-      checked: true
-    }];
-    component.creatorFilterList = [{
-      value: { user, count: 1 },
-      display: `${user.displayName} (1)`,
-      checked: true
-    }];
+    component.recordType = recordTypeFilterItem;
+    component.keywordFilterList = [keywordFilterItem];
+    component.creatorFilterList = [creatorFilterItem];
   });
 
   afterEach(() => {
@@ -276,6 +280,45 @@ describe('Record Filters component', function () {
       component.updateFilterList(component.creatorFilterIndex, [], [firstCreatorFilterItem]);
       expect(actualFilterItem.checked).toBeFalse();
       expect(creatorFilter.numChecked).toEqual(0);
+    });
+  });
+  describe('reset methods', () => {
+    beforeEach(() => {
+      component.ngOnInit();
+      spyOn(component.changeFilter, 'emit');
+    });
+    it('should reset record type filter', () => {
+      const recordTypeFilter = component.filters[0];
+      expect(recordTypeFilter).toBeDefined();
+      recordTypeFilter.reset();
+      const expectedChangeFilter: SelectedRecordFilters = {
+        recordType: undefined,
+        keywordFilterList: [keywordFilterItem],
+        creatorFilterList: [creatorFilterItem]
+      };
+      expect(component.changeFilter.emit).toHaveBeenCalledWith(expectedChangeFilter);
+    });
+    it('should reset creator filter', () => {
+      const creatorFilter = component.filters[1];
+      expect(creatorFilter).toBeDefined();
+      creatorFilter.reset();
+      const expectedChangeFilter: SelectedRecordFilters = {
+        recordType: recordTypeFilterItem,
+        keywordFilterList: [keywordFilterItem],
+        creatorFilterList: []
+      };
+      expect(component.changeFilter.emit).toHaveBeenCalledWith(expectedChangeFilter);
+    });
+    it('should reset keyword filter', () => {
+      const keywordFilter = component.filters[2];
+      expect(keywordFilter).toBeDefined();
+      keywordFilter.reset();
+      const expectedChangeFilter: SelectedRecordFilters = {
+        recordType: recordTypeFilterItem,
+        keywordFilterList: [],
+        creatorFilterList: [creatorFilterItem]
+      };
+      expect(component.changeFilter.emit).toHaveBeenCalledWith(expectedChangeFilter);
     });
   });
   describe('contains the correct html', () => {
