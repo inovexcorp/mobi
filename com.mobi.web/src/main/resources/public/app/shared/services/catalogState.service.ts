@@ -24,10 +24,10 @@ import { Injectable } from '@angular/core';
 import { find, includes, get } from 'lodash';
 
 import { CATALOG, DATASET, DCTERMS, DELIM, ONTOLOGYEDITOR, SHAPESGRAPHEDITOR, WORKFLOWS } from '../../prefixes';
-import { JSONLDObject } from '../models/JSONLDObject.interface';
-import { SortOption } from '../models/sortOption.interface';
 import { CatalogManagerService } from './catalogManager.service';
 import { FilterItem } from '../models/filterItem.interface';
+import { JSONLDObject } from '../models/JSONLDObject.interface';
+import { SortOption } from '../models/sortOption.interface';
 
 /**
  * @class shared.CatalogStateService
@@ -66,11 +66,11 @@ export class CatalogStateService {
      */
     recordSortOption: SortOption = undefined;
     /**
-     * `recordFilterType` holds a {@link shared.FilterItem} representing the IRI of a catalog Record type to be used to
-     * filter the results in the {@link catalog.RecordsViewComponent}.
-     * @type {FilterItem}
+     * `recordTypeFilterList` holds a list of {@link shared.FilterItem}s representing the IRIs of catalog Record types
+     * to be used to filter the results in the {@link catalog.RecordsViewComponent}.
+     * @type {FilterItem[]}
      */
-    recordFilterType: FilterItem = undefined;
+    recordTypeFilterList: FilterItem[] = [];
     /**
      * `keywordFilterList` holds a list of {@link shared.FilterItem}s representing keywords to be used to filter the
      * results in the {@link catalog.RecordsViewComponent}.
@@ -160,7 +160,7 @@ export class CatalogStateService {
     reset(): void {
         this.totalRecordSize = 0;
         this.currentRecordPage = 1;
-        this.recordFilterType = undefined;
+        this.recordTypeFilterList = [];
         this.keywordFilterList = [];
         this.keywordSearchText = '';
         this.creatorFilterList = [];

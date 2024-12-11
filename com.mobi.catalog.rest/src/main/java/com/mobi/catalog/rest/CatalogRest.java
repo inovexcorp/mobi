@@ -433,7 +433,7 @@ public class CatalogRest {
                             "http://purl.org/dc/terms/title"},
                     required = true))
             @QueryParam("sort") String sort,
-            @Parameter(schema = @Schema(description = "IRI of the Type Records you want to get back",
+            @Parameter(schema = @Schema(description = "IRIs of the Record Types you want to get back",
                     allowableValues = {"http://mobi.com/ontologies/catalog#VersionedRecord",
                             "http://mobi.com/ontologies/catalog#VersionedRDFRecord",
                             "http://mobi.com/ontologies/catalog#Record",
@@ -441,9 +441,8 @@ public class CatalogRest {
                             "http://mobi.com/ontologies/shapes-graph-editor#ShapesGraphRecord",
                             "http://mobi.com/ontologies/delimited#MappingRecord",
                             "http://mobi.com/ontologies/catalog#UnversionedRecord",
-                            "http://mobi.com/ontologies/dataset#DatasetRecord"},
-                    required = true))
-            @QueryParam("type") String recordType,
+                            "http://mobi.com/ontologies/dataset#DatasetRecord"}))
+            @QueryParam("type") List<String> recordTypes,
             @Parameter(description = "List of keywords")
             @QueryParam("keywords") List<String> keywords,
             @Parameter(description = "List of creator IRIs")
@@ -467,8 +466,8 @@ public class CatalogRest {
             if (sort != null) {
                 builder.sortBy(vf.createIRI(sort));
             }
-            if (recordType != null) {
-                builder.typeFilter(List.of(vf.createIRI(recordType)));
+            if (recordTypes != null && !recordTypes.isEmpty()) {
+                builder.typeFilter(recordTypes.stream().map(vf::createIRI).collect(Collectors.toList()));
             }
             if (searchText != null) {
                 builder.searchText(searchText);
@@ -3002,7 +3001,14 @@ public class CatalogRest {
     )
     public Response getRecordTypes() {
         try {
-            return Response.ok(mapper.valueToTree(getRecordFactories().keySet()).toString()).build();
+            ObjectNode returnObject = mapper.createObjectNode();
+            getRecordFactories().forEach((iri, factory) -> {
+                Set<String> parentIRIs = factory.getParentTypeIRIs().stream()
+                        .map(IRI::stringValue)
+                        .collect(Collectors.toSet());
+                returnObject.set(iri, mapper.valueToTree(parentIRIs));
+            });
+            return Response.ok(returnObject).build();
         } catch (MobiException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         }

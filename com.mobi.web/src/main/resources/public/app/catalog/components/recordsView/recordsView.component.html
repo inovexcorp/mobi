@@ -24,11 +24,11 @@
     <div class="col-lg-10 offset-lg-1 h-100">
         <div class="row h-100 flex-nowrap">
             <div class="col-3 vertical-scroll">
-                <record-filters
+              <record-filters
                         [catalogId]="catalogId"
-                        [recordType]="state.recordFilterType"
-                        [keywordFilterList]="state.keywordFilterList"
-                        [creatorFilterList]="state.creatorFilterList"
+                        [recordTypes]="state.recordTypeFilterList"
+                        [keywords]="state.keywordFilterList"
+                        [creators]="state.creatorFilterList"
                         (changeFilter)="changeFilter($event)">
                 </record-filters>
             </div>

@@ -24,6 +24,7 @@ import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
+
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { cloneDeep } from 'lodash';
@@ -107,7 +108,6 @@ describe('Record Filters component', function () {
     userManagerStub = TestBed.inject(UserManagerService) as jasmine.SpyObj<UserManagerService>;
     catalogManagerStub = TestBed.inject(CatalogManagerService) as jasmine.SpyObj<CatalogManagerService>;
 
-    catalogManagerStub.recordTypes = ['test1', 'test2'];
     catalogManagerStub.localCatalog = {'@id': catalogId, '@type': []};
     catalogManagerStub.getRecords.and.returnValue(of(new HttpResponse<JSONLDObject[]>({
       body: records,
@@ -117,8 +117,8 @@ describe('Record Filters component', function () {
       body: keywords,
       headers: new HttpHeaders(headers)
     })));
-    catalogManagerStub.getRecordTypeFilter.and.callFake((isSelectedCall, emitterCall) => {
-      const filterItems = catalogManagerStub.recordTypes.map(type => ({
+    catalogManagerStub.getRecordTypeFilter.and.callFake(isSelectedCall => {
+      const filterItems = ['test1', 'test2'].map(type => ({
         value: type,
         display: getBeautifulIRI(type),
         checked: isSelectedCall(type),
@@ -135,7 +135,7 @@ describe('Record Filters component', function () {
         },
         setFilterItems: () => {
         },
-        filter: (filterItem: FilterItem) => {
+        filter: () => {
         },
       };
     });
@@ -144,9 +144,9 @@ describe('Record Filters component', function () {
     userManagerStub.filterUsers.and.callFake((users) => users);
 
     component.catalogId = catalogId;
-    component.recordType = recordTypeFilterItem;
-    component.keywordFilterList = [keywordFilterItem];
-    component.creatorFilterList = [creatorFilterItem];
+    component.recordTypes = [recordTypeFilterItem];
+    component.keywords = [keywordFilterItem];
+    component.creators = [creatorFilterItem];
   });
 
   afterEach(() => {
@@ -169,6 +169,7 @@ describe('Record Filters component', function () {
       ];
       expect(recordTypeFilter.title).toEqual('Record Type');
       expect(recordTypeFilter.filterItems).toEqual(expectedFilterItems);
+      expect(catalogManagerStub.getRecordTypeFilter).toHaveBeenCalledWith(jasmine.any(Function), jasmine.any(Function));
     });
     it('with creatorFilter', () => {
       const creatorFilter = component.filters[1];
@@ -217,7 +218,7 @@ describe('Record Filters component', function () {
         component.filters[1].filterItems.push(secondCreatorFilterItem);
         component.filters[1].filter(undefined);
         expect(component.changeFilter.emit).toHaveBeenCalledWith({
-          recordType: component.recordType,
+          recordTypeFilterList: component.recordTypes,
           keywordFilterList: [firstKeywordFilterItem],
           creatorFilterList: [firstCreatorFilterItem, secondCreatorFilterItem]
         });
@@ -227,7 +228,7 @@ describe('Record Filters component', function () {
         component.filters[1].filterItems = [];
         component.filters[1].filter(undefined);
         expect(component.changeFilter.emit).toHaveBeenCalledWith({
-          recordType: component.recordType,
+          recordTypeFilterList: component.recordTypes,
           keywordFilterList: [firstKeywordFilterItem],
           creatorFilterList: []
         });
@@ -236,11 +237,11 @@ describe('Record Filters component', function () {
     });
     describe('keywordsFilter should filter records', () => {
       it('if the keyword filter has been checked', () => {
-        component.keywordFilterList = [firstKeywordFilterItem];
+        component.keywords = [firstKeywordFilterItem];
         component.filters[2].filter(secondKeywordFilterItem);
-        expect(component.keywordFilterList).toEqual([firstKeywordFilterItem, secondKeywordFilterItem]);
+        expect(component.keywords).toEqual([firstKeywordFilterItem, secondKeywordFilterItem]);
         expect(component.changeFilter.emit).toHaveBeenCalledWith({
-          recordType: component.recordType,
+          recordTypeFilterList: component.recordTypes,
           keywordFilterList: [firstKeywordFilterItem, secondKeywordFilterItem],
           creatorFilterList: [firstCreatorFilterItem]
         });
@@ -248,26 +249,14 @@ describe('Record Filters component', function () {
       });
       it('if the keyword filter has been unchecked', () => {
         component.filters[2].filter(firstKeywordFilterItem);
-        expect(component.keywordFilterList).toEqual([]);
+        expect(component.keywords).toEqual([]);
         expect(component.changeFilter.emit).toHaveBeenCalledWith({
-          recordType: component.recordType,
+          recordTypeFilterList: component.recordTypes,
           keywordFilterList: [],
           creatorFilterList: [firstCreatorFilterItem]
         });
         expect(component.filters[2].numChecked).toEqual(0);
       });
-    });
-    it('should update a filter\'s selected item and numChecked on updateValue call', () => {
-      const recordTypeFilter = component.filters[0];
-      expect(recordTypeFilter).toBeDefined();
-      expect(recordTypeFilter.filterItems.length).toEqual(catalogManagerStub.recordTypes.length);
-      const actualFilterItem = recordTypeFilter.filterItems[0];
-      actualFilterItem.checked = true;
-      recordTypeFilter.numChecked = 1;
-
-      component.updateFilterValue(component.recordTypeFilterIndex);
-      expect(actualFilterItem.checked).toBeFalse();
-      expect(recordTypeFilter.numChecked).toEqual(0);
     });
     it('should update a filter\'s selected items and numChecked on updateList call', () => {
       const creatorFilter = component.filters[1];
@@ -292,7 +281,7 @@ describe('Record Filters component', function () {
       expect(recordTypeFilter).toBeDefined();
       recordTypeFilter.reset();
       const expectedChangeFilter: SelectedRecordFilters = {
-        recordType: undefined,
+        recordTypeFilterList: [],
         keywordFilterList: [keywordFilterItem],
         creatorFilterList: [creatorFilterItem]
       };
@@ -303,7 +292,7 @@ describe('Record Filters component', function () {
       expect(creatorFilter).toBeDefined();
       creatorFilter.reset();
       const expectedChangeFilter: SelectedRecordFilters = {
-        recordType: recordTypeFilterItem,
+        recordTypeFilterList: [recordTypeFilterItem],
         keywordFilterList: [keywordFilterItem],
         creatorFilterList: []
       };
@@ -314,7 +303,7 @@ describe('Record Filters component', function () {
       expect(keywordFilter).toBeDefined();
       keywordFilter.reset();
       const expectedChangeFilter: SelectedRecordFilters = {
-        recordType: recordTypeFilterItem,
+        recordTypeFilterList: [recordTypeFilterItem],
         keywordFilterList: [],
         creatorFilterList: [creatorFilterItem]
       };

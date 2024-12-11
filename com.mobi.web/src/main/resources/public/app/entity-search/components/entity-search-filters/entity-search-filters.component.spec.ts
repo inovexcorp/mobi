@@ -22,16 +22,18 @@
  */
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
+
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 import { cloneDeep } from 'lodash';
 
+import { CATALOG } from '../../../prefixes';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
-import { DELIM, ONTOLOGYEDITOR, SHAPESGRAPHEDITOR, WORKFLOWS } from '../../../prefixes';
 import { EntitySearchStateService } from '../../services/entity-search-state.service';
 import { FilterItem } from '../../../shared/models/filterItem.interface';
+import { getBeautifulIRI } from '../../../shared/utility';
 import { KeywordCount } from '../../../shared/models/keywordCount.interface';
-import { ListFilter } from '../../../shared/models/list-filter.interface';
+import { FilterType, ListFilter } from '../../../shared/models/list-filter.interface';
 import { ListFiltersComponent } from '../../../shared/components/list-filters/list-filters.component';
 import { SearchableListFilter } from '../../../shared/models/searchable-list-filter.interface';
 import { SelectedEntityFilters } from '../../models/selected-entity-filters.interface';
@@ -45,9 +47,9 @@ describe('Entity Search Filters component', () => {
   let recordTypeFilter: ListFilter;
   let keywordsFilter: SearchableListFilter;
 
-  const ontRecordFilterItem: FilterItem = {
-    value: `${ONTOLOGYEDITOR}OntologyRecord`,
-    display: 'Ontology Record',
+  const recordTypeFilterItem: FilterItem = {
+    value: 'urn:test1',
+    display: 'Test 1',
     checked: true
   };
   const keyword1FilterItem: FilterItem = {
@@ -83,6 +85,28 @@ describe('Entity Search Filters component', () => {
       body: keywords,
       headers: new HttpHeaders(headers)
     })));
+    catalogManagerStub.getRecordTypeFilter.and.callFake(isSelectedCall => {
+      const filterItems = ['urn:test1', 'urn:test2'].map(type => ({
+        value: type,
+        display: getBeautifulIRI(type),
+        checked: isSelectedCall(type),
+      } as FilterItem));
+      return {
+        title: 'Record Type',
+        type: FilterType.CHECKBOX,
+        numChecked: 1,
+        hide: false,
+        pageable: false,
+        searchable: false,
+        filterItems,
+        onInit: () => {
+        },
+        setFilterItems: () => {
+        },
+        filter: () => {
+        },
+      };
+    });
 
     fixture.detectChanges();
   });
@@ -96,71 +120,45 @@ describe('Entity Search Filters component', () => {
 
   describe('initializes correctly', () => {
     beforeEach(() => {
-      component.typeFilters = [ontRecordFilterItem];
+      component.typeFilters = [recordTypeFilterItem];
       spyOn(component.changeFilter, 'emit');
       component.ngOnInit();
       recordTypeFilter = component.filters[component.recordFilterIndex];
       keywordsFilter = component.filters[component.keywordFilterIndex] as SearchableListFilter;
     });
     it('with recordTypeFilter', () => {
-      const expectedFilterItems: FilterItem[] = [
-        ontRecordFilterItem,
-        {value: `${WORKFLOWS}WorkflowRecord`, display: 'Workflow Record', checked: false},
-        {value: `${DELIM}MappingRecord`, display: 'Mapping Record', checked: false},
-        {value: `${SHAPESGRAPHEDITOR}ShapesGraphRecord`, display: 'Shapes Graph Record', checked: false},
+      const recordTypeFilter = component.filters[0];
+      const expectedFilterItems = [
+        {value: 'urn:test1', display: 'Test 1', checked: true},
+        {value: 'urn:test2', display: 'Test 2', checked: false}
       ];
-
-      component.ngOnInit();
+      expect(recordTypeFilter.title).toEqual('Record Type');
       expect(recordTypeFilter.filterItems).toEqual(expectedFilterItems);
+      expect(catalogManagerStub.getRecordTypeFilter).toHaveBeenCalledWith(jasmine.any(Function), jasmine.any(Function), `${CATALOG}VersionedRDFRecord`);
     });
     it('with keywordFilterItems filter', () => {
       const expectedFilterItems: FilterItem[] = [
-        {value: `keyword1`, display: 'keyword1', checked: false},
+        {value: 'keyword1', display: 'keyword1', checked: false},
       ];
-
-      component.ngOnInit();
       expect(keywordsFilter.filterItems).toEqual(expectedFilterItems);
     });
   });
   describe('has working filter methods', () => {
     beforeEach(() => {
       spyOn(component.changeFilter, 'emit');
-      component.typeFilters = [cloneDeep(ontRecordFilterItem)];
+      component.typeFilters = [cloneDeep(recordTypeFilterItem)];
       component.keywordFilterItems = [cloneDeep(keyword1FilterItem)];
       component.ngOnInit();
       recordTypeFilter = component.filters[component.recordFilterIndex];
       keywordsFilter = component.filters[component.keywordFilterIndex] as SearchableListFilter;
     });
-    describe('for the recordTypeFilter', () => {
-      it('if the item has been checked', () => {
-        const clickedFilterItem: FilterItem = {value: `${WORKFLOWS}WorkflowRecord`, display: 'Workflow Record', checked: true};
-        recordTypeFilter.filter(clickedFilterItem);
-
-        const expectedChangeFilter: SelectedEntityFilters = { 
-          chosenTypes: [ontRecordFilterItem, clickedFilterItem], 
-          keywordFilterItems: [keyword1FilterItem] 
-        };
-        expect(component.changeFilter.emit).toHaveBeenCalledWith(expectedChangeFilter);
-      });
-      it('if the item was unchecked', () => {
-        const clickedFilterItem = cloneDeep(ontRecordFilterItem);
-        clickedFilterItem.checked = false;
-        recordTypeFilter.filter(clickedFilterItem);
-
-        const expectedChangeFilter: SelectedEntityFilters = {
-          chosenTypes: [], 
-          keywordFilterItems: [keyword1FilterItem]
-        };
-        expect(component.changeFilter.emit).toHaveBeenCalledWith(expectedChangeFilter);
-      });
-    });
     describe('for the keywordsFilter', () => {
       it('if the item has been checked', () => {
-        const clickedFilterItem: FilterItem = {value: `keyword2`, display: 'keyword2', checked: true};
+        const clickedFilterItem: FilterItem = {value: 'keyword2', display: 'keyword2', checked: true};
         keywordsFilter.filter(clickedFilterItem);
 
         const expectedChangeFilter: SelectedEntityFilters = { 
-          chosenTypes: [ontRecordFilterItem], 
+          chosenTypes: [recordTypeFilterItem], 
           keywordFilterItems: [keyword1FilterItem, clickedFilterItem] 
         };
         expect(component.changeFilter.emit).toHaveBeenCalledWith(expectedChangeFilter);
@@ -171,7 +169,7 @@ describe('Entity Search Filters component', () => {
         keywordsFilter.filter(clickedFilterItem);
 
         const expectedChangeFilter: SelectedEntityFilters = {
-          chosenTypes: [ontRecordFilterItem], 
+          chosenTypes: [recordTypeFilterItem], 
           keywordFilterItems: []
         };
         expect(component.changeFilter.emit).toHaveBeenCalledWith(expectedChangeFilter);
@@ -189,20 +187,20 @@ describe('Entity Search Filters component', () => {
       it('should reset keywordsFilter', () => {
         keywordsFilter.reset();
         const expectedChangeFilter: SelectedEntityFilters = {
-          chosenTypes: [ontRecordFilterItem], 
+          chosenTypes: [recordTypeFilterItem], 
           keywordFilterItems: []
         };
         expect(component.changeFilter.emit).toHaveBeenCalledWith(expectedChangeFilter);
       });
     });
     it('should update the selectedRecordTypes and numChecked on updateList call', () => {
-      const ontologyRecordActualItem = recordTypeFilter.filterItems.find(item => item.value === `${ONTOLOGYEDITOR}OntologyRecord`);
-      expect(ontologyRecordActualItem).toBeDefined();
-      expect(ontologyRecordActualItem.checked).toBeTrue();
+      const testRecordActualItem = recordTypeFilter.filterItems.find(item => item.value === 'urn:test1');
+      expect(testRecordActualItem).toBeDefined();
+      expect(testRecordActualItem.checked).toBeTrue();
       expect(recordTypeFilter.numChecked).toEqual(1);
 
-      component.updateFilterList(component.recordFilterIndex, [], [ontRecordFilterItem]);
-      expect(ontologyRecordActualItem.checked).toBeFalse();
+      component.updateFilterList(component.recordFilterIndex, [], [recordTypeFilterItem]);
+      expect(testRecordActualItem.checked).toBeFalse();
       expect(recordTypeFilter.numChecked).toEqual(0);
     });
     it('should update the selectedKeyword and numChecked on updateList call', () => {
