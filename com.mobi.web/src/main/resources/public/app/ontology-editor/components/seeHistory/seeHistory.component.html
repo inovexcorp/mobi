@@ -18,12 +18,12 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="see-history row p-4 h-100">
-    <div class="col-auto back-column h-100">
-        <button (click)="goBack()" mat-button class="remove-min-width"><span class="fa fa-chevron-left fa-2x"></span></button>
+<div class="see-history d-flex p-4 h-100">
+    <div class="back-column col h-100">
+        <button mat-icon-button class="back-button remove-min-width" (click)="goBack()"><span class="fa fa-chevron-left fa-2x"></span></button>
     </div>
     <div class="see-history-header d-flex flex-column remove-min-width col h-100">
-        <div class="row">
+        <div class="d-flex row">
             <h2 class="see-history-title mb-0 mr-1 break-word align-self-end">{{om.getEntityName(os.listItem.selected)}}</h2>
             <static-iri class="align-self-end" [readOnly]=true [iri]="os.listItem.selected['@id']"></static-iri>
         </div>

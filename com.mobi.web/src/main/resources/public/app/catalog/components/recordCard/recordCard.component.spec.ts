@@ -20,27 +20,26 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { By } from '@angular/platform-browser';
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatCardModule } from '@angular/material/card';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { By } from '@angular/platform-browser';
+import { MatIconModule } from '@angular/material/icon';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MockComponent, MockProvider } from 'ng-mocks';
 
-import {
-    cleanStylesFromDOM,
-} from '../../../../test/ts/Shared';
-import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
-import { DCTERMS } from '../../../prefixes';
 import { CatalogRecordKeywordsComponent } from '../catalogRecordKeywords/catalogRecordKeywords.component';
+import { cleanStylesFromDOM } from '../../../../test/ts/Shared';
+import { DCTERMS } from '../../../prefixes';
 import { EntityPublisherComponent } from '../entityPublisher/entityPublisher.component';
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { OpenRecordButtonComponent } from '../openRecordButton/openRecordButton.component';
 import { RecordIconComponent } from '../../../shared/components/recordIcon/recordIcon.component';
 import { RecordTypeComponent } from '../recordType/recordType.component';
-import { RecordCardComponent } from './recordCard.component';
 import { ToastService } from '../../../shared/services/toast.service';
+import { RecordCardComponent } from './recordCard.component';
 
 describe('Record Card component', function() {
     let component: RecordCardComponent;
@@ -64,6 +63,7 @@ describe('Record Card component', function() {
                 MatCardModule,
                 MatTooltipModule,
                 MatDividerModule,
+                MatIconModule
             ],
             declarations: [
                 RecordCardComponent,

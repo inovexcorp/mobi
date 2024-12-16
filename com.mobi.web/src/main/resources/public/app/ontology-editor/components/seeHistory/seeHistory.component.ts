@@ -41,7 +41,8 @@ import { condenseCommitId, isBlankNodeId } from '../../../shared/utility';
  */
 @Component({
     selector: 'see-history',
-    templateUrl: './seeHistory.component.html'
+    templateUrl: './seeHistory.component.html',
+    styleUrls: ['./seeHistory.component.scss']
 })
 
 export class SeeHistoryComponent{

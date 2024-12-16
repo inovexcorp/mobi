@@ -24,45 +24,51 @@
 @import "../../../css/variables";
 
 .record-view {
-    .record-sidebar {
-        width: 500px;
+    flex-wrap: wrap;
+    .back-column {
+        flex-grow: 0;
+        flex-shrink: 1;
     }
     .record-view-tabset .material-tabset {
         height: auto !important;
     }
-
-    .button-container{
-        button {
-            margin-left: 10px;
-        }
+    .record-body {
+        min-width: 300px;
     }
-    .about-record {
-        dt {
-            float: left;
-            clear: left;
-            width: 100px;
-        }
-        dd {
-            margin: 0 0 0 110px;
-            padding: 0 0 0.5em 0.5em;
-    
-            .keyword-description {
-                padding: 0;
+    .record-sidebar {
+        flex-grow: 0;
+        flex-basis: 450px;
+        .about-record {
+            dt {
+                float: left;
+                clear: left;
+                width: 100px;
+            }
+            dd {
+                margin: 0 0 0 110px;
+                padding: 0 0 0.5em 0.5em;
+                .keyword-description {
+                    padding: 0;
+                }
             }
         }
-    
+        .statistics {
+            dt, dd {
+                display: inline-block;
+                width: calc(50% - 0.5rem);
+                margin: 0;
+            }
+            dt {
+                text-align: left;
+            }
+            dt::after {
+                content: ":";
+            }
+        }
     }
-    .statistics {
-        dt, dd {
-            display: inline-block;
-            width: calc(50% - 0.5rem);
-            margin: 0;
-        }
-        dt {
-            text-align: left;
-        }
-        dt::after {
-            content: ":";
+    .button-container {
+        button {
+            margin-left: 10px;
         }
     }
 }

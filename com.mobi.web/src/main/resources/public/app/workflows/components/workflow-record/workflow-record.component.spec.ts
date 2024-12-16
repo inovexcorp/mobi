@@ -540,12 +540,12 @@ describe('WorkflowRecordComponent', () => {
     it('for workflow-details', () => {
       expect(element.queryAll(By.css('div.record-header')).length).toEqual(1);
       expect(element.queryAll(By.css('div.record-header h2.record-title')).length).toEqual(1);
-      expect(element.queryAll(By.css('div.record-header p.record-workflow-iri')).length).toEqual(1);
+      expect(element.queryAll(By.css('div.record-header div.record-workflow-iri')).length).toEqual(1);
       expect(element.queryAll(By.css('div.record-header div.record-active-toggle')).length).toEqual(1);
-      expect(element.queryAll(By.css('div.record-header p.record-description')).length).toEqual(1);
+      expect(element.queryAll(By.css('div.record-header div.record-description')).length).toEqual(1);
       expect(element.queryAll(By.css('div.record-header h2.record-title'))[0].nativeElement.innerText).toEqual(workflow_mocks[0].title);
-      expect(element.queryAll(By.css('div.record-header p.record-workflow-iri'))[0].nativeElement.innerText).toEqual(workflow_mocks[0].workflowIRI);
-      expect(element.queryAll(By.css('div.record-header p.record-description'))[0].nativeElement.innerText).toEqual(workflow_mocks[0].description);
+      expect(element.queryAll(By.css('div.record-header div.record-workflow-iri'))[0].nativeElement.innerText).toEqual(workflow_mocks[0].workflowIRI);
+      expect(element.queryAll(By.css('div.record-header div.record-description'))[0].nativeElement.innerText).toEqual(workflow_mocks[0].description);
     });
     it('when the graph is in fullscreen mode', () => {
       component.fullScreenMode = true;

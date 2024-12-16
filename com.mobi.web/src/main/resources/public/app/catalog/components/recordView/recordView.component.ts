@@ -22,17 +22,17 @@
  */
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { find } from 'lodash';
+import { Subject } from 'rxjs';
 
 import { CATALOG, POLICY } from '../../../prefixes';
-import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { CatalogStateService } from '../../../shared/services/catalogState.service';
+import { getDate, getDctermsValue, getPropertyId, updateDctermsValue } from '../../../shared/utility';
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { PolicyEnforcementService } from '../../../shared/services/policyEnforcement.service';
-import { ToastService } from '../../../shared/services/toast.service';
-import { getDate, getDctermsValue, getPropertyId, updateDctermsValue } from '../../../shared/utility';
-import { Subject } from 'rxjs';
 import { Statistic } from '../../../shared/models/statistic.interface';
+import { ToastService } from '../../../shared/services/toast.service';
 
 /**
  * @class catalog.RecordViewComponent
