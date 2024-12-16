@@ -20,100 +20,104 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="workflow-record">
-    <div class="back-sidebar">
-        <button mat-icon-button (click)="goBack()" class="remove-min-width"><span class="fa fa-chevron-left fa-2x"></span></button>
+<div class="workflow-record d-flex p-4 h-100">
+    <div class="back-sidebar col">
+        <button mat-icon-button class="back-button remove-min-width" (click)="goBack()"><span class="fa fa-chevron-left fa-2x"></span></button>
     </div>
-    <div class="workflow-record-main d-flex flex-column">
-        <div class="workflow-record-header">
-            <div class="workflow-details">
-                <div class="record-header">
-                    <span class="workflow-title-line">
-                        <h2 class="record-title d-flex align-items-center">
-                            {{ record.title }}
-                        </h2>
-                        <mat-icon class="edit-icon" *ngIf="workflowsState.isEditMode" title="Currently Editing Workflow Model.">warning</mat-icon>
-                    </span>
-                    <p class="record-workflow-iri text-muted">
-                        {{ record.workflowIRI }}
-                    </p>
-                    <div class="record-active-toggle">
-                        <mat-slide-toggle
-                                [disabled]="!record.canModifyMasterBranch || workflowsState.isEditMode"
-                                [checked]="record.active"
-                                (change)="toggleRecordActive($event, record)">
-                            {{recordStatus(record.active)}}
-                        </mat-slide-toggle>
-                    </div>
-                    <p class="record-description">
-                        {{ record.description  || '(No description)'}}
-                    </p>
-                </div>
-            </div>
-            <div class="workflow-control">
-                <app-workflow-controls [records]="[record]"
-                    [executingWorkflows]="runningWorkflows"
-                    [isEditMode]="workflowsState.isEditMode"
-                    (onRun)="runWorkflow()"
-                    (onDownload)="downloadWorkflow()"
-                    (onDelete)="deleteWorkflow()">
-                </app-workflow-controls>
-            </div>
-        </div>
-        <div class="workflow-record-body flex-1 remove-min-height">
-            <div class="h-100 workflow-record-body-tab-wrapper" *ngIf="!fullScreenMode">
-                <mat-tab-group class="h-100" dynamicHeight="true">
-                    <mat-tab label="Executions">
-                        <ng-template matTabContent>
-                            <div class="mat-tab-content-wrapper">
-                                <app-execution-history-table
-                                   [workflow]="record"
-                                   [executingActivities]="executingActivities"
-                                   [workflowRdf]="workflowRdf">
-                                </app-execution-history-table>
+    <div class="workflow-record-main col">
+        <div class="d-flex flex-column h-100">
+            <div class="workflow-record-header">
+                <div class="workflow-details">
+                    <div class="record-header">
+                        <div class="workflow-title-line d-flex">
+                            <h2 class="record-title break-word">
+                                {{ record.title }}
+                            </h2>
+                            <div>
+                                <mat-icon class="edit-icon" *ngIf="workflowsState.isEditMode" title="Currently Editing Workflow Model.">warning</mat-icon>
                             </div>
-                        </ng-template>
-                    </mat-tab>
-                    <mat-tab label="Commits">
-                        <ng-template matTabContent>
-                            <div class="mat-tab-content-wrapper">
-                                <commit-history-table
-                                    [headTitle]="branch.title"
-                                    [commitId]="branch.head"
-                                    [recordId]="record.iri"
-                                    [branches]="branches"
-                                    [type]="branch.type"
-                                    graph>
-                                </commit-history-table>
-                            </div>
-                        </ng-template>
-                    </mat-tab>
-                </mat-tab-group>
-            </div>
-            <div class="h-100 workflow-record-body-display" *ngIf="workflowRdf.length">
-                <div class="model-overlay">
-                    <div class="changes-text">
-                        <info-message *ngIf="workflowsState.hasChanges">You have unsaved changes in your workflow model.</info-message>
-                    </div>
-                    <div class="model-buttons">
-                        <ng-template #editButton>
-                            <button class="edit-button" color="primary" (click)="toggleEditMode()" mat-icon-button title="Edit Workflow Model."><mat-icon>edit</mat-icon></button>
-                            <button class="fullscreen-button" color="primary" (click)="toggleFullscreen()" mat-icon-button title="Expand to Full Screen"><mat-icon>fullscreen</mat-icon></button>
-                        </ng-template>
-                        <ng-template #otherButtons>
-                            <button class="upload-button" color="primary" (click)="uploadChangesModal()" mat-icon-button title="Upload Changes to Workflow Model."><mat-icon>upload</mat-icon></button>
-                            <button class="save-button" color="primary" (click)="commitChanges()" mat-icon-button title="Save Changes to Workflow Model."><mat-icon>save</mat-icon></button>
-                            <button class="fullscreen-button" color="primary" (click)="toggleFullscreen()" mat-icon-button title="Expand to Full Screen"><mat-icon>fullscreen</mat-icon></button>
-                        </ng-template>
-                        <ng-container *ngIf="!workflowsState.isEditMode; then editButton else otherButtons"></ng-container>
+                        </div>
+                        <div class="record-workflow-iri text-muted break-word">
+                            {{ record.workflowIRI }}
+                        </div>
+                        <div class="record-active-toggle">
+                            <mat-slide-toggle
+                                    [disabled]="!record.canModifyMasterBranch || workflowsState.isEditMode"
+                                    [checked]="record.active"
+                                    (change)="toggleRecordActive($event, record)">
+                                {{recordStatus(record.active)}}
+                            </mat-slide-toggle>
+                        </div>
+                        <div class="record-description break-word">
+                            {{ record.description  || '(No description)'}}
+                        </div>
                     </div>
                 </div>
-                <app-workflow-display [resource]="workflowRdf"
-                                      [shaclDefinitions]="shaclDefinitions"
-                                      [isEditMode]="workflowsState.isEditMode"
-                                      [recordId]="record.iri"
-                                      [fullScreenMode]="fullScreenMode"
-                ></app-workflow-display>
+                <div class="workflow-control">
+                    <app-workflow-controls [records]="[record]"
+                        [executingWorkflows]="runningWorkflows"
+                        [isEditMode]="workflowsState.isEditMode"
+                        (onRun)="runWorkflow()"
+                        (onDownload)="downloadWorkflow()"
+                        (onDelete)="deleteWorkflow()">
+                    </app-workflow-controls>
+                </div>
+            </div>
+            <div class="workflow-record-body flex-1 remove-min-height">
+                <div class="h-100 workflow-record-body-tab-wrapper" *ngIf="!fullScreenMode">
+                    <mat-tab-group class="h-100" dynamicHeight="true">
+                        <mat-tab label="Executions">
+                            <ng-template matTabContent>
+                                <div class="mat-tab-content-wrapper">
+                                    <app-execution-history-table
+                                       [workflow]="record"
+                                       [executingActivities]="executingActivities"
+                                       [workflowRdf]="workflowRdf">
+                                    </app-execution-history-table>
+                                </div>
+                            </ng-template>
+                        </mat-tab>
+                        <mat-tab label="Commits">
+                            <ng-template matTabContent>
+                                <div class="mat-tab-content-wrapper">
+                                    <commit-history-table
+                                        [headTitle]="branch.title"
+                                        [commitId]="branch.head"
+                                        [recordId]="record.iri"
+                                        [branches]="branches"
+                                        [type]="branch.type"
+                                        graph>
+                                    </commit-history-table>
+                                </div>
+                            </ng-template>
+                        </mat-tab>
+                    </mat-tab-group>
+                </div>
+                <div class="h-100 workflow-record-body-display" *ngIf="workflowRdf.length">
+                    <div class="model-overlay">
+                        <div class="changes-text">
+                            <info-message *ngIf="workflowsState.hasChanges">You have unsaved changes in your workflow model.</info-message>
+                        </div>
+                        <div class="model-buttons">
+                            <ng-template #editButton>
+                                <button class="edit-button" color="primary" (click)="toggleEditMode()" mat-icon-button title="Edit Workflow Model."><mat-icon>edit</mat-icon></button>
+                                <button class="fullscreen-button" color="primary" (click)="toggleFullscreen()" mat-icon-button title="Expand to Full Screen"><mat-icon>fullscreen</mat-icon></button>
+                            </ng-template>
+                            <ng-template #otherButtons>
+                                <button class="upload-button" color="primary" (click)="uploadChangesModal()" mat-icon-button title="Upload Changes to Workflow Model."><mat-icon>upload</mat-icon></button>
+                                <button class="save-button" color="primary" (click)="commitChanges()" mat-icon-button title="Save Changes to Workflow Model."><mat-icon>save</mat-icon></button>
+                                <button class="fullscreen-button" color="primary" (click)="toggleFullscreen()" mat-icon-button title="Expand to Full Screen"><mat-icon>fullscreen</mat-icon></button>
+                            </ng-template>
+                            <ng-container *ngIf="!workflowsState.isEditMode; then editButton else otherButtons"></ng-container>
+                        </div>
+                    </div>
+                    <app-workflow-display [resource]="workflowRdf"
+                                          [shaclDefinitions]="shaclDefinitions"
+                                          [isEditMode]="workflowsState.isEditMode"
+                                          [recordId]="record.iri"
+                                          [fullScreenMode]="fullScreenMode"
+                    ></app-workflow-display>
+                </div>
             </div>
         </div>
     </div>

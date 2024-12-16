@@ -20,24 +20,24 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="record-permission-view row p-4 h-100 vertical-scroll">
-    <div class="col-auto back-column h-100">
-        <button mat-button (click)="goBack()" class="remove-min-width back-button"><span class="fa fa-chevron-left fa-2x"></span></button>
+<div class="record-permission-view d-flex p-4 h-100">
+    <div class="back-column col">
+        <button mat-icon-button (click)="goBack()" class="back-button remove-min-width"><span class="fa fa-chevron-left fa-2x"></span></button>
     </div>
-    <div class="col permissions-page container-fluid py-3">
-        <div class="row padding">
-            <div class="col-6 offset-3">
-                <h2>Manage {{ title }}</h2>
+    <div class="permissions-page col container-fluid py-3 vertical-scroll">
+        <div class="row pb-1">
+            <div class="col-7 offset-2">
+                <h2 class="permissions-page-title">Manage {{ title }}</h2>
             </div>
         </div>
-        <div *ngFor="let policy of this.policies" class="row padding">
-            <div class="col-6 offset-3">
+        <div *ngFor="let policy of policies" class="row pb-2 policy">
+            <div class="col-7 offset-2">
                 <user-access-controls [item]="policy" [ruleTitle]="policy.title"></user-access-controls>
             </div>
         </div>
-        <div class="save-container">
-            <button type="button" mat-fab color="primary" class="btn-float save-button" (click)="save()" [disabled]="!hasChanges()" matTooltip="Save Changes"><i class="fa fa-fw fa-floppy-o"></i></button>
-        </div>
+    </div>
+    <div class="save-container">
+        <button type="button" mat-fab color="primary" class="btn-float save-button" (click)="save()" [disabled]="!hasChanges()" matTooltip="Save Changes"><i class="fa fa-fw fa-floppy-o"></i></button>
     </div>
 </div>
 

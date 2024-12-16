@@ -20,48 +20,33 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-.stacked-icon {
-  display: inline-block;
-  width: 2em;
-  height: 2em;
-  border-radius: 50%;
-  vertical-align: middle;
-
-  .mat-icon {
-    margin-right: 0 !important;
-    vertical-align: baseline !important;
-    margin-left: 2px;
-  }
-}
- .logs-preview {
-  display: flex;
-  flex-direction: row;
-  padding: 1.5rem;
-  height: 100%;
-
+.logs-preview {
   .back-sidebar {
-      flex: 0 0 auto;
-      max-width: none;
-      width: auto;
-      padding-right: 1.5rem;
-      padding-left: 1.5rem;
+    flex: 0 1 0;
   }
   .logs-preview-main {
-      flex: 1 0 0;
-      flex-direction: column;
-      padding-right: 1.5rem;
-      padding-left: 1.5rem;
-
-      ::ng-deep .CodeMirror {
-          height: 100%;
-          border: 1px solid rgba(0, 0, 0, 0.12);
-          
-          .CodeMirror-cursor {
-              display: none !important
-          }
+    flex: 1 0 0;
+    .log-control {
+      width: 400px;
+      .stacked-icon {
+        display: inline-block;
+        width: 2em;
+        height: 2em;
+        border-radius: 50%;
+        vertical-align: middle;
+        .mat-icon {
+          margin-right: 0 !important;
+          vertical-align: baseline !important;
+          margin-left: 2px;
+        }
       }
-      .log-control {
-        width: 400px;
+    }
+    ::ng-deep .CodeMirror {
+      height: 100%;
+      border: 1px solid rgba(0, 0, 0, 0.12);
+      .CodeMirror-cursor {
+        display: none !important
       }
+    }
   }
 }

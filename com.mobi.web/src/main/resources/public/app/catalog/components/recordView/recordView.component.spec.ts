@@ -29,23 +29,23 @@ import { MockComponent, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 import { cloneDeep } from 'lodash';
 
+import { CATALOG, DCTERMS, POLICY } from '../../../prefixes';
+import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
+import { CatalogRecordKeywordsComponent } from '../catalogRecordKeywords/catalogRecordKeywords.component';
+import { CatalogStateService } from '../../../shared/services/catalogState.service';
 import { cleanStylesFromDOM, DATE_STR, SHORT_DATE_STR } from '../../../../../public/test/ts/Shared';
+import { EntityPublisherComponent } from '../entityPublisher/entityPublisher.component';
 import { InlineEditComponent } from '../../../shared/components/inlineEdit/inlineEdit.component';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
-import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
-import { CatalogStateService } from '../../../shared/services/catalogState.service';
-import { CatalogRecordKeywordsComponent } from '../catalogRecordKeywords/catalogRecordKeywords.component';
-import { EntityPublisherComponent } from '../entityPublisher/entityPublisher.component';
 import { LimitDescriptionComponent } from '../../../shared/components/limitDescription/limitDescription.component';
+import { ManageRecordButtonComponent } from '../manageRecordButton/manageRecordButton.component';
+import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { OpenRecordButtonComponent } from '../openRecordButton/openRecordButton.component';
+import { PolicyEnforcementService } from '../../../shared/services/policyEnforcement.service';
 import { RecordIconComponent } from '../../../shared/components/recordIcon/recordIcon.component';
 import { RecordViewTabsetComponent } from '../recordViewTabset/recordViewTabset.component';
-import { CATALOG, DCTERMS, POLICY } from '../../../prefixes';
-import { ManageRecordButtonComponent } from '../manageRecordButton/manageRecordButton.component';
-import { OntologyStateService } from '../../../shared/services/ontologyState.service';
-import { PolicyEnforcementService } from '../../../shared/services/policyEnforcement.service';
 import { ToastService } from '../../../shared/services/toast.service';
-import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
 import { RecordViewComponent } from './recordView.component';
 
 describe('Record View component', function() {
@@ -270,10 +270,9 @@ describe('Record View component', function() {
     describe('contains the correct html', function() {
         it('for wrapping containers', function() {
             expect(element.queryAll(By.css('.record-view')).length).toEqual(1);
-            expect(element.queryAll(By.css('.row')).length).toEqual(1);
-            expect(element.queryAll(By.css('.back-column')).length).toEqual(1);
-            expect(element.queryAll(By.css('.record-body')).length).toEqual(1);
-            expect(element.queryAll(By.css('.record-sidebar')).length).toEqual(1);
+            expect(element.queryAll(By.css('.record-view .back-column')).length).toEqual(1);
+            expect(element.queryAll(By.css('.record-view .record-body')).length).toEqual(1);
+            expect(element.queryAll(By.css('.record-view .record-sidebar')).length).toEqual(1);
         });
         ['record-view-tabset', 'button', 'record-icon', 'dl', 'entity-publisher', 'catalog-record-keywords', 'limit-description'].forEach(test => {
             it('with a ' + test, function() {

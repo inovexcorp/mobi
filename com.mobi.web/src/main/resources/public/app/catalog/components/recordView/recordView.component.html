@@ -20,11 +20,11 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="record-view row p-4 h-100">
-    <div class="col-auto back-column h-100">
-        <button mat-icon-button (click)="goBack()" class="remove-min-width"><span class="fa fa-chevron-left fa-2x"></span></button>
+<div class="record-view d-flex p-4 h-100 vertical-scroll">
+    <div class="back-column col">
+        <button mat-icon-button (click)="goBack()" class="back-button remove-min-width"><span class="fa fa-chevron-left fa-2x"></span></button>
     </div>
-    <div class="col record-body h-100 vertical-scroll">
+    <div class="record-body col h-100 vertical-scroll">
         <div class="record-header">
             <h2 class="record-title d-flex align-items-center">
                 <record-icon class="align-self-start" [record]="record"></record-icon><inline-edit [text]="title" [canEdit]="canEdit" (saveEvent)="updateTitle($event)" class="flex-1" [required]="true">{{title}}</inline-edit>
@@ -35,7 +35,7 @@
         </div>
         <record-view-tabset [record]="record" (updateRecord)="updateRecord($event)" [canEdit]="canEdit"></record-view-tabset>
     </div>
-    <div class="record-sidebar col-auto h-100 vertical-scroll">
+    <div class="record-sidebar col h-100 vertical-scroll">
         <div class="about-record">
             <h3>About this Record</h3>
             <dl>
@@ -65,11 +65,9 @@
                 </div>
             </ng-template>
         </div>
-        <div>
-            <div class="d-flex button-container">
-                <open-record-button [record]="record"></open-record-button>
-                <manage-record-button [record]="record" (manageEvent)="updatePermission($event)"></manage-record-button>
-            </div>
+        <div class="button-container d-flex">
+            <open-record-button [record]="record"></open-record-button>
+            <manage-record-button [record]="record" (manageEvent)="updatePermission($event)"></manage-record-button>
         </div>
     </div>
 </div>

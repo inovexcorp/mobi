@@ -20,33 +20,35 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="logs-preview">
-  <div class="back-sidebar">
-    <button mat-icon-button (click)="goBack()" class="remove-min-width"><span class="fa fa-chevron-left fa-2x"></span></button>
+<div class="logs-preview d-flex p-4 h-100">
+  <div class="back-sidebar col">
+    <button mat-icon-button class="back-button remove-min-width" (click)="goBack()"><span class="fa fa-chevron-left fa-2x"></span></button>
   </div>
-  <div class="logs-preview-main d-flex flex-column remove-min-width">
-    <div class="log-header">
-      <h1>{{activity.executionIdLabel}} <span class="badge badge-pill text-capitalize badge-padded" [ngClass]="wss.getStatusClass(activity.status)">{{activity.status}}</span></h1>
-      <p>Executed by <strong title="Username: {{activity.executorUsername}}">{{activity.executorDisplayName}}</strong> at {{activity.startTimeLabel}} for {{activity.runningTimeLabel}}</p>
-      <mat-form-field class="log-control">
-        <mat-label>Log File</mat-label>
-        <mat-select [formControl]="logControl">
-          <mat-option *ngIf="activityLog" [value]="activityLog.iri">{{activityLog.label}}</mat-option>
-          <mat-optgroup *ngFor="let group of logFiles">
-            <span [title]="group.groupLabel"><span class="stacked-icon" [ngClass]="getStatusCircleClass(group.groupStatus)"><mat-icon>{{getStatusIcon(group.groupStatus)}}</mat-icon></span> {{group.groupLabel}}</span>
-            <mat-option *ngFor="let logFile of group.logs" [value]="logFile.iri" [title]="logFile.iri">{{logFile.label}}</mat-option>
-          </mat-optgroup>
-        </mat-select>
-      </mat-form-field>
-      <button mat-icon-button color="primary" [disabled]="!logControl.value" (click)="downloadLogs()"><mat-icon>download</mat-icon></button>
-    </div>
-    <warning-message *ngIf="limitedResults">Log preview has been limited. Download to see the full contents.</warning-message>
-    <div class="log-viewer flex-1 remove-min-height" #logViewer>
-      <error-display *ngIf="errorMessage">{{errorMessage}}</error-display>
-      <ngx-codemirror *ngIf="preview; else noFile" [(ngModel)]="preview" [options]="options"></ngx-codemirror>
-      <ng-template #noFile>
-        <warning-message *ngIf="!errorMessage">No log preview to show</warning-message>
-      </ng-template>
+  <div class="logs-preview-main col">
+    <div class=" d-flex flex-column remove-min-width h-100">
+      <div class="log-header">
+        <h1>{{activity.executionIdLabel}} <span class="badge badge-pill text-capitalize badge-padded" [ngClass]="wss.getStatusClass(activity.status)">{{activity.status}}</span></h1>
+        <p>Executed by <strong title="Username: {{activity.executorUsername}}">{{activity.executorDisplayName}}</strong> at {{activity.startTimeLabel}} for {{activity.runningTimeLabel}}</p>
+        <mat-form-field class="log-control">
+          <mat-label>Log File</mat-label>
+          <mat-select [formControl]="logControl">
+            <mat-option *ngIf="activityLog" [value]="activityLog.iri">{{activityLog.label}}</mat-option>
+            <mat-optgroup *ngFor="let group of logFiles">
+              <span [title]="group.groupLabel"><span class="stacked-icon" [ngClass]="getStatusCircleClass(group.groupStatus)"><mat-icon>{{getStatusIcon(group.groupStatus)}}</mat-icon></span> {{group.groupLabel}}</span>
+              <mat-option *ngFor="let logFile of group.logs" [value]="logFile.iri" [title]="logFile.iri">{{logFile.label}}</mat-option>
+            </mat-optgroup>
+          </mat-select>
+        </mat-form-field>
+        <button mat-icon-button color="primary" [disabled]="!logControl.value" (click)="downloadLogs()"><mat-icon>download</mat-icon></button>
+      </div>
+      <warning-message *ngIf="limitedResults">Log preview has been limited. Download to see the full contents.</warning-message>
+      <div class="log-viewer flex-1 remove-min-height" #logViewer>
+        <error-display *ngIf="errorMessage">{{errorMessage}}</error-display>
+        <ngx-codemirror *ngIf="preview; else noFile" [(ngModel)]="preview" [options]="options"></ngx-codemirror>
+        <ng-template #noFile>
+          <warning-message *ngIf="!errorMessage">No log preview to show</warning-message>
+        </ng-template>
+      </div>
     </div>
   </div>
 </div>

@@ -23,25 +23,9 @@
 /* Core variables */
 @import "../../../css/variables";
 
-.record-permission-view {
+.see-history {
     .back-column {
         flex-grow: 0;
         flex-shrink: 1;
     }
-    .permissions-page {
-        .policy {
-            min-width: 25rem;
-        }
-        &-title {
-            word-break: break-word;
-        }
-    }
-    .save-container {
-        height: auto;
-        bottom: 25px;
-        position: fixed;
-        right: 25px;
-        z-index: 5001;
-    }
-    flex-wrap: nowrap;
 }
