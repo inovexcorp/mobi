@@ -169,6 +169,11 @@ public class ExplorableDatasetRest {
     private static final String OBJECT_BINDING = "object";
     private static final String CLASS_IRI_REPLACE = "%CLASSIRI%";
 
+    private static final String DATASET_IRI_REQUIRED = "The Dataset Record IRI is required.";
+    private static final String RECORD_NOT_FOUND = "The Dataset Record could not be found.";
+    private static final String INSTANCE_IRI_REQUIRED = "The Instance IRI is required.";
+    private static final String INSTANCE_NOT_FOUND = "The requested instance could not be found.";
+
     static {
         try {
             GET_CLASSES_TYPES = IOUtils.toString(
@@ -230,11 +235,11 @@ public class ExplorableDatasetRest {
             @Parameter(description = "ID of the DatasetRecord for the Dataset from which to retrieve the data",
                     required = true)
             @PathParam("recordIRI") String recordIRI) {
-        checkStringParam(recordIRI, "The Dataset Record IRI is required.");
+        checkStringParam(recordIRI, DATASET_IRI_REQUIRED);
         Resource datasetRecordRsr = factory.createIRI(recordIRI);
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             DatasetRecord record = datasetManager.getDatasetRecord(datasetRecordRsr).orElseThrow(() ->
-                    ErrorUtils.sendError("The Dataset Record could not be found.", Response.Status.BAD_REQUEST));
+                    ErrorUtils.sendError(RECORD_NOT_FOUND, Response.Status.BAD_REQUEST));
             List<ClassDetails> classes = new ArrayList<>();
             Consumer<TupleQueryResult> tupleQueryResultConsumer = results ->
                     getClassDetailsFromQueryResults(results, datasetRecordRsr, classes);
@@ -290,7 +295,7 @@ public class ExplorableDatasetRest {
             @DefaultValue("true") @QueryParam("ascending") boolean asc,
             @Parameter(description = "Whether or not the list should include inferred instances")
             @DefaultValue("false") @QueryParam("infer") boolean infer) {
-        checkStringParam(recordIRI, "The Dataset Record IRI is required.");
+        checkStringParam(recordIRI, DATASET_IRI_REQUIRED);
         checkStringParam(classIRI, "The Class IRI is required.");
         Resource datasetRecordRsr = factory.createIRI(recordIRI);
         try {
@@ -339,12 +344,12 @@ public class ExplorableDatasetRest {
             @PathParam("recordIRI") String recordIRI,
             @Parameter(description = "IRI of the class type to get property details for", required = true)
             @PathParam("classIRI") String classIRI) {
-        checkStringParam(recordIRI, "The Dataset Record IRI is required.");
+        checkStringParam(recordIRI, DATASET_IRI_REQUIRED);
         checkStringParam(classIRI, "The Class IRI is required.");
         Resource recordId = factory.createIRI(recordIRI);
         try {
             DatasetRecord record = datasetManager.getDatasetRecord(recordId).orElseThrow(() ->
-                    ErrorUtils.sendError("The Dataset Record could not be found.", Response.Status.BAD_REQUEST));
+                    ErrorUtils.sendError(RECORD_NOT_FOUND, Response.Status.BAD_REQUEST));
             return Response.ok(getClassProperties(record, classIRI)).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
@@ -380,7 +385,7 @@ public class ExplorableDatasetRest {
             @PathParam("recordIRI") String recordIRI,
             @Parameter(description = "New Instance JSON", required = true)
                     String newInstanceJson) {
-        checkStringParam(recordIRI, "The Dataset Record IRI is required.");
+        checkStringParam(recordIRI, DATASET_IRI_REQUIRED);
         checkStringParam(newInstanceJson, "The Instance's JSON-LD is required.");
         try (DatasetConnection conn = datasetManager.getConnection(factory.createIRI(recordIRI))) {
             Model instanceModel = jsonldToModel(newInstanceJson);
@@ -431,12 +436,12 @@ public class ExplorableDatasetRest {
             @PathParam("recordIRI") String recordIRI,
             @Parameter(description = "IRI of the instance to get", required = true)
             @PathParam("instanceIRI") String instanceIRI) {
-        checkStringParam(recordIRI, "The Dataset Record IRI is required.");
-        checkStringParam(instanceIRI, "The Instance IRI is required.");
+        checkStringParam(recordIRI, DATASET_IRI_REQUIRED);
+        checkStringParam(instanceIRI, INSTANCE_IRI_REQUIRED);
         try (DatasetConnection conn = datasetManager.getConnection(factory.createIRI(recordIRI))) {
             Model instanceModel = getLimitedInstance(instanceIRI, conn);
             if (instanceModel.size() == 0) {
-                throw ErrorUtils.sendError("The requested instance could not be found.", Response.Status.BAD_REQUEST);
+                throw ErrorUtils.sendError(INSTANCE_NOT_FOUND, Response.Status.BAD_REQUEST);
             }
             String json = modelToSkolemizedJsonld(instanceModel, bNodeService);
             return Response.ok(getArrayNodeFromJson(json)).build();
@@ -479,13 +484,13 @@ public class ExplorableDatasetRest {
             @PathParam("instanceIRI") String instanceIRI,
             @Parameter(description = "Instance JSON-LD", required = true)
                     String json) {
-        checkStringParam(recordIRI, "The Dataset Record IRI is required.");
-        checkStringParam(instanceIRI, "The Instance IRI is required.");
+        checkStringParam(recordIRI, DATASET_IRI_REQUIRED);
+        checkStringParam(instanceIRI, INSTANCE_IRI_REQUIRED);
         try (DatasetConnection conn = datasetManager.getConnection(factory.createIRI(recordIRI))) {
             Resource instanceId = factory.createIRI(instanceIRI);
             RepositoryResult<Statement> statements = conn.getStatements(instanceId, null, null);
             if (!statements.hasNext()) {
-                throw ErrorUtils.sendError("The requested instance could not be found.", Response.Status.BAD_REQUEST);
+                throw ErrorUtils.sendError(INSTANCE_NOT_FOUND, Response.Status.BAD_REQUEST);
             }
             conn.begin();
             RepositoryResult<Statement> reifiedDeclarations = conn.getStatements(null, RDF.SUBJECT, instanceId);
@@ -535,12 +540,12 @@ public class ExplorableDatasetRest {
             @PathParam("recordIRI") String recordIRI,
             @Parameter(description = "IRI of the instance to delete", required = true)
             @PathParam("instanceIRI") String instanceIRI) {
-        checkStringParam(recordIRI, "The Dataset Record IRI is required.");
-        checkStringParam(instanceIRI, "The Instance IRI is required.");
+        checkStringParam(recordIRI, DATASET_IRI_REQUIRED);
+        checkStringParam(instanceIRI, INSTANCE_IRI_REQUIRED);
         try (DatasetConnection conn = datasetManager.getConnection(factory.createIRI(recordIRI))) {
             Model instanceModel = getInstanceModel(instanceIRI, conn);
             if (instanceModel.size() == 0) {
-                throw ErrorUtils.sendError("The requested instance could not be found.",
+                throw ErrorUtils.sendError(INSTANCE_NOT_FOUND,
                         Response.Status.BAD_REQUEST);
             }
             conn.begin();
@@ -565,7 +570,7 @@ public class ExplorableDatasetRest {
      */
     private String getInferredClasses(Resource recordId, IRI classIRI) {
         DatasetRecord record = datasetManager.getDatasetRecord(recordId).orElseThrow(() ->
-                ErrorUtils.sendError("The Dataset Record could not be found.", Response.Status.BAD_REQUEST));
+                ErrorUtils.sendError(RECORD_NOT_FOUND, Response.Status.BAD_REQUEST));
         Model recordModel = record.getModel();
         StringBuilder builder = new StringBuilder();
         builder.append(" <").append(classIRI.stringValue()).append("> ");
