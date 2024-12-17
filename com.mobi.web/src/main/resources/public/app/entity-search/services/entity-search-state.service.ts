@@ -28,6 +28,8 @@ import { catchError, switchMap } from 'rxjs/operators';
 import { CatalogManagerService } from '../../shared/services/catalogManager.service';
 import { EntityRecord } from '../models/entity-record';
 import { PaginatedConfig } from '../../shared/models/paginatedConfig.interface';
+import { SortOption } from '../../shared/models/sortOption.interface';
+import { find } from 'lodash';
 import { RESTError } from '../../shared/models/RESTError.interface';
 import { ToastService } from '../../shared/services/toast.service';
 
@@ -40,6 +42,21 @@ import { ToastService } from '../../shared/services/toast.service';
   providedIn: 'root'
 })
 export class EntitySearchStateService {
+
+  /**
+   * `sortOptions` contains a list of objects representing all sort options for the Entity Search page.
+   * @type {SortOption[]}
+   */
+  sortOptions: SortOption[] = [{
+      field: 'entityName',
+      asc: true,
+      label: 'Entity Name (asc)'
+    }, {
+        field: 'entityName',
+        asc: false,
+        label: 'Entity Name (desc)'
+    }];
+
   /**
    * `paginationConfig` holds the configuration to be used when retrieving the results of a
    * Dataset Records query. These configurations are the limit, page index, search text,
@@ -50,9 +67,11 @@ export class EntitySearchStateService {
     limit: 10,
     pageIndex: 0,
     searchText: '',
+    sortOption: find(this.sortOptions, {field: 'entityName', asc: true}),
     type: [],
     keywords: []
   };
+
   /**
    * `totalRecordSize` holds an integer for the total number of entity search result in the latest query on the
    * {@link entitySearch.SearchResultsListComponent}.
@@ -79,6 +98,7 @@ export class EntitySearchStateService {
     this.resetPagination();
     this.paginationConfig.type = [];
     this.paginationConfig.keywords = [];
+    this.paginationConfig.sortOption = find(this.sortOptions, {field: 'entityName', asc: true});
     this.keywordSearchText = '';
     this.currentResults = [];
   }

@@ -354,6 +354,11 @@ public class CatalogRest {
             @QueryParam("limit") int limit,
             @Parameter(description = "String used to filter out Records", required = true)
             @QueryParam("searchText") String searchText,
+            @Parameter(schema = @Schema(description = "The name of the field to use for sort order",
+                    allowableValues = {"entityName"}))
+            @DefaultValue("entityName") @QueryParam("sort") String sort,
+            @Parameter(description = "Whether or not the list should be sorted ascending or descending")
+            @DefaultValue("true") @QueryParam("ascending") boolean asc,
             @Parameter(description = "List of record types to filter over")
             @QueryParam("type") List<String> recordTypes,
             @Parameter(description = "List of keywords")
@@ -365,6 +370,10 @@ public class CatalogRest {
             PaginatedSearchParams.Builder builder = new PaginatedSearchParams.Builder();
             builder.offset(offset);
             builder.limit(limit);
+            builder.ascending(asc);
+            if (sort != null) {
+                builder.sortBy(sort);
+            }
             if (searchText != null) {
                 builder.searchText(searchText);
             }

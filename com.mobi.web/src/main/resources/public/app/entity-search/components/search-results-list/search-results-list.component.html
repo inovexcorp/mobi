@@ -32,8 +32,13 @@
             </div>
             <div class="col d-flex flex-column remove-min-width">
                 <div class="search-form d-flex">
-                    <search-bar class="w-100 mt-2" [(bindModel)]="searchText"
+                    <search-bar class="flex-1 mr-2" [(bindModel)]="searchText"
                                 (submitEvent)="searchRecords()"></search-bar>
+                    <mat-form-field>
+                        <mat-select [(ngModel)]="state.paginationConfig.sortOption" (ngModelChange)="searchRecords()">
+                            <mat-option *ngFor="let option of state.sortOptions" [value]="option">{{option.label}}</mat-option>
+                        </mat-select>
+                    </mat-form-field>
                 </div>
                 <app-filters-selected-list
                         (selectedFiltersChange)="changeFilter($event)"

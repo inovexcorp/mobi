@@ -23,6 +23,7 @@
 const searchResultsViewCssSelector = 'app-entity-search-page app-search-results-list';
 const itemCssSelector = 'app-entity-search-page app-search-results-list app-search-result-item';
 const searchBarCssSelector = `${searchResultsViewCssSelector} .d-flex .search-form input`;
+const sortDropdownCssSelector = `${searchResultsViewCssSelector} .d-flex .search-form mat-select`;
 const itemTitleSelector = `${itemCssSelector} div.record-body h2.record-title div.inline-edit`;
 const itemDescriptionSelector = `${itemCssSelector} div.record-body p inline-edit`;
 const paginationLabel = `${searchResultsViewCssSelector} .mat-paginator-range-label`;
@@ -157,8 +158,25 @@ const entitySearchPageCommands = {
           .click(button);
   },
 
-  openRecordItem: function(titleOfEntity, titleOfRecord) {
-    const recordItemSelector = createRecordItemXPathSelector(titleOfEntity, titleOfRecord);
+  verifyEntitySearchPageSort: function (sortOptionString) {
+    return this.useCss()
+        .waitForElementVisible(sortDropdownCssSelector)
+        .useXpath()
+        .waitForElementPresent('//app-entity-search-page//div[contains(@class, "search-form")]//mat-select//span[text()[contains(.,"' + sortOptionString + '")]]')
+        .useCss();
+  },
+
+  applyOrderFilter: function(orderString) {
+    return this.waitForElementVisible(sortDropdownCssSelector)
+        .click(sortDropdownCssSelector)
+        .waitForElementVisible('div.mat-select-panel')
+        .waitForElementVisible('xpath', '//div[contains(@class, "mat-select-panel")]//mat-option')
+        .click('xpath', '//div[contains(@class, "mat-select-panel")]//mat-option//span[contains(@class,"mat-option-text")][text()[contains(., "' + orderString + '")]]')
+        .waitForElementNotPresent('#spinner-full');
+  },
+
+  openRecordItem: function(titleOfRecord) {
+    const recordItemSelector = createRecordItemXPathSelector(titleOfRecord);
     const openButtonSelector = recordItemSelector + '//open-record-button//button';
 
     const openCommands = function() {
