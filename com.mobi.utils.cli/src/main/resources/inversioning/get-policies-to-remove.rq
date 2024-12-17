@@ -1,0 +1,10 @@
+PREFIX policy: <http://mobi.com/ontologies/policy#>
+PREFIX documents: <http://mobi.com/ontologies/documents#>
+SELECT ?recordPolicy ?recordPolicyURL ?policyPolicy ?policyPolicyURL
+WHERE {
+    ?recordPolicy policy:relatedResource ?record ;
+        documents:retrievalURL ?recordPolicyURL .
+
+    ?policyPolicy policy:relatedResource ?recordPolicy ;
+        documents:retrievalURL ?policyPolicyURL .
+}

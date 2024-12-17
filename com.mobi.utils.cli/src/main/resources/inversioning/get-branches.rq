@@ -1,0 +1,5 @@
+PREFIX mcat: <http://mobi.com/ontologies/catalog#>
+SELECT * WHERE {
+    ?record a mcat:Record ;
+        mcat:branch ?branch .
+}

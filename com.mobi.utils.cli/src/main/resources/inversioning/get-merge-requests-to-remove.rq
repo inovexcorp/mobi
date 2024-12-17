@@ -1,0 +1,8 @@
+PREFIX mergereqs: <http://mobi.com/ontologies/merge-requests#>
+SELECT ?g1
+WHERE {
+    GRAPH ?g1 {
+        ?sub a mergereqs:MergeRequest ;
+            mergereqs:onRecord ?record .
+    }
+}

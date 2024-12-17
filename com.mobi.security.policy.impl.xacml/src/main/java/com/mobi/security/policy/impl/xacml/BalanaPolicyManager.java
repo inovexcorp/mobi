@@ -303,6 +303,11 @@ public class BalanaPolicyManager implements XACMLPolicyManager {
         return this.repository;
     }
 
+    @Override
+    public String getFileLocation() {
+        return this.fileLocation;
+    }
+
     private BalanaPolicy getBalanaPolicy(XACMLPolicy policy) {
         if (policy instanceof BalanaPolicy) {
             return (BalanaPolicy) policy;
