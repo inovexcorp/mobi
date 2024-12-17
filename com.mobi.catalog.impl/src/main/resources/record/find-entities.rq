@@ -188,6 +188,6 @@ WHERE {
   }
 }
 GROUP BY ?entityIri ?record
-ORDER BY ASC(?entityNameUni)
+%SORT%
 #%LIMIT%
 #%OFFSET%

@@ -1,6 +1,8 @@
+package com.mobi.catalog.api;
+
 /*-
  * #%L
- * com.mobi.web
+ * com.mobi.catalog.api
  * $Id:$
  * $HeadURL:$
  * %%
@@ -21,11 +23,5 @@
  * #L%
  */
 
-/**
- * An option for sorting the results of an endpoint call
- */
-export interface SortOption {
-    field: string, // The IRI or identifier of the field to sort by
-    asc: boolean, // Whether the sort should be ascending or not
-    label: string // A string label for the sort option
+public record StringSortKey(String key) implements SortKey {
 }

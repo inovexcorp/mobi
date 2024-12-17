@@ -28,6 +28,9 @@ import static com.mobi.security.policy.api.xacml.XACML.POLICY_PERMIT_OVERRIDES;
 import com.mobi.catalog.api.PaginatedSearchParams;
 import com.mobi.catalog.api.PaginatedSearchResults;
 import com.mobi.catalog.api.RecordManager;
+import com.mobi.catalog.api.ResourceSortKey;
+import com.mobi.catalog.api.SortKey;
+import com.mobi.catalog.api.StringSortKey;
 import com.mobi.catalog.api.ThingManager;
 import com.mobi.catalog.api.builder.KeywordCount;
 import com.mobi.catalog.api.ontologies.mcat.Catalog;
@@ -156,6 +159,7 @@ public class SimpleRecordManager implements RecordManager {
 
     private final ValueFactory vf = new ValidatingValueFactory();
     private final Map<Resource, String> sortingOptions = new HashMap<>();
+
     /**
      * A map of the available RecordServices. The string is get typeIRI for the individual RecordService.
      */
@@ -183,7 +187,7 @@ public class SimpleRecordManager implements RecordManager {
 
     @Activate
     protected void start() {
-        createSortingOptions();
+        createRecordSortingOptions();
     }
 
     @Modified
@@ -276,6 +280,33 @@ public class SimpleRecordManager implements RecordManager {
                 .replace("%RECORDS%", viewableRecordsConcat)
                 .replace("#%LIMIT%", String.format("LIMIT %d", limit))
                 .replace("#%OFFSET%", String.format("OFFSET %d", offset));
+
+        StringBuilder querySuffix = new StringBuilder("\nORDER BY ");
+        Optional<SortKey> optionalSortBy = searchParams.getSortBy();
+        StringSortKey sortByParam = optionalSortBy
+                .map(sortKey -> {
+                    if (sortKey instanceof StringSortKey) {
+                        return (StringSortKey) sortKey; // Cast safely if it's the correct type
+                    } else {
+                        throw new IllegalStateException(
+                                "Expected a StringSortKey but got: " + sortKey.getClass()
+                        );
+                    }
+                })
+                .orElseGet(() -> new StringSortKey("entityName")); // Provide default if empty
+
+        StringBuilder binding = new StringBuilder();
+        if (sortByParam.key().equals("entityName")) {
+            binding.append("?entityNameUni");
+        }
+        Optional<Boolean> ascendingParam = searchParams.getAscending();
+        if (ascendingParam.isPresent() && ascendingParam.get()) {
+            querySuffix.append(binding);
+        } else {
+            querySuffix.append("DESC(").append(binding).append(")");
+        }
+        entitiesQueryStr = entitiesQueryStr.replace("%SORT%", querySuffix);
+
         if (log.isTraceEnabled()) {
             log.trace("Entities Query: " + entitiesQueryStr);
         }
@@ -635,7 +666,7 @@ public class SimpleRecordManager implements RecordManager {
     /**
      * Creates the base for the sorting options Object.
      */
-    private void createSortingOptions() {
+    private void createRecordSortingOptions() {
         sortingOptions.put(vf.createIRI(_Thing.modified_IRI), MODIFIED);
         sortingOptions.put(vf.createIRI(_Thing.issued_IRI), "issued");
         sortingOptions.put(vf.createIRI(_Thing.title_IRI), "title");
@@ -655,12 +686,24 @@ public class SimpleRecordManager implements RecordManager {
         }
 
         StringBuilder querySuffix = new StringBuilder("\nORDER BY ");
-        Resource sortByParam = searchParams.getSortBy().orElse(vf.createIRI(_Thing.modified_IRI));
+        Optional<SortKey> optionalSortBy = searchParams.getSortBy();
+
+        ResourceSortKey sortByParam = optionalSortBy
+                .map(sortKey -> {
+                    if (sortKey instanceof ResourceSortKey) {
+                        return (ResourceSortKey) sortKey; // Cast safely if it's the correct type
+                    } else {
+                        throw new IllegalStateException(
+                                "Expected a ResourceSortKey but got: " + sortKey.getClass()
+                        );
+                    }
+                })
+                .orElseGet(() -> new ResourceSortKey(vf.createIRI(_Thing.modified_IRI))); // Provide default if empty
         StringBuilder binding = new StringBuilder();
-        if (sortByParam.equals(vf.createIRI(_Thing.title_IRI))) {
-            binding.append("lcase(?").append(sortingOptions.getOrDefault(sortByParam, MODIFIED)).append(")");
+        if (sortByParam.resource().equals(vf.createIRI(_Thing.title_IRI))) {
+            binding.append("lcase(?").append(sortingOptions.getOrDefault(sortByParam.resource(), MODIFIED)).append(")");
         } else {
-            binding.append("?").append(sortingOptions.getOrDefault(sortByParam, MODIFIED));
+            binding.append("?").append(sortingOptions.getOrDefault(sortByParam.resource(), MODIFIED));
         }
         Optional<Boolean> ascendingParam = searchParams.getAscending();
         if (ascendingParam.isPresent() && ascendingParam.get()) {

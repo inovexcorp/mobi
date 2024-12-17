@@ -48,7 +48,7 @@ module.exports = {
         browser.globals.switchToPage(browser, 'catalog', 'catalog-page records-view');
         browser.globals.wait_for_no_spinners(browser);
         browser.page.catalogPage().waitForElementPresent('@filterSelector')
-    
+
         browser.page.catalogPage().openRecordItem('shacl');
         browser.page.catalogPage().changeRecordFields('shacl', {'description': 'new description', 'keywords': ['shacl1', 'shacl2']});
         browser.page.catalogPage().leaveCatalogRecord(browser);
@@ -77,13 +77,17 @@ module.exports = {
             .expect.element('app-entity-search-page app-search-results-list div.entity-results-list div info-message p').text.to.contain('No search has been performed');
     },
 
-    'Step 8: Verify Filter Appearance': function (browser) {
+    'Step 8: Verify Sort Dropdown Appearance': function (browser) {
+        browser.page.entitySearchPage().verifyEntitySearchPageSort('Entity Name (asc)');
+    },
+
+    'Step 9: Verify Filter Appearance': function (browser) {
         browser.page.entitySearchPage().verifyFilterItems('Record Type', recordTypeFilters);
         browser.page.entitySearchPage().verifyFilterItems('Keywords', ['shacl1', 'shacl2']);
         browser.page.entitySearchPage().assertNumFilterChips(0);
     },
 
-    'Step 9: Verify Reset Button for Filters': function (browser) {
+    'Step 10: Verify Reset Button for Filters': function (browser) {
         // Toggle Filters ON
         browser.page.entitySearchPage().toggleFilterItem('Record Type', 'Ontology Record');
         browser.globals.wait_for_no_spinners(browser);
@@ -107,7 +111,7 @@ module.exports = {
         browser.page.entitySearchPage().assertNumFilterChips(0);
     },
 
-    'Step 10: Verify No Search Filter Logic': function (browser) {
+    'Step 11: Verify No Search Filter Logic': function (browser) {
         // Toggle Filters ON
         browser.page.entitySearchPage().toggleFilterItem('Record Type', 'Ontology Record');
         browser.globals.wait_for_no_spinners(browser);
@@ -133,7 +137,7 @@ module.exports = {
         browser.page.entitySearchPage().assertNumFilterChips(0);
     },
 
-    'Step 11: Apply Search Text & validate results': function (browser) {
+    'Step 12: Apply Search Text & validate results': function (browser) {
         // Search Page without filters
         browser.page.entitySearchPage().applySearchText('shapes');
         browser.globals.wait_for_no_spinners(browser);
@@ -158,7 +162,7 @@ module.exports = {
         browser.page.entitySearchPage().verifyRecordListView();
     },
 
-    'Step 12: Verify removing filter chip removes filter': function (browser) {
+    'Step 13: Verify removing filter chip removes filter': function (browser) {
         browser.page.entitySearchPage().removeFilterChip('Shapes Graph Record');
         browser.page.entitySearchPage().removeFilterChip('shacl1');
         browser.globals.wait_for_no_spinners(browser);
@@ -166,7 +170,7 @@ module.exports = {
         browser.page.entitySearchPage().verifyFilterItemCheckedState('Shapes Graph Record', false);
         browser.page.entitySearchPage().verifyFilterItemCheckedState('shacl1', false);
         browser.useCss().assert.elementsCount('app-entity-search-page app-search-results-list mat-card-title', 10);
-        
+
         // Toggle filters on for the reset test next
         browser.page.entitySearchPage().toggleFilterItem('Record Type', 'Ontology Record');
         browser.globals.wait_for_no_spinners(browser);
@@ -177,7 +181,7 @@ module.exports = {
         browser.page.entitySearchPage().verifyFilterItemCheckedState('Shapes Graph Record', true);
     },
 
-    'Step 13: Verify reset button clears filter chips' : function(browser) {
+    'Step 14: Verify reset button clears filter chips' : function(browser) {
         browser.page.entitySearchPage().resetFilters();
         browser.globals.wait_for_no_spinners(browser);
         browser.page.entitySearchPage().assertNumFilterChips(0);
@@ -193,7 +197,7 @@ module.exports = {
         browser.page.entitySearchPage().assertNumFilterChips(1);
     },
 
-    'Step 14: Navigate Away and Back': function (browser) {
+    'Step 15: Navigate Away and Back': function (browser) {
         browser.globals.switchToPage(browser, 'shapes-graph-editor', 'shapes-graph-editor-page')
         browser.globals.wait_for_no_spinners(browser);
         browser.globals.switchToPage(browser, 'entity-search', 'app-entity-search-page');
@@ -210,13 +214,13 @@ module.exports = {
         browser.page.entitySearchPage().assertNumFilterChips(2);
     },
 
-    'Step 15: Logout and Log Back In': function (browser) {
+    'Step 16: Logout and Log Back In': function (browser) {
         browser.useCss();
         browser.globals.logout(browser);
         browser.globals.initial_steps(browser, adminUsername, adminPassword);
     },
 
-    'Step 16: Verify Cleared State': function (browser) {
+    'Step 17: Verify Cleared State': function (browser) {
         browser.globals.switchToPage(browser, 'entity-search', 'app-entity-search-page');
         browser.useCss()
             .waitForElementVisible('app-entity-search-page info-message p')
@@ -233,10 +237,32 @@ module.exports = {
         browser.useCss().expect.element('input.mat-checkbox-input[aria-checked=true]').to.not.be.present;
     },
 
-    'Step 17: Ensure Selected types are not still Being Stored': function (browser) {
+    'Step 18: Ensure Selected types are not still Being Stored': function (browser) {
         browser.page.entitySearchPage().applySearchText('shapes');
         browser.useCss().assert.elementsCount('app-entity-search-page app-search-results-list mat-card-title', 10);
         browser.useCss().expect.element('app-entity-search-page app-search-results-list open-record-button button').to.be.present;
         browser.page.entitySearchPage().verifyRecordListView();
+    },
+
+    'Step 19: Change Dropdown Value': function (browser) {
+        browser.page.entitySearchPage().applyOrderFilter('Entity Name (desc)')
+        browser.page.entitySearchPage().verifyEntitySearchPageSort('Entity Name (desc)');
+    },
+
+    'Step 20: Verify Sort Option Does Not Change When Switching Pages': function (browser) {
+        browser.globals.switchToPage(browser, 'shapes-graph-editor', 'shapes-graph-editor-page')
+        browser.globals.wait_for_no_spinners(browser);
+        browser.globals.switchToPage(browser, 'entity-search', 'app-entity-search-page');
+        browser.globals.wait_for_no_spinners(browser);
+        browser.page.entitySearchPage().verifyEntitySearchPageSort('Entity Name (desc)');
+    },
+
+    'Step 21: Verify Sort Option is Reset When Logging Out': function (browser) {
+        browser.useCss();
+        browser.globals.logout(browser);
+        browser.globals.initial_steps(browser, adminUsername, adminPassword);
+        browser.globals.switchToPage(browser, 'entity-search', 'app-entity-search-page');
+        browser.globals.wait_for_no_spinners(browser);
+        browser.page.entitySearchPage().verifyEntitySearchPageSort('Entity Name (asc)');
     }
 }

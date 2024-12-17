@@ -59,6 +59,7 @@ import com.mobi.catalog.api.DistributionManager;
 import com.mobi.catalog.api.PaginatedSearchParams;
 import com.mobi.catalog.api.PaginatedSearchResults;
 import com.mobi.catalog.api.RecordManager;
+import com.mobi.catalog.api.StringSortKey;
 import com.mobi.catalog.api.VersionManager;
 import com.mobi.catalog.api.builder.Conflict;
 import com.mobi.catalog.api.builder.Difference;
@@ -583,6 +584,8 @@ public class CatalogRestTest extends MobiRestTestCXF {
         Response response = target().path(CATALOG_URL_LOCAL + "/entities")
                 .queryParam("offset", 1)
                 .queryParam("limit", 11)
+                .queryParam("sort", "entityName")
+                .queryParam("asc", true)
                 .queryParam("keywords", "keyword1")
                 .queryParam("keywords", "keyword2")
                 .queryParam("searchText", "test").request().get();
@@ -592,6 +595,8 @@ public class CatalogRestTest extends MobiRestTestCXF {
                 .searchText("test")
                 .keywords(List.of("keyword1", "keyword2"))
                 .typeFilter(List.of(vf.createIRI(VersionedRDFRecord.TYPE)))
+                .sortBy(new StringSortKey("entityName"))
+                .ascending(true)
                 .offset(1)
                 .limit(11);
 

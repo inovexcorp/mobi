@@ -42,7 +42,7 @@ describe('EntitySearchStateService', () => {
 
   const entityRecords: EntityRecord[] = SearchResultsMock;
   const catalogId = 'http://mobi.com/catalog-local';
-  
+
   beforeEach(() => {
     TestBed.configureTestingModule({
       providers: [
@@ -131,6 +131,15 @@ describe('EntitySearchStateService', () => {
     expect(service.paginationConfig.searchText).toEqual('');
     expect(service.paginationConfig.type).toEqual([]);
     expect(service.paginationConfig.keywords).toEqual([]);
+    expect(service.paginationConfig.sortOption).toEqual({
+        field: 'entityName',
+        asc: true,
+        label: 'Entity Name (asc)'
+    }, {
+        field: 'entityName',
+        asc: false,
+        label: 'Entity Name (desc)'
+    });
     expect(service.totalResultSize).toEqual(0);
     expect(service.keywordSearchText).toEqual('');
   });

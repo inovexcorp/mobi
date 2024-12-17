@@ -1281,6 +1281,8 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
                 .searchText("Entity")
                 .limit(10)
                 .offset(0)
+                .sortBy("entityName")
+                .ascending(true)
                 .build();
         try (RepositoryConnection conn = repo.getConnection()) {
             PaginatedSearchResults<EntityMetadata> results = manager.findEntities(ManagerTestConstants.CATALOG_IRI,
@@ -1311,6 +1313,59 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
             assertEquals("This is a comment for entity 1.", entityMetadata.matchingAnnotations().get(1).get("value"));
             assertEquals("Entity 1 Label", entityMetadata.matchingAnnotations().get(2).get("value"));
             assertEquals("Entity 1 Preferred Label", entityMetadata.matchingAnnotations().get(3).get("value"));
+        }
+    }
+
+    @Test
+    public void testFindEntitiesSort() throws Exception {
+        String record1 = "http://example.org/record1";
+        String record2 = "http://example.org/record2";
+        mockFindEntities(record1, record2);
+
+        PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder()
+                .searchText("Entity")
+                .limit(10)
+                .offset(0)
+                .sortBy("entityName")
+                .ascending(false)
+                .build();
+        try (RepositoryConnection conn = repo.getConnection()) {
+            PaginatedSearchResults<EntityMetadata> resultsDesc = manager.findEntities(ManagerTestConstants.CATALOG_IRI,
+                    searchParams, user, conn);
+            assertEquals(10, resultsDesc.getPageSize());
+            assertEquals(5, resultsDesc.getTotalSize());
+            assertEquals(1, resultsDesc.getPageNumber());
+            assertEquals(5, resultsDesc.getPage().size());
+            // Get the first EntityMetadata from the results
+
+            assertEquals("Entity 2 Label", resultsDesc.getPage().get(0).entityName());
+            assertEquals("Entity 1d Label", resultsDesc.getPage().get(1).entityName());
+            assertEquals("Entity 1c Label", resultsDesc.getPage().get(2).entityName());
+            assertEquals("Entity 1b Label", resultsDesc.getPage().get(3).entityName());
+            assertEquals("Entity 1 Label", resultsDesc.getPage().get(4).entityName());
+        }
+
+        PaginatedSearchParams searchParamsAsc = new PaginatedSearchParams.Builder()
+                .searchText("Entity")
+                .limit(10)
+                .offset(0)
+                .sortBy("entityName")
+                .ascending(true)
+                .build();
+        try (RepositoryConnection conn = repo.getConnection()) {
+            PaginatedSearchResults<EntityMetadata> resultsAsc = manager.findEntities(ManagerTestConstants.CATALOG_IRI,
+                    searchParamsAsc, user, conn);
+            assertEquals(10, resultsAsc.getPageSize());
+            assertEquals(5, resultsAsc.getTotalSize());
+            assertEquals(1, resultsAsc.getPageNumber());
+            assertEquals(5, resultsAsc.getPage().size());
+            // Get the first EntityMetadata from the results
+
+            assertEquals("Entity 1 Label", resultsAsc.getPage().get(0).entityName());
+            assertEquals("Entity 1b Label", resultsAsc.getPage().get(1).entityName());
+            assertEquals("Entity 1c Label", resultsAsc.getPage().get(2).entityName());
+            assertEquals("Entity 1d Label", resultsAsc.getPage().get(3).entityName());
+            assertEquals("Entity 2 Label", resultsAsc.getPage().get(4).entityName());
         }
     }
 
@@ -1457,6 +1512,8 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
             PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder()
                     .searchText("Object")
                     .limit(10)
+                    .sortBy("entityName")
+                    .ascending(true)
                     .offset(0)
                     .build();
             PaginatedSearchResults<EntityMetadata> results = manager.findEntities(ManagerTestConstants.CATALOG_IRI,
@@ -1474,6 +1531,8 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
                     .searchText("Object")
                     .limit(1)
                     .offset(0)
+                    .sortBy("entityName")
+                    .ascending(true)
                     .build();
             results = manager.findEntities(ManagerTestConstants.CATALOG_IRI,
                     searchParams, user, conn);
@@ -1487,7 +1546,8 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
                     results.getPage().stream().map((e) -> e.sourceRecord().get("iri")).toList());
             // Test Page 2
             searchParams = new PaginatedSearchParams.Builder().searchText("Object")
-                    .limit(1).offset(1).build();
+                    .limit(1).offset(1).sortBy("entityName")
+                    .ascending(true).build();
             results = manager.findEntities(ManagerTestConstants.CATALOG_IRI,
                     searchParams, user, conn);
             Assert.assertEquals(List.of("http://example.org/entity2"),
@@ -1499,7 +1559,8 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
             assertEquals(2, results.getPageNumber());
             // Test Page 3
             searchParams = new PaginatedSearchParams.Builder().searchText("Object")
-                    .limit(1).offset(2).build();
+                    .limit(1).offset(2).sortBy("entityName")
+                    .ascending(true).build();
             try {
                 manager.findEntities(ManagerTestConstants.CATALOG_IRI,
                         searchParams, user, conn);
@@ -1517,7 +1578,8 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
         when(pdp.filter(any(), any(IRI.class))).thenReturn(new HashSet<>());
 
         PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder().searchText("Entity 2")
-                .limit(10).offset(0).build();
+                .limit(10).offset(0).sortBy("entityName")
+                .ascending(true).build();
         try (RepositoryConnection conn = repo.getConnection()) {
             PaginatedSearchResults<EntityMetadata> results = manager.findEntities(ManagerTestConstants.CATALOG_IRI,
                     searchParams, user, conn);
@@ -1535,7 +1597,8 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
         mockFindEntities(record1, record2);
 
         PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder().searchText("NOT_EXIST")
-                .limit(10).offset(0).build();
+                .limit(10).offset(0).sortBy("entityName")
+                .ascending(true).build();
         try (RepositoryConnection conn = repo.getConnection()) {
             PaginatedSearchResults<EntityMetadata> results = manager.findEntities(ManagerTestConstants.CATALOG_IRI,
                     searchParams, user, conn);

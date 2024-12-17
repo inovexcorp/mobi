@@ -1382,6 +1382,10 @@ export class CatalogManagerService {
         if (config.searchText) {
             params = params.set('searchText', config.searchText.trim());
         }
+        if (config.sortOption) {
+            params = params.set('sort', config.sortOption.field);
+            params = params.set('asc', config.sortOption.asc);
+        }
         const url = `${this.prefix}/${encodeURIComponent(catalogId)}/entities`;
         const request = this.http.get<EntityRecord[]>(url, {params, observe: 'response'});
         return this.spinnerSrv.track(request)

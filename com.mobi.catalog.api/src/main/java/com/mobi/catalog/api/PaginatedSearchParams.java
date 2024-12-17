@@ -38,7 +38,7 @@ public class PaginatedSearchParams {
     private final List<Resource> typeFilter;
     private final List<Resource> creators;
     private final List<String> keywords;
-    private final Resource sortBy;
+    private final SortKey sortBy;
     private final Boolean ascending;
     private final Integer limit;
     private final int offset;
@@ -70,7 +70,7 @@ public class PaginatedSearchParams {
         return Optional.ofNullable(creators);
     }
 
-    public Optional<Resource> getSortBy() {
+    public Optional<SortKey> getSortBy() {
         return Optional.ofNullable(sortBy);
     }
 
@@ -89,7 +89,7 @@ public class PaginatedSearchParams {
     public static class Builder {
         private Integer limit = null;
         private int offset = 0;
-        private Resource sortBy = null;
+        private SortKey sortBy = null;
         private String searchText = null;
         private List<Resource> typeFilter = null;
         private List<String> keywords = null;
@@ -108,8 +108,18 @@ public class PaginatedSearchParams {
             return this;
         }
 
-        public Builder sortBy(Resource sortBy) {
+        public Builder sortBy(SortKey sortBy) {
             this.sortBy = sortBy;
+            return this;
+        }
+
+        public Builder sortBy(Resource resource) {
+            this.sortBy = new ResourceSortKey(resource);
+            return this;
+        }
+
+        public Builder sortBy(String key) {
+            this.sortBy = new StringSortKey(key);
             return this;
         }
 
@@ -170,7 +180,7 @@ public class PaginatedSearchParams {
                 + ", typeFilter=" + typeFilter
                 + ", keywords=" + keywords
                 + ", creators=" + creators
-                + ", sortBy=" + sortBy
+                + ", sortBy=" + getSortBy().map(SortKey::key).orElse("null")
                 + ", ascending=" + ascending
                 + ", limit=" + limit
                 + ", offset=" + offset
