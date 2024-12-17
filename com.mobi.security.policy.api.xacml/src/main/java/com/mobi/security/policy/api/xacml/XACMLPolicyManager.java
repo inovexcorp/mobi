@@ -134,4 +134,9 @@ public interface XACMLPolicyManager {
      * @return The {@link Resource} of the provided policy.
      */
     Resource loadSystemPolicyIfAbsent(String policy);
+
+    /**
+     * @return the base directory for where Policies are stored
+     */
+    String getFileLocation();
 }

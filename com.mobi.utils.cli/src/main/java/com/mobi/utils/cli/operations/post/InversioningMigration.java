@@ -52,8 +52,12 @@ import com.mobi.jaas.api.ontologies.usermanagement.UserFactory;
 import com.mobi.persistence.utils.Bindings;
 import com.mobi.persistence.utils.Models;
 import com.mobi.repository.api.OsgiRepository;
+import com.mobi.security.policy.api.xacml.XACMLPolicyManager;
 import com.mobi.utils.cli.api.PostRestoreOperation;
 import com.mobi.utils.cli.utils.RestoreUtils;
+import com.mobi.vfs.api.VirtualFile;
+import com.mobi.vfs.api.VirtualFilesystem;
+import com.mobi.vfs.api.VirtualFilesystemException;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.maven.artifact.versioning.InvalidVersionSpecificationException;
@@ -101,6 +105,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -108,6 +113,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Component(
@@ -133,6 +139,9 @@ public class InversioningMigration implements PostRestoreOperation {
     private static final String GET_VERSIONEDRDFRECORD_IRIS;
     private static final String CONSTRUCT_DEFAULT;
     private static final String CLEAN_PROV;
+    private static final String GET_POLICIES_TO_REMOVE;
+    private static final String GET_MERGE_REQUESTS_TO_REMOVE;
+    private static final String GET_BRANCHES;
 
     // Commit Queries
     private static final String GET_INITIAL_COMMIT;
@@ -159,6 +168,21 @@ public class InversioningMigration implements PostRestoreOperation {
             CLEAN_PROV = IOUtils.toString(
                     Objects.requireNonNull(InversioningMigration.class
                             .getResourceAsStream("/inversioning/clean-prov.rq")),
+                    StandardCharsets.UTF_8
+            );
+            GET_POLICIES_TO_REMOVE = IOUtils.toString(
+                    Objects.requireNonNull(InversioningMigration.class
+                            .getResourceAsStream("/inversioning/get-policies-to-remove.rq")),
+                    StandardCharsets.UTF_8
+            );
+            GET_MERGE_REQUESTS_TO_REMOVE = IOUtils.toString(
+                    Objects.requireNonNull(InversioningMigration.class
+                            .getResourceAsStream("/inversioning/get-merge-requests-to-remove.rq")),
+                    StandardCharsets.UTF_8
+            );
+            GET_BRANCHES = IOUtils.toString(
+                    Objects.requireNonNull(InversioningMigration.class
+                            .getResourceAsStream("/inversioning/get-branches.rq")),
                     StandardCharsets.UTF_8
             );
 
@@ -237,6 +261,12 @@ public class InversioningMigration implements PostRestoreOperation {
     ThingManager thingManager;
 
     @Reference
+    XACMLPolicyManager policyManager;
+
+    @Reference
+    VirtualFilesystem vfs;
+
+    @Reference
     UserFactory userFactory;
 
     @Reference
@@ -254,14 +284,18 @@ public class InversioningMigration implements PostRestoreOperation {
             copyNonVersionedGraphs(tempConn, sysConn);
 
             for (Resource originalRecordIRI : getVersionedRdfRecordIRIs(tempConn)) {
+                VersionedRDFRecord record = null;
+                Set<Resource> recordCommits = new HashSet<>();
                 try {
-                    VersionedRDFRecord record = restoreCommits(originalRecordIRI, admin, tempConn,
+                    record = restoreCommits(originalRecordIRI, admin, recordCommits, tempConn,
                             configProvider.getRepository());
                     recordMap.put(originalRecordIRI, record);
                     restoreInProgressCommits(originalRecordIRI, tempConn, sysConn);
                 } catch (Exception e) {
                     RestoreUtils.error("Error creating record " + originalRecordIRI.stringValue(), e, LOGGER);
                     errorMap.put(originalRecordIRI, e);
+
+                    removeFailedRecordData(record, originalRecordIRI, admin, recordCommits, sysConn, tempConn);
                 }
             }
 
@@ -269,7 +303,8 @@ public class InversioningMigration implements PostRestoreOperation {
             // Restore all Record Graphs
             try (RepositoryResult<Resource> contextIDs = tempConn.getContextIDs()) {
                 contextIDs.forEach(context -> {
-                    if (context.stringValue().startsWith("https://mobi.com/records#")) {
+                    if (context.stringValue().startsWith("https://mobi.com/records#")
+                            && !errorMap.containsKey(context)) {
                         try (RepositoryResult<Statement> statements =
                                      tempConn.getStatements(null, null, null, context)) {
                             sysConn.add(statements);
@@ -277,6 +312,7 @@ public class InversioningMigration implements PostRestoreOperation {
                     }
                 });
             }
+
             long endTime = System.currentTimeMillis();
             RestoreUtils.out(String.format("Restored all Record graphs in %s ms", endTime - startTime), LOGGER);
 
@@ -284,6 +320,7 @@ public class InversioningMigration implements PostRestoreOperation {
             // Restore MasterBranches and delete temporary VersionedRDFRecord graphs
             recordMap.forEach((originalRecordIRI, record) ->
                     restoreMasterBranch(record, originalRecordIRI, tempConn, sysConn));
+
             endTime = System.currentTimeMillis();
             RestoreUtils.out(String.format("Updated MASTER branches in %s ms", endTime - startTime), LOGGER);
         }
@@ -302,9 +339,9 @@ public class InversioningMigration implements PostRestoreOperation {
 
         // Delete systemTemp repository and data
         try {
+            tempRepo.shutDown();
             Files.delete(Paths.get(System.getProperty("karaf.etc") + File.separator
                     + "com.mobi.service.repository.native-systemTemp.cfg"));
-            tempRepo.shutDown();
             File tempRepoData = tempRepo.getDataDir();
             FileUtils.deleteDirectory(tempRepoData);
         } catch (IOException e) {
@@ -313,18 +350,97 @@ public class InversioningMigration implements PostRestoreOperation {
 
         errorMap.forEach((recordIRI, err) -> {
             RestoreUtils.error("Error creating record " + recordIRI.stringValue(), err, LOGGER);
-            LOGGER.error("Error creating record " + recordIRI.stringValue(), err);
         });
     }
 
-    private VersionedRDFRecord restoreCommits(Resource originalRecordIRI, User admin, RepositoryConnection tempConn,
-                                              Repository repository) {
+    private void removeFailedRecordData(VersionedRDFRecord record, Resource originalRecordIRI, User admin,
+                                        Set<Resource> recordCommits, RepositoryConnection sysConn,
+                                        RepositoryConnection tempConn) {
+        if (record != null) {
+            recordManager.removeRecord(configProvider.getLocalCatalogIRI(), record.getResource(), admin,
+                    VersionedRDFRecord.class, sysConn);
+
+            // Remove temporary record used in restore.
+            sysConn.remove((Resource) null, null, null, record.getResource());
+        }
+        Set<Resource> resourcesToRemove = new HashSet<>();
+        for (Resource recordCommitIRI : recordCommits) {
+            commitManager.getCommit(recordCommitIRI, sysConn).ifPresent(commit -> {
+                Set<Revision> revisions = revisionManager.getAllRevisionsFromCommitId(recordCommitIRI,
+                        sysConn);
+                revisions.forEach(revision -> resourcesToRemove.add(revision.getResource()));
+                revisions.forEach(revision -> {
+                    revision.getAdditions().ifPresent(resourcesToRemove::add);
+                    revision.getDeletions().ifPresent(resourcesToRemove::add);
+                });
+            });
+        }
+        resourcesToRemove.addAll(recordCommits);
+
+        TupleQuery removePolicies = tempConn.prepareTupleQuery(GET_POLICIES_TO_REMOVE);
+        removePolicies.setBinding(RECORD_BINDING, originalRecordIRI);
+        try (TupleQueryResult result = removePolicies.evaluate()) {
+            for (BindingSet bindings : result) {
+                Resource recordPolicy = Bindings.requiredResource(bindings, "recordPolicy");
+                String recordPolicyURL = Bindings.requiredResource(bindings, "recordPolicyURL").stringValue();
+                Resource policyPolicy = Bindings.requiredResource(bindings, "policyPolicy");
+                String policyPolicyURL = Bindings.requiredResource(bindings, "policyPolicyURL").stringValue();
+                resourcesToRemove.add(recordPolicy);
+                resourcesToRemove.add(policyPolicy);
+                try {
+                    String[] recordPolicyParts = recordPolicyURL.split(Pattern.quote(File.separator));
+                    String[] policyPolicyParts = policyPolicyURL.split(Pattern.quote(File.separator));
+                    deleteFile(recordPolicyParts);
+                    deleteFile(policyPolicyParts);
+                } catch (VirtualFilesystemException e) {
+                    // Swallow exception and continue
+                    RestoreUtils.error("Could not remove policies for " + originalRecordIRI.stringValue(), e,
+                            LOGGER);
+                }
+            }
+        }
+
+        TupleQuery removeMRs = tempConn.prepareTupleQuery(GET_MERGE_REQUESTS_TO_REMOVE);
+        removeMRs.setBinding(RECORD_BINDING, originalRecordIRI);
+        try (TupleQueryResult result = removeMRs.evaluate()) {
+            result.forEach(bindings ->
+                    resourcesToRemove.add(Bindings.requiredResource(bindings, "g1")));
+        }
+
+        TupleQuery getBranches = tempConn.prepareTupleQuery(GET_BRANCHES);
+        getBranches.setBinding(RECORD_BINDING, originalRecordIRI);
+        try (TupleQueryResult result = getBranches.evaluate()) {
+            result.forEach(bindings ->
+                    resourcesToRemove.add(Bindings.requiredResource(bindings, "branch")));
+        }
+
+        sysConn.remove(null, null, null, resourcesToRemove.toArray(new Resource[0]));
+    }
+
+    private void deleteFile(String[] parts) throws VirtualFilesystemException {
+        StringBuilder sb = new StringBuilder();
+        String location = policyManager.getFileLocation();
+        sb.append(location);
+        if (!location.endsWith(File.separator)) {
+            sb.append(File.separator);
+        }
+        for (int i = parts.length - 3; i <= parts.length - 1; i++) {
+            sb.append(parts[i]);
+            sb.append(File.separator);
+        }
+        VirtualFile vf = vfs.resolveVirtualFile(sb.toString());
+        vf.delete();
+    }
+
+    private VersionedRDFRecord restoreCommits(Resource originalRecordIRI, User admin, Set<Resource> recordCommits,
+                                              RepositoryConnection tempConn, Repository repository) {
         try (RepositoryConnection sysConn = repository.getConnection()) {
             long startTime = System.currentTimeMillis();
             RecordService<? extends VersionedRDFRecord> recordService = getRecordService(originalRecordIRI, tempConn);
             Resource initialCommit = getInitialCommit(originalRecordIRI, tempConn);
             List<Resource> commits = getAllCommitIRIs(initialCommit, tempConn);
             List<Resource> masterCommits = getMasterChain(originalRecordIRI, tempConn);
+            recordCommits.addAll(commits);
 
             RestoreUtils.out(String.format("Updating VersionedRDFRecord %s with %s total commits",
                     originalRecordIRI.stringValue(), commits.size()), LOGGER);
@@ -337,7 +453,7 @@ public class InversioningMigration implements PostRestoreOperation {
                     .orElseThrow(() -> new IllegalStateException("Record does not have an associated MasterBranch"));
             Resource newInitialCommitIRI = getFirstObjectResource(sysConn.getStatements(masterBranchIRI,
                     vf.createIRI(Branch.head_IRI), null), "Master branch does not have HEAD commit");
-
+            recordCommits.add(newInitialCommitIRI);
             restoreCommitIRIs(initialCommit, newInitialCommitIRI, tempConn, sysConn);
 
             Map<Resource, CommitData> commitDataMap = getCommitBaseAux(commits, tempConn);
@@ -349,60 +465,70 @@ public class InversioningMigration implements PostRestoreOperation {
                     // If the commit is directly on master commit to master
                     addCommit(commitData, admin, catalogIRI, recordIRI, masterBranchIRI, tempConn, sysConn);
                 } else if (commitData.aux.isPresent()) {
-                    // Handle merge commits
-                    // Determine if the source branch is master or another branch
-                    Branch sourceBranch = null;
-                    Resource source;
-                    Resource masterHeadIRI = commitManager.getHeadCommitIRI(
-                            branchManager.getMasterBranch(catalogIRI, recordIRI, sysConn));
-                    if (commitData.aux.get().equals(masterHeadIRI)) {
-                        source = masterBranchIRI;
-                    } else {
-                        sourceBranch = addBranch(catalogIRI, recordIRI, commitData.aux.get(), sysConn);
-                        source = sourceBranch.getResource();
-                    }
-
-                    // Determine if the target branch is master or another branch
-                    Branch targetBranch = null;
-                    Resource target;
-                    if (masterCommits.contains(commitData.commit)) {
-                        target = masterBranchIRI;
-                    } else {
-                        targetBranch = addBranch(catalogIRI, recordIRI, commitData.base, sysConn);
-                        target = targetBranch.getResource();
-                    }
-
-                    // Handle conflicts
-                    DeltaModels deltaModels = getDeltaModels(commitData.commit, tempConn);
-                    Map<Resource, Conflict> conflictMap;
-                    conflictMap = differenceManager.getConflicts(commitData.aux.get(), commitData.base, sysConn)
-                            .stream().collect(Collectors.toMap(Conflict::getIRI, Function.identity()));
-
-                    LOGGER.debug("Merging commit {} of {} into {} ", commitData.commit,
-                            commitData.aux.get().stringValue(), commitData.base.stringValue());
-                    Resource mergeCommit = versioningManager.merge(catalogIRI, recordIRI, source, target, admin,
-                            deltaModels.additions, deltaModels.deletions, conflictMap, sysConn);
-                    restoreCommitIRIs(commitData.commit, mergeCommit, tempConn, sysConn);
-
-                    // Clear temporary branches
-                    if (sourceBranch != null) {
-                        cleanBranch(recordIRI, sourceBranch.getResource(), sysConn);
-                    }
-                    if (targetBranch != null) {
-                        cleanBranch(recordIRI, targetBranch.getResource(), sysConn);
-                    }
+                    addMergeCommit(catalogIRI, recordIRI, masterBranchIRI, masterCommits, admin, commitData, tempConn,
+                            sysConn);
                 } else {
                     // Commit to forward branch
                     // Create temporary branch for commit, add commit, then delete the temporary branch
                     Branch branch = addBranch(catalogIRI, recordIRI, commitData.base, sysConn);
-                    addCommit(commitData, admin, catalogIRI, recordIRI, branch.getResource(), tempConn, sysConn);
-                    cleanBranch(recordIRI, branch.getResource(), sysConn);
+                    try {
+                        addCommit(commitData, admin, catalogIRI, recordIRI, branch.getResource(), tempConn, sysConn);
+                    } finally {
+                        cleanBranch(recordIRI, branch.getResource(), sysConn);
+                    }
                 }
             }
             long endTime = System.currentTimeMillis();
             RestoreUtils.out(String.format("Updated VersionedRDFRecord %s in %s ms", originalRecordIRI.stringValue(),
                     endTime - startTime), LOGGER);
             return record;
+        }
+    }
+
+    private void addMergeCommit(Resource catalogIRI, Resource recordIRI, Resource masterBranchIRI,
+                                List<Resource> masterCommits, User admin, CommitData commitData,
+                                RepositoryConnection tempConn, RepositoryConnection sysConn) {
+        // Handle merge commits
+        // Determine if the source branch is master or another branch
+        Branch sourceBranch = null;
+        Resource source;
+        Resource masterHeadIRI = commitManager.getHeadCommitIRI(
+                branchManager.getMasterBranch(catalogIRI, recordIRI, sysConn));
+        if (commitData.aux.get().equals(masterHeadIRI)) {
+            source = masterBranchIRI;
+        } else {
+            sourceBranch = addBranch(catalogIRI, recordIRI, commitData.aux.get(), sysConn);
+            source = sourceBranch.getResource();
+        }
+
+        // Determine if the target branch is master or another branch
+        Branch targetBranch = null;
+        Resource target;
+        if (masterCommits.contains(commitData.commit)) {
+            target = masterBranchIRI;
+        } else {
+            targetBranch = addBranch(catalogIRI, recordIRI, commitData.base, sysConn);
+            target = targetBranch.getResource();
+        }
+
+        // Handle conflicts
+        DeltaModels deltaModels = getDeltaModels(commitData.commit, tempConn);
+        Map<Resource, Conflict> conflictMap;
+        conflictMap = differenceManager.getConflicts(commitData.aux.get(), commitData.base, sysConn)
+                .stream().collect(Collectors.toMap(Conflict::getIRI, Function.identity()));
+
+        LOGGER.debug("Merging commit {} of {} into {} ", commitData.commit,
+                commitData.aux.get().stringValue(), commitData.base.stringValue());
+        Resource mergeCommit = versioningManager.merge(catalogIRI, recordIRI, source, target, admin,
+                deltaModels.additions, deltaModels.deletions, conflictMap, sysConn);
+        restoreCommitIRIs(commitData.commit, mergeCommit, tempConn, sysConn);
+
+        // Clear temporary branches
+        if (sourceBranch != null) {
+            cleanBranch(recordIRI, sourceBranch.getResource(), sysConn);
+        }
+        if (targetBranch != null) {
+            cleanBranch(recordIRI, targetBranch.getResource(), sysConn);
         }
     }
 
