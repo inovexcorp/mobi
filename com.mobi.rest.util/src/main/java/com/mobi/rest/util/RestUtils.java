@@ -65,6 +65,7 @@ import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.ModelFactory;
 import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.base.CoreDatatype;
@@ -79,7 +80,7 @@ import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.rio.WriterConfig;
 import org.eclipse.rdf4j.rio.helpers.BasicParserSettings;
 import org.eclipse.rdf4j.rio.helpers.BufferedGroupingRDFHandler;
-import org.eclipse.rdf4j.rio.helpers.StatementCollector;
+import org.eclipse.rdf4j.rio.helpers.ContextStatementCollector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -407,6 +408,21 @@ public class RestUtils {
         return groupedModelToSkolemizedString(model, getRDFFormat(format), service);
     }
 
+    public static class ValidatingStatementCollector extends ContextStatementCollector {
+
+        public ValidatingStatementCollector() {
+            super(vf);
+        }
+
+        public ValidatingStatementCollector(Collection<Statement> statements) {
+            super(statements, vf);
+        }
+
+        public ValidatingStatementCollector(Collection<Statement> statements, Map<String, String> namespaces) {
+            super(statements, namespaces, vf);
+        }
+    }
+
     /**
      * Converts a JSON-LD string into a {@link Model}.
      *
@@ -416,9 +432,10 @@ public class RestUtils {
     public static Model jsonldToModel(String jsonld) {
         long start = System.currentTimeMillis();
         try {
-            RDFParser rdfParser = Rio.createParser(RDFFormat.JSONLD);
             Model model = new LinkedHashModel();
-            rdfParser.setRDFHandler(new StatementCollector(model));
+            RDFParser rdfParser = Rio.createParser(RDFFormat.JSONLD);
+            rdfParser.setValueFactory(vf);
+            rdfParser.setRDFHandler(new ValidatingStatementCollector(model));
 
             rdfParser.getParserConfig().set(BasicParserSettings.PRESERVE_BNODE_IDS, true);
             rdfParser.parse(IOUtils.toInputStream(jsonld, StandardCharsets.UTF_8));

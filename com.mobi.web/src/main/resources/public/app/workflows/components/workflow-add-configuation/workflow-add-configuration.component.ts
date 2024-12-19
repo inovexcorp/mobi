@@ -42,6 +42,7 @@ import { EntityTypeConfig, ModalConfig, ModalType } from '../../models/modal-con
 import { JSONLDId } from '../../../shared/models/JSONLDId.interface';
 import { JSONLDValue } from '../../../shared/models/JSONLDValue.interface';
 import { EntityType } from '../../models/workflow-display.interface';
+import { splitIRI } from '../../../shared/pipes/splitIRI.pipe';
 
 interface DistinctValues {
   base: (JSONLDId|JSONLDValue)[],
@@ -471,17 +472,16 @@ export class WorkflowAddConfigurationComponent implements OnInit {
    * @returns {Difference} - The difference object with the updated configuration and old properties.
    */
   private _addEntity(formValues: FormValues, nodeShape: JSONLDObject): Difference {
+    const workflowIri = this.data.workflowIRI.replace('#', '/');
     const newEntity: JSONLDObject = {
-      '@id': `${this.data.workflowIRI}/${this.data.entityType}#${v4()}`,
+      '@id': `${workflowIri}/${this.data.entityType}#${v4()}`,
       '@type': this._getTypes(nodeShape)
     };
-
     const newValues = getShaclGeneratedData(newEntity, this.selectedConfiguration.formFieldConfigs, formValues);
     const workflowDefinitionChanges = {
       '@id': this.data.workflowIRI,
       [this.data.hasPropertyIRI]: [{'@id': newEntity['@id']}]
     };
-
     return new Difference([workflowDefinitionChanges].concat(newValues));
   }
 }
