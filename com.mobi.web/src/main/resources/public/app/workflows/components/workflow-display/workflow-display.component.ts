@@ -684,20 +684,29 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
       select: addEntityFunc
     };
 
-    const commands = [{
+    const deleteCommand = {
       content: '<span class="fa fa-trash fa-2x" matTooltip="delete"></span>',
       select: deleteEntity
-    },
-    {
+    };
+
+    const editCommand = {
       content: '<span class="fa fa-edit fa-2x" matTooltip="edit"></span>',
       select: editEntityFunc
-    }];
+    };
+
+    const actionCommands = [deleteCommand, editCommand];
+    const triggerCommands = [addCommand];
+    if (!this._isDefaultTrigger) {
+      triggerCommands.push(deleteCommand);
+    }
+    // Done after for order around the circle
+    triggerCommands.push(editCommand);
     return [{
       selector: 'node[entityType="action"]',
-      commands: [...commands]
+      commands: actionCommands
     }, {
       selector: 'node[entityType="trigger"]',
-      commands: [addCommand, ...commands]
+      commands: triggerCommands
     }];
   }
   /**
@@ -890,6 +899,9 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
         node.data().color = triggerStyle.color;
         node.data().fontStyle = triggerStyle.fontStyle;
         this._isDefaultTrigger = false;
+        // Reset context menus to account for trigger being set
+        this._destroyMenus();
+        this._initializeContextMenu();
       }
       this.cyChart.style().update();
     }
@@ -974,6 +986,10 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
       elem.data().name = 'Default Trigger';
       this._setDefaultTriggerStyles(elem.data());
       this.cyChart.style().update();
+      this._isDefaultTrigger = true;
+      // Reset context menus to account for trigger being removed
+      this._destroyMenus();
+      this._initializeContextMenu();
     } else {
       const nodeId = elem.data('id');
       const edges = this.cyChart.edges().filter((ele) => ele.data('source') === nodeId || ele.data('target') === nodeId);

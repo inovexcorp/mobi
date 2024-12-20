@@ -32,17 +32,18 @@ import { cloneDeep, isArray } from 'lodash';
 import { of, throwError } from 'rxjs';
 // local
 import { actionSHACLDefinitions, triggerSHACLDefinitions, workflowRDF } from '../../models/mock_data/workflow-mocks';
+import { cleanStylesFromDOM } from 'src/main/resources/public/test/ts/Shared';
+import { Difference } from '../../../shared/models/difference.class';
 import { Element, EntityType } from '../../models/workflow-display.interface';
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { ModalType } from '../../models/modal-config.interface';
+import { WorkflowAddConfigurationComponent } from '../workflow-add-configuation/workflow-add-configuration.component';
 import {
   WorkflowPropertyOverlayComponent
 } from '../workflow-property-overlay-component/workflow-property-overlay.component';
-import { WorkflowsStateService } from '../../services/workflows-state.service';
-import { WorkflowAddConfigurationComponent } from '../workflow-add-configuation/workflow-add-configuration.component';
 import { WORKFLOWS } from '../../../prefixes';
-import { ModalType } from '../../models/modal-config.interface';
-import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
-import { Difference } from '../../../shared/models/difference.class';
 import { WorkflowsManagerService } from '../../services/workflows-manager.service';
+import { WorkflowsStateService } from '../../services/workflows-state.service';
 import { ToastService } from '../../../shared/services/toast.service';
 import { WorkflowDisplayComponent } from './workflow-display.component';
 
@@ -102,8 +103,8 @@ describe('WorkflowDisplayComponent', () => {
       zoom: (zoomLevel: number) => {
         console.log(zoomLevel);
       },
-      animate: (...args) => {
-        console.log("stubbed animate");
+      animate: () => {
+        console.log('stubbed animate');
       }
     });
 
@@ -125,11 +126,13 @@ describe('WorkflowDisplayComponent', () => {
   });
 
   afterEach(() => {
+    cleanStylesFromDOM();
     fixture = null;
     component = null;
     matDialog = null;
     workflowsStateStub = null;
     workflowsManagerStub = null;
+    cyChartSpy = null;
   });
 
   it('should create', () => {
