@@ -66,11 +66,11 @@
             <dl class="annotation-list" *ngIf="entity.matchingAnnotations">
                 <ng-container *ngFor="let annotation of entity.matchingAnnotations">
                     <div class="annotation-item">
-                    <dt>
-                        <span class="prop-name">{{ annotation.propName }}</span>
-                        <span class="text-muted text-center ml-1">{{ annotation.prop }}</span>
-                    </dt>
-                    <dd [title]="annotation.value" [innerHtml]="annotation.matchValue | highlightText:state.paginationConfig.searchText"></dd>
+                        <dt>
+                            <span class="prop-name">{{ annotation.propName }}</span>
+                            <span class="annotation-item-prop text-muted text-center ml-1">{{ annotation.prop }}</span>
+                        </dt>
+                        <dd class="annotation-item-value" [title]="annotation.value" [innerHtml]="annotation.matchValue | highlightText:state.paginationConfig.searchText"></dd>
                     </div>
                 </ng-container>
             </dl>
