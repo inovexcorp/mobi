@@ -934,10 +934,9 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
    * @return {JSONLDObject|undefined} - The Workflow JSON-LD object or undefined if not found.
    */
   private _findWorkflowObject(def: JSONLDObject[]): JSONLDObject {
-    return def.find(item => {
-      return has(item, this.buildWorkflowsIRI('hasAction')) ||
-        has(item, this.buildWorkflowsIRI('hasTrigger'));
-    });
+    return def.find(item => item['@type']?.includes(this.buildWorkflowsIRI('Workflow')) 
+      || has(item, this.buildWorkflowsIRI('hasAction'))
+      || has(item, this.buildWorkflowsIRI('hasTrigger')));
   }
   /**
    * Adds a new node to the chart based on the provided entity JSON-LD.
