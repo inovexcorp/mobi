@@ -6,7 +6,7 @@ package com.mobi.ontology.impl.core.versioning;
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 - 2024 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2025 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -24,6 +24,7 @@ package com.mobi.ontology.impl.core.versioning;
  */
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -192,7 +193,7 @@ public class OntologyRecordVersioningServiceTest extends OrmEnabledTestCase {
         try (RepositoryConnection conn = repo.getConnection()) {
             conn.clear();
         }
-        service.updateMasterRecordIRI(record.getResource(), commit, repo.getConnection());
+        service.updateMasterRecordIRI(record, commit, repo.getConnection());
     }
 
     @Test(expected=IllegalArgumentException.class)
@@ -204,11 +205,12 @@ public class OntologyRecordVersioningServiceTest extends OrmEnabledTestCase {
         when(thingManager.getObject(eq(record.getResource()), eq(service.ontologyRecordFactory), any(RepositoryConnection.class))).thenReturn(record);
 
         try (RepositoryConnection conn = repo.getConnection()) {
-            service.updateMasterRecordIRI(record.getResource(), commit, conn);
+            service.updateMasterRecordIRI(record, commit, conn);
         } finally {
             verify(ontologyCache).clearCacheImports(originalOntologyIRI);
             verify(ontologyManager).ontologyIriExists(eq(newIRI));
-            verify(record, never()).setTrackedIdentifier(eq(newIRI));
+            assertTrue(record.getTrackedIdentifier().isPresent());
+            assertEquals(originalOntologyIRI, record.getTrackedIdentifier().get());
             verify(thingManager, never()).updateObject(any(OntologyRecord.class), any(RepositoryConnection.class));
             verify(ontologyCache, never()).clearCacheImports(newIRI);
         }
@@ -223,11 +225,12 @@ public class OntologyRecordVersioningServiceTest extends OrmEnabledTestCase {
         when(thingManager.getObject(eq(record.getResource()), eq(service.ontologyRecordFactory), any(RepositoryConnection.class))).thenReturn(record);
 
         try (RepositoryConnection conn = repo.getConnection()) {
-            service.updateMasterRecordIRI(record.getResource(), commit, conn);
+            service.updateMasterRecordIRI(record, commit, conn);
         } finally {
             verify(ontologyCache).clearCacheImports(originalOntologyIRI);
             verify(ontologyManager).ontologyIriExists(eq(newIRI));
-            verify(record).setTrackedIdentifier(eq(newIRI));
+            assertTrue(record.getTrackedIdentifier().isPresent());
+            assertEquals(newIRI, record.getTrackedIdentifier().get());
             verify(thingManager).updateObject(any(OntologyRecord.class), any(RepositoryConnection.class));
             verify(ontologyCache).clearCacheImports(newIRI);
         }
