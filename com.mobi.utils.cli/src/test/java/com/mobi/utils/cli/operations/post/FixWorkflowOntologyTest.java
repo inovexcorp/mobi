@@ -30,6 +30,7 @@ import com.mobi.repository.impl.sesame.memory.MemoryRepositoryWrapper;
 import com.mobi.utils.cli.CliTestUtils;
 import org.apache.maven.artifact.versioning.InvalidVersionSpecificationException;
 import org.eclipse.rdf4j.common.transaction.QueryEvaluationMode;
+import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.ModelFactory;
 import org.eclipse.rdf4j.model.Statement;
@@ -38,6 +39,7 @@ import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.eclipse.rdf4j.query.QueryResults;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.eclipse.rdf4j.repository.RepositoryResult;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
 import org.junit.Before;
@@ -55,6 +57,10 @@ public class FixWorkflowOntologyTest {
     private MemoryRepositoryWrapper provRepo;
 
     private FixWorkflowOntology fixOperation;
+
+    private final IRI activityA = vf.createIRI("https://www.example.com/activites/A");
+    private final IRI endedAtTime = vf.createIRI("http://www.w3.org/ns/prov#endedAtTime");
+    private final IRI succeeded = vf.createIRI("http://mobi.solutions/ontologies/workflows#succeeded");
 
     @Before
     public void setupMocks() throws Exception {
@@ -98,17 +104,20 @@ public class FixWorkflowOntologyTest {
     public void fixDanglingActivitiesTest() {
         CliTestUtils.loadFiles(provRepo, "/workflowActivities.trig");
         fixOperation.execute();
-        try(RepositoryConnection conn = provRepo.getConnection()) {
-            Model model = QueryResults.asModel(conn.getStatements(
-                    vf.createIRI("https://www.example.com/activites/A"), null, null), mf);
+        try (RepositoryConnection conn = provRepo.getConnection()) {
+            Model model = QueryResults.asModel(conn.getStatements(activityA, null, null), mf);
 
-            Statement endedTriple = conn.getStatements(vf.createIRI("https://www.example.com/activites/A"),
-                    vf.createIRI("http://www.w3.org/ns/prov#endedAtTime"), null).stream().findFirst()
-                    .orElseThrow(() -> new IllegalStateException("No endedAt Triple available."));
+            Statement endedTriple;
+            try (RepositoryResult<Statement> stmts = conn.getStatements(activityA, endedAtTime, null)) {
+                endedTriple = stmts.stream().findFirst()
+                        .orElseThrow(() -> new IllegalStateException("No endedAt Triple available."));
+            }
 
-            Statement succeededTriple = conn.getStatements(vf.createIRI("https://www.example.com/activites/A"),
-                            vf.createIRI("http://mobi.solutions/ontologies/workflows#succeeded"), null).stream()
-                    .findFirst().orElseThrow(() -> new IllegalStateException("No succeeded Triple available."));
+            Statement succeededTriple;
+            try (RepositoryResult<Statement> stmts = conn.getStatements(activityA, succeeded, null)) {
+                succeededTriple = stmts.stream().findFirst()
+                        .orElseThrow(() -> new IllegalStateException("No succeeded Triple available."));
+            }
 
             assertEquals(9, model.size());
 
