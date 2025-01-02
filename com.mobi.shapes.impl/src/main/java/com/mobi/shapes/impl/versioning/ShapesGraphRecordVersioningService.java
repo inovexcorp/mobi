@@ -6,7 +6,7 @@ package com.mobi.shapes.impl.versioning;
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 - 2024 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2025 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -24,6 +24,7 @@ package com.mobi.shapes.impl.versioning;
  */
 
 import com.mobi.catalog.api.ontologies.mcat.Commit;
+import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.catalog.api.versioning.BaseVersioningService;
 import com.mobi.catalog.api.versioning.VersioningService;
 import com.mobi.ontology.utils.OntologyModels;
@@ -69,17 +70,19 @@ public class ShapesGraphRecordVersioningService extends BaseVersioningService<Sh
     }
 
     @Override
-    protected void updateMasterRecordIRI(Resource recordId, Commit commit, RepositoryConnection conn) {
+    protected void updateMasterRecordIRI(VersionedRDFRecord record, Commit commit, RepositoryConnection conn) {
         Resource headGraph = branchManager.getHeadGraph(
-                branchManager.getMasterBranch(configProvider.getLocalCatalogIRI(), recordId, conn));
+                branchManager.getMasterBranch(configProvider.getLocalCatalogIRI(), record.getResource(), conn));
         Model currentIRIs = QueryResults.asModel(
                 conn.getStatements(null, RDF.TYPE, OWL.ONTOLOGY, headGraph));
         if (currentIRIs.isEmpty()) {
             throw new IllegalStateException("Ontology does not contain an ontology definition");
         }
-        ShapesGraphRecord record = thingManager.getObject(recordId, shapesGraphRecordFactory, conn);
+        ShapesGraphRecord shapesGraphRecord = shapesGraphRecordFactory.getExisting(record.getResource(),
+                record.getModel()).orElseThrow(() ->
+                new IllegalStateException("Record expected to be of type ShapesGraphRecord"));
         Resource existingOntologyIRI = record.getTrackedIdentifier()
-                .orElseThrow(() -> new IllegalStateException("ShapesGraphRecord " + recordId.stringValue()
+                .orElseThrow(() -> new IllegalStateException("ShapesGraphRecord " + record.getResource()
                         + " does not have an ontologyIRI"));
         Model ontologyDefinitions = mf.createEmptyModel();
         currentIRIs.subjects().stream()

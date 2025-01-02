@@ -6,7 +6,7 @@ package com.mobi.shapes.impl.versioning;
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 - 2024 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2025 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -24,8 +24,13 @@ package com.mobi.shapes.impl.versioning;
  */
 
 import static org.junit.Assert.assertEquals;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import com.mobi.catalog.api.BranchManager;
 import com.mobi.catalog.api.CommitManager;
@@ -53,7 +58,9 @@ import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
@@ -164,7 +171,7 @@ public class ShapesGraphRecordVersioningServiceTest extends OrmEnabledTestCase {
     public void updateMasterRecordIRINotContainOntologyDefinitionTest() throws Exception {
         try(RepositoryConnection conn = repo.getConnection()) {
             conn.clear();
-            service.updateMasterRecordIRI(record.getResource(), commit, conn);
+            service.updateMasterRecordIRI(record, commit, conn);
         }
     }
 
@@ -172,13 +179,15 @@ public class ShapesGraphRecordVersioningServiceTest extends OrmEnabledTestCase {
     public void updateMasterRecordIRIOntologyIRISameTest() throws Exception {
         when(shapesGraphManager.shapesGraphIriExists(any(Resource.class))).thenReturn(true);
         when(thingManager.getObject(eq(record.getResource()), eq(service.shapesGraphRecordFactory), any(RepositoryConnection.class))).thenReturn(record);
+        IRI newIRI = getValueFactory().createIRI("http://new");
 
         try(RepositoryConnection conn = repo.getConnection()) {
-            record.setTrackedIdentifier(getValueFactory().createIRI("http://new"));
+            record.setTrackedIdentifier(newIRI);
             Mockito.reset(record);
-            service.updateMasterRecordIRI(record.getResource(), commit, conn);
+            service.updateMasterRecordIRI(record, commit, conn);
         } finally {
-            verify(record, never()).setTrackedIdentifier(eq(getValueFactory().createIRI("http://new")));
+            assertTrue(record.getTrackedIdentifier().isPresent());
+            assertEquals(newIRI, record.getTrackedIdentifier().get());
             verify(thingManager, never()).updateObject(any(ShapesGraphRecord.class), any(RepositoryConnection.class));
         }
     }
@@ -192,10 +201,11 @@ public class ShapesGraphRecordVersioningServiceTest extends OrmEnabledTestCase {
         try(RepositoryConnection conn = repo.getConnection()) {
             record.setTrackedIdentifier(getValueFactory().createIRI("http://new"));
             Mockito.reset(record);
-            service.updateMasterRecordIRI(record.getResource(), commit, conn);
+            service.updateMasterRecordIRI(record, commit, conn);
         } finally {
             verify(shapesGraphManager).shapesGraphIriExists(eq(newShapeIRI));
-            verify(record).setTrackedIdentifier(eq(newShapeIRI));
+            assertTrue(record.getTrackedIdentifier().isPresent());
+            assertEquals(newShapeIRI, record.getTrackedIdentifier().get());
             verify(thingManager).updateObject(any(ShapesGraphRecord.class), any(RepositoryConnection.class));
         }
     }

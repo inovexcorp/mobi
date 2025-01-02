@@ -4,7 +4,7 @@
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 - 2024 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2025 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -80,11 +80,7 @@ export class WorkflowRecordComponent implements OnInit, OnDestroy {
      }
 
   ngOnInit(): void {
-    this.cm.getRecord(this.record.iri, this.catalogId).pipe(
-      switchMap(recordJsonLd => this.workflowsState.convertJSONLDToWorkflowSchema(recordJsonLd[0]))
-    ).subscribe(record => {
-      this.record = record;
-    });
+    this._setRecord();
     this.setRecordBranches();
     this.setShaclDefinitions();
     this._wm.getExecutingActivities().subscribe(activities => {
@@ -324,6 +320,7 @@ export class WorkflowRecordComponent implements OnInit, OnDestroy {
       this.cm.createBranchCommit(this.branch.branch['@id'], this.record.iri, this.catalogId, 'Commit for new Workflow Changes').subscribe(() => {
         this.toggleEditMode();
         this.setRecordBranches();
+        this._setRecord();
       },
       () => {
         this._toast.createErrorToast('Error saving changes to workflow');
@@ -348,6 +345,18 @@ export class WorkflowRecordComponent implements OnInit, OnDestroy {
     this.runningWorkflows = [];
     activities.forEach(activity => {
       this.runningWorkflows.push(getPropertyId(activity, `${PROV}used`));
+    });
+  }
+
+  /**
+   * Sets the record variable to the latest data from the server.
+   * @private
+   */
+  private _setRecord(): void {
+    this.cm.getRecord(this.record.iri, this.catalogId).pipe(
+      switchMap(recordJsonLd => this.workflowsState.convertJSONLDToWorkflowSchema(recordJsonLd[0]))
+    ).subscribe(record => {
+      this.record = record;
     });
   }
 }

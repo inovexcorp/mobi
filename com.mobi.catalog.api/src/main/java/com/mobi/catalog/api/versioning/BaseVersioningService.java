@@ -6,7 +6,7 @@ package com.mobi.catalog.api.versioning;
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 - 2024 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2025 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -165,7 +165,7 @@ public abstract class BaseVersioningService<T extends VersionedRDFRecord> implem
                 () -> new IllegalStateException("Commit " + commitIRI.stringValue() + " could not be found"));
         newCommit.getWasAssociatedWith_resource().stream().findFirst()
                 .ifPresent(userIri -> {
-                    updateMasterRecordIRI(record.getResource(), newCommit, conn);
+                    updateMasterRecordIRI(record, newCommit, conn);
                     sendCommitEvent(record.getResource(), branch.getResource(), userIri, user.getResource());
                 });
         return commitIRI;
@@ -233,7 +233,7 @@ public abstract class BaseVersioningService<T extends VersionedRDFRecord> implem
         }
         commitManager.addCommit(targetBranch, newCommit, conn);
 
-        updateMasterRecordIRI(record.getResource(), newCommit, conn);
+        updateMasterRecordIRI(record, newCommit, conn);
         sendCommitEvent(record.getResource(), targetBranch.getResource(), user.getResource(), newCommit.getResource());
         return newCommit.getResource();
     }
@@ -279,7 +279,8 @@ public abstract class BaseVersioningService<T extends VersionedRDFRecord> implem
         return commitRevisionIRI;
     }
 
-    private Resource getBranchingCommit(Resource baseCommitIRI, Resource auxCommitIRI, String query, RepositoryConnection conn) {
+    private Resource getBranchingCommit(Resource baseCommitIRI, Resource auxCommitIRI, String query,
+                                        RepositoryConnection conn) {
         // Figure out what commit the source branch (auxCommit) originally diverged from the target branch (baseCommit)
         TupleQuery getBranchingCommit = conn.prepareTupleQuery(query);
         getBranchingCommit.setBinding("targetHead", baseCommitIRI);
@@ -361,9 +362,12 @@ public abstract class BaseVersioningService<T extends VersionedRDFRecord> implem
                         () -> new IllegalStateException("Forward merge commit does not contain a baseCommit"));
                 Commit baseCommit = getHeadCommit(commitBaseCommitResource, conn);
                 if (baseCommit.getResource().equals(branchingResource)) {
-                    addInfluencedRevision(commit, baseCommit, getDeltaValue(forwardMergeBaseRevision.getAdditions(), ADDITIONS,
-                            forwardMergeBaseRevision.getResource()), getDeltaValue(forwardMergeBaseRevision.getDeletions(), DELETIONS,
-                            forwardMergeBaseRevision.getResource()), commitRevision, conn);
+                    addInfluencedRevision(commit, baseCommit,
+                            getDeltaValue(forwardMergeBaseRevision.getAdditions(), ADDITIONS,
+                                forwardMergeBaseRevision.getResource()),
+                            getDeltaValue(forwardMergeBaseRevision.getDeletions(), DELETIONS,
+                                forwardMergeBaseRevision.getResource()),
+                            commitRevision, conn);
                 } else {
                     Revision baseCommitRevision = revisionManager.getRevisionFromCommitId(commitBaseCommitResource,
                             conn);
@@ -459,7 +463,8 @@ public abstract class BaseVersioningService<T extends VersionedRDFRecord> implem
         }
     }
 
-    private void addInfluencedRevision(Commit commit, Commit parentCommit, IRI addGraph, IRI delGraph, Revision commitRevision, RepositoryConnection conn) {
+    private void addInfluencedRevision(Commit commit, Commit parentCommit, IRI addGraph, IRI delGraph,
+                                       Revision commitRevision, RepositoryConnection conn) {
         // If the parent is the branching commit, add a new Revision to the branching commit
         Revision branchCommitRevision = revisionManager.createRevision(UUID.randomUUID());
         branchCommitRevision.setAdditions(delGraph);
@@ -475,11 +480,6 @@ public abstract class BaseVersioningService<T extends VersionedRDFRecord> implem
         commitRevision.setProperty(branchCommitRevision.getResource(), PROV.HAD_PRIMARY_SOURCE);
         commit.getModel().addAll(commitRevision.getModel());
         thingManager.updateObject(commit, conn);
-    }
-
-    private Commit getHeadCommit(Resource commitIRI, RepositoryConnection conn) {
-        return commitManager.getCommit(commitIRI, conn).orElseThrow(
-                () -> new IllegalStateException("Could not find commit " + commitIRI.stringValue()));
     }
 
     @Override
@@ -696,7 +696,16 @@ public abstract class BaseVersioningService<T extends VersionedRDFRecord> implem
     private record MergeRevisions(Revision base, Revision aux, Revision display, Model keptEntityDoNotAdd,
                                   Model duplicateAddsToRemove, Model duplicateDelsToRemove) {}
 
-    protected void updateMasterRecordIRI(Resource recordId, Commit commit, RepositoryConnection conn) {
+    /**
+     * Method meant to be overwritten by implementing classes that will update any tracked identifiers on the parent
+     * record based off commits to the Master Branch. NOTE: This method is intended to mutate the provided Record's
+     * underlying model for further processing.
+     *
+     * @param record The {@link VersionedRDFRecord} tracking an identifier IRI on the Master Branch
+     * @param commit The recent Commit made on the Master Branch
+     * @param conn A {@link RepositoryConnection} for lookup
+     */
+    protected void updateMasterRecordIRI(VersionedRDFRecord record, Commit commit, RepositoryConnection conn) {
     }
 
     protected void sendCommitEvent(Resource record, Resource branch, Resource user, Resource newCommit) {
@@ -731,19 +740,21 @@ public abstract class BaseVersioningService<T extends VersionedRDFRecord> implem
         inProgressCommit.getModel()
                 .filter(revisionIRI, additionsIRI, null)
                 .forEach(st -> {
-                    // Make the baseCommit's Revision deletions point to the InProgressCommit's additions (Reverse Delta)
+                    // Make baseCommit's Revision deletions point to the InProgressCommit's additions (Reverse Delta)
                     conn.add(baseRevisionIRI, deletionsIRI, st.getObject(), baseCommit.getResource());
                     // Apply the statements in the InProgressCommit additions to the state graph
-                    RepositoryResult<Statement> additions = conn.getStatements(null, null, null, (Resource) st.getObject());
+                    RepositoryResult<Statement> additions = conn.getStatements(null, null, null, (Resource)
+                            st.getObject());
                     conn.add(additions, headGraph);
                 });
         inProgressCommit.getModel()
                 .filter(revisionIRI, deletionsIRI, null)
                 .forEach(st -> {
-                    // Make the baseCommit's Revision additions point to the InProgressCommit's deletions (Reverse Delta)
+                    // Make baseCommit's Revision additions point to the InProgressCommit's deletions (Reverse Delta)
                     conn.add(baseRevisionIRI, additionsIRI, st.getObject(), baseCommit.getResource());
                     // Apply the statements in the InProgressCommit deletions to the state graph
-                    RepositoryResult<Statement> deletions = conn.getStatements(null, null, null, (Resource) st.getObject());
+                    RepositoryResult<Statement> deletions = conn.getStatements(null, null, null, (Resource)
+                            st.getObject());
                     conn.remove(deletions, headGraph);
                 });
     }
@@ -758,6 +769,11 @@ public abstract class BaseVersioningService<T extends VersionedRDFRecord> implem
         return commitManager.getHeadCommitFromBranch(branch, conn)
                 .orElseThrow(() -> new IllegalStateException(type + " branch " + branch.getResource().stringValue()
                         + "does not have a HEAD commit set."));
+    }
+
+    private Commit getHeadCommit(Resource commitIRI, RepositoryConnection conn) {
+        return commitManager.getCommit(commitIRI, conn).orElseThrow(
+                () -> new IllegalStateException("Could not find commit " + commitIRI.stringValue()));
     }
 
     private IRI getDeltaValue(Optional<IRI> deltaGraphOpt, String type, Resource revisionResource) {

@@ -6,18 +6,18 @@ package com.mobi.workflows.impl.core.versioning;
  * $Id:$
  * $HeadURL:$
  * %%
- * Copyright (C) 2016 - 2024 iNovex Information Systems, Inc.
+ * Copyright (C) 2016 - 2025 iNovex Information Systems, Inc.
  * %%
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * 
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * 
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
@@ -34,6 +34,7 @@ import com.mobi.catalog.api.versioning.VersioningService;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.workflows.api.WorkflowManager;
 import com.mobi.workflows.api.ontologies.workflows.Workflow;
+import com.mobi.workflows.api.ontologies.workflows.WorkflowFactory;
 import com.mobi.workflows.api.ontologies.workflows.WorkflowRecord;
 import com.mobi.workflows.api.ontologies.workflows.WorkflowRecordFactory;
 import org.eclipse.rdf4j.model.Model;
@@ -49,6 +50,8 @@ import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.event.EventAdmin;
 
 import java.util.Map;
+import java.util.Optional;
+import javax.annotation.Nullable;
 
 @Component(
         immediate = true,
@@ -57,6 +60,9 @@ import java.util.Map;
 public class WorkflowRecordVersioningService extends BaseVersioningService<WorkflowRecord> {
     @Reference
     protected WorkflowRecordFactory workflowRecordFactory;
+
+    @Reference
+    protected WorkflowFactory workflowFactory;
 
     @Reference
     protected WorkflowManager workflowManager;
@@ -83,11 +89,12 @@ public class WorkflowRecordVersioningService extends BaseVersioningService<Workf
         WorkflowRecord workflowRecord = recordManager.getRecord(configProvider.getLocalCatalogIRI(),
                 record.getResource(), workflowRecordFactory, conn);
 
-        Resource workflowIRI = workflowRecord.getWorkflowIRI().orElseThrow(() ->
-                new IllegalArgumentException("Workflow Records must have linked workflow"));
+        // Fetching this before commit is made to avoid transaction conflict when adding new data affects the head graph
+        Workflow workflow = getCurrentWorkflow(convertRecord(record), branch, conn);
 
-        Resource commitIRI = super.addMasterCommit(record, branch, user, message, conn);
-        return validateAndUpdateTrigger(workflowRecord, workflowIRI, commitIRI, conn);
+        Resource commitIRI = super.addMasterCommit(workflowRecord, branch, user, message, conn);
+        validateAndUpdateTrigger(workflowRecord, workflow, commitIRI, conn);
+        return commitIRI;
     }
 
     @Override
@@ -97,46 +104,42 @@ public class WorkflowRecordVersioningService extends BaseVersioningService<Workf
         WorkflowRecord workflowRecord = recordManager.getRecord(configProvider.getLocalCatalogIRI(),
                 record.getResource(), workflowRecordFactory, conn);
 
-        Resource workflowIRI = workflowRecord.getWorkflowIRI().orElseThrow(() ->
-                new IllegalArgumentException("Workflow Records must have linked workflow"));
+        // Fetching this before commit is made to avoid transaction conflict when adding new data affects the head graph
+        Workflow workflow = getCurrentWorkflow(convertRecord(record), targetBranch, conn);
 
-        Resource commitIRI = super.mergeIntoMaster(record, sourceBranch, targetBranch, user, additions, deletions,
-                conflictMap, conn);
-        return validateAndUpdateTrigger(workflowRecord, workflowIRI, commitIRI, conn);
-    }
-
-    protected Resource validateAndUpdateTrigger(WorkflowRecord workflowRecord, Resource workflowIRI, Resource commitIRI,
-                                                RepositoryConnection conn) {
-        workflowManager.validateWorkflow(compiledResourceManager.getCompiledResource(commitIRI, conn));
-        Commit newCommit = commitManager.getCommit(commitIRI, conn).orElseThrow(
-                () -> new IllegalStateException("Commit " + commitIRI.stringValue() + " could not be found"));
-        newCommit.getBaseCommit_resource()
-                .ifPresent(baseCommit -> {
-                    Workflow oldWorkflow = workflowManager.getWorkflow(workflowIRI).orElseThrow(() ->
-                            new IllegalArgumentException("Workflow " + workflowIRI + " does not exist"));
-                    workflowManager.updateTriggerService(workflowRecord, oldWorkflow, conn);
-                });
+        Resource commitIRI = super.mergeIntoMaster(workflowRecord, sourceBranch, targetBranch, user, additions,
+                deletions, conflictMap, conn);
+        validateAndUpdateTrigger(workflowRecord, workflow, commitIRI, conn);
         return commitIRI;
     }
 
+    protected void validateAndUpdateTrigger(WorkflowRecord workflowRecord, @Nullable Workflow oldWorkflow,
+                                                Resource commitIRI, RepositoryConnection conn) {
+        workflowManager.validateWorkflow(compiledResourceManager.getCompiledResource(commitIRI, conn));
+        if (oldWorkflow != null) {
+            workflowManager.updateTriggerService(workflowRecord, oldWorkflow, conn);
+        }
+    }
+
     @Override
-    protected void updateMasterRecordIRI(Resource recordId, Commit commit, RepositoryConnection conn) {
+    protected void updateMasterRecordIRI(VersionedRDFRecord record, Commit commit, RepositoryConnection conn) {
         Resource headGraph = branchManager.getHeadGraph(
-                branchManager.getMasterBranch(configProvider.getLocalCatalogIRI(), recordId, conn));
+                branchManager.getMasterBranch(configProvider.getLocalCatalogIRI(), record.getResource(), conn));
         Model currentIRIs = QueryResults.asModel(
                 conn.getStatements(null, RDF.TYPE, vf.createIRI(Workflow.TYPE), headGraph));
         if (currentIRIs.isEmpty()) {
             throw new IllegalStateException("Workflow does not contain a workflow definition");
         }
-        WorkflowRecord record = thingManager.getObject(recordId, workflowRecordFactory, conn);
-        Resource existingWorkflowIRI = record.getWorkflowIRI()
-                .orElseThrow(() -> new IllegalStateException("WorkflowRecord " + recordId.stringValue()
+        // Done so the model of the passed object to updated for further processing
+        WorkflowRecord workflowRecord = convertRecord(record);
+        Resource existingWorkflowIRI = workflowRecord.getWorkflowIRI()
+                .orElseThrow(() -> new IllegalStateException("WorkflowRecord " + workflowRecord.getResource()
                         + " does not have an ontologyIRI"));
         Resource currentWorkflowIRI = currentIRIs.stream().findFirst().get().getSubject();
 
         if (!currentWorkflowIRI.equals(existingWorkflowIRI)) {
             assertWorkflowUniqueness(currentWorkflowIRI);
-            record.setWorkflowIRI(currentWorkflowIRI);
+            workflowRecord.setWorkflowIRI(currentWorkflowIRI);
             thingManager.updateObject(record, conn);
         }
     }
@@ -145,5 +148,23 @@ public class WorkflowRecordVersioningService extends BaseVersioningService<Workf
         if (workflowManager.workflowRecordIriExists(workflowId)) {
             throw new IllegalArgumentException("Workflow ID: " + workflowId + " already exists.");
         }
+    }
+
+    private Workflow getCurrentWorkflow(WorkflowRecord record, MasterBranch branch, RepositoryConnection conn) {
+        Workflow workflow = null;
+        Optional<Resource> headCommit = branch.getHead_resource();
+        if (headCommit.isPresent()) {
+            Resource workflowIRI = record.getWorkflowIRI().orElseThrow(() ->
+                    new IllegalArgumentException("Workflow Records must have linked workflow"));
+            Model workflowModel = compiledResourceManager.getCompiledResource(headCommit.get(), conn);
+            workflow = workflowFactory.getExisting(workflowIRI, workflowModel).orElseThrow(() ->
+                    new IllegalArgumentException("Workflow " + workflowIRI + " does not exist"));
+        }
+        return workflow;
+    }
+
+    private WorkflowRecord convertRecord(VersionedRDFRecord record) {
+        return workflowRecordFactory.getExisting(record.getResource(), record.getModel())
+                .orElseThrow(() -> new IllegalStateException("Record expected to be of type WorkflowRecord"));
     }
 }
