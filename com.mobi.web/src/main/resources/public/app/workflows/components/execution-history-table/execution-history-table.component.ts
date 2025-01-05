@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { AfterViewInit, Component, Input, OnChanges, SimpleChanges, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, Input, OnChanges, OnInit, SimpleChanges, ViewChild } from '@angular/core';
 import { MatTableDataSource } from '@angular/material/table';
 import { MatPaginator, PageEvent } from '@angular/material/paginator';
 import { animate, state, style, transition, trigger } from '@angular/animations';
@@ -62,7 +62,7 @@ import { WorkflowSchema } from '../../models/workflow-record.interface';
     ]),
   ],
 })
-export class ExecutionHistoryTableComponent implements OnChanges, AfterViewInit {
+export class ExecutionHistoryTableComponent implements OnInit, OnChanges, AfterViewInit {
   @Input() workflow: WorkflowSchema;
   @Input() workflowRdf: JSONLDObject[] = [];
   @Input() executingActivities: JSONLDObject[] = [];
@@ -87,6 +87,10 @@ export class ExecutionHistoryTableComponent implements OnChanges, AfterViewInit 
 
   constructor(public wss: WorkflowsStateService, private _wms: WorkflowsManagerService) { }
 
+  ngOnInit(): void {
+    this.findWorkflowExecutionActivities();
+  }
+
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['executingActivities']) {
       if (changes['executingActivities'].firstChange) {
@@ -94,24 +98,26 @@ export class ExecutionHistoryTableComponent implements OnChanges, AfterViewInit 
       }
       const previousActivities: JSONLDObject[] = changes['executingActivities'].previousValue;
       const currentActivities: JSONLDObject[] = changes['executingActivities'].currentValue;
-   
-      let shouldRefetch$: Observable<boolean> = of(false);
-      // If no filters, refetch page
-      if (!this.paginationConfig.startingAfter && !this.paginationConfig.status) {
-        shouldRefetch$ = of(true);
-      } else if (currentActivities.length > previousActivities.length) { // If a new activity was started
-        shouldRefetch$ = this._shouldRefetchBecauseNewActivities(currentActivities
-          .filter(activity => previousActivities.findIndex(prevAct => prevAct['@id'] === activity['@id']) < 0));
-      } else { // If a running activity ended
-        shouldRefetch$ = this._shouldRefetchBecauseEndedActivities(previousActivities
-          .filter(activity => currentActivities.findIndex(currAct => currAct['@id'] === activity['@id']) < 0));
-      }
-  
-      shouldRefetch$.subscribe(result => {
-        if (result) {
-          this.findWorkflowExecutionActivities();
+
+      if (JSON.stringify(previousActivities) !== JSON.stringify(currentActivities)) {
+        let shouldRefetch$: Observable<boolean>;
+        // If no filters, refetch page
+        if (!this.paginationConfig.startingAfter && !this.paginationConfig.status) {
+          shouldRefetch$ = of(true);
+        } else if (currentActivities.length > previousActivities.length) { // If a new activity was started
+          shouldRefetch$ = this._shouldRefetchBecauseNewActivities(currentActivities
+              .filter(activity => previousActivities.findIndex(prevAct => prevAct['@id'] === activity['@id']) < 0));
+        } else { // If a running activity ended
+          shouldRefetch$ = this._shouldRefetchBecauseEndedActivities(previousActivities
+              .filter(activity => currentActivities.findIndex(currAct => currAct['@id'] === activity['@id']) < 0));
         }
-      });
+
+        shouldRefetch$.subscribe(result => {
+          if (result) {
+            this.findWorkflowExecutionActivities();
+          }
+        });
+      }
     }
   }
   ngAfterViewInit(): void {
