@@ -23,10 +23,11 @@
  */
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { EntitySearchStateService } from '../../services/entity-search-state.service';
-import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { By } from '@angular/platform-browser';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
+import { MatSelectModule } from '@angular/material/select';
 
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
@@ -37,6 +38,7 @@ import { CatalogStateService } from '../../../shared/services/catalogState.servi
 import { CATALOG, ONTOLOGYEDITOR } from '../../../prefixes';
 import { EntityRecord } from '../../models/entity-record';
 import { EntitySearchFiltersComponent } from '../entity-search-filters/entity-search-filters.component';
+import { EntitySearchStateService } from '../../services/entity-search-state.service';
 import { FiltersSelectedListComponent } from '../../../shared/components/filters-selected-list/filters-selected-list.component';
 import { InfoMessageComponent } from '../../../shared/components/infoMessage/infoMessage.component';
 import { RecordIconComponent } from '../../../shared/components/recordIcon/recordIcon.component';
@@ -45,7 +47,6 @@ import { SearchResultItemComponent } from '../search-result-item/search-result-i
 import { SearchResultsMock } from '../../mock-data/search-results.mock';
 import { SelectedEntityFilters } from '../../models/selected-entity-filters.interface';
 import { SearchResultsListComponent } from './search-results-list.component';
-import { MatSelectModule } from '@angular/material/select';
 
 describe('SearchResultsListComponent', () => {
   let component: SearchResultsListComponent;
@@ -76,6 +77,8 @@ describe('SearchResultsListComponent', () => {
       imports: [
         NoopAnimationsModule,
         MatPaginatorModule,
+        FormsModule,
+        ReactiveFormsModule,
         MatSelectModule
       ]
     }).compileComponents();

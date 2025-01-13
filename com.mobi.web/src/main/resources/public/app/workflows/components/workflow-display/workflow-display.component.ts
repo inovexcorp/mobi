@@ -50,6 +50,10 @@ import { JSONLDId } from '../../../shared/models/JSONLDId.interface';
 import { ToastService } from '../../../shared/services/toast.service';
 import { WorkflowsManagerService } from '../../services/workflows-manager.service';
 
+// Setup cytoscape extensions
+cytoscape.use(dagre);
+cytoscape.use(cxtmenu);
+
 interface TypeI {
   key: string;
   id: string;
@@ -248,8 +252,6 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
    */
   createCytoscapeInstance(): cytoscape.Core {
     const container = <HTMLElement>document.querySelector('.workflow-display');
-    cytoscape.use(dagre);
-    cytoscape.use(cxtmenu);
     return cytoscape({
       layout: {
         name: 'dagre'

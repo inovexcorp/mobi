@@ -58,7 +58,6 @@ describe('VisualizationMenuComponent', () => {
             json: { elements: { nodes: [], edges: [] } },
             ready: undefined,
             zoom: (zoomLevel: number) => {
-                console.log(zoomLevel);
             }
         });
 

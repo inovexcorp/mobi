@@ -23,7 +23,7 @@
 import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { MatPaginator, PageEvent } from '@angular/material/paginator';
 import { catchError, switchMap, tap } from 'rxjs/operators';
-import { Observable, ReplaySubject, Subscription, combineLatest, forkJoin, of, throwError } from 'rxjs';
+import { Observable, ReplaySubject, Subject, Subscription, combineLatest, forkJoin, of, throwError } from 'rxjs';
 import { DataSource } from '@angular/cdk/collections';
 import { MatDialog } from '@angular/material/dialog';
 import { Sort, SortDirection } from '@angular/material/sort';

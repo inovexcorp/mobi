@@ -21,6 +21,7 @@
  * #L%
  */
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+
 import EventSource from 'eventsourcemock';
 
 import { REST_PREFIX } from '../../constants';

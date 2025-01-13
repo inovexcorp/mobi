@@ -66,7 +66,6 @@ describe('Ontology Visualization component', () => {
             json: { elements: { nodes: [], edges: [] } },
             ready: undefined,
             zoom: (zoomLevel: number) => {
-                console.log(zoomLevel);
             }
         });
 
