@@ -32,7 +32,7 @@ import { cloneDeep, isArray } from 'lodash';
 import { of, throwError } from 'rxjs';
 // local
 import { actionSHACLDefinitions, triggerSHACLDefinitions, workflowRDF } from '../../models/mock_data/workflow-mocks';
-import { cleanStylesFromDOM } from 'src/main/resources/public/test/ts/Shared';
+import { cleanStylesFromDOM } from '../../../../test/ts/Shared';
 import { Difference } from '../../../shared/models/difference.class';
 import { Element, EntityType } from '../../models/workflow-display.interface';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
@@ -101,10 +101,8 @@ describe('WorkflowDisplayComponent', () => {
       json: { elements: { nodes: [], edges: [] } },
       ready: undefined,
       zoom: (zoomLevel: number) => {
-        console.log(zoomLevel);
       },
       animate: () => {
-        console.log('stubbed animate');
       }
     });
 

@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { TestBed } from '@angular/core/testing';
+import { fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
@@ -176,24 +176,24 @@ describe('OntologyVisualization Service', () => {
     });
 
     describe('should initialize with the correct data', function() {
-        it('successfully', async (done) => {
+        it('successfully', fakeAsync(() => {
             expect(() => visualizationStub.getGraphState('commit', true)).toThrowError(Error); // ensure no state exist
             // this needs to be fixed later
             ontologyVisualizationDataStub.getOntologyNetworkObservable.and.returnValue(of(visData));
             ontologyVisualizationDataStub.buildGraphData.and.returnValue(of(visData));
-            await visualizationStub.init('commit', null).subscribe( commitGraphState => {
+            visualizationStub.init('commit', null).subscribe( commitGraphState => {
                 commitGraphState.importedOntologies = [];
                 commitGraphState.allGraphNodes = [];
                 visualizationStub.graphStateCache.set('commit', commitGraphState);
-                done();
             });
+            tick();
             expect(ontologyVisualizationDataStub.buildGraphData).toHaveBeenCalled();
 
             //@todo Fix this later
             // expect(ontologyVisualizationDataStub.getOntologyNetworkObservable).toHaveBeenCalled();
             // expect(ontologyVisualizationDataStub.graphDataFormat).toHaveBeenCalled();
             // expect(ontologyVisualizationDataStub.buildGraph).toHaveBeenCalled();
-        });
+        }));
         // it('with InProgressCommit', fakeAsync(async (done) => {
         //     ontologyStateStub.hasInProgressCommit = jasmine.createSpy('hasInProgressCommit').and.returnValue(true);
         //     expect(() => visualizationStub.getGraphState('commit', true)).toThrowError(Error); // ensure no state exist

@@ -21,7 +21,7 @@
  * #L%
  */
 import { Injectable, NgZone } from '@angular/core';
-import { Observable, ReplaySubject } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 
 import { REST_PREFIX } from '../../constants';
 import { SSEEvent } from '../models/sse-event';
@@ -47,9 +47,9 @@ export class SseService {
   /**
    * A Subject that will emit whenever an event is received from the EventSource.
    * @private
-   * @type {ReplaySubject}
+   * @type {Subject}
    */
-  private _eventSubject = new ReplaySubject<SSEEvent>();
+  private _eventSubject = new Subject<SSEEvent>();
 
   /**
    * The number of seconds to wait before trying to reconnect to the event stream again. Will double on every retry.

@@ -101,8 +101,10 @@ public class OntologyImportServiceImpl implements OntologyImportService {
             Difference diff = differenceManager.getDiff(existingData, newData);
             if (!diff.getAdditions().isEmpty() || !diff.getDeletions().isEmpty()) {
                 try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+                    File additionsFile = createTempFileFromModel(diff.getAdditions());
+                    File deletionsFile = createTempFileFromModel(diff.getDeletions());
                     commitManager.createInProgressCommit(configProvider.getLocalCatalogIRI(), ontologyRecord, user,
-                            createTempFileFromModel(diff.getAdditions()), createTempFileFromModel(diff.getAdditions()), conn);
+                            additionsFile, deletionsFile, conn);
                     versioningManager.commit(configProvider.getLocalCatalogIRI(), ontologyRecord, branch, user,
                             commitMsg, conn);
                 }
@@ -110,7 +112,6 @@ public class OntologyImportServiceImpl implements OntologyImportService {
             return diff;
         } else {
             newData.removeAll(existingData);
-
             if (!newData.isEmpty()) {
                 try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
                     commitManager.createInProgressCommit(configProvider.getLocalCatalogIRI(), ontologyRecord, user,
