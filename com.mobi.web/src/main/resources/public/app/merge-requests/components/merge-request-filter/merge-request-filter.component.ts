@@ -154,7 +154,7 @@ export class MergeRequestFilterComponent implements OnInit, OnDestroy {
             records: componentContext._state.records
           });
         }
-      },
+      }
     };
   }
 
@@ -236,6 +236,18 @@ export class MergeRequestFilterComponent implements OnInit, OnDestroy {
             pagingData.hasNextPage = filterInstance.filterItems.length < pagingData.totalSize;
           }, error => componentContext._toast.createErrorToast(error));
       },
+      reset: function(): void {
+        this.filterItems.filter(item => item.checked).forEach(item => {
+          item.checked = false;
+        });
+        componentContext.changeFilter.emit({
+          requestStatus: componentContext._state.requestStatus,
+          creators: [],
+          assignees: componentContext._state.assignees,
+          records: componentContext._state.records
+        });
+        this.numChecked = 0;
+      }
     };
   }
 
@@ -312,6 +324,18 @@ export class MergeRequestFilterComponent implements OnInit, OnDestroy {
             pagingData.hasNextPage = filterInstance.filterItems.length < pagingData.totalSize;
           }, error => componentContext._toast.createErrorToast(error));
       },
+      reset: function(): void {
+        this.filterItems.filter(item => item.checked).forEach(item => {
+          item.checked = false;
+        });
+        componentContext.changeFilter.emit({
+          requestStatus: componentContext._state.requestStatus,
+          creators: componentContext._state.creators,
+          assignees: componentContext._state.assignees,
+          records: []
+        });
+        this.numChecked = 0;
+      }
     };
   }
 
@@ -375,24 +399,36 @@ export class MergeRequestFilterComponent implements OnInit, OnDestroy {
       nextPage: function(): void {
         const filterInstance: SearchableListFilter = this;
         const pagingData = filterInstance.pagingData;
-        const paginatedConfig = {
-            searchText: componentContext._state.assigneeSearchText,
-            pageIndex: pagingData.pageIndex,
-            limit: pagingData.limit,
+      const paginatedConfig = {
+          searchText: componentContext._state.assigneeSearchText,
+          pageIndex: pagingData.pageIndex,
+          limit: pagingData.limit,
         };
         componentContext._mm.getAssignees(paginatedConfig).pipe(
           takeUntil(componentContext._destroySub$),
         ).subscribe((response: HttpResponse<UserCount[]>) => {
-            if (pagingData.pageIndex === 0) {
-              filterInstance.rawFilterItems = response.body;
-            } else {
-              filterInstance.rawFilterItems = filterInstance.rawFilterItems.concat(response.body);
-            }
-            filterInstance.setFilterItems();
-            pagingData.totalSize = Number(response.headers.get('x-total-count')) || 0;
-            pagingData.hasNextPage = filterInstance.filterItems.length < pagingData.totalSize;
-          }, error => componentContext._toast.createErrorToast(error));
+          if (pagingData.pageIndex === 0) {
+            filterInstance.rawFilterItems = response.body;
+          } else {
+            filterInstance.rawFilterItems = filterInstance.rawFilterItems.concat(response.body);
+          }
+          filterInstance.setFilterItems();
+          pagingData.totalSize = Number(response.headers.get('x-total-count')) || 0;
+          pagingData.hasNextPage = filterInstance.filterItems.length < pagingData.totalSize;
+        }, error => componentContext._toast.createErrorToast(error));
       },
+      reset: function(): void {
+        this.filterItems.filter(item => item.checked).forEach(item => {
+          item.checked = false;
+        });
+        componentContext.changeFilter.emit({
+          requestStatus: componentContext._state.requestStatus,
+          creators: componentContext._state.creators,
+          assignees: [],
+          records: componentContext._state.records,
+        });
+        this.numChecked = 0;
+      }
     };
   }
 }

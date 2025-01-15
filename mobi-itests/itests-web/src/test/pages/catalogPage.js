@@ -34,7 +34,7 @@ const filterItemXpath = '//catalog-page//record-filters//mat-expansion-panel//di
 var createRecordFiltersXPathSelector = function(filterTypeHeader, filterType) {
     var selectors = ['//catalog-page',
         '//records-view//record-filters//div[contains(@class, "record-filters")]//mat-expansion-panel-header',
-        '//mat-panel-title[contains(@class, "mat-expansion-panel-header-title")][text()[contains(.,"' + filterTypeHeader + '")]]//ancestor::mat-expansion-panel',
+        '//mat-panel-title[contains(@class, "mat-expansion-panel-header-title")]//div[text()[contains(.,"' + filterTypeHeader + '")]]//ancestor::mat-expansion-panel',
         '//div[contains(@class, "mat-expansion-panel-content")]',
         '//div[contains(@class, "filter-option")]//mat-checkbox']
     if (filterType) {

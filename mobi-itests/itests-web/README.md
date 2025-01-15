@@ -32,7 +32,7 @@ In order for the tests to run completely, you must have the following requiremen
       - Make sure your docker instance has at least 16Gb of memory & 6 CPUs allotted for processes
 
 - The tests run much slower when run through Maven than when you directly run the `test` script in the `package.json`. If you want to minimize overall time, you can run the maven build up until the phase right before the tests are actually run (so all the maven variable injection is performed and files are prepped in the target dir) and then run the `test` script directly:
-    1. Run `mvn clean pre-integration-test`
+    1. Run `mvn clean pre-integration-test -DskipFunctional=false`
     2. Run `npm run test`
 
 - To run an individual test in the functional test suite:

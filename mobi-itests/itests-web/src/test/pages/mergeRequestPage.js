@@ -33,7 +33,7 @@ const selectedFilterChipListXpath = '//merge-requests-page//merge-request-list//
 var createFilterXPathSelector = function(filterTypeHeader, filterOption) {
   var selectors = ['//merge-requests-page',
       '//merge-request-filter//div[contains(@class, "merge-request-filter")]//mat-expansion-panel-header',
-      `//mat-panel-title[contains(@class, "mat-expansion-panel-header-title")][text()[contains(.,"${filterTypeHeader}")]]//ancestor::mat-expansion-panel`,
+      `//mat-panel-title[contains(@class, "mat-expansion-panel-header-title")]//div[text()[contains(.,"${filterTypeHeader}")]]//ancestor::mat-expansion-panel`,
       '//div[contains(@class, "mat-expansion-panel-content")]'
   ];
   if (filterOption) {
@@ -95,7 +95,7 @@ const mergeRequestPageCommands = {
     },
 
     changeStatusType: function (status) {
-        var statusXpath = `//merge-request-list//merge-request-filter//mat-expansion-panel//mat-panel-title[text()[contains(.,"Request Status")]]//ancestor::mat-expansion-panel//mat-radio-button//span[text()[contains(.,"${status}")]]`
+        var statusXpath = `//merge-request-list//merge-request-filter//mat-expansion-panel//mat-panel-title//div[text()[contains(.,"Request Status")]]//ancestor::mat-expansion-panel//mat-radio-button//span[text()[contains(.,"${status}")]]`
         return this.useXpath()
             .waitForElementVisible(statusXpath)
             .click(statusXpath)
