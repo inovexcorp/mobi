@@ -23,14 +23,12 @@
 <div class="list-filters w-100">
   <mat-expansion-panel class="mat-elevation-z0" *ngFor="let currentFilter of filters" [expanded]="!currentFilter.hide">
       <mat-expansion-panel-header>
-          <mat-panel-title>
-            <div class="d-flex flex-row">
-              <div class="filter-panel-title align-self-center">
-                {{ currentFilter.title }}<span class="checkbox-count ml-1" *ngIf="currentFilter.type === FilterType.CHECKBOX && currentFilter.numChecked > 0"> ({{currentFilter.numChecked}})</span>
-              </div>
-              <div class="filter-reset-button-container" *ngIf="currentFilter.type === FilterType.CHECKBOX && currentFilter.hasOwnProperty('reset')">
-                <button type="button" mat-button color="primary" (click)="reset($event, currentFilter)" [disabled]="currentFilter.numChecked == 0">Reset</button>
-              </div>
+          <mat-panel-title class="justify-content-between">
+            <div class="filter-panel-title align-self-center">
+              {{ currentFilter.title }}<span class="checkbox-count ml-1" *ngIf="currentFilter.type === FilterType.CHECKBOX && currentFilter.numChecked > 0"> ({{currentFilter.numChecked}})</span>
+            </div>
+            <div class="filter-reset-button-container" *ngIf="currentFilter.type === FilterType.CHECKBOX && currentFilter.hasOwnProperty('reset')">
+              <button type="button" mat-button color="primary" (click)="reset($event, currentFilter)" [disabled]="currentFilter.numChecked == 0">Reset</button>
             </div>
           </mat-panel-title>
       </mat-expansion-panel-header>
