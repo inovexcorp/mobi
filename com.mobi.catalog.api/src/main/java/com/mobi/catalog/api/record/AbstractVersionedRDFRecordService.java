@@ -502,7 +502,7 @@ public abstract class AbstractVersionedRDFRecordService<T extends VersionedRDFRe
                     commit.getModel().forEach(exporter::handleStatement);
 
                     // Write Additions/Deletions Graphs
-                    Revision revision = revisionManager.getRevision(commitId, conn);
+                    Revision revision = revisionManager.getRevisionFromCommitId(commitId, conn);
                     revision.getAdditions().ifPresentOrElse(graph -> {
                         conn.getStatements(null, null, null, graph).forEach(exporter::handleStatement);
                     }, () -> new IllegalStateException("No Additions Graph IRI found"));

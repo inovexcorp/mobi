@@ -75,6 +75,7 @@ import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 import org.eclipse.rdf4j.model.vocabulary.PROV;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.query.BindingSet;
+import org.eclipse.rdf4j.query.BooleanQuery;
 import org.eclipse.rdf4j.query.GraphQuery;
 import org.eclipse.rdf4j.query.GraphQueryResult;
 import org.eclipse.rdf4j.query.QueryResults;
@@ -133,6 +134,7 @@ public class InversioningMigration implements PostRestoreOperation {
     private static final String DELETIONS_BINDING = "deletions";
     private static final String INITIAL_COMMIT_BINDING = "initialCommit";
     private static final String FILTER_IN = "%FILTER_IN%";
+    private static final String COMMITS_VALUES = "%COMMITS%";
     private static final String ADMIN_USER_IRI = "http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997";
 
     // General Queries
@@ -151,6 +153,7 @@ public class InversioningMigration implements PostRestoreOperation {
     private static final String REPLACE_COMMIT_IRIS_SUBJECT;
     private static final String REPLACE_COMMIT_IRIS_OBJECT;
     private static final String CONSTRUCT_COMMIT_METADATA;
+    private static final String CHECK_GRAPH_REVISIONS;
 
     static {
         try {
@@ -222,6 +225,11 @@ public class InversioningMigration implements PostRestoreOperation {
                             .getResourceAsStream("/inversioning/commits/construct-commit-metadata.rq")),
                     StandardCharsets.UTF_8
             );
+            CHECK_GRAPH_REVISIONS = IOUtils.toString(
+                    Objects.requireNonNull(InversioningMigration.class
+                            .getResourceAsStream("/inversioning/commits/check-graph-revisions.rq")),
+                    StandardCharsets.UTF_8
+            );
         } catch (IOException e) {
             throw new MobiException(e);
         }
@@ -284,19 +292,20 @@ public class InversioningMigration implements PostRestoreOperation {
             copyNonVersionedGraphs(tempConn, sysConn);
 
             for (Resource originalRecordIRI : getVersionedRdfRecordIRIs(tempConn)) {
-                VersionedRDFRecord record = null;
                 Set<Resource> recordCommits = new HashSet<>();
-                try {
-                    record = restoreCommits(originalRecordIRI, admin, recordCommits, tempConn,
+                    RecordCreation recordCreation = restoreCommits(originalRecordIRI, admin, recordCommits, tempConn,
                             configProvider.getRepository());
-                    recordMap.put(originalRecordIRI, record);
-                    restoreInProgressCommits(originalRecordIRI, tempConn, sysConn);
-                } catch (Exception e) {
-                    RestoreUtils.error("Error creating record " + originalRecordIRI.stringValue(), e, LOGGER);
-                    errorMap.put(originalRecordIRI, e);
+                    if (recordCreation.isSuccessful()) {
+                        recordMap.put(originalRecordIRI, recordCreation.record());
+                        restoreInProgressCommits(originalRecordIRI, tempConn, sysConn);
+                    } else {
+                        RestoreUtils.error("\tError creating record " + originalRecordIRI.stringValue(),
+                                recordCreation.ex(), LOGGER);
+                        errorMap.put(originalRecordIRI, recordCreation.ex());
 
-                    removeFailedRecordData(record, originalRecordIRI, admin, recordCommits, sysConn, tempConn);
-                }
+                        removeFailedRecordData(recordCreation.record(), originalRecordIRI, recordCommits,
+                                sysConn, tempConn);
+                    }
             }
 
             long startTime = System.currentTimeMillis();
@@ -349,21 +358,33 @@ public class InversioningMigration implements PostRestoreOperation {
         }
 
         errorMap.forEach((recordIRI, err) -> {
-            RestoreUtils.error("Error creating record " + recordIRI.stringValue(), err, LOGGER);
+            RestoreUtils.error("\tError creating record " + recordIRI.stringValue(), err, LOGGER);
         });
     }
 
-    private void removeFailedRecordData(VersionedRDFRecord record, Resource originalRecordIRI, User admin,
+    private record RecordCreation(VersionedRDFRecord record, Exception ex, boolean isSuccessful) {}
+
+    private void removeFailedRecordData(VersionedRDFRecord record, Resource originalRecordIRI,
                                         Set<Resource> recordCommits, RepositoryConnection sysConn,
                                         RepositoryConnection tempConn) {
-        if (record != null) {
-            recordManager.removeRecord(configProvider.getLocalCatalogIRI(), record.getResource(), admin,
-                    VersionedRDFRecord.class, sysConn);
-
-            // Remove temporary record used in restore.
-            sysConn.remove((Resource) null, null, null, record.getResource());
-        }
         Set<Resource> resourcesToRemove = new HashSet<>();
+        if (record != null) {
+            resourcesToRemove.add(record.getResource());
+            resourcesToRemove.addAll(record.getBranch_resource());
+            MasterBranch masterBranch = branchManager.getMasterBranch(configProvider.getLocalCatalogIRI(),
+                    record.getResource(), sysConn);
+            resourcesToRemove.add(masterBranch.getResource());
+            masterBranch.getHeadGraph().ifPresent(resourcesToRemove::add);
+
+            try (RepositoryConnection provConn = provRepo.getConnection()) {
+                Update cleanProv = provConn.prepareUpdate(CLEAN_PROV);
+                cleanProv.setBinding(RECORD_BINDING, record.getResource());
+                cleanProv.execute();
+            }
+
+            getPolicyGraphsToRemove(record.getResource(), sysConn, resourcesToRemove);
+        }
+
         for (Resource recordCommitIRI : recordCommits) {
             commitManager.getCommit(recordCommitIRI, sysConn).ifPresent(commit -> {
                 Set<Revision> revisions = revisionManager.getAllRevisionsFromCommitId(recordCommitIRI,
@@ -377,28 +398,7 @@ public class InversioningMigration implements PostRestoreOperation {
         }
         resourcesToRemove.addAll(recordCommits);
 
-        TupleQuery removePolicies = tempConn.prepareTupleQuery(GET_POLICIES_TO_REMOVE);
-        removePolicies.setBinding(RECORD_BINDING, originalRecordIRI);
-        try (TupleQueryResult result = removePolicies.evaluate()) {
-            for (BindingSet bindings : result) {
-                Resource recordPolicy = Bindings.requiredResource(bindings, "recordPolicy");
-                String recordPolicyURL = Bindings.requiredResource(bindings, "recordPolicyURL").stringValue();
-                Resource policyPolicy = Bindings.requiredResource(bindings, "policyPolicy");
-                String policyPolicyURL = Bindings.requiredResource(bindings, "policyPolicyURL").stringValue();
-                resourcesToRemove.add(recordPolicy);
-                resourcesToRemove.add(policyPolicy);
-                try {
-                    String[] recordPolicyParts = recordPolicyURL.split(Pattern.quote(File.separator));
-                    String[] policyPolicyParts = policyPolicyURL.split(Pattern.quote(File.separator));
-                    deleteFile(recordPolicyParts);
-                    deleteFile(policyPolicyParts);
-                } catch (VirtualFilesystemException e) {
-                    // Swallow exception and continue
-                    RestoreUtils.error("Could not remove policies for " + originalRecordIRI.stringValue(), e,
-                            LOGGER);
-                }
-            }
-        }
+        getPolicyGraphsToRemove(originalRecordIRI, tempConn, resourcesToRemove);
 
         TupleQuery removeMRs = tempConn.prepareTupleQuery(GET_MERGE_REQUESTS_TO_REMOVE);
         removeMRs.setBinding(RECORD_BINDING, originalRecordIRI);
@@ -417,6 +417,32 @@ public class InversioningMigration implements PostRestoreOperation {
         sysConn.remove(null, null, null, resourcesToRemove.toArray(new Resource[0]));
     }
 
+    private void getPolicyGraphsToRemove(Resource recordIri, RepositoryConnection conn,
+                                         Set<Resource> resourcesToRemove) {
+        TupleQuery removePolicies = conn.prepareTupleQuery(GET_POLICIES_TO_REMOVE);
+        removePolicies.setBinding(RECORD_BINDING, recordIri);
+        try (TupleQueryResult result = removePolicies.evaluate()) {
+            for (BindingSet bindings : result) {
+                Resource recordPolicy = Bindings.requiredResource(bindings, "recordPolicy");
+                String recordPolicyURL = Bindings.requiredResource(bindings, "recordPolicyURL").stringValue();
+                Resource policyPolicy = Bindings.requiredResource(bindings, "policyPolicy");
+                String policyPolicyURL = Bindings.requiredResource(bindings, "policyPolicyURL").stringValue();
+                resourcesToRemove.add(recordPolicy);
+                resourcesToRemove.add(policyPolicy);
+                try {
+                    String[] recordPolicyParts = recordPolicyURL.split(Pattern.quote(File.separator));
+                    String[] policyPolicyParts = policyPolicyURL.split(Pattern.quote(File.separator));
+                    deleteFile(recordPolicyParts);
+                    deleteFile(policyPolicyParts);
+                } catch (VirtualFilesystemException e) {
+                    // Swallow exception and continue
+                    RestoreUtils.error("Could not remove policies for " + recordIri.stringValue(), e,
+                            LOGGER);
+                }
+            }
+        }
+    }
+
     private void deleteFile(String[] parts) throws VirtualFilesystemException {
         StringBuilder sb = new StringBuilder();
         String location = policyManager.getFileLocation();
@@ -432,8 +458,9 @@ public class InversioningMigration implements PostRestoreOperation {
         vf.delete();
     }
 
-    private VersionedRDFRecord restoreCommits(Resource originalRecordIRI, User admin, Set<Resource> recordCommits,
+    private RecordCreation restoreCommits(Resource originalRecordIRI, User admin, Set<Resource> recordCommits,
                                               RepositoryConnection tempConn, Repository repository) {
+        VersionedRDFRecord record = null;
         try (RepositoryConnection sysConn = repository.getConnection()) {
             long startTime = System.currentTimeMillis();
             RecordService<? extends VersionedRDFRecord> recordService = getRecordService(originalRecordIRI, tempConn);
@@ -445,7 +472,9 @@ public class InversioningMigration implements PostRestoreOperation {
             RestoreUtils.out(String.format("Updating VersionedRDFRecord %s with %s total commits",
                     originalRecordIRI.stringValue(), commits.size()), LOGGER);
 
-            VersionedRDFRecord record = createRecord(initialCommit, originalRecordIRI, admin, recordService, tempConn,
+            checkGraphRevisions(commits, tempConn);
+
+            record = createRecord(initialCommit, originalRecordIRI, admin, recordService, tempConn,
                     sysConn);
             Resource recordIRI = record.getResource();
             Resource catalogIRI = configProvider.getLocalCatalogIRI();
@@ -465,6 +494,9 @@ public class InversioningMigration implements PostRestoreOperation {
                     // If the commit is directly on master commit to master
                     addCommit(commitData, admin, catalogIRI, recordIRI, masterBranchIRI, tempConn, sysConn);
                 } else if (commitData.aux.isPresent()) {
+                    if (commitData.aux.get().equals(commitData.base)) {
+                        throw new IllegalStateException("Merge commit cannot have same base and auxiliary commit");
+                    }
                     addMergeCommit(catalogIRI, recordIRI, masterBranchIRI, masterCommits, admin, commitData, tempConn,
                             sysConn);
                 } else {
@@ -481,7 +513,18 @@ public class InversioningMigration implements PostRestoreOperation {
             long endTime = System.currentTimeMillis();
             RestoreUtils.out(String.format("Updated VersionedRDFRecord %s in %s ms", originalRecordIRI.stringValue(),
                     endTime - startTime), LOGGER);
-            return record;
+            return new RecordCreation(record, null, true);
+        } catch (Exception e) {
+            return new RecordCreation(record, e, false);
+        }
+    }
+
+    private void checkGraphRevisions(List<Resource> commits, RepositoryConnection tempConn) {
+        String isGraphRevisionQuery = CHECK_GRAPH_REVISIONS.replace(COMMITS_VALUES, generateQuerySub(commits, true));
+        BooleanQuery isGraphRevision = tempConn.prepareBooleanQuery(isGraphRevisionQuery);
+        if (isGraphRevision.evaluate()) {
+            RestoreUtils.error("Unsupported trig record found", LOGGER);
+            throw new IllegalStateException("Record contains unsupported graphRevisions (trig data)");
         }
     }
 
@@ -709,7 +752,7 @@ public class InversioningMigration implements PostRestoreOperation {
     }
 
     private Map<Resource, CommitData> getCommitBaseAux(List<Resource> commits, RepositoryConnection tempConn) {
-        String query = GET_COMMIT_BASE_AUX.replace(FILTER_IN, generateFilterIn(commits));
+        String query = GET_COMMIT_BASE_AUX.replace(FILTER_IN, generateQuerySub(commits, false));
         TupleQuery getCommitBaseAux = tempConn.prepareTupleQuery(query);
         try (TupleQueryResult result = getCommitBaseAux.evaluate()) {
             Map<Resource, CommitData> commitBaseAux = new HashMap<>();
@@ -880,13 +923,15 @@ public class InversioningMigration implements PostRestoreOperation {
         }
     }
 
-    private String generateFilterIn(List<Resource> resources) {
+    private String generateQuerySub(List<Resource> resources, boolean isValues) {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < resources.size(); i ++) {
             sb.append("<");
             sb.append(resources.get(i).stringValue());
             sb.append(">");
-            if (i < resources.size() - 1) {
+            if (isValues) {
+                sb.append(" ");
+            } else if (i < resources.size() - 1) {
                 sb.append(", ");
             }
         }
