@@ -35,7 +35,6 @@ import com.mobi.catalog.api.ontologies.mcat.RevisionFactory;
 import com.mobi.exception.MobiException;
 import com.mobi.persistence.utils.Bindings;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.ModelFactory;
@@ -72,8 +71,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Component
 public class SimpleRevisionManager implements RevisionManager {
@@ -700,10 +697,10 @@ public class SimpleRevisionManager implements RevisionManager {
     /**
      * Gets a {@link Map} of the merge commit {@link Resource} to a {@link MergeChains} object.
      *
-     * @param masterBranch The MASTER branch to retrieve all merges for.
+     * @param masterBranch        The MASTER branch to retrieve all merges for.
      * @param previousMasterMerge The {@link Resource} of the previous merge into MASTER. Can filter results to process
      *                            based on this value.
-     * @param conn A {@link RepositoryConnection} for lookup.
+     * @param conn                A {@link RepositoryConnection} for lookup.
      * @return
      */
     private Map<Resource, MergeChains> getMergeChainsMap(Resource masterBranch, Resource previousMasterMerge,
@@ -730,8 +727,8 @@ public class SimpleRevisionManager implements RevisionManager {
 
             try (TupleQueryResult getBaseChainsResult = getBaseChains.evaluate();
                  TupleQueryResult getAuxChainsResult = getAuxChains.evaluate()) {
-                getBaseChainsResult.forEach(getBindingSetConsumer(commit, mergeChainsMap, true));
-                getAuxChainsResult.forEach(getBindingSetConsumer(commit, mergeChainsMap, false));
+                getBaseChainsResult.forEach(getChainResult(commit, mergeChainsMap, true));
+                getAuxChainsResult.forEach(getChainResult(commit, mergeChainsMap, false));
             }
 
             MergeChains mergeChains = mergeChainsMap.get(commit);
@@ -804,8 +801,8 @@ public class SimpleRevisionManager implements RevisionManager {
         }
     }
 
-    private Consumer<BindingSet> getBindingSetConsumer(Resource mergeCommit, Map<Resource, MergeChains> mergeChainsMap,
-                                                       boolean isBase) {
+    private Consumer<BindingSet> getChainResult(Resource mergeCommit, Map<Resource, MergeChains> mergeChainsMap,
+                                                boolean isBase) {
         return bindings -> {
             // Get the Commits and Revisions for the chain
             Resource revision = Bindings.requiredResource(bindings, "revParent");
@@ -853,21 +850,6 @@ public class SimpleRevisionManager implements RevisionManager {
         askAdds.setBinding(MERGE_COMMIT_BINDING, mergeCommit);
 
         chains.setConflictMerge(askAdds.evaluate() || askDels.evaluate());
-    }
-
-    /**
-     * Converts a pipe delimited string into a List of {@link Resource}s
-     *
-     * @param pipeSeparatedString the pipe delimited string to convert
-     * @return A {@link List} of {@link Resource}s
-     */
-    private List<Resource> getList(String pipeSeparatedString) {
-        return Stream.of(StringUtils.split(pipeSeparatedString, '|'))
-                .map(String::trim)
-                .filter(StringUtils::isNotBlank)
-                .map(vf::createIRI)
-                .map(Resource.class::cast)
-                .collect(Collectors.toCollection(ArrayList::new));
     }
 
     /**

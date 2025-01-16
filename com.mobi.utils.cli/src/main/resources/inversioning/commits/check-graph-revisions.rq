@@ -1,0 +1,8 @@
+PREFIX prov: <http://www.w3.org/ns/prov#>
+PREFIX mcat: <http://mobi.com/ontologies/catalog#>
+
+ASK {
+    VALUES ?commit { %COMMITS% }
+    ?commit prov:generated ?revision .
+    ?revision mcat:graphRevision ?graphRevision .
+}

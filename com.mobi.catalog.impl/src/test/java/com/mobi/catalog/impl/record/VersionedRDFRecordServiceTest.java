@@ -250,7 +250,7 @@ public class VersionedRDFRecordServiceTest extends OrmEnabledTestCase {
         when(branchManager.getBranch(eq(testRecord), eq(branchIRI), any(OrmFactory.class), any(RepositoryConnection.class))).thenReturn(branch);
         when(commitManager.getHeadCommitIRI(eq(branch))).thenReturn(commitIRI);
         Revision rev = mock(Revision.class);
-        when(revisionManager.getRevision(eq(commitIRI), any(RepositoryConnection.class))).thenReturn(rev);
+        when(revisionManager.getRevisionFromCommitId(eq(commitIRI), any(RepositoryConnection.class))).thenReturn(rev);
         when(rev.getAdditions()).thenReturn(Optional.of(additionsIRI));
         when(rev.getDeletions()).thenReturn(Optional.of(deletionsIRI));
         doReturn(Stream.of(commitIRI).collect(Collectors.toList()))

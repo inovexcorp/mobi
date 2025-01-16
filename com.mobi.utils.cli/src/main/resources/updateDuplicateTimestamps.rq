@@ -1,0 +1,23 @@
+PREFIX mcat: <http://mobi.com/ontologies/catalog#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+
+DELETE {
+    ?otherCommit prov:atTime ?otherTime .
+}
+INSERT {
+    ?otherCommit prov:atTime ?updatedTime .
+}
+WHERE {
+    VALUES ?duration { "P2DT0H0M1S"^^xsd:duration }
+
+    ?initialCommit a mcat:Commit ;
+        (^mcat:baseCommit | ^mcat:branchCommit) ?otherCommit ;
+        mcat:initialRevision ?initialRev ;
+        prov:atTime ?initialTime .
+    ?otherCommit a mcat:Commit ;
+        prov:atTime ?otherTime .
+    FILTER(?initialTime = ?otherTime)
+
+    BIND((?otherTime + ?duration) as ?updatedTime)
+}
