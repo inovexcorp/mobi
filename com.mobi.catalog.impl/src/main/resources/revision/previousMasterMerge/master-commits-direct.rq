@@ -1,0 +1,26 @@
+PREFIX mcat: <http://mobi.com/ontologies/catalog#>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+
+# Get all commits in master and determine if they are direct master commits
+SELECT DISTINCT ?parent ?direct
+WHERE {
+    {
+        ?masterHead a mcat:Commit ;
+            (mcat:baseCommit|mcat:auxiliaryCommit)+ ?parent .
+        ?parent prov:atTime ?time .
+        ?commit prov:atTime ?commitTime .
+        FILTER (?time < ?commitTime)
+
+        OPTIONAL {
+            ?masterHead mcat:baseCommit+ ?parent .
+            BIND(true as ?direct)
+        }
+    } UNION {
+        ?masterHead a mcat:Commit ;
+            prov:atTime ?time .
+        ?commit prov:atTime ?commitTime .
+        BIND(?masterHead as ?parent)
+        BIND(true as ?direct)
+        FILTER (?time < ?commitTime)
+    }
+} ORDER BY DESC(?time)

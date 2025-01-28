@@ -97,6 +97,8 @@ public class SimpleRevisionManager implements RevisionManager {
     private static final String GET_FORWARD_REVISION_CHAIN;
     private static final String GET_FORWARD_BRANCHING_COMMIT;
     private static final String GET_PREVIOUS_MASTER_MERGE;
+    private static final String MASTER_COMMITS_DIRECT;
+    private static final String FILTER_MASTER_COMMIT;
     private static final String GET_LATEST_MASTER_MERGE_INTO_FORWARD;
     private static final String IS_COI_DOWN_BASE;
     private static final String ASK_CONFLICT_ADDS;
@@ -168,7 +170,17 @@ public class SimpleRevisionManager implements RevisionManager {
             );
             GET_PREVIOUS_MASTER_MERGE = IOUtils.toString(
                     Objects.requireNonNull(SimpleRevisionManager.class
-                            .getResourceAsStream("/revision/get-previous-master-merge.rq")),
+                            .getResourceAsStream("/revision/previousMasterMerge/get-previous-master-merge.rq")),
+                    StandardCharsets.UTF_8
+            );
+            MASTER_COMMITS_DIRECT = IOUtils.toString(
+                    Objects.requireNonNull(SimpleRevisionManager.class
+                            .getResourceAsStream("/revision/previousMasterMerge/master-commits-direct.rq")),
+                    StandardCharsets.UTF_8
+            );
+            FILTER_MASTER_COMMIT = IOUtils.toString(
+                    Objects.requireNonNull(SimpleRevisionManager.class
+                            .getResourceAsStream("/revision/previousMasterMerge/filter-master-commit.rq")),
                     StandardCharsets.UTF_8
             );
             GET_LATEST_MASTER_MERGE_INTO_FORWARD = IOUtils.toString(
@@ -660,26 +672,8 @@ public class SimpleRevisionManager implements RevisionManager {
      *         branch
      */
     private Resource getForwardBranchingCommit(Resource commitId, Resource masterHead, RepositoryConnection conn) {
-        return getMergeOrBranchingCommit(commitId, masterHead, conn, GET_FORWARD_BRANCHING_COMMIT);
-    }
-
-    /**
-     * Retrieves a {@link Resource} that indicates the branch has been merge into master previously. Will return null
-     * otherwise
-     *
-     * @param commitId A {@link Resource} of the commitId being calculated
-     * @param masterHead A {@link Resource} of the MASTER branch HEAD commit
-     * @param conn A {@link RepositoryConnection} for lookup
-     * @return A {@link Resource} that indicates the branch has been merge into master previously or null otherwise
-     */
-    private Resource getPreviousMasterMerge(Resource commitId, Resource masterHead, RepositoryConnection conn) {
-        return getMergeOrBranchingCommit(commitId, masterHead, conn, GET_PREVIOUS_MASTER_MERGE);
-    }
-
-    private Resource getMergeOrBranchingCommit(Resource commitId, Resource masterHead, RepositoryConnection conn,
-                                               String getPreviousMasterMerge) {
         Resource resource = null;
-        TupleQuery tupleQuery = conn.prepareTupleQuery(getPreviousMasterMerge);
+        TupleQuery tupleQuery = conn.prepareTupleQuery(GET_FORWARD_BRANCHING_COMMIT);
         tupleQuery.setBinding(COMMIT_BINDING, commitId);
         tupleQuery.setBinding(MASTER_HEAD_BINDING, masterHead);
         try (TupleQueryResult result = tupleQuery.evaluate()) {
@@ -693,6 +687,67 @@ public class SimpleRevisionManager implements RevisionManager {
         }
         return resource;
     }
+
+    /**
+     * Retrieves a {@link Resource} that indicates the branch has been merge into master previously. Will return null
+     * otherwise
+     *
+     * @param commitId A {@link Resource} of the commitId being calculated
+     * @param masterHead A {@link Resource} of the MASTER branch HEAD commit
+     * @param conn A {@link RepositoryConnection} for lookup
+     * @return A {@link Resource} that indicates the branch has been merge into master previously or null otherwise
+     */
+    private Resource getPreviousMasterMerge(Resource commitId, Resource masterHead, RepositoryConnection conn) {
+        TupleQuery masterDirect = conn.prepareTupleQuery(MASTER_COMMITS_DIRECT);
+        masterDirect.setBinding(MASTER_HEAD_BINDING, masterHead);
+        masterDirect.setBinding(COMMIT_BINDING, commitId);
+
+        List<MasterCommit> masterCommits = new ArrayList<>();
+        try (TupleQueryResult result = masterDirect.evaluate()) {
+            result.forEach(bindings -> {
+                Resource commitResource = Bindings.requiredResource(bindings, PARENT_BINDING);
+                boolean direct = bindings.getBinding("direct") != null;
+                masterCommits.add(new MasterCommit(commitResource, direct));
+            });
+        }
+
+        masterCommits.removeIf(mc -> filterMasterCommitDirect(mc, commitId, masterHead, conn));
+
+        for (MasterCommit masterCommit : masterCommits) {
+            TupleQuery getPreviousMasterMerge = conn.prepareTupleQuery(GET_PREVIOUS_MASTER_MERGE);
+            getPreviousMasterMerge.setBinding(PARENT_BINDING, masterCommit.commitId());
+            getPreviousMasterMerge.setBinding(COMMIT_BINDING, commitId);
+            getPreviousMasterMerge.setBinding(MASTER_HEAD_BINDING, masterHead);
+            try (TupleQueryResult result = getPreviousMasterMerge.evaluate()) {
+                for (BindingSet bindings : result) {
+                    return Bindings.requiredResource(bindings, PARENT_BINDING);
+                }
+            }
+        }
+        return null;
+    }
+
+    private boolean filterMasterCommitDirect(MasterCommit masterCommit, Resource commitId, Resource masterHead,
+                                             RepositoryConnection conn) {
+        if (masterCommit.direct()) {
+            return false;
+        }
+
+        TupleQuery filterMasterCommit = conn.prepareTupleQuery(FILTER_MASTER_COMMIT);
+        filterMasterCommit.setBinding(MASTER_HEAD_BINDING, masterHead);
+        filterMasterCommit.setBinding(COMMIT_BINDING, commitId);
+        filterMasterCommit.setBinding(PARENT_BINDING, masterCommit.commitId());
+
+        List<Resource> directMasterCommits = new ArrayList<>();
+        try (TupleQueryResult result = filterMasterCommit.evaluate()) {
+            result.forEach(bindings -> {
+                directMasterCommits.add(Bindings.requiredResource(bindings, "masterCommit"));
+            });
+        }
+        return directMasterCommits.size() <= 1;
+    }
+
+    private record MasterCommit(Resource commitId, boolean direct) {}
 
     /**
      * Gets a {@link Map} of the merge commit {@link Resource} to a {@link MergeChains} object.

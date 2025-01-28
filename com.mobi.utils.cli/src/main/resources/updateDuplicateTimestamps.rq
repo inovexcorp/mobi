@@ -3,13 +3,17 @@ PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 PREFIX prov: <http://www.w3.org/ns/prov#>
 
 DELETE {
-    ?otherCommit prov:atTime ?otherTime .
+    GRAPH ?otherCommit {
+        ?otherCommit prov:atTime ?otherTime .
+    }
 }
 INSERT {
-    ?otherCommit prov:atTime ?updatedTime .
+    GRAPH ?otherCommit {
+        ?otherCommit prov:atTime ?updatedTime .
+    }
 }
 WHERE {
-    VALUES ?duration { "P2DT0H0M1S"^^xsd:duration }
+    VALUES ?duration { "P0DT0H0M01.000555S"^^xsd:duration }
 
     ?initialCommit a mcat:Commit ;
         (^mcat:baseCommit | ^mcat:branchCommit) ?otherCommit ;

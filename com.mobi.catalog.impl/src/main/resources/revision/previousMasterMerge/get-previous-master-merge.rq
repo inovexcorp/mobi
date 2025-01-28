@@ -1,0 +1,50 @@
+PREFIX mcat: <http://mobi.com/ontologies/catalog#>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+
+SELECT DISTINCT ?parent
+WHERE {
+    {
+        SELECT ?parent ?time
+        WHERE {
+            {
+                # Retrieves the previous merge of master into another branch
+                ?commit a mcat:Commit ;
+                    (mcat:auxiliaryCommit | mcat:baseCommit)+ ?other .
+
+                ?other mcat:auxiliaryCommit ?parent .
+                ?parent prov:atTime ?time .
+            }
+            UNION
+            {
+                # Retrieves the previous merge of master into another branch for the merge commit itself
+                ?commit a mcat:Commit ;
+                    mcat:auxiliaryCommit ?parent .
+                ?parent prov:atTime ?time .
+            }
+            UNION
+            {
+                # Retrieves the branching commit off of master
+                ?masterHead a mcat:Commit ;
+                    mcat:baseCommit+ ?parent .
+                ?commit a mcat:Commit ;
+                    mcat:baseCommit+ ?parent .
+
+                ?parent prov:atTime ?time .
+            }
+            UNION
+            {
+                # Get last shared commit in commit chain that exists in master
+                ?commit mcat:baseCommit+ ?parent .
+                ?parent prov:atTime ?time .
+            }
+        }
+    }
+    UNION
+    {
+        ?commit prov:generated/prov:wasDerivedFrom ?revision .
+        ?parent mcat:masterMergeIntoBranchRevision ?revision ;
+            prov:atTime ?time .
+    }
+}
+ORDER BY DESC(?time)
+LIMIT 1
