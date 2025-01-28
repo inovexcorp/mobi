@@ -1,0 +1,61 @@
+PREFIX mcat: <http://mobi.com/ontologies/catalog#>
+PREFIX prov: <http://www.w3.org/ns/prov#>
+
+# Filter to make sure the master commit being pulled back isn't only in master because this commit got merged
+SELECT ?masterCommit ?filterResult {
+    # Find out whether to filter out any chain that goes directly through the compiling commit to the parent
+    # under test
+    {
+        # Some master direct commit chain (Not HEAD) that passes through the commit to the parent under test
+        ?masterHead mcat:baseCommit+ ?directMasterCommit .
+        ?directMasterCommit (mcat:baseCommit|mcat:auxiliaryCommit)+ ?commit ;
+            prov:atTime ?time .
+        ?commit (mcat:baseCommit|mcat:auxiliaryCommit)+ ?parent .
+        BIND(?directMasterCommit as ?masterCommit)
+        BIND(true as ?filterResult)
+    }
+    UNION
+    {
+        # Some master direct commit chain (Not HEAD) that goes directly to the parent under test
+        ?masterHead mcat:baseCommit+ ?directMasterCommit .
+        ?directMasterCommit (mcat:baseCommit|mcat:auxiliaryCommit)+ ?someCommit ;
+            prov:atTime ?time .
+        ?someCommit (mcat:baseCommit|mcat:auxiliaryCommit)+ ?parent .
+        FILTER (?someCommit != ?commit)
+        BIND(?directMasterCommit as ?masterCommit)
+    }
+    UNION
+    {
+        # Some master direct commit chain (Not HEAD) that goes directly to the parent under test
+        ?masterHead mcat:baseCommit+ ?directMasterCommit .
+        ?directMasterCommit (mcat:baseCommit|mcat:auxiliaryCommit) ?parent ;
+            prov:atTime ?time .
+        BIND(?directMasterCommit as ?masterCommit)
+    }
+    UNION
+    {
+        # HEAD commit chain that passes through the commit to the parent under test
+        ?masterHead (mcat:baseCommit|mcat:auxiliaryCommit)+ ?commit ;
+            prov:atTime ?time .
+        ?commit (mcat:baseCommit|mcat:auxiliaryCommit)+ ?parent .
+        BIND(?masterHead as ?masterCommit)
+        BIND(true as ?filterResult)
+    }
+    UNION
+    {
+        # HEAD commit chain that goes directly to the parent under test
+        ?masterHead (mcat:baseCommit|mcat:auxiliaryCommit)+ ?someCommit ;
+            prov:atTime ?time .
+        ?someCommit (mcat:baseCommit|mcat:auxiliaryCommit)+ ?parent .
+        FILTER (?someCommit != ?commit)
+        BIND(?masterHead as ?masterCommit)
+    }
+    UNION
+    {
+        # HEAD commit chain that goes directly to the parent under test
+        ?masterHead (mcat:baseCommit|mcat:auxiliaryCommit) ?parent ;
+            prov:atTime ?time .
+        BIND(?masterHead as ?masterCommit)
+    }
+}
+ORDER BY DESC(?time)
