@@ -34,7 +34,7 @@ import { UserManagerService } from '../../../shared/services/userManager.service
 import { LoginManagerService } from '../../../shared/services/loginManager.service';
 import { getDctermsValue, getPropertyId } from '../../../shared/utility';
 import { VersionedRdfListItem } from '../../../shared/models/versionedRdfListItem.class';
-import { stateServiceToken } from '../../injection-token';
+import { stateServiceToken } from '../../../shared/injection-token';
 import { VersionedRdfState } from '../../../shared/services/versionedRdfState.service';
 import { Commit } from '../../../shared/models/commit.interface';
 

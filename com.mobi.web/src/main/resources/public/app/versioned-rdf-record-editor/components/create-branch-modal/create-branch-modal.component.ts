@@ -29,7 +29,7 @@ import { switchMap, tap } from 'rxjs/operators';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { ToastService } from '../../../shared/services/toast.service';
 import { VersionedRdfListItem } from '../../../shared/models/versionedRdfListItem.class';
-import { stateServiceToken } from '../../injection-token';
+import { stateServiceToken } from '../../../shared/injection-token';
 import { VersionedRdfState } from '../../../shared/services/versionedRdfState.service';
 import { VersionedRdfStateBase } from '../../../shared/models/versionedRdfStateBase.interface';
 

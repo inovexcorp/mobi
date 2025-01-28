@@ -39,7 +39,7 @@ import { CatalogManagerService } from '../../../shared/services/catalogManager.s
 import { CommitDifference } from '../../../shared/models/commitDifference.interface';
 import { ToastService } from '../../../shared/services/toast.service';
 import { VersionedRdfListItem } from '../../../shared/models/versionedRdfListItem.class';
-import { stateServiceToken } from '../../injection-token';
+import { stateServiceToken } from '../../../shared/injection-token';
 import { VersionedRdfState } from '../../../shared/services/versionedRdfState.service';
 import { EditorRecordSelectComponent } from '../editor-record-select/editor-record-select.component';
 import { EditorBranchSelectComponent } from '../editor-branch-select/editor-branch-select.component';

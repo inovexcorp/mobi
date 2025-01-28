@@ -44,7 +44,7 @@ import { ToastService } from '../../../shared/services/toast.service';
 import { getBeautifulIRI, getDctermsValue } from '../../../shared/utility';
 import { XACMLRequest } from '../../../shared/models/XACMLRequest.interface';
 import { VersionedRdfListItem } from '../../../shared/models/versionedRdfListItem.class';
-import { stateServiceToken } from '../../injection-token';
+import { stateServiceToken } from '../../../shared/injection-token';
 import { VersionedRdfState } from '../../../shared/services/versionedRdfState.service';
 import { splitIRI } from '../../../shared/pipes/splitIRI.pipe';
 import { NewRecordModalComponent } from '../new-record-modal/new-record-modal.component';

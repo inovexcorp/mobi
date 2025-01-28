@@ -41,7 +41,7 @@ import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/e
 import { RdfUpload } from '../../../shared/models/rdfUpload.interface';
 import { VersionedRdfListItem } from '../../../shared/models/versionedRdfListItem.class';
 import { VersionedRdfState } from '../../../shared/services/versionedRdfState.service';
-import { stateServiceToken } from '../../injection-token';
+import { stateServiceToken } from '../../../shared/injection-token';
 import { CamelCasePipe } from '../../../shared/pipes/camelCase.pipe';
 import { DCTERMS, OWL } from '../../../prefixes';
 import { RESTError } from '../../../shared/models/RESTError.interface';

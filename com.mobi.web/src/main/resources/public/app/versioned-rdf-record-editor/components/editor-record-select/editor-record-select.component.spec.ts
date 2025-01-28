@@ -54,7 +54,7 @@ import { PolicyEnforcementService } from '../../../shared/services/policyEnforce
 import { ToastService } from '../../../shared/services/toast.service';
 import { VersionedRdfListItem } from '../../../shared/models/versionedRdfListItem.class';
 import { VersionedRdfState } from '../../../shared/services/versionedRdfState.service';
-import { stateServiceToken } from '../../injection-token';
+import { stateServiceToken } from '../../../shared/injection-token';
 import { NewRecordModalComponent } from '../new-record-modal/new-record-modal.component';
 import { UploadRecordModalComponent } from '../upload-record-modal/upload-record-modal.component';
 import { DownloadRecordModalComponent } from '../download-record-modal/download-record-modal.component';

@@ -31,7 +31,7 @@ import { MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 
 import {
-  cleanStylesFromDOM,
+  cleanStylesFromDOM, MockVersionedRdfState,
 } from '../../../../test/ts/Shared';
 import { CatalogStateService } from '../../../shared/services/catalogState.service';
 import { SharedModule } from '../../../shared/shared.module';
@@ -53,11 +53,13 @@ import { EntityNamesItem } from '../../../shared/models/entityNamesItem.interfac
 import { DatasetStateService } from '../../../shared/services/datasetState.service';
 import { Difference } from '../../../shared/models/difference.class';
 import { OpenRecordButtonComponent } from './openRecordButton.component';
+import { VersionedRdfListItem } from '../../../shared/models/versionedRdfListItem.class';
+import { stateServiceToken } from '../../../shared/injection-token';
 
 describe('Open Record Button component', function () {
-  let component: OpenRecordButtonComponent;
+  let component: OpenRecordButtonComponent<VersionedRdfListItem>;
   let element: DebugElement;
-  let fixture: ComponentFixture<OpenRecordButtonComponent>;
+  let fixture: ComponentFixture<OpenRecordButtonComponent<VersionedRdfListItem>>;
   let catalogStateStub: jasmine.SpyObj<CatalogStateService>;
   let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
   let datasetStateStub: jasmine.SpyObj<DatasetStateService>;
@@ -115,6 +117,7 @@ describe('Open Record Button component', function () {
         MockProvider(PolicyEnforcementService),
         MockProvider(PolicyManagerService),
         MockProvider(ToastService),
+        { provide: stateServiceToken, useClass: MockVersionedRdfState },
       ],
     }).compileComponents();
 
@@ -146,6 +149,7 @@ describe('Open Record Button component', function () {
     policyEnforcementStub.permit = 'Permit';
     policyEnforcementStub.deny = 'Deny';
     policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.permit));
+    component.state.listItem = new VersionedRdfListItem();
   });
 
   afterEach(function() {

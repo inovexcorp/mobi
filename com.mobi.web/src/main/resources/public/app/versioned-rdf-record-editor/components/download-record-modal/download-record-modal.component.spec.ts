@@ -35,7 +35,7 @@ import { MockComponent } from 'ng-mocks';
 import { MockVersionedRdfState, cleanStylesFromDOM } from '../../../../test/ts/Shared';
 import { VersionedRdfListItem } from '../../../shared/models/versionedRdfListItem.class';
 import { VersionedRdfState } from '../../../shared/services/versionedRdfState.service';
-import { stateServiceToken } from '../../injection-token';
+import { stateServiceToken } from '../../../shared/injection-token';
 import { SerializationSelectComponent } from '../../../shared/components/serializationSelect/serializationSelect.component';
 import { DownloadRecordModalComponent } from './download-record-modal.component';
 

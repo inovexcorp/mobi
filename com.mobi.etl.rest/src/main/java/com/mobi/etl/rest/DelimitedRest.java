@@ -29,6 +29,8 @@ import static com.mobi.rest.util.RestUtils.getRDFFormat;
 import static com.mobi.rest.util.RestUtils.groupedModelToString;
 import static com.mobi.rest.util.RestUtils.jsonldToModel;
 import static java.nio.file.FileVisitResult.CONTINUE;
+import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
+import static javax.ws.rs.core.Response.Status.INTERNAL_SERVER_ERROR;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -220,7 +222,7 @@ public class DelimitedRest {
             try {
                 fileOutput = toByteArrayOutputStream(inputStream);
             } catch (IOException e) {
-                throw ErrorUtils.sendError("Error parsing delimited file", Response.Status.BAD_REQUEST);
+                throw ErrorUtils.sendError("Error parsing delimited file", BAD_REQUEST);
             }
             getCharset(fileOutput.toByteArray());
 
@@ -231,9 +233,9 @@ public class DelimitedRest {
             saveStreamToFile(new ByteArrayInputStream(fileOutput.toByteArray()), filePath);
             return Response.status(201).entity(filePath.getFileName().toString()).build();
         } catch (IllegalStateException | MobiException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw ErrorUtils.sendError(ex, ex.getMessage(), INTERNAL_SERVER_ERROR);
         } catch (IllegalArgumentException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError(e, e.getMessage(), BAD_REQUEST);
         }
     }
 
@@ -281,7 +283,7 @@ public class DelimitedRest {
             try {
                 fileOutput = toByteArrayOutputStream(inputStream);
             } catch (IOException e) {
-                throw ErrorUtils.sendError("Error parsing delimited file", Response.Status.BAD_REQUEST);
+                throw ErrorUtils.sendError("Error parsing delimited file", BAD_REQUEST);
             }
             getCharset(fileOutput.toByteArray());
 
@@ -289,9 +291,9 @@ public class DelimitedRest {
             saveStreamToFile(new ByteArrayInputStream(fileOutput.toByteArray()), filePath);
             return Response.ok(fileName).build();
         } catch (IllegalStateException | MobiException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw ErrorUtils.sendError(ex, ex.getMessage(), INTERNAL_SERVER_ERROR);
         } catch (IllegalArgumentException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError(e, e.getMessage(), BAD_REQUEST);
         }
     }
 
@@ -350,9 +352,9 @@ public class DelimitedRest {
 
             return Response.ok(groupedModelToString(data, format)).build();
         } catch (IllegalStateException | MobiException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw ErrorUtils.sendError(ex, ex.getMessage(), INTERNAL_SERVER_ERROR);
         } catch (IllegalArgumentException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError(e, e.getMessage(), BAD_REQUEST);
         }
     }
 
@@ -424,7 +426,7 @@ public class DelimitedRest {
 
             return response;
         } catch (IllegalStateException | MobiException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw ErrorUtils.sendError(ex, ex.getMessage(), INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -480,7 +482,7 @@ public class DelimitedRest {
             try {
                 rdfImportService.importModel(config, data);
             } catch (RepositoryException ex) {
-                throw ErrorUtils.sendError("Error in repository connection", Response.Status.INTERNAL_SERVER_ERROR);
+                throw ErrorUtils.sendError("Error in repository connection", INTERNAL_SERVER_ERROR);
             }
 
             // Remove temp file
@@ -488,9 +490,9 @@ public class DelimitedRest {
 
             return Response.ok().build();
         } catch (IllegalStateException | MobiException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw ErrorUtils.sendError(ex, ex.getMessage(), INTERNAL_SERVER_ERROR);
         } catch (IllegalArgumentException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError(e, e.getMessage(), BAD_REQUEST);
         }
     }
 
@@ -574,9 +576,9 @@ public class DelimitedRest {
 
             return response;
         } catch (IllegalStateException | MobiException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(ex);
         } catch (IllegalArgumentException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
+            throw RestUtils.getErrorObjBadRequest(e);
         }
     }
 
@@ -594,7 +596,7 @@ public class DelimitedRest {
                           boolean containsHeaders, String separator, boolean limit) {
         // Collect the delimited file and its extension
         File delimitedFile = getUploadedFile(fileName).orElseThrow(() ->
-                ErrorUtils.sendError("Document not found", Response.Status.BAD_REQUEST));
+                ErrorUtils.sendError("Document not found", BAD_REQUEST));
         String extension = FilenameUtils.getExtension(delimitedFile.getName());
 
         // Collect the mapping model
@@ -602,7 +604,7 @@ public class DelimitedRest {
         try {
             mappingModel = mappingSupplier.get();
         } catch (IOException e) {
-            throw ErrorUtils.sendError("Error converting mapping JSON-LD", Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError("Error converting mapping JSON-LD", BAD_REQUEST);
         }
 
         // Run the mapping against the delimited data
@@ -627,7 +629,7 @@ public class DelimitedRest {
             logger.info("File mapped: " + delimitedFile.getPath());
             return result;
         } catch (IOException e) {
-            throw ErrorUtils.sendError(e, "Exception reading ETL file", Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError(e, "Exception reading ETL file", BAD_REQUEST);
         }
     }
 
@@ -641,7 +643,7 @@ public class DelimitedRest {
         try {
             return supplier.get();
         } catch (IOException | MobiException e) {
-            throw ErrorUtils.sendError(e, "Error converting delimited file", Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError(e, "Error converting delimited file", BAD_REQUEST);
         }
     }
 
@@ -696,7 +698,7 @@ public class DelimitedRest {
                         json = convertCSVRows(file, numRows, separatorChar);
                     }
                 } catch (Exception e) {
-                    throw ErrorUtils.sendError("Error loading document", Response.Status.BAD_REQUEST);
+                    throw ErrorUtils.sendError("Error loading document", BAD_REQUEST);
                 }
 
                 return Response.ok(json).build();
@@ -704,9 +706,9 @@ public class DelimitedRest {
                 throw ErrorUtils.sendError("Document not found", Response.Status.NOT_FOUND);
             }
         } catch (IllegalStateException | MobiException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw ErrorUtils.sendError(ex, ex.getMessage(), INTERNAL_SERVER_ERROR);
         } catch (IllegalArgumentException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError(e, e.getMessage(), BAD_REQUEST);
         }
     }
 
@@ -736,9 +738,9 @@ public class DelimitedRest {
             Files.copy(fileInputStream, filePath, StandardCopyOption.REPLACE_EXISTING);
             fileInputStream.close();
         } catch (FileNotFoundException e) {
-            throw ErrorUtils.sendError(e, "Error writing delimited file", Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError(e, "Error writing delimited file", BAD_REQUEST);
         } catch (IOException e) {
-            throw ErrorUtils.sendError(e, "Error parsing delimited file", Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError(e, "Error parsing delimited file", BAD_REQUEST);
         }
         logger.info("File Uploaded: " + filePath);
     }
@@ -827,7 +829,7 @@ public class DelimitedRest {
         if (optCharset.isPresent()) {
             charset = optCharset.get();
         } else {
-            throw ErrorUtils.sendError("Delimited file is not in a supported encoding", Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError("Delimited file is not in a supported encoding", BAD_REQUEST);
         }
 
         return charset;
@@ -854,11 +856,11 @@ public class DelimitedRest {
         try {
             mappingOpt = mappingManager.retrieveMapping(vf.createIRI(mappingRecordIRI));
         } catch (IllegalArgumentException e) {
-            throw ErrorUtils.sendError("Mapping " + mappingRecordIRI + " does not exist", Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError("Mapping " + mappingRecordIRI + " does not exist", BAD_REQUEST);
         }
         MappingWrapper mapping = mappingOpt.orElseThrow(() ->
                 ErrorUtils.sendError("Mapping " + mappingRecordIRI + " could not be retrieved",
-                        Response.Status.BAD_REQUEST));
+                        BAD_REQUEST));
         return mapping.getModel();
     }
 
@@ -866,7 +868,7 @@ public class DelimitedRest {
         try {
             Files.deleteIfExists(Paths.get(TEMP_DIR + "/" + fileName));
         } catch (IOException e) {
-            throw ErrorUtils.sendError(e, "Error deleting delimited file", Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError(e, "Error deleting delimited file", BAD_REQUEST);
         }
     }
 
@@ -896,7 +898,7 @@ public class DelimitedRest {
         try {
             data = new FileInputStream(delimited);
         } catch (FileNotFoundException e) {
-            throw ErrorUtils.sendError("Document not found", Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError("Document not found", BAD_REQUEST);
         }
         return data;
     }

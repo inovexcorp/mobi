@@ -23,7 +23,7 @@
 import { Component, OnDestroy } from '@angular/core';
 
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
-import { stateServiceToken } from '../../../versioned-rdf-record-editor/injection-token';
+import { stateServiceToken } from '../../../shared/injection-token';
 
 /**
  * @class ontology-editor.OntologyEditorPageComponent

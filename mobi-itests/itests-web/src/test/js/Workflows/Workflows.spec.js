@@ -305,6 +305,6 @@ module.exports = {
             .click('app-workflows .mat-tab-labels > div:nth-child(2)');
         browser.globals.wait_for_no_spinners(browser);
         browser.useXpath()
-            .assert.visible('//*[contains(text(), "test-workflow")]');
+            .assert.visible('//*[contains(text(), "http://example.com/workflows/A")]');
     }
 }

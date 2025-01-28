@@ -34,7 +34,7 @@ import { BehaviorSubject, of } from 'rxjs';
 
 import { VersionedRdfListItem } from '../../../shared/models/versionedRdfListItem.class';
 import { VersionedRdfState } from '../../../shared/services/versionedRdfState.service';
-import { stateServiceToken } from '../../injection-token';
+import { stateServiceToken } from '../../../shared/injection-token';
 import { MockVersionedRdfState, cleanStylesFromDOM } from '../../../../test/ts/Shared';
 import { UploadItem } from '../../models/upload-item.interface';
 import { UploadErrorsModalComponent } from '../upload-errors-modal/upload-errors-modal.component';

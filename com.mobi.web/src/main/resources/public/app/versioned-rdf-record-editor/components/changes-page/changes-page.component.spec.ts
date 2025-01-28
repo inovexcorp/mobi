@@ -43,7 +43,7 @@ import { ToastService } from '../../../shared/services/toast.service';
 import { CommitCompiledResourceComponent } from '../../../shared/components/commitCompiledResource/commitCompiledResource.component';
 import { Commit } from '../../../shared/models/commit.interface';
 import { VersionedRdfListItem } from '../../../shared/models/versionedRdfListItem.class';
-import { stateServiceToken } from '../../injection-token';
+import { stateServiceToken } from '../../../shared/injection-token';
 import { VersionedRdfState } from '../../../shared/services/versionedRdfState.service';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { CommitChangesDisplayComponent } from '../../../shared/components/commitChangesDisplay/commitChangesDisplay.component';

@@ -43,7 +43,7 @@ import { CATALOG } from '../../../prefixes';
 import { ToastService } from '../../../shared/services/toast.service';
 import { VersionedRdfListItem } from '../../../shared/models/versionedRdfListItem.class';
 import { VersionedRdfState } from '../../../shared/services/versionedRdfState.service';
-import { stateServiceToken } from '../../injection-token';
+import { stateServiceToken } from '../../../shared/injection-token';
 import { CommitModalComponent } from './commit-modal.component';
 
 describe('Commit Modal component', function() {

@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component, Input } from '@angular/core';
+import { Component, Inject, Input } from '@angular/core';
 import { Router } from '@angular/router';
 import { HttpErrorResponse } from '@angular/common/http';
 
@@ -46,6 +46,9 @@ import { ShapesGraphListItem } from '../../../shared/models/shapesGraphListItem.
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
 import { ToastService } from '../../../shared/services/toast.service';
 import { WorkflowsStateService } from '../../../workflows/services/workflows-state.service';
+import { stateServiceToken } from '../../../shared/injection-token';
+import { VersionedRdfState } from '../../../shared/services/versionedRdfState.service';
+import { VersionedRdfListItem } from '../../../shared/models/versionedRdfListItem.class';
 
 /**
  * @class catalog.OpenRecordButtonComponent
@@ -60,7 +63,7 @@ import { WorkflowsStateService } from '../../../workflows/services/workflows-sta
   selector: 'open-record-button',
   templateUrl: './openRecordButton.component.html'
 })
-export class OpenRecordButtonComponent {
+export class OpenRecordButtonComponent <TData extends VersionedRdfListItem>{
   recordType = '';
   showButton = false;
   isEntityRecord: boolean;
@@ -81,8 +84,9 @@ export class OpenRecordButtonComponent {
               private _pm: PolicyManagerService,
               private _sgs: ShapesGraphStateService,
               private _wss: WorkflowsStateService,
-              private _toast: ToastService) {
-  }
+              private _toast: ToastService,
+              @Inject(stateServiceToken) public state: VersionedRdfState<TData>
+  ) {}
 
   private _record;
 
@@ -110,6 +114,7 @@ export class OpenRecordButtonComponent {
     this._canRead().subscribe(canRead => {
       if (canRead) {
         if (this.isEntityRecord) {
+          this.state.listItem.changesPageOpen = false;
           this.updateEntityRecord();
         } else {
           this.navigateToRecord();
@@ -226,10 +231,15 @@ export class OpenRecordButtonComponent {
    */
   handleRecordUpdate(): void {
     this.recordType = this._cs.getRecordType(this.record);
-    this.isEntityRecord = Object.prototype.hasOwnProperty.call(this.record, 'entityIRI');
-    this._canRead().subscribe(canRead => {
-      this.showButton = canRead;
-    });
+    if (this.record) {
+      this.isEntityRecord = Object.prototype.hasOwnProperty.call(this.record, 'entityIRI');
+      this._canRead().subscribe(canRead => {
+        this.showButton = canRead;
+      });
+    } else {
+      this.isEntityRecord = false;
+      this.showButton = false;
+    }
   }
 
   /**

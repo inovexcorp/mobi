@@ -27,7 +27,7 @@ import { VersionedRdfListItem } from '../../../shared/models/versionedRdfListIte
 import { UploadItem } from '../../models/upload-item.interface';
 import { UploadErrorsModalComponent } from '../upload-errors-modal/upload-errors-modal.component';
 import { VersionedRdfState } from '../../../shared/services/versionedRdfState.service';
-import { stateServiceToken } from '../../injection-token';
+import { stateServiceToken } from '../../../shared/injection-token';
 
 /**
  * @class versioned-rdf-record-editor.UploadRecordLogComponent

@@ -29,7 +29,7 @@ import { BehaviorSubject, of } from 'rxjs';
 
 import { VersionedRdfListItem } from '../../../shared/models/versionedRdfListItem.class';
 import { VersionedRdfState } from '../../../shared/services/versionedRdfState.service';
-import { stateServiceToken } from '../../injection-token';
+import { stateServiceToken } from '../../../shared/injection-token';
 import { getBeautifulIRI } from '../../../shared/utility';
 import { ToastService } from '../../../shared/services/toast.service';
 import { RESTError } from '../../../shared/models/RESTError.interface';

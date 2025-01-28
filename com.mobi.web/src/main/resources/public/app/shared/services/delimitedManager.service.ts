@@ -29,7 +29,7 @@ import { Observable, of, throwError } from 'rxjs';
 import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
 import { REST_PREFIX } from '../../constants';
 import { JSONLDObject } from '../models/JSONLDObject.interface';
-import { createHttpParams, handleError } from '../utility';
+import { createHttpParams, handleError, handleErrorObject } from '../utility';
 import { XACMLRequest } from '../models/XACMLRequest.interface';
 import { PolicyEnforcementService } from './policyEnforcement.service';
 import { POLICY } from '../../prefixes';
@@ -250,7 +250,7 @@ export class DelimitedManagerService {
         };
         return this.spinnerSvc.track(this.http.post<null>(`${this.prefix}/${encodeURIComponent(this.fileName)}/map-to-ontology`, 
           null, {params: createHttpParams(params), observe: 'response'}))
-           .pipe(catchError(handleError));
+           .pipe(catchError(handleErrorObject));
     }
     /**
      * Retrieves the header name of a column based on its index. If {@link shared.DelimitedManagerService#dataRows} have

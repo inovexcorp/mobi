@@ -41,7 +41,7 @@ import { ShapesGraphListItem } from '../../../shared/models/shapesGraphListItem.
 import { CamelCasePipe } from '../../../shared/pipes/camelCase.pipe';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { VersionedRdfListItem } from '../../../shared/models/versionedRdfListItem.class';
-import { stateServiceToken } from '../../injection-token';
+import { stateServiceToken } from '../../../shared/injection-token';
 import { VersionedRdfState } from '../../../shared/services/versionedRdfState.service';
 import { RESTError } from '../../../shared/models/RESTError.interface';
 import { CreateTagModalComponent } from './create-tag-modal.component';

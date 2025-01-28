@@ -31,7 +31,7 @@ import { CamelCasePipe } from '../../../shared/pipes/camelCase.pipe';
 import { splitIRI } from '../../../shared/pipes/splitIRI.pipe';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { VersionedRdfListItem } from '../../../shared/models/versionedRdfListItem.class';
-import { stateServiceToken } from '../../injection-token';
+import { stateServiceToken } from '../../../shared/injection-token';
 import { VersionedRdfState } from '../../../shared/services/versionedRdfState.service';
 import { VersionedRdfStateBase } from '../../../shared/models/versionedRdfStateBase.interface';
 import { Difference } from '../../../shared/models/difference.class';
