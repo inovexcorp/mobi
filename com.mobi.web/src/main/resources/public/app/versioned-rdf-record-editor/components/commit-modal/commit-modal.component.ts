@@ -31,7 +31,7 @@ import { CATALOG } from '../../../prefixes';
 import { ToastService } from '../../../shared/services/toast.service';
 import { getPropertyId } from '../../../shared/utility';
 import { VersionedRdfListItem } from '../../../shared/models/versionedRdfListItem.class';
-import { stateServiceToken } from '../../injection-token';
+import { stateServiceToken } from '../../../shared/injection-token';
 import { VersionedRdfState } from '../../../shared/services/versionedRdfState.service';
 import { RESTError } from '../../../shared/models/RESTError.interface';
 

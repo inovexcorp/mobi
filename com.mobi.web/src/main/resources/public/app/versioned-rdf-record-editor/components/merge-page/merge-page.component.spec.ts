@@ -44,7 +44,7 @@ import { PolicyEnforcementService } from '../../../shared/services/policyEnforce
 import { UserManagerService } from '../../../shared/services/userManager.service';
 import { LoginManagerService } from '../../../shared/services/loginManager.service';
 import { VersionedRdfListItem } from '../../../shared/models/versionedRdfListItem.class';
-import { stateServiceToken } from '../../injection-token';
+import { stateServiceToken } from '../../../shared/injection-token';
 import { VersionedRdfState } from '../../../shared/services/versionedRdfState.service';
 import { MergePageComponent } from './merge-page.component';
 

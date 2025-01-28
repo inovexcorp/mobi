@@ -41,8 +41,9 @@
             width: fit-content;
             overflow: hidden;
             text-overflow: ellipsis;
-            cursor: auto;
         }
+
+        cursor: pointer !important;
     }
 
     button.mat-icon-button {

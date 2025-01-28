@@ -26,7 +26,7 @@ import { MatDialogRef } from '@angular/material/dialog';
 import { MAT_DIALOG_DATA } from '@angular/material/dialog';
 
 import { RdfDownload } from '../../../shared/models/rdfDownload.interface';
-import { stateServiceToken } from '../../injection-token';
+import { stateServiceToken } from '../../../shared/injection-token';
 import { VersionedRdfState } from '../../../shared/services/versionedRdfState.service';
 import { VersionedRdfListItem } from '../../../shared/models/versionedRdfListItem.class';
 

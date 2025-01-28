@@ -44,7 +44,7 @@ import { ShapesGraphListItem } from '../../../shared/models/shapesGraphListItem.
 import { Difference } from '../../../shared/models/difference.class';
 import { ToastService } from '../../../shared/services/toast.service';
 import { VersionedRdfListItem } from '../../../shared/models/versionedRdfListItem.class';
-import { stateServiceToken } from '../../injection-token';
+import { stateServiceToken } from '../../../shared/injection-token';
 import { VersionedRdfState } from '../../../shared/services/versionedRdfState.service';
 import { UploadChangesModalComponent } from './upload-changes-modal.component';
 

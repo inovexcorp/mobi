@@ -38,7 +38,7 @@ import { cleanStylesFromDOM, MockVersionedRdfState } from '../../../../test/ts/S
 import { KeywordSelectComponent } from '../../../shared/components/keywordSelect/keywordSelect.component';
 import { RESTError } from '../../../shared/models/RESTError.interface';
 import { VersionedRdfListItem } from '../../../shared/models/versionedRdfListItem.class';
-import { stateServiceToken } from '../../injection-token';
+import { stateServiceToken } from '../../../shared/injection-token';
 import { VersionedRdfState } from '../../../shared/services/versionedRdfState.service';
 import { ToastService } from '../../../shared/services/toast.service';
 import { UploadRecordModalComponent } from './upload-record-modal.component';

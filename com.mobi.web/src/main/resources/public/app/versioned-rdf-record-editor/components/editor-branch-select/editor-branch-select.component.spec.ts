@@ -47,7 +47,7 @@ import { CatalogManagerService } from '../../../shared/services/catalogManager.s
 import { ToastService } from '../../../shared/services/toast.service';
 import { VersionedRdfListItem } from '../../../shared/models/versionedRdfListItem.class';
 import { VersionedRdfState } from '../../../shared/services/versionedRdfState.service';
-import { stateServiceToken } from '../../injection-token';
+import { stateServiceToken } from '../../../shared/injection-token';
 import { State } from '../../../shared/models/state.interface';
 import { ProgressSpinnerService } from '../../../shared/components/progress-spinner/services/progressSpinner.service';
 import { EditBranchModalComponent } from '../edit-branch-modal/edit-branch-modal.component';

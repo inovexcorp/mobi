@@ -27,7 +27,7 @@ import { switchMap } from 'rxjs/operators';
 
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { ToastService } from '../../../shared/services/toast.service';
-import { stateServiceToken } from '../../injection-token';
+import { stateServiceToken } from '../../../shared/injection-token';
 import { VersionedRdfState } from '../../../shared/services/versionedRdfState.service';
 import { VersionedRdfListItem } from '../../../shared/models/versionedRdfListItem.class';
 import { splitIRI } from '../../../shared/pipes/splitIRI.pipe';

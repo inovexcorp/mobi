@@ -241,10 +241,10 @@ describe('Delimited Manager service', function() {
         it('unless an error occurs', function() {
             service.mapAndCommit(mappingRecordIRI, ontologyRecordIRI, branchIRI, true)
                 .subscribe(() => fail('Promise should have rejected'), response => {
-                    expect(response).toBe(error);
+                    expect(response).toEqual({ error: '', errorMessage: 'Error Message', errorDetails: [  ] });
                 });
             const request = httpMock.expectOne(req => req.url === this.url && req.method === 'POST');
-            request.flush('flush', { status: 400, statusText: error });
+            request.flush({errorMessage: error}, { status: 400, statusText: error });
         });
         it('with update specified', function() {
             service.mapAndCommit(mappingRecordIRI, ontologyRecordIRI, branchIRI, true)

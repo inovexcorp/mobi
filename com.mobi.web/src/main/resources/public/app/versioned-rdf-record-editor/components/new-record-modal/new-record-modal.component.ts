@@ -32,7 +32,7 @@ import { RESTError } from '../../../shared/models/RESTError.interface';
 import { CamelCasePipe } from '../../../shared/pipes/camelCase.pipe';
 import { splitIRI } from '../../../shared/pipes/splitIRI.pipe';
 import { VersionedRdfListItem } from '../../../shared/models/versionedRdfListItem.class';
-import { stateServiceToken } from '../../injection-token';
+import { stateServiceToken } from '../../../shared/injection-token';
 import { VersionedRdfState } from '../../../shared/services/versionedRdfState.service';
 import { addLanguageToAnnotations, getBeautifulIRI } from '../../../shared/utility';
 import { RdfUpload } from '../../../shared/models/rdfUpload.interface';

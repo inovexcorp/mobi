@@ -41,7 +41,7 @@ import { CatalogManagerService } from '../../../shared/services/catalogManager.s
 import { ToastService } from '../../../shared/services/toast.service';
 import { VersionedRdfListItem } from '../../../shared/models/versionedRdfListItem.class';
 import { VersionedRdfState } from '../../../shared/services/versionedRdfState.service';
-import { stateServiceToken } from '../../injection-token';
+import { stateServiceToken } from '../../../shared/injection-token';
 import { CreateBranchModalComponent } from './create-branch-modal.component';
 
 describe('Create branch component', function() {

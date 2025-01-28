@@ -127,8 +127,8 @@ export class RunMappingOntologyOverlayComponent implements OnInit {
             this._runMapping(this.state.selected.record.id);
         }
     }
-    private _onError(errorMessage: string): void {
-        this.errorMessage = errorMessage;
+    private _onError(error: JSONLDObject): void {
+        this.errorMessage = error.errorMessage ? error.errorMessage : error;
     }
     private _runMapping(id: string): void {
         this.dm.mapAndCommit(id, this.ontology.id, this.branch['@id'], this.update).subscribe(response => {

@@ -21,6 +21,8 @@
  * #L%
  */
 import { Component } from '@angular/core';
+import { stateServiceToken } from '../../../shared/injection-token';
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 
 /**
  * EntitySearchPageComponent is responsible for displaying and handling the entity search page.
@@ -30,7 +32,13 @@ import { Component } from '@angular/core';
  */
 @Component({
   selector: 'app-entity-search-page',
-  templateUrl: './entity-search-page.component.html'
+  templateUrl: './entity-search-page.component.html',
+  providers: [
+    {
+      provide: stateServiceToken,
+      useExisting: OntologyStateService
+    }
+  ]
 })
 export class EntitySearchPageComponent {
 

@@ -34,7 +34,7 @@ import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { ToastService } from '../../../shared/services/toast.service';
 import { condenseCommitId, getDctermsValue, getPropertyId } from '../../../shared/utility';
-import { stateServiceToken } from '../../injection-token';
+import { stateServiceToken } from '../../../shared/injection-token';
 import { VersionedRdfListItem } from '../../../shared/models/versionedRdfListItem.class';
 import { VersionedRdfState } from '../../../shared/services/versionedRdfState.service';
 import { ProgressSpinnerService } from '../../../shared/components/progress-spinner/services/progressSpinner.service';

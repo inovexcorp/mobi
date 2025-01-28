@@ -23,6 +23,8 @@
 import { Component } from '@angular/core';
 
 import { CatalogStateService } from '../../../shared/services/catalogState.service';
+import { stateServiceToken } from '../../../shared/injection-token';
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 
 /**
  * @class catalog.CatalogPageComponent
@@ -33,7 +35,13 @@ import { CatalogStateService } from '../../../shared/services/catalogState.servi
 @Component({
     selector: 'catalog-page',
     templateUrl: './catalogPage.component.html',
-    styleUrls: ['./catalogPage.component.scss']
+    styleUrls: ['./catalogPage.component.scss'],
+    providers: [
+        {
+            provide: stateServiceToken,
+            useExisting: OntologyStateService
+        }
+    ]
 })
 export class CatalogPageComponent {
     constructor(public state: CatalogStateService) {}
