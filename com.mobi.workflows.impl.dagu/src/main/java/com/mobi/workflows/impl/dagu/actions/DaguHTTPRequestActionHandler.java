@@ -26,8 +26,8 @@ package com.mobi.workflows.impl.dagu.actions;
 import com.mobi.exception.MobiException;
 import com.mobi.workflows.api.action.ActionDefinition;
 import com.mobi.workflows.api.action.ActionHandler;
-import com.mobi.workflows.api.ontologies.workflows.HTTPRequestAction;
-import com.mobi.workflows.api.ontologies.workflows.Header;
+import com.mobi.workflows.api.ontologies.actions.HTTPRequestAction;
+import com.mobi.workflows.api.ontologies.actions.Header;
 import org.apache.commons.io.IOUtils;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.utils.URIBuilder;
@@ -36,6 +36,7 @@ import org.osgi.service.component.annotations.Component;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
@@ -59,7 +60,7 @@ public class DaguHTTPRequestActionHandler implements ActionHandler<HTTPRequestAc
             throw new MobiException("Error parsing YAML " + e);
         }
         yamlContent = fillTemplate(yamlContent, action);
-        return new DaguActionDefinition(yamlContent);
+        return new DaguActionDefinition(yamlContent, action);
     }
 
     @Override
@@ -68,8 +69,8 @@ public class DaguHTTPRequestActionHandler implements ActionHandler<HTTPRequestAc
     }
 
     @Override
-    public InputStream getShaclDefinition() {
-        return ActionHandler.class.getResourceAsStream("/workflows.ttl");
+    public URL getShaclDefinition() {
+        return ActionHandler.class.getResource("/actionOntology.ttl");
     }
 
     /**

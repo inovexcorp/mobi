@@ -23,17 +23,15 @@ package com.mobi.workflows.impl.core.trigger;
  * #L%
  */
 
-import com.mobi.workflows.impl.ontologies.workflows.ScheduledTrigger;
 import com.mobi.workflows.api.trigger.BaseTriggerHandler;
 import com.mobi.workflows.api.trigger.TriggerHandler;
-import org.eclipse.rdf4j.model.ValueFactory;
-import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
+import com.mobi.workflows.impl.ontologies.workflows.ScheduledTrigger;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.InputStream;
+import java.net.URL;
 import java.util.Map;
 
 @Component(
@@ -70,7 +68,7 @@ public class ScheduledTriggerHandler extends BaseTriggerHandler<ScheduledTrigger
     }
 
     @Override
-    public InputStream getShaclDefinition() {
-        return ScheduledTrigger.class.getResourceAsStream("/triggerOntology.ttl");
+    public URL getShaclDefinition() {
+        return ScheduledTrigger.class.getResource("/triggerOntology.ttl");
     }
 }

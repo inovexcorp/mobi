@@ -94,7 +94,7 @@ public class DaguHttpClient {
      * @throws InterruptedException If an error occurs sending the HTTP request
      */
     public ObjectNode getDag(String sha1WorkflowIRI) throws IOException, InterruptedException {
-        log.trace("Checking if dag " + sha1WorkflowIRI + " already exists");
+        log.trace("Checking if dag {} already exists", sha1WorkflowIRI);
         Builder requestBuilder = HttpRequest.newBuilder(URI.create(daguHost + DAGS_REST_PREFIX + sha1WorkflowIRI))
                 .header("Accept", "application/json");
 
@@ -118,7 +118,7 @@ public class DaguHttpClient {
      * @throws InterruptedException If an error occurs sending the HTTP request
      */
     public void createDag(String sha1WorkflowIRI) throws IOException, InterruptedException {
-        log.trace("dag " + sha1WorkflowIRI + " does not exist. Creating.");
+        log.trace("dag {} does not exist. Creating.", sha1WorkflowIRI);
         ObjectNode createJson = mapper.createObjectNode();
         createJson.put("action", "new");
         createJson.put("value", sha1WorkflowIRI);
@@ -204,7 +204,7 @@ public class DaguHttpClient {
      * @throws InterruptedException If an error occurs sending the HTTP request
      */
     public Optional<ObjectNode> checkDagExist(String sha1WorkflowIRI) throws IOException, InterruptedException {
-        log.trace("Checking dag " + sha1WorkflowIRI + " status");
+        log.trace("Checking dag {} status", sha1WorkflowIRI);
         Builder requestBuilder = HttpRequest.newBuilder(URI.create(daguHost + DAGS_REST_PREFIX + sha1WorkflowIRI))
                 .header("accept", "application/json");
 
@@ -228,7 +228,7 @@ public class DaguHttpClient {
             throw new MobiException("dag object invalid");
         }
         String statusText = statusObject.get("StatusText").asText();
-        log.trace("dag " + sha1WorkflowIRI + " status is " + statusText);
+        log.trace("dag {} status is {}", sha1WorkflowIRI, statusText);
         if (statusText.equalsIgnoreCase("finished") || statusText.equalsIgnoreCase("failed")) {
             return Optional.of(resultObject);
         } else {

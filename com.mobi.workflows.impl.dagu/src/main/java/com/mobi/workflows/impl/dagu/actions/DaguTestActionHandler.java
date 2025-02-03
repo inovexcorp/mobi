@@ -25,10 +25,10 @@ package com.mobi.workflows.impl.dagu.actions;
 
 import com.mobi.workflows.api.action.ActionDefinition;
 import com.mobi.workflows.api.action.ActionHandler;
-import com.mobi.workflows.api.ontologies.workflows.TestAction;
+import com.mobi.workflows.api.ontologies.actions.TestAction;
 import org.osgi.service.component.annotations.Component;
 
-import java.io.InputStream;
+import java.net.URL;
 
 @Component(
         immediate = true,
@@ -40,7 +40,7 @@ public class DaguTestActionHandler implements ActionHandler<TestAction> {
                 .orElseThrow(() -> new IllegalStateException("TestAction must have a message"));
         String step = "- name: " + action.getResource() + "\n"
                 + "  command: echo \"" + message + "\"";
-        return new DaguActionDefinition(step);
+        return new DaguActionDefinition(step, action);
     }
 
     @Override
@@ -49,7 +49,7 @@ public class DaguTestActionHandler implements ActionHandler<TestAction> {
     }
 
     @Override
-    public InputStream getShaclDefinition() {
-        return ActionHandler.class.getResourceAsStream("/workflows.ttl");
+    public URL getShaclDefinition() {
+        return ActionHandler.class.getResource("/actionOntology.ttl");
     }
 }

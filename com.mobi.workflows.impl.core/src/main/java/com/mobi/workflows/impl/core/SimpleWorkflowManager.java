@@ -47,9 +47,7 @@ import com.mobi.ontologies.provo.Entity;
 import com.mobi.ontologies.provo.EntityFactory;
 import com.mobi.persistence.utils.Bindings;
 import com.mobi.persistence.utils.ConnectionUtils;
-import com.mobi.persistence.utils.SkolemizedStatementCollector;
 import com.mobi.persistence.utils.Statements;
-import com.mobi.persistence.utils.api.BNodeService;
 import com.mobi.prov.api.ProvOntologyLoader;
 import com.mobi.prov.api.ProvenanceService;
 import com.mobi.prov.api.builder.ActivityConfig;
@@ -89,7 +87,6 @@ import org.apache.commons.lang3.time.StopWatch;
 import org.eclipse.rdf4j.common.exception.ValidationException;
 import org.eclipse.rdf4j.federated.exception.FedXException;
 import org.eclipse.rdf4j.federated.repository.FedXRepository;
-import org.eclipse.rdf4j.model.BNode;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.model.Model;
@@ -115,9 +112,8 @@ import org.eclipse.rdf4j.repository.RepositoryException;
 import org.eclipse.rdf4j.repository.RepositoryResult;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.rio.RDFFormat;
-import org.eclipse.rdf4j.rio.RDFParser;
 import org.eclipse.rdf4j.rio.Rio;
-import org.eclipse.rdf4j.rio.helpers.StatementCollector;
+import org.eclipse.rdf4j.rio.helpers.BasicParserSettings;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
 import org.eclipse.rdf4j.sail.shacl.ShaclSail;
 import org.osgi.service.component.annotations.Activate;
@@ -134,6 +130,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
@@ -282,9 +280,6 @@ public class SimpleWorkflowManager implements WorkflowManager, EventHandler {
 
     @Reference
     protected EventAdmin eventAdmin;
-
-    @Reference
-    BNodeService bNodeService;
 
     @Activate
     protected void startService() {
@@ -436,8 +431,8 @@ public class SimpleWorkflowManager implements WorkflowManager, EventHandler {
         for (TriggerHandler<Trigger> handler : triggerHandlers.values()) {
             IRI triggerTypeIRI = vf.createIRI(handler.getTypeIRI());
             Model tempModel;
-            try {
-                tempModel = Rio.parse(handler.getShaclDefinition(), RDFFormat.TURTLE);
+            try (InputStream in = handler.getShaclDefinition().openStream()) {
+                tempModel = Rio.parse(in, RDFFormat.TURTLE);
             } catch (IOException e) {
                 throw new MobiException("Error reading SHACL definitions for Trigger " + triggerTypeIRI, e);
             }
@@ -456,8 +451,8 @@ public class SimpleWorkflowManager implements WorkflowManager, EventHandler {
         for (ActionHandler<Action> handler : actionHandlers.values()) {
             IRI actionTypeIRI = vf.createIRI(handler.getTypeIRI());
             Model tempModel;
-            try {
-                tempModel = Rio.parse(handler.getShaclDefinition(), RDFFormat.TURTLE);
+            try (InputStream in = handler.getShaclDefinition().openStream()) {
+                tempModel = Rio.parse(in, RDFFormat.TURTLE);
             } catch (IOException e) {
                 throw new MobiException("Error reading SHACL definitions for Action " + actionTypeIRI, e);
             }
@@ -1015,26 +1010,30 @@ public class SimpleWorkflowManager implements WorkflowManager, EventHandler {
             conn.add(systemRepoTriplesToAdd);
             log.trace("Adding base SHACL definitions");
 
-            ModelFactory modelFactory = new DynamicModelFactory();
-            Map<BNode, IRI> skolemizedBNodes = new HashMap<>();
-            StatementCollector stmtCollector = new SkolemizedStatementCollector(modelFactory,
-                    bNodeService, skolemizedBNodes);
-            RDFParser parser = Rio.createParser(RDFFormat.TURTLE);
-            parser.setRDFHandler(stmtCollector);
-            parser.parse(WorkflowManager.class.getResourceAsStream("/workflows.ttl"), "");
-            conn.add(stmtCollector.getStatements(), RDF4J.SHACL_SHAPE_GRAPH);
+            List<URL> loadedURLs = new ArrayList<>();
+            conn.getParserConfig().set(BasicParserSettings.PRESERVE_BNODE_IDS, true);
+            loadedURLs.add(WorkflowManager.class.getResource("/workflows.ttl"));
+            conn.add(WorkflowManager.class.getResource("/workflows.ttl"), RDFFormat.TURTLE, RDF4J.SHACL_SHAPE_GRAPH);
 
             log.trace("Adding Trigger SHACL definitions");
             for (TriggerHandler<Trigger> handler : triggerHandlers.values()) {
-                stmtCollector.clear();
-                parser.parse(handler.getShaclDefinition());
-                conn.add(stmtCollector.getStatements(), RDF4J.SHACL_SHAPE_GRAPH);
+                URL triggerURL = handler.getShaclDefinition();
+                if (loadedURLs.contains(triggerURL)) {
+                    log.trace("Loaded " + triggerURL + " before. Skipping.");
+                    continue;
+                }
+                loadedURLs.add(triggerURL);
+                conn.add(triggerURL, RDFFormat.TURTLE, RDF4J.SHACL_SHAPE_GRAPH);
             }
             log.trace("Adding Action SHACL definitions");
             for (ActionHandler<Action> handler : actionHandlers.values()) {
-                stmtCollector.clear();
-                parser.parse(handler.getShaclDefinition());
-                conn.add(stmtCollector.getStatements(), RDF4J.SHACL_SHAPE_GRAPH);
+                URL actionURL = handler.getShaclDefinition();
+                if (loadedURLs.contains(actionURL)) {
+                    log.trace("Loaded " + actionURL + " before. Skipping.");
+                    continue;
+                }
+                loadedURLs.add(actionURL);
+                conn.add(actionURL, RDFFormat.TURTLE, RDF4J.SHACL_SHAPE_GRAPH);
             }
             conn.commit();
             log.trace("Workflow RDF deemed valid");
@@ -1141,12 +1140,6 @@ public class SimpleWorkflowManager implements WorkflowManager, EventHandler {
         Activity activity = provService.createActivity(config);
         activity.addStartedAtTime(OffsetDateTime.now());
         return activity;
-    }
-
-    protected void removeActivity(Activity activity) {
-        if (activity != null) {
-            provService.deleteActivity(activity.getResource());
-        }
     }
 
     /**

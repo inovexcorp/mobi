@@ -47,6 +47,7 @@ import com.mobi.workflows.api.action.ActionHandler;
 import com.mobi.workflows.api.ontologies.workflows.Action;
 import com.mobi.workflows.api.ontologies.workflows.ActionExecution;
 import com.mobi.workflows.api.ontologies.workflows.ActionExecutionFactory;
+import com.mobi.workflows.api.ontologies.workflows.ActionFactory;
 import com.mobi.workflows.api.ontologies.workflows.Trigger;
 import com.mobi.workflows.api.ontologies.workflows.Workflow;
 import com.mobi.workflows.api.ontologies.workflows.WorkflowExecutionActivity;
@@ -89,6 +90,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.Timer;
@@ -145,6 +147,9 @@ public class DaguWorkflowEngine extends AbstractWorkflowEngine implements Workfl
     protected OrmFactoryRegistry factoryRegistry;
 
     @Reference
+    protected ActionFactory actionFactory;
+
+    @Reference
     protected BinaryFileFactory binaryFileFactory;
 
     @Reference
@@ -176,7 +181,7 @@ public class DaguWorkflowEngine extends AbstractWorkflowEngine implements Workfl
         log.debug("Starting DaguWorkflowEngine");
         setupEncryption(config);
         validateConfig(config);
-        log.trace("DaguWorkflowEngine started with config: " + config);
+        log.trace("DaguWorkflowEngine started with config: {}", config);
         setUpEngine(config);
         log.debug("Started DaguWorkflowEngine");
     }
@@ -197,13 +202,13 @@ public class DaguWorkflowEngine extends AbstractWorkflowEngine implements Workfl
             if (dag.hasNonNull("DAG") && dag.get("DAG").hasNonNull("ErrorT")) {
                 daguHttpClient.createDag(sha1WorkflowIRI);
             }
-            log.trace("Updating dag " + sha1WorkflowIRI);
+            log.trace("Updating dag {}", sha1WorkflowIRI);
             daguHttpClient.updateDag(workflowYaml, sha1WorkflowIRI);
 
             log.trace("Running dag");
             daguHttpClient.runDagJob(activity, sha1WorkflowIRI);
 
-            log.info("Successfully started Workflow " + workflow.getResource());
+            log.info("Successfully started Workflow {}", workflow.getResource());
             Runnable runnable = () -> {
                 CountDownLatch latch = new CountDownLatch(1);
                 long max = pollingTimeout / pollingInterval;
@@ -225,7 +230,7 @@ public class DaguWorkflowEngine extends AbstractWorkflowEngine implements Workfl
                             Optional<ObjectNode> opt = daguHttpClient.checkDagExist(sha1WorkflowIRI);
                             if (opt.isPresent()) {
                                 ObjectNode objectNode = opt.get();
-                                log.debug("Workflow " + workflow.getResource() + " completed");
+                                log.debug("Workflow {} completed", workflow.getResource());
                                 ObjectNode statusObject = (ObjectNode) objectNode.get("DAG").get("Status");
                                 String logFilePath = statusObject.get("Log").asText();
                                 BinaryFile binaryFile = getSchedulerLog(sha1WorkflowIRI, logFilePath, activity);
@@ -298,7 +303,7 @@ public class DaguWorkflowEngine extends AbstractWorkflowEngine implements Workfl
         binaryFile.setMimeType("text/plain");
         if (isLocal) {
             log.trace("Dagu installation is local. Pulling log file straight from system");
-            log.trace("Creating Binary File " + logFileIRI + " for logs");
+            log.trace("Creating Binary File {} for logs", logFileIRI);
             binaryFile.setRetrievalURL(vf.createIRI("file://" + logFilePath));
             binaryFile.setSize(Long.valueOf(Files.size(logFilePathObj)).doubleValue());
         } else {
@@ -312,7 +317,7 @@ public class DaguWorkflowEngine extends AbstractWorkflowEngine implements Workfl
                     Files.createDirectory(workflowLogDir);
                 }
                 Path workflowLogFile = Path.of(workflowLogDir + "/" + logFileName);
-                log.trace("Creating log file locally at " + workflowLogFile);
+                log.trace("Creating log file locally at {}", workflowLogFile);
                 InputStream logStream = new ByteArrayInputStream(content.getBytes());
                 try {
                     Files.copy(logStream, workflowLogFile, StandardCopyOption.REPLACE_EXISTING);
@@ -363,7 +368,7 @@ public class DaguWorkflowEngine extends AbstractWorkflowEngine implements Workfl
                 actionExecutions.add(actionExecution);
 
                 conn.add(actionExecution.getModel());
-                for (BinaryFile file: logFiles) {
+                for (BinaryFile file : logFiles) {
                     conn.add(file.getModel());
                 }
             }
@@ -388,9 +393,9 @@ public class DaguWorkflowEngine extends AbstractWorkflowEngine implements Workfl
         LocalDateTime startTime = null;
         LocalDateTime stopTime = null;
         boolean succeeded = true;
-        for (String stepId: stepList) {
-            for (JsonNode stepNode: steps) {
-                if (stepNode.at("/Step/Name").toString().equals(stepId)) {
+        for (String stepId : stepList) {
+            for (JsonNode stepNode : steps) {
+                if (stepNode.at("/Step/Name").textValue().equals(stepId)) {
                     BinaryFile file = createLogFile(stepNode, activity, sha1WorkflowIRI);
                     if (file != null) {
                         logFiles.add(file);
@@ -413,7 +418,7 @@ public class DaguWorkflowEngine extends AbstractWorkflowEngine implements Workfl
         }
         execution.setLogs(logFiles);
         if (startTime == null || stopTime == null) {
-            log.debug("None of the Steps for Action " + execution.getAboutAction_resource().get() + " were run");
+            log.debug("None of the Steps for Action {} were run", execution.getAboutAction_resource().get());
         } else {
             ZoneOffset offset = OffsetDateTime.now().getOffset();
             execution.setStartedAt(startTime.atOffset(offset));
@@ -437,7 +442,7 @@ public class DaguWorkflowEngine extends AbstractWorkflowEngine implements Workfl
         binaryFile.setMimeType("text/plain");
         if (isLocal) {
             log.trace("Dagu installation is local. Pulling log file straight from system");
-            log.trace("Creating Binary File " + logFileIRI + " for logs");
+            log.trace("Creating Binary File {} for logs", logFileIRI);
             binaryFile.setRetrievalURL(vf.createIRI("file://" + logFilePath));
         } else {
             String stepName = encode(stepNode.get("Step").get("Name").asText());
@@ -451,7 +456,7 @@ public class DaguWorkflowEngine extends AbstractWorkflowEngine implements Workfl
                     Files.createDirectory(workflowLogDir);
                 }
                 Path workflowLogFile = Path.of(workflowLogDir + "/" + logFileName);
-                log.trace("Creating log file locally at " + workflowLogFile);
+                log.trace("Creating log file locally at {}", workflowLogFile);
                 InputStream logStream = new ByteArrayInputStream(content.getBytes());
                 try {
                     Files.copy(logStream, workflowLogFile, StandardCopyOption.REPLACE_EXISTING);
@@ -470,11 +475,11 @@ public class DaguWorkflowEngine extends AbstractWorkflowEngine implements Workfl
     }
 
     private ActionDefinition toActionDefinition(Action action) {
-        log.trace("Identifying ActionHandler for " + action.getResource());
+        log.trace("Identifying ActionHandler for {}", action.getResource());
         OrmFactory<? extends Action> ormFactory = getActionFactory(action.getResource(),
                 action.getModel());
         ActionHandler<Action> handler = actionHandlers.get(ormFactory.getTypeIRI().stringValue());
-        log.trace("Identified Action type as " + handler.getTypeIRI());
+        log.trace("Identified Action type as {}", handler.getTypeIRI());
         return handler.createDefinition(ormFactory.getExisting(action.getResource(), action.getModel())
                 .orElseThrow(() -> new IllegalStateException("Issue converting Action types")));
     }
@@ -530,7 +535,7 @@ public class DaguWorkflowEngine extends AbstractWorkflowEngine implements Workfl
      */
     private Map<Action, List<String>> createActionList(Workflow workflow) {
         Map<Action, List<String>> actionList = new HashMap<>();
-        for (Action action: workflow.getHasAction()) {
+        for (Action action : actionFactory.getAllExisting(workflow.getModel())) {
             ActionDefinition definition = toActionDefinition(action);
             if (definition instanceof DaguActionDefinition) {
                 actionList.put(action, ((DaguActionDefinition) definition).getStepNames());
@@ -549,21 +554,20 @@ public class DaguWorkflowEngine extends AbstractWorkflowEngine implements Workfl
      * @return A Dagu compliant Yaml String
      */
     protected String createYaml(Workflow workflow) {
+        List<ActionDefinition> definitions = actionFactory.getAllExisting(workflow.getModel()).stream()
+                .map(this::toActionDefinition)
+                .filter(def -> def instanceof DaguActionDefinition)
+                .collect(Collectors.toList());
+        setActionDependencies(definitions);
+        String yaml = "params: MOBI_HOST MOBI_TOKEN\n"
+                + "steps:\n"
+                + definitions.stream()
+                .map(Objects::toString)
+                .collect(Collectors.joining("\n"));
         if (isLocal) {
-            return "logDir: " + logDir + "\n"
-                    + "params: MOBI_HOST MOBI_TOKEN\n"
-                    + "steps:\n" + workflow.getHasAction().stream()
-                    .map(this::toActionDefinition)
-                    .filter(def -> def instanceof DaguActionDefinition)
-                    .map(Object::toString)
-                    .collect(Collectors.joining("\n"));
+            return "logDir: " + logDir + "\n" + yaml;
         } else {
-            return "params: MOBI_HOST MOBI_TOKEN\n"
-                    + "steps:\n" + workflow.getHasAction().stream()
-                    .map(this::toActionDefinition)
-                    .filter(def -> def instanceof DaguActionDefinition)
-                    .map(Object::toString)
-                    .collect(Collectors.joining("\n"));
+            return yaml;
         }
     }
 
@@ -599,11 +603,11 @@ public class DaguWorkflowEngine extends AbstractWorkflowEngine implements Workfl
         try {
             encryptionService.encrypt(password, "password", this.configurationAdmin.getConfiguration(ENGINE_NAME));
         } catch (IOException e) {
-            log.error("Could not get configuration for " + ENGINE_NAME, e);
+            log.error("Could not get configuration for {}", ENGINE_NAME, e);
             throw new MobiException(e);
         } catch (MobiException m) {
-            log.error("Encryption service password has been changed. Please enter the DAGU basic auth password in " +
-                    "plaintext to encrypt/decrypt.");
+            log.error("Encryption service password has been changed. Please enter the DAGU basic auth password in "
+                    + "plaintext to encrypt/decrypt.");
         }
     }
 
@@ -636,11 +640,11 @@ public class DaguWorkflowEngine extends AbstractWorkflowEngine implements Workfl
      */
     private void validateConfig(DaguWorkflowEngineConfig config) {
         if (config.username() != null & config.password() == null) {
-            throw new IllegalArgumentException("Dagu Workflow Engine cannot be run due to DaguWorkflowEngineConfig" +
-                    " having a basic auth username and no password configured.");
+            throw new IllegalArgumentException("Dagu Workflow Engine cannot be run due to DaguWorkflowEngineConfig"
+                    + " having a basic auth username and no password configured.");
         } else if (config.username() == null & config.password() != null) {
-            throw new IllegalArgumentException("Dagu Workflow Engine cannot be run due to DaguWorkflowEngineConfig" +
-                    " having a basic auth password and no username configured.");
+            throw new IllegalArgumentException("Dagu Workflow Engine cannot be run due to DaguWorkflowEngineConfig"
+                    + " having a basic auth password and no username configured.");
         }
     }
 
@@ -649,11 +653,11 @@ public class DaguWorkflowEngine extends AbstractWorkflowEngine implements Workfl
             password = encryptionService.isEnabled() ? encryptionService.decrypt(config.password(), "password",
                     this.configurationAdmin.getConfiguration(ENGINE_NAME)) : config.password();
         } catch (IOException e) {
-            log.error("Could not get configuration for " + ENGINE_NAME, e);
+            log.error("Could not get configuration for {}", ENGINE_NAME, e);
             throw new MobiException(e);
         } catch (MobiException m) {
-            log.error("Encryption service password has been changed. Please enter the DAGU basic auth password in" +
-                    "plaintext to encrypt/decrypt.");
+            log.error("Encryption service password has been changed. Please enter the DAGU basic auth password in"
+                    + "plaintext to encrypt/decrypt.");
         }
     }
 }

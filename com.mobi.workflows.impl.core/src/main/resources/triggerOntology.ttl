@@ -17,7 +17,7 @@
     owl:versionIRI <http://mobi.solutions/ontologies/workflows/triggers#1.0> ;
     owl:imports <http://mobi.com/ontologies/prov>, <http://mobi.com/ontologies/documents> ;
     rdfs:label "The Mobi Workflows Trigger Ontology"@en ;
-    rdfs:comment "The Mobi Workflows Trigger ontology is designed to represent collections of actions that are triggered manually, by a schedule, or by events occurring in the system."@en ;
+    rdfs:comment "The Mobi Workflows Trigger ontology contains the definitions of all default supported triggers for Workflows."@en ;
     dct:creator [foaf:name "Khalil Savoy"] ;
     foaf:maker [foaf:name "Mobi"; foaf:homepage <https://mobi.inovexcorp.com/>] ;
     dct:modified "2023-09-15"^^xsd:date .

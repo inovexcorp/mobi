@@ -554,9 +554,9 @@ public class DaguWorkflowEngineTest extends OrmEnabledTestCase {
         IRI action2 = vf.createIRI("http://test.com/workflows-example#WorkflowAHTTPAction1");
         IRI action3 = vf.createIRI("http://test.com/workflows-example#WorkflowAHTTPAction2");
         HashMap<Action, List<String>> testMap = new HashMap<>();
-        testMap.put(actionFactory.createNew(action1), List.of("\"http://example.com/workflows/A/action\""));
-        testMap.put(actionFactory.createNew(action2), List.of("\"http://test.com/workflows-example#WorkflowAHTTPAction1 HTTP Request\"", "\"http://test.com/workflows-example#WorkflowAHTTPAction1 output\""));
-        testMap.put(actionFactory.createNew(action3), List.of("\"http://test.com/workflows-example#WorkflowAHTTPAction2 HTTP Request\"", "\"http://test.com/workflows-example#WorkflowAHTTPAction2 output\""));
+        testMap.put(actionFactory.createNew(action1), List.of("http://example.com/workflows/A/action"));
+        testMap.put(actionFactory.createNew(action2), List.of("http://test.com/workflows-example#WorkflowAHTTPAction1 HTTP Request", "http://test.com/workflows-example#WorkflowAHTTPAction1 output"));
+        testMap.put(actionFactory.createNew(action3), List.of("http://test.com/workflows-example#WorkflowAHTTPAction2 HTTP Request", "http://test.com/workflows-example#WorkflowAHTTPAction2 output"));
         String jsonString = IOUtils.toString(Objects.requireNonNull(getClass().getResourceAsStream("/objectNode.txt")), StandardCharsets.UTF_8);
         ObjectNode testNode = new ObjectMapper().readValue(jsonString, ObjectNode.class);
 

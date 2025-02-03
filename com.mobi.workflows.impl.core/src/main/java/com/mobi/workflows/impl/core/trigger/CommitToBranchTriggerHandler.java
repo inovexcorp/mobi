@@ -26,14 +26,13 @@ package com.mobi.workflows.impl.core.trigger;
 import com.mobi.workflows.api.trigger.BaseTriggerHandler;
 import com.mobi.workflows.api.trigger.TriggerHandler;
 import com.mobi.workflows.impl.ontologies.workflows.CommitToBranchTrigger;
-
 import org.eclipse.rdf4j.model.Resource;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.InputStream;
+import java.net.URL;
 import java.util.Map;
 
 @Component(
@@ -70,7 +69,7 @@ public class CommitToBranchTriggerHandler extends BaseTriggerHandler<CommitToBra
     }
 
     @Override
-    public InputStream getShaclDefinition() {
-        return CommitToBranchTriggerHandler.class.getResourceAsStream("/triggerOntology.ttl");
+    public URL getShaclDefinition() {
+        return CommitToBranchTriggerHandler.class.getResource("/triggerOntology.ttl");
     }
 }

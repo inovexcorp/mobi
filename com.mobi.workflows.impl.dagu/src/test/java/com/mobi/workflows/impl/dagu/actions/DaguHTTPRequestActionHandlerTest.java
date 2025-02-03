@@ -31,8 +31,8 @@ import static org.mockito.Mockito.when;
 
 import com.mobi.exception.MobiException;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
-import com.mobi.workflows.api.ontologies.workflows.HTTPRequestAction;
-import com.mobi.workflows.api.ontologies.workflows.Header;
+import com.mobi.workflows.api.ontologies.actions.HTTPRequestAction;
+import com.mobi.workflows.api.ontologies.actions.Header;
 import org.apache.http.NameValuePair;
 import org.apache.http.message.BasicNameValuePair;
 import org.eclipse.rdf4j.model.IRI;

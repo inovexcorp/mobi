@@ -128,6 +128,11 @@
                                     <outputPackage>com.mobi.workflows.api.ontologies.workflows</outputPackage>
                                     <ontologyName>Workflows</ontologyName>
                                 </ontology>
+                                <ontology>
+                                    <ontologyFile>${project.basedir}/src/main/resources/actionOntology.ttl</ontologyFile>
+                                    <outputPackage>com.mobi.workflows.api.ontologies.actions</outputPackage>
+                                    <ontologyName>Actions</ontologyName>
+                                </ontology>
                             </generates>
                             <references>
                                 <ontology>
@@ -148,6 +153,11 @@
                                     <ontologyFile>${project.basedir}/../com.mobi.catalog.api/src/main/resources/mcat.ttl</ontologyFile>
                                     <outputPackage>com.mobi.catalog.api.ontologies.mcat</outputPackage>
                                     <ontologyName>MCAT</ontologyName>
+                                </ontology>
+                                <ontology>
+                                    <ontologyFile>${project.basedir}/src/main/resources/workflows.ttl</ontologyFile>
+                                    <outputPackage>com.mobi.workflows.api.ontologies.workflows</outputPackage>
+                                    <ontologyName>Workflows</ontologyName>
                                 </ontology>
                             </references>
                             <outputLocation>${project.basedir}/target/generated-sources</outputLocation>

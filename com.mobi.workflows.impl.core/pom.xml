@@ -151,7 +151,7 @@
                                 <ontology>
                                     <ontologyFile>${project.basedir}/src/main/resources/triggerOntology.ttl</ontologyFile>
                                     <outputPackage>com.mobi.workflows.impl.ontologies.workflows</outputPackage>
-                                    <ontologyName>triggers</ontologyName>
+                                    <ontologyName>Triggers</ontologyName>
                                 </ontology>
                             </generates>
                             <references>
