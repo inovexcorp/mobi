@@ -114,7 +114,9 @@ export class OpenRecordButtonComponent <TData extends VersionedRdfListItem>{
     this._canRead().subscribe(canRead => {
       if (canRead) {
         if (this.isEntityRecord) {
-          this.state.listItem.changesPageOpen = false;
+          if (this.state.listItem) {
+            this.state.listItem.changesPageOpen = false;
+          }
           this.updateEntityRecord();
         } else {
           this.navigateToRecord();
