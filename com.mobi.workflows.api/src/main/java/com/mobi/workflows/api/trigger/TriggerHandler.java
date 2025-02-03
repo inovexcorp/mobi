@@ -26,7 +26,7 @@ package com.mobi.workflows.api.trigger;
 import com.mobi.workflows.api.ontologies.workflows.Trigger;
 import org.eclipse.rdf4j.model.Resource;
 
-import java.io.InputStream;
+import java.net.URL;
 
 public interface TriggerHandler<T extends Trigger> {
 
@@ -68,10 +68,10 @@ public interface TriggerHandler<T extends Trigger> {
     String getTypeIRI();
 
     /**
-     * Provides the RDF of the SHACL shape of the {@link Trigger} to be used for validation. Expects the RDF to be in
-     * Turtle format.
+     * Provides the URL of a RDF file containing the SHACL shape of the {@link Trigger} to be used for validation.
+     * Expects the RDF file to be in Turtle format.
      *
-     * @return An {@link InputStream} of Turtle RDF data containing the SHACL shape for this Trigger type
+     * @return A {@link URL} of a Turtle RDF file containing the SHACL shape for this Trigger type
      */
-    InputStream getShaclDefinition();
+    URL getShaclDefinition();
 }

@@ -14,13 +14,13 @@
 @base <http://mobi.solutions/ontologies/workflows> .
 
 <http://mobi.solutions/ontologies/workflows> a owl:Ontology ;
-    owl:versionIRI <http://mobi.solutions/ontologies/workflows#1.0> ;
+    owl:versionIRI <http://mobi.solutions/ontologies/workflows#2.0> ;
     owl:imports <http://mobi.com/ontologies/prov>, <http://mobi.com/ontologies/documents>, <http://mobi.com/ontologies/catalog> ;
     rdfs:label "The Mobi Workflows Ontology"@en ;
     rdfs:comment "The Mobi Workflows ontology is designed to represent collections of actions that are triggered manually, by a schedule, or by events occurring in the system."@en ;
     dct:creator [foaf:name "Khalil Savoy"] ;
     foaf:maker [foaf:name "Mobi"; foaf:homepage <https://mobi.inovexcorp.com/>] ;
-    dct:modified "2023-08-16"^^xsd:date .
+    dct:modified "2025-1-31"^^xsd:date .
 
 # Workflow
 
@@ -38,19 +38,51 @@
 :Workflow a owl:Class, sh:NodeShape, rdfs:Class ;
     rdfs:label "Workflow"@en ;
     rdfs:comment "A specification of a set of actions to execute when triggered."@en ;
-    sh:property :triggerPropertyShape, :actionPropertyShape.
+    sh:property :triggerPropertyShape, :actionPropertyShape, :NoEntryToChildActionsPropertyShape .
 
-#Workflow Property Shapes
+# Workflow Properties and Shapes
 
 :triggerPropertyShape a sh:PropertyShape ;
     sh:path :hasTrigger ;
     sh:maxCount 1 ;
     sh:class :Trigger.
 
-:actionPropertyShape a sh:PropertyShape;
+:hasTrigger a owl:ObjectProperty, owl:FunctionalProperty ;
+    rdfs:label "has trigger"@en ;
+    rdfs:comment "A trigger for a specific Workflow."@en ;
+    rdfs:domain :Workflow ;
+    rdfs:range :Trigger .
+
+:actionPropertyShape a sh:PropertyShape ;
     sh:path :hasAction ;
     sh:minCount 1 ;
     sh:class :Action .
+
+:NoEntryToChildActionsPropertyShape a sh:PropertyShape ;
+    sh:message "Entry Actions must not be child Actions"@en ;
+    sh:path :hasAction ;
+    sh:sparql [
+        a sh:SPARQLConstraint ;
+        sh:select """
+            SELECT $this ?value
+            WHERE {
+                $this $path ?value .
+                FILTER EXISTS {
+                    ?action <http://mobi.solutions/ontologies/workflows#hasChildAction> ?value .
+                }
+            }
+        """
+    ] .
+    # TODO: Once RDF4J supports sh:oneOrMorePath, can use this
+    #sh:path ( :hasAction [ sh:oneOrMorePath :hasChildAction ] ) ;
+    #sh:disjoint :hasAction .
+
+:hasAction a owl:ObjectProperty ;
+    rdfs:label "has entry action"@en ;
+    rdfs:comment "A starting Action for a specific Workflow."@en ;
+    # TODO update when we figure out how to handle unions in ORM service
+    rdfs:domain :Workflow ;
+    rdfs:range :Action .
 
 :latestActivity a owl:ObjectProperty, owl:FunctionalProperty ;
     rdfs:label "latest activity"@en ;
@@ -63,19 +95,6 @@
     rdfs:comment "Whether a specific Workflow should execute when triggered."@en ;
     rdfs:domain :WorkflowRecord ;
     rdfs:range xsd:boolean .
-
-:hasTrigger a owl:ObjectProperty, owl:FunctionalProperty ;
-    rdfs:label "has trigger"@en ;
-    rdfs:comment "A trigger for a specific Workflow."@en ;
-    rdfs:domain :Workflow ;
-    rdfs:range :Trigger .
-
-:hasAction a owl:ObjectProperty ;
-    rdfs:label "has action"@en ;
-    rdfs:comment "An Action for a specific Workflow."@en ;
-    # TODO update when we figure out how to handle unions in ORM service
-    rdfs:domain :Workflow ;
-    rdfs:range :Action .
 
 :hasActionExecution a owl:ObjectProperty ;
     rdfs:label "has action execution"@en ;
@@ -98,161 +117,47 @@
 
 # Action
 
-:Action a owl:Class ;
+:Action a owl:Class, sh:NodeShape, rdfs:Class ;
     rdfs:label "Action"@en ;
-    rdfs:comment "A set of instructions that should be executed when a Workflow is running."@en .
+    rdfs:comment "A set of instructions that should be executed when a Workflow is running."@en ;
+    sh:property :HasChildActionPropertyShape, :NoCyclesPropertyShape, :NoDanglingActionsPropertyShape .
 
-# TestAction
+# Action Properties and Shapes
 
-:TestAction a owl:Class, sh:NodeShape, rdfs:Class ;
-    rdfs:subClassOf :Action ;
-    rdfs:label "Test Action"@en ;
-    rdfs:comment "An action that simply outputs the provided message."@en ;
-    sh:property :testActionPropertyShape.
+:HasChildActionPropertyShape a sh:PropertyShape ;
+    sh:message "Child of an Action must be another Action"@en ;
+    sh:path :hasChildAction ;
+    sh:class :Action .
 
-:testActionPropertyShape a sh:PropertyShape ;
-    wf:usesFormField wf:TextInput ;
-    sh:path :testMessage ;
-    sh:datatype xsd:string ;
-    sh:minCount 1 ;
-    sh:maxCount 1 .
+:NoCyclesPropertyShape a sh:PropertyShape ;
+    sh:message "There cannot be a cycle among child Actions."@en ;
+    sh:path :hasChildAction ;
+    sh:sparql [
+      a sh:SPARQLConstraint ;
+      sh:select """
+        SELECT $this ?value
+        WHERE {
+          $this $PATH ?value .
+          FILTER EXISTS {
+            ?value <http://mobi.solutions/ontologies/workflows#hasChildAction>+ $this .
+          }
+        }
+      """
+    ] .
+    # TODO: Once RDF4J supports sh:oneOrMorePath, can use this
+    #sh:path [ sh:oneOrMorePath [ sh:inversePath :hasChildAction ] ] ;
+    #sh:disjoint :hasChildAction .
 
-:testMessage a owl:DatatypeProperty, owl:FunctionalProperty ;
-    rdfs:label "test message"@en ;
-    rdfs:comment "A message for a Test Action to output."@en ;
-    rdfs:domain :TestAction ;
-    rdfs:range xsd:string .
+:NoDanglingActionsPropertyShape a sh:PropertyShape ;
+    sh:message "An Action must be a child of another Action or an entry point for the Workflow"@en ;
+    sh:path [ sh:alternativePath ( [ sh:inversePath :hasAction ] [ sh:inversePath :hasChildAction ] ) ] ;
+    sh:minCount 1 .
 
-# HTTPRequestAction
-
-:HTTPRequestAction a owl:Class, sh:NodeShape, rdfs:Class ;
-    rdfs:label "HTTP Request Action"@en ;
-    rdfs:subClassOf :Action ;
-    sh:property :httpUrlPropertyShape, :httpMethodPropertyShape, :httpBodyPropertyShape, :httpMediaTypePropertyShape,
-            :httpHeaderPropertyShape, :httpTimeoutPropertyShape .
-
-#HTTPRequestAction Property Shapes
-
-:httpUrlPropertyShape a sh:PropertyShape ;
-    sh:path :hasHttpUrl ;
-    sh:datatype xsd:string ;
-    sh:minCount 1 ;
-    sh:maxCount 1 ;
-    sh:pattern "^(https?|ftp):\/\/[^\s\/$.?#].[^\s]*$" ;
-    wf:usesFormField wf:TextInput.
-
-:hasHttpUrl a owl:DatatypeProperty, owl:FunctionalProperty ;
-    rdfs:label "http url"@en ;
-    rdfs:comment "The URL of the HTTP request"@en ;
-    rdfs:domain :HTTPRequestAction ;
-    rdfs:range xsd:string .
-
-:httpMethodPropertyShape a sh:PropertyShape ;
-    sh:path :hasHttpMethod ;
-    sh:datatype xsd:string ;
-    sh:minCount 1 ;
-    sh:maxCount 1 ;
-    sh:in ("GET" "POST") ;
-    wf:usesFormField wf:DropdownInput .
-
-:hasHttpMethod a owl:DatatypeProperty, owl:FunctionalProperty ;
-    rdfs:label "http method"@en ;
-    rdfs:comment "The method of the HTTP request"@en ;
-    rdfs:domain :HTTPRequestAction ;
-    rdfs:range xsd:string .
-
-:httpBodyPropertyShape a sh:PropertyShape ;
-    sh:path :hasHttpBody ;
-    sh:datatype xsd:string ;
-    sh:minCount 0 ;
-    sh:maxCount 1 ;
-    sh:minLength 1 ;
-    wf:usesFormField wf:TextareaInput .
-
-:hasHttpBody a owl:DatatypeProperty, owl:FunctionalProperty ;
-    rdfs:label "http request body"@en ;
-    rdfs:comment "The body of the HTTP request"@en ;
-    rdfs:domain :HTTPRequestAction ;
-    rdfs:range xsd:string .
-
-:httpMediaTypePropertyShape a sh:PropertyShape ;
-    sh:path :hasHttpMediaType ;
-    sh:datatype xsd:string ;
-    sh:minCount 0 ;
-    sh:maxCount 1 ;
-    sh:in ("text/plain" "text/yaml" "application/json" "application/owl+xml" "text/owl-manchester" "text/owl-functional"
-     "obo/obo" "application/n-triples" "application/rdf+xml" "application/xml" "text/xml" "text/turtle"
-      "application/x-turtle" "text/n3" "text/rdf+n3" "application/rdf+json" "application/trig" "application/x-trig"
-       "application/x-trigstar" "application/n-quads" "text/x-nquads" "text/nquads" "application/x-binary-rdf"
-        "application/vnd.hdt" "application/x-ld+ndjson" "application/trix" "text/x-turtlestar"
-         "application/x-turtlestar" "application/ld+json" "application/sparql-query") ;
-    wf:usesFormField wf:DropdownInput .
-
-:hasHttpMediaType a owl:DatatypeProperty, owl:FunctionalProperty ;
-    rdfs:label "media type"@en ;
-    rdfs:comment "The media type of the HTTP request"@en ;
-    rdfs:domain :HTTPRequestAction ;
-    rdfs:range xsd:string .
-
-:httpTimeoutPropertyShape a sh:PropertyShape ;
-    sh:path :hasHttpTimeout ;
-    sh:minCount 0 ;
-    sh:maxCount 1 ;
-    sh:datatype xsd:integer ;
-    sh:defaultValue "30"^^xsd:integer ;
-    sh:minInclusive 0 ;
-    wf:usesFormField wf:TextInput .
-
-:hasHttpTimeout a owl:DatatypeProperty, owl:FunctionalProperty ;
-    rdfs:label "http timeout (seconds)"@en ;
-    rdfs:comment "The timeout value in seconds of the HTTP request"@en ;
-    rdfs:domain :HTTPRequestAction ;
-    rdfs:range xsd:integer .
-
-:httpHeaderPropertyShape a sh:PropertyShape ;
-    sh:minCount 0 ;
-    sh:path :hasHeader ;
-    sh:node :Header .
-
-:Header a owl:Class, sh:NodeShape, rdfs:Class ;
-    rdfs:label "Header"@en ;
-    sh:property :headerNamePropertyShape ;
-    sh:property :headerValuePropertyShape .
-
-:headerNamePropertyShape a sh:PropertyShape ;
-    sh:name "Header Name" ;
-    sh:path :hasHeaderName ;
-    sh:datatype xsd:string ;
-    sh:minCount 1 ;
-    sh:maxCount 1 ;
-    wf:usesFormField wf:TextInput .
-
-:headerValuePropertyShape a sh:PropertyShape ;
-    sh:name "Header Value" ;
-    sh:path :hasHeaderValue ; 
-    sh:datatype xsd:string ;
-    sh:minCount 1 ;
-    sh:maxCount 1 ;
-    wf:usesFormField wf:TextInput .
-
-:hasHeaderName a owl:DatatypeProperty, owl:FunctionalProperty ;
-    rdfs:label "header name"@en ;
-    rdfs:comment "The Key/Name of the Header"@en ;
-    sh:order 0 ;
-    rdfs:domain :Header ;
-    rdfs:range xsd:string .
-
-:hasHeaderValue a owl:DatatypeProperty, owl:FunctionalProperty ;
-    rdfs:label "header value"@en ;
-    rdfs:comment "The Value of the Header"@en ;
-    sh:order 1 ;
-    rdfs:domain :Header ;
-    rdfs:range xsd:string .
-
-:hasHeader a owl:ObjectProperty ;
-    rdfs:label "hasHeader" ;
-    rdfs:domain :HTTPRequestAction ;
-    rdfs:range :Header .
+:hasChildAction a owl:ObjectProperty, owl:IrreflexiveProperty, owl:AsymmetricProperty ;
+    rdfs:label "has child action"@en ;
+    rdfs:comment "An Action that should be executed after the current one."@en ;
+    rdfs:domain :Action ;
+    rdfs:range :Action .
 
 # WorkflowExecutionActivity
 

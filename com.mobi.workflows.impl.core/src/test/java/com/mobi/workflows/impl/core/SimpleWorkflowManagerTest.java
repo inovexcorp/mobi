@@ -29,7 +29,6 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
@@ -58,7 +57,6 @@ import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.jaas.api.token.TokenManager;
 import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.ontologies.provo.Activity;
-import com.mobi.persistence.utils.api.BNodeService;
 import com.mobi.prov.api.ProvenanceService;
 import com.mobi.prov.api.builder.ActivityConfig;
 import com.mobi.rdf.orm.OrmFactory;
@@ -88,7 +86,6 @@ import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.ValueFactory;
-import org.eclipse.rdf4j.model.impl.LinkedHashModel;
 import org.eclipse.rdf4j.model.util.Models;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
@@ -211,10 +208,6 @@ public class SimpleWorkflowManagerTest extends OrmEnabledTestCase {
         systemRepository = new MemoryRepositoryWrapper();
         systemRepository.setDelegate(new SailRepository(new MemoryStore()));
 
-        BNodeService bNodeService = Mockito.mock(BNodeService.class);
-
-        when(bNodeService.deterministicSkolemize(any(Model.class), anyMap())).thenReturn(new LinkedHashModel());
-
         mock(SimpleVirtualFilesystemConfig.class);
 
         user = userFactory.createNew(vf.createIRI("http://test.org/user"));
@@ -273,7 +266,6 @@ public class SimpleWorkflowManagerTest extends OrmEnabledTestCase {
 
         workflowManager = Mockito.spy(new SimpleWorkflowManager());
         injectOrmFactoryReferencesIntoService(workflowManager);
-        workflowManager.bNodeService = bNodeService;
         workflowManager.commitManager = commitManager;
         workflowManager.branchManager = branchManager;
         workflowManager.compiledResourceManager = compiledResourceManager;
@@ -366,7 +358,7 @@ public class SimpleWorkflowManagerTest extends OrmEnabledTestCase {
         IRI exampleTrigger = vf.createIRI("http://mobi.solutions/test/triggers-actions#TriggerA");
         TriggerHandler<Trigger> mockTriggerHandler = mock(TriggerHandler.class);
         when(mockTriggerHandler.getTypeIRI()).thenReturn(exampleTrigger.stringValue());
-        when(mockTriggerHandler.getShaclDefinition()).thenReturn(getClass().getResourceAsStream("/trigger_actions_examples.ttl"));
+        when(mockTriggerHandler.getShaclDefinition()).thenReturn(getClass().getResource("/trigger_actions_examples.ttl"));
         workflowManager.addTriggerHandler(mockTriggerHandler);
 
         Map<Resource, Model> result = workflowManager.getTriggerShaclDefinitions();
@@ -384,10 +376,10 @@ public class SimpleWorkflowManagerTest extends OrmEnabledTestCase {
         IRI exampleTriggerB = vf.createIRI("http://mobi.solutions/test/triggers-actions#TriggerB");
         TriggerHandler<Trigger> mockTriggerHandlerA = mock(TriggerHandler.class);
         when(mockTriggerHandlerA.getTypeIRI()).thenReturn(exampleTriggerA.stringValue());
-        when(mockTriggerHandlerA.getShaclDefinition()).thenReturn(getClass().getResourceAsStream("/trigger_actions_examples.ttl"));
+        when(mockTriggerHandlerA.getShaclDefinition()).thenReturn(getClass().getResource("/trigger_actions_examples.ttl"));
         TriggerHandler<Trigger> mockTriggerHandlerB = mock(TriggerHandler.class);
         when(mockTriggerHandlerB.getTypeIRI()).thenReturn(exampleTriggerB.stringValue());
-        when(mockTriggerHandlerB.getShaclDefinition()).thenReturn(getClass().getResourceAsStream("/trigger_actions_examples.ttl"));
+        when(mockTriggerHandlerB.getShaclDefinition()).thenReturn(getClass().getResource("/trigger_actions_examples.ttl"));
         workflowManager.addTriggerHandler(mockTriggerHandlerA);
         workflowManager.addTriggerHandler(mockTriggerHandlerB);
 
@@ -416,7 +408,7 @@ public class SimpleWorkflowManagerTest extends OrmEnabledTestCase {
         IRI exampleAction = vf.createIRI("http://mobi.solutions/test/triggers-actions#ActionA");
         ActionHandler<Action> mockActionHandler = mock(ActionHandler.class);
         when(mockActionHandler.getTypeIRI()).thenReturn(exampleAction.stringValue());
-        when(mockActionHandler.getShaclDefinition()).thenReturn(getClass().getResourceAsStream("/trigger_actions_examples.ttl"));
+        when(mockActionHandler.getShaclDefinition()).thenReturn(getClass().getResource("/trigger_actions_examples.ttl"));
         workflowManager.addActionHandler(mockActionHandler);
 
         Map<Resource, Model> result = workflowManager.getActionShaclDefinitions();
@@ -434,10 +426,10 @@ public class SimpleWorkflowManagerTest extends OrmEnabledTestCase {
         IRI exampleActionB = vf.createIRI("http://mobi.solutions/test/triggers-actions#ActionB");
         ActionHandler<Action> mockActionHandlerA = mock(ActionHandler.class);
         when(mockActionHandlerA.getTypeIRI()).thenReturn(exampleActionA.stringValue());
-        when(mockActionHandlerA.getShaclDefinition()).thenReturn(getClass().getResourceAsStream("/trigger_actions_examples.ttl"));
+        when(mockActionHandlerA.getShaclDefinition()).thenReturn(getClass().getResource("/trigger_actions_examples.ttl"));
         ActionHandler<Action> mockActionHandlerB = mock(ActionHandler.class);
         when(mockActionHandlerB.getTypeIRI()).thenReturn(exampleActionB.stringValue());
-        when(mockActionHandlerB.getShaclDefinition()).thenReturn(getClass().getResourceAsStream("/trigger_actions_examples.ttl"));
+        when(mockActionHandlerB.getShaclDefinition()).thenReturn(getClass().getResource("/trigger_actions_examples.ttl"));
         workflowManager.addActionHandler(mockActionHandlerA);
         workflowManager.addActionHandler(mockActionHandlerB);
 
@@ -563,12 +555,12 @@ public class SimpleWorkflowManagerTest extends OrmEnabledTestCase {
         workflowModel = Rio.parse(stream, "", RDFFormat.TURTLE);
 
         TriggerHandler<Trigger> mockTriggerHandler = mock(TriggerHandler.class);
-        when(mockTriggerHandler.getShaclDefinition()).thenReturn(getClass().getResourceAsStream("/triggerOntology.ttl"));
+        when(mockTriggerHandler.getShaclDefinition()).thenReturn(getClass().getResource("/triggerOntology.ttl"));
         workflowManager.addTriggerHandler(mockTriggerHandler);
         workflowManager.validateWorkflow(workflowModel);
     }
 
-    @Test
+    @Test(expected = InvalidWorkflowException.class)
     public void validateWorkflowTestWithUndefinedValuesInSystemRepo() throws IOException {
         InputStream stream = getClass().getResourceAsStream("/undefined-workflow.ttl");
         workflowModel = Rio.parse(stream, "", RDFFormat.TURTLE);
@@ -583,10 +575,10 @@ public class SimpleWorkflowManagerTest extends OrmEnabledTestCase {
             conn.commit();
 
             ActionHandler<Action> mockActionHandler = mock(ActionHandler.class);
-            when(mockActionHandler.getShaclDefinition()).thenReturn(getClass().getResourceAsStream("/workflows.ttl"));
+            when(mockActionHandler.getShaclDefinition()).thenReturn(getClass().getResource("/workflows.ttl"));
             workflowManager.addActionHandler(mockActionHandler);
             TriggerHandler<Trigger> mockTriggerHandler = mock(TriggerHandler.class);
-            when(mockTriggerHandler.getShaclDefinition()).thenReturn(getClass().getResourceAsStream("/triggerOntology.ttl"));
+            when(mockTriggerHandler.getShaclDefinition()).thenReturn(getClass().getResource("/triggerOntology.ttl"));
             workflowManager.addTriggerHandler(mockTriggerHandler);
 
             workflowManager.validateWorkflow(workflowModel);
@@ -610,10 +602,10 @@ public class SimpleWorkflowManagerTest extends OrmEnabledTestCase {
             conn.commit();
 
             ActionHandler<Action> mockActionHandler = mock(ActionHandler.class);
-            when(mockActionHandler.getShaclDefinition()).thenReturn(getClass().getResourceAsStream("/workflows.ttl"));
+            when(mockActionHandler.getShaclDefinition()).thenReturn(getClass().getResource("/workflows.ttl"));
             workflowManager.addActionHandler(mockActionHandler);
             TriggerHandler<Trigger> mockTriggerHandler = mock(TriggerHandler.class);
-            when(mockTriggerHandler.getShaclDefinition()).thenReturn(getClass().getResourceAsStream("/triggerOntology.ttl"));
+            when(mockTriggerHandler.getShaclDefinition()).thenReturn(getClass().getResource("/triggerOntology.ttl"));
             workflowManager.addTriggerHandler(mockTriggerHandler);
 
             workflowManager.validateWorkflow(workflowModel);
@@ -658,7 +650,7 @@ public class SimpleWorkflowManagerTest extends OrmEnabledTestCase {
 
         // Mock the ActionHandler by loading in duplicate input stream
         ActionHandler<Action> mockActionHandler = mock(ActionHandler.class);
-        when(mockActionHandler.getShaclDefinition()).thenReturn(getClass().getResourceAsStream("/workflows.ttl"));
+        when(mockActionHandler.getShaclDefinition()).thenReturn(getClass().getResource("/empty.ttl"));
         workflowManager.addActionHandler(mockActionHandler);
 
         // Call the method to validate the workflow with duplicate values
@@ -898,7 +890,6 @@ public class SimpleWorkflowManagerTest extends OrmEnabledTestCase {
             conn.add(workflowRecord.getModel(), workflowRecord.getResource());
             conn.add(workflowModel);
         }
-//        when(branchManager.getMasterBranch(any(Resource.class), eq(recordIRI), any(RepositoryConnection.class))).thenReturn(branch);
         when(commitManager.getHeadCommit(any(Resource.class), eq(recordIRI), eq(branchIRI), any(RepositoryConnection.class))).thenReturn(commit);
         when(compiledResourceManager.getCompiledResource(eq(commitIRI), any(RepositoryConnection.class))).thenReturn(workflowModel);
 

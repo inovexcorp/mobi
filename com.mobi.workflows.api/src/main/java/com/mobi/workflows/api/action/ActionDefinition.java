@@ -23,9 +23,15 @@ package com.mobi.workflows.api.action;
  * #L%
  */
 
+import com.mobi.workflows.api.ontologies.workflows.Action;
+
 /**
  * Representation of a single step of a workflow as defined by a
  * {@link com.mobi.workflows.api.ontologies.workflows.Workflow}.
  */
 public interface ActionDefinition {
+
+    void addDependency(ActionDefinition parentAction);
+
+    Action getAction();
 }

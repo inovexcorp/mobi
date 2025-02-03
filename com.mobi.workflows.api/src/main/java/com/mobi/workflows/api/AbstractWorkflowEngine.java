@@ -23,27 +23,30 @@ package com.mobi.workflows.api;
  * #L%
  */
 
-import com.mobi.ontologies.provo.Activity;
 import com.mobi.prov.api.ProvenanceService;
 import com.mobi.sse.SSEUtils;
 import com.mobi.vfs.ontologies.documents.BinaryFile;
+import com.mobi.workflows.api.action.ActionDefinition;
+import com.mobi.workflows.api.ontologies.workflows.Action;
 import com.mobi.workflows.api.ontologies.workflows.WorkflowExecutionActivity;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.event.EventAdmin;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ThreadPoolExecutor;
 
 public abstract class AbstractWorkflowEngine implements WorkflowEngine {
-    @Reference
-    public ProvenanceService provService;
 
+    private final Logger log = LoggerFactory.getLogger(AbstractWorkflowEngine.class);
     protected final ValueFactory vf = new ValidatingValueFactory();
     protected static final List<Resource> executingWorkflows = new ArrayList<>();
     protected static ThreadPoolExecutor threadPool;
@@ -51,6 +54,9 @@ public abstract class AbstractWorkflowEngine implements WorkflowEngine {
     protected static final String ACTION_EXECUTION_NAMESPACE = "https://mobi.solutions/workflows/ActionExecution/";
 
     protected EventAdmin eventAdmin;
+
+    @Reference
+    public ProvenanceService provService;
 
     /**
      * Retrieves the engine's list of currently executing workflows.
@@ -97,9 +103,20 @@ public abstract class AbstractWorkflowEngine implements WorkflowEngine {
         return priorValue;
     }
 
-    protected void removeActivity(Activity activity) {
-        if (activity != null) {
-            provService.deleteActivity(activity.getResource());
+    protected void setActionDependencies(List<ActionDefinition> actions) {
+        for (ActionDefinition definition : actions) {
+            Action action = definition.getAction();
+            action.getHasChildAction_resource().forEach(iri -> {
+                Optional<ActionDefinition> childDefinition = actions.stream()
+                        .filter(def -> def.getAction().getResource().equals(iri))
+                        .findFirst();
+                if (childDefinition.isPresent()) {
+                    log.trace("Adding child action " + iri + " to action " + action.getResource());
+                    childDefinition.get().addDependency(definition);
+                } else {
+                    log.warn("Could not find child definition " + iri + " for parent action " + action.getResource());
+                }
+            });
         }
     }
 }

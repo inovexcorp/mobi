@@ -1,0 +1,174 @@
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+@prefix foaf: <http://xmlns.com/foaf/0.1/> .
+@prefix dct: <http://purl.org/dc/terms/> .
+@prefix prov: <http://www.w3.org/ns/prov#> .
+@prefix sh: <http://www.w3.org/ns/shacl#> .
+@prefix wf: <https://mobi.solutions/ontologies/form#>.
+@prefix : <http://mobi.solutions/ontologies/workflows#> .
+@base <http://mobi.solutions/ontologies/workflows> .
+
+<http://mobi.solutions/ontologies/worklows/actions> a owl:Ontology ;
+    owl:versionIRI <http://mobi.solutions/ontologies/workflows/actions#1.0> ;
+    owl:imports <http://mobi.solutions/ontologies/workflows> ;
+    rdfs:label "The Mobi Workflows Action Ontology"@en ;
+    rdfs:comment "The Mobi Workflows Action ontology contains the definitions of all default supported actions for Workflows."@en ;
+    dct:creator [foaf:name "Megan Mercer"] ;
+    foaf:maker [foaf:name "Mobi"; foaf:homepage <https://mobi.inovexcorp.com/>] ;
+    dct:modified "2025-1-31"^^xsd:date .
+
+# TestAction
+
+:TestAction a owl:Class, sh:NodeShape, rdfs:Class ;
+    rdfs:subClassOf :Action ;
+    rdfs:label "Test Action"@en ;
+    rdfs:comment "An action that simply outputs the provided message."@en ;
+    sh:property :testActionPropertyShape.
+
+# TestAction Properties and Shapes
+
+:testActionPropertyShape a sh:PropertyShape ;
+    wf:usesFormField wf:TextInput ;
+    sh:path :testMessage ;
+    sh:datatype xsd:string ;
+    sh:minCount 1 ;
+    sh:maxCount 1 .
+
+:testMessage a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:label "test message"@en ;
+    rdfs:comment "A message for a Test Action to output."@en ;
+    rdfs:domain :TestAction ;
+    rdfs:range xsd:string .
+
+# HTTPRequestAction
+
+:HTTPRequestAction a owl:Class, sh:NodeShape, rdfs:Class ;
+    rdfs:label "HTTP Request Action"@en ;
+    rdfs:subClassOf :Action ;
+    sh:property :httpUrlPropertyShape, :httpMethodPropertyShape, :httpBodyPropertyShape, :httpMediaTypePropertyShape,
+            :httpHeaderPropertyShape, :httpTimeoutPropertyShape .
+
+# HTTPRequestAction Property Shapes
+
+:httpUrlPropertyShape a sh:PropertyShape ;
+    sh:path :hasHttpUrl ;
+    sh:datatype xsd:string ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:pattern "^(https?|ftp):\/\/[^\s\/$.?#].[^\s]*$" ;
+    wf:usesFormField wf:TextInput.
+
+:hasHttpUrl a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:label "http url"@en ;
+    rdfs:comment "The URL of the HTTP request"@en ;
+    rdfs:domain :HTTPRequestAction ;
+    rdfs:range xsd:string .
+
+:httpMethodPropertyShape a sh:PropertyShape ;
+    sh:path :hasHttpMethod ;
+    sh:datatype xsd:string ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    sh:in ("GET" "POST") ;
+    wf:usesFormField wf:DropdownInput .
+
+:hasHttpMethod a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:label "http method"@en ;
+    rdfs:comment "The method of the HTTP request"@en ;
+    rdfs:domain :HTTPRequestAction ;
+    rdfs:range xsd:string .
+
+:httpBodyPropertyShape a sh:PropertyShape ;
+    sh:path :hasHttpBody ;
+    sh:datatype xsd:string ;
+    sh:minCount 0 ;
+    sh:maxCount 1 ;
+    sh:minLength 1 ;
+    wf:usesFormField wf:TextareaInput .
+
+:hasHttpBody a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:label "http request body"@en ;
+    rdfs:comment "The body of the HTTP request"@en ;
+    rdfs:domain :HTTPRequestAction ;
+    rdfs:range xsd:string .
+
+:httpMediaTypePropertyShape a sh:PropertyShape ;
+    sh:path :hasHttpMediaType ;
+    sh:datatype xsd:string ;
+    sh:minCount 0 ;
+    sh:maxCount 1 ;
+    sh:in ("text/plain" "text/yaml" "application/json" "application/owl+xml" "text/owl-manchester" "text/owl-functional"
+     "obo/obo" "application/n-triples" "application/rdf+xml" "application/xml" "text/xml" "text/turtle"
+      "application/x-turtle" "text/n3" "text/rdf+n3" "application/rdf+json" "application/trig" "application/x-trig"
+       "application/x-trigstar" "application/n-quads" "text/x-nquads" "text/nquads" "application/x-binary-rdf"
+        "application/vnd.hdt" "application/x-ld+ndjson" "application/trix" "text/x-turtlestar"
+         "application/x-turtlestar" "application/ld+json" "application/sparql-query") ;
+    wf:usesFormField wf:DropdownInput .
+
+:hasHttpMediaType a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:label "media type"@en ;
+    rdfs:comment "The media type of the HTTP request"@en ;
+    rdfs:domain :HTTPRequestAction ;
+    rdfs:range xsd:string .
+
+:httpTimeoutPropertyShape a sh:PropertyShape ;
+    sh:path :hasHttpTimeout ;
+    sh:minCount 0 ;
+    sh:maxCount 1 ;
+    sh:datatype xsd:integer ;
+    sh:defaultValue "30"^^xsd:integer ;
+    sh:minInclusive 0 ;
+    wf:usesFormField wf:TextInput .
+
+:hasHttpTimeout a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:label "http timeout (seconds)"@en ;
+    rdfs:comment "The timeout value in seconds of the HTTP request"@en ;
+    rdfs:domain :HTTPRequestAction ;
+    rdfs:range xsd:integer .
+
+:httpHeaderPropertyShape a sh:PropertyShape ;
+    sh:minCount 0 ;
+    sh:path :hasHeader ;
+    sh:node :Header .
+
+:Header a owl:Class, sh:NodeShape, rdfs:Class ;
+    rdfs:label "Header"@en ;
+    sh:property :headerNamePropertyShape ;
+    sh:property :headerValuePropertyShape .
+
+:headerNamePropertyShape a sh:PropertyShape ;
+    sh:name "Header Name" ;
+    sh:path :hasHeaderName ;
+    sh:datatype xsd:string ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    wf:usesFormField wf:TextInput .
+
+:headerValuePropertyShape a sh:PropertyShape ;
+    sh:name "Header Value" ;
+    sh:path :hasHeaderValue ;
+    sh:datatype xsd:string ;
+    sh:minCount 1 ;
+    sh:maxCount 1 ;
+    wf:usesFormField wf:TextInput .
+
+:hasHeaderName a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:label "header name"@en ;
+    rdfs:comment "The Key/Name of the Header"@en ;
+    sh:order 0 ;
+    rdfs:domain :Header ;
+    rdfs:range xsd:string .
+
+:hasHeaderValue a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:label "header value"@en ;
+    rdfs:comment "The Value of the Header"@en ;
+    sh:order 1 ;
+    rdfs:domain :Header ;
+    rdfs:range xsd:string .
+
+:hasHeader a owl:ObjectProperty ;
+    rdfs:label "hasHeader" ;
+    rdfs:domain :HTTPRequestAction ;
+    rdfs:range :Header .
