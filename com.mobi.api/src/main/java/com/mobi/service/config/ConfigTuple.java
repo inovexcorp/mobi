@@ -22,10 +22,11 @@ package com.mobi.service.config;
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-public record ConfigMethodInfo(
-        String fieldKey,
-        String name,
-        String description,
-        TypeReturn type,
-        boolean required,
-        boolean masked) {}
+
+/**
+ * Configuration Tuple which contains the Class and Path to save to.
+ *
+ * @param configClass Configuration Class.
+ * @param configPath Path to save to.
+ */
+public record ConfigTuple(Class<?> configClass, String configPath) { }

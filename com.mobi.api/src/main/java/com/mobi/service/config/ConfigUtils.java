@@ -32,15 +32,14 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.Dictionary;
 import java.util.Hashtable;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.HashMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.lang.reflect.Method;
 
 public class ConfigUtils {
-
     private static final Logger LOGGER = LoggerFactory.getLogger(ConfigUtils.class);
 
     /**
@@ -53,7 +52,7 @@ public class ConfigUtils {
         try {
             config.update(new Hashtable<>(newConfigurationData));
         } catch (IOException e) {
-            LOGGER.error("Issue updating service configuration for: " + config.getPid(), e);
+            LOGGER.error("Issue updating service configuration for: {}", config.getPid(), e);
         }
     }
 
@@ -70,7 +69,7 @@ public class ConfigUtils {
             final Configuration config = configurationAdmin.getConfiguration(serviceName);
             updateServiceConfig(newConfigurationData, config);
         } catch (IOException e) {
-            LOGGER.error("Could not get configuration for service: " + serviceName, e);
+            LOGGER.error("Could not get configuration for service: {}", serviceName, e);
             // Continue along, since we'll just re-generate the service configuration next
             // time the server starts.
         }
@@ -90,22 +89,35 @@ public class ConfigUtils {
     }
 
     /**
-     * Method to return a map of config methods and their corresponding properties
-     * 
-     * @param configClass The class that holds methods you'd like to map
-     * @return A map of methods with their respective properties
+     * Maps the methods of a given configuration class to their respective metadata information.
+     * This method iterates over all declared methods of the provided class and looks for
+     * the {@link ConfigurationMetadata} annotation. For each method that has this annotation,
+     * it creates a {@link ConfigMethodInfo} object containing the metadata details, and stores it
+     * in a map with the method name (replacing underscores with periods) as the key.
+     *
+     * @param configClass The class whose methods are to be inspected. It must be a class containing
+     *                    methods annotated with {@link ConfigurationMetadata}.
+     * @return A {@link Map} where the key is the method name (with underscores replaced by periods),
+     *         and the value is the corresponding {@link ConfigMethodInfo} that holds the metadata
+     *         about that method, such as its name, description, type, and other configuration details.
      */
     public static Map<String, ConfigMethodInfo> mapMethodsToInfo(Class<?> configClass) {
-        Map<String, ConfigMethodInfo> methodInfoMap = new HashMap<>();
-        Method[] anzoConfigMethods = configClass.getDeclaredMethods();
+        Map<String, ConfigMethodInfo> methodInfoMap = new LinkedHashMap<>();
+        Method[] declaredMethods = configClass.getDeclaredMethods();
 
-        for (Method method : anzoConfigMethods) {
+        for (Method method : declaredMethods) {
             ConfigurationMetadata customAttrDef = method.getAnnotation(ConfigurationMetadata.class);
+            if (customAttrDef == null) {
+                continue;  // Skip methods without the ConfigurationMetadata annotation
+            }
             String methodName = method.getName().replace("_", ".");
-            String description = customAttrDef.description();
-            String type = customAttrDef.type();
-            boolean required = customAttrDef.required();
-            methodInfoMap.put(methodName, new ConfigMethodInfo(methodName, description, type, required));
+            methodInfoMap.put(methodName, new ConfigMethodInfo(
+                    method.getName(),
+                    customAttrDef.name(),
+                    customAttrDef.description(),
+                    customAttrDef.type(),
+                    customAttrDef.required(),
+                    customAttrDef.masked()));
         }
         return methodInfoMap;
     }
