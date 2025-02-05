@@ -26,10 +26,19 @@ package com.mobi.service.config;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
+/**
+ * This annotation is used to define metadata for configuration properties. It is typically applied
+ * to fields or methods that represent configuration options in an application. The annotation provides
+ * additional information such as the name, description, type, whether the configuration is required,
+ * and whether it should be masked (for sensitive information).
+ *
+ * @see java.lang.annotation.RetentionPolicy#RUNTIME
+ */
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ConfigurationMetadata {
     String name();
     String description();
-    String type();
+    TypeReturn type();
     boolean required();
+    boolean masked();
 }

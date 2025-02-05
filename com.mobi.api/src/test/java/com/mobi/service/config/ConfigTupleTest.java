@@ -22,10 +22,27 @@ package com.mobi.service.config;
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-public record ConfigMethodInfo(
-        String fieldKey,
-        String name,
-        String description,
-        TypeReturn type,
-        boolean required,
-        boolean masked) {}
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+
+import org.junit.Test;
+
+public class ConfigTupleTest {
+
+    @Test
+    public void testConfigTupleCreation() {
+        // Given
+        Class<?> expectedClass = String.class;
+        String expectedPath = "/some/path";
+
+        // When
+        ConfigTuple configTuple = new ConfigTuple(expectedClass, expectedPath);
+
+        // Then
+        assertNotNull("ConfigTuple should not be null", configTuple);
+        assertEquals("ConfigClass should match", expectedClass, configTuple.configClass());
+        assertEquals("ConfigPath should match", expectedPath, configTuple.configPath());
+    }
+
+}

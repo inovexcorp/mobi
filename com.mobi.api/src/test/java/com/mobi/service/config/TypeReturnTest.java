@@ -22,10 +22,18 @@ package com.mobi.service.config;
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-public record ConfigMethodInfo(
-        String fieldKey,
-        String name,
-        String description,
-        TypeReturn type,
-        boolean required,
-        boolean masked) {}
+
+import org.junit.Assert;
+import org.junit.Test;
+
+public class TypeReturnTest {
+
+    @Test
+    public void testGetTypeReturn(){
+        Assert.assertEquals(TypeReturn.STRING, TypeReturn.getTypeReturn("".getClass()));
+        Assert.assertEquals(TypeReturn.NUMBER, TypeReturn.getTypeReturn(Integer.valueOf(3).getClass()));
+        Assert.assertEquals(TypeReturn.NUMBER, TypeReturn.getTypeReturn(Long.valueOf(3).getClass()));
+        Assert.assertEquals(TypeReturn.BOOLEAN, TypeReturn.getTypeReturn(Boolean.valueOf(true).getClass()));
+        Assert.assertEquals(TypeReturn.NONE, TypeReturn.getTypeReturn(Object.class));
+    }
+}
