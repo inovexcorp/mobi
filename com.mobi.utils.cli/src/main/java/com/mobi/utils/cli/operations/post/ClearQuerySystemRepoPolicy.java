@@ -40,24 +40,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Component(
-        service = { ClearAdminSystemPolicies.class, PostRestoreOperation.class }
+        service = { ClearQuerySystemRepoPolicy.class, PostRestoreOperation.class }
 )
-public class ClearAdminSystemPolicies implements PostRestoreOperation {
-    private static final Logger LOGGER = LoggerFactory.getLogger(ClearAdminSystemPolicies.class);
+public class ClearQuerySystemRepoPolicy implements PostRestoreOperation {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ClearQuerySystemRepoPolicy.class);
     private static final ValueFactory vf = new ValidatingValueFactory();
     private static final List<Resource> POLICES_TO_REMOVE;
 
     static {
-        POLICES_TO_REMOVE = Stream.of(vf.createIRI("http://mobi.com/policies/system-repo-access"),
-                        vf.createIRI("http://mobi.com/policies/all-access-versioned-rdf-record"),
-                        vf.createIRI("http://mobi.com/policies/dataset-creation"),
-                        vf.createIRI("http://mobi.com/policies/ontology-creation"),
-                        vf.createIRI("http://mobi.com/policies/shapes-graph-record-creation"))
-                .collect(Collectors.toUnmodifiableList());
+        POLICES_TO_REMOVE = List.of(vf.createIRI("http://mobi.com/policies/system-repo-access"));
     }
 
     @Reference
@@ -73,20 +66,20 @@ public class ClearAdminSystemPolicies implements PostRestoreOperation {
 
     @Override
     public Integer getPriority() {
-        return 105;
+        return 106;
     }
 
     @Override
     public VersionRange getVersionRange() throws InvalidVersionSpecificationException {
-        // Up to version 1.20 (excluded). Reference: MP-2505
-        return VersionRange.createFromVersionSpec("(0,1.20)");
+        // Up to version 4.1 (excluded). Reference: MP-3215
+        return VersionRange.createFromVersionSpec("(0,4.1)");
     }
 
     @Override
     public void execute() {
         LOGGER.debug("{} execute", getClass().getSimpleName());
-        LOGGER.debug("Remove old versions of admin policy and system repo query policy");
-        // 1.20 changed admin policy and system repo query policy.
+        LOGGER.debug("Remove old versions of system repo query policy");
+        // 4.1 changed system repo query policy.
         // Need to remove old versions so update policy takes effect.
         try (RepositoryConnection conn = config.getRepository().getConnection()) {
             PolicyFileUtils.removePolicyFiles(conn, vfs, POLICES_TO_REMOVE, LOGGER);

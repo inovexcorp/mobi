@@ -20,13 +20,13 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<Policy xmlns="urn:oasis:names:tc:xacml:3.0:core:schema:wd-17" PolicyId="http://mobi.com/policies/system-repo-access" RuleCombiningAlgId="urn:oasis:names:tc:xacml:3.0:rule-combining-algorithm:deny-unless-permit" Version="1.0">
-    <Description>Query System Repository</Description>
+<Policy xmlns="urn:oasis:names:tc:xacml:3.0:core:schema:wd-17" PolicyId="http://mobi.com/policies/prov-repo-access" RuleCombiningAlgId="urn:oasis:names:tc:xacml:3.0:rule-combining-algorithm:deny-unless-permit" Version="1.0">
+    <Description>Query Prov Repository</Description>
     <Target>
         <AnyOf>
             <AllOf>
                 <Match MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal">
-                    <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">https://mobi.solutions/repos/system</AttributeValue>
+                    <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">https://mobi.solutions/repos/prov</AttributeValue>
                     <AttributeDesignator AttributeId="urn:oasis:names:tc:xacml:1.0:resource:resource-id" Category="urn:oasis:names:tc:xacml:3.0:attribute-category:resource" DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="true"/>
                 </Match>
                 <Match MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal">
@@ -36,7 +36,7 @@
             </AllOf>
             <AllOf>
                 <Match MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal">
-                    <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">https://mobi.solutions/repos/system</AttributeValue>
+                    <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">https://mobi.solutions/repos/prov</AttributeValue>
                     <AttributeDesignator AttributeId="urn:oasis:names:tc:xacml:1.0:resource:resource-id" Category="urn:oasis:names:tc:xacml:3.0:attribute-category:resource" DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="true"/>
                 </Match>
                 <Match MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal">
@@ -46,7 +46,7 @@
             </AllOf>
         </AnyOf>
     </Target>
-    <Rule Effect="Permit" RuleId="urn:querySystemRepo">
+    <Rule Effect="Permit" RuleId="urn:queryProvRepo">
         <Target>
             <AnyOf>
                 <AllOf>
@@ -62,7 +62,7 @@
             </AnyOf>
         </Target>
     </Rule>
-    <Rule Effect="Permit" RuleId="urn:querySystemRepoAdmin">
+    <Rule Effect="Permit" RuleId="urn:queryProvRepoAdmin">
         <Target>
             <AnyOf>
                 <AllOf>
