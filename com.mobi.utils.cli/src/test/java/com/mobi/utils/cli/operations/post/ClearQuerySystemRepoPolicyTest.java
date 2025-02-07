@@ -55,7 +55,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class ClearAdminSystemPoliciesTest {
+public class ClearQuerySystemRepoPolicyTest {
     private static final String POLICY_FILE_LOCATION = "testLocation";
     private AutoCloseable closeable;
     private MemoryRepositoryWrapper repo;
@@ -84,7 +84,7 @@ public class ClearAdminSystemPoliciesTest {
     @Mock
     private ServiceReference<XACMLPolicyManager> xacmlServiceRef;
 
-    private ClearAdminSystemPolicies operation;
+    private ClearQuerySystemRepoPolicy operation;
 
     @Before
     public void setupMocks() throws Exception {
@@ -103,7 +103,7 @@ public class ClearAdminSystemPoliciesTest {
         when(bundleContext.getServiceReference(eq(XACMLPolicyManager.class))).thenReturn(xacmlServiceRef);
         when(xacmlServiceRef.getProperty(eq("policyFileLocation"))).thenReturn(POLICY_FILE_LOCATION);
 
-        operation = new ClearAdminSystemPolicies();
+        operation = new ClearQuerySystemRepoPolicy();
         operation.config = config;
         operation.vfs = vfs;
     }
@@ -124,15 +124,19 @@ public class ClearAdminSystemPoliciesTest {
                 "1.17;true",
                 "1.18;true",
                 "1.19;true",
-                "1.20;false",
-                "1.21;false",
-                "1.22;false",
-                "2.0;false",
-                "2.1;false",
-                "2.2;false",
-                "2.3;false",
-                "2.4;false",
-                "2.5;false"
+                "1.20;true",
+                "1.21;true",
+                "1.22;true",
+                "2.0;true",
+                "2.1;true",
+                "2.2;true",
+                "2.3;true",
+                "2.4;true",
+                "2.5;true",
+                "3.0;true",
+                "3.1;true",
+                "4.0;true",
+                "4.1;false"
         ).collect(Collectors.toUnmodifiableList());
         List<String> actualVersionCheck = CliTestUtils.runVersionCheck(operation, expectedVersions);
         Assert.assertEquals(expectedVersions, actualVersionCheck);
@@ -151,7 +155,7 @@ public class ClearAdminSystemPoliciesTest {
 
             operation.execute();
 
-            Assert.assertEquals(3, Mockito.mockingDetails(vfs).getInvocations().size());
+            Assert.assertEquals(1, Mockito.mockingDetails(vfs).getInvocations().size());
         }
     }
 }
