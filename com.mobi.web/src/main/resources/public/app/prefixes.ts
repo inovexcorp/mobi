@@ -54,3 +54,4 @@ export const COMMITID = 'http://mobi.com/states/shapes-graph-editor/commit-id/';
 export const WORKFLOWS = 'http://mobi.solutions/ontologies/workflows#';
 export const WORKFLOWLOGS = 'https://mobi.solutions/workflows/log-files/';
 export const GRAPHEDITOR = 'shapes-graph-editor';
+export const REPOS = 'https://mobi.solutions/repos/';

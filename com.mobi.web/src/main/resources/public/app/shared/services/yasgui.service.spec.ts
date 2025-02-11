@@ -71,7 +71,7 @@ describe('YASGUI service', function() {
         jsonLDResponse = getJsonLDResponseText();
     
         const element = document.createElement('div');
-        service.initYasgui(element, {endpoint: 'mobirest/sparql/limited-results?'}, discoverStateStub.query);
+        service.initYasgui(element, {endpoint: 'mobirest/sparql/'}, discoverStateStub.query);
         service.submitQuery = jasmine.createSpy('submitQuery');
     });
 

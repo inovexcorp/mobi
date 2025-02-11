@@ -29,7 +29,7 @@ import { Observable } from 'rxjs';
 import {
     cleanStylesFromDOM,
 } from '../../../test/ts/Shared';
-import { XSD } from '../../prefixes';
+import { REPOS, XSD } from '../../prefixes';
 import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
 import { SPARQLSelectResults } from '../models/sparqlSelectResults.interface';
 import { SparqlManagerService } from './sparqlManager.service';
@@ -42,6 +42,9 @@ describe('SPARQL Manager service', function() {
     const error = 'error message';
     const query = 'SELECT * WHERE { ?s ?p ?o }';
     const datasetRecordIRI = 'datasetRecordIRI';
+    const systemRepoIRI = `${REPOS}system`;
+    const systemRepoURL = `/mobirest/sparql/repository/${encodeURIComponent(systemRepoIRI)}`;
+    const datasetURL = `/mobirest/sparql/dataset-record/${encodeURIComponent(datasetRecordIRI)}`;
     const selectResults: SPARQLSelectResults = {
         head: {
             vars: ['A', 'B']
@@ -85,35 +88,33 @@ describe('SPARQL Manager service', function() {
 
     describe('should query the repository with a GET', function() {
         it('unless an error occurs', fakeAsync(function() {
-            service.query(query, '')
+            service.query(query, systemRepoIRI)
                 .subscribe(() => fail('Observable should have rejected'), response => {
                     expect(response).toEqual(error);
                 });
-            const request = httpMock.expectOne(req => req.url === service.prefix && req.method === 'GET');
+            const request = httpMock.expectOne(req => req.url === systemRepoURL && req.method === 'GET');
             request.flush('flush', { status: 400, statusText: error });
         }));
         describe('successfully', function() {
             describe('when tracked elsewhere', function() {
                 it('with a dataset and results in a string format', fakeAsync(function() {
-                    service.query(query, datasetRecordIRI, true)
+                    service.query(query, datasetRecordIRI, 'dataset-record', true)
                         .subscribe(response => {
                             expect(response).toEqual(constructResults);
                             expect(progressSpinnerStub.trackedRequest).toHaveBeenCalledWith(jasmine.any(Observable), true);
                         });
-                    const request = httpMock.expectOne(req => req.url === service.prefix && req.method === 'GET');
+                    const request = httpMock.expectOne(req => req.url === datasetURL && req.method === 'GET');
                     expect(request.request.params.get('query')).toEqual(query);
-                    expect(request.request.params.get('dataset')).toEqual(datasetRecordIRI);
                     request.flush(constructResults);
                 }));
                 it('without a dataset and the results are in JSON format', fakeAsync(function() {
-                    service.query(query, '', true)
+                    service.query(query, systemRepoIRI, 'repository', true)
                         .subscribe(response => {
                             expect(response).toEqual(selectResults);
                             expect(progressSpinnerStub.trackedRequest).toHaveBeenCalledWith(jasmine.any(Observable), true);
                         });
-                    const request = httpMock.expectOne(req => req.url === service.prefix && req.method === 'GET');
+                    const request = httpMock.expectOne(req => req.url === systemRepoURL && req.method === 'GET');
                     expect(request.request.params.get('query')).toEqual(query);
-                    expect(request.request.params.get('dataset')).toBeNull();
                     request.flush(JSON.stringify(selectResults), {
                         headers: new HttpHeaders({'Content-Type': 'application/json'})
                     });
@@ -121,25 +122,23 @@ describe('SPARQL Manager service', function() {
             });
             describe('when not tracked', function() {
                 it('with a dataset and results in a string format', fakeAsync(function() {
-                    service.query(query, datasetRecordIRI)
+                    service.query(query, datasetRecordIRI, 'dataset-record')
                         .subscribe(response => {
                             expect(response).toEqual(constructResults);
                             expect(progressSpinnerStub.trackedRequest).toHaveBeenCalledWith(jasmine.any(Observable), false);
                         });
-                    const request = httpMock.expectOne(req => req.url === service.prefix && req.method === 'GET');
+                    const request = httpMock.expectOne(req => req.url === datasetURL && req.method === 'GET');
                     expect(request.request.params.get('query')).toEqual(query);
-                    expect(request.request.params.get('dataset')).toEqual(datasetRecordIRI);
                     request.flush(constructResults);
                 }));
                 it('without a dataset and the results are in JSON format', fakeAsync(function() {
-                    service.query(query, '')
+                    service.query(query, systemRepoIRI)
                         .subscribe(response => {
                             expect(response).toEqual(selectResults);
                             expect(progressSpinnerStub.trackedRequest).toHaveBeenCalledWith(jasmine.any(Observable), false);
                         });
-                    const request = httpMock.expectOne(req => req.url === service.prefix && req.method === 'GET');
+                    const request = httpMock.expectOne(req => req.url === systemRepoURL && req.method === 'GET');
                     expect(request.request.params.get('query')).toEqual(query);
-                    expect(request.request.params.get('dataset')).toBeNull();
                     request.flush(JSON.stringify(selectResults), {
                         headers: new HttpHeaders({'Content-Type': 'application/json'})
                     });
@@ -149,35 +148,33 @@ describe('SPARQL Manager service', function() {
     });
     describe('should query the repository with a POST', function() {
         it('unless an error occurs', fakeAsync(function() {
-            service.postQuery(query, '')
+            service.postQuery(query, datasetRecordIRI, 'dataset-record')
                 .subscribe(() => fail('Observable should have rejected'), response => {
                     expect(response).toEqual(error);
                 });
-            const request = httpMock.expectOne(req => req.url === service.prefix && req.method === 'POST');
+            const request = httpMock.expectOne(req => req.url === datasetURL && req.method === 'POST');
             request.flush('flush', { status: 400, statusText: error });
         }));
         describe('successfully', function() {
             describe('when tracked elsewhere', function() {
                 it('with a dataset and results in a string format', fakeAsync(function() {
-                    service.postQuery(query, datasetRecordIRI, true)
+                    service.postQuery(query, datasetRecordIRI, 'dataset-record', true)
                         .subscribe(response => {
                             expect(response).toEqual(constructResults);
                             expect(progressSpinnerStub.trackedRequest).toHaveBeenCalledWith(jasmine.any(Observable), true);
                         });
-                    const request = httpMock.expectOne(req => req.url === service.prefix && req.method === 'POST');
+                    const request = httpMock.expectOne(req => req.url === datasetURL && req.method === 'POST');
                     expect(request.request.body).toEqual(query);
-                    expect(request.request.params.get('dataset')).toEqual(datasetRecordIRI);
                     request.flush(constructResults);
                 }));
                 it('without a dataset and the results are in JSON format', fakeAsync(function() {
-                    service.postQuery(query, '', true)
+                    service.postQuery(query, systemRepoIRI, 'repository', true)
                         .subscribe(response => {
                             expect(response).toEqual(selectResults);
                             expect(progressSpinnerStub.trackedRequest).toHaveBeenCalledWith(jasmine.any(Observable), true);
                         });
-                    const request = httpMock.expectOne(req => req.url === service.prefix && req.method === 'POST');
+                    const request = httpMock.expectOne(req => req.url === systemRepoURL && req.method === 'POST');
                     expect(request.request.body).toEqual(query);
-                    expect(request.request.params.get('dataset')).toBeNull();
                     request.flush(JSON.stringify(selectResults), {
                         headers: new HttpHeaders({'Content-Type': 'application/json'})
                     });
@@ -185,25 +182,23 @@ describe('SPARQL Manager service', function() {
             });
             describe('when not tracked', function() {
                 it('with a dataset and results in a string format', fakeAsync(function() {
-                    service.postQuery(query, datasetRecordIRI)
+                    service.postQuery(query, datasetRecordIRI, 'dataset-record')
                         .subscribe(response => {
                             expect(response).toEqual(constructResults);
                             expect(progressSpinnerStub.trackedRequest).toHaveBeenCalledWith(jasmine.any(Observable), false);
                         });
-                    const request = httpMock.expectOne(req => req.url === service.prefix && req.method === 'POST');
+                    const request = httpMock.expectOne(req => req.url === datasetURL && req.method === 'POST');
                     expect(request.request.body).toEqual(query);
-                    expect(request.request.params.get('dataset')).toEqual(datasetRecordIRI);
                     request.flush(constructResults);
                 }));
                 it('without a dataset and the results are in JSON format', fakeAsync(function() {
-                    service.postQuery(query, '')
+                    service.postQuery(query, systemRepoIRI, 'repository')
                         .subscribe(response => {
                             expect(response).toEqual(selectResults);
                             expect(progressSpinnerStub.trackedRequest).toHaveBeenCalledWith(jasmine.any(Observable), false);
                         });
-                    const request = httpMock.expectOne(req => req.url === service.prefix && req.method === 'POST');
+                    const request = httpMock.expectOne(req => req.url === systemRepoURL && req.method === 'POST');
                     expect(request.request.body).toEqual(query);
-                    expect(request.request.params.get('dataset')).toBeNull();
                     request.flush(JSON.stringify(selectResults), {
                         headers: new HttpHeaders({'Content-Type': 'application/json'})
                     });
@@ -220,12 +215,11 @@ describe('SPARQL Manager service', function() {
                 const params = new HttpParams({
                     fromObject: {
                         query,
-                        fileType: 'csv',
-                        dataset: datasetRecordIRI
+                        fileType: 'csv'
                     }
                 });
-                service.downloadResults(query, 'csv', '', datasetRecordIRI);
-                expect(window.open).toHaveBeenCalledWith(`${service.prefix}?${params.toString()}`);
+                service.downloadResults(query, 'csv', '', datasetRecordIRI, 'dataset-record');
+                expect(window.open).toHaveBeenCalledWith(`${datasetURL}?${params.toString()}`);
             });
             it('with a file name', function() {
                 const params = new HttpParams({
@@ -236,7 +230,7 @@ describe('SPARQL Manager service', function() {
                     }
                 });
                 service.downloadResults(query, 'csv', 'test');
-                expect(window.open).toHaveBeenCalledWith(`${service.prefix}?${params.toString()}`);
+                expect(window.open).toHaveBeenCalledWith(`${systemRepoURL}?${params.toString()}`);
             });
             it('without a file name', function() {
                 const params = new HttpParams({
@@ -246,7 +240,7 @@ describe('SPARQL Manager service', function() {
                     }
                 });
                 service.downloadResults(query, 'csv');
-                expect(window.open).toHaveBeenCalledWith(`${service.prefix}?${params.toString()}`);
+                expect(window.open).toHaveBeenCalledWith(`${systemRepoURL}?${params.toString()}`);
             });
         });
         describe('via POST', function() {
@@ -254,7 +248,7 @@ describe('SPARQL Manager service', function() {
                 const aSpy = jasmine.createSpyObj('a', ['click']);
                 spyOn(document, 'createElement').and.returnValue(aSpy);
                 const expectedResult: ArrayBuffer = new ArrayBuffer(8);
-                service.downloadResultsPost(query, 'csv', '', datasetRecordIRI)
+                service.downloadResultsPost(query, 'csv', '', datasetRecordIRI, 'dataset-record')
                     .subscribe(response => {
                         expect(progressSpinnerStub.track).toHaveBeenCalledWith(jasmine.any(Observable));
                         expect(response).toEqual(expectedResult);
@@ -266,11 +260,10 @@ describe('SPARQL Manager service', function() {
                     }, () => {
                         fail('Observable should have resolved');
                     });
-                const request = httpMock.expectOne(req => req.url === service.prefix && req.method === 'POST');
+                const request = httpMock.expectOne(req => req.url === datasetURL && req.method === 'POST');
                 expect(request.request.body).toEqual(query);
                 expect(request.request.params.get('fileType')).toEqual('csv');
                 expect(request.request.params.get('fileName')).toBeNull();
-                expect(request.request.params.get('dataset')).toEqual(datasetRecordIRI);
                 expect(request.request.headers.get('Accept')).toEqual('application/octet-stream');
                 expect(request.request.headers.get('Content-Type')).toEqual('application/sparql-query');
                 request.flush(expectedResult);
@@ -289,11 +282,10 @@ describe('SPARQL Manager service', function() {
                         expect(aSpy.download).toEqual('test');
                         expect(aSpy.click).toHaveBeenCalledWith();
                     }, () => fail('Observable should have resolved'));
-                const request = httpMock.expectOne(req => req.url === service.prefix && req.method === 'POST');
+                const request = httpMock.expectOne(req => req.url === systemRepoURL && req.method === 'POST');
                 expect(request.request.body).toEqual(query);
                 expect(request.request.params.get('fileType')).toEqual('csv');
                 expect(request.request.params.get('fileName')).toEqual('test');
-                expect(request.request.params.get('dataset')).toBeNull();
                 expect(request.request.headers.get('Accept')).toEqual('application/octet-stream');
                 expect(request.request.headers.get('Content-Type')).toEqual('application/sparql-query');
                 request.flush(expectedResult);
@@ -312,11 +304,10 @@ describe('SPARQL Manager service', function() {
                         expect(aSpy.download).toEqual('untitled');
                         expect(aSpy.click).toHaveBeenCalledWith();
                     }, () => fail('Observable should have resolved'));
-                const request = httpMock.expectOne(req => req.url === service.prefix && req.method === 'POST');
+                const request = httpMock.expectOne(req => req.url === systemRepoURL && req.method === 'POST');
                 expect(request.request.body).toEqual(query);
                 expect(request.request.params.get('fileType')).toEqual('csv');
                 expect(request.request.params.get('fileName')).toBeNull();
-                expect(request.request.params.get('dataset')).toBeNull();
                 expect(request.request.headers.get('Accept')).toEqual('application/octet-stream');
                 expect(request.request.headers.get('Content-Type')).toEqual('application/sparql-query');
                 request.flush(expectedResult);

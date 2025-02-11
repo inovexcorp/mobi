@@ -53,6 +53,8 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.ConfigurationPolicy;
@@ -69,6 +71,7 @@ import javax.ws.rs.GET;
 import javax.ws.rs.HeaderParam;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
@@ -79,7 +82,7 @@ import javax.ws.rs.core.Response;
 @Designate(ocd = SparqlRestConfig.class)
 @Path("/sparql")
 public class SparqlRest {
-
+    private ValueFactory vf = new ValidatingValueFactory();
     private int limitResults;
 
     private RepositoryManager repositoryManager;
@@ -110,35 +113,41 @@ public class SparqlRest {
     }
 
     /**
-     * Retrieves the results of the provided SPARQL query. Can optionally limit the query to a Dataset.
+     * Retrieves the results of the provided SPARQL query for the given {@code storeType} with the IRI {@code id}.
      * Supports CSV, TSV, Excel 97-2003, and Excel 2013, Turtle, JSON-LD, and RDF/XML file extensions.
      * For select queries the default type is JSON and for construct queries default type is Turtle.
      * If an invalid file type was given for a query, it will change it to the default and log incorrect file type.
      *
-     * @param queryString String representing a SPARQL query.
-     * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query
+     * @param queryString String representing a SPARQL query
+     * @param storeType the type of store to query
+     * @param resourceId the IRI of the resource to query
      * @param acceptString used to specify certain media types which are acceptable for the response
      * @return The SPARQL 1.1 results in mime type specified by accept header
      */
     @GET
+    @Path("/{storeType}/{id}")
     @Produces({XLSX_MIME_TYPE, XLS_MIME_TYPE, CSV_MIME_TYPE, TSV_MIME_TYPE,
             JSON_MIME_TYPE, TURTLE_MIME_TYPE, LDJSON_MIME_TYPE, RDFXML_MIME_TYPE})
     @RolesAllowed("user")
-    @ResourceAttributes(@AttributeValue(id = "https://mobi.solutions/store-type", value = "repository"))
-    @ResourceId(type = ValueType.QUERY, value = "dataset", defaultValue = @DefaultResourceId("https://mobi.solutions/repos/system"))
+    @ResourceAttributes(@AttributeValue(type = ValueType.PATH, id = "https://mobi.solutions/store-type",
+            value = "storeType"))
+    @ResourceId(type = ValueType.PATH, value = "id",
+            defaultValue = @DefaultResourceId("https://mobi.solutions/repos/system"))
     public Response queryRdf(
             @QueryParam("query") String queryString,
-            @QueryParam("dataset") String datasetRecordId,
+            @PathParam("storeType") String storeType,
+            @PathParam("id") String resourceId,
             @HeaderParam("accept") String acceptString) {
         if (queryString == null) {
             throw ErrorUtils.sendError("Parameter 'query' must be set.", Response.Status.BAD_REQUEST);
         }
         ConnectionObjects connectionObjects = new ConnectionObjects(this.repositoryManager, this.datasetManager);
-        return RestQueryUtils.handleQuery(queryString, datasetRecordId, acceptString, null, null, false, connectionObjects);
+        return RestQueryUtils.handleQuery(queryString, vf.createIRI(resourceId), storeType, acceptString, null,
+                null, false, connectionObjects);
     }
 
     /**
-     * Retrieves the results of the provided SPARQL.query Can optionally limit the query to a Dataset.
+     * Retrieves the results of the provided SPARQL query for the given {@code storeType} with the IRI {@code id}.
      * Downloads a delimited, binary file, or text file with the results of the provided SPARQL query.
      * Supports CSV, TSV, Excel 97-2003, and Excel 2013, Turtle, JSON-LD, and RDF/XML file extensions.
      * For select queries the default type is JSON and for construct queries default type is Turtle.
@@ -146,13 +155,15 @@ public class SparqlRest {
      * https://github.com/eclipse/rdf4j/blob/master/core/rio/api/src/main/java/org/eclipse/rdf4j/rio/RDFFormat.java
      *
      * @param queryString The SPARQL query to execute.
-     * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query
+     * @param storeType the type of store to query
+     * @param resourceId the IRI of the resource to query
      * @param fileType used to specify certain media types which are acceptable for the response
      * @param acceptString used to specify certain media types which are acceptable for the response
      * @param fileName The optional file name for the download file
      * @return The SPARQL 1.1 Response in the format of fileType query parameter
      */
     @GET
+    @Path("/{storeType}/{id}")
     @Produces({MediaType.APPLICATION_OCTET_STREAM, "text/*", "application/*"})
     @RolesAllowed("user")
     @Operation(
@@ -188,13 +199,18 @@ public class SparqlRest {
                     })
             }
     )
-    @ResourceAttributes(@AttributeValue(id = "https://mobi.solutions/store-type", value = "repository"))
-    @ResourceId(type = ValueType.QUERY, value = "dataset", defaultValue = @DefaultResourceId("https://mobi.solutions/repos/system"))
+    @ResourceAttributes(@AttributeValue(type = ValueType.PATH, id = "https://mobi.solutions/store-type",
+            value = "storeType"))
+    @ResourceId(type = ValueType.PATH, value = "id")
     public Response downloadRdfQuery(
             @Parameter(description = "String representing a SPARQL query", required = true)
             @QueryParam("query") String queryString,
-            @Parameter(description = "An optional DatasetRecord IRI representing the Dataset to query")
-            @QueryParam("dataset") String datasetRecordId,
+            @Parameter(description = "The string value representing what type of store is being queried (dataset, "
+                    + "repository, etc.)", required = true)
+            @PathParam("storeType") String storeType,
+            @Parameter(description = "The IRI representing what resource to query (Repository IRI, DatasetRecord IRI, "
+                    + "etc.", required = true)
+            @PathParam("id") String resourceId,
             @Parameter(description = "Format of the downloaded results file when the `ACCEPT` header is set to "
                     + "`application/octet-stream`",
                     schema = @Schema(allowableValues = {"xlsx", "csv", "tsv", "ttl", "jsonld", "rdf", "json"}))
@@ -208,64 +224,73 @@ public class SparqlRest {
             throw ErrorUtils.sendError("Parameter 'query' must be set.", Response.Status.BAD_REQUEST);
         }
         ConnectionObjects connectionObjects = new ConnectionObjects(this.repositoryManager, this.datasetManager);
-        return RestQueryUtils.handleQuery(queryString, datasetRecordId, convertFileExtensionToMimeType(fileType),
-                fileName, null, false, connectionObjects);
+        return RestQueryUtils.handleQuery(queryString, vf.createIRI(resourceId), storeType,
+                convertFileExtensionToMimeType(fileType), fileName, null, false, connectionObjects);
     }
 
     /**
-     * Retrieves the results of the provided SPARQL query. Can optionally limit the query to a Dataset.
+     * Retrieves the results of the provided SPARQL query for the given {@code storeType} with the IRI {@code id}.
      * Supports CSV, TSV, Excel 97-2003, and Excel 2013, Turtle, JSON-LD, and RDF/XML file extensions.
      * For select queries the default type is JSON and for construct queries default type is Turtle.
      * If an invalid file type was given for a query, it will change it to the default and log incorrect file type.
      *
-     * @param queryString String representing a SPARQL query.
-     * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query
+     * @param queryString String representing a SPARQL query
+     * @param storeType the type of store to query
+     * @param resourceId the IRI of the resource to query
      * @param acceptString used to specify certain media types which are acceptable for the response
      * @return The SPARQL 1.1 results in mime type specified by accept header
      */
     @POST
+    @Path("/{storeType}/{id}")
     @Consumes("application/sparql-query")
     @Produces({XLSX_MIME_TYPE, XLS_MIME_TYPE, CSV_MIME_TYPE, TSV_MIME_TYPE,
             JSON_MIME_TYPE, TURTLE_MIME_TYPE, LDJSON_MIME_TYPE, RDFXML_MIME_TYPE})
     @RolesAllowed("user")
     @ActionId(value = Read.TYPE)
-    @ResourceAttributes(@AttributeValue(id = "https://mobi.solutions/store-type", value = "repository"))
-    @ResourceId(type = ValueType.QUERY, value = "dataset", defaultValue = @DefaultResourceId("https://mobi.solutions/repos/system"))
+    @ResourceAttributes(@AttributeValue(type = ValueType.PATH, id = "https://mobi.solutions/store-type",
+            value = "storeType"))
+    @ResourceId(type = ValueType.PATH, value = "id")
     public Response postQueryRdf(
-            @QueryParam("dataset") String datasetRecordId,
+            @PathParam("storeType") String storeType,
+            @PathParam("id") String resourceId,
             @HeaderParam("accept") String acceptString,
             String queryString) {
         if (queryString == null) {
             throw ErrorUtils.sendError("SPARQL query must be provided in request body.", Response.Status.BAD_REQUEST);
         }
         ConnectionObjects connectionObjects = new ConnectionObjects(this.repositoryManager, this.datasetManager);
-        return RestQueryUtils.handleQuery(queryString, datasetRecordId, acceptString, null, null, false,connectionObjects);
+        return RestQueryUtils.handleQuery(queryString, vf.createIRI(resourceId), storeType, acceptString, null,
+                null, false, connectionObjects);
     }
 
     /**
-     * Retrieves the results of the provided SPARQL.query Can optionally limit the query to a Dataset.
+     * Retrieves the results of the provided SPARQL query for the given {@code storeType} with the IRI {@code id}.
      * Downloads a delimited, binary file, or text file with the results of the provided SPARQL query.
      * Supports CSV, TSV, Excel 97-2003, and Excel 2013, Turtle, JSON-LD, and RDF/XML file extensions.
      * For select queries the default type is JSON and for construct queries default type is Turtle.
      * If an invalid file type was given for a query, it will change it to the default and log incorrect file type.
      * https://github.com/eclipse/rdf4j/blob/master/core/rio/api/src/main/java/org/eclipse/rdf4j/rio/RDFFormat.java
      *
-     * @param queryString The SPARQL query to execute.
-     * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query
+     * @param queryString The SPARQL query to execute
+     * @param storeType the type of store to query
+     * @param resourceId the IRI of the resource to query
      * @param fileType used to specify certain media types which are acceptable for the response
      * @param acceptString used to specify certain media types which are acceptable for the response
      * @param fileName The optional file name for the download file
      * @return The SPARQL 1.1 Response in the format of fileType query parameter
      */
     @POST
+    @Path("/{storeType}/{id}")
     @Consumes("application/sparql-query")
     @Produces({MediaType.APPLICATION_OCTET_STREAM, "text/*", "application/*"})
     @RolesAllowed("user")
     @ActionId(value = Read.TYPE)
-    @ResourceAttributes(@AttributeValue(id = "https://mobi.solutions/store-type", value = "repository"))
-    @ResourceId(type = ValueType.QUERY, value = "dataset", defaultValue = @DefaultResourceId("https://mobi.solutions/repos/system"))
+    @ResourceAttributes(@AttributeValue(type = ValueType.PATH, id = "https://mobi.solutions/store-type",
+            value = "storeType"))
+    @ResourceId(type = ValueType.PATH, value = "id")
     public Response postDownloadRdfQuery(
-            @QueryParam("dataset") String datasetRecordId,
+            @PathParam("storeType") String storeType,
+            @PathParam("id") String resourceId,
             @QueryParam("fileType") String fileType,
             @HeaderParam("accept") String acceptString,
             @DefaultValue("results") @QueryParam("fileName") String fileName,
@@ -274,57 +299,63 @@ public class SparqlRest {
             throw ErrorUtils.sendError("Body must contain a query.", Response.Status.BAD_REQUEST);
         }
         ConnectionObjects connectionObjects = new ConnectionObjects(this.repositoryManager, this.datasetManager);
-        return RestQueryUtils.handleQuery(queryString, datasetRecordId, convertFileExtensionToMimeType(fileType),
-                fileName, null, false, connectionObjects);
+        return RestQueryUtils.handleQuery(queryString, vf.createIRI(resourceId), storeType,
+                convertFileExtensionToMimeType(fileType), fileName, null, false, connectionObjects);
     }
 
     /**
-     * Retrieves the results of the provided SPARQL query. Can optionally limit the query to a Dataset.
+     * Retrieves the results of the provided SPARQL query for the given {@code storeType} with the IRI {@code id}.
      * Supports CSV, TSV, Excel 97-2003, and Excel 2013, Turtle, JSON-LD, and RDF/XML file extensions.
      * For select queries the default type is JSON and for construct queries default type is Turtle.
      * If an invalid file type was given for a query, it will change it to the default and log incorrect file type.
      *
-     * @param queryString String representing a SPARQL query.
-     * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query
+     * @param queryString String representing a SPARQL query
+     * @param storeType the type of store to query
+     * @param resourceId the IRI of the resource to query
      * @param acceptString used to specify certain media types which are acceptable for the response
      * @return The SPARQL 1.1 results in mime type specified by accept header
      */
     @POST
+    @Path("/{storeType}/{id}")
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Produces({XLSX_MIME_TYPE, XLS_MIME_TYPE, CSV_MIME_TYPE, TSV_MIME_TYPE,
             JSON_MIME_TYPE, TURTLE_MIME_TYPE, LDJSON_MIME_TYPE, RDFXML_MIME_TYPE})
     @RolesAllowed("user")
     @ActionId(value = Read.TYPE)
-    @ResourceAttributes(@AttributeValue(id = "https://mobi.solutions/store-type", value = "repository"))
-    @ResourceId(type = ValueType.BODY, value = "dataset", defaultValue = @DefaultResourceId("https://mobi.solutions/repos/system"))
+    @ResourceAttributes(@AttributeValue(type = ValueType.PATH, id = "https://mobi.solutions/store-type",
+            value = "storeType"))
+    @ResourceId(type = ValueType.PATH, value = "id")
     public Response postUrlEncodedQueryRdf(
             @FormParam("query") String queryString,
-            @FormParam("dataset") String datasetRecordId,
+            @PathParam("storeType") String storeType,
+            @PathParam("id") String resourceId,
             @HeaderParam("accept") String acceptString) {
         if (queryString == null) {
             throw ErrorUtils.sendError("Form parameter 'query' must be set.", Response.Status.BAD_REQUEST);
         }
         ConnectionObjects connectionObjects = new ConnectionObjects(this.repositoryManager, this.datasetManager);
-        return RestQueryUtils.handleQuery(queryString, datasetRecordId, acceptString,
-                null, null, false, connectionObjects);
+        return RestQueryUtils.handleQuery(queryString, vf.createIRI(resourceId), storeType, acceptString, null,
+                null, false, connectionObjects);
     }
 
     /**
-     * Retrieves the results of the provided SPARQL.query Can optionally limit the query to a Dataset.
+     * Retrieves the results of the provided SPARQL query for the given {@code storeType} with the IRI {@code id}.
      * Downloads a delimited, binary file, or text file with the results of the provided SPARQL query.
      * Supports CSV, TSV, Excel 97-2003, and Excel 2013, Turtle, JSON-LD, and RDF/XML file extensions.
      * For select queries the default type is JSON and for construct queries default type is Turtle.
      * If an invalid file type was given for a query, it will change it to the default and log incorrect file type.
      * https://github.com/eclipse/rdf4j/blob/master/core/rio/api/src/main/java/org/eclipse/rdf4j/rio/RDFFormat.java
      *
-     * @param queryString The SPARQL query to execute.
-     * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query
+     * @param queryString The SPARQL query to execute
+     * @param storeType the type of store to query
+     * @param resourceId the IRI of the resource to query
      * @param fileType used to specify certain media types which are acceptable for the response
      * @param acceptString used to specify certain media types which are acceptable for the response
      * @param fileName The optional file name for the download file
      * @return The SPARQL 1.1 Response in the format of fileType query parameter
      */
     @POST
+    @Path("/{storeType}/{id}")
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Produces({MediaType.APPLICATION_OCTET_STREAM, "text/*", "application/*"})
     @RolesAllowed("user")
@@ -379,17 +410,24 @@ public class SparqlRest {
                     }
             ),
             parameters = {
-                    @Parameter(name = "dataset", description = "Optional DatasetRecord IRI representing the Dataset to "
-                            + "query when the `CONTENT-TYPE` is **NOT** set to `application/x-www-form-urlencoded`",
-                            in = ParameterIn.QUERY)
+                    @Parameter(name = "storeType", description = "The string value representing what type of store is "
+                            + "being queried (dataset, repository, etc.)", required = true, in = ParameterIn.PATH),
+                    @Parameter(name = "id", description = "The IRI representing what resource to query (Repository IRI,"
+                            + " DatasetRecord IRI, etc.", required = true, in = ParameterIn.PATH)
             }
     )
     @ActionId(value = Read.TYPE)
-    @ResourceAttributes(@AttributeValue(id = "https://mobi.solutions/store-type", value = "repository"))
-    @ResourceId(type = ValueType.BODY, value = "dataset", defaultValue = @DefaultResourceId("https://mobi.solutions/repos/system"))
+    @ResourceAttributes(@AttributeValue(type = ValueType.PATH, id = "https://mobi.solutions/store-type",
+            value = "storeType"))
+    @ResourceId(type = ValueType.PATH, value = "id")
     public Response postUrlEncodedDownloadRdfQuery(
             @FormParam("query") String queryString,
-            @FormParam("dataset") String datasetRecordId,
+            @Parameter(description = "The string value representing what type of store is being queried (dataset, "
+                    + "repository, etc.)", required = true)
+            @PathParam("storeType") String storeType,
+            @Parameter(description = "The IRI representing what resource to query (Repository IRI, DatasetRecord IRI, "
+                    + "etc.", required = true)
+            @PathParam("id") String resourceId,
             @Parameter(description = "Format of the downloaded results file when the `ACCEPT` header is set to "
                     + "`application/octet-stream`",
                     schema = @Schema(allowableValues = {"xlsx", "csv", "tsv", "ttl", "jsonld", "rdf", "json"}))
@@ -403,24 +441,25 @@ public class SparqlRest {
             throw ErrorUtils.sendError("Form parameter 'query' must be set.", Response.Status.BAD_REQUEST);
         }
         ConnectionObjects connectionObjects = new ConnectionObjects(this.repositoryManager, this.datasetManager);
-        return RestQueryUtils.handleQuery(queryString, datasetRecordId, convertFileExtensionToMimeType(fileType),
-                fileName, null, false, connectionObjects);
+        return RestQueryUtils.handleQuery(queryString, vf.createIRI(resourceId), storeType,
+                convertFileExtensionToMimeType(fileType), fileName, null, false, connectionObjects);
     }
 
     /**
      * Retrieves the results of the provided SPARQL query, number of records limited to configurable
-     * limit field variable under SparqlRestConfig.
-     * Can optionally limit the query to a Dataset. Supports JSON, Turtle, JSON-LD, and RDF/XML mime types.
+     * limit field variable under SparqlRestConfig for the given {@code storeType} with the IRI {@code id}.
+     * Supports JSON, Turtle, JSON-LD, and RDF/XML mime types.
      * For select queries the default type is JSON and for construct queries default type is Turtle.
      * If an invalid file type was given for a query, it will change it to the default and log incorrect file type.
      *
-     * @param queryString The SPARQL query to execute.
-     * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query
+     * @param queryString The SPARQL query to execute
+     * @param storeType the type of store to query
+     * @param resourceId the IRI of the resource to query
      * @param acceptString used to specify certain media types which are acceptable for the response
      * @return The SPARQL 1.1 results in mime type specified by accept header
      */
     @GET
-    @Path("/limited-results")
+    @Path("/{storeType}/{id}/limited-results")
     @Produces({JSON_MIME_TYPE, TURTLE_MIME_TYPE, LDJSON_MIME_TYPE, RDFXML_MIME_TYPE})
     @RolesAllowed("user")
     @Operation(
@@ -449,68 +488,78 @@ public class SparqlRest {
                     })
             }
     )
-    @ResourceAttributes(@AttributeValue(id = "https://mobi.solutions/store-type", value = "repository"))
-    @ResourceId(type = ValueType.QUERY, value = "dataset", defaultValue = @DefaultResourceId("https://mobi.solutions/repos/system"))
+    @ResourceAttributes(@AttributeValue(type = ValueType.PATH, id = "https://mobi.solutions/store-type",
+            value = "storeType"))
+    @ResourceId(type = ValueType.PATH, value = "id")
     public Response getLimitedResults(
             @Parameter(description = "The SPARQL query to execute", required = true)
             @QueryParam("query") String queryString,
-            @Parameter(description = "Optional DatasetRecord IRI representing the Dataset to query")
-            @QueryParam("dataset") String datasetRecordId,
+            @Parameter(description = "The string value representing what type of store is being queried (dataset, "
+                    + "repository, etc.)", required = true)
+            @PathParam("storeType") String storeType,
+            @Parameter(description = "The IRI representing what resource to query (Repository IRI, DatasetRecord IRI, "
+                    + "etc.", required = true)
+            @PathParam("id") String resourceId,
             @Parameter(hidden = true)
             @HeaderParam("accept") String acceptString) {
         if (queryString == null) {
             throw ErrorUtils.sendError("Parameter 'query' must be set.", Response.Status.BAD_REQUEST);
         }
         ConnectionObjects connectionObjects = new ConnectionObjects(this.repositoryManager, this.datasetManager);
-        return RestQueryUtils.handleQueryEagerly(queryString, datasetRecordId, acceptString,
-                this.limitResults, null, false, connectionObjects);
+        return RestQueryUtils.handleQueryEagerly(queryString, vf.createIRI(resourceId), storeType,
+                acceptString, this.limitResults, null, false, connectionObjects);
     }
 
     /**
      * Retrieves the results of the provided SPARQL query, number of records limited to configurable
-     * limit field variable under SparqlRestConfig.
-     * Can optionally limit the query to a Dataset. Supports JSON, Turtle, JSON-LD, and RDF/XML mime types.
+     * limit field variable under SparqlRestConfig for the given {@code storeType} with the IRI {@code id}.
+     * Supports JSON, Turtle, JSON-LD, and RDF/XML mime types.
      * For select queries the default type is JSON and for construct queries default type is Turtle.
      * If an invalid file type was given for a query, it will change it to the default and log incorrect file type.
      *
-     * @param queryString The SPARQL query to execute.
-     * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query
+     * @param queryString The SPARQL query to execute
+     * @param storeType the type of store to query
+     * @param resourceId the IRI of the resource to query
      * @param acceptString used to specify certain media types which are acceptable for the response
      * @return The SPARQL 1.1 results in mime type specified by accept header
      */
     @POST
     @Consumes("application/sparql-query")
-    @Path("/limited-results")
+    @Path("/{storeType}/{id}/limited-results")
     @Produces({JSON_MIME_TYPE, TURTLE_MIME_TYPE, LDJSON_MIME_TYPE, RDFXML_MIME_TYPE})
     @RolesAllowed("user")
     @ActionId(value = Read.TYPE)
-    @ResourceAttributes(@AttributeValue(id = "https://mobi.solutions/store-type", value = "repository"))
-    @ResourceId(type = ValueType.QUERY, value = "dataset", defaultValue = @DefaultResourceId("https://mobi.solutions/repos/system"))
-    public Response postLimitedResults(@QueryParam("dataset") String datasetRecordId,
-                                       @HeaderParam("accept") String acceptString, String queryString) {
+    @ResourceAttributes(@AttributeValue(type = ValueType.PATH, id = "https://mobi.solutions/store-type",
+            value = "storeType"))
+    @ResourceId(type = ValueType.PATH, value = "id")
+    public Response postLimitedResults(
+            @PathParam("storeType") String storeType,
+            @PathParam("id") String resourceId,
+            @HeaderParam("accept") String acceptString, String queryString) {
         if (queryString == null) {
             throw ErrorUtils.sendError("Body must contain a query.", Response.Status.BAD_REQUEST);
         }
         ConnectionObjects connectionObjects = new ConnectionObjects(this.repositoryManager, this.datasetManager);
-        return RestQueryUtils.handleQueryEagerly(queryString, datasetRecordId, acceptString,
-                this.limitResults, null, false, connectionObjects);
+        return RestQueryUtils.handleQueryEagerly(queryString, vf.createIRI(resourceId), storeType,
+                acceptString, this.limitResults, null, false, connectionObjects);
     }
 
     /**
      * Retrieves the results of the provided SPARQL query, number of records limited to configurable
-     * limit field variable under SparqlRestConfig.
-     * Can optionally limit the query to a Dataset. Supports JSON, Turtle, JSON-LD, and RDF/XML mime types.
+     * limit field variable under SparqlRestConfig for the given {@code storeType} with the IRI {@code id}.
+     * Supports JSON, Turtle, JSON-LD, and RDF/XML mime types.
      * For select queries the default type is JSON and for construct queries default type is Turtle.
      * If an invalid file type was given for a query, it will change it to the default and log incorrect file type.
      *
-     * @param queryString The SPARQL query to execute.
-     * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query
+     * @param queryString The SPARQL query to execute
+     * @param storeType the type of store to query
+     * @param resourceId the IRI of the resource to query
      * @param acceptString used to specify certain media types which are acceptable for the response
      * @return The SPARQL 1.1 results in mime type specified by accept header
      */
     @POST
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
-    @Path("/limited-results")
+    @Path("/{storeType}/{id}/limited-results")
     @Produces({JSON_MIME_TYPE, TURTLE_MIME_TYPE, LDJSON_MIME_TYPE, RDFXML_MIME_TYPE})
     @RolesAllowed("user")
     @Operation(
@@ -564,22 +613,26 @@ public class SparqlRest {
                     }
             ),
             parameters = {
-                    @Parameter(name = "dataset", description = "Optional DatasetRecord IRI representing the Dataset to "
-                            + "query when the `CONTENT-TYPE` is **NOT** set to `application/x-www-form-urlencoded`",
-                            in = ParameterIn.QUERY)
+                    @Parameter(name = "storeType", description = "The string value representing what type of store is "
+                            + "being queried (dataset, repository, etc.)", required = true, in = ParameterIn.PATH),
+                    @Parameter(name = "id", description = "The IRI representing what resource to query (Repository IRI,"
+                            + " DatasetRecord IRI, etc.", required = true, in = ParameterIn.PATH)
             }
     )
     @ActionId(value = Read.TYPE)
-    @ResourceAttributes(@AttributeValue(id = "https://mobi.solutions/store-type", value = "repository"))
-    @ResourceId(type = ValueType.BODY, value = "dataset",defaultValue = @DefaultResourceId("https://mobi.solutions/repos/system"))
-    public Response postUrlEncodedLimitedResults(@FormParam("query") String queryString,
-                                                 @FormParam("dataset") String datasetRecordId,
-                                                 @Parameter(hidden = true) @HeaderParam("accept") String acceptString) {
+    @ResourceAttributes(@AttributeValue(type = ValueType.PATH, id = "https://mobi.solutions/store-type",
+            value = "storeType"))
+    @ResourceId(type = ValueType.PATH, value = "id")
+    public Response postUrlEncodedLimitedResults(
+            @FormParam("query") String queryString,
+            @PathParam("storeType") String storeType,
+            @PathParam("id") String resourceId,
+            @Parameter(hidden = true) @HeaderParam("accept") String acceptString) {
         if (queryString == null) {
             throw ErrorUtils.sendError("Form parameter 'query' must be set.", Response.Status.BAD_REQUEST);
         }
         ConnectionObjects connectionObjects = new ConnectionObjects(this.repositoryManager, this.datasetManager);
-        return RestQueryUtils.handleQueryEagerly(queryString, datasetRecordId, acceptString,
+        return RestQueryUtils.handleQueryEagerly(queryString, vf.createIRI(resourceId), storeType, acceptString,
                 this.limitResults, null, false, connectionObjects);
     }
 
@@ -589,9 +642,5 @@ public class SparqlRest {
     private static class EncodedParams {
         @Schema(type = "string", description = "The SPARQL query to execute", required = true)
         public String query;
-        @Schema(type = "string", description = "Optional DatasetRecord IRI representing the Dataset to query")
-        public String dataset;
     }
-
-
 }
