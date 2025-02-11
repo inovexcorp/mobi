@@ -48,6 +48,7 @@ import com.mobi.repository.impl.sesame.memory.MemoryRepositoryWrapper;
 import com.mobi.rest.test.util.MobiRestTestCXF;
 import com.mobi.sparql.rest.SparqlRest;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang.StringUtils;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.ModelFactory;
 import org.eclipse.rdf4j.model.Resource;
@@ -63,6 +64,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
@@ -95,8 +97,8 @@ public class SparqlRestTest extends MobiRestTestCXF {
     private List<String> datasets;
     private List<String> filenames;
 
-    public static final String SPARQL_LIMITED_RESULTS_URL = "sparql/limited-results";
-    public static final String SPARQL_URL = "sparql";
+//    public static final String generateURL("", true) = "sparql/limited-results";
+//    public static final String generateURL("", false) = "sparql";
 
     // Mock services used in server
     private static SparqlRest rest;
@@ -233,16 +235,13 @@ public class SparqlRestTest extends MobiRestTestCXF {
                 String[] dataArray = (String[]) mapEntry.getValue();
                 String mimeType = dataArray[0];
 
-                WebTarget webTarget = target().path(SPARQL_URL).queryParam("query", dataArray[1]);
+                WebTarget webTarget = target().path(generateURL(dataset, false)).queryParam("query", dataArray[1]);
 
-                if (dataset != null) {
-                    webTarget = webTarget.queryParam("dataset", DATASET_ID);
-                }
                 Response response = webTarget.request().accept(mimeType).get();
 
                 assertEquals(200, response.getStatus());
 
-                verify(rest, atLeast(minNumberOfInvocations)).queryRdf(anyString(), any(), anyString());
+                verify(rest, atLeast(minNumberOfInvocations)).queryRdf(anyString(), anyString(), anyString(), anyString());
 
                 if (dataset != null) {
                     verify(datasetManager, atLeastOnce()).getConnection(vf.createIRI(DATASET_ID));
@@ -291,17 +290,14 @@ public class SparqlRestTest extends MobiRestTestCXF {
                 String[] dataArray = (String[]) mapEntry.getValue();
                 String mimeType = dataArray[0];
 
-                WebTarget webTarget = target().path(SPARQL_URL);
+                WebTarget webTarget = target().path(generateURL(dataset, false));
 
-                if (dataset != null) {
-                    webTarget = webTarget.queryParam("dataset", DATASET_ID);
-                }
                 Response response = webTarget.request().accept(mimeType).post(Entity.entity(
                         ResourceUtils.decode(dataArray[1]), "application/sparql-query"));
 
                 assertEquals(200, response.getStatus());
 
-                verify(rest, atLeast(minNumberOfInvocations)).postQueryRdf(any(), anyString(), anyString());
+                verify(rest, atLeast(minNumberOfInvocations)).postQueryRdf(anyString(), anyString(), anyString(), anyString());
 
                 if (dataset != null) {
                     verify(datasetManager, atLeastOnce()).getConnection(vf.createIRI(DATASET_ID));
@@ -350,20 +346,17 @@ public class SparqlRestTest extends MobiRestTestCXF {
                 String[] dataArray = (String[]) mapEntry.getValue();
                 String mimeType = dataArray[0];
 
-                WebTarget webTarget = target().path(SPARQL_URL);
+                WebTarget webTarget = target().path(generateURL(dataset, false));
 
                 Form form = new Form();
                 form.param("query", ResourceUtils.decode(dataArray[1]));
-                if (dataset != null) {
-                    form.param("dataset", DATASET_ID);
-                }
                 Response response = webTarget.request().accept(mimeType).post(Entity.entity(form,
                         MediaType.APPLICATION_FORM_URLENCODED_TYPE));
 
                 assertEquals(200, response.getStatus());
 
-                verify(rest, atLeast(minNumberOfInvocations)).postUrlEncodedQueryRdf(anyString(), any(),
-                        anyString());
+                verify(rest, atLeast(minNumberOfInvocations)).postUrlEncodedQueryRdf(anyString(), anyString(),
+                        anyString(), anyString());
 
                 if (dataset != null) {
                     verify(datasetManager, atLeastOnce()).getConnection(vf.createIRI(DATASET_ID));
@@ -411,7 +404,7 @@ public class SparqlRestTest extends MobiRestTestCXF {
 
                     String type = (String) mapEntry.getKey();
                     String[] dataArray = (String[]) mapEntry.getValue();
-                    WebTarget webTarget = target().path(SPARQL_URL)
+                    WebTarget webTarget = target().path(generateURL(dataset, false))
                             .queryParam("query", dataArray[1])
                             .queryParam("fileType", type);
 
@@ -419,13 +412,10 @@ public class SparqlRestTest extends MobiRestTestCXF {
                         webTarget = webTarget.queryParam("fileName", filename);
                     }
 
-                    if (dataset != null) {
-                        webTarget = webTarget.queryParam("dataset", DATASET_ID);
-                    }
                     Response response = webTarget.request().accept(MediaType.APPLICATION_OCTET_STREAM).get();
 
-                    verify(rest, atLeast(minNumberOfInvocations)).downloadRdfQuery(anyString(), any(),
-                            any(), anyString(), anyString());
+                    verify(rest, atLeast(minNumberOfInvocations)).downloadRdfQuery(anyString(), anyString(), anyString(),
+                            anyString(), anyString(), anyString());
 
                     if (dataset != null) {
                         verify(datasetManager, atLeastOnce()).getConnection(vf.createIRI(DATASET_ID));
@@ -483,22 +473,19 @@ public class SparqlRestTest extends MobiRestTestCXF {
                     String type = (String) mapEntry.getKey();
                     String[] dataArray = (String[]) mapEntry.getValue();
 
-                    WebTarget webTarget = target().path(SPARQL_URL)
+                    WebTarget webTarget = target().path(generateURL(dataset, false))
                             .queryParam("fileType", type);
 
                     if (filename != null) {
                         webTarget = webTarget.queryParam("fileName", filename);
                     }
 
-                    if (dataset != null) {
-                        webTarget = webTarget.queryParam("dataset", DATASET_ID);
-                    }
                     Response response = webTarget.request()
                             .header("accept", MediaType.APPLICATION_OCTET_STREAM)
                             .post(Entity.entity(ResourceUtils.decode(dataArray[1]), "application/sparql-query"));
 
-                    verify(rest, atLeast(minNumberOfInvocations)).postDownloadRdfQuery(any(), anyString(),
-                            anyString(), anyString(), anyString());
+                    verify(rest, atLeast(minNumberOfInvocations)).postDownloadRdfQuery(anyString(), anyString(),
+                            anyString(), anyString(), anyString(), anyString());
 
                     if (dataset != null) {
                         verify(datasetManager, atLeastOnce()).getConnection(vf.createIRI(DATASET_ID));
@@ -558,11 +545,8 @@ public class SparqlRestTest extends MobiRestTestCXF {
 
                     Form form = new Form();
                     form.param("query", ResourceUtils.decode(dataArray[1]));
-                    if (dataset != null) {
-                        form.param("dataset", DATASET_ID);
-                    }
 
-                    WebTarget webTarget = target().path(SPARQL_URL)
+                    WebTarget webTarget = target().path(generateURL(dataset, false))
                             .queryParam("fileType", type);
 
                     if (filename != null) {
@@ -574,8 +558,8 @@ public class SparqlRestTest extends MobiRestTestCXF {
                             .header("accept", MediaType.APPLICATION_OCTET_STREAM)
                             .post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
 
-                    verify(rest, atLeast(minNumberOfInvocations)).postUrlEncodedDownloadRdfQuery(anyString(), any(),
-                            any(), anyString(), anyString());
+                    verify(rest, atLeast(minNumberOfInvocations)).postUrlEncodedDownloadRdfQuery(anyString(), anyString(),
+                            anyString(), anyString(), anyString(), anyString());
 
                     if (dataset != null) {
                         verify(datasetManager, atLeastOnce()).getConnection(vf.createIRI(DATASET_ID));
@@ -626,17 +610,13 @@ public class SparqlRestTest extends MobiRestTestCXF {
         int minNumberOfInvocations = 0;
         for (String dataset : datasets) {
             minNumberOfInvocations += 1;
-            WebTarget webTarget = target().path(SPARQL_URL)
+            WebTarget webTarget = target().path(generateURL(dataset, false))
                     .queryParam("query", ALL_QUERY);
-
-            if (dataset != null) {
-                webTarget = webTarget.queryParam("dataset", DATASET_ID);
-            }
 
             Response response = webTarget.request().accept(MediaType.APPLICATION_OCTET_STREAM).get();
 
             verify(rest, atLeast(minNumberOfInvocations)).downloadRdfQuery(anyString(), any(),
-                    any(), anyString(), anyString());
+                    anyString(), any(), anyString(), anyString());
 
             if (dataset != null) {
                 verify(datasetManager).getConnection(vf.createIRI(DATASET_ID));
@@ -659,17 +639,13 @@ public class SparqlRestTest extends MobiRestTestCXF {
         int minNumberOfInvocations = 0;
         for (String dataset : datasets) {
             minNumberOfInvocations += 1;
-            WebTarget webTarget = target().path(SPARQL_URL)
+            WebTarget webTarget = target().path(generateURL(dataset, false))
                     .queryParam("query", CONSTRUCT_QUERY);
-
-            if (dataset != null) {
-                webTarget = webTarget.queryParam("dataset", DATASET_ID);
-            }
 
             Response response = webTarget.request().accept(MediaType.APPLICATION_OCTET_STREAM).get();
 
-            verify(rest, atLeast(minNumberOfInvocations)).downloadRdfQuery(anyString(), any(), any(),
-                    anyString(), anyString());
+            verify(rest, atLeast(minNumberOfInvocations)).downloadRdfQuery(anyString(), anyString(), anyString(),
+                    any(), anyString(), anyString());
             assertEquals(200, response.getStatus());
 
             if (dataset != null) {
@@ -692,7 +668,7 @@ public class SparqlRestTest extends MobiRestTestCXF {
         // Setup:
         when(repositoryManager.getRepository(anyString())).thenReturn(Optional.empty());
 
-        Response response = target().path(SPARQL_URL)
+        Response response = target().path(generateURL("", false))
                 .queryParam("query", ALL_QUERY)
                 .request().accept(MediaType.APPLICATION_JSON_TYPE).get();
         assertEquals(500, response.getStatus());
@@ -703,7 +679,7 @@ public class SparqlRestTest extends MobiRestTestCXF {
         // Setup:
         when(repositoryManager.getRepository(anyString())).thenReturn(Optional.empty());
 
-        Response response = target().path(SPARQL_URL)
+        Response response = target().path(generateURL("", false))
                 .queryParam("query", CONSTRUCT_QUERY)
                 .request().accept(MediaType.APPLICATION_JSON_TYPE).get();
         assertEquals(500, response.getStatus());
@@ -714,9 +690,8 @@ public class SparqlRestTest extends MobiRestTestCXF {
         // Setup:
         when(datasetManager.getConnection(any(Resource.class))).thenThrow(new IllegalArgumentException());
 
-        Response response = target().path(SPARQL_URL)
+        Response response = target().path(generateURL(DATASET_ID, false))
                 .queryParam("query", ALL_QUERY)
-                .queryParam("dataset", DATASET_ID)
                 .request().accept(MediaType.APPLICATION_JSON_TYPE).get();
         assertEquals(400, response.getStatus());
     }
@@ -726,21 +701,20 @@ public class SparqlRestTest extends MobiRestTestCXF {
         // Setup:
         when(datasetManager.getConnection(any(Resource.class))).thenThrow(new IllegalArgumentException());
 
-        Response response = target().path(SPARQL_URL)
+        Response response = target().path(generateURL(DATASET_ID, false))
                 .queryParam("query", CONSTRUCT_QUERY)
-                .queryParam("dataset", DATASET_ID)
                 .request().accept(MediaType.APPLICATION_JSON_TYPE).get();
         assertEquals(400, response.getStatus());
     }
 
     @Test
     public void selectQueryWithInvalidQueryTest() {
-        Response response = target().path(SPARQL_URL)
+        Response response = target().path(generateURL("", false))
                 .queryParam("query", ALL_QUERY + "-" + ResourceUtils.encode("+"))
                 .request().accept(MediaType.APPLICATION_JSON_TYPE).get();
         assertEquals(400, response.getStatus());
 
-        response = target().path(SPARQL_URL)
+        response = target().path(generateURL("", false))
                 .queryParam("query", ALL_QUERY + "-" + ResourceUtils.encode("+"))
                 .queryParam("dataset", DATASET_ID)
                 .request().accept(MediaType.APPLICATION_JSON_TYPE).get();
@@ -749,12 +723,12 @@ public class SparqlRestTest extends MobiRestTestCXF {
 
     @Test
     public void constructQueryWithInvalidQueryTest() {
-        Response response = target().path(SPARQL_URL)
+        Response response = target().path(generateURL("", false))
                 .queryParam("query", CONSTRUCT_QUERY + "-" + ResourceUtils.encode("+"))
                 .request().accept(MediaType.APPLICATION_JSON_TYPE).get();
         assertEquals(400, response.getStatus());
 
-        response = target().path(SPARQL_URL)
+        response = target().path(generateURL("", false))
                 .queryParam("query", CONSTRUCT_QUERY + "-" + ResourceUtils.encode("+"))
                 .queryParam("dataset", DATASET_ID)
                 .request().accept(MediaType.APPLICATION_JSON_TYPE).get();
@@ -766,9 +740,8 @@ public class SparqlRestTest extends MobiRestTestCXF {
         // Setup:
         when(datasetManager.getConnection(any(Resource.class))).thenThrow(new MobiException());
 
-        Response response = target().path(SPARQL_URL)
+        Response response = target().path(generateURL(DATASET_ID, false))
                 .queryParam("query", ALL_QUERY)
-                .queryParam("dataset", DATASET_ID)
                 .request().accept(MediaType.APPLICATION_JSON_TYPE).get();
         assertEquals(500, response.getStatus());
     }
@@ -778,9 +751,8 @@ public class SparqlRestTest extends MobiRestTestCXF {
         // Setup:
         when(datasetManager.getConnection(any(Resource.class))).thenThrow(new MobiException());
 
-        Response response = target().path(SPARQL_URL)
+        Response response = target().path(generateURL(DATASET_ID, false))
                 .queryParam("query", ALL_QUERY)
-                .queryParam("dataset", DATASET_ID)
                 .request().accept(MediaType.APPLICATION_JSON_TYPE).get();
         assertEquals(500, response.getStatus());
     }
@@ -792,7 +764,7 @@ public class SparqlRestTest extends MobiRestTestCXF {
                 .thenReturn(Optional.empty());
 
         fileTypesMimes.forEach((type, dataArray) -> {
-            Response response = target().path(SPARQL_URL)
+            Response response = target().path(generateURL("", false))
                     .queryParam("query", dataArray[1])
                     .queryParam("fileType", type)
                     .request().get();
@@ -807,9 +779,8 @@ public class SparqlRestTest extends MobiRestTestCXF {
                 .thenThrow(new IllegalArgumentException());
 
         fileTypesMimes.forEach((type, dataArray) -> {
-            Response response = target().path(SPARQL_URL)
+            Response response = target().path(generateURL(DATASET_ID, false))
                     .queryParam("query", dataArray[1])
-                    .queryParam("dataset", DATASET_ID)
                     .queryParam("fileType", type)
                     .request().get();
             assertEquals(400, response.getStatus());
@@ -818,7 +789,7 @@ public class SparqlRestTest extends MobiRestTestCXF {
 
     @Test
     public void downloadQueryWithInvalidQueryTest() throws Exception {
-        Response response = target().path(SPARQL_URL)
+        Response response = target().path(generateURL("", false))
                 .queryParam("query", ResourceUtils.encode("+"))
                 .request().get();
 
@@ -829,7 +800,7 @@ public class SparqlRestTest extends MobiRestTestCXF {
 
     @Test
     public void downloadQueryDatasetWithInvalidQueryTest() throws Exception {
-        Response response = target().path(SPARQL_URL)
+        Response response = target().path(generateURL("", false))
                 .queryParam("query", ResourceUtils.encode("+"))
                 .queryParam("dataset", DATASET_ID)
                 .request().get();
@@ -844,16 +815,12 @@ public class SparqlRestTest extends MobiRestTestCXF {
         int minNumberOfInvocations = 0;
         for (String dataset : datasets) {
             minNumberOfInvocations += 1;
-            WebTarget webTarget = target().path(SPARQL_LIMITED_RESULTS_URL)
+            WebTarget webTarget = target().path(generateURL(dataset, true))
                     .queryParam("query", ALL_QUERY);
-
-            if (dataset != null) {
-                webTarget = webTarget.queryParam("dataset", DATASET_ID);
-            }
 
             Response response = webTarget.request().get();
 
-            verify(rest, atLeast(minNumberOfInvocations)).getLimitedResults(anyString(), anyString(), anyString());
+            verify(rest, atLeast(minNumberOfInvocations)).getLimitedResults(anyString(), anyString(), anyString(), anyString());
 
             if (dataset != null) {
                 verify(datasetManager).getConnection(vf.createIRI(DATASET_ID));
@@ -877,16 +844,12 @@ public class SparqlRestTest extends MobiRestTestCXF {
         int minNumberOfInvocations = 0;
         for (String dataset : datasets) {
             minNumberOfInvocations += 1;
-            WebTarget webTarget = target().path(SPARQL_LIMITED_RESULTS_URL);
-
-            if (dataset != null) {
-                webTarget = webTarget.queryParam("dataset", DATASET_ID);
-            }
+            WebTarget webTarget = target().path(generateURL(dataset, true));
 
             Response response = webTarget.request().post(Entity.entity(ResourceUtils.decode(ALL_QUERY),
                     "application/sparql-query"));
 
-            verify(rest, atLeast(minNumberOfInvocations)).postLimitedResults(any(), anyString(), anyString());
+            verify(rest, atLeast(minNumberOfInvocations)).postLimitedResults(anyString(), anyString(), anyString(), anyString());
 
             if (dataset != null) {
                 verify(datasetManager).getConnection(vf.createIRI(DATASET_ID));
@@ -910,19 +873,16 @@ public class SparqlRestTest extends MobiRestTestCXF {
         int minNumberOfInvocations = 0;
         for (String dataset : datasets) {
             minNumberOfInvocations += 1;
-            WebTarget webTarget = target().path(SPARQL_LIMITED_RESULTS_URL);
+            WebTarget webTarget = target().path(generateURL(dataset, true));
 
             Form form = new Form();
             form.param("query", ResourceUtils.decode(ALL_QUERY));
-
-            if (dataset != null) {
-                form.param("dataset", DATASET_ID);
-            }
-
+            
             Response response = webTarget.request().post(Entity.entity(form,
                     MediaType.APPLICATION_FORM_URLENCODED_TYPE));
 
-            verify(rest, atLeast(minNumberOfInvocations)).postUrlEncodedLimitedResults(anyString(), any(), anyString());
+            verify(rest, atLeast(minNumberOfInvocations)).postUrlEncodedLimitedResults(anyString(), anyString(),
+                    anyString(), anyString());
 
             if (dataset != null) {
                 verify(datasetManager).getConnection(vf.createIRI(DATASET_ID));
@@ -948,16 +908,12 @@ public class SparqlRestTest extends MobiRestTestCXF {
         int minNumberOfInvocations = 0;
         for (String dataset : datasets) {
             minNumberOfInvocations += 1;
-            WebTarget webTarget = target().path(SPARQL_LIMITED_RESULTS_URL)
+            WebTarget webTarget = target().path(generateURL(dataset, true))
                     .queryParam("query", ALL_QUERY);
-
-            if (dataset != null) {
-                webTarget = webTarget.queryParam("dataset", DATASET_ID);
-            }
 
             Response response = webTarget.request().get();
 
-            verify(rest, atLeast(minNumberOfInvocations)).getLimitedResults(anyString(), anyString(), anyString());
+            verify(rest, atLeast(minNumberOfInvocations)).getLimitedResults(anyString(), anyString(), anyString(), anyString());
 
             if (dataset != null) {
                 verify(datasetManager).getConnection(vf.createIRI(DATASET_ID));
@@ -980,16 +936,12 @@ public class SparqlRestTest extends MobiRestTestCXF {
         int minNumberOfInvocations = 0;
         for (String dataset : datasets) {
             minNumberOfInvocations += 1;
-            WebTarget webTarget = target().path(SPARQL_LIMITED_RESULTS_URL)
+            WebTarget webTarget = target().path(generateURL(dataset, true))
                     .queryParam("query", CONSTRUCT_QUERY);
-
-            if (dataset != null) {
-                webTarget = webTarget.queryParam("dataset", DATASET_ID);
-            }
 
             Response response = webTarget.request().get();
 
-            verify(rest, atLeast(minNumberOfInvocations)).getLimitedResults(anyString(), any(), anyString());
+            verify(rest, atLeast(minNumberOfInvocations)).getLimitedResults(anyString(), anyString(), anyString(), anyString());
 
             if (dataset != null) {
                 verify(datasetManager).getConnection(vf.createIRI(DATASET_ID));
@@ -1013,16 +965,12 @@ public class SparqlRestTest extends MobiRestTestCXF {
         int minNumberOfInvocations = 0;
         for (String dataset : datasets) {
             minNumberOfInvocations += 1;
-            WebTarget webTarget = target().path(SPARQL_LIMITED_RESULTS_URL)
+            WebTarget webTarget = target().path(generateURL(dataset, true))
                     .queryParam("query", CONSTRUCT_QUERY);
-
-            if (dataset != null) {
-                webTarget = webTarget.queryParam("dataset", DATASET_ID);
-            }
-
+            
             Response response = webTarget.request().get();
 
-            verify(rest, atLeast(minNumberOfInvocations)).getLimitedResults(anyString(), any(), anyString());
+            verify(rest, atLeast(minNumberOfInvocations)).getLimitedResults(anyString(), anyString(), anyString(), anyString());
 
             if (dataset != null) {
                 verify(datasetManager).getConnection(vf.createIRI(DATASET_ID));
@@ -1051,16 +999,13 @@ public class SparqlRestTest extends MobiRestTestCXF {
                 String[] dataArray = (String[]) mapEntry.getValue();
                 String mimeType = dataArray[0];
 
-                WebTarget webTarget = target().path(SPARQL_LIMITED_RESULTS_URL).queryParam("query", dataArray[1]);
+                WebTarget webTarget = target().path(generateURL(dataset, true)).queryParam("query", dataArray[1]);
 
-                if (dataset != null) {
-                    webTarget = webTarget.queryParam("dataset", DATASET_ID);
-                }
                 Response response = webTarget.request().accept(mimeType).get();
 
                 assertEquals(200, response.getStatus());
 
-                verify(rest, atLeast(minNumberOfInvocations)).getLimitedResults(anyString(), any(), anyString());
+                verify(rest, atLeast(minNumberOfInvocations)).getLimitedResults(anyString(), anyString(), anyString(), anyString());
 
                 if (dataset != null) {
                     verify(datasetManager, atLeastOnce()).getConnection(vf.createIRI(DATASET_ID));
@@ -1100,7 +1045,7 @@ public class SparqlRestTest extends MobiRestTestCXF {
         // Setup:
         when(repositoryManager.getRepository(anyString())).thenReturn(Optional.empty());
 
-        Response response = target().path(SPARQL_LIMITED_RESULTS_URL)
+        Response response = target().path(generateURL("", true))
                 .queryParam("query", ALL_QUERY)
                 .request().accept(MediaType.APPLICATION_JSON_TYPE).get();
         assertEquals(500, response.getStatus());
@@ -1111,7 +1056,7 @@ public class SparqlRestTest extends MobiRestTestCXF {
         // Setup:
         when(repositoryManager.getRepository(anyString())).thenReturn(Optional.empty());
 
-        Response response = target().path(SPARQL_LIMITED_RESULTS_URL)
+        Response response = target().path(generateURL("", true))
                 .queryParam("query", CONSTRUCT_QUERY)
                 .request().accept(MediaType.APPLICATION_JSON_TYPE).get();
         assertEquals(500, response.getStatus());
@@ -1122,9 +1067,8 @@ public class SparqlRestTest extends MobiRestTestCXF {
         // Setup:
         when(datasetManager.getConnection(any(Resource.class))).thenThrow(new IllegalArgumentException());
 
-        Response response = target().path(SPARQL_LIMITED_RESULTS_URL)
+        Response response = target().path(generateURL(DATASET_ID, true))
                 .queryParam("query", ALL_QUERY)
-                .queryParam("dataset", DATASET_ID)
                 .request().accept(MediaType.APPLICATION_JSON_TYPE).get();
         assertEquals(400, response.getStatus());
     }
@@ -1134,37 +1078,34 @@ public class SparqlRestTest extends MobiRestTestCXF {
         // Setup:
         when(datasetManager.getConnection(any(Resource.class))).thenThrow(new IllegalArgumentException());
 
-        Response response = target().path(SPARQL_LIMITED_RESULTS_URL)
+        Response response = target().path(generateURL(DATASET_ID, true))
                 .queryParam("query", CONSTRUCT_QUERY)
-                .queryParam("dataset", DATASET_ID)
                 .request().accept(MediaType.APPLICATION_JSON_TYPE).get();
         assertEquals(400, response.getStatus());
     }
 
     @Test
     public void selectQueryWithInvalidQueryLimitedTest() {
-        Response response = target().path(SPARQL_LIMITED_RESULTS_URL)
+        Response response = target().path(generateURL("", true))
                 .queryParam("query", ALL_QUERY + "-" + ResourceUtils.encode("+"))
                 .request().accept(MediaType.APPLICATION_JSON_TYPE).get();
         assertEquals(400, response.getStatus());
 
-        response = target().path(SPARQL_LIMITED_RESULTS_URL)
+        response = target().path(generateURL(DATASET_ID, true))
                 .queryParam("query", ALL_QUERY + "-" + ResourceUtils.encode("+"))
-                .queryParam("dataset", DATASET_ID)
                 .request().accept(MediaType.APPLICATION_JSON_TYPE).get();
         assertEquals(400, response.getStatus());
     }
 
     @Test
     public void constructQueryWithInvalidQueryLimitedTest() {
-        Response response = target().path(SPARQL_LIMITED_RESULTS_URL)
+        Response response = target().path(generateURL("", true))
                 .queryParam("query", CONSTRUCT_QUERY + "-" + ResourceUtils.encode("+"))
                 .request().accept(MediaType.APPLICATION_JSON_TYPE).get();
         assertEquals(400, response.getStatus());
 
-        response = target().path(SPARQL_LIMITED_RESULTS_URL)
+        response = target().path(generateURL(DATASET_ID, true))
                 .queryParam("query", CONSTRUCT_QUERY + "-" + ResourceUtils.encode("+"))
-                .queryParam("dataset", DATASET_ID)
                 .request().accept(MediaType.APPLICATION_JSON_TYPE).get();
         assertEquals(400, response.getStatus());
     }
@@ -1174,9 +1115,8 @@ public class SparqlRestTest extends MobiRestTestCXF {
         // Setup:
         when(datasetManager.getConnection(any(Resource.class))).thenThrow(new MobiException());
 
-        Response response = target().path(SPARQL_LIMITED_RESULTS_URL)
+        Response response = target().path(generateURL(DATASET_ID, true))
                 .queryParam("query", ALL_QUERY)
-                .queryParam("dataset", DATASET_ID)
                 .request().accept(MediaType.APPLICATION_JSON_TYPE).get();
         assertEquals(500, response.getStatus());
     }
@@ -1186,10 +1126,16 @@ public class SparqlRestTest extends MobiRestTestCXF {
         // Setup:
         when(datasetManager.getConnection(any(Resource.class))).thenThrow(new MobiException());
 
-        Response response = target().path(SPARQL_LIMITED_RESULTS_URL)
+        Response response = target().path(generateURL(DATASET_ID, true))
                 .queryParam("query", ALL_QUERY)
-                .queryParam("dataset", DATASET_ID)
                 .request().accept(MediaType.APPLICATION_JSON_TYPE).get();
         assertEquals(500, response.getStatus());
+    }
+
+    private String generateURL(String dataset, boolean isLimited) {
+        String storeType = StringUtils.isEmpty(dataset) ? "repository" : "dataset-record";
+        String resourceId = StringUtils.isEmpty(dataset) ? "https://mobi.solutions/repos/system" : dataset;
+        String limited = isLimited ? "limited-results" : "";
+        return "sparql/" + storeType + "/" + URLEncoder.encode(resourceId) + "/" + limited;
     }
 }

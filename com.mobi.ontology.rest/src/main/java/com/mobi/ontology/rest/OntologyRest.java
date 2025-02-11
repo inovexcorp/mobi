@@ -3626,8 +3626,8 @@ public class OntologyRest {
             if (fileExtension != null && !fileExtension.isEmpty()) {
                 acceptString = convertFileExtensionToMimeType(fileExtension);
             }
-            return RestQueryUtils.handleQuery(queryString, null, acceptString, fileName, ontology, includeImports,
-                    null);
+            return RestQueryUtils.handleQuery(queryString, null, null, acceptString, fileName, ontology,
+                    includeImports, null);
         } catch (MalformedQueryException ex) {
             throw RestUtils.getErrorObjBadRequest(new IllegalArgumentException(QUERY_INVALID_MESSAGE
                     + ";;;" + ex.getMessage()));
@@ -3730,8 +3730,8 @@ public class OntologyRest {
             Ontology ontology = optOntology(httpServletRequest, recordIdStr, branchIdStr, commitIdStr,
                     applyInProgressCommit, conn).orElseThrow(() -> RestUtils.getErrorObjBadRequest(
                             new IllegalArgumentException("The ontology could not be found.")));
-            return RestQueryUtils.handleQueryEagerly(queryString, null, acceptString,
-                    this.configProvider.getLimitedSize(), ontology, includeImports, null);
+            return RestQueryUtils.handleQueryEagerly(queryString, null, null,
+                    acceptString, this.configProvider.getLimitedSize(), ontology, includeImports, null);
         }
     }
 
@@ -3789,8 +3789,8 @@ public class OntologyRest {
             Ontology ontology = optOntology(context, recordIdStr, branchIdStr, commitIdStr, applyInProgressCommit, conn)
                     .orElseThrow(() -> RestUtils.getErrorObjBadRequest(
                             new IllegalArgumentException("The ontology could not be found.")));
-            return RestQueryUtils.handleQueryEagerly(queryString, null, acceptString,
-                    this.configProvider.getLimitedSize(), ontology, includeImports, null);
+            return RestQueryUtils.handleQueryEagerly(queryString, null, null,
+                    acceptString, this.configProvider.getLimitedSize(), ontology, includeImports, null);
         }
     }
 
@@ -3916,8 +3916,8 @@ public class OntologyRest {
             Ontology ontology = optOntology(context, recordIdStr, branchIdStr, commitIdStr, applyInProgressCommit, conn)
                     .orElseThrow(() -> RestUtils.getErrorObjBadRequest(
                             new IllegalArgumentException("The ontology could not be found.")));
-            return RestQueryUtils.handleQueryEagerly(queryString, null, acceptString,
-                    this.configProvider.getLimitedSize(), ontology, includeImports, null);
+            return RestQueryUtils.handleQueryEagerly(queryString, null, null,
+                    acceptString, this.configProvider.getLimitedSize(), ontology, includeImports, null);
         }
     }
 

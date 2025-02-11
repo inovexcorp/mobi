@@ -29,6 +29,7 @@ import { REST_PREFIX } from '../../constants';
 import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
 import { SPARQLSelectResults } from '../models/sparqlSelectResults.interface';
 import { createHttpParams, handleError } from '../utility';
+import { REPOS } from "../../prefixes";
 
 /**
  * @class shared.SparqlManagerService
@@ -47,17 +48,14 @@ export class SparqlManagerService {
      * and optionally using the provided DatasetRecord IRI to limit the query to a dataset.
      *
      * @param {string} query The SPARQL query string to submit
-     * @param {string} datasetRecordIRI The IRI of the DatasetRecord to restrict the query to
-     * @param {string} id The identifier for this call
+     * @param {string} resourceId The IRI resource to query
+     * @param {string} storeType The type of store to query
      * @return {Observable} A Observable that resolves to the data from the response or rejects with an
      * error message.
      */
-    query(query: string, datasetRecordIRI = '', isTracked = false): Observable<string|SPARQLSelectResults> {
+    query(query: string, resourceId = `${REPOS}system`, storeType = 'repository', isTracked = false): Observable<string | SPARQLSelectResults> {
         const params: {[key: string]: string} = { query };
-        if (datasetRecordIRI) {
-            params.dataset = datasetRecordIRI;
-        }
-        const request = this.http.get(this.prefix, {params: createHttpParams(params), responseType: 'text', observe: 'response'})
+        const request = this.http.get(`${this.prefix}/${encodeURIComponent(storeType)}/${encodeURIComponent(resourceId)}`, {params: createHttpParams(params), responseType: 'text', observe: 'response'})
             .pipe(
                 catchError(handleError),
                 map((response: HttpResponse<string>) => {
@@ -77,17 +75,13 @@ export class SparqlManagerService {
      * and optionally using the provided DatasetRecord IRI to limit the query to a dataset.
      *
      * @param {string} query The SPARQL query string to submit
-     * @param {string} datasetRecordIRI The IRI of the DatasetRecord to restrict the query to
-     * @param {string} id The identifier for this call
+     * @param {string} resourceId The IRI resource to query
+     * @param {string} storeType The type of store to query
      * @return {Observable} A Observable that resolves to the data from the response or rejects with an
      * error message.
      */
-    postQuery(query: string, datasetRecordIRI = '', isTracked = false): Observable<string|SPARQLSelectResults> {
-        const params: {[key: string]: string} = {};
-        if (datasetRecordIRI) {
-            params.dataset = datasetRecordIRI;
-        }
-        const request = this.http.post(this.prefix, query, {params: createHttpParams(params), responseType: 'text', observe: 'response'})
+    postQuery(query: string, resourceId = `${REPOS}system`, storeType = 'repository', isTracked = false): Observable<string | SPARQLSelectResults> {
+        const request = this.http.post(`${this.prefix}/${encodeURIComponent(storeType)}/${encodeURIComponent(resourceId)}`, query, {responseType: 'text', observe: 'response'})
             .pipe(
                 catchError(handleError),
                 map((response: HttpResponse<string>) => {
@@ -110,9 +104,10 @@ export class SparqlManagerService {
      * @param {string} query The query to run
      * @param {string} fileType The type of file to download based on file extension
      * @param {string} fileName The optional name of the downloaded file
-     * @param {string} datasetRecordIRI The optional Dataset to run the query against
+     * @param {string} resourceId The IRI resource to query
+     * @param {string} storeType The type of store to query
      */
-    downloadResults(query: string, fileType: string, fileName = '', datasetRecordIRI = ''): void {
+    downloadResults(query: string, fileType: string, fileName = '', resourceId = `${REPOS}system`, storeType = 'repository'): void {
         const paramsObj: {[key: string]: string} = {
             query,
             fileType
@@ -120,10 +115,7 @@ export class SparqlManagerService {
         if (fileName) {
             paramsObj.fileName = fileName;
         }
-        if (datasetRecordIRI) {
-            paramsObj.dataset = datasetRecordIRI;
-        }
-        window.open(`${this.prefix}?${createHttpParams(paramsObj).toString()}`);
+        window.open(`${this.prefix}/${encodeURIComponent(storeType)}/${encodeURIComponent(resourceId)}?${createHttpParams(paramsObj).toString()}`);
     }
 
     /**
@@ -133,8 +125,10 @@ export class SparqlManagerService {
      *
      * @param {string} fileType The type of file to download based on file extension
      * @param {string=''} fileName The optional name of the downloaded file
+     * @param {string} resourceId The IRI resource to query
+     * @param {string} storeType The type of store to query
      */
-    downloadResultsPost(query: string, fileType: string, fileName = '', datasetRecordIRI = ''): Observable<ArrayBuffer> {
+    downloadResultsPost(query: string, fileType: string, fileName = '', resourceId = `${REPOS}system`, storeType = 'repository'): Observable<ArrayBuffer> {
         const params: {[key: string]: string} = {
             fileType,
             fileName
@@ -142,11 +136,7 @@ export class SparqlManagerService {
         let headers = new HttpHeaders();
         headers = headers.append('Accept', 'application/octet-stream').append('Content-Type', 'application/sparql-query');
         
-        if (datasetRecordIRI) {
-            params.dataset = datasetRecordIRI;
-        }
-        
-        return this.spinnerSvc.track(this.http.post(this.prefix, query, {headers, params: createHttpParams(params), responseType: 'arraybuffer', observe: 'response'}))
+        return this.spinnerSvc.track(this.http.post(`${this.prefix}/${encodeURIComponent(storeType)}/${encodeURIComponent(resourceId)}`, query, {headers, params: createHttpParams(params), responseType: 'arraybuffer', observe: 'response'}))
             .pipe(
                 catchError(handleError),
                 map((response: HttpResponse<ArrayBuffer>) => {

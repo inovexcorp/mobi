@@ -100,7 +100,7 @@ export class ExploreUtilsService {
                 'dcterms': DCTERMS
             }
         });
-        return this.sparql.query(query, datasetRecordIRI)
+        return this.sparql.query(query, datasetRecordIRI, 'dataset-record')
             .pipe(map((data: string| SPARQLSelectResults) => data as SPARQLSelectResults));
     }
     /**

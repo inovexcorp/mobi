@@ -23,6 +23,8 @@ package com.mobi.repository.api;
  * #L%
  */
 
+import org.eclipse.rdf4j.model.IRI;
+
 import java.util.Map;
 import java.util.Optional;
 
@@ -35,6 +37,22 @@ public interface RepositoryManager {
      * @return An initialized Repository object, or Optional.empty if no repository was known for the specified ID.
      */
     Optional<OsgiRepository> getRepository(String id);
+
+    /**
+     * Gets the repository that is known by the specified IRI from this manager.
+     *
+     * @param repositoryIRI - The IRI associated with a repository.
+     * @return An initialized Repository object, or Optional.empty if no repository was known for the repositoryIRI.
+     */
+    Optional<OsgiRepository> getRepository(IRI repositoryIRI);
+
+    /**
+     * Gets the IRI for the repository that is known by the specified ID from this manager.
+     *
+     * @param id - The IRI for the repository ID.
+     * @return An IRI for the Repository object, or Optional.empty if no repository was known for the specified ID.
+     */
+    Optional<IRI> getRepositoryIRI(String id);
 
     /**
      * Returns all configured repositories.

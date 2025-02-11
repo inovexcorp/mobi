@@ -36,6 +36,7 @@ import { DownloadQueryOverlayComponent } from '../components/downloadQueryOverla
 import { ToastService } from './toast.service';
 import { YasguiQuery } from '../models/yasguiQuery.class';
 import { LoginManagerService } from './loginManager.service';
+import { REPOS } from "../../prefixes";
 
 
 /**
@@ -54,7 +55,7 @@ import { LoginManagerService } from './loginManager.service';
  */
 @Injectable()
 export class YasguiService {
-    defaultUrl : URL = new URL(`${REST_PREFIX}sparql/limited-results`, window.location.origin);
+    defaultUrl : URL = new URL(`${REST_PREFIX}sparql`, window.location.origin);
     yasgui : any = {};
     customURL = null;
     reponseLimitElement = <HTMLElement>{};
@@ -356,11 +357,15 @@ export class YasguiService {
 
     // update yasr request configuration
     private _setRequestConfig(configVals) {
-        const datasetIri = this.isOntology ? undefined : this.yasguiQuery.recordId;
+        const resourceId = this.isOntology || this.yasguiQuery.recordId ? this.yasguiQuery.recordId : `${REPOS}system`;
         let url =  this.customURL || this.defaultUrl.href;
         if (this.isOntology) {
-            url = new URL(`${REST_PREFIX}ontologies/${encodeURIComponent(this.yasguiQuery.recordId)}/limited-results`, window.location.origin).href;
+            url = new URL(`${REST_PREFIX}ontologies/${encodeURIComponent(resourceId)}/limited-results`, window.location.origin).href;
             // query
+        } else if (this.yasguiQuery.recordId) {
+            url = new URL(`${url}/dataset-record/${encodeURIComponent(resourceId)}/limited-results`);
+        } else {
+            url = new URL(`${url}/repository/${encodeURIComponent(resourceId)}/limited-results`);
         }
         const { headers } = this.yasgui.getTab().getRequestConfig();
         headers.Accept = this._getFormat(this.yasgui.getTab().yasr.selectedPlugin, this.yasguiQuery.queryString);
@@ -378,8 +383,6 @@ export class YasguiService {
             if (this.yasguiQuery.commitId !== '') {
                 requestConfig['args'].push({ name: 'commitId', value: this.yasguiQuery.commitId});
             }
-        } else {
-            requestConfig['args'] = (datasetIri !== '') ? [{name: 'dataset', value: datasetIri}] : [];
         }
         this.yasgui.getTab().setRequestConfig(requestConfig);
     }

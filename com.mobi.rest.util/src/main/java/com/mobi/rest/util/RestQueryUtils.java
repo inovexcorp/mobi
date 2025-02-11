@@ -88,8 +88,10 @@ public class RestQueryUtils {
     public static final String X_LIMIT_EXCEEDED = "X-LIMIT-EXCEEDED";
     public static final String QUERY_INVALID_MESSAGE = "Query is invalid. Please change the query and re-execute.";
     public static final String REPO_NOT_AVAILABLE_MESSAGE = "Repository is not available";
-    public static final IllegalArgumentException QUERY_INVALID_EXCEPTION = new IllegalArgumentException(QUERY_INVALID_MESSAGE);
-    public static final IllegalArgumentException REPO_NOT_AVAILABLE_EXCEPTION = new IllegalArgumentException(REPO_NOT_AVAILABLE_MESSAGE);
+    public static final IllegalArgumentException QUERY_INVALID_EXCEPTION =
+            new IllegalArgumentException(QUERY_INVALID_MESSAGE);
+    public static final IllegalArgumentException REPO_NOT_AVAILABLE_EXCEPTION =
+            new IllegalArgumentException(REPO_NOT_AVAILABLE_MESSAGE);
 
     /**
      * Handle SPARQL Query based on query type.  Can handle SELECT AND CONSTRUCT queries.
@@ -97,16 +99,17 @@ public class RestQueryUtils {
      * SELECT queries output: JSON, XLS, XLSX, CSV, TSV
      * CONSTRUCT queries output: Turtle, JSON-LD, and RDF/XML
      *
-     * @param queryString     The SPARQL query to execute.
-     * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query
-     * @param acceptString    used to specify certain media types which are acceptable for the response
-     * @param fileName        The optional file name for the download file.
-     * @param ontology        Ontology to query from.
-     * @param includeImports  Should Include Imports for Ontology.
+     * @param queryString    The SPARQL query to execute.
+     * @param resourceId     The IRI of the resource to query
+     * @param storeType      The type of store to query
+     * @param acceptString   used to specify certain media types which are acceptable for the response
+     * @param fileName       The optional file name for the download file.
+     * @param ontology       Ontology to query from.
+     * @param includeImports Should Include Imports for Ontology.
      * @return SPARQL 1.1 Response in the format of ACCEPT Header mime type
      */
-    public static Response handleQuery(String queryString, String datasetRecordId, String acceptString, String fileName,
-                                       Ontology ontology, boolean includeImports,
+    public static Response handleQuery(String queryString, Resource resourceId, String storeType, String acceptString,
+                                       String fileName, Ontology ontology, boolean includeImports,
                                        ConnectionObjects connectionObjects) {
         try {
             ParsedOperation parsedOperation = QueryParserUtil.parseOperation(QueryLanguage.SPARQL, queryString, null);
@@ -114,18 +117,19 @@ public class RestQueryUtils {
                 throw RestUtils.getErrorObjBadRequest(QUERY_INVALID_EXCEPTION);
             }
             if (parsedOperation instanceof ParsedTupleQuery) {
-                return handleSelectQuery(queryString, datasetRecordId, acceptString, fileName,
-                        ontology, includeImports, connectionObjects).build();
+                return handleSelectQuery(queryString, resourceId, storeType, acceptString,
+                        fileName, ontology, includeImports, connectionObjects).build();
             } else if (parsedOperation instanceof ParsedGraphQuery) {
-                return handleConstructQuery(queryString, datasetRecordId, acceptString, fileName,
-                        ontology, includeImports, false, connectionObjects).build();
+                return handleConstructQuery(queryString, resourceId, storeType, acceptString,
+                        fileName, ontology, includeImports, false, connectionObjects).build();
             } else {
                 throw RestUtils.getErrorObjBadRequest(QUERY_INVALID_EXCEPTION);
             }
         } catch (IllegalArgumentException ex) {
             throw RestUtils.getErrorObjBadRequest(ex);
         } catch (MalformedQueryException ex) {
-            throw RestUtils.getErrorObjBadRequest(new IllegalArgumentException(QUERY_INVALID_MESSAGE + ";;;" + ex.getMessage()));
+            throw RestUtils.getErrorObjBadRequest(new IllegalArgumentException(QUERY_INVALID_MESSAGE + ";;;"
+                    + ex.getMessage()));
         } catch (MobiException ex) {
             throw RestUtils.getErrorObjInternalServerError(ex);
         } catch (Exception e) {
@@ -141,24 +145,26 @@ public class RestQueryUtils {
      * SELECT queries output: JSON, XLS, XLSX, CSV, TSV
      * CONSTRUCT queries output: Turtle, JSON-LD, and RDF/XML
      *
-     * @param queryString     The SPARQL query to execute.
-     * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query
-     * @param mimeType        used to specify certain media types which are acceptable for the response
-     * @param ontology        Ontology to query from.
-     * @param includeImports  Should Include Imports for Ontology.
+     * @param queryString    The SPARQL query to execute.
+     * @param resourceId     The IRI of the resource to query
+     * @param storeType      The type of store to query
+     * @param mimeType       used to specify certain media types which are acceptable for the response
+     * @param ontology       Ontology to query from.
+     * @param includeImports Should Include Imports for Ontology.
      * @return SPARQL 1.1 Response in the format of ACCEPT Header mime type
      */
-    public static Response handleQueryEagerly(String queryString, String datasetRecordId, String mimeType,
-                                              int limit, Ontology ontology,  boolean includeImports, ConnectionObjects connectionObjects) {
+    public static Response handleQueryEagerly(String queryString, Resource resourceId, String storeType, String mimeType,
+                                              int limit, Ontology ontology, boolean includeImports,
+                                              ConnectionObjects connectionObjects) {
         try {
             ParsedOperation parsedOperation = QueryParserUtil.parseOperation(QueryLanguage.SPARQL, queryString, null);
             if (!(parsedOperation instanceof ParsedQuery)) {
                 throw RestUtils.getErrorObjBadRequest(QUERY_INVALID_EXCEPTION);
             }
             if (parsedOperation instanceof ParsedTupleQuery) {
-                return handleSelectQueryEagerly(queryString, datasetRecordId, mimeType, limit, ontology, includeImports, connectionObjects);
+                return handleSelectQueryEagerly(queryString, resourceId, storeType, mimeType, limit, ontology, includeImports, connectionObjects);
             } else if (parsedOperation instanceof ParsedGraphQuery) {
-                return handleConstructQueryEagerly(queryString, datasetRecordId, mimeType, limit,ontology, includeImports, connectionObjects);
+                return handleConstructQueryEagerly(queryString, resourceId, storeType, mimeType, limit,ontology, includeImports, connectionObjects);
             } else {
                 throw RestUtils.getErrorObjBadRequest(QUERY_INVALID_EXCEPTION);
             }
@@ -175,17 +181,19 @@ public class RestQueryUtils {
      * Handle Select Query. Defaults to json if mimeType is invalid
      * Output: JSON, XLS, XLSX, CSV, TSV
      *
-     * @param queryString     The SPARQL query to execute.
-     * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query.
-     * @param mimeType        used to specify certain media types which are acceptable for the response.
-     * @param fileName        The optional file name for the download file.
-     * @param ontology        Ontology to query from.
-     * @param includeImports  Should Include Imports for Ontology.
+     * @param queryString    The SPARQL query to execute.
+     * @param resourceId     The Resource of the resource to query
+     * @param storeType      The type of store to query
+     * @param mimeType       used to specify certain media types which are acceptable for the response.
+     * @param fileName       The optional file name for the download file.
+     * @param ontology       Ontology to query from.
+     * @param includeImports Should Include Imports for Ontology.
      * @return SPARQL 1.1 ResponseBuilder in the format of ACCEPT Header mime type
      */
-    public static Response.ResponseBuilder handleSelectQuery(String queryString, String datasetRecordId,
-                                                             String mimeType, String fileName, Ontology ontology,
-                                                             boolean includeImports, ConnectionObjects connectionObjects) {
+    public static Response.ResponseBuilder handleSelectQuery(String queryString, Resource resourceId,
+                                                             String storeType, String mimeType, String fileName,
+                                                             Ontology ontology, boolean includeImports,
+                                                             ConnectionObjects connectionObjects) {
         StreamingOutput stream;
         String fileExtension;
 
@@ -197,14 +205,14 @@ public class RestQueryUtils {
         switch (mimeType) {
             case JSON_MIME_TYPE:
                 fileExtension = "json";
-                stream = getSelectStream(queryString, datasetRecordId, ontology, includeImports, TupleQueryResultFormat.JSON, connectionObjects);
+                stream = getSelectStream(queryString, resourceId, storeType, ontology, includeImports, TupleQueryResultFormat.JSON, connectionObjects);
                 break;
             case XLS_MIME_TYPE:
                 fileExtension = "xls";
                 if (ontology != null) {
                     tupleQueryResult = ontology.getTupleQueryResults(queryString, includeImports);
                 } else {
-                    tupleQueryResult = getTupleQueryResults(queryString, datasetRecordId, connectionObjects);
+                    tupleQueryResult = getTupleQueryResults(queryString, resourceId, storeType, connectionObjects);
                 }
                 stream = createExcelResults(tupleQueryResult, fileExtension);
                 break;
@@ -213,17 +221,17 @@ public class RestQueryUtils {
                 if (ontology != null) {
                     tupleQueryResult = ontology.getTupleQueryResults(queryString, includeImports);
                 } else {
-                    tupleQueryResult = getTupleQueryResults(queryString, datasetRecordId, connectionObjects);
+                    tupleQueryResult = getTupleQueryResults(queryString, resourceId, storeType, connectionObjects);
                 }
                 stream = createExcelResults(tupleQueryResult, fileExtension);
                 break;
             case CSV_MIME_TYPE:
                 fileExtension = "csv";
-                stream = getSelectStream(queryString, datasetRecordId, ontology, includeImports, TupleQueryResultFormat.CSV, connectionObjects);
+                stream = getSelectStream(queryString, resourceId, storeType, ontology, includeImports, TupleQueryResultFormat.CSV, connectionObjects);
                 break;
             case TSV_MIME_TYPE:
                 fileExtension = "tsv";
-                stream = getSelectStream(queryString, datasetRecordId, ontology, includeImports, TupleQueryResultFormat.TSV, connectionObjects);
+                stream = getSelectStream(queryString, resourceId, storeType, ontology, includeImports, TupleQueryResultFormat.TSV, connectionObjects);
                 break;
             default:
                 fileExtension = "json";
@@ -231,7 +239,7 @@ public class RestQueryUtils {
                 mimeType = JSON_MIME_TYPE;
                 logger.debug(String.format("Invalid mimeType [%s]: defaulted to [%s]", oldMimeType,
                         mimeType));
-                stream = getSelectStream(queryString, datasetRecordId, ontology, includeImports, TupleQueryResultFormat.JSON, connectionObjects);
+                stream = getSelectStream(queryString, resourceId, storeType, ontology, includeImports, TupleQueryResultFormat.JSON, connectionObjects);
                 break;
         }
 
@@ -250,37 +258,41 @@ public class RestQueryUtils {
      * Output: JSON
      *
      * @param queryString     The SPARQL query to execute.
-     * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query
+     * @param resourceId      The Resource of the resource to query
+     * @param storeType       The type of store to query
      * @param mimeType        used to specify certain media types which are acceptable for the response
      * @param ontology        Ontology to query from.
      * @param includeImports  Should Include Imports for Ontology.
      * @return The SPARQL 1.1 Response in the format of ACCEPT Header mime type
      */
-    private static Response handleSelectQueryEagerly(String queryString, String datasetRecordId, String mimeType,
-                                                     int limit, Ontology ontology,  boolean includeImports, ConnectionObjects connectionObjects)
+    private static Response handleSelectQueryEagerly(String queryString, Resource resourceId, String storeType,
+                                                     String mimeType, int limit, Ontology ontology,
+                                                     boolean includeImports, ConnectionObjects connectionObjects)
             throws IOException {
         if (!JSON_MIME_TYPE.equals(mimeType)) {
             logger.debug(String.format("Invalid mimeType [%s]: defaulted to [%s]", mimeType, JSON_MIME_TYPE));
         }
-        return getSelectQueryResponseEagerly(queryString, datasetRecordId,
+        return getSelectQueryResponseEagerly(queryString, resourceId, storeType,
                 TupleQueryResultFormat.JSON, JSON_MIME_TYPE, limit, ontology, includeImports, connectionObjects);
     }
 
     /**
      * Get SelectQueryResponse Eagerly.
      *
-     * @param queryString            The SPARQL query to execute.
-     * @param datasetRecordId        an optional DatasetRecord IRI representing the Dataset to query
+     * @param queryString    The SPARQL query to execute.
+     * @param resourceId     The Resource of the resource to query
+     * @param storeType      The type of store to query
      * @param tupleQueryResultFormat TupleQueryResultFormat used to convert TupleQueryResults for response
      * @param mimeType               used to specify certain media types which are acceptable for the response
      * @param ontology        Ontology to query from.
      * @param includeImports  Should Include Imports for Ontology.
      * @return Response in TupleQueryResultFormat of SPARQL Query
      */
-    private static Response getSelectQueryResponseEagerly(String queryString, String datasetRecordId,
-                                                          TupleQueryResultFormat tupleQueryResultFormat, String mimeType,
-                                                          Integer limit, Ontology ontology,  boolean includeImports,
-                                                          ConnectionObjects connectionObjects) throws IOException {
+    private static Response getSelectQueryResponseEagerly(String queryString, Resource resourceId, String storeType,
+                                                          TupleQueryResultFormat tupleQueryResultFormat,
+                                                          String mimeType, Integer limit, Ontology ontology,
+                                                          boolean includeImports,
+                                                          ConnectionObjects connectionObjects)throws IOException {
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         boolean limitExceeded;
 
@@ -295,16 +307,20 @@ public class RestQueryUtils {
             queryResults.close();
             byteArrayOutputStream.flush();
             byteArrayOutputStream.close();
-        } else if (!StringUtils.isBlank(datasetRecordId)) {
-            Resource recordId = valueFactory.createIRI(datasetRecordId);
+        } else if ("dataset-record".equals(storeType)) {
             DatasetManager datasetManager = connectionObjects.getDatasetManager();
-            try (DatasetConnection conn = datasetManager.getConnection(recordId)) {
+            try (DatasetConnection conn = datasetManager.getConnection(resourceId)) {
                 limitExceeded = executeTupleQuery(queryString, tupleQueryResultFormat, byteArrayOutputStream, conn,
                         limit);
             } catch (IllegalArgumentException ex) {
                 throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
             }
-        } else {
+        } else if ("repository".equals(storeType)) {
+            // TODO: Will be removed in future ticket when repository manager is used
+            if (!"https://mobi.solutions/repos/system".equals(resourceId.stringValue())) {
+                throw new IllegalArgumentException("Unsupported repository provided.");
+            }
+
             RepositoryManager repositoryManager = connectionObjects.getRepositoryManager();
             OsgiRepository repository = repositoryManager.getRepository("system").orElseThrow(() ->
                     getErrorObjInternalServerError(REPO_NOT_AVAILABLE_EXCEPTION));
@@ -314,6 +330,8 @@ public class RestQueryUtils {
             } catch (IllegalArgumentException ex) {
                 throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
             }
+        } else {
+            throw new IllegalArgumentException("Unsupported storeType: " + storeType);
         }
 
         Response.ResponseBuilder builder = Response.ok(byteArrayOutputStream.toString())
@@ -331,15 +349,16 @@ public class RestQueryUtils {
      * Output: Turtle, JSON-LD, and RDF/XML
      *
      * @param queryString     The SPARQL query to execute.
-     * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query.
+     * @param resourceId     The Resource of the resource to query
+     * @param storeType      The type of store to query
      * @param mimeType        used to specify certain media types which are acceptable for the response.
      * @param ontology        Ontology to query from.
      * @param includeImports  Should Include Imports for Ontology.
      * @return The SPARQL 1.1 Response from ACCEPT Header
      */
-    private static Response handleConstructQueryEagerly(String queryString, String datasetRecordId, String mimeType,
-                                                        int limit, Ontology ontology,  boolean includeImports,
-                                                        ConnectionObjects connectionObjects)
+    private static Response handleConstructQueryEagerly(String queryString, Resource resourceId, String storeType,
+                                                        String mimeType, int limit, Ontology ontology,
+                                                        boolean includeImports, ConnectionObjects connectionObjects)
             throws IOException {
         RDFFormat format;
 
@@ -363,7 +382,7 @@ public class RestQueryUtils {
                 format = RDFFormat.TURTLE;
                 logger.debug(String.format("Invalid mimeType [%s]: defaulted to [%s]", oldMimeType, mimeType));
         }
-        return getGraphQueryResponseEagerly(queryString, datasetRecordId, format, mimeType, limit,
+        return getGraphQueryResponseEagerly(queryString, resourceId, storeType, format, mimeType, limit,
                 ontology, includeImports, connectionObjects);
     }
 
@@ -371,35 +390,44 @@ public class RestQueryUtils {
      * Get GraphQueryResponse Eagerly.
      *
      * @param queryString     The SPARQL query to execute.
-     * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query
+     * @param resourceId      The Resource of the resource to query
+     * @param storeType       The type of store to query
      * @param format          RDFFormat used to convert GraphQueryResults for response
      * @param mimeType        used to specify certain media types which are acceptable for the response
      * @param ontology        Ontology to query from.
      * @param includeImports  Should Include Imports for Ontology.
      * @return Response in RDFFormat of SPARQL Query
      */
-    private static Response getGraphQueryResponseEagerly(String queryString, String datasetRecordId, RDFFormat format,
-                                                         String mimeType, int limit, Ontology ontology,  boolean includeImports,
+    private static Response getGraphQueryResponseEagerly(String queryString, Resource resourceId, String storeType,
+                                                         RDFFormat format, String mimeType, int limit,
+                                                         Ontology ontology, boolean includeImports,
                                                          ConnectionObjects connectionObjects) throws IOException {
-        boolean limitExceeded;
+        boolean limitExceeded = false;
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 
         if (ontology != null) {
             limitExceeded = ontology.getGraphQueryResultsStream(queryString, includeImports, format, false, limit, byteArrayOutputStream);
-        } else if (!StringUtils.isBlank(datasetRecordId)) {
-            Resource recordId = valueFactory.createIRI(datasetRecordId);
+        } else if ("dataset-record".equals(storeType)) {
             DatasetManager datasetManager = connectionObjects.getDatasetManager();
-            try (DatasetConnection conn = datasetManager.getConnection(recordId)) {
+            try (DatasetConnection conn = datasetManager.getConnection(resourceId)) {
                 limitExceeded = executeGraphQuery(queryString, format, byteArrayOutputStream, conn, limit);
             }
-        } else {
+        } else if ("repository".equals(storeType)) {
+            // TODO: Will be removed in future ticket when repository manager is used
+            if (!"https://mobi.solutions/repos/system".equals(resourceId.stringValue())) {
+                throw new IllegalArgumentException("Unsupported repository provided.");
+            }
+
             RepositoryManager repositoryManager = connectionObjects.getRepositoryManager();
             OsgiRepository repository = repositoryManager.getRepository("system").orElseThrow(() ->
                     ErrorUtils.sendError("Repository is not available.", Response.Status.INTERNAL_SERVER_ERROR));
             try (RepositoryConnection conn = repository.getConnection()) {
                 limitExceeded = executeGraphQuery(queryString, format, byteArrayOutputStream, conn, limit);
             }
+        } else {
+            throw new IllegalArgumentException("Unsupported storeType: " + storeType);
         }
+
         Response.ResponseBuilder builder = Response.ok(byteArrayOutputStream.toString())
                 .header("Content-Type", mimeType);
 
@@ -414,16 +442,17 @@ public class RestQueryUtils {
      * Handle Construct Query.
      * Output: Turtle, JSON-LD, and RDF/XML
      *
-     * @param queryString     The SPARQL query to execute.
-     * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query.
-     * @param mimeType        used to specify certain media types which are acceptable for the response.
-     * @param fileName        The optional file name for the download file.
-     * @param ontology        Ontology to query from.
-     * @param includeImports  Should Include Imports for Ontology.
+     * @param queryString    The SPARQL query to execute.
+     * @param resourceId     The Resource of the resource to query
+     * @param storeType      The type of store to query
+     * @param mimeType       used to specify certain media types which are acceptable for the response.
+     * @param fileName       The optional file name for the download file.
+     * @param ontology       Ontology to query from.
+     * @param includeImports Should Include Imports for Ontology.
      * @return The SPARQL 1.1 Response from ACCEPT Header
      */
-    public static Response.ResponseBuilder handleConstructQuery(String queryString, String datasetRecordId,
-                                                                String mimeType, String fileName,
+    public static Response.ResponseBuilder handleConstructQuery(String queryString, Resource resourceId,
+                                                                String storeType, String mimeType, String fileName,
                                                                 Ontology ontology, boolean includeImports,
                                                                 boolean skolemize, ConnectionObjects connectionObjects) {
         RDFFormat format;
@@ -455,8 +484,8 @@ public class RestQueryUtils {
                         oldMimeType, mimeType));
         }
 
-        StreamingOutput stream = getConstructStream(queryString, datasetRecordId, format,
-                ontology, includeImports, skolemize, connectionObjects);
+        StreamingOutput stream = getConstructStream(queryString, resourceId, storeType, format, ontology,
+                includeImports, skolemize, connectionObjects);
 
         Response.ResponseBuilder builder = Response.ok(stream)
                 .type(mimeType);
@@ -466,24 +495,28 @@ public class RestQueryUtils {
         return builder;
     }
 
-    private static StreamingOutput getConstructStream(String queryString, String datasetRecordId, RDFFormat format,
-                                                      Ontology ontology, boolean includeImports, boolean skolemize,
-                                                      ConnectionObjects connectionObjects) {
+    private static StreamingOutput getConstructStream(String queryString, Resource resourceId, String storeType,
+                                                      RDFFormat format, Ontology ontology, boolean includeImports,
+                                                      boolean skolemize, ConnectionObjects connectionObjects) {
         if (ontology != null) {
             return os -> {
                 ontology.getGraphQueryResultsStream(queryString, includeImports, format, skolemize, os);
             };
-        } else if (!StringUtils.isBlank(datasetRecordId)) {
+        } else if ("dataset-record".equals(storeType)) {
             return os -> {
-                Resource recordId = valueFactory.createIRI(datasetRecordId);
                 DatasetManager datasetManager = connectionObjects.getDatasetManager();
-                try (DatasetConnection conn = datasetManager.getConnection(recordId)) {
+                try (DatasetConnection conn = datasetManager.getConnection(resourceId)) {
                     executeGraphQuery(queryString, format, os, conn, null);
                 } catch (IllegalArgumentException ex) {
                     throw RestUtils.getErrorObjBadRequest(ex);
                 }
             };
-        } else {
+        } else if ("repository".equals(storeType)) {
+            // TODO: Will be removed in future ticket when repository manager is used
+            if (!"https://mobi.solutions/repos/system".equals(resourceId.stringValue())) {
+                throw new IllegalArgumentException("Unsupported repository provided.");
+            }
+
             return os -> {
                 RepositoryManager repositoryManager = connectionObjects.getRepositoryManager();
                 OsgiRepository repository = repositoryManager.getRepository("system").orElseThrow(() ->
@@ -494,6 +527,8 @@ public class RestQueryUtils {
                     throw RestUtils.getErrorObjBadRequest(ex);
                 }
             };
+        } else {
+            throw new IllegalArgumentException("Unsupported storeType: " + storeType);
         }
     }
 
@@ -516,8 +551,8 @@ public class RestQueryUtils {
         return limitExceeded;
     }
 
-    private static StreamingOutput getSelectStream(String queryString, String datasetRecordId,
-                                                   Ontology ontology, boolean includeImports,
+    private static StreamingOutput getSelectStream(String queryString, Resource resourceId,
+                                                   String storeType, Ontology ontology, boolean includeImports,
                                                    TupleQueryResultFormat format, ConnectionObjects connectionObjects) {
         if (ontology != null) {
             return os -> {
@@ -527,25 +562,32 @@ public class RestQueryUtils {
                 os.flush();
                 os.close();
             };
-        } else if (!StringUtils.isBlank(datasetRecordId)) {
+        } else if ("dataset-record".equals(storeType)) {
             return os -> {
-                Resource recordId = valueFactory.createIRI(datasetRecordId);
-                try (DatasetConnection conn = connectionObjects.getDatasetManager().getConnection(recordId)) {
+                try (DatasetConnection conn = connectionObjects.getDatasetManager().getConnection(resourceId)) {
                     executeTupleQuery(queryString, format, os, conn, null);
                 } catch (IllegalArgumentException ex) {
                     throw RestUtils.getErrorObjBadRequest(ex);
                 }
             };
-        } else {
+        } else if ("repository".equals(storeType)) {
+            // TODO: Will be removed in future ticket when repository manager is used
+            if (!"https://mobi.solutions/repos/system".equals(resourceId.stringValue())) {
+                throw new IllegalArgumentException("Unsupported repository provided.");
+            }
+
             return os -> {
-                OsgiRepository repository = connectionObjects.getRepositoryManager().getRepository("system").orElseThrow(() ->
-                        getErrorObjInternalServerError(REPO_NOT_AVAILABLE_EXCEPTION));
+                // TODO: Use different getRepository method for IRI
+                OsgiRepository repository = connectionObjects.getRepositoryManager().getRepository("system")
+                        .orElseThrow(() -> getErrorObjInternalServerError(REPO_NOT_AVAILABLE_EXCEPTION));
                 try (RepositoryConnection conn = repository.getConnection()) {
                     executeTupleQuery(queryString, format, os, conn, null);
                 } catch (IllegalArgumentException ex) {
                     throw RestUtils.getErrorObjBadRequest(ex);
                 }
             };
+        } else {
+            throw new IllegalArgumentException("Unsupported storeType: " + storeType);
         }
     }
 
@@ -571,17 +613,17 @@ public class RestQueryUtils {
     /**
      * Get TupleQueryResults.
      *
-     * @param queryString     The SPARQL query to execute.
-     * @param datasetRecordId an optional DatasetRecord IRI representing the Dataset to query
+     * @param queryString The SPARQL query to execute.
+     * @param resourceId     The Resource of the resource to query
+     * @param storeType      The type of store to query
      * @return TupleQueryResult results of SPARQL Query
      */
-    private static TupleQueryResult getTupleQueryResults(String queryString, String datasetRecordId,
-                                                         ConnectionObjects connectionObjects) {
+    private static TupleQueryResult getTupleQueryResults(String queryString, Resource resourceId,
+                                                         String storeType, ConnectionObjects connectionObjects) {
         TupleQueryResult queryResults;
 
-        if (!StringUtils.isBlank(datasetRecordId)) {
-            Resource recordId = valueFactory.createIRI(datasetRecordId);
-            try (DatasetConnection conn = connectionObjects.getDatasetManager().getConnection(recordId)) {
+        if ("dataset-record".equals(storeType)) {
+            try (DatasetConnection conn = connectionObjects.getDatasetManager().getConnection(resourceId)) {
                 TupleQuery query = conn.prepareTupleQuery(queryString);
                 queryResults = new MutableTupleQueryResult(query.evaluate());
                 // MutableTupleQueryResult - stores the complete query result in memory
@@ -589,9 +631,14 @@ public class RestQueryUtils {
                     logger.trace(query.explain(Explanation.Level.Timed).toString());
                 }
             }
-        } else {
-            OsgiRepository repository = connectionObjects.getRepositoryManager().getRepository("system").orElseThrow(() ->
-                    getErrorObjInternalServerError(REPO_NOT_AVAILABLE_EXCEPTION));
+        } else if ("repository".equals(storeType)) {
+            // TODO: Will be removed in future ticket when repository manager is used
+            if (!"https://mobi.solutions/repos/system".equals(resourceId.stringValue())) {
+                throw new IllegalArgumentException("Unsupported repository provided.");
+            }
+
+            OsgiRepository repository = connectionObjects.getRepositoryManager().getRepository("system")
+                    .orElseThrow(() -> getErrorObjInternalServerError(REPO_NOT_AVAILABLE_EXCEPTION));
             try (RepositoryConnection conn = repository.getConnection()) {
                 TupleQuery query = conn.prepareTupleQuery(queryString);
                 queryResults = new MutableTupleQueryResult(query.evaluate());
@@ -599,7 +646,10 @@ public class RestQueryUtils {
                     logger.trace(query.explain(Explanation.Level.Timed).toString());
                 }
             }
+        } else {
+            throw new IllegalArgumentException("Unsupported storeType: " + storeType);
         }
+
         return queryResults;
     }
 

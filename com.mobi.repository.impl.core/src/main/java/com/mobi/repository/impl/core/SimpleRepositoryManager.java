@@ -27,6 +27,9 @@ import com.mobi.repository.api.OsgiRepository;
 import com.mobi.repository.api.RepositoryManager;
 import com.mobi.repository.base.OsgiRepositoryWrapper;
 import com.mobi.repository.impl.sesame.memory.MemoryRepositoryWrapper;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
 import org.osgi.service.component.annotations.Component;
@@ -40,6 +43,9 @@ import java.util.Optional;
 
 @Component(immediate = true)
 public class SimpleRepositoryManager implements RepositoryManager {
+
+    private static final String REPO_PREFIX = "https://mobi.solutions/repos/";
+    private final ValueFactory vf = new ValidatingValueFactory();
 
     protected Map<String, OsgiRepository> initializedRepositories = new HashMap<>();
 
@@ -56,6 +62,25 @@ public class SimpleRepositoryManager implements RepositoryManager {
     public Optional<OsgiRepository> getRepository(String id) {
         if (initializedRepositories.containsKey(id)) {
             return Optional.of(initializedRepositories.get(id));
+        } else {
+            return Optional.empty();
+        }
+    }
+
+    @Override
+    public Optional<OsgiRepository> getRepository(IRI repositoryIRI) {
+        String id = repositoryIRI.stringValue().substring(REPO_PREFIX.length());
+        if (initializedRepositories.containsKey(id)) {
+            return Optional.of(initializedRepositories.get(id));
+        } else {
+            return Optional.empty();
+        }
+    }
+
+    @Override
+    public Optional<IRI> getRepositoryIRI(String id) {
+        if (initializedRepositories.containsKey(id)) {
+            return Optional.of(vf.createIRI(REPO_PREFIX + id));
         } else {
             return Optional.empty();
         }
