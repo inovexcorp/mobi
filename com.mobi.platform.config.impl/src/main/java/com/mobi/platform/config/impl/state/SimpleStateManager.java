@@ -77,6 +77,8 @@ public class SimpleStateManager implements StateManager {
     private static final String USER_BINDING = "userId";
     private static final String APPLICATION_BINDING = "application";
     private static final String RESOURCES_BINDING = "resources";
+    private static final String USER_NOT_FOUND = "User not found";
+    private static final String STATE_NOT_FOUND = "State not found";
 
     static {
         try {
@@ -118,10 +120,10 @@ public class SimpleStateManager implements StateManager {
     @Override
     public boolean stateExistsForUser(Resource stateId, String username) {
         User user = engineManager.retrieveUser(username).orElseThrow(() ->
-                new IllegalArgumentException("User not found"));
+                new IllegalArgumentException(USER_NOT_FOUND));
         try (RepositoryConnection conn = repository.getConnection()) {
             if (!stateExists(stateId, conn)) {
-                throw new IllegalArgumentException("State not found");
+                throw new IllegalArgumentException(STATE_NOT_FOUND);
             }
             return ConnectionUtils.contains(conn, stateId, factory.createIRI(State.forUser_IRI), user.getResource());
         }
@@ -143,7 +145,7 @@ public class SimpleStateManager implements StateManager {
             }
             if (username != null && !username.isEmpty()) {
                 User user = engineManager.retrieveUser(username).orElseThrow(() ->
-                        new IllegalArgumentException("User not found"));
+                        new IllegalArgumentException(USER_NOT_FOUND));
                 statesQuery.setBinding(USER_BINDING, user.getResource());
             }
             TupleQueryResult results = statesQuery.evaluate();
@@ -193,7 +195,7 @@ public class SimpleStateManager implements StateManager {
     @Override
     public Model getState(Resource stateId) {
         if (!stateExists(stateId)) {
-            throw new IllegalArgumentException("State not found");
+            throw new IllegalArgumentException(STATE_NOT_FOUND);
         }
         Model result = modelFactory.createEmptyModel();
         Model stateModel = modelFactory.createEmptyModel();
@@ -208,7 +210,7 @@ public class SimpleStateManager implements StateManager {
     @Override
     public void updateState(Resource stateId, Model newState) throws MobiException {
         if (!stateExists(stateId)) {
-            throw new IllegalArgumentException("State not found");
+            throw new IllegalArgumentException(STATE_NOT_FOUND);
         }
         try (RepositoryConnection conn = repository.getConnection()) {
             Model stateModel = modelFactory.createEmptyModel();
@@ -225,7 +227,7 @@ public class SimpleStateManager implements StateManager {
     @Override
     public void deleteState(Resource stateId) {
         if (!stateExists(stateId)) {
-            throw new IllegalArgumentException("State not found");
+            throw new IllegalArgumentException(STATE_NOT_FOUND);
         }
         try (RepositoryConnection conn = repository.getConnection()) {
             Model stateModel = modelFactory.createEmptyModel();
@@ -244,7 +246,7 @@ public class SimpleStateManager implements StateManager {
 
     private <T extends State> T createState(Model newState, String username, OrmFactory<T> ormFactory) {
         User user = engineManager.retrieveUser(username).orElseThrow(() ->
-                new IllegalArgumentException("User not found"));
+                new IllegalArgumentException(USER_NOT_FOUND));
         T stateObj = ormFactory.createNew(factory.createIRI(NAMESPACE + UUID.randomUUID()));
         stateObj.setStateResource(newState.subjects());
         stateObj.setForUser(user);
