@@ -244,6 +244,17 @@ public class OntologyRest {
     private static final String GET_ENTITY_NAMES;
     private static final String NAME_SPLITTER = "�";
 
+    private static final String ONTOLOGY_NOT_FOUND = "The ontology could not be found.";
+    private static final String ONTOLOGY = "Ontology ";
+    private static final String DOES_NOT_EXIST = " does not exist.";
+    private static final String ENTITIES = "%ENTITIES%";
+    private static final String BINDINGS = "bindings";
+    private static final String TURTLE = "turtle";
+    private static final String RDF_XML = "rdf/xml";
+    private static final String OWL_XML = "owl/xml";
+    private static final String ONTOLOGY_ID = "ontologyId";
+    private static final String JSONLD = "jsonld";
+
     static {
         try {
             GET_ENTITY_QUERY = IOUtils.toString(
@@ -426,8 +437,8 @@ public class OntologyRest {
                     + "otherwise, nothing will be returned")
             @QueryParam("commitId") String commitIdStr,
             @Parameter(description = "Desired RDF return format",
-                    schema = @Schema(allowableValues = {"jsonld", "rdf/xml", "owl/xml", "turtle"}))
-            @DefaultValue("jsonld") @QueryParam("rdfFormat") String rdfFormat,
+                    schema = @Schema(allowableValues = {JSONLD, RDF_XML, OWL_XML, TURTLE}))
+            @DefaultValue(JSONLD) @QueryParam("rdfFormat") String rdfFormat,
             @Parameter(description = "Whether or not the cached version of the identified Ontology should "
                     + "be cleared before retrieval")
             @DefaultValue("false") @QueryParam("clearCache") boolean clearCache,
@@ -444,7 +455,7 @@ public class OntologyRest {
             Ontology ontology = optOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr,
                     applyInProgressCommit, conn)
                     .orElseThrow(() ->
-                            ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
+                            ErrorUtils.sendError(ONTOLOGY_NOT_FOUND, Response.Status.BAD_REQUEST));
 
             StreamingOutput output = outputStream ->
                     writeOntologyToStream(ontology, rdfFormat, skolemize, outputStream);
@@ -501,8 +512,8 @@ public class OntologyRest {
                     + "will be returned")
             @QueryParam("commitId") String commitIdStr,
             @Parameter(description = "Desired RDF return format",
-                    schema = @Schema(allowableValues = {"jsonld", "rdf/xml", "owl/xml", "turtle"}))
-            @DefaultValue("jsonld") @QueryParam("rdfFormat") String rdfFormat,
+                    schema = @Schema(allowableValues = {JSONLD, RDF_XML, OWL_XML, TURTLE}))
+            @DefaultValue(JSONLD) @QueryParam("rdfFormat") String rdfFormat,
             @Parameter(description = "File name for the ontology file")
             @DefaultValue("ontology") @QueryParam("fileName") String fileName,
             @Parameter(description = "")
@@ -511,7 +522,7 @@ public class OntologyRest {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Ontology ontology = optOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr,
                     applyInProgressCommit, conn)
-                    .orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
+                    .orElseThrow(() -> ErrorUtils.sendError(ONTOLOGY_NOT_FOUND,
                             Response.Status.BAD_REQUEST));
             StreamingOutput stream = getOntologyAsRdfStream(ontology, rdfFormat, false);
             return Response.ok(stream).header("Content-Disposition", "attachment;filename=" + fileName
@@ -573,7 +584,7 @@ public class OntologyRest {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Ontology ontology = optOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true,
                     conn)
-                    .orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
+                    .orElseThrow(() -> ErrorUtils.sendError(ONTOLOGY_NOT_FOUND,
                             Response.Status.BAD_REQUEST));
             Model entityModel = getModelForEntityInOntology(ontology, entityIdStr);
             Difference diff = differenceManager.getDiff(entityModel, getModelFromJson(entityJson));
@@ -847,7 +858,7 @@ public class OntologyRest {
                 StreamingOutput output = getVocabularyStuffStream(optionalOntology.get());
                 return Response.ok(output).build();
             } else {
-                throw ErrorUtils.sendError("Ontology " + recordIdStr + " does not exist.", Response.Status.BAD_REQUEST);
+                throw ErrorUtils.sendError(ONTOLOGY + recordIdStr + DOES_NOT_EXIST, Response.Status.BAD_REQUEST);
             }
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
@@ -990,7 +1001,7 @@ public class OntologyRest {
                 StreamingOutput output = getOntologyStuffStream(optionalOntology.get());
                 return Response.ok(output).build();
             } else {
-                throw ErrorUtils.sendError("Ontology " + recordIdStr + " does not exist.",
+                throw ErrorUtils.sendError(ONTOLOGY + recordIdStr + DOES_NOT_EXIST,
                         Response.Status.BAD_REQUEST);
             }
         } catch (MobiException e) {
@@ -1132,7 +1143,7 @@ public class OntologyRest {
             log.trace("Start entityNames");
             watch.start();
             outputStream.write(", \"entityNames\": ".getBytes());
-            String queryString = GET_ENTITY_NAMES.replace("%ENTITIES%", "");
+            String queryString = GET_ENTITY_NAMES.replace(ENTITIES, "");
             writeEntityNamesToStream(ontology.getTupleQueryResults(queryString, true), outputStream);
             watch.stop();
             log.trace("End entityNames: " + watch.getTime() + "ms");
@@ -1189,7 +1200,7 @@ public class OntologyRest {
                 StreamingOutput output = getPropertyToRangesStream(optionalOntology.get());
                 return Response.ok(output).build();
             } else {
-                throw ErrorUtils.sendError("Ontology " + recordIdStr + " does not exist.",
+                throw ErrorUtils.sendError(ONTOLOGY + recordIdStr + DOES_NOT_EXIST,
                         Response.Status.BAD_REQUEST);
             }
         } catch (MobiException e) {
@@ -1403,7 +1414,7 @@ public class OntologyRest {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Ontology ontology = optOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true,
                     conn)
-                    .orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
+                    .orElseThrow(() -> ErrorUtils.sendError(ONTOLOGY_NOT_FOUND,
                             Response.Status.BAD_REQUEST));
             return deletionsToInProgressCommit(servletRequest, ontology, annotationIdStr, recordIdStr, conn);
         } catch (MobiException e) {
@@ -1553,7 +1564,7 @@ public class OntologyRest {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Ontology ontology = optOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true,
                     conn)
-                    .orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
+                    .orElseThrow(() -> ErrorUtils.sendError(ONTOLOGY_NOT_FOUND,
                             Response.Status.BAD_REQUEST));
             return deletionsToInProgressCommit(servletRequest, ontology, classIdStr, recordIdStr, conn);
         } catch (MobiException e) {
@@ -1698,7 +1709,7 @@ public class OntologyRest {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Ontology ontology = optOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true,
                     conn)
-                    .orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
+                    .orElseThrow(() -> ErrorUtils.sendError(ONTOLOGY_NOT_FOUND,
                             Response.Status.BAD_REQUEST));
             return deletionsToInProgressCommit(servletRequest, ontology, datatypeIdStr, recordIdStr, conn);
         } catch (MobiException e) {
@@ -1843,7 +1854,7 @@ public class OntologyRest {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Ontology ontology = optOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true,
                     conn)
-                    .orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
+                    .orElseThrow(() -> ErrorUtils.sendError(ONTOLOGY_NOT_FOUND,
                             Response.Status.BAD_REQUEST));
             return deletionsToInProgressCommit(servletRequest, ontology, objectPropertyIdStr, recordIdStr, conn);
         } catch (MobiException e) {
@@ -1988,7 +1999,7 @@ public class OntologyRest {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Ontology ontology = optOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true,
                     conn)
-                    .orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
+                    .orElseThrow(() -> ErrorUtils.sendError(ONTOLOGY_NOT_FOUND,
                             Response.Status.BAD_REQUEST));
             return deletionsToInProgressCommit(servletRequest, ontology, dataPropertyIdStr, recordIdStr, conn);
         } catch (MobiException e) {
@@ -2133,7 +2144,7 @@ public class OntologyRest {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Ontology ontology = optOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true,
                     conn)
-                    .orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
+                    .orElseThrow(() -> ErrorUtils.sendError(ONTOLOGY_NOT_FOUND,
                             Response.Status.BAD_REQUEST));
             return deletionsToInProgressCommit(servletRequest, ontology, individualIdStr, recordIdStr, conn);
         } catch (MobiException e) {
@@ -2251,7 +2262,7 @@ public class OntologyRest {
                 }
                 return Response.ok(arrayNode.toString()).build();
             } else {
-                throw ErrorUtils.sendError("Ontology " + recordIdStr + " does not exist.", Response.Status.BAD_REQUEST);
+                throw ErrorUtils.sendError(ONTOLOGY + recordIdStr + DOES_NOT_EXIST, Response.Status.BAD_REQUEST);
             }
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
@@ -2297,7 +2308,7 @@ public class OntologyRest {
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "Desired RDF return format")
-            @DefaultValue("jsonld") @QueryParam("rdfFormat") String rdfFormat,
+            @DefaultValue(JSONLD) @QueryParam("rdfFormat") String rdfFormat,
             @Parameter(description = "String representing the Branch Resource ID")
             @QueryParam("branchId") String branchIdStr,
             @Parameter(description = "String representing the Commit Resource ID")
@@ -2679,7 +2690,7 @@ public class OntologyRest {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Ontology ontology = optOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr,
                     applyInProgressCommit, conn).orElseThrow(() ->
-                        ErrorUtils.sendError("The ontology could not be found.", Response.Status.BAD_REQUEST));
+                        ErrorUtils.sendError(ONTOLOGY_NOT_FOUND, Response.Status.BAD_REQUEST));
             Hierarchy hierarchy = ontology.getSubClassesOf();
             return Response.ok(getHierarchyStream(hierarchy, nested, getClassIRIs(ontology))).build();
         } catch (MobiException e) {
@@ -2736,7 +2747,7 @@ public class OntologyRest {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Ontology ontology = optOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true,
                     conn)
-                    .orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
+                    .orElseThrow(() -> ErrorUtils.sendError(ONTOLOGY_NOT_FOUND,
                             Response.Status.BAD_REQUEST));
             Hierarchy hierarchy = ontology.getSubObjectPropertiesOf();
             return Response.ok(getHierarchyStream(hierarchy, nested, getObjectPropertyIRIs(ontology))).build();
@@ -2794,7 +2805,7 @@ public class OntologyRest {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Ontology ontology = optOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true,
                     conn)
-                    .orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
+                    .orElseThrow(() -> ErrorUtils.sendError(ONTOLOGY_NOT_FOUND,
                             Response.Status.BAD_REQUEST));
             Hierarchy hierarchy = ontology.getSubDatatypePropertiesOf();
             return Response.ok(getHierarchyStream(hierarchy, nested, getDataPropertyIRIs(ontology))).build();
@@ -2853,7 +2864,7 @@ public class OntologyRest {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Ontology ontology = optOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true,
                     conn)
-                    .orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
+                    .orElseThrow(() -> ErrorUtils.sendError(ONTOLOGY_NOT_FOUND,
                             Response.Status.BAD_REQUEST));
             Hierarchy hierarchy = ontology.getSubAnnotationPropertiesOf();
             return Response.ok(getHierarchyStream(hierarchy, nested, getAnnotationIRIs(ontology))).build();
@@ -2910,7 +2921,7 @@ public class OntologyRest {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Ontology ontology = optOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true,
                     conn)
-                    .orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
+                    .orElseThrow(() -> ErrorUtils.sendError(ONTOLOGY_NOT_FOUND,
                             Response.Status.BAD_REQUEST));
             Hierarchy hierarchy = ontology.getConceptRelationships();
             return Response.ok(getHierarchyStream(hierarchy, nested, getConceptIRIs(ontology))).build();
@@ -2969,7 +2980,7 @@ public class OntologyRest {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Ontology ontology = optOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true,
                     conn)
-                    .orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
+                    .orElseThrow(() -> ErrorUtils.sendError(ONTOLOGY_NOT_FOUND,
                             Response.Status.BAD_REQUEST));
             Hierarchy hierarchy = ontology.getConceptSchemeRelationships();
             return Response.ok(getHierarchyStream(hierarchy, nested, getConceptSchemeIRIs(ontology))).build();
@@ -3023,7 +3034,7 @@ public class OntologyRest {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Ontology ontology = optOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true,
                     conn)
-                    .orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
+                    .orElseThrow(() -> ErrorUtils.sendError(ONTOLOGY_NOT_FOUND,
                             Response.Status.BAD_REQUEST));
             ObjectNode objectNode = mapper.createObjectNode();
             objectNode.set("individuals",
@@ -3086,7 +3097,7 @@ public class OntologyRest {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Ontology ontology = optOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true,
                     conn)
-                    .orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
+                    .orElseThrow(() -> ErrorUtils.sendError(ONTOLOGY_NOT_FOUND,
                             Response.Status.BAD_REQUEST));
             Resource entityIRI = vf.createIRI(entityIRIStr);
             if (queryType.equals("construct")) {
@@ -3155,7 +3166,7 @@ public class OntologyRest {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Ontology ontology = optOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true,
                     conn)
-                    .orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
+                    .orElseThrow(() -> ErrorUtils.sendError(ONTOLOGY_NOT_FOUND,
                             Response.Status.BAD_REQUEST));
             checkStringParam(searchText, "The searchText is missing.");
             TupleQueryResult results = ontology.getSearchResults(searchText);
@@ -3224,7 +3235,7 @@ public class OntologyRest {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Ontology ontology = optOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr, true,
                     conn)
-                    .orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
+                    .orElseThrow(() -> ErrorUtils.sendError(ONTOLOGY_NOT_FOUND,
                             Response.Status.BAD_REQUEST));
             return Response.ok(getUnloadableImportIRIs(ontology)).build();
         } catch (MobiException e) {
@@ -3466,7 +3477,7 @@ public class OntologyRest {
             @DefaultValue("results") @QueryParam("fileName") String fileName,
             @Parameter(description = "Format of the downloaded results file when the `ACCEPT` header is set to "
                     + "`application/octet-stream`",
-                    schema = @Schema(allowableValues = {"xlsx", "csv", "tsv", "ttl", "jsonld", "rdf", "json"}))
+                    schema = @Schema(allowableValues = {"xlsx", "csv", "tsv", "ttl", JSONLD, "rdf", "json"}))
             @QueryParam("fileType") String fileType,
             @Parameter(hidden = true)
             @HeaderParam("accept") String acceptString,
@@ -3569,7 +3580,7 @@ public class OntologyRest {
                             + "`ACCEPT` header is set to `application/octet-stream`", in = ParameterIn.QUERY),
                     @Parameter(name = "fileType", description = "Format of the downloaded results file when the "
                             + "`ACCEPT` header is set to `application/octet-stream`", in = ParameterIn.QUERY,
-                            schema = @Schema(allowableValues = {"xlsx", "csv", "tsv", "ttl", "jsonld", "rdf", "json"}))
+                            schema = @Schema(allowableValues = {"xlsx", "csv", "tsv", "ttl", JSONLD, "rdf", "json"}))
 
             }
     )
@@ -3595,7 +3606,7 @@ public class OntologyRest {
             @DefaultValue("results") @FormParam("fileName") String fileName,
             @Parameter(description = "Format of the downloaded results file when the `ACCEPT` header is set to "
                     + "`application/octet-stream`",
-                    schema = @Schema(allowableValues = {"xlsx", "csv", "tsv", "ttl", "jsonld", "rdf", "json"}))
+                    schema = @Schema(allowableValues = {"xlsx", "csv", "tsv", "ttl", JSONLD, "rdf", "json"}))
             @FormParam("fileType") String fileType,
             @Parameter(hidden = true)
             @HeaderParam("accept") String acceptString) {
@@ -3621,7 +3632,7 @@ public class OntologyRest {
 
             Ontology ontology = optOntology(context, recordIdStr, branchIdStr, commitIdStr, applyInProgressCommit, conn)
                     .orElseThrow(() -> RestUtils.getErrorObjBadRequest(
-                            new IllegalArgumentException("The ontology could not be found.")));
+                            new IllegalArgumentException(ONTOLOGY_NOT_FOUND)));
 
             if (fileExtension != null && !fileExtension.isEmpty()) {
                 acceptString = convertFileExtensionToMimeType(fileExtension);
@@ -3729,7 +3740,7 @@ public class OntologyRest {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Ontology ontology = optOntology(httpServletRequest, recordIdStr, branchIdStr, commitIdStr,
                     applyInProgressCommit, conn).orElseThrow(() -> RestUtils.getErrorObjBadRequest(
-                            new IllegalArgumentException("The ontology could not be found.")));
+                            new IllegalArgumentException(ONTOLOGY_NOT_FOUND)));
             return RestQueryUtils.handleQueryEagerly(queryString, null, null,
                     acceptString, this.configProvider.getLimitedSize(), ontology, includeImports, null);
         }
@@ -3788,7 +3799,7 @@ public class OntologyRest {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Ontology ontology = optOntology(context, recordIdStr, branchIdStr, commitIdStr, applyInProgressCommit, conn)
                     .orElseThrow(() -> RestUtils.getErrorObjBadRequest(
-                            new IllegalArgumentException("The ontology could not be found.")));
+                            new IllegalArgumentException(ONTOLOGY_NOT_FOUND)));
             return RestQueryUtils.handleQueryEagerly(queryString, null, null,
                     acceptString, this.configProvider.getLimitedSize(), ontology, includeImports, null);
         }
@@ -3915,7 +3926,7 @@ public class OntologyRest {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Ontology ontology = optOntology(context, recordIdStr, branchIdStr, commitIdStr, applyInProgressCommit, conn)
                     .orElseThrow(() -> RestUtils.getErrorObjBadRequest(
-                            new IllegalArgumentException("The ontology could not be found.")));
+                            new IllegalArgumentException(ONTOLOGY_NOT_FOUND)));
             return RestQueryUtils.handleQueryEagerly(queryString, null, null,
                     acceptString, this.configProvider.getLimitedSize(), ontology, includeImports, null);
         }
@@ -3977,7 +3988,7 @@ public class OntologyRest {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Ontology ontology = optOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr,
                     applyInProgressCommit, conn)
-                    .orElseThrow(() -> ErrorUtils.sendError("The ontology could not be found.",
+                    .orElseThrow(() -> ErrorUtils.sendError(ONTOLOGY_NOT_FOUND,
                             Response.Status.BAD_REQUEST));
 
             ObjectNode results = mapper.createObjectNode();
@@ -3986,7 +3997,7 @@ public class OntologyRest {
 
             Optional<ObjectNode> baseResults = handleGroupedQuery(ontology, queryString.concat(" limit " + queryLimit));
             if (baseResults.isPresent()) {
-                currentNodes = currentNodes + baseResults.get().findValue("bindings").size();
+                currentNodes = currentNodes + baseResults.get().findValue(BINDINGS).size();
                 Resource ontologyIRI = ontology.getOntologyId().getOntologyIRI().orElseThrow(() ->
                         new IllegalStateException("Ontology IRI expected to be present"));
                 results.putPOJO(ontologyIRI.toString(), baseResults.get());
@@ -3999,7 +4010,7 @@ public class OntologyRest {
                         Optional<ObjectNode> importedResults = handleGroupedQuery(importedOntology,
                                 queryString.concat("limit " + (queryLimitNum - currentNodes)));
                         if (importedResults.isPresent()) {
-                            currentNodes = currentNodes + importedResults.get().findValue("bindings").size();
+                            currentNodes = currentNodes + importedResults.get().findValue(BINDINGS).size();
                             Resource importedOntIRI = importedOntology.getOntologyId().getOntologyIRI()
                                     .orElseThrow(() -> new IllegalStateException("Ontology IRI expected to be "
                                             + "present"));
@@ -4041,7 +4052,7 @@ public class OntologyRest {
                     for (Object statement : graphQueryResults.toArray()) {
                         stringResults.add(statement.toString());
                     }
-                    constructResults.set("bindings", stringResults);
+                    constructResults.set(BINDINGS, stringResults);
                     return Optional.of(constructResults);
                 } else {
                     return Optional.empty();
@@ -4104,7 +4115,7 @@ public class OntologyRest {
             @QueryParam("commitId") String commitIdStr,
             @Parameter(description = "Specified format for the return data. Valid values include 'jsonld', "
                     + "'turtle', 'rdf/xml', and 'trig'")
-            @DefaultValue("jsonld") @QueryParam("format") String format,
+            @DefaultValue(JSONLD) @QueryParam("format") String format,
             @Parameter(description = "Boolean indicating whether ontology imports "
                     + "should be included in the query")
             @DefaultValue("true") @QueryParam("includeImports") boolean includeImports,
@@ -4115,13 +4126,13 @@ public class OntologyRest {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Ontology ontology = optOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr,
                     applyInProgressCommit, conn).orElseThrow(() -> ErrorUtils.sendError(
-                            "The ontology could not be found.", Response.Status.BAD_REQUEST));
+                            ONTOLOGY_NOT_FOUND, Response.Status.BAD_REQUEST));
 
             IRI entity = vf.createIRI(entityIdStr);
             String queryString = GET_ENTITY_QUERY.replace("%ENTITY%", "<" + entity.stringValue() + ">");
 
-            return getResponseBuilderForGraphQuery(ontology, queryString, includeImports, format.equals("jsonld"),
-                    format).type(format.equals("jsonld") ? MediaType.APPLICATION_JSON_TYPE : MediaType.TEXT_PLAIN_TYPE)
+            return getResponseBuilderForGraphQuery(ontology, queryString, includeImports, format.equals(JSONLD),
+                    format).type(format.equals(JSONLD) ? MediaType.APPLICATION_JSON_TYPE : MediaType.TEXT_PLAIN_TYPE)
                     .build();
         } catch (MobiException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
@@ -4191,11 +4202,11 @@ public class OntologyRest {
 
             String queryString = null;
             if (resources.isEmpty()) {
-                queryString = GET_ENTITY_NAMES.replace("%ENTITIES%", "");
+                queryString = GET_ENTITY_NAMES.replace(ENTITIES, "");
             } else {
                 String resourcesString = "VALUES ?entity {<" + resources.stream().map(Resource::stringValue)
                         .collect(Collectors.joining("> <")) + ">}";
-                queryString = GET_ENTITY_NAMES.replace("%ENTITIES%", resourcesString);
+                queryString = GET_ENTITY_NAMES.replace(ENTITIES, resourcesString);
             }
             Optional<Ontology> optionalOntology = optOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr,
                     applyInProgressCommit, conn);
@@ -4210,7 +4221,7 @@ public class OntologyRest {
                 log.trace("Entity names endpoint: " + watch.getTime() + "ms");
                 return Response.ok(output).build();
             } else {
-                throw ErrorUtils.sendError("Ontology " + recordIdStr + " does not exist.",
+                throw ErrorUtils.sendError(ONTOLOGY + recordIdStr + DOES_NOT_EXIST,
                         Response.Status.BAD_REQUEST);
             }
         } catch (MobiException | IOException e) {
@@ -4253,7 +4264,7 @@ public class OntologyRest {
             @Parameter(description = "String representing the IRI of the requested ontology", required = true)
             @PathParam("ontologyIRI") String ontologyIRI,
             @Parameter(description = "Desired RDF return format",
-                    schema = @Schema(allowableValues = {"jsonld", "rdf/xml", "turtle"}))
+                    schema = @Schema(allowableValues = {JSONLD, RDF_XML, TURTLE}))
             @QueryParam("format") String format
     ) {
         try {
@@ -4273,7 +4284,7 @@ public class OntologyRest {
                 if (!(canRead == Decision.DENY)) {
                     String finalFormat = (format != null ? format :
                             RDFFiles.getFormatForFileName(ontologyIRI).isPresent()
-                                    ? RDFFiles.getFormatForFileName(ontologyIRI).get().getName() : "turtle");
+                                    ? RDFFiles.getFormatForFileName(ontologyIRI).get().getName() : TURTLE);
 
                     Ontology ontology = this.ontologyManager.retrieveOntology(recordIRI).orElseThrow(
                             () -> new IllegalStateException("Expected Ontology object to be present")
@@ -4310,9 +4321,9 @@ public class OntologyRest {
 
     private RDFFormat getRdfFormat(String format) {
         return switch (format.toLowerCase()) {
-            case "rdf/xml" -> RDFFormat.RDFXML;
-            case "owl/xml" -> throw new NotImplementedException("OWL/XML format is not yet implemented.");
-            case "turtle" -> RDFFormat.TURTLE;
+            case RDF_XML -> RDFFormat.RDFXML;
+            case OWL_XML -> throw new NotImplementedException("OWL/XML format is not yet implemented.");
+            case TURTLE -> RDFFormat.TURTLE;
             default -> RDFFormat.JSONLD;
         };
     }
@@ -4521,7 +4532,7 @@ public class OntologyRest {
         if (optionalOntology.isPresent()) {
             return iriFunction.apply(optionalOntology.get());
         } else {
-            throw ErrorUtils.sendError("Ontology " + recordIdStr + " does not exist.", Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError(ONTOLOGY + recordIdStr + DOES_NOT_EXIST, Response.Status.BAD_REQUEST);
         }
     }
 
@@ -4594,7 +4605,7 @@ public class OntologyRest {
             Ontology baseOntology = optionalOntology.get();
             return OntologyUtils.getImportedOntologies(baseOntology.getImportsClosure(), baseOntology);
         } else {
-            throw ErrorUtils.sendError("Ontology " + recordIdStr + " does not exist.", Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError(ONTOLOGY + recordIdStr + DOES_NOT_EXIST, Response.Status.BAD_REQUEST);
         }
     }
 
@@ -4896,9 +4907,9 @@ public class OntologyRest {
     private OutputStream writeOntologyToStream(Ontology ontology, String rdfFormat, boolean skolemize,
                                                OutputStream outputStream) {
         return switch (rdfFormat.toLowerCase()) {
-            case "rdf/xml" -> ontology.asRdfXml(outputStream);
-            case "owl/xml" -> ontology.asOwlXml(outputStream);
-            case "turtle" -> ontology.asTurtle(outputStream);
+            case RDF_XML -> ontology.asRdfXml(outputStream);
+            case OWL_XML -> ontology.asOwlXml(outputStream);
+            case TURTLE -> ontology.asTurtle(outputStream);
             default -> ontology.asJsonLD(skolemize, outputStream);
         };
     }
@@ -4914,13 +4925,13 @@ public class OntologyRest {
      */
     private String getOntologyAsRdf(Ontology ontology, String rdfFormat, boolean skolemize) {
         switch (rdfFormat.toLowerCase()) {
-            case "rdf/xml" -> {
+            case RDF_XML -> {
                 return ontology.asRdfXml().toString();
             }
-            case "owl/xml" -> {
+            case OWL_XML -> {
                 return ontology.asOwlXml().toString();
             }
-            case "turtle" -> {
+            case TURTLE -> {
                 return ontology.asTurtle().toString();
             }
             default -> {
@@ -4942,9 +4953,9 @@ public class OntologyRest {
     private StreamingOutput getOntologyAsRdfStream(Ontology ontology, String rdfFormat, boolean skolemize) {
         return output -> {
             switch (rdfFormat.toLowerCase()) {
-                case "rdf/xml" -> ontology.asRdfXml(output);
-                case "owl/xml" -> ontology.asOwlXml(output);
-                case "turtle" -> ontology.asTurtle(output);
+                case RDF_XML -> ontology.asRdfXml(output);
+                case OWL_XML -> ontology.asOwlXml(output);
+                case TURTLE -> ontology.asTurtle(output);
                 default -> ontology.asJsonLD(skolemize, output);
             }
         };
@@ -4965,7 +4976,7 @@ public class OntologyRest {
         ObjectNode objectNode = mapper.createObjectNode();
         objectNode.put("documentFormat", rdfFormat);
         objectNode.put("id", ontologyId.getOntologyIdentifier().stringValue());
-        objectNode.put("ontologyId", optIri.isPresent() ? optIri.get().stringValue() : "");
+        objectNode.put(ONTOLOGY_ID, optIri.isPresent() ? optIri.get().stringValue() : "");
         long start = System.currentTimeMillis();
         try {
             objectNode.set("ontology", mapper.readTree(getOntologyAsRdf(ontology, rdfFormat, false)));
@@ -4984,7 +4995,7 @@ public class OntologyRest {
 
         ObjectNode objectNode = mapper.createObjectNode();
         objectNode.put("id", ontologyId.getOntologyIdentifier().stringValue());
-        objectNode.put("ontologyId", optIri.isPresent() ? optIri.get().stringValue() : "");
+        objectNode.put(ONTOLOGY_ID, optIri.isPresent() ? optIri.get().stringValue() : "");
 
         return objectNode;
     }
@@ -5184,7 +5195,7 @@ public class OntologyRest {
         ObjectNode objectNode = mapper.createObjectNode();
         Resource ontologyIRI = record.getTrackedIdentifier().orElseThrow(() ->
                 new IllegalStateException("Ontology IRI must be present"));
-        objectNode.put("ontologyId", ontologyIRI.toString());
+        objectNode.put(ONTOLOGY_ID, ontologyIRI.toString());
         objectNode.put("recordId", record.getResource().stringValue());
         objectNode.put("branchId", branchId.toString());
         objectNode.put("commitId", commitId.toString());
@@ -5214,7 +5225,7 @@ public class OntologyRest {
         public String fileName;
         @Schema(type = "string", description = "Format of the downloaded results file when the `ACCEPT` "
                 + "header is set to `application/octet-stream`",
-                allowableValues = {"xlsx", "csv", "tsv", "ttl", "jsonld", "rdf", "json"})
+                allowableValues = {"xlsx", "csv", "tsv", "ttl", JSONLD, "rdf", "json"})
         public String fileType;
     }
 }
