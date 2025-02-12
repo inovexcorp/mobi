@@ -143,6 +143,14 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
     private static final String REQUEST_STATUS_ACCEPTED = "accepted";
     private static final String REQUEST_STATUS_OPEN = "open";
 
+    private static final String REQUEST = "Request ";
+    private static final String NO_VERSIONED_RDF_RECORD = " does not have a VersionedRDFRecord";
+    private static final String NO_TARGET_BRANCH = " does not have a target Branch";
+    private static final String NO_SOURCE_BRANCH = " does not have a source Branch";
+    private static final String NON_EXIST = " does not exist";
+    private static final String IN = " IN (";
+    private static final String LOGICAL_AND = "> && ";
+
     static {
         try {
             GET_COMMENT_CHAINS = IOUtils.toString(Objects.requireNonNull(SimpleMergeRequestManager.class
@@ -227,17 +235,17 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
         // Validate MergeRequest
         MergeRequest request = thingManager.getExpectedObject(requestId, mergeRequestFactory, conn);
         if (request.getModel().contains(requestId, TYPE_IRI, ACCEPTED_MERGE_REQUEST_IRI)) {
-            throw new IllegalArgumentException("Request " + requestId + " has already been accepted");
+            throw new IllegalArgumentException(REQUEST + requestId + " has already been accepted");
         }
 
         // Collect information about the VersionedRDFRecord, Branches, and Commits
         Resource recordId = request.getOnRecord_resource().orElseThrow(() ->
-                new IllegalStateException("Request " + requestId + " does not have a VersionedRDFRecord"));
+                new IllegalStateException(REQUEST + requestId + NO_VERSIONED_RDF_RECORD));
         Resource targetId = request.getTargetBranch_resource().orElseThrow(() ->
-                new IllegalArgumentException("Request " + requestId + " does not have a target Branch"));
+                new IllegalArgumentException(REQUEST + requestId + NO_TARGET_BRANCH));
         Branch target = thingManager.getExpectedObject(targetId, branchFactory, conn);
         Resource sourceId = request.getSourceBranch_resource().orElseThrow(() ->
-                new IllegalStateException("Request " + requestId + " does not have a source Branch"));
+                new IllegalStateException(REQUEST + requestId + NO_SOURCE_BRANCH));
         Branch source = thingManager.getExpectedObject(sourceId, branchFactory, conn);
         Resource sourceCommitId = commitManager.getHeadCommitIRI(source);
         Resource targetCommitId = commitManager.getHeadCommitIRI(target);
@@ -280,19 +288,19 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
         MergeRequest request = thingManager.getExpectedObject(requestId, mergeRequestFactory, conn);
         Model requestModel = request.getModel();
         if (requestModel.contains(requestId, TYPE_IRI, ACCEPTED_MERGE_REQUEST_IRI)) {
-            throw new IllegalArgumentException("Request " + requestId + " has already been accepted.");
+            throw new IllegalArgumentException(REQUEST + requestId + " has already been accepted.");
         } else if (requestModel.contains(requestId, TYPE_IRI, CLOSED_MERGE_REQUEST_IRI)) {
-            throw new IllegalArgumentException("Request " + requestId + " has already been closed.");
+            throw new IllegalArgumentException(REQUEST + requestId + " has already been closed.");
         }
 
         // Collect information about the VersionedRDFRecord, Branches, and Commits
         request.getOnRecord_resource().orElseThrow(() ->
-                new IllegalStateException("Request " + requestId + " does not have a VersionedRDFRecord"));
+                new IllegalStateException(REQUEST + requestId + NO_VERSIONED_RDF_RECORD));
         Resource targetId = request.getTargetBranch_resource().orElseThrow(() ->
-                new IllegalArgumentException("Request " + requestId + " does not have a target Branch"));
+                new IllegalArgumentException(REQUEST + requestId + NO_TARGET_BRANCH));
         Branch targetBranch = thingManager.getExpectedObject(targetId, branchFactory, conn);
         Resource sourceId = request.getSourceBranch_resource().orElseThrow(() ->
-                new IllegalStateException("Request " + requestId + " does not have a source Branch"));
+                new IllegalStateException(REQUEST + requestId + NO_SOURCE_BRANCH));
         Branch sourceBranch = thingManager.getExpectedObject(sourceId, branchFactory, conn);
         Resource sourceCommitId = commitManager.getHeadCommitIRI(sourceBranch);
         Resource targetCommitId = commitManager.getHeadCommitIRI(targetBranch);
@@ -322,7 +330,7 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
         if (requestModel.contains(requestId, TYPE_IRI, ACCEPTED_MERGE_REQUEST_IRI)) {
             throw new IllegalArgumentException("Cannot reopen " + requestId + " as it's already accepted.");
         } else if (!requestModel.contains(requestId, TYPE_IRI, CLOSED_MERGE_REQUEST_IRI)) {
-            throw new IllegalArgumentException("Request " + requestId + " is already open.");
+            throw new IllegalArgumentException(REQUEST + requestId + " is already open.");
         }
 
         ClosedMergeRequest closedRequest = closedMergeRequestFactory.getExisting(requestId, requestModel).orElseThrow(
@@ -330,13 +338,13 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
 
         // Collect information about the VersionedRDFRecord, Branches
         closedRequest.getOnRecord_resource().orElseThrow(() ->
-                new IllegalStateException("Request " + requestId + " does not have a VersionedRDFRecord"));
+                new IllegalStateException(REQUEST + requestId + NO_VERSIONED_RDF_RECORD));
         Resource targetId = closedRequest.getTargetBranch_resource().orElseThrow(() ->
-                new IllegalArgumentException("Request " + requestId + " does not have a target Branch"));
+                new IllegalArgumentException(REQUEST + requestId + NO_TARGET_BRANCH));
         thingManager.getExpectedObject(targetId, branchFactory, conn);
 
         Resource sourceId = closedRequest.getSourceBranch_resource().orElseThrow(() ->
-                new IllegalArgumentException("Request " + requestId + " does not have a source Branch"));
+                new IllegalArgumentException(REQUEST + requestId + NO_SOURCE_BRANCH));
         thingManager.getExpectedObject(sourceId, branchFactory, conn);
 
         closedRequest.clearSourceCommit();
@@ -468,7 +476,7 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
         comment.setProperty(user.getResource(), DCTERMS.CREATOR);
         comment.setProperty(vf.createLiteral(commentStr), DCTERMS.DESCRIPTION);
         MergeRequest mergeRequest = getMergeRequest(requestId).orElseThrow(
-                () -> new IllegalArgumentException("MergeRequest " + requestId + " does not exist"));
+                () -> new IllegalArgumentException("MergeRequest " + requestId + NON_EXIST));
         comment.setOnMergeRequest(mergeRequest);
 
         try (RepositoryConnection connection = configProvider.getRepository().getConnection()) {
@@ -480,10 +488,10 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
     @Override
     public Comment createComment(Resource requestId, User user, String commentStr, Resource parentCommentId) {
         Comment parent = getComment(parentCommentId).orElseThrow(
-                () -> new IllegalArgumentException("Parent comment " + parentCommentId + " does not exist"));
+                () -> new IllegalArgumentException("Parent comment " + parentCommentId + NON_EXIST));
         while (parent.getReplyComment_resource().isPresent()) {
             parent = getComment(parent.getReplyComment_resource().get()).orElseThrow(
-                    () -> new IllegalArgumentException("Parent comment " + parentCommentId + " does not exist"));
+                    () -> new IllegalArgumentException("Parent comment " + parentCommentId + NON_EXIST));
         }
         Comment comment = createComment(requestId, user, commentStr);
         parent.setReplyComment(comment);
@@ -532,7 +540,7 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
     public void deleteComment(Resource commentId, RepositoryConnection conn) {
         // Adjust comment chain pointers if they exist
         Comment comment = getComment(commentId, conn).orElseThrow(
-                () -> new IllegalArgumentException("Comment " + commentId + " does not exist"));
+                () -> new IllegalArgumentException("Comment " + commentId + NON_EXIST));
         RepositoryResult<Statement> statements = conn.getStatements(null, vf.createIRI(
                 Comment.replyComment_IRI), commentId);
         if (statements.hasNext()) {
@@ -542,7 +550,7 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
             if (childCommentResourceOpt.isPresent() && parentCommentOpt.isPresent()) {
                 Comment childComment = getComment(childCommentResourceOpt.get(), conn).orElseThrow(
                         () -> new IllegalArgumentException("Child comment " + childCommentResourceOpt.get()
-                                + " does not exist"));
+                                + NON_EXIST));
                 Comment parentComment = parentCommentOpt.get();
                 parentComment.setReplyComment(childComment);
                 updateComment(parentComment.getResource(), parentComment, conn);
@@ -599,7 +607,7 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
         List<MergeRequest> mergeRequests = getMergeRequests(builder.build(), conn);
         mergeRequests.forEach(mergeRequest -> deleteMergeRequest(mergeRequest.getResource(), conn));
 
-        builder.setRequestStatus("accepted");
+        builder.setRequestStatus(REQUEST_STATUS_ACCEPTED);
         mergeRequests = getMergeRequests(builder.build(), conn);
         mergeRequests.forEach(mergeRequest -> deleteMergeRequest(mergeRequest.getResource(), conn));
     }
@@ -626,7 +634,7 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
     @Override
     public List<List<Comment>> getComments(Resource requestId, RepositoryConnection conn) {
         getMergeRequest(requestId, conn).orElseThrow(() ->
-                new IllegalArgumentException("MergeRequest " + requestId + " does not exist"));
+                new IllegalArgumentException("MergeRequest " + requestId + NON_EXIST));
 
         List<List<Comment>> commentChains = new ArrayList<>();
         TupleQuery query = conn.prepareTupleQuery(GET_COMMENT_CHAINS);
@@ -687,25 +695,25 @@ public class SimpleMergeRequestManager implements MergeRequestManager {
 
         if (params.hasFilters()) {
             filters.append("FILTER (");
-            params.getOnRecords().ifPresent(onRecord -> filters.append("?").append(ON_RECORD_BINDING).append(" IN (")
+            params.getOnRecords().ifPresent(onRecord -> filters.append("?").append(ON_RECORD_BINDING).append(IN)
                     .append(String.join(", ", onRecord.stream().map(iri -> "<" + iri + ">").toList())).append(") && "));
             params.getSourceBranch().ifPresent(sourceBranch -> filters.append("?").append(SOURCE_BRANCH_BINDING)
-                    .append(" = <").append(sourceBranch).append("> && "));
+                    .append(" = <").append(sourceBranch).append(LOGICAL_AND));
             params.getTargetBranch().ifPresent(targetBranch -> filters.append("?").append(TARGET_BRANCH_BINDING)
-                    .append(" = <").append(targetBranch).append("> && "));
+                    .append(" = <").append(targetBranch).append(LOGICAL_AND));
             params.getSourceCommit().ifPresent(sourceCommit -> filters.append("?").append(SOURCE_COMMIT_BINDING)
-                    .append(" = <").append(sourceCommit).append("> && "));
+                    .append(" = <").append(sourceCommit).append(LOGICAL_AND));
             params.getTargetCommit().ifPresent(targetCommit -> filters.append("?").append(TARGET_COMMIT_BINDING)
-                    .append(" = <").append(targetCommit).append("> && "));
+                    .append(" = <").append(targetCommit).append(LOGICAL_AND));
             params.getRemoveSource().ifPresent(removeSource -> filters.append("?").append(REMOVE_SOURCE_BINDING)
                     .append(" = ").append(removeSource).append(" && "));
             params.getSearchText().ifPresent(searchText -> {
                 filters.append("CONTAINS(LCASE(?").append(SEARCHABLE_BINDING).append("), ?")
                         .append(SEARCH_TEXT_BINDING).append(") && ");
             });
-            params.getCreators().ifPresent(creator -> filters.append("?").append(CREATOR_BINDING).append(" IN (")
+            params.getCreators().ifPresent(creator -> filters.append("?").append(CREATOR_BINDING).append(IN)
                     .append(String.join(", ", creator.stream().map(iri -> "<" + iri + ">").toList())).append(") && "));
-            params.getAssignees().ifPresent(assignee -> filters.append("?").append(ASSIGNEE_BINDING).append(" IN (")
+            params.getAssignees().ifPresent(assignee -> filters.append("?").append(ASSIGNEE_BINDING).append(IN)
                     .append(String.join(", ", assignee.stream().map(iri -> "<" + iri + ">").toList())).append(") && "));
             filters.delete(filters.lastIndexOf(" && "), filters.length());
             filters.append(")");
