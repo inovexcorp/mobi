@@ -40,16 +40,17 @@ import java.util.List;
 public class JSONQueryResults {
 
     private static ObjectMapper mapper = new ObjectMapper();
+    private static final String VALUE = "value";
 
     private static ObjectNode writeValue(Value value) {
         ObjectNode result = mapper.createObjectNode();
 
         if (value instanceof IRI) {
             result.put("type", "uri");
-            result.put("value", value.toString());
+            result.put(VALUE, value.toString());
         } else if (value instanceof BNode) {
             result.put("type", "bnode");
-            result.put("value", ((BNode)value).getID());
+            result.put(VALUE, ((BNode)value).getID());
         } else if (value instanceof Literal) {
             Literal lit = (Literal)value;
 
@@ -59,7 +60,7 @@ public class JSONQueryResults {
 
             result.put("datatype", lit.getDatatype().stringValue());
             result.put("type", "literal");
-            result.put("value", lit.getLabel());
+            result.put(VALUE, lit.getLabel());
         } else {
             throw new MobiException("Unknown Value object type: " + value.getClass());
         }
