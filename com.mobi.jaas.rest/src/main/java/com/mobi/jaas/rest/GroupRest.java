@@ -91,6 +91,10 @@ public class GroupRest {
     private final Logger logger = LoggerFactory.getLogger(GroupRest.class);
     private static final ObjectMapper mapper = new ObjectMapper();
 
+    private static final String GROUP = "Group ";
+    private static final String TITLE_PROVIDED = "Group title must be provided";
+    private static final String NOT_FOUND = " not found";
+
     @Reference
     void setEngineManager(EngineManager engineManager) {
         this.engineManager = engineManager;
@@ -176,7 +180,7 @@ public class GroupRest {
         checkStringParam(title, "Group title is required");
         try {
             if (engineManager.groupExists(title)) {
-                throw ErrorUtils.sendError("Group " + title + " already exists", Response.Status.BAD_REQUEST);
+                throw ErrorUtils.sendError(GROUP+ title + " already exists", Response.Status.BAD_REQUEST);
             }
 
             GroupConfig.Builder builder = new GroupConfig.Builder(title);
@@ -229,12 +233,12 @@ public class GroupRest {
             @Parameter(description = "Title of the Group to retrieve", required = true)
             @PathParam("groupTitle") String groupTitle) {
         if (StringUtils.isEmpty(groupTitle)) {
-            throw ErrorUtils.sendError("Group title must be provided", Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError(TITLE_PROVIDED, Response.Status.BAD_REQUEST);
         }
 
         try {
             Group group = engineManager.retrieveGroup(groupTitle).orElseThrow(() ->
-                    ErrorUtils.sendError("Group " + groupTitle + " not found", Response.Status.NOT_FOUND));
+                    ErrorUtils.sendError(GROUP + groupTitle + NOT_FOUND, Response.Status.NOT_FOUND));
 
             String json = groupedModelToString(group.getModel().filter(group.getResource(), null, null),
                     getRDFFormat("jsonld"));
@@ -270,7 +274,7 @@ public class GroupRest {
             @Parameter(description = "JSON-LD string representation of a Group to replace the existing Group",
                     required = true) String newGroupStr) {
         if (StringUtils.isEmpty(groupTitle)) {
-            throw ErrorUtils.sendError("Group title must be provided", Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError(TITLE_PROVIDED, Response.Status.BAD_REQUEST);
         }
 
         Model groupModel = jsonldToModel(newGroupStr);
@@ -290,7 +294,7 @@ public class GroupRest {
 
         try {
             Group savedGroup = engineManager.retrieveGroup(rdfEngine.getEngineName(), groupTitle).orElseThrow(() ->
-                    ErrorUtils.sendError("Group " + groupTitle + " not found", Response.Status.BAD_REQUEST));
+                    ErrorUtils.sendError(GROUP + groupTitle + NOT_FOUND, Response.Status.BAD_REQUEST));
             Optional<Value> savedGroupTitle = savedGroup.getProperty(vf.createIRI(DCTERMS.TITLE.stringValue()));
             if (!savedGroupTitle.isPresent()) {
                 throw ErrorUtils.sendError("Group must have a title", Response.Status.INTERNAL_SERVER_ERROR);
@@ -334,11 +338,11 @@ public class GroupRest {
             @Parameter(description = "Title of the Group to remove", required = true)
             @PathParam("groupTitle") String groupTitle) {
         if (StringUtils.isEmpty(groupTitle)) {
-            throw ErrorUtils.sendError("Group title must be provided", Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError(TITLE_PROVIDED, Response.Status.BAD_REQUEST);
         }
         try {
             if (!engineManager.groupExists(groupTitle)) {
-                throw ErrorUtils.sendError("Group " + groupTitle + " not found", Response.Status.BAD_REQUEST);
+                throw ErrorUtils.sendError(GROUP + groupTitle + NOT_FOUND, Response.Status.BAD_REQUEST);
             }
 
             engineManager.deleteGroup(rdfEngine.getEngineName(), groupTitle);
@@ -372,12 +376,12 @@ public class GroupRest {
             @Parameter(description = "Title of the Group to retrieve roles from", required = true)
             @PathParam("groupTitle") String groupTitle) {
         if (StringUtils.isEmpty(groupTitle)) {
-            throw ErrorUtils.sendError("Group title must be provided", Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError(TITLE_PROVIDED, Response.Status.BAD_REQUEST);
         }
 
         try {
             Group group = engineManager.retrieveGroup(groupTitle).orElseThrow(() ->
-                    ErrorUtils.sendError("Group " + groupTitle + " not found", Response.Status.BAD_REQUEST));
+                    ErrorUtils.sendError(GROUP + groupTitle + NOT_FOUND, Response.Status.BAD_REQUEST));
 
             ArrayNode result = group.getHasGroupRole().stream()
                     .map(role -> role.getModel().filter(role.getResource(), null, null))
@@ -422,10 +426,10 @@ public class GroupRest {
         }
         try {
             Group savedGroup = engineManager.retrieveGroup(groupTitle).orElseThrow(() ->
-                    ErrorUtils.sendError("Group " + groupTitle + " not found", Response.Status.BAD_REQUEST));
+                    ErrorUtils.sendError(GROUP + groupTitle + NOT_FOUND, Response.Status.BAD_REQUEST));
             roles.stream()
                     .map(s -> engineManager.getRole(s).orElseThrow(() ->
-                            ErrorUtils.sendError("Role " + s + " not found", Response.Status.BAD_REQUEST)))
+                            ErrorUtils.sendError("Role " + s + NOT_FOUND, Response.Status.BAD_REQUEST)))
                     .forEach(savedGroup::addHasGroupRole);
             engineManager.updateGroup(savedGroup);
             logger.info("Role(s) " + String.join(", ", roles) + " to group " + groupTitle);
@@ -465,9 +469,9 @@ public class GroupRest {
 
         try {
             Group savedGroup = engineManager.retrieveGroup(groupTitle).orElseThrow(() ->
-                    ErrorUtils.sendError("Group " + groupTitle + " not found", Response.Status.BAD_REQUEST));
+                    ErrorUtils.sendError(GROUP + groupTitle + NOT_FOUND, Response.Status.BAD_REQUEST));
             Role roleObj = engineManager.getRole(role).orElseThrow(() ->
-                    ErrorUtils.sendError("Role " + role + " not found", Response.Status.BAD_REQUEST));
+                    ErrorUtils.sendError("Role " + role + NOT_FOUND, Response.Status.BAD_REQUEST));
             savedGroup.removeHasGroupRole(roleObj);
             engineManager.updateGroup(savedGroup);
             logger.info("Removed role " + role + " from group " + groupTitle);
@@ -501,12 +505,12 @@ public class GroupRest {
             @Parameter(description = "Title of the Group to retrieve users from", required = true)
             @PathParam("groupTitle") String groupTitle) {
         if (StringUtils.isEmpty(groupTitle)) {
-            throw ErrorUtils.sendError("Group title must be provided", Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError(TITLE_PROVIDED, Response.Status.BAD_REQUEST);
         }
 
         try {
             Group savedGroup = engineManager.retrieveGroup(groupTitle).orElseThrow(() ->
-                    ErrorUtils.sendError("Group " + groupTitle + " not found", Response.Status.BAD_REQUEST));
+                    ErrorUtils.sendError(GROUP + groupTitle + NOT_FOUND, Response.Status.BAD_REQUEST));
             Set<User> members = savedGroup.getMember_resource().stream()
                     .map(iri -> engineManager.getUsername(iri).orElseThrow(() ->
                             ErrorUtils.sendError("Unable to get User: " + iri, Response.Status.INTERNAL_SERVER_ERROR)))
@@ -557,14 +561,14 @@ public class GroupRest {
                     schema = @Schema(implementation = String.class, description = "username")))
             @QueryParam("users") List<String> usernames) {
         if (StringUtils.isEmpty(groupTitle)) {
-            throw ErrorUtils.sendError("Group title must be provided", Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError(TITLE_PROVIDED, Response.Status.BAD_REQUEST);
         }
         try {
             Group savedGroup = engineManager.retrieveGroup(rdfEngine.getEngineName(), groupTitle).orElseThrow(() ->
-                    ErrorUtils.sendError("Group " + groupTitle + " not found", Response.Status.BAD_REQUEST));
+                    ErrorUtils.sendError(GROUP + groupTitle + NOT_FOUND, Response.Status.BAD_REQUEST));
             usernames.stream()
                     .map(username -> engineManager.retrieveUser(username).orElseThrow(() ->
-                            ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST)))
+                            ErrorUtils.sendError("User " + username + NOT_FOUND, Response.Status.BAD_REQUEST)))
                     .forEach(savedGroup::addMember);
             engineManager.updateGroup(rdfEngine.getEngineName(), savedGroup);
             logger.info("Added user(s) " + String.join(", ", usernames) + " to group " + groupTitle);
@@ -604,9 +608,9 @@ public class GroupRest {
         }
         try {
             Group savedGroup = engineManager.retrieveGroup(groupTitle).orElseThrow(() ->
-                    ErrorUtils.sendError("Group " + groupTitle + " not found", Response.Status.BAD_REQUEST));
+                    ErrorUtils.sendError(GROUP + groupTitle + NOT_FOUND, Response.Status.BAD_REQUEST));
             User savedUser = engineManager.retrieveUser(username).orElseThrow(() ->
-                    ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
+                    ErrorUtils.sendError("User " + username + NOT_FOUND, Response.Status.BAD_REQUEST));
             savedGroup.removeMember(savedUser);
             engineManager.updateGroup(savedGroup);
             logger.info("Removed user " + username + " from group " + groupTitle);
