@@ -95,6 +95,12 @@ public class UserRest {
     private static final ObjectMapper mapper = new ObjectMapper();
     static final String ADMIN_USER_IRI = "http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997";
 
+    private static final String USERNAME_PROVIDED = "Username must be provided";
+    private static final String NOT_FOUND = " not found";
+    private static final String CURRENT_USERNAME_PROVIDED = "Current username must be provided";
+    private static final String MUST_HAVE_PASSWORD = "User must have a password";
+    private static final String ROLE = "Role ";
+
     final ValueFactory vf = new ValidatingValueFactory();
     
     @Reference
@@ -194,7 +200,7 @@ public class UserRest {
                     description = "Optional email of the User to create"))
             @FormParam("email") String email) {
         if (StringUtils.isEmpty(username)) {
-            throw ErrorUtils.sendError("Username must be provided", Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError(USERNAME_PROVIDED, Response.Status.BAD_REQUEST);
         }
         if (StringUtils.isEmpty(password)) {
             throw ErrorUtils.sendError("Password must be provided", Response.Status.BAD_REQUEST);
@@ -254,11 +260,11 @@ public class UserRest {
             @Parameter(description = "Username of the User to retrieve", required = true)
             @PathParam("username") String username) {
         if (StringUtils.isEmpty(username)) {
-            throw ErrorUtils.sendError("Username must be provided", Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError(USERNAME_PROVIDED, Response.Status.BAD_REQUEST);
         }
         try {
             User user = engineManager.retrieveUser(username).orElseThrow(() ->
-                    ErrorUtils.sendError("User " + username + " not found", Response.Status.NOT_FOUND));
+                    ErrorUtils.sendError("User " + username + NOT_FOUND, Response.Status.NOT_FOUND));
             user.clearPassword();
             String json = groupedModelToString(user.getModel().filter(user.getResource(), null, null),
                     getRDFFormat("jsonld"));
@@ -297,7 +303,7 @@ public class UserRest {
                     required = true)
                     String newUserStr) {
         if (StringUtils.isEmpty(username)) {
-            throw ErrorUtils.sendError("Current username must be provided", Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError(CURRENT_USERNAME_PROVIDED, Response.Status.BAD_REQUEST);
         }
         isAuthorizedUser(servletRequest, username);
 
@@ -317,12 +323,12 @@ public class UserRest {
                         Response.Status.BAD_REQUEST);
             }
             User savedUser = engineManager.retrieveUser(rdfEngine.getEngineName(), username).orElseThrow(() ->
-                    ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
+                    ErrorUtils.sendError("User " + username + NOT_FOUND, Response.Status.BAD_REQUEST));
             if (savedUser.getUsername().isEmpty()) {
                 throw ErrorUtils.sendError("User must have a username", Response.Status.INTERNAL_SERVER_ERROR);
             }
             if (savedUser.getPassword().isEmpty()) {
-                throw ErrorUtils.sendError("User must have a password", Response.Status.INTERNAL_SERVER_ERROR);
+                throw ErrorUtils.sendError(MUST_HAVE_PASSWORD, Response.Status.INTERNAL_SERVER_ERROR);
             }
             if (!savedUser.getUsername().get().equals(newUsername)) {
                 throw ErrorUtils.sendError("Usernames must match", Response.Status.BAD_REQUEST);
@@ -370,7 +376,7 @@ public class UserRest {
             @Parameter(description = "New password for the user", required = true)
             @QueryParam("newPassword") String newPassword) {
         if (StringUtils.isEmpty(username)) {
-            throw RestUtils.getErrorObjBadRequest(new MobiException("Current username must be provided"));
+            throw RestUtils.getErrorObjBadRequest(new MobiException(CURRENT_USERNAME_PROVIDED));
         }
         checkCurrentUser(getActiveUsername(servletRequest), username);
         if (StringUtils.isEmpty(currentPassword)) {
@@ -415,7 +421,7 @@ public class UserRest {
             @Parameter(description = "New password for the User", required = true)
             @QueryParam("newPassword") String newPassword) {
         if (StringUtils.isEmpty(username)) {
-            throw ErrorUtils.sendError("Current username must be provided", Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError(CURRENT_USERNAME_PROVIDED, Response.Status.BAD_REQUEST);
         }
         if (StringUtils.isEmpty(newPassword)) {
             throw ErrorUtils.sendError("New password must be provided", Response.Status.BAD_REQUEST);
@@ -451,13 +457,13 @@ public class UserRest {
             @Parameter(description = "Username of the User to remove", required = true)
             @PathParam("username") String username) {
         if (StringUtils.isEmpty(username)) {
-            throw ErrorUtils.sendError("Username must be provided", Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError(USERNAME_PROVIDED, Response.Status.BAD_REQUEST);
         }
         isAuthorizedUser(servletRequest, username);
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Optional<User> user = engineManager.retrieveUser(username);
             if (user.isEmpty()) {
-                throw ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST);
+                throw ErrorUtils.sendError("User " + username + NOT_FOUND, Response.Status.BAD_REQUEST);
             }
             String userIRI = user.get().getResource().stringValue();
             if (userIRI.equals(ADMIN_USER_IRI)) {
@@ -504,11 +510,11 @@ public class UserRest {
             @Parameter(description = "Whether or not to include roles from the User's groups")
             @DefaultValue("false") @QueryParam("includeGroups") boolean includeGroups) {
         if (StringUtils.isEmpty(username)) {
-            throw ErrorUtils.sendError("Username must be provided", Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError(USERNAME_PROVIDED, Response.Status.BAD_REQUEST);
         }
         try {
             User user = engineManager.retrieveUser(username).orElseThrow(() ->
-                    ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
+                    ErrorUtils.sendError("User " + username + NOT_FOUND, Response.Status.BAD_REQUEST));
             Set<Role> roles = includeGroups ? engineManager.getUserRoles(username)
                     : user.getHasUserRole();
             ArrayNode result = roles.stream()
@@ -553,10 +559,10 @@ public class UserRest {
 
         try {
             User savedUser = engineManager.retrieveUser(username).orElseThrow(() ->
-                    ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
+                    ErrorUtils.sendError("User " + username + NOT_FOUND, Response.Status.BAD_REQUEST));
             roles.stream()
                     .map(s -> engineManager.getRole(s).orElseThrow(() ->
-                            ErrorUtils.sendError("Role " + s + " not found", Response.Status.BAD_REQUEST)))
+                            ErrorUtils.sendError(ROLE + s + NOT_FOUND, Response.Status.BAD_REQUEST)))
                     .forEach(savedUser::addHasUserRole);
             engineManager.updateUser(savedUser);
             logger.info("Role(s) " + String.join(", ", roles) + " added to user " + username);
@@ -594,9 +600,9 @@ public class UserRest {
         }
         try {
             User savedUser = engineManager.retrieveUser(username).orElseThrow(() ->
-                    ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
+                    ErrorUtils.sendError("User " + username + NOT_FOUND, Response.Status.BAD_REQUEST));
             Role roleObj = engineManager.getRole(role).orElseThrow(() ->
-                    ErrorUtils.sendError("Role " + role + " not found", Response.Status.BAD_REQUEST));
+                    ErrorUtils.sendError(ROLE + role + NOT_FOUND, Response.Status.BAD_REQUEST));
             if (ADMIN_USER_IRI.equals(savedUser.getResource().stringValue())
                     && roleObj.getResource().stringValue().contains("admin")) {
                 throw ErrorUtils.sendError("Cannot remove admin role from admin user",
@@ -604,7 +610,7 @@ public class UserRest {
             }
             savedUser.removeHasUserRole(roleObj);
             engineManager.updateUser(savedUser);
-            logger.info("Role " + role + " removed from user " + username);
+            logger.info(ROLE + role + " removed from user " + username);
             return Response.ok().build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex.getMessage(), Response.Status.BAD_REQUEST);
@@ -633,12 +639,12 @@ public class UserRest {
             @Parameter(description = "Username to retrieve groups from", required = true)
             @PathParam("username") String username) {
         if (StringUtils.isEmpty(username)) {
-            throw ErrorUtils.sendError("Username must be provided", Response.Status.BAD_REQUEST);
+            throw ErrorUtils.sendError(USERNAME_PROVIDED, Response.Status.BAD_REQUEST);
         }
 
         try {
             User savedUser = engineManager.retrieveUser(username).orElseThrow(() ->
-                    ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
+                    ErrorUtils.sendError("User " + username + NOT_FOUND, Response.Status.BAD_REQUEST));
             Set<Group> groups = engineManager.getGroups().stream()
                     .filter(group -> group.getMember_resource().stream()
                             .anyMatch(resource -> resource.equals(savedUser.getResource())))
@@ -684,9 +690,9 @@ public class UserRest {
         }
         try {
             User savedUser = engineManager.retrieveUser(username).orElseThrow(() ->
-                    ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
+                    ErrorUtils.sendError("User " + username + NOT_FOUND, Response.Status.BAD_REQUEST));
             Group savedGroup = engineManager.retrieveGroup(groupTitle).orElseThrow(() ->
-                    ErrorUtils.sendError("Group " + groupTitle + " not found", Response.Status.BAD_REQUEST));
+                    ErrorUtils.sendError("Group " + groupTitle + NOT_FOUND, Response.Status.BAD_REQUEST));
             savedGroup.addMember(savedUser);
             engineManager.updateGroup(savedGroup);
             logger.info("Added user " + username + " to group " + groupTitle);
@@ -725,9 +731,9 @@ public class UserRest {
         }
         try {
             User savedUser = engineManager.retrieveUser(username).orElseThrow(() ->
-                    ErrorUtils.sendError("User " + username + " not found", Response.Status.BAD_REQUEST));
+                    ErrorUtils.sendError("User " + username + NOT_FOUND, Response.Status.BAD_REQUEST));
             Group savedGroup = engineManager.retrieveGroup(rdfEngine.getEngineName(), groupTitle).orElseThrow(() ->
-                    ErrorUtils.sendError("Group " + groupTitle + " not found", Response.Status.BAD_REQUEST));
+                    ErrorUtils.sendError("Group " + groupTitle + NOT_FOUND, Response.Status.BAD_REQUEST));
             savedGroup.removeMember(savedUser);
             engineManager.updateGroup(rdfEngine.getEngineName(), savedGroup);
             logger.info("Removed user " + username + " from group " + groupTitle);
@@ -808,14 +814,14 @@ public class UserRest {
      */
     private Response updatePassword(String username, String newPassword) {
         User savedUser = engineManager.retrieveUser(rdfEngine.getEngineName(), username).orElseThrow(() ->
-                        RestUtils.getErrorObjBadRequest(new MobiException("User " + username + " not found")));
+                        RestUtils.getErrorObjBadRequest(new MobiException("User " + username + NOT_FOUND)));
         if (savedUser.getPassword().isEmpty()) {
-            throw RestUtils.getErrorObjInternalServerError(new MobiException("User must have a password"));
+            throw RestUtils.getErrorObjInternalServerError(new MobiException(MUST_HAVE_PASSWORD));
         }
         User tempUser = engineManager.createUser(rdfEngine.getEngineName(),
                 new UserConfig.Builder("", newPassword, new HashSet<>()).build());
         if (tempUser.getPassword().isEmpty()) {
-            throw RestUtils.getErrorObjInternalServerError(new MobiException("User must have a password"));
+            throw RestUtils.getErrorObjInternalServerError(new MobiException(MUST_HAVE_PASSWORD));
         }
         savedUser.setPassword(tempUser.getPassword().get());
         engineManager.updateUser(rdfEngine.getEngineName(), savedUser);
