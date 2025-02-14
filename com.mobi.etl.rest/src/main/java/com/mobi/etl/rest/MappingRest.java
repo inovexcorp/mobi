@@ -107,6 +107,8 @@ public class MappingRest {
 
     private final ValueFactory vf = new ValidatingValueFactory();
 
+    private static final String JSON_LD = "jsonld";
+
     @Reference
     protected MappingManager manager;
 
@@ -153,14 +155,14 @@ public class MappingRest {
         Map<String, List<Class<?>>> fields = new HashMap<>();
         fields.put("title", List.of(String.class));
         fields.put("description", List.of(String.class));
-        fields.put("jsonld", List.of(String.class));
+        fields.put(JSON_LD, List.of(String.class));
         fields.put("markdown", List.of(String.class));
         fields.put("keywords", List.of(Set.class, String.class));
 
         Map<String, Object> formData = RestUtils.getFormData(servletRequest, fields);
         String title = (String) formData.get("title");
         String description = (String) formData.get("description");
-        String jsonld = (String) formData.get("jsonld");
+        String jsonld = (String) formData.get(JSON_LD);
         String markdown = (String) formData.get("markdown");
         Set<String> keywords = (Set<String>) formData.get("keywords");
         FileUpload file = (FileUpload) formData.getOrDefault("file", new FileUpload());
@@ -260,7 +262,7 @@ public class MappingRest {
             logger.info("Getting mapping " + recordId);
             MappingWrapper mapping = manager.retrieveMapping(vf.createIRI(recordId)).orElseThrow(() ->
                     ErrorUtils.sendError("Mapping not found", Response.Status.NOT_FOUND));
-            String mappingJsonld = groupedModelToString(mapping.getModel(), getRDFFormat("jsonld"));
+            String mappingJsonld = groupedModelToString(mapping.getModel(), getRDFFormat(JSON_LD));
             return Response.ok(mappingJsonld).build();
         } catch (IllegalArgumentException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
@@ -295,7 +297,7 @@ public class MappingRest {
             @Parameter(description = "Id of an uploaded mapping", required = true)
             @PathParam("recordId") String recordId,
             @Parameter(description = "RDFFormat the file should be")
-            @DefaultValue("jsonld") @QueryParam("format") String format) {
+            @DefaultValue(JSON_LD) @QueryParam("format") String format) {
         try {
             logger.info("Downloading mapping " + recordId);
             MappingWrapper mapping = manager.retrieveMapping(vf.createIRI(recordId)).orElseThrow(() ->
