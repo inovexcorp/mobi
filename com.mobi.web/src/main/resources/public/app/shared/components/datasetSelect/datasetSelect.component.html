@@ -28,7 +28,7 @@
         <mat-icon matSuffix>keyboard_arrow_down</mat-icon>
         <mat-autocomplete  #auto="matAutocomplete" (optionSelected)="selectDataset($event)" (closed)="handleDropdown('closed')"
                            (opened)="handleDropdown('opened')" [displayWith]="getDisplayText.bind(this)">
-            <mat-option *ngFor="let record of filteredDatasets | async" [value]="record" [title]="record['@id']">
+            <mat-option *ngFor="let record of filteredDatasets | async" [value]="record" [title]="record.title">
                 {{record.title}}
             </mat-option>
         </mat-autocomplete>

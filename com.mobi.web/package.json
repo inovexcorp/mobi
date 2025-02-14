@@ -96,7 +96,7 @@
     "@angular-eslint/schematics": "1.2.0",
     "@angular-eslint/template-parser": "1.2.0",
     "@angular/cdk": "^14.2.7",
-    "@angular/cli": "^14.2.11",
+    "@angular/cli": "^16.2.16",
     "@angular/compiler-cli": "^14.3.0",
     "@angular/language-service": "^14.3.0",
     "@schematics/angular": "^14.2.13",
