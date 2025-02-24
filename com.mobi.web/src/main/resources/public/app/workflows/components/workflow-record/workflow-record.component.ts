@@ -45,6 +45,7 @@ import { WorkflowUploadChangesModalComponent } from '../workflow-upload-changes-
 import { Difference } from '../../../shared/models/difference.class';
 import { WorkflowSHACLDefinitions } from '../../models/workflow-shacl-definitions.interface';
 import { RESTError } from '../../../shared/models/RESTError.interface';
+import { WorkflowCommitErrorModalComponent } from '../workflow-commit-error-modal/workflow-commit-error-modal.component';
 
 /**
  * @class workflows.WorkflowRecordComponent
@@ -317,13 +318,15 @@ export class WorkflowRecordComponent implements OnInit, OnDestroy {
    */
   commitChanges(): void {
     if (this.workflowsState.hasChanges) {
-      this.cm.createBranchCommit(this.branch.branch['@id'], this.record.iri, this.catalogId, 'Commit for new Workflow Changes').subscribe(() => {
-        this.toggleEditMode();
-        this.setRecordBranches();
-        this._setRecord();
-      },
-      () => {
-        this._toast.createErrorToast('Error saving changes to workflow');
+      this.cm.createBranchCommit(this.branch.branch['@id'], this.record.iri, this.catalogId, 'Commit for new Workflow Changes').subscribe({
+        next: () => {
+          this.toggleEditMode();
+          this.setRecordBranches();
+          this._setRecord();
+        },
+        error: (errorObj: RESTError) => {
+          this._dialog.open(WorkflowCommitErrorModalComponent, { data: { errorObject: errorObj } });
+        }
       });
     } else {
       this.toggleEditMode();

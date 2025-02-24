@@ -46,13 +46,13 @@ import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
 import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
+import com.mobi.persistence.utils.Models;
 import com.mobi.persistence.utils.api.BNodeService;
 import com.mobi.rdf.orm.Thing;
 import com.mobi.rdf.orm.conversion.ValueConverterRegistry;
 import com.mobi.rdf.orm.impl.ThingImpl;
 import com.mobi.web.security.util.AuthenticationProps;
 import org.apache.commons.io.IOUtils;
-
 import org.eclipse.rdf4j.model.BNode;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
@@ -623,15 +623,15 @@ public class RestUtilsTest {
 
     @Test
     public void createJsonErrorObjectDelimitedTest() throws Exception {
-        ObjectNode result = RestUtils.createJsonErrorObject(new IllegalStateException("Exception;;;detail1;;;detail2"), ";;;");
+        ObjectNode result = RestUtils.createJsonErrorObject(new IllegalStateException("Exception" + Models.ERROR_OBJECT_DELIMITER + "detail1" + Models.ERROR_OBJECT_DELIMITER + "detail2"), "" + Models.ERROR_OBJECT_DELIMITER + "");
         ObjectNode expected = new ObjectMapper().readValue("{\"error\": \"IllegalStateException\", \"errorMessage\" : \"Exception\", \"errorDetails\": [\"detail1\", \"detail2\"]}", ObjectNode.class);
         assertEquals(expected, result);
     }
 
     @Test
     public void createJsonErrorObjectDelimitedWrongDelimiterTest() throws Exception {
-        ObjectNode result = RestUtils.createJsonErrorObject(new IllegalStateException("Exception;;;detail1;;;detail2"), "~~~");
-        ObjectNode expected = new ObjectMapper().readValue("{\"error\": \"IllegalStateException\", \"errorMessage\" : \"Exception;;;detail1;;;detail2\", \"errorDetails\": []}", ObjectNode.class);
+        ObjectNode result = RestUtils.createJsonErrorObject(new IllegalStateException("Exception" + Models.ERROR_OBJECT_DELIMITER + "detail1" + Models.ERROR_OBJECT_DELIMITER + "detail2"), "~~~");
+        ObjectNode expected = new ObjectMapper().readValue("{\"error\": \"IllegalStateException\", \"errorMessage\" : \"Exception" + Models.ERROR_OBJECT_DELIMITER + "detail1" + Models.ERROR_OBJECT_DELIMITER + "detail2\", \"errorDetails\": []}", ObjectNode.class);
         assertEquals(expected, result);
     }
 

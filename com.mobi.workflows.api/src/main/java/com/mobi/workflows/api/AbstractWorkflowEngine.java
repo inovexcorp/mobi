@@ -111,10 +111,10 @@ public abstract class AbstractWorkflowEngine implements WorkflowEngine {
                         .filter(def -> def.getAction().getResource().equals(iri))
                         .findFirst();
                 if (childDefinition.isPresent()) {
-                    log.trace("Adding child action " + iri + " to action " + action.getResource());
+                    log.trace("Adding child action {} to action {}", iri, action.getResource());
                     childDefinition.get().addDependency(definition);
                 } else {
-                    log.warn("Could not find child definition " + iri + " for parent action " + action.getResource());
+                    log.warn("Could not find child definition {} for parent action {}", iri, action.getResource());
                 }
             });
         }

@@ -1063,7 +1063,7 @@ public class RestUtils {
      * @return A {@link MobiWebException} of a 500 with error information in the body.
      */
     public static MobiWebException getErrorObjInternalServerError(Throwable throwable) {
-        ObjectNode objectNode = createJsonErrorObject(throwable);
+        ObjectNode objectNode = createJsonErrorObject(throwable, Models.ERROR_OBJECT_DELIMITER);
         Response response = Response
                 .status(Response.Status.INTERNAL_SERVER_ERROR)
                 .type(MediaType.APPLICATION_JSON_TYPE)

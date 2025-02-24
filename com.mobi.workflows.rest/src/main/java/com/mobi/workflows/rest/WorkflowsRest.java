@@ -61,6 +61,7 @@ import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.persistence.utils.BNodeUtils;
+import com.mobi.persistence.utils.Models;
 import com.mobi.persistence.utils.RDFFiles;
 import com.mobi.persistence.utils.api.BNodeService;
 import com.mobi.prov.api.ProvenanceService;
@@ -303,8 +304,8 @@ public class WorkflowsRest {
             });
 
             if (!invalidFields.isEmpty()) {
-                throw new IllegalArgumentException(String.format("Invalid Fields;;;%s",
-                        String.join(";;;", invalidFields)));
+                throw new IllegalArgumentException("Invalid Fields" + Models.ERROR_OBJECT_DELIMITER
+                        + String.join(Models.ERROR_OBJECT_DELIMITER, invalidFields));
             }
             // Find Workflows
             User activeUser = getActiveUser(servletRequest, engineManager);
@@ -642,8 +643,7 @@ public class WorkflowsRest {
         } catch (MobiException | ExecutionException | InterruptedException | CompletionException ex) {
             if (ex instanceof ExecutionException) {
                 if (ex.getCause() instanceof InvalidWorkflowException invalidWorkflowException) {
-                    ObjectNode error = createJsonInvalidWorkflowError(invalidWorkflowException);
-                    throw RestUtils.getErrorObjInternalServerError(invalidWorkflowException, error);
+                    throw RestUtils.getErrorObjInternalServerError(invalidWorkflowException);
                 } else if (ex.getCause() instanceof IllegalArgumentException) {
                     throw RestUtils.getErrorObjBadRequest(ex.getCause());
                 } else if (ex.getCause() instanceof RDFParseException) {
@@ -842,8 +842,8 @@ public class WorkflowsRest {
             // Validation
             List<String> invalidFields = params.validate();
             if (!invalidFields.isEmpty()) {
-                throw new IllegalArgumentException(String.format("Invalid Fields;;;%s",
-                        String.join(";;;", invalidFields)));
+                throw new IllegalArgumentException("Invalid Fields" + Models.ERROR_OBJECT_DELIMITER
+                        + String.join(Models.ERROR_OBJECT_DELIMITER, invalidFields));
             }
             // Find Workflows
             User activeUser = getActiveUser(servletRequest, engineManager);

@@ -27,7 +27,7 @@ import { MockComponent, MockProvider } from 'ng-mocks';
 // material
 import { MatDialog } from '@angular/material/dialog';
 // lodash
-import { cloneDeep, isArray } from 'lodash';
+import { cloneDeep, isObject } from 'lodash';
 //rxjs
 import { of, throwError } from 'rxjs';
 // local
@@ -37,7 +37,7 @@ import { Difference } from '../../../shared/models/difference.class';
 import { Element, EntityType } from '../../models/workflow-display.interface';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { ModalType } from '../../models/modal-config.interface';
-import { WorkflowAddConfigurationComponent } from '../workflow-add-configuation/workflow-add-configuration.component';
+import { WorkflowAddConfigurationComponent } from '../workflow-add-configuration/workflow-add-configuration.component';
 import {
   WorkflowPropertyOverlayComponent
 } from '../workflow-property-overlay-component/workflow-property-overlay.component';
@@ -177,51 +177,41 @@ describe('WorkflowDisplayComponent', () => {
   });
   describe('component methods', () => {
     it('should get workflow data', () => {
-      spyOn(component, 'getNodesByType').and.returnValue([]);
-      spyOn(component, 'buildEdges').and.returnValue([]);
+      spyOn(component, 'getNodesAndEdgesByType').and.returnValue({ nodes: [], edges: []});
       spyOn(component, 'initGraph');
       component.setWorkflowData();
-      expect(component.getNodesByType).toHaveBeenCalledWith(workflowRDF, component.activityKeyMap.trigger.key);
-      expect(component.buildEdges).toHaveBeenCalledWith([], []);
+      expect(component.getNodesAndEdgesByType).toHaveBeenCalledWith(workflowRDF, EntityType.TRIGGER);
+      expect(component.getNodesAndEdgesByType).toHaveBeenCalledWith(workflowRDF, EntityType.ACTION);
       expect(component.initGraph).toHaveBeenCalledWith({nodes: [], edges: []});
     });
-    it('should get nodes by type', () => {
-      let trigger = component.getNodesByType(workflowRDF, component.activityKeyMap.trigger.key);
-      expect(isArray(trigger)).toBeTrue();
-      expect(trigger.length).toBe(1);
-      const workflowRDFClone = cloneDeep(workflowRDF).filter(obj => !obj['@type'].includes(`${WORKFLOWS}Trigger`));
-      const workflowDef = workflowRDFClone.find(obj => obj['@type'].includes(`${WORKFLOWS}Workflow`));
-      delete workflowDef[`${WORKFLOWS}hasTrigger`];
-      trigger = component.getNodesByType(workflowRDFClone, component.activityKeyMap.trigger.key);
-      expect(isArray(trigger)).toBeTrue();
-      expect(trigger.length).toBe(1);
-      const action = component.getNodesByType(workflowRDF, component.activityKeyMap.action.key);
-      expect(isArray(action)).toBeTrue();
-      expect(action.length).toBe(2);
-    });
-    it('should build nodes', () => {
-      const type = workflowRDF[0][component.buildWorkflowsIRI('hasTrigger')];
-      const nodes = component.buildNodes(type, workflowRDF);
-
-      expect(isArray(nodes)).toBeTrue();
-      expect(nodes.length).toBe(1);
-      const node = nodes[0].data;
+    it('should get nodes and edges by type', () => {
+      let trigger = component.getNodesAndEdgesByType(workflowRDF, EntityType.TRIGGER);
+      expect(isObject(trigger)).toBeTrue();
+      expect(trigger.nodes.length).toBe(1);
+      const node = trigger.nodes[0].data;
       const data = nodeData[0].data;
       for (const key of keyData) {
         expect(node[key]).toEqual(data[key]);
       }
-      expect(node.id).toEqual(jasmine.stringContaining('https://mobi.solutions/workflows/graph/trigger/'));
-    });
-    it('should build edges', () => {
-      const triggers: Element[] = component.getNodesByType(workflowRDF, component.activityKeyMap.trigger.key);
-      const actions: Element[] = component.getNodesByType(workflowRDF, component.activityKeyMap.action.key);
-      const edges = component.buildEdges(triggers, actions);
-      expect(isArray(edges)).toBeTrue();
-      expect(edges.length).toBe(2);
-      edges.forEach((item) => {
+      expect(node.id).toContain('https://mobi.solutions/workflows/graph/trigger/');
+      expect(trigger.edges.length).toBe(2);
+      trigger.edges.forEach((item) => {
         expect(item.data['source']).toEqual(jasmine.stringContaining('https://mobi.solutions/workflows/graph/trigger/'));
         expect(['http://example.com/workflows/LEDControl/action', 'http://example.com/workflows/LEDControl/action/b']).toContain(item.data['target']);
       });
+
+      const workflowRDFClone = cloneDeep(workflowRDF).filter(obj => !obj['@type'].includes(`${WORKFLOWS}Trigger`));
+      const workflowDef = workflowRDFClone.find(obj => obj['@type'].includes(`${WORKFLOWS}Workflow`));
+      delete workflowDef[`${WORKFLOWS}hasTrigger`];
+      trigger = component.getNodesAndEdgesByType(workflowRDFClone, EntityType.TRIGGER);
+      expect(isObject(trigger)).toBeTrue();
+      expect(trigger.nodes.length).toBe(1);
+      expect(trigger.nodes[0].data.id).toContain('https://mobi.solutions/workflows/graph/trigger');
+      expect(trigger.edges.length).toBe(2);
+      const action = component.getNodesAndEdgesByType(workflowRDF, EntityType.ACTION);
+      expect(isObject(action)).toBeTrue();
+      expect(action.nodes.length).toBe(2);
+      expect(action.edges.length).toBe(0);
     });
     it('should open a modal', () => {
       const entity = workflowRDF.find(obj => obj['@type'].includes(`${WORKFLOWS}Trigger`));
@@ -566,7 +556,7 @@ describe('WorkflowDisplayComponent', () => {
       describe('if it is the trigger', () => {
         it('successfully', fakeAsync(() => {
           workflowsManagerStub.updateWorkflowConfiguration.and.returnValue(of(null));
-          component.getDeleteEntityDifference((<any> component)._TRIGGER_NODE_ID, EntityType.TRIGGER).subscribe(result => {
+          component.getDeleteEntityDifference((<any> component)._TRIGGER_NODE_ID).subscribe(result => {
             expect(result).toBeDefined();
             expect((result.additions as JSONLDObject[]).length).toEqual(0);
             expect((result.deletions as JSONLDObject[]).length).toEqual(2);
@@ -581,7 +571,7 @@ describe('WorkflowDisplayComponent', () => {
         }));
         it('unless an error occurs', fakeAsync(() => {
           workflowsManagerStub.updateWorkflowConfiguration.and.returnValue(throwError('Error'));
-          component.getDeleteEntityDifference((<any> component)._TRIGGER_NODE_ID, EntityType.TRIGGER)
+          component.getDeleteEntityDifference((<any> component)._TRIGGER_NODE_ID)
             .subscribe(() => fail('Observable should have failed'), error => {
               expect(error).toEqual('Error');
               expect(workflowsManagerStub.updateWorkflowConfiguration).toHaveBeenCalledWith(jasmine.any(Difference), recordId);
@@ -592,7 +582,7 @@ describe('WorkflowDisplayComponent', () => {
       describe('if it is an action', () => {
         it('successfully', fakeAsync(() => {
           workflowsManagerStub.updateWorkflowConfiguration.and.returnValue(of(null));
-          component.getDeleteEntityDifference('http://example.com/workflows/LEDControl/action/b', EntityType.ACTION).subscribe(result => {
+          component.getDeleteEntityDifference('http://example.com/workflows/LEDControl/action/b').subscribe(result => {
             expect(result).toBeDefined();
             expect((result.additions as JSONLDObject[]).length).toEqual(0);
             expect((result.deletions as JSONLDObject[]).length).toEqual(3);
@@ -607,7 +597,7 @@ describe('WorkflowDisplayComponent', () => {
         }));
         it('unless an error occurs', fakeAsync(() => {
           workflowsManagerStub.updateWorkflowConfiguration.and.returnValue(throwError('Error'));
-          component.getDeleteEntityDifference((<any> component)._TRIGGER_NODE_ID, EntityType.TRIGGER)
+          component.getDeleteEntityDifference('http://example.com/workflows/LEDControl/action/b')
             .subscribe(() => fail('Observable should have failed'), error => {
               expect(error).toEqual('Error');
               expect(workflowsManagerStub.updateWorkflowConfiguration).toHaveBeenCalledWith(jasmine.any(Difference), recordId);
