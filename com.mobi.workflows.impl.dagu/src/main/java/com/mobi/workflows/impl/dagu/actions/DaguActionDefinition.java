@@ -123,7 +123,7 @@ public class DaguActionDefinition implements ActionDefinition {
         } catch (IOException e) {
             throw new MobiException("Error when writing updated yaml", e);
         }
-        this.yaml = writer.toString().replace("steps:\n", "");
+        this.yaml = writer.toString().replace("steps:\n", "").trim().replaceAll("\n {2}", "\n");
     }
 
     @Override

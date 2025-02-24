@@ -38,8 +38,8 @@ public class DaguActionDefinitionTest extends OrmEnabledTestCase {
     private final IRI actionIRI = VALUE_FACTORY.createIRI("urn:test");
     private final Action action = actionFactory.createNew(actionIRI);
 
-    private final String yaml = "  - name: " + actionIRI + "\n"
-            + "    command: echo \"WOW\"";
+    private final String yaml = "- name: " + actionIRI + "\n"
+            + "  command: echo \"WOW\"";
 
     @Test
     public void testConstructor() {
@@ -60,15 +60,14 @@ public class DaguActionDefinitionTest extends OrmEnabledTestCase {
     public void testAddDependency() {
         IRI otherActionIRI = VALUE_FACTORY.createIRI("urn:test2");
         Action otherAction = actionFactory.createNew(otherActionIRI);
-        String otherYaml = "  - name: " + otherActionIRI + "\n"
-                + "    command: echo \"AMAZING\"";
+        String otherYaml = "- name: " + otherActionIRI + "\n"
+                + "  command: echo \"AMAZING\"";
         DaguActionDefinition otherDefinition = new DaguActionDefinition(otherYaml, otherAction);
 
         String expectedYaml = yaml + "\n"
-                + "    depends:\n      - " + otherActionIRI + "\n";
+                + "  depends:\n    - " + otherActionIRI;
         DaguActionDefinition definition = new DaguActionDefinition(yaml, action);
         definition.addDependency(otherDefinition);
-        System.out.println(expectedYaml);
         assertEquals(expectedYaml, definition.toString());
     }
 
