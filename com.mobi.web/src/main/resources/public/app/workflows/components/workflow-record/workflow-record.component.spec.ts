@@ -38,21 +38,23 @@ import { of, Subject, throwError } from 'rxjs';
 
 import { CATALOG, DCTERMS, PROV, WORKFLOWS } from '../../../prefixes';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
+import { CommitDifference } from '../../../shared/models/commitDifference.interface';
+import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
+import { Difference } from '../../../shared/models/difference.class';
 import { ExecutionHistoryTableComponent } from '../execution-history-table/execution-history-table.component';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { ToastService } from '../../../shared/services/toast.service';
-import { WorkflowDisplayComponent } from '../workflow-display/workflow-display.component';
-import { WorkflowsStateService } from '../../services/workflows-state.service';
-import { WorkflowControlsComponent } from '../workflow-controls/workflow-controls.component';
 import { workflow_mocks, workflowRecordJSONLD } from '../../models/mock_data/workflow-mocks';
 import { WorkflowActivitySSEEvent, WorkflowsManagerService } from '../../services/workflows-manager.service';
-import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
+import { WorkflowCommitErrorModalComponent } from '../workflow-commit-error-modal/workflow-commit-error-modal.component';
+import { WorkflowControlsComponent } from '../workflow-controls/workflow-controls.component';
+import { WorkflowDisplayComponent } from '../workflow-display/workflow-display.component';
 import { WorkflowDownloadModalComponent } from '../workflow-download-modal/workflow-download-modal.component';
-import { Difference } from '../../../shared/models/difference.class';
-import { WorkflowUploadChangesModalComponent } from '../workflow-upload-changes-modal/workflow-upload-changes-modal.component';
-import { CommitDifference } from '../../../shared/models/commitDifference.interface';
 import { WorkflowSHACLDefinitions } from '../../models/workflow-shacl-definitions.interface';
+import { WorkflowsStateService } from '../../services/workflows-state.service';
+import { WorkflowUploadChangesModalComponent } from '../workflow-upload-changes-modal/workflow-upload-changes-modal.component';
 import { WorkflowRecordComponent } from './workflow-record.component';
+import { RESTError } from '../../../shared/models/RESTError.interface';
 
 describe('WorkflowRecordComponent', () => {
   let component: WorkflowRecordComponent;
@@ -119,7 +121,8 @@ describe('WorkflowRecordComponent', () => {
         WorkflowRecordComponent,
         MockComponent(WorkflowControlsComponent),
         MockComponent(WorkflowDisplayComponent),
-        MockComponent(ExecutionHistoryTableComponent)
+        MockComponent(ExecutionHistoryTableComponent),
+        MockComponent(WorkflowCommitErrorModalComponent)
       ],
       providers: [
         MockProvider(WorkflowsManagerService),
@@ -499,14 +502,18 @@ describe('WorkflowRecordComponent', () => {
         expect(component.toggleEditMode).toHaveBeenCalledWith();
         expect(component.setRecordBranches).not.toHaveBeenCalledWith();
       });
-      it('unless an error occurs', () => {
-        const errorMessage = 'Error saving changes to workflow';
+      it('unless an error occurs', fakeAsync(() => {
+        const errorObject: RESTError = {
+          error: '',
+          errorMessage: 'Error saving changes to workflow',
+          errorDetails: []
+        };
         workflowsStateStub.hasChanges = true;
-        catalogManagerStub.createBranchCommit.and.returnValue(throwError(errorMessage));
+        catalogManagerStub.createBranchCommit.and.returnValue(throwError(errorObject));
         component.commitChanges();
     
-        expect(toastStub.createErrorToast).toHaveBeenCalledWith(errorMessage);
-      });
+        expect(matDialog.open).toHaveBeenCalledWith(WorkflowCommitErrorModalComponent, { data: { errorObject } });
+      }));
     });
   });
   describe('contains the correct html', () => {

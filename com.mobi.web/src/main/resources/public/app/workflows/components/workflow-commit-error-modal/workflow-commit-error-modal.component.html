@@ -20,16 +20,13 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<h1 mat-dialog-title>Upload Workflow Changes</h1>
+<h1 mat-dialog-title>Error Saving Workflow</h1>
 <div mat-dialog-content class="pb-1">
-    <ng-container *ngIf="error">
-      <error-display>{{error.errorMessage}}</error-display>
-      <app-shacl-validation-report *ngIf="error?.error === 'InvalidWorkflowException'" [errorObject]="error"></app-shacl-validation-report>
-    </ng-container>
-    <file-input [displayText]="'Select a file'" [(files)]="file"
-        [accept]="['.owl','.ttl','.xml','.jsonld','.owx','.rdf','.obo', '.jsonld']" required></file-input>
+    <error-display>Error saving changes to workflow
+      <p>{{data.errorObject.errorMessage}}</p>
+    </error-display>
+    <app-shacl-validation-report *ngIf="data?.errorObject?.error === 'InvalidWorkflowException'" [errorObject]="data.errorObject"></app-shacl-validation-report>
 </div>
 <div mat-dialog-actions>
     <button mat-raised-button [mat-dialog-close]="false">Cancel</button>
-    <button mat-raised-button color="primary" (click)="submit()" [disabled]="!file">Submit</button>
 </div>

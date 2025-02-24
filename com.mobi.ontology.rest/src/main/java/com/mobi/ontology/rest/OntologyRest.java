@@ -90,6 +90,7 @@ import com.mobi.ontology.utils.imports.ImportsResolver;
 import com.mobi.persistence.utils.BNodeUtils;
 import com.mobi.persistence.utils.Bindings;
 import com.mobi.persistence.utils.JSONQueryResults;
+import com.mobi.persistence.utils.Models;
 import com.mobi.persistence.utils.RDFFiles;
 import com.mobi.persistence.utils.api.BNodeService;
 import com.mobi.rest.security.annotations.ActionAttributes;
@@ -3641,7 +3642,7 @@ public class OntologyRest {
                     includeImports, null);
         } catch (MalformedQueryException ex) {
             throw RestUtils.getErrorObjBadRequest(new IllegalArgumentException(QUERY_INVALID_MESSAGE
-                    + ";;;" + ex.getMessage()));
+                    + Models.ERROR_OBJECT_DELIMITER + ex.getMessage()));
         } catch (MobiException ex) {
             throw RestUtils.getErrorObjInternalServerError(ex);
         }

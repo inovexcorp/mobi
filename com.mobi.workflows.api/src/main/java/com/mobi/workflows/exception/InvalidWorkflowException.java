@@ -24,7 +24,12 @@ package com.mobi.workflows.exception;
  */
 
 import com.mobi.exception.MobiException;
+import com.mobi.persistence.utils.Models;
 import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.Rio;
+
+import java.io.StringWriter;
 
 public class InvalidWorkflowException extends MobiException {
     Model validationReport;
@@ -48,6 +53,18 @@ public class InvalidWorkflowException extends MobiException {
     public InvalidWorkflowException(String message, Throwable exception, Model validationReport) {
         super(message, exception);
         this.validationReport = validationReport;
+    }
+
+    @Override
+    public String getMessage() {
+        String message = super.getMessage();
+        if (this.validationReport != null) {
+            StringWriter sw = new StringWriter();
+            Rio.write(this.validationReport, sw, RDFFormat.TURTLE);
+            return message + Models.ERROR_OBJECT_DELIMITER + sw.toString().replaceAll("\n", Models.ERROR_OBJECT_DELIMITER);
+        } else {
+            return message;
+        }
     }
 
     public Model getValidationReport() {

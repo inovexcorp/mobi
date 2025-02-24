@@ -37,6 +37,7 @@ import com.mobi.dataset.api.DatasetConnection;
 import com.mobi.dataset.api.DatasetManager;
 import com.mobi.exception.MobiException;
 import com.mobi.ontology.core.api.Ontology;
+import com.mobi.persistence.utils.Models;
 import com.mobi.persistence.utils.rio.Rio;
 import com.mobi.repository.api.OsgiRepository;
 import com.mobi.repository.api.RepositoryManager;
@@ -95,7 +96,6 @@ public class RestQueryUtils {
 
     /**
      * Handle SPARQL Query based on query type.  Can handle SELECT AND CONSTRUCT queries.
-     * <p>
      * SELECT queries output: JSON, XLS, XLSX, CSV, TSV
      * CONSTRUCT queries output: Turtle, JSON-LD, and RDF/XML
      *
@@ -128,8 +128,8 @@ public class RestQueryUtils {
         } catch (IllegalArgumentException ex) {
             throw RestUtils.getErrorObjBadRequest(ex);
         } catch (MalformedQueryException ex) {
-            throw RestUtils.getErrorObjBadRequest(new IllegalArgumentException(QUERY_INVALID_MESSAGE + ";;;"
-                    + ex.getMessage()));
+            throw RestUtils.getErrorObjBadRequest(new IllegalArgumentException(QUERY_INVALID_MESSAGE
+                    + Models.ERROR_OBJECT_DELIMITER + ex.getMessage()));
         } catch (MobiException ex) {
             throw RestUtils.getErrorObjInternalServerError(ex);
         } catch (Exception e) {
@@ -141,7 +141,6 @@ public class RestQueryUtils {
 
     /**
      * Handle SPARQL Query eagerly based on query type. Can handle SELECT AND CONSTRUCT queries.
-     * <p>
      * SELECT queries output: JSON, XLS, XLSX, CSV, TSV
      * CONSTRUCT queries output: Turtle, JSON-LD, and RDF/XML
      *
@@ -153,8 +152,8 @@ public class RestQueryUtils {
      * @param includeImports Should Include Imports for Ontology.
      * @return SPARQL 1.1 Response in the format of ACCEPT Header mime type
      */
-    public static Response handleQueryEagerly(String queryString, Resource resourceId, String storeType, String mimeType,
-                                              int limit, Ontology ontology, boolean includeImports,
+    public static Response handleQueryEagerly(String queryString, Resource resourceId, String storeType,
+                                              String mimeType, int limit, Ontology ontology, boolean includeImports,
                                               ConnectionObjects connectionObjects) {
         try {
             ParsedOperation parsedOperation = QueryParserUtil.parseOperation(QueryLanguage.SPARQL, queryString, null);
@@ -162,16 +161,19 @@ public class RestQueryUtils {
                 throw RestUtils.getErrorObjBadRequest(QUERY_INVALID_EXCEPTION);
             }
             if (parsedOperation instanceof ParsedTupleQuery) {
-                return handleSelectQueryEagerly(queryString, resourceId, storeType, mimeType, limit, ontology, includeImports, connectionObjects);
+                return handleSelectQueryEagerly(queryString, resourceId, storeType, mimeType, limit, ontology,
+                        includeImports, connectionObjects);
             } else if (parsedOperation instanceof ParsedGraphQuery) {
-                return handleConstructQueryEagerly(queryString, resourceId, storeType, mimeType, limit,ontology, includeImports, connectionObjects);
+                return handleConstructQueryEagerly(queryString, resourceId, storeType, mimeType, limit, ontology,
+                        includeImports, connectionObjects);
             } else {
                 throw RestUtils.getErrorObjBadRequest(QUERY_INVALID_EXCEPTION);
             }
         } catch (IllegalArgumentException ex) {
             throw RestUtils.getErrorObjBadRequest(ex);
         } catch (MalformedQueryException ex) {
-            throw RestUtils.getErrorObjBadRequest(new IllegalArgumentException(QUERY_INVALID_MESSAGE + ";;;" + ex.getMessage()));
+            throw RestUtils.getErrorObjBadRequest(new IllegalArgumentException(QUERY_INVALID_MESSAGE
+                    + Models.ERROR_OBJECT_DELIMITER + ex.getMessage()));
         } catch (MobiException | IOException ex) {
             throw RestUtils.getErrorObjInternalServerError(ex);
         }
@@ -203,11 +205,12 @@ public class RestQueryUtils {
         TupleQueryResult tupleQueryResult;
 
         switch (mimeType) {
-            case JSON_MIME_TYPE:
+            case JSON_MIME_TYPE -> {
                 fileExtension = "json";
-                stream = getSelectStream(queryString, resourceId, storeType, ontology, includeImports, TupleQueryResultFormat.JSON, connectionObjects);
-                break;
-            case XLS_MIME_TYPE:
+                stream = getSelectStream(queryString, resourceId, storeType, ontology, includeImports,
+                        TupleQueryResultFormat.JSON, connectionObjects);
+            }
+            case XLS_MIME_TYPE -> {
                 fileExtension = "xls";
                 if (ontology != null) {
                     tupleQueryResult = ontology.getTupleQueryResults(queryString, includeImports);
@@ -215,8 +218,8 @@ public class RestQueryUtils {
                     tupleQueryResult = getTupleQueryResults(queryString, resourceId, storeType, connectionObjects);
                 }
                 stream = createExcelResults(tupleQueryResult, fileExtension);
-                break;
-            case XLSX_MIME_TYPE:
+            }
+            case XLSX_MIME_TYPE -> {
                 fileExtension = "xlsx";
                 if (ontology != null) {
                     tupleQueryResult = ontology.getTupleQueryResults(queryString, includeImports);
@@ -224,23 +227,26 @@ public class RestQueryUtils {
                     tupleQueryResult = getTupleQueryResults(queryString, resourceId, storeType, connectionObjects);
                 }
                 stream = createExcelResults(tupleQueryResult, fileExtension);
-                break;
-            case CSV_MIME_TYPE:
+            }
+            case CSV_MIME_TYPE -> {
                 fileExtension = "csv";
-                stream = getSelectStream(queryString, resourceId, storeType, ontology, includeImports, TupleQueryResultFormat.CSV, connectionObjects);
-                break;
-            case TSV_MIME_TYPE:
+                stream = getSelectStream(queryString, resourceId, storeType, ontology, includeImports,
+                        TupleQueryResultFormat.CSV, connectionObjects);
+            }
+            case TSV_MIME_TYPE -> {
                 fileExtension = "tsv";
-                stream = getSelectStream(queryString, resourceId, storeType, ontology, includeImports, TupleQueryResultFormat.TSV, connectionObjects);
-                break;
-            default:
+                stream = getSelectStream(queryString, resourceId, storeType, ontology, includeImports,
+                        TupleQueryResultFormat.TSV, connectionObjects);
+            }
+            default -> {
                 fileExtension = "json";
                 String oldMimeType = mimeType;
                 mimeType = JSON_MIME_TYPE;
                 logger.debug(String.format("Invalid mimeType [%s]: defaulted to [%s]", oldMimeType,
                         mimeType));
-                stream = getSelectStream(queryString, resourceId, storeType, ontology, includeImports, TupleQueryResultFormat.JSON, connectionObjects);
-                break;
+                stream = getSelectStream(queryString, resourceId, storeType, ontology, includeImports,
+                        TupleQueryResultFormat.JSON, connectionObjects);
+            }
         }
 
         Response.ResponseBuilder builder = Response.ok(stream)
@@ -300,7 +306,8 @@ public class RestQueryUtils {
             limitExceeded = false;
             TupleQueryResult queryResults = ontology.getTupleQueryResults(queryString, includeImports);
             if (limit != null) {
-                limitExceeded = QueryResultIOLimited.writeTuple(queryResults, tupleQueryResultFormat, byteArrayOutputStream, limit);
+                limitExceeded = QueryResultIOLimited.writeTuple(queryResults, tupleQueryResultFormat,
+                        byteArrayOutputStream, limit);
             } else {
                 QueryResultIO.writeTuple(queryResults, tupleQueryResultFormat, byteArrayOutputStream);
             }
@@ -367,20 +374,15 @@ public class RestQueryUtils {
         }
 
         switch (mimeType) {
-            case TURTLE_MIME_TYPE:
-                format = RDFFormat.TURTLE;
-                break;
-            case LDJSON_MIME_TYPE:
-                format = RDFFormat.JSONLD;
-                break;
-            case RDFXML_MIME_TYPE:
-                format = RDFFormat.RDFXML;
-                break;
-            default:
+            case TURTLE_MIME_TYPE -> format = RDFFormat.TURTLE;
+            case LDJSON_MIME_TYPE -> format = RDFFormat.JSONLD;
+            case RDFXML_MIME_TYPE -> format = RDFFormat.RDFXML;
+            default -> {
                 String oldMimeType = mimeType;
                 mimeType = TURTLE_MIME_TYPE;
                 format = RDFFormat.TURTLE;
                 logger.debug(String.format("Invalid mimeType [%s]: defaulted to [%s]", oldMimeType, mimeType));
+            }
         }
         return getGraphQueryResponseEagerly(queryString, resourceId, storeType, format, mimeType, limit,
                 ontology, includeImports, connectionObjects);
@@ -406,7 +408,8 @@ public class RestQueryUtils {
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 
         if (ontology != null) {
-            limitExceeded = ontology.getGraphQueryResultsStream(queryString, includeImports, format, false, limit, byteArrayOutputStream);
+            limitExceeded = ontology.getGraphQueryResultsStream(queryString, includeImports, format, false, limit,
+                    byteArrayOutputStream);
         } else if ("dataset-record".equals(storeType)) {
             DatasetManager datasetManager = connectionObjects.getDatasetManager();
             try (DatasetConnection conn = datasetManager.getConnection(resourceId)) {
@@ -454,7 +457,8 @@ public class RestQueryUtils {
     public static Response.ResponseBuilder handleConstructQuery(String queryString, Resource resourceId,
                                                                 String storeType, String mimeType, String fileName,
                                                                 Ontology ontology, boolean includeImports,
-                                                                boolean skolemize, ConnectionObjects connectionObjects) {
+                                                                boolean skolemize,
+                                                                ConnectionObjects connectionObjects) {
         RDFFormat format;
         String fileExtension;
 
@@ -463,25 +467,26 @@ public class RestQueryUtils {
         }
 
         switch (mimeType) {
-            case TURTLE_MIME_TYPE:
+            case TURTLE_MIME_TYPE -> {
                 fileExtension = "ttl";
                 format = RDFFormat.TURTLE;
-                break;
-            case LDJSON_MIME_TYPE:
+            }
+            case LDJSON_MIME_TYPE -> {
                 fileExtension = "jsonld";
                 format = RDFFormat.JSONLD;
-                break;
-            case RDFXML_MIME_TYPE:
+            }
+            case RDFXML_MIME_TYPE -> {
                 fileExtension = "rdf";
                 format = RDFFormat.RDFXML;
-                break;
-            default:
+            }
+            default -> {
                 fileExtension = "ttl";
                 String oldMimeType = mimeType;
                 mimeType = TURTLE_MIME_TYPE;
                 format = RDFFormat.TURTLE;
                 logger.debug(String.format("Invalid mimeType [%s] : defaulted to [%s]",
                         oldMimeType, mimeType));
+            }
         }
 
         StreamingOutput stream = getConstructStream(queryString, resourceId, storeType, format, ontology,

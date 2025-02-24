@@ -135,6 +135,7 @@ const workflowRecordJSONLD: JSONLDObject[] =  [{
 
 export { workflowRecordJSONLD };
 
+// TODO: Consider making this more complex now that chained actions are supported
 const workflowRDF: JSONLDObject[] = [
     {
         '@id': 'http://example.com/workflows/LEDControl',

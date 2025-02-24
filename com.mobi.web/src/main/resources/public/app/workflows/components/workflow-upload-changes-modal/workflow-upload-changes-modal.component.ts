@@ -27,6 +27,17 @@ import { HttpResponse } from '@angular/common/http';
 import { RESTError } from '../../../shared/models/RESTError.interface';
 import { WorkflowsManagerService } from '../../services/workflows-manager.service';
 
+/**
+ * @class workflows.WorkflowUploadChangesModalComponent
+ * 
+ * A component that creates content for a modal to upload changes to the Workflow Record represented by the provided
+ * record IRI, branch IRI, and commit IRI. The form in the modal contains a {@link shared.FileInputComponent} for the
+ * changes file. If the uploaded workflow is not valid, a {@link workflows.ShaclValidationReportComponent} is shown.
+ * 
+ * @param {string} recordId The IRI of the Workflow Record receiving the uploaded changes
+ * @param {string} branchId The IRI of the Branch receiving the uploaded changes
+ * @param {string} commitId The IRI of the Commit receiving the uploaded changes
+ */
 @Component({
   selector: 'app-workflow-upload-changes-modal',
   templateUrl: './workflow-upload-changes-modal.component.html'
@@ -68,7 +79,7 @@ export class WorkflowUploadChangesModalComponent {
       }
     );
   }
-  private _onError(errorObj: any): void {
+  private _onError(errorObj: string|RESTError): void {
     if (typeof errorObj === 'string') {
       this.error = {
         error: '',

@@ -45,7 +45,7 @@ module.exports = function (config) {
       restartOnFileChange: true,
       // Concurrency level
       // how many browser should be started simultaneous
-      concurrency: Infinity,
+      concurrency: 4,
       // Increased timeouts for connecting to the browser
       captureTimeout: 210000,
       browserDisconnectTolerance: 3,

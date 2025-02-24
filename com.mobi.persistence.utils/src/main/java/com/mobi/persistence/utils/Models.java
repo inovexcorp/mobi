@@ -71,7 +71,7 @@ import java.util.zip.ZipInputStream;
 public class Models {
     protected static final Map<String, List<RDFParser>> preferredExtensionParsers;
     protected static final List<RDFParser> rdfParsers;
-    public static final String ERROR_OBJECT_DELIMITER = ";;;";
+    public static final String ERROR_OBJECT_DELIMITER = "���";
     public static ValueFactory vf = new ValidatingValueFactory();
     private static ModelFactory mf = new DynamicModelFactory();
 

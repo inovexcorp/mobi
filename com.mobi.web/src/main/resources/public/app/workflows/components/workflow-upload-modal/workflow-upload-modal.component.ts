@@ -33,6 +33,17 @@ import { WorkflowSchema } from '../../models/workflow-record.interface';
 import { WorkflowRecordConfig } from '../../models/workflowRecordConfig.interface';
 import { RESTError } from '../../../shared/models/RESTError.interface';
 
+/**
+ * @class workflows.WorkflowUploadModalComponent
+ * 
+ * A component that creates content for a modal to create a new Workflow Record based off the provided uploaded File
+ * containing a Workflow definition. The form in the modal contains an input and textarea for the title and description
+ * of the record along with a {@link shared.KeywordSelectComponent} for record keywords. The modal is closed with an
+ * object containing a `status` key with a boolean indicating the success. If the record creation was successful, the
+ * object will also contain a `newWorkflow` key with a {@link WorkflowSchema} of the uploaded workflow.
+ * 
+ * @param {File} file A File object representing an uploaded file containing a workflow definition.
+ */
 @Component({
   selector: 'app-workflow-upload-modal',
   templateUrl: './workflow-upload-modal.component.html'})
@@ -104,8 +115,9 @@ export class WorkflowUploadModalComponent implements OnInit {
               canModifyMasterBranch: modifyPermission,
               canDeleteWorkflow: deletePermission.some(permission => permission.decision === 'Permit')
             };
-        })
-      )}),
+          })
+        );
+      }),
       catchError((error: RESTError) => {
         this.error = error;
         requestErrorFlag = true;

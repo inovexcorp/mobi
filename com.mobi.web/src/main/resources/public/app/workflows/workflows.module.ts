@@ -32,6 +32,7 @@ import { SharedModule } from '../shared/shared.module';
 import { ActionExecutionsTableComponent } from './components/action-executions-table/action-executions-table.component';
 import { ExecutionHistoryTableComponent } from './components/execution-history-table/execution-history-table.component';
 import { LogsPreviewComponent } from './components/logs-preview/logs-preview.component';
+import { ShaclValidationReportComponent } from './components/shacl-validation-report/shacl-validation-report.component';
 import { WorkflowControlsComponent } from './components/workflow-controls/workflow-controls.component';
 import { WorkflowsComponent } from './components/workflows/workflows.component';
 import { WorkflowDisplayComponent } from './components/workflow-display/workflow-display.component';
@@ -44,8 +45,9 @@ import { WorkflowsManagerService } from './services/workflows-manager.service';
 import { WorkflowsStateService } from './services/workflows-state.service';
 import { WorkflowCreationModalComponent } from './components/workflow-creation-modal/workflow-creation-modal.component';
 import { WorkflowUploadChangesModalComponent } from './components/workflow-upload-changes-modal/workflow-upload-changes-modal.component';
-import { WorkflowAddConfigurationComponent } from './components/workflow-add-configuation/workflow-add-configuration.component';
+import { WorkflowAddConfigurationComponent } from './components/workflow-add-configuration/workflow-add-configuration.component';
 import { WorkflowUploadModalComponent } from './components/workflow-upload-modal/workflow-upload-modal.component';
+import { WorkflowCommitErrorModalComponent } from './components/workflow-commit-error-modal/workflow-commit-error-modal.component';
 
 const routes: Routes = [{
   path: '', component: WorkflowsComponent,
@@ -62,6 +64,7 @@ const routes: Routes = [{
     ActionExecutionsTableComponent,
     ExecutionHistoryTableComponent,
     LogsPreviewComponent,
+    ShaclValidationReportComponent,
     WorkflowControlsComponent,
     WorkflowsComponent,
     WorkflowDisplayComponent,
@@ -74,7 +77,8 @@ const routes: Routes = [{
     WorkflowUploadChangesModalComponent,
     WorkflowUploadModalComponent,
     WorkflowAddConfigurationComponent,
-    WorkflowUploadChangesModalComponent
+    WorkflowUploadChangesModalComponent,
+    WorkflowCommitErrorModalComponent
   ],
   imports: [
     CommonModule,

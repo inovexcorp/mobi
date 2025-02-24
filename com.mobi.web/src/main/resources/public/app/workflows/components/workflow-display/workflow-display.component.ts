@@ -33,22 +33,20 @@ import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { v4 } from 'uuid';
 // local imports
-import { EdgeData, Element, EntityType, NodeData, NodeTypeStyle } from '../../models/workflow-display.interface';
-import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
-import { WORKFLOWS } from '../../../prefixes';
-import { getBeautifulIRI } from '../../../shared/utility';
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
-import {
-  WorkflowPropertyOverlayComponent
-} from '../workflow-property-overlay-component/workflow-property-overlay.component';
-import { WorkflowAddConfigurationComponent } from '../workflow-add-configuation/workflow-add-configuration.component';
-import { ModalConfig, ModalType } from '../../models/modal-config.interface';
 import { Difference } from '../../../shared/models/difference.class';
-import { WorkflowSHACLDefinitions } from '../../models/workflow-shacl-definitions.interface';
-import { WorkflowsStateService } from '../../services/workflows-state.service';
+import { EdgeData, Element, EntityType, NodeData, NodeTypeStyle } from '../../models/workflow-display.interface';
+import { getBeautifulIRI } from '../../../shared/utility';
 import { JSONLDId } from '../../../shared/models/JSONLDId.interface';
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { ModalConfig, ModalType } from '../../models/modal-config.interface';
 import { ToastService } from '../../../shared/services/toast.service';
+import { WORKFLOWS } from '../../../prefixes';
+import { WorkflowAddConfigurationComponent } from '../workflow-add-configuration/workflow-add-configuration.component';
+import { WorkflowPropertyOverlayComponent } from '../workflow-property-overlay-component/workflow-property-overlay.component';
+import { WorkflowSHACLDefinitions } from '../../models/workflow-shacl-definitions.interface';
 import { WorkflowsManagerService } from '../../services/workflows-manager.service';
+import { WorkflowsStateService } from '../../services/workflows-state.service';
 
 // Setup cytoscape extensions
 cytoscape.use(dagre);
@@ -120,7 +118,7 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
     [EntityType.ACTION]: [this.buildWorkflowsIRI('Action')],
     [EntityType.TRIGGER]: [this.buildWorkflowsIRI('Trigger'), this.buildWorkflowsIRI('EventTrigger')]
   };
-  public readonly activityKeyMap: Record<EntityType.TRIGGER | EntityType.ACTION, TypeI > = {
+  public readonly entityKeyMap: Record<EntityType.TRIGGER | EntityType.ACTION, TypeI > = {
     trigger: { key: 'hasTrigger', id: this.buildWorkflowsIRI('Trigger'), shaclKey: 'triggers' },
     action: { key: 'hasAction', id: this.buildWorkflowsIRI('Action'), shaclKey: 'actions' }
   };
@@ -157,6 +155,15 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
       this._handleEditMode();
     }
   }
+  ngAfterContentChecked(): void {
+    //Used when the canvas resizes to keep things from looking choppy and to make sure all elements are on screen.
+    this.cyChart.animate(
+        {duration: 150},
+        {fit: {
+          padding: 50}
+        }
+    );
+  }
   /**
    * Retrieves workflow data.
    */
@@ -170,53 +177,54 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
    * Returns an array of elements that match the given node key type in the data array.
    *
    * @param {JSONLDObject[]} workflowData - The JSON-LD of the Workflow.
-   * @param {string} nodeKey - The key representing the node type in the JSON-LD objects.
-   * @return {Element[]} - An array of elements that match the given node key type.
+   * @param {EntityType} entityType - The type of entities to create nodes for.
+   * @return {{ nodes: Element[], edges: Element[] }} - An object containing an array of node elements that match the
+   *  given node key type and an array of outgoing edge elements from the generated nodes.
    */
-  getNodesByType(workflowData: JSONLDObject[], nodeKey: string): Element[] {
-    const workflowObject = this._findWorkflowObject(workflowData);
-    const nodeIRIs: JSONLDId[] = workflowObject[this.buildWorkflowsIRI(nodeKey)];
-    if (nodeKey === this.activityKeyMap.trigger.key && !nodeIRIs) {
-      return [this._createNode(this.getDefaultTrigger())];
-    }
-    if (nodeIRIs && nodeIRIs.length > 0) {
-      return this.buildNodes(nodeIRIs, workflowData);
-    } else {
-      return [];
-    }
-  }
-  /**
-   * Builds an array of nodes based on the given list of JSON-LD ID objects and workflow JSON-LD.
-   *
-   * @param {JSONLDObject} context - The context object.
-   * @param {JSONLDObject[]} workflowData - The array of workflow objects.
-   * @return {Element[]} The array of nodes built from the context and workflow.
-   */
-  buildNodes(context: JSONLDId[], workflowData: JSONLDObject[]) : Element[] {
-    const nodes: Element[] = [];
-    context.forEach(idObj => {
-      const entity: JSONLDObject = workflowData.find(obj => obj['@id'] === idObj['@id']);
-      if (entity) {
-        nodes.push(this._createNode(entity));
+  getNodesAndEdgesByType(workflowData: JSONLDObject[], entityType: EntityType): { nodes: Element[], edges: Element[] } {
+    let entities = workflowData.filter(obj => obj['@type'].includes(this.entityKeyMap[entityType].id));
+    if (entityType === EntityType.TRIGGER) {
+      if (entities.length > 1) {
+        console.error('More than one trigger node found unexpectedly');
+        return { nodes: [], edges: [] };
+      } else if (!entities.length) {
+        entities = [this.getDefaultTrigger()];
       }
+    }
+    let edges: Element[] = [];
+    const nodes = entities.map(entity => {
+      // Make this first to account for trigger nodes
+      const node = this._createNode(entity);
+      const childIRIs = entityType === EntityType.TRIGGER ?
+        this.getEntryActionIRIs(workflowData) :
+        this.getChildActionIRIs(entity);
+      const childEdges = childIRIs.map(childActionIRI => this._buildNodeEdge(node.data.id, childActionIRI));
+      edges = edges.concat(childEdges);
+      return node;
     });
-    return nodes;
+    return { nodes, edges };
   }
   /**
-   * Build edges based on provided triggers and actions.
-   *
-   * @param {Element[]} triggers - An array of trigger elements.
-   * @param {Element[]} actions - An object containing action elements with their respective keys.
-   * @returns {Element[]} - An array of edge elements.
+   * Retrieves the IRIs of the "entry" Actions of the Workflow represented by the provided JSON-LD array. An "entry"
+   * Action is one related directly to the w:Workflow object.
+   * 
+   * @param {JSONLDObject[]} workflowData - The Workflow to retrieve "entry" actions from.
+   * @returns {string[]} - An array of Action IRI strings.
    */
-  buildEdges(triggers: Element[], actions: Element[]): Element[] {
-    const edges: Element[] = [];
-    // Assume there is only one trigger element (prescribed by SHACL validation in backend)
-    const trigger = triggers[0];
-    for (const action of actions) {
-      edges.push(this._buildNodeEdges(trigger.data.id, action.data.id));
-    }
-    return edges;
+  getEntryActionIRIs(workflowData: JSONLDObject[]): string[] {
+    const workflowObject = this._findWorkflowObject(workflowData);
+    const nodeIRIs: JSONLDId[] = workflowObject[this.buildWorkflowsIRI(this.entityKeyMap.action.key)];
+    return nodeIRIs ? nodeIRIs.map(obj => obj['@id']) : [];
+  }
+  /**
+   * Retrieves the IRIs of all the child Actions of the provided Action JSON-LD.
+   * 
+   * @param {JSONLDObject} action - The Action JSON-LD from which to retrieve child Actions.
+   * @returns {string[]} - An array of Action IRI strings.
+   */
+  getChildActionIRIs(action: JSONLDObject): string[] {
+    const childActionIdObjs: JSONLDId[] = action[this.buildWorkflowsIRI('hasChildAction')];
+    return childActionIdObjs ? childActionIdObjs.map(obj => obj['@id']) : [];
   }
   /**
    * Builds an IRI by appending a given string to the constant WORKFLOWS namespace.
@@ -360,8 +368,8 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
     const isEditMode = mode === ModalType.EDIT;
     // If in ADD mode, only can add Actions
     const entityType: EntityType = isEditMode ? elem.data('entityType') : EntityType.ACTION;
-    const objectKey = this.buildWorkflowsIRI(this.activityKeyMap[entityType].key);
-    const shaclKey = this.activityKeyMap[entityType].shaclKey;
+    const objectKey = this.buildWorkflowsIRI(this.entityKeyMap[entityType].key);
+    const shaclKey = this.entityKeyMap[entityType].shaclKey;
     const wfDef = this._findWorkflowObject(this._editedResource);
 
     const objectConfig: ModalConfig = {
@@ -386,22 +394,14 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
    * Creates a Difference representing deleting a configuration based on the given ID and entity type string.
    *
    * @param {string} id - The ID of the configuration to be deleted.
-   * @param {string} entityType - The type of entity being deleted
    * @returns {Difference} A difference containing the deleted configuration triples
    */
-  getDeleteEntityDifference(id: string, entityType: EntityType): Observable<Difference> {
-    const objectKey = this.buildWorkflowsIRI(this.activityKeyMap[entityType].key);
-
-    const workflowDefinition = this._findWorkflowObject(this._editedResource);
+  getDeleteEntityDifference(id: string): Observable<Difference> {
     const entity = id === this._TRIGGER_NODE_ID ? this._getTriggerJSONLD(this._editedResource) : find(this._editedResource, {'@id': id});
-    const removed = {
-      '@id': workflowDefinition['@id'],
-      [objectKey]: [{'@id': entity['@id']}]
-    };
+    const entityAndReferencedObjects = this._collectEntityAndReferencedObjects(entity, this._editedResource);
+    const referenceTriples = this._collectReferenceTriples(entity, this._editedResource);
 
-    const allDeletions = this._collectEntityAndReferencedObjects(entity, this._editedResource);
-    allDeletions.push(removed);
-    const diff: Difference = new Difference([], allDeletions);
+    const diff: Difference = new Difference([], [...entityAndReferencedObjects, ...referenceTriples]);
     return this._wms.updateWorkflowConfiguration(diff, this.recordId).pipe(
       map(() => diff)
     );
@@ -424,7 +424,6 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
       this._editedResource = [];
     }
   }
-
   /**
    * Construct the graph data for visualization.
    * @private
@@ -433,11 +432,11 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
    * @return {{ nodes: Element[], edges: Element[] } } - The graph data containing nodes and edges.
    */
   private _buildGraphData(workflowData: JSONLDObject[]): { nodes: Element[], edges: Element[] } {
-    const triggers: Element[] = this.getNodesByType(workflowData, this.activityKeyMap.trigger.key);
-    const actions: Element[] = this.getNodesByType(workflowData, this.activityKeyMap.action.key);
+    const triggers = this.getNodesAndEdgesByType(workflowData, EntityType.TRIGGER);
+    const actions = this.getNodesAndEdgesByType(workflowData, EntityType.ACTION);
     return {
-      nodes: [...triggers, ...actions],
-      edges: [...this.buildEdges(triggers, actions)]
+      nodes: [...triggers.nodes, ...actions.nodes],
+      edges: [...triggers.edges, ...actions.edges]
     };
   }
   /**
@@ -712,8 +711,8 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
     }];
   }
   /**
-   * Collects and returns an array of the provided workflow entity and all the other obejcts it references found in the
-   * provided full resource JSON-LD array.
+   * Collects and returns an array of the provided workflow entity and all the other objects it references found in the
+   * provided full resource JSON-LD array. Does not included referenced w:Trigger, w:Action, or w:Workflow objects.
    * @private
    * 
    * @param {JSONLDObject} entity The starting JSON-LD object to search with
@@ -727,13 +726,52 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
         if (propVal['@value']) {
           return 1 === 1;
         }
-        const referencedObject = resource.find(obj => obj['@id'] === propVal['@id']);
+        const referencedObject = resource.find(obj => {
+          const hasId = obj['@id'] === propVal['@id'];
+          const isTrigger = obj['@type'].includes(this.entityKeyMap.trigger.id);
+          const isAction = obj['@type'].includes(this.entityKeyMap.action.id);
+          const isWorkflow = obj['@type'].includes(this.buildWorkflowsIRI('Workflow'));
+          // Don't want to collect main workflow entities since this is used for deletions
+          return hasId && !isTrigger && !isAction && !isWorkflow;
+        });
         if (referencedObject) {
           fullArray.push(referencedObject);
         }
       });
     });
     return fullArray;
+  }
+  /**
+   * Collects and returns an array of JSON-LD objects representing the triples that reference the provided JSON-LD
+   * entity from the provided JSON-LD array of objects. Does not include the full JSON-LD of a referencing object, only
+   * the property that referenced the target object.
+   * @private
+   * 
+   * @param {JSONLDObject} entity - The target entity to search for references to.
+   * @param {JSONLDObject} resource - A JSON-LD array to search for references in.
+   * @returns {JSONLDObject[]} - A JSON-LD array of objects representing triples.
+   */
+  private _collectReferenceTriples(entity: JSONLDObject, resource: JSONLDObject[]): JSONLDObject[] {
+    const triples: JSONLDObject[] = [];
+    resource.forEach(obj => {
+      let tripleObj;
+      Object.keys(obj).filter(key => key !== '@id' && key !== '@type').forEach(prop => {
+        obj[prop].some(propVal => {
+          if (propVal['@value']) {
+            return 1 === 1;
+          }
+          if (propVal['@id'] === entity['@id']) {
+            tripleObj = tripleObj || triples.find(obj => obj['@id'] === obj['@id']);
+            if (!tripleObj) {
+              tripleObj = { '@id': obj['@id'] };
+              triples.push(tripleObj);
+            }
+            tripleObj[prop] = [{ '@id': entity['@id'] }];
+          }
+        });
+      });
+    });
+    return triples;
   }
   /**
    * Opens a dialog with the given data.
@@ -833,8 +871,8 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
         // Update editedResource
         this._updateEntityWithAdditions(addedStmts, workflowEntity);
         // Update graph node if root entity (trigger/action) and type was changed
-        const isRootEntity = workflowEntity['@type'].includes(this.activityKeyMap.trigger.id) 
-          || workflowEntity['@type'].includes(this.activityKeyMap.action.id);
+        const isRootEntity = workflowEntity['@type'].includes(this.entityKeyMap.trigger.id) 
+          || workflowEntity['@type'].includes(this.entityKeyMap.action.id);
         if (addedStmts['@type'] && isRootEntity) {
           const typeInfo = this._getTypeInformation(workflowEntity['@type']);
           this._updateNode(workflowEntity['@id'], typeInfo);
@@ -844,7 +882,7 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
         this._editedResource.push(addedStmts);
         // Update graph node if root entity (trigger/action)
         const types = this._getDefinitionTypes(addedStmts);
-        if (types.includes(this.activityKeyMap.trigger.id) || types.includes(this.activityKeyMap.action.id)) {
+        if (types.includes(this.entityKeyMap.trigger.id) || types.includes(this.entityKeyMap.action.id)) {
           const typeInfo = this._getTypeInformation(types);
           if (typeInfo.entityType === 'trigger') {
             this._updateNode(addedStmts['@id'], typeInfo);
@@ -888,9 +926,9 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
   private _updateNode(id: string, typeInfo: TypeInfo): void {
     let node;
     if (typeInfo.entityType === 'trigger') {
-       node = this._getTriggerFromChart();
+      node = this._getTriggerFromChart();
     } else {
-       node = this.cyChart.getElementById(id);
+      node = this.cyChart.getElementById(id);
     }
 
     if (node && node.data().name !== typeInfo.name) {
@@ -950,7 +988,7 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
     const node = this._createNode(entity);
     this.cyChart.add(node);
     const trigger = this._getTriggerFromChart();
-    const edge = this._buildNodeEdges(trigger.data().id, node.data.id);
+    const edge = this._buildNodeEdge(trigger.data().id, node.data.id);
     this.cyChart.add(edge);
     this.cyChart.layout(this.cyLayout).run();
   }
@@ -962,7 +1000,7 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
    * @param {string} targetId - The target node ID.
    * @returns {Element} - The built node edge.
    */
-  private _buildNodeEdges(sourceId: string, targetId: string): Element {
+  private _buildNodeEdge(sourceId: string, targetId: string): Element {
     const edgeData: EdgeData = {
       id: this._buildEdgeId(sourceId, targetId),
       name: '',
@@ -1020,16 +1058,6 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
    * @returns {JSONLDObject} The Trigger JSON-LD object if found
    */
   private _getTriggerJSONLD(resource: JSONLDObject[]): JSONLDObject {
-    return resource.find(obj => obj['@type'].includes(this.activityKeyMap.trigger.id));
-  }
-
-  ngAfterContentChecked(): void {
-    //Used when the canvas resizes to keep things from looking choppy and to make sure all elements are on screen.
-    this.cyChart.animate(
-        {duration: 150},
-        {fit: {
-          padding: 50}
-        }
-    );
+    return resource.find(obj => obj['@type'].includes(this.entityKeyMap.trigger.id));
   }
 }
