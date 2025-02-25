@@ -33,18 +33,19 @@ import { MockComponent, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 
 import { cleanStylesFromDOM } from '../../../../../public/test/ts/Shared';
+import { ONTOLOGY_STORE_TYPE } from '../../../constants';
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
-import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
-import { SerializationSelectComponent } from '../../../shared/components/serializationSelect/serializationSelect.component';
 import { PreviewBlockComponent } from './previewBlock.component';
+import { SerializationSelectComponent } from '../../../shared/components/serializationSelect/serializationSelect.component';
+import { SparqlManagerService } from '../../../shared/services/sparqlManager.service';
 
 describe('Preview Block component', function() {
     let component: PreviewBlockComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<PreviewBlockComponent>;
     let ontologyStateStub: jasmine.SpyObj<OntologyStateService>;
-    let ontologyManagerStub: jasmine.SpyObj<OntologyManagerService>;
+    let sparqlManagerStub: jasmine.SpyObj<SparqlManagerService>;
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
@@ -62,7 +63,7 @@ describe('Preview Block component', function() {
             ],
             providers: [
                 MockProvider(OntologyStateService),
-                MockProvider(OntologyManagerService)
+                MockProvider(SparqlManagerService)
             ]
         }).compileComponents();
 
@@ -70,7 +71,7 @@ describe('Preview Block component', function() {
         component = fixture.componentInstance;
         element = fixture.debugElement;
         ontologyStateStub = TestBed.inject(OntologyStateService) as jasmine.SpyObj<OntologyStateService>;
-        ontologyManagerStub = TestBed.inject(OntologyManagerService) as jasmine.SpyObj<OntologyManagerService>;
+        sparqlManagerStub = TestBed.inject(SparqlManagerService) as jasmine.SpyObj<SparqlManagerService>;
 
         ontologyStateStub.listItem = new OntologyListItem();
     });
@@ -81,7 +82,7 @@ describe('Preview Block component', function() {
         element = null;
         fixture = null;
         ontologyStateStub = null;
-        ontologyManagerStub = null;
+        sparqlManagerStub = null;
     });
 
     it('should initialize correctly', fakeAsync(function() {
@@ -137,22 +138,22 @@ describe('Preview Block component', function() {
             });
             it('unless an error occurs', fakeAsync(function() {
                 component.activePage = { serialization: 'test' };
-                ontologyManagerStub.postQueryResults.and.returnValue(throwError('Error'));
+                sparqlManagerStub.postQuery.and.returnValue(throwError('Error'));
                 component.setPreview();
                 tick();
-                expect(ontologyManagerStub.postQueryResults).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, ontologyStateStub.listItem.versionedRdfRecord.branchId, ontologyStateStub.listItem.versionedRdfRecord.commitId, 'CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o . } LIMIT 5000', 'test', false, true);
+                expect(sparqlManagerStub.postQuery).toHaveBeenCalledWith('CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o . } LIMIT 5000', ontologyStateStub.listItem.versionedRdfRecord.recordId, ONTOLOGY_STORE_TYPE, ontologyStateStub.listItem.versionedRdfRecord.branchId, ontologyStateStub.listItem.versionedRdfRecord.commitId, false, true, 'test');
                 expect(component.activePage.preview).toEqual('Error');
                 expect(component.activePageChange.emit).toHaveBeenCalledWith(component.activePage);
             }));
             describe('successfully', function() {
                 it('if the format is JSON-LD', fakeAsync(function() {
                     const jsonld = [{'@id': 'id'}];
-                    ontologyManagerStub.postQueryResults.and.returnValue(of(jsonld));
+                    sparqlManagerStub.postQuery.and.returnValue(of(JSON.stringify(jsonld, null, 2)));
                     component.activePage = {serialization: 'jsonld'};
                     component.setPreview();
                     tick();
                     expect(component.activePage.mode).toEqual('application/ld+json');
-                    expect(ontologyManagerStub.postQueryResults).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, ontologyStateStub.listItem.versionedRdfRecord.branchId, ontologyStateStub.listItem.versionedRdfRecord.commitId, 'CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o . } LIMIT 5000', 'jsonld', false, true);
+                    expect(sparqlManagerStub.postQuery).toHaveBeenCalledWith('CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o . } LIMIT 5000', ontologyStateStub.listItem.versionedRdfRecord.recordId, ONTOLOGY_STORE_TYPE, ontologyStateStub.listItem.versionedRdfRecord.branchId, ontologyStateStub.listItem.versionedRdfRecord.commitId, false, true, 'jsonld');
                     expect(component.activePage.preview).toEqual(JSON.stringify(jsonld, null, 2));
                     expect(component.activePageChange.emit).toHaveBeenCalledWith(component.activePage);
                 }));
@@ -167,12 +168,12 @@ describe('Preview Block component', function() {
                             mode: 'application/xml'
                         }
                     ].forEach(test => {
-                        ontologyManagerStub.postQueryResults.and.returnValue(of('Test'));
+                        sparqlManagerStub.postQuery.and.returnValue(of('Test'));
                         component.activePage = {serialization: test.serialization};
                         component.setPreview();
                         tick();
                         expect(component.activePage.mode).toEqual(test.mode);
-                        expect(ontologyManagerStub.postQueryResults).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, ontologyStateStub.listItem.versionedRdfRecord.branchId, ontologyStateStub.listItem.versionedRdfRecord.commitId, 'CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o . } LIMIT 5000', test.serialization, false, true);
+                        expect(sparqlManagerStub.postQuery).toHaveBeenCalledWith('CONSTRUCT { ?s ?p ?o } WHERE { ?s ?p ?o . } LIMIT 5000', ontologyStateStub.listItem.versionedRdfRecord.recordId, ONTOLOGY_STORE_TYPE, ontologyStateStub.listItem.versionedRdfRecord.branchId, ontologyStateStub.listItem.versionedRdfRecord.commitId, false, true, test.serialization);
                         expect(component.activePage.preview).toEqual('Test');
                         expect(component.activePageChange.emit).toHaveBeenCalledWith(component.activePage);
                     });

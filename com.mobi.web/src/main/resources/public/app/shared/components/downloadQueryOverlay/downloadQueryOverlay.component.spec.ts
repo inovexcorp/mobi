@@ -35,9 +35,9 @@ import { MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 
 import { cleanStylesFromDOM } from '../../../../test/ts/Shared';
-import { SparqlManagerService } from '../../services/sparqlManager.service';
 import { DownloadQueryOverlayComponent } from './downloadQueryOverlay.component';
-import { OntologyManagerService } from '../../services/ontologyManager.service';
+import { ONTOLOGY_STORE_TYPE, REPOSITORY_STORE_TYPE } from '../../../constants';
+import { SparqlManagerService } from '../../services/sparqlManager.service';
 
 describe('Download Query Overlay component', function() {
     let component: DownloadQueryOverlayComponent;
@@ -45,17 +45,16 @@ describe('Download Query Overlay component', function() {
     let fixture: ComponentFixture<DownloadQueryOverlayComponent>;
     let matDialogRef: jasmine.SpyObj<MatDialogRef<DownloadQueryOverlayComponent>>;
     let sparqlManagerStub: jasmine.SpyObj<SparqlManagerService>;
-    let ontologyManagerStub: jasmine.SpyObj<OntologyManagerService>;
-
     const error = 'error';
     let data;
 
     beforeEach(async () => {
         data = {
             query: 'SELECT * WHERE {?s ?p ?o}',
-            recordId: 'recordId',
+            resourceId: 'recordId',
             queryType: 'select',
-            isOntology: false
+            isOntology: false,
+            includeImports: false
         };
         await TestBed.configureTestingModule({
             imports: [
@@ -74,7 +73,6 @@ describe('Download Query Overlay component', function() {
             ],
             providers: [
                 MockProvider(SparqlManagerService),
-                MockProvider(OntologyManagerService),
                 { provide: MAT_DIALOG_DATA, useValue: data },
                 { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close'])}
             ]
@@ -87,7 +85,6 @@ describe('Download Query Overlay component', function() {
         element = fixture.debugElement;
         matDialogRef = TestBed.inject(MatDialogRef) as jasmine.SpyObj<MatDialogRef<DownloadQueryOverlayComponent>>;
         sparqlManagerStub = TestBed.inject(SparqlManagerService) as jasmine.SpyObj<SparqlManagerService>;
-        ontologyManagerStub = TestBed.inject(OntologyManagerService) as jasmine.SpyObj<OntologyManagerService>;
 
         component.data.queryType = 'select';
     });
@@ -99,7 +96,6 @@ describe('Download Query Overlay component', function() {
         fixture = null;
         matDialogRef = null;
         sparqlManagerStub = null;
-        ontologyManagerStub = null;
     });
 
     describe('should initialize correctly if the query type is', function() {
@@ -143,40 +139,42 @@ describe('Download Query Overlay component', function() {
             beforeEach(() => {
                 component.downloadResultsForm.controls.fileName.setValue('name');
                 component.downloadResultsForm.controls.fileType.setValue('csv');
+                data.storeType = REPOSITORY_STORE_TYPE;
             });
             describe('when it is not an ontology', function() {
                 it('unless an error occurs', fakeAsync(function() {
                     sparqlManagerStub.downloadResultsPost.and.returnValue(throwError(error));
                     component.download();
                     tick();
-                    expect(sparqlManagerStub.downloadResultsPost).toHaveBeenCalledWith(data.query, 'csv', 'name', data.recordId);
+                    expect(sparqlManagerStub.downloadResultsPost).toHaveBeenCalledWith(data.query, 'csv', 'name', data.resourceId, REPOSITORY_STORE_TYPE, '', data.commitId, data.includeImports, true);
                     expect(matDialogRef.close).toHaveBeenCalledWith(error);
                 }));
                 it('successfully', fakeAsync(function() {
                     sparqlManagerStub.downloadResultsPost.and.returnValue(of(null));
                     component.download();
                     tick();
-                    expect(sparqlManagerStub.downloadResultsPost).toHaveBeenCalledWith(data.query,'csv', 'name', data.recordId);
+                    expect(sparqlManagerStub.downloadResultsPost).toHaveBeenCalledWith(data.query, 'csv', 'name', data.resourceId, REPOSITORY_STORE_TYPE, '', data.commitId, data.includeImports, true);
                     expect(matDialogRef.close).toHaveBeenCalledWith();
                 }));
             });
-            describe('when it is not ontology', function() {
+            describe('when it is an ontology', function() {
                 beforeEach(() => {
                     data.isOntology = true;
                     data.commitId = 'commitId';
+                    data.storeType = ONTOLOGY_STORE_TYPE;
                 });
                 it('unless an error occurs', fakeAsync(function() {
-                    ontologyManagerStub.downloadResultsPost.and.returnValue(throwError(error));
+                    sparqlManagerStub.downloadResultsPost.and.returnValue(throwError(error));
                     component.download();
                     tick();
-                    expect(ontologyManagerStub.downloadResultsPost).toHaveBeenCalledWith(data.query, 'csv', 'name', data.recordId, data.commitId);
+                    expect(sparqlManagerStub.downloadResultsPost).toHaveBeenCalledWith(data.query, 'csv', 'name', data.resourceId, ONTOLOGY_STORE_TYPE, '', data.commitId, data.includeImports, true);
                     expect(matDialogRef.close).toHaveBeenCalledWith(error);
                 }));
                 it('successfully', fakeAsync(function() {
-                    ontologyManagerStub.downloadResultsPost.and.returnValue(of(null));
+                    sparqlManagerStub.downloadResultsPost.and.returnValue(of(null));
                     component.download();
                     tick();
-                    expect(ontologyManagerStub.downloadResultsPost).toHaveBeenCalledWith(data.query,'csv', 'name', data.recordId, data.commitId);
+                    expect(sparqlManagerStub.downloadResultsPost).toHaveBeenCalledWith(data.query, 'csv', 'name', data.resourceId, ONTOLOGY_STORE_TYPE, '', data.commitId, data.includeImports, true);
                     expect(matDialogRef.close).toHaveBeenCalledWith();
                 }));
             });

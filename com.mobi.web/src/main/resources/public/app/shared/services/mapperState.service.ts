@@ -40,32 +40,34 @@ import { catchError, map, switchMap } from 'rxjs/operators';
 import { CATALOG, DATA, DCTERMS, DELIM, OWL, RDFS } from '../../prefixes';
 import { Difference } from '../models/difference.class';
 
+import { beautify } from '../pipes/beautify.pipe';
+import { CatalogManagerService } from './catalogManager.service';
+import { DelimitedManagerService } from './delimitedManager.service';
+import {
+    getBeautifulIRI,
+    getDctermsValue,
+    getPropertyId,
+    getPropertyValue,
+    hasPropertyId,
+    removePropertyId,
+    setDctermsValue,
+    updateDctermsValue
+} from '../utility';
 import { JSONLDObject } from '../models/JSONLDObject.interface';
 import { Mapping } from '../models/mapping.class';
 import { MappingClass } from '../models/mappingClass.interface';
 import { MappingInvalidProp } from '../models/mappingInvalidProp.interface';
+import { MappingManagerService } from './mappingManager.service';
+import { MappingOntologyInfo } from '../models/mappingOntologyInfo.interface';
 import { MappingProperty } from '../models/mappingProperty.interface';
 import { MappingRecord } from '../models/mappingRecord.interface';
 import { MappingState } from '../models/mappingState.interface';
-import { PaginatedConfig } from '../models/paginatedConfig.interface';
-import { splitIRI } from '../pipes/splitIRI.pipe';
-import { CatalogManagerService } from './catalogManager.service';
-import { DelimitedManagerService } from './delimitedManager.service';
-import { MappingManagerService } from './mappingManager.service';
+import { ONTOLOGY_STORE_TYPE } from '../../constants';
 import { OntologyManagerService } from './ontologyManager.service';
+import { PaginatedConfig } from '../models/paginatedConfig.interface';
+import { SparqlManagerService } from './sparqlManager.service';
 import { SPARQLSelectResults } from '../models/sparqlSelectResults.interface';
-import { MappingOntologyInfo } from '../models/mappingOntologyInfo.interface';
-import { 
-    getBeautifulIRI, 
-    getDctermsValue, 
-    getPropertyId, 
-    getPropertyValue, 
-    hasPropertyId, 
-    removePropertyId, 
-    setDctermsValue, 
-    updateDctermsValue
-} from '../utility';
-import { beautify } from '../pipes/beautify.pipe';
+import { splitIRI } from '../pipes/splitIRI.pipe';
 
 /**
  * @class shared.MapperStateService
@@ -76,7 +78,7 @@ import { beautify } from '../pipes/beautify.pipe';
 @Injectable()
 export class MapperStateService {
     constructor(private mm: MappingManagerService, private cm: CatalogManagerService, private dm: DelimitedManagerService,
-        private om: OntologyManagerService) {}
+        private om: OntologyManagerService, private sm: SparqlManagerService) {}
 
     // Static step indexes
     selectMappingStep = 0;
@@ -997,8 +999,8 @@ export class MapperStateService {
      */
     retrieveClasses(ontInfo: MappingOntologyInfo, searchText: string, limit = 100, isTracked = false): Observable<MappingClass[]> {
         const query = this.CLASSES_QUERY.replace('%SEARCH%', searchText).replace('%LIMIT%', `${limit}`);
-        return this.om.postQueryResults(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId, query, 'application/json', 
-          true, false, isTracked)
+        return this.sm.postQuery(query, ontInfo.recordId, ONTOLOGY_STORE_TYPE, ontInfo.branchId, ontInfo.commitId, true,
+            false, 'application/json', isTracked)
             .pipe(map(response => {
                 if (!response) {
                   return [];
@@ -1022,7 +1024,8 @@ export class MapperStateService {
      */
     retrieveSpecificClasses(ontInfo: MappingOntologyInfo, iris: string[]): Observable<MappingClass[]> {
       const query = this.CLASS_QUERY.replace('%IRI%', iris.map(iri => `<${iri}>`).join(' '));
-      return this.om.postQueryResults(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId, query, 'application/json')
+        return this.sm.postQuery(query, ontInfo.recordId, ONTOLOGY_STORE_TYPE, ontInfo.branchId, ontInfo.commitId,
+            true, false)
           .pipe(map(response => {
               if (!response) {
                 return [];
@@ -1054,8 +1057,8 @@ export class MapperStateService {
             .replace('%CLASS%', classIri)
             .replace('%SEARCH%', searchText)
             .replace('%LIMIT%', `${limit}`);
-        return this.om.postQueryResults(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId, query, 'application/json', 
-          true, false, isTracked)
+        return this.sm.postQuery(query, ontInfo.recordId, ONTOLOGY_STORE_TYPE, ontInfo.branchId, ontInfo.commitId, true,
+            false, 'application/json', isTracked)
             .pipe(map(response => {
                 if (!response) {
                     return [];
@@ -1085,7 +1088,7 @@ export class MapperStateService {
     retrieveSpecificProps(ontInfo: MappingOntologyInfo, iris: {iri: string, type: string}[]): 
       Observable<MappingProperty[]> {
         const query = this.PROP_QUERY.replace('%IRI%', iris.map(iri => `(<${iri.iri}> <${iri.type}>)`).join(' '));
-        return this.om.postQueryResults(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId, query, 'application/json')
+        return this.sm.postQuery(query, ontInfo.recordId, ONTOLOGY_STORE_TYPE, ontInfo.branchId, ontInfo.commitId, true, false)
             .pipe(map(response => {
                 if (!response) {
                     return [];

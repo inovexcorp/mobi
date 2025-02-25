@@ -38,16 +38,17 @@ import {
 import { catchError, map, switchMap } from 'rxjs/operators';
 import { forkJoin, Observable, throwError, of } from 'rxjs';
 
-import { DatasetManagerService } from '../../../shared/services/datasetManager.service';
-import { SparqlManagerService } from '../../../shared/services/sparqlManager.service';
 import { DATASET, DCTERMS, OWL, RDF, RDFS, XSD } from '../../../prefixes';
+import { DATASET_STORE_TYPE } from '../../../constants';
+import { DatasetManagerService } from '../../../shared/services/datasetManager.service';
+import { getInputType, getPattern, getPropertyId, getPropertyValue } from '../../../shared/utility';
+import { JSONLDId } from '../../../shared/models/JSONLDId.interface';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { JSONLDValue } from '../../../shared/models/JSONLDValue.interface';
-import { SPARQLSelectResults } from '../../../shared/models/sparqlSelectResults.interface';
-import { PropertyDetails } from '../../models/propertyDetails.interface';
-import { JSONLDId } from '../../../shared/models/JSONLDId.interface';
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
-import { getInputType, getPattern, getPropertyId, getPropertyValue } from '../../../shared/utility';
+import { PropertyDetails } from '../../models/propertyDetails.interface';
+import { SparqlManagerService } from '../../../shared/services/sparqlManager.service';
+import { SPARQLSelectResults } from '../../../shared/models/sparqlSelectResults.interface';
 
 /**
  * @class explore.ExploreUtilsService
@@ -100,7 +101,7 @@ export class ExploreUtilsService {
                 'dcterms': DCTERMS
             }
         });
-        return this.sparql.query(query, datasetRecordIRI, 'dataset-record')
+        return this.sparql.query(query, datasetRecordIRI, DATASET_STORE_TYPE)
             .pipe(map((data: string| SPARQLSelectResults) => data as SPARQLSelectResults));
     }
     /**

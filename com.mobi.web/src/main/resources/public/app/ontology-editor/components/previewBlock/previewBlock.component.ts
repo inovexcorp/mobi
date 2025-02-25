@@ -23,8 +23,9 @@
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
 
+import { ONTOLOGY_STORE_TYPE } from '../../../constants';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
-import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
+import { SparqlManagerService } from '../../../shared/services/sparqlManager.service';
 
 /**
  * @class ontology-editor.PreviewBlockComponent
@@ -55,7 +56,7 @@ export class PreviewBlockComponent implements OnInit, OnChanges {
         serialization: ['']
     });
 
-    constructor(private fb: UntypedFormBuilder, public os: OntologyStateService, private om: OntologyManagerService) {}
+    constructor(private fb: UntypedFormBuilder, public os: OntologyStateService, private sm: SparqlManagerService) {}
 
     ngOnInit(): void {
         this.previewForm.controls.serialization.setValue(this.activePage.serialization);
@@ -69,13 +70,14 @@ export class PreviewBlockComponent implements OnInit, OnChanges {
     }
     setPreview(): void {
         this._setMode(this.activePage.serialization);
-        this.om.postQueryResults(this.os.listItem.versionedRdfRecord.recordId, 
-          this.os.listItem.versionedRdfRecord.branchId, 
-          this.os.listItem.versionedRdfRecord.commitId, 
-          this.previewQuery, 
-          this.activePage.serialization, 
-          false, 
-          true)
+        this.sm.postQuery(this.previewQuery,
+            this.os.listItem.versionedRdfRecord.recordId,
+            ONTOLOGY_STORE_TYPE,
+            this.os.listItem.versionedRdfRecord.branchId,
+            this.os.listItem.versionedRdfRecord.commitId,
+            false,
+            true,
+            this.activePage.serialization)
             .subscribe(ontology => {
                 this.activePage.preview = typeof ontology === 'string' ? ontology : JSON.stringify(ontology, null, 2);
                 this.activePageChange.emit(this.activePage);

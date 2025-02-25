@@ -40,3 +40,9 @@ export const REST_PREFIX = '/mobirest/';
 export const ADMIN_USER_IRI = 'http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997';
 
 export const INDENT = 1.28571429;
+
+export const REPOSITORY_STORE_TYPE = 'repository';
+
+export const DATASET_STORE_TYPE = 'dataset-record';
+
+export const ONTOLOGY_STORE_TYPE = 'ontology-record';

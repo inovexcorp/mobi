@@ -28,7 +28,6 @@ import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { Observable } from 'rxjs';
 
 import { SparqlManagerService } from '../../services/sparqlManager.service';
-import { OntologyManagerService } from '../../services/ontologyManager.service';
 
 interface FormatOption {
     id: string,
@@ -64,8 +63,9 @@ export class DownloadQueryOverlayComponent implements OnInit {
     })
 
     constructor(private dialogRef: MatDialogRef<DownloadQueryOverlayComponent>, private fb: UntypedFormBuilder,
-        @Inject(MAT_DIALOG_DATA) public data: {query: string, queryType?: string, recordId?: string, commitId?: string, isOntology: boolean},
-        private sm: SparqlManagerService, private om: OntologyManagerService) {}
+        @Inject(MAT_DIALOG_DATA) public data: {query: string, queryType?: string, storeType: string, resourceId: string,
+            commitId?: string, includeImports: boolean, isOntology: boolean},
+        private sm: SparqlManagerService) {}
     
     ngOnInit(): void {
         this.queryType = this.data.queryType || 'select';
@@ -78,12 +78,8 @@ export class DownloadQueryOverlayComponent implements OnInit {
 
         const fileType = this.downloadResultsForm.controls.fileType.value;
         const fileName = this.downloadResultsForm.controls.fileName.value;
-        let request: Observable<ArrayBuffer>;
-        if (this.data.isOntology) {
-            request = this.om.downloadResultsPost(this.data.query, fileType, fileName, this.data.recordId, this.data.commitId);
-        } else {
-            request = this.sm.downloadResultsPost(this.data.query, fileType, fileName, this.data.recordId);
-        }
+        let request: Observable<ArrayBuffer> = this.sm.downloadResultsPost(this.data.query, fileType, fileName,
+            this.data.resourceId, this.data.storeType, '', this.data.commitId, this.data.includeImports, true);
         request.subscribe({
             next: () => {
                 this.dialogRef.close();
