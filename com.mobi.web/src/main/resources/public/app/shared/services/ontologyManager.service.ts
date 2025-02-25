@@ -20,58 +20,58 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { 
-    endsWith, 
-    get, 
-    indexOf, 
-    forEach, 
-    some, 
-    includes, 
-    find, 
-    isMatch, 
-    has, 
-    filter, 
-    intersection, 
-    concat, 
+import {
+    concat,
+    endsWith,
+    filter,
+    find,
+    forEach,
+    get,
+    has,
+    includes,
+    indexOf,
+    intersection,
+    isMatch,
+    some,
     uniq
 } from 'lodash';
 import { Injectable } from '@angular/core';
 import * as JSZip from 'jszip';
-import { from, Observable, throwError, of } from 'rxjs';
+import { from, Observable, of, throwError } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
 import { HttpClient, HttpErrorResponse, HttpHeaders, HttpResponse } from '@angular/common/http';
 
 import { CatalogManagerService } from './catalogManager.service';
-import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
-import { REST_PREFIX } from '../../constants';
-import { DC, ONTOLOGYEDITOR, OWL, POLICY, RDFS, SKOS, SKOSXL } from '../../prefixes';
-import { VocabularyStuff } from '../models/vocabularyStuff.interface';
-import { OntologyStuff } from '../models/ontologyStuff.interface';
-import { PropertyToRanges } from '../models/propertyToRanges.interface';
-import { IriList } from '../models/iriList.interface';
-import { HierarchyResponse } from '../models/hierarchyResponse.interface';
-import { JSONLDObject } from '../models/JSONLDObject.interface';
-import { OntologyDocument } from '../models/ontologyDocument.interface';
-import { EntityNames } from '../models/entityNames.interface';
-import { RESTError } from '../models/RESTError.interface';
-import { GroupQueryResults } from '../models/groupQueryResults.interface';
-import { SPARQLSelectBinding, SPARQLSelectResults } from '../models/sparqlSelectResults.interface';
-import { 
-    createHttpParams, 
-    entityNameProps, 
-    getDctermsValue, 
-    getEntityName, 
-    getErrorDataObject, 
-    getPropertyValue, 
-    handleError, 
-    handleErrorObject, 
+import {
+    createHttpParams,
+    entityNameProps,
+    getDctermsValue,
+    getEntityName,
+    getErrorDataObject,
+    getPropertyValue,
+    handleError,
+    handleErrorObject,
     isBlankNode
 } from '../utility';
+import { DC, ONTOLOGYEDITOR, OWL, POLICY, RDFS, SKOS, SKOSXL } from '../../prefixes';
+import { EntityNames } from '../models/entityNames.interface';
+import { HierarchyResponse } from '../models/hierarchyResponse.interface';
+import { IriList } from '../models/iriList.interface';
+import { JSONLDObject } from '../models/JSONLDObject.interface';
 import { OBJ_PROPERTY_VALUES_QUERY } from '../../queries';
-import { RdfUpload } from '../models/rdfUpload.interface';
-import { VersionedRdfUploadResponse } from '../models/versionedRdfUploadResponse.interface';
-import { XACMLRequest } from '../models/XACMLRequest.interface';
+import { ONTOLOGY_STORE_TYPE, REST_PREFIX } from '../../constants';
+import { OntologyDocument } from '../models/ontologyDocument.interface';
+import { OntologyStuff } from '../models/ontologyStuff.interface';
 import { PolicyEnforcementService } from './policyEnforcement.service';
+import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
+import { PropertyToRanges } from '../models/propertyToRanges.interface';
+import { RdfUpload } from '../models/rdfUpload.interface';
+import { RESTError } from '../models/RESTError.interface';
+import { SparqlManagerService } from './sparqlManager.service';
+import { SPARQLSelectBinding, SPARQLSelectResults } from '../models/sparqlSelectResults.interface';
+import { VersionedRdfUploadResponse } from '../models/versionedRdfUploadResponse.interface';
+import { VocabularyStuff } from '../models/vocabularyStuff.interface';
+import { XACMLRequest } from '../models/XACMLRequest.interface';
 
 /**
  * @class shared.OntologyManagerService
@@ -86,10 +86,11 @@ export class OntologyManagerService {
     prefix = `${REST_PREFIX}ontologies`;
 
     constructor(
-        private http: HttpClient, 
-        private cm: CatalogManagerService,
-        private pep: PolicyEnforcementService,
-        private spinnerSrv: ProgressSpinnerService) {}
+        private _http: HttpClient,
+        private _cm: CatalogManagerService,
+        private _sm: SparqlManagerService,
+        private _pep: PolicyEnforcementService,
+        private _spinnerSrv: ProgressSpinnerService) {}
 
     /**
      * 'entityNameProps' holds an array of properties used to determine an entity name.
@@ -105,7 +106,7 @@ export class OntologyManagerService {
      * Initializes the `catalogId` variable.
      */
     initialize(): void {
-        this.catalogId = get(this.cm.localCatalog, '@id', '');
+        this.catalogId = get(this._cm.localCatalog, '@id', '');
     }
     /**
      * Calls the POST /mobirest/ontologies endpoint which uploads an ontology to the Mobi repository
@@ -152,8 +153,8 @@ export class OntologyManagerService {
                     fd.append('description', config.description);
                 }
                 forEach(config.keywords, word => fd.append('keywords', word));
-                const request = this.http.post<{ontologyId: string, recordId: string, branchId: string, commitId: string}>(this.prefix, fd);
-                return this.spinnerSrv.trackedRequest(request, isTracked).pipe(catchError(handleErrorObject));
+                const request = this._http.post<{ontologyId: string, recordId: string, branchId: string, commitId: string}>(this.prefix, fd);
+                return this._spinnerSrv.trackedRequest(request, isTracked).pipe(catchError(handleErrorObject));
             })
         );
     }
@@ -177,7 +178,7 @@ export class OntologyManagerService {
             branchId,
             commitId
         };
-        return this.spinnerSrv.track(this.http.put(`${this.prefix}/${encodeURIComponent(recordId)}`, fd, {
+        return this._spinnerSrv.track(this._http.put(`${this.prefix}/${encodeURIComponent(recordId)}`, fd, {
             observe: 'response',
             headers,
             params: createHttpParams(params)
@@ -223,7 +224,7 @@ export class OntologyManagerService {
         };
         let headers = new HttpHeaders();
         headers = headers.append('Accept', rdfFormat === 'jsonld' ? 'application/json' : 'text/plain');
-        return this.spinnerSrv.track(this.http.get(`${this.prefix}/${encodeURIComponent(recordId)}`, {
+        return this._spinnerSrv.track(this._http.get(`${this.prefix}/${encodeURIComponent(recordId)}`, {
             responseType: 'text',
             observe: 'response',
             headers,
@@ -265,8 +266,8 @@ export class OntologyManagerService {
             resourceId: recordId,
             actionId: `${POLICY}Read`
         };
-        this.pep.evaluateRequest(readRequest).pipe(
-            map(currentPermissions => currentPermissions === this.pep.permit)
+        this._pep.evaluateRequest(readRequest).pipe(
+            map(currentPermissions => currentPermissions === this._pep.permit)
         ).subscribe((isPermit) => {
             if (isPermit) {
                 window.open(url);
@@ -281,7 +282,7 @@ export class OntologyManagerService {
      */
     clearCache(recordId: string, commitId: string): Observable<void> {
       const params = createHttpParams({ commitId });
-      return this.spinnerSrv.track(this.http.delete(`${this.prefix}/${encodeURIComponent(recordId)}/cache`, { params }))
+      return this._spinnerSrv.track(this._http.delete(`${this.prefix}/${encodeURIComponent(recordId)}/cache`, { params }))
         .pipe(catchError(handleError), map(() => {}));
     }
     /**
@@ -293,7 +294,7 @@ export class OntologyManagerService {
      * @return {Observable} HTTP OK unless there was an error.
      */
     deleteOntologyBranch(recordId: string, branchId: string): Observable<void> {
-        return this.spinnerSrv.track(this.http.delete(`${this.prefix}/${encodeURIComponent(recordId)}/branches/${encodeURIComponent(branchId)}`))
+        return this._spinnerSrv.track(this._http.delete(`${this.prefix}/${encodeURIComponent(recordId)}/branches/${encodeURIComponent(branchId)}`))
             .pipe(catchError(handleError), map(() => {}));
     }
     /**
@@ -309,8 +310,8 @@ export class OntologyManagerService {
       Observable<VocabularyStuff> {
         const params = { branchId, commitId };
         const url = `${this.prefix}/${encodeURIComponent(recordId)}/vocabulary-stuff`;
-        const request = this.http.get<VocabularyStuff>(url, {params: createHttpParams(params)});
-        return this.spinnerSrv.trackedRequest(request, isTracked).pipe(catchError(handleError));
+        const request = this._http.get<VocabularyStuff>(url, {params: createHttpParams(params)});
+        return this._spinnerSrv.trackedRequest(request, isTracked).pipe(catchError(handleError));
     }
     /**
      * Calls the GET /mobirest/ontologies/{recordId}/ontology-stuff endpoint and retrieves an OntologyStuff object 
@@ -327,8 +328,8 @@ export class OntologyManagerService {
       Observable<OntologyStuff> {
         const params = { branchId, commitId, clearCache };
         const url = `${this.prefix}/${encodeURIComponent(recordId)}/ontology-stuff`;
-        const request = this.http.get<OntologyStuff>(url, {params: createHttpParams(params)});
-        return this.spinnerSrv.trackedRequest(request, isTracked).pipe(catchError(handleError));
+        const request = this._http.get<OntologyStuff>(url, {params: createHttpParams(params)});
+        return this._spinnerSrv.trackedRequest(request, isTracked).pipe(catchError(handleError));
     }
     /**
      * Calls the GET /mobirest/ontologies/{recordId}/property-range endpoint and retrieves a PropertyToRanges object 
@@ -345,8 +346,8 @@ export class OntologyManagerService {
       isTracked = false): Observable<PropertyToRanges> {
         const params = { branchId, commitId, applyInProgressCommit };
         const url = `${this.prefix}/${encodeURIComponent(recordId)}/property-ranges`;
-        const request = this.http.get<PropertyToRanges>(url, {params: createHttpParams(params)});
-        return this.spinnerSrv.trackedRequest(request, isTracked).pipe(catchError(handleError));
+        const request = this._http.get<PropertyToRanges>(url, {params: createHttpParams(params)});
+        return this._spinnerSrv.trackedRequest(request, isTracked).pipe(catchError(handleError));
     }
     /**
      * Calls the GET /mobirest/ontologies/{recordId}/iris endpoint and retrieves an IriList object with all the IRIs
@@ -363,7 +364,7 @@ export class OntologyManagerService {
             return throwError('RecordId is empty');
         }
         const params = { branchId, commitId };
-        return this.spinnerSrv.track(this.http.get<IriList>(`${this.prefix}/${encodeURIComponent(recordId)}/iris`, 
+        return this._spinnerSrv.track(this._http.get<IriList>(`${this.prefix}/${encodeURIComponent(recordId)}/iris`,
           {params: createHttpParams(params)}))
             .pipe(catchError(handleError));
     }
@@ -387,8 +388,8 @@ export class OntologyManagerService {
         }
         const params = { branchId, commitId, applyInProgressCommit };
         const url = `${this.prefix}/${encodeURIComponent(recordId)}/imported-iris`;
-        const request = this.http.get<IriList[]>(url, {params: createHttpParams(params)});
-        return this.spinnerSrv.trackedRequest(request, isTracked).pipe(catchError(handleError));
+        const request = this._http.get<IriList[]>(url, {params: createHttpParams(params)});
+        return this._spinnerSrv.trackedRequest(request, isTracked).pipe(catchError(handleError));
     }
     /**
      * Calls the GET /mobirest/ontologies/{recordId}/class-hierarchies endpoint and retrieves a HierarchyResponse 
@@ -403,7 +404,7 @@ export class OntologyManagerService {
     getClassHierarchies(recordId: string, branchId: string, commitId: string, applyInProgressCommit = true): 
       Observable<HierarchyResponse> {
         const params = { branchId, commitId, applyInProgressCommit };
-        return this.spinnerSrv.track(this.http.get<HierarchyResponse>(`${this.prefix}/${encodeURIComponent(recordId)}/class-hierarchies`, 
+        return this._spinnerSrv.track(this._http.get<HierarchyResponse>(`${this.prefix}/${encodeURIComponent(recordId)}/class-hierarchies`,
           {params: createHttpParams(params)}))
             .pipe(catchError(handleError));
     }
@@ -421,7 +422,7 @@ export class OntologyManagerService {
     getOntologyClasses(recordId: string, branchId: string, commitId: string, applyInProgressCommit = true): 
       Observable<JSONLDObject[]> {
         const params = { branchId, commitId, applyInProgressCommit};
-        return this.spinnerSrv.track(this.http.get<JSONLDObject[]>(`${this.prefix}/${encodeURIComponent(recordId)}/classes`, 
+        return this._spinnerSrv.track(this._http.get<JSONLDObject[]>(`${this.prefix}/${encodeURIComponent(recordId)}/classes`,
           {params: createHttpParams(params)}))
             .pipe(catchError(handleError));
     }
@@ -436,7 +437,7 @@ export class OntologyManagerService {
      */
     getDataProperties(recordId: string, branchId: string, commitId: string): Observable<JSONLDObject[]> {
         const params = { branchId, commitId };
-        return this.spinnerSrv.track(this.http.get<JSONLDObject[]>(`${this.prefix}/${encodeURIComponent(recordId)}/data-properties`, 
+        return this._spinnerSrv.track(this._http.get<JSONLDObject[]>(`${this.prefix}/${encodeURIComponent(recordId)}/data-properties`,
           {params: createHttpParams(params)}))
             .pipe(catchError(handleError));
     }
@@ -451,7 +452,7 @@ export class OntologyManagerService {
      */
     getObjProperties(recordId: string, branchId: string, commitId: string): Observable<JSONLDObject[]> {
         const params = { branchId, commitId };
-        return this.spinnerSrv.track(this.http.get<JSONLDObject[]>(`${this.prefix}/${encodeURIComponent(recordId)}/object-properties`, 
+        return this._spinnerSrv.track(this._http.get<JSONLDObject[]>(`${this.prefix}/${encodeURIComponent(recordId)}/object-properties`,
           {params: createHttpParams(params)}))
             .pipe(catchError(handleError));
     }
@@ -468,7 +469,7 @@ export class OntologyManagerService {
      */
     getClassesWithIndividuals(recordId: string, branchId: string, commitId: string): Observable<JSONLDObject> {
         const params = { branchId, commitId };
-        return this.spinnerSrv.track(this.http.get<JSONLDObject>(`${this.prefix}/${encodeURIComponent(recordId)}/classes-with-individuals`, 
+        return this._spinnerSrv.track(this._http.get<JSONLDObject>(`${this.prefix}/${encodeURIComponent(recordId)}/classes-with-individuals`,
           {params: createHttpParams(params)}))
             .pipe(catchError(handleError));
     }
@@ -485,7 +486,7 @@ export class OntologyManagerService {
      */
     getDataPropertyHierarchies(recordId: string, branchId: string, commitId: string): Observable<HierarchyResponse> {
         const params = { branchId, commitId };
-        return this.spinnerSrv.track(this.http.get<HierarchyResponse>(`${this.prefix}/${encodeURIComponent(recordId)}/data-property-hierarchies`, 
+        return this._spinnerSrv.track(this._http.get<HierarchyResponse>(`${this.prefix}/${encodeURIComponent(recordId)}/data-property-hierarchies`,
           {params: createHttpParams(params)}))
             .pipe(catchError(handleError));
     }
@@ -502,7 +503,7 @@ export class OntologyManagerService {
      */
     getObjectPropertyHierarchies(recordId: string, branchId: string, commitId: string): Observable<HierarchyResponse> {
         const params = { branchId, commitId };
-        return this.spinnerSrv.track(this.http.get<HierarchyResponse>(`${this.prefix}/${encodeURIComponent(recordId)}/object-property-hierarchies`, 
+        return this._spinnerSrv.track(this._http.get<HierarchyResponse>(`${this.prefix}/${encodeURIComponent(recordId)}/object-property-hierarchies`,
           {params: createHttpParams(params)}))
             .pipe(catchError(handleError));
     }
@@ -520,7 +521,7 @@ export class OntologyManagerService {
     getAnnotationPropertyHierarchies(recordId: string, branchId: string, commitId: string): 
       Observable<HierarchyResponse> {
         const params = { branchId, commitId };
-        return this.spinnerSrv.track(this.http.get<HierarchyResponse>(`${this.prefix}/${encodeURIComponent(recordId)}/annotation-property-hierarchies`, 
+        return this._spinnerSrv.track(this._http.get<HierarchyResponse>(`${this.prefix}/${encodeURIComponent(recordId)}/annotation-property-hierarchies`,
           {params: createHttpParams(params)}))
             .pipe(catchError(handleError));
     }
@@ -539,7 +540,7 @@ export class OntologyManagerService {
         const annotationJSON: JSONLDObject = {'@id': iri, '@type': [`${OWL}AnnotationProperty`]};
         if (indexOf(annotationIRIs, iri) === -1) {
             const params = { annotationjson: JSON.stringify(annotationJSON) };
-            return this.spinnerSrv.track(this.http.post(`${this.prefix}/${encodeURIComponent(recordId)}/annotations`, 
+            return this._spinnerSrv.track(this._http.post(`${this.prefix}/${encodeURIComponent(recordId)}/annotations`,
               null, {params: createHttpParams(params), observe: 'response'}))
                 .pipe(
                     catchError(handleError),
@@ -568,7 +569,7 @@ export class OntologyManagerService {
      */
     getConceptHierarchies(recordId: string, branchId: string, commitId: string): Observable<HierarchyResponse> {
         const params = { branchId, commitId };
-        return this.spinnerSrv.track(this.http.get<HierarchyResponse>(`${this.prefix}/${encodeURIComponent(recordId)}/concept-hierarchies`, 
+        return this._spinnerSrv.track(this._http.get<HierarchyResponse>(`${this.prefix}/${encodeURIComponent(recordId)}/concept-hierarchies`,
           {params: createHttpParams(params)}))
             .pipe(catchError(handleError));
     }
@@ -585,7 +586,7 @@ export class OntologyManagerService {
      */
     getConceptSchemeHierarchies(recordId: string, branchId: string, commitId: string): Observable<HierarchyResponse> {
         const params = { branchId, commitId };
-        return this.spinnerSrv.track(this.http.get<HierarchyResponse>(`${this.prefix}/${encodeURIComponent(recordId)}/concept-scheme-hierarchies`, 
+        return this._spinnerSrv.track(this._http.get<HierarchyResponse>(`${this.prefix}/${encodeURIComponent(recordId)}/concept-scheme-hierarchies`,
           {params: createHttpParams(params)}))
             .pipe(catchError(handleError));
     }
@@ -603,7 +604,7 @@ export class OntologyManagerService {
     getImportedOntologies(recordId: string, branchId: string, commitId: string, rdfFormat = 'jsonld', 
       applyInProgressCommit = false): Observable<OntologyDocument[]> {
         const params = { rdfFormat, branchId, commitId, applyInProgressCommit };
-        return this.http.get<OntologyDocument[]>(`${this.prefix}/${encodeURIComponent(recordId)}/imported-ontologies`, 
+        return this._http.get<OntologyDocument[]>(`${this.prefix}/${encodeURIComponent(recordId)}/imported-ontologies`,
           { observe: 'response', params: createHttpParams(params)})
             .pipe(
                 catchError(handleError),
@@ -635,8 +636,8 @@ export class OntologyManagerService {
       isTracked = false): Observable<JSONLDObject[] | SPARQLSelectBinding[]> {
         const params = { branchId, commitId, queryType };
         const url = `${this.prefix}/${encodeURIComponent(recordId)}/entity-usages/${encodeURIComponent(entityIRI)}`;
-        const request = this.http.get(url, {params: createHttpParams(params)});
-        return this.spinnerSrv.trackedRequest(request, isTracked)
+        const request = this._http.get(url, {params: createHttpParams(params)});
+        return this._spinnerSrv.trackedRequest(request, isTracked)
             .pipe(
                 catchError(handleError),
                 map((response: JSONLDObject[] | SPARQLSelectResults) => {
@@ -668,8 +669,8 @@ export class OntologyManagerService {
         headers = headers.append('Content-Type', 'application/json');
         const url = `${this.prefix}/${encodeURIComponent(recordId)}/entity-names`;
         const data = { filterResources };
-        const request = this.http.post<EntityNames>(url, data, {params: createHttpParams(params), headers});
-        return this.spinnerSrv.trackedRequest(request, isTracked).pipe(catchError(handleError));
+        const request = this._http.post<EntityNames>(url, data, {params: createHttpParams(params), headers});
+        return this._spinnerSrv.trackedRequest(request, isTracked).pipe(catchError(handleError));
     }
     /**
      * Gets the search results for literals that contain the requested search text.
@@ -686,7 +687,7 @@ export class OntologyManagerService {
       Observable<{[key: string]: string[]}> {
         const defaultErrorMessage = 'An error has occurred with your search.';
         const params = { searchText, branchId, commitId };
-        return this.spinnerSrv.trackedRequest(this.http.get(`${this.prefix}/${encodeURIComponent(recordId)}/search-results`, 
+        return this._spinnerSrv.trackedRequest(this._http.get(`${this.prefix}/${encodeURIComponent(recordId)}/search-results`,
           {observe: 'response', params: createHttpParams(params)}), isTracked)
             .pipe(
                 catchError(handleError),
@@ -702,152 +703,6 @@ export class OntologyManagerService {
             );
     }
     /**
-     * Get the results of the provided SPARQL query via a GET
-     *
-     * @param {string} recordId The record ID of the ontology to query.
-     * @param {string} branchId The branch ID of the ontology to query.
-     * @param {string} commitId The commit ID of the ontology to query.
-     * @param {string} query The SPARQL query to run against the ontology.
-     * @param {string} format The return format of the query results.
-     * @param {boolean} [includeImports=true] Whether to include the imported ontologies data
-     * @param {boolean} [applyInProgressCommit=false] Whether to apply the in progress commit changes
-     * @return {Observable} An Observable containing the SPARQL query results as either a JSON-LD array or a RDF
-     *    formatted string for CONSTRUCT queries or {@link SPARQLSelectResults} for SELECT queries
-     */
-    getQueryResults(recordId: string, branchId: string, commitId: string, query: string, format: string, 
-      includeImports = true, applyInProgressCommit = false, isTracked = false): 
-      Observable<JSONLDObject[] | SPARQLSelectResults | string> {
-        const params = {
-            query,
-            branchId,
-            commitId,
-            includeImports,
-            applyInProgressCommit
-        };
-        let headers = new HttpHeaders();
-        headers = headers.append('Accept', this._getMimeType(format));
-        return this.spinnerSrv.trackedRequest(this.http.get(`${this.prefix}/${encodeURIComponent(recordId)}/query`, {
-            responseType: 'text',
-            observe: 'response',
-            headers,
-            params: createHttpParams(params)
-        }), isTracked).pipe(
-            catchError(handleError),
-            map((response: HttpResponse<string>) => {
-                if (response.status === 204) {
-                    return undefined;
-                }
-                const contentType = response.headers.get('Content-Type');
-                if (contentType === 'application/json') {
-                    return (JSON.parse(response.body)) as SPARQLSelectResults;
-                } else if (contentType === 'application/ld+json') {
-                    return (JSON.parse(response.body)) as JSONLDObject[];
-                } else {
-                    return response.body;
-                }
-            })
-        );
-    }
-    /**
-     * Get the results of the provided SPARQL query via a POST
-     *
-     * @param {string} recordId The record ID of the ontology to query.
-     * @param {string} branchId The branch ID of the ontology to query.
-     * @param {string} commitId The commit ID of the ontology to query.
-     * @param {string} query The SPARQL query to run against the ontology.
-     * @param {string} format The return format of the query results.
-     * @param {boolean} [includeImports=true] Whether to include the imported ontologies data
-     * @param {boolean} [applyInProgressCommit=false] Whether to apply the in progress commit changes
-     * @param {boolean} isTracked Whether the request should be tracked by the {@link shared.ProgressSpinnerService}
-     * @return {Observable} An Observable containing the SPARQL query results
-     */
-    postQueryResults(recordId: string, branchId: string, commitId: string, query: string, format: string, 
-      includeImports = true, applyInProgressCommit = false, isTracked = false): Observable<JSONLDObject[] | SPARQLSelectResults | string> {
-        const params = {
-            branchId,
-            commitId,
-            includeImports,
-            applyInProgressCommit
-        };
-        let headers = new HttpHeaders();
-        headers = headers.append('Accept', this._getMimeType(format));
-        headers = headers.append('Content-Type', 'application/sparql-query');
-        return this.spinnerSrv.trackedRequest(this.http.post(`${this.prefix}/${encodeURIComponent(recordId)}/query`, query, {
-            responseType: 'text',
-            observe: 'response',
-            headers,
-            params: createHttpParams(params)
-        }), isTracked).pipe(
-            catchError(handleError),
-            map((response: HttpResponse<string>) => {
-                if (response.status === 204) {
-                    return undefined;
-                }
-                const contentType = response.headers.get('Content-Type');
-                if (contentType === 'application/json') {
-                    return (JSON.parse(response.body)) as SPARQLSelectResults;
-                } else if (contentType === 'application/ld+json') {
-                  return (JSON.parse(response.body)) as JSONLDObject[];
-                } else {
-                    return response.body;
-                }
-            })
-        );
-    }
-    /**
-     * Calls the POST /mobirest/ontologies/{recordId}/query endpoint with an Accept Header of application/octet-stream
-     * which will start a download of the results of running the provided query in the specified file type with an
-     * optional file name.
-     *
-     * @param {string} query The query to run
-     * @param {string} fileType The type of file to download based on file extension
-     * @param {string=''} fileName The optional name of the downloaded file
-     * @param {string} recordId the Ontology Record ID
-     * @param {string} commitId the Commit to run the query against
-     * @param {boolean} applyInProgressCommit whether to apply the InProgressCommit to the results
-     * @param {boolean} includeImports whether to include the imports closure in the results
-     */
-    downloadResultsPost(query: string, fileType: string, fileName = '', recordId = '', commitId = '', 
-      applyInProgressCommit = true, includeImports = false): Observable<ArrayBuffer> {
-        const params: {[key: string]: string | boolean} = {
-            fileType,
-            fileName,
-            commitId,
-            applyInProgressCommit,
-            includeImports
-        };
-        let headers = new HttpHeaders();
-        headers = headers.append('Accept', 'application/octet-stream').append('Content-Type', 'application/sparql-query');
-
-        return this.spinnerSrv.track(this.http.post(`${this.prefix}/${encodeURIComponent(recordId)}/query`, query, 
-          {headers, params: createHttpParams(params), responseType: 'arraybuffer', observe: 'response'}))
-            .pipe(
-                catchError(handleError),
-                map((response: HttpResponse<ArrayBuffer>) => {
-                    const file = new Blob([response.body], {
-                        type: response.headers.get('Content-Type')
-                    });
-                    const fileURL = URL.createObjectURL(file);
-                    const a = document.createElement('a');
-                    a.href = fileURL;
-                    a.target = '_blank';
-                    const respFilename = this._getFileName(response);
-                    a.download = respFilename || fileName || 'untitled';
-                    a.click(); //click the link "a"
-                    return response.body;
-                }));
-    }
-
-    private _getFileName(response: HttpResponse<ArrayBuffer>): string {
-        try {
-            const contentDisposition: string = response.headers.get('content-disposition');
-            const matches = /filename=([^;]+)/ig.exec(contentDisposition);
-            return ((matches || [''])[1]).trim();
-        } catch (e) {
-            return '';
-        }
-    }
-    /**
      * Gets a list of imported ontology IRIs that failed to resolve.
      *
      * @param {string} recordId The record ID of the ontology you want to get from the repository.
@@ -858,7 +713,7 @@ export class OntologyManagerService {
      */
     getFailedImports(recordId: string, branchId: string, commitId: string): Observable<string[]> {
         const params = { branchId, commitId };
-        return this.http.get<string[]>(`${this.prefix}/${encodeURIComponent(recordId)}/failed-imports`, 
+        return this._http.get<string[]>(`${this.prefix}/${encodeURIComponent(recordId)}/failed-imports`,
           {params: createHttpParams(params)})
             .pipe(catchError(handleError));
     }
@@ -881,8 +736,8 @@ export class OntologyManagerService {
         includeImports = true, applyInProgressCommit = true, isTracked = false): Observable<JSONLDObject[]> {
         const params = { branchId, commitId, format, includeImports, applyInProgressCommit };
         const url = `${this.prefix}/${encodeURIComponent(recordId)}/entities/${encodeURIComponent(entityId)}`;
-        const request = this.http.get<JSONLDObject[]>(url, {params: createHttpParams(params)});
-        return this.spinnerSrv.trackedRequest(request, isTracked).pipe(catchError(handleError));
+        const request = this._http.get<JSONLDObject[]>(url, {params: createHttpParams(params)});
+        return this._spinnerSrv.trackedRequest(request, isTracked).pipe(catchError(handleError));
     }
     /**
      * Checks if the provided entity is deprecated by looking for the owl:deprecated annotation.
@@ -979,55 +834,6 @@ export class OntologyManagerService {
     getClasses(ontologies: JSONLDObject[][]): JSONLDObject[] {
         return this._collectThings(ontologies, entity => this.isClass(entity) && !isBlankNode(entity));
     }
-
-    /**
-     * GET /mobirest/ontologies/{recordId}/group-query endpoint to retrieve the first 500 class Entities of
-     * the ontology and the corresponding imports closure. Supports a search text to filter on entity labels.
-     *
-     * @param {string} recordId The identifier of the ontology you want to retrieve classes from
-     * @param {string} branchId The id of the Branch with the specified Commit
-     * @param {string} commitId The id of the Commit to retrieve the ontology from
-     * @param {string} limit The limit of results that is set within the query
-     * @param {string} searchText User given search text to filter classes on
-     * @returns {Observable<GroupQueryResults>} An array of the first 100 owl:Class entities within the ontologies that match the search text.
-     */
-    retrieveClasses(recordId:string, branchId:string, commitId:string, limit:string, searchText = '', 
-      isTracked = false): Observable<GroupQueryResults> {
-        let query = 'PREFIX dc: <http://purl.org/dc/elements/1.1/>\n' +
-            'PREFIX dcterms: <http://purl.org/dc/terms/>\n' +
-            'PREFIX skosxl: <http://www.w3.org/2008/05/skos-xl#>\n' +
-            'PREFIX skos: <http://www.w3.org/2004/02/skos/core#>\n' +
-            'PREFIX owl: <http://www.w3.org/2002/07/owl#>\n' +
-            'PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n' +
-            'PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n' +
-            'SELECT ?id ?label ?description ?deprecated WHERE {\n' +
-            '\t?id a owl:Class ;\n' +
-            '  \tOptional { ?id rdfs:label | dcterms:title | dc:title | skos:prefLabel | skos:altlabel | skosxl:literalForm ?label. }\n' +
-            '    Optional { ?id owl:deprecated ?deprecated. }\n' +
-            '    Optional { ?id dcterms:description | dc:description ?description. }\n' +
-            '  Filter (!isBlank(?id))\n' +
-            '  Filter (contains(lcase(str(?id)), lcase("searchText")) || contains(lcase(str(?label)), lcase("searchText")))\n' +
-            '} OrderBy(?label)';
-
-        if (searchText) { 
-            query = query.replace(/searchText/g, searchText);
-        } else { 
-            query = query.replace('  Filter (contains(lcase(str(?id)), lcase("searchText")) || contains(lcase(str(?label)), lcase("searchText")))\n', '');
-        }
-
-        const params = { query, branchId, commitId, limit };
-        const request = this.http.get(`${this.prefix}/${encodeURIComponent(recordId)}/group-query`, 
-          {params: createHttpParams(params), responseType: 'text', observe: 'response'})
-            .pipe(
-                catchError(handleError),
-                map((response: HttpResponse<string>) => {
-                    return (JSON.parse(response.body)) as GroupQueryResults;
-                    
-                })
-            );
-        return this.spinnerSrv.trackedRequest(request, isTracked);
-    }
-
     /**
      * Gets the list of all owl:Class entity IRIs within the provided ontologies that are not blank nodes.
      * Returns a string[].
@@ -1536,16 +1342,9 @@ export class OntologyManagerService {
      */
     getObjectPropertyValues(recordId: string, branchId: string, propertyIri: string,
                             isTracked = false): Observable<SPARQLSelectResults> {
-        const url = `${this.prefix}/${encodeURIComponent(recordId)}/query`;
         const valuesQuery = OBJ_PROPERTY_VALUES_QUERY.replace('%PROPIRI%', propertyIri);
-        const params = createHttpParams({
-            applyInProgressCommit: true,
-            branchId: branchId,
-            query: valuesQuery
-        });
-
-        const request = this.http.get<SPARQLSelectResults>(url, {params});
-        return this.spinnerSrv.trackedRequest(request, isTracked).pipe(catchError(handleError));
+        return this._sm.query(valuesQuery, recordId, ONTOLOGY_STORE_TYPE, branchId, '', true, true, isTracked)
+            .pipe(map((data: string| SPARQLSelectResults) => data as SPARQLSelectResults));
     }
 
     private _getFileTitleInfo(title) {

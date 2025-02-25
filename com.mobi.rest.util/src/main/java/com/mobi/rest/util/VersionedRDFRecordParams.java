@@ -23,9 +23,11 @@ package com.mobi.rest.util;
  * #L%
  */
 
-import com.mobi.dataset.api.DatasetManager;
-import com.mobi.ontology.core.api.OntologyManager;
-import com.mobi.repository.api.RepositoryManager;
+import com.mobi.catalog.api.CommitManager;
+import com.mobi.catalog.config.CatalogConfigProvider;
+import com.mobi.jaas.api.ontologies.usermanagement.User;
 
-public record ConnectionObjects(RepositoryManager repositoryManager, DatasetManager datasetManager,
-                                OntologyManager ontologyManager) {}
+public record VersionedRDFRecordParams(String branchId, String commitId, boolean includeImports,
+                                       boolean applyInProgressCommit, User user,
+                                       CatalogConfigProvider configProvider, CommitManager commitManager) {
+}

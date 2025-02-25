@@ -27,16 +27,16 @@ import { PersistedJson } from '@triply/yasgui/build/ts/src/PersistentConfig';
 import { MatDialog } from '@angular/material/dialog';
 import { Router } from '@angular/router';
 
-import * as YasrTurtlePlugin from '../../vendor/YASGUI/plugins/turtle/turtle';
-import * as YasrRdfXmlPlugin from '../../vendor/YASGUI/plugins/rdfXml/rdfXml';
 import * as YasrJsonLDlPlugin from '../../vendor/YASGUI/plugins/jsonLD/jsonLD';
-import { hasClass } from '../../vendor/YASGUI/plugins/utils/yasguiUtil';
-import { REST_PREFIX } from '../../constants';
+import * as YasrRdfXmlPlugin from '../../vendor/YASGUI/plugins/rdfXml/rdfXml';
+import * as YasrTurtlePlugin from '../../vendor/YASGUI/plugins/turtle/turtle';
+import { DATASET_STORE_TYPE, ONTOLOGY_STORE_TYPE, REPOSITORY_STORE_TYPE, REST_PREFIX } from '../../constants';
 import { DownloadQueryOverlayComponent } from '../components/downloadQueryOverlay/downloadQueryOverlay.component';
+import { hasClass } from '../../vendor/YASGUI/plugins/utils/yasguiUtil';
+import { LoginManagerService } from './loginManager.service';
+import { REPOS } from '../../prefixes';
 import { ToastService } from './toast.service';
 import { YasguiQuery } from '../models/yasguiQuery.class';
-import { LoginManagerService } from './loginManager.service';
-import { REPOS } from "../../prefixes";
 
 
 /**
@@ -264,13 +264,25 @@ export class YasguiService {
         if (downloadIconDisabled) {
             return;
         }
-        
+
+        let storeType: string;
+        if (this.isOntology) {
+            storeType = ONTOLOGY_STORE_TYPE;
+        } else if (this.yasguiQuery.recordId) {
+            storeType = DATASET_STORE_TYPE;
+        } else {
+            storeType = REPOSITORY_STORE_TYPE;
+        }
+
+        const resourceId = this.isOntology || this.yasguiQuery.recordId ? this.yasguiQuery.recordId : `${REPOS}system`;
         this.matDialog.open(DownloadQueryOverlayComponent, {
             data: {
                 query: tab.yasqe.getQueryWithValues(),
                 queryType: tab.yasqe.getQueryType()?.toLowerCase(),
-                recordId: this.yasguiQuery.recordId,
+                storeType,
+                resourceId,
                 commitId: this.yasguiQuery.commitId,
+                includeImports: this.yasguiQuery.isImportedOntologyIncluded,
                 isOntology: this.isOntology
             }
         }).afterClosed().subscribe((errorMessage) => {
@@ -360,7 +372,7 @@ export class YasguiService {
         const resourceId = this.isOntology || this.yasguiQuery.recordId ? this.yasguiQuery.recordId : `${REPOS}system`;
         let url =  this.customURL || this.defaultUrl.href;
         if (this.isOntology) {
-            url = new URL(`${REST_PREFIX}ontologies/${encodeURIComponent(resourceId)}/limited-results`, window.location.origin).href;
+            url = new URL(`${url}/ontology-record/${encodeURIComponent(resourceId)}/limited-results`, window.location.origin).href;
             // query
         } else if (this.yasguiQuery.recordId) {
             url = new URL(`${url}/dataset-record/${encodeURIComponent(resourceId)}/limited-results`);

@@ -25,23 +25,24 @@ import { TestBed } from '@angular/core/testing';
 import { MockProvider } from 'ng-mocks';
 import { HttpParams, HttpHeaders } from '@angular/common/http';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { Observable, of } from 'rxjs';
+import { of, throwError } from 'rxjs';
 
 import { CatalogManagerService } from './catalogManager.service';
 import { cleanStylesFromDOM } from '../../../test/ts/Shared';
 import { DC, DCTERMS, OWL, ONTOLOGYEDITOR, SKOS, SKOSXL, RDFS } from '../../prefixes';
-import { GroupQueryResults } from '../models/groupQueryResults.interface';
 import { JSONLDObject } from '../models/JSONLDObject.interface';
 import { OBJ_PROPERTY_VALUES_QUERY } from '../../queries';
+import { ONTOLOGY_STORE_TYPE } from '../../constants';
 import { OntologyDocument } from '../models/ontologyDocument.interface';
+import { OntologyManagerService } from './ontologyManager.service';
 import { OntologyStuff } from '../models/ontologyStuff.interface';
 import { PolicyEnforcementService } from './policyEnforcement.service';
 import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
 import { PropertyToRanges } from '../models/propertyToRanges.interface';
 import { RESTError } from '../models/RESTError.interface';
+import { SparqlManagerService } from './sparqlManager.service';
 import { SPARQLSelectResults } from '../models/sparqlSelectResults.interface';
 import { VocabularyStuff } from '../models/vocabularyStuff.interface';
-import { OntologyManagerService } from './ontologyManager.service';
 
 describe('Ontology Manager service', function() {
     let service: OntologyManagerService;
@@ -51,10 +52,9 @@ describe('Ontology Manager service', function() {
     let vocabularyStuffObj: VocabularyStuff;
     let ontologyStuffObj: OntologyStuff;
     let policyEnforcementStub: jasmine.SpyObj<PolicyEnforcementService>;
+    let sparqlManagerStub: jasmine.SpyObj<SparqlManagerService>;
 
     const emptyObj: JSONLDObject = {'@id': 'test'};
-    const selectQuery = 'select * where {?s ?p ?o}';
-    const constructQuery = 'construct where {?s ?p ?o}';
 
     const recordId = 'recordId';
     const ontologyId = 'ontologyId';
@@ -223,7 +223,8 @@ describe('Ontology Manager service', function() {
                 OntologyManagerService,
                 MockProvider(CatalogManagerService),
                 MockProvider(ProgressSpinnerService),
-                MockProvider(PolicyEnforcementService)
+                MockProvider(PolicyEnforcementService),
+                MockProvider(SparqlManagerService)
             ]
         });
 
@@ -235,6 +236,7 @@ describe('Ontology Manager service', function() {
         policyEnforcementStub.deny = 'Deny';
         policyEnforcementStub.permit = 'Permit';
         policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.permit));
+        sparqlManagerStub = TestBed.inject(SparqlManagerService) as jasmine.SpyObj<SparqlManagerService>;
 
         catalogManagerStub.localCatalog = {'@id': catalogId};
         service.initialize();
@@ -281,6 +283,7 @@ describe('Ontology Manager service', function() {
         catalogManagerStub = null;
         progressSpinnerStub = null;
         policyEnforcementStub = null;
+        sparqlManagerStub = null;
     });
 
     describe('uploadOntology hits the proper endpoint', function() {
@@ -1267,266 +1270,6 @@ describe('Ontology Manager service', function() {
             request.flush('flush', { status: 400, statusText: error });
         });
     });
-    describe('getQueryResults calls the correct functions when GET /mobirest/ontologies/{recordId}/query', function() {
-        describe('succeeds', function() {
-            it('and returns JSON-LD', function() {
-                const resp: JSONLDObject[] = [{'@id': 'id'}];
-                service.getQueryResults(recordId, branchId, commitId, constructQuery, format)
-                    .subscribe(response => expect(response).toEqual(resp),
-                        () => fail('Observable should have succeeded'));
-
-                const request = httpMock.expectOne(req => req.url === (`/mobirest/ontologies/${recordId}/query`) && req.method === 'GET');
-                expect((request.request.params).get('query')).toEqual(constructQuery);
-                expect(request.request.params.get('branchId')).toEqual(branchId);
-                expect((request.request.params).get('commitId')).toEqual(commitId);
-                expect((request.request.params).get('applyInProgressCommit').toString()).toEqual('false');
-                expect((request.request.params).get('includeImports').toString()).toEqual('true');
-                expect(request.request.headers.get('Accept')).toEqual('application/ld+json');
-                request.flush(resp, {
-                    headers: new HttpHeaders({'Content-Type': 'application/ld+json'})
-                });
-            });
-            it('and returns JSON', function() {
-                const resp: SPARQLSelectResults = {
-                    head: {
-                        vars: [],
-                        link: []
-                    },
-                    results: {
-                        bindings: []
-                    }
-                };
-                service.getQueryResults(recordId, branchId, commitId, selectQuery, 'application/json')
-                    .subscribe(response => expect(response).toEqual(resp),
-                        () => fail('Observable should have succeeded'));
-
-                const request = httpMock.expectOne(req => req.url === (`/mobirest/ontologies/${recordId}/query`) && req.method === 'GET');
-                expect((request.request.params).get('query')).toEqual(selectQuery);
-                expect(request.request.params.get('branchId')).toEqual(branchId);
-                expect((request.request.params).get('commitId')).toEqual(commitId);
-                expect((request.request.params).get('applyInProgressCommit').toString()).toEqual('false');
-                expect((request.request.params).get('includeImports').toString()).toEqual('true');
-                expect(request.request.headers.get('Accept')).toEqual('application/json');
-                request.flush(resp, {
-                    headers: new HttpHeaders({'Content-Type': 'application/json'})
-                });
-            });
-            it('and returns a RDF string', function() {
-                const resp = '<urn:Subject> <urn:Predicate> "Object" .';
-                service.getQueryResults(recordId, branchId, commitId, selectQuery, 'turtle')
-                    .subscribe(response => expect(response).toEqual(resp),
-                        () => fail('Observable should have succeeded'));
-
-                const request = httpMock.expectOne(req => req.url === (`/mobirest/ontologies/${recordId}/query`) && req.method === 'GET');
-                expect((request.request.params).get('query')).toEqual(selectQuery);
-                expect(request.request.params.get('branchId')).toEqual(branchId);
-                expect((request.request.params).get('commitId')).toEqual(commitId);
-                expect((request.request.params).get('applyInProgressCommit').toString()).toEqual('false');
-                expect((request.request.params).get('includeImports').toString()).toEqual('true');
-                expect(request.request.headers.get('Accept')).toEqual('text/turtle');
-                request.flush(resp, {
-                    headers: new HttpHeaders({'Content-Type': 'text/turtle'})
-                });
-            });
-        });
-        it('fails', function() {
-            service.getQueryResults(recordId, branchId, commitId, selectQuery, format)
-                .subscribe(() => {
-                    fail('Observable should have errored');
-                }, response => {
-                    expect(response).toBe(error);
-                });
-            const request = httpMock.expectOne(req => req.url === (`/mobirest/ontologies/${recordId}/query`) && req.method === 'GET');
-            expect((request.request.params).get('query')).toEqual(selectQuery);
-            expect(request.request.params.get('branchId')).toEqual(branchId);
-            expect((request.request.params).get('commitId')).toEqual(commitId);
-            expect((request.request.params).get('applyInProgressCommit').toString()).toEqual('false');
-            expect((request.request.params).get('includeImports').toString()).toEqual('true');
-            expect(request.request.headers.get('Accept')).toEqual('application/ld+json');
-            request.flush('flush', { status: 400, statusText: error });
-        });
-    });
-    describe('postQueryResults calls the correct functions when POST /mobirest/ontologies/{recordId}/query', function() {
-        describe('succeeds', function() {
-            it('and returns JSON-LD', function() {
-                const resp: JSONLDObject[] = [{'@id': 'id'}];
-                service.postQueryResults(recordId, branchId, commitId, constructQuery, format)
-                    .subscribe(response => expect(response).toEqual(resp),
-                        () => fail('Observable should have succeeded'));
-
-                const request = httpMock.expectOne(req => req.url === (`/mobirest/ontologies/${recordId}/query`) && req.method === 'POST');
-                expect(request.request.body).toEqual(constructQuery);
-                expect(request.request.params.get('branchId')).toEqual(branchId);
-                expect((request.request.params).get('commitId')).toEqual(commitId);
-                expect((request.request.params).get('applyInProgressCommit').toString()).toEqual('false');
-                expect((request.request.params).get('includeImports').toString()).toEqual('true');
-                expect(request.request.headers.get('Accept')).toEqual('application/ld+json');
-                expect(request.request.headers.get('Content-Type')).toEqual('application/sparql-query');
-                request.flush(resp, {
-                    headers: new HttpHeaders({'Content-Type': 'application/ld+json'})
-                });
-            });
-            it('and returns JSON', function() {
-                const resp: SPARQLSelectResults = {
-                  head: {
-                    vars: [],
-                    link: []
-                  },
-                  results: {
-                    bindings: []
-                  }
-                };
-                service.postQueryResults(recordId, branchId, commitId, selectQuery, 'application/json')
-                    .subscribe(response => expect(response).toEqual(resp),
-                        () => fail('Observable should have succeeded'));
-
-                const request = httpMock.expectOne(req => req.url === (`/mobirest/ontologies/${recordId}/query`) && req.method === 'POST');
-                expect(request.request.body).toEqual(selectQuery);
-                expect(request.request.params.get('branchId')).toEqual(branchId);
-                expect((request.request.params).get('commitId')).toEqual(commitId);
-                expect((request.request.params).get('applyInProgressCommit').toString()).toEqual('false');
-                expect((request.request.params).get('includeImports').toString()).toEqual('true');
-                expect(request.request.headers.get('Accept')).toEqual('application/json');
-                expect(request.request.headers.get('Content-Type')).toEqual('application/sparql-query');
-                request.flush(resp, {
-                    headers: new HttpHeaders({'Content-Type': 'application/json'})
-                });
-            });
-            it('and returns a RDF string', function() {
-                const resp = '<urn:Subject> <urn:Predicate> "Object" .';
-                service.postQueryResults(recordId, branchId, commitId, selectQuery, 'turtle')
-                    .subscribe(response => expect(response).toEqual(resp),
-                        () => fail('Observable should have succeeded'));
-
-                const request = httpMock.expectOne(req => req.url === (`/mobirest/ontologies/${recordId}/query`) && req.method === 'POST');
-                expect(request.request.body).toEqual(selectQuery);
-                expect(request.request.params.get('branchId')).toEqual(branchId);
-                expect((request.request.params).get('commitId')).toEqual(commitId);
-                expect((request.request.params).get('applyInProgressCommit').toString()).toEqual('false');
-                expect((request.request.params).get('includeImports').toString()).toEqual('true');
-                expect(request.request.headers.get('Accept')).toEqual('text/turtle');
-                expect(request.request.headers.get('Content-Type')).toEqual('application/sparql-query');
-                request.flush(resp, {
-                    headers: new HttpHeaders({'Content-Type': 'text/turtle'})
-                });
-            });
-        });
-        it('fails', function() {
-            service.postQueryResults(recordId, branchId, commitId, selectQuery, format)
-                .subscribe(() => {
-                    fail('Observable should have errored');
-                }, response => {
-                    expect(response).toBe(error);
-                });
-            const request = httpMock.expectOne(req => req.url === (`/mobirest/ontologies/${recordId}/query`) && req.method === 'POST');
-            expect(request.request.body).toEqual(selectQuery);
-            expect(request.request.params.get('branchId')).toEqual(branchId);
-            expect((request.request.params).get('commitId')).toEqual(commitId);
-            expect((request.request.params).get('applyInProgressCommit').toString()).toEqual('false');
-            expect((request.request.params).get('includeImports').toString()).toEqual('true');
-            expect(request.request.headers.get('Accept')).toEqual('application/ld+json');
-            expect(request.request.headers.get('Content-Type')).toEqual('application/sparql-query');
-            request.flush('flush', { status: 400, statusText: error });
-        });
-    });
-    describe('postQueryResults calls the correct functions when POST /mobirest/ontologies/{recordId}/query', function() {
-        beforeEach(function() {
-            this.query = 'select * where {?s ?p ?o}';
-        });
-        it('succeeds', function() {
-            service.postQueryResults(recordId, branchId, commitId, this.query, format)
-                .subscribe(response => expect(response).toEqual([{'@id': 'id'}]),
-                    () => fail('Observable should have succeeded'));
-
-            const request = httpMock.expectOne(req => req.url === (`/mobirest/ontologies/${recordId}/query`) && req.method === 'POST');
-            expect(request.request.body).toEqual(this.query);
-            expect(request.request.params.get('branchId')).toEqual(branchId);
-            expect((request.request.params).get('commitId')).toEqual(commitId);
-            expect((request.request.params).get('applyInProgressCommit').toString()).toEqual('false');
-            expect((request.request.params).get('includeImports').toString()).toEqual('true');
-            expect(request.request.headers.get('Accept')).toEqual('application/ld+json');
-            expect(request.request.headers.get('Content-Type')).toEqual('application/sparql-query');
-            request.flush([{'@id': 'id'}], {
-                headers: new HttpHeaders({'Content-Type': 'application/json'})
-            });
-        });
-        it('fails', function() {
-            service.postQueryResults(recordId, branchId, commitId, this.query, format)
-                .subscribe(() => {
-                    fail('Observable should have errored');
-                }, response => {
-                    expect(response).toBe(error);
-                });
-            const request = httpMock.expectOne(req => req.url === (`/mobirest/ontologies/${recordId}/query`) && req.method === 'POST');
-            expect(request.request.body).toEqual(this.query);
-            expect(request.request.params.get('branchId')).toEqual(branchId);
-            expect((request.request.params).get('commitId')).toEqual(commitId);
-            expect((request.request.params).get('applyInProgressCommit').toString()).toEqual('false');
-            expect((request.request.params).get('includeImports').toString()).toEqual('true');
-            expect(request.request.headers.get('Accept')).toEqual('application/ld+json');
-    
-            request.flush('flush', { status: 400, statusText: error });
-        });
-    });
-    describe('should download query results', function() {
-        beforeEach(function() {
-            spyOn(window, 'open');
-        });
-        it('with only required fields', function() {
-            const aSpy = jasmine.createSpyObj('a', ['click']);
-            spyOn(document, 'createElement').and.returnValue(aSpy);
-            const expectedResult: ArrayBuffer = new ArrayBuffer(8);
-            service.downloadResultsPost(selectQuery, 'csv', 'filename', recordId, commitId)
-                .subscribe(response => {
-                    expect(progressSpinnerStub.track).toHaveBeenCalledWith(jasmine.any(Observable));
-                    expect(response).toEqual(expectedResult);
-                    expect(document.createElement).toHaveBeenCalledWith('a');
-                    expect(aSpy.href).toBeTruthy();
-                    expect(aSpy.target).toEqual('_blank');
-                    expect(aSpy.download).toEqual('filename');
-                    expect(aSpy.click).toHaveBeenCalledWith();
-                }, () => {
-                    fail('Observable should have resolved');
-                });
-            const request = httpMock.expectOne(req => req.url === (`/mobirest/ontologies/${recordId}/query`) && req.method === 'POST');
-            expect(request.request.body).toEqual(selectQuery);
-            expect(request.request.params.get('fileType')).toEqual('csv');
-            expect(request.request.params.get('fileName')).toEqual('filename');
-            expect(request.request.params.get('commitId')).toEqual(commitId);
-            expect(request.request.params.get('applyInProgressCommit')).toEqual('true');
-            expect(request.request.params.get('includeImports')).toEqual('false');
-            expect(request.request.headers.get('Accept')).toEqual('application/octet-stream');
-            expect(request.request.headers.get('Content-Type')).toEqual('application/sparql-query');
-            request.flush(expectedResult);
-        });
-        it('with optional fields', function() {
-            const aSpy = jasmine.createSpyObj('a', ['click']);
-            spyOn(document, 'createElement').and.returnValue(aSpy);
-            const expectedResult: ArrayBuffer = new ArrayBuffer(8);
-            service.downloadResultsPost(selectQuery, 'csv', 'filename', recordId, commitId, false, true)
-                .subscribe(response => {
-                    expect(progressSpinnerStub.track).toHaveBeenCalledWith(jasmine.any(Observable));
-                    expect(response).toEqual(expectedResult);
-                    expect(document.createElement).toHaveBeenCalledWith('a');
-                    expect(aSpy.href).toBeTruthy();
-                    expect(aSpy.target).toEqual('_blank');
-                    expect(aSpy.download).toEqual('filename');
-                    expect(aSpy.click).toHaveBeenCalledWith();
-                }, () => {
-                    fail('Observable should have resolved');
-                });
-            const request = httpMock.expectOne(req => req.url === (`/mobirest/ontologies/${recordId}/query`) && req.method === 'POST');
-            expect(request.request.body).toEqual(selectQuery);
-            expect(request.request.params.get('fileType')).toEqual('csv');
-            expect(request.request.params.get('fileName')).toEqual('filename');
-            expect(request.request.params.get('commitId')).toEqual(commitId);
-            expect(request.request.params.get('applyInProgressCommit')).toEqual('false');
-            expect(request.request.params.get('includeImports')).toEqual('true');
-            expect(request.request.headers.get('Accept')).toEqual('application/octet-stream');
-            expect(request.request.headers.get('Content-Type')).toEqual('application/sparql-query');
-            request.flush(expectedResult);
-        });
-    });
     describe('getFailedImports calls the correct functions when GET /mobirest/ontologies/{recordId}/failed-imports', function() {
         it('succeeds', function() {
             service.getFailedImports(recordId, branchId, commitId)
@@ -1555,32 +1298,24 @@ describe('Ontology Manager service', function() {
     });
     describe('getObjectPropertyValues calls the correct functions when GET /mobirest/ontologies/{recordId}/query', function() {
         it('succeeds', function() {
+            sparqlManagerStub.query.and.returnValue(of(usages));
             service.getObjectPropertyValues(recordId, branchId, objectPropertyId)
                 .subscribe(response => {
                     expect(response).toEqual(usages);
                 }, () => {
                     fail('Observable should have succeeded');
                 });
-            const request = httpMock.expectOne(req =>
-                req.url === (`/mobirest/ontologies/${recordId}/query`) && req.method === 'GET');
-            expect(request.request.params.get('branchId')).toEqual(branchId);
-            expect((request.request.params).get('query')).toEqual(objQuery);
-            expect((request.request.params).get('applyInProgressCommit')).toBe('true');
-            request.flush(usages);
+            expect(sparqlManagerStub.query).toHaveBeenCalledWith(jasmine.stringContaining(objectPropertyId), recordId, ONTOLOGY_STORE_TYPE, branchId, '', true, true, false);
         });
         it('fails', function() {
+            sparqlManagerStub.query.and.returnValue(throwError(error));
             service.getObjectPropertyValues(recordId, branchId, objectPropertyId)
                 .subscribe(() => {
                     fail('Observable should have errored');
                 }, response => {
                     expect(response).toBe(error);
                 });
-            const request = httpMock.expectOne(req =>
-                req.url === (`/mobirest/ontologies/${recordId}/query`) && req.method === 'GET');
-            expect(request.request.params.get('branchId')).toEqual(branchId);
-            expect((request.request.params).get('query')).toEqual(objQuery);
-            expect((request.request.params).get('applyInProgressCommit')).toBe('true');
-            request.flush('flush', { status: 400, statusText: error });
+            expect(sparqlManagerStub.query).toHaveBeenCalledWith(jasmine.stringContaining(objectPropertyId), recordId, ONTOLOGY_STORE_TYPE, branchId, '', true, true, false);
         });
     });
     describe('getEntityAndBlankNodes retrieves entity and blank node RDF', function() {
@@ -1718,21 +1453,6 @@ describe('Ontology Manager service', function() {
         });
         it('undefined if there are no classes in the ontology', function() {
             expect(service.getClasses([[ontologyObj],[importedOntObj]])).toEqual([]);
-        });
-    });
-    describe('retrieveClasses should return', function() {
-        it('valid', function() {
-            service.retrieveClasses(recordId, branchId, commitId, '0')
-                .subscribe((groupQueryResults: GroupQueryResults) => {
-                    expect(groupQueryResults).toEqual({});
-                }, () => {
-                    fail('Observable should have succeeded');
-                });
-            const request = httpMock.expectOne(req => req.url === (`/mobirest/ontologies/${recordId}/group-query`) && req.method === 'GET');
-            expect(request.request.params.get('branchId')).toEqual(branchId);
-            expect(request.request.params.get('commitId')).toEqual(commitId);
-            expect(request.request.params.get('limit')).toEqual('0');
-            request.flush({});
         });
     });
     describe('getClassIRIs should return', function() {

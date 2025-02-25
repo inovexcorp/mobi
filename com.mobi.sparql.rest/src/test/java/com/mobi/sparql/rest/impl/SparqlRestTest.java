@@ -30,7 +30,9 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.reset;
@@ -39,20 +41,30 @@ import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.mobi.catalog.api.CommitManager;
+import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
+import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.dataset.api.DatasetConnection;
 import com.mobi.dataset.api.DatasetManager;
 import com.mobi.exception.MobiException;
+import com.mobi.jaas.api.engines.EngineManager;
+import com.mobi.jaas.api.ontologies.usermanagement.User;
+import com.mobi.ontology.core.api.Ontology;
+import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.persistence.utils.ResourceUtils;
+import com.mobi.repository.api.OsgiRepository;
 import com.mobi.repository.api.RepositoryManager;
 import com.mobi.repository.impl.sesame.memory.MemoryRepositoryWrapper;
 import com.mobi.rest.test.util.MobiRestTestCXF;
+import com.mobi.rest.test.util.UsernameTestFilter;
 import com.mobi.sparql.rest.SparqlRest;
 import org.apache.commons.io.IOUtils;
-import org.apache.commons.lang.StringUtils;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.ModelFactory;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.query.GraphQueryResult;
+import org.eclipse.rdf4j.query.resultio.QueryResultIO;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.sail.memory.MemoryStore;
@@ -84,6 +96,12 @@ public class SparqlRestTest extends MobiRestTestCXF {
     private String ALL_QUERY;
     private String CONSTRUCT_QUERY;
     private String DATASET_ID;
+    private String ONTOLOGY_ID_0; // With branch, commit, and imports and inProgressCommit
+    private String ONTOLOGY_ID_1; // With branch and inProgressCommit
+    private String ONTOLOGY_ID_2; // With commit and imports
+    private String ONTOLOGY_ID_3; // Just recordId
+    private String BRANCH_ID;
+    private String COMMIT_ID;
     private Model testModel;
 
     private AutoCloseable closeable;
@@ -94,11 +112,8 @@ public class SparqlRestTest extends MobiRestTestCXF {
     private Map<String, String[]> selectFileTypesMimes;
     private Map<String, String[]> constructFileTypesMimes;
     private Map<String, String[]> limitedFileTypesMimes;
-    private List<String> datasets;
+    private List<String> recordIDs;
     private List<String> filenames;
-
-//    public static final String generateURL("", true) = "sparql/limited-results";
-//    public static final String generateURL("", false) = "sparql";
 
     // Mock services used in server
     private static SparqlRest rest;
@@ -106,9 +121,28 @@ public class SparqlRestTest extends MobiRestTestCXF {
     private static ModelFactory mf;
     private static RepositoryManager repositoryManager;
     private static DatasetManager datasetManager;
+    private static OntologyManager ontologyManager;
+    private static EngineManager engineManager;
+    private static CatalogConfigProvider configProvider;
+    private static CommitManager commitManager;
 
     @Mock
     private DatasetConnection datasetConnection;
+
+    @Mock
+    private User user;
+
+    @Mock
+    private Ontology ontology;
+
+    @Mock
+    private OsgiRepository mockRepo;
+
+    @Mock
+    private RepositoryConnection mockConn;
+
+    @Mock
+    private InProgressCommit inProgressCommit;
 
     @BeforeClass
     public static void startServer() {
@@ -117,15 +151,22 @@ public class SparqlRestTest extends MobiRestTestCXF {
 
         repositoryManager = Mockito.mock(RepositoryManager.class);
         datasetManager = Mockito.mock(DatasetManager.class);
-        
+        ontologyManager = Mockito.mock(OntologyManager.class);
+        engineManager = Mockito.mock(EngineManager.class);
+        configProvider = Mockito.mock(CatalogConfigProvider.class);
+        commitManager = Mockito.mock(CommitManager.class);
 
         rest = new SparqlRest();
-        rest.setRepository(repositoryManager);
-        rest.setDatasetManager(datasetManager);
+        rest.repositoryManager = repositoryManager;
+        rest.datasetManager = datasetManager;
+        rest.ontologyManager = ontologyManager;
+        rest.engineManager = engineManager;
+        rest.configProvider = configProvider;
+        rest.commitManager = commitManager;
         rest.setLimitResults(500);
 
         rest = Mockito.spy(rest);
-        configureServer(rest);
+        configureServer(rest, new UsernameTestFilter());
     }
 
     @Before
@@ -145,6 +186,12 @@ public class SparqlRestTest extends MobiRestTestCXF {
         conn.add(testModel);
 
         DATASET_ID = "http://example.com/datasets/0";
+        ONTOLOGY_ID_0 = "http://example.com/ontology/0";
+        ONTOLOGY_ID_1 = "http://example.com/ontology/1";
+        ONTOLOGY_ID_2 = "http://example.com/ontology/2";
+        ONTOLOGY_ID_3 = "http://example.com/ontology/3";
+        BRANCH_ID = "http://example.com/branches/0";
+        COMMIT_ID = "http://example.com/commits/0";
 
         ALL_QUERY = ResourceUtils.encode(IOUtils.toString(Objects.requireNonNull(getClass().getClassLoader()
                 .getResourceAsStream("all_query.rq")), StandardCharsets.UTF_8));
@@ -174,7 +221,7 @@ public class SparqlRestTest extends MobiRestTestCXF {
         limitedFileTypesMimes.putAll(constructFileTypesMimes);
         limitedFileTypesMimes.putAll(selectFileTypesMimes);
 
-        datasets = Arrays.asList(null, DATASET_ID);
+        recordIDs = Arrays.asList(null, DATASET_ID, ONTOLOGY_ID_0, ONTOLOGY_ID_1, ONTOLOGY_ID_2, ONTOLOGY_ID_3);
         filenames = Arrays.asList(null, "test");
 
         // mock getRepository
@@ -189,12 +236,23 @@ public class SparqlRestTest extends MobiRestTestCXF {
         // mock prepareGraphQuery
         when(datasetConnection.prepareGraphQuery(anyString()))
                 .thenAnswer(i -> conn.prepareGraphQuery(i.getArgument(0, String.class)));
+
+        when(engineManager.retrieveUser(anyString())).thenReturn(Optional.of(user));
+        when(configProvider.getRepository()).thenReturn(mockRepo);
+        when(mockRepo.getConnection()).thenReturn(mockConn);
+        when(commitManager.getInProgressCommitOpt(any(), any(), any(), any())).thenReturn(Optional.of(inProgressCommit));
+
+        when(ontologyManager.retrieveOntology(any(Resource.class))).thenReturn(Optional.of(ontology));
+        when(ontologyManager.retrieveOntology(any(Resource.class), any(Resource.class))).thenReturn(Optional.of(ontology));
+        when(ontologyManager.retrieveOntology(any(Resource.class), any(Resource.class), any(Resource.class))).thenReturn(Optional.of(ontology));
+        when(ontologyManager.retrieveOntologyByCommit(any(Resource.class), any(Resource.class))).thenReturn(Optional.of(ontology));
+        when(ontologyManager.applyChanges(eq(ontology), eq(inProgressCommit))).thenReturn(ontology);
     }
 
     @After
     public void resetMocks() throws Exception {
         closeable.close();
-        reset(repositoryManager, datasetConnection, datasetManager);
+        reset(repositoryManager, datasetConnection, datasetManager, ontologyManager, engineManager, configProvider, commitManager);
     }
 
     private void setupLargeRepo() {
@@ -221,35 +279,79 @@ public class SparqlRestTest extends MobiRestTestCXF {
                 .thenAnswer(i -> connLarge.prepareTupleQuery(i.getArgument(0, String.class)));
         when(datasetConnection.prepareGraphQuery(anyString()))
                 .thenAnswer(i -> connLarge.prepareGraphQuery(i.getArgument(0, String.class)));
+        when(ontology.getTupleQueryResults(anyString(), anyBoolean())).thenAnswer(i -> connLarge.prepareTupleQuery("SELECT * WHERE { ?s ?p ?o. }").evaluate());
+        when(ontology.getGraphQueryResultsStream(anyString(), anyBoolean(), any(), anyBoolean(), any())).thenAnswer(i -> {
+            try (GraphQueryResult result = connLarge.prepareGraphQuery("CONSTRUCT { ?s ?p ?o. } WHERE { ?s ?p ?o. }").evaluate()) {
+                QueryResultIO.writeGraph(result, i.getArgument(2), i.getArgument(4));
+            }
+            return true;
+        });
+        when(ontology.getGraphQueryResultsStream(anyString(), anyBoolean(), any(), anyBoolean(), any(), any())).thenAnswer(i -> {
+            try (GraphQueryResult result = connLarge.prepareGraphQuery("CONSTRUCT { ?s ?p ?o. } WHERE { ?s ?p ?o. }").evaluate()) {
+                QueryResultIO.writeGraph(result, i.getArgument(2), i.getArgument(5));
+            }
+            return true;
+        });
+    }
+
+    private void setupOntology() {
+        when(ontology.getTupleQueryResults(anyString(), anyBoolean())).thenAnswer(i -> conn.prepareTupleQuery("SELECT * WHERE { ?s ?p ?o. }").evaluate());
+        when(ontology.getGraphQueryResultsStream(anyString(), anyBoolean(), any(), anyBoolean(), any())).thenAnswer(i -> {
+            try (GraphQueryResult result = conn.prepareGraphQuery("CONSTRUCT { ?s ?p ?o. } WHERE { ?s ?p ?o. }").evaluate()) {
+                QueryResultIO.writeGraph(result, i.getArgument(2), i.getArgument(4));
+            }
+            return false;
+        });
+        when(ontology.getGraphQueryResultsStream(anyString(), anyBoolean(), any(), anyBoolean(), any(), any())).thenAnswer(i -> {
+            try (GraphQueryResult result = conn.prepareGraphQuery("CONSTRUCT { ?s ?p ?o. } WHERE { ?s ?p ?o. }").evaluate()) {
+                QueryResultIO.writeGraph(result, i.getArgument(2), i.getArgument(5));
+            }
+            return false;
+        });
     }
 
     @Test
     public void queryRdfTest() throws Exception {
+        setupOntology();
         assertEquals("Verify Mimes Types", 10, fileTypesMimes.size());
         int minNumberOfInvocations = 0;
 
-        for (String dataset : datasets) {
+        for (int i = 0; i < recordIDs.size(); i++) {
+            String recordId = recordIDs.get(i);
             for (Map.Entry mapEntry: fileTypesMimes.entrySet()) {
                 minNumberOfInvocations += 1;
                 String type = (String) mapEntry.getKey();
                 String[] dataArray = (String[]) mapEntry.getValue();
                 String mimeType = dataArray[0];
 
-                WebTarget webTarget = target().path(generateURL(dataset, false)).queryParam("query", dataArray[1]);
-
+                WebTarget webTarget = getTarget(recordId, i, false, null).queryParam("query", dataArray[1]);
                 Response response = webTarget.request().accept(mimeType).get();
 
                 assertEquals(200, response.getStatus());
 
-                verify(rest, atLeast(minNumberOfInvocations)).queryRdf(anyString(), anyString(), anyString(), anyString());
+                verify(rest, atLeast(minNumberOfInvocations)).queryRdf(any(), anyString(), anyString(), anyString(), any(), any(), anyBoolean(), anyBoolean(), anyString());
 
-                if (dataset != null) {
+                if (i == 1) {
                     verify(datasetManager, atLeastOnce()).getConnection(vf.createIRI(DATASET_ID));
                     if (dataArray[1].equals(CONSTRUCT_QUERY)) {
                         verify(datasetConnection, atLeastOnce()).prepareGraphQuery(anyString());
                     } else {
                         verify(datasetConnection, atLeastOnce()).prepareTupleQuery(anyString());
                     }
+                } else if (i == 2) {
+                    verify(ontologyManager, atLeastOnce()).retrieveOntology(eq(vf.createIRI(recordId)), eq(vf.createIRI(BRANCH_ID)), eq(vf.createIRI(COMMIT_ID)));
+                    verify(configProvider, atLeastOnce()).getRepository();
+                    verify(mockRepo, atLeastOnce()).getConnection();
+                    verify(commitManager, atLeastOnce()).getInProgressCommitOpt(any(), any(), any(), any());
+                } else if (i == 3) {
+                    verify(ontologyManager, atLeastOnce()).retrieveOntology(eq(vf.createIRI(recordId)), eq(vf.createIRI(BRANCH_ID)));
+                    verify(configProvider, atLeastOnce()).getRepository();
+                    verify(mockRepo, atLeastOnce()).getConnection();
+                    verify(commitManager, atLeastOnce()).getInProgressCommitOpt(any(), any(), any(), any());
+                } else if (i == 4) {
+                    verify(ontologyManager, atLeastOnce()).retrieveOntologyByCommit(eq(vf.createIRI(recordId)), eq(vf.createIRI(COMMIT_ID)));
+                } else if (i == 5) {
+                    verify(ontologyManager, atLeastOnce()).retrieveOntology(eq(vf.createIRI(recordId)));
                 } else {
                     verify(repositoryManager, atLeastOnce()).getRepository("system");
                 }
@@ -275,37 +377,53 @@ public class SparqlRestTest extends MobiRestTestCXF {
                 }
             }
         }
-        assertEquals("Verify minNumberOfInvocations", 20, minNumberOfInvocations);
+        assertEquals("Verify minNumberOfInvocations", 60, minNumberOfInvocations);
     }
 
     @Test
     public void postQueryRdfTest() throws Exception {
+        setupOntology();
         assertEquals("Verify Mimes Types", 10, fileTypesMimes.size());
         int minNumberOfInvocations = 0;
 
-        for (String dataset : datasets) {
+        for (int i = 0; i < recordIDs.size(); i++) {
+            String recordId = recordIDs.get(i);
             for (Map.Entry mapEntry: fileTypesMimes.entrySet()) {
                 minNumberOfInvocations += 1;
                 String type = (String) mapEntry.getKey();
                 String[] dataArray = (String[]) mapEntry.getValue();
                 String mimeType = dataArray[0];
 
-                WebTarget webTarget = target().path(generateURL(dataset, false));
+                WebTarget webTarget = getTarget(recordId, i, false, null);
 
                 Response response = webTarget.request().accept(mimeType).post(Entity.entity(
                         ResourceUtils.decode(dataArray[1]), "application/sparql-query"));
 
                 assertEquals(200, response.getStatus());
 
-                verify(rest, atLeast(minNumberOfInvocations)).postQueryRdf(anyString(), anyString(), anyString(), anyString());
+                verify(rest, atLeast(minNumberOfInvocations)).postQueryRdf(any(), anyString(), anyString(), any(), any(), anyBoolean(), anyBoolean(), anyString(), anyString());
 
-                if (dataset != null) {
+                if (i == 1) {
                     verify(datasetManager, atLeastOnce()).getConnection(vf.createIRI(DATASET_ID));
                     if (dataArray[1].equals(CONSTRUCT_QUERY)) {
                         verify(datasetConnection, atLeastOnce()).prepareGraphQuery(anyString());
                     } else {
                         verify(datasetConnection, atLeastOnce()).prepareTupleQuery(anyString());
                     }
+                } else if (i == 2) {
+                    verify(ontologyManager, atLeastOnce()).retrieveOntology(eq(vf.createIRI(recordId)), eq(vf.createIRI(BRANCH_ID)), eq(vf.createIRI(COMMIT_ID)));
+                    verify(configProvider, atLeastOnce()).getRepository();
+                    verify(mockRepo, atLeastOnce()).getConnection();
+                    verify(commitManager, atLeastOnce()).getInProgressCommitOpt(any(), any(), any(), any());
+                } else if (i == 3) {
+                    verify(ontologyManager, atLeastOnce()).retrieveOntology(eq(vf.createIRI(recordId)), eq(vf.createIRI(BRANCH_ID)));
+                    verify(configProvider, atLeastOnce()).getRepository();
+                    verify(mockRepo, atLeastOnce()).getConnection();
+                    verify(commitManager, atLeastOnce()).getInProgressCommitOpt(any(), any(), any(), any());
+                } else if (i == 4) {
+                    verify(ontologyManager, atLeastOnce()).retrieveOntologyByCommit(eq(vf.createIRI(recordId)), eq(vf.createIRI(COMMIT_ID)));
+                } else if (i == 5) {
+                    verify(ontologyManager, atLeastOnce()).retrieveOntology(eq(vf.createIRI(recordId)));
                 } else {
                     verify(repositoryManager, atLeastOnce()).getRepository("system");
                 }
@@ -331,40 +449,56 @@ public class SparqlRestTest extends MobiRestTestCXF {
                 }
             }
         }
-        assertEquals("Verify minNumberOfInvocations", 20, minNumberOfInvocations);
+        assertEquals("Verify minNumberOfInvocations", 60, minNumberOfInvocations);
     }
 
     @Test
     public void postUrlEncodedQueryRdfTest() throws Exception {
+        setupOntology();
         assertEquals("Verify Mimes Types", 10, fileTypesMimes.size());
         int minNumberOfInvocations = 0;
 
-        for (String dataset : datasets) {
+        for (int i = 0; i < recordIDs.size(); i++) {
+            String recordId = recordIDs.get(i);
             for (Map.Entry mapEntry: fileTypesMimes.entrySet()) {
                 minNumberOfInvocations += 1;
                 String type = (String) mapEntry.getKey();
                 String[] dataArray = (String[]) mapEntry.getValue();
                 String mimeType = dataArray[0];
 
-                WebTarget webTarget = target().path(generateURL(dataset, false));
-
                 Form form = new Form();
+                WebTarget webTarget = getTarget(recordId, i, false, form);
+
                 form.param("query", ResourceUtils.decode(dataArray[1]));
                 Response response = webTarget.request().accept(mimeType).post(Entity.entity(form,
                         MediaType.APPLICATION_FORM_URLENCODED_TYPE));
 
                 assertEquals(200, response.getStatus());
 
-                verify(rest, atLeast(minNumberOfInvocations)).postUrlEncodedQueryRdf(anyString(), anyString(),
-                        anyString(), anyString());
+                verify(rest, atLeast(minNumberOfInvocations)).postUrlEncodedQueryRdf(any(), anyString(), anyString(),
+                        anyString(), any(), any(), anyBoolean(), anyBoolean(), anyString());
 
-                if (dataset != null) {
+                if (i == 1) {
                     verify(datasetManager, atLeastOnce()).getConnection(vf.createIRI(DATASET_ID));
                     if (dataArray[1].equals(CONSTRUCT_QUERY)) {
                         verify(datasetConnection, atLeastOnce()).prepareGraphQuery(anyString());
                     } else {
                         verify(datasetConnection, atLeastOnce()).prepareTupleQuery(anyString());
                     }
+                } else if (i == 2) {
+                    verify(ontologyManager, atLeastOnce()).retrieveOntology(eq(vf.createIRI(recordId)), eq(vf.createIRI(BRANCH_ID)), eq(vf.createIRI(COMMIT_ID)));
+                    verify(configProvider, atLeastOnce()).getRepository();
+                    verify(mockRepo, atLeastOnce()).getConnection();
+                    verify(commitManager, atLeastOnce()).getInProgressCommitOpt(any(), any(), any(), any());
+                } else if (i == 3) {
+                    verify(ontologyManager, atLeastOnce()).retrieveOntology(eq(vf.createIRI(recordId)), eq(vf.createIRI(BRANCH_ID)));
+                    verify(configProvider, atLeastOnce()).getRepository();
+                    verify(mockRepo, atLeastOnce()).getConnection();
+                    verify(commitManager, atLeastOnce()).getInProgressCommitOpt(any(), any(), any(), any());
+                } else if (i == 4) {
+                    verify(ontologyManager, atLeastOnce()).retrieveOntologyByCommit(eq(vf.createIRI(recordId)), eq(vf.createIRI(COMMIT_ID)));
+                } else if (i == 5) {
+                    verify(ontologyManager, atLeastOnce()).retrieveOntology(eq(vf.createIRI(recordId)));
                 } else {
                     verify(repositoryManager, atLeastOnce()).getRepository("system");
                 }
@@ -390,21 +524,23 @@ public class SparqlRestTest extends MobiRestTestCXF {
                 }
             }
         }
-        assertEquals("Verify minNumberOfInvocations", 20, minNumberOfInvocations);
+        assertEquals("Verify minNumberOfInvocations", 60, minNumberOfInvocations);
     }
 
     @Test
     public void downloadQueryTest() throws Exception {
+        setupOntology();
         assertEquals("Verify Mimes Types", 10, fileTypesMimes.size());
         int minNumberOfInvocations = 0;
         for (String filename : filenames) {
-            for (String dataset : datasets) {
+            for (int i = 0; i < recordIDs.size(); i++) {
+            String recordId = recordIDs.get(i);
                 for (Map.Entry mapEntry: fileTypesMimes.entrySet()) {
                     minNumberOfInvocations += 1;
 
                     String type = (String) mapEntry.getKey();
                     String[] dataArray = (String[]) mapEntry.getValue();
-                    WebTarget webTarget = target().path(generateURL(dataset, false))
+                    WebTarget webTarget = getTarget(recordId, i, false, null)
                             .queryParam("query", dataArray[1])
                             .queryParam("fileType", type);
 
@@ -414,16 +550,30 @@ public class SparqlRestTest extends MobiRestTestCXF {
 
                     Response response = webTarget.request().accept(MediaType.APPLICATION_OCTET_STREAM).get();
 
-                    verify(rest, atLeast(minNumberOfInvocations)).downloadRdfQuery(anyString(), anyString(), anyString(),
-                            anyString(), anyString(), anyString());
+                    verify(rest, atLeast(minNumberOfInvocations)).downloadRdfQuery(any(), anyString(), anyString(), anyString(),
+                            any(), any(), anyBoolean(), anyBoolean(), any(), anyString(), anyString());
 
-                    if (dataset != null) {
+                    if (i == 1) {
                         verify(datasetManager, atLeastOnce()).getConnection(vf.createIRI(DATASET_ID));
                         if (dataArray[1].equals(CONSTRUCT_QUERY)) {
                             verify(datasetConnection, atLeastOnce()).prepareGraphQuery(anyString());
                         } else {
                             verify(datasetConnection, atLeastOnce()).prepareTupleQuery(anyString());
                         }
+                    } else if (i == 2) {
+                        verify(ontologyManager, atLeastOnce()).retrieveOntology(eq(vf.createIRI(recordId)), eq(vf.createIRI(BRANCH_ID)), eq(vf.createIRI(COMMIT_ID)));
+                        verify(configProvider, atLeastOnce()).getRepository();
+                        verify(mockRepo, atLeastOnce()).getConnection();
+                        verify(commitManager, atLeastOnce()).getInProgressCommitOpt(any(), any(), any(), any());
+                    } else if (i == 3) {
+                        verify(ontologyManager, atLeastOnce()).retrieveOntology(eq(vf.createIRI(recordId)), eq(vf.createIRI(BRANCH_ID)));
+                        verify(configProvider, atLeastOnce()).getRepository();
+                        verify(mockRepo, atLeastOnce()).getConnection();
+                        verify(commitManager, atLeastOnce()).getInProgressCommitOpt(any(), any(), any(), any());
+                    } else if (i == 4) {
+                        verify(ontologyManager, atLeastOnce()).retrieveOntologyByCommit(eq(vf.createIRI(recordId)), eq(vf.createIRI(COMMIT_ID)));
+                    } else if (i == 5) {
+                        verify(ontologyManager, atLeastOnce()).retrieveOntology(eq(vf.createIRI(recordId)));
                     } else {
                         verify(repositoryManager, atLeastOnce()).getRepository("system");
                     }
@@ -458,22 +608,24 @@ public class SparqlRestTest extends MobiRestTestCXF {
                 }
             }
         }
-        assertEquals("Verify minNumberOfInvocations", 40, minNumberOfInvocations);
+        assertEquals("Verify minNumberOfInvocations", 120, minNumberOfInvocations);
     }
 
     @Test
     public void downloadQueryPostTest() throws Exception {
+        setupOntology();
         assertEquals("Verify Mimes Types", 10, fileTypesMimes.size());
         int minNumberOfInvocations = 0;
         for (String filename : filenames) {
-            for (String dataset : datasets) {
+            for (int i = 0; i < recordIDs.size(); i++) {
+            String recordId = recordIDs.get(i);
                 for (Map.Entry mapEntry: fileTypesMimes.entrySet()) {
                     minNumberOfInvocations += 1;
 
                     String type = (String) mapEntry.getKey();
                     String[] dataArray = (String[]) mapEntry.getValue();
 
-                    WebTarget webTarget = target().path(generateURL(dataset, false))
+                    WebTarget webTarget = getTarget(recordId, i, false, null)
                             .queryParam("fileType", type);
 
                     if (filename != null) {
@@ -484,16 +636,30 @@ public class SparqlRestTest extends MobiRestTestCXF {
                             .header("accept", MediaType.APPLICATION_OCTET_STREAM)
                             .post(Entity.entity(ResourceUtils.decode(dataArray[1]), "application/sparql-query"));
 
-                    verify(rest, atLeast(minNumberOfInvocations)).postDownloadRdfQuery(anyString(), anyString(),
-                            anyString(), anyString(), anyString(), anyString());
+                    verify(rest, atLeast(minNumberOfInvocations)).postDownloadRdfQuery(any(), anyString(), anyString(),
+                            any(), any(), anyBoolean(), anyBoolean(), any(), anyString(), anyString(), anyString());
 
-                    if (dataset != null) {
+                    if (i == 1) {
                         verify(datasetManager, atLeastOnce()).getConnection(vf.createIRI(DATASET_ID));
                         if (dataArray[1].equals(CONSTRUCT_QUERY)) {
                             verify(datasetConnection, atLeastOnce()).prepareGraphQuery(anyString());
                         } else {
                             verify(datasetConnection, atLeastOnce()).prepareTupleQuery(anyString());
                         }
+                    } else if (i == 2) {
+                        verify(ontologyManager, atLeastOnce()).retrieveOntology(eq(vf.createIRI(recordId)), eq(vf.createIRI(BRANCH_ID)), eq(vf.createIRI(COMMIT_ID)));
+                        verify(configProvider, atLeastOnce()).getRepository();
+                        verify(mockRepo, atLeastOnce()).getConnection();
+                        verify(commitManager, atLeastOnce()).getInProgressCommitOpt(any(), any(), any(), any());
+                    } else if (i == 3) {
+                        verify(ontologyManager, atLeastOnce()).retrieveOntology(eq(vf.createIRI(recordId)), eq(vf.createIRI(BRANCH_ID)));
+                        verify(configProvider, atLeastOnce()).getRepository();
+                        verify(mockRepo, atLeastOnce()).getConnection();
+                        verify(commitManager, atLeastOnce()).getInProgressCommitOpt(any(), any(), any(), any());
+                    } else if (i == 4) {
+                        verify(ontologyManager, atLeastOnce()).retrieveOntologyByCommit(eq(vf.createIRI(recordId)), eq(vf.createIRI(COMMIT_ID)));
+                    } else if (i == 5) {
+                        verify(ontologyManager, atLeastOnce()).retrieveOntology(eq(vf.createIRI(recordId)));
                     } else {
                         verify(repositoryManager, atLeastOnce()).getRepository("system");
                     }
@@ -528,15 +694,17 @@ public class SparqlRestTest extends MobiRestTestCXF {
                 }
             }
         }
-        assertEquals("Verify minNumberOfInvocations", 40, minNumberOfInvocations);
+        assertEquals("Verify minNumberOfInvocations", 120, minNumberOfInvocations);
     }
 
     @Test
     public void downloadQueryPostUrlEncodedTest() throws Exception {
+        setupOntology();
         assertEquals("Verify Mimes Types", 10, fileTypesMimes.size());
         int minNumberOfInvocations = 0;
         for (String filename : filenames) {
-            for (String dataset : datasets) {
+            for (int i = 0; i < recordIDs.size(); i++) {
+            String recordId = recordIDs.get(i);
                 for (Map.Entry mapEntry: fileTypesMimes.entrySet()) {
                     minNumberOfInvocations += 1;
 
@@ -546,7 +714,7 @@ public class SparqlRestTest extends MobiRestTestCXF {
                     Form form = new Form();
                     form.param("query", ResourceUtils.decode(dataArray[1]));
 
-                    WebTarget webTarget = target().path(generateURL(dataset, false))
+                    WebTarget webTarget = getTarget(recordId, i , false, form)
                             .queryParam("fileType", type);
 
                     if (filename != null) {
@@ -558,16 +726,30 @@ public class SparqlRestTest extends MobiRestTestCXF {
                             .header("accept", MediaType.APPLICATION_OCTET_STREAM)
                             .post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
 
-                    verify(rest, atLeast(minNumberOfInvocations)).postUrlEncodedDownloadRdfQuery(anyString(), anyString(),
-                            anyString(), anyString(), anyString(), anyString());
+                    verify(rest, atLeast(minNumberOfInvocations)).postUrlEncodedDownloadRdfQuery(any(), anyString(), anyString(),
+                            anyString(), any(), any(), anyBoolean(), anyBoolean(), any(), anyString(), anyString());
 
-                    if (dataset != null) {
+                    if (i == 1) {
                         verify(datasetManager, atLeastOnce()).getConnection(vf.createIRI(DATASET_ID));
                         if (dataArray[1].equals(CONSTRUCT_QUERY)) {
                             verify(datasetConnection, atLeastOnce()).prepareGraphQuery(anyString());
                         } else {
                             verify(datasetConnection, atLeastOnce()).prepareTupleQuery(anyString());
                         }
+                    } else if (i == 2) {
+                        verify(ontologyManager, atLeastOnce()).retrieveOntology(eq(vf.createIRI(recordId)), eq(vf.createIRI(BRANCH_ID)), eq(vf.createIRI(COMMIT_ID)));
+                        verify(configProvider, atLeastOnce()).getRepository();
+                        verify(mockRepo, atLeastOnce()).getConnection();
+                        verify(commitManager, atLeastOnce()).getInProgressCommitOpt(any(), any(), any(), any());
+                    } else if (i == 3) {
+                        verify(ontologyManager, atLeastOnce()).retrieveOntology(eq(vf.createIRI(recordId)), eq(vf.createIRI(BRANCH_ID)));
+                        verify(configProvider, atLeastOnce()).getRepository();
+                        verify(mockRepo, atLeastOnce()).getConnection();
+                        verify(commitManager, atLeastOnce()).getInProgressCommitOpt(any(), any(), any(), any());
+                    } else if (i == 4) {
+                        verify(ontologyManager, atLeastOnce()).retrieveOntologyByCommit(eq(vf.createIRI(recordId)), eq(vf.createIRI(COMMIT_ID)));
+                    } else if (i == 5) {
+                        verify(ontologyManager, atLeastOnce()).retrieveOntology(eq(vf.createIRI(recordId)));
                     } else {
                         verify(repositoryManager, atLeastOnce()).getRepository("system");
                     }
@@ -602,27 +784,43 @@ public class SparqlRestTest extends MobiRestTestCXF {
                 }
             }
         }
-        assertEquals("Verify minNumberOfInvocations", 40, minNumberOfInvocations);
+        assertEquals("Verify minNumberOfInvocations", 120, minNumberOfInvocations);
     }
 
     @Test
     public void selectQueryDefaultTest() throws Exception {
+        setupOntology();
         int minNumberOfInvocations = 0;
-        for (String dataset : datasets) {
+        for (int i = 0; i < recordIDs.size(); i++) {
+            String recordId = recordIDs.get(i);
             minNumberOfInvocations += 1;
-            WebTarget webTarget = target().path(generateURL(dataset, false))
+            WebTarget webTarget = getTarget(recordId, i, false, null)
                     .queryParam("query", ALL_QUERY);
 
             Response response = webTarget.request().accept(MediaType.APPLICATION_OCTET_STREAM).get();
 
-            verify(rest, atLeast(minNumberOfInvocations)).downloadRdfQuery(anyString(), any(),
-                    anyString(), any(), anyString(), anyString());
+            verify(rest, atLeast(minNumberOfInvocations)).downloadRdfQuery(any(), anyString(), anyString(), anyString(),
+                    any(), any(), anyBoolean(), anyBoolean(), any(), anyString(), anyString());
 
-            if (dataset != null) {
+            if (i == 1) {
                 verify(datasetManager).getConnection(vf.createIRI(DATASET_ID));
                 verify(datasetConnection).prepareTupleQuery(anyString());
+            } else if (i == 2) {
+                verify(ontologyManager, atLeastOnce()).retrieveOntology(eq(vf.createIRI(recordId)), eq(vf.createIRI(BRANCH_ID)), eq(vf.createIRI(COMMIT_ID)));
+                verify(configProvider, atLeastOnce()).getRepository();
+                verify(mockRepo, atLeastOnce()).getConnection();
+                verify(commitManager, atLeastOnce()).getInProgressCommitOpt(any(), any(), any(), any());
+            } else if (i == 3) {
+                verify(ontologyManager, atLeastOnce()).retrieveOntology(eq(vf.createIRI(recordId)), eq(vf.createIRI(BRANCH_ID)));
+                verify(configProvider, atLeastOnce()).getRepository();
+                verify(mockRepo, atLeastOnce()).getConnection();
+                verify(commitManager, atLeastOnce()).getInProgressCommitOpt(any(), any(), any(), any());
+            } else if (i == 4) {
+                verify(ontologyManager, atLeastOnce()).retrieveOntologyByCommit(eq(vf.createIRI(recordId)), eq(vf.createIRI(COMMIT_ID)));
+            } else if (i == 5) {
+                verify(ontologyManager, atLeastOnce()).retrieveOntology(eq(vf.createIRI(recordId)));
             } else {
-                verify(repositoryManager).getRepository("system");
+                verify(repositoryManager, atLeastOnce()).getRepository("system");
             }
 
             assertEquals(200, response.getStatus());
@@ -636,23 +834,39 @@ public class SparqlRestTest extends MobiRestTestCXF {
 
     @Test
     public void constructQueryDefaultTest() {
+        setupOntology();
         int minNumberOfInvocations = 0;
-        for (String dataset : datasets) {
+        for (int i = 0; i < recordIDs.size(); i++) {
+            String recordId = recordIDs.get(i);
             minNumberOfInvocations += 1;
-            WebTarget webTarget = target().path(generateURL(dataset, false))
+            WebTarget webTarget = getTarget(recordId, i, false, null)
                     .queryParam("query", CONSTRUCT_QUERY);
 
             Response response = webTarget.request().accept(MediaType.APPLICATION_OCTET_STREAM).get();
 
-            verify(rest, atLeast(minNumberOfInvocations)).downloadRdfQuery(anyString(), anyString(), anyString(),
-                    any(), anyString(), anyString());
+            verify(rest, atLeast(minNumberOfInvocations)).downloadRdfQuery(any(), anyString(), anyString(), anyString(),
+                    any(), any(), anyBoolean(), anyBoolean(), any(), anyString(), anyString());
             assertEquals(200, response.getStatus());
 
-            if (dataset != null) {
+            if (i == 1) {
                 verify(datasetManager).getConnection(vf.createIRI(DATASET_ID));
                 verify(datasetConnection).prepareGraphQuery(anyString());
+            } else if (i == 2) {
+                verify(ontologyManager, atLeastOnce()).retrieveOntology(eq(vf.createIRI(recordId)), eq(vf.createIRI(BRANCH_ID)), eq(vf.createIRI(COMMIT_ID)));
+                verify(configProvider, atLeastOnce()).getRepository();
+                verify(mockRepo, atLeastOnce()).getConnection();
+                verify(commitManager, atLeastOnce()).getInProgressCommitOpt(any(), any(), any(), any());
+            } else if (i == 3) {
+                verify(ontologyManager, atLeastOnce()).retrieveOntology(eq(vf.createIRI(recordId)), eq(vf.createIRI(BRANCH_ID)));
+                verify(configProvider, atLeastOnce()).getRepository();
+                verify(mockRepo, atLeastOnce()).getConnection();
+                verify(commitManager, atLeastOnce()).getInProgressCommitOpt(any(), any(), any(), any());
+            } else if (i == 4) {
+                verify(ontologyManager, atLeastOnce()).retrieveOntologyByCommit(eq(vf.createIRI(recordId)), eq(vf.createIRI(COMMIT_ID)));
+            } else if (i == 5) {
+                verify(ontologyManager, atLeastOnce()).retrieveOntology(eq(vf.createIRI(recordId)));
             } else {
-                verify(repositoryManager).getRepository("system");
+                verify(repositoryManager, atLeastOnce()).getRepository("system");
             }
 
             assertEquals("attachment;filename=results.ttl", response.getHeaderString("Content-Disposition"));
@@ -668,7 +882,7 @@ public class SparqlRestTest extends MobiRestTestCXF {
         // Setup:
         when(repositoryManager.getRepository(anyString())).thenReturn(Optional.empty());
 
-        Response response = target().path(generateURL("", false))
+        Response response = getTarget("", 0, false, null)
                 .queryParam("query", ALL_QUERY)
                 .request().accept(MediaType.APPLICATION_JSON_TYPE).get();
         assertEquals(500, response.getStatus());
@@ -679,7 +893,7 @@ public class SparqlRestTest extends MobiRestTestCXF {
         // Setup:
         when(repositoryManager.getRepository(anyString())).thenReturn(Optional.empty());
 
-        Response response = target().path(generateURL("", false))
+        Response response = getTarget("", 0, false, null)
                 .queryParam("query", CONSTRUCT_QUERY)
                 .request().accept(MediaType.APPLICATION_JSON_TYPE).get();
         assertEquals(500, response.getStatus());
@@ -690,7 +904,7 @@ public class SparqlRestTest extends MobiRestTestCXF {
         // Setup:
         when(datasetManager.getConnection(any(Resource.class))).thenThrow(new IllegalArgumentException());
 
-        Response response = target().path(generateURL(DATASET_ID, false))
+        Response response = getTarget(DATASET_ID, 1, false, null)
                 .queryParam("query", ALL_QUERY)
                 .request().accept(MediaType.APPLICATION_JSON_TYPE).get();
         assertEquals(400, response.getStatus());
@@ -701,7 +915,7 @@ public class SparqlRestTest extends MobiRestTestCXF {
         // Setup:
         when(datasetManager.getConnection(any(Resource.class))).thenThrow(new IllegalArgumentException());
 
-        Response response = target().path(generateURL(DATASET_ID, false))
+        Response response = getTarget(DATASET_ID, 1, false, null)
                 .queryParam("query", CONSTRUCT_QUERY)
                 .request().accept(MediaType.APPLICATION_JSON_TYPE).get();
         assertEquals(400, response.getStatus());
@@ -709,12 +923,12 @@ public class SparqlRestTest extends MobiRestTestCXF {
 
     @Test
     public void selectQueryWithInvalidQueryTest() {
-        Response response = target().path(generateURL("", false))
+        Response response = getTarget("", 0, false, null)
                 .queryParam("query", ALL_QUERY + "-" + ResourceUtils.encode("+"))
                 .request().accept(MediaType.APPLICATION_JSON_TYPE).get();
         assertEquals(400, response.getStatus());
 
-        response = target().path(generateURL("", false))
+        response = getTarget("", 0, false, null)
                 .queryParam("query", ALL_QUERY + "-" + ResourceUtils.encode("+"))
                 .queryParam("dataset", DATASET_ID)
                 .request().accept(MediaType.APPLICATION_JSON_TYPE).get();
@@ -723,12 +937,12 @@ public class SparqlRestTest extends MobiRestTestCXF {
 
     @Test
     public void constructQueryWithInvalidQueryTest() {
-        Response response = target().path(generateURL("", false))
+        Response response = getTarget("", 0, false, null)
                 .queryParam("query", CONSTRUCT_QUERY + "-" + ResourceUtils.encode("+"))
                 .request().accept(MediaType.APPLICATION_JSON_TYPE).get();
         assertEquals(400, response.getStatus());
 
-        response = target().path(generateURL("", false))
+        response = getTarget("", 0, false, null)
                 .queryParam("query", CONSTRUCT_QUERY + "-" + ResourceUtils.encode("+"))
                 .queryParam("dataset", DATASET_ID)
                 .request().accept(MediaType.APPLICATION_JSON_TYPE).get();
@@ -740,7 +954,7 @@ public class SparqlRestTest extends MobiRestTestCXF {
         // Setup:
         when(datasetManager.getConnection(any(Resource.class))).thenThrow(new MobiException());
 
-        Response response = target().path(generateURL(DATASET_ID, false))
+        Response response = getTarget(DATASET_ID, 1, false, null)
                 .queryParam("query", ALL_QUERY)
                 .request().accept(MediaType.APPLICATION_JSON_TYPE).get();
         assertEquals(500, response.getStatus());
@@ -751,7 +965,7 @@ public class SparqlRestTest extends MobiRestTestCXF {
         // Setup:
         when(datasetManager.getConnection(any(Resource.class))).thenThrow(new MobiException());
 
-        Response response = target().path(generateURL(DATASET_ID, false))
+        Response response = getTarget(DATASET_ID, 1, false, null)
                 .queryParam("query", ALL_QUERY)
                 .request().accept(MediaType.APPLICATION_JSON_TYPE).get();
         assertEquals(500, response.getStatus());
@@ -764,7 +978,7 @@ public class SparqlRestTest extends MobiRestTestCXF {
                 .thenReturn(Optional.empty());
 
         fileTypesMimes.forEach((type, dataArray) -> {
-            Response response = target().path(generateURL("", false))
+            Response response = getTarget("", 0, false, null)
                     .queryParam("query", dataArray[1])
                     .queryParam("fileType", type)
                     .request().get();
@@ -779,7 +993,7 @@ public class SparqlRestTest extends MobiRestTestCXF {
                 .thenThrow(new IllegalArgumentException());
 
         fileTypesMimes.forEach((type, dataArray) -> {
-            Response response = target().path(generateURL(DATASET_ID, false))
+            Response response = getTarget(DATASET_ID, 1, false, null)
                     .queryParam("query", dataArray[1])
                     .queryParam("fileType", type)
                     .request().get();
@@ -789,7 +1003,7 @@ public class SparqlRestTest extends MobiRestTestCXF {
 
     @Test
     public void downloadQueryWithInvalidQueryTest() throws Exception {
-        Response response = target().path(generateURL("", false))
+        Response response = getTarget("", 0, false, null)
                 .queryParam("query", ResourceUtils.encode("+"))
                 .request().get();
 
@@ -800,7 +1014,7 @@ public class SparqlRestTest extends MobiRestTestCXF {
 
     @Test
     public void downloadQueryDatasetWithInvalidQueryTest() throws Exception {
-        Response response = target().path(generateURL("", false))
+        Response response = getTarget("", 0, false, null)
                 .queryParam("query", ResourceUtils.encode("+"))
                 .queryParam("dataset", DATASET_ID)
                 .request().get();
@@ -812,21 +1026,37 @@ public class SparqlRestTest extends MobiRestTestCXF {
 
     @Test
     public void selectQueryDefaultLimitedTest() throws Exception {
+        setupOntology();
         int minNumberOfInvocations = 0;
-        for (String dataset : datasets) {
+        for (int i = 0; i < recordIDs.size(); i++) {
+            String recordId = recordIDs.get(i);
             minNumberOfInvocations += 1;
-            WebTarget webTarget = target().path(generateURL(dataset, true))
+            WebTarget webTarget = getTarget(recordId, i, true, null)
                     .queryParam("query", ALL_QUERY);
 
             Response response = webTarget.request().get();
 
-            verify(rest, atLeast(minNumberOfInvocations)).getLimitedResults(anyString(), anyString(), anyString(), anyString());
+            verify(rest, atLeast(minNumberOfInvocations)).getLimitedResults(any(), anyString(), anyString(), anyString(), any(), any(), anyBoolean(), anyBoolean(), anyString());
 
-            if (dataset != null) {
+            if (i == 1) {
                 verify(datasetManager).getConnection(vf.createIRI(DATASET_ID));
                 verify(datasetConnection).prepareTupleQuery(anyString());
+            } else if (i == 2) {
+                verify(ontologyManager, atLeastOnce()).retrieveOntology(eq(vf.createIRI(recordId)), eq(vf.createIRI(BRANCH_ID)), eq(vf.createIRI(COMMIT_ID)));
+                verify(configProvider, atLeastOnce()).getRepository();
+                verify(mockRepo, atLeastOnce()).getConnection();
+                verify(commitManager, atLeastOnce()).getInProgressCommitOpt(any(), any(), any(), any());
+            } else if (i == 3) {
+                verify(ontologyManager, atLeastOnce()).retrieveOntology(eq(vf.createIRI(recordId)), eq(vf.createIRI(BRANCH_ID)));
+                verify(configProvider, atLeastOnce()).getRepository();
+                verify(mockRepo, atLeastOnce()).getConnection();
+                verify(commitManager, atLeastOnce()).getInProgressCommitOpt(any(), any(), any(), any());
+            } else if (i == 4) {
+                verify(ontologyManager, atLeastOnce()).retrieveOntologyByCommit(eq(vf.createIRI(recordId)), eq(vf.createIRI(COMMIT_ID)));
+            } else if (i == 5) {
+                verify(ontologyManager, atLeastOnce()).retrieveOntology(eq(vf.createIRI(recordId)));
             } else {
-                verify(repositoryManager).getRepository("system");
+                verify(repositoryManager, atLeastOnce()).getRepository("system");
             }
 
             assertEquals(200, response.getStatus());
@@ -841,21 +1071,37 @@ public class SparqlRestTest extends MobiRestTestCXF {
 
     @Test
     public void selectQueryPostDefaultLimitedTest() throws Exception {
+        setupOntology();
         int minNumberOfInvocations = 0;
-        for (String dataset : datasets) {
+        for (int i = 0; i < recordIDs.size(); i++) {
+            String recordId = recordIDs.get(i);
             minNumberOfInvocations += 1;
-            WebTarget webTarget = target().path(generateURL(dataset, true));
+            WebTarget webTarget = getTarget(recordId, i, true, null);
 
             Response response = webTarget.request().post(Entity.entity(ResourceUtils.decode(ALL_QUERY),
                     "application/sparql-query"));
 
-            verify(rest, atLeast(minNumberOfInvocations)).postLimitedResults(anyString(), anyString(), anyString(), anyString());
+            verify(rest, atLeast(minNumberOfInvocations)).postLimitedResults(any(), anyString(), anyString(), any(), any(), anyBoolean(), anyBoolean(), anyString(), anyString());
 
-            if (dataset != null) {
+            if (i == 1) {
                 verify(datasetManager).getConnection(vf.createIRI(DATASET_ID));
                 verify(datasetConnection).prepareTupleQuery(anyString());
+            } else if (i == 2) {
+                verify(ontologyManager, atLeastOnce()).retrieveOntology(eq(vf.createIRI(recordId)), eq(vf.createIRI(BRANCH_ID)), eq(vf.createIRI(COMMIT_ID)));
+                verify(configProvider, atLeastOnce()).getRepository();
+                verify(mockRepo, atLeastOnce()).getConnection();
+                verify(commitManager, atLeastOnce()).getInProgressCommitOpt(any(), any(), any(), any());
+            } else if (i == 3) {
+                verify(ontologyManager, atLeastOnce()).retrieveOntology(eq(vf.createIRI(recordId)), eq(vf.createIRI(BRANCH_ID)));
+                verify(configProvider, atLeastOnce()).getRepository();
+                verify(mockRepo, atLeastOnce()).getConnection();
+                verify(commitManager, atLeastOnce()).getInProgressCommitOpt(any(), any(), any(), any());
+            } else if (i == 4) {
+                verify(ontologyManager, atLeastOnce()).retrieveOntologyByCommit(eq(vf.createIRI(recordId)), eq(vf.createIRI(COMMIT_ID)));
+            } else if (i == 5) {
+                verify(ontologyManager, atLeastOnce()).retrieveOntology(eq(vf.createIRI(recordId)));
             } else {
-                verify(repositoryManager).getRepository("system");
+                verify(repositoryManager, atLeastOnce()).getRepository("system");
             }
 
             assertEquals(200, response.getStatus());
@@ -870,25 +1116,41 @@ public class SparqlRestTest extends MobiRestTestCXF {
 
     @Test
     public void selectQueryPostUrlEncodedDefaultLimitedTest() throws Exception {
+        setupOntology();
         int minNumberOfInvocations = 0;
-        for (String dataset : datasets) {
+        for (int i = 0; i < recordIDs.size(); i++) {
+            String recordId = recordIDs.get(i);
             minNumberOfInvocations += 1;
-            WebTarget webTarget = target().path(generateURL(dataset, true));
-
             Form form = new Form();
+            WebTarget webTarget = getTarget(recordId, i, true, form);
+
             form.param("query", ResourceUtils.decode(ALL_QUERY));
-            
+
             Response response = webTarget.request().post(Entity.entity(form,
                     MediaType.APPLICATION_FORM_URLENCODED_TYPE));
 
-            verify(rest, atLeast(minNumberOfInvocations)).postUrlEncodedLimitedResults(anyString(), anyString(),
-                    anyString(), anyString());
+            verify(rest, atLeast(minNumberOfInvocations)).postUrlEncodedLimitedResults(any(), anyString(), anyString(),
+                    anyString(), any(), any(), anyBoolean(), anyBoolean(), anyString());
 
-            if (dataset != null) {
+            if (i == 1) {
                 verify(datasetManager).getConnection(vf.createIRI(DATASET_ID));
                 verify(datasetConnection).prepareTupleQuery(anyString());
+            } else if (i == 2) {
+                verify(ontologyManager, atLeastOnce()).retrieveOntology(eq(vf.createIRI(recordId)), eq(vf.createIRI(BRANCH_ID)), eq(vf.createIRI(COMMIT_ID)));
+                verify(configProvider, atLeastOnce()).getRepository();
+                verify(mockRepo, atLeastOnce()).getConnection();
+                verify(commitManager, atLeastOnce()).getInProgressCommitOpt(any(), any(), any(), any());
+            } else if (i == 3) {
+                verify(ontologyManager, atLeastOnce()).retrieveOntology(eq(vf.createIRI(recordId)), eq(vf.createIRI(BRANCH_ID)));
+                verify(configProvider, atLeastOnce()).getRepository();
+                verify(mockRepo, atLeastOnce()).getConnection();
+                verify(commitManager, atLeastOnce()).getInProgressCommitOpt(any(), any(), any(), any());
+            } else if (i == 4) {
+                verify(ontologyManager, atLeastOnce()).retrieveOntologyByCommit(eq(vf.createIRI(recordId)), eq(vf.createIRI(COMMIT_ID)));
+            } else if (i == 5) {
+                verify(ontologyManager, atLeastOnce()).retrieveOntology(eq(vf.createIRI(recordId)));
             } else {
-                verify(repositoryManager).getRepository("system");
+                verify(repositoryManager, atLeastOnce()).getRepository("system");
             }
 
             assertEquals(200, response.getStatus());
@@ -906,21 +1168,37 @@ public class SparqlRestTest extends MobiRestTestCXF {
         setupLargeRepo();
 
         int minNumberOfInvocations = 0;
-        for (String dataset : datasets) {
+        for (int i = 0; i < recordIDs.size(); i++) {
+            String recordId = recordIDs.get(i);
             minNumberOfInvocations += 1;
-            WebTarget webTarget = target().path(generateURL(dataset, true))
+            WebTarget webTarget = getTarget(recordId, i, true, null)
                     .queryParam("query", ALL_QUERY);
 
             Response response = webTarget.request().get();
 
-            verify(rest, atLeast(minNumberOfInvocations)).getLimitedResults(anyString(), anyString(), anyString(), anyString());
+            verify(rest, atLeast(minNumberOfInvocations)).getLimitedResults(any(), anyString(), anyString(), anyString(), any(), any(), anyBoolean(), anyBoolean(), anyString());
 
-            if (dataset != null) {
+            if (i == 1) {
                 verify(datasetManager).getConnection(vf.createIRI(DATASET_ID));
                 verify(datasetConnection).prepareTupleQuery(anyString());
+            } else if (i == 2) {
+                verify(ontologyManager, atLeastOnce()).retrieveOntology(eq(vf.createIRI(recordId)), eq(vf.createIRI(BRANCH_ID)), eq(vf.createIRI(COMMIT_ID)));
+                verify(configProvider, atLeastOnce()).getRepository();
+                verify(mockRepo, atLeastOnce()).getConnection();
+                verify(commitManager, atLeastOnce()).getInProgressCommitOpt(any(), any(), any(), any());
+            } else if (i == 3) {
+                verify(ontologyManager, atLeastOnce()).retrieveOntology(eq(vf.createIRI(recordId)), eq(vf.createIRI(BRANCH_ID)));
+                verify(configProvider, atLeastOnce()).getRepository();
+                verify(mockRepo, atLeastOnce()).getConnection();
+                verify(commitManager, atLeastOnce()).getInProgressCommitOpt(any(), any(), any(), any());
+            } else if (i == 4) {
+                verify(ontologyManager, atLeastOnce()).retrieveOntologyByCommit(eq(vf.createIRI(recordId)), eq(vf.createIRI(COMMIT_ID)));
+            } else if (i == 5) {
+                verify(ontologyManager, atLeastOnce()).retrieveOntology(eq(vf.createIRI(recordId)));
             } else {
-                verify(repositoryManager).getRepository("system");
+                verify(repositoryManager, atLeastOnce()).getRepository("system");
             }
+
             assertEquals(200, response.getStatus());
             assertEquals(MediaType.APPLICATION_JSON, response.getHeaderString("Content-Type"));
             assertEquals("500", response.getHeaderString("X-LIMIT-EXCEEDED"));
@@ -933,22 +1211,39 @@ public class SparqlRestTest extends MobiRestTestCXF {
 
     @Test
     public void constructQueryDefaultLimitedTest() {
+        setupOntology();
         int minNumberOfInvocations = 0;
-        for (String dataset : datasets) {
+        for (int i = 0; i < recordIDs.size(); i++) {
+            String recordId = recordIDs.get(i);
             minNumberOfInvocations += 1;
-            WebTarget webTarget = target().path(generateURL(dataset, true))
+            WebTarget webTarget = getTarget(recordId, i, true, null)
                     .queryParam("query", CONSTRUCT_QUERY);
 
             Response response = webTarget.request().get();
 
-            verify(rest, atLeast(minNumberOfInvocations)).getLimitedResults(anyString(), anyString(), anyString(), anyString());
+            verify(rest, atLeast(minNumberOfInvocations)).getLimitedResults(any(), anyString(), anyString(), anyString(), any(), any(), anyBoolean(), anyBoolean(), anyString());
 
-            if (dataset != null) {
+            if (i == 1) {
                 verify(datasetManager).getConnection(vf.createIRI(DATASET_ID));
                 verify(datasetConnection).prepareGraphQuery(anyString());
+            } else if (i == 2) {
+                verify(ontologyManager, atLeastOnce()).retrieveOntology(eq(vf.createIRI(recordId)), eq(vf.createIRI(BRANCH_ID)), eq(vf.createIRI(COMMIT_ID)));
+                verify(configProvider, atLeastOnce()).getRepository();
+                verify(mockRepo, atLeastOnce()).getConnection();
+                verify(commitManager, atLeastOnce()).getInProgressCommitOpt(any(), any(), any(), any());
+            } else if (i == 3) {
+                verify(ontologyManager, atLeastOnce()).retrieveOntology(eq(vf.createIRI(recordId)), eq(vf.createIRI(BRANCH_ID)));
+                verify(configProvider, atLeastOnce()).getRepository();
+                verify(mockRepo, atLeastOnce()).getConnection();
+                verify(commitManager, atLeastOnce()).getInProgressCommitOpt(any(), any(), any(), any());
+            } else if (i == 4) {
+                verify(ontologyManager, atLeastOnce()).retrieveOntologyByCommit(eq(vf.createIRI(recordId)), eq(vf.createIRI(COMMIT_ID)));
+            } else if (i == 5) {
+                verify(ontologyManager, atLeastOnce()).retrieveOntology(eq(vf.createIRI(recordId)));
             } else {
-                verify(repositoryManager).getRepository("system");
+                verify(repositoryManager, atLeastOnce()).getRepository("system");
             }
+
             assertEquals(200, response.getStatus());
             assertEquals("text/turtle", response.getHeaderString("Content-Type"));
             assertNull(response.getHeaderString("X-LIMIT-EXCEEDED"));
@@ -963,21 +1258,37 @@ public class SparqlRestTest extends MobiRestTestCXF {
         setupLargeRepo();
 
         int minNumberOfInvocations = 0;
-        for (String dataset : datasets) {
+        for (int i = 0; i < recordIDs.size(); i++) {
+            String recordId = recordIDs.get(i);
             minNumberOfInvocations += 1;
-            WebTarget webTarget = target().path(generateURL(dataset, true))
+            WebTarget webTarget = getTarget(recordId, i, true, null)
                     .queryParam("query", CONSTRUCT_QUERY);
-            
+
             Response response = webTarget.request().get();
 
-            verify(rest, atLeast(minNumberOfInvocations)).getLimitedResults(anyString(), anyString(), anyString(), anyString());
+            verify(rest, atLeast(minNumberOfInvocations)).getLimitedResults(any(), anyString(), anyString(), anyString(), any(), any(), anyBoolean(), anyBoolean(), anyString());
 
-            if (dataset != null) {
+            if (i == 1) {
                 verify(datasetManager).getConnection(vf.createIRI(DATASET_ID));
                 verify(datasetConnection).prepareGraphQuery(anyString());
+            } else if (i == 2) {
+                verify(ontologyManager, atLeastOnce()).retrieveOntology(eq(vf.createIRI(recordId)), eq(vf.createIRI(BRANCH_ID)), eq(vf.createIRI(COMMIT_ID)));
+                verify(configProvider, atLeastOnce()).getRepository();
+                verify(mockRepo, atLeastOnce()).getConnection();
+                verify(commitManager, atLeastOnce()).getInProgressCommitOpt(any(), any(), any(), any());
+            } else if (i == 3) {
+                verify(ontologyManager, atLeastOnce()).retrieveOntology(eq(vf.createIRI(recordId)), eq(vf.createIRI(BRANCH_ID)));
+                verify(configProvider, atLeastOnce()).getRepository();
+                verify(mockRepo, atLeastOnce()).getConnection();
+                verify(commitManager, atLeastOnce()).getInProgressCommitOpt(any(), any(), any(), any());
+            } else if (i == 4) {
+                verify(ontologyManager, atLeastOnce()).retrieveOntologyByCommit(eq(vf.createIRI(recordId)), eq(vf.createIRI(COMMIT_ID)));
+            } else if (i == 5) {
+                verify(ontologyManager, atLeastOnce()).retrieveOntology(eq(vf.createIRI(recordId)));
             } else {
-                verify(repositoryManager).getRepository("system");
+                verify(repositoryManager, atLeastOnce()).getRepository("system");
             }
+
             assertEquals(200, response.getStatus());
             assertEquals("text/turtle", response.getHeaderString("Content-Type"));
             assertEquals("500", response.getHeaderString("X-LIMIT-EXCEEDED"));
@@ -989,31 +1300,47 @@ public class SparqlRestTest extends MobiRestTestCXF {
 
     @Test
     public void limitedResultsTest() throws Exception {
+        setupOntology();
         assertEquals("Verify Mimes Types", 6, limitedFileTypesMimes.size());
 
         int minNumberOfInvocations = 0;
-        for (String dataset : datasets) {
+        for (int i = 0; i < recordIDs.size(); i++) {
+            String recordId = recordIDs.get(i);
             for (Map.Entry mapEntry: limitedFileTypesMimes.entrySet()) {
                 minNumberOfInvocations += 1;
                 String type = (String) mapEntry.getKey();
                 String[] dataArray = (String[]) mapEntry.getValue();
                 String mimeType = dataArray[0];
 
-                WebTarget webTarget = target().path(generateURL(dataset, true)).queryParam("query", dataArray[1]);
+                WebTarget webTarget = getTarget(recordId, i, true, null).queryParam("query", dataArray[1]);
 
                 Response response = webTarget.request().accept(mimeType).get();
 
                 assertEquals(200, response.getStatus());
 
-                verify(rest, atLeast(minNumberOfInvocations)).getLimitedResults(anyString(), anyString(), anyString(), anyString());
+                verify(rest, atLeast(minNumberOfInvocations)).getLimitedResults(any(), anyString(), anyString(), anyString(), any(), any(), anyBoolean(), anyBoolean(), anyString());
 
-                if (dataset != null) {
+                if (i == 1) {
                     verify(datasetManager, atLeastOnce()).getConnection(vf.createIRI(DATASET_ID));
                     if (dataArray[1].equals(CONSTRUCT_QUERY)) {
                         verify(datasetConnection, atLeastOnce()).prepareGraphQuery(anyString());
                     } else {
                         verify(datasetConnection, atLeastOnce()).prepareTupleQuery(anyString());
                     }
+                } else if (i == 2) {
+                    verify(ontologyManager, atLeastOnce()).retrieveOntology(eq(vf.createIRI(recordId)), eq(vf.createIRI(BRANCH_ID)), eq(vf.createIRI(COMMIT_ID)));
+                    verify(configProvider, atLeastOnce()).getRepository();
+                    verify(mockRepo, atLeastOnce()).getConnection();
+                    verify(commitManager, atLeastOnce()).getInProgressCommitOpt(any(), any(), any(), any());
+                } else if (i == 3) {
+                    verify(ontologyManager, atLeastOnce()).retrieveOntology(eq(vf.createIRI(recordId)), eq(vf.createIRI(BRANCH_ID)));
+                    verify(configProvider, atLeastOnce()).getRepository();
+                    verify(mockRepo, atLeastOnce()).getConnection();
+                    verify(commitManager, atLeastOnce()).getInProgressCommitOpt(any(), any(), any(), any());
+                } else if (i == 4) {
+                    verify(ontologyManager, atLeastOnce()).retrieveOntologyByCommit(eq(vf.createIRI(recordId)), eq(vf.createIRI(COMMIT_ID)));
+                } else if (i == 5) {
+                    verify(ontologyManager, atLeastOnce()).retrieveOntology(eq(vf.createIRI(recordId)));
                 } else {
                     verify(repositoryManager, atLeastOnce()).getRepository("system");
                 }
@@ -1037,7 +1364,7 @@ public class SparqlRestTest extends MobiRestTestCXF {
                 }
             }
         }
-        assertEquals("Verify minNumberOfInvocations", 12, minNumberOfInvocations);
+        assertEquals("Verify minNumberOfInvocations", 36, minNumberOfInvocations);
     }
 
     @Test
@@ -1045,7 +1372,7 @@ public class SparqlRestTest extends MobiRestTestCXF {
         // Setup:
         when(repositoryManager.getRepository(anyString())).thenReturn(Optional.empty());
 
-        Response response = target().path(generateURL("", true))
+        Response response = getTarget("", 0, true, null)
                 .queryParam("query", ALL_QUERY)
                 .request().accept(MediaType.APPLICATION_JSON_TYPE).get();
         assertEquals(500, response.getStatus());
@@ -1056,7 +1383,7 @@ public class SparqlRestTest extends MobiRestTestCXF {
         // Setup:
         when(repositoryManager.getRepository(anyString())).thenReturn(Optional.empty());
 
-        Response response = target().path(generateURL("", true))
+        Response response = getTarget("", 0, true, null)
                 .queryParam("query", CONSTRUCT_QUERY)
                 .request().accept(MediaType.APPLICATION_JSON_TYPE).get();
         assertEquals(500, response.getStatus());
@@ -1067,7 +1394,7 @@ public class SparqlRestTest extends MobiRestTestCXF {
         // Setup:
         when(datasetManager.getConnection(any(Resource.class))).thenThrow(new IllegalArgumentException());
 
-        Response response = target().path(generateURL(DATASET_ID, true))
+        Response response = getTarget(DATASET_ID, 1, true, null)
                 .queryParam("query", ALL_QUERY)
                 .request().accept(MediaType.APPLICATION_JSON_TYPE).get();
         assertEquals(400, response.getStatus());
@@ -1078,7 +1405,7 @@ public class SparqlRestTest extends MobiRestTestCXF {
         // Setup:
         when(datasetManager.getConnection(any(Resource.class))).thenThrow(new IllegalArgumentException());
 
-        Response response = target().path(generateURL(DATASET_ID, true))
+        Response response = getTarget(DATASET_ID, 1, true, null)
                 .queryParam("query", CONSTRUCT_QUERY)
                 .request().accept(MediaType.APPLICATION_JSON_TYPE).get();
         assertEquals(400, response.getStatus());
@@ -1086,12 +1413,12 @@ public class SparqlRestTest extends MobiRestTestCXF {
 
     @Test
     public void selectQueryWithInvalidQueryLimitedTest() {
-        Response response = target().path(generateURL("", true))
+        Response response = getTarget("", 0, true, null)
                 .queryParam("query", ALL_QUERY + "-" + ResourceUtils.encode("+"))
                 .request().accept(MediaType.APPLICATION_JSON_TYPE).get();
         assertEquals(400, response.getStatus());
 
-        response = target().path(generateURL(DATASET_ID, true))
+        response = getTarget(DATASET_ID, 1, true, null)
                 .queryParam("query", ALL_QUERY + "-" + ResourceUtils.encode("+"))
                 .request().accept(MediaType.APPLICATION_JSON_TYPE).get();
         assertEquals(400, response.getStatus());
@@ -1099,12 +1426,12 @@ public class SparqlRestTest extends MobiRestTestCXF {
 
     @Test
     public void constructQueryWithInvalidQueryLimitedTest() {
-        Response response = target().path(generateURL("", true))
+        Response response = getTarget("", 0, true, null)
                 .queryParam("query", CONSTRUCT_QUERY + "-" + ResourceUtils.encode("+"))
                 .request().accept(MediaType.APPLICATION_JSON_TYPE).get();
         assertEquals(400, response.getStatus());
 
-        response = target().path(generateURL(DATASET_ID, true))
+        response = getTarget(DATASET_ID, 1, true, null)
                 .queryParam("query", CONSTRUCT_QUERY + "-" + ResourceUtils.encode("+"))
                 .request().accept(MediaType.APPLICATION_JSON_TYPE).get();
         assertEquals(400, response.getStatus());
@@ -1115,7 +1442,7 @@ public class SparqlRestTest extends MobiRestTestCXF {
         // Setup:
         when(datasetManager.getConnection(any(Resource.class))).thenThrow(new MobiException());
 
-        Response response = target().path(generateURL(DATASET_ID, true))
+        Response response = getTarget(DATASET_ID, 1, true, null)
                 .queryParam("query", ALL_QUERY)
                 .request().accept(MediaType.APPLICATION_JSON_TYPE).get();
         assertEquals(500, response.getStatus());
@@ -1126,16 +1453,64 @@ public class SparqlRestTest extends MobiRestTestCXF {
         // Setup:
         when(datasetManager.getConnection(any(Resource.class))).thenThrow(new MobiException());
 
-        Response response = target().path(generateURL(DATASET_ID, true))
+        Response response = getTarget(DATASET_ID, 1, true, null)
                 .queryParam("query", ALL_QUERY)
                 .request().accept(MediaType.APPLICATION_JSON_TYPE).get();
         assertEquals(500, response.getStatus());
     }
 
-    private String generateURL(String dataset, boolean isLimited) {
-        String storeType = StringUtils.isEmpty(dataset) ? "repository" : "dataset-record";
-        String resourceId = StringUtils.isEmpty(dataset) ? "https://mobi.solutions/repos/system" : dataset;
+    private WebTarget getTarget(String resourceId, int index, boolean isLimited, Form form) {
+        if (resourceId == null || index == 0) {
+            resourceId = "https://mobi.solutions/repos/system";
+        }
         String limited = isLimited ? "limited-results" : "";
-        return "sparql/" + storeType + "/" + URLEncoder.encode(resourceId) + "/" + limited;
+        WebTarget target = target();
+        if (index == 1) {
+            target = target.path("sparql/dataset-record/" + URLEncoder.encode(resourceId, StandardCharsets.UTF_8) + "/" + limited);
+        } else if (index == 2) {
+            target = target.path("sparql/ontology-record/" + URLEncoder.encode(resourceId, StandardCharsets.UTF_8) + "/" + limited);
+            if (form == null) {
+                target = target.queryParam("branchId", BRANCH_ID)
+                        .queryParam("commitId", COMMIT_ID)
+                        .queryParam("includeImports", true)
+                        .queryParam("applyInProgressCommit", true);
+            } else {
+                form.param("branchId", BRANCH_ID)
+                        .param("commitId", COMMIT_ID)
+                        .param("includeImports", "true")
+                        .param("applyInProgressCommit", "true");
+            }
+
+        } else if (index == 3) {
+            target = target.path("sparql/ontology-record/" + URLEncoder.encode(resourceId, StandardCharsets.UTF_8) + "/" + limited);
+            if (form == null) {
+                target = target.queryParam("branchId", BRANCH_ID)
+                        .queryParam("includeImports", false)
+                        .queryParam("applyInProgressCommit", true);
+            } else {
+                form.param("branchId", BRANCH_ID)
+                        .param("includeImports", "false")
+                        .param("applyInProgressCommit", "true");
+            }
+
+        } else if (index == 4) {
+            target = target.path("sparql/ontology-record/" + URLEncoder.encode(resourceId, StandardCharsets.UTF_8) + "/" + limited);
+            if (form == null) {
+                target = target.queryParam("commitId", COMMIT_ID)
+                        .queryParam("includeImports", true)
+                        .queryParam("applyInProgressCommit", false);
+            } else {
+                form.param("commitId", COMMIT_ID)
+                        .param("includeImports", "true")
+                        .param("applyInProgressCommit", "false");
+            }
+
+        } else if (index == 5) {
+            target = target.path("sparql/ontology-record/" + URLEncoder.encode(resourceId, StandardCharsets.UTF_8) + "/" + limited);
+        } else {
+            target = target.path("sparql/repository/" + URLEncoder.encode(resourceId, StandardCharsets.UTF_8) + "/" + limited);
+        }
+
+        return target;
     }
 }

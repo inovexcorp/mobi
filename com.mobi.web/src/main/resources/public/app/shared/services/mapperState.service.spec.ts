@@ -25,25 +25,25 @@ import { cloneDeep, has, merge } from 'lodash';
 import { MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 
-import {
-    cleanStylesFromDOM,
-} from '../../../test/ts/Shared';
 import { CATALOG, DATA, DCTERMS, DELIM, OWL, XSD } from '../../prefixes';
+import { CatalogManagerService } from './catalogManager.service';
+import { cleanStylesFromDOM, } from '../../../test/ts/Shared';
+import { DelimitedManagerService } from './delimitedManager.service';
 import { Difference } from '../models/difference.class';
+import { getDctermsValue } from '../utility';
+import { IriList } from '../models/iriList.interface';
 import { JSONLDObject } from '../models/JSONLDObject.interface';
+import { MapperStateService } from './mapperState.service';
 import { Mapping } from '../models/mapping.class';
 import { MappingClass } from '../models/mappingClass.interface';
+import { MappingManagerService } from './mappingManager.service';
+import { MappingOntologyInfo } from '../models/mappingOntologyInfo.interface';
 import { MappingProperty } from '../models/mappingProperty.interface';
 import { MappingRecord } from '../models/mappingRecord.interface';
-import { CatalogManagerService } from './catalogManager.service';
-import { DelimitedManagerService } from './delimitedManager.service';
-import { MappingManagerService } from './mappingManager.service';
+import { ONTOLOGY_STORE_TYPE } from '../../constants';
 import { OntologyManagerService } from './ontologyManager.service';
-import { MappingOntologyInfo } from '../models/mappingOntologyInfo.interface';
+import { SparqlManagerService } from './sparqlManager.service';
 import { SPARQLSelectResults } from '../models/sparqlSelectResults.interface';
-import { IriList } from '../models/iriList.interface';
-import { getDctermsValue } from '../utility';
-import { MapperStateService } from './mapperState.service';
 
 describe('Mapper State service', function() {
     let service: MapperStateService;
@@ -51,6 +51,7 @@ describe('Mapper State service', function() {
     let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
     let delimitedManagerStub: jasmine.SpyObj<DelimitedManagerService>;
     let ontologyManagerStub: jasmine.SpyObj<OntologyManagerService>;
+    let sparqlManagerStub: jasmine.SpyObj<SparqlManagerService>;
 
     let mappingStub: jasmine.SpyObj<Mapping>;
     const error = 'Error message';
@@ -95,6 +96,7 @@ describe('Mapper State service', function() {
                 MockProvider(MappingManagerService),
                 MockProvider(DelimitedManagerService),
                 MockProvider(OntologyManagerService),
+                MockProvider(SparqlManagerService)
             ]
         });
 
@@ -103,6 +105,7 @@ describe('Mapper State service', function() {
         mappingManagerStub = TestBed.inject(MappingManagerService) as jasmine.SpyObj<MappingManagerService>;
         delimitedManagerStub = TestBed.inject(DelimitedManagerService) as jasmine.SpyObj<DelimitedManagerService>;
         ontologyManagerStub = TestBed.inject(OntologyManagerService) as jasmine.SpyObj<OntologyManagerService>;
+        sparqlManagerStub = TestBed.inject(SparqlManagerService) as jasmine.SpyObj<SparqlManagerService>;
 
         catalogManagerStub.localCatalog = {'@id': catalogId};
         mappingStub = jasmine.createSpyObj('Mapping', [
@@ -140,6 +143,7 @@ describe('Mapper State service', function() {
         delimitedManagerStub = null;
         catalogManagerStub = null;
         mappingStub = null;
+        sparqlManagerStub = null;
     });
 
     it('should initialize important variables', function() {
@@ -1166,13 +1170,14 @@ describe('Mapper State service', function() {
     });
     describe('should get the list of classes from the imports closure of a source ontology', function() {
         it('unless an error occurs', async function() {
-            ontologyManagerStub.postQueryResults.and.returnValue(throwError(error));
+            sparqlManagerStub.postQuery.and.returnValue(throwError(error));
             await service.retrieveClasses(ontInfo, 'custom search')
                 .subscribe(() => fail('Observable should have failed'), response => {
                     expect(response).toEqual(error);
                 });
-            expect(ontologyManagerStub.postQueryResults).toHaveBeenCalledWith(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId, 
-                jasmine.stringContaining('custom search'), 'application/json', true, false, false);
+            expect(sparqlManagerStub.postQuery).toHaveBeenCalledWith(jasmine.stringContaining('custom search'),
+                ontInfo.recordId, ONTOLOGY_STORE_TYPE, ontInfo.branchId, ontInfo.commitId, true, false,
+                'application/json', false);
         });
         it('successfully', async function() {
             const results: SPARQLSelectResults = {
@@ -1190,7 +1195,7 @@ describe('Mapper State service', function() {
                   },
                 ] }
             };
-            ontologyManagerStub.postQueryResults.and.returnValue(of(results));
+            sparqlManagerStub.postQuery.and.returnValue(of(results));
             await service.retrieveClasses(ontInfo, 'custom search').subscribe(result => {
                 expect(result.length).toEqual(2);
                 expect(result).toContain({
@@ -1206,26 +1211,26 @@ describe('Mapper State service', function() {
                     deprecated: true
                 });
             }, () => fail('Observable should have succeeded'));
-            expect(ontologyManagerStub.postQueryResults).toHaveBeenCalledWith(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId, 
-                jasmine.stringContaining('custom search'), 'application/json', true, false, false);
+            expect(sparqlManagerStub.postQuery).toHaveBeenCalledWith(jasmine.stringContaining('custom search'),
+                ontInfo.recordId, ONTOLOGY_STORE_TYPE, ontInfo.branchId, ontInfo.commitId, true, false, 'application/json', false);
         });
     });
     describe('should retrieve specific classes from the imports closure of the selected Mapping', function() {
         it('unless an error occurs', async function() {
-            ontologyManagerStub.postQueryResults.and.returnValue(throwError(error));
+            sparqlManagerStub.postQuery.and.returnValue(throwError(error));
             await service.retrieveSpecificClasses(ontInfo, [mappingClass.iri]).subscribe(() => fail('Observable should have failed'), result => {
                 expect(result).toEqual(error);
             });
-            expect(ontologyManagerStub.postQueryResults).toHaveBeenCalledWith(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId, 
-                jasmine.stringContaining(mappingClass.iri), 'application/json');
+            expect(sparqlManagerStub.postQuery).toHaveBeenCalledWith(jasmine.stringContaining(mappingClass.iri),
+                ontInfo.recordId, ONTOLOGY_STORE_TYPE, ontInfo.branchId, ontInfo.commitId, true, false);
         });
         it('unless no classes are found', async function() {
-            ontologyManagerStub.postQueryResults.and.returnValue(of(null));
+            sparqlManagerStub.postQuery.and.returnValue(of(null));
             await service.retrieveSpecificClasses(ontInfo, [mappingClass.iri]).subscribe(result => {
                 expect(result).toEqual([]);
             }, () => fail('Observable should have succeeded'));
-            expect(ontologyManagerStub.postQueryResults).toHaveBeenCalledWith(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId, 
-                jasmine.stringContaining(mappingClass.iri), 'application/json');
+            expect(sparqlManagerStub.postQuery).toHaveBeenCalledWith(jasmine.stringContaining(mappingClass.iri),
+                ontInfo.recordId, ONTOLOGY_STORE_TYPE, ontInfo.branchId, ontInfo.commitId, true, false);
         });
         it('successfully with one IRI', async function() {
             const results: SPARQLSelectResults = {
@@ -1236,12 +1241,12 @@ describe('Mapper State service', function() {
                   description: { value: mappingClass.description, type: 'string' },
               } ] }
             };
-            ontologyManagerStub.postQueryResults.and.returnValue(of(results));
+            sparqlManagerStub.postQuery.and.returnValue(of(results));
             await service.retrieveSpecificClasses(ontInfo, [mappingClass.iri]).subscribe(result => {
                 expect(result).toEqual([mappingClass]);
             }, () => fail('Observable should have succeeded'));
-            expect(ontologyManagerStub.postQueryResults).toHaveBeenCalledWith(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId, 
-                jasmine.stringContaining(mappingClass.iri), 'application/json');
+            expect(sparqlManagerStub.postQuery).toHaveBeenCalledWith(jasmine.stringContaining(mappingClass.iri),
+                ontInfo.recordId, ONTOLOGY_STORE_TYPE, ontInfo.branchId, ontInfo.commitId, true, false);
         });
         it('successfully with multiple IRIs', async function() {
             const otherMappingClass: MappingClass = {
@@ -1266,23 +1271,23 @@ describe('Mapper State service', function() {
                   },
               ] }
             };
-            ontologyManagerStub.postQueryResults.and.returnValue(of(results));
+            sparqlManagerStub.postQuery.and.returnValue(of(results));
             await service.retrieveSpecificClasses(ontInfo, [mappingClass.iri, otherMappingClass.iri]).subscribe(result => {
                 expect(result).toEqual([mappingClass, otherMappingClass]);
             }, () => fail('Observable should have succeeded'));
-            expect(ontologyManagerStub.postQueryResults).toHaveBeenCalledWith(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId, 
-                jasmine.stringContaining(`<${mappingClass.iri}> <${otherMappingClass.iri}>`), 'application/json');
+            expect(sparqlManagerStub.postQuery).toHaveBeenCalledWith(jasmine.stringContaining(`<${mappingClass.iri}> <${otherMappingClass.iri}>`),
+                ontInfo.recordId, ONTOLOGY_STORE_TYPE, ontInfo.branchId, ontInfo.commitId, true, false);
         });
     });
     describe('should get the list of properties for a class from the imports closure of a source ontology', function() {
         it('unless an error occurs', async function() {
-            ontologyManagerStub.postQueryResults.and.returnValue(throwError(error));
+            sparqlManagerStub.postQuery.and.returnValue(throwError(error));
             await service.retrieveProps(ontInfo, classId, 'custom search')
                 .subscribe(() => fail('Observable should have failed'), response => {
                     expect(response).toEqual(error);
                 });
-            expect(ontologyManagerStub.postQueryResults).toHaveBeenCalledWith(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId, 
-                jasmine.stringContaining('custom search'), 'application/json', true, false, false);
+            expect(sparqlManagerStub.postQuery).toHaveBeenCalledWith(jasmine.stringContaining('custom search'),
+                ontInfo.recordId, ONTOLOGY_STORE_TYPE, ontInfo.branchId, ontInfo.commitId, true, false, 'application/json', false);
         });
         it('successfully', async function() {
             const results: SPARQLSelectResults = {
@@ -1304,7 +1309,7 @@ describe('Mapper State service', function() {
                     },
                 ] }
             };
-            ontologyManagerStub.postQueryResults.and.returnValue(of(results));
+            sparqlManagerStub.postQuery.and.returnValue(of(results));
             await service.retrieveProps(ontInfo, classId, 'custom search').subscribe(result => {
                 expect(result.length).toEqual(2);
                 expect(result).toContain({
@@ -1324,26 +1329,26 @@ describe('Mapper State service', function() {
                     ranges: [`${XSD}string`, `${XSD}boolean`]
                 });
             }, () => fail('Observable should have succeeded'));
-            expect(ontologyManagerStub.postQueryResults).toHaveBeenCalledWith(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId, 
-                jasmine.stringContaining('custom search'), 'application/json', true, false, false);
+            expect(sparqlManagerStub.postQuery).toHaveBeenCalledWith(jasmine.stringContaining('custom search'),
+                ontInfo.recordId, ONTOLOGY_STORE_TYPE, ontInfo.branchId, ontInfo.commitId, true, false, 'application/json', false);
         });
     });
     describe('should retrieve specific properties from the imports closure of the selected Mapping', function() {
         it('unless an error occurs', async function() {
-            ontologyManagerStub.postQueryResults.and.returnValue(throwError(error));
+            sparqlManagerStub.postQuery.and.returnValue(throwError(error));
             await service.retrieveSpecificProps(ontInfo, [{ iri: mappingProperty.iri, type: mappingProperty.type }]).subscribe(() => fail('Observable should have failed'), result => {
                 expect(result).toEqual(error);
             });
-            expect(ontologyManagerStub.postQueryResults).toHaveBeenCalledWith(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId, 
-                jasmine.stringContaining(mappingProperty.iri), 'application/json');
+            expect(sparqlManagerStub.postQuery).toHaveBeenCalledWith(jasmine.stringContaining(mappingProperty.iri),
+                ontInfo.recordId, ONTOLOGY_STORE_TYPE, ontInfo.branchId, ontInfo.commitId, true, false);
         });
         it('unless no properties are found', async function() {
-            ontologyManagerStub.postQueryResults.and.returnValue(of(null));
+            sparqlManagerStub.postQuery.and.returnValue(of(null));
             await service.retrieveSpecificProps(ontInfo, [{ iri: mappingProperty.iri, type: mappingProperty.type }]).subscribe(result => {
                 expect(result).toEqual([]);
             }, () => fail('Observable should have succeeded'));
-            expect(ontologyManagerStub.postQueryResults).toHaveBeenCalledWith(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId, 
-                jasmine.stringContaining(mappingProperty.iri), 'application/json');
+            expect(sparqlManagerStub.postQuery).toHaveBeenCalledWith(jasmine.stringContaining(mappingProperty.iri),
+                ontInfo.recordId, ONTOLOGY_STORE_TYPE, ontInfo.branchId, ontInfo.commitId, true, false);
         });
         it('successfully with one IRI', async function() {
             const results: SPARQLSelectResults = {
@@ -1355,12 +1360,12 @@ describe('Mapper State service', function() {
                   ranges: { value: '', type: 'string' },
               } ] }
             };
-            ontologyManagerStub.postQueryResults.and.returnValue(of(results));
+            sparqlManagerStub.postQuery.and.returnValue(of(results));
             await service.retrieveSpecificProps(ontInfo, [{ iri: mappingProperty.iri, type: mappingProperty.type }]).subscribe(result => {
                 expect(result).toEqual([mappingProperty]);
             }, () => fail('Observable should have succeeded'));
-            expect(ontologyManagerStub.postQueryResults).toHaveBeenCalledWith(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId, 
-                jasmine.stringContaining(mappingProperty.iri), 'application/json');
+            expect(sparqlManagerStub.postQuery).toHaveBeenCalledWith(jasmine.stringContaining(mappingProperty.iri),
+                ontInfo.recordId, ONTOLOGY_STORE_TYPE, ontInfo.branchId, ontInfo.commitId, true, false);
         });
         it('successfully with multiple IRIs', async function() {
             const otherMappingProperty: MappingProperty = {
@@ -1390,12 +1395,12 @@ describe('Mapper State service', function() {
                   },
               ] }
             };
-            ontologyManagerStub.postQueryResults.and.returnValue(of(results));
+            sparqlManagerStub.postQuery.and.returnValue(of(results));
             await service.retrieveSpecificProps(ontInfo, [{ iri: mappingProperty.iri, type: mappingProperty.type }, { iri: otherMappingProperty.iri, type: otherMappingProperty.type}]).subscribe(result => {
                 expect(result).toEqual([mappingProperty, otherMappingProperty]);
             }, () => fail('Observable should have succeeded'));
-            expect(ontologyManagerStub.postQueryResults).toHaveBeenCalledWith(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId, 
-                jasmine.stringContaining(`(<${mappingProperty.iri}> <${mappingProperty.type}>) (<${otherMappingProperty.iri}> <${otherMappingProperty.type}>)`), 'application/json');
+            expect(sparqlManagerStub.postQuery).toHaveBeenCalledWith(jasmine.stringContaining(`(<${mappingProperty.iri}> <${mappingProperty.type}>) (<${otherMappingProperty.iri}> <${otherMappingProperty.type}>)`),
+                ontInfo.recordId, ONTOLOGY_STORE_TYPE, ontInfo.branchId, ontInfo.commitId, true, false);
         });
     });
 });
