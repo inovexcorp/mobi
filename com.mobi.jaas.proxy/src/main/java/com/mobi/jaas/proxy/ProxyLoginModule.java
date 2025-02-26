@@ -38,22 +38,23 @@ public class ProxyLoginModule implements LoginModule {
     public static final String BUNDLE_ID = "bundle.id";
 
     private LoginModule target = null;
+    private static final String OPTION = "Option ";
 
     @Override
     public void initialize(Subject subject, CallbackHandler callbackHandler, Map<String, ?> sharedState,
                            Map<String, ?> options) {
         BundleContext context = (BundleContext) options.get(BundleContext.class.getName());
         if (context == null) {
-            throw new IllegalStateException("Option " + BundleContext.class.getName()
+            throw new IllegalStateException(OPTION + BundleContext.class.getName()
                     + " must be set to the BundleContext of the module");
         }
         String module = (String) options.get(MODULE);
         if (module == null) {
-            throw new IllegalStateException("Option " + MODULE + " must be set to the name of the module");
+            throw new IllegalStateException(OPTION + MODULE + " must be set to the name of the module");
         }
         String bundleId = (String) options.get(BUNDLE_ID);
         if (bundleId == null) {
-            throw new IllegalStateException("Option " + BUNDLE_ID
+            throw new IllegalStateException(OPTION + BUNDLE_ID
                     + " must be set to the name of the bundle with the module");
         }
         Bundle bundle = context.getBundle(Long.parseLong(bundleId));
