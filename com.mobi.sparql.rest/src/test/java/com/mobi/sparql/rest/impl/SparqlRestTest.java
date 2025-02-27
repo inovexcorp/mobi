@@ -59,6 +59,7 @@ import com.mobi.rest.test.util.MobiRestTestCXF;
 import com.mobi.rest.test.util.UsernameTestFilter;
 import com.mobi.sparql.rest.SparqlRest;
 import org.apache.commons.io.IOUtils;
+import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.ModelFactory;
 import org.eclipse.rdf4j.model.Resource;
@@ -103,6 +104,7 @@ public class SparqlRestTest extends MobiRestTestCXF {
     private String BRANCH_ID;
     private String COMMIT_ID;
     private Model testModel;
+    private IRI systemIRI;
 
     private AutoCloseable closeable;
     private MemoryRepositoryWrapper repo;
@@ -192,6 +194,7 @@ public class SparqlRestTest extends MobiRestTestCXF {
         ONTOLOGY_ID_3 = "http://example.com/ontology/3";
         BRANCH_ID = "http://example.com/branches/0";
         COMMIT_ID = "http://example.com/commits/0";
+        systemIRI = vf.createIRI("https://mobi.solutions/repos/system");
 
         ALL_QUERY = ResourceUtils.encode(IOUtils.toString(Objects.requireNonNull(getClass().getClassLoader()
                 .getResourceAsStream("all_query.rq")), StandardCharsets.UTF_8));
@@ -225,7 +228,7 @@ public class SparqlRestTest extends MobiRestTestCXF {
         filenames = Arrays.asList(null, "test");
 
         // mock getRepository
-        when(repositoryManager.getRepository(anyString()))
+        when(repositoryManager.getRepository(any(IRI.class)))
                 .thenReturn(Optional.of(repo));
         // mock getConnection
         when(datasetManager.getConnection(any(Resource.class)))
@@ -268,7 +271,7 @@ public class SparqlRestTest extends MobiRestTestCXF {
 
         reset(repositoryManager, datasetConnection, datasetManager);
         // mock repositoryManager
-        when(repositoryManager.getRepository(anyString()))
+        when(repositoryManager.getRepository(any(IRI.class)))
                 .thenReturn(Optional.of(repoLarge));
 
         // mock getConnection
@@ -353,7 +356,7 @@ public class SparqlRestTest extends MobiRestTestCXF {
                 } else if (i == 5) {
                     verify(ontologyManager, atLeastOnce()).retrieveOntology(eq(vf.createIRI(recordId)));
                 } else {
-                    verify(repositoryManager, atLeastOnce()).getRepository("system");
+                    verify(repositoryManager, atLeastOnce()).getRepository(systemIRI);
                 }
 
                 MultivaluedMap<String, Object> headers = response.getHeaders();
@@ -425,7 +428,7 @@ public class SparqlRestTest extends MobiRestTestCXF {
                 } else if (i == 5) {
                     verify(ontologyManager, atLeastOnce()).retrieveOntology(eq(vf.createIRI(recordId)));
                 } else {
-                    verify(repositoryManager, atLeastOnce()).getRepository("system");
+                    verify(repositoryManager, atLeastOnce()).getRepository(systemIRI);
                 }
 
                 MultivaluedMap<String, Object> headers = response.getHeaders();
@@ -500,7 +503,7 @@ public class SparqlRestTest extends MobiRestTestCXF {
                 } else if (i == 5) {
                     verify(ontologyManager, atLeastOnce()).retrieveOntology(eq(vf.createIRI(recordId)));
                 } else {
-                    verify(repositoryManager, atLeastOnce()).getRepository("system");
+                    verify(repositoryManager, atLeastOnce()).getRepository(systemIRI);
                 }
 
                 MultivaluedMap<String, Object> headers = response.getHeaders();
@@ -575,7 +578,7 @@ public class SparqlRestTest extends MobiRestTestCXF {
                     } else if (i == 5) {
                         verify(ontologyManager, atLeastOnce()).retrieveOntology(eq(vf.createIRI(recordId)));
                     } else {
-                        verify(repositoryManager, atLeastOnce()).getRepository("system");
+                        verify(repositoryManager, atLeastOnce()).getRepository(systemIRI);
                     }
 
                     MultivaluedMap<String, Object> headers = response.getHeaders();
@@ -661,7 +664,7 @@ public class SparqlRestTest extends MobiRestTestCXF {
                     } else if (i == 5) {
                         verify(ontologyManager, atLeastOnce()).retrieveOntology(eq(vf.createIRI(recordId)));
                     } else {
-                        verify(repositoryManager, atLeastOnce()).getRepository("system");
+                        verify(repositoryManager, atLeastOnce()).getRepository(systemIRI);
                     }
 
                     MultivaluedMap<String, Object> headers = response.getHeaders();
@@ -751,7 +754,7 @@ public class SparqlRestTest extends MobiRestTestCXF {
                     } else if (i == 5) {
                         verify(ontologyManager, atLeastOnce()).retrieveOntology(eq(vf.createIRI(recordId)));
                     } else {
-                        verify(repositoryManager, atLeastOnce()).getRepository("system");
+                        verify(repositoryManager, atLeastOnce()).getRepository(systemIRI);
                     }
 
                     MultivaluedMap<String, Object> headers = response.getHeaders();
@@ -820,7 +823,7 @@ public class SparqlRestTest extends MobiRestTestCXF {
             } else if (i == 5) {
                 verify(ontologyManager, atLeastOnce()).retrieveOntology(eq(vf.createIRI(recordId)));
             } else {
-                verify(repositoryManager, atLeastOnce()).getRepository("system");
+                verify(repositoryManager, atLeastOnce()).getRepository(systemIRI);
             }
 
             assertEquals(200, response.getStatus());
@@ -866,7 +869,7 @@ public class SparqlRestTest extends MobiRestTestCXF {
             } else if (i == 5) {
                 verify(ontologyManager, atLeastOnce()).retrieveOntology(eq(vf.createIRI(recordId)));
             } else {
-                verify(repositoryManager, atLeastOnce()).getRepository("system");
+                verify(repositoryManager, atLeastOnce()).getRepository(systemIRI);
             }
 
             assertEquals("attachment;filename=results.ttl", response.getHeaderString("Content-Disposition"));
@@ -880,7 +883,7 @@ public class SparqlRestTest extends MobiRestTestCXF {
     @Test
     public void selectQueryRepositoryUnavailableTest() {
         // Setup:
-        when(repositoryManager.getRepository(anyString())).thenReturn(Optional.empty());
+        when(repositoryManager.getRepository(any(IRI.class))).thenReturn(Optional.empty());
 
         Response response = getTarget("", 0, false, null)
                 .queryParam("query", ALL_QUERY)
@@ -891,7 +894,7 @@ public class SparqlRestTest extends MobiRestTestCXF {
     @Test
     public void constructQueryRepositoryUnavailableTest() {
         // Setup:
-        when(repositoryManager.getRepository(anyString())).thenReturn(Optional.empty());
+        when(repositoryManager.getRepository(any(IRI.class))).thenReturn(Optional.empty());
 
         Response response = getTarget("", 0, false, null)
                 .queryParam("query", CONSTRUCT_QUERY)
@@ -974,7 +977,7 @@ public class SparqlRestTest extends MobiRestTestCXF {
     @Test
     public void downloadQueryRepositoryUnavailableTest() {
         // Setup:
-        when(repositoryManager.getRepository(anyString()))
+        when(repositoryManager.getRepository(any(IRI.class)))
                 .thenReturn(Optional.empty());
 
         fileTypesMimes.forEach((type, dataArray) -> {
@@ -1056,7 +1059,7 @@ public class SparqlRestTest extends MobiRestTestCXF {
             } else if (i == 5) {
                 verify(ontologyManager, atLeastOnce()).retrieveOntology(eq(vf.createIRI(recordId)));
             } else {
-                verify(repositoryManager, atLeastOnce()).getRepository("system");
+                verify(repositoryManager, atLeastOnce()).getRepository(systemIRI);
             }
 
             assertEquals(200, response.getStatus());
@@ -1101,7 +1104,7 @@ public class SparqlRestTest extends MobiRestTestCXF {
             } else if (i == 5) {
                 verify(ontologyManager, atLeastOnce()).retrieveOntology(eq(vf.createIRI(recordId)));
             } else {
-                verify(repositoryManager, atLeastOnce()).getRepository("system");
+                verify(repositoryManager, atLeastOnce()).getRepository(systemIRI);
             }
 
             assertEquals(200, response.getStatus());
@@ -1150,7 +1153,7 @@ public class SparqlRestTest extends MobiRestTestCXF {
             } else if (i == 5) {
                 verify(ontologyManager, atLeastOnce()).retrieveOntology(eq(vf.createIRI(recordId)));
             } else {
-                verify(repositoryManager, atLeastOnce()).getRepository("system");
+                verify(repositoryManager, atLeastOnce()).getRepository(systemIRI);
             }
 
             assertEquals(200, response.getStatus());
@@ -1196,7 +1199,7 @@ public class SparqlRestTest extends MobiRestTestCXF {
             } else if (i == 5) {
                 verify(ontologyManager, atLeastOnce()).retrieveOntology(eq(vf.createIRI(recordId)));
             } else {
-                verify(repositoryManager, atLeastOnce()).getRepository("system");
+                verify(repositoryManager, atLeastOnce()).getRepository(systemIRI);
             }
 
             assertEquals(200, response.getStatus());
@@ -1241,7 +1244,7 @@ public class SparqlRestTest extends MobiRestTestCXF {
             } else if (i == 5) {
                 verify(ontologyManager, atLeastOnce()).retrieveOntology(eq(vf.createIRI(recordId)));
             } else {
-                verify(repositoryManager, atLeastOnce()).getRepository("system");
+                verify(repositoryManager, atLeastOnce()).getRepository(systemIRI);
             }
 
             assertEquals(200, response.getStatus());
@@ -1286,7 +1289,7 @@ public class SparqlRestTest extends MobiRestTestCXF {
             } else if (i == 5) {
                 verify(ontologyManager, atLeastOnce()).retrieveOntology(eq(vf.createIRI(recordId)));
             } else {
-                verify(repositoryManager, atLeastOnce()).getRepository("system");
+                verify(repositoryManager, atLeastOnce()).getRepository(systemIRI);
             }
 
             assertEquals(200, response.getStatus());
@@ -1342,7 +1345,7 @@ public class SparqlRestTest extends MobiRestTestCXF {
                 } else if (i == 5) {
                     verify(ontologyManager, atLeastOnce()).retrieveOntology(eq(vf.createIRI(recordId)));
                 } else {
-                    verify(repositoryManager, atLeastOnce()).getRepository("system");
+                    verify(repositoryManager, atLeastOnce()).getRepository(systemIRI);
                 }
 
                 MultivaluedMap<String, Object> headers = response.getHeaders();
@@ -1370,7 +1373,7 @@ public class SparqlRestTest extends MobiRestTestCXF {
     @Test
     public void selectQueryRepositoryUnavailableLimitedTest() {
         // Setup:
-        when(repositoryManager.getRepository(anyString())).thenReturn(Optional.empty());
+        when(repositoryManager.getRepository(any(IRI.class))).thenReturn(Optional.empty());
 
         Response response = getTarget("", 0, true, null)
                 .queryParam("query", ALL_QUERY)
@@ -1381,7 +1384,7 @@ public class SparqlRestTest extends MobiRestTestCXF {
     @Test
     public void constructQueryRepositoryUnavailableLimitedTest() {
         // Setup:
-        when(repositoryManager.getRepository(anyString())).thenReturn(Optional.empty());
+        when(repositoryManager.getRepository(any(IRI.class))).thenReturn(Optional.empty());
 
         Response response = getTarget("", 0, true, null)
                 .queryParam("query", CONSTRUCT_QUERY)

@@ -24,6 +24,7 @@ package com.mobi.utils.cli.operations.post;
  */
 
 import com.mobi.catalog.config.CatalogConfigProvider;
+import com.mobi.exception.MobiException;
 import com.mobi.utils.cli.api.PostRestoreOperation;
 import com.mobi.utils.cli.utils.PolicyFileUtils;
 import com.mobi.vfs.api.VirtualFilesystem;
@@ -39,6 +40,13 @@ import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
 @Component(
@@ -48,9 +56,10 @@ public class ClearQuerySystemRepoPolicy implements PostRestoreOperation {
     private static final Logger LOGGER = LoggerFactory.getLogger(ClearQuerySystemRepoPolicy.class);
     private static final ValueFactory vf = new ValidatingValueFactory();
     private static final List<Resource> POLICES_TO_REMOVE;
+    private static final String QUERY_SYSTEM_POLICY = "http://mobi.com/policies/system-repo-access";
 
     static {
-        POLICES_TO_REMOVE = List.of(vf.createIRI("http://mobi.com/policies/system-repo-access"));
+        POLICES_TO_REMOVE = List.of(vf.createIRI(QUERY_SYSTEM_POLICY));
     }
 
     @Reference
@@ -79,10 +88,19 @@ public class ClearQuerySystemRepoPolicy implements PostRestoreOperation {
     public void execute() {
         LOGGER.debug("{} execute", getClass().getSimpleName());
         LOGGER.debug("Remove old versions of system repo query policy");
-        // 4.1 changed system repo query policy.
+        // 4.1 changed system repo query policy to use new ID and filename
         // Need to remove old versions so update policy takes effect.
         try (RepositoryConnection conn = config.getRepository().getConnection()) {
             PolicyFileUtils.removePolicyFiles(conn, vfs, POLICES_TO_REMOVE, LOGGER);
+        }
+
+        Path path = Paths.get(System.getProperty("karaf.etc") + File.separator + "policies"
+                + File.separator + "systemPolicies" + File.separator
+                + URLEncoder.encode(QUERY_SYSTEM_POLICY, StandardCharsets.UTF_8) + ".xml");
+        try {
+            Files.deleteIfExists(path);
+        } catch (IOException e) {
+            throw new MobiException(e);
         }
     }
 }

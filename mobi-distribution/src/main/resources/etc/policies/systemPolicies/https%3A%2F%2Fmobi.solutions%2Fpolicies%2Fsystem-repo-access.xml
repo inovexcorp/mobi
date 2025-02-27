@@ -20,13 +20,13 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<Policy xmlns="urn:oasis:names:tc:xacml:3.0:core:schema:wd-17" PolicyId="http://mobi.com/policies/ontology-cache-repo-access" RuleCombiningAlgId="urn:oasis:names:tc:xacml:3.0:rule-combining-algorithm:deny-unless-permit" Version="1.0">
-    <Description>Query Ontology Cache Repository</Description>
+<Policy xmlns="urn:oasis:names:tc:xacml:3.0:core:schema:wd-17" PolicyId="https://mobi.solutions/policies/system-repo-access" RuleCombiningAlgId="urn:oasis:names:tc:xacml:3.0:rule-combining-algorithm:deny-unless-permit" Version="1.0">
+    <Description>Query System Repository</Description>
     <Target>
         <AnyOf>
             <AllOf>
                 <Match MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal">
-                    <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">https://mobi.solutions/repos/ontologyCache</AttributeValue>
+                    <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">https://mobi.solutions/repos/system</AttributeValue>
                     <AttributeDesignator AttributeId="urn:oasis:names:tc:xacml:1.0:resource:resource-id" Category="urn:oasis:names:tc:xacml:3.0:attribute-category:resource" DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="true"/>
                 </Match>
                 <Match MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal">
@@ -36,7 +36,7 @@
             </AllOf>
             <AllOf>
                 <Match MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal">
-                    <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">https://mobi.solutions/repos/ontologyCache</AttributeValue>
+                    <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">https://mobi.solutions/repos/system</AttributeValue>
                     <AttributeDesignator AttributeId="urn:oasis:names:tc:xacml:1.0:resource:resource-id" Category="urn:oasis:names:tc:xacml:3.0:attribute-category:resource" DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="true"/>
                 </Match>
                 <Match MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal">
@@ -46,19 +46,23 @@
             </AllOf>
         </AnyOf>
     </Target>
-    <Rule RuleId="urn:queryOntologyCacheRepo" Effect="Permit">
+    <Rule Effect="Permit" RuleId="urn:querySystemRepo">
         <Target>
             <AnyOf>
                 <AllOf>
                     <Match MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal">
-                        <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">http://mobi.com/users/d033e22ae348aeb5660fc2140aec35850c4da997</AttributeValue>
-                        <AttributeDesignator Category="urn:oasis:names:tc:xacml:1.0:subject-category:access-subject" AttributeId="urn:oasis:names:tc:xacml:1.0:subject:subject-id" DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="true"/>
+                        <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">http://mobi.com/roles/user</AttributeValue>
+                        <AttributeDesignator AttributeId="http://mobi.com/ontologies/user/management#hasUserRole" Category="urn:oasis:names:tc:xacml:1.0:subject-category:access-subject" DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="true"/>
+                    </Match>
+                    <Match MatchId="urn:oasis:names:tc:xacml:1.0:function:string-equal">
+                        <AttributeValue DataType="http://www.w3.org/2001/XMLSchema#string">repository</AttributeValue>
+                        <AttributeDesignator AttributeId="https://mobi.solutions/store-type" Category="urn:oasis:names:tc:xacml:3.0:attribute-category:resource" DataType="http://www.w3.org/2001/XMLSchema#string" MustBePresent="true"/>
                     </Match>
                 </AllOf>
             </AnyOf>
         </Target>
     </Rule>
-    <Rule Effect="Permit" RuleId="urn:queryOntologyCacheRepoAdmin">
+    <Rule Effect="Permit" RuleId="urn:querySystemRepoAdmin">
         <Target>
             <AnyOf>
                 <AllOf>
