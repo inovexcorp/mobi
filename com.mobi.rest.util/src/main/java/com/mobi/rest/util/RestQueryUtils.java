@@ -53,6 +53,7 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
@@ -169,9 +170,11 @@ public class RestQueryUtils {
                 throw RestUtils.getErrorObjBadRequest(QUERY_INVALID_EXCEPTION);
             }
             if (parsedOperation instanceof ParsedTupleQuery) {
-                return handleSelectQueryEagerly(queryString, resourceId, storeType, mimeType, limit, rdfRecordParams, connectionObjects);
+                return handleSelectQueryEagerly(queryString, resourceId, storeType, mimeType, limit, rdfRecordParams,
+                        connectionObjects);
             } else if (parsedOperation instanceof ParsedGraphQuery) {
-                return handleConstructQueryEagerly(queryString, resourceId, storeType, mimeType, limit, rdfRecordParams, connectionObjects);
+                return handleConstructQueryEagerly(queryString, resourceId, storeType, mimeType, limit, rdfRecordParams,
+                        connectionObjects);
             } else {
                 throw RestUtils.getErrorObjBadRequest(QUERY_INVALID_EXCEPTION);
             }
@@ -250,8 +253,7 @@ public class RestQueryUtils {
                 fileExtension = "json";
                 String oldMimeType = mimeType;
                 mimeType = JSON_MIME_TYPE;
-                logger.debug(String.format("Invalid mimeType [%s]: defaulted to [%s]", oldMimeType,
-                        mimeType));
+                logger.debug(String.format("Invalid mimeType [%s]: defaulted to [%s]", oldMimeType, mimeType));
                 stream = getSelectStream(queryString, resourceId, storeType, rdfRecordParams,
                         TupleQueryResultFormat.JSON, connectionObjects);
             }
@@ -280,7 +282,8 @@ public class RestQueryUtils {
      * @return The SPARQL 1.1 Response in the format of ACCEPT Header mime type
      */
     private static Response handleSelectQueryEagerly(String queryString, Resource resourceId, String storeType,
-                                                     String mimeType, int limit, VersionedRDFRecordParams rdfRecordParams,
+                                                     String mimeType, int limit,
+                                                     VersionedRDFRecordParams rdfRecordParams,
                                                      ConnectionObjects connectionObjects)
             throws IOException {
         if (!JSON_MIME_TYPE.equals(mimeType)) {
@@ -304,8 +307,9 @@ public class RestQueryUtils {
      */
     private static Response getSelectQueryResponseEagerly(String queryString, Resource resourceId, String storeType,
                                                           TupleQueryResultFormat tupleQueryResultFormat,
-                                                          String mimeType, Integer limit, VersionedRDFRecordParams rdfRecordParams,
-                                                          ConnectionObjects connectionObjects)throws IOException {
+                                                          String mimeType, Integer limit,
+                                                          VersionedRDFRecordParams rdfRecordParams,
+                                                          ConnectionObjects connectionObjects) throws IOException {
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
         boolean limitExceeded;
 
@@ -332,13 +336,8 @@ public class RestQueryUtils {
                 throw getErrorObjBadRequest(ex);
             }
         } else if (REPOSITORY_STORE_TYPE.equals(storeType)) {
-            // TODO: Will be removed in future ticket when repository manager is used
-            if (!"https://mobi.solutions/repos/system".equals(resourceId.stringValue())) {
-                throw getErrorObjInternalServerError(new IllegalArgumentException("Unsupported repository provided."));
-            }
-
             RepositoryManager repositoryManager = connectionObjects.repositoryManager();
-            OsgiRepository repository = repositoryManager.getRepository("system").orElseThrow(() ->
+            OsgiRepository repository = repositoryManager.getRepository((IRI) resourceId).orElseThrow(() ->
                     getErrorObjInternalServerError(REPO_NOT_AVAILABLE_EXCEPTION));
             try (RepositoryConnection conn = repository.getConnection()) {
                 limitExceeded = executeTupleQuery(queryString, tupleQueryResultFormat, byteArrayOutputStream, conn,
@@ -413,7 +412,7 @@ public class RestQueryUtils {
                                                          RDFFormat format, String mimeType, int limit,
                                                          VersionedRDFRecordParams rdfRecordParams,
                                                          ConnectionObjects connectionObjects) throws IOException {
-        boolean limitExceeded = false;
+        boolean limitExceeded;
         ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
 
         if (ONTOLOGY_STORE_TYPE.equals(storeType)) {
@@ -427,13 +426,8 @@ public class RestQueryUtils {
                 limitExceeded = executeGraphQuery(queryString, format, byteArrayOutputStream, conn, limit);
             }
         } else if (REPOSITORY_STORE_TYPE.equals(storeType)) {
-            // TODO: Will be removed in future ticket when repository manager is used
-            if (!"https://mobi.solutions/repos/system".equals(resourceId.stringValue())) {
-                throw getErrorObjInternalServerError(new IllegalArgumentException("Unsupported repository provided."));
-            }
-
             RepositoryManager repositoryManager = connectionObjects.repositoryManager();
-            OsgiRepository repository = repositoryManager.getRepository("system").orElseThrow(() ->
+            OsgiRepository repository = repositoryManager.getRepository((IRI) resourceId).orElseThrow(() ->
                     getErrorObjInternalServerError(new IllegalArgumentException(REPO_NOT_AVAILABLE_MESSAGE)));
             try (RepositoryConnection conn = repository.getConnection()) {
                 limitExceeded = executeGraphQuery(queryString, format, byteArrayOutputStream, conn, limit);
@@ -494,8 +488,7 @@ public class RestQueryUtils {
                 String oldMimeType = mimeType;
                 mimeType = TURTLE_MIME_TYPE;
                 format = RDFFormat.TURTLE;
-                logger.debug(String.format("Invalid mimeType [%s] : defaulted to [%s]",
-                        oldMimeType, mimeType));
+                logger.debug(String.format("Invalid mimeType [%s] : defaulted to [%s]", oldMimeType, mimeType));
             }
         }
 
@@ -528,14 +521,9 @@ public class RestQueryUtils {
                 }
             };
         } else if (REPOSITORY_STORE_TYPE.equals(storeType)) {
-            // TODO: Will be removed in future ticket when repository manager is used
-            if (!"https://mobi.solutions/repos/system".equals(resourceId.stringValue())) {
-                throw getErrorObjInternalServerError(new IllegalArgumentException("Unsupported repository provided."));
-            }
-
             return os -> {
                 RepositoryManager repositoryManager = connectionObjects.repositoryManager();
-                OsgiRepository repository = repositoryManager.getRepository("system").orElseThrow(() ->
+                OsgiRepository repository = repositoryManager.getRepository((IRI) resourceId).orElseThrow(() ->
                         getErrorObjInternalServerError(REPO_NOT_AVAILABLE_EXCEPTION));
                 try (RepositoryConnection conn = repository.getConnection()) {
                     executeGraphQuery(queryString, format, os, conn, null);
@@ -589,14 +577,8 @@ public class RestQueryUtils {
                 }
             };
         } else if (REPOSITORY_STORE_TYPE.equals(storeType)) {
-            // TODO: Will be removed in future ticket when repository manager is used
-            if (!"https://mobi.solutions/repos/system".equals(resourceId.stringValue())) {
-                throw getErrorObjInternalServerError(new IllegalArgumentException("Unsupported repository provided."));
-            }
-
             return os -> {
-                // TODO: Use different getRepository method for IRI
-                OsgiRepository repository = connectionObjects.repositoryManager().getRepository("system")
+                OsgiRepository repository = connectionObjects.repositoryManager().getRepository((IRI) resourceId)
                         .orElseThrow(() -> getErrorObjInternalServerError(REPO_NOT_AVAILABLE_EXCEPTION));
                 try (RepositoryConnection conn = repository.getConnection()) {
                     executeTupleQuery(queryString, format, os, conn, null);
@@ -651,12 +633,7 @@ public class RestQueryUtils {
                 }
             }
         } else if (REPOSITORY_STORE_TYPE.equals(storeType)) {
-            // TODO: Will be removed in future ticket when repository manager is used
-            if (!"https://mobi.solutions/repos/system".equals(resourceId.stringValue())) {
-                throw getErrorObjInternalServerError(new IllegalArgumentException("Unsupported repository provided."));
-            }
-
-            OsgiRepository repository = connectionObjects.repositoryManager().getRepository("system")
+            OsgiRepository repository = connectionObjects.repositoryManager().getRepository((IRI) resourceId)
                     .orElseThrow(() -> getErrorObjInternalServerError(REPO_NOT_AVAILABLE_EXCEPTION));
             try (RepositoryConnection conn = repository.getConnection()) {
                 TupleQuery query = conn.prepareTupleQuery(queryString);
@@ -734,11 +711,10 @@ public class RestQueryUtils {
         try {
             if (StringUtils.isNotBlank(commitIdStr)) {
                 if (StringUtils.isNotBlank(branchIdStr)) {
-                    optionalOntology = ontologyManager.retrieveOntology(recordId,
-                            vf.createIRI(branchIdStr), vf.createIRI(commitIdStr));
-                } else {
-                    optionalOntology = ontologyManager.retrieveOntologyByCommit(recordId,
+                    optionalOntology = ontologyManager.retrieveOntology(recordId, vf.createIRI(branchIdStr),
                             vf.createIRI(commitIdStr));
+                } else {
+                    optionalOntology = ontologyManager.retrieveOntologyByCommit(recordId, vf.createIRI(commitIdStr));
                 }
             } else if (StringUtils.isNotBlank(branchIdStr)) {
                 optionalOntology = ontologyManager.retrieveOntology(recordId, vf.createIRI(branchIdStr));
@@ -752,8 +728,8 @@ public class RestQueryUtils {
                 Optional<InProgressCommit> inProgressCommitOpt;
                 try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
                     inProgressCommitOpt = rdfRecordParams.commitManager()
-                            .getInProgressCommitOpt(rdfRecordParams.configProvider().getLocalCatalogIRI(),
-                                    recordId, user, conn);
+                            .getInProgressCommitOpt(rdfRecordParams.configProvider().getLocalCatalogIRI(), recordId,
+                                    user, conn);
                 }
 
                 if (inProgressCommitOpt.isPresent()) {

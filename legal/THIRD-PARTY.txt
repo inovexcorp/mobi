@@ -1,5 +1,5 @@
 
-Lists of 455 third-party dependencies.
+Lists of 454 third-party dependencies.
      (Revised BSD License) AntLR Parser Generator (antlr:antlr:2.7.7 - http://www.antlr.org/)
      (Apache-2.0) bndlib (biz.aQute.bnd:biz.aQute.bndlib:3.5.0 - http://bnd.bndtools.org/)
      (The Apache Software License, Version 2.0) cglib-nodep (cglib:cglib-nodep:3.3.0 - https://github.com/cglib/cglib/cglib-nodep)
@@ -102,7 +102,6 @@ Lists of 455 third-party dependencies.
      (The Apache Software License, Version 2.0) Byte Buddy agent (net.bytebuddy:byte-buddy-agent:1.12.10 - https://bytebuddy.net/byte-buddy-agent)
      (Apache-2.0) (LGPL-2.1-or-later) Java Native Access (net.java.dev.jna:jna:5.12.1 - https://github.com/java-native-access/jna)
      (Apache-2.0) (LGPL-2.1-or-later) Java Native Access Platform (net.java.dev.jna:jna-platform:5.12.1 - https://github.com/java-native-access/jna)
-     (The Apache Software License, Version 2.0) Zero-allocation Hashing (net.openhft:zero-allocation-hashing:0.15 - https://github.com/OpenHFT/Zero-Allocation-Hashing)
      (The Apache Software License, Version 2.0) ezmorph (net.sf.ezmorph:ezmorph:1.0.6 - http://ezmorph.sourceforge.net)
      (GNU Lesser General Public Liencse, Version 3.0) (The Apache Software License, Version 2.0) OWLAPI :: Interfaces (net.sourceforge.owlapi:owlapi-api:5.5.0 - http://owlcs.github.io/owlapi/owlapi-api/)
      (GNU Lesser General Public Liencse, Version 3.0) (The Apache Software License, Version 2.0) OWLAPI :: Binding and Config (net.sourceforge.owlapi:owlapi-apibinding:5.5.0 - http://owlcs.github.io/owlapi/owlapi-apibinding/)
