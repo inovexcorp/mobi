@@ -29,7 +29,10 @@ import com.mobi.shapes.api.ShapesGraph;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.query.TupleQueryResult;
+import org.eclipse.rdf4j.rio.RDFFormat;
 
+import java.io.OutputStream;
 import java.util.Optional;
 import javax.ws.rs.core.StreamingOutput;
 
@@ -106,6 +109,65 @@ public class SimpleShapesGraph implements ShapesGraph {
         String query = SHAPES_GRAPH_CONTENT_QUERY.replace(IRI_REPLACE, shapesGraphId.stringValue());
         return outputStream ->
                 this.ontology.getGraphQueryResultsStream(query, false, RestUtils.getRDFFormat(format), false, outputStream);
+    }
+
+    @Override
+    public OutputStream asTurtle() {
+        return this.ontology.asTurtle();
+    }
+
+    @Override
+    public OutputStream asRdfXml() {
+        return this.ontology.asRdfXml();
+    }
+
+    @Override
+    public OutputStream asTurtle(OutputStream outputStream) {
+        return this.ontology.asTurtle(outputStream);
+    }
+
+    @Override
+    public OutputStream asRdfXml(OutputStream outputStream) {
+        return this.ontology.asRdfXml(outputStream);
+    }
+
+    @Override
+    public OutputStream asJsonLD(boolean skolemize) {
+        return this.ontology.asJsonLD(skolemize);
+    }
+
+    @Override
+    public OutputStream asJsonLD(boolean skolemize, OutputStream outputStream) {
+        return this.ontology.asJsonLD(skolemize, outputStream);
+    }
+
+    @Override
+    public TupleQueryResult getTupleQueryResults(String queryString, boolean includeImports) {
+        return this.ontology.getTupleQueryResults(queryString, includeImports);
+    }
+
+    @Override
+    public Model getGraphQueryResults(String queryString, boolean includeImports) {
+        return this.ontology.getGraphQueryResults(queryString, includeImports);
+    }
+
+    @Override
+    public OutputStream getGraphQueryResultsStream(String queryString, boolean includeImports, RDFFormat format,
+                                                   boolean skolemize) {
+        return this.ontology.getGraphQueryResultsStream(queryString, includeImports, format, skolemize);
+    }
+
+    @Override
+    public OutputStream getGraphQueryResultsStream(String queryString, boolean includeImports, RDFFormat format,
+                                                   boolean skolemize, OutputStream outputStream) {
+        return this.ontology.getGraphQueryResultsStream(queryString, includeImports, format, skolemize, outputStream);
+    }
+
+    @Override
+    public boolean getGraphQueryResultsStream(String queryString, boolean includeImports, RDFFormat format,
+                                              boolean skolemize, Integer limit, OutputStream outputStream) {
+        return this.ontology.getGraphQueryResultsStream(queryString, includeImports, format, skolemize, limit,
+                outputStream);
     }
 
     protected Ontology getOntology() {

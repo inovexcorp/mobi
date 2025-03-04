@@ -43,7 +43,6 @@ import com.mobi.ontology.core.api.ObjectProperty;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.api.OntologyManager;
-import com.mobi.ontology.core.utils.MobiOntologyException;
 import com.mobi.ontology.utils.OntologyModels;
 import com.mobi.ontology.utils.cache.repository.OntologyDatasets;
 import com.mobi.ontology.utils.imports.ImportsResolver;
@@ -487,7 +486,7 @@ public class SimpleOntology implements Ontology {
     }
 
     @Override
-    public Model asModel() throws MobiOntologyException {
+    public Model asModel() {
         try (DatasetConnection conn = getDatasetConnection()) {
             long startTime = getStartTime();
             Model model = mf.createEmptyModel();
@@ -502,42 +501,42 @@ public class SimpleOntology implements Ontology {
     }
 
     @Override
-    public OutputStream asTurtle() throws MobiOntologyException {
+    public OutputStream asTurtle() {
         return getOntologyOutputStream(false, true, RDFFormat.TURTLE);
     }
 
     @Override
-    public OutputStream asTurtle(OutputStream outputStream) throws MobiOntologyException {
+    public OutputStream asTurtle(OutputStream outputStream) {
         return getOntologyOutputStream(false, true, RDFFormat.TURTLE, outputStream);
     }
 
     @Override
-    public OutputStream asRdfXml() throws MobiOntologyException {
+    public OutputStream asRdfXml() {
         return getOntologyOutputStream(false, true, RDFFormat.RDFXML);
     }
 
     @Override
-    public OutputStream asRdfXml(OutputStream outputStream) throws MobiOntologyException {
+    public OutputStream asRdfXml(OutputStream outputStream) {
         return getOntologyOutputStream(false, true, RDFFormat.RDFXML, outputStream);
     }
 
     @Override
-    public OutputStream asOwlXml() throws MobiOntologyException {
+    public OutputStream asOwlXml() {
         throw new NotImplementedException("OWL/XML format is not yet implemented.");
     }
 
     @Override
-    public OutputStream asOwlXml(OutputStream outputStream) throws MobiOntologyException {
+    public OutputStream asOwlXml(OutputStream outputStream) {
         throw new NotImplementedException("OWL/XML format is not yet implemented.");
     }
 
     @Override
-    public OutputStream asJsonLD(boolean skolemize) throws MobiOntologyException {
+    public OutputStream asJsonLD(boolean skolemize) {
         return getOntologyOutputStream(skolemize, false, RDFFormat.JSONLD);
     }
 
     @Override
-    public OutputStream asJsonLD(boolean skolemize, OutputStream outputStream) throws MobiOntologyException {
+    public OutputStream asJsonLD(boolean skolemize, OutputStream outputStream) {
         return getOntologyOutputStream(skolemize, false, RDFFormat.JSONLD, outputStream);
     }
 
@@ -592,7 +591,7 @@ public class SimpleOntology implements Ontology {
 
             undoApplyDifferenceIfPresent(conn);
         } catch (RDFHandlerException e) {
-            throw new MobiOntologyException("Error while writing Ontology.");
+            throw new RDFHandlerException("Error while writing Ontology.", e);
         }
         logTrace("getOntologyOutputStream(" + format.getName() + ", outputStream)", startTime);
         return outputStream;

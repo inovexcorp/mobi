@@ -88,6 +88,7 @@ public interface ShapesGraphManager {
      *
      * @param shapesGraph the ShapesGraph to apply the Difference to
      * @param inProgressCommit the InProgressCommit with changes made to the shapes graph
+     * @return A ShapesGraph with the applied changes
      */
-    void applyChanges(ShapesGraph shapesGraph, InProgressCommit inProgressCommit);
+    ShapesGraph applyChanges(ShapesGraph shapesGraph, InProgressCommit inProgressCommit);
 }

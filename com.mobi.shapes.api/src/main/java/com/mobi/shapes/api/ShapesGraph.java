@@ -23,6 +23,7 @@ package com.mobi.shapes.api;
  * #L%
  */
 
+import com.mobi.versionedrdf.api.QueryableVersionedRDF;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
@@ -30,7 +31,7 @@ import org.eclipse.rdf4j.model.Resource;
 import java.util.Optional;
 import javax.ws.rs.core.StreamingOutput;
 
-public interface ShapesGraph {
+public interface ShapesGraph extends QueryableVersionedRDF {
 
     /**
      * Retrieves the model backing the SimpleShapesGraph object.

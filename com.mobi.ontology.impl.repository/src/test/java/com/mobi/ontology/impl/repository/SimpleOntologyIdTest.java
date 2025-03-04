@@ -28,9 +28,9 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
+import com.mobi.exception.MobiException;
 import com.mobi.namespace.api.NamespaceService;
 import com.mobi.ontology.core.api.OntologyId;
-import com.mobi.ontology.core.utils.MobiOntologyException;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import com.mobi.setting.api.SettingService;
 import com.mobi.setting.api.ontologies.setting.ApplicationSetting;
@@ -143,7 +143,7 @@ public class SimpleOntologyIdTest extends OrmEnabledTestCase  {
         assertEquals(Optional.empty(), ontologyId.getVersionIRI());
     }
 
-    @Test(expected = MobiOntologyException.class)
+    @Test(expected = MobiException.class)
     public void testConstructorWithNoIdAndNoOntologyIRIAndVersionIRI() {
         OntologyId ontologyId = new SimpleOntologyId.Builder(settingService, namespaceService).versionIRI(versionIRI).build();
     }
