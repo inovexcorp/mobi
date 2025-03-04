@@ -71,11 +71,6 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.mobi</groupId>
-            <artifactId>ontology.api</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
             <groupId>commons-fileupload</groupId>
             <artifactId>commons-fileupload</artifactId>
             <version>${commons-fileupload.version}</version>

@@ -141,8 +141,9 @@ public class SimpleShapesGraphManager implements ShapesGraphManager {
     }
 
     @Override
-    public void applyChanges(ShapesGraph shapesGraph, InProgressCommit inProgressCommit) {
+    public ShapesGraph applyChanges(ShapesGraph shapesGraph, InProgressCommit inProgressCommit) {
         ontologyManager.applyChanges(((SimpleShapesGraph) shapesGraph).getOntology(), inProgressCommit);
+        return shapesGraph;
     }
 
     private Optional<ShapesGraph> getShapesGraph(@Nonnull Resource recordId, @Nonnull Resource commitId) {

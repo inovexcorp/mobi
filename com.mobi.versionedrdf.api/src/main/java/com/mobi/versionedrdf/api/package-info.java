@@ -1,8 +1,10 @@
-package com.mobi.rest.util;
+@Version("1.0.0.${build}")
+
+package com.mobi.versionedrdf.api;
 
 /*-
  * #%L
- * com.mobi.rest.util
+ * com.mobi.versionedrdf.api
  * $Id:$
  * $HeadURL:$
  * %%
@@ -23,9 +25,4 @@ package com.mobi.rest.util;
  * #L%
  */
 
-import com.mobi.dataset.api.DatasetManager;
-import com.mobi.ontology.core.api.OntologyManager;
-import com.mobi.repository.api.RepositoryManager;
-
-public record ConnectionObjects(RepositoryManager repositoryManager, DatasetManager datasetManager,
-                                OntologyManager ontologyManager) {}
+import org.osgi.annotation.versioning.Version;

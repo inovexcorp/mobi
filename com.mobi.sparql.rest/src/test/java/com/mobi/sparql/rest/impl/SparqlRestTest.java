@@ -57,6 +57,8 @@ import com.mobi.repository.api.RepositoryManager;
 import com.mobi.repository.impl.sesame.memory.MemoryRepositoryWrapper;
 import com.mobi.rest.test.util.MobiRestTestCXF;
 import com.mobi.rest.test.util.UsernameTestFilter;
+import com.mobi.shapes.api.ShapesGraph;
+import com.mobi.shapes.api.ShapesGraphManager;
 import com.mobi.sparql.rest.SparqlRest;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.model.IRI;
@@ -101,6 +103,10 @@ public class SparqlRestTest extends MobiRestTestCXF {
     private String ONTOLOGY_ID_1; // With branch and inProgressCommit
     private String ONTOLOGY_ID_2; // With commit and imports
     private String ONTOLOGY_ID_3; // Just recordId
+    private String SHAPES_GRAPH_ID_0; // With branch, commit, and imports and inProgressCommit
+    private String SHAPES_GRAPH_ID_1; // With branch and inProgressCommit
+    private String SHAPES_GRAPH_ID_2; // With commit and imports
+    private String SHAPES_GRAPH_ID_3; // Just recordId
     private String BRANCH_ID;
     private String COMMIT_ID;
     private Model testModel;
@@ -124,6 +130,7 @@ public class SparqlRestTest extends MobiRestTestCXF {
     private static RepositoryManager repositoryManager;
     private static DatasetManager datasetManager;
     private static OntologyManager ontologyManager;
+    private static ShapesGraphManager shapesGraphManager;
     private static EngineManager engineManager;
     private static CatalogConfigProvider configProvider;
     private static CommitManager commitManager;
@@ -136,6 +143,9 @@ public class SparqlRestTest extends MobiRestTestCXF {
 
     @Mock
     private Ontology ontology;
+
+    @Mock
+    private ShapesGraph shapesGraph;
 
     @Mock
     private OsgiRepository mockRepo;
@@ -154,6 +164,7 @@ public class SparqlRestTest extends MobiRestTestCXF {
         repositoryManager = Mockito.mock(RepositoryManager.class);
         datasetManager = Mockito.mock(DatasetManager.class);
         ontologyManager = Mockito.mock(OntologyManager.class);
+        shapesGraphManager = Mockito.mock(ShapesGraphManager.class);
         engineManager = Mockito.mock(EngineManager.class);
         configProvider = Mockito.mock(CatalogConfigProvider.class);
         commitManager = Mockito.mock(CommitManager.class);
@@ -162,6 +173,7 @@ public class SparqlRestTest extends MobiRestTestCXF {
         rest.repositoryManager = repositoryManager;
         rest.datasetManager = datasetManager;
         rest.ontologyManager = ontologyManager;
+        rest.shapesGraphManager = shapesGraphManager;
         rest.engineManager = engineManager;
         rest.configProvider = configProvider;
         rest.commitManager = commitManager;
@@ -192,6 +204,10 @@ public class SparqlRestTest extends MobiRestTestCXF {
         ONTOLOGY_ID_1 = "http://example.com/ontology/1";
         ONTOLOGY_ID_2 = "http://example.com/ontology/2";
         ONTOLOGY_ID_3 = "http://example.com/ontology/3";
+        SHAPES_GRAPH_ID_0 = "http://example.com/shapes/0";
+        SHAPES_GRAPH_ID_1 = "http://example.com/shapes/1";
+        SHAPES_GRAPH_ID_2 = "http://example.com/shapes/2";
+        SHAPES_GRAPH_ID_3 = "http://example.com/shapes/3";
         BRANCH_ID = "http://example.com/branches/0";
         COMMIT_ID = "http://example.com/commits/0";
         systemIRI = vf.createIRI("https://mobi.solutions/repos/system");
@@ -224,7 +240,7 @@ public class SparqlRestTest extends MobiRestTestCXF {
         limitedFileTypesMimes.putAll(constructFileTypesMimes);
         limitedFileTypesMimes.putAll(selectFileTypesMimes);
 
-        recordIDs = Arrays.asList(null, DATASET_ID, ONTOLOGY_ID_0, ONTOLOGY_ID_1, ONTOLOGY_ID_2, ONTOLOGY_ID_3);
+        recordIDs = Arrays.asList(null, DATASET_ID, ONTOLOGY_ID_0, ONTOLOGY_ID_1, ONTOLOGY_ID_2, ONTOLOGY_ID_3, SHAPES_GRAPH_ID_0, SHAPES_GRAPH_ID_1, SHAPES_GRAPH_ID_2, SHAPES_GRAPH_ID_3);
         filenames = Arrays.asList(null, "test");
 
         // mock getRepository
@@ -250,6 +266,12 @@ public class SparqlRestTest extends MobiRestTestCXF {
         when(ontologyManager.retrieveOntology(any(Resource.class), any(Resource.class), any(Resource.class))).thenReturn(Optional.of(ontology));
         when(ontologyManager.retrieveOntologyByCommit(any(Resource.class), any(Resource.class))).thenReturn(Optional.of(ontology));
         when(ontologyManager.applyChanges(eq(ontology), eq(inProgressCommit))).thenReturn(ontology);
+
+        when(shapesGraphManager.retrieveShapesGraph(any(Resource.class))).thenReturn(Optional.of(shapesGraph));
+        when(shapesGraphManager.retrieveShapesGraph(any(Resource.class), any(Resource.class))).thenReturn(Optional.of(shapesGraph));
+        when(shapesGraphManager.retrieveShapesGraph(any(Resource.class), any(Resource.class), any(Resource.class))).thenReturn(Optional.of(shapesGraph));
+        when(shapesGraphManager.retrieveShapesGraphByCommit(any(Resource.class), any(Resource.class))).thenReturn(Optional.of(shapesGraph));
+        when(shapesGraphManager.applyChanges(eq(shapesGraph), eq(inProgressCommit))).thenReturn(shapesGraph);
     }
 
     @After
@@ -295,6 +317,20 @@ public class SparqlRestTest extends MobiRestTestCXF {
             }
             return true;
         });
+
+        when(shapesGraph.getTupleQueryResults(anyString(), anyBoolean())).thenAnswer(i -> connLarge.prepareTupleQuery("SELECT * WHERE { ?s ?p ?o. }").evaluate());
+        when(shapesGraph.getGraphQueryResultsStream(anyString(), anyBoolean(), any(), anyBoolean(), any())).thenAnswer(i -> {
+            try (GraphQueryResult result = connLarge.prepareGraphQuery("CONSTRUCT { ?s ?p ?o. } WHERE { ?s ?p ?o. }").evaluate()) {
+                QueryResultIO.writeGraph(result, i.getArgument(2), i.getArgument(4));
+            }
+            return true;
+        });
+        when(shapesGraph.getGraphQueryResultsStream(anyString(), anyBoolean(), any(), anyBoolean(), any(), any())).thenAnswer(i -> {
+            try (GraphQueryResult result = connLarge.prepareGraphQuery("CONSTRUCT { ?s ?p ?o. } WHERE { ?s ?p ?o. }").evaluate()) {
+                QueryResultIO.writeGraph(result, i.getArgument(2), i.getArgument(5));
+            }
+            return true;
+        });
     }
 
     private void setupOntology() {
@@ -306,6 +342,20 @@ public class SparqlRestTest extends MobiRestTestCXF {
             return false;
         });
         when(ontology.getGraphQueryResultsStream(anyString(), anyBoolean(), any(), anyBoolean(), any(), any())).thenAnswer(i -> {
+            try (GraphQueryResult result = conn.prepareGraphQuery("CONSTRUCT { ?s ?p ?o. } WHERE { ?s ?p ?o. }").evaluate()) {
+                QueryResultIO.writeGraph(result, i.getArgument(2), i.getArgument(5));
+            }
+            return false;
+        });
+
+        when(shapesGraph.getTupleQueryResults(anyString(), anyBoolean())).thenAnswer(i -> conn.prepareTupleQuery("SELECT * WHERE { ?s ?p ?o. }").evaluate());
+        when(shapesGraph.getGraphQueryResultsStream(anyString(), anyBoolean(), any(), anyBoolean(), any())).thenAnswer(i -> {
+            try (GraphQueryResult result = conn.prepareGraphQuery("CONSTRUCT { ?s ?p ?o. } WHERE { ?s ?p ?o. }").evaluate()) {
+                QueryResultIO.writeGraph(result, i.getArgument(2), i.getArgument(4));
+            }
+            return false;
+        });
+        when(shapesGraph.getGraphQueryResultsStream(anyString(), anyBoolean(), any(), anyBoolean(), any(), any())).thenAnswer(i -> {
             try (GraphQueryResult result = conn.prepareGraphQuery("CONSTRUCT { ?s ?p ?o. } WHERE { ?s ?p ?o. }").evaluate()) {
                 QueryResultIO.writeGraph(result, i.getArgument(2), i.getArgument(5));
             }
@@ -334,30 +384,7 @@ public class SparqlRestTest extends MobiRestTestCXF {
 
                 verify(rest, atLeast(minNumberOfInvocations)).queryRdf(any(), anyString(), anyString(), anyString(), any(), any(), anyBoolean(), anyBoolean(), anyString());
 
-                if (i == 1) {
-                    verify(datasetManager, atLeastOnce()).getConnection(vf.createIRI(DATASET_ID));
-                    if (dataArray[1].equals(CONSTRUCT_QUERY)) {
-                        verify(datasetConnection, atLeastOnce()).prepareGraphQuery(anyString());
-                    } else {
-                        verify(datasetConnection, atLeastOnce()).prepareTupleQuery(anyString());
-                    }
-                } else if (i == 2) {
-                    verify(ontologyManager, atLeastOnce()).retrieveOntology(eq(vf.createIRI(recordId)), eq(vf.createIRI(BRANCH_ID)), eq(vf.createIRI(COMMIT_ID)));
-                    verify(configProvider, atLeastOnce()).getRepository();
-                    verify(mockRepo, atLeastOnce()).getConnection();
-                    verify(commitManager, atLeastOnce()).getInProgressCommitOpt(any(), any(), any(), any());
-                } else if (i == 3) {
-                    verify(ontologyManager, atLeastOnce()).retrieveOntology(eq(vf.createIRI(recordId)), eq(vf.createIRI(BRANCH_ID)));
-                    verify(configProvider, atLeastOnce()).getRepository();
-                    verify(mockRepo, atLeastOnce()).getConnection();
-                    verify(commitManager, atLeastOnce()).getInProgressCommitOpt(any(), any(), any(), any());
-                } else if (i == 4) {
-                    verify(ontologyManager, atLeastOnce()).retrieveOntologyByCommit(eq(vf.createIRI(recordId)), eq(vf.createIRI(COMMIT_ID)));
-                } else if (i == 5) {
-                    verify(ontologyManager, atLeastOnce()).retrieveOntology(eq(vf.createIRI(recordId)));
-                } else {
-                    verify(repositoryManager, atLeastOnce()).getRepository(systemIRI);
-                }
+                verifyManagers(i, dataArray, recordId);
 
                 MultivaluedMap<String, Object> headers = response.getHeaders();
                 assertEquals(headers.get("Content-Type").get(0), mimeType);
@@ -380,7 +407,48 @@ public class SparqlRestTest extends MobiRestTestCXF {
                 }
             }
         }
-        assertEquals("Verify minNumberOfInvocations", 60, minNumberOfInvocations);
+        assertEquals("Verify minNumberOfInvocations", 100, minNumberOfInvocations);
+    }
+
+    private void verifyManagers(int i, String[] dataArray, String recordId) {
+        if (i == 1) {
+            verify(datasetManager, atLeastOnce()).getConnection(vf.createIRI(DATASET_ID));
+            if (dataArray[1].equals(CONSTRUCT_QUERY)) {
+                verify(datasetConnection, atLeastOnce()).prepareGraphQuery(anyString());
+            } else {
+                verify(datasetConnection, atLeastOnce()).prepareTupleQuery(anyString());
+            }
+        } else if (i == 2) {
+            verify(ontologyManager, atLeastOnce()).retrieveOntology(eq(vf.createIRI(recordId)), eq(vf.createIRI(BRANCH_ID)), eq(vf.createIRI(COMMIT_ID)));
+            verify(configProvider, atLeastOnce()).getRepository();
+            verify(mockRepo, atLeastOnce()).getConnection();
+            verify(commitManager, atLeastOnce()).getInProgressCommitOpt(any(), any(), any(), any());
+        } else if (i == 3) {
+            verify(ontologyManager, atLeastOnce()).retrieveOntology(eq(vf.createIRI(recordId)), eq(vf.createIRI(BRANCH_ID)));
+            verify(configProvider, atLeastOnce()).getRepository();
+            verify(mockRepo, atLeastOnce()).getConnection();
+            verify(commitManager, atLeastOnce()).getInProgressCommitOpt(any(), any(), any(), any());
+        } else if (i == 4) {
+            verify(ontologyManager, atLeastOnce()).retrieveOntologyByCommit(eq(vf.createIRI(recordId)), eq(vf.createIRI(COMMIT_ID)));
+        } else if (i == 5) {
+            verify(ontologyManager, atLeastOnce()).retrieveOntology(eq(vf.createIRI(recordId)));
+        } else if (i == 6) {
+            verify(shapesGraphManager, atLeastOnce()).retrieveShapesGraph(eq(vf.createIRI(recordId)), eq(vf.createIRI(BRANCH_ID)), eq(vf.createIRI(COMMIT_ID)));
+            verify(configProvider, atLeastOnce()).getRepository();
+            verify(mockRepo, atLeastOnce()).getConnection();
+            verify(commitManager, atLeastOnce()).getInProgressCommitOpt(any(), any(), any(), any());
+        } else if (i == 7) {
+            verify(shapesGraphManager, atLeastOnce()).retrieveShapesGraph(eq(vf.createIRI(recordId)), eq(vf.createIRI(BRANCH_ID)));
+            verify(configProvider, atLeastOnce()).getRepository();
+            verify(mockRepo, atLeastOnce()).getConnection();
+            verify(commitManager, atLeastOnce()).getInProgressCommitOpt(any(), any(), any(), any());
+        } else if (i == 8) {
+            verify(shapesGraphManager, atLeastOnce()).retrieveShapesGraphByCommit(eq(vf.createIRI(recordId)), eq(vf.createIRI(COMMIT_ID)));
+        } else if (i == 9) {
+            verify(shapesGraphManager, atLeastOnce()).retrieveShapesGraph(eq(vf.createIRI(recordId)));
+        } else {
+            verify(repositoryManager, atLeastOnce()).getRepository(systemIRI);
+        }
     }
 
     @Test
@@ -406,30 +474,7 @@ public class SparqlRestTest extends MobiRestTestCXF {
 
                 verify(rest, atLeast(minNumberOfInvocations)).postQueryRdf(any(), anyString(), anyString(), any(), any(), anyBoolean(), anyBoolean(), anyString(), anyString());
 
-                if (i == 1) {
-                    verify(datasetManager, atLeastOnce()).getConnection(vf.createIRI(DATASET_ID));
-                    if (dataArray[1].equals(CONSTRUCT_QUERY)) {
-                        verify(datasetConnection, atLeastOnce()).prepareGraphQuery(anyString());
-                    } else {
-                        verify(datasetConnection, atLeastOnce()).prepareTupleQuery(anyString());
-                    }
-                } else if (i == 2) {
-                    verify(ontologyManager, atLeastOnce()).retrieveOntology(eq(vf.createIRI(recordId)), eq(vf.createIRI(BRANCH_ID)), eq(vf.createIRI(COMMIT_ID)));
-                    verify(configProvider, atLeastOnce()).getRepository();
-                    verify(mockRepo, atLeastOnce()).getConnection();
-                    verify(commitManager, atLeastOnce()).getInProgressCommitOpt(any(), any(), any(), any());
-                } else if (i == 3) {
-                    verify(ontologyManager, atLeastOnce()).retrieveOntology(eq(vf.createIRI(recordId)), eq(vf.createIRI(BRANCH_ID)));
-                    verify(configProvider, atLeastOnce()).getRepository();
-                    verify(mockRepo, atLeastOnce()).getConnection();
-                    verify(commitManager, atLeastOnce()).getInProgressCommitOpt(any(), any(), any(), any());
-                } else if (i == 4) {
-                    verify(ontologyManager, atLeastOnce()).retrieveOntologyByCommit(eq(vf.createIRI(recordId)), eq(vf.createIRI(COMMIT_ID)));
-                } else if (i == 5) {
-                    verify(ontologyManager, atLeastOnce()).retrieveOntology(eq(vf.createIRI(recordId)));
-                } else {
-                    verify(repositoryManager, atLeastOnce()).getRepository(systemIRI);
-                }
+                verifyManagers(i, dataArray, recordId);
 
                 MultivaluedMap<String, Object> headers = response.getHeaders();
                 assertEquals(headers.get("Content-Type").get(0), mimeType);
@@ -452,7 +497,7 @@ public class SparqlRestTest extends MobiRestTestCXF {
                 }
             }
         }
-        assertEquals("Verify minNumberOfInvocations", 60, minNumberOfInvocations);
+        assertEquals("Verify minNumberOfInvocations", 100, minNumberOfInvocations);
     }
 
     @Test
@@ -481,30 +526,7 @@ public class SparqlRestTest extends MobiRestTestCXF {
                 verify(rest, atLeast(minNumberOfInvocations)).postUrlEncodedQueryRdf(any(), anyString(), anyString(),
                         anyString(), any(), any(), anyBoolean(), anyBoolean(), anyString());
 
-                if (i == 1) {
-                    verify(datasetManager, atLeastOnce()).getConnection(vf.createIRI(DATASET_ID));
-                    if (dataArray[1].equals(CONSTRUCT_QUERY)) {
-                        verify(datasetConnection, atLeastOnce()).prepareGraphQuery(anyString());
-                    } else {
-                        verify(datasetConnection, atLeastOnce()).prepareTupleQuery(anyString());
-                    }
-                } else if (i == 2) {
-                    verify(ontologyManager, atLeastOnce()).retrieveOntology(eq(vf.createIRI(recordId)), eq(vf.createIRI(BRANCH_ID)), eq(vf.createIRI(COMMIT_ID)));
-                    verify(configProvider, atLeastOnce()).getRepository();
-                    verify(mockRepo, atLeastOnce()).getConnection();
-                    verify(commitManager, atLeastOnce()).getInProgressCommitOpt(any(), any(), any(), any());
-                } else if (i == 3) {
-                    verify(ontologyManager, atLeastOnce()).retrieveOntology(eq(vf.createIRI(recordId)), eq(vf.createIRI(BRANCH_ID)));
-                    verify(configProvider, atLeastOnce()).getRepository();
-                    verify(mockRepo, atLeastOnce()).getConnection();
-                    verify(commitManager, atLeastOnce()).getInProgressCommitOpt(any(), any(), any(), any());
-                } else if (i == 4) {
-                    verify(ontologyManager, atLeastOnce()).retrieveOntologyByCommit(eq(vf.createIRI(recordId)), eq(vf.createIRI(COMMIT_ID)));
-                } else if (i == 5) {
-                    verify(ontologyManager, atLeastOnce()).retrieveOntology(eq(vf.createIRI(recordId)));
-                } else {
-                    verify(repositoryManager, atLeastOnce()).getRepository(systemIRI);
-                }
+                verifyManagers(i, dataArray, recordId);
 
                 MultivaluedMap<String, Object> headers = response.getHeaders();
                 assertEquals(headers.get("Content-Type").get(0), mimeType);
@@ -527,7 +549,7 @@ public class SparqlRestTest extends MobiRestTestCXF {
                 }
             }
         }
-        assertEquals("Verify minNumberOfInvocations", 60, minNumberOfInvocations);
+        assertEquals("Verify minNumberOfInvocations", 100, minNumberOfInvocations);
     }
 
     @Test
@@ -611,7 +633,7 @@ public class SparqlRestTest extends MobiRestTestCXF {
                 }
             }
         }
-        assertEquals("Verify minNumberOfInvocations", 120, minNumberOfInvocations);
+        assertEquals("Verify minNumberOfInvocations", 200, minNumberOfInvocations);
     }
 
     @Test
@@ -697,7 +719,7 @@ public class SparqlRestTest extends MobiRestTestCXF {
                 }
             }
         }
-        assertEquals("Verify minNumberOfInvocations", 120, minNumberOfInvocations);
+        assertEquals("Verify minNumberOfInvocations", 200, minNumberOfInvocations);
     }
 
     @Test
@@ -787,7 +809,7 @@ public class SparqlRestTest extends MobiRestTestCXF {
                 }
             }
         }
-        assertEquals("Verify minNumberOfInvocations", 120, minNumberOfInvocations);
+        assertEquals("Verify minNumberOfInvocations", 200, minNumberOfInvocations);
     }
 
     @Test
@@ -1323,30 +1345,7 @@ public class SparqlRestTest extends MobiRestTestCXF {
 
                 verify(rest, atLeast(minNumberOfInvocations)).getLimitedResults(any(), anyString(), anyString(), anyString(), any(), any(), anyBoolean(), anyBoolean(), anyString());
 
-                if (i == 1) {
-                    verify(datasetManager, atLeastOnce()).getConnection(vf.createIRI(DATASET_ID));
-                    if (dataArray[1].equals(CONSTRUCT_QUERY)) {
-                        verify(datasetConnection, atLeastOnce()).prepareGraphQuery(anyString());
-                    } else {
-                        verify(datasetConnection, atLeastOnce()).prepareTupleQuery(anyString());
-                    }
-                } else if (i == 2) {
-                    verify(ontologyManager, atLeastOnce()).retrieveOntology(eq(vf.createIRI(recordId)), eq(vf.createIRI(BRANCH_ID)), eq(vf.createIRI(COMMIT_ID)));
-                    verify(configProvider, atLeastOnce()).getRepository();
-                    verify(mockRepo, atLeastOnce()).getConnection();
-                    verify(commitManager, atLeastOnce()).getInProgressCommitOpt(any(), any(), any(), any());
-                } else if (i == 3) {
-                    verify(ontologyManager, atLeastOnce()).retrieveOntology(eq(vf.createIRI(recordId)), eq(vf.createIRI(BRANCH_ID)));
-                    verify(configProvider, atLeastOnce()).getRepository();
-                    verify(mockRepo, atLeastOnce()).getConnection();
-                    verify(commitManager, atLeastOnce()).getInProgressCommitOpt(any(), any(), any(), any());
-                } else if (i == 4) {
-                    verify(ontologyManager, atLeastOnce()).retrieveOntologyByCommit(eq(vf.createIRI(recordId)), eq(vf.createIRI(COMMIT_ID)));
-                } else if (i == 5) {
-                    verify(ontologyManager, atLeastOnce()).retrieveOntology(eq(vf.createIRI(recordId)));
-                } else {
-                    verify(repositoryManager, atLeastOnce()).getRepository(systemIRI);
-                }
+                verifyManagers(i, dataArray, recordId);
 
                 MultivaluedMap<String, Object> headers = response.getHeaders();
                 assertEquals(headers.get("Content-Type").get(0), mimeType);
@@ -1367,7 +1366,7 @@ public class SparqlRestTest extends MobiRestTestCXF {
                 }
             }
         }
-        assertEquals("Verify minNumberOfInvocations", 36, minNumberOfInvocations);
+        assertEquals("Verify minNumberOfInvocations", 60, minNumberOfInvocations);
     }
 
     @Test
@@ -1510,6 +1509,46 @@ public class SparqlRestTest extends MobiRestTestCXF {
 
         } else if (index == 5) {
             target = target.path("sparql/ontology-record/" + URLEncoder.encode(resourceId, StandardCharsets.UTF_8) + "/" + limited);
+        } else if (index == 6) {
+            target = target.path("sparql/shapes-graph-record/" + URLEncoder.encode(resourceId, StandardCharsets.UTF_8) + "/" + limited);
+            if (form == null) {
+                target = target.queryParam("branchId", BRANCH_ID)
+                        .queryParam("commitId", COMMIT_ID)
+                        .queryParam("includeImports", true)
+                        .queryParam("applyInProgressCommit", true);
+            } else {
+                form.param("branchId", BRANCH_ID)
+                        .param("commitId", COMMIT_ID)
+                        .param("includeImports", "true")
+                        .param("applyInProgressCommit", "true");
+            }
+
+        } else if (index == 7) {
+            target = target.path("sparql/shapes-graph-record/" + URLEncoder.encode(resourceId, StandardCharsets.UTF_8) + "/" + limited);
+            if (form == null) {
+                target = target.queryParam("branchId", BRANCH_ID)
+                        .queryParam("includeImports", false)
+                        .queryParam("applyInProgressCommit", true);
+            } else {
+                form.param("branchId", BRANCH_ID)
+                        .param("includeImports", "false")
+                        .param("applyInProgressCommit", "true");
+            }
+
+        } else if (index == 8) {
+            target = target.path("sparql/shapes-graph-record/" + URLEncoder.encode(resourceId, StandardCharsets.UTF_8) + "/" + limited);
+            if (form == null) {
+                target = target.queryParam("commitId", COMMIT_ID)
+                        .queryParam("includeImports", true)
+                        .queryParam("applyInProgressCommit", false);
+            } else {
+                form.param("commitId", COMMIT_ID)
+                        .param("includeImports", "true")
+                        .param("applyInProgressCommit", "false");
+            }
+
+        } else if (index == 9) {
+            target = target.path("sparql/shapes-graph-record/" + URLEncoder.encode(resourceId, StandardCharsets.UTF_8) + "/" + limited);
         } else {
             target = target.path("sparql/repository/" + URLEncoder.encode(resourceId, StandardCharsets.UTF_8) + "/" + limited);
         }

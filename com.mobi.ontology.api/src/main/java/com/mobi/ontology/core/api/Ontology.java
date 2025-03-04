@@ -23,91 +23,41 @@ package com.mobi.ontology.core.api;
  * #L%
  */
 
-import com.mobi.ontology.core.utils.MobiOntologyException;
+import com.mobi.versionedrdf.api.QueryableVersionedRDF;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.query.TupleQueryResult;
-import org.eclipse.rdf4j.rio.RDFFormat;
 
 import java.io.OutputStream;
 import java.util.Optional;
 import java.util.Set;
 
-public interface Ontology {
-
-    Model asModel() throws MobiOntologyException;
+public interface Ontology extends QueryableVersionedRDF {
 
     /**
-     * Returns the Ontology as TURTLE in an OutputStream.
+     * Returns the Ontology a {@link Model}.
      *
-     * @return an OutputStream of TURTLE
-     * @throws MobiOntologyException If an error occurs while parsing
+     * @return an RDF4j Model of the Ontology
      */
-    OutputStream asTurtle() throws MobiOntologyException;
-
-    /**
-     * Returns the Ontology as RDF-XML in an OutputStream.
-     *
-     * @return an OutputStream of RDF-XML
-     * @throws MobiOntologyException If an error occurs while parsing
-     */
-    OutputStream asRdfXml() throws MobiOntologyException;
+    Model asModel();
 
     /**
      * Returns the Ontology as OWL-XML in an OutputStream.
      *
      * @return an OutputStream of OWL-XML
-     * @throws MobiOntologyException If an error occurs while parsing
+     * @throws org.eclipse.rdf4j.rio.RDFHandlerException If an error occurs while parsing
      */
-    OutputStream asOwlXml() throws MobiOntologyException;
-
-    /**
-     * Returns the Ontology as TURTLE written to the given OutputStream.
-     *
-     * @param outputStream The outputStream to write the TURTLE to
-     * @return the OutputStream that was written to
-     * @throws MobiOntologyException If an error occurs while parsing
-     */
-    OutputStream asTurtle(OutputStream outputStream) throws MobiOntologyException;
-
-    /**
-     * Returns the Ontology as RDF-XML written to the given OutputStream.
-     *
-     * @param outputStream The outputStream to write the RDF-XML to
-     * @return the OutputStream that was written to
-     * @throws MobiOntologyException If an error occurs while parsing
-     */
-
-    OutputStream asRdfXml(OutputStream outputStream) throws MobiOntologyException;
+    OutputStream asOwlXml();
 
     /**
      * Returns the Ontology as OWL-XML written to the given OutputStream.
      *
      * @param outputStream The outputStream to write the OWL-XML to
      * @return the OutputStream that was written to
-     * @throws MobiOntologyException If an error occurs while parsing
+     * @throws org.eclipse.rdf4j.rio.RDFHandlerException If an error occurs while parsing
      */
-    OutputStream asOwlXml(OutputStream outputStream) throws MobiOntologyException;
-
-    /**
-     * Returns the Ontology as JSON-LD in an OutputStream.
-     *
-     * @param skolemize Whether or not blank node ids should be skolemized before rendering
-     * @return an OutputStream of JSON-LD
-     * @throws MobiOntologyException If an error occurs while parsing
-     */
-    OutputStream asJsonLD(boolean skolemize) throws MobiOntologyException;
-
-    /**
-     * Returns the Ontology as JSON-LD written to the given OutputStream.
-     *
-     * @param skolemize Whether or not blank node ids should be skolemized before rendering
-     * @param outputStream The outputStream to write the JSON-LD to
-     * @return the OutputStream that was written to
-     * @throws MobiOntologyException If an error occurs while parsing
-     */
-    OutputStream asJsonLD(boolean skolemize, OutputStream outputStream) throws MobiOntologyException;
+    OutputStream asOwlXml(OutputStream outputStream);
 
     /**
      * Returns the OntologyID that describes the Ontology IRI, Version IRI,
@@ -401,61 +351,6 @@ public interface Ontology {
      * @return a Set with the query results.
      */
     TupleQueryResult getSearchResults(String searchText);
-
-    /**
-     * Searches the Ontology & its import closures using the provided Sparql query.
-     *
-     * @param queryString the Sparql query string you want to execute.
-     * @param includeImports include data from ontology imports when querying
-     * @return a Tuple Set with the query results.
-     */
-    TupleQueryResult getTupleQueryResults(String queryString, boolean includeImports);
-
-    /**
-     * Searches the Ontology & its import closures using the provided SPARQL query.
-     *
-     * @param queryString the Sparql query string you want to execute.
-     * @param includeImports include data from ontology imports when querying
-     * @return a model with the query results.
-     */
-    Model getGraphQueryResults(String queryString, boolean includeImports);
-
-    /**
-     * Searches the Ontology & its import closures using the provided SPARQL query.
-     *
-     * @param queryString Sparql query string you want to execute.
-     * @param includeImports Include data from ontology imports when querying
-     * @param format Specified format for the return of queries
-     * @param skolemize Whether or not the Ontology should be skoelmized before serialized
-     * @return OutputStream OutputStream that the rdf should be written to
-     */
-    OutputStream getGraphQueryResultsStream(String queryString, boolean includeImports, RDFFormat format, boolean skolemize);
-
-    /**
-     * Searches the Ontology & its import closures using the provided SPARQL query.
-     *
-     * @param queryString the Sparql query string you want to execute.
-     * @param includeImports include data from ontology imports when querying
-     * @param format the specified format for the return of queries
-     * @param skolemize whether or not the Ontology should be skoelmized before serialized
-     * @param outputStream OutputStream that the rdf should be written to
-     * @return OutputStream
-     */
-    OutputStream getGraphQueryResultsStream(String queryString, boolean includeImports, RDFFormat format, boolean skolemize, OutputStream outputStream);
-
-    /**
-     * Searches the Ontology & its import closures using the provided SPARQL query.
-     *
-     * @param queryString the Sparql query string you want to execute.
-     * @param includeImports include data from ontology imports when querying
-     * @param format the specified format for the return of queries
-     * @param skolemize whether or not the Ontology should be skoelmized before serialized
-     * @param limit Integer limit
-     * @param outputStream OutputStream that the rdf should be written to
-     * @return OutputStream
-     */
-    boolean getGraphQueryResultsStream(String queryString, boolean includeImports, RDFFormat format,
-                                       boolean skolemize, Integer limit, OutputStream outputStream);
 
     /**
      * Compares two SimpleOntology objects by their resource ids (ontologyId) and RDF model of the ontology objects,

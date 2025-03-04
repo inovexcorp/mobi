@@ -23,11 +23,17 @@ package com.mobi.rest.util;
  * #L%
  */
 
-import com.mobi.catalog.api.CommitManager;
-import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 
+/**
+ * A POJO of VersionedRdfRecord parameters to use when querying.
+ *
+ * @param branchId String representing the Branch ID
+ * @param commitId String representing the Commit ID
+ * @param includeImports Boolean indicating whether imports should be included in the query
+ * @param applyInProgressCommit Whether to apply the in progress commit for the user making the request
+ * @param user The User making the request
+ */
 public record VersionedRDFRecordParams(String branchId, String commitId, boolean includeImports,
-                                       boolean applyInProgressCommit, User user,
-                                       CatalogConfigProvider configProvider, CommitManager commitManager) {
+                                       boolean applyInProgressCommit, User user) {
 }

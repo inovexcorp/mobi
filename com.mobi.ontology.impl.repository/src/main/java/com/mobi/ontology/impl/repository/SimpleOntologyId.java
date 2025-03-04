@@ -23,10 +23,10 @@ package com.mobi.ontology.impl.repository;
  * #L%
  */
 
+import com.mobi.exception.MobiException;
 import com.mobi.namespace.api.NamespaceService;
 import com.mobi.namespace.api.ontologies.DefaultOntologyNamespaceApplicationSetting;
 import com.mobi.ontology.core.api.OntologyId;
-import com.mobi.ontology.core.utils.MobiOntologyException;
 import com.mobi.ontology.utils.OntologyModels;
 import com.mobi.setting.api.SettingService;
 import com.mobi.setting.api.ontologies.setting.ApplicationSetting;
@@ -108,7 +108,7 @@ public class SimpleOntologyId implements OntologyId {
         }
 
         if (builder.versionIRI != null && builder.ontologyIRI == null) {
-            throw new MobiOntologyException("ontology IRI must not be null if version IRI is not null");
+            throw new MobiException("ontology IRI must not be null if version IRI is not null");
         }
 
         ValueFactory vf = new ValidatingValueFactory();
