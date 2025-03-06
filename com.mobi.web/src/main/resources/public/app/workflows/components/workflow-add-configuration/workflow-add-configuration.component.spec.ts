@@ -35,21 +35,21 @@ import { MockComponent, MockProvider } from 'ng-mocks';
 import { cloneDeep } from 'lodash';
 import { of, throwError } from 'rxjs';
 
-import { WorkflowsManagerService } from '../../services/workflows-manager.service';
-import { ModalConfig, ModalType } from '../../models/modal-config.interface';
-import { SHACLFormComponent } from '../../../shacl-forms/components/shacl-form/shacl-form.component';
-import {
+import { actionSHACLDefinitions, testActionNodeShape, triggerSHACLDefinitions } from '../../models/mock_data/workflow-mocks';
+import { cleanStylesFromDOM } from '../../../../test/ts/Shared';
+import { Difference } from '../../../shared/models/difference.class';
+import { 
   DownloadMappingOverlayComponent
 } from '../../../mapper/components/downloadMappingOverlay/downloadMappingOverlay.component';
-import { cleanStylesFromDOM } from '../../../../test/ts/Shared';
-import { actionSHACLDefinitions, testActionNodeShape, triggerSHACLDefinitions } from '../../models/mock_data/workflow-mocks';
-import { SHACLFormFieldComponent } from '../../../shacl-forms/components/shacl-form-field/shacl-form-field.component';
-import { WORKFLOWS } from '../../../prefixes';
-import { SHACLFormManagerService } from '../../../shacl-forms/services/shaclFormManager.service';
-import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
-import { FormValues } from '../../../shacl-forms/models/form-values.interface';
-import { Difference } from '../../../shared/models/difference.class';
 import { EntityType } from '../../models/workflow-display.interface';
+import { FormValues } from '../../../shacl-forms/models/form-values.interface';
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { ModalConfig, ModalType } from '../../models/modal-config.interface';
+import { SHACLFormComponent } from '../../../shacl-forms/components/shacl-form/shacl-form.component';
+import { SHACLFormFieldComponent } from '../../../shacl-forms/components/shacl-form-field/shacl-form-field.component';
+import { SHACLFormManagerService } from '../../../shacl-forms/services/shaclFormManager.service';
+import { WORKFLOWS } from '../../../prefixes';
+import { WorkflowsManagerService } from '../../services/workflows-manager.service';
 import { WorkflowAddConfigurationComponent } from './workflow-add-configuration.component';
 
 describe('WorkflowAddConfigurationComponent', () => {
@@ -91,16 +91,12 @@ describe('WorkflowAddConfigurationComponent', () => {
   };
   const objectConfig: ModalConfig = {
     recordIRI: 'http://www.example/id/1',
-    selectedConfigIRI: action['@id'],
-    workflowEntity: [action],
     workflowIRI: 'id:one',
     shaclDefinitions: actionSHACLDefinitions,
-    hasProperties: [{
-      '@id': 'http://example.com/workflows/LEDControl/action'
-    }],
-    hasPropertyIRI: `${WORKFLOWS}hasAction`,
     entityType: EntityType.ACTION,
-    mode: ModalType.ADD
+    mode: ModalType.ADD,
+    parentIRI: 'id:one',
+    parentProp: `${WORKFLOWS}hasAction`
   };
 
   beforeEach(async () => {
@@ -183,6 +179,8 @@ describe('WorkflowAddConfigurationComponent', () => {
   });
   describe('controller methods', () => {
     it('should set the FormValues', () => {
+      component.data.selectedConfigIRI = action['@id'];
+      component.data.workflowEntity = [action];
       fixture.detectChanges();
       component.setFormValues();
       expect(component.entityBeingEdited).toEqual(action);
@@ -191,7 +189,7 @@ describe('WorkflowAddConfigurationComponent', () => {
       expect(component.selectedConfiguration.value).toEqual(`${WORKFLOWS}TestAction`);
     });
     it('should set the getConfigurationType', () => {
-      const types = component.getConfigurationType(objectConfig.workflowEntity[0]['@type']);
+      const types = component.getConfigurationType(action['@type']);
       expect(types.length).toEqual(1);
       expect(types[0]).toEqual(`${WORKFLOWS}TestAction`);
     });
@@ -233,7 +231,7 @@ describe('WorkflowAddConfigurationComponent', () => {
         expect(matDialogRef.close).toHaveBeenCalledWith(undefined);
       });
       describe('if an action is being', () => {
-        describe('added and the changes update', () => {
+        describe('added', () => {
           beforeEach(() => {
             fixture.detectChanges();
             component.shaclFormValid = true;
@@ -243,46 +241,97 @@ describe('WorkflowAddConfigurationComponent', () => {
               [`${WORKFLOWS}testMessage`]: 'New'
             };
           });
-          it('succeeds', fakeAsync(() => {
-            workflowsManagerStub.updateWorkflowConfiguration.and.returnValue(of(null));
-            component.submit();
-            tick();
-            expect(component.errorMsg).toEqual('');
-            expect(workflowsManagerStub.updateWorkflowConfiguration).toHaveBeenCalledWith(jasmine.any(Difference), objectConfig.recordIRI);
-            const diff = workflowsManagerStub.updateWorkflowConfiguration.calls.mostRecent().args[0];
-            expect((diff.additions as JSONLDObject[]).length).toEqual(2);
-            expect((diff.additions as JSONLDObject[])).toContain({
-              '@id': objectConfig.workflowIRI,
-              [`${WORKFLOWS}hasAction`]: [{ '@id': jasmine.stringContaining(`${objectConfig.workflowIRI}/action`)}]
+          describe('beneath the workflow and the changes update', () => {
+            it('succeeds', fakeAsync(() => {
+              workflowsManagerStub.updateWorkflowConfiguration.and.returnValue(of(null));
+              component.submit();
+              tick();
+              expect(component.errorMsg).toEqual('');
+              expect(workflowsManagerStub.updateWorkflowConfiguration).toHaveBeenCalledWith(jasmine.any(Difference), objectConfig.recordIRI);
+              const diff = workflowsManagerStub.updateWorkflowConfiguration.calls.mostRecent().args[0];
+              expect((diff.additions as JSONLDObject[]).length).toEqual(2);
+              expect((diff.additions as JSONLDObject[])).toContain({
+                '@id': objectConfig.workflowIRI,
+                [`${WORKFLOWS}hasAction`]: [{ '@id': jasmine.stringContaining(`${objectConfig.workflowIRI}/action`)}]
+              });
+              expect((diff.additions as JSONLDObject[])).toContain({
+                '@id': jasmine.stringContaining(`${objectConfig.workflowIRI}/action`),
+                '@type': [`${WORKFLOWS}TestAction`, `${WORKFLOWS}Action`],
+                [`${WORKFLOWS}testMessage`]: [{ '@value': 'New' }]
+              });
+              expect((diff.deletions as JSONLDObject[]).length).toEqual(0);
+              expect(matDialogRef.close).toHaveBeenCalledWith(jasmine.any(Difference));
+            }));
+            it('fails', fakeAsync(() => {
+              workflowsManagerStub.updateWorkflowConfiguration.and.returnValue(throwError(new HttpErrorResponse({ status: 500 })));
+              component.submit();
+              tick();
+              expect(component.errorMsg).toBeTruthy();
+              expect(workflowsManagerStub.updateWorkflowConfiguration).toHaveBeenCalledWith(jasmine.any(Difference), objectConfig.recordIRI);
+              const diff = workflowsManagerStub.updateWorkflowConfiguration.calls.mostRecent().args[0];
+              expect((diff.additions as JSONLDObject[]).length).toEqual(2);
+              expect((diff.additions as JSONLDObject[])).toContain({
+                '@id': objectConfig.workflowIRI,
+                [`${WORKFLOWS}hasAction`]: [{ '@id': jasmine.stringContaining(`${objectConfig.workflowIRI}/action`)}]
+              });
+              expect((diff.additions as JSONLDObject[])).toContain({
+                '@id': jasmine.stringContaining(`${objectConfig.workflowIRI}/action`),
+                '@type': [`${WORKFLOWS}TestAction`, `${WORKFLOWS}Action`],
+                [`${WORKFLOWS}testMessage`]: [{ '@value': 'New' }]
+              });
+              expect((diff.deletions as JSONLDObject[]).length).toEqual(0);
+              expect(matDialogRef.close).not.toHaveBeenCalled();
+            }));
+          });
+          describe('beneath an action and the changes update', () => {
+            const parentIRI = 'urn:another-action';
+            beforeEach(() => {
+              const dataClone = cloneDeep(component.data);
+              dataClone.parentIRI = parentIRI;
+              dataClone.parentProp = `${WORKFLOWS}hasChildAction`;
+              component.data = dataClone;
             });
-            expect((diff.additions as JSONLDObject[])).toContain({
-              '@id': jasmine.stringContaining(`${objectConfig.workflowIRI}/action`),
-              '@type': [`${WORKFLOWS}TestAction`, `${WORKFLOWS}Action`],
-              [`${WORKFLOWS}testMessage`]: [{ '@value': 'New' }]
-            });
-            expect((diff.deletions as JSONLDObject[]).length).toEqual(0);
-            expect(matDialogRef.close).toHaveBeenCalledWith(jasmine.any(Difference));
-          }));
-          it('fails', fakeAsync(() => {
-            workflowsManagerStub.updateWorkflowConfiguration.and.returnValue(throwError(new HttpErrorResponse({ status: 500 })));
-            component.submit();
-            tick();
-            expect(component.errorMsg).toBeTruthy();
-            expect(workflowsManagerStub.updateWorkflowConfiguration).toHaveBeenCalledWith(jasmine.any(Difference), objectConfig.recordIRI);
-            const diff = workflowsManagerStub.updateWorkflowConfiguration.calls.mostRecent().args[0];
-            expect((diff.additions as JSONLDObject[]).length).toEqual(2);
-            expect((diff.additions as JSONLDObject[])).toContain({
-              '@id': objectConfig.workflowIRI,
-              [`${WORKFLOWS}hasAction`]: [{ '@id': jasmine.stringContaining(`${objectConfig.workflowIRI}/action`)}]
-            });
-            expect((diff.additions as JSONLDObject[])).toContain({
-              '@id': jasmine.stringContaining(`${objectConfig.workflowIRI}/action`),
-              '@type': [`${WORKFLOWS}TestAction`, `${WORKFLOWS}Action`],
-              [`${WORKFLOWS}testMessage`]: [{ '@value': 'New' }]
-            });
-            expect((diff.deletions as JSONLDObject[]).length).toEqual(0);
-            expect(matDialogRef.close).not.toHaveBeenCalled();
-          }));
+            it('succeeds', fakeAsync(() => {
+              workflowsManagerStub.updateWorkflowConfiguration.and.returnValue(of(null));
+              component.submit();
+              tick();
+              expect(component.errorMsg).toEqual('');
+              expect(workflowsManagerStub.updateWorkflowConfiguration).toHaveBeenCalledWith(jasmine.any(Difference), objectConfig.recordIRI);
+              const diff = workflowsManagerStub.updateWorkflowConfiguration.calls.mostRecent().args[0];
+              expect((diff.additions as JSONLDObject[]).length).toEqual(2);
+              expect((diff.additions as JSONLDObject[])).toContain({
+                '@id': parentIRI,
+                [`${WORKFLOWS}hasChildAction`]: [{ '@id': jasmine.stringContaining(`${objectConfig.workflowIRI}/action`)}]
+              });
+              expect((diff.additions as JSONLDObject[])).toContain({
+                '@id': jasmine.stringContaining(`${objectConfig.workflowIRI}/action`),
+                '@type': [`${WORKFLOWS}TestAction`, `${WORKFLOWS}Action`],
+                [`${WORKFLOWS}testMessage`]: [{ '@value': 'New' }]
+              });
+              expect((diff.deletions as JSONLDObject[]).length).toEqual(0);
+              expect(matDialogRef.close).toHaveBeenCalledWith(jasmine.any(Difference));
+            }));
+            it('fails', fakeAsync(() => {
+              workflowsManagerStub.updateWorkflowConfiguration.and.returnValue(throwError(new HttpErrorResponse({ status: 500 })));
+              component.submit();
+              tick();
+              expect(component.errorMsg).toBeTruthy();
+              expect(workflowsManagerStub.updateWorkflowConfiguration).toHaveBeenCalledWith(jasmine.any(Difference), objectConfig.recordIRI);
+              const diff = workflowsManagerStub.updateWorkflowConfiguration.calls.mostRecent().args[0];
+              expect((diff.additions as JSONLDObject[]).length).toEqual(2);
+              expect((diff.additions as JSONLDObject[])).toContain({
+                '@id': parentIRI,
+                [`${WORKFLOWS}hasChildAction`]: [{ '@id': jasmine.stringContaining(`${objectConfig.workflowIRI}/action`)}]
+              });
+              expect((diff.additions as JSONLDObject[])).toContain({
+                '@id': jasmine.stringContaining(`${objectConfig.workflowIRI}/action`),
+                '@type': [`${WORKFLOWS}TestAction`, `${WORKFLOWS}Action`],
+                [`${WORKFLOWS}testMessage`]: [{ '@value': 'New' }]
+              });
+              expect((diff.deletions as JSONLDObject[]).length).toEqual(0);
+              expect(matDialogRef.close).not.toHaveBeenCalled();
+            }));
+          });
         });
         describe('edited', () => {
           beforeEach(() => {
@@ -414,14 +463,14 @@ describe('WorkflowAddConfigurationComponent', () => {
         beforeEach(() => {
           const triggerConfig = cloneDeep(objectConfig);
           triggerConfig.entityType = EntityType.TRIGGER;
-          triggerConfig.workflowEntity = [trigger];
-          triggerConfig.selectedConfigIRI = trigger['@id'];
-          triggerConfig.hasPropertyIRI = `${WORKFLOWS}hasTrigger`;
-          triggerConfig.hasProperties = [];
           triggerConfig.shaclDefinitions = triggerSHACLDefinitions;
           component.data = triggerConfig;
         });
         describe('added and the changes update', () => {
+          beforeEach(() => {
+            component.data.parentIRI = component.data.workflowIRI;
+            component.data.parentProp = `${WORKFLOWS}hasTrigger`;
+          });
           beforeEach(() => {
             fixture.detectChanges();
             component.shaclFormValid = true;
@@ -477,7 +526,8 @@ describe('WorkflowAddConfigurationComponent', () => {
         });
         describe('edited', () => {
           beforeEach(() => {
-            component.data.hasProperties = [{'@id': trigger['@id']}];
+            component.data.workflowEntity = [trigger];
+            component.data.selectedConfigIRI = trigger['@id'];
             component.data.mode = ModalType.EDIT;
             fixture.detectChanges();
             component.shaclFormValid = true;
@@ -637,6 +687,10 @@ describe('WorkflowAddConfigurationComponent', () => {
   function setEditMode() {
     const configClone = cloneDeep(objectConfig);
     configClone.mode = ModalType.EDIT;
+    configClone.selectedConfigIRI = action['@id'];
+    configClone.workflowEntity = [action];
+    delete configClone.parentIRI;
+    delete configClone.parentProp;
     component.data = configClone;
   }
 });

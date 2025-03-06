@@ -22,7 +22,6 @@
  */
 import { JSONLDObject } from '../../shared/models/JSONLDObject.interface';
 import { FormValues } from '../../shacl-forms/models/form-values.interface';
-import { JSONLDId } from '../../shared/models/JSONLDId.interface';
 import { SHACLFormFieldConfig } from '../../shacl-forms/models/shacl-form-field-config';
 import { EntityTypesI } from './workflow-shacl-definitions.interface';
 import { EntityType } from './workflow-display.interface';
@@ -52,27 +51,11 @@ interface ModalConfig {
    * 
    * @type {string}
    */
-  workflowIRI: string
+  workflowIRI: string;
   /**
    * Represents each of the available types of workflow entities and their SHACL definitions.
    */
   shaclDefinitions: EntityTypesI;
-  /**
-   * A list of the current identifiers of triggers/actions for the workflow in question
-   */
-  hasProperties: JSONLDId[];
-  /**
-   * The IRI of the property to set on the workflow for this entity type (either hasTrigger or hasAction)
-   *
-   * @type {string}
-   */
-  hasPropertyIRI: string;
-  /**
-   * The selected configuration.
-   *
-   * @type {string}
-   */
-  selectedConfigIRI?: string;
   /**
    * Represents the type of entity to be added or edited.
    *
@@ -80,17 +63,37 @@ interface ModalConfig {
    */
   entityType: EntityType;
   /**
-   * Represents a workflow entity definition (Trigger/Action) with all its referenced objects.
-   *
-   * @type {JSONLDObject} The JSON-LD representation of the workflow entity and its referenced objects.
-   */
-  workflowEntity?: JSONLDObject[];
-  /**
    * Represents the mode for a particular .
    *
    * @type {string}
    */
   mode: ModalType;
+  // Mode.ADD only properties
+  /**
+   * The IRI of the entity that should be the "parent" of the entity being created, i.e. the subject of the triple pointing to the new entity
+   * 
+   * @type {string}
+   */
+  parentIRI?: string
+  /**
+   * The IRI of the property to use on the parent entity to refer to the entity being created.
+   *
+   * @type {string}
+   */
+  parentProp?: string;
+  // Mode.EDIT only properties
+  /**
+   * The selected configuration that is being edited.
+   *
+   * @type {string}
+   */
+  selectedConfigIRI?: string;
+  /**
+   * Represents a workflow entity definition (Trigger/Action) being edited with all its referenced objects.
+   *
+   * @type {JSONLDObject} The JSON-LD representation of the workflow entity and its referenced objects.
+   */
+  workflowEntity?: JSONLDObject[];
 }
 /**
  * @interface EntityTypeConfig

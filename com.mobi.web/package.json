@@ -57,6 +57,7 @@
     "cytoscape": "3.28.x",
     "cytoscape-cxtmenu": "^3.5.0",
     "cytoscape-dagre": "^2.5.0",
+    "cytoscape-edgehandles": "^4.0.1",
     "d3-force": "^3.0.0",
     "daemonite-material": "^4.1.1",
     "eslint": "^7.6.0",

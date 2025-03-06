@@ -27,6 +27,7 @@ import { MatDialog } from '@angular/material/dialog';
 import cytoscape from 'cytoscape/dist/cytoscape.esm.js';
 import dagre from 'cytoscape-dagre';
 import cxtmenu from 'cytoscape-cxtmenu';
+import edgehandles from 'cytoscape-edgehandles';
 // other libraries
 import { cloneDeep, find, has, isArray, isEmpty, isEqual } from 'lodash';
 import { Observable } from 'rxjs';
@@ -51,9 +52,12 @@ import { WorkflowsStateService } from '../../services/workflows-state.service';
 // Setup cytoscape extensions
 cytoscape.use(dagre);
 cytoscape.use(cxtmenu);
+cytoscape.use(edgehandles);
 
 interface TypeI {
-  key: string;
+  childKey: {
+    [key: string]: string
+  },
   id: string;
   shaclKey: string;
 }
@@ -112,15 +116,29 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
   // public attributes
   public cyChart: cytoscape.Core; // cytoscape instance
   public cyMenu: cxtmenu[] = [];
+  public cyEdgehandles;
   public cyChartSize = 1;
   public cyLayout: cytoscape.Layouts; // cytoscape layout
   public superTypes = {
     [EntityType.ACTION]: [this.buildWorkflowsIRI('Action')],
     [EntityType.TRIGGER]: [this.buildWorkflowsIRI('Trigger'), this.buildWorkflowsIRI('EventTrigger')]
   };
-  public readonly entityKeyMap: Record<EntityType.TRIGGER | EntityType.ACTION, TypeI > = {
-    trigger: { key: 'hasTrigger', id: this.buildWorkflowsIRI('Trigger'), shaclKey: 'triggers' },
-    action: { key: 'hasAction', id: this.buildWorkflowsIRI('Action'), shaclKey: 'actions' }
+  public readonly entityKeyMap: Record<EntityType.TRIGGER | EntityType.ACTION, TypeI> = {
+    trigger: {
+      id: this.buildWorkflowsIRI('Trigger'),
+      childKey: {
+        [EntityType.TRIGGER]: this.buildWorkflowsIRI('hasTrigger'),
+        [EntityType.ACTION]: this.buildWorkflowsIRI('hasAction'),
+      },
+      shaclKey: 'triggers'
+    },
+    action: {
+      id: this.buildWorkflowsIRI('Action'),
+      childKey: {
+        [EntityType.ACTION]: this.buildWorkflowsIRI('hasChildAction')
+      },
+      shaclKey: 'actions'
+    }
   };
   // inputs
   @Input() shaclDefinitions!: WorkflowSHACLDefinitions;
@@ -155,13 +173,13 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
       this._handleEditMode();
     }
   }
+  /**
+   * Used when the canvas resizes to keep things from looking choppy and to make sure all elements are on screen.
+   */
   ngAfterContentChecked(): void {
-    //Used when the canvas resizes to keep things from looking choppy and to make sure all elements are on screen.
     this.cyChart.animate(
-        {duration: 150},
-        {fit: {
-          padding: 50}
-        }
+        { duration: 150 },
+        { fit: { padding: 50 } }
     );
   }
   /**
@@ -213,7 +231,7 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
    */
   getEntryActionIRIs(workflowData: JSONLDObject[]): string[] {
     const workflowObject = this._findWorkflowObject(workflowData);
-    const nodeIRIs: JSONLDId[] = workflowObject[this.buildWorkflowsIRI(this.entityKeyMap.action.key)];
+    const nodeIRIs: JSONLDId[] = workflowObject[this.entityKeyMap[EntityType.TRIGGER].childKey[EntityType.ACTION]];
     return nodeIRIs ? nodeIRIs.map(obj => obj['@id']) : [];
   }
   /**
@@ -223,7 +241,7 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
    * @returns {string[]} - An array of Action IRI strings.
    */
   getChildActionIRIs(action: JSONLDObject): string[] {
-    const childActionIdObjs: JSONLDId[] = action[this.buildWorkflowsIRI('hasChildAction')];
+    const childActionIdObjs: JSONLDId[] = action[this.entityKeyMap[EntityType.ACTION].childKey[EntityType.ACTION]];
     return childActionIdObjs ? childActionIdObjs.map(obj => obj['@id']) : [];
   }
   /**
@@ -342,8 +360,9 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
    * Handle the response from a modal dialog.
    *
    * @param {Difference} changes - The changes received from the modal dialog.
+   * @param {string} [parentIRI] - The optional IRI of the parent entity for any added entities.
    */
-  handleModalResponse(changes: Difference): void {
+  handleModalResponse(changes: Difference, parentIRI?: string): void {
     if (!changes) {
       return;
     }
@@ -352,7 +371,7 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
         this._handleDeletedStatements(changes.deletions);
       }
       if (this._checkArray(changes.additions) && changes.additions.length > 0) {
-        this._handleAddedStatements(changes.additions);
+        this._handleAddedStatements(changes.additions, parentIRI);
       }
       this._workflowsState.hasChanges = true;
     }
@@ -366,9 +385,9 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
    */
   createModalConfig(elem: cytoscape.ElementDefinition, mode: ModalType): ModalConfig {
     const isEditMode = mode === ModalType.EDIT;
+    const elemEntityType = elem.data('entityType');
     // If in ADD mode, only can add Actions
-    const entityType: EntityType = isEditMode ? elem.data('entityType') : EntityType.ACTION;
-    const objectKey = this.buildWorkflowsIRI(this.entityKeyMap[entityType].key);
+    const entityType: EntityType = isEditMode ? elemEntityType : EntityType.ACTION;
     const shaclKey = this.entityKeyMap[entityType].shaclKey;
     const wfDef = this._findWorkflowObject(this._editedResource);
 
@@ -376,22 +395,25 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
       recordIRI: this.recordId,
       workflowIRI: wfDef['@id'],
       shaclDefinitions: this.shaclDefinitions[shaclKey],
-      hasProperties: wfDef[objectKey] || [],
-      hasPropertyIRI: objectKey,
       entityType,
       mode
     };
 
-    if (isEditMode) {
-      const workflowEntity = this._getDefinitionValue(elem.data('id'));
+    const workflowEntity = this._getDefinitionValue(elem.data('id'));
+    // If truly editing an existing action/trigger
+    if (isEditMode && workflowEntity['@id'] !== this._TRIGGER_NODE_ID) {
       objectConfig.selectedConfigIRI = workflowEntity['@id'];
       objectConfig.workflowEntity = this._collectEntityAndReferencedObjects(workflowEntity, this._editedResource);
+    } else { // Otherwise adding an action or trigger (despite the mode being EDIT)
+      objectConfig.parentIRI = elemEntityType === EntityType.ACTION ? workflowEntity['@id'] : wfDef['@id'];
+      objectConfig.parentProp = this.entityKeyMap[elemEntityType].childKey[entityType];
     }
 
     return objectConfig;
   }
   /**
-   * Creates a Difference representing deleting a configuration based on the given ID and entity type string.
+   * Creates a Difference representing deleting an entity in a workflow based on the given ID and entity type string
+   * and updates the InProgressCommit on the server.
    *
    * @param {string} id - The ID of the configuration to be deleted.
    * @returns {Difference} A difference containing the deleted configuration triples
@@ -406,6 +428,64 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
       map(() => diff)
     );
   }
+  /**
+   * Creates a Difference representing deleting an edge between workflow entities based on the ID of the source and
+   * target of the edge and updates the InProgressCommit on the server.
+   * 
+   * @param {string} sourceId - The ID of the source node of the edge.
+   * @param {string} targetId - The ID of the target node of the edge.
+   * @returns {Difference} A difference containing the deleted triple for the
+   */
+  getDeleteEdgeDifference(sourceId: string, targetId: string): Observable<Difference> {
+    const diffObj = this._createJSONLDForEdge(sourceId, targetId);
+    const diff: Difference = new Difference([], [diffObj]);
+    return this._wms.updateWorkflowConfiguration(diff, this.recordId).pipe(
+      map(() => diff)
+    );
+  }
+  /**
+   * Determines whether an edge can be drawn between two nodes in the chart. Logic ensures:
+   *  - No direct loops
+   *  - No duplicate edges
+   *  - No edges from an Action back to the Trigger (i.e. the Workflow)
+   *
+   * @param {cytoscape.ElementDefinition} sourceNode The source node of the proposed edge
+   * @param {cytoscape.ElementDefinition} targetNode The target node of the proposed edge
+   * @returns {boolean} True if the edge can be added; false otherwise
+   */
+  edgeCanBeAdded(sourceNode: cytoscape.ElementDefinition, targetNode: cytoscape.ElementDefinition): boolean {
+    const hasExistingEdge = !!this.cyChart.edges()
+      .filter((ele) => ele.data('source') === sourceNode.data('id') && ele.data('target') === targetNode.data('id'))
+      .length;
+    const actionToTrigger = sourceNode.data('entityType') === EntityType.ACTION 
+      && targetNode.data('entityType') === EntityType.TRIGGER;
+    return !sourceNode.same(targetNode)  // no direct loops
+      && !hasExistingEdge // no duplicate edges
+      && !actionToTrigger; // no edges from action back to trigger
+  }
+  /**
+   * Attempts to add a new triple between two entities represented by the sourceNode, targetNode, and cytoscape edge
+   * that was added to the chart. Updates the stored InProgressCommit and the _editedResource with the new edge. If an
+   * error occurs, removes the edge from the chart.
+   * 
+   * @param {cytoscape.ElementDefinition} sourceNode An Element representing the source node of an added edge
+   * @param {cytoscape.ElementDefinition} targetNode An Element representing the target node of an added edge
+   * @param {cytoscape.ElementDefinition} addedEdge An Element representing an edge between the source and target nodes
+   */
+  addNewEdge(sourceNode: cytoscape.ElementDefinition, targetNode: cytoscape.ElementDefinition, 
+    addedEdge: cytoscape.ElementDefinition): void {
+    const newTriples = this._createJSONLDForEdge(sourceNode.data('id'), targetNode.data('id'));
+    const diff = new Difference([newTriples]);
+    this._wms.updateWorkflowConfiguration(diff, this.recordId).subscribe({
+      next: () => {
+        this._handleAddedStatements([newTriples]);
+      },
+      error: (error: string) => {
+        this._toast.createErrorToast(`Edge could not be saved: ${error}`);
+        addedEdge.remove();
+      }
+    });
+  }
 
   /*****************
    * Private methods
@@ -418,9 +498,11 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
   private _handleEditMode() {
     if (this.isEditMode) {
       this._initializeContextMenu();
+      this._initializeEdgeHandles();
       this._editedResource = cloneDeep(this.resource);
     } else {
       this._destroyMenus();
+      this._destroyEdgeHandles();
       this._editedResource = [];
     }
   }
@@ -523,6 +605,60 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
           'line-color': '#8BB0D0',
           'target-arrow-color': '#8BB0D0',
         }
+      },
+      // some style for the extension
+
+      {
+        selector: '.eh-handle',
+        style: {
+          'background-color': 'red',
+          'width': 12,
+          'height': 12,
+          'shape': 'ellipse',
+          'overlay-opacity': 0,
+          'border-width': 12, // makes the handle easier to hit
+          'border-opacity': 0
+        }
+      },
+
+      {
+        selector: '.eh-hover',
+        style: {
+          'background-color': 'red'
+        }
+      },
+
+      {
+        selector: '.eh-source',
+        style: {
+          'border-width': 2,
+          'border-color': 'red'
+        }
+      },
+
+      {
+        selector: '.eh-target',
+        style: {
+          'border-width': 2,
+          'border-color': 'red'
+        }
+      },
+
+      {
+        selector: '.eh-preview, .eh-ghost-edge',
+        style: {
+          'background-color': 'red',
+          'line-color': 'red',
+          'target-arrow-color': 'red',
+          'source-arrow-color': 'red'
+        }
+      },
+
+      {
+        selector: '.eh-ghost-edge.eh-preview-active',
+        style: {
+          'opacity': 0
+        }
       }
     ]);
   }
@@ -559,7 +695,7 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
       fontStyle: style.fontStyle,
       color: style.color,
       borderColor: style.borderColor,
-      shape: style?.shape || 'ellipse'
+      shape: style?.shape || 'ellipse',
     };
     if (this._isDefaultTrigger && entityType === EntityType.TRIGGER) {
       this._setDefaultTriggerStyles(nodeData);
@@ -610,22 +746,78 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
    * Removes all the context menus from the graph nodes. Meant to be used when exiting edit mode.
    * @private
    */
-  private _destroyMenus() {
+  private _destroyMenus(): void {
     this.cyMenu.forEach(menu => {
       menu.destroy();
     });
     this.cyMenu = [];
   }
   /**
+   * Removes the edge
+   */
+  private _destroyEdgeHandles(): void {
+    if (this.cyEdgehandles) {
+      this.cyEdgehandles.disableDrawMode();
+      this.cyEdgehandles.destroy();
+    }
+    this.cyEdgehandles = undefined;
+    this.cyChart.off('ehcomplete');
+  }
+  /**
    * Creates the context menus for the nodes to be used when editing.
    * @private
    */
-  private _initializeContextMenu() {
+  private _initializeContextMenu(): void {
     if (!this.cyMenu.length) {
       this._getContextMenus().forEach(menu => {
         this.cyMenu.push(this.cyChart.cxtmenu(menu));
       });
     }
+  }
+  /**
+   * Creates the edgehandles behavior for creating new edges in the chart.
+   * @private
+   */
+  private _initializeEdgeHandles(): void {
+    if (!this.cyEdgehandles) {
+      const config = {
+        canConnect: (sourceNode, targetNode) => this.edgeCanBeAdded(sourceNode, targetNode),
+        edgeParams: (sourceNode, targetNode) => this._buildNodeEdge(sourceNode.data('id'), targetNode.data('id')),
+        hoverDelay: 150, // time spent hovering over a target node before it is considered selected
+        snap: true, // when enabled, the edge can be drawn by just moving close to a target node (can be confusing on compound graphs)
+        snapThreshold: 50, // the target node must be less than or equal to this many pixels away from the cursor/finger
+        snapFrequency: 15, // the number of times per second (Hz) that snap checks done (lower is less expensive)
+        noEdgeEventsInDraw: true, // set events:no to edges during draws, prevents mouseouts on compounds
+        disableBrowserGestures: true // during an edge drawing gesture, disable browser gestures such as two-finger trackpad swipe and pinch-to-zoom
+      };
+      this.cyEdgehandles = this.cyChart.edgehandles(config);
+      this.cyEdgehandles.enableDrawMode();
+      this.cyChart.on('ehcomplete', (_event, sourceNode, targetNode, addedEdge) => this.addNewEdge(sourceNode, targetNode, addedEdge));
+    }
+  }
+  /**
+   * Generates a JSON-LD object representing a triple from the entity with the sourceId to the entity with the targetId. 
+   * @private
+   * 
+   * @param {string} sourceId The IRI of the source of the triple
+   * @param {string} targetId The IRI of the target of the triple
+   * @returns {JSONLDObject} A JSON-LD object that represents a triple forming a connection between two nodes
+   */
+  private _createJSONLDForEdge(sourceId: string, targetId: string): JSONLDObject {
+    let prop: string;
+    let id: string;
+    if (sourceId === this._TRIGGER_NODE_ID) {
+      id = this._findWorkflowObject(this._editedResource)['@id'];
+      prop = this.entityKeyMap[EntityType.TRIGGER].childKey[EntityType.ACTION];
+    } else {
+      id = sourceId;
+      prop = this.entityKeyMap[EntityType.ACTION].childKey[EntityType.ACTION];
+    }
+    const edgeObj: JSONLDObject = {
+      '@id': id,
+      [prop]: [{ '@id': targetId }]
+    };
+    return edgeObj;
   }
   /**
    * Retrieves the context menus for each node type.
@@ -665,13 +857,38 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
     const deleteEntity = function (ele: cytoscape.ElementDefinition): void {
       this._dialog.open(ConfirmModalComponent, {
         data: {
-          content: `Are you sure you want to delete <strong>${ele.data('name') }</strong>?`
+          content: `Are you sure you want to delete <strong>${ele.data('name')}</strong>?`
         }
       }).afterClosed().subscribe((canDelete: boolean) => {
         if (canDelete) {
           const id = ele.data('id');
           this.getDeleteEntityDifference(id, ele.data('entityType')).subscribe(diff => {
             this._deleteNode(ele);
+            this.handleModalResponse(diff);
+          }, error => {
+            this._toast.createErrorToast(`Error saving changes: ${error}`);
+          });
+        }
+      });
+    }.bind(this);
+
+    /**
+     * Deletes an edge between entities from the graph.
+     * @private
+     *
+     * @param {Element.Node} ele - the cytoscape node for the edge
+     */
+    const deleteEdge = function(ele: cytoscape.ElementDefinition): void {
+      this._dialog.open(ConfirmModalComponent, {
+        data: {
+          content: 'Are you sure you want to delete this edge?'
+        }
+      }).afterClosed().subscribe((canDelete: boolean) => {
+        if (canDelete) {
+          const sourceId = ele.data('source');
+          const targetId = ele.data('target');
+          this.getDeleteEdgeDifference(sourceId, targetId).subscribe(diff => {
+            ele.remove();
             this.handleModalResponse(diff);
           }, error => {
             this._toast.createErrorToast(`Error saving changes: ${error}`);
@@ -690,12 +907,17 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
       select: deleteEntity
     };
 
+    const deleteEdgeCommand = {
+      content: '<span class="fa fa-trash fa-2x" matTooltip="delete"></span>',
+      select: deleteEdge
+    };
+
     const editCommand = {
       content: '<span class="fa fa-edit fa-2x" matTooltip="edit"></span>',
       select: editEntityFunc
     };
 
-    const actionCommands = [deleteCommand, editCommand];
+    const actionCommands = [addCommand, deleteCommand, editCommand];
     const triggerCommands = [addCommand];
     if (!this._isDefaultTrigger) {
       triggerCommands.push(deleteCommand);
@@ -708,6 +930,9 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
     }, {
       selector: 'node[entityType="trigger"]',
       commands: triggerCommands
+    }, {
+      selector: 'edge',
+      commands: [deleteEdgeCommand]
     }];
   }
   /**
@@ -784,7 +1009,7 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
       panelClass: 'medium-dialog',
       data
     }).afterClosed().subscribe((changes: Difference) => {
-      this.handleModalResponse(changes);
+      this.handleModalResponse(changes, data.parentIRI);
     });
   }
   /**
@@ -853,8 +1078,9 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
    * @private
    * 
    * @param {JSONLDObject[]} additions The JSON-LD of added statements
+   * @param {string} [parentIRI] The optional IRI of the parent entity when drawing new edges in the chart
    */
-  private _handleAddedStatements(additions: JSONLDObject[]): void {
+  private _handleAddedStatements(additions: JSONLDObject[], parentIRI?: string): void {
     // Update the workflow definition itself first
     const addedWorkflowDefStatements = this._findWorkflowObject(additions);
     const workflowDefinition = this._findWorkflowObject(this._editedResource);
@@ -884,10 +1110,10 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
         const types = this._getDefinitionTypes(addedStmts);
         if (types.includes(this.entityKeyMap.trigger.id) || types.includes(this.entityKeyMap.action.id)) {
           const typeInfo = this._getTypeInformation(types);
-          if (typeInfo.entityType === 'trigger') {
+          if (typeInfo.entityType === EntityType.TRIGGER) {
             this._updateNode(addedStmts['@id'], typeInfo);
           } else {
-            this._addNodeToChart(addedStmts);
+            this._addNodeToChart(addedStmts, parentIRI);
           }
         }
       }
@@ -925,7 +1151,7 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
    */
   private _updateNode(id: string, typeInfo: TypeInfo): void {
     let node;
-    if (typeInfo.entityType === 'trigger') {
+    if (typeInfo.entityType === EntityType.TRIGGER) {
       node = this._getTriggerFromChart();
     } else {
       node = this.cyChart.getElementById(id);
@@ -934,7 +1160,7 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
     if (node && node.data().name !== typeInfo.name) {
       node.data().name = typeInfo.name;
       // If the trigger node was updated, need to remove the default trigger styles and unset the boolean
-      if (typeInfo.entityType === 'trigger') {
+      if (typeInfo.entityType === EntityType.TRIGGER) {
         const triggerStyle = this.getNodeTypeStyle(typeInfo.entityType);
         node.data().color = triggerStyle.color;
         node.data().fontStyle = triggerStyle.fontStyle;
@@ -979,16 +1205,26 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
       || has(item, this.buildWorkflowsIRI('hasTrigger')));
   }
   /**
-   * Adds a new node to the chart based on the provided entity JSON-LD.
+   * Adds a new node to the chart based on the provided entity JSON-LD and optional parent IRI. If the parent IRI is the
+   * workflow definition, draws the edge from the trigger node. Otherwise, draws the edge from the element with that id.
    * @private
    *
    * @param {JSONLDObject} entity - The entity JSON-LD to create the node from.
+   * @param {string} [parentIRI] - The optional IRI of the parent entity for this entity.
    */
-  private _addNodeToChart(entity: JSONLDObject): void {
+  private _addNodeToChart(entity: JSONLDObject, parentIRI?: string): void {
     const node = this._createNode(entity);
     this.cyChart.add(node);
-    const trigger = this._getTriggerFromChart();
-    const edge = this._buildNodeEdge(trigger.data().id, node.data.id);
+    const wfDef = this._findWorkflowObject(this._editedResource);
+    let sourceId: string;
+    if (parentIRI === wfDef['@id']) {
+      const trigger = this._getTriggerFromChart();
+      sourceId = trigger.data('id');
+    } else {
+      const node = this.cyChart.getElementById(parentIRI);
+      sourceId = node.data('id');
+    }
+    const edge = this._buildNodeEdge(sourceId, node.data.id);
     this.cyChart.add(edge);
     this.cyChart.layout(this.cyLayout).run();
   }
@@ -1021,7 +1257,7 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
    */
   private _deleteNode(elem: cytoscape.node): void {
     const entityType = elem.data('entityType');
-    if (entityType === 'trigger') {
+    if (entityType === EntityType.TRIGGER) {
       elem.data().name = 'Default Trigger';
       this._setDefaultTriggerStyles(elem.data());
       this.cyChart.style().update();

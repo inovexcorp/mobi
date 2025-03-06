@@ -37,6 +37,7 @@ import { Difference } from '../../../shared/models/difference.class';
 import { Element, EntityType } from '../../models/workflow-display.interface';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { ModalType } from '../../models/modal-config.interface';
+import { ToastService } from '../../../shared/services/toast.service';
 import { WorkflowAddConfigurationComponent } from '../workflow-add-configuration/workflow-add-configuration.component';
 import {
   WorkflowPropertyOverlayComponent
@@ -44,7 +45,6 @@ import {
 import { WORKFLOWS } from '../../../prefixes';
 import { WorkflowsManagerService } from '../../services/workflows-manager.service';
 import { WorkflowsStateService } from '../../services/workflows-state.service';
-import { ToastService } from '../../../shared/services/toast.service';
 import { WorkflowDisplayComponent } from './workflow-display.component';
 
 describe('WorkflowDisplayComponent', () => {
@@ -53,6 +53,7 @@ describe('WorkflowDisplayComponent', () => {
   let matDialog: jasmine.SpyObj<MatDialog>;
   let workflowsStateStub: jasmine.SpyObj<WorkflowsStateService>;
   let workflowsManagerStub: jasmine.SpyObj<WorkflowsManagerService>;
+  let toastStub: jasmine.SpyObj<ToastService>;
 
   let cyChartSpy;
 
@@ -103,6 +104,8 @@ describe('WorkflowDisplayComponent', () => {
       zoom: (zoomLevel: number) => {
       },
       animate: () => {
+      },
+      off: () => {
       }
     });
 
@@ -110,6 +113,7 @@ describe('WorkflowDisplayComponent', () => {
     matDialog = TestBed.inject(MatDialog) as jasmine.SpyObj<MatDialog>;
     workflowsStateStub = TestBed.inject(WorkflowsStateService) as jasmine.SpyObj<WorkflowsStateService>;
     workflowsManagerStub = TestBed.inject(WorkflowsManagerService) as jasmine.SpyObj<WorkflowsManagerService>;
+    toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
     //component
     fixture = TestBed.createComponent(WorkflowDisplayComponent);
     component = fixture.componentInstance;
@@ -130,6 +134,7 @@ describe('WorkflowDisplayComponent', () => {
     matDialog = null;
     workflowsStateStub = null;
     workflowsManagerStub = null;
+    toastStub = null;
     cyChartSpy = null;
   });
 
@@ -163,6 +168,7 @@ describe('WorkflowDisplayComponent', () => {
         isEditMode: new SimpleChange(undefined, true, true)
       });
       expect(component.cyMenu.length).toBeTruthy();
+      expect(component.cyEdgehandles).toBeDefined();
       expect((<any> component)._editedResource).toEqual(component.resource);
     });
     it('if not in edit mode', () => {
@@ -172,6 +178,7 @@ describe('WorkflowDisplayComponent', () => {
       });
       expect(component.setWorkflowData).not.toHaveBeenCalled();  
       expect(component.cyMenu).toEqual([]);
+      expect(component.cyEdgehandles).toBeUndefined();
       expect((<any> component)._editedResource).toEqual([]);
     });
   });
@@ -210,8 +217,8 @@ describe('WorkflowDisplayComponent', () => {
       expect(trigger.edges.length).toBe(2);
       const action = component.getNodesAndEdgesByType(workflowRDF, EntityType.ACTION);
       expect(isObject(action)).toBeTrue();
-      expect(action.nodes.length).toBe(2);
-      expect(action.edges.length).toBe(0);
+      expect(action.nodes.length).toBe(3);
+      expect(action.edges.length).toBe(1);
     });
     it('should open a modal', () => {
       const entity = workflowRDF.find(obj => obj['@type'].includes(`${WORKFLOWS}Trigger`));
@@ -263,7 +270,7 @@ describe('WorkflowDisplayComponent', () => {
         expect((<any> component)._editedResource).toEqual(component.resource);
         expect(workflowsStateStub.hasChanges).toBeFalsy();
       });
-      it('if an action is added', () => {
+      it('if an action is added beneath the workflow', () => {
         const newAction: JSONLDObject = {
           '@id': 'http://example.com/workflows/LEDControl/action/new',
           '@type': [`${WORKFLOWS}Action`, `${WORKFLOWS}HTTPRequestAction`],
@@ -284,12 +291,40 @@ describe('WorkflowDisplayComponent', () => {
           newAction,
           newHeader
         ]);
-        component.handleModalResponse(diff);
-        expect((<any> component)._editedResource.length).toEqual(7);
+        component.handleModalResponse(diff, 'http://example.com/workflows/LEDControl');
+        expect((<any> component)._editedResource.length).toEqual(8);
         expect((<any> component)._editedResource).toContain(newAction);
         expect((<any> component)._editedResource).toContain(newHeader);
         const workflowDefinition = (<any> component)._editedResource.find(obj => obj['@id'] === 'http://example.com/workflows/LEDControl');
         expect(workflowDefinition[`${WORKFLOWS}hasAction`]).toContain({'@id': 'http://example.com/workflows/LEDControl/action/new'});
+      });
+      it('if an action is added beneath another action', () => {
+        const newAction: JSONLDObject = {
+          '@id': 'http://example.com/workflows/LEDControl/action/new',
+          '@type': [`${WORKFLOWS}Action`, `${WORKFLOWS}HTTPRequestAction`],
+          [`${WORKFLOWS}hasHttpUrl`]: [{ '@value': 'http://test.com' }],
+          [`${WORKFLOWS}hasHeader`]: [{ '@id': 'http://example.com/workflows/LEDControl/action/header/new' }]
+        };
+        const newHeader: JSONLDObject = {
+          '@id': 'http://example.com/workflows/LEDControl/action/header/new',
+          '@type': [`${WORKFLOWS}Header`],
+          [`${WORKFLOWS}hasHeaderName`]: [{ '@value': 'X-Test' }],
+          [`${WORKFLOWS}hasHeaderValue`]: [{ '@value': 'X-Test' }]
+        };
+        const diff = new Difference([
+          {
+            '@id': 'http://example.com/workflows/LEDControl/action',
+            [`${WORKFLOWS}hasChildAction`]: [{ '@id': 'http://example.com/workflows/LEDControl/action/new' }]
+          },
+          newAction,
+          newHeader
+        ]);
+        component.handleModalResponse(diff, 'http://example.com/workflows/LEDControl/action');
+        expect((<any> component)._editedResource.length).toEqual(8);
+        expect((<any> component)._editedResource).toContain(newAction);
+        expect((<any> component)._editedResource).toContain(newHeader);
+        const actionDefinition = (<any> component)._editedResource.find(obj => obj['@id'] === 'http://example.com/workflows/LEDControl/action');
+        expect(actionDefinition[`${WORKFLOWS}hasChildAction`]).toContain({'@id': 'http://example.com/workflows/LEDControl/action/new'});
       });
       it('if an action is edited', () => {
         const originalHeader = workflowRDF.find(obj => obj['@id'] === 'http://example.com/workflows/LEDControl/header');
@@ -317,7 +352,7 @@ describe('WorkflowDisplayComponent', () => {
           ]
         );
         component.handleModalResponse(diff);
-        expect((<any> component)._editedResource.length).toEqual(5);
+        expect((<any> component)._editedResource.length).toEqual(6);
         expect((<any> component)._editedResource).not.toContain(originalHeader);
         expect((<any> component)._editedResource).toContain(newHeader);
         const action = (<any> component)._editedResource.find(obj => obj['@id'] === 'http://example.com/workflows/LEDControl/action/b');
@@ -339,7 +374,7 @@ describe('WorkflowDisplayComponent', () => {
           ]
         );
         component.handleModalResponse(diff);
-        expect((<any> component)._editedResource.length).toEqual(4);
+        expect((<any> component)._editedResource.length).toEqual(5);
         expect((<any> component)._editedResource).not.toContain(originalHeader);
         const action = (<any> component)._editedResource.find(obj => obj['@id'] === 'http://example.com/workflows/LEDControl/action/b');
         expect(action).toEqual({
@@ -361,7 +396,7 @@ describe('WorkflowDisplayComponent', () => {
           originalHeader
         ]);
         component.handleModalResponse(diff);
-        expect((<any> component)._editedResource.length).toEqual(3);
+        expect((<any> component)._editedResource.length).toEqual(4);
         expect((<any> component)._editedResource).not.toContain(originalAction);
         expect((<any> component)._editedResource).not.toContain(originalHeader);
         const workflowDefinition = (<any> component)._editedResource.find(obj => obj['@id'] === 'http://example.com/workflows/LEDControl');
@@ -383,7 +418,7 @@ describe('WorkflowDisplayComponent', () => {
           originalTriggerClone
         ]);
         component.handleModalResponse(diff);
-        expect((<any> component)._editedResource.length).toEqual(5);
+        expect((<any> component)._editedResource.length).toEqual(6);
         expect((<any> component)._editedResource).toContain(originalTriggerClone);
         const workflowDefinition = (<any> component)._editedResource.find(obj => obj['@id'] === 'http://example.com/workflows/LEDControl');
         expect(workflowDefinition[`${WORKFLOWS}hasTrigger`]).toContain({'@id': originalTriggerClone['@id']});
@@ -417,7 +452,7 @@ describe('WorkflowDisplayComponent', () => {
           }], [originalTriggerClone]
         );
         component.handleModalResponse(diff);
-        expect((<any> component)._editedResource.length).toEqual(5);
+        expect((<any> component)._editedResource.length).toEqual(6);
         const trigger = (<any> component)._editedResource.find(obj => obj['@id'] === 'http://example.com/workflows/LEDControl/trigger');
         expect(trigger).toEqual({
           '@id': 'http://example.com/workflows/LEDControl/trigger',
@@ -437,7 +472,7 @@ describe('WorkflowDisplayComponent', () => {
           originalTrigger
         ]);
         component.handleModalResponse(diff);
-        expect((<any> component)._editedResource.length).toEqual(4);
+        expect((<any> component)._editedResource.length).toEqual(5);
         expect((<any> component)._editedResource).not.toContain(originalTrigger);
         const workflowDefinition = (<any> component)._editedResource.find(obj => obj['@id'] === 'http://example.com/workflows/LEDControl');
         expect(workflowDefinition[`${WORKFLOWS}hasTrigger`]).toBeUndefined();
@@ -445,47 +480,55 @@ describe('WorkflowDisplayComponent', () => {
       });
     });
     describe('should create the appropriate modal config', () => {
+      let elemData;
+      const elemMock = {
+        data: key => elemData[key]
+      };
       beforeEach(() => {
         (<any> component)._editedResource = cloneDeep(component.resource);
+        elemData = {
+          entityType: EntityType.ACTION,
+          id: 'http://example.com/workflows/LEDControl/action/b'
+        };
+      });
+      afterEach(() => {
+        elemData = null;
       });
       describe('if an action is being', () => {
-        it('added', () => {
-          const result = component.createModalConfig(undefined, ModalType.ADD);
+        it('added beneath the Workflow', () => {
+          elemData.entityType = EntityType.TRIGGER;
+          elemData.id = 'http://example.com/workflows/LEDControl';
+          const result = component.createModalConfig(elemMock, ModalType.ADD);
           expect(result.recordIRI).toEqual(component.recordId);
           expect(result.workflowIRI).toEqual('http://example.com/workflows/LEDControl');
           expect(result.shaclDefinitions).toEqual(actionSHACLDefinitions);
-          expect(result.hasProperties).toEqual([
-            { '@id': 'http://example.com/workflows/LEDControl/action' },
-            { '@id': 'http://example.com/workflows/LEDControl/action/b' },
-          ]);
-          expect(result.hasPropertyIRI).toEqual(`${WORKFLOWS}hasAction`);
-          expect(result.entityType).toEqual('action');
+          expect(result.parentIRI).toEqual('http://example.com/workflows/LEDControl');
+          expect(result.parentProp).toEqual(`${WORKFLOWS}hasAction`);
+          expect(result.entityType).toEqual(EntityType.ACTION);
+          expect(result.mode).toEqual(ModalType.ADD);
+          expect(result.selectedConfigIRI).toBeUndefined();
+          expect(result.workflowEntity).toBeUndefined();
+        });
+        it('added beneath another Action', () => {
+          const result = component.createModalConfig(elemMock, ModalType.ADD);
+          expect(result.recordIRI).toEqual(component.recordId);
+          expect(result.workflowIRI).toEqual('http://example.com/workflows/LEDControl');
+          expect(result.shaclDefinitions).toEqual(actionSHACLDefinitions);
+          expect(result.parentIRI).toEqual(elemData.id);
+          expect(result.parentProp).toEqual(`${WORKFLOWS}hasChildAction`);
+          expect(result.entityType).toEqual(EntityType.ACTION);
           expect(result.mode).toEqual(ModalType.ADD);
           expect(result.selectedConfigIRI).toBeUndefined();
           expect(result.workflowEntity).toBeUndefined();
         });
         it('edited', () => {
-          const elemMock = jasmine.createSpyObj('ElementDefinition', ['data']);
-          elemMock.data.and.callFake((key => {
-              if (key === 'entityType') {
-                return 'action';
-              } else if (key === 'id') {
-                return 'http://example.com/workflows/LEDControl/action/b';
-              } else {
-                return '';
-              }
-            }
-          ));
           const result = component.createModalConfig(elemMock, ModalType.EDIT);
           expect(result.recordIRI).toEqual(component.recordId);
           expect(result.workflowIRI).toEqual('http://example.com/workflows/LEDControl');
           expect(result.shaclDefinitions).toEqual(actionSHACLDefinitions);
-          expect(result.hasProperties).toEqual([
-            { '@id': 'http://example.com/workflows/LEDControl/action' },
-            { '@id': 'http://example.com/workflows/LEDControl/action/b' },
-          ]);
-          expect(result.hasPropertyIRI).toEqual(`${WORKFLOWS}hasAction`);
-          expect(result.entityType).toEqual('action');
+          expect(result.parentIRI).toBeUndefined();
+          expect(result.parentProp).toBeUndefined();
+          expect(result.entityType).toEqual(EntityType.ACTION);
           expect(result.mode).toEqual(ModalType.EDIT);
           expect(result.selectedConfigIRI).toEqual('http://example.com/workflows/LEDControl/action/b');
           expect(result.workflowEntity.length).toEqual(2);
@@ -498,50 +541,29 @@ describe('WorkflowDisplayComponent', () => {
           (<any> component)._editedResource.splice(idx, 1);
           const workflowDef = (<any> component)._editedResource.find(obj => obj['@id'] === 'http://example.com/workflows/LEDControl');
           delete workflowDef[`${WORKFLOWS}hasTrigger`];
-          const elemMock = jasmine.createSpyObj('ElementDefinition', ['data']);
-          elemMock.data.and.callFake((key => {
-              if (key === 'entityType') {
-                return 'trigger';
-              } else if (key === 'id') {
-                return (<any> component)._TRIGGER_NODE_ID;
-              } else {
-                return '';
-              }
-            }
-          ));
+          elemData.entityType = EntityType.TRIGGER;
+          elemData.id = (<any> component)._TRIGGER_NODE_ID;
           const result = component.createModalConfig(elemMock, ModalType.EDIT);
           expect(result.recordIRI).toEqual(component.recordId);
           expect(result.workflowIRI).toEqual('http://example.com/workflows/LEDControl');
           expect(result.shaclDefinitions).toEqual(triggerSHACLDefinitions);
-          expect(result.hasProperties).toEqual([]);
-          expect(result.hasPropertyIRI).toEqual(`${WORKFLOWS}hasTrigger`);
-          expect(result.entityType).toEqual('trigger');
+          expect(result.parentIRI).toEqual('http://example.com/workflows/LEDControl');
+          expect(result.parentProp).toEqual(`${WORKFLOWS}hasTrigger`);
+          expect(result.entityType).toEqual(EntityType.TRIGGER);
           expect(result.mode).toEqual(ModalType.EDIT);
-          expect(result.selectedConfigIRI).toEqual((<any> component)._TRIGGER_NODE_ID);
-          expect(result.workflowEntity.length).toEqual(1);
-          expect(result.workflowEntity).toContain(jasmine.objectContaining({'@id': (<any> component)._TRIGGER_NODE_ID}));
+          expect(result.selectedConfigIRI).toBeUndefined();
+          expect(result.workflowEntity).toBeUndefined();
         });
         it('edited', () => {
-          const elemMock = jasmine.createSpyObj('ElementDefinition', ['data']);
-          elemMock.data.and.callFake((key => {
-              if (key === 'entityType') {
-                return 'trigger';
-              } else if (key === 'id') {
-                return 'http://example.com/workflows/LEDControl/trigger';
-              } else {
-                return '';
-              }
-            }
-          ));
+          elemData.entityType = EntityType.TRIGGER;
+          elemData.id = 'http://example.com/workflows/LEDControl/trigger';
           const result = component.createModalConfig(elemMock, ModalType.EDIT);
           expect(result.recordIRI).toEqual(component.recordId);
           expect(result.workflowIRI).toEqual('http://example.com/workflows/LEDControl');
           expect(result.shaclDefinitions).toEqual(triggerSHACLDefinitions);
-          expect(result.hasProperties).toEqual([
-            { '@id': 'http://example.com/workflows/LEDControl/trigger' },
-          ]);
-          expect(result.hasPropertyIRI).toEqual(`${WORKFLOWS}hasTrigger`);
-          expect(result.entityType).toEqual('trigger');
+          expect(result.parentIRI).toBeUndefined();
+          expect(result.parentProp).toBeUndefined();
+          expect(result.entityType).toEqual(EntityType.TRIGGER);
           expect(result.mode).toEqual(ModalType.EDIT);
           expect(result.selectedConfigIRI).toEqual('http://example.com/workflows/LEDControl/trigger');
           expect(result.workflowEntity.length).toEqual(1);
@@ -603,6 +625,203 @@ describe('WorkflowDisplayComponent', () => {
               expect(workflowsManagerStub.updateWorkflowConfiguration).toHaveBeenCalledWith(jasmine.any(Difference), recordId);
             });
           tick();
+        }));
+      });
+    });
+    describe('should get a difference for deleting an edge', () => {
+      beforeEach(() => {
+        (<any> component)._editedResource = cloneDeep(component.resource);
+      });
+      describe('if the edge is between the trigger and an action', () => {
+        it('successfully', fakeAsync(() => {
+          workflowsManagerStub.updateWorkflowConfiguration.and.returnValue(of(null));
+          component.getDeleteEdgeDifference((<any> component)._TRIGGER_NODE_ID, 'http://example.com/workflows/LEDControl/action').subscribe(result => {
+            expect(result).toBeDefined();
+            expect((result.additions as JSONLDObject[]).length).toEqual(0);
+            expect((result.deletions as JSONLDObject[]).length).toEqual(1);
+            expect((result.deletions as JSONLDObject[])).toEqual([{
+              '@id': 'http://example.com/workflows/LEDControl',
+              [`${WORKFLOWS}hasAction`]: [{ '@id': 'http://example.com/workflows/LEDControl/action' }]
+            }]);
+            expect(workflowsManagerStub.updateWorkflowConfiguration).toHaveBeenCalledWith(result, recordId);
+          });
+          tick();
+        }));
+        it('unless an error occurs', fakeAsync(() => {
+          workflowsManagerStub.updateWorkflowConfiguration.and.returnValue(throwError('Error'));
+          component.getDeleteEdgeDifference((<any> component)._TRIGGER_NODE_ID, 'http://example.com/workflows/LEDControl/action')
+            .subscribe(() => fail('Observable should have failed'), error => {
+              expect(error).toEqual('Error');
+              expect(workflowsManagerStub.updateWorkflowConfiguration).toHaveBeenCalledWith(jasmine.any(Difference), recordId);
+            });
+          tick();
+        }));
+      });
+      describe('if the edge is between an action and another action', () => {
+        it('successfully', fakeAsync(() => {
+          workflowsManagerStub.updateWorkflowConfiguration.and.returnValue(of(null));
+          component.getDeleteEdgeDifference('http://example.com/workflows/LEDControl/action', 'http://example.com/workflows/LEDControl/action/a').subscribe(result => {
+            expect(result).toBeDefined();
+            expect((result.additions as JSONLDObject[]).length).toEqual(0);
+            expect((result.deletions as JSONLDObject[]).length).toEqual(1);
+            expect((result.deletions as JSONLDObject[])).toEqual([{
+              '@id': 'http://example.com/workflows/LEDControl/action',
+              [`${WORKFLOWS}hasChildAction`]: [{ '@id': 'http://example.com/workflows/LEDControl/action/a' }]
+            }]);
+            expect(workflowsManagerStub.updateWorkflowConfiguration).toHaveBeenCalledWith(result, recordId);
+          });
+          tick();
+        }));
+        it('unless an error occurs', fakeAsync(() => {
+          workflowsManagerStub.updateWorkflowConfiguration.and.returnValue(throwError('Error'));
+          component.getDeleteEdgeDifference('http://example.com/workflows/LEDControl/action', 'http://example.com/workflows/LEDControl/action/a')
+            .subscribe(() => fail('Observable should have failed'), error => {
+              expect(error).toEqual('Error');
+              expect(workflowsManagerStub.updateWorkflowConfiguration).toHaveBeenCalledWith(jasmine.any(Difference), recordId);
+            });
+          tick();
+        }));
+      });
+    });
+    it('should determine whether an edge can be added between two nodes', () => {
+      const sourceElemData = {
+        id: 'http://example.com/workflows/LEDControl/action',
+        entityType: EntityType.ACTION
+      };
+      const targetElemData = {
+        id: 'http://example.com/workflows/LEDControl/action/b',
+        entityType: EntityType.ACTION
+      };
+      const sourceElem = {
+        data: key => sourceElemData[key],
+        same: obj => obj.data('id') === sourceElemData.id && obj.data('entityType') === sourceElemData.entityType 
+      };
+      const targetElem = {
+        data: key => targetElemData[key],
+        same: obj => obj.data('id') === targetElemData.id && obj.data('entityType') === targetElemData.entityType 
+      };
+      const edges = (<any> component)._buildGraphData(component.resource).edges
+        .map(el => ({
+          data: key => el.data[key]
+        }));
+      component.cyChart.edges = () => edges;
+      expect(component.edgeCanBeAdded(sourceElem, targetElem)).toBeTrue();
+
+      // No duplicates
+      sourceElemData.id = (<any> component)._TRIGGER_NODE_ID;
+      sourceElemData.entityType = EntityType.TRIGGER;
+      expect(component.edgeCanBeAdded(sourceElem, targetElem)).toBeFalse();
+
+      // No direct loops
+      sourceElemData.id = targetElemData.id;
+      sourceElemData.entityType = targetElemData.entityType;
+      expect(component.edgeCanBeAdded(sourceElem, targetElem)).toBeFalse();
+
+      // No edges back to trigger
+      targetElemData.id = (<any> component)._TRIGGER_NODE_ID;
+      targetElemData.entityType = EntityType.TRIGGER;
+      expect(component.edgeCanBeAdded(sourceElem, targetElem)).toBeFalse();
+    });
+    describe('should add a new edge to the chart', () => {
+      const addedEdge = jasmine.createSpyObj('ElementDefinition', ['remove']);
+      const sourceNodeData = { id: '' };
+      const sourceNode = {
+        data: key => sourceNodeData[key]
+      };
+      const targetNodeData = { id: '' };
+      const targetNode = {
+        data: key => targetNodeData[key]
+      };
+      beforeEach(() => {
+        component.setWorkflowData();
+        (<any> component)._editedResource = cloneDeep(component.resource);
+        addedEdge.remove.calls.reset();
+      });
+      describe('if the edge is from the trigger to an action', () => {
+        beforeEach(() => {
+          sourceNodeData.id = (<any> component)._TRIGGER_NODE_ID;
+          targetNodeData.id = 'http://example.com/workflows/LEDControl/action/new';
+        });
+        it('successfully', fakeAsync(() => {
+          workflowsManagerStub.updateWorkflowConfiguration.and.returnValue(of(null));
+          const workflowDef = (<any> component)._editedResource.find(obj => obj['@type'].includes(`${WORKFLOWS}Workflow`));
+          expect(workflowDef[`${WORKFLOWS}hasAction`].length).toEqual(2);
+          component.addNewEdge(sourceNode, targetNode, addedEdge);
+          tick();
+          expect(workflowsManagerStub.updateWorkflowConfiguration).toHaveBeenCalledWith(jasmine.any(Difference), component.recordId);
+          const diff = workflowsManagerStub.updateWorkflowConfiguration.calls.mostRecent().args[0];
+          expect((diff.additions as JSONLDObject[]).length).toEqual(1);
+          expect((diff.additions as JSONLDObject[])).toContain({
+            '@id': 'http://example.com/workflows/LEDControl',
+            [`${WORKFLOWS}hasAction`]: [{ '@id': targetNodeData.id }]
+          });
+          expect((diff.deletions as JSONLDObject[]).length).toEqual(0);
+          expect(addedEdge.remove).not.toHaveBeenCalled();
+          expect(toastStub.createErrorToast).not.toHaveBeenCalled();
+          expect(workflowDef[`${WORKFLOWS}hasAction`].length).toEqual(3);
+          expect(workflowDef[`${WORKFLOWS}hasAction`]).toContain({'@id': targetNodeData.id});
+        }));
+        it('unless an error occurs', fakeAsync(() => {
+          workflowsManagerStub.updateWorkflowConfiguration.and.returnValue(throwError('Error'));
+          const workflowDef = (<any> component)._editedResource.find(obj => obj['@type'].includes(`${WORKFLOWS}Workflow`));
+          expect(workflowDef[`${WORKFLOWS}hasAction`].length).toEqual(2);
+          component.addNewEdge(sourceNode, targetNode, addedEdge);
+          tick();
+          expect(workflowsManagerStub.updateWorkflowConfiguration).toHaveBeenCalledWith(jasmine.any(Difference), component.recordId);
+          const diff = workflowsManagerStub.updateWorkflowConfiguration.calls.mostRecent().args[0];
+          expect((diff.additions as JSONLDObject[]).length).toEqual(1);
+          expect((diff.additions as JSONLDObject[])).toContain({
+            '@id': 'http://example.com/workflows/LEDControl',
+            [`${WORKFLOWS}hasAction`]: [{ '@id': targetNodeData.id }]
+          });
+          expect((diff.deletions as JSONLDObject[]).length).toEqual(0);
+          expect(addedEdge.remove).toHaveBeenCalledWith();
+          expect(toastStub.createErrorToast).toHaveBeenCalledWith(jasmine.stringContaining('Error'));
+          expect(workflowDef[`${WORKFLOWS}hasAction`].length).toEqual(2);
+        }));
+      });
+      describe('if the edge is from an action to another action', () => {
+        beforeEach(() => {
+          sourceNodeData.id = 'http://example.com/workflows/LEDControl/action/a';
+          targetNodeData.id = 'http://example.com/workflows/LEDControl/action/b';
+        });
+        it('successfully', fakeAsync(() => {
+          workflowsManagerStub.updateWorkflowConfiguration.and.returnValue(of(null));
+          const actionDef = (<any> component)._editedResource.find(obj => obj['@id'] === sourceNodeData.id);
+          expect(actionDef[`${WORKFLOWS}hasChildAction`]).toBeUndefined();
+          component.addNewEdge(sourceNode, targetNode, addedEdge);
+          tick();
+          expect(workflowsManagerStub.updateWorkflowConfiguration).toHaveBeenCalledWith(jasmine.any(Difference), component.recordId);
+          const diff = workflowsManagerStub.updateWorkflowConfiguration.calls.mostRecent().args[0];
+          expect((diff.additions as JSONLDObject[]).length).toEqual(1);
+          expect((diff.additions as JSONLDObject[])).toContain({
+            '@id': sourceNodeData.id,
+            [`${WORKFLOWS}hasChildAction`]: [{ '@id': targetNodeData.id }]
+          });
+          expect((diff.deletions as JSONLDObject[]).length).toEqual(0);
+          expect(addedEdge.remove).not.toHaveBeenCalled();
+          expect(toastStub.createErrorToast).not.toHaveBeenCalled();
+          expect(actionDef[`${WORKFLOWS}hasChildAction`]).toBeDefined();
+          expect(actionDef[`${WORKFLOWS}hasChildAction`].length).toEqual(1);
+          expect(actionDef[`${WORKFLOWS}hasChildAction`]).toContain({'@id': targetNodeData.id});
+        }));
+        it('unless an error occurs', fakeAsync(() => {
+          workflowsManagerStub.updateWorkflowConfiguration.and.returnValue(throwError('Error'));
+          const actionDef = (<any> component)._editedResource.find(obj => obj['@id'] === sourceNodeData.id);
+          expect(actionDef[`${WORKFLOWS}hasChildAction`]).toBeUndefined();
+          component.addNewEdge(sourceNode, targetNode, addedEdge);
+          tick();
+          expect(workflowsManagerStub.updateWorkflowConfiguration).toHaveBeenCalledWith(jasmine.any(Difference), component.recordId);
+          const diff = workflowsManagerStub.updateWorkflowConfiguration.calls.mostRecent().args[0];
+          expect((diff.additions as JSONLDObject[]).length).toEqual(1);
+          expect((diff.additions as JSONLDObject[])).toContain({
+            '@id': sourceNodeData.id,
+            [`${WORKFLOWS}hasChildAction`]: [{ '@id': targetNodeData.id }]
+          });
+          expect((diff.deletions as JSONLDObject[]).length).toEqual(0);
+          expect(addedEdge.remove).toHaveBeenCalledWith();
+          expect(toastStub.createErrorToast).toHaveBeenCalledWith(jasmine.stringContaining('Error'));
+          expect(actionDef[`${WORKFLOWS}hasChildAction`]).toBeUndefined();
         }));
       });
     });

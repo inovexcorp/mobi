@@ -174,7 +174,24 @@ const workflowRDF: JSONLDObject[] = [
         ],
         [`${WORKFLOWS}testMessage`]: [
             {
-                '@value': 'This is a test message from Workflow C'
+                '@value': 'This is a test message from action in Workflow C'
+            }
+        ],
+        [`${WORKFLOWS}hasChildAction`]: [
+            {
+              '@id': 'http://example.com/workflows/LEDControl/action/a'
+            }
+        ]
+    },
+    {
+        '@id': 'http://example.com/workflows/LEDControl/action/a',
+        '@type': [
+            `${WORKFLOWS}Action`,
+            `${WORKFLOWS}TestAction`
+        ],
+        [`${WORKFLOWS}testMessage`]: [
+            {
+                '@value': 'This is a test message from action A in Workflow C'
             }
         ]
     },

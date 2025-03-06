@@ -42,7 +42,6 @@ import { EntityTypeConfig, ModalConfig, ModalType } from '../../models/modal-con
 import { JSONLDId } from '../../../shared/models/JSONLDId.interface';
 import { JSONLDValue } from '../../../shared/models/JSONLDValue.interface';
 import { EntityType } from '../../models/workflow-display.interface';
-import { splitIRI } from '../../../shared/pipes/splitIRI.pipe';
 
 interface DistinctValues {
   base: (JSONLDId|JSONLDValue)[],
@@ -307,7 +306,7 @@ export class WorkflowAddConfigurationComponent implements OnInit {
     const isEditMode = this.data.mode === ModalType.EDIT;
     const nodeShape = this.selectedConfiguration.nodeShape;
     const isEditActionTrigger = () => (this.data.entityType === EntityType.ACTION ||
-      (this.data.entityType === EntityType.TRIGGER && this.data.hasProperties.length > 0));
+      (this.data.entityType === EntityType.TRIGGER && this.data.selectedConfigIRI));
     if (isEditMode && isEditActionTrigger()) {
       return this._editEntity(formValues, nodeShape);
     } else {
@@ -478,10 +477,10 @@ export class WorkflowAddConfigurationComponent implements OnInit {
       '@type': this._getTypes(nodeShape)
     };
     const newValues = getShaclGeneratedData(newEntity, this.selectedConfiguration.formFieldConfigs, formValues);
-    const workflowDefinitionChanges = {
-      '@id': this.data.workflowIRI,
-      [this.data.hasPropertyIRI]: [{'@id': newEntity['@id']}]
+    const parentChanges: JSONLDObject = {
+      '@id': this.data.parentIRI,
+      [this.data.parentProp]: [{ '@id': newEntity['@id'] }]
     };
-    return new Difference([workflowDefinitionChanges].concat(newValues));
+    return new Difference([parentChanges].concat(newValues));
   }
 }
