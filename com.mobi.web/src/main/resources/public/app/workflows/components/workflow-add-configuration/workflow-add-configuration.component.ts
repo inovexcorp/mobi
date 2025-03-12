@@ -22,7 +22,7 @@
  */
 import { ChangeDetectorRef, Component, Inject, OnInit } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { FormBuilder } from '@angular/forms';
+import { AbstractControl, FormBuilder, FormGroup } from '@angular/forms';
 import { MatSelectChange } from '@angular/material/select';
 
 import { capitalize, cloneDeep, difference, get, isEqual } from 'lodash';
@@ -30,11 +30,14 @@ import { v4 } from 'uuid';
 
 import { FormValues } from '../../../shacl-forms/models/form-values.interface';
 import { SHACLFormFieldConfig } from '../../../shacl-forms/models/shacl-form-field-config';
-import { RDFS, SHACL, WORKFLOWS } from '../../../prefixes';
+import { DCTERMS, RDFS, SHACL, WORKFLOWS } from '../../../prefixes';
 import {
   getPropertyId,
   getPropertyValue,
-  getShaclGeneratedData} from '../../../shared/utility';
+  getShaclGeneratedData,
+  getEntityName,
+  setDctermsValue
+} from '../../../shared/utility';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { WorkflowsManagerService } from '../../services/workflows-manager.service';
 import { Difference } from '../../../shared/models/difference.class';
@@ -83,8 +86,9 @@ export class WorkflowAddConfigurationComponent implements OnInit {
    * @type {FormGroup}
    * @property configType - The control for the configuration type.
    */
-  configurationFormGroup = this._fb.group({
-    configType: []
+  configurationFormGroup: FormGroup = this._fb.group({
+    configType: [],
+    actionTitle: ''
   });
   /**
    * Represents a list of entity type configurations.
@@ -123,6 +127,19 @@ export class WorkflowAddConfigurationComponent implements OnInit {
    */
   entityBeingEdited: JSONLDObject;
 
+  /**
+   * Represents the previous value of a title before it is changed in the modal.
+   */
+  previousTitleValue = undefined;
+
+  /**
+   * A boolean variable that indicates whether the values in the SHACL form value has changed. It is changed when
+   * the SHACL Config form component emits that a change to its values has happened. Will also update when the type
+   * of configuration is changed and the modal is in edit mode.
+   *
+   */
+  formValueChanged = false;
+
   constructor(@Inject(MAT_DIALOG_DATA) public data: ModalConfig,
               private _fb: FormBuilder,
               private _dialogRef: MatDialogRef<WorkflowAddConfigurationComponent>,
@@ -136,6 +153,7 @@ export class WorkflowAddConfigurationComponent implements OnInit {
     this._setTitle(capitalize(this.data.entityType));
 
     if (this.data.mode === ModalType.EDIT) {
+      this.shaclFormValid = true;
       this.setFormValues();
       if (this.selectedConfiguration) {
         this._setTitle(this.selectedConfiguration.label);
@@ -177,11 +195,25 @@ export class WorkflowAddConfigurationComponent implements OnInit {
    * @param {MatSelectChange} value - The change event object containing the new value for the configuration.
    */
   configurationControlChange({ value = {} }: MatSelectChange): void {
+    this.formValueChanged = this.data.mode !== ModalType.EDIT;
     this.selectedConfiguration = undefined; // Removes existing SHACL form so it can be reinitialized with new fields
     this._ref.detectChanges();
     this.selectedConfiguration = value;
     this._setTitle(value.label);
-    this.submitDisabled = true;
+    if (this.configurationFormGroup.controls.actionTitle.dirty) {
+      this._checkSubmissionAvailability();
+    } else {
+      this.submitDisabled = true;
+    }
+  }
+
+  /**
+   * Updates the title value by performing necessary checks to ensure submission availability.
+   *
+   * @return {void} This method does not return a value.
+   */
+  updateTitleValue(): void {
+    this._checkSubmissionAvailability();
   }
   /**
    * Updates the form values of the selected configuration.
@@ -189,6 +221,7 @@ export class WorkflowAddConfigurationComponent implements OnInit {
    * @param {FormValues} $event - The updated form values.
    */
   updateFormValues($event: FormValues): void {
+    this.formValueChanged = true;
     this.selectedConfiguration.formValues = $event;
   }
   /**
@@ -207,7 +240,7 @@ export class WorkflowAddConfigurationComponent implements OnInit {
    */
   submit(): void {
     this.errorMsg = '';
-    if (!this._isFormValid() || !this.shaclFormValid) {
+    if ((!this._isFormValid() || !this.shaclFormValid) && !this.configurationFormGroup.controls.actionTitle.dirty) {
       return;
     }
 
@@ -264,10 +297,17 @@ export class WorkflowAddConfigurationComponent implements OnInit {
    */
   setFormValues(): void {
     this.entityBeingEdited = this.data.workflowEntity.find(obj => obj['@id'] === this.data.selectedConfigIRI);
+    const title = getEntityName(this.entityBeingEdited, false);
     const type = this.getConfigurationType(this.entityBeingEdited['@type']);
     const config = this.configurationList.find(item => item.value === type[0]);
     this.configurationFormGroup.controls.configType.setValue(config);
     this.selectedConfiguration = config;
+
+    if (title) {
+      this.previousTitleValue = title;
+      this.configurationFormGroup.controls.actionTitle.setValue(title);
+    }
+
     this.configurationFormGroup.controls.configType.markAllAsTouched();
   }
   /**
@@ -298,11 +338,13 @@ export class WorkflowAddConfigurationComponent implements OnInit {
    * @returns {Difference} The added and removed triples represented by the form value changes
    */
   private _buildDifference(): Difference {
-    const { formValues } = this.selectedConfiguration;
-    if (!formValues) {
+    const {formValues} = this.selectedConfiguration;
+    if (!formValues && !this.configurationFormGroup.controls.actionTitle.dirty) { //no changes have been made
       return new Difference();
+    } else if (!formValues && this.configurationFormGroup.controls.actionTitle.dirty) { //only updating the title
+      return this._createTitleDiff(this.data.workflowEntity[0]);
     }
-    
+
     const isEditMode = this.data.mode === ModalType.EDIT;
     const nodeShape = this.selectedConfiguration.nodeShape;
     const isEditActionTrigger = () => (this.data.entityType === EntityType.ACTION ||
@@ -424,8 +466,10 @@ export class WorkflowAddConfigurationComponent implements OnInit {
       entityChanges['@type'] = difference(newTypes, this.entityBeingEdited['@type']);
       const entityDeletions = cloneDeep(this.entityBeingEdited);
       entityDeletions['@type'] = difference(entityDeletions['@type'], newTypes);
+      this._updateEntityTitle(entityDeletions, entityChanges);
       diff = new Difference([entityChanges], [entityDeletions]);
     } else {
+      this._updateEntityTitle(this.entityBeingEdited, entityChanges);
       diff = this.getObjectDiff(this.entityBeingEdited, entityChanges);
     }
     this._updateDiffForReferencedObjects(diff, generatedData);
@@ -477,10 +521,103 @@ export class WorkflowAddConfigurationComponent implements OnInit {
       '@type': this._getTypes(nodeShape)
     };
     const newValues = getShaclGeneratedData(newEntity, this.selectedConfiguration.formFieldConfigs, formValues);
+    const newTitleControl: AbstractControl<any, any> = this.configurationFormGroup.controls.actionTitle;
+
+    if (newTitleControl.value.length > 0 && newTitleControl.dirty) {
+      newValues[0][`${DCTERMS}title`] = [{'@value': newTitleControl.value}];
+    }
+
     const parentChanges: JSONLDObject = {
       '@id': this.data.parentIRI,
       [this.data.parentProp]: [{ '@id': newEntity['@id'] }]
     };
     return new Difference([parentChanges].concat(newValues));
+  }
+
+  /**
+   * Creates a diff object representing changes to the title property of a workflow entity when that is the only
+   * change being made.
+   *
+   * @param {Object} workflowEntity - The workflow entity containing title information to be processed.
+   * @return {Difference} An object representing the changes to the title property, including additions and deletions.
+   */
+  private _createTitleDiff(workflowEntity): Difference {
+    const titles = cloneDeep(workflowEntity[`${DCTERMS}title`]);
+    if (titles?.length > 0) {
+      const changedTitleIndex = titles.findIndex(title => title['@value'] === this.previousTitleValue);
+      const changedTitleObj = cloneDeep(titles[changedTitleIndex]);
+
+      const delObj: JSONLDObject = {
+        '@id': this.data.selectedConfigIRI,
+        [`${DCTERMS}title`]: [changedTitleObj]
+      };
+
+      let newValue: any;
+      if (changedTitleObj && changedTitleObj['@language']) {
+        const lang = changedTitleObj['@language'];
+        newValue = [
+          {
+            '@value': this.configurationFormGroup.controls.actionTitle.value,
+            '@language': lang
+          }
+        ];
+      } else {
+        newValue = [{'@value': this.configurationFormGroup.controls.actionTitle.value}];
+      }
+
+      const addObj: JSONLDObject = {
+        '@id': this.data.selectedConfigIRI,
+        [`${DCTERMS}title`]: newValue
+      };
+
+      return new Difference([addObj], [delObj]);
+    } else {
+      const addObj: JSONLDObject = {
+        '@id': this.data.selectedConfigIRI,
+        [`${DCTERMS}title`]: [{'@value': this.configurationFormGroup.controls.actionTitle.value}]
+      };
+
+      return new Difference([addObj], []);
+    }
+  }
+
+  /**
+   * Updates the title(s) of the specified entity based on changes made or a type change.
+   *
+   * @param {JSONLDObject} entityBeingEdited - The current entity being edited containing all its properties.
+   * @param {JSONLDObject} entityChanges - The object capturing changes that need to be applied to the entity.
+   * @return {void} Does not return a value. Updates the entityChanges object directly with the modified title.
+   */
+  private _updateEntityTitle(entityBeingEdited: JSONLDObject, entityChanges: JSONLDObject): void {
+    if (this.configurationFormGroup.controls.actionTitle.dirty) {
+      const titles = cloneDeep(entityBeingEdited[`${DCTERMS}title`]);
+      if (titles?.length > 0) {
+        const changedTitleIndex = titles.findIndex(title => title['@value'] === this.previousTitleValue);
+        // const changedTitleObj = cloneDeep(titles[changedTitleIndex]);
+        titles[changedTitleIndex]['@value'] = this.configurationFormGroup.controls.actionTitle.value;
+        entityChanges[`${DCTERMS}title`] = titles;
+      } else {
+        if (this.configurationFormGroup.controls.actionTitle.value) {
+          setDctermsValue(entityChanges, 'title', this.configurationFormGroup.controls.actionTitle.value);
+        }
+      }
+    } else if (!this.configurationFormGroup.controls.actionTitle.dirty) {
+      delete entityBeingEdited[`${DCTERMS}title`];
+    }
+  }
+
+  /**
+   * Checks the availability of the submission button based on form changes and validity.
+   * Updates the `submitDisabled` property to enable or disable the submission button.
+   *
+   * @return {void} Does not return a value.
+   */
+  private _checkSubmissionAvailability(): void {
+    //check to see if the form has been changed
+    if (!this.formValueChanged && this.configurationFormGroup.controls.configType.value) {
+      this.submitDisabled = false;
+    } else {
+      this.submitDisabled = !(this.formValueChanged && this.shaclFormValid);
+    }
   }
 }

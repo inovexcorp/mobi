@@ -193,6 +193,7 @@ describe('WorkflowDisplayComponent', () => {
     });
     it('should get nodes and edges by type', () => {
       let trigger = component.getNodesAndEdgesByType(workflowRDF, EntityType.TRIGGER);
+
       expect(isObject(trigger)).toBeTrue();
       expect(trigger.nodes.length).toBe(1);
       const node = trigger.nodes[0].data;

@@ -14,6 +14,10 @@ module.exports = function (config) {
         require('karma-coverage-istanbul-reporter'),
         require('@angular-devkit/build-angular/plugins/karma')
       ],
+      parallelOptions: {
+        executors: 4, // Defaults to cpu-count - 1
+        shardStrategy: 'round-robin'
+      },
       client: {
         clearContext: true, // leave Jasmine Spec Runner output visible in browser
         args: ['--build']

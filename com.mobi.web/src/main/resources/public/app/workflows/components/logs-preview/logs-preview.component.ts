@@ -151,13 +151,13 @@ export class LogsPreviewComponent implements OnInit, OnDestroy {
   getStatusCircleClass(status: WorkflowStatus): string {
     switch (status) {
       case 'failure':
-        return 'badge-danger';
+        return 'text-danger';
       case 'started':
-        return 'badge-info';
+        return 'text-info';
       case 'success':
-        return 'badge-success';
+        return 'text-success';
       default:
-        return 'badge-light';
+        return 'text-light';
     }
   }
   

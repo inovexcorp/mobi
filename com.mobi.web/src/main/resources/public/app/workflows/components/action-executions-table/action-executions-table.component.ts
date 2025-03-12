@@ -41,7 +41,8 @@ import { WorkflowsStateService } from '../../services/workflows-state.service';
  */
 @Component({
   selector: 'app-action-executions-table',
-  templateUrl: './action-executions-table.component.html'
+  templateUrl: './action-executions-table.component.html',
+  styleUrls: ['./action-executions-table.component.scss'],
 })
 export class ActionExecutionsTableComponent implements OnChanges {
   @Input() actions: JSONLDObject[] = [];
