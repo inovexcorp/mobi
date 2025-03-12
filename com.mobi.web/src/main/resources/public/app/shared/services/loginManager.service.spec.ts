@@ -188,8 +188,8 @@ describe('Login Manager service', function() {
 
             const request = httpMock.expectOne(req => req.url === service.prefix && req.method === 'POST');
             request.flush('flush', { status: 400, statusText: error });
-            expect(request.request.params.get('username')).toEqual(params.username);
-            expect(request.request.params.get('password')).toEqual(params.password);
+            expect(request.request.body.get('username')).toEqual(params.username);
+            expect(request.request.body.get('password')).toEqual(params.password);
         });
         it('unless the credentials are wrong', function() {
             service.login(params.username, params.password)
@@ -199,8 +199,8 @@ describe('Login Manager service', function() {
 
             const request = httpMock.expectOne(req => req.url === service.prefix && req.method === 'POST');
             request.flush('flush', { status: 401, statusText: error });
-            expect(request.request.params.get('username')).toEqual(params.username);
-            expect(request.request.params.get('password')).toEqual(params.password);
+            expect(request.request.body.get('username')).toEqual(params.username);
+            expect(request.request.body.get('password')).toEqual(params.password);
         });
         it('unless the account is anonymous', function() {
             userManagerStub.getUser.and.returnValue(throwError(error));
@@ -211,8 +211,8 @@ describe('Login Manager service', function() {
 
             const request = httpMock.expectOne(req => req.url === service.prefix && req.method === 'POST');
             request.flush('anon');
-            expect(request.request.params.get('username')).toEqual(params.username);
-            expect(request.request.params.get('password')).toEqual(params.password);
+            expect(request.request.body.get('username')).toEqual(params.username);
+            expect(request.request.body.get('password')).toEqual(params.password);
             expect(service.currentUser).toEqual('anon');
             expect(service.currentUserIRI).toBeFalsy();
         });
@@ -224,8 +224,8 @@ describe('Login Manager service', function() {
                 }, () => fail('Observable should have resolved'));
             const request = httpMock.expectOne(req => req.url === service.prefix && req.method === 'POST' );
             request.flush('user');
-            expect(request.request.params.get('username')).toEqual(params.username);
-            expect(request.request.params.get('password')).toEqual(params.password);
+            expect(request.request.body.get('username')).toEqual(params.username);
+            expect(request.request.body.get('password')).toEqual(params.password);
 
             tick();
             expect(router.navigate).toHaveBeenCalledWith(['/home']);

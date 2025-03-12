@@ -25,7 +25,7 @@ import { catchError, map, mergeMap, switchMap, tap } from 'rxjs/operators';
 import { get } from 'lodash';
 import { forkJoin, from, Observable, of, Subject, throwError } from 'rxjs';
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { MatDialog } from '@angular/material/dialog';
 
@@ -127,11 +127,13 @@ export class LoginManagerService {
    * with an error message if the log in attempt failed
    */
   login(username: string, password: string): Observable<boolean> {
-    const params = {username, password};
-    return this.http.post(this.prefix, null, {
-      params: createHttpParams(params),
+    const fd = new HttpParams()
+      .set('username', username)
+      .set('password', password);
+    return this.http.post(this.prefix, fd, {
       responseType: 'text',
-      observe: 'response'
+      observe: 'response',
+      headers: new HttpHeaders({'Content-Type': 'application/x-www-form-urlencoded'})
     }).pipe(
       switchMap(response => {
         if (response.status === 200 && response.body) {

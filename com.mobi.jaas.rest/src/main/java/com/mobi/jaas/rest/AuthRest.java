@@ -57,7 +57,9 @@ import java.util.StringTokenizer;
 import java.util.stream.Collectors;
 import javax.security.auth.Subject;
 import javax.servlet.http.HttpServletRequest;
+import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
+import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -131,6 +133,7 @@ public class AuthRest {
      * @return a plaintext response with the newly logged in User's username
      */
     @POST
+    @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Produces(MediaType.TEXT_PLAIN)
     @Operation(
             tags = "session",
@@ -144,10 +147,10 @@ public class AuthRest {
     public Response login(
             @Context HttpServletRequest servletRequest,
             @Parameter(description = "Username of user", required = true)
-            @QueryParam("username") String username,
+            @FormParam("username") String username,
             @Parameter(description = "Password of user",
                     schema = @Schema(type = "string", format = "password"), required = true)
-            @QueryParam("password") String password) {
+            @FormParam("password") String password) {
         Optional<UserCredentials> userCredsOptional = processFormAuth(username, password);
 
         if (!userCredsOptional.isPresent()) {

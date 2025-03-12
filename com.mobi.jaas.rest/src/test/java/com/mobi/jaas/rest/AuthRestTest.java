@@ -58,6 +58,8 @@ import java.util.Optional;
 import javax.security.auth.login.AppConfigurationEntry;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.client.Entity;
+import javax.ws.rs.core.Form;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.NewCookie;
 import javax.ws.rs.core.Response;
 
@@ -182,7 +184,8 @@ public class AuthRestTest extends MobiRestTestCXF {
 
     @Test
     public void loginNoCredsNoAuthTest() throws Exception {
-        Response response = target().path("session").request().post(Entity.json(""));
+        Response response = target().path("session").request()
+                .post(Entity.entity(new Form(), MediaType.APPLICATION_FORM_URLENCODED));
         assertEquals(response.getStatus(), 401);
         Map<String, NewCookie> cookies = response.getCookies();
         assertEquals(0, cookies.size());
@@ -194,7 +197,7 @@ public class AuthRestTest extends MobiRestTestCXF {
         String authorization = ":" + PASSWORD;
 
         Response response = target().path("session").request()
-                .header("Authorization", "Basic " + Base64.getEncoder().encodeToString(authorization.getBytes())).post(Entity.json(""));
+                .header("Authorization", "Basic " + Base64.getEncoder().encodeToString(authorization.getBytes())).post(Entity.entity(new Form(), MediaType.APPLICATION_FORM_URLENCODED));
         assertEquals(response.getStatus(), 401);
         verify(tokenManager, never()).generateAuthToken(anyString());
         Map<String, NewCookie> cookies = response.getCookies();
@@ -207,7 +210,7 @@ public class AuthRestTest extends MobiRestTestCXF {
         String authorization = USERNAME + ":";
 
         Response response = target().path("session").request()
-                .header("Authorization", "Basic " + Base64.getEncoder().encodeToString(authorization.getBytes())).post(Entity.json(""));
+                .header("Authorization", "Basic " + Base64.getEncoder().encodeToString(authorization.getBytes())).post(Entity.entity(new Form(), MediaType.APPLICATION_FORM_URLENCODED));
         assertEquals(response.getStatus(), 401);
         verify(tokenManager, never()).generateAuthToken(anyString());
         Map<String, NewCookie> cookies = response.getCookies();
@@ -220,7 +223,7 @@ public class AuthRestTest extends MobiRestTestCXF {
         String authorization = ANON + ":" + ERROR;
 
         Response response = target().path("session").request()
-                .header("Authorization", "Basic " + Base64.getEncoder().encodeToString(authorization.getBytes())).post(Entity.json(""));
+                .header("Authorization", "Basic " + Base64.getEncoder().encodeToString(authorization.getBytes())).post(Entity.entity(new Form(), MediaType.APPLICATION_FORM_URLENCODED));
         assertEquals(response.getStatus(), 401);
         verify(tokenManager, never()).generateAuthToken(anyString());
         verify(engineManager).getUserRoles(anyString());
@@ -235,7 +238,7 @@ public class AuthRestTest extends MobiRestTestCXF {
         configMap.put("principals", false);
 
         Response response = target().path("session").request()
-                .header("Authorization", "Basic " + Base64.getEncoder().encodeToString(authorization.getBytes())).post(Entity.json(""));
+                .header("Authorization", "Basic " + Base64.getEncoder().encodeToString(authorization.getBytes())).post(Entity.entity(new Form(), MediaType.APPLICATION_FORM_URLENCODED));
         assertEquals(response.getStatus(), 401);
         verify(tokenManager, never()).generateAuthToken(anyString());
         verify(engineManager, times(0)).getUserRoles(anyString());
@@ -250,7 +253,7 @@ public class AuthRestTest extends MobiRestTestCXF {
         when(engineManager.getUserRoles(USERNAME)).thenReturn(Collections.singleton(otherRole));
 
         Response response = target().path("session").request()
-                .header("Authorization", "Basic " + Base64.getEncoder().encodeToString(authorization.getBytes())).post(Entity.json(""));
+                .header("Authorization", "Basic " + Base64.getEncoder().encodeToString(authorization.getBytes())).post(Entity.entity(new Form(), MediaType.APPLICATION_FORM_URLENCODED));
         assertEquals(response.getStatus(), 401);
         verify(tokenManager, never()).generateAuthToken(anyString());
         verify(engineManager).getUserRoles(USERNAME);
@@ -264,7 +267,8 @@ public class AuthRestTest extends MobiRestTestCXF {
         String authorization = USERNAME + ":" + PASSWORD;
 
         Response response = target().path("session").request()
-                .header("Authorization", "Basic " + Base64.getEncoder().encodeToString(authorization.getBytes())).post(Entity.json(""));
+                .header("Authorization", "Basic " + Base64.getEncoder().encodeToString(authorization.getBytes()))
+                .post(Entity.entity(new Form(), MediaType.APPLICATION_FORM_URLENCODED));
         assertEquals(response.getStatus(), 200);
         verify(tokenManager).generateAuthToken(USERNAME);
         verify(engineManager).getUserRoles(USERNAME);
@@ -277,9 +281,11 @@ public class AuthRestTest extends MobiRestTestCXF {
     @Test
     public void loginCredNoUsernameTest() throws Exception {
         // Setup:
-        String authorization = ":" + PASSWORD;
-
-        Response response = target().path("session").queryParam("password", PASSWORD).request().post(Entity.json(""));
+        Form form = new Form ();
+        form.param ("password", PASSWORD);
+        Response response = target().path("session")
+                .request()
+                .post(Entity.entity(new Form(), MediaType.APPLICATION_FORM_URLENCODED));
         assertEquals(response.getStatus(), 401);
         verify(tokenManager, never()).generateAuthToken(anyString());
         Map<String, NewCookie> cookies = response.getCookies();
@@ -288,7 +294,10 @@ public class AuthRestTest extends MobiRestTestCXF {
 
     @Test
     public void loginCredNoPasswordTest() throws Exception {
-        Response response = target().path("session").queryParam("username", USERNAME).request().post(Entity.json(""));
+        Form form = new Form ();
+        form.param ("username", USERNAME);
+        Response response = target().path("session")
+                .request().post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED));
         assertEquals(response.getStatus(), 401);
         verify(tokenManager, never()).generateAuthToken(anyString());
         Map<String, NewCookie> cookies = response.getCookies();
@@ -297,7 +306,11 @@ public class AuthRestTest extends MobiRestTestCXF {
 
     @Test
     public void loginCredInvalidTest() throws Exception {
-        Response response = target().path("session").queryParam("username", ANON).queryParam("password", ERROR).request().post(Entity.json(""));
+        Form form = new Form();
+        form.param("username", ANON);
+        form.param("password", ERROR);
+        Response response = target().path("session")
+                .request().post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED));
         assertEquals(response.getStatus(), 401);
         verify(tokenManager, never()).generateAuthToken(anyString());
         verify(engineManager).getUserRoles(anyString());
@@ -309,8 +322,12 @@ public class AuthRestTest extends MobiRestTestCXF {
     public void loginCredValidNoPrincipalsTest() throws Exception {
         // Setup:
         configMap.put("principals", false);
+        Form form = new Form();
+        form.param("username", USERNAME);
+        form.param("password", PASSWORD);
 
-        Response response = target().path("session").queryParam("username", USERNAME).queryParam("password", PASSWORD).request().post(Entity.json(""));
+        Response response = target().path("session")
+                .request().post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED));
         assertEquals(response.getStatus(), 401);
         verify(tokenManager, never()).generateAuthToken(anyString());
         verify(engineManager, times(0)).getUserRoles(anyString());
@@ -322,8 +339,11 @@ public class AuthRestTest extends MobiRestTestCXF {
     public void loginCredValidNoRequiredRoleTest() throws Exception {
         // Setup:
         when(engineManager.getUserRoles(USERNAME)).thenReturn(Collections.singleton(otherRole));
-
-        Response response = target().path("session").queryParam("username", USERNAME).queryParam("password", PASSWORD).request().post(Entity.json(""));
+        Form form = new Form();
+        form.param("username", USERNAME);
+        form.param("password", PASSWORD);
+        Response response = target().path("session")
+                .request().post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED));
         assertEquals(response.getStatus(), 401);
         verify(tokenManager, never()).generateAuthToken(anyString());
         verify(engineManager).getUserRoles(USERNAME);
@@ -333,7 +353,12 @@ public class AuthRestTest extends MobiRestTestCXF {
 
     @Test
     public void loginCredValidTest() throws Exception {
-        Response response = target().path("session").queryParam("username", USERNAME).queryParam("password", PASSWORD).request().post(Entity.json(""));
+        Form form = new Form();
+        form.param("username", USERNAME);
+        form.param("password", PASSWORD);
+        Response response = target().path("session")
+                .request()
+                .post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED));
         assertEquals(response.getStatus(), 200);
         verify(tokenManager).generateAuthToken(USERNAME);
         verify(engineManager).getUserRoles(USERNAME);
