@@ -22,9 +22,13 @@
   -->
 <div class="add-configuration-modal">
     <h1 mat-dialog-title>{{ modalTitle }}</h1>
-    <div mat-dialog-content>
+    <div mat-dialog-content [formGroup]="configurationFormGroup">
         <error-display *ngIf="errorMsg">{{ errorMsg }}</error-display>
-        <div *ngIf="configurationList.length > 0" [formGroup]="configurationFormGroup">
+        <mat-form-field *ngIf="this.data?.entityType!=='trigger'" class="w-100">
+            <mat-label>Title</mat-label>
+            <input matInput type="text" name="title" formControlName="actionTitle" (change)="updateTitleValue()"/>
+        </mat-form-field>
+        <div *ngIf="configurationList.length > 0">
             <mat-form-field class="w-100">
                 <mat-label class="text-capitalize">{{ data.type }} Type</mat-label>
                 <mat-select formControlName="configType" (selectionChange)="configurationControlChange($event)"

@@ -87,7 +87,7 @@ export class CatalogManagerService {
      * `coreRecordTypes` contains a list of IRI strings of all the core types of Records defined by Mobi.
      * @type {string[]}
      */
-    coreRecordTypes = [
+    coreRecordTypes: string[] = [
         `${CATALOG}Record`,
         `${CATALOG}UnversionedRecord`,
         `${CATALOG}VersionedRecord`,
@@ -634,7 +634,7 @@ export class CatalogManagerService {
      * for the identified Version. Returns an Observable with the IRI of the new Distribution if successful or
      * rejects with an error message.
      *
-     * @param {string} version The id of the Version to create the Distribution for
+     * @param {string} versionId The id of the Version to create the Distribution for
      * @param {string} recordId The id of the Record the Version should be part of
      * @param {string} catalogId The id of the Catalog the Record should be a part of
      * @param {DistributionConfig} distributionConfig A configuration object containing metadata for the new Distribution

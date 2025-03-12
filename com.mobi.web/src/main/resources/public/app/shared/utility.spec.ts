@@ -404,6 +404,10 @@ describe('Utility method', () => {
       const iri = 'http://test.com#';
       expect(getBeautifulIRI(iri)).toBe(iri);
     });
+    it('if it does not have a local name', () => {
+      const iri = 'http://test.com#';
+      expect(getBeautifulIRI(iri)).toBe(iri);
+    });
   });
   it('should get the namespace of an iri', () => {
     expect(getIRINamespace('http://test.com#localName')).toBe('http://test.com#');
@@ -713,6 +717,10 @@ describe('Utility method', () => {
     it('returns the @id if present and nothing else', function() {
       this.entity['@id'] = 'http://test.com#ontology';
       expect(getEntityName(this.entity)).toEqual('Ontology');
+    });
+    it('returns nothing if useBeautifulIRI is false', function() {
+      this.entity['@id'] = 'http://test.com#ontology';
+      expect(getEntityName(this.entity, false)).toEqual('');
     });
   });
   it('getShaclGeneratedData should convert FormValues into JSON-LD', () => {

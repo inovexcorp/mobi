@@ -660,16 +660,18 @@ export function condenseCommitId(id: string): string {
  * values over the others. Returns a string for the entity name.
  *
  * @param {JSONLDObject} entity The entity you want the name of.
+ * @param {boolean} useBeautifulIRI whether the beautifiedIRI should be used in case there's no entityName
  * @returns {string} The beautified IRI string.
  */
-export function getEntityName(entity: JSONLDObject): string {
+export function getEntityName(entity: JSONLDObject, useBeautifulIRI = true): string {
   let result = reduce(entityNameProps, (tempResult, prop) => {
-    return tempResult
-      || _getPrioritizedValue(entity, prop);
+    return tempResult || _getPrioritizedValue(entity, prop);
   }, '');
 
-  if (!result && has(entity, '@id')) {
-      result = getBeautifulIRI(entity['@id']);
+  if (useBeautifulIRI) {
+      if (!result && has(entity, '@id')) {
+          result = getBeautifulIRI(entity['@id']);
+      }
   }
   return result;
 }
@@ -756,12 +758,12 @@ export function getShaclGeneratedData(instance: JSONLDObject, configs: SHACLForm
           valToSet = '' + val;
         } else { // If the property value is an object
           const objVal = val as { [key: string]: string };
-          // If the field config has sub fields, need to generate an associated object
-          if (config.subFields && config.subFields.length) { 
+          // If the field config has sub-fields, need to generate an associated object
+          if (config.subFields && config.subFields.length) {
             const assocObject: JSONLDObject = _createAssociatedObject(config, objVal);
             genData.push(assocObject);
             valToSet = assocObject['@id'];
-          } else { 
+          } else {
             // If the object has keys that start with the property name, assume all the values of the object are values of the property
             const valKey = Object.keys(objVal).find(key => key.startsWith(prop));
             valToSet = '' + objVal[valKey];
@@ -775,7 +777,7 @@ export function getShaclGeneratedData(instance: JSONLDObject, configs: SHACLForm
       if (typeof formValues[prop] !== 'object') {
         valToSet = '' + formValues[prop];
       } else { // If the form value is an object, need to generate/update an associated object for the complex setting value
-        const assocObject: JSONLDObject = _createAssociatedObject(config, formValues[prop] as { [key: string]: string});
+        const assocObject: JSONLDObject = _createAssociatedObject(config, formValues[prop] as {[key: string]: string});
         genData.push(assocObject);
         valToSet = assocObject['@id'];
       }
