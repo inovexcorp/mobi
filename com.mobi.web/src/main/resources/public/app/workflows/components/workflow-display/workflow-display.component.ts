@@ -478,6 +478,7 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
     this._wms.updateWorkflowConfiguration(diff, this.recordId).subscribe({
       next: () => {
         this._handleAddedStatements([newTriples]);
+        this._workflowsState.hasChanges = true;
       },
       error: (error: string) => {
         this._toast.createErrorToast(`Edge could not be saved: ${error}`);
