@@ -29,8 +29,7 @@
         <bundle>mvn:org.apache.commons/commons-lang3/${commons-lang3.version}</bundle>
         <bundle>mvn:commons-io/commons-io/${commons-io.version}</bundle>
         <bundle>mvn:commons-beanutils/commons-beanutils/${commons-beanutils.version}</bundle>
-        <bundle>mvn:commons-collections/commons-collections/${commons-collections.version}</bundle>
-        <bundle>mvn:org.apache.commons/commons-collections4/4.2</bundle>
+        <bundle>mvn:commons-collections/commons-collections/3.2.2</bundle>
         <bundle>mvn:commons-validator/commons-validator/${commons-validator.version}</bundle>
         <bundle>mvn:commons-digester/commons-digester/1.8.1</bundle>
         <bundle>mvn:com.fasterxml.jackson.core/jackson-databind/${jackson-databind.version}</bundle>
@@ -100,7 +99,7 @@
         <bundle>wrap:mvn:org.apache.maven/maven-artifact/${maven-artifact.version}</bundle>
 
         <bundle>mvn:com.nimbusds/nimbus-jose-jwt/${jose-jwt.version}</bundle>
-        <bundle>mvn:net.minidev/json-smart/2.4.8</bundle>
+        <bundle>mvn:net.minidev/json-smart/2.4.11</bundle>
         <bundle>mvn:net.minidev/accessors-smart/2.4.8</bundle>
         <bundle>mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.oro/2.0.8_6</bundle>
         <bundle>mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.aopalliance/1.0_6</bundle>
@@ -112,7 +111,6 @@
         <!-- Shared Dependencies -->
         <bundle>mvn:commons-codec/commons-codec/${commons-codec.version}</bundle>
         <bundle>mvn:commons-lang/commons-lang/${commons-lang.version}</bundle>
-        <bundle>mvn:org.apache.commons/commons-text/1.10.0</bundle>
         <bundle>mvn:org.glassfish.hk2.external/javax.inject/2.5.0-b32</bundle>
 
         <!-- ETL Dependencies -->
@@ -153,21 +151,16 @@
         <feature>elasticsearch-deps</feature>
 
         <!-- RDF4J Dependencies -->
-        <bundle>mvn:commons-io/commons-io/2.5</bundle>
-        <bundle>mvn:org.apache.httpcomponents/httpcore-osgi/4.4.11</bundle>
-        <bundle>mvn:org.apache.httpcomponents/httpclient-osgi/4.5.8</bundle>
         <bundle>mvn:com.github.jsonld-java/jsonld-java/${jsonld-java.version}</bundle>
         <bundle>mvn:com.google.guava/failureaccess/1.0.1</bundle>
         <bundle>mvn:com.google.guava/guava/32.1.2-jre</bundle>
-        <bundle>mvn:commons-collections/commons-collections/3.2.1</bundle>
-        <bundle>mvn:commons-beanutils/commons-beanutils/1.9.3</bundle>
         <bundle>mvn:org.locationtech.spatial4j/spatial4j/0.8</bundle>
         <bundle>mvn:org.mapdb/mapdb/1.0.8</bundle>
-        <bundle>mvn:org.apache.commons/commons-lang3/3.12.0</bundle>
-        <bundle>mvn:org.apache.commons/commons-text/1.9</bundle>
+        <bundle>mvn:org.apache.commons/commons-lang3/3.17.0</bundle>
+        <bundle>mvn:org.apache.commons/commons-text/1.13.0</bundle>
         <bundle>mvn:org.apache.commons/commons-collections4/4.4</bundle>
         <bundle>mvn:com.opencsv/opencsv/5.3</bundle>
-        <bundle>mvn:org.locationtech.jts/jts-core/1.18.1</bundle>
+        <bundle>mvn:org.locationtech.jts/jts-core/1.19.0</bundle>
         <bundle>wrap:mvn:org.lwjgl/lwjgl-lmdb/3.3.1</bundle>
         <bundle>wrap:mvn:org.lwjgl/lwjgl/3.3.1</bundle>
 
@@ -181,17 +174,20 @@
         <bundle>mvn:com.fasterxml.jackson.dataformat/jackson-dataformat-cbor/${jackson.version}</bundle>
         <bundle>mvn:org.apache.logging.log4j/log4j-api/2.17.1</bundle>
         <bundle>mvn:org.apache.logging.log4j/log4j-core/2.17.1</bundle>
+        <bundle>wrap:mvn:com.github.spullara.mustache.java/compiler/0.9.14</bundle>
+        <bundle>wrap:mvn:org.apache.httpcomponents/httpcore-nio/${httpcore.version}</bundle>
+        <bundle>wrap:mvn:org.apache.httpcomponents/httpasyncclient/4.1.5</bundle>
 
-        <bundle>mvn:io.netty/netty-common/4.1.51.Final</bundle>
-        <bundle>mvn:io.netty/netty-buffer/4.1.51.Final</bundle>
-        <bundle>mvn:io.netty/netty-resolver/4.1.51.Final</bundle>
-        <bundle>mvn:io.netty/netty-transport/4.1.51.Final</bundle>
-        <bundle>mvn:io.netty/netty-codec/4.1.51.Final</bundle>
-        <bundle>mvn:io.netty/netty-handler/4.1.51.Final</bundle>
-        <bundle>mvn:io.netty/netty-codec-http/4.1.51.Final</bundle>
+        <bundle>mvn:io.netty/netty-common/4.1.119.Final</bundle>
+        <bundle>mvn:io.netty/netty-buffer/4.1.119.Final</bundle>
+        <bundle>mvn:io.netty/netty-resolver/4.1.119.Final</bundle>
+        <bundle>mvn:io.netty/netty-transport/4.1.119.Final</bundle>
+        <bundle>mvn:io.netty/netty-transport-native-unix-common/4.1.119.Final</bundle>
+        <bundle>mvn:io.netty/netty-codec/4.1.119.Final</bundle>
+        <bundle>mvn:io.netty/netty-handler/4.1.119.Final</bundle>
+        <bundle>mvn:io.netty/netty-codec-http/4.1.119.Final</bundle>
         <bundle>mvn:com.ning/compress-lzf/1.0.4</bundle>
-        <bundle>mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.elasticsearch/6.6.2_1</bundle>
-        <bundle>mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.elasticsearch-client/6.6.2_1</bundle>
+        <bundle>mvn:org.apache.servicemix.bundles/org.apache.servicemix.bundles.elasticsearch/7.10.2_1</bundle>
     </feature>
     <feature name="mobi-core" description="Mobi Core Platform Bundles" version="${project.version}">
         <feature>mobi-deps</feature>
