@@ -761,6 +761,7 @@ describe('WorkflowDisplayComponent', () => {
           expect(toastStub.createErrorToast).not.toHaveBeenCalled();
           expect(workflowDef[`${WORKFLOWS}hasAction`].length).toEqual(3);
           expect(workflowDef[`${WORKFLOWS}hasAction`]).toContain({'@id': targetNodeData.id});
+          expect(workflowsStateStub.hasChanges).toBeTruthy();
         }));
         it('unless an error occurs', fakeAsync(() => {
           workflowsManagerStub.updateWorkflowConfiguration.and.returnValue(throwError('Error'));
@@ -779,6 +780,7 @@ describe('WorkflowDisplayComponent', () => {
           expect(addedEdge.remove).toHaveBeenCalledWith();
           expect(toastStub.createErrorToast).toHaveBeenCalledWith(jasmine.stringContaining('Error'));
           expect(workflowDef[`${WORKFLOWS}hasAction`].length).toEqual(2);
+          expect(workflowsStateStub.hasChanges).toBeFalsy();
         }));
       });
       describe('if the edge is from an action to another action', () => {
@@ -805,6 +807,7 @@ describe('WorkflowDisplayComponent', () => {
           expect(actionDef[`${WORKFLOWS}hasChildAction`]).toBeDefined();
           expect(actionDef[`${WORKFLOWS}hasChildAction`].length).toEqual(1);
           expect(actionDef[`${WORKFLOWS}hasChildAction`]).toContain({'@id': targetNodeData.id});
+          expect(workflowsStateStub.hasChanges).toBeTruthy();
         }));
         it('unless an error occurs', fakeAsync(() => {
           workflowsManagerStub.updateWorkflowConfiguration.and.returnValue(throwError('Error'));
@@ -823,6 +826,7 @@ describe('WorkflowDisplayComponent', () => {
           expect(addedEdge.remove).toHaveBeenCalledWith();
           expect(toastStub.createErrorToast).toHaveBeenCalledWith(jasmine.stringContaining('Error'));
           expect(actionDef[`${WORKFLOWS}hasChildAction`]).toBeUndefined();
+          expect(workflowsStateStub.hasChanges).toBeFalsy();
         }));
       });
     });
