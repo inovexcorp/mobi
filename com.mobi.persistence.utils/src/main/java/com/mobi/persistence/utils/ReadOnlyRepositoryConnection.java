@@ -46,142 +46,144 @@ import java.net.URL;
 
 public class ReadOnlyRepositoryConnection extends RepositoryConnectionWrapper {
 
+    private static final String CONNECTION_READ_ONLY = "Connection is read-only. Operation not supported.";
+
     public ReadOnlyRepositoryConnection(RepositoryConnection conn) {
         super(conn.getRepository(), conn);
     }
 
     @Override
     public Update prepareUpdate(String s) throws RepositoryException, MalformedQueryException {
-        throw new UnsupportedOperationException("Connection is read-only. Operation not supported.");
+        throw new UnsupportedOperationException(CONNECTION_READ_ONLY);
     }
 
     @Override
     public Update prepareUpdate(QueryLanguage ql, String update) throws RepositoryException, MalformedQueryException {
-        throw new UnsupportedOperationException("Connection is read-only. Operation not supported.");
+        throw new UnsupportedOperationException(CONNECTION_READ_ONLY);
     }
 
     @Override
     public Update prepareUpdate(QueryLanguage ql, String update, String baseURI)
             throws RepositoryException, MalformedQueryException {
-        throw new UnsupportedOperationException("Connection is read-only. Operation not supported.");
+        throw new UnsupportedOperationException(CONNECTION_READ_ONLY);
     }
 
     @Override
     public void add(InputStream in, RDFFormat dataFormat, Resource... contexts)
             throws IOException, RDFParseException, RepositoryException {
-        throw new UnsupportedOperationException("Connection is read-only. Operation not supported.");
+        throw new UnsupportedOperationException(CONNECTION_READ_ONLY);
     }
 
     @Override
     public void add(InputStream in, String baseURI, RDFFormat dataFormat, Resource... contexts)
             throws IOException, RDFParseException, RepositoryException {
-        throw new UnsupportedOperationException("Connection is read-only. Operation not supported.");
+        throw new UnsupportedOperationException(CONNECTION_READ_ONLY);
     }
 
     @Override
     public void add(Reader reader, RDFFormat dataFormat, Resource... contexts)
             throws IOException, RDFParseException, RepositoryException {
-        throw new UnsupportedOperationException("Connection is read-only. Operation not supported.");
+        throw new UnsupportedOperationException(CONNECTION_READ_ONLY);
     }
 
     @Override
     public void add(Reader reader, String baseURI, RDFFormat dataFormat, Resource... contexts)
             throws IOException, RDFParseException, RepositoryException {
-        throw new UnsupportedOperationException("Connection is read-only. Operation not supported.");
+        throw new UnsupportedOperationException(CONNECTION_READ_ONLY);
     }
 
     @Override
     public void add(URL url, Resource... contexts)
             throws IOException, RDFParseException, RepositoryException {
-        throw new UnsupportedOperationException("Connection is read-only. Operation not supported.");
+        throw new UnsupportedOperationException(CONNECTION_READ_ONLY);
     }
 
     @Override
     public void add(URL url, RDFFormat dataFormat, Resource... contexts)
             throws IOException, RDFParseException, RepositoryException {
-        throw new UnsupportedOperationException("Connection is read-only. Operation not supported.");
+        throw new UnsupportedOperationException(CONNECTION_READ_ONLY);
     }
 
     @Override
     public void add(URL url, String baseURI, RDFFormat dataFormat, Resource... contexts)
             throws IOException, RDFParseException, RepositoryException {
-        throw new UnsupportedOperationException("Connection is read-only. Operation not supported.");
+        throw new UnsupportedOperationException(CONNECTION_READ_ONLY);
     }
 
     @Override
     public void add(File file, Resource... contexts)
             throws IOException, RDFParseException, RepositoryException {
-        throw new UnsupportedOperationException("Connection is read-only. Operation not supported.");
+        throw new UnsupportedOperationException(CONNECTION_READ_ONLY);
     }
 
     @Override
     public void add(File file, RDFFormat dataFormat, Resource... contexts)
             throws IOException, RDFParseException, RepositoryException {
-        throw new UnsupportedOperationException("Connection is read-only. Operation not supported.");
+        throw new UnsupportedOperationException(CONNECTION_READ_ONLY);
     }
 
     @Override
     public void add(File file, String baseURI, RDFFormat dataFormat, Resource... contexts)
             throws IOException, RDFParseException, RepositoryException {
-        throw new UnsupportedOperationException("Connection is read-only. Operation not supported.");
+        throw new UnsupportedOperationException(CONNECTION_READ_ONLY);
     }
 
     @Override
     public void add(Resource subject, IRI predicate, Value object, Resource... contexts) throws RepositoryException {
-        throw new UnsupportedOperationException("Connection is read-only. Operation not supported.");
+        throw new UnsupportedOperationException(CONNECTION_READ_ONLY);
     }
 
     @Override
     public void add(Statement st, Resource... contexts) throws RepositoryException {
-        throw new UnsupportedOperationException("Connection is read-only. Operation not supported.");
+        throw new UnsupportedOperationException(CONNECTION_READ_ONLY);
     }
 
     @Override
     public void add(Iterable<? extends Statement> statements, Resource... contexts) throws RepositoryException {
-        throw new UnsupportedOperationException("Connection is read-only. Operation not supported.");
+        throw new UnsupportedOperationException(CONNECTION_READ_ONLY);
     }
 
     @Override
     public <E extends Exception> void add(Iteration<? extends Statement, E> statements, Resource... contexts)
             throws RepositoryException, E {
-        throw new UnsupportedOperationException("Connection is read-only. Operation not supported.");
+        throw new UnsupportedOperationException(CONNECTION_READ_ONLY);
     }
 
     @Override
     public void add(RepositoryResult<Statement> statements, Resource... contexts)
             throws RepositoryException {
-        throw new UnsupportedOperationException("Connection is read-only. Operation not supported.");
+        throw new UnsupportedOperationException(CONNECTION_READ_ONLY);
     }
 
     @Override
     public void remove(Resource subject, IRI predicate, Value object, Resource... contexts) throws RepositoryException {
-        throw new UnsupportedOperationException("Connection is read-only. Operation not supported.");
+        throw new UnsupportedOperationException(CONNECTION_READ_ONLY);
     }
 
     @Override
     public void remove(Statement st, Resource... contexts) throws RepositoryException {
-        throw new UnsupportedOperationException("Connection is read-only. Operation not supported.");
+        throw new UnsupportedOperationException(CONNECTION_READ_ONLY);
     }
 
     @Override
     public void remove(Iterable<? extends Statement> statements, Resource... contexts) throws RepositoryException {
-        throw new UnsupportedOperationException("Connection is read-only. Operation not supported.");
+        throw new UnsupportedOperationException(CONNECTION_READ_ONLY);
     }
 
     @Override
     public <E extends Exception> void remove(Iteration<? extends Statement, E> statements, Resource... contexts)
             throws RepositoryException, E {
-        throw new UnsupportedOperationException("Connection is read-only. Operation not supported.");
+        throw new UnsupportedOperationException(CONNECTION_READ_ONLY);
     }
 
     @Override
     public void remove(RepositoryResult<Statement> statements, Resource... contexts)
             throws RepositoryException {
-        throw new UnsupportedOperationException("Connection is read-only. Operation not supported.");
+        throw new UnsupportedOperationException(CONNECTION_READ_ONLY);
     }
 
     @Override
     public void clear(Resource... contexts) throws RepositoryException {
-        throw new UnsupportedOperationException("Connection is read-only. Operation not supported.");
+        throw new UnsupportedOperationException(CONNECTION_READ_ONLY);
     }
 }
