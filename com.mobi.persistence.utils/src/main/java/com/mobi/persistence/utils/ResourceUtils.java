@@ -30,6 +30,7 @@ import org.eclipse.rdf4j.model.ValueFactory;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 
 public class ResourceUtils {
 
@@ -40,18 +41,12 @@ public class ResourceUtils {
      * @return The URL encoded version of the passed string.
      */
     public static String encode(String str) {
-        String encoded;
-        try {
-            encoded = URLEncoder.encode(str, "UTF-8").replaceAll("%28", "(")
-                    .replaceAll("%29", ")")
-                    .replaceAll("\\+", "%20")
-                    .replaceAll("%27", "'")
-                    .replaceAll("%21", "!")
-                    .replaceAll("%7E", "~");
-        } catch (UnsupportedEncodingException e) {
-            throw new MobiException(e);
-        }
-        return encoded;
+        return URLEncoder.encode(str, StandardCharsets.UTF_8).replaceAll("%28", "(")
+                .replaceAll("%29", ")")
+                .replaceAll("\\+", "%20")
+                .replaceAll("%27", "'")
+                .replaceAll("%21", "!")
+                .replaceAll("%7E", "~");
     }
 
     /**
@@ -61,18 +56,7 @@ public class ResourceUtils {
      * @return A string of the URL encoded version of the passed Resource.
      */
     public static String encode(Resource resource) {
-        String encoded;
-        try {
-            encoded = URLEncoder.encode(resource.stringValue(), "UTF-8").replaceAll("%28", "(")
-                    .replaceAll("%29", ")")
-                    .replaceAll("\\+", "%20")
-                    .replaceAll("%27", "'")
-                    .replaceAll("%21", "!")
-                    .replaceAll("%7E", "~");
-        } catch (UnsupportedEncodingException e) {
-            throw new MobiException(e);
-        }
-        return encoded;
+        return encode(resource.stringValue());
     }
 
     /**
@@ -82,13 +66,7 @@ public class ResourceUtils {
      * @return The decoded version of the passed URL encoded string.
      */
     public static String decode(String str) {
-        String decoded;
-        try {
-            decoded = URLDecoder.decode(str, "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            throw new MobiException(e);
-        }
-        return decoded;
+        return URLDecoder.decode(str, StandardCharsets.UTF_8);
     }
 
     /**
@@ -99,12 +77,7 @@ public class ResourceUtils {
      * @return The a {@link Resource} decoded version of the passed URL encoded string.
      */
     public static Resource decode(String str, ValueFactory vf) {
-        String decoded;
-        try {
-            decoded = URLDecoder.decode(str, "UTF-8");
-        } catch (UnsupportedEncodingException e) {
-            throw new MobiException(e);
-        }
+        String decoded = URLDecoder.decode(str, StandardCharsets.UTF_8);
         return vf.createIRI(decoded);
     }
 }
