@@ -78,6 +78,7 @@ public class StateRest {
     protected final ValueFactory factory = new ValidatingValueFactory();
     protected final ModelFactory modelFactory = new DynamicModelFactory();
     private static final ObjectMapper mapper = new ObjectMapper();
+    private static final String NOT_ALLOWED = "Not allowed";
 
     @Reference
     protected void setStateManager(StateManager stateManager) {
@@ -219,7 +220,7 @@ public class StateRest {
         String username = RestUtils.getActiveUsername(servletRequest);
         try {
             if (!stateManager.stateExistsForUser(factory.createIRI(stateId), username)) {
-                throw ErrorUtils.sendError("Not allowed", Response.Status.UNAUTHORIZED);
+                throw ErrorUtils.sendError(NOT_ALLOWED, Response.Status.UNAUTHORIZED);
             }
             Model state = stateManager.getState(factory.createIRI(stateId));
             return Response.ok(convertModel(state)).build();
@@ -266,7 +267,7 @@ public class StateRest {
         String username = RestUtils.getActiveUsername(servletRequest);
         try {
             if (!stateManager.stateExistsForUser(factory.createIRI(stateId), username)) {
-                throw ErrorUtils.sendError("Not allowed", Response.Status.UNAUTHORIZED);
+                throw ErrorUtils.sendError(NOT_ALLOWED, Response.Status.UNAUTHORIZED);
             }
             Model newState = Rio.parse(
                     IOUtils.toInputStream(newStateJson, StandardCharsets.UTF_8), "", RDFFormat.JSONLD);
@@ -315,7 +316,7 @@ public class StateRest {
         String username = RestUtils.getActiveUsername(servletRequest);
         try {
             if (!stateManager.stateExistsForUser(factory.createIRI(stateId), username)) {
-                throw ErrorUtils.sendError("Not allowed", Response.Status.UNAUTHORIZED);
+                throw ErrorUtils.sendError(NOT_ALLOWED, Response.Status.UNAUTHORIZED);
             }
             stateManager.deleteState(factory.createIRI(stateId));
         } catch (IllegalArgumentException ex) {
