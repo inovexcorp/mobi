@@ -119,6 +119,7 @@ public class RdfEngine implements Engine {
     private static final String GROUP_BINDING = "groupId";
     private static final String QUERY_USERNAME_BINDING = "queryUsername";
     private static final String QUERY_TITLE_BINDING = "queryTitle";
+    private static final String ADMIN = "admin";
 
     static {
         try {
@@ -164,14 +165,14 @@ public class RdfEngine implements Engine {
                                 vf.createIRI(DCTERMS.TITLE.stringValue()));
                         conn.add(adminRole.getModel(), context);
                     });
-            if (getUserId("admin").isEmpty()) {
-                Resource adminIRI = createUserIri("admin");
+            if (getUserId(ADMIN).isEmpty()) {
+                Resource adminIRI = createUserIri(ADMIN);
                 Set<Role> allRoles = roles.stream()
                         .map(role -> roleFactory.createNew(vf.createIRI(roleNamespace + role)))
                         .collect(Collectors.toSet());
                 User admin = userFactory.createNew(adminIRI);
-                admin.setUsername(vf.createLiteral("admin"));
-                admin.setPassword(vf.createLiteral(getEncryptedPassword("admin")));
+                admin.setUsername(vf.createLiteral(ADMIN));
+                admin.setPassword(vf.createLiteral(getEncryptedPassword(ADMIN)));
                 admin.setHasUserRole(allRoles);
                 conn.add(admin.getModel(), context);
             }
