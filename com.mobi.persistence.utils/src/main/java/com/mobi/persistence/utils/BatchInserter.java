@@ -48,6 +48,8 @@ public class BatchInserter extends AbstractRDFHandler {
     protected String MOBI_HTTP_NAMESPACE = "http://mobi.com/";
     protected Set<String> cleansedGraphStrings = new HashSet<>();
 
+    private static final String STATEMENTS_IMPORTED = " statements imported";
+
     /**
      * Creates a new BatchInserter that will use the provided RepositoryConnection to insert statements
      * in batch chunks of the default size. The RepositoryConnection will not be closed after all the statements
@@ -88,13 +90,13 @@ public class BatchInserter extends AbstractRDFHandler {
     public void endRDF() throws RDFHandlerException {
         conn.commit();
         if (logger != null) {
-            logger.debug("Import complete. " + count + " statements imported");
+            logger.debug("Import complete. " + count + STATEMENTS_IMPORTED);
             for (String cleansedGraph : getCleansedGraphStrings()) {
                 logger.debug("Protected graph " + cleansedGraph + " was cleansed before import.");
             }
         }
         if (printToSystem) {
-            System.out.println("Import complete. " + count + " statements imported");
+            System.out.println("Import complete. " + count + STATEMENTS_IMPORTED);
             for (String cleansedGraph : getCleansedGraphStrings()) {
                 System.out.println("Protected graph " + cleansedGraph + " was cleansed before import.");
             }
@@ -120,10 +122,10 @@ public class BatchInserter extends AbstractRDFHandler {
                 try {
                     conn.commit();
                     if (logger != null) {
-                        logger.debug(batchSize + " statements imported");
+                        logger.debug(batchSize + STATEMENTS_IMPORTED);
                     }
                     if (printToSystem) {
-                        System.out.println(batchSize + " statements imported");
+                        System.out.println(batchSize + STATEMENTS_IMPORTED);
                     }
                     conn.begin();
                 } catch (RepositoryException e) {
