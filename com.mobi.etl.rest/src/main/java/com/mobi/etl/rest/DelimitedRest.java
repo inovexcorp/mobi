@@ -145,6 +145,9 @@ public class DelimitedRest {
 
     private static final long NUM_LINE_PREVIEW = 10;
 
+    private static final String PARSING_DELIMITED_ERROR = "Error parsing delimited file";
+    private static final String PROVIDE_IRI_MAPPING = "Must provide the IRI of a mapping record";
+
     public static final String TEMP_DIR = System.getProperty("java.io.tmpdir") + "/com.mobi.etl.rest.impl.tmp";
 
     @Reference
@@ -222,7 +225,7 @@ public class DelimitedRest {
             try {
                 fileOutput = toByteArrayOutputStream(inputStream);
             } catch (IOException e) {
-                throw ErrorUtils.sendError("Error parsing delimited file", BAD_REQUEST);
+                throw ErrorUtils.sendError(PARSING_DELIMITED_ERROR, BAD_REQUEST);
             }
             getCharset(fileOutput.toByteArray());
 
@@ -283,7 +286,7 @@ public class DelimitedRest {
             try {
                 fileOutput = toByteArrayOutputStream(inputStream);
             } catch (IOException e) {
-                throw ErrorUtils.sendError("Error parsing delimited file", BAD_REQUEST);
+                throw ErrorUtils.sendError(PARSING_DELIMITED_ERROR, BAD_REQUEST);
             }
             getCharset(fileOutput.toByteArray());
 
@@ -400,7 +403,7 @@ public class DelimitedRest {
             @DefaultValue(",") @QueryParam("separator") String separator,
             @Parameter(description = "Name for the downloaded file", required = true)
             @QueryParam("fileName") String downloadFileName) {
-        checkStringParam(mappingRecordIRI, "Must provide the IRI of a mapping record");
+        checkStringParam(mappingRecordIRI, PROVIDE_IRI_MAPPING);
 
         try {
             // Convert the data
@@ -467,7 +470,7 @@ public class DelimitedRest {
             @DefaultValue("true") @QueryParam("containsHeaders") boolean containsHeaders,
             @Parameter(description = "Character the columns are separated by if it is a CSV")
             @DefaultValue(",") @QueryParam("separator") String separator) {
-        checkStringParam(mappingRecordIRI, "Must provide the IRI of a mapping record");
+        checkStringParam(mappingRecordIRI, PROVIDE_IRI_MAPPING);
         checkStringParam(datasetRecordIRI, "Must provide the IRI of a dataset record");
 
         try {
@@ -547,7 +550,7 @@ public class DelimitedRest {
             @DefaultValue("true") @QueryParam("containsHeaders") boolean containsHeaders,
             @Parameter(description = "Character the columns are separated by if it is a CSV")
             @DefaultValue(",") @QueryParam("separator") String separator) {
-        checkStringParam(mappingRecordIRI, "Must provide the IRI of a mapping record");
+        checkStringParam(mappingRecordIRI, PROVIDE_IRI_MAPPING);
         checkStringParam(ontologyRecordIRI, "Must provide the IRI of an ontology record");
         checkStringParam(branchIRI, "Must provide the IRI of an ontology branch");
 
@@ -740,7 +743,7 @@ public class DelimitedRest {
         } catch (FileNotFoundException e) {
             throw ErrorUtils.sendError(e, "Error writing delimited file", BAD_REQUEST);
         } catch (IOException e) {
-            throw ErrorUtils.sendError(e, "Error parsing delimited file", BAD_REQUEST);
+            throw ErrorUtils.sendError(e, PARSING_DELIMITED_ERROR, BAD_REQUEST);
         }
         logger.info("File Uploaded: " + filePath);
     }
