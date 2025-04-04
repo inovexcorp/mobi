@@ -245,7 +245,7 @@ export class WorkflowAddConfigurationComponent implements OnInit {
     }
 
     const data = this._buildDifference();
-    if (data.hasChanges()) {
+    if (data?.hasChanges()) {
       this._wms.updateWorkflowConfiguration(data, this.data.recordIRI).subscribe(() => {
         this._dialogRef.close(data);
       }, (error: string) => {
@@ -339,9 +339,10 @@ export class WorkflowAddConfigurationComponent implements OnInit {
    */
   private _buildDifference(): Difference {
     const {formValues} = this.selectedConfiguration;
-    if (!formValues && !this.configurationFormGroup.controls.actionTitle.dirty) { //no changes have been made
+    const titleControl: AbstractControl = this.configurationFormGroup.controls.actionTitle;
+    if (!formValues && !titleControl.dirty) { //no changes have been made
       return new Difference();
-    } else if (!formValues && this.configurationFormGroup.controls.actionTitle.dirty) { //only updating the title
+    } else if (!formValues && titleControl.dirty) { //only updating the title
       return this._createTitleDiff(this.data.workflowEntity[0]);
     }
 
@@ -543,6 +544,7 @@ export class WorkflowAddConfigurationComponent implements OnInit {
    */
   private _createTitleDiff(workflowEntity): Difference {
     const titles = cloneDeep(workflowEntity[`${DCTERMS}title`]);
+    const titleControl: AbstractControl = this.configurationFormGroup.controls.actionTitle;
     if (titles?.length > 0) {
       const changedTitleIndex = titles.findIndex(title => title['@value'] === this.previousTitleValue);
       const changedTitleObj = cloneDeep(titles[changedTitleIndex]);
@@ -552,29 +554,33 @@ export class WorkflowAddConfigurationComponent implements OnInit {
         [`${DCTERMS}title`]: [changedTitleObj]
       };
 
-      let newValue: any;
-      if (changedTitleObj && changedTitleObj['@language']) {
-        const lang = changedTitleObj['@language'];
-        newValue = [
-          {
-            '@value': this.configurationFormGroup.controls.actionTitle.value,
-            '@language': lang
-          }
-        ];
+      if (titleControl.value) {
+        let newValue: any;
+        if (changedTitleObj && changedTitleObj['@language']) {
+          const lang = changedTitleObj['@language'];
+          newValue = [
+            {
+              '@value': titleControl.value,
+              '@language': lang
+            }
+          ];
+        } else {
+          newValue = [{'@value': titleControl.value}];
+        }
+
+        const addObj: JSONLDObject = {
+          '@id': this.data.selectedConfigIRI,
+          [`${DCTERMS}title`]: newValue
+        };
+
+        return new Difference([addObj], [delObj]);
       } else {
-        newValue = [{'@value': this.configurationFormGroup.controls.actionTitle.value}];
+        return new Difference([], [delObj]);
       }
-
+    } else if ((titles?.length === 0 || titles === undefined) && titleControl.value) {
       const addObj: JSONLDObject = {
         '@id': this.data.selectedConfigIRI,
-        [`${DCTERMS}title`]: newValue
-      };
-
-      return new Difference([addObj], [delObj]);
-    } else {
-      const addObj: JSONLDObject = {
-        '@id': this.data.selectedConfigIRI,
-        [`${DCTERMS}title`]: [{'@value': this.configurationFormGroup.controls.actionTitle.value}]
+        [`${DCTERMS}title`]: [{'@value': titleControl.value}]
       };
 
       return new Difference([addObj], []);

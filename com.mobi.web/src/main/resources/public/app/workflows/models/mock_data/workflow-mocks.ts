@@ -181,6 +181,11 @@ const workflowRDF: JSONLDObject[] = [
             {
               '@id': 'http://example.com/workflows/LEDControl/action/a'
             }
+        ],
+        [`${DCTERMS}title`]: [
+          {
+              '@value': 'New Title'
+          }
         ]
     },
     {

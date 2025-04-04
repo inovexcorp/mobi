@@ -1051,6 +1051,12 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
         if (Object.keys(workflowEntity).length === 1) {
           this._editedResource.splice(workflowEntityIdx, 1);
         }
+        if (deletedStmts[`${DCTERMS}title`]) {
+          const typeInfo = this._getTypeInformation(workflowEntity['@type']);
+          const potentialName = getEntityName(workflowEntity, false);
+          typeInfo.name = potentialName ? potentialName : typeInfo.name;
+          this._updateNode(workflowEntity['@id'], typeInfo);
+        }
       }
     });
   }
