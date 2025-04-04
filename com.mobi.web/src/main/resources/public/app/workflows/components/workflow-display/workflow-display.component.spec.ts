@@ -42,7 +42,7 @@ import { WorkflowAddConfigurationComponent } from '../workflow-add-configuration
 import {
   WorkflowPropertyOverlayComponent
 } from '../workflow-property-overlay-component/workflow-property-overlay.component';
-import { WORKFLOWS } from '../../../prefixes';
+import { DCTERMS, WORKFLOWS } from '../../../prefixes';
 import { WorkflowsManagerService } from '../../services/workflows-manager.service';
 import { WorkflowsStateService } from '../../services/workflows-state.service';
 import { WorkflowDisplayComponent } from './workflow-display.component';
@@ -358,6 +358,23 @@ describe('WorkflowDisplayComponent', () => {
         expect((<any> component)._editedResource).toContain(newHeader);
         const action = (<any> component)._editedResource.find(obj => obj['@id'] === 'http://example.com/workflows/LEDControl/action/b');
         expect(action[`${WORKFLOWS}hasHttpUrl`]).toEqual([{ '@value': 'http://new.com' }]);
+        expect(workflowsStateStub.hasChanges).toBeTrue();
+      });
+      it('if an action\'s title is edited', () => {
+        const id = 'http://example.com/workflows/LEDControl/action';
+        const testAction = workflowRDF.find(obj => obj['@id'] === id);
+        testAction[`${DCTERMS}title`] = [{ '@value': 'New Title' }];
+        const diff = new Difference(
+          [], [
+            {
+              '@id': id,
+              [`${DCTERMS}title`]: [{ '@value': 'New Title' }]
+            },
+          ]
+        );
+        component.handleModalResponse(diff);
+        expect((<any> component)._editedResource.length).toEqual(6);
+        expect((<any> component)._editedResource).not.toContain({[`${DCTERMS}title`]: [{ '@value': 'New Title' }]});
         expect(workflowsStateStub.hasChanges).toBeTrue();
       });
       it('if an action was changed to a different type', () => {

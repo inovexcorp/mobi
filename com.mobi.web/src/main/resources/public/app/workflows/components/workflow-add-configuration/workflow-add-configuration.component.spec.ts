@@ -246,38 +246,66 @@ describe('WorkflowAddConfigurationComponent', () => {
         expect(workflowsManagerStub.updateWorkflowConfiguration).not.toHaveBeenCalled();
         expect(matDialogRef.close).toHaveBeenCalledWith(undefined);
       });
-      it('if there are only changes to the title', fakeAsync(() => {
-        workflowsManagerStub.updateWorkflowConfiguration.and.returnValue(of(null));
-        setEditMode();
-        fixture.detectChanges();
-        component.configurationFormGroup.controls.configType.setValue(component.configurationList[0]);
-        component.shaclFormValid = true;
-        component.configurationFormGroup.controls.actionTitle.setValue('New Title');
-        component.configurationFormGroup.controls.actionTitle.markAsDirty();
-        component.submit();
+      describe('if there are only changes to the title', () => {
+        it('and the title is not empty', fakeAsync(() => {
+          workflowsManagerStub.updateWorkflowConfiguration.and.returnValue(of(null));
+          setEditMode();
+          fixture.detectChanges();
+          component.configurationFormGroup.controls.configType.setValue(component.configurationList[0]);
+          component.shaclFormValid = true;
+          component.configurationFormGroup.controls.actionTitle.setValue('New Title');
+          component.configurationFormGroup.controls.actionTitle.markAsDirty();
+          component.submit();
 
-        tick(); //needed to make sure observable returns
+          tick(); //needed to make sure observable returns
 
-        expect(component.errorMsg).toEqual('');
-        expect(workflowsManagerStub.updateWorkflowConfiguration).toHaveBeenCalledWith(jasmine.any(Difference), objectConfig.recordIRI);
-        const diff: Difference = workflowsManagerStub.updateWorkflowConfiguration.calls.mostRecent().args[0];
-        expect(matDialogRef.close).toHaveBeenCalledWith(diff);
-        expect((diff.additions as JSONLDObject[]).length).toEqual(1);
-        expect((diff.deletions as JSONLDObject[]).length).toEqual(1);
+          expect(component.errorMsg).toEqual('');
+          expect(workflowsManagerStub.updateWorkflowConfiguration).toHaveBeenCalledWith(jasmine.any(Difference), objectConfig.recordIRI);
+          const diff: Difference = workflowsManagerStub.updateWorkflowConfiguration.calls.mostRecent().args[0];
+          expect(matDialogRef.close).toHaveBeenCalledWith(diff);
+          expect((diff.additions as JSONLDObject[]).length).toEqual(1);
+          expect((diff.deletions as JSONLDObject[]).length).toEqual(1);
 
-        expect(diff.additions as JSONLDObject[]).toContain(
-          {
-            '@id': 'workflows:action',
-            [`${DCTERMS}title`]: [{'@value': 'New Title'}]
-          }
-        );
-        expect(diff.deletions as JSONLDObject[]).toContain(
-          {
-            '@id': 'workflows:action',
-            [`${DCTERMS}title`]: [{'@value': 'A title to test things'}]
-          }
-        );
-      }));
+          expect(diff.additions as JSONLDObject[]).toContain(
+            {
+              '@id': 'workflows:action',
+              [`${DCTERMS}title`]: [{'@value': 'New Title'}]
+            }
+          );
+          expect(diff.deletions as JSONLDObject[]).toContain(
+            {
+              '@id': 'workflows:action',
+              [`${DCTERMS}title`]: [{'@value': 'A title to test things'}]
+            }
+          );
+        }));
+        it('and the title is empty', fakeAsync(() => {
+          workflowsManagerStub.updateWorkflowConfiguration.and.returnValue(of(null));
+          setEditMode();
+          fixture.detectChanges();
+          component.configurationFormGroup.controls.configType.setValue(component.configurationList[0]);
+          component.shaclFormValid = true;
+          component.configurationFormGroup.controls.actionTitle.setValue('');
+          component.configurationFormGroup.controls.actionTitle.markAsDirty();
+          component.submit();
+
+          tick(); //needed to make sure observable returns
+
+          expect(component.errorMsg).toEqual('');
+          expect(workflowsManagerStub.updateWorkflowConfiguration).toHaveBeenCalledWith(jasmine.any(Difference), objectConfig.recordIRI);
+          const diff: Difference = workflowsManagerStub.updateWorkflowConfiguration.calls.mostRecent().args[0];
+          expect(matDialogRef.close).toHaveBeenCalledWith(diff);
+          expect((diff.additions as JSONLDObject[]).length).toEqual(0);
+          expect((diff.deletions as JSONLDObject[]).length).toEqual(1);
+
+          expect(diff.deletions as JSONLDObject[]).toContain(
+            {
+              '@id': 'workflows:action',
+              [`${DCTERMS}title`]: [{'@value': 'A title to test things'}]
+            }
+          );
+        }));
+      });
       describe('if an action is being', () => {
         describe('added', () => {
           beforeEach(() => {
