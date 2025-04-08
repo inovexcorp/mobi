@@ -113,6 +113,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -348,18 +349,21 @@ public class InversioningMigration implements PostRestoreOperation {
 
         // Delete systemTemp repository and data
         try {
+            RestoreUtils.out("Removing temporary repository", LOGGER);
             tempRepo.shutDown();
             Files.delete(Paths.get(System.getProperty("karaf.etc") + File.separator
                     + "com.mobi.service.repository.native-systemTemp.cfg"));
             File tempRepoData = tempRepo.getDataDir();
             FileUtils.deleteDirectory(tempRepoData);
+            TimeUnit.SECONDS.sleep(10);
         } catch (IOException e) {
             throw new MobiException("Could not delete systemTemp configuration file", e);
+        } catch (InterruptedException e) {
+            throw new MobiException(e);
         }
 
-        errorMap.forEach((recordIRI, err) -> {
-            RestoreUtils.error("\tError creating record " + recordIRI.stringValue(), err, LOGGER);
-        });
+        errorMap.forEach((recordIRI, err) ->
+                RestoreUtils.error("\tError creating record " + recordIRI.stringValue(), err, LOGGER));
     }
 
     private record RecordCreation(VersionedRDFRecord record, Exception ex, boolean isSuccessful) {}
