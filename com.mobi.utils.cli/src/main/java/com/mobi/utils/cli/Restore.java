@@ -345,7 +345,7 @@ public class Restore implements Action {
 
         for (Iterator<String> i = manifestRepos.fieldNames(); i.hasNext();) {
             String repoName = i.next();
-            if (!remoteRepos.contains(repoName)) {
+            if (!remoteRepos.contains(repoName) && !"systemTemp".equals(repoName)) {
                 String repoPath = manifestRepos.get(repoName).asText();
                 String repoDirectoryPath = repoPath.substring(0, repoPath.lastIndexOf(repoName + ".zip"));
                 File repoFile = new File(RESTORE_PATH + File.separator + repoDirectoryPath + File.separator
