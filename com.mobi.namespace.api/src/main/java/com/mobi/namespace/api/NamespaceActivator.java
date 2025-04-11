@@ -1,8 +1,8 @@
-package com.mobi.namespace.impl;
+package com.mobi.namespace.api;
 
 /*-
  * #%L
- * com.mobi.namespace.impl
+ * com.mobi.namespace.api
  * $Id:$
  * $HeadURL:$
  * %%
@@ -23,7 +23,6 @@ package com.mobi.namespace.impl;
  * #L%
  */
 
-import com.mobi.namespace.api.NamespaceService;
 import com.mobi.setting.api.SettingUtilsService;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.ValueFactory;
@@ -36,14 +35,12 @@ import org.osgi.service.component.annotations.Reference;
 import java.io.IOException;
 import java.io.InputStream;
 
-@Component(name = SimpleNamespaceService.COMPONENT_NAME, immediate = true)
-public class SimpleNamespaceService implements NamespaceService {
-
-    static final String COMPONENT_NAME = "com.mobi.namespace.api.NamespaceService";
+@Component(name = NamespaceActivator.COMPONENT_NAME, immediate = true)
+public class NamespaceActivator {
+    static final String COMPONENT_NAME = "com.mobi.namespace.api.NamespaceActivator";
 
     private static final String NAMESPACE_ONTOLOGY_NAME = "http://mobi.com/ontologies/namespace";
-    private static final String DEFAULT_NAMESPACE_IRI = "http://mobi.com/ontologies/namespace/DefaultOntologyNamespace/";
-    private String defaultOntologyNamespace = "http://mobi.com/ontologies/";
+    private static final String DEFAULT_NAMESPACE_IRI = "http://mobi.solutions/ontologies/namespace/DefaultOntologyNamespace/";
     final ValueFactory vf = new ValidatingValueFactory();
 
     @Reference
@@ -52,18 +49,8 @@ public class SimpleNamespaceService implements NamespaceService {
     @Activate
     @Modified
     protected void start() throws IOException {
-        InputStream namespaceOntology = NamespaceService.class.getResourceAsStream("/namespace.ttl");
+        InputStream namespaceOntology = NamespaceActivator.class.getResourceAsStream("/namespace.ttl");
         Model model = settingUtilsService.updateRepoWithSettingDefinitions(namespaceOntology, NAMESPACE_ONTOLOGY_NAME);
         settingUtilsService.initializeApplicationSettingsWithDefaultValues(model, vf.createIRI(DEFAULT_NAMESPACE_IRI));
-    }
-
-    @Override
-    public void setDefaultOntologyNamespace(String namespace) {
-        this.defaultOntologyNamespace = namespace;
-    }
-
-    @Override
-    public String getDefaultOntologyNamespace() {
-        return this.defaultOntologyNamespace;
     }
 }

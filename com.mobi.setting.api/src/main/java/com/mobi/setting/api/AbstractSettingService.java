@@ -50,6 +50,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -77,11 +78,12 @@ public abstract class AbstractSettingService<T extends Setting> implements Setti
     static {
         try {
             GET_SETTING_DEFINITIONS = IOUtils.toString(
-                    AbstractSettingService.class.getResourceAsStream("/get-setting-definitions.rq"),
+                    Objects.requireNonNull(AbstractSettingService.class
+                            .getResourceAsStream("/get-setting-definitions.rq")),
                     StandardCharsets.UTF_8
             );
             GET_GROUPS = IOUtils.toString(
-                    AbstractSettingService.class.getResourceAsStream("/get-groups.rq"),
+                    Objects.requireNonNull(AbstractSettingService.class.getResourceAsStream("/get-groups.rq")),
                     StandardCharsets.UTF_8
             );
         } catch (IOException e) {
@@ -175,7 +177,7 @@ public abstract class AbstractSettingService<T extends Setting> implements Setti
                 .map(Statements::objectResource)
                 .filter(Optional::isPresent)
                 .map(Optional::get)
-                .collect(Collectors.toList());
+                .toList();
 
         List<IRI> orderedIRIs = factoryRegistry.getSortedFactoriesOfType(getType())
                 .stream()
@@ -189,7 +191,7 @@ public abstract class AbstractSettingService<T extends Setting> implements Setti
                 })
                 .map(OrmFactory::getTypeIRI)
                 .filter(types::contains)
-                .collect(Collectors.toList());
+                .toList();
 
         if (orderedIRIs.size() == 0) {
             throw new IllegalArgumentException("Setting type could not be found");
@@ -226,7 +228,8 @@ public abstract class AbstractSettingService<T extends Setting> implements Setti
     }
 
     protected List<Resource> getReferencedEntityIRIs(Resource settingIRI, String propIRI, RepositoryConnection conn) {
-        return QueryResults.asList(conn.getStatements(settingIRI, vf.createIRI(propIRI), null, vf.createIRI(SettingService.GRAPH)))
+        return QueryResults.asList(conn.getStatements(settingIRI, vf.createIRI(propIRI), null,
+                        vf.createIRI(SettingService.GRAPH)))
                 .stream()
                 .map(Statements::objectResource)
                 .filter(Optional::isPresent)
@@ -245,6 +248,13 @@ public abstract class AbstractSettingService<T extends Setting> implements Setti
         });
     }
 
+    /**
+     * Validates the RDF of the provided Setting to determine that it is well formed. This includes that the setting has
+     * either a data value or an object value and all referenced object value instances are within the model.
+     *
+     * @param setting The {@link Setting} to validate
+     * @throws IllegalArgumentException if the Setting RDF is not well formed
+     */
     public void validateSetting(T setting) {
         setting.getHasObjectValue_resource().forEach(objectValue -> {
             if (!setting.getModel().contains(objectValue, null, null)) {
@@ -252,7 +262,7 @@ public abstract class AbstractSettingService<T extends Setting> implements Setti
             }
         });
 
-        if (setting.getHasObjectValue_resource().isEmpty() && !setting.getHasDataValue().isPresent()) {
+        if (setting.getHasObjectValue_resource().isEmpty() && setting.getHasDataValue().isEmpty()) {
             throw new IllegalArgumentException("Setting must have either data value or object value");
         }
     }
@@ -283,6 +293,19 @@ public abstract class AbstractSettingService<T extends Setting> implements Setti
         Model model = QueryResults.asModel(query.evaluate(), mf);
         // Using getAllExisting should be fine in this case because there should be a maximum of 1 Setting
         Collection<T> settings = settingFactory.getAllExisting(model);
+        if (settings.size() == 1) {
+            return Optional.of(settings.iterator().next());
+        } else if (settings.isEmpty()) {
+            return Optional.empty();
+        } else {
+            throw new IllegalStateException("More than one application setting of type " + getTypeIRI() + " exists.");
+        }
+    }
+
+    protected <U extends T> Optional<U> getSettingFromQuery(GraphQuery query, Class<U> type) {
+        Model model = QueryResults.asModel(query.evaluate(), mf);
+        // Using getAllExisting should be fine in this case because there should be a maximum of 1 Setting
+        Collection<U> settings = factoryRegistry.getAllExisting(model, type);
         if (settings.size() == 1) {
             return Optional.of(settings.iterator().next());
         } else if (settings.isEmpty()) {

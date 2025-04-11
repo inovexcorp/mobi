@@ -43,7 +43,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -62,7 +64,8 @@ public class SimpleApplicationSettingService extends AbstractSettingService<Appl
     static {
         try {
             GET_APPLICATION_SETTING = IOUtils.toString(
-                    SimpleApplicationSettingService.class.getResourceAsStream("/get-application-setting.rq"),
+                    Objects.requireNonNull(SimpleApplicationSettingService.class
+                            .getResourceAsStream("/get-application-setting.rq")),
                     StandardCharsets.UTF_8
             );
         } catch (IOException e) {
@@ -139,6 +142,24 @@ public class SimpleApplicationSettingService extends AbstractSettingService<Appl
             GraphQuery query = conn.prepareGraphQuery(GET_APPLICATION_SETTING);
             query.setBinding("applicationSettingType", type);
             return getSettingFromQuery(query);
+        }
+    }
+
+    @Override
+    public <U extends ApplicationSetting> Optional<U> getSettingByType(Class<U> type, User... user) {
+        String typeIRI;
+        try {
+            Field typeField = type.getField("TYPE");
+            typeIRI = (String) typeField.get(null);
+        } catch (NoSuchFieldException | IllegalAccessException e) {
+            throw new MobiException(e);
+        }
+        LOGGER.debug("Retrieving ApplicationSetting by class {} with type IRI {}", type, typeIRI);
+        checkUser(user);
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            GraphQuery query = conn.prepareGraphQuery(GET_APPLICATION_SETTING);
+            query.setBinding("applicationSettingType", vf.createIRI(typeIRI));
+            return getSettingFromQuery(query, type);
         }
     }
 

@@ -115,7 +115,6 @@
         <module>com.mobi.notification.impl</module>
         <module>com.mobi.persistence.utils.impl</module>
         <module>com.mobi.namespace.api</module>
-        <module>com.mobi.namespace.impl</module>
         <module>com.mobi.shapes.api</module>
         <module>com.mobi.shapes.impl</module>
         <module>com.mobi.shapes.rest</module>

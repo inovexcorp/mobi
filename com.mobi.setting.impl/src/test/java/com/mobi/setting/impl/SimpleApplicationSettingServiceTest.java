@@ -26,6 +26,8 @@ package com.mobi.setting.impl;
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 import com.mobi.catalog.config.CatalogConfigProvider;
@@ -51,6 +53,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 import java.io.InputStream;
@@ -58,6 +61,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class SimpleApplicationSettingServiceTest extends OrmEnabledTestCase {
     private AutoCloseable closeable;
@@ -83,8 +87,16 @@ public class SimpleApplicationSettingServiceTest extends OrmEnabledTestCase {
         closeable = MockitoAnnotations.openMocks(this);
 
         when(registry.getFactoriesOfType(User.class)).thenReturn(Collections.singletonList(userFactory));
-        when(testComplexApplicationSettingFactory.getTypeIRI()).thenReturn(VALUE_FACTORY.createIRI(SimpleApplicationSettingServiceTest.TestComplexApplicationSetting.TYPE));
-        when(testSimpleApplicationSettingFactory.getTypeIRI()).thenReturn(VALUE_FACTORY.createIRI(SimpleApplicationSettingServiceTest.TestSimpleApplicationSetting.TYPE));
+        when(registry.getAllExisting(any(Model.class), eq(TestComplexApplicationSetting.class))).thenAnswer(i -> {
+            Model model = i.getArgument(0);
+            return model.filter(null, RDF.TYPE, getValueFactory().createIRI(TestComplexApplicationSetting.TYPE)).stream().map(statement -> {
+                TestComplexApplicationSetting mock = Mockito.mock(TestComplexApplicationSetting.class);
+                when(mock.getModel()).thenReturn(model);
+                return mock;
+            }).collect(Collectors.toSet());
+        });
+        when(testComplexApplicationSettingFactory.getTypeIRI()).thenReturn(VALUE_FACTORY.createIRI(TestComplexApplicationSetting.TYPE));
+        when(testSimpleApplicationSettingFactory.getTypeIRI()).thenReturn(VALUE_FACTORY.createIRI(TestSimpleApplicationSetting.TYPE));
         when(registry.getSortedFactoriesOfType(ApplicationSetting.class)).thenReturn(Arrays.asList(testComplexApplicationSettingFactory, testSimpleApplicationSettingFactory, applicationSettingFactory));
 
         when(configProvider.getRepository()).thenReturn(repo);
@@ -222,6 +234,29 @@ public class SimpleApplicationSettingServiceTest extends OrmEnabledTestCase {
         Optional<ApplicationSetting> retrievedApplicationSetting = service.getSettingByType(
                 VALUE_FACTORY.createIRI("http://mobi.com/ontologies/notification#EmailNotificationPreference"));
         assertFalse(retrievedApplicationSetting.isPresent());
+    }
+
+    // getApplicationSettingByType(Class)
+
+    @Test
+    public void getApplicationSettingByTypeWithClassTest() throws Exception {
+        InputStream inputStream = getClass().getResourceAsStream("/complexApplicationSetting.ttl");
+        Model testDataModel = Rio.parse(inputStream, "", RDFFormat.TURTLE);
+        ApplicationSetting applicationSetting = applicationSettingFactory.getExisting(VALUE_FACTORY.createIRI("http://example" +
+                ".com/MyComplexApplicationSetting"), testDataModel).get();
+
+        service.createSetting(applicationSetting);
+        try (RepositoryConnection conn = repo.getConnection()) {
+            applicationSetting.getModel().forEach(statement -> assertTrue(ConnectionUtils.contains(conn, statement.getSubject(),
+                    statement.getPredicate(), statement.getObject())));
+        }
+
+        Optional<TestComplexApplicationSetting> result = service.getSettingByType(TestComplexApplicationSetting.class);
+        assertTrue(result.isPresent());
+        TestComplexApplicationSetting retrievedApplicationSetting = result.get();
+        Model retrievedApplicationSettingModel = retrievedApplicationSetting.getModel();
+
+        applicationSetting.getModel().forEach(statement -> assertTrue(retrievedApplicationSettingModel.contains(statement)));
     }
 
     // getUserApplicationSettings

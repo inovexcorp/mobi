@@ -720,7 +720,7 @@ public class SettingRestTest extends MobiRestTestCXF {
 
     @Test
     public void getPreferenceByTypeTypeNotExistsTest() throws Exception {
-        when(preferenceService.getSettingByType(any(), any())).thenReturn(Optional.empty());
+        when(preferenceService.getSettingByType(any(Resource.class), any())).thenReturn(Optional.empty());
         Response response = target().path("settings/types/" + encode(TestSimplePreference.TYPE))
                 .queryParam("type", Preference.TYPE)
                 .request().get();
@@ -729,7 +729,7 @@ public class SettingRestTest extends MobiRestTestCXF {
 
     @Test
     public void getPreferenceByTypeIllegalArgumentTest() throws Exception {
-        doThrow(IllegalArgumentException.class).when(preferenceService).getSettingByType(any(), any());
+        doThrow(IllegalArgumentException.class).when(preferenceService).getSettingByType(any(Resource.class), any());
         Response response = target().path("settings/types/" + encode(TestSimplePreference.TYPE))
                 .queryParam("type", Preference.TYPE)
                 .request().get();
@@ -738,7 +738,7 @@ public class SettingRestTest extends MobiRestTestCXF {
 
     @Test
     public void getPreferenceByTypeIllegalStateTest() throws Exception {
-        doThrow(IllegalStateException.class).when(preferenceService).getSettingByType(any(), any());
+        doThrow(IllegalStateException.class).when(preferenceService).getSettingByType(any(Resource.class), any());
         Response response = target().path("settings/types/" + encode(TestSimplePreference.TYPE))
                 .queryParam("type", Preference.TYPE)
                 .request().get();
@@ -764,7 +764,7 @@ public class SettingRestTest extends MobiRestTestCXF {
 
     @Test
     public void getApplicationSettingByTypeResourceNotExistsTest() throws Exception {
-        when(applicationSettingService.getSettingByType(any(), any())).thenReturn(Optional.empty());
+        when(applicationSettingService.getSettingByType(any(Resource.class), any())).thenReturn(Optional.empty());
         Response response = target().path("settings/types/" + encode(TestSimpleApplicationSetting.TYPE))
                 .queryParam("type", ApplicationSetting.TYPE)
                 .request().get();
@@ -773,7 +773,7 @@ public class SettingRestTest extends MobiRestTestCXF {
 
     @Test
     public void getApplicationSettingByTypeIllegalArgumentTest() throws Exception {
-        doThrow(IllegalArgumentException.class).when(applicationSettingService).getSettingByType(any(), any());
+        doThrow(IllegalArgumentException.class).when(applicationSettingService).getSettingByType(any(Resource.class), any());
         Response response = target().path("settings/types/" + encode(TestSimpleApplicationSetting.TYPE))
                 .queryParam("type", ApplicationSetting.TYPE)
                 .request().get();
@@ -782,7 +782,7 @@ public class SettingRestTest extends MobiRestTestCXF {
 
     @Test
     public void getApplicationSettingByTypeIllegalStateTest() throws Exception {
-        doThrow(IllegalStateException.class).when(applicationSettingService).getSettingByType(any(), any());
+        doThrow(IllegalStateException.class).when(applicationSettingService).getSettingByType(any(Resource.class), any());
         Response response = target().path("settings/types/" + encode(TestSimpleApplicationSetting.TYPE))
                 .queryParam("type", ApplicationSetting.TYPE)
                 .request().get();

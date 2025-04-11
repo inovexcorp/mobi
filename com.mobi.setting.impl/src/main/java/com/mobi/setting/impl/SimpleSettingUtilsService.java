@@ -69,19 +69,21 @@ public class SimpleSettingUtilsService implements SettingUtilsService {
     @Reference(target = "(settingType=Application)")
     SettingService<ApplicationSetting> applicationSettingService;
 
-    /** Only supports Simple Settings with no nested property shapes */
+    /**
+     * Only supports Simple Settings with no nested property shapes.
+     */
     @Override
     public void initializeApplicationSettingsWithDefaultValues(Model model, Resource defaultIRI) {
-        Map<Resource, Literal> propertyShapeToDefaultValue = new HashMap<>();
+        Map<Resource, Literal> propShapeToDefaultValue = new HashMap<>();
         Map<Resource, Literal> settingToDefaultValue = new HashMap<>();
-        model.filter(null, vf.createIRI(SHACL.DEFAULT_VALUE.stringValue()), null).forEach(statement -> {
-            propertyShapeToDefaultValue.put(statement.getSubject(), vf.createLiteral(statement.getObject().stringValue()));
+        model.filter(null, SHACL.DEFAULT_VALUE, null).forEach(statement -> {
+            if (statement.getObject().isLiteral()) {
+                propShapeToDefaultValue.put(statement.getSubject(), (Literal) statement.getObject());
+            }
         });
-        propertyShapeToDefaultValue.keySet().forEach(propertyShape -> {
-            model.filter(null, vf.createIRI(SHACL.PROPERTY.stringValue()), propertyShape).forEach(statement -> {
-                settingToDefaultValue.put(statement.getSubject(), propertyShapeToDefaultValue.get(propertyShape));
-            });
-        });
+        propShapeToDefaultValue.keySet().forEach(propertyShape ->
+                model.filter(null, SHACL.PROPERTY, propertyShape).forEach(statement ->
+                        settingToDefaultValue.put(statement.getSubject(), propShapeToDefaultValue.get(propertyShape))));
 
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             for (Resource settingIRI : settingToDefaultValue.keySet()) {
@@ -89,16 +91,14 @@ public class SimpleSettingUtilsService implements SettingUtilsService {
                 if (defaultValue.stringValue().isEmpty()) {
                     return;
                 }
-                if (ConnectionUtils.contains(conn, settingIRI, null, null,
-                        vf.createIRI(SettingService.GRAPH))) {
-                    Optional<ApplicationSetting> applicationSettingOpt = applicationSettingService
-                            .getSettingByType(settingIRI);
+                if (ConnectionUtils.contains(conn, settingIRI, null, null, vf.createIRI(SettingService.GRAPH))) {
+                    Optional<ApplicationSetting> appSettingOpt = applicationSettingService.getSettingByType(settingIRI);
                     // if the default application setting value has not been set, set it now using the
                     // sh:defaultValue
-                    if (!applicationSettingOpt.isPresent()) {
+                    if (appSettingOpt.isEmpty()) {
                         OrmFactory<? extends ApplicationSetting> theFactory = (OrmFactory<? extends ApplicationSetting>)
-                                factoryRegistry.getFactoryOfType((IRI) settingIRI)
-                                        .orElseThrow(() -> new IllegalArgumentException("Unknown setting type: " + settingIRI));
+                                factoryRegistry.getFactoryOfType((IRI) settingIRI).orElseThrow(() ->
+                                        new IllegalArgumentException("Unknown setting type: " + settingIRI));
                         ApplicationSetting theSetting = theFactory.createNew(vf.createIRI(defaultIRI.stringValue()
                                 + UUID.randomUUID()));
                         theSetting.setHasDataValue(defaultValue);

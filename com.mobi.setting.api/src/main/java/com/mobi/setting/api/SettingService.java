@@ -145,6 +145,18 @@ public interface SettingService<T extends Setting> {
     Optional<T> getSettingByType(Resource type, User... user);
 
     /**
+     * Retrieves a {@link Setting} of type {@link U} which is a subclass of {@link T} if one and only one exists. If
+     * the service utilizes a {@link User} and one is provided, then it retrieves the {@link Setting} for that user. If
+     * multiple {@link Setting}s of the provided type exist, they should be retrieved by their {@link Resource}.
+     *
+     * @param type The subclass of {@link T} that should be retrieved.
+     * @param user A {@link User} to retrieve the {@link Setting} for. Optional if the service does not use it.
+     * @return An {@link Optional} of the {@link Setting} of the provided {@code type}.
+     * @param <U> A subclass of the specific type of {@link Setting}
+     */
+    <U extends T> Optional<U> getSettingByType(Class<U> type, User... user);
+
+    /**
      * Deletes a {@link Setting} of type {@link T} if one and only one exists. If the service utilizes a {@link User}
      * and one is provided, then it retrieves the {@link Setting} for that user. If multiple {@link Setting}s of the
      * provided type exist, they should be deleted by their {@link Resource}.

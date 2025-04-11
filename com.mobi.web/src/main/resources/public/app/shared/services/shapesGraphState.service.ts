@@ -21,32 +21,33 @@
  * #L%
  */
 import { Injectable } from '@angular/core';
-import { find, get, isEmpty, some } from 'lodash';
-import { map, switchMap, tap } from 'rxjs/operators';
-import { Observable, of, merge as rxjsMerge, throwError } from 'rxjs';
 import { HttpResponse } from '@angular/common/http';
+import { find, get, isEmpty, some } from 'lodash';
+import { Observable, of, merge as rxjsMerge, throwError } from 'rxjs';
+import { map, switchMap, tap } from 'rxjs/operators';
 
-import { CatalogManagerService } from './catalogManager.service';
-import { RecordSelectFiltered } from '../../versioned-rdf-record-editor/models/record-select-filtered.interface';
-import { Difference } from '../models/difference.class';
-import { RdfUpload } from '../models/rdfUpload.interface';
-import { ShapesGraphListItem } from '../models/shapesGraphListItem.class';
-import { VersionedRdfStateBase } from '../models/versionedRdfStateBase.interface';
-import { VersionedRdfUploadResponse } from '../models/versionedRdfUploadResponse.interface';
-import { ShapesGraphManagerService } from './shapesGraphManager.service';
+import { CATALOG, BRANCHID, COMMITID, GRAPHEDITOR, SHAPESGRAPHEDITOR, SHAPESGRAPHSTATE, TAGID } from '../../prefixes';
 import { CatalogDetails, VersionedRdfState } from './versionedRdfState.service';
-import { JSONLDObject } from '../models/JSONLDObject.interface';
-import { BRANCHID, COMMITID, SHAPESGRAPHSTATE, TAGID, GRAPHEDITOR, CATALOG, SHAPESGRAPHEDITOR } from '../../prefixes';
-import { StateManagerService } from './stateManager.service';
-import { PolicyManagerService } from './policyManager.service';
-import { ToastService } from './toast.service';
-import { PolicyEnforcementService } from './policyEnforcement.service';
-import { getBeautifulIRI, getDctermsValue, getPropertyId } from '../utility';
-import { XACMLRequest } from '../models/XACMLRequest.interface';
-import { MergeRequestManagerService } from './mergeRequestManager.service';
+import { CatalogManagerService } from './catalogManager.service';
+import { Difference } from '../models/difference.class';
 import { EventPayload, EventTypeConstants, EventWithPayload } from '../models/eventWithPayload.interface';
+import { getBeautifulIRI, getDctermsValue, getPropertyId } from '../utility';
+import { JSONLDObject } from '../models/JSONLDObject.interface';
+import { MergeRequestManagerService } from './mergeRequestManager.service';
+import { PolicyEnforcementService } from './policyEnforcement.service';
+import { PolicyManagerService } from './policyManager.service';
 import { RdfDownload } from '../models/rdfDownload.interface';
 import { RdfUpdate } from '../models/rdfUpdate.interface';
+import { RdfUpload } from '../models/rdfUpload.interface';
+import { RecordSelectFiltered } from '../../versioned-rdf-record-editor/models/record-select-filtered.interface';
+import { SettingManagerService } from './settingManager.service';
+import { ShapesGraphListItem } from '../models/shapesGraphListItem.class';
+import { ShapesGraphManagerService } from './shapesGraphManager.service';
+import { StateManagerService } from './stateManager.service';
+import { ToastService } from './toast.service';
+import { VersionedRdfStateBase } from '../models/versionedRdfStateBase.interface';
+import { VersionedRdfUploadResponse } from '../models/versionedRdfUploadResponse.interface';
+import { XACMLRequest } from '../models/XACMLRequest.interface';
 
 /**
  * @class shared.ShapesGraphStateService
@@ -64,7 +65,8 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
               protected toast: ToastService,
               protected pep: PolicyEnforcementService,
               private pm: PolicyManagerService,
-              private sgm: ShapesGraphManagerService) {
+              private sgm: ShapesGraphManagerService,
+              protected stm: SettingManagerService) {
     super(SHAPESGRAPHSTATE,
       BRANCHID,
       TAGID,
@@ -160,7 +162,7 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
    * Returns the namespace to be used for new ShapesGraphRecords
    */
   getDefaultNamespace(): Observable<string> {
-    return of('http://mobi.solutions/ontologies/shapes-graph/');
+    return this.stm.getDefaultNamespace(`${SHAPESGRAPHEDITOR}ShapesGraphRecord`);
   }
   /**
    * Returns the display name of an entity within the currently selected ShapesGraphRecord. Currently just returns the

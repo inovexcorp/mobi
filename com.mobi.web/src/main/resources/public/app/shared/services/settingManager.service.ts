@@ -27,13 +27,18 @@ import { has } from 'lodash';
 import { Observable, of, throwError } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
 
-import { REST_PREFIX } from '../../constants';
-import { SETTING, SHACL } from '../../prefixes';
-import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
+import { createHttpParams, getPropertyValue, handleError, handleErrorObject } from '../utility';
 import { JSONLDObject } from '../models/JSONLDObject.interface';
+import { ONTOLOGYEDITOR, SETTING, SHACL, SHAPESGRAPHEDITOR } from '../../prefixes';
+import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
+import { REST_PREFIX } from '../../constants';
 import { SettingConstants } from '../models/settingConstants.class';
 import { ToastService } from './toast.service';
-import { createHttpParams, getPropertyValue, handleError, handleErrorObject } from '../utility';
+
+interface NamespaceSetting {
+  setting: string,
+  propertyShape: string
+}
 
 /**
  * @class shared.SettingManagerService
@@ -43,61 +48,96 @@ import { createHttpParams, getPropertyValue, handleError, handleErrorObject } fr
  */
 @Injectable()
 export class SettingManagerService {
+    private readonly NAMESPACE_PREFIX = 'http://mobi.com/ontologies/namespace#';
     prefix = `${REST_PREFIX}settings`;
     prefSettingType = { iri: `${SETTING}Preference`, userText: 'Preferences'};
     appSettingType = { iri: `${SETTING}ApplicationSetting`, userText: 'Application Settings'};
     
-    namespaceGroup = 'http://mobi.com/ontologies/namespace#NamespaceApplicationSettingGroup';
-    defaultOntologyNamespaceSetting = 'http://mobi.com/ontologies/namespace#DefaultOntologyNamespaceApplicationSetting';
-    defaultOntologyNamespacePropertyShape = 'http://mobi.com/ontologies/namespace#DefaultOntologyNamespaceApplication'
-        + 'SettingPropertyShape';
+    public readonly defaultNamespaceMap: Record<string, NamespaceSetting> = {
+      [`${ONTOLOGYEDITOR}OntologyRecord`]: {
+        setting: `${this.NAMESPACE_PREFIX}DefaultOntologyNamespaceApplicationSetting`,
+        propertyShape: `${this.NAMESPACE_PREFIX}DefaultOntologyNamespaceApplicationSettingPropertyShape`
+      },
+      [`${SHAPESGRAPHEDITOR}ShapesGraphRecord`]: {
+        setting: `${this.NAMESPACE_PREFIX}DefaultShapesGraphNamespaceApplicationSetting`,
+        propertyShape: `${this.NAMESPACE_PREFIX}DefaultShapesGraphNamespaceApplicationSettingPropertyShape`,
+      }
+    };
+    readonly namespaceGroup = `${this.NAMESPACE_PREFIX}NamespaceApplicationSettingGroup`;
 
-    constructor(private http: HttpClient, private toast: ToastService, private spinnerSvc: ProgressSpinnerService) {}
+    constructor(private _http: HttpClient, private _toast: ToastService, private _spinnerSvc: ProgressSpinnerService) {}
 
-    getDefaultNamespace(): Observable<string> {
-        return this.getApplicationSettingByType(this.defaultOntologyNamespaceSetting).pipe(
-            switchMap(response => {
-                const applicationSetting = response;
-                if (applicationSetting.length > 1) {
-                    this.toast.createErrorToast('Too many values present for application setting');
-                    return throwError('');
-                } else if (applicationSetting.length === 1) {
-                    const defaultNamespace = applicationSetting[0];
-                    if (has(defaultNamespace, SettingConstants.HAS_DATA_VALUE)) {
-                        return of(getPropertyValue(defaultNamespace, SettingConstants.HAS_DATA_VALUE));
-                    }
-                    return throwError('');
-                } else {
-                    this.toast.createErrorToast('No values found for application setting. For some reason, endpoint '
-                        + 'did not return error.');
-                    return throwError('');
-                }
-            }),
-            catchError(() => {
-                return this.getApplicationSettingDefinitions(this.namespaceGroup).pipe(
-                    switchMap(response => {
-                        const newArray = response.filter(el => {
-                            return el['@id'] === this.defaultOntologyNamespacePropertyShape;
-                        });
-                        if (newArray.length !== 1) {
-                            this.toast.createErrorToast(`Number of matching property shapes must be one, not ${newArray.length}`);
-                            return throwError('');
-                        }
-                        const defaultNamespacePropertyShape = newArray[0];
-                        if (has(defaultNamespacePropertyShape, `${SHACL}defaultValue`)) {
-                            return of(getPropertyValue(defaultNamespacePropertyShape, `${SHACL}defaultValue`));
-                        } else {
-                            this.toast.createErrorToast('No default value found for default namespace');
-                            return throwError('');
-                        }
-                    }),
-                    catchError(() => {
-                        this.toast.createErrorToast('Could not retrieve setting definitions');
-                        return throwError('');
-                    })
-                );
-            }),
-        );
+    /**
+     * Retrieves the default namespace value that is set for the Application Setting based on the type of record
+     * provided. If the provided string does not match one of the known record types with a default namespace, returns 
+     * an Error Observable. In all "error" states, such as too many Application Setting instances or missing the
+     * hasDataValue property, falls back to the default value set on the Application Setting definition itself.
+     * 
+     * @param {string} type The IRI of a VersionedRDFRecord subclass
+     * @returns {Observable} An Observable that resolves with the default namespace for the provided VersionedRDFRecord
+     *    subclass from the instance of the appropriate Application Setting; rejects otherwise
+     */
+    getDefaultNamespace(type: string): Observable<string> {
+      if (!this.defaultNamespaceMap[type]) {
+        return throwError(`No setting found for record type ${type}`);
+      }
+      return this.getApplicationSettingByType(this.defaultNamespaceMap[type].setting).pipe(
+        switchMap(response => {
+          const applicationSetting = response;
+          if (applicationSetting.length > 1) {
+            this._toast.createErrorToast('Too many values present for application setting');
+            return throwError('');
+          } else if (applicationSetting.length === 1) {
+            const defaultNamespace = applicationSetting[0];
+            if (has(defaultNamespace, SettingConstants.HAS_DATA_VALUE)) {
+                return of(getPropertyValue(defaultNamespace, SettingConstants.HAS_DATA_VALUE));
+            }
+            return throwError('');
+          } else {
+            this._toast.createErrorToast('No values found for application setting. For some reason, endpoint '
+                + 'did not return error.');
+            return throwError('');
+          }
+        }),
+        catchError(() => this.getDefaultNamespaceFromSetting(type))
+      );
+    }
+
+    /**
+     * Retrieves the default namespace value that is set on the definition of the Application Setting via the
+     * sh:defaultValue property based on the type of record provided. If the provided string does not match one of the
+     * known record types with a default namespace, returns an Error Observable. Error Observables are also returned
+     * for a number of "error" states such as missing the required Property Shape definition, the sh:defaultValue
+     * property, etc.
+     * 
+     * @param {string} type The IRI of a VersionedRDFRecord subclass
+     * @returns {Observable} An Observable that resolves with the default namespace for the provided VersionedRDFRecord
+     *    subclass from the appropriate Application Setting definition; rejects otherwise
+     */
+    getDefaultNamespaceFromSetting(type: string): Observable<string> {
+      if (!this.defaultNamespaceMap[type]) {
+        return throwError(`No setting found for record type ${type}`);
+      }
+      return this.getApplicationSettingDefinitions(this.namespaceGroup).pipe(
+        switchMap(response => {
+          const newArray = response.filter(el => el['@id'] === this.defaultNamespaceMap[type].propertyShape);
+          if (newArray.length !== 1) {
+              this._toast.createErrorToast(`Number of matching property shapes must be one, not ${newArray.length}`);
+              return throwError('');
+          }
+          const defaultNamespacePropertyShape = newArray[0];
+          if (has(defaultNamespacePropertyShape, `${SHACL}defaultValue`)) {
+            return of(getPropertyValue(defaultNamespacePropertyShape, `${SHACL}defaultValue`));
+          } else {
+            this._toast.createErrorToast('No default value found for default namespace');
+            return throwError('');
+          }
+        }),
+        catchError(() => {
+          this._toast.createErrorToast('Could not retrieve setting definitions');
+          return throwError('');
+        })
+      );
     }
 
     /**
@@ -108,7 +148,7 @@ export class SettingManagerService {
      * rejected with an error message
      */
     getUserPreferences(isTracked = false): Observable<{ [key: string]: JSONLDObject[] }> {
-        return this.getSettings(this.prefSettingType.iri, isTracked);
+      return this.getSettings(this.prefSettingType.iri, isTracked);
     }
 
     /**
@@ -119,7 +159,7 @@ export class SettingManagerService {
      * rejected with an error message
      */
     getApplicationSettings(isTracked = false): Observable<{ [key: string]: JSONLDObject[] }> {
-        return this.getSettings(this.appSettingType.iri, isTracked);
+      return this.getSettings(this.appSettingType.iri, isTracked);
     }
 
     /**
@@ -136,10 +176,10 @@ export class SettingManagerService {
      * error message
      */
     getSettings(type: string, isTracked = false): Observable<{ [key: string]: JSONLDObject[] }> {
-        const params = { type };
-        const request = this.http.get<{ [key: string]: JSONLDObject[] }>(this.prefix, 
-            { params: createHttpParams(params) });
-        return this.spinnerSvc.trackedRequest(request, isTracked).pipe(catchError(handleError));
+      const params = { type };
+      const request = this._http.get<{ [key: string]: JSONLDObject[] }>(this.prefix, 
+        { params: createHttpParams(params) });
+      return this._spinnerSvc.trackedRequest(request, isTracked).pipe(catchError(handleError));
     }
 
     /**
@@ -151,7 +191,7 @@ export class SettingManagerService {
      * error message
      */
     getApplicationSettingByType(applicationSettingType: string, isTracked = false): Observable<JSONLDObject[]> {
-        return this.getSettingByType(this.appSettingType.iri, applicationSettingType, isTracked);
+      return this.getSettingByType(this.appSettingType.iri, applicationSettingType, isTracked);
     }
 
     /**
@@ -163,7 +203,7 @@ export class SettingManagerService {
      * error message
      */
     getUserPreferenceByType(preferenceType: string, isTracked = false): Observable<JSONLDObject[]> {
-        return this.getSettingByType(this.prefSettingType.iri, preferenceType, isTracked);
+      return this.getSettingByType(this.prefSettingType.iri, preferenceType, isTracked);
     }
 
     /**
@@ -178,10 +218,10 @@ export class SettingManagerService {
      * error message
      */
     getSettingByType(type: string, settingSubType: string, isTracked = false): Observable<JSONLDObject[]> {
-        const params = { type };
-        const request = this.http.get<JSONLDObject[]>(`${this.prefix}/types/${encodeURIComponent(settingSubType)}`, 
-            {params: createHttpParams(params)});
-        return this.spinnerSvc.trackedRequest(request, isTracked).pipe(catchError(handleError));
+      const params = { type };
+      const request = this._http.get<JSONLDObject[]>(`${this.prefix}/types/${encodeURIComponent(settingSubType)}`, 
+          { params: createHttpParams(params) });
+      return this._spinnerSvc.trackedRequest(request, isTracked).pipe(catchError(handleError));
     }
 
     /**
@@ -196,8 +236,8 @@ export class SettingManagerService {
      * error object
      */
     updateUserPreference(preferenceId: string, preferenceType: string, userPreference: JSONLDObject[], 
-      isTracked = false): Observable<void> {
-        return this.updateSetting(this.prefSettingType.iri, preferenceId, preferenceType, userPreference, isTracked);
+        isTracked = false): Observable<void> {
+      return this.updateSetting(this.prefSettingType.iri, preferenceId, preferenceType, userPreference, isTracked);
     }
 
     /**
@@ -213,9 +253,9 @@ export class SettingManagerService {
      * error object
      */
     updateApplicationSetting(applicationSettingId: string, applicationSettingType: string, 
-      applicationSetting: JSONLDObject[], isTracked = false): Observable<void> {
-        return this.updateSetting(this.appSettingType.iri, applicationSettingId, applicationSettingType, 
-            applicationSetting, isTracked);
+        applicationSetting: JSONLDObject[], isTracked = false): Observable<void> {
+      return this.updateSetting(this.appSettingType.iri, applicationSettingId, applicationSettingType, 
+        applicationSetting, isTracked);
     }
 
     /**
@@ -232,10 +272,10 @@ export class SettingManagerService {
      */
     updateSetting(type: string, settingId: string, subType: string, setting: JSONLDObject[], 
       isTracked = false): Observable<void> {
-        const params = { subType, type };
-        const request = this.http.put(`${this.prefix}/${encodeURIComponent(settingId)}`, setting, 
-            {params: createHttpParams(params)});
-        return this.spinnerSvc.trackedRequest(request, isTracked).pipe(catchError(handleErrorObject), map(() => {}));
+      const params = { subType, type };
+      const request = this._http.put(`${this.prefix}/${encodeURIComponent(settingId)}`, setting, 
+        { params: createHttpParams(params) });
+      return this._spinnerSvc.trackedRequest(request, isTracked).pipe(catchError(handleErrorObject), map(() => {}));
     }
 
     /**
@@ -249,7 +289,7 @@ export class SettingManagerService {
      * error object
      */
     createUserPreference(preferenceType: string, userPreference: JSONLDObject[], isTracked = false): Observable<void> {
-        return this.createSetting(this.prefSettingType.iri , preferenceType, userPreference, isTracked);
+      return this.createSetting(this.prefSettingType.iri , preferenceType, userPreference, isTracked);
     }
 
     /**
@@ -263,8 +303,8 @@ export class SettingManagerService {
      * error object
      */
     createApplicationSetting(applicationSettingType: string, applicationSetting: JSONLDObject[], 
-      isTracked = false): Observable<void> {
-        return this.createSetting(this.appSettingType.iri, applicationSettingType, applicationSetting, isTracked);
+        isTracked = false): Observable<void> {
+      return this.createSetting(this.appSettingType.iri, applicationSettingType, applicationSetting, isTracked);
     }
 
     /**
@@ -280,9 +320,9 @@ export class SettingManagerService {
      * error object
      */
     createSetting(type: string, subType: string, setting: JSONLDObject[], isTracked = false): Observable<void> {
-        const params = { subType, type };
-        const request = this.http.post(this.prefix, setting, {params: createHttpParams(params), responseType: 'text'});
-        return this.spinnerSvc.trackedRequest(request, isTracked).pipe(catchError(handleErrorObject), map(() => {}));
+      const params = { subType, type };
+      const request = this._http.post(this.prefix, setting, {params: createHttpParams(params), responseType: 'text'});
+      return this._spinnerSvc.trackedRequest(request, isTracked).pipe(catchError(handleErrorObject), map(() => {}));
     }
 
     /**
@@ -294,9 +334,9 @@ export class SettingManagerService {
      * error message
      */
     getSettingGroups(type: string, isTracked = false): Observable<JSONLDObject[]> {
-        const params = { type };
-        const request = this.http.get<JSONLDObject[]>(`${this.prefix}/groups`, {params: createHttpParams(params)});
-        return this.spinnerSvc.trackedRequest(request, isTracked).pipe(catchError(handleError));
+      const params = { type };
+      const request = this._http.get<JSONLDObject[]>(`${this.prefix}/groups`, {params: createHttpParams(params)});
+      return this._spinnerSvc.trackedRequest(request, isTracked).pipe(catchError(handleError));
     }
 
     /**
@@ -307,7 +347,7 @@ export class SettingManagerService {
      * error message
      */
     getPreferenceGroups(isTracked = false): Observable<JSONLDObject[]> {
-        return this.getSettingGroups(this.prefSettingType.iri, isTracked);
+      return this.getSettingGroups(this.prefSettingType.iri, isTracked);
     }
 
     /**
@@ -318,7 +358,7 @@ export class SettingManagerService {
      * error message
      */
     getApplicationSettingGroups(isTracked = false): Observable<JSONLDObject[]> {
-        return this.getSettingGroups(this.appSettingType.iri, isTracked);
+      return this.getSettingGroups(this.appSettingType.iri, isTracked);
     }
 
     /**
@@ -330,7 +370,7 @@ export class SettingManagerService {
      * error message
      */
     getPreferenceDefinitions(settingGroup: string, isTracked = false): Observable<JSONLDObject[]> {
-        return this.getSettingDefinitions(settingGroup, this.prefSettingType.iri, isTracked);
+      return this.getSettingDefinitions(settingGroup, this.prefSettingType.iri, isTracked);
     }
 
     /**
@@ -342,7 +382,7 @@ export class SettingManagerService {
      * error message
      */
     getApplicationSettingDefinitions(applicationSettingGroup: string, isTracked = false): Observable<JSONLDObject[]> {
-        return this.getSettingDefinitions(applicationSettingGroup, this.appSettingType.iri, isTracked);
+      return this.getSettingDefinitions(applicationSettingGroup, this.appSettingType.iri, isTracked);
     }
 
     /**
@@ -356,9 +396,9 @@ export class SettingManagerService {
      * error message
      */
     getSettingDefinitions(settingGroup: string, type: string, isTracked = false): Observable<JSONLDObject[]> {
-        const params = { type };
-        const url = `${this.prefix}/groups/${encodeURIComponent(settingGroup)}/definitions`;
-        const request = this.http.get<JSONLDObject[]>(url, {params: createHttpParams(params)});
-        return this.spinnerSvc.trackedRequest(request, isTracked).pipe(catchError(handleError));
+      const params = { type };
+      const url = `${this.prefix}/groups/${encodeURIComponent(settingGroup)}/definitions`;
+      const request = this._http.get<JSONLDObject[]>(url, {params: createHttpParams(params)});
+      return this._spinnerSvc.trackedRequest(request, isTracked).pipe(catchError(handleError));
     }
 }
