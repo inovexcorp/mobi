@@ -24,7 +24,6 @@ package com.mobi.ontology.impl.repository;
  */
 
 import com.mobi.exception.MobiException;
-import com.mobi.namespace.api.NamespaceService;
 import com.mobi.namespace.api.ontologies.DefaultOntologyNamespaceApplicationSetting;
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.utils.OntologyModels;
@@ -41,6 +40,7 @@ import java.util.UUID;
 
 public class SimpleOntologyId implements OntologyId {
 
+    protected static final String FALLBACK_ONTOLOGY_NAMESPACE =  "https://mobi.solutions/ontology/";
     private final Resource identifier;
     private IRI ontologyIRI;
     private IRI versionIRI;
@@ -51,12 +51,9 @@ public class SimpleOntologyId implements OntologyId {
         private IRI versionIRI;
         private Model model;
         private final SettingService<ApplicationSetting> settingService;
-        private final NamespaceService namespaceService;
 
-        public Builder(SettingService<ApplicationSetting> settingService,
-                       NamespaceService namespaceService) {
+        public Builder(SettingService<ApplicationSetting> settingService) {
             this.settingService = settingService;
-            this.namespaceService = namespaceService;
         }
 
         /**
@@ -93,7 +90,6 @@ public class SimpleOntologyId implements OntologyId {
 
     private SimpleOntologyId(Builder builder) {
         SettingService<ApplicationSetting> settingService = builder.settingService;
-        NamespaceService namespaceService = builder.namespaceService;
 
         if (builder.model != null) {
             builder.ontologyIRI = null;
@@ -122,14 +118,11 @@ public class SimpleOntologyId implements OntologyId {
         } else if (builder.identifier != null) {
             this.identifier = builder.identifier;
         } else {
-            String ontologyNamespace;
-            Optional<ApplicationSetting> ontologyNamespaceApplicationSetting = settingService.getSettingByType(
-                    vf.createIRI(DefaultOntologyNamespaceApplicationSetting.TYPE));
-            if (ontologyNamespaceApplicationSetting.isPresent() && ontologyNamespaceApplicationSetting.get()
-                    .getHasDataValue().isPresent()) {
-                ontologyNamespace = ontologyNamespaceApplicationSetting.get().getHasDataValue().get().stringValue();
-            } else {
-                ontologyNamespace = namespaceService.getDefaultOntologyNamespace();
+            String ontologyNamespace = FALLBACK_ONTOLOGY_NAMESPACE;
+            Optional<DefaultOntologyNamespaceApplicationSetting> namespaceSetting = settingService.getSettingByType(
+                    DefaultOntologyNamespaceApplicationSetting.class);
+            if (namespaceSetting.isPresent() && namespaceSetting.get().getHasDataValue().isPresent()) {
+                ontologyNamespace = namespaceSetting.get().getHasDataValue().get().stringValue();
             }
             this.identifier = vf.createIRI(ontologyNamespace + UUID.randomUUID());
         }

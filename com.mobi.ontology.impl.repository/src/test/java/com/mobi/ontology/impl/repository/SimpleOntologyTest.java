@@ -46,7 +46,6 @@ import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.dataset.api.DatasetUtilsService;
 import com.mobi.dataset.impl.SimpleDatasetRepositoryConnection;
 import com.mobi.dataset.ontology.dataset.Dataset;
-import com.mobi.namespace.api.NamespaceService;
 import com.mobi.ontology.core.api.AnnotationProperty;
 import com.mobi.ontology.core.api.DataProperty;
 import com.mobi.ontology.core.api.Hierarchy;
@@ -175,9 +174,6 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
     @Mock
     private SettingService<ApplicationSetting> settingService;
 
-    @Mock
-    private NamespaceService namespaceService;
-
     @Before
     public void setUp() throws Exception {
         vf = VALUE_FACTORY;
@@ -203,13 +199,13 @@ public class SimpleOntologyTest extends OrmEnabledTestCase {
         repo = spy(repoManager.createMemoryRepository());
         when(repo.getRepositoryID()).thenReturn("ontologyCache");
 
-        when(settingService.getSettingByType(any())).thenReturn(Optional.empty());
+        when(settingService.getSettingByType(any(Resource.class))).thenReturn(Optional.empty());
         when(ontologyId.getOntologyIRI()).thenReturn(Optional.of(ontologyIRI));
         when(ontologyId.getVersionIRI()).thenReturn(Optional.of(versionIRI));
         when(ontologyManager.createOntologyId(any(IRI.class), any(IRI.class))).thenReturn(ontologyId);
         when(ontologyManager.createOntologyId(any(IRI.class))).thenReturn(ontologyId);
         ArgumentCaptor<Model> iriModel = ArgumentCaptor.forClass(Model.class);
-        when(ontologyManager.createOntologyId(iriModel.capture())).thenAnswer(invocation -> new SimpleOntologyId.Builder(settingService, namespaceService).model(iriModel.getValue()).build());
+        when(ontologyManager.createOntologyId(iriModel.capture())).thenAnswer(invocation -> new SimpleOntologyId.Builder(settingService).model(iriModel.getValue()).build());
         when(importsResolver.getRecordIRIFromOntologyIRI(any(Resource.class))).thenReturn(Optional.empty());
         when(ontologyId.getOntologyIdentifier()).thenReturn(vf.createIRI("https://mobi.com/ontology-id"));
 

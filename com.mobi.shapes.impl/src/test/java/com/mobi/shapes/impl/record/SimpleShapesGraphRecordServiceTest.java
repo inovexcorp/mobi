@@ -64,6 +64,7 @@ import com.mobi.catalog.api.versioning.VersioningManager;
 import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
+import com.mobi.namespace.api.ontologies.DefaultShapesGraphNamespaceApplicationSetting;
 import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.persistence.utils.ConnectionUtils;
 import com.mobi.prov.api.ontologies.mobiprov.CreateActivity;
@@ -73,6 +74,8 @@ import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import com.mobi.repository.impl.sesame.memory.MemoryRepositoryWrapper;
 import com.mobi.security.policy.api.xacml.XACMLPolicy;
 import com.mobi.security.policy.api.xacml.XACMLPolicyManager;
+import com.mobi.setting.api.SettingService;
+import com.mobi.setting.api.ontologies.setting.ApplicationSetting;
 import com.mobi.shapes.api.ShapesGraphManager;
 import com.mobi.shapes.api.ontologies.shapesgrapheditor.ShapesGraphRecord;
 import org.eclipse.rdf4j.model.IRI;
@@ -185,6 +188,9 @@ public class SimpleShapesGraphRecordServiceTest extends OrmEnabledTestCase {
     private ShapesGraphManager shapesGraphManager;
 
     @Mock
+    private SettingService<ApplicationSetting> settingService;
+
+    @Mock
     private CreateActivity createActivity;
 
     @Before
@@ -232,6 +238,7 @@ public class SimpleShapesGraphRecordServiceTest extends OrmEnabledTestCase {
         testRecord.setTrackedIdentifier(testIRI);
 
         closeable = MockitoAnnotations.openMocks(this);
+        when(settingService.getSettingByType(DefaultShapesGraphNamespaceApplicationSetting.class)).thenReturn(Optional.empty());
         when(versioningManager.commit(any(Resource.class), any(Resource.class), any(Resource.class), any(User.class), anyString(), any(RepositoryConnection.class))).thenReturn(commitIRI);
         when(thingManager.optObject(any(IRI.class), any(OrmFactory.class), any(RepositoryConnection.class))).thenReturn(Optional.of(testRecord));
         when(branchManager.getBranch(eq(testRecord), eq(branchIRI), any(OrmFactory.class), any(RepositoryConnection.class))).thenReturn(branch);
@@ -274,6 +281,7 @@ public class SimpleShapesGraphRecordServiceTest extends OrmEnabledTestCase {
         recordService.differenceManager = differenceManager;
         recordService.versionManager = versionManager;
         recordService.revisionManager = revisionManager;
+        recordService.settingService = settingService;
     }
 
     @After

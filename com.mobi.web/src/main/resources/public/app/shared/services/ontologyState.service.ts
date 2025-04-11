@@ -263,7 +263,7 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
      * Returns the namespace to be used for new OntologyRecords from the application settings
      */
     getDefaultNamespace(): Observable<string> {
-      return this.stm.getDefaultNamespace();
+      return this.stm.getDefaultNamespace(`${ONTOLOGYEDITOR}OntologyRecord`);
     }
     /**
      * Returns the display name of an entity within the currently selected OntologyRecord. Pulls from the calculated

@@ -238,7 +238,6 @@
         <bundle>mvn:com.mobi/notification.api/${project.version}</bundle>
         <bundle>mvn:com.mobi/notification.impl/${project.version}</bundle>
         <bundle>mvn:com.mobi/namespace.api/${project.version}</bundle>
-        <bundle>mvn:com.mobi/namespace.impl/${project.version}</bundle>
         <bundle>mvn:com.mobi/shapes.api/${project.version}</bundle>
         <bundle>mvn:com.mobi/shapes.impl/${project.version}</bundle>
         <bundle>mvn:com.mobi/owlapi.utils/${project.version}</bundle>

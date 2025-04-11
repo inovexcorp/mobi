@@ -35,7 +35,6 @@ import com.mobi.catalog.api.ontologies.mcat.BranchFactory;
 import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
 import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.exception.MobiException;
-import com.mobi.namespace.api.NamespaceService;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyCreationService;
 import com.mobi.ontology.core.api.OntologyId;
@@ -101,9 +100,6 @@ public class SimpleOntologyManager implements OntologyManager {
 
     @Reference(target = "(settingType=Application)")
     protected SettingService<ApplicationSetting> settingService;
-
-    @Reference
-    protected NamespaceService namespaceService;
 
     @Reference
     protected OntologyCreationService ontologyCreationService;
@@ -224,22 +220,22 @@ public class SimpleOntologyManager implements OntologyManager {
 
     @Override
     public OntologyId createOntologyId() {
-        return new SimpleOntologyId.Builder(settingService, namespaceService).build();
+        return new SimpleOntologyId.Builder(settingService).build();
     }
 
     @Override
     public OntologyId createOntologyId(Resource resource) {
-        return new SimpleOntologyId.Builder(settingService, namespaceService).id(resource).build();
+        return new SimpleOntologyId.Builder(settingService).id(resource).build();
     }
 
     @Override
     public OntologyId createOntologyId(IRI ontologyIRI) {
-        return new SimpleOntologyId.Builder(settingService, namespaceService).ontologyIRI(ontologyIRI).build();
+        return new SimpleOntologyId.Builder(settingService).ontologyIRI(ontologyIRI).build();
     }
 
     @Override
     public OntologyId createOntologyId(IRI ontologyIRI, IRI versionIRI) {
-        return new SimpleOntologyId.Builder(settingService, namespaceService)
+        return new SimpleOntologyId.Builder(settingService)
                 .ontologyIRI(ontologyIRI)
                 .versionIRI(versionIRI)
                 .build();
@@ -247,7 +243,7 @@ public class SimpleOntologyManager implements OntologyManager {
 
     @Override
     public OntologyId createOntologyId(Model model) {
-        return new SimpleOntologyId.Builder(settingService, namespaceService).model(model).build();
+        return new SimpleOntologyId.Builder(settingService).model(model).build();
     }
 
     protected Optional<Ontology> getOntology(@Nonnull Resource recordId, @Nonnull Resource commitId) {

@@ -27,12 +27,10 @@ import { HttpResponse } from '@angular/common/http';
 import { MockProvider } from 'ng-mocks';
 import { Subject, of, throwError } from 'rxjs';
 
-import {
-    cleanStylesFromDOM
-} from '../../../test/ts/Shared';
+import { CATALOG, DCTERMS, SHAPESGRAPHEDITOR } from '../../prefixes';
 import { CatalogDetails } from './versionedRdfState.service';
 import { CatalogManagerService } from './catalogManager.service';
-import { CATALOG, DCTERMS } from '../../prefixes';
+import { cleanStylesFromDOM } from '../../../test/ts/Shared';
 import { Difference } from '../models/difference.class';
 import { EventWithPayload } from '../models/eventWithPayload.interface';
 import { JSONLDObject } from '../models/JSONLDObject.interface';
@@ -43,6 +41,7 @@ import { RdfDownload } from '../models/rdfDownload.interface';
 import { RdfUpdate } from '../models/rdfUpdate.interface';
 import { RdfUpload } from '../models/rdfUpload.interface';
 import { RecordSelectFiltered } from '../../versioned-rdf-record-editor/models/record-select-filtered.interface';
+import { SettingManagerService } from './settingManager.service';
 import { ShapesGraphListItem } from '../models/shapesGraphListItem.class';
 import { ShapesGraphManagerService } from './shapesGraphManager.service';
 import { StateManagerService } from './stateManager.service';
@@ -56,6 +55,7 @@ describe('Shapes Graph State service', function() {
   let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
   let mergeRequestManagerServiceStub: jasmine.SpyObj<MergeRequestManagerService>;
   let policyEnforcementStub: jasmine.SpyObj<PolicyEnforcementService>;
+  let settingManagerStub: jasmine.SpyObj<SettingManagerService>;
   let shapesGraphManagerStub: jasmine.SpyObj<ShapesGraphManagerService>;
   let toastStub: jasmine.SpyObj<ToastService>;
   let _catalogManagerActionSubject: Subject<EventWithPayload>;
@@ -85,9 +85,11 @@ describe('Shapes Graph State service', function() {
         MockProvider(PolicyManagerService),
         MockProvider(ShapesGraphManagerService),
         MockProvider(StateManagerService),
+        MockProvider(SettingManagerService),
         MockProvider(ToastService)
       ]
     });
+    settingManagerStub = TestBed.inject(SettingManagerService) as jasmine.SpyObj<SettingManagerService>;
     shapesGraphManagerStub = TestBed.inject(ShapesGraphManagerService) as jasmine.SpyObj<ShapesGraphManagerService>;
     shapesGraphManagerStub.createShapesGraphRecord.and.returnValue(of(uploadResponse));
     policyEnforcementStub = TestBed.inject(PolicyEnforcementService) as jasmine.SpyObj<PolicyEnforcementService>;
@@ -117,6 +119,7 @@ describe('Shapes Graph State service', function() {
     shapesGraphManagerStub = null;
     catalogManagerStub = null;
     policyEnforcementStub = null;
+    settingManagerStub = null;
     _catalogManagerActionSubject = null;
     _mergeRequestManagerActionSubject = null;
   });
@@ -125,10 +128,12 @@ describe('Shapes Graph State service', function() {
     expect(service['catalogId']).toEqual(catalogId);
   });
   it('getDefaultNamespace provides the default namespace to be used for new shapes graphs', fakeAsync(function() {
+    settingManagerStub.getDefaultNamespace.and.returnValue(of('shapes-graph'));
     service.getDefaultNamespace().subscribe(value => {
-      expect(value).toContain('shapes-graph');
+      expect(value).toEqual('shapes-graph');
     });
     tick();
+    expect(settingManagerStub.getDefaultNamespace).toHaveBeenCalledWith(`${SHAPESGRAPHEDITOR}ShapesGraphRecord`);
   }));
   it('should retrieve the name of an entity for shapes graphs', function() {
     expect(service.getEntityName('http://test.com/TestEntity')).toEqual('Test Entity');

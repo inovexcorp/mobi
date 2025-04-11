@@ -26,6 +26,8 @@ package com.mobi.setting.impl;
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertFalse;
 import static junit.framework.TestCase.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 import com.mobi.catalog.config.CatalogConfigProvider;
@@ -53,6 +55,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 import java.io.InputStream;
@@ -60,6 +63,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 public class SimplePreferenceServiceTest extends OrmEnabledTestCase {
     private AutoCloseable closeable;
@@ -91,6 +95,14 @@ public class SimplePreferenceServiceTest extends OrmEnabledTestCase {
         closeable = MockitoAnnotations.openMocks(this);
 
         when(registry.getFactoriesOfType(User.class)).thenReturn(Collections.singletonList(userFactory));
+        when(registry.getAllExisting(any(Model.class), eq(TestComplexPreference.class))).thenAnswer(i -> {
+            Model model = i.getArgument(0);
+            return model.filter(null, RDF.TYPE, getValueFactory().createIRI(TestComplexPreference.TYPE)).stream().map(statement -> {
+                TestComplexPreference mock = Mockito.mock(TestComplexPreference.class);
+                when(mock.getModel()).thenReturn(model);
+                return mock;
+            }).collect(Collectors.toSet());
+        });
         when(testComplexPreferenceFactory.getTypeIRI()).thenReturn(VALUE_FACTORY.createIRI(TestComplexPreference.TYPE));
         when(testSimplePreferenceFactory.getTypeIRI()).thenReturn(VALUE_FACTORY.createIRI(TestSimplePreference.TYPE));
         when(registry.getSortedFactoriesOfType(Preference.class)).thenReturn(Arrays.asList(testComplexPreferenceFactory, testSimplePreferenceFactory, preferenceFactory));
@@ -266,6 +278,30 @@ public class SimplePreferenceServiceTest extends OrmEnabledTestCase {
         Optional<Preference> retrievedPreference = service.getSettingByType(
                 VALUE_FACTORY.createIRI("http://mobi.com/ontologies/notification#EmailNotificationPreference"), user);
         assertFalse(retrievedPreference.isPresent());
+    }
+
+    // getUserPreferenceByType(Class)
+
+    @Test
+    public void getUserPreferenceByTypeWithClassTest() throws Exception {
+        User user = userFactory.createNew(VALUE_FACTORY.createIRI("http://test.com/user"));
+        InputStream inputStream = getClass().getResourceAsStream("/complexPreference.ttl");
+        Model testDataModel = Rio.parse(inputStream, "", RDFFormat.TURTLE);
+        Preference preference = preferenceFactory.getExisting(VALUE_FACTORY.createIRI("http://example" +
+                ".com/MyComplexPreference"), testDataModel).get();
+
+        service.createSetting(preference, user);
+        try (RepositoryConnection conn = repo.getConnection()) {
+            preference.getModel().forEach(statement -> assertTrue(ConnectionUtils.contains(conn, statement.getSubject(),
+                    statement.getPredicate(), statement.getObject())));
+        }
+
+        Optional<TestComplexPreference> result = service.getSettingByType(TestComplexPreference.class, user);
+        assertTrue(result.isPresent());
+        TestComplexPreference retrievedUserPreference = result.get();
+        Model retrievedUserPreferenceModel = retrievedUserPreference.getModel();
+
+        preference.getModel().forEach(statement -> assertTrue(retrievedUserPreferenceModel.contains(statement)));
     }
 
     // getUserPreferences

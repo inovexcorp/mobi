@@ -20,40 +20,40 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { HttpResponse } from '@angular/common/http';
+import { ElementRef } from '@angular/core';
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { HttpResponse } from '@angular/common/http';
+import { MatSnackBar } from '@angular/material/snack-bar';
 import { concat, filter, get, has, includes, map, set, sortBy, cloneDeep } from 'lodash';
 import { MockProvider } from 'ng-mocks';
 import { of, Subject, throwError } from 'rxjs';
 import { map as rxjsMap, tap } from 'rxjs/operators';
-import { ElementRef } from '@angular/core';
-import { MatSnackBar } from '@angular/material/snack-bar';
 
-import { CATALOG, DCTERMS, OWL, RDF, RDFS, SKOS, XSD } from '../../prefixes';
-import { Difference } from '../models/difference.class';
-import { HierarchyNode } from '../models/hierarchyNode.interface';
-import { VocabularyStuff } from '../models/vocabularyStuff.interface';
-import { JSONLDObject } from '../models/JSONLDObject.interface';
-import { OntologyListItem } from '../models/ontologyListItem.class';
+import { CATALOG, DCTERMS, ONTOLOGYEDITOR, OWL, RDF, RDFS, SKOS, XSD } from '../../prefixes';
 import { CatalogManagerService } from './catalogManager.service';
-import { OntologyManagerService } from './ontologyManager.service';
-import { Hierarchy } from '../models/hierarchy.interface';
-import { OntologyAction } from '../models/ontologyAction';
-import { StateManagerService } from './stateManager.service';
-import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
-import { PolicyEnforcementService } from './policyEnforcement.service';
-import { ToastService } from './toast.service';
-import { PolicyManagerService } from './policyManager.service';
-import { ManchesterConverterService } from './manchesterConverter.service';
-import { PropertyManagerService } from './propertyManager.service';
-import { UpdateRefsService } from './updateRefs.service';
-import { MergeRequestManagerService } from './mergeRequestManager.service';
+import { Difference } from '../models/difference.class';
 import { EventTypeConstants, EventWithPayload } from '../models/eventWithPayload.interface';
-import { SettingManagerService } from './settingManager.service';
-import { RdfUpload } from '../models/rdfUpload.interface';
-import { RdfDownload } from '../models/rdfDownload.interface';
-import { VersionedRdfState } from './versionedRdfState.service';
+import { Hierarchy } from '../models/hierarchy.interface';
+import { HierarchyNode } from '../models/hierarchyNode.interface';
+import { JSONLDObject } from '../models/JSONLDObject.interface';
+import { ManchesterConverterService } from './manchesterConverter.service';
+import { MergeRequestManagerService } from './mergeRequestManager.service';
+import { OntologyAction } from '../models/ontologyAction';
+import { OntologyListItem } from '../models/ontologyListItem.class';
+import { OntologyManagerService } from './ontologyManager.service';
 import { OntologyRecordActionI } from './ontologyRecordAction.interface';
+import { PolicyEnforcementService } from './policyEnforcement.service';
+import { PolicyManagerService } from './policyManager.service';
+import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
+import { PropertyManagerService } from './propertyManager.service';
+import { RdfDownload } from '../models/rdfDownload.interface';
+import { RdfUpload } from '../models/rdfUpload.interface';
+import { SettingManagerService } from './settingManager.service';
+import { StateManagerService } from './stateManager.service';
+import { ToastService } from './toast.service';
+import { UpdateRefsService } from './updateRefs.service';
+import { VersionedRdfState } from './versionedRdfState.service';
+import { VocabularyStuff } from '../models/vocabularyStuff.interface';
 import { OntologyStateService } from './ontologyState.service';
 
 class MockElementRef extends ElementRef {
@@ -280,6 +280,7 @@ describe('Ontology State Service', function() {
       expect(value).toEqual('ontology');
     });
     tick();
+    expect(settingManagerStub.getDefaultNamespace).toHaveBeenCalledWith(`${ONTOLOGYEDITOR}OntologyRecord`);
   }));
   describe('getEntityName should return the proper value', function() {
     beforeEach(() => {
