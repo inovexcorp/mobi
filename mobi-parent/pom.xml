@@ -92,7 +92,7 @@
         <jakarta.version>2.1.6</jakarta.version>
         <!-- These deps are only needed for POI-->
         <log4j.version>2.18.0</log4j.version>
-        <commons-compress.version>1.21</commons-compress.version>
+        <commons-compress.version>1.26.0</commons-compress.version>
 
         <rdf4j.version>4.3.15</rdf4j.version>
         <servlet.version>3.1.0</servlet.version>  <!-- 4.0.1 with later pax web -->
