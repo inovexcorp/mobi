@@ -397,7 +397,8 @@ export class MapperStateService {
         ?iri owl:deprecated ?deprecateds .
       }
       OPTIONAL {
-        ?iri rdfs:range ?startingRange .
+        ?iri rdfs:subPropertyOf* ?prop .
+        ?prop rdfs:range ?startingRange .
         ?startingRange ^rdfs:subClassOf* ?range .
         FILTER(isIRI(?range))
       }
@@ -713,8 +714,8 @@ export class MapperStateService {
                     propIRIsToObjectMappings[propIRI].forEach(propMapping => {
                         const rangeClassId = mapping.getClassIdByMappingId(getPropertyId(propMapping, 
                             `${DELIM}classMapping`));
-                        // Incompatible if class of range class mapping is not in object property range options
-                        if (!mappingProperty.ranges.includes(rangeClassId)) {
+                        // Incompatible if class of range class mapping is not in object property range options if present
+                        if (mappingProperty.ranges.length && !mappingProperty.ranges.includes(rangeClassId)) {
                             incompatibleMappings.push(propMapping);
                             return;
                         }
