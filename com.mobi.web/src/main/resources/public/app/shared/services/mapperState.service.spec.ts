@@ -458,18 +458,22 @@ describe('Mapper State service', function() {
             ]);
         });
         it('if there are incompatible object properties', async function() {
+            // Switched the property IRI
             const switchedObjPropMapping: JSONLDObject = cloneDeep(objPropMapping);
             switchedObjPropMapping[`${DELIM}hasProperty`] = [{ '@id': propId }];
             
+            // Property has been deprecated
             const deprecatedProperty: MappingProperty = cloneDeep(objProp);
             deprecatedProperty.iri = 'deprecatedProperty';
             deprecatedProperty.deprecated = true;
             const deprecatedPropMapping: JSONLDObject = cloneDeep(objPropMapping);
             deprecatedPropMapping[`${DELIM}hasProperty`] = [{ '@id': deprecatedProperty.iri }];
             
+            // Property was deleted but mapping remains
             const missingPropMapping: JSONLDObject = cloneDeep(objPropMapping);
             missingPropMapping[`${DELIM}hasProperty`] = [{ '@id': 'error' }];
 
+            // Range no longer present
             const removedRangeClass: MappingClass = cloneDeep(mappingClass);
             removedRangeClass.iri = 'missingRange';
             const removedRangeClassMapping: JSONLDObject = cloneDeep(classMapping);
@@ -477,12 +481,27 @@ describe('Mapper State service', function() {
             removedRangeClassMapping[`${DELIM}mapsTo`] = [{ '@id': removedRangeClass.iri }];
             const removedRangeProperty: MappingProperty = cloneDeep(objProp);
             removedRangeProperty.iri = 'missingRangeProperty';
-            removedRangeProperty.ranges = [];
+            removedRangeProperty.ranges = ['otherIRI'];
             const removedRangePropMapping: JSONLDObject = cloneDeep(objPropMapping);
             removedRangePropMapping['@id'] = 'removedRangePropMapping';
             removedRangePropMapping[`${DELIM}hasProperty`] = [{ '@id': removedRangeProperty.iri }];
             removedRangePropMapping[`${DELIM}classMapping`] = [{ '@id': removedRangeClassMapping['@id'] }];
 
+            // Ranges have been completely removed (not incompatible)
+            const noRangeClass: MappingClass = cloneDeep(mappingClass);
+            noRangeClass.iri = 'noRange';
+            const noRangeClassMapping: JSONLDObject = cloneDeep(classMapping);
+            noRangeClassMapping['@id'] = 'noRangeClassMapping';
+            noRangeClassMapping[`${DELIM}mapsTo`] = [{ '@id': noRangeClass.iri }];
+            const noRangeProperty: MappingProperty = cloneDeep(objProp);
+            noRangeProperty.iri = 'noRangeProperty';
+            noRangeProperty.ranges = [];
+            const noRangePropMapping: JSONLDObject = cloneDeep(objPropMapping);
+            noRangePropMapping['@id'] = 'noRangePropMapping';
+            noRangePropMapping[`${DELIM}hasProperty`] = [{ '@id': noRangeProperty.iri }];
+            noRangePropMapping[`${DELIM}classMapping`] = [{ '@id': noRangeClassMapping['@id'] }];
+
+            // Range class has been deprecated
             const incomClass: MappingClass = cloneDeep(mappingClass);
             incomClass.iri = 'incomClassId';
             incomClass.deprecated = true;
@@ -502,26 +521,29 @@ describe('Mapper State service', function() {
                     return classId;
                 } else if (id === removedRangeClassMapping['@id']) {
                     return removedRangeClass.iri;
+                } else if (id === noRangeClassMapping['@id']) {
+                  return noRangeClass.iri;
                 } else if (id === incomClassMapping['@id']) {
                     return incomClass.iri;
                 } else {
                     return '';
                 }
             });
-            mappingStub.getAllClassMappings.and.returnValue([classMapping, removedRangeClassMapping, incomClassMapping]);
-            mappingStub.getAllObjectMappings.and.returnValue([objPropMapping, switchedObjPropMapping, deprecatedPropMapping, missingPropMapping, removedRangePropMapping, incomRangePropMapping]);
-            spyOn(service, 'retrieveSpecificClasses').and.returnValue(of([mappingClass, removedRangeClass, incomClass]));
-            spyOn(service, 'retrieveSpecificProps').and.returnValue(of([mappingProperty, deprecatedProperty, objProp, removedRangeProperty, incomRangeProperty]));
+            mappingStub.getAllClassMappings.and.returnValue([classMapping, removedRangeClassMapping, noRangeClassMapping, incomClassMapping]);
+            mappingStub.getAllObjectMappings.and.returnValue([objPropMapping, switchedObjPropMapping, deprecatedPropMapping, missingPropMapping, removedRangePropMapping, noRangePropMapping, incomRangePropMapping]);
+            spyOn(service, 'retrieveSpecificClasses').and.returnValue(of([mappingClass, removedRangeClass, noRangeClass, incomClass]));
+            spyOn(service, 'retrieveSpecificProps').and.returnValue(of([mappingProperty, deprecatedProperty, objProp, removedRangeProperty, noRangeProperty, incomRangeProperty]));
             await service.findIncompatibleMappings(mappingStub).subscribe(result => {
                 expect(result).toEqual([incomClassMapping, switchedObjPropMapping, deprecatedPropMapping, missingPropMapping, removedRangePropMapping, incomRangePropMapping]);
             }, () => fail('Observable should have succeeded'));
-            expect(service.retrieveSpecificClasses).toHaveBeenCalledWith(ontInfo, [classId, removedRangeClass.iri, incomClass.iri]);
+            expect(service.retrieveSpecificClasses).toHaveBeenCalledWith(ontInfo, [classId, removedRangeClass.iri, noRangeClass.iri, incomClass.iri]);
             expect(service.retrieveSpecificProps).toHaveBeenCalledWith(ontInfo, [
                 { iri: objPropId, type: `${OWL}ObjectProperty` }, 
                 { iri: propId, type: `${OWL}ObjectProperty` }, 
                 { iri: deprecatedProperty.iri, type: `${OWL}ObjectProperty` }, 
                 { iri: 'error', type: `${OWL}ObjectProperty` }, 
                 { iri: removedRangeProperty.iri, type: `${OWL}ObjectProperty` },
+                { iri: noRangeProperty.iri, type: `${OWL}ObjectProperty` },
                 { iri: incomRangeProperty.iri, type: `${OWL}ObjectProperty` },
             ]);
         });
