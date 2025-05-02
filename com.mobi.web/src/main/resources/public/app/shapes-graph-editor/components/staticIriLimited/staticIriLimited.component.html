@@ -25,5 +25,6 @@
         <strong class="text-muted break-word" matTooltip="Copy IRI" matTooltipPosition="above" [copy-clipboard]="iri">
             <span>{{iriBegin + iriThen}}</span><span [innerHtml]="iriEnd | safeHtml: 'html'"></span>
         </strong>
+        <a *ngIf="canModify && !readOnly" (click)="showEditIriOverlay()" class="ml-1"><i class="fa fa-pencil"></i></a>
     </span>
 </div>

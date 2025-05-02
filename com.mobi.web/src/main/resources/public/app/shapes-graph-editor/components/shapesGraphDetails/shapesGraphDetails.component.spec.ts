@@ -20,27 +20,33 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-
-import { TestBed, ComponentFixture } from '@angular/core/testing';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
-import { DebugElement } from '@angular/core';
+//angular imports
 import { By } from '@angular/platform-browser';
-
-import { cleanStylesFromDOM } from '../../../../../public/test/ts/Shared';
-import { StaticIriLimitedComponent } from '../staticIriLimited/staticIriLimited.component';
-import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
-import { PrefixationPipe } from '../../../shared/pipes/prefixation.pipe';
+import { ComponentFixture, fakeAsync, TestBed, tick} from '@angular/core/testing';
+import { DebugElement } from '@angular/core';
+//third party imports
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
+import { throwError, of } from 'rxjs';
+//mobi + local imports
+import { cleanStylesFromDOM } from '../../../../test/ts/Shared';
+import { OnEditEventI } from '../../../shared/models/onEditEvent.interface';
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
-import { ShapesGraphListItem } from '../../../shared/models/shapesGraphListItem.class';
+import { PrefixationPipe } from '../../../shared/pipes/prefixation.pipe';
 import { ShapesGraphDetailsComponent } from './shapesGraphDetails.component';
+import { ShapesGraphListItem } from '../../../shared/models/shapesGraphListItem.class';
+import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
+import { StaticIriLimitedComponent } from '../staticIriLimited/staticIriLimited.component';
+import { ToastService } from '../../../shared/services/toast.service';
 
 describe('Shapes Graph Details component', function() {
     let component: ShapesGraphDetailsComponent;
     let element: DebugElement;
     let fixture: ComponentFixture<ShapesGraphDetailsComponent>;
     let shapesGraphStateStub: jasmine.SpyObj<ShapesGraphStateService>;
+    let toastStub: jasmine.SpyObj<ToastService>;
+    let iriEditEvent: OnEditEventI;
 
-    beforeEach(async () => {
+    beforeEach(() => {
         TestBed.configureTestingModule({
             imports: [],
             declarations: [
@@ -52,6 +58,7 @@ describe('Shapes Graph Details component', function() {
                 PrefixationPipe,
                 MockProvider(ShapesGraphStateService),
                 MockProvider(OntologyManagerService),
+                MockProvider(ToastService),
             ]
         }).compileComponents();
 
@@ -61,6 +68,15 @@ describe('Shapes Graph Details component', function() {
         shapesGraphStateStub = TestBed.inject(ShapesGraphStateService) as jasmine.SpyObj<ShapesGraphStateService>;
         shapesGraphStateStub.listItem = new ShapesGraphListItem();
         shapesGraphStateStub.listItem.metadata = {'@id': ''};
+        toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
+
+        iriEditEvent = {
+            value: {
+                'iriBegin': 'http://matonto.org/ontologies/uhtc',
+                'iriThen': '/',
+                'iriEnd': 'shapes-graph-test'
+            }
+        };
     });
 
     afterAll(function() {
@@ -69,6 +85,8 @@ describe('Shapes Graph Details component', function() {
         element = null;
         fixture = null;
         shapesGraphStateStub = null;
+        toastStub = null;
+        iriEditEvent = null;
     });
 
     describe('contains the correct html', function() {
@@ -93,6 +111,25 @@ describe('Shapes Graph Details component', function() {
                 shapesGraphStateStub.listItem.metadata = {'@id': '', '@type': ['test', 'test2']};
                 expect(component.getTypes()).toEqual(expected);
             });
+        });
+        describe('onIriEdit functions properly', function() {
+            it('when shapesGraphState.onIriEdit resolves', fakeAsync(() => {
+                shapesGraphStateStub.onIriEdit.and.returnValue(of(null));
+                shapesGraphStateStub.saveCurrentChanges.and.returnValue(of(null));
+                component.onIriEdit(iriEditEvent);
+                tick();
+                expect(shapesGraphStateStub.onIriEdit).toHaveBeenCalledWith('http://matonto.org/ontologies/uhtc', '/', 'shapes-graph-test');
+                expect(shapesGraphStateStub.saveCurrentChanges).toHaveBeenCalledWith();
+            }));
+            it('when shapesGraphState.onIriEdit does not resolve', fakeAsync(function() {
+                shapesGraphStateStub.onIriEdit.and.returnValue(throwError('Test Error'));
+                iriEditEvent.value.iriThen = undefined;
+                component.onIriEdit(iriEditEvent);
+                tick();
+                expect(shapesGraphStateStub.onIriEdit).toHaveBeenCalledWith('http://matonto.org/ontologies/uhtc', undefined, 'shapes-graph-test');
+                expect(shapesGraphStateStub.saveCurrentChanges).not.toHaveBeenCalled();
+                expect(toastStub.createErrorToast).toHaveBeenCalledWith('Test Error');
+            }));
         });
     });
 });

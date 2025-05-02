@@ -98,7 +98,12 @@ const shapesEditorCommands = {
             .page.editorPage()
             .assert.valueEquals('@editorRecordSelectInput', shapes_graph_title)
             .assert.valueEquals('@editorBranchSelectInput', branchTitle);
-    }
+    },
+
+    //TODO placeholder until we consolidate two different spots for editing IRI
+    editIri: function(newIriEnd) {
+        return this.api.page.editorPage().editIri(parentEl, newIriEnd);
+    },
 }
 
 module.exports = {

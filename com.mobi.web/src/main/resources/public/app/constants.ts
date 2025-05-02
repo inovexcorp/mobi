@@ -46,3 +46,5 @@ export const REPOSITORY_STORE_TYPE = 'repository';
 export const DATASET_STORE_TYPE = 'dataset-record';
 
 export const ONTOLOGY_STORE_TYPE = 'ontology-record';
+
+export const SHAPES_STORE_TYPE = 'shapes-graph-record';

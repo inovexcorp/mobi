@@ -100,7 +100,7 @@ describe('Create Data Property Overlay component', function() {
         camelCaseStub = TestBed.inject(CamelCasePipe) as jasmine.SpyObj<CamelCasePipe>;
 
         ontologyStateStub.getDefaultPrefix.and.returnValue(namespace);
-        ontologyStateStub.saveCurrentChanges.and.returnValue(of([]));
+        ontologyStateStub.saveCurrentChanges.and.returnValue(of(null));
         ontologyStateStub.listItem = new OntologyListItem();
     });
 

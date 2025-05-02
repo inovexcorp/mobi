@@ -20,13 +20,23 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Injectable } from '@angular/core';
+//angular imports
 import { HttpResponse } from '@angular/common/http';
-import { find, get, isEmpty, some } from 'lodash';
+import { Injectable } from '@angular/core';
+//third party imports
+import { cloneDeep, find, get, isEmpty, remove, some } from 'lodash';
 import { Observable, of, merge as rxjsMerge, throwError } from 'rxjs';
 import { map, switchMap, tap } from 'rxjs/operators';
-
-import { CATALOG, BRANCHID, COMMITID, GRAPHEDITOR, SHAPESGRAPHEDITOR, SHAPESGRAPHSTATE, TAGID } from '../../prefixes';
+//mobi + local imports
+import {
+  CATALOG,
+  BRANCHID,
+  COMMITID,
+  GRAPHEDITOR,
+  SHAPESGRAPHEDITOR,
+  SHAPESGRAPHSTATE,
+  TAGID
+} from '../../prefixes';
 import { CatalogDetails, VersionedRdfState } from './versionedRdfState.service';
 import { CatalogManagerService } from './catalogManager.service';
 import { Difference } from '../models/difference.class';
@@ -34,17 +44,21 @@ import { EventPayload, EventTypeConstants, EventWithPayload } from '../models/ev
 import { getBeautifulIRI, getDctermsValue, getPropertyId } from '../utility';
 import { JSONLDObject } from '../models/JSONLDObject.interface';
 import { MergeRequestManagerService } from './mergeRequestManager.service';
-import { PolicyEnforcementService } from './policyEnforcement.service';
-import { PolicyManagerService } from './policyManager.service';
 import { RdfDownload } from '../models/rdfDownload.interface';
 import { RdfUpdate } from '../models/rdfUpdate.interface';
 import { RdfUpload } from '../models/rdfUpload.interface';
+import { PolicyEnforcementService } from './policyEnforcement.service';
+import { PolicyManagerService } from './policyManager.service';
 import { RecordSelectFiltered } from '../../versioned-rdf-record-editor/models/record-select-filtered.interface';
 import { SettingManagerService } from './settingManager.service';
 import { ShapesGraphListItem } from '../models/shapesGraphListItem.class';
 import { ShapesGraphManagerService } from './shapesGraphManager.service';
+import { SHAPES_STORE_TYPE } from '../../constants';
+import { SparqlManagerService } from './sparqlManager.service';
+import { SPARQLSelectResults } from '../models/sparqlSelectResults.interface';
 import { StateManagerService } from './stateManager.service';
 import { ToastService } from './toast.service';
+import { UpdateRefsService } from './updateRefs.service';
 import { VersionedRdfStateBase } from '../models/versionedRdfStateBase.interface';
 import { VersionedRdfUploadResponse } from '../models/versionedRdfUploadResponse.interface';
 import { XACMLRequest } from '../models/XACMLRequest.interface';
@@ -66,7 +80,9 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
               protected pep: PolicyEnforcementService,
               private pm: PolicyManagerService,
               private sgm: ShapesGraphManagerService,
-              protected stm: SettingManagerService) {
+              protected stm: SettingManagerService,
+              protected updateRefs: UpdateRefsService,
+              private sparql: SparqlManagerService) {
     super(SHAPESGRAPHSTATE,
       BRANCHID,
       TAGID,
@@ -94,7 +110,7 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
       })
     ).subscribe();
   }
-  // Updates state based on Event type. Handles branch removals and accept merge requests.
+  // Updates state based on the Event type. Handles branch removals and accept merge requests.
   _handleEventWithPayload(eventType: string, payload: EventPayload): Observable<null> {
     if (eventType === EventTypeConstants.EVENT_BRANCH_REMOVAL) {
       return this._handleEventBranchRemoval(payload);
@@ -463,5 +479,78 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
         return of(null);
       })
     );
+  }
+
+  /**
+   * Handles the editing process for an IRI (Internationalized Resource Identifier) and updates related metadata and
+   * references.
+   *
+   * @param {string} iriBegin - The beginning part of the IRI. Must not be null or empty.
+   * @param {string} iriThen - The intermediate part of the IRI. Must not be null or empty.
+   * @param {string} iriEnd - The ending part of the IRI. Must not be null or empty.
+   * @return {Observable<any>} An Observable that completes when all related metadata and references have been updated successfully. Emits an error in case of validation failures or internal errors.
+   */
+  onIriEdit(iriBegin: string, iriThen: string, iriEnd: string): Observable<void> {
+    //checking for IRI structure
+    if (!iriBegin) {
+      return throwError('onIriEdit validation failed for iriBegin');
+    }
+    if (!iriThen) {
+      return throwError('onIriEdit validation failed for iriThen');
+    }
+    if (!iriEnd) {
+      return throwError('onIriEdit validation failed for iriEnd');
+    }
+
+    const newIRI = iriBegin + iriThen + iriEnd;
+    const oldEntity = cloneDeep(this.listItem.metadata);
+    // TODO: Once tabs added make sure this accounts for which tab you are on (either editing shapes graph IRI or node shape IRI)
+    // this.getActivePage().entityIRI = newIRI;
+    if (some(this.listItem.additions, oldEntity)) {
+      remove(this.listItem.additions, oldEntity);
+      this.updateRefs.update(this.listItem, this.listItem.metadata['@id'], newIRI, this._updateRefsExclude);
+      //TODO comment back in and implement when we have hierarchical shapes. Only if needed similarly to ontology editor
+      // this._recalculateJoinedPaths(this.listItem);
+    } else {
+      this.updateRefs.update(this.listItem, this.listItem.metadata['@id'], newIRI, this._updateRefsExclude);
+      //TODO Same thing as above
+      // this._recalculateJoinedPaths(this.listItem);
+      this.addToDeletions(this.listItem.versionedRdfRecord.recordId, oldEntity);
+    }
+
+    if (!this.listItem.versionedRdfRecord.recordId) {
+      return throwError('OnEdit validation failed for recordId');
+    }
+    this.addToAdditions(this.listItem.versionedRdfRecord.recordId, cloneDeep(this.listItem.metadata));
+
+    //retrieves all instances where the oldIRI is the predicate or object of a triple and updates them to the newIRI
+    return this._retrieveUsages(this.listItem, oldEntity['@id']).pipe(map(response => {
+      if (typeof response === 'string') {
+        const statements = JSON.parse(response) as JSONLDObject[];
+        statements.forEach(statement => this.addToDeletions(this.listItem.versionedRdfRecord.recordId, statement));
+        this.updateRefs.update(statements, oldEntity['@id'], newIRI, this._updateRefsExclude);
+        statements.forEach(statement => this.addToAdditions(this.listItem.versionedRdfRecord.recordId, statement));
+      } else {
+        throw new Error('Associated entities were not updated due to an internal error.');
+      }
+    }));
+  }
+
+  private _retrieveUsages(listItem: ShapesGraphListItem, oldIRI:string): Observable<string | SPARQLSelectResults> {
+    const usageQuery = `construct {?s ?p ?o}
+      where {
+          {
+              ?s ?p <${oldIRI}> .
+              bind(<${oldIRI}> as ?o)
+          }
+          union
+          {
+              ?s <${oldIRI}> ?o .
+              bind(<${oldIRI}> as ?p)
+          }
+      } order by ?p ?s ?o`;
+
+    return this.sparql.postQuery(usageQuery, listItem.versionedRdfRecord.recordId, SHAPES_STORE_TYPE,
+      listItem.versionedRdfRecord.branchId, listItem.versionedRdfRecord.commitId, false, false, 'jsonld');
   }
 }

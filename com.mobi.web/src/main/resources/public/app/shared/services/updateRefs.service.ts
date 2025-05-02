@@ -72,7 +72,7 @@ export class UpdateRefsService {
                     });
                 } else if (typeof value === 'object') { // objects need to be updated
                     this._internalUpdate(obj[key], old, fresh, exclude);
-                } else if (value === old) { // change string value if it matches
+                } else if (value === old) { // change value if it matches
                     obj[key] = fresh;
                 }
             }

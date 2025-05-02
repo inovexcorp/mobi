@@ -26,6 +26,13 @@
 .shapes-graph-details {
     padding-bottom: 15px;
 
+    .shapes-graph-heading {
+        .editable-iri {
+            display: inline-block;
+            margin-left: .5rem;
+        }
+    }
+
     .entity-name {
         font-size: 18px;
         word-break: break-word;

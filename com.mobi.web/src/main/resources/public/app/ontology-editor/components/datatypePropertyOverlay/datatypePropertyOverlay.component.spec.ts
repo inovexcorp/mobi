@@ -200,7 +200,7 @@ describe('Datatype Property Overlay component', function() {
                 component.data.propertyValue = 'value';
                 propertyManagerStub.addValue.and.returnValue(true);
                 this.langStringSpy = spyOn(component, 'isLangString').and.returnValue(true);
-                ontologyStateStub.saveCurrentChanges.and.returnValue(of([]));
+                ontologyStateStub.saveCurrentChanges.and.returnValue(of(null));
                 propertyManagerStub.createValueObj.and.returnValue({'@value': ''});
             });
             it('unless it is a duplicate value', function() {
@@ -279,7 +279,7 @@ describe('Datatype Property Overlay component', function() {
                 propertyManagerStub.editValue.and.returnValue(true);
                 this.isLangStringSpy = spyOn(component, 'isLangString').and.returnValue(true);
                 propertyManagerStub.createValueObj.and.returnValue({'@value': 'newValue'});
-                ontologyStateStub.saveCurrentChanges.and.returnValue(of([]));
+                ontologyStateStub.saveCurrentChanges.and.returnValue(of(null));
             });
             it('unless it is a duplicate value', function() {
                 propertyManagerStub.editValue.and.returnValue(false);
