@@ -49,6 +49,8 @@ import { ToastService } from './toast.service';
 import { VersionedRdfStateBase } from '../models/versionedRdfStateBase.interface';
 import { VersionedRdfUploadResponse } from '../models/versionedRdfUploadResponse.interface';
 import { ShapesGraphStateService } from './shapesGraphState.service';
+import { UpdateRefsService } from './updateRefs.service';
+import { SparqlManagerService } from './sparqlManager.service';
 
 describe('Shapes Graph State service', function() {
   let service: ShapesGraphStateService;
@@ -57,13 +59,17 @@ describe('Shapes Graph State service', function() {
   let policyEnforcementStub: jasmine.SpyObj<PolicyEnforcementService>;
   let settingManagerStub: jasmine.SpyObj<SettingManagerService>;
   let shapesGraphManagerStub: jasmine.SpyObj<ShapesGraphManagerService>;
+  let sparqlManagerStub: jasmine.SpyObj<SparqlManagerService>;
+  let updateRefsStub: jasmine.SpyObj<UpdateRefsService>;
   let toastStub: jasmine.SpyObj<ToastService>;
   let _catalogManagerActionSubject: Subject<EventWithPayload>;
   let _mergeRequestManagerActionSubject: Subject<EventWithPayload>;
 
+  let exclusionList: string[] = [];
+
   const error = 'Error Message';
   const catalogId = 'catalog';
-  const file = new File([''], 'filename', { type: 'text/html' });
+  const file = new File([''], 'filename', {type: 'text/html'});
   const uploadResponse: VersionedRdfUploadResponse = {
     recordId: 'recordId',
     branchId: 'branchId',
@@ -72,8 +78,8 @@ describe('Shapes Graph State service', function() {
     shapesGraphId: 'shapesGraphId'
   };
 
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({
+  beforeEach(() => {
+    TestBed.configureTestingModule({
       imports: [
         HttpClientTestingModule
       ],
@@ -86,10 +92,14 @@ describe('Shapes Graph State service', function() {
         MockProvider(ShapesGraphManagerService),
         MockProvider(StateManagerService),
         MockProvider(SettingManagerService),
-        MockProvider(ToastService)
+        MockProvider(ToastService),
+        MockProvider(UpdateRefsService),
+        MockProvider(SparqlManagerService)
       ]
     });
     settingManagerStub = TestBed.inject(SettingManagerService) as jasmine.SpyObj<SettingManagerService>;
+    sparqlManagerStub = TestBed.inject(SparqlManagerService) as jasmine.SpyObj<SparqlManagerService>;
+    updateRefsStub  = TestBed.inject(UpdateRefsService) as jasmine.SpyObj<UpdateRefsService>;
     shapesGraphManagerStub = TestBed.inject(ShapesGraphManagerService) as jasmine.SpyObj<ShapesGraphManagerService>;
     shapesGraphManagerStub.createShapesGraphRecord.and.returnValue(of(uploadResponse));
     policyEnforcementStub = TestBed.inject(PolicyEnforcementService) as jasmine.SpyObj<PolicyEnforcementService>;
@@ -110,16 +120,30 @@ describe('Shapes Graph State service', function() {
     service = TestBed.inject(ShapesGraphStateService);
     service.listItem = new ShapesGraphListItem();
     service.initialize();
+
+    exclusionList = [
+      'element',
+      'usagesElement',
+      'branches',
+      'tags',
+      'failedImports',
+      'openSnackbar',
+      'versionedRdfRecord',
+      'merge',
+      'selectedCommit'
+    ];
   });
   
   afterEach(function() {
     cleanStylesFromDOM();
     service = null;
     toastStub = null;
+    updateRefsStub = null;
     shapesGraphManagerStub = null;
     catalogManagerStub = null;
     policyEnforcementStub = null;
     settingManagerStub = null;
+    sparqlManagerStub = null;
     _catalogManagerActionSubject = null;
     _mergeRequestManagerActionSubject = null;
   });
@@ -173,8 +197,9 @@ describe('Shapes Graph State service', function() {
       service.list.push(tempItem);
 
       expect(service.listItem).toBeUndefined();
-      await service.open(selectedRecord)
-        .subscribe(() => {}, () => fail('Observable should have succeeded'));
+      service.open(selectedRecord)
+        .subscribe(() => {
+        }, () => fail('Observable should have succeeded'));
 
       expect(service.listItem).toEqual(tempItem);
       expect(this.catalogDetailsSpy).not.toHaveBeenCalled();
@@ -182,8 +207,9 @@ describe('Shapes Graph State service', function() {
     describe('when the item is not open and retrieves catalog details', function() {
       it('successfully', async function() {
         spyOn(service, 'updateShapesGraphMetadata').and.returnValue(of(null));
-        await service.open(selectedRecord)
-          .subscribe(() => {}, () => fail('Observable should have succeeded'));
+        service.open(selectedRecord)
+          .subscribe(() => {
+          }, () => fail('Observable should have succeeded'));
         expect(this.catalogDetailsSpy).toHaveBeenCalledWith(selectedRecord.recordId);
         expect(service.listItem.versionedRdfRecord).toEqual({
           title: selectedRecord.title,
@@ -743,5 +769,94 @@ describe('Shapes Graph State service', function() {
       expect(service.listItem.userCanModify).toEqual(false);
       expect(service.listItem.userCanModifyMaster).toEqual(false);
     });
+  });
+  describe('onIriEdit calls the appropriate manager methods', function() {
+    const iriBegin = 'www.example.com/test-record';
+    const iriThen = '/';
+    const iriEnd = 'shapes-test';
+    const newIRI = iriBegin + iriThen + iriEnd;
+    beforeEach(function() {
+      const metadata = {
+        '@id': 'www.example.com/test-record/shapes',
+        '@type': ['http://www.w3.org/2002/07/owl#Ontology'],
+      };
+      service.listItem.versionedRdfRecord.recordId = 'recordId';
+      service.listItem.versionedRdfRecord.branchId = 'branchId';
+      service.listItem.versionedRdfRecord.commitId = 'commitId';
+      service.listItem.metadata = metadata;
+      service.list.push(service.listItem);
+    });
+    it('When there are already additions with the previous IRI', fakeAsync(function() {
+      service.listItem.additions = [{
+        '@id': 'www.example.com/test-record/shapes',
+        '@type': ['http://www.w3.org/2002/07/owl#Ontology'],
+        'http://purl.org/dc/elements/1.1/title': [{'@value': 'UHTC Shapes Graph'}]
+      }];
+      sparqlManagerStub.postQuery.and.returnValue(of('[]'));
+      service.onIriEdit(iriBegin, iriThen, iriEnd).subscribe();
+      tick();
+
+      expect(service.listItem.additions.length).toEqual(1);
+      expect(service.listItem.deletions.length).toEqual(0);
+      expect(sparqlManagerStub.postQuery).toHaveBeenCalledWith(jasmine.any(String), 'recordId', 'shapes-graph-record',
+        'branchId', 'commitId', false, false, 'jsonld');
+      expect(updateRefsStub.update).toHaveBeenCalledWith(service.listItem, 'www.example.com/test-record/shapes',
+        newIRI, exclusionList);
+    }));
+    it('When no usages are found', fakeAsync(function() {
+      sparqlManagerStub.postQuery.and.returnValue(of('[]'));
+      service.onIriEdit(iriBegin, iriThen, iriEnd).subscribe();
+      tick();
+
+      expect(service.listItem.additions.length).toEqual(1);
+      expect(service.listItem.deletions.length).toEqual(1);
+      expect(sparqlManagerStub.postQuery).toHaveBeenCalledWith(jasmine.any(String), 'recordId', 'shapes-graph-record',
+        'branchId', 'commitId', false, false, 'jsonld');
+      expect(updateRefsStub.update).toHaveBeenCalledWith(service.listItem, 'www.example.com/test-record/shapes',
+        newIRI, exclusionList);
+    }));
+    it('When retrieveUsages method throws an error', fakeAsync(function() {
+      spyOn(service, 'addToAdditions');
+      spyOn(service, 'addToDeletions');
+      sparqlManagerStub.postQuery.and.returnValue(throwError('Error'));
+      service.onIriEdit(iriBegin, iriThen, iriEnd)
+        .subscribe(() => fail('Observable should not have resolved'), () => {});
+      tick();
+
+      expect(service.addToAdditions).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, Object.assign({}, service.listItem.metadata));
+      expect(service.addToDeletions).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, Object.assign({}, service.listItem.metadata));
+      expect(sparqlManagerStub.postQuery).toHaveBeenCalledWith(jasmine.any(String), 'recordId', 'shapes-graph-record',
+        'branchId', 'commitId', false, false, 'jsonld');
+      expect(updateRefsStub.update).toHaveBeenCalledWith(service.listItem, 'www.example.com/test-record/shapes',
+        newIRI, exclusionList);
+    }));
+    it('When retrieveUsages method resolves', fakeAsync(function() {
+      const usages = `[ {
+        "@id" : "_:genid-f008989dbffa42c28d08087aacb415c738-464BF00DDBF1492E53EF0EBAD7F08536",
+        "http://www.w3.org/2000/01/rdf-schema#isDefinedBy" : [ {
+          "@id" : "www.example.com/test-record/shapes"
+        } ]
+      }, {
+        "@id" : "http://schema.org/ElementShape",
+        "http://www.w3.org/2000/01/rdf-schema#isDefinedBy" : [ {
+          "@id" : "www.example.com/test-record/shapes"
+        } ]
+      }, {
+        "@id" : "http://schema.org/MaterialShape",
+        "http://www.w3.org/2000/01/rdf-schema#isDefinedBy" : [ {
+          "@id" : "www.example.com/test-record/shapes"
+        } ]
+      } ]`;
+
+      sparqlManagerStub.postQuery.and.returnValue(of(usages));
+      service.onIriEdit(iriBegin, iriThen, iriEnd).subscribe();
+      tick();
+      expect(service.listItem.additions.length).toEqual(4);
+      expect(service.listItem.deletions.length).toEqual(4);
+      expect(sparqlManagerStub.postQuery).toHaveBeenCalledWith(jasmine.any(String), 'recordId', 'shapes-graph-record',
+        'branchId', 'commitId', false, false, 'jsonld');
+      expect(updateRefsStub.update).toHaveBeenCalledWith(service.listItem, 'www.example.com/test-record/shapes',
+        newIRI, exclusionList);
+    }));
   });
 });

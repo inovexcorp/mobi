@@ -88,7 +88,7 @@ describe('Create Annotation Overlay component', function() {
         matDialogRef = TestBed.inject(MatDialogRef) as jasmine.SpyObj<MatDialogRef<CreateAnnotationPropertyOverlayComponent>>;
         ontologyStateServiceStub = TestBed.inject(OntologyStateService) as jasmine.SpyObj<OntologyStateService>;
 
-        ontologyStateServiceStub.saveCurrentChanges.and.returnValue(of([]));
+        ontologyStateServiceStub.saveCurrentChanges.and.returnValue(of(null));
         ontologyStateServiceStub.getDefaultPrefix.and.returnValue(namespace);
         ontologyStateServiceStub.listItem = new OntologyListItem();
     });

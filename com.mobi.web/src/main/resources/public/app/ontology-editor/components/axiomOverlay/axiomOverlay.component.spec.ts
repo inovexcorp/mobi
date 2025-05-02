@@ -230,7 +230,7 @@ describe('Axiom Overlay component', function() {
                 component.values = ['value'];
                 component.axiom = Object.assign({}, axiom);
                 component.expression = 'PropA some ClassA';
-                ontologyStateServiceStub.saveCurrentChanges.and.returnValue(of([]));
+                ontologyStateServiceStub.saveCurrentChanges.and.returnValue(of(null));
                 propertyServiceStub.addId.and.returnValue(true);
             });
             describe('if adding a list', function() {

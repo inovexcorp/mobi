@@ -93,11 +93,11 @@ export class SparqlManagerService {
      * @param {string} storeType The type of store to query
      * @param {string} branchId An optional IRI of a branch if the resourceId is a VersionedRDFRecord
      * @param {string} commitId An optional IRI of a commit if the resourceId is a VersionedRDFRecord
-     * @param {boolean} [includeImports=true] Whether to include imports if the resourceId is a VersionedRDFRecord
-     * @param {boolean} [applyInProgressCommit=true] Whether to apply the InProgessCommit if the resourceId is a
+     * @param {boolean} [includeImports=false] Whether to include imports if the resourceId is a VersionedRDFRecord
+     * @param {boolean} [applyInProgressCommit=false] Whether to apply the InProgessCommit if the resourceId is a
      *      VersionedRDFRecord
      * @param {string} [format='application/json'] The RDF format to return the results in
-     * @param {boolean} isTracked Whether the request should be tracked by the {@link shared.ProgressSpinnerService}
+     * @param {boolean} [isTracked=false] Whether the request should be tracked by the {@link shared.ProgressSpinnerService}
      * @return {Observable} A Observable that resolves to the data from the response or rejects with an
      * error message.
      */

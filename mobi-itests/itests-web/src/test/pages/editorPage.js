@@ -277,7 +277,22 @@ const editorCommands = {
       } else {
           return this.waitForElementNotPresent('app-changes-page');
       }
-    }
+    },
+
+    editIri: function(newIriEnd) {
+        return this.useXpath()
+            .waitForElementVisible('//static-iri//div[contains(@class, "static-ir")]//span//a//i[contains(@class, "fa-pencil")]')
+            .click('//static-iri//div[contains(@class, "static-ir")]//span//a//i[contains(@class, "fa-pencil")]')
+            .waitForElementVisible('//edit-iri-overlay')
+            .waitForElementVisible("//edit-iri-overlay//h1[text() [contains(., 'Edit IRI')]]")
+            .useCss()
+            .pause(1000) // To avoid clashes with autofocusing
+            .setValue('edit-iri-overlay input[name=iriEnd]', newIriEnd)
+            .useXpath()
+            .click("//edit-iri-overlay//button/span[text() [contains(., 'Submit')]]")
+            .waitForElementNotPresent('//edit-iri-overlay')
+            .assert.not.elementPresent("//edit-iri-overlay//button/span[text() [contains(., 'Submit')]]")
+    },
 }
 
 module.exports = {

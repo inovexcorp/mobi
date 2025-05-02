@@ -23,24 +23,25 @@
 
 import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
+
 import { cloneDeep, includes, set } from 'lodash';
 import { MockProvider } from 'ng-mocks';
 import { of, throwError, Observable } from 'rxjs';
 
-import { mockStateManager } from '../../../test/ts/Shared';
 import { CATALOG, DCTERMS } from '../../prefixes';
+import { CatalogManagerService } from './catalogManager.service';
 import { CommitDifference } from '../models/commitDifference.interface';
 import { Difference } from '../models/difference.class';
 import { JSONLDObject } from '../models/JSONLDObject.interface';
-import { State } from '../models/state.interface';
-import { VersionedRdfListItem } from '../models/versionedRdfListItem.class';
-import { CatalogManagerService } from './catalogManager.service';
-import { ToastService } from './toast.service';
-import { StateManagerService } from './stateManager.service';
-import { RecordSelectFiltered } from '../../versioned-rdf-record-editor/models/record-select-filtered.interface';
+import { mockStateManager } from '../../../test/ts/Shared';
 import { RdfDownload } from '../models/rdfDownload.interface';
 import { RdfUpdate } from '../models/rdfUpdate.interface';
 import { RdfUpload } from '../models/rdfUpload.interface';
+import { RecordSelectFiltered } from '../../versioned-rdf-record-editor/models/record-select-filtered.interface';
+import { State } from '../models/state.interface';
+import { StateManagerService } from './stateManager.service';
+import { ToastService } from './toast.service';
+import { VersionedRdfListItem } from '../models/versionedRdfListItem.class';
 import { VersionedRdfUploadResponse } from '../models/versionedRdfUploadResponse.interface';
 import { VersionedRdfState } from './versionedRdfState.service';
 
@@ -116,6 +117,7 @@ describe('Versioned RDF State service', function() {
   let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
   let stateManagerStub;
   let toastStub: jasmine.SpyObj<ToastService>;
+  const error = 'Error message';
   const recordId = 'recordId';
   const branchId = 'branchId';
   const commitId = 'http://test.com#1234567890';
@@ -1740,5 +1742,247 @@ describe('Versioned RDF State service', function() {
     expect(service.listItem).toBeUndefined();
     expect(service.uploadList).toEqual([]);
     expect(service.uploadPending).toEqual(0);
+  });
+  describe('saveCurrentChanges should call the proper methods when', function() {
+    beforeEach(function() {
+      service.listItem = new VersionedRdfListItem();
+      service.listItem.additions = [{'@id': 'add'}];
+      service.listItem.deletions = [{'@id': 'del'}];
+      this.difference = new Difference(service.listItem.additions, service.listItem.deletions);
+    });
+    describe('updateInProgressCommit resolves', function() {
+      beforeEach(function() {
+        catalogManagerStub.updateInProgressCommit.and.returnValue(of(null));
+      });
+      describe('and getInProgressCommit resolves', function() {
+        describe('and inProgressCommit is empty', function() {
+          beforeEach(function() {
+            catalogManagerStub.getInProgressCommit.and.returnValue(of(new Difference()));
+          });
+          describe('and deleteInProgressCommit resolves', function() {
+            beforeEach(function() {
+              catalogManagerStub.deleteInProgressCommit.and.returnValue(of(null));
+            });
+            describe('and getStateByRecordId is empty', function() {
+              beforeEach(function() {
+                spyOn(service, 'getStateByRecordId').and.returnValue(undefined);
+                spyOn(service, 'updateState');
+              });
+              it('and createState resolves', fakeAsync(function() {
+                spyOn(service, 'createState').and.returnValue(of(null));
+                service.saveCurrentChanges()
+                  .subscribe(() => {}, () => {
+                    fail('Observable should have resolved');
+                  });
+                tick();
+                expect(catalogManagerStub.updateInProgressCommit).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, catalogId, this.difference);
+                expect(catalogManagerStub.getInProgressCommit).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, catalogId);
+                expect(service.listItem.inProgressCommit).toEqual(new Difference());
+                expect(service.listItem.additions).toEqual([]);
+                expect(service.listItem.deletions).toEqual([]);
+                expect(catalogManagerStub.deleteInProgressCommit).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, catalogId);
+                expect(service.getStateByRecordId).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId);
+                expect(service.createState).toHaveBeenCalledWith({recordId: service.listItem.versionedRdfRecord.recordId, commitId: service.listItem.versionedRdfRecord.commitId, branchId: service.listItem.versionedRdfRecord.branchId});
+                expect(service.updateState).not.toHaveBeenCalled();
+              }));
+              it('and createState rejects', fakeAsync(function() {
+                spyOn(service, 'createState').and.returnValue(throwError(error));
+                service.saveCurrentChanges()
+                  .subscribe(() => fail('Observable should have rejected'), response => {
+                    expect(response).toEqual(error);
+                  });
+                tick();
+                expect(catalogManagerStub.updateInProgressCommit).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, catalogId, this.difference);
+                expect(catalogManagerStub.getInProgressCommit).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, catalogId);
+                expect(service.listItem.inProgressCommit).toEqual(new Difference());
+                expect(service.listItem.additions).toEqual([]);
+                expect(service.listItem.deletions).toEqual([]);
+                expect(catalogManagerStub.deleteInProgressCommit).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, catalogId);
+                expect(service.getStateByRecordId).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId);
+                expect(service.createState).toHaveBeenCalledWith({recordId: service.listItem.versionedRdfRecord.recordId, commitId: service.listItem.versionedRdfRecord.commitId, branchId: service.listItem.versionedRdfRecord.branchId});
+                expect(service.updateState).not.toHaveBeenCalled();
+              }));
+            });
+            describe('and getStateByRecordId is present', function() {
+              beforeEach(function() {
+                spyOn(service, 'getStateByRecordId').and.returnValue({id: 'id', model: []});
+                spyOn(service, 'createState');
+              });
+              it('and updateState resolves', fakeAsync(function() {
+                spyOn(service, 'updateState').and.returnValue(of(null));
+                service.saveCurrentChanges()
+                  .subscribe(() => {}, () => {
+                    fail('Observable should have resolved');
+                  });
+                tick();
+                expect(catalogManagerStub.updateInProgressCommit).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, catalogId, this.difference);
+                expect(catalogManagerStub.getInProgressCommit).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, catalogId);
+                expect(service.listItem.inProgressCommit).toEqual(new Difference());
+                expect(service.listItem.additions).toEqual([]);
+                expect(service.listItem.deletions).toEqual([]);
+                expect(catalogManagerStub.deleteInProgressCommit).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, catalogId);
+                expect(service.getStateByRecordId).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId);
+                expect(service.createState).not.toHaveBeenCalled();
+                expect(service.updateState).toHaveBeenCalledWith({recordId: service.listItem.versionedRdfRecord.recordId, commitId: service.listItem.versionedRdfRecord.commitId, branchId: service.listItem.versionedRdfRecord.branchId});
+              }));
+              it('and updateState rejects', fakeAsync(function() {
+                spyOn(service, 'updateState').and.returnValue(throwError(error));
+                service.saveCurrentChanges()
+                  .subscribe(() => fail('Observable should have rejected'), response => {
+                    expect(response).toEqual(error);
+                  });
+                tick();
+                expect(catalogManagerStub.updateInProgressCommit).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, catalogId, this.difference);
+                expect(catalogManagerStub.getInProgressCommit).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, catalogId);
+                expect(service.listItem.inProgressCommit).toEqual(new Difference());
+                expect(service.listItem.additions).toEqual([]);
+                expect(service.listItem.deletions).toEqual([]);
+                expect(catalogManagerStub.deleteInProgressCommit).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, catalogId);
+                expect(service.getStateByRecordId).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId);
+                expect(service.createState).not.toHaveBeenCalled();
+                expect(service.updateState).toHaveBeenCalledWith({recordId: service.listItem.versionedRdfRecord.recordId, commitId: service.listItem.versionedRdfRecord.commitId, branchId: service.listItem.versionedRdfRecord.branchId });
+              }));
+            });
+          });
+          it('and deleteInProgressCommit rejects', fakeAsync(function() {
+            spyOn(service, 'getStateByRecordId');
+            spyOn(service, 'createState');
+            spyOn(service, 'updateState');
+            catalogManagerStub.deleteInProgressCommit.and.returnValue(throwError(error));
+            service.saveCurrentChanges()
+              .subscribe(() => fail('Observable should have rejected'), response => {
+                expect(response).toEqual(error);
+              });
+            tick();
+            expect(catalogManagerStub.updateInProgressCommit).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, catalogId, this.difference);
+            expect(catalogManagerStub.getInProgressCommit).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, catalogId);
+            expect(service.listItem.inProgressCommit).toEqual(new Difference());
+            expect(service.listItem.additions).toEqual([]);
+            expect(service.listItem.deletions).toEqual([]);
+            expect(catalogManagerStub.deleteInProgressCommit).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, catalogId);
+            expect(service.getStateByRecordId).not.toHaveBeenCalled();
+            expect(service.createState).not.toHaveBeenCalled();
+            expect(service.updateState).not.toHaveBeenCalled();
+          }));
+        });
+        describe('and inProgressCommit has changes', function() {
+          beforeEach(function() {
+            catalogManagerStub.getInProgressCommit.and.returnValue(of(this.difference));
+          });
+          describe('and getStateByRecordId is empty', function() {
+            beforeEach(function() {
+              spyOn(service, 'getStateByRecordId').and.returnValue(undefined);
+              spyOn(service, 'updateState');
+            });
+            it('and createState resolves', fakeAsync(function() {
+              spyOn(service, 'createState').and.returnValue(of(null));
+              service.saveCurrentChanges()
+                .subscribe(() => {}, () => {
+                  fail('Observable should have resolved');
+                });
+              tick();
+              expect(catalogManagerStub.updateInProgressCommit).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, catalogId, this.difference);
+              expect(catalogManagerStub.getInProgressCommit).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, catalogId);
+              expect(service.listItem.inProgressCommit).toEqual(this.difference);
+              expect(service.listItem.additions).toEqual([]);
+              expect(service.listItem.deletions).toEqual([]);
+              expect(catalogManagerStub.deleteInProgressCommit).not.toHaveBeenCalled();
+              expect(service.getStateByRecordId).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId);
+              expect(service.createState).toHaveBeenCalledWith({recordId: service.listItem.versionedRdfRecord.recordId, commitId: service.listItem.versionedRdfRecord.commitId, branchId: service.listItem.versionedRdfRecord.branchId});
+              expect(service.updateState).not.toHaveBeenCalled();
+            }));
+            it('and createState rejects', fakeAsync(function() {
+              spyOn(service, 'createState').and.returnValue(throwError(error));
+              service.saveCurrentChanges()
+                .subscribe(() => fail('Observable should have rejected'), response => {
+                  expect(response).toEqual(error);
+                });
+              tick();
+              expect(catalogManagerStub.updateInProgressCommit).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, catalogId, this.difference);
+              expect(catalogManagerStub.getInProgressCommit).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, catalogId);
+              expect(service.listItem.inProgressCommit).toEqual(this.difference);
+              expect(service.listItem.additions).toEqual([]);
+              expect(service.listItem.deletions).toEqual([]);
+              expect(catalogManagerStub.deleteInProgressCommit).not.toHaveBeenCalled();
+              expect(service.getStateByRecordId).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId);
+              expect(service.createState).toHaveBeenCalledWith({recordId: service.listItem.versionedRdfRecord.recordId, commitId: service.listItem.versionedRdfRecord.commitId, branchId: service.listItem.versionedRdfRecord.branchId});
+              expect(service.updateState).not.toHaveBeenCalled();
+            }));
+          });
+          describe('and getStateByRecordId is present', function() {
+            beforeEach(function() {
+              spyOn(service, 'getStateByRecordId').and.returnValue({id: 'id', model: []});
+              spyOn(service, 'createState');
+            });
+            it('and updateState resolves', fakeAsync(function() {
+              spyOn(service, 'updateState').and.returnValue(of(null));
+              service.saveCurrentChanges()
+                .subscribe(() => {}, () => {
+                  fail('Observable should have resolved');
+                });
+              tick();
+              expect(catalogManagerStub.updateInProgressCommit).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, catalogId, this.difference);
+              expect(catalogManagerStub.getInProgressCommit).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, catalogId);
+              expect(service.listItem.inProgressCommit).toEqual(this.difference);
+              expect(service.listItem.additions).toEqual([]);
+              expect(service.listItem.deletions).toEqual([]);
+              expect(catalogManagerStub.deleteInProgressCommit).not.toHaveBeenCalled();
+              expect(service.getStateByRecordId).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId);
+              expect(service.createState).not.toHaveBeenCalled();
+              expect(service.updateState).toHaveBeenCalledWith({recordId: service.listItem.versionedRdfRecord.recordId, commitId: service.listItem.versionedRdfRecord.commitId, branchId: service.listItem.versionedRdfRecord.branchId});
+            }));
+            it('and updateState rejects', fakeAsync(function() {
+              spyOn(service, 'updateState').and.returnValue(throwError(error));
+              service.saveCurrentChanges()
+                .subscribe(() => fail('Observable should have rejected'), response => {
+                  expect(response).toEqual(error);
+                });
+              tick();
+              expect(catalogManagerStub.updateInProgressCommit).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, catalogId, this.difference);
+              expect(catalogManagerStub.getInProgressCommit).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, catalogId);
+              expect(service.listItem.inProgressCommit).toEqual(this.difference);
+              expect(service.listItem.additions).toEqual([]);
+              expect(service.listItem.deletions).toEqual([]);
+              expect(catalogManagerStub.deleteInProgressCommit).not.toHaveBeenCalled();
+              expect(service.getStateByRecordId).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId);
+              expect(service.createState).not.toHaveBeenCalled();
+              expect(service.updateState).toHaveBeenCalledWith({recordId: service.listItem.versionedRdfRecord.recordId, commitId: service.listItem.versionedRdfRecord.commitId, branchId: service.listItem.versionedRdfRecord.branchId});
+            }));
+          });
+        });
+      });
+      it('when getInProgressCommit rejects', fakeAsync(function() {
+        spyOn(service, 'getStateByRecordId');
+        spyOn(service, 'createState');
+        spyOn(service, 'updateState');
+        catalogManagerStub.getInProgressCommit.and.returnValue(throwError(error));
+        service.saveCurrentChanges()
+          .subscribe(() => fail('Observable should have rejected'), response => {
+            expect(response).toEqual(error);
+          });
+        tick();
+        expect(catalogManagerStub.updateInProgressCommit).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, catalogId, this.difference);
+        expect(catalogManagerStub.getInProgressCommit).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, catalogId);
+        expect(service.getStateByRecordId).not.toHaveBeenCalled();
+        expect(service.createState).not.toHaveBeenCalled();
+        expect(service.updateState).not.toHaveBeenCalled();
+      }));
+    });
+    it('updateInProgressCommit rejects', fakeAsync(function() {
+      spyOn(service, 'getStateByRecordId');
+      spyOn(service, 'createState');
+      spyOn(service, 'updateState');
+      catalogManagerStub.updateInProgressCommit.and.returnValue(throwError(error));
+      service.saveCurrentChanges()
+        .subscribe(() => fail('Observable should have rejected'), response => {
+          expect(response).toEqual(error);
+        });
+      tick();
+      expect(catalogManagerStub.updateInProgressCommit).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, catalogId, this.difference);
+      expect(catalogManagerStub.getInProgressCommit).not.toHaveBeenCalled();
+      expect(service.getStateByRecordId).not.toHaveBeenCalled();
+      expect(service.createState).not.toHaveBeenCalled();
+      expect(service.updateState).not.toHaveBeenCalled();
+    }));
   });
 });

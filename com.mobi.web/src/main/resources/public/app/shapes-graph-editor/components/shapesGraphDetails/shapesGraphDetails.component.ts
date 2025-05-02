@@ -20,12 +20,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { join, orderBy, map, get } from 'lodash';
 import { Component } from '@angular/core';
+import { get, join, map, orderBy } from 'lodash';
 
-import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
-import { PrefixationPipe } from '../../../shared/pipes/prefixation.pipe';
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
+import { OnEditEventI } from '../../../shared/models/onEditEvent.interface';
+import { PrefixationPipe } from '../../../shared/pipes/prefixation.pipe';
+import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
+import { ToastService } from '../../../shared/services/toast.service';
 
 /**
  * @class shapes-graph-editor.SelectedDetailsComponent
@@ -45,13 +47,21 @@ import { OntologyManagerService } from '../../../shared/services/ontologyManager
 })
 export class ShapesGraphDetailsComponent {
 
-    constructor(public state: ShapesGraphStateService, public om: OntologyManagerService, private prefixation: PrefixationPipe) {}
+    constructor(public state: ShapesGraphStateService, public om: OntologyManagerService, 
+      private _prefixation: PrefixationPipe, private _toast: ToastService) {}
 
     getTypes(): string {
         return join(orderBy(
                 map(get(this.state.listItem.metadata, '@type', []), t => { 
-                    return this.prefixation.transform(t);
+                    return this._prefixation.transform(t);
                 })
         ), ', ');
+    }
+
+    onIriEdit(event: OnEditEventI): void {
+      this.state.onIriEdit(event.value.iriBegin, event.value.iriThen, event.value.iriEnd)
+        .subscribe(() => {
+            this.state.saveCurrentChanges().subscribe();
+        }, error => this._toast.createErrorToast(error));
     }
 }

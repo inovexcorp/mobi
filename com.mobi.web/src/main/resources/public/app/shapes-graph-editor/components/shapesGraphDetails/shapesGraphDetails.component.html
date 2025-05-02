@@ -23,7 +23,10 @@
 <div class="shapes-graph-details">
     <div class="shapes-graph-heading">
         <span class="entity-name">{{om.getEntityName(state.listItem.metadata)}} </span>
-        <static-iri-limited class="editable-iri" [iri]="state.listItem.shapesGraphId"></static-iri-limited>
+        <static-iri-limited class="editable-iri" 
+            [iri]="state.listItem.shapesGraphId"
+            [canModify]="state.canModify()"
+            (onEdit)="onIriEdit($event)"></static-iri-limited>
     </div>
     <p *ngIf="state.listItem.metadata['@type'].length" class="type-wrapper entity-types">
         <span class="type-label">Type(s):</span>

@@ -21,7 +21,7 @@
  * #L%
  */
 import { HttpResponse } from '@angular/common/http';
-import { cloneDeep, concat, find, get, head, includes, isEmpty, remove } from 'lodash';
+import { cloneDeep, concat, find, get, head, includes, isEmpty, isEqual, join, mergeWith, remove } from 'lodash';
 import { Observable, of, throwError } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
 import { v4 } from 'uuid';
@@ -36,7 +36,7 @@ import { VersionedRdfStateBase } from '../models/versionedRdfStateBase.interface
 import { CatalogManagerService } from './catalogManager.service';
 import { StateManagerService } from './stateManager.service';
 import { ToastService } from './toast.service';
-import { condenseCommitId, getPropertyId } from '../utility';
+import { condenseCommitId, getPropertyId, mergingArrays } from '../utility';
 import { RecordSelectFiltered } from '../../versioned-rdf-record-editor/models/record-select-filtered.interface';
 import { RdfDownload } from '../models/rdfDownload.interface';
 import { RdfUpdate } from '../models/rdfUpdate.interface';
@@ -84,6 +84,24 @@ export abstract class VersionedRdfState<T extends VersionedRdfListItem> {
      * The IRI of the catalog all the VersionedRDFRecords are associated with.
      */
     protected catalogId: string;
+    /**
+     * A list of reference keys to be excluded from update operations.
+     * This array contains the names of properties that should not
+     * be considered when performing reference updates in a system or application.
+     *
+     * @type {string[]}
+     */
+    protected _updateRefsExclude: string[] = [
+        'element',
+        'usagesElement',
+        'branches',
+        'tags',
+        'failedImports',
+        'openSnackbar',
+        'versionedRdfRecord',
+        'merge',
+        'selectedCommit'
+    ];
 
     /**
      * The IRI string of the type of VersionedRDFRecord.
@@ -682,5 +700,95 @@ export abstract class VersionedRdfState<T extends VersionedRdfListItem> {
       this.listItem = undefined;
       this.uploadList = [];
       this.uploadPending = 0;
+    }
+    /**
+     * Adds the provided JSON-LD to the additions of the open {@link VersionedRdfListItem} associated with the provided
+     * record IRI before it is saved to the user's In Progress Commit.
+     * 
+     * @param {string} recordId The Record IRI of an open listItem
+     * @param {JSONLDObject} json The JSON-LD to add to the additions of a listItem
+     */
+    addToAdditions(recordId: string, json: JSONLDObject): void {
+      this._addToInProgress(recordId, json, true);
+    }
+    /**
+     * Adds the provided JSON-LD to the deletions of the open {@link VersionedRdfListItem} associated with the provided
+     * record IRI before it is saved to the user's In Progress Commit.
+     *
+     * @param {string} recordId The Record IRI of an open listItem
+     * @param {JSONLDObject} json The JSON-LD to add to the deletions of a listItem
+     */
+    addToDeletions(recordId: string, json: JSONLDObject): void {
+      this._addToInProgress(recordId, json, false);
+    }
+    /**
+     * Saves the additions and deletions on the provided {@link VersionedRdfListItem} to the current user's 
+     * InProgressCommit.
+     * 
+     * @returns {Observable<null>} An Observable indicating the success of the save
+     */
+    saveCurrentChanges(listItem: T = this.listItem): Observable<null> {
+      const difference = new Difference();
+      difference.additions = listItem.additions;
+      difference.deletions = listItem.deletions;
+      return this.cm.updateInProgressCommit(listItem.versionedRdfRecord.recordId, this.catalogId, difference).pipe(
+        switchMap(() => this.cm.getInProgressCommit(listItem.versionedRdfRecord.recordId, this.catalogId)),
+        switchMap((inProgressCommit: Difference) => {
+          listItem.inProgressCommit = inProgressCommit;
+          listItem.additions = [];
+          listItem.deletions = [];
+          return isEqual(inProgressCommit, new Difference()) ?
+            this.cm.deleteInProgressCommit(listItem.versionedRdfRecord.recordId, this.catalogId) :
+            of(null);
+        }),
+        switchMap(() => {
+          if (isEmpty(this.getStateByRecordId(listItem.versionedRdfRecord.recordId))) {
+            return this.createState({
+              recordId: listItem.versionedRdfRecord.recordId,
+              commitId: listItem.versionedRdfRecord.commitId,
+              branchId: listItem.versionedRdfRecord.branchId
+            });
+          } else {
+            return this.updateState({
+              recordId: listItem.versionedRdfRecord.recordId,
+              commitId: listItem.versionedRdfRecord.commitId,
+              branchId: listItem.versionedRdfRecord.branchId
+            });
+          }
+        })
+      );
+    }
+
+    /* Private helper functions */
+    /**
+     * Adds the provided RDF in the form of a {@link JSONLDObject} to either the additions or deletions array of the
+     * {@link VersionedRdfListItem} corresponding to the provided record ID.
+     * 
+     * @param {string} recordId The IRI of the Record to receive the additions or deletions
+     * @param {JSONLDObject} json The RDF to add to the additions/deletions.
+     * @param {boolean} isAdditions Whether the RDF should be added to the additions array. Will be added to the
+     *    deletions array otherwise
+     */
+    private _addToInProgress(recordId: string, json: JSONLDObject, isAdditions: boolean): void {
+      const prop = isAdditions ? 'additions' : 'deletions';
+      const listItem = this.getListItemByRecordId(recordId);
+      const entity = find(listItem[prop], {'@id': json['@id']});
+      const filteredJson = cloneDeep(json);
+      if (entity) {
+        mergeWith(entity, filteredJson, mergingArrays);
+      } else  {
+        listItem[prop].push(filteredJson);
+      }
+    }
+
+    /**
+     * Joins the provided path to an entity in a hierarchy represented by the array of strings into a single string,
+     * joined with `.`.
+     *
+     * @param {string[]} path The path of entities to join
+     * @returns {string} A single string with the joined path
+     */
+    joinPath(path: string[]): string {
+        return join(path, '.');
     }
 }

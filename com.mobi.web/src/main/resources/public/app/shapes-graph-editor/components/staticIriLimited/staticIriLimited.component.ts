@@ -20,8 +20,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { OnChanges, OnInit, Component, Input, SimpleChanges } from '@angular/core';
+import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
 
+import { EditIriOverlayComponent } from '../../../shared/components/editIriOverlay/editIriOverlay.component';
+import { EditIriOverlayData } from '../../../shared/models/editIriOverlayData.interface';
+import { OnEditEventI } from '../../../shared/models/onEditEvent.interface';
 import { splitIRI } from '../../../shared/pipes/splitIRI.pipe';
 
 /**
@@ -36,30 +40,48 @@ import { splitIRI } from '../../../shared/pipes/splitIRI.pipe';
     selector: 'static-iri-limited',
     templateUrl: './staticIriLimited.component.html'
 })
-export class StaticIriLimitedComponent implements OnInit, OnChanges {
+export class StaticIriLimitedComponent {
+  private _iri = '';
 
-    @Input() iri;
+  iriBegin = '';
+  iriThen = '';
+  iriEnd = '';
 
-    iriBegin;
-    iriThen;
-    iriEnd;
+  @Input() canModify = false;
+  @Input() readOnly = false;
 
-    constructor() {}
+  @Input() set iri(value: string) {
+    this._iri = value;
+    this.setVariables();
+  }
 
-    ngOnInit(): void {
-        this.setVariables();
+  get iri(): string {
+    return this._iri;
+  }
+
+  @Output() onEdit = new EventEmitter<OnEditEventI | boolean>();
+
+  constructor(private _dialog: MatDialog) {}
+
+  setVariables(): void {
+    if (this.iri) {
+      const splitIri = splitIRI(this.iri);
+      this.iriBegin = splitIri.begin;
+      this.iriThen = splitIri.then;
+      this.iriEnd = splitIri.end;
     }
+  }
 
-    ngOnChanges(changesObj: SimpleChanges): void {
-        if (!changesObj.iri || !changesObj.iri.isFirstChange()) {
-            this.setVariables();
-        }
-    }
-
-    setVariables(): void {
-        const splitIri = splitIRI(this.iri);
-        this.iriBegin = splitIri.begin;
-        this.iriThen = splitIri.then;
-        this.iriEnd = splitIri.end;
-    }
+  showEditIriOverlay(): void {
+    const dataObj: EditIriOverlayData = {
+      iriBegin: this.iriBegin,
+      iriThen: this.iriThen,
+      iriEnd: this.iriEnd,
+    };
+    this._dialog.open(EditIriOverlayComponent, { data: dataObj }).afterClosed().subscribe((result: OnEditEventI) => {
+      if (result) {
+        this.onEdit.emit(result);
+      }
+    });
+  }
 }

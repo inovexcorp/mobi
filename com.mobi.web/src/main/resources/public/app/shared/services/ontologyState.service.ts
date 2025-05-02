@@ -42,14 +42,12 @@ import {
     initial,
     intersection,
     isEmpty,
-    isEqual,
     isObject,
     join,
     keys,
     lowerCase,
     mapValues,
     merge,
-    mergeWith,
     omit,
     pull,
     remove,
@@ -100,7 +98,7 @@ import { ManchesterConverterService } from './manchesterConverter.service';
 import { PropertyManagerService } from './propertyManager.service';
 import { UpdateRefsService } from './updateRefs.service';
 import { YasguiQuery } from '../models/yasguiQuery.class';
-import { getBeautifulIRI, getDctermsValue, getIRINamespace, getPropertyId, isBlankNodeId, mergingArrays } from '../utility';
+import { getBeautifulIRI, getDctermsValue, getIRINamespace, getPropertyId, isBlankNodeId } from '../utility';
 import { SPARQLSelectBinding } from '../models/sparqlSelectResults.interface';
 import { MergeRequestManagerService } from './mergeRequestManager.service';
 import { EventPayload, EventTypeConstants, EventWithPayload } from '../models/eventWithPayload.interface';
@@ -121,18 +119,6 @@ import { XACMLRequest } from '../models/XACMLRequest.interface';
 @Injectable()
 export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
     type = `${ONTOLOGYEDITOR}OntologyRecord`;
-  
-    private _updateRefsExclude = [
-        'element',
-        'usagesElement',
-        'branches',
-        'tags',
-        'failedImports',
-        'openSnackbar',
-        'versionedRdfRecord',
-        'merge',
-        'selectedCommit'
-    ];
 
     // Static lists of SKOS vocabulary related IRIs
     static broaderRelations = [
@@ -897,26 +883,6 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
         return this.getEntity(entityIRI, listItem).pipe(map(arr => find(arr, {'@id': entityIRI})));
     }
     /**
-     * Adds the provided JSON-LD to the additions of the open {@link OntologyListItem} associated with the provided
-     * record IRI before it is saved to the user's In Progress Commit.
-     * 
-     * @param {string} recordId The Record IRI of an open listItem
-     * @param {JSONLDObject} json The JSON-LD to add to the additions of a listItem
-     */
-    addToAdditions(recordId: string, json: JSONLDObject): void {
-        this._addToInProgress(recordId, json, 'additions');
-    }
-    /**
-     * Adds the provided JSON-LD to the deletions of the open {@link OntologyListItem} associated with the provided
-     * record IRI before it is saved to the user's In Progress Commit.
-     *
-     * @param {string} recordId The Record IRI of an open listItem
-     * @param {JSONLDObject} json The JSON-LD to add to the deletions of a listItem
-     */
-    addToDeletions(recordId: string, json: JSONLDObject): void {
-        this._addToInProgress(recordId, json, 'deletions');
-    }
-    /**
      * Sets the opened status of the no domains folder of the everything tree on the current {@link OntologyListItem}.
      * Meant to be
      * used for a {@link HierarchyNode}.
@@ -1289,11 +1255,11 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
         }
     }
     /**
-     * Get the page state object of the active page of the provided {@link OntologyListItem}.
+     * Get the page state object representing the active page of the provided {@link OntologyListItem}.
      * 
-     * @param {OntologyListItem} listItem The optional listItem to get the active page of. Otherwise uses the currently
+     * @param {OntologyListItem} listItem The optional listItem to get the active page of. Otherwise, uses the currently
      *    selected item
-     * @param {number} [tabIndex=undefined] The optional index of the page to retrieve. Otherwise uses the active one 
+     * @param {number} [tabIndex=undefined] The optional index of the page to retrieve. Otherwise, uses the active one
      * @returns {any} The currently selected page state object of the provided listItem
      */
     getActivePage(listItem: OntologyListItem = this.listItem, tabIndex: number = undefined): any {
@@ -1498,16 +1464,7 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
         }
         
     }
-    /**
-     * Joins the provided path to an entity in a hierarchy represented by the array of strings into a single string,
-     * joined with `.`.
-     * 
-     * @param {string[]} path The path of entities to join
-     * @returns {string} A single string with the joined path
-     */
-    joinPath(path: string[]): string {
-        return join(path, '.');
-    }
+
     /**
      * Updates the currently selected {@link OntologyListItem} to view the entity identified by the provided IRI.
      * Updates the selected tab in the editor and all required variables in order to view the details of the entity.
@@ -1758,7 +1715,7 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
     }
     /**
      * Method to recalculate the 'joinedPath' field on each of the nodes of the flat lists in the provided
-     * {@link OntologyListItem}. If the recalculated  value differs from the previous value, the editorTabStates on the
+     * {@link OntologyListItem}. If the recalculated value differs from the previous value, the editorTabStates on the
      * listItem are adjusted accordingly for that joinedPath.
      *
      * @param {OntologyListItem} [listItem=listItem] The listItem to execute these actions against
@@ -2204,43 +2161,17 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
         return !!this.existsInListItem(id, this.listItem) && !isBlankNodeId(id);
     }
     /**
-     * Saves the additions and deletions on the provided {@link OntologyListItem} to the current user's InProgressCommit.
+     * Saves the additions and deletions on the provided {@link OntologyListItem} to the current user's
+     * InProgressCommit. After saving, will reset all the entity usages across all tabs.
      * 
      * @returns {Observable<null>} An Observable indicating the success of the save
      */
-    saveCurrentChanges(listItem: OntologyListItem = this.listItem): Observable<unknown> {
-      const difference = new Difference();
-      difference.additions = listItem.additions;
-      difference.deletions = listItem.deletions;
-      return this.cm.updateInProgressCommit(listItem.versionedRdfRecord.recordId, this.catalogId, difference).pipe(
-        switchMap(() => this.cm.getInProgressCommit(listItem.versionedRdfRecord.recordId, this.catalogId)),
-        switchMap((inProgressCommit: Difference) => {
-          listItem.inProgressCommit = inProgressCommit;
-          listItem.additions = [];
-          listItem.deletions = [];
-          return isEqual(inProgressCommit, new Difference()) ?
-              this.cm.deleteInProgressCommit(listItem.versionedRdfRecord.recordId, this.catalogId) :
-              of(null);
-        }),
-        switchMap(() => {
-          forOwn(listItem.editorTabStates, value => {
-            unset(value, 'usages');
-          });
-          if (isEmpty(this.getStateByRecordId(listItem.versionedRdfRecord.recordId))) {
-            return this.createState({
-                recordId: listItem.versionedRdfRecord.recordId,
-                commitId: listItem.versionedRdfRecord.commitId,
-                branchId: listItem.versionedRdfRecord.branchId
-            });
-          } else {
-            return this.updateState({
-                recordId: listItem.versionedRdfRecord.recordId,
-                commitId: listItem.versionedRdfRecord.commitId,
-                branchId: listItem.versionedRdfRecord.branchId
-            });
-          }
-        }),
+    saveCurrentChanges(listItem: OntologyListItem = this.listItem): Observable<null> {
+      return super.saveCurrentChanges(listItem).pipe(
         tap(() => {
+            forOwn(listItem.editorTabStates, value => {
+                unset(value, 'usages');
+            });
             const entityIRI = this.getActiveEntityIRI(listItem);
             const activeKey = this.getActiveKey(listItem);
             if (activeKey !== 'project' && activeKey !== 'individuals' && entityIRI) {
@@ -2722,16 +2653,6 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
             return;
         }
         return get(listItem.entityInfo, entityIRI, undefined);
-    }
-    private _addToInProgress(recordId: string, json: JSONLDObject, prop: string): void {
-        const listItem = this.getListItemByRecordId(recordId);
-        const entity = find(listItem[prop], {'@id': json['@id']});
-        const filteredJson = cloneDeep(json);
-        if (entity) {
-            mergeWith(entity, filteredJson, mergingArrays);
-        } else  {
-            listItem[prop].push(filteredJson);
-        }
     }
     private _addImportedOntologyToListItem(listItem: OntologyListItem, importedOntObj: {id: string, ontologyId: string}): void {
         const importedOntologyListItem = {

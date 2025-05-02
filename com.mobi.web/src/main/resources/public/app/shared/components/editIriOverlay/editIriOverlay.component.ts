@@ -23,10 +23,11 @@
 
 import { Component, Inject, OnInit } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { UntypedFormBuilder, ValidatorFn, Validators } from '@angular/forms';
+import { UntypedFormBuilder, Validators } from '@angular/forms';
 
-import { REGEX } from '../../../constants';
+import { EditIriOverlayData } from '../../models/editIriOverlayData.interface';
 import { OnEditEventI } from '../../models/onEditEvent.interface';
+import { REGEX } from '../../../constants';
 
 /**
  * @class shared.EditIriOverlayComponent
@@ -46,7 +47,6 @@ import { OnEditEventI } from '../../models/onEditEvent.interface';
  * function to a boolean where true means the IRI is invalid.
  * @param {Function} resolve.customValidation.msg The error message for when the custom validation fails
  */
-
 @Component({
     selector: 'edit-iri-overlay',
     templateUrl: './editIriOverlay.component.html'
@@ -54,7 +54,7 @@ import { OnEditEventI } from '../../models/onEditEvent.interface';
 export class EditIriOverlayComponent implements OnInit {
 
     constructor(private dialogRef: MatDialogRef<EditIriOverlayComponent, OnEditEventI | boolean>, 
-                @Inject(MAT_DIALOG_DATA) public data: { iriBegin: string, iriThen: string, iriEnd: string, validator?: ValidatorFn, validatorMsg?: string, validatorKey?: string},
+                @Inject(MAT_DIALOG_DATA) public data: EditIriOverlayData,
                 private fb: UntypedFormBuilder) {}
 
     namespacePattern = REGEX.IRI;
