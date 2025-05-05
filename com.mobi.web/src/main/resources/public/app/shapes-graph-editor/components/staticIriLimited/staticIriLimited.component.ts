@@ -38,7 +38,8 @@ import { splitIRI } from '../../../shared/pipes/splitIRI.pipe';
 
 @Component({
     selector: 'static-iri-limited',
-    templateUrl: './staticIriLimited.component.html'
+    templateUrl: './staticIriLimited.component.html',
+    styleUrls: ['./staticIriLimited.component.scss'],
 })
 export class StaticIriLimitedComponent {
   private _iri = '';

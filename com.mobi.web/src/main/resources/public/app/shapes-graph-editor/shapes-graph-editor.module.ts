@@ -23,12 +23,14 @@
 import { NgModule } from '@angular/core';
 
 import { SharedModule } from '../shared/shared.module';
-import { ShapesGraphEditorPageComponent } from './components/shapesGraphEditorPage/shapesGraphEditorPage.component';
 import { ShapesGraphDetailsComponent } from './components/shapesGraphDetails/shapesGraphDetails.component';
-import { StaticIriLimitedComponent } from './components/staticIriLimited/staticIriLimited.component';
+import { ShapesGraphEditorPageComponent } from './components/shapesGraphEditorPage/shapesGraphEditorPage.component';
 import { ShapesGraphPropertiesBlockComponent } from './components/shapesGraphPropertiesBlock/shapesGraphPropertiesBlock.component';
 import { ShapesGraphPropertyValuesComponent } from './components/shapesGraphPropertyValues/shapesGraphPropertyValues.component';
-import { YateComponent } from './components/yate/yate.component';
+import { ShapesPreviewComponent } from './components/shapes-preview/shapes-preview.component';
+import { ShapesTabsHolderComponent } from './components/shapes-tabs-holder/shapes-tabs-holder.component';
+import { ShapesProjectTabComponent } from './components/shapes-project-tab/shapes-project-tab.component';
+import { StaticIriLimitedComponent } from './components/staticIriLimited/staticIriLimited.component';
 import { VersionedRdfRecordEditorModule } from '../versioned-rdf-record-editor/versioned-rdf-record-editor.module';
 
 /**
@@ -39,7 +41,7 @@ import { VersionedRdfRecordEditorModule } from '../versioned-rdf-record-editor/v
  @NgModule({
      imports: [
         SharedModule,
-        VersionedRdfRecordEditorModule
+        VersionedRdfRecordEditorModule,
      ],
     declarations: [
         ShapesGraphDetailsComponent,
@@ -47,7 +49,9 @@ import { VersionedRdfRecordEditorModule } from '../versioned-rdf-record-editor/v
         ShapesGraphPropertiesBlockComponent,
         ShapesGraphPropertyValuesComponent,
         StaticIriLimitedComponent,
-        YateComponent,
+        ShapesPreviewComponent,
+        ShapesTabsHolderComponent,
+        ShapesProjectTabComponent,
     ],
     providers: []
 })

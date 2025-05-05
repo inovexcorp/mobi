@@ -54,7 +54,7 @@ public class SimpleShapesGraph implements ShapesGraph {
             WHERE {
                 ?s ?p ?o .
                 FILTER (?s != <%IRI%>)
-            }
+            } LIMIT 5000
             """;
     private static final String IRI_REPLACE = "%IRI%";
 

@@ -23,6 +23,12 @@
 /* Core variables */
 @import "../../../css/variables";
 
-.yate {
+.shapes-preview {
+  .mat-card-header {
+    justify-content: end;
+  }
+
+  .yate {
     height: 100% !important;
+  }
 }

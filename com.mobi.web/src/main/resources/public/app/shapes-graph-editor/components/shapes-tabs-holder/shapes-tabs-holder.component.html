@@ -1,0 +1,41 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 - 2025 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="shapes-tab-holder h-100">
+    <div class="main-tabs h-100">
+        <mat-tab-group #tabsGroup dynamicHeight="true" class="h-100"
+                       [(selectedIndex)]="state.listItem.tabIndex"
+                       (selectedTabChange)="onTabChanged($event)">
+            <mat-tab label="Project">
+                <ng-template matTabContent>
+                    <app-shapes-project-tab></app-shapes-project-tab>
+                </ng-template>
+            </mat-tab>
+            <mat-tab label="Node Shapes">
+                <ng-template matTabContent>
+                    <!--TODO Below is for testing purposes. Remove or Rework upon review or next ticket respectively-->
+                    <div class="node-display">Node Shapes Coming Soon!</div>
+                </ng-template>
+            </mat-tab>
+        </mat-tab-group>
+    </div>
+</div>

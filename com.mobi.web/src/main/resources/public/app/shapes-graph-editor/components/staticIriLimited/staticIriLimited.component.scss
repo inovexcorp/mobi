@@ -20,13 +20,25 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import {ValidatorFn} from '@angular/forms';
+.static-iri-limited{
+  padding-bottom: 5px;
+  display: inline-block;
 
-export interface EditIriOverlayData {
-  iriBegin: string
-  iriThen: string
-  iriEnd: string
-  validator?: ValidatorFn
-  validatorMsg?: string
-  validatorKey?: string
+  strong {
+    word-break: break-all;
+
+    a {
+      margin-left: .20rem;
+      white-space: nowrap;
+    }
+  }
+  .duplicate-iri {
+    border-bottom: solid red 1px;
+  }
+  .highlight-text {
+    background-color: var(--yellow);
+  }
+  a:not([href]):not([tabindex]) {
+    color: var(--primary);
+  }
 }
