@@ -85,7 +85,6 @@ const ontologyEditorTabStates = {
 };
 
 export class OntologyListItem extends VersionedRdfListItem {
-    tabIndex: number;
     ontologyId: string
     isVocabulary: boolean
     editorTabStates: any

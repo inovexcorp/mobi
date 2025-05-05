@@ -20,13 +20,21 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import {ValidatorFn} from '@angular/forms';
+import { Component, ViewChild } from '@angular/core';
+import { MatTabChangeEvent, MatTabGroup } from '@angular/material/tabs';
+import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
 
-export interface EditIriOverlayData {
-  iriBegin: string
-  iriThen: string
-  iriEnd: string
-  validator?: ValidatorFn
-  validatorMsg?: string
-  validatorKey?: string
+@Component({
+  selector: 'app-shapes-tabs-holder',
+  templateUrl: './shapes-tabs-holder.component.html',
+  styleUrls: ['./shapes-tabs-holder.component.scss']
+})
+export class ShapesTabsHolderComponent {
+  @ViewChild('tabsGroup') tabsGroup: MatTabGroup;
+
+  constructor(public state: ShapesGraphStateService) {}
+
+  onTabChanged(event: MatTabChangeEvent): void {
+    //TODO Pending logic for when more tabs get implemented and we can select entities.
+  }
 }

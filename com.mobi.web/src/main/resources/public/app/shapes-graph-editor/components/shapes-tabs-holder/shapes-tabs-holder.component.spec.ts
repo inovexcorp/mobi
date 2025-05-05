@@ -1,0 +1,93 @@
+/*-
+ * #%L
+ * com.mobi.web
+ * $Id:$
+ * $HeadURL:$
+ * %%
+ * Copyright (C) 2016 - 2025 iNovex Information Systems, Inc.
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * #L%
+ */
+import { DebugElement } from '@angular/core';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+
+import { BrowserAnimationsModule} from '@angular/platform-browser/animations';
+import { By } from '@angular/platform-browser';
+import { cleanStylesFromDOM } from '../../../../test/ts/Shared';
+import { MatTabsModule } from '@angular/material/tabs';
+import { MockProvider } from 'ng-mocks';
+import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
+import { ShapesGraphListItem } from '../../../shared/models/shapesGraphListItem.class';
+import { ShapesTabsHolderComponent } from './shapes-tabs-holder.component';
+
+describe('ShapesTabsHolderComponent', () => {
+  let component: ShapesTabsHolderComponent;
+  let element: DebugElement;
+  let fixture: ComponentFixture<ShapesTabsHolderComponent>;
+  let stateSvcStub: jasmine.SpyObj<ShapesGraphStateService>;
+
+  const recordId = 'recordId';
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      imports: [
+        MatTabsModule,
+        BrowserAnimationsModule,
+      ],
+      declarations: [ShapesTabsHolderComponent],
+      providers: [MockProvider(ShapesGraphStateService)]
+    });
+
+    fixture = TestBed.createComponent(ShapesTabsHolderComponent);
+    component = fixture.componentInstance;
+    element = fixture.debugElement;
+
+    stateSvcStub = TestBed.inject(ShapesGraphStateService) as jasmine.SpyObj<ShapesGraphStateService>;
+    stateSvcStub.listItem = new ShapesGraphListItem();
+    stateSvcStub.listItem.versionedRdfRecord.recordId = recordId;
+
+    fixture.detectChanges();
+  });
+
+  afterAll(function() {
+    cleanStylesFromDOM();
+    element = null;
+    fixture = null;
+    stateSvcStub = null;
+  });
+
+  describe('should initialize', () => {
+    describe('with the correct html', function() {
+      it('when on the Project tab ', function() {
+        expect(element.queryAll(By.css('mat-tab-group')).length).toEqual(1);
+        expect(element.queryAll(By.css('mat-tab-body')).length).toEqual(2);
+        expect(element.queryAll(By.css('app-shapes-project-tab')).length).toEqual(1);
+      });
+      it('when on the Node Shapes tab ', async function() {
+        stateSvcStub.listItem.tabIndex = 1; // Ensures the right tab is active
+        fixture.detectChanges();
+        await fixture.isStable();
+
+        expect(element.queryAll(By.css('mat-tab-group')).length).toEqual(1);
+        expect(element.queryAll(By.css('mat-tab-body')).length).toEqual(2);
+        const contentDiv = element.queryAll(By.css('div.node-display'));
+        expect(contentDiv.length).toEqual(1);
+        expect(contentDiv[0].nativeElement.textContent.trim())
+          .toEqual('Node Shapes Coming Soon!');
+
+      });
+    });
+  });
+});

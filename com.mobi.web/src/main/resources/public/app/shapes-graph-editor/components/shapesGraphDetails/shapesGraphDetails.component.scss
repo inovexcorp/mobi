@@ -47,6 +47,14 @@
 
         .types {
             font-size: .85em;
+            padding-right: 3px;
+        }
+        .imported-ontology {
+            font-size: .85em;
+            word-break: break-word;
+        }
+        a:not([href]):not([tabindex]) {
+            color: var(--primary);
         }
     }
 }

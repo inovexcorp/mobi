@@ -20,13 +20,29 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import {ValidatorFn} from '@angular/forms';
-
-export interface EditIriOverlayData {
-  iriBegin: string
-  iriThen: string
-  iriEnd: string
-  validator?: ValidatorFn
-  validatorMsg?: string
-  validatorKey?: string
+.shapes-tab-holder {
+  .selected-header {
+    .btn-container {
+      button[color='primary'] {
+        margin-right: .25rem;
+      }
+    }
+  }
+  .mat-tab-label[aria-labelledby='hidden'] {
+    width: 0px !important;
+    min-width: 0px;
+    padding: 0px;
+  }
+  .search-tab {
+    height: 100%;
+  }
+  .mat-tab-body-wrapper {
+    flex: 1;
+    min-height: 0;
+  }
+  .mobi-visualization {
+    .mat-tab-body-wrapper {
+      height: 100%;
+    }
+  }
 }

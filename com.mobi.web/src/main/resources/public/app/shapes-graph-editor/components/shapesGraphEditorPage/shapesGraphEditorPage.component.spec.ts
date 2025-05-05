@@ -20,22 +20,22 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { DebugElement } from '@angular/core';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { DebugElement } from '@angular/core';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MockComponent, MockProvider } from 'ng-mocks';
-import { YateComponent } from '../yate/yate.component';
 
-import { cleanStylesFromDOM } from '../../../../../public/test/ts/Shared';
-import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
-import { ShapesGraphDetailsComponent } from '../shapesGraphDetails/shapesGraphDetails.component';
-import { ShapesGraphPropertiesBlockComponent } from '../shapesGraphPropertiesBlock/shapesGraphPropertiesBlock.component';
-import { ShapesGraphListItem } from '../../../shared/models/shapesGraphListItem.class';
-import { EditorTopBarComponent } from '../../../versioned-rdf-record-editor/components/editor-top-bar/editor-top-bar.component';
 import { ChangesPageComponent } from '../../../versioned-rdf-record-editor/components/changes-page/changes-page.component';
+import { cleanStylesFromDOM } from '../../../../test/ts/Shared';
+import { EditorTopBarComponent } from '../../../versioned-rdf-record-editor/components/editor-top-bar/editor-top-bar.component';
 import { MergePageComponent } from '../../../versioned-rdf-record-editor/components/merge-page/merge-page.component';
 import { ShapesGraphEditorPageComponent } from './shapesGraphEditorPage.component';
+import { ShapesGraphDetailsComponent } from '../shapesGraphDetails/shapesGraphDetails.component';
+import { ShapesGraphListItem } from '../../../shared/models/shapesGraphListItem.class';
+import { ShapesGraphPropertiesBlockComponent } from '../shapesGraphPropertiesBlock/shapesGraphPropertiesBlock.component';
+import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
+import { ShapesPreviewComponent } from '../shapes-preview/shapes-preview.component';
 
 describe('Shapes Graph Editor Page component', function() {
     let element: DebugElement;
@@ -54,7 +54,7 @@ describe('Shapes Graph Editor Page component', function() {
                 MockComponent(MergePageComponent),
                 MockComponent(ShapesGraphDetailsComponent),
                 MockComponent(ShapesGraphPropertiesBlockComponent),
-                MockComponent(YateComponent)
+                MockComponent(ShapesPreviewComponent)
             ],
             providers: [
                 MockProvider(ShapesGraphStateService),

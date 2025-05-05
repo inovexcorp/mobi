@@ -26,6 +26,7 @@ import { Difference } from './difference.class';
 import { JSONLDObject } from './JSONLDObject.interface';
 
 export class VersionedRdfListItem {
+    tabIndex: number; //moved into super class to account for we need to keep track in both ontology and shapes editor
     changesPageOpen: boolean;
     currentVersionTitle: string;
     masterBranchIri: string;

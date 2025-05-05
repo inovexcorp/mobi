@@ -27,15 +27,5 @@
                             [additions]="state?.listItem?.inProgressCommit?.additions"
                             [deletions]="state?.listItem?.inProgressCommit?.deletions">
     </app-changes-page>
-    <div class="flex-1 remove-min-height d-flex flex-column h-100 vertical-scroll" *ngIf="state.listItem?.metadata && keys(state.listItem?.metadata).length && !state?.listItem?.changesPageOpen && !state?.listItem?.merge?.active">
-        <shapes-graph-details class="py-2"></shapes-graph-details>
-        <div class="row w-100 flex-1 remove-min-height">
-            <div class="col vertical-scroll h-100">
-                <shapes-graph-properties-block class="col" [shapesGraph]="state?.listItem?.metadata"></shapes-graph-properties-block>
-            </div>
-            <div class="col h-100 pb-3">
-                <yate class="h-100" [content]="state.listItem.content"></yate>
-            </div>
-        </div>
-    </div>
+    <app-shapes-tabs-holder class="flex-1 remove-min-height d-flex flex-column h-100 vertical-scroll" *ngIf="state?.listItem"></app-shapes-tabs-holder>
 </div>

@@ -47,7 +47,7 @@ import { ToastService } from '../../../shared/services/toast.service';
 })
 export class ShapesGraphDetailsComponent {
 
-    constructor(public state: ShapesGraphStateService, public om: OntologyManagerService, 
+    constructor(public state: ShapesGraphStateService, public om: OntologyManagerService,
       private _prefixation: PrefixationPipe, private _toast: ToastService) {}
 
     getTypes(): string {

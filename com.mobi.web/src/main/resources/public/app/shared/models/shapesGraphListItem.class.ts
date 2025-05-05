@@ -24,11 +24,17 @@ import { VersionedRdfListItem } from './versionedRdfListItem.class';
 import { JSONLDObject } from './JSONLDObject.interface';
 
 export class ShapesGraphListItem extends VersionedRdfListItem {
+    //The variable keeping track of what format the preview is in is normally kept in editorTabStates in
+    //OntologyListItem but keeping it high-level here as we may be re-working how tab state is stored.
+    previewFormat: string
     shapesGraphId: string;
     changesPageOpen: boolean;
     currentVersionTitle: string;
     metadata: JSONLDObject;
     content: string;
+
+    static PROJECT_TAB = 0;
+    static NODE_SHAPES_TAB = 1;
 
     constructor() {
         super();
@@ -37,5 +43,7 @@ export class ShapesGraphListItem extends VersionedRdfListItem {
         this.currentVersionTitle = '';
         this.metadata = undefined;
         this.content = '';
+        this.previewFormat = 'turtle';
+        this.tabIndex = ShapesGraphListItem.PROJECT_TAB;
     }
 }
