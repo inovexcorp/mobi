@@ -185,6 +185,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
     private static final String CONFLICT_IRI = "http://mobi.com/conflicts/test";
     private static final String CATALOG_URL_LOCAL = "catalogs/" + encode(LOCAL_IRI);
     private static final String CATALOG_URL_DISTRIBUTED = "catalogs/" + encode(DISTRIBUTED_IRI);
+    private static final String MASTER = "MASTER";
 
     // Mock services used in server
     private static CatalogRest rest;
@@ -2619,6 +2620,21 @@ public class CatalogRestTest extends MobiRestTestCXF {
                 + "/branches/" + encode(BRANCH_IRI))
                 .request().put(Entity.json(branch.toString()));
         assertEquals(200, response.getStatus());
+        verify(branchManager).updateBranch(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), any(Branch.class), any(RepositoryConnection.class));
+        verify(bNodeService).deskolemize(any(Model.class));
+    }
+
+    @Test
+    public void updateBranchMASTERTest() {
+        //Setup:
+        doThrow(new IllegalArgumentException()).when(branchManager).updateBranch(any(Resource.class), any(Resource.class), any(), any(RepositoryConnection.class));
+        ObjectNode branch = mapper.createObjectNode().put("@id", BRANCH_IRI)
+                .set("@type", mapper.createArrayNode().add(Branch.TYPE));
+
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
+                        + "/branches/" + encode(MASTER))
+                .request().put(Entity.json(branch.toString()));
+        assertEquals(400, response.getStatus());
         verify(branchManager).updateBranch(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), any(Branch.class), any(RepositoryConnection.class));
         verify(bNodeService).deskolemize(any(Model.class));
     }
