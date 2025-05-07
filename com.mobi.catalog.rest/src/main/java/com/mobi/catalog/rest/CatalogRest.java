@@ -59,6 +59,7 @@ import com.mobi.catalog.api.builder.Conflict;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.builder.DistributionConfig;
 import com.mobi.catalog.api.builder.KeywordCount;
+import com.mobi.catalog.api.ontologies.mcat.MasterBranch;
 import com.mobi.catalog.api.record.EntityMetadata;
 import com.mobi.catalog.api.record.statistic.Statistic;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
@@ -2133,6 +2134,7 @@ public class CatalogRest {
             @Parameter(description = "String representing the Branch ID", required = true)
                     String newBranchJson) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            branchId = checkBranchId(catalogId, recordId, branchId, conn);
             Branch newBranch = getNewThing(newBranchJson, vf.createIRI(branchId),
                     factoryRegistry.getFactoryOfType(Branch.class).get());
             branchManager.updateBranch(vf.createIRI(catalogId), vf.createIRI(recordId), newBranch, conn);
@@ -3256,4 +3258,25 @@ public class CatalogRest {
         return jsonArray;
     }
 
+    /**
+     * Checks for keyword MASTER in the provided branchId (case-insensitive) if present returns IRI to MASTER branch,
+     * otherwise, returns branchId string
+     *
+     * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                  with "_:".
+     * @param recordId String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
+     *                 String begins with "_:".
+     * @param branchId String representing the Branch ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                 with "_:".
+     * @param conn A repository connection
+     * @return A string of the appropriate branchId
+     */
+    private String checkBranchId(String catalogId, String recordId, String branchId, RepositoryConnection conn) {
+        if ("master".equals(branchId.toLowerCase())) {
+            MasterBranch branch = branchManager.getMasterBranch(vf.createIRI(catalogId), vf.createIRI(recordId), conn);
+            return branch.getResource().stringValue();
+        } else {
+            return branchId;
+        }
+    }
 }
