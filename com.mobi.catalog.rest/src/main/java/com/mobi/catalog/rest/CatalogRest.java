@@ -2277,8 +2277,9 @@ public class CatalogRest {
             checkStringParam(message, "Commit message is required");
             User activeUser = getActiveUser(servletRequest, engineManager);
             try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+                String resolvedBranchId = checkBranchId(catalogId, recordId, branchId, conn);
                 Resource newCommitId = versioningManager.commit(vf.createIRI(catalogId), vf.createIRI(recordId),
-                        vf.createIRI(branchId), activeUser, message, conn);
+                        vf.createIRI(resolvedBranchId), activeUser, message, conn);
                 return Response.status(201).entity(newCommitId.stringValue()).build();
             }
         } catch (IllegalArgumentException ex) {
