@@ -2819,6 +2819,16 @@ public class CatalogRestTest extends MobiRestTestCXF {
     }
 
     @Test
+    public void createBranchCommitMASTERTest() {
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
+                        + "/branches/" + encode(MASTER) + "/commits")
+                .queryParam("message", "Message").request().post(Entity.entity("", MediaType.TEXT_PLAIN));
+        assertEquals(201, response.getStatus());
+        assertEquals(COMMIT_IRIS[0], response.readEntity(String.class));
+        verify(versioningManager).commit(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), eq(vf.createIRI(BRANCH_IRI)), any(User.class), eq("Message"), any(RepositoryConnection.class));
+    }
+
+    @Test
     public void createBranchCommitForUserThatDoesNotExistTest() {
         // Setup:
         when(engineManager.retrieveUser(anyString())).thenReturn(Optional.empty());
