@@ -118,7 +118,7 @@ public class BasicAuthRestIT extends KarafTestSupport {
     public void testNoAuth() throws Exception {
         try (CloseableHttpClient client = createHttpClient(); CloseableHttpResponse response = getCatalogsNoAuth(client)) {
             assertNotNull(response);
-            assertEquals(HttpStatus.SC_FORBIDDEN, response.getStatusLine().getStatusCode());
+            assertEquals(HttpStatus.SC_UNAUTHORIZED, response.getStatusLine().getStatusCode());
         } catch (IOException | GeneralSecurityException e) {
             fail("Exception thrown: " + e.getLocalizedMessage());
         }
