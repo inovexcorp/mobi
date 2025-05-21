@@ -2587,6 +2587,16 @@ public class CatalogRestTest extends MobiRestTestCXF {
     }
 
     @Test
+    public void removeBranchMASTERTest() {
+        doThrow(new IllegalArgumentException()).when(branchManager).removeBranch(any(Resource.class), any(Resource.class), any(), any(RepositoryConnection.class));
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
+                        + "/branches/" + encode(MASTER))
+                .request().delete();
+        assertEquals(400, response.getStatus());
+        verify(branchManager).removeBranch(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), eq(vf.createIRI(BRANCH_IRI)), any(RepositoryConnection.class));
+    }
+
+    @Test
     public void removeBranchWithIncorrectPathTest() {
         // Setup:
         doThrow(new IllegalArgumentException()).when(branchManager).removeBranch(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), eq(vf.createIRI(ERROR_IRI)), any(RepositoryConnection.class));
