@@ -83,15 +83,19 @@ public class BalanaIT extends KarafTestSupport {
         systemPolicyIds.add(vf.createIRI("http://mobi.com/policies/admin-user-only-access-versioned-rdf-record"));
         systemPolicyIds.add(vf.createIRI("http://mobi.com/policies/dataset-creation"));
         systemPolicyIds.add(vf.createIRI("http://mobi.com/policies/ontology-creation"));
+        systemPolicyIds.add(vf.createIRI("http://mobi.com/policies/mapping-creation"));
+        systemPolicyIds.add(vf.createIRI("http://mobi.com/policies/workflow-record-creation"));
         systemPolicyIds.add(vf.createIRI("http://mobi.com/policies/shapes-graph-record-creation"));
-        systemPolicyIds.add(vf.createIRI("http://mobi.com/policies/system-repo-access"));
+        systemPolicyIds.add(vf.createIRI("https://mobi.solutions/policies/system-repo-access"));
+        systemPolicyIds.add(vf.createIRI("https://mobi.solutions/policies/prov-repo-access"));
+        systemPolicyIds.add(vf.createIRI("https://mobi.solutions/policies/ontology-cache-repo-access"));
     }
 
     @Test
     public void validateSystemPoliciesLoaded() throws Exception {
         XACMLPolicyManager policyManager = getOsgiService(XACMLPolicyManager.class);
         Set<Resource> policyIds = policyManager.getSystemPolicyIds();
-        assertEquals(7, policyIds.size());
+        assertEquals(9, policyIds.size());
         systemPolicyIds.forEach(systemPolicy -> assertTrue(policyIds.contains(systemPolicy)));
     }
 }
