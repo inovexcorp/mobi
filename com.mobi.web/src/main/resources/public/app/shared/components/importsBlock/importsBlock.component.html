@@ -22,7 +22,7 @@
   -->
 <div class="imports-block">
     <div class="section-header">
-        <h5>Imports</h5><a *ngIf="os.canModify()" class="float-right fa fa-fw fa-plus" (click)="showNewOverlay()"></a><a class="float-right fa fa-fw fa-refresh" (click)="refresh()"></a>
+        <h5>Imports</h5><a *ngIf="stateService.canModify()" class="float-right fa fa-fw fa-plus" (click)="showNewOverlay()"></a><a class="float-right fa fa-fw fa-refresh" (click)="refresh()"></a>
     </div>
     <div *ngIf="imports.length" class="direct-imports-container">
         <p *ngFor="let imported of imports" class="import">
@@ -40,7 +40,7 @@
                       matTooltipPosition="above">{{imported['@id']}}</span>
                 <strong class="text-danger"> (failed)</strong>
             </ng-template>
-            <a mat-icon-button color="primary" *ngIf="os.canModify()" (click)="setupRemove(imported['@id'])" title="Delete"><mat-icon>delete</mat-icon></a>
+            <a mat-icon-button color="primary" *ngIf="stateService.canModify()" (click)="setupRemove(imported['@id'])" title="Delete"><mat-icon>delete</mat-icon></a>
         </p>
     </div>
     <div *ngIf="indirectImports.length" class="indirect-import-container">
@@ -62,5 +62,5 @@
             </ng-template>
         </p>
     </div>
-    <info-message *ngIf="!imports.length">This ontology does not have any imports.</info-message>
+    <info-message *ngIf="!imports.length">{{noImportMessage}}</info-message>
 </div>

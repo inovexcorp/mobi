@@ -29,6 +29,7 @@ import static com.mobi.rest.util.RestUtils.getRDFFormatFileExtension;
 import static com.mobi.rest.util.RestUtils.getRDFFormatMimeType;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mobi.catalog.api.BranchManager;
 import com.mobi.catalog.api.CommitManager;
@@ -47,7 +48,10 @@ import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
+import com.mobi.ontology.core.api.Ontology;
+import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.utils.OntologyModels;
+import com.mobi.ontology.utils.cache.OntologyCache;
 import com.mobi.persistence.utils.BNodeUtils;
 import com.mobi.persistence.utils.Models;
 import com.mobi.persistence.utils.ParsedModel;
@@ -82,6 +86,7 @@ import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.ModelFactory;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Statement;
+import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
@@ -107,6 +112,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 import javax.annotation.security.RolesAllowed;
 import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
@@ -159,6 +165,9 @@ public class ShapesGraphRest {
 
     @Reference
     ShapesGraphManager shapesGraphManager;
+
+    @Reference
+    OntologyCache ontologyCache;
 
     @Reference
     PDP pdp;
@@ -682,6 +691,95 @@ public class ShapesGraphRest {
         } catch (MobiException | IllegalStateException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
+    }
+
+    /**
+     * Retrieves failed import IRIs and successfully imported ontologies for a ShapeGraph.
+     *
+     * @param servletRequest the HttpServletRequest.
+     * @param recordIdStr String representing the record Resource id. NOTE: Assumes id represents an IRI unless
+     *                    String begins with "_:".
+     * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
+     *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
+     *                    master Branch.
+     * @param commitIdStr String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
+     *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
+     *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
+     *                    otherwise, nothing will be returned.
+     * @param clearCache  whether the cached version of the identified Ontology should be cleared before
+     *                    retrieval
+     * @param applyInProgressCommit Boolean indicating whether any in progress commits by user should be
+     *                              applied to the return value
+     * @return Returns a JSON object containing failed import IRIs and successfully imported ontologies for a ShapeGraph.
+     */
+    @GET
+    @Path("{recordId}/imports")
+    @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN})
+    @RolesAllowed("user")
+    @Operation(
+            tags = "shapes-graphs",
+            summary = "Retrieve information about imports for the given ShapeGraph",
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "Returns a JSON object containing failed import IRIs and " 
+                            + "successfully imported ontologies for a ShapeGraph."),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
+            }
+    )
+    @ResourceId(type = ValueType.PATH, value = "recordId")
+    public Response getShapesGraphImports(
+            @Context HttpServletRequest servletRequest,
+            @Parameter(description = "String representing the Record Resource ID", required = true)
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @QueryParam("commitId") String commitIdStr,
+            @Parameter(description = "Boolean to decide to clear cache")
+            @DefaultValue("false") @QueryParam("clearCache") boolean clearCache,
+            @Parameter(description = "Whether or not to apply the in progress commit "
+                    + "for the user making the request")
+            @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit
+    ) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            if (clearCache) {
+                ontologyCache.removeFromCache(recordIdStr, commitIdStr);
+            }
+            ShapesGraph shapesGraph = getShapesGraph(recordIdStr, branchIdStr, commitIdStr, applyInProgressCommit,
+                    servletRequest, conn);
+
+            ObjectNode stuff = mapper.createObjectNode();
+            ArrayNode failedImportsArray = mapper.createArrayNode();
+            Set<String> unloadableImportIRIs = shapesGraph.getUnloadableImportIRIs().stream()
+                    .map(Value::stringValue)
+                    .collect(Collectors.toSet());
+            unloadableImportIRIs.forEach(failedImportsArray::add);
+            stuff.set("failedImports", failedImportsArray);
+
+            ArrayNode importedOntologiesArray = mapper.createArrayNode();
+            shapesGraph.getImportedOntologies().stream()
+                    .map(this::getOntologyIdentifiersAsJsonObject)
+                    .forEach(importedOntologiesArray::add);
+            stuff.set("importedOntologies", importedOntologiesArray);
+            return Response.ok(stuff.toString()).build();
+        } catch (IllegalArgumentException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
+        } catch (MobiException | IllegalStateException ex) {
+            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    private ObjectNode getOntologyIdentifiersAsJsonObject(Ontology ontology) {
+        OntologyId ontologyId = ontology.getOntologyId();
+        Optional<IRI> optIri = ontologyId.getOntologyIRI();
+
+        ObjectNode objectNode = mapper.createObjectNode();
+        objectNode.put("id", ontologyId.getOntologyIdentifier().stringValue());
+        objectNode.put("ontologyId", optIri.isPresent() ? optIri.get().stringValue() : "");
+
+        return objectNode;
     }
 
     /**

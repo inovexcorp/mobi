@@ -37,6 +37,7 @@ import { JSONLDObject } from '../models/JSONLDObject.interface';
 import { XACMLRequest } from '../models/XACMLRequest.interface';
 import { POLICY } from '../../prefixes';
 import { PolicyEnforcementService } from './policyEnforcement.service';
+import { ShapesGraphImports } from '../models/shapesGraphImports.interface';
 
 /**
  * @class shared.ShapesGraphManagerService
@@ -215,5 +216,24 @@ export class ShapesGraphManagerService {
             responseType: 'text'
         }));
         return ob.pipe(catchError(handleError));
+    }
+
+    /**
+     * Calls the GET /mobirest/shapes-graphs/{recordId}/imports endpoint and retrieves an ShapesGraphImports object
+     * containing keys corresponding to the structure.
+     *
+     * @param {string} recordId The id of the Record the Branch should be part of
+     * @param {string} branchId The id of the Branch with the specified Commit
+     * @param {string} commitId The id of the Commit to retrieve the ontology from
+     * @param {boolean} clearCache Whether or not to clear the cache
+     * @param {boolean} isTracked Whether the request should be tracked by the {@link shared.ProgressSpinnerService}
+     * @return {Observable<ShapesGraphImports>} An Observable with an ShapesGraphImports object containing listItem keys.
+     */
+    getShapesGraphImports(recordId: string, branchId: string, commitId: string, clearCache = false, isTracked = false):
+        Observable<ShapesGraphImports> {
+        const params = { branchId, commitId, clearCache };
+        const url = `${this.prefix}/${encodeURIComponent(recordId)}/imports`;
+        const request = this.http.get<ShapesGraphImports>(url, {params: createHttpParams(params)});
+        return this.spinnerSvc.trackedRequest(request, isTracked).pipe(catchError(handleError));
     }
 }

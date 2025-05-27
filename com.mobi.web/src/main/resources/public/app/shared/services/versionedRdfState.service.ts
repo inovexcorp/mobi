@@ -496,6 +496,15 @@ export abstract class VersionedRdfState<T extends VersionedRdfListItem> {
         );
     }
     /**
+     * Tests whether the provided `listItem` has any unsaved changes that should be saved to the InProgressCommit.
+     * 
+     * @param {VersionedRdfListItem} listItem The OntologyListItem to test
+     * @returns {boolean} True if there are unsaved changes on the provided `listItem`
+     */
+    hasChanges(listItem: VersionedRdfListItem): boolean {
+        return !!get(listItem, 'additions', []).length || !!get(listItem, 'deletions', []).length;
+    }
+    /**
      * Checks if the state is a tag.
      *
      * @param {JSONLDObject} jsonld the JSONLDObject to check for a StateTag.
@@ -790,5 +799,20 @@ export abstract class VersionedRdfState<T extends VersionedRdfListItem> {
      */
     joinPath(path: string[]): string {
         return join(path, '.');
+    }
+
+    /**
+     * Adds an imported ontology reference to a given list item.
+     *
+     * @param {VersionedRdfListItem} listItem - The list item to which the imported ontology should be added.
+     * @param {{id: string, ontologyId: string}} importedOntObj - An object containing the `id` and `ontologyId` of the imported ontology.
+     */
+    addImportedOntologyToListItem(listItem: VersionedRdfListItem, importedOntObj: {id: string, ontologyId: string}): void {
+        const importedOntologyListItem = {
+            id: importedOntObj.id,
+            ontologyId: importedOntObj.ontologyId
+        };
+        listItem.importedOntologyIds.push(importedOntObj.id);
+        listItem.importedOntologies.push(importedOntologyListItem);
     }
 }

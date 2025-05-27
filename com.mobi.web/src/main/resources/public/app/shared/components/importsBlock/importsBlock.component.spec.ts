@@ -32,18 +32,18 @@ import { MockComponent, MockProvider } from 'ng-mocks';
 import { of, Subject, throwError } from 'rxjs';
 import { MatTooltipModule } from '@angular/material/tooltip';
 
-import { cleanStylesFromDOM } from '../../../../../public/test/ts/Shared';
+import { cleanStylesFromDOM } from '../../../../test/ts/Shared';
 import { OWL } from '../../../prefixes';
-import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
-import { InfoMessageComponent } from '../../../shared/components/infoMessage/infoMessage.component';
-import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
-import { OntologyStateService } from '../../../shared/services/ontologyState.service';
-import { PropertyManagerService } from '../../../shared/services/propertyManager.service';
-import { ToastService } from '../../../shared/services/toast.service';
+import { ConfirmModalComponent } from '../confirmModal/confirmModal.component';
+import { InfoMessageComponent } from '../infoMessage/infoMessage.component';
+import { OntologyListItem } from '../../models/ontologyListItem.class';
+import { OntologyStateService } from '../../services/ontologyState.service';
+import { PropertyManagerService } from '../../services/propertyManager.service';
+import { ToastService } from '../../services/toast.service';
 import { ImportsOverlayComponent } from '../importsOverlay/importsOverlay.component';
-import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
-import { OntologyRecordActionI } from '../../../shared/services/ontologyRecordAction.interface';
-import { OntologyAction } from '../../../shared/models/ontologyAction';
+import { OntologyManagerService } from '../../services/ontologyManager.service';
+import { OntologyRecordActionI } from '../../services/ontologyRecordAction.interface';
+import { VersionedRdfRecord } from '../../models/versionedRdfRecord.interface';
 import { ImportsBlockComponent } from './importsBlock.component';
 
 describe('Imports Block component', function() {
@@ -64,6 +64,12 @@ describe('Imports Block component', function() {
   const commitId = 'commitId';
   const url = 'http://test.com';
   const importId = {'@id': url};
+  const versionedRdfRecord: VersionedRdfRecord = {
+    title: 'title',
+    recordId: recordId,
+    commitId: commitId,
+    branchId: branchId
+  }
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -97,9 +103,6 @@ describe('Imports Block component', function() {
     _ontologyRecordActionSubject = new Subject<OntologyRecordActionI>();
     ontologyStateStub.ontologyRecordAction$ = _ontologyRecordActionSubject.asObservable();
 
-    fixture = TestBed.createComponent(ImportsBlockComponent);
-    component = fixture.componentInstance;
-    element = fixture.debugElement;
     ontologyManagerStub = TestBed.inject(OntologyManagerService) as jasmine.SpyObj<OntologyManagerService>;
     propertyManagerStub = TestBed.inject(PropertyManagerService) as jasmine.SpyObj<PropertyManagerService>;
     toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
@@ -114,7 +117,12 @@ describe('Imports Block component', function() {
       '@id': ontologyId,
       [`${OWL}imports`]: [importId]
     };
-    component.recordId = recordId;
+    fixture = TestBed.createComponent(ImportsBlockComponent);
+    component = fixture.componentInstance;
+    element = fixture.debugElement;
+    component.versionedRdfRecord = versionedRdfRecord;
+    component.stateService = ontologyStateStub;
+    component.listItem = ontologyStateStub.listItem;
   });
 
   afterEach(function() {
@@ -129,94 +137,12 @@ describe('Imports Block component', function() {
     toastStub = null;
   });
 
-  it('should initialize correctly and watch for update state events', fakeAsync(() => {
-    const setImportsSpy = spyOn(component, 'setImports');
-    const setIndirectImportsSpy = spyOn(component, 'setIndirectImports');
-    component.ngOnInit();
-    setImportsSpy.calls.reset();
-    setIndirectImportsSpy.calls.reset();
-    _ontologyRecordActionSubject.next({
-      action: OntologyAction.UPDATE_STATE,
-      recordId: recordId
-    });
-    tick();
-    expect(component.setImports).toHaveBeenCalledWith();
-    expect(component.setIndirectImports).toHaveBeenCalledWith();
-  }));
   it('should handle changes correctly', function() {
     spyOn(component, 'setImports');
     spyOn(component, 'setIndirectImports');
     component.ngOnChanges();
     expect(component.setImports).toHaveBeenCalledWith();
     expect(component.setIndirectImports).toHaveBeenCalledWith();
-  });
-  describe('contains the correct html', function() {
-    it('for wrapping containers', function() {
-      expect(element.queryAll(By.css('.imports-block')).length).toEqual(1);
-    });
-    it('with a .section-header', function() {
-      expect(element.queryAll(By.css('.section-header')).length).toEqual(1);
-    });
-    it('with links for adding and refreshing when the user can modify branch', function() {
-      ontologyStateStub.canModify.and.returnValue(true);
-      fixture.detectChanges();
-      expect(element.queryAll(By.css('.section-header a')).length).toEqual(2);
-    });
-    it('with links for adding and refreshing when the user cannot modify branch', function() {
-      ontologyStateStub.canModify.and.returnValue(false);
-      fixture.detectChanges();
-      expect(element.queryAll(By.css('.section-header a')).length).toEqual(1);
-    });
-    it('with a p a.import-iri', function() {
-      component.imports = [importId];
-      fixture.detectChanges();
-      expect(element.queryAll(By.css('p a.import-iri')).length).toEqual(1);
-      spyOn(component, 'failed').and.returnValue(true);
-      fixture.detectChanges();
-      expect(element.queryAll(By.css('p a.import-iri')).length).toEqual(0);
-    });
-    it('with a .text-danger', function() {
-      component.imports = [importId];
-      fixture.detectChanges();
-      expect(element.queryAll(By.css('.text-danger')).length).toEqual(0);
-      spyOn(component, 'failed').and.returnValue(true);
-      fixture.detectChanges();
-      expect(element.queryAll(By.css('.text-danger')).length).toEqual(2);
-    });
-    it('with a p a[title="Delete"] if the user can modify', function() {
-      component.imports = [importId];
-      fixture.detectChanges();
-      expect(element.queryAll(By.css('p a[title="Delete"]')).length).toEqual(1);
-    });
-    it('with no p a.btn-link if the user cannot modify', function() {
-      ontologyStateStub.canModify.and.returnValue(false);
-      fixture.detectChanges();
-      expect(element.queryAll(By.css('p a.btn-link')).length).toEqual(0);
-    });
-    it('depending on the length of the selected ontology imports', function() {
-      component.ngOnChanges();
-      fixture.detectChanges();
-      expect(element.queryAll(By.css('info-message')).length).toEqual(0);
-      expect(element.queryAll(By.css('.import')).length).toEqual(1);
-      component.imports = [];
-      fixture.detectChanges();
-      expect(element.queryAll(By.css('info-message')).length).toEqual(1);
-      expect(element.queryAll(By.css('.import')).length).toEqual(0);
-    });
-    it('with an .indirect-import-container', function() {
-      fixture.detectChanges();
-      expect(element.queryAll(By.css('.indirect-import-container')).length).toEqual(0);
-      component.indirectImports = ['iri'];
-      fixture.detectChanges();
-      expect(element.queryAll(By.css('.indirect-import-container')).length).toEqual(1);
-    });
-    it('with an .indirect.import', function() {
-      fixture.detectChanges();
-      expect(element.queryAll(By.css('.indirect.import')).length).toEqual(0);
-      component.indirectImports = ['iri'];
-      fixture.detectChanges();
-      expect(element.queryAll(By.css('.indirect.import')).length).toEqual(1);
-    });
   });
   describe('controller methods', function() {
     describe('setupRemove should set the correct variables and open a remove confirmation modal if', function() {
@@ -371,9 +297,83 @@ describe('Imports Block component', function() {
       spyOn(component, 'setIndirectImports');
       component.showNewOverlay();
       tick();
-      expect(matDialog.open).toHaveBeenCalledWith(ImportsOverlayComponent);
+      expect(matDialog.open).toHaveBeenCalledWith(ImportsOverlayComponent, {data: {
+        stateService: component.stateService,
+        listItem: component.listItem,
+        targetRecordTypes: component.targetRecordTypes
+      }});
       expect(component.setImports).toHaveBeenCalledWith();
       expect(component.setIndirectImports).toHaveBeenCalledWith();
     }));
+  });
+  describe('contains the correct html', function() {
+    it('for wrapping containers', function() {
+      expect(element.queryAll(By.css('.imports-block')).length).toEqual(1);
+    });
+    it('with a .section-header', function() {
+      expect(element.queryAll(By.css('.section-header')).length).toEqual(1);
+    });
+    it('with links for adding and refreshing when the user can modify branch', function() {
+      ontologyStateStub.canModify.and.returnValue(true);
+      fixture.detectChanges();
+      expect(element.queryAll(By.css('.section-header a')).length).toEqual(2);
+    });
+    it('with links for adding and refreshing when the user cannot modify branch', function() {
+      ontologyStateStub.canModify.and.returnValue(false);
+      fixture.detectChanges();
+      expect(element.queryAll(By.css('.section-header a')).length).toEqual(1);
+    });
+    it('with a p a.import-iri', function() {
+      component.imports = [importId];
+      fixture.detectChanges();
+      expect(element.queryAll(By.css('p a.import-iri')).length).toEqual(1);
+      spyOn(component, 'failed').and.returnValue(true);
+      fixture.detectChanges();
+      expect(element.queryAll(By.css('p a.import-iri')).length).toEqual(0);
+    });
+    it('with a .text-danger', function() {
+      component.imports = [importId];
+      fixture.detectChanges();
+      expect(element.queryAll(By.css('.text-danger')).length).toEqual(0);
+      spyOn(component, 'failed').and.returnValue(true);
+      fixture.detectChanges();
+      expect(element.queryAll(By.css('.text-danger')).length).toEqual(2);
+    });
+    it('with a p a[title="Delete"] if the user can modify', function() {
+      component.imports = [importId];
+      fixture.detectChanges();
+      expect(element.queryAll(By.css('p a[title="Delete"]')).length).toEqual(1);
+    });
+    it('with no p a.btn-link if the user cannot modify', function() {
+      ontologyStateStub.canModify.and.returnValue(false);
+      fixture.detectChanges();
+      expect(element.queryAll(By.css('p a.btn-link')).length).toEqual(0);
+    });
+    it('depending on the length of the selected ontology imports', function() {
+      component.ngOnChanges();
+      fixture.detectChanges();
+      expect(element.queryAll(By.css('info-message')).length).toEqual(0);
+      expect(element.queryAll(By.css('.import')).length).toEqual(1);
+      component.imports = [];
+      fixture.detectChanges();
+      expect(element.queryAll(By.css('info-message')).length).toEqual(1);
+      expect(element.queryAll(By.css('.import')).length).toEqual(0);
+    });
+    it('with an .indirect-import-container', function() {
+      fixture.detectChanges();
+      expect(element.queryAll(By.css('.indirect-import-container')).length).toEqual(0);
+      component.indirectImports = ['iri'];
+      fixture.detectChanges();
+      expect(element.queryAll(By.css('.indirect-import-container')).length).toEqual(1);
+    });
+    it('with an .indirect.import', function() {
+      fixture.detectChanges();
+      expect(element.queryAll(By.css('.indirect.import')).length).toEqual(0);
+      component.indirectImports = ['iri'];
+      fixture.detectChanges();
+      expect(element.queryAll(By.css('.indirect.import')).length).toEqual(1);
+    });
+
+    // TODO add no import message
   });
 });

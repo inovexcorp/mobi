@@ -23,12 +23,14 @@ package com.mobi.shapes.api;
  * #L%
  */
 
+import com.mobi.ontology.core.api.Ontology;
 import com.mobi.versionedrdf.api.QueryableVersionedRDF;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
 
 import java.util.Optional;
+import java.util.Set;
 import javax.ws.rs.core.StreamingOutput;
 
 public interface ShapesGraph extends QueryableVersionedRDF {
@@ -80,4 +82,19 @@ public interface ShapesGraph extends QueryableVersionedRDF {
      * @return The serialization of the Shapes Graph except for statements with a subject of the Shapes Graph IRI.
      */
     StreamingOutput serializeShapesGraphContent(String format);
+
+    /**
+     * Returns the set of IRIs of unloadable imported ontologies.  The set is accumulated during loading the
+     * ontology from an ontology document or an ontology IRI.
+     *
+     * @return set of IRIs
+     */
+    Set<IRI> getUnloadableImportIRIs();
+
+    /**
+     * Gets the imported ontologies for the Ontology identified, excluding the base Ontology.
+     *
+     * @return the Set of imported Ontologies without the base Ontology.
+     */
+    Set<Ontology> getImportedOntologies();
 }

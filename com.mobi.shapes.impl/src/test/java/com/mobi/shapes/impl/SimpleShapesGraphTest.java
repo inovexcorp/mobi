@@ -61,6 +61,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Optional;
+import java.util.Set;
 import javax.ws.rs.core.StreamingOutput;
 
 public class SimpleShapesGraphTest extends OrmEnabledTestCase {
@@ -74,6 +75,9 @@ public class SimpleShapesGraphTest extends OrmEnabledTestCase {
 
     @Mock
     Ontology ontology;
+
+    @Mock
+    Ontology importOntology1;
 
     @Mock
     private OntologyId ontologyId;
@@ -327,5 +331,21 @@ public class SimpleShapesGraphTest extends OrmEnabledTestCase {
         result.write(os);
         String stringResult = os.toString(StandardCharsets.UTF_8);
         assertEquals(expectedResult, stringResult.trim());
+    }
+
+    @Test
+    public void testGetUnloadableImportIRIs() {
+        when(ontology.getUnloadableImportIRIs()).thenReturn(Set.of(getValueFactory().createIRI("urn:unload1")));
+        Set<IRI> result = shapesGraph.getUnloadableImportIRIs();
+        Set<IRI> expectedResult = Set.of(getValueFactory().createIRI("urn:unload1"));
+        assertEquals(expectedResult, result);
+    }
+
+    @Test
+    public void testGetImportedOntologies() {
+        when(ontology.getImportsClosure()).thenReturn(Set.of(ontology, importOntology1));
+        Set<Ontology> result = shapesGraph.getImportedOntologies();
+        Set<Ontology> expectedResult = Set.of(importOntology1);
+        assertEquals(expectedResult, result);
     }
 }

@@ -29,7 +29,7 @@ import { MockComponent, MockProvider } from 'ng-mocks';
 import { cleanStylesFromDOM } from '../../../../../public/test/ts/Shared';
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
-import { ImportsBlockComponent } from '../importsBlock/importsBlock.component';
+import { ImportsBlockComponent } from '../../../shared/components/importsBlock/importsBlock.component';
 import { OntologyPropertiesBlockComponent } from '../ontologyPropertiesBlock/ontologyPropertiesBlock.component';
 import { PreviewBlockComponent } from '../previewBlock/previewBlock.component';
 import { SelectedDetailsComponent } from '../selectedDetails/selectedDetails.component';

@@ -24,12 +24,17 @@ import { By } from '@angular/platform-browser';
 import { ComponentFixture, TestBed, tick, fakeAsync } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
 
-import { MockProvider } from 'ng-mocks';
+import { ImportsBlockComponent } from '../../../shared/components/importsBlock/importsBlock.component';
+import { MockComponent, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
+import { ShapesGraphDetailsComponent } from '../shapesGraphDetails/shapesGraphDetails.component';
 import { ShapesGraphListItem } from '../../../shared/models/shapesGraphListItem.class';
-import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
 import { ShapesGraphManagerService } from '../../../shared/services/shapesGraphManager.service';
+import { ShapesGraphPropertiesBlockComponent } from '../shapesGraphPropertiesBlock/shapesGraphPropertiesBlock.component';
+import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
 import { ShapesProjectTabComponent } from './shapes-project-tab.component';
+import { ShapesPreviewComponent } from '../shapes-preview/shapes-preview.component';
+
 
 describe('Shapes Project Tab component', () => {
   let component: ShapesProjectTabComponent;
@@ -40,7 +45,13 @@ describe('Shapes Project Tab component', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      declarations: [ShapesProjectTabComponent],
+      declarations: [
+        ShapesProjectTabComponent,
+        MockComponent(ImportsBlockComponent),
+        MockComponent(ShapesGraphDetailsComponent),
+        MockComponent(ShapesGraphPropertiesBlockComponent),
+        MockComponent(ShapesPreviewComponent)
+      ],
       providers: [
         MockProvider(ShapesGraphStateService),
         MockProvider(ShapesGraphManagerService)

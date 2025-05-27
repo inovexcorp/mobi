@@ -24,6 +24,7 @@ package com.mobi.shapes.impl;
  */
 
 import com.mobi.ontology.core.api.Ontology;
+import com.mobi.ontology.utils.OntologyUtils;
 import com.mobi.rest.util.RestUtils;
 import com.mobi.shapes.api.ShapesGraph;
 import org.eclipse.rdf4j.model.IRI;
@@ -34,6 +35,7 @@ import org.eclipse.rdf4j.rio.RDFFormat;
 
 import java.io.OutputStream;
 import java.util.Optional;
+import java.util.Set;
 import javax.ws.rs.core.StreamingOutput;
 
 public class SimpleShapesGraph implements ShapesGraph {
@@ -109,6 +111,16 @@ public class SimpleShapesGraph implements ShapesGraph {
         String query = SHAPES_GRAPH_CONTENT_QUERY.replace(IRI_REPLACE, shapesGraphId.stringValue());
         return outputStream ->
                 this.ontology.getGraphQueryResultsStream(query, false, RestUtils.getRDFFormat(format), false, outputStream);
+    }
+
+    @Override
+    public Set<Ontology> getImportedOntologies() {
+        return OntologyUtils.getImportedOntologies(ontology);
+    }
+
+    @Override
+    public Set<IRI> getUnloadableImportIRIs() {
+        return this.ontology.getUnloadableImportIRIs();
     }
 
     @Override

@@ -30,11 +30,12 @@ import { ChangesPageComponent } from '../../../versioned-rdf-record-editor/compo
 import { cleanStylesFromDOM } from '../../../../test/ts/Shared';
 import { EditorTopBarComponent } from '../../../versioned-rdf-record-editor/components/editor-top-bar/editor-top-bar.component';
 import { MergePageComponent } from '../../../versioned-rdf-record-editor/components/merge-page/merge-page.component';
-import { ShapesGraphEditorPageComponent } from './shapesGraphEditorPage.component';
 import { ShapesGraphDetailsComponent } from '../shapesGraphDetails/shapesGraphDetails.component';
+import { ShapesGraphEditorPageComponent } from './shapesGraphEditorPage.component';
 import { ShapesGraphListItem } from '../../../shared/models/shapesGraphListItem.class';
 import { ShapesGraphPropertiesBlockComponent } from '../shapesGraphPropertiesBlock/shapesGraphPropertiesBlock.component';
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
+import { ShapesTabsHolderComponent } from '../shapes-tabs-holder/shapes-tabs-holder.component';
 import { ShapesPreviewComponent } from '../shapes-preview/shapes-preview.component';
 
 describe('Shapes Graph Editor Page component', function() {
@@ -49,12 +50,13 @@ describe('Shapes Graph Editor Page component', function() {
             ],
             declarations: [
                 ShapesGraphEditorPageComponent,
-                MockComponent(EditorTopBarComponent),
                 MockComponent(ChangesPageComponent),
+                MockComponent(EditorTopBarComponent),
                 MockComponent(MergePageComponent),
                 MockComponent(ShapesGraphDetailsComponent),
                 MockComponent(ShapesGraphPropertiesBlockComponent),
-                MockComponent(ShapesPreviewComponent)
+                MockComponent(ShapesPreviewComponent),
+                MockComponent(ShapesTabsHolderComponent)
             ],
             providers: [
                 MockProvider(ShapesGraphStateService),
