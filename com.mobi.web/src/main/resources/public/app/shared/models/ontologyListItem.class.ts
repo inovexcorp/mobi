@@ -88,8 +88,6 @@ export class OntologyListItem extends VersionedRdfListItem {
     ontologyId: string
     isVocabulary: boolean
     editorTabStates: any
-    importedOntologies: {id: string, ontologyId: string}[]
-    importedOntologyIds: string[]
     createdFromExists: boolean
     dataPropertyRange: {[key: string]: string}
     derivedConcepts: string[]
@@ -116,11 +114,7 @@ export class OntologyListItem extends VersionedRdfListItem {
     noDomainProperties: string[]
     classToChildProperties: {[key: string]: string[]}
     iriList: string[]
-    selected: JSONLDObject
-    selectedBlankNodes: JSONLDObject[]
-    failedImports: string[]
     seeHistory: boolean
-    hasPendingRefresh: boolean
     openSnackbar: MatSnackBarRef<SimpleSnackBar>
     iriBegin: string
     iriThen: string
@@ -142,8 +136,6 @@ export class OntologyListItem extends VersionedRdfListItem {
         this.ontologyId = '';
         this.isVocabulary = false;
         this.editorTabStates = cloneDeep(ontologyEditorTabStates);
-        this.importedOntologies = [];
-        this.importedOntologyIds = [];
         this.createdFromExists = true;
         this.userCanModify = false;
         this.userCanModifyMaster = false;
@@ -207,11 +199,7 @@ export class OntologyListItem extends VersionedRdfListItem {
         this.noDomainProperties = [];
         this.classToChildProperties = {};
         this.iriList = [];
-        this.selected = undefined;
-        this.selectedBlankNodes = [];
-        this.failedImports = [];
         this.seeHistory = false;
-        this.hasPendingRefresh = false;
         this.iriBegin = '';
         this.iriThen = '';
         this.query = new YasguiQuery();

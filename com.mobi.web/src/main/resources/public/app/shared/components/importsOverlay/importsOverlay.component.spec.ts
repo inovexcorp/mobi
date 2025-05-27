@@ -28,7 +28,7 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
-import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
@@ -39,19 +39,20 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 
-import { cleanStylesFromDOM } from '../../../../../public/test/ts/Shared';
-import { OntologyDetails } from '../../../datasets/models/ontologyDetails.interface';
 import { CATALOG, DCTERMS, OWL } from '../../../prefixes';
-import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
-import { InfoMessageComponent } from '../../../shared/components/infoMessage/infoMessage.component';
-import { ProgressSpinnerService } from '../../../shared/components/progress-spinner/services/progressSpinner.service';
-import { SearchBarComponent } from '../../../shared/components/searchBar/searchBar.component';
-import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
-import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
-import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
-import { OntologyStateService } from '../../../shared/services/ontologyState.service';
-import { PropertyManagerService } from '../../../shared/services/propertyManager.service';
-import { ToastService } from '../../../shared/services/toast.service';
+import { CatalogManagerService } from '../../services/catalogManager.service';
+import { cleanStylesFromDOM } from '../../../../test/ts/Shared';
+import { ErrorDisplayComponent } from '../errorDisplay/errorDisplay.component';
+import { InfoMessageComponent } from '../infoMessage/infoMessage.component';
+import { JSONLDObject } from '../../models/JSONLDObject.interface';
+import { OntologyDetails } from '../../../datasets/models/ontologyDetails.interface';
+import { OntologyListItem } from '../../models/ontologyListItem.class';
+import { OntologyStateService } from '../../services/ontologyState.service';
+import { ProgressSpinnerService } from '../progress-spinner/services/progressSpinner.service';
+import { PropertyManagerService } from '../../services/propertyManager.service';
+import { RecordIconComponent } from '../recordIcon/recordIcon.component';
+import { SearchBarComponent } from '../searchBar/searchBar.component';
+import { ToastService } from '../../services/toast.service';
 import { ImportsOverlayComponent } from './importsOverlay.component';
 
 describe('Imports Overlay component', function() {
@@ -65,6 +66,7 @@ describe('Imports Overlay component', function() {
     let httpMock: HttpTestingController;
     let propertyManagerStub: jasmine.SpyObj<PropertyManagerService>;
     let toastStub: jasmine.SpyObj<ToastService>;
+    let listItem: OntologyListItem;
 
     const url = 'http://test.com';
     const error = 'Error Message';
@@ -86,6 +88,13 @@ describe('Imports Overlay component', function() {
     };
 
     beforeEach(async () => {
+        listItem = new OntologyListItem();
+        listItem.selected = {'@id': 'ontology'};
+        const dialogData = {
+            stateService: null,
+            listItem: listItem,
+            targetRecordTypes: ['OntologyRecord', 'ShapeGraphRecord']
+        };
         await TestBed.configureTestingModule({
             imports: [
                 HttpClientTestingModule,
@@ -106,6 +115,7 @@ describe('Imports Overlay component', function() {
                 MockComponent(InfoMessageComponent),
                 MockComponent(ErrorDisplayComponent),
                 MockComponent(SearchBarComponent),
+                MockComponent(RecordIconComponent)
             ],
             providers: [
                 MockProvider(ProgressSpinnerService),
@@ -113,15 +123,11 @@ describe('Imports Overlay component', function() {
                 MockProvider(OntologyStateService),
                 MockProvider(PropertyManagerService),
                 MockProvider(ToastService),
-                { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close'])}
+                { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close'])},
+                { provide: MAT_DIALOG_DATA, useValue: dialogData }
             ]
-        });
-    });
+        }).compileComponents();
 
-    beforeEach(function() {
-        fixture = TestBed.createComponent(ImportsOverlayComponent);
-        component = fixture.componentInstance;
-        element = fixture.debugElement;
         catalogManagerStub = TestBed.inject(CatalogManagerService) as jasmine.SpyObj<CatalogManagerService>;
         progressSpinnerStub = TestBed.inject(ProgressSpinnerService) as jasmine.SpyObj<ProgressSpinnerService>;
         ontologyStateStub = TestBed.inject(OntologyStateService) as jasmine.SpyObj<OntologyStateService>;
@@ -132,8 +138,11 @@ describe('Imports Overlay component', function() {
 
         catalogManagerStub.localCatalog = {'@id': catalogId};
         catalogManagerStub.sortOptions = [sortOption];
-        ontologyStateStub.listItem = new OntologyListItem();
-        ontologyStateStub.listItem.selected = {'@id': 'ontology'};
+
+        dialogData.stateService = ontologyStateStub;
+        fixture = TestBed.createComponent(ImportsOverlayComponent);
+        component = fixture.componentInstance;
+        element = fixture.debugElement;
     });
 
     afterEach(function() {
@@ -147,6 +156,7 @@ describe('Imports Overlay component', function() {
         progressSpinnerStub = null;
         propertyManagerStub = null;
         toastStub = null;
+        listItem = null;
     });
 
     it('initializes correctly', function() {
@@ -275,7 +285,7 @@ describe('Imports Overlay component', function() {
                     selected: true,
                     jsonld: ontology3
                 }];
-                ontologyStateStub.listItem.versionedRdfRecord.recordId = ontology2['@id'];
+                listItem.versionedRdfRecord.recordId = ontology2['@id'];
                 catalogManagerStub.getRecords.and.returnValue(of(new HttpResponse({body: [ontologyRecord, ontology2, ontology3]})));
                 component.setOntologies();
                 tick();
@@ -385,7 +395,7 @@ describe('Imports Overlay component', function() {
             it('if there are duplicate values', function() {
                 propertyManagerStub.addId.and.returnValue(false);
                 component.confirmed([url], 0);
-                expect(propertyManagerStub.addId).toHaveBeenCalledWith(ontologyStateStub.listItem.selected, `${OWL}imports`, url);
+                expect(propertyManagerStub.addId).toHaveBeenCalledWith(listItem.selected, `${OWL}imports`, url);
                 expect(toastStub.createWarningToast).toHaveBeenCalledWith('Duplicate property values not allowed');
                 expect(ontologyStateStub.addToAdditions).not.toHaveBeenCalled();
                 expect(ontologyStateStub.saveCurrentChanges).not.toHaveBeenCalled();
@@ -396,7 +406,7 @@ describe('Imports Overlay component', function() {
                 beforeEach(function() {
                     propertyManagerStub.addId.and.returnValue(true);
                     this.additionsObj = {
-                        '@id': ontologyStateStub.listItem.selected['@id'],
+                        '@id': listItem.selected['@id'],
                         [`${OWL}imports`]: [{'@id': url}]
                     };
                 });
@@ -409,20 +419,20 @@ describe('Imports Overlay component', function() {
                         ontologyStateStub.changeVersion.and.returnValue(of(null));
                         component.confirmed([url], 0);
                         tick();
-                        expect(propertyManagerStub.addId).toHaveBeenCalledWith(ontologyStateStub.listItem.selected, `${OWL}imports`, url);
-                        expect(ontologyStateStub.addToAdditions).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, this.additionsObj);
+                        expect(propertyManagerStub.addId).toHaveBeenCalledWith(listItem.selected, `${OWL}imports`, url);
+                        expect(ontologyStateStub.addToAdditions).toHaveBeenCalledWith(listItem.versionedRdfRecord.recordId, this.additionsObj);
                         expect(ontologyStateStub.saveCurrentChanges).toHaveBeenCalledWith();
-                        expect(ontologyStateStub.changeVersion).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, ontologyStateStub.listItem.versionedRdfRecord.branchId, ontologyStateStub.listItem.versionedRdfRecord.commitId, undefined, ontologyStateStub.listItem.currentVersionTitle, ontologyStateStub.listItem.upToDate, false, false);
+                        expect(ontologyStateStub.changeVersion).toHaveBeenCalledWith(listItem.versionedRdfRecord.recordId, listItem.versionedRdfRecord.branchId, listItem.versionedRdfRecord.commitId, undefined, listItem.currentVersionTitle, listItem.upToDate, false, false);
                         expect(matDialogRef.close).toHaveBeenCalledWith(true);
                     }));
                     it('when update ontology rejects', fakeAsync(function() {
                         ontologyStateStub.changeVersion.and.returnValue(throwError(error));
                         component.confirmed([url], 0);
                         tick();
-                        expect(propertyManagerStub.addId).toHaveBeenCalledWith(ontologyStateStub.listItem.selected, `${OWL}imports`, url);
-                        expect(ontologyStateStub.addToAdditions).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, this.additionsObj);
+                        expect(propertyManagerStub.addId).toHaveBeenCalledWith(listItem.selected, `${OWL}imports`, url);
+                        expect(ontologyStateStub.addToAdditions).toHaveBeenCalledWith(listItem.versionedRdfRecord.recordId, this.additionsObj);
                         expect(ontologyStateStub.saveCurrentChanges).toHaveBeenCalledWith();
-                        expect(ontologyStateStub.changeVersion).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, ontologyStateStub.listItem.versionedRdfRecord.branchId, ontologyStateStub.listItem.versionedRdfRecord.commitId, undefined, ontologyStateStub.listItem.currentVersionTitle, ontologyStateStub.listItem.upToDate, false, false);
+                        expect(ontologyStateStub.changeVersion).toHaveBeenCalledWith(listItem.versionedRdfRecord.recordId, listItem.versionedRdfRecord.branchId, listItem.versionedRdfRecord.commitId, undefined, listItem.currentVersionTitle, listItem.upToDate, false, false);
                         expect(matDialogRef.close).not.toHaveBeenCalled();
                         expect(component.urlError).toEqual(error);
                     }));
@@ -431,8 +441,8 @@ describe('Imports Overlay component', function() {
                     ontologyStateStub.saveCurrentChanges.and.returnValue(throwError(error));
                     component.confirmed([url], 0);
                     tick();
-                    expect(propertyManagerStub.addId).toHaveBeenCalledWith(ontologyStateStub.listItem.selected, `${OWL}imports`, url);
-                    expect(ontologyStateStub.addToAdditions).toHaveBeenCalledWith(ontologyStateStub.listItem.versionedRdfRecord.recordId, this.additionsObj);
+                    expect(propertyManagerStub.addId).toHaveBeenCalledWith(listItem.selected, `${OWL}imports`, url);
+                    expect(ontologyStateStub.addToAdditions).toHaveBeenCalledWith(listItem.versionedRdfRecord.recordId, this.additionsObj);
                     expect(ontologyStateStub.saveCurrentChanges).toHaveBeenCalledWith();
                     expect(ontologyStateStub.changeVersion).not.toHaveBeenCalled();
                     expect(matDialogRef.close).not.toHaveBeenCalled();

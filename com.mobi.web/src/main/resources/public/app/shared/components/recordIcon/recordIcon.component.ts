@@ -62,8 +62,10 @@ export class RecordIconComponent {
         this._changeIcon(this.state.getRecordIcon(this._record));
     }
 
-  constructor(public state: CatalogStateService, private cm: CatalogManagerService) {
-  }
+    @Input() stackIconSizeOverride?: string;
+
+    constructor(public state: CatalogStateService, private cm: CatalogManagerService) {
+    }
 
     private _changeIcon(recordIcon: string): void {
         if (recordIcon.startsWith('mat ')) {

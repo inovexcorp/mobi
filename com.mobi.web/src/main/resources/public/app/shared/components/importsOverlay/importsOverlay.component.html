@@ -50,6 +50,9 @@
                         <info-message *ngIf="ontologies.length === 0">No ontologies are available to import</info-message>
                         <mat-selection-list #ontologyList (selectionChange)="selectedUpdate($event)">
                             <mat-list-option *ngFor="let ontology of ontologies" [selected]="ontology.selected" [value]="ontology">
+                                <div matListIcon class="mr-2 mb-3">
+                                    <record-icon [record]="ontology.jsonld" [stackIconSizeOverride]="'1.7em'"></record-icon>
+                                </div>
                                 <h4 matLine [title]="ontology.title">{{ontology.title}}</h4>
                                 <p matLine [title]="ontology.ontologyIRI"><small class="ontology-iri text-muted">{{ontology.ontologyIRI}}</small></p>
                             </mat-list-option>

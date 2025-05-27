@@ -29,7 +29,13 @@
                     <ontology-properties-block class="col" [ontology]="os.listItem.selected"></ontology-properties-block>
                 </div>
                 <div class="row py-2">
-                    <imports-block class="col" [recordId]="os.listItem.versionedRdfRecord.recordId"></imports-block>
+                    <imports-block class="col"
+                        [versionedRdfRecord]="os.listItem.versionedRdfRecord"
+                        [stateService]="os"
+                        [listItem]="os.listItem"
+                        [targetRecordTypes]="targetRecordTypes"
+                        [noImportMessage]="noImportMessage">
+                    </imports-block>
                 </div>
             </div>
             <preview-block class="col-7 h-100" [(activePage)]="os.listItem.editorTabStates.project"></preview-block>

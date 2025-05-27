@@ -39,10 +39,13 @@ import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 export class ShapesGraphPropertiesBlockComponent implements OnChanges {
     @Input() shapesGraph: JSONLDObject;
     properties: Array<string> = [];
+    excludeProperties = ['http://www.w3.org/2002/07/owl#imports'];
 
     constructor() {}
-    
+
     ngOnChanges(): void {
-        this.properties = Object.keys(this.shapesGraph).filter(property => property.charAt(0) !== '@');
+        this.properties = Object.keys(this.shapesGraph)
+            .filter(property => property.charAt(0) !== '@')
+            .filter(property => !this.excludeProperties.includes(property));
     }
 }

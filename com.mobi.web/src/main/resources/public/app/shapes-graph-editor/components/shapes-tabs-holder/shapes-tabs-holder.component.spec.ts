@@ -27,9 +27,10 @@ import { BrowserAnimationsModule} from '@angular/platform-browser/animations';
 import { By } from '@angular/platform-browser';
 import { cleanStylesFromDOM } from '../../../../test/ts/Shared';
 import { MatTabsModule } from '@angular/material/tabs';
-import { MockProvider } from 'ng-mocks';
+import { MockComponent, MockProvider } from 'ng-mocks';
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
 import { ShapesGraphListItem } from '../../../shared/models/shapesGraphListItem.class';
+import { ShapesProjectTabComponent } from '../shapes-project-tab/shapes-project-tab.component';
 import { ShapesTabsHolderComponent } from './shapes-tabs-holder.component';
 
 describe('ShapesTabsHolderComponent', () => {
@@ -46,8 +47,13 @@ describe('ShapesTabsHolderComponent', () => {
         MatTabsModule,
         BrowserAnimationsModule,
       ],
-      declarations: [ShapesTabsHolderComponent],
-      providers: [MockProvider(ShapesGraphStateService)]
+      declarations: [
+        ShapesTabsHolderComponent,
+        MockComponent(ShapesProjectTabComponent)
+      ],
+      providers: [
+        MockProvider(ShapesGraphStateService)
+      ]
     });
 
     fixture = TestBed.createComponent(ShapesTabsHolderComponent);

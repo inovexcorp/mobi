@@ -260,4 +260,40 @@ describe('Shapes Graph Manager service', function() {
             expect(window.open).not.toHaveBeenCalledWith();
         });
     });
+    describe('should retrieve shapes graph iri of a shapes graph record', function() {
+        it('unless an error occurs', function() {
+            service.getShapesGraphIRI('record1', 'branch1', 'commit1')
+                .subscribe(() => fail('Promise should have rejected'), response => {
+                    expect(response).toEqual(error);
+                });
+            const request = httpMock.expectOne(req => req.method === 'GET' && req.url === `${service.prefix}/record1/id`);
+            request.flush('flush', { status: 400, statusText: error });
+        });
+        it('successfully', function() {
+            service.getShapesGraphIRI('record1', 'branch1', 'commit1')
+                .subscribe(response => {
+                    expect(response).toEqual('content');
+                }, () => fail('Promise should have resolved'));
+            const request = httpMock.expectOne(req => req.method === 'GET' && req.url === `${service.prefix}/record1/id`);
+            request.flush('content');
+        });
+    });
+    describe('should retrieve shapes graph imports of a shapes graph record', function() {
+        it('unless an error occurs', function() {
+            service.getShapesGraphImports('record1', 'branch1', 'commit1')
+                .subscribe(() => fail('Promise should have rejected'), response => {
+                    expect(response).toEqual(error);
+                });
+            const request = httpMock.expectOne(req => req.method === 'GET' && req.url === `${service.prefix}/record1/imports`);
+            request.flush('flush', { status: 400, statusText: error });
+        });
+        it('successfully', function() {
+            service.getShapesGraphImports('record1', 'branch1', 'commit1')
+                .subscribe(response => {
+                    expect(response).toEqual({importedOntologies:[], failedImports: []});
+                }, () => fail('Promise should have resolved'));
+            const request = httpMock.expectOne(req => req.method === 'GET' && req.url === `${service.prefix}/record1/imports`);
+            request.flush({importedOntologies:[], failedImports: []});
+        });
+    });
 });

@@ -107,16 +107,17 @@ import { ValueDisplayComponent } from './components/valueDisplay/valueDisplay.co
 import { WarningMessageComponent } from './components/warningMessage/warningMessage.component';
 import { FiltersSelectedListComponent } from './components/filters-selected-list/filters-selected-list.component';
 
-import { CopyClipboardDirective } from './directives/copyClipboard/copyClipboard.directive';
-import { DragFileDirective } from './directives/dragFile/dragFile.directive';
-import { FocusDirective } from './directives/focus/focus.directive';
 import { CatalogManagerService } from './services/catalogManager.service';
 import { CatalogStateService } from './services/catalogState.service';
+import { CopyClipboardDirective } from './directives/copyClipboard/copyClipboard.directive';
 import { D3TransformerService } from './services/d3Transformer.service';
 import { DatasetManagerService } from './services/datasetManager.service';
 import { DatasetStateService } from './services/datasetState.service';
 import { DelimitedManagerService } from './services/delimitedManager.service';
 import { DiscoverStateService } from './services/discoverState.service';
+import { DragFileDirective } from './directives/dragFile/dragFile.directive';
+import { FocusDirective } from './directives/focus/focus.directive';
+
 import { LoginManagerService } from './services/loginManager.service';
 import { ManchesterConverterService } from './services/manchesterConverter.service';
 import { MapperStateService } from './services/mapperState.service';
@@ -154,6 +155,8 @@ import { TrustedHtmlPipe } from './pipes/trustedHtml.pipe';
 
 import { MobiErrorStateMatcher } from './MobiErrorStateMatcher';
 import { HistoryGraph } from '../history-graph/history-graph.module';
+import { ImportsBlockComponent } from './components/importsBlock/importsBlock.component';
+import { ImportsOverlayComponent } from './components/importsOverlay/importsOverlay.component';
 
 /**
  * @namespace shared
@@ -233,6 +236,8 @@ import { HistoryGraph } from '../history-graph/history-graph.module';
     FileInputComponent,
     FocusDirective,
     HighlightTextPipe,
+    ImportsBlockComponent,
+    ImportsOverlayComponent,
     InfoMessageComponent,
     InlineEditComponent,
     IriSelectComponent,
@@ -325,6 +330,8 @@ import { HistoryGraph } from '../history-graph/history-graph.module';
     DatasetSelectComponent,
     ErrorDisplayComponent,
     FileInputComponent,
+    ImportsBlockComponent,
+    ImportsOverlayComponent,
     InfoMessageComponent,
     InlineEditComponent,
     IriSelectComponent,

@@ -20,29 +20,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-/* Core variables */
-@import "../../../css/variables";
-
-.record-icon {
-    color: var(--primary);
-    display: inline-block;
-    &.mat-record-icon {
-        background-color:  var(--primary);
-        border-radius: 0.45em;
-        width: 1.7em;
-        height: 1.7em;
-        vertical-align: middle;
-        display: inline-flex;
-        margin-right: 0.2rem;
-
-        ::ng-deep .mat-icon {
-            -webkit-text-fill-color:white;
-            font-size: 1.3em;
-            line-height: 1.3em !important;
-            width: 1.3em;
-            height: 1.3em;
-            display: flex;
-            justify-content: center;
-        }
-    }
+ /**
+ * @ngdoc interface
+ * @name shared.models:ShapesGraphImports
+ *
+ * @description
+ * Represents a response from the shapeGraph imports endpoint
+ */
+export interface ShapesGraphImports {
+    importedOntologies: {id: string, ontologyId: string}[],
+    failedImports: string[],
 }

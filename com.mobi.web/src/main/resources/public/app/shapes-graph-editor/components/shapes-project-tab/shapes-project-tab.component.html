@@ -26,14 +26,25 @@
         <div class="row flex-1 remove-min-height">
             <div class="col-5 vertical-scroll h-100">
                 <div class="row py-2">
-                <shapes-graph-properties-block class="col"
-                                               [shapesGraph]="state?.listItem?.metadata"></shapes-graph-properties-block>
+                    <shapes-graph-properties-block class="col"
+                        [shapesGraph]="state?.listItem?.metadata">
+                    </shapes-graph-properties-block>
+                </div>
+                <div class="row py-2">
+                    <imports-block class="col"
+                        [versionedRdfRecord]="state.listItem.versionedRdfRecord"
+                        [stateService]="state"
+                        [listItem]="state.listItem"
+                        [targetRecordTypes]="targetRecordTypes"
+                        [noImportMessage]="noImportMessage">
+                    </imports-block>
                 </div>
             </div>
             <shapes-preview class="col-7 h-100"
-                            [format]="this.state.listItem.previewFormat"
-                            [content]="state.listItem.content"
-                            (contentTypeChange)=updateContentType($event)></shapes-preview>
+                [format]="state.listItem.previewFormat"
+                [content]="state.listItem.content"
+                (contentTypeChange)=updateContentType($event)>
+            </shapes-preview>
         </div>
     </div>
 </div>

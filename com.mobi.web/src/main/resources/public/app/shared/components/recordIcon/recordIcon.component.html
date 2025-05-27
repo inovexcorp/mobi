@@ -21,7 +21,9 @@
   #L%
   -->
 
-<span *ngIf="!isMaterial" class="record-icon fa-stack">
+<span *ngIf="!isMaterial" 
+  class="record-icon fa-stack stack-icon"
+  [ngStyle]="stackIconSizeOverride ? {'width': stackIconSizeOverride, 'height': stackIconSizeOverride} : {}">
   <i class="fa fa-square fa-stack-2x"></i>
   <i class="fa {{icon}} fa-inverse fa-stack-1x" title="{{title}}"></i>
 </span>

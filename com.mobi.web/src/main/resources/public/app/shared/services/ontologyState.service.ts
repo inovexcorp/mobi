@@ -569,7 +569,7 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
         ]).pipe(
             switchMap(response => {
                 listItem.ontologyId = response[0].ontologyIRI;
-                listItem.editorTabStates.project.entityIRI = response[0].ontologyIRI;    
+                listItem.editorTabStates.project.entityIRI = response[0].ontologyIRI;
                 forEach(response[0].propertyToRanges, (ranges, propertyIRI) => {
                     listItem.propertyIcons[propertyIRI] = this._getIcon(ranges);
                 });
@@ -593,7 +593,7 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
                 listItem.derivedSemanticRelations = get(responseIriList, 'derivedSemanticRelations', []);
                 get(responseIriList, 'datatypes', []).forEach(iri => this._addIri(listItem, 'dataPropertyRange', iri, listItem.ontologyId));
                 get(response[0], 'importedOntologies').forEach(importedOntObj => {
-                    this._addImportedOntologyToListItem(listItem, importedOntObj);
+                    this.addImportedOntologyToListItem(listItem, importedOntObj);
                 });
                 forEach(get(response[0], 'importedIRIs'), iriList => {
                     iriList.annotationProperties.forEach(iri => this._addIri(listItem, 'annotations.iris', iri, iriList.id));
@@ -2653,14 +2653,6 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
             return;
         }
         return get(listItem.entityInfo, entityIRI, undefined);
-    }
-    private _addImportedOntologyToListItem(listItem: OntologyListItem, importedOntObj: {id: string, ontologyId: string}): void {
-        const importedOntologyListItem = {
-            id: importedOntObj.id,
-            ontologyId: importedOntObj.ontologyId
-        };
-        listItem.importedOntologyIds.push(importedOntObj.id);
-        listItem.importedOntologies.push(importedOntologyListItem);
     }
     private _setHierarchyInfo(obj: Hierarchy, response: VocabularyStuff | OntologyStuff, key: string): void {
         const hierarchyInfo = get(response, key, {parentMap: {}, childMap: {}, circularMap: {}});

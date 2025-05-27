@@ -22,6 +22,7 @@
  */
 import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 
+import { ONTOLOGYEDITOR } from '../../../prefixes';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 
 /**
@@ -38,16 +39,19 @@ import { OntologyStateService } from '../../../shared/services/ontologyState.ser
     templateUrl: './projectTab.component.html'
 })
 export class ProjectTabComponent implements OnInit, OnDestroy {
+    targetRecordTypes = [`${ONTOLOGYEDITOR}OntologyRecord`];
+    noImportMessage = 'This ontology does not have any imports.';
+
     @ViewChild('projectTab', { static: true }) projectTab: ElementRef;
     
     constructor(public os: OntologyStateService) {}
 
+    ngOnInit(): void {
+        this.os.listItem.editorTabStates.project.element = this.projectTab;
+    }
     ngOnDestroy(): void {
         if (this.os.listItem) {
             this.os.listItem.editorTabStates.project.element = undefined;
         }
-    }
-    ngOnInit(): void {
-        this.os.listItem.editorTabStates.project.element = this.projectTab;
     }
 }

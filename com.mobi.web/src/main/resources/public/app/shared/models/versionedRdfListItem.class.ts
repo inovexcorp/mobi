@@ -24,6 +24,7 @@ import { Commit } from './commit.interface';
 import { Conflict } from './conflict.interface';
 import { Difference } from './difference.class';
 import { JSONLDObject } from './JSONLDObject.interface';
+import { VersionedRdfRecord } from './versionedRdfRecord.interface';
 
 export class VersionedRdfListItem {
     tabIndex: number; //moved into super class to account for we need to keep track in both ontology and shapes editor
@@ -34,13 +35,7 @@ export class VersionedRdfListItem {
     userBranch: boolean;
     userCanModify: boolean;
     userCanModifyMaster: boolean;
-    versionedRdfRecord: {
-        title: string,
-        recordId: string,
-        branchId?: string,
-        commitId: string,
-        tagId?: string
-    };
+    versionedRdfRecord: VersionedRdfRecord;
     additions: JSONLDObject[];
     deletions: JSONLDObject[];
     inProgressCommit: Difference;
@@ -54,6 +49,12 @@ export class VersionedRdfListItem {
         startIndex: number
     }
     selectedCommit?: Commit
+    hasPendingRefresh: boolean
+    importedOntologies: {id: string, ontologyId: string}[]
+    importedOntologyIds: string[]
+    failedImports: string[];
+    selected: JSONLDObject;
+    selectedBlankNodes: JSONLDObject[];
 
     constructor() {
         this.masterBranchIri = '';
@@ -67,6 +68,10 @@ export class VersionedRdfListItem {
             branchId: '',
             commitId: ''
         };
+        this.importedOntologies = [];
+        this.importedOntologyIds = [];
+        this.failedImports = [];
+        this.hasPendingRefresh = false;
         this.additions = [];
         this.deletions = [];
         this.inProgressCommit = new Difference();
@@ -80,5 +85,7 @@ export class VersionedRdfListItem {
             startIndex: 0
         };
         this.selectedCommit = undefined;
+        this.selected = undefined;
+        this.selectedBlankNodes = [];
     }
 }

@@ -21,12 +21,12 @@
  * #L%
  */
 //angular imports
-import { HttpResponse } from '@angular/common/http';
+import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 //third party imports
-import { cloneDeep, find, get, isEmpty, remove, some } from 'lodash';
+import { cloneDeep, find, get, isEmpty, remove, some, assign } from 'lodash';
 import { Observable, of, merge as rxjsMerge, throwError } from 'rxjs';
-import { map, switchMap, tap } from 'rxjs/operators';
+import { catchError, map, switchMap, tap } from 'rxjs/operators';
 //mobi + local imports
 import {
   CATALOG,
@@ -44,16 +44,17 @@ import { EventPayload, EventTypeConstants, EventWithPayload } from '../models/ev
 import { getBeautifulIRI, getDctermsValue, getPropertyId } from '../utility';
 import { JSONLDObject } from '../models/JSONLDObject.interface';
 import { MergeRequestManagerService } from './mergeRequestManager.service';
+import { PolicyEnforcementService } from './policyEnforcement.service';
+import { PolicyManagerService } from './policyManager.service';
 import { RdfDownload } from '../models/rdfDownload.interface';
 import { RdfUpdate } from '../models/rdfUpdate.interface';
 import { RdfUpload } from '../models/rdfUpload.interface';
-import { PolicyEnforcementService } from './policyEnforcement.service';
-import { PolicyManagerService } from './policyManager.service';
 import { RecordSelectFiltered } from '../../versioned-rdf-record-editor/models/record-select-filtered.interface';
 import { SettingManagerService } from './settingManager.service';
+import { SHAPES_STORE_TYPE } from '../../constants';
 import { ShapesGraphListItem } from '../models/shapesGraphListItem.class';
 import { ShapesGraphManagerService } from './shapesGraphManager.service';
-import { SHAPES_STORE_TYPE } from '../../constants';
+import { ShapesGraphImports } from '../models/shapesGraphImports.interface';
 import { SparqlManagerService } from './sparqlManager.service';
 import { SPARQLSelectResults } from '../models/sparqlSelectResults.interface';
 import { StateManagerService } from './stateManager.service';
@@ -198,29 +199,19 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
    * Opens the ShapesGraphRecord identified by the provided details in the Shapes Editor.
    */
   open(record: RecordSelectFiltered): Observable<null> {
-    const existingListItem = this.list.find(listItem => listItem.versionedRdfRecord.recordId === record.recordId);
-    if (existingListItem) {
-      this.listItem = existingListItem;
-      return of(null);
-    }
     return this.getCatalogDetails(record.recordId).pipe(
-      switchMap((response: CatalogDetails) => {
-        const listItem = new ShapesGraphListItem();
-        listItem.versionedRdfRecord = {
-          title: record.title,
-          recordId: response.recordId,
-          branchId: response.branchId,
-          commitId: response.commitId,
-          tagId: response.tagId
-        };
-        listItem.inProgressCommit.additions = response.inProgressCommit.additions;
-        listItem.inProgressCommit.deletions = response.inProgressCommit.deletions;
-        listItem.changesPageOpen = false;
-        listItem.upToDate = response.upToDate;
-
+      switchMap((response: CatalogDetails) => this.createListItem(response.recordId,
+        response.branchId,
+        response.commitId,
+        response.tagId,
+        response.inProgressCommit,
+        response.upToDate,
+        record.title
+      )),
+      switchMap(listItem => {
         this.listItem = listItem;
         this.list.push(listItem);
-        return this.updateShapesGraphMetadata(response.recordId, response.branchId, response.commitId);
+        return of(null);
       })
     );
   }
@@ -239,59 +230,41 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
    * the Shapes Editor.
    */
   createAndOpen(rdfUpload: RdfUpload): Observable<VersionedRdfUploadResponse> {
-    if (rdfUpload.jsonld || rdfUpload.file) {
-      return this.sgm.createShapesGraphRecord(rdfUpload).pipe(
-        switchMap((response: VersionedRdfUploadResponse) => {
-          const listItem = new ShapesGraphListItem();
-          listItem.shapesGraphId = response.shapesGraphId;
-          listItem.masterBranchIri = response.branchId;
-          listItem.versionedRdfRecord = {
-            title: response.title,
-            recordId: response.recordId,
-            branchId: response.branchId,
-            commitId: response.commitId
-          };
-          listItem.currentVersionTitle = 'MASTER';
-          return this.sgm.getShapesGraphMetadata(listItem.versionedRdfRecord.recordId,
-            listItem.versionedRdfRecord.branchId,
-            listItem.versionedRdfRecord.commitId,
-            listItem.shapesGraphId
-          ).pipe(
-            switchMap((arr: string | JSONLDObject[]) => {
-              listItem.metadata = find((arr as JSONLDObject[]), {'@id': listItem.shapesGraphId});
-              return this.sgm.getShapesGraphContent(listItem.versionedRdfRecord.recordId,
-                listItem.versionedRdfRecord.branchId,
-                listItem.versionedRdfRecord.commitId
-              );
-            }),
-            switchMap((content: string | JSONLDObject[]) => {
-              listItem.content = content as string;
-              const stateBase: VersionedRdfStateBase = {
-                recordId: response.recordId,
-                commitId: response.commitId,
-                branchId: response.branchId
-              };
-              return this.createState(stateBase);
-            }),
-            tap(() => {
-              listItem.userCanModify = true;
-              listItem.userCanModifyMaster = true;
-              this.listItem = listItem;
-              this.list.push(this.listItem);
-            })
-          );
-        }),
-        map(() => ({
-          recordId: this.listItem.versionedRdfRecord.recordId,
-          branchId: this.listItem.versionedRdfRecord.branchId,
-          commitId: this.listItem.versionedRdfRecord.commitId,
-          title: this.listItem.versionedRdfRecord.title,
-          shapesGraphId: this.listItem.shapesGraphId,
-        }))
-      );
-    } else {
+    if (!rdfUpload.jsonld && !rdfUpload.file) {
       return throwError('Creation requires a file or JSON-LD');
     }
+    let listItem: ShapesGraphListItem;
+    return this.sgm.createShapesGraphRecord(rdfUpload).pipe(
+      switchMap((response: VersionedRdfUploadResponse) => {
+        if (rdfUpload.file) {
+          return this.createListItem(response.recordId, response.branchId, response.commitId,
+            undefined, new Difference(), true, rdfUpload.title);
+        } else {
+          return this.createListItem(response.recordId, response.branchId, response.commitId,
+            undefined, new Difference(), true, response.title);
+        }
+      }),
+      switchMap((newListItem: ShapesGraphListItem) => {
+        listItem = newListItem;
+        const stateBase: VersionedRdfStateBase = {
+          recordId: listItem.versionedRdfRecord.recordId,
+          commitId: listItem.versionedRdfRecord.commitId,
+          branchId: listItem.versionedRdfRecord.branchId
+        };
+        return this.createState(stateBase);
+      }),
+      tap(() => {
+        this.list.push(listItem);
+        this.listItem = listItem;
+      }),
+      map(() => ({
+        recordId: this.listItem.versionedRdfRecord.recordId,
+        branchId: this.listItem.versionedRdfRecord.branchId,
+        commitId: this.listItem.versionedRdfRecord.commitId,
+        title: this.listItem.versionedRdfRecord.title,
+        shapesGraphId: this.listItem.shapesGraphId,
+      }))
+    );
   }
   /**
    * Deletes the ShapesGraphRecord identified by the record IRI starting with its state then the record itself.
@@ -315,12 +288,16 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
   removeChanges(): Observable<null> {
     return this.cm.deleteInProgressCommit(this.listItem.versionedRdfRecord.recordId, this.catalogId).pipe(
       switchMap(() => {
-        this.clearInProgressCommit();
-        return this.updateShapesGraphMetadata(this.listItem.versionedRdfRecord.recordId,
+        return this.changeVersion(this.listItem.versionedRdfRecord.recordId,
           this.listItem.versionedRdfRecord.branchId,
-          this.listItem.versionedRdfRecord.commitId
-        );
-      }));
+          this.listItem.versionedRdfRecord.commitId,
+          undefined,
+          this.listItem.currentVersionTitle,
+          this.listItem.upToDate,
+          true,
+          this.listItem.changesPageOpen
+      )})
+    );
   }
   /**
    * Handles uploading changes to the ShapesGraphRecord identified by the provided details. Calls the Shapes Graph
@@ -329,16 +306,30 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
    */
   uploadChanges(rdfUpdate: RdfUpdate): Observable<null> {
     return this.sgm.uploadChanges(rdfUpdate).pipe(
-      switchMap((response) => {
-        if (response.status === 204) {
-          return throwError('No changes');
+      switchMap(() => this.cm.getInProgressCommit(rdfUpdate.recordId, this.catalogId)),
+      catchError((response: HttpErrorResponse): Observable<string> => {
+        if (typeof response === 'string'){
+          return throwError({errorMessage: response, errorDetails: []});
+        } else if (typeof response === 'object' && 'errorMessage' in response){
+          return throwError(response);
+        } else if (response.status === 404 || response.status === 204) {
+          return throwError({errorMessage: 'No changes were found in the uploaded file.', errorDetails: []});
+        } else {
+          return throwError({errorMessage: 'Something went wrong. Please try again later.', errorDetails: []});
         }
-        return this.cm.getInProgressCommit(rdfUpdate.recordId, this.catalogId);
       }),
       switchMap((inProgressCommit: Difference) => {
         const listItem = this.getListItemByRecordId(rdfUpdate.recordId);
         listItem.inProgressCommit = inProgressCommit;
-        return this.updateShapesGraphMetadata(rdfUpdate.recordId, rdfUpdate.branchId, rdfUpdate.commitId);
+        return this.changeVersion(rdfUpdate.recordId,
+          rdfUpdate.branchId,
+          rdfUpdate.commitId,
+          undefined,
+          listItem.currentVersionTitle,
+          listItem.upToDate,
+          false,
+          listItem.changesPageOpen
+        );
       })
     );
   }
@@ -356,40 +347,29 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
       commitId,
       tagId
     };
+    let oldListItem: ShapesGraphListItem;
+    let newListItem: ShapesGraphListItem;
     return this.updateState(state).pipe(
       switchMap(() => {
-        const oldListItem = this.getListItemByRecordId(recordId);
-        if (oldListItem) {
-          const title = oldListItem.versionedRdfRecord.title;
-          const item = new ShapesGraphListItem();
-          item.versionedRdfRecord = {
-            recordId,
-            branchId,
-            commitId,
-            tagId,
-            title
-          };
-          item.currentVersionTitle = versionTitle ? versionTitle : oldListItem.currentVersionTitle;
-          if (oldListItem.inProgressCommit && !clearInProgressCommit) {
-            item.inProgressCommit = oldListItem.inProgressCommit;
-          }
-          if (clearInProgressCommit) {
-            item.inProgressCommit = new Difference();
-          }
-          item.changesPageOpen = changesPageOpen;
-          item.upToDate = upToDate;
-          const idx = this.list.indexOf(oldListItem);
-          this.list[idx] = item;
-          this.listItem = item;
-          return this.updateShapesGraphMetadata(item.versionedRdfRecord.recordId,
-            item.versionedRdfRecord.branchId,
-            item.versionedRdfRecord.commitId
-          );
+        oldListItem = this.getListItemByRecordId(recordId);
+        if (clearInProgressCommit) {
+          oldListItem.inProgressCommit = new Difference();
         }
-        return of(null);
-      })
+        return this.createListItem(recordId, branchId, commitId, tagId, 
+          oldListItem.inProgressCommit, upToDate, oldListItem.versionedRdfRecord.title);
+      }),
+      map((createdItem) => {
+        newListItem = createdItem;
+        newListItem.changesPageOpen = changesPageOpen;
+        if (versionTitle) {
+          newListItem.currentVersionTitle = versionTitle;
+        }
+        assign(oldListItem, newListItem);
+        return null;
+      }),
     );
   }
+
   /**
    * Performs a merge of the selected source/current branch of the currently selected ShapesGraphRecord into the
    * selected target branch with any chosen resolutions. Updates the Shapes Graph data to the new merge commit's data.
@@ -410,7 +390,10 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
           this.listItem.merge.target['@id'],
           commit,
           undefined,
-          getDctermsValue(this.listItem.merge.target, 'title'), true, false, false)
+          getDctermsValue(this.listItem.merge.target, 'title'), 
+          true,
+          false,
+          false)
       ),
       switchMap(() => {
         if (shouldDelete) {
@@ -424,18 +407,34 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
 
   // Custom methods
   /**
-   * Updates the shapes graph metadata for the given recordId, branchId, commitId combination. Retrieves the
-   * shapesGraphId as well. Should be used in cases where the shapesGraphId may have been changed in the backend.
-   * Applies the inProgressCommit when retrieving data.
-   *
-   * @param {string} recordId the IRI of the record to retrieve metadata for.
-   * @param {string} branchId the IRI of the branch to retrieve metadata for.
-   * @param {string} commitId the IRI of the commit to retrieve metadata for.
-   * @returns {Observable} An Observable that resolves if the metadata update was successful; otherwise fails with either an
-   *    error string or a {@link RESTError} object.
+   * Creates an {@link ShapesGraphListItem} given the provided input parameters.
+   * 
+   * @param {string} recordId The Record IRI for the ontology
+   * @param {string} branchId The Branch IRI of the intended version of the ontology
+   * @param {string} commitId The Commit IRI of the intended version of the ontology
+   * @param {string} tagId The Tag IRI of the intended version of the ontology
+   * @param {Difference} inProgressCommit The Difference to save as the InProgressCommit of the ontology
+   * @param {boolean} [upToDate=true] Whether the ontology should be considered as up to date in the frontend state.
+   * Defaults to true
+   * @param {string} title The title of the ontology
+   * @returns {Observable} An Observable with the newly created `listItem` for the ontology
    */
-  updateShapesGraphMetadata(recordId: string, branchId: string, commitId: string): Observable<null> {
-    const listItem = this.getListItemByRecordId(recordId);
+  createListItem(recordId: string, branchId: string, commitId: string, tagId: string, inProgressCommit: Difference,
+      upToDate = true, title: string): Observable<ShapesGraphListItem> {
+    const modifyRequest: XACMLRequest = {
+      resourceId:recordId,
+      actionId: this.pm.actionModify
+    };
+    const listItem = new ShapesGraphListItem();
+    listItem.versionedRdfRecord = {
+      title: title,
+      recordId: recordId,
+      branchId: branchId,
+      commitId: commitId,
+      tagId: tagId
+    };
+    listItem.inProgressCommit = inProgressCommit;
+    listItem.upToDate = upToDate;
     return this.sgm.getShapesGraphIRI(recordId, branchId, commitId).pipe(
       switchMap((shapesGraphId: string) => {
         listItem.shapesGraphId = shapesGraphId;
@@ -447,6 +446,18 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
       }),
       switchMap((arr: string | JSONLDObject[]) => {
         listItem.metadata = find((arr as JSONLDObject[]), {'@id': listItem.shapesGraphId});
+        listItem.selected = find((arr as JSONLDObject[]), {'@id': listItem.shapesGraphId});
+        return this.sgm.getShapesGraphImports(
+          listItem.versionedRdfRecord.recordId,
+          listItem.versionedRdfRecord.branchId,
+          listItem.versionedRdfRecord.commitId
+        );
+      }),
+      switchMap((shapesGraphImports: ShapesGraphImports) => {
+        get(shapesGraphImports, 'importedOntologies').forEach(importedOntObj => {
+          this.addImportedOntologyToListItem(listItem, importedOntObj);
+        });
+        listItem.failedImports = get(shapesGraphImports, 'failedImports', []);
         return this.sgm.getShapesGraphContent(listItem.versionedRdfRecord.recordId,
           listItem.versionedRdfRecord.branchId,
           listItem.versionedRdfRecord.commitId
@@ -459,10 +470,6 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
       switchMap((branches: HttpResponse<JSONLDObject[]>) => {
         const masterBranch = branches.body.find(branch => getDctermsValue(branch, 'title') === 'MASTER');
         listItem.masterBranchIri = masterBranch ? masterBranch['@id'] : '';
-        const modifyRequest: XACMLRequest = {
-          resourceId: listItem.versionedRdfRecord.recordId,
-          actionId: this.pm.actionModify
-        };
         return this.pep.evaluateRequest(modifyRequest);
       }),
       switchMap((decision: string) => {
@@ -476,11 +483,10 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
       }),
       switchMap((decision: string) => {
         listItem.userCanModifyMaster = decision === this.pep.permit;
-        return of(null);
+        return of(listItem);
       })
     );
   }
-
   /**
    * Handles the editing process for an IRI (Internationalized Resource Identifier) and updates related metadata and
    * references.

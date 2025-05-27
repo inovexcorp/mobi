@@ -53,8 +53,6 @@ import { DatatypePropertyOverlayComponent } from './components/datatypePropertyO
 import { EverythingTreeComponent } from './components/everythingTree/everythingTree.component';
 import { HierarchyFilterComponent } from './components/hierarchyFilter/hierarchyFilter.component';
 import { HierarchyTreeComponent } from './components/hierarchyTree/hierarchyTree.component';
-import { ImportsBlockComponent } from './components/importsBlock/importsBlock.component';
-import { ImportsOverlayComponent } from './components/importsOverlay/importsOverlay.component';
 import { IndividualsTabComponent } from './components/individualsTab/individualsTab.component';
 import { IndividualHierarchyBlockComponent } from './components/individualHierarchyBlock/individualHierarchyBlock.component';
 import { IndividualTypesModalComponent } from './components/individualTypesModal/individualTypesModal.component';
@@ -133,8 +131,6 @@ import { VersionedRdfRecordEditorModule } from '../versioned-rdf-record-editor/v
         EverythingTreeComponent,
         HierarchyFilterComponent,
         HierarchyTreeComponent,
-        ImportsBlockComponent,
-        ImportsOverlayComponent,
         IndividualHierarchyBlockComponent,
         IndividualsTabComponent,
         IndividualTypesModalComponent,

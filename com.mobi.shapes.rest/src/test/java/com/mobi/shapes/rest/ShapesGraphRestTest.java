@@ -30,11 +30,13 @@ import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
@@ -44,6 +46,7 @@ import static org.mockito.Mockito.when;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mobi.catalog.api.BranchManager;
 import com.mobi.catalog.api.CommitManager;
@@ -64,6 +67,7 @@ import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyId;
+import com.mobi.ontology.utils.cache.OntologyCache;
 import com.mobi.persistence.utils.impl.SimpleBNodeService;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.repository.impl.sesame.memory.MemoryRepositoryWrapper;
@@ -105,13 +109,15 @@ import org.mockito.Mockito;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import javax.ws.rs.client.Entity;
@@ -133,6 +139,7 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
     private static EngineManager engineManager;
     private static SimpleBNodeService bNodeService;
     private static ShapesGraphManager shapesGraphManager;
+    private static OntologyCache ontologyCache;
     private static PDP pdp;
     private static Request request;
     private static com.mobi.security.policy.api.Response response;
@@ -174,6 +181,7 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
         recordManager = mock(RecordManager.class);
         compiledResourceManager = mock(CompiledResourceManager.class);
         shapesGraphManager = mock(ShapesGraphManager.class);
+        ontologyCache = mock(OntologyCache.class);
         pdp = mock(PDP.class);
         request = mock(Request.class);
         response = mock(com.mobi.security.policy.api.Response.class);
@@ -232,6 +240,7 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
         rest.compiledResourceManager = compiledResourceManager;
         rest.engineManager = engineManager;
         rest.shapesGraphManager = shapesGraphManager;
+        rest.ontologyCache = ontologyCache;
         rest.pdp = pdp;
 
         bNodeService = new SimpleBNodeService();
@@ -263,7 +272,7 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
     @After
     public void resetMocks() {
         reset(engineManager, configProvider, differenceManager, commitManager, branchManager, recordManager,
-                compiledResourceManager,  shapesGraphManager, shapesGraphSpy);
+                compiledResourceManager,  shapesGraphManager, ontologyCache, shapesGraphSpy);
     }
 
     @Test
@@ -864,7 +873,7 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
     }
 
     @Test
-    public void testGetShapesGraphContent() throws IOException {
+    public void testGetShapesGraphContent() {
         when(shapesGraphManager.retrieveShapesGraph(eq(recordId), eq(branchId), eq(commitId)))
                 .thenReturn(Optional.of(shapesGraphSpy));
         when(commitManager.getInProgressCommitOpt(eq(catalogId), eq(recordId),
@@ -884,7 +893,7 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
     }
 
     @Test
-    public void testGetShapesGraphContentWithoutBranchId() throws IOException {
+    public void testGetShapesGraphContentWithoutBranchId() {
         when(shapesGraphManager.retrieveShapesGraphByCommit(eq(recordId), eq(commitId)))
                 .thenReturn(Optional.of(shapesGraphSpy));
         when(commitManager.getInProgressCommitOpt(eq(catalogId), eq(recordId),
@@ -902,7 +911,7 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
     }
 
     @Test
-    public void testGetShapesGraphContentWithoutBranchOrCommitId() throws IOException {
+    public void testGetShapesGraphContentWithoutBranchOrCommitId() {
         when(shapesGraphManager.retrieveShapesGraph(eq(recordId)))
                 .thenReturn(Optional.of(shapesGraphSpy));
         when(commitManager.getInProgressCommitOpt(eq(catalogId), eq(recordId),
@@ -919,7 +928,7 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
     }
 
     @Test
-    public void testGetShapesGraphContentWithoutCommitId() throws IOException {
+    public void testGetShapesGraphContentWithoutCommitId() {
         when(shapesGraphManager.retrieveShapesGraph(eq(recordId), eq(branchId)))
                 .thenReturn(Optional.of(shapesGraphSpy));
         when(commitManager.getInProgressCommitOpt(eq(catalogId), eq(recordId),
@@ -938,7 +947,7 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
     }
 
     @Test
-    public void testGetShapesGraphContentWithExistingInProgressCommit() throws IOException {
+    public void testGetShapesGraphContentWithExistingInProgressCommit() {
         when(shapesGraphManager.retrieveShapesGraph(eq(recordId), eq(branchId), eq(commitId)))
                 .thenReturn(Optional.of(shapesGraphSpy));
 
@@ -954,6 +963,162 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
         verify(shapesGraphManager).retrieveShapesGraph(eq(recordId), eq(branchId), eq(commitId));
         verify(shapesGraphManager).applyChanges(shapesGraphSpy, inProgressCommit);
         verify(shapesGraphSpy).serializeShapesGraphContent(eq("turtle"));
+    }
+
+    @Test
+    public void testGetShapesGraphImports() {
+        Ontology mockOntology1 = mock(Ontology.class);
+        OntologyId mockOntologyId1 = mock(OntologyId.class);
+        when(mockOntologyId1.getOntologyIdentifier()).thenReturn(vf.createIRI("urn:ontIde1"));
+        when(mockOntology1.getOntologyId()).thenReturn(mockOntologyId1);
+        when(mockOntologyId1.getOntologyIRI()).thenReturn(Optional.of(vf.createIRI("urn:ontIri1")));
+
+        Ontology mockOntology2 = mock(Ontology.class);
+        OntologyId mockOntologyId2 = mock(OntologyId.class);
+        when(mockOntologyId2.getOntologyIdentifier()).thenReturn(vf.createIRI("urn:ontIde2"));
+        when(mockOntology2.getOntologyId()).thenReturn(mockOntologyId2);
+
+        Set<Ontology> importedOntologies = new LinkedHashSet<>();
+        importedOntologies.add(mockOntology1);
+        importedOntologies.add(mockOntology2);
+
+        doReturn(importedOntologies).when(shapesGraphSpy).getImportedOntologies();
+        doReturn(Set.of(vf.createIRI("urn:unloadable1"))).when(shapesGraphSpy).getUnloadableImportIRIs();
+        when(shapesGraphManager.retrieveShapesGraph(eq(recordId), eq(branchId), eq(commitId)))
+                .thenReturn(Optional.of(shapesGraphSpy));
+        when(commitManager.getInProgressCommitOpt(eq(catalogId), eq(recordId),
+                any(User.class), any(RepositoryConnection.class))).thenReturn(Optional.empty());
+
+        Response response = target().path("shapes-graphs/" + encode(recordId.stringValue()) + "/imports")
+                .queryParam("branchId", branchId.stringValue())
+                .queryParam("commitId", commitId.stringValue())
+                .request()
+                .get();
+
+        assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
+        ObjectNode objectNode = getResponse(response);
+        assertTrue(objectNode.has("failedImports"));
+        ArrayNode expectedFailedImport = mapper.createArrayNode();
+        expectedFailedImport.add("urn:unloadable1");
+        assertEquals(objectNode.get("failedImports"), expectedFailedImport);
+        assertTrue(objectNode.has("importedOntologies"));
+        ArrayNode expectedImportedOntologies = mapper.createArrayNode();
+        ObjectNode ontJson1 = mapper.createObjectNode().put("id", "urn:ontIde1").put("ontologyId", "urn:ontIri1");
+        ObjectNode ontJson2 = mapper.createObjectNode().put("id", "urn:ontIde2").put("ontologyId", "");
+        expectedImportedOntologies.addAll(List.of(ontJson1, ontJson2));
+        assertEquals(objectNode.get("importedOntologies"), expectedImportedOntologies);
+        assertGetUserFromContext();
+        verify(ontologyCache, times(0)).removeFromCache(anyString(), anyString());
+        verify(commitManager).getInProgressCommitOpt(eq(catalogId), eq(recordId), any(User.class), any(RepositoryConnection.class));
+        verify(shapesGraphManager).retrieveShapesGraph(eq(recordId), eq(branchId), eq(commitId));
+        verify(shapesGraphSpy).getUnloadableImportIRIs();
+        verify(shapesGraphSpy).getImportedOntologies();
+    }
+
+    @Test
+    public void testGetShapesGraphImportsClearCache() {
+        when(shapesGraphManager.retrieveShapesGraph(eq(recordId), eq(branchId), eq(commitId)))
+                .thenReturn(Optional.of(shapesGraphSpy));
+        when(commitManager.getInProgressCommitOpt(eq(catalogId), eq(recordId),
+                any(User.class), any(RepositoryConnection.class))).thenReturn(Optional.empty());
+
+        Response response = target().path("shapes-graphs/" + encode(recordId.stringValue()) + "/imports")
+                .queryParam("branchId", branchId.stringValue())
+                .queryParam("commitId", commitId.stringValue())
+                .queryParam("clearCache", "true")
+                .request()
+                .get();
+
+        assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
+        assertGetUserFromContext();
+        verify(ontologyCache, times(1)).removeFromCache(recordId.stringValue(), commitId.stringValue());
+        verify(commitManager).getInProgressCommitOpt(eq(catalogId), eq(recordId), any(User.class), any(RepositoryConnection.class));
+        verify(shapesGraphManager).retrieveShapesGraph(eq(recordId), eq(branchId), eq(commitId));
+        verify(shapesGraphSpy).getUnloadableImportIRIs();
+        verify(shapesGraphSpy).getImportedOntologies();
+    }
+
+    @Test
+    public void testGetShapesGraphImportsWithoutBranchId() {
+        when(shapesGraphManager.retrieveShapesGraphByCommit(eq(recordId), eq(commitId)))
+                .thenReturn(Optional.of(shapesGraphSpy));
+        when(commitManager.getInProgressCommitOpt(eq(catalogId), eq(recordId),
+                any(User.class), any(RepositoryConnection.class))).thenReturn(Optional.empty());
+
+        Response response = target().path("shapes-graphs/" + encode(recordId.stringValue()) + "/imports")
+                .queryParam("commitId", commitId.stringValue())
+                .request()
+                .get();
+
+        assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
+        verify(ontologyCache, times(0)).removeFromCache(anyString(), anyString());
+        verify(commitManager).getInProgressCommitOpt(eq(catalogId), eq(recordId),
+                any(User.class), any(RepositoryConnection.class));
+        verify(shapesGraphManager).retrieveShapesGraphByCommit(eq(recordId), eq(commitId));
+        verify(shapesGraphSpy).getUnloadableImportIRIs();
+        verify(shapesGraphSpy).getImportedOntologies();
+    }
+
+    @Test
+    public void testGetShapesGraphImportsWithoutBranchOrCommitId() {
+        when(shapesGraphManager.retrieveShapesGraph(eq(recordId)))
+                .thenReturn(Optional.of(shapesGraphSpy));
+        when(commitManager.getInProgressCommitOpt(eq(catalogId), eq(recordId),
+                any(User.class), any(RepositoryConnection.class))).thenReturn(Optional.empty());
+
+        Response response = target().path("shapes-graphs/" + encode(recordId.stringValue()) + "/imports")
+                .request()
+                .get();
+
+        assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
+        verify(ontologyCache, times(0)).removeFromCache(anyString(), anyString());
+        verify(commitManager).getInProgressCommitOpt(eq(catalogId), eq(recordId),
+                any(User.class), any(RepositoryConnection.class));
+        verify(shapesGraphManager).retrieveShapesGraph(eq(recordId));
+        verify(shapesGraphSpy).getUnloadableImportIRIs();
+        verify(shapesGraphSpy).getImportedOntologies();
+    }
+
+    @Test
+    public void testGetShapesGraphImportsWithoutCommitId() {
+        when(shapesGraphManager.retrieveShapesGraph(eq(recordId), eq(branchId)))
+                .thenReturn(Optional.of(shapesGraphSpy));
+        when(commitManager.getInProgressCommitOpt(eq(catalogId), eq(recordId),
+                any(User.class), any(RepositoryConnection.class))).thenReturn(Optional.empty());
+
+        Response response = target().path("shapes-graphs/" + encode(recordId.stringValue()) + "/imports")
+                .queryParam("branchId", branchId.stringValue())
+                .request()
+                .get();
+
+        assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
+        verify(ontologyCache, times(0)).removeFromCache(anyString(), anyString());
+        verify(commitManager).getInProgressCommitOpt(eq(catalogId), eq(recordId),
+                any(User.class), any(RepositoryConnection.class));
+        verify(shapesGraphManager).retrieveShapesGraph(eq(recordId), eq(branchId));
+        verify(shapesGraphSpy).getUnloadableImportIRIs();
+        verify(shapesGraphSpy).getImportedOntologies();
+    }
+
+    @Test
+    public void testGetShapesGraphImportsWithExistingInProgressCommit() {
+        when(shapesGraphManager.retrieveShapesGraph(eq(recordId), eq(branchId), eq(commitId)))
+                .thenReturn(Optional.of(shapesGraphSpy));
+
+        Response response = target().path("shapes-graphs/" + encode(recordId.stringValue()) + "/imports")
+                .queryParam("branchId", branchId.stringValue())
+                .queryParam("commitId", commitId.stringValue())
+                .request()
+                .get();
+
+        assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
+        assertGetUserFromContext();
+        verify(ontologyCache, times(0)).removeFromCache(anyString(), anyString());
+        verify(commitManager).getInProgressCommitOpt(eq(catalogId), eq(recordId), any(User.class), any(RepositoryConnection.class));
+        verify(shapesGraphManager).retrieveShapesGraph(eq(recordId), eq(branchId), eq(commitId));
+        verify(shapesGraphManager).applyChanges(shapesGraphSpy, inProgressCommit);
+        verify(shapesGraphSpy).getUnloadableImportIRIs();
+        verify(shapesGraphSpy).getImportedOntologies();
     }
 
     private ObjectNode getResponse(Response response) {

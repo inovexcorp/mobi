@@ -22,13 +22,17 @@
  */
 import { ComponentFixture, fakeAsync, flush, TestBed } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { MatCardModule } from '@angular/material/card';
+import { MockComponent } from 'ng-mocks';
 import * as YATE from 'perfectkb-yate';
 
 import { By } from '@angular/platform-browser';
 import { cleanStylesFromDOM } from '../../../../test/ts/Shared';
 import { DebugElement } from '@angular/core';
 import { MatTabsModule } from '@angular/material/tabs';
+import { SerializationSelectComponent } from '../../../shared/components/serializationSelect/serializationSelect.component';
 import { ShapesPreviewComponent } from './shapes-preview.component';
+
 
 describe('Shapes Preview component', function() {
   let component: ShapesPreviewComponent;
@@ -40,9 +44,13 @@ describe('Shapes Preview component', function() {
       imports: [
         MatTabsModule,
         FormsModule,
-        ReactiveFormsModule
+        ReactiveFormsModule,
+        MatCardModule
       ],
-      declarations: [ShapesPreviewComponent],
+      declarations: [
+        ShapesPreviewComponent,
+        MockComponent(SerializationSelectComponent)
+      ],
       providers: []
     }).compileComponents();
 

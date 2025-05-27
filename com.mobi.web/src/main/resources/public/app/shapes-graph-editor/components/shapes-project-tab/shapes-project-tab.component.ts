@@ -20,9 +20,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { ONTOLOGYEDITOR, SHAPESGRAPHEDITOR } from '../../../prefixes';
 import { ShapesGraphManagerService } from '../../../shared/services/shapesGraphManager.service';
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
 
@@ -30,16 +31,21 @@ import { ShapesGraphStateService } from '../../../shared/services/shapesGraphSta
   selector: 'app-shapes-project-tab',
   templateUrl: './shapes-project-tab.component.html',
 })
-export class ShapesProjectTabComponent implements OnInit {
-  constructor(public state: ShapesGraphStateService, public sgm: ShapesGraphManagerService) {}
+export class ShapesProjectTabComponent {
+  targetRecordTypes = [
+    `${ONTOLOGYEDITOR}OntologyRecord`,
+    `${SHAPESGRAPHEDITOR}ShapesGraphRecord`
+  ];
+  noImportMessage = 'This shapes graph does not have any imports.';
+  
+  constructor(
+    public sgm: ShapesGraphManagerService,
+    public state: ShapesGraphStateService
+  ) {}
 
-  ngOnInit():void {
-    console.log(this.state.listItem.versionedRdfRecord);
-  }
   keys(object: JSONLDObject): Array<string> {
     return Object.keys(object);
   }
-
   updateContentType(format: string) : void {
     const recordInfo = this.state.listItem.versionedRdfRecord;
     this.state.listItem.previewFormat = format;
