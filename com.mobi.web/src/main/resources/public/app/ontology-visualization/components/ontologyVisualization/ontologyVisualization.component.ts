@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import cytoscape from 'cytoscape/dist/cytoscape.esm.js';
+
 import {
     ChangeDetectionStrategy,
     ChangeDetectorRef,
@@ -34,18 +34,21 @@ import {
     SimpleChanges,
     ViewChild
 } from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
 
+import cytoscape from 'cytoscape/dist/cytoscape.esm.js';
 import { Subscription } from 'rxjs';
-import { OntologyVisualizationService } from '../../services/ontologyVisualization.service';
-import { SidePanelAction, SidePanelPayloadI } from '../../classes/sidebarState';
-import { GraphState, StateNode } from '../../classes';
-import { ProgressSpinnerService } from '../../../shared/components/progress-spinner/services/progressSpinner.service';
-import { ToastService } from '../../../shared/services/toast.service';
-import { D3SimulatorService } from '../../services/d3Simulator.service';
-import { SimulationOptions } from '../../interfaces/simulation.interface';
 
 import { D3Node, D3NodeIndex } from '../../classes/d3Classes';
+import { D3SimulatorService } from '../../services/d3Simulator.service';
+import { GraphState, StateNode } from '../../classes';
 import { GraphStateDataI } from '../../classes/graphState';
+import { OntologyVisualizationService } from '../../services/ontologyVisualization.service';
+import { ProgressSpinnerService } from '../../../shared/components/progress-spinner/services/progressSpinner.service';
+import { SidePanelAction, SidePanelPayloadI } from '../../classes/sidebarState';
+import { SimulationOptions } from '../../interfaces/simulation.interface';
+import { ToastService } from '../../../shared/services/toast.service';
+import { VisualizationHelpModal } from '../visualization-help-modal/visualization-help-modal.component';
 
 /**
  * @class ontology-visualization.OntologyVisualization
@@ -99,9 +102,10 @@ export class OntologyVisualization implements OnInit, OnDestroy, OnChanges {
     newNodeWithPositionAdded = false;
     initialZoomLevel = 0;
 
-    constructor(private ovis: OntologyVisualizationService,  
+    constructor(private ovis: OntologyVisualizationService,
         private d3Simulator: D3SimulatorService,
-        private toast: ToastService, 
+        private toast: ToastService,
+        private dialog: MatDialog,
         private cf: ChangeDetectorRef,
         private spinnerSrv : ProgressSpinnerService) {}
 
@@ -685,5 +689,8 @@ export class OntologyVisualization implements OnInit, OnDestroy, OnChanges {
             this.status.hasWarningsMsg = true;
             this.toast.createWarningToast(`Maximum number of nodes reached. Only ${nodeLimit} nodes are being displayed`, this._toastrConfig);
         }
+    }
+    openHelpDialog() {
+        this.dialog.open(VisualizationHelpModal);
     }
 }

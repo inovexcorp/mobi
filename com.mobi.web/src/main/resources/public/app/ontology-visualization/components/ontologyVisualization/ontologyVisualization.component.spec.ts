@@ -20,22 +20,24 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { DebugElement, SimpleChange } from '@angular/core';
 import { By } from '@angular/platform-browser';
+import { DebugElement, SimpleChange } from '@angular/core';
 import { fakeAsync, TestBed, tick, ComponentFixture } from '@angular/core/testing';
-import { MockComponent, MockProvider } from 'ng-mocks';
-import { Subject } from 'rxjs';
+import { MatDialog } from '@angular/material/dialog';
 
-import { OntologyVisualizationService } from '../../services/ontologyVisualization.service';
-import { OntologyVisualization } from './ontologyVisualization.component';
-import { InfoMessageComponent } from '../../../shared/components/infoMessage/infoMessage.component';
-import { SpinnerComponent } from '../../../shared/components/progress-spinner/components/spinner/spinner.component';
+import { MockComponent, MockProvider } from 'ng-mocks';
+import { of, Subject } from 'rxjs';
+
 import { cleanStylesFromDOM, MockOntologyVisualizationService } from  '../../../../test/ts/Shared';
-import { ProgressSpinnerService } from '../../../shared/components/progress-spinner/services/progressSpinner.service';
-import { ToastService } from '../../../shared/services/toast.service';
-import { SidePanelPayloadI } from '../../classes/sidebarState';
 import { D3SimulatorService } from '../../services/d3Simulator.service';
+import { InfoMessageComponent } from '../../../shared/components/infoMessage/infoMessage.component';
+import { OntologyVisualizationService } from '../../services/ontologyVisualization.service';
+import { ProgressSpinnerService } from '../../../shared/components/progress-spinner/services/progressSpinner.service';
+import { SidePanelPayloadI } from '../../classes/sidebarState';
+import { SpinnerComponent } from '../../../shared/components/progress-spinner/components/spinner/spinner.component';
+import { ToastService } from '../../../shared/services/toast.service';
 import { VisualizationMenuComponent } from '../visualization-menu/visualization-menu.component';
+import { OntologyVisualization } from './ontologyVisualization.component';
 
 describe('Ontology Visualization component', () => {
     let component: OntologyVisualization;
@@ -56,6 +58,9 @@ describe('Ontology Visualization component', () => {
             ],
             providers: [
                 MockProvider(ProgressSpinnerService),
+                { provide: MatDialog, useFactory: () => jasmine.createSpyObj('MatDialog', {
+                    open: { afterClosed: () => of(true)}
+                })},
                 { provide: OntologyVisualizationService, useClass: MockOntologyVisualizationService },
                 MockProvider(ToastService),
                 MockProvider(D3SimulatorService)

@@ -20,43 +20,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-.ontology-visualization {
-  &-container {
-    flex: 1;
-    display: flex;
-    .ontology-visualization {
-      flex: 1;
-    }
+import { Component } from '@angular/core';
 
-    #loading {
-      position: absolute;
-      left: 0;
-      top: 50%;
-      width: 100%;
-      text-align: center;
-      margin-top: -0.5em;
-      font-size: 2em;
-      color: #303f9f;
-      background: red;
-    }
-
-    .loaded {
-      display: none;
-    }
-  }
-
-}
-.visualization-help {
-  position: absolute;
-  z-index: 999999 !important;
-  bottom: 0;
-}
-visualization-menu {
-  position: absolute;
-  z-index: 999999 !important;
-  background: #f5f5f5;
-  border-radius: 10px;
-  border: var(--primary);
-  border-style: solid;
-  border-width: thin;
+/**
+ * @class ontology-visualization.VisualizationHelpModal
+ * 
+ * A component that creates content for a modal that displays a visualization help.
+ */
+@Component({
+  selector: 'app-visualization-help-modal',
+  templateUrl: './visualization-help-modal.component.html',
+  styleUrls: ['./visualization-help-modal.component.scss'],
+})
+export class VisualizationHelpModal {
+  constructor() { }
 }
