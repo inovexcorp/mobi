@@ -20,43 +20,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-.ontology-visualization {
-  &-container {
-    flex: 1;
-    display: flex;
-    .ontology-visualization {
-      flex: 1;
-    }
-
-    #loading {
-      position: absolute;
-      left: 0;
-      top: 50%;
-      width: 100%;
-      text-align: center;
-      margin-top: -0.5em;
-      font-size: 2em;
-      color: #303f9f;
-      background: red;
-    }
-
-    .loaded {
-      display: none;
+.section {
+  ul {
+    list-style-type: disc;
+    li {
+      margin-left: 1em;
     }
   }
-
-}
-.visualization-help {
-  position: absolute;
-  z-index: 999999 !important;
-  bottom: 0;
-}
-visualization-menu {
-  position: absolute;
-  z-index: 999999 !important;
-  background: #f5f5f5;
-  border-radius: 10px;
-  border: var(--primary);
-  border-style: solid;
-  border-width: thin;
+  margin-bottom: 1em;
 }

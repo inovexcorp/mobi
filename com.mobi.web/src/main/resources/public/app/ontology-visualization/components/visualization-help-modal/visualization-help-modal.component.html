@@ -1,0 +1,56 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 - 2025 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<h1 mat-dialog-title>Visualization Help</h1>
+<div mat-dialog-content class="pb-1">
+  <div class="section">
+    <h4>Visualization Graph</h4>
+    <ul>
+      <li>Nodes in the visualization graph can be clicked to highlight them and focus their entry in the sidebar</li>
+      <li>Nodes can be dragged to reposition them manually</li>
+      <li>Nodes are color-coded based on their source ontology</li>
+      <li><strong>Dotted lines</strong> represent subclass-of relationships</li>
+      <li><strong>Solid lines</strong> represent object properties and display a label indicating the relationship type</li>
+      <li>A maximum of 500 nodes will be rendered in the visualization graph. A snackbar warning is shown on initial load if this limit is exceeded.</li>
+    </ul>
+  </div>
+  <div class="section">
+    <h4>Zoom</h4>
+    <ul>
+      <li>Use the mouse scroll wheel or the zoom bar to zoom in and out of the visualization graph</li>
+      <li>Right-click a class in the sidebar to center the visualization graph on that class</li>
+    </ul>
+  </div>
+  <div class="section">
+    <h4>Sidebar</h4>
+    <ul>
+      <li>Use the search box to filter classes by name</li>
+      <li>Toggle between local and imported ontologies using the ontology filter</li>
+      <li>All classes are grouped by source ontology and sorted alphabetically</li>
+      <li>Checkboxes allow you to show or hide specific ontologies/classes</li>
+      <li>Clicking a class in the sidebar highlights the corresponding node in the visualization graph</li>
+    </ul>
+  </div>
+</div>
+<div mat-dialog-actions>
+    <button mat-raised-button [mat-dialog-close]="false">Close</button>
+</div>

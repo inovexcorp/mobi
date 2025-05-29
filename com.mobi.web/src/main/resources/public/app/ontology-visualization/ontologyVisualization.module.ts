@@ -38,6 +38,7 @@ import { OntologyVisualizationService } from './services/ontologyVisualization.s
 import { OntologyVisualizationDataService } from './services/ontologyVisualizationData.service';
 import { D3SimulatorService } from './services/d3Simulator.service';
 import { ControlRecordUtilsService } from './services/controlRecordUtils.service';
+import { VisualizationHelpModal } from './components/visualization-help-modal/visualization-help-modal.component';
 import { VisualizationMenuComponent } from './components/visualization-menu/visualization-menu.component';
 import { MatSliderModule } from '@angular/material/slider';
 
@@ -61,10 +62,11 @@ import { MatSliderModule } from '@angular/material/slider';
     ],
     declarations: [
         OntologyVisualization,
-        VisualizationSidebar,
-        VisualizationSidebarSearch,
         VisualizationClassListComponent,
+        VisualizationHelpModal,
         VisualizationMenuComponent,
+        VisualizationSidebar,
+        VisualizationSidebarSearch
     ],
     exports: [
         MatExpansionModule,
