@@ -2208,10 +2208,12 @@ public class CatalogRest {
             ArrayNode commitChain = mapper.createArrayNode();
 
             final List<Commit> commits;
+            branchId = checkBranchId(catalogId, recordId, branchId, conn);
             if (StringUtils.isBlank(targetId)) {
                 commits = commitManager.getCommitChain(vf.createIRI(catalogId), vf.createIRI(recordId),
                         vf.createIRI(branchId), conn);
             } else {
+                targetId = checkBranchId(catalogId, recordId, targetId, conn);
                 commits = commitManager.getDifferenceChain(vf.createIRI(catalogId), vf.createIRI(recordId),
                         vf.createIRI(branchId), vf.createIRI(targetId), conn);
             }
@@ -2518,6 +2520,8 @@ public class CatalogRest {
         long start = System.currentTimeMillis();
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             checkStringParam(targetBranchId, "Target branch is required");
+            branchId = checkBranchId(catalogId, recordId, branchId, conn);
+            targetBranchId = checkBranchId(catalogId, recordId, targetBranchId, conn);
             Resource catalogIRI = vf.createIRI(catalogId);
             Resource recordIRI = vf.createIRI(recordId);
             Commit sourceHead = commitManager.getHeadCommit(catalogIRI, recordIRI, vf.createIRI(branchId), conn);
@@ -3277,7 +3281,7 @@ public class CatalogRest {
      * @return A string of the appropriate branchId
      */
     private String checkBranchId(String catalogId, String recordId, String branchId, RepositoryConnection conn) {
-        if ("master".equals(branchId.toLowerCase())) {
+        if ("master".equals(branchId.toLowerCase().trim())) {
             MasterBranch branch = branchManager.getMasterBranch(vf.createIRI(catalogId), vf.createIRI(recordId), conn);
             return branch.getResource().stringValue();
         } else {
