@@ -2717,6 +2717,28 @@ public class CatalogRestTest extends MobiRestTestCXF {
     }
 
     @Test
+    public void getCommitChainMASTERTest() {
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
+                        + "/branches/" + encode(MASTER) + "/commits")
+                .request().get();
+        assertEquals(200, response.getStatus());
+        verify(commitManager).getCommitChain(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(BRANCH_IRI), conn);
+        MultivaluedMap<String, Object> headers = response.getHeaders();
+        assertEquals(String.valueOf(COMMIT_IRIS.length),  headers.get("X-Total-Count").get(0));
+        assertEquals(0, response.getLinks().size());
+        try {
+            ArrayNode array = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
+            assertEquals(array.size(), COMMIT_IRIS.length);
+            array.forEach(result -> {
+                assertTrue(result.has("id"));
+                assertTrue(Arrays.asList(COMMIT_IRIS).contains(result.get("id").asText()));
+            });
+        } catch (Exception e) {
+            fail("Expected no exception, but got: " + e.getMessage());
+        }
+    }
+
+    @Test
     public void getCommitChainWithPaginationTest() {
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/commits").queryParam("offset", 0).queryParam("limit", 10)
@@ -3048,6 +3070,31 @@ public class CatalogRestTest extends MobiRestTestCXF {
     public void getConflictsTest() {
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/conflicts")
+                .queryParam("targetId", BRANCH_IRI).request().get();
+        assertEquals(200, response.getStatus());
+        verify(commitManager, times(2)).getHeadCommit(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(BRANCH_IRI), conn);
+        verify(differenceManager).getConflicts(eq(vf.createIRI(COMMIT_IRIS[0])), eq(vf.createIRI(COMMIT_IRIS[0])), any(RepositoryConnection.class));
+        try {
+            ArrayNode result = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
+            assertEquals(1, result.size());
+            JsonNode outcome = result.get(0);
+            assertTrue(outcome.has("left"));
+            assertTrue(outcome.has("right"));
+            JsonNode left = outcome.get("left");
+            JsonNode right = outcome.get("right");
+            assertTrue(left.has("additions"));
+            assertTrue(left.has("deletions"));
+            assertTrue(right.has("additions"));
+            assertTrue(right.has("deletions"));
+        } catch (Exception e) {
+            fail("Expected no exception, but got: " + e.getMessage());
+        }
+    }
+
+    @Test
+    public void getConflictsMASTERTest() {
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
+                        + "/branches/" + encode(MASTER) + "/conflicts")
                 .queryParam("targetId", BRANCH_IRI).request().get();
         assertEquals(200, response.getStatus());
         verify(commitManager, times(2)).getHeadCommit(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(BRANCH_IRI), conn);
