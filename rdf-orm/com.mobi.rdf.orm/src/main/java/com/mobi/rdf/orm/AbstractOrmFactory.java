@@ -1,6 +1,5 @@
 package com.mobi.rdf.orm;
 
-import org.osgi.service.component.annotations.Reference;
 import com.mobi.exception.MobiException;
 import com.mobi.rdf.orm.conversion.ValueConversionException;
 import com.mobi.rdf.orm.conversion.ValueConverterRegistry;
@@ -11,6 +10,8 @@ import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
+import org.eclipse.rdf4j.model.vocabulary.RDF;
+import org.osgi.service.component.annotations.Reference;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -111,8 +112,7 @@ public abstract class AbstractOrmFactory<T extends Thing> implements OrmFactory<
      * Get the type IRI string from the given interface type.
      *
      * @param type The interface {@link Thing} type to get the IRI string from
-     * @return The IRI String identifying the type of object for the passed in
-     * type value
+     * @return The IRI String identifying the type of object for the passed in type value
      */
     private static String getTypeIriString(Class<?> type) {
         try {
@@ -143,7 +143,9 @@ public abstract class AbstractOrmFactory<T extends Thing> implements OrmFactory<
      */
     @Override
     public T convertValue(Value value, Thing thing, Class<? extends T> desiredType) throws ValueConversionException {
-        return getExisting((Resource) value, thing.getModel()).orElseThrow(() -> new ValueConversionException("Issue getting existing " + getType().getName() + "' from " + value.stringValue()));
+        return getExisting((Resource) value, thing.getModel()).orElseThrow(() ->
+                new ValueConversionException("Issue getting existing " + getType().getName() + "' from "
+                        + value.stringValue()));
     }
 
     /**
@@ -191,7 +193,8 @@ public abstract class AbstractOrmFactory<T extends Thing> implements OrmFactory<
      */
     @Override
     public Stream<T> streamExisting(final Model model) {
-        return model.filter(null, valueFactory.createIRI(RDF_TYPE_IRI), getTypeIRI()).stream().map(stmt -> getExisting(stmt.getSubject(), model).get());
+        return model.filter(null, RDF.TYPE, getTypeIRI()).stream()
+                .map(stmt -> getExisting(stmt.getSubject(), model).get());
     }
 
     /**
@@ -200,13 +203,14 @@ public abstract class AbstractOrmFactory<T extends Thing> implements OrmFactory<
     @Override
     public T createNew(Resource resource, Model model, ValueFactory valueFactory,
                        ValueConverterRegistry valueConverterRegistry) {
-        model.add(valueFactory.createStatement(resource, valueFactory.createIRI(RDF_TYPE_IRI),
-                valueFactory.createIRI(typeIriString)));
+        model.add(valueFactory.createStatement(resource, RDF.TYPE, valueFactory.createIRI(typeIriString)));
         getParentTypeIRIs().forEach(iri -> {
-            model.add(valueFactory.createStatement(resource, valueFactory.createIRI(RDF_TYPE_IRI), iri));
+            model.add(valueFactory.createStatement(resource, RDF.TYPE, iri));
         });
         // Will always be present in this condition.
-        return getExisting(resource, model, valueFactory, valueConverterRegistry).orElseThrow(() -> new MobiException("Issue creating new OrmThing, expected previously created resource " + resource.stringValue() + "was not found"));
+        return getExisting(resource, model, valueFactory, valueConverterRegistry).orElseThrow(() ->
+                new MobiException("Issue creating new OrmThing, expected previously created resource "
+                        + resource.stringValue() + "was not found"));
     }
 
     /**

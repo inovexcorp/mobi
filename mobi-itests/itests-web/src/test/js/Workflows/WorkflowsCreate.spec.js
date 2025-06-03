@@ -21,9 +21,6 @@
  * #L%
  */
 var path = require('path');
-var adminUsername = 'admin'
-var adminPassword = 'admin'
-
 var user01 = {
     'username': 'SHICKS', 
     'password': 'sean',
@@ -32,7 +29,6 @@ var user01 = {
     'email': 'sean.hicks@inovexcorp.com', 
     'role': 'user' 
 };
-
 var badWorkflowFile = path.resolve(__dirname + '/../../resources/rdf_files/invalid-workflow.ttl' ); // has workflow def issue
 var validWorkflowFile = path.resolve(__dirname + '/../../resources/rdf_files/test-workflow.ttl');
 
@@ -40,18 +36,26 @@ module.exports = {
     '@tags': ['sanity', 'workflows'],
 
     'Step 1: Initial Setup' : function(browser) {
-        browser.globals.initial_steps(browser, adminUsername, adminPassword),
-        browser.globals.switchToPage(browser, 'user-management'),
-        browser.page.administrationPage().createUser(user01),
+        browser.globals.initial_steps(browser, browser.globals.adminUsername, browser.globals.adminPassword);
+        browser.globals.switchToPage(browser, 'user-management');
+        browser.page.administrationPage().createUser(user01);
+        browser.globals.wait_for_no_spinners(browser);
+        browser.globals.dismiss_toast(browser);
         browser.page.administrationPage().toggleWorkflowCreatePermission();
+        browser.globals.wait_for_no_spinners(browser);
+        browser.globals.dismiss_toast(browser);
     },
     'Step 2: Navigate to Workflows page' : function(browser) {
         browser.globals.switchToPage(browser, 'workflows');
     },
     'Step 3: Create two workflows' : function(browser) {
-        browser.page.workflowsPage().createWorkflow('SeansWorkflowCreateTest1').returnToLanding();
+        browser.page.workflowsPage().createWorkflow('SeansWorkflowCreateTest1');
         browser.globals.wait_for_no_spinners(browser);
-        browser.page.workflowsPage().createWorkflow('SeansWorkflowCreateTest2').returnToLanding();
+        browser.page.workflowsPage().returnToLanding();
+        browser.globals.wait_for_no_spinners(browser);
+        browser.page.workflowsPage().createWorkflow('SeansWorkflowCreateTest2');
+        browser.globals.wait_for_no_spinners(browser);
+        browser.page.workflowsPage().returnToLanding();
         browser.globals.wait_for_no_spinners(browser);
         browser.page.workflowsPage()
             .useCss()
@@ -72,7 +76,7 @@ module.exports = {
     },
     'Step 6: Verify upload new workflow functionality': function(browser) {
         browser.globals.logout(browser);
-        browser.globals.login(browser, adminUsername, adminPassword);
+        browser.globals.login(browser, browser.globals.adminUsername, browser.globals.adminPassword);
         browser.globals.switchToPage(browser, 'workflows');
         browser.page.workflowsPage().useCss()
             .assert.visible('@uploadWorkflowButton')

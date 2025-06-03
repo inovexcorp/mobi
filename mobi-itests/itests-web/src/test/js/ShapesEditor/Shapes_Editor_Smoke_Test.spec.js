@@ -21,30 +21,25 @@
  * #L%
  */
 var path = require('path');
-var adminUsername = 'admin'
-var adminPassword = 'admin'
-
 var shapes_graph_title = 'UHTC_shapes';
 var shapes_graph = path.resolve(__dirname + '/../../resources/rdf_files/UHTC_shapes.ttl');
-
 var additional_shapes_graph_title = 'additional_shapes';
 var additional_shapes_graph = path.resolve(__dirname + '/../../resources/rdf_files/additional_shapes.ttl');
-
 var shapes_graph_update = path.resolve(__dirname + '/../../resources/rdf_files/UHTC_shapes_update.ttl');
 var shapes_graph_conflict = path.resolve(__dirname + '/../../resources/rdf_files/UHTC_shapes_conflict.ttl');
 
-
 module.exports = {
-    '@tags': ['shapes-editor', 'sanity'],
+    '@tags': ['shapes-editor', 'sanity', 'focus', ],
 
     'Step 1: Initial Setup': function(browser) {
-        browser.globals.initial_steps(browser, adminUsername, adminPassword)
+        browser.globals.initial_steps(browser, browser.globals.adminUsername, browser.globals.adminPassword)
         browser.globals.switchToPage(browser, 'shapes-graph-editor', 'shapes-graph-editor-page')
     },
 
     'Step 2: Create a new shapes graph': function(browser) {
         browser.page.shapesEditorPage().uploadShapesGraph(shapes_graph)
         browser.globals.wait_for_no_spinners(browser)
+        browser.globals.dismiss_toast(browser);
     },
 
     'Step 3: Verify shapes graph presentation': function(browser) {
@@ -81,6 +76,7 @@ module.exports = {
     'Step 6: Upload Changes': function(browser) {
         browser.page.shapesEditorPage().uploadChanges(shapes_graph_update);
         browser.globals.wait_for_no_spinners(browser)
+        browser.globals.dismiss_toast(browser);
     },
 
     'Step 7: Verify Uploaded Changes': function(browser) {
@@ -88,7 +84,6 @@ module.exports = {
             .assert.visible('mat-chip.uncommitted')
             .page.shapesEditorPage()
             .expect.elements('@propertyValues').count.to.equal(5)
-        browser.globals.dismiss_toast(browser);
         browser.page.shapesEditorPage().toggleChangesPage();
         browser.globals.wait_for_no_spinners(browser);
         browser
@@ -99,6 +94,7 @@ module.exports = {
     'Step 8: Commit changes and verify commit was made successfully': function(browser) {
         browser.page.shapesEditorPage().commit('The first manual commit message');
         browser.globals.wait_for_no_spinners(browser)
+        browser.globals.dismiss_toast(browser);
         browser
             .assert.not.elementPresent('mat-chip.uncommitted')
             .assert.not.elementPresent('app-changes-page mat-expansion-panel')
@@ -118,6 +114,7 @@ module.exports = {
         browser.globals.dismiss_toast(browser);
         browser.page.shapesEditorPage().commit('A conflict commit on master');
         browser.globals.wait_for_no_spinners(browser)
+        browser.globals.dismiss_toast(browser);
     },
 
     'Step 10: Merge created branch into master': function(browser) {

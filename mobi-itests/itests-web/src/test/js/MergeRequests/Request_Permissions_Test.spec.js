@@ -195,12 +195,14 @@ module.exports = {
             .waitForElementVisible('//create-request//request-record-select//mat-card//mat-card-title[contains(text(),"' + ontologyMrPermission_title + '")]')
             .click('//create-request//request-record-select//mat-card//mat-card-title[contains(text(),"' + ontologyMrPermission_title + '")]');
         browser.page.mergeRequestPage().createRequestNext();
+        browser.globals.wait_for_no_spinners(browser);
     },
 
     'Step 20: Create a merge request - modify branches': function(browser) {
         browser.page.mergeRequestPage().createRequestSourceBranchSelect(branchTitle);
         browser.page.mergeRequestPage().createRequestTargetBranchSelect(masterBranchTitle);
         browser.page.mergeRequestPage().createRequestNext();
+        browser.globals.wait_for_no_spinners(browser);
     },
 
     'Step 21: Create a merge request - submit MR': function(browser) {
@@ -257,12 +259,14 @@ module.exports = {
             .waitForElementVisible('//create-request//request-record-select//mat-card//mat-card-title[contains(text(),"'+ontologyMrPermission_title+'")]')
             .click('//create-request//request-record-select//mat-card//mat-card-title[contains(text(),"'+ontologyMrPermission_title+'")]')
         browser.page.mergeRequestPage().createRequestNext();
+        browser.globals.wait_for_no_spinners(browser);
     },
 
     'Step 29: Create a merge request - modify branches': function(browser) {
         browser.page.mergeRequestPage().createRequestSourceBranchSelect(branchTitle);
         browser.page.mergeRequestPage().createRequestTargetBranchSelect(masterBranchTitle);
         browser.page.mergeRequestPage().createRequestNext();
+        browser.globals.wait_for_no_spinners(browser);
     },
 
     'Step 30: Create a merge request - submit MR': function(browser) {

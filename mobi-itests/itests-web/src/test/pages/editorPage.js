@@ -279,10 +279,12 @@ const editorCommands = {
       }
     },
 
-    editIri: function(newIriEnd) {
-        return this.useXpath()
-            .waitForElementVisible('//static-iri//div[contains(@class, "static-ir")]//span//a//i[contains(@class, "fa-pencil")]')
-            .click('//static-iri//div[contains(@class, "static-ir")]//span//a//i[contains(@class, "fa-pencil")]')
+    editIri: function(parentEl, newIriEnd) {
+        return this.useCss()
+            .waitForElementVisible(parentEl)
+            .useXpath()
+            .waitForElementVisible(`//${parentEl}//static-iri//div[contains(@class, "static-ir")]//span//a//i[contains(@class, "fa-pencil")]`)
+            .click(`//${parentEl}//static-iri//div[contains(@class, "static-ir")]//span//a//i[contains(@class, "fa-pencil")]`)
             .waitForElementVisible('//edit-iri-overlay')
             .waitForElementVisible("//edit-iri-overlay//h1[text() [contains(., 'Edit IRI')]]")
             .useCss()

@@ -21,8 +21,6 @@
  * #L%
  */
 var path = require('path');
-var adminUsername = 'admin'
-var adminPassword = 'admin'
 var Onto1 = path.resolve(__dirname + '/../../resources/rdf_files/pizza.owl');
 // shapes graph
 var shapes_graph = path.resolve(__dirname + '/../../resources/rdf_files/UHTC_shapes.ttl');
@@ -33,7 +31,7 @@ module.exports = {
   '@tags': ['sanity', 'entity-search'],
 
   'Step 1: Initial Setup': function (browser) {
-    browser.globals.initial_steps(browser, adminUsername, adminPassword)
+    browser.globals.initial_steps(browser, browser.globals.adminUsername, browser.globals.adminPassword)
   },
 
   'Step 2: Upload Ontologies': function (browser) {
@@ -67,7 +65,7 @@ module.exports = {
     browser.page.entitySearchPage().verifyRecordListView();
   },
 
-  'Step 6:Search entity results': function (browser) {
+  'Step 6: Search entity results': function (browser) {
     browser.page.entitySearchPage().useCss()
       .click('@paginationNext');
     browser.globals.wait_for_no_spinners(browser);
@@ -97,9 +95,9 @@ module.exports = {
     browser.waitForElementVisible('app-entity-search-page app-search-results-list mat-card mat-card-title');
     browser.expect.elements('app-entity-search-page app-search-results-list mat-card mat-card-title').count.to.equal(10);
     // Verify that the correct number of matching annotations is displayed for the selected entity
-    var expectedAnnotationsCount = 1;
+    var expectedAnnotationsCount = 2;
     browser.expect.elements('app-entity-search-page app-search-results-list app-search-result-item:nth-child(1) mat-card .annotation-section .annotation-list .annotation-item').count.to.equal(expectedAnnotationsCount);
-    browser.expect.element('app-entity-search-page app-search-results-list app-search-result-item:nth-child(1) mat-card .annotation-section:nth-of-type(1) .mb-1 div').text.to.contain('1 Matching Annotation(s)');
+    browser.expect.element('app-entity-search-page app-search-results-list app-search-result-item:nth-child(1) mat-card .annotation-section:nth-of-type(1) .mb-1 div').text.to.contain(expectedAnnotationsCount + ' Matching Annotation(s)');
     // Verify that each annotation is displayed correctly for the selected entity
     browser.expect.element('app-entity-search-page app-search-results-list app-search-result-item:nth-child(1) mat-card .annotation-section .annotation-list .annotation-item:nth-of-type(1) .prop-name').to.be.present;
     browser.expect.element('app-entity-search-page app-search-results-list app-search-result-item:nth-child(1) mat-card .annotation-section .annotation-list .annotation-item:nth-of-type(1) dd').to.be.present;
@@ -107,11 +105,11 @@ module.exports = {
 
   'Step 9: Open entity' : function(browser) {
     browser.page.entitySearchPage().clearEntitySearchBar();
-    browser.page.entitySearchPage().applySearchText('pizza');
+    browser.page.entitySearchPage().applySearchText('dapizza');
     browser.globals.wait_for_no_spinners(browser);
     browser.page.entitySearchPage().openRecordItem('BaseDaPizza');
     browser.globals.wait_for_no_spinners(browser);
-    browser.assert.not.elementPresent('app-entity-search-page app-search-results-list  open-record-button button');
+    browser.assert.not.elementPresent('app-entity-search-page app-search-results-list open-record-button button');
     browser.waitForElementVisible('selected-details .entity-name')
       .assert.textContains('selected-details .entity-name', 'BaseDaPizza');
     browser.globals.switchToPage(browser, 'entity-search', 'app-entity-search-page');
@@ -121,7 +119,7 @@ module.exports = {
 
   'Step 10: View a record' : function(browser) {
     browser.page.entitySearchPage().clearEntitySearchBar();
-    browser.page.entitySearchPage().applySearchText('pizza');
+    browser.page.entitySearchPage().applySearchText('dapizza');
     browser.globals.wait_for_no_spinners(browser);
     browser.page.entitySearchPage().viewRecord('BaseDaPizza', 'pizza');
     browser.globals.wait_for_no_spinners(browser);
@@ -138,6 +136,7 @@ module.exports = {
   'Step 12: Create a new shapes graph': function(browser) {
     browser.page.shapesEditorPage().uploadShapesGraph(shapes_graph)
     browser.globals.wait_for_no_spinners(browser)
+    browser.globals.dismiss_toast(browser);
   },
 
   'Step 13: Verify shapes graph presentation': function(browser) {
@@ -168,18 +167,19 @@ module.exports = {
       .assert.valueEquals('@editorBranchSelectInput', 'Entity:UHTC Test Branch');
   },
 
-  'Step `16`: Perform a new search': function (browser) {
+  'Step 16: Perform a new search': function (browser) {
     browser.globals.switchToPage(browser, 'entity-search', 'app-entity-search-page');
     browser.waitForElementVisible('app-entity-search-page')
-    .page.entitySearchPage().clearEntitySearchBar();
+      .page.entitySearchPage().clearEntitySearchBar();
     browser.page.entitySearchPage().applySearchText('materials')
-    .expect.elements('app-entity-search-page app-search-results-list mat-card-title').count.to.equal(1)
+      .expect.elements('app-entity-search-page app-search-results-list mat-card-title').count.to.equal(1)
   },
 
   'Step 17: Open SHACL entity' : function(browser) {
     browser.globals.wait_for_no_spinners(browser);
     browser.page.entitySearchPage().openRecordItem('UHTC Shapes Graph');
     browser.globals.wait_for_no_spinners(browser);
+    browser.globals.dismiss_toast(browser);
     browser.assert.not.elementPresent('app-entity-search-page app-search-results-list  open-record-button button');
     browser.waitForElementVisible('shapes-graph-details .entity-name')
       .assert.textContains('shapes-graph-details .entity-name', 'UHTC Shapes Graph');
@@ -191,9 +191,11 @@ module.exports = {
     browser.globals.wait_for_no_spinners(browser);
     browser.page.shapesEditorPage().uploadChanges(shapes_graph_update);
     browser.globals.wait_for_no_spinners(browser)
+    browser.globals.dismiss_toast(browser);
     browser.globals.switchToPage(browser, 'entity-search', 'app-entity-search-page');
     browser.page.entitySearchPage().openRecordItem('UHTC Shapes Graph');
     browser.globals.wait_for_no_spinners(browser);
+    browser.globals.dismiss_toast(browser);
     browser.assert.not.elementPresent('app-entity-search-page app-search-results-list open-record-button button');
     browser.waitForElementVisible('shapes-graph-details .entity-name')
       .assert.textContains('shapes-graph-details .entity-name', 'UHTC Shapes Graph');

@@ -20,9 +20,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-var adminUsername = 'admin';
-var adminPassword = 'admin';
-
 var successWorkflow = 'Success Workflow';
 var workflowA = 'Workflow A';
 var neverRunWorkflow = 'Never Run Workflow';
@@ -49,7 +46,7 @@ module.exports = {
     },
 
     'Step 1: Initial Setup' : function(browser) {
-        browser.globals.initial_steps(browser, adminUsername, adminPassword);
+        browser.globals.initial_steps(browser, browser.globals.adminUsername, browser.globals.adminPassword);
     },
 
     'Step 2: Navigate to Workflows and validate initial state': function(browser) {

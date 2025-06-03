@@ -23,10 +23,6 @@
 var path = require('path');
 var badWorkflowFile = path.resolve(__dirname + '/../../resources/rdf_files/invalid-workflow.ttl');  // has workflow def issue
 var validWorkflowFile = path.resolve(__dirname + '/../../resources/rdf_files/test-workflow.ttl');
-
-var adminUsername = 'admin';
-var adminPassword = 'admin';
-
 var newUser = { 'username': 'test', 'password': 'test',
     'firstName': 'Johnny', 'lastName': 'Test', 'email': 'test@gmail.com', 'role': 'admin' };
 
@@ -34,7 +30,7 @@ module.exports = {
     '@tags': ['sanity', 'workflows'],
 
     'Step 1: Initial Setup' : function(browser) {
-        browser.globals.initial_steps(browser, adminUsername, adminPassword);
+        browser.globals.initial_steps(browser, browser.globals.adminUsername, browser.globals.adminPassword);
     },
     'Step 2: Navigate to Workflows page' : function(browser) {
         browser.globals.switchToPage(browser, 'workflows', 'app-workflow-records');
@@ -52,8 +48,9 @@ module.exports = {
     },
     'Step 5: Create Workflows': function(browser) {
         for (var i = 1; i <= 25; i++) {
-            browser.page.workflowsPage().createWorkflow('Workflow' + i)
-                .returnToLanding();
+            browser.page.workflowsPage().createWorkflow('Workflow' + i);
+            browser.globals.wait_for_no_spinners(browser);
+            browser.page.workflowsPage().returnToLanding();
             browser.globals.wait_for_no_spinners(browser);
         }
     },
@@ -263,7 +260,7 @@ module.exports = {
     'Step 31: Verify edit mode functionality when in edit mode': function(browser) {
         browser.globals.logout(browser);
         browser.globals.wait_for_no_spinners(browser);
-        browser.globals.login(browser, adminUsername, adminPassword);
+        browser.globals.login(browser, browser.globals.adminUsername, browser.globals.adminPassword);
         browser.globals.wait_for_no_spinners(browser);
         browser.globals.switchToPage(browser, 'workflows');
         browser.page.workflowsPage()

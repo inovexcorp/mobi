@@ -21,8 +21,6 @@
  * #L%
  */
 var path = require('path');
-var adminUsername = 'admin'
-var adminPassword = 'admin'
 var OntoSample = path.resolve(__dirname + '/../../resources/rdf_files/uhtc-ontology.ttl');
 var skosOnt = path.resolve(__dirname + '/../../resources/rdf_files/skos.rdf');
 var OntoCSV = path.resolve(__dirname + '/../../resources/ontology_csv\'s/uhtc-compounds.csv');
@@ -31,7 +29,7 @@ module.exports = {
     '@tags': ['mapping-tool', 'mapping-tool-dataset', 'datasets', 'sanity'],
 
     'Step 1: Initial Setup' : function(browser) {
-        browser.globals.initial_steps(browser, adminUsername, adminPassword);
+        browser.globals.initial_steps(browser, browser.globals.adminUsername, browser.globals.adminPassword);
     },
 
     'Step 2: Upload Ontologies' : function(browser) {
@@ -71,216 +69,88 @@ module.exports = {
 
     'Step 7: Navigate to Mapping page' : function(browser) {
         browser.globals.wait_for_no_spinners(browser);
-        browser.globals.switchToPage(browser, 'mapper', 'mapper-page');
+        browser.globals.switchToPage(browser, 'mapper', 'mapping-select-page');
         browser.globals.wait_for_no_spinners(browser);
     },
 
     'Step 8: Create new mapping' : function(browser) {
-        browser
-            .click('button.new-button');
-        browser
-            .waitForElementVisible('create-mapping-overlay')
-            .waitForElementVisible('create-mapping-overlay input[name="title"]')
-            .setValue('form.mat-dialog-content input[name=title]', "UHTC material Mapping")
-            .setValue('form.mat-dialog-content textarea', "A mapping of materials listed in the UHTC csv file to the UHTC ontology")
-            .waitForElementVisible('div.mat-dialog-actions button.mat-primary:enabled')
-            .click('div.mat-dialog-actions button.mat-primary');
-        browser
-            .waitForElementNotPresent('create-mapping-overlay');
+        browser.page.mapperPage().createMapping('UHTC material Mapping', 'A mapping of materials listed in the UHTC csv file to the UHTC ontology');
+        browser.globals.wait_for_no_spinners(browser);
     },
 
     'Step 9: Attach csv to mapping' : function(browser) {
+        browser.page.mapperPage().selectDataFile(OntoCSV);
         browser.globals.wait_for_no_spinners(browser);
-        browser
-            .waitForElementNotPresent('div.modal.fade')
-            .waitForElementVisible('div.file-input button')
-            .click('div.file-input button')
-            .uploadFile('input[type=file]', OntoCSV)
-        browser.globals.wait_for_no_spinners(browser);
-        browser
-            .waitForElementVisible('button.continue-btn:enabled')
-            .click('button.continue-btn');
     },
 
     'Step 10: Click on uploaded ontology' : function(browser) {
+        browser.page.mapperPage().selectOntology('uhtc');
         browser.globals.wait_for_no_spinners(browser)
-        browser
-            .waitForElementVisible('mapping-config-overlay')
-            .waitForElementVisible('div.mat-dialog-content input[data-placeholder="Search..."]')
-            .setValue('div.mat-dialog-content input[data-placeholder="Search..."]', 'uhtc')
-            .keys(browser.Keys.ENTER)
-            .waitForElementVisible({locateStrategy: 'xpath', selector: '//mat-list-option//h4[text()[contains(.,"uhtc")]]'})
-            .click('xpath', '//mat-list-option//h4[text()[contains(.,"uhtc")]]')
-        browser.globals.wait_for_no_spinners(browser);
-        browser
-            .waitForElementVisible('div.mat-dialog-actions button.mat-primary:enabled')
-            .click('div.mat-dialog-actions button.mat-primary');
-        browser
-            .useCss()
-            .waitForElementNotPresent('mapping-config-overlay');
     },
 
     'Step 11: Add class to mapping' : function(browser) {
+        browser.page.mapperPage().addClassMapping('Material');
         browser.globals.wait_for_no_spinners(browser);
-        browser
-            .waitForElementVisible('edit-mapping-tab .editor-form')
-            .waitForElementVisible('div.class-mappings button.add-class-mapping-button')
-            .click('div.class-mappings button.add-class-mapping-button');
-        browser.waitForElementVisible('class-mapping-overlay')
-            .waitForElementVisible('class-mapping-overlay class-select')
-            .click('form.mat-dialog-content class-select')
-        browser
-            .pause(2000) // Wait for REST call to finish
-            .click('xpath', '//div//mat-option//span[contains(text(), "Material")]')
-            .useXpath()
-            .waitForElementVisible('//button/span[text() [contains(., "Submit")]]')
-            .click("//button/span[text() [contains(., 'Submit')]]");
-        browser
-            .useCss()
-            .waitForElementNotPresent('class-mapping-overlay');
     },
 
     'Step 12: Verify Class Mapping has been selected' : function(browser) {
-        browser.globals.wait_for_no_spinners(browser);
-        browser
-            .assert.valueEquals('edit-mapping-tab class-mapping-select input', 'UHTC Material');
+        browser.page.mapperPage()
+            .assert.valueEquals('@classMappingSelectInput', 'UHTC Material');
     },
 
     'Step 13: Choose new IRI template' : function(browser) {
+        browser.page.mapperPage().setIRITemplateLocalName('Material');
         browser.globals.wait_for_no_spinners(browser);
-        browser
-            .waitForElementVisible('.iri-template .field-label button.mat-primary')
-            .click('.iri-template .field-label button.mat-primary');
-        browser
-            .waitForElementVisible('iri-template-overlay')
-            .waitForElementVisible('iri-template-overlay mat-form-field.template-ends-with mat-select')
-            .click('form.mat-dialog-content mat-form-field.template-ends-with mat-select')
-            .waitForElementVisible('div.mat-select-panel')
-            .waitForElementVisible('xpath','//div[contains(@class, "mat-select-panel")]//mat-option')
-            .click('xpath','//div[contains(@class, "mat-select-panel")]//mat-option//span[contains(@class,"mat-option-text")][text()[contains(., "Material")]]');
-        browser.globals.wait_for_no_spinners(browser);
-        browser
-            .waitForElementVisible('div.mat-dialog-actions button.mat-primary:enabled')
-            .click('div.mat-dialog-actions button.mat-primary')
-        browser
-            .waitForElementNotPresent('iri-template-overlay');
     },
 
     'Step 14: Add Property Mappings and verify addition' : function(browser) {
-        browser.globals.wait_for_no_spinners(browser);
-        var properties = ["Chemical Formula", "Density", "Melting Point", "Title", "Description", "No Domain", "Union Domain"];
+        var properties = [
+            { property: 'Chemical Formula', column: 'Material'},
+            { property: 'Density', column: 'Density' },
+            { property: 'Melting Point', column: 'Melting Point C'},
+            { property: 'Title', column: 'Title' },
+            { property: 'Description', column: 'Description' },
+            { property: 'No Domain', column: 'Source' },
+            { property: 'Union Domain', column: 'Source' }
+        ];
 
-        for (var i = 0 ; i < properties.length; i++)
-        {
-                browser.globals.wait_for_no_spinners(browser);
-                browser.click('div.properties-field-name button.add-prop-mapping-button');
-                browser.waitForElementVisible('prop-mapping-overlay');
-                browser.waitForElementVisible('prop-mapping-overlay prop-select');
-                browser.click('form.mat-dialog-content prop-select');
-                browser.click('xpath', '//div//mat-option//span[contains(text(), "' + properties[i] + '")]');
-                browser.click('form.mat-dialog-content column-select mat-select');
-                browser.waitForElementVisible('div.mat-select-panel');
-                browser.waitForElementVisible('xpath','//div[contains(@class, "mat-select-panel")]//mat-option');
-
-                switch (properties[i]) {
-                    case "Chemical Formula":
-                        browser.click('xpath','//div[contains(@class, "mat-select-panel")]//mat-option//span[contains(@class,"mat-option-text")][text()[contains(., "Source")]]')
-                        break;
-                    case "Melting Point":
-                        browser.click('xpath','//div[contains(@class, "mat-select-panel")]//mat-option//span[contains(@class,"mat-option-text")][text()[contains(., "Melting point") and contains(., "C")]]')
-                        break;
-                    case "No Domain":
-                        browser.click('xpath','//div[contains(@class, "mat-select-panel")]//mat-option//span[contains(@class,"mat-option-text")][text()[contains(., "Source")]]')
-                        break;
-                    case "Union Domain":
-                        browser.click('xpath','//div[contains(@class, "mat-select-panel")]//mat-option//span[contains(@class,"mat-option-text")][text()[contains(., "Source")]]')
-                        break;
-                    default:
-                        browser.click('xpath','//div[contains(@class, "mat-select-panel")]//mat-option//span[contains(@class,"mat-option-text")][text()[contains(., "' + properties[i] + '")]]')
-                        break;
-                }
-                browser.globals.wait_for_no_spinners(browser);
-                browser
-                    .waitForElementVisible('div.mat-dialog-actions button.mat-primary:enabled')
-                    .click('div.mat-dialog-actions button.mat-primary')
-                browser.waitForElementNotPresent('prop-mapping-overlay');
-                browser.globals.wait_for_no_spinners(browser);
-                browser.useXpath();
-                browser.assert.visible('//class-mapping-details//mat-list-item//h4[text()[contains(., "' + properties[i] + '")]]');
-                browser.useCss();
+        for (var i = 0 ; i < properties.length; i++) {
+            browser.page.mapperPage().addPropertyMapping(properties[i].property, properties[1].column);
+            browser.globals.wait_for_no_spinners(browser);
+            browser.page.mapperPage().assertPropertyMappingVisible(properties[i].property);
         }
     },
 
     'Step 15: Verify Edit Property modal auto selects correct property' : function(browser){
-        browser.globals.wait_for_no_spinners(browser);
-        browser
+        browser.useCss()
             .click('xpath', '//mat-list[contains(@class, "prop-list")]//h4[text()="Chemical Formula"]//parent::div/following-sibling::div[contains(@class, "prop-actions")]//button[contains(@class, "menu-button")]')
             .waitForElementVisible('div.mat-menu-content button.mat-menu-item.edit')
-            .click('div.mat-menu-content button.mat-menu-item.edit')
+            .click('div.mat-menu-content button.mat-menu-item.edit') // TODO: Keeps getting click intercepted by cdk-overlay-pane
             .waitForElementVisible('prop-mapping-overlay')
             .waitForElementVisible('prop-mapping-overlay prop-select')
             .waitForElementVisible({locateStrategy: 'xpath', selector: '//h1[contains(@class, "mat-dialog-title")][text()="Edit Property"]'})
             .assert.valueEquals('form.mat-dialog-content prop-select input', 'Chemical Formula')
             .click('div.mat-dialog-actions button:not([color="primary"])');
-        
     },
 
     'Step 16: Add Crystal Structure Mapping' : function(browser){
         browser.globals.wait_for_no_spinners(browser);
-        browser
-            .click('div.properties-field-name button.add-prop-mapping-button')
-            .waitForElementVisible('prop-mapping-overlay')
-            .waitForElementVisible('prop-mapping-overlay prop-select')
-            .click('form.mat-dialog-content prop-select')
-            .click('xpath', '//div//mat-option//span[contains(text(), "Crystal Structure")]')
-            .click('form.mat-dialog-content mat-form-field.range-class-select-container mat-select')
-            .waitForElementVisible('div.mat-select-panel')
-            .waitForElementVisible('xpath','//div[contains(@class, "mat-select-panel")]//mat-option')
-            .click('xpath','//div[contains(@class, "mat-select-panel")]//mat-option//span[contains(@class,"mat-option-text")][text()[contains(., "New Crystal Structure")]]')
+        browser.page.mapperPage().addPropertyMapping('Crystal Structure');
         browser.globals.wait_for_no_spinners(browser);
-        browser
-            .waitForElementVisible('div.mat-dialog-actions button.mat-primary:enabled')
-            .click('div.mat-dialog-actions button.mat-primary');
-        browser.waitForElementNotPresent('prop-mapping-overlay');
     },
 
     'Step 17: Verify Crystal Class addition' : function(browser) {
-        browser.globals.wait_for_no_spinners(browser);
-        browser
-            .useXpath()
-            .assert.visible('//class-mapping-details//mat-list-item//h4[text()[contains(., "Crystal")]]')
-            .useCss();
+        browser.page.mapperPage().assertPropertyMappingVisible('Crystal');
     },
 
     'Step 18: Switch to crystal structure class' : function(browser) {
+        browser.page.mapperPage().switchClassMapping('Crystal Structure');
         browser.globals.wait_for_no_spinners(browser);
-        browser
-            .click('edit-mapping-tab class-mapping-select')
-            .clearValue('edit-mapping-tab class-mapping-select input')
-            .setValue('edit-mapping-tab class-mapping-select input', 'crystal')
-            .useXpath()
-            .waitForElementVisible('//mat-option//span[contains(text(), "Crystal Structure")]')
-            .click('xpath', '//div//mat-option//span[contains(text(), "Crystal Structure")]')
-            .useCss();
     },
 
     'Step 19: Add crystal structure name property' : function(browser) {
+        browser.page.mapperPage().addPropertyMapping('Crystal Structure', 'Crystal');
         browser.globals.wait_for_no_spinners(browser);
-        browser
-            .click('div.properties-field-name button.add-prop-mapping-button')
-            .waitForElementVisible('prop-mapping-overlay')
-            .waitForElementVisible('prop-mapping-overlay prop-select')
-            .click('form.mat-dialog-content prop-select')
-            .click('xpath', '//div//mat-option//span[contains(text(), "Crystal Structure")]')
-            .click('form.mat-dialog-content column-select mat-select')
-            .waitForElementVisible('div.mat-select-panel')
-            .waitForElementVisible('xpath','//div[contains(@class, "mat-select-panel")]//mat-option')
-            .click('xpath','//div[contains(@class, "mat-select-panel")]//mat-option//span[contains(@class,"mat-option-text")][text()[contains(., "Crystal")]]')
-        browser.globals.wait_for_no_spinners(browser);
-        browser
-            .waitForElementVisible('div.mat-dialog-actions button.mat-primary:enabled')
-            .click('div.mat-dialog-actions button.mat-primary');
-        browser.waitForElementNotPresent('prop-mapping-overlay');
     },
 
     'Step 20: Verify visibility of crystal structure name property' : function(browser) {
@@ -291,34 +161,17 @@ module.exports = {
             .useCss();
     },
 
-    'Step 21: Save Mapping' : function(browser) {
+    'Step 21: Save Mapping and Upload to Dataset' : function(browser) {
+        browser.page.mapperPage().uploadToDataset('UHTC');
         browser.globals.wait_for_no_spinners(browser);
-        browser
-            .click('edit-mapping-tab .button-container .drop-down-button');
     },
 
-    'Step 22: Upload mapping to dataset' : function(browser) {
-        browser
-            .waitForElementVisible('div.mat-menu-content button.mat-menu-item.run-dataset')
-            .click('div.mat-menu-content button.mat-menu-item.run-dataset')
-            .waitForElementVisible('run-mapping-dataset-overlay')
-            .waitForElementVisible('run-mapping-dataset-overlay input[aria-label="Dataset"]')
-            .click('form.mat-dialog-content mat-form-field')
-            .click('xpath', '//div//mat-option//span[contains(text(), "UHTC")]')
-            .expect.element('run-mapping-dataset-overlay div.mat-dialog-actions button.mat-primary').to.not.have.attribute('disabled', 'Testing if submit does not contain disabled attribute');
-        browser
-            .waitForElementVisible('div.mat-dialog-actions button.mat-primary:enabled')
-            .click('div.mat-dialog-actions button.mat-primary')
-        browser.waitForElementNotPresent('run-mapping-dataset-overlay');
-    },
-
-    'Step 23: Verify user is back on main mapping page' : function(browser) {
-        browser.globals.wait_for_no_spinners(browser);
+    'Step 22: Verify user is back on main mapping page' : function(browser) {
         browser
             .assert.visible('mapping-select-page');
     },
 
-    'Step 24: Explore dataset mapping' : function(browser) {
+    'Step 23: Explore dataset mapping' : function(browser) {
         browser.globals.wait_for_no_spinners(browser);
         browser.globals.switchToPage(browser, 'discover', 'discover-page');
         browser.globals.wait_for_no_spinners(browser);
@@ -331,7 +184,7 @@ module.exports = {
             .useCss();
     },
 
-    'Step 25: Check for Material and Crystal structure cards' : function(browser) {
+    'Step 24: Check for Material and Crystal structure cards' : function(browser) {
         browser.globals.wait_for_no_spinners(browser);
         browser
             .useXpath()
@@ -340,7 +193,7 @@ module.exports = {
     },
     // Adding entity search test below
     // since this test doesn't have a page object
-    'Step 26: Perform a new entity search for the mapping': function (browser) {
+    'Step 25: Perform a new entity search for the mapping': function (browser) {
         browser.globals.switchToPage(browser, 'entity-search', 'app-entity-search-page');
         browser.waitForElementVisible('app-entity-search-page');
         browser.page.entitySearchPage().clearEntitySearchBar();
@@ -350,7 +203,7 @@ module.exports = {
             .waitForElementVisible('app-entity-search-page app-search-results-list mat-card-title');
     },
 
-    'Step 27: Open Mapping from entity search result' : function(browser) {
+    'Step 26: Open Mapping from entity search result' : function(browser) {
         browser.globals.wait_for_no_spinners(browser);
         browser.page.entitySearchPage().openRecordItem('Density', 'UHTC material Mapping');
         browser.globals.wait_for_no_spinners(browser);

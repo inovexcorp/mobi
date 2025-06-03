@@ -21,8 +21,6 @@
  * #L%
  */
 var path = require('path');
-var adminUsername = 'admin'
-var adminPassword = 'admin'
 var Onto1 = path.resolve(__dirname + '/../../resources/rdf_files/deprecated-entity-filter-1.ttl');
 var Onto2 = path.resolve(__dirname + '/../../resources/rdf_files/deprecated-entity-filter-2.ttl');
 var Onto3 = path.resolve(__dirname + '/../../resources/rdf_files/deprecated-entity-filter-3.ttl');
@@ -31,7 +29,7 @@ module.exports = {
     '@tags': ['sanity', 'ontology-editor'],
 
     'Step 1: Initial Setup' : function(browser) {
-        browser.globals.initial_steps(browser, adminUsername, adminPassword)
+        browser.globals.initial_steps(browser, browser.globals.adminUsername, browser.globals.adminPassword)
     },
 
     'Step 2: Upload Ontologies' : function(browser) {

@@ -48,12 +48,6 @@ import java.util.stream.Stream;
  * @author bdgould
  */
 public interface OrmFactory<T extends Thing> extends ValueConverter<T> {
-
-    /**
-     * The IRI string representing the rdf:type value.
-     */
-    String RDF_TYPE_IRI = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type";
-
     /**
      * Create a new instance of the specified type with the provided params.
      *

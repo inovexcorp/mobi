@@ -21,8 +21,6 @@
  * #L%
  */
 var path = require('path');
-var adminUsername = 'admin';
-var adminPassword = 'admin';
 var Onto1 = path.resolve(__dirname + '/../../resources/rdf_files/test-local-imports-1.ttl');
 var Onto1eName = 'test-local-imports-1e.ttl';
 var Onto1e = path.resolve(__dirname + '/../../resources/rdf_files/' + Onto1eName); // has syntax issue
@@ -41,7 +39,7 @@ module.exports = {
     '@tags': ['sanity', 'ontology-editor'],
 
     'Step 1: Initial Setup' : function(browser) {
-        browser.globals.initial_steps(browser, adminUsername, adminPassword)
+        browser.globals.initial_steps(browser, browser.globals.adminUsername, browser.globals.adminPassword)
     },
 
     'Step 2: Upload Ontologies' : function(browser) {

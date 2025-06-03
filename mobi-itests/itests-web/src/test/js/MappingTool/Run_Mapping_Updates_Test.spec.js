@@ -21,8 +21,6 @@
  * #L%
  */
 var path = require('path');
-var adminUsername = 'admin'
-var adminPassword = 'admin'
 var OntoSample = path.resolve(__dirname + '/../../resources/rdf_files/uhtc-ontology.ttl');
 var skosOnt = path.resolve(__dirname + '/../../resources/rdf_files/skos.rdf');
 var OntoCSV = path.resolve(__dirname + '/../../resources/ontology_csv\'s/uhtc-compounds.csv');
@@ -31,12 +29,13 @@ module.exports = {
     '@tags': ['mapping-tool', 'mapping-tool-changes', 'sanity'],
 
     'Step 1: Initial Setup' : function(browser) {
-        browser.globals.initial_steps(browser, adminUsername, adminPassword);
+        browser.globals.initial_steps(browser, browser.globals.adminUsername, browser.globals.adminPassword);
     },
 
     'Step 2: Create New Ontology': function(browser) {
         browser.page.ontologyEditorPage().createOntology('ontology-mapping-updates', 'myDescription');
         browser.globals.wait_for_no_spinners(browser);
+        browser.globals.dismiss_toast(browser);
         browser.page.ontologyEditorPage().onProjectTab();
     },
 
@@ -72,119 +71,47 @@ module.exports = {
 
     'Step 7: Navigate to Mapping page' : function(browser) {
         browser.globals.wait_for_no_spinners(browser);
-        browser.globals.switchToPage(browser, 'mapper', 'mapper-page');
+        browser.globals.switchToPage(browser, 'mapper', 'mapping-select-page');
         browser.globals.wait_for_no_spinners(browser);
     },
 
     'Step 8: Create new mapping' : function(browser) {
-        browser
-            .click('button.new-button');
-        browser
-            .waitForElementVisible('create-mapping-overlay')
-            .waitForElementVisible('create-mapping-overlay input[name="title"]')
-            .setValue('form.mat-dialog-content input[name=title]', "UHTC material Mapping")
-            .setValue('form.mat-dialog-content textarea', "A mapping of materials listed in the UHTC csv file to the UHTC ontology")
-            .waitForElementVisible('div.mat-dialog-actions button.mat-primary:enabled')
-            .click('div.mat-dialog-actions button.mat-primary');
-        browser
-            .waitForElementNotPresent('class-mapping-overlay');
+        browser.page.mapperPage().createMapping('UHTC material Mapping', 'A mapping of materials listed in the UHTC csv file to the UHTC ontology');
+        browser.globals.wait_for_no_spinners(browser);
     },
 
     'Step 9: Attach csv to mapping' : function(browser) {
+        browser.page.mapperPage().selectDataFile(OntoCSV);
         browser.globals.wait_for_no_spinners(browser);
-        browser
-            .waitForElementNotPresent('div.modal.fade')
-            .waitForElementVisible('div.file-input button')
-            .click('div.file-input button')
-            .uploadFile('input[type=file]', OntoCSV)
-        browser.globals.wait_for_no_spinners(browser);
-        browser
-            .waitForElementVisible('button.continue-btn:enabled')
-            .click('button.continue-btn');
     },
 
     'Step 10: Click on uploaded ontology' : function(browser) {
+        browser.page.mapperPage().selectOntology('uhtc');
         browser.globals.wait_for_no_spinners(browser);
-        browser
-            .waitForElementVisible('mapping-config-overlay')
-            .waitForElementVisible('div.mat-dialog-content input[data-placeholder="Search..."]')
-            .setValue('div.mat-dialog-content input[data-placeholder="Search..."]', 'uhtc')
-            .keys(browser.Keys.ENTER)
-            .waitForElementVisible({locateStrategy: 'xpath', selector: '//mat-list-option//h4[text()[contains(.,"uhtc")]]'})
-            .click('xpath', '//mat-list-option//h4[text()[contains(.,"uhtc")]]')
-        browser.globals.wait_for_no_spinners(browser);
-        browser
-            .waitForElementVisible('div.mat-dialog-actions button.mat-primary:enabled')
-            .click('div.mat-dialog-actions button.mat-primary');
-        browser.waitForElementNotPresent('mapping-config-overlay');
     },
 
     'Step 11: Add class to mapping' : function(browser) {
+        browser.page.mapperPage().addClassMapping('Material');
         browser.globals.wait_for_no_spinners(browser);
-        browser
-            .waitForElementVisible('edit-mapping-tab .editor-form')
-            .waitForElementVisible('div.class-mappings button.add-class-mapping-button')
-            .click('div.class-mappings button.add-class-mapping-button');
-        browser.waitForElementVisible('class-mapping-overlay')
-            .waitForElementVisible('class-mapping-overlay class-select')
-            .click('form.mat-dialog-content class-select')
-        browser
-            .pause(2000) // Wait for REST call to finish
-            .click('xpath', '//div//mat-option//span[contains(text(), "Material")]')
-            .useXpath()
-            .waitForElementVisible('//button/span[text() [contains(., "Submit")]]')
-            .click('//button/span[text() [contains(., "Submit")]]')
-            .useCss()
-            .waitForElementNotPresent('class-mapping-overlay');
     },
 
     'Step 12: Verify Class Mapping has been selected' : function(browser) {
-        browser.globals.wait_for_no_spinners(browser);
-        browser
-            .assert.valueEquals('edit-mapping-tab class-mapping-select input', 'UHTC Material');
+        browser.page.mapperPage()
+            .assert.valueEquals('@classMappingSelectInput', 'UHTC Material');
     },
 
     'Step 13: Choose new IRI template' : function(browser) {
+        browser.page.mapperPage().setIRITemplateLocalName('Material');
         browser.globals.wait_for_no_spinners(browser);
-        browser
-            .waitForElementVisible('.iri-template .field-label button.mat-primary')
-            .click('.iri-template .field-label button.mat-primary')
-        browser
-            .waitForElementVisible('iri-template-overlay')
-            .waitForElementVisible('iri-template-overlay mat-form-field.template-ends-with mat-select')
-            .click('form.mat-dialog-content mat-form-field.template-ends-with mat-select')
-            .waitForElementVisible('div.mat-select-panel')
-            .waitForElementVisible('xpath','//div[contains(@class, "mat-select-panel")]//mat-option')
-            .click('xpath','//div[contains(@class, "mat-select-panel")]//mat-option//span[contains(@class,"mat-option-text")][text()[contains(., "Material")]]');
-        browser.globals.wait_for_no_spinners(browser);
-        browser
-            .waitForElementVisible('div.mat-dialog-actions button.mat-primary:enabled')
-            .click('div.mat-dialog-actions button.mat-primary');
-        browser.waitForElementNotPresent('iri-template-overlay');
     },
 
     'Step 14: Commit to Ontology' : function(browser) {
-        browser.globals.wait_for_no_spinners(browser);
-        browser
-            .waitForElementVisible('edit-mapping-tab .button-container .drop-down-button')
-            .click('edit-mapping-tab .button-container .drop-down-button');
-        browser
-            .waitForElementVisible('div.mat-menu-content button.mat-menu-item.run-ontology')
-            .click('div.mat-menu-content button.mat-menu-item.run-ontology');
-        browser
-            .click('xpath', '//div//mat-option//span[contains(text(), "ontology-mapping-updates")]');
-        browser
-            .click('xpath', '//mat-dialog-container//run-mapping-ontology-overlay//mat-radio-group/mat-radio-button[2]//span[contains(text(), "Commit as updates")]');
-        browser
-            .waitForElementVisible('xpath', '//button/span[text() [contains(., "Submit")]]')
-            .click('xpath', '//button/span[text() [contains(., "Submit")]]');
-        browser.waitForElementNotPresent('run-mapping-ontology-overlay');
+        browser.page.mapperPage().commitToOntology('ontology-mapping-updates', true);
         browser.globals.wait_for_no_spinners(browser);
         browser.globals.dismiss_toast(browser);
     },
 
     'Step 15: Verify user is back on main mapping page' : function(browser) {
-        browser.globals.wait_for_no_spinners(browser);
         browser
             .assert.visible('mapping-select-page');
     },

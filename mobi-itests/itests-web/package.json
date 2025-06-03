@@ -9,10 +9,11 @@
   },
   "scripts": {
     "test": "./node_modules/.bin/nightwatch",
-    "verify": "./node_modules/.bin/verify-junit-xml ./target/nightwatch-reports/*/*.xml"
+    "test-headless": "./node_modules/.bin/nightwatch --env headless"
   },
   "devDependencies": {
-    "chromedriver": "135.0.2",
+    "chromedriver": "137.0.0",
+    "geckodriver": "^5.0.0",
     "nightwatch": "3.7.0"
   },
   "author": "",
@@ -21,6 +22,6 @@
     "dockerode": "^4.0.2",
     "https": "^1.0.0",
     "node-fetch": "^2.7.0",
-    "verify-junit-xml": "^0.0.3"
+    "tar-fs": "^3.0.8"
   }
 }

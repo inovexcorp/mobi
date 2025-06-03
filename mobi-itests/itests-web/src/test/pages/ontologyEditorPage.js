@@ -209,9 +209,11 @@ const projectTabCommands = {
             .waitForElementVisible('xpath', '//imports-overlay//div[text()[contains(.,"On Server")]]')
             .waitForElementVisible('imports-overlay button.mat-primary')
             .pause(1000) // TODO: Ideally remove this
-            .click('xpath', '//imports-overlay//div[text()[contains(.,"On Server")]]')
-            .waitForElementNotVisible('div.spinner') // waits for imports to loads up
-            .useXpath().waitForElementVisible(`//imports-overlay//h4[text()[contains(.,"${import_title}")]]`)
+            .useXpath()
+            .waitForElementVisible('//imports-overlay//div[text()[contains(.,"On Server")]]')
+            .click('//imports-overlay//div[text()[contains(.,"On Server")]]')
+            .waitForElementNotVisible('css selector', 'div.spinner') // waits for imports to loads up
+            .waitForElementVisible(`//imports-overlay//h4[text()[contains(.,"${import_title}")]]`)
             .click(`//imports-overlay//h4[text()[contains(.,"${import_title}")]]//parent::div`)
             .waitForElementVisible(`//imports-overlay//mat-chip-list//mat-chip[text()[contains(.,"${import_title}")]]`)
             .useCss()
@@ -300,7 +302,8 @@ const hierarchyTreeCommands = {
 
     selectItem: function(itemName) {
         this.verifyItemVisible(itemName)
-            .click('xpath', `//div[contains(@class, "tree-item-wrapper")]//span[text()="${itemName}"]`);
+            .click('xpath', `//div[contains(@class, "tree-item-wrapper")]//span[text()="${itemName}"]`)
+            .api.globals.wait_for_no_spinners(this);
         return this.verifySelectedEntity(itemName);
     },
 
@@ -322,9 +325,7 @@ const hierarchyTreeCommands = {
     },
 
     verifyDeletedEntity: function(itemName) {
-        return this.useCss()
-            .waitForElementVisible('div.tree')
-            .useXpath()
+        return this.useXpath()
             .waitForElementNotPresent(`//div[contains(@class, "tree-item-wrapper")]//span[text()="${itemName}"]`)
     }
 }

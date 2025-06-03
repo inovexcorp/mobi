@@ -20,14 +20,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-var adminUsername = 'admin'
-var adminPassword = 'admin'
 
 module.exports = {
-  '@tags': ['login', 'sanity'],
+  '@tags': ['login', 'administration', 'sanity'],
 
   'Step 1: Initial Setup' : function(browser) {
-    browser.globals.initial_steps(browser, adminUsername, adminPassword)
+    browser.globals.initial_steps(browser, browser.globals.adminUsername, browser.globals.adminPassword)
   },
 
   'Step 2: Navigate to administration page' : function(browser) {
@@ -38,7 +36,7 @@ module.exports = {
     browser
       .useCss()
       .assert.visible('a.current-user-box')
-      .getText('a.current-user-box', function(result) {browser.assert.ok(result.value == adminUsername)})
+      .getText('a.current-user-box', function(result) {browser.assert.ok(result.value === browser.globals.adminUsername)})
   },
 
   'Step 4: logout' : function(browser){
@@ -46,7 +44,7 @@ module.exports = {
   },
 
   'Step 5: login as all caps admin' : function(browser) {
-    browser.globals.login(browser, adminUsername.toUpperCase(), adminPassword);
+    browser.globals.login(browser, browser.globals.adminUsername.toUpperCase(), browser.globals.adminPassword);
   },
 
   'Step 6: check for administration nav item' : function(browser) {
@@ -59,7 +57,7 @@ module.exports = {
     browser
       .useCss()
       .assert.visible('a.current-user-box')
-      .getText('a.current-user-box', function(result) {browser.assert.ok(result.value == adminUsername)})
+      .getText('a.current-user-box', function(result) {browser.assert.ok(result.value === browser.globals.adminUsername)})
   },
 
   'Step 8: The user successfully logs out' : function(browser){

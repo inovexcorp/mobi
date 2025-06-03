@@ -30,7 +30,7 @@ var shapes_graph = path.resolve(__dirname + '/../../resources/rdf_files/UHTC_sha
 var error_message = 'A Record already exists with tracked IRI'
 
 module.exports = {
-    '@tags': ['shapes-editor', 'sanity', 'test'],
+    '@tags': ['shapes-editor'],
 
     'Step 1: Initial Setup': function(browser) {
         browser.globals.initial_steps(browser, adminUsername, adminPassword)

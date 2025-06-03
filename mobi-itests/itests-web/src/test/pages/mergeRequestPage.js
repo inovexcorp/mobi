@@ -254,9 +254,7 @@ const mergeRequestCommands = {
         return this.useXpath()
             .waitForElementVisible('//button//span[contains(text(), "Next")]/parent::button')
             .assert.enabled('//button//span[contains(text(), "Next")]/parent::button')
-            .click('//button//span[contains(text(), "Next")]/parent::button')
-            .useCss()
-            .waitForElementNotPresent('div.mat-horizontal-stepper-content.ng-animating');
+            .click('//button//span[contains(text(), "Next")]/parent::button');
     },
 
     closeMergeRequest: function() {

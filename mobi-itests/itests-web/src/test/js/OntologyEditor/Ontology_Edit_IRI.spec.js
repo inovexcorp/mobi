@@ -21,8 +21,6 @@
  * #L%
  */
 var path = require('path');
-var adminUsername = 'admin'
-var adminPassword = 'admin'
 var validURL = 'https://avm.inovexcorp.com/ontologies/10/2019';
 var invalidURL = 'https://avm.inovexcorp.com/ontolo<gies/10/2019';
 var invalidEndsWidth = 'test`-local-`imports-1';
@@ -35,7 +33,7 @@ module.exports = {
     '@tags': ['sanity', 'ontology-editor'],
 
     'Step 1: Initial Setup' : function(browser) {
-        browser.globals.initial_steps(browser, adminUsername, adminPassword)
+        browser.globals.initial_steps(browser, browser.globals.adminUsername, browser.globals.adminPassword)
     },
 
     'Step 2: Upload Ontologies' : function(browser) {

@@ -23,8 +23,6 @@
 
 /*jshint esnext: true */
 var path = require('path');
-var adminUsername = 'admin'
-var adminPassword = 'admin'
 
 var ontologies = [
     path.resolve(__dirname + '/../../resources/rdf_files/active-entity-filter-1.ttl'),
@@ -51,7 +49,7 @@ module.exports = {
     '@tags': ['sanity', 'ontology-editor'],
 
     'Step 1: Initial Setup': function(browser) {
-        browser.globals.initial_steps(browser, adminUsername, adminPassword)
+        browser.globals.initial_steps(browser, browser.globals.adminUsername, browser.globals.adminPassword)
     },
 
     'Step 2: Upload Ontologies': function(browser) {

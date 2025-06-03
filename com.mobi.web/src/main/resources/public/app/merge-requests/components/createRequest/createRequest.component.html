@@ -21,7 +21,7 @@
   #L%
   -->
 <div class="create-request h-100 d-flex">
-    <!-- TODO: Come Angular 11, switch the ngIfs to lazy loading -->
+    <!-- Using ngIfs in the step content because otherwise the previous step's content stays in the DOM -->
     <mat-horizontal-stepper editable="false" linear #requestStepper>
         <mat-step #firstStep label="Select Record" [completed]="!!state.requestConfig.recordId">
             <div *ngIf="requestStepper.selectedIndex === 0" class="d-flex flex-column h-100">

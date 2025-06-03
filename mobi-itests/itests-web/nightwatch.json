@@ -9,35 +9,101 @@
   },
   "output_folder": "./target/nightwatch-reports/",
   "globals_path": "target/classes/nightwatch-globals.js",
-  "webdriver": {
-    "start_process": true,
-    "server_path": "node_modules/.bin/chromedriver",
-    "cli_args": [
-      "--verbose"
-    ],
-    "port": 9515
-  },
   "test_settings": {
     "default": {
+      "webdriver": {
+        "start_process": true,
+        "server_path": "node_modules/.bin/chromedriver",
+        "cli_args": [
+          "--verbose"
+        ],
+        "port": 9515
+      },
       "desiredCapabilities": {
         "browserName": "chrome",
         "goog:chromeOptions": {
           "args": [
-            "--headless",
+            "--lang=en-US",
             "window-size=1920,1080",
             "--no-sandbox",
             "test-type",
             "ignore-certificate-errors"
-          ]
+          ],
+          "prefs" : {
+            "credentials_enable_service" : false,
+            "profile.password_manager_enabled" : false,
+            "profile.password_manager_leak_detection": false
+          }
         },
         "acceptInsecureCerts": true,
-        "acceptSslCerts": true
+        "acceptSslCerts": true,
+        "loggingPrefs": {
+          "browser": "ALL"
+        }
       },
       "screenshots": {
         "enabled": true,
         "on_failure": true,
         "on_error": true,
         "path": "./target/nightwatch-screenshots/"
+      }
+    },
+    "headless": {
+      "desiredCapabilities": {
+        "goog:chromeOptions": {
+          "args": [
+            "--headless",
+            "--lang=en-US",
+            "window-size=1920,1080",
+            "--no-sandbox",
+            "test-type",
+            "ignore-certificate-errors"
+          ],
+          "prefs" : {
+            "credentials_enable_service" : false,
+            "profile.password_manager_enabled" : false,
+            "profile.password_manager_leak_detection": false
+          }
+        }
+      }
+    },
+    "firefox": {
+      "webdriver": {
+        "start_process": true,
+        "server_path": "node_modules/.bin/geckodriver",
+        "cli_args": [
+          "-vv"
+        ],
+        "port": 4444
+      },
+      "desiredCapabilities": {
+        "browserName": "firefox",
+        "moz:firefoxOptions": {
+          "args": [
+            "--width=1920",
+            "--height=1080"
+          ]
+        }
+      }
+    },
+    "firefox-headless": {
+      "webdriver": {
+        "start_process": true,
+        "server_path": "node_modules/.bin/geckodriver",
+        "cli_args": [
+          "-vv"
+        ],
+        "port": 4444
+      },
+      "desiredCapabilities": {
+        "browserName": "firefox",
+        "moz:firefoxOptions": {
+          "args": [
+            "--headless",
+            "--width=1920",
+            "--height=1080"
+          ]
+        }
       }
     }
   }
