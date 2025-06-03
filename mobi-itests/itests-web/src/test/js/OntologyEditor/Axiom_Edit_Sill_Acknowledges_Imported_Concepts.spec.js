@@ -21,8 +21,6 @@
  * #L%
  */
 var path = require('path');
-var adminUsername = 'admin'
-var adminPassword = 'admin'
 var vocab = path.resolve(__dirname + '/../../resources/rdf_files/single-concept-vocab.ttl');
 var Onto2 = path.resolve(__dirname + '/../../resources/rdf_files/test-local-imports-2.ttl');
 var Onto3 = path.resolve(__dirname + '/../../resources/rdf_files/test-local-imports-3.ttl');
@@ -32,7 +30,7 @@ module.exports = {
     '@tags': ['sanity', 'ontology-editor'],
 
     'Step 1: Login and navigate to Ontology Editor' : function(browser) {
-        browser.globals.initial_steps(browser, adminUsername, adminPassword)
+        browser.globals.initial_steps(browser, browser.globals.adminUsername, browser.globals.adminPassword)
     },
 
     'Step 2: Upload Ontologies' : function(browser) {
@@ -140,7 +138,7 @@ module.exports = {
             .assert.not.elementPresent('//axiom-overlay//input[contains(@data-placeholder, "Values")]')
             .waitForElementVisible('//axiom-overlay//ngx-codemirror')
             .waitForElementPresent('//axiom-overlay//ngx-codemirror//div[contains(@Class, "CodeMirror")]//textarea')
-            .click('//axiom-overlay//ngx-codemirror//span[contains(@role, "presentation")]')
+            .click('//axiom-overlay//ngx-codemirror//div[contains(@Class, "CodeMirror")]')
             .sendKeys('//axiom-overlay//ngx-codemirror//div[contains(@Class, "CodeMirror")]//textarea' ,"DataProperty1 or DataProperty2")
             .click('//axiom-overlay//button//span[text()[contains(.,"Submit")]]')
             .useCss()

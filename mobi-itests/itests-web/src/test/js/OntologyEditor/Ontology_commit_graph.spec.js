@@ -21,15 +21,13 @@
  * #L%
  */
 var path = require('path');
-var adminUsername = 'admin';
-var adminPassword = 'admin';
 var skosOnt = path.resolve(__dirname + '/../../resources/rdf_files/skos.rdf');
 
 module.exports = {
     '@tags': ['ontology-editor', 'sanity'],
 
     'Step 1: Initial Setup' : function(browser) {
-        browser.globals.initial_steps(browser, adminUsername, adminPassword)
+        browser.globals.initial_steps(browser, browser.globals.adminUsername, browser.globals.adminPassword)
     },
 
     'Step 2: Upload SKOS Ontologies' : function(browser) {
@@ -42,6 +40,7 @@ module.exports = {
     'Step 3: Create New Ontology' : function(browser) {
         browser.page.ontologyEditorPage().createOntology('MyGraph', 'Ontology graph');
         browser.globals.wait_for_no_spinners(browser);
+        browser.globals.dismiss_toast(browser);
         browser.page.ontologyEditorPage().onProjectTab();
     },
 
@@ -83,8 +82,8 @@ module.exports = {
         browser.page.ontologyEditorPage().isActive('ontology-tab');
     },
 
-    'Step 10: add new Import': function(browser) {
-        browser.page.ontologyEditorPage().addServerImport('skos');
+    'Step 10: Add new Import': function(browser) {
+        browser.page.ontologyEditorPage().addServerImport('skos'); // TODO: Fails headless but works rendered...
     },
 
     'Step 11: Commit Changes': function(browser) {
@@ -111,10 +110,10 @@ module.exports = {
             .assert.elementPresent('//commit-history-table//commit-history-graph//*[local-name()="svg"]//*[local-name()="text" and @class="commit-subject-string" and text()[contains(., "initial commit")]]')
     },
 
-    'Step 19: Checkout Initial commit ': function(browser) {
+    'Step 13: Checkout Initial commit ': function(browser) {
         browser
             .useXpath()
-            .click('css selector','commit-history-graph svg g g:last-child g g:first-child')
+            .click('css selector','commit-history-graph svg g g:last-child g g:first-child') // Breaks in firefox
             .waitForElementNotPresent('//commit-history-table//commit-history-graph//*[local-name()="svg"]//*[local-name()="text" and @class="commit-subject-string" and text()[contains(., "MASTER")]]')
             .useCss()
             .waitForElementVisible('.mat-tab-label-container .mat-tab-label:nth-child(9)')

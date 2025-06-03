@@ -21,16 +21,13 @@
  * #L%
  */
 var path = require('path');
-var adminUsername = 'admin'
-var adminPassword = 'admin'
-
 var Onto1 = path.resolve(__dirname + '/../../resources/rdf_files/pizza.owl');
 
 module.exports = {
     '@tags': ['sanity', 'ontology-editor'],
 
     'Step 1: Initial Setup' : function(browser) {
-        browser.globals.initial_steps(browser, adminUsername, adminPassword)
+        browser.globals.initial_steps(browser, browser.globals.adminUsername, browser.globals.adminPassword)
         browser.page.ontologyEditorPage().isActive();
     },
 
@@ -40,7 +37,7 @@ module.exports = {
         browser.globals.dismiss_toast(browser);
     },
 
-    'Step 3: Verify Ontology called “pizza.owl" is open' : function(browser) {
+    'Step 3: Verify Ontology called "pizza.owl" is open' : function(browser) {
         browser.page.editorPage()
             .assert.valueEquals('@editorRecordSelectInput', 'pizza')
             .assert.valueEquals('@editorBranchSelectInput', 'MASTER')

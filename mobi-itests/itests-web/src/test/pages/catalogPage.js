@@ -201,8 +201,9 @@ const catalogRecordCommands = {
             browser.expect.element(recordBodyTitleSelector).text.to.contain(titleOfRecord);
             browser
                 .click('css selector', recordBodyDescriptionSelector, function(result) { this.assert.strictEqual(result.status, 0) })
-                .setValue(recordBodyDescriptionSelector + ' textarea', [description, browser.Keys.ENTER])
-                .waitForElementNotPresent('#spinner-full');
+                .setValue(recordBodyDescriptionSelector + ' textarea', [description, browser.Keys.ENTER]);
+            browser.globals.wait_for_no_spinners(browser);
+            browser.globals.dismiss_toast(browser);
             browser.expect.element(recordBodyDescriptionSelector).text.to.contain(description);
         }
 
@@ -210,16 +211,16 @@ const catalogRecordCommands = {
             var keywords = changeObj.keywords;
             browser.expect.element(recordBodyTitleSelector).text.to.contain(titleOfRecord);
             browser
-                .click('css selector', 'catalog-page record-view catalog-record-keywords', function(result) { this.assert.strictEqual(result.status, 0) })
-                .waitForElementNotPresent('#spinner-full');
+                .click('css selector', 'catalog-page record-view catalog-record-keywords', function(result) { this.assert.strictEqual(result.status, 0) });
 
             for(var keyword in keywords){ // keyword acts like index number instead of value
                 browser.setValue('catalog-page record-view catalog-record-keywords input', [keywords[keyword], browser.Keys.ENTER]);
             }
 
             browser
-                .click('css selector', 'catalog-page record-view catalog-record-keywords a', function(result) { this.assert.strictEqual(result.status, 0) })
-                .waitForElementNotPresent('#spinner-full');
+                .click('css selector', 'catalog-page record-view catalog-record-keywords a', function(result) { this.assert.strictEqual(result.status, 0) });
+            browser.globals.wait_for_no_spinners(browser);
+            browser.globals.dismiss_toast(browser);
         }
     },
 

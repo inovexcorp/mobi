@@ -45,22 +45,22 @@ import { RequestRecordSelectComponent } from './components/requestRecordSelect/r
  * The `merge-requests` module provides components that make up the Merge Requests module in the Mobi application.
  */
 @NgModule({
-    imports: [ SharedModule ],
-    declarations: [
-        AssigneeInputComponent,
-        CommentDisplayComponent,
-        CreateRequestComponent,
-        EditRequestOverlayComponent,
-        MergeRequestDiscussionComponent,
-        MergeRequestFilterComponent,
-        MergeRequestListComponent,
-        MergeRequestTabsetComponent,
-        MergeRequestViewComponent,
-        MergeRequestsPageComponent,
-        ReplyCommentComponent,
-        RequestBranchSelectComponent,
-        RequestDetailsFormComponent,
-        RequestRecordSelectComponent
-    ]
+  imports: [ SharedModule ],
+  declarations: [
+    AssigneeInputComponent,
+    CommentDisplayComponent,
+    CreateRequestComponent,
+    EditRequestOverlayComponent,
+    MergeRequestDiscussionComponent,
+    MergeRequestFilterComponent,
+    MergeRequestListComponent,
+    MergeRequestTabsetComponent,
+    MergeRequestViewComponent,
+    MergeRequestsPageComponent,
+    ReplyCommentComponent,
+    RequestBranchSelectComponent,
+    RequestDetailsFormComponent,
+    RequestRecordSelectComponent
+  ]
 })
 export class MergeRequestsModule {}

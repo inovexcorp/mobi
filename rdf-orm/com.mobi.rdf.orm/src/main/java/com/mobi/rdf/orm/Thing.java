@@ -40,7 +40,6 @@ import java.util.Set;
  * @author bdgould
  */
 public interface Thing {
-
     /**
      * The type IRI string for a {@link Thing} instance.
      */
@@ -52,12 +51,12 @@ public interface Thing {
     Class<? extends Thing> DEFAULT_IMPL = ThingImpl.class;
 
     /**
-     * @return The {@link Resource} identifying this {@link Thing}
+     * The {@link Resource} identifying this {@link Thing}.
      */
     Resource getResource();
 
     /**
-     * @return The backing {@link Model} for this {@link Thing}
+     * The backing {@link Model} for this {@link Thing}.
      */
     Model getModel();
 
@@ -66,8 +65,7 @@ public interface Thing {
      *
      * @param predicate The predicate identifying the property
      * @param context   The context {@link IRI}
-     * @return The {@link Value} from the backing {@link Model} for this
-     * {@link Thing}
+     * @return The {@link Value} from the backing {@link Model} for this {@link Thing}
      */
     Optional<Value> getProperty(IRI predicate, IRI... context);
 
@@ -77,8 +75,7 @@ public interface Thing {
      *
      * @param predicate The {@link IRI} of the predicate you want values for
      * @param context   The {@link IRI} of the context of this statement
-     * @return The {@link Set} of {@link Value}s with the specified prediciate
-     * for this object
+     * @return The {@link Set} of {@link Value}s with the specified predicate for this object
      */
     Set<Value> getProperties(IRI predicate, IRI... context);
 
@@ -89,7 +86,7 @@ public interface Thing {
      * @param value     The {@link Value} to store
      * @param predicate The predicate {@link IRI} of the property to set
      * @param context   The {@link IRI} of the context
-     * @return Whether or not the property was set
+     * @return Whether the property was set
      */
     boolean setProperty(Value value, IRI predicate, IRI... context);
 
@@ -109,7 +106,7 @@ public interface Thing {
      * @param value     The {@link Value} to add
      * @param predicate The predicate {@link IRI} to add it to
      * @param context   The context {@link IRI} to use
-     * @return Whether or not the {@link Value} was added to
+     * @return Whether the {@link Value} was added to
      */
     boolean addProperty(Value value, IRI predicate, IRI... context);
 
@@ -120,7 +117,7 @@ public interface Thing {
      * @param value     The value to remove
      * @param predicate The predicate {@link IRI} to remove the {@link Value} from
      * @param context   The context {@link IRI} to use
-     * @return Whether or not the {@link Value} was removed
+     * @return Whether the {@link Value} was removed
      */
     boolean removeProperty(Value value, IRI predicate, IRI... context);
 
@@ -129,12 +126,12 @@ public interface Thing {
      *
      * @param predicate The {@link IRI} of the predicate to clear out
      * @param context   The {@link IRI} contexts to remove with
-     * @return Whether or not data was removed from this {@link Thing}
+     * @return Whether data was removed from this {@link Thing}
      */
     boolean clearProperty(IRI predicate, IRI... context);
 
     /**
-     * @return The {@link ValueFactory} instance to use for this object
+     * The {@link ValueFactory} instance to use for this object.
      */
     ValueFactory getValueFactory();
 

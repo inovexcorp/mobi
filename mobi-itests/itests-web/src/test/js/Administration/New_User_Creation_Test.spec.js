@@ -20,8 +20,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-var adminUsername = "admin"
-var adminPassword = "admin"
 
 var newUser = {
     username: 'newUser',
@@ -51,7 +49,7 @@ module.exports = {
     '@tags': ['login', 'administration', 'sanity'],
 
     'Step 1: Initial Setup' : function(browser) {
-        browser.globals.initial_steps(browser, adminUsername, adminPassword)
+        browser.globals.initial_steps(browser, browser.globals.adminUsername, browser.globals.adminPassword)
     },
 
     'Step 2: The user clicks on the Administration sidebar link' : function(browser) {
@@ -138,7 +136,7 @@ module.exports = {
     },
 
     'Step 15: The admin user logs in' : function(browser) {
-        browser.globals.login(browser, adminUsername, adminPassword);
+        browser.globals.login(browser, browser.globals.adminUsername, browser.globals.adminPassword);
     },
 
     'Step 16: The admin user can manage the newly created ontology' : function(browser) {

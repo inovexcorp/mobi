@@ -149,54 +149,34 @@
                         </configuration>
                     </plugin>
                     <plugin>
-                        <groupId>org.codehaus.mojo</groupId>
-                        <artifactId>exec-maven-plugin</artifactId>
-                        <version>3.0.0</version>
+                        <groupId>com.github.eirslett</groupId>
+                        <artifactId>frontend-maven-plugin</artifactId>
+                        <version>1.15.1</version>
                         <executions>
+                            <execution>
+                                <id>install node and npm</id>
+                                <goals>
+                                    <goal>install-node-and-npm</goal>
+                                </goals>
+                                <configuration>
+                                    <nodeVersion>v18.19.0</nodeVersion>
+                                </configuration>
+                            </execution>
                             <execution>
                                 <id>npm install</id>
                                 <goals>
-                                    <goal>exec</goal>
+                                    <goal>npm</goal>
                                 </goals>
                                 <phase>generate-test-sources</phase>
-                                <configuration>
-                                    <executable>npm</executable>
-                                    <arguments>
-                                        <argument>install</argument>
-                                    </arguments>
-                                </configuration>
                             </execution>
                             <execution>
-                                <id>npm run tests</id>
+                                <id>npm run test</id>
                                 <goals>
-                                    <goal>exec</goal>
+                                    <goal>npm</goal>
                                 </goals>
                                 <phase>integration-test</phase>
                                 <configuration>
-                                    <executable>npm</executable>
-                                    <arguments>
-                                        <argument>run</argument>
-                                        <argument>test</argument>
-                                    </arguments>
-                                    <successCodes>
-                                        <successCode>0</successCode>
-                                        <successCode>1</successCode>
-                                        <successCode>5</successCode>
-                                    </successCodes>
-                                </configuration>
-                            </execution>
-                            <execution>
-                                <id>verify</id>
-                                <goals>
-                                    <goal>exec</goal>
-                                </goals>
-                                <phase>verify</phase>
-                                <configuration>
-                                    <executable>npm</executable>
-                                    <arguments>
-                                        <argument>run</argument>
-                                        <argument>verify</argument>
-                                    </arguments>
+                                    <arguments>run test-headless</arguments>
                                 </configuration>
                             </execution>
                         </executions>

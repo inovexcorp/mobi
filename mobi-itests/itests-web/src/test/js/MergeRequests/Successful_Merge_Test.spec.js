@@ -20,9 +20,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-var adminUsername = 'admin';
-var adminPassword = 'admin';
-
 var ontology01 = {
     title: 'myTitle2', 
     description: 'myDescription'
@@ -38,7 +35,7 @@ module.exports = {
     '@tags': ['ontology-editor', 'sanity', 'merge-requests'],
 
     'Step 1: Initial Setup': function(browser) {
-        browser.globals.initial_steps(browser, adminUsername, adminPassword);
+        browser.globals.initial_steps(browser, browser.globals.adminUsername, browser.globals.adminPassword);
     },
 
     'Step 2: Ensure that user is on Ontology editor page' : function(browser) {
@@ -210,10 +207,12 @@ module.exports = {
         browser.page.mergeRequestPage().createNewRequest();
         browser.page.mergeRequestPage().clickMatCard(ontology01.title);
         browser.page.mergeRequestPage().createRequestNext();
+        browser.globals.wait_for_no_spinners(browser);
         // Select checkbox to remove branch after acceptance and add admin as assignee
         browser.page.mergeRequestPage().createRequestSourceBranchSelect('newBranchTitle2');
         browser.page.mergeRequestPage().createRequestTargetBranchSelect('MASTER');
         browser.page.mergeRequestPage().createRequestNext();
+        browser.globals.wait_for_no_spinners(browser);
 
         browser.page.mergeRequestPage().createRequestSubmit();
         browser.globals.wait_for_no_spinners(browser);
@@ -263,10 +262,12 @@ module.exports = {
         browser.page.mergeRequestPage().createNewRequest();
         browser.page.mergeRequestPage().clickMatCard(ontology01.title);
         browser.page.mergeRequestPage().createRequestNext();
+        browser.globals.wait_for_no_spinners(browser);
         // Select the source and target branches and click Next
         browser.page.mergeRequestPage().createRequestSourceBranchSelect('newBranchTitle3Removal');
         browser.page.mergeRequestPage().createRequestTargetBranchSelect('MASTER');
         browser.page.mergeRequestPage().createRequestNext();
+        browser.globals.wait_for_no_spinners(browser);
         // Select checkbox to remove branch after acceptance and add admin as assignee
         browser
             .useXpath()
@@ -274,8 +275,8 @@ module.exports = {
             .click('//merge-requests-page//create-request//mat-checkbox//span[contains(text(), "Remove")]')
             .waitForElementVisible('//merge-requests-page//create-request//div[contains(@class, "assignee-input")]//div[contains(@class, "mat-form-field-infix")]//input')
             .click('//merge-requests-page//create-request//div[contains(@class, "assignee-input")]//div[contains(@class, "mat-form-field-infix")]//input')
-            .waitForElementVisible('//mat-option//span[text()[contains(., "' + adminUsername + '")]]')
-            .click('//mat-option//span[text()[contains(., "' + adminUsername + '")]]')
+            .waitForElementVisible('//mat-option//span[text()[contains(., "' + browser.globals.adminUsername + '")]]')
+            .click('//mat-option//span[text()[contains(., "' + browser.globals.adminUsername + '")]]')
         browser.page.mergeRequestPage().createRequestSubmit();
         browser.globals.dismiss_toast(browser);
     },
@@ -318,15 +319,15 @@ module.exports = {
         browser.globals.wait_for_no_spinners(browser);
 
         // Select the admin creator filter
-        browser.page.mergeRequestPage().toggleFilterItem('Creators', adminUsername + ' (2)');
+        browser.page.mergeRequestPage().toggleFilterItem('Creators', browser.globals.adminUsername + ' (2)');
         browser.globals.wait_for_no_spinners(browser);
         browser.page.mergeRequestPage().assertNumFilterChips(1);
-        browser.page.mergeRequestPage().assertFilterChipExists(adminUsername);
+        browser.page.mergeRequestPage().assertFilterChipExists(browser.globals.adminUsername);
         browser.useCss()
             .assert.textContains('div.request-contents .details h3', 'newBranchTitle3Removal');
 
         // Unselect the admin creator filter
-        browser.page.mergeRequestPage().toggleFilterItem('Creators', adminUsername + ' (2)');
+        browser.page.mergeRequestPage().toggleFilterItem('Creators', browser.globals.adminUsername + ' (2)');
         browser.globals.wait_for_no_spinners(browser);
         browser.page.mergeRequestPage().assertNumFilterChips(0);
     },
@@ -339,10 +340,10 @@ module.exports = {
         browser.page.mergeRequestPage().searchFilterList('Assignees', 'ad');
 
         // Select the admin creator filter
-        browser.page.mergeRequestPage().toggleFilterItem('Assignee', adminUsername + ' (1)');
+        browser.page.mergeRequestPage().toggleFilterItem('Assignee', browser.globals.adminUsername + ' (1)');
         browser.globals.wait_for_no_spinners(browser);
         browser.page.mergeRequestPage().assertNumFilterChips(1);
-        browser.page.mergeRequestPage().assertFilterChipExists(adminUsername);
+        browser.page.mergeRequestPage().assertFilterChipExists(browser.globals.adminUsername);
         browser.useCss()
             .assert.textContains('div.request-contents .details h3', 'newBranchTitle3Removal');
 
@@ -351,7 +352,7 @@ module.exports = {
 
     'Step 27: Reset button clears chips': function(browser) {
       // Add another filter for reset test
-      browser.page.mergeRequestPage().toggleFilterItem('Creators', adminUsername);
+      browser.page.mergeRequestPage().toggleFilterItem('Creators', browser.globals.adminUsername);
       browser.globals.wait_for_no_spinners(browser);
       browser.page.mergeRequestPage().assertNumFilterChips(2);
 

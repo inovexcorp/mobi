@@ -20,15 +20,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-var adminUsername = 'admin'
-var adminPassword = 'admin'
-var pages = ["Catalog", "Ontology Editor", "Merge Requests", "Shapes Editor" ,"Mapping Tool", "Datasets", "Discover"]
+var pages = ['Catalog', 'Ontology Editor', 'Merge Requests', 'Shapes Editor', 'Mapping Tool', 'Datasets', 'Discover']
 
 module.exports = {
     '@tags': ['sanity'],
 
     'Step 1: login as admin' : function(browser) {
-        browser.globals.initial_steps(browser, adminUsername, adminPassword)
+        browser.globals.initial_steps(browser, browser.globals.adminUsername, browser.globals.adminPassword)
         browser.globals.wait_for_no_spinners(browser);
         browser.globals.switchToPage(browser, 'home')
         browser.waitForElementVisible('.home-page')

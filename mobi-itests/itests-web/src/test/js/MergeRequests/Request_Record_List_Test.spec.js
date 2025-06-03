@@ -22,16 +22,11 @@
  * #L%
  */
 var path = require('path');
-var adminUsername = 'admin';
-var adminPassword = 'admin';
-
 var shapegraph001_title = 'shapes_mr_test';
 var shapegraph001_branch001_title = 'MergeTestBranch001';
 var shapegraph001_commit_message_001 = 'The first manual commit message';
-
 var shapes_mr_test = path.resolve( __dirname + '/../../resources/rdf_files/shapes_mr_test.ttl');
 var shapes_mr_test_change = path.resolve(__dirname + '/../../resources/rdf_files/shapes_mr_test_change_001.ttl');
-
 var ontology001_title = 'ontMrTest001';
 
 /**
@@ -45,7 +40,7 @@ module.exports = {
     '@tags': ['ontology-editor', 'shapes-editor', 'sanity', 'merge-requests'],
 
     'Step 1: Initial Setup': function(browser) {
-        browser.globals.initial_steps(browser, adminUsername, adminPassword)
+        browser.globals.initial_steps(browser, browser.globals.adminUsername, browser.globals.adminPassword)
     },
 
     'Step 2: Navigate to the Shapes Graph Editor': function(browser) {
@@ -55,6 +50,8 @@ module.exports = {
 
     'Step 3: Create a new shapes graph': function(browser) {
         browser.page.shapesEditorPage().uploadShapesGraph(shapes_mr_test);
+        browser.globals.wait_for_no_spinners(browser);
+        browser.globals.dismiss_toast(browser);
     },
 
     'Step 4: Create a new branch for shape graph': function(browser) {
@@ -65,6 +62,7 @@ module.exports = {
     'Step 5: Upload Changes to shape graph': function(browser) {
         browser.page.shapesEditorPage().uploadChanges(shapes_mr_test_change);
         browser.globals.wait_for_no_spinners(browser);
+        browser.globals.dismiss_toast(browser);
     },
 
     'Step 6: Verify Uploaded Changes': function(browser) {
@@ -85,6 +83,7 @@ module.exports = {
     'Step 8: Commit changes to shape graph': function(browser) {
         browser.page.shapesEditorPage().commit(shapegraph001_commit_message_001);
         browser.globals.wait_for_no_spinners(browser);
+        browser.globals.dismiss_toast(browser);
     },
 
     'Step 9: Verify commit was made successfully': function(browser) {
@@ -109,6 +108,7 @@ module.exports = {
     'Step 11: Create New Ontology' : function(browser) {
         browser.page.ontologyEditorPage().createOntology('ontMrTest001', 'myDescription');
         browser.globals.wait_for_no_spinners(browser);
+        browser.globals.dismiss_toast(browser);
         browser.page.ontologyEditorPage().onProjectTab();
     },
 

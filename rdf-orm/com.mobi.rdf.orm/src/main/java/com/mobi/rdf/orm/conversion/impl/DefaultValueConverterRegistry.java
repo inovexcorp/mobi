@@ -163,8 +163,7 @@ public class DefaultValueConverterRegistry implements ValueConverterRegistry {
      * This method will "boxify" primitives into their {@link Object} type.
      *
      * @param type The type to try and boxify
-     * @return The "boxified" type, or the original if it is already not a
-     * primitive
+     * @return The "boxified" type, or the original if it is already not a primitive
      */
     @SuppressWarnings("unchecked")
     protected static <T> Class<T> boxify(final Class<T> type) {
@@ -244,7 +243,8 @@ public class DefaultValueConverterRegistry implements ValueConverterRegistry {
             return new HashSet<>();
         } else {
             @SuppressWarnings("unchecked")
-            final ValueConverter<T> converter = getValueConverter(boxify((Class<T>) types.iterator().next().getClass()));
+            final ValueConverter<T> converter = getValueConverter(
+                    boxify((Class<T>) types.iterator().next().getClass()));
             if (converter != null) {
                 final List<Exception> exceptions = new ArrayList<>();
                 try {
@@ -287,7 +287,9 @@ public class DefaultValueConverterRegistry implements ValueConverterRegistry {
             // Recurse on directly implemented interfaces
             for (Class<?> clazz : type.getInterfaces()) {
                 result = (ValueConverter<T>) getValueConverter(clazz);
-                if (result != null) break;
+                if (result != null) {
+                    break;
+                }
             }
             // Recurse on super class
             if (result == null && type.getSuperclass() != null) {
@@ -301,7 +303,8 @@ public class DefaultValueConverterRegistry implements ValueConverterRegistry {
      * {@inheritDoc}
      */
     @Override
-    @Reference(cardinality = ReferenceCardinality.MULTIPLE, policy = ReferencePolicy.DYNAMIC, unbind = "unregisterValueConverter")
+    @Reference(cardinality = ReferenceCardinality.MULTIPLE, policy = ReferencePolicy.DYNAMIC,
+            unbind = "unregisterValueConverter")
     public <T> void registerValueConverter(final ValueConverter<T> converter) {
         final Class<T> type = converter.getType();
         if (!registry.containsKey(type)) {

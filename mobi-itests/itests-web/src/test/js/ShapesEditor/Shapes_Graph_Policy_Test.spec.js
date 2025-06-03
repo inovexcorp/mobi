@@ -21,8 +21,6 @@
  * #L%
  */
 var path = require('path');
-var adminUsername = 'admin'
-var adminPassword = 'admin'
 var newUser = {
     username: 'newUserB',
     password: 'testB',
@@ -33,10 +31,10 @@ var newUser = {
 var shapes_graph = path.resolve(__dirname + '/../../resources/rdf_files/semops_shapes.ttl');
 
 module.exports = {
-    '@tags': ['shapes-editor', 'sanity'],
+    '@tags': ['shapes-editor'],
 
     'Step 1: Initial Setup' : function(browser) {
-        browser.globals.initial_steps(browser, adminUsername, adminPassword)
+        browser.globals.initial_steps(browser, browser.globals.adminUsername, browser.globals.adminPassword)
     },
 
     'Step 2: Navigate to the Shapes Graph Editor': function(browser) {

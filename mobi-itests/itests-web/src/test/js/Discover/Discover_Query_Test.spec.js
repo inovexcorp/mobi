@@ -21,9 +21,6 @@
  * #L%
  */
 var path = require('path');
-var adminUsername = "admin"
-var adminPassword = "admin"
-var dropDownSelector = '//query-tab//form//dataset-form-group//ul[contains(@class, "ui-select-choices")]//li[contains(@class, "ui-select-choices-group")]//div[contains(@class,"ui-select-choices-row")]';
 var Onto1 = path.resolve(__dirname + '/../../resources/rdf_files/EventOntology.ttl');
 
 // TODO: Move a lot of these functions to the datasetsPage and discoverPage
@@ -31,7 +28,7 @@ module.exports = {
     '@tags': ['sanity', 'datasets', 'discover'],
 
     'Step 1: Initial Setup' : function(browser) {
-        browser.globals.initial_steps(browser, adminUsername, adminPassword);
+        browser.globals.initial_steps(browser, browser.globals.adminUsername, browser.globals.adminPassword);
     },
 
     'Step 2: Upload Ontologies' : function(browser) {
@@ -48,6 +45,7 @@ module.exports = {
     'Step 4: Create a new Dataset' : function(browser) {
         browser.page.datasetPage().createDataset('Event ontology data', 'A dataset consisting of information about events', ['EventOntology']);
         browser.globals.wait_for_no_spinners(browser);
+        browser.globals.dismiss_toast(browser);
     },
 
     'Step 5: Validate dataset Appearance' : function(browser) {

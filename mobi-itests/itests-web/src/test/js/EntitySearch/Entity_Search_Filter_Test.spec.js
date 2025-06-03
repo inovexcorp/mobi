@@ -21,8 +21,6 @@
  * #L%
  */
 var path = require('path');
-var adminUsername = 'admin'
-var adminPassword = 'admin'
 var Onto1 = path.resolve(__dirname + '/../../resources/rdf_files/shacl.ttl');
 // shapes graph
 var shapes_graph = path.resolve(__dirname + '/../../resources/rdf_files/UHTC_shapes.ttl');
@@ -33,7 +31,7 @@ module.exports = {
     '@tags': ['sanity', 'entity-search', 'entity-search-filters'],
 
     'Step 1: Initial Setup': function (browser) {
-        browser.globals.initial_steps(browser, adminUsername, adminPassword);
+        browser.globals.initial_steps(browser, browser.globals.adminUsername, browser.globals.adminPassword);
     },
 
     'Step 2: Upload Ontologies': function (browser) {
@@ -217,7 +215,7 @@ module.exports = {
     'Step 16: Logout and Log Back In': function (browser) {
         browser.useCss();
         browser.globals.logout(browser);
-        browser.globals.initial_steps(browser, adminUsername, adminPassword);
+        browser.globals.initial_steps(browser, browser.globals.adminUsername, browser.globals.adminPassword);
     },
 
     'Step 17: Verify Cleared State': function (browser) {
@@ -260,7 +258,7 @@ module.exports = {
     'Step 21: Verify Sort Option is Reset When Logging Out': function (browser) {
         browser.useCss();
         browser.globals.logout(browser);
-        browser.globals.initial_steps(browser, adminUsername, adminPassword);
+        browser.globals.initial_steps(browser, browser.globals.adminUsername, browser.globals.adminPassword);
         browser.globals.switchToPage(browser, 'entity-search', 'app-entity-search-page');
         browser.globals.wait_for_no_spinners(browser);
         browser.page.entitySearchPage().verifyEntitySearchPageSort('Entity Name (asc)');

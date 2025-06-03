@@ -1,6 +1,9 @@
 const Docker = require('dockerode');
 const fetch = require('node-fetch');
 const https = require('https');
+const tar = require('tar-fs');
+const fs = require('fs');
+const path = require('path');
 
 const docker =  new Docker({socketPath: '/var/run/docker.sock'});
 
@@ -22,10 +25,11 @@ const buildOptions = {
 
 module.exports = {
     'globalPort' : httpsPort,
+    'adminUsername': 'admin',
+    'adminPassword': 'admin',
 
-    // default timeout value in milliseconds for waitFor commands and implicit waitFor value for
-    // expect assertions
     waitForConditionTimeout : 60000,
+    waitForConditionPollInterval: 100,
     retryAssertionTimeout: 30000,
     asyncHookTimeout: 60000,
 
@@ -163,26 +167,69 @@ module.exports = {
     },
 
     afterEach(browser, done) {
-        containerObj.stop(function (err, data) {
-            if (err) {
-                console.log('Error stopping container:', err);
-            } else {
-                console.log(`Container ${containerObj.id} successfully stopped`);
-                containerObj.remove(function (err, data) {
-                    if (err) {
-                        browser.assert.fail(`Error removing container ${containerObj.id}:`, err);
-                        done();
-                    } else {
-                        console.log(`Container ${containerObj.id} successfully removed`);
-                        done();
-                    }
-                });
+        function shutDown() {
+            containerObj.stop(function (err, data) {
+                if (err) {
+                    console.log('Error stopping container:', err);
+                } else {
+                    console.log(`Container ${containerObj.id} successfully stopped`);
+                    containerObj.remove(function (err, data) {
+                        if (err) {
+                            browser.assert.fail(`Error removing container ${containerObj.id}:`, err);
+                            done();
+                        } else {
+                            console.log(`Container ${containerObj.id} successfully removed`);
+                            done();
+                        }
+                    });
+                }
+            });
+        }
+        const currentTest = browser.currentTest;
+        if (currentTest.results && currentTest.results.failed > 0) {
+            console.log('Current test had a failure. Pulling logs');
+            // Setup log output dir
+            let testDate = new Date(currentTest.timestamp).toUTCString();
+            let dateStr = testDate.substring(testDate.indexOf(', ') + 2).replaceAll(':', '').replaceAll(' ', '_');
+            let outputPath = `/test-logs/${currentTest.module.replace('.spec', '')}/${dateStr}`;
+            const dir = path.join(__dirname, '..', outputPath);
+            if (!fs.existsSync(dir)){
+                fs.mkdirSync(dir, { recursive: true });
             }
-        })
+            // Fetch console logs
+            if (browser.consoleLogs.length) {
+              const consoleLogFile = fs.createWriteStream(path.join(dir, 'console.log'));
+              consoleLogFile.on('error', function(err) { console.error('Error writing browser log file', err); });
+              browser.consoleLogs.forEach(function(v) { consoleLogFile.write(`${v}\n`); });
+              consoleLogFile.end();
+            }
+            // Fetch rendered HTML
+            browser.source(result => {
+              const htmlFile = fs.createWriteStream(path.join(dir, 'index.html'));
+              htmlFile.on('error', function(err) { console.error('Error writing HTML file', err); });
+              htmlFile.write(result.value);
+              htmlFile.end();
+            });
+            // Fetch Karaf logs
+            containerObj.getArchive({path: '/opt/mobi/mobi-distribution/data/log/karaf.log'}, (err, stream) => {
+                if (err) {
+                    console.error('Error getting archive:', err);
+                    done();
+                }
+              
+                stream.pipe(tar.extract(`./target${outputPath}`));
+                shutDown();
+            });
+        } else {
+            shutDown();
+        }
     },
 
     'initial_steps': function (browser, user, password) {
-        browser.url(`https://localhost:${httpsPort}/${distributionName}/index.html#/home`);
+        browser.consoleLogs = [];
+        browser.captureBrowserConsoleLogs((event) => {
+            browser.consoleLogs.push(`${event.timestamp} ${event.type}: ${event.args.map(arg => arg.value || arg.description).join('\n')}`);
+        }).url(`https://localhost:${httpsPort}/${distributionName}/index.html#/home`);
         browser.globals.login(browser, user, password);
         browser.globals.wait_for_no_spinners(browser);
         browser.globals.switchToPage(browser, 'ontology-editor', 'ontology-editor-page');
@@ -202,8 +249,8 @@ module.exports = {
     'logout': function(browser) {
         browser
             .useXpath()
-            .pause(2000)
-            .click("//i[@class= 'fa fa-sign-out fa-fw']/following-sibling::span[text()[contains(.,'Logout')]]")
+            .click("//span[text()[contains(.,'Logout')]]/parent::a")
+            // .click("//i[@class= 'fa fa-sign-out fa-fw']/following-sibling::span[text()[contains(.,'Logout')]]")
             .waitForElementVisible('//div[@class="form-group"]//input[@id="username"]')
     },
 
@@ -216,10 +263,13 @@ module.exports = {
     },
 
     'dismiss_toast': function(browser) {
-        browser.useCss().isVisible('div#toast-container', function(result) {
-            if (result) {
-                browser.click('div#toast-container')
-                    .waitForElementNotVisible('div#toast-container');
+        browser.useCss().isVisible({
+          selector: 'div.ngx-toastr',
+          suppressNotFoundErrors: true,
+          timeout: 2000
+        }, function(result) {
+            if (result && result.value) {
+                browser.click('div.ngx-toastr');
             }
         });
     },

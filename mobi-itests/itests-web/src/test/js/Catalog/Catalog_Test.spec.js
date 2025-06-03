@@ -21,8 +21,6 @@
  * #L%
  */
 var path = require('path');
-var adminUsername = 'admin'
-var adminPassword = 'admin'
 var CatalogOnto1 = path.resolve(__dirname + '/../../resources/rdf_files/z-catalog-ontology-1.ttl');
 var CatalogOnto2 = path.resolve(__dirname + '/../../resources/rdf_files/z-catalog-ontology-2.ttl');
 var CatalogOnto3 = path.resolve(__dirname + '/../../resources/rdf_files/z-catalog-ontology-3.ttl');
@@ -47,7 +45,7 @@ module.exports = {
     '@tags': ['sanity', 'catalog'],
 
     'Step 1: Initial Setup' : function(browser) {
-        browser.globals.initial_steps(browser, adminUsername, adminPassword)
+        browser.globals.initial_steps(browser, browser.globals.adminUsername, browser.globals.adminPassword)
     },
 
     'Step 2: Upload Ontologies' : function(browser) {
@@ -67,7 +65,7 @@ module.exports = {
         browser.expect.elements('catalog-page records-view record-filters div.record-filters mat-expansion-panel-header mat-panel-title').count.to.equal(3);
         browser.expect.element('catalog-page records-view record-filters info-message p').text.to.contain('No Keywords available');
         browser.page.catalogPage().verifyFilterItems('Record Type', recordTypeFilters);
-        browser.page.catalogPage().verifyFilterItems('Creators', [adminUsername]);
+        browser.page.catalogPage().verifyFilterItems('Creators', [browser.globals.adminUsername]);
         browser.page.catalogPage().assertNumFilterChips(0);
     },
 
