@@ -20,11 +20,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import {Component, EventEmitter, Input, OnInit, Output} from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 
 import { MergeRequest } from '../../../shared/models/mergeRequest.interface';
 import { MergeRequestsStateService } from '../../../shared/services/mergeRequestsState.service';
-import { ONTOLOGYEDITOR } from '../../../prefixes';
 
 /**
  * @class merge-requests.MergeRequestTabsetComponent

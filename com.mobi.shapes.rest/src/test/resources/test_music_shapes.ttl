@@ -1,0 +1,56 @@
+
+<http://stardog.com/tutorial/NameShape> a <http://www.w3.org/ns/shacl#NodeShape>;
+                                        <http://www.w3.org/ns/shacl#property> _:5db4c7d72a434c64a41a5b1998ec4b8027 .
+
+_:5db4c7d72a434c64a41a5b1998ec4b8027 <http://www.w3.org/ns/shacl#path> <http://stardog.com/tutorial/name>;
+                                     <http://www.w3.org/ns/shacl#datatype> <http://www.w3.org/2001/XMLSchema#string>;
+                                     <http://www.w3.org/ns/shacl#minCount> "1"^^<http://www.w3.org/2001/XMLSchema#integer> .
+
+<http://stardog.com/tutorial/ArtistShape> a <http://www.w3.org/ns/shacl#NodeShape>;
+                                          <http://www.w3.org/ns/shacl#targetClass> <http://stardog.com/tutorial/Artist>;
+                                          <http://www.w3.org/ns/shacl#node> <http://stardog.com/tutorial/NameShape> .
+
+<http://stardog.com/tutorial/BandShape> a <http://www.w3.org/ns/shacl#NodeShape>;
+                                        <http://www.w3.org/ns/shacl#property> <http://stardog.com/tutorial/BandMemberShape>;
+                                        <http://www.w3.org/ns/shacl#targetClass> <http://stardog.com/tutorial/Band>;
+                                        <http://www.w3.org/ns/shacl#not> _:5db4c7d72a434c64a41a5b1998ec4b8028 .
+
+<http://stardog.com/tutorial/BandMemberShape> a <http://www.w3.org/ns/shacl#PropertyShape>;
+                                              <http://www.w3.org/ns/shacl#path> <http://stardog.com/tutorial/member>;
+                                              <http://www.w3.org/ns/shacl#minCount> "1"^^<http://www.w3.org/2001/XMLSchema#integer>;
+                                              <http://www.w3.org/ns/shacl#class> <http://stardog.com/tutorial/SoloArtist> .
+
+_:5db4c7d72a434c64a41a5b1998ec4b8028 <http://www.w3.org/ns/shacl#class> <http://stardog.com/tutorial/Person> .
+
+<http://stardog.com/tutorial/AlbumShape> a <http://www.w3.org/ns/shacl#NodeShape>;
+                                         <http://www.w3.org/ns/shacl#property> <http://stardog.com/tutorial/AlbumDateShape>,
+                                         <http://stardog.com/tutorial/AlbumArtistShape>, <http://stardog.com/tutorial/AlbumTrackShape>;
+                                         <http://www.w3.org/ns/shacl#targetClass> <http://stardog.com/tutorial/Album>;
+                                         <http://www.w3.org/ns/shacl#node> <http://stardog.com/tutorial/NameShape> .
+
+<http://stardog.com/tutorial/AlbumDateShape> a <http://www.w3.org/ns/shacl#PropertyShape>;
+                                             <http://www.w3.org/ns/shacl#path> <http://stardog.com/tutorial/date>;
+                                             <http://www.w3.org/ns/shacl#datatype> <http://www.w3.org/2001/XMLSchema#date>;
+                                             <http://www.w3.org/ns/shacl#minCount> "1"^^<http://www.w3.org/2001/XMLSchema#integer>;
+                                             <http://www.w3.org/ns/shacl#maxCount> "1"^^<http://www.w3.org/2001/XMLSchema#integer> .
+
+<http://stardog.com/tutorial/AlbumArtistShape> a <http://www.w3.org/ns/shacl#PropertyShape>;
+                                               <http://www.w3.org/ns/shacl#path> <http://stardog.com/tutorial/artist>;
+                                               <http://www.w3.org/ns/shacl#minCount> "1"^^<http://www.w3.org/2001/XMLSchema#integer>;
+                                               <http://www.w3.org/ns/shacl#class> <http://stardog.com/tutorial/Artist> .
+
+<http://stardog.com/tutorial/AlbumTrackShape> a <http://www.w3.org/ns/shacl#PropertyShape>;
+                                              <http://www.w3.org/ns/shacl#path> <http://stardog.com/tutorial/track>;
+                                              <http://www.w3.org/ns/shacl#minCount> "1"^^<http://www.w3.org/2001/XMLSchema#integer>;
+                                              <http://www.w3.org/ns/shacl#class> <http://stardog.com/tutorial/Song> .
+
+<http://stardog.com/tutorial/SongShape> a <http://www.w3.org/ns/shacl#NodeShape>;
+                                        <http://www.w3.org/ns/shacl#property> <http://stardog.com/tutorial/SongLengthShape>;
+                                        <http://www.w3.org/ns/shacl#targetClass> <http://stardog.com/tutorial/Song>;
+                                        <http://www.w3.org/ns/shacl#node> <http://stardog.com/tutorial/NameShape> .
+
+<http://stardog.com/tutorial/SongLengthShape> a <http://www.w3.org/ns/shacl#PropertyShape>;
+                                              <http://www.w3.org/ns/shacl#path> <http://stardog.com/tutorial/length>;
+                                              <http://www.w3.org/ns/shacl#datatype> <http://www.w3.org/2001/XMLSchema#integer> .
+
+<https://mobi.solutions/shapes-graphs/music_test> a <http://www.w3.org/2002/07/owl#Ontology> .

@@ -182,7 +182,8 @@ public class SimpleShapesGraph implements ShapesGraph {
                 outputStream);
     }
 
-    protected Ontology getOntology() {
+    @Override
+    public Ontology getOntology() {
         return this.ontology;
     }
 }

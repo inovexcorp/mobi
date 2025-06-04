@@ -413,3 +413,17 @@ login-layout, main-layout {
         }
     }
 }
+
+.node-shapes-list {
+    .cdk-virtual-scroll-content-wrapper {
+        width: 100% !important;
+    }
+
+    .node-content {
+        white-space: nowrap;
+        margin-bottom: 0.5rem !important;
+        width: 100% !important;
+        text-overflow: ellipsis;
+        overflow: hidden;
+    }
+}

@@ -20,13 +20,4 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="shapes-graph-editor-page p-3 h-100 d-flex flex-column">
-    <app-editor-top-bar *ngIf="!state?.listItem?.merge?.active"></app-editor-top-bar>
-    <app-merge-page *ngIf="state?.listItem?.merge?.active"></app-merge-page>
-    <app-changes-page class="flex-1 remove-min-height" *ngIf="state?.listItem?.changesPageOpen"
-                            [additions]="state?.listItem?.inProgressCommit?.additions"
-                            [deletions]="state?.listItem?.inProgressCommit?.deletions">
-    </app-changes-page>
-    <app-shapes-tabs-holder class="flex-1 remove-min-height d-flex flex-column h-100 vertical-scroll"
-                            *ngIf="state?.listItem && !state?.listItem?.changesPageOpen"></app-shapes-tabs-holder>
-</div>
+<p>Display of Node Shapes Coming Soon!</p>

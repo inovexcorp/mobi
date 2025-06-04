@@ -20,13 +20,14 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="shapes-graph-editor-page p-3 h-100 d-flex flex-column">
-    <app-editor-top-bar *ngIf="!state?.listItem?.merge?.active"></app-editor-top-bar>
-    <app-merge-page *ngIf="state?.listItem?.merge?.active"></app-merge-page>
-    <app-changes-page class="flex-1 remove-min-height" *ngIf="state?.listItem?.changesPageOpen"
-                            [additions]="state?.listItem?.inProgressCommit?.additions"
-                            [deletions]="state?.listItem?.inProgressCommit?.deletions">
-    </app-changes-page>
-    <app-shapes-tabs-holder class="flex-1 remove-min-height d-flex flex-column h-100 vertical-scroll"
-                            *ngIf="state?.listItem && !state?.listItem?.changesPageOpen"></app-shapes-tabs-holder>
+<div class="node-shapes-list tree h-100 p-0 w-100 d-flex flex-column">
+    <div class="d-flex flex-row search pb-1">
+        <search-bar class="flex-1 remove-min-width" [(bindModel)]="searchText" (submitEvent)="search()"></search-bar>
+    </div>
+    <info-message *ngIf="nodeShapes.length === 0" class="no-match">No node shapes match your search criteria.</info-message>
+    <cdk-virtual-scroll-viewport itemSize="26" #hierarchyVirtualScroll class="flex-1 repeater-container w-100 remove-min-height">
+        <div *cdkVirtualFor="let node of nodeShapes" class="nodeWrapper">
+            <app-node-shapes-item [nodeData]="node"></app-node-shapes-item>
+        </div>
+    </cdk-virtual-scroll-viewport>
 </div>

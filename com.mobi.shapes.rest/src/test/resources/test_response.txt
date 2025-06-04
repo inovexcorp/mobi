@@ -1,0 +1,51 @@
+[
+  {
+    "iri": "http://stardog.com/tutorial/AlbumShape",
+    "name": "AlbumShape",
+    "targetType": "http://www.w3.org/ns/shacl#targetClass",
+    "targetValue": "http://stardog.com/tutorial/Album",
+    "imported": true
+  },
+  {
+    "iri": "http://stardog.com/tutorial/ArtistShape",
+    "name": "ArtistShape",
+    "targetType": "http://www.w3.org/ns/shacl#targetClass",
+    "targetValue": "http://stardog.com/tutorial/Artist",
+    "imported": true
+  },
+  {
+    "iri": "http://stardog.com/tutorial/BandShape",
+    "name": "BandShape",
+    "targetType": "http://www.w3.org/ns/shacl#targetClass",
+    "targetValue": "http://stardog.com/tutorial/Band",
+    "imported": true
+  },
+  {
+    "iri": "http://stardog.com/tutorial/NameShape",
+    "name": "NameShape",
+    "targetType": "",
+    "targetValue": "",
+    "imported": true
+  },
+  {
+    "iri": "http://stardog.com/tutorial/SongShape",
+    "name": "SongShape",
+    "targetType": "http://www.w3.org/ns/shacl#targetClass",
+    "targetValue": "http://stardog.com/tutorial/Song",
+    "imported": true
+  },
+  {
+    "iri": "http://schema.org/ElementShape",
+    "name": "Test Element node shape",
+    "targetType": "http://www.w3.org/ns/shacl#targetClass",
+    "targetValue": "http://matonto.org/ontologies/uhtc#Element",
+    "imported": false
+  },
+  {
+    "iri": "http://matonto.org/ontologies/uhtc#Material",
+    "name": "UHTC Material shapes graph",
+    "targetType": "http://www.w3.org/ns/shacl#implicitTarget",
+    "targetValue": "http://matonto.org/ontologies/uhtc#Material",
+    "imported": false
+  }
+]

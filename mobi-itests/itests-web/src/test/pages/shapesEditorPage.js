@@ -22,7 +22,6 @@
  */
 
 const parentEl = 'shapes-graph-editor-page';
-
 const propertyValues = `${parentEl} shapes-graph-property-values`;
 
 const shapesEditorCommands = {
@@ -98,6 +97,18 @@ const shapesEditorCommands = {
             .page.editorPage()
             .assert.valueEquals('@editorRecordSelectInput', shapes_graph_title)
             .assert.valueEquals('@editorBranchSelectInput', branchTitle);
+    },
+
+    verifyNodeShapeListItem: function(nodeShape) {
+        const nodeItemSelector = '//app-node-shapes-tab//app-node-shapes-list//cdk-virtual-scroll-viewport//app-node-shapes-item';
+
+        return this.api
+            .useXpath()
+            .assert.visible(`${nodeItemSelector}//h4[text()[contains(.,'${nodeShape.title}')]]`)
+            .assert.visible(`${nodeItemSelector}//small[text()[contains(.,'${nodeShape.iri}')]]`)
+            .assert.visible(`${nodeItemSelector}//small[text()[contains(.,'${nodeShape.target}')]]`)
+            .assert.visible(`${nodeItemSelector}//small[text()[contains(.,'${nodeShape.type}')]]`)
+            .assert.visible(`${nodeItemSelector}//small[text()[contains(.,'${nodeShape.imported}')]]`)
     },
 
     //TODO placeholder until we consolidate two different spots for editing IRI
