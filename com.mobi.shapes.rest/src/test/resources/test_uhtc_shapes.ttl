@@ -1,0 +1,43 @@
+<http://matonto.org/ontologies/uhtc/shapes-graph> a <http://www.w3.org/2002/07/owl#Ontology>;
+                                                  <http://www.w3.org/2000/01/rdf-schema#label> "UHTC Shapes Graph";
+                                                  <http://purl.org/dc/elements/1.1/description> "Shapes Graph developed for the the purpose of validating UHTC Materials against their Elemental Properties.";
+                                                  <http://www.w3.org/2002/07/owl#imports> <https://mobi.solutions/shapes-graphs/music_test>;
+                                                  <http://purl.org/dc/elements/1.1/title> "UHTC Shapes Graph" .
+
+<http://matonto.org/ontologies/uhtc#Material> a <http://www.w3.org/ns/shacl#NodeShape>, <http://www.w3.org/2002/07/owl#Class>;
+                                              <http://www.w3.org/ns/shacl#name> "UHTC Material shapes graph";
+                                              <http://purl.org/dc/elements/1.1/title> "Test Node shape";
+                                              <http://www.w3.org/ns/shacl#property> _:280078f5d1d14663b9424690b3e3e44515, _:280078f5d1d14663b9424690b3e3e44516,
+                                              _:280078f5d1d14663b9424690b3e3e44517 .
+
+_:280078f5d1d14663b9424690b3e3e44515 <http://www.w3.org/ns/shacl#path> <http://matonto.org/ontologies/uhtc#chemicalFormula>;
+                                     <http://www.w3.org/ns/shacl#datatype> <http://www.w3.org/2001/XMLSchema#string>;
+                                     <http://www.w3.org/ns/shacl#minCount> "1"^^<http://www.w3.org/2001/XMLSchema#integer>;
+                                     <http://www.w3.org/ns/shacl#maxCount> "1"^^<http://www.w3.org/2001/XMLSchema#integer>;
+                                     <http://www.w3.org/ns/shacl#pattern> "[A-Z][a-z]?\\d*|\\(.*?\\)\\d+";
+                                     <http://www.w3.org/ns/shacl#name> "Chemical Formula" .
+
+_:280078f5d1d14663b9424690b3e3e44516 <http://www.w3.org/ns/shacl#path> <http://matonto.org/ontologies/uhtc#density>;
+                                     <http://www.w3.org/ns/shacl#minCount> "1"^^<http://www.w3.org/2001/XMLSchema#integer>;
+                                     <http://www.w3.org/ns/shacl#maxCount> "1"^^<http://www.w3.org/2001/XMLSchema#integer>;
+                                     <http://www.w3.org/ns/shacl#name> "Density" .
+
+_:280078f5d1d14663b9424690b3e3e44517 <http://www.w3.org/ns/shacl#path> <http://matonto.org/ontologies/uhtc#crystalStructure>;
+                                     <http://www.w3.org/ns/shacl#minCount> "1"^^<http://www.w3.org/2001/XMLSchema#integer>;
+                                     <http://www.w3.org/ns/shacl#maxCount> "1"^^<http://www.w3.org/2001/XMLSchema#integer> .
+
+<http://schema.org/ElementShape> a <http://www.w3.org/ns/shacl#NodeShape>;
+                                 <http://purl.org/dc/elements/1.1/title> "UHTC Element shapes graph",
+                                 "Test Element node shape" ;
+                                 <http://www.w3.org/ns/shacl#property> _:280078f5d1d14663b9424690b3e3e44518, _:280078f5d1d14663b9424690b3e3e44519;
+                                 <http://www.w3.org/ns/shacl#targetClass> <http://matonto.org/ontologies/uhtc#Element> .
+
+_:280078f5d1d14663b9424690b3e3e44518 <http://www.w3.org/ns/shacl#path> <http://matonto.org/ontologies/uhtc#elementName>;
+                                     <http://www.w3.org/ns/shacl#datatype> <http://www.w3.org/2001/XMLSchema#string>;
+                                     <http://www.w3.org/ns/shacl#minCount> "1"^^<http://www.w3.org/2001/XMLSchema#integer>;
+                                     <http://www.w3.org/ns/shacl#name> "elementName" .
+
+_:280078f5d1d14663b9424690b3e3e44519 <http://www.w3.org/ns/shacl#path> <http://matonto.org/ontologies/uhtc#symbol>;
+                                     <http://www.w3.org/ns/shacl#minCount> "1"^^<http://www.w3.org/2001/XMLSchema#integer>;
+                                     <http://www.w3.org/ns/shacl#maxCount> "1"^^<http://www.w3.org/2001/XMLSchema#integer>;
+                                     <http://www.w3.org/ns/shacl#name> "Symbol" .

@@ -36,12 +36,10 @@ export class ShapesProjectTabComponent {
     `${ONTOLOGYEDITOR}OntologyRecord`,
     `${SHAPESGRAPHEDITOR}ShapesGraphRecord`
   ];
+
   noImportMessage = 'This shapes graph does not have any imports.';
-  
-  constructor(
-    public sgm: ShapesGraphManagerService,
-    public state: ShapesGraphStateService
-  ) {}
+
+  constructor(public state: ShapesGraphStateService, public sgm: ShapesGraphManagerService) {}
 
   keys(object: JSONLDObject): Array<string> {
     return Object.keys(object);

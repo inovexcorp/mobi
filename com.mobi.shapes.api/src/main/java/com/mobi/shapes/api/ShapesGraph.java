@@ -97,4 +97,11 @@ public interface ShapesGraph extends QueryableVersionedRDF {
      * @return the Set of imported Ontologies without the base Ontology.
      */
     Set<Ontology> getImportedOntologies();
+
+    /**
+     * Retrieves the ontology object associated with the Shapes Graph.
+     *
+     * @return The {@link Ontology} associated with the Shapes Graph.
+     */
+    Ontology getOntology();
 }

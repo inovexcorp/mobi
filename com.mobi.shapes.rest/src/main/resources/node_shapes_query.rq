@@ -1,0 +1,65 @@
+PREFIX owl: <http://www.w3.org/2002/07/owl#>
+PREFIX sh: <http://www.w3.org/ns/shacl#>
+PREFIX rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
+PREFIX dct: <http://purl.org/dc/terms/>
+PREFIX dc: <http://purl.org/dc/elements/1.1/>
+SELECT DISTINCT ?iri ?name (SAMPLE(?targetTypes) as ?targetType) (SAMPLE(?targetValues) as ?targetValue)
+WHERE {
+  BIND("%search%" as ?search)
+  {
+    SELECT ?iri (GROUP_CONCAT(?nameOption;separator="�") as ?names)
+    WHERE {
+      {
+        SELECT ?iri ?nameOption
+        WHERE {
+          {
+            ?iri a sh:NodeShape .
+            FILTER(ISIRI(?iri))
+            BIND(REPLACE(STR(?iri), "^.*?([_\\p{L}][-_\\p{L}\\p{N}]*)$", "$1") as ?nameOption)
+            BIND(9 as ?propertyOrder)
+          } UNION {
+            VALUES (?property ?propertyOrder) { (sh:name 2) (rdfs:label 4) (dct:title 6) (dc:title 8) }
+            ?iri a sh:NodeShape ;
+            ?property ?nameOption .
+            FILTER(ISIRI(?iri))
+            OPTIONAL {
+              ?iri ?property ?nameOption .
+              FILTER(LANGMATCHES(LANG(?nameOption), "EN"))
+              BIND(?propertyOrder - 1 as ?propertyOrder)
+            }
+          }
+        } ORDER BY ?propertyOrder
+      }
+    } GROUP BY ?iri
+  }
+  OPTIONAL {
+    BIND(sh:targetClass as ?targetTypes)
+    ?iri ?targetTypes ?targetValues .
+  }
+  OPTIONAL {
+    BIND(sh:targetNode as ?targetTypes)
+    ?iri ?targetTypes ?targetValues .
+  }
+  OPTIONAL {
+    BIND(sh:targetSubjectsOf as ?targetTypes)
+    ?iri ?targetTypes ?targetValues .
+  }
+  OPTIONAL {
+    BIND(sh:targetObjectsOf as ?targetTypes)
+    ?iri ?targetTypes ?targetValues .
+  }
+  OPTIONAL {
+    ?iri a rdfs:Class .
+    BIND(sh:implicitTarget as ?targetTypes)
+    BIND(?iri as ?targetValues)
+  }
+  OPTIONAL {
+    ?iri a owl:Class .
+    BIND(sh:implicitTarget as ?targetTypes)
+    BIND(?iri as ?targetValues)
+  }
+  FILTER(CONTAINS(LCASE(?names), LCASE(?search)))
+  BIND(IF(STRBEFORE(?names, "�") = "", ?names, STRBEFORE(?names, "�")) as ?name)
+} GROUP BY ?iri ?name ORDER BY LCASE(?name)

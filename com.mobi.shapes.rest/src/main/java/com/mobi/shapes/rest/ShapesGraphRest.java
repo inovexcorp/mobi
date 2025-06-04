@@ -28,6 +28,7 @@ import static com.mobi.rest.util.RestUtils.getActiveUser;
 import static com.mobi.rest.util.RestUtils.getRDFFormatFileExtension;
 import static com.mobi.rest.util.RestUtils.getRDFFormatMimeType;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -51,8 +52,10 @@ import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.utils.OntologyModels;
+import com.mobi.ontology.utils.OntologyUtils;
 import com.mobi.ontology.utils.cache.OntologyCache;
 import com.mobi.persistence.utils.BNodeUtils;
+import com.mobi.persistence.utils.Bindings;
 import com.mobi.persistence.utils.Models;
 import com.mobi.persistence.utils.ParsedModel;
 import com.mobi.persistence.utils.RDFFiles;
@@ -92,6 +95,8 @@ import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.OWL;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
+import org.eclipse.rdf4j.query.Binding;
+import org.eclipse.rdf4j.query.TupleQueryResult;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.RepositoryResult;
 import org.eclipse.rdf4j.rio.RDFParseException;
@@ -103,10 +108,13 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -135,9 +143,21 @@ import javax.ws.rs.core.StreamingOutput;
 public class ShapesGraphRest {
 
     private static final ObjectMapper mapper = new ObjectMapper();
+    private static final String GET_NODE_SHAPES_QUERY;
 
     final ValueFactory vf = new ValidatingValueFactory();
     final ModelFactory mf = new DynamicModelFactory();
+
+    static {
+        try {
+            GET_NODE_SHAPES_QUERY = IOUtils.toString(
+                    Objects.requireNonNull(ShapesGraphRest.class.getResourceAsStream("/node_shapes_query.rq")),
+                    StandardCharsets.UTF_8
+            );
+        } catch (IOException ex) {
+            throw new MobiException(ex);
+        }
+    }
 
     @Reference
     CatalogConfigProvider configProvider;
@@ -584,8 +604,8 @@ public class ShapesGraphRest {
      *                       branchId; otherwise, nothing will be returned.
      * @param format         the specified format for the return data. Valid values include "jsonld", "turtle",
      *                       "rdf/xml", and "trig"
-     * @param applyInProgressCommit whether to apply the in progress commit for the user making the request.
-     * @return The RDF triples for a specified entity including all of is transitively attached Blank Nodes.
+     * @param applyInProgressCommit whether to apply the in-progress commit for the user making the request.
+     * @return The RDF triples for a specified entity, including all of its transitively attached Blank Nodes.
      */
     @GET
     @Path("{recordId}/entities/{entityId}")
@@ -609,9 +629,9 @@ public class ShapesGraphRest {
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the entity Resource ID", required = true)
             @PathParam("entityId") String entityIdStr,
-            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @Parameter(description = "String representing the Branch Resource ID")
             @QueryParam("branchId") String branchIdStr,
-            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @Parameter(description = "String representing the Commit Resource ID")
             @QueryParam("commitId") String commitIdStr,
             @Parameter(description = "Specified format for the return data. Valid values include 'jsonld', "
                     + "'turtle', 'rdf/xml', and 'trig'")
@@ -671,9 +691,9 @@ public class ShapesGraphRest {
             @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
-            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @Parameter(description = "String representing the Branch Resource ID")
             @QueryParam("branchId") String branchIdStr,
-            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @Parameter(description = "String representing the Commit Resource ID")
             @QueryParam("commitId") String commitIdStr,
             @Parameter(description = "Specified format for the return data. Valid values include 'jsonld', "
                     + "'turtle', 'rdf/xml', and 'trig'")
@@ -721,7 +741,7 @@ public class ShapesGraphRest {
             summary = "Retrieve information about imports for the given ShapeGraph",
             responses = {
                     @ApiResponse(responseCode = "200",
-                            description = "Returns a JSON object containing failed import IRIs and " 
+                            description = "Returns a JSON object containing failed import IRIs and "
                             + "successfully imported ontologies for a ShapeGraph."),
                     @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
@@ -733,9 +753,9 @@ public class ShapesGraphRest {
             @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
-            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @Parameter(description = "String representing the Branch Resource ID")
             @QueryParam("branchId") String branchIdStr,
-            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @Parameter(description = "String representing the Commit Resource ID")
             @QueryParam("commitId") String commitIdStr,
             @Parameter(description = "Boolean to decide to clear cache")
             @DefaultValue("false") @QueryParam("clearCache") boolean clearCache,
@@ -818,9 +838,9 @@ public class ShapesGraphRest {
             @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
-            @Parameter(description = "String representing the Branch Resource ID", required = false)
+            @Parameter(description = "String representing the Branch Resource ID")
             @QueryParam("branchId") String branchIdStr,
-            @Parameter(description = "String representing the Commit Resource ID", required = false)
+            @Parameter(description = "String representing the Commit Resource ID")
             @QueryParam("commitId") String commitIdStr,
             @Parameter(description = "Whether or not to apply the in progress commit "
                     + "for the user making the request")
@@ -838,6 +858,56 @@ public class ShapesGraphRest {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         } catch (MobiException | IllegalStateException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @GET
+    @Path("{recordId}/node-shapes")
+    @Produces({MediaType.APPLICATION_JSON})
+    @RolesAllowed("user")
+    @Operation(
+            tags = "shapes-graphs",
+            summary = "Retrieves the list of associated Node Shapes for the specified record, branch, and commit",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "A list of Node Shapes with associated metadata"),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
+            }
+    )
+    @ResourceId(type = ValueType.PATH, value = "recordId")
+    public Response getShapesGraphNodeShapes(
+            @Context HttpServletRequest servletRequest,
+            @Parameter(description = "String representing the Record Resource ID", required = true)
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "String representing the Branch Resource ID")
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "String representing the Commit Resource ID")
+            @QueryParam("commitId") String commitIdStr,
+            @Parameter(description = "Whether or not to apply the in progress commit for the user making the request")
+            @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit,
+            @Parameter(description = "The text to filter over when searching node shapes")
+            @DefaultValue("") @QueryParam("searchText") String searchText
+    ) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            ShapesGraph shapesGraph = getShapesGraph(recordIdStr, branchIdStr, commitIdStr,
+                    applyInProgressCommit, servletRequest, conn);
+
+            Ontology ontology = shapesGraph.getOntology();
+            Set<Ontology> onlyImports = OntologyUtils.getImportedOntologies(ontology);
+
+            ArrayNode nodeShapes = mapper.createArrayNode();
+            getNodeShapesFromOntology(nodeShapes, ontology, false, searchText);
+            onlyImports.forEach(ont -> getNodeShapesFromOntology(nodeShapes, ont, true, searchText));
+
+            //hardcoded values for limit and offset until we handle virtual scrolling appropriately
+            orderShapeNodes(nodeShapes, 0, 500);
+
+            return Response.ok(nodeShapes.toString()).build();
+        } catch (IllegalArgumentException ex) {
+            throw RestUtils.getErrorObjBadRequest(ex);
+        } catch (MobiException | IllegalStateException ex) {
+            throw RestUtils.getErrorObjInternalServerError(ex);
         }
     }
 
@@ -914,5 +984,45 @@ public class ShapesGraphRest {
         }
 
         return parsedModel.getModel();
+    }
+
+    protected void getNodeShapesFromOntology(ArrayNode nodeShapes, Ontology ontology, boolean imported,
+                                             String searchText) {
+        TupleQueryResult results = ontology.getTupleQueryResults(GET_NODE_SHAPES_QUERY.replace("%search%", searchText),
+                false);
+
+        results.forEach(queryResult -> {
+            String nodeIri = Bindings.requiredResource(queryResult, "iri").stringValue();
+            String nodeName = Bindings.requiredLiteral(queryResult, "name").stringValue();
+            Optional<Binding> targetType = Optional.ofNullable(queryResult.getBinding( "targetType"));
+            Optional<Binding> targetValue = Optional.ofNullable(queryResult.getBinding("targetValue"));
+
+            ObjectNode nodeShape = mapper.createObjectNode();
+            nodeShape.put("iri", nodeIri);
+            nodeShape.put("name", nodeName);
+            nodeShape.put("targetType", targetType.isPresent()? targetType.get().getValue().stringValue() : "");
+            nodeShape.put("targetValue", targetValue.isPresent() ? targetValue.get().getValue().stringValue() : "");
+            nodeShape.put("imported", imported);
+
+            nodeShapes.add(nodeShape);
+        });
+    }
+
+    protected void orderShapeNodes(ArrayNode nodeShapes, int offset, int limit) {
+        List<JsonNode> nodeList = new ArrayList<>();
+        nodeShapes.forEach(nodeList::add);
+        nodeShapes.removeAll();
+
+        nodeList.sort(Comparator.comparing(node -> node.get("name").asText()));
+
+        if (offset > nodeList.size()) {
+            throw new IllegalArgumentException("Offset is larger than the number of nodes in the list.");
+        } else if (limit == 0 ) {
+            throw new IllegalArgumentException("Limit cannot be set to 0.");
+        } else if (limit > 0 && limit > nodeList.size()) {
+            nodeList.subList(offset, nodeList.size()).forEach(nodeShapes::add);
+        } else {
+            nodeList.subList(offset, limit).forEach(nodeShapes::add);
+        }
     }
 }

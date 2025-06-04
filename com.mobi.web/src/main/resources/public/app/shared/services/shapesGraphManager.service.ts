@@ -20,25 +20,29 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+//Angular imports
 import { HttpClient, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
-import { forEach, get } from 'lodash';
+
+//Third party imports
 import { catchError, map } from 'rxjs/operators';
+import { forEach, get } from 'lodash';
 import { Observable } from 'rxjs';
 
-import { REST_PREFIX } from '../../constants';
-import { RdfDownload } from '../models/rdfDownload.interface';
-import { RdfUpload } from '../models/rdfUpload.interface';
-import { VersionedRdfUploadResponse } from '../models/versionedRdfUploadResponse.interface';
-import { RdfUpdate } from '../models/rdfUpdate.interface';
-import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
+//Mobi imports
 import { createHttpParams, handleError, handleErrorObject } from '../utility';
 import { JSONLDObject } from '../models/JSONLDObject.interface';
-import { XACMLRequest } from '../models/XACMLRequest.interface';
+import { NodeShapeInfo } from '../../shapes-graph-editor/models/nodeShapeInfo.interface';
 import { POLICY } from '../../prefixes';
 import { PolicyEnforcementService } from './policyEnforcement.service';
+import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
+import { REST_PREFIX } from '../../constants';
+import { RdfDownload } from '../models/rdfDownload.interface';
+import { RdfUpdate } from '../models/rdfUpdate.interface';
+import { RdfUpload } from '../models/rdfUpload.interface';
 import { ShapesGraphImports } from '../models/shapesGraphImports.interface';
-
+import { VersionedRdfUploadResponse } from '../models/versionedRdfUploadResponse.interface';
+import { XACMLRequest } from '../models/XACMLRequest.interface';
 /**
  * @class shared.ShapesGraphManagerService
  *
@@ -47,193 +51,209 @@ import { ShapesGraphImports } from '../models/shapesGraphImports.interface';
  */
 @Injectable()
 export class ShapesGraphManagerService {
-    prefix = `${REST_PREFIX}shapes-graphs`;
+  prefix = `${REST_PREFIX}shapes-graphs`;
 
-    constructor(
-        private http: HttpClient,
-        private pep: PolicyEnforcementService,
-        private spinnerSvc: ProgressSpinnerService) {}
+  constructor(private http: HttpClient, private pep: PolicyEnforcementService,
+              private spinnerSvc: ProgressSpinnerService) {}
 
-    /**
-     * Calls the POST /mobirest/shapes-graphs endpoint to upload a SHACL shapes graph to Mobi. Returns a Observable that
-     * resolves with the result of the call if it was successful and rejects with an error message if it was not.
-     *
-     * @param {RdfUpload} newRecord the new SHACL record to add
-     * @param {boolean} isTracked Whether the request should be tracked by the {@link shared.ProgressSpinnerService}
-     * @returns {Observable} A Observable that resolves with metadata about the newly created Record if the request was 
-     *    successful; rejects with a {@link RESTError} otherwise
-     */
-    createShapesGraphRecord(newRecord: RdfUpload, isTracked = false): Observable<VersionedRdfUploadResponse> {
-        const fd = new FormData();
-        fd.append('title', newRecord.title);
-        if (newRecord.jsonld) {
-            fd.append('json', JSON.stringify(newRecord.jsonld));
+  /**
+   * Calls the POST /mobirest/shapes-graphs endpoint to upload a SHACL shapes graph to Mobi. Returns a Observable that
+   * resolves with the result of the call if it was successful and rejects with an error message if it was not.
+   *
+   * @param {RdfUpload} newRecord the new SHACL record to add
+   * @param {boolean} isTracked Whether the request should be tracked by the {@link shared.ProgressSpinnerService}
+   * @returns {Observable} A Observable that resolves with metadata about the newly created Record if the request was
+   *    successful; rejects with a {@link RESTError} otherwise
+   */
+  createShapesGraphRecord(newRecord: RdfUpload, isTracked = false): Observable<VersionedRdfUploadResponse> {
+    const fd = new FormData();
+    fd.append('title', newRecord.title);
+    if (newRecord.jsonld) {
+      fd.append('json', JSON.stringify(newRecord.jsonld));
+    }
+    if (newRecord.file) {
+      fd.append('file', newRecord.file);
+    }
+    if (newRecord.description) {
+      fd.append('description', newRecord.description);
+    }
+    forEach(get(newRecord, 'keywords', []), keyword => fd.append('keywords', keyword));
+    const request = this.http.post<VersionedRdfUploadResponse>(this.prefix, fd);
+    return this.spinnerSvc.trackedRequest(request, isTracked).pipe(catchError(handleErrorObject));
+  }
+  /**
+   * Calls the GET /mobirest/shapes-graphs/{recordId} endpoint using the `window.location` variable which will
+   * start a download of the SHACL shapes graph starting at the identified Commit.
+   *
+   * @param {RdfDownload} rdfDownload the VersionedRdfRecord download parameters
+   */
+  downloadShapesGraph(rdfDownload: RdfDownload): void {
+    const params = createHttpParams({
+      branchId: rdfDownload.branchId,
+      commitId: rdfDownload.commitId,
+      rdfFormat: rdfDownload.rdfFormat || 'jsonld',
+      fileName: rdfDownload.fileName || 'shapesGraph',
+      applyInProgressCommit: rdfDownload.applyInProgressCommit || false
+    });
+    const url = `${this.prefix}/${encodeURIComponent(rdfDownload.recordId)}?${params.toString()}`;
+    const readRequest: XACMLRequest = {
+      resourceId: rdfDownload.recordId,
+      actionId: `${POLICY}Read`
+    };
+    this.pep.evaluateRequest(readRequest).pipe(
+      map(currentPermissions => currentPermissions === this.pep.permit)
+    ).subscribe((isPermit) => {
+      if (isPermit) {
+        window.open(url);
+      }
+    });
+
+  }
+  /**
+   * Calls the PUT /mobirest/shapes-graphs/{recordId} endpoint which will update the in-progress commit
+   * object to be applied to the shapes graph.
+   *
+   * @param {RdfUpdate} rdfUpdate the uploaded SHACL shapes graph
+   * @returns {Observable} An Observable that resolves if the request was successful; rejects with a {@link RESTError}
+   *    otherwise
+   */
+  uploadChanges(rdfUpdate: RdfUpdate): Observable<HttpResponse<null>> {
+    const fd = new FormData();
+    if (rdfUpdate.file) {
+      fd.append('file', rdfUpdate.file);
+    }
+    if (rdfUpdate.jsonld) {
+      fd.append('json', JSON.stringify(rdfUpdate.jsonld));
+    }
+    const params = {
+      branchId: rdfUpdate.branchId,
+      commitId: rdfUpdate.commitId,
+      replaceInProgressCommit: rdfUpdate.replaceInProgressCommit
+    };
+    return this.spinnerSvc.track(this.http.put<null>(`${this.prefix}/${encodeURIComponent(rdfUpdate.recordId)}`, fd,
+      { observe: 'response', params: createHttpParams(params) }))
+      .pipe(catchError(handleErrorObject));
+  }
+
+  /**
+   * Calls the GET /mobirest/shapes-graphs/{recordId}/entities/{entityId} endpoint which will
+   * retrieve all the directly attached predicates and objects of the passed in entityId.
+   *
+   * @param {string} recordId the IRI of the record to retrieve.
+   * @param {string} branchId the IRI of the branch to retrieve.
+   * @param {string} commitId the IRI of the commit to retrieve.
+   * @param {string} commitId the IRI of the entity to retrieve.
+   * @param {string} format the format of the rdf that will be retrieved.
+   * @param {boolean} applyInProgressCommit whether to apply the current in progress commit.
+   * @returns {Observable} An Observable that resolves with the metadata triples as either a JSON-LD array or a RDF
+   *    formatted string; rejects with an error message otherwise
+   */
+  getShapesGraphMetadata(recordId: string, branchId: string, commitId: string, entityId: string, format = 'jsonld',
+                         applyInProgressCommit = true): Observable<JSONLDObject[] | string>  {
+    const url = `${this.prefix}/${encodeURIComponent(recordId)}/entities/${encodeURIComponent(entityId)}`;
+    const ob = this.spinnerSvc.track(this.http.get(url, {
+      params: createHttpParams({ branchId, commitId, format, applyInProgressCommit }),
+      responseType: 'text'
+    }));
+    return ob.pipe(
+      catchError(handleError),
+      map((response: string) => {
+        if (format === 'jsonld') {
+          return (JSON.parse(response)) as JSONLDObject[];
+        } else {
+          return response;
         }
-        if (newRecord.file) {
-            fd.append('file', newRecord.file);
+      })
+    );
+  }
+
+  /**
+   * Calls the GET /mobirest/shapes-graphs/{recordId}/content endpoint which will retrieve all triples in a Shapes
+   * Graph not directly attached to the Shapes Graph IRI subjectId.
+   *
+   * @param {string} recordId the IRI of the record to retrieve.
+   * @param {string} branchId the IRI of the branch to retrieve.
+   * @param {string} commitId the IRI of the commit to retrieve.
+   * @param {string} format the format of the rdf that will be retrieved.
+   * @param {boolean} applyInProgressCommit whether to apply the current in progress commit.
+   * @returns {Observable} An Observable that resolves with the triples of the shapes graph content as either a
+   *    JSON-LD array or a RDF formatted string if the request was successful; rejects with an error message otherwise
+   */
+  getShapesGraphContent(recordId: string, branchId: string, commitId: string, format = 'turtle',
+                        applyInProgressCommit = true): Observable<JSONLDObject[] | string>  {
+    const url = `${this.prefix}/${encodeURIComponent(recordId)}/content`;
+    const ob = this.spinnerSvc.track(this.http.get(url, {
+      params: createHttpParams({ branchId, commitId, format, applyInProgressCommit }),
+      responseType: 'text'
+    }));
+    return ob.pipe(
+      catchError(handleError),
+      map((response: string) => {
+        if (format === 'jsonld') {
+          return (JSON.parse(response)) as JSONLDObject[];
+        } else {
+          return response;
         }
-        if (newRecord.description) {
-            fd.append('description', newRecord.description);
-        }
-        forEach(get(newRecord, 'keywords', []), keyword => fd.append('keywords', keyword));
-        const request = this.http.post<VersionedRdfUploadResponse>(this.prefix, fd);
-        return this.spinnerSvc.trackedRequest(request, isTracked).pipe(catchError(handleErrorObject));
-    }
-    /**
-     * Calls the GET /mobirest/shapes-graphs/{recordId} endpoint using the `window.location` variable which will
-     * start a download of the SHACL shapes graph starting at the identified Commit.
-     *
-     * @param {RdfDownload} rdfDownload the VersionedRdfRecord download parameters
-     */
-    downloadShapesGraph(rdfDownload: RdfDownload): void {
-        const params = createHttpParams({
-            branchId: rdfDownload.branchId,
-            commitId: rdfDownload.commitId,
-            rdfFormat: rdfDownload.rdfFormat || 'jsonld',
-            fileName: rdfDownload.fileName || 'shapesGraph',
-            applyInProgressCommit: rdfDownload.applyInProgressCommit || false
-        });
-        const url = `${this.prefix}/${encodeURIComponent(rdfDownload.recordId)}?${params.toString()}`;
-        const readRequest: XACMLRequest = {
-            resourceId: rdfDownload.recordId,
-            actionId: `${POLICY}Read`
-        };
-        this.pep.evaluateRequest(readRequest).pipe(
-            map(currentPermissions => currentPermissions === this.pep.permit)
-        ).subscribe((isPermit) => {
-            if (isPermit) {
-                window.open(url);
-            }
-        });
+      })
+    );
+  }
 
-    }
-    /**
-     * Calls the PUT /mobirest/shapes-graphs/{recordId} endpoint which will update the in-progress commit
-     * object to be applied to the shapes graph.
-     *
-     * @param {RdfUpdate} rdfUpdate the uploaded SHACL shapes graph
-     * @returns {Observable} An Observable that resolves if the request was successful; rejects with a {@link RESTError}
-     *    otherwise
-     */
-    uploadChanges(rdfUpdate: RdfUpdate): Observable<HttpResponse<null>> {
-        const fd = new FormData();
-        if (rdfUpdate.file) {
-            fd.append('file', rdfUpdate.file);
-        }
-        if (rdfUpdate.jsonld) {
-            fd.append('json', JSON.stringify(rdfUpdate.jsonld));
-        }
-        const params = {
-            branchId: rdfUpdate.branchId,
-            commitId: rdfUpdate.commitId,
-            replaceInProgressCommit: rdfUpdate.replaceInProgressCommit
-        };
-        return this.spinnerSvc.track(this.http.put<null>(`${this.prefix}/${encodeURIComponent(rdfUpdate.recordId)}`, fd, 
-          { observe: 'response', params: createHttpParams(params) }))
-            .pipe(catchError(handleErrorObject));
-    }
+  /**
+   * Calls the GET /mobirest/shapes-graphs/{recordId}/id endpoint which will
+   * retrieve the IRI of the shapes graph with the passed in recordId, branchId, and commitId.
+   *
+   * @param {string} recordId the IRI of the record to retrieve.
+   * @param {string} branchId the IRI of the branch to retrieve.
+   * @param {string} commitId the IRI of the commit to retrieve.
+   * @param {boolean} applyInProgressCommit whether to apply the current in progress commit.
+   *
+   * @returns {Observable} An Observable that resolves with the IRI string if the request was successful; rejects with
+   *    an error message otherwise
+   */
+  getShapesGraphIRI(recordId: string, branchId: string, commitId: string, applyInProgressCommit = true): Observable<string> {
+    const url = `${this.prefix}/${encodeURIComponent(recordId)}/id`;
+    const ob = this.spinnerSvc.track(this.http.get(url, {
+      params: createHttpParams({ branchId, commitId, applyInProgressCommit }),
+      responseType: 'text'
+    }));
+    return ob.pipe(catchError(handleError));
+  }
 
-    /**
-     * Calls the GET /mobirest/shapes-graphs/{recordId}/entities/{entityId} endpoint which will
-     * retrieve all the directly attached predicates and objects of the passed in entityId.
-     *
-     * @param {string} recordId the IRI of the record to retrieve.
-     * @param {string} branchId the IRI of the branch to retrieve.
-     * @param {string} commitId the IRI of the commit to retrieve.
-     * @param {string} commitId the IRI of the entity to retrieve.
-     * @param {string} format the format of the rdf that will be retrieved.
-     * @param {boolean} applyInProgressCommit whether to apply the current in progress commit.
-     * @returns {Observable} An Observable that resolves with the metadata triples as either a JSON-LD array or a RDF 
-     *    formatted string; rejects with an error message otherwise
-     */
-    getShapesGraphMetadata(recordId: string, branchId: string, commitId: string, entityId: string, format = 'jsonld', 
-      applyInProgressCommit = true): Observable<JSONLDObject[] | string>  {
-        const url = `${this.prefix}/${encodeURIComponent(recordId)}/entities/${encodeURIComponent(entityId)}`;
-        const ob = this.spinnerSvc.track(this.http.get(url, { 
-            params: createHttpParams({ branchId, commitId, format, applyInProgressCommit }),
-            responseType: 'text'
-        }));
-        return ob.pipe(
-            catchError(handleError),
-            map((response: string) => {
-                if (format === 'jsonld') {
-                    return (JSON.parse(response)) as JSONLDObject[];
-                } else {
-                    return response;
-                }
-            })
-        );
-    }
+  /**
+   * Calls the GET /mobirest/shapes-graphs/{recordId}/imports endpoint and retrieves an ShapesGraphImports object
+   * containing keys corresponding to the structure.
+   *
+   * @param {string} recordId The id of the Record the Branch should be part of
+   * @param {string} branchId The id of the Branch with the specified Commit
+   * @param {string} commitId The id of the Commit to retrieve the ontology from
+   * @param {boolean} clearCache Whether or not to clear the cache
+   * @param {boolean} isTracked Whether the request should be tracked by the {@link shared.ProgressSpinnerService}
+   * @return {Observable<ShapesGraphImports>} An Observable with an ShapesGraphImports object containing listItem keys.
+   */
+  getShapesGraphImports(recordId: string, branchId: string, commitId: string, clearCache = false, isTracked = false):
+    Observable<ShapesGraphImports> {
+    const params = { branchId, commitId, clearCache };
+    const url = `${this.prefix}/${encodeURIComponent(recordId)}/imports`;
+    const request = this.http.get<ShapesGraphImports>(url, {params: createHttpParams(params)});
+    return this.spinnerSvc.trackedRequest(request, isTracked).pipe(catchError(handleError));
+  }
 
-    /**
-     * Calls the GET /mobirest/shapes-graphs/{recordId}/content endpoint which will retrieve all triples in a Shapes 
-     * Graph not directly attached to the Shapes Graph IRI subjectId.
-     *
-     * @param {string} recordId the IRI of the record to retrieve.
-     * @param {string} branchId the IRI of the branch to retrieve.
-     * @param {string} commitId the IRI of the commit to retrieve.
-     * @param {string} format the format of the rdf that will be retrieved.
-     * @param {boolean} applyInProgressCommit whether to apply the current in progress commit.
-     * @returns {Observable} An Observable that resolves with the triples of the shapes graph content as either a
-     *    JSON-LD array or a RDF formatted string if the request was successful; rejects with an error message otherwise
-     */
-    getShapesGraphContent(recordId: string, branchId: string, commitId: string, format = 'turtle', 
-      applyInProgressCommit = true): Observable<JSONLDObject[] | string>  {
-        const url = `${this.prefix}/${encodeURIComponent(recordId)}/content`;
-        const ob = this.spinnerSvc.track(this.http.get(url, { 
-            params: createHttpParams({ branchId, commitId, format, applyInProgressCommit }), 
-            responseType: 'text'
-        }));
-        return ob.pipe(
-            catchError(handleError),
-            map((response: string) => {
-              if (format === 'jsonld') {
-                  return (JSON.parse(response)) as JSONLDObject[];
-              } else {
-                  return response;
-              }
-            })
-        );
-    }
-
-    /**
-     * Calls the GET /mobirest/shapes-graphs/{recordId}/id endpoint which will
-     * retrieve the IRI of the shapes graph with the passed in recordId, branchId, and commitId.
-     *
-     * @param {string} recordId the IRI of the record to retrieve.
-     * @param {string} branchId the IRI of the branch to retrieve.
-     * @param {string} commitId the IRI of the commit to retrieve.
-     * @param {boolean} applyInProgressCommit whether to apply the current in progress commit.
-     *
-     * @returns {Observable} An Observable that resolves with the IRI string if the request was successful; rejects with 
-     *    an error message otherwise
-     */
-    getShapesGraphIRI(recordId: string, branchId: string, commitId: string, 
-      applyInProgressCommit = true): Observable<string> {
-        const url = `${this.prefix}/${encodeURIComponent(recordId)}/id`;
-        const ob = this.spinnerSvc.track(this.http.get(url, {
-            params: createHttpParams({ branchId, commitId, applyInProgressCommit }), 
-            responseType: 'text'
-        }));
-        return ob.pipe(catchError(handleError));
-    }
-
-    /**
-     * Calls the GET /mobirest/shapes-graphs/{recordId}/imports endpoint and retrieves an ShapesGraphImports object
-     * containing keys corresponding to the structure.
-     *
-     * @param {string} recordId The id of the Record the Branch should be part of
-     * @param {string} branchId The id of the Branch with the specified Commit
-     * @param {string} commitId The id of the Commit to retrieve the ontology from
-     * @param {boolean} clearCache Whether or not to clear the cache
-     * @param {boolean} isTracked Whether the request should be tracked by the {@link shared.ProgressSpinnerService}
-     * @return {Observable<ShapesGraphImports>} An Observable with an ShapesGraphImports object containing listItem keys.
-     */
-    getShapesGraphImports(recordId: string, branchId: string, commitId: string, clearCache = false, isTracked = false):
-        Observable<ShapesGraphImports> {
-        const params = { branchId, commitId, clearCache };
-        const url = `${this.prefix}/${encodeURIComponent(recordId)}/imports`;
-        const request = this.http.get<ShapesGraphImports>(url, {params: createHttpParams(params)});
-        return this.spinnerSvc.trackedRequest(request, isTracked).pipe(catchError(handleError));
-    }
+  /**
+   * Retrieves node shapes for a specified record, branch, and commit.
+   *
+   * @param {string} recordId - The unique identifier for the record.
+   * @param {string} branchId - The identifier of the branch where the node shapes are located.
+   * @param {string} commitId - The identifier of the commit to retrieve the node shapes for.
+   * @param {boolean} [applyInProgressCommit=true] - Indicates whether to apply an in-progress commit when retrieving
+   * the node shapes.
+   * @param {string} searchText - The search text to filter the node shapes by.
+   *
+   * @return {Observable<string>} An observable emitting the retrieved node shapes as a JSON string.
+   */
+  getNodeShapes(recordId: string, branchId: string, commitId: string, applyInProgressCommit = true, searchText = ''): Observable<NodeShapeInfo[]> {
+    const url = `${this.prefix}/${encodeURIComponent(recordId)}/node-shapes`;
+    const params = { branchId, commitId, applyInProgressCommit, searchText };
+    const request = this.http.get<NodeShapeInfo[]>(url, {params: createHttpParams(params)});
+    return this.spinnerSvc.trackedRequest(request, true).pipe(catchError(handleError));
+  }
 }
