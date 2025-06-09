@@ -31,7 +31,12 @@
     </ul>
   </error-display>
   <div mat-dialog-content class="pb-1">
-    <file-input [displayText]="'Select a file'" [(files)]="selectedFile" [accept]="['.owl','.ttl','.xml','.jsonld','.owx','.rdf','.obo']" required></file-input>
+    <file-input 
+      [displayText]="'Select a file'"
+      [(files)]="selectedFile" 
+      [accept]="['.json', '.jsonld', '.nt', '.obo', '.ofn', '.omn', '.owl', '.rdf', '.rdfs', '.ttl', '.xml']"
+      required>
+    </file-input>
   </div>
   <div mat-dialog-actions>
     <button mat-raised-button [mat-dialog-close]="">Cancel</button>
