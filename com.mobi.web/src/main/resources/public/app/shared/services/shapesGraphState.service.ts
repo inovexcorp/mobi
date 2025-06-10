@@ -24,7 +24,7 @@
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 //third party imports
-import { cloneDeep, find, get, isEmpty, remove, some, assign } from 'lodash';
+import { cloneDeep, find, get, isEmpty, remove, some, assign, has } from 'lodash';
 import { Observable, of, merge as rxjsMerge, throwError } from 'rxjs';
 import { catchError, map, switchMap, tap } from 'rxjs/operators';
 //mobi + local imports
@@ -41,7 +41,7 @@ import { CatalogDetails, VersionedRdfState } from './versionedRdfState.service';
 import { CatalogManagerService } from './catalogManager.service';
 import { Difference } from '../models/difference.class';
 import { EventPayload, EventTypeConstants, EventWithPayload } from '../models/eventWithPayload.interface';
-import { getBeautifulIRI, getDctermsValue, getPropertyId } from '../utility';
+import { getBeautifulIRI, getDctermsValue, getPropertyId, isBlankNodeId } from '../utility';
 import { JSONLDObject } from '../models/JSONLDObject.interface';
 import { MergeRequestManagerService } from './mergeRequestManager.service';
 import { PolicyEnforcementService } from './policyEnforcement.service';
@@ -63,6 +63,11 @@ import { UpdateRefsService } from './updateRefs.service';
 import { VersionedRdfStateBase } from '../models/versionedRdfStateBase.interface';
 import { VersionedRdfUploadResponse } from '../models/versionedRdfUploadResponse.interface';
 import { XACMLRequest } from '../models/XACMLRequest.interface';
+import { JSONLDId } from '../models/JSONLDId.interface';
+import { JSONLDValue } from '../models/JSONLDValue.interface';
+import { PropertyManagerService } from './propertyManager.service';
+import { splitIRI } from '../pipes/splitIRI.pipe';
+import { VersionedRdfListItem } from '../models/versionedRdfListItem.class';
 
 /**
  * @class shared.ShapesGraphStateService
@@ -71,7 +76,6 @@ import { XACMLRequest } from '../models/XACMLRequest.interface';
  */
 @Injectable()
 export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListItem> {
-
   type = `${SHAPESGRAPHEDITOR}ShapesGraphRecord`;
 
   constructor(protected sm: StateManagerService,
@@ -80,6 +84,7 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
               protected toast: ToastService,
               protected pep: PolicyEnforcementService,
               private pm: PolicyManagerService,
+              protected propertyManager: PropertyManagerService,
               private sgm: ShapesGraphManagerService,
               protected stm: SettingManagerService,
               protected updateRefs: UpdateRefsService,
@@ -406,6 +411,13 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
   }
 
   // Custom methods
+  private _addIri(listItem: ShapesGraphListItem, path: string, iri: string, ontologyId: string = undefined): void {
+    const iriObj = get(listItem, path, {});
+    if (!has(iriObj, `['${iri}']`)) {
+      iriObj[iri] = ontologyId || splitIRI(iri).begin;
+    }
+  }
+
   /**
    * Creates an {@link ShapesGraphListItem} given the provided input parameters.
    * 
@@ -435,6 +447,8 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
     };
     listItem.inProgressCommit = inProgressCommit;
     listItem.upToDate = upToDate;
+    this.propertyManager.defaultDatatypes.forEach(iri => this._addIri(listItem, 'dataPropertyRange', iri));
+
     return this.sgm.getShapesGraphIRI(recordId, branchId, commitId).pipe(
       switchMap((shapesGraphId: string) => {
         listItem.shapesGraphId = shapesGraphId;
@@ -559,4 +573,69 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
     return this.sparql.postQuery(usageQuery, listItem.versionedRdfRecord.recordId, SHAPES_STORE_TYPE,
       listItem.versionedRdfRecord.branchId, listItem.versionedRdfRecord.commitId, false, false, 'jsonld');
   }
+
+  /**
+   * Creates a display of the specified property value on the selected entity on the currently selected
+   * {@link ShapesGraphStateService} based on whether it is a data property value, object property value, or blank node.
+   *
+   * @param {string} key The IRI of a property on the current entity
+   * @param {number} index The index of a specific property value
+   * @return {string} A string a display of the property value
+   */
+   getPropValueDisplay(key: string, index: number): string {
+    return get(this.listItem.selected[key], `[${index}]["@value"]`)
+        || get(this.listItem.selected[key], `[${index}]["@id"]`);
+  }
+
+  /**
+   * Removes the specified property value on the selected entity on the currently selected {@link ShapesGraphListItem},
+   * updating the InProgressCommit, everything hierarchy, and property hierarchy.
+   *
+   * @param {string} key The IRI of a property on the current entity
+   * @param {number} index The index of a specific property value
+   * @return {Observable} An Observable that resolves with the JSON-LD value object that was removed
+   */
+  removeProperty(key: string, index: number): Observable<JSONLDId|JSONLDValue> {
+    const axiomObject: JSONLDId|JSONLDValue = this.listItem.selected[key][index];
+    const json: JSONLDObject = {
+        '@id': this.listItem.selected['@id'],
+        [key]: [cloneDeep(axiomObject)]
+    };
+    this.addToDeletions(this.listItem.versionedRdfRecord.recordId, json);
+    if (isBlankNodeId(axiomObject['@id'])) {
+        remove(axiomObject['@id']);
+    }
+    this.propertyManager.remove(this.listItem.selected, key, index);
+    return this.saveCurrentChanges()
+        .pipe(map(() => {
+            return axiomObject;
+        }));
+  }
+
+  /**
+   * Calculates the new label for the current selected entity in the currently selected {@link ShapesGraphListItem}
+   */
+  updateLabel(): void {
+    return;
+  }
+
+  /**
+   * Determines whether the provided id is "linkable", i.e. that a link could be made to take a user to that entity.
+   * Id must be present in the indices of the currently selected {@link ShapesGraphListItem} and not be a blank node id.
+   *
+   * @param {string} id An id from the current ontology
+   * @returns {boolean} True if the id exists as an entity and not a blank node; false otherwise
+   */
+  isLinkable(id: string): boolean {
+    return false;
+  }
+
+  goTo(iri: string): void {
+    throw new Error('goTo for ShapesGraphListItem not supported.');
+  }
+
+  isImported(iri: string, listItem?: VersionedRdfListItem): boolean {
+    return false;
+  }
+
 }

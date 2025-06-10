@@ -142,7 +142,7 @@ module.exports = {
   'Step 13: Verify shapes graph presentation': function(browser) {
     browser
       .waitForElementVisible('shapes-graph-details')
-      .waitForElementVisible('shapes-graph-properties-block')
+      .waitForElementVisible('properties-block')
       .waitForElementVisible('div.yate')
       .page.editorPage()
       .assert.valueEquals('@editorRecordSelectInput', shapes_graph_title)
@@ -160,7 +160,7 @@ module.exports = {
   'Step 15: Verify switching of branches': function(browser) {
     browser
       .waitForElementVisible('shapes-graph-details')
-      .waitForElementVisible('shapes-graph-properties-block')
+      .waitForElementVisible('properties-block')
       .waitForElementVisible('div.yate')
       .page.editorPage()
       .assert.valueEquals('@editorRecordSelectInput', shapes_graph_title)

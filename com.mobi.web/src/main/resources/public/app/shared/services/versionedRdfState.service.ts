@@ -43,6 +43,8 @@ import { RdfUpdate } from '../models/rdfUpdate.interface';
 import { RdfUpload } from '../models/rdfUpload.interface';
 import { VersionedRdfUploadResponse } from '../models/versionedRdfUploadResponse.interface';
 import { UploadItem } from '../../versioned-rdf-record-editor/models/upload-item.interface';
+import { JSONLDId } from '../models/JSONLDId.interface';
+import { JSONLDValue } from '../models/JSONLDValue.interface';
 
 export interface CatalogDetails {
   recordId: string, 
@@ -815,4 +817,67 @@ export abstract class VersionedRdfState<T extends VersionedRdfListItem> {
         listItem.importedOntologyIds.push(importedOntObj.id);
         listItem.importedOntologies.push(importedOntologyListItem);
     }
+
+    /**
+     * Creates an HTML string of the body of a {@link shared.ConfirmModalComponent} for confirming the
+     * deletion of the specified property value on the selected entity of the currently selected {@link OntologyListItem}
+     *
+     * @param {string} key The IRI of a property on the current entity
+     * @param {number} index The index of the specific property value being deleted
+     * @return {string} A string with HTML for the body of a `confirmModal`
+     */
+    getRemovePropOverlayMessage(key: string, index: number): string {
+        return `<p>Are you sure you want to remove:<br><strong>${key}</strong></p><p>with value:<br><strong>`
+            + `${this.getPropValueDisplay(key, index)}</strong></p><p>from:<br><strong>`
+            + `${this.listItem.selected['@id']}</strong> ?</p>`;
+    }
+
+    /**
+     * Creates a display of the specified property value on the selected entity on the currently selected
+     * {@link VersionedRdfListItem}
+     *
+     * @param {string} key The IRI of a property on the current entity
+     * @param {number} index The index of a specific property value
+     * @return {string} A string a display of the property value
+     */
+    abstract getPropValueDisplay(key: string, index: number): string;
+
+    /**
+     * Removes the specified property value on the selected entity on the currently selected {@link VersionedRdfListItem},
+     * updating the InProgressCommit, state.
+     *
+     * @param {string} key The IRI of a property on the current entity
+     * @param {number} index The index of a specific property value
+     * @return {Observable} An Observable that resolves with the JSON-LD value object that was removed
+     */
+    abstract removeProperty(key: string, index: number): Observable<JSONLDId|JSONLDValue>;
+
+    /**
+     * Calculates the new label for the current selected entity in the currently selected {@link VersionedRdfListItem}
+     */
+    abstract updateLabel(): void;
+
+    /**
+     * Determines whether the provided id is "linkable", i.e. that a link could be made to take a user to that entity.
+     *
+     * @param {string} id An id from the current versionedRdfState
+     * @returns {boolean} True if the id exists as an entity and not a blank node; false otherwise
+     */
+    abstract isLinkable(id: string): boolean;
+
+    /**
+     * Updates the currently selected {@link VersionedRdfListItem} to view the entity identified by the provided IRI.
+     * 
+     * @param {string} iri The IRI of the entity to open the editor at
+     */
+    abstract goTo(iri: string): void;
+
+    /**
+     * Determines whether the provided IRI is imported or not in the provided {@link VersionedRdfListItem}.
+     *
+     * @param {string} iri The IRI to search for
+     * @param {VersionedRdfListItem} [listItem=listItem] The listItem to execute these actions against
+     * @returns {boolean} True if the IRI is imported; false otherwise
+     */
+    abstract isImported(iri: string, listItem?: VersionedRdfListItem): boolean;
 }

@@ -89,7 +89,6 @@ export class OntologyListItem extends VersionedRdfListItem {
     isVocabulary: boolean
     editorTabStates: any
     createdFromExists: boolean
-    dataPropertyRange: {[key: string]: string}
     derivedConcepts: string[]
     derivedConceptSchemes: string[]
     derivedSemanticRelations: string[]
@@ -139,7 +138,6 @@ export class OntologyListItem extends VersionedRdfListItem {
         this.createdFromExists = true;
         this.userCanModify = false;
         this.userCanModifyMaster = false;
-        this.dataPropertyRange = {};
         this.derivedConcepts = [];
         this.derivedConceptSchemes = [];
         this.derivedSemanticRelations = [];

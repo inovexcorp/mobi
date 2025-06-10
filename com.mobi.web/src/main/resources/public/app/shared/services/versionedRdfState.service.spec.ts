@@ -44,6 +44,8 @@ import { ToastService } from './toast.service';
 import { VersionedRdfListItem } from '../models/versionedRdfListItem.class';
 import { VersionedRdfUploadResponse } from '../models/versionedRdfUploadResponse.interface';
 import { VersionedRdfState } from './versionedRdfState.service';
+import { JSONLDId } from '../models/JSONLDId.interface';
+import { JSONLDValue } from '../models/JSONLDValue.interface';
 
 class VersionedRdfStateImpl extends VersionedRdfState<VersionedRdfListItemImpl> {
   static testPrefix = 'urn:state#';
@@ -96,7 +98,26 @@ class VersionedRdfStateImpl extends VersionedRdfState<VersionedRdfListItemImpl> 
   merge(): Observable<null> {
     return of(null);
   }
-
+  getRemovePropOverlayMessage(key: string, index: number): string {
+    return '';
+  }
+  getPropValueDisplay(key: string, index: number): string {
+    return '';
+  }
+  removeProperty(key: string, index: number): Observable<JSONLDId|JSONLDValue>{
+    return throwError('Method not implemented.');
+  }
+  updateLabel() {
+  }
+  isLinkable(id: string): boolean {
+    throw new Error('Method not implemented.');
+  }
+  goTo(iri: string): void {
+    throw new Error('Method not implemented.');
+  }
+  isImported(iri: string, listItem?: VersionedRdfListItem): boolean {
+    throw new Error('Method not implemented.');
+  }
   public setServices(stateManager: StateManagerService, catalogManager: CatalogManagerService, toast: ToastService) {
     this.sm = stateManager;
     this.cm = catalogManager;

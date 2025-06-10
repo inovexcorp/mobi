@@ -24,6 +24,7 @@ import { By } from '@angular/platform-browser';
 import { DebugElement, SimpleChange } from '@angular/core';
 import { fakeAsync, TestBed, tick, ComponentFixture } from '@angular/core/testing';
 import { MatDialog } from '@angular/material/dialog';
+import { MatIconModule } from '@angular/material/icon';
 
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { of, Subject } from 'rxjs';
@@ -50,6 +51,9 @@ describe('Ontology Visualization component', () => {
 
     beforeEach(async () =>  {
         await TestBed.configureTestingModule({
+            imports: [
+                MatIconModule
+            ],
             declarations: [
                 OntologyVisualization,
                 MockComponent(SpinnerComponent),

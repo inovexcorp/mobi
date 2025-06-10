@@ -21,30 +21,32 @@
   #L%
   -->
 <div class="shapes-project-tab h-100 w-100 m-0 p-3">
-    <div class="d-flex flex-column h-100" *ngIf="state.listItem?.metadata && keys(state.listItem?.metadata).length && !state?.listItem?.changesPageOpen && !state?.listItem?.merge?.active">
-        <shapes-graph-details></shapes-graph-details>
-        <div class="row flex-1 remove-min-height">
-            <div class="col-5 vertical-scroll h-100">
-                <div class="row py-2">
-                    <shapes-graph-properties-block class="col"
-                        [shapesGraph]="state?.listItem?.metadata">
-                    </shapes-graph-properties-block>
-                </div>
-                <div class="row py-2">
-                    <imports-block class="col"
-                        [versionedRdfRecord]="state.listItem.versionedRdfRecord"
-                        [stateService]="state"
-                        [listItem]="state.listItem"
-                        [targetRecordTypes]="targetRecordTypes"
-                        [noImportMessage]="noImportMessage">
-                    </imports-block>
-                </div>
-            </div>
-            <shapes-preview class="col-7 h-100"
-                [format]="state.listItem.previewFormat"
-                [content]="state.listItem.content"
-                (contentTypeChange)=updateContentType($event)>
-            </shapes-preview>
+  <div class="d-flex flex-column h-100" *ngIf="state.listItem?.selected && keys(state.listItem?.selected).length && !state?.listItem?.changesPageOpen && !state?.listItem?.merge?.active">
+    <shapes-graph-details></shapes-graph-details>
+    <div class="row flex-1 remove-min-height">
+      <div class="col-5 vertical-scroll h-100">
+        <div class="row py-2">
+          <properties-block class="col"
+            [stateService]="state"
+            [ontology]="state.listItem.selected"
+            [annotationIRIs]="annotationIRIs">
+          </properties-block>
         </div>
+          <div class="row py-2">
+            <imports-block class="col"
+              [versionedRdfRecord]="state.listItem.versionedRdfRecord"
+              [stateService]="state"
+              [listItem]="state.listItem"
+              [targetRecordTypes]="targetRecordTypes"
+              [noImportMessage]="noImportMessage">
+            </imports-block>
+          </div>
+      </div>
+      <shapes-preview class="col-7 h-100"
+        [format]="state.listItem.previewFormat"
+        [content]="state.listItem.content"
+        (contentTypeChange)=updateContentType($event)>
+      </shapes-preview>
     </div>
+  </div>
 </div>

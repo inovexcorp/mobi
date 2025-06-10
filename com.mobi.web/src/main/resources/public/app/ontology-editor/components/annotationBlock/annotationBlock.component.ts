@@ -61,7 +61,9 @@ export class AnnotationBlockComponent implements OnChanges {
         this.annotationsFiltered = sortBy(this.annotations.filter(prop => has(this.os.listItem.selected, prop)), iri => this.os.getEntityName(iri));
     }
     openAddOverlay(): void {
-        this.dialog.open(AnnotationOverlayComponent, {data: { editing: false }}).afterClosed().subscribe(result => {
+        this.dialog.open(AnnotationOverlayComponent, {data: {
+            editing: false,
+        }}).afterClosed().subscribe(result => {
             if (result) {
                 this.updatePropertiesFiltered();
             }

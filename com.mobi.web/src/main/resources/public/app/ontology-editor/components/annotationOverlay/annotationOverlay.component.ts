@@ -85,10 +85,13 @@ export class AnnotationOverlayComponent implements OnInit {
     filteredAnnotations: Observable<AnnotationGroup[]>;
     dataPropertyRanges: {[key: string]: string} = {}; 
 
-    constructor(private fb: UntypedFormBuilder, private dialogRef: MatDialogRef<AnnotationOverlayComponent>, 
+    constructor(private fb: UntypedFormBuilder,
+        private dialogRef: MatDialogRef<AnnotationOverlayComponent>, 
         @Inject(MAT_DIALOG_DATA) public data: PropertyOverlayDataOptions,
-        private om: OntologyManagerService, public os: OntologyStateService,
-        public pm: PropertyManagerService, private toast: ToastService) {}
+        private om: OntologyManagerService, 
+        public os: OntologyStateService,
+        public pm: PropertyManagerService, 
+        private toast: ToastService) {}
     
     ngOnInit(): void {
         if (this.data.isIRIProperty) {

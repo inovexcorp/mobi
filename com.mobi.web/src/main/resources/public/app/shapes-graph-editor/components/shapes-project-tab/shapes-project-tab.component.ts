@@ -38,8 +38,12 @@ export class ShapesProjectTabComponent {
   ];
 
   noImportMessage = 'This shapes graph does not have any imports.';
-
-  constructor(public state: ShapesGraphStateService, public sgm: ShapesGraphManagerService) {}
+  annotationIRIs = [];
+  
+  constructor(
+    public sgm: ShapesGraphManagerService,
+    public state: ShapesGraphStateService
+  ) {}
 
   keys(object: JSONLDObject): Array<string> {
     return Object.keys(object);

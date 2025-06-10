@@ -36,7 +36,7 @@ import { cleanStylesFromDOM } from '../../../../../public/test/ts/Shared';
 import { RDF, XSD } from '../../../prefixes';
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
 import { DatatypePropertyOverlayComponent } from '../datatypePropertyOverlay/datatypePropertyOverlay.component';
-import { PropertyValuesComponent } from '../propertyValues/propertyValues.component';
+import { PropertyValuesComponent } from '../../../shared/components/propertyValues/propertyValues.component';
 import { DatatypePropertyBlockComponent } from './datatypePropertyBlock.component';
 
 describe('Datatype Property Block component', function() {

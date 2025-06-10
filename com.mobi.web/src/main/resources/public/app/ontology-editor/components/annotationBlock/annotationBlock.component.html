@@ -21,8 +21,17 @@
   #L%
   -->
 <div class="annotation-block">
-    <div class="section-header">
-        <h5>Annotations</h5><a *ngIf="os.listItem.selected && !os.isSelectedImported() && os.canModify()" class="float-right fa fa-fw fa-plus" (click)="openAddOverlay()"></a>
-    </div>
-    <property-values *ngFor="let annotation of annotationsFiltered" [property]="annotation" [entity]="os.listItem.selected" (remove)="openRemoveOverlay($event)" (edit)="editClicked($event)" [highlightIris]="highlightIris" [highlightText]="highlightText"></property-values>
+  <div class="section-header">
+    <h5>Annotations</h5><a *ngIf="os.listItem.selected && !os.isSelectedImported() && os.canModify()"
+      class="float-right fa fa-fw fa-plus" (click)="openAddOverlay()"></a>
+  </div>
+  <property-values *ngFor="let annotation of annotationsFiltered"
+    [stateService]="os"
+    [property]="annotation"
+    [entity]="os.listItem.selected"
+    (remove)="openRemoveOverlay($event)"
+    (edit)="editClicked($event)"
+    [highlightIris]="highlightIris"
+    [highlightText]="highlightText">
+  </property-values>
 </div>

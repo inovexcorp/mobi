@@ -21,34 +21,36 @@
   #L%
   -->
 <div class="iri-select">
-    <mat-form-field>
-        <mat-label>{{displayText}}<small *ngIf="mutedText" class="text-muted"> {{mutedText}}</small></mat-label>
-        <input *ngIf="singleSelect; else multiSelect" class="single-input" matInput type="text"
-            [placeholder]="'Select ' + displayText"
-            [formControl]="singleControl"
-            [matAutocomplete]="iriAutocomplete"/>
-        <ng-template #multiSelect>
-            <mat-chip-list #iriChips>
-                <mat-chip *ngFor="let option of selectedOptions" [removable]="true" (removed)="remove(option)">
-                    <span class="text-truncate">{{option.name}}</span>
-                    <mat-icon matChipRemove>cancel</mat-icon>
-                </mat-chip>
-                <input #multiInput class="multi-input" matInput type="text"
-                    [placeholder]="'Select ' + displayText"
-                    [formControl]="multiControl"
-                    [matChipInputFor]="iriChips"
-                    [matAutocomplete]="iriAutocomplete"
-                    [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
-                    [matChipInputAddOnBlur]="false"
-                    (matChipInputTokenEnd)="add($event)"/>
-            </mat-chip-list>
-        </ng-template>
-        <mat-autocomplete #iriAutocomplete="matAutocomplete" (optionSelected)="select($event)">
-            <mat-optgroup *ngFor="let group of filteredIris | async" [label]="group.namespace">
-                <mat-option *ngFor="let iriObj of group.options" [value]="iriObj" [title]="iriObj.iri">
-                    {{iriObj.name}}
-                </mat-option>
-            </mat-optgroup>
-        </mat-autocomplete>
-    </mat-form-field>
+  <mat-form-field class="w-100">
+    <mat-label>{{displayText}}<small *ngIf="mutedText" class="text-muted"> {{mutedText}}</small></mat-label>
+    <input *ngIf="singleSelect; else multiSelect" class="single-input" matInput type="text"
+      [placeholder]="'Select ' + displayText"
+      [formControl]="singleControl"
+      [matAutocomplete]="iriAutocomplete"/>
+    <ng-template #multiSelect>
+      <mat-chip-list #iriChips>
+        <mat-chip *ngFor="let option of selectedOptions" [removable]="true" (removed)="remove(option)">
+          <span class="text-truncate">{{option.name}}</span>
+          <mat-icon matChipRemove>cancel</mat-icon>
+        </mat-chip>
+        <input #multiInput class="multi-input" matInput type="text"
+          [placeholder]="'Select ' + displayText"
+          [formControl]="multiControl"
+          [matChipInputFor]="iriChips"
+          [matAutocomplete]="iriAutocomplete"
+          [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
+          [matChipInputAddOnBlur]="false"
+          (matChipInputTokenEnd)="add($event)"/>
+      </mat-chip-list>
+    </ng-template>
+    <mat-autocomplete #iriAutocomplete="matAutocomplete"
+      [displayWith]="displayFn || defaultDisplayFn.bind(this)"
+      (optionSelected)="select($event)">
+      <mat-optgroup *ngFor="let group of filteredIris | async" [label]="group.namespace">
+        <mat-option *ngFor="let iriObj of group.options" [value]="iriObj" [title]="iriObj.iri">
+          {{iriObj.name}}
+        </mat-option>
+      </mat-optgroup>
+    </mat-autocomplete>
+  </mat-form-field>
 </div>

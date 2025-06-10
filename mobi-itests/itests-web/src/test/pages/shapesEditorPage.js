@@ -22,7 +22,8 @@
  */
 
 const parentEl = 'shapes-graph-editor-page';
-const propertyValues = `${parentEl} shapes-graph-property-values`;
+
+const propertyValues = `${parentEl} property-values`;
 
 const shapesEditorCommands = {
     openRecordSelect: function() {
@@ -92,7 +93,7 @@ const shapesEditorCommands = {
     verifyShapesEditorPage: function(shapes_graph_title, branchTitle) {
         return this.api
             .waitForElementVisible('shapes-graph-details')
-            .waitForElementVisible('shapes-graph-properties-block')
+            .waitForElementVisible('properties-block')
             .waitForElementVisible('div.yate')
             .page.editorPage()
             .assert.valueEquals('@editorRecordSelectInput', shapes_graph_title)

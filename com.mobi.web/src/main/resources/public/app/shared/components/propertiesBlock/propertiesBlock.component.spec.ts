@@ -20,30 +20,30 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { By } from '@angular/platform-browser';
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
+import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 
-import { AnnotationOverlayComponent } from '../annotationOverlay/annotationOverlay.component';
-import { cleanStylesFromDOM } from '../../../../../public/test/ts/Shared';
-import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
-import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
-import { OntologyStateService } from '../../../shared/services/ontologyState.service';
-import { PropertyManagerService } from '../../../shared/services/propertyManager.service';
+import { cleanStylesFromDOM } from '../../../../test/ts/Shared';
+import { ConfirmModalComponent } from '../confirmModal/confirmModal.component';
+import { OntologyListItem } from '../../models/ontologyListItem.class';
+import { OntologyStateService } from '../../services/ontologyState.service';
+import { PropertyManagerService } from '../../services/propertyManager.service';
+import { PropertyOverlayComponent } from '../propertyOverlay/propertyOverlay.component';
 import { PropertyValuesComponent } from '../../../shared/components/propertyValues/propertyValues.component';
-import { AnnotationBlockComponent } from './annotationBlock.component';
+import { PropertiesBlockComponent } from './propertiesBlock.component';
 
-describe('Annotation Block component', function () {
-  let component: AnnotationBlockComponent;
+describe('Properties Block component', function () {
+  let component: PropertiesBlockComponent;
   let element: DebugElement;
-  let fixture: ComponentFixture<AnnotationBlockComponent>;
+  let fixture: ComponentFixture<PropertiesBlockComponent>;
   let ontologyStateStub: jasmine.SpyObj<OntologyStateService>;
   let matDialog: jasmine.SpyObj<MatDialog>;
   let propertyManagerStub: jasmine.SpyObj<PropertyManagerService>;
@@ -59,10 +59,10 @@ describe('Annotation Block component', function () {
         MatIconModule,
       ],
       declarations: [
-        AnnotationBlockComponent,
-        MockComponent(PropertyValuesComponent),
+        PropertiesBlockComponent,
         MockComponent(ConfirmModalComponent),
-        MockComponent(AnnotationOverlayComponent),
+        MockComponent(PropertyValuesComponent),
+        MockComponent(PropertyOverlayComponent),
       ],
       providers: [
         MockProvider(OntologyStateService),
@@ -73,22 +73,22 @@ describe('Annotation Block component', function () {
           })
         }
       ]
-    });
-  });
-
-  beforeEach(function () {
-    fixture = TestBed.createComponent(AnnotationBlockComponent);
-    component = fixture.componentInstance;
-    element = fixture.debugElement;
+    }).compileComponents();
     ontologyStateStub = TestBed.inject(OntologyStateService) as jasmine.SpyObj<OntologyStateService>;
     propertyManagerStub = TestBed.inject(PropertyManagerService) as jasmine.SpyObj<PropertyManagerService>;
     matDialog = TestBed.inject(MatDialog) as jasmine.SpyObj<MatDialog>;
-
     ontologyStateStub.listItem = new OntologyListItem();
-    ontologyStateStub.listItem.selected = {
+
+    fixture = TestBed.createComponent(PropertiesBlockComponent);
+    component = fixture.componentInstance;
+    element = fixture.debugElement;
+
+    component.stateService = ontologyStateStub;
+    component.annotationIRIs = ['inputProp1'];
+    component.ontology = {
       '@id': entityIRI,
-      'prop1': [{ '@id': 'value1' }],
-      'prop2': [{ '@value': 'value2', '@type': 'type', '@language': 'language' }]
+      prop1: [{ '@id': 'value1' }],
+      prop2: [{ '@value': 'value2', '@type': 'type', '@language': 'language' }]
     };
   });
 
@@ -109,31 +109,21 @@ describe('Annotation Block component', function () {
   });
   describe('contains the correct html', function () {
     it('for wrapping containers', function () {
-      expect(element.queryAll(By.css('.annotation-block')).length).toEqual(1);
+      expect(element.queryAll(By.css('.properties-block')).length).toEqual(1);
       expect(element.queryAll(By.css('.section-header')).length).toEqual(1);
     });
-    it('depending on how many annotations there are', function () {
+    it('depending on how many ontology properties there are', function () {
       fixture.detectChanges();
       expect(element.queryAll(By.css('property-values')).length).toEqual(0);
 
-      component.annotationsFiltered = ['prop1', 'prop2'];
+      component.propertiesFiltered = ['prop1', 'prop2'];
       fixture.detectChanges();
       expect(element.queryAll(By.css('property-values')).length).toEqual(2);
     });
-    it('depending on whether the selected entity is imported', function () {
-      ontologyStateStub.listItem.selected.mobi = { imported: true };
-      fixture.detectChanges();
-      expect(element.queryAll(By.css('.section-header a')).length).toEqual(0);
-    });
-    it('depending on whether something is selected when the user can modify branch', function () {
+    it('depending on whether the user can modify branch', function () {
       ontologyStateStub.canModify.and.returnValue(true);
       fixture.detectChanges();
       expect(element.queryAll(By.css('.section-header a')).length).toEqual(1);
-      ontologyStateStub.listItem.selected = undefined;
-      fixture.detectChanges();
-      expect(element.queryAll(By.css('a.fa-plus')).length).toEqual(0);
-    });
-    it('if the user cannot modify branch', function () {
       ontologyStateStub.canModify.and.returnValue(false);
       fixture.detectChanges();
       expect(element.queryAll(By.css('.section-header a')).length).toEqual(0);
@@ -142,20 +132,23 @@ describe('Annotation Block component', function () {
   describe('controller methods', function () {
     it('should update the filtered properties', function () {
       ontologyStateStub.getEntityName.and.callFake(a => a);
-      ontologyStateStub.listItem.annotations.iris = { 'annotation1': '', 'default2': '', 'owl2': '', 'prop2': '' };
+      component.annotationIRIs = ['annotation1', 'default2', 'owl2', 'prop2'];
+      propertyManagerStub.ontologyProperties = ['ont1', 'ont2'];
       propertyManagerStub.defaultAnnotations = ['default1', 'default2', 'prop1'];
       propertyManagerStub.owlAnnotations = ['owl1', 'owl2'];
       component.updatePropertiesFiltered();
-      expect(component.annotations).toEqual(['annotation1', 'default2', 'owl2', 'prop2', 'default1', 'prop1', 'owl1']);
-      expect(component.annotationsFiltered).toEqual(['prop1', 'prop2']);
+      expect(component.properties).toEqual(['ont1', 'ont2', 'default1', 'default2', 'prop1', 'owl1', 'owl2', 'annotation1', 'prop2']);
+      expect(component.propertiesFiltered).toEqual(['prop1', 'prop2']);
     });
-    it('should set the correct manager values when opening the Add Annotation Overlay', fakeAsync(function () {
+    it('should set the correct manager values when opening the Add Ontology Property Overlay', fakeAsync(function () {
       spyOn(component, 'updatePropertiesFiltered');
       component.openAddOverlay();
       tick();
-      expect(matDialog.open).toHaveBeenCalledWith(AnnotationOverlayComponent, {
+      expect(matDialog.open).toHaveBeenCalledWith(PropertyOverlayComponent, {
         data: {
+          stateService: ontologyStateStub,
           editing: false,
+          annotationIRIs: ['inputProp1']
         }
       });
       expect(component.updatePropertiesFiltered).toHaveBeenCalledWith();
@@ -170,22 +163,23 @@ describe('Annotation Block component', function () {
       expect(matDialog.open).toHaveBeenCalledWith(ConfirmModalComponent, { data: { content: 'REMOVE' } });
       expect(ontologyStateStub.removeProperty).toHaveBeenCalledWith('key', 1);
       expect(component.updatePropertiesFiltered).toHaveBeenCalledWith();
-      expect(ontologyStateStub.annotationModified).toHaveBeenCalledWith(entityIRI, 'key', null);
     }));
     it('should set the correct manager values when editing an annotation', fakeAsync(function () {
       spyOn(component, 'updatePropertiesFiltered');
-      const annotationIRI = 'prop2';
-      component.editClicked({ property: annotationIRI, index: 0 });
+      const propertyIRI = 'prop2';
+      component.editClicked({ property: propertyIRI, index: 0 });
       tick();
-      expect(matDialog.open).toHaveBeenCalledWith(AnnotationOverlayComponent, {
+      expect(matDialog.open).toHaveBeenCalledWith(PropertyOverlayComponent, {
         data: {
+          stateService: ontologyStateStub,
           editing: true,
-          annotation: annotationIRI,
+          property: propertyIRI,
           value: 'value2',
           index: 0,
           type: 'type',
           language: 'language',
-          isIRIProperty: false
+          isIRIProperty: false,
+          annotationIRIs: ['inputProp1']
         }
       });
       expect(component.updatePropertiesFiltered).toHaveBeenCalledWith();

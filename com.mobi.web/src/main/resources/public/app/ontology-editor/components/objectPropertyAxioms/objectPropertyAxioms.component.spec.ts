@@ -32,7 +32,7 @@ import { SharedModule } from '../../../shared/shared.module';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { cleanStylesFromDOM } from '../../../../test/ts/Shared';
 import { RDFS } from '../../../prefixes';
-import { PropertyValuesComponent } from '../propertyValues/propertyValues.component';
+import { PropertyValuesComponent } from '../../../shared/components/propertyValues/propertyValues.component';
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
 import { PropertyManagerService } from '../../../shared/services/propertyManager.service';

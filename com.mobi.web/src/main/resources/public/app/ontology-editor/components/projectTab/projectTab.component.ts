@@ -31,7 +31,7 @@ import { OntologyStateService } from '../../../shared/services/ontologyState.ser
  * A component that creates a page containing information about the current
  * {@link shared.OntologyStateService#listItem selected ontology}. The display includes a
  * {@link ontology-editor.SelectedDetailsComponent}, an
- * {@link ontology-editor.OntologyPropertiesBlockComponent}, an
+ * {@link ontology-editor.ListItemPropertiesBlockComponent}, an
  * {@link ontology-editor.ImportsBlockComponent}, and a {@link ontology-editor.PreviewBlockComponent}.
  */
 @Component({
@@ -41,6 +41,7 @@ import { OntologyStateService } from '../../../shared/services/ontologyState.ser
 export class ProjectTabComponent implements OnInit, OnDestroy {
     targetRecordTypes = [`${ONTOLOGYEDITOR}OntologyRecord`];
     noImportMessage = 'This ontology does not have any imports.';
+    annotationIRIs = [];
 
     @ViewChild('projectTab', { static: true }) projectTab: ElementRef;
     
@@ -48,6 +49,7 @@ export class ProjectTabComponent implements OnInit, OnDestroy {
 
     ngOnInit(): void {
         this.os.listItem.editorTabStates.project.element = this.projectTab;
+        this.annotationIRIs = Object.keys(this.os.listItem.annotations.iris);
     }
     ngOnDestroy(): void {
         if (this.os.listItem) {

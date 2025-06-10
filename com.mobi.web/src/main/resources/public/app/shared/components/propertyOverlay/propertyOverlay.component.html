@@ -53,9 +53,15 @@
                 <mat-error *ngIf="propertyForm.get('value').errors?.datatype">Value is invalid for the chosen datatype</mat-error>
             </mat-form-field>
             <!-- datatype -->
-            <iri-select-ontology [selected]="[propertyForm.controls.type.value]" (selectedChange)="validateValue($event)" [selectList]="dataPropertyRanges" displayText="Type" [singleSelect]="true"></iri-select-ontology>
+            <iri-select
+                [selected]="[propertyForm.controls.type.value]"
+                (selectedChange)="validateValue($event)"
+                [selectList]="dataPropertyRanges"
+                displayText="Type" 
+                [singleSelect]="true">
+            </iri-select>
             <!-- language -->
-            <language-select *ngIf="isLangString()" [parentForm]="propertyForm" [disableClear]="true">></language-select>
+            <language-select *ngIf="isLangString()" [parentForm]="propertyForm" [disableClear]="true"></language-select>
         </ng-template>
     </ng-template>
 </form>

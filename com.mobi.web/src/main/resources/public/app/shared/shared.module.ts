@@ -157,6 +157,9 @@ import { MobiErrorStateMatcher } from './MobiErrorStateMatcher';
 import { HistoryGraph } from '../history-graph/history-graph.module';
 import { ImportsBlockComponent } from './components/importsBlock/importsBlock.component';
 import { ImportsOverlayComponent } from './components/importsOverlay/importsOverlay.component';
+import { PropertyValuesComponent } from './components/propertyValues/propertyValues.component';
+import { PropertiesBlockComponent } from './components/propertiesBlock/propertiesBlock.component';
+import { PropertyOverlayComponent } from './components/propertyOverlay/propertyOverlay.component';
 
 /**
  * @namespace shared
@@ -274,6 +277,9 @@ import { ImportsOverlayComponent } from './components/importsOverlay/importsOver
     SplitIRIPipe,
     TrustedHtmlPipe,
     FiltersSelectedListComponent,
+    PropertyValuesComponent,
+    PropertiesBlockComponent,
+    PropertyOverlayComponent,
   ],
   exports: [
     BrowserAnimationsModule,
@@ -363,6 +369,9 @@ import { ImportsOverlayComponent } from './components/importsOverlay/importsOver
     DragFileDirective,
     FocusDirective,
     FiltersSelectedListComponent,
+    PropertyValuesComponent,
+    PropertiesBlockComponent,
+    PropertyOverlayComponent,
   ],
   providers: [
     CatalogManagerService,
