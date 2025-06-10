@@ -43,7 +43,7 @@ module.exports = {
     'Step 3: Verify shapes graph presentation': function(browser) {
         browser
             .waitForElementVisible('shapes-graph-details')
-            .waitForElementVisible('shapes-graph-properties-block')
+            .waitForElementVisible('properties-block')
             .waitForElementVisible('div.yate')
             .page.editorPage()
             .assert.valueEquals('@editorRecordSelectInput', 'UHTC_Node_List')

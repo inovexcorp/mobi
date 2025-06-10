@@ -29,13 +29,12 @@ import { NodeShapesItemComponent } from './components/node-shapes-item/node-shap
 import { NodeShapesListComponent } from './components/node-shapes-list/node-shapes-list.component';
 import { NodeShapesTabComponent } from './components/node-shapes-tab/node-shapes-tab.component';
 import { ScrollingModule } from '@angular/cdk/scrolling';
-import { SharedModule } from '../shared/shared.module';
+
 import { ShapesGraphDetailsComponent } from './components/shapesGraphDetails/shapesGraphDetails.component';
 import { ShapesGraphEditorPageComponent } from './components/shapesGraphEditorPage/shapesGraphEditorPage.component';
-import { ShapesGraphPropertiesBlockComponent } from './components/shapesGraphPropertiesBlock/shapesGraphPropertiesBlock.component';
-import { ShapesGraphPropertyValuesComponent } from './components/shapesGraphPropertyValues/shapesGraphPropertyValues.component';
 import { ShapesPreviewComponent } from './components/shapes-preview/shapes-preview.component';
 import { ShapesProjectTabComponent } from './components/shapes-project-tab/shapes-project-tab.component';
+import { SharedModule } from '../shared/shared.module';
 import { ShapesTabsHolderComponent } from './components/shapes-tabs-holder/shapes-tabs-holder.component';
 import { StaticIriLimitedComponent } from './components/staticIriLimited/staticIriLimited.component';
 import { VersionedRdfRecordEditorModule } from '../versioned-rdf-record-editor/versioned-rdf-record-editor.module';
@@ -58,8 +57,6 @@ import { VersionedRdfRecordEditorModule } from '../versioned-rdf-record-editor/v
      NodeShapesTabComponent,
      ShapesGraphDetailsComponent,
      ShapesGraphEditorPageComponent,
-     ShapesGraphPropertiesBlockComponent,
-     ShapesGraphPropertyValuesComponent,
      ShapesPreviewComponent,
      ShapesProjectTabComponent,
      ShapesTabsHolderComponent,
@@ -67,4 +64,4 @@ import { VersionedRdfRecordEditorModule } from '../versioned-rdf-record-editor/v
    ],
    providers: []
 })
-export class ShapesGraphEditorModule {}
+export class ShapesGraphEditorModule { }

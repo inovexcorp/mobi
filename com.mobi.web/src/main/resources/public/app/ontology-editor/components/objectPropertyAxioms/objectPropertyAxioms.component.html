@@ -21,9 +21,10 @@
   #L%
   -->
 <div class="object-property-axioms">
-    <property-values *ngFor="let axiom of this.axioms"
-                     [property]="axiom"
-                     [entity]="this.os.listItem.selected"
-                     (remove)="this.openRemoveOverlay($event)">\
-    </property-values>
+  <property-values *ngFor="let axiom of this.axioms"
+    [stateService]="os"
+    [property]="axiom"
+    [entity]="this.os.listItem.selected"
+    (remove)="this.openRemoveOverlay($event)">\
+  </property-values>
 </div>

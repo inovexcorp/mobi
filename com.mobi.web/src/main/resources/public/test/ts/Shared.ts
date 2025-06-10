@@ -224,4 +224,11 @@ export class MockVersionedRdfState extends VersionedRdfState<VersionedRdfListIte
   checkConflicts = jasmine.createSpy('checkConflicts')
   cancelMerge = jasmine.createSpy('cancelMerge')
   getListItemByRecordId = jasmine.createSpy('getListItemByRecordId')
+  getRemovePropOverlayMessage = jasmine.createSpy('getRemovePropOverlayMessage')
+  getPropValueDisplay = jasmine.createSpy('getPropValueDisplay')
+  removeProperty = jasmine.createSpy('removeProperty')
+  updateLabel = jasmine.createSpy('updateLabel')
+  isLinkable = jasmine.createSpy('isLinkable')
+  goTo = jasmine.createSpy('goTo')
+  isImported = jasmine.createSpy('isImported')
 }

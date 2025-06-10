@@ -31,93 +31,91 @@ import { cleanStylesFromDOM } from '../../../../test/ts/Shared';
 import { EditorTopBarComponent } from '../../../versioned-rdf-record-editor/components/editor-top-bar/editor-top-bar.component';
 import { MergePageComponent } from '../../../versioned-rdf-record-editor/components/merge-page/merge-page.component';
 import { ShapesGraphDetailsComponent } from '../shapesGraphDetails/shapesGraphDetails.component';
-import { ShapesGraphEditorPageComponent } from './shapesGraphEditorPage.component';
 import { ShapesGraphListItem } from '../../../shared/models/shapesGraphListItem.class';
-import { ShapesGraphPropertiesBlockComponent } from '../shapesGraphPropertiesBlock/shapesGraphPropertiesBlock.component';
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
 import { ShapesTabsHolderComponent } from '../shapes-tabs-holder/shapes-tabs-holder.component';
 import { ShapesPreviewComponent } from '../shapes-preview/shapes-preview.component';
+import { ShapesGraphEditorPageComponent } from './shapesGraphEditorPage.component';
 
-describe('Shapes Graph Editor Page component', function() {
-    let element: DebugElement;
-    let fixture: ComponentFixture<ShapesGraphEditorPageComponent>;
-    let shapesGraphStateStub: jasmine.SpyObj<ShapesGraphStateService>;
+describe('Shapes Graph Editor Page component', function () {
+  let element: DebugElement;
+  let fixture: ComponentFixture<ShapesGraphEditorPageComponent>;
+  let shapesGraphStateStub: jasmine.SpyObj<ShapesGraphStateService>;
 
-    beforeEach(async () => {
-        await TestBed.configureTestingModule({
-            imports: [ 
-                MatExpansionModule
-            ],
-            declarations: [
-                ShapesGraphEditorPageComponent,
-                MockComponent(ChangesPageComponent),
-                MockComponent(EditorTopBarComponent),
-                MockComponent(MergePageComponent),
-                MockComponent(ShapesGraphDetailsComponent),
-                MockComponent(ShapesGraphPropertiesBlockComponent),
-                MockComponent(ShapesPreviewComponent),
-                MockComponent(ShapesTabsHolderComponent)
-            ],
-            providers: [
-                MockProvider(ShapesGraphStateService),
-            ]
-        }).compileComponents();
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [
+        MatExpansionModule
+      ],
+      declarations: [
+        ShapesGraphEditorPageComponent,
+        MockComponent(ChangesPageComponent),
+        MockComponent(EditorTopBarComponent),
+        MockComponent(MergePageComponent),
+        MockComponent(ShapesGraphDetailsComponent),
+        MockComponent(ShapesPreviewComponent),
+        MockComponent(ShapesTabsHolderComponent)
+      ],
+      providers: [
+        MockProvider(ShapesGraphStateService),
+      ]
+    }).compileComponents();
 
-        fixture = TestBed.createComponent(ShapesGraphEditorPageComponent);
-        element = fixture.debugElement;
-        shapesGraphStateStub = TestBed.inject(ShapesGraphStateService) as jasmine.SpyObj<ShapesGraphStateService>;
-        shapesGraphStateStub.listItem = new ShapesGraphListItem();
+    shapesGraphStateStub = TestBed.inject(ShapesGraphStateService) as jasmine.SpyObj<ShapesGraphStateService>;
+    shapesGraphStateStub.listItem = new ShapesGraphListItem();
+    fixture = TestBed.createComponent(ShapesGraphEditorPageComponent);
+    element = fixture.debugElement;
+  });
+
+  afterAll(function () {
+    cleanStylesFromDOM();
+    element = null;
+    fixture = null;
+    shapesGraphStateStub = null;
+  });
+
+  describe('contains the correct html', function () {
+    it('for wrapping containers', function () {
+      expect(element.queryAll(By.css('div.shapes-graph-editor-page')).length).toEqual(1);
     });
-
-    afterAll(function() {
-        cleanStylesFromDOM();
-        element = null;
-        fixture = null;
-        shapesGraphStateStub = null;
+    describe('with editor top bar', function () {
+      it('when no active merge', async function () {
+        fixture.detectChanges();
+        await fixture.whenStable();
+        expect(element.queryAll(By.css('app-editor-top-bar')).length).toEqual(1);
+      });
+      it('with an active merge', async function () {
+        shapesGraphStateStub.listItem.merge.active = true;
+        fixture.detectChanges();
+        await fixture.whenStable();
+        expect(element.queryAll(By.css('app-editor-top-bar')).length).toEqual(0);
+      });
     });
-
-    describe('contains the correct html', function() {
-        it('for wrapping containers', function() {
-            expect(element.queryAll(By.css('div.shapes-graph-editor-page')).length).toEqual(1);
-        });
-        describe('with editor top bar', function() {
-            it('when no active merge', async function() {
-                fixture.detectChanges();
-                await fixture.whenStable();
-                expect(element.queryAll(By.css('app-editor-top-bar')).length).toEqual(1);
-            });
-            it('with an active merge', async function() {
-                shapesGraphStateStub.listItem.merge.active = true;
-                fixture.detectChanges();
-                await fixture.whenStable();
-                expect(element.queryAll(By.css('app-editor-top-bar')).length).toEqual(0);
-            });
-        });
-        describe('with shapes graph merge page', function() {
-            it('when no active merge', async function() {
-                fixture.detectChanges();
-                await fixture.whenStable();
-                expect(element.queryAll(By.css('app-merge-page')).length).toEqual(0);
-            });
-            it('with an active merge', async function() {
-                shapesGraphStateStub.listItem.merge.active = true;
-                fixture.detectChanges();
-                await fixture.whenStable();
-                expect(element.queryAll(By.css('app-merge-page')).length).toEqual(1);
-            });
-        });
-        describe('with shapes graph changes page', function() {
-            it('when no active merge', async function() {
-                fixture.detectChanges();
-                await fixture.whenStable();
-                expect(element.queryAll(By.css('app-changes-page')).length).toEqual(0);
-            });
-            it('with an active merge', async function() {
-                shapesGraphStateStub.listItem.changesPageOpen = true;
-                fixture.detectChanges();
-                await fixture.whenStable();
-                expect(element.queryAll(By.css('app-changes-page')).length).toEqual(1);
-            });
-        });
+    describe('with shapes graph merge page', function () {
+      it('when no active merge', async function () {
+        fixture.detectChanges();
+        await fixture.whenStable();
+        expect(element.queryAll(By.css('app-merge-page')).length).toEqual(0);
+      });
+      it('with an active merge', async function () {
+        shapesGraphStateStub.listItem.merge.active = true;
+        fixture.detectChanges();
+        await fixture.whenStable();
+        expect(element.queryAll(By.css('app-merge-page')).length).toEqual(1);
+      });
     });
+    describe('with shapes graph changes page', function () {
+      it('when no active merge', async function () {
+        fixture.detectChanges();
+        await fixture.whenStable();
+        expect(element.queryAll(By.css('app-changes-page')).length).toEqual(0);
+      });
+      it('with an active merge', async function () {
+        shapesGraphStateStub.listItem.changesPageOpen = true;
+        fixture.detectChanges();
+        await fixture.whenStable();
+        expect(element.queryAll(By.css('app-changes-page')).length).toEqual(1);
+      });
+    });
+  });
 });

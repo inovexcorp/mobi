@@ -20,7 +20,6 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
@@ -33,25 +32,27 @@ import { MatInputModule } from '@angular/material/input';
 import { MatRadioModule } from '@angular/material/radio';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 
-import { cleanStylesFromDOM } from '../../../../../public/test/ts/Shared';
+import { cleanStylesFromDOM } from '../../../../test/ts/Shared';
 import { DCTERMS, OWL, XSD } from '../../../prefixes';
-import { LanguageSelectComponent } from '../../../shared/components/languageSelect/languageSelect.component';
-import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
-import { OntologyStateService } from '../../../shared/services/ontologyState.service';
-import { PropertyManagerService } from '../../../shared/services/propertyManager.service';
-import { ToastService } from '../../../shared/services/toast.service';
-import { IriSelectOntologyComponent } from '../iriSelectOntology/iriSelectOntology.component';
-import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
-import { OntologyPropertyOverlayComponent } from './ontologyPropertyOverlay.component';
+import { IriSelectComponent } from '../iriSelect/iriSelect.component';
+import { LanguageSelectComponent } from '../languageSelect/languageSelect.component';
+import { OntologyListItem } from '../../models/ontologyListItem.class';
+import { OntologyManagerService } from '../../services/ontologyManager.service';
+import { OntologyStateService } from '../../services/ontologyState.service';
+import { PropertyManagerService } from '../../services/propertyManager.service';
+import { PropertyOverlayDataOptions } from '../../models/propertyOverlayDataOptions.interface';
+import { ToastService } from '../../services/toast.service';
+import { PropertyOverlayComponent } from './propertyOverlay.component';
 
-describe('Ontology Property Overlay component', () => {
-  let component: OntologyPropertyOverlayComponent;
+describe('Property Overlay component', () => {
+  let component: PropertyOverlayComponent;
   let element: DebugElement;
-  let fixture: ComponentFixture<OntologyPropertyOverlayComponent>;
-  let matDialogRef: jasmine.SpyObj<MatDialogRef<OntologyPropertyOverlayComponent>>;
+  let fixture: ComponentFixture<PropertyOverlayComponent>;
+  let matDialogRef: jasmine.SpyObj<MatDialogRef<PropertyOverlayComponent>>;
   let ontologyManagerStub: jasmine.SpyObj<OntologyManagerService>;
   let ontologyStateStub: jasmine.SpyObj<OntologyStateService>;
   let propertyManagerStub: jasmine.SpyObj<PropertyManagerService>;
@@ -61,6 +62,9 @@ describe('Ontology Property Overlay component', () => {
   const entityIRI = 'entity';
 
   beforeEach(async () => {
+    const dialogData: PropertyOverlayDataOptions = {
+        editing: false,
+    };
     await TestBed.configureTestingModule({
       imports: [
         NoopAnimationsModule,
@@ -75,33 +79,31 @@ describe('Ontology Property Overlay component', () => {
         MatIconModule
       ],
       declarations: [
-        OntologyPropertyOverlayComponent,
+        PropertyOverlayComponent,
         MockComponent(LanguageSelectComponent),
-        MockComponent(IriSelectOntologyComponent)
+        MockComponent(IriSelectComponent)
       ],
       providers: [
         MockProvider(OntologyManagerService),
         MockProvider(OntologyStateService),
         MockProvider(PropertyManagerService),
         MockProvider(ToastService),
-        { provide: MAT_DIALOG_DATA, useValue: { editing: false } },
+        { provide: MAT_DIALOG_DATA, useValue: dialogData },
         { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close'])}
       ]
-    });
-  });
-
-  beforeEach(() => {
-    fixture = TestBed.createComponent(OntologyPropertyOverlayComponent);
-    component = fixture.componentInstance;
-    element = fixture.debugElement;
+    }).compileComponents();
     ontologyManagerStub = TestBed.inject(OntologyManagerService) as jasmine.SpyObj<OntologyManagerService>;
     ontologyStateStub = TestBed.inject(OntologyStateService) as jasmine.SpyObj<OntologyStateService>;
-    matDialogRef = TestBed.inject(MatDialogRef) as jasmine.SpyObj<MatDialogRef<OntologyPropertyOverlayComponent>>;
+    matDialogRef = TestBed.inject(MatDialogRef) as jasmine.SpyObj<MatDialogRef<PropertyOverlayComponent>>;
     propertyManagerStub = TestBed.inject(PropertyManagerService) as jasmine.SpyObj<PropertyManagerService>;
     toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
-
     ontologyStateStub.listItem = new OntologyListItem();
     ontologyStateStub.listItem.selected = {'@id': entityIRI};
+    dialogData.stateService = ontologyStateStub;
+    dialogData.annotationIRIs = [property];
+    fixture = TestBed.createComponent(PropertyOverlayComponent);
+    component = fixture.componentInstance;
+    element = fixture.debugElement;
   });
 
   afterEach(() => {

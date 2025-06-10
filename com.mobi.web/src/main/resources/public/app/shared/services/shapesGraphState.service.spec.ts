@@ -25,8 +25,9 @@ import { HttpClientTestingModule } from '@angular/common/http/testing';
 
 import { MockProvider } from 'ng-mocks';
 import { Subject, of, throwError } from 'rxjs';
+import { cloneDeep, concat, map } from 'lodash';
 
-import { CATALOG, DCTERMS, OWL, SHAPESGRAPHEDITOR } from '../../prefixes';
+import { CATALOG, DCTERMS, OWL, RDF, SHAPESGRAPHEDITOR, XSD } from '../../prefixes';
 import { CatalogManagerService } from './catalogManager.service';
 import { cleanStylesFromDOM } from '../../../test/ts/Shared';
 import { Difference } from '../models/difference.class';
@@ -35,6 +36,7 @@ import { JSONLDObject } from '../models/JSONLDObject.interface';
 import { MergeRequestManagerService } from './mergeRequestManager.service';
 import { PolicyEnforcementService } from './policyEnforcement.service';
 import { PolicyManagerService } from './policyManager.service';
+import { PropertyManagerService } from './propertyManager.service';
 import { RdfDownload } from '../models/rdfDownload.interface';
 import { RdfUpload } from '../models/rdfUpload.interface';
 import { SettingManagerService } from './settingManager.service';
@@ -44,10 +46,8 @@ import { SparqlManagerService } from './sparqlManager.service';
 import { StateManagerService } from './stateManager.service';
 import { ToastService } from './toast.service';
 import { UpdateRefsService } from './updateRefs.service';
-import { VersionedRdfStateBase } from '../models/versionedRdfStateBase.interface';
 import { VersionedRdfUploadResponse } from '../models/versionedRdfUploadResponse.interface';
 import { ShapesGraphStateService } from './shapesGraphState.service';
-import { cloneDeep } from 'lodash';
 
 describe('Shapes Graph State service', function() {
   let service: ShapesGraphStateService;
@@ -56,6 +56,7 @@ describe('Shapes Graph State service', function() {
   let policyEnforcementStub: jasmine.SpyObj<PolicyEnforcementService>;
   let settingManagerStub: jasmine.SpyObj<SettingManagerService>;
   let shapesGraphManagerStub: jasmine.SpyObj<ShapesGraphManagerService>;
+  let propertyManagerStub: jasmine.SpyObj<PropertyManagerService>;
   let sparqlManagerStub: jasmine.SpyObj<SparqlManagerService>;
   let updateRefsStub: jasmine.SpyObj<UpdateRefsService>;
   let toastStub: jasmine.SpyObj<ToastService>;
@@ -100,6 +101,7 @@ describe('Shapes Graph State service', function() {
         MockProvider(MergeRequestManagerService),
         MockProvider(PolicyEnforcementService),
         MockProvider(PolicyManagerService),
+        MockProvider(PropertyManagerService),
         MockProvider(SettingManagerService),
         MockProvider(ShapesGraphManagerService),
         MockProvider(SparqlManagerService),
@@ -117,6 +119,12 @@ describe('Shapes Graph State service', function() {
     policyEnforcementStub.permit = 'Permit';
     policyEnforcementStub.deny = 'Deny';
     policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.permit));
+    propertyManagerStub = TestBed.inject(PropertyManagerService) as jasmine.SpyObj<PropertyManagerService>;
+
+    propertyManagerStub.defaultDatatypes = concat(
+      map(['anyURI', 'boolean', 'byte', 'dateTime', 'decimal', 'double', 'float', 'int', 'integer', 'language', 'long', 'string'], item => XSD + item),
+      map(['langString'], item => RDF + item)
+    );
 
     mergeRequestManagerServiceStub = TestBed.inject(MergeRequestManagerService) as jasmine.SpyObj<MergeRequestManagerService>;
     toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
@@ -140,7 +148,6 @@ describe('Shapes Graph State service', function() {
     listItem.userCanModify = true;
     listItem.userCanModifyMaster = true;
     service = TestBed.inject(ShapesGraphStateService);
-    // service.listItem = new ShapesGraphListItem();
     service.initialize();
 
     exclusionList = [

@@ -2332,19 +2332,6 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
         })), group => group.namespace.toUpperCase());
     }
     /**
-     * Creates an HTML string of the body of a {@link shared.ConfirmModalComponent} for confirming the
-     * deletion of the specified property value on the selected entity of the currently selected {@link OntologyListItem}
-     *
-     * @param {string} key The IRI of a property on the current entity
-     * @param {number} index The index of the specific property value being deleted
-     * @return {string} A string with HTML for the body of a `confirmModal`
-     */
-    getRemovePropOverlayMessage(key: string, index: number): string {
-        return `<p>Are you sure you want to remove:<br><strong>${key}</strong></p><p>with value:<br><strong>`
-            + `${this.getPropValueDisplay(key, index)}</strong></p><p>from:<br><strong>`
-            + `${this.listItem.selected['@id']}</strong> ?</p>`;
-    }
-    /**
      * Creates a display of the specified property value on the selected entity on the currently selected
      * {@link OntologyListItem} based on whether it is a data property value, object property value, or blank node.
      *

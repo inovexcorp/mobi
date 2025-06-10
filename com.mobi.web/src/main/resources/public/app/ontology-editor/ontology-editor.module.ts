@@ -65,8 +65,6 @@ import { ObjectPropertyOverlayComponent } from './components/objectPropertyOverl
 import { OntologyButtonStackComponent } from './components/ontologyButtonStack/ontologyButtonStack.component';
 import { OntologyClassSelectComponent } from './components/ontologyClassSelect/ontologyClassSelect.component';
 import { OntologyEditorPageComponent } from './components/ontologyEditorPage/ontologyEditorPage.component';
-import { OntologyPropertiesBlockComponent } from './components/ontologyPropertiesBlock/ontologyPropertiesBlock.component';
-import { OntologyPropertyOverlayComponent } from './components/ontologyPropertyOverlay/ontologyPropertyOverlay.component';
 import { OntologyTabComponent } from './components/ontologyTab/ontologyTab.component';
 import { OverviewTabComponent } from './components/overviewTab/overviewTab.component';
 import { PreviewBlockComponent } from './components/previewBlock/previewBlock.component';
@@ -74,7 +72,6 @@ import { ProjectTabComponent } from './components/projectTab/projectTab.componen
 import { PropertiesTabComponent } from './components/propertiesTab/propertiesTab.component';
 import { PropertyHierarchyBlockComponent } from './components/propertyHierarchyBlock/propertyHierarchyBlock.component';
 import { PropertyTreeComponent } from './components/propertyTree/propertyTree.component';
-import { PropertyValuesComponent } from './components/propertyValues/propertyValues.component';
 import { QueryViewComponent } from './components/query-view/query-view.component';
 import { SearchTabComponent } from './components/searchTab/searchTab.component';
 import { SeeHistoryComponent } from './components/seeHistory/seeHistory.component';
@@ -143,8 +140,6 @@ import { VersionedRdfRecordEditorModule } from '../versioned-rdf-record-editor/v
         OntologyButtonStackComponent,
         OntologyClassSelectComponent,
         OntologyEditorPageComponent,
-        OntologyPropertiesBlockComponent,
-        OntologyPropertyOverlayComponent,
         OntologyTabComponent,
         OverviewTabComponent,
         PreviewBlockComponent,
@@ -152,7 +147,6 @@ import { VersionedRdfRecordEditorModule } from '../versioned-rdf-record-editor/v
         PropertiesTabComponent,
         PropertyHierarchyBlockComponent,
         PropertyTreeComponent,
-        PropertyValuesComponent,
         QueryViewComponent,
         SearchTabComponent,
         SeeHistoryComponent,

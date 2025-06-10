@@ -24,23 +24,24 @@
 import { ENTER } from '@angular/cdk/keycodes';
 import { Component, ElementRef, EventEmitter, Input, OnChanges, OnInit, Output, ViewChild } from '@angular/core';
 import { UntypedFormControl, Validators } from '@angular/forms';
-import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete'; 
+import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { MatChipInputEvent } from '@angular/material/chips';
+
 import { get, sortBy, includes, groupBy } from 'lodash';
 import { Observable } from 'rxjs';
 import { debounceTime, map, startWith } from 'rxjs/operators';
 
-import { splitIRI } from '../../pipes/splitIRI.pipe';
 import { getBeautifulIRI } from '../../utility';
+import { splitIRI } from '../../pipes/splitIRI.pipe';
 
 interface IriGrouping {
-    namespace: string,
-    options: IriOption[]
+  namespace: string;
+  options: IriOption[];
 }
 
-interface IriOption {
-    item: string,
-    name: string,
+export interface IriOption {
+  item: string;
+  name: string;
 }
 
 /**
@@ -61,150 +62,171 @@ interface IriOption {
  * Presence alone is enough to set it to true.
  */
 @Component({
-    selector: 'iri-select',
-    templateUrl: './iriSelect.component.html'
+  selector: 'iri-select',
+  templateUrl: './iriSelect.component.html'
 })
 export class IriSelectComponent implements OnInit, OnChanges {
-    @Input() selected: string[] = [];
-    @Input() selectList: {[key: string]: string};
-    @Input() displayText = '';
-    @Input() mutedText = '';
-    @Input() isDisabledWhen = false;
-    @Input() isRequiredWhen = false;
-    @Input() singleSelect = false;
-    
-    @Output() selectedChange = new EventEmitter<string[]>();
+  @Input() selected: string[] = [];
+  @Input() selectList: { [key: string]: string };
+  @Input() displayText = '';
+  @Input() mutedText = '';
+  @Input() isDisabledWhen = false;
+  @Input() isRequiredWhen = false;
+  @Input() singleSelect = false;
+  @Input() displayFn?: (iriOption: IriOption) => string;
 
-    selectedOptions: IriOption[] = [];
-    separatorKeysCodes: number[] = [ENTER];
-    filteredIris: Observable<IriGrouping[]>;
+  @Output() selectedChange = new EventEmitter<string[]>();
 
-    singleControl: UntypedFormControl = new UntypedFormControl();
-    multiControl: UntypedFormControl = new UntypedFormControl();
+  selectedOptions: IriOption[] = [];
+  separatorKeysCodes: number[] = [ENTER];
+  filteredIris: Observable<IriGrouping[]>;
 
-    @ViewChild('multiInput') multiInput: ElementRef;
+  singleControl: UntypedFormControl = new UntypedFormControl();
+  multiControl: UntypedFormControl = new UntypedFormControl();
 
-    constructor() {}
-    
-    ngOnInit(): void {
-        this.singleSelect = !(this.singleSelect === false);
-        if (this.singleSelect) {
-            this.filteredIris = this.singleControl.valueChanges
-                .pipe(
-                    debounceTime(500),
-                    startWith(''),
-                    map(val => {
-                        const searchText = typeof val === 'string' ? val : '';
-                        return this.filter(searchText);
-                    }),
-                );
-        } else {
-            this.filteredIris = this.multiControl.valueChanges
-                .pipe(
-                    debounceTime(500),
-                    startWith(''),
-                    map(val => {
-                        const searchText = typeof val === 'string' ? val : '';
-                        return this.filter(searchText);
-                    }),
-                );
-        }
-        this.setDisabled(this.isDisabledWhen);
-        this.setRequired(this.isRequiredWhen);
-    }
-    ngOnChanges(): void {
-        this.setDisabled(this.isDisabledWhen);
-        this.setRequired(this.isRequiredWhen);
-    }
-    setDisabled(val: boolean): void {
-        if (val) {
-            if (this.singleSelect) {
-                this.singleControl.disable();
-            } else {
-                this.multiControl.disable();
-            }
-        } else {
-            if (this.singleSelect) {
-                this.singleControl.enable();
-            } else {
-                this.multiControl.enable();
-            }
-        }
-    }
-    setRequired(val: boolean): void {
-        if (val) {
-            if (this.singleSelect) {
-                this.singleControl.setValidators([Validators.required]);
-            } else {
-                this.multiControl.setValidators([Validators.required]);
-            }
-        } else {
-            if (this.singleSelect) {
-                this.singleControl.clearValidators();
-            } else {
-                this.multiControl.clearValidators();
-            }
-        }
-    }
-    filter(searchText: string): IriGrouping[] {
-        const array: IriOption[] = [];
-        const mapped: IriOption[] = Object.keys(this.selectList).map(item => {
-            return {
-                item,
-                name: getBeautifulIRI(item)
-            };
+  @ViewChild('multiInput') multiInput: ElementRef;
+
+  constructor() { }
+
+  ngOnInit(): void {
+    this.singleSelect = !(this.singleSelect === false);
+    if (this.singleSelect) {
+      if (this.selected && this.selected.length) {
+        this.singleControl.setValue({
+          item: this.selected[0],
+          name: this.getName(this.selected[0])
         });
-        mapped.forEach(item => {
-            if (array.length === 100) {
-                return;
-            } else if (includes(item.name.trim().toUpperCase(), searchText.trim().toUpperCase())) {
-                array.push(item);
-            }
+      }
+      this.filteredIris = this.singleControl.valueChanges
+        .pipe(
+          debounceTime(500),
+          startWith(''),
+          map(val => {
+            const searchText = typeof val === 'string' ? val : '';
+            return this.filter(searchText);
+          }),
+        );
+    } else {
+      if (this.selected && this.selected.length) {
+        this.selectedOptions = this.selected.map(iri => {
+          return {
+            item: iri,
+            name: this.getName(iri)
+          };
         });
-        const grouped: {[key: string]: IriOption[]} = groupBy(array, item => this.getOntologyIri(item.item));
-        return sortBy(Object.keys(grouped).map(namespace => ({
-            namespace,
-            options: sortBy(grouped[namespace], item => item.name.trim().toUpperCase())
-        })), group => group.namespace.toUpperCase());
+      }
+      this.filteredIris = this.multiControl.valueChanges
+        .pipe(
+          debounceTime(500),
+          startWith(''),
+          map(val => {
+            const searchText = typeof val === 'string' ? val : '';
+            return this.filter(searchText);
+          }),
+        );
     }
-    getOntologyIri(iri: string): string {
-        return get(this.selectList, `['${iri}']`, splitIRI(iri).begin);
+    this.setDisabled(this.isDisabledWhen);
+    this.setRequired(this.isRequiredWhen);
+  }
+  ngOnChanges(): void {
+    this.setDisabled(this.isDisabledWhen);
+    this.setRequired(this.isRequiredWhen);
+  }
+  setDisabled(val: boolean): void {
+    if (val) {
+      if (this.singleSelect) {
+        this.singleControl.disable();
+      } else {
+        this.multiControl.disable();
+      }
+    } else {
+      if (this.singleSelect) {
+        this.singleControl.enable();
+      } else {
+        this.multiControl.enable();
+      }
     }
-    add(event: MatChipInputEvent): void {
-        const input = event.input;
-        const value = event.value;
-    
-        if (value) {
-            this.selectedOptions.push({ item: value, name: getBeautifulIRI(value) });
-            this.selected.push(value);
-            this.selectedChange.emit(this.selected);
-        }
-    
-        // Reset the input value
-        if (input) {
-            input.value = '';
-        }
-    
-        this.multiControl.setValue(null);
+  }
+  setRequired(val: boolean): void {
+    if (val) {
+      if (this.singleSelect) {
+        this.singleControl.setValidators([Validators.required]);
+      } else {
+        this.multiControl.setValidators([Validators.required]);
+      }
+    } else {
+      if (this.singleSelect) {
+        this.singleControl.clearValidators();
+      } else {
+        this.multiControl.clearValidators();
+      }
     }
-    remove(option: IriOption): void {
-        const index = this.selected.indexOf(option.item);
-    
-        if (index >= 0) {
-            this.selectedOptions.splice(index, 1);
-            this.selected.splice(index, 1);
-            this.selectedChange.emit(this.selected);
-        }
+  }
+  filter(searchText: string): IriGrouping[] {
+    const array: IriOption[] = [];
+    const mapped: IriOption[] = Object.keys(this.selectList).map(item => {
+      return {
+        item,
+        name: this.getName(item)
+      };
+    });
+    mapped.forEach(item => {
+      if (array.length === 100) {
+        return;
+      } else if (includes(item.name.trim().toUpperCase(), searchText.trim().toUpperCase())) {
+        array.push(item);
+      }
+    });
+    const grouped: { [key: string]: IriOption[] } = groupBy(array, item => this.getOntologyIri(item.item));
+    return sortBy(Object.keys(grouped).map(namespace => ({
+      namespace,
+      options: sortBy(grouped[namespace], item => item.name.trim().toUpperCase())
+    })), group => group.namespace.toUpperCase());
+  }
+  defaultDisplayFn(iriOption: IriOption): string {
+    return iriOption ? iriOption.name : '';
+  }
+  getOntologyIri(iri: string): string {
+    return get(this.selectList, `['${iri}']`, splitIRI(iri).begin);
+  }
+  getName(value: string): string {
+    return getBeautifulIRI(value);
+  }
+  add(event: MatChipInputEvent): void {
+    const input = event.input;
+    const value = event.value;
+
+    if (value) {
+      this.selectedOptions.push({ item: value, name: this.getName(value) });
+      this.selected.push(value);
+      this.selectedChange.emit(this.selected);
     }
-    select(event: MatAutocompleteSelectedEvent): void {
-        if (this.singleSelect) {
-            this.selected = [event.option.value.item];
-        } else {
-            this.selectedOptions.push(event.option.value);
-            this.selected.push(event.option.value.item);
-            this.multiInput.nativeElement.value = '';
-            this.multiControl.setValue(null);
-        }
-        this.selectedChange.emit(this.selected);
+
+    // Reset the input value
+    if (input) {
+      input.value = '';
     }
+
+    this.multiControl.setValue(null);
+  }
+  remove(option: IriOption): void {
+    const index = this.selected.indexOf(option.item);
+
+    if (index >= 0) {
+      this.selectedOptions.splice(index, 1);
+      this.selected.splice(index, 1);
+      this.selectedChange.emit(this.selected);
+    }
+  }
+  select(event: MatAutocompleteSelectedEvent): void {
+    if (this.singleSelect) {
+      this.selected = [event.option.value.item];
+    } else {
+      this.selectedOptions.push(event.option.value);
+      this.selected.push(event.option.value.item);
+      this.multiInput.nativeElement.value = '';
+      this.multiControl.setValue(null);
+    }
+    this.selectedChange.emit(this.selected);
+  }
 }

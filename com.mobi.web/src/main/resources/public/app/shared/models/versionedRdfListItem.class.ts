@@ -48,13 +48,14 @@ export class VersionedRdfListItem {
         resolutions: Difference
         startIndex: number
     }
-    selectedCommit?: Commit
-    hasPendingRefresh: boolean
-    importedOntologies: {id: string, ontologyId: string}[]
+    selectedCommit?: Commit;
+    hasPendingRefresh: boolean;
+    importedOntologies: {id: string, ontologyId: string}[];
     importedOntologyIds: string[]
     failedImports: string[];
     selected: JSONLDObject;
     selectedBlankNodes: JSONLDObject[];
+    dataPropertyRange: {[key: string]: string};
 
     constructor() {
         this.masterBranchIri = '';
@@ -87,5 +88,6 @@ export class VersionedRdfListItem {
         this.selectedCommit = undefined;
         this.selected = undefined;
         this.selectedBlankNodes = [];
+        this.dataPropertyRange = {};
     }
 }

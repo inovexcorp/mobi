@@ -186,15 +186,15 @@ const projectTabCommands = {
             .waitForElementVisible('xpath', '//mat-tab-header//div[text()[contains(.,"Project")]]')
             .waitForElementVisible('ontology-editor-page ontology-tab project-tab selected-details')
             .waitForElementVisible('ontology-editor-page ontology-tab project-tab selected-details static-iri')
-            .waitForElementVisible('ontology-editor-page ontology-tab project-tab ontology-properties-block')
+            .waitForElementVisible('ontology-editor-page ontology-tab project-tab properties-block')
             .waitForElementVisible('ontology-editor-page ontology-tab project-tab imports-block')
             .waitForElementVisible('ontology-editor-page ontology-tab project-tab preview-block');
     },
 
     verifyProjectTab: function(title, description, iri) {
         return this.useXpath()
-            .waitForElementVisible('//project-tab//ontology-properties-block//value-display//span[text()[contains(.,"' + title + '")]]')
-            .waitForElementVisible('//project-tab//ontology-properties-block//value-display//span[text()[contains(.,"' + description + '")]]')
+            .waitForElementVisible('//project-tab//properties-block//value-display//span[text()[contains(.,"' + title + '")]]')
+            .waitForElementVisible('//project-tab//properties-block//value-display//span[text()[contains(.,"' + description + '")]]')
             .waitForElementVisible('//project-tab//selected-details//static-iri//span[text()[contains(.,"' + iri + '")]]');
     },
 

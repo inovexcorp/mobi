@@ -21,6 +21,9 @@
  * #L%
  */
 
+import { VersionedRdfState } from "../services/versionedRdfState.service";
+import { VersionedRdfListItem } from "./versionedRdfListItem.class";
+
 export interface PropertyOverlayDataOptions {
     editing: boolean;
     property?: string;
@@ -30,4 +33,6 @@ export interface PropertyOverlayDataOptions {
     index?: number;
     language?: string;
     isIRIProperty?: boolean;
+    annotationIRIs?: string[];
+    stateService?: VersionedRdfState<VersionedRdfListItem>;
 }

@@ -22,13 +22,13 @@
  */
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
 
-import { OntologyStateService } from '../../../shared/services/ontologyState.service';
-import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { isBlankNodeId } from '../../../shared/utility';
+import { VersionedRdfState } from '../../../shared/services/versionedRdfState.service';
+import { VersionedRdfListItem } from '../../../shared/models/versionedRdfListItem.class';
 
 /**
- * @class ontology-editor.PropertyValuesComponent
+ * @class shared.PropertyValuesComponent
  *
  * A component that creates a display of the values of the provided `property` on the provided JSON-LD `entity`. Display
  * includes the property as a header and the individual values displayed using either a
@@ -47,39 +47,40 @@ import { isBlankNodeId } from '../../../shared/utility';
  * @param {string} highlightText An optional string that should be highlighted in any value displays
  */
 @Component({
-    selector: 'property-values',
-    templateUrl: './propertyValues.component.html',
-    styleUrls: ['./propertyValues.component.scss']
+  selector: 'property-values',
+  templateUrl: './propertyValues.component.html',
+  styleUrls: ['./propertyValues.component.scss']
 })
 export class PropertyValuesComponent implements OnInit, OnChanges {
-    @Input() property: string;
-    @Input() entity: JSONLDObject;
-    @Input() highlightText: string;
-    @Input() highlightIris: string[] = [];
+  @Input() stateService: VersionedRdfState<VersionedRdfListItem>;
+  @Input() property: string;
+  @Input() entity: JSONLDObject;
+  @Input() highlightText: string;
+  @Input() highlightIris: string[] = [];
 
-    @Output() edit = new EventEmitter<{property: string, index: number}>();
-    @Output() remove = new EventEmitter<{iri: string, index: number}>();
+  @Output() edit = new EventEmitter<{ property: string, index: number }>();
+  @Output() remove = new EventEmitter<{ iri: string, index: number }>();
 
-    readonly isBlankNodeId = isBlankNodeId;
-    isHighlightedProp = false;
-    isEditSet = false;
-    isRemoveSet = false;
+  readonly isBlankNodeId = isBlankNodeId;
+  isHighlightedProp = false;
+  isEditSet = false;
+  isRemoveSet = false;
 
-    constructor(public os: OntologyStateService, public om: OntologyManagerService) {}
-    
-    ngOnInit(): void {
-        this.isEditSet = this.edit.observers.length > 0;
-        this.isRemoveSet = this.remove.observers.length > 0;
+  constructor() { }
+
+  ngOnInit(): void {
+    this.isEditSet = this.edit.observers.length > 0;
+    this.isRemoveSet = this.remove.observers.length > 0;
+  }
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes.highlightIris) {
+      this.isHighlightedProp = changes.highlightIris.currentValue.includes(this.property);
     }
-    ngOnChanges(changes: SimpleChanges): void {
-        if (changes.highlightIris) {
-            this.isHighlightedProp = changes.highlightIris.currentValue.includes(this.property);
-        }
-    }
-    callEdit(index: number): void {
-        this.edit.emit({ property: this.property, index });
-    }
-    callRemove(index: number): void {
-        this.remove.emit({ iri: this.property, index });
-    }
+  }
+  callEdit(index: number): void {
+    this.edit.emit({ property: this.property, index });
+  }
+  callRemove(index: number): void {
+    this.remove.emit({ iri: this.property, index });
+  }
 }

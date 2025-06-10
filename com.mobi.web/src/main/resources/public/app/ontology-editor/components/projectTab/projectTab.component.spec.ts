@@ -30,7 +30,7 @@ import { cleanStylesFromDOM } from '../../../../../public/test/ts/Shared';
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { ImportsBlockComponent } from '../../../shared/components/importsBlock/importsBlock.component';
-import { OntologyPropertiesBlockComponent } from '../ontologyPropertiesBlock/ontologyPropertiesBlock.component';
+import { PropertiesBlockComponent } from '../../../shared/components/propertiesBlock/propertiesBlock.component';
 import { PreviewBlockComponent } from '../previewBlock/previewBlock.component';
 import { SelectedDetailsComponent } from '../selectedDetails/selectedDetails.component';
 import { ProjectTabComponent } from './projectTab.component';
@@ -46,7 +46,7 @@ describe('Project Tab component', function() {
             declarations: [
                 ProjectTabComponent,
                 MockComponent(SelectedDetailsComponent),
-                MockComponent(OntologyPropertiesBlockComponent),
+                MockComponent(PropertiesBlockComponent),
                 MockComponent(PreviewBlockComponent),
                 MockComponent(ImportsBlockComponent)
             ],
@@ -85,7 +85,7 @@ describe('Project Tab component', function() {
             expect(element.queryAll(By.css('.project-tab')).length).toEqual(1);
         });
         it('depending on whether something is selected', function() {
-            const components = ['selected-details', 'ontology-properties-block', 'imports-block', 'preview-block'];
+            const components = ['selected-details', 'properties-block', 'imports-block', 'preview-block'];
             fixture.detectChanges();
             components.forEach(test => {
                 expect(element.queryAll(By.css(test)).length).toEqual(0);

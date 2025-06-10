@@ -34,7 +34,7 @@ import { OntologyStateService } from '../../../shared/services/ontologyState.ser
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
 import { cleanStylesFromDOM } from '../../../../../public/test/ts/Shared';
 import { RDF } from '../../../prefixes';
-import { PropertyValuesComponent } from '../propertyValues/propertyValues.component';
+import { PropertyValuesComponent } from '../../../shared/components/propertyValues/propertyValues.component';
 import { ObjectPropertyOverlayComponent } from '../objectPropertyOverlay/objectPropertyOverlay.component';
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
 import { JSONLDId } from '../../../shared/models/JSONLDId.interface';

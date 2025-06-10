@@ -49,7 +49,7 @@ module.exports = {
     'Step 4: Verify shapes graph presentation': function(browser) {
         browser
             .waitForElementVisible('shapes-graph-details')
-            .waitForElementVisible('shapes-graph-properties-block')
+            .waitForElementVisible('properties-block')
             .waitForElementVisible('div.yate')
             .page.editorPage()
             .assert.valueEquals('@editorRecordSelectInput', 'semops_shapes')
@@ -67,7 +67,7 @@ module.exports = {
     'Step 6: Verify switching of branches': function(browser) {
         browser
             .waitForElementVisible('shapes-graph-details')
-            .waitForElementVisible('shapes-graph-properties-block')
+            .waitForElementVisible('properties-block')
             .waitForElementVisible('div.yate')
             .page.editorPage()
             .assert.valueEquals('@editorRecordSelectInput', 'semops_shapes')

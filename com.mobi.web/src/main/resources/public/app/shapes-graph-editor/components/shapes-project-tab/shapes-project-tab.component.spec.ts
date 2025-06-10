@@ -24,17 +24,17 @@ import { By } from '@angular/platform-browser';
 import { ComponentFixture, TestBed, tick, fakeAsync } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
 
-import { ImportsBlockComponent } from '../../../shared/components/importsBlock/importsBlock.component';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
+
+import { ImportsBlockComponent } from '../../../shared/components/importsBlock/importsBlock.component';
+import { PropertiesBlockComponent } from '../../../shared/components/propertiesBlock/propertiesBlock.component';
 import { ShapesGraphDetailsComponent } from '../shapesGraphDetails/shapesGraphDetails.component';
 import { ShapesGraphListItem } from '../../../shared/models/shapesGraphListItem.class';
 import { ShapesGraphManagerService } from '../../../shared/services/shapesGraphManager.service';
-import { ShapesGraphPropertiesBlockComponent } from '../shapesGraphPropertiesBlock/shapesGraphPropertiesBlock.component';
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
-import { ShapesProjectTabComponent } from './shapes-project-tab.component';
 import { ShapesPreviewComponent } from '../shapes-preview/shapes-preview.component';
-
+import { ShapesProjectTabComponent } from './shapes-project-tab.component';
 
 describe('Shapes Project Tab component', () => {
   let component: ShapesProjectTabComponent;
@@ -43,29 +43,24 @@ describe('Shapes Project Tab component', () => {
   let stateSvcStub: jasmine.SpyObj<ShapesGraphStateService>;
   let managerSvcStub: jasmine.SpyObj<ShapesGraphManagerService>;
 
-  beforeEach(() => {
-    TestBed.configureTestingModule({
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
       declarations: [
         ShapesProjectTabComponent,
         MockComponent(ImportsBlockComponent),
+        MockComponent(PropertiesBlockComponent),
         MockComponent(ShapesGraphDetailsComponent),
-        MockComponent(ShapesGraphPropertiesBlockComponent),
         MockComponent(ShapesPreviewComponent)
       ],
       providers: [
         MockProvider(ShapesGraphStateService),
         MockProvider(ShapesGraphManagerService)
       ]
-    });
-    fixture = TestBed.createComponent(ShapesProjectTabComponent);
-    element = fixture.debugElement;
-    component = fixture.componentInstance;
-
-    //setting up the services
+    }).compileComponents();
     managerSvcStub = TestBed.inject(ShapesGraphManagerService) as jasmine.SpyObj<ShapesGraphManagerService>;
     stateSvcStub = TestBed.inject(ShapesGraphStateService) as jasmine.SpyObj<ShapesGraphStateService>;
     stateSvcStub.listItem = new ShapesGraphListItem();
-    stateSvcStub.listItem.metadata = {
+    stateSvcStub.listItem.selected = {
       '@id': 'http://www.example.com/test',
       '@type': ['http://www.w3.org/2002/07/owl#Ontology'],
       'http://purl.org/dc/elements/1.1/description': [
@@ -77,8 +72,7 @@ describe('Shapes Project Tab component', () => {
         {
           '@value': 'Test Shapes Graph'
         }
-      ],
-
+      ]
     };
     stateSvcStub.listItem.versionedRdfRecord = {
       'title': 'Test Shapes',
@@ -88,6 +82,9 @@ describe('Shapes Project Tab component', () => {
       'tagId': ''
     };
 
+    fixture = TestBed.createComponent(ShapesProjectTabComponent);
+    element = fixture.debugElement;
+    component = fixture.componentInstance;
     fixture.detectChanges();
   });
 
@@ -101,15 +98,18 @@ describe('Shapes Project Tab component', () => {
 
   describe('should initialize ', function() {
     describe('with the correct html', function() {
-      ['shapes-graph-details', 'shapes-graph-properties-block', 'shapes-preview']
-        .forEach(test => {
-          it('containing a ' + test, function() {
-            expect(element.queryAll(By.css(test)).length).toEqual(1);
+      ['shapes-graph-details', 'properties-block', 'imports-block', 'shapes-preview']
+        .forEach(selector => {
+          it('containing a ' + selector, function() {
+            const found = element.queryAll(By.css(selector));
+            expect(found.length)
+              .withContext(`Expected to find one <${selector}> element`)
+              .toBe(1);
           });
         });
     });
     it('while retrieving the appropriate list of keys', function() {
-      const retrievedKeys = component.keys(stateSvcStub.listItem.metadata);
+      const retrievedKeys = component.keys(stateSvcStub.listItem.selected);
       expect(retrievedKeys).toEqual(
         jasmine.arrayContaining([
           '@id',
