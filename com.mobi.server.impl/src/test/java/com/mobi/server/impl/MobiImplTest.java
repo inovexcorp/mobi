@@ -24,7 +24,9 @@ package com.mobi.server.impl;
  */
 
 import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -36,6 +38,7 @@ import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.mockito.MockitoAnnotations;
 import org.osgi.service.cm.Configuration;
 import org.osgi.service.cm.ConfigurationAdmin;
@@ -46,6 +49,9 @@ import java.util.UUID;
 
 public class MobiImplTest {
     private AutoCloseable closeable;
+    private MobiImpl impl;
+    private MockedStatic<UUID> uuidMock;
+    private UUID serverId = UUID.fromString("98ab4787-549d-3c82-8265-e593d7e944b5");
 
     @Mock
     MobiConfig mobiConfig;
@@ -65,22 +71,27 @@ public class MobiImplTest {
     @Before
     public void setup() throws Exception {
         closeable = MockitoAnnotations.openMocks(this);
+        uuidMock = mockStatic(UUID.class);
+        impl = new MobiImpl();
+        when(utils.getMacId()).thenReturn("serverId".getBytes());
+        when(configurationAdmin.getConfiguration(anyString())).thenReturn(configuration);
+        when(configuration.getProperties()).thenReturn(new Hashtable<>());
+        when(mobiConfig.serverId()).thenReturn(serverId.toString());
+        uuidMock.when(() -> UUID.nameUUIDFromBytes(any())).thenReturn(serverId);
+
+        impl.utils = utils;
+        impl.configurationAdmin = configurationAdmin;
     }
 
     @After
     public void resetMocks() throws Exception {
         closeable.close();
+        uuidMock.close();
     }
 
     @Test
     public void testGeneratedServerIdIsSaved() throws Exception {
-        when(utils.getMacId()).thenReturn("serverId".getBytes());
-        when(configurationAdmin.getConfiguration(anyString())).thenReturn(configuration);
-        when(configuration.getProperties()).thenReturn(new Hashtable<>());
-
-        MobiImpl impl = new MobiImpl();
-        impl.configurationAdmin = configurationAdmin;
-        impl.utils = utils;
+        when(mobiConfig.serverId()).thenReturn(null);
         impl.activate(mobiConfig);
         verify(configuration).update(captor.capture());
         verify(utils).getMacId();
@@ -88,21 +99,17 @@ public class MobiImplTest {
     }
 
     @Test
-    public void testAlreadyHasServerId() throws Exception {
-        MobiImpl impl = new MobiImpl();
-        String val = UUID.randomUUID().toString();
-        when(mobiConfig.serverId()).thenReturn(val);
-        
+    public void testGeneratedServerIdIsSavedExistingDifferent() throws Exception {
+        when(mobiConfig.serverId()).thenReturn("different");
         impl.activate(mobiConfig);
-        assertEquals(val, impl.getServerIdentifier().toString());
+        verify(configuration).update(captor.capture());
+        verify(utils).getMacId();
+        assertEquals(impl.getServerIdentifier().toString(), captor.getValue().get("serverId"));
     }
 
     @Test
-    public void testHostNameProvided() throws Exception {
-        MobiImpl impl = new MobiImpl();
-        String val = UUID.randomUUID().toString();
+    public void testHostNameProvided() {
         String hostName = "https://www.google.com";
-        when(mobiConfig.serverId()).thenReturn(val);
         when(mobiConfig.hostName()).thenReturn(hostName);
 
         impl.activate(mobiConfig);
@@ -110,11 +117,8 @@ public class MobiImplTest {
     }
 
     @Test
-    public void testHostNameIPProvided() throws Exception {
-        MobiImpl impl = new MobiImpl();
-        String val = UUID.randomUUID().toString();
+    public void testHostNameIPProvided() {
         String hostName = "http://8.8.8.8";
-        when(mobiConfig.serverId()).thenReturn(val);
         when(mobiConfig.hostName()).thenReturn(hostName);
 
         impl.activate(mobiConfig);
@@ -122,11 +126,8 @@ public class MobiImplTest {
     }
 
     @Test
-    public void testHostNameIPNoProtocolProvided() throws Exception {
-        MobiImpl impl = new MobiImpl();
-        String val = UUID.randomUUID().toString();
+    public void testHostNameIPNoProtocolProvided() {
         String hostName = "8.8.8.8";
-        when(mobiConfig.serverId()).thenReturn(val);
         when(mobiConfig.hostName()).thenReturn(hostName);
 
         impl.activate(mobiConfig);
@@ -134,11 +135,8 @@ public class MobiImplTest {
     }
 
     @Test
-    public void testHostNameLocalHostProvided() throws Exception {
-        MobiImpl impl = new MobiImpl();
-        String val = UUID.randomUUID().toString();
+    public void testHostNameLocalHostProvided() {
         String hostName = "https://localhost:8443";
-        when(mobiConfig.serverId()).thenReturn(val);
         when(mobiConfig.hostName()).thenReturn(hostName);
 
         impl.activate(mobiConfig);
@@ -146,11 +144,8 @@ public class MobiImplTest {
     }
 
     @Test
-    public void testHostNameLocalHostIPProvided() throws Exception {
-        MobiImpl impl = new MobiImpl();
-        String val = UUID.randomUUID().toString();
+    public void testHostNameLocalHostIPProvided() {
         String hostName = "http://127.0.0.1";
-        when(mobiConfig.serverId()).thenReturn(val);
         when(mobiConfig.hostName()).thenReturn(hostName);
 
         impl.activate(mobiConfig);
@@ -158,11 +153,8 @@ public class MobiImplTest {
     }
 
     @Test
-    public void testHostNameProvidedInvalid() throws Exception {
-        MobiImpl impl = new MobiImpl();
-        String val = UUID.randomUUID().toString();
+    public void testHostNameProvidedInvalid() {
         String hostName = "someBadHostName";
-        when(mobiConfig.serverId()).thenReturn(val);
         when(mobiConfig.hostName()).thenReturn(hostName);
 
         impl.activate(mobiConfig);
@@ -170,11 +162,7 @@ public class MobiImplTest {
     }
 
     @Test
-    public void testHostNameNotProvided() throws Exception {
-        MobiImpl impl = new MobiImpl();
-        String val = UUID.randomUUID().toString();
-        when(mobiConfig.serverId()).thenReturn(val);
-
+    public void testHostNameNotProvided() {
         impl.activate(mobiConfig);
         assertEquals("", impl.getHostName());
     }

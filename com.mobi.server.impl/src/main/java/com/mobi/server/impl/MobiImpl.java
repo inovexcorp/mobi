@@ -86,26 +86,19 @@ public class MobiImpl implements Mobi {
     @Activate
     @Modified
     public void activate(final MobiConfig serviceConfig) {
-        if (serviceConfig.serverId() == null) {
-            LOGGER.warn("No server id configured in startup, going to rebuild our Server UUID from the MAC ID of this machine.");
-            final byte[] macId = utils.getMacId();
-            this.serverId = UUID.nameUUIDFromBytes(macId);
+        LOGGER.warn("Recalculating serverId UUID from the MAC ID of this machine at start up.");
+        final byte[] macId = utils.getMacId();
+        this.serverId = UUID.nameUUIDFromBytes(macId);
+
+        if (!this.serverId.toString().equals(serviceConfig.serverId())) {
             try {
                 Map<String, Object> data = ConfigUtils.getPropertiesMap(this.configurationAdmin.getConfiguration(SERVICE_NAME));
                 data.put("serverId", this.serverId.toString());
                 ConfigUtils.updateServiceConfig(data, configurationAdmin, SERVICE_NAME);
+                return;
             } catch (IOException e) {
                 LOGGER.error("Could not get configuration for " + SERVICE_NAME, e);
                 throw new MobiException(e);
-            }
-        } else {
-            final String id = serviceConfig.serverId();
-            LOGGER.info("Server ID present in service configuration. {}", id);
-            try {
-                this.serverId = UUID.fromString(id);
-            } catch (IllegalArgumentException e) {
-                // If the currently configured server id is invalid (a non-UUID).
-                throw new MobiException("Previously configured server ID is invalid: " + id, e);
             }
         }
         LOGGER.info("Initialized core platform server service with id {}", this.serverId);
