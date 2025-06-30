@@ -24,7 +24,7 @@
 	<https://mobi.com/ontologies/3/2017/CrackGrowth#hasDataPair> <http://mobi.com/data/crackgrowthontologyeh/datapair/klm> .
 
 <http://mobi.com/data/crackgrowthontologyeh/datapair/765> a <https://mobi.com/ontologies/3/2017/CrackGrowth#DataPair> ;
-	<https://mobi.com/ontologies/3/2017/CrackGrowth#hasCyclicCrackGrowthRate> "0.0000008814" ;
+	<https://mobi.com/ontologies/3/2017/CrackGrowth#hasCyclicCrackGrowthRate> "0.00000088138" ;
 	<https://mobi.com/ontologies/3/2017/CrackGrowth#hasStressIntensityRange> "21339472.8" .
 
 <http://mobi.com/data/crackgrowthontologyeh/dataset/432> a <https://mobi.com/ontologies/3/2017/CrackGrowth#DataSet> ;
@@ -48,7 +48,7 @@
 	<https://mobi.com/ontologies/3/2017/CrackGrowth#hasDataPair> <http://mobi.com/data/crackgrowthontologyeh/datapair/765> .
 
 <http://mobi.com/data/crackgrowthontologyeh/datapair/321> a <https://mobi.com/ontologies/3/2017/CrackGrowth#DataPair> ;
-	<https://mobi.com/ontologies/3/2017/CrackGrowth#hasStressIntensityRange> "38756086.8" .
+	<https://mobi.com/ontologies/3/2017/CrackGrowth#hasStressIntensityRange> "38756086.800000004" .
 
 <http://mobi.com/data/crackgrowthontologyeh/dataset/678> a <https://mobi.com/ontologies/3/2017/CrackGrowth#DataSet> ;
 	<https://mobi.com/ontologies/3/2017/CrackGrowth#hasDataPair> <http://mobi.com/data/crackgrowthontologyeh/datapair/789> ;

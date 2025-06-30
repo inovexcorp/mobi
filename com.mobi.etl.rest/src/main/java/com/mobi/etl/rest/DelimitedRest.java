@@ -23,6 +23,7 @@ package com.mobi.etl.rest;
  * #L%
  */
 
+import static com.mobi.etl.api.delimited.ExcelUtils.getCellText;
 import static com.mobi.rest.util.RestUtils.checkStringParam;
 import static com.mobi.rest.util.RestUtils.getActiveUser;
 import static com.mobi.rest.util.RestUtils.getRDFFormat;
@@ -69,12 +70,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.poi.ss.usermodel.DataFormatter;
-import org.apache.poi.ss.usermodel.FormulaEvaluator;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.ss.usermodel.WorkbookFactory;
+import org.apache.commons.lang3.time.StopWatch;
+import org.dhatim.fastexcel.reader.ReadableWorkbook;
+import org.dhatim.fastexcel.reader.ReadingOptions;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.ValueFactory;
@@ -108,7 +106,6 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -221,19 +218,16 @@ public class DelimitedRest {
             InputStream inputStream = file.getStream();
             String filename = file.getFilename();
 
-            ByteArrayOutputStream fileOutput;
-            try {
-                fileOutput = toByteArrayOutputStream(inputStream);
-            } catch (IOException e) {
-                throw ErrorUtils.sendError(PARSING_DELIMITED_ERROR, BAD_REQUEST);
-            }
-            getCharset(fileOutput.toByteArray());
-
             String uuid = generateUuid();
             String extension = FilenameUtils.getExtension(filename);
             Path filePath = Paths.get(TEMP_DIR + "/" + uuid + "." + extension);
 
-            saveStreamToFile(new ByteArrayInputStream(fileOutput.toByteArray()), filePath);
+            saveStreamToFile(inputStream, filePath);
+            try {
+                getCharset(filePath.toFile(), true);
+            } catch (IOException ex) {
+                throw new IllegalStateException("Error occurred reading temporary file", ex);
+            }
             return Response.status(201).entity(filePath.getFileName().toString()).build();
         } catch (IllegalStateException | MobiException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), INTERNAL_SERVER_ERROR);
@@ -351,7 +345,11 @@ public class DelimitedRest {
         checkStringParam(jsonld, "Must provide a JSON-LD string");
         try {
             // Convert the data
+            StopWatch watch = new StopWatch();
+            watch.start();
             Model data = etlFileToModel(fileName, () -> jsonldToModel(jsonld), containsHeaders, separator, true);
+            watch.stop();
+            logger.trace("ETL File took {}ms", watch.getNanoTime() / 1000000);
 
             return Response.ok(groupedModelToString(data, format)).build();
         } catch (IllegalStateException | MobiException ex) {
@@ -407,8 +405,12 @@ public class DelimitedRest {
 
         try {
             // Convert the data
+            StopWatch watch = new StopWatch();
+            watch.start();
             Model data = etlFileToModel(fileName, () -> getUploadedMapping(mappingRecordIRI), containsHeaders,
                     separator, false);
+            watch.stop();
+            logger.trace("ETL File took {}ms", watch.getNanoTime() / 1000000);
             String result = groupedModelToString(data, format);
 
             // Write data into a stream
@@ -475,8 +477,12 @@ public class DelimitedRest {
 
         try {
             // Convert the data
+            StopWatch watch = new StopWatch();
+            watch.start();
             Model data = etlFileToModel(fileName, () -> getUploadedMapping(mappingRecordIRI), containsHeaders,
                     separator, false);
+            watch.stop();
+            logger.trace("ETL File took {}ms", watch.getNanoTime() / 1000000);
 
             // Add data to the dataset
             ImportServiceConfig config = new ImportServiceConfig.Builder().dataset(vf.createIRI(datasetRecordIRI))
@@ -556,8 +562,12 @@ public class DelimitedRest {
 
         try {
             // Convert the data
+            StopWatch watch = new StopWatch();
+            watch.start();
             Model mappingData = etlFileToModel(fileName, () -> getUploadedMapping(mappingRecordIRI), containsHeaders,
                     separator, false);
+            watch.stop();
+            logger.trace("ETL File took {}ms", watch.getNanoTime() / 1000000);
 
             // Commit converted data
             IRI branchId = vf.createIRI(branchIRI);
@@ -602,6 +612,14 @@ public class DelimitedRest {
                 ErrorUtils.sendError("Document not found", BAD_REQUEST));
         String extension = FilenameUtils.getExtension(delimitedFile.getName());
 
+        // Collect the delimited file charset
+        Charset charset;
+        try (InputStream data = getDocumentInputStream(delimitedFile)) {
+            charset = CharsetUtils.getEncoding(data).orElse(Charset.defaultCharset());
+        } catch (IOException e) {
+            throw ErrorUtils.sendError(e, "Exception reading ETL file", BAD_REQUEST);
+        }
+
         // Collect the mapping model
         Model mappingModel;
         try {
@@ -613,15 +631,15 @@ public class DelimitedRest {
         // Run the mapping against the delimited data
         try (InputStream data = getDocumentInputStream(delimitedFile)) {
             Model result;
-            if (extension.equals("xls") || extension.equals("xlsx")) {
-                ExcelConfig.ExcelConfigBuilder config = new ExcelConfig.ExcelConfigBuilder(data, mappingModel)
+            if (extension.equals("xlsx")) {
+                ExcelConfig.ExcelConfigBuilder config = new ExcelConfig.ExcelConfigBuilder(data, charset, mappingModel)
                         .containsHeaders(containsHeaders);
                 if (limit) {
                     config.limit(NUM_LINE_PREVIEW);
                 }
                 result = etlFileWithSupplier(() -> converter.convert(config.build()));
             } else {
-                SVConfig.SVConfigBuilder config = new SVConfig.SVConfigBuilder(data, mappingModel)
+                SVConfig.SVConfigBuilder config = new SVConfig.SVConfigBuilder(data, charset, mappingModel)
                         .separator(separator.charAt(0))
                         .containsHeaders(containsHeaders);
                 if (limit) {
@@ -629,7 +647,7 @@ public class DelimitedRest {
                 }
                 result = etlFileWithSupplier(() -> converter.convert(config.build()));
             }
-            logger.info("File mapped: " + delimitedFile.getPath());
+            logger.info("File mapped: {}", delimitedFile.getPath());
             return result;
         } catch (IOException e) {
             throw ErrorUtils.sendError(e, "Exception reading ETL file", BAD_REQUEST);
@@ -691,10 +709,10 @@ public class DelimitedRest {
                 String extension = FilenameUtils.getExtension(file.getName());
                 int numRows = (rowEnd <= 0) ? 10 : rowEnd;
 
-                logger.info("Getting " + numRows + " rows from " + file.getName());
+                logger.info("Getting {} rows from {}", numRows, file.getName());
                 String json;
                 try {
-                    if (extension.equals("xls") || extension.equals("xlsx")) {
+                    if (extension.equals("xlsx")) {
                         json = convertExcelRows(file, numRows);
                     } else {
                         char separatorChar = separator.charAt(0);
@@ -745,7 +763,7 @@ public class DelimitedRest {
         } catch (IOException e) {
             throw ErrorUtils.sendError(e, PARSING_DELIMITED_ERROR, BAD_REQUEST);
         }
-        logger.info("File Uploaded: " + filePath);
+        logger.info("File Uploaded: {}", filePath);
     }
 
     /**
@@ -759,46 +777,47 @@ public class DelimitedRest {
      * @throws IOException csv file could not be read
      */
     private String convertCSVRows(File input, int numRows, char separator) throws IOException, CsvException {
-        Charset charset = getCharset(Files.readAllBytes(input.toPath()));
+        Charset charset = getCharset(input, false);
         CSVParser parser = new CSVParserBuilder().withSeparator(separator).build();
         try (CSVReader reader = new CSVReaderBuilder(new InputStreamReader(new FileInputStream(input), charset))
                 .withCSVParser(parser).build()) {
-            List<String[]> csvRows = reader.readAll();
             ArrayNode returnRows = mapper.createArrayNode();
-            for (int i = 0; i <= numRows && i < csvRows.size(); i++) {
-                returnRows.insert(i, mapper.valueToTree(csvRows.get(i)));
+            for (int i = 0; i <= numRows; i++) {
+                String[] row = reader.readNext();
+                if (row == null) {
+                    break;
+                }
+                returnRows.insert(i, mapper.valueToTree(row));
             }
             return returnRows.toString();
         }
     }
 
     /**
-     * Converts the specified number of rows of a Excel file into JSON and returns
-     * them as a String.
+     * Converts the specified number of rows of a Excel file into JSON and returns them as a String.
      *
      * @param input the Excel file to convert into JSON
      * @param numRows the number of rows from the Excel file to convert
      * @return a string with the JSON of the Excel rows
-     * @throws IOException excel file could not be read
+     * @throws IOException If Excel file could not be read
      */
     private String convertExcelRows(File input, int numRows) throws IOException {
-        try (Workbook wb = WorkbookFactory.create(input)) {
-            // Only support single sheet files for now
-            FormulaEvaluator evaluator = wb.getCreationHelper().createFormulaEvaluator();
-            Sheet sheet = wb.getSheetAt(0);
-            DataFormatter df = new DataFormatter();
-            ArrayNode rowList = mapper.createArrayNode();
-            for (Row row : sheet) {
-                if (row.getRowNum() <= numRows) {
-                    //getLastCellNumber instead of getPhysicalNumberOfCells so that blank values don't shift cells
-                    ArrayNode columns = mapper.createArrayNode();
-                    for (int i = 0; i < row.getLastCellNum(); i++) {
-                        columns.insert(i, df.formatCellValue(row.getCell(i), evaluator));
-                    }
-                    rowList.add(columns);
-                }
-            }
-            return rowList.toString();
+        // Arguments will extract cell formatting and mark a cell as in error if it could not be parsed
+        ReadingOptions readingOptions = new ReadingOptions(true, true);
+        try (InputStream is = new FileInputStream(input);
+                ReadableWorkbook wb = new ReadableWorkbook(is, readingOptions)) {
+            org.dhatim.fastexcel.reader.Sheet sheet = wb.getFirstSheet();
+            ArrayNode rows = sheet.openStream()
+                    .limit(numRows + 1)
+                    .map(row -> {
+                        ArrayNode columns = mapper.createArrayNode();
+                        for (int i = 0; i < row.getCellCount(); i++) {
+                            columns.insert(i, getCellText(row.getCell(i)));
+                        }
+                        return columns;
+                    })
+                    .collect(mapper::createArrayNode, ArrayNode::add, ArrayNode::add);
+            return rows.toString();
         }
     }
 
@@ -836,6 +855,25 @@ public class DelimitedRest {
         }
 
         return charset;
+    }
+
+    private Charset getCharset(File file, boolean delete) throws IOException {
+        try (InputStream is = new FileInputStream(file)) {
+            Charset charset;
+            Optional<Charset> optCharset = CharsetUtils.getEncoding(is);
+            if (optCharset.isPresent()) {
+                charset = optCharset.get();
+            } else {
+                if (delete) {
+                    boolean deleted = file.delete();
+                    if (!deleted) {
+                        logger.debug("File {} was not fully deleted", file.getAbsolutePath());
+                    }
+                }
+                throw ErrorUtils.sendError("Delimited file is not in a supported encoding", BAD_REQUEST);
+            }
+            return charset;
+        }
     }
 
     /**

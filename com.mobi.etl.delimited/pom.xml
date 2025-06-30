@@ -90,7 +90,6 @@
             <groupId>org.osgi</groupId>
             <artifactId>org.osgi.service.metatype.annotations</artifactId>
         </dependency>
-
         <dependency>
             <groupId>com.opencsv</groupId>
             <artifactId>opencsv</artifactId>
@@ -100,8 +99,8 @@
             <artifactId>logback-classic</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.apache.servicemix.bundles</groupId>
-            <artifactId>org.apache.servicemix.bundles.poi</artifactId>
+            <groupId>org.dhatim</groupId>
+            <artifactId>fastexcel-reader</artifactId>
         </dependency>
 
         <!-- Test Dependencies -->

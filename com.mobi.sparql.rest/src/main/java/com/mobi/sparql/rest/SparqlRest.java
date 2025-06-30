@@ -30,7 +30,6 @@ import static com.mobi.rest.util.RestUtils.RDFXML_MIME_TYPE;
 import static com.mobi.rest.util.RestUtils.TSV_MIME_TYPE;
 import static com.mobi.rest.util.RestUtils.TURTLE_MIME_TYPE;
 import static com.mobi.rest.util.RestUtils.XLSX_MIME_TYPE;
-import static com.mobi.rest.util.RestUtils.XLS_MIME_TYPE;
 import static com.mobi.rest.util.RestUtils.convertFileExtensionToMimeType;
 import static com.mobi.rest.util.RestUtils.getActiveUser;
 import static com.mobi.rest.util.RestUtils.getErrorObjBadRequest;
@@ -71,12 +70,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.poi.hssf.usermodel.HSSFWorkbook;
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.dhatim.fastexcel.Workbook;
+import org.dhatim.fastexcel.Worksheet;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
@@ -183,6 +178,7 @@ public class SparqlRest {
 
     /**
      * Set Limit Results.
+     *
      * @param limitResults the size to limit sparql query results to on the limited endpoints
      */
     public void setLimitResults(int limitResults) {
@@ -203,8 +199,8 @@ public class SparqlRest {
      */
     @GET
     @Path("/{storeType}/{id}")
-    @Produces({XLSX_MIME_TYPE, XLS_MIME_TYPE, CSV_MIME_TYPE, TSV_MIME_TYPE,
-            JSON_MIME_TYPE, TURTLE_MIME_TYPE, LDJSON_MIME_TYPE, RDFXML_MIME_TYPE})
+    @Produces({XLSX_MIME_TYPE, CSV_MIME_TYPE, TSV_MIME_TYPE, JSON_MIME_TYPE, TURTLE_MIME_TYPE, LDJSON_MIME_TYPE,
+            RDFXML_MIME_TYPE})
     @RolesAllowed("user")
     @Operation(
             tags = "sparql",
@@ -220,7 +216,6 @@ public class SparqlRest {
                                     @Content(mediaType = RDFXML_MIME_TYPE),
                                     @Content(mediaType = JSON_MIME_TYPE),
                                     @Content(mediaType = XLSX_MIME_TYPE),
-                                    @Content(mediaType = XLS_MIME_TYPE),
                                     @Content(mediaType = CSV_MIME_TYPE),
                                     @Content(mediaType = TSV_MIME_TYPE),
                                     @Content(mediaType = MediaType.APPLICATION_OCTET_STREAM)
@@ -275,7 +270,7 @@ public class SparqlRest {
     /**
      * Retrieves the results of the provided SPARQL query for the given {@code storeType} with the IRI {@code id}.
      * Downloads a delimited, binary file, or text file with the results of the provided SPARQL query.
-     * Supports CSV, TSV, Excel 97-2003, and Excel 2013, Turtle, JSON-LD, and RDF/XML file extensions.
+     * Supports CSV, TSV, Excel 2007, Turtle, JSON-LD, and RDF/XML file extensions.
      * For select queries the default type is JSON and for construct queries default type is Turtle.
      * If an invalid file type was given for a query, it will change it to the default and log incorrect file type.
      * https://github.com/eclipse/rdf4j/blob/master/core/rio/api/src/main/java/org/eclipse/rdf4j/rio/RDFFormat.java
@@ -319,7 +314,7 @@ public class SparqlRest {
 
     /**
      * Retrieves the results of the provided SPARQL query for the given {@code storeType} with the IRI {@code id}.
-     * Supports CSV, TSV, Excel 97-2003, and Excel 2013, Turtle, JSON-LD, and RDF/XML file extensions.
+     * Supports CSV, TSV, Excel 2007, Turtle, JSON-LD, and RDF/XML file extensions.
      * For select queries the default type is JSON and for construct queries default type is Turtle.
      * If an invalid file type was given for a query, it will change it to the default and log incorrect file type.
      *
@@ -332,8 +327,8 @@ public class SparqlRest {
     @POST
     @Path("/{storeType}/{id}")
     @Consumes("application/sparql-query")
-    @Produces({XLSX_MIME_TYPE, XLS_MIME_TYPE, CSV_MIME_TYPE, TSV_MIME_TYPE,
-            JSON_MIME_TYPE, TURTLE_MIME_TYPE, LDJSON_MIME_TYPE, RDFXML_MIME_TYPE})
+    @Produces({XLSX_MIME_TYPE, CSV_MIME_TYPE, TSV_MIME_TYPE, JSON_MIME_TYPE, TURTLE_MIME_TYPE, LDJSON_MIME_TYPE,
+            RDFXML_MIME_TYPE})
     @RolesAllowed("user")
     @ActionId(value = Read.TYPE)
     @ResourceAttributes(@AttributeValue(type = ValueType.PATH, id = "https://mobi.solutions/store-type",
@@ -362,7 +357,7 @@ public class SparqlRest {
     /**
      * Retrieves the results of the provided SPARQL query for the given {@code storeType} with the IRI {@code id}.
      * Downloads a delimited, binary file, or text file with the results of the provided SPARQL query.
-     * Supports CSV, TSV, Excel 97-2003, and Excel 2013, Turtle, JSON-LD, and RDF/XML file extensions.
+     * Supports CSV, TSV, Excel 2007, Turtle, JSON-LD, and RDF/XML file extensions.
      * For select queries the default type is JSON and for construct queries default type is Turtle.
      * If an invalid file type was given for a query, it will change it to the default and log incorrect file type.
      * https://github.com/eclipse/rdf4j/blob/master/core/rio/api/src/main/java/org/eclipse/rdf4j/rio/RDFFormat.java
@@ -408,7 +403,7 @@ public class SparqlRest {
 
     /**
      * Retrieves the results of the provided SPARQL query for the given {@code storeType} with the IRI {@code id}.
-     * Supports CSV, TSV, Excel 97-2003, and Excel 2013, Turtle, JSON-LD, and RDF/XML file extensions.
+     * Supports CSV, TSV, Excel 2007, Turtle, JSON-LD, and RDF/XML file extensions.
      * For select queries the default type is JSON and for construct queries default type is Turtle.
      * If an invalid file type was given for a query, it will change it to the default and log incorrect file type.
      *
@@ -421,8 +416,8 @@ public class SparqlRest {
     @POST
     @Path("/{storeType}/{id}")
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
-    @Produces({XLSX_MIME_TYPE, XLS_MIME_TYPE, CSV_MIME_TYPE, TSV_MIME_TYPE,
-            JSON_MIME_TYPE, TURTLE_MIME_TYPE, LDJSON_MIME_TYPE, RDFXML_MIME_TYPE})
+    @Produces({XLSX_MIME_TYPE, CSV_MIME_TYPE, TSV_MIME_TYPE, JSON_MIME_TYPE, TURTLE_MIME_TYPE, LDJSON_MIME_TYPE,
+            RDFXML_MIME_TYPE})
     @RolesAllowed("user")
     @Operation(
             tags = "sparql",
@@ -438,7 +433,6 @@ public class SparqlRest {
                                     @Content(mediaType = RDFXML_MIME_TYPE),
                                     @Content(mediaType = JSON_MIME_TYPE),
                                     @Content(mediaType = XLSX_MIME_TYPE),
-                                    @Content(mediaType = XLS_MIME_TYPE),
                                     @Content(mediaType = CSV_MIME_TYPE),
                                     @Content(mediaType = TSV_MIME_TYPE),
                                     @Content(mediaType = MediaType.APPLICATION_OCTET_STREAM),
@@ -517,7 +511,7 @@ public class SparqlRest {
     /**
      * Retrieves the results of the provided SPARQL query for the given {@code storeType} with the IRI {@code id}.
      * Downloads a delimited, binary file, or text file with the results of the provided SPARQL query.
-     * Supports CSV, TSV, Excel 97-2003, and Excel 2013, Turtle, JSON-LD, and RDF/XML file extensions.
+     * Supports CSV, TSV, Excel 2007, Turtle, JSON-LD, and RDF/XML file extensions.
      * For select queries the default type is JSON and for construct queries default type is Turtle.
      * If an invalid file type was given for a query, it will change it to the default and log incorrect file type.
      * https://github.com/eclipse/rdf4j/blob/master/core/rio/api/src/main/java/org/eclipse/rdf4j/rio/RDFFormat.java
@@ -711,7 +705,6 @@ public class SparqlRest {
                                     @Content(mediaType = RDFXML_MIME_TYPE),
                                     @Content(mediaType = JSON_MIME_TYPE),
                                     @Content(mediaType = XLSX_MIME_TYPE),
-                                    @Content(mediaType = XLS_MIME_TYPE),
                                     @Content(mediaType = CSV_MIME_TYPE),
                                     @Content(mediaType = TSV_MIME_TYPE),
                                     @Content(mediaType = MediaType.APPLICATION_OCTET_STREAM),
@@ -804,7 +797,7 @@ public class SparqlRest {
 
     /**
      * Handle SPARQL Query based on query type.  Can handle SELECT AND CONSTRUCT queries.
-     * SELECT queries output: JSON, XLS, XLSX, CSV, TSV
+     * SELECT queries output: JSON, XLSX, CSV, TSV
      * CONSTRUCT queries output: Turtle, JSON-LD, and RDF/XML
      *
      * @param queryString     The SPARQL query to execute.
@@ -846,7 +839,7 @@ public class SparqlRest {
 
     /**
      * Handle SPARQL Query eagerly based on query type. Can handle SELECT AND CONSTRUCT queries.
-     * SELECT queries output: JSON, XLS, XLSX, CSV, TSV
+     * SELECT queries output: JSON, XLSX, CSV, TSV
      * CONSTRUCT queries output: Turtle, JSON-LD, and RDF/XML
      *
      * @param queryString     The SPARQL query to execute.
@@ -866,7 +859,8 @@ public class SparqlRest {
             if (parsedOperation instanceof ParsedTupleQuery) {
                 return handleSelectQueryEagerly(queryString, resourceId, storeType, mimeType, limit, rdfRecordParams);
             } else if (parsedOperation instanceof ParsedGraphQuery) {
-                return handleConstructQueryEagerly(queryString, resourceId, storeType, mimeType, limit, rdfRecordParams);
+                return handleConstructQueryEagerly(queryString, resourceId, storeType, mimeType, limit,
+                        rdfRecordParams);
             } else {
                 throw RestUtils.getErrorObjBadRequest(QUERY_INVALID_EXCEPTION);
             }
@@ -882,7 +876,7 @@ public class SparqlRest {
 
     /**
      * Handle Select Query. Defaults to json if mimeType is invalid
-     * Output: JSON, XLS, XLSX, CSV, TSV
+     * Output: JSON, XLSX, CSV, TSV
      *
      * @param queryString     The SPARQL query to execute.
      * @param resourceId      The Resource of the resource to query
@@ -907,10 +901,6 @@ public class SparqlRest {
                 fileExtension = "json";
                 stream = getSelectStream(queryString, resourceId, storeType, rdfRecordParams,
                         TupleQueryResultFormat.JSON);
-            }
-            case XLS_MIME_TYPE -> {
-                fileExtension = "xls";
-                stream = getStreamingOutputExcel(queryString, resourceId, storeType, rdfRecordParams, fileExtension);
             }
             case XLSX_MIME_TYPE -> {
                 fileExtension = "xlsx";
@@ -955,7 +945,7 @@ public class SparqlRest {
         } else {
             tupleQueryResult = getTupleQueryResults(queryString, resourceId, storeType);
         }
-        return createExcelResults(tupleQueryResult, fileExtension);
+        return createExcelResults(tupleQueryResult);
     }
 
     /**
@@ -1194,7 +1184,7 @@ public class SparqlRest {
             };
         } else if (REPOSITORY_STORE_TYPE.equals(storeType)) {
             return os -> {
-                    OsgiRepository repository = repositoryManager.getRepository((IRI) resourceId).orElseThrow(() ->
+                OsgiRepository repository = repositoryManager.getRepository((IRI) resourceId).orElseThrow(() ->
                         getErrorObjInternalServerError(REPO_NOT_AVAILABLE_EXCEPTION));
                 try (RepositoryConnection conn = repository.getConnection()) {
                     executeGraphQuery(queryString, format, os, conn, null);
@@ -1319,49 +1309,40 @@ public class SparqlRest {
     }
 
     /**
-     * Create Excel Format Streaming Output Results.
-     * HSSF is the POI Project's pure Java implementation of the Excel '97(-2007) file format.
-     * XSSF is the POI Project's pure Java implementation of the Excel 2007 OOXML (.xlsx) file format.
+     * Create Excel Format Streaming Output Results. Fastexcel only supports output as Excel 2007 OOXML (.xlsx) format.
      *
      * @param result TupleQueryResult
-     * @param type   the excel spreadsheet format, accepts xls, xlsx
      * @return StreamingOutput creates a binary stream for Workbook data
      */
-    private StreamingOutput createExcelResults(TupleQueryResult result, String type) {
+    private StreamingOutput createExcelResults(TupleQueryResult result) {
         List<String> bindings = result.getBindingNames();
 
         return os -> {
-            try (Workbook wb = type.equals("xls") ? new HSSFWorkbook() : new XSSFWorkbook()) {
-                Sheet sheet = wb.createSheet();
-                Row row;
-                Cell cell;
+            try (Workbook wb = new Workbook(os, "test", "1.0")) {
+                Worksheet sheet = wb.newWorksheet("Sheet 1");
                 BindingSet bindingSet;
                 int rowIt = 0;
                 int cellIt = 0;
 
-                row = sheet.createRow(rowIt);
                 for (String bindingName : bindings) {
-                    cell = row.createCell(cellIt);
-                    cell.setCellValue(bindingName);
+                    sheet.value(0, cellIt, bindingName);
                     cellIt++;
                 }
                 rowIt++;
                 while (result.hasNext()) {
                     bindingSet = result.next();
                     cellIt = 0;
-                    row = sheet.createRow(rowIt);
                     for (String bindingName : bindings) {
-                        cell = row.createCell(cellIt);
                         Optional<Binding> bindingOpt = Optional.ofNullable(bindingSet.getBinding(bindingName));
                         if (bindingOpt.isPresent()) {
-                            cell.setCellValue(bindingOpt.get().getValue().stringValue());
+                            sheet.value(rowIt, cellIt, bindingOpt.get().getValue().stringValue());
                         }
                         cellIt++;
                     }
                     rowIt++;
                 }
 
-                wb.write(os);
+                wb.finish();
                 os.flush();
                 os.close();
             } catch (IOException e) {
@@ -1383,22 +1364,18 @@ public class SparqlRest {
                 Resource commitIRI = vf.createIRI(commitIdStr);
                 if (StringUtils.isNotBlank(branchIdStr)) {
                     Resource branchIRI = vf.createIRI(branchIdStr);
-                    queryableRDFOpt = isOnt ?
-                            ontologyManager.retrieveOntology(recordId, branchIRI, commitIRI) :
+                    queryableRDFOpt = isOnt ? ontologyManager.retrieveOntology(recordId, branchIRI, commitIRI) :
                             shapesGraphManager.retrieveShapesGraph(recordId, branchIRI, commitIRI);
                 } else {
-                    queryableRDFOpt = isOnt ?
-                            ontologyManager.retrieveOntologyByCommit(recordId, commitIRI) :
+                    queryableRDFOpt = isOnt ? ontologyManager.retrieveOntologyByCommit(recordId, commitIRI) :
                             shapesGraphManager.retrieveShapesGraphByCommit(recordId, commitIRI);
                 }
             } else if (StringUtils.isNotBlank(branchIdStr)) {
                 Resource branchIRI = vf.createIRI(branchIdStr);
-                queryableRDFOpt = isOnt ?
-                        ontologyManager.retrieveOntology(recordId, branchIRI) :
+                queryableRDFOpt = isOnt ? ontologyManager.retrieveOntology(recordId, branchIRI) :
                         shapesGraphManager.retrieveShapesGraph(recordId, branchIRI);
             } else {
-                queryableRDFOpt = isOnt ?
-                        ontologyManager.retrieveOntology(recordId) :
+                queryableRDFOpt = isOnt ? ontologyManager.retrieveOntology(recordId) :
                         shapesGraphManager.retrieveShapesGraph(recordId);
             }
 
@@ -1411,8 +1388,7 @@ public class SparqlRest {
                 }
 
                 if (inProgressCommitOpt.isPresent()) {
-                    queryableRDFOpt = isOnt ?
-                            Optional.of(ontologyManager.applyChanges((Ontology) queryableRDFOpt.get(),
+                    queryableRDFOpt = isOnt ? Optional.of(ontologyManager.applyChanges((Ontology) queryableRDFOpt.get(),
                                     inProgressCommitOpt.get())) :
                             Optional.of(shapesGraphManager.applyChanges((ShapesGraph) queryableRDFOpt.get(),
                                     inProgressCommitOpt.get()));

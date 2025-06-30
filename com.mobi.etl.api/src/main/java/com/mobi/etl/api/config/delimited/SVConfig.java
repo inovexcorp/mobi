@@ -26,6 +26,7 @@ package com.mobi.etl.api.config.delimited;
 import org.eclipse.rdf4j.model.Model;
 
 import java.io.InputStream;
+import java.nio.charset.Charset;
 
 public class SVConfig extends DelimitedConfig {
     private char separator = ',';
@@ -42,8 +43,8 @@ public class SVConfig extends DelimitedConfig {
     public static class SVConfigBuilder extends Builder<SVConfigBuilder> {
         private char separator = ',';
 
-        public SVConfigBuilder(InputStream data, Model mapping) {
-            super(data, mapping);
+        public SVConfigBuilder(InputStream data, Charset charset, Model mapping) {
+            super(data, charset, mapping);
         }
 
         public SVConfigBuilder separator(char separator) {

@@ -47,7 +47,7 @@ export class FileUploadFormComponent implements OnInit, OnDestroy {
     separator: [',']
   });
   isExcel = false;
-  readonly acceptFileTypes = ['.csv','.xls','.xlsx','.tsv'];
+  readonly acceptFileTypes = ['.csv','.xlsx','.tsv'];
 
   constructor(public dm: DelimitedManagerService, public state: MapperStateService, private fb: UntypedFormBuilder) {}
   
@@ -74,7 +74,7 @@ export class FileUploadFormComponent implements OnInit, OnDestroy {
   }
   upload(value: File): void {
     this.dm.fileObj = value;
-    this.isExcel = includes(get(this.dm.fileObj, 'name', ''), 'xls');
+    this.isExcel = includes(get(this.dm.fileObj, 'name', ''), 'x');
     if (this.dm.fileObj) {
       this.dm.upload(this.dm.fileObj).subscribe(data => {
         this.dm.fileName = data;

@@ -107,7 +107,6 @@ describe('Download Query Overlay component', function() {
                 jasmine.objectContaining({id: 'csv'}),
                 jasmine.objectContaining({id: 'tsv'}),
                 jasmine.objectContaining({id: 'xlsx'}),
-                jasmine.objectContaining({id: 'xls'}),
             ]);
         });
         it('construct', function() {
@@ -130,7 +129,6 @@ describe('Download Query Overlay component', function() {
                 jasmine.objectContaining({id: 'csv'}),
                 jasmine.objectContaining({id: 'tsv'}),
                 jasmine.objectContaining({id: 'xlsx'}),
-                jasmine.objectContaining({id: 'xls'}),
             ]);
         });
     });

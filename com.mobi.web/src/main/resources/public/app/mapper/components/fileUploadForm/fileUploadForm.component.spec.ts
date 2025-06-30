@@ -45,7 +45,7 @@ describe('File Upload Form component', function() {
     let delimitedManagerStub: jasmine.SpyObj<DelimitedManagerService>;
 
     const error = 'Error message';
-    const file: File = new File([''], 'test.xls');
+    const file: File = new File([''], 'test.xlsx');
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({

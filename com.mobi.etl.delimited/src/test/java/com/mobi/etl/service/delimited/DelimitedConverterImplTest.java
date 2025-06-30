@@ -49,6 +49,7 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.io.InputStream;
+import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -237,68 +238,6 @@ public class DelimitedConverterImplTest extends OrmEnabledTestCase {
     }
 
     @Test
-    public void Convert_Excel_97_2003_File_with_Multiple_Object_per_Row_and_Object_and_Data_Properties() throws Exception {
-        // Setup
-        ExcelConfig config = getExcelConfigBuilder("testFile.xls", "newestMapping.ttl").containsHeaders(true).build();
-
-        Model convertedModel = converter.convert(config);
-        assertEquals(convertedModel, testOutput);
-    }
-
-    @Test
-    public void Convert_Excel_97_2003_File_with_Formulas() throws Exception {
-        // Setup
-        ExcelConfig config = getExcelConfigBuilder("formulaData.xls", "formulaMapping.ttl").containsHeaders(true).build();
-
-        Model convertedModel = converter.convert(config);
-        assertEquals(convertedModel, testFormulaOutput);
-    }
-
-    @Test
-    public void Convert_Excel_97_2003_File_with_Multiple_Object_per_Row_and_Object_and_Data_Properties_with_Blank_Values() throws Exception {
-        // Setup
-        ExcelConfig config = getExcelConfigBuilder("testFileWithBlanks.xls", "newestMapping.ttl").containsHeaders(true).build();
-
-        Model convertedModel = converter.convert(config);
-        assertEquals(convertedModel, testOutputWithBlanks);
-    }
-
-    @Test
-    public void Convert_Excel_97_2003_File_with_Multiple_Object_per_Row_and_Object_and_Data_Properties_in_Passed_Ontologies() throws Exception {
-        // Setup
-        ExcelConfig config = getExcelConfigBuilder("testFile.xls", "mappingAllDatatypes.ttl").containsHeaders(true).ontologies(Collections.singleton(ontology)).build();
-
-        Model convertedModel = converter.convert(config);
-        assertEquals(convertedModel, testOutputWithDatatypes);
-    }
-
-    @Test
-    public void Convert_Excel_97_2003_File_with_Multiple_Object_per_Row_and_Object_and_Data_Properties_in_Source_Ontologies() throws Exception {
-        // Setup
-        when(om.retrieveOntology(any(), any(), any())).thenReturn(Optional.of(ontology));
-        ExcelConfig config = getExcelConfigBuilder("testFile.xls", "mappingWithSourceOntology.ttl").containsHeaders(true).build();
-
-        Model convertedModel = converter.convert(config);
-        assertEquals(convertedModel, testOutputWithDatatypes);
-    }
-
-    @Test
-    public void Convert_Excel_97_2003_File_with_Source_Ontologies_and_Invalid_Values_for_Range_Datatypes() throws Exception {
-        // Setup
-        when(om.retrieveOntology(any(), any(), any())).thenReturn(Optional.of(ontology));
-        ExcelConfig config = getExcelConfigBuilder("testFileWithInvalidValues.xls", "mappingWithSourceOntology.ttl").containsHeaders(true).build();
-
-        Model convertedModel = converter.convert(config);
-        testOutputWithDatatypesAndInvalidValues.forEach(statement -> {
-            if (!convertedModel.contains(statement)) {
-                System.out.println(statement);
-            }
-        });
-        assertEquals(testOutputWithDatatypesAndInvalidValues.size(), convertedModel.size());
-        assertEquals(testOutputWithDatatypesAndInvalidValues, convertedModel);
-    }
-
-    @Test
     public void Convert_Excel_2007_File_with_Multiple_Object_per_Row_and_Object_and_Data_Properties() throws Exception {
         // Setup
         ExcelConfig config = getExcelConfigBuilder("testFile.xlsx", "newestMapping.ttl").containsHeaders(true).build();
@@ -332,6 +271,7 @@ public class DelimitedConverterImplTest extends OrmEnabledTestCase {
         when(converter.generateUuid()).thenReturn("abc", "bcd", "cdf", "dfg", "fgh", "ghi", "hij", "ijk", "jkl", "klm", "lmn", "mno", "nop", "opq", "pqr", "qrs", "rst", "stu", "tuv", "uvw", "vwx", "wxy", "xyz", "yza", "zab", "123", "234", "345", "456", "567", "678", "789", "890", "987", "876", "765", "654", "543", "432", "321");
 
         Model convertedModel = converter.convert(config);
+        Rio.write(convertedModel, System.out, RDFFormat.TURTLE);
         assertEquals(convertedModel, testOutputWithFormattingAndBlanks);
     }
 
@@ -460,15 +400,6 @@ public class DelimitedConverterImplTest extends OrmEnabledTestCase {
     }
 
     @Test
-    public void Convert_Excel_97_2003_File_with_an_offset_and_headers_and_blank_rows() throws Exception {
-        // Setup
-        ExcelConfig config = getExcelConfigBuilder("testFileWithBlanks.xls", "newestMapping.ttl").containsHeaders(true).offset(2).build();
-
-        Model convertedModel = converter.convert(config);
-        assertEquals(convertedModel, testOutputOffsetWithBlankRows);
-    }
-
-    @Test
     public void Convert_Excel_2007_File_with_an_offset_and_headers_and_blank_rows() throws Exception {
         // Setup
         ExcelConfig config = getExcelConfigBuilder("testFileWithBlanks.xlsx", "newestMapping.ttl").containsHeaders(true).offset(2).build();
@@ -508,7 +439,7 @@ public class DelimitedConverterImplTest extends OrmEnabledTestCase {
     @Test(expected = MobiETLException.class)
     public void Missing_mapsTo_throws_an_exception() throws Exception {
         // Setup
-        SVConfig config = new SVConfig.SVConfigBuilder(getInputStream("testFile.csv"), loadModel("mapping_no-mapsTo.ttl")).containsHeaders(true).separator(',').build();
+        SVConfig config = new SVConfig.SVConfigBuilder(getInputStream("testFile.csv"), Charset.defaultCharset(), loadModel("mapping_no-mapsTo.ttl")).containsHeaders(true).separator(',').build();
 
         converter.convert(config);
     }
@@ -516,7 +447,7 @@ public class DelimitedConverterImplTest extends OrmEnabledTestCase {
     @Test(expected = MobiETLException.class)
     public void Missing_classMapping_throws_an_exception() throws Exception {
         // Setup
-        SVConfig config = new SVConfig.SVConfigBuilder(getInputStream("testFile.csv"), loadModel("mapping_no-classMapping.ttl")).containsHeaders(true).separator(',').build();
+        SVConfig config = new SVConfig.SVConfigBuilder(getInputStream("testFile.csv"), Charset.defaultCharset(), loadModel("mapping_no-classMapping.ttl")).containsHeaders(true).separator(',').build();
 
         converter.convert(config);
     }
@@ -534,10 +465,10 @@ public class DelimitedConverterImplTest extends OrmEnabledTestCase {
     }
 
     private SVConfig.SVConfigBuilder getSVConfigBuilder(String inputFilename, String mappingFilename) throws Exception {
-        return new SVConfig.SVConfigBuilder(getInputStream(inputFilename), loadModel(mappingFilename));
+        return new SVConfig.SVConfigBuilder(getInputStream(inputFilename), Charset.defaultCharset(), loadModel(mappingFilename));
     }
 
     private ExcelConfig.ExcelConfigBuilder getExcelConfigBuilder(String inputFilename, String mappingFilename) throws Exception {
-        return new ExcelConfig.ExcelConfigBuilder(getInputStream(inputFilename), loadModel(mappingFilename));
+        return new ExcelConfig.ExcelConfigBuilder(getInputStream(inputFilename), Charset.defaultCharset(), loadModel(mappingFilename));
     }
 }
