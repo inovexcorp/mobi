@@ -23,6 +23,7 @@ package com.mobi.etl.rest;
  * #L%
  */
 
+import static com.mobi.etl.api.delimited.ExcelUtils.getCellText;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getModelFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getRequiredOrmFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory;
@@ -59,13 +60,8 @@ import com.mobi.rest.test.util.FormDataMultiPart;
 import com.mobi.rest.test.util.MobiRestTestCXF;
 import com.mobi.rest.test.util.UsernameTestFilter;
 import org.apache.commons.io.IOUtils;
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.DataFormatter;
-import org.apache.poi.ss.usermodel.FormulaEvaluator;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.ss.usermodel.WorkbookFactory;
+import org.dhatim.fastexcel.reader.ReadableWorkbook;
+import org.dhatim.fastexcel.reader.ReadingOptions;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.ModelFactory;
@@ -281,34 +277,20 @@ public class DelimitedRestTest extends MobiRestTestCXF {
 
     @Test
     public void getRowsFromExcelWithDefaultsTest() throws Exception {
-        String fileName1 = UUID.randomUUID() + ".xls";
-        copyResourceToTemp("test.xls", fileName1);
-        List<String> expectedLines = getExcelResourceLines("test.xls");
-        Response response = target().path("delimited-files/" + fileName1).request().get();
-        assertEquals(200, response.getStatus());
-        testResultsRows(response, expectedLines, 10);
-
-        String fileName2 = UUID.randomUUID() + ".xlsx";
-        copyResourceToTemp("test.xlsx", fileName2);
-        expectedLines = getExcelResourceLines("test.xlsx");
-        response = target().path("delimited-files/" + fileName2).request().get();
+        String fileName = UUID.randomUUID() + ".xlsx";
+        copyResourceToTemp("test.xlsx", fileName);
+        List<String> expectedLines = getExcelResourceLines("test.xlsx");
+        Response response = target().path("delimited-files/" + fileName).request().get();
         assertEquals(200, response.getStatus());
         testResultsRows(response, expectedLines, 10);
     }
 
     @Test
     public void getRowsFromExcelWithFormulasTest() throws Exception {
-        String fileName1 = UUID.randomUUID() + ".xls";
-        copyResourceToTemp("formulaData.xls", fileName1);
-        List<String> expectedLines = getExcelResourceLines("formulaData.xls");
-        Response response = target().path("delimited-files/" + fileName1).request().get();
-        assertEquals(200, response.getStatus());
-        testResultsRows(response, expectedLines, 9);
-
-        String fileName2 = UUID.randomUUID() + ".xlsx";
-        copyResourceToTemp("formulaData.xlsx", fileName2);
-        expectedLines = getExcelResourceLines("formulaData.xlsx");
-        response = target().path("delimited-files/" + fileName2).request().get();
+        String fileName = UUID.randomUUID() + ".xlsx";
+        copyResourceToTemp("formulaData.xlsx", fileName);
+        List<String> expectedLines = getExcelResourceLines("formulaData.xlsx");
+        Response response = target().path("delimited-files/" + fileName).request().get();
         assertEquals(200, response.getStatus());
         testResultsRows(response, expectedLines, 9);
     }
@@ -317,17 +299,10 @@ public class DelimitedRestTest extends MobiRestTestCXF {
     public void getRowsFromExcelWithParamsTest() throws Exception {
         int rowNum = 5;
 
-        String fileName1 = UUID.randomUUID() + ".xls";
-        copyResourceToTemp("test.xls", fileName1);
-        List<String> expectedLines = getExcelResourceLines("test.xls");
-        Response response = target().path("delimited-files/" + fileName1).queryParam("rowCount", rowNum).request().get();
-        assertEquals(200, response.getStatus());
-        testResultsRows(response, expectedLines, rowNum);
-
-        String fileName2 = UUID.randomUUID() + ".xlsx";
-        copyResourceToTemp("test.xlsx", fileName2);
-        expectedLines = getExcelResourceLines("test.xlsx");
-        response = target().path("delimited-files/" + fileName2).queryParam("rowCount", rowNum).request().get();
+        String fileName = UUID.randomUUID() + ".xlsx";
+        copyResourceToTemp("test.xlsx", fileName);
+        List<String> expectedLines = getExcelResourceLines("test.xlsx");
+        Response response = target().path("delimited-files/" + fileName).queryParam("rowCount", rowNum).request().get();
         assertEquals(200, response.getStatus());
         testResultsRows(response, expectedLines, rowNum);
     }
@@ -715,8 +690,8 @@ public class DelimitedRestTest extends MobiRestTestCXF {
         when(ontologyImportService.importOntology(eq(vf.createIRI(ONTOLOGY_RECORD_IRI)),
                 eq(vf.createIRI(MASTER_BRANCH_IRI)), eq(false), eq(model), eq(user), anyString()))
                 .thenReturn(new Difference.Builder().additions(committedModel).build());
-        String fileName = UUID.randomUUID() + ".xls";
-        copyResourceToTemp("test.xls", fileName);
+        String fileName = UUID.randomUUID() + ".xlsx";
+        copyResourceToTemp("test.xlsx", fileName);
 
         Response response = target().path("delimited-files/" + fileName + "/map-to-ontology").queryParam("mappingRecordIRI", MAPPING_RECORD_IRI)
                 .queryParam("ontologyRecordIRI", ONTOLOGY_RECORD_IRI).queryParam("branchIRI", MASTER_BRANCH_IRI)
@@ -785,21 +760,19 @@ public class DelimitedRestTest extends MobiRestTestCXF {
     }
 
     private List<String> getExcelResourceLines(String fileName) {
+        // Arguments will extract cell formatting and mark a cell as in error if it could not be parsed
+        ReadingOptions readingOptions = new ReadingOptions(true, true);
         List<String> expectedLines = new ArrayList<>();
-        try {
-            Workbook wb = WorkbookFactory.create(Objects.requireNonNull(getClass().getResourceAsStream("/" + fileName)));
-            FormulaEvaluator evaluator = wb.getCreationHelper().createFormulaEvaluator();
-            Sheet sheet = wb.getSheetAt(0);
-            DataFormatter df = new DataFormatter();
-            int index = 0;
-            for (Row row : sheet) {
-                StringBuilder rowStr = new StringBuilder();
-                for (Cell cell : row) {
-                    rowStr.append(df.formatCellValue(cell, evaluator));
-                }
-                expectedLines.add(index, rowStr.toString());
-                index++;
-            }
+        try (InputStream is = Objects.requireNonNull(getClass().getResourceAsStream("/" + fileName)); ReadableWorkbook wb = new ReadableWorkbook(is, readingOptions)) {
+            org.dhatim.fastexcel.reader.Sheet sheet = wb.getFirstSheet();
+            sheet.openStream()
+                    .forEach(row -> {
+                        StringBuilder rowStr = new StringBuilder();
+                        for (int i = 0; i < row.getCellCount(); i++) {
+                            rowStr.append(getCellText(row.getCell(i)));
+                        }
+                        expectedLines.add(rowStr.toString());
+                    });
         } catch (IOException e) {
             e.printStackTrace();
         }

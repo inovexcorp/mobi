@@ -39,19 +39,6 @@
 
     <dependencies>
         <dependency>
-            <groupId>org.osgi</groupId>
-            <artifactId>org.osgi.service.cm</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.eclipse.rdf4j</groupId>
-            <artifactId>rdf4j-runtime-osgi</artifactId>
-            <version>${rdf4j.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.servicemix.bundles</groupId>
-            <artifactId>org.apache.servicemix.bundles.poi</artifactId>
-        </dependency>
-        <dependency>
             <groupId>com.mobi</groupId>
             <artifactId>persistence.api</artifactId>
             <version>${project.version}</version>
@@ -76,6 +63,20 @@
             <artifactId>rdf.orm</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.osgi</groupId>
+            <artifactId>org.osgi.service.cm</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.rdf4j</groupId>
+            <artifactId>rdf4j-runtime-osgi</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.dhatim</groupId>
+            <artifactId>fastexcel-reader</artifactId>
+        </dependency>
+
+        <!-- Test dependencies -->
         <dependency>
             <groupId>org.spockframework</groupId>
             <artifactId>spock-core</artifactId>

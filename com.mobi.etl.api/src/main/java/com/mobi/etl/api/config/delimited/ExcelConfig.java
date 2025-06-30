@@ -26,6 +26,7 @@ package com.mobi.etl.api.config.delimited;
 import org.eclipse.rdf4j.model.Model;
 
 import java.io.InputStream;
+import java.nio.charset.Charset;
 
 public class ExcelConfig extends DelimitedConfig {
 
@@ -34,8 +35,8 @@ public class ExcelConfig extends DelimitedConfig {
     }
 
     public static class ExcelConfigBuilder extends Builder<ExcelConfigBuilder> {
-        public ExcelConfigBuilder(InputStream data, Model mapping) {
-            super(data, mapping);
+        public ExcelConfigBuilder(InputStream data, Charset charset, Model mapping) {
+            super(data, charset, mapping);
         }
 
         public ExcelConfig build() {

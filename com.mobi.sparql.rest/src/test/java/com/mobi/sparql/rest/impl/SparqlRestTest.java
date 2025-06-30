@@ -226,7 +226,6 @@ public class SparqlRestTest extends MobiRestTestCXF {
         selectFileTypesMimes.put("sWrongType", new String[]{"application/json", ALL_QUERY});
         fileTypesMimes.put("csv", new String[]{"text/csv", ALL_QUERY});
         fileTypesMimes.put("tsv", new String[]{"text/tab-separated-values", ALL_QUERY});
-        fileTypesMimes.put("xls", new String[]{"application/vnd.ms-excel", ALL_QUERY});
         fileTypesMimes.put("xlsx", new String[]{"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 ALL_QUERY});
 
@@ -366,15 +365,15 @@ public class SparqlRestTest extends MobiRestTestCXF {
     @Test
     public void queryRdfTest() throws Exception {
         setupOntology();
-        assertEquals("Verify Mimes Types", 10, fileTypesMimes.size());
+        assertEquals("Verify Mimes Types", 9, fileTypesMimes.size());
         int minNumberOfInvocations = 0;
 
         for (int i = 0; i < recordIDs.size(); i++) {
             String recordId = recordIDs.get(i);
-            for (Map.Entry mapEntry: fileTypesMimes.entrySet()) {
+            for (Map.Entry<String, String[]> mapEntry: fileTypesMimes.entrySet()) {
                 minNumberOfInvocations += 1;
-                String type = (String) mapEntry.getKey();
-                String[] dataArray = (String[]) mapEntry.getValue();
+                String type = mapEntry.getKey();
+                String[] dataArray = mapEntry.getValue();
                 String mimeType = dataArray[0];
 
                 WebTarget webTarget = getTarget(recordId, i, false, null).queryParam("query", dataArray[1]);
@@ -407,7 +406,7 @@ public class SparqlRestTest extends MobiRestTestCXF {
                 }
             }
         }
-        assertEquals("Verify minNumberOfInvocations", 100, minNumberOfInvocations);
+        assertEquals("Verify minNumberOfInvocations", 90, minNumberOfInvocations);
     }
 
     private void verifyManagers(int i, String[] dataArray, String recordId) {
@@ -454,15 +453,15 @@ public class SparqlRestTest extends MobiRestTestCXF {
     @Test
     public void postQueryRdfTest() throws Exception {
         setupOntology();
-        assertEquals("Verify Mimes Types", 10, fileTypesMimes.size());
+        assertEquals("Verify Mimes Types", 9, fileTypesMimes.size());
         int minNumberOfInvocations = 0;
 
         for (int i = 0; i < recordIDs.size(); i++) {
             String recordId = recordIDs.get(i);
-            for (Map.Entry mapEntry: fileTypesMimes.entrySet()) {
+            for (Map.Entry<String, String[]> mapEntry: fileTypesMimes.entrySet()) {
                 minNumberOfInvocations += 1;
-                String type = (String) mapEntry.getKey();
-                String[] dataArray = (String[]) mapEntry.getValue();
+                String type = mapEntry.getKey();
+                String[] dataArray = mapEntry.getValue();
                 String mimeType = dataArray[0];
 
                 WebTarget webTarget = getTarget(recordId, i, false, null);
@@ -497,21 +496,21 @@ public class SparqlRestTest extends MobiRestTestCXF {
                 }
             }
         }
-        assertEquals("Verify minNumberOfInvocations", 100, minNumberOfInvocations);
+        assertEquals("Verify minNumberOfInvocations", 90, minNumberOfInvocations);
     }
 
     @Test
     public void postUrlEncodedQueryRdfTest() throws Exception {
         setupOntology();
-        assertEquals("Verify Mimes Types", 10, fileTypesMimes.size());
+        assertEquals("Verify Mimes Types", 9, fileTypesMimes.size());
         int minNumberOfInvocations = 0;
 
         for (int i = 0; i < recordIDs.size(); i++) {
             String recordId = recordIDs.get(i);
-            for (Map.Entry mapEntry: fileTypesMimes.entrySet()) {
+            for (Map.Entry<String, String[]> mapEntry: fileTypesMimes.entrySet()) {
                 minNumberOfInvocations += 1;
-                String type = (String) mapEntry.getKey();
-                String[] dataArray = (String[]) mapEntry.getValue();
+                String type = mapEntry.getKey();
+                String[] dataArray = mapEntry.getValue();
                 String mimeType = dataArray[0];
 
                 Form form = new Form();
@@ -549,22 +548,22 @@ public class SparqlRestTest extends MobiRestTestCXF {
                 }
             }
         }
-        assertEquals("Verify minNumberOfInvocations", 100, minNumberOfInvocations);
+        assertEquals("Verify minNumberOfInvocations", 90, minNumberOfInvocations);
     }
 
     @Test
     public void downloadQueryTest() throws Exception {
         setupOntology();
-        assertEquals("Verify Mimes Types", 10, fileTypesMimes.size());
+        assertEquals("Verify Mimes Types", 9, fileTypesMimes.size());
         int minNumberOfInvocations = 0;
         for (String filename : filenames) {
             for (int i = 0; i < recordIDs.size(); i++) {
             String recordId = recordIDs.get(i);
-                for (Map.Entry mapEntry: fileTypesMimes.entrySet()) {
+                for (Map.Entry<String, String[]> mapEntry: fileTypesMimes.entrySet()) {
                     minNumberOfInvocations += 1;
 
-                    String type = (String) mapEntry.getKey();
-                    String[] dataArray = (String[]) mapEntry.getValue();
+                    String type = mapEntry.getKey();
+                    String[] dataArray = mapEntry.getValue();
                     WebTarget webTarget = getTarget(recordId, i, false, null)
                             .queryParam("query", dataArray[1])
                             .queryParam("fileType", type);
@@ -633,22 +632,22 @@ public class SparqlRestTest extends MobiRestTestCXF {
                 }
             }
         }
-        assertEquals("Verify minNumberOfInvocations", 200, minNumberOfInvocations);
+        assertEquals("Verify minNumberOfInvocations", 180, minNumberOfInvocations);
     }
 
     @Test
     public void downloadQueryPostTest() throws Exception {
         setupOntology();
-        assertEquals("Verify Mimes Types", 10, fileTypesMimes.size());
+        assertEquals("Verify Mimes Types", 9, fileTypesMimes.size());
         int minNumberOfInvocations = 0;
         for (String filename : filenames) {
             for (int i = 0; i < recordIDs.size(); i++) {
             String recordId = recordIDs.get(i);
-                for (Map.Entry mapEntry: fileTypesMimes.entrySet()) {
+                for (Map.Entry<String, String[]> mapEntry: fileTypesMimes.entrySet()) {
                     minNumberOfInvocations += 1;
 
-                    String type = (String) mapEntry.getKey();
-                    String[] dataArray = (String[]) mapEntry.getValue();
+                    String type = mapEntry.getKey();
+                    String[] dataArray = mapEntry.getValue();
 
                     WebTarget webTarget = getTarget(recordId, i, false, null)
                             .queryParam("fileType", type);
@@ -719,22 +718,22 @@ public class SparqlRestTest extends MobiRestTestCXF {
                 }
             }
         }
-        assertEquals("Verify minNumberOfInvocations", 200, minNumberOfInvocations);
+        assertEquals("Verify minNumberOfInvocations", 180, minNumberOfInvocations);
     }
 
     @Test
     public void downloadQueryPostUrlEncodedTest() throws Exception {
         setupOntology();
-        assertEquals("Verify Mimes Types", 10, fileTypesMimes.size());
+        assertEquals("Verify Mimes Types", 9, fileTypesMimes.size());
         int minNumberOfInvocations = 0;
         for (String filename : filenames) {
             for (int i = 0; i < recordIDs.size(); i++) {
             String recordId = recordIDs.get(i);
-                for (Map.Entry mapEntry: fileTypesMimes.entrySet()) {
+                for (Map.Entry<String, String[]> mapEntry: fileTypesMimes.entrySet()) {
                     minNumberOfInvocations += 1;
 
-                    String type = (String) mapEntry.getKey();
-                    String[] dataArray = (String[]) mapEntry.getValue();
+                    String type = mapEntry.getKey();
+                    String[] dataArray = mapEntry.getValue();
 
                     Form form = new Form();
                     form.param("query", ResourceUtils.decode(dataArray[1]));
@@ -746,7 +745,6 @@ public class SparqlRestTest extends MobiRestTestCXF {
                         webTarget = webTarget.queryParam("fileName", filename);
                     }
 
-                    System.out.println(dataArray[0]);
                     Response response = webTarget.request()
                             .header("accept", MediaType.APPLICATION_OCTET_STREAM)
                             .post(Entity.entity(form, MediaType.APPLICATION_FORM_URLENCODED_TYPE));
@@ -809,7 +807,7 @@ public class SparqlRestTest extends MobiRestTestCXF {
                 }
             }
         }
-        assertEquals("Verify minNumberOfInvocations", 200, minNumberOfInvocations);
+        assertEquals("Verify minNumberOfInvocations", 180, minNumberOfInvocations);
     }
 
     @Test
@@ -1331,10 +1329,10 @@ public class SparqlRestTest extends MobiRestTestCXF {
         int minNumberOfInvocations = 0;
         for (int i = 0; i < recordIDs.size(); i++) {
             String recordId = recordIDs.get(i);
-            for (Map.Entry mapEntry: limitedFileTypesMimes.entrySet()) {
+            for (Map.Entry<String, String[]> mapEntry: limitedFileTypesMimes.entrySet()) {
                 minNumberOfInvocations += 1;
-                String type = (String) mapEntry.getKey();
-                String[] dataArray = (String[]) mapEntry.getValue();
+                String type = mapEntry.getKey();
+                String[] dataArray = mapEntry.getValue();
                 String mimeType = dataArray[0];
 
                 WebTarget webTarget = getTarget(recordId, i, true, null).queryParam("query", dataArray[1]);

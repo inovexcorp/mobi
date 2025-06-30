@@ -28,12 +28,14 @@ import com.mobi.ontology.core.api.Ontology;
 import org.eclipse.rdf4j.model.Model;
 
 import java.io.InputStream;
+import java.nio.charset.Charset;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
 
 public class DelimitedConfig {
     private InputStream data;
+    private Charset charset;
     private Model mapping;
     private Set<Ontology> ontologies;
     private boolean containsHeaders = true;
@@ -42,6 +44,7 @@ public class DelimitedConfig {
 
     protected DelimitedConfig(Builder builder) {
         data = builder.data;
+        charset = builder.charset;
         mapping = builder.mapping;
         ontologies = builder.ontologies;
         containsHeaders = builder.containsHeaders;
@@ -51,6 +54,10 @@ public class DelimitedConfig {
 
     public InputStream getData() {
         return data;
+    }
+
+    public Charset getCharset() {
+        return charset;
     }
 
     public Model getMapping() {
@@ -75,14 +82,16 @@ public class DelimitedConfig {
 
     public static class Builder<T extends Builder> {
         private final InputStream data;
+        private final Charset charset;
         private final Model mapping;
         private Set<Ontology> ontologies = Collections.emptySet();
         private boolean containsHeaders = true;
         private Long limit;
         private long offset = 0;
 
-        public Builder(InputStream data, Model mapping) {
+        public Builder(InputStream data, Charset charset, Model mapping) {
             this.data = data;
+            this.charset = charset;
             this.mapping = mapping;
         }
 

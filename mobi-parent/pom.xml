@@ -88,11 +88,11 @@
         <osgi.version>8.0.0</osgi.version>
         <owlapi.version>5.5.0</owlapi.version>
         <owlapi.rdf4j.version>4.2.0</owlapi.rdf4j.version>
-        <poi.version>5.2.3_1</poi.version>
         <jakarta.version>2.1.6</jakarta.version>
-        <!-- These deps are only needed for POI-->
+        <!-- These deps are only needed for Fastexcel-->
         <log4j.version>2.18.0</log4j.version>
-        <commons-compress.version>1.21</commons-compress.version>
+        <commons-compress.version>1.27.1</commons-compress.version>
+        <fastexcel.version>0.19.0</fastexcel.version>
 
         <rdf4j.version>4.3.15</rdf4j.version>
         <servlet.version>3.1.0</servlet.version>  <!-- 4.0.1 with later pax web -->
@@ -364,7 +364,6 @@
                 <version>${osgi-http.version}</version>
             </dependency>
 
-
             <!-- Other Dependencies -->
             <dependency>
                 <groupId>jakarta.ws.rs</groupId>
@@ -463,11 +462,6 @@
                 <version>${swagger.version}</version>
             </dependency>
             <dependency>
-                <groupId>org.apache.servicemix.bundles</groupId>
-                <artifactId>org.apache.servicemix.bundles.poi</artifactId>
-                <version>${poi.version}</version>
-            </dependency>
-            <dependency>
                 <groupId>com.nimbusds</groupId>
                 <artifactId>nimbus-jose-jwt</artifactId>
                 <version>${jose-jwt.version}</version>
@@ -512,6 +506,16 @@
                 <groupId>org.lz4</groupId>
                 <artifactId>lz4-java</artifactId>
                 <version>${lz4.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.dhatim</groupId>
+                <artifactId>fastexcel-reader</artifactId>
+                <version>${fastexcel.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.dhatim</groupId>
+                <artifactId>fastexcel</artifactId>
+                <version>${fastexcel.version}</version>
             </dependency>
 
             <!-- Test Dependencies -->

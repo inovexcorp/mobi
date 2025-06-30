@@ -36,6 +36,7 @@ import com.mobi.etl.api.rdf.export.RDFExportService;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.jaas.engines.RdfEngine;
+import com.mobi.rest.util.CharsetUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.karaf.shell.api.action.Action;
@@ -58,7 +59,9 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.Charset;
 
 @Command(scope = "mobi", name = "transform", description = "Transforms CSV Files to RDF using a mapping file")
 @Service
@@ -180,15 +183,22 @@ public class CLITransform implements Action {
                     .orElseThrow(() -> new IllegalArgumentException("Mapping record not found"))
                     .getModel();
 
+            Charset charset;
+            try (InputStream data = new FileInputStream(newFile)) {
+                charset = CharsetUtils.getEncoding(data).orElse(Charset.defaultCharset());
+            }
+
             Model model;
-            if (extension.equals("xls") || extension.equals("xlsx")) {
-                ExcelConfig config = new ExcelConfig.ExcelConfigBuilder(new FileInputStream(newFile), mapping)
-                        .containsHeaders(containsHeaders).build();
-                model = converter.convert(config);
-            } else {
-                SVConfig config = new SVConfig.SVConfigBuilder(new FileInputStream(newFile), mapping)
-                        .containsHeaders(containsHeaders).separator(separator.charAt(0)).build();
-                model = converter.convert(config);
+            try (InputStream data = new FileInputStream(newFile)) {
+                if (extension.equals("xls") || extension.equals("xlsx")) {
+                    ExcelConfig config = new ExcelConfig.ExcelConfigBuilder(data, charset, mapping)
+                            .containsHeaders(containsHeaders).build();
+                    model = converter.convert(config);
+                } else {
+                    SVConfig config = new SVConfig.SVConfigBuilder(data, charset, mapping)
+                            .containsHeaders(containsHeaders).separator(separator.charAt(0)).build();
+                    model = converter.convert(config);
+                }
             }
 
             if (dataset != null) {

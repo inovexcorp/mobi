@@ -727,7 +727,8 @@ public class SourceGenerator {
                 return codeModel.ref(Double.class);
             } else if (rangeIri.equals(XSD.LONG)) {
                 return codeModel.ref(Long.class);
-            } else if (rangeIri.equals(XSD.INTEGER)) {
+            } else if (rangeIri.equals(XSD.INTEGER) || rangeIri.equals(XSD.NON_NEGATIVE_INTEGER)
+                    || rangeIri.equals(XSD.NON_POSITIVE_INTEGER)) {
                 return codeModel.ref(Integer.class);
             } else if (rangeIri.equals(OWL.THING)) {
                 return codeModel.ref(Thing.class);

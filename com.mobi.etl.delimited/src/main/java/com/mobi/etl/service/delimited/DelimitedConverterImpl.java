@@ -24,6 +24,7 @@ package com.mobi.etl.service.delimited;
  */
 
 import static com.google.common.base.CharMatcher.whitespace;
+import static com.mobi.etl.api.delimited.ExcelUtils.getCellText;
 
 import com.mobi.etl.api.config.delimited.ExcelConfig;
 import com.mobi.etl.api.config.delimited.SVConfig;
@@ -37,21 +38,17 @@ import com.mobi.exception.MobiException;
 import com.mobi.ontology.core.api.DataProperty;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyManager;
-import com.mobi.rest.util.CharsetUtils;
 import com.mobi.vocabularies.xsd.XSD;
 import com.opencsv.CSVParser;
 import com.opencsv.CSVParserBuilder;
 import com.opencsv.CSVReader;
 import com.opencsv.CSVReaderBuilder;
 import com.opencsv.exceptions.CsvValidationException;
-import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.poi.ss.usermodel.DataFormatter;
-import org.apache.poi.ss.usermodel.FormulaEvaluator;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.ss.usermodel.WorkbookFactory;
+import org.dhatim.fastexcel.reader.Cell;
+import org.dhatim.fastexcel.reader.ReadableWorkbook;
+import org.dhatim.fastexcel.reader.ReadingOptions;
+import org.dhatim.fastexcel.reader.Sheet;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.model.Model;
@@ -66,12 +63,10 @@ import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -82,6 +77,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -118,17 +114,14 @@ public class DelimitedConverterImpl implements DelimitedConverter {
                 new IllegalArgumentException("Missing mapping object"));
         Set<Ontology> sourceOntologies = config.getOntologies().isEmpty() ? getSourceOntologies(mapping) :
                 config.getOntologies();
-        byte[] data = toByteArrayOutputStream(config.getData()).toByteArray();
 
         Model convertedRDF = modelFactory.createEmptyModel();
         ArrayList<ClassMapping> classMappings = parseClassMappings(config.getMapping());
         long offset = config.getOffset();
         boolean containsHeaders = config.getContainsHeaders();
 
-        Charset charset = CharsetUtils.getEncoding(new ByteArrayInputStream(data)).orElseThrow(() ->
-                new MobiException("Unsupported character set"));
         CSVParser parser = new CSVParserBuilder().withSeparator(config.getSeparator()).build();
-        try (CSVReader reader = new CSVReaderBuilder(new InputStreamReader(new ByteArrayInputStream(data), charset))
+        try (CSVReader reader = new CSVReaderBuilder(new InputStreamReader(config.getData(), config.getCharset()))
                 .withCSVParser(parser).build()) {
             // If headers exist, skip them
             if (containsHeaders) {
@@ -173,54 +166,60 @@ public class DelimitedConverterImpl implements DelimitedConverter {
                 new IllegalArgumentException("Missing mapping object"));
         Set<Ontology> sourceOntologies = config.getOntologies().isEmpty() ? getSourceOntologies(mapping) :
                 config.getOntologies();
-        String[] nextRow;
         Model convertedRDF = modelFactory.createEmptyModel();
         ArrayList<ClassMapping> classMappings = parseClassMappings(config.getMapping());
 
-        try (Workbook wb = WorkbookFactory.create(config.getData())) {
-            FormulaEvaluator evaluator = wb.getCreationHelper().createFormulaEvaluator();
-            Sheet sheet = wb.getSheetAt(0);
-            DataFormatter df = new DataFormatter();
+        convertExcel(config, convertedRDF, sourceOntologies, classMappings);
+
+        return convertedRDF;
+    }
+
+    private void convertExcel(ExcelConfig config, Model convertedRDF, Set<Ontology> sourceOntologies,
+                              ArrayList<ClassMapping> classMappings) throws IOException {
+        // Arguments will extract cell formatting and mark a cell as in error if it could not be parsed
+        ReadingOptions readingOptions = new ReadingOptions(true, true);
+        try (ReadableWorkbook wb = new ReadableWorkbook(config.getData(), readingOptions)) {
+            Sheet sheet = wb.getFirstSheet();
             boolean containsHeaders = config.getContainsHeaders();
             long offset = config.getOffset();
             Optional<Long> limit = config.getLimit();
-            long lastRowNumber = -1;
+            AtomicLong lastRowNumber = new AtomicLong(-1);
 
             //Traverse each row and convert column into RDF
-            for (Row row : sheet) {
+            sheet.openStream().forEach(row -> {
+                int zeroBasedRowNum = row.getRowNum() - 1;
                 // If headers exist or the row is before the offset point, skip the row
-                if ((containsHeaders && row.getRowNum() == 0) || row.getRowNum() - (containsHeaders ? 1 : 0) < offset
-                        || (limit.isPresent() && row.getRowNum() >= limit.get() + offset) || row.getLastCellNum() < 0) {
-                    lastRowNumber++;
-                    continue;
+                if ((containsHeaders && zeroBasedRowNum == 0)
+                        || zeroBasedRowNum - (containsHeaders ? 1 : 0) < offset
+                        || (limit.isPresent() && zeroBasedRowNum >= limit.get() + offset)
+                        || row.getPhysicalCellCount() < 0) {
+                    lastRowNumber.getAndIncrement();
+                    return;
                 }
                 // Logging the automatic skip of empty rows with no formatting
-                while (row.getRowNum() > lastRowNumber + 1) {
-                    LOGGER.debug(String.format("Skipping empty row number: %d", lastRowNumber + 1));
-                    lastRowNumber++;
+                while (row.getRowNum() > lastRowNumber.get() + 1) {
+                    LOGGER.debug(String.format("Skipping empty row number: %d", lastRowNumber.get() + 1));
+                    lastRowNumber.getAndIncrement();
                 }
-                //getLastCellNumber instead of getPhysicalNumberOfCells so that blank values don't cause cells to shift
-                nextRow = new String[row.getLastCellNum()];
+                // getCellCount instead of getPhysicalCellCount so that blank values don't cause cells to shift
+                String[] cells = new String[row.getCellCount()];
                 boolean rowContainsValues = false;
-                for (int i = 0; i < row.getLastCellNum(); i++) {
-                    nextRow[i] = df.formatCellValue(row.getCell(i), evaluator);
-                    if (!rowContainsValues && !nextRow[i].isEmpty()) {
+                for (int i = 0; i < row.getCellCount(); i++) {
+                    Cell cell = row.getCell(i);
+                    cells[i] = getCellText(cell);
+                    if (!rowContainsValues && !cells[i].isEmpty()) {
                         rowContainsValues = true;
                     }
                 }
-                //Skipping empty rows
+                // Skipping empty rows
                 if (rowContainsValues) {
-                    writeClassMappingsToModel(convertedRDF, nextRow, classMappings, sourceOntologies);
+                    writeClassMappingsToModel(convertedRDF, cells, classMappings, sourceOntologies);
                 } else {
                     LOGGER.debug(String.format("Skipping empty row number: %d", row.getRowNum()));
                 }
-                lastRowNumber++;
-            }
-        } catch (NotImplementedException e) {
-            throw new MobiException(e);
+                lastRowNumber.getAndIncrement();
+            });
         }
-
-        return convertedRDF;
     }
 
     /**
