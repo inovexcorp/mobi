@@ -276,18 +276,18 @@ class SimpleDatasetManagerSpec extends Specification {
         recordMock.getModel() >> modelMock
 
         7.times { mockRecords <<  recordMock }
-        originalResults.getPage() >> mockRecords
-        originalResults.getPageNumber() >> 1
-        originalResults.getTotalSize() >> 7
-        originalResults.getPageSize() >> 10
+        originalResults.page() >> mockRecords
+        originalResults.pageNumber() >> 1
+        originalResults.totalSize() >> 7
+        originalResults.pageSize() >> 10
         recordManagerMock.findRecord(*_) >>> originalResults
 
         expect:
         def results = service.getDatasetRecords(new DatasetPaginatedSearchParams(vf))
-        results.getPage().size() == 7
-        results.getPageSize() == 10
-        results.getTotalSize() == 7
-        results.getPageNumber() == 1
+        results.page().size() == 7
+        results.pageSize() == 10
+        results.totalSize() == 7
+        results.pageNumber() == 1
     }
 
     def "getDatasets() returns an empty set when there are no datasets in that repository"() {

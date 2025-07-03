@@ -21,30 +21,38 @@
   #L%
   -->
 <div class="shapes-project-tab h-100 w-100 m-0 p-3">
-  <div class="d-flex flex-column h-100" *ngIf="state.listItem?.selected && keys(state.listItem?.selected).length && !state?.listItem?.changesPageOpen && !state?.listItem?.merge?.active">
-    <shapes-graph-details></shapes-graph-details>
+  <div class="d-flex flex-column h-100" *ngIf="listItem?.selected && keys(listItem?.selected).length && !state?.listItem?.changesPageOpen && !state?.listItem?.merge?.active">
+    <selected-details
+        [stateService]="state"
+        [entity]="listItem?.selected"
+        [entityIri]="listItem?.selected['@id']"
+        [canModify]="state.canModify()"
+        [isImported]="state.isSelectedImported()">
+    </selected-details>
     <div class="row flex-1 remove-min-height">
       <div class="col-5 vertical-scroll h-100">
         <div class="row py-2">
           <properties-block class="col"
             [stateService]="state"
-            [ontology]="state.listItem.selected"
+            [canModify]="canModify"
+            [ontology]="listItem.selected"
             [annotationIRIs]="annotationIRIs">
           </properties-block>
         </div>
           <div class="row py-2">
             <imports-block class="col"
-              [versionedRdfRecord]="state.listItem.versionedRdfRecord"
+              [versionedRdfRecord]="listItem.versionedRdfRecord"
               [stateService]="state"
-              [listItem]="state.listItem"
+              [listItem]="listItem"
               [targetRecordTypes]="targetRecordTypes"
-              [noImportMessage]="noImportMessage">
+              [noImportMessage]="noImportMessage"
+              [canModify]="canModify">
             </imports-block>
           </div>
       </div>
       <shapes-preview class="col-7 h-100"
-        [format]="state.listItem.previewFormat"
-        [content]="state.listItem.content"
+        [format]="listItem.previewFormat"
+        [content]="listItem.content"
         (contentTypeChange)=updateContentType($event)>
       </shapes-preview>
     </div>

@@ -25,7 +25,13 @@
     <div class="see-history-header d-flex flex-column remove-min-width col h-100">
         <div class="d-flex row">
             <h2 class="see-history-title mb-0 mr-1 break-word align-self-end">{{om.getEntityName(os.listItem.selected)}}</h2>
-            <static-iri class="align-self-end" [readOnly]=true [iri]="os.listItem.selected['@id']"></static-iri>
+            <static-iri class="align-self-end"
+                [stateService]="os"
+                [iri]="os.listItem.selected['@id']"
+                [isImported]="os.isSelectedImported()"
+                [canModify]="os.canModify()"
+                [readOnly]=true >
+            </static-iri>
         </div>
         <div class="row flex-1 remove-min-height">
             <div class="col-xl-6 d-flex flex-column h-100 vertical-scroll">

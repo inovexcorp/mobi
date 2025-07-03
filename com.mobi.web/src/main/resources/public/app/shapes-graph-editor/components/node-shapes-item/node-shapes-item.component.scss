@@ -46,7 +46,7 @@
   }
 }
 
-.node-item-wrapper:hover {
+.node-item-wrapper:hover, .activeNode{
   cursor: pointer;
   background-color: var(--light);
 }

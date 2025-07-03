@@ -20,14 +20,31 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
- /**
+
+/** 
  * @ngdoc interface
- * @name shared.models:ShapesGraphImports
+ * @name shared.models:ImportedOntology
+ * 
+ * Represents metadata for an ontology that was successfully imported into the shapes graph.
  *
- * @description
- * Represents a response from the shapeGraph imports endpoint
+ * @property {string} id - The unique identifier of the import entry (e.g., internal DB or UUID).
+ * @property {string} ontologyId - The IRI or identifier of the imported ontology.
+ * @property {string[]} iris - A list of all distinct subject IRIs used in the ontology.
  */
+export interface ImportedOntology {
+    id: string;
+    ontologyId: string;
+    iris: string[];
+}
+
+/**
+* @ngdoc interface
+* @name shared.models:ShapesGraphImports
+*
+* Represents a response from the shapeGraph imports endpoint
+*/
 export interface ShapesGraphImports {
-    importedOntologies: {id: string, ontologyId: string}[],
+    nonImportedIris: string[];
+    importedOntologies: ImportedOntology[],
     failedImports: string[],
 }

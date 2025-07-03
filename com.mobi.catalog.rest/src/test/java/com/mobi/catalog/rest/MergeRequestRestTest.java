@@ -261,10 +261,10 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
 
         userCount = new UserCount(user.getResource(), com.mobi.rest.util.UsernameTestFilter.USERNAME, 10);
 
-        when(userCountResults.getPage()).thenReturn(Collections.singletonList(userCount));
-        when(userCountResults.getPageNumber()).thenReturn(0);
-        when(userCountResults.getPageSize()).thenReturn(10);
-        when(userCountResults.getTotalSize()).thenReturn(1);
+        when(userCountResults.page()).thenReturn(Collections.singletonList(userCount));
+        when(userCountResults.pageNumber()).thenReturn(0);
+        when(userCountResults.pageSize()).thenReturn(10);
+        when(userCountResults.totalSize()).thenReturn(1);
 
         when(requestManager.getMergeRequests(any(MergeRequestFilterParams.class))).thenReturn(Collections.singletonList(request1));
         when(requestManager.createMergeRequest(any(MergeRequestConfig.class), any(Resource.class))).thenReturn(request1);
@@ -287,10 +287,10 @@ public class MergeRequestRestTest extends MobiRestTestCXF {
 
         recordCount = new RecordCount(record.getResource(), "record", 10);
 
-        when(recordCountResults.getPage()).thenReturn(Collections.singletonList(recordCount));
-        when(recordCountResults.getPageNumber()).thenReturn(0);
-        when(recordCountResults.getPageSize()).thenReturn(10);
-        when(recordCountResults.getTotalSize()).thenReturn(1);
+        when(recordCountResults.page()).thenReturn(Collections.singletonList(recordCount));
+        when(recordCountResults.pageNumber()).thenReturn(0);
+        when(recordCountResults.pageSize()).thenReturn(10);
+        when(recordCountResults.totalSize()).thenReturn(1);
 
         when(requestManager.getRecords(any(PaginatedSearchParams.class), any(Resource.class))).thenReturn(recordCountResults);
     }

@@ -63,52 +63,54 @@ import {
     unset,
     values,
     without,
-    cloneDeep
+    cloneDeep,
+    orderBy
 } from 'lodash';
 import { switchMap, map, catchError, tap, finalize } from 'rxjs/operators';
 import { ElementRef, Injectable } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
 
-import { Difference } from '../models/difference.class';
-import { JSONLDObject } from '../models/JSONLDObject.interface';
-import { CatalogManagerService } from './catalogManager.service';
-import { CatalogDetails, VersionedRdfState } from './versionedRdfState.service';
 import { CATALOG, DCTERMS, ONTOLOGYSTATE, OWL, RDF, RDFS, SKOS, XSD, ONTOLOGYEDITOR } from '../../prefixes';
-import { OntologyManagerService } from './ontologyManager.service';
-import { OntologyListItem } from '../models/ontologyListItem.class';
-import { splitIRI } from '../pipes/splitIRI.pipe';
-import { Hierarchy } from '../models/hierarchy.interface';
-import { VocabularyStuff } from '../models/vocabularyStuff.interface';
-import { OntologyStuff } from '../models/ontologyStuff.interface';
-import { HierarchyNode } from '../models/hierarchyNode.interface';
+import { CatalogDetails, VersionedRdfState } from './versionedRdfState.service';
+import { CatalogManagerService } from './catalogManager.service';
+import { Difference } from '../models/difference.class';
 import { EntityNamesItem } from '../models/entityNamesItem.interface';
-import { OntologyRecordActionI } from './ontologyRecordAction.interface';
-import { OntologyAction } from '../models/ontologyAction';
+import { EventPayload, EventTypeConstants, EventWithPayload } from '../models/eventWithPayload.interface';
+import { getBeautifulIRI, getDctermsValue, getIRINamespace, getPropertyId, isBlankNodeId } from '../utility';
+import { Hierarchy } from '../models/hierarchy.interface';
+import { HierarchyNode } from '../models/hierarchyNode.interface';
 import { JSONLDId } from '../models/JSONLDId.interface';
+import { JSONLDObject } from '../models/JSONLDObject.interface';
 import { JSONLDValue } from '../models/JSONLDValue.interface';
-import { StateManagerService } from './stateManager.service';
+import { ManchesterConverterService } from './manchesterConverter.service';
+import { MergeRequestManagerService } from './mergeRequestManager.service';
+import { OntologyAction } from '../models/ontologyAction';
+import { OntologyListItem } from '../models/ontologyListItem.class';
+import { OntologyManagerService } from './ontologyManager.service';
+import { OntologyRecordActionI } from './ontologyRecordAction.interface';
+import { OntologyStuff } from '../models/ontologyStuff.interface';
 import { ParentNode } from '../models/parentNode.interface';
-import { VersionedRdfStateBase } from '../models/versionedRdfStateBase.interface';
-import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
-import { ToastService } from './toast.service';
 import { PolicyEnforcementService } from './policyEnforcement.service';
 import { PolicyManagerService } from './policyManager.service';
-import { ManchesterConverterService } from './manchesterConverter.service';
+import { PrefixationPipe } from '../pipes/prefixation.pipe';
+import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
 import { PropertyManagerService } from './propertyManager.service';
-import { UpdateRefsService } from './updateRefs.service';
-import { YasguiQuery } from '../models/yasguiQuery.class';
-import { getBeautifulIRI, getDctermsValue, getIRINamespace, getPropertyId, isBlankNodeId } from '../utility';
-import { SPARQLSelectBinding } from '../models/sparqlSelectResults.interface';
-import { MergeRequestManagerService } from './mergeRequestManager.service';
-import { EventPayload, EventTypeConstants, EventWithPayload } from '../models/eventWithPayload.interface';
-import { RecordSelectFiltered } from '../../versioned-rdf-record-editor/models/record-select-filtered.interface';
 import { RdfDownload } from '../models/rdfDownload.interface';
 import { RdfUpdate } from '../models/rdfUpdate.interface';
 import { RdfUpload } from '../models/rdfUpload.interface';
+import { RecordSelectFiltered } from '../../versioned-rdf-record-editor/models/record-select-filtered.interface';
 import { SettingManagerService } from './settingManager.service';
+import { SPARQLSelectBinding } from '../models/sparqlSelectResults.interface';
+import { splitIRI } from '../pipes/splitIRI.pipe';
+import { StateManagerService } from './stateManager.service';
+import { ToastService } from './toast.service';
+import { UpdateRefsService } from './updateRefs.service';
+import { VersionedRdfStateBase } from '../models/versionedRdfStateBase.interface';
 import { VersionedRdfUploadResponse } from '../models/versionedRdfUploadResponse.interface';
+import { VocabularyStuff } from '../models/vocabularyStuff.interface';
 import { XACMLRequest } from '../models/XACMLRequest.interface';
+import { YasguiQuery } from '../models/yasguiQuery.class';
 
 /**
  * @class shared.OntologyStateService
@@ -156,6 +158,7 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
         protected mc: ManchesterConverterService, 
         protected pe: PolicyEnforcementService, 
         protected polm: PolicyManagerService,
+        protected prefixation: PrefixationPipe,
         protected stm: SettingManagerService) {
             super(ONTOLOGYSTATE,
                 'http://mobi.com/states/ontology-editor/branch-id/',
@@ -1011,7 +1014,7 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
      * @param {string} iriThen The separator between the beginning and the local name of the new entity IRI
      * @param {string} iriEnd The local name of the new entity IRI
      */
-    onEdit(iriBegin: string, iriThen: string, iriEnd: string): Observable<unknown> {
+    onIriEdit(iriBegin: string, iriThen: string, iriEnd: string): Observable<void> {
         if (!iriBegin) {
             return throwError('OnEdit validation failed for iriBegin');
         }
@@ -1020,6 +1023,9 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
         }
         if (!iriEnd) {
             return throwError('OnEdit validation failed for iriEnd');
+        }
+        if (!this.listItem.versionedRdfRecord.recordId) {
+            return throwError('OnEdit validation failed for recordId');
         }
         const newIRI = iriBegin + iriThen + iriEnd;
         const oldEntity = cloneDeep(this.listItem.selected);
@@ -1035,9 +1041,6 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
         }
         if (this.getActiveKey() !== 'project') {
             this.setCommonIriParts(iriBegin, iriThen);
-        }
-        if (!this.listItem.versionedRdfRecord.recordId) {
-            return throwError('OnEdit validation failed for recordId');
         }
         this.addToAdditions(this.listItem.versionedRdfRecord.recordId, cloneDeep(this.listItem.selected));
         return this.om.getEntityUsages(this.listItem.versionedRdfRecord.recordId,
@@ -1109,7 +1112,7 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
             }),
             map(arr => {
                 listItem.selected = find(arr, {'@id': entityIRI});
-                listItem.selectedBlankNodes = this._getArrWithoutEntity(entityIRI, arr);
+                listItem.selectedBlankNodes = this.getArrWithoutEntity(entityIRI, arr);
                 const bnodeIndex = this.getBnodeIndex(listItem.selectedBlankNodes);
                 listItem.selectedBlankNodes.forEach(bnode => {
                     listItem.blankNodes[bnode['@id']] = this.mc.jsonldToManchester(bnode['@id'], listItem.selectedBlankNodes, bnodeIndex, true);
@@ -1153,19 +1156,7 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
                 () => listItem.editorTabStates[this.getActiveKey(listItem, tabIndex)].usages = []
             );
     }
-    /**
-     * Creates an index for the blank nodes so that the manchester syntax logic will work correctly.
-     * 
-     * @param {JSONLDObject[]} [selectedBlankNodes=listItem.selectedBlankNodes] The JSON-LD array of blank nodes to index
-     * @returns {{[key: string]: {position: number}}} The index of blank nodes
-     */
-    getBnodeIndex(selectedBlankNodes = this.listItem.selectedBlankNodes): {[key: string]: {position: number}} {
-        const bnodeIndex = {};
-        selectedBlankNodes.forEach((bnode, idx) => {
-            bnodeIndex[bnode['@id']] = {position: idx};
-        });
-        return bnodeIndex;
-    }
+
     /**
      * Resets the state of each of the tabs in the provided {@link OntologyListItem}. If the active tab is the project
      * tab, sets the selected entity back to the Ontology object. If the active tab is not the project tab, unsets the
@@ -2136,21 +2127,6 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
         this.commonDelete(entityIRI).subscribe();
     }
     /**
-     * Retrieves the Manchester Syntax value for the provided blank node id if it exists in the blankNodes map of the
-     * currently selected {@link OntologyListItem}. If the value is not a blank node id, returns undefined. If the
-     * Manchester Syntax string is  not set, returns the blank node id back.
-     *
-     * @param {string} id A blank node id
-     * @returns {string} The Manchester Syntax string for the provided id if it is a blank node id and exists in the
-     * blankNodes map; undefined otherwise 
-     */
-    getBlankNodeValue(id: string): string {
-        if (isBlankNodeId(id)) {
-            return get(this.listItem.blankNodes, id, id);
-        }
-        return;
-    }
-    /**
      * Determines whether the provided id is "linkable", i.e. that a link could be made to take a user to that entity.
      * Id must be present in the indices of the currently selected {@link OntologyListItem} and not be a blank node id.
      *
@@ -2419,6 +2395,19 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
         });
     }
 
+    /**
+     * Retrieves the `ontologyId` from the currently selected entity in the list item.
+     *
+     * Looks up the selected entity's ID in `entityInfo` and returns its `ontologyId` property,
+     * or an empty string if not found.
+     *
+     * @returns {string} The ontology ID of the selected entity, or an empty string if unavailable.
+     */
+    getImportedSource(): string {
+        const entity = get(this.listItem.entityInfo, get(this.listItem.selected, '@id'), {});
+        return get(entity, 'ontologyId', '');
+    }
+
     /* Private helper functions */
     private _addInfo(listItem: OntologyListItem, iri: string, ontologyId: string): void {
       const info = merge((listItem.entityInfo[iri] || {names: undefined, label: ''}), {
@@ -2647,13 +2636,7 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
         obj.childMap = hierarchyInfo.childMap;
         obj.circularMap = hierarchyInfo.circularMap;
     }
-    private _getArrWithoutEntity(iri: string, arr: JSONLDObject[]): JSONLDObject[] {
-        if (!arr || !arr.length) {
-            return [];
-        }
-        arr.splice(arr.findIndex(entity => entity['@id'] === iri), 1);
-        return arr;
-    }
+
     private _isInIris(property: string, iri: string): boolean {
         return has(get(this.listItem, `${property}.iris`), iri);
     }

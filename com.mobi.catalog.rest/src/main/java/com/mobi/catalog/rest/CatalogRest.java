@@ -390,10 +390,10 @@ public class CatalogRest {
                     builder.build(), activeUser, conn);
 
             ArrayNode entities = mapper.createArrayNode();
-            searchResults.getPage().forEach(entityMetadata->{
+            searchResults.page().forEach(entityMetadata->{
                 entities.add(entityMetadata.toObjectNode());
             });
-            return createPaginatedResponse(uriInfo, entities, searchResults.getTotalSize(), limit, offset);
+            return createPaginatedResponse(uriInfo, entities, searchResults.totalSize(), limit, offset);
         } catch (IllegalArgumentException ex) {
             throw RestUtils.getErrorObjBadRequest(ex);
         } catch (IllegalStateException | MobiException ex) {
@@ -490,7 +490,7 @@ public class CatalogRest {
             }
             PaginatedSearchResults<Record> records = recordManager.findRecord(vf.createIRI(catalogId),
                     builder.build(), getActiveUser(servletRequest, engineManager), conn);
-            return createPaginatedResponse(uriInfo, records.getPage(), records.getTotalSize(), limit, offset,
+            return createPaginatedResponse(uriInfo, records.page(), records.totalSize(), limit, offset,
                     Record.TYPE, bNodeService);
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
@@ -752,7 +752,7 @@ public class CatalogRest {
 
             ArrayNode keywordsArrayNode = serializeKeywordCount(keywordCounts);
 
-            return createPaginatedResponse(uriInfo, keywordsArrayNode, keywordCounts.getTotalSize(),
+            return createPaginatedResponse(uriInfo, keywordsArrayNode, keywordCounts.totalSize(),
                     limit, offset);
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
@@ -764,7 +764,7 @@ public class CatalogRest {
     private ArrayNode serializeKeywordCount(PaginatedSearchResults<KeywordCount> keywordCounts) {
         ArrayNode keywordsArrayNode = mapper.createArrayNode();
 
-        for (KeywordCount keywordCount: keywordCounts.getPage()) {
+        for (KeywordCount keywordCount: keywordCounts.page()) {
             ObjectNode keywordObject = mapper.createObjectNode();
             keywordObject.put(Record.keyword_IRI, keywordCount.getKeyword().stringValue());
             keywordObject.put("count", keywordCount.getKeywordCount());

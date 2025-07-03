@@ -92,7 +92,7 @@ const shapesEditorCommands = {
 
     verifyShapesEditorPage: function(shapes_graph_title, branchTitle) {
         return this.api
-            .waitForElementVisible('shapes-graph-details')
+            .waitForElementVisible('selected-details')
             .waitForElementVisible('properties-block')
             .waitForElementVisible('div.yate')
             .page.editorPage()

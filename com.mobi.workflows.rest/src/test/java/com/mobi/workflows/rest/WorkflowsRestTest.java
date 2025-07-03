@@ -350,22 +350,22 @@ public class WorkflowsRestTest extends MobiRestTestCXF {
     public void findWorkflowRecordsTest() {
         PaginatedSearchResults<ObjectNode> results = new PaginatedSearchResults<ObjectNode>() {
             @Override
-            public List<ObjectNode> getPage() {
+            public List<ObjectNode> page() {
                 return Stream.of(mapper.createObjectNode()).toList();
             }
 
             @Override
-            public int getTotalSize() {
+            public int totalSize() {
                 return 10;
             }
 
             @Override
-            public int getPageSize() {
+            public int pageSize() {
                 return 10;
             }
 
             @Override
-            public int getPageNumber() {
+            public int pageNumber() {
                 return 1;
             }
         };
@@ -394,11 +394,11 @@ public class WorkflowsRestTest extends MobiRestTestCXF {
 
         verify(workflowManager).findWorkflowRecords(eq(builder.build()), eq(user));
         MultivaluedMap<String, Object> headers = response.getHeaders();
-        assertEquals(headers.get("X-Total-Count").get(0), "" + results.getTotalSize());
+        assertEquals(headers.get("X-Total-Count").get(0), "" + results.totalSize());
         assertEquals(1, response.getLinks().size());
         try {
             ArrayNode result = (ArrayNode) mapper.readTree(response.readEntity(String.class));
-            assertEquals(results.getPage().size(), result.size());
+            assertEquals(results.page().size(), result.size());
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
@@ -630,22 +630,22 @@ public class WorkflowsRestTest extends MobiRestTestCXF {
     public void findWorkflowExecutionActivitiesTest() {
         PaginatedSearchResults<ObjectNode> results = new PaginatedSearchResults<ObjectNode>() {
             @Override
-            public List<ObjectNode> getPage() {
+            public List<ObjectNode> page() {
                 return Stream.of(mapper.createObjectNode()).toList();
             }
 
             @Override
-            public int getTotalSize() {
+            public int totalSize() {
                 return 10;
             }
 
             @Override
-            public int getPageSize() {
+            public int pageSize() {
                 return 10;
             }
 
             @Override
-            public int getPageNumber() {
+            public int pageNumber() {
                 return 1;
             }
         };
@@ -670,11 +670,11 @@ public class WorkflowsRestTest extends MobiRestTestCXF {
 
         verify(workflowManager).findWorkflowExecutionActivities(eq(workflowId), eq(builder.build()), eq(user));
         MultivaluedMap<String, Object> headers = response.getHeaders();
-        assertEquals(headers.get("X-Total-Count").get(0), "" + results.getTotalSize());
+        assertEquals(headers.get("X-Total-Count").get(0), "" + results.totalSize());
         assertEquals(1, response.getLinks().size());
         try {
             ArrayNode result = (ArrayNode) mapper.readTree(response.readEntity(String.class));
-            assertEquals(results.getPage().size(), result.size());
+            assertEquals(results.page().size(), result.size());
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }

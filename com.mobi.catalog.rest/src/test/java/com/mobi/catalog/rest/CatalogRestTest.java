@@ -343,10 +343,10 @@ public class CatalogRestTest extends MobiRestTestCXF {
         when(bNodeService.skolemize(any(Statement.class))).thenAnswer(i -> i.getArgument(0, Statement.class));
         when(bNodeService.deskolemize(any(Model.class))).thenAnswer(i -> i.getArgument(0, Model.class));
 
-        when(recordResults.getPage()).thenReturn(Collections.singletonList(testRecord));
-        when(recordResults.getPageNumber()).thenReturn(0);
-        when(recordResults.getPageSize()).thenReturn(10);
-        when(recordResults.getTotalSize()).thenReturn(50);
+        when(recordResults.page()).thenReturn(Collections.singletonList(testRecord));
+        when(recordResults.pageNumber()).thenReturn(0);
+        when(recordResults.pageSize()).thenReturn(10);
+        when(recordResults.totalSize()).thenReturn(50);
 
         when(commitManager.commitInRecord(any(Resource.class), any(Resource.class), any(RepositoryConnection.class))).thenReturn(false);
         when(commitManager.commitInRecord(eq(vf.createIRI(RECORD_IRI)), eq(vf.createIRI(COMMIT_IRIS[0])), any(RepositoryConnection.class))).thenReturn(true);
@@ -574,10 +574,10 @@ public class CatalogRestTest extends MobiRestTestCXF {
     @Test
     public void getEntitiesTest() {
         List<EntityMetadata> entities = createEntities();
-        when(entityResults.getPage()).thenReturn(entities);
-        when(entityResults.getPageNumber()).thenReturn(1);
-        when(entityResults.getPageSize()).thenReturn(10);
-        when(entityResults.getTotalSize()).thenReturn(1);
+        when(entityResults.page()).thenReturn(entities);
+        when(entityResults.pageNumber()).thenReturn(1);
+        when(entityResults.pageSize()).thenReturn(10);
+        when(entityResults.totalSize()).thenReturn(1);
 
         when(recordManager.findEntities(any(Resource.class), any(PaginatedSearchParams.class), any(User.class), any(RepositoryConnection.class)))
                 .thenReturn(entityResults);
@@ -603,11 +603,11 @@ public class CatalogRestTest extends MobiRestTestCXF {
 
         verify(recordManager).findEntities(vf.createIRI(LOCAL_IRI), builder.build(), user, conn);
         MultivaluedMap<String, Object> headers = response.getHeaders();
-        assertEquals(headers.get("X-Total-Count").get(0), "" + entityResults.getTotalSize());
+        assertEquals(headers.get("X-Total-Count").get(0), "" + entityResults.totalSize());
         assertEquals(1, response.getLinks().size());
         try {
             ArrayNode result = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
-            assertEquals(result.size(), entityResults.getPage().size());
+            assertEquals(result.size(), entityResults.page().size());
             // Test iri field
             assertEquals("http://example.com/entity/1", result.get(0).get("iri").asText());
             // Test entityName field
@@ -685,11 +685,11 @@ public class CatalogRestTest extends MobiRestTestCXF {
 
         verify(recordManager).findRecord(vf.createIRI(LOCAL_IRI), builder.build(), user, conn);
         MultivaluedMap<String, Object> headers = response.getHeaders();
-        assertEquals(headers.get("X-Total-Count").get(0), "" + recordResults.getTotalSize());
+        assertEquals(headers.get("X-Total-Count").get(0), "" + recordResults.totalSize());
         assertEquals(0, response.getLinks().size());
         try {
             ArrayNode result = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
-            assertEquals(result.size(), recordResults.getPage().size());
+            assertEquals(result.size(), recordResults.page().size());
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
@@ -722,11 +722,11 @@ public class CatalogRestTest extends MobiRestTestCXF {
 
         verify(recordManager).findRecord(vf.createIRI(LOCAL_IRI), builder.build(), user, conn);
         MultivaluedMap<String, Object> headers = response.getHeaders();
-        assertEquals(headers.get("X-Total-Count").get(0), "" + recordResults.getTotalSize());
+        assertEquals(headers.get("X-Total-Count").get(0), "" + recordResults.totalSize());
         assertEquals(0, response.getLinks().size());
         try {
             ArrayNode result = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
-            assertEquals(result.size(), recordResults.getPage().size());
+            assertEquals(result.size(), recordResults.page().size());
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
@@ -757,11 +757,11 @@ public class CatalogRestTest extends MobiRestTestCXF {
 
         verify(recordManager).findRecord(vf.createIRI(LOCAL_IRI), builder.build(), user, conn);
         MultivaluedMap<String, Object> headers = response.getHeaders();
-        assertEquals("" + recordResults.getTotalSize(), headers.get("X-Total-Count").get(0));
+        assertEquals("" + recordResults.totalSize(), headers.get("X-Total-Count").get(0));
         assertEquals(0, response.getLinks().size());
         try {
             ArrayNode result = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
-            assertEquals(result.size(), recordResults.getPage().size());
+            assertEquals(result.size(), recordResults.page().size());
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
@@ -770,7 +770,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
     @Test
     public void getRecordsWithLinksTest() {
         // Setup:
-        when(recordResults.getPageNumber()).thenReturn(1);
+        when(recordResults.pageNumber()).thenReturn(1);
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records")
                 .queryParam("offset", 1)
@@ -1065,10 +1065,10 @@ public class CatalogRestTest extends MobiRestTestCXF {
                 .map(split -> new KeywordCount(vf.createLiteral(split[0]), Integer.parseInt(split[1])))
                 .collect(Collectors.toList());
 
-        when(keywordResults.getPage()).thenReturn(keywordCounts);
-        when(keywordResults.getPageNumber()).thenReturn(0);
-        when(keywordResults.getPageSize()).thenReturn(keywordCounts.size());
-        when(keywordResults.getTotalSize()).thenReturn(50);
+        when(keywordResults.page()).thenReturn(keywordCounts);
+        when(keywordResults.pageNumber()).thenReturn(0);
+        when(keywordResults.pageSize()).thenReturn(keywordCounts.size());
+        when(keywordResults.totalSize()).thenReturn(50);
 
         when(recordManager.getKeywords(any(Resource.class), any(PaginatedSearchParams.class), any(RepositoryConnection.class))).thenReturn(keywordResults);
     }
@@ -1090,12 +1090,12 @@ public class CatalogRestTest extends MobiRestTestCXF {
 
         verify(recordManager).getKeywords(eq(vf.createIRI(LOCAL_IRI)), eq(builder.build()), any(RepositoryConnection.class));
         MultivaluedMap<String, Object> headers = response.getHeaders();
-        assertEquals(headers.get("X-Total-Count").get(0), "" + keywordResults.getTotalSize());
+        assertEquals(headers.get("X-Total-Count").get(0), "" + keywordResults.totalSize());
         assertEquals(0, response.getLinks().size());
         try {
             String responseString = response.readEntity(String.class);
             ArrayNode result = mapper.readValue(responseString, ArrayNode.class);
-            assertEquals(result.size(), keywordResults.getPage().size());
+            assertEquals(result.size(), keywordResults.page().size());
 
             String expected = "1.4,2.1";
             String actual = StreamSupport.stream(result.spliterator(), false)
@@ -1126,12 +1126,12 @@ public class CatalogRestTest extends MobiRestTestCXF {
 
         verify(recordManager).getKeywords(eq(vf.createIRI(LOCAL_IRI)), eq(builder.build()), any(RepositoryConnection.class));
         MultivaluedMap<String, Object> headers = response.getHeaders();
-        assertEquals(headers.get("X-Total-Count").get(0), "" + keywordResults.getTotalSize());
+        assertEquals(headers.get("X-Total-Count").get(0), "" + keywordResults.totalSize());
         assertEquals(0, response.getLinks().size());
         try {
             String responseString = response.readEntity(String.class);
             ArrayNode result = mapper.readValue(responseString, ArrayNode.class);
-            assertEquals(result.size(), keywordResults.getPage().size());
+            assertEquals(result.size(), keywordResults.page().size());
 
             String expected = "1.4,2.1";
             String actual = StreamSupport.stream(result.spliterator(), false)

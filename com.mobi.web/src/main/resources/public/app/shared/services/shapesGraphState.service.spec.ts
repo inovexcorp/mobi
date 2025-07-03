@@ -23,7 +23,7 @@
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 
-import { MockProvider } from 'ng-mocks';
+import { MockPipe, MockProvider } from 'ng-mocks';
 import { Subject, of, throwError } from 'rxjs';
 import { cloneDeep, concat, map } from 'lodash';
 
@@ -33,9 +33,12 @@ import { cleanStylesFromDOM } from '../../../test/ts/Shared';
 import { Difference } from '../models/difference.class';
 import { EventWithPayload } from '../models/eventWithPayload.interface';
 import { JSONLDObject } from '../models/JSONLDObject.interface';
+import { ManchesterConverterService } from './manchesterConverter.service';
 import { MergeRequestManagerService } from './mergeRequestManager.service';
 import { PolicyEnforcementService } from './policyEnforcement.service';
 import { PolicyManagerService } from './policyManager.service';
+import { PrefixationPipe } from '../pipes/prefixation.pipe';
+import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
 import { PropertyManagerService } from './propertyManager.service';
 import { RdfDownload } from '../models/rdfDownload.interface';
 import { RdfUpload } from '../models/rdfUpload.interface';
@@ -51,17 +54,20 @@ import { ShapesGraphStateService } from './shapesGraphState.service';
 
 describe('Shapes Graph State service', function() {
   let service: ShapesGraphStateService;
-  let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
-  let mergeRequestManagerServiceStub: jasmine.SpyObj<MergeRequestManagerService>;
-  let policyEnforcementStub: jasmine.SpyObj<PolicyEnforcementService>;
-  let settingManagerStub: jasmine.SpyObj<SettingManagerService>;
-  let shapesGraphManagerStub: jasmine.SpyObj<ShapesGraphManagerService>;
-  let propertyManagerStub: jasmine.SpyObj<PropertyManagerService>;
-  let sparqlManagerStub: jasmine.SpyObj<SparqlManagerService>;
-  let updateRefsStub: jasmine.SpyObj<UpdateRefsService>;
-  let toastStub: jasmine.SpyObj<ToastService>;
   let _catalogManagerActionSubject: Subject<EventWithPayload>;
   let _mergeRequestManagerActionSubject: Subject<EventWithPayload>;
+  let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
+  let manchesterConverterStub: jasmine.SpyObj<ManchesterConverterService>;
+  let mergeRequestManagerServiceStub: jasmine.SpyObj<MergeRequestManagerService>;
+  let policyEnforcementStub: jasmine.SpyObj<PolicyEnforcementService>;
+  let prefixationStub: jasmine.SpyObj<PrefixationPipe>;
+  let progressSpinnerStub: jasmine.SpyObj<ProgressSpinnerService>;
+  let propertyManagerStub: jasmine.SpyObj<PropertyManagerService>;
+  let settingManagerStub: jasmine.SpyObj<SettingManagerService>;
+  let shapesGraphManagerStub: jasmine.SpyObj<ShapesGraphManagerService>;
+  let sparqlManagerStub: jasmine.SpyObj<SparqlManagerService>;
+  let toastStub: jasmine.SpyObj<ToastService>;
+  let updateRefsStub: jasmine.SpyObj<UpdateRefsService>;
 
   let exclusionList: string[] = [];
 
@@ -74,9 +80,9 @@ describe('Shapes Graph State service', function() {
   const tagId = 'tagId';
   const title = 'title';
   const recordTitle = 'recordTitle';
-  const difference: Difference = new Difference([{'@id': 'add'}], [{'@id': 'del'}]);
+  const difference: Difference = new Difference([{ '@id': 'add' }], [{ '@id': 'del' }]);
   const error = 'Error Message';
-  const file = new File([''], 'filename', {type: 'text/html'});
+  const file = new File([''], 'filename', { type: 'text/html' });
   const uploadResponse: VersionedRdfUploadResponse = Object.freeze({
     recordId: 'recordId',
     branchId: 'branchId',
@@ -98,7 +104,9 @@ describe('Shapes Graph State service', function() {
       providers: [
         ShapesGraphStateService,
         MockProvider(CatalogManagerService),
+        MockProvider(ManchesterConverterService),
         MockProvider(MergeRequestManagerService),
+        MockProvider(ProgressSpinnerService),
         MockProvider(PolicyEnforcementService),
         MockProvider(PolicyManagerService),
         MockProvider(PropertyManagerService),
@@ -107,30 +115,35 @@ describe('Shapes Graph State service', function() {
         MockProvider(SparqlManagerService),
         MockProvider(StateManagerService),
         MockProvider(ToastService),
+        { provide: PrefixationPipe, useClass: MockPipe(PrefixationPipe) },
         MockProvider(UpdateRefsService)
       ]
     }).compileComponents();
     settingManagerStub = TestBed.inject(SettingManagerService) as jasmine.SpyObj<SettingManagerService>;
     sparqlManagerStub = TestBed.inject(SparqlManagerService) as jasmine.SpyObj<SparqlManagerService>;
-    updateRefsStub  = TestBed.inject(UpdateRefsService) as jasmine.SpyObj<UpdateRefsService>;
+    updateRefsStub = TestBed.inject(UpdateRefsService) as jasmine.SpyObj<UpdateRefsService>;
     shapesGraphManagerStub = TestBed.inject(ShapesGraphManagerService) as jasmine.SpyObj<ShapesGraphManagerService>;
     shapesGraphManagerStub.createShapesGraphRecord.and.returnValue(of(uploadResponse));
+    manchesterConverterStub = TestBed.inject(ManchesterConverterService) as jasmine.SpyObj<ManchesterConverterService>;
+    manchesterConverterStub.jsonldToManchester.and.callFake(a => a);
     policyEnforcementStub = TestBed.inject(PolicyEnforcementService) as jasmine.SpyObj<PolicyEnforcementService>;
     policyEnforcementStub.permit = 'Permit';
     policyEnforcementStub.deny = 'Deny';
     policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.permit));
     propertyManagerStub = TestBed.inject(PropertyManagerService) as jasmine.SpyObj<PropertyManagerService>;
-
+    prefixationStub = TestBed.inject(PrefixationPipe) as jasmine.SpyObj<PrefixationPipe>;
+    prefixationStub.transform.and.callFake(a => a);
     propertyManagerStub.defaultDatatypes = concat(
       map(['anyURI', 'boolean', 'byte', 'dateTime', 'decimal', 'double', 'float', 'int', 'integer', 'language', 'long', 'string'], item => XSD + item),
       map(['langString'], item => RDF + item)
     );
+    progressSpinnerStub = TestBed.inject(ProgressSpinnerService) as jasmine.SpyObj<ProgressSpinnerService>;
 
     mergeRequestManagerServiceStub = TestBed.inject(MergeRequestManagerService) as jasmine.SpyObj<MergeRequestManagerService>;
     toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
     catalogManagerStub = TestBed.inject(CatalogManagerService) as jasmine.SpyObj<CatalogManagerService>;
-    catalogManagerStub.localCatalog = {'@id': catalogId, '@type': []};
-    
+    catalogManagerStub.localCatalog = { '@id': catalogId, '@type': [] };
+
     _catalogManagerActionSubject = new Subject<EventWithPayload>();
     _mergeRequestManagerActionSubject = new Subject<EventWithPayload>();
     catalogManagerStub.catalogManagerAction$ = _catalogManagerActionSubject.asObservable();
@@ -162,20 +175,22 @@ describe('Shapes Graph State service', function() {
       'selectedCommit'
     ];
   });
-  
+
   afterEach(function() {
     cleanStylesFromDOM();
     service = null;
-    toastStub = null;
-    updateRefsStub = null;
-    shapesGraphManagerStub = null;
-    catalogManagerStub = null;
-    policyEnforcementStub = null;
-    settingManagerStub = null;
-    sparqlManagerStub = null;
     _catalogManagerActionSubject = null;
     _mergeRequestManagerActionSubject = null;
+    catalogManagerStub = null;
     listItem = null;
+    manchesterConverterStub = null;
+    policyEnforcementStub = null;
+    progressSpinnerStub = null;
+    settingManagerStub = null;
+    shapesGraphManagerStub = null;
+    sparqlManagerStub = null;
+    toastStub = null;
+    updateRefsStub = null;
   });
 
   it('initialize works properly', function() {
@@ -195,7 +210,7 @@ describe('Shapes Graph State service', function() {
   describe('getIdentifierIRI retrieves the shapes graph IRI of a ShapesGraphRecord', function() {
     it('if provided JSON-LD', function() {
       expect(service.getIdentifierIRI({
-        '@id': 'recordId', 
+        '@id': 'recordId',
         [`${CATALOG}trackedIdentifier`]: [{ '@id': 'shapesGraphIRI' }]
       })).toEqual('shapesGraphIRI');
     });
@@ -208,19 +223,19 @@ describe('Shapes Graph State service', function() {
   describe('open should call the proper methods', function() {
     describe('when getCatalogDetails resolves', function() {
       beforeEach(function() {
-          spyOn(service, 'getCatalogDetails').and.returnValue(of({
-            recordId,
-            branchId,
-            commitId,
-            tagId,
-            upToDate: true,
-            inProgressCommit: difference,
-          }));
+        spyOn(service, 'getCatalogDetails').and.returnValue(of({
+          recordId,
+          branchId,
+          commitId,
+          tagId,
+          upToDate: true,
+          inProgressCommit: difference,
+        }));
       });
       it('and createListItem resolves', fakeAsync(function() {
         spyOn(service, 'createListItem').and.returnValue(of(listItem));
-        service.open({recordId, title, identifierIRI: shapesGraphId})
-          .subscribe(() => {}, () => fail('Observable should have resolved'));
+        service.open({ recordId, title, identifierIRI: shapesGraphId })
+          .subscribe(() => { }, () => fail('Observable should have resolved'));
         tick();
         expect(service.createListItem).toHaveBeenCalledWith(recordId, branchId, commitId, tagId, difference, true, title);
         expect(service.listItem).toEqual(listItem);
@@ -228,7 +243,7 @@ describe('Shapes Graph State service', function() {
       }));
       it('and createListItem rejects', fakeAsync(function() {
         spyOn(service, 'createListItem').and.returnValue(throwError(error));
-        service.open({recordId, title, identifierIRI: shapesGraphId})
+        service.open({ recordId, title, identifierIRI: shapesGraphId })
           .subscribe(() => fail('Observable should have rejected'), response => {
             expect(response).toEqual(error);
           });
@@ -240,7 +255,7 @@ describe('Shapes Graph State service', function() {
     });
     it('and getCatalogDetails rejects', fakeAsync(function() {
       spyOn(service, 'getCatalogDetails').and.returnValue(throwError(error));
-      service.open({recordId, title, identifierIRI: shapesGraphId})
+      service.open({ recordId, title, identifierIRI: shapesGraphId })
         .subscribe(() => fail('Observable should have rejected'), response => {
           expect(response).toEqual(error);
         });
@@ -249,7 +264,7 @@ describe('Shapes Graph State service', function() {
   });
   describe('create makes a new shapes graph record without opening it', function() {
     it('unless no file or JSON-LD was provided', fakeAsync(function() {
-      service.create({title: ''}).subscribe(() => fail('Observable should have failed'), error => {
+      service.create({ title: '' }).subscribe(() => fail('Observable should have failed'), error => {
         expect(error).toEqual('Creation requires a file or JSON-LD');
       });
       tick();
@@ -277,7 +292,7 @@ describe('Shapes Graph State service', function() {
       service.list = [];
     });
     it('unless no file or JSON-LD was provided', fakeAsync(function() {
-      service.createAndOpen({title: ''}).subscribe(() => fail('Observable should have failed'), error => {
+      service.createAndOpen({ title: '' }).subscribe(() => fail('Observable should have failed'), error => {
         expect(error).toEqual('Creation requires a file or JSON-LD');
       });
       tick();
@@ -422,7 +437,7 @@ describe('Shapes Graph State service', function() {
         it('successfully', async function() {
           catalogManagerStub.deleteRecord.and.returnValue(of(null));
           await service.delete('recordId')
-            .subscribe(() => {}, () => fail('Observable should have succeeded'));
+            .subscribe(() => { }, () => fail('Observable should have succeeded'));
           expect(this.deleteStateSpy).toHaveBeenCalledWith('recordId');
           expect(catalogManagerStub.deleteRecord).toHaveBeenCalledWith('recordId', catalogId);
         });
@@ -468,7 +483,7 @@ describe('Shapes Graph State service', function() {
       });
       it('and changeVersion succeeds', fakeAsync(function() {
         spyOn(service, 'changeVersion').and.returnValue(of(null));
-        service.removeChanges().subscribe(() => {}, () => fail('Observable should have resolved'));
+        service.removeChanges().subscribe(() => { }, () => fail('Observable should have resolved'));
         tick();
         expect(catalogManagerStub.deleteInProgressCommit).toHaveBeenCalledWith(recordId, catalogId);
         expect(service.changeVersion).toHaveBeenCalledWith(recordId, branchId, commitId, undefined, listItem.currentVersionTitle, listItem.upToDate, true, listItem.changesPageOpen);
@@ -506,9 +521,9 @@ describe('Shapes Graph State service', function() {
         catalogManagerStub.getInProgressCommit.and.returnValue(of(difference));
         spyOn(service, 'changeVersion').and.returnValue(of(null));
         listItem.upToDate = true;
-        service.uploadChanges({file, recordId, branchId, commitId}).subscribe(() => {}, () => fail('Observable should have resolved'));
+        service.uploadChanges({ file, recordId, branchId, commitId }).subscribe(() => { }, () => fail('Observable should have resolved'));
         tick();
-        expect(shapesGraphManagerStub.uploadChanges).toHaveBeenCalledWith({file, recordId, branchId, commitId});
+        expect(shapesGraphManagerStub.uploadChanges).toHaveBeenCalledWith({ file, recordId, branchId, commitId });
         expect(catalogManagerStub.getInProgressCommit).toHaveBeenCalledWith(recordId, catalogId);
         expect(service.getListItemByRecordId).toHaveBeenCalledWith(recordId);
         expect(listItem.inProgressCommit).toEqual(difference);
@@ -518,11 +533,11 @@ describe('Shapes Graph State service', function() {
         catalogManagerStub.getInProgressCommit.and.returnValue(throwError(error));
         spyOn(service, 'changeVersion');
         listItem.upToDate = true;
-        service.uploadChanges({file, recordId, branchId, commitId}).subscribe(() => fail('Observable should have rejected'), response => {
-          expect(response).toEqual({ errorMessage: error, errorDetails: [  ] });
+        service.uploadChanges({ file, recordId, branchId, commitId }).subscribe(() => fail('Observable should have rejected'), response => {
+          expect(response).toEqual({ errorMessage: error, errorDetails: [] });
         });
         tick();
-        expect(shapesGraphManagerStub.uploadChanges).toHaveBeenCalledWith({file, recordId, branchId, commitId});
+        expect(shapesGraphManagerStub.uploadChanges).toHaveBeenCalledWith({ file, recordId, branchId, commitId });
         expect(catalogManagerStub.getInProgressCommit).toHaveBeenCalledWith(recordId, catalogId);
         expect(service.getListItemByRecordId).not.toHaveBeenCalled();
         expect(service.changeVersion).not.toHaveBeenCalled();
@@ -531,11 +546,11 @@ describe('Shapes Graph State service', function() {
     it('when uploadChangesFile rejects', fakeAsync(function() {
       shapesGraphManagerStub.uploadChanges.and.returnValue(throwError(error));
       spyOn(service, 'changeVersion');
-      service.uploadChanges({file, recordId, branchId, commitId}).subscribe(() => fail('Observable should have rejected'), response => {
-        expect(response).toEqual({ errorMessage: error, errorDetails: [  ] });
+      service.uploadChanges({ file, recordId, branchId, commitId }).subscribe(() => fail('Observable should have rejected'), response => {
+        expect(response).toEqual({ errorMessage: error, errorDetails: [] });
       });
       tick();
-      expect(shapesGraphManagerStub.uploadChanges).toHaveBeenCalledWith({file, recordId, branchId, commitId});
+      expect(shapesGraphManagerStub.uploadChanges).toHaveBeenCalledWith({ file, recordId, branchId, commitId });
       expect(catalogManagerStub.getInProgressCommit).not.toHaveBeenCalled();
       expect(service.getListItemByRecordId).not.toHaveBeenCalled();
       expect(service.changeVersion).not.toHaveBeenCalled();
@@ -543,10 +558,10 @@ describe('Shapes Graph State service', function() {
   });
   describe('changeVersion should call the proper methods when', function() {
     beforeEach(function() {
-        this.oldListItem = cloneDeep(listItem);
-        this.oldListItem.tabIndex = 1;
-        this.oldListItem.inProgressCommit = difference;
-        spyOn(service, 'getListItemByRecordId').and.returnValue(this.oldListItem);
+      this.oldListItem = cloneDeep(listItem);
+      this.oldListItem.tabIndex = 1;
+      this.oldListItem.inProgressCommit = difference;
+      spyOn(service, 'getListItemByRecordId').and.returnValue(this.oldListItem);
     });
     describe('updateState resolves', function() {
       beforeEach(function() {
@@ -559,7 +574,7 @@ describe('Shapes Graph State service', function() {
         it('and the in progress commit should be cleared with the same version title', fakeAsync(function() {
           const versionTitle = this.oldListItem.currentVersionTitle;
           service.changeVersion(recordId, branchId, commitId, tagId, undefined, listItem.upToDate, true, true)
-            .subscribe(() => {}, () => fail('Observable should have resolved'));
+            .subscribe(() => { }, () => fail('Observable should have resolved'));
           tick();
           expect(service.updateState).toHaveBeenCalledWith({ recordId, commitId, branchId, tagId });
           expect(service.createListItem).toHaveBeenCalledWith(recordId, branchId, commitId, tagId, new Difference(), listItem.upToDate, listItem.versionedRdfRecord.title);
@@ -568,7 +583,7 @@ describe('Shapes Graph State service', function() {
         }));
         it('and the in progress commit should not be cleared with a new version title', fakeAsync(function() {
           service.changeVersion(recordId, branchId, commitId, tagId, 'New Title', listItem.upToDate, false, false)
-            .subscribe(() => {}, () => fail('Observable should have resolved'));
+            .subscribe(() => { }, () => fail('Observable should have resolved'));
           tick();
           expect(service.updateState).toHaveBeenCalledWith({ recordId, commitId, branchId, tagId });
           expect(service.createListItem).toHaveBeenCalledWith(recordId, branchId, commitId, tagId, difference, listItem.upToDate, listItem.versionedRdfRecord.title);
@@ -609,13 +624,13 @@ describe('Shapes Graph State service', function() {
       service.listItem.merge.target = {
         '@id': 'targetBranchId',
         '@type': [],
-        [`${DCTERMS}title`]: [{'@value': 'branchTitle'}]
+        [`${DCTERMS}title`]: [{ '@value': 'branchTitle' }]
       };
       this.changeVersionSpy = spyOn(service, 'changeVersion').and.returnValue(of(null));
       catalogManagerStub.deleteRecordBranch.and.returnValue(of(null));
       catalogManagerStub.mergeBranches.and.returnValue(of('commitId'));
     });
-    describe('and should change the shapes graph version to the target branch', function()  {
+    describe('and should change the shapes graph version to the target branch', function() {
       describe('and handle if the checkbox is', function() {
         it('checked', async function() {
           service.listItem.merge.checkbox = true;
@@ -677,14 +692,14 @@ describe('Shapes Graph State service', function() {
       service.listItem.versionedRdfRecord.recordId = 'recordId';
       service.listItem.versionedRdfRecord.branchId = 'branchId';
       service.listItem.versionedRdfRecord.commitId = 'commitId';
-      service.listItem.metadata = metadata;
+      service.listItem.selected = metadata;
       service.list.push(service.listItem);
     });
     it('When there are already additions with the previous IRI', fakeAsync(function() {
       service.listItem.additions = [{
         '@id': 'www.example.com/test-record/shapes',
         '@type': ['http://www.w3.org/2002/07/owl#Ontology'],
-        'http://purl.org/dc/elements/1.1/title': [{'@value': 'UHTC Shapes Graph'}]
+        'http://purl.org/dc/elements/1.1/title': [{ '@value': 'UHTC Shapes Graph' }]
       }];
       sparqlManagerStub.postQuery.and.returnValue(of('[]'));
       service.onIriEdit(iriBegin, iriThen, iriEnd).subscribe();
@@ -714,11 +729,11 @@ describe('Shapes Graph State service', function() {
       spyOn(service, 'addToDeletions');
       sparqlManagerStub.postQuery.and.returnValue(throwError('Error'));
       service.onIriEdit(iriBegin, iriThen, iriEnd)
-        .subscribe(() => fail('Observable should not have resolved'), () => {});
+        .subscribe(() => fail('Observable should not have resolved'), () => { });
       tick();
 
-      expect(service.addToAdditions).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, Object.assign({}, service.listItem.metadata));
-      expect(service.addToDeletions).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, Object.assign({}, service.listItem.metadata));
+      expect(service.addToAdditions).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, Object.assign({}, service.listItem.selected));
+      expect(service.addToDeletions).toHaveBeenCalledWith(service.listItem.versionedRdfRecord.recordId, Object.assign({}, service.listItem.selected));
       expect(sparqlManagerStub.postQuery).toHaveBeenCalledWith(jasmine.any(String), 'recordId', 'shapes-graph-record',
         'branchId', 'commitId', false, false, 'jsonld');
       expect(updateRefsStub.update).toHaveBeenCalledWith(service.listItem, 'www.example.com/test-record/shapes',
@@ -752,5 +767,19 @@ describe('Shapes Graph State service', function() {
       expect(updateRefsStub.update).toHaveBeenCalledWith(service.listItem, 'www.example.com/test-record/shapes',
         newIRI, exclusionList);
     }));
+  });
+  describe('getTypesLabel functions properly', function() {
+    it('when @type is empty', function() {
+      expect(service.getTypesLabel({
+        '@id': 'id',
+        '@type': []
+      })).toEqual('');
+    });
+    it('when @type has items', function() {
+      expect(service.getTypesLabel({
+        '@id': 'id',
+        '@type': ['test', 'test2']
+      })).toEqual('test, test2');
+    });
   });
 });

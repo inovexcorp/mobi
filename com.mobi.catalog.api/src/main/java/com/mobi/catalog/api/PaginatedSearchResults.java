@@ -32,26 +32,26 @@ public interface PaginatedSearchResults<T> {
      *
      * @return the Set of results from the current page.
      */
-    List<T> getPage();
+    List<T> page();
 
     /**
      * Returns the total size of results for all pages.
      *
      * @return the total size of results for all pages.
      */
-    int getTotalSize();
+    int totalSize();
 
     /**
      * Returns the page size provided for the search.
      *
      * @return the page size provided for the search.
      */
-    int getPageSize();
+    int pageSize();
 
     /**
      * Returns the current page number for these results. Page numbers start at 1.
      *
      * @return the current page number for these results.
      */
-    int getPageNumber();
+    int pageNumber();
 }

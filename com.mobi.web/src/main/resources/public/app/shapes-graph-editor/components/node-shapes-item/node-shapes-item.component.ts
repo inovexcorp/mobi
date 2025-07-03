@@ -20,17 +20,46 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { Component, EventEmitter, Input, Output } from '@angular/core';
 
-//Angular imports
-import { Component, Input } from '@angular/core';
+import { getBeautifulIRI } from '../../../shared/utility';
+import { NodeShapeInfo } from '../../models/nodeShapeInfo.interface';
 
+/**
+ * @class shapes-graph-editor.NodeShapesItemComponent
+ *
+ * This component displays a summary card for a SHACL Node Shape.
+ * 
+ * Summary Card displays
+ * - name
+ * - IRI 
+ * - target type
+ * - target value
+ * - import status
+ * 
+ * @param {NodeShapeInfo} nodeData - The node shape data to display in the card.
+ * @param {boolean} selected - Whether this item is currently selected in the list.
+ * @param {EventEmitter<NodeShapeInfo>} onItemSelect - Emits the selected node shape when the card is clicked.
+ */
 @Component({
   selector: 'app-node-shapes-item',
   templateUrl: './node-shapes-item.component.html',
   styleUrls: ['./node-shapes-item.component.scss']
 })
 export class NodeShapesItemComponent {
-  constructor() {}
+  @Input() nodeData: NodeShapeInfo;
+  @Input() selected: boolean;
 
-  @Input() nodeData: Record<string, any>;
+  @Output() onItemSelect = new EventEmitter<NodeShapeInfo>();
+
+  readonly getBeautifulIRI = getBeautifulIRI;
+
+  constructor() {}
+  /**
+   * Emits the selected NodeShapeInfo item to parent component.
+   * Triggered when a user selects an item from the UI.
+   */
+  setSelected(): void {
+    this.onItemSelect.emit(this.nodeData);
+  }
 }

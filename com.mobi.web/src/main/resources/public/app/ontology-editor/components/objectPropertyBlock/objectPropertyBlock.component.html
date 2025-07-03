@@ -24,9 +24,12 @@
     <div class="section-header">
         <h5>Object Properties</h5><a *ngIf="!os.isSelectedImported() && os.canModify()" (click)="openAddObjectPropOverlay()" class="float-right fa fa-fw fa-plus"></a>
     </div>
-    <property-values  *ngFor="let property of objectPropertiesFiltered"
-                      [property]="property"
-                      [entity]="os.listItem.selected"
-                      (remove)="showRemovePropertyOverlay($event)">
+    <property-values *ngFor="let property of objectPropertiesFiltered"
+      [stateService]="os"
+      [canModify]="os.canModify()"
+      [property]="property"
+      [entity]="os.listItem.selected"
+      [isEntityImported]="os.isImported(os.listItem.selected['@id'])"
+      (remove)="showRemovePropertyOverlay($event)">
     </property-values>
 </div>

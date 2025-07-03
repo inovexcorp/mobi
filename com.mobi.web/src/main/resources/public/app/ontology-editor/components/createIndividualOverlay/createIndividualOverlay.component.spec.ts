@@ -36,7 +36,7 @@ import { of } from 'rxjs';
 import { cleanStylesFromDOM } from '../../../../../public/test/ts/Shared';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
-import { StaticIriComponent } from '../staticIri/staticIri.component';
+import { StaticIriComponent } from '../../../shared/components/staticIri/staticIri.component';
 import { OntologyClassSelectComponent } from '../ontologyClassSelect/ontologyClassSelect.component';
 import { CamelCasePipe } from '../../../shared/pipes/camelCase.pipe';
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';

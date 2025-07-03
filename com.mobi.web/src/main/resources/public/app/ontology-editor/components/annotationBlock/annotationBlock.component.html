@@ -27,8 +27,10 @@
   </div>
   <property-values *ngFor="let annotation of annotationsFiltered"
     [stateService]="os"
-    [property]="annotation"
     [entity]="os.listItem.selected"
+    [isEntityImported]="os.isImported(os.listItem.selected['@id'])"
+    [property]="annotation"
+    [canModify]="os.canModify()"
     (remove)="openRemoveOverlay($event)"
     (edit)="editClicked($event)"
     [highlightIris]="highlightIris"

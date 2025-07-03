@@ -20,38 +20,56 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component } from '@angular/core';
+import { Component, Input } from '@angular/core';
 
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { ONTOLOGYEDITOR, SHAPESGRAPHEDITOR } from '../../../prefixes';
+import { ShapesGraphListItem } from '../../../shared/models/shapesGraphListItem.class';
 import { ShapesGraphManagerService } from '../../../shared/services/shapesGraphManager.service';
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
 
+/**
+ * @class shapes-graph-editor.ShapesProjectTabComponent
+ * @requires shared.ShapesGraphManagerService
+ * @requires shared.ShapesGraphStateService
+ * 
+ * A component that creates a page containing information about the current shapes graph
+ * 
+ * @param {ShapesGraphListItem} listItem - The selected item containing node shape data to display.
+ * @param {boolean} canModify Indicates whether the user has permission to modify the listItem.
+ */
 @Component({
   selector: 'app-shapes-project-tab',
   templateUrl: './shapes-project-tab.component.html',
 })
 export class ShapesProjectTabComponent {
+  @Input() listItem: ShapesGraphListItem;
+  @Input() canModify: boolean;
+
   targetRecordTypes = [
     `${ONTOLOGYEDITOR}OntologyRecord`,
     `${SHAPESGRAPHEDITOR}ShapesGraphRecord`
   ];
-
   noImportMessage = 'This shapes graph does not have any imports.';
   annotationIRIs = [];
   
   constructor(
-    public sgm: ShapesGraphManagerService,
+    private _sgm: ShapesGraphManagerService,
     public state: ShapesGraphStateService
   ) {}
 
   keys(object: JSONLDObject): Array<string> {
     return Object.keys(object);
   }
+
+  /**
+   * Updates the preview format and fetches the corresponding Shapes Graph content.
+   * @param format The desired preview format (e.g., "application/ld+json", "text/turtle").
+   */
   updateContentType(format: string) : void {
     const recordInfo = this.state.listItem.versionedRdfRecord;
     this.state.listItem.previewFormat = format;
-    this.sgm.getShapesGraphContent(recordInfo.recordId, recordInfo.branchId, recordInfo.commitId, format, true)
+    this._sgm.getShapesGraphContent(recordInfo.recordId, recordInfo.branchId, recordInfo.commitId, format, true)
       .subscribe((content: string | JSONLDObject[]) => {
         this.state.listItem.content = typeof content !== 'string' ? JSON.stringify(content, null, 2) : content;
     }, error => this.state.listItem.content = error);

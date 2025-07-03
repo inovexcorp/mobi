@@ -42,22 +42,22 @@ public class SimpleSearchResults<T> implements PaginatedSearchResults<T> {
     }
 
     @Override
-    public List<T> getPage() {
+    public List<T> page() {
         return page;
     }
 
     @Override
-    public int getTotalSize() {
+    public int totalSize() {
         return totalSize;
     }
 
     @Override
-    public int getPageSize() {
+    public int pageSize() {
         return pageSize;
     }
 
     @Override
-    public int getPageNumber() {
+    public int pageNumber() {
         return pageNumber;
     }
 }

@@ -22,8 +22,17 @@
  */
 import { Component, ViewChild } from '@angular/core';
 import { MatTabChangeEvent, MatTabGroup } from '@angular/material/tabs';
-import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
 
+import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
+import { ShapesGraphListItem } from '../../../shared/models/shapesGraphListItem.class';
+
+/**
+ * @class shapes-graph-editor.ShapesTabsHolderComponent
+ * @requires shared.ShapesGraphStateService
+ *
+ * A component that holds and manages the tab layout for the shapes graph editor.
+ * It reacts to tab changes and can be extended to trigger actions when specific tabs are selected.
+ */
 @Component({
   selector: 'app-shapes-tabs-holder',
   templateUrl: './shapes-tabs-holder.component.html',
@@ -32,9 +41,17 @@ import { ShapesGraphStateService } from '../../../shared/services/shapesGraphSta
 export class ShapesTabsHolderComponent {
   @ViewChild('tabsGroup') tabsGroup: MatTabGroup;
 
-  constructor(public state: ShapesGraphStateService) {}
+  constructor(public state: ShapesGraphStateService) { }
 
   onTabChanged(event: MatTabChangeEvent): void {
-    //TODO Pending logic for when more tabs get implemented and we can select entities.
+    switch (event.index) {
+      case ShapesGraphListItem.PROJECT_TAB:
+        this.state.setSelected(this.state.listItem.shapesGraphId, this.state.listItem).subscribe();
+        break;
+      case ShapesGraphListItem.NODE_SHAPES_TAB:
+        this.state.setSelected(this.state.listItem.nodeTab.selectedEntityIRI, this.state.listItem).subscribe();
+        break;
+      default:
+    }
   }
 }

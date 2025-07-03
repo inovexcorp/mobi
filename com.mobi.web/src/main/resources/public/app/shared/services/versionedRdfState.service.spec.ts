@@ -115,8 +115,20 @@ class VersionedRdfStateImpl extends VersionedRdfState<VersionedRdfListItemImpl> 
   goTo(iri: string): void {
     throw new Error('Method not implemented.');
   }
+  isSelectedImported(listItem?: VersionedRdfListItem): boolean {
+    return false;
+  }
   isImported(iri: string, listItem?: VersionedRdfListItem): boolean {
     throw new Error('Method not implemented.');
+  }
+  checkIri(iri: string): boolean {
+    return false
+  }
+  onIriEdit(iriBegin: string, iriThen: string, iriEnd: string): Observable<void> {
+    return of(null)
+  }
+  getImportedSource(): string {
+      return '';
   }
   public setServices(stateManager: StateManagerService, catalogManager: CatalogManagerService, toast: ToastService) {
     this.sm = stateManager;

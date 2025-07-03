@@ -55,6 +55,7 @@ export class VersionedRdfListItem {
     failedImports: string[];
     selected: JSONLDObject;
     selectedBlankNodes: JSONLDObject[];
+    blankNodes: {[key: string]: string};
     dataPropertyRange: {[key: string]: string};
 
     constructor() {
@@ -89,5 +90,6 @@ export class VersionedRdfListItem {
         this.selected = undefined;
         this.selectedBlankNodes = [];
         this.dataPropertyRange = {};
+        this.blankNodes = {};
     }
 }

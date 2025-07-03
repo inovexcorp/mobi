@@ -38,7 +38,7 @@ import {
 } from '../../../../../public/test/ts/Shared';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
-import { StaticIriComponent } from '../staticIri/staticIri.component';
+import { StaticIriComponent } from '../../../shared/components/staticIri/staticIri.component';
 import { AdvancedLanguageSelectComponent } from '../../../shared/components/advancedLanguageSelect/advancedLanguageSelect.component';
 import { CamelCasePipe } from '../../../shared/pipes/camelCase.pipe';
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';

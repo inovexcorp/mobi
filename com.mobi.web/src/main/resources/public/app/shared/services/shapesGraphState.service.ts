@@ -22,11 +22,11 @@
  */
 //angular imports
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Injectable } from '@angular/core';
+import { ElementRef, Injectable } from '@angular/core';
 //third party imports
-import { cloneDeep, find, get, isEmpty, remove, some, assign, has } from 'lodash';
+import { catchError, finalize, map, switchMap, tap } from 'rxjs/operators';
+import { cloneDeep, find, get, isEmpty, remove, some, assign, has, includes, join, orderBy } from 'lodash';
 import { Observable, of, merge as rxjsMerge, throwError } from 'rxjs';
-import { catchError, map, switchMap, tap } from 'rxjs/operators';
 //mobi + local imports
 import {
   CATALOG,
@@ -42,32 +42,34 @@ import { CatalogManagerService } from './catalogManager.service';
 import { Difference } from '../models/difference.class';
 import { EventPayload, EventTypeConstants, EventWithPayload } from '../models/eventWithPayload.interface';
 import { getBeautifulIRI, getDctermsValue, getPropertyId, isBlankNodeId } from '../utility';
+import { JSONLDId } from '../models/JSONLDId.interface';
 import { JSONLDObject } from '../models/JSONLDObject.interface';
+import { JSONLDValue } from '../models/JSONLDValue.interface';
 import { MergeRequestManagerService } from './mergeRequestManager.service';
 import { PolicyEnforcementService } from './policyEnforcement.service';
 import { PolicyManagerService } from './policyManager.service';
+import { PropertyManagerService } from './propertyManager.service';
 import { RdfDownload } from '../models/rdfDownload.interface';
 import { RdfUpdate } from '../models/rdfUpdate.interface';
 import { RdfUpload } from '../models/rdfUpload.interface';
 import { RecordSelectFiltered } from '../../versioned-rdf-record-editor/models/record-select-filtered.interface';
 import { SettingManagerService } from './settingManager.service';
 import { SHAPES_STORE_TYPE } from '../../constants';
-import { ShapesGraphListItem } from '../models/shapesGraphListItem.class';
-import { ShapesGraphManagerService } from './shapesGraphManager.service';
 import { ShapesGraphImports } from '../models/shapesGraphImports.interface';
+import { EntityImportStatus, ShapesGraphListItem, SubjectImportMap } from '../models/shapesGraphListItem.class';
+import { ShapesGraphManagerService } from './shapesGraphManager.service';
 import { SparqlManagerService } from './sparqlManager.service';
 import { SPARQLSelectResults } from '../models/sparqlSelectResults.interface';
+import { splitIRI } from '../pipes/splitIRI.pipe';
 import { StateManagerService } from './stateManager.service';
 import { ToastService } from './toast.service';
 import { UpdateRefsService } from './updateRefs.service';
 import { VersionedRdfStateBase } from '../models/versionedRdfStateBase.interface';
 import { VersionedRdfUploadResponse } from '../models/versionedRdfUploadResponse.interface';
 import { XACMLRequest } from '../models/XACMLRequest.interface';
-import { JSONLDId } from '../models/JSONLDId.interface';
-import { JSONLDValue } from '../models/JSONLDValue.interface';
-import { PropertyManagerService } from './propertyManager.service';
-import { splitIRI } from '../pipes/splitIRI.pipe';
-import { VersionedRdfListItem } from '../models/versionedRdfListItem.class';
+import { PrefixationPipe } from '../pipes/prefixation.pipe';
+import { ManchesterConverterService } from './manchesterConverter.service';
+import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
 
 /**
  * @class shared.ShapesGraphStateService
@@ -78,18 +80,24 @@ import { VersionedRdfListItem } from '../models/versionedRdfListItem.class';
 export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListItem> {
   type = `${SHAPESGRAPHEDITOR}ShapesGraphRecord`;
 
-  constructor(protected sm: StateManagerService,
-              protected cm: CatalogManagerService,
-              protected mrm: MergeRequestManagerService,
-              protected toast: ToastService,
-              protected pep: PolicyEnforcementService,
-              private pm: PolicyManagerService,
-              protected propertyManager: PropertyManagerService,
-              private sgm: ShapesGraphManagerService,
-              protected stm: SettingManagerService,
-              protected updateRefs: UpdateRefsService,
-              private sparql: SparqlManagerService) {
-    super(SHAPESGRAPHSTATE,
+  constructor(
+    protected cm: CatalogManagerService,
+    protected mc: ManchesterConverterService,
+    protected mrm: MergeRequestManagerService,
+    protected spinnerSvc: ProgressSpinnerService,
+    protected pep: PolicyEnforcementService,
+    private pm: PolicyManagerService,
+    protected propertyManager: PropertyManagerService,
+    private sgm: ShapesGraphManagerService,
+    protected sm: StateManagerService,
+    private sparql: SparqlManagerService,
+    protected stm: SettingManagerService,
+    protected prefixation: PrefixationPipe,
+    protected toast: ToastService,
+    protected updateRefs: UpdateRefsService,
+  ) {
+    super(
+      SHAPESGRAPHSTATE,
       BRANCHID,
       TAGID,
       COMMITID,
@@ -103,7 +111,7 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
       switchMap((event: EventWithPayload) => {
         const eventType = event?.eventType;
         const payload = event?.payload;
-        if (eventType && payload){
+        if (eventType && payload) {
           const ob = this._handleEventWithPayload(eventType, payload);
           if (!ob) {
             return of(false);
@@ -132,7 +140,7 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
     const recordId = get(payload, 'recordId');
     const branchId = get(payload, 'branchId');
     if (recordId && branchId) {
-      const recordExistInList = some(this.list, {versionedRdfRecord: {recordId: recordId}});
+      const recordExistInList = some(this.list, { versionedRdfRecord: { recordId: recordId } });
       if (recordExistInList) {
         return this.deleteBranchState(recordId, branchId);
       } else {
@@ -148,7 +156,7 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
     const recordId = get(payload, 'recordId');
     const targetBranchId = get(payload, 'targetBranchId');
     if (recordId && targetBranchId) {
-      const recordExistInList = some(this.list, {versionedRdfRecord: {recordId: recordId}});
+      const recordExistInList = some(this.list, { versionedRdfRecord: { recordId: recordId } });
       if (recordExistInList) {
         if (!isEmpty(this.listItem)) {
           if (get(this.listItem, 'versionedRdfRecord.branchId') === targetBranchId) {
@@ -168,8 +176,8 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
         return of(null);
       }
     } else {
-        console.warn('EVENT_MERGE_REQUEST_ACCEPTED is missing recordIri or targetBranchId');
-        return of(null);
+      console.warn('EVENT_MERGE_REQUEST_ACCEPTED is missing recordIri or targetBranchId');
+      return of(null);
     }
   }
   /**
@@ -301,7 +309,8 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
           this.listItem.upToDate,
           true,
           this.listItem.changesPageOpen
-      )})
+        )
+      })
     );
   }
   /**
@@ -313,14 +322,14 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
     return this.sgm.uploadChanges(rdfUpdate).pipe(
       switchMap(() => this.cm.getInProgressCommit(rdfUpdate.recordId, this.catalogId)),
       catchError((response: HttpErrorResponse): Observable<string> => {
-        if (typeof response === 'string'){
-          return throwError({errorMessage: response, errorDetails: []});
-        } else if (typeof response === 'object' && 'errorMessage' in response){
+        if (typeof response === 'string') {
+          return throwError({ errorMessage: response, errorDetails: [] });
+        } else if (typeof response === 'object' && 'errorMessage' in response) {
           return throwError(response);
         } else if (response.status === 404 || response.status === 204) {
-          return throwError({errorMessage: 'No changes were found in the uploaded file.', errorDetails: []});
+          return throwError({ errorMessage: 'No changes were found in the uploaded file.', errorDetails: [] });
         } else {
-          return throwError({errorMessage: 'Something went wrong. Please try again later.', errorDetails: []});
+          return throwError({ errorMessage: 'Something went wrong. Please try again later.', errorDetails: [] });
         }
       }),
       switchMap((inProgressCommit: Difference) => {
@@ -360,7 +369,7 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
         if (clearInProgressCommit) {
           oldListItem.inProgressCommit = new Difference();
         }
-        return this.createListItem(recordId, branchId, commitId, tagId, 
+        return this.createListItem(recordId, branchId, commitId, tagId,
           oldListItem.inProgressCommit, upToDate, oldListItem.versionedRdfRecord.title);
       }),
       map((createdItem) => {
@@ -395,7 +404,7 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
           this.listItem.merge.target['@id'],
           commit,
           undefined,
-          getDctermsValue(this.listItem.merge.target, 'title'), 
+          getDctermsValue(this.listItem.merge.target, 'title'),
           true,
           false,
           false)
@@ -432,9 +441,9 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
    * @returns {Observable} An Observable with the newly created `listItem` for the ontology
    */
   createListItem(recordId: string, branchId: string, commitId: string, tagId: string, inProgressCommit: Difference,
-      upToDate = true, title: string): Observable<ShapesGraphListItem> {
+    upToDate = true, title: string): Observable<ShapesGraphListItem> {
     const modifyRequest: XACMLRequest = {
-      resourceId:recordId,
+      resourceId: recordId,
       actionId: this.pm.actionModify
     };
     const listItem = new ShapesGraphListItem();
@@ -452,15 +461,9 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
     return this.sgm.getShapesGraphIRI(recordId, branchId, commitId).pipe(
       switchMap((shapesGraphId: string) => {
         listItem.shapesGraphId = shapesGraphId;
-        return this.sgm.getShapesGraphMetadata(listItem.versionedRdfRecord.recordId,
-          listItem.versionedRdfRecord.branchId,
-          listItem.versionedRdfRecord.commitId,
-          listItem.shapesGraphId
-        );
+        return this.setSelected(listItem.shapesGraphId, listItem);
       }),
-      switchMap((arr: string | JSONLDObject[]) => {
-        listItem.metadata = find((arr as JSONLDObject[]), {'@id': listItem.shapesGraphId});
-        listItem.selected = find((arr as JSONLDObject[]), {'@id': listItem.shapesGraphId});
+      switchMap(() => {
         return this.sgm.getShapesGraphImports(
           listItem.versionedRdfRecord.recordId,
           listItem.versionedRdfRecord.branchId,
@@ -472,6 +475,7 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
           this.addImportedOntologyToListItem(listItem, importedOntObj);
         });
         listItem.failedImports = get(shapesGraphImports, 'failedImports', []);
+        listItem.subjectImportMap = this._getSubjectImportMap(shapesGraphImports);
         return this.sgm.getShapesGraphContent(listItem.versionedRdfRecord.recordId,
           listItem.versionedRdfRecord.branchId,
           listItem.versionedRdfRecord.commitId
@@ -501,6 +505,35 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
       })
     );
   }
+
+  private _getSubjectImportMap(shapesGraphImports: ShapesGraphImports): SubjectImportMap {
+    const subjectMap: SubjectImportMap = {};
+    for (const ontology of shapesGraphImports.importedOntologies) {
+      for (const subject of ontology.iris) {
+        if (!subjectMap[subject]) {
+          subjectMap[subject] = {
+            imported: true,
+            ontologyIds: [ontology.ontologyId],
+          };
+        } else {
+          let entityImportStatus: EntityImportStatus = subjectMap[subject];
+          entityImportStatus.ontologyIds = entityImportStatus.ontologyIds.concat([ontology.ontologyId]);
+        }
+      }
+    }
+    for (const subject of shapesGraphImports.nonImportedIris) {
+      if (!subjectMap[subject]) {
+        subjectMap[subject] = {
+          imported: false
+        };
+      } else {
+        let entityImportStatus: EntityImportStatus = subjectMap[subject];
+        entityImportStatus.alsoLocal = true;
+      }
+    }
+    return subjectMap;
+  }
+
   /**
    * Handles the editing process for an IRI (Internationalized Resource Identifier) and updates related metadata and
    * references.
@@ -521,28 +554,21 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
     if (!iriEnd) {
       return throwError('onIriEdit validation failed for iriEnd');
     }
-
+    if (!this.listItem.versionedRdfRecord.recordId) {
+      return throwError('onIriEdit validation failed for recordId');
+    }
     const newIRI = iriBegin + iriThen + iriEnd;
-    const oldEntity = cloneDeep(this.listItem.metadata);
+    let oldEntity = cloneDeep(this.listItem.selected);
     // TODO: Once tabs added make sure this accounts for which tab you are on (either editing shapes graph IRI or node shape IRI)
-    // this.getActivePage().entityIRI = newIRI;
     if (some(this.listItem.additions, oldEntity)) {
       remove(this.listItem.additions, oldEntity);
-      this.updateRefs.update(this.listItem, this.listItem.metadata['@id'], newIRI, this._updateRefsExclude);
+      this.updateRefs.update(this.listItem, oldEntity['@id'], newIRI, this._updateRefsExclude);
       //TODO comment back in and implement when we have hierarchical shapes. Only if needed similarly to ontology editor
-      // this._recalculateJoinedPaths(this.listItem);
     } else {
-      this.updateRefs.update(this.listItem, this.listItem.metadata['@id'], newIRI, this._updateRefsExclude);
-      //TODO Same thing as above
-      // this._recalculateJoinedPaths(this.listItem);
+      this.updateRefs.update(this.listItem, oldEntity['@id'], newIRI, this._updateRefsExclude);
       this.addToDeletions(this.listItem.versionedRdfRecord.recordId, oldEntity);
     }
-
-    if (!this.listItem.versionedRdfRecord.recordId) {
-      return throwError('OnEdit validation failed for recordId');
-    }
-    this.addToAdditions(this.listItem.versionedRdfRecord.recordId, cloneDeep(this.listItem.metadata));
-
+    this.addToAdditions(this.listItem.versionedRdfRecord.recordId, cloneDeep(this.listItem.selected));
     //retrieves all instances where the oldIRI is the predicate or object of a triple and updates them to the newIRI
     return this._retrieveUsages(this.listItem, oldEntity['@id']).pipe(map(response => {
       if (typeof response === 'string') {
@@ -556,7 +582,7 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
     }));
   }
 
-  private _retrieveUsages(listItem: ShapesGraphListItem, oldIRI:string): Observable<string | SPARQLSelectResults> {
+  private _retrieveUsages(listItem: ShapesGraphListItem, oldIRI: string): Observable<string | SPARQLSelectResults> {
     const usageQuery = `construct {?s ?p ?o}
       where {
           {
@@ -573,6 +599,51 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
     return this.sparql.postQuery(usageQuery, listItem.versionedRdfRecord.recordId, SHAPES_STORE_TYPE,
       listItem.versionedRdfRecord.branchId, listItem.versionedRdfRecord.commitId, false, false, 'jsonld');
   }
+  /**
+   * Sets the `selected`, `selectedBlankNodes`, and `blankNodes` properties on the provided {@link ShapesGraphListItem}
+   * based on the response from {@link shared.ShapesGraphStateService#getShapesGraphEntity}. Returns an Observable
+   * indicating the success of the action. If the provided `entityIRI` or `listItem` are not valid, returns an
+   * Observable that resolves. Sets the entity usages if the provided `getUsages` parameter is true. Also accepts an
+   * optional ElementRef to attach a spinner to in the call to fetch the entity.
+   *
+   * @param {string} entityIRI The IRI of the entity to retrieve
+   * @param {ShapesGraphListItem} [listItem=listItem] The listItem to execute these actions against
+   * @param {ElementRef} element An optional element to attach a spinner to when fetching the entity
+   * @return {Observable} An Observable indicating the success of the action
+   */
+  setSelected(entityIRI: string, listItem: ShapesGraphListItem = this.listItem, element?: ElementRef): Observable<null> {
+    listItem.selected = undefined;
+    if (!entityIRI || !listItem) {
+      if (listItem) {
+        listItem.selectedBlankNodes = [];
+        listItem.blankNodes = {};
+      }
+      return of(null);
+    }
+    if (element) {
+      this.spinnerSvc.startLoadingForComponent(element);
+    }
+    return this.sgm.getShapesGraphEntity(listItem.versionedRdfRecord.recordId,
+      listItem.versionedRdfRecord.branchId,
+      listItem.versionedRdfRecord.commitId,
+      entityIRI
+    ).pipe(
+      finalize(() => {
+        if (element) {
+          this.spinnerSvc.finishLoadingForComponent(element);
+        }
+      }),
+      map((arr: JSONLDObject[]) => {
+        listItem.selected = find(arr, { '@id': entityIRI });
+        listItem.selectedBlankNodes = this.getArrWithoutEntity(entityIRI, arr);
+        const bnodeIndex = this.getBnodeIndex(listItem.selectedBlankNodes);
+        listItem.selectedBlankNodes.forEach(bnode => {
+          listItem.blankNodes[bnode['@id']] = this.mc.jsonldToManchester(bnode['@id'], listItem.selectedBlankNodes, bnodeIndex, true);
+        });
+        return null;
+      })
+    );
+  }
 
   /**
    * Creates a display of the specified property value on the selected entity on the currently selected
@@ -582,9 +653,9 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
    * @param {number} index The index of a specific property value
    * @return {string} A string a display of the property value
    */
-   getPropValueDisplay(key: string, index: number): string {
+  getPropValueDisplay(key: string, index: number): string {
     return get(this.listItem.selected[key], `[${index}]["@value"]`)
-        || get(this.listItem.selected[key], `[${index}]["@id"]`);
+      || get(this.listItem.selected[key], `[${index}]["@id"]`);
   }
 
   /**
@@ -595,21 +666,21 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
    * @param {number} index The index of a specific property value
    * @return {Observable} An Observable that resolves with the JSON-LD value object that was removed
    */
-  removeProperty(key: string, index: number): Observable<JSONLDId|JSONLDValue> {
-    const axiomObject: JSONLDId|JSONLDValue = this.listItem.selected[key][index];
+  removeProperty(key: string, index: number): Observable<JSONLDId | JSONLDValue> {
+    const axiomObject: JSONLDId | JSONLDValue = this.listItem.selected[key][index];
     const json: JSONLDObject = {
-        '@id': this.listItem.selected['@id'],
-        [key]: [cloneDeep(axiomObject)]
+      '@id': this.listItem.selected['@id'],
+      [key]: [cloneDeep(axiomObject)]
     };
     this.addToDeletions(this.listItem.versionedRdfRecord.recordId, json);
     if (isBlankNodeId(axiomObject['@id'])) {
-        remove(axiomObject['@id']);
+      remove(axiomObject['@id']);
     }
     this.propertyManager.remove(this.listItem.selected, key, index);
     return this.saveCurrentChanges()
-        .pipe(map(() => {
-            return axiomObject;
-        }));
+      .pipe(map(() => {
+        return axiomObject;
+      }));
   }
 
   /**
@@ -630,12 +701,72 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
     return false;
   }
 
+  /**
+   * Updates the currently selected {@link ShapesGraphListItem} to view the entity identified by the provided IRI.
+   * Updates the selected tab in the editor and all required variables in order to view the details of the entity.
+   * 
+   * @param {string} iri The IRI of the entity to open the editor at
+   */
   goTo(iri: string): void {
-    throw new Error('goTo for ShapesGraphListItem not supported.');
+    throw new Error('goTo functionality for ShapesGraphListItem not supported.');
   }
 
-  isImported(iri: string, listItem?: VersionedRdfListItem): boolean {
-    return false;
+  /**
+   * Determines whether the selected IRI of the provided {@link ShapesGraphListItem} is imported or not. Defaults to true.
+   *
+   * @param {ShapesGraphListItem} [listItem=listItem] The listItem to execute these actions against
+   * @returns {boolean} True if the selected IRI is imported; false otherwise
+   */
+  isSelectedImported(listItem: ShapesGraphListItem = this.listItem): boolean {
+    const selected = this.listItem.selected;
+    if (listItem && selected) {
+      const iri = get(selected, '@id', '');
+      return iri ? this.isImported(iri, listItem) : false;
+    }
+    return true; // This occurs when auth interceptor clears the state
   }
 
+  /**
+   * Determines whether the provided IRI is marked as imported in the given {@link ShapesGraphListItem}.
+   * If no status is found for the IRI, it defaults to `true`.
+   *
+   * If an `entityPredicate` is provided, the method will look for a specific predicate in the entity's
+   * import status and return its `imported` flag.
+   *
+   * @param {string} iri - The IRI of the entity to check.
+   * @param {ShapesGraphListItem} [listItem=this.listItem] - The list item to check against. Defaults to the current list item.
+   * @returns {boolean} `true` if the IRI (or predicate) is considered imported; otherwise `false`.
+   */
+  isImported(iri: string, listItem: ShapesGraphListItem = this.listItem): boolean {
+    const entityImportStatus: EntityImportStatus = listItem?.subjectImportMap[iri];
+    return !entityImportStatus ? true : entityImportStatus.imported;
+  }
+
+  /**
+   * Checks whether an IRI exists in the currently selected {@link ShapesGraphListItem} and it not the current selected
+   * entity.
+   * 
+   * @param {string} iri The entity IRI to check
+   * @returns {boolean} True if the entity exists in the `listItem` but is not selected
+   */
+  checkIri(iri: string): boolean {
+    const isCurrentIri = iri === get(this.listItem.selected, '@id');
+    if (isCurrentIri) {
+      return false;
+    }
+    const iriExists = !!this.listItem?.subjectImportMap[iri]; 
+    return iriExists;
+  }
+
+  /**
+   * Returns the source shape IRI for the currently selected node in the shapes graph.
+   *
+   * Retrieves `sourceShape` from the `nodeTab` of the current `listItem`.
+   * Returns an empty string if not defined.
+   *
+   * @returns {string} The source shape IRI or an empty string.
+   */
+  getImportedSource(): string {
+    return this.listItem?.nodeTab?.sourceShape || '';
+  }
 }

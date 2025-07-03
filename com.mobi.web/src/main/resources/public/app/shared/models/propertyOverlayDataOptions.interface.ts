@@ -22,9 +22,11 @@
  */
 
 import { VersionedRdfState } from "../services/versionedRdfState.service";
+import { JSONLDObject } from "./JSONLDObject.interface";
 import { VersionedRdfListItem } from "./versionedRdfListItem.class";
 
 export interface PropertyOverlayDataOptions {
+    entity: JSONLDObject;
     editing: boolean;
     property?: string;
     annotation?: string;

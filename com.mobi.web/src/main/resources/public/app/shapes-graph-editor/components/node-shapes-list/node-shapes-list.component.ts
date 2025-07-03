@@ -21,25 +21,51 @@
  * #L%
  */
 //Angular imports
-import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, Input, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
+
+// 3rd party imports
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 //Mobi imports
 import { NodeShapeInfo } from '../../models/nodeShapeInfo.interface';
 import { ShapesGraphManagerService } from '../../../shared/services/shapesGraphManager.service';
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
 import { ToastService } from '../../../shared/services/toast.service';
+import { VersionedRdfRecord } from '../../../shared/models/versionedRdfRecord.interface';
 
+/**
+ * @class shapes-graph-editor.NodeShapesListComponent
+ * @requires shared.ShapesGraphStateService
+ * @requires shared.ShapesGraphManagerService
+ * @requires shared.ToastService
+
+ * Component displays a scrollable list of SHACL Node Shapes for a given record.
+ * Supports filtering by search text and highlights the currently selected shape.
+ * Displays a message if no matching shapes are found.
+ * 
+ * @param {VersionedRdfRecord} versionedRdfRecord The record containing node shape VersionedRdfRecord data.
+ * @param {string} viewedRecord The IRI of the currently selected or viewed node shape.
+ */
 @Component({
   selector: 'app-node-shapes-list',
   templateUrl: './node-shapes-list.component.html',
   styleUrls: ['./node-shapes-list.component.scss']
 })
-export class NodeShapesListComponent implements OnChanges {
+export class NodeShapesListComponent implements OnChanges, OnDestroy {
+  @Input() versionedRdfRecord: VersionedRdfRecord;
   @Input() viewedRecord: string;
+
+  private _destroySub$ = new Subject<void>();
+
   nodeShapes: NodeShapeInfo[] = [];
   searchText = '';
 
-  constructor(public sgm: ShapesGraphManagerService, public sgs: ShapesGraphStateService, public toast: ToastService) {}
+  constructor(
+    private _sgm: ShapesGraphManagerService,
+    public sgs: ShapesGraphStateService,
+    private _toast: ToastService
+  ) {}
 
   /**
    * Called whenever Angular detects changes to the input properties of the component.
@@ -50,10 +76,21 @@ export class NodeShapesListComponent implements OnChanges {
    * @return {void} This method does not return any value.
    */
   ngOnChanges(changes: SimpleChanges): void {
-    if (!changes.viewedRecord.firstChange) {
+    if (!changes.viewedRecord?.firstChange) {
       this.searchText = '';
     }
-    this.retrieveList();
+    this._retrieveList();
+  }
+  
+  /**
+   * Angular lifecycle hook called when the component is destroyed.
+   * 
+   * Emits a signal to complete all active subscriptions bound with `takeUntil(this._destroySub$)`,
+   * ensuring proper cleanup and preventing memory leaks.
+   */
+  ngOnDestroy(): void {
+    this._destroySub$.next();
+    this._destroySub$.complete();
   }
 
   /**
@@ -62,15 +99,37 @@ export class NodeShapesListComponent implements OnChanges {
    * @return {void} Does not return any value.
    */
   search(): void {
-    this.retrieveList();
+    this._retrieveList();
   }
 
-  private retrieveList(): void {
-    this.sgm.getNodeShapes(this.sgs.listItem.versionedRdfRecord.recordId, this.sgs.listItem.versionedRdfRecord.branchId,
-      this.sgs.listItem.versionedRdfRecord.commitId, true, this.searchText).subscribe(nodes => {
+  /**
+   * Handles selection of a NodeShape item from the list.
+   *
+   * @param nodeShapeInfo - The selected node shape information to emit.
+   */
+  onItemSelection(nodeShapeInfo: NodeShapeInfo): void {
+    this.sgs.listItem.nodeTab = {
+      selectedEntityIRI: nodeShapeInfo.iri,
+      selectedEntityName: nodeShapeInfo.name,
+      selectedEntity: undefined,
+      sourceShape: nodeShapeInfo.sourceOntologyIRI
+    };
+    this.sgs.setSelected(nodeShapeInfo.iri, this.sgs.listItem).subscribe();
+  }
+
+  private _retrieveList(): void {
+    this._sgm.getNodeShapes(
+      this.versionedRdfRecord.recordId,
+      this.versionedRdfRecord.branchId,
+      this.versionedRdfRecord.commitId,
+      true,
+      this.searchText
+    ).pipe(
+        takeUntil(this._destroySub$)
+    ).subscribe((nodes: NodeShapeInfo[]) => {
       this.nodeShapes = nodes;
     }, (error) => {
-      this.toast.createErrorToast(error);
+      this._toast.createErrorToast(error);
     });
   }
 }

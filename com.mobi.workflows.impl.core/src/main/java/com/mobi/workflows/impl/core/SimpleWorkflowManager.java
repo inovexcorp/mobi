@@ -339,7 +339,7 @@ public class SimpleWorkflowManager implements WorkflowManager, EventHandler {
             PaginatedSearchParams.Builder builder = new PaginatedSearchParams.Builder().ascending(true);
             builder.typeFilter(List.of(vf.createIRI(WorkflowRecord.TYPE)));
             List<Record> records = recordManager.findRecord(configProvider.getLocalCatalogIRI(),
-                    builder.build(), conn).getPage();
+                    builder.build(), conn).page();
 
             if (!records.isEmpty()) {
                 for (Record record : records) {

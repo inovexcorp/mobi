@@ -5,7 +5,11 @@ PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 PREFIX dct: <http://purl.org/dc/terms/>
 PREFIX dc: <http://purl.org/dc/elements/1.1/>
-SELECT DISTINCT ?iri ?name (SAMPLE(?targetTypes) as ?targetType) (SAMPLE(?targetValues) as ?targetValue)
+
+SELECT DISTINCT
+  ?iri
+  ?name
+  (SAMPLE(?targetTypes) as ?targetType) (SAMPLE(?targetValues) as ?targetValue)
 WHERE {
   BIND("%search%" as ?search)
   {
@@ -62,4 +66,6 @@ WHERE {
   }
   FILTER(CONTAINS(LCASE(?names), LCASE(?search)))
   BIND(IF(STRBEFORE(?names, "�") = "", ?names, STRBEFORE(?names, "�")) as ?name)
-} GROUP BY ?iri ?name ORDER BY LCASE(?name)
+}
+GROUP BY ?iri ?name
+ORDER BY LCASE(?name)

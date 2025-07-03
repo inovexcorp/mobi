@@ -197,15 +197,15 @@ public class DatasetRest {
             PaginatedSearchResults<Record> results = recordManager.findRecord(configProvider.getLocalCatalogIRI(),
                     params.build(), getActiveUser(servletRequest, engineManager), conn);
 
-            ArrayNode array = results.getPage().stream()
+            ArrayNode array = results.page().stream()
                     .map(datasetRecord -> removeContext(datasetRecord.getModel()))
                     .map(model -> modelToSkolemizedJsonld(model, bNodeService))
                     .map(RestUtils::getArrayNodeFromJson)
                     .collect(mapper::createArrayNode, ArrayNode::add, ArrayNode::add);
 
-            Links links = LinksUtils.buildLinks(uriInfo, array.size(), results.getTotalSize(), limit, offset);
+            Links links = LinksUtils.buildLinks(uriInfo, array.size(), results.totalSize(), limit, offset);
             Response.ResponseBuilder response = Response.ok(array)
-                    .header("X-Total-Count", results.getTotalSize());
+                    .header("X-Total-Count", results.totalSize());
             if (links.getNext() != null) {
                 response = response.link(links.getBase() + links.getNext(), "next");
             }

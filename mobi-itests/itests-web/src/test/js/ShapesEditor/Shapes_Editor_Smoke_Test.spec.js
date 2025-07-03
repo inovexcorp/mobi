@@ -44,7 +44,7 @@ module.exports = {
 
     'Step 3: Verify shapes graph presentation': function(browser) {
         browser
-            .waitForElementVisible('app-shapes-project-tab shapes-graph-details')
+            .waitForElementVisible('app-shapes-project-tab selected-details')
             .waitForElementVisible('app-shapes-project-tab properties-block')
             .waitForElementVisible('app-shapes-project-tab properties-block .section-header a.fa-plus')
             .waitForElementVisible('div.yate')
@@ -63,7 +63,7 @@ module.exports = {
 
     'Step 5: Verify switching of branches': function(browser) {
         browser
-            .waitForElementVisible('app-shapes-project-tab shapes-graph-details')
+            .waitForElementVisible('app-shapes-project-tab selected-details')
             .waitForElementVisible('app-shapes-project-tab properties-block')
             .waitForElementVisible('app-shapes-project-tab div.yate')
             .page.editorPage()
@@ -148,7 +148,7 @@ module.exports = {
             .click('resolve-conflicts-block div.btn-container button.mat-primary')
         browser.globals.wait_for_no_spinners(browser)
         browser
-            .waitForElementVisible('shapes-graph-details')
+            .waitForElementVisible('selected-details')
             .waitForElementVisible('properties-block')
             .waitForElementVisible('div.yate')
             .useXpath()

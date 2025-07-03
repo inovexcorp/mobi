@@ -48,7 +48,8 @@ import { VersionedRdfListItem } from '../../models/versionedRdfListItem.class';
 })
 export class PropertiesBlockComponent implements OnChanges {
   @Input() stateService: VersionedRdfState<VersionedRdfListItem>;
-  @Input() ontology: JSONLDObject;
+  @Input() ontology: JSONLDObject; // TODO since this was moved to shared, ontology should be called entity
+  @Input() canModify: boolean;
   @Input() annotationIRIs: string[];
 
   properties = [];
@@ -70,6 +71,7 @@ export class PropertiesBlockComponent implements OnChanges {
     this.dialog.open(PropertyOverlayComponent, {
       data: {
         stateService: this.stateService,
+        entity: this.ontology,
         annotationIRIs: this.annotationIRIs,
         editing: false
       }
@@ -96,6 +98,7 @@ export class PropertiesBlockComponent implements OnChanges {
     this.dialog.open(PropertyOverlayComponent, {
       data: {
         stateService: this.stateService,
+        entity: this.ontology,
         annotationIRIs: this.annotationIRIs,
         editing: true,
         property: input.property,

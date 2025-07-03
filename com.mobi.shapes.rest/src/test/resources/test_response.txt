@@ -4,48 +4,55 @@
     "name": "AlbumShape",
     "targetType": "http://www.w3.org/ns/shacl#targetClass",
     "targetValue": "http://stardog.com/tutorial/Album",
-    "imported": true
+    "imported": true,
+    "sourceOntologyIRI": "https://mobi.solutions/shapes-graphs/music_test"
   },
   {
     "iri": "http://stardog.com/tutorial/ArtistShape",
     "name": "ArtistShape",
     "targetType": "http://www.w3.org/ns/shacl#targetClass",
     "targetValue": "http://stardog.com/tutorial/Artist",
-    "imported": true
+    "imported": true,
+    "sourceOntologyIRI": "https://mobi.solutions/shapes-graphs/music_test"
   },
   {
     "iri": "http://stardog.com/tutorial/BandShape",
     "name": "BandShape",
     "targetType": "http://www.w3.org/ns/shacl#targetClass",
     "targetValue": "http://stardog.com/tutorial/Band",
-    "imported": true
+    "imported": true,
+    "sourceOntologyIRI": "https://mobi.solutions/shapes-graphs/music_test"
   },
   {
     "iri": "http://stardog.com/tutorial/NameShape",
     "name": "NameShape",
     "targetType": "",
     "targetValue": "",
-    "imported": true
+    "imported": true,
+    "sourceOntologyIRI": "https://mobi.solutions/shapes-graphs/music_test"
   },
   {
     "iri": "http://stardog.com/tutorial/SongShape",
     "name": "SongShape",
     "targetType": "http://www.w3.org/ns/shacl#targetClass",
     "targetValue": "http://stardog.com/tutorial/Song",
-    "imported": true
+    "imported": true,
+    "sourceOntologyIRI": "https://mobi.solutions/shapes-graphs/music_test"
   },
   {
     "iri": "http://schema.org/ElementShape",
     "name": "Test Element node shape",
     "targetType": "http://www.w3.org/ns/shacl#targetClass",
     "targetValue": "http://matonto.org/ontologies/uhtc#Element",
-    "imported": false
+    "imported": false,
+    "sourceOntologyIRI": "https://mobi.solutions/shapes-graphs/uhtc_test"
   },
   {
     "iri": "http://matonto.org/ontologies/uhtc#Material",
     "name": "UHTC Material shapes graph",
     "targetType": "http://www.w3.org/ns/shacl#implicitTarget",
     "targetValue": "http://matonto.org/ontologies/uhtc#Material",
-    "imported": false
+    "imported": false,
+    "sourceOntologyIRI": "https://mobi.solutions/shapes-graphs/uhtc_test"
   }
 ]

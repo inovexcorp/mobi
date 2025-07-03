@@ -207,20 +207,20 @@ public class DatasetRestTest extends MobiRestTestCXF {
         when(datasetManager.safeDeleteDataset(eq(record1.getResource()), any(User.class))).thenReturn(record1);
         when(engineManager.retrieveUser(anyString())).thenReturn(Optional.of(user));
 
-        when(recordResults.getPage()).thenReturn(Stream.of(record1, record2, record3).collect(Collectors.toList()));
-        when(recordResults.getPageNumber()).thenReturn(1);
-        when(recordResults.getPageSize()).thenReturn(10);
-        when(recordResults.getTotalSize()).thenReturn(3);
+        when(recordResults.page()).thenReturn(Stream.of(record1, record2, record3).collect(Collectors.toList()));
+        when(recordResults.pageNumber()).thenReturn(1);
+        when(recordResults.pageSize()).thenReturn(10);
+        when(recordResults.totalSize()).thenReturn(3);
 
         when(branchManager.getMasterBranch(eq(localIRI), eq(ontologyRecordIRI), any(RepositoryConnection.class))).thenReturn(masterBranch);
         when(recordManager.findRecord(any(Resource.class), any(PaginatedSearchParams.class), any(User.class), any(RepositoryConnection.class))).thenReturn(recordResults);
         when(recordManager.createRecord(any(User.class), any(RecordOperationConfig.class), any(), any(RepositoryConnection.class))).thenReturn(record1);
         when(commitManager.getHeadCommitIRI(eq(branch))).thenReturn(commitIRI);
 
-        when(results.getPage()).thenReturn(Stream.of(record1, record2, record3).collect(Collectors.toList()));
-        when(results.getPageNumber()).thenReturn(1);
-        when(results.getPageSize()).thenReturn(10);
-        when(results.getTotalSize()).thenReturn(3);
+        when(results.page()).thenReturn(Stream.of(record1, record2, record3).collect(Collectors.toList()));
+        when(results.pageNumber()).thenReturn(1);
+        when(results.pageSize()).thenReturn(10);
+        when(results.totalSize()).thenReturn(3);
     }
 
     @After
@@ -249,9 +249,9 @@ public class DatasetRestTest extends MobiRestTestCXF {
     @Test
     public void getDatasetRecordsWithLinksTest() {
         // Setup:
-        when(recordResults.getPage()).thenReturn(Collections.singletonList(record2));
-        when(recordResults.getPageNumber()).thenReturn(2);
-        when(recordResults.getPageSize()).thenReturn(1);
+        when(recordResults.page()).thenReturn(Collections.singletonList(record2));
+        when(recordResults.pageNumber()).thenReturn(2);
+        when(recordResults.pageSize()).thenReturn(1);
 
         Response response = target().path("datasets").queryParam("offset", 1).queryParam("limit", 1).request().get();
         assertEquals(200, response.getStatus());

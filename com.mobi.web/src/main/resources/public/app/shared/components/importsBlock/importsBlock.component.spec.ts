@@ -20,29 +20,29 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-
-import { DebugElement } from '@angular/core';
+import { By } from '@angular/platform-browser';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { DebugElement } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
-import { By } from '@angular/platform-browser';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { of, Subject, throwError } from 'rxjs';
-import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { cleanStylesFromDOM } from '../../../../test/ts/Shared';
-import { OWL } from '../../../prefixes';
 import { ConfirmModalComponent } from '../confirmModal/confirmModal.component';
+import { ImportsOverlayComponent } from '../importsOverlay/importsOverlay.component';
 import { InfoMessageComponent } from '../infoMessage/infoMessage.component';
 import { OntologyListItem } from '../../models/ontologyListItem.class';
-import { OntologyStateService } from '../../services/ontologyState.service';
-import { PropertyManagerService } from '../../services/propertyManager.service';
-import { ToastService } from '../../services/toast.service';
-import { ImportsOverlayComponent } from '../importsOverlay/importsOverlay.component';
 import { OntologyManagerService } from '../../services/ontologyManager.service';
 import { OntologyRecordActionI } from '../../services/ontologyRecordAction.interface';
+import { OntologyStateService } from '../../services/ontologyState.service';
+import { OWL } from '../../../prefixes';
+import { PropertyManagerService } from '../../services/propertyManager.service';
+import { ToastService } from '../../services/toast.service';
 import { VersionedRdfRecord } from '../../models/versionedRdfRecord.interface';
 import { ImportsBlockComponent } from './importsBlock.component';
 
@@ -95,10 +95,8 @@ describe('Imports Block component', function() {
           open: { afterClosed: () => of(true)}
         }) }
       ]
-    });
-  });
+    }).compileComponents();
 
-  beforeEach(function() {
     ontologyStateStub = TestBed.inject(OntologyStateService) as jasmine.SpyObj<OntologyStateService>;
     _ontologyRecordActionSubject = new Subject<OntologyRecordActionI>();
     ontologyStateStub.ontologyRecordAction$ = _ontologyRecordActionSubject.asObservable();
@@ -108,7 +106,6 @@ describe('Imports Block component', function() {
     toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
     matDialog = TestBed.inject(MatDialog) as jasmine.SpyObj<MatDialog>;
     
-    ontologyStateStub.canModify.and.returnValue(true);
     ontologyStateStub.listItem = new OntologyListItem();
     ontologyStateStub.listItem.versionedRdfRecord.recordId = recordId;
     ontologyStateStub.listItem.versionedRdfRecord.branchId = branchId;
@@ -120,6 +117,7 @@ describe('Imports Block component', function() {
     fixture = TestBed.createComponent(ImportsBlockComponent);
     component = fixture.componentInstance;
     element = fixture.debugElement;
+    component.canModify = true;
     component.versionedRdfRecord = versionedRdfRecord;
     component.stateService = ontologyStateStub;
     component.listItem = ontologyStateStub.listItem;
@@ -314,12 +312,12 @@ describe('Imports Block component', function() {
       expect(element.queryAll(By.css('.section-header')).length).toEqual(1);
     });
     it('with links for adding and refreshing when the user can modify branch', function() {
-      ontologyStateStub.canModify.and.returnValue(true);
+      component.canModify = true;
       fixture.detectChanges();
       expect(element.queryAll(By.css('.section-header a')).length).toEqual(2);
     });
     it('with links for adding and refreshing when the user cannot modify branch', function() {
-      ontologyStateStub.canModify.and.returnValue(false);
+      component.canModify = false;
       fixture.detectChanges();
       expect(element.queryAll(By.css('.section-header a')).length).toEqual(1);
     });
@@ -345,7 +343,7 @@ describe('Imports Block component', function() {
       expect(element.queryAll(By.css('p a[title="Delete"]')).length).toEqual(1);
     });
     it('with no p a.btn-link if the user cannot modify', function() {
-      ontologyStateStub.canModify.and.returnValue(false);
+      component.canModify = false;
       fixture.detectChanges();
       expect(element.queryAll(By.css('p a.btn-link')).length).toEqual(0);
     });
@@ -373,7 +371,5 @@ describe('Imports Block component', function() {
       fixture.detectChanges();
       expect(element.queryAll(By.css('.indirect.import')).length).toEqual(1);
     });
-
-    // TODO add no import message
   });
 });

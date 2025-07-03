@@ -78,6 +78,7 @@ describe('Property Values component', function () {
     component = fixture.componentInstance;
     element = fixture.debugElement;
     component.stateService = ontologyStateStub;
+    component.isEntityImported = false;
   });
 
   afterEach(function () {
@@ -113,7 +114,7 @@ describe('Property Values component', function () {
     it('depending on whether a value is a blank node and user can modify', function () {
       component.property = property;
       component.entity = entity;
-      ontologyStateStub.canModify.and.returnValue(true);
+      component.canModify = true;
       component.edit.subscribe();
       component.remove.subscribe();
       fixture.detectChanges();
@@ -127,7 +128,7 @@ describe('Property Values component', function () {
     it('depending on whether a value is a blank node and user cannot modify', function () {
       component.property = property;
       component.entity = entity;
-      ontologyStateStub.canModify.and.returnValue(false);
+      component.canModify = true;
       fixture.detectChanges();
       const blankNodeValue = element.queryAll(By.css('.prop-value-container .value-display-wrapper blank-node-value-display'));
       expect(blankNodeValue.length).toEqual(1);
@@ -163,8 +164,8 @@ describe('Property Values component', function () {
     component.entity = entity;
     component.property = property;
     component.edit.subscribe(() => { });
-    ontologyStateStub.canModify.and.returnValue(true);
-    ontologyStateStub.isImported.and.returnValue(false);
+    component.canModify = true;
+    component.isEntityImported = false;
 
     fixture.detectChanges();
 
@@ -178,8 +179,8 @@ describe('Property Values component', function () {
   it('should call remove when the appropriate button is clicked', () => {
     component.entity = entity;
     component.property = property;
-    ontologyStateStub.canModify.and.returnValue(true);
-    ontologyStateStub.isImported.and.returnValue(false);
+    component.canModify = true;
+    component.isEntityImported = false;
     component.remove.subscribe(() => { });
     spyOn(component, 'callRemove');
     fixture.detectChanges();

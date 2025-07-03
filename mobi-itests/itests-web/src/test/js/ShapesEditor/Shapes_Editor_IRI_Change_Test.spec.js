@@ -44,7 +44,7 @@ module.exports = {
 
     'Step 3: Verify shapes graph presentation': function(browser) {
         browser
-            .waitForElementVisible('shapes-graph-details')
+            .waitForElementVisible('selected-details')
             .waitForElementVisible('properties-block')
             .waitForElementVisible('div.yate')
             .page.editorPage()
@@ -62,7 +62,7 @@ module.exports = {
 
     'Step 5: Verify New shapes graph presentation': function(browser) {
         browser
-            .waitForElementVisible('shapes-graph-details')
+            .waitForElementVisible('selected-details')
             .waitForElementVisible('properties-block')
             .waitForElementVisible('div.yate')
             .page.editorPage()
@@ -75,8 +75,8 @@ module.exports = {
 
     'Step 6: Edit the shape graph IRI to be invalid': function(browser) {
         browser.useXpath()
-            .waitForElementVisible('//static-iri-limited//div[contains(@class, "static-iri")]//span//a//i[contains(@class, "fa-pencil")]')
-            .click('//static-iri-limited//div[contains(@class, "static-ir")]//span//a//i[contains(@class, "fa-pencil")]')
+            .waitForElementVisible('//static-iri//div[contains(@class, "static-iri")]//span//a//i[contains(@class, "fa-pencil")]')
+            .click('//static-iri//div[contains(@class, "static-ir")]//span//a//i[contains(@class, "fa-pencil")]')
             .waitForElementVisible('//edit-iri-overlay')
             .waitForElementVisible("//edit-iri-overlay//h1[text() [contains(., 'Edit IRI')]]")
             .useCss()
@@ -93,8 +93,8 @@ module.exports = {
     'Step 7: Confirm the shapes graph changes': function(browser) {
         browser.useXpath()
             .expect.element('//app-editor-top-bar//mat-chip-list//mat-chip[text() [contains(., "Uncommitted Changes")]]').to.be.visible;
-        browser.expect.element('//shapes-graph-details//static-iri-limited//strong//span[text() [contains(., "http://matonto.org/ontologies/uhtc/")]]').to.be.visible;
-        browser.expect.element('//shapes-graph-details//static-iri-limited//strong//span[text() [contains(., "shapes-graph")]]').to.be.visible;
+        browser.expect.element('//selected-details//static-iri//strong//span[text() [contains(., "http://matonto.org/ontologies/uhtc/")]]').to.be.visible;
+        browser.expect.element('//selected-details//static-iri//strong//span[text() [contains(., "shapes-graph")]]').to.be.visible;
     },
 
     'Step 8: Attempt to commit the IRI changes': function(browser) {
@@ -115,8 +115,8 @@ module.exports = {
 
     'Step 9: Change the IRI to be valid & commit the change': function(browser) {
         browser
-            .waitForElementVisible('//static-iri-limited//div[contains(@class, "static-iri")]//span//a//i[contains(@class, "fa-pencil")]')
-            .click('//static-iri-limited//div[contains(@class, "static-ir")]//span//a//i[contains(@class, "fa-pencil")]')
+            .waitForElementVisible('//static-iri//div[contains(@class, "static-iri")]//span//a//i[contains(@class, "fa-pencil")]')
+            .click('//static-iri//div[contains(@class, "static-ir")]//span//a//i[contains(@class, "fa-pencil")]')
             .waitForElementVisible('//edit-iri-overlay')
             .waitForElementVisible("//edit-iri-overlay//h1[text() [contains(., 'Edit IRI')]]")
             .useCss()
@@ -130,8 +130,8 @@ module.exports = {
         browser.page.shapesEditorPage().commit('testing iri change');
         browser.globals.wait_for_no_spinners(browser);
         browser.useXpath()
-        browser.expect.element('//shapes-graph-details//static-iri-limited//strong//span[text() [contains(., "http://matonto.org/ontologies/uhtc/")]]').to.be.visible;
-        browser.expect.element('//shapes-graph-details//static-iri-limited//strong//span[text() [contains(., "shapes-graph-iri-test")]]').to.be.visible;
+        browser.expect.element('//selected-details//static-iri//strong//span[text() [contains(., "http://matonto.org/ontologies/uhtc/")]]').to.be.visible;
+        browser.expect.element('//selected-details//static-iri//strong//span[text() [contains(., "shapes-graph-iri-test")]]').to.be.visible;
         browser.assert.not.elementPresent('//app-editor-top-bar//mat-chip-list//mat-chip[text() [contains(., "Uncommitted Changes")]]');
     },
 }

@@ -33,12 +33,17 @@ import {
   ViewChild,
 } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
+
 import * as YATE from 'perfectkb-yate';
 
 /**
- * @class shapes-graph-editor.YateComponent
+ * @class shapes-graph-editor.ShapesPreviewComponent
  * 
  * A component that displays content using the YATE text editor.
+ * 
+ * @param {string} content - The textual content to display in the editor.
+ * @param {string} format - The format of the content (e.g., "text/turtle", "application/ld+json").
+ * @param {EventEmitter<string>} contentTypeChange - Event emitted when the content type is changed.
  */
 @Component({
   selector: 'shapes-preview',
@@ -46,7 +51,6 @@ import * as YATE from 'perfectkb-yate';
   styleUrls: ['./shapes-preview.component.scss']
 })
 export class ShapesPreviewComponent implements OnInit, OnChanges, AfterViewInit {
-   
   @Input() content: string;
   @Input() format: string;
   @Output() contentTypeChange = new EventEmitter<string>();

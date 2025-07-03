@@ -230,7 +230,6 @@ public class OntologyRest {
     private static final String ONTOLOGY = "Ontology ";
     private static final String DOES_NOT_EXIST = " does not exist.";
     private static final String ENTITIES = "%ENTITIES%";
-    private static final String BINDINGS = "bindings";
     private static final String TURTLE = "turtle";
     private static final String RDF_XML = "rdf/xml";
     private static final String OWL_XML = "owl/xml";

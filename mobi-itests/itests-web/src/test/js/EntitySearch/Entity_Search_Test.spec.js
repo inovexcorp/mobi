@@ -141,7 +141,7 @@ module.exports = {
 
   'Step 13: Verify shapes graph presentation': function(browser) {
     browser
-      .waitForElementVisible('shapes-graph-details')
+      .waitForElementVisible('selected-details')
       .waitForElementVisible('properties-block')
       .waitForElementVisible('div.yate')
       .page.editorPage()
@@ -159,7 +159,7 @@ module.exports = {
 
   'Step 15: Verify switching of branches': function(browser) {
     browser
-      .waitForElementVisible('shapes-graph-details')
+      .waitForElementVisible('selected-details')
       .waitForElementVisible('properties-block')
       .waitForElementVisible('div.yate')
       .page.editorPage()
@@ -181,8 +181,8 @@ module.exports = {
     browser.globals.wait_for_no_spinners(browser);
     browser.globals.dismiss_toast(browser);
     browser.assert.not.elementPresent('app-entity-search-page app-search-results-list  open-record-button button');
-    browser.waitForElementVisible('shapes-graph-details .entity-name')
-      .assert.textContains('shapes-graph-details .entity-name', 'UHTC Shapes Graph');
+    browser.waitForElementVisible('selected-details .entity-name')
+      .assert.textContains('selected-details .entity-name', 'UHTC Shapes Graph');
     browser.page.editorPage().assert.valueEquals('@editorBranchSelectInput', 'MASTER');
   },
 
@@ -197,8 +197,8 @@ module.exports = {
     browser.globals.wait_for_no_spinners(browser);
     browser.globals.dismiss_toast(browser);
     browser.assert.not.elementPresent('app-entity-search-page app-search-results-list open-record-button button');
-    browser.waitForElementVisible('shapes-graph-details .entity-name')
-      .assert.textContains('shapes-graph-details .entity-name', 'UHTC Shapes Graph');
+    browser.waitForElementVisible('selected-details .entity-name')
+      .assert.textContains('selected-details .entity-name', 'UHTC Shapes Graph');
     browser.page.editorPage().assert.valueEquals('@editorBranchSelectInput', 'Entity:UHTC Test Branch-2');
   },
   'Step 19: Navigate to Workflows page' : function(browser) {

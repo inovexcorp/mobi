@@ -84,7 +84,8 @@ describe('Properties Block component', function () {
     element = fixture.debugElement;
 
     component.stateService = ontologyStateStub;
-    component.annotationIRIs = ['inputProp1'];
+    component.canModify = true;
+    component.annotationIRIs = ['prop1'];
     component.ontology = {
       '@id': entityIRI,
       prop1: [{ '@id': 'value1' }],
@@ -121,10 +122,10 @@ describe('Properties Block component', function () {
       expect(element.queryAll(By.css('property-values')).length).toEqual(2);
     });
     it('depending on whether the user can modify branch', function () {
-      ontologyStateStub.canModify.and.returnValue(true);
+      component.canModify = true;
       fixture.detectChanges();
       expect(element.queryAll(By.css('.section-header a')).length).toEqual(1);
-      ontologyStateStub.canModify.and.returnValue(false);
+      component.canModify = false;
       fixture.detectChanges();
       expect(element.queryAll(By.css('.section-header a')).length).toEqual(0);
     });
@@ -147,8 +148,9 @@ describe('Properties Block component', function () {
       expect(matDialog.open).toHaveBeenCalledWith(PropertyOverlayComponent, {
         data: {
           stateService: ontologyStateStub,
+          entity: component.ontology,
           editing: false,
-          annotationIRIs: ['inputProp1']
+          annotationIRIs: ['prop1']
         }
       });
       expect(component.updatePropertiesFiltered).toHaveBeenCalledWith();
@@ -172,6 +174,7 @@ describe('Properties Block component', function () {
       expect(matDialog.open).toHaveBeenCalledWith(PropertyOverlayComponent, {
         data: {
           stateService: ontologyStateStub,
+          entity: component.ontology,
           editing: true,
           property: propertyIRI,
           value: 'value2',
@@ -179,7 +182,7 @@ describe('Properties Block component', function () {
           type: 'type',
           language: 'language',
           isIRIProperty: false,
-          annotationIRIs: ['inputProp1']
+          annotationIRIs: ['prop1']
         }
       });
       expect(component.updatePropertiesFiltered).toHaveBeenCalledWith();

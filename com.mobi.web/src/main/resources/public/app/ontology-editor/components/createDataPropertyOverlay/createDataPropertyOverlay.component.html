@@ -22,7 +22,14 @@
   -->
 <h1 mat-dialog-title>Create New OWL Data Property</h1>
 <form mat-dialog-content [formGroup]="createForm">
-    <static-iri [iri]="property['@id']" (onEdit)="onEdit($event.value.iriBegin, $event.value.iriThen, $event.value.iriEnd)" [duplicateCheck]="duplicateCheck"></static-iri>
+    <static-iri
+        [stateService]="os"
+        [iri]="property['@id']"
+        [isImported]="os.isSelectedImported()"
+        [canModify]="os.canModify()"
+        [duplicateCheck]="duplicateCheck"
+        (onEdit)="onEdit($event.value.iriBegin, $event.value.iriThen, $event.value.iriEnd)">
+    </static-iri>
     <mat-form-field class="w-100">
         <mat-label>Name</mat-label>
         <input matInput type="text" name="name" formControlName="title" required focus/>

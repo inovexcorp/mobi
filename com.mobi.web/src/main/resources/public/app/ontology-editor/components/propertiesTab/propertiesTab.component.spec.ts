@@ -30,7 +30,7 @@ import { of } from 'rxjs';
 import { cleanStylesFromDOM } from '../../../../../public/test/ts/Shared';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
-import { SelectedDetailsComponent } from '../selectedDetails/selectedDetails.component';
+import { SelectedDetailsComponent } from '../../../shared/components/selectedDetails/selectedDetails.component';
 import { AnnotationBlockComponent } from '../annotationBlock/annotationBlock.component';
 import { AxiomBlockComponent } from '../axiomBlock/axiomBlock.component';
 import { CharacteristicsRowComponent } from '../characteristicsRow/characteristicsRow.component';

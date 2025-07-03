@@ -68,7 +68,7 @@ public class WorkflowSearchResults implements PaginatedSearchResults<ObjectNode>
      * @return the List of results from the current page.
      */
     @Override
-    public List<ObjectNode> getPage() {
+    public List<ObjectNode> page() {
         return this.page;
     }
 
@@ -78,7 +78,7 @@ public class WorkflowSearchResults implements PaginatedSearchResults<ObjectNode>
      * @return the total size of results for all pages.
      */
     @Override
-    public int getTotalSize() {
+    public int totalSize() {
         return this.totalSize;
     }
 
@@ -88,7 +88,7 @@ public class WorkflowSearchResults implements PaginatedSearchResults<ObjectNode>
      * @return the page size provided for the search.
      */
     @Override
-    public int getPageSize() {
+    public int pageSize() {
         return this.pageSize;
     }
 
@@ -98,7 +98,7 @@ public class WorkflowSearchResults implements PaginatedSearchResults<ObjectNode>
      * @return the current page number for these results.
      */
     @Override
-    public int getPageNumber() {
+    public int pageNumber() {
         return this.pageNumber;
     }
 
@@ -108,22 +108,22 @@ public class WorkflowSearchResults implements PaginatedSearchResults<ObjectNode>
         private static final long serialVersionUID = 2994432257552675130L;
 
         @Override
-        public List<ObjectNode> getPage() {
+        public List<ObjectNode> page() {
             return Collections.emptyList();
         }
 
         @Override
-        public int getTotalSize() {
+        public int totalSize() {
             return 0;
         }
 
         @Override
-        public int getPageSize() {
+        public int pageSize() {
             return 0;
         }
 
         @Override
-        public int getPageNumber() {
+        public int pageNumber() {
             return 0;
         }
 

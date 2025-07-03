@@ -477,16 +477,16 @@ public class SimpleWorkflowManagerTest extends OrmEnabledTestCase {
 
             PaginatedSearchResults<ObjectNode> results = workflowManager.findWorkflowRecords(searchParams, adminUser);
             assertNotNull(results);
-            assertNotNull(results.getPage());
-            assertEquals(4, results.getTotalSize());
-            assertEquals(4, results.getPageSize());
-            assertEquals(1, results.getPageNumber());
+            assertNotNull(results.page());
+            assertEquals(4, results.totalSize());
+            assertEquals(4, results.pageSize());
+            assertEquals(1, results.pageNumber());
 
             String expectedJson = IOUtils.toString(
                     Objects.requireNonNull(SimpleWorkflowManager.class.getResourceAsStream("/expected-find-workflows-01.json")),
                     StandardCharsets.UTF_8
             );
-            assertEquals(expectedJson, mapper.writer(printer).writeValueAsString(results.getPage()));
+            assertEquals(expectedJson, mapper.writer(printer).writeValueAsString(results.page()));
         }
     }
 
@@ -531,11 +531,11 @@ public class SimpleWorkflowManagerTest extends OrmEnabledTestCase {
                 assertNotNull(results);
 
                 ObjectNode jsonResults = mapper.createObjectNode();
-                List<String> actualIds = results.getPage().stream()
+                List<String> actualIds = results.page().stream()
                         .map((record) -> record.get("iri").textValue()).toList();
-                jsonResults.put("totalSize", results.getTotalSize());
-                jsonResults.put("pageSize", results.getPageSize());
-                jsonResults.put("pageNumber", results.getPageNumber());
+                jsonResults.put("totalSize", results.totalSize());
+                jsonResults.put("pageSize", results.pageSize());
+                jsonResults.put("pageNumber", results.pageNumber());
                 jsonResults.set("expectedIris", mapper.convertValue(actualIds, ArrayNode.class));
 
                 ObjectNode expectedObjectNode = mapper.createObjectNode();
@@ -831,10 +831,10 @@ public class SimpleWorkflowManagerTest extends OrmEnabledTestCase {
                 PaginatedSearchResults<ObjectNode> results = workflowManager.findWorkflowExecutionActivities(workflowRecordIri, searchParamsBuilder.build(), adminUser);
                 assertNotNull(results);
                 ObjectNode jsonResults = mapper.createObjectNode();
-                jsonResults.put("totalSize", results.getTotalSize());
-                jsonResults.put("pageSize", results.getPageSize());
-                jsonResults.put("pageNumber", results.getPageNumber());
-                jsonResults.set("page", mapper.convertValue(results.getPage(), ArrayNode.class));
+                jsonResults.put("totalSize", results.totalSize());
+                jsonResults.put("pageSize", results.pageSize());
+                jsonResults.put("pageNumber", results.pageNumber());
+                jsonResults.set("page", mapper.convertValue(results.page(), ArrayNode.class));
 
                 ObjectNode expectedObjectNode = mapper.createObjectNode();
                 expectedObjectNode.put("requestUser", requestUserIri);

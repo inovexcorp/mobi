@@ -48,7 +48,7 @@ module.exports = {
 
     'Step 4: Verify shapes graph presentation': function(browser) {
         browser
-            .waitForElementVisible('shapes-graph-details')
+            .waitForElementVisible('selected-details')
             .waitForElementVisible('properties-block')
             .waitForElementVisible('div.yate')
             .page.editorPage()
@@ -66,7 +66,7 @@ module.exports = {
 
     'Step 6: Verify switching of branches': function(browser) {
         browser
-            .waitForElementVisible('shapes-graph-details')
+            .waitForElementVisible('selected-details')
             .waitForElementVisible('properties-block')
             .waitForElementVisible('div.yate')
             .page.editorPage()

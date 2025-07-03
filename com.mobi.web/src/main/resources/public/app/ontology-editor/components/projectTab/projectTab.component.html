@@ -22,12 +22,19 @@
   -->
 <div class="project-tab h-100 w-100 m-0 p-3" #projectTab>
     <div class="d-flex flex-column h-100" *ngIf="os.listItem.selected">
-        <selected-details></selected-details>
+        <selected-details
+            [stateService]="os"
+            [entity]="os.listItem.selected"
+            [entityIri]="os.listItem.selected['@id']"
+            [isImported]="os.isSelectedImported()"
+            [canModify]="os.canModify()">
+        </selected-details>
         <div class="row flex-1 remove-min-height">
             <div class="col-5 vertical-scroll h-100">
                 <div class="row py-2">
                     <properties-block class="col"
                         [stateService]="os"
+                        [canModify]="os.canModify()"
                         [ontology]="os.listItem.selected"
                         [annotationIRIs]="annotationIRIs">
                     </properties-block>
@@ -38,7 +45,8 @@
                         [stateService]="os"
                         [listItem]="os.listItem"
                         [targetRecordTypes]="targetRecordTypes"
-                        [noImportMessage]="noImportMessage">
+                        [noImportMessage]="noImportMessage"
+                        [canModify]="os.canModify()">
                     </imports-block>
                 </div>
             </div>

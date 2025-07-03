@@ -28,6 +28,7 @@ import { GraphState, StateEdge, StateNode } from '../../app/ontology-visualizati
 import { ControlRecordI } from '../../app/ontology-visualization/classes/controlRecords';
 import { VersionedRdfState } from '../../app/shared/services/versionedRdfState.service';
 import { VersionedRdfListItem } from '../../app/shared/models/versionedRdfListItem.class';
+import { JSONLDObject } from '../../app/shared/models/JSONLDObject.interface';
 
 export const DATE_STR = '2023-01-01T00:00:00Z';
 export const SHORT_DATE_STR = formatDate(new Date(DATE_STR), 'short', 'en-US');
@@ -187,48 +188,53 @@ export class mockStateManager {
 }
 
 export class MockVersionedRdfState extends VersionedRdfState<VersionedRdfListItem> {
-  changeVersion = jasmine.createSpy('changeVersion')
-  open = jasmine.createSpy('open')
-  delete = jasmine.createSpy('delete')
-  getIdentifierIRI = jasmine.createSpy('getIdentifierIRI')
-  download = jasmine.createSpy('download')
-  uploadChanges = jasmine.createSpy('uploadChanges')
-  removeChanges = jasmine.createSpy('removeChanges')
-  create = jasmine.createSpy('create')
-  createAndOpen = jasmine.createSpy('createAndOpen')
-  getDefaultNamespace = jasmine.createSpy('getDefaultNamespace')
-  getEntityName = jasmine.createSpy('getEntityName')
-  getId = jasmine.createSpy('getId')
-  merge = jasmine.createSpy('merge')
-  isCommittable = jasmine.createSpy('merge')
+  changeVersion = jasmine.createSpy('changeVersion');
+  open = jasmine.createSpy('open');
+  delete = jasmine.createSpy('delete');
+  getIdentifierIRI = jasmine.createSpy('getIdentifierIRI');
+  download = jasmine.createSpy('download');
+  uploadChanges = jasmine.createSpy('uploadChanges');
+  removeChanges = jasmine.createSpy('removeChanges');
+  create = jasmine.createSpy('create');
+  createAndOpen = jasmine.createSpy('createAndOpen');
+  getDefaultNamespace = jasmine.createSpy('getDefaultNamespace');
+  getEntityName = jasmine.createSpy('getEntityName');
+  getId = jasmine.createSpy('getId');
+  merge = jasmine.createSpy('merge');
+  isCommittable = jasmine.createSpy('isCommittable');
   validateCurrentStateExists = jasmine.createSpy('validateCurrentStateExists')
-  close = jasmine.createSpy('close')
-  canModify = jasmine.createSpy('canModify')
-  clearInProgressCommit = jasmine.createSpy('clearInProgressCommit')
-  createState = jasmine.createSpy('createState')
-  getStateByRecordId = jasmine.createSpy('getStateByRecordId')
-  updateState = jasmine.createSpy('updateState')
-  deleteState = jasmine.createSpy('deleteState')
-  deleteBranchState = jasmine.createSpy('deleteBranchState')
-  getCurrentStateByRecordId = jasmine.createSpy('getCurrentStateByRecordId')
-  getCurrentStateIdByRecordId = jasmine.createSpy('getCurrentStateIdByRecordId')
-  getCurrentState = jasmine.createSpy('getCurrentState')
-  getCurrentStateId = jasmine.createSpy('getCurrentStateId')
-  getCommitIdOfBranchState = jasmine.createSpy('getCommitIdOfBranchState')
-  isStateTag = jasmine.createSpy('isStateTag')
-  isStateBranch = jasmine.createSpy('isStateBranch')
-  getCatalogDetails = jasmine.createSpy('getCatalogDetails')
-  getLatestMaster = jasmine.createSpy('getLatestMaster')
-  getMergeDifferences = jasmine.createSpy('getMergeDifferences')
-  attemptMerge = jasmine.createSpy('attemptMerge')
-  checkConflicts = jasmine.createSpy('checkConflicts')
-  cancelMerge = jasmine.createSpy('cancelMerge')
-  getListItemByRecordId = jasmine.createSpy('getListItemByRecordId')
-  getRemovePropOverlayMessage = jasmine.createSpy('getRemovePropOverlayMessage')
-  getPropValueDisplay = jasmine.createSpy('getPropValueDisplay')
-  removeProperty = jasmine.createSpy('removeProperty')
-  updateLabel = jasmine.createSpy('updateLabel')
-  isLinkable = jasmine.createSpy('isLinkable')
-  goTo = jasmine.createSpy('goTo')
-  isImported = jasmine.createSpy('isImported')
+  close = jasmine.createSpy('close');
+  canModify = jasmine.createSpy('canModify');
+  clearInProgressCommit = jasmine.createSpy('clearInProgressCommit');
+  createState = jasmine.createSpy('createState');
+  getStateByRecordId = jasmine.createSpy('getStateByRecordId');
+  updateState = jasmine.createSpy('updateState');
+  deleteState = jasmine.createSpy('deleteState');
+  deleteBranchState = jasmine.createSpy('deleteBranchState');
+  getCurrentStateByRecordId = jasmine.createSpy('getCurrentStateByRecordId');
+  getCurrentStateIdByRecordId = jasmine.createSpy('getCurrentStateIdByRecordId');
+  getCurrentState = jasmine.createSpy('getCurrentState');
+  getCurrentStateId = jasmine.createSpy('getCurrentStateId');;
+  getCommitIdOfBranchState = jasmine.createSpy('getCommitIdOfBranchState');
+  isStateTag = jasmine.createSpy('isStateTag');
+  isStateBranch = jasmine.createSpy('isStateBranch');
+  getCatalogDetails = jasmine.createSpy('getCatalogDetails');
+  getLatestMaster = jasmine.createSpy('getLatestMaster');
+  getMergeDifferences = jasmine.createSpy('getMergeDifferences');
+  attemptMerge = jasmine.createSpy('attemptMerge');
+  checkConflicts = jasmine.createSpy('checkConflicts');
+  cancelMerge = jasmine.createSpy('cancelMerge');
+  getListItemByRecordId = jasmine.createSpy('getListItemByRecordId');
+  getRemovePropOverlayMessage = jasmine.createSpy('getRemovePropOverlayMessage');
+  getPropValueDisplay = jasmine.createSpy('getPropValueDisplay');
+  removeProperty = jasmine.createSpy('removeProperty');
+  updateLabel = jasmine.createSpy('updateLabel');
+  isLinkable = jasmine.createSpy('isLinkable');
+  goTo = jasmine.createSpy('goTo');
+  isSelectedImported = jasmine.createSpy('isSelectedImported');
+  isImported = jasmine.createSpy('isImported');
+  checkIri = jasmine.createSpy('checkIri');
+  onIriEdit = jasmine.createSpy('onIriEdit');
+  getTypesLabel = jasmine.createSpy('getTypesLabel');
+  getImportedSource = jasmine.createSpy('getImportedSource');
 }

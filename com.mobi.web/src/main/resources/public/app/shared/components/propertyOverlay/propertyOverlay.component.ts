@@ -173,9 +173,9 @@ export class PropertyOverlayComponent implements OnInit {
     let added = false;
 
     if (this.isOntologyProperty) {
-      added = this._pm.addId(this.stateService.listItem.selected, property, value);
+      added = this._pm.addId(this.data.entity, property, value);
     } else {
-      added = this._pm.addValue(this.stateService.listItem.selected, property, value, type, language);
+      added = this._pm.addValue(this.data.entity, property, value, type, language);
     }
     if (added) {
       this.stateService.addToAdditions(this.stateService.listItem.versionedRdfRecord.recordId, this._createJson(value, type, language));
@@ -193,13 +193,13 @@ export class PropertyOverlayComponent implements OnInit {
     const value = this.propertyForm.controls.value.value;
     const language = this.propertyForm.controls.language.value;
     const type = language ? '' : this.propertyForm.controls.type.value;
-    const oldObj = Object.assign({}, get(this.stateService.listItem.selected, `['${property}']['${this.data.index}']`));
+    const oldObj = Object.assign({}, get(this.data.entity, `['${property}']['${this.data.index}']`));
     let edited = false;
 
     if (this.isOntologyProperty) {
-      edited = this._pm.editId(this.stateService.listItem.selected, property, this.data.index, value);
+      edited = this._pm.editId(this.data.entity, property, this.data.index, value);
     } else {
-      edited = this._pm.editValue(this.stateService.listItem.selected, property, this.data.index, value, type, language);
+      edited = this._pm.editValue(this.data.entity, property, this.data.index, value, type, language);
     }
     if (edited) {
       this.stateService.addToDeletions(this.stateService.listItem.versionedRdfRecord.recordId, this._createJson(get(oldObj, '@value', get(oldObj, '@id')), get(oldObj, '@type'), get(oldObj, '@language')));
@@ -228,6 +228,6 @@ export class PropertyOverlayComponent implements OnInit {
 
   private _createJson(value, type, language) {
     const valueObj = this.isOntologyProperty ? { '@id': value } : this._pm.createValueObj(value, type, language);
-    return createJson(this.stateService.listItem.selected['@id'], this.propertyForm.controls.property.value, valueObj);
+    return createJson(this.data.entity['@id'], this.propertyForm.controls.property.value, valueObj);
   }
 }

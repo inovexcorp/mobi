@@ -27,7 +27,10 @@
     <info-message *ngIf="nodeShapes.length === 0" class="no-match">No node shapes match your search criteria.</info-message>
     <cdk-virtual-scroll-viewport itemSize="26" #hierarchyVirtualScroll class="flex-1 repeater-container w-100 remove-min-height">
         <div *cdkVirtualFor="let node of nodeShapes" class="nodeWrapper">
-            <app-node-shapes-item [nodeData]="node"></app-node-shapes-item>
+            <app-node-shapes-item [nodeData]="node"
+                                  [selected]="sgs.listItem.nodeTab.selectedEntityIRI === node.iri"
+                                  (onItemSelect)="onItemSelection($event)">
+            </app-node-shapes-item>
         </div>
     </cdk-virtual-scroll-viewport>
 </div>

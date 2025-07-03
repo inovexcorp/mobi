@@ -75,8 +75,8 @@ module.exports = {
     'Step 9: Verify a new branch was created' : function(browser) {
         browser
             .page.editorPage()
-            .assert.valueEquals('@editorRecordSelectInput', 'myTitle')
-            .assert.valueEquals('@editorBranchSelectInput', 'newBranchTitle');
+            .assert.valueContains('@editorRecordSelectInput', 'myTitle')
+            .assert.valueContains('@editorBranchSelectInput', 'newBranchTitle');
     },
 
     'Step 10: Create a new Class': function(browser) {
@@ -165,8 +165,8 @@ module.exports = {
         browser.page.ontologyEditorPage().switchBranch('MASTER');
         browser.globals.wait_for_no_spinners(browser);
         browser.page.editorPage()
-            .assert.valueEquals('@editorRecordSelectInput', 'myTitle')
-            .assert.valueEquals('@editorBranchSelectInput', 'MASTER');
+            .assert.valueContains('@editorRecordSelectInput', 'myTitle')
+            .assert.valueContains('@editorBranchSelectInput', 'MASTER');
         browser.page.ontologyEditorPage().toggleChangesPage();
         browser.globals.wait_for_no_spinners(browser);
         browser
@@ -180,8 +180,8 @@ module.exports = {
         browser.page.ontologyEditorPage().switchBranch('newBranchTitle');
         browser.globals.wait_for_no_spinners(browser);
         browser.page.editorPage()
-            .assert.valueEquals('@editorRecordSelectInput', 'myTitle')
-            .assert.valueEquals('@editorBranchSelectInput', 'newBranchTitle');
+            .assert.valueContains('@editorRecordSelectInput', 'myTitle')
+            .assert.valueContains('@editorBranchSelectInput', 'newBranchTitle');
     },
 
     'Step 19: Perform a merge': function(browser) {

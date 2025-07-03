@@ -32,7 +32,7 @@ import { OntologyStateService } from '../../../shared/services/ontologyState.ser
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 import { SharedModule } from '../../../shared/shared.module';
 import { IndividualHierarchyBlockComponent } from '../individualHierarchyBlock/individualHierarchyBlock.component';
-import { SelectedDetailsComponent } from '../selectedDetails/selectedDetails.component';
+import { SelectedDetailsComponent } from '../../../shared/components/selectedDetails/selectedDetails.component';
 import { DatatypePropertyBlockComponent } from '../datatypePropertyBlock/datatypePropertyBlock.component';
 import { ObjectPropertyBlockComponent } from '../objectPropertyBlock/objectPropertyBlock.component';
 import { AnnotationBlockComponent } from '../annotationBlock/annotationBlock.component';

@@ -72,6 +72,7 @@ import com.mobi.ontology.utils.cache.OntologyCache;
 import com.mobi.persistence.utils.impl.SimpleBNodeService;
 import com.mobi.rdf.orm.OrmFactory;
 import com.mobi.repository.impl.sesame.memory.MemoryRepositoryWrapper;
+import com.mobi.rest.test.util.EmptyQueryResult;
 import com.mobi.rest.test.util.FormDataMultiPart;
 import com.mobi.rest.test.util.MobiRestTestCXF;
 import com.mobi.rest.util.UsernameTestFilter;
@@ -256,6 +257,12 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
 
         when(pdp.createRequest(any(), any(), any(), any(), any(), any())).thenReturn(request);
         when(pdp.evaluate(any(), any(IRI.class))).thenReturn(response);
+
+        Ontology currentOntology = Mockito.spy(Ontology.class);
+        when(shapesGraphSpy.getOntology()).thenReturn(currentOntology);
+        Model currentModel = mf.createEmptyModel();
+        when(currentOntology.asModel()).thenReturn(currentModel);
+        when(currentOntology.getTupleQueryResults(anyString(), anyBoolean())).thenAnswer(i -> new EmptyQueryResult());
 
         try (RepositoryConnection conn = repo.getConnection()) {
             InputStream stream = new ByteArrayInputStream("<http://mobi.com/branch> <http://mobi.com/ontologies/catalog#head> <http://mobi.com/commit> . <http://mobi.com/shapes-graph-id> a <http://www.w3.org/2002/07/owl#Ontology> .".getBytes(StandardCharsets.UTF_8));
@@ -970,11 +977,15 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
         when(mockOntologyId1.getOntologyIdentifier()).thenReturn(vf.createIRI("urn:ontIde1"));
         when(mockOntology1.getOntologyId()).thenReturn(mockOntologyId1);
         when(mockOntologyId1.getOntologyIRI()).thenReturn(Optional.of(vf.createIRI("urn:ontIri1")));
+        when(mockOntology1.getTupleQueryResults(anyString(), anyBoolean())).thenAnswer(i -> new EmptyQueryResult());
+        when(mockOntology1.asModel()).thenReturn(mf.createEmptyModel());
 
         Ontology mockOntology2 = mock(Ontology.class);
         OntologyId mockOntologyId2 = mock(OntologyId.class);
         when(mockOntologyId2.getOntologyIdentifier()).thenReturn(vf.createIRI("urn:ontIde2"));
         when(mockOntology2.getOntologyId()).thenReturn(mockOntologyId2);
+        when(mockOntology2.getTupleQueryResults(anyString(), anyBoolean())).thenAnswer(i -> new EmptyQueryResult());
+        when(mockOntology2.asModel()).thenReturn(mf.createEmptyModel());
 
         Set<Ontology> importedOntologies = new LinkedHashSet<>();
         importedOntologies.add(mockOntology1);
@@ -1001,8 +1012,8 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
         assertEquals(objectNode.get("failedImports"), expectedFailedImport);
         assertTrue(objectNode.has("importedOntologies"));
         ArrayNode expectedImportedOntologies = mapper.createArrayNode();
-        ObjectNode ontJson1 = mapper.createObjectNode().put("id", "urn:ontIde1").put("ontologyId", "urn:ontIri1");
-        ObjectNode ontJson2 = mapper.createObjectNode().put("id", "urn:ontIde2").put("ontologyId", "");
+        ObjectNode ontJson1 = mapper.createObjectNode().put("id", "urn:ontIde1").put("ontologyId", "urn:ontIri1").set("iris", mapper.createArrayNode());
+        ObjectNode ontJson2 = mapper.createObjectNode().put("id", "urn:ontIde2").put("ontologyId", "").set("iris", mapper.createArrayNode());
         expectedImportedOntologies.addAll(List.of(ontJson1, ontJson2));
         assertEquals(objectNode.get("importedOntologies"), expectedImportedOntologies);
         assertGetUserFromContext();
@@ -1136,7 +1147,7 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
                             "/node-shapes").queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
                     .queryParam("applyInProgressCommit", false).request().get();
 
-            assertEquals(Response.Status.BAD_REQUEST.getStatusCode(), response.getStatus());
+            assertEquals(Response.Status.NOT_FOUND.getStatusCode(), response.getStatus());
         } catch (Exception e) {
             fail("Exception should not have been thrown: " + e.getMessage());
         }
@@ -1177,7 +1188,8 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
                         "name": "AlbumShape",
                         "targetType": "http://www.w3.org/ns/shacl#targetClass",
                         "targetValue": "http://stardog.com/tutorial/Album",
-                        "imported": true
+                        "imported": true,
+                        "sourceOntologyIRI":"https://mobi.solutions/shapes-graphs/music_test"
                       }
                     ]
                     """;

@@ -35,7 +35,7 @@ import { OntologyStateService } from '../../../shared/services/ontologyState.ser
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 import { cleanStylesFromDOM } from '../../../../test/ts/Shared';
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
-import { StaticIriComponent } from '../staticIri/staticIri.component';
+import { StaticIriComponent } from '../../../shared/components/staticIri/staticIri.component';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
 import { CommitDifference } from '../../../shared/models/commitDifference.interface';

@@ -45,22 +45,22 @@ public class SearchResults {
         private static final long serialVersionUID = 2994432257552675130L;
 
         @Override
-        public List<E> getPage() {
+        public List<E> page() {
             return Collections.emptyList();
         }
 
         @Override
-        public int getTotalSize() {
+        public int totalSize() {
             return 0;
         }
 
         @Override
-        public int getPageSize() {
+        public int pageSize() {
             return 0;
         }
 
         @Override
-        public int getPageNumber() {
+        public int pageNumber() {
             return 0;
         }
 

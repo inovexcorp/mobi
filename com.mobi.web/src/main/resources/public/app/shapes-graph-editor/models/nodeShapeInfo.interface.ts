@@ -21,9 +21,10 @@
  * #L%
  */
 export interface NodeShapeInfo {
-  iri: string,
-  name: string,
-  targetType: string,
-  targetValue: string
-  imported: boolean
+  iri: string;
+  name: string;
+  targetType: string;
+  targetValue: string;
+  imported: boolean;
+  sourceOntologyIRI: string;
 }

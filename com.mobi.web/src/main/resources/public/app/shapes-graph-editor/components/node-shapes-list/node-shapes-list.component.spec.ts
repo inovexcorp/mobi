@@ -28,14 +28,18 @@ import { DebugElement, SimpleChanges } from '@angular/core';
 import { ScrollingModule } from '@angular/cdk/scrolling';
 
 //Third-Party imports
-import { MockProvider } from 'ng-mocks';
+import { MockComponent, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 
 //Mobi & Local imports
 import { cleanStylesFromDOM } from '../../../../test/ts/Shared';
-import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
+import { InfoMessageComponent } from '../../../shared/components/infoMessage/infoMessage.component';
+import { NodeShapeInfo } from '../../models/nodeShapeInfo.interface';
+import { NodeShapesItemComponent } from '../node-shapes-item/node-shapes-item.component';
+import { SearchBarComponent } from '../../../shared/components/searchBar/searchBar.component';
 import { ShapesGraphListItem } from '../../../shared/models/shapesGraphListItem.class';
 import { ShapesGraphManagerService } from '../../../shared/services/shapesGraphManager.service';
+import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
 import { ToastService } from '../../../shared/services/toast.service';
 import { NodeShapesListComponent } from './node-shapes-list.component';
 
@@ -47,21 +51,23 @@ describe('NodeShapesListComponent', () => {
   let shapesGraphManagerStub: jasmine.SpyObj<ShapesGraphManagerService>;
   let toastStub: jasmine.SpyObj<ToastService>;
 
-  const nodeList = [
-    {
-      'iri': 'http://www.example.com/Test1',
-      'name': 'Test1',
-      'targetType': 'http://www.w3.org/ns/shacl#targetClass',
-      'targetValue': 'http://stardog.com/tutorial/test4',
-      'imported': true
-    },
-    {
-      'iri': 'http://www.example.com/Test2',
-      'name': 'Test2',
-      'targetType': 'http://www.example.com#targetClass',
-      'targetValue': 'http://www.example.com/Test3',
-      'imported': false
-    }
+  const nodeList: NodeShapeInfo[] = [
+    Object.freeze({
+      iri: 'http://www.example.com/Test1',
+      name: 'Test1',
+      targetType: 'http://www.w3.org/ns/shacl#targetClass',
+      targetValue: 'http://stardog.com/tutorial/test4',
+      imported: true,
+      sourceOntologyIRI: 'https://mobi.solutions/shapes-graphs/example'
+    }),
+    Object.freeze({
+      iri: 'http://www.example.com/Test2',
+      name: 'Test2',
+      targetType: 'http://www.example.com#targetClass',
+      targetValue: 'http://www.example.com/Test3',
+      imported: false,
+      sourceOntologyIRI: 'https://mobi.solutions/shapes-graphs/example'
+    })
   ];
 
   const changesObj: SimpleChanges = {
@@ -75,35 +81,52 @@ describe('NodeShapesListComponent', () => {
     }
   };
 
-  beforeEach(() => {
-    TestBed.configureTestingModule({
-      imports: [ScrollingModule],
-      declarations: [NodeShapesListComponent],
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [
+        ScrollingModule
+      ],
+      declarations: [
+        NodeShapesListComponent,
+        MockComponent(NodeShapesItemComponent),
+        MockComponent(InfoMessageComponent),
+        MockComponent(SearchBarComponent)
+      ],
       providers: [
         MockProvider(ShapesGraphStateService),
         MockProvider(ShapesGraphManagerService),
         MockProvider(ToastService),
       ]
     }).compileComponents();
+    toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
+    shapesGraphStateStub = TestBed.inject(ShapesGraphStateService) as jasmine.SpyObj<ShapesGraphStateService>;
+    shapesGraphStateStub.listItem = new ShapesGraphListItem();
+    shapesGraphStateStub.listItem.selected = {
+      '@id': 'https://mobi.solutions/shapes-graphs/example',
+      '@type': ['http://www.w3.org/2002/07/owl#Ontology']
+    };
+    shapesGraphStateStub.listItem.nodeTab = {
+      selectedEntityIRI: 'selectedEntityIRI',
+      selectedEntityName: 'selectedEntityName',
+      selectedEntity: undefined,
+      sourceShape: 'sourceShape'
+    };
+    shapesGraphStateStub.setSelected.and.returnValue(of(null));
+    shapesGraphManagerStub = TestBed.inject(ShapesGraphManagerService) as jasmine.SpyObj<ShapesGraphManagerService>;
+    shapesGraphManagerStub.getNodeShapes.and.returnValue(of(nodeList));
+
     fixture = TestBed.createComponent(NodeShapesListComponent);
     component = fixture.componentInstance;
     component.nodeShapes = [];
     element = fixture.debugElement;
 
-    toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
-
-    shapesGraphStateStub = TestBed.inject(ShapesGraphStateService) as jasmine.SpyObj<ShapesGraphStateService>;
-    shapesGraphStateStub.listItem = new ShapesGraphListItem();
-    shapesGraphStateStub.listItem.versionedRdfRecord = {
+    component.versionedRdfRecord = {
       title: 'Test Record',
       recordId: 'recordId',
       branchId: 'branchId',
       commitId: 'commitId',
     };
     component.viewedRecord = 'https://mobi.solutions/shapes-graphs/example';
-
-    shapesGraphManagerStub = TestBed.inject(ShapesGraphManagerService) as jasmine.SpyObj<ShapesGraphManagerService>;
-    shapesGraphManagerStub.getNodeShapes.and.returnValue(of(nodeList));
 
     fixture.detectChanges();
   });
@@ -120,6 +143,28 @@ describe('NodeShapesListComponent', () => {
 
   it('should create', () => {
     expect(component).toBeTruthy();
+  });
+  describe('controller method', () => {
+    it('onItemSelection should set listItem nodeTab', () => {
+      expect(shapesGraphStateStub.listItem.nodeTab.selectedEntityIRI).toEqual('selectedEntityIRI');
+      expect(shapesGraphStateStub.listItem.nodeTab.selectedEntityName).toEqual('selectedEntityName');
+      expect(shapesGraphStateStub.listItem.nodeTab.selectedEntity).toEqual(undefined);
+      expect(shapesGraphStateStub.listItem.nodeTab.sourceShape).toEqual('sourceShape');
+      const nodeShapeInfo: NodeShapeInfo = {
+        iri: 'iri',
+        name: 'name',
+        targetType: 'targetType',
+        targetValue: 'targetValue',
+        imported: false,
+        sourceOntologyIRI: 'sourceShapeNew'
+      };
+      component.onItemSelection(nodeShapeInfo);
+      expect(shapesGraphStateStub.listItem.nodeTab.selectedEntityIRI).toEqual('iri');
+      expect(shapesGraphStateStub.listItem.nodeTab.selectedEntityName).toEqual('name');
+      expect(shapesGraphStateStub.listItem.nodeTab.selectedEntity).toEqual(undefined);
+      expect(shapesGraphStateStub.listItem.nodeTab.sourceShape).toEqual('sourceShapeNew');
+      expect(shapesGraphStateStub.setSelected).toHaveBeenCalledWith(shapesGraphStateStub.listItem.nodeTab.selectedEntityIRI, shapesGraphStateStub.listItem);
+    });
   });
   describe('should create the correct html', () => {
     it('if there are no node shapes.', () => {

@@ -20,20 +20,21 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="node-item-wrapper w-100">
+<div class="node-item-wrapper w-100" (click)="setSelected()" [ngClass]="{'activeNode': selected}">
     <h4 class="node-title shortened-text" title="{{nodeData.name | beautify}}">{{nodeData.name | beautify}}</h4>
     <div class="node-content shortened-text">
         <div class="prop-header d-flex align-items-baseline clearfix" title="{{nodeData.iri}}">
             <p class="text text-truncate m-0">IRI: </p>
-            <small class="ml-1 text-muted text-truncate flex-1">{{ nodeData.iri }}</small>
+            <small class="ml-1 text-muted text-truncate flex-1">{{nodeData.iri}}</small>
         </div>
-        <div class="prop-header d-flex align-items-baseline clearfix" title="{{nodeData.targetValue ? nodeData.targetValue : 'N/A'}}">
+        <div class="prop-header d-flex align-items-baseline clearfix" title="{{nodeData.targetValue || 'N/A'}}">
             <p class="text text-truncate m-0">Target: </p>
-            <small class="ml-1 text-muted text-truncate flex-1">{{nodeData.targetValue ? nodeData.targetValue : 'N/A'}}</small>
+            <small class="ml-1 text-muted text-truncate flex-1">{{nodeData.targetValue || 'N/A'}}</small>
+            <!-- TODO use the entity name of the value once we add entity name fetching for all IRIs later -->
         </div>
-        <div class="prop-header d-flex align-items-baseline clearfix" title="{{nodeData.targetType ? nodeData.targetType : 'N/A'}}">
+        <div class="prop-header d-flex align-items-baseline clearfix" title="{{nodeData.targetType || 'N/A'}}">
             <p class="text text-truncate m-0">Target Type: </p>
-            <small class="ml-1 text-muted text-truncate flex-1">{{nodeData.targetType ? nodeData.targetType : 'N/A'}}</small>
+            <small class="ml-1 text-muted text-truncate flex-1">{{getBeautifulIRI(nodeData.targetType) || 'N/A'}}</small>
         </div>
         <div class="prop-header d-flex align-items-baseline clearfix" title="{{nodeData.imported}}">
             <p class="text text-truncate m-0">Imported: </p>

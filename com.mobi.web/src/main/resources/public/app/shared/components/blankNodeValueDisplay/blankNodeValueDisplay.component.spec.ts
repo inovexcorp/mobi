@@ -70,6 +70,7 @@ describe('Blank Node Value Display component', function() {
         component.node = {'@id': 'someId', name: 'someName'};
         ontologyStateStub.getBlankNodeValue.and.returnValue(bnode);
         trustedHtmlStub.transform.and.returnValue(bnode);
+        component.stateService = ontologyStateStub;
     });
 
     afterEach(function() {

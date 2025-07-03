@@ -22,44 +22,62 @@ package com.mobi.shapes.impl;
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-
+import com.mobi.catalog.api.PaginatedSearchParams;
+import com.mobi.catalog.api.PaginatedSearchResults;
+import com.mobi.exception.MobiException;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.utils.OntologyUtils;
+import com.mobi.persistence.utils.Bindings;
 import com.mobi.rest.util.RestUtils;
+import com.mobi.shapes.api.NodeShapeSummary;
 import com.mobi.shapes.api.ShapesGraph;
+import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.Value;
+import org.eclipse.rdf4j.query.Binding;
 import org.eclipse.rdf4j.query.TupleQueryResult;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.rio.RDFFormat;
 
+import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import javax.ws.rs.core.StreamingOutput;
 
 public class SimpleShapesGraph implements ShapesGraph {
-
     private final Ontology ontology;
-
-    private static final String GET_ENTITY_QUERY = """
-            CONSTRUCT {
-              <%IRI%> ?p ?o .
-            }
-            WHERE {
-              <%IRI%> ?p ?o .
-            }""";
-    private static final String SHAPES_GRAPH_CONTENT_QUERY = """
-            CONSTRUCT {
-                ?s ?p ?o .
-            }
-            WHERE {
-                ?s ?p ?o .
-                FILTER (?s != <%IRI%>)
-            } LIMIT 5000
-            """;
+    private static final String OFFSET_EXCEEDS = "Offset exceeds total size";
     private static final String IRI_REPLACE = "%IRI%";
+    private static final String GET_ENTITY_QUERY;
+    private static final String GET_NODE_SHAPES_QUERY;
+    private static final String SHAPES_GRAPH_CONTENT_QUERY;
 
+    static {
+        try {
+            GET_ENTITY_QUERY = IOUtils.toString(
+                    Objects.requireNonNull(SimpleShapesGraph.class.getResourceAsStream("/retrieve-entity.rq")),
+                    StandardCharsets.UTF_8
+            );
+            GET_NODE_SHAPES_QUERY = IOUtils.toString(
+                    Objects.requireNonNull(SimpleShapesGraph.class.getResourceAsStream("/node-shapes-query.rq")),
+                    StandardCharsets.UTF_8
+            );
+            SHAPES_GRAPH_CONTENT_QUERY = IOUtils.toString(
+                    Objects.requireNonNull(SimpleShapesGraph.class.getResourceAsStream("/graph-content.rq")),
+                    StandardCharsets.UTF_8
+            );
+        } catch (IOException ex) {
+            throw new MobiException(ex);
+        }
+    }
     /**
      * Creates a SimpleShapesGraph object that represents a Shapes Graph.
      *
@@ -77,7 +95,7 @@ public class SimpleShapesGraph implements ShapesGraph {
     @Override
     public Model getEntity(Resource subjectId) {
         return this.ontology.getGraphQueryResults(GET_ENTITY_QUERY.replace(IRI_REPLACE, subjectId.stringValue()),
-                false);
+                true);
     }
 
     @Override
@@ -185,5 +203,88 @@ public class SimpleShapesGraph implements ShapesGraph {
     @Override
     public Ontology getOntology() {
         return this.ontology;
+    }
+
+    @Override
+    public PaginatedSearchResults<NodeShapeSummary> findNodeShapes(PaginatedSearchParams searchParams, RepositoryConnection conn) {
+        String searchTextParam = searchParams.getSearchText().orElse("");
+
+        List<NodeShapeSummary> nodeShapeSummaries = new ArrayList<>();
+
+        Ontology ontology = this.getOntology();
+        Set<Ontology> onlyImports = OntologyUtils.getImportedOntologies(ontology);
+
+        getNodeShapesFromOntology(nodeShapeSummaries, ontology, false, searchTextParam);
+        onlyImports.forEach(ont -> getNodeShapesFromOntology(nodeShapeSummaries, ont, true, searchTextParam));
+
+        int totalCount = nodeShapeSummaries.size();
+        int offset = searchParams.getOffset();
+        int limit = searchParams.getLimit().orElse(totalCount);
+
+        if (totalCount == 0) {
+            return new SimpleSearchResults<>(nodeShapeSummaries, totalCount, limit, 1);
+        }
+        if (offset > totalCount) {
+            throw new IllegalArgumentException(OFFSET_EXCEEDS);
+        }
+
+        int pageNumber = (limit > 0) ? (offset / limit) + 1 : 1;
+        return new SimpleSearchResults<>(orderShapeNodes(nodeShapeSummaries, offset, limit), totalCount, limit, pageNumber);
+    }
+
+    /**
+     * Retrieves node shapes from the given ontology using a predefined SPARQL query and adds them to the provided list.
+     *
+     * @param nodeShapeSummaries the list to which the resulting {@link NodeShapeSummary} objects will be added
+     * @param ontology the ontology to query for node shapes
+     * @param imported flag indicating whether these shapes come from an imported ontology
+     * @param searchText search text used to filter shapes in the query (replaces "%search%" in the query template.
+     */
+    protected void getNodeShapesFromOntology(List<NodeShapeSummary> nodeShapeSummaries,
+                                             Ontology ontology,
+                                             boolean imported,
+                                             String searchText) {
+        String queryString = GET_NODE_SHAPES_QUERY.replace("%search%", searchText);
+        TupleQueryResult results = ontology.getTupleQueryResults(queryString, false);
+
+        results.forEach(queryResult -> {
+            String nodeIri = Bindings.requiredResource(queryResult, "iri").stringValue();
+            String nodeName = Bindings.requiredLiteral(queryResult, "name").stringValue();
+            Optional<Binding> targetType = Optional.ofNullable(queryResult.getBinding( "targetType"));
+            Optional<Binding> targetValue = Optional.ofNullable(queryResult.getBinding("targetValue"));
+            Optional<IRI> ontologyIRI = ontology.getOntologyId().getOntologyIRI();
+            NodeShapeSummary nodeShapeSummary = new NodeShapeSummary(
+                    nodeIri,
+                    nodeName,
+                    targetType.isPresent() ? targetType.get().getValue().stringValue() : "",
+                    targetValue.isPresent() ? targetValue.get().getValue().stringValue() : "",
+                    imported,
+                    ontologyIRI.map(Value::stringValue).orElse(null)
+            );
+            nodeShapeSummaries.add(nodeShapeSummary);
+        });
+    }
+
+    /**
+     * Sorts the given list of NodeShapeSummary objects by name and applies pagination.
+     * @param nodeShapeSummaries the list to sort and modify in-place
+     * @param offset the starting index for pagination (must be within bounds)
+     * @param limit the maximum number of items to include (must be > 0)
+     * @throws IllegalArgumentException if offset or limit is invalid
+     */
+    protected List<NodeShapeSummary> orderShapeNodes(List<NodeShapeSummary> nodeShapeSummaries, int offset, int limit) {
+        if (limit <= 0) {
+            throw new IllegalArgumentException("Limit must be greater than 0.");
+        }
+        nodeShapeSummaries.sort(Comparator.comparing(NodeShapeSummary::name));
+        if (offset >= nodeShapeSummaries.size()) {
+            throw new IllegalArgumentException("Offset is greater than or equal to the number of nodes.");
+        }
+        int toIndex = Math.min(offset + limit, nodeShapeSummaries.size());
+        return nodeShapeSummaries.subList(offset, toIndex);
+    }
+
+    private record SimpleSearchResults<T>(List<T> page, int totalSize, int pageSize,
+                                         int pageNumber) implements PaginatedSearchResults<T> {
     }
 }

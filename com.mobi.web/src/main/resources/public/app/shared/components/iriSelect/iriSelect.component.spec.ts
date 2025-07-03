@@ -260,7 +260,6 @@ describe('IRI Select component', function () {
         } as MatAutocompleteSelectedEvent;
         component.select(event);
         expect(component.selected).toEqual(['previous', iriOption.item]);
-        console.log(component.selectedOptions)
         expect(component.selectedOptions).toEqual([{ item: 'previous', name: 'Previous' }, iriOption]);
         expect(component.selectedChange.emit).toHaveBeenCalledWith(['previous', iriOption.item]);
         expect(component.multiInput.nativeElement.value).toEqual('');

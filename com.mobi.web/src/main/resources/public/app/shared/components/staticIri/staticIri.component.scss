@@ -20,7 +20,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-.static-iri-limited{
+/* Core variables */
+@import "../../../css/variables";
+
+.static-iri {
   padding-bottom: 5px;
   display: inline-block;
 
@@ -32,12 +35,15 @@
       white-space: nowrap;
     }
   }
+
   .duplicate-iri {
     border-bottom: solid red 1px;
   }
+
   .highlight-text {
     background-color: var(--yellow);
   }
+
   a:not([href]):not([tabindex]) {
     color: var(--primary);
   }
