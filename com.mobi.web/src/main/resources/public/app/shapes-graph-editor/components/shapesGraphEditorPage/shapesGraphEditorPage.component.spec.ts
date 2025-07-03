@@ -30,7 +30,6 @@ import { ChangesPageComponent } from '../../../versioned-rdf-record-editor/compo
 import { cleanStylesFromDOM } from '../../../../test/ts/Shared';
 import { EditorTopBarComponent } from '../../../versioned-rdf-record-editor/components/editor-top-bar/editor-top-bar.component';
 import { MergePageComponent } from '../../../versioned-rdf-record-editor/components/merge-page/merge-page.component';
-import { ShapesGraphDetailsComponent } from '../shapesGraphDetails/shapesGraphDetails.component';
 import { ShapesGraphListItem } from '../../../shared/models/shapesGraphListItem.class';
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
 import { ShapesTabsHolderComponent } from '../shapes-tabs-holder/shapes-tabs-holder.component';
@@ -52,7 +51,6 @@ describe('Shapes Graph Editor Page component', function () {
         MockComponent(ChangesPageComponent),
         MockComponent(EditorTopBarComponent),
         MockComponent(MergePageComponent),
-        MockComponent(ShapesGraphDetailsComponent),
         MockComponent(ShapesPreviewComponent),
         MockComponent(ShapesTabsHolderComponent)
       ],

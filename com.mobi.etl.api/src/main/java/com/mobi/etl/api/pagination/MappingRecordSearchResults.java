@@ -39,32 +39,32 @@ public class MappingRecordSearchResults implements PaginatedSearchResults<Mappin
     private int pageNumber;
 
     public MappingRecordSearchResults(PaginatedSearchResults<Record> results, MappingRecordFactory factory) {
-        this.pageSize = results.getPageSize();
-        this.totalSize = results.getTotalSize();
-        this.pageNumber = results.getPageNumber();
-        this.page = results.getPage().stream()
+        this.pageSize = results.pageSize();
+        this.totalSize = results.totalSize();
+        this.pageNumber = results.pageNumber();
+        this.page = results.page().stream()
                 .map(record -> factory.getExisting(record.getResource(), record.getModel()).orElseThrow(() ->
                         new IllegalArgumentException("Provided results object did not contain a Mapping Record")))
                 .collect(Collectors.toList());
     }
 
     @Override
-    public List<MappingRecord> getPage() {
+    public List<MappingRecord> page() {
         return page;
     }
 
     @Override
-    public int getTotalSize() {
+    public int totalSize() {
         return totalSize;
     }
 
     @Override
-    public int getPageSize() {
+    public int pageSize() {
         return pageSize;
     }
 
     @Override
-    public int getPageNumber() {
+    public int pageNumber() {
         return pageNumber;
     }
 }

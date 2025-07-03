@@ -42,7 +42,7 @@ module.exports = {
 
     'Step 3: Verify shapes graph presentation': function(browser) {
         browser
-            .waitForElementVisible('shapes-graph-details')
+            .waitForElementVisible('selected-details')
             .waitForElementVisible('properties-block')
             .waitForElementVisible('div.yate')
             .page.editorPage()
@@ -72,7 +72,7 @@ module.exports = {
                 title: 'UHTC Material shapes graph',
                 iri: 'http://matonto.org/ontologies/uhtc#Material',
                 target: 'http://matonto.org/ontologies/uhtc#Material',
-                type: 'http://www.w3.org/ns/shacl#implicitTarget',
+                type: 'Implicit Target',
                 imported: false
             });
 
@@ -81,7 +81,7 @@ module.exports = {
                 title: 'Test Element node shape',
                 iri: 'http://schema.org/ElementShape',
                 target: 'http://matonto.org/ontologies/uhtc#Element',
-                type: 'http://www.w3.org/ns/shacl#targetClass',
+                type: 'Target Class',
                 imported: false
             });
     },
@@ -98,7 +98,7 @@ module.exports = {
                 title: 'Test Element node shape',
                 iri: 'http://schema.org/ElementShape',
                 target: 'http://matonto.org/ontologies/uhtc#Element',
-                type: 'http://www.w3.org/ns/shacl#targetClass',
+                type: 'Target Class',
                 imported: false
             });
     }

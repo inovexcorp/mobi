@@ -312,10 +312,10 @@ public class WorkflowsRest {
             PaginatedSearchResults<ObjectNode> records = workflowManager.findWorkflowRecords(params, activeUser);
             // Response
             ArrayNode arrayNode = mapper.createArrayNode();
-            for (ObjectNode objectNode : records.getPage()) {
+            for (ObjectNode objectNode : records.page()) {
                 arrayNode.add(objectNode);
             }
-            return createPaginatedResponse(uriInfo, arrayNode, records.getTotalSize(), limit, offset);
+            return createPaginatedResponse(uriInfo, arrayNode, records.totalSize(), limit, offset);
         } catch (IllegalArgumentException ex) {
             throw RestUtils.getErrorObjBadRequest(ex);
         } catch (MobiException ex) {
@@ -851,10 +851,10 @@ public class WorkflowsRest {
                     workflowRecordId, params, activeUser);
             // Response
             ArrayNode arrayNode = mapper.createArrayNode();
-            for (ObjectNode objectNode : records.getPage()) {
+            for (ObjectNode objectNode : records.page()) {
                 arrayNode.add(objectNode);
             }
-            return createPaginatedResponse(uriInfo, arrayNode, records.getTotalSize(), limit, offset);
+            return createPaginatedResponse(uriInfo, arrayNode, records.totalSize(), limit, offset);
         } catch (IllegalArgumentException ex) {
             throw RestUtils.getErrorObjBadRequest(ex);
         } catch (MobiException ex) {

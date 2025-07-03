@@ -190,10 +190,10 @@ public class CommitRestTest extends MobiRestTestCXF {
         when(bNodeService.skolemize(any(Statement.class))).thenAnswer(i -> i.getArgument(0, Statement.class));
         when(bNodeService.deskolemize(any(Model.class))).thenAnswer(i -> i.getArgument(0, Model.class));
 
-        when(results.getPage()).thenReturn(Collections.singletonList(testRecord));
-        when(results.getPageNumber()).thenReturn(0);
-        when(results.getPageSize()).thenReturn(10);
-        when(results.getTotalSize()).thenReturn(50);
+        when(results.page()).thenReturn(Collections.singletonList(testRecord));
+        when(results.pageNumber()).thenReturn(0);
+        when(results.pageSize()).thenReturn(10);
+        when(results.totalSize()).thenReturn(50);
 
         when(commitManager.getCommit(eq(vf.createIRI(COMMIT_IRIS[0])), any(RepositoryConnection.class))).thenReturn(Optional.of(testCommits.get(0)));
         when(commitManager.getCommit(eq(vf.createIRI(COMMIT_IRIS[1])), any(RepositoryConnection.class))).thenReturn(Optional.of(testCommits.get(1)));

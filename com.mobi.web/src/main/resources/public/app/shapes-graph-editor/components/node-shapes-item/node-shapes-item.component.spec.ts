@@ -20,7 +20,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-
 //angular imports
 import { By } from '@angular/platform-browser';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
@@ -32,28 +31,30 @@ import { MockPipe } from 'ng-mocks';
 //Mobi & Local imports
 import { BeautifyPipe } from '../../../shared/pipes/beautify.pipe';
 import { cleanStylesFromDOM } from '../../../../test/ts/Shared';
+import { NodeShapeInfo } from '../../models/nodeShapeInfo.interface';
 import { NodeShapesItemComponent } from './node-shapes-item.component';
 
 describe('NodeShapesItemComponent', () => {
   let component: NodeShapesItemComponent;
   let element: DebugElement;
   let fixture: ComponentFixture<NodeShapesItemComponent>;
-  
-  const nodeItem = {
-    'iri': 'http://www.example.com/TestName',
-    'name': 'TestName',
-    'targetType': 'http://www.example.com/type',
-    'targetValue': 'http://www.example.com/value',
-    'imported': true
+
+  const nodeItem: NodeShapeInfo = {
+    iri: 'http://www.example.com/TestName',
+    name: 'TestName',
+    targetType: 'http://www.example.com/type',
+    targetValue: 'http://www.example.com/value',
+    imported: true,
+    sourceOntologyIRI: 'urn:sourceShape'
   };
 
-  beforeEach(() => {
-    TestBed.configureTestingModule({
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
       declarations: [
         NodeShapesItemComponent,
         MockPipe(BeautifyPipe)
       ]
-    });
+    }).compileComponents();
     fixture = TestBed.createComponent(NodeShapesItemComponent);
     component = fixture.componentInstance;
     element = fixture.debugElement;

@@ -59,11 +59,11 @@ import { MatStepperModule } from '@angular/material/stepper';
 import { MatTableModule } from '@angular/material/table';
 import { MatTabsModule } from '@angular/material/tabs';
 import { MatTooltipModule } from '@angular/material/tooltip';
-
 import { ShowdownModule } from 'ngx-showdown';
 import { MatMarkdownEditorModule } from 'mat-markdown-editor/dist';
 import { CodemirrorModule } from '@ctrl/ngx-codemirror';
 
+import { HistoryGraph } from '../history-graph/history-graph.module';
 import { SHACLFormsModule } from '../shacl-forms/shacl-forms.module';
 
 import { ActivityListComponent } from './components/activity-list/activity-list.component';
@@ -84,6 +84,9 @@ import { DownloadQueryOverlayComponent } from './components/downloadQueryOverlay
 import { EditIriOverlayComponent } from './components/editIriOverlay/editIriOverlay.component';
 import { ErrorDisplayComponent } from './components/errorDisplay/errorDisplay.component';
 import { FileInputComponent } from './components/fileInput/fileInput.component';
+import { FiltersSelectedListComponent } from './components/filters-selected-list/filters-selected-list.component';
+import { ImportsBlockComponent } from './components/importsBlock/importsBlock.component';
+import { ImportsOverlayComponent } from './components/importsOverlay/importsOverlay.component';
 import { InfoMessageComponent } from './components/infoMessage/infoMessage.component';
 import { InlineEditComponent } from './components/inlineEdit/inlineEdit.component';
 import { IriSelectComponent } from './components/iriSelect/iriSelect.component';
@@ -92,20 +95,24 @@ import { LanguageSelectComponent } from './components/languageSelect/languageSel
 import { LimitDescriptionComponent } from './components/limitDescription/limitDescription.component';
 import { ListFiltersComponent } from './components/list-filters/list-filters.component';
 import { MarkdownEditorComponent } from './components/markdownEditor/markdownEditor.component';
+import { PropertiesBlockComponent } from './components/propertiesBlock/propertiesBlock.component';
+import { PropertyOverlayComponent } from './components/propertyOverlay/propertyOverlay.component';
+import { PropertyValuesComponent } from './components/propertyValues/propertyValues.component';
 import { RecordIconComponent } from './components/recordIcon/recordIcon.component';
 import { ResolveConflictsBlock } from './components/resolveConflictsBlock/resolveConflictsBlock.component';
 import { ResolveConflictsFormComponent } from './components/resolveConflictsForm/resolveConflictsForm.component';
 import { SearchBarComponent } from './components/searchBar/searchBar.component';
+import { SelectedDetailsComponent } from './components/selectedDetails/selectedDetails.component';
 import { SerializationSelectComponent } from './components/serializationSelect/serializationSelect.component';
 import { SettingEditPageComponent } from './components/settingEditPage/settingEditPage.component';
 import { SettingGroupComponent } from './components/settingGroup/settingGroup.component';
 import { SidebarComponent } from './components/sidebar/sidebar.component';
 import { SpinnerComponent } from './components/progress-spinner/components/spinner/spinner.component';
+import { StaticIriComponent } from '../shared/components/staticIri/staticIri.component';
 import { UnmaskPasswordComponent } from './components/unmaskPassword/unmaskPassword.component';
 import { UserAccessControlsComponent } from './components/userAccessControls/userAccessControls.component';
 import { ValueDisplayComponent } from './components/valueDisplay/valueDisplay.component';
 import { WarningMessageComponent } from './components/warningMessage/warningMessage.component';
-import { FiltersSelectedListComponent } from './components/filters-selected-list/filters-selected-list.component';
 
 import { CatalogManagerService } from './services/catalogManager.service';
 import { CatalogStateService } from './services/catalogState.service';
@@ -154,13 +161,6 @@ import { SplitIRIPipe } from './pipes/splitIRI.pipe';
 import { TrustedHtmlPipe } from './pipes/trustedHtml.pipe';
 
 import { MobiErrorStateMatcher } from './MobiErrorStateMatcher';
-import { HistoryGraph } from '../history-graph/history-graph.module';
-import { ImportsBlockComponent } from './components/importsBlock/importsBlock.component';
-import { ImportsOverlayComponent } from './components/importsOverlay/importsOverlay.component';
-import { PropertyValuesComponent } from './components/propertyValues/propertyValues.component';
-import { PropertiesBlockComponent } from './components/propertiesBlock/propertiesBlock.component';
-import { PropertyOverlayComponent } from './components/propertyOverlay/propertyOverlay.component';
-
 /**
  * @namespace shared
  *
@@ -220,24 +220,30 @@ import { PropertyOverlayComponent } from './components/propertyOverlay/propertyO
     BranchSelectComponent,
     BreadcrumbsComponent,
     CamelCasePipe,
+    CamelCasePipe,
     CircleButtonStackComponent,
     CircleButtonStackComponent,
-    CommitCompiledResourceComponent,
-    CommitHistoryTableComponent,
     CommitChangesDisplayComponent,
     CommitCompiledResourceComponent,
+    CommitCompiledResourceComponent,
     CommitDifferenceTabsetComponent,
+    CommitHistoryTableComponent,
     CommitHistoryTableComponent,
     CommitInfoOverlayComponent,
     ConfirmModalComponent,
     CopyClipboardDirective,
+    CopyClipboardDirective,
     DatasetSelectComponent,
     DownloadQueryOverlayComponent,
+    DragFileDirective,
     DragFileDirective,
     EditIriOverlayComponent,
     ErrorDisplayComponent,
     FileInputComponent,
+    FiltersSelectedListComponent,
     FocusDirective,
+    FocusDirective,
+    HighlightTextPipe,
     HighlightTextPipe,
     ImportsBlockComponent,
     ImportsOverlayComponent,
@@ -250,36 +256,31 @@ import { PropertyOverlayComponent } from './components/propertyOverlay/propertyO
     ListFiltersComponent,
     MarkdownEditorComponent,
     PrefixationPipe,
+    PrefixationPipe,
+    PropertiesBlockComponent,
+    PropertyOverlayComponent,
+    PropertyValuesComponent,
     RecordIconComponent,
     ResolveConflictsBlock,
     ResolveConflictsFormComponent,
     SearchBarComponent,
+    SelectedDetailsComponent,
     SerializationSelectComponent,
     SettingEditPageComponent,
     SettingGroupComponent,
     ShowPropertiesPipe,
+    ShowPropertiesPipe,
     SidebarComponent,
     SpinnerComponent,
     SplitIRIPipe,
+    SplitIRIPipe,
+    StaticIriComponent,
+    TrustedHtmlPipe,
     TrustedHtmlPipe,
     UnmaskPasswordComponent,
     UserAccessControlsComponent,
     ValueDisplayComponent,
-    WarningMessageComponent,
-    BeautifyPipe,
-    CamelCasePipe,
-    CopyClipboardDirective,
-    DragFileDirective,
-    FocusDirective,
-    HighlightTextPipe,
-    PrefixationPipe,
-    ShowPropertiesPipe,
-    SplitIRIPipe,
-    TrustedHtmlPipe,
-    FiltersSelectedListComponent,
-    PropertyValuesComponent,
-    PropertiesBlockComponent,
-    PropertyOverlayComponent,
+    WarningMessageComponent
   ],
   exports: [
     BrowserAnimationsModule,
@@ -323,9 +324,11 @@ import { PropertyOverlayComponent } from './components/propertyOverlay/propertyO
     ActivityListComponent,
     ActivityTitleComponent,
     AdvancedLanguageSelectComponent,
+    BeautifyPipe,
     BlankNodeValueDisplayComponent,
     BranchSelectComponent,
     BreadcrumbsComponent,
+    CamelCasePipe,
     CircleButtonStackComponent,
     CommitChangesDisplayComponent,
     CommitCompiledResourceComponent,
@@ -333,9 +336,14 @@ import { PropertyOverlayComponent } from './components/propertyOverlay/propertyO
     CommitHistoryTableComponent,
     CommitInfoOverlayComponent,
     ConfirmModalComponent,
+    CopyClipboardDirective,
     DatasetSelectComponent,
+    DragFileDirective,
     ErrorDisplayComponent,
     FileInputComponent,
+    FiltersSelectedListComponent,
+    FocusDirective,
+    HighlightTextPipe,
     ImportsBlockComponent,
     ImportsOverlayComponent,
     InfoMessageComponent,
@@ -346,32 +354,27 @@ import { PropertyOverlayComponent } from './components/propertyOverlay/propertyO
     LimitDescriptionComponent,
     ListFiltersComponent,
     MarkdownEditorComponent,
+    PrefixationPipe,
+    PropertiesBlockComponent,
+    PropertyOverlayComponent,
+    PropertyValuesComponent,
+    RecordIconComponent,
     ResolveConflictsBlock,
     ResolveConflictsFormComponent,
     SearchBarComponent,
+    SelectedDetailsComponent,
     SerializationSelectComponent,
     SettingEditPageComponent,
+    ShowPropertiesPipe,
     SidebarComponent,
     SpinnerComponent,
-    RecordIconComponent,
+    SplitIRIPipe,
+    StaticIriComponent,
+    TrustedHtmlPipe,
     UnmaskPasswordComponent,
     UserAccessControlsComponent,
     ValueDisplayComponent,
-    WarningMessageComponent,
-    BeautifyPipe,
-    CamelCasePipe,
-    HighlightTextPipe,
-    PrefixationPipe,
-    ShowPropertiesPipe,
-    SplitIRIPipe,
-    TrustedHtmlPipe,
-    CopyClipboardDirective,
-    DragFileDirective,
-    FocusDirective,
-    FiltersSelectedListComponent,
-    PropertyValuesComponent,
-    PropertiesBlockComponent,
-    PropertyOverlayComponent,
+    WarningMessageComponent
   ],
   providers: [
     CatalogManagerService,

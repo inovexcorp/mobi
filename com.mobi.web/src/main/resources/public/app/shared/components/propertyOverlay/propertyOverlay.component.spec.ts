@@ -47,6 +47,7 @@ import { PropertyManagerService } from '../../services/propertyManager.service';
 import { PropertyOverlayDataOptions } from '../../models/propertyOverlayDataOptions.interface';
 import { ToastService } from '../../services/toast.service';
 import { PropertyOverlayComponent } from './propertyOverlay.component';
+import { JSONLDObject } from '../../models/JSONLDObject.interface';
 
 describe('Property Overlay component', () => {
   let component: PropertyOverlayComponent;
@@ -60,9 +61,13 @@ describe('Property Overlay component', () => {
 
   const property = 'property1';
   const entityIRI = 'entity';
+  const entity: JSONLDObject = {
+    '@id': entityIRI
+  };
 
   beforeEach(async () => {
     const dialogData: PropertyOverlayDataOptions = {
+        entity: entity,
         editing: false,
     };
     await TestBed.configureTestingModule({

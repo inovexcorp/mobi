@@ -25,7 +25,14 @@
     <div class="selected-class col-9 h-100 pt-2" #classesTab>
         <div class="h-100 w-100 d-flex flex-column" *ngIf="os.listItem.selected">
             <div class="selected-header d-flex">
-                <selected-details class="flex-1" [highlightText]="highlightText"></selected-details>
+                <selected-details class="flex-1" 
+                    [stateService]="os"
+                    [entity]="os.listItem.selected"
+                    [entityIri]="os.listItem.selected['@id']"
+                    [canModify]="os.canModify()"
+                    [isImported]="os.isSelectedImported()"
+                    [highlightText]="highlightText">
+                </selected-details>
                 <div class="btn-container">
                     <button mat-raised-button color="primary" [disabled]="!os.listItem.selected || os.isSelectedImported()" (click)="seeHistory()">See History</button>
                     <button mat-raised-button *ngIf="os.canModify()" color="warn" [disabled]="!os.listItem.selected || os.isSelectedImported()" (click)="showDeleteConfirmation()">Delete</button>

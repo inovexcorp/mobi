@@ -34,7 +34,7 @@ import { InfoMessageComponent } from '../../../shared/components/infoMessage/inf
 import { TreeItemComponent } from '../treeItem/treeItem.component';
 import { SearchBarComponent } from '../../../shared/components/searchBar/searchBar.component';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
-import { SelectedDetailsComponent } from '../selectedDetails/selectedDetails.component';
+import { SelectedDetailsComponent } from '../../../shared/components/selectedDetails/selectedDetails.component';
 import { WarningMessageComponent } from '../../../shared/components/warningMessage/warningMessage.component';
 import { PrefixationPipe } from '../../../shared/pipes/prefixation.pipe';
 import { HighlightTextPipe } from '../../../shared/pipes/highlightText.pipe';

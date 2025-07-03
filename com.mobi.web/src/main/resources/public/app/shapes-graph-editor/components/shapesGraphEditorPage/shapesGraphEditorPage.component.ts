@@ -22,12 +22,13 @@
  */
 import { Component } from '@angular/core';
 
-import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
 import { stateServiceToken } from '../../../shared/injection-token';
 
 /**
  * @class shapes-graph-editor.ShapesGraphEditorPageComponent
+ * @requires shared.ShapesGraphStateService
  *
  * A component which creates the main page of the Shapes Graph Editor module.
  */

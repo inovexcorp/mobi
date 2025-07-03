@@ -23,6 +23,47 @@
 import { VersionedRdfListItem } from './versionedRdfListItem.class';
 import { JSONLDObject } from './JSONLDObject.interface';
 
+export interface NodeShapesTabState {
+    selectedEntityIRI: string;
+    selectedEntityName: string;
+    selectedEntity: JSONLDObject;
+    sourceShape: string;
+}
+
+export interface ShapeGraphEditorTabStates {
+    project: {
+        entityIRI: string;
+    }
+}
+
+/** 
+ * @ngdoc interface
+ * @name shared.models:SubjectImportMap
+ * 
+ * A mapping of entityIRIs to their corresponding import status.
+ * Each key represents an entity's IRI, and the value describes whether it was imported,
+ * whether it also exists locally, and the ontologies it originated from.
+ */
+export interface SubjectImportMap {
+    [entityId: string]: EntityImportStatus;
+};
+
+/** 
+ * @ngdoc interface
+ * @name shared.models:EntityImportStatus
+ * 
+ * Represents the import status of a single entity within an ontology.
+ *
+ * @property {boolean} imported - Indicates whether the entity was imported.
+ * @property {boolean=} alsoLocal - Optional. True if the entity also exists locally in addition to being imported.
+ * @property {string[]=} ontologyIds - Optional. A list of ontology IRIs the entity was imported from.
+ */
+export interface EntityImportStatus {
+    imported: boolean;
+    alsoLocal?: boolean // TODO Remove for 3196
+    ontologyIds?: string[];
+};
+
 export class ShapesGraphListItem extends VersionedRdfListItem {
     //The variable keeping track of what format the preview is in is normally kept in editorTabStates in
     //OntologyListItem but keeping it high-level here as we may be re-working how tab state is stored.
@@ -32,6 +73,10 @@ export class ShapesGraphListItem extends VersionedRdfListItem {
     currentVersionTitle: string;
     metadata: JSONLDObject;
     content: string;
+    editorTabStates: ShapeGraphEditorTabStates;
+    nodeTab: NodeShapesTabState;
+
+    subjectImportMap: SubjectImportMap;
 
     static PROJECT_TAB = 0;
     static NODE_SHAPES_TAB = 1;
@@ -45,5 +90,17 @@ export class ShapesGraphListItem extends VersionedRdfListItem {
         this.content = '';
         this.previewFormat = 'turtle';
         this.tabIndex = ShapesGraphListItem.PROJECT_TAB;
+        this.editorTabStates = {
+            project: {
+                entityIRI: ''
+            }
+        }
+        this.nodeTab = {
+            selectedEntityIRI: '',
+            selectedEntityName: '',
+            selectedEntity: undefined,
+            sourceShape: ''
+        };
+        this.subjectImportMap = {};
     }
 }

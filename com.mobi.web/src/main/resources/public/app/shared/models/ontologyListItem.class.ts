@@ -26,7 +26,6 @@ import { cloneDeep } from 'lodash';
 import { EntityNames } from './entityNames.interface';
 import { Hierarchy } from './hierarchy.interface';
 import { HierarchyNode } from './hierarchyNode.interface';
-import { JSONLDObject } from './JSONLDObject.interface';
 import { ParentNode } from './parentNode.interface';
 import { VersionedRdfListItem } from './versionedRdfListItem.class';
 import { YasguiQuery } from './yasguiQuery.class';
@@ -104,7 +103,6 @@ export class OntologyListItem extends VersionedRdfListItem {
     flatEverythingTree: (HierarchyNode|ParentNode)[]
     concepts: Hierarchy
     conceptSchemes: Hierarchy
-    blankNodes: {[key: string]: string}
     entityInfo: EntityNames
     classesAndIndividuals: {[key: string]: string[]}
     classesWithIndividuals: string[]
@@ -188,7 +186,6 @@ export class OntologyListItem extends VersionedRdfListItem {
             circularMap: {},
             flat: []
         };
-        this.blankNodes = {};
         this.entityInfo = {};
         this.classesAndIndividuals = {};
         this.classesWithIndividuals = [];

@@ -22,14 +22,15 @@
   -->
 <div class="properties-block">
     <div class="section-header">
-        <h5>Properties</h5><a *ngIf="stateService.canModify()" class="float-right fa fa-fw fa-plus" (click)="openAddOverlay()"></a>
+        <h5>Properties</h5><a *ngIf="canModify" class="float-right fa fa-fw fa-plus" (click)="openAddOverlay()"></a>
     </div>
-    <property-values
-       *ngFor="let property of propertiesFiltered"
-       [stateService]="stateService"
-       [property]="property"
-       [entity]="ontology"
-       (remove)="openRemoveOverlay($event)"
-       (edit)="editClicked($event)">
+    <property-values *ngFor="let property of propertiesFiltered"
+      [stateService]="stateService"
+      [entity]="ontology"
+      [property]="property"
+      [isEntityImported]="stateService.isImported(ontology['@id'], stateService.listItem, property)"
+      [canModify]="canModify"
+      (remove)="openRemoveOverlay($event)"
+      (edit)="editClicked($event)">
     </property-values>
 </div>

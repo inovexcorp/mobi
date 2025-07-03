@@ -20,16 +20,19 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="shapes-graph-details">
-    <div class="shapes-graph-heading">
-        <span class="entity-name">{{om.getEntityName(state.listItem.metadata)}} </span>
-        <static-iri-limited class="editable-iri" 
-            [iri]="state.listItem.shapesGraphId"
-            [canModify]="state.canModify()"
-            (onEdit)="onIriEdit($event)"></static-iri-limited>
-    </div>
-    <p *ngIf="state.listItem.metadata['@type'].length" class="type-wrapper entity-types">
-        <span class="type-label">Type(s):</span>
-        <span class="types text-muted">{{getTypes()}}</span>
-    </p>
+<div class="static-iri">
+  <error-display *ngIf="duplicateCheck && iriExist">This IRI already exists</error-display>
+  <span>
+    <strong class="text-muted" 
+      [ngClass]="{'duplicate-iri': duplicateCheck && iriExist}"
+      [copy-clipboard]="iri"
+      matTooltip="Copy IRI" 
+      matTooltipPosition="above">
+      <span>{{iriBegin + iriThen}}</span>
+      <span [innerHTML]="iriEnd | highlightText:highlightText | safeHtml: 'html'"></span>
+    </strong>
+    <a *ngIf="!isImported && canModify && !readOnly" class="ml-1" (click)="showIriOverlay()">
+        <i class="fa fa-pencil"></i>
+    </a>
+  </span>
 </div>

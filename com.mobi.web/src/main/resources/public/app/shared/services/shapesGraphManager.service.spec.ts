@@ -39,6 +39,8 @@ import { RdfUpdate } from '../models/rdfUpdate.interface';
 import { RdfUpload } from '../models/rdfUpload.interface';
 import { VersionedRdfUploadResponse } from '../models/versionedRdfUploadResponse.interface';
 import { ShapesGraphManagerService } from './shapesGraphManager.service';
+import { NodeShapeInfo } from '../../shapes-graph-editor/models/nodeShapeInfo.interface';
+import { ShapesGraphImports } from '../models/shapesGraphImports.interface';
 
 describe('Shapes Graph Manager service', function() {
   let service: ShapesGraphManagerService;
@@ -69,20 +71,22 @@ describe('Shapes Graph Manager service', function() {
   };
   let rdfDownload: RdfDownload;
 
-  const nodeList = [
+  const nodeList: NodeShapeInfo[] = [
     {
-      'iri': 'http://www.example.com/Test1',
-      'name': 'Test1',
-      'targetType': 'http://www.w3.org/ns/shacl#targetClass',
-      'targetValue': 'http://stardog.com/tutorial/test4',
-      'imported': true
+      iri: 'http://www.example.com/Test1',
+      name: 'Test1',
+      targetType: 'http://www.w3.org/ns/shacl#targetClass',
+      targetValue: 'http://stardog.com/tutorial/test4',
+      imported: true,
+      sourceOntologyIRI: null
     },
     {
-      'iri': 'http://www.example.com/Test2',
-      'name': 'Test2',
-      'targetType': 'http://www.example.com#targetClass',
-      'targetValue': 'http://www.example.com/Test3',
-      'imported': false
+      iri: 'http://www.example.com/Test2',
+      name: 'Test2',
+      targetType: 'http://www.example.com#targetClass',
+      targetValue: 'http://www.example.com/Test3',
+      imported: false,
+      sourceOntologyIRI: null
     }
   ];
 
@@ -196,10 +200,14 @@ describe('Shapes Graph Manager service', function() {
     it('unless an error occurs', function() {
       service.getShapesGraphContent('record1', 'branch1', 'commit1')
         .subscribe(() => fail('Promise should have rejected'), response => {
-          expect(response).toEqual(error);
+          expect(response).toEqual({
+            error: '',
+            errorMessage: error,
+            errorDetails: []
+          });
         });
       const request = httpMock.expectOne(req => req.method === 'GET' && req.url === `${service.prefix}/record1/content`);
-      request.flush('flush', { status: 400, statusText: error });
+      request.flush({errorMessage: error}, { status: 400, statusText: error });
     });
     it('successfully', function() {
       service.getShapesGraphContent('record1', 'branch1', 'commit1')
@@ -285,10 +293,14 @@ describe('Shapes Graph Manager service', function() {
     it('unless an error occurs', function() {
       service.getNodeShapes('record1', 'branch1', 'commit1')
         .subscribe(() => fail('Promise should have rejected'), response => {
-          expect(response).toEqual(error);
+          expect(response).toEqual({
+            error: '',
+            errorMessage: error,
+            errorDetails: []
+          });
         });
       const request = httpMock.expectOne(req => req.method === 'GET' && req.url === `${service.prefix}/record1/node-shapes`);
-      request.flush('flush', { status: 400, statusText: error });
+      request.flush({errorMessage: error}, { status: 400, statusText: error });
     });
     it('successfully', function() {
       service.getNodeShapes('record1', 'branch1', 'commit1')
@@ -303,10 +315,14 @@ describe('Shapes Graph Manager service', function() {
       it('unless an error occurs', function() {
           service.getShapesGraphIRI('record1', 'branch1', 'commit1')
               .subscribe(() => fail('Promise should have rejected'), response => {
-                  expect(response).toEqual(error);
+                  expect(response).toEqual({
+                    error: '',
+                    errorMessage: error,
+                    errorDetails: []
+                  });
               });
           const request = httpMock.expectOne(req => req.method === 'GET' && req.url === `${service.prefix}/record1/id`);
-          request.flush('flush', { status: 400, statusText: error });
+          request.flush({errorMessage: error}, { status: 400, statusText: error });
       });
       it('successfully', function() {
           service.getShapesGraphIRI('record1', 'branch1', 'commit1')
@@ -321,18 +337,27 @@ describe('Shapes Graph Manager service', function() {
       it('unless an error occurs', function() {
           service.getShapesGraphImports('record1', 'branch1', 'commit1')
               .subscribe(() => fail('Promise should have rejected'), response => {
-                  expect(response).toEqual(error);
+                  expect(response).toEqual({
+                    error: '',
+                    errorMessage: error,
+                    errorDetails: []
+                  });
               });
           const request = httpMock.expectOne(req => req.method === 'GET' && req.url === `${service.prefix}/record1/imports`);
-          request.flush('flush', { status: 400, statusText: error });
+          request.flush({errorMessage: error}, { status: 400, statusText: error });
       });
       it('successfully', function() {
+          const expectedResponse: ShapesGraphImports = {
+            importedOntologies: [],
+            failedImports: [],
+            nonImportedIris: []
+          };
           service.getShapesGraphImports('record1', 'branch1', 'commit1')
               .subscribe(response => {
-                  expect(response).toEqual({importedOntologies: [], failedImports: []});
+                  expect(response).toEqual(expectedResponse);
               }, () => fail('Promise should have resolved'));
           const request = httpMock.expectOne(req => req.method === 'GET' && req.url === `${service.prefix}/record1/imports`);
-          request.flush({importedOntologies: [], failedImports: []});
+          request.flush(expectedResponse);
       });
   });
 });

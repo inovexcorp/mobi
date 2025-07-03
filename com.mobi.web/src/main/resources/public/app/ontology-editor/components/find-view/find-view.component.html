@@ -47,7 +47,14 @@
     <div class="entity-IRI col-8 d-flex flex-column pt-2 h-100" *ngIf="os.listItem.editorTabStates.search.entityIRI">
         <div class="flex-1 vertical-scroll">
             <div class="d-flex">
-                <selected-details class="flex-1 remove-min-width" [readOnly]="true"></selected-details>
+                <selected-details class="flex-1 remove-min-width"
+                    [stateService]="os"
+                    [entity]="os.listItem.selected"
+                    [entityIri]="os.listItem.selected['@id']"
+                    [isImported]="os.isSelectedImported()"
+                    [canModify]="os.canModify()"
+                    [readOnly]="true">
+                </selected-details>
                 <div>
                     <button mat-raised-button color="primary" *ngIf="canGoTo()" (click)="os.goTo(os.listItem.editorTabStates.search.entityIRI)">Go To</button>
                 </div>

@@ -25,13 +25,15 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { By } from '@angular/platform-browser';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
-import { MatTabsModule } from '@angular/material/tabs';
+import { MatTabChangeEvent, MatTabsModule } from '@angular/material/tabs';
 
 //Third-arty imports
 import { MockComponent, MockProvider } from 'ng-mocks';
+import { of } from 'rxjs';
 
 //Mobi && Local imports
 import { cleanStylesFromDOM } from '../../../../test/ts/Shared';
+import { NodeShapesTabComponent } from '../node-shapes-tab/node-shapes-tab.component';
 import { ShapesGraphListItem } from '../../../shared/models/shapesGraphListItem.class';
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
 import { ShapesProjectTabComponent } from '../shapes-project-tab/shapes-project-tab.component';
@@ -45,20 +47,21 @@ describe('ShapesTabsHolderComponent', () => {
 
   const recordId = 'recordId';
 
-  beforeEach(() => {
-    TestBed.configureTestingModule({
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
       imports: [
         MatTabsModule,
         BrowserAnimationsModule,
       ],
       declarations: [
         ShapesTabsHolderComponent,
-        MockComponent(ShapesProjectTabComponent)
+        MockComponent(ShapesProjectTabComponent),
+        MockComponent(NodeShapesTabComponent)
       ],
       providers: [
         MockProvider(ShapesGraphStateService)
       ]
-    });
+    }).compileComponents();
 
     fixture = TestBed.createComponent(ShapesTabsHolderComponent);
     component = fixture.componentInstance;
@@ -67,7 +70,9 @@ describe('ShapesTabsHolderComponent', () => {
     stateSvcStub = TestBed.inject(ShapesGraphStateService) as jasmine.SpyObj<ShapesGraphStateService>;
     stateSvcStub.listItem = new ShapesGraphListItem();
     stateSvcStub.listItem.versionedRdfRecord.recordId = recordId;
-
+    stateSvcStub.listItem.shapesGraphId = 'shapesGraphId';
+    stateSvcStub.listItem.nodeTab.selectedEntityIRI = 'selectedEntityIRI';
+    stateSvcStub.setSelected.and.returnValue(of(null));
     fixture.detectChanges();
   });
 
@@ -78,6 +83,25 @@ describe('ShapesTabsHolderComponent', () => {
     stateSvcStub = null;
   });
 
+  describe('controller method', function () {
+    it('onTabChanged handles a tab change', function () {
+      [
+        { index: 0, key: 'PROJECT_TAB', value: 'shapesGraphId' },
+        { index: 1, key: 'NODE_SHAPES_TAB', value: 'selectedEntityIRI' },
+        { index: 8 },
+      ].forEach(test => {
+        stateSvcStub.setSelected.calls.reset();
+        const event = new MatTabChangeEvent();
+        event.index = test.index;
+        component.onTabChanged(event);
+        if (test.key) {
+          expect(stateSvcStub.setSelected).toHaveBeenCalledWith(test.value, stateSvcStub.listItem);
+        } else {
+          expect(stateSvcStub.setSelected).not.toHaveBeenCalled();
+        }
+      });
+    });
+  });
   describe('should initialize', () => {
     describe('with the correct html', () => {
       it('when on the Project tab ', () => {

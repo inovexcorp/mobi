@@ -20,10 +20,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { map, get, concat, reject, includes, findIndex, sortBy, pick } from 'lodash';
-import { switchMap } from 'rxjs/operators';
 import { Component, Input, OnChanges } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
+
+import { switchMap } from 'rxjs/operators';
+import { map, get, concat, reject, includes, findIndex, sortBy, pick } from 'lodash';
 
 import { ConfirmModalComponent } from '../confirmModal/confirmModal.component';
 import { createJson } from '../../utility';
@@ -36,14 +37,24 @@ import { ToastService } from '../../services/toast.service';
 import { VersionedRdfListItem } from '../../models/versionedRdfListItem.class';
 import { VersionedRdfState } from '../../services/versionedRdfState.service';
 import { VersionedRdfRecord } from '../../models/versionedRdfRecord.interface';
-
 /**
  * @class shared.ImportsBlockComponent
- *
+ * @requires MatDialog
+ * @requires shared.ToastService
+ * @requires shared.PropertyManagerService
+ * @requires shared.OntologyManagerService
+ * 
  * A component that creates a section that displays the imports on the ontology represented by the current
- * {@link shared.OntologyStateService#listItem}. The section contains buttons for adding an import and reloading the
+ * {@link shared.VersionedRdfState#listItem}. The section contains buttons for adding an import and reloading the
  * imports. Each import is displayed as its IRI and with a remove button. The component houses the methods for opening
  * the modal for {@link shared.ImportsOverlayComponent } adding and removing imports.
+ * 
+ * @param {VersionedRdfRecord} versionedRdfRecord - The RDF record representing the ontology's content.
+ * @param {VersionedRdfState<VersionedRdfListItem>} stateService - The service managing the versioned RDF state.
+ * @param {VersionedRdfListItem} listItem - The selected list item representing the ontology being edited.
+ * @param {string[]} targetRecordTypes - The types of records used for searching for imports.
+ * @param {string} noImportMessage - A message to display when there are no imports to show.
+ * @param {boolean} canModify - Whether the user has permission to modify the imports.
  */
 @Component({
   selector: 'imports-block',
@@ -56,14 +67,15 @@ export class ImportsBlockComponent implements OnChanges {
   @Input() listItem: VersionedRdfListItem;
   @Input() targetRecordTypes: string[];
   @Input() noImportMessage: string;
+  @Input() canModify: boolean;
 
   imports: JSONLDId[] = [];
   indirectImports: string[] = [];
 
   constructor(
-    private dialog: MatDialog,
-    private toast: ToastService,
-    private pm: PropertyManagerService,
+    private _dialog: MatDialog,
+    private _toast: ToastService,
+    private _pm: PropertyManagerService,
     private _om: OntologyManagerService
   ) {}
 
@@ -78,7 +90,7 @@ export class ImportsBlockComponent implements OnChanges {
     } else {
       msg = `<p>Are you sure you want to remove the import: <strong>${url}</strong>?</p>`;
     }
-    this.dialog.open(ConfirmModalComponent, { data: { content: msg } }).afterClosed().subscribe(result => {
+    this._dialog.open(ConfirmModalComponent, { data: { content: msg } }).afterClosed().subscribe(result => {
       if (result) {
         this.remove(url);
       }
@@ -89,7 +101,7 @@ export class ImportsBlockComponent implements OnChanges {
       this.versionedRdfRecord.recordId,
       createJson(this.listItem.selected['@id'], `${OWL}imports`, {'@id': url})
     );
-    this.pm.remove(this.listItem.selected, `${OWL}imports`, findIndex(this.listItem.selected[`${OWL}imports`], {'@id': url}));
+    this._pm.remove(this.listItem.selected, `${OWL}imports`, findIndex(this.listItem.selected[`${OWL}imports`], {'@id': url}));
     this.stateService.saveCurrentChanges(this.listItem).pipe(
       switchMap(() => this.stateService.changeVersion(this.versionedRdfRecord.recordId,
         this.versionedRdfRecord.branchId,
@@ -123,8 +135,8 @@ export class ImportsBlockComponent implements OnChanges {
         this.listItem.hasPendingRefresh = true;
         this.setImports();
         this.setIndirectImports();
-        this.toast.createSuccessToast('Refreshed Imports');
-    }, error => this.toast.createErrorToast(error));
+        this._toast.createSuccessToast('Refreshed Imports');
+    }, error => this._toast.createErrorToast(error));
   }
   setImports(): void {
     this.imports = sortBy(this.listItem.selected[`${OWL}imports`], '@id');
@@ -140,7 +152,7 @@ export class ImportsBlockComponent implements OnChanges {
     this.indirectImports = sortBy(map(filtered, item => item.ontologyId || item.id));
   }
   showNewOverlay(): void {
-    this.dialog.open(ImportsOverlayComponent, {
+    this._dialog.open(ImportsOverlayComponent, {
       data: {
         stateService: this.stateService,
         listItem: this.listItem,

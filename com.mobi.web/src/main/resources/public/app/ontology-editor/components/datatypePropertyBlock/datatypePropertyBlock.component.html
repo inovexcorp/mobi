@@ -24,11 +24,12 @@
     <div class="section-header">
         <h5>Datatype Properties</h5><a *ngIf="!os.isSelectedImported() && os.canModify()" (click)="openAddDataPropOverlay()" class="float-right fa fa-fw fa-plus"></a>
     </div>
-
     <property-values *ngFor="let property of dataPropertiesFiltered"
       [stateService]="os"
+      [canModify]="os.canModify()"
       [property]="property"
       [entity]="os.listItem.selected"
+      [isEntityImported]="os.isImported(os.listItem.selected['@id'])"
       (edit)="editDataProp($event)"
       (remove)="showRemovePropertyOverlay($event)">
     </property-values>

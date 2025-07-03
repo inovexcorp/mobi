@@ -1,0 +1,42 @@
+# Query constructs a subgraph by retrieving all direct triples from a given entity
+# and recursively expanding both blank and non-blank objects to include their properties.
+PREFIX : <urn:ex:>
+
+CONSTRUCT {
+    ?entity ?directpred ?directobj .
+    ?attachedObj ?p2 ?o2 .
+}
+WHERE {
+    BIND (<%IRI%> as ?entity) # Replace or bind ?entity externally
+    {
+        # Direct triples
+        ?entity ?directpred ?directobj .
+    }
+    UNION {
+        # Handle blank nodes
+        {
+            SELECT (?o AS ?blank_node)
+            WHERE {
+                ?entity ?p ?o .
+                FILTER(isBlank(?o))
+            }
+        }
+        ?blank_node (:|!:)* ?attachedObj .
+        OPTIONAL {
+            ?attachedObj ?p2 ?o2 .
+            FILTER(isBlank(?attachedObj))
+        }
+    }
+    UNION {
+        # Handle non-blank node property shapes (e.g., classes or IRIs)
+        {
+            SELECT (?o AS ?nonBlankNode)
+            WHERE {
+                ?entity ?p ?o .
+                FILTER(!isBlank(?o))
+            }
+        }
+        ?nonBlankNode ?p2 ?o2 .
+        BIND(?nonBlankNode AS ?attachedObj)
+    }
+}

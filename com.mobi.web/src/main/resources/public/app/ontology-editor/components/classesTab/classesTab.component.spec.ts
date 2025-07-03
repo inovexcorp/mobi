@@ -34,7 +34,7 @@ import { OntologyManagerService } from '../../../shared/services/ontologyManager
 import { AnnotationBlockComponent } from '../annotationBlock/annotationBlock.component';
 import { AxiomBlockComponent } from '../axiomBlock/axiomBlock.component';
 import { UsagesBlockComponent } from '../usagesBlock/usagesBlock.component';
-import { SelectedDetailsComponent } from '../selectedDetails/selectedDetails.component';
+import { SelectedDetailsComponent } from '../../../shared/components/selectedDetails/selectedDetails.component';
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
 import { ClassesTabComponent } from './classesTab.component';

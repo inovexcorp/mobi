@@ -32,7 +32,7 @@ import { OntologyStateService } from '../../../shared/services/ontologyState.ser
 import { ImportsBlockComponent } from '../../../shared/components/importsBlock/importsBlock.component';
 import { PropertiesBlockComponent } from '../../../shared/components/propertiesBlock/propertiesBlock.component';
 import { PreviewBlockComponent } from '../previewBlock/previewBlock.component';
-import { SelectedDetailsComponent } from '../selectedDetails/selectedDetails.component';
+import { SelectedDetailsComponent } from '../../../shared/components/selectedDetails/selectedDetails.component';
 import { ProjectTabComponent } from './projectTab.component';
 
 describe('Project Tab component', function() {

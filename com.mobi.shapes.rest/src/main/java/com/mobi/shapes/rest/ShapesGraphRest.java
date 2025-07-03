@@ -24,11 +24,11 @@ package com.mobi.shapes.rest;
  */
 
 import static com.mobi.rest.util.RestUtils.checkStringParam;
+import static com.mobi.rest.util.RestUtils.createPaginatedResponse;
 import static com.mobi.rest.util.RestUtils.getActiveUser;
 import static com.mobi.rest.util.RestUtils.getRDFFormatFileExtension;
 import static com.mobi.rest.util.RestUtils.getRDFFormatMimeType;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -36,6 +36,8 @@ import com.mobi.catalog.api.BranchManager;
 import com.mobi.catalog.api.CommitManager;
 import com.mobi.catalog.api.CompiledResourceManager;
 import com.mobi.catalog.api.DifferenceManager;
+import com.mobi.catalog.api.PaginatedSearchParams;
+import com.mobi.catalog.api.PaginatedSearchResults;
 import com.mobi.catalog.api.RecordManager;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
@@ -52,7 +54,6 @@ import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.utils.OntologyModels;
-import com.mobi.ontology.utils.OntologyUtils;
 import com.mobi.ontology.utils.cache.OntologyCache;
 import com.mobi.persistence.utils.BNodeUtils;
 import com.mobi.persistence.utils.Bindings;
@@ -67,9 +68,11 @@ import com.mobi.rest.security.annotations.ResourceId;
 import com.mobi.rest.security.annotations.ValueType;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.FileUpload;
+import com.mobi.rest.util.MobiNotFoundException;
 import com.mobi.rest.util.RestUtils;
 import com.mobi.security.policy.api.Decision;
 import com.mobi.security.policy.api.PDP;
+import com.mobi.shapes.api.NodeShapeSummary;
 import com.mobi.shapes.api.ShapesGraph;
 import com.mobi.shapes.api.ShapesGraphManager;
 import com.mobi.shapes.api.ontologies.shapesgrapheditor.ShapesGraphRecord;
@@ -95,8 +98,6 @@ import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.eclipse.rdf4j.model.vocabulary.OWL;
 import org.eclipse.rdf4j.model.vocabulary.RDF;
-import org.eclipse.rdf4j.query.Binding;
-import org.eclipse.rdf4j.query.TupleQueryResult;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.RepositoryResult;
 import org.eclipse.rdf4j.rio.RDFParseException;
@@ -108,9 +109,8 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -136,28 +136,15 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
+import javax.ws.rs.core.UriInfo;
 
 @Path("/shapes-graphs")
 @Component(service = ShapesGraphRest.class, immediate = true)
 @JaxrsResource
 public class ShapesGraphRest {
-
     private static final ObjectMapper mapper = new ObjectMapper();
-    private static final String GET_NODE_SHAPES_QUERY;
-
     final ValueFactory vf = new ValidatingValueFactory();
     final ModelFactory mf = new DynamicModelFactory();
-
-    static {
-        try {
-            GET_NODE_SHAPES_QUERY = IOUtils.toString(
-                    Objects.requireNonNull(ShapesGraphRest.class.getResourceAsStream("/node_shapes_query.rq")),
-                    StandardCharsets.UTF_8
-            );
-        } catch (IOException ex) {
-            throw new MobiException(ex);
-        }
-    }
 
     @Reference
     CatalogConfigProvider configProvider;
@@ -248,12 +235,13 @@ public class ShapesGraphRest {
         String filename = file.getFilename();
         checkStringParam(title, "The title is missing.");
         if (inputStream == null && json == null) {
-            throw ErrorUtils.sendError("The SHACL Shapes Graph data is missing.", Response.Status.BAD_REQUEST);
+            throw RestUtils.getErrorObjBadRequest(
+                    new IllegalArgumentException("The SHACL Shapes Graph data is missing."));
         } else if (inputStream != null && json != null) {
-            throw ErrorUtils.sendError("Only provide either a SHACL Shapes Graph file or SHACL Shapes Graph json"
-                            + "data.", Response.Status.BAD_REQUEST);
+            throw RestUtils.getErrorObjBadRequest(
+                    new IllegalArgumentException("Only provide either a SHACL Shapes Graph file or " +
+                            "SHACL Shapes Graph json data"));
         }
-
         if (inputStream != null) {
             RecordOperationConfig config = new OperationConfig();
             config.set(VersionedRDFRecordCreateSettings.INPUT_STREAM, inputStream);
@@ -325,8 +313,7 @@ public class ShapesGraphRest {
                     vf.createIRI(Branch.head_IRI), null);
             if (!commitStmt.hasNext()) {
                 commitStmt.close();
-                throw ErrorUtils.sendError("The requested instance could not be found.",
-                        Response.Status.BAD_REQUEST);
+                throw new MobiNotFoundException("The requested instance could not be found.");
             }
             Resource commitId = (Resource) commitStmt.next().getObject();
             commitStmt.close();
@@ -340,6 +327,8 @@ public class ShapesGraphRest {
             objectNode.put("title", title);
 
             return Response.status(Response.Status.CREATED).entity(objectNode.toString()).build();
+        } catch (MobiNotFoundException ex) {
+            throw RestUtils.getErrorObjNotFound(ex);
         } catch (IllegalArgumentException | RDFParseException ex) {
             throw RestUtils.getErrorObjBadRequest(ex);
         } catch (MobiException | IllegalStateException ex) {
@@ -409,10 +398,12 @@ public class ShapesGraphRest {
             return Response.ok(output).header("Content-Disposition", "attachment;filename=" + fileName
                     + "." + getRDFFormatFileExtension(rdfFormat)).header("Content-Type",
                     getRDFFormatMimeType(rdfFormat)).build();
-        } catch (IllegalArgumentException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.BAD_REQUEST);
-        } catch (MobiException | IllegalStateException e) {
-            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        } catch (MobiNotFoundException ex) {
+            throw RestUtils.getErrorObjNotFound(ex);
+        } catch (IllegalArgumentException ex) {
+            throw RestUtils.getErrorObjBadRequest(ex);
+        } catch (MobiException | IllegalStateException ex) {
+            throw RestUtils.getErrorObjInternalServerError(ex);
         }
     }
 
@@ -645,10 +636,12 @@ public class ShapesGraphRest {
                     servletRequest, conn);
             return Response.ok(RestUtils.modelToString(shapesGraph.getEntity(vf.createIRI(entityIdStr)), format))
                     .build();
+        } catch (MobiNotFoundException ex) {
+            throw RestUtils.getErrorObjNotFound(ex);
         } catch (IllegalArgumentException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
+            throw RestUtils.getErrorObjBadRequest(ex);
         } catch (MobiException | IllegalStateException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(ex);
         }
     }
 
@@ -706,10 +699,12 @@ public class ShapesGraphRest {
             ShapesGraph shapesGraph = getShapesGraph(recordIdStr, branchIdStr, commitIdStr, applyInProgressCommit,
                     servletRequest, conn);
             return Response.ok(shapesGraph.serializeShapesGraphContent(format)).build();
+        } catch (MobiNotFoundException ex) {
+            throw RestUtils.getErrorObjNotFound(ex);
         } catch (IllegalArgumentException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
+            throw RestUtils.getErrorObjBadRequest(ex);
         } catch (MobiException | IllegalStateException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(ex);
         }
     }
 
@@ -769,8 +764,18 @@ public class ShapesGraphRest {
             }
             ShapesGraph shapesGraph = getShapesGraph(recordIdStr, branchIdStr, commitIdStr, applyInProgressCommit,
                     servletRequest, conn);
-
             ObjectNode stuff = mapper.createObjectNode();
+
+            Ontology ontology = shapesGraph.getOntology();
+
+            ArrayNode nonImportedIris = mapper.createArrayNode();
+            String allSubjectsQuery = "SELECT DISTINCT ?s WHERE { ?s ?p ?o }";
+            ontology.getTupleQueryResults(allSubjectsQuery, false).forEach(bindings -> {
+                String sub = Bindings.requiredResource(bindings, "s").stringValue();
+                nonImportedIris.add(sub);
+            });
+            stuff.set("nonImportedIris", nonImportedIris);
+
             ArrayNode failedImportsArray = mapper.createArrayNode();
             Set<String> unloadableImportIRIs = shapesGraph.getUnloadableImportIRIs().stream()
                     .map(Value::stringValue)
@@ -784,12 +789,28 @@ public class ShapesGraphRest {
                     .forEach(importedOntologiesArray::add);
             stuff.set("importedOntologies", importedOntologiesArray);
             return Response.ok(stuff.toString()).build();
+        } catch (MobiNotFoundException ex) {
+            throw RestUtils.getErrorObjNotFound(ex);
         } catch (IllegalArgumentException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
+            throw RestUtils.getErrorObjBadRequest(ex);
         } catch (MobiException | IllegalStateException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(ex);
         }
     }
+
+    /**
+     * Constructs a JSON object containing identifiers and IRIs from the given {@link Ontology}.
+     *
+     * <p>The resulting JSON object has the following structure:
+     * <ul>
+     *   <li><code>id</code>: The string value of the ontology's internal identifier.</li>
+     *   <li><code>ontologyId</code>: The string value of the ontology IRI, or an empty string if not present.</li>
+     *   <li><code>iris</code>: A list of all distinct subject IRIs used in the ontology.</li>
+     * </ul>
+     *
+     * @param ontology the {@link Ontology} from which to extract identifier information
+     * @return a {@link ObjectNode} representing the ontology metadata
+     */
 
     private ObjectNode getOntologyIdentifiersAsJsonObject(Ontology ontology) {
         OntologyId ontologyId = ontology.getOntologyId();
@@ -799,6 +820,13 @@ public class ShapesGraphRest {
         objectNode.put("id", ontologyId.getOntologyIdentifier().stringValue());
         objectNode.put("ontologyId", optIri.isPresent() ? optIri.get().stringValue() : "");
 
+        ArrayNode importedIris = mapper.createArrayNode();
+        String allSubjectsQuery = "SELECT DISTINCT ?s WHERE { ?s ?p ?o }";
+        ontology.getTupleQueryResults(allSubjectsQuery, false).forEach(bindings -> {
+            String sub = Bindings.requiredResource(bindings, "s").stringValue();
+            importedIris.add(sub);
+        });
+        objectNode.set("iris", importedIris);
         return objectNode;
     }
 
@@ -826,11 +854,15 @@ public class ShapesGraphRest {
             summary = "Retrieves the Shapes Graph ID for the specified record, branch, and commit",
             responses = {
                     @ApiResponse(responseCode = "200",
-                            description = "RDF triples for a specified entity including all of is "
-                                    + "transitively attached Blank Nodes"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
+                            description = "Shapes Graph ID for the specified record, branch, and commit",
+                            content = @Content(mediaType = MediaType.TEXT_PLAIN)),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST",
+                            content = @Content(mediaType = MediaType.APPLICATION_JSON)),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied for recordId"),
+                    @ApiResponse(responseCode = "404", description = "Shapes Graph ID could not be found.",
+                            content = @Content(mediaType = MediaType.APPLICATION_JSON)),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR",
+                            content = @Content(mediaType = MediaType.APPLICATION_JSON)),
             }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
@@ -851,33 +883,82 @@ public class ShapesGraphRest {
                     applyInProgressCommit, servletRequest, conn);
 
             IRI shapesGraphId = shapesGraph.getShapesGraphId().orElseThrow(() ->
-                    ErrorUtils.sendError("Shapes Graph ID could not be found.", Response.Status.INTERNAL_SERVER_ERROR));
+                    new MobiNotFoundException("Shapes Graph ID could not be found."));
 
             return Response.ok(shapesGraphId.stringValue()).build();
+        } catch (MobiNotFoundException ex) {
+            throw RestUtils.getErrorObjNotFound(ex);
         } catch (IllegalArgumentException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
+            throw RestUtils.getErrorObjBadRequest(ex);
         } catch (MobiException | IllegalStateException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(ex);
         }
     }
 
+    private static class NodeShapeSummaryDoc {
+        @Schema(description = "The IRI of the Node Shape.")
+        public String iri;
+
+        @Schema(description = "A human-readable name or label for the Node Shape.")
+        public String name;
+
+        @Schema(description = "The SHACL target type, such as sh:targetClass or sh:targetNode.")
+        public String targetType;
+
+        @Schema(description = "The value associated with the SHACL target, e.g., a class or instance IRI.")
+        public String targetValue;
+
+        @Schema(description = "Indicates whether the Node Shape was imported from another ontology.")
+        public boolean imported;
+
+        @Schema(description = "The IRI of the source ontology where the Node Shape is defined.")
+        public String sourceOntologyIRI;
+    }
+
+    /**
+     * Retrieves a paginated list of SHACL Node Shapes for the specified Shapes Graph, identified by the given
+     * record, branch, and commit. The response can be filtered using a search term, and optionally includes
+     * changes from the in-progress commit for the requesting user.
+     *
+     * @param servletRequest            The HTTP servlet request context.
+     * @param uriInfo                   URI information for request construction and metadata.
+     * @param recordIdStr               String representing the Record Resource ID.
+     *                                  NOTE: Assumes ID represents an IRI unless the string begins with "_:".
+     * @param branchIdStr               String representing the Branch Resource ID. Optional. If not specified, the master
+     *                                  branch will be used. NOTE: Assumes ID represents an IRI unless the string begins with "_:".
+     * @param commitIdStr               String representing the Commit Resource ID. Optional. If not specified, the head commit
+     *                                  will be used. The provided commitId must belong to the branch identified by branchId;
+     *                                  otherwise, no results will be returned.
+     * @param applyInProgressCommit     Whether to apply the in-progress commit for the current user. Defaults to true.
+     * @param offset                    Offset index for paging the results. Defaults to 0.
+     * @param limit                     Maximum number of node shapes to return. Defaults to 500.
+     * @param searchText                Optional text filter applied when searching node shapes by name or other attributes.
+     *
+     * @return A {@link Response} containing a paginated list of {@code NodeShapeSummary} objects in JSON format.
+     */
     @GET
     @Path("{recordId}/node-shapes")
     @Produces({MediaType.APPLICATION_JSON})
     @RolesAllowed("user")
     @Operation(
             tags = "shapes-graphs",
-            summary = "Retrieves the list of associated Node Shapes for the specified record, branch, and commit",
+            summary = "Retrieves the list of associated NodeShapeSummary for the specified record, branch, and commit",
             responses = {
-                    @ApiResponse(responseCode = "200", description = "A list of Node Shapes with associated metadata"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
+                    @ApiResponse(responseCode = "200", description = "A list of Node Shapes with associated metadata",
+                            content = @Content(mediaType = MediaType.APPLICATION_JSON,
+                                    schema = @Schema(implementation = NodeShapeSummaryDoc.class))),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST",
+                            content = @Content(mediaType = MediaType.APPLICATION_JSON)),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied",
+                            content = @Content(mediaType = MediaType.APPLICATION_JSON)),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR",
+                            content = @Content(mediaType = MediaType.APPLICATION_JSON)),
             }
     )
     @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getShapesGraphNodeShapes(
             @Context HttpServletRequest servletRequest,
+            @Context UriInfo uriInfo,
             @Parameter(description = "String representing the Record Resource ID", required = true)
             @PathParam("recordId") String recordIdStr,
             @Parameter(description = "String representing the Branch Resource ID")
@@ -886,24 +967,32 @@ public class ShapesGraphRest {
             @QueryParam("commitId") String commitIdStr,
             @Parameter(description = "Whether or not to apply the in progress commit for the user making the request")
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit,
+            @Parameter(description = "Offset for the page")
+            @DefaultValue("0") @QueryParam("offset") int offset,
+            @Parameter(description = "Number of Distributions to return in one page")
+            @DefaultValue("500") @QueryParam("limit") int limit,
             @Parameter(description = "The text to filter over when searching node shapes")
-            @DefaultValue("") @QueryParam("searchText") String searchText
+            @QueryParam("searchText") String searchText
     ) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             ShapesGraph shapesGraph = getShapesGraph(recordIdStr, branchIdStr, commitIdStr,
                     applyInProgressCommit, servletRequest, conn);
 
-            Ontology ontology = shapesGraph.getOntology();
-            Set<Ontology> onlyImports = OntologyUtils.getImportedOntologies(ontology);
-
-            ArrayNode nodeShapes = mapper.createArrayNode();
-            getNodeShapesFromOntology(nodeShapes, ontology, false, searchText);
-            onlyImports.forEach(ont -> getNodeShapesFromOntology(nodeShapes, ont, true, searchText));
-
-            //hardcoded values for limit and offset until we handle virtual scrolling appropriately
-            orderShapeNodes(nodeShapes, 0, 500);
-
-            return Response.ok(nodeShapes.toString()).build();
+            PaginatedSearchParams.Builder builder = new PaginatedSearchParams.Builder();
+            builder.offset(offset);
+            builder.limit(limit);
+            if (searchText != null) {
+                builder.searchText(searchText);
+            }
+            PaginatedSearchResults<NodeShapeSummary> searchResults = shapesGraph.findNodeShapes(
+                    builder.build(), conn);
+            ArrayNode entities = mapper.createArrayNode();
+            searchResults.page().forEach(nodeShapeSummary ->{
+                entities.add(nodeShapeSummary.toObjectNode());
+            });
+            return createPaginatedResponse(uriInfo, entities, searchResults.totalSize(), limit, offset);
+        } catch (MobiNotFoundException ex) {
+            throw RestUtils.getErrorObjNotFound(ex);
         } catch (IllegalArgumentException ex) {
             throw RestUtils.getErrorObjBadRequest(ex);
         } catch (MobiException | IllegalStateException ex) {
@@ -950,19 +1039,15 @@ public class ShapesGraphRest {
         } else {
             shapesGraphOpt = shapesGraphManager.retrieveShapesGraph((vf.createIRI(recordIdStr)));
         }
-
         ShapesGraph shapesGraph = shapesGraphOpt.orElseThrow(() ->
-                ErrorUtils.sendError("The shapes graph could not be found.", Response.Status.BAD_REQUEST));
-
+                        new MobiNotFoundException("The shapes graph could not be found."));
         if (applyInProgressCommit) {
             User user = getActiveUser(servletRequest, engineManager);
             Optional<InProgressCommit> inProgressCommitOpt = commitManager.getInProgressCommitOpt(
                     configProvider.getLocalCatalogIRI(), vf.createIRI(recordIdStr), user, conn);
-
             inProgressCommitOpt.ifPresent(inProgressCommit -> shapesGraphManager.applyChanges(shapesGraphOpt.get(),
                     inProgressCommit));
         }
-
         return shapesGraph;
     }
 
@@ -984,45 +1069,5 @@ public class ShapesGraphRest {
         }
 
         return parsedModel.getModel();
-    }
-
-    protected void getNodeShapesFromOntology(ArrayNode nodeShapes, Ontology ontology, boolean imported,
-                                             String searchText) {
-        TupleQueryResult results = ontology.getTupleQueryResults(GET_NODE_SHAPES_QUERY.replace("%search%", searchText),
-                false);
-
-        results.forEach(queryResult -> {
-            String nodeIri = Bindings.requiredResource(queryResult, "iri").stringValue();
-            String nodeName = Bindings.requiredLiteral(queryResult, "name").stringValue();
-            Optional<Binding> targetType = Optional.ofNullable(queryResult.getBinding( "targetType"));
-            Optional<Binding> targetValue = Optional.ofNullable(queryResult.getBinding("targetValue"));
-
-            ObjectNode nodeShape = mapper.createObjectNode();
-            nodeShape.put("iri", nodeIri);
-            nodeShape.put("name", nodeName);
-            nodeShape.put("targetType", targetType.isPresent()? targetType.get().getValue().stringValue() : "");
-            nodeShape.put("targetValue", targetValue.isPresent() ? targetValue.get().getValue().stringValue() : "");
-            nodeShape.put("imported", imported);
-
-            nodeShapes.add(nodeShape);
-        });
-    }
-
-    protected void orderShapeNodes(ArrayNode nodeShapes, int offset, int limit) {
-        List<JsonNode> nodeList = new ArrayList<>();
-        nodeShapes.forEach(nodeList::add);
-        nodeShapes.removeAll();
-
-        nodeList.sort(Comparator.comparing(node -> node.get("name").asText()));
-
-        if (offset > nodeList.size()) {
-            throw new IllegalArgumentException("Offset is larger than the number of nodes in the list.");
-        } else if (limit == 0 ) {
-            throw new IllegalArgumentException("Limit cannot be set to 0.");
-        } else if (limit > 0 && limit > nodeList.size()) {
-            nodeList.subList(offset, nodeList.size()).forEach(nodeShapes::add);
-        } else {
-            nodeList.subList(offset, limit).forEach(nodeShapes::add);
-        }
     }
 }

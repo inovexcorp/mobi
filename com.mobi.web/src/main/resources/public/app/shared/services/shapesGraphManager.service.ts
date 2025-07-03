@@ -30,7 +30,7 @@ import { forEach, get } from 'lodash';
 import { Observable } from 'rxjs';
 
 //Mobi imports
-import { createHttpParams, handleError, handleErrorObject } from '../utility';
+import { createHttpParams, handleErrorObject } from '../utility';
 import { JSONLDObject } from '../models/JSONLDObject.interface';
 import { NodeShapeInfo } from '../../shapes-graph-editor/models/nodeShapeInfo.interface';
 import { POLICY } from '../../prefixes';
@@ -148,7 +148,7 @@ export class ShapesGraphManagerService {
    * @returns {Observable} An Observable that resolves with the metadata triples as either a JSON-LD array or a RDF
    *    formatted string; rejects with an error message otherwise
    */
-  getShapesGraphMetadata(recordId: string, branchId: string, commitId: string, entityId: string, format = 'jsonld',
+  getShapesGraphEntity(recordId: string, branchId: string, commitId: string, entityId: string, format = 'jsonld',
                          applyInProgressCommit = true): Observable<JSONLDObject[] | string>  {
     const url = `${this.prefix}/${encodeURIComponent(recordId)}/entities/${encodeURIComponent(entityId)}`;
     const ob = this.spinnerSvc.track(this.http.get(url, {
@@ -156,7 +156,7 @@ export class ShapesGraphManagerService {
       responseType: 'text'
     }));
     return ob.pipe(
-      catchError(handleError),
+      catchError(handleErrorObject),
       map((response: string) => {
         if (format === 'jsonld') {
           return (JSON.parse(response)) as JSONLDObject[];
@@ -187,7 +187,7 @@ export class ShapesGraphManagerService {
       responseType: 'text'
     }));
     return ob.pipe(
-      catchError(handleError),
+      catchError(handleErrorObject),
       map((response: string) => {
         if (format === 'jsonld') {
           return (JSON.parse(response)) as JSONLDObject[];
@@ -216,7 +216,7 @@ export class ShapesGraphManagerService {
       params: createHttpParams({ branchId, commitId, applyInProgressCommit }),
       responseType: 'text'
     }));
-    return ob.pipe(catchError(handleError));
+    return ob.pipe(catchError(handleErrorObject));
   }
 
   /**
@@ -235,7 +235,7 @@ export class ShapesGraphManagerService {
     const params = { branchId, commitId, clearCache };
     const url = `${this.prefix}/${encodeURIComponent(recordId)}/imports`;
     const request = this.http.get<ShapesGraphImports>(url, {params: createHttpParams(params)});
-    return this.spinnerSvc.trackedRequest(request, isTracked).pipe(catchError(handleError));
+    return this.spinnerSvc.trackedRequest(request, isTracked).pipe(catchError(handleErrorObject));
   }
 
   /**
@@ -254,6 +254,6 @@ export class ShapesGraphManagerService {
     const url = `${this.prefix}/${encodeURIComponent(recordId)}/node-shapes`;
     const params = { branchId, commitId, applyInProgressCommit, searchText };
     const request = this.http.get<NodeShapeInfo[]>(url, {params: createHttpParams(params)});
-    return this.spinnerSvc.trackedRequest(request, true).pipe(catchError(handleError));
+    return this.spinnerSvc.trackedRequest(request, true).pipe(catchError(handleErrorObject));
   }
 }

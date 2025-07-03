@@ -20,4 +20,18 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<p>Display of Node Shapes Coming Soon!</p>
+<div class="node-shapes-display" *ngIf="nodeShape">
+  <selected-details
+    [stateService]="stateService"
+    [entity]="nodeShape"
+    [entityIri]="nodeShape['@id']"
+    [isImported]="stateService.isSelectedImported()"
+    [canModify]="false">
+  </selected-details>
+  <properties-block class="col"
+    [stateService]="stateService"
+    [canModify]="false"
+    [ontology]="nodeShape"
+    [annotationIRIs]="nodeShapeProperties">
+  </properties-block>
+</div>

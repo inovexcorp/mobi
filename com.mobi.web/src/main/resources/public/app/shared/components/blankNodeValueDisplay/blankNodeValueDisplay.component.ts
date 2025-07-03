@@ -26,6 +26,8 @@ import { SafeHtml } from '@angular/platform-browser';
 import { OntologyStateService } from '../../services/ontologyState.service';
 import { TrustedHtmlPipe } from '../../pipes/trustedHtml.pipe';
 import { PrefixationPipe } from '../../pipes/prefixation.pipe';
+import { VersionedRdfState } from '../../services/versionedRdfState.service';
+import { VersionedRdfListItem } from '../../models/versionedRdfListItem.class';
 
 /**
  * @name shared.BlankNodeValueDisplayComponent
@@ -36,28 +38,30 @@ import { PrefixationPipe } from '../../pipes/prefixation.pipe';
  * @param {string} nodeId The ID of a blank node in the current {@link shared.OntologyStateService#listItem ontology}
  */
 @Component({
-    selector: 'blank-node-value-display',
-    templateUrl: './blankNodeValueDisplay.component.html',
-    styleUrls: ['./blankNodeValueDisplay.component.scss']
+  selector: 'blank-node-value-display',
+  templateUrl: './blankNodeValueDisplay.component.html',
+  styleUrls: ['./blankNodeValueDisplay.component.scss']
 })
 export class BlankNodeValueDisplayComponent implements OnInit {
-    @Input() node;
-    htmlValue: SafeHtml;
-    typeValue: SafeHtml;
-    langValue: SafeHtml;
+  @Input() stateService: VersionedRdfState<VersionedRdfListItem>;
+  @Input() node;
 
-    constructor(public os: OntologyStateService,
-                private safeHtml: TrustedHtmlPipe,
-                private prefixation: PrefixationPipe
-    ) {}
+  htmlValue: SafeHtml;
+  typeValue: SafeHtml;
+  langValue: SafeHtml;
 
-    ngOnInit(): void {
-        this.calcNodeProperties();
-    }
+  constructor(
+    private safeHtml: TrustedHtmlPipe,
+    private prefixation: PrefixationPipe
+  ) { }
 
-    private calcNodeProperties(): void {
-        this.htmlValue = this.safeHtml.transform(this.os.getBlankNodeValue(this.node['@id']) || this.node['@id'] || this.node['@value'], 'html');
-        this.typeValue = this.node['@type'] ? this.safeHtml.transform(this.prefixation.transform(this.node['@type']), 'html') : undefined;
-        this.langValue = this.node['@language'] ? this.safeHtml.transform(this.prefixation.transform(this.node['@language']), 'html') : undefined;
-    }
+  ngOnInit(): void {
+    this.calcNodeProperties();
+  }
+
+  private calcNodeProperties(): void {
+    this.htmlValue = this.safeHtml.transform(this.stateService.getBlankNodeValue(this.node['@id']) || this.node['@id'] || this.node['@value'], 'html');
+    this.typeValue = this.node['@type'] ? this.safeHtml.transform(this.prefixation.transform(this.node['@type']), 'html') : undefined;
+    this.langValue = this.node['@language'] ? this.safeHtml.transform(this.prefixation.transform(this.node['@language']), 'html') : undefined;
+  }
 }

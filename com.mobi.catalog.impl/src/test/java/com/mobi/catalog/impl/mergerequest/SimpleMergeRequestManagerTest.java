@@ -1660,10 +1660,10 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
 
         PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder().build();
 
-        assertEquals(1, manager.getCreators(searchParams).getPageNumber());
-        assertFalse(manager.getCreators(searchParams).getPage().isEmpty());
-        assertEquals(2, manager.getCreators(searchParams).getPageSize());
-        assertEquals(2, manager.getCreators(searchParams).getTotalSize());
+        assertEquals(1, manager.getCreators(searchParams).pageNumber());
+        assertFalse(manager.getCreators(searchParams).page().isEmpty());
+        assertEquals(2, manager.getCreators(searchParams).pageSize());
+        assertEquals(2, manager.getCreators(searchParams).totalSize());
     }
 
     @Test
@@ -1671,10 +1671,10 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
         PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder().build();
 
         try (RepositoryConnection conn = repo.getConnection()) {
-            assertEquals(1, manager.getCreators(searchParams, conn).getPageNumber());
-            assertFalse(manager.getCreators(searchParams, conn).getPage().isEmpty());
-            assertEquals(2, manager.getCreators(searchParams, conn).getPageSize());
-            assertEquals(2, manager.getCreators(searchParams, conn).getTotalSize());
+            assertEquals(1, manager.getCreators(searchParams, conn).pageNumber());
+            assertFalse(manager.getCreators(searchParams, conn).page().isEmpty());
+            assertEquals(2, manager.getCreators(searchParams, conn).pageSize());
+            assertEquals(2, manager.getCreators(searchParams, conn).totalSize());
         }
     }
 
@@ -1682,30 +1682,30 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
     public void testGetCreatorsWithUser() {
         PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder().build();
 
-        assertEquals(1, manager.getCreators(searchParams, user1.getResource()).getPageNumber());
-        assertFalse(manager.getCreators(searchParams, user1.getResource()).getPage().isEmpty());
-        assertEquals(2, manager.getCreators(searchParams, user1.getResource()).getPageSize());
-        assertEquals(2, manager.getCreators(searchParams, user1.getResource()).getTotalSize());
+        assertEquals(1, manager.getCreators(searchParams, user1.getResource()).pageNumber());
+        assertFalse(manager.getCreators(searchParams, user1.getResource()).page().isEmpty());
+        assertEquals(2, manager.getCreators(searchParams, user1.getResource()).pageSize());
+        assertEquals(2, manager.getCreators(searchParams, user1.getResource()).totalSize());
     }
 
     @Test
     public void testGetCreatorWithSearchText() {
         PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder().searchText("1").build();
 
-        assertEquals(1, manager.getCreators(searchParams, user1.getResource()).getPageNumber());
-        assertFalse(manager.getCreators(searchParams, user1.getResource()).getPage().isEmpty());
-        assertEquals(1, manager.getCreators(searchParams, user1.getResource()).getPageSize());
-        assertEquals(1, manager.getCreators(searchParams, user1.getResource()).getTotalSize());
+        assertEquals(1, manager.getCreators(searchParams, user1.getResource()).pageNumber());
+        assertFalse(manager.getCreators(searchParams, user1.getResource()).page().isEmpty());
+        assertEquals(1, manager.getCreators(searchParams, user1.getResource()).pageSize());
+        assertEquals(1, manager.getCreators(searchParams, user1.getResource()).totalSize());
     }
 
     @Test
     public void testGetCreatorSearchNotExist() {
         PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder().searchText("NotExist").build();
 
-        assertEquals(0, manager.getCreators(searchParams, user1.getResource()).getPageNumber());
-        assertTrue(manager.getCreators(searchParams, user1.getResource()).getPage().isEmpty());
-        assertEquals(0, manager.getCreators(searchParams, user1.getResource()).getPageSize());
-        assertEquals(0, manager.getCreators(searchParams, user1.getResource()).getTotalSize());
+        assertEquals(0, manager.getCreators(searchParams, user1.getResource()).pageNumber());
+        assertTrue(manager.getCreators(searchParams, user1.getResource()).page().isEmpty());
+        assertEquals(0, manager.getCreators(searchParams, user1.getResource()).pageSize());
+        assertEquals(0, manager.getCreators(searchParams, user1.getResource()).totalSize());
     }
 
     @Test
@@ -1713,10 +1713,10 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
         PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder().build();
 
         try (RepositoryConnection conn = repo.getConnection()) {
-            assertEquals(1, manager.getCreators(searchParams, conn, user1.getResource()).getPageNumber());
-            assertFalse(manager.getCreators(searchParams, conn, user1.getResource()).getPage().isEmpty());
-            assertEquals(2, manager.getCreators(searchParams, conn, user1.getResource()).getPageSize());
-            assertEquals(2, manager.getCreators(searchParams, conn, user1.getResource()).getTotalSize());
+            assertEquals(1, manager.getCreators(searchParams, conn, user1.getResource()).pageNumber());
+            assertFalse(manager.getCreators(searchParams, conn, user1.getResource()).page().isEmpty());
+            assertEquals(2, manager.getCreators(searchParams, conn, user1.getResource()).pageSize());
+            assertEquals(2, manager.getCreators(searchParams, conn, user1.getResource()).totalSize());
         }
     }
 
@@ -1724,10 +1724,10 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
     public void testGetAssigneesWithNoConnection() {
         PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder().build();
 
-        assertEquals(1, manager.getAssignees(searchParams).getPageNumber());
-        assertFalse(manager.getAssignees(searchParams).getPage().isEmpty());
-        assertEquals(2, manager.getAssignees(searchParams).getPageSize());
-        assertEquals(2, manager.getAssignees(searchParams).getTotalSize());
+        assertEquals(1, manager.getAssignees(searchParams).pageNumber());
+        assertFalse(manager.getAssignees(searchParams).page().isEmpty());
+        assertEquals(2, manager.getAssignees(searchParams).pageSize());
+        assertEquals(2, manager.getAssignees(searchParams).totalSize());
     }
 
     @Test
@@ -1735,10 +1735,10 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
         PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder().build();
 
         try (RepositoryConnection conn = repo.getConnection()) {
-            assertEquals(1, manager.getAssignees(searchParams, conn).getPageNumber());
-            assertFalse(manager.getAssignees(searchParams, conn).getPage().isEmpty());
-            assertEquals(2, manager.getAssignees(searchParams, conn).getPageSize());
-            assertEquals(2, manager.getAssignees(searchParams, conn).getTotalSize());
+            assertEquals(1, manager.getAssignees(searchParams, conn).pageNumber());
+            assertFalse(manager.getAssignees(searchParams, conn).page().isEmpty());
+            assertEquals(2, manager.getAssignees(searchParams, conn).pageSize());
+            assertEquals(2, manager.getAssignees(searchParams, conn).totalSize());
         }
     }
 
@@ -1746,30 +1746,30 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
     public void testGetAssigneesWithUser() {
         PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder().build();
 
-        assertEquals(1, manager.getAssignees(searchParams, user1.getResource()).getPageNumber());
-        assertFalse(manager.getAssignees(searchParams, user1.getResource()).getPage().isEmpty());
-        assertEquals(1, manager.getAssignees(searchParams, user1.getResource()).getPageSize());
-        assertEquals(1, manager.getAssignees(searchParams, user1.getResource()).getTotalSize());
+        assertEquals(1, manager.getAssignees(searchParams, user1.getResource()).pageNumber());
+        assertFalse(manager.getAssignees(searchParams, user1.getResource()).page().isEmpty());
+        assertEquals(1, manager.getAssignees(searchParams, user1.getResource()).pageSize());
+        assertEquals(1, manager.getAssignees(searchParams, user1.getResource()).totalSize());
     }
 
     @Test
     public void testGetAssigneesWithSearchText() {
         PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder().searchText("2").build();
 
-        assertEquals(1, manager.getAssignees(searchParams, user1.getResource()).getPageNumber());
-        assertFalse(manager.getAssignees(searchParams, user1.getResource()).getPage().isEmpty());
-        assertEquals(1, manager.getAssignees(searchParams, user1.getResource()).getPageSize());
-        assertEquals(1, manager.getAssignees(searchParams, user1.getResource()).getTotalSize());
+        assertEquals(1, manager.getAssignees(searchParams, user1.getResource()).pageNumber());
+        assertFalse(manager.getAssignees(searchParams, user1.getResource()).page().isEmpty());
+        assertEquals(1, manager.getAssignees(searchParams, user1.getResource()).pageSize());
+        assertEquals(1, manager.getAssignees(searchParams, user1.getResource()).totalSize());
     }
 
     @Test
     public void testGetAssigneesSearchNotExist() {
         PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder().searchText("NotExist").build();
 
-        assertEquals(0, manager.getAssignees(searchParams, user1.getResource()).getPageNumber());
-        assertTrue(manager.getAssignees(searchParams, user1.getResource()).getPage().isEmpty());
-        assertEquals(0, manager.getAssignees(searchParams, user1.getResource()).getPageSize());
-        assertEquals(0, manager.getAssignees(searchParams, user1.getResource()).getTotalSize());
+        assertEquals(0, manager.getAssignees(searchParams, user1.getResource()).pageNumber());
+        assertTrue(manager.getAssignees(searchParams, user1.getResource()).page().isEmpty());
+        assertEquals(0, manager.getAssignees(searchParams, user1.getResource()).pageSize());
+        assertEquals(0, manager.getAssignees(searchParams, user1.getResource()).totalSize());
     }
 
     @Test
@@ -1777,10 +1777,10 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
         PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder().build();
 
         try (RepositoryConnection conn = repo.getConnection()) {
-            assertEquals(1, manager.getAssignees(searchParams, conn, user1.getResource()).getPageNumber());
-            assertFalse(manager.getAssignees(searchParams, conn, user1.getResource()).getPage().isEmpty());
-            assertEquals(1, manager.getAssignees(searchParams, conn, user1.getResource()).getPageSize());
-            assertEquals(1, manager.getAssignees(searchParams, conn, user1.getResource()).getTotalSize());
+            assertEquals(1, manager.getAssignees(searchParams, conn, user1.getResource()).pageNumber());
+            assertFalse(manager.getAssignees(searchParams, conn, user1.getResource()).page().isEmpty());
+            assertEquals(1, manager.getAssignees(searchParams, conn, user1.getResource()).pageSize());
+            assertEquals(1, manager.getAssignees(searchParams, conn, user1.getResource()).totalSize());
         }
     }
 
@@ -1788,10 +1788,10 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
     public void testGetRecordsWithNoConnection() {
         PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder().build();
 
-        assertEquals(1, manager.getRecords(searchParams).getPageNumber());
-        assertFalse(manager.getRecords(searchParams).getPage().isEmpty());
-        assertEquals(2, manager.getRecords(searchParams).getPageSize());
-        assertEquals(2, manager.getRecords(searchParams).getTotalSize());
+        assertEquals(1, manager.getRecords(searchParams).pageNumber());
+        assertFalse(manager.getRecords(searchParams).page().isEmpty());
+        assertEquals(2, manager.getRecords(searchParams).pageSize());
+        assertEquals(2, manager.getRecords(searchParams).totalSize());
     }
 
     @Test
@@ -1799,10 +1799,10 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
         PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder().build();
 
         try (RepositoryConnection conn = repo.getConnection()) {
-            assertEquals(1, manager.getRecords(searchParams, conn).getPageNumber());
-            assertFalse(manager.getRecords(searchParams, conn).getPage().isEmpty());
-            assertEquals(2, manager.getRecords(searchParams, conn).getPageSize());
-            assertEquals(2, manager.getRecords(searchParams, conn).getTotalSize());
+            assertEquals(1, manager.getRecords(searchParams, conn).pageNumber());
+            assertFalse(manager.getRecords(searchParams, conn).page().isEmpty());
+            assertEquals(2, manager.getRecords(searchParams, conn).pageSize());
+            assertEquals(2, manager.getRecords(searchParams, conn).totalSize());
         }
     }
 
@@ -1810,30 +1810,30 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
     public void testGetRecordsWithUser() {
         PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder().build();
 
-        assertEquals(1, manager.getRecords(searchParams, versionedRDFRecord1.getResource()).getPageNumber());
-        assertFalse(manager.getRecords(searchParams, versionedRDFRecord1.getResource()).getPage().isEmpty());
-        assertEquals(1, manager.getRecords(searchParams, versionedRDFRecord1.getResource()).getPageSize());
-        assertEquals(1, manager.getRecords(searchParams, versionedRDFRecord1.getResource()).getTotalSize());
+        assertEquals(1, manager.getRecords(searchParams, versionedRDFRecord1.getResource()).pageNumber());
+        assertFalse(manager.getRecords(searchParams, versionedRDFRecord1.getResource()).page().isEmpty());
+        assertEquals(1, manager.getRecords(searchParams, versionedRDFRecord1.getResource()).pageSize());
+        assertEquals(1, manager.getRecords(searchParams, versionedRDFRecord1.getResource()).totalSize());
     }
 
     @Test
     public void testGetRecordsWithSearchText() {
         PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder().searchText("2").build();
 
-        assertEquals(1, manager.getRecords(searchParams, versionedRDFRecord1.getResource()).getPageNumber());
-        assertFalse(manager.getRecords(searchParams, versionedRDFRecord1.getResource()).getPage().isEmpty());
-        assertEquals(1, manager.getRecords(searchParams, versionedRDFRecord1.getResource()).getPageSize());
-        assertEquals(1, manager.getRecords(searchParams, versionedRDFRecord1.getResource()).getTotalSize());
+        assertEquals(1, manager.getRecords(searchParams, versionedRDFRecord1.getResource()).pageNumber());
+        assertFalse(manager.getRecords(searchParams, versionedRDFRecord1.getResource()).page().isEmpty());
+        assertEquals(1, manager.getRecords(searchParams, versionedRDFRecord1.getResource()).pageSize());
+        assertEquals(1, manager.getRecords(searchParams, versionedRDFRecord1.getResource()).totalSize());
     }
 
     @Test
     public void testGetRecordsSearchNotExist() {
         PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder().searchText("NotExist").build();
 
-        assertEquals(0, manager.getRecords(searchParams, versionedRDFRecord1.getResource()).getPageNumber());
-        assertTrue(manager.getRecords(searchParams, versionedRDFRecord1.getResource()).getPage().isEmpty());
-        assertEquals(0, manager.getRecords(searchParams, versionedRDFRecord1.getResource()).getPageSize());
-        assertEquals(0, manager.getRecords(searchParams, versionedRDFRecord1.getResource()).getTotalSize());
+        assertEquals(0, manager.getRecords(searchParams, versionedRDFRecord1.getResource()).pageNumber());
+        assertTrue(manager.getRecords(searchParams, versionedRDFRecord1.getResource()).page().isEmpty());
+        assertEquals(0, manager.getRecords(searchParams, versionedRDFRecord1.getResource()).pageSize());
+        assertEquals(0, manager.getRecords(searchParams, versionedRDFRecord1.getResource()).totalSize());
     }
 
     @Test
@@ -1841,10 +1841,10 @@ public class SimpleMergeRequestManagerTest extends OrmEnabledTestCase {
         PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder().build();
 
         try (RepositoryConnection conn = repo.getConnection()) {
-            assertEquals(1, manager.getRecords(searchParams, conn, versionedRDFRecord1.getResource()).getPageNumber());
-            assertFalse(manager.getRecords(searchParams, conn, versionedRDFRecord1.getResource()).getPage().isEmpty());
-            assertEquals(1, manager.getRecords(searchParams, conn, versionedRDFRecord1.getResource()).getPageSize());
-            assertEquals(1, manager.getRecords(searchParams, conn, versionedRDFRecord1.getResource()).getTotalSize());
+            assertEquals(1, manager.getRecords(searchParams, conn, versionedRDFRecord1.getResource()).pageNumber());
+            assertFalse(manager.getRecords(searchParams, conn, versionedRDFRecord1.getResource()).page().isEmpty());
+            assertEquals(1, manager.getRecords(searchParams, conn, versionedRDFRecord1.getResource()).pageSize());
+            assertEquals(1, manager.getRecords(searchParams, conn, versionedRDFRecord1.getResource()).totalSize());
         }
     }
 

@@ -22,21 +22,19 @@
  */
 //angular imports
 import { NgModule } from '@angular/core';
+import { ScrollingModule } from '@angular/cdk/scrolling';
 
 //Mobi & Local imports
 import { NodeShapesDisplayComponent } from './components/node-shapes-display/node-shapes-display.component';
 import { NodeShapesItemComponent } from './components/node-shapes-item/node-shapes-item.component';
 import { NodeShapesListComponent } from './components/node-shapes-list/node-shapes-list.component';
 import { NodeShapesTabComponent } from './components/node-shapes-tab/node-shapes-tab.component';
-import { ScrollingModule } from '@angular/cdk/scrolling';
 
-import { ShapesGraphDetailsComponent } from './components/shapesGraphDetails/shapesGraphDetails.component';
 import { ShapesGraphEditorPageComponent } from './components/shapesGraphEditorPage/shapesGraphEditorPage.component';
 import { ShapesPreviewComponent } from './components/shapes-preview/shapes-preview.component';
 import { ShapesProjectTabComponent } from './components/shapes-project-tab/shapes-project-tab.component';
 import { SharedModule } from '../shared/shared.module';
 import { ShapesTabsHolderComponent } from './components/shapes-tabs-holder/shapes-tabs-holder.component';
-import { StaticIriLimitedComponent } from './components/staticIriLimited/staticIriLimited.component';
 import { VersionedRdfRecordEditorModule } from '../versioned-rdf-record-editor/versioned-rdf-record-editor.module';
 
 /**
@@ -55,12 +53,10 @@ import { VersionedRdfRecordEditorModule } from '../versioned-rdf-record-editor/v
      NodeShapesItemComponent,
      NodeShapesListComponent,
      NodeShapesTabComponent,
-     ShapesGraphDetailsComponent,
      ShapesGraphEditorPageComponent,
      ShapesPreviewComponent,
      ShapesProjectTabComponent,
-     ShapesTabsHolderComponent,
-     StaticIriLimitedComponent,
+     ShapesTabsHolderComponent
    ],
    providers: []
 })

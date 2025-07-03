@@ -407,8 +407,8 @@ public class MergeRequestRest {
             User activeUser = getActiveUser(servletRequest, engineManager);
             PaginatedSearchResults<UserCount> counts = manager.getCreators(builder.build(), activeUser.getResource());
             ArrayNode arr = serializeUserCount(counts);
-            return createPaginatedResponse(uriInfo, arr, counts.getTotalSize(), limit == 0
-                    ? counts.getTotalSize() : limit, offset);
+            return createPaginatedResponse(uriInfo, arr, counts.totalSize(), limit == 0
+                    ? counts.totalSize() : limit, offset);
         } catch (IllegalArgumentException ex) {
             throw RestUtils.getErrorObjBadRequest(ex);
         } catch (IllegalStateException | SailException | MobiException ex) {
@@ -469,8 +469,8 @@ public class MergeRequestRest {
             User activeUser = getActiveUser(servletRequest, engineManager);
             PaginatedSearchResults<UserCount> counts = manager.getAssignees(builder.build(), activeUser.getResource());
             ArrayNode arr = serializeUserCount(counts);
-            return createPaginatedResponse(uriInfo, arr, counts.getTotalSize(), limit == 0
-                    ? counts.getTotalSize() : limit, offset);
+            return createPaginatedResponse(uriInfo, arr, counts.totalSize(), limit == 0
+                    ? counts.totalSize() : limit, offset);
         } catch (IllegalArgumentException ex) {
             throw RestUtils.getErrorObjBadRequest(ex);
         } catch (IllegalStateException | SailException | MobiException ex) {
@@ -531,8 +531,8 @@ public class MergeRequestRest {
             User activeUser = getActiveUser(servletRequest, engineManager);
             PaginatedSearchResults<RecordCount> counts = manager.getRecords(builder.build(), activeUser.getResource());
             ArrayNode arr = serializeRecordCount(counts);
-            return createPaginatedResponse(uriInfo, arr, counts.getTotalSize(), limit == 0
-                    ? counts.getTotalSize() : limit, offset);
+            return createPaginatedResponse(uriInfo, arr, counts.totalSize(), limit == 0
+                    ? counts.totalSize() : limit, offset);
         } catch (IllegalArgumentException ex) {
             throw RestUtils.getErrorObjBadRequest(ex);
         } catch (IllegalStateException | SailException | MobiException ex) {
@@ -1118,7 +1118,7 @@ public class MergeRequestRest {
     private ArrayNode serializeUserCount(PaginatedSearchResults<UserCount> userCounts) {
         ArrayNode userArrayNode = mapper.createArrayNode();
 
-        for (UserCount userCount: userCounts.getPage()) {
+        for (UserCount userCount: userCounts.page()) {
             ObjectNode userObject = mapper.createObjectNode();
             userObject.put("user", userCount.getUser().stringValue());
             userObject.put("name", userCount.getName());
@@ -1131,7 +1131,7 @@ public class MergeRequestRest {
     private ArrayNode serializeRecordCount(PaginatedSearchResults<RecordCount> recordCounts) {
         ArrayNode recordArrayNode = mapper.createArrayNode();
 
-        for (RecordCount recordCount: recordCounts.getPage()) {
+        for (RecordCount recordCount: recordCounts.page()) {
             ObjectNode recordObject = mapper.createObjectNode();
             recordObject.put("record", recordCount.getRecord().stringValue());
             recordObject.put("title", recordCount.getTitle());

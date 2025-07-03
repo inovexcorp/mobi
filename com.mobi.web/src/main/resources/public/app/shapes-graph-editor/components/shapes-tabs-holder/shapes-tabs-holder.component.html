@@ -27,12 +27,18 @@
                        (selectedTabChange)="onTabChanged($event)">
             <mat-tab label="Project">
                 <ng-template matTabContent>
-                    <app-shapes-project-tab></app-shapes-project-tab>
+                    <app-shapes-project-tab
+                        [listItem]="state.listItem"
+                        [canModify]="state.canModify()">
+                    </app-shapes-project-tab>
                 </ng-template>
             </mat-tab>
             <mat-tab label="Node Shapes">
                 <ng-template matTabContent>
-                    <app-node-shapes-tab></app-node-shapes-tab>
+                    <app-node-shapes-tab
+                        [listItem]="state.listItem"
+                        [canModify]="state.canModify()">
+                    </app-node-shapes-tab>
                 </ng-template>
             </mat-tab>
         </mat-tab-group>

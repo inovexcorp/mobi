@@ -189,10 +189,10 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
             PaginatedSearchResults<Record> records = manager.findRecord(ManagerTestConstants.CATALOG_IRI, searchParams, conn);
 
             // then
-            assertEquals(1, records.getPage().size());
-            assertEquals(TOTAL_SIZE, records.getTotalSize());
-            assertEquals(1, records.getPageSize());
-            assertEquals(1, records.getPageNumber());
+            assertEquals(1, records.page().size());
+            assertEquals(TOTAL_SIZE, records.totalSize());
+            assertEquals(1, records.pageSize());
+            assertEquals(1, records.pageNumber());
         }
     }
 
@@ -211,10 +211,10 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
             PaginatedSearchResults<Record> records = manager.findRecord(ManagerTestConstants.CATALOG_IRI, searchParams, conn);
 
             // then
-            assertEquals(1, records.getPage().size());
-            assertEquals(2, records.getTotalSize());
-            assertEquals(1, records.getPageSize());
-            assertEquals(1, records.getPageNumber());
+            assertEquals(1, records.page().size());
+            assertEquals(2, records.totalSize());
+            assertEquals(1, records.pageSize());
+            assertEquals(1, records.pageNumber());
         }
     }
 
@@ -234,10 +234,10 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
             PaginatedSearchResults<Record> records = manager.findRecord(ManagerTestConstants.CATALOG_IRI, searchParams, conn);
 
             // then
-            assertEquals(1, records.getPage().size());
-            assertEquals(2, records.getTotalSize());
-            assertEquals(1, records.getPageSize());
-            assertEquals(1, records.getPageNumber());
+            assertEquals(1, records.page().size());
+            assertEquals(2, records.totalSize());
+            assertEquals(1, records.pageSize());
+            assertEquals(1, records.pageNumber());
         }
     }
 
@@ -254,10 +254,10 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
             PaginatedSearchResults<Record> records = manager.findRecord(ManagerTestConstants.CATALOG_IRI, searchParams, conn);
 
             // then
-            assertEquals(1, records.getPage().size());
-            assertEquals(TOTAL_SIZE, records.getTotalSize());
-            assertEquals(1, records.getPageSize());
-            assertEquals(2, records.getPageNumber());
+            assertEquals(1, records.page().size());
+            assertEquals(TOTAL_SIZE, records.totalSize());
+            assertEquals(1, records.pageSize());
+            assertEquals(2, records.pageNumber());
         }
     }
 
@@ -276,10 +276,10 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
             PaginatedSearchResults<Record> records = manager.findRecord(ManagerTestConstants.CATALOG_IRI, searchParams, conn);
 
             // then
-            assertEquals(1, records.getPage().size());
-            assertEquals(2, records.getTotalSize());
-            assertEquals(1, records.getPageSize());
-            assertEquals(2, records.getPageNumber());
+            assertEquals(1, records.page().size());
+            assertEquals(2, records.totalSize());
+            assertEquals(1, records.pageSize());
+            assertEquals(2, records.pageNumber());
         }
     }
 
@@ -298,10 +298,10 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
             PaginatedSearchResults<Record> records = manager.findRecord(ManagerTestConstants.CATALOG_IRI, searchParams, conn);
 
             // then
-            assertEquals(1, records.getPage().size());
-            assertEquals(2, records.getTotalSize());
-            assertEquals(1, records.getPageSize());
-            assertEquals(2, records.getPageNumber());
+            assertEquals(1, records.page().size());
+            assertEquals(2, records.totalSize());
+            assertEquals(1, records.pageSize());
+            assertEquals(2, records.pageNumber());
         }
     }
 
@@ -318,10 +318,10 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
             PaginatedSearchResults<Record> records = manager.findRecord(ManagerTestConstants.CATALOG_IRI, searchParams, conn);
 
             // then
-            assertEquals(TOTAL_SIZE, records.getPage().size());
-            assertEquals(TOTAL_SIZE, records.getTotalSize());
-            assertEquals(1000, records.getPageSize());
-            assertEquals(1, records.getPageNumber());
+            assertEquals(TOTAL_SIZE, records.page().size());
+            assertEquals(TOTAL_SIZE, records.totalSize());
+            assertEquals(1000, records.pageSize());
+            assertEquals(1, records.pageNumber());
         }
     }
 
@@ -347,10 +347,10 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
             PaginatedSearchResults<Record> records = manager.findRecord(ManagerTestConstants.CATALOG_IRI, searchParams, user, conn);
 
             // then
-            assertEquals(2, records.getPage().size());
-            assertEquals(2, records.getTotalSize());
-            assertEquals(1000, records.getPageSize());
-            assertEquals(1, records.getPageNumber());
+            assertEquals(2, records.page().size());
+            assertEquals(2, records.totalSize());
+            assertEquals(1000, records.pageSize());
+            assertEquals(1, records.pageNumber());
         }
     }
 
@@ -376,10 +376,10 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
             PaginatedSearchResults<Record> records = manager.findRecord(ManagerTestConstants.CATALOG_IRI, searchParams, user, conn);
 
             // then
-            assertEquals(1, records.getPage().size());
-            assertEquals(2, records.getTotalSize());
-            assertEquals(1, records.getPageSize());
-            assertEquals(1, records.getPageNumber());
+            assertEquals(1, records.page().size());
+            assertEquals(2, records.totalSize());
+            assertEquals(1, records.pageSize());
+            assertEquals(1, records.pageNumber());
         }
 
         PaginatedSearchParams pageTwoSearchParams = new PaginatedSearchParams.Builder().limit(limit).offset(1)
@@ -391,10 +391,10 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
                     user, conn);
 
             // then
-            assertEquals(1, pageTwoRecords.getPage().size());
-            assertEquals(2, pageTwoRecords.getTotalSize());
-            assertEquals(1, pageTwoRecords.getPageSize());
-            assertEquals(2, pageTwoRecords.getPageNumber());
+            assertEquals(1, pageTwoRecords.page().size());
+            assertEquals(2, pageTwoRecords.totalSize());
+            assertEquals(1, pageTwoRecords.pageSize());
+            assertEquals(2, pageTwoRecords.pageNumber());
         }
     }
 
@@ -415,10 +415,10 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
             PaginatedSearchResults<Record> records = manager.findRecord(ManagerTestConstants.CATALOG_IRI, searchParams, user, conn);
 
             // then
-            assertEquals(0, records.getPage().size());
-            assertEquals(0, records.getTotalSize());
-            assertEquals(0, records.getPageSize());
-            assertEquals(0, records.getPageNumber());
+            assertEquals(0, records.page().size());
+            assertEquals(0, records.totalSize());
+            assertEquals(0, records.pageSize());
+            assertEquals(0, records.pageNumber());
         }
     }
 
@@ -446,12 +446,12 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
 
             // then
             verify(manager, atLeastOnce()).getRecord(eq(ManagerTestConstants.CATALOG_IRI), any(Resource.class), eq(recordFactory), any(RepositoryConnection.class));
-            assertEquals(ManagerTestConstants.RECORD_IRI, resources1.getPage().iterator().next().getResource());
-            assertEquals(VALUE_FACTORY.createIRI(ManagerTestConstants.RECORDS + "complex-record"), resources2.getPage().iterator().next().getResource());
-            assertEquals(ManagerTestConstants.UNVERSIONED_RECORD_IRI, resources3.getPage().iterator().next().getResource());
-            assertEquals(VALUE_FACTORY.createIRI(ManagerTestConstants.RECORDS + "complex-record"), resources4.getPage().iterator().next().getResource());
-            assertEquals(VALUE_FACTORY.createIRI(ManagerTestConstants.RECORDS + "complex-record"), resources5.getPage().iterator().next().getResource());
-            assertEquals(resources6.getPage().iterator().next().getResource().stringValue(), "http://mobi.com/test/records#versioned-record-missing-version");
+            assertEquals(ManagerTestConstants.RECORD_IRI, resources1.page().iterator().next().getResource());
+            assertEquals(VALUE_FACTORY.createIRI(ManagerTestConstants.RECORDS + "complex-record"), resources2.page().iterator().next().getResource());
+            assertEquals(ManagerTestConstants.UNVERSIONED_RECORD_IRI, resources3.page().iterator().next().getResource());
+            assertEquals(VALUE_FACTORY.createIRI(ManagerTestConstants.RECORDS + "complex-record"), resources4.page().iterator().next().getResource());
+            assertEquals(VALUE_FACTORY.createIRI(ManagerTestConstants.RECORDS + "complex-record"), resources5.page().iterator().next().getResource());
+            assertEquals(resources6.page().iterator().next().getResource().stringValue(), "http://mobi.com/test/records#versioned-record-missing-version");
         }
     }
 
@@ -468,10 +468,10 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
             // when
             PaginatedSearchResults<Record> records = manager.findRecord(ManagerTestConstants.CATALOG_IRI, searchParams, conn);
             // then
-            assertEquals(2, records.getPage().size());
-            assertEquals(2, records.getTotalSize());
-            assertEquals(10, records.getPageSize());
-            assertEquals(1, records.getPageNumber());
+            assertEquals(2, records.page().size());
+            assertEquals(2, records.totalSize());
+            assertEquals(10, records.pageSize());
+            assertEquals(1, records.pageNumber());
         }
     }
 
@@ -489,10 +489,10 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
             // when
             PaginatedSearchResults<Record> records = manager.findRecord(ManagerTestConstants.CATALOG_IRI, searchParams, conn);
             // then
-            assertEquals(1, records.getPage().size());
-            assertEquals(1, records.getTotalSize());
-            assertEquals(10, records.getPageSize());
-            assertEquals(1, records.getPageNumber());
+            assertEquals(1, records.page().size());
+            assertEquals(1, records.totalSize());
+            assertEquals(10, records.pageSize());
+            assertEquals(1, records.pageNumber());
         }
     }
 
@@ -509,10 +509,10 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
             // when
             PaginatedSearchResults<Record> records = manager.findRecord(ManagerTestConstants.CATALOG_IRI, searchParams, conn);
             // then
-            assertEquals(1, records.getPage().size());
-            assertEquals(1, records.getTotalSize());
-            assertEquals(10, records.getPageSize());
-            assertEquals(1, records.getPageNumber());
+            assertEquals(1, records.page().size());
+            assertEquals(1, records.totalSize());
+            assertEquals(10, records.pageSize());
+            assertEquals(1, records.pageNumber());
         }
     }
 
@@ -531,8 +531,8 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
             PaginatedSearchResults<Record> records = manager.findRecord(ManagerTestConstants.CATALOG_IRI, searchParams, conn);
 
             // then
-            assertEquals(0, records.getPage().size());
-            assertEquals(0, records.getTotalSize());
+            assertEquals(0, records.page().size());
+            assertEquals(0, records.totalSize());
         }
     }
 
@@ -548,8 +548,8 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
             PaginatedSearchResults<Record> records = manager.findRecord(ManagerTestConstants.CATALOG_DISTRIBUTED_IRI, searchParams, conn);
 
             // then
-            assertEquals(0, records.getPage().size());
-            assertEquals(0, records.getTotalSize());
+            assertEquals(0, records.page().size());
+            assertEquals(0, records.totalSize());
         }
     }
 
@@ -571,12 +571,12 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
 
             // then
             assertTrue(true);
-            assertEquals(7, versionedRecords.getPage().size());
-            assertEquals(7, versionedRecords.getTotalSize());
-            assertEquals(2, unversionedRecords.getPage().size());
-            assertEquals(2, unversionedRecords.getTotalSize());
-            assertEquals(TOTAL_SIZE, fullRecords.getPage().size());
-            assertEquals(TOTAL_SIZE, fullRecords.getTotalSize());
+            assertEquals(7, versionedRecords.page().size());
+            assertEquals(7, versionedRecords.totalSize());
+            assertEquals(2, unversionedRecords.page().size());
+            assertEquals(2, unversionedRecords.totalSize());
+            assertEquals(TOTAL_SIZE, fullRecords.page().size());
+            assertEquals(TOTAL_SIZE, fullRecords.totalSize());
         }
     }
 
@@ -679,11 +679,11 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
             // when
             PaginatedSearchResults<KeywordCount> keywordCounts = manager.getKeywords(ManagerTestConstants.CATALOG_IRI, searchParams, conn);
             // then
-            assertEquals(2, keywordCounts.getPage().size());
-            assertEquals(2, keywordCounts.getTotalSize());
-            assertEquals("[KC(111, 2), KC(222, 2)]", keywordCounts.getPage().toString());
-            assertEquals(10, keywordCounts.getPageSize());
-            assertEquals(1, keywordCounts.getPageNumber());
+            assertEquals(2, keywordCounts.page().size());
+            assertEquals(2, keywordCounts.totalSize());
+            assertEquals("[KC(111, 2), KC(222, 2)]", keywordCounts.page().toString());
+            assertEquals(10, keywordCounts.pageSize());
+            assertEquals(1, keywordCounts.pageNumber());
         }
     }
 
@@ -701,11 +701,11 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
             // when
             PaginatedSearchResults<KeywordCount> keywordCounts = manager.getKeywords(ManagerTestConstants.CATALOG_IRI, searchParams, conn);
             // then
-            assertEquals(1, keywordCounts.getPage().size());
-            assertEquals(1, keywordCounts.getTotalSize());
-            assertEquals("[KC(111, 2)]", keywordCounts.getPage().toString());
-            assertEquals(10, keywordCounts.getPageSize());
-            assertEquals(1, keywordCounts.getPageNumber());
+            assertEquals(1, keywordCounts.page().size());
+            assertEquals(1, keywordCounts.totalSize());
+            assertEquals("[KC(111, 2)]", keywordCounts.page().toString());
+            assertEquals(10, keywordCounts.pageSize());
+            assertEquals(1, keywordCounts.pageNumber());
         }
     }
 
@@ -722,11 +722,11 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
             // when
             PaginatedSearchResults<KeywordCount> keywordCounts = manager.getKeywords(ManagerTestConstants.CATALOG_IRI, searchParams, conn);
             // then
-            assertEquals(0, keywordCounts.getPage().size());
-            assertEquals(0, keywordCounts.getTotalSize());
-            assertEquals("[]", keywordCounts.getPage().toString());
-            assertEquals(0, keywordCounts.getPageSize());
-            assertEquals(0, keywordCounts.getPageNumber());
+            assertEquals(0, keywordCounts.page().size());
+            assertEquals(0, keywordCounts.totalSize());
+            assertEquals("[]", keywordCounts.page().toString());
+            assertEquals(0, keywordCounts.pageSize());
+            assertEquals(0, keywordCounts.pageNumber());
         }
     }
 
@@ -743,11 +743,11 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
             // when
             PaginatedSearchResults<KeywordCount> keywordCounts = manager.getKeywords(ManagerTestConstants.CATALOG_IRI, searchParams, conn);
             // then
-            assertEquals(1, keywordCounts.getPage().size());
-            assertEquals("[KC(111, 2)]", keywordCounts.getPage().toString());
-            assertEquals(2, keywordCounts.getTotalSize());
-            assertEquals(1, keywordCounts.getPageSize());
-            assertEquals(1, keywordCounts.getPageNumber());
+            assertEquals(1, keywordCounts.page().size());
+            assertEquals("[KC(111, 2)]", keywordCounts.page().toString());
+            assertEquals(2, keywordCounts.totalSize());
+            assertEquals(1, keywordCounts.pageSize());
+            assertEquals(1, keywordCounts.pageNumber());
         }
     }
 
@@ -764,11 +764,11 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
             // when
             PaginatedSearchResults<KeywordCount> keywordCounts = manager.getKeywords(ManagerTestConstants.CATALOG_IRI, searchParams, conn);
             // then
-            assertEquals(1, keywordCounts.getPage().size());
-            assertEquals("[KC(222, 2)]", keywordCounts.getPage().toString());
-            assertEquals(2, keywordCounts.getTotalSize());
-            assertEquals(1, keywordCounts.getPageSize());
-            assertEquals(2, keywordCounts.getPageNumber());
+            assertEquals(1, keywordCounts.page().size());
+            assertEquals("[KC(222, 2)]", keywordCounts.page().toString());
+            assertEquals(2, keywordCounts.totalSize());
+            assertEquals(1, keywordCounts.pageSize());
+            assertEquals(2, keywordCounts.pageNumber());
         }
     }
 
@@ -1287,12 +1287,12 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
         try (RepositoryConnection conn = repo.getConnection()) {
             PaginatedSearchResults<EntityMetadata> results = manager.findEntities(ManagerTestConstants.CATALOG_IRI,
                     searchParams, user, conn);
-            assertEquals(10, results.getPageSize());
-            assertEquals(5, results.getTotalSize());
-            assertEquals(1, results.getPageNumber());
-            assertEquals(5, results.getPage().size());
+            assertEquals(10, results.pageSize());
+            assertEquals(5, results.totalSize());
+            assertEquals(1, results.pageNumber());
+            assertEquals(5, results.page().size());
             // Get the first EntityMetadata from the results
-            EntityMetadata entityMetadata = results.getPage().get(0);
+            EntityMetadata entityMetadata = results.page().get(0);
             assertEquals("http://example.org/entity1", entityMetadata.iri());
             assertEquals("Entity 1 Label", entityMetadata.entityName());
             assertEquals(1, entityMetadata.types().size());
@@ -1332,17 +1332,17 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
         try (RepositoryConnection conn = repo.getConnection()) {
             PaginatedSearchResults<EntityMetadata> resultsDesc = manager.findEntities(ManagerTestConstants.CATALOG_IRI,
                     searchParams, user, conn);
-            assertEquals(10, resultsDesc.getPageSize());
-            assertEquals(5, resultsDesc.getTotalSize());
-            assertEquals(1, resultsDesc.getPageNumber());
-            assertEquals(5, resultsDesc.getPage().size());
+            assertEquals(10, resultsDesc.pageSize());
+            assertEquals(5, resultsDesc.totalSize());
+            assertEquals(1, resultsDesc.pageNumber());
+            assertEquals(5, resultsDesc.page().size());
             // Get the first EntityMetadata from the results
 
-            assertEquals("Entity 2 Label", resultsDesc.getPage().get(0).entityName());
-            assertEquals("Entity 1d Label", resultsDesc.getPage().get(1).entityName());
-            assertEquals("Entity 1c Label", resultsDesc.getPage().get(2).entityName());
-            assertEquals("Entity 1b Label", resultsDesc.getPage().get(3).entityName());
-            assertEquals("Entity 1 Label", resultsDesc.getPage().get(4).entityName());
+            assertEquals("Entity 2 Label", resultsDesc.page().get(0).entityName());
+            assertEquals("Entity 1d Label", resultsDesc.page().get(1).entityName());
+            assertEquals("Entity 1c Label", resultsDesc.page().get(2).entityName());
+            assertEquals("Entity 1b Label", resultsDesc.page().get(3).entityName());
+            assertEquals("Entity 1 Label", resultsDesc.page().get(4).entityName());
         }
 
         PaginatedSearchParams searchParamsAsc = new PaginatedSearchParams.Builder()
@@ -1355,17 +1355,17 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
         try (RepositoryConnection conn = repo.getConnection()) {
             PaginatedSearchResults<EntityMetadata> resultsAsc = manager.findEntities(ManagerTestConstants.CATALOG_IRI,
                     searchParamsAsc, user, conn);
-            assertEquals(10, resultsAsc.getPageSize());
-            assertEquals(5, resultsAsc.getTotalSize());
-            assertEquals(1, resultsAsc.getPageNumber());
-            assertEquals(5, resultsAsc.getPage().size());
+            assertEquals(10, resultsAsc.pageSize());
+            assertEquals(5, resultsAsc.totalSize());
+            assertEquals(1, resultsAsc.pageNumber());
+            assertEquals(5, resultsAsc.page().size());
             // Get the first EntityMetadata from the results
 
-            assertEquals("Entity 1 Label", resultsAsc.getPage().get(0).entityName());
-            assertEquals("Entity 1b Label", resultsAsc.getPage().get(1).entityName());
-            assertEquals("Entity 1c Label", resultsAsc.getPage().get(2).entityName());
-            assertEquals("Entity 1d Label", resultsAsc.getPage().get(3).entityName());
-            assertEquals("Entity 2 Label", resultsAsc.getPage().get(4).entityName());
+            assertEquals("Entity 1 Label", resultsAsc.page().get(0).entityName());
+            assertEquals("Entity 1b Label", resultsAsc.page().get(1).entityName());
+            assertEquals("Entity 1c Label", resultsAsc.page().get(2).entityName());
+            assertEquals("Entity 1d Label", resultsAsc.page().get(3).entityName());
+            assertEquals("Entity 2 Label", resultsAsc.page().get(4).entityName());
         }
     }
 
@@ -1385,12 +1385,12 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
         try (RepositoryConnection conn = repo.getConnection()) {
             PaginatedSearchResults<EntityMetadata> results = manager.findEntities(ManagerTestConstants.CATALOG_IRI,
                     searchParams, user, conn);
-            assertEquals(10, results.getPageSize());
-            assertEquals(1, results.getTotalSize());
-            assertEquals(1, results.getPageNumber());
-            assertEquals(1, results.getPage().size());
+            assertEquals(10, results.pageSize());
+            assertEquals(1, results.totalSize());
+            assertEquals(1, results.pageNumber());
+            assertEquals(1, results.page().size());
             // Get the first EntityMetadata from the results
-            EntityMetadata entityMetadata = results.getPage().get(0);
+            EntityMetadata entityMetadata = results.page().get(0);
             assertEquals("http://example.org/entity2", entityMetadata.iri());
             assertEquals("Entity 2 Label", entityMetadata.entityName());
             assertEquals(1, entityMetadata.types().size());
@@ -1428,10 +1428,10 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
         try (RepositoryConnection conn = repo.getConnection()) {
             PaginatedSearchResults<EntityMetadata> results = manager.findEntities(ManagerTestConstants.CATALOG_IRI,
                     searchParams, user, conn);
-            assertEquals(0, results.getPageSize());
-            assertEquals(0, results.getTotalSize());
-            assertEquals(0, results.getPageNumber());
-            assertEquals(0, results.getPage().size());
+            assertEquals(0, results.pageSize());
+            assertEquals(0, results.totalSize());
+            assertEquals(0, results.pageNumber());
+            assertEquals(0, results.page().size());
         }
     }
 
@@ -1451,12 +1451,12 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
         try (RepositoryConnection conn = repo.getConnection()) {
             PaginatedSearchResults<EntityMetadata> results = manager.findEntities(ManagerTestConstants.CATALOG_IRI,
                     searchParams, user, conn);
-            assertEquals(10, results.getPageSize());
-            assertEquals(1, results.getTotalSize());
-            assertEquals(1, results.getPageNumber());
-            assertEquals(1, results.getPage().size());
+            assertEquals(10, results.pageSize());
+            assertEquals(1, results.totalSize());
+            assertEquals(1, results.pageNumber());
+            assertEquals(1, results.page().size());
             // Get the first EntityMetadata from the results
-            EntityMetadata entityMetadata = results.getPage().get(0);
+            EntityMetadata entityMetadata = results.page().get(0);
             assertEquals("http://example.org/entity2", entityMetadata.iri());
             assertEquals("Entity 2 Label", entityMetadata.entityName());
             assertEquals(1, entityMetadata.types().size());
@@ -1494,10 +1494,10 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
         try (RepositoryConnection conn = repo.getConnection()) {
             PaginatedSearchResults<EntityMetadata> results = manager.findEntities(ManagerTestConstants.CATALOG_IRI,
                     searchParams, user, conn);
-            assertEquals(0, results.getPageSize());
-            assertEquals(0, results.getTotalSize());
-            assertEquals(0, results.getPageNumber());
-            assertEquals(0, results.getPage().size());
+            assertEquals(0, results.pageSize());
+            assertEquals(0, results.totalSize());
+            assertEquals(0, results.pageNumber());
+            assertEquals(0, results.page().size());
         }
     }
 
@@ -1518,14 +1518,14 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
                     .build();
             PaginatedSearchResults<EntityMetadata> results = manager.findEntities(ManagerTestConstants.CATALOG_IRI,
                     searchParams, user, conn);
-            assertEquals(10, results.getPageSize());
-            assertEquals(2, results.getTotalSize());
-            assertEquals(2, results.getPage().size());
-            assertEquals(1, results.getPageNumber());
+            assertEquals(10, results.pageSize());
+            assertEquals(2, results.totalSize());
+            assertEquals(2, results.page().size());
+            assertEquals(1, results.pageNumber());
             Assert.assertEquals(List.of("http://example.org/entity1", "http://example.org/entity2"),
-                    results.getPage().stream().map(EntityMetadata::iri).toList());
+                    results.page().stream().map(EntityMetadata::iri).toList());
             Assert.assertEquals(List.of("http://example.org/record1",  "http://example.org/record2"),
-                    results.getPage().stream().map((e) -> e.sourceRecord().get("iri")).toList());
+                    results.page().stream().map((e) -> e.sourceRecord().get("iri")).toList());
             // Test Page 1
             searchParams = new PaginatedSearchParams.Builder()
                     .searchText("Object")
@@ -1536,14 +1536,14 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
                     .build();
             results = manager.findEntities(ManagerTestConstants.CATALOG_IRI,
                     searchParams, user, conn);
-            assertEquals(1, results.getPageSize());
-            assertEquals(2, results.getTotalSize());
-            assertEquals(1, results.getPage().size());
-            assertEquals(1, results.getPageNumber());
+            assertEquals(1, results.pageSize());
+            assertEquals(2, results.totalSize());
+            assertEquals(1, results.page().size());
+            assertEquals(1, results.pageNumber());
             Assert.assertEquals(List.of("http://example.org/entity1"),
-                    results.getPage().stream().map(EntityMetadata::iri).toList());
+                    results.page().stream().map(EntityMetadata::iri).toList());
             Assert.assertEquals(List.of("http://example.org/record1"),
-                    results.getPage().stream().map((e) -> e.sourceRecord().get("iri")).toList());
+                    results.page().stream().map((e) -> e.sourceRecord().get("iri")).toList());
             // Test Page 2
             searchParams = new PaginatedSearchParams.Builder().searchText("Object")
                     .limit(1).offset(1).sortBy("entityName")
@@ -1551,12 +1551,12 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
             results = manager.findEntities(ManagerTestConstants.CATALOG_IRI,
                     searchParams, user, conn);
             Assert.assertEquals(List.of("http://example.org/entity2"),
-                    results.getPage().stream().map(EntityMetadata::iri).toList());
+                    results.page().stream().map(EntityMetadata::iri).toList());
             Assert.assertEquals(List.of("http://example.org/record2"),
-                    results.getPage().stream().map((e) -> e.sourceRecord().get("iri")).toList());
-            assertEquals(1, results.getPageSize());
-            assertEquals(2, results.getTotalSize());
-            assertEquals(2, results.getPageNumber());
+                    results.page().stream().map((e) -> e.sourceRecord().get("iri")).toList());
+            assertEquals(1, results.pageSize());
+            assertEquals(2, results.totalSize());
+            assertEquals(2, results.pageNumber());
             // Test Page 3
             searchParams = new PaginatedSearchParams.Builder().searchText("Object")
                     .limit(1).offset(2).sortBy("entityName")
@@ -1583,10 +1583,10 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
         try (RepositoryConnection conn = repo.getConnection()) {
             PaginatedSearchResults<EntityMetadata> results = manager.findEntities(ManagerTestConstants.CATALOG_IRI,
                     searchParams, user, conn);
-            assertTrue(results.getPage().isEmpty());
-            assertEquals(0, results.getPageSize());
-            assertEquals(0, results.getTotalSize());
-            assertEquals(0, results.getPageNumber());
+            assertTrue(results.page().isEmpty());
+            assertEquals(0, results.pageSize());
+            assertEquals(0, results.totalSize());
+            assertEquals(0, results.pageNumber());
         }
     }
 
@@ -1602,10 +1602,10 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
         try (RepositoryConnection conn = repo.getConnection()) {
             PaginatedSearchResults<EntityMetadata> results = manager.findEntities(ManagerTestConstants.CATALOG_IRI,
                     searchParams, user, conn);
-            assertTrue(results.getPage().isEmpty());
-            assertEquals(0, results.getPageSize());
-            assertEquals(0, results.getTotalSize());
-            assertEquals(0, results.getPageNumber());
+            assertTrue(results.page().isEmpty());
+            assertEquals(0, results.pageSize());
+            assertEquals(0, results.totalSize());
+            assertEquals(0, results.pageNumber());
         }
     }
 

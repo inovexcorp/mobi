@@ -23,8 +23,10 @@
 <div class="class-axioms">
     <property-values *ngFor="let axiom of axioms"
       [stateService]="os"
+      [canModify]="os.canModify()"
       [property]="axiom"
       [entity]="os.listItem.selected"
+      [isEntityImported]="os.isImported(os.listItem.selected['@id'])"
       (remove)="openRemoveOverlay($event)">
     </property-values>
 </div>

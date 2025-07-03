@@ -53,8 +53,10 @@ import { VersionedRdfListItem } from '../../../shared/models/versionedRdfListIte
 })
 export class PropertyValuesComponent implements OnInit, OnChanges {
   @Input() stateService: VersionedRdfState<VersionedRdfListItem>;
-  @Input() property: string;
   @Input() entity: JSONLDObject;
+  @Input() isEntityImported: boolean;
+  @Input() property: string;
+  @Input() canModify: boolean;
   @Input() highlightText: string;
   @Input() highlightIris: string[] = [];
 
@@ -62,6 +64,7 @@ export class PropertyValuesComponent implements OnInit, OnChanges {
   @Output() remove = new EventEmitter<{ iri: string, index: number }>();
 
   readonly isBlankNodeId = isBlankNodeId;
+  
   isHighlightedProp = false;
   isEditSet = false;
   isRemoveSet = false;

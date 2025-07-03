@@ -125,7 +125,6 @@ import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
 import org.eclipse.rdf4j.model.vocabulary.OWL;
 import org.eclipse.rdf4j.model.vocabulary.SKOS;
 import org.eclipse.rdf4j.query.GraphQuery;
-import org.eclipse.rdf4j.query.MalformedQueryException;
 import org.eclipse.rdf4j.query.QueryResults;
 import org.eclipse.rdf4j.query.TupleQuery;
 import org.eclipse.rdf4j.query.impl.MutableTupleQueryResult;
@@ -421,10 +420,10 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         configureApp();
         final IRI skosSemanticRelation = vf.createIRI(SKOS.SEMANTIC_RELATION.stringValue());
 
-        when(results.getPage()).thenReturn(Collections.emptyList());
-        when(results.getPageNumber()).thenReturn(0);
-        when(results.getPageSize()).thenReturn(0);
-        when(results.getTotalSize()).thenReturn(0);
+        when(results.page()).thenReturn(Collections.emptyList());
+        when(results.pageNumber()).thenReturn(0);
+        when(results.pageSize()).thenReturn(0);
+        when(results.totalSize()).thenReturn(0);
 
         when(engineManager.retrieveUser(anyString())).thenReturn(Optional.of(user));
 

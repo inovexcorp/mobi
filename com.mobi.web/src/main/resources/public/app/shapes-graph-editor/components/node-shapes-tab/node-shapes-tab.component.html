@@ -21,6 +21,14 @@
   #L%
   -->
 <div class="node-shapes-tab h-100 row m-0 py-1">
-    <app-node-shapes-list class="col-3 h-100" [viewedRecord]="sgs.listItem.metadata['@id']"></app-node-shapes-list>
-    <app-node-shapes-display class="selected-node col-9 h-100 pt-2"></app-node-shapes-display>
+  <app-node-shapes-list class="col-3 h-100"
+    [versionedRdfRecord]="listItem.versionedRdfRecord"
+    [viewedRecord]="listItem.shapesGraphId">
+  </app-node-shapes-list>
+  <app-node-shapes-display *ngIf="listItem.selected"
+    class="selected-node col-9 h-100 pt-2"
+    [nodeShape]="listItem.selected"
+    [selectedEntityIRI]="listItem.selected['@id']"
+    [canModify]="canModify">
+  </app-node-shapes-display>
 </div>
