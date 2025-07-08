@@ -42,7 +42,6 @@ import { OntologyManagerService } from '../../../shared/services/ontologyManager
     selector: 'individuals-tab'
 })
 export class IndividualsTabComponent implements OnInit, OnDestroy {
-    highlightText = '';
     @ViewChild('individualsTab', { static: true }) individualsTab: ElementRef;
    
     constructor(public os:OntologyStateService,
@@ -51,7 +50,6 @@ export class IndividualsTabComponent implements OnInit, OnDestroy {
 
     ngOnInit(): void {
         this.os.listItem.editorTabStates.individuals.element = this.individualsTab;
-        this.highlightText = this.os.listItem.editorTabStates.individuals.searchText;
     }
     ngOnDestroy(): void {
         if (this.os.listItem) {

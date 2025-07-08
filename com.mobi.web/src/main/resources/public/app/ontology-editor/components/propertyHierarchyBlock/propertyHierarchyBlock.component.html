@@ -27,7 +27,7 @@
                    [objectProps]="os.listItem.objectProperties.flat"
                    [annotationProps]="os.listItem.annotations.flat"
                    [index]="os.listItem.editorTabStates.properties.index"
-                   (updateSearch)="updateSearch(value)"
+                   (updateSearch)="updateSearch($event)"
                    [branchId]="os.listItem.versionedRdfRecord.branchId">
     </property-tree>
 </div>

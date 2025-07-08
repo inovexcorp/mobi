@@ -25,7 +25,7 @@
     <hierarchy-tree *ngIf="os.listItem.conceptSchemes.flat.length"
                     [parentLabel]="'concept schemes'"
                     [hierarchy]="os.listItem.conceptSchemes.flat"
-                    (updateSearch)="updateSearch(value)"
+                    (updateSearch)="updateSearch($event)"
                     [index]="os.listItem.editorTabStates.schemes.index"
                     (resetIndex)="resetIndex()"
                     [branchId]="os.listItem.versionedRdfRecord.branchId">

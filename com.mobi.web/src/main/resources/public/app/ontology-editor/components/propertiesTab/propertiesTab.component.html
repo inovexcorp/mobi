@@ -31,7 +31,7 @@
                     [entityIri]="os.listItem.selected['@id']"
                     [isImported]="os.isSelectedImported()"
                     [canModify]="os.canModify()"
-                    [highlightText]="highlightText">
+                    [highlightText]="os.listItem.editorTabStates.properties.searchText">
                 </selected-details>
                 <div class="btn-container">
                     <button mat-raised-button color="primary" [disabled]="!os.listItem.selected || os.isSelectedImported()" (click)="seeHistory()">See History</button>
@@ -43,7 +43,7 @@
                     <div class="row py-2">
                         <annotation-block [selected]="os.listItem.selected"
                                           [highlightIris]="om.entityNameProps"
-                                          [highlightText]="highlightText"
+                                          [highlightText]="os.listItem.editorTabStates.properties.searchText"
                                           class="col">
                         </annotation-block>
                     </div>

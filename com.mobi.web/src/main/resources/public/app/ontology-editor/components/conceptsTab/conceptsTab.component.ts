@@ -44,7 +44,6 @@ import { PropertyManagerService } from '../../../shared/services/propertyManager
     templateUrl: './conceptsTab.component.html'
 })
 export class ConceptsTabComponent implements OnInit, OnDestroy {
-    highlightText = '';
     @ViewChild('conceptsTab', { static: true }) conceptsTab: ElementRef;
     
     constructor(public os: OntologyStateService, public om: OntologyManagerService,
@@ -56,7 +55,6 @@ export class ConceptsTabComponent implements OnInit, OnDestroy {
         const schemeRelationships = filter(this.pm.conceptSchemeRelationshipList, iri => includes(this.os.listItem.iriList, iri));
         this.relationshipList = concat(this.os.listItem.derivedSemanticRelations, schemeRelationships);
         this.os.listItem.editorTabStates.concepts.element = this.conceptsTab;
-        this.highlightText = this.os.listItem.editorTabStates.classes.searchText;
     }
     ngOnDestroy(): void {
         if (this.os.listItem) {

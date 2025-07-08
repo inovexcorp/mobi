@@ -45,14 +45,12 @@ import { ConfirmModalComponent } from '../../../shared/components/confirmModal/c
 })
 
 export class ConceptSchemesTabComponent implements OnInit, OnDestroy {
-    highlightText = '';
     @ViewChild('conceptSchemesTab', { static: true }) conceptSchemesTab: ElementRef;
 
     constructor(public os: OntologyStateService, public om: OntologyManagerService, private dialog: MatDialog){}
 
     ngOnInit(): void {
         this.os.listItem.editorTabStates.schemes.element = this.conceptSchemesTab;
-        this.highlightText = this.os.listItem.editorTabStates.classes.searchText;
     }
     ngOnDestroy(): void {
         if (this.os.listItem) {

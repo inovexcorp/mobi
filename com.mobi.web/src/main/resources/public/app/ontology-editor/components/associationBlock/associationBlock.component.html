@@ -24,7 +24,7 @@
     <info-message *ngIf="!this.os.listItem.flatEverythingTree.length">(No entities defined)</info-message>
     <everything-tree *ngIf="this.os.listItem.flatEverythingTree.length"
                      [hierarchy]="this.os.listItem.flatEverythingTree"
-                     (updateSearch)="this.updateSearch(value)"
+                     (updateSearch)="this.updateSearch($event)"
                      [branchId]="this.os.listItem.versionedRdfRecord.branchId">
     </everything-tree>
 </div>
