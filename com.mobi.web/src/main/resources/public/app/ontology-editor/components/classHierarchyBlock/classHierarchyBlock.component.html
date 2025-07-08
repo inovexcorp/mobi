@@ -22,5 +22,12 @@
   -->
 <div class="class-hierarchy-block h-100 py-1">
     <info-message *ngIf="!os.listItem.classes.flat.length">(No classes defined)</info-message>
-    <hierarchy-tree *ngIf="os.listItem.classes.flat.length" [parentLabel]="'classes'" [hierarchy]="os.listItem.classes.flat" (updateSearch)="updateSearch(value)" [index]="os.listItem.editorTabStates.classes.index" (resetIndex)="resetIndex()" [branchId]="os.listItem.versionedRdfRecord.branchId"></hierarchy-tree>
+    <hierarchy-tree *ngIf="os.listItem.classes.flat.length"
+                    [parentLabel]="'classes'"
+                    [hierarchy]="os.listItem.classes.flat"
+                    (updateSearch)="updateSearch($event)"
+                    [index]="os.listItem.editorTabStates.classes.index"
+                    (resetIndex)="resetIndex()"
+                    [branchId]="os.listItem.versionedRdfRecord.branchId">
+    </hierarchy-tree>
 </div>

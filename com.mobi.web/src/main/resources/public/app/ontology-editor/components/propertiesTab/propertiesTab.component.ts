@@ -43,14 +43,12 @@ import { ConfirmModalComponent } from '../../../shared/components/confirmModal/c
 })
 
 export class PropertiesTabComponent implements OnInit, OnDestroy {
-    highlightText = '';
     @ViewChild('propertiesTab', { static: true }) propertiesTab: ElementRef;
 
     constructor(public os: OntologyStateService, public om: OntologyManagerService, private dialog: MatDialog) {}
     
     ngOnInit(): void {
         this.os.listItem.editorTabStates.properties.element = this.propertiesTab;
-        this.highlightText = this.os.listItem.editorTabStates.properties.searchText;
     }
     ngOnDestroy(): void {
         if (this.os.listItem) {

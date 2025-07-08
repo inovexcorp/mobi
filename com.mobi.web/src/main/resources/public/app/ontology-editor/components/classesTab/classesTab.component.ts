@@ -44,13 +44,11 @@ import { ConfirmModalComponent } from '../../../shared/components/confirmModal/c
     templateUrl: './classesTab.component.html'
 })
 export class ClassesTabComponent implements OnInit, OnDestroy {
-    highlightText = '';
     @ViewChild('classesTab', { static: true }) classesTab: ElementRef;
 
     constructor(public os: OntologyStateService, public om: OntologyManagerService, private dialog: MatDialog) {}
     ngOnInit(): void {
         this.os.listItem.editorTabStates.classes.element = this.classesTab;
-        this.highlightText = this.os.listItem.editorTabStates.classes.searchText;
     }
     ngOnDestroy(): void {
         if (this.os.listItem) {
