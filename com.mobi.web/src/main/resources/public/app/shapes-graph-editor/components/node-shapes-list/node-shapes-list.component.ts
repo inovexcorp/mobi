@@ -21,7 +21,7 @@
  * #L%
  */
 //Angular imports
-import { Component, Input, OnChanges, OnDestroy, Output, SimpleChanges } from '@angular/core';
+import { Component, Input, OnChanges, OnDestroy, SimpleChanges } from '@angular/core';
 
 // 3rd party imports
 import { Subject } from 'rxjs';
@@ -33,6 +33,7 @@ import { ShapesGraphManagerService } from '../../../shared/services/shapesGraphM
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
 import { ToastService } from '../../../shared/services/toast.service';
 import { VersionedRdfRecord } from '../../../shared/models/versionedRdfRecord.interface';
+import { getBeautifulIRI } from '../../../shared/utility';
 
 /**
  * @class shapes-graph-editor.NodeShapesListComponent
@@ -127,6 +128,10 @@ export class NodeShapesListComponent implements OnChanges, OnDestroy {
     ).pipe(
         takeUntil(this._destroySub$)
     ).subscribe((nodes: NodeShapeInfo[]) => {
+      nodes.forEach(nodeShape => {
+        nodeShape.targetTypeLabel = getBeautifulIRI(nodeShape.targetType);
+        nodeShape.targetValueLabel = this.sgs.getEntityName(nodeShape.targetValue);
+      });
       this.nodeShapes = nodes;
     }, (error) => {
       this._toast.createErrorToast(error);

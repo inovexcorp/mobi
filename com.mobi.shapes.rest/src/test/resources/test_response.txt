@@ -49,7 +49,7 @@
   },
   {
     "iri": "http://matonto.org/ontologies/uhtc#Material",
-    "name": "UHTC Material shapes graph",
+    "name": "Test Node shape",
     "targetType": "http://www.w3.org/ns/shacl#implicitTarget",
     "targetValue": "http://matonto.org/ontologies/uhtc#Material",
     "imported": false,

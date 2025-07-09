@@ -40,6 +40,7 @@ import { SearchBarComponent } from '../../../shared/components/searchBar/searchB
 import { ShapesGraphListItem } from '../../../shared/models/shapesGraphListItem.class';
 import { ShapesGraphManagerService } from '../../../shared/services/shapesGraphManager.service';
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
+import { splitIRI } from '../../../shared/pipes/splitIRI.pipe';
 import { ToastService } from '../../../shared/services/toast.service';
 import { NodeShapesListComponent } from './node-shapes-list.component';
 
@@ -52,22 +53,26 @@ describe('NodeShapesListComponent', () => {
   let toastStub: jasmine.SpyObj<ToastService>;
 
   const nodeList: NodeShapeInfo[] = [
-    Object.freeze({
+    {
       iri: 'http://www.example.com/Test1',
       name: 'Test1',
       targetType: 'http://www.w3.org/ns/shacl#targetClass',
+      targetTypeLabel: 'Target Class',
       targetValue: 'http://stardog.com/tutorial/test4',
+      targetValueLabel: 'test4',
       imported: true,
       sourceOntologyIRI: 'https://mobi.solutions/shapes-graphs/example'
-    }),
-    Object.freeze({
+    },
+    {
       iri: 'http://www.example.com/Test2',
       name: 'Test2',
       targetType: 'http://www.example.com#targetClass',
+      targetTypeLabel: 'Target Class',
       targetValue: 'http://www.example.com/Test3',
+      targetValueLabel: 'Test3',
       imported: false,
       sourceOntologyIRI: 'https://mobi.solutions/shapes-graphs/example'
-    })
+    }
   ];
 
   const changesObj: SimpleChanges = {
@@ -111,6 +116,7 @@ describe('NodeShapesListComponent', () => {
       selectedEntity: undefined,
       sourceShape: 'sourceShape'
     };
+    shapesGraphStateStub.getEntityName.and.callFake(s => splitIRI(s).end);
     shapesGraphStateStub.setSelected.and.returnValue(of(null));
     shapesGraphManagerStub = TestBed.inject(ShapesGraphManagerService) as jasmine.SpyObj<ShapesGraphManagerService>;
     shapesGraphManagerStub.getNodeShapes.and.returnValue(of(nodeList));

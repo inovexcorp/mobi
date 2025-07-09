@@ -26,6 +26,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
+import { entityNameProps } from '../../../shared/utility';
 
 /**
  * @class ontology-editor.ConceptSchemesTabComponent
@@ -45,6 +46,7 @@ import { ConfirmModalComponent } from '../../../shared/components/confirmModal/c
 })
 
 export class ConceptSchemesTabComponent implements OnInit, OnDestroy {
+    readonly entityNameProps = entityNameProps;
     @ViewChild('conceptSchemesTab', { static: true }) conceptSchemesTab: ElementRef;
 
     constructor(public os: OntologyStateService, public om: OntologyManagerService, private dialog: MatDialog){}

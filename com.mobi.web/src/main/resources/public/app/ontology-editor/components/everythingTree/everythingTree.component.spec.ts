@@ -227,7 +227,6 @@ describe('Everything Tree component', function() {
                 };
                 component.hierarchy = [this.filterNodeParent, this.filterNode, this.filterNodeFolder];
                 component.filterText = 'ti';
-                ontologyManagerServiceStub.entityNameProps = [`${DCTERMS}title`];
                 ontologyStateServiceStub.joinPath.and.callFake((path) => {
                     return join(path, '.');
                 });

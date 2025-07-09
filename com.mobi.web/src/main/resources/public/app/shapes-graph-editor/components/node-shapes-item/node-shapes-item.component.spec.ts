@@ -42,8 +42,10 @@ describe('NodeShapesItemComponent', () => {
   const nodeItem: NodeShapeInfo = {
     iri: 'http://www.example.com/TestName',
     name: 'TestName',
-    targetType: 'http://www.example.com/type',
-    targetValue: 'http://www.example.com/value',
+    targetType: 'http://www.w3.org/ns/shacl#targetClass',
+    targetTypeLabel: 'Target Class',
+    targetValue: 'http://www.example.com/ValueClass',
+    targetValueLabel: 'Value Class',
     imported: true,
     sourceOntologyIRI: 'urn:sourceShape'
   };
@@ -86,8 +88,10 @@ describe('NodeShapesItemComponent', () => {
     expect(content[0].nativeElement.innerHTML).toContain('Target Type: ');
     expect(content[0].nativeElement.innerHTML).toContain('Imported: ');
     expect(content[0].nativeElement.innerHTML).toContain('http://www.example.com/TestName');
-    expect(content[0].nativeElement.innerHTML).toContain('http://www.example.com/value');
-    expect(content[0].nativeElement.innerHTML).toContain('http://www.example.com/type');
+    expect(content[0].nativeElement.innerHTML).toContain('http://www.example.com/ValueClass');
+    expect(content[0].nativeElement.innerHTML).toContain('Value Class');
+    expect(content[0].nativeElement.innerHTML).toContain('http://www.w3.org/ns/shacl#targetClass');
+    expect(content[0].nativeElement.innerHTML).toContain('Target Class');
     expect(content[0].nativeElement.innerHTML).toContain('true');
   });
 });

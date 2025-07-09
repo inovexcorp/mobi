@@ -37,7 +37,7 @@ import { PropertyManagerService } from '../../../shared/services/propertyManager
 import { datatype } from '../../../shared/validators/datatype.validator';
 import { REGEX } from '../../../constants';
 import { PropertyOverlayDataOptions } from '../../../shared/models/propertyOverlayDataOptions.interface';
-import { createJson, getIRINamespace } from '../../../shared/utility';
+import { createJson, entityNameProps, getIRINamespace } from '../../../shared/utility';
 
 interface AnnotationGroup {
     namespace: string,
@@ -171,7 +171,7 @@ export class AnnotationOverlayComponent implements OnInit {
         if (added) {
             this.os.addToAdditions(this.os.listItem.versionedRdfRecord.recordId, this._createJson(value, type, language));
             this.os.saveCurrentChanges().subscribe();
-            if (this.om.entityNameProps.includes(annotation)) {
+            if (entityNameProps.includes(annotation)) {
                 this.os.updateLabel();
             }
             this.os.annotationModified(this.os.listItem.selected['@id'], annotation, value);
@@ -196,7 +196,7 @@ export class AnnotationOverlayComponent implements OnInit {
             this.os.addToDeletions(this.os.listItem.versionedRdfRecord.recordId, this._createJson(get(oldObj, '@value', get(oldObj, '@id')), get(oldObj, '@type'), get(oldObj, '@language')));
             this.os.addToAdditions(this.os.listItem.versionedRdfRecord.recordId, this._createJson(value, type, language));
             this.os.saveCurrentChanges().subscribe();
-            if (this.om.entityNameProps.includes(annotation)) {
+            if (entityNameProps.includes(annotation)) {
                 this.os.updateLabel();
             }
             this.os.annotationModified(this.os.listItem.selected['@id'], annotation, value);

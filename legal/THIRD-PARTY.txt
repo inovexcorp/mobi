@@ -1,5 +1,5 @@
 
-Lists of 457 third-party dependencies.
+Lists of 456 third-party dependencies.
      (Revised BSD License) AntLR Parser Generator (antlr:antlr:2.7.7 - http://www.antlr.org/)
      (Apache-2.0) bndlib (biz.aQute.bnd:biz.aQute.bndlib:3.5.0 - http://bnd.bndtools.org/)
      (The Apache Software License, Version 2.0) cglib-nodep (cglib:cglib-nodep:3.3.0 - https://github.com/cglib/cglib/cglib-nodep)
@@ -86,7 +86,6 @@ Lists of 457 third-party dependencies.
      (Eclipse Distribution License - v 1.0) Jakarta XML Binding API (jakarta.xml.bind:jakarta.xml.bind-api:2.3.3 - https://github.com/eclipse-ee4j/jaxb-api/jakarta.xml.bind-api)
      (Eclipse Distribution License - v 1.0) Jakarta SOAP with Attachments API (jakarta.xml.soap:jakarta.xml.soap-api:1.4.2 - https://github.com/eclipse-ee4j/saaj-api)
      (Eclipse Distribution License - v 1.0) Jakarta XML Web Services API (jakarta.xml.ws:jakarta.xml.ws-api:2.3.3 - https://github.com/eclipse-ee4j/jax-ws-api)
-     (Common Development and Distribution License (CDDL) v1.0) JavaBeans Activation Framework (JAF) (javax.activation:activation:1.1 - http://java.sun.com/products/javabeans/jaf/index.jsp)
      (COMMON DEVELOPMENT AND DISTRIBUTION LICENSE (CDDL) Version 1.0) JavaBeans(TM) Activation Framework (javax.activation:activation:1.1.1 - http://java.sun.com/javase/technologies/desktop/javabeans/jaf/index.jsp)
      (Common Development and Distribution License, Version 1.1, and GNU General Public License, Version 2 with Classpath Exception) javax.annotation API (javax.annotation:javax.annotation-api:1.3.2 - http://jcp.org/en/jsr/detail?id=250)
      (The Apache Software License, Version 2.0) JSR107 API and SPI (javax.cache:cache-api:1.1.1 - https://github.com/jsr107/jsr107spec)

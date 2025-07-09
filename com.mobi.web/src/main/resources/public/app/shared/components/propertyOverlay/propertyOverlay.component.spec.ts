@@ -307,7 +307,6 @@ describe('Property Overlay component', () => {
     });
     describe('addProperty calls the correct manager functions', () => {
       beforeEach(() => {
-        ontologyManagerStub.entityNameProps = [`${DCTERMS}title`];
         ontologyStateStub.saveCurrentChanges.and.returnValue(of(null));
         component.propertyForm.controls.property.setValue(property);
         component.propertyForm.controls.value.setValue('value');
@@ -412,7 +411,6 @@ describe('Property Overlay component', () => {
     });
     describe('editProperty calls the correct manager functions', () => {
       beforeEach(() => {
-        ontologyManagerStub.entityNameProps = [`${DCTERMS}title`];
         ontologyStateStub.saveCurrentChanges.and.returnValue(of(null));
         component.propertyForm.controls.property.setValue(property);
         component.propertyForm.controls.value.setValue('value');

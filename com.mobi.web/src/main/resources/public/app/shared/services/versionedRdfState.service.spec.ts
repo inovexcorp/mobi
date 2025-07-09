@@ -25,14 +25,17 @@ import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 
 import { cloneDeep, includes, set } from 'lodash';
-import { MockProvider } from 'ng-mocks';
+import { MockPipe, MockProvider } from 'ng-mocks';
 import { of, throwError, Observable } from 'rxjs';
 
 import { CATALOG, DCTERMS } from '../../prefixes';
 import { CatalogManagerService } from './catalogManager.service';
 import { CommitDifference } from '../models/commitDifference.interface';
 import { Difference } from '../models/difference.class';
+import { JSONLDId } from '../models/JSONLDId.interface';
 import { JSONLDObject } from '../models/JSONLDObject.interface';
+import { JSONLDValue } from '../models/JSONLDValue.interface';
+import { ManchesterConverterService } from './manchesterConverter.service';
 import { mockStateManager } from '../../../test/ts/Shared';
 import { RdfDownload } from '../models/rdfDownload.interface';
 import { RdfUpdate } from '../models/rdfUpdate.interface';
@@ -44,8 +47,7 @@ import { ToastService } from './toast.service';
 import { VersionedRdfListItem } from '../models/versionedRdfListItem.class';
 import { VersionedRdfUploadResponse } from '../models/versionedRdfUploadResponse.interface';
 import { VersionedRdfState } from './versionedRdfState.service';
-import { JSONLDId } from '../models/JSONLDId.interface';
-import { JSONLDValue } from '../models/JSONLDValue.interface';
+import { PrefixationPipe } from '../pipes/prefixation.pipe';
 
 class VersionedRdfStateImpl extends VersionedRdfState<VersionedRdfListItemImpl> {
   static testPrefix = 'urn:state#';
@@ -107,8 +109,6 @@ class VersionedRdfStateImpl extends VersionedRdfState<VersionedRdfListItemImpl> 
   removeProperty(key: string, index: number): Observable<JSONLDId|JSONLDValue>{
     return throwError('Method not implemented.');
   }
-  updateLabel() {
-  }
   isLinkable(id: string): boolean {
     throw new Error('Method not implemented.');
   }
@@ -130,10 +130,12 @@ class VersionedRdfStateImpl extends VersionedRdfState<VersionedRdfListItemImpl> 
   getImportedSource(): string {
       return '';
   }
-  public setServices(stateManager: StateManagerService, catalogManager: CatalogManagerService, toast: ToastService) {
+  public setServices(stateManager: StateManagerService, catalogManager: CatalogManagerService, toast: ToastService, mc: ManchesterConverterService, prefixation: PrefixationPipe) {
     this.sm = stateManager;
     this.cm = catalogManager;
     this.toast = toast;
+    this.mc = mc;
+    this.prefixation = prefixation;
   }
 }
 
@@ -148,6 +150,8 @@ class stateManagerService {
 describe('Versioned RDF State service', function() {
   let service: VersionedRdfStateImpl;
   let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
+  let manchesterConverterStub: jasmine.SpyObj<ManchesterConverterService>;
+  let prefixationStub: jasmine.SpyObj<PrefixationPipe>;
   let stateManagerStub;
   let toastStub: jasmine.SpyObj<ToastService>;
   const error = 'Error message';
@@ -186,7 +190,9 @@ describe('Versioned RDF State service', function() {
         VersionedRdfStateImpl,
         MockProvider(CatalogManagerService),
         { provide: stateManagerService, useClass: mockStateManager },
-        MockProvider(ToastService)
+        MockProvider(ToastService),
+        MockProvider(ManchesterConverterService),
+        { provide: PrefixationPipe, useClass: MockPipe(PrefixationPipe) },
       ]
     }).compileComponents();
 
@@ -196,8 +202,11 @@ describe('Versioned RDF State service', function() {
 
     stateManagerStub = TestBed.inject(stateManagerService);
     catalogManagerStub = TestBed.inject(CatalogManagerService) as jasmine.SpyObj<CatalogManagerService>;
+    manchesterConverterStub = TestBed.inject(ManchesterConverterService) as jasmine.SpyObj<ManchesterConverterService>;
     toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
-    service.setServices(stateManagerStub, catalogManagerStub, toastStub);
+    prefixationStub = TestBed.inject(PrefixationPipe) as jasmine.SpyObj<PrefixationPipe>;
+    prefixationStub.transform.and.callFake(a => a);
+    service.setServices(stateManagerStub, catalogManagerStub, toastStub, manchesterConverterStub, prefixationStub);
     service.initialize();
 
     recordState = {
@@ -212,6 +221,7 @@ describe('Versioned RDF State service', function() {
   afterEach(function() {
     service = null;
     catalogManagerStub = null;
+    manchesterConverterStub = null;
     stateManagerStub = null;
     toastStub = null;
 
@@ -2017,5 +2027,71 @@ describe('Versioned RDF State service', function() {
       expect(service.createState).not.toHaveBeenCalled();
       expect(service.updateState).not.toHaveBeenCalled();
     }));
+  });
+  it('joinPath joins the provided array correctly', function() {
+    expect(service.joinPath(['a', 'b', 'c'])).toBe('a.b.c');
+  });
+  describe('getBlankNodeValue returns', function() {
+    beforeEach(function() {
+      service.listItem.blankNodes = { '_:genid1': 'value1' };
+    });
+    it('value for the key provided contained in the object', function() {
+      expect(service.getBlankNodeValue('_:genid1')).toEqual(service.listItem.blankNodes['_:genid1']);
+    });
+    it('key for the key provided not contained in the object', function() {
+      expect(service.getBlankNodeValue('_:genid2')).toEqual('_:genid2');
+    });
+    it('undefined if isBlankNodeId returns false', function() {
+      expect(service.getBlankNodeValue('key1')).toEqual(undefined);
+    });
+  });
+  describe('getTypesLabel functions properly', function() {
+    it('when @type is empty', function() {
+      expect(service.getTypesLabel({
+        '@id': 'id',
+        '@type': []
+      })).toEqual('');
+    });
+    it('when @type has items', function() {
+      expect(service.getTypesLabel({
+        '@id': 'id',
+        '@type': ['test', 'test2']
+      })).toEqual('test, test2');
+    });
+    it('when @type has blank node items', function() {
+      manchesterConverterStub.jsonldToManchester.and.callFake(a => a);
+      spyOn(service, 'getBnodeIndex').and.returnValue({});
+      service.listItem.selectedBlankNodes = [];
+      expect(service.getTypesLabel({
+        '@id': 'iri',
+        '@type': ['_:genid0', 'test2']
+      })).toEqual('_:genid0, test2');
+      expect(manchesterConverterStub.jsonldToManchester).toHaveBeenCalledWith('_:genid0', service.listItem.selectedBlankNodes, {}, true);
+      expect(service.getBnodeIndex).toHaveBeenCalledWith();
+    });
+  });
+  describe('updateLabel sets the label correctly', function() {
+    beforeEach(function() {
+      service.listItem.entityInfo = {
+        iri: {
+          label: 'old-value',
+          names: ['old-value']
+        }
+      };
+    });
+    it('when the listItem.entityInfo contains the selected @id', function() {
+      service.listItem.selected = {
+        '@id': 'iri'
+      };
+      service.updateLabel();
+      expect(service.listItem.entityInfo.iri.label).toEqual('Iri');
+      expect(service.listItem.entityInfo.iri.names).toEqual([]);
+    });
+    it('when the listItem.entityInfo does not contain the selected @id', function() {
+      service.listItem.selected = { '@id': 'other-iri' };
+      service.updateLabel();
+      expect(service.listItem.entityInfo.iri.label).toEqual('old-value');
+      expect(service.listItem.entityInfo.iri.names).toEqual(['old-value']);
+    });
   });
 });

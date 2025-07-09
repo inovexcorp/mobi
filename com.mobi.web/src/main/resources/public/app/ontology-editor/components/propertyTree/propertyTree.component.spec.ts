@@ -289,7 +289,6 @@ describe('Property Tree component', function() {
                         return 'recordId.otherIri';
                     }
                 });
-                ontologyManagerServiceStub.entityNameProps = [`${DCTERMS}title`];
                 ontologyStateServiceStub.joinPath.and.callFake((path) => {
                     return join(path, '.');
                 });

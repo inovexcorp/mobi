@@ -23,12 +23,6 @@ package com.mobi.shapes.rest;
  * #L%
  */
 
-import static com.mobi.rest.util.RestUtils.checkStringParam;
-import static com.mobi.rest.util.RestUtils.createPaginatedResponse;
-import static com.mobi.rest.util.RestUtils.getActiveUser;
-import static com.mobi.rest.util.RestUtils.getRDFFormatFileExtension;
-import static com.mobi.rest.util.RestUtils.getRDFFormatMimeType;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -110,11 +104,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -137,6 +129,12 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
+
+import static com.mobi.rest.util.RestUtils.checkStringParam;
+import static com.mobi.rest.util.RestUtils.createPaginatedResponse;
+import static com.mobi.rest.util.RestUtils.getActiveUser;
+import static com.mobi.rest.util.RestUtils.getRDFFormatFileExtension;
+import static com.mobi.rest.util.RestUtils.getRDFFormatMimeType;
 
 @Path("/shapes-graphs")
 @Component(service = ShapesGraphRest.class, immediate = true)
@@ -984,12 +982,9 @@ public class ShapesGraphRest {
             if (searchText != null) {
                 builder.searchText(searchText);
             }
-            PaginatedSearchResults<NodeShapeSummary> searchResults = shapesGraph.findNodeShapes(
-                    builder.build(), conn);
+            PaginatedSearchResults<NodeShapeSummary> searchResults = shapesGraph.findNodeShapes(builder.build(), conn);
             ArrayNode entities = mapper.createArrayNode();
-            searchResults.page().forEach(nodeShapeSummary ->{
-                entities.add(nodeShapeSummary.toObjectNode());
-            });
+            searchResults.page().forEach(nodeShapeSummary -> entities.add(nodeShapeSummary.toObjectNode()));
             return createPaginatedResponse(uriInfo, entities, searchResults.totalSize(), limit, offset);
         } catch (MobiNotFoundException ex) {
             throw RestUtils.getErrorObjNotFound(ex);

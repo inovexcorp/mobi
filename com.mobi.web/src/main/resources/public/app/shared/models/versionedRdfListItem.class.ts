@@ -23,6 +23,7 @@
 import { Commit } from './commit.interface';
 import { Conflict } from './conflict.interface';
 import { Difference } from './difference.class';
+import { EntityNames } from './entityNames.interface';
 import { JSONLDObject } from './JSONLDObject.interface';
 import { VersionedRdfRecord } from './versionedRdfRecord.interface';
 
@@ -57,6 +58,7 @@ export class VersionedRdfListItem {
     selectedBlankNodes: JSONLDObject[];
     blankNodes: {[key: string]: string};
     dataPropertyRange: {[key: string]: string};
+    entityInfo: EntityNames;
 
     constructor() {
         this.masterBranchIri = '';
@@ -91,5 +93,6 @@ export class VersionedRdfListItem {
         this.selectedBlankNodes = [];
         this.dataPropertyRange = {};
         this.blankNodes = {};
+        this.entityInfo = {};
     }
 }

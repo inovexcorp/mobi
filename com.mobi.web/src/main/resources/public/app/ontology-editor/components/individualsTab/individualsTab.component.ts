@@ -26,6 +26,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
+import { entityNameProps } from '../../../shared/utility';
 
 /**
  * @class ontology-editor.IndividualsTabComponent
@@ -42,6 +43,7 @@ import { OntologyManagerService } from '../../../shared/services/ontologyManager
     selector: 'individuals-tab'
 })
 export class IndividualsTabComponent implements OnInit, OnDestroy {
+    readonly entityNameProps = entityNameProps;
     @ViewChild('individualsTab', { static: true }) individualsTab: ElementRef;
    
     constructor(public os:OntologyStateService,

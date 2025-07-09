@@ -74,7 +74,8 @@ import {
   getEntityName,
   addLanguageToAnnotations,
   getShaclGeneratedData,
-  getSubstringMatch
+  getSubstringMatch,
+  getArrWithoutEntity
 } from './utility';
 
 describe('Utility method', () => {
@@ -130,6 +131,10 @@ describe('Utility method', () => {
     it('if it contains the property', () => {
       const entity = {'@id': '', 'property': [{'@value': 'value'}]};
       expect(getPropertyValue(entity, 'property')).toBe('value');
+    });
+    it('if it contains more than one value for the property', () => {
+      const entity = {'@id': '', 'property': [{'@value': 'value2'}, {'@value': 'value1'}]};
+      expect(getPropertyValue(entity, 'property')).toBe('value1');
     });
     it('if it does not contain the property', () => {
       expect(getPropertyValue({'@id': ''}, 'property')).toBe('');
@@ -580,6 +585,19 @@ describe('Utility method', () => {
     const expected = ['iri1', 'iri2', 'iri3'];
     expect(getObjIrisFromDifference(additions)).toEqual(expected);
   });
+  it('getArrWithoutEntity should return a JSON-LD array without the entity with the specified IRI', () => {
+    expect(getArrWithoutEntity('B', undefined)).toEqual([]);
+    expect(getArrWithoutEntity('B', [])).toEqual([]);
+    const arr: JSONLDObject[] = [
+      { '@id': 'A' },
+      { '@id': 'B' },
+      { '@id': 'C' },
+    ];
+    expect(getArrWithoutEntity('B', arr)).toEqual([
+      { '@id': 'A' },
+      { '@id': 'C' },
+    ]);
+  });
   it('getInputType should return the proper input type based on datatype', () => {
     [0, 1].forEach(id => {
       expect(getInputType(properties[id])).toBe('datetime-local');
@@ -690,7 +708,27 @@ describe('Utility method', () => {
         this.entity[`${DCTERMS}title`] = [{ '@value': 'title' }];
         expect(getEntityName(this.entity)).toEqual('title');
       });
-      describe('returns the  SKOSXL:literalForm,  if present and no rdfs:label or dcterms:title', function () {
+      describe('returns skos:prefLabel if present and no rdfs:label, dcterms:title, or dc:title', function() {
+        it('and in english', function() {
+          this.entity[`${SKOS}prefLabel`] = [{'@value': 'hello', '@language': 'en'}, {'@value': 'hola', '@language': 'es'}];
+          expect(getEntityName(this.entity)).toEqual('hello');
+        });
+        it('and there is no english version', function() {
+          this.entity[`${SKOS}prefLabel`] = [{ '@value': 'title' }];
+          expect(getEntityName(this.entity)).toEqual('title');
+        });
+      });
+      describe('returns skos:altLabel if present and no rdfs:label, dcterms:title, dc:title, or skos:prefLabel', function() {
+        it('and in english', function() {
+          this.entity[`${SKOS}altLabel`] = [{'@value': 'hello', '@language': 'en'}, {'@value': 'hola', '@language': 'es'}];
+          expect(getEntityName(this.entity)).toEqual('hello');
+        });
+        it('and there is no english version', function() {
+          this.entity[`${SKOS}altLabel`] = [{ '@value': 'title' }];
+          expect(getEntityName(this.entity)).toEqual('title');
+        });
+      });
+      describe('returns the skosxl:literalForm, if present and no rdfs:label, dcterms:title, dc:title, skos:prefLabel, or skos:altLabel', function () {
         it('and in english', function () {
           this.entity[`${SKOSXL}literalForm`] = [{'@value': 'hello', '@language': 'en'}, {
             '@value': 'hola',
@@ -700,6 +738,19 @@ describe('Utility method', () => {
         });
         it('and there is no english version', function () {
           this.entity[`${SKOSXL}literalForm`] = [{'@value': 'Salutos', '@language': 'eo'}];
+          expect(getEntityName(this.entity)).toEqual('Salutos');
+        });
+      });
+      describe('returns the sh:name, if present and no rdfs:label, dcterms:title, dc:title, skos:prefLabel, skos:altLabel, or skosxl:literalForm', function () {
+        it('and in english', function () {
+          this.entity[`${SHACL}name`] = [{'@value': 'hello', '@language': 'en'}, {
+            '@value': 'hola',
+            '@language': 'es'
+          }];
+          expect(getEntityName(this.entity)).toEqual('hello');
+        });
+        it('and there is no english version', function () {
+          this.entity[`${SHACL}name`] = [{'@value': 'Salutos', '@language': 'eo'}];
           expect(getEntityName(this.entity)).toEqual('Salutos');
         });
       });

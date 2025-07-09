@@ -65,6 +65,7 @@ public interface ShapesGraph extends QueryableVersionedRDF {
      * Retrieves the model containing all Statements in the Shapes Graph except for those with a subjectID of the Shapes
      * Graph IRI.
      * NOTE: ResultSet is limited this to only 5000 triples.
+     *
      * @return The model containing all Statements in the Shapes Graph except for statements with a subjectID of the
      *      Shapes Graph IRI.
      */
@@ -111,13 +112,15 @@ public interface ShapesGraph extends QueryableVersionedRDF {
     /**
      * Retrieves a paginated list of {@link NodeShapeSummary} from the repository based on the provided
      * search parameters.
+     *
      * @param searchParams The search parameters to use for querying entities. This includes pagination details such
      *                     as page number and page size, as well as any other criteria used for filtering the results.
      * @param conn The repository connection used to perform the query. This connection should be established
      *             and valid for the duration of the query.
      * @return A {@link PaginatedSearchResults} object containing the results of the query. The object will include
-     * a list of {@link NodeShapeSummary} objects representing the entities on the current page, as well as metadata
-     * about the total number of results and pagination.
+     *      a list of {@link NodeShapeSummary} objects representing the entities on the current page, as well as
+     *      metadata about the total number of results and pagination.
      */
-    PaginatedSearchResults<NodeShapeSummary> findNodeShapes(PaginatedSearchParams searchParams, RepositoryConnection conn);
+    PaginatedSearchResults<NodeShapeSummary> findNodeShapes(PaginatedSearchParams searchParams,
+                                                            RepositoryConnection conn);
 }
