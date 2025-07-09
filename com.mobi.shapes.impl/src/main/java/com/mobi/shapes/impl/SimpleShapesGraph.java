@@ -22,6 +22,7 @@ package com.mobi.shapes.impl;
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+
 import com.mobi.catalog.api.PaginatedSearchParams;
 import com.mobi.catalog.api.PaginatedSearchResults;
 import com.mobi.exception.MobiException;
@@ -78,6 +79,7 @@ public class SimpleShapesGraph implements ShapesGraph {
             throw new MobiException(ex);
         }
     }
+
     /**
      * Creates a SimpleShapesGraph object that represents a Shapes Graph.
      *
@@ -128,7 +130,8 @@ public class SimpleShapesGraph implements ShapesGraph {
                 new IllegalStateException("Missing Shapes Graph OntologyIRI"));
         String query = SHAPES_GRAPH_CONTENT_QUERY.replace(IRI_REPLACE, shapesGraphId.stringValue());
         return outputStream ->
-                this.ontology.getGraphQueryResultsStream(query, false, RestUtils.getRDFFormat(format), false, outputStream);
+                this.ontology.getGraphQueryResultsStream(query, false, RestUtils.getRDFFormat(format), false,
+                        outputStream);
     }
 
     @Override
@@ -147,13 +150,13 @@ public class SimpleShapesGraph implements ShapesGraph {
     }
 
     @Override
-    public OutputStream asRdfXml() {
-        return this.ontology.asRdfXml();
+    public OutputStream asTurtle(OutputStream outputStream) {
+        return this.ontology.asTurtle(outputStream);
     }
 
     @Override
-    public OutputStream asTurtle(OutputStream outputStream) {
-        return this.ontology.asTurtle(outputStream);
+    public OutputStream asRdfXml() {
+        return this.ontology.asRdfXml();
     }
 
     @Override
@@ -206,7 +209,8 @@ public class SimpleShapesGraph implements ShapesGraph {
     }
 
     @Override
-    public PaginatedSearchResults<NodeShapeSummary> findNodeShapes(PaginatedSearchParams searchParams, RepositoryConnection conn) {
+    public PaginatedSearchResults<NodeShapeSummary> findNodeShapes(PaginatedSearchParams searchParams,
+                                                                   RepositoryConnection conn) {
         String searchTextParam = searchParams.getSearchText().orElse("");
 
         List<NodeShapeSummary> nodeShapeSummaries = new ArrayList<>();
@@ -229,7 +233,8 @@ public class SimpleShapesGraph implements ShapesGraph {
         }
 
         int pageNumber = (limit > 0) ? (offset / limit) + 1 : 1;
-        return new SimpleSearchResults<>(orderShapeNodes(nodeShapeSummaries, offset, limit), totalCount, limit, pageNumber);
+        return new SimpleSearchResults<>(orderShapeNodes(nodeShapeSummaries, offset, limit), totalCount, limit,
+                pageNumber);
     }
 
     /**
@@ -250,7 +255,7 @@ public class SimpleShapesGraph implements ShapesGraph {
         results.forEach(queryResult -> {
             String nodeIri = Bindings.requiredResource(queryResult, "iri").stringValue();
             String nodeName = Bindings.requiredLiteral(queryResult, "name").stringValue();
-            Optional<Binding> targetType = Optional.ofNullable(queryResult.getBinding( "targetType"));
+            Optional<Binding> targetType = Optional.ofNullable(queryResult.getBinding("targetType"));
             Optional<Binding> targetValue = Optional.ofNullable(queryResult.getBinding("targetValue"));
             Optional<IRI> ontologyIRI = ontology.getOntologyId().getOntologyIRI();
             NodeShapeSummary nodeShapeSummary = new NodeShapeSummary(
@@ -267,6 +272,7 @@ public class SimpleShapesGraph implements ShapesGraph {
 
     /**
      * Sorts the given list of NodeShapeSummary objects by name and applies pagination.
+     *
      * @param nodeShapeSummaries the list to sort and modify in-place
      * @param offset the starting index for pagination (must be within bounds)
      * @param limit the maximum number of items to include (must be > 0)

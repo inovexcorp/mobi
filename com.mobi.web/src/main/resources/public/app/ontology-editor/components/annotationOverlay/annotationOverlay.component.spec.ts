@@ -301,7 +301,6 @@ describe('Annotation Overlay component', function() {
             describe('the value was added successfully', function() {
                 beforeEach(function() {
                     propertyManagerStub.addValue.and.returnValue(true);
-                    ontologyManagerStub.entityNameProps = [`${DCTERMS}title`];
                 });
                 it('and it is a name prop', function() {
                     component.annotationForm.controls.annotation.setValue(`${DCTERMS}title`);
@@ -349,7 +348,6 @@ describe('Annotation Overlay component', function() {
             describe('if the value was edited successfully', function() {
                 beforeEach(function() {
                     propertyManagerStub.editValue.and.returnValue(true);
-                    ontologyManagerStub.entityNameProps = [`${DCTERMS}title`];
                 });
                 it('and it is a name prop', function() {
                     component.annotationForm.controls.annotation.setValue(`${DCTERMS}title`);

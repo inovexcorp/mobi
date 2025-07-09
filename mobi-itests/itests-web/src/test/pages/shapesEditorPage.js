@@ -24,103 +24,147 @@
 const parentEl = 'shapes-graph-editor-page';
 
 const propertyValues = `${parentEl} property-values`;
+const nodeItemSelectorXpath = `//${parentEl}//app-node-shapes-tab//app-node-shapes-list//cdk-virtual-scroll-viewport//app-node-shapes-item`;
+const nodeShapesSearchBar = 'app-node-shapes-tab app-node-shapes-list search-bar';
+const nodeShapesList = 'app-node-shapes-tab app-node-shapes-list cdk-virtual-scroll-viewport';
 
 const shapesEditorCommands = {
-    openRecordSelect: function() {
-        return this.api.page.editorPage().openRecordSelect(parentEl);
-    },
+  openRecordSelect: function() {
+    return this.api.page.editorPage().openRecordSelect(parentEl);
+  },
 
-    createShapesGraph: function(title, description) {
-        return this.api.page.editorPage().createRecord(parentEl, title, description);
-    },
+  createShapesGraph: function(title, description) {
+    return this.api.page.editorPage().createRecord(parentEl, title, description);
+  },
 
-    uploadShapesGraph: function(shapes_file) {
-        return this.api.page.editorPage().uploadRecord(parentEl, shapes_file);
-    },
+  uploadShapesGraph: function(shapes_file) {
+    return this.api.page.editorPage().uploadRecord(parentEl, shapes_file);
+  },
 
-    searchForShapesGraph: function(title) {
-        return this.api.page.editorPage().searchForRecord(parentEl, title);
-    },
+  searchForShapesGraph: function(title) {
+    return this.api.page.editorPage().searchForRecord(parentEl, title);
+  },
 
-    openShapesGraph: function(title) {
-        return this.api.page.editorPage().openRecord(parentEl, title);
-    },
+  openShapesGraph: function(title) {
+    return this.api.page.editorPage().openRecord(parentEl, title);
+  },
 
-    closeShapesGraph: function(title) {
-        return this.api.page.editorPage().closeRecord(parentEl, title);
-    },
+  closeShapesGraph: function(title) {
+    return this.api.page.editorPage().closeRecord(parentEl, title);
+  },
 
-    openUploadRecordLog: function() {
-        return this.api.page.editorPage().openUploadRecordLog(parentEl);
-    },    
+  openUploadRecordLog: function() {
+    return this.api.page.editorPage().openUploadRecordLog(parentEl);
+  },    
 
-    createBranch: function(branch_title, branch_description) {
-        return this.api.page.editorPage().createBranch(parentEl, branch_title);
-    },
+  createBranch: function(branch_title, branch_description) {
+    return this.api.page.editorPage().createBranch(parentEl, branch_title);
+  },
 
-    createTag: function(tag_title) {
-        return this.api.page.editorPage().createTag(parentEl, tag_title);
-    },
+  createTag: function(tag_title) {
+    return this.api.page.editorPage().createTag(parentEl, tag_title);
+  },
 
-    openBranchSelect: function() {
-        return this.api.page.editorPage().openBranchSelect(parentEl);
-    },
+  openBranchSelect: function() {
+    return this.api.page.editorPage().openBranchSelect(parentEl);
+  },
 
-    switchBranch: function(branch_title) {
-        return this.api.page.editorPage().switchBranch(parentEl, branch_title);
-    },
+  switchBranch: function(branch_title) {
+    return this.api.page.editorPage().switchBranch(parentEl, branch_title);
+  },
 
-    deleteBranchOrTag: function(title, isBranch = true) {
-        return this.api.page.editorPage().deleteBranchOrTag(parentEl, title, isBranch);
-    },
+  deleteBranchOrTag: function(title, isBranch = true) {
+    return this.api.page.editorPage().deleteBranchOrTag(parentEl, title, isBranch);
+  },
 
-    deleteShapesGraph: function(title) {
-        return this.api.page.editorPage().deleteRecord(parentEl, title);
-    },
+  deleteShapesGraph: function(title) {
+    return this.api.page.editorPage().deleteRecord(parentEl, title);
+  },
 
-    uploadChanges: function(file) {
-        return this.api.page.editorPage().uploadChanges(parentEl, file);
-    },
+  uploadChanges: function(file) {
+    return this.api.page.editorPage().uploadChanges(parentEl, file);
+  },
 
-    commit: function(message) {
-        return this.api.page.editorPage().commit(parentEl, message);
-    },
+  commit: function(message) {
+    return this.api.page.editorPage().commit(parentEl, message);
+  },
 
-    toggleChangesPage: function(open = true) {
-        return this.api.page.editorPage().toggleChangesPage(parentEl, open);
-    },
+  toggleChangesPage: function(open = true) {
+    return this.api.page.editorPage().toggleChangesPage(parentEl, open);
+  },
 
-    verifyShapesEditorPage: function(shapes_graph_title, branchTitle) {
-        return this.api
-            .waitForElementVisible('selected-details')
-            .waitForElementVisible('properties-block')
-            .waitForElementVisible('div.yate')
-            .page.editorPage()
-            .assert.valueEquals('@editorRecordSelectInput', shapes_graph_title)
-            .assert.valueEquals('@editorBranchSelectInput', branchTitle);
-    },
+  //TODO placeholder until we consolidate two different spots for editing IRI
+  editIri: function(newIriEnd) {
+    return this.api.page.editorPage().editIri(parentEl, newIriEnd);
+  },
+};
 
-    verifyNodeShapeListItem: function(nodeShape) {
-        const nodeItemSelector = '//app-node-shapes-tab//app-node-shapes-list//cdk-virtual-scroll-viewport//app-node-shapes-item';
+const projectTabCommands = {
+  verifyShapesEditorPage: function(shapes_graph_title, branchTitle) {
+    return this.api
+      .waitForElementVisible('selected-details')
+      .waitForElementVisible('properties-block')
+      .waitForElementVisible('div.yate')
+      .page.editorPage()
+      .assert.valueEquals('@editorRecordSelectInput', shapes_graph_title)
+      .assert.valueEquals('@editorBranchSelectInput', branchTitle);
+  },
+};
 
-        return this.api
-            .useXpath()
-            .assert.visible(`${nodeItemSelector}//h4[text()[contains(.,'${nodeShape.title}')]]`)
-            .assert.visible(`${nodeItemSelector}//small[text()[contains(.,'${nodeShape.iri}')]]`)
-            .assert.visible(`${nodeItemSelector}//small[text()[contains(.,'${nodeShape.target}')]]`)
-            .assert.visible(`${nodeItemSelector}//small[text()[contains(.,'${nodeShape.type}')]]`)
-            .assert.visible(`${nodeItemSelector}//small[text()[contains(.,'${nodeShape.imported}')]]`)
-    },
+const nodeShapesTabCommands = {
+  switchToNodeShapesTab: function() {
+    return this
+      .useXpath()
+      .waitForElementVisible('//app-shapes-tabs-holder//mat-tab-group//div[text()[contains(., "Node Shapes")]]')
+      .click('//app-shapes-tabs-holder//mat-tab-group//div[text()[contains(., "Node Shapes")]]')
+      .api.globals.wait_for_no_spinners(this);
+  },
 
-    //TODO placeholder until we consolidate two different spots for editing IRI
-    editIri: function(newIriEnd) {
-        return this.api.page.editorPage().editIri(parentEl, newIriEnd);
-    },
-}
+  verifyNodeShapesTab: function() {
+    return this.useCss()
+      .assert.visible(nodeShapesList)
+      .assert.visible(nodeShapesSearchBar);
+  },
+
+  verifyNodeShapesNum: function(num) {
+    return this.useCss()
+      .assert.elementsCount(`${nodeShapesList} app-node-shapes-item`, num);
+  },
+
+  searchNodeShapes: function(searchText) {
+    this.verifyNodeShapesTab();
+    return this.useCss()
+      .click(nodeShapesSearchBar)
+      .setValue(`${nodeShapesSearchBar} input`, searchText)
+      .sendKeys(`${nodeShapesSearchBar} input`, browser.Keys.ENTER)
+      .api.globals.wait_for_no_spinners(this);
+  },
+
+  verifyNodeShapeListItem: function(nodeShape) {
+    return this.api
+      .useXpath()
+      .assert.visible(`${nodeItemSelectorXpath}//h4[text()[contains(.,'${nodeShape.title}')]]`)
+      .assert.visible(`${nodeItemSelectorXpath}//small[text()[contains(.,'${nodeShape.iri}')]]`)
+      .assert.visible(`${nodeItemSelectorXpath}//small[text()[contains(.,'${nodeShape.target}')]]`)
+      .assert.visible(`${nodeItemSelectorXpath}//small[text()[contains(.,'${nodeShape.type}')]]`)
+      .assert.visible(`${nodeItemSelectorXpath}//small[text()[contains(.,'${nodeShape.imported}')]]`)
+  },
+
+  selectNodeShape: function(nodeShapeTitle) {
+    this.useXpath()
+      .waitForElementVisible(`${nodeItemSelectorXpath}//h4[text()[contains(.,'${nodeShapeTitle}')]]`)
+      .click(`${nodeItemSelectorXpath}//h4[text()[contains(.,'${nodeShapeTitle}')]]`)
+      .api.globals.wait_for_no_spinners(this);
+    return this.useXpath()
+      .waitForElementVisible(`//app-node-shapes-display//div[contains(@class, "selected-heading")]//span[text()[contains(.,"${nodeShapeTitle}")]]`);
+  }
+};
 
 module.exports = {
-    elements: {
-        propertyValues: propertyValues
-    },
-    commands: [shapesEditorCommands]
+  elements: {
+    propertyValues: propertyValues,
+    nodeShapesList: nodeShapesList,
+    nodeShapesSearchBar: nodeShapesSearchBar
+  },
+  commands: [shapesEditorCommands, projectTabCommands, nodeShapesTabCommands]
 }

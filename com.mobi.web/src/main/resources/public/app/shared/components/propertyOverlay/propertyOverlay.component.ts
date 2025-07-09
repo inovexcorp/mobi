@@ -28,7 +28,7 @@ import { some, union, get, groupBy, sortBy } from 'lodash';
 import { Observable } from 'rxjs';
 import { map, startWith } from 'rxjs/operators';
 
-import { createJson, getIRINamespace } from '../../utility';
+import { createJson, entityNameProps, getIRINamespace } from '../../utility';
 import { datatype } from '../../validators/datatype.validator';
 import { OntologyManagerService } from '../../services/ontologyManager.service';
 import { OWL, RDF, XSD } from '../../../prefixes';
@@ -180,7 +180,7 @@ export class PropertyOverlayComponent implements OnInit {
     if (added) {
       this.stateService.addToAdditions(this.stateService.listItem.versionedRdfRecord.recordId, this._createJson(value, type, language));
       this.stateService.saveCurrentChanges().subscribe();
-      if (this._om.entityNameProps.includes(property)) {
+      if (entityNameProps.includes(property)) {
         this.stateService.updateLabel();
       }
     } else {
@@ -205,7 +205,7 @@ export class PropertyOverlayComponent implements OnInit {
       this.stateService.addToDeletions(this.stateService.listItem.versionedRdfRecord.recordId, this._createJson(get(oldObj, '@value', get(oldObj, '@id')), get(oldObj, '@type'), get(oldObj, '@language')));
       this.stateService.addToAdditions(this.stateService.listItem.versionedRdfRecord.recordId, this._createJson(value, type, language));
       this.stateService.saveCurrentChanges().subscribe();
-      if (this._om.entityNameProps.includes(property)) {
+      if (entityNameProps.includes(property)) {
         this.stateService.updateLabel();
       }
     } else {

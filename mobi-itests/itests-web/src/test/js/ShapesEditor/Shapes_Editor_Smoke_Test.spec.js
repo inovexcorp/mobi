@@ -29,16 +29,16 @@ var shapes_graph_update = path.resolve(__dirname + '/../../resources/rdf_files/U
 var shapes_graph_conflict = path.resolve(__dirname + '/../../resources/rdf_files/UHTC_shapes_conflict.ttl');
 
 module.exports = {
-    '@tags': ['shapes-editor', 'sanity', 'focus', 'shapes-editor-001'],
+    '@tags': ['shapes-editor', 'sanity', 'shapes-editor-001'],
 
     'Step 1: Initial Setup': function(browser) {
-        browser.globals.initial_steps(browser, browser.globals.adminUsername, browser.globals.adminPassword)
-        browser.globals.switchToPage(browser, 'shapes-graph-editor', 'shapes-graph-editor-page')
+        browser.globals.initial_steps(browser, browser.globals.adminUsername, browser.globals.adminPassword);
+        browser.globals.switchToPage(browser, 'shapes-graph-editor', 'shapes-graph-editor-page');
     },
 
     'Step 2: Create a new shapes graph': function(browser) {
-        browser.page.shapesEditorPage().uploadShapesGraph(shapes_graph)
-        browser.globals.wait_for_no_spinners(browser)
+        browser.page.shapesEditorPage().uploadShapesGraph(shapes_graph);
+        browser.globals.wait_for_no_spinners(browser);
         browser.globals.dismiss_toast(browser);
     },
 
@@ -76,7 +76,7 @@ module.exports = {
 
     'Step 6: Upload Changes': function(browser) {
         browser.page.shapesEditorPage().uploadChanges(shapes_graph_update);
-        browser.globals.wait_for_no_spinners(browser)
+        browser.globals.wait_for_no_spinners(browser);
         browser.globals.dismiss_toast(browser);
     },
 
@@ -84,27 +84,27 @@ module.exports = {
         browser
             .assert.visible('mat-chip.uncommitted')
             .page.shapesEditorPage()
-            .expect.elements('@propertyValues').count.to.equal(5)
+            .expect.elements('@propertyValues').count.to.equal(5);
         browser.page.shapesEditorPage().toggleChangesPage();
         browser.globals.wait_for_no_spinners(browser);
         browser
             .waitForElementVisible('app-changes-page div.changes-info button.mat-warn')
-            .expect.elements('app-changes-page mat-expansion-panel').count.to.equal(4)
+            .expect.elements('app-changes-page mat-expansion-panel').count.to.equal(4);
     },
 
     'Step 8: Commit changes and verify commit was made successfully': function(browser) {
         browser.page.shapesEditorPage().commit('The first manual commit message');
-        browser.globals.wait_for_no_spinners(browser)
+        browser.globals.wait_for_no_spinners(browser);
         browser.globals.dismiss_toast(browser);
         browser
             .assert.not.elementPresent('mat-chip.uncommitted')
             .assert.not.elementPresent('app-changes-page mat-expansion-panel')
             .assert.textContains('app-changes-page info-message p', 'No Changes to Display')
-            .expect.elements('commit-history-table svg .commit-hash-string').count.to.equal(2)
+            .expect.elements('commit-history-table svg .commit-hash-string').count.to.equal(2);
         browser
             .useXpath()
             .assert.elementPresent('//commit-history-table//commit-history-graph//*[local-name()="svg"]//*[local-name()="text" and @class="commit-subject-string" and text()[contains(., "The first manual commit message")]]')
-            .assert.elementPresent('//commit-history-table//commit-history-graph//*[local-name()="svg"]//*[local-name()="text" and @class="commit-subject-string" and text()[contains(., "initial commit")]]')
+            .assert.elementPresent('//commit-history-table//commit-history-graph//*[local-name()="svg"]//*[local-name()="text" and @class="commit-subject-string" and text()[contains(., "initial commit")]]');
     },
 
     'Step 9: Upload merge conflict into master': function(browser) {
@@ -114,15 +114,15 @@ module.exports = {
         browser.globals.wait_for_no_spinners(browser);
         browser.globals.dismiss_toast(browser);
         browser.page.shapesEditorPage().commit('A conflict commit on master');
-        browser.globals.wait_for_no_spinners(browser)
+        browser.globals.wait_for_no_spinners(browser);
         browser.globals.dismiss_toast(browser);
     },
 
     'Step 10: Merge created branch into master': function(browser) {
         browser.page.shapesEditorPage().switchBranch('UHTC Test Branch');
-        browser.globals.wait_for_no_spinners(browser)
+        browser.globals.wait_for_no_spinners(browser);
         browser.page.editorPage()
-            .click('@mergeBranchesButton')
+            .click('@mergeBranchesButton');
         browser
             .waitForElementVisible('app-merge-page branch-select input')
             .waitForElementVisible('app-merge-page button.mat-primary')
@@ -132,27 +132,28 @@ module.exports = {
             .assert.visible('commit-difference-tabset')
             .expect.elements('commit-difference-tabset div.mat-tab-label').count.to.equal(2);
         browser
-            .click('app-merge-page button.mat-primary')
-        browser.globals.wait_for_no_spinners(browser)
+            .click('app-merge-page button.mat-primary');
+        browser.globals.wait_for_no_spinners(browser);
     },
 
     'Step 11: Resolve conflicts and Verify successful merge': function(browser) {
         browser
             .waitForElementVisible('resolve-conflicts-block')
             .waitForElementVisible('resolve-conflicts-form p small')
-            .click('resolve-conflicts-form p small')
-        browser.globals.wait_for_no_spinners(browser)
+            .click('resolve-conflicts-form p small');
+        browser.globals.wait_for_no_spinners(browser);
         browser.expect.elements('resolve-conflicts-form div.conflict').count.to.equal(2);
         browser
             .click('xpath', '//resolve-conflicts-form//div[contains(@class,"conflict")]//div[@class="card"][1]')
-            .click('resolve-conflicts-block div.btn-container button.mat-primary')
-        browser.globals.wait_for_no_spinners(browser)
+            .click('resolve-conflicts-block div.btn-container button.mat-primary');
+        browser.globals.wait_for_no_spinners(browser);
+        browser.globals.dismiss_toast(browser);
         browser
             .waitForElementVisible('selected-details')
             .waitForElementVisible('properties-block')
             .waitForElementVisible('div.yate')
             .useXpath()
-            .assert.textContains('//property-values//div//p[contains(text(), "Title")]/../..//value-display', 'UHTC Shapes Graph with some changes')
+            .assert.textContains('//property-values//div//p[contains(text(), "Title")]/../..//value-display', 'UHTC Shapes Graph with some changes');
     },
 
     'Step 12: Delete created branch and verify successful deletion': function(browser) {
@@ -161,7 +162,8 @@ module.exports = {
             .page.editorPage()
             .assert.valueEquals('@editorBranchSelectInput', 'MASTER');
         browser.page.shapesEditorPage().deleteBranchOrTag('UHTC Test Branch');
-        browser.globals.wait_for_no_spinners(browser)
+        browser.globals.wait_for_no_spinners(browser);
+        browser.globals.dismiss_toast(browser);
     },
 
     'Step 13: Add RDF#Comment Property and verify count': function(browser) {
@@ -191,7 +193,7 @@ module.exports = {
             .assert.not.elementPresent('property-overlay');
         
         browser.page.shapesEditorPage().commit('add rdf:comment');
-        browser.globals.wait_for_no_spinners(browser)
+        browser.globals.wait_for_no_spinners(browser);
         browser.globals.dismiss_toast(browser);
         browser
             .page.shapesEditorPage()
@@ -209,26 +211,28 @@ module.exports = {
       browser.page.editorPage()
           .waitForElementVisible('@editorBranchSelectInput')
           .click('@editorBranchSelectIcon')
-          .pause(1000)
+          .pause(1000);
       browser
           .useXpath()
           .waitForElementVisible('//mat-optgroup//mat-option//span[contains(text(), "MASTER")]')
-          .click('//mat-optgroup//mat-option//span[contains(text(), "MASTER")]')
-      browser.globals.wait_for_no_spinners(browser)
+          .click('//mat-optgroup//mat-option//span[contains(text(), "MASTER")]');
+      browser.globals.wait_for_no_spinners(browser);
       
       browser.page.shapesEditorPage().deleteBranchOrTag('UHTC Test Tag', false);
       browser.globals.wait_for_no_spinners(browser);
+      browser.globals.dismiss_toast(browser);
     },
 
     'Step 16: Create and open a new record': function(browser) {
         browser.page.shapesEditorPage().uploadShapesGraph(additional_shapes_graph);
         browser.globals.wait_for_no_spinners(browser);
+        browser.globals.dismiss_toast(browser);
     },
 
     'Step 17: Verify both records are open': function(browser) {
         browser
             .page.editorPage()
-            .click('@editorRecordSelectIcon')
+            .click('@editorRecordSelectIcon');
         browser
             .useXpath()
             .assert.visible('//mat-optgroup//span[contains(text(), "Open")]/..//span[contains(text(), "' + shapes_graph_title + '")]')

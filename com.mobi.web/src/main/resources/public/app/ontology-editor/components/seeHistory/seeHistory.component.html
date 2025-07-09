@@ -24,7 +24,7 @@
     </div>
     <div class="see-history-header d-flex flex-column remove-min-width col h-100">
         <div class="d-flex row">
-            <h2 class="see-history-title mb-0 mr-1 break-word align-self-end">{{om.getEntityName(os.listItem.selected)}}</h2>
+            <h2 class="see-history-title mb-0 mr-1 break-word align-self-end">{{entityName}}</h2>
             <static-iri class="align-self-end"
                 [stateService]="os"
                 [iri]="os.listItem.selected['@id']"

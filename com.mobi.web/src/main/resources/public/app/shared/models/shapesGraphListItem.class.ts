@@ -24,16 +24,16 @@ import { VersionedRdfListItem } from './versionedRdfListItem.class';
 import { JSONLDObject } from './JSONLDObject.interface';
 
 export interface NodeShapesTabState {
-    selectedEntityIRI: string;
-    selectedEntityName: string;
-    selectedEntity: JSONLDObject;
-    sourceShape: string;
+  selectedEntityIRI: string;
+  selectedEntityName: string;
+  selectedEntity: JSONLDObject;
+  sourceShape: string;
 }
 
 export interface ShapeGraphEditorTabStates {
-    project: {
-        entityIRI: string;
-    }
+  project: {
+    entityIRI: string;
+  }
 }
 
 /** 
@@ -45,8 +45,8 @@ export interface ShapeGraphEditorTabStates {
  * whether it also exists locally, and the ontologies it originated from.
  */
 export interface SubjectImportMap {
-    [entityId: string]: EntityImportStatus;
-};
+  [entityId: string]: EntityImportStatus;
+}
 
 /** 
  * @ngdoc interface
@@ -59,48 +59,48 @@ export interface SubjectImportMap {
  * @property {string[]=} ontologyIds - Optional. A list of ontology IRIs the entity was imported from.
  */
 export interface EntityImportStatus {
-    imported: boolean;
-    alsoLocal?: boolean // TODO Remove for 3196
-    ontologyIds?: string[];
-};
+  imported: boolean;
+  alsoLocal?: boolean // TODO Remove for 3196
+  ontologyIds?: string[];
+}
 
 export class ShapesGraphListItem extends VersionedRdfListItem {
-    //The variable keeping track of what format the preview is in is normally kept in editorTabStates in
-    //OntologyListItem but keeping it high-level here as we may be re-working how tab state is stored.
-    previewFormat: string
-    shapesGraphId: string;
-    changesPageOpen: boolean;
-    currentVersionTitle: string;
-    metadata: JSONLDObject;
-    content: string;
-    editorTabStates: ShapeGraphEditorTabStates;
-    nodeTab: NodeShapesTabState;
+  //The variable keeping track of what format the preview is in is normally kept in editorTabStates in
+  //OntologyListItem but keeping it high-level here as we may be re-working how tab state is stored.
+  previewFormat: string
+  shapesGraphId: string;
+  changesPageOpen: boolean;
+  currentVersionTitle: string;
+  metadata: JSONLDObject;
+  content: string;
+  editorTabStates: ShapeGraphEditorTabStates;
+  nodeTab: NodeShapesTabState;
 
-    subjectImportMap: SubjectImportMap;
+  subjectImportMap: SubjectImportMap;
 
-    static PROJECT_TAB = 0;
-    static NODE_SHAPES_TAB = 1;
+  static PROJECT_TAB = 0;
+  static NODE_SHAPES_TAB = 1;
 
-    constructor() {
-        super();
-        this.shapesGraphId = '';
-        this.changesPageOpen = false;
-        this.currentVersionTitle = '';
-        this.metadata = undefined;
-        this.content = '';
-        this.previewFormat = 'turtle';
-        this.tabIndex = ShapesGraphListItem.PROJECT_TAB;
-        this.editorTabStates = {
-            project: {
-                entityIRI: ''
-            }
-        }
-        this.nodeTab = {
-            selectedEntityIRI: '',
-            selectedEntityName: '',
-            selectedEntity: undefined,
-            sourceShape: ''
-        };
-        this.subjectImportMap = {};
-    }
+  constructor() {
+    super();
+    this.shapesGraphId = '';
+    this.changesPageOpen = false;
+    this.currentVersionTitle = '';
+    this.metadata = undefined;
+    this.content = '';
+    this.previewFormat = 'turtle';
+    this.tabIndex = ShapesGraphListItem.PROJECT_TAB;
+    this.editorTabStates = {
+      project: {
+        entityIRI: ''
+      }
+    };
+    this.nodeTab = {
+      selectedEntityIRI: '',
+      selectedEntityName: '',
+      selectedEntity: undefined,
+      sourceShape: ''
+    };
+    this.subjectImportMap = {};
+  }
 }

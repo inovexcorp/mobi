@@ -45,6 +45,7 @@ import { OntologyManagerService } from './ontologyManager.service';
 import { OntologyRecordActionI } from './ontologyRecordAction.interface';
 import { PolicyEnforcementService } from './policyEnforcement.service';
 import { PolicyManagerService } from './policyManager.service';
+import { PrefixationPipe } from '../pipes/prefixation.pipe';
 import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
 import { PropertyManagerService } from './propertyManager.service';
 import { RdfDownload } from '../models/rdfDownload.interface';
@@ -56,7 +57,6 @@ import { UpdateRefsService } from './updateRefs.service';
 import { VersionedRdfState } from './versionedRdfState.service';
 import { VocabularyStuff } from '../models/vocabularyStuff.interface';
 import { OntologyStateService } from './ontologyState.service';
-import { PrefixationPipe } from '../pipes/prefixation.pipe';
 
 class MockElementRef extends ElementRef {
   constructor() {
@@ -1972,14 +1972,10 @@ describe('Ontology State Service', function() {
     expect(service.createFlatIndividualTree(undefined)).toEqual([]);
   });
   it('addEntity adds the entity to the provided ontology and index', function() {
-    ontologyManagerStub.getEntityName.and.returnValue('name');
-    ontologyManagerStub.getEntityNames.and.returnValue(['name']);
     service.addEntity(individualObj, listItem);
     expect(has(listItem.entityInfo, individualId)).toBe(true);
-    expect(ontologyManagerStub.getEntityName).toHaveBeenCalledWith(individualObj);
-    expect(listItem.entityInfo[individualId].label).toBe('name');
-    expect(ontologyManagerStub.getEntityNames).toHaveBeenCalledWith(individualObj);
-    expect(listItem.entityInfo[individualId].names).toEqual(['name']);
+    expect(listItem.entityInfo[individualId].label).toBe('Individual Id');
+    expect(listItem.entityInfo[individualId].names).toEqual([]);
     expect(listItem.entityInfo[individualId].ontologyId).toBe(ontologyId);
   });
   it('removeEntity removes the entity from the iriList and index', function() {
@@ -2388,7 +2384,6 @@ describe('Ontology State Service', function() {
       }));
     });
   });
-  // TODO test for getBnodeIndex
   describe('resetStateTabs should set the correct variables', function() {
     beforeEach(function() {
       this.el = new MockElementRef();
@@ -2657,9 +2652,7 @@ describe('Ontology State Service', function() {
       expect(service.areParentsOpen(node, tab)).toBe(false);
     });
   });
-  it('joinPath joins the provided array correctly', function() {
-    expect(service.joinPath(['a', 'b', 'c'])).toBe('a.b.c');
-  });
+  
   describe('goTo calls the proper manager functions with correct parameters when it is', function() {
     beforeEach(function() {
       this.el = new MockElementRef();
@@ -4058,21 +4051,6 @@ describe('Ontology State Service', function() {
     expect(service.listItem.individuals.flat).toEqual([hierarchyNode]);
     expect(service.commonDelete).toHaveBeenCalledWith(entityIRI);
   });
-  describe('getBlankNodeValue returns', function() {
-    beforeEach(function() {
-      service.listItem = listItem;
-      service.listItem.blankNodes = { '_:genid1': 'value1' };
-    });
-    it('value for the key provided contained in the object', function() {
-      expect(service.getBlankNodeValue('_:genid1')).toEqual(service.listItem.blankNodes['_:genid1']);
-    });
-    it('key for the key provided not contained in the object', function() {
-      expect(service.getBlankNodeValue('_:genid2')).toEqual('_:genid2');
-    });
-    it('undefined if isBlankNodeId returns false', function() {
-      expect(service.getBlankNodeValue('key1')).toEqual(undefined);
-    });
-  });
   describe('isLinkable returns proper value', function() {
     it('when existsInListItem exists and isBlankNodeId is false', function() {
       spyOn(service, 'existsInListItem').and.returnValue(true);
@@ -4163,8 +4141,6 @@ describe('Ontology State Service', function() {
           names: ['old-value']
         }
       };
-      ontologyManagerStub.getEntityName.and.returnValue('new-value');
-      ontologyManagerStub.getEntityNames.and.returnValue(['new-value']);
       ontologyManagerStub.isClass.and.returnValue(false);
       ontologyManagerStub.isDataTypeProperty.and.returnValue(false);
       ontologyManagerStub.isObjectProperty.and.returnValue(false);
@@ -4188,8 +4164,8 @@ describe('Ontology State Service', function() {
         expect(ontologyManagerStub.isAnnotation).not.toHaveBeenCalledWith(service.listItem.selected);
         expect(ontologyManagerStub.isConcept).not.toHaveBeenCalledWith(service.listItem.selected);
         expect(ontologyManagerStub.isConceptScheme).not.toHaveBeenCalledWith(service.listItem.selected);
-        expect(service.listItem.entityInfo.iri.label).toEqual('new-value');
-        expect(service.listItem.entityInfo.iri.names).toEqual(['new-value']);
+        expect(service.listItem.entityInfo.iri.label).toEqual('Iri');
+        expect(service.listItem.entityInfo.iri.names).toEqual([]);
         expect(service.flattenHierarchy).toHaveBeenCalledWith(service.listItem.classes);
         expect(service.listItem.classes.flat).toEqual([hierarchyNode]);
       });
@@ -4202,8 +4178,8 @@ describe('Ontology State Service', function() {
         expect(ontologyManagerStub.isAnnotation).not.toHaveBeenCalledWith(service.listItem.selected);
         expect(ontologyManagerStub.isConcept).not.toHaveBeenCalledWith(service.listItem.selected);
         expect(ontologyManagerStub.isConceptScheme).not.toHaveBeenCalledWith(service.listItem.selected);
-        expect(service.listItem.entityInfo.iri.label).toEqual('new-value');
-        expect(service.listItem.entityInfo.iri.names).toEqual(['new-value']);
+        expect(service.listItem.entityInfo.iri.label).toEqual('Iri');
+        expect(service.listItem.entityInfo.iri.names).toEqual([]);
         expect(service.flattenHierarchy).toHaveBeenCalledWith(service.listItem.dataProperties);
         expect(service.listItem.dataProperties.flat).toEqual([hierarchyNode]);
       });
@@ -4216,8 +4192,8 @@ describe('Ontology State Service', function() {
         expect(ontologyManagerStub.isAnnotation).not.toHaveBeenCalledWith(service.listItem.selected);
         expect(ontologyManagerStub.isConcept).not.toHaveBeenCalledWith(service.listItem.selected);
         expect(ontologyManagerStub.isConceptScheme).not.toHaveBeenCalledWith(service.listItem.selected);
-        expect(service.listItem.entityInfo.iri.label).toEqual('new-value');
-        expect(service.listItem.entityInfo.iri.names).toEqual(['new-value']);
+        expect(service.listItem.entityInfo.iri.label).toEqual('Iri');
+        expect(service.listItem.entityInfo.iri.names).toEqual([]);
         expect(service.flattenHierarchy).toHaveBeenCalledWith(service.listItem.objectProperties);
         expect(service.listItem.objectProperties.flat).toEqual([hierarchyNode]);
       });
@@ -4230,8 +4206,8 @@ describe('Ontology State Service', function() {
         expect(ontologyManagerStub.isAnnotation).toHaveBeenCalledWith(service.listItem.selected);
         expect(ontologyManagerStub.isConcept).not.toHaveBeenCalledWith(service.listItem.selected);
         expect(ontologyManagerStub.isConceptScheme).not.toHaveBeenCalledWith(service.listItem.selected);
-        expect(service.listItem.entityInfo.iri.label).toEqual('new-value');
-        expect(service.listItem.entityInfo.iri.names).toEqual(['new-value']);
+        expect(service.listItem.entityInfo.iri.label).toEqual('Iri');
+        expect(service.listItem.entityInfo.iri.names).toEqual([]);
         expect(service.flattenHierarchy).toHaveBeenCalledWith(service.listItem.annotations);
         expect(service.listItem.annotations.flat).toEqual([hierarchyNode]);
       });
@@ -4244,8 +4220,8 @@ describe('Ontology State Service', function() {
         expect(ontologyManagerStub.isAnnotation).toHaveBeenCalledWith(service.listItem.selected);
         expect(ontologyManagerStub.isConcept).toHaveBeenCalledWith(service.listItem.selected, service.listItem.derivedConcepts);
         expect(ontologyManagerStub.isConceptScheme).not.toHaveBeenCalledWith(service.listItem.selected, service.listItem.derivedConceptSchemes);
-        expect(service.listItem.entityInfo.iri.label).toEqual('new-value');
-        expect(service.listItem.entityInfo.iri.names).toEqual(['new-value']);
+        expect(service.listItem.entityInfo.iri.label).toEqual('Iri');
+        expect(service.listItem.entityInfo.iri.names).toEqual([]);
         expect(service.flattenHierarchy).toHaveBeenCalledWith(service.listItem.concepts);
         expect(service.listItem.concepts.flat).toEqual([hierarchyNode]);
       });
@@ -4258,8 +4234,8 @@ describe('Ontology State Service', function() {
         expect(ontologyManagerStub.isAnnotation).toHaveBeenCalledWith(service.listItem.selected);
         expect(ontologyManagerStub.isConcept).toHaveBeenCalledWith(service.listItem.selected, service.listItem.derivedConcepts);
         expect(ontologyManagerStub.isConceptScheme).toHaveBeenCalledWith(service.listItem.selected, service.listItem.derivedConceptSchemes);
-        expect(service.listItem.entityInfo.iri.label).toEqual('new-value');
-        expect(service.listItem.entityInfo.iri.names).toEqual(['new-value']);
+        expect(service.listItem.entityInfo.iri.label).toEqual('Iri');
+        expect(service.listItem.entityInfo.iri.names).toEqual([]);
         expect(service.flattenHierarchy).toHaveBeenCalledWith(service.listItem.conceptSchemes);
         expect(service.listItem.conceptSchemes.flat).toEqual([hierarchyNode]);
       });
@@ -4436,7 +4412,6 @@ describe('Ontology State Service', function() {
       spyOn(service, 'addToDeletions');
       this.index = 0;
       this.key = 'test';
-      ontologyManagerStub.entityNameProps = [`${DCTERMS}title`];
       spyOn(service, 'createFlatEverythingTree').and.returnValue([hierarchyNode]);
     });
     it('if the selected key is rdfs:range', fakeAsync(function() {
@@ -4684,30 +4659,4 @@ describe('Ontology State Service', function() {
     expect(service.goTo).toHaveBeenCalledWith('iri');
     expect(service.listItem.openSnackbar).toBeUndefined();
   }));
-  describe('getTypesLabel functions properly', function() {
-    it('when @type is empty', function() {
-      expect(service.getTypesLabel({
-        '@id': 'id',
-        '@type': []
-      })).toEqual('');
-    });
-    it('when @type has items', function() {
-      expect(service.getTypesLabel({
-        '@id': 'id',
-        '@type': ['test', 'test2']
-      })).toEqual('test, test2');
-    });
-    it('when @type has blank node items', function() {
-      manchesterConverterStub.jsonldToManchester.and.callFake(a => a);
-      spyOn(service, 'getBnodeIndex').and.returnValue({});
-      service.listItem = new OntologyListItem();
-      service.listItem.selectedBlankNodes = [];
-      expect(service.getTypesLabel({
-        '@id': 'iri',
-        '@type': ['_:genid0', 'test2']
-      })).toEqual('_:genid0, test2');
-      expect(manchesterConverterStub.jsonldToManchester).toHaveBeenCalledWith('_:genid0', service.listItem.selectedBlankNodes, {}, true);
-      expect(service.getBnodeIndex).toHaveBeenCalledWith();
-    });
-  });
 });

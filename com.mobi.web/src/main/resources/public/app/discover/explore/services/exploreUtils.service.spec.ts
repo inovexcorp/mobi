@@ -34,8 +34,8 @@ import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { JSONLDValue } from '../../../shared/models/JSONLDValue.interface';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { DATASET, OWL, RDF, XSD } from '../../../prefixes';
-import { ExploreUtilsService } from './exploreUtils.service';
 import { REGEX } from '../../../constants';
+import { ExploreUtilsService } from './exploreUtils.service';
 
 describe('Explore Utils Service', function() {
     let exploreUtilsService : ExploreUtilsService;
@@ -238,11 +238,10 @@ describe('Explore Utils Service', function() {
             expect(ontologyManagerStub.getOntologyClasses).toHaveBeenCalledWith('recordId', 'branchId', 'commitId', false);
         });
         it('successfully', function() {
-            ontologyManagerStub.getEntityName.and.returnValue('title');
             ontologyManagerStub.getOntologyClasses.and.returnValue(of([{'@id': 'classId', [`${OWL}deprecated`]: [{ '@value': 'true'}] }]));
             exploreUtilsService.getClasses(this.datasetId)
                 .subscribe(function(response) {
-                    expect(response).toContain({id: 'classId', title: 'title', deprecated: true});
+                    expect(response).toContain({id: 'classId', title: 'Class Id', deprecated: true});
                 }, function() {
                     fail('Observable should have resolved');
                 });

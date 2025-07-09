@@ -46,7 +46,7 @@ import { HierarchyFilter } from '../hierarchyFilter/hierarchyFilter.component';
  *
  * A component that creates a `div` containing a {@link shared.SearchBarComponent} and hierarchy of
  * {@link ontology-editor.TreeItemComponent}s of individuals. When search text is provided, the hierarchy filters what
- * is shown based on value matches with predicates in the {@link shared.OntologyManagerService entityNameProps}.
+ * is shown based on value matches with predicates in the utility entityNameProps.
  *
  * @param {Object[]} hierarchy An array which represents a flattened individual hierarchy
  * @param {Function} updateSearch A function to update the state variable used to track the search filter text

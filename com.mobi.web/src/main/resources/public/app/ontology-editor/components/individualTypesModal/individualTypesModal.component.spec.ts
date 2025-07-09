@@ -35,7 +35,6 @@ import { cleanStylesFromDOM } from '../../../../../public/test/ts/Shared';
 import { OWL } from '../../../prefixes';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
 import { OntologyListItem } from '../../../shared/models/ontologyListItem.class';
-import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { OntologyClassSelectComponent } from '../ontologyClassSelect/ontologyClassSelect.component';
 import { IndividualTypesModalComponent } from './individualTypesModal.component';
@@ -46,7 +45,6 @@ describe('Individual Types Modal component', function() {
     let fixture: ComponentFixture<IndividualTypesModalComponent>;
     let matDialogRef: jasmine.SpyObj<MatDialogRef<IndividualTypesModalComponent>>;
     let ontologyStateStub: jasmine.SpyObj<OntologyStateService>;
-    let ontologyManagerStub: jasmine.SpyObj<OntologyManagerService>;
 
     const error = 'Error Message';
     const iri = 'iri';
@@ -66,7 +64,6 @@ describe('Individual Types Modal component', function() {
             ],
             providers: [
                 MockProvider(OntologyStateService),
-                MockProvider(OntologyManagerService),
                 { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close'])}
             ]
         });
@@ -77,7 +74,6 @@ describe('Individual Types Modal component', function() {
         component = fixture.componentInstance;
         element = fixture.debugElement;
         ontologyStateStub = TestBed.inject(OntologyStateService) as jasmine.SpyObj<OntologyStateService>;
-        ontologyManagerStub = TestBed.inject(OntologyManagerService) as jasmine.SpyObj<OntologyManagerService>;
         matDialogRef = TestBed.inject(MatDialogRef) as jasmine.SpyObj<MatDialogRef<IndividualTypesModalComponent>>;
 
         ontologyStateStub.listItem = new OntologyListItem();
@@ -94,13 +90,11 @@ describe('Individual Types Modal component', function() {
         fixture = null;
         matDialogRef = null;
         ontologyStateStub = null;
-        ontologyManagerStub = null;
     });
 
     it('should initialize correctly', function() {
-        ontologyManagerStub.getEntityName.and.returnValue('name');
         component.ngOnInit();
-        expect(component.entityName).toEqual('name');
+        expect(component.entityName).toEqual('Iri');
         expect(component.types).toEqual([`${OWL}NamedIndividual`, 'type1', 'type2']);
     });
     describe('contains the correct html', function() {

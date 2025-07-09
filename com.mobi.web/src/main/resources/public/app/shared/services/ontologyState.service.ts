@@ -63,9 +63,7 @@ import {
     unset,
     values,
     without,
-    cloneDeep,
-    orderBy
-} from 'lodash';
+    cloneDeep} from 'lodash';
 import { switchMap, map, catchError, tap, finalize } from 'rxjs/operators';
 import { ElementRef, Injectable } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
@@ -77,7 +75,7 @@ import { CatalogManagerService } from './catalogManager.service';
 import { Difference } from '../models/difference.class';
 import { EntityNamesItem } from '../models/entityNamesItem.interface';
 import { EventPayload, EventTypeConstants, EventWithPayload } from '../models/eventWithPayload.interface';
-import { getBeautifulIRI, getDctermsValue, getIRINamespace, getPropertyId, isBlankNodeId } from '../utility';
+import { entityNameProps, getArrWithoutEntity, getBeautifulIRI, getDctermsValue, getEntityName, getEntityNames, getIRINamespace, getPropertyId, isBlankNodeId } from '../utility';
 import { Hierarchy } from '../models/hierarchy.interface';
 import { HierarchyNode } from '../models/hierarchyNode.interface';
 import { JSONLDId } from '../models/JSONLDId.interface';
@@ -822,8 +820,8 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
     addEntity(entityJSON: JSONLDObject, listItem: OntologyListItem = this.listItem): void {
         listItem.iriList.push(entityJSON['@id']);
         get(listItem, 'entityInfo', {})[entityJSON['@id']] = {
-            label: this.om.getEntityName(entityJSON),
-            names: this.om.getEntityNames(entityJSON),
+            label: getEntityName(entityJSON),
+            names: getEntityNames(entityJSON),
             ontologyId: listItem.ontologyId,
             imported: false
         };
@@ -1112,7 +1110,7 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
             }),
             map(arr => {
                 listItem.selected = find(arr, {'@id': entityIRI});
-                listItem.selectedBlankNodes = this.getArrWithoutEntity(entityIRI, arr);
+                listItem.selectedBlankNodes = getArrWithoutEntity(entityIRI, arr);
                 const bnodeIndex = this.getBnodeIndex(listItem.selectedBlankNodes);
                 listItem.selectedBlankNodes.forEach(bnode => {
                     listItem.blankNodes[bnode['@id']] = this.mc.jsonldToManchester(bnode['@id'], listItem.selectedBlankNodes, bnodeIndex, true);
@@ -2163,12 +2161,7 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
      * updates all references to the entity throughout the hierarchies.
      */
     updateLabel(): void {
-        const newLabel = this.om.getEntityName(this.listItem.selected);
-        const iri = this.listItem.selected['@id'];
-        if (has(this.listItem.entityInfo, `['${iri}'].label`) && this.listItem.entityInfo[iri].label !== newLabel) {
-            this.listItem.entityInfo[iri].label = newLabel;
-            this.listItem.entityInfo[iri].names = this.om.getEntityNames(this.listItem.selected);
-        }
+        super.updateLabel();
         if (this.om.isClass(this.listItem.selected)) {
             this.listItem.classes.flat = this.flattenHierarchy(this.listItem.classes);
             this.listItem.flatEverythingTree = this.createFlatEverythingTree(this.listItem);
@@ -2366,7 +2359,7 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
         }
         return this.saveCurrentChanges()
             .pipe(map(() => {
-                if (this.om.entityNameProps.includes(key)) {
+                if (entityNameProps.includes(key)) {
                     this.updateLabel();
                 }
                 return axiomObject;

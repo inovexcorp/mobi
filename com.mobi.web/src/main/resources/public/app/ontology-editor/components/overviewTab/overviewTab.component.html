@@ -23,7 +23,7 @@
 <div class="overview-tab row m-0 h-100">
     <association-block class="col-3 h-100"></association-block>
     <div class="selected-entity col-9 h-100 pt-2" #overviewTab>
-        <div class="h-100 w-100 d-flex flex-column" *ngIf="this.os.listItem.selected">
+        <div class="h-100 w-100 d-flex flex-column" *ngIf="os.listItem.selected">
             <div class="selected-header d-flex">
                 <selected-details class="flex-1"
                     [stateService]="os"
@@ -34,15 +34,15 @@
                     [highlightText]="os.listItem.editorTabStates.overview.searchText">
                 </selected-details>
                 <div class="btn-container">
-                    <button mat-raised-button color="primary" [disabled]="!this.os.listItem.selected || this.os.isSelectedImported()" (click)="this.seeHistory()">See History</button>
-                    <button mat-raised-button *ngIf="this.os.canModify()" color="warn" [disabled]="this.os.isSelectedImported()" (click)="this.showDeleteConfirmation()">Delete</button>
+                    <button mat-raised-button color="primary" [disabled]="!os.listItem.selected || os.isSelectedImported()" (click)="seeHistory()">See History</button>
+                    <button mat-raised-button *ngIf="os.canModify()" color="warn" [disabled]="os.isSelectedImported()" (click)="showDeleteConfirmation()">Delete</button>
                 </div>
             </div>
             <div class="row flex-1 remove-min-height">
                 <div class="col-7 vertical-scroll h-100">
                     <div class="row py-2">
-                        <annotation-block [selected]="this.os.listItem.selected"
-                                          [highlightIris]="this.om.entityNameProps"
+                        <annotation-block [selected]="os.listItem.selected"
+                                          [highlightIris]="entityNameProps"
                                           [highlightText]="os.listItem.editorTabStates.overview.searchText" class="col" >
                         </annotation-block>
                     </div>
@@ -53,7 +53,7 @@
                 <div class="col-5 characteristics-usages-wrapper vertical-scroll h-100">
                     <characteristics-row></characteristics-row>
                     <div class="row py-2">
-                        <usages-block class="col" [usages]="this.os.listItem.editorTabStates.overview.usages"></usages-block>
+                        <usages-block class="col" [usages]="os.listItem.editorTabStates.overview.usages"></usages-block>
                     </div>
                 </div>
             </div>

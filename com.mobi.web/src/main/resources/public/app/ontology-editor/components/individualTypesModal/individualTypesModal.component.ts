@@ -25,8 +25,8 @@ import { MatDialogRef } from '@angular/material/dialog';
 import { difference, get, remove, set, pull, unset, some } from 'lodash';
 import { OWL } from '../../../prefixes';
 
-import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import { getEntityName } from '../../../shared/utility';
 
 /**
  * @class ontology-editor.IndividualTypesModalComponent
@@ -45,11 +45,10 @@ export class IndividualTypesModalComponent implements OnInit {
     error = '';
     namedIndividualIri = `${OWL}NamedIndividual`;
 
-    constructor(private matDialogRef: MatDialogRef<IndividualTypesModalComponent>, public om: OntologyManagerService,
-        public os: OntologyStateService) {}
+    constructor(private matDialogRef: MatDialogRef<IndividualTypesModalComponent>, public os: OntologyStateService) {}
     
     ngOnInit(): void {
-        this.entityName = this.om.getEntityName(this.os.listItem.selected);
+        this.entityName = getEntityName(this.os.listItem.selected);
         this.types = Object.assign([], this.os.listItem.selected['@type']);
     }
     submit(): void {

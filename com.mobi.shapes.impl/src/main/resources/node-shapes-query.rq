@@ -5,6 +5,8 @@ PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
 PREFIX xsd: <http://www.w3.org/2001/XMLSchema#>
 PREFIX dct: <http://purl.org/dc/terms/>
 PREFIX dc: <http://purl.org/dc/elements/1.1/>
+PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+PREFIX skosxl: <http://www.w3.org/2004/02/skos/core#>
 
 SELECT DISTINCT
   ?iri
@@ -24,7 +26,7 @@ WHERE {
             BIND(REPLACE(STR(?iri), "^.*?([_\\p{L}][-_\\p{L}\\p{N}]*)$", "$1") as ?nameOption)
             BIND(9 as ?propertyOrder)
           } UNION {
-            VALUES (?property ?propertyOrder) { (sh:name 2) (rdfs:label 4) (dct:title 6) (dc:title 8) }
+            VALUES (?property ?propertyOrder) { (rdfs:label 2) (dct:title 4) (dc:title 6) (skos:prefLabel 8) (skos:altLabel 10) (skosxl:literalForm 12) (sh:name 18) }
             ?iri a sh:NodeShape ;
             ?property ?nameOption .
             FILTER(ISIRI(?iri))
@@ -34,7 +36,7 @@ WHERE {
               BIND(?propertyOrder - 1 as ?propertyOrder)
             }
           }
-        } ORDER BY ?propertyOrder
+        } ORDER BY ?propertyOrder ?nameOption
       }
     } GROUP BY ?iri
   }

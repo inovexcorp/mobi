@@ -25,8 +25,8 @@ import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ElementRef, Injectable } from '@angular/core';
 //third party imports
 import { catchError, finalize, map, switchMap, tap } from 'rxjs/operators';
-import { cloneDeep, find, get, isEmpty, remove, some, assign, has, includes, join, orderBy } from 'lodash';
-import { Observable, of, merge as rxjsMerge, throwError } from 'rxjs';
+import { cloneDeep, find, get, isEmpty, remove, some, assign, has } from 'lodash';
+import { forkJoin, Observable, of, merge as rxjsMerge, throwError } from 'rxjs';
 //mobi + local imports
 import {
   CATALOG,
@@ -40,14 +40,18 @@ import {
 import { CatalogDetails, VersionedRdfState } from './versionedRdfState.service';
 import { CatalogManagerService } from './catalogManager.service';
 import { Difference } from '../models/difference.class';
+import { EntityNames } from '../models/entityNames.interface';
 import { EventPayload, EventTypeConstants, EventWithPayload } from '../models/eventWithPayload.interface';
-import { getBeautifulIRI, getDctermsValue, getPropertyId, isBlankNodeId } from '../utility';
+import { getArrWithoutEntity, getBeautifulIRI, getDctermsValue, getPropertyId, isBlankNodeId } from '../utility';
 import { JSONLDId } from '../models/JSONLDId.interface';
 import { JSONLDObject } from '../models/JSONLDObject.interface';
 import { JSONLDValue } from '../models/JSONLDValue.interface';
+import { ManchesterConverterService } from './manchesterConverter.service';
 import { MergeRequestManagerService } from './mergeRequestManager.service';
 import { PolicyEnforcementService } from './policyEnforcement.service';
 import { PolicyManagerService } from './policyManager.service';
+import { PrefixationPipe } from '../pipes/prefixation.pipe';
+import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
 import { PropertyManagerService } from './propertyManager.service';
 import { RdfDownload } from '../models/rdfDownload.interface';
 import { RdfUpdate } from '../models/rdfUpdate.interface';
@@ -67,9 +71,6 @@ import { UpdateRefsService } from './updateRefs.service';
 import { VersionedRdfStateBase } from '../models/versionedRdfStateBase.interface';
 import { VersionedRdfUploadResponse } from '../models/versionedRdfUploadResponse.interface';
 import { XACMLRequest } from '../models/XACMLRequest.interface';
-import { PrefixationPipe } from '../pipes/prefixation.pipe';
-import { ManchesterConverterService } from './manchesterConverter.service';
-import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
 
 /**
  * @class shared.ShapesGraphStateService
@@ -79,6 +80,62 @@ import { ProgressSpinnerService } from '../components/progress-spinner/services/
 @Injectable()
 export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListItem> {
   type = `${SHAPESGRAPHEDITOR}ShapesGraphRecord`;
+
+  private readonly _ENTITY_NAMES_QUERY = `
+  PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+  PREFIX dc: <http://purl.org/dc/elements/1.1/>
+  PREFIX dct: <http://purl.org/dc/terms/>
+  PREFIX owl: <http://www.w3.org/2002/07/owl#>
+  PREFIX skosxl: <http://www.w3.org/2008/05/skos-xl#>
+  PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+  PREFIX sh: <http://www.w3.org/ns/shacl#>
+
+  SELECT ?iri (GROUP_CONCAT(?nameOption;separator="�") as ?names)
+  WHERE {
+    {
+      SELECT ?iri ?nameOption
+      WHERE {
+        {
+          ?iri a ?type .
+          FILTER(ISIRI(?iri))
+          BIND(REPLACE(STR(?iri), "^.*?([_\\\\p{L}][-_\\\\p{L}\\\\p{N}]*)$", "$1") as ?nameOption)
+          BIND(19 as ?propertyOrder)
+        } UNION {
+          VALUES (?property ?propertyOrder) { (rdfs:label 2) (dct:title 4) (dc:title 6) (skos:prefLabel 8) (skos:altLabel 10) (skosxl:literalForm 12) (sh:name 18) }
+          ?iri a ?type ;
+            ?property ?nameOption .
+          FILTER(ISIRI(?iri))
+          OPTIONAL {
+            ?iri ?property ?nameOption .
+            FILTER(LANGMATCHES(LANG(?nameOption), "EN"))
+            BIND(?propertyOrder - 1 as ?propertyOrder)
+          }
+        } UNION {
+          ?iri a ?type ;
+            (skosxl:prefLabel/skosxl:literalForm) ?nameOption .
+          FILTER(ISIRI(?iri))
+          FILTER(LANGMATCHES(LANG(?nameOption), "EN"))
+          BIND(13 as ?propertyOrder)
+        } UNION {
+          ?iri a ?type ;
+            (skosxl:prefLabel/skosxl:literalForm) ?nameOption .
+          FILTER(ISIRI(?iri))
+          BIND(14 as ?propertyOrder)
+        } UNION {
+          ?iri a ?type ;
+            (skosxl:altLabel/skosxl:literalForm) ?nameOption .
+          FILTER(ISIRI(?iri))
+          FILTER(LANGMATCHES(LANG(?nameOption), "EN"))
+          BIND(15 as ?propertyOrder)
+        } UNION {
+          ?iri a ?type ;
+            (skosxl:altLabel/skosxl:literalForm) ?nameOption .
+          FILTER(ISIRI(?iri))
+          BIND(16 as ?propertyOrder)
+        }
+      } ORDER BY ?propertyOrder ?nameOption
+    }
+  } GROUP BY ?iri`;
 
   constructor(
     protected cm: CatalogManagerService,
@@ -195,10 +252,13 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
     return this.stm.getDefaultNamespace(`${SHAPESGRAPHEDITOR}ShapesGraphRecord`);
   }
   /**
-   * Returns the display name of an entity within the currently selected ShapesGraphRecord. Currently just returns the
-   * beautiful IRI.
+   * Returns the display name of an entity within the currently selected ShapesGraphRecord. Pulls from the calculated
+   * and cached entity names of the shapes graph.
    */
   getEntityName(entityId: string): string {
+    if (this.listItem.entityInfo[entityId]) {
+      return this.listItem.entityInfo[entityId].label || getBeautifulIRI(entityId);
+    }
     return getBeautifulIRI(entityId);
   }
   /**
@@ -309,7 +369,7 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
           this.listItem.upToDate,
           true,
           this.listItem.changesPageOpen
-        )
+        );
       })
     );
   }
@@ -458,49 +518,61 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
     listItem.upToDate = upToDate;
     this.propertyManager.defaultDatatypes.forEach(iri => this._addIri(listItem, 'dataPropertyRange', iri));
 
-    return this.sgm.getShapesGraphIRI(recordId, branchId, commitId).pipe(
-      switchMap((shapesGraphId: string) => {
+    // Do this request first so that the ontology cache is populated and avoid race conditions with the other requests
+    return this.sgm.getShapesGraphIRI(recordId, branchId, commitId)
+      .pipe(switchMap(shapesGraphId => {
         listItem.shapesGraphId = shapesGraphId;
-        return this.setSelected(listItem.shapesGraphId, listItem);
+        // Submit first round of requests that will feed into the second round
+        return forkJoin({
+          shapesGraphImports: this.sgm.getShapesGraphImports(
+            listItem.versionedRdfRecord.recordId,
+            listItem.versionedRdfRecord.branchId,
+            listItem.versionedRdfRecord.commitId
+          ),
+          content: this.sgm.getShapesGraphContent(listItem.versionedRdfRecord.recordId,
+            listItem.versionedRdfRecord.branchId,
+            listItem.versionedRdfRecord.commitId
+          ),
+          branches: this.cm.getRecordBranches(recordId, this.catalogId),
+          modifyDecision: this.pep.evaluateRequest(modifyRequest),
+          entityNames: this.getEntityNames(listItem)
+        });
       }),
-      switchMap(() => {
-        return this.sgm.getShapesGraphImports(
-          listItem.versionedRdfRecord.recordId,
-          listItem.versionedRdfRecord.branchId,
-          listItem.versionedRdfRecord.commitId
-        );
-      }),
-      switchMap((shapesGraphImports: ShapesGraphImports) => {
-        get(shapesGraphImports, 'importedOntologies').forEach(importedOntObj => {
+      switchMap((result: {
+          shapesGraphImports: ShapesGraphImports, 
+          content: string | JSONLDObject[], 
+          branches: HttpResponse<JSONLDObject[]>, 
+          modifyDecision: string,
+          entityNames: EntityNames}) => {
+        // Handle getShapesGraphImports
+        get(result.shapesGraphImports, 'importedOntologies').forEach(importedOntObj => {
           this.addImportedOntologyToListItem(listItem, importedOntObj);
         });
-        listItem.failedImports = get(shapesGraphImports, 'failedImports', []);
-        listItem.subjectImportMap = this._getSubjectImportMap(shapesGraphImports);
-        return this.sgm.getShapesGraphContent(listItem.versionedRdfRecord.recordId,
-          listItem.versionedRdfRecord.branchId,
-          listItem.versionedRdfRecord.commitId
-        );
-      }),
-      switchMap((content: string | JSONLDObject[]) => {
-        listItem.content = content as string;
-        return this.cm.getRecordBranches(recordId, this.catalogId);
-      }),
-      switchMap((branches: HttpResponse<JSONLDObject[]>) => {
-        const masterBranch = branches.body.find(branch => getDctermsValue(branch, 'title') === 'MASTER');
+        listItem.failedImports = get(result.shapesGraphImports, 'failedImports', []);
+        listItem.subjectImportMap = this._getSubjectImportMap(result.shapesGraphImports);
+        // Handle getShapesGraphContent
+        listItem.content = result.content as string;
+        // Handle getRecordBranches
+        const masterBranch = result.branches.body.find(branch => getDctermsValue(branch, 'title') === 'MASTER');
         listItem.masterBranchIri = masterBranch ? masterBranch['@id'] : '';
-        return this.pep.evaluateRequest(modifyRequest);
+        // Handle modifyRequest decision
+        listItem.userCanModify = result.modifyDecision === this.pep.permit;
+        // Handle getEntityNames
+        listItem.entityInfo = result.entityNames;
+        // Submit next round of requests that rely on responses from the first
+        return forkJoin({
+          modifyMasterDecision: this.pep.evaluateRequest({
+            resourceId: listItem.versionedRdfRecord.recordId,
+            actionId: this.pm.actionModify,
+            actionAttrs: { [`${CATALOG}branch`]: listItem.masterBranchIri }
+          }),
+          setSelected: this.setSelected(listItem.shapesGraphId, listItem)
+        });
       }),
-      switchMap((decision: string) => {
-        const modifyMasterRequest: XACMLRequest = {
-          resourceId: listItem.versionedRdfRecord.recordId,
-          actionId: this.pm.actionModify,
-          actionAttrs: { [`${CATALOG}branch`]: listItem.masterBranchIri }
-        };
-        listItem.userCanModify = decision === this.pep.permit;
-        return this.pep.evaluateRequest(modifyMasterRequest);
-      }),
-      switchMap((decision: string) => {
-        listItem.userCanModifyMaster = decision === this.pep.permit;
+      switchMap((result: { modifyMasterDecision: string}) => {
+        // Handle modifyMasterDecision
+        listItem.userCanModifyMaster = result.modifyMasterDecision === this.pep.permit;
+        // Return final listItem
         return of(listItem);
       })
     );
@@ -516,7 +588,7 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
             ontologyIds: [ontology.ontologyId],
           };
         } else {
-          let entityImportStatus: EntityImportStatus = subjectMap[subject];
+          const entityImportStatus: EntityImportStatus = subjectMap[subject];
           entityImportStatus.ontologyIds = entityImportStatus.ontologyIds.concat([ontology.ontologyId]);
         }
       }
@@ -527,7 +599,7 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
           imported: false
         };
       } else {
-        let entityImportStatus: EntityImportStatus = subjectMap[subject];
+        const entityImportStatus: EntityImportStatus = subjectMap[subject];
         entityImportStatus.alsoLocal = true;
       }
     }
@@ -558,7 +630,7 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
       return throwError('onIriEdit validation failed for recordId');
     }
     const newIRI = iriBegin + iriThen + iriEnd;
-    let oldEntity = cloneDeep(this.listItem.selected);
+    const oldEntity = cloneDeep(this.listItem.selected);
     // TODO: Once tabs added make sure this accounts for which tab you are on (either editing shapes graph IRI or node shape IRI)
     if (some(this.listItem.additions, oldEntity)) {
       remove(this.listItem.additions, oldEntity);
@@ -635,7 +707,7 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
       }),
       map((arr: JSONLDObject[]) => {
         listItem.selected = find(arr, { '@id': entityIRI });
-        listItem.selectedBlankNodes = this.getArrWithoutEntity(entityIRI, arr);
+        listItem.selectedBlankNodes = getArrWithoutEntity(entityIRI, arr);
         const bnodeIndex = this.getBnodeIndex(listItem.selectedBlankNodes);
         listItem.selectedBlankNodes.forEach(bnode => {
           listItem.blankNodes[bnode['@id']] = this.mc.jsonldToManchester(bnode['@id'], listItem.selectedBlankNodes, bnodeIndex, true);
@@ -681,13 +753,6 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
       .pipe(map(() => {
         return axiomObject;
       }));
-  }
-
-  /**
-   * Calculates the new label for the current selected entity in the currently selected {@link ShapesGraphListItem}
-   */
-  updateLabel(): void {
-    return;
   }
 
   /**
@@ -768,5 +833,32 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
    */
   getImportedSource(): string {
     return this.listItem?.nodeTab?.sourceShape || '';
+  }
+
+  /**
+   * Performs a SPARQL query to retrieve the entity names for all IRIs within the Shapes Graph record as represented by
+   * the provided {@link ShapesGraphListItem}. The query retrieves labels and names for each entity IRI and searches
+   * across the entire imports closure.
+   *
+   * @param {ShapesGraphListItem} [listItem=this.listItem] The ShapesGraphListItem representing the Shapes Graph record
+   * for which to retrieve the entity names. Defaults to the currently selected listItem.
+   * @returns {Observable<EntityNames>} An Observable that emits a {@link EntityNames} mapping each entity IRI to its
+   *    label and names.
+   */
+  getEntityNames(listItem: ShapesGraphListItem = this.listItem): Observable<EntityNames> {
+    return this.sparql.postQuery(this._ENTITY_NAMES_QUERY, listItem.versionedRdfRecord.recordId, SHAPES_STORE_TYPE,
+        listItem.versionedRdfRecord.branchId, listItem.versionedRdfRecord.commitId, true, true)
+      .pipe(map((results: SPARQLSelectResults) => {
+        const entityNames: EntityNames = {};
+        results.results.bindings.forEach(binding => {
+          const iri = binding.iri.value;
+          const names = binding.names.value.split('�');
+          entityNames[iri] = {
+            label: names[0],
+            names
+          };
+        });
+        return entityNames;
+      }));
   }
 }

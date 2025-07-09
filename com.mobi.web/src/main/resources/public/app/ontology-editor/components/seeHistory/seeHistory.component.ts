@@ -21,7 +21,7 @@
  * #L%
  */
 import { findIndex } from 'lodash';
-import { Component, ElementRef, ViewChild } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { finalize, first, switchMap } from 'rxjs/operators';
 
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
@@ -31,7 +31,7 @@ import { Commit } from '../../../shared/models/commit.interface';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { CommitDifference } from '../../../shared/models/commitDifference.interface';
 import { ProgressSpinnerService } from '../../../shared/components/progress-spinner/services/progressSpinner.service';
-import { condenseCommitId, isBlankNodeId } from '../../../shared/utility';
+import { condenseCommitId, getEntityName, isBlankNodeId } from '../../../shared/utility';
 
 /**
  * @class ontology-editor.SeeHistoryComponent
@@ -45,17 +45,22 @@ import { condenseCommitId, isBlankNodeId } from '../../../shared/utility';
     styleUrls: ['./seeHistory.component.scss']
 })
 
-export class SeeHistoryComponent{
+export class SeeHistoryComponent implements OnInit {
     commits: Commit[] = [];
     selectedCommit;
     resource: JSONLDObject;
     changes: CommitDifference;
     error = '';
+    entityName = '';
 
     @ViewChild('compiledResource') compiledResource: ElementRef;
     
     constructor(public os: OntologyStateService, public om: OntologyManagerService, public cm: CatalogManagerService,
                 private spinnerSvc: ProgressSpinnerService) {}
+    
+    ngOnInit(): void {
+      this.entityName = getEntityName(this.os.listItem.selected);
+    }
 
     goBack(): void {
         this.os.listItem.seeHistory = undefined;

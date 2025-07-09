@@ -29,9 +29,8 @@ import { of, throwError } from 'rxjs';
 
 import { CatalogManagerService } from './catalogManager.service';
 import { cleanStylesFromDOM } from '../../../test/ts/Shared';
-import { DC, DCTERMS, OWL, ONTOLOGYEDITOR, SKOS, SKOSXL, RDFS } from '../../prefixes';
+import { DC, DCTERMS, OWL, ONTOLOGYEDITOR, SKOS, RDFS } from '../../prefixes';
 import { JSONLDObject } from '../models/JSONLDObject.interface';
-import { OBJ_PROPERTY_VALUES_QUERY } from '../../queries';
 import { ONTOLOGY_STORE_TYPE } from '../../constants';
 import { OntologyDocument } from '../models/ontologyDocument.interface';
 import { OntologyManagerService } from './ontologyManager.service';
@@ -214,7 +213,6 @@ describe('Ontology Manager service', function() {
             'urn:hasTopping': ['urn:PizzaTopping']
         }
     };
-    const objQuery = OBJ_PROPERTY_VALUES_QUERY.replace('%PROPIRI%', objectPropertyId);
 
     beforeEach(() => {
         TestBed.configureTestingModule({
@@ -1919,75 +1917,6 @@ describe('Ontology Manager service', function() {
         });
         it('undefined when not present', function() {
             expect(service.getEntity([], classId)).toBe(undefined);
-        });
-    });
-    describe('getEntityName should return', function() {
-        beforeEach(function () {
-            this.entity = cloneDeep(emptyObj);
-        });
-        describe('returns the rdfs:label if present', function() {
-            it('and in english', function() {
-                this.entity[`${RDFS}label`] = [{'@value': 'hello', '@language': 'en'}, {'@value': 'hola', '@language': 'es'}];
-                expect(service.getEntityName(this.entity)).toEqual('hello');
-            });
-            it('and there is no english version', function() {
-                this.entity[`${RDFS}label`] = [{ '@value': title }];
-                expect(service.getEntityName(this.entity)).toEqual(title);
-            });
-        });
-        describe('returns the dcterms:title if present and no rdfs:label', function() {
-            it('and in english', function() {
-                this.entity[`${DCTERMS}title`] = [{'@value': 'hello', '@language': 'en'}, {'@value': 'hola', '@language': 'es'}];
-                expect(service.getEntityName(this.entity)).toEqual('hello');
-            });
-            it('and there is no english version', function() {
-                this.entity[`${DCTERMS}title`] = [{ '@value': title }];
-                expect(service.getEntityName(this.entity)).toEqual(title);
-            });
-        });
-        describe('returns the dc:title if present and no rdfs:label or dcterms:title', function() {
-            it('and in english', function() {
-                this.entity[`${DC}title`] = [{'@value': 'hello', '@language': 'en'}, {'@value': 'hola', '@language': 'es'}];
-                expect(service.getEntityName(this.entity)).toEqual('hello');
-            });
-            it('and there is no english version', function() {
-                this.entity[`${DC}title`] = [{ '@value': title }];
-                expect(service.getEntityName(this.entity)).toEqual(title);
-            });
-        });
-        describe('returns skos:prefLabel if present and no rdfs:label, dcterms:title, or dc:title', function() {
-            it('and in english', function() {
-                this.entity[`${SKOS}prefLabel`] = [{'@value': 'hello', '@language': 'en'}, {'@value': 'hola', '@language': 'es'}];
-                expect(service.getEntityName(this.entity)).toEqual('hello');
-            });
-            it('and there is no english version', function() {
-                this.entity[`${SKOS}prefLabel`] = [{ '@value': title }];
-                expect(service.getEntityName(this.entity)).toEqual(title);
-            });
-        });
-        describe('returns skos:altLabel if present and no rdfs:label, dcterms:title, or dc:title, or skos:prefLabel', function() {
-            it('and in english', function() {
-                this.entity[`${SKOS}altLabel`] = [{'@value': 'hello', '@language': 'en'}, {'@value': 'hola', '@language': 'es'}];
-                expect(service.getEntityName(this.entity)).toEqual('hello');
-            });
-            it('and there is no english version', function() {
-                this.entity[`${SKOS}altLabel`] = [{ '@value': title }];
-                expect(service.getEntityName(this.entity)).toEqual(title);
-            });
-        });
-        describe('returns skosxl:literalForm if present and no rdfs:label, dcterms:title, or dc:title, skos:prefLabel or skos:altLabel', function() {
-            it('and in english', function() {
-                this.entity[`${SKOSXL}literalForm`] = [{'@value': 'hello', '@language': 'en'}, {'@value': 'hola', '@language': 'es'}];
-                expect(service.getEntityName(this.entity)).toEqual('hello');
-            });
-            it('and there is no english version', function() {
-                this.entity[`${SKOSXL}literalForm`] = [{ '@value': title }];
-                expect(service.getEntityName(this.entity)).toEqual(title);
-            });
-        });
-        it('returns the @id if present and nothing else', function() {
-            this.entity['@id'] = 'http://test.com#ontology';
-            expect(service.getEntityName(this.entity)).toEqual('Ontology');
         });
     });
     describe('getEntityDescription should return', function() {

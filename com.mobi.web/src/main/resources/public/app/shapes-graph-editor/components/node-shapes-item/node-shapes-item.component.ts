@@ -22,7 +22,6 @@
  */
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 
-import { getBeautifulIRI } from '../../../shared/utility';
 import { NodeShapeInfo } from '../../models/nodeShapeInfo.interface';
 
 /**
@@ -52,9 +51,8 @@ export class NodeShapesItemComponent {
 
   @Output() onItemSelect = new EventEmitter<NodeShapeInfo>();
 
-  readonly getBeautifulIRI = getBeautifulIRI;
-
   constructor() {}
+
   /**
    * Emits the selected NodeShapeInfo item to parent component.
    * Triggered when a user selects an item from the UI.

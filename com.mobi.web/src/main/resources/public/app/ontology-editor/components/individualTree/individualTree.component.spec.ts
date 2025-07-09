@@ -269,7 +269,6 @@ describe('Individual Tree component', function() {
                         return 'recordId.Class A';
                     }
                 });
-                ontologyManagerServiceStub.entityNameProps = [`${DCTERMS}title`];
                 ontologyStateServiceStub.joinPath.and.callFake((path) => join(path, '.'));
             });
             describe('has filter text', function() {

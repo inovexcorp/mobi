@@ -41,7 +41,7 @@ import { forkJoin, Observable, throwError, of } from 'rxjs';
 import { DATASET, DCTERMS, OWL, RDF, RDFS, XSD } from '../../../prefixes';
 import { DATASET_STORE_TYPE } from '../../../constants';
 import { DatasetManagerService } from '../../../shared/services/datasetManager.service';
-import { getInputType, getPattern, getPropertyId, getPropertyValue } from '../../../shared/utility';
+import { getEntityName, getInputType, getPattern, getPropertyId, getPropertyValue } from '../../../shared/utility';
 import { JSONLDId } from '../../../shared/models/JSONLDId.interface';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { JSONLDValue } from '../../../shared/models/JSONLDValue.interface';
@@ -217,7 +217,7 @@ export class ExploreUtilsService {
                         const deprecated = includes(['true', true, '1', 1], getPropertyValue(clazz, `${OWL}deprecated`));
                         return {
                             id: clazz['@id'],
-                            title: this.om.getEntityName(clazz),
+                            title: getEntityName(clazz),
                             deprecated
                         };
                     }));

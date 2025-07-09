@@ -28,6 +28,7 @@ import { OntologyStateService } from '../../../shared/services/ontologyState.ser
 import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
 import { PropertyManagerService } from '../../../shared/services/propertyManager.service';
+import { entityNameProps } from '../../../shared/utility';
 
 /**
  * @class ontology-editor.ConceptsTabComponent
@@ -44,6 +45,7 @@ import { PropertyManagerService } from '../../../shared/services/propertyManager
     templateUrl: './conceptsTab.component.html'
 })
 export class ConceptsTabComponent implements OnInit, OnDestroy {
+    readonly entityNameProps = entityNameProps;
     @ViewChild('conceptsTab', { static: true }) conceptsTab: ElementRef;
     
     constructor(public os: OntologyStateService, public om: OntologyManagerService,

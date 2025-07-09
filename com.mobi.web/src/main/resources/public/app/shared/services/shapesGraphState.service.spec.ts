@@ -22,6 +22,7 @@
  */
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
+import { HttpResponse } from '@angular/common/http';
 
 import { MockPipe, MockProvider } from 'ng-mocks';
 import { Subject, of, throwError } from 'rxjs';
@@ -31,6 +32,7 @@ import { CATALOG, DCTERMS, OWL, RDF, SHAPESGRAPHEDITOR, XSD } from '../../prefix
 import { CatalogManagerService } from './catalogManager.service';
 import { cleanStylesFromDOM } from '../../../test/ts/Shared';
 import { Difference } from '../models/difference.class';
+import { EntityNames } from '../models/entityNames.interface';
 import { EventWithPayload } from '../models/eventWithPayload.interface';
 import { JSONLDObject } from '../models/JSONLDObject.interface';
 import { ManchesterConverterService } from './manchesterConverter.service';
@@ -51,6 +53,7 @@ import { ToastService } from './toast.service';
 import { UpdateRefsService } from './updateRefs.service';
 import { VersionedRdfUploadResponse } from '../models/versionedRdfUploadResponse.interface';
 import { ShapesGraphStateService } from './shapesGraphState.service';
+import { SHAPES_STORE_TYPE } from '../../constants';
 
 describe('Shapes Graph State service', function() {
   let service: ShapesGraphStateService;
@@ -60,6 +63,7 @@ describe('Shapes Graph State service', function() {
   let manchesterConverterStub: jasmine.SpyObj<ManchesterConverterService>;
   let mergeRequestManagerServiceStub: jasmine.SpyObj<MergeRequestManagerService>;
   let policyEnforcementStub: jasmine.SpyObj<PolicyEnforcementService>;
+  let policyManagerStub: jasmine.SpyObj<PolicyManagerService>;
   let prefixationStub: jasmine.SpyObj<PrefixationPipe>;
   let progressSpinnerStub: jasmine.SpyObj<ProgressSpinnerService>;
   let propertyManagerStub: jasmine.SpyObj<PropertyManagerService>;
@@ -130,13 +134,12 @@ describe('Shapes Graph State service', function() {
     policyEnforcementStub.permit = 'Permit';
     policyEnforcementStub.deny = 'Deny';
     policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.permit));
+    policyManagerStub = TestBed.inject(PolicyManagerService) as jasmine.SpyObj<PolicyManagerService>;
+    policyManagerStub.actionModify = 'Modify';
     propertyManagerStub = TestBed.inject(PropertyManagerService) as jasmine.SpyObj<PropertyManagerService>;
     prefixationStub = TestBed.inject(PrefixationPipe) as jasmine.SpyObj<PrefixationPipe>;
     prefixationStub.transform.and.callFake(a => a);
-    propertyManagerStub.defaultDatatypes = concat(
-      map(['anyURI', 'boolean', 'byte', 'dateTime', 'decimal', 'double', 'float', 'int', 'integer', 'language', 'long', 'string'], item => XSD + item),
-      map(['langString'], item => RDF + item)
-    );
+    
     progressSpinnerStub = TestBed.inject(ProgressSpinnerService) as jasmine.SpyObj<ProgressSpinnerService>;
 
     mergeRequestManagerServiceStub = TestBed.inject(MergeRequestManagerService) as jasmine.SpyObj<MergeRequestManagerService>;
@@ -160,6 +163,16 @@ describe('Shapes Graph State service', function() {
     listItem.masterBranchIri = masterBranchIri;
     listItem.userCanModify = true;
     listItem.userCanModifyMaster = true;
+    propertyManagerStub.defaultDatatypes = concat(
+      map(['anyURI', 'boolean', 'byte', 'dateTime', 'decimal', 'double', 'float', 'int', 'integer', 'language', 'long', 'string'], item => {
+        listItem.dataPropertyRange[XSD + item] = XSD.slice(0, -1);
+        return XSD + item;
+      }),
+      map(['langString'], item => {
+        listItem.dataPropertyRange[RDF + item] = RDF.slice(0, -1);
+        return RDF + item;
+      })
+    );
     service = TestBed.inject(ShapesGraphStateService);
     service.initialize();
 
@@ -185,6 +198,7 @@ describe('Shapes Graph State service', function() {
     listItem = null;
     manchesterConverterStub = null;
     policyEnforcementStub = null;
+    policyManagerStub = null;
     progressSpinnerStub = null;
     settingManagerStub = null;
     shapesGraphManagerStub = null;
@@ -205,7 +219,20 @@ describe('Shapes Graph State service', function() {
     expect(settingManagerStub.getDefaultNamespace).toHaveBeenCalledWith(`${SHAPESGRAPHEDITOR}ShapesGraphRecord`);
   }));
   it('should retrieve the name of an entity for shapes graphs', function() {
+    listItem.entityInfo = {
+      'http://test.com/AnotherEntity': {
+        label: 'Another',
+        names: ['Blah']
+      },
+      'http://test.com/MissingLabel': {
+        label: '',
+        names: []
+      }
+    };
+    service.listItem = listItem;
     expect(service.getEntityName('http://test.com/TestEntity')).toEqual('Test Entity');
+    expect(service.getEntityName('http://test.com/MissingLabel')).toEqual('Missing Label');
+    expect(service.getEntityName('http://test.com/AnotherEntity')).toEqual('Another');
   });
   describe('getIdentifierIRI retrieves the shapes graph IRI of a ShapesGraphRecord', function() {
     it('if provided JSON-LD', function() {
@@ -678,6 +705,261 @@ describe('Shapes Graph State service', function() {
         });
     });
   });
+  describe('should create a listItem', () => {
+    const branches: JSONLDObject[] = [
+      { '@id': branchId, [`${DCTERMS}title`]: [{ '@value': 'Other Branch'}] },
+      { '@id': masterBranchIri, [`${DCTERMS}title`]: [{ '@value': 'MASTER' }] }
+    ];
+    const entityNames: EntityNames = {
+      'urn:test': { label: 'Test', names: [] }
+    };
+    beforeEach(() => {
+      shapesGraphManagerStub.getShapesGraphImports.and.returnValue(of({
+        nonImportedIris: ['class'],
+        failedImports: ['failed'],
+        importedOntologies: [
+          { id: 'other-record', ontologyId: 'other-ont', iris: ['other-class'] }
+        ]
+      }));
+      shapesGraphManagerStub.getShapesGraphContent.and.returnValue(of('content'));
+      catalogManagerStub.getRecordBranches.and.returnValue(of(new HttpResponse<JSONLDObject[]>({ body: branches })))
+    });
+    describe('if getShapesGraphIRI succeeds', () => {
+      beforeEach(() => {
+        shapesGraphManagerStub.getShapesGraphIRI.and.returnValue(of(shapesGraphId));
+      });
+      describe('with all first requests passing', () => {
+        let expectedListItem: ShapesGraphListItem;
+        beforeEach(() => {
+          expectedListItem = cloneDeep(listItem);
+          expectedListItem.versionedRdfRecord.tagId = tagId;
+          expectedListItem.failedImports = ['failed'];
+          expectedListItem.importedOntologyIds = ['other-record'];
+          expectedListItem.importedOntologies = [{ id: 'other-record', ontologyId: 'other-ont' }];
+          expectedListItem.subjectImportMap = {
+            'other-class': { imported: true, ontologyIds: ['other-ont'] },
+            'class': { imported: false }
+          };
+          expectedListItem.content = 'content';
+          expectedListItem.entityInfo = entityNames;
+          expectedListItem.userCanModifyMaster = false;
+          spyOn(service, 'getEntityNames').and.returnValue(of(entityNames));
+        });
+        afterEach(() => {
+          expectedListItem = undefined;
+        });
+        it('successfully', fakeAsync(() => {
+          expectedListItem.userCanModifyMaster = true;
+          spyOn(service, 'setSelected').and.returnValue(of(null));
+          service.createListItem(recordId, branchId, commitId, tagId, new Difference(), true, recordTitle).subscribe(
+            result => {
+              expect(result).toEqual(expectedListItem);
+            }, () => fail('Observable should have rejected'));
+          tick();
+          expect(shapesGraphManagerStub.getShapesGraphIRI).toHaveBeenCalledWith(recordId, branchId, commitId);
+          expect(shapesGraphManagerStub.getShapesGraphContent).toHaveBeenCalledWith(recordId, branchId, commitId);
+          expect(catalogManagerStub.getRecordBranches).toHaveBeenCalledWith(recordId, catalogId);
+          expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({
+            resourceId: recordId,
+            actionId: policyManagerStub.actionModify
+          });
+          expect(service.getEntityNames).toHaveBeenCalledWith(jasmine.any(ShapesGraphListItem));
+          expect(service.setSelected).toHaveBeenCalledWith(shapesGraphId, expectedListItem);
+          expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({
+            resourceId: recordId,
+            actionId: policyManagerStub.actionModify,
+            actionAttrs: { [`${CATALOG}branch`]: masterBranchIri }
+          });
+        }));
+        it('unless evaluateRequest fails', fakeAsync(() => {
+          spyOn(service, 'setSelected').and.returnValue(of(null));
+          policyEnforcementStub.evaluateRequest.and.callFake(obj => {
+            if (obj.actionAttrs) {
+              return throwError(error);
+            } else {
+              return of(policyEnforcementStub.permit);
+            }
+          });
+          service.createListItem(recordId, branchId, commitId, tagId, new Difference(), true, recordTitle).subscribe(
+            () => fail('Observable should have rejected'), result => {
+              expect(result).toEqual(error);
+            });
+          tick();
+          expect(shapesGraphManagerStub.getShapesGraphIRI).toHaveBeenCalledWith(recordId, branchId, commitId);
+          expect(shapesGraphManagerStub.getShapesGraphContent).toHaveBeenCalledWith(recordId, branchId, commitId);
+          expect(catalogManagerStub.getRecordBranches).toHaveBeenCalledWith(recordId, catalogId);
+          expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({
+            resourceId: recordId,
+            actionId: policyManagerStub.actionModify
+          });
+          expect(service.getEntityNames).toHaveBeenCalledWith(jasmine.any(ShapesGraphListItem));
+          expect(service.setSelected).toHaveBeenCalledWith(shapesGraphId, expectedListItem);
+          expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({
+            resourceId: recordId,
+            actionId: policyManagerStub.actionModify,
+            actionAttrs: { [`${CATALOG}branch`]: masterBranchIri }
+          });
+        }));
+        it('unless setSelected fails', fakeAsync(() => {
+          spyOn(service, 'setSelected').and.returnValue(throwError(error));
+          service.createListItem(recordId, branchId, commitId, tagId, new Difference(), true, recordTitle).subscribe(
+            () => fail('Observable should have rejected'), result => {
+              expect(result).toEqual(error);
+            });
+          tick();
+          expect(shapesGraphManagerStub.getShapesGraphIRI).toHaveBeenCalledWith(recordId, branchId, commitId);
+          expect(shapesGraphManagerStub.getShapesGraphContent).toHaveBeenCalledWith(recordId, branchId, commitId);
+          expect(catalogManagerStub.getRecordBranches).toHaveBeenCalledWith(recordId, catalogId);
+          expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({
+            resourceId: recordId,
+            actionId: policyManagerStub.actionModify
+          });
+          expect(service.getEntityNames).toHaveBeenCalledWith(jasmine.any(ShapesGraphListItem));
+          expect(service.setSelected).toHaveBeenCalledWith(shapesGraphId, expectedListItem);
+          expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({
+            resourceId: recordId,
+            actionId: policyManagerStub.actionModify,
+            actionAttrs: { [`${CATALOG}branch`]: masterBranchIri }
+          });
+        }));
+      });
+      it('unless getEntityNames fails', fakeAsync(() => {
+        spyOn(service, 'setSelected').and.returnValue(of(null));
+        spyOn(service, 'getEntityNames').and.returnValue(throwError(error));
+        service.createListItem(recordId, branchId, commitId, tagId, new Difference(), true, recordTitle).subscribe(
+          () => fail('Observable should have rejected'), result => {
+            expect(result).toEqual(error);
+          });
+        tick();
+        expect(shapesGraphManagerStub.getShapesGraphIRI).toHaveBeenCalledWith(recordId, branchId, commitId);
+        expect(shapesGraphManagerStub.getShapesGraphContent).toHaveBeenCalledWith(recordId, branchId, commitId);
+        expect(catalogManagerStub.getRecordBranches).toHaveBeenCalledWith(recordId, catalogId);
+        expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({
+          resourceId: recordId,
+          actionId: policyManagerStub.actionModify
+        });
+        expect(service.getEntityNames).toHaveBeenCalledWith(jasmine.any(ShapesGraphListItem));
+        expect(service.setSelected).not.toHaveBeenCalled();
+        expect(policyEnforcementStub.evaluateRequest).not.toHaveBeenCalledWith({
+          resourceId: recordId,
+          actionId: policyManagerStub.actionModify,
+          actionAttrs: { [`${CATALOG}branch`]: masterBranchIri }
+        });
+      }));
+      it('unless evaluateRequest fails', fakeAsync(() => {
+        spyOn(service, 'setSelected').and.returnValue(of(null));
+        spyOn(service, 'getEntityNames').and.returnValue(of(entityNames));
+        policyEnforcementStub.evaluateRequest.and.returnValue(throwError(error));
+        service.createListItem(recordId, branchId, commitId, tagId, new Difference(), true, recordTitle).subscribe(
+          () => fail('Observable should have rejected'), result => {
+            expect(result).toEqual(error);
+          });
+        tick();
+        expect(shapesGraphManagerStub.getShapesGraphIRI).toHaveBeenCalledWith(recordId, branchId, commitId);
+        expect(shapesGraphManagerStub.getShapesGraphContent).toHaveBeenCalledWith(recordId, branchId, commitId);
+        expect(catalogManagerStub.getRecordBranches).toHaveBeenCalledWith(recordId, catalogId);
+        expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({
+          resourceId: recordId,
+          actionId: policyManagerStub.actionModify
+        });
+        expect(service.getEntityNames).toHaveBeenCalledWith(jasmine.any(ShapesGraphListItem));
+        expect(service.setSelected).not.toHaveBeenCalled();
+        expect(policyEnforcementStub.evaluateRequest).not.toHaveBeenCalledWith({
+          resourceId: recordId,
+          actionId: policyManagerStub.actionModify,
+          actionAttrs: { [`${CATALOG}branch`]: masterBranchIri }
+        });
+      }));
+      it('unless getRecordBranches fails', fakeAsync(() => {
+        spyOn(service, 'setSelected').and.returnValue(of(null));
+        spyOn(service, 'getEntityNames').and.returnValue(of(entityNames));
+        catalogManagerStub.getRecordBranches.and.returnValue(throwError(error));
+        service.createListItem(recordId, branchId, commitId, tagId, new Difference(), true, recordTitle).subscribe(
+          () => fail('Observable should have rejected'), result => {
+            expect(result).toEqual(error);
+          });
+        tick();
+        expect(shapesGraphManagerStub.getShapesGraphIRI).toHaveBeenCalledWith(recordId, branchId, commitId);
+        expect(shapesGraphManagerStub.getShapesGraphContent).toHaveBeenCalledWith(recordId, branchId, commitId);
+        expect(catalogManagerStub.getRecordBranches).toHaveBeenCalledWith(recordId, catalogId);
+        expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({
+          resourceId: recordId,
+          actionId: policyManagerStub.actionModify
+        });
+        expect(service.getEntityNames).toHaveBeenCalledWith(jasmine.any(ShapesGraphListItem));
+        expect(service.setSelected).not.toHaveBeenCalled();
+        expect(policyEnforcementStub.evaluateRequest).not.toHaveBeenCalledWith({
+          resourceId: recordId,
+          actionId: policyManagerStub.actionModify,
+          actionAttrs: { [`${CATALOG}branch`]: masterBranchIri }
+        });
+      }));
+      it('unless getShapesGraphContent fails', fakeAsync(() => {
+        spyOn(service, 'setSelected').and.returnValue(of(null));
+        spyOn(service, 'getEntityNames').and.returnValue(of(entityNames));
+        shapesGraphManagerStub.getShapesGraphContent.and.returnValue(throwError(error));
+        service.createListItem(recordId, branchId, commitId, tagId, new Difference(), true, recordTitle).subscribe(
+          () => fail('Observable should have rejected'), result => {
+            expect(result).toEqual(error);
+          });
+        tick();
+        expect(shapesGraphManagerStub.getShapesGraphIRI).toHaveBeenCalledWith(recordId, branchId, commitId);
+        expect(shapesGraphManagerStub.getShapesGraphContent).toHaveBeenCalledWith(recordId, branchId, commitId);
+        expect(catalogManagerStub.getRecordBranches).toHaveBeenCalledWith(recordId, catalogId);
+        expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({
+          resourceId: recordId,
+          actionId: policyManagerStub.actionModify
+        });
+        expect(service.getEntityNames).toHaveBeenCalledWith(jasmine.any(ShapesGraphListItem));
+        expect(service.setSelected).not.toHaveBeenCalled();
+        expect(policyEnforcementStub.evaluateRequest).not.toHaveBeenCalledWith({
+          resourceId: recordId,
+          actionId: policyManagerStub.actionModify,
+          actionAttrs: { [`${CATALOG}branch`]: masterBranchIri }
+        });
+      }));
+      it('unless getShapesGraphImports fails', fakeAsync(() => {
+        spyOn(service, 'setSelected').and.returnValue(of(null));
+        spyOn(service, 'getEntityNames').and.returnValue(of(entityNames));
+        shapesGraphManagerStub.getShapesGraphImports.and.returnValue(throwError(error));
+        service.createListItem(recordId, branchId, commitId, tagId, new Difference(), true, recordTitle).subscribe(
+          () => fail('Observable should have rejected'), result => {
+            expect(result).toEqual(error);
+          });
+        tick();
+        expect(shapesGraphManagerStub.getShapesGraphIRI).toHaveBeenCalledWith(recordId, branchId, commitId);
+        expect(shapesGraphManagerStub.getShapesGraphContent).toHaveBeenCalledWith(recordId, branchId, commitId);
+        expect(catalogManagerStub.getRecordBranches).toHaveBeenCalledWith(recordId, catalogId);
+        expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({
+          resourceId: recordId,
+          actionId: policyManagerStub.actionModify
+        });
+        expect(service.getEntityNames).toHaveBeenCalledWith(jasmine.any(ShapesGraphListItem));
+        expect(service.setSelected).not.toHaveBeenCalled();
+        expect(policyEnforcementStub.evaluateRequest).not.toHaveBeenCalledWith({
+          resourceId: recordId,
+          actionId: policyManagerStub.actionModify,
+          actionAttrs: { [`${CATALOG}branch`]: masterBranchIri }
+        });
+      }));
+    });
+    it('unless getShapesGraphIRI fails', fakeAsync(() => {
+      spyOn(service, 'setSelected').and.returnValue(of(null));
+      spyOn(service, 'getEntityNames').and.returnValue(of(entityNames));
+      shapesGraphManagerStub.getShapesGraphIRI.and.returnValue(throwError(error));
+      service.createListItem(recordId, branchId, commitId, tagId, new Difference(), true, recordTitle).subscribe(
+        () => fail('Observable should have rejected'), result => {
+          expect(result).toEqual(error);
+        });
+      tick();
+      expect(shapesGraphManagerStub.getShapesGraphIRI).toHaveBeenCalledWith(recordId, branchId, commitId);
+      expect(shapesGraphManagerStub.getShapesGraphContent).not.toHaveBeenCalled();
+      expect(catalogManagerStub.getRecordBranches).not.toHaveBeenCalled();
+      expect(policyEnforcementStub.evaluateRequest).not.toHaveBeenCalled();
+      expect(service.getEntityNames).not.toHaveBeenCalledWith();
+      expect(service.setSelected).not.toHaveBeenCalled();
+    }));
+  });
   describe('onIriEdit calls the appropriate manager methods', function() {
     const iriBegin = 'www.example.com/test-record';
     const iriThen = '/';
@@ -768,18 +1050,66 @@ describe('Shapes Graph State service', function() {
         newIRI, exclusionList);
     }));
   });
-  describe('getTypesLabel functions properly', function() {
-    it('when @type is empty', function() {
-      expect(service.getTypesLabel({
-        '@id': 'id',
-        '@type': []
-      })).toEqual('');
-    });
-    it('when @type has items', function() {
-      expect(service.getTypesLabel({
-        '@id': 'id',
-        '@type': ['test', 'test2']
-      })).toEqual('test, test2');
-    });
+  // TODO: Add test for setSelected
+  // TODO: Add test for getPropValueDisplay
+  // TODO: Add test for removeProperty
+  // TODO: Add test for isSelectedImported
+  // TODO: Add test for isImported
+  // TODO: Add test for checkIri
+  // TODO: Add test for getImportedSource
+  describe('should retrieve entity names from the shapes graph record', () => {
+    it('successfully', fakeAsync(() => {
+      sparqlManagerStub.postQuery.and.returnValue(of({
+        head: {
+          vars: ['iri', 'names']
+        },
+        results: {
+          bindings: [
+            {
+              iri: {
+                value: 'urn:test',
+                type: `${XSD}string`
+              },
+              names: {
+                value: 'Test�Testing�WOW',
+                type: `${XSD}string`
+              }
+            },
+            {
+              iri: {
+                value: 'urn:example',
+                type: `${XSD}string`
+              },
+              names: {
+                value: 'Example',
+                type: `${XSD}string`
+              }
+            }
+          ]
+        }
+      }));
+      service.getEntityNames(listItem).subscribe(result => {
+        expect(result).toEqual({
+          'urn:test': {
+            label: 'Test',
+            names: ['Test', 'Testing', 'WOW']
+          },
+          'urn:example': {
+            label: 'Example',
+            names: ['Example']
+          }
+        });
+      }, () => fail('Observable should have succeeded'));
+      tick();
+      expect(sparqlManagerStub.postQuery).toHaveBeenCalledWith(jasmine.any(String), recordId, SHAPES_STORE_TYPE, branchId, commitId, true, true);
+    }));
+    it('unless an error occurs', fakeAsync(() => {
+      sparqlManagerStub.postQuery.and.returnValue(throwError(error));
+      service.getEntityNames(listItem).subscribe(() => fail('Observable should have failed'), result => {
+        expect(result).toEqual(error);
+      });
+      tick();
+      expect(sparqlManagerStub.postQuery).toHaveBeenCalledWith(jasmine.any(String), recordId, SHAPES_STORE_TYPE, branchId, commitId, true, true);
+    }));
   });
 });

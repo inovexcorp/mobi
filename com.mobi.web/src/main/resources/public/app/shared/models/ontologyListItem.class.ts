@@ -103,7 +103,6 @@ export class OntologyListItem extends VersionedRdfListItem {
     flatEverythingTree: (HierarchyNode|ParentNode)[]
     concepts: Hierarchy
     conceptSchemes: Hierarchy
-    entityInfo: EntityNames
     classesAndIndividuals: {[key: string]: string[]}
     classesWithIndividuals: string[]
     individualsParentPath: string[]
@@ -186,7 +185,6 @@ export class OntologyListItem extends VersionedRdfListItem {
             circularMap: {},
             flat: []
         };
-        this.entityInfo = {};
         this.classesAndIndividuals = {};
         this.classesWithIndividuals = [];
         this.individualsParentPath = [];

@@ -24,7 +24,9 @@ export interface NodeShapeInfo {
   iri: string;
   name: string;
   targetType: string;
+  targetTypeLabel?: string; // Used to display the target type
   targetValue: string;
+  targetValueLabel?: string; // Used to display the value of the target
   imported: boolean;
   sourceOntologyIRI: string;
 }

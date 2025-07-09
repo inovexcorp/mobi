@@ -21,7 +21,6 @@
  * #L%
  */
 import {
-    concat,
     endsWith,
     filter,
     find,
@@ -32,9 +31,7 @@ import {
     indexOf,
     intersection,
     isMatch,
-    some,
-    uniq
-} from 'lodash';
+    some} from 'lodash';
 import { Injectable } from '@angular/core';
 import * as JSZip from 'jszip';
 import { from, Observable, of, throwError } from 'rxjs';
@@ -44,16 +41,14 @@ import { HttpClient, HttpErrorResponse, HttpHeaders, HttpResponse } from '@angul
 import { CatalogManagerService } from './catalogManager.service';
 import {
     createHttpParams,
-    entityNameProps,
     getDctermsValue,
-    getEntityName,
     getErrorDataObject,
     getPropertyValue,
     handleError,
     handleErrorObject,
     isBlankNode
 } from '../utility';
-import { DC, ONTOLOGYEDITOR, OWL, POLICY, RDFS, SKOS, SKOSXL } from '../../prefixes';
+import { DC, ONTOLOGYEDITOR, OWL, POLICY, RDFS, SKOS } from '../../prefixes';
 import { EntityNames } from '../models/entityNames.interface';
 import { HierarchyResponse } from '../models/hierarchyResponse.interface';
 import { IriList } from '../models/iriList.interface';
@@ -91,16 +86,6 @@ export class OntologyManagerService {
         private _sm: SparqlManagerService,
         private _pep: PolicyEnforcementService,
         private _spinnerSrv: ProgressSpinnerService) {}
-
-    /**
-     * 'entityNameProps' holds an array of properties used to determine an entity name.
-     * @type {string[]}
-     */
-    entityNameProps = [...entityNameProps,
-        `${SKOS}prefLabel`, 
-        `${SKOS}altLabel`, 
-        `${SKOSXL}literalForm`
-    ];
 
     /**
      * Initializes the `catalogId` variable.
@@ -1169,32 +1154,6 @@ export class OntologyManagerService {
             }
         });
         return retValue;
-    }
-    /**
-     * Gets the provided entity's name. This name is either the `rdfs:label`, `dcterms:title`, or `dc:title`.
-     * If none of those annotations exist, it returns the beautified `@id`. Prioritizes english language tagged
-     * values over the others. Returns a string for the entity name.
-     *
-     * @param {JSONLDObject} entity The entity you want the name of.
-     * @returns {string} The beautified IRI string.
-     */
-    getEntityName(entity: JSONLDObject): string {
-        return getEntityName(entity);
-    }
-    /**
-     * Gets the provided entity's names. These names are an array of the '@value' values for the entityNameProps.
-     *
-     * @param {JSONLDObject} entity The entity you want the names of.
-     * @returns {string[]} The names for the entityNameProps.
-     */
-    getEntityNames(entity: JSONLDObject): string[] {
-        let names = [];
-        forEach(this.entityNameProps, prop => {
-            if (has(entity, prop)) {
-                names = concat(names, (get(entity, prop, []).map(val => val['@value'])));
-            } 
-        });
-        return uniq(names);
     }
     /**
      * Gets the provided entity's description. This description is either the `rdfs:comment`,

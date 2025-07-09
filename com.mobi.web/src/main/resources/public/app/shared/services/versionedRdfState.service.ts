@@ -22,7 +22,7 @@
  */
 import { HttpResponse } from '@angular/common/http';
 
-import { cloneDeep, concat, find, get, head, includes, isEmpty, isEqual, join, mergeWith, orderBy, remove } from 'lodash';
+import { cloneDeep, concat, find, get, has, head, includes, isEmpty, isEqual, join, mergeWith, orderBy, remove } from 'lodash';
 import { Observable, of, throwError } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
 import { v4 } from 'uuid';
@@ -30,7 +30,7 @@ import { v4 } from 'uuid';
 import { CATALOG } from '../../prefixes';
 import { CatalogManagerService } from './catalogManager.service';
 import { CommitDifference } from '../models/commitDifference.interface';
-import { condenseCommitId, getPropertyId, isBlankNodeId, mergingArrays } from '../utility';
+import { condenseCommitId, getEntityName, getEntityNames, getPropertyId, isBlankNodeId, mergingArrays } from '../utility';
 import { Difference } from '../models/difference.class';
 import { JSONLDId } from '../models/JSONLDId.interface';
 import { JSONLDObject } from '../models/JSONLDObject.interface';
@@ -856,20 +856,6 @@ export abstract class VersionedRdfState<T extends VersionedRdfListItem> {
   }
 
   /**
-   * Returns a new array excluding the entity with the specified IRI.
-   *
-   * @param {string} iri - The IRI of the entity to exclude.
-   * @param {JSONLDObject[]} arr - The array of JSON-LD objects to filter.
-   * @returns {JSONLDObject[]} A new array without the entity matching the IRI.
-   */
-  getArrWithoutEntity(iri: string, arr: JSONLDObject[]): JSONLDObject[] {
-    if (!arr || !arr.length) {
-      return [];
-    }
-    return arr.filter(entity => entity['@id'] !== iri);
-  }
-
-  /**
    * Creates an index for the blank nodes so that the manchester syntax logic will work correctly.
    * 
    * @param {JSONLDObject[]} [selectedBlankNodes=listItem.selectedBlankNodes] The JSON-LD array of blank nodes to index
@@ -903,6 +889,18 @@ export abstract class VersionedRdfState<T extends VersionedRdfListItem> {
   }
 
   /**
+   * Calculates the new label for the current selected entity in the currently selected {@link VersionedRdfListItem}
+   */
+  updateLabel(): void {
+    const newLabel = getEntityName(this.listItem.selected);
+    const iri = this.listItem.selected['@id'];
+    if (has(this.listItem.entityInfo, `['${iri}'].label`) && this.listItem.entityInfo[iri].label !== newLabel) {
+        this.listItem.entityInfo[iri].label = newLabel;
+        this.listItem.entityInfo[iri].names = getEntityNames(this.listItem.selected);
+    }
+  }
+
+  /**
    * Creates a display of the specified property value on the selected entity on the currently selected
    * {@link VersionedRdfListItem}
    *
@@ -921,11 +919,6 @@ export abstract class VersionedRdfState<T extends VersionedRdfListItem> {
    * @return {Observable} An Observable that resolves with the JSON-LD value object that was removed
    */
   abstract removeProperty(key: string, index: number): Observable<JSONLDId | JSONLDValue>;
-
-  /**
-   * Calculates the new label for the current selected entity in the currently selected {@link VersionedRdfListItem}
-   */
-  abstract updateLabel(): void;
 
   /**
    * Determines whether the provided id is "linkable", i.e. that a link could be made to take a user to that entity.

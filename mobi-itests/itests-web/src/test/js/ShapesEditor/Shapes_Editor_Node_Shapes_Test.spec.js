@@ -24,8 +24,6 @@ var path = require('path');
 var adminUsername = 'admin'
 var adminPassword = 'admin'
 var shapes_graph = path.resolve(__dirname + '/../../resources/rdf_files/UHTC_Node_List.ttl');
-var search_bar = 'app-node-shapes-tab app-node-shapes-list search-bar';
-var node_shapes_list = 'app-node-shapes-tab app-node-shapes-list cdk-virtual-scroll-viewport';
 
 module.exports = {
     '@tags': ['sanity', 'shapes-editor'],
@@ -54,52 +52,56 @@ module.exports = {
     },
 
     'Step 4: Navigate to Node Shapes tab': function(browser) {
-        browser
-            .useXpath()
-            .waitForElementVisible('//app-shapes-tabs-holder//mat-tab-group//div[text()[contains(., "Node Shapes")]]')
-            .click('//app-shapes-tabs-holder//mat-tab-group//div[text()[contains(., "Node Shapes")]]')
-        browser.globals.wait_for_no_spinners(browser);
+        browser.page.shapesEditorPage().switchToNodeShapesTab();
     },
 
-    'Step 6: Verify Node Shapes List': function(browser) {
-        browser
-            .useCss()
-            .assert.visible(node_shapes_list);
-        browser.assert.visible(search_bar);
-        browser.assert.elementsCount(node_shapes_list + ' app-node-shapes-item', 2);
+    'Step 5: Verify Node Shapes List': function(browser) {
+        browser.page.shapesEditorPage().verifyNodeShapesTab();
+        browser.page.shapesEditorPage().verifyNodeShapesNum(2);
+        // browser
+        //     .useCss()
+        //     .assert.visible(node_shapes_list);
+        // browser.assert.visible(search_bar);
+        // browser.assert.elementsCount(node_shapes_list + ' app-node-shapes-item', 2);
         browser.page.shapesEditorPage()
             .verifyNodeShapeListItem({
-                title: 'UHTC Material shapes graph',
+                title: 'Test Node shape',
                 iri: 'http://matonto.org/ontologies/uhtc#Material',
-                target: 'http://matonto.org/ontologies/uhtc#Material',
+                target: 'Test Node shape',
                 type: 'Implicit Target',
                 imported: false
             });
-
         browser.page.shapesEditorPage()
             .verifyNodeShapeListItem({
                 title: 'Test Element node shape',
                 iri: 'http://schema.org/ElementShape',
-                target: 'http://matonto.org/ontologies/uhtc#Element',
+                target: 'Element',
                 type: 'Target Class',
                 imported: false
             });
     },
 
-    'Step 7: Verify search functionality': function(browser) {
-        browser.useCss()
-            .click(search_bar)
-        browser.element('//app-node-shapes-tab//app-node-shapes-list//search-bar//input').sendKeys('Element');
-        browser.element('//app-node-shapes-tab//app-node-shapes-list//search-bar//input').sendKeys(browser.Keys.ENTER);
-        browser.globals.wait_for_no_spinners(browser);
-        browser.useCss().assert.elementsCount(node_shapes_list + ' app-node-shapes-item', 1);
+    'Step 6: Verify search functionality': function(browser) {
+        // browser.useCss()
+        //     .click(search_bar)
+        // browser.element('//app-node-shapes-tab//app-node-shapes-list//search-bar//input').sendKeys('Element');
+        // browser.element('//app-node-shapes-tab//app-node-shapes-list//search-bar//input').sendKeys(browser.Keys.ENTER);
+        // browser.globals.wait_for_no_spinners(browser);
+        browser.page.shapesEditorPage().searchNodeShapes('Element');
+        browser.page.shapesEditorPage().verifyNodeShapesNum(1);
+        // browser.useCss().assert.elementsCount(node_shapes_list + ' app-node-shapes-item', 1);
         browser.page.shapesEditorPage()
             .verifyNodeShapeListItem({
                 title: 'Test Element node shape',
                 iri: 'http://schema.org/ElementShape',
-                target: 'http://matonto.org/ontologies/uhtc#Element',
+                target: 'Element',
                 type: 'Target Class',
                 imported: false
             });
+    },
+
+    'Step 7: Verify selecting node shape': function(browser) {
+        browser.page.shapesEditorPage()
+            .selectNodeShape('Test Element node shape');
     }
 }
