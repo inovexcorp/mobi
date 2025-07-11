@@ -28,7 +28,7 @@
         <div class="avatar-box rounded-circle align-middle"><img src="images/avatar.png" alt="User avatar"/></div>
         <div class="user-title flex-1 remove-min-width text-truncate ml-1 align-middle collapsed-hide" *ngIf="!collapsedNav">{{getUserDisplay()}}</div>
     </a>
-    <ul class="main-nav nav flex-column flex-grow-1">
+    <ul class="main-nav flex-grow-1">
         <li class="nav-item" *ngFor="let per of perspectives" [ngClass]="{'active': router.isActive(per.route, false), 'sub-item': per.sub}" [routerLinkActive]="'active'">
             <a class="nav-link" [routerLink]="[per.route]">
                 <i *ngIf="!per.mat" class="fa fa-{{per.icon}}"></i>
