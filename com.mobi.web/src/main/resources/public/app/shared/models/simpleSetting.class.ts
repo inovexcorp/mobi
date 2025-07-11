@@ -24,7 +24,7 @@ import { v4 } from 'uuid';
 import { sortBy } from 'lodash';
 
 import { Setting } from './setting.interface';
-import { DCTERMS, OWL, RDFS, SETTING, SHACL } from '../../prefixes';
+import { DCTERMS, OWL, RDFS, SETTING, SH } from '../../prefixes';
 import { JSONLDObject } from './JSONLDObject.interface';
 import { SHACLFormFieldConfig } from '../../shacl-forms/models/shacl-form-field-config';
 import { FormValues } from '../../shacl-forms/models/form-values.interface';
@@ -45,11 +45,11 @@ export class SimpleSetting implements Setting {
 
   constructor(settingJson: JSONLDObject, shapeDefinitions: {[key: string]: JSONLDObject}) {
     this._json = settingJson;
-    getPropertyIds(this.json, `${SHACL}property`).forEach(propertyId => {
+    getPropertyIds(this.json, `${SH}property`).forEach(propertyId => {
       this._formFieldPropertyShapes.push(shapeDefinitions[propertyId]);
     });
     this._formFieldPropertyShapes.forEach(formField => {
-      this._formFieldProperties.push(getPropertyId(formField, `${SHACL}path`));
+      this._formFieldProperties.push(getPropertyId(formField, `${SH}path`));
       this._formFieldConfigs.push(new SHACLFormFieldConfig(this.json, formField['@id'], Object.values(shapeDefinitions)));
     });
   }

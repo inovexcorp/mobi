@@ -22,11 +22,22 @@
  */
 
 const parentEl = 'shapes-graph-editor-page';
+const nodeShapesTab = 'app-node-shapes-tab';
+const nodeShapesListEl = `${nodeShapesTab} app-node-shapes-list`;
+const nodeShapesDisplay = `${nodeShapesTab} app-node-shapes-display`;
 
 const propertyValues = `${parentEl} property-values`;
-const nodeItemSelectorXpath = `//${parentEl}//app-node-shapes-tab//app-node-shapes-list//cdk-virtual-scroll-viewport//app-node-shapes-item`;
-const nodeShapesSearchBar = 'app-node-shapes-tab app-node-shapes-list search-bar';
-const nodeShapesList = 'app-node-shapes-tab app-node-shapes-list cdk-virtual-scroll-viewport';
+const nodeItemSelectorXpath = `//${parentEl}//${nodeShapesTab}//app-node-shapes-list//cdk-virtual-scroll-viewport//app-node-shapes-item`;
+const nodeShapesSearchBar = `${nodeShapesListEl} search-bar`;
+const nodeShapesList = `${nodeShapesListEl} cdk-virtual-scroll-viewport`;
+
+function getPropertyShapeSelector(idOrIdx) {
+  if (typeof idOrIdx === 'number') {
+    return `//app-node-shapes-tab//app-node-shapes-display//app-property-shapes-display//mat-card[${idOrIdx}]`
+  } else {
+    return `//app-node-shapes-tab//app-node-shapes-display//app-property-shapes-display//mat-card//mat-card-title//h5[text()[contains(., "${idOrIdx}")]]`;
+  }
+}
 
 const shapesEditorCommands = {
   openRecordSelect: function() {
@@ -157,6 +168,22 @@ const nodeShapesTabCommands = {
       .api.globals.wait_for_no_spinners(this);
     return this.useXpath()
       .waitForElementVisible(`//app-node-shapes-display//div[contains(@class, "selected-heading")]//span[text()[contains(.,"${nodeShapeTitle}")]]`);
+  },
+
+  verifyPropertyShapesNum: function(num) {
+    return this.useCss()
+      .waitForElementVisible(`${nodeShapesDisplay} app-property-shapes-display`)
+      .assert.elementsCount(`${nodeShapesDisplay} app-property-shapes-display .property-shape`, num);
+  },
+
+  verifyPropertyShapeDisplay: function(idOrIdx, pathString, numConstraints) {
+    const selector = getPropertyShapeSelector(idOrIdx);
+    return this.useCss()
+      .waitForElementVisible(`${nodeShapesDisplay} app-property-shapes-display`)
+      .useXpath()
+      .waitForElementVisible(selector)
+      .assert.textContains(`${selector}//ancestor::mat-card//div[contains(@class, "path-display")]`, pathString)
+      .assert.elementsCount(`${selector}//ancestor::mat-card//div[contains(@class, "constraint")]`, numConstraints);
   }
 };
 
@@ -164,7 +191,8 @@ module.exports = {
   elements: {
     propertyValues: propertyValues,
     nodeShapesList: nodeShapesList,
-    nodeShapesSearchBar: nodeShapesSearchBar
+    nodeShapesSearchBar: nodeShapesSearchBar,
+    nodeShapesDisplay: nodeShapesDisplay
   },
   commands: [shapesEditorCommands, projectTabCommands, nodeShapesTabCommands]
 }

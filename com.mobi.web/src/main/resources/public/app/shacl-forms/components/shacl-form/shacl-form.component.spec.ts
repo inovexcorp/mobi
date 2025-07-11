@@ -32,7 +32,7 @@ import { of } from 'rxjs';
 
 import { SHACLFormFieldComponent } from '../shacl-form-field/shacl-form-field.component';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
-import { RDF, SHACL_FORM, SHACL, XSD } from '../../../prefixes';
+import { RDF, SHACL_FORM, SH, XSD } from '../../../prefixes';
 import { cleanStylesFromDOM } from '../../../../test/ts/Shared';
 import { SHACLFormFieldConfig } from '../../models/shacl-form-field-config';
 import { SHACLFormManagerService } from '../../services/shaclFormManager.service';
@@ -60,28 +60,28 @@ describe('SHACLFormComponent', () => {
   const multiSubProperty1 = 'urn:multiSubProperty1';
   const multiSubProperty2 = 'urn:multiSubProperty2';
   const autocompleteOption: Option = new Option('urn:recordA', 'Record A');
-  const nodeShape: JSONLDObject = { '@id': 'urn:Class', '@type': [`${SHACL}NodeShape`] };
+  const nodeShape: JSONLDObject = { '@id': 'urn:Class', '@type': [`${SH}NodeShape`] };
   const textPropertyShape: JSONLDObject = {
     '@id': 'urn:TextPropertyShape',
-    '@type': [ `${SHACL}PropertyShape` ],
+    '@type': [ `${SH}PropertyShape` ],
     [`${SHACL_FORM}usesFormField`]: [{ '@id': `${SHACL_FORM}TextInput` }],
-    [`${SHACL}path`]: [{ '@id': textProp }],
-    [`${SHACL}minCount`]: [{ '@value': '1' }],
-    [`${SHACL}maxCount`]: [{ '@value': '2' }]
+    [`${SH}path`]: [{ '@id': textProp }],
+    [`${SH}minCount`]: [{ '@value': '1' }],
+    [`${SH}maxCount`]: [{ '@value': '2' }]
   };
   const unlimitedTextPropertyShape: JSONLDObject = {
     '@id': 'urn:UnlimitedTextPropertyShape',
-    '@type': [ `${SHACL}PropertyShape` ],
+    '@type': [ `${SH}PropertyShape` ],
     [`${SHACL_FORM}usesFormField`]: [{ '@id': `${SHACL_FORM}TextInput` }],
-    [`${SHACL}path`]: [{ '@id': 'urn:unlimitedTextProp' }],
+    [`${SH}path`]: [{ '@id': 'urn:unlimitedTextProp' }],
   };
   const togglePropertyShape: JSONLDObject = {
     '@id': 'urn:TogglePropertyShape',
-    '@type': [ `${SHACL}PropertyShape` ],
+    '@type': [ `${SH}PropertyShape` ],
     [`${SHACL_FORM}usesFormField`]: [{ '@id': `${SHACL_FORM}ToggleInput` }],
-    [`${SHACL}path`]: [{ '@id': toggleProp }],
-    [`${SHACL}maxCount`]: [{ '@value': '1' }],
-    [`${SHACL}datatype`]: [{ '@id': `${XSD}boolean` }]
+    [`${SH}path`]: [{ '@id': toggleProp }],
+    [`${SH}maxCount`]: [{ '@value': '1' }],
+    [`${SH}datatype`]: [{ '@id': `${XSD}boolean` }]
   };
   const radioBnode2: JSONLDObject = {
     '@id': '_:rb2',
@@ -95,11 +95,11 @@ describe('SHACLFormComponent', () => {
   };
   const radioPropertyShape: JSONLDObject = {
     '@id': 'urn:RadioPropertyShape',
-    '@type': [ `${SHACL}PropertyShape` ],
+    '@type': [ `${SH}PropertyShape` ],
     [`${SHACL_FORM}usesFormField`]: [{ '@id': `${SHACL_FORM}RadioInput` }],
-    [`${SHACL}path`]: [{ '@id': radioProp }],
-    [`${SHACL}maxCount`]: [{ '@value': '1' }],
-    [`${SHACL}in`]: [{ '@id': radioBnode1['@id'] }]
+    [`${SH}path`]: [{ '@id': radioProp }],
+    [`${SH}maxCount`]: [{ '@value': '1' }],
+    [`${SH}in`]: [{ '@id': radioBnode1['@id'] }]
   };
   const checkboxBnode2: JSONLDObject = {
     '@id': '_:cb2',
@@ -113,10 +113,10 @@ describe('SHACLFormComponent', () => {
   };
   const checkboxPropertyShape: JSONLDObject = {
     '@id': 'urn:CheckboxPropertyShape',
-    '@type': [ `${SHACL}PropertyShape` ],
+    '@type': [ `${SH}PropertyShape` ],
     [`${SHACL_FORM}usesFormField`]: [{ '@id': `${SHACL_FORM}CheckboxInput` }],
-    [`${SHACL}path`]: [{ '@id': checkboxProp }],
-    [`${SHACL}in`]: [{ '@id': checkboxBnode1['@id'] }]
+    [`${SH}path`]: [{ '@id': checkboxProp }],
+    [`${SH}in`]: [{ '@id': checkboxBnode1['@id'] }]
   };
   const dropdownBnode2: JSONLDObject = {
     '@id': '_:db2',
@@ -130,70 +130,70 @@ describe('SHACLFormComponent', () => {
   };
   const dropdownPropertyShape: JSONLDObject = {
     '@id': 'urn:DropdownPropertyShape',
-    '@type': [ `${SHACL}PropertyShape` ],
+    '@type': [ `${SH}PropertyShape` ],
     [`${SHACL_FORM}usesFormField`]: [{ '@id': `${SHACL_FORM}DropdownInput` }],
-    [`${SHACL}path`]: [{ '@id': dropdownProp }],
-    [`${SHACL}maxCount`]: [{ '@value': '1' }],
-    [`${SHACL}datatype`]: [{ '@id': `${XSD}integer` }],
-    [`${SHACL}in`]: [{ '@id': dropdownBnode1['@id'] }]
+    [`${SH}path`]: [{ '@id': dropdownProp }],
+    [`${SH}maxCount`]: [{ '@value': '1' }],
+    [`${SH}datatype`]: [{ '@id': `${XSD}integer` }],
+    [`${SH}in`]: [{ '@id': dropdownBnode1['@id'] }]
   };
   const autocompletePropertyShape: JSONLDObject = {
     '@id': 'urn:AutocompletePropertyShape',
-    '@type': [ `${SHACL}PropertyShape` ],
+    '@type': [ `${SH}PropertyShape` ],
     [`${SHACL_FORM}usesFormField`]: [{ '@id': `${SHACL_FORM}AutocompleteInput` }],
-    [`${SHACL}path`]: [{ '@id': autocompleteProp }],
-    [`${SHACL}maxCount`]: [{ '@value': '1' }],
-    [`${SHACL}class`]: [{ '@id': 'urn:SomeClass' }]
+    [`${SH}path`]: [{ '@id': autocompleteProp }],
+    [`${SH}maxCount`]: [{ '@value': '1' }],
+    [`${SH}class`]: [{ '@id': 'urn:SomeClass' }]
   };
   const hiddenTextInputPropertyShape: JSONLDObject = {
     '@id': 'urn:HiddenTextInputPropertyShape',
-    '@type': [ `${SHACL}PropertyShape` ],
+    '@type': [ `${SH}PropertyShape` ],
     [`${SHACL_FORM}usesFormField`]: [{ '@id': `${SHACL_FORM}HiddenTextInput` }],
-    [`${SHACL}path`]: [{ '@id': hiddenTextInputProp }]
+    [`${SH}path`]: [{ '@id': hiddenTextInputProp }]
   };
   const noInputPropertyShape: JSONLDObject = {
     '@id': 'urn:NoInputPropertyShape',
-    '@type': [ `${SHACL}PropertyShape` ],
+    '@type': [ `${SH}PropertyShape` ],
     [`${SHACL_FORM}usesFormField`]: [{ '@id': `${SHACL_FORM}NoInput` }],
-    [`${SHACL}path`]: [{ '@id': noInputProp }]
+    [`${SH}path`]: [{ '@id': noInputProp }]
   };
   const complexSubPropertyShape1: JSONLDObject = {
     '@id': 'urn:ComplexSubPropertyShape1',
-    '@type': [`${SHACL}PropertyShape`],
-    [`${SHACL}path`]: [{ '@id': complexSubProperty1 }],
-    [`${SHACL}name`]: [{ '@value': 'Complex Sub Label 1' }],
-    [`${SHACL}maxCount`]: [{ '@value': '1' }],
+    '@type': [`${SH}PropertyShape`],
+    [`${SH}path`]: [{ '@id': complexSubProperty1 }],
+    [`${SH}name`]: [{ '@value': 'Complex Sub Label 1' }],
+    [`${SH}maxCount`]: [{ '@value': '1' }],
     [`${SHACL_FORM}usesFormField`]: [{ '@id': `${SHACL_FORM}TextInput` }],
   };
   const complexSubPropertyShape2: JSONLDObject = {
     '@id': 'urn:ComplexSubPropertyShape2',
-    '@type': [`${SHACL}PropertyShape`],
-    [`${SHACL}path`]: [{ '@id': complexSubProperty2 }],
-    [`${SHACL}name`]: [{ '@value': 'Complex Sub Label 2' }],
+    '@type': [`${SH}PropertyShape`],
+    [`${SH}path`]: [{ '@id': complexSubProperty2 }],
+    [`${SH}name`]: [{ '@value': 'Complex Sub Label 2' }],
     [`${SHACL_FORM}usesFormField`]: [{ '@id': `${SHACL_FORM}TextInput` }],
   };
   const complexNodeShape: JSONLDObject = {
     '@id': 'urn:ComplexNode',
-    '@type': [`${SHACL}NodeShape`],
-    [`${SHACL}property`]: [
+    '@type': [`${SH}NodeShape`],
+    [`${SH}property`]: [
       { '@id': complexSubPropertyShape1['@id'] },
       { '@id': complexSubPropertyShape2['@id'] }
     ]
   };
   const complexPropertyShape: JSONLDObject = {
     '@id': 'urn:ComplexPropertyShape',
-    '@type': [ `${SHACL}PropertyShape` ],
-    [`${SHACL}path`]: [{ '@id': complexProp }],
-    [`${SHACL}maxCount`]: [{ '@value': '1' }],
-    [`${SHACL}node`]: [{ '@id': complexNodeShape['@id'] }]
+    '@type': [ `${SH}PropertyShape` ],
+    [`${SH}path`]: [{ '@id': complexProp }],
+    [`${SH}maxCount`]: [{ '@value': '1' }],
+    [`${SH}node`]: [{ '@id': complexNodeShape['@id'] }]
   };
   const multiSubPropertyShape1: JSONLDObject = {
     '@id': 'urn:MultiSubPropertyShape1',
-    '@type': [`${SHACL}PropertyShape`],
-    [`${SHACL}path`]: [{ '@id': multiSubProperty1 }],
-    [`${SHACL}name`]: [{ '@value': 'Multi Sub Label 1' }],
-    [`${SHACL}class`]: [{ '@id': 'urn:SomeClass' }],
-    [`${SHACL}sparql`]: [{ '@id': '_:someBnode' }],
+    '@type': [`${SH}PropertyShape`],
+    [`${SH}path`]: [{ '@id': multiSubProperty1 }],
+    [`${SH}name`]: [{ '@value': 'Multi Sub Label 1' }],
+    [`${SH}class`]: [{ '@id': 'urn:SomeClass' }],
+    [`${SH}sparql`]: [{ '@id': '_:someBnode' }],
     [`${SHACL_FORM}usesFormField`]: [{ '@id': `${SHACL_FORM}AutocompleteInput` }],
   };
   const multiRadioBnode2: JSONLDObject = {
@@ -208,26 +208,26 @@ describe('SHACLFormComponent', () => {
   };
   const multiSubPropertyShape2: JSONLDObject = {
     '@id': 'urn:MultiSubPropertyShape2',
-    '@type': [`${SHACL}PropertyShape`],
-    [`${SHACL}path`]: [{ '@id': multiSubProperty2 }],
-    [`${SHACL}name`]: [{ '@value': 'Multi Sub Label 2' }],
+    '@type': [`${SH}PropertyShape`],
+    [`${SH}path`]: [{ '@id': multiSubProperty2 }],
+    [`${SH}name`]: [{ '@value': 'Multi Sub Label 2' }],
     [`${SHACL_FORM}usesFormField`]: [{ '@id': `${SHACL_FORM}RadioInput` }],
-    [`${SHACL}maxCount`]: [{ '@value': '1' }],
-    [`${SHACL}in`]: [{ '@id': multiRadioBnode1['@id'] }]
+    [`${SH}maxCount`]: [{ '@value': '1' }],
+    [`${SH}in`]: [{ '@id': multiRadioBnode1['@id'] }]
   };
   const multiNodeShape: JSONLDObject = {
     '@id': 'urn:MultiNode',
-    '@type': [`${SHACL}NodeShape`],
-    [`${SHACL}property`]: [
+    '@type': [`${SH}NodeShape`],
+    [`${SH}property`]: [
       { '@id': multiSubPropertyShape1['@id']},
       { '@id': multiSubPropertyShape2['@id'] },
     ]
   };
   const complexMultivaluedPropertyShape: JSONLDObject = {
     '@id': 'urn:ComplexMultivaluedPropertyShape',
-    '@type': [ `${SHACL}PropertyShape` ],
-    [`${SHACL}path`]: [{ '@id': complexMultivaluedProp }],
-    [`${SHACL}node`]: [{ '@id': multiNodeShape['@id'] }]
+    '@type': [ `${SH}PropertyShape` ],
+    [`${SH}path`]: [{ '@id': complexMultivaluedProp }],
+    [`${SH}node`]: [{ '@id': multiNodeShape['@id'] }]
   };
   const fullArr: JSONLDObject[] = [
     textPropertyShape, 

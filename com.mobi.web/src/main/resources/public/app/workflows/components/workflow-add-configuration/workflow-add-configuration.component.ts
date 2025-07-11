@@ -30,7 +30,7 @@ import { v4 } from 'uuid';
 
 import { FormValues } from '../../../shacl-forms/models/form-values.interface';
 import { SHACLFormFieldConfig } from '../../../shacl-forms/models/shacl-form-field-config';
-import { DCTERMS, RDFS, SHACL, WORKFLOWS } from '../../../prefixes';
+import { DCTERMS, RDFS, SH, WORKFLOWS } from '../../../prefixes';
 import {
   getPropertyId,
   getPropertyValue,
@@ -186,7 +186,7 @@ export class WorkflowAddConfigurationComponent implements OnInit {
    * @return {SHACLFormFieldConfig[]} - An array of form field configurations.
    */
   buildFormFieldConfigs(configuration: JSONLDObject[], nodeShape: JSONLDObject): SHACLFormFieldConfig[] {
-    return get(nodeShape, `${SHACL}property`, [])
+    return get(nodeShape, `${SH}property`, [])
       .map(propertyShapeId => new SHACLFormFieldConfig(nodeShape, propertyShapeId['@id'], configuration));
   }
   /**

@@ -22,7 +22,7 @@
  */
 import { cloneDeep } from 'lodash';
 
-import { DCTERMS, OWL, RDF, RDFS, SETTING, SHACL, SHACL_FORM } from '../../prefixes';
+import { DCTERMS, OWL, RDF, RDFS, SETTING, SH, SHACL_FORM } from '../../prefixes';
 import { JSONLDObject } from './JSONLDObject.interface';
 import { SimpleSetting } from './simpleSetting.class';
 
@@ -32,45 +32,45 @@ describe('SimpleSetting', () => {
   const subPropB = 'urn:subPropB';
   const applicationSettingNodeShape: JSONLDObject = {
     '@id': 'urn:CustomApplicationSetting',
-    '@type': [`${OWL}Class`, `${SHACL}NodeShape`],
+    '@type': [`${OWL}Class`, `${SH}NodeShape`],
     [`${DCTERMS}description`]: [{ '@value': 'Test Application Setting' }],
     [`${RDFS}subClassOf`]: [{ '@id': `${SETTING}ApplicationSetting` }],
-    [`${SHACL}property`]: [{ '@id': propertyShapeId }]
+    [`${SH}property`]: [{ '@id': propertyShapeId }]
   };
   const preferenceNodeShape: JSONLDObject = {
     '@id': 'urn:CustomPreference',
-    '@type': [`${OWL}Class`, `${SHACL}NodeShape`],
+    '@type': [`${OWL}Class`, `${SH}NodeShape`],
     [`${DCTERMS}description`]: [{ '@value': 'Test Preference' }],
     [`${RDFS}subClassOf`]: [{ '@id': `${SETTING}Preference` }],
-    [`${SHACL}property`]: [{ '@id': propertyShapeId }]
+    [`${SH}property`]: [{ '@id': propertyShapeId }]
   };
   const textPropertyShape: JSONLDObject = {
     '@id': propertyShapeId,
-    '@type': [`${SHACL}PropertyShape`],
-    [`${SHACL}path`]: [{ '@id': `${SETTING}hasDataValue` }],
+    '@type': [`${SH}PropertyShape`],
+    [`${SH}path`]: [{ '@id': `${SETTING}hasDataValue` }],
     [`${SHACL_FORM}usesFormField`]: [{ '@id': `${SHACL_FORM}TextInput` }]
   };
   const complexPropertyShape: JSONLDObject = {
     '@id': propertyShapeId,
-    '@type': [`${SHACL}PropertyShape`],
-    [`${SHACL}path`]: [{ '@id': `${SETTING}hasObjectValue` }],
-    [`${SHACL}node`]: [{ '@id': 'urn:AssociatedObject' }]
+    '@type': [`${SH}PropertyShape`],
+    [`${SH}path`]: [{ '@id': `${SETTING}hasObjectValue` }],
+    [`${SH}node`]: [{ '@id': 'urn:AssociatedObject' }]
   };
   const associatedNodeShape: JSONLDObject = {
     '@id': 'urn:AssociatedObject',
-    '@type': [`${OWL}Class`, `${SHACL}NodeShape`],
-    [`${SHACL}property`]: [{ '@id': subPropA + 'Shape' }, { '@id': subPropB + 'Shape' }]
+    '@type': [`${OWL}Class`, `${SH}NodeShape`],
+    [`${SH}property`]: [{ '@id': subPropA + 'Shape' }, { '@id': subPropB + 'Shape' }]
   };
   const associatedPropertyShapeA: JSONLDObject = {
     '@id': subPropA + 'Shape',
-    '@type': [`${SHACL}PropertyShape`],
-    [`${SHACL}path`]: [{ '@id': subPropA }],
+    '@type': [`${SH}PropertyShape`],
+    [`${SH}path`]: [{ '@id': subPropA }],
     [`${SHACL_FORM}usesFormField`]: [{ '@id': `${SHACL_FORM}TextInput` }]
   };
   const associatedPropertyShapeB: JSONLDObject = {
     '@id': subPropB + 'Shape',
-    '@type': [`${SHACL}PropertyShape`],
-    [`${SHACL}path`]: [{ '@id': subPropB }],
+    '@type': [`${SH}PropertyShape`],
+    [`${SH}path`]: [{ '@id': subPropB }],
     [`${SHACL_FORM}usesFormField`]: [{ '@id': `${SHACL_FORM}TextInput` }]
   };
 
@@ -118,10 +118,10 @@ describe('SimpleSetting', () => {
   it('should create for a preference with a checkbox or radio input', () => {
     const propertyShape: JSONLDObject = {
       '@id': propertyShapeId,
-      '@type': [`${SHACL}PropertyShape`],
-      [`${SHACL}path`]: [{ '@id': `${SETTING}hasDataValue` }],
+      '@type': [`${SH}PropertyShape`],
+      [`${SH}path`]: [{ '@id': `${SETTING}hasDataValue` }],
       [`${SHACL_FORM}usesFormField`]: [{ '@id': `${SHACL_FORM}RadioInput` }],
-      [`${SHACL}in`]: [{ '@id': '_:b1' }]
+      [`${SH}in`]: [{ '@id': '_:b1' }]
     };
     const bnode1: JSONLDObject = {
       '@id': '_:b1',

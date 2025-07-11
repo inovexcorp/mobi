@@ -40,6 +40,7 @@ module.exports = {
     'Step 2: Upload a shapes graph': function(browser) {
         browser.page.shapesEditorPage().uploadShapesGraph(shapes_graph)
         browser.globals.wait_for_no_spinners(browser)
+        browser.globals.dismiss_toast(browser);
     },
 
     'Step 3: Verify shapes graph presentation': function(browser) {
@@ -58,6 +59,7 @@ module.exports = {
     'Step 4: Create a new shapes graph': function(browser) {
         browser.page.shapesEditorPage().createShapesGraph('Test Shapes Graph', 'Test Shapes Graph Description');
         browser.globals.wait_for_no_spinners(browser);
+        browser.globals.dismiss_toast(browser);
     },
 
     'Step 5: Verify New shapes graph presentation': function(browser) {
@@ -129,6 +131,7 @@ module.exports = {
         browser.globals.wait_for_no_spinners(browser);
         browser.page.shapesEditorPage().commit('testing iri change');
         browser.globals.wait_for_no_spinners(browser);
+        browser.globals.dismiss_toast(browser);
         browser.useXpath()
         browser.expect.element('//selected-details//static-iri//strong//span[text() [contains(., "http://matonto.org/ontologies/uhtc/")]]').to.be.visible;
         browser.expect.element('//selected-details//static-iri//strong//span[text() [contains(., "shapes-graph-iri-test")]]').to.be.visible;

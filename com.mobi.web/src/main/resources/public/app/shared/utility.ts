@@ -32,7 +32,7 @@ import * as sha1 from 'js-sha1';
 import { JSONLDObject } from './models/JSONLDObject.interface';
 import { JSONLDId } from './models/JSONLDId.interface';
 import { JSONLDValue } from './models/JSONLDValue.interface';
-import { DC, DCTERMS, RDF, RDFS, SHACL, SKOS, SKOSXL, XSD } from '../prefixes';
+import { DC, DCTERMS, RDF, RDFS, SH, SKOS, SKOSXL, XSD } from '../prefixes';
 import { PaginatedConfig } from './models/paginatedConfig.interface';
 import { RESTError } from './models/RESTError.interface';
 import { REGEX } from '../constants';
@@ -50,7 +50,7 @@ export const entityNameProps = [
   `${SKOS}altLabel`,
   `${SKOSXL}altLabel`,
   `${SKOSXL}literalForm`,
-  `${SHACL}name`,
+  `${SH}name`,
 ];
 
 /**
@@ -91,8 +91,9 @@ export const entityNameProps = [
  *   `setDctermsValue`
  *   `updateDctermsValue`
  *   `getDctermsId`
- * RDF List Conversion: A specialized function to convert an RDF List (represented by blank nodes with `$first` and `$rest` properties) into a flat array of values or IDs.
+ * RDF List Conversion: Specialized function to convert an RDF List (represented by blank nodes with `rdf:first` and `rdf:rest` properties) into a flat array of values or IDs.
  *   `rdfListToValueArray`
+ *   `rdfListToValueArrayWithMap`
  * Language Annotation: Adds a language tag to common annotation properties like `dct:title`, `dct:description`, and `skos:prefLabel`.
  *   `addLanguageToAnnotations`
  * IRI Extraction: Extracts object IRIs from arrays representing additions or deletions in a JSON-LD context.
@@ -594,6 +595,67 @@ export function rdfListToValueArray(fullJsonld: JSONLDObject[], firstElementID: 
 }
 
 /**
+ * Creates a string array for an RDF List represented with JSON-LD blank nodes stored in a map of IRI to node for
+ * faster lookups. It iterates through the linked list, pulling out the values of the `rdf:first` and `rdf:rest`
+ * properties until it reaches the end of the list. Can optionally retrieve a property value from the blank nodes
+ * instead of the direct string values in the RDF list. Pulls both data values and IRI values. The final array is
+ * passed as an argument and returned from the function (to support recursion).
+ * 
+ * @param {Record<string, JSONLDObject>} jsonldMap The map of id to JSON-LD object to convert to an array
+ * @param {string} firstElementID The ID of the first blank node
+ * @param {string[]} sortedList The sorted array of values
+ * @param {string} [property=''] An optional property to retrieve from the blank nodes. If not set, will retrieve direct string values
+ * in RDF list
+ * @returns 
+ */
+export function rdfListToValueArrayWithMap(jsonldMap: Record<string, JSONLDObject>, firstElementID: string, 
+  sortedList: string[] = [], property = ''): string[] {
+    const currentElement: JSONLDObject|undefined = jsonldMap[firstElementID];
+    if (!currentElement) {
+        console.error(`Could not find element ID ${firstElementID} in provided JSON-LD`);
+        return sortedList;
+    } else if (currentElement[`${RDF}first`] === undefined && property === '') {
+        console.debug(`No rdf:first predicate found in element with ID ${firstElementID}. Using the ID itself`);
+        sortedList.push(firstElementID);
+        return sortedList;
+    } else if (currentElement[`${RDF}first`] === undefined && property !== '') {
+        console.debug('Element is a JSONLDObject with a property filter. Pulling out property id/value from element');
+        const value = getPropertyId(currentElement, property) || getPropertyValue(currentElement, property);
+        if (value) {
+            sortedList.push(value);
+        }
+        return sortedList;
+    } else if (currentElement[`${RDF}rest`] === undefined && property === '') {
+        const value = getPropertyId(currentElement, `${RDF}first`) || getPropertyValue(currentElement, `${RDF}first`);
+        if (value) {
+            sortedList.push(value);
+        }
+        console.error(`No rdf:rest predicate found in element with ID ${firstElementID}`);
+        return sortedList;
+    } else {
+        const id = getPropertyId(currentElement, `${RDF}first`);
+        if (id && jsonldMap[id] && isBlankNodeId(id)) {
+            // Checks to see if it points to a different blank node array that contains the values
+            console.debug('rdf:first points to another blank node. Recursing through chain.');
+            rdfListToValueArrayWithMap(jsonldMap, id, sortedList, property);
+        } else {
+            // The value is the result itself
+            const value = id || getPropertyValue(currentElement, `${RDF}first`);
+            if (value) {
+                sortedList.push(value);
+            }
+        }
+        
+        if (getPropertyId(currentElement, `${RDF}rest`) === `${RDF}nil`) {
+            console.debug('Reached end of rdf list');
+            return sortedList;
+        }
+        console.debug('Recursing through rdf:rest chain.');
+        return rdfListToValueArrayWithMap(jsonldMap, getPropertyId(currentElement, `${RDF}rest`), sortedList, property);
+    }
+}
+
+/**
  * Adds a language specification on the dct:title, dct:description, and skos:prefLabel properties on the
  * provided JSON-LD object.
  * 
@@ -663,7 +725,7 @@ export function getSkolemizedIRI(): string {
  * @return {boolean} Returns true if the id is a blank node id, otherwise returns false.
  */
 export function isBlankNodeId(id: string): boolean {
-  return isString(id) && (id.includes('/.well-known/genid/') || id.includes('_:genid') || id.includes('_:b'));
+  return isString(id) && (id.includes('/.well-known/genid/') || id.includes('_:genid') || id.includes('_:b') || id.startsWith('_:'));
 }
 
 /**

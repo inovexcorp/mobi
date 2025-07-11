@@ -1,0 +1,1408 @@
+/*-
+ * #%L
+ * com.mobi.web
+ * $Id:$
+ * $HeadURL:$
+ * %%
+ * Copyright (C) 2016 - 2025 iNovex Information Systems, Inc.
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * #L%
+ */
+import { Constraint } from './constraint.interface';
+import { JSONLDId } from '../../shared/models/JSONLDId.interface';
+import { JSONLDObject } from '../../shared/models/JSONLDObject.interface';
+import { JSONLDValue } from '../../shared/models/JSONLDValue.interface';
+import { PathNode } from './property-shape.interface';
+import { RDF, SH, XSD } from '../../prefixes';
+
+// This file contains test cases for SHACL Property Paths and Constraints
+
+interface PathTestCase {
+  iri: string,
+  testName: string,
+  jsonldMap: Record<string, JSONLDObject>,
+  structure: PathNode,
+  pathString: string,
+}
+
+export const pathTestCases: PathTestCase[] = [
+  // This chunk of tests focuses on sequence paths
+  {
+    testName: 'one predicate path' ,
+    iri: 'http://www.test.com/test#PropA',
+    jsonldMap: {},
+    structure: { type: 'IRI', iri: 'http://www.test.com/test#PropA', label: 'Prop A' },
+    pathString: 'Prop A'
+  },
+  {
+    testName: 'multiple predicate path (sequence path)',
+    iri: '_:b1',
+    jsonldMap: {
+      '_:b1': {
+        '@id': '_:b1',
+        [`${RDF}first`]: [{
+          '@id': 'http://www.test.com/test#PropA'
+        }],
+        [`${RDF}rest`]: [{
+          '@id': '_:b2'
+        }]
+      },
+      '_:b2': {
+        '@id': '_:b2',
+        [`${RDF}first`]: [{
+          '@id': 'http://www.test.com/test#PropB'
+        }],
+        [`${RDF}rest`]: [{
+          '@id': `${RDF}nil`
+        }]
+      }
+    },
+    structure: {
+      type: 'Sequence',
+      items: [
+        { type: 'IRI', iri: 'http://www.test.com/test#PropA', label: 'Prop A' },
+        { type: 'IRI', iri: 'http://www.test.com/test#PropB', label: 'Prop B' },
+      ]
+    },
+    pathString: 'Prop A / Prop B'
+  },
+  {
+    testName: 'one predicate path with special path',
+    iri: '_:b1',
+    jsonldMap: {
+      '_:b1': {
+        '@id': '_:b1',
+        [`${SH}zeroOrMorePath`]: [{
+          '@id': 'http://www.test.com/test#PropA'
+        }]
+      }
+    },
+    structure: {
+      type: 'ZeroOrMore',
+      path: {
+        type: 'IRI',
+        iri: 'http://www.test.com/test#PropA',
+        label: 'Prop A'
+      }
+    },
+    pathString: '( Prop A )*',
+  },
+  {
+    testName: 'multiple predicate path with special paths',
+    iri: '_:b1',
+    jsonldMap: {
+      '_:b1': {
+        '@id': '_:b1',
+        [`${RDF}first`]: [{
+          '@id': '_:b2'
+        }],
+        [`${RDF}rest`]: [{
+          '@id': '_:b3'
+        }]
+      },
+      '_:b2': {
+        '@id': '_:b2',
+        [`${SH}zeroOrMorePath`]: [{
+          '@id': 'http://www.test.com/test#PropA'
+        }]
+      },
+      '_:b3': {
+        '@id': '_:b3',
+        [`${RDF}first`]: [{
+          '@id': '_:b4'
+        }],
+        [`${RDF}rest`]: [{
+          '@id': `${RDF}nil`
+        }]
+      },
+      '_:b4': {
+        '@id': '_:b4',
+        [`${SH}oneOrMorePath`]: [{
+          '@id': 'http://www.test.com/test#PropB'
+        }]
+      },
+    },
+    structure: {
+      type: 'Sequence',
+      items: [
+        {
+          type: 'ZeroOrMore',
+          path: {
+            type: 'IRI',
+            iri: 'http://www.test.com/test#PropA',
+            label: 'Prop A'
+          }
+        },
+        {
+          type: 'OneOrMore',
+          path: {
+            type: 'IRI',
+            iri: 'http://www.test.com/test#PropB',
+            label: 'Prop B'
+          }
+        }
+      ]
+    },
+    pathString: '( Prop A )* / ( Prop B )+',
+  },
+  {
+    testName: 'multiple predicate path with one special path one not',
+    iri: '_:b1',
+    jsonldMap: {
+      '_:b1': {
+        '@id': '_:b1',
+        [`${RDF}first`]: [{
+          '@id': 'http://www.test.com/test#PropA'
+        }],
+        [`${RDF}rest`]: [{
+          '@id': '_:b2'
+        }]
+      },
+      '_:b2': {
+        '@id': '_:b2',
+        [`${RDF}first`]: [{
+          '@id': '_:b3'
+        }],
+        [`${RDF}rest`]: [{
+          '@id': `${RDF}nil`
+        }]
+      },
+      '_:b3': {
+        '@id': '_:b3',
+        [`${SH}zeroOrMorePath`]: [{
+          '@id': 'http://www.test.com/test#PropB'
+        }]
+      },
+    },
+    structure: {
+      type: 'Sequence',
+      items: [
+        {
+          type: 'IRI',
+          iri: 'http://www.test.com/test#PropA',
+          label: 'Prop A'
+        },
+        {
+          type: 'ZeroOrMore',
+          path: {
+            type: 'IRI',
+            iri: 'http://www.test.com/test#PropB',
+            label: 'Prop B'
+          }
+        }
+      ]
+    },
+    pathString: 'Prop A / ( Prop B )*'
+  },
+  // This chunk of tests focuses on inverse paths
+  {
+    testName: 'one inverse path',
+    iri: '_:b1',
+    jsonldMap: {
+      '_:b1': {
+        '@id': '_:b1',
+        [`${SH}inversePath`]: [{
+          '@id': 'http://www.test.com/test#PropA'
+        }]
+      }
+    },
+    structure: {
+      type: 'Inverse',
+      path: {
+        type: 'IRI',
+        iri: 'http://www.test.com/test#PropA',
+        label: 'Prop A',
+      }
+    },
+    pathString: '^( Prop A )'
+  },
+  {
+    testName: 'multiple inverse path',
+    iri: '_:b1',
+    jsonldMap: {
+      '_:b1': {
+        '@id': '_:b1',
+        [`${RDF}first`]: [{
+          '@id': '_:b2'
+        }],
+        [`${RDF}rest`]: [{
+          '@id': '_:b3'
+        }]
+      },
+      '_:b2': {
+        '@id': '_:b2',
+        [`${SH}inversePath`]: [{
+          '@id': 'http://www.test.com/test#PropA'
+        }]
+      },
+      '_:b3': {
+        '@id': '_:b3',
+        [`${RDF}first`]: [{
+          '@id': '_:b4'
+        }],
+        [`${RDF}rest`]: [{
+          '@id': `${RDF}nil`
+        }]
+      },
+      '_:b4': {
+        '@id': '_:b4',
+        [`${SH}inversePath`]: [{
+          '@id': 'http://www.test.com/test#PropC'
+        }]
+      },
+    },
+    structure: {
+      type: 'Sequence',
+      items: [
+        {
+          type: 'Inverse',
+          path: {
+            type: 'IRI',
+            iri: 'http://www.test.com/test#PropA',
+            label: 'Prop A',
+          }
+        },
+        {
+          type: 'Inverse',
+          path: {
+            type: 'IRI',
+            iri: 'http://www.test.com/test#PropC',
+            label: 'Prop C',
+          }
+        }
+      ]
+    },
+    pathString: '^( Prop A ) / ^( Prop C )'
+  },
+  {
+    testName: 'multiple inverse paths with special paths',
+    iri: '_:b1',
+    jsonldMap: {
+      '_:b1': {
+        '@id': '_:b1',
+        [`${RDF}first`]: [{
+          '@id': '_:b2'
+        }],
+        [`${RDF}rest`]: [{
+          '@id': '_:b3'
+        }]
+      },
+      '_:b2': {
+        '@id': '_:b2',
+        [`${SH}zeroOrMorePath`]: [{
+          '@id': '_:b4'
+        }]
+      },
+      '_:b3': {
+        '@id': '_:b3',
+        [`${RDF}first`]: [{
+          '@id': '_:b5'
+        }],
+        [`${RDF}rest`]: [{
+          '@id': `${RDF}nil`
+        }]
+      },
+      '_:b4': {
+        '@id': '_:b4',
+        [`${SH}inversePath`]: [{
+          '@id': 'http://www.test.com/test#PropA'
+        }]
+      },
+      '_:b5': {
+        '@id': '_:b5',
+        [`${SH}oneOrMorePath`]: [{
+          '@id': '_:b6'
+        }]
+      },
+      '_:b6': {
+        '@id': '_:b6',
+        [`${SH}inversePath`]: [{
+          '@id': 'http://www.test.com/test#PropC'
+        }]
+      },
+    },
+    structure: {
+      type: 'Sequence',
+      items: [
+        {
+          type: 'ZeroOrMore',
+          path: {
+            type: 'Inverse',
+            path: {
+              type: 'IRI',
+              iri: 'http://www.test.com/test#PropA',
+              label: 'Prop A',
+            }
+          }
+        },
+        {
+          type: 'OneOrMore',
+          path: {
+            type: 'Inverse',
+            path: {
+              type: 'IRI',
+              iri: 'http://www.test.com/test#PropC',
+              label: 'Prop C',
+            }
+          }
+        }
+      ]
+    },
+    pathString: '( ^( Prop A ) )* / ( ^( Prop C ) )+',
+  },
+  {
+    testName: 'multiple inverse path with one special path one not',
+    iri: '_:b1',
+    jsonldMap: {
+      '_:b1': {
+        '@id': '_:b1',
+        [`${RDF}first`]: [{
+          '@id': '_:b2'
+        }],
+        [`${RDF}rest`]: [{
+          '@id': '_:b3'
+        }]
+      },
+      '_:b2': {
+        '@id': '_:b2',
+        [`${SH}inversePath`]: [{
+          '@id': 'http://www.test.com/test#PropA'
+        }]
+      },
+      '_:b3': {
+        '@id': '_:b3',
+        [`${RDF}first`]: [{
+          '@id': '_:b4'
+        }],
+        [`${RDF}rest`]: [{
+          '@id': `${RDF}nil`
+        }]
+      },
+      '_:b4': {
+        '@id': '_:b4',
+        [`${SH}oneOrMorePath`]: [{
+          '@id': '_:b5'
+        }]
+      },
+      '_:b5': {
+        '@id': '_:b5',
+        [`${SH}inversePath`]: [{
+          '@id': 'http://www.test.com/test#PropC'
+        }]
+      },
+    },
+    structure: {
+      type: 'Sequence',
+      items: [
+        {
+          type: 'Inverse',
+          path: {
+            type: 'IRI',
+            iri: 'http://www.test.com/test#PropA',
+            label: 'Prop A',
+          }
+        },
+        {
+          type: 'OneOrMore',
+          path: {
+            type: 'Inverse',
+            path: {
+              type: 'IRI',
+              iri: 'http://www.test.com/test#PropC',
+              label: 'Prop C',
+            }
+          }
+        }
+      ]
+    },
+    pathString: '^( Prop A ) / ( ^( Prop C ) )+',
+  },
+  // This chunk of tests focuses on alternate path
+  {
+    testName: 'one alternate path',
+    iri: '_:b1',
+    jsonldMap: {
+      '_:b1': {
+        '@id': '_:b1',
+        [`${SH}alternativePath`]: [{
+          '@id': '_:b2'
+        }]
+      },
+      '_:b2': {
+        '@id': '_:b2',
+        [`${RDF}first`]: [{
+          '@id': 'http://www.test.com/test#PropA'
+        }],
+        [`${RDF}rest`]: [{
+          '@id': '_:b3'
+        }]
+      },
+      '_:b3': {
+        '@id': '_:b3',
+        [`${RDF}first`]: [{
+          '@id': 'http://www.test.com/test#PropB'
+        }],
+        [`${RDF}rest`]: [{
+          '@id': `${RDF}nil`
+        }]
+      }
+    },
+    structure: {
+      type: 'Alternative',
+      items: [
+        {
+          type: 'IRI',
+          iri: 'http://www.test.com/test#PropA',
+          label: 'Prop A'
+        },
+        {
+          type: 'IRI',
+          iri: 'http://www.test.com/test#PropB',
+          label: 'Prop B'
+        }
+      ]
+    },
+    pathString: 'Prop A | Prop B',
+  },
+  {
+    testName: 'one alternate path with special path',
+    iri: '_:b1',
+    jsonldMap: {
+      '_:b1': {
+        '@id': '_:b1',
+        [`${SH}zeroOrMorePath`]: [{
+          '@id': '_:b2'
+        }]
+      },
+      '_:b2': {
+        '@id': '_:b2',
+        [`${SH}alternativePath`]: [{
+          '@id': '_:b3'
+        }]
+      },
+      '_:b3': {
+        '@id': '_:b3',
+        [`${RDF}first`]: [{
+          '@id': 'http://www.test.com/test#PropA'
+        }],
+        [`${RDF}rest`]: [{
+          '@id': '_:b4'
+        }]
+      },
+      '_:b4': {
+        '@id': '_:b4',
+        [`${RDF}first`]: [{
+          '@id': 'http://www.test.com/test#PropB'
+        }],
+        [`${RDF}rest`]: [{
+          '@id': `${RDF}nil`
+        }]
+      }
+    },
+    structure: {
+      type: 'ZeroOrMore',
+      path: {
+        type: 'Alternative',
+        items: [
+          {
+            type: 'IRI',
+            iri: 'http://www.test.com/test#PropA',
+            label: 'Prop A'
+          },
+          {
+            type: 'IRI',
+            iri: 'http://www.test.com/test#PropB',
+            label: 'Prop B'
+          }
+        ]
+      }
+    },
+    pathString: '( Prop A | Prop B )*',
+  },
+  {
+    testName: 'multiple alternative paths',
+    iri: '_:b1',
+    jsonldMap: {
+      '_:b1': {
+        '@id': '_:b1',
+        [`${RDF}first`]: [{
+          '@id': '_:b2'
+        }],
+        [`${RDF}rest`]: [{
+          '@id': '_:b3'
+        }]
+      },
+      '_:b2': {
+        '@id': '_:b2',
+        [`${SH}alternativePath`]: [{
+          '@id': '_:b4'
+        }]
+      },
+      '_:b3': {
+        '@id': '_:b3',
+        [`${RDF}first`]: [{
+          '@id': '_:b5'
+        }],
+        [`${RDF}rest`]: [{
+          '@id': `${RDF}nil`
+        }]
+      },
+      '_:b4': {
+        '@id': '_:b4',
+        [`${RDF}first`]: [{
+          '@id': 'http://www.test.com/test#PropA'
+        }],
+        [`${RDF}rest`]: [{
+          '@id': '_:b6'
+        }]
+      },
+      '_:b5': {
+        '@id': '_:b5',
+        [`${SH}alternativePath`]: [{
+          '@id': '_:b7'
+        }]
+      },
+      '_:b6': {
+        '@id': '_:b6',
+        [`${RDF}first`]: [{
+          '@id': 'http://www.test.com/test#PropB'
+        }],
+        [`${RDF}rest`]: [{
+          '@id': `${RDF}nil`
+        }]
+      },
+      '_:b7': {
+        '@id': '_:b7',
+        [`${RDF}first`]: [{
+          '@id': 'http://www.test.com/test#PropC'
+        }],
+        [`${RDF}rest`]: [{
+          '@id': '_:b8'
+        }]
+      },
+      '_:b8': {
+        '@id': '_:b8',
+        [`${RDF}first`]: [{
+          '@id': 'http://www.test.com/test#PropD'
+        }],
+        [`${RDF}rest`]: [{
+          '@id': `${RDF}nil`
+        }]
+      }
+    },
+    structure: {
+      type: 'Sequence',
+      items: [
+        {
+          type: 'Alternative',
+          items: [
+            {
+              type: 'IRI',
+              iri: 'http://www.test.com/test#PropA',
+              label: 'Prop A'
+            },
+            {
+              type: 'IRI',
+              iri: 'http://www.test.com/test#PropB',
+              label: 'Prop B'
+            }
+          ]
+        },
+        {
+          type: 'Alternative',
+          items: [
+            {
+              type: 'IRI',
+              iri: 'http://www.test.com/test#PropC',
+              label: 'Prop C'
+            },
+            {
+              type: 'IRI',
+              iri: 'http://www.test.com/test#PropD',
+              label: 'Prop D'
+            }
+          ]
+        }
+      ]
+    },
+    pathString: 'Prop A | Prop B / Prop C | Prop D',
+  },
+  {
+    testName: 'multiple predicate path with alternate paths special paths',
+    iri: '_:b1',
+    jsonldMap: {
+      '_:b1': {
+        '@id': '_:b1',
+        [`${RDF}first`]: [{
+          '@id': '_:b2'
+        }],
+        [`${RDF}rest`]: [{
+          '@id': '_:b3'
+        }]
+      },
+      '_:b2': {
+        '@id': '_:b2',
+        [`${SH}zeroOrMorePath`]: [{
+          '@id': '_:b4'
+        }]
+      },
+      '_:b3': {
+        '@id': '_:b3',
+        [`${RDF}first`]: [{
+          '@id': '_:b5'
+        }],
+        [`${RDF}rest`]: [{
+          '@id': `${RDF}nil`
+        }]
+      },
+      '_:b4': {
+        '@id': '_:b4',
+        [`${SH}alternativePath`]: [{
+          '@id': '_:b6'
+        }]
+      },
+      '_:b5': {
+        '@id': '_:b5',
+        [`${SH}oneOrMorePath`]: [{
+          '@id': '_:b7'
+        }]
+      },
+      '_:b6': {
+        '@id': '_:b6',
+        [`${RDF}first`]: [{
+          '@id': 'http://www.test.com/test#PropA'
+        }],
+        [`${RDF}rest`]: [{
+          '@id': '_:b8'
+        }]
+      },
+      '_:b7': {
+        '@id': '_:b7',
+        [`${SH}alternativePath`]: [{
+          '@id': '_:b9'
+        }]
+      },
+      '_:b8': {
+        '@id': '_:b8',
+        [`${RDF}first`]: [{
+          '@id': 'http://www.test.com/test#PropB'
+        }],
+        [`${RDF}rest`]: [{
+          '@id': `${RDF}nil`
+        }]
+      },
+      '_:b9': {
+        '@id': '_:b9',
+        [`${RDF}first`]: [{
+          '@id': 'http://www.test.com/test#PropC'
+        }],
+        [`${RDF}rest`]: [{
+          '@id': '_:b10'
+        }]
+      },
+      '_:b10': {
+        '@id': '_:b10',
+        [`${RDF}first`]: [{
+          '@id': 'http://www.test.com/test#PropD'
+        }],
+        [`${RDF}rest`]: [{
+          '@id': `${RDF}nil`
+        }]
+      }
+    },
+    structure: {
+      type: 'Sequence',
+      items: [
+        {
+          type: 'ZeroOrMore',
+          path: {
+            type: 'Alternative',
+            items: [
+              {
+                type: 'IRI',
+                iri: 'http://www.test.com/test#PropA',
+                label: 'Prop A'
+              },
+              {
+                type: 'IRI',
+                iri: 'http://www.test.com/test#PropB',
+                label: 'Prop B'
+              }
+            ]
+          }
+        },
+        {
+          type: 'OneOrMore',
+          path: {
+            type: 'Alternative',
+            items: [
+              {
+                type: 'IRI',
+                iri: 'http://www.test.com/test#PropC',
+                label: 'Prop C'
+              },
+              {
+                type: 'IRI',
+                iri: 'http://www.test.com/test#PropD',
+                label: 'Prop D'
+              }
+            ]
+          }
+        }
+      ]
+    },
+    pathString: '( Prop A | Prop B )* / ( Prop C | Prop D )+',
+  },
+  {
+    testName: 'one predicate path, one inverse path, both with alternates, predicate path with special path',
+    iri: '_:b1',
+    jsonldMap: {
+      '_:b1': {
+        '@id': '_:b1',
+        [`${RDF}first`]: [{
+          '@id': '_:b2'
+        }],
+        [`${RDF}rest`]: [{
+          '@id': '_:b3'
+        }]
+      },
+      '_:b2': {
+        '@id': '_:b2',
+        [`${SH}oneOrMorePath`]: [{
+          '@id': '_:b4'
+        }]
+      },
+      '_:b3': {
+        '@id': '_:b3',
+        [`${RDF}first`]: [{
+          '@id': '_:b5'
+        }],
+        [`${RDF}rest`]: [{
+          '@id': '_:b6'
+        }]
+      },
+      '_:b4': {
+        '@id': '_:b4',
+        [`${SH}inversePath`]: [{
+          '@id': 'http://www.test.com/test#PropA'
+        }]
+      },
+      '_:b5': {
+        '@id': '_:b5',
+        [`${SH}alternativePath`]: [{
+          '@id': '_:b7'
+        }]
+      },
+      '_:b6': {
+        '@id': '_:b6',
+        [`${RDF}first`]: [{
+          '@id': '_:b8'
+        }],
+        [`${RDF}rest`]: [{
+          '@id': `${RDF}nil`
+        }]
+      },
+      '_:b7': {
+        '@id': '_:b7',
+        [`${RDF}first`]: [{
+          '@id': 'http://www.test.com/test#PropB'
+        }],
+        [`${RDF}rest`]: [{
+          '@id': '_:b9'
+        }]
+      },
+      '_:b8': {
+        '@id': '_:b8',
+        [`${SH}alternativePath`]: [{
+          '@id': '_:b10'
+        }]
+      },
+      '_:b9': {
+        '@id': '_:b9',
+        [`${RDF}first`]: [{
+          '@id': 'http://www.test.com/test#PropC'
+        }],
+        [`${RDF}rest`]: [{
+          '@id': `${RDF}nil`
+        }]
+      },
+      '_:b10': {
+        '@id': '_:b10',
+        [`${RDF}first`]: [{
+          '@id': 'http://www.test.com/test#PropD'
+        }],
+        [`${RDF}rest`]: [{
+          '@id': '_:b11'
+        }]
+      },
+      '_:b11': {
+        '@id': '_:b11',
+        [`${RDF}first`]: [{
+          '@id': 'http://www.test.com/test#PropE'
+        }],
+        [`${RDF}rest`]: [{
+          '@id': `${RDF}nil`
+        }]
+      }
+    },
+    structure: {
+      type: 'Sequence',
+      items: [
+        {
+          type: 'OneOrMore',
+          path: {
+            type: 'Inverse',
+            path: {
+              type: 'IRI',
+              iri: 'http://www.test.com/test#PropA',
+              label: 'Prop A',
+            },
+          }
+        },
+        {
+          type: 'Alternative',
+          items: [
+            {
+              type: 'IRI',
+              iri: 'http://www.test.com/test#PropB',
+              label: 'Prop B',
+            },
+            {
+              type: 'IRI',
+              iri: 'http://www.test.com/test#PropC',
+              label: 'Prop C',
+            },
+          ]
+        },
+        {
+          type: 'Alternative',
+          items: [
+            {
+              type: 'IRI',
+              iri: 'http://www.test.com/test#PropD',
+              label: 'Prop D',
+            },
+            {
+              type: 'IRI',
+              iri: 'http://www.test.com/test#PropE',
+              label: 'Prop E',
+            },
+          ]
+        }
+      ]
+    },
+    pathString: '( ^( Prop A ) )+ / Prop B | Prop C / Prop D | Prop E',
+  },
+  //  This chunk of tests focuses on mixed predicate and inverse paths
+  {
+    testName: 'predicate path to inverse path',
+    iri: '_:b1',
+    jsonldMap: {
+      '_:b1': {
+        '@id': '_:b1',
+        [`${RDF}first`]: [{
+          '@id': 'http://www.test.com/test#PropA'
+        }],
+        [`${RDF}rest`]: [{
+          '@id': '_:b2'
+        }]
+      },
+      '_:b2': {
+        '@id': '_:b2',
+        [`${RDF}first`]: [{
+          '@id': '_:b3'
+        }],
+        [`${RDF}rest`]: [{
+          '@id': `${RDF}nil`
+        }]
+      },
+      '_:b3': {
+        '@id': '_:b3',
+        [`${SH}inversePath`]: [{
+          '@id': 'http://www.test.com/test#PropC'
+        }]
+      }
+    },
+    structure: {
+      type: 'Sequence',
+      items: [
+        {
+          type: 'IRI',
+          iri: 'http://www.test.com/test#PropA',
+          label: 'Prop A'
+        },
+        {
+          type: 'Inverse',
+          path: {
+            type: 'IRI',
+            iri: 'http://www.test.com/test#PropC',
+            label: 'Prop C',
+          }
+        }
+      ]
+    },
+    pathString: 'Prop A / ^( Prop C )',
+  },
+  {
+    testName: 'inverse path to predicate path',
+    iri: '_:b1',
+    jsonldMap: {
+      '_:b1': {
+        '@id': '_:b1',
+        [`${RDF}first`]: [{
+          '@id': '_:b2'
+        }],
+        [`${RDF}rest`]: [{
+          '@id': '_:b3'
+        }]
+      },
+      '_:b2': {
+        '@id': '_:b2',
+        [`${SH}inversePath`]: [{
+          '@id': 'http://www.test.com/test#PropB'
+        }]
+      },
+      '_:b3': {
+        '@id': '_:b3',
+        [`${RDF}first`]: [{
+          '@id': 'http://www.test.com/test#PropD'
+        }],
+        [`${RDF}rest`]: [{
+          '@id': `${RDF}nil`
+        }]
+      },
+    },
+    structure: {
+      type: 'Sequence',
+      items: [
+        {
+          type: 'Inverse',
+          path: {
+            type: 'IRI',
+            iri: 'http://www.test.com/test#PropB',
+            label: 'Prop B',
+          }
+        },
+        {
+          type: 'IRI',
+          iri: 'http://www.test.com/test#PropD',
+          label: 'Prop D'
+        }
+      ]
+    },
+    pathString: '^( Prop B ) / Prop D',
+  },
+  {
+    testName: 'multiple predicate path with inverse and specialty paths',
+    iri: '_:b1',
+    jsonldMap: {
+      '_:b1': {
+        '@id': '_:b1',
+        [`${RDF}first`]: [{
+          '@id': '_:b2'
+        }],
+        [`${RDF}rest`]: [{
+          '@id': '_:b3'
+        }]
+      },
+      '_:b2': {
+        '@id': '_:b2',
+        [`${SH}zeroOrMorePath`]: [{
+          '@id': 'http://www.test.com/test#PropA'
+        }]
+      },
+      '_:b3': {
+        '@id': '_:b3',
+        [`${RDF}first`]: [{
+          '@id': '_:b4'
+        }],
+        [`${RDF}rest`]: [{
+          '@id': `${RDF}nil`
+        }]
+      },
+      '_:b4': {
+        '@id': '_:b4',
+        [`${SH}oneOrMorePath`]: [{
+          '@id': '_:b5'
+        }]
+      },
+      '_:b5': {
+        '@id': '_:b5',
+        [`${SH}inversePath`]: [{
+          '@id': 'http://www.test.com/test#PropB'
+        }]
+      },
+    },
+    structure: {
+      type: 'Sequence',
+      items: [
+        {
+          type: 'ZeroOrMore',
+          path: {
+            type: 'IRI',
+            iri: 'http://www.test.com/test#PropA',
+            label: 'Prop A',
+          }
+        },
+        {
+          type: 'OneOrMore',
+          path: {
+            type: 'Inverse',
+            path: {
+              type: 'IRI',
+              iri: 'http://www.test.com/test#PropB',
+              label: 'Prop B',
+            }
+          }
+        }
+      ]
+    },
+    pathString: '( Prop A )* / ( ^( Prop B ) )+',
+  }
+];
+
+interface ConstraintTestCase {
+  testName: string,
+  key: string,
+  values: (JSONLDId|JSONLDValue)[],
+  bnodes: JSONLDObject[],
+  constraint: Constraint,
+  separate?: boolean
+}
+
+export const constraintTestCases: ConstraintTestCase[] = [
+  {
+    testName: 'sh:class',
+    key: `${SH}class`,
+    values: [
+      { '@id': 'http://www.test.com/test#ClassA' }
+    ],
+    bnodes: [],
+    constraint: {
+      constraintProp: `${SH}class`,
+      constraintLabel: 'Class',
+      value: [{ chosenValue: 'http://www.test.com/test#ClassA', label: 'Class A' }],
+    }
+  },
+  {
+    testName: 'sh:datatype',
+    key: `${SH}datatype`,
+    values: [
+      { '@id': 'http://www.test.com/test#DatatypeA' }
+    ],
+    bnodes: [],
+    constraint: {
+      constraintProp: `${SH}datatype`,
+      constraintLabel: 'Datatype',
+      value: [{ chosenValue: 'http://www.test.com/test#DatatypeA', label: 'Datatype A' }],
+    }
+  },
+  {
+    testName: 'sh:nodeKind',
+    key: `${SH}nodeKind`,
+    values: [
+      { '@id': `${SH}Literal` }
+    ],
+    bnodes: [],
+    constraint: {
+      constraintProp: `${SH}nodeKind`,
+      constraintLabel: 'Node Kind',
+      value: [{ chosenValue: `${SH}Literal`, label: 'Literal' }],
+    }
+  },
+  {
+    testName: 'sh:minCount',
+    key: `${SH}minCount`,
+    values: [
+      { '@value': '1', '@type': `${XSD}nonNegativeInteger` }
+    ],
+    bnodes: [],
+    constraint: {
+      constraintProp: `${SH}minCount`,
+      constraintLabel: 'Min Count',
+      value: [{ chosenValue: '1', label: '1' }],
+    }
+  },
+  {
+    testName: 'sh:maxCount',
+    key: `${SH}maxCount`,
+    values: [
+      { '@value': '5', '@type': `${XSD}nonNegativeInteger` }
+    ],
+    bnodes: [],
+    constraint: {
+      constraintProp: `${SH}maxCount`,
+      constraintLabel: 'Max Count',
+      value: [{ chosenValue: '5', label: '5' }],
+    }
+  },
+  {
+    testName: 'sh:minExclusive',
+    key: `${SH}minExclusive`,
+    values: [
+      { '@value': '10', '@type': `${XSD}decimal` }
+    ],
+    bnodes: [],
+    constraint: {
+      constraintProp: `${SH}minExclusive`,
+      constraintLabel: 'Min Exclusive',
+      value: [{ chosenValue: '10', label: '10' }],
+    }
+  },
+  {
+    testName: 'sh:minInclusive',
+    key: `${SH}minInclusive`,
+    values: [
+      { '@value': '10', '@type': `${XSD}decimal` }
+    ],
+    bnodes: [],
+    constraint: {
+      constraintProp: `${SH}minInclusive`,
+      constraintLabel: 'Min Inclusive',
+      value: [{ chosenValue: '10', label: '10' }],
+    }
+  },
+  {
+    testName: 'sh:maxExclusive',
+    key: `${SH}maxExclusive`,
+    values: [
+      { '@value': '10', '@type': `${XSD}decimal` }
+    ],
+    bnodes: [],
+    constraint: {
+      constraintProp: `${SH}maxExclusive`,
+      constraintLabel: 'Max Exclusive',
+      value: [{ chosenValue: '10', label: '10' }],
+    }
+  },
+  {
+    testName: 'sh:maxInclusive',
+    key: `${SH}maxInclusive`,
+    values: [
+      { '@value': '10', '@type': `${XSD}decimal` }
+    ],
+    bnodes: [],
+    constraint: {
+      constraintProp: `${SH}maxInclusive`,
+      constraintLabel: 'Max Inclusive',
+      value: [{ chosenValue: '10', label: '10' }],
+    }
+  },
+  {
+    testName: 'sh:minLength',
+    key: `${SH}minLength`,
+    values: [
+      { '@value': '3', '@type': `${XSD}nonNegativeInteger` }
+    ],
+    bnodes: [],
+    constraint: {
+      constraintProp: `${SH}minLength`,
+      constraintLabel: 'Min Length',
+      value: [{ chosenValue: '3', label: '3' }],
+    }
+  },
+  {
+    testName: 'sh:maxLength',
+    key: `${SH}maxLength`,
+    values: [
+      { '@value': '10', '@type': `${XSD}nonNegativeInteger` }
+    ],
+    bnodes: [],
+    constraint: {
+      constraintProp: `${SH}maxLength`,
+      constraintLabel: 'Max Length',
+      value: [{ chosenValue: '10', label: '10' }],
+    }
+  },
+  {
+    testName: 'sh:pattern',
+    key: `${SH}pattern`,
+    values: [
+      { '@value': '^[a-zA-Z0-9]+$' }
+    ],
+    bnodes: [],
+    constraint: {
+      constraintProp: `${SH}pattern`,
+      constraintLabel: 'Pattern',
+      value: [{ chosenValue: '^[a-zA-Z0-9]+$', label: '^[a-zA-Z0-9]+$' }],
+    }
+  },
+  {
+    testName: 'sh:flags',
+    key: `${SH}flags`,
+    values: [
+      { '@value': 'i' }
+    ],
+    bnodes: [],
+    constraint: {
+      constraintProp: `${SH}flags`,
+      constraintLabel: 'Flags',
+      value: [{ chosenValue: 'i', label: 'i' }],
+    }
+  },
+  {
+    testName: 'sh:languageIn',
+    key: `${SH}languageIn`,
+    values: [
+      { '@id': '_:b1_lang' }
+    ],
+    bnodes: [
+      { '@id': '_:b1_lang', [`${RDF}first`]: [{ '@value': 'en' }], [`${RDF}rest`]: [{ '@id': '_:b2_lang' }] },
+      { '@id': '_:b2_lang', [`${RDF}first`]: [{ '@value': 'fr' }], [`${RDF}rest`]: [{ '@id': `${RDF}nil` }] },
+    ],
+    constraint: {
+      constraintProp: `${SH}languageIn`,
+      constraintLabel: 'Language In',
+      value: [
+        { chosenValue: 'en', label: 'en' },
+        { chosenValue: 'fr', label: 'fr' }
+      ],
+    }
+  },
+  {
+    testName: 'sh:uniqueLang',
+    key: `${SH}uniqueLang`,
+    values: [
+      { '@value': 'true', '@type': `${XSD}boolean` }
+    ],
+    bnodes: [],
+    constraint: {
+      constraintProp: `${SH}uniqueLang`,
+      constraintLabel: 'Unique Lang',
+      value: [{ chosenValue: 'true', label: 'true' }],
+    }
+  },
+  {
+    testName: 'sh:equals',
+    key: `${SH}equals`,
+    values: [
+      { '@id': 'http://www.test.com/test#PropA' }
+    ],
+    bnodes: [],
+    constraint: {
+      constraintProp: `${SH}equals`,
+      constraintLabel: 'Equals',
+      value: [{ chosenValue: 'http://www.test.com/test#PropA', label: 'Prop A' }],
+    }
+  },
+  {
+    testName: 'sh:disjoint',
+    key: `${SH}disjoint`,
+    values: [
+      { '@id': 'http://www.test.com/test#PropA' }
+    ],
+    bnodes: [],
+    constraint: {
+      constraintProp: `${SH}disjoint`,
+      constraintLabel: 'Disjoint',
+      value: [{ chosenValue: 'http://www.test.com/test#PropA', label: 'Prop A' }],
+    }
+  },
+  {
+    testName: 'sh:lessThan',
+    key: `${SH}lessThan`,
+    values: [
+      { '@id': 'http://www.test.com/test#PropA' }
+    ],
+    bnodes: [],
+    constraint: {
+      constraintProp: `${SH}lessThan`,
+      constraintLabel: 'Less Than',
+      value: [{ chosenValue: 'http://www.test.com/test#PropA', label: 'Prop A' }],
+    }
+  },
+  {
+    testName: 'sh:lessThanOrEquals',
+    key: `${SH}lessThanOrEquals`,
+    values: [
+      { '@id': 'http://www.test.com/test#PropA' }
+    ],
+    bnodes: [],
+    constraint: {
+      constraintProp: `${SH}lessThanOrEquals`,
+      constraintLabel: 'Less Than Or Equals',
+      value: [{ chosenValue: 'http://www.test.com/test#PropA', label: 'Prop A' }],
+    }
+  },
+  // These test cases have to be done separate as they reuse the same property
+  {
+    testName: 'sh:hasValue with data value',
+    separate: true,
+    key: `${SH}hasValue`,
+    values: [
+      { '@value': '3.14', '@type': `${XSD}decimal` }
+    ],
+    bnodes: [],
+    constraint: {
+      constraintProp: `${SH}hasValue`,
+      constraintLabel: 'Has Value',
+      value: [{ chosenValue: '3.14', label: '3.14' }],
+    }
+  },
+  {
+    testName: 'sh:hasValue with IRI value',
+    separate: true,
+    key: `${SH}hasValue`,
+    values: [
+      { '@id': 'http://www.test.com/test#IndividualA' }
+    ],
+    bnodes: [],
+    constraint: {
+      constraintProp: `${SH}hasValue`,
+      constraintLabel: 'Has Value',
+      value: [{ chosenValue: 'http://www.test.com/test#IndividualA', label: 'Individual A' }],
+    }
+  },
+  {
+    testName: 'sh:in with data values',
+    separate: true,
+    key: `${SH}in`,
+    values: [
+      { '@id': '_:b1_in' }
+    ],
+    bnodes: [
+      { '@id': '_:b1_in', [`${RDF}first`]: [{ '@value': '3.14', '@type': `${XSD}decimal` }], [`${RDF}rest`]: [{ '@id': '_:b2_in' }] },
+      { '@id': '_:b2_in', [`${RDF}first`]: [{ '@value': '2.71', '@type': `${XSD}decimal` }], [`${RDF}rest`]: [{ '@id': `${RDF}nil` }] },
+    ],
+    constraint: {
+      constraintProp: `${SH}in`,
+      constraintLabel: 'In',
+      value: [
+        { chosenValue: '3.14', label: '3.14' },
+        { chosenValue: '2.71', label: '2.71' }
+      ],
+    }
+  },
+  {
+    testName: 'sh:in with IRI values',
+    separate: true,
+    key: `${SH}in`,
+    values: [
+      { '@id': '_:b1_in_iri' }
+    ],
+    bnodes: [
+      { '@id': '_:b1_in_iri', [`${RDF}first`]: [{ '@id': 'http://www.test.com/test#IndividualA' }], [`${RDF}rest`]: [{ '@id': '_:b2_in_iri' }] },
+      { '@id': '_:b2_in_iri', [`${RDF}first`]: [{ '@id': 'http://www.test.com/test#IndividualB' }], [`${RDF}rest`]: [{ '@id': `${RDF}nil` }] },
+    ],
+    constraint: {
+      constraintProp: `${SH}in`,
+      constraintLabel: 'In',
+      value: [
+        { chosenValue: 'http://www.test.com/test#IndividualA', label: 'Individual A' },
+        { chosenValue: 'http://www.test.com/test#IndividualB', label: 'Individual B' },
+      ],
+    }
+  }
+];

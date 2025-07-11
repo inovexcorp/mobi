@@ -22,7 +22,7 @@
  */
 import { ValidatorFn, Validators } from '@angular/forms';
 
-import { RDF, SHACL_FORM, SHACL, XSD } from '../../prefixes';
+import { RDF, SHACL_FORM, SH, XSD } from '../../prefixes';
 import { JSONLDObject } from '../../shared/models/JSONLDObject.interface';
 import {
   getPropertyId,
@@ -65,19 +65,19 @@ export class SHACLFormFieldConfig {
       if (!this._propertyShape) {
         throw new Error('Could not find specified PropertyShape in provided JSON-LD');
       }
-      this._property = getPropertyId(this._propertyShape, `${SHACL}path`);
-      this._label = getPropertyValue(this._propertyShape, `${SHACL}name`) || getBeautifulIRI(this._property)
+      this._property = getPropertyId(this._propertyShape, `${SH}path`);
+      this._label = getPropertyValue(this._propertyShape, `${SH}name`) || getBeautifulIRI(this._property)
         .replace('Has ', '');
 
       if (!this._property) {
         throw new Error('Property path not configured');
       }
 
-      if (this._propertyShape[`${SHACL}node`]) { // If a complex PropertyShape (i.e. with sh:node)
-        const subNodeShapeId = getPropertyId(this._propertyShape, `${SHACL}node`);
+      if (this._propertyShape[`${SH}node`]) { // If a complex PropertyShape (i.e. with sh:node)
+        const subNodeShapeId = getPropertyId(this._propertyShape, `${SH}node`);
         const subNodeShape = fullJsonld.find(obj => obj['@id'] === subNodeShapeId);
         this._subFields = [];
-        getPropertyIds(subNodeShape, `${SHACL}property`).forEach(subFieldId => {
+        getPropertyIds(subNodeShape, `${SH}property`).forEach(subFieldId => {
           this._subFields.push(new SHACLFormFieldConfig(subNodeShape, subFieldId, fullJsonld));
         });
       } else { // Assumption of simple PropertyShapes (i.e. without sh:node)
@@ -116,8 +116,8 @@ export class SHACLFormFieldConfig {
             throw new Error('Form field type not supported');
         }
   
-        const valueArray = this._propertyShape[`${SHACL}in`] ? 
-          rdfListToValueArray(fullJsonld, getPropertyId(this._propertyShape, `${SHACL}in`)) :
+        const valueArray = this._propertyShape[`${SH}in`] ? 
+          rdfListToValueArray(fullJsonld, getPropertyId(this._propertyShape, `${SH}in`)) :
           [];
       
         this._values = valueArray.map(value => new Option(value, value));
@@ -178,33 +178,33 @@ export class SHACLFormFieldConfig {
 
   // sh:minCount
   public get minCount(): number|undefined {
-    const temp = getPropertyValue(this.propertyShape, `${SHACL}minCount`);
+    const temp = getPropertyValue(this.propertyShape, `${SH}minCount`);
     return temp ? (Number.isNaN(parseInt(temp, 10)) ? undefined : parseInt(temp, 10)) : undefined;
   }
 
   // sh:maxCount
   public get maxCount(): number|undefined {
-    const temp = getPropertyValue(this.propertyShape, `${SHACL}maxCount`);
+    const temp = getPropertyValue(this.propertyShape, `${SH}maxCount`);
     return temp ? (Number.isNaN(parseInt(temp, 10)) ? undefined : parseInt(temp, 10)) : undefined;
   }
 
   // sh:regex & sh:flags
   public get regex(): RegExp|undefined {
-    const temp = getPropertyValue(this.propertyShape, `${SHACL}pattern`);
-    const flags = getPropertyValue(this._propertyShape, `${SHACL}flags`);
+    const temp = getPropertyValue(this.propertyShape, `${SH}pattern`);
+    const flags = getPropertyValue(this._propertyShape, `${SH}flags`);
     return temp ? (flags ? new RegExp(temp, flags) : new RegExp(temp)) : undefined;
   }
 
   // sh:datatype
   public get datatype(): string|undefined {
-    const temp = getPropertyId(this.propertyShape, `${SHACL}datatype`);
+    const temp = getPropertyId(this.propertyShape, `${SH}datatype`);
     return temp || undefined;
   }
 
   // sh:defaultValue
   public get defaultValue(): string|undefined {
-    const tempValue = getPropertyValue(this.propertyShape, `${SHACL}defaultValue`);
-    const tempId = getPropertyId(this.propertyShape, `${SHACL}defaultValue`);
+    const tempValue = getPropertyValue(this.propertyShape, `${SH}defaultValue`);
+    const tempId = getPropertyId(this.propertyShape, `${SH}defaultValue`);
     return tempValue || tempId || undefined;
   }
 

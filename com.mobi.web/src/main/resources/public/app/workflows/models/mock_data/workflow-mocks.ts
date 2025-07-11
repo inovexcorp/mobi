@@ -26,7 +26,7 @@ import { WorkflowSchema } from '../workflow-record.interface';
 import { WorkflowDataRow } from '../workflow-record-table';
 import { condenseCommitId } from '../../../shared/utility';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
-import { CATALOG, DCTERMS, OWL, RDFS, SHACL, SHACL_FORM, WORKFLOWS, XSD } from '../../../prefixes';
+import { CATALOG, DCTERMS, OWL, RDFS, SH, SHACL_FORM, WORKFLOWS, XSD } from '../../../prefixes';
 
 const workflow_mocks: WorkflowSchema[] = [
     {
@@ -250,7 +250,7 @@ const testActionNodeShape: JSONLDObject = {
   '@id': `${WORKFLOWS}TestAction`,
   '@type': [
       `${OWL}Class`,
-      `${SHACL}NodeShape`,
+      `${SH}NodeShape`,
       `${RDFS}Class`
   ],
   [`${RDFS}comment`]: [
@@ -270,7 +270,7 @@ const testActionNodeShape: JSONLDObject = {
           '@id': `${WORKFLOWS}Action`
       }
   ],
-  [`${SHACL}property`]: [
+  [`${SH}property`]: [
       {
           '@id': `${WORKFLOWS}testActionPropertyShape`
       }
@@ -282,7 +282,7 @@ const httpRequestActionNodeShape: JSONLDObject = {
     '@id': `${WORKFLOWS}HTTPRequestAction`,
     '@type': [
         `${OWL}Class`,
-        `${SHACL}NodeShape`,
+        `${SH}NodeShape`,
         `${RDFS}Class`
     ],
     [`${RDFS}label`]: [
@@ -296,7 +296,7 @@ const httpRequestActionNodeShape: JSONLDObject = {
             '@id': `${WORKFLOWS}Action`
         }
     ],
-    [`${SHACL}property`]: [
+    [`${SH}property`]: [
         {
             '@id': `${WORKFLOWS}httpUrlPropertyShape`
         },
@@ -331,26 +331,26 @@ const actionSHACLDefinitions = {
         {
             '@id': `${WORKFLOWS}testActionPropertyShape`,
             '@type': [
-                `${SHACL}PropertyShape`
+                `${SH}PropertyShape`
             ],
-            [`${SHACL}datatype`]: [
+            [`${SH}datatype`]: [
                 {
                     '@id': `${XSD}string`
                 }
             ],
-            [`${SHACL}maxCount`]: [
+            [`${SH}maxCount`]: [
                 {
                     '@type': `${XSD}integer`,
                     '@value': '1'
                 }
             ],
-            [`${SHACL}minCount`]: [
+            [`${SH}minCount`]: [
                 {
                     '@type': `${XSD}integer`,
                     '@value': '1'
                 }
             ],
-            [`${SHACL}path`]: [
+            [`${SH}path`]: [
                 {
                     '@id': `${WORKFLOWS}testMessage`
                 }
@@ -397,7 +397,7 @@ const actionSHACLDefinitions = {
             '@id': `${WORKFLOWS}Header`,
             '@type': [
                 `${OWL}Class`,
-                `${SHACL}NodeShape`,
+                `${SH}NodeShape`,
                 `${RDFS}Class`
             ],
             [`${RDFS}label`]: [
@@ -406,7 +406,7 @@ const actionSHACLDefinitions = {
                     '@value': 'Header'
                 }
             ],
-            [`${SHACL}property`]: [
+            [`${SH}property`]: [
                 {
                     '@id': `${WORKFLOWS}headerNamePropertyShape`
                 },
@@ -464,7 +464,7 @@ const actionSHACLDefinitions = {
                     '@id': `${XSD}string`
                 }
             ],
-            [`${SHACL}order`]: [
+            [`${SH}order`]: [
                 {
                     '@type': `${XSD}integer`,
                     '@value': '0'
@@ -499,7 +499,7 @@ const actionSHACLDefinitions = {
                     '@id': `${XSD}string`
                 }
             ],
-            [`${SHACL}order`]: [
+            [`${SH}order`]: [
                 {
                     '@type': `${XSD}integer`,
                     '@value': '1'
@@ -538,31 +538,31 @@ const actionSHACLDefinitions = {
         {
             '@id': `${WORKFLOWS}headerNamePropertyShape`,
             '@type': [
-                `${SHACL}PropertyShape`
+                `${SH}PropertyShape`
             ],
-            [`${SHACL}datatype`]: [
+            [`${SH}datatype`]: [
                 {
                     '@id': `${XSD}string`
                 }
             ],
-            [`${SHACL}maxCount`]: [
+            [`${SH}maxCount`]: [
                 {
                     '@type': `${XSD}integer`,
                     '@value': '1'
                 }
             ],
-            [`${SHACL}minCount`]: [
+            [`${SH}minCount`]: [
                 {
                     '@type': `${XSD}integer`,
                     '@value': '1'
                 }
             ],
-            [`${SHACL}name`]: [
+            [`${SH}name`]: [
                 {
                     '@value': 'Header Name'
                 }
             ],
-            [`${SHACL}path`]: [
+            [`${SH}path`]: [
                 {
                     '@id': `${WORKFLOWS}hasHeaderName`
                 }
@@ -576,31 +576,31 @@ const actionSHACLDefinitions = {
         {
             '@id': `${WORKFLOWS}headerValuePropertyShape`,
             '@type': [
-                `${SHACL}PropertyShape`
+                `${SH}PropertyShape`
             ],
-            [`${SHACL}datatype`]: [
+            [`${SH}datatype`]: [
                 {
                     '@id': `${XSD}string`
                 }
             ],
-            [`${SHACL}maxCount`]: [
+            [`${SH}maxCount`]: [
                 {
                     '@type': `${XSD}integer`,
                     '@value': '1'
                 }
             ],
-            [`${SHACL}minCount`]: [
+            [`${SH}minCount`]: [
                 {
                     '@type': `${XSD}integer`,
                     '@value': '1'
                 }
             ],
-            [`${SHACL}name`]: [
+            [`${SH}name`]: [
                 {
                     '@value': 'Header Value'
                 }
             ],
-            [`${SHACL}path`]: [
+            [`${SH}path`]: [
                 {
                     '@id': `${WORKFLOWS}hasHeaderValue`
                 }
@@ -614,20 +614,20 @@ const actionSHACLDefinitions = {
         {
             '@id': `${WORKFLOWS}httpHeaderPropertyShape`,
             '@type': [
-                `${SHACL}PropertyShape`
+                `${SH}PropertyShape`
             ],
-            [`${SHACL}minCount`]: [
+            [`${SH}minCount`]: [
                 {
                     '@type': `${XSD}integer`,
                     '@value': '0'
                 }
             ],
-            [`${SHACL}node`]: [
+            [`${SH}node`]: [
                 {
                     '@id': `${WORKFLOWS}Header`
                 }
             ],
-            [`${SHACL}path`]: [
+            [`${SH}path`]: [
                 {
                     '@id': `${WORKFLOWS}hasHeader`
                 }
@@ -636,31 +636,31 @@ const actionSHACLDefinitions = {
         {
             '@id': `${WORKFLOWS}httpUrlPropertyShape`,
             '@type': [
-                `${SHACL}PropertyShape`
+                `${SH}PropertyShape`
             ],
-            [`${SHACL}datatype`]: [
+            [`${SH}datatype`]: [
                 {
                     '@id': `${XSD}string`
                 }
             ],
-            [`${SHACL}maxCount`]: [
+            [`${SH}maxCount`]: [
                 {
                     '@type': `${XSD}integer`,
                     '@value': '1'
                 }
             ],
-            [`${SHACL}minCount`]: [
+            [`${SH}minCount`]: [
                 {
                     '@type': `${XSD}integer`,
                     '@value': '1'
                 }
             ],
-            [`${SHACL}path`]: [
+            [`${SH}path`]: [
                 {
                     '@id': `${WORKFLOWS}hasHttpUrl`
                 }
             ],
-            [`${SHACL}pattern`]: [
+            [`${SH}pattern`]: [
                 {
                     '@value': '^(https?|ftp):\\/\\/[^\\s\\/$.?#].[^\\s]*$'
                 }
@@ -679,7 +679,7 @@ const scheduledTriggerNodeShape: JSONLDObject = {
     '@id': `${WORKFLOWS}ScheduledTrigger`,
     '@type': [
         `${OWL}Class`,
-        `${SHACL}NodeShape`,
+        `${SH}NodeShape`,
         `${RDFS}Class`
     ],
     [`${RDFS}comment`]: [
@@ -699,7 +699,7 @@ const scheduledTriggerNodeShape: JSONLDObject = {
             '@id': `${WORKFLOWS}Trigger`
         }
     ],
-    [`${SHACL}property`]: [
+    [`${SH}property`]: [
         {
             '@id': `${WORKFLOWS}cronExpressionPropertyShape`
         }
@@ -711,7 +711,7 @@ const commitToBranchTriggerNodeShape: JSONLDObject = {
     '@id': `${WORKFLOWS}CommitToBranchTrigger`,
     '@type': [
         `${OWL}Class`,
-        `${SHACL}NodeShape`,
+        `${SH}NodeShape`,
         `${RDFS}Class`
     ],
     [`${RDFS}comment`]: [
@@ -731,7 +731,7 @@ const commitToBranchTriggerNodeShape: JSONLDObject = {
             '@id': `${WORKFLOWS}EventTrigger`
         }
     ],
-    [`${SHACL}property`]: [
+    [`${SH}property`]: [
         {
             '@id': `${WORKFLOWS}watchesRecordPropertyShape`
         },
@@ -747,7 +747,7 @@ const triggerSHACLDefinitions = {
         {
             '@id': '_:02f15581c487430599f07bb6b91688ad8933',
             '@type': [
-                `${SHACL}SPARQLConstraint`
+                `${SH}SPARQLConstraint`
             ]
         },
         commitToBranchTriggerNodeShape,
@@ -783,31 +783,31 @@ const triggerSHACLDefinitions = {
       {
           '@id': `${WORKFLOWS}watchesBranchPropertyShape`,
           '@type': [
-              `${SHACL}PropertyShape`
+              `${SH}PropertyShape`
           ],
-          [`${SHACL}class`]: [
+          [`${SH}class`]: [
               {
                   '@id': `${CATALOG}Branch`
               }
           ],
-          [`${SHACL}maxCount`]: [
+          [`${SH}maxCount`]: [
               {
                   '@type': `${XSD}integer`,
                   '@value': '1'
               }
           ],
-          [`${SHACL}minCount`]: [
+          [`${SH}minCount`]: [
               {
                   '@type': `${XSD}integer`,
                   '@value': '1'
               }
           ],
-          [`${SHACL}path`]: [
+          [`${SH}path`]: [
               {
                   '@id': `${WORKFLOWS}watchesBranch`
               }
           ],
-          [`${SHACL}sparql`]: [
+          [`${SH}sparql`]: [
               {
                   '@id': '_:02f15581c487430599f07bb6b91688ad8933'
               }
@@ -850,26 +850,26 @@ const triggerSHACLDefinitions = {
       {
           '@id': `${WORKFLOWS}watchesRecordPropertyShape`,
           '@type': [
-              `${SHACL}PropertyShape`
+              `${SH}PropertyShape`
           ],
-          [`${SHACL}class`]: [
+          [`${SH}class`]: [
               {
                   '@id': `${CATALOG}VersionedRDFRecord`
               }
           ],
-          [`${SHACL}maxCount`]: [
+          [`${SH}maxCount`]: [
               {
                   '@type': `${XSD}integer`,
                   '@value': '1'
               }
           ],
-          [`${SHACL}minCount`]: [
+          [`${SH}minCount`]: [
               {
                   '@type': `${XSD}integer`,
                   '@value': '1'
               }
           ],
-          [`${SHACL}path`]: [
+          [`${SH}path`]: [
               {
                   '@id': `${WORKFLOWS}watchesRecord`
               }
@@ -915,31 +915,31 @@ const triggerSHACLDefinitions = {
       {
           '@id': `${WORKFLOWS}cronExpressionPropertyShape`,
           '@type': [
-              `${SHACL}PropertyShape`
+              `${SH}PropertyShape`
           ],
-          [`${SHACL}datatype`]: [
+          [`${SH}datatype`]: [
               {
                   '@id': `${XSD}string`
               }
           ],
-          [`${SHACL}maxCount`]: [
+          [`${SH}maxCount`]: [
               {
                   '@type': `${XSD}integer`,
                   '@value': '1'
               }
           ],
-          [`${SHACL}minCount`]: [
+          [`${SH}minCount`]: [
               {
                   '@type': `${XSD}integer`,
                   '@value': '1'
               }
           ],
-          [`${SHACL}path`]: [
+          [`${SH}path`]: [
               {
                   '@id': `${WORKFLOWS}cron`
               }
           ],
-          [`${SHACL}pattern`]: [
+          [`${SH}pattern`]: [
               {
                   '@value': '(((\\d+,)+\\d+|(\\d+(\\/|-)\\d+)|\\d+|\\*|\\?) ?){5,7}'
               }

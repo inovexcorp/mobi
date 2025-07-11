@@ -28,7 +28,7 @@ import { merge, Observable, Subject } from 'rxjs';
 import { debounceTime, map } from 'rxjs/operators';
 
 import { FieldType, SHACLFormFieldConfig } from '../../models/shacl-form-field-config';
-import { SHACL, XSD } from '../../../prefixes';
+import { SH, XSD } from '../../../prefixes';
 import { SHACLFormManagerService } from '../../services/shaclFormManager.service';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { Option } from '../../models/option.class';
@@ -77,7 +77,7 @@ export class SHACLFormFieldComponent implements OnInit {
   constructor(public sh: SHACLFormManagerService, private ref: ChangeDetectorRef) {
     this.sh.fieldUpdated.subscribe((fieldName: string) => {
       // If an autocomplete field was updated in the form and the current field is an autocomplete with a SPARQL constraint, reset the value
-      if (fieldName !== this.formFieldConfig.property && this.formFieldConfig.fieldType === FieldType.AUTOCOMPLETE && this.formFieldConfig.propertyShape[`${SHACL}sparql`]) {
+      if (fieldName !== this.formFieldConfig.property && this.formFieldConfig.fieldType === FieldType.AUTOCOMPLETE && this.formFieldConfig.propertyShape[`${SH}sparql`]) {
         this.fieldFormControl.setValue(new Option('', ''));
         this.ngOnInit();
       }

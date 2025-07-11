@@ -359,21 +359,9 @@ module.exports = {
         browser.page.catalogPage().finishSearch();
         browser.page.catalogPage().openRecordItem(ontologyMrPermission_title);
 
-        browser
-            .useXpath()
-            .waitForElementVisible('//button//span[contains(text(), "Manage")]/parent::button')
-            .click('//button//span[contains(text(), "Manage")]/parent::button');
-        browser
-            .useXpath()
-            .waitForElementVisible('//div//h4[contains(text(), "Manage Record")]/parent::div//mat-slide-toggle')
-            .click('//div//h4[contains(text(), "Manage Record")]/parent::div//mat-slide-toggle');
-        browser
-            .useXpath()
-            .waitForElementVisible('//div[@class="save-container"]//button')
-            .click('//div[@class="save-container"]//button');
-        browser
-            .useCss()
-            .waitForElementNotPresent('div.mat-horizontal-stepper-content.ng-animating');
+        browser.page.catalogPage().openManage();
+        browser.globals.wait_for_no_spinners(browser);
+        browser.page.catalogPage().toggleRecordEveryonePermission('Manage Record');
    },
 
    'Step 41: The user clicks logout' : function(browser) {
@@ -434,21 +422,9 @@ module.exports = {
         browser.page.catalogPage().finishSearch();
         browser.page.catalogPage().openRecordItem(ontologyMrPermission_title);
 
-        browser
-            .useXpath()
-            .waitForElementVisible('//button//span[contains(text(), "Manage")]/parent::button')
-            .click('//button//span[contains(text(), "Manage")]/parent::button');
-        browser
-            .useXpath()
-            .waitForElementVisible('//div//h4[contains(text(), "Modify Master Branch")]/parent::div//mat-slide-toggle')
-            .click('//div//h4[contains(text(), "Modify Master Branch")]/parent::div//mat-slide-toggle');
-        browser
-            .useXpath()
-            .waitForElementVisible('//div[@class="save-container"]//button')
-            .click('//div[@class="save-container"]//button');
-        browser
-            .useCss()
-            .waitForElementNotPresent('div.mat-horizontal-stepper-content.ng-animating');
+        browser.page.catalogPage().openManage();
+        browser.globals.wait_for_no_spinners(browser);
+        browser.page.catalogPage().toggleRecordEveryonePermission('Modify Master Branch');
     },
 
     'Step 48: The user clicks logout' : function(browser) {

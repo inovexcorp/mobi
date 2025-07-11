@@ -38,7 +38,7 @@ import { of } from 'rxjs';
 import { cloneDeep } from 'lodash';
 
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
-import { RDF, SHACL, SHACL_FORM, XSD } from '../../../prefixes';
+import { RDF, SH, SHACL_FORM, XSD } from '../../../prefixes';
 import { SHACLFormFieldConfig } from '../../models/shacl-form-field-config';
 import { cleanStylesFromDOM } from '../../../../test/ts/Shared';
 import { SHACLFormManagerService } from '../../services/shaclFormManager.service';
@@ -51,7 +51,7 @@ describe('SHACLFormFieldComponent', () => {
   let fixture: ComponentFixture<SHACLFormFieldComponent>;
   let shaclFormManagerStub: jasmine.SpyObj<SHACLFormManagerService>;
 
-  const nodeShape: JSONLDObject = { '@id': 'urn:NodeShape', '@type': [`${SHACL}NodeShape`] };
+  const nodeShape: JSONLDObject = { '@id': 'urn:NodeShape', '@type': [`${SH}NodeShape`] };
   const propertyShapeId = 'urn:PropertyShapeA';
   const propertyName = 'urn:testProp';
 
@@ -97,9 +97,9 @@ describe('SHACLFormFieldComponent', () => {
   describe('should handle another field in the form being updated', () => {
     const propertyShape: JSONLDObject = {
       '@id': propertyShapeId,
-      '@type': [ `${SHACL}PropertyShape` ],
+      '@type': [ `${SH}PropertyShape` ],
       [`${SHACL_FORM}usesFormField`]: [{ '@id': `${SHACL_FORM}AutocompleteInput` }],
-      [`${SHACL}path`]: [{ '@id': propertyName }]
+      [`${SH}path`]: [{ '@id': propertyName }]
     };
     const option = new Option('A', 'A');
     it('if the current field is the one that was updated', () => {
@@ -133,7 +133,7 @@ describe('SHACLFormFieldComponent', () => {
     });
     it('if the current field is an autocomplete with a SPARQL constraint', () => {
       const propertyShapeClone = cloneDeep(propertyShape);
-      propertyShapeClone[`${SHACL}sparql`] = [{ '@id': '_:someBnode' }];
+      propertyShapeClone[`${SH}sparql`] = [{ '@id': '_:someBnode' }];
       component.formFieldConfig = new SHACLFormFieldConfig(nodeShape, propertyShapeId, [propertyShapeClone]);
       component.parentFormGroup = new UntypedFormGroup({
         [propertyName]: new UntypedFormControl(option)
@@ -146,9 +146,9 @@ describe('SHACLFormFieldComponent', () => {
   describe('should create for a TextInput', () => {
     const propertyShape: JSONLDObject = {
       '@id': propertyShapeId,
-      '@type': [ `${SHACL}PropertyShape` ],
+      '@type': [ `${SH}PropertyShape` ],
       [`${SHACL_FORM}usesFormField`]: [{ '@id': `${SHACL_FORM}TextInput` }],
-      [`${SHACL}path`]: [{ '@id': propertyName }]
+      [`${SH}path`]: [{ '@id': propertyName }]
     };
     it('with a value already set', () => {
       component.formFieldConfig = new SHACLFormFieldConfig(nodeShape, propertyShapeId, [propertyShape]);
@@ -162,7 +162,7 @@ describe('SHACLFormFieldComponent', () => {
     });
     it('with a value already set and a default', () => {
       const adjustedPropertyShape = Object.assign({}, propertyShape);
-      adjustedPropertyShape[`${SHACL}defaultValue`] = [{ '@value': 'DEFAULT' }];
+      adjustedPropertyShape[`${SH}defaultValue`] = [{ '@value': 'DEFAULT' }];
       component.formFieldConfig = new SHACLFormFieldConfig(nodeShape, propertyShapeId, [adjustedPropertyShape]);
       component.parentFormGroup = new UntypedFormGroup({
         [propertyName]: new UntypedFormControl('initial')
@@ -184,7 +184,7 @@ describe('SHACLFormFieldComponent', () => {
     });
     it('with no value set and a default', () => {
       const adjustedPropertyShape = Object.assign({}, propertyShape);
-      adjustedPropertyShape[`${SHACL}defaultValue`] = [{ '@value': 'DEFAULT' }];
+      adjustedPropertyShape[`${SH}defaultValue`] = [{ '@value': 'DEFAULT' }];
       component.formFieldConfig = new SHACLFormFieldConfig(nodeShape, propertyShapeId, [adjustedPropertyShape]);
       component.parentFormGroup = new UntypedFormGroup({
         [propertyName]: new UntypedFormControl('')
@@ -196,8 +196,8 @@ describe('SHACLFormFieldComponent', () => {
     });
     it('with validators', () => {
       const adjustedPropertyShape = Object.assign({}, propertyShape);
-      adjustedPropertyShape[`${SHACL}minCount`] = [{ '@value': '1' }];
-      adjustedPropertyShape[`${SHACL}pattern`] = [{ '@value': 'word' }];
+      adjustedPropertyShape[`${SH}minCount`] = [{ '@value': '1' }];
+      adjustedPropertyShape[`${SH}pattern`] = [{ '@value': 'word' }];
       component.formFieldConfig = new SHACLFormFieldConfig(nodeShape, propertyShapeId, [adjustedPropertyShape]);
       component.parentFormGroup = new UntypedFormGroup({
         [propertyName]: new UntypedFormControl('')
@@ -218,9 +218,9 @@ describe('SHACLFormFieldComponent', () => {
   describe('should create for a TextareaInput', () => {
     const propertyShape: JSONLDObject = {
       '@id': propertyShapeId,
-      '@type': [ `${SHACL}PropertyShape` ],
+      '@type': [ `${SH}PropertyShape` ],
       [`${SHACL_FORM}usesFormField`]: [{ '@id': `${SHACL_FORM}TextareaInput` }],
-      [`${SHACL}path`]: [{ '@id': propertyName }]
+      [`${SH}path`]: [{ '@id': propertyName }]
     };
     it('with a value already set', () => {
       component.formFieldConfig = new SHACLFormFieldConfig(nodeShape, propertyShapeId, [propertyShape]);
@@ -234,7 +234,7 @@ describe('SHACLFormFieldComponent', () => {
     });
     it('with a value already set and a default', () => {
       const adjustedPropertyShape = Object.assign({}, propertyShape);
-      adjustedPropertyShape[`${SHACL}defaultValue`] = [{ '@value': 'DEFAULT' }];
+      adjustedPropertyShape[`${SH}defaultValue`] = [{ '@value': 'DEFAULT' }];
       component.formFieldConfig = new SHACLFormFieldConfig(nodeShape, propertyShapeId, [adjustedPropertyShape]);
       component.parentFormGroup = new UntypedFormGroup({
         [propertyName]: new UntypedFormControl('initial')
@@ -256,7 +256,7 @@ describe('SHACLFormFieldComponent', () => {
     });
     it('with no value set and a default', () => {
       const adjustedPropertyShape = Object.assign({}, propertyShape);
-      adjustedPropertyShape[`${SHACL}defaultValue`] = [{ '@value': 'DEFAULT' }];
+      adjustedPropertyShape[`${SH}defaultValue`] = [{ '@value': 'DEFAULT' }];
       component.formFieldConfig = new SHACLFormFieldConfig(nodeShape, propertyShapeId, [adjustedPropertyShape]);
       component.parentFormGroup = new UntypedFormGroup({
         [propertyName]: new UntypedFormControl('')
@@ -268,8 +268,8 @@ describe('SHACLFormFieldComponent', () => {
     });
     it('with validators', () => {
       const adjustedPropertyShape = Object.assign({}, propertyShape);
-      adjustedPropertyShape[`${SHACL}minCount`] = [{ '@value': '1' }];
-      adjustedPropertyShape[`${SHACL}pattern`] = [{ '@value': 'word' }];
+      adjustedPropertyShape[`${SH}minCount`] = [{ '@value': '1' }];
+      adjustedPropertyShape[`${SH}pattern`] = [{ '@value': 'word' }];
       component.formFieldConfig = new SHACLFormFieldConfig(nodeShape, propertyShapeId, [adjustedPropertyShape]);
       component.parentFormGroup = new UntypedFormGroup({
         [propertyName]: new UntypedFormControl('')
@@ -290,10 +290,10 @@ describe('SHACLFormFieldComponent', () => {
   describe('should create for a ToggleInput', () => {
     const propertyShape: JSONLDObject = {
       '@id': propertyShapeId,
-      '@type': [ `${SHACL}PropertyShape` ],
+      '@type': [ `${SH}PropertyShape` ],
       [`${SHACL_FORM}usesFormField`]: [{ '@id': `${SHACL_FORM}ToggleInput` }],
-      [`${SHACL}path`]: [{ '@id': propertyName }],
-      [`${SHACL}datatype`]: [{ '@id': `${XSD}boolean` }]
+      [`${SH}path`]: [{ '@id': propertyName }],
+      [`${SH}datatype`]: [{ '@id': `${XSD}boolean` }]
     };
     it('with a value already set', () => {
       component.formFieldConfig = new SHACLFormFieldConfig(nodeShape, propertyShapeId, [propertyShape]);
@@ -307,7 +307,7 @@ describe('SHACLFormFieldComponent', () => {
     });
     it('with a value already set and a default', () => {
       const adjustedPropertyShape = Object.assign({}, propertyShape);
-      adjustedPropertyShape[`${SHACL}defaultValue`] = [{ '@value': 'true' }];
+      adjustedPropertyShape[`${SH}defaultValue`] = [{ '@value': 'true' }];
       component.formFieldConfig = new SHACLFormFieldConfig(nodeShape, propertyShapeId, [propertyShape]);
       component.parentFormGroup = new UntypedFormGroup({
         [propertyName]: new UntypedFormControl('false')
@@ -329,7 +329,7 @@ describe('SHACLFormFieldComponent', () => {
     });
     it('with no value set and a default', () => {
       const adjustedPropertyShape = Object.assign({}, propertyShape);
-      adjustedPropertyShape[`${SHACL}defaultValue`] = [{ '@value': 'true' }];
+      adjustedPropertyShape[`${SH}defaultValue`] = [{ '@value': 'true' }];
       component.formFieldConfig = new SHACLFormFieldConfig(nodeShape, propertyShapeId, [adjustedPropertyShape]);
       component.parentFormGroup = new UntypedFormGroup({
         [propertyName]: new UntypedFormControl('')
@@ -343,10 +343,10 @@ describe('SHACLFormFieldComponent', () => {
   describe('should create for a Dropdown', () => {
     const propertyShape: JSONLDObject = {
       '@id': propertyShapeId,
-      '@type': [ `${SHACL}PropertyShape` ],
+      '@type': [ `${SH}PropertyShape` ],
       [`${SHACL_FORM}usesFormField`]: [{ '@id': `${SHACL_FORM}DropdownInput` }],
-      [`${SHACL}path`]: [{ '@id': propertyName }],
-      [`${SHACL}in`]: [{ '@id': '_:b1' }]
+      [`${SH}path`]: [{ '@id': propertyName }],
+      [`${SH}in`]: [{ '@id': '_:b1' }]
     };
     const bnode1: JSONLDObject = {
       '@id': '_:b1',
@@ -389,10 +389,10 @@ describe('SHACLFormFieldComponent', () => {
   describe('should create for an Autocomplete', () => {
     const propertyShape: JSONLDObject = {
       '@id': propertyShapeId,
-      '@type': [ `${SHACL}PropertyShape` ],
+      '@type': [ `${SH}PropertyShape` ],
       [`${SHACL_FORM}usesFormField`]: [{ '@id': `${SHACL_FORM}AutocompleteInput` }],
-      [`${SHACL}path`]: [{ '@id': propertyName }],
-      [`${SHACL}in`]: [{ '@id': '_:b1' }]
+      [`${SH}path`]: [{ '@id': propertyName }],
+      [`${SH}in`]: [{ '@id': '_:b1' }]
     };
     const bnode1: JSONLDObject = {
       '@id': '_:b1',
@@ -421,7 +421,7 @@ describe('SHACLFormFieldComponent', () => {
     });
     it('with no options set', () => {
       const propertyShapeClone = cloneDeep(propertyShape);
-      delete propertyShapeClone[`${SHACL}in`];
+      delete propertyShapeClone[`${SH}in`];
       component.formFieldConfig = new SHACLFormFieldConfig(nodeShape, propertyShapeId, [propertyShapeClone]);
       component.parentFormGroup = new UntypedFormGroup({
         [propertyName]: new UntypedFormControl(new Option('A', 'A'))
@@ -472,10 +472,10 @@ describe('SHACLFormFieldComponent', () => {
   describe('should create for a RadioInput', () => {
     const propertyShape: JSONLDObject = {
       '@id': propertyShapeId,
-      '@type': [ `${SHACL}PropertyShape` ],
+      '@type': [ `${SH}PropertyShape` ],
       [`${SHACL_FORM}usesFormField`]: [{ '@id': `${SHACL_FORM}RadioInput` }],
-      [`${SHACL}path`]: [{ '@id': propertyName }],
-      [`${SHACL}in`]: [{ '@id': '_:b1' }]
+      [`${SH}path`]: [{ '@id': propertyName }],
+      [`${SH}in`]: [{ '@id': '_:b1' }]
     };
     const bnode1: JSONLDObject = {
       '@id': '_:b1',
@@ -509,7 +509,7 @@ describe('SHACLFormFieldComponent', () => {
     });
     it('with a value already set and a default', () => {
       const adjustedPropertyShape = Object.assign({}, propertyShape);
-      adjustedPropertyShape[`${SHACL}defaultValue`] = [{ '@value': 'B' }];
+      adjustedPropertyShape[`${SH}defaultValue`] = [{ '@value': 'B' }];
       component.formFieldConfig = new SHACLFormFieldConfig(nodeShape, propertyShapeId, [adjustedPropertyShape, bnode1, bnode2, bnode3]);
       const value = component.formFieldConfig.values.filter(val => val.value === 'A')[0];
       component.parentFormGroup = new UntypedFormGroup({
@@ -538,7 +538,7 @@ describe('SHACLFormFieldComponent', () => {
     });
     it('with no value set and a default', () => {
       const adjustedPropertyShape = Object.assign({}, propertyShape);
-      adjustedPropertyShape[`${SHACL}defaultValue`] = [{ '@value': 'B' }];
+      adjustedPropertyShape[`${SH}defaultValue`] = [{ '@value': 'B' }];
       component.formFieldConfig = new SHACLFormFieldConfig(nodeShape, propertyShapeId, [adjustedPropertyShape, bnode1, bnode2, bnode3]);
       component.parentFormGroup = new UntypedFormGroup({
         [propertyName]: new UntypedFormControl('')
@@ -556,10 +556,10 @@ describe('SHACLFormFieldComponent', () => {
   describe('should create for a CheckboxInput', () => {
     const propertyShape: JSONLDObject = {
       '@id': propertyShapeId,
-      '@type': [ `${SHACL}PropertyShape` ],
+      '@type': [ `${SH}PropertyShape` ],
       [`${SHACL_FORM}usesFormField`]: [{ '@id': `${SHACL_FORM}CheckboxInput` }],
-      [`${SHACL}path`]: [{ '@id': propertyName }],
-      [`${SHACL}in`]: [{ '@id': '_:b1' }]
+      [`${SH}path`]: [{ '@id': propertyName }],
+      [`${SH}in`]: [{ '@id': '_:b1' }]
     };
     const bnode1: JSONLDObject = {
       '@id': '_:b1',
@@ -596,7 +596,7 @@ describe('SHACLFormFieldComponent', () => {
     });
     it('with a value already set and a default', () => {
       const adjustedPropertyShape = Object.assign({}, propertyShape);
-      adjustedPropertyShape[`${SHACL}defaultValue`] = [{ '@value': 'B' }];
+      adjustedPropertyShape[`${SH}defaultValue`] = [{ '@value': 'B' }];
       component.formFieldConfig = new SHACLFormFieldConfig(nodeShape, propertyShapeId, [adjustedPropertyShape, bnode1, bnode2, bnode3]);
       component.parentFormGroup = new UntypedFormGroup({
         [propertyName]: new UntypedFormArray([
@@ -630,7 +630,7 @@ describe('SHACLFormFieldComponent', () => {
     });
     it('with no value set and a default', () => {
       const adjustedPropertyShape = Object.assign({}, propertyShape);
-      adjustedPropertyShape[`${SHACL}defaultValue`] = [{ '@value': 'B' }];
+      adjustedPropertyShape[`${SH}defaultValue`] = [{ '@value': 'B' }];
       component.formFieldConfig = new SHACLFormFieldConfig(nodeShape, propertyShapeId, [adjustedPropertyShape, bnode1, bnode2, bnode3]);
       component.parentFormGroup = new UntypedFormGroup({
         [propertyName]: new UntypedFormArray([])
@@ -648,7 +648,7 @@ describe('SHACLFormFieldComponent', () => {
     });
     it('with validators', () => {
       const adjustedPropertyShape = Object.assign({}, propertyShape);
-      adjustedPropertyShape[`${SHACL}minCount`] = [{ '@value': '1' }];
+      adjustedPropertyShape[`${SH}minCount`] = [{ '@value': '1' }];
       component.formFieldConfig = new SHACLFormFieldConfig(nodeShape, propertyShapeId, [adjustedPropertyShape, bnode1, bnode2, bnode3]);
       component.parentFormGroup = new UntypedFormGroup({
         [propertyName]: new UntypedFormArray([])
@@ -675,7 +675,7 @@ describe('SHACLFormFieldComponent', () => {
     });
     it('with a maxCount', () => {
       const adjustedPropertyShape = Object.assign({}, propertyShape);
-      adjustedPropertyShape[`${SHACL}maxCount`] = [{ '@value': '1' }];
+      adjustedPropertyShape[`${SH}maxCount`] = [{ '@value': '1' }];
       component.formFieldConfig = new SHACLFormFieldConfig(nodeShape, propertyShapeId, [adjustedPropertyShape, bnode1, bnode2, bnode3]);
       component.parentFormGroup = new UntypedFormGroup({
         [propertyName]: new UntypedFormArray([])
@@ -711,9 +711,9 @@ describe('SHACLFormFieldComponent', () => {
   describe('should create for a NoInput', () => {
     const propertyShape: JSONLDObject = {
       '@id': propertyShapeId,
-      '@type': [ `${SHACL}PropertyShape` ],
+      '@type': [ `${SH}PropertyShape` ],
       [`${SHACL_FORM}usesFormField`]: [{ '@id': `${SHACL_FORM}NoInput` }],
-      [`${SHACL}path`]: [{ '@id': propertyName }]
+      [`${SH}path`]: [{ '@id': propertyName }]
     };
     it('with no value set', () => {
       component.formFieldConfig = new SHACLFormFieldConfig(nodeShape, propertyShapeId, [propertyShape]);
@@ -726,7 +726,7 @@ describe('SHACLFormFieldComponent', () => {
     });
     it('with no value set and a default', () => {
       const adjustedPropertyShape = Object.assign({}, propertyShape);
-      adjustedPropertyShape[`${SHACL}defaultValue`] = [{ '@value': 'DEFAULT' }];
+      adjustedPropertyShape[`${SH}defaultValue`] = [{ '@value': 'DEFAULT' }];
       component.formFieldConfig = new SHACLFormFieldConfig(nodeShape, propertyShapeId, [adjustedPropertyShape]);
       component.parentFormGroup = new UntypedFormGroup({
         [propertyName]: new UntypedFormControl('')

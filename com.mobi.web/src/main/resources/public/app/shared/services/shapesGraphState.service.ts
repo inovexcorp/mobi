@@ -35,8 +35,7 @@ import {
   GRAPHEDITOR,
   SHAPESGRAPHEDITOR,
   SHAPESGRAPHSTATE,
-  TAGID
-} from '../../prefixes';
+  TAGID} from '../../prefixes';
 import { CatalogDetails, VersionedRdfState } from './versionedRdfState.service';
 import { CatalogManagerService } from './catalogManager.service';
 import { Difference } from '../models/difference.class';

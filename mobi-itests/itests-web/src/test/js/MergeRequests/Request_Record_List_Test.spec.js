@@ -57,6 +57,7 @@ module.exports = {
     'Step 4: Create a new branch for shape graph': function(browser) {
         browser.page.shapesEditorPage().createBranch(shapegraph001_branch001_title);
         browser.globals.wait_for_no_spinners(browser);
+        browser.globals.dismiss_toast(browser);
     },
 
     'Step 5: Upload Changes to shape graph': function(browser) {
