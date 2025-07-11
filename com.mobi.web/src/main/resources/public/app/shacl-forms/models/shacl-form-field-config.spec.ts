@@ -22,13 +22,13 @@
  */
 import { FormControl, Validators } from '@angular/forms';
 
-import { RDF, SHACL, SHACL_FORM, XSD } from '../../prefixes';
+import { RDF, SH, SHACL_FORM, XSD } from '../../prefixes';
 import { JSONLDObject } from '../../shared/models/JSONLDObject.interface';
 import { FieldType, SHACLFormFieldConfig } from './shacl-form-field-config';
 import { Option } from './option.class';
 
 describe('SHACLFormFieldConfig', () => {
-  const nodeShape: JSONLDObject = { '@id': 'urn:NodeShape', '@type': [`${SHACL}NodeShape`] };
+  const nodeShape: JSONLDObject = { '@id': 'urn:NodeShape', '@type': [`${SH}NodeShape`] };
   const propertyShapeId = 'urn:PropertyShapeA';
   const propertyId = 'urn:testProp';
 
@@ -42,7 +42,7 @@ describe('SHACLFormFieldConfig', () => {
     const result = new SHACLFormFieldConfig(nodeShape, propertyShapeId, [
       {
         '@id': propertyShapeId,
-        '@type': [`${SHACL}PropertyShape`]
+        '@type': [`${SH}PropertyShape`]
       }
     ]);
     expect(result).toBeTruthy();
@@ -53,8 +53,8 @@ describe('SHACLFormFieldConfig', () => {
     const result = new SHACLFormFieldConfig(nodeShape, propertyShapeId, [
       {
         '@id': propertyShapeId,
-        '@type': [`${SHACL}PropertyShape`],
-        [`${SHACL}path`]: [{ '@id': propertyId }]
+        '@type': [`${SH}PropertyShape`],
+        [`${SH}path`]: [{ '@id': propertyId }]
       }
     ]);
     expect(result).toBeTruthy();
@@ -65,8 +65,8 @@ describe('SHACLFormFieldConfig', () => {
     const result = new SHACLFormFieldConfig(nodeShape, propertyShapeId, [
       {
         '@id': propertyShapeId,
-        '@type': [`${SHACL}PropertyShape`],
-        [`${SHACL}path`]: [{ '@id': propertyId }],
+        '@type': [`${SH}PropertyShape`],
+        [`${SH}path`]: [{ '@id': propertyId }],
         [`${SHACL_FORM}usesFormField`]: [{ '@id': 'error' }]
       }
     ]);
@@ -87,10 +87,10 @@ describe('SHACLFormFieldConfig', () => {
     it(`should create a basic ${test.field} with the precalculated fields set`, () => {
       const propertyShape: JSONLDObject = {
         '@id': propertyShapeId,
-        '@type': [`${SHACL}PropertyShape`],
-        [`${SHACL}path`]: [{ '@id': propertyId }],
+        '@type': [`${SH}PropertyShape`],
+        [`${SH}path`]: [{ '@id': propertyId }],
         [`${SHACL_FORM}usesFormField`]: [{ '@id': test.field }],
-        [`${SHACL}name`]: [{ '@value': 'Label' }]
+        [`${SH}name`]: [{ '@value': 'Label' }]
       };
       const result = new SHACLFormFieldConfig(nodeShape, propertyShapeId, [propertyShape]);
       expect(result).toBeTruthy();
@@ -107,21 +107,21 @@ describe('SHACLFormFieldConfig', () => {
   it('should create a complex field when sh:node is detected', () => {
     const propertyShape: JSONLDObject = {
       '@id': propertyShapeId,
-      '@type': [`${SHACL}PropertyShape`],
-      [`${SHACL}path`]: [{ '@id': propertyId }],
-      [`${SHACL}name`]: [{ '@value': 'Label' }],
-      [`${SHACL}node`]: [{ '@id': 'urn:subObject' }]
+      '@type': [`${SH}PropertyShape`],
+      [`${SH}path`]: [{ '@id': propertyId }],
+      [`${SH}name`]: [{ '@value': 'Label' }],
+      [`${SH}node`]: [{ '@id': 'urn:subObject' }]
     };
     const subObject: JSONLDObject = {
       '@id': 'urn:subObject',
-      '@type': [`${SHACL}NodeShape`],
-      [`${SHACL}property`]: [{ '@id': 'urn:subPropertyShape' }]
+      '@type': [`${SH}NodeShape`],
+      [`${SH}property`]: [{ '@id': 'urn:subPropertyShape' }]
     };
     const subPropertyShape: JSONLDObject = {
       '@id': 'urn:subPropertyShape',
-      '@type': [`${SHACL}PropertyShape`],
-      [`${SHACL}path`]: [{ '@id': 'urn:subProperty' }],
-      [`${SHACL}name`]: [{ '@value': 'Sub Label' }],
+      '@type': [`${SH}PropertyShape`],
+      [`${SH}path`]: [{ '@id': 'urn:subProperty' }],
+      [`${SH}name`]: [{ '@value': 'Sub Label' }],
       [`${SHACL_FORM}usesFormField`]: [{ '@id': `${SHACL_FORM}TextInput` }],
     };
     const result = new SHACLFormFieldConfig(nodeShape, propertyShapeId, [propertyShape, subObject, subPropertyShape]);
@@ -146,10 +146,10 @@ describe('SHACLFormFieldConfig', () => {
   it('should handle when the first blank node cannot be found for a sh:in list', () => {
     const propertyShape: JSONLDObject = {
       '@id': propertyShapeId,
-      '@type': [`${SHACL}PropertyShape`],
-      [`${SHACL}path`]: [{ '@id': propertyId }],
+      '@type': [`${SH}PropertyShape`],
+      [`${SH}path`]: [{ '@id': propertyId }],
       [`${SHACL_FORM}usesFormField`]: [{ '@id': `${SHACL_FORM}RadioInput` }],
-      [`${SHACL}in`]: [{ '@id': '_:b1' }]
+      [`${SH}in`]: [{ '@id': '_:b1' }]
     };
     const result = new SHACLFormFieldConfig(nodeShape, propertyShapeId, [propertyShape]);
     expect(result).toBeTruthy();
@@ -160,10 +160,10 @@ describe('SHACLFormFieldConfig', () => {
   it('should handle when a blank node in a sh:in list does not have rdf:first', () => {
     const propertyShape: JSONLDObject = {
       '@id': propertyShapeId,
-      '@type': [`${SHACL}PropertyShape`],
-      [`${SHACL}path`]: [{ '@id': propertyId }],
+      '@type': [`${SH}PropertyShape`],
+      [`${SH}path`]: [{ '@id': propertyId }],
       [`${SHACL_FORM}usesFormField`]: [{ '@id': `${SHACL_FORM}RadioInput` }],
-      [`${SHACL}in`]: [{ '@id': '_:b1' }]
+      [`${SH}in`]: [{ '@id': '_:b1' }]
     };
     const result = new SHACLFormFieldConfig(nodeShape, propertyShapeId, [propertyShape, { '@id': '_:b1' }]);
     expect(result).toBeTruthy();
@@ -174,10 +174,10 @@ describe('SHACLFormFieldConfig', () => {
   it('should handle when a blank node in a sh:in list does not have rdf:rest', () => {
     const propertyShape: JSONLDObject = {
       '@id': propertyShapeId,
-      '@type': [`${SHACL}PropertyShape`],
-      [`${SHACL}path`]: [{ '@id': propertyId }],
+      '@type': [`${SH}PropertyShape`],
+      [`${SH}path`]: [{ '@id': propertyId }],
       [`${SHACL_FORM}usesFormField`]: [{ '@id': `${SHACL_FORM}RadioInput` }],
-      [`${SHACL}in`]: [{ '@id': '_:b1' }]
+      [`${SH}in`]: [{ '@id': '_:b1' }]
     };
     const bnode: JSONLDObject = { '@id': '_:b1', [`${RDF}first`]: [{ '@value': 'A' }] };
     const result = new SHACLFormFieldConfig(nodeShape, propertyShapeId, [propertyShape, bnode]);
@@ -189,10 +189,10 @@ describe('SHACLFormFieldConfig', () => {
   it('should handle when a blank node in a sh:in list has a rdf:rest of rdf:nil', () => {
     const propertyShape: JSONLDObject = {
       '@id': propertyShapeId,
-      '@type': [`${SHACL}PropertyShape`],
-      [`${SHACL}path`]: [{ '@id': propertyId }],
+      '@type': [`${SH}PropertyShape`],
+      [`${SH}path`]: [{ '@id': propertyId }],
       [`${SHACL_FORM}usesFormField`]: [{ '@id': `${SHACL_FORM}RadioInput` }],
-      [`${SHACL}in`]: [{ '@id': '_:b1' }]
+      [`${SH}in`]: [{ '@id': '_:b1' }]
     };
     const bnode: JSONLDObject = { '@id': '_:b1', [`${RDF}first`]: [{ '@value': 'A' }], [`${RDF}rest`]: [{ '@id': `${RDF}nil`}] };
     const result = new SHACLFormFieldConfig(nodeShape, propertyShapeId, [propertyShape, bnode]);
@@ -204,10 +204,10 @@ describe('SHACLFormFieldConfig', () => {
   it('should handle when a blank node in a sh:in list cannot be found', () => {
     const propertyShape: JSONLDObject = {
       '@id': propertyShapeId,
-      '@type': [`${SHACL}PropertyShape`],
-      [`${SHACL}path`]: [{ '@id': propertyId }],
+      '@type': [`${SH}PropertyShape`],
+      [`${SH}path`]: [{ '@id': propertyId }],
       [`${SHACL_FORM}usesFormField`]: [{ '@id': `${SHACL_FORM}RadioInput` }],
-      [`${SHACL}in`]: [{ '@id': '_:b1' }]
+      [`${SH}in`]: [{ '@id': '_:b1' }]
     };
     const bnode: JSONLDObject = { '@id': '_:b1', [`${RDF}first`]: [{ '@value': 'A' }], [`${RDF}rest`]: [{ '@id': '_:b2'}] };
     const result = new SHACLFormFieldConfig(nodeShape, propertyShapeId, [propertyShape, bnode]);
@@ -219,10 +219,10 @@ describe('SHACLFormFieldConfig', () => {
   it('should handle a lengthy sh:in list', () => {
     const propertyShape: JSONLDObject = {
       '@id': propertyShapeId,
-      '@type': [`${SHACL}PropertyShape`],
-      [`${SHACL}path`]: [{ '@id': propertyId }],
+      '@type': [`${SH}PropertyShape`],
+      [`${SH}path`]: [{ '@id': propertyId }],
       [`${SHACL_FORM}usesFormField`]: [{ '@id': `${SHACL_FORM}RadioInput` }],
-      [`${SHACL}in`]: [{ '@id': '_:b1' }]
+      [`${SH}in`]: [{ '@id': '_:b1' }]
     };
     const bnode1: JSONLDObject = { '@id': '_:b1', [`${RDF}first`]: [{ '@value': 'A' }], [`${RDF}rest`]: [{ '@id': '_:b2'}] };
     const bnode2: JSONLDObject = { '@id': '_:b2', [`${RDF}first`]: [{ '@value': 'Y' }], [`${RDF}rest`]: [{ '@id': '_:b3'}] };
@@ -237,92 +237,92 @@ describe('SHACLFormFieldConfig', () => {
   it('should correctly fetch the sh:minCount value', () => {
     const propertyShape: JSONLDObject = {
       '@id': propertyShapeId,
-      '@type': [`${SHACL}PropertyShape`],
-      [`${SHACL}path`]: [{ '@id': propertyId }],
+      '@type': [`${SH}PropertyShape`],
+      [`${SH}path`]: [{ '@id': propertyId }],
       [`${SHACL_FORM}usesFormField`]: [{ '@id': `${SHACL_FORM}RadioInput` }]
     };
     expect(new SHACLFormFieldConfig(nodeShape, propertyShapeId, [propertyShape]).minCount).toBeUndefined();
-    propertyShape[`${SHACL}minCount`] = [{ '@id': 'error' }];
+    propertyShape[`${SH}minCount`] = [{ '@id': 'error' }];
     expect(new SHACLFormFieldConfig(nodeShape, propertyShapeId, [propertyShape]).minCount).toBeUndefined();
-    delete propertyShape[`${SHACL}minCount`][0]['@id'];
-    propertyShape[`${SHACL}minCount`][0]['@value'] = 'error';
+    delete propertyShape[`${SH}minCount`][0]['@id'];
+    propertyShape[`${SH}minCount`][0]['@value'] = 'error';
     expect(new SHACLFormFieldConfig(nodeShape, propertyShapeId, [propertyShape]).minCount).toBeUndefined();
-    propertyShape[`${SHACL}minCount`][0]['@value'] = '0';
+    propertyShape[`${SH}minCount`][0]['@value'] = '0';
     expect(new SHACLFormFieldConfig(nodeShape, propertyShapeId, [propertyShape]).minCount).toEqual(0);
   });
   it('should correctly fetch the sh:maxCount value', () => {
     const propertyShape: JSONLDObject = {
       '@id': propertyShapeId,
-      '@type': [`${SHACL}PropertyShape`],
-      [`${SHACL}path`]: [{ '@id': propertyId }],
+      '@type': [`${SH}PropertyShape`],
+      [`${SH}path`]: [{ '@id': propertyId }],
       [`${SHACL_FORM}usesFormField`]: [{ '@id': `${SHACL_FORM}CheckboxInput` }]
     };
     expect(new SHACLFormFieldConfig(nodeShape, propertyShapeId, [propertyShape]).maxCount).toBeUndefined();
-    propertyShape[`${SHACL}maxCount`] = [{ '@id': 'error' }];
+    propertyShape[`${SH}maxCount`] = [{ '@id': 'error' }];
     expect(new SHACLFormFieldConfig(nodeShape, propertyShapeId, [propertyShape]).maxCount).toBeUndefined();
-    delete propertyShape[`${SHACL}maxCount`][0]['@id'];
-    propertyShape[`${SHACL}maxCount`][0]['@value'] = 'error';
+    delete propertyShape[`${SH}maxCount`][0]['@id'];
+    propertyShape[`${SH}maxCount`][0]['@value'] = 'error';
     expect(new SHACLFormFieldConfig(nodeShape, propertyShapeId, [propertyShape]).maxCount).toBeUndefined();
-    propertyShape[`${SHACL}maxCount`][0]['@value'] = '0';
+    propertyShape[`${SH}maxCount`][0]['@value'] = '0';
     expect(new SHACLFormFieldConfig(nodeShape, propertyShapeId, [propertyShape]).maxCount).toEqual(0);
   });
   it('should correctly fetch the sh:pattern value', () => {
     const propertyShape: JSONLDObject = {
       '@id': propertyShapeId,
-      '@type': [`${SHACL}PropertyShape`],
-      [`${SHACL}path`]: [{ '@id': propertyId }],
+      '@type': [`${SH}PropertyShape`],
+      [`${SH}path`]: [{ '@id': propertyId }],
       [`${SHACL_FORM}usesFormField`]: [{ '@id': `${SHACL_FORM}TextInput` }]
     };
     expect(new SHACLFormFieldConfig(nodeShape, propertyShapeId, [propertyShape]).regex).toBeUndefined();
-    propertyShape[`${SHACL}pattern`] = [{ '@id': 'error' }];
+    propertyShape[`${SH}pattern`] = [{ '@id': 'error' }];
     expect(new SHACLFormFieldConfig(nodeShape, propertyShapeId, [propertyShape]).regex).toBeUndefined();
-    delete propertyShape[`${SHACL}pattern`][0]['@id'];
-    propertyShape[`${SHACL}pattern`][0]['@value'] = ')W*#^#W)^&)#';
+    delete propertyShape[`${SH}pattern`][0]['@id'];
+    propertyShape[`${SH}pattern`][0]['@value'] = ')W*#^#W)^&)#';
     expect(() => new SHACLFormFieldConfig(nodeShape, propertyShapeId, [propertyShape]).regex).toThrow();
-    propertyShape[`${SHACL}pattern`][0]['@value'] = 'word';
+    propertyShape[`${SH}pattern`][0]['@value'] = 'word';
     expect(regexEqual(new SHACLFormFieldConfig(nodeShape, propertyShapeId, [propertyShape]).regex, /word/)).toBeTrue();
-    propertyShape[`${SHACL}flags`] = [{ '@value': 'i' }];
+    propertyShape[`${SH}flags`] = [{ '@value': 'i' }];
     expect(regexEqual(new SHACLFormFieldConfig(nodeShape, propertyShapeId, [propertyShape]).regex, /word/i)).toBeTrue();
   });
   it('should correctly fetch the sh:datatype value', () => {
     const propertyShape: JSONLDObject = {
       '@id': propertyShapeId,
-      '@type': [`${SHACL}PropertyShape`],
-      [`${SHACL}path`]: [{ '@id': propertyId }],
+      '@type': [`${SH}PropertyShape`],
+      [`${SH}path`]: [{ '@id': propertyId }],
       [`${SHACL_FORM}usesFormField`]: [{ '@id': `${SHACL_FORM}TextInput` }]
     };
     expect(new SHACLFormFieldConfig(nodeShape, propertyShapeId, [propertyShape]).datatype).toBeUndefined();
-    propertyShape[`${SHACL}datatype`] = [{ '@value': 'error' }];
+    propertyShape[`${SH}datatype`] = [{ '@value': 'error' }];
     expect(new SHACLFormFieldConfig(nodeShape, propertyShapeId, [propertyShape]).datatype).toBeUndefined();
-    delete propertyShape[`${SHACL}datatype`][0]['@value'];
-    propertyShape[`${SHACL}datatype`][0]['@id'] = 'error';
+    delete propertyShape[`${SH}datatype`][0]['@value'];
+    propertyShape[`${SH}datatype`][0]['@id'] = 'error';
     expect(new SHACLFormFieldConfig(nodeShape, propertyShapeId, [propertyShape]).datatype).toEqual('error');
-    propertyShape[`${SHACL}datatype`][0]['@id'] = `${XSD}string`;
+    propertyShape[`${SH}datatype`][0]['@id'] = `${XSD}string`;
     expect(new SHACLFormFieldConfig(nodeShape, propertyShapeId, [propertyShape]).datatype).toEqual(`${XSD}string`);
   });
   it('should correctly fetch the sh:defaultValue value', () => {
     const propertyShape: JSONLDObject = {
       '@id': propertyShapeId,
-      '@type': [`${SHACL}PropertyShape`],
-      [`${SHACL}path`]: [{ '@id': propertyId }],
+      '@type': [`${SH}PropertyShape`],
+      [`${SH}path`]: [{ '@id': propertyId }],
       [`${SHACL_FORM}usesFormField`]: [{ '@id': `${SHACL_FORM}TextInput` }]
     };
     expect(new SHACLFormFieldConfig(nodeShape, propertyShapeId, [propertyShape]).defaultValue).toBeUndefined();
-    propertyShape[`${SHACL}defaultValue`] = [{ '@id': 'urn:test' }];
+    propertyShape[`${SH}defaultValue`] = [{ '@id': 'urn:test' }];
     expect(new SHACLFormFieldConfig(nodeShape, propertyShapeId, [propertyShape]).defaultValue).toEqual('urn:test');
-    delete propertyShape[`${SHACL}defaultValue`][0]['@id'];
-    propertyShape[`${SHACL}defaultValue`][0]['@value'] = 'Test';
+    delete propertyShape[`${SH}defaultValue`][0]['@id'];
+    propertyShape[`${SH}defaultValue`][0]['@value'] = 'Test';
     expect(new SHACLFormFieldConfig(nodeShape, propertyShapeId, [propertyShape]).defaultValue).toEqual('Test');
   });
   describe('should correctly calculate validators', () => {
     it('if a regex is set', () => {
       const propertyShape: JSONLDObject = {
         '@id': propertyShapeId,
-        '@type': [`${SHACL}PropertyShape`],
-        [`${SHACL}path`]: [{ '@id': propertyId }],
+        '@type': [`${SH}PropertyShape`],
+        [`${SH}path`]: [{ '@id': propertyId }],
         [`${SHACL_FORM}usesFormField`]: [{ '@id': `${SHACL_FORM}TextInput` }],
-        [`${SHACL}pattern`]: [{ '@value': 'word' }],
-        [`${SHACL}flags`]: [{ '@value': 'i' }]
+        [`${SH}pattern`]: [{ '@value': 'word' }],
+        [`${SH}flags`]: [{ '@value': 'i' }]
       };
       const validators = new SHACLFormFieldConfig(nodeShape, propertyShapeId, [propertyShape]).validators;
       expect(validators.length).toEqual(1);
@@ -332,10 +332,10 @@ describe('SHACLFormFieldConfig', () => {
     it('if a datatype is set and xsd:integer', () => {
       const propertyShape: JSONLDObject = {
         '@id': propertyShapeId,
-        '@type': [`${SHACL}PropertyShape`],
-        [`${SHACL}path`]: [{ '@id': propertyId }],
+        '@type': [`${SH}PropertyShape`],
+        [`${SH}path`]: [{ '@id': propertyId }],
         [`${SHACL_FORM}usesFormField`]: [{ '@id': `${SHACL_FORM}TextInput` }],
-        [`${SHACL}datatype`]: [{ '@id': `${XSD}int` }]
+        [`${SH}datatype`]: [{ '@id': `${XSD}int` }]
       };
       const validators = new SHACLFormFieldConfig(nodeShape, propertyShapeId, [propertyShape]).validators;
       expect(validators.length).toEqual(1);
@@ -345,10 +345,10 @@ describe('SHACLFormFieldConfig', () => {
     it('if a minCount is set', () => {
       const propertyShape: JSONLDObject = {
         '@id': propertyShapeId,
-        '@type': [`${SHACL}PropertyShape`],
-        [`${SHACL}path`]: [{ '@id': propertyId }],
+        '@type': [`${SH}PropertyShape`],
+        [`${SH}path`]: [{ '@id': propertyId }],
         [`${SHACL_FORM}usesFormField`]: [{ '@id': `${SHACL_FORM}TextInput` }],
-        [`${SHACL}minCount`]: [{ '@value': '1' }]
+        [`${SH}minCount`]: [{ '@value': '1' }]
       };
       const validators = new SHACLFormFieldConfig(nodeShape, propertyShapeId, [propertyShape]).validators;
       expect(validators.length).toEqual(1);

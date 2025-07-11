@@ -36,6 +36,7 @@ module.exports = {
     'Step 2: Upload a shapes graph': function(browser) {
         browser.page.shapesEditorPage().uploadShapesGraph(path.resolve(shapes_graph));
         browser.globals.wait_for_no_spinners(browser);
+        browser.globals.dismiss_toast(browser);
     },
 
     'Step 3: Verify shapes graph presentation': function(browser) {
@@ -58,11 +59,6 @@ module.exports = {
     'Step 5: Verify Node Shapes List': function(browser) {
         browser.page.shapesEditorPage().verifyNodeShapesTab();
         browser.page.shapesEditorPage().verifyNodeShapesNum(2);
-        // browser
-        //     .useCss()
-        //     .assert.visible(node_shapes_list);
-        // browser.assert.visible(search_bar);
-        // browser.assert.elementsCount(node_shapes_list + ' app-node-shapes-item', 2);
         browser.page.shapesEditorPage()
             .verifyNodeShapeListItem({
                 title: 'Test Node shape',
@@ -82,14 +78,8 @@ module.exports = {
     },
 
     'Step 6: Verify search functionality': function(browser) {
-        // browser.useCss()
-        //     .click(search_bar)
-        // browser.element('//app-node-shapes-tab//app-node-shapes-list//search-bar//input').sendKeys('Element');
-        // browser.element('//app-node-shapes-tab//app-node-shapes-list//search-bar//input').sendKeys(browser.Keys.ENTER);
-        // browser.globals.wait_for_no_spinners(browser);
         browser.page.shapesEditorPage().searchNodeShapes('Element');
         browser.page.shapesEditorPage().verifyNodeShapesNum(1);
-        // browser.useCss().assert.elementsCount(node_shapes_list + ' app-node-shapes-item', 1);
         browser.page.shapesEditorPage()
             .verifyNodeShapeListItem({
                 title: 'Test Element node shape',
@@ -103,5 +93,13 @@ module.exports = {
     'Step 7: Verify selecting node shape': function(browser) {
         browser.page.shapesEditorPage()
             .selectNodeShape('Test Element node shape');
+        // Validate Node Shape metadata
+        browser.useXpath()
+            .assert.elementPresent('//value-display//div//span[text()[contains(.,"Test Element node shape")]]//ancestor::property-values//p[text()[contains(.,"Title")]]');
+        // Validate number of property shapes
+        browser.page.shapesEditorPage().verifyPropertyShapesNum(2);
+        // Validate path and constraints on first property shape
+        browser.page.shapesEditorPage().verifyPropertyShapeDisplay(1, 'Symbol', 2);
+        browser.page.shapesEditorPage().verifyPropertyShapeDisplay(2, 'Element Name', 2);
     }
 }

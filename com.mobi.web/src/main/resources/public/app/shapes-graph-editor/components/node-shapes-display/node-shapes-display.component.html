@@ -20,18 +20,27 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="node-shapes-display" *ngIf="nodeShape">
-  <selected-details
-    [stateService]="stateService"
-    [entity]="nodeShape"
-    [entityIri]="nodeShape['@id']"
-    [isImported]="stateService.isSelectedImported()"
-    [canModify]="false">
-  </selected-details>
-  <properties-block class="col"
-    [stateService]="stateService"
-    [canModify]="false"
-    [ontology]="nodeShape"
-    [annotationIRIs]="nodeShapeProperties">
-  </properties-block>
+<div class="node-shapes-display d-flex flex-column h-100" *ngIf="nodeShape">
+  <div class="selected-header d-flex">
+    <selected-details class="flex-1"
+      [stateService]="stateService"
+      [entity]="nodeShape"
+      [entityIri]="nodeShape['@id']"
+      [isImported]="stateService.isSelectedImported()"
+      [canModify]="false">
+    </selected-details>
+  </div>
+  <div class="row flex-1 remove-min-height">
+    <div class="col-6 vertical-scroll h-100">
+      <properties-block
+        [stateService]="stateService"
+        [canModify]="false"
+        [ontology]="nodeShape"
+        [annotationIRIs]="nodeShapeProperties">
+      </properties-block>
+    </div>
+    <div class="col-6 vertical-scroll h-100">
+      <app-property-shapes-display [nodeShape]="nodeShape"></app-property-shapes-display>
+    </div>
+  </div>
 </div>

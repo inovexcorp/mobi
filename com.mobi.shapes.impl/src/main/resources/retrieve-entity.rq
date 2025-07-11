@@ -39,4 +39,21 @@ WHERE {
         ?nonBlankNode ?p2 ?o2 .
         BIND(?nonBlankNode AS ?attachedObj)
     }
+    UNION {
+        {
+             SELECT (?o as ?blank_node)
+             WHERE {
+                 ?entity ?connect ?propertyShape .
+                 ?propertyShape ?p ?o.
+                 FILTER(isBlank(?o))
+             }
+        }
+
+        ?blank_node (:|!:)* ?attachedObj .
+
+        OPTIONAL {
+             ?attachedObj ?p2 ?o2 .
+             FILTER(isBlank(?attachedObj))
+        }
+    }
 }

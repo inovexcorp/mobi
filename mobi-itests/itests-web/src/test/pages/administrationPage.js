@@ -45,6 +45,21 @@ const administrationPageCommands = {
             .waitForElementNotPresent('create-user-overlay')
             .assert.not.elementPresent("//button/span[text()[contains(., 'Submit')]]");
     },
+    openPermissionsTab: function() {
+        return this.useXpath()
+            .waitForElementVisible('//mat-tab-header//div[text()[contains(.,"Permissions")]]')
+            .click('//mat-tab-header//div[text()[contains(.,"Permissions")]]')
+            .waitForElementVisible('//permissions-page');
+    },
+    toggleEveryonePermission: function(permissionName) {
+        return this.useXpath()
+            .waitForElementVisible('//permissions-page')
+            .waitForElementVisible(`//h4[contains(text(), "${permissionName}")]/following-sibling::mat-slide-toggle`)
+            .click(`//h4[contains(text(), "${permissionName}")]/following-sibling::mat-slide-toggle`)
+            .useCss()
+            .waitForElementVisible('.save-container')
+            .click('.save-container');
+    },
     toggleWorkflowCreatePermission: function() {
         return this.useXpath()
           .click('//mat-tab-header//div[text()[contains(.,"Permissions")]]')

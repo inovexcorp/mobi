@@ -41,7 +41,9 @@ module.exports = {
         browser.page.administrationPage().createUser(user01);
         browser.globals.wait_for_no_spinners(browser);
         browser.globals.dismiss_toast(browser);
-        browser.page.administrationPage().toggleWorkflowCreatePermission();
+        browser.page.administrationPage().openPermissionsTab()
+        browser.globals.wait_for_no_spinners(browser);
+        browser.page.administrationPage().toggleEveryonePermission('Create Workflow Record');
         browser.globals.wait_for_no_spinners(browser);
         browser.globals.dismiss_toast(browser);
     },

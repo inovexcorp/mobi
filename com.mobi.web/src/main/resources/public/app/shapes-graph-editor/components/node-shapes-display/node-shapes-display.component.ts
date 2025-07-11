@@ -21,19 +21,15 @@
  * #L%
  */
 //Angular imports
-import { Component, Input, OnChanges, OnDestroy } from '@angular/core';
-// 3rd Party imports
-import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { Component, Input, OnChanges } from '@angular/core';
 //Mobi + Local imports
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
-import { SHACL } from '../../../prefixes';
+import { SH } from '../../../prefixes';
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
 
 /**
  * @class shapes-graph-editor.NodeShapesDisplayComponent
  * @requires shared.ShapesGraphStateService
- * @requires shared.ShapesGraphManagerService
  * 
  * A component responsible for rendering the full detail view of a selected SHACL Node Shape.
  * 
@@ -43,15 +39,14 @@ import { ShapesGraphStateService } from '../../../shared/services/shapesGraphSta
  */
 @Component({
   selector: 'app-node-shapes-display',
-  templateUrl: './node-shapes-display.component.html',
+  templateUrl: './node-shapes-display.component.html'
 })
-export class NodeShapesDisplayComponent implements OnChanges, OnDestroy {
+export class NodeShapesDisplayComponent implements OnChanges {
   @Input() nodeShape: JSONLDObject;
   @Input() selectedEntityIRI: string;
   @Input() canModify: boolean;
 
   nodeShapeProperties: string[] = [];
-  propertyShapes: JSONLDObject[] = [];
   readOnly = true; // TODO Edit Node Shape IRI will modify this variable
 
   private readonly _protectedKeys = [
@@ -60,29 +55,27 @@ export class NodeShapesDisplayComponent implements OnChanges, OnDestroy {
   ];
   // https://www.w3.org/TR/shacl/#core-components-logical
   private readonly _logicalConstraintPredicates = [
-    `${SHACL}or`,   // Logical OR between multiple shapes 
-    `${SHACL}and`,  // Logical AND between multiple shapes
-    `${SHACL}not`,  // Logical NOT (negation of a shape)
-    `${SHACL}xone`, // Exclusive OR: exactly one shape must match
+    `${SH}or`,   // Logical OR between multiple shapes 
+    `${SH}and`,  // Logical AND between multiple shapes
+    `${SH}not`,  // Logical NOT (negation of a shape)
+    `${SH}xone`, // Exclusive OR: exactly one shape must match
   ];
   // https://www.w3.org/TR/shacl/#targets
   private readonly _targetPredicates = [
-    `${SHACL}targetClass`, // Applies shape to all instances of a given class
-    `${SHACL}targetNode`, // Applies to a specific node (IRI or blank node)
-    `${SHACL}targetSubjectsOf`, // Applies to all subjects of a specific property
-    `${SHACL}targetObjectsOf`, // Applies to all objects of a specific property
+    `${SH}targetClass`, // Applies shape to all instances of a given class
+    `${SH}targetNode`, // Applies to a specific node (IRI or blank node)
+    `${SH}targetSubjectsOf`, // Applies to all subjects of a specific property
+    `${SH}targetObjectsOf`, // Applies to all objects of a specific property
   ];
   private readonly _nestedPredicates = [
-    `${SHACL}property`, // Declares Property shapes constraints on specific properties of the focus node
+    `${SH}property`, // Declares Property shapes constraints on specific properties of the focus node
   ];
   private readonly excludedKeys = [
     ...this._protectedKeys,
     ...this._targetPredicates,
     ...this._nestedPredicates,
     ...this._logicalConstraintPredicates
-  ]
-
-  private _destroySub$ = new Subject<void>();
+  ];
 
   constructor(
     public stateService: ShapesGraphStateService
@@ -92,17 +85,11 @@ export class NodeShapesDisplayComponent implements OnChanges, OnDestroy {
     this._setNodeShapeEntity();
   }
 
-  ngOnDestroy(): void {
-    this._destroySub$.next();
-    this._destroySub$.complete();
-  }
-
   private _setNodeShapeEntity() {
     if (!this.nodeShape) {
       return;
     }
     this.nodeShapeProperties = Object.keys(this.nodeShape).filter(key => !this.excludedKeys.includes(key));
-    this.propertyShapes = this.stateService.listItem.selectedBlankNodes || [];
     this.stateService.listItem.nodeTab.selectedEntity = this.nodeShape;
   }
 }

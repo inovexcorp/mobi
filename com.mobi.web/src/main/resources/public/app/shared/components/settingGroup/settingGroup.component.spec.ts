@@ -33,7 +33,7 @@ import {
 } from '../../../../../public/test/ts/Shared';
 import { ErrorDisplayComponent } from '../errorDisplay/errorDisplay.component';
 import { SimpleSetting } from '../../models/simpleSetting.class';
-import { OWL, RDFS, SETTING, SHACL, SHACL_FORM, XSD } from '../../../prefixes';
+import { OWL, RDFS, SETTING, SH, SHACL_FORM, XSD } from '../../../prefixes';
 import { ToastService } from '../../services/toast.service';
 import { SettingManagerService } from '../../services/settingManager.service';
 import { SHACLFormComponent } from '../../../shacl-forms/components/shacl-form/shacl-form.component';
@@ -124,73 +124,73 @@ describe('Setting Group component', function() {
 
         testSettingsDefinitions = [ {
             '@id': `${SETTING}SomeSimpleBooleanPreference`,
-            '@type': [ `${OWL}Class`, `${SHACL}NodeShape` ],
+            '@type': [ `${OWL}Class`, `${SH}NodeShape` ],
             [`${SETTING}inGroup`]: [ {
               '@id': `${SETTING}TestPrefGroupA`
             } ],
             [`${RDFS}subClassOf`]: [ {
               '@id': `${SETTING}Preference`
             } ],
-            [`${SHACL}description`]: [ {
+            [`${SH}description`]: [ {
               '@value': 'What is your value for the simple boolean preference?'
             } ],
-            [`${SHACL}property`]: [ {
+            [`${SH}property`]: [ {
               '@id': `${SETTING}SomeSimpleBooleanPreferencePropertyShape`
             } ]
           }, {
             '@id': `${SETTING}SomeSimpleBooleanPreferencePropertyShape`,
-            '@type': [ `${SHACL}PropertyShape` ],
+            '@type': [ `${SH}PropertyShape` ],
             [`${SHACL_FORM}usesFormField`]: [ {
               '@id': `${SHACL_FORM}ToggleInput`
             } ],
-            [`${SHACL}datatype`]: [ {
+            [`${SH}datatype`]: [ {
               '@id': `${XSD}boolean`
             } ],
-            [`${SHACL}maxCount`]: [ {
+            [`${SH}maxCount`]: [ {
               '@type': `${XSD}integer`,
               '@value': '1'
             } ],
-            [`${SHACL}minCount`]: [ {
+            [`${SH}minCount`]: [ {
               '@type': `${XSD}integer`,
               '@value': '1'
             } ],
-            [`${SHACL}path`]: [ {
+            [`${SH}path`]: [ {
               '@id': `${SETTING}hasDataValue`
             } ]
           }, {
             '@id': `${SETTING}SomeSimpleTextPreference`,
-            '@type': [ `${OWL}Class`, `${SHACL}NodeShape` ],
+            '@type': [ `${OWL}Class`, `${SH}NodeShape` ],
             [`${SETTING}inGroup`]: [ {
               '@id': `${SETTING}TestPrefGroupA`
             } ],
             [`${RDFS}subClassOf`]: [ {
               '@id': `${SETTING}Preference`
             } ],
-            [`${SHACL}description`]: [ {
+            [`${SH}description`]: [ {
               '@language': 'en',
               '@value': 'Enter a value for this simple text preference'
             } ],
-            [`${SHACL}property`]: [ {
+            [`${SH}property`]: [ {
               '@id': `${SETTING}SomeSimpleTextPreferencePropertyShape`
             } ]
           }, {
             '@id': `${SETTING}SomeSimpleTextPreferencePropertyShape`,
-            '@type': [ `${SHACL}PropertyShape` ],
+            '@type': [ `${SH}PropertyShape` ],
             [`${SHACL_FORM}usesFormField`]: [ {
               '@id': `${SHACL_FORM}TextInput`
             } ],
-            [`${SHACL}datatype`]: [ {
+            [`${SH}datatype`]: [ {
               '@id': `${XSD}string`
             } ],
-            [`${SHACL}maxCount`]: [ {
+            [`${SH}maxCount`]: [ {
               '@type': `${XSD}integer`,
               '@value': '2'
             } ],
-            [`${SHACL}minCount`]: [ {
+            [`${SH}minCount`]: [ {
               '@type': `${XSD}integer`,
               '@value': '1'
             } ],
-            [`${SHACL}path`]: [ {
+            [`${SH}path`]: [ {
               '@id': `${SETTING}hasDataValue`
             } ]
           } ];

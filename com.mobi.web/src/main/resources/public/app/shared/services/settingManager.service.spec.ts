@@ -27,7 +27,7 @@ import { MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 
 import { JSONLDObject } from '../models/JSONLDObject.interface';
-import { ONTOLOGYEDITOR, SETTING, SHACL, SHAPESGRAPHEDITOR } from '../../prefixes';
+import { ONTOLOGYEDITOR, SETTING, SH, SHAPESGRAPHEDITOR } from '../../prefixes';
 import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
 import { RESTError } from '../models/RESTError.interface';
 import { SettingConstants } from '../models/settingConstants.class';
@@ -195,7 +195,7 @@ describe('Setting Manager service', function() {
       it('successfully', fakeAsync(() => {
         const propertyShape = {
           '@id': service.defaultNamespaceMap[type].propertyShape,
-          [`${SHACL}defaultValue`]: [{ '@value': defaultNamespace }]
+          [`${SH}defaultValue`]: [{ '@value': defaultNamespace }]
         };
         spyOn(service, 'getApplicationSettingDefinitions').and.returnValue(of([propertyShape]));
         service.getDefaultNamespaceFromSetting(type).subscribe(result => {
@@ -238,7 +238,7 @@ describe('Setting Manager service', function() {
       it('successfully', fakeAsync(() => {
         const propertyShape = {
           '@id': service.defaultNamespaceMap[type].propertyShape,
-          [`${SHACL}defaultValue`]: [{ '@value': defaultNamespace }]
+          [`${SH}defaultValue`]: [{ '@value': defaultNamespace }]
         };
         spyOn(service, 'getApplicationSettingDefinitions').and.returnValue(of([propertyShape]));
         service.getDefaultNamespaceFromSetting(type).subscribe(result => {

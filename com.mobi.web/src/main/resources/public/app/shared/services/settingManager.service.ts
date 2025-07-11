@@ -29,7 +29,7 @@ import { catchError, map, switchMap } from 'rxjs/operators';
 
 import { createHttpParams, getPropertyValue, handleError, handleErrorObject } from '../utility';
 import { JSONLDObject } from '../models/JSONLDObject.interface';
-import { ONTOLOGYEDITOR, SETTING, SHACL, SHAPESGRAPHEDITOR } from '../../prefixes';
+import { ONTOLOGYEDITOR, SETTING, SH, SHAPESGRAPHEDITOR } from '../../prefixes';
 import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
 import { REST_PREFIX } from '../../constants';
 import { SettingConstants } from '../models/settingConstants.class';
@@ -126,8 +126,8 @@ export class SettingManagerService {
               return throwError('');
           }
           const defaultNamespacePropertyShape = newArray[0];
-          if (has(defaultNamespacePropertyShape, `${SHACL}defaultValue`)) {
-            return of(getPropertyValue(defaultNamespacePropertyShape, `${SHACL}defaultValue`));
+          if (has(defaultNamespacePropertyShape, `${SH}defaultValue`)) {
+            return of(getPropertyValue(defaultNamespacePropertyShape, `${SH}defaultValue`));
           } else {
             this._toast.createErrorToast('No default value found for default namespace');
             return throwError('');

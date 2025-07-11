@@ -44,6 +44,7 @@ module.exports = {
     'Step 3: Create a new shapes graph': function(browser) {
         browser.page.shapesEditorPage().uploadShapesGraph(shapes_graph)
         browser.globals.wait_for_no_spinners(browser)
+        browser.globals.dismiss_toast(browser);
     },
 
     'Step 4: Verify shapes graph presentation': function(browser) {
@@ -83,21 +84,19 @@ module.exports = {
 
     'Step 8: A new user is created' : function(browser) {
         browser.page.administrationPage().createUser(newUser);
+        browser.globals.wait_for_no_spinners(browser);
+        browser.globals.dismiss_toast(browser);
     },
 
     'Step 9: The admin user clicks on the permissions tab' : function(browser) {
-        browser
-            .click('//mat-tab-group//div[contains(@class,"mat-tab-labels")]//div[contains(@class,"mat-tab-label-content")][text()[contains(., "Permissions")]]')
+        browser.page.administrationPage().openPermissionsTab();
+        browser.globals.wait_for_no_spinners(browser);
     },
 
     'Step 10: The admin user toggles off Create Shapes Graph permission' : function(browser) {
-        browser
-            .waitForElementVisible('//h4[contains(text(), "Create Shapes Graph Record")]/following-sibling::mat-slide-toggle')
-            .click('//h4[contains(text(), "Create Shapes Graph Record")]/following-sibling::mat-slide-toggle')
-            .useCss()
-            .waitForElementVisible('.save-container')
-            .click('.save-container');
+        browser.page.administrationPage().toggleEveryonePermission('Create Shapes Graph Record');
         browser.globals.wait_for_no_spinners(browser);
+        browser.globals.dismiss_toast(browser);
     },
 
     'Step 11: The admin user clicks logout' : function(browser) {
@@ -175,25 +174,15 @@ module.exports = {
     },
 
     'Step 24: The admin user removes modify permission for the shapes graph record' : function(browser) {
-        browser
-            .useCss()
-            .waitForElementNotPresent('#spinner-full')
-            .setValue('catalog-page records-view .d-flex .search-form input','semops_shapes')
-            .sendKeys('catalog-page records-view .d-flex .search-form input', browser.Keys.ENTER)
-            .waitForElementNotPresent('#spinner-full')
-            .click('xpath', '//catalog-page//record-card//mat-card-title//span[text()[contains(., "semops_shapes")]]//ancestor::mat-card//button[contains(@class, "view-button")]')
-            .waitForElementVisible('catalog-page record-view div.record-body')
-            .expect.element('catalog-page record-view div.record-body h2.record-title div.inline-edit').text.to.contain('semops_shapes');
-        browser.assert.elementPresent('catalog-page record-view div.record-sidebar manage-record-button button');
-        browser
-            .assert.elementPresent('catalog-page record-view div.record-sidebar manage-record-button button')
-            .click('catalog-page record-view div.record-sidebar manage-record-button button')
-            .useXpath()
-            .waitForElementVisible('//user-access-controls//*[h4="Modify Record"]//mat-slide-toggle')
-            .click('//user-access-controls//*[h4="Modify Record"]//mat-slide-toggle')
-            .useCss()
-            .click('div.save-container');
+        browser.page.catalogPage().applySearchText('semops_shapes');
         browser.globals.wait_for_no_spinners(browser);
+        browser.page.catalogPage().assertRecordVisible('semops_shapes', 1);
+        browser.page.catalogPage().openRecordItem('semops_shapes');
+        browser.globals.wait_for_no_spinners(browser);
+        browser.page.catalogPage().openManage('semops_shapes');
+        browser.globals.wait_for_no_spinners(browser);
+        browser.page.catalogPage().toggleRecordEveryonePermission('Modify Record');
+        browser.globals.dismiss_toast(browser);
     },
 
     'Step 25: The admin user clicks logout' : function(browser) {
