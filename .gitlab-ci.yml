@@ -65,7 +65,7 @@ unit_test_java:
   stage: test
   script:
     # Build and runs tests, skipping sections that are integration/functional and web
-    - mvn $MAVEN_THREADED $MAVEN_CLI_OPTS -pl '!:web,!mobi-karaf-feature,!mobi-distribution,!mobi-itests,!:itests-orm,!:itests-web,!:itests-platform,!:itests-etl,!:itests-rest,!:itests-vfs' install
+    - mvn $MAVEN_THREADED $MAVEN_CLI_OPTS -pl '!:web,!mobi-karaf-feature,!mobi-distribution,!mobi-itests,!:itests-orm,!:itests-web,!:itests-platform,!:itests-etl,!:itests-rest,!:itests-vfs,!:docker' install
   only:
     - merge_requests
     - master # Any commit to master triggers this job
@@ -236,7 +236,7 @@ deploy_prod:
     - cd rdf-orm/rdf-orm-gradle-plugin
     - ./gradlew publish -PlocalMavenRepo=$CI_PROJECT_DIR/.m2/repository -Pversion=$VERSION -PnexusUsername=$INOVEX_USERNAME -PnexusPassword=$INOVEX_PASSWORD
     # build and push the docker image, per instructions in mobi-distribution README
-    - cd ../../mobi-distribution
+    - cd ../../com.mobi.docker
     - mvn $MAVEN_CLI_OPTS docker:build -DpushImageTag
 
 increment_minor_version:

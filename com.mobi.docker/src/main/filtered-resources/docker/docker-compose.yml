@@ -1,0 +1,15 @@
+name: mobi
+services:
+  mobi:
+    container_name: Mobi
+    image: inovexis/mobi:latest
+    pull_policy: never
+    ports:
+      - "443:8443"
+    command: bash -c '/opt/mobi/mobi-distribution/docker/docker-start.sh'
+    volumes:
+      - mobi_data:/opt/mobi/mobi-distribution/data
+      - mobi_etc:/opt/mobi/mobi-distribution/etc
+volumes:
+  mobi_data:
+  mobi_etc:

@@ -1,0 +1,102 @@
+<!--
+  #%L
+  com.mobi.docker
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 - 2025 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.mobi</groupId>
+        <artifactId>mobi-parent</artifactId>
+        <version>4.2.0-SNAPSHOT</version>
+        <relativePath>../mobi-parent/pom.xml</relativePath>
+    </parent>
+
+    <artifactId>docker</artifactId>
+    <name>${project.groupId}.${project.artifactId}</name>
+    <packaging>pom</packaging>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.mobi</groupId>
+            <artifactId>mobi-distribution</artifactId>
+            <version>${project.version}</version>
+            <type>pom</type>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>maven-resources-plugin</artifactId>
+                <version>3.3.1</version>
+                <executions>
+                    <execution>
+                        <id>filter-resources</id>
+                        <phase>generate-resources</phase>
+                        <goals>
+                            <goal>resources</goal>
+                        </goals>
+                        <configuration>
+                            <encoding>UTF-8</encoding>
+                            <resources>
+                                <resource>
+                                    <directory>src/main/filtered-resources</directory>
+                                    <filtering>true</filtering>
+                                </resource>
+                            </resources>
+                            <outputDirectory>${project.build.directory}/filtered-resources</outputDirectory>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>io.fabric8</groupId>
+                <artifactId>docker-maven-plugin</artifactId>
+                <version>0.46.0</version>
+                <configuration>
+                    <images>
+                        <image>
+                            <name>inovexis/mobi</name>
+                            <build>
+                                <dockerFile>${project.build.directory}/filtered-resources/docker/Dockerfile</dockerFile>
+                                <assembly>
+                                    <inline>
+                                        <files>
+                                            <file>
+                                                <source>../mobi-distribution/target/mobi-distribution-${project.version}.tar.gz</source>
+                                                <destName>mobi-distribution-${project.version}.tar.gz</destName>
+                                            </file>
+                                            <file>
+                                                <source>${project.build.directory}/filtered-resources/docker/docker-start.sh</source>
+                                                <destName>docker-start.sh</destName>
+                                            </file>
+                                        </files>
+                                    </inline>
+                                </assembly>
+                            </build>
+                        </image>
+                    </images>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

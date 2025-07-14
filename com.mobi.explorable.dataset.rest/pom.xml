@@ -149,12 +149,6 @@
         </dependency>
         <dependency>
             <groupId>com.mobi</groupId>
-            <artifactId>rest.security</artifactId>
-            <version>${project.version}</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>com.mobi</groupId>
             <artifactId>rest.test.util</artifactId>
             <version>${project.version}</version>
             <scope>test</scope>
