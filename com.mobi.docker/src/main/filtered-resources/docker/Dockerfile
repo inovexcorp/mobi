@@ -5,8 +5,10 @@ ENV MOBI_VERSION ${project.version}
 
 # Base Mobi assembly in the /opt/mobi directory.
 WORKDIR /opt/mobi
-ADD ./mobi-distribution-$MOBI_VERSION.tar.gz ./
+ADD maven/mobi-distribution-$MOBI_VERSION.tar.gz ./
 RUN mv ./mobi-distribution-$MOBI_VERSION ./mobi-distribution
+RUN mkdir -p ./mobi-distribution/docker
+ADD maven/docker-start.sh ./mobi-distribution/docker/docker-start.sh
 RUN cp -r ./mobi-distribution/etc ./mobi-etc-defaults
 CMD chmod +x ./mobi-distribution/docker/docker-start.sh && ./mobi-distribution/docker/docker-start.sh
 

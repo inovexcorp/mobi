@@ -1,9 +1,0 @@
-version: '2'
-services:
-  mobi:
-    container_name: Mobi
-    image: mobi:${project.version}
-    build: .
-    ports:
-      - "8443:8443"
-    command: bash -c '/opt/mobi/${project.artifactId}-${project.version}/bin/karaf server'

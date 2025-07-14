@@ -127,6 +127,7 @@
         <module>com.mobi.shacl.form.rest</module>
         <module>com.mobi.sse</module>
         <module>com.mobi.versionedrdf.api</module>
+        <module>com.mobi.docker</module>
     </modules>
 
     <properties>
