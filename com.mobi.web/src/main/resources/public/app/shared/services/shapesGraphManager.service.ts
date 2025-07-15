@@ -145,14 +145,15 @@ export class ShapesGraphManagerService {
    * @param {string} commitId the IRI of the entity to retrieve.
    * @param {string} format the format of the rdf that will be retrieved.
    * @param {boolean} applyInProgressCommit whether to apply the current in progress commit.
+   * @param {boolean} includeImports Whether to include imported triples
    * @returns {Observable} An Observable that resolves with the metadata triples as either a JSON-LD array or a RDF
    *    formatted string; rejects with an error message otherwise
    */
   getShapesGraphEntity(recordId: string, branchId: string, commitId: string, entityId: string, format = 'jsonld',
-                         applyInProgressCommit = true): Observable<JSONLDObject[] | string>  {
+                         applyInProgressCommit = true, includeImports=true): Observable<JSONLDObject[] | string>  {
     const url = `${this.prefix}/${encodeURIComponent(recordId)}/entities/${encodeURIComponent(entityId)}`;
     const ob = this.spinnerSvc.track(this.http.get(url, {
-      params: createHttpParams({ branchId, commitId, format, applyInProgressCommit }),
+      params: createHttpParams({ branchId, commitId, format, applyInProgressCommit, includeImports }),
       responseType: 'text'
     }));
     return ob.pipe(

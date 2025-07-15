@@ -21,7 +21,7 @@
   #L%
   -->
 <div class="node-shapes-display d-flex flex-column h-100" *ngIf="nodeShape">
-  <div class="selected-header d-flex">
+  <div class="selected-header d-flex row">
     <selected-details class="flex-1"
       [stateService]="stateService"
       [entity]="nodeShape"
@@ -32,12 +32,21 @@
   </div>
   <div class="row flex-1 remove-min-height">
     <div class="col-6 vertical-scroll h-100">
-      <properties-block
-        [stateService]="stateService"
-        [canModify]="false"
-        [ontology]="nodeShape"
-        [annotationIRIs]="nodeShapeProperties">
-      </properties-block>
+      <div class="row py-2">
+        <properties-block class="w-100"
+          [stateService]="stateService"
+          [canModify]="false"
+          [ontology]="nodeShape"
+          [annotationIRIs]="nodeShapeProperties">
+        </properties-block>
+      </div>
+      <div class="row py-2">
+        <app-shacl-target class="w-100"
+          [versionedRdfRecord]="stateService.listItem.versionedRdfRecord"
+          [nodeShape]="nodeShape"
+          [canModify]="canModify">
+       </app-shacl-target>
+      </div>
     </div>
     <div class="col-6 vertical-scroll h-100">
       <app-property-shapes-display [nodeShape]="nodeShape"></app-property-shapes-display>

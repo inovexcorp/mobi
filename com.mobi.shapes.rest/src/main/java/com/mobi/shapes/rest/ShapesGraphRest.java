@@ -594,6 +594,7 @@ public class ShapesGraphRest {
      * @param format         the specified format for the return data. Valid values include "jsonld", "turtle",
      *                       "rdf/xml", and "trig"
      * @param applyInProgressCommit whether to apply the in-progress commit for the user making the request.
+     * @param includeImports boolean indicating whether ontology imports should be included in the query.
      * @return The RDF triples for a specified entity, including all of its transitively attached Blank Nodes.
      */
     @GET
@@ -627,13 +628,16 @@ public class ShapesGraphRest {
             @DefaultValue("jsonld") @QueryParam("format") String format,
             @Parameter(description = "Whether or not to apply the in progress commit "
                     + "for the user making the request")
-            @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit
+            @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit,
+            @Parameter(description = "Boolean indicating whether ontology imports "
+                    + "should be included in the query")
+            @DefaultValue("true") @QueryParam("includeImports") boolean includeImports
     ) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             ShapesGraph shapesGraph = getShapesGraph(recordIdStr, branchIdStr, commitIdStr, applyInProgressCommit,
                     servletRequest, conn);
-            return Response.ok(RestUtils.modelToString(shapesGraph.getEntity(vf.createIRI(entityIdStr)), format))
-                    .build();
+            Model entity = shapesGraph.getEntity(vf.createIRI(entityIdStr), includeImports);
+            return Response.ok(RestUtils.modelToString(entity, format)).build();
         } catch (MobiNotFoundException ex) {
             throw RestUtils.getErrorObjNotFound(ex);
         } catch (IllegalArgumentException ex) {

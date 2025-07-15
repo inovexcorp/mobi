@@ -737,8 +737,8 @@ describe('Shapes Graph State service', function() {
           expectedListItem.importedOntologyIds = ['other-record'];
           expectedListItem.importedOntologies = [{ id: 'other-record', ontologyId: 'other-ont' }];
           expectedListItem.subjectImportMap = {
-            'other-class': { imported: true, ontologyIds: ['other-ont'] },
-            'class': { imported: false }
+            'other-class': { imported: true, alsoLocal: false, ontologyIds: ['other-ont'] },
+            'class': { imported: false,  alsoLocal: true}
           };
           expectedListItem.content = 'content';
           expectedListItem.entityInfo = entityNames;

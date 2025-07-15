@@ -60,7 +60,7 @@ export interface SubjectImportMap {
  */
 export interface EntityImportStatus {
   imported: boolean;
-  alsoLocal?: boolean // TODO Remove for 3196
+  alsoLocal?: boolean;
   ontologyIds?: string[];
 }
 

@@ -20,7 +20,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-
 const parentEl = 'shapes-graph-editor-page';
 const nodeShapesTab = 'app-node-shapes-tab';
 const nodeShapesListEl = `${nodeShapesTab} app-node-shapes-list`;
@@ -30,6 +29,12 @@ const propertyValues = `${parentEl} property-values`;
 const nodeItemSelectorXpath = `//${parentEl}//${nodeShapesTab}//app-node-shapes-list//cdk-virtual-scroll-viewport//app-node-shapes-item`;
 const nodeShapesSearchBar = `${nodeShapesListEl} search-bar`;
 const nodeShapesList = `${nodeShapesListEl} cdk-virtual-scroll-viewport`;
+const parentShaclTarget = 'app-node-shapes-display app-shacl-target';
+const shaclTargetForm = `${parentShaclTarget} form.shacl-target`;
+const targetRadioGroup = `${shaclTargetForm} mat-radio-group.target-select`;
+const targetRadioButtonLabel = `${shaclTargetForm} mat-radio-group.target-select mat-radio-button.mat-radio-checked .mat-radio-label-content`;
+const targetValueInput = `${shaclTargetForm} input[formControlName="targetValue"]`;
+const targetValueLabel = `${shaclTargetForm} mat-form-field:has(input[formControlName="targetValue"]) mat-label`;
 
 function getPropertyShapeSelector(idOrIdx) {
   if (typeof idOrIdx === 'number') {
@@ -122,6 +127,9 @@ const projectTabCommands = {
   },
 };
 
+/**
+ * Commands specific to interacting with the Node Shapes Tab within the Shapes Graph Editor.
+ */
 const nodeShapesTabCommands = {
   switchToNodeShapesTab: function() {
     return this
@@ -187,12 +195,61 @@ const nodeShapesTabCommands = {
   }
 };
 
+/**
+ * Commands specific to <app-shacl-target>
+ */
+const shaclTargetCommands = {
+  /**
+    * Verifies the details displayed in the SHACL Target section for a selected Node Shape.
+    * @param {string} expectedTargetTypeLabel - The expected label of the selected target type. 'Target Class', 'Target Node'. etc
+    * @param {string} expectedInputLabelText - The expected text displayed in the mat-label for the target value input field.
+    * @param {string} expectedTargetValue - The expected value displayed in the target input field.
+    * @param {boolean} expectedToBeDisabled - True if the form fields are expected to be disabled (non-editable); false otherwise.
+    * @returns {object} The Nightwatch.js API object for chaining.
+    */
+  verifyTargetSectionForNodeShape: function(expectedTargetTypeLabel, expectedInputLabelText, expectedTargetValue, expectedToBeDisabled) {
+    this.useCss()
+      .waitForElementVisible('@shaclTargetForm', 'Expected SHACL Target form to be visible')
+      .assert.visible('@targetRadioGroup', 'Expected Target radio group to be visible');
+    this.useCss()
+      .waitForElementVisible('@targetRadioButtonLabel', 'Expected a checked radio button label to be visible')
+      .assert.textEquals('@targetRadioButtonLabel', expectedTargetTypeLabel);
+    this.useCss()
+      .waitForElementVisible('@targetValueLabel', 'Expected Target Value input label to be visible')
+      .assert.textEquals('@targetValueLabel', expectedInputLabelText);
+    this.useCss()
+      .waitForElementVisible('@targetValueInput', 'Expected Target Value input field to be visible')
+      .assert.attributeContains('@targetValueInput', 'value', expectedTargetValue);
+    if (expectedToBeDisabled) {
+      this.assert.attributeContains('@targetValueInput', 'disabled', 'true');
+    } else {
+      this.assert.attributeContains('@targetValueInput', 'disabled', 'false');
+    }
+    // PlaceHolder: Verify the 'Edit' button if applicable
+    // browser.assert.elementPresent('.shacl-target .edit-button', 'Expected Edit button to be present');
+    // browser.assert.visible('.shacl-target .edit-button', 'Expected Edit button to be visible');
+    return this.api;
+  }
+  // TODO add editing commands
+};
+
 module.exports = {
   elements: {
     propertyValues: propertyValues,
     nodeShapesList: nodeShapesList,
     nodeShapesSearchBar: nodeShapesSearchBar,
-    nodeShapesDisplay: nodeShapesDisplay
+    nodeShapesDisplay: nodeShapesDisplay,
+    // Shacl Target Selectors
+    shaclTargetForm: shaclTargetForm,
+    targetRadioGroup: targetRadioGroup,
+    targetRadioButtonLabel: targetRadioButtonLabel,
+    targetValueLabel: targetValueLabel,
+    targetValueInput: targetValueInput
   },
-  commands: [shapesEditorCommands, projectTabCommands, nodeShapesTabCommands]
+  commands: [
+    shapesEditorCommands,
+    projectTabCommands,
+    nodeShapesTabCommands,
+    shaclTargetCommands
+  ]
 }

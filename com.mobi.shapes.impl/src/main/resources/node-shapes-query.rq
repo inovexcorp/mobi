@@ -11,7 +11,8 @@ PREFIX skosxl: <http://www.w3.org/2004/02/skos/core#>
 SELECT DISTINCT
   ?iri
   ?name
-  (SAMPLE(?targetTypes) as ?targetType) (SAMPLE(?targetValues) as ?targetValue)
+  (SAMPLE(?targetTypes) as ?targetType)
+  (SAMPLE(?targetValues) as ?targetValue)
 WHERE {
   BIND("%search%" as ?search)
   {

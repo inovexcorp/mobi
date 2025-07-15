@@ -700,7 +700,7 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
         assertGetUserFromContext();
         verify(commitManager).getInProgressCommitOpt(eq(catalogId), eq(recordId), any(User.class), any(RepositoryConnection.class));
         verify(shapesGraphManager).retrieveShapesGraph(eq(recordId), eq(branchId), eq(commitId));
-        verify(shapesGraphSpy).getEntity(vf.createIRI("urn:test"));
+        verify(shapesGraphSpy).getEntity(vf.createIRI("urn:test"), true);
     }
 
     @Test
@@ -720,7 +720,7 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
         verify(commitManager).getInProgressCommitOpt(eq(catalogId), eq(recordId),
                 any(User.class), any(RepositoryConnection.class));
         verify(shapesGraphManager).retrieveShapesGraphByCommit(eq(recordId), eq(commitId));
-        verify(shapesGraphSpy).getEntity(vf.createIRI("urn:test"));
+        verify(shapesGraphSpy).getEntity(vf.createIRI("urn:test"), true);
     }
 
     @Test
@@ -739,7 +739,7 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
         verify(commitManager).getInProgressCommitOpt(eq(catalogId), eq(recordId),
                 any(User.class), any(RepositoryConnection.class));
         verify(shapesGraphManager).retrieveShapesGraph(eq(recordId));
-        verify(shapesGraphSpy).getEntity(vf.createIRI("urn:test"));
+        verify(shapesGraphSpy).getEntity(vf.createIRI("urn:test"), true);
     }
 
     @Test
@@ -759,7 +759,7 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
         verify(commitManager).getInProgressCommitOpt(eq(catalogId), eq(recordId),
                 any(User.class), any(RepositoryConnection.class));
         verify(shapesGraphManager).retrieveShapesGraph(eq(recordId), eq(branchId));
-        verify(shapesGraphSpy).getEntity(vf.createIRI("urn:test"));
+        verify(shapesGraphSpy).getEntity(vf.createIRI("urn:test"), true);
     }
 
     @Test
@@ -779,7 +779,7 @@ public class ShapesGraphRestTest extends MobiRestTestCXF {
         verify(commitManager).getInProgressCommitOpt(eq(catalogId), eq(recordId), any(User.class), any(RepositoryConnection.class));
         verify(shapesGraphManager).retrieveShapesGraph(eq(recordId), eq(branchId), eq(commitId));
         verify(shapesGraphManager).applyChanges(shapesGraphSpy, inProgressCommit);
-        verify(shapesGraphSpy).getEntity(vf.createIRI("urn:test"));
+        verify(shapesGraphSpy).getEntity(vf.createIRI("urn:test"), true);
     }
 
     @Test

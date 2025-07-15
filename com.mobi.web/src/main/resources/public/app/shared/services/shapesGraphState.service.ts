@@ -585,6 +585,7 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
           subjectMap[subject] = {
             imported: true,
             ontologyIds: [ontology.ontologyId],
+            alsoLocal: false
           };
         } else {
           const entityImportStatus: EntityImportStatus = subjectMap[subject];
@@ -595,7 +596,8 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
     for (const subject of shapesGraphImports.nonImportedIris) {
       if (!subjectMap[subject]) {
         subjectMap[subject] = {
-          imported: false
+          imported: false,
+          alsoLocal: true
         };
       } else {
         const entityImportStatus: EntityImportStatus = subjectMap[subject];
@@ -694,10 +696,15 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
     if (element) {
       this.spinnerSvc.startLoadingForComponent(element);
     }
+    const entityImportStatus: EntityImportStatus = listItem?.subjectImportMap[entityIRI];
+    const isEntityLocal = !entityImportStatus ? false : entityImportStatus.alsoLocal;
     return this.sgm.getShapesGraphEntity(listItem.versionedRdfRecord.recordId,
       listItem.versionedRdfRecord.branchId,
       listItem.versionedRdfRecord.commitId,
-      entityIRI
+      entityIRI,
+      'jsonld',
+      true,
+      !isEntityLocal
     ).pipe(
       finalize(() => {
         if (element) {

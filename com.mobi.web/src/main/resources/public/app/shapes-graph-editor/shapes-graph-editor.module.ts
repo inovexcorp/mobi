@@ -37,6 +37,7 @@ import { ShapesGraphEditorPageComponent } from './components/shapesGraphEditorPa
 import { ShapesPreviewComponent } from './components/shapes-preview/shapes-preview.component';
 import { ShapesProjectTabComponent } from './components/shapes-project-tab/shapes-project-tab.component';
 import { ShapesTabsHolderComponent } from './components/shapes-tabs-holder/shapes-tabs-holder.component';
+import { ShaclTargetComponent } from './components/shacl-target/shacl-target.component';
 
 /**
  * @namespace shapes-graph-editor
@@ -54,6 +55,7 @@ import { ShapesTabsHolderComponent } from './components/shapes-tabs-holder/shape
      NodeShapesItemComponent,
      NodeShapesListComponent,
      NodeShapesTabComponent,
+     ShaclTargetComponent,
      ShapesGraphEditorPageComponent,
      ShapesPreviewComponent,
      ShapesProjectTabComponent,
