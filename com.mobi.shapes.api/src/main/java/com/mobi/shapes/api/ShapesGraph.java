@@ -49,10 +49,10 @@ public interface ShapesGraph extends QueryableVersionedRDF {
      * Retrieves the model containing all Statements in the Shapes Graph with the passed in subjectId.
      *
      * @param subjectId The {@link Resource} to retrieve statements for.
-     *
+     * @param includeImports Boolean indicating whether ontology imports should be included in the model
      * @return The {@link Model} containing all statements with the passed in subjectId.
      */
-    Model getEntity(Resource subjectId);
+    Model getEntity(Resource subjectId, boolean includeImports);
 
     /**
      * Retrieves an Optional of the Shapes Graph IRI.

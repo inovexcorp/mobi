@@ -32,6 +32,7 @@ import { PropertiesBlockComponent } from '../../../shared/components/propertiesB
 import { PropertyShapesDisplayComponent } from '../property-shapes-display/property-shapes-display.component';
 import { SelectedDetailsComponent } from '../../../shared/components/selectedDetails/selectedDetails.component';
 import { SH } from '../../../prefixes';
+import { ShaclTargetComponent } from '../shacl-target/shacl-target.component';
 import { ShapesGraphListItem } from '../../../shared/models/shapesGraphListItem.class';
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
 import { NodeShapesDisplayComponent } from './node-shapes-display.component';
@@ -69,6 +70,7 @@ describe('NodeShapesDisplayComponent', () => {
         NodeShapesDisplayComponent,
         MockComponent(PropertiesBlockComponent),
         MockComponent(SelectedDetailsComponent),
+        MockComponent(ShaclTargetComponent),
         MockComponent(PropertyShapesDisplayComponent)
       ],
       providers: [

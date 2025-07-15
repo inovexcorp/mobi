@@ -1,0 +1,128 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 - 2025 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="shacl-target w-100">
+  <div class="section-header">
+    <h5>Target</h5><a class="float-right text-muted" [matMenuTriggerFor]="targetInfo"><mat-icon>info</mat-icon></a>
+    <!-- TODO Uncomment block for MP-3199 -->
+    <!-- <div *ngIf="canModify">
+      <button *ngIf="!editMode" mat-raised-button class="edit-button" color="primary" type="button"
+        (click)="onEdit()">
+        Edit
+      </button>
+      <button *ngIf="editMode" mat-raised-button class="save-button" color="primary" type="button" (click)="onSave()">
+        Save
+      </button>
+    </div> -->
+  </div>
+  <form class="shacl-target" [formGroup]="targetForm">
+    <!-- Target Radio Buttons -->
+    <fieldset class="form-field-style">
+      <mat-radio-group class="target-select d-flex flex-column" aria-label="Select target of node shape" formControlName="target"
+        (change)="handleTargetChange($event)" required>
+        <mat-radio-button class="radioButton" *ngFor="let option of targetStrategies" [value]="option.targetIri">
+          <span [title]="option.targetIri">{{ option.label }}</span>
+        </mat-radio-button>
+      </mat-radio-group>
+    </fieldset>
+    <ng-template #iriErrors>
+      <mat-error *ngIf="targetForm.get('targetValue')?.hasError('required')">
+        This field is required.
+      </mat-error>
+      <mat-error *ngIf="targetForm.get('targetValue')?.hasError('pattern')">
+        Please enter a valid IRI (e.g., https://example.org/resource).
+      </mat-error>
+    </ng-template>
+    <!-- Target Value Field -->
+    <ng-container [ngSwitch]="targetLabel.value" *ngIf="(targetLabel$ | async) as targetLabel">
+      <!-- TargetNode -->
+      <ng-container *ngSwitchCase="TARGET_NODE">
+        <mat-form-field class="w-100">
+          <mat-label>{{ targetLabel.label }}</mat-label>
+          <input type="text" matInput formControlName="targetValue" required />
+          <ng-container *ngTemplateOutlet="iriErrors"></ng-container>
+        </mat-form-field>
+      </ng-container>
+      <!-- ImplicitReference -->
+      <ng-container *ngSwitchCase="IMPLICIT_REFERENCE">
+      </ng-container>
+      <!-- Case for when nodeShape does not have target -->
+      <ng-container *ngSwitchCase="''">
+      </ng-container>
+      <!-- TargetClass -->
+      <ng-container *ngSwitchCase="TARGET_CLASS">
+        <mat-form-field class="w-100">
+          <mat-label>{{ targetLabel.label }}</mat-label>
+          <input type="text" matInput formControlName="targetValue" [matAutocomplete]="auto" required [title]="targetForm.get('targetValue')?.value || ''"/>
+          <ng-container *ngTemplateOutlet="iriErrors"></ng-container>
+          <mat-autocomplete #auto="matAutocomplete" [displayWith]="targetValueDisplay.bind(this)">
+            <ng-container *ngFor="let group of targetValueSuggestions">
+              <mat-optgroup [label]="group.label">
+                <mat-option *ngFor="let suggestion of group.suggestions" [value]="suggestion.value">
+                  <span [title]="suggestion.value">{{ suggestion.label }}</span>
+                </mat-option>
+              </mat-optgroup>
+            </ng-container>
+          </mat-autocomplete>
+        </mat-form-field>
+      </ng-container>
+      <!-- TargetObjectsOf/TargetSubjectsOf -->
+      <ng-container *ngSwitchDefault>
+        <mat-form-field class="w-100">
+          <mat-label>{{ targetLabel.label }}</mat-label>
+          <mat-chip-list #chipList aria-label="Target Values" [selectable]="editMode">
+            <mat-chip *ngFor="let chipValue of chipValues; let i = index" 
+              [selectable]="editMode"
+              [removable]="editMode"
+              (removed)="removeChip(i)"
+              [disabled]="!editMode"
+              [title]="chipValue.value">
+              {{ chipValue.label }}
+              <mat-icon matChipRemove>cancel</mat-icon>
+            </mat-chip>
+            <!--  Input for typing and autocomplete -->
+            <input [matChipInputFor]="chipList" [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
+              [matChipInputAddOnBlur]="false" (matChipInputTokenEnd)="addChipFromInput($event)" matInput
+              formControlName="targetValue" [matAutocomplete]="auto" />
+          </mat-chip-list>
+          <ng-container *ngTemplateOutlet="iriErrors"></ng-container>
+          <!--  Autocomplete Dropdown -->
+          <mat-autocomplete #auto="matAutocomplete" [displayWith]="targetValueDisplay.bind(this)">
+            <ng-container *ngFor="let group of targetValueSuggestions">
+              <mat-optgroup [label]="group.label">
+                <mat-option *ngFor="let suggestion of group.suggestions" [value]="suggestion.value"
+                  (onSelectionChange)="addChip(suggestion, $event)">
+                  <span [title]="suggestion.value">{{ suggestion.label }}</span>
+                </mat-option>
+              </mat-optgroup>
+            </ng-container>
+          </mat-autocomplete>
+        </mat-form-field>
+      </ng-container>
+    </ng-container>
+  </form>
+</div>
+<mat-menu #targetInfo="matMenu">
+  <div class="info-menu p-1">
+    See the Specification for more details about the <a href="https://www.w3.org/TR/shacl/#targets" target="_blank">Target</a> options.
+  </div>
+</mat-menu>

@@ -159,17 +159,17 @@ public class SimpleShapesGraphTest extends OrmEnabledTestCase {
 
     @Test
     public void testGetEntity() {
-        Model result = shapesGraph.getEntity(SHAPES_GRAPH_IRI);
+        Model result = shapesGraph.getEntity(SHAPES_GRAPH_IRI, true);
         assertEquals(2, result.size());
         assertTrue(result.contains(SHAPES_GRAPH_IRI, RDF.TYPE, OWL.ONTOLOGY));
         assertTrue(result.contains(SHAPES_GRAPH_IRI, DCTERMS.TITLE, null));
 
-        result = shapesGraph.getEntity(NODE_SHAPE_IRI);
+        result = shapesGraph.getEntity(NODE_SHAPE_IRI, true);
         assertEquals(2, result.size());
         assertTrue(result.contains(NODE_SHAPE_IRI, RDF.TYPE, SHACL.NODE_SHAPE));
         assertTrue(result.contains(NODE_SHAPE_IRI, DCTERMS.TITLE, null));
 
-        result = shapesGraph.getEntity(VALUE_FACTORY.createIRI("urn:missing"));
+        result = shapesGraph.getEntity(VALUE_FACTORY.createIRI("urn:missing"), true);
         assertEquals(0, result.size());
     }
 

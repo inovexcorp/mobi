@@ -26,7 +26,7 @@ var adminPassword = 'admin'
 var shapes_graph = path.resolve(__dirname + '/../../resources/rdf_files/UHTC_Node_List.ttl');
 
 module.exports = {
-    '@tags': ['sanity', 'shapes-editor'],
+    '@tags': ['sanity', 'shapes-editor', 'shapes-editor-node-shapes'],
 
     'Step 1: Initial Setup' : function(browser) {
         browser.globals.initial_steps(browser, adminUsername, adminPassword)
@@ -101,5 +101,10 @@ module.exports = {
         // Validate path and constraints on first property shape
         browser.page.shapesEditorPage().verifyPropertyShapeDisplay(1, 'Symbol', 2);
         browser.page.shapesEditorPage().verifyPropertyShapeDisplay(2, 'Element Name', 2);
-    }
+    },
+
+    'Step 8: Verify Target section details for selected Node Shape': function(browser) {
+        browser.page.shapesEditorPage()
+            .verifyTargetSectionForNodeShape('Types of Instance', 'Select a Type', 'Element', true);
+    },
 }

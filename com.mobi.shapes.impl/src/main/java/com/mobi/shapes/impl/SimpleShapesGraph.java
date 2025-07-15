@@ -95,9 +95,9 @@ public class SimpleShapesGraph implements ShapesGraph {
     }
 
     @Override
-    public Model getEntity(Resource subjectId) {
+    public Model getEntity(Resource subjectId, boolean includeImports) {
         return this.ontology.getGraphQueryResults(GET_ENTITY_QUERY.replace(IRI_REPLACE, subjectId.stringValue()),
-                true);
+                includeImports);
     }
 
     @Override
