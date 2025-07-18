@@ -60,11 +60,10 @@ describe('NodeShapesTabComponent', () => {
       '@id': 'https://mobi.solutions/shapes-graphs/example',
       '@type': ['http://www.w3.org/2002/07/owl#Ontology']
     };
-    listItem.nodeTab = {
-      selectedEntityIRI: 'selectedEntityIRI',
-      selectedEntityName: 'selectedEntityName',
-      selectedEntity: undefined,
-      sourceShape: 'sourceShape'
+    listItem.editorTabStates.nodeShapes = {
+      entityIRI: 'selectedEntityIRI',
+      sourceIRI: 'sourceIRI',
+      nodes: []
     };
 
     fixture = TestBed.createComponent(NodeShapesTabComponent);

@@ -26,8 +26,13 @@ import { forOwn, isString, isEmpty, has, indexOf, isPlainObject, forEach, unset,
 /**
  * @class shared.UpdateRefsService
  *
- * `updateRefsService` is a service that provides functionality to update references in an object from
- * {@link shared.OntologyManagerService}.
+ * Service provides utilities to recursively update or remove string references 
+ * within a state object that can be nested and complex. Use to modify state from a 
+ * service like `shared.OntologyStateService` and `shared.ShapesGraphStateService`.
+ * 
+ * NOTE:
+ * All public methods in this service mutate the object passed to them directly. 
+ * They do not create or return a new copy.
  */
 @Injectable()
 export class UpdateRefsService {
@@ -38,56 +43,78 @@ export class UpdateRefsService {
     constructor() {}
 
     /**
-     * Changes every instance of a specific key in an object from {@link shared.OntologyManagerService} to a new string.
-     * It directly affects the passed in object instead of creating a new copy.
+     * Recursively finds all occurrences of a string within an state service object and replaces them with a new string.
+     * 
+     * 1. Object keys that match the `old` string.
+     * 2. String property values that match the `old` string.
+     * 3. String elements within arrays that match the `old` string.
      *
-     * @param {Object} obj An object from {@link shared.OntologyManagerService}. Assumed to be an ontology object.
-     * @param {string} old The original key string that will be updated
-     * @param {string} fresh The new string to change the old key into
+     * **NOTE:** This method mutates the input `obj` directly. It does not return a new copy.
+     *
+     * @param {any} stateObject The state object to traverse and update.
+     * @param {string} old The string to search for (as a key, value, or array item).
+     * @param {string} fresh The new string to replace `old` with.
+     * @param {string[]} [exclude=[]] An optional array of keys to exclude from the update process.
+     * @returns {void}
      */
-    update(obj: any, old: string, fresh: string, exclude: string[] = []): void {
+    update(stateObject: any, old: string, fresh: string, exclude: string[] = []): void {
         const ex = exclude.concat(this.exclude);
-        this._internalUpdate(obj, old, fresh, ex);
+        this._internalUpdate(stateObject, old, fresh, ex);
     }
-    private _internalUpdate(obj: any, old: string, fresh: string, exclude: string[] = []): void {
+    /**
+     * The internal, recursive implementation of the `update` method.
+     * @param {any} stateObject The current object or sub-object to process.
+     * @param {string} old The string to replace.
+     * @param {string} fresh The new string.
+     * @param {string[]} exclude The consolidated list of keys to ignore.
+     * @returns {void}
+     */
+    private _internalUpdate(stateObject: any, old: string, fresh: string, exclude: string[] = []): void {
         // iterates over all of the properties of the object
-        forOwn(obj, (value, key) => {
+        forOwn(stateObject, (value, key) => {
             const excluded = indexOf(exclude, key);
             // replaces the key if it is the old value
             if (key === old && excluded === -1) {
-                delete obj[key];
-                obj[fresh] = value;
+                delete stateObject[key];
+                stateObject[fresh] = value;
                 key = fresh;
             }
-            if (!(excluded !== -1 || !obj[key])) {
+            if (!(excluded !== -1 || !stateObject[key])) {
                 // checks all items in the array
                 if (isArray(value)) {
                     forEach(value, (item, index) => {
                         // checks to see if it contains the old value
                         if (item === old) {
-                            obj[key][index] = fresh;
+                            stateObject[key][index] = fresh;
                         } else if (typeof item !== 'string') { // not a string, so update it
-                            this._internalUpdate(obj[key][index], old, fresh, exclude);
+                            this._internalUpdate(stateObject[key][index], old, fresh, exclude);
                         }
                     });
                 } else if (typeof value === 'object') { // objects need to be updated
-                    this._internalUpdate(obj[key], old, fresh, exclude);
+                    this._internalUpdate(stateObject[key], old, fresh, exclude);
                 } else if (value === old) { // change value if it matches
-                    obj[key] = fresh;
+                    stateObject[key] = fresh;
                 }
             }
         });
     }
     /**
-     * Removes every instance of a specific key in an object from
-     * {@link shared.OntologyManagerService}. It directly
-     * affects the passed in object instead of creating a new copy.
+     * Recursively finds and removes all occurrences of a specific string within state object's structure.
+     * 
+     * 1. Property key-value pairs where the value matches the `word`.
+     * 2. Elements from arrays that match the `word`.
      *
-     * @param {Object} obj An object from {@link shared.OntologyManagerService}. Assumed to be an ontology object.
+     * After removing an item, it performs a cleanup. Any objects or arrays that become empty
+     * as a result of the removal are themselves removed from their parent, preventing empty ojects/arrays.
+     *
+     * **NOTE:** This method mutates the input `obj` directly. It does not return a new copy.
+     * 
+     * @param {Object} stateObject The state object to traverse and update.
      * @param {string} word The original string that will be removed
+     * @returns {void}
      */
-    remove(obj: any, word: string): void {
-        forOwn(obj, (value, key) => {
+    remove(stateObject: any, word: string): void {
+        forOwn(stateObject, (value, key) => {
             if (isArray(value)) {
                 remove(value, item => item === word);
                 forEach(value, (item) => {
@@ -97,18 +124,26 @@ export class UpdateRefsService {
                 });
                 remove(value, item => this._checkValue(item));
                 if (!value.length) {
-                    unset(obj, key);
+                    unset(stateObject, key);
                 }
             } else if (isPlainObject(value)) {
                 this.remove(value, word);
                 if (this._checkValue(value)) {
-                    unset(obj, key);
+                    unset(stateObject, key);
                 }
             } else if (value === word) {
-                unset(obj, key);
+                unset(stateObject, key);
             }
         });
     }
+    /**
+     * A helper utility to determine if a value is effectively empty and can be safely removed.
+     * It's considered empty if it's `lodash.isEmpty` (e.g., {}, [], "") or an object
+     * containing only the Angular `$$hashKey` property.
+     *
+     * @param {*} value The value to check.
+     * @returns {boolean} `true` if the value is considered empty, otherwise `false`.
+     */
     private _checkValue(value) {
         return isEmpty(value) || (Object.keys(value).length === 1 && has(value, '$$hashKey'));
     }

@@ -74,7 +74,7 @@ const shapesEditorCommands = {
   },    
 
   createBranch: function(branch_title, branch_description) {
-    return this.api.page.editorPage().createBranch(parentEl, branch_title);
+    return this.api.page.editorPage().createBranch(parentEl, branch_title, branch_description);
   },
 
   createTag: function(tag_title) {
@@ -101,18 +101,25 @@ const shapesEditorCommands = {
     return this.api.page.editorPage().uploadChanges(parentEl, file);
   },
 
-  commit: function(message) {
-    return this.api.page.editorPage().commit(parentEl, message);
+  commit: function(message, error_message = '') {
+    return this.api.page.editorPage().commit(parentEl, message, error_message);
   },
 
   toggleChangesPage: function(open = true) {
     return this.api.page.editorPage().toggleChangesPage(parentEl, open);
   },
 
-  //TODO placeholder until we consolidate two different spots for editing IRI
-  editIri: function(newIriEnd) {
-    return this.api.page.editorPage().editIri(parentEl, newIriEnd);
+  editIri: function(newIriEnd, iriBegin = '') {
+    return this.api.page.editorPage().editIri(parentEl, newIriEnd, iriBegin);
   },
+
+  verifyStaticIriValue: function(iriBegin, iriEnd) {
+    return this.api.page.editorPage().verifyStaticIriValue(parentEl, iriBegin, iriEnd);
+  },
+
+  verifyUncommittedChanges: function(shouldBeVisible) {
+    return this.api.page.editorPage().verifyUncommittedChanges(parentEl, shouldBeVisible);
+  }
 };
 
 const projectTabCommands = {
@@ -136,6 +143,7 @@ const nodeShapesTabCommands = {
       .useXpath()
       .waitForElementVisible('//app-shapes-tabs-holder//mat-tab-group//div[text()[contains(., "Node Shapes")]]')
       .click('//app-shapes-tabs-holder//mat-tab-group//div[text()[contains(., "Node Shapes")]]')
+      .waitForElementVisible('//app-node-shapes-tab')
       .api.globals.wait_for_no_spinners(this);
   },
 

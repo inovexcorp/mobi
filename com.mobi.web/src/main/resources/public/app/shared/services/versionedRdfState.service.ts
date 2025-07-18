@@ -107,7 +107,8 @@ export abstract class VersionedRdfState<T extends VersionedRdfListItem> {
     'openSnackbar',
     'versionedRdfRecord',
     'merge',
-    'selectedCommit'
+    'selectedCommit',
+    'nodes'
   ];
 
   /**
@@ -301,6 +302,14 @@ export abstract class VersionedRdfState<T extends VersionedRdfListItem> {
       return false; // This occurs when auth interceptor clears the state
     }
   }
+
+  /**
+   * Determines whether the current user can modify the entity rdf types
+   * 
+   * @returns {boolean} True if the current user is allowed to modify the current entity types ; false otherwise
+   */
+  abstract canModifyEntityTypes(entity: JSONLDObject): boolean;
+
   /**
    * Resets the additions and deletions in the in progress commit.
    */

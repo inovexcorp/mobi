@@ -32,7 +32,7 @@ import { Observable } from 'rxjs';
 //Mobi imports
 import { createHttpParams, handleErrorObject } from '../utility';
 import { JSONLDObject } from '../models/JSONLDObject.interface';
-import { NodeShapeInfo } from '../../shapes-graph-editor/models/nodeShapeInfo.interface';
+import { NodeShapeSummary } from '../../shapes-graph-editor/models/node-shape-summary.interface';
 import { POLICY } from '../../prefixes';
 import { PolicyEnforcementService } from './policyEnforcement.service';
 import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
@@ -61,7 +61,7 @@ export class ShapesGraphManagerService {
    * resolves with the result of the call if it was successful and rejects with an error message if it was not.
    *
    * @param {RdfUpload} newRecord the new SHACL record to add
-   * @param {boolean} isTracked Whether the request should be tracked by the {@link shared.ProgressSpinnerService}
+   * @param {boolean} [isTracked=false] Whether the request should be tracked by the {@link shared.ProgressSpinnerService}
    * @returns {Observable} A Observable that resolves with metadata about the newly created Record if the request was
    *    successful; rejects with a {@link RESTError} otherwise
    */
@@ -143,17 +143,17 @@ export class ShapesGraphManagerService {
    * @param {string} branchId the IRI of the branch to retrieve.
    * @param {string} commitId the IRI of the commit to retrieve.
    * @param {string} commitId the IRI of the entity to retrieve.
-   * @param {string} format the format of the rdf that will be retrieved.
-   * @param {boolean} applyInProgressCommit whether to apply the current in progress commit.
-   * @param {boolean} includeImports Whether to include imported triples
+   * @param {string} [format='jsonld'] the format of the rdf that will be retrieved.
+   * @param {boolean} [applyInProgressCommit=true] whether to apply the current in progress commit.
+   * @param {boolean} [includeImports=true] Whether to include imported triples
    * @returns {Observable} An Observable that resolves with the metadata triples as either a JSON-LD array or a RDF
    *    formatted string; rejects with an error message otherwise
    */
   getShapesGraphEntity(recordId: string, branchId: string, commitId: string, entityId: string, format = 'jsonld',
-                         applyInProgressCommit = true, includeImports=true): Observable<JSONLDObject[] | string>  {
+                         applyInProgressCommit = true, includeImports = true): Observable<JSONLDObject[] | string>  {
     const url = `${this.prefix}/${encodeURIComponent(recordId)}/entities/${encodeURIComponent(entityId)}`;
     const ob = this.spinnerSvc.track(this.http.get(url, {
-      params: createHttpParams({ branchId, commitId, format, applyInProgressCommit, includeImports }),
+      params: createHttpParams({ branchId, commitId, format, applyInProgressCommit, includeImports}),
       responseType: 'text'
     }));
     return ob.pipe(
@@ -175,8 +175,8 @@ export class ShapesGraphManagerService {
    * @param {string} recordId the IRI of the record to retrieve.
    * @param {string} branchId the IRI of the branch to retrieve.
    * @param {string} commitId the IRI of the commit to retrieve.
-   * @param {string} format the format of the rdf that will be retrieved.
-   * @param {boolean} applyInProgressCommit whether to apply the current in progress commit.
+   * @param {string} [format='turtle'] the format of the rdf that will be retrieved.
+   * @param {boolean} [applyInProgressCommit=true] whether to apply the current in progress commit.
    * @returns {Observable} An Observable that resolves with the triples of the shapes graph content as either a
    *    JSON-LD array or a RDF formatted string if the request was successful; rejects with an error message otherwise
    */
@@ -206,7 +206,7 @@ export class ShapesGraphManagerService {
    * @param {string} recordId the IRI of the record to retrieve.
    * @param {string} branchId the IRI of the branch to retrieve.
    * @param {string} commitId the IRI of the commit to retrieve.
-   * @param {boolean} applyInProgressCommit whether to apply the current in progress commit.
+   * @param {boolean} [applyInProgressCommit=true] whether to apply the current in progress commit.
    *
    * @returns {Observable} An Observable that resolves with the IRI string if the request was successful; rejects with
    *    an error message otherwise
@@ -227,8 +227,8 @@ export class ShapesGraphManagerService {
    * @param {string} recordId The id of the Record the Branch should be part of
    * @param {string} branchId The id of the Branch with the specified Commit
    * @param {string} commitId The id of the Commit to retrieve the ontology from
-   * @param {boolean} clearCache Whether or not to clear the cache
-   * @param {boolean} isTracked Whether the request should be tracked by the {@link shared.ProgressSpinnerService}
+   * @param {boolean} [clearCache=false] Whether or not to clear the cache
+   * @param {boolean} [isTracked=false] Whether the request should be tracked by the {@link shared.ProgressSpinnerService}
    * @return {Observable<ShapesGraphImports>} An Observable with an ShapesGraphImports object containing listItem keys.
    */
   getShapesGraphImports(recordId: string, branchId: string, commitId: string, clearCache = false, isTracked = false):
@@ -251,10 +251,10 @@ export class ShapesGraphManagerService {
    *
    * @return {Observable<string>} An observable emitting the retrieved node shapes as a JSON string.
    */
-  getNodeShapes(recordId: string, branchId: string, commitId: string, applyInProgressCommit = true, searchText = ''): Observable<NodeShapeInfo[]> {
+  getNodeShapes(recordId: string, branchId: string, commitId: string, applyInProgressCommit = true, searchText = ''): Observable<NodeShapeSummary[]> {
     const url = `${this.prefix}/${encodeURIComponent(recordId)}/node-shapes`;
     const params = { branchId, commitId, applyInProgressCommit, searchText };
-    const request = this.http.get<NodeShapeInfo[]>(url, {params: createHttpParams(params)});
+    const request = this.http.get<NodeShapeSummary[]>(url, {params: createHttpParams(params)});
     return this.spinnerSvc.trackedRequest(request, true).pipe(catchError(handleErrorObject));
   }
 }

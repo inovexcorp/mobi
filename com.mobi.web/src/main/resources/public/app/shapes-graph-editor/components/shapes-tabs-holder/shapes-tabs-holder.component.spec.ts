@@ -71,7 +71,7 @@ describe('ShapesTabsHolderComponent', () => {
     stateSvcStub.listItem = new ShapesGraphListItem();
     stateSvcStub.listItem.versionedRdfRecord.recordId = recordId;
     stateSvcStub.listItem.shapesGraphId = 'shapesGraphId';
-    stateSvcStub.listItem.nodeTab.selectedEntityIRI = 'selectedEntityIRI';
+    stateSvcStub.listItem.editorTabStates.nodeShapes.entityIRI = 'selectedEntityIRI';
     stateSvcStub.setSelected.and.returnValue(of(null));
     fixture.detectChanges();
   });

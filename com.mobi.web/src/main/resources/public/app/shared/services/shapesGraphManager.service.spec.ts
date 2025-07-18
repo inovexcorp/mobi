@@ -39,7 +39,7 @@ import { RdfUpdate } from '../models/rdfUpdate.interface';
 import { RdfUpload } from '../models/rdfUpload.interface';
 import { VersionedRdfUploadResponse } from '../models/versionedRdfUploadResponse.interface';
 import { ShapesGraphManagerService } from './shapesGraphManager.service';
-import { NodeShapeInfo } from '../../shapes-graph-editor/models/nodeShapeInfo.interface';
+import { NodeShapeSummary } from '../../shapes-graph-editor/models/node-shape-summary.interface';
 import { ShapesGraphImports } from '../models/shapesGraphImports.interface';
 
 describe('Shapes Graph Manager service', function() {
@@ -71,7 +71,7 @@ describe('Shapes Graph Manager service', function() {
   };
   let rdfDownload: RdfDownload;
 
-  const nodeList: NodeShapeInfo[] = [
+  const nodeList: NodeShapeSummary[] = [
     {
       iri: 'http://www.example.com/Test1',
       name: 'Test1',

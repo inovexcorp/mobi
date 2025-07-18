@@ -237,4 +237,5 @@ export class MockVersionedRdfState extends VersionedRdfState<VersionedRdfListIte
   onIriEdit = jasmine.createSpy('onIriEdit');
   getTypesLabel = jasmine.createSpy('getTypesLabel');
   getImportedSource = jasmine.createSpy('getImportedSource');
+  canModifyEntityTypes =  jasmine.createSpy('canModifyEntityTypes');
 }

@@ -130,6 +130,9 @@ class VersionedRdfStateImpl extends VersionedRdfState<VersionedRdfListItemImpl> 
   getImportedSource(): string {
       return '';
   }
+  canModifyEntityTypes(entity: JSONLDObject): boolean {
+    return false;
+  }
   public setServices(stateManager: StateManagerService, catalogManager: CatalogManagerService, toast: ToastService, mc: ManchesterConverterService, prefixation: PrefixationPipe) {
     this.sm = stateManager;
     this.cm = catalogManager;

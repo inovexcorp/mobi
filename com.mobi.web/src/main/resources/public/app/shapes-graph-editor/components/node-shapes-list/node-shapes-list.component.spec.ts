@@ -34,7 +34,7 @@ import { of, throwError } from 'rxjs';
 //Mobi & Local imports
 import { cleanStylesFromDOM } from '../../../../test/ts/Shared';
 import { InfoMessageComponent } from '../../../shared/components/infoMessage/infoMessage.component';
-import { NodeShapeInfo } from '../../models/nodeShapeInfo.interface';
+import { NodeShapeSummary } from '../../models/node-shape-summary.interface';
 import { NodeShapesItemComponent } from '../node-shapes-item/node-shapes-item.component';
 import { SearchBarComponent } from '../../../shared/components/searchBar/searchBar.component';
 import { ShapesGraphListItem } from '../../../shared/models/shapesGraphListItem.class';
@@ -52,7 +52,7 @@ describe('NodeShapesListComponent', () => {
   let shapesGraphManagerStub: jasmine.SpyObj<ShapesGraphManagerService>;
   let toastStub: jasmine.SpyObj<ToastService>;
 
-  const nodeList: NodeShapeInfo[] = [
+  const nodeList: NodeShapeSummary[] = [
     {
       iri: 'http://www.example.com/Test1',
       name: 'Test1',
@@ -110,11 +110,10 @@ describe('NodeShapesListComponent', () => {
       '@id': 'https://mobi.solutions/shapes-graphs/example',
       '@type': ['http://www.w3.org/2002/07/owl#Ontology']
     };
-    shapesGraphStateStub.listItem.nodeTab = {
-      selectedEntityIRI: 'selectedEntityIRI',
-      selectedEntityName: 'selectedEntityName',
-      selectedEntity: undefined,
-      sourceShape: 'sourceShape'
+    shapesGraphStateStub.listItem.editorTabStates.nodeShapes = {
+      entityIRI: 'selectedEntityIRI',
+      sourceIRI: 'sourceIRI',
+      nodes: []
     };
     shapesGraphStateStub.getEntityName.and.callFake(s => splitIRI(s).end);
     shapesGraphStateStub.setSelected.and.returnValue(of(null));
@@ -123,7 +122,6 @@ describe('NodeShapesListComponent', () => {
 
     fixture = TestBed.createComponent(NodeShapesListComponent);
     component = fixture.componentInstance;
-    component.nodeShapes = [];
     element = fixture.debugElement;
 
     component.versionedRdfRecord = {
@@ -152,24 +150,20 @@ describe('NodeShapesListComponent', () => {
   });
   describe('controller method', () => {
     it('onItemSelection should set listItem nodeTab', () => {
-      expect(shapesGraphStateStub.listItem.nodeTab.selectedEntityIRI).toEqual('selectedEntityIRI');
-      expect(shapesGraphStateStub.listItem.nodeTab.selectedEntityName).toEqual('selectedEntityName');
-      expect(shapesGraphStateStub.listItem.nodeTab.selectedEntity).toEqual(undefined);
-      expect(shapesGraphStateStub.listItem.nodeTab.sourceShape).toEqual('sourceShape');
-      const nodeShapeInfo: NodeShapeInfo = {
+      expect(shapesGraphStateStub.listItem.editorTabStates.nodeShapes.entityIRI).toEqual('selectedEntityIRI');
+      expect(shapesGraphStateStub.listItem.editorTabStates.nodeShapes.sourceIRI).toEqual('sourceIRI');
+      const nodeShapeInfo: NodeShapeSummary = {
         iri: 'iri',
         name: 'name',
         targetType: 'targetType',
         targetValue: 'targetValue',
         imported: false,
-        sourceOntologyIRI: 'sourceShapeNew'
+        sourceOntologyIRI: 'urn:newSourceOntologyIRI'
       };
       component.onItemSelection(nodeShapeInfo);
-      expect(shapesGraphStateStub.listItem.nodeTab.selectedEntityIRI).toEqual('iri');
-      expect(shapesGraphStateStub.listItem.nodeTab.selectedEntityName).toEqual('name');
-      expect(shapesGraphStateStub.listItem.nodeTab.selectedEntity).toEqual(undefined);
-      expect(shapesGraphStateStub.listItem.nodeTab.sourceShape).toEqual('sourceShapeNew');
-      expect(shapesGraphStateStub.setSelected).toHaveBeenCalledWith(shapesGraphStateStub.listItem.nodeTab.selectedEntityIRI, shapesGraphStateStub.listItem);
+      expect(shapesGraphStateStub.listItem.editorTabStates.nodeShapes.entityIRI).toEqual('iri');
+      expect(shapesGraphStateStub.listItem.editorTabStates.nodeShapes.sourceIRI).toEqual('urn:newSourceOntologyIRI');
+      expect(shapesGraphStateStub.setSelected).toHaveBeenCalledWith(shapesGraphStateStub.listItem.editorTabStates.nodeShapes.entityIRI, shapesGraphStateStub.listItem);
     });
   });
   describe('should create the correct html', () => {
@@ -194,19 +188,19 @@ describe('NodeShapesListComponent', () => {
   });
   describe('should retrieve the correct node shapes upon component load or change', () => {
     it('unless there are errors.', () => {
-      component.nodeShapes = [];
+      shapesGraphStateStub.listItem.editorTabStates.nodeShapes.nodes = [];
       shapesGraphManagerStub.getNodeShapes.and.returnValue(throwError('Error Message'));
       component.ngOnChanges(changesObj);
       fixture.detectChanges();
       expect(shapesGraphManagerStub.getNodeShapes).toHaveBeenCalledWith('recordId', 'branchId', 'commitId', true, '');
       expect(toastStub.createErrorToast).toHaveBeenCalledWith('Error Message');
-      expect(component.nodeShapes).toEqual([]);
+      expect(shapesGraphStateStub.listItem.editorTabStates.nodeShapes.nodes).toEqual([]);
     });
     it('if there are node shapes', () => {
       component.ngOnChanges(changesObj);
       fixture.detectChanges();
       expect(shapesGraphManagerStub.getNodeShapes).toHaveBeenCalledWith('recordId', 'branchId', 'commitId', true, '');
-      expect(component.nodeShapes).toEqual(nodeList);
+      expect(shapesGraphStateStub.listItem.editorTabStates.nodeShapes.nodes).toEqual(nodeList);
     });
   });
   describe('should retrieve the filtered list of node shapes upon search', () => {
@@ -217,14 +211,14 @@ describe('NodeShapesListComponent', () => {
       fixture.detectChanges();
       expect(shapesGraphManagerStub.getNodeShapes).toHaveBeenCalledWith('recordId', 'branchId', 'commitId', true, 'test');
       expect(toastStub.createErrorToast).toHaveBeenCalledWith('Error Message');
-      expect(component.nodeShapes).toEqual([]);
+      expect(shapesGraphStateStub.listItem.editorTabStates.nodeShapes.nodes).toEqual([]);
     });
     it('if there are node shapes', () => {
       component.searchText = 'test';
       component.ngOnChanges(changesObj);
       fixture.detectChanges();
       expect(shapesGraphManagerStub.getNodeShapes).toHaveBeenCalledWith('recordId', 'branchId', 'commitId', true, 'test');
-      expect(component.nodeShapes).toEqual(nodeList);
+      expect(shapesGraphStateStub.listItem.editorTabStates.nodeShapes.nodes).toEqual(nodeList);
     });
   });
 });

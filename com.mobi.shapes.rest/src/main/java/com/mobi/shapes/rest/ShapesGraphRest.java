@@ -637,7 +637,8 @@ public class ShapesGraphRest {
             ShapesGraph shapesGraph = getShapesGraph(recordIdStr, branchIdStr, commitIdStr, applyInProgressCommit,
                     servletRequest, conn);
             Model entity = shapesGraph.getEntity(vf.createIRI(entityIdStr), includeImports);
-            return Response.ok(RestUtils.modelToString(entity, format)).build();
+            return Response.ok(RestUtils.modelToString(entity, format))
+                    .build();
         } catch (MobiNotFoundException ex) {
             throw RestUtils.getErrorObjNotFound(ex);
         } catch (IllegalArgumentException ex) {

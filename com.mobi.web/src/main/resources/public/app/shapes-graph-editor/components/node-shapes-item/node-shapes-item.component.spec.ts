@@ -31,7 +31,7 @@ import { MockPipe } from 'ng-mocks';
 //Mobi & Local imports
 import { BeautifyPipe } from '../../../shared/pipes/beautify.pipe';
 import { cleanStylesFromDOM } from '../../../../test/ts/Shared';
-import { NodeShapeInfo } from '../../models/nodeShapeInfo.interface';
+import { NodeShapeSummary } from '../../models/node-shape-summary.interface';
 import { NodeShapesItemComponent } from './node-shapes-item.component';
 
 describe('NodeShapesItemComponent', () => {
@@ -39,7 +39,7 @@ describe('NodeShapesItemComponent', () => {
   let element: DebugElement;
   let fixture: ComponentFixture<NodeShapesItemComponent>;
 
-  const nodeItem: NodeShapeInfo = {
+  const nodeItem: NodeShapeSummary = {
     iri: 'http://www.example.com/TestName',
     name: 'TestName',
     targetType: 'http://www.w3.org/ns/shacl#targetClass',
@@ -47,7 +47,7 @@ describe('NodeShapesItemComponent', () => {
     targetValue: 'http://www.example.com/ValueClass',
     targetValueLabel: 'Value Class',
     imported: true,
-    sourceOntologyIRI: 'urn:sourceShape'
+    sourceOntologyIRI: 'urn:sourceOntologyIRI'
   };
 
   beforeEach(async () => {
@@ -61,7 +61,7 @@ describe('NodeShapesItemComponent', () => {
     component = fixture.componentInstance;
     element = fixture.debugElement;
 
-    component.nodeData = nodeItem;
+    component.nodeShapeSummary = nodeItem;
 
     fixture.detectChanges();
   });

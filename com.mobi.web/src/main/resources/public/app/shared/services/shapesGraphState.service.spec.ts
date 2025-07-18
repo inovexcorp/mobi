@@ -185,7 +185,8 @@ describe('Shapes Graph State service', function() {
       'openSnackbar',
       'versionedRdfRecord',
       'merge',
-      'selectedCommit'
+      'selectedCommit',
+      'nodes'
     ];
   });
 
@@ -261,6 +262,7 @@ describe('Shapes Graph State service', function() {
       });
       it('and createListItem resolves', fakeAsync(function() {
         spyOn(service, 'createListItem').and.returnValue(of(listItem));
+        spyOn(service, 'setSelected').and.returnValue(of(null));
         service.open({ recordId, title, identifierIRI: shapesGraphId })
           .subscribe(() => { }, () => fail('Observable should have resolved'));
         tick();
@@ -330,6 +332,7 @@ describe('Shapes Graph State service', function() {
       describe('when uploadOntology succeeds', function() {
         describe('and createListItem succeeds', function() {
           beforeEach(function() {
+            spyOn(service, 'setSelected').and.returnValue(of(null));
             spyOn(service, 'createListItem').and.returnValue(of(listItem));
           });
           it('and createState resolves', fakeAsync(function() {
@@ -403,6 +406,7 @@ describe('Shapes Graph State service', function() {
       });
       describe('when uploadOntology succeeds', function() {
         it('and createState resolves', fakeAsync(function() {
+          spyOn(service, 'setSelected').and.returnValue(of(null));
           spyOn(service, 'createState').and.returnValue(of(null));
           service.createAndOpen(uploadDetails)
             .subscribe(response => {
@@ -418,6 +422,7 @@ describe('Shapes Graph State service', function() {
           expect(shapesGraphManagerStub.createShapesGraphRecord).toHaveBeenCalledWith(uploadDetails);
           expect(service.createListItem).toHaveBeenCalledWith(recordId, branchId, commitId, undefined, new Difference(), true, uploadResponse.title);
           expect(service.createState).toHaveBeenCalledWith({ branchId, recordId, commitId });
+          expect(service.setSelected).toHaveBeenCalledWith('shapesGraphId', listItem);
           expect(service.list.length).toBe(1);
           expect(service.listItem).toBeDefined();
           expect(service.listItem.shapesGraphId).toEqual(shapesGraphId);
@@ -738,7 +743,7 @@ describe('Shapes Graph State service', function() {
           expectedListItem.importedOntologies = [{ id: 'other-record', ontologyId: 'other-ont' }];
           expectedListItem.subjectImportMap = {
             'other-class': { imported: true, alsoLocal: false, ontologyIds: ['other-ont'] },
-            'class': { imported: false,  alsoLocal: true}
+            'class': { imported: false, alsoLocal: true }
           };
           expectedListItem.content = 'content';
           expectedListItem.entityInfo = entityNames;
@@ -750,7 +755,6 @@ describe('Shapes Graph State service', function() {
         });
         it('successfully', fakeAsync(() => {
           expectedListItem.userCanModifyMaster = true;
-          spyOn(service, 'setSelected').and.returnValue(of(null));
           service.createListItem(recordId, branchId, commitId, tagId, new Difference(), true, recordTitle).subscribe(
             result => {
               expect(result).toEqual(expectedListItem);
@@ -764,7 +768,6 @@ describe('Shapes Graph State service', function() {
             actionId: policyManagerStub.actionModify
           });
           expect(service.getEntityNames).toHaveBeenCalledWith(jasmine.any(ShapesGraphListItem));
-          expect(service.setSelected).toHaveBeenCalledWith(shapesGraphId, expectedListItem);
           expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({
             resourceId: recordId,
             actionId: policyManagerStub.actionModify,
@@ -772,7 +775,6 @@ describe('Shapes Graph State service', function() {
           });
         }));
         it('unless evaluateRequest fails', fakeAsync(() => {
-          spyOn(service, 'setSelected').and.returnValue(of(null));
           policyEnforcementStub.evaluateRequest.and.callFake(obj => {
             if (obj.actionAttrs) {
               return throwError(error);
@@ -793,29 +795,6 @@ describe('Shapes Graph State service', function() {
             actionId: policyManagerStub.actionModify
           });
           expect(service.getEntityNames).toHaveBeenCalledWith(jasmine.any(ShapesGraphListItem));
-          expect(service.setSelected).toHaveBeenCalledWith(shapesGraphId, expectedListItem);
-          expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({
-            resourceId: recordId,
-            actionId: policyManagerStub.actionModify,
-            actionAttrs: { [`${CATALOG}branch`]: masterBranchIri }
-          });
-        }));
-        it('unless setSelected fails', fakeAsync(() => {
-          spyOn(service, 'setSelected').and.returnValue(throwError(error));
-          service.createListItem(recordId, branchId, commitId, tagId, new Difference(), true, recordTitle).subscribe(
-            () => fail('Observable should have rejected'), result => {
-              expect(result).toEqual(error);
-            });
-          tick();
-          expect(shapesGraphManagerStub.getShapesGraphIRI).toHaveBeenCalledWith(recordId, branchId, commitId);
-          expect(shapesGraphManagerStub.getShapesGraphContent).toHaveBeenCalledWith(recordId, branchId, commitId);
-          expect(catalogManagerStub.getRecordBranches).toHaveBeenCalledWith(recordId, catalogId);
-          expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({
-            resourceId: recordId,
-            actionId: policyManagerStub.actionModify
-          });
-          expect(service.getEntityNames).toHaveBeenCalledWith(jasmine.any(ShapesGraphListItem));
-          expect(service.setSelected).toHaveBeenCalledWith(shapesGraphId, expectedListItem);
           expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({
             resourceId: recordId,
             actionId: policyManagerStub.actionModify,

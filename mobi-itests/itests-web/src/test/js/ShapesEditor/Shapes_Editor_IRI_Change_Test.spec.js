@@ -30,7 +30,7 @@ var shapes_graph = path.resolve(__dirname + '/../../resources/rdf_files/UHTC_sha
 var error_message = 'A Record already exists with tracked IRI'
 
 module.exports = {
-    '@tags': ['shapes-editor'],
+    '@tags': ['shapes-editor', 'shapes-editor-iri-change'],
 
     'Step 1: Initial Setup': function(browser) {
         browser.globals.initial_steps(browser, adminUsername, adminPassword)
@@ -44,97 +44,119 @@ module.exports = {
     },
 
     'Step 3: Verify shapes graph presentation': function(browser) {
-        browser
-            .waitForElementVisible('selected-details')
-            .waitForElementVisible('properties-block')
-            .waitForElementVisible('div.yate')
-            .page.editorPage()
-            .assert.valueEquals('@editorRecordSelectInput', 'UHTC_shapes')
-            .assert.valueEquals('@editorBranchSelectInput', 'MASTER');
+        browser.page.shapesEditorPage()
+            .verifyShapesEditorPage('UHTC_shapes', 'MASTER')
         browser
             .page.shapesEditorPage()
             .expect.elements('@propertyValues').count.to.equal(3)
     },
 
-    'Step 4: Create a new shapes graph': function(browser) {
-        browser.page.shapesEditorPage().createShapesGraph('Test Shapes Graph', 'Test Shapes Graph Description');
-        browser.globals.wait_for_no_spinners(browser);
-        browser.globals.dismiss_toast(browser);
+    'Step 4: Navigate to Node Shapes tab': function(browser) {
+        browser.page.shapesEditorPage().switchToNodeShapesTab();
     },
 
-    'Step 5: Verify New shapes graph presentation': function(browser) {
-        browser
-            .waitForElementVisible('selected-details')
-            .waitForElementVisible('properties-block')
-            .waitForElementVisible('div.yate')
-            .page.editorPage()
-            .assert.valueEquals('@editorRecordSelectInput', shapes_graph_title)
-            .assert.valueEquals('@editorBranchSelectInput', 'MASTER');
-        browser
-            .page.shapesEditorPage()
-            .expect.elements('@propertyValues').count.to.equal(2)
+    'Step 5: Verify Node Shapes List': function(browser) {
+        browser.page.shapesEditorPage().verifyNodeShapesTab();
+        browser.page.shapesEditorPage().verifyNodeShapesNum(1);
+        browser.page.shapesEditorPage()
+            .verifyNodeShapeListItem({
+                title: 'UHTC Material shapes graph',
+                iri: 'http://schema.org/MaterialShape',
+                target: 'Material',
+                type: 'Class',
+                imported: false
+            });
     },
 
-    'Step 6: Edit the shape graph IRI to be invalid': function(browser) {
+    'Step 6: Verify selecting node shape': function(browser) {
+        browser.page.shapesEditorPage()
+            .selectNodeShape('UHTC Material shapes graph');
+        // Validate Node Shape metadata
         browser.useXpath()
-            .waitForElementVisible('//static-iri//div[contains(@class, "static-iri")]//span//a//i[contains(@class, "fa-pencil")]')
-            .click('//static-iri//div[contains(@class, "static-ir")]//span//a//i[contains(@class, "fa-pencil")]')
-            .waitForElementVisible('//edit-iri-overlay')
-            .waitForElementVisible("//edit-iri-overlay//h1[text() [contains(., 'Edit IRI')]]")
-            .useCss()
-            .pause(1000) // To avoid clashes with autofocusing
-            .setValue('edit-iri-overlay input[name=iriBegin]', 'http://matonto.org/ontologies/uhtc')
-            .setValue('edit-iri-overlay input[name=iriEnd]', 'shapes-graph')
-            .useXpath()
-            .click("//edit-iri-overlay//button/span[text() [contains(., 'Submit')]]")
-            .waitForElementNotPresent('//edit-iri-overlay')
-            .assert.not.elementPresent("//edit-iri-overlay//button/span[text() [contains(., 'Submit')]]")
+            .assert.elementPresent('//value-display//div//span[text()[contains(.,"UHTC Material shapes graph")]]//ancestor::property-values//p[text()[contains(.,"Title")]]');
+        // Validate number of property shapes
+        browser.page.shapesEditorPage().verifyPropertyShapesNum(3);
+        // Validate path and constraints on first property shape
+        browser.page.shapesEditorPage().verifyPropertyShapeDisplay(1, 'Chemical', 4);
+        browser.page.shapesEditorPage().verifyPropertyShapeDisplay(2, 'Density', 2);
+        browser.page.shapesEditorPage().verifyPropertyShapeDisplay(3, 'Crystal Structure', 2);
+    },
+
+     'Step 7: Edit the shape graph IRI to be valid': function(browser) {
+        browser.page.shapesEditorPage().editIri('MaterialShape1', 'http://schema.org');
         browser.globals.wait_for_no_spinners(browser);
     },
 
-    'Step 7: Confirm the shapes graph changes': function(browser) {
-        browser.useXpath()
-            .expect.element('//app-editor-top-bar//mat-chip-list//mat-chip[text() [contains(., "Uncommitted Changes")]]').to.be.visible;
-        browser.expect.element('//selected-details//static-iri//strong//span[text() [contains(., "http://matonto.org/ontologies/uhtc/")]]').to.be.visible;
-        browser.expect.element('//selected-details//static-iri//strong//span[text() [contains(., "shapes-graph")]]').to.be.visible;
+    'Step 8: Navigate to Node Shapes that was committed to': function(browser) {
+        browser.page.shapesEditorPage().switchToNodeShapesTab();
+        browser.page.shapesEditorPage().verifyNodeShapesTab();
+        browser.page.shapesEditorPage().verifyNodeShapesNum(1);
+        browser.page.shapesEditorPage()
+            .verifyNodeShapeListItem({
+                title: 'UHTC Material shapes graph',
+                iri: 'http://schema.org/MaterialShape1',
+                target: 'Material',
+                type: 'Class',
+                imported: false
+            });
+        browser.page.shapesEditorPage().selectNodeShape('UHTC Material shapes graph');
     },
 
-    'Step 8: Attempt to commit the IRI changes': function(browser) {
-        browser
-            .useCss()
-            .click('app-editor-top-bar button.commit')
-            .waitForElementVisible('app-commit-modal')
-            .waitForElementVisible('app-commit-modal textarea')
-            .waitForElementVisible('app-commit-modal div.mat-dialog-actions button.mat-primary')
-            .sendKeys('app-commit-modal textarea', 'testing iri change')
-            .click('app-commit-modal div.mat-dialog-actions button.mat-primary')
-        browser.globals.wait_for_no_spinners(browser);
-        browser
-            .useXpath()
-            .expect.element('//app-commit-modal//error-display//p[text() [contains(., "' + error_message + '")]]').to.be.visible;
-        browser.click('//app-commit-modal//button/span[text() [contains(., "Cancel")]]')
+    'Step 9: Confirm the shapes graph changes': function(browser) {
+        browser.page.shapesEditorPage().verifyUncommittedChanges(true);
+        browser.page.shapesEditorPage().verifyStaticIriValue('http://schema.org/', 'MaterialShape1');
     },
 
-    'Step 9: Change the IRI to be valid & commit the change': function(browser) {
-        browser
-            .waitForElementVisible('//static-iri//div[contains(@class, "static-iri")]//span//a//i[contains(@class, "fa-pencil")]')
-            .click('//static-iri//div[contains(@class, "static-ir")]//span//a//i[contains(@class, "fa-pencil")]')
-            .waitForElementVisible('//edit-iri-overlay')
-            .waitForElementVisible("//edit-iri-overlay//h1[text() [contains(., 'Edit IRI')]]")
-            .useCss()
-            .pause(1000) // To avoid clashes with autofocusing
-            .setValue('edit-iri-overlay input[name=iriEnd]', 'shapes-graph-iri-test')
-            .useXpath()
-            .click("//edit-iri-overlay//button/span[text() [contains(., 'Submit')]]")
-            .waitForElementNotPresent('//edit-iri-overlay')
-            .assert.not.elementPresent("//edit-iri-overlay//button/span[text() [contains(., 'Submit')]]")
+    'Step 10: Change the IRI to be valid & commit the change': function(browser) {
+        browser.page.shapesEditorPage().editIri('shapes-graph-iri-test');
         browser.globals.wait_for_no_spinners(browser);
         browser.page.shapesEditorPage().commit('testing iri change');
         browser.globals.wait_for_no_spinners(browser);
         browser.globals.dismiss_toast(browser);
         browser.useXpath()
-        browser.expect.element('//selected-details//static-iri//strong//span[text() [contains(., "http://matonto.org/ontologies/uhtc/")]]').to.be.visible;
-        browser.expect.element('//selected-details//static-iri//strong//span[text() [contains(., "shapes-graph-iri-test")]]').to.be.visible;
-        browser.assert.not.elementPresent('//app-editor-top-bar//mat-chip-list//mat-chip[text() [contains(., "Uncommitted Changes")]]');
+        browser.page.shapesEditorPage().verifyStaticIriValue('http://schema.org/', 'shapes-graph-iri-test');
+        browser.page.shapesEditorPage().verifyUncommittedChanges(false);
     },
+
+    'Step 11: Create a new shapes graph': function(browser) {
+        browser.page.shapesEditorPage().createShapesGraph('Test Shapes Graph', 'Test Shapes Graph Description');
+        browser.globals.wait_for_no_spinners(browser);
+        browser.globals.dismiss_toast(browser);
+    },
+
+    'Step 12: Verify New shapes graph presentation': function(browser) {
+        browser.page.shapesEditorPage()
+            .verifyShapesEditorPage(shapes_graph_title, 'MASTER')
+        browser
+            .page.shapesEditorPage()
+            .expect.elements('@propertyValues').count.to.equal(2)
+    },
+
+    'Step 13: Edit the shape graph IRI to be invalid': function(browser) {
+        browser.page.shapesEditorPage().editIri('shapes-graph', 'http://matonto.org/ontologies/uhtc');
+        browser.globals.wait_for_no_spinners(browser);
+    },
+
+    'Step 14: Confirm the shapes graph changes': function(browser) {
+        browser.page.shapesEditorPage().verifyUncommittedChanges(true);
+        browser.page.shapesEditorPage()
+            .verifyStaticIriValue('http://matonto.org/ontologies/uhtc/', 'shapes-graph');
+    },
+
+    'Step 15: Attempt to commit the IRI changes': function(browser) {
+        browser.page.shapesEditorPage().commit('testing iri change', error_message);
+        browser.globals.wait_for_no_spinners(browser);
+    },
+
+    'Step 16: Change the IRI to be valid & commit the change': function(browser) {
+        browser.page.shapesEditorPage().editIri('shapes-graph-iri-test');
+        browser.globals.wait_for_no_spinners(browser);
+        browser.page.shapesEditorPage().commit('testing iri change');
+        browser.globals.wait_for_no_spinners(browser);
+        browser.globals.dismiss_toast(browser);
+        browser.useXpath()
+        browser.page.shapesEditorPage()
+            .verifyStaticIriValue('http://matonto.org/ontologies/uhtc/', 'shapes-graph-iri-test');
+        browser.page.shapesEditorPage().verifyUncommittedChanges(false);
+    }
 }

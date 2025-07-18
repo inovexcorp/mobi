@@ -32,7 +32,6 @@ import { of, throwError } from 'rxjs';
 import { cleanStylesFromDOM } from '../../../../test/ts/Shared';
 import { IndividualTypesModalComponent } from '../../../ontology-editor/components/individualTypesModal/individualTypesModal.component';
 import { ManchesterConverterService } from '../../services/manchesterConverter.service';
-import { OntologyListItem } from '../../models/ontologyListItem.class';
 import { OntologyManagerService } from '../../services/ontologyManager.service';
 import { OntologyStateService } from '../../services/ontologyState.service';
 import { PrefixationPipe } from '../../pipes/prefixation.pipe';
@@ -46,14 +45,13 @@ describe('Selected Details component', function () {
   let fixture: ComponentFixture<SelectedDetailsComponent>;
   let manchesterConverterStub: jasmine.SpyObj<ManchesterConverterService>;
   let matDialog: jasmine.SpyObj<MatDialog>;
-  let ontologyManagerStub: jasmine.SpyObj<OntologyManagerService>;
   let ontologyStateStub: jasmine.SpyObj<OntologyStateService>;
   let prefixationStub: jasmine.SpyObj<PrefixationPipe>;
   let toastStub: jasmine.SpyObj<ToastService>;
 
   const iri = 'iri';
   const mockEntity = Object.freeze({
-    '@id': 'iri',
+    '@id': iri,
     '@type': ['type1', 'type2']
   });
 
@@ -69,7 +67,6 @@ describe('Selected Details component', function () {
         MockComponent(IndividualTypesModalComponent)
       ],
       providers: [
-        MockProvider(OntologyManagerService),
         MockProvider(OntologyStateService),
         { provide: PrefixationPipe, useClass: MockPipe(PrefixationPipe) },
         MockProvider(ManchesterConverterService),
@@ -82,11 +79,11 @@ describe('Selected Details component', function () {
       ]
     }).compileComponents();
     matDialog = TestBed.inject(MatDialog) as jasmine.SpyObj<MatDialog>;
-    ontologyManagerStub = TestBed.inject(OntologyManagerService) as jasmine.SpyObj<OntologyManagerService>;
-    ontologyManagerStub.isIndividual.and.returnValue(true);
+    
     manchesterConverterStub = TestBed.inject(ManchesterConverterService) as jasmine.SpyObj<ManchesterConverterService>;
     toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
     ontologyStateStub = TestBed.inject(OntologyStateService) as jasmine.SpyObj<OntologyStateService>;
+    ontologyStateStub.canModifyEntityTypes.and.returnValue(true);
     prefixationStub = TestBed.inject(PrefixationPipe) as jasmine.SpyObj<PrefixationPipe>;
     prefixationStub.transform.and.callFake(a => a);
 
@@ -109,7 +106,6 @@ describe('Selected Details component', function () {
     fixture = null;
     ontologyStateStub = null;
     matDialog = null;
-    ontologyManagerStub = null;
     manchesterConverterStub = null;
     toastStub = null;
   });
@@ -197,7 +193,7 @@ describe('Selected Details component', function () {
       expect(element.queryAll(By.css('.entity-types')).length).toEqual(1);
     });
     it('depending on whether the details should be read only', function () {
-      ontologyManagerStub.isIndividual.and.returnValue(true);
+      ontologyStateStub.canModifyEntityTypes.and.returnValue(true);
       component.readOnly = false;
       component.isImported = false;
       component.canModify = true;
@@ -213,7 +209,7 @@ describe('Selected Details component', function () {
       expect(element.queryAll(By.css('a')).length).toEqual(0);
     });
     it('depending on whether the entity is an individual', function () {
-      ontologyManagerStub.isIndividual.and.returnValue(false);
+      ontologyStateStub.canModifyEntityTypes.and.returnValue(false);
       component.ngOnChanges();
       fixture.detectChanges();
       expect(element.queryAll(By.css('a')).length).toEqual(0);
@@ -221,7 +217,7 @@ describe('Selected Details component', function () {
       component.readOnly = false;
       component.isImported = false;
       component.canModify = true;
-      ontologyManagerStub.isIndividual.and.returnValue(true);
+      ontologyStateStub.canModifyEntityTypes.and.returnValue(true);
       component.ngOnChanges();
       fixture.detectChanges();
       expect(element.queryAll(By.css('a')).length).toEqual(1);

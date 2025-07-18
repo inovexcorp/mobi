@@ -49,7 +49,7 @@ export class ShapesTabsHolderComponent {
         this.state.setSelected(this.state.listItem.shapesGraphId, this.state.listItem).subscribe();
         break;
       case ShapesGraphListItem.NODE_SHAPES_TAB:
-        this.state.setSelected(this.state.listItem.nodeTab.selectedEntityIRI, this.state.listItem).subscribe();
+        this.state.setSelected(this.state.listItem.editorTabStates.nodeShapes.entityIRI, this.state.listItem).subscribe();
         break;
       default:
     }

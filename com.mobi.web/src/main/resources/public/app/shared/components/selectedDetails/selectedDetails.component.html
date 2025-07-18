@@ -23,7 +23,6 @@
 <div class="selected-details">
     <div class="selected-heading" *ngIf="entity">
         <span class="entity-name">{{getEntityName(entity)}}</span>
-        <!-- TODO MP-3196 will enable editing of static-iri  -->
         <static-iri
             class="editable-iri"
             [stateService]="stateService"

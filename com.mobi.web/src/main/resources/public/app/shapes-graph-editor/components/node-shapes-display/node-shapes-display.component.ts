@@ -47,7 +47,6 @@ export class NodeShapesDisplayComponent implements OnChanges {
   @Input() canModify: boolean;
 
   nodeShapeProperties: string[] = [];
-  readOnly = true; // TODO Edit Node Shape IRI will modify this variable
 
   private readonly _protectedKeys = [
     '@id',
@@ -90,6 +89,5 @@ export class NodeShapesDisplayComponent implements OnChanges {
       return;
     }
     this.nodeShapeProperties = Object.keys(this.nodeShape).filter(key => !this.excludedKeys.includes(key));
-    this.stateService.listItem.nodeTab.selectedEntity = this.nodeShape;
   }
 }

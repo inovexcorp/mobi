@@ -40,7 +40,7 @@
       <mat-radio-group class="target-select d-flex flex-column" aria-label="Select target of node shape" formControlName="target"
         (change)="handleTargetChange($event)" required>
         <mat-radio-button class="radioButton" *ngFor="let option of targetStrategies" [value]="option.targetIri">
-          <span [title]="option.targetIri">{{ option.label }}</span>
+          <span [title]="option.description">{{ option.label }}</span>
         </mat-radio-button>
       </mat-radio-group>
     </fieldset>

@@ -106,11 +106,9 @@ describe('NodeShapesDisplayComponent', () => {
     });
     it('should populate properties and entity on setNodeShapeEntity', () => {
       expect(component.nodeShapeProperties).toEqual([]);
-      expect(component.readOnly).toEqual(true);
       component.ngOnChanges();
       expect(component.nodeShape).toEqual(jasmine.objectContaining({ '@id': 'http://stardog.com/tutorial/AlbumShape' }));
       expect(component.nodeShapeProperties).toEqual([`${SH}node`]);
-      expect(shapesGraphStateStub.listItem.nodeTab.selectedEntity).toEqual(component.nodeShape);
     });
   });
   it('should have the correct html', () => {

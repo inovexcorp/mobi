@@ -20,19 +20,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { VersionedRdfListItem } from './versionedRdfListItem.class';
 import { JSONLDObject } from './JSONLDObject.interface';
-
-export interface NodeShapesTabState {
-  selectedEntityIRI: string;
-  selectedEntityName: string;
-  selectedEntity: JSONLDObject;
-  sourceShape: string;
-}
+import { NodeShapeSummary } from '../../shapes-graph-editor/models/node-shape-summary.interface';
+import { VersionedRdfListItem } from './versionedRdfListItem.class';
 
 export interface ShapeGraphEditorTabStates {
   project: {
     entityIRI: string;
+  },
+  nodeShapes: {
+    entityIRI: string;
+    sourceIRI: string;
+    nodes: NodeShapeSummary[];
   }
 }
 
@@ -74,7 +73,6 @@ export class ShapesGraphListItem extends VersionedRdfListItem {
   metadata: JSONLDObject;
   content: string;
   editorTabStates: ShapeGraphEditorTabStates;
-  nodeTab: NodeShapesTabState;
 
   subjectImportMap: SubjectImportMap;
 
@@ -93,13 +91,12 @@ export class ShapesGraphListItem extends VersionedRdfListItem {
     this.editorTabStates = {
       project: {
         entityIRI: ''
+      }, 
+      nodeShapes: {
+        entityIRI: '',
+        sourceIRI: '',
+        nodes: []
       }
-    };
-    this.nodeTab = {
-      selectedEntityIRI: '',
-      selectedEntityName: '',
-      selectedEntity: undefined,
-      sourceShape: ''
     };
     this.subjectImportMap = {};
   }
