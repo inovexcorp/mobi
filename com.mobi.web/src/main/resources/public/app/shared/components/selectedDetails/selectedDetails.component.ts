@@ -75,14 +75,13 @@ export class SelectedDetailsComponent implements OnChanges {
 
   constructor(
     private _dialog: MatDialog,
-    private _om: OntologyManagerService,
     private _toast: ToastService
   ) { }
 
   ngOnChanges(): void {
     this.importedSource = this.getImportedSource();
     this.entityHasTypes = this.entity && this.entity['@type'] && this.entity['@type'].length > 0;
-    this.canModifyTypes = this._om.isIndividual(this.entity) && !this.readOnly && !this.isImported &&
+    this.canModifyTypes = this.stateService.canModifyEntityTypes(this.entity) && !this.readOnly && !this.isImported &&
       this.canModify;
   }
 

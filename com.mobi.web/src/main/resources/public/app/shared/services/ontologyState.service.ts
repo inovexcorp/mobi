@@ -1118,7 +1118,6 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
                 if (this.om.isIndividual(listItem.selected)) {
                     this._findValuesMissingDatatypes(listItem.selected);
                 }
-
                 if (getUsages && !has(this.getActivePage(), 'usages') && listItem.selected) {
                     this.setEntityUsages(entityIRI);
                 }
@@ -1257,7 +1256,7 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
           listItem.editorTabStates[this.getActiveKey(listItem)];
     }
     /**
-     * Retrieves the IRI of the activity entity on a specific page of the provided {@link OntologyListItem}.
+     * Retrieves the IRI of the active entity on a specific page of the provided {@link OntologyListItem}.
      * 
      * @param {OntologyListItem} listItem The optional listItem to get the active entity of. Otherwise uses the currently
      *    selected item
@@ -2399,6 +2398,15 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
     getImportedSource(): string {
         const entity = get(this.listItem.entityInfo, get(this.listItem.selected, '@id'), {});
         return get(entity, 'ontologyId', '');
+    }
+
+    /**
+     * Determines whether the current user can modify the entity rdf types
+     * 
+     * @returns {boolean} True if the current user is allowed to modify the current entity types ; false otherwise
+     */
+    canModifyEntityTypes(entity: JSONLDObject): boolean {
+        return this.om.isIndividual(entity);
     }
 
     /* Private helper functions */

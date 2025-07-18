@@ -22,7 +22,7 @@
  */
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 
-import { NodeShapeInfo } from '../../models/nodeShapeInfo.interface';
+import { NodeShapeSummary } from '../../models/node-shape-summary.interface';
 
 /**
  * @class shapes-graph-editor.NodeShapesItemComponent
@@ -36,9 +36,9 @@ import { NodeShapeInfo } from '../../models/nodeShapeInfo.interface';
  * - target value
  * - import status
  * 
- * @param {NodeShapeInfo} nodeData - The node shape data to display in the card.
+ * @param {NodeShapeSummary} nodeShapeSummary - The node shape data to display in the card.
  * @param {boolean} selected - Whether this item is currently selected in the list.
- * @param {EventEmitter<NodeShapeInfo>} onItemSelect - Emits the selected node shape when the card is clicked.
+ * @param {EventEmitter<NodeShapeSummary>} onItemSelect - Emits the selected node shape when the card is clicked.
  */
 @Component({
   selector: 'app-node-shapes-item',
@@ -46,10 +46,10 @@ import { NodeShapeInfo } from '../../models/nodeShapeInfo.interface';
   styleUrls: ['./node-shapes-item.component.scss']
 })
 export class NodeShapesItemComponent {
-  @Input() nodeData: NodeShapeInfo;
+  @Input() nodeShapeSummary: NodeShapeSummary;
   @Input() selected: boolean;
 
-  @Output() onItemSelect = new EventEmitter<NodeShapeInfo>();
+  @Output() onItemSelect = new EventEmitter<NodeShapeSummary>();
 
   constructor() {}
 
@@ -58,6 +58,6 @@ export class NodeShapesItemComponent {
    * Triggered when a user selects an item from the UI.
    */
   setSelected(): void {
-    this.onItemSelect.emit(this.nodeData);
+    this.onItemSelect.emit(this.nodeShapeSummary);
   }
 }

@@ -252,8 +252,8 @@ const editorCommands = {
             .waitForElementNotPresent('app-create-branch-modal div.mat-dialog-actions button:not(.mat-primary)');
     },
 
-    commit: function(parentEl, message) {
-        return this.useCss()
+    commit: function(parentEl, message, error_message = '') {
+        this.useCss()
             .waitForElementVisible(parentEl)
             .waitForElementVisible(`${parentEl} ${editorTopBar}`)
             // Pause added because otherwise the modal was closing before it could be found for some reason
@@ -263,8 +263,19 @@ const editorCommands = {
             .waitForElementVisible('app-commit-modal textarea')
             .waitForElementVisible('app-commit-modal div.mat-dialog-actions button.mat-primary')
             .sendKeys('app-commit-modal textarea', message)
-            .click('app-commit-modal div.mat-dialog-actions button.mat-primary')
-            .waitForElementNotPresent('app-commit-modal div.mat-dialog-actions button:not(.mat-primary)');
+        if (error_message) {
+            this.useCss()
+                .click('app-commit-modal div.mat-dialog-actions button.mat-primary')
+                .useXpath()
+                .expect.element('//app-commit-modal//error-display//p[text() [contains(., "' + error_message + '")]]').to.be.visible;
+            return browser.click('//app-commit-modal//button/span[text() [contains(., "Cancel")]]')
+                .useCss()
+                .waitForElementNotPresent('app-commit-modal div.mat-dialog-actions button:not(.mat-primary)');
+        } else {
+            return this.useCss()
+                .click('app-commit-modal div.mat-dialog-actions button.mat-primary')
+                .waitForElementNotPresent('app-commit-modal div.mat-dialog-actions button:not(.mat-primary)');
+        }
     },
 
     toggleChangesPage: function(parentEl, open = true) {
@@ -279,8 +290,8 @@ const editorCommands = {
       }
     },
 
-    editIri: function(parentEl, newIriEnd) {
-        return this.useCss()
+    editIri: function(parentEl, newIriEnd, iriBegin = '') {
+        this.useCss()
             .waitForElementVisible(parentEl)
             .useXpath()
             .waitForElementVisible(`//${parentEl}//static-iri//div[contains(@class, "static-ir")]//span//a//i[contains(@class, "fa-pencil")]`)
@@ -290,11 +301,38 @@ const editorCommands = {
             .useCss()
             .pause(1000) // To avoid clashes with autofocusing
             .setValue('edit-iri-overlay input[name=iriEnd]', newIriEnd)
-            .useXpath()
+
+        if (iriBegin) {
+            this.useCss().setValue('edit-iri-overlay input[name=iriBegin]', iriBegin)
+        }
+        return this.useXpath()
             .click("//edit-iri-overlay//button/span[text() [contains(., 'Submit')]]")
             .waitForElementNotPresent('//edit-iri-overlay')
             .assert.not.elementPresent("//edit-iri-overlay//button/span[text() [contains(., 'Submit')]]")
     },
+
+    verifyStaticIriValue: function(parentEl, iriBegin, iriEnd) {
+        this.useCss()
+            .waitForElementVisible(parentEl)
+        this.api.useXpath()
+            .waitForElementVisible(`//${parentEl}//selected-details//static-iri`);
+        this.expect.element(`//${parentEl}//selected-details//static-iri//strong//span[text()[contains(., "${iriBegin}")]]`).to.be.visible;
+        this.expect.element(`//${parentEl}//selected-details//static-iri//strong//span[text()[contains(., "${iriEnd}")]]`).to.be.visible;
+      return this.api
+    },
+
+    verifyUncommittedChanges: function(parentEl, shouldBeVisible) {
+        this.useCss()
+            .waitForElementVisible(parentEl)
+        if (shouldBeVisible) {
+            this.api.useXpath()
+                .expect.element(`//${parentEl}//app-editor-top-bar//mat-chip-list//mat-chip[text()[contains(., "Uncommitted Changes")]]`).to.be.visible;
+        } else {
+            this.api.useXpath()
+                .assert.not.elementPresent(`//${parentEl}//app-editor-top-bar//mat-chip-list//mat-chip[text()[contains(., "Uncommitted Changes")]]`);
+        }
+        return this;
+    }
 }
 
 module.exports = {

@@ -28,12 +28,12 @@ import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
 //Mobi imports
-import { NodeShapeInfo } from '../../models/nodeShapeInfo.interface';
+import { getBeautifulIRI } from '../../../shared/utility';
+import { NodeShapeSummary } from '../../models/node-shape-summary.interface';
 import { ShapesGraphManagerService } from '../../../shared/services/shapesGraphManager.service';
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
 import { ToastService } from '../../../shared/services/toast.service';
 import { VersionedRdfRecord } from '../../../shared/models/versionedRdfRecord.interface';
-import { getBeautifulIRI } from '../../../shared/utility';
 
 /**
  * @class shapes-graph-editor.NodeShapesListComponent
@@ -59,7 +59,6 @@ export class NodeShapesListComponent implements OnChanges, OnDestroy {
 
   private _destroySub$ = new Subject<void>();
 
-  nodeShapes: NodeShapeInfo[] = [];
   searchText = '';
 
   constructor(
@@ -106,18 +105,22 @@ export class NodeShapesListComponent implements OnChanges, OnDestroy {
   /**
    * Handles selection of a NodeShape item from the list.
    *
-   * @param nodeShapeInfo - The selected node shape information to emit.
+   * @param selectedNodeShapeInfo - The selected node shape information to emit.
    */
-  onItemSelection(nodeShapeInfo: NodeShapeInfo): void {
-    this.sgs.listItem.nodeTab = {
-      selectedEntityIRI: nodeShapeInfo.iri,
-      selectedEntityName: nodeShapeInfo.name,
-      selectedEntity: undefined,
-      sourceShape: nodeShapeInfo.sourceOntologyIRI
+  onItemSelection(selectedNodeShapeInfo: NodeShapeSummary): void {
+    this.sgs.listItem.editorTabStates.nodeShapes = {
+      ...this.sgs.listItem.editorTabStates.nodeShapes,
+      entityIRI: selectedNodeShapeInfo.iri,
+      sourceIRI: selectedNodeShapeInfo.sourceOntologyIRI,
     };
-    this.sgs.setSelected(nodeShapeInfo.iri, this.sgs.listItem).subscribe();
+    this.sgs.setSelected(selectedNodeShapeInfo.iri, this.sgs.listItem).subscribe();
   }
 
+  /**
+   * Retrieves a list of Node Shapes for the given RDF record and search text.
+   * Updates the component state and displays user-friendly labels for target types and values.
+   * Handles errors by showing a toast message.
+   */
   private _retrieveList(): void {
     this._sgm.getNodeShapes(
       this.versionedRdfRecord.recordId,
@@ -127,12 +130,12 @@ export class NodeShapesListComponent implements OnChanges, OnDestroy {
       this.searchText
     ).pipe(
         takeUntil(this._destroySub$)
-    ).subscribe((nodes: NodeShapeInfo[]) => {
+    ).subscribe((nodes: NodeShapeSummary[]) => {
       nodes.forEach(nodeShape => {
         nodeShape.targetTypeLabel = getBeautifulIRI(nodeShape.targetType);
         nodeShape.targetValueLabel = this.sgs.getEntityName(nodeShape.targetValue);
       });
-      this.nodeShapes = nodes;
+      this.sgs.listItem.editorTabStates.nodeShapes.nodes = nodes; // Provide reference for updating 
     }, (error) => {
       this._toast.createErrorToast(error);
     });

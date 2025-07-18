@@ -21,23 +21,23 @@
   #L%
   -->
 <div class="node-item-wrapper w-100" (click)="setSelected()" [ngClass]="{'activeNode': selected}">
-  <h4 class="node-title shortened-text" title="{{nodeData.name | beautify}}">{{nodeData.name | beautify}}</h4>
+  <h4 class="node-title shortened-text" title="{{nodeShapeSummary.name | beautify}}">{{nodeShapeSummary.name | beautify}}</h4>
   <div class="node-content shortened-text">
-    <div class="prop-header d-flex align-items-baseline clearfix" title="{{nodeData.iri}}">
+    <div class="prop-header d-flex align-items-baseline clearfix" title="{{nodeShapeSummary.iri}}">
       <p class="text text-truncate m-0">IRI: </p>
-      <small class="ml-1 text-muted text-truncate flex-1">{{nodeData.iri}}</small>
+      <small class="ml-1 text-muted text-truncate flex-1">{{nodeShapeSummary.iri}}</small>
     </div>
-    <div class="prop-header d-flex align-items-baseline clearfix" title="{{nodeData.targetValue || 'N/A'}}">
+    <div class="prop-header d-flex align-items-baseline clearfix" title="{{nodeShapeSummary.targetValue || 'N/A'}}">
       <p class="text text-truncate m-0">Target: </p>
-      <small class="ml-1 text-muted text-truncate flex-1">{{nodeData.targetValueLabel || 'N/A'}}</small>
+      <small class="ml-1 text-muted text-truncate flex-1">{{nodeShapeSummary.targetValueLabel || 'N/A'}}</small>
     </div>
-    <div class="prop-header d-flex align-items-baseline clearfix" title="{{nodeData.targetType || 'N/A'}}">
+    <div class="prop-header d-flex align-items-baseline clearfix" title="{{nodeShapeSummary.targetType || 'N/A'}}">
       <p class="text text-truncate m-0">Target Type: </p>
-      <small class="ml-1 text-muted text-truncate flex-1">{{nodeData.targetTypeLabel || 'N/A'}}</small>
+      <small class="ml-1 text-muted text-truncate flex-1">{{nodeShapeSummary.targetTypeLabel || 'N/A'}}</small>
     </div>
-    <div class="prop-header d-flex align-items-baseline clearfix" title="{{nodeData.imported}}">
+    <div class="prop-header d-flex align-items-baseline clearfix" title="{{nodeShapeSummary.imported}}">
       <p class="text text-truncate m-0">Imported: </p>
-      <small class="ml-1 text-muted text-truncate flex-1">{{nodeData.imported}}</small>
+      <small class="ml-1 text-muted text-truncate flex-1">{{nodeShapeSummary.imported}}</small>
     </div>
   </div>
 </div>

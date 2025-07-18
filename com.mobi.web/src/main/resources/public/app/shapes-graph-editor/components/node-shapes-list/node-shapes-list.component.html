@@ -24,11 +24,11 @@
     <div class="d-flex flex-row search pb-1">
         <search-bar class="flex-1 remove-min-width" [(bindModel)]="searchText" (submitEvent)="search()"></search-bar>
     </div>
-    <info-message *ngIf="nodeShapes.length === 0" class="no-match">No node shapes match your search criteria.</info-message>
+    <info-message *ngIf="sgs.listItem.editorTabStates.nodeShapes.nodes.length === 0" class="no-match">No node shapes match your search criteria.</info-message>
     <cdk-virtual-scroll-viewport itemSize="26" #hierarchyVirtualScroll class="flex-1 repeater-container w-100 remove-min-height">
-        <div *cdkVirtualFor="let node of nodeShapes" class="nodeWrapper">
-            <app-node-shapes-item [nodeData]="node"
-                                  [selected]="sgs.listItem.nodeTab.selectedEntityIRI === node.iri"
+        <div *cdkVirtualFor="let nodeShapeSummary of sgs.listItem.editorTabStates.nodeShapes.nodes" class="nodeWrapper">
+            <app-node-shapes-item [nodeShapeSummary]="nodeShapeSummary"
+                                  [selected]="sgs.listItem.editorTabStates.nodeShapes.entityIRI === nodeShapeSummary.iri"
                                   (onItemSelect)="onItemSelection($event)">
             </app-node-shapes-item>
         </div>

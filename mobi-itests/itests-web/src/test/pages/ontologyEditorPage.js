@@ -89,12 +89,24 @@ const ontologyEditorCommands = {
         return this.api.page.editorPage().uploadChanges(parentEl, file);
     },
 
-    commit: function(message) {
-        return this.api.page.editorPage().commit(parentEl, message);
+    commit: function(message, error_message = '') {
+        return this.api.page.editorPage().commit(parentEl, message, error_message);
     },
 
     toggleChangesPage: function(open = true) {
         return this.api.page.editorPage().toggleChangesPage(parentEl, open);
+    },
+
+    editIri: function(newIriEnd, iriBegin = '') {
+        return this.api.page.editorPage().editIri(parentEl, newIriEnd, iriBegin);
+    },
+
+    verifyStaticIriValue: function(iriBegin, iriEnd) {
+        return this.api.page.editorPage().verifyStaticIriValue(parentEl, iriBegin, iriEnd);
+    },
+
+    verifyUncommittedChanges: function(shouldBeVisible) {
+        return this.api.page.editorPage().verifyUncommittedChanges(parentEl, shouldBeVisible);
     },
 
     // TODO: Figure out what to do with this
