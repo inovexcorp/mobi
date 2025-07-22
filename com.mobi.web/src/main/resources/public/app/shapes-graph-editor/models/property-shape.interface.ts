@@ -34,7 +34,8 @@ export interface PropertyShape {
   constraints: Constraint[],
   path: PathNode ,
   pathString: string,
-  pathHtmlString: string
+  pathHtmlString: string,
+  referencedNodeIds: Set<string>
 }
 
 /**

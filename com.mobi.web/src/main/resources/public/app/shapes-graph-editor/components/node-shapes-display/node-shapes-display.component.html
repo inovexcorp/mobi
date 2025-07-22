@@ -49,7 +49,7 @@
       </div>
     </div>
     <div class="col-6 vertical-scroll h-100">
-      <app-property-shapes-display [nodeShape]="nodeShape"></app-property-shapes-display>
+      <app-property-shapes-display [nodeShape]="nodeShape" [canModify]="canModify" [isImported]="stateService.isSelectedImported()"></app-property-shapes-display>
     </div>
   </div>
 </div>

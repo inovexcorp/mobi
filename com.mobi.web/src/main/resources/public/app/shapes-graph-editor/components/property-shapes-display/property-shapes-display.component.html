@@ -38,6 +38,9 @@
         <span class="subheader">{{constraint.constraintLabel}}: </span><span *ngFor="let value of constraint.value; last as last">{{value.label}}<span *ngIf="!last">, </span></span>
       </div>
     </mat-card-content>
+    <mat-card-actions>
+      <button mat-button color="warn" (click)="confirmPropertyShapeDeletion(propertyShape)" [disabled]="!canModify || isImported">Delete</button>
+    </mat-card-actions>
   </mat-card>
 </div>
 <mat-menu #constraintInfo="matMenu">
