@@ -200,6 +200,22 @@ const nodeShapesTabCommands = {
       .waitForElementVisible(selector)
       .assert.textContains(`${selector}//ancestor::mat-card//div[contains(@class, "path-display")]`, pathString)
       .assert.elementsCount(`${selector}//ancestor::mat-card//div[contains(@class, "constraint")]`, numConstraints);
+  },
+
+  removePropertyShape: function(idOrIdx) {
+    const selector = getPropertyShapeSelector(idOrIdx);
+    return this.useCss()
+      .waitForElementVisible(`${nodeShapesDisplay} app-property-shapes-display`)
+      .useXpath()
+      .waitForElementVisible(selector)
+      .waitForElementVisible(`${selector}//ancestor::mat-card-actions//button[contains(@class, "mat-warn")]`)
+      .click(`${selector}//ancestor::mat-card-actions//button[contains(@class, "mat-warn")]`)
+      .useCss()
+      .waitForElementVisible('confirm-modal')
+      .waitForElementVisible('confirm-modal button.mat-primary')
+      .click('confirm-modal button.mat-primary')
+      .useCss()
+      .api.globals.wait_for_no_spinners(this);
   }
 };
 

@@ -135,6 +135,7 @@ import static com.mobi.rest.util.RestUtils.createPaginatedResponse;
 import static com.mobi.rest.util.RestUtils.getActiveUser;
 import static com.mobi.rest.util.RestUtils.getRDFFormatFileExtension;
 import static com.mobi.rest.util.RestUtils.getRDFFormatMimeType;
+import static com.mobi.rest.util.RestUtils.modelToSkolemizedString;
 
 @Path("/shapes-graphs")
 @Component(service = ShapesGraphRest.class, immediate = true)
@@ -237,8 +238,8 @@ public class ShapesGraphRest {
                     new IllegalArgumentException("The SHACL Shapes Graph data is missing."));
         } else if (inputStream != null && json != null) {
             throw RestUtils.getErrorObjBadRequest(
-                    new IllegalArgumentException("Only provide either a SHACL Shapes Graph file or " +
-                            "SHACL Shapes Graph json data"));
+                    new IllegalArgumentException("Only provide either a SHACL Shapes Graph file or "
+                            + "SHACL Shapes Graph json data"));
         }
         if (inputStream != null) {
             RecordOperationConfig config = new OperationConfig();
@@ -636,9 +637,9 @@ public class ShapesGraphRest {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             ShapesGraph shapesGraph = getShapesGraph(recordIdStr, branchIdStr, commitIdStr, applyInProgressCommit,
                     servletRequest, conn);
+
             Model entity = shapesGraph.getEntity(vf.createIRI(entityIdStr), includeImports);
-            return Response.ok(RestUtils.modelToString(entity, format))
-                    .build();
+            return Response.ok(modelToSkolemizedString(entity, format, bNodeService)).build();
         } catch (MobiNotFoundException ex) {
             throw RestUtils.getErrorObjNotFound(ex);
         } catch (IllegalArgumentException ex) {

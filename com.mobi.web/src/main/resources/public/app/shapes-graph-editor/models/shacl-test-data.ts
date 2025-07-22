@@ -35,6 +35,7 @@ interface PathTestCase {
   jsonldMap: Record<string, JSONLDObject>,
   structure: PathNode,
   pathString: string,
+  referencedIds: Set<string>
 }
 
 export const pathTestCases: PathTestCase[] = [
@@ -44,7 +45,8 @@ export const pathTestCases: PathTestCase[] = [
     iri: 'http://www.test.com/test#PropA',
     jsonldMap: {},
     structure: { type: 'IRI', iri: 'http://www.test.com/test#PropA', label: 'Prop A' },
-    pathString: 'Prop A'
+    pathString: 'Prop A',
+    referencedIds: new Set()
   },
   {
     testName: 'multiple predicate path (sequence path)',
@@ -76,7 +78,8 @@ export const pathTestCases: PathTestCase[] = [
         { type: 'IRI', iri: 'http://www.test.com/test#PropB', label: 'Prop B' },
       ]
     },
-    pathString: 'Prop A / Prop B'
+    pathString: 'Prop A / Prop B',
+    referencedIds: new Set(['_:b1', '_:b2'])
   },
   {
     testName: 'one predicate path with special path',
@@ -98,6 +101,7 @@ export const pathTestCases: PathTestCase[] = [
       }
     },
     pathString: '( Prop A )*',
+    referencedIds: new Set(['_:b1'])
   },
   {
     testName: 'multiple predicate path with special paths',
@@ -156,6 +160,7 @@ export const pathTestCases: PathTestCase[] = [
       ]
     },
     pathString: '( Prop A )* / ( Prop B )+',
+    referencedIds: new Set(['_:b1', '_:b2', '_:b3', '_:b4'])
   },
   {
     testName: 'multiple predicate path with one special path one not',
@@ -204,7 +209,8 @@ export const pathTestCases: PathTestCase[] = [
         }
       ]
     },
-    pathString: 'Prop A / ( Prop B )*'
+    pathString: 'Prop A / ( Prop B )*',
+    referencedIds: new Set(['_:b1', '_:b2', '_:b3'])
   },
   // This chunk of tests focuses on inverse paths
   {
@@ -226,7 +232,8 @@ export const pathTestCases: PathTestCase[] = [
         label: 'Prop A',
       }
     },
-    pathString: '^( Prop A )'
+    pathString: '^( Prop A )',
+    referencedIds: new Set(['_:b1'])
   },
   {
     testName: 'multiple inverse path',
@@ -284,7 +291,8 @@ export const pathTestCases: PathTestCase[] = [
         }
       ]
     },
-    pathString: '^( Prop A ) / ^( Prop C )'
+    pathString: '^( Prop A ) / ^( Prop C )',
+    referencedIds: new Set(['_:b1', '_:b2', '_:b3', '_:b4'])
   },
   {
     testName: 'multiple inverse paths with special paths',
@@ -361,6 +369,7 @@ export const pathTestCases: PathTestCase[] = [
       ]
     },
     pathString: '( ^( Prop A ) )* / ( ^( Prop C ) )+',
+    referencedIds: new Set(['_:b1', '_:b2', '_:b3', '_:b4', '_:b5', '_:b6'])
   },
   {
     testName: 'multiple inverse path with one special path one not',
@@ -428,6 +437,7 @@ export const pathTestCases: PathTestCase[] = [
       ]
     },
     pathString: '^( Prop A ) / ( ^( Prop C ) )+',
+    referencedIds: new Set(['_:b1', '_:b2', '_:b3', '_:b4', '_:b5'])
   },
   // This chunk of tests focuses on alternate path
   {
@@ -475,6 +485,7 @@ export const pathTestCases: PathTestCase[] = [
       ]
     },
     pathString: 'Prop A | Prop B',
+    referencedIds: new Set(['_:b1', '_:b2', '_:b3'])
   },
   {
     testName: 'one alternate path with special path',
@@ -530,6 +541,7 @@ export const pathTestCases: PathTestCase[] = [
       }
     },
     pathString: '( Prop A | Prop B )*',
+    referencedIds: new Set(['_:b1', '_:b2', '_:b3', '_:b4'])
   },
   {
     testName: 'multiple alternative paths',
@@ -638,6 +650,7 @@ export const pathTestCases: PathTestCase[] = [
       ]
     },
     pathString: 'Prop A | Prop B / Prop C | Prop D',
+    referencedIds: new Set(['_:b1', '_:b2', '_:b3', '_:b4', '_:b5', '_:b6', '_:b7', '_:b8'])
   },
   {
     testName: 'multiple predicate path with alternate paths special paths',
@@ -764,6 +777,7 @@ export const pathTestCases: PathTestCase[] = [
       ]
     },
     pathString: '( Prop A | Prop B )* / ( Prop C | Prop D )+',
+    referencedIds: new Set(['_:b1', '_:b2', '_:b3', '_:b4', '_:b5', '_:b6', '_:b7', '_:b8', '_:b9', '_:b10'])
   },
   {
     testName: 'one predicate path, one inverse path, both with alternates, predicate path with special path',
@@ -904,6 +918,7 @@ export const pathTestCases: PathTestCase[] = [
       ]
     },
     pathString: '( ^( Prop A ) )+ / Prop B | Prop C / Prop D | Prop E',
+    referencedIds: new Set(['_:b1', '_:b2', '_:b3', '_:b4', '_:b5', '_:b6', '_:b7', '_:b8', '_:b9', '_:b10', '_:b11'])
   },
   //  This chunk of tests focuses on mixed predicate and inverse paths
   {
@@ -954,6 +969,7 @@ export const pathTestCases: PathTestCase[] = [
       ]
     },
     pathString: 'Prop A / ^( Prop C )',
+    referencedIds: new Set(['_:b1', '_:b2', '_:b3'])
   },
   {
     testName: 'inverse path to predicate path',
@@ -1003,6 +1019,7 @@ export const pathTestCases: PathTestCase[] = [
       ]
     },
     pathString: '^( Prop B ) / Prop D',
+    referencedIds: new Set(['_:b1', '_:b2', '_:b3'])
   },
   {
     testName: 'multiple predicate path with inverse and specialty paths',
@@ -1070,6 +1087,7 @@ export const pathTestCases: PathTestCase[] = [
       ]
     },
     pathString: '( Prop A )* / ( ^( Prop B ) )+',
+    referencedIds: new Set(['_:b1', '_:b2', '_:b3', '_:b4', '_:b5'])
   }
 ];
 

@@ -107,4 +107,23 @@ module.exports = {
         browser.page.shapesEditorPage()
             .verifyTargetSectionForNodeShape('Types of Instance', 'Select a Type', 'Element', true);
     },
+
+    'Step 9: Remove a Property Shape': function(browser) {
+        browser.page.shapesEditorPage()
+            .removePropertyShape(1);
+        browser.page.shapesEditorPage().verifyPropertyShapesNum(1);
+        browser.page.shapesEditorPage().verifyPropertyShapeDisplay(1, 'Element Name', 2);
+    },
+
+    'Step 10: Verify Property Shape Removal': function(browser) {
+        browser.page.shapesEditorPage().toggleChangesPage();
+        browser.globals.wait_for_no_spinners(browser);
+        browser.useCss()
+            .waitForElementVisible('app-changes-page div.changes-info button.mat-warn')
+            // For some reason Nightwatch really wanted to see the selector as XPath...
+            .expect.elements({
+              selector: 'app-changes-page mat-expansion-panel',
+              locateStrategy: 'css selector'
+            }).count.to.equal(2);
+    }
 }

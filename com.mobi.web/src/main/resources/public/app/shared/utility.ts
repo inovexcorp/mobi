@@ -53,6 +53,8 @@ export const entityNameProps = [
   `${SH}name`,
 ];
 
+export const skolemizedNamespace = 'http://mobi.com/.well-known/genid/';
+
 /**
  * This file provides a variety of different utility methods used through the application.
  * 
@@ -548,6 +550,7 @@ export function getDctermsId(entity: JSONLDObject, property: string): string {
  * @param sortedList The sorted array of values
  * @param property An optional property to retrieve from the blank nodes. If not set, will retrieve direct string values
  * in RDF list
+ * @returns The sorted array of values (same as the parameter)
  */
 export function rdfListToValueArray(fullJsonld: JSONLDObject[], firstElementID: string, sortedList: string[] = [], property = ''): string[] {
   const currentElement: JSONLDObject|undefined = fullJsonld.find(jsonLDObject => jsonLDObject['@id'] === firstElementID);
@@ -605,11 +608,13 @@ export function rdfListToValueArray(fullJsonld: JSONLDObject[], firstElementID: 
  * @param {string} firstElementID The ID of the first blank node
  * @param {string[]} sortedList The sorted array of values
  * @param {string} [property=''] An optional property to retrieve from the blank nodes. If not set, will retrieve direct string values
- * in RDF list
- * @returns 
+ *    in RDF list
+ * @param {string[]} [bnodeIds=[]] An optional array to hold all the discovered blank node ids that make up the list
+ * @returns The sorted array of values (same as the parameter)
  */
 export function rdfListToValueArrayWithMap(jsonldMap: Record<string, JSONLDObject>, firstElementID: string, 
-  sortedList: string[] = [], property = ''): string[] {
+  sortedList: string[] = [], property = '', bnodeIds: string[] = []): string[] {
+    bnodeIds.push(firstElementID);
     const currentElement: JSONLDObject|undefined = jsonldMap[firstElementID];
     if (!currentElement) {
         console.error(`Could not find element ID ${firstElementID} in provided JSON-LD`);
@@ -637,7 +642,7 @@ export function rdfListToValueArrayWithMap(jsonldMap: Record<string, JSONLDObjec
         if (id && jsonldMap[id] && isBlankNodeId(id)) {
             // Checks to see if it points to a different blank node array that contains the values
             console.debug('rdf:first points to another blank node. Recursing through chain.');
-            rdfListToValueArrayWithMap(jsonldMap, id, sortedList, property);
+            rdfListToValueArrayWithMap(jsonldMap, id, sortedList, property, bnodeIds);
         } else {
             // The value is the result itself
             const value = id || getPropertyValue(currentElement, `${RDF}first`);
@@ -651,7 +656,8 @@ export function rdfListToValueArrayWithMap(jsonldMap: Record<string, JSONLDObjec
             return sortedList;
         }
         console.debug('Recursing through rdf:rest chain.');
-        return rdfListToValueArrayWithMap(jsonldMap, getPropertyId(currentElement, `${RDF}rest`), sortedList, property);
+        return rdfListToValueArrayWithMap(jsonldMap, getPropertyId(currentElement, `${RDF}rest`), sortedList, 
+          property, bnodeIds);
     }
 }
 
@@ -715,7 +721,13 @@ export function getArrWithoutEntity(iri: string, arr: JSONLDObject[]): JSONLDObj
  * @return {string} A skolemized IRI that should be unique.
  */
 export function getSkolemizedIRI(): string {
-  return `http://mobi.com/.well-known/genid/${v4()}`;
+  return `${skolemizedNamespace}${v4()}`;
+}
+
+export function deskolemizeIRI(iri: string): string {
+  return iri.startsWith('http://mobi.com/.well-known/genid/') ? 
+    iri.replace('http://mobi.com/.well-known/genid/', '_:') : 
+    iri;
 }
 
 /**

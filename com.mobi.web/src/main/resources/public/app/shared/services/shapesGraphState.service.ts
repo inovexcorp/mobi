@@ -24,8 +24,8 @@
 import { HttpErrorResponse, HttpResponse } from '@angular/common/http';
 import { ElementRef, Injectable } from '@angular/core';
 //third party imports
-import { catchError, finalize, map, switchMap, tap } from 'rxjs/operators';
-import { cloneDeep, find, get, isEmpty, remove, some, assign, has, clone } from 'lodash';
+import { catchError, finalize, map, switchMap } from 'rxjs/operators';
+import { cloneDeep, find, get, isEmpty, remove, some, assign, has } from 'lodash';
 import { forkJoin, Observable, of, merge as rxjsMerge, throwError } from 'rxjs';
 //mobi + local imports
 import {
@@ -35,7 +35,8 @@ import {
   GRAPHEDITOR,
   SHAPESGRAPHEDITOR,
   SHAPESGRAPHSTATE,
-  TAGID
+  TAGID,
+  SH
 } from '../../prefixes';
 import { CatalogDetails, VersionedRdfState } from './versionedRdfState.service';
 import { CatalogManagerService } from './catalogManager.service';
@@ -72,6 +73,7 @@ import { UpdateRefsService } from './updateRefs.service';
 import { VersionedRdfStateBase } from '../models/versionedRdfStateBase.interface';
 import { VersionedRdfUploadResponse } from '../models/versionedRdfUploadResponse.interface';
 import { XACMLRequest } from '../models/XACMLRequest.interface';
+import { PropertyShape } from '../../shapes-graph-editor/models/property-shape.interface';
 
 /**
  * @class shared.ShapesGraphStateService
@@ -681,7 +683,7 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
         this.updateRefs.update(statements, oldEntity['@id'], newIRI, this._updateRefsExclude);
         statements.forEach(statement => this.addToAdditions(this.listItem.versionedRdfRecord.recordId, statement));
       } else {
-        throw new Error('Associated entities were not updated due to an internal error.');
+        throwError('Associated entities were not updated due to an internal error.');
       }
     }));
   }
@@ -845,6 +847,7 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
     };
     this.addToDeletions(this.listItem.versionedRdfRecord.recordId, json);
     if (isBlankNodeId(axiomObject['@id'])) {
+      // TODO: This line is doing nothing
       remove(axiomObject['@id']);
     }
     this.propertyManager.remove(this.listItem.selected, key, index);
@@ -968,5 +971,57 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
         });
         return entityNames;
       }));
+  }
+
+  /**
+   * 
+   * @param propertyShape 
+   * @returns 
+   */
+  removePropertyShape(propertyShape: PropertyShape): Observable<void> {
+    // Add sh:property value deletion
+    const json: JSONLDObject = {
+      '@id': this.listItem.selected['@id'],
+      [`${SH}property`]: [{ '@id': propertyShape.id }]
+    };
+    this.addToDeletions(this.listItem.versionedRdfRecord.recordId, json);
+    // Add property shape to deletions
+    this.addToDeletions(this.listItem.versionedRdfRecord.recordId, propertyShape.jsonld);
+    // Add objects for all referenced ids to deletions
+    propertyShape.referencedNodeIds.forEach(id => {
+      const obj = this.listItem.selectedBlankNodes.find(obj => obj['@id'] === id);
+      if (obj) {
+        this.addToDeletions(this.listItem.versionedRdfRecord.recordId, obj);
+      }
+    });
+    // Fetch all usages of the property shape (if it is a blank node, there is most likely none)
+    let $ob: Observable<void>;
+    if (isBlankNodeId(propertyShape.id)) {
+      $ob = this.saveCurrentChanges();
+    } else {
+      $ob = this._retrieveUsages(this.listItem, propertyShape.id).pipe(switchMap(response => {
+        if (typeof response === 'string') {
+          const statements = JSON.parse(response) as JSONLDObject[];
+          statements.forEach(statement => this.addToDeletions(this.listItem.versionedRdfRecord.recordId, statement));
+        } else {
+          return throwError('Associated usages were not updated due to an internal error.');
+        }
+        // Save current changes
+        return this.saveCurrentChanges();
+      }));
+    }
+    return $ob.pipe(map(() => {
+      // Update selected JSON-LD object
+      const idx = this.listItem.selected[`${SH}property`].findIndex(val => val['@id'] === propertyShape.id);
+      this.propertyManager.remove(this.listItem.selected, `${SH}property`, idx);
+      // Update listItem.selectedBlankNodes
+      this.listItem.selectedBlankNodes = this.listItem.selectedBlankNodes
+        .filter(obj => !propertyShape.referencedNodeIds.has(obj['@id']));
+      // Update listItem.entityInfo
+      // IGNORING subjectImportMap
+      [propertyShape.id, ...propertyShape.referencedNodeIds].forEach(id => {
+        delete this.listItem.entityInfo[id];
+      });
+    }));
   }
 }

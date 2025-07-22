@@ -21,19 +21,23 @@
  * #L%
  */
 import { Component, Input, OnChanges } from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
 
+import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
 import { Constraint } from '../../models/constraint.interface';
 import { EntityNames } from '../../../shared/models/entityNames.interface';
-import { isBlankNodeId, getPropertyId, rdfListToValueArrayWithMap, getBeautifulIRI } from '../../../shared/utility';
+import { isBlankNodeId, getPropertyId, rdfListToValueArrayWithMap, getBeautifulIRI, deskolemizeIRI } from '../../../shared/utility';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { PathNode, PropertyShape } from '../../models/property-shape.interface';
 import { RDF, SH } from '../../../prefixes';
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
+import { ToastService } from '../../../shared/services/toast.service';
 
 export interface ResolvedPath {
   asString: string;
   asHtmlString: string;
   asStructure: PathNode;
+  referencedIds: Set<string> // All the referenced blank node ids from the path
 }
 
 /**
@@ -80,8 +84,10 @@ export class PropertyShapesDisplayComponent implements OnChanges {
   propertyShapes: PropertyShape[] = [];
 
   @Input() nodeShape: JSONLDObject;
+  @Input() canModify: boolean;
+  @Input() isImported: boolean;
   
-  constructor(private _sgs: ShapesGraphStateService) {}
+  constructor(private _sgs: ShapesGraphStateService, private _dialog: MatDialog, private _toast: ToastService) {}
 
   ngOnChanges(): void {
     if (this.nodeShape) {
@@ -123,7 +129,8 @@ export class PropertyShapesDisplayComponent implements OnChanges {
         constraints: [],
         path: undefined,
         pathString: '',
-        pathHtmlString: ''
+        pathHtmlString: '',
+        referencedNodeIds: undefined
       };
 
       // Handle Path
@@ -138,6 +145,7 @@ export class PropertyShapesDisplayComponent implements OnChanges {
       propertyShapeObj.pathString = resolvedPath.asString;
       propertyShapeObj.pathHtmlString = resolvedPath.asHtmlString;
       propertyShapeObj.path = resolvedPath.asStructure;
+      propertyShapeObj.referencedNodeIds = resolvedPath.referencedIds;
 
       // Handle Constraints
       this.setConstraints(propertyShapeObj, jsonldMap, entityNames);
@@ -181,20 +189,25 @@ export class PropertyShapesDisplayComponent implements OnChanges {
         return {
           asString: '^' + this._parenthesize(inner.asString),
           asHtmlString: '^' + this._parenthesize(inner.asHtmlString),
-          asStructure: { type: 'Inverse', path: inner.asStructure }
+          asStructure: { type: 'Inverse', path: inner.asStructure },
+          referencedIds: inner.referencedIds.add(iri)
         };
       }
       if (node[`${SH}alternativePath`]) {
-        const items = rdfListToValueArrayWithMap(jsonldMap, getPropertyId(node, `${SH}alternativePath`))
+        const startingId = getPropertyId(node, `${SH}alternativePath`);
+        const bnodeIds = [];
+        const items = rdfListToValueArrayWithMap(jsonldMap, startingId, [], '', bnodeIds)
           .map((item: string) => this.resolvePath(item, jsonldMap, entityNames, visited))
           .filter(item => !!item);
         if (items.length === 0) {
           return;
         }
+        const refIdSets = items.map(i => i.referencedIds).concat([new Set<string>(bnodeIds)]);
         return {
           asString: items.map(i => i.asString).join(' | '),
           asHtmlString: items.map(i => i.asHtmlString).join(' | '),
-          asStructure: { type: 'Alternative', items: items.map(i => i.asStructure) }
+          asStructure: { type: 'Alternative', items: items.map(i => i.asStructure) },
+          referencedIds: this._mergeSetsWithReduce(refIdSets).add(iri)
         };
       }
       if (node[`${SH}zeroOrMorePath`]) {
@@ -205,7 +218,8 @@ export class PropertyShapesDisplayComponent implements OnChanges {
         return {
           asString: this._parenthesize(inner.asString) + '*',
           asHtmlString: this._parenthesize(inner.asHtmlString) + '*',
-          asStructure: { type: 'ZeroOrMore', path: inner.asStructure }
+          asStructure: { type: 'ZeroOrMore', path: inner.asStructure },
+          referencedIds: inner.referencedIds.add(iri)
         };
       }
       if (node[`${SH}oneOrMorePath`]) {
@@ -216,7 +230,8 @@ export class PropertyShapesDisplayComponent implements OnChanges {
         return {
           asString: this._parenthesize(inner.asString) + '+',
           asHtmlString: this._parenthesize(inner.asHtmlString) + '+',
-          asStructure: { type: 'OneOrMore', path: inner.asStructure }
+          asStructure: { type: 'OneOrMore', path: inner.asStructure },
+          referencedIds: inner.referencedIds.add(iri)
         };
       }
       if (node[`${SH}zeroOrOnePath`]) {
@@ -227,39 +242,34 @@ export class PropertyShapesDisplayComponent implements OnChanges {
         return {
           asString: this._parenthesize(inner.asString) + '?',
           asHtmlString: this._parenthesize(inner.asHtmlString) + '?',
-          asStructure: { type: 'ZeroOrOne', path: inner.asStructure }
+          asStructure: { type: 'ZeroOrOne', path: inner.asStructure },
+          referencedIds: inner.referencedIds.add(iri)
         };
       }
-      const items = rdfListToValueArrayWithMap(jsonldMap, iri)
+      // Fallback to a SHACL property path sequence
+      const bnodeIds = [];
+      const items = rdfListToValueArrayWithMap(jsonldMap, iri, [], '', bnodeIds)
         .map((item: string) => this.resolvePath(item, jsonldMap, entityNames, visited))
         .filter(item => !!item);
       if (items.length === 0) {
         return;
       }
+      const refIdSets = items.map(i => i.referencedIds).concat([new Set<string>(bnodeIds)]);
       return {
         asString: items.map(i => i.asString).join(' / '),
         asHtmlString: items.map(i => i.asHtmlString).join(' / '),
-        asStructure: { type: 'Sequence', items: items.map(i => i.asStructure) }
+        asStructure: { type: 'Sequence', items: items.map(i => i.asStructure) },
+        referencedIds: this._mergeSetsWithReduce(refIdSets).add(iri)
       };
     } else {
       const propLabel = this._getLabel(iri, entityNames);
       return {
         asString: propLabel,
         asHtmlString: `<span title="${iri}">${propLabel}</span>`,
-        asStructure: { type: 'IRI', iri, label: propLabel }
+        asStructure: { type: 'IRI', iri, label: propLabel },
+        referencedIds: new Set<string>()
       };
     }
-  }
-
-  /**
-   * Wraps a string in parentheses if it is longer than one character. This is used to format paths in a more readable
-   * way, especially for complex paths that involve sequences or alternatives.
-   * 
-   * @param {string} s The string to be parenthesized.
-   * @returns {string} The parenthesized string if its length is greater than 1, otherwise returns the original string.
-   */
-  private _parenthesize(s: string): string {
-    return s.length > 1 ? `( ${s} )` : s;
   }
 
   /**
@@ -283,12 +293,18 @@ export class PropertyShapesDisplayComponent implements OnChanges {
           constraint.value.push({ chosenValue: value['@value'], label: value['@value'] });
         } else if (value['@id']) {
           if (isBlankNodeId(value['@id'])) {
+            // If the values are IRIs, we need to fetch the entity name
             const valuesAreIris = !!getPropertyId(jsonldMap[value['@id']], `${RDF}first`);
-            constraint.value = constraint.value.concat(rdfListToValueArrayWithMap(jsonldMap, value['@id'])
+            const bnodeIds = [];
+            const constraintValues = rdfListToValueArrayWithMap(jsonldMap, value['@id'], [], '', bnodeIds)
               .map(val => ({ 
                 chosenValue: val, 
                 label: valuesAreIris ? this._getLabel(val, entityNames) : val
-              })));
+              }));
+            // Include all blank nodes in the Property Shape's referencedNodeIds list
+            propertyShape.referencedNodeIds = new Set([...propertyShape.referencedNodeIds, ...bnodeIds]);
+            // Include all constraint values from the rdf:List
+            constraint.value = constraint.value.concat(constraintValues);
           } else {
             constraint.value.push({ chosenValue: value['@id'], label: this._getLabel(value['@id'], entityNames) });
           }
@@ -298,6 +314,50 @@ export class PropertyShapesDisplayComponent implements OnChanges {
     });
   }
 
+  /**
+   * Opens a confirmation modal to delete the provided PropertyShape.
+   * 
+   * @param {PropertyShape} propertyShape The Property Shape to remove from the Node Shape
+   */
+  confirmPropertyShapeDeletion(propertyShape: PropertyShape): void {
+    this._dialog.open(ConfirmModalComponent, {
+      data: {
+        content: `Are you sure you want to delete <strong>${propertyShape.label}</strong> with path <strong>${propertyShape.pathString}</strong>?`
+      }
+    }).afterClosed().subscribe((result: boolean) => {
+      if (result) {
+        this.deletePropertyShape(propertyShape);
+      }
+    });
+  }
+
+  /**
+   * Calls the state service method to delete the provided PropertyShape. If successful, removes the PropertyShape from
+   * the component's `propertyShapes` list. Otherwise throws an error toast.
+   * 
+   * @param {PropertyShape} propertyShape The Property Shape to remove from the selected Node Shape
+   */
+  deletePropertyShape(propertyShape: PropertyShape): void {
+    this._sgs.removePropertyShape(propertyShape).subscribe(() => {
+      const idx = this.propertyShapes.findIndex(ps => ps.id === propertyShape.id);
+      if (idx >= 0) {
+        this.propertyShapes.splice(idx, 1);
+      }
+    }, (error: string) => {
+      this._toast.createErrorToast(`Property Shape unable to be deleted: ${error}`);
+    });
+  }
+
+  /**
+   * Wraps a string in parentheses if it is longer than one character. This is used to format paths in a more readable
+   * way, especially for complex paths that involve sequences or alternatives.
+   * 
+   * @param {string} s The string to be parenthesized.
+   * @returns {string} The parenthesized string if its length is greater than 1, otherwise returns the original string.
+   */
+  private _parenthesize(s: string): string {
+    return s.length > 1 ? `( ${s} )` : s;
+  }
   /**
    * Returns the label of a given ID based on the provided entity names. If the ID is a blank node ID, it returns the
    * ID itself. If the ID is found in the entity names, it returns the label of that entity. If the ID is not found,
@@ -309,12 +369,24 @@ export class PropertyShapesDisplayComponent implements OnChanges {
    */
   private _getLabel(id: string, entityNames: EntityNames): string {
     if (isBlankNodeId(id)) {
-      return id;
+      return deskolemizeIRI(id);
     }
     const entity = entityNames[id];
     if (entity) {
       return entity.label || getBeautifulIRI(id);
     }
     return getBeautifulIRI(id);
+  }
+
+  /**
+   * Merges an array of Sets into a single set, making sure there are no duplicates.
+   * 
+   * @param {Set<T>[]} sets An array of Sets to merge together
+   * @returns {Set<T>} A single Set of the merged values
+   */
+  private _mergeSetsWithReduce<T>(sets: Set<T>[]): Set<T> {
+    return sets.reduce((accumulator, currentSet) => {
+      return new Set([...accumulator, ...currentSet]); // Combines the accumulator and currentSet using the spread operator into a new Set in each iteration
+    }, new Set<T>()); // Starts with an empty set as the initial accumulator
   }
 }

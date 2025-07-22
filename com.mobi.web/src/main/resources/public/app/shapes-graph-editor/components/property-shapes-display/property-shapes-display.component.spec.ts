@@ -21,15 +21,19 @@
  * #L%
  */
 import { DebugElement } from '@angular/core';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
+import { MatDialog } from '@angular/material/dialog';
 
-import { MockProvider } from 'ng-mocks';
+import { MockComponent, MockProvider } from 'ng-mocks';
+import { of, throwError } from 'rxjs';
 
+import { cleanStylesFromDOM } from 'src/main/resources/public/test/ts/Shared';
+import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
 import { EntityNames } from '../../../shared/models/entityNames.interface';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { pathTestCases, constraintTestCases } from '../../models/shacl-test-data';
@@ -37,6 +41,7 @@ import { PropertyShape } from '../../models/property-shape.interface';
 import { SH, XSD } from '../../../prefixes';
 import { ShapesGraphListItem } from '../../../shared/models/shapesGraphListItem.class';
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { PropertyShapesDisplayComponent } from './property-shapes-display.component';
 
 describe('PropertyShapesDisplayComponent', () => {
@@ -44,6 +49,8 @@ describe('PropertyShapesDisplayComponent', () => {
   let element: DebugElement;
   let fixture: ComponentFixture<PropertyShapesDisplayComponent>;
   let shapesGraphStateStub: jasmine.SpyObj<ShapesGraphStateService>;
+  let matDialog: jasmine.SpyObj<MatDialog>;
+  let toastStub: jasmine.SpyObj<ToastService>;
 
   const nodeShape: JSONLDObject = {
     '@id': 'http://stardog.com/tutorial/AlbumShape',
@@ -139,22 +146,42 @@ describe('PropertyShapesDisplayComponent', () => {
         MatIconModule,
         MatMenuModule
       ],
-      declarations: [PropertyShapesDisplayComponent],
+      declarations: [
+        PropertyShapesDisplayComponent,
+        MockComponent(ConfirmModalComponent)
+      ],
       providers: [
-        MockProvider(ShapesGraphStateService)
+        MockProvider(ShapesGraphStateService),
+        MockProvider(ToastService),
+        { provide: MatDialog, useFactory: () => jasmine.createSpyObj('MatDialog', {
+            open: { afterClosed: () => of(true)}
+        }) }
       ]
     }).compileComponents();
 
+    matDialog = TestBed.inject(MatDialog) as jasmine.SpyObj<MatDialog>;
     shapesGraphStateStub = TestBed.inject(ShapesGraphStateService) as jasmine.SpyObj<ShapesGraphStateService>;
     shapesGraphStateStub.listItem = new ShapesGraphListItem();
     shapesGraphStateStub.listItem.selectedBlankNodes = selectedBlankNodes;
     shapesGraphStateStub.listItem.entityInfo = entityNames;
+    toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
 
     fixture = TestBed.createComponent(PropertyShapesDisplayComponent);
     element = fixture.debugElement;
     component = fixture.componentInstance;
     component.nodeShape = nodeShape;
+    component.canModify = true;
     fixture.detectChanges();
+  });
+
+  afterEach(() => {
+    cleanStylesFromDOM();
+    component = null;
+    element = null;
+    fixture = null;
+    shapesGraphStateStub = null;
+    matDialog = null;
+    toastStub = null;
   });
 
   it('should create', () => {
@@ -178,7 +205,7 @@ describe('PropertyShapesDisplayComponent', () => {
     describe('should set the property shapes', () => {
       it('unless the node shape does not have the sh:property set', () => {
         spyOn(component, 'setConstraints');
-        spyOn(component, 'resolvePath').and.returnValue({ asString: '', asHtmlString: '', asStructure: undefined });
+        spyOn(component, 'resolvePath').and.returnValue({ asString: '', asHtmlString: '', asStructure: undefined, referencedIds: new Set() });
         component.nodeShape = {
           '@id': 'http://stardog.com/tutorial/AlbumShape',
           '@type': [`${SH}NodeShape`],
@@ -193,7 +220,7 @@ describe('PropertyShapesDisplayComponent', () => {
       });
       it('unless the node shape points to a property shape that does not exist', () => {
         spyOn(component, 'setConstraints');
-        spyOn(component, 'resolvePath').and.returnValue({ asString: '', asHtmlString: '', asStructure: undefined });
+        spyOn(component, 'resolvePath').and.returnValue({ asString: '', asHtmlString: '', asStructure: undefined, referencedIds: new Set() });
         component.nodeShape = {
           '@id': 'http://stardog.com/tutorial/AlbumShape',
           '@type': [`${SH}NodeShape`],
@@ -211,7 +238,7 @@ describe('PropertyShapesDisplayComponent', () => {
       });
       it('unless one of the property shapes does not have a path', () => {
         spyOn(component, 'setConstraints');
-        spyOn(component, 'resolvePath').and.returnValue({ asString: '', asHtmlString: '', asStructure: undefined });
+        spyOn(component, 'resolvePath').and.returnValue({ asString: '', asHtmlString: '', asStructure: undefined, referencedIds: new Set() });
         component.nodeShape = {
           '@id': 'http://stardog.com/tutorial/AlbumShape',
           '@type': [`${SH}NodeShape`],
@@ -250,7 +277,7 @@ describe('PropertyShapesDisplayComponent', () => {
       });
       it('successfully', () => {
         spyOn(component, 'setConstraints');
-        spyOn(component, 'resolvePath').and.returnValue({ asString: 'test', asHtmlString: '<span>test</span>', asStructure: { type: 'IRI', iri: 'iri', label: 'label' } });
+        spyOn(component, 'resolvePath').and.returnValue({ asString: 'test', asHtmlString: '<span>test</span>', asStructure: { type: 'IRI', iri: 'iri', label: 'label' }, referencedIds: new Set(['_:b1', '_:b2']) });
         component.nodeShape = nodeShape;
         component.setPropertyShapes(component.nodeShape, shapesGraphStateStub.listItem.selectedBlankNodes, entityNames);
         expect(component.propertyShapes.length).toEqual(4);
@@ -265,6 +292,7 @@ describe('PropertyShapesDisplayComponent', () => {
           expect(ps.pathString).toEqual('test');
           expect(ps.pathHtmlString).toEqual('<span>test</span>');
           expect(ps.path).toEqual({ type: 'IRI', iri: 'iri', label: 'label' });
+          expect(ps.referencedNodeIds).toEqual(new Set(['_:b1', '_:b2']));
           expect(component.resolvePath).toHaveBeenCalledWith(paths[idx], jasmine.anything(), entityNames);
           expect(component.setConstraints).toHaveBeenCalledWith(ps, jasmine.anything(), entityNames);
         });
@@ -277,6 +305,7 @@ describe('PropertyShapesDisplayComponent', () => {
           expect(result).toBeDefined();
           expect(result.asString).toEqual(testCase.pathString);
           expect(result.asStructure).toEqual(testCase.structure);
+          expect(result.referencedIds).toEqual(testCase.referencedIds);
         });
       });
       it('returns undefined if the iri has been visited cannot be resolved', () => {
@@ -313,6 +342,7 @@ describe('PropertyShapesDisplayComponent', () => {
           pathString: '',
           pathHtmlString: '',
           constraints: [],
+          referencedNodeIds: new Set()
         };
         const jsonldMap: Record<string, JSONLDObject> = {};
         const relevantTestCases = constraintTestCases.filter(ts => !ts.separate);
@@ -326,6 +356,9 @@ describe('PropertyShapesDisplayComponent', () => {
         expect(propertyShape.constraints.length).toEqual(relevantTestCases.length);
         relevantTestCases.forEach(testCase => {
           expect(propertyShape.constraints).toContain(testCase.constraint);
+          testCase.bnodes.forEach(bnode => {
+            expect(propertyShape.referencedNodeIds).toContain(bnode['@id']);
+          });
         });
       });
       // Do the tests that need to be separate due to shared properties
@@ -342,6 +375,7 @@ describe('PropertyShapesDisplayComponent', () => {
             pathString: '',
             pathHtmlString: '',
             constraints: [],
+            referencedNodeIds: new Set()
           };
           const jsonldMap: Record<string, JSONLDObject> = {};
           testCase.bnodes.forEach(bnode => {
@@ -350,8 +384,46 @@ describe('PropertyShapesDisplayComponent', () => {
           component.setConstraints(propertyShape, jsonldMap, entityNames);
           expect(propertyShape.constraints.length).toEqual(1);
           expect(propertyShape.constraints[0]).toEqual(testCase.constraint);
+          testCase.bnodes.forEach(bnode => {
+            expect(propertyShape.referencedNodeIds).toContain(bnode['@id']);
+          });
         });
       });
+    });
+    it('should confirm the deletion of a property shape', fakeAsync(() => {
+      component.ngOnChanges();
+      fixture.detectChanges();
+      spyOn(component, 'deletePropertyShape');
+      component.confirmPropertyShapeDeletion(component.propertyShapes[0]);
+      tick();
+      expect(matDialog.open).toHaveBeenCalledWith(ConfirmModalComponent, {data: {content: jasmine.stringMatching('Are you sure you want to delete')}});
+      expect(component.deletePropertyShape).toHaveBeenCalledWith(component.propertyShapes[0]);
+    }));
+    describe('should delete a property shape', () => {
+      beforeEach(() => {
+        component.ngOnChanges();
+        fixture.detectChanges();
+      });
+      it('successfully', fakeAsync(() => {
+        shapesGraphStateStub.removePropertyShape.and.returnValue(of(null));
+        const currentLength = component.propertyShapes.length;
+        const propertyShape = component.propertyShapes[0];
+        component.deletePropertyShape(propertyShape);
+        tick();
+        expect(shapesGraphStateStub.removePropertyShape).toHaveBeenCalledWith(propertyShape);
+        expect(component.propertyShapes.length).toEqual(currentLength - 1);
+        expect(component.propertyShapes.findIndex(ps => ps.id === propertyShape.id)).toEqual(-1);
+        expect(toastStub.createErrorToast).not.toHaveBeenCalled();
+      }));
+      it('unless an error occurs', fakeAsync(() => {
+        shapesGraphStateStub.removePropertyShape.and.returnValue(throwError('Error message'));
+        const currentLength =component.propertyShapes.length;
+        component.deletePropertyShape(component.propertyShapes[0]);
+        tick();
+        expect(shapesGraphStateStub.removePropertyShape).toHaveBeenCalledWith(component.propertyShapes[0]);
+        expect(component.propertyShapes.length).toEqual(currentLength);
+        expect(toastStub.createErrorToast).toHaveBeenCalledWith('Property Shape unable to be deleted: Error message');
+      }));
     });
   });
   describe('contains the correct html', () => {
@@ -375,5 +447,32 @@ describe('PropertyShapesDisplayComponent', () => {
       fixture.detectChanges();
       expect(element.queryAll(By.css('.mat-menu-panel')).length).toEqual(1);
     });
+    it('should disable the delete buttons appropriately', () => {
+      element.queryAll(By.css('.mat-card-actions button[color="warn"]')).forEach(btn => {
+        expect(btn.properties['disabled']).toBeFalsy();
+      });
+
+      component.isImported = true;
+      fixture.detectChanges();
+      element.queryAll(By.css('.mat-card-actions button[color="warn"]')).forEach(btn => {
+        expect(btn.properties['disabled']).toBeTruthy();
+      });
+
+      component.isImported = false;
+      component.canModify = false;
+      fixture.detectChanges();
+      element.queryAll(By.css('.mat-card-actions button[color="warn"]')).forEach(btn => {
+        expect(btn.properties['disabled']).toBeTruthy();
+      });
+    });
+  });
+  it('should call confirmPropertyShapeDeletion when the button is clicked', function() {
+    component.ngOnChanges();
+    fixture.detectChanges();
+    spyOn(component, 'confirmPropertyShapeDeletion');
+    const deleteButton = element.queryAll(By.css('.mat-card-actions button[color="warn"]'))[0];
+    deleteButton.triggerEventHandler('click', {});
+    fixture.detectChanges();
+    expect(component.confirmPropertyShapeDeletion).toHaveBeenCalledWith(component.propertyShapes[0]);
   });
 });
