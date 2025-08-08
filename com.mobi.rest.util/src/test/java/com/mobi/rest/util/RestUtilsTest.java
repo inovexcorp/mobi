@@ -170,7 +170,7 @@ public class RestUtilsTest {
         when(uriInfo.getPath(eq(false))).thenReturn("tests");
         when(uriInfo.getBaseUri()).thenReturn(URI.create("urn://test/rest/"));
         when(uriInfo.getAbsolutePath()).thenReturn(URI.create("urn://test/rest/tests"));
-        when(uriInfo.getQueryParameters()).thenReturn(new MultivaluedHashMap<String, String>());
+        when(uriInfo.getQueryParameters()).thenReturn(new MultivaluedHashMap<>());
     }
 
     @After
@@ -179,50 +179,50 @@ public class RestUtilsTest {
     }
 
     @Test
-    public void getRDFFormatTest() throws Exception {
-        assertEquals(RestUtils.getRDFFormat("jsonld"), RDFFormat.JSONLD);
-        assertEquals(RestUtils.getRDFFormat("JSONLD"), RDFFormat.JSONLD);
-        assertEquals(RestUtils.getRDFFormat("turtle"), RDFFormat.TURTLE);
-        assertEquals(RestUtils.getRDFFormat("TURTLE"), RDFFormat.TURTLE);
-        assertEquals(RestUtils.getRDFFormat("trig"), RDFFormat.TRIG);
-        assertEquals(RestUtils.getRDFFormat("TRiG"), RDFFormat.TRIG);
-        assertEquals(RestUtils.getRDFFormat("rdf/xml"), RDFFormat.RDFXML);
-        assertEquals(RestUtils.getRDFFormat("RDF/XML"), RDFFormat.RDFXML);
-        assertEquals(RestUtils.getRDFFormat("something else"), RDFFormat.JSONLD);
+    public void getRDFFormatTest() {
+        assertEquals(RDFFormat.JSONLD, RestUtils.getRDFFormat("jsonld"));
+        assertEquals(RDFFormat.JSONLD, RestUtils.getRDFFormat("JSONLD"));
+        assertEquals(RDFFormat.TURTLE, RestUtils.getRDFFormat("turtle"));
+        assertEquals(RDFFormat.TURTLE, RestUtils.getRDFFormat("TURTLE"));
+        assertEquals(RDFFormat.TRIG, RestUtils.getRDFFormat("trig"));
+        assertEquals(RDFFormat.TRIG, RestUtils.getRDFFormat("TRiG"));
+        assertEquals(RDFFormat.RDFXML, RestUtils.getRDFFormat("rdf/xml"));
+        assertEquals(RDFFormat.RDFXML, RestUtils.getRDFFormat("RDF/XML"));
+        assertEquals(RDFFormat.JSONLD, RestUtils.getRDFFormat("something else"));
     }
 
     @Test
-    public void getRDFFormatFileExtensionTest() throws Exception {
-        assertEquals(RestUtils.getRDFFormatFileExtension("jsonld"), "jsonld");
-        assertEquals(RestUtils.getRDFFormatFileExtension("JSONLD"), "jsonld");
-        assertEquals(RestUtils.getRDFFormatFileExtension("turtle"), "ttl");
-        assertEquals(RestUtils.getRDFFormatFileExtension("TURTLE"), "ttl");
-        assertEquals(RestUtils.getRDFFormatFileExtension("trig"), "trig");
-        assertEquals(RestUtils.getRDFFormatFileExtension("TRiG"), "trig");
-        assertEquals(RestUtils.getRDFFormatFileExtension("rdf/xml"), "rdf");
-        assertEquals(RestUtils.getRDFFormatFileExtension("RDF/XML"), "rdf");
-        assertEquals(RestUtils.getRDFFormatFileExtension("owl/xml"), "owx");
-        assertEquals(RestUtils.getRDFFormatFileExtension("OWL/XML"), "owx");
-        assertEquals(RestUtils.getRDFFormatFileExtension("something else"), "jsonld");
+    public void getRDFFormatFileExtensionTest() {
+        assertEquals("jsonld", RestUtils.getRDFFormatFileExtension("jsonld"));
+        assertEquals("jsonld", RestUtils.getRDFFormatFileExtension("JSONLD"));
+        assertEquals("ttl", RestUtils.getRDFFormatFileExtension("turtle"));
+        assertEquals("ttl", RestUtils.getRDFFormatFileExtension("TURTLE"));
+        assertEquals("trig", RestUtils.getRDFFormatFileExtension("trig"));
+        assertEquals("trig", RestUtils.getRDFFormatFileExtension("TRiG"));
+        assertEquals("rdf", RestUtils.getRDFFormatFileExtension("rdf/xml"));
+        assertEquals("rdf", RestUtils.getRDFFormatFileExtension("RDF/XML"));
+        assertEquals("owx", RestUtils.getRDFFormatFileExtension("owl/xml"));
+        assertEquals("owx", RestUtils.getRDFFormatFileExtension("OWL/XML"));
+        assertEquals("jsonld", RestUtils.getRDFFormatFileExtension("something else"));
     }
 
     @Test
-    public void getRDFFormatMimeTypeTest() throws Exception {
-        assertEquals(RestUtils.getRDFFormatMimeType("jsonld"), "application/ld+json");
-        assertEquals(RestUtils.getRDFFormatMimeType("JSONLD"), "application/ld+json");
-        assertEquals(RestUtils.getRDFFormatMimeType("turtle"), "text/turtle");
-        assertEquals(RestUtils.getRDFFormatMimeType("TURTLE"), "text/turtle");
-        assertEquals(RestUtils.getRDFFormatMimeType("trig"), "application/trig");
-        assertEquals(RestUtils.getRDFFormatMimeType("TRiG"), "application/trig");
-        assertEquals(RestUtils.getRDFFormatMimeType("rdf/xml"), "application/rdf+xml");
-        assertEquals(RestUtils.getRDFFormatMimeType("RDF/XML"), "application/rdf+xml");
-        assertEquals(RestUtils.getRDFFormatMimeType("owl/xml"), "application/owl+xml");
-        assertEquals(RestUtils.getRDFFormatMimeType("OWL/XML"), "application/owl+xml");
-        assertEquals(RestUtils.getRDFFormatMimeType("something else"), "application/ld+json");
+    public void getRDFFormatMimeTypeTest() {
+        assertEquals("application/ld+json", RestUtils.getRDFFormatMimeType("jsonld"));
+        assertEquals("application/ld+json", RestUtils.getRDFFormatMimeType("JSONLD"));
+        assertEquals("text/turtle", RestUtils.getRDFFormatMimeType("turtle"));
+        assertEquals("text/turtle", RestUtils.getRDFFormatMimeType("TURTLE"));
+        assertEquals("application/trig", RestUtils.getRDFFormatMimeType("trig"));
+        assertEquals("application/trig", RestUtils.getRDFFormatMimeType("TRiG"));
+        assertEquals("application/rdf+xml", RestUtils.getRDFFormatMimeType("rdf/xml"));
+        assertEquals("application/rdf+xml", RestUtils.getRDFFormatMimeType("RDF/XML"));
+        assertEquals("application/owl+xml", RestUtils.getRDFFormatMimeType("owl/xml"));
+        assertEquals("application/owl+xml", RestUtils.getRDFFormatMimeType("OWL/XML"));
+        assertEquals("application/ld+json", RestUtils.getRDFFormatMimeType("something else"));
     }
 
     @Test
-    public void getRDFFormatForConstructQueryTest() throws Exception {
+    public void getRDFFormatForConstructQueryTest() {
         assertEquals(RDFFormat.JSONLD, RestUtils.getRDFFormatForConstructQuery("application/ld+json"));
         assertEquals(RDFFormat.TURTLE, RestUtils.getRDFFormatForConstructQuery("text/turtle"));
         assertEquals(RDFFormat.RDFXML, RestUtils.getRDFFormatForConstructQuery("application/rdf+xml"));
@@ -231,14 +231,14 @@ public class RestUtilsTest {
     }
 
     @Test
-    public void modelToStringWithRDFFormatTest() throws Exception {
+    public void modelToStringWithRDFFormatTest() {
         assertEquals(removeWhitespace(expectedJsonld), removeWhitespace(RestUtils.modelToString(model, RDFFormat.JSONLD)));
         assertEquals(expectedTurtle, RestUtils.modelToString(model, RDFFormat.TURTLE));
         assertTrue(equalsIgnoreNewline(expectedRdfxml, RestUtils.modelToString(model, RDFFormat.RDFXML)));
     }
 
     @Test
-    public void modelToStringTest() throws Exception {
+    public void modelToStringTest() {
         assertEquals(removeWhitespace(expectedJsonld), removeWhitespace(RestUtils.modelToString(model, "jsonld")));
         assertEquals(expectedTurtle, RestUtils.modelToString(model, "turtle"));
         assertTrue(equalsIgnoreNewline(expectedRdfxml, RestUtils.modelToString(model, "rdf/xml")));
@@ -246,14 +246,14 @@ public class RestUtilsTest {
     }
 
     @Test
-    public void modelToSkolemizedStringWithRDFFormatTest() throws Exception {
+    public void modelToSkolemizedStringWithRDFFormatTest() {
         assertEquals(removeWhitespace(expectedJsonld), removeWhitespace(RestUtils.modelToSkolemizedString(model, RDFFormat.JSONLD, service)));
         assertEquals(expectedTurtle, RestUtils.modelToSkolemizedString(model, RDFFormat.TURTLE, service));
         assertTrue(equalsIgnoreNewline(expectedRdfxml, RestUtils.modelToSkolemizedString(model, RDFFormat.RDFXML, service)));
     }
 
     @Test
-    public void modelToSkolemizedStringTest() throws Exception {
+    public void modelToSkolemizedStringTest() {
         assertEquals(removeWhitespace(expectedJsonld), removeWhitespace(RestUtils.modelToSkolemizedString(model, "jsonld", service)));
         assertEquals(expectedTurtle, RestUtils.modelToSkolemizedString(model, "turtle", service));
         assertTrue(equalsIgnoreNewline(expectedRdfxml, RestUtils.modelToSkolemizedString(model, "rdf/xml", service)));
@@ -261,7 +261,7 @@ public class RestUtilsTest {
     }
 
     @Test
-    public void groupedModelToOutputStreamTest() throws Exception {
+    public void groupedModelToOutputStreamTest() throws IOException {
         RDFFormat[] formatArray = new RDFFormat[] {RDFFormat.RDFXML, RDFFormat.JSONLD, RDFFormat.TURTLE};
         for (RDFFormat format : formatArray) {
             Path file = Files.createTempFile("test", format.getDefaultFileExtension());
@@ -280,14 +280,14 @@ public class RestUtilsTest {
     }
 
     @Test
-    public void groupedModelToStringWithRDFFormatTest() throws Exception {
+    public void groupedModelToStringWithRDFFormatTest() {
         assertEquals(removeWhitespace(expectedJsonld), removeWhitespace(RestUtils.groupedModelToString(model, RDFFormat.JSONLD)));
         assertEquals(expectedGroupedTurtle, RestUtils.groupedModelToString(model, RDFFormat.TURTLE));
         assertTrue(equalsIgnoreNewline(expectedGroupedRdfxml, RestUtils.groupedModelToString(model, RDFFormat.RDFXML)));
     }
 
     @Test
-    public void groupedModelToStringTest() throws Exception {
+    public void groupedModelToStringTest() {
         assertEquals(removeWhitespace(expectedJsonld), removeWhitespace(RestUtils.groupedModelToString(model, "jsonld")));
         assertEquals(expectedGroupedTurtle, RestUtils.groupedModelToString(model, "turtle"));
         assertTrue(equalsIgnoreNewline(expectedGroupedRdfxml, RestUtils.groupedModelToString(model, "rdf/xml")));
@@ -295,14 +295,14 @@ public class RestUtilsTest {
     }
 
     @Test
-    public void groupedModelToSkolemizedStringWithRDFFormatTest() throws Exception {
+    public void groupedModelToSkolemizedStringWithRDFFormatTest() {
         assertEquals(removeWhitespace(expectedJsonld), removeWhitespace(RestUtils.groupedModelToSkolemizedString(model, RDFFormat.JSONLD, service)));
         assertEquals(expectedGroupedTurtle, RestUtils.groupedModelToSkolemizedString(model, RDFFormat.TURTLE, service));
         assertTrue(equalsIgnoreNewline(expectedGroupedRdfxml, RestUtils.groupedModelToSkolemizedString(model, RDFFormat.RDFXML, service)));
     }
 
     @Test
-    public void groupedModelToSkolemizedStringTest() throws Exception {
+    public void groupedModelToSkolemizedStringTest() {
         assertEquals(removeWhitespace(expectedJsonld), removeWhitespace(RestUtils.groupedModelToSkolemizedString(model, "jsonld", service)));
         assertEquals(expectedGroupedTurtle, RestUtils.groupedModelToSkolemizedString(model, "turtle", service));
         assertTrue(equalsIgnoreNewline(expectedGroupedRdfxml, RestUtils.groupedModelToSkolemizedString(model, "rdf/xml", service)));
@@ -310,7 +310,7 @@ public class RestUtilsTest {
     }
 
     @Test
-    public void jsonldBnodeToModelTest() throws Exception {
+    public void jsonldBnodeToModelTest() {
         Model expectedModel = mf.createEmptyModel();
         expectedModel.add(vf.createBNode("genid-1024e515be3042e890725d6ebf42462058-EAB37436DD2C162351935B8308AC176D"),
                 vf.createIRI("http://www.w3.org/2002/07/owl#someValuesFrom"),
@@ -326,39 +326,39 @@ public class RestUtilsTest {
     }
 
     @Test
-    public void jsonldToModelTest() throws Exception {
+    public void jsonldToModelTest() {
         Model result = RestUtils.jsonldToModel(expectedJsonld);
         assertEquals(model, result);
     }
 
     @Test
-    public void jsonldToDeskolemizedModelTest() throws Exception {
+    public void jsonldToDeskolemizedModelTest() {
         Model result = RestUtils.jsonldToDeskolemizedModel(expectedJsonld, service);
         assertEquals(model, result);
         verify(service).deskolemize(model);
     }
 
     @Test
-    public void modelToSkolemizedJsonldTest() throws Exception {
+    public void modelToSkolemizedJsonldTest() {
         String result = RestUtils.modelToSkolemizedJsonld(model, service);
         assertEquals(removeWhitespace(expectedJsonld), removeWhitespace(result));
         verify(service, atLeastOnce()).skolemize(any(Statement.class));
     }
 
     @Test
-    public void modelToJsonldTest() throws Exception {
+    public void modelToJsonldTest() {
         String result = RestUtils.modelToJsonld(model);
         assertEquals(removeWhitespace(expectedJsonld), removeWhitespace(result));
     }
 
     @Test
-    public void modelToTrigTest() throws Exception {
+    public void modelToTrigTest() {
         String result = RestUtils.modelToTrig(model);
         assertEquals(expectedTrig, result);
     }
 
     @Test
-    public void getActiveUsernameTest() throws Exception {
+    public void getActiveUsernameTest() {
         String result = RestUtils.getActiveUsername(context);
         assertEquals("tester", result);
     }
@@ -376,7 +376,7 @@ public class RestUtilsTest {
     }
 
     @Test
-    public void getActiveUserTest() throws Exception {
+    public void getActiveUserTest() {
         User result = RestUtils.getActiveUser(context, engineManager);
         assertEquals(user, result);
     }
@@ -465,10 +465,10 @@ public class RestUtilsTest {
         ArrayNode array = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
         assertTrue(array.get(0).isObject());
         ObjectNode jsonObject = (ObjectNode) array.get(0);
-        assertEquals(jsonObject.get(testPropIRI.stringValue()).get(0).get("@value").asText(), "VALUE 1");
-        assertEquals(response.getLinks().size(), 1);
+        assertEquals("VALUE 1", jsonObject.get(testPropIRI.stringValue()).get(0).get("@value").asText());
+        assertEquals(1, response.getLinks().size());
         Link link = response.getLinks().iterator().next();
-        assertEquals(link.getRel(), "next");
+        assertEquals("next", link.getRel());
         assertEquals("/rest/tests", link.getUri().getRawPath());
 
         response = RestUtils.createPaginatedThingResponse(uriInfo, set, testPropIRI, 1, 1, true,
@@ -476,8 +476,8 @@ public class RestUtilsTest {
         array = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
         assertTrue(array.get(0).isObject());
         jsonObject = (ObjectNode) array.get(0);
-        assertEquals(jsonObject.get(testPropIRI.stringValue()).get(0).get("@value").asText(), "VALUE 2");
-        assertEquals(response.getLinks().size(), 2);
+        assertEquals("VALUE 2", jsonObject.get(testPropIRI.stringValue()).get(0).get("@value").asText());
+        assertEquals(2, response.getLinks().size());
         assertTrue(response.getLinks().stream()
                 .allMatch(lnk -> (lnk.getRel().equals("prev") || lnk.getRel().equals("next"))
                         && lnk.getUri().getRawPath().equals("/rest/tests")));
@@ -487,10 +487,10 @@ public class RestUtilsTest {
         array = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
         assertTrue(array.get(0).isObject());
         jsonObject = (ObjectNode) array.get(0);
-        assertEquals(jsonObject.get(testPropIRI.stringValue()).get(0).get("@value").asText(), "VALUE 3");
-        assertEquals(response.getLinks().size(), 1);
+        assertEquals("VALUE 3", jsonObject.get(testPropIRI.stringValue()).get(0).get("@value").asText());
+        assertEquals(1, response.getLinks().size());
         link = response.getLinks().iterator().next();
-        assertEquals(link.getRel(), "prev");
+        assertEquals("prev", link.getRel());
         assertEquals("/rest/tests", link.getUri().getRawPath());
 
         // TEST DESC
@@ -499,10 +499,10 @@ public class RestUtilsTest {
         array = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
         assertTrue(array.get(0).isObject());
         jsonObject = (ObjectNode) array.get(0);
-        assertEquals(jsonObject.get(testPropIRI.stringValue()).get(0).get("@value").asText(), "VALUE 3");
-        assertEquals(response.getLinks().size(), 1);
+        assertEquals("VALUE 3", jsonObject.get(testPropIRI.stringValue()).get(0).get("@value").asText());
+        assertEquals(1, response.getLinks().size());
         link = response.getLinks().iterator().next();
-        assertEquals(link.getRel(), "next");
+        assertEquals("next", link.getRel());
         assertEquals("/rest/tests", link.getUri().getRawPath());
 
         response = RestUtils.createPaginatedThingResponse(uriInfo, set, testPropIRI, 1, 1, false,
@@ -510,8 +510,8 @@ public class RestUtilsTest {
         array = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
         assertTrue(array.get(0).isObject());
         jsonObject = (ObjectNode) array.get(0);
-        assertEquals(jsonObject.get(testPropIRI.stringValue()).get(0).get("@value").asText(), "VALUE 2");
-        assertEquals(response.getLinks().size(), 2);
+        assertEquals("VALUE 2", jsonObject.get(testPropIRI.stringValue()).get(0).get("@value").asText());
+        assertEquals(2, response.getLinks().size());
         assertTrue(response.getLinks().stream()
                 .allMatch(lnk -> (lnk.getRel().equals("prev") || lnk.getRel().equals("next"))
                         && lnk.getUri().getRawPath().equals("/rest/tests")));
@@ -521,16 +521,16 @@ public class RestUtilsTest {
         array = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
         assertTrue(array.get(0).isObject());
         jsonObject = (ObjectNode) array.get(0);
-        assertEquals(jsonObject.get(testPropIRI.stringValue()).get(0).get("@value").asText(), "VALUE 1");
-        assertEquals(response.getLinks().size(), 1);
+        assertEquals("VALUE 1", jsonObject.get(testPropIRI.stringValue()).get(0).get("@value").asText());
+        assertEquals(1, response.getLinks().size());
         link = response.getLinks().iterator().next();
-        assertEquals(link.getRel(), "prev");
+        assertEquals("prev", link.getRel());
         assertEquals("/rest/tests", link.getUri().getRawPath());
 
         // TEST NO PAGING REQUIRED
         response = RestUtils.createPaginatedThingResponse(uriInfo, set, testPropIRI, 0, 10, true,
                 null, "http://example.com/test#TestThing", service);
-        assertEquals(response.getLinks().size(), 0);
+        assertEquals(0, response.getLinks().size());
     }
 
     @Test
@@ -545,10 +545,10 @@ public class RestUtilsTest {
         ArrayNode array = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
         assertTrue(array.get(0).isObject());
         ObjectNode jsonObject = (ObjectNode) array.get(0);
-        assertEquals(jsonObject.get(testPropIRI.stringValue()).get(0).get("@value").asText(), "VALUE 1");
-        assertEquals(response.getLinks().size(), 1);
+        assertEquals("VALUE 1", jsonObject.get(testPropIRI.stringValue()).get(0).get("@value").asText());
+        assertEquals(1, response.getLinks().size());
         Link link = response.getLinks().iterator().next();
-        assertEquals(link.getRel(), "next");
+        assertEquals("next", link.getRel());
         assertEquals("/rest/tests", link.getUri().getRawPath());
 
         response = RestUtils.createPaginatedThingResponse(uriInfo, set, testPropIRI, 1, 1, true,
@@ -556,10 +556,10 @@ public class RestUtilsTest {
         array = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
         assertTrue(array.get(0).isObject());
         jsonObject = (ObjectNode) array.get(0);
-        assertEquals(jsonObject.get(testPropIRI.stringValue()).get(0).get("@value").asText(), "VALUE 3");
-        assertEquals(response.getLinks().size(), 1);
+        assertEquals("VALUE 3", jsonObject.get(testPropIRI.stringValue()).get(0).get("@value").asText());
+        assertEquals(1, response.getLinks().size());
         link = response.getLinks().iterator().next();
-        assertEquals(link.getRel(), "prev");
+        assertEquals("prev", link.getRel());
         assertEquals("/rest/tests", link.getUri().getRawPath());
     }
 
@@ -568,25 +568,25 @@ public class RestUtilsTest {
         ArrayNode array = mapper.readValue("[{\"@graph\":[" + expectedTypedJsonld + "]}]", ArrayNode.class);
 
         Response response = RestUtils.createPaginatedResponse(uriInfo, array, 3, 1, 0);
-        assertEquals(response.getLinks().size(), 1);
+        assertEquals(1, response.getLinks().size());
         Link link = response.getLinks().iterator().next();
-        assertEquals(link.getRel(), "next");
+        assertEquals("next", link.getRel());
         assertEquals("/rest/tests", link.getUri().getRawPath());
 
         response = RestUtils.createPaginatedResponse(uriInfo, array, 3, 1, 1);
-        assertEquals(response.getLinks().size(), 2);
+        assertEquals(2, response.getLinks().size());
         assertTrue(response.getLinks().stream()
                 .allMatch(lnk -> (lnk.getRel().equals("prev") || lnk.getRel().equals("next"))
                         && lnk.getUri().getRawPath().equals("/rest/tests")));
 
         response = RestUtils.createPaginatedResponse(uriInfo, array, 3, 1, 2);
-        assertEquals(response.getLinks().size(), 1);
+        assertEquals(1, response.getLinks().size());
         link = response.getLinks().iterator().next();
-        assertEquals(link.getRel(), "prev");
+        assertEquals("prev", link.getRel());
         assertEquals("/rest/tests", link.getUri().getRawPath());
 
         response = RestUtils.createPaginatedResponse(uriInfo, array, 3, 3, 0);
-        assertEquals(response.getLinks().size(), 0);
+        assertEquals(0, response.getLinks().size());
     }
 
     @Test
@@ -623,7 +623,7 @@ public class RestUtilsTest {
 
     @Test
     public void createJsonErrorObjectDelimitedTest() throws Exception {
-        ObjectNode result = RestUtils.createJsonErrorObject(new IllegalStateException("Exception" + Models.ERROR_OBJECT_DELIMITER + "detail1" + Models.ERROR_OBJECT_DELIMITER + "detail2"), "" + Models.ERROR_OBJECT_DELIMITER + "");
+        ObjectNode result = RestUtils.createJsonErrorObject(new IllegalStateException("Exception" + Models.ERROR_OBJECT_DELIMITER + "detail1" + Models.ERROR_OBJECT_DELIMITER + "detail2"), Models.ERROR_OBJECT_DELIMITER);
         ObjectNode expected = new ObjectMapper().readValue("{\"error\": \"IllegalStateException\", \"errorMessage\" : \"Exception\", \"errorDetails\": [\"detail1\", \"detail2\"]}", ObjectNode.class);
         assertEquals(expected, result);
     }
@@ -762,6 +762,39 @@ public class RestUtilsTest {
         assertNotNull(totalCollectionTime);
     }
 
+    @Test
+    public void parseExceptionForHTML() {
+        String htmlResponse = """
+                <html>
+                   <head><title>503 Service Temporarily Unavailable</title></head>
+                   <body><center><h1>503 Service Temporarily Unavailable</h1></center></body>
+               </html>""";
+
+        IllegalStateException e = new IllegalStateException(htmlResponse);
+        IllegalStateException ex = RestUtils.parseExceptionForHTML(e);
+        assertEquals("503 Service Temporarily Unavailable", ex.getMessage());
+    }
+
+    @Test
+    public void parseExceptionForInvalidHTMLTest() {
+        String htmlResponse = """
+                <html>
+                   <body><center><h1>invalid</h1></center></body>
+               </html>""";
+
+        IllegalStateException e = new IllegalStateException(htmlResponse);
+        IllegalStateException ex = RestUtils.parseExceptionForHTML(e);
+        assertEquals(htmlResponse, ex.getMessage());
+    }
+
+    @Test
+    public void parseExceptionForHTMLNoTextTest() {
+        String exceptionMessage = "Exception message";
+        IllegalArgumentException e = new IllegalArgumentException(exceptionMessage);
+        IllegalArgumentException ex = RestUtils.parseExceptionForHTML(e);
+        assertEquals(exceptionMessage, ex.getMessage());
+    }
+
     private void setUpModels() {
         model.add(vf.createIRI("http://example.com/test/0"), vf.createIRI("http://example.com/prop1"), vf.createLiteral("true"));
         model.add(vf.createIRI("http://example.com/test/0"), vf.createIRI("http://example.com/prop2"), vf.createLiteral("true"));
@@ -817,11 +850,6 @@ public class RestUtilsTest {
          * The type IRI string for a {@link TestThing} instance.
          */
         public String TYPE = "http://example.com/test#TestThing";
-
-        public TestThing(Resource resource, Model model, ValueFactory valueFactory, ValueConverterRegistry valueConverterRegistry) {
-            super(resource, model, valueFactory, valueConverterRegistry);
-            this.setProperty(vf.createIRI(TYPE), vf.createIRI("http://www.w3.org/1999/02/22-rdf-syntax-ns#type"));
-        }
 
         public TestThing(String resourceString, Model model, ValueFactory valueFactory, ValueConverterRegistry valueConverterRegistry) {
             super(resourceString, model, valueFactory, valueConverterRegistry);
