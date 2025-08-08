@@ -77,7 +77,6 @@ import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.RDFHandler;
 import org.eclipse.rdf4j.rio.RDFParser;
 import org.eclipse.rdf4j.rio.Rio;
-import org.eclipse.rdf4j.rio.WriterConfig;
 import org.eclipse.rdf4j.rio.helpers.BasicParserSettings;
 import org.eclipse.rdf4j.rio.helpers.BufferedGroupingRDFHandler;
 import org.eclipse.rdf4j.rio.helpers.ContextStatementCollector;
@@ -313,7 +312,6 @@ public class RestUtils {
         long start = System.currentTimeMillis();
         try {
             StringWriter sw = new StringWriter();
-            WriterConfig config = new WriterConfig();
             Rio.write(new SkolemizedStatementIterable(model, service), sw, format);
             return sw.toString();
         } finally {
@@ -671,7 +669,7 @@ public class RestUtils {
      * @return The first object representing a single Entity present in the JSON-LD array.
      */
     public static ObjectNode getObjectFromJsonld(String json) {
-        JsonNode jsonNode = null;
+        JsonNode jsonNode;
         try {
             jsonNode = mapper.readTree(json);
         } catch (IOException e) {
@@ -732,7 +730,7 @@ public class RestUtils {
      */
     public static JsonNode getTypedObjectFromJsonld(String json, String type) {
         long start = System.currentTimeMillis();
-        JsonNode arrayNode = null;
+        JsonNode arrayNode;
         try {
             arrayNode = mapper.readTree(json);
 
@@ -1064,12 +1062,7 @@ public class RestUtils {
      */
     public static MobiWebException getErrorObjInternalServerError(Throwable throwable) {
         ObjectNode objectNode = createJsonErrorObject(throwable, Models.ERROR_OBJECT_DELIMITER);
-        Response response = Response
-                .status(Response.Status.INTERNAL_SERVER_ERROR)
-                .type(MediaType.APPLICATION_JSON_TYPE)
-                .entity(objectNode.toString())
-                .build();
-        return ErrorUtils.sendError(throwable, throwable.getMessage(), response);
+        return getErrorObjInternalServerError(throwable, objectNode);
     }
 
     /**
@@ -1136,10 +1129,10 @@ public class RestUtils {
                                 parsedValues.put(name, value);
                             }
                         } else {
-                            LOG.debug("Non default field '" + name + "' provided.");
+                            LOG.debug("Non default field '{}' provided.", name);
                         }
                     } else {
-                        // Is the file stream
+                        // This is the file stream
                         parsedValues.put(item.getFieldName(),
                                 new FileUpload(item.getName(), Models.toByteArrayInputStream(stream)));
                     }
@@ -1245,5 +1238,46 @@ public class RestUtils {
             records.add(recordObjectNode);
         });
         return records;
+    }
+
+    /**
+     * Checks if the provided exception contains an HTML response in its message.
+     * If an HTML response is detected, it extracts the content of the title tag
+     * from the message and throws a new exception of the same type as the original exception
+     * with that information. If the title tag is not found or there is no HTML in the message,
+     * it returns the original exception.
+     *
+     * @param error The exception whose message is to be checked for HTML content.
+     *          It is expected to possibly contain an HTML response.
+     * @param <T> A {@link Class} that extends {@link Exception}.
+     * @return A re-wrapped {@link Exception} of the original exception unless there's no HTML in the message.
+     */
+    public static <T extends Exception> T parseExceptionForHTML(T error) {
+        String message = error.getMessage();
+        if (message != null && message.contains("<html>")) {
+            String startTag = "<title>";
+            String endTag = "</title>";
+
+            // Find the starting position of the content
+            int startIndex = message.indexOf(startTag);
+            if (startIndex != -1) {
+                startIndex += startTag.length(); // Move the index to the end of the start tag
+
+                // Find the ending position of the content
+                int endIndex = message.indexOf(endTag, startIndex);
+
+                if (endIndex != -1) {
+                    // Extract the substring between the start and end indices
+                    String titleContent = message.substring(startIndex, endIndex);
+                    try {
+                        return (T) error.getClass().getDeclaredConstructor(String.class).newInstance(titleContent);
+                    } catch (Exception reflectionException) {
+                        throw new RuntimeException("Failed to create exception of type " + error.getClass().getName(),
+                                reflectionException);
+                    }
+                }
+            }
+        }
+        return error;
     }
 }

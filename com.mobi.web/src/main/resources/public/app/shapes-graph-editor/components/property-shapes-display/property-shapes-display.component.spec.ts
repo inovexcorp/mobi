@@ -32,7 +32,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 
-import { cleanStylesFromDOM } from 'src/main/resources/public/test/ts/Shared';
+import { cleanStylesFromDOM } from '../../../../test/ts/Shared';
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
 import { EntityNames } from '../../../shared/models/entityNames.interface';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
