@@ -64,13 +64,13 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 
-public class RestoreTest {
+public class RestoreServiceTest {
     private static final String POLICY_FILE_LOCATION = "testLocation";
     private AutoCloseable closeable;
     private MemoryRepositoryWrapper repo;
     private MemoryRepositoryWrapper provRepo;
     private ValueFactory vf;
-    private Restore restore;
+    private RestoreService restore;
 
     @Mock
     private RepositoryManager repositoryManager;
@@ -116,8 +116,7 @@ public class RestoreTest {
         closeable = MockitoAnnotations.openMocks(this);
         vf = new ValidatingValueFactory();
 
-        restore = new Restore();
-        restore.stateManager = stateManager;
+        restore = new RestoreService();
         restore.repositoryManager = repositoryManager;
         restore.importService = importService;
         restore.config = catalogConfigProvider;
