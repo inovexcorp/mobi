@@ -25,6 +25,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
 
 import { MockComponent, MockProvider } from 'ng-mocks';
+import { of } from 'rxjs';
 
 import { cleanStylesFromDOM } from '../../../../test/ts/Shared';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
@@ -85,6 +86,8 @@ describe('NodeShapesDisplayComponent', () => {
     component.nodeShape = entityJSONLDObject;
     component.selectedEntityIRI = selectedEntityIRI;
     component.canModify = false;
+
+    shapesGraphStateStub.checkForExcludedPredicates.and.returnValue(of('0'));
   });
 
   afterEach(() => {
@@ -99,10 +102,11 @@ describe('NodeShapesDisplayComponent', () => {
     expect(component).toBeTruthy();
   });
   describe('controller method', () => {
-    it('should call setNodeShapeEntity on ngOnChanges', () => {
+    it('should call setNodeShapeEntity & checkForExcludedPredicates on ngOnChanges', () => {
       spyOn(component as any, '_setNodeShapeEntity');
       component.ngOnChanges();
-      expect(component['_setNodeShapeEntity']).toHaveBeenCalled();
+      expect(component['_setNodeShapeEntity']).toHaveBeenCalledWith();
+      expect(shapesGraphStateStub.checkForExcludedPredicates).toHaveBeenCalledWith('http://stardog.com/tutorial/AlbumShape');
     });
     it('should populate properties and entity on setNodeShapeEntity', () => {
       expect(component.nodeShapeProperties).toEqual([]);

@@ -22,6 +22,9 @@
   -->
 <div class="selected-details">
     <div class="selected-heading" *ngIf="entity">
+        <span class="warning-icon-holder" *ngIf="warningText" [matMenuTriggerFor]="warningMenu">
+            <mat-icon class="warning-icon">warning</mat-icon>
+        </span>
         <span class="entity-name">{{getEntityName(entity)}}</span>
         <static-iri
             class="editable-iri"
@@ -44,6 +47,7 @@
         <span class="types text-muted">{{getTypes()}}</span>
         <a *ngIf="canModifyTypes" (click)="showTypesOverlay()"><i class="fa fa-pencil"></i></a>
     </p>
+    <mat-menu #warningMenu="matMenu">
+        <div class="info-menu p-1" [innerHTML]="warningText"></div>
+    </mat-menu>
 </div>
-<!-- Template must use function for proper change detection -->
-<!-- EdgeCase: Adding/Removing dcTerms#Title from entity, Types modification does not trigger ngChanges -->

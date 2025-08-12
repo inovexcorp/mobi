@@ -47,6 +47,7 @@ export class NodeShapesDisplayComponent implements OnChanges {
   @Input() canModify: boolean;
 
   nodeShapeProperties: string[] = [];
+  predicateWarningText: string;
 
   private readonly _protectedKeys = [
     '@id',
@@ -82,6 +83,15 @@ export class NodeShapesDisplayComponent implements OnChanges {
 
   ngOnChanges(): void {
     this._setNodeShapeEntity();
+    this.stateService.checkForExcludedPredicates(this.nodeShape['@id']).subscribe(results => {
+      if (parseInt(results) > 0) {
+        this.predicateWarningText = '<p>Unsupported SHACL predicates present within the graph for this node shape. ' +
+          'Please see <a href="https://inovexcorp.github.io/mobi-docs/latest/index.html#shapes-editor-guide" ' +
+          'target="_blank">docs</a> for more details.</p>';
+      } else {
+        this.predicateWarningText = undefined;
+      }
+    });
   }
 
   private _setNodeShapeEntity() {

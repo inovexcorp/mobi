@@ -61,6 +61,7 @@ export class SelectedDetailsComponent implements OnChanges {
   @Input() entityIri: string;
   @Input() isImported: boolean
   @Input() canModify: boolean;
+  @Input() warningText = undefined;
 
   @Input() readOnly?: boolean;
   @Input() highlightText?: string;

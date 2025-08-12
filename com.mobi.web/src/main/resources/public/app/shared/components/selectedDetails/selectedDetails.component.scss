@@ -20,6 +20,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+@use 'sass:map';
+@use '@angular/material' as mat;
+
 /* Core variables */
 @import "../../../css/variables";
 
@@ -30,6 +33,19 @@
         }
     }
     padding-bottom: 15px;
+
+    .warning-icon-holder {
+        margin-right: -7px;
+        cursor: pointer;
+
+        .warning-icon {
+            color: mat.get-color-from-palette(mat.$amber-palette, 500);
+            font-size: 16px;
+            position: relative;
+            top: 4.25px;
+            right: 3px;
+        }
+    }
 
     .entity-name {
         font-size: 18px;
