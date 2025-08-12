@@ -82,24 +82,21 @@ module.exports = {
 
     'Step 7: Verify Uploaded Changes': function(browser) {
         browser
-            .assert.visible('mat-chip.uncommitted')
             .page.shapesEditorPage()
             .expect.elements('@propertyValues').count.to.equal(5);
         browser.page.shapesEditorPage().toggleChangesPage();
         browser.globals.wait_for_no_spinners(browser);
-        browser
-            .waitForElementVisible('app-changes-page div.changes-info button.mat-warn')
-            .expect.elements('app-changes-page mat-expansion-panel').count.to.equal(4);
+        browser.page.shapesEditorPage().verifyUncommittedChanges(true);
+        browser.page.shapesEditorPage().verifyChangePageCommitNum(4);
     },
 
     'Step 8: Commit changes and verify commit was made successfully': function(browser) {
         browser.page.shapesEditorPage().commit('The first manual commit message');
         browser.globals.wait_for_no_spinners(browser);
         browser.globals.dismiss_toast(browser);
-        browser
-            .assert.not.elementPresent('mat-chip.uncommitted')
-            .assert.not.elementPresent('app-changes-page mat-expansion-panel')
-            .assert.textContains('app-changes-page info-message p', 'No Changes to Display')
+        browser.page.shapesEditorPage().verifyUncommittedChanges(false);
+        browser.page.shapesEditorPage().verifyChangePageCommitNum(0);
+        browser.useCss()
             .expect.elements('commit-history-table svg .commit-hash-string').count.to.equal(2);
         browser
             .useXpath()

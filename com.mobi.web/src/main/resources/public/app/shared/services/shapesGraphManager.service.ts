@@ -242,10 +242,10 @@ export class ShapesGraphManagerService {
   /**
    * Retrieves node shapes for a specified record, branch, and commit.
    *
-   * @param {string} recordId - The unique identifier for the record.
-   * @param {string} branchId - The identifier of the branch where the node shapes are located.
-   * @param {string} commitId - The identifier of the commit to retrieve the node shapes for.
-   * @param {boolean} [applyInProgressCommit=true] - Indicates whether to apply an in-progress commit when retrieving
+   * @param {string} recordId The unique identifier for the record.
+   * @param {string} branchId The identifier of the branch where the node shapes are located.
+   * @param {string} commitId The identifier of the commit to retrieve the node shapes for.
+   * @param {boolean} [applyInProgressCommit=true] Indicates whether to apply an in-progress commit when retrieving
    * the node shapes.
    * @param {string} searchText - The search text to filter the node shapes by.
    *

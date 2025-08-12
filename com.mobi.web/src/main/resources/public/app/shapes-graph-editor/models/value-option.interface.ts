@@ -24,8 +24,8 @@
  * Represents an option that can be used for selectable lists, dropdowns, 
  * radio buttons, or any other UI elements where a user picks a value.
  *
- * @property label - The human-readable text shown to the user.
- * @property value - The actual value submitted or stored when this option is selected.
+ * @property {string} label The human-readable text shown to the user.
+ * @property {string} value The actual value submitted or stored when this option is selected.
  */
 export interface ValueOption {
   label: string;

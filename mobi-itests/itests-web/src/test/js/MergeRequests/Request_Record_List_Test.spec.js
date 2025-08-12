@@ -76,9 +76,7 @@ module.exports = {
     'Step 7: Verify Shapes Graph Change pages': function(browser) {
         browser.globals.dismiss_toast(browser);
         browser.page.shapesEditorPage().toggleChangesPage();
-        browser
-            .waitForElementVisible('app-changes-page div.changes-info button.mat-warn')
-            .expect.elements('app-changes-page mat-expansion-panel').count.to.equal(3)
+        browser.page.shapesEditorPage().verifyChangePageCommitNum(3);
     },
 
     'Step 8: Commit changes to shape graph': function(browser) {
@@ -88,12 +86,9 @@ module.exports = {
     },
 
     'Step 9: Verify commit was made successfully': function(browser) {
-        browser
-            .useCss()
-            .assert.not.elementPresent('mat-chip.uncommitted');
-        browser.assert.not.elementPresent('app-changes-page mat-expansion-panel');
-        browser
-            .assert.textContains('app-changes-page info-message p', 'No Changes to Display')
+        browser.page.shapesEditorPage().verifyUncommittedChanges(false);
+        browser.page.shapesEditorPage().verifyChangePageCommitNum(0);
+        browser.useCss()
             .expect.elements('commit-history-table svg .commit-hash-string').count.to.equal(2)
         browser
             .useXpath()

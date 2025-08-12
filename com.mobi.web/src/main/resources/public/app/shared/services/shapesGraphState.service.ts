@@ -45,17 +45,20 @@ import { EntityImportStatus, ShapesGraphListItem, SubjectImportMap } from '../mo
 import { EntityNames } from '../models/entityNames.interface';
 import { EventPayload, EventTypeConstants, EventWithPayload } from '../models/eventWithPayload.interface';
 import { getArrWithoutEntity, getBeautifulIRI, getDctermsValue, getEntityName, getPropertyId, isBlankNodeId } from '../utility';
+import { GroupedSuggestion } from '../../shapes-graph-editor/models/grouped-suggestion';
 import { JSONLDId } from '../models/JSONLDId.interface';
 import { JSONLDObject } from '../models/JSONLDObject.interface';
 import { JSONLDValue } from '../models/JSONLDValue.interface';
 import { ManchesterConverterService } from './manchesterConverter.service';
 import { MergeRequestManagerService } from './mergeRequestManager.service';
+import { MultiTargetTypeData, ShaclTargetDetector, SingleTargetTypeData } from '../../shapes-graph-editor/models/target-type-data';
 import { NodeShapeSummary } from '../../shapes-graph-editor/models/node-shape-summary.interface';
 import { PolicyEnforcementService } from './policyEnforcement.service';
 import { PolicyManagerService } from './policyManager.service';
 import { PrefixationPipe } from '../pipes/prefixation.pipe';
 import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
 import { PropertyManagerService } from './propertyManager.service';
+import { PropertyShape } from '../../shapes-graph-editor/models/property-shape.interface';
 import { RdfDownload } from '../models/rdfDownload.interface';
 import { RdfUpdate } from '../models/rdfUpdate.interface';
 import { RdfUpload } from '../models/rdfUpload.interface';
@@ -68,12 +71,12 @@ import { SparqlManagerService } from './sparqlManager.service';
 import { SPARQLSelectResults } from '../models/sparqlSelectResults.interface';
 import { splitIRI } from '../pipes/splitIRI.pipe';
 import { StateManagerService } from './stateManager.service';
+import { TARGET_OBJECTS_OF, TARGET_SUBJECTS_OF } from '../../shapes-graph-editor/models/constants';
 import { ToastService } from './toast.service';
 import { UpdateRefsService } from './updateRefs.service';
 import { VersionedRdfStateBase } from '../models/versionedRdfStateBase.interface';
 import { VersionedRdfUploadResponse } from '../models/versionedRdfUploadResponse.interface';
 import { XACMLRequest } from '../models/XACMLRequest.interface';
-import { PropertyShape } from '../../shapes-graph-editor/models/property-shape.interface';
 
 /**
  * @class shared.ShapesGraphStateService
@@ -83,7 +86,7 @@ import { PropertyShape } from '../../shapes-graph-editor/models/property-shape.i
 @Injectable()
 export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListItem> {
   type = `${SHAPESGRAPHEDITOR}ShapesGraphRecord`;
-
+  shaclTargetDetector = new ShaclTargetDetector();
   private readonly _ENTITY_NAMES_QUERY = `
   PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
   PREFIX dc: <http://purl.org/dc/elements/1.1/>
@@ -647,18 +650,12 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
    * @return {Observable<any>} An Observable that completes when all related metadata and references have been updated successfully. Emits an error in case of validation failures or internal errors.
    */
   onIriEdit(iriBegin: string, iriThen: string, iriEnd: string): Observable<void> {
-    //checking for IRI structure
-    if (!iriBegin) {
-      return throwError('onIriEdit validation failed for iriBegin');
+    const recordId = this.listItem.versionedRdfRecord.recordId;
+    if (!recordId) {
+      return throwError('Cannot edit IRI without a valid record ID.');
     }
-    if (!iriThen) {
-      return throwError('onIriEdit validation failed for iriThen');
-    }
-    if (!iriEnd) {
-      return throwError('onIriEdit validation failed for iriEnd');
-    }
-    if (!this.listItem.versionedRdfRecord.recordId) {
-      return throwError('onIriEdit validation failed for recordId');
+    if (!iriBegin || !iriThen || !iriEnd) {
+      return throwError('IRI cannot be incomplete. All parts are required.');
     }
     const newIRI = iriBegin + iriThen + iriEnd;
     const oldEntity = cloneDeep(this.listItem.selected);
@@ -667,14 +664,13 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
     if (some(this.listItem.additions, oldEntity)) {
       remove(this.listItem.additions, oldEntity);
       this.updateRefs.update(this.listItem, oldEntity['@id'], newIRI, this._updateRefsExclude);
-      //TODO comment back in and implement when we have hierarchical shapes. Only if needed similarly to ontology editor
     } else {
       this.updateRefs.update(this.listItem, oldEntity['@id'], newIRI, this._updateRefsExclude);
       this.addToDeletions(this.listItem.versionedRdfRecord.recordId, oldEntity);
     }
-    this.addToAdditions(this.listItem.versionedRdfRecord.recordId, cloneDeep(this.listItem.selected));
+    this.addToAdditions(this.listItem.versionedRdfRecord.recordId, this.listItem.selected);
     // Updates the NodeShapeSummary List
-    this.updateNodeShapeSummaries(oldEntity, newIRI);
+    this.updateNodeShapeSummaries(oldEntity, this.listItem.selected);
     //retrieves all instances where the oldIRI is the predicate or object of a triple and updates them to the newIRI
     return this._retrieveUsages(this.listItem, oldEntity['@id']).pipe(map(response => {
       if (typeof response === 'string') {
@@ -688,7 +684,13 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
     }));
   }
 
-  private updateNodeShapeSummaries(oldEntity: JSONLDObject, newIRI: string) {
+  /**
+   * Updates the list of node shape summaries after a node shape has changed.
+   *
+   * @param oldEntity The original JSON-LD object of the node shape before the modification.
+   * @param newNodeShape The new JSON-LD object of the node shape after the modification.
+   */
+  updateNodeShapeSummaries(oldEntity: JSONLDObject, newNodeShape: JSONLDObject): void {
     this.updateEntityName(this.listItem.selected);
     const nodeShapesInfos: NodeShapeSummary[] = this.listItem.editorTabStates?.nodeShapes?.nodes || [];
     if (nodeShapesInfos) {
@@ -696,14 +698,30 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
         if (currentNode.iri !== oldEntity['@id']) {
           return currentNode;
         }
-        return {
+        const targetTypeData = this.shaclTargetDetector.detect(newNodeShape);
+        const targetType = targetTypeData?.targetType;
+
+        const nodeShapeSummary: NodeShapeSummary = {
           ...currentNode,
-          iri: newIRI,
-          name: this.getEntityName(newIRI)
+          iri: newNodeShape['@id'],
+          name: this.getEntityName(newNodeShape['@id']),
+          targetType: targetType || 'N/A',
+          targetTypeLabel: targetType ? getBeautifulIRI(targetType) : 'N/A',
+          targetValue: '',
+          targetValueLabel: ''
         };
-      }).sort((a, b) => {
-        return (a.name || '').localeCompare(b.name || '');
-      });
+        if (targetTypeData) {
+          if (targetTypeData.multiSelect) {
+            const targetValue = (targetTypeData as MultiTargetTypeData).values[0];
+            nodeShapeSummary.targetValue = targetValue;
+          } else {
+            const targetValue = (targetTypeData as SingleTargetTypeData).value;
+            nodeShapeSummary.targetValue = targetValue;
+          }
+        }
+        nodeShapeSummary.targetValueLabel = this.getEntityName(nodeShapeSummary.targetValue);
+        return nodeShapeSummary;
+      }).sort((a, b) => (a.name || '').localeCompare(b.name || ''));
     }
   }
 
@@ -737,6 +755,9 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
    * @return {Observable} An Observable indicating the success of the action
    */
   setSelected(entityIRI: string, listItem: ShapesGraphListItem = this.listItem, element?: ElementRef): Observable<null> {
+    if (!listItem) {
+      return throwError('Cannot set selected entity: The ShapesGraphListItem was not provided.');
+    }
     listItem.selected = undefined;
     if (!entityIRI || !listItem) {
       if (listItem) {
@@ -974,9 +995,170 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
   }
 
   /**
+   * Retrieves a list of OWL classes, grouped by their ontology IRI.
+   *
+   * @param {string} [searchText=''] - An optional string to filter class IRIs. The search is case-insensitive and trimmed.
+   * @param {boolean} [isTracked=false] - A flag to indicate if the API call should be tracked for progress indication.
+   * @returns {Observable<GroupedSuggestion[]>} An observable that emits an array of `GroupedSuggestion` objects,
+   *   where each group contains a list of class IRIs belonging to the same ontology, sorted by their labels.
+   */
+  getClassOptions(searchText = '', isTracked = false): Observable<GroupedSuggestion[]> {
+    return this._fetchIris(this.getClassesQuery(searchText), isTracked).pipe(
+      map(iris => this.groupSuggestionsByOntologyIri(iris))
+    );
+  }
+
+  /**
+   * Retrieves a list of OWL properties, grouped by their ontology IRI.
+   * The type of properties fetched depends on the `targetType` parameter.
+   *
+   * @param {string} [searchText=''] - An optional string to filter property IRIs. The search is case-insensitive and trimmed.
+   * @param {string} [targetType=''] - Specifies the type of properties to fetch.
+   * @param {boolean} [isTracked=false] - A flag to indicate if the API call should be tracked for progress indication.
+   * @returns {Observable<GroupedSuggestion[]>} An observable that emits an array of `GroupedSuggestion` objects,
+   *   where each group contains a list of property IRIs belonging to the same ontology, sorted by their labels.
+   */
+  getPropertiesOptions(searchText = '', targetType = '', isTracked = false): Observable<GroupedSuggestion[]> {
+    let query;
+    if (targetType === TARGET_OBJECTS_OF) {
+      query = this.getObjectPropertiesQuery(searchText);
+    } else if (targetType === TARGET_SUBJECTS_OF) {
+      query = this.getPropertiesByTypeQuery(searchText);
+    } else {
+      return of([]);
+    }
+    return this._fetchIris(query, isTracked).pipe(
+      map(iris => this.groupSuggestionsByOntologyIri(iris))
+    );
+  }
+
+  /**
+   * Returns a SPARQL query string that selects all distinct OWL classes in the dataset.
    * 
+   * @param searchText Optional search string to filter class IRIs
+   * @returns {string} SPARQL query for retrieving all owl:Class IRIs.
+   */
+  getClassesQuery(searchText = ''): string {
+    const normalizedSearch = searchText.toLowerCase().trim();
+    const filter = normalizedSearch ? `FILTER(CONTAINS(LCASE(STR(?iri)), "${normalizedSearch}"))` : '';
+    return `
+      PREFIX owl: <http://www.w3.org/2002/07/owl#>
+      SELECT DISTINCT ?iri WHERE {
+        ?iri a owl:Class .
+        FILTER(isIRI(?iri))
+        ${filter}
+      }
+      ORDER BY ?iri
+      LIMIT 25
+    `;
+  }
+
+  /**
+  * Returns a SPARQL query string that selects all distinct OWL object properties in the dataset.
+  * 
+  * @param searchText Optional search string to filter property IRIs
+  * @returns {string} SPARQL query for retrieving all owl:ObjectProperty IRIs.
+  */
+  getObjectPropertiesQuery(searchText = ''): string {
+    const normalizedSearch = searchText.toLowerCase().trim();
+    const filter = normalizedSearch ? `FILTER(CONTAINS(LCASE(STR(?iri)), "${normalizedSearch}"))` : '';
+    return `
+    PREFIX owl: <http://www.w3.org/2002/07/owl#>
+    SELECT DISTINCT ?iri WHERE {
+      ?iri a owl:ObjectProperty .
+      FILTER(isIRI(?iri))
+      ${filter}
+    }
+    ORDER BY ?iri
+    `;
+  }
+
+  /**
+   * Returns a SPARQL query string that selects all distinct OWL properties of specific types.
+   * 
+   * @param searchText Optional search string to filter property IRIs
+   * @returns {string} SPARQL query for retrieving all OWL property IRIs with their types.
+   */
+  getPropertiesByTypeQuery(searchText = ''): string {
+    const normalizedSearch = searchText.toLowerCase().trim();
+    const filter = normalizedSearch ? `FILTER(CONTAINS(LCASE(STR(?iri)), "${normalizedSearch}"))` : '';
+    return `
+    PREFIX owl: <http://www.w3.org/2002/07/owl#>
+    SELECT DISTINCT ?iri ?type WHERE {
+      ?iri a ?type .
+      FILTER (isIRI(?iri))
+      VALUES ?type { owl:ObjectProperty owl:DatatypeProperty owl:AnnotationProperty }
+      ${filter}
+    }
+    ORDER BY ?iri
+    `;
+  }
+
+  /**
+   * Executes a SPARQL SELECT query to retrieve IRIs from the shapes graph's imports closure.
+   *
+   * @param query The SPARQL query string to execute.
+   * @returns {Observable<string[]>} An observable of string IRIs extracted from the query results.
+   */
+  private _fetchIris(query: string, isTracked = false): Observable<string[]> {
+    if (!this.listItem.versionedRdfRecord) {
+      return of([]);
+    }
+    return this.sparql.postQuery(query,
+      this.listItem.versionedRdfRecord.recordId,
+      SHAPES_STORE_TYPE,
+      this.listItem.versionedRdfRecord.branchId,
+      this.listItem.versionedRdfRecord.commitId,
+      true,
+      true,
+      'application/json',
+      isTracked
+    ).pipe(
+      map(response => {
+        if (!response) {
+          return [];
+        }
+        return (response as SPARQLSelectResults).results.bindings.map(
+          binding => binding['iri'].value
+        );
+      })
+    );
+  }
+
+  /**
+   * Groups IRIs by their ontology IRI prefix (as returned by `splitIRI`),
+   * sorts the groups alphabetically by ontology IRI, and sorts the IRIs in each group by `label`.
+   *
+   * @param {string[]} iris The list of IRIs to group.
+   * @returns {GroupedSuggestion[]} A sorted array of groups, each with an `ontologyIri` and its corresponding sorted
+   *    IRIs.
+   */
+  groupSuggestionsByOntologyIri(iris: string[]): GroupedSuggestion[] {
+    const grouped = iris.reduce<Record<string, string[]>>((acc, iri) => {
+      const ontologyIri = splitIRI(iri).begin;
+      if (!acc[ontologyIri]) {
+        acc[ontologyIri] = [];
+      }
+      acc[ontologyIri].push(iri);
+      return acc;
+    }, {});
+    return Object.keys(grouped)
+      .sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()))
+      .map(ontologyIri => ({
+        label: ontologyIri,
+        suggestions: grouped[ontologyIri]
+          .map(iri => ({
+            label: this.getEntityName(iri),
+            value: iri
+          }))
+          .sort((a, b) => a.label.toLowerCase().localeCompare(b.label.toLowerCase()))
+      }));
+  }
+
+  /**
+   * Remove PropertyShape
    * @param propertyShape 
-   * @returns 
+   * @returns Observable
    */
   removePropertyShape(propertyShape: PropertyShape): Observable<void> {
     // Add sh:property value deletion

@@ -132,10 +132,9 @@ module.exports = {
         browser.globals.wait_for_no_spinners(browser);
         browser.globals.dismiss_toast(browser);
         browser.page.ontologyEditorPage().toggleChangesPage();
-        browser
-            .assert.not.elementPresent('mat-chip.uncommitted')
-            .assert.not.elementPresent('app-changes-page mat-expansion-panel')
-            .assert.textContains('app-changes-page info-message p', 'No Changes to Display')
+        browser.page.ontologyEditorPage().verifyUncommittedChanges(false);
+        browser.page.ontologyEditorPage().verifyChangePageCommitNum(0);
+        browser.useCss()
             .expect.elements('commit-history-table svg .commit-hash-string').count.to.equal(2)
         browser
             .useXpath()

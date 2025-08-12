@@ -26,35 +26,30 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
 
 //Third-Party imports
-import { MockComponent, MockProvider } from 'ng-mocks';
+import { MockComponent } from 'ng-mocks';
 
 //Mobi & Local imports
 import { NodeShapesDisplayComponent } from '../node-shapes-display/node-shapes-display.component';
 import { NodeShapesListComponent } from '../node-shapes-list/node-shapes-list.component';
 import { ShapesGraphListItem } from '../../../shared/models/shapesGraphListItem.class';
-import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
 import { NodeShapesTabComponent } from './node-shapes-tab.component';
 
 describe('NodeShapesTabComponent', () => {
   let component: NodeShapesTabComponent;
   let element: DebugElement;
   let fixture: ComponentFixture<NodeShapesTabComponent>;
-  let stateSvcStub: jasmine.SpyObj<ShapesGraphStateService>;
   let listItem: ShapesGraphListItem;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       declarations: [
         NodeShapesTabComponent,
-        MockComponent(NodeShapesListComponent),
-        MockComponent(NodeShapesDisplayComponent)
+        MockComponent(NodeShapesDisplayComponent),
+        MockComponent(NodeShapesListComponent)
       ],
-      providers: [
-        MockProvider(ShapesGraphStateService)
-      ]
+      providers: []
     }).compileComponents();
 
-    stateSvcStub = TestBed.inject(ShapesGraphStateService) as jasmine.SpyObj<ShapesGraphStateService>;
     listItem = new ShapesGraphListItem();
     listItem.selected = {
       '@id': 'https://mobi.solutions/shapes-graphs/example',
@@ -69,14 +64,14 @@ describe('NodeShapesTabComponent', () => {
     fixture = TestBed.createComponent(NodeShapesTabComponent);
     component = fixture.componentInstance;
     element = fixture.debugElement;
-    component.listItem = listItem
+    component.listItem = listItem;
+    component.canModify = true;
   });
 
   afterEach(() => {
     fixture = null;
     component = null;
     element = null;
-    stateSvcStub = null;
     listItem = null;
   });
 

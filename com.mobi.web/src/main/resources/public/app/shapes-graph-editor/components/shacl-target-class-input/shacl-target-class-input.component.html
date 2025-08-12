@@ -1,0 +1,49 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 - 2025 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<mat-form-field class="w-100">
+  <span class="spinner-prefix" matPrefix #targetClassSpinner></span>
+  <mat-label>{{ label }}</mat-label>
+  <input
+    type="text"
+    matInput
+    [formControl]="classInputControl"
+    [matAutocomplete]="auto"
+    [title]="classInputControl.value || ''"
+    (focus)="onInputFocus()"
+    (blur)="onTouched()"/>
+  <mat-error *ngIf="classInputControl.hasError('required')">
+    This field is required.
+  </mat-error>
+  <mat-error *ngIf="classInputControl.hasError('pattern')">
+    Please enter a valid IRI.
+  </mat-error>
+  <mat-autocomplete #auto="matAutocomplete">
+    <ng-container *ngFor="let group of suggestions$ | async">
+      <mat-optgroup [label]="group.label">
+        <mat-option *ngFor="let suggestion of group.suggestions" [value]="suggestion.value" [ngClass]="suggestion.value === classInputControl.value ? 'selected': ''">
+          <span [title]="suggestion.value">{{ suggestion.label }}</span>
+        </mat-option>
+      </mat-optgroup>
+    </ng-container>
+  </mat-autocomplete>
+</mat-form-field>

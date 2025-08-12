@@ -23,19 +23,11 @@ package com.mobi.shapes.impl;
  * #L%
  */
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import com.mobi.repository.impl.sesame.memory.MemoryRepositoryWrapper;
+import com.mobi.shapes.api.NodeShapeSummary;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
@@ -60,15 +52,29 @@ import org.mockito.MockitoAnnotations;
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import javax.ws.rs.core.StreamingOutput;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class SimpleShapesGraphTest extends OrmEnabledTestCase {
     private AutoCloseable closeable;
     private MemoryRepositoryWrapper repo;
     private Model shapesModel;
     private SimpleShapesGraph shapesGraph;
+    private List<NodeShapeSummary> nodeShapeSummaries;
 
     private final IRI SHAPES_GRAPH_IRI = VALUE_FACTORY.createIRI("http://test.com/shapes-graph");
     private final IRI NODE_SHAPE_IRI = VALUE_FACTORY.createIRI("http://test.com/node-shape");
@@ -134,7 +140,13 @@ public class SimpleShapesGraphTest extends OrmEnabledTestCase {
             Rio.write(shapesModel, rdfWriter);
             return os;
         });
-
+        nodeShapeSummaries = new ArrayList<>(List.of(
+            new NodeShapeSummary("iri:C", "Charlie", "class", "t:C", false, "ont:1"),
+            new NodeShapeSummary("iri:a", "alpha", "class", "t:a", true, "ont:2"),
+            new NodeShapeSummary("iri:B", "Bravo", "property", "t:B", false, "ont:1"),
+            new NodeShapeSummary("iri:E", "echo", "class", "t:E", true, "ont:2"),
+            new NodeShapeSummary("iri:D", "DELTA", "property", "t:D", false, "ont:1")
+        ));
         shapesGraph = new SimpleShapesGraph(ontology);
     }
 
@@ -191,11 +203,12 @@ public class SimpleShapesGraphTest extends OrmEnabledTestCase {
 
     @Test
     public void testSerializeShapesGraphTurtle() throws Exception {
-        String expectedResult = "<http://test.com/shapes-graph> a <http://www.w3.org/2002/07/owl#Ontology>;\n" +
-                "  <http://purl.org/dc/terms/title> \"Test Shapes Graph\" .\n" +
-                "\n" +
-                "<http://test.com/node-shape> a <http://www.w3.org/ns/shacl#NodeShape>;\n" +
-                "  <http://purl.org/dc/terms/title> \"Test Node Shape\" .";
+        String expectedResult = """
+                <http://test.com/shapes-graph> a <http://www.w3.org/2002/07/owl#Ontology>;
+                  <http://purl.org/dc/terms/title> "Test Shapes Graph" .
+
+                <http://test.com/node-shape> a <http://www.w3.org/ns/shacl#NodeShape>;
+                  <http://purl.org/dc/terms/title> "Test Node Shape" .""";
         StreamingOutput result = shapesGraph.serializeShapesGraph("turtle");
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         result.write(os);
@@ -205,21 +218,22 @@ public class SimpleShapesGraphTest extends OrmEnabledTestCase {
 
     @Test
     public void testSerializeShapesGraphRdfXml() throws Exception {
-        String expectedResult = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-                "<rdf:RDF\n" +
-                "\txmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\">\n" +
-                "\n" +
-                "<rdf:Description rdf:about=\"http://test.com/shapes-graph\">\n" +
-                "\t<rdf:type rdf:resource=\"http://www.w3.org/2002/07/owl#Ontology\"/>\n" +
-                "\t<title xmlns=\"http://purl.org/dc/terms/\">Test Shapes Graph</title>\n" +
-                "</rdf:Description>\n" +
-                "\n" +
-                "<rdf:Description rdf:about=\"http://test.com/node-shape\">\n" +
-                "\t<rdf:type rdf:resource=\"http://www.w3.org/ns/shacl#NodeShape\"/>\n" +
-                "\t<title xmlns=\"http://purl.org/dc/terms/\">Test Node Shape</title>\n" +
-                "</rdf:Description>\n" +
-                "\n" +
-                "</rdf:RDF>";
+        String expectedResult = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <rdf:RDF
+                \txmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+
+                <rdf:Description rdf:about="http://test.com/shapes-graph">
+                \t<rdf:type rdf:resource="http://www.w3.org/2002/07/owl#Ontology"/>
+                \t<title xmlns="http://purl.org/dc/terms/">Test Shapes Graph</title>
+                </rdf:Description>
+
+                <rdf:Description rdf:about="http://test.com/node-shape">
+                \t<rdf:type rdf:resource="http://www.w3.org/ns/shacl#NodeShape"/>
+                \t<title xmlns="http://purl.org/dc/terms/">Test Node Shape</title>
+                </rdf:Description>
+
+                </rdf:RDF>""";
         StreamingOutput result = shapesGraph.serializeShapesGraph("rdf/xml");
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         result.write(os);
@@ -229,19 +243,20 @@ public class SimpleShapesGraphTest extends OrmEnabledTestCase {
 
     @Test
     public void testSerializeShapesGraphJsonld() throws Exception {
-        String expectedResult = "[ {\n" +
-                "  \"@id\" : \"http://test.com/node-shape\",\n" +
-                "  \"@type\" : [ \"http://www.w3.org/ns/shacl#NodeShape\" ],\n" +
-                "  \"http://purl.org/dc/terms/title\" : [ {\n" +
-                "    \"@value\" : \"Test Node Shape\"\n" +
-                "  } ]\n" +
-                "}, {\n" +
-                "  \"@id\" : \"http://test.com/shapes-graph\",\n" +
-                "  \"@type\" : [ \"http://www.w3.org/2002/07/owl#Ontology\" ],\n" +
-                "  \"http://purl.org/dc/terms/title\" : [ {\n" +
-                "    \"@value\" : \"Test Shapes Graph\"\n" +
-                "  } ]\n" +
-                "} ]";
+        String expectedResult = """
+                [ {
+                  "@id" : "http://test.com/node-shape",
+                  "@type" : [ "http://www.w3.org/ns/shacl#NodeShape" ],
+                  "http://purl.org/dc/terms/title" : [ {
+                    "@value" : "Test Node Shape"
+                  } ]
+                }, {
+                  "@id" : "http://test.com/shapes-graph",
+                  "@type" : [ "http://www.w3.org/2002/07/owl#Ontology" ],
+                  "http://purl.org/dc/terms/title" : [ {
+                    "@value" : "Test Shapes Graph"
+                  } ]
+                } ]""";
         StreamingOutput result = shapesGraph.serializeShapesGraph("jsonld");
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         result.write(os);
@@ -251,19 +266,20 @@ public class SimpleShapesGraphTest extends OrmEnabledTestCase {
 
     @Test
     public void testSerializeShapesGraphUnknownFormat() throws Exception {
-        String expectedResult = "[ {\n" +
-                "  \"@id\" : \"http://test.com/node-shape\",\n" +
-                "  \"@type\" : [ \"http://www.w3.org/ns/shacl#NodeShape\" ],\n" +
-                "  \"http://purl.org/dc/terms/title\" : [ {\n" +
-                "    \"@value\" : \"Test Node Shape\"\n" +
-                "  } ]\n" +
-                "}, {\n" +
-                "  \"@id\" : \"http://test.com/shapes-graph\",\n" +
-                "  \"@type\" : [ \"http://www.w3.org/2002/07/owl#Ontology\" ],\n" +
-                "  \"http://purl.org/dc/terms/title\" : [ {\n" +
-                "    \"@value\" : \"Test Shapes Graph\"\n" +
-                "  } ]\n" +
-                "} ]";
+        String expectedResult = """
+                [ {
+                  "@id" : "http://test.com/node-shape",
+                  "@type" : [ "http://www.w3.org/ns/shacl#NodeShape" ],
+                  "http://purl.org/dc/terms/title" : [ {
+                    "@value" : "Test Node Shape"
+                  } ]
+                }, {
+                  "@id" : "http://test.com/shapes-graph",
+                  "@type" : [ "http://www.w3.org/2002/07/owl#Ontology" ],
+                  "http://purl.org/dc/terms/title" : [ {
+                    "@value" : "Test Shapes Graph"
+                  } ]
+                } ]""";
         StreamingOutput result = shapesGraph.serializeShapesGraph("unknown");
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         result.write(os);
@@ -284,16 +300,17 @@ public class SimpleShapesGraphTest extends OrmEnabledTestCase {
 
     @Test
     public void testSerializeShapesGraphContentRdfXml() throws Exception {
-        String expectedResult = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
-                "<rdf:RDF\n" +
-                "\txmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\">\n" +
-                "\n" +
-                "<rdf:Description rdf:about=\"http://test.com/node-shape\">\n" +
-                "\t<rdf:type rdf:resource=\"http://www.w3.org/ns/shacl#NodeShape\"/>\n" +
-                "\t<title xmlns=\"http://purl.org/dc/terms/\">Test Node Shape</title>\n" +
-                "</rdf:Description>\n" +
-                "\n" +
-                "</rdf:RDF>";
+        String expectedResult = """
+                <?xml version="1.0" encoding="UTF-8"?>
+                <rdf:RDF
+                \txmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+
+                <rdf:Description rdf:about="http://test.com/node-shape">
+                \t<rdf:type rdf:resource="http://www.w3.org/ns/shacl#NodeShape"/>
+                \t<title xmlns="http://purl.org/dc/terms/">Test Node Shape</title>
+                </rdf:Description>
+
+                </rdf:RDF>""";
         StreamingOutput result = shapesGraph.serializeShapesGraphContent("rdf/xml");
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         result.write(os);
@@ -303,13 +320,14 @@ public class SimpleShapesGraphTest extends OrmEnabledTestCase {
 
     @Test
     public void testSerializeShapesGraphContentJsonld() throws Exception {
-        String expectedResult = "[ {\n" +
-                "  \"@id\" : \"http://test.com/node-shape\",\n" +
-                "  \"@type\" : [ \"http://www.w3.org/ns/shacl#NodeShape\" ],\n" +
-                "  \"http://purl.org/dc/terms/title\" : [ {\n" +
-                "    \"@value\" : \"Test Node Shape\"\n" +
-                "  } ]\n" +
-                "} ]";
+        String expectedResult = """
+                [ {
+                  "@id" : "http://test.com/node-shape",
+                  "@type" : [ "http://www.w3.org/ns/shacl#NodeShape" ],
+                  "http://purl.org/dc/terms/title" : [ {
+                    "@value" : "Test Node Shape"
+                  } ]
+                } ]""";
         StreamingOutput result = shapesGraph.serializeShapesGraphContent("jsonld");
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         result.write(os);
@@ -319,13 +337,14 @@ public class SimpleShapesGraphTest extends OrmEnabledTestCase {
 
     @Test
     public void testSerializeShapesGraphContentUnknownFormat() throws Exception {
-        String expectedResult = "[ {\n" +
-                "  \"@id\" : \"http://test.com/node-shape\",\n" +
-                "  \"@type\" : [ \"http://www.w3.org/ns/shacl#NodeShape\" ],\n" +
-                "  \"http://purl.org/dc/terms/title\" : [ {\n" +
-                "    \"@value\" : \"Test Node Shape\"\n" +
-                "  } ]\n" +
-                "} ]";
+        String expectedResult = """
+                [ {
+                  "@id" : "http://test.com/node-shape",
+                  "@type" : [ "http://www.w3.org/ns/shacl#NodeShape" ],
+                  "http://purl.org/dc/terms/title" : [ {
+                    "@value" : "Test Node Shape"
+                  } ]
+                } ]""";
         StreamingOutput result = shapesGraph.serializeShapesGraphContent("unknown");
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         result.write(os);
@@ -347,5 +366,93 @@ public class SimpleShapesGraphTest extends OrmEnabledTestCase {
         Set<Ontology> result = shapesGraph.getImportedOntologies();
         Set<Ontology> expectedResult = Set.of(importOntology1);
         assertEquals(expectedResult, result);
+    }
+
+    @Test
+    public void testOrderShapeNodesSortsCaseInsensitively() {
+        List<String> expectedOrder = List.of("alpha", "Bravo", "Charlie", "DELTA", "echo");;
+        assertSummaryNames(expectedOrder, shapesGraph.orderShapeNodes(nodeShapeSummaries, 0, 5));
+    }
+
+    @Test
+    public void testOrderShapeNodesSortsWithDuplicateNames() {
+        nodeShapeSummaries.add(new NodeShapeSummary("iri:A2", "alpha", "class", "t:A2", false, "ont:3"));
+        List<String> expectedOrder = List.of("alpha", "alpha", "Bravo", "Charlie", "DELTA", "echo");
+        assertSummaryNames(expectedOrder, shapesGraph.orderShapeNodes(nodeShapeSummaries, 0, 6));
+    }
+
+    @Test
+    public void testOrderShapeNodesPagination() {
+        assertSummaryNames(List.of("alpha", "Bravo"), shapesGraph.orderShapeNodes(nodeShapeSummaries, 0, 2));
+        assertSummaryNames(List.of("Bravo", "Charlie"), shapesGraph.orderShapeNodes(nodeShapeSummaries, 1, 2));
+        assertSummaryNames(List.of("DELTA", "echo"), shapesGraph.orderShapeNodes(nodeShapeSummaries, 3, 5));
+        assertSummaryNames(List.of("DELTA", "echo"), shapesGraph.orderShapeNodes(nodeShapeSummaries, 3, 2));
+    }
+
+    @Test
+    public void testOrderShapeNodesNullName() {
+        nodeShapeSummaries.add(new NodeShapeSummary("iri:N", null, "class", "t:N", false, "ont:1"));
+        List<String> expectedOrder = Arrays.asList("alpha", "Bravo", "Charlie", "DELTA", "echo", null);
+        assertSummaryNames(expectedOrder, shapesGraph.orderShapeNodes(nodeShapeSummaries, 0, nodeShapeSummaries.size()));
+    }
+
+    @Test
+    public void testOrderShapeNodesEmptyList() {
+        try {
+            assertSummaryNames(List.of(), shapesGraph.orderShapeNodes(new ArrayList<>(), 0, 10));
+        } catch (IllegalArgumentException e) {
+            assertEquals("Offset is greater than or equal to the number of nodes.", e.getMessage());
+        }
+    }
+
+    @Test
+    public void testOrderShapeNodesThrowsExceptionForZeroLimit() {
+        try {
+            shapesGraph.orderShapeNodes(nodeShapeSummaries, 0, 0);
+        } catch (IllegalArgumentException e) {
+            assertEquals("Limit must be greater than 0.", e.getMessage());
+        }
+    }
+
+    @Test
+    public void testOrderShapeNodesThrowsExceptionForNegativeLimit() {
+        try {
+            shapesGraph.orderShapeNodes(nodeShapeSummaries, 0, -5);
+        } catch (IllegalArgumentException e) {
+            assertEquals("Limit must be greater than 0.", e.getMessage());
+        }
+    }
+
+    @Test
+    public void testOrderShapeNodesThrowsExceptionForNegativeOffset() {
+        try {
+            shapesGraph.orderShapeNodes(nodeShapeSummaries, -1, 5);
+        } catch (IllegalArgumentException e) {
+            assertEquals("Offset must be greater than 0.", e.getMessage());
+        }
+    }
+
+    @Test
+    public void testOrderShapeNodesThrowsExceptionForOffsetEqualToSize() {
+        try {
+            shapesGraph.orderShapeNodes(nodeShapeSummaries, nodeShapeSummaries.size(), 1);
+        } catch (IllegalArgumentException e) {
+            assertEquals("Offset is greater than or equal to the number of nodes.", e.getMessage());
+        }
+    }
+
+    @Test
+    public void testOrderShapeNodesThrowsExceptionForOffsetGreaterThanSize() {
+        try {
+            shapesGraph.orderShapeNodes(nodeShapeSummaries, nodeShapeSummaries.size() + 1, 1);
+            fail("Should have thrown IllegalArgumentException");
+        } catch (IllegalArgumentException e) {
+            assertEquals("Offset is greater than or equal to the number of nodes.", e.getMessage());
+        }
+    }
+
+    private static void assertSummaryNames(List<String> expectedOrder, List<NodeShapeSummary> result) {
+        List<String> names = result.stream().map(NodeShapeSummary::name).toList();
+        assertEquals(expectedOrder, names);
     }
 }

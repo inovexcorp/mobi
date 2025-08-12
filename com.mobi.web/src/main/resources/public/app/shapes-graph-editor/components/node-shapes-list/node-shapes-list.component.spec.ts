@@ -10,12 +10,12 @@
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
@@ -74,7 +74,6 @@ describe('NodeShapesListComponent', () => {
       sourceOntologyIRI: 'https://mobi.solutions/shapes-graphs/example'
     }
   ];
-
   const changesObj: SimpleChanges = {
     viewedRecord: {
       previousValue: undefined,
@@ -100,7 +99,7 @@ describe('NodeShapesListComponent', () => {
       providers: [
         MockProvider(ShapesGraphStateService),
         MockProvider(ShapesGraphManagerService),
-        MockProvider(ToastService),
+        MockProvider(ToastService)
       ]
     }).compileComponents();
     toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
@@ -115,7 +114,7 @@ describe('NodeShapesListComponent', () => {
       sourceIRI: 'sourceIRI',
       nodes: []
     };
-    shapesGraphStateStub.getEntityName.and.callFake(s => splitIRI(s).end);
+    shapesGraphStateStub.getEntityName.and.callFake((entityId: string) => splitIRI(entityId).end);
     shapesGraphStateStub.setSelected.and.returnValue(of(null));
     shapesGraphManagerStub = TestBed.inject(ShapesGraphManagerService) as jasmine.SpyObj<ShapesGraphManagerService>;
     shapesGraphManagerStub.getNodeShapes.and.returnValue(of(nodeList));
@@ -128,7 +127,7 @@ describe('NodeShapesListComponent', () => {
       title: 'Test Record',
       recordId: 'recordId',
       branchId: 'branchId',
-      commitId: 'commitId',
+      commitId: 'commitId'
     };
     component.viewedRecord = 'https://mobi.solutions/shapes-graphs/example';
 
@@ -163,7 +162,10 @@ describe('NodeShapesListComponent', () => {
       component.onItemSelection(nodeShapeInfo);
       expect(shapesGraphStateStub.listItem.editorTabStates.nodeShapes.entityIRI).toEqual('iri');
       expect(shapesGraphStateStub.listItem.editorTabStates.nodeShapes.sourceIRI).toEqual('urn:newSourceOntologyIRI');
-      expect(shapesGraphStateStub.setSelected).toHaveBeenCalledWith(shapesGraphStateStub.listItem.editorTabStates.nodeShapes.entityIRI, shapesGraphStateStub.listItem);
+      expect(shapesGraphStateStub.setSelected).toHaveBeenCalledWith(
+        shapesGraphStateStub.listItem.editorTabStates.nodeShapes.entityIRI,
+        shapesGraphStateStub.listItem
+      );
     });
   });
   describe('should create the correct html', () => {
@@ -171,7 +173,9 @@ describe('NodeShapesListComponent', () => {
       shapesGraphManagerStub.getNodeShapes.and.returnValue(of([]));
       const infoMessage = element.queryAll(By.css('.no-match'));
       expect(infoMessage.length).toEqual(1);
-      expect(infoMessage[0].nativeElement.innerHTML).toContain('No node shapes match your search criteria.');
+      expect(infoMessage[0].nativeElement.innerHTML).toContain(
+        'No node shapes match your search criteria.'
+      );
       expect(element.queryAll(By.css('app-node-shapes-item')).length).toEqual(0);
     });
     it('if there are node shapes.', async () => {
@@ -189,35 +193,60 @@ describe('NodeShapesListComponent', () => {
   describe('should retrieve the correct node shapes upon component load or change', () => {
     it('unless there are errors.', () => {
       shapesGraphStateStub.listItem.editorTabStates.nodeShapes.nodes = [];
-      shapesGraphManagerStub.getNodeShapes.and.returnValue(throwError('Error Message'));
+      shapesGraphManagerStub.getNodeShapes.and.returnValue(throwError({errorMessage: 'Error Message'}));
       component.ngOnChanges(changesObj);
       fixture.detectChanges();
-      expect(shapesGraphManagerStub.getNodeShapes).toHaveBeenCalledWith('recordId', 'branchId', 'commitId', true, '');
-      expect(toastStub.createErrorToast).toHaveBeenCalledWith('Error Message');
+      expect(shapesGraphManagerStub.getNodeShapes).toHaveBeenCalledWith(
+        'recordId',
+        'branchId',
+        'commitId',
+        true,
+        ''
+      );
       expect(shapesGraphStateStub.listItem.editorTabStates.nodeShapes.nodes).toEqual([]);
+      expect(toastStub.createErrorToast).toHaveBeenCalledWith('Error Message');
     });
     it('if there are node shapes', () => {
       component.ngOnChanges(changesObj);
       fixture.detectChanges();
-      expect(shapesGraphManagerStub.getNodeShapes).toHaveBeenCalledWith('recordId', 'branchId', 'commitId', true, '');
+      expect(shapesGraphManagerStub.getNodeShapes).toHaveBeenCalledWith(
+        'recordId',
+        'branchId',
+        'commitId',
+        true,
+        ''
+      );
       expect(shapesGraphStateStub.listItem.editorTabStates.nodeShapes.nodes).toEqual(nodeList);
+      expect(toastStub.createErrorToast).not.toHaveBeenCalled();
     });
   });
   describe('should retrieve the filtered list of node shapes upon search', () => {
     it('unless there are errors.', () => {
       component.searchText = 'test';
-      shapesGraphManagerStub.getNodeShapes.and.returnValue(throwError('Error Message'));
+      shapesGraphManagerStub.getNodeShapes.and.returnValue(throwError({errorMessage: 'Error Message'}));
       component.ngOnChanges(changesObj);
       fixture.detectChanges();
-      expect(shapesGraphManagerStub.getNodeShapes).toHaveBeenCalledWith('recordId', 'branchId', 'commitId', true, 'test');
-      expect(toastStub.createErrorToast).toHaveBeenCalledWith('Error Message');
+      expect(shapesGraphManagerStub.getNodeShapes).toHaveBeenCalledWith(
+        'recordId',
+        'branchId',
+        'commitId',
+        true,
+        'test'
+      );
       expect(shapesGraphStateStub.listItem.editorTabStates.nodeShapes.nodes).toEqual([]);
+      expect(toastStub.createErrorToast).toHaveBeenCalledWith('Error Message');
     });
     it('if there are node shapes', () => {
       component.searchText = 'test';
       component.ngOnChanges(changesObj);
       fixture.detectChanges();
-      expect(shapesGraphManagerStub.getNodeShapes).toHaveBeenCalledWith('recordId', 'branchId', 'commitId', true, 'test');
+      expect(shapesGraphManagerStub.getNodeShapes).toHaveBeenCalledWith(
+        'recordId',
+        'branchId',
+        'commitId',
+        true,
+        'test'
+      );
       expect(shapesGraphStateStub.listItem.editorTabStates.nodeShapes.nodes).toEqual(nodeList);
     });
   });

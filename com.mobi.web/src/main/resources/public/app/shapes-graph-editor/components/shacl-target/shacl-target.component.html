@@ -21,103 +21,46 @@
   #L%
   -->
 <div class="shacl-target w-100">
-  <div class="section-header">
-    <h5>Target</h5><a class="float-right text-muted" [matMenuTriggerFor]="targetInfo"><mat-icon>info</mat-icon></a>
-    <!-- TODO Uncomment block for MP-3199 -->
-    <!-- <div *ngIf="canModify">
-      <button *ngIf="!editMode" mat-raised-button class="edit-button" color="primary" type="button"
-        (click)="onEdit()">
-        Edit
-      </button>
-      <button *ngIf="editMode" mat-raised-button class="save-button" color="primary" type="button" (click)="onSave()">
-        Save
-      </button>
-    </div> -->
+  <div class="section-header d-flex justify-content-between align-items-center w-100">
+    <h5 class="m-0">Target</h5>
+    <div class="header-actions d-flex align-items-center gap-2">
+      <div *ngIf="canModify && !isImported" class="text-muted">
+        <button *ngIf="editMode === 'DISABLED'" class="edit-button" mat-icon-button color="primary" (click)="onEdit()">
+          <i class="fa fa-pencil"></i> <!-- <mat-icon>edit</mat-icon> for consistency ? -->
+        </button>
+        <button *ngIf="editMode === 'ENABLED'" 
+          class="save-button" mat-icon-button color="primary" title="Save Changes to Node Shape."
+          [disabled]="targetForm.invalid" (click)="onSave()">
+          <mat-icon>save</mat-icon>
+        </button>
+      </div>
+      <a class="text-muted" [matMenuTriggerFor]="targetInfo"><mat-icon>info</mat-icon></a>
+    </div>
   </div>
-  <form class="shacl-target" [formGroup]="targetForm">
+  <form class="shacl-target-form" [formGroup]="targetForm">
     <!-- Target Radio Buttons -->
-    <fieldset class="form-field-style">
-      <mat-radio-group class="target-select d-flex flex-column" aria-label="Select target of node shape" formControlName="target"
-        (change)="handleTargetChange($event)" required>
-        <mat-radio-button class="radioButton" *ngFor="let option of targetStrategies" [value]="option.targetIri">
-          <span [title]="option.description">{{ option.label }}</span>
-        </mat-radio-button>
-      </mat-radio-group>
-    </fieldset>
-    <ng-template #iriErrors>
-      <mat-error *ngIf="targetForm.get('targetValue')?.hasError('required')">
-        This field is required.
-      </mat-error>
-      <mat-error *ngIf="targetForm.get('targetValue')?.hasError('pattern')">
-        Please enter a valid IRI (e.g., https://example.org/resource).
-      </mat-error>
-    </ng-template>
+    <app-shacl-target-selector formControlName="target" (selectionChange)="handleTargetChange($event)">
+    </app-shacl-target-selector>
     <!-- Target Value Field -->
-    <ng-container [ngSwitch]="targetLabel.value" *ngIf="(targetLabel$ | async) as targetLabel">
-      <!-- TargetNode -->
-      <ng-container *ngSwitchCase="TARGET_NODE">
-        <mat-form-field class="w-100">
-          <mat-label>{{ targetLabel.label }}</mat-label>
-          <input type="text" matInput formControlName="targetValue" required />
-          <ng-container *ngTemplateOutlet="iriErrors"></ng-container>
-        </mat-form-field>
-      </ng-container>
-      <!-- ImplicitReference -->
+    <ng-container *ngIf="targetOption" [ngSwitch]="targetOption.iri">
       <ng-container *ngSwitchCase="IMPLICIT_REFERENCE">
       </ng-container>
-      <!-- Case for when nodeShape does not have target -->
-      <ng-container *ngSwitchCase="''">
-      </ng-container>
-      <!-- TargetClass -->
-      <ng-container *ngSwitchCase="TARGET_CLASS">
-        <mat-form-field class="w-100">
-          <mat-label>{{ targetLabel.label }}</mat-label>
-          <input type="text" matInput formControlName="targetValue" [matAutocomplete]="auto" required [title]="targetForm.get('targetValue')?.value || ''"/>
-          <ng-container *ngTemplateOutlet="iriErrors"></ng-container>
-          <mat-autocomplete #auto="matAutocomplete" [displayWith]="targetValueDisplay.bind(this)">
-            <ng-container *ngFor="let group of targetValueSuggestions">
-              <mat-optgroup [label]="group.label">
-                <mat-option *ngFor="let suggestion of group.suggestions" [value]="suggestion.value">
-                  <span [title]="suggestion.value">{{ suggestion.label }}</span>
-                </mat-option>
-              </mat-optgroup>
-            </ng-container>
-          </mat-autocomplete>
-        </mat-form-field>
-      </ng-container>
-      <!-- TargetObjectsOf/TargetSubjectsOf -->
-      <ng-container *ngSwitchDefault>
-        <mat-form-field class="w-100">
-          <mat-label>{{ targetLabel.label }}</mat-label>
-          <mat-chip-list #chipList aria-label="Target Values" [selectable]="editMode">
-            <mat-chip *ngFor="let chipValue of chipValues; let i = index" 
-              [selectable]="editMode"
-              [removable]="editMode"
-              (removed)="removeChip(i)"
-              [disabled]="!editMode"
-              [title]="chipValue.value">
-              {{ chipValue.label }}
-              <mat-icon matChipRemove>cancel</mat-icon>
-            </mat-chip>
-            <!--  Input for typing and autocomplete -->
-            <input [matChipInputFor]="chipList" [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
-              [matChipInputAddOnBlur]="false" (matChipInputTokenEnd)="addChipFromInput($event)" matInput
-              formControlName="targetValue" [matAutocomplete]="auto" />
-          </mat-chip-list>
-          <ng-container *ngTemplateOutlet="iriErrors"></ng-container>
-          <!--  Autocomplete Dropdown -->
-          <mat-autocomplete #auto="matAutocomplete" [displayWith]="targetValueDisplay.bind(this)">
-            <ng-container *ngFor="let group of targetValueSuggestions">
-              <mat-optgroup [label]="group.label">
-                <mat-option *ngFor="let suggestion of group.suggestions" [value]="suggestion.value"
-                  (onSelectionChange)="addChip(suggestion, $event)">
-                  <span [title]="suggestion.value">{{ suggestion.label }}</span>
-                </mat-option>
-              </mat-optgroup>
-            </ng-container>
-          </mat-autocomplete>
-        </mat-form-field>
-      </ng-container>
+      <app-shacl-target-node-input *ngSwitchCase="TARGET_NODE"
+        class="target-input"
+        formControlName="targetValue"
+        [label]="targetOption.valueLabel">
+      </app-shacl-target-node-input>
+      <app-shacl-target-class-input *ngSwitchCase="TARGET_CLASS"
+        class="target-input"
+        formControlName="targetValue"
+        [label]="targetOption.valueLabel">
+      </app-shacl-target-class-input>
+      <app-shacl-target-chip-input *ngSwitchDefault
+        class="target-input"
+        formControlName="targetValues"
+        [label]="targetOption.valueLabel"
+        [targetType]="targetOption.iri">
+      </app-shacl-target-chip-input>
     </ng-container>
   </form>
 </div>

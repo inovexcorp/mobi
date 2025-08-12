@@ -28,7 +28,7 @@ var shapes_graph = path.resolve(__dirname + '/../../resources/rdf_files/UHTC_Nod
 module.exports = {
     '@tags': ['sanity', 'shapes-editor', 'shapes-editor-node-shapes'],
 
-    'Step 1: Initial Setup' : function(browser) {
+    'Step 1: Initial Setup': function(browser) {
         browser.globals.initial_steps(browser, adminUsername, adminPassword)
         browser.globals.switchToPage(browser, 'shapes-graph-editor', 'shapes-graph-editor-page')
     },
@@ -105,7 +105,7 @@ module.exports = {
 
     'Step 8: Verify Target section details for selected Node Shape': function(browser) {
         browser.page.shapesEditorPage()
-            .verifyTargetSectionForNodeShape('Types of Instance', 'Select a Type', 'Element', true);
+            .verifyTargetSectionForNodeShape('Types of Instance', 'Select a Type', 'http://matonto.org/ontologies/uhtc#Element', true);
     },
 
     'Step 9: Remove a Property Shape': function(browser) {
@@ -115,15 +115,57 @@ module.exports = {
         browser.page.shapesEditorPage().verifyPropertyShapeDisplay(1, 'Element Name', 2);
     },
 
-    'Step 10: Verify Property Shape Removal': function(browser) {
+    'Step 10: Verify Property Shape Removal and Commit changes': function(browser) {
         browser.page.shapesEditorPage().toggleChangesPage();
         browser.globals.wait_for_no_spinners(browser);
-        browser.useCss()
-            .waitForElementVisible('app-changes-page div.changes-info button.mat-warn')
-            // For some reason Nightwatch really wanted to see the selector as XPath...
-            .expect.elements({
-              selector: 'app-changes-page mat-expansion-panel',
-              locateStrategy: 'css selector'
-            }).count.to.equal(2);
+        browser.page.shapesEditorPage().verifyChangePageCommitNum(2);
+        // > Commit Changes
+        browser.page.shapesEditorPage().commit('Property Shape Removal');
+        browser.globals.wait_for_no_spinners(browser);
+        browser.globals.dismiss_toast(browser);
+        // > Verify No Changes to commit
+        browser.page.shapesEditorPage().verifyUncommittedChanges(false);
+        browser.page.shapesEditorPage().verifyChangePageCommitNum(0);
+        // > Toggle Back
+        browser.page.shapesEditorPage().toggleChangesPage(false);
+        browser.globals.wait_for_no_spinners(browser)
+    },
+
+    'Step 11: Edit Target': function(browser) {
+        browser.page.shapesEditorPage()
+            .selectNodeShape('Test Element node shape');
+        // > Click on edit button
+        browser.page.shapesEditorPage()
+            .useCss()
+            .waitForElementVisible('@shaclTargetForm')
+            .waitForElementVisible('@shaclTargetEditButton')
+            .click('@shaclTargetEditButton');
+        // > Click on Specific Instance (edit node iri) radio button
+        browser.page.shapesEditorPage()
+            .useCss()
+            .waitForElementVisible('@shaclTargetForm')
+            .waitForElementVisible('@targetRadioGroup')
+            .useXpath()
+            .waitForElementVisible('//mat-radio-button[contains(., "Specific Instance")]')
+            .click('//mat-radio-button[contains(., "Specific Instance")]');
+        // > Select a Type Input - Type IRI 
+        browser.page.shapesEditorPage()
+            .useCss()
+            .waitForElementVisible('@targetValueInput')
+            .clearValue('@targetValueInput')
+            .setValue('@targetValueInput', 'urn:newTargetIri');
+        // > Click on Save button
+        browser.page.shapesEditorPage()
+            .useCss()
+            .waitForElementVisible('@shaclTargetSaveButton')
+            .assert.enabled('@shaclTargetSaveButton')
+            .click('@shaclTargetSaveButton');
+        // > Verify Changes
+        browser.page.shapesEditorPage().toggleChangesPage();
+        browser.page.shapesEditorPage().verifyChangePageCommitNum(1);
+        // > Commit Change 
+        browser.page.shapesEditorPage()
+            .commit('Property Shape Removal');
+        browser.globals.wait_for_no_spinners(browser);
     }
 }

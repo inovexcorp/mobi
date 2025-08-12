@@ -20,16 +20,16 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-  
-<div class="shapes-preview h-100">
-  <mat-card class="d-flex flex-column h-100">
-    <mat-card-header>
-      <form [formGroup]="serializationForm">
-        <serialization-select class="d-inline-block" [parentForm]="serializationForm"></serialization-select>
-        <button mat-raised-button color="primary" class="refresh-button ml-2"
-            (click)="setContent()">Refresh</button>
-      </form>
-    </mat-card-header>
-    <mat-card-content class="flex-1 remove-min-height position-relative" #shapesGraphContent></mat-card-content>
-  </mat-card>
-</div>
+<mat-form-field class="w-100">
+  <mat-label>{{ label }}</mat-label>
+  <input type="text" matInput
+    [formControl]="nodeInputControl"
+    (input)="onChange($event.target.value)"
+    (blur)="onTouched()"/>
+  <mat-error *ngIf="nodeInputControl.hasError('required')">
+    This field is required.
+  </mat-error>
+  <mat-error *ngIf="nodeInputControl.hasError('pattern')">
+    Please enter a valid IRI
+  </mat-error>
+</mat-form-field>

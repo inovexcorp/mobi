@@ -53,9 +53,9 @@ export interface SubjectImportMap {
  * 
  * Represents the import status of a single entity within an ontology.
  *
- * @property {boolean} imported - Indicates whether the entity was imported.
- * @property {boolean=} alsoLocal - Optional. True if the entity also exists locally in addition to being imported.
- * @property {string[]=} ontologyIds - Optional. A list of ontology IRIs the entity was imported from.
+ * @property {boolean} imported Indicates whether the entity was imported.
+ * @property {boolean} alsoLocal Optional. True if the entity also exists locally in addition to being imported.
+ * @property {string[]} ontologyIds Optional. A list of ontology IRIs the entity was imported from.
  */
 export interface EntityImportStatus {
   imported: boolean;

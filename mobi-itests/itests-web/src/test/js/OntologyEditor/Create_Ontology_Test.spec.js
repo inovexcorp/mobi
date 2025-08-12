@@ -92,14 +92,8 @@ module.exports = {
 
     'Step 12: Verify changes are shown': function(browser) {
         browser.page.ontologyEditorPage().toggleChangesPage();
-        browser
-            .useCss()
-            .waitForElementVisible('app-changes-page div.changes-info button.mat-warn')
-            // Used selector object because it was determined to use xpath despite the useCss right before...
-            .expect.elements({
-                locateStrategy: 'css selector',
-                selector: 'app-changes-page mat-expansion-panel'
-            }).count.to.equal(1);
+        browser.globals.wait_for_no_spinners(browser);
+        browser.page.ontologyEditorPage().verifyChangePageCommitNum(1);
         browser
             .useCss()
             .waitForElementVisible('app-changes-page mat-expansion-panel mat-panel-title[title*="firstClass"]')
@@ -119,10 +113,9 @@ module.exports = {
     'Step 13: Commit Changes': function(browser) {
         browser.page.ontologyEditorPage().commit('commit123');
         browser.globals.wait_for_no_spinners(browser);
-        browser
-            .assert.not.elementPresent('mat-chip.uncommitted')
-            .assert.not.elementPresent('app-changes-page mat-expansion-panel')
-            .assert.textContains('app-changes-page info-message p', 'No Changes to Display')
+        browser.page.ontologyEditorPage().verifyUncommittedChanges(false);
+        browser.page.ontologyEditorPage().verifyChangePageCommitNum(0);
+        browser.useCss()
             .expect.elements('commit-history-table svg .commit-hash-string').count.to.equal(3);
         browser.globals.dismiss_toast(browser);
     },

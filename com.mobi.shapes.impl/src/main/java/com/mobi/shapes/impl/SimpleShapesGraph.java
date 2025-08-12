@@ -282,11 +282,22 @@ public class SimpleShapesGraph implements ShapesGraph {
         if (limit <= 0) {
             throw new IllegalArgumentException("Limit must be greater than 0.");
         }
-        nodeShapeSummaries.sort(Comparator.comparing(NodeShapeSummary::name));
+        if (offset < 0) {
+            throw new IllegalArgumentException("Offset must be greater than 0.");
+        }
         if (offset >= nodeShapeSummaries.size()) {
             throw new IllegalArgumentException("Offset is greater than or equal to the number of nodes.");
         }
+        nodeShapeSummaries.sort(Comparator.nullsLast(
+                Comparator.comparing(
+                    NodeShapeSummary::name,
+                    Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)
+                )
+            ));
         int toIndex = Math.min(offset + limit, nodeShapeSummaries.size());
+        if (offset > toIndex) {
+            return List.of();
+        }
         return nodeShapeSummaries.subList(offset, toIndex);
     }
 

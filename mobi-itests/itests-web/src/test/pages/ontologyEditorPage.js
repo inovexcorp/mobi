@@ -109,6 +109,10 @@ const ontologyEditorCommands = {
         return this.api.page.editorPage().verifyUncommittedChanges(parentEl, shouldBeVisible);
     },
 
+    verifyChangePageCommitNum: function(number) {
+      return this.api.page.editorPage().verifyChangePageCommitNum(parentEl, number);
+    },
+
     // TODO: Figure out what to do with this
     isActive: function (option) {
         if (option === 'ontology-tab') {

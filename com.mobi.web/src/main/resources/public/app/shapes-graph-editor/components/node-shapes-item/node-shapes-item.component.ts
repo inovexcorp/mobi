@@ -25,7 +25,7 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { NodeShapeSummary } from '../../models/node-shape-summary.interface';
 
 /**
- * @class shapes-graph-editor.NodeShapesItemComponent
+ * @class NodeShapesItemComponent
  *
  * This component displays a summary card for a SHACL Node Shape.
  * 

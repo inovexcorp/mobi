@@ -1982,7 +1982,7 @@ export class OntologyStateService extends VersionedRdfState<OntologyListItem> {
         const paths = [];
         const individuals = [];
 
-        individual['@type'].forEach((type) => {
+        individual['@type'].forEach((type: string) => {
             const indivArr = [];
             const existingInds = get(this.listItem.classesAndIndividuals, type);
             const path = this.getPathsTo(this.listItem.classes, type);

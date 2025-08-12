@@ -25,7 +25,7 @@
     [versionedRdfRecord]="listItem.versionedRdfRecord"
     [viewedRecord]="listItem.shapesGraphId">
   </app-node-shapes-list>
-  <app-node-shapes-display *ngIf="listItem.selected"
+  <app-node-shapes-display *ngIf="listItem.selected && listItem.editorTabStates.nodeShapes.entityIRI"
     class="selected-node col-9 h-100 pt-2"
     [nodeShape]="listItem.selected"
     [selectedEntityIRI]="listItem.selected['@id']"

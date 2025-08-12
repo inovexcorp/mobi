@@ -4483,13 +4483,13 @@ describe('Ontology State Service', function() {
         service.listItem.selectedBlankNodes = [{ '@id': '_:genid1' }];
       });
       it('but is not present in the listItems list of selectedBlankNodes', fakeAsync(function() {
-        this.key = 'http://www.w3.org/2000/01/rdf-schema#subClassOf';
+        this.key = `${RDFS}subClassOf`;
         service.listItem.selected = {
           '@id': 'http://mobi.inovexcorp.com/ontology/test/bnode#ClassC',
           '@type': [
             'http://www.w3.org/2002/07/owl#Class'
           ],
-          'http://www.w3.org/2000/01/rdf-schema#subClassOf': [
+          [`${RDFS}subClassOf`]: [
             {
               '@id': 'http://mobi.com/.well-known/genid/genid-91a0b08612a24e18a7a3d528e8ba6f6916-b1'
             },
@@ -4500,7 +4500,7 @@ describe('Ontology State Service', function() {
         };
         this.expected = {
           '@id': 'http://mobi.inovexcorp.com/ontology/test/bnode#ClassC',
-          'http://www.w3.org/2000/01/rdf-schema#subClassOf': [
+          [`${RDFS}subClassOf`]: [
             {
               '@id': 'http://mobi.com/.well-known/genid/genid-91a0b08612a24e18a7a3d528e8ba6f6916-b1'
             }

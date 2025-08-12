@@ -10,12 +10,12 @@
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
@@ -27,27 +27,26 @@ import { ShapesGraphStateService } from '../../../shared/services/shapesGraphSta
 import { stateServiceToken } from '../../../shared/injection-token';
 
 /**
- * @class shapes-graph-editor.ShapesGraphEditorPageComponent
- * @requires shared.ShapesGraphStateService
+ * @class ShapesGraphEditorPageComponent
+ * @requires ShapesGraphStateService
  *
  * A component which creates the main page of the Shapes Graph Editor module.
  */
 @Component({
-    selector: 'shapes-graph-editor-page',
-    templateUrl: './shapesGraphEditorPage.component.html',
-    styleUrls: ['./shapesGraphEditorPage.component.scss'],
-    providers: [
-        {
-            provide: stateServiceToken,
-            useExisting: ShapesGraphStateService
-        }
-    ]
+  selector: 'shapes-graph-editor-page',
+  templateUrl: './shapesGraphEditorPage.component.html',
+  styleUrls: ['./shapesGraphEditorPage.component.scss'],
+  providers: [
+    {
+      provide: stateServiceToken,
+      useExisting: ShapesGraphStateService
+    }
+  ]
 })
 export class ShapesGraphEditorPageComponent {
+  constructor(public state: ShapesGraphStateService) {}
 
-    constructor(public state: ShapesGraphStateService) {}
-
-    keys(object: JSONLDObject): Array<string> {
-        return Object.keys(object);
-    }
+  keys(object: JSONLDObject): Array<string> {
+    return Object.keys(object);
+  }
 }
