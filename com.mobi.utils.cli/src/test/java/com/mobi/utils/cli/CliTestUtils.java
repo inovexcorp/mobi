@@ -60,7 +60,7 @@ public class CliTestUtils {
         try (RepositoryConnection conn = repo.getConnection()) {
             conn.begin();
             for(String name : files){
-                InputStream testData = RestoreTest.class.getResourceAsStream(name);
+                InputStream testData = RestoreServiceTest.class.getResourceAsStream(name);
                 conn.add(Rio.parse(testData, "", RDFFormat.TRIG));
             }
             conn.commit();
