@@ -24,9 +24,9 @@ import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { HttpResponse } from '@angular/common/http';
 
+import { cloneDeep, concat, map } from 'lodash';
 import { MockPipe, MockProvider } from 'ng-mocks';
 import { Subject, of, throwError } from 'rxjs';
-import { cloneDeep, concat, map } from 'lodash';
 
 import { CATALOG, DCTERMS, OWL, RDF, SH, SHAPESGRAPHEDITOR, XSD } from '../../prefixes';
 import { CatalogManagerService } from './catalogManager.service';
@@ -49,12 +49,13 @@ import { SettingManagerService } from './settingManager.service';
 import { SHAPES_STORE_TYPE } from '../../constants';
 import { ShapesGraphListItem } from '../models/shapesGraphListItem.class';
 import { ShapesGraphManagerService } from './shapesGraphManager.service';
+import { ShapesGraphStateService } from './shapesGraphState.service';
 import { SparqlManagerService } from './sparqlManager.service';
+import { SPARQLSelectResults } from '../models/sparqlSelectResults.interface';
 import { StateManagerService } from './stateManager.service';
 import { ToastService } from './toast.service';
 import { UpdateRefsService } from './updateRefs.service';
 import { VersionedRdfUploadResponse } from '../models/versionedRdfUploadResponse.interface';
-import { ShapesGraphStateService } from './shapesGraphState.service';
 
 describe('Shapes Graph State service', function() {
   let service: ShapesGraphStateService;
@@ -66,12 +67,10 @@ describe('Shapes Graph State service', function() {
   let policyEnforcementStub: jasmine.SpyObj<PolicyEnforcementService>;
   let policyManagerStub: jasmine.SpyObj<PolicyManagerService>;
   let prefixationStub: jasmine.SpyObj<PrefixationPipe>;
-  let progressSpinnerStub: jasmine.SpyObj<ProgressSpinnerService>;
   let propertyManagerStub: jasmine.SpyObj<PropertyManagerService>;
   let settingManagerStub: jasmine.SpyObj<SettingManagerService>;
   let shapesGraphManagerStub: jasmine.SpyObj<ShapesGraphManagerService>;
   let sparqlManagerStub: jasmine.SpyObj<SparqlManagerService>;
-  let toastStub: jasmine.SpyObj<ToastService>;
   let updateRefsStub: jasmine.SpyObj<UpdateRefsService>;
 
   let exclusionList: string[] = [];
@@ -140,13 +139,10 @@ describe('Shapes Graph State service', function() {
     propertyManagerStub = TestBed.inject(PropertyManagerService) as jasmine.SpyObj<PropertyManagerService>;
     prefixationStub = TestBed.inject(PrefixationPipe) as jasmine.SpyObj<PrefixationPipe>;
     prefixationStub.transform.and.callFake(a => a);
-    
-    progressSpinnerStub = TestBed.inject(ProgressSpinnerService) as jasmine.SpyObj<ProgressSpinnerService>;
 
     mergeRequestManagerServiceStub = TestBed.inject(MergeRequestManagerService) as jasmine.SpyObj<MergeRequestManagerService>;
-    toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
     catalogManagerStub = TestBed.inject(CatalogManagerService) as jasmine.SpyObj<CatalogManagerService>;
-    catalogManagerStub.localCatalog = { '@id': catalogId, '@type': [] };
+    catalogManagerStub.localCatalog = {'@id': catalogId, '@type': []};
 
     _catalogManagerActionSubject = new Subject<EventWithPayload>();
     _mergeRequestManagerActionSubject = new Subject<EventWithPayload>();
@@ -201,11 +197,9 @@ describe('Shapes Graph State service', function() {
     manchesterConverterStub = null;
     policyEnforcementStub = null;
     policyManagerStub = null;
-    progressSpinnerStub = null;
     settingManagerStub = null;
     shapesGraphManagerStub = null;
     sparqlManagerStub = null;
-    toastStub = null;
     updateRefsStub = null;
   });
 
@@ -467,16 +461,17 @@ describe('Shapes Graph State service', function() {
     });
     describe('first deleting the state', function() {
       describe('then deleting the record', function() {
-        it('successfully', async function() {
+        it('successfully', function() {
           catalogManagerStub.deleteRecord.and.returnValue(of(null));
-          await service.delete('recordId')
-            .subscribe(() => { }, () => fail('Observable should have succeeded'));
+          service.delete('recordId')
+            .subscribe(() => {
+            }, () => fail('Observable should have succeeded'));
           expect(this.deleteStateSpy).toHaveBeenCalledWith('recordId');
           expect(catalogManagerStub.deleteRecord).toHaveBeenCalledWith('recordId', catalogId);
         });
-        it('unless an error occurs', async function() {
+        it('unless an error occurs', function() {
           catalogManagerStub.deleteRecord.and.returnValue(throwError(error));
-          await service.delete('recordId')
+          service.delete('recordId')
             .subscribe(() => {
               fail('Observable should have rejected');
             }, response => {
@@ -486,9 +481,9 @@ describe('Shapes Graph State service', function() {
           expect(catalogManagerStub.deleteRecord).toHaveBeenCalledWith('recordId', catalogId);
         });
       });
-      it('unless an error occurs', async function() {
+      it('unless an error occurs', function() {
         this.deleteStateSpy.and.returnValue(throwError(error));
-        await service.delete('recordId')
+        service.delete('recordId')
           .subscribe(() => {
             fail('Observable should have rejected');
           }, response => {
@@ -650,7 +645,7 @@ describe('Shapes Graph State service', function() {
   });
   describe('should merge shapes graph branches', function() {
     beforeEach(function() {
-      service.list = [listItem]
+      service.list = [listItem];
       service.listItem = listItem;
       service.listItem.versionedRdfRecord.recordId = 'recordId';
       service.listItem.versionedRdfRecord.branchId = 'sourceBranchId';
@@ -665,18 +660,18 @@ describe('Shapes Graph State service', function() {
     });
     describe('and should change the shapes graph version to the target branch', function() {
       describe('and handle if the checkbox is', function() {
-        it('checked', async function() {
+        it('checked', function() {
           service.listItem.merge.checkbox = true;
-          await service.merge()
+          service.merge()
             .subscribe(() => {
               expect(catalogManagerStub.mergeBranches).toHaveBeenCalledWith('sourceBranchId', 'targetBranchId', 'recordId', 'catalogId', new Difference(), []);
               expect(this.changeVersionSpy).toHaveBeenCalledWith('recordId', 'targetBranchId', 'commitId', undefined, 'branchTitle', true, false, false);
               expect(catalogManagerStub.deleteRecordBranch).toHaveBeenCalledWith('recordId', 'sourceBranchId', catalogId);
             }, () => fail('Observable should have succeeded'));
         });
-        it('unchecked', async function() {
+        it('unchecked', function() {
           service.listItem.merge.checkbox = false;
-          await service.merge()
+          service.merge()
             .subscribe(() => {
               expect(catalogManagerStub.mergeBranches).toHaveBeenCalledWith('sourceBranchId', 'targetBranchId', 'recordId', 'catalogId', new Difference(), []);
               expect(this.changeVersionSpy).toHaveBeenCalledWith('recordId', 'targetBranchId', 'commitId', undefined, 'branchTitle', true, false, false);
@@ -684,9 +679,9 @@ describe('Shapes Graph State service', function() {
             }, () => fail('Observable should have succeeded'));
         });
       });
-      it('unless an error occurs', async function() {
+      it('unless an error occurs', function() {
         this.changeVersionSpy.and.returnValue(throwError('Error'));
-        await service.merge()
+        service.merge()
           .subscribe(() => {
             fail('Observable should have errored');
           }, response => {
@@ -697,9 +692,9 @@ describe('Shapes Graph State service', function() {
           });
       });
     });
-    it('unless an error occurs', async function() {
+    it('unless an error occurs', function() {
       catalogManagerStub.mergeBranches.and.returnValue(throwError('Error'));
-      await service.merge()
+      service.merge()
         .subscribe(() => {
           fail('Observable should have rejected');
         }, response => {
@@ -728,7 +723,7 @@ describe('Shapes Graph State service', function() {
         ]
       }));
       shapesGraphManagerStub.getShapesGraphContent.and.returnValue(of('content'));
-      catalogManagerStub.getRecordBranches.and.returnValue(of(new HttpResponse<JSONLDObject[]>({ body: branches })))
+      catalogManagerStub.getRecordBranches.and.returnValue(of(new HttpResponse<JSONLDObject[]>({ body: branches })));
     });
     describe('if getShapesGraphIRI succeeds', () => {
       beforeEach(() => {
@@ -939,6 +934,42 @@ describe('Shapes Graph State service', function() {
       expect(service.getEntityNames).not.toHaveBeenCalledWith();
       expect(service.setSelected).not.toHaveBeenCalled();
     }));
+  });
+  describe('should check if the node shape graph contains excluded predicates', function() {
+    it('and return the number of excluded predicates if successful', function() {
+      service.listItem = listItem;
+      const sparqlResults: SPARQLSelectResults = {
+        head: { vars: ['unsupportedNum'] },
+        results: {
+          bindings: [
+            {
+              unsupportedNum: {
+                datatype: 'http://www.w3.org/2001/XMLSchema#integer',
+                type: 'literal',
+                value: '1'
+              }
+            }
+          ]
+        }
+      };
+      sparqlManagerStub.postQuery.and.returnValue(of(sparqlResults));
+      service.checkForExcludedPredicates('http://stardog.com/tutorial/AlbumShape').subscribe(result => {
+        expect(result).toEqual('1');
+        expect(sparqlManagerStub.postQuery).toHaveBeenCalledWith(jasmine.any(String), 'recordId', SHAPES_STORE_TYPE, 'branchId',
+          'commitId', true, true, 'jsonld');
+      });
+    });
+    it('and throw an error if unsuccessful', function() {
+      service.listItem = listItem;
+      const sparqlResults = 'invalid response type';
+      sparqlManagerStub.postQuery.and.returnValue(of(sparqlResults));
+      service.checkForExcludedPredicates('http://stardog.com/tutorial/AlbumShape')
+        .subscribe(() => fail('Observable should not have resolved'), error => {
+          expect(error).toEqual('Could not retrieve number of unsupported predicates.');
+          expect(sparqlManagerStub.postQuery).toHaveBeenCalledWith(jasmine.any(String), 'recordId', SHAPES_STORE_TYPE,
+            'branchId', 'commitId', true, true, 'jsonld');
+        });
+    });
   });
   describe('onIriEdit calls the appropriate manager methods', function() {
     const iriBegin = 'www.example.com/test-record';

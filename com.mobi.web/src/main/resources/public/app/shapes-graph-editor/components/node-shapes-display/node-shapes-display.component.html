@@ -27,7 +27,8 @@
       [entity]="nodeShape"
       [entityIri]="nodeShape['@id']"
       [isImported]="stateService.isSelectedImported()"
-      [canModify]="canModify">
+      [canModify]="canModify"
+      [warningText]="predicateWarningText">
     </selected-details>
   </div>
   <div class="row flex-1 remove-min-height">

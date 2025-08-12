@@ -20,30 +20,29 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-
-import { DebugElement } from '@angular/core';
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { By } from '@angular/platform-browser';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { DebugElement } from '@angular/core';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import { MatMenuModule } from '@angular/material/menu';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+
 import { MockComponent, MockProvider, MockPipe } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 
 import { cleanStylesFromDOM } from '../../../../test/ts/Shared';
 import { IndividualTypesModalComponent } from '../../../ontology-editor/components/individualTypesModal/individualTypesModal.component';
 import { ManchesterConverterService } from '../../services/manchesterConverter.service';
-import { OntologyManagerService } from '../../services/ontologyManager.service';
 import { OntologyStateService } from '../../services/ontologyState.service';
 import { PrefixationPipe } from '../../pipes/prefixation.pipe';
+import { SelectedDetailsComponent } from './selectedDetails.component';
 import { StaticIriComponent } from '../staticIri/staticIri.component';
 import { ToastService } from '../../services/toast.service';
-import { SelectedDetailsComponent } from './selectedDetails.component';
 
 describe('Selected Details component', function () {
   let component: SelectedDetailsComponent;
   let element: DebugElement;
   let fixture: ComponentFixture<SelectedDetailsComponent>;
-  let manchesterConverterStub: jasmine.SpyObj<ManchesterConverterService>;
   let matDialog: jasmine.SpyObj<MatDialog>;
   let ontologyStateStub: jasmine.SpyObj<OntologyStateService>;
   let prefixationStub: jasmine.SpyObj<PrefixationPipe>;
@@ -60,6 +59,7 @@ describe('Selected Details component', function () {
       imports: [
         NoopAnimationsModule,
         MatDialogModule,
+        MatMenuModule
       ],
       declarations: [
         SelectedDetailsComponent,
@@ -79,8 +79,6 @@ describe('Selected Details component', function () {
       ]
     }).compileComponents();
     matDialog = TestBed.inject(MatDialog) as jasmine.SpyObj<MatDialog>;
-    
-    manchesterConverterStub = TestBed.inject(ManchesterConverterService) as jasmine.SpyObj<ManchesterConverterService>;
     toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
     ontologyStateStub = TestBed.inject(OntologyStateService) as jasmine.SpyObj<OntologyStateService>;
     ontologyStateStub.canModifyEntityTypes.and.returnValue(true);
@@ -106,7 +104,6 @@ describe('Selected Details component', function () {
     fixture = null;
     ontologyStateStub = null;
     matDialog = null;
-    manchesterConverterStub = null;
     toastStub = null;
   });
 
@@ -158,6 +155,8 @@ describe('Selected Details component', function () {
   describe('contains the correct html', function () {
     it('for wrapping containers', function () {
       expect(element.queryAll(By.css('.selected-details')).length).toEqual(1);
+      expect(element.queryAll(By.css('.warning-icon-holder')).length).toEqual(0);
+      expect(element.queryAll(By.css('.warning-icon')).length).toEqual(0);
     });
     it('depending on whether something is selected', function () {
       fixture.detectChanges();
@@ -234,6 +233,15 @@ describe('Selected Details component', function () {
       component.ngOnChanges();
       fixture.detectChanges();
       expect(element.queryAll(By.css('.is-imported-ontology')).length).toEqual(0);
+    });
+    it('when there is a warning message', function () {
+      component.warningText = '<p>Example Text</p>';
+      component.ngOnChanges();
+      fixture.detectChanges();
+      expect(element.queryAll(By.css('.selected-heading')).length).toEqual(1);
+      expect(element.queryAll(By.css('static-iri')).length).toEqual(1);
+      expect(element.queryAll(By.css('.warning-icon-holder')).length).toEqual(1);
+      expect(element.queryAll(By.css('.warning-icon')).length).toEqual(1);
     });
   });
 });

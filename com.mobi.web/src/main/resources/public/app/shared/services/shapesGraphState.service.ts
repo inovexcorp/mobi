@@ -1024,4 +1024,40 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
       });
     }));
   }
+
+  /**
+   * Executes a SPARQL query to check for excluded predicates in the linked node shape's graph.
+   * It evaluates specific SHACL predicates defined in the query to retrieve the count of unsupported elements.
+   *
+   * @return {Observable<string | SPARQLSelectResults>} An observable that emits the result of the SPARQL query.
+   * The result can either be a JSON-encoded string or a specific SPARQLSelectResults object.
+   */
+  checkForExcludedPredicates(nodeIri: string): Observable<string> {
+    const predicateQuery = `
+      PREFIX sh: <http://www.w3.org/ns/shacl#>
+      SELECT (COUNT(DISTINCT ?prop) as ?unsupportedNum)
+      WHERE {
+        VALUES ?prop { sh:or sh:and sh:not sh:xone sh:group sh:defaultValue sh:node sh:qualifiedValueShape
+         sh:qualifiedMaxCount sh:qualifiedMinCount sh:closed sh:ignoredProperties sh:sparql, sh:severity }
+        {
+          <${nodeIri}> ?prop ?o.
+        } UNION {
+          <${nodeIri}> ?pred ?ent.
+          ?ent ?prop ?o.
+        }
+      }`;
+
+    const record = this.listItem.versionedRdfRecord;
+
+    return this.sparql.postQuery(predicateQuery, record.recordId, SHAPES_STORE_TYPE,
+      record.branchId, record.commitId, true, true, 'jsonld')
+      .pipe(switchMap(response => {
+        if (typeof response === 'object') {
+          const results = response as SPARQLSelectResults;
+          return results.results.bindings[0].unsupportedNum.value;
+        } else {
+          return throwError('Could not retrieve number of unsupported predicates.');
+        }
+      }));
+  }
 }
