@@ -38,6 +38,10 @@ import { ShapesPreviewComponent } from './components/shapes-preview/shapes-previ
 import { ShapesProjectTabComponent } from './components/shapes-project-tab/shapes-project-tab.component';
 import { ShapesTabsHolderComponent } from './components/shapes-tabs-holder/shapes-tabs-holder.component';
 import { ShaclTargetComponent } from './components/shacl-target/shacl-target.component';
+import { ShaclTargetSelectorComponent } from './components/shacl-target-selector/shacl-target-selector.component';
+import { ShaclTargetClassInputComponent } from './components/shacl-target-class-input/shacl-target-class-input.component';
+import { ShaclTargetNodeInputComponent } from './components/shacl-target-node-input/shacl-target-node-input.component';
+import { ShaclTargetChipInputComponent } from './components/shacl-target-chip-input/shacl-target-chip-input.component';
 
 /**
  * @namespace shapes-graph-editor
@@ -56,11 +60,15 @@ import { ShaclTargetComponent } from './components/shacl-target/shacl-target.com
      NodeShapesListComponent,
      NodeShapesTabComponent,
      ShaclTargetComponent,
+     ShaclTargetSelectorComponent,
      ShapesGraphEditorPageComponent,
      ShapesPreviewComponent,
      ShapesProjectTabComponent,
      ShapesTabsHolderComponent,
-     PropertyShapesDisplayComponent
+     PropertyShapesDisplayComponent,
+     ShaclTargetClassInputComponent,
+     ShaclTargetNodeInputComponent,
+     ShaclTargetChipInputComponent
    ],
    providers: []
 })

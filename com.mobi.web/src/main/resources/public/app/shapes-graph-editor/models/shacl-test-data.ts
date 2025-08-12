@@ -25,10 +25,265 @@ import { JSONLDId } from '../../shared/models/JSONLDId.interface';
 import { JSONLDObject } from '../../shared/models/JSONLDObject.interface';
 import { JSONLDValue } from '../../shared/models/JSONLDValue.interface';
 import { PathNode } from './property-shape.interface';
-import { RDF, SH, XSD } from '../../prefixes';
+import { OWL, RDF, RDFS, SH, XSD } from '../../prefixes';
+import { TARGET_NODE, TARGET_CLASS, TARGET_OBJECTS_OF, TARGET_SUBJECTS_OF } from './constants';
 
-// This file contains test cases for SHACL Property Paths and Constraints
+/**
+ * Recursively applies Object.freeze() to an object and all of its nested properties,
+ * making the entire data structure immutable.
+ *
+ * @template {object} T The type of the object being frozen.
+ * @param {T} obj The object to make deeply immutable.
+ * @returns {T} The same object reference, now deeply frozen.
+ */
+function deepFreeze<T>(obj: T): T {
+  const propNames = Object.getOwnPropertyNames(obj);
+  for (const name of propNames) {
+    const value = (obj)[name];
+    if (value && typeof value === 'object') {
+      deepFreeze(value);
+    }
+  }
+  return Object.freeze(obj);
+}
+/**
+ * SHACL Target Shape Test Cases
+ * - Edge cases:
+ *   - Shapes with no targets
+ *   - Target priority checks (explicit > implicit)
+ *   - Shapes mixing valid/empty/null targets
+ *   - Blank node targets
+ * - Implicit Target:
+ *   - Shapes using implicit rdfs:Class or owl:Class
+ *   - Implicit target with explicit override
+ *   - Blank node shape with implicit class
+ * - Target Node:
+ *   - Single IRI
+ *   - Multiple IRIs
+ *   - Duplicate IRIs
+ *   - Literal values
+ *   - Mixed IRI + literal
+ *   - Null or empty values
+ * - Target Class
+ *   - Single or multiple IRIs
+ *   - Null or empty values
+ * - TargetObjectsOf:
+ *   - Single or multiple properties
+ *   - Null, empty or invalid values
+ * - TargetSubjectsOf:
+ *   - Single or multiple properties
+ *   - Null, empty or invalid values
+ */
+const RDFS_CLASS = `${RDFS}Class`;
+const OWL_CLASS = `${OWL}Class`;
+export const TARGET_SHAPES = deepFreeze({
+  // === Edge Cases ===
+  edgeCases: {
+    ALL_TARGETS: {
+      '@id': 'ex:NodeShape_AllTargets',
+      '@type': [`${SH}NodeShape`],
+      [TARGET_CLASS]: [{ '@id': 'ex:ClassP' }],
+      [TARGET_NODE]: [{ '@id': 'ex:NodeO' }],
+      [TARGET_OBJECTS_OF]: [{ '@id': 'ex:objPropQ' }],
+      [TARGET_SUBJECTS_OF]: [{ '@id': 'ex:subPropR' }],
+    } as JSONLDObject,
+    MIXED_EMPTY_AND_VALID_TARGETS: {
+      '@id': 'ex:NodeShape_MixedTargets',
+      '@type': [`${SH}NodeShape`],
+      [TARGET_CLASS]: [],
+      [TARGET_NODE]: [{ '@id': 'ex:ValidNode' }],
+      [TARGET_OBJECTS_OF]: null,
+    } as JSONLDObject,
+    NO_TARGET: {
+      '@id': 'ex:NodeShape_NoTarget',
+      '@type': [`${SH}NodeShape`, 'some:OtherType'],
+    } as JSONLDObject,
+    NO_TARGET_WITHOUT_TYPE: {
+      '@id': 'ex:NodeShape_NoTarget',
+      '@type': ['some:OtherType'],
+    } as JSONLDObject,
+    PRIORITY_CHECK: {
+      '@id': 'ex:NodeShape_PriorityOrder',
+      '@type': [`${SH}NodeShape`],
+      [TARGET_CLASS]: [{ '@id': 'ex:LessPreferredClass' }],
+      [TARGET_NODE]: [{ '@id': 'ex:PreferredNode' }],
+    } as JSONLDObject,
+    TARGET_IS_BLANK_NODE: {
+      '@id': 'ex:NodeShape_TargetBlankNode',
+      '@type': [`${SH}NodeShape`],
+      [TARGET_NODE]: [{ '@id': '_:b1' }],
+    } as JSONLDObject,
+  },
+  // === Implicit Targets ===
+  implicit: {
+    BLANK_NODE_SHAPE_IMPLICIT: {
+      '@id': '_:implicitShape1',
+      '@type': [`${SH}NodeShape`, RDFS_CLASS],
+    } as JSONLDObject,
+    OWL_CLASS_REFERENCE: {
+      '@id': 'ex:MyOWLClass',
+      '@type': [`${SH}NodeShape`, OWL_CLASS],
+    } as JSONLDObject,
+    RDFS_CLASS_REFERENCE: {
+      '@id': 'ex:MyRDFSClass',
+      '@type': [`${SH}NodeShape`, RDFS_CLASS],
+    } as JSONLDObject,
+    RDFS_OWL_CLASS_REFERENCE: {
+      '@id': 'ex:MyRdfsOwlClass',
+      '@type': [`${SH}NodeShape`, RDFS_CLASS, OWL_CLASS],
+    } as JSONLDObject,
+    WITH_EXPLICIT_TARGET_PRIORITY: {
+      '@id': 'ex:MyClassPrioritized',
+      '@type': [`${SH}NodeShape`, RDFS_CLASS],
+      [TARGET_NODE]: [{ '@id': 'ex:AnotherNode' }],
+    } as JSONLDObject,
+  },
+  // === Target Class ===
+  targetClass: {
+    IRI: {
+      '@id': 'ex:NodeShape_TargetClassIRI',
+      '@type': [`${SH}NodeShape`],
+      [TARGET_CLASS]: [{ '@id': 'ex:MyClass' }],
+    } as JSONLDObject,
+    MULTIPLE_IRIS: {
+      '@id': 'ex:NodeShape_TargetClassMultipleIRIs',
+      '@type': [`${SH}NodeShape`],
+      [TARGET_CLASS]: [
+        { '@id': 'ex:ClassA' },
+        { '@id': 'ex:ClassB' },
+      ],
+    } as JSONLDObject,
+    WITH_EMPTY_ARRAY: {
+      '@id': 'ex:NodeShape_TargetClassEmptyArray',
+      '@type': [`${SH}NodeShape`],
+      [TARGET_CLASS]: [],
+    } as JSONLDObject,
 
+    WITH_NULL_VALUE: {
+      '@id': 'ex:NodeShape_TargetClassNull',
+      '@type': [`${SH}NodeShape`],
+      [TARGET_CLASS]: null,
+    } as JSONLDObject,
+  },
+  // === Target Node ===
+  targetNode: {
+    DUPLICATE_IRIS: {
+      '@id': 'ex:NodeShape_TargetNodeDuplicateIRIs',
+      '@type': [`${SH}NodeShape`],
+      [TARGET_NODE]: [
+        { '@id': 'ex:Node1' },
+        { '@id': 'ex:Node1' },
+      ],
+    } as JSONLDObject,
+    IRI: {
+      '@id': 'ex:NodeShape_TargetNodeIRI',
+      '@type': [`${SH}NodeShape`],
+      [TARGET_NODE]: [{ '@id': 'ex:SpecificNode' }],
+    } as JSONLDObject,
+    LITERAL: {
+      '@id': 'ex:NodeShape_TargetNodeLiteral',
+      [TARGET_NODE]: [{ '@value': 'SomeLiteralValue' }],
+    } as JSONLDObject,
+    MIXED_IRI_AND_LITERAL: {
+      '@id': 'ex:NodeShape_TargetNodeMixed',
+      '@type': [`${SH}NodeShape`],
+      [TARGET_NODE]: [
+        { '@id': 'ex:SpecificNode' },
+        { '@value': 'SomeLiteralValue' },
+      ],
+    } as JSONLDObject,
+    MULTIPLE_IRIS: {
+      '@id': 'ex:NodeShape_TargetNodeMultipleIRIs',
+      '@type': [`${SH}NodeShape`],
+      [TARGET_NODE]: [
+        { '@id': 'ex:Node1' },
+        { '@id': 'ex:Node2' },
+      ],
+    } as JSONLDObject,
+    WITH_EMPTY_ARRAY: {
+      '@id': 'ex:NodeShape_TargetNodeEmptyArray',
+      '@type': [`${SH}NodeShape`],
+      [TARGET_NODE]: [],
+    } as JSONLDObject,
+    WITH_NULL_VALUE: {
+      '@id': 'ex:NodeShape_TargetNodeNull',
+      [TARGET_NODE]: null,
+    } as JSONLDObject,
+  },
+  // === Target Objects Of ===
+  targetObjectsOf: {
+    MULTIPLE_VALUES: {
+      '@id': 'ex:NodeShape_TargetObjectsOfMultiple',
+      '@type': [`${SH}NodeShape`],
+      [TARGET_OBJECTS_OF]: [
+        { '@id': 'ex:prop1' },
+        { '@id': 'ex:prop2' },
+      ],
+    } as JSONLDObject,
+    SINGLE_VALUE: {
+      '@id': 'ex:NodeShape_TargetObjectsOfSingle',
+      '@type': [`${SH}NodeShape`],
+      [TARGET_OBJECTS_OF]: [{ '@id': 'ex:prop1' }],
+    } as JSONLDObject,
+    WITH_EMPTY_ARRAY: {
+      '@id': 'ex:NodeShape_TargetObjectsOfEmptyArray',
+      '@type': [`${SH}NodeShape`],
+      [TARGET_OBJECTS_OF]: [],
+    } as JSONLDObject,
+    WITH_INVALID_VALUES: {
+      '@id': 'ex:NodeShape_TargetObjectsOfInvalid',
+      '@type': [`${SH}NodeShape`],
+      [TARGET_OBJECTS_OF]: [
+        'someLiteral',
+        { notId: 'value' },
+        123,
+        { '@value': 'literal' },
+      ],
+    } as JSONLDObject,
+    WITH_NULL_VALUE: {
+      '@id': 'ex:NodeShape_TargetObjectsOfNull',
+      '@type': [`${SH}NodeShape`],
+      [TARGET_OBJECTS_OF]: null,
+    } as JSONLDObject,
+  },
+  // === Target Subjects Of ===
+  targetSubjectsOf: {
+    MULTIPLE_VALUES: {
+      '@id': 'ex:NodeShape_TargetSubjectsOfMultiple',
+      '@type': [`${SH}NodeShape`],
+      [TARGET_SUBJECTS_OF]: [
+        { '@id': 'ex:propA' },
+        { '@id': 'ex:propB' },
+      ],
+    } as JSONLDObject,
+    SINGLE_VALUE: {
+      '@id': 'ex:NodeShape_TargetSubjectsOfSingle',
+      '@type': [`${SH}NodeShape`],
+      [TARGET_SUBJECTS_OF]: [{ '@id': 'ex:propA' }],
+    } as JSONLDObject,
+    WITH_EMPTY_ARRAY: {
+      '@id': 'ex:NodeShape_TargetSubjectsOfEmptyArray',
+      '@type': [`${SH}NodeShape`],
+      [TARGET_SUBJECTS_OF]: [],
+    } as JSONLDObject,
+    WITH_INVALID_VALUES: {
+      '@id': 'ex:NodeShape_TargetSubjectsOfInvalid',
+      '@type': [`${SH}NodeShape`],
+      [TARGET_SUBJECTS_OF]: [
+        { '@value': 'cannot be a literal' },
+        'string',
+        null,
+      ],
+    } as JSONLDObject,
+    WITH_NULL_VALUE: {
+      '@id': 'ex:NodeShape_TargetSubjectsOfNull',
+      '@type': [`${SH}NodeShape`],
+      [TARGET_SUBJECTS_OF]: null,
+    } as JSONLDObject,
+  },
+});
+
+// Test cases for SHACL Property Paths and Constraints
 interface PathTestCase {
   iri: string,
   testName: string,

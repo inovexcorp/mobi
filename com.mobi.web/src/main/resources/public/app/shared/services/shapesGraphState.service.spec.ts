@@ -20,23 +20,28 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { ElementRef } from '@angular/core';
 import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { HttpResponse } from '@angular/common/http';
 
 import { cloneDeep, concat, map } from 'lodash';
 import { MockPipe, MockProvider } from 'ng-mocks';
-import { Subject, of, throwError } from 'rxjs';
+import { Observable, Subject, of, throwError } from 'rxjs';
 
-import { CATALOG, DCTERMS, OWL, RDF, SH, SHAPESGRAPHEDITOR, XSD } from '../../prefixes';
+import { BlankNodeIndex } from './versionedRdfState.service';
+import { CATALOG, DCTERMS, OWL, RDF, RDFS, SH, SHAPESGRAPHEDITOR, XSD } from '../../prefixes';
 import { CatalogManagerService } from './catalogManager.service';
 import { cleanStylesFromDOM } from '../../../test/ts/Shared';
 import { Difference } from '../models/difference.class';
 import { EntityNames } from '../models/entityNames.interface';
+import { EventTypeConstants } from '../models/eventWithPayload.interface';
 import { EventWithPayload } from '../models/eventWithPayload.interface';
+import { GroupedSuggestion } from '../../shapes-graph-editor/models/grouped-suggestion';
 import { JSONLDObject } from '../models/JSONLDObject.interface';
 import { ManchesterConverterService } from './manchesterConverter.service';
 import { MergeRequestManagerService } from './mergeRequestManager.service';
+import { NodeShapeSummary } from '../../shapes-graph-editor/models/node-shape-summary.interface';
 import { PolicyEnforcementService } from './policyEnforcement.service';
 import { PolicyManagerService } from './policyManager.service';
 import { PrefixationPipe } from '../pipes/prefixation.pipe';
@@ -53,6 +58,7 @@ import { ShapesGraphStateService } from './shapesGraphState.service';
 import { SparqlManagerService } from './sparqlManager.service';
 import { SPARQLSelectResults } from '../models/sparqlSelectResults.interface';
 import { StateManagerService } from './stateManager.service';
+import { TARGET_CLASS, TARGET_OBJECTS_OF, TARGET_SUBJECTS_OF } from '../../shapes-graph-editor/models/constants';
 import { ToastService } from './toast.service';
 import { UpdateRefsService } from './updateRefs.service';
 import { VersionedRdfUploadResponse } from '../models/versionedRdfUploadResponse.interface';
@@ -67,10 +73,12 @@ describe('Shapes Graph State service', function() {
   let policyEnforcementStub: jasmine.SpyObj<PolicyEnforcementService>;
   let policyManagerStub: jasmine.SpyObj<PolicyManagerService>;
   let prefixationStub: jasmine.SpyObj<PrefixationPipe>;
+  let progressSpinnerStub: jasmine.SpyObj<ProgressSpinnerService>;
   let propertyManagerStub: jasmine.SpyObj<PropertyManagerService>;
   let settingManagerStub: jasmine.SpyObj<SettingManagerService>;
   let shapesGraphManagerStub: jasmine.SpyObj<ShapesGraphManagerService>;
   let sparqlManagerStub: jasmine.SpyObj<SparqlManagerService>;
+  let toastStub: jasmine.SpyObj<ToastService>;
   let updateRefsStub: jasmine.SpyObj<UpdateRefsService>;
 
   let exclusionList: string[] = [];
@@ -139,6 +147,8 @@ describe('Shapes Graph State service', function() {
     propertyManagerStub = TestBed.inject(PropertyManagerService) as jasmine.SpyObj<PropertyManagerService>;
     prefixationStub = TestBed.inject(PrefixationPipe) as jasmine.SpyObj<PrefixationPipe>;
     prefixationStub.transform.and.callFake(a => a);
+    progressSpinnerStub = TestBed.inject(ProgressSpinnerService) as jasmine.SpyObj<ProgressSpinnerService>;
+    toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
 
     mergeRequestManagerServiceStub = TestBed.inject(MergeRequestManagerService) as jasmine.SpyObj<MergeRequestManagerService>;
     catalogManagerStub = TestBed.inject(CatalogManagerService) as jasmine.SpyObj<CatalogManagerService>;
@@ -197,14 +207,115 @@ describe('Shapes Graph State service', function() {
     manchesterConverterStub = null;
     policyEnforcementStub = null;
     policyManagerStub = null;
+    progressSpinnerStub = null;
     settingManagerStub = null;
     shapesGraphManagerStub = null;
     sparqlManagerStub = null;
+    toastStub = null;
     updateRefsStub = null;
   });
 
   it('initialize works properly', function() {
     expect(service['catalogId']).toEqual(catalogId);
+    expect(service.list).toEqual([]);
+    expect(service.listItem).toBeUndefined();
+  });
+  describe('event handling from constructor', () => {
+    beforeEach(function() {
+      service.listItem = listItem;
+      service.list = [listItem];
+    });
+    describe('when a branch removal event is received', function() {
+      it('should call deleteBranchState if the record exists in the list', fakeAsync(function() {
+        spyOn(service, 'deleteBranchState').and.returnValue(of(null));
+        const eventPayload: EventWithPayload = {
+          eventType: EventTypeConstants.EVENT_BRANCH_REMOVAL,
+          payload: { recordId: recordId, branchId: 'branch-to-delete' }
+        };
+        _catalogManagerActionSubject.next(eventPayload);
+        tick();
+        expect(service.deleteBranchState).toHaveBeenCalledWith(recordId, 'branch-to-delete');
+      }));
+      it('should do nothing if the record does not exist in the list', fakeAsync(function() {
+        spyOn(service, 'deleteBranchState').and.returnValue(of(null));
+        const eventPayload: EventWithPayload = {
+          eventType: EventTypeConstants.EVENT_BRANCH_REMOVAL,
+          payload: { recordId: 'non-existent-record', branchId: 'branch-to-delete' }
+        };
+        _catalogManagerActionSubject.next(eventPayload);
+        tick();
+        expect(service.deleteBranchState).not.toHaveBeenCalled();
+      }));
+      it('should log a warning if recordId or branchId is missing', fakeAsync(function() {
+        spyOn(console, 'warn');
+        spyOn(service, 'deleteBranchState').and.returnValue(of(null));
+        const eventPayload: EventWithPayload = {
+          eventType: EventTypeConstants.EVENT_BRANCH_REMOVAL,
+          payload: { recordId: recordId } // missing branchId
+        };
+        _catalogManagerActionSubject.next(eventPayload);
+        tick();
+        expect(console.warn).toHaveBeenCalledWith('EVENT_BRANCH_REMOVAL is missing recordIri or branchId');
+      }));
+    });
+    describe('when a merge request acceptance event is received', function() {
+      it('should mark the listItem as out-of-date and show a toast if the target branch is the current branch', fakeAsync(function() {
+        service.listItem.versionedRdfRecord.branchId = 'main';
+        service.listItem.merge.active = true;
+        const eventPayload: EventWithPayload = {
+          eventType: EventTypeConstants.EVENT_MERGE_REQUEST_ACCEPTED,
+          payload: { recordId: recordId, targetBranchId: 'main' }
+        };
+        _mergeRequestManagerActionSubject.next(eventPayload);
+        tick();
+        expect(service.listItem.upToDate).toBeFalse();
+        expect(toastStub.createWarningToast).toHaveBeenCalledWith(jasmine.any(String), { timeOut: 5000 });
+      }));
+      it('should show a toast if a merge is active and its target is the affected branch', fakeAsync(function() {
+        service.listItem.versionedRdfRecord.branchId = 'feature-branch';
+        service.listItem.merge.active = true;
+        service.listItem.merge.target = { '@id': 'main', '@type': [] };
+        const eventPayload: EventWithPayload = {
+          eventType: EventTypeConstants.EVENT_MERGE_REQUEST_ACCEPTED,
+          payload: { recordId: recordId, targetBranchId: 'main' }
+        };
+        _mergeRequestManagerActionSubject.next(eventPayload);
+        tick();
+        expect(service.listItem.upToDate).toBeTrue();
+        expect(toastStub.createWarningToast).toHaveBeenCalledTimes(1);
+      }));
+      it('should do nothing if the affected record is not in the list', fakeAsync(function() {
+        const eventPayload: EventWithPayload = {
+          eventType: EventTypeConstants.EVENT_MERGE_REQUEST_ACCEPTED,
+          payload: { recordId: 'some-other-record', targetBranchId: 'main' }
+        };
+        _mergeRequestManagerActionSubject.next(eventPayload);
+        tick();
+        expect(service.listItem.upToDate).toBeTrue();
+        expect(toastStub.createWarningToast).not.toHaveBeenCalled();
+      }));
+    });
+    describe('when an invalid event is received', function() {
+      it('should create an error toast if the event has no payload', fakeAsync(function() {
+        const eventPayload = {
+          eventType: EventTypeConstants.EVENT_BRANCH_REMOVAL,
+          payload: undefined
+        };
+        _catalogManagerActionSubject.next(eventPayload);
+        tick();
+        expect(toastStub.createErrorToast).toHaveBeenCalledWith('Event type and payload is required');
+      }));
+      it('should log a console warning for an unknown event type', fakeAsync(function() {
+        spyOn(console, 'warn');
+        const unknownEvent = {
+          eventType: 'unknown-event',
+          payload: { recordId: '123' }
+        };
+        _catalogManagerActionSubject.next(unknownEvent);
+        tick();
+        expect(console.warn).toHaveBeenCalledWith('Event type is not valid');
+      }));
+    });
   });
   it('getDefaultNamespace provides the default namespace to be used for new shapes graphs', fakeAsync(function() {
     settingManagerStub.getDefaultNamespace.and.returnValue(of('shapes-graph'));
@@ -216,19 +327,54 @@ describe('Shapes Graph State service', function() {
   }));
   it('should retrieve the name of an entity for shapes graphs', function() {
     listItem.entityInfo = {
-      'http://test.com/AnotherEntity': {
+      'http://mobi.com/AnotherEntity': {
         label: 'Another',
         names: ['Blah']
       },
-      'http://test.com/MissingLabel': {
+      'http://mobi.com/MissingLabel': {
         label: '',
         names: []
       }
     };
     service.listItem = listItem;
-    expect(service.getEntityName('http://test.com/TestEntity')).toEqual('Test Entity');
-    expect(service.getEntityName('http://test.com/MissingLabel')).toEqual('Missing Label');
-    expect(service.getEntityName('http://test.com/AnotherEntity')).toEqual('Another');
+    expect(service.getEntityName('http://mobi.com/TestEntity')).toEqual('Test Entity');
+    expect(service.getEntityName('http://mobi.com/MissingLabel')).toEqual('Missing Label');
+    expect(service.getEntityName('http://mobi.com/AnotherEntity')).toEqual('Another');
+  });
+  describe('updateEntityName', () => {
+    it('should update the label for an existing entity in entityInfo', () => {
+      service.listItem = listItem;
+      const entityId = 'http://mobi.com/MyShape';
+      service.listItem.entityInfo[entityId] = { label: 'Old Label', names: [] };
+      const updatedEntity = { '@id': entityId, 'prop1': [{ '@value': 'New Label' }] };
+      service.updateEntityName(updatedEntity);
+
+      expect(service.listItem.entityInfo[entityId].label).toEqual('My Shape');
+    });
+    it('should do nothing if the entity does not exist in entityInfo', () => {
+      service.listItem = listItem;
+      const originalInfo = cloneDeep(service.listItem.entityInfo);
+      const updatedEntity = { '@id': 'http://mobi.com/NonExistent', 'prop1': [{ '@value': 'New Name' }] };
+
+      service.updateEntityName(updatedEntity);
+      expect(service.listItem.entityInfo).toEqual(originalInfo);
+    });
+  });
+  describe('goTo', () => {
+    it('should throw an error indicating it is not supported', () => {
+      expect(() => service.goTo('some:iri')).toThrow(new Error('goTo functionality for ShapesGraphListItem not supported.'));
+    });
+  });
+  describe('isLinkable', () => {
+    it('should always return false', () => {
+      expect(service.isLinkable('urn:anyIri')).toBeFalse();
+    });
+  });
+  describe('canModifyEntityTypes', () => {
+    it('should always return false', () => {
+      const entity: JSONLDObject = { '@id': 'any' };
+      expect(service.canModifyEntityTypes(entity)).toBeFalse();
+    });
   });
   describe('getIdentifierIRI retrieves the shapes graph IRI of a ShapesGraphRecord', function() {
     it('if provided JSON-LD', function() {
@@ -708,7 +854,7 @@ describe('Shapes Graph State service', function() {
   });
   describe('should create a listItem', () => {
     const branches: JSONLDObject[] = [
-      { '@id': branchId, [`${DCTERMS}title`]: [{ '@value': 'Other Branch'}] },
+      { '@id': branchId, [`${DCTERMS}title`]: [{ '@value': 'Other Branch' }] },
       { '@id': masterBranchIri, [`${DCTERMS}title`]: [{ '@value': 'MASTER' }] }
     ];
     const entityNames: EntityNames = {
@@ -976,11 +1122,11 @@ describe('Shapes Graph State service', function() {
     const iriThen = '/';
     const iriEnd = 'shapes-test';
     const newIRI = iriBegin + iriThen + iriEnd;
+    const metadata: JSONLDObject = Object.freeze({
+      '@id': 'www.example.com/test-record/shapes',
+      '@type': [`${OWL}Ontology`],
+    });
     beforeEach(function() {
-      const metadata = {
-        '@id': 'www.example.com/test-record/shapes',
-        '@type': ['http://www.w3.org/2002/07/owl#Ontology'],
-      };
       service.listItem = listItem;
       service.listItem.versionedRdfRecord.recordId = 'recordId';
       service.listItem.versionedRdfRecord.branchId = 'branchId';
@@ -991,8 +1137,8 @@ describe('Shapes Graph State service', function() {
     it('When there are already additions with the previous IRI', fakeAsync(function() {
       service.listItem.additions = [{
         '@id': 'www.example.com/test-record/shapes',
-        '@type': ['http://www.w3.org/2002/07/owl#Ontology'],
-        'http://purl.org/dc/elements/1.1/title': [{ '@value': 'UHTC Shapes Graph' }]
+        '@type': [`${OWL}Ontology`],
+        [`${DCTERMS}title`]: [{ '@value': 'UHTC Shapes Graph' }]
       }];
       sparqlManagerStub.postQuery.and.returnValue(of('[]'));
       service.onIriEdit(iriBegin, iriThen, iriEnd).subscribe();
@@ -1033,24 +1179,27 @@ describe('Shapes Graph State service', function() {
         newIRI, exclusionList);
     }));
     it('When retrieveUsages method resolves', fakeAsync(function() {
-      const usages = `[ {
-        "@id" : "_:genid-f008989dbffa42c28d08087aacb415c738-464BF00DDBF1492E53EF0EBAD7F08536",
-        "http://www.w3.org/2000/01/rdf-schema#isDefinedBy" : [ {
-          "@id" : "www.example.com/test-record/shapes"
-        } ]
-      }, {
-        "@id" : "http://schema.org/ElementShape",
-        "http://www.w3.org/2000/01/rdf-schema#isDefinedBy" : [ {
-          "@id" : "www.example.com/test-record/shapes"
-        } ]
-      }, {
-        "@id" : "http://schema.org/MaterialShape",
-        "http://www.w3.org/2000/01/rdf-schema#isDefinedBy" : [ {
-          "@id" : "www.example.com/test-record/shapes"
-        } ]
-      } ]`;
-
-      sparqlManagerStub.postQuery.and.returnValue(of(usages));
+      const usages: JSONLDObject[] = [
+        {
+          '@id': '_:genid-f008989dbffa42c28d08087aacb415c738-464BF00DDBF1492E53EF0EBAD7F08536',
+          [`${RDFS}isDefinedBy`]: [
+            { '@id': 'www.example.com/test-record/shapes' }
+          ],
+        },
+        {
+          '@id': 'http://schema.org/ElementShape',
+          [`${RDFS}isDefinedBy`]: [
+            { '@id': 'www.example.com/test-record/shapes' }
+          ],
+        },
+        {
+          '@id': 'http://schema.org/MaterialShape',
+          [`${RDFS}isDefinedBy`]: [
+            { '@id': 'www.example.com/test-record/shapes' }
+          ],
+        },
+      ];
+      sparqlManagerStub.postQuery.and.returnValue(of(JSON.stringify(usages)));
       service.onIriEdit(iriBegin, iriThen, iriEnd).subscribe();
       tick();
       expect(service.listItem.additions.length).toEqual(4);
@@ -1061,13 +1210,383 @@ describe('Shapes Graph State service', function() {
         newIRI, exclusionList);
     }));
   });
-  // TODO: Add test for setSelected
-  // TODO: Add test for getPropValueDisplay
-  // TODO: Add test for removeProperty
-  // TODO: Add test for isSelectedImported
-  // TODO: Add test for isImported
-  // TODO: Add test for checkIri
-  // TODO: Add test for getImportedSource
+  describe('updateNodeShapeSummaries', function() {
+    let oldEntity: JSONLDObject;
+    let newNodeShape: JSONLDObject;
+    let otherNodeShapeSummary: NodeShapeSummary;
+    beforeEach(function() {
+      service.listItem = listItem;
+      spyOn(service, 'updateEntityName');
+      spyOn(service, 'getEntityName').and.callFake(iri => {
+        if (iri === 'new:shape') {
+          return 'A New Shape';
+        }
+        if (iri === 'new:targetClass') {
+          return 'New Target Class';
+        }
+        return '';
+      });
+      otherNodeShapeSummary = {
+        iri: 'other:shape',
+        name: 'Other Shape',
+        targetType: 'sh:targetClass',
+        targetTypeLabel: 'sh:targetClass',
+        targetValue: 'other:class',
+        targetValueLabel: 'Other Class',
+        imported: false,
+        sourceOntologyIRI: 'sourceOntologyIRI'
+      };
+      oldEntity = {
+        '@id': 'old:shape',
+        [`${DCTERMS}Title`]: [{ '@value': 'Old Shape Name' }]
+      };
+      newNodeShape = {
+        '@id': 'new:shape',
+        [`${DCTERMS}Title`]: [{ '@value': 'A New Shape' }],
+        [TARGET_CLASS]: [{ '@id': 'new:targetClass' }]
+      };
+      service.listItem.editorTabStates.nodeShapes.nodes = [
+        otherNodeShapeSummary,
+        {
+          iri: 'old:shape',
+          name: 'Z Old Shape',
+          targetType: 'sh:targetNode',
+          targetTypeLabel: 'sh:targetNode',
+          targetValue: 'old:node',
+          targetValueLabel: 'Old Node',
+          imported: false,
+          sourceOntologyIRI: 'sourceOntologyIRI'
+        }
+      ];
+      service.shaclTargetDetector.detect = jasmine.createSpy().and.returnValue({
+        targetType: 'sh:targetClass',
+        value: 'new:targetClass',
+        multiSelect: false
+      });
+    });
+    it('should update the correct node shape summary with new IRI, name, and target info', function() {
+      service.updateNodeShapeSummaries(oldEntity, newNodeShape);
+      const updatedNodes = service.listItem.editorTabStates.nodeShapes.nodes;
+      const updatedSummary = updatedNodes.find(n => n.iri === 'new:shape');
+      expect(updatedSummary).toBeDefined();
+      expect(updatedSummary.name).toEqual('A New Shape');
+      expect(updatedSummary.targetType).toEqual('sh:targetClass');
+      expect(updatedSummary.targetValue).toEqual('new:targetClass');
+      expect(updatedSummary.targetValueLabel).toEqual('New Target Class');
+    });
+    it('should not modify other node shape summaries in the list', function() {
+      service.updateNodeShapeSummaries(oldEntity, newNodeShape);
+      const updatedNodes = service.listItem.editorTabStates.nodeShapes.nodes;
+      const unchagedSummary = updatedNodes.find(n => n.iri === 'other:shape');
+      expect(unchagedSummary).toEqual(otherNodeShapeSummary);
+    });
+    it('should re-sort the list of summaries by name after the update', function() {
+      service.updateNodeShapeSummaries(oldEntity, newNodeShape);
+      const updatedNodes = service.listItem.editorTabStates.nodeShapes.nodes;
+      expect(updatedNodes[0].name).toEqual('A New Shape');
+      expect(updatedNodes[1].name).toEqual('Other Shape');
+    });
+    it('should correctly handle a shape where the target is removed', function() {
+      service.shaclTargetDetector.detect = jasmine.createSpy().and.returnValue(null);
+      service.updateNodeShapeSummaries(oldEntity, newNodeShape);
+      const updatedNodes = service.listItem.editorTabStates.nodeShapes.nodes;
+      const updatedSummary = updatedNodes.find(n => n.iri === 'new:shape');
+      expect(updatedSummary.targetType).toEqual('N/A');
+      expect(updatedSummary.targetTypeLabel).toEqual('N/A');
+      expect(updatedSummary.targetValue).toEqual('');
+      expect(updatedSummary.targetValueLabel).toEqual('');
+    });
+    it('should call updateEntityName to keep the cache consistent', function() {
+      service.updateNodeShapeSummaries(oldEntity, newNodeShape);
+      expect(service.updateEntityName).toHaveBeenCalledWith(service.listItem.selected);
+    });
+  });
+  describe('setSelected sets the selected entity', () => {
+    const entityIri = 'urn:entity';
+    const bnode1: JSONLDObject = { '@id': '_:b1', 'urn:prop': [{ '@value': 'bnode1-val' }] };
+    const bnode2: JSONLDObject = { '@id': '_:b2', 'urn:prop': [{ '@value': 'bnode2-val' }] };
+    const entityJsonld: JSONLDObject = { '@id': entityIri, 'urn:prop': [{ '@id': bnode1['@id'] }] };
+    const blankNodeIndex: BlankNodeIndex = { 'node': { position: 2 } };
+    let mockElementRef: ElementRef;
+    beforeEach(() => {
+      service.listItem = cloneDeep(listItem);
+      service.listItem.selected = entityJsonld;
+      service.listItem.subjectImportMap = {
+        [entityIri]: { imported: false, alsoLocal: true },
+        'urn:imported-entity': { imported: true, alsoLocal: false }
+      };
+      shapesGraphManagerStub.getShapesGraphEntity.and.returnValue(of([entityJsonld, bnode1, bnode2]));
+      manchesterConverterStub.jsonldToManchester.and.callFake(id => `manchester for ${id}`);
+      spyOn(service, 'getBnodeIndex').and.returnValue(blankNodeIndex);
+      mockElementRef = { nativeElement: {} };
+    });
+    it('should do nothing and return null if listItem is not provided', fakeAsync(() => {
+      service.setSelected(entityIri, null).subscribe(() => {
+        fail('Observable should have failed, but it succeeded.');
+      }, error => {
+        expect(error).toEqual('Cannot set selected entity: The ShapesGraphListItem was not provided.');
+      });
+      tick();
+      expect(shapesGraphManagerStub.getShapesGraphEntity).not.toHaveBeenCalled();
+    }));
+    it('should reset state and return null if entityIRI is not provided', fakeAsync(() => {
+      service.listItem.selected = entityJsonld;
+      service.setSelected(null).subscribe(result => {
+        expect(result).toBeNull();
+      });
+      tick();
+      expect(service.listItem.selected).toBeUndefined();
+      expect(service.listItem.selectedBlankNodes).toEqual([]);
+      expect(service.listItem.blankNodes).toEqual({});
+      expect(shapesGraphManagerStub.getShapesGraphEntity).not.toHaveBeenCalled();
+    }));
+    it('should call spinner service when an element is provided', fakeAsync(() => {
+      service.setSelected(entityIri, service.listItem, mockElementRef).subscribe();
+      tick();
+      expect(progressSpinnerStub.startLoadingForComponent).toHaveBeenCalledWith(mockElementRef);
+      expect(progressSpinnerStub.finishLoadingForComponent).toHaveBeenCalledWith(mockElementRef);
+    }));
+    describe('and fetches the entity', () => {
+      it('as local if subjectImportMap marks it with alsoLocal: true', fakeAsync(() => {
+        service.setSelected(entityIri).subscribe();
+        tick();
+        expect(shapesGraphManagerStub.getShapesGraphEntity).toHaveBeenCalledWith(
+          recordId, branchId, commitId, entityIri, 'jsonld', true, false
+        );
+      }));
+      it('as imported if subjectImportMap marks it with alsoLocal: false', fakeAsync(() => {
+        service.setSelected('urn:imported-entity').subscribe();
+        tick();
+        expect(shapesGraphManagerStub.getShapesGraphEntity).toHaveBeenCalledWith(
+          recordId, branchId, commitId, 'urn:imported-entity', 'jsonld', true, true
+        );
+      }));
+      it('as imported if entity is not in subjectImportMap', fakeAsync(() => {
+        service.setSelected('urn:unknown-entity').subscribe();
+        tick();
+        expect(shapesGraphManagerStub.getShapesGraphEntity).toHaveBeenCalledWith(
+          recordId, branchId, commitId, 'urn:unknown-entity', 'jsonld', true, true
+        );
+      }));
+    });
+    it('should correctly populate listItem properties on success', fakeAsync(() => {
+      service.setSelected(entityIri).subscribe(result => {
+        expect(result).toBeNull();
+      });
+      tick();
+      expect(service.listItem.selected).toEqual(entityJsonld);
+      expect(service.listItem.selectedBlankNodes).toEqual([bnode1, bnode2]);
+      expect(service.getBnodeIndex).toHaveBeenCalledWith([bnode1, bnode2]);
+      expect(service.listItem.blankNodes['_:b1']).toEqual('manchester for _:b1');
+      expect(service.listItem.blankNodes['_:b2']).toEqual('manchester for _:b2');
+      expect(manchesterConverterStub.jsonldToManchester).toHaveBeenCalledTimes(2);
+    }));
+    it('should handle API errors and still finalize the spinner', fakeAsync(() => {
+      shapesGraphManagerStub.getShapesGraphEntity.and.returnValue(throwError(error));
+      service.setSelected(entityIri, service.listItem, mockElementRef).subscribe(
+        () => fail('Observable should have failed'),
+        err => expect(err).toEqual(error)
+      );
+      tick();
+      expect(progressSpinnerStub.startLoadingForComponent).toHaveBeenCalledWith(mockElementRef);
+      expect(progressSpinnerStub.finishLoadingForComponent).toHaveBeenCalledWith(mockElementRef);
+      expect(service.listItem.selected).toBeUndefined();
+    }));
+  });
+  describe('getActiveKey', () => {
+    beforeEach(() => {
+      service.listItem = listItem;
+    });
+    it('should return project for PROJECT_TAB', () => {
+      expect(service.getActiveKey(listItem, ShapesGraphListItem.PROJECT_TAB)).toBe('project');
+    });
+    it('should return nodeShapes for NODE_SHAPES_TAB', () => {
+      expect(service.getActiveKey(listItem, ShapesGraphListItem.NODE_SHAPES_TAB)).toBe('nodeShapes');
+    });
+    it('should default to project', () => {
+      expect(service.getActiveKey(listItem, 99)).toBe('project');
+    });
+    it('should use listItem tabIndex if no index is provided', () => {
+      listItem.tabIndex = ShapesGraphListItem.NODE_SHAPES_TAB;
+      expect(service.getActiveKey(listItem)).toBe('nodeShapes');
+    });
+  });
+  describe('getActivePage', () => {
+    beforeEach(() => {
+      service.listItem = listItem;
+    });
+    it('should return the project page state', () => {
+      listItem.tabIndex = ShapesGraphListItem.PROJECT_TAB;
+      expect(service.getActivePage()).toBe(listItem.editorTabStates.project);
+    });
+    it('should return the node shapes page state', () => {
+      listItem.tabIndex = ShapesGraphListItem.NODE_SHAPES_TAB;
+      expect(service.getActivePage()).toBe(listItem.editorTabStates.nodeShapes);
+    });
+  });
+  describe('getActiveEntityIRI', () => {
+    beforeEach(() => {
+      service.listItem = listItem;
+    });
+    it('should return the entityIRI from the active page', () => {
+      listItem.tabIndex = ShapesGraphListItem.PROJECT_TAB;
+      listItem.editorTabStates.project.entityIRI = 'urn:project-entity';
+      expect(service.getActiveEntityIRI()).toBe('urn:project-entity');
+      listItem.tabIndex = ShapesGraphListItem.NODE_SHAPES_TAB;
+      listItem.editorTabStates.nodeShapes.entityIRI = 'urn:nodeshape-entity';
+      expect(service.getActiveEntityIRI()).toBe('urn:nodeshape-entity');
+    });
+  });
+  describe('getPropValueDisplay gets the correct value for a property', function() {
+    beforeEach(function() {
+      service.listItem = listItem;
+      service.listItem.selected = {
+        '@id': 'urn:test',
+        'urn:valueProp': [{ '@value': 'Data Value' }],
+        'urn:idProp': [{ '@id': 'urn:iri' }]
+      };
+    });
+    it('for a value property', function() {
+      const display = service.getPropValueDisplay('urn:valueProp', 0);
+      expect(display).toEqual('Data Value');
+    });
+    it('for an id property', function() {
+      const display = service.getPropValueDisplay('urn:idProp', 0);
+      expect(display).toEqual('urn:iri');
+    });
+    it('and returns undefined if not found', function() {
+      const display = service.getPropValueDisplay('urn:nonExistentProp', 0);
+      expect(display).toBeUndefined();
+    });
+  });
+  describe('removeProperty removes a property value', function() {
+    const propertyKey = 'urn:prop';
+    const valueToRemove = { '@value': 'Value 1' };
+    const otherValue = { '@value': 'Value 2' };
+    beforeEach(function() {
+      service.listItem = listItem;
+      service.listItem.selected = {
+        '@id': 'urn:entity',
+        [propertyKey]: [valueToRemove, otherValue]
+      };
+      spyOn(service, 'addToDeletions');
+    });
+    it('successfully', fakeAsync(function() {
+      spyOn(service, 'saveCurrentChanges').and.returnValue(of(null));
+      service.removeProperty(propertyKey, 0).subscribe(removed => {
+        expect(removed).toEqual(valueToRemove);
+      }, () => fail('Observable should have succeeded'));
+      tick();
+
+      expect(service.addToDeletions).toHaveBeenCalledWith(recordId, {
+        '@id': 'urn:entity',
+        [propertyKey]: [valueToRemove]
+      });
+      expect(propertyManagerStub.remove).toHaveBeenCalledWith(service.listItem.selected, propertyKey, 0);
+      expect(service.saveCurrentChanges).toHaveBeenCalledWith();
+    }));
+    it('unless saving changes fails', fakeAsync(function() {
+      spyOn(service, 'saveCurrentChanges').and.returnValue(throwError(error));
+      service.removeProperty(propertyKey, 0).subscribe(() => fail('Observable should have failed'), err => {
+        expect(err).toEqual(error);
+      });
+
+      expect(service.addToDeletions).toHaveBeenCalled();
+      expect(propertyManagerStub.remove).toHaveBeenCalled();
+      expect(service.saveCurrentChanges).toHaveBeenCalledWith();
+    }));
+  });
+  describe('isSelectedImported checks if the selected entity is imported', function() {
+    beforeEach(function() {
+      service.listItem = listItem;
+      service.listItem.subjectImportMap = {
+        'urn:importedOnly': { imported: true, alsoLocal: false, ontologyIds: ['a'] },
+        'urn:importedAndLocal': { imported: true, alsoLocal: true, ontologyIds: ['a'] },
+        'urn:localOnly': { imported: false, alsoLocal: true, ontologyIds: [] }
+      };
+    });
+    it('and returns true if only imported', function() {
+      service.listItem.selected = { '@id': 'urn:importedOnly' };
+      expect(service.isSelectedImported()).toBeTrue();
+    });
+    it('and returns false if imported but also local', function() {
+      service.listItem.selected = { '@id': 'urn:importedAndLocal' };
+      expect(service.isSelectedImported()).toBeFalse();
+    });
+    it('and returns false if only local', function() {
+      service.listItem.selected = { '@id': 'urn:localOnly' };
+      expect(service.isSelectedImported()).toBeFalse();
+    });
+    it('and returns true if entity not in map (default)', function() {
+      service.listItem.selected = { '@id': 'urn:notInMap' };
+      expect(service.isSelectedImported()).toBeTrue();
+    });
+    it('and returns true if no entity is selected', function() {
+      service.listItem.selected = undefined;
+      expect(service.isSelectedImported()).toBeTrue();
+    });
+  });
+  describe('isImported checks if a given IRI is imported', function() {
+    beforeEach(function() {
+      service.listItem = listItem;
+      service.listItem.subjectImportMap = {
+        'urn:importedOnly': { imported: true, alsoLocal: false, ontologyIds: ['a'] },
+        'urn:importedAndLocal': { imported: true, alsoLocal: true, ontologyIds: ['a'] },
+        'urn:localOnly': { imported: false, alsoLocal: true, ontologyIds: [] }
+      };
+    });
+    it('and returns true if only imported', function() {
+      expect(service.isImported('urn:importedOnly')).toBeTrue();
+    });
+    it('and returns false if imported but also local', function() {
+      expect(service.isImported('urn:importedAndLocal')).toBeFalse();
+    });
+    it('and returns false if only local', function() {
+      expect(service.isImported('urn:localOnly')).toBeFalse();
+    });
+    it('and returns true if IRI not in map (default)', function() {
+      expect(service.isImported('urn:notInMap')).toBeTrue();
+    });
+    it('and returns true if listItem is missing', function() {
+      expect(service.isImported('urn:anything', null)).toBeTrue();
+    });
+  });
+  describe('checkIri checks if an IRI exists and is not the current entity', function() {
+    beforeEach(function() {
+      service.listItem = listItem;
+      service.listItem.selected = { '@id': 'urn:current' };
+      service.listItem.subjectImportMap = {
+        'urn:current': { imported: false, alsoLocal: true, ontologyIds: [] },
+        'urn:exists': { imported: false, alsoLocal: true, ontologyIds: [] }
+      };
+    });
+    it('and returns false for the current IRI', function() {
+      expect(service.checkIri('urn:current')).toBeFalse();
+    });
+    it('and returns true for an existing, different IRI', function() {
+      expect(service.checkIri('urn:exists')).toBeTrue();
+    });
+    it('and returns false for a non-existent IRI', function() {
+      expect(service.checkIri('urn:doesNotExist')).toBeFalse();
+    });
+  });
+  describe('getImportedSource gets the source IRI for an import', function() {
+    beforeEach(function() {
+      service.listItem = listItem;
+    });
+    it('and returns the source IRI if it exists', function() {
+      service.listItem.editorTabStates.nodeShapes.sourceIRI = 'urn:source-shape';
+      expect(service.getImportedSource()).toEqual('urn:source-shape');
+    });
+    it('and returns an empty string if it does not exist', function() {
+      service.listItem.editorTabStates.nodeShapes.sourceIRI = undefined;
+      expect(service.getImportedSource()).toEqual('');
+    });
+    it('and returns an empty string if the listItem is null', function() {
+      service.listItem = null;
+      expect(service.getImportedSource()).toEqual('');
+    });
+  });
   describe('should retrieve entity names from the shapes graph record', () => {
     it('successfully', fakeAsync(() => {
       sparqlManagerStub.postQuery.and.returnValue(of({
@@ -1212,7 +1731,7 @@ describe('Shapes Graph State service', function() {
         };
       });
       describe('if postQuery succeeds', () => {
-        const usages = [{'@id': 'urn:somethingElse', 'urn:someProp': [{'@id': propertyShape.id}]}];
+        const usages = [{ '@id': 'urn:somethingElse', 'urn:someProp': [{ '@id': propertyShape.id }] }];
         it('successfully', fakeAsync(() => {
           sparqlManagerStub.postQuery.and.returnValue(of(JSON.stringify(usages)));
           spyOn(service, 'saveCurrentChanges').and.returnValue(of(null));
@@ -1263,7 +1782,7 @@ describe('Shapes Graph State service', function() {
           expect(service.saveCurrentChanges).toHaveBeenCalledWith();
         }));
         it('unless the response is not a string', fakeAsync(() => {
-          sparqlManagerStub.postQuery.and.returnValue(of({ head: { vars: []}, results: {bindings: []}}));
+          sparqlManagerStub.postQuery.and.returnValue(of({ head: { vars: [] }, results: { bindings: [] } }));
           spyOn(service, 'saveCurrentChanges');
           service.removePropertyShape(propertyShape).subscribe(() => fail('Observable should have failed'), result => {
             expect(result).toContain('Associated usages were not updated due to an internal error');
@@ -1311,5 +1830,107 @@ describe('Shapes Graph State service', function() {
         expect(service.saveCurrentChanges).not.toHaveBeenCalled();
       }));
     });
+  });
+  it('getClassesQuery should return correct query without filter', () => {
+    const query = service.getClassesQuery();
+    expect(query).toContain('PREFIX owl: <http://www.w3.org/2002/07/owl#>');
+    expect(query).toContain('SELECT DISTINCT ?iri WHERE');
+    expect(query).toContain('?iri a owl:Class .');
+    expect(query).not.toContain('FILTER(CONTAINS');
+  });
+  it('getClassesQuery should include filter for searchText', () => {
+    const query = service.getClassesQuery('TestClass');
+    expect(query).toContain('FILTER(CONTAINS(LCASE(STR(?iri)), "testclass"))');
+  });
+  it('getObjectPropertiesQuery should return correct query without filter', () => {
+    const query = service.getObjectPropertiesQuery();
+    expect(query).toContain('PREFIX owl: <http://www.w3.org/2002/07/owl#>');
+    expect(query).toContain('SELECT DISTINCT ?iri WHERE');
+    expect(query).toContain('?iri a owl:ObjectProperty .');
+    expect(query).not.toContain('FILTER(CONTAINS');
+  });
+  it('getObjectPropertiesQuery should include filter for searchText', () => {
+    const query = service.getObjectPropertiesQuery('Test');
+    expect(query).toContain('FILTER(CONTAINS(LCASE(STR(?iri)), "test"))');
+  });
+  it('getPropertiesByTypeQuery should return correct query without filter', () => {
+    const query = service.getPropertiesByTypeQuery();
+    expect(query).toContain('VALUES ?type { owl:ObjectProperty owl:DatatypeProperty owl:AnnotationProperty }');
+    expect(query).toContain('SELECT DISTINCT ?iri ?type WHERE');
+    expect(query).not.toContain('FILTER(CONTAINS');
+  });
+  it('getPropertiesByTypeQuery should include filter for searchText', () => {
+    const query = service.getPropertiesByTypeQuery('Prop');
+    expect(query).toContain('FILTER(CONTAINS(LCASE(STR(?iri)), "prop"))');
+  });
+  describe('_fetchIris', () => {
+    beforeEach(() => {
+      service.listItem = listItem;
+    });
+    it('should return empty array if listItem has no versionedRdfRecord', fakeAsync(() => {
+      service.listItem.versionedRdfRecord = null;
+      (service['_fetchIris']('query') as Observable<string[]>).subscribe(result => {
+        expect(result).toEqual([]);
+      });
+      tick();
+    }));
+    it('should post a query and map the results to an array of IRIs', fakeAsync(() => {
+      const mockResponse: SPARQLSelectResults = {
+        head: {
+          vars: ['iri', 'B']
+        },
+        results: {
+          bindings: [
+            { iri: { value: 'iri1', type: `${XSD}string` } },
+            { iri: { value: 'iri2', type: `${XSD}string` } }
+          ]
+        }
+      };
+      sparqlManagerStub.postQuery.and.returnValue(of(mockResponse));
+      (service['_fetchIris']('query') as Observable<string[]>).subscribe(result => {
+        expect(result).toEqual(['iri1', 'iri2']);
+      });
+      tick();
+      expect(sparqlManagerStub.postQuery).toHaveBeenCalledWith(
+        'query', recordId, SHAPES_STORE_TYPE, branchId, commitId, true, true, 'application/json', false
+      );
+    }));
+    it('should handle empty response from postQuery', fakeAsync(() => {
+      sparqlManagerStub.postQuery.and.returnValue(of(null));
+      (service['_fetchIris']('query') as Observable<string[]>).subscribe(result => {
+        expect(result).toEqual([]);
+      });
+      tick();
+    }));
+  });
+  describe('getClassOptions', () => {
+    it('should fetch and group class options', fakeAsync(() => {
+      spyOn(service as any, '_fetchIris').and.returnValue(of(['class1', 'class2']));
+      spyOn(service, 'groupSuggestionsByOntologyIri').and.returnValue([{ label: 'group', suggestions: [] }] as GroupedSuggestion[]);
+      service.getClassOptions().subscribe();
+      tick();
+      expect(service['_fetchIris']).toHaveBeenCalled();
+      expect(service.groupSuggestionsByOntologyIri).toHaveBeenCalledWith(['class1', 'class2']);
+    }));
+  });
+  describe('getPropertiesOptions', () => {
+    it('should return an empty observable if targetType is invalid', fakeAsync(() => {
+      let result;
+      service.getPropertiesOptions('search', 'invalidType').subscribe(res => result = res);
+      tick();
+      expect(result).toEqual([]);
+    }));
+    it('should call getObjectPropertiesQuery for TARGET_OBJECTS_OF', fakeAsync(() => {
+      spyOn(service as any, '_fetchIris').and.returnValue(of([]));
+      service.getPropertiesOptions('search', TARGET_OBJECTS_OF).subscribe();
+      tick();
+      expect(service['_fetchIris']).toHaveBeenCalledWith(service.getObjectPropertiesQuery('search'), false);
+    }));
+    it('should call getPropertiesByTypeQuery for TARGET_SUBJECTS_OF', fakeAsync(() => {
+      spyOn(service as any, '_fetchIris').and.returnValue(of([]));
+      service.getPropertiesOptions('search', TARGET_SUBJECTS_OF).subscribe();
+      tick();
+      expect(service['_fetchIris']).toHaveBeenCalledWith(service.getPropertiesByTypeQuery('search'), false);
+    }));
   });
 });

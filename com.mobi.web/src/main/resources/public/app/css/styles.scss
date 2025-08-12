@@ -83,6 +83,11 @@ select.form-control, .custom-select {
     font-size: 0.875rem;
 }
 
+// Styling Dropdown Options
+.mat-option.selected {
+  font-weight: bold;
+}
+
 /* General page spacing */
 body {
     bottom: 0;

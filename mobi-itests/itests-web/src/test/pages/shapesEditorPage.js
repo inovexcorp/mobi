@@ -29,12 +29,15 @@ const propertyValues = `${parentEl} property-values`;
 const nodeItemSelectorXpath = `//${parentEl}//${nodeShapesTab}//app-node-shapes-list//cdk-virtual-scroll-viewport//app-node-shapes-item`;
 const nodeShapesSearchBar = `${nodeShapesListEl} search-bar`;
 const nodeShapesList = `${nodeShapesListEl} cdk-virtual-scroll-viewport`;
+// Shacl Target Selectors
 const parentShaclTarget = 'app-node-shapes-display app-shacl-target';
-const shaclTargetForm = `${parentShaclTarget} form.shacl-target`;
-const targetRadioGroup = `${shaclTargetForm} mat-radio-group.target-select`;
-const targetRadioButtonLabel = `${shaclTargetForm} mat-radio-group.target-select mat-radio-button.mat-radio-checked .mat-radio-label-content`;
-const targetValueInput = `${shaclTargetForm} input[formControlName="targetValue"]`;
-const targetValueLabel = `${shaclTargetForm} mat-form-field:has(input[formControlName="targetValue"]) mat-label`;
+const shaclTargetEditButton = `${parentShaclTarget} button:has(i.fa-pencil)`;
+const shaclTargetSaveButton = `${parentShaclTarget} button.save-button`;
+const shaclTargetForm = `${parentShaclTarget} form.shacl-target-form`;
+const targetRadioGroup = `${shaclTargetForm} mat-radio-group.target-type-select`;
+const targetRadioButtonLabel = `${targetRadioGroup} mat-radio-button.mat-radio-checked .mat-radio-label-content`;
+const targetValueInput = `${shaclTargetForm} .target-input input`;
+const targetValueLabel = `${shaclTargetForm} mat-form-field:has(input) mat-label`;
 
 function getPropertyShapeSelector(idOrIdx) {
   if (typeof idOrIdx === 'number') {
@@ -71,7 +74,7 @@ const shapesEditorCommands = {
 
   openUploadRecordLog: function() {
     return this.api.page.editorPage().openUploadRecordLog(parentEl);
-  },    
+  },
 
   createBranch: function(branch_title, branch_description) {
     return this.api.page.editorPage().createBranch(parentEl, branch_title, branch_description);
@@ -119,6 +122,10 @@ const shapesEditorCommands = {
 
   verifyUncommittedChanges: function(shouldBeVisible) {
     return this.api.page.editorPage().verifyUncommittedChanges(parentEl, shouldBeVisible);
+  },
+
+  verifyChangePageCommitNum: function(number) {
+    return this.api.page.editorPage().verifyChangePageCommitNum(parentEl, number);
   }
 };
 
@@ -265,6 +272,8 @@ module.exports = {
     nodeShapesDisplay: nodeShapesDisplay,
     // Shacl Target Selectors
     shaclTargetForm: shaclTargetForm,
+    shaclTargetEditButton: shaclTargetEditButton,
+    shaclTargetSaveButton: shaclTargetSaveButton,
     targetRadioGroup: targetRadioGroup,
     targetRadioButtonLabel: targetRadioButtonLabel,
     targetValueLabel: targetValueLabel,

@@ -34,12 +34,13 @@ import { ShapesGraphManagerService } from '../../../shared/services/shapesGraphM
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
 import { ToastService } from '../../../shared/services/toast.service';
 import { VersionedRdfRecord } from '../../../shared/models/versionedRdfRecord.interface';
+import { RESTError } from '../../../shared/models/RESTError.interface';
 
 /**
- * @class shapes-graph-editor.NodeShapesListComponent
- * @requires shared.ShapesGraphStateService
- * @requires shared.ShapesGraphManagerService
- * @requires shared.ToastService
+ * @class NodeShapesListComponent
+ * @requires ShapesGraphStateService
+ * @requires ShapesGraphManagerService
+ * @requires ToastService
 
  * Component displays a scrollable list of SHACL Node Shapes for a given record.
  * Supports filtering by search text and highlights the currently selected shape.
@@ -136,8 +137,8 @@ export class NodeShapesListComponent implements OnChanges, OnDestroy {
         nodeShape.targetValueLabel = this.sgs.getEntityName(nodeShape.targetValue);
       });
       this.sgs.listItem.editorTabStates.nodeShapes.nodes = nodes; // Provide reference for updating 
-    }, (error) => {
-      this._toast.createErrorToast(error);
+    }, (error: RESTError) => {
+      this._toast.createErrorToast(error.errorMessage);
     });
   }
 }

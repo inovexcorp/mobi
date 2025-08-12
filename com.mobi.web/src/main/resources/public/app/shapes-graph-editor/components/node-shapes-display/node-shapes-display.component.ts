@@ -23,19 +23,20 @@
 //Angular imports
 import { Component, Input, OnChanges } from '@angular/core';
 //Mobi + Local imports
+import { EXPLICIT_TARGETS } from '../../models/constants';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { SH } from '../../../prefixes';
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
 
 /**
- * @class shapes-graph-editor.NodeShapesDisplayComponent
- * @requires shared.ShapesGraphStateService
+ * @class NodeShapesDisplayComponent
+ * @requires ShapesGraphStateService
  * 
  * A component responsible for rendering the full detail view of a selected SHACL Node Shape.
  * 
- * @param {JSONLDObject} nodeShape - The JSON-LD representation of the selected SHACL Node Shape.
- * @param {string} selectedEntityIRI - The IRI of the selected SHACL Node Shape to display.
- * @param {boolean} canModify - Indicates whether the user has permission to modify the node shape.
+ * @param {JSONLDObject} nodeShape The JSON-LD representation of the selected SHACL Node Shape.
+ * @param {string} selectedEntityIRI The IRI of the selected SHACL Node Shape to display.
+ * @param {boolean} canModify Indicates whether the user has permission to modify the node shape.
  */
 @Component({
   selector: 'app-node-shapes-display',
@@ -60,19 +61,12 @@ export class NodeShapesDisplayComponent implements OnChanges {
     `${SH}not`,  // Logical NOT (negation of a shape)
     `${SH}xone`, // Exclusive OR: exactly one shape must match
   ];
-  // https://www.w3.org/TR/shacl/#targets
-  private readonly _targetPredicates = [
-    `${SH}targetClass`, // Applies shape to all instances of a given class
-    `${SH}targetNode`, // Applies to a specific node (IRI or blank node)
-    `${SH}targetSubjectsOf`, // Applies to all subjects of a specific property
-    `${SH}targetObjectsOf`, // Applies to all objects of a specific property
-  ];
   private readonly _nestedPredicates = [
     `${SH}property`, // Declares Property shapes constraints on specific properties of the focus node
   ];
-  private readonly excludedKeys = [
-    ...this._protectedKeys,
-    ...this._targetPredicates,
+  private readonly _excludedKeys = [
+    ...this._protectedKeys, // Keys handled by selected-details
+    ...EXPLICIT_TARGETS, // Keys handled by app-shacl-target
     ...this._nestedPredicates,
     ...this._logicalConstraintPredicates
   ];
@@ -94,10 +88,10 @@ export class NodeShapesDisplayComponent implements OnChanges {
     });
   }
 
-  private _setNodeShapeEntity() {
+  private _setNodeShapeEntity(): void {
     if (!this.nodeShape) {
       return;
     }
-    this.nodeShapeProperties = Object.keys(this.nodeShape).filter(key => !this.excludedKeys.includes(key));
+    this.nodeShapeProperties = Object.keys(this.nodeShape).filter(key => !this._excludedKeys.includes(key));
   }
 }

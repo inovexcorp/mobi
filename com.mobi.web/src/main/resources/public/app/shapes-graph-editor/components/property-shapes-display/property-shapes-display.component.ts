@@ -41,8 +41,8 @@ export interface ResolvedPath {
 }
 
 /**
- * @class shapes-graph-editor.NodeShapesDisplayComponent
- * @requires shared.ShapesGraphStateService
+ * @class NodeShapesDisplayComponent
+ * @requires ShapesGraphStateService
  * 
  * A component that displays a list of all the Property Shapes attached to the provided Node Shape, represented as a
  * {@link JSONLDObject}. Handles parsing through the sh:path of each property shape recursively and representing all
@@ -107,7 +107,7 @@ export class PropertyShapesDisplayComponent implements OnChanges {
   setPropertyShapes(nodeShape: JSONLDObject, jsonld: JSONLDObject[], entityNames: EntityNames): void {
     // Create a map of JSON-LD objects by their @id for quick access
     const jsonldMap: Record<string, JSONLDObject> = {};
-    jsonld.forEach((item) => {
+    jsonld.forEach((item: JSONLDObject) => {
       if (item['@id']) {
         jsonldMap[item['@id']] = item;
       }

@@ -10,12 +10,12 @@
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
@@ -27,8 +27,8 @@ import { ShapesGraphStateService } from '../../../shared/services/shapesGraphSta
 import { ShapesGraphListItem } from '../../../shared/models/shapesGraphListItem.class';
 
 /**
- * @class shapes-graph-editor.ShapesTabsHolderComponent
- * @requires shared.ShapesGraphStateService
+ * @class ShapesTabsHolderComponent
+ * @requires ShapesGraphStateService
  *
  * A component that holds and manages the tab layout for the shapes graph editor.
  * It reacts to tab changes and can be extended to trigger actions when specific tabs are selected.
@@ -41,7 +41,7 @@ import { ShapesGraphListItem } from '../../../shared/models/shapesGraphListItem.
 export class ShapesTabsHolderComponent {
   @ViewChild('tabsGroup') tabsGroup: MatTabGroup;
 
-  constructor(public state: ShapesGraphStateService) { }
+  constructor(public state: ShapesGraphStateService) {}
 
   onTabChanged(event: MatTabChangeEvent): void {
     switch (event.index) {
@@ -49,7 +49,11 @@ export class ShapesTabsHolderComponent {
         this.state.setSelected(this.state.listItem.shapesGraphId, this.state.listItem).subscribe();
         break;
       case ShapesGraphListItem.NODE_SHAPES_TAB:
-        this.state.setSelected(this.state.listItem.editorTabStates.nodeShapes.entityIRI, this.state.listItem).subscribe();
+        this.state.setSelected(
+            this.state.listItem.editorTabStates.nodeShapes.entityIRI,
+            this.state.listItem
+          )
+          .subscribe();
         break;
       default:
     }

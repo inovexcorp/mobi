@@ -28,7 +28,6 @@ import { switchMap } from 'rxjs/operators';
 import { getEntityName } from '../../utility';
 import { IndividualTypesModalComponent } from '../../../ontology-editor/components/individualTypesModal/individualTypesModal.component';
 import { JSONLDObject } from '../../models/JSONLDObject.interface';
-import { OntologyManagerService } from '../../services/ontologyManager.service';
 import { ToastService } from '../../services/toast.service';
 import { VersionedRdfListItem } from '../../models/versionedRdfListItem.class';
 import { VersionedRdfState } from '../../services/versionedRdfState.service';
@@ -43,12 +42,12 @@ import { VersionedRdfState } from '../../services/versionedRdfState.service';
  * The display is optionally `readOnly` and can optionally highlight text in the `staticIri` matching the provided `highlightText`.
  *
  * @param {VersionedRdfState<VersionedRdfListItem>} stateService - Service managing state for RDF versioned records.
- * @param {JSONLDObject} entity - The JSON-LD object representing the selected entity.
- * @param {string} entityIri - The IRI of the selected entity.
- * @param {boolean} isImported - Indicates whether the entity was imported from another source.
- * @param {boolean} canModify - Indicates if the user has permission to modify the entity's IRI.
- * @param {boolean} [readOnly] - Optional flag to render the component in read-only mode.
- * @param {string} [highlightText] - Optional text to pass along to the `staticIri` for highlighting.
+ * @param {JSONLDObject} entity The JSON-LD object representing the selected entity.
+ * @param {string} entityIri The IRI of the selected entity.
+ * @param {boolean} isImported Indicates whether the entity was imported from another source.
+ * @param {boolean} canModify Indicates if the user has permission to modify the entity's IRI.
+ * @param {boolean} [readOnly] Optional flag to render the component in read-only mode.
+ * @param {string} [highlightText] Optional text to pass along to the `staticIri` for highlighting.
  */
 @Component({
   selector: 'selected-details',

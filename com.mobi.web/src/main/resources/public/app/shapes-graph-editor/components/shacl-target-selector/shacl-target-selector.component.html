@@ -20,16 +20,17 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-  
-<div class="shapes-preview h-100">
-  <mat-card class="d-flex flex-column h-100">
-    <mat-card-header>
-      <form [formGroup]="serializationForm">
-        <serialization-select class="d-inline-block" [parentForm]="serializationForm"></serialization-select>
-        <button mat-raised-button color="primary" class="refresh-button ml-2"
-            (click)="setContent()">Refresh</button>
-      </form>
-    </mat-card-header>
-    <mat-card-content class="flex-1 remove-min-height position-relative" #shapesGraphContent></mat-card-content>
-  </mat-card>
-</div>
+<fieldset class="target-selector py-2">
+  <mat-radio-group class="d-flex flex-column target-type-select"
+    aria-label="Select a Target Option"
+    [value]="value"
+    [disabled]="isDisabled"
+    (change)="onRadioChange($event)">
+    <mat-radio-button 
+      class="target-type-option"
+      *ngFor="let targetOption of targetOptions"
+      [value]="targetOption.iri">
+      <span [title]="targetOption.description">{{ targetOption.label }}</span>
+    </mat-radio-button>
+  </mat-radio-group>
+</fieldset>

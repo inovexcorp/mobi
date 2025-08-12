@@ -1,0 +1,51 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 - 2025 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<mat-form-field class="w-100">
+  <span class="spinner-prefix" matPrefix #targetChipSpinner></span>
+  <mat-label>{{ label }}</mat-label>
+  <mat-chip-list #chipList aria-label="Target Values" [selectable]="!isDisabled">
+    <mat-chip *ngFor="let chipValue of chipValues; let i = index" [selectable]="!isDisabled" [removable]="!isDisabled"
+      (removed)="removeChip(i)" [disabled]="isDisabled" [title]="chipValue.value">
+      {{ chipValue.label }}
+      <mat-icon matChipRemove *ngIf="!isDisabled">cancel</mat-icon>
+    </mat-chip>
+    <input type="text" matInput #chipInput
+      [matAutocomplete]="auto"
+      [formControl]="inputControl" 
+      [matChipInputFor]="chipList" 
+      [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
+      [matChipInputAddOnBlur]="false" 
+      (matChipInputTokenEnd)="addChipFromInput($event)"
+      (focus)="onInputFocus()"
+      (blur)="onTouched()" />
+  </mat-chip-list>
+  <mat-autocomplete #auto="matAutocomplete" (optionSelected)="addChipFromSelection($event)" [displayWith]="displayFn">
+    <ng-container *ngFor="let group of suggestions$ | async; trackBy: trackByGroupLabel">
+      <mat-optgroup [label]="group.label">
+        <mat-option *ngFor="let suggestion of group.suggestions; trackBy: trackBySuggestionValue" [value]="suggestion">
+          <span [title]="suggestion.value">{{ suggestion.label }}</span>
+        </mat-option>
+      </mat-optgroup>
+    </ng-container>
+  </mat-autocomplete>
+</mat-form-field>

@@ -64,12 +64,9 @@ module.exports = {
       },
 
     'Step 6: Click changes tab': function(browser) {
-        browser
-            .assert.visible('mat-chip.uncommitted')
+        browser.page.ontologyEditorPage().verifyUncommittedChanges(true);
         browser.page.ontologyEditorPage().toggleChangesPage();
         browser.globals.wait_for_no_spinners(browser);
-        browser
-            .waitForElementVisible('app-changes-page div.changes-info button.mat-warn')
-            .expect.elements('app-changes-page mat-expansion-panel').count.to.equal(5)
+        browser.page.ontologyEditorPage().verifyChangePageCommitNum(5);
     }
 }

@@ -45,6 +45,7 @@
         <app-shacl-target class="w-100"
           [versionedRdfRecord]="stateService.listItem.versionedRdfRecord"
           [nodeShape]="nodeShape"
+          [isImported]="stateService.isSelectedImported()"
           [canModify]="canModify">
        </app-shacl-target>
       </div>

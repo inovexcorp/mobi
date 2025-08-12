@@ -23,14 +23,14 @@
 /**
  * Represents a summary of a SHACL Node Shape.
  *
- * @property iri - The IRI of the Node Shape.
- * @property name - A human-readable name or label for the Node Shape.
- * @property targetType - The SHACL target type (e.g., `sh:targetClass`, `sh:targetNode`).
- * @property targetTypeLabel - (Optional) A display-friendly label for the target type.
- * @property targetValue - The value associated with the SHACL target (e.g., a class IRI).
- * @property targetValueLabel - (Optional) A display-friendly label for the target value.
- * @property imported - Whether this Node Shape was imported from another ontology.
- * @property sourceOntologyIRI - The IRI of the source ontology where this Node Shape is defined.
+ * @property {string} iri The IRI of the Node Shape.
+ * @property {string} name A human-readable name or label for the Node Shape.
+ * @property {string} targetType The SHACL target type (e.g., `sh:targetClass`, `sh:targetNode`).
+ * @property {string} targetTypeLabel (Optional) A display-friendly label for the target type.
+ * @property {string} targetValue The value associated with the SHACL target (e.g., a class IRI).
+ * @property {string} targetValueLabel (Optional) A display-friendly label for the target value.
+ * @property {boolean} imported Whether this Node Shape was imported from another ontology.
+ * @property {string} sourceOntologyIRI The IRI of the source ontology where this Node Shape is defined.
  */
 export interface NodeShapeSummary {
   iri: string;
