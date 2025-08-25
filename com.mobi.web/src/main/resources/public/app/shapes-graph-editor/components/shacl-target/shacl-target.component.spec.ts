@@ -45,8 +45,8 @@ import {
 } from '../../models/constants';
 import { OWL, RDFS, SH } from '../../../prefixes';
 import { PropertyManagerService } from '../../../shared/services/propertyManager.service';
-import { ShaclTargetChipInputComponent } from '../shacl-target-chip-input/shacl-target-chip-input.component';
-import { ShaclTargetClassInputComponent } from '../shacl-target-class-input/shacl-target-class-input.component';
+import { ShaclChipSuggestionsInputComponent } from '../shacl-chip-suggestions-input/shacl-chip-suggestions-input.component';
+import { ShaclSingleSuggestionInputComponent } from '../shacl-single-suggestion-input/shacl-single-suggestion-input.component';
 import { ShaclTargetNodeInputComponent } from '../shacl-target-node-input/shacl-target-node-input.component';
 import { ShaclTargetSelectorComponent, TargetOption } from '../shacl-target-selector/shacl-target-selector.component';
 import { ShapesGraphListItem } from '../../../shared/models/shapesGraphListItem.class';
@@ -107,11 +107,11 @@ describe('ShaclTargetComponent', () => {
     description: 'targetSubjectOfeDescription',
     valueLabel: 'targetSubjectOfValueLabel'
   };
-  const targetImpicitOption: TargetOption = {
+  const targetImplicitOption: TargetOption = {
     iri: IMPLICIT_REFERENCE,
-    label: 'targetImpicitLabel',
-    description: 'targetImpicitDescription',
-    valueLabel: 'targetImpicitValueLabel'
+    label: 'targetImplicitLabel',
+    description: 'targetImplicitDescription',
+    valueLabel: 'targetImplicitValueLabel'
   };
 
   beforeEach(async () => {
@@ -127,10 +127,10 @@ describe('ShaclTargetComponent', () => {
       ],
       declarations: [
         ShaclTargetComponent,
-        MockComponent(ShaclTargetChipInputComponent),
+        MockComponent(ShaclChipSuggestionsInputComponent),
+        MockComponent(ShaclSingleSuggestionInputComponent),
         MockComponent(ShaclTargetNodeInputComponent),
         MockComponent(ShaclTargetSelectorComponent),
-        MockComponent(ShaclTargetClassInputComponent)
       ],
       providers: [
         MockProvider(ShapesGraphStateService),
@@ -211,7 +211,10 @@ describe('ShaclTargetComponent', () => {
 
         component.targetOption = targetNodeOption;
         component.targetForm.controls['target'].setValue(TARGET_NODE);
-        component.targetForm.controls['targetValue'].setValue('http://example.org/SomeNode');
+        component.targetForm.controls['targetValue'].setValue({
+          value: 'http://example.org/SomeNode',
+          label: 'Some Node'
+        });
 
         component.onSave();
 
@@ -277,7 +280,7 @@ describe('ShaclTargetComponent', () => {
         {
           description: 'when starting with NO target, change to implicit',
           initialShape: TARGET_SHAPES.edgeCases.NO_TARGET,
-          newOption: targetImpicitOption,
+          newOption: targetImplicitOption,
           newNodeShape: TARGET_SHAPES.implicit.RDFS_CLASS_REFERENCE,
           expectedDiff: {
             deletionJson: null,
@@ -294,7 +297,7 @@ describe('ShaclTargetComponent', () => {
         {
           description: 'when starting with NO target (NO Type), change to implicit',
           initialShape: TARGET_SHAPES.edgeCases.NO_TARGET_WITHOUT_TYPE,
-          newOption: targetImpicitOption,
+          newOption: targetImplicitOption,
           newNodeShape: TARGET_SHAPES.implicit.RDFS_OWL_CLASS_REFERENCE,
           expectedDiff: {
             deletionJson: null,
@@ -367,7 +370,7 @@ describe('ShaclTargetComponent', () => {
         {
           description: 'when starting with targetNode, change to implicit',
           initialShape: TARGET_SHAPES.targetNode.IRI,
-          newOption: targetImpicitOption,
+          newOption: targetImplicitOption,
           newNodeShape: TARGET_SHAPES.implicit.RDFS_CLASS_REFERENCE,
           expectedDiff: {
             deletionJson: {
@@ -461,7 +464,7 @@ describe('ShaclTargetComponent', () => {
         {
           description: 'when starting with targetClass, change to implicit',
           initialShape: TARGET_SHAPES.targetClass.IRI,
-          newOption: targetImpicitOption,
+          newOption: targetImplicitOption,
           newNodeShape: TARGET_SHAPES.implicit.RDFS_CLASS_REFERENCE,
           expectedDiff: {
             deletionJson: {
@@ -560,7 +563,7 @@ describe('ShaclTargetComponent', () => {
         {
           description: 'when starting with targetSubjectsOf, change to implicit',
           initialShape: TARGET_SHAPES.targetSubjectsOf.SINGLE_VALUE,
-          newOption: targetImpicitOption,
+          newOption: targetImplicitOption,
           newNodeShape: TARGET_SHAPES.implicit.RDFS_CLASS_REFERENCE,
           expectedDiff: {
             deletionJson: {
@@ -644,7 +647,7 @@ describe('ShaclTargetComponent', () => {
         {
           description: 'when starting with targetObjectsOf, change to implicit',
           initialShape: TARGET_SHAPES.targetObjectsOf.SINGLE_VALUE,
-          newOption: targetImpicitOption,
+          newOption: targetImplicitOption,
           newNodeShape: TARGET_SHAPES.implicit.RDFS_CLASS_REFERENCE,
           expectedDiff: {
             deletionJson: {
@@ -740,7 +743,7 @@ describe('ShaclTargetComponent', () => {
         {
           description: 'when starting with implicit, change to a different implicit form',
           initialShape: TARGET_SHAPES.implicit.RDFS_CLASS_REFERENCE,
-          newOption: targetImpicitOption,
+          newOption: targetImplicitOption,
           newNodeShape: TARGET_SHAPES.implicit.RDFS_CLASS_REFERENCE,
           expectedDiff: {
             deletionJson: {
@@ -813,7 +816,7 @@ describe('ShaclTargetComponent', () => {
           ...targetNodeOption,
           isUserSelection: true
         };
-        component.targetForm.controls['targetValue'].setValue('valueIRI');
+        component.targetForm.controls['targetValue'].setValue({ value: 'valueIRI', label: 'valueLabel' });
 
         const additionJson = component.createAdditionJsonLdObject(component.nodeShape);
         expect(additionJson).toBeTruthy();
@@ -828,10 +831,10 @@ describe('ShaclTargetComponent', () => {
       it('should create an addition object for a single value target (IMPLICIT_REFERENCE)', () => {
         component.nodeShape = { '@id': 'node1' };
         component.targetOption = {
-          ...targetImpicitOption,
+          ...targetImplicitOption,
           isUserSelection: true
         };
-        component.targetForm.controls['targetValue'].setValue('valueIRI');
+        component.targetForm.controls['targetValue'].setValue({ value: 'valueIRI', label: 'valueLabel' });
 
         const additionJson = component.createAdditionJsonLdObject(component.nodeShape);
         expect(additionJson).toBeTruthy();
@@ -883,8 +886,8 @@ describe('ShaclTargetComponent', () => {
           ...targetNodeOption,
           isUserSelection: true
         };
-        component.targetForm.controls['targetValue'].setValue('oldValue');
-        component.targetForm.controls['targetValues'].setValue(['oldValues']);
+        component.targetForm.controls['targetValue'].setValue({ value: 'oldValue', label: 'oldValueLabel' });
+        component.targetForm.controls['targetValues'].setValue([{ value: 'oldValues', label: 'oldValueLabels' }]);
 
         const newTargetOption: TargetOption = {
           ...targetClassOption,
@@ -894,7 +897,7 @@ describe('ShaclTargetComponent', () => {
 
         component.handleTargetChange(newTargetOption);
 
-        expect(component.targetForm.value.targetValue).toBe('');
+        expect(component.targetForm.value.targetValue).toBeNull();
         expect(component.targetForm.value.targetValues).toEqual([]);
       });
     });
@@ -966,7 +969,7 @@ describe('ShaclTargetComponent', () => {
     it('should enable save button when form is valid', () => {
       component.editMode = 'ENABLED';
       component.targetForm.controls['target'].setValue(component.TARGET_NODE);
-      component.targetForm.controls['targetValue'].setValue('http://example.org/SomeNode');
+      component.targetForm.controls['targetValue'].setValue({ value: 'http://example.org/SomeNode', label: 'Some Node' });
       fixture.detectChanges();
 
       const saveBtn = element.query(By.css('button.save-button'));
@@ -988,27 +991,27 @@ describe('ShaclTargetComponent', () => {
         component.targetOption = targetClassOption;
         fixture.detectChanges();
 
-        const classInput = element.query(By.directive(ShaclTargetClassInputComponent));
+        const classInput = element.query(By.directive(ShaclSingleSuggestionInputComponent));
         expect(classInput).toBeTruthy();
       });
       it('TARGET_OBJECTS_OF', () => {
         component.targetOption = targetObjectsOfOption;
         fixture.detectChanges();
 
-        const chipInput = element.query(By.directive(ShaclTargetChipInputComponent));
+        const chipInput = element.query(By.directive(ShaclChipSuggestionsInputComponent));
         expect(chipInput).toBeTruthy();
       });
       it('TARGET_SUBJECTS_OF', () => {
         component.targetOption = targetSubjectOfOption;
         fixture.detectChanges();
 
-        const chipInput = element.query(By.directive(ShaclTargetChipInputComponent));
+        const chipInput = element.query(By.directive(ShaclChipSuggestionsInputComponent));
         expect(chipInput).toBeTruthy();
       });
       it('IMPLICIT', () => {
-        component.targetOption = targetImpicitOption;
+        component.targetOption = targetImplicitOption;
         fixture.detectChanges();
-        const classInput = element.query(By.directive(ShaclTargetClassInputComponent));
+        const classInput = element.query(By.directive(ShaclSingleSuggestionInputComponent));
         expect(classInput).toBeFalsy();
       });
     });

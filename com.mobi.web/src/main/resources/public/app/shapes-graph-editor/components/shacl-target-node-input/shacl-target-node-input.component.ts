@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component, forwardRef, Input } from '@angular/core';
+import { Component, forwardRef, Input, OnDestroy, OnInit } from '@angular/core';
 import {
   AbstractControl,
   ControlValueAccessor,
@@ -32,7 +32,13 @@ import {
   Validators
 } from '@angular/forms';
 
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
+
+import { getBeautifulIRI } from '../../../shared/utility';
+import { propertyRegex } from '../../../shared/validators/property-regex.validator';
 import { REGEX } from '../../../constants';
+import { ValueOption } from '../../models/value-option.interface';
 
 /**
  * @class ShaclTargetNodeInputComponent
@@ -60,15 +66,34 @@ import { REGEX } from '../../../constants';
     }
   ]
 })
-export class ShaclTargetNodeInputComponent implements ControlValueAccessor, Validator {
+export class ShaclTargetNodeInputComponent implements ControlValueAccessor, Validator, OnInit, OnDestroy {
   @Input() label: string;
 
-  nodeInputControl = new FormControl('', [Validators.required, Validators.pattern(REGEX.IRI)]);
+  private destroy$ = new Subject<void>();
+
+  nodeInputControl = new FormControl('', [Validators.required, propertyRegex(REGEX.IRI, 'value')]);
 
   constructor() {}
 
+  ngOnInit(): void {
+    // Subscribe to value changes and propagate them as objects
+    this.nodeInputControl.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(value => {
+        this.onChange({
+          value: value || '', 
+          label: value ? getBeautifulIRI(value) : ''
+        });
+      });
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
   /** Callback to propagate value changes up to the parent form. */
-  onChange: (value: string) => void = () => {};
+  onChange: (value: ValueOption) => void = () => {};
 
   /** Callback to propagate the touched state up to the parent form. */
   onTouched: () => void = () => {};
@@ -77,17 +102,25 @@ export class ShaclTargetNodeInputComponent implements ControlValueAccessor, Vali
    * Writes value from parent form into nodeInputControl.
    * Triggered when the parent form is initialized or when parentForm.patchValue() is called.
    *
-   * @param {string} value The new value from the parent form control.
+   * @param {string|ValueOption} value The new value from the parent form control.
    */
-  writeValue(value: string): void {
-    this.nodeInputControl.setValue(value, { emitEvent: false }); // Prevents feedback loops.
+  writeValue(value: string | ValueOption): void {
+    let stringValue = '';
+    
+    if (typeof value === 'string') {
+      stringValue = value;
+    } else if (value && typeof value === 'object' && 'value' in value) {
+      stringValue = value.value;
+    }
+    
+    this.nodeInputControl.setValue(stringValue, { emitEvent: false });
   }
 
   /**
    * Registers a callback function to be called when the control's value changes in the UI.
    * @param fn The callback function to register.
    */
-  registerOnChange(fn: (value: string) => void): void {
+  registerOnChange(fn: (value: ValueOption) => void): void {
     this.onChange = fn;
   }
 

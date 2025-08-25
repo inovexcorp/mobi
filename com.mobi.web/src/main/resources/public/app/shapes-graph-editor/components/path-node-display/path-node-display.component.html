@@ -1,0 +1,83 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 - 2025 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="path-node-display mb-1">
+  <ng-container [ngSwitch]="pathNode.type">
+    <ng-container *ngSwitchCase="'IRI'">
+      <mat-icon *ngIf="inverseParent; else predicatePath" class="arrow-icon inverse">arrow_upward</mat-icon>
+      <ng-template #predicatePath>
+        <mat-icon class="arrow-icon predicate">arrow_downward</mat-icon>
+      </ng-template>
+      <mat-card>
+        <mat-card-subtitle [title]="pathNode.iri">{{pathNode.label}}</mat-card-subtitle>
+        <!-- If inverse, parent should be inverse's parent and sibling should be inverse -->
+        <!-- Add node as an alternative after this node -->
+        <app-add-path-node-hover-button *ngIf="allowAltButton" class="alt-button" [onBottom]="false" (onClick)="clickAdd(parentNode, seqIdx, inverseParent || pathNode, false)"></app-add-path-node-hover-button>
+        <!-- Add node in sequence after this node -->
+        <app-add-path-node-hover-button *ngIf="allowSeqButton" class="seq-button" (onClick)="clickAdd(parentNode, seqIdx, inverseParent || pathNode)"></app-add-path-node-hover-button>
+      </mat-card>
+    </ng-container>
+    <ng-container *ngSwitchCase="'ZeroOrMore'">
+      <fieldset class="zero-or-more cardinality-container">
+        <legend class="cardinality-label">Zero or More</legend>
+        <app-path-node-display [pathNode]="pathNode.path" (addNodeToParent)="addNodeToParent.emit($event)" [parentNode]="pathNode"></app-path-node-display>
+        <!-- Add node in sequence after this ZeroOrMore node -->
+        <app-add-path-node-hover-button *ngIf="allowSeqButton" class="seq-button" (onClick)="clickAdd(parentNode, seqIdx, pathNode)"></app-add-path-node-hover-button>
+      </fieldset>
+    </ng-container>
+    <ng-container *ngSwitchCase="'OneOrMore'">
+      <fieldset class="one-or-more cardinality-container">
+        <legend class="cardinality-label">One or More</legend>
+        <app-path-node-display [pathNode]="pathNode.path" (addNodeToParent)="addNodeToParent.emit($event)" [parentNode]="pathNode"></app-path-node-display>
+        <!-- Add node in sequence after this OneOrMore node -->
+        <app-add-path-node-hover-button *ngIf="allowSeqButton" class="seq-button" (onClick)="clickAdd(parentNode, seqIdx, pathNode)"></app-add-path-node-hover-button>
+      </fieldset>
+    </ng-container>
+    <ng-container *ngSwitchCase="'ZeroOrOne'">
+      <fieldset class="zero-or-one cardinality-container">
+        <legend class="cardinality-label">Zero or One</legend>
+        <app-path-node-display [pathNode]="pathNode.path" (addNodeToParent)="addNodeToParent.emit($event)" [parentNode]="pathNode"></app-path-node-display>
+        <!-- Add node in sequence after this. ZeroOrOne node -->
+        <app-add-path-node-hover-button *ngIf="allowSeqButton" class="seq-button" (onClick)="clickAdd(parentNode, seqIdx, pathNode)"></app-add-path-node-hover-button>
+      </fieldset>
+    </ng-container>
+    <ng-container *ngSwitchCase="'Inverse'">
+      <!-- Special inverse case passing the parent -->
+      <app-path-node-display [pathNode]="pathNode.path" [inverseParent]="pathNode" (addNodeToParent)="addNodeToParent.emit($event)" [parentNode]="parentNode" [allowSeqButton]="allowSeqButton"></app-path-node-display>
+    </ng-container>
+    <ng-container *ngSwitchCase="'Sequence'">
+      <!-- Only show seq button on last node -->
+      <app-path-node-display *ngFor="let seqNode of pathNode.items; let idx = index; last as last" [pathNode]="seqNode" (addNodeToParent)="addNodeToParent.emit($event)" [parentNode]="pathNode" [seqIdx]="idx" [allowSeqButton]="last"></app-path-node-display>
+    </ng-container>
+    <ng-container *ngSwitchCase="'Alternative'">
+      <fieldset class="alternative-list d-flex align-items-center">
+        <div class="alternative-container d-flex align-items-center flex-1" *ngFor="let seqNode of pathNode.items; last as last">
+          <!-- No sequence buttons on alternate nodes and only show alt button on last node -->
+          <app-path-node-display class="flex-1" [pathNode]="seqNode" (addNodeToParent)="addNodeToParent.emit($event)" [allowAltButton]="last" [allowSeqButton]="false" [parentNode]="pathNode"></app-path-node-display>
+          <div *ngIf="!last" class="alternative-separator px-1">OR</div>
+        </div>
+        <!-- Add node in sequence after this Alternative node -->
+        <app-add-path-node-hover-button *ngIf="allowSeqButton" class="seq-button" (onClick)="clickAdd(parentNode, seqIdx, pathNode)"></app-add-path-node-hover-button>
+      </fieldset>
+    </ng-container>
+  </ng-container>
+</div>

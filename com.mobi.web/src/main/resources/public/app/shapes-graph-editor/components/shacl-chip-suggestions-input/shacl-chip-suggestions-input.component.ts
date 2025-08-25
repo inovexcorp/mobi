@@ -10,108 +10,104 @@
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- *
+ * 
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- *
+ * 
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import {
-  Component,
-  ElementRef,
-  forwardRef,
-  Input,
-  OnChanges,
-  OnDestroy,
-  OnInit,
-  SimpleChanges,
-  ViewChild
-} from '@angular/core';
-import {
-  AbstractControl,
-  ControlValueAccessor,
-  FormControl,
-  NG_VALIDATORS,
-  NG_VALUE_ACCESSOR,
-  ValidationErrors,
-  Validator,
-  Validators
-} from '@angular/forms';
+import { Component, ElementRef, forwardRef, Input, OnChanges, OnDestroy, OnInit, SimpleChanges, ViewChild } from '@angular/core';
+import { ControlValueAccessor, FormControl, NG_VALIDATORS, NG_VALUE_ACCESSOR, ValidationErrors, Validator } from '@angular/forms';
 import { ENTER } from '@angular/cdk/keycodes';
-import { MatChipInputEvent } from '@angular/material/chips';
 import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
+import { MatChipInputEvent } from '@angular/material/chips';
 
 import { Observable, of, Subject, Subscription } from 'rxjs';
-import { catchError, debounceTime, filter, finalize, map, switchMap, takeUntil } from 'rxjs/operators';
+import { takeUntil, map, debounceTime, switchMap, startWith, catchError, finalize, tap } from 'rxjs/operators';
+import { cloneDeep, some } from 'lodash';
 
 import { GroupedSuggestion } from '../../models/grouped-suggestion';
+import { OWL } from '../../../prefixes';
+import { ProgressSpinnerService } from '../../../shared/components/progress-spinner/services/progressSpinner.service';
+import { PropertyType, ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
 import { REGEX } from '../../../constants';
-import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
 import { ToastService } from '../../../shared/services/toast.service';
 import { ValueOption } from '../../models/value-option.interface';
-import { ProgressSpinnerService } from '../../../shared/components/progress-spinner/services/progressSpinner.service';
+import { propertyRegex } from '../../../shared/validators/property-regex.validator';
 
 /**
- * @class ShaclTargetChipInputComponent
+ * @class ShaclChipSuggestionsInputComponent
  * @requires ShapesGraphStateService
  * @requires ToastService
- *
- * A custom form control component for inputting a list of SHACL target IRIs.
- *
- * It uses Angular Material Chips to display the selected IRIs and provides
- * an autocomplete dropdown with suggestions fetched from the shapes graph.
- *
+ * @requires ProgressSpinnerService
+ * 
+ * A custom Angular form control component for selecting more than one OWL class or property from the imports closure
+ * of the {@link ShapesGraphStateService.listItem currently selected shapes graph}. Has an autocomplete that either
+ * pulls owl:Class IRIs or a list of properties filtered by the provided `propertyTypes`, providing users with relevant
+ * suggestions as they type. Also supports entering custom IRIs that are not in the list. It uses Angular Material 
+ * Chips to display the selected IRIs.
+ * 
  * It integrates with Angular's Reactive Forms by implementing ControlValueAccessor.
  * It uses an internal FormControl to manage its own state.
- *
+ * 
  * @param {string} label The label for the form field.
- * @param {string} targetType The type of target to query for.
+ * @param {boolean} pullClasses Whether to pull owl:Class IRIs or properties. Defaults to true.
+ * @param {PropertyType[]} propertyTypes The types of properties to filter by when pulling properties. Defaults to all
+ * property types.
  */
 @Component({
-  selector: 'app-shacl-target-chip-input',
-  templateUrl: './shacl-target-chip-input.component.html',
+  selector: 'app-shacl-chip-suggestions-input',
+  templateUrl: './shacl-chip-suggestions-input.component.html',
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => ShaclTargetChipInputComponent),
+      useExisting: forwardRef(() => ShaclChipSuggestionsInputComponent),
       multi: true
     },
     {
       provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => ShaclTargetChipInputComponent),
+      useExisting: forwardRef(() => ShaclChipSuggestionsInputComponent),
       multi: true
     }
   ]
 })
-export class ShaclTargetChipInputComponent implements ControlValueAccessor, Validator, OnInit, OnChanges, OnDestroy {
+export class ShaclChipSuggestionsInputComponent implements ControlValueAccessor, Validator, OnInit, OnChanges, OnDestroy {
   @Input() label: string;
-  @Input() targetType: string;
+  @Input() pullClasses = true;
+  @Input() propertyTypes: PropertyType[] = [];
 
   @ViewChild('chipInput') chipInput: ElementRef<HTMLInputElement>;
-  @ViewChild('targetChipSpinner', { static: true }) targetChipSpinner: ElementRef;
+  @ViewChild('autocompleteSpinner', { static: true }) autocompleteSpinner: ElementRef;
 
   readonly separatorKeysCodes: number[] = [ENTER];
 
+  // Option that is only shown if the entered value is a valid IRI but not in the list of suggestions.
+  customSuggestion: ValueOption = {
+    value: '',
+    label: '',
+    type: `${OWL}ObjectProperty` // Default type for properties so all options are considered
+  };
   chipValues: ValueOption[] = [];
   suggestions$: Observable<GroupedSuggestion[]> = of([]);
-  // suggestions: GroupedSuggestion[] = [];
-  inputControl = new FormControl<string | ValueOption | null>('', Validators.pattern(REGEX.IRI));
+  inputControl = new FormControl('', [propertyRegex(REGEX.IRI, 'value')]);
   isDisabled = false;
+  noMatches = true;
+
   private _destroySub$ = new Subject<void>();
   private _suggestionsSubscription: Subscription;
 
   constructor(
-    public stateService: ShapesGraphStateService,
-    private _toastService: ToastService,
+    public state: ShapesGraphStateService,
+    private _toast: ToastService,
     private _spinner: ProgressSpinnerService
   ) { }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes.targetType && !changes.targetType.firstChange) {
+    if (changes.pullClasses && !changes.pullClasses.firstChange) {
       this._setupSuggestionsSubscription();
       this.chipInput.nativeElement.value = '';
     }
@@ -126,14 +122,21 @@ export class ShaclTargetChipInputComponent implements ControlValueAccessor, Vali
       this._suggestionsSubscription.unsubscribe();
     }
     this.suggestions$ = this.inputControl.valueChanges
-    // this._suggestionsSubscription = this.inputControl.valueChanges
       .pipe(
         takeUntil(this._destroySub$),
-        map(value => typeof value === 'string' ? value : ''),
+        startWith<string | ValueOption>(''),
         debounceTime(300),
+        map(value => typeof value === 'string' ? value : value ? value.value : ''),
         switchMap((searchText: string) => this._getSuggestions(searchText)),
       );
-      this._suggestionsSubscription = this.suggestions$.subscribe();
+    this._suggestionsSubscription = this.suggestions$.subscribe();
+    this.inputControl.valueChanges.pipe(takeUntil(this._destroySub$)).subscribe((value: string | ValueOption) => {
+      // Updates the custom suggestion based on the input value
+      if (typeof value === 'string') {
+        this.customSuggestion.value = value;
+        this.customSuggestion.label = this.state.getEntityName(value);
+      }
+    });
   }
 
   /**
@@ -145,20 +148,34 @@ export class ShaclTargetChipInputComponent implements ControlValueAccessor, Vali
   }
 
   /** Callback to propagate value changes up to the parent form. */
-  onChange: (value: string[]) => void = () => { };
+  onChange: (value: ValueOption[]) => void = () => {};
 
   /** Callback to propagate the touched state up to the parent form. */
-  onTouched: () => void = () => { };
+  onTouched: () => void = () => {};
 
+  /**
+   * When the input field is focused, it effectively refreshes the input value to ensure the latest suggestions are
+   * shown since they are not fetched if the field is disabled.
+   */
   onInputFocus(): void {
     this.inputControl.setValue(this.inputControl.value);
+  }
+
+  /**
+   * If focus leaves the input, it resets the input value to the selected option so that invalid values are not
+   * displayed.
+   */
+  onBlur(): void {
+    this.inputControl.setValue('');
+    this.chipInput.nativeElement.value = '';
+    this.onTouched();
   }
 
   /**
    * Registers a callback function to be called when the control's value changes in the UI.
    * @param fn The callback function to register.
    */
-  registerOnChange(fn: (value: string[]) => void): void {
+  registerOnChange(fn: (value: ValueOption[]) => void): void {
     this.onChange = fn;
   }
 
@@ -176,12 +193,9 @@ export class ShaclTargetChipInputComponent implements ControlValueAccessor, Vali
    *
    * @param values The new values from the parent form control.
    */
-  writeValue(values: string[] | null): void {
+  writeValue(values: ValueOption[] | null): void {
     if (values) {
-      this.chipValues = values.map((iri: string) => ({
-        label: this.stateService.getEntityName(iri),
-        value: iri
-      }));
+      this.chipValues = values;
     } else {
       this.chipValues = [];
     }
@@ -197,7 +211,7 @@ export class ShaclTargetChipInputComponent implements ControlValueAccessor, Vali
    * @param _control The form control instance. Not used directly, but required by the interface.
    * @returns A ValidationErrors object if the list is empty, otherwise null.
    */
-  validate(_control: AbstractControl): ValidationErrors | null {
+  validate(): ValidationErrors | null {
     if (this.chipValues.length > 0) {
       return null;
     }
@@ -212,12 +226,15 @@ export class ShaclTargetChipInputComponent implements ControlValueAccessor, Vali
   addChipFromSelection(event: MatAutocompleteSelectedEvent): void {
     const suggestion: ValueOption = event.option.value;
     if (suggestion && !this.chipValues.some((c: ValueOption) => c.value === suggestion.value)) {
-      this.chipValues = [...this.chipValues, suggestion];
+      this.chipValues = [...this.chipValues, cloneDeep(suggestion)];
       this._propagateChanges();
     }
     // Clear the physical input element and reset the form control
     this.chipInput.nativeElement.value = '';
     this.inputControl.setValue(null, { emitEvent: false });
+    // Clear the custom suggestion
+    this.customSuggestion.value = '';
+    this.customSuggestion.label = '';
   }
 
   /**
@@ -227,9 +244,9 @@ export class ShaclTargetChipInputComponent implements ControlValueAccessor, Vali
   addChipFromInput(event: MatChipInputEvent): void {
     if (this.inputControl.valid && this.inputControl.value) {
       const value = (this.inputControl.value as string)?.trim();
-      if (value && !this.chipValues.some((c) => c.value === value)) {
+      if (value && !this.chipValues.some(c => c.value === value)) {
         const newChip = {
-          label: this.stateService.getEntityName(value),
+          label: this.state.getEntityName(value),
           value: value
         };
         this.chipValues = [...this.chipValues, newChip];
@@ -241,6 +258,9 @@ export class ShaclTargetChipInputComponent implements ControlValueAccessor, Vali
       event.input.value = '';
     }
     this.inputControl.setValue(null, { emitEvent: false });
+    // Clear the custom suggestion
+    this.customSuggestion.value = '';
+    this.customSuggestion.label = '';
   }
 
   /**
@@ -258,7 +278,7 @@ export class ShaclTargetChipInputComponent implements ControlValueAccessor, Vali
    * Propagate the component's internal state back to the parent reactive form.
    */
   private _propagateChanges(): void {
-    this.onChange(this.chipValues.map(chip => chip.value));
+    this.onChange(this.chipValues);
     this.onTouched(); // Triggers validation messages and styling
   }
 
@@ -315,10 +335,13 @@ export class ShaclTargetChipInputComponent implements ControlValueAccessor, Vali
     if (this.inputControl.disabled) {
       return of([]);
     }
-    this._spinner.startLoadingForComponent(this.targetChipSpinner, 15);
-    return this.stateService.getPropertiesOptions(searchText, this.targetType, true).pipe(
+    this._spinner.startLoadingForComponent(this.autocompleteSpinner, 15);
+    const ob = this.pullClasses 
+      ? this.state.getClassOptions(searchText, true) 
+      : this.state.getPropertyOptions(searchText, this.propertyTypes, true);
+    return ob.pipe(
       catchError(() => {
-        this._toastService.createErrorToast('Could not load suggestions. Please try typing again.');
+        this._toast.createErrorToast('Could not load suggestions. Please try typing again.');
         return of([]);
       }),
       // Remove already selected chips from suggestions
@@ -331,8 +354,13 @@ export class ShaclTargetChipInputComponent implements ControlValueAccessor, Vali
         }
         return suggestions;
       }),
+      tap(suggestions => {
+        // Determines if the custom suggestion should be shown based on whether the input value is in the suggestions
+        this.noMatches = !some(suggestions, group => 
+          some(group.suggestions, suggestion => suggestion.value === this.inputControl.value));
+      }),
       finalize(() => {
-        this._spinner.finishLoadingForComponent(this.targetChipSpinner);
+        this._spinner.finishLoadingForComponent(this.autocompleteSpinner);
       })
     );
   }

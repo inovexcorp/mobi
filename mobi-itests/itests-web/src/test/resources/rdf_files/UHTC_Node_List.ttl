@@ -1,7 +1,7 @@
 <http://matonto.org/ontologies/uhtc/shapes-graph> a <http://www.w3.org/2002/07/owl#Ontology>;
                                                   <http://www.w3.org/2000/01/rdf-schema#label> "UHTC Shapes Graph";
                                                   <http://purl.org/dc/elements/1.1/description> "Shapes Graph developed for the the purpose of validating UHTC Materials against their Elemental Properties.";
-                                                  <http://www.w3.org/2002/07/owl#imports> <https://mobi.solutions/shapes-graphs/music_test>;
+                                                  <http://www.w3.org/2002/07/owl#imports> <https://mobi.solutions/shapes-graphs/music_test>, <http://matonto.org/ontologies/uhtc>;
                                                   <http://purl.org/dc/elements/1.1/title> "UHTC Shapes Graph" .
 
 <http://matonto.org/ontologies/uhtc#Material> a <http://www.w3.org/ns/shacl#NodeShape>, <http://www.w3.org/2002/07/owl#Class>;

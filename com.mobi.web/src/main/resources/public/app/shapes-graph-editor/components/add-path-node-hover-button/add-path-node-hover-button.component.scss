@@ -20,16 +20,47 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-/**
- * Represents an option that can be used for selectable lists, dropdowns, 
- * radio buttons, or any other UI elements where a user picks a value.
- *
- * @property {string} label The human-readable text shown to the user.
- * @property {string} value The actual value submitted or stored when this option is selected.
- * @property {string} type An optional type string for the value
- */
-export interface ValueOption {
-  label: string;
-  value: string;
-  type?: string;
+.add-path-node-hover-button {
+  position: absolute;
+  z-index: 1;
+  pointer-events: auto;
+}
+.card-bottom-hover-zone {
+  left: 0;
+  right: 0;
+  bottom: -20px;
+  height: 40px; // Desired hover area height same as icon button height
+
+  .add-circle-icon {
+    left: 50%;
+    bottom: 0; // Center in hover area
+    transform: translateX(-50%);
+  }
+}
+
+.card-right-hover-zone {
+  position: absolute;
+  width: 40px;
+  right: -20px;
+  top: 0;
+  bottom: 0;
+
+  .add-circle-icon {
+    top: 50%;
+    right: 0;
+    transform: translateY(-50%);
+  }
+}
+
+.add-circle-icon {
+  position: absolute;
+  opacity: 0;
+  z-index: 2;
+  pointer-events: none;
+  transition: opacity 200ms ease;
+
+  &.visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
 }

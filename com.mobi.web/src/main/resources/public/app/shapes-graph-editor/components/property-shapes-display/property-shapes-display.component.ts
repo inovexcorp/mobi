@@ -23,10 +23,11 @@
 import { Component, Input, OnChanges } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 
+import { AddPropertyShapeModalComponent } from '../add-property-shape-modal/add-property-shape-modal.component';
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
 import { Constraint } from '../../models/constraint.interface';
 import { EntityNames } from '../../../shared/models/entityNames.interface';
-import { isBlankNodeId, getPropertyId, rdfListToValueArrayWithMap, getBeautifulIRI, deskolemizeIRI } from '../../../shared/utility';
+import { isBlankNodeId, getPropertyId, rdfListToValueArrayWithMap, getBeautifulIRI, deskolemizeIRI, getPropertyValue } from '../../../shared/utility';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { PathNode, PropertyShape } from '../../models/property-shape.interface';
 import { RDF, SH } from '../../../prefixes';
@@ -43,6 +44,8 @@ export interface ResolvedPath {
 /**
  * @class NodeShapesDisplayComponent
  * @requires ShapesGraphStateService
+ * @requires ToastService
+ * @requires MatDialog
  * 
  * A component that displays a list of all the Property Shapes attached to the provided Node Shape, represented as a
  * {@link JSONLDObject}. Handles parsing through the sh:path of each property shape recursively and representing all
@@ -125,6 +128,7 @@ export class PropertyShapesDisplayComponent implements OnChanges {
       const propertyShapeObj: PropertyShape = {
         id: propertyShapeId,
         label: this._getLabel(propertyShapeId, entityNames),
+        message: getPropertyValue(propertyShape, `${SH}message`),
         jsonld: propertyShape,
         constraints: [],
         path: undefined,
@@ -311,6 +315,19 @@ export class PropertyShapesDisplayComponent implements OnChanges {
         }
       });
       propertyShape.constraints.push(constraint);
+    });
+  }
+
+  /**
+   * Opens the AddPropertyShapeModal to add a new Property Shape to the current Node Shape. If the modal returns a new
+   * PropertyShape, adds to the list and sorts.
+   */
+  openAddOverlay(): void {
+    this._dialog.open(AddPropertyShapeModalComponent).afterClosed().subscribe((result: PropertyShape) => {
+      if (result) {
+        this.propertyShapes.push(result);
+        this.propertyShapes.sort((a, b) => a.id.localeCompare(b.id));
+      }
     });
   }
 

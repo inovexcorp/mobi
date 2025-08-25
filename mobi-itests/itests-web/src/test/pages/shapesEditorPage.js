@@ -39,6 +39,16 @@ const targetRadioButtonLabel = `${targetRadioGroup} mat-radio-button.mat-radio-c
 const targetValueInput = `${shaclTargetForm} .target-input input`;
 const targetValueLabel = `${shaclTargetForm} mat-form-field:has(input) mat-label`;
 
+const addPropertyShapeButton = `${nodeShapesDisplay} app-property-shapes-display .section-header a.fa`;
+const addPropertyShapeModal = 'app-add-property-shape-modal';
+const addPropertyShapeModalSubmit = `${addPropertyShapeModal} .mat-dialog-actions button.mat-primary`;
+const pathConfigurationContainer = `${addPropertyShapeModal} .path-configuration`;
+const pathConfigurationContainerXpath = `//${addPropertyShapeModal}//div[contains(@class, "path-configuration")]`;
+const constraintSelect = `${addPropertyShapeModal} .constraint-content mat-select`;
+const propertyShapeNameInput = `${addPropertyShapeModal} mat-form-field input[formControlName="name"]`;
+const propertyShapeMessageInput = `${addPropertyShapeModal} mat-form-field input[formControlName="message"]`;
+const addPathNodeModal = 'app-add-path-node-modal';
+
 function getPropertyShapeSelector(idOrIdx) {
   if (typeof idOrIdx === 'number') {
     return `//app-node-shapes-tab//app-node-shapes-display//app-property-shapes-display//mat-card[${idOrIdx}]`
@@ -227,6 +237,89 @@ const nodeShapesTabCommands = {
 };
 
 /**
+ * Commands specific to the AddPropertyShapeModalComponent
+ */
+const addPropertyShapeCommands = {
+  openAddPropertyShapeModal: function() {
+    return this.useCss()
+      .waitForElementVisible(`${nodeShapesDisplay} app-property-shapes-display`)
+      .waitForElementVisible(addPropertyShapeButton)
+      .click(addPropertyShapeButton)
+      .waitForElementVisible(addPropertyShapeModal)
+      .api.globals.wait_for_no_spinners(this);
+  },
+
+  verifyPathConfiguration: function(num) {
+    return this.useCss()
+      .waitForElementVisible(pathConfigurationContainer)
+      .assert.elementsCount(`${pathConfigurationContainer} mat-card`, num);
+  },
+
+  clickPathButton: function(propName, onBottom=true) {
+    const hoverZoneClass = onBottom ? 'card-bottom-hover-zone' : 'card-right-hover-zone';
+    const hoverZoneSelector = `${pathConfigurationContainerXpath}//mat-card//mat-card-subtitle[text()[contains(., "${propName}")]]` 
+      + `//following-sibling::app-add-path-node-hover-button//div[contains(@class, "${hoverZoneClass}")]`;
+    return this.useCss()
+      .waitForElementVisible(pathConfigurationContainer)
+      .useXpath()
+      .waitForElementVisible(`${pathConfigurationContainerXpath}//mat-card//mat-card-subtitle[text()[contains(., "${propName}")]]`)
+      .moveToElement(hoverZoneSelector, 0, 0)
+      .waitForElementVisible(`${hoverZoneSelector}//button`)
+      .click(`${hoverZoneSelector}//button`)
+      .useCss()
+      .waitForElementVisible(addPathNodeModal)
+      .api.globals.wait_for_no_spinners(this);
+  },
+
+  submitAddPathNodeModal: function(propName, inverse=false, cardinalityOption='None') {
+    this.useCss()
+      .waitForElementVisible(addPathNodeModal)
+      .waitForElementVisible(`${addPathNodeModal} app-shacl-single-suggestion-input[formcontrolname="property"] mat-form-field input`)
+      .setValue(`${addPathNodeModal} app-shacl-single-suggestion-input[formcontrolname="property"] mat-form-field input`, propName)
+      .useXpath()
+      .waitForElementVisible(`//mat-optgroup//mat-option//span[text()[contains(.,"${propName}")]]`)
+      .click(`//mat-optgroup//mat-option//span[text()[contains(.,"${propName}")]]`);
+
+    if (inverse) {
+      this.useCss()
+        .waitForElementVisible(`${addPathNodeModal} mat-checkbox span`)
+        .click(`${addPathNodeModal} mat-checkbox span`)
+    }
+    if (cardinalityOption != 'None') {
+      this.useCss()
+        .waitForElementVisible(`${addPathNodeModal} mat-button-toggle-group`)
+        .useXpath()
+        .waitForElementVisible(`//${addPathNodeModal}//mat-button-toggle-group//button//span[text()[contains(.,"${cardinalityOption}")]]`)
+        .click(`//${addPathNodeModal}//mat-button-toggle-group//button//span[text()[contains(.,"${cardinalityOption}")]]`)
+    }
+    return this.useCss()
+      .waitForElementVisible(`${addPathNodeModal} div.mat-dialog-actions button.mat-primary`)
+      .click(`${addPathNodeModal} div.mat-dialog-actions button.mat-primary`)
+      .waitForElementNotPresent(`${addPathNodeModal} div.mat-dialog-actions button.mat-primary`)
+  },
+
+  toggleConstraint: function(constraintName) {
+    return this.useCss()
+      .waitForElementVisible(constraintSelect)
+      .click(constraintSelect)
+      .useXpath()
+      .waitForElementVisible(`//mat-option//span[text()[contains(., "${constraintName}")]]`)
+      .click(`//mat-option//span[text()[contains(., "${constraintName}")]]`)
+      .click('//body') // Click body to close the select options
+      .waitForElementNotPresent(`//mat-option//span[text()[contains(., "${constraintName}")]]`)
+  },
+
+  submitAddPropertyShapeModal: function() {
+    return this.useCss()
+      .waitForElementVisible(addPropertyShapeModal)
+      .waitForElementVisible(addPropertyShapeModalSubmit)
+      .click(addPropertyShapeModalSubmit)
+      .waitForElementNotPresent(addPropertyShapeModalSubmit)
+      .api.globals.wait_for_no_spinners(this);
+  }
+};
+
+/**
  * Commands specific to <app-shacl-target>
  */
 const shaclTargetCommands = {
@@ -270,6 +363,13 @@ module.exports = {
     nodeShapesList: nodeShapesList,
     nodeShapesSearchBar: nodeShapesSearchBar,
     nodeShapesDisplay: nodeShapesDisplay,
+    // Property Shapes
+    addPropertyShapeButton: addPropertyShapeButton,
+    addPropertyShapeModal: addPropertyShapeModal,
+    addPropertyShapeModalSubmit: addPropertyShapeModalSubmit,
+    constraintSelect: constraintSelect,
+    propertyShapeNameInput: propertyShapeNameInput,
+    propertyShapeMessageInput: propertyShapeMessageInput,
     // Shacl Target Selectors
     shaclTargetForm: shaclTargetForm,
     shaclTargetEditButton: shaclTargetEditButton,
@@ -283,6 +383,7 @@ module.exports = {
     shapesEditorCommands,
     projectTabCommands,
     nodeShapesTabCommands,
+    addPropertyShapeCommands,
     shaclTargetCommands
   ]
 }

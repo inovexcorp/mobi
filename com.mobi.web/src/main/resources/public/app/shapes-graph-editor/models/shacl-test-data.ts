@@ -20,6 +20,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { FormControl } from '@angular/forms';
+
 import { Constraint } from './constraint.interface';
 import { JSONLDId } from '../../shared/models/JSONLDId.interface';
 import { JSONLDObject } from '../../shared/models/JSONLDObject.interface';
@@ -290,7 +292,19 @@ interface PathTestCase {
   jsonldMap: Record<string, JSONLDObject>,
   structure: PathNode,
   pathString: string,
-  referencedIds: Set<string>
+  referencedIds: Set<string>,
+  htmlCounts: {
+    'mat-card': number,
+    '.arrow-icon.inverse': number,
+    '.arrow-icon.predicate': number,
+    'app-add-path-node-hover-button.alt-button': number,
+    'app-add-path-node-hover-button.seq-button': number,
+    'fieldset.cardinality-container.zero-or-more': number,
+    'fieldset.cardinality-container.one-or-more': number,
+    'fieldset.cardinality-container.zero-or-one': number,
+    'fieldset.alternative-list': number,
+    '.alternative-separator': number
+  }
 }
 
 export const pathTestCases: PathTestCase[] = [
@@ -301,7 +315,19 @@ export const pathTestCases: PathTestCase[] = [
     jsonldMap: {},
     structure: { type: 'IRI', iri: 'http://www.test.com/test#PropA', label: 'Prop A' },
     pathString: 'Prop A',
-    referencedIds: new Set()
+    referencedIds: new Set(),
+    htmlCounts: {
+      'mat-card': 1,
+      '.arrow-icon.inverse': 0,
+      '.arrow-icon.predicate': 1,
+      'app-add-path-node-hover-button.alt-button': 1,
+      'app-add-path-node-hover-button.seq-button': 1,
+      'fieldset.cardinality-container.zero-or-more': 0,
+      'fieldset.cardinality-container.one-or-more': 0,
+      'fieldset.cardinality-container.zero-or-one': 0,
+      'fieldset.alternative-list': 0,
+      '.alternative-separator': 0
+    }
   },
   {
     testName: 'multiple predicate path (sequence path)',
@@ -334,7 +360,19 @@ export const pathTestCases: PathTestCase[] = [
       ]
     },
     pathString: 'Prop A / Prop B',
-    referencedIds: new Set(['_:b1', '_:b2'])
+    referencedIds: new Set(['_:b1', '_:b2']),
+    htmlCounts: {
+      'mat-card': 2,
+      '.arrow-icon.inverse': 0,
+      '.arrow-icon.predicate': 2,
+      'app-add-path-node-hover-button.alt-button': 2,
+      'app-add-path-node-hover-button.seq-button': 1,
+      'fieldset.cardinality-container.zero-or-more': 0,
+      'fieldset.cardinality-container.one-or-more': 0,
+      'fieldset.cardinality-container.zero-or-one': 0,
+      'fieldset.alternative-list': 0,
+      '.alternative-separator': 0
+    }
   },
   {
     testName: 'one predicate path with special path',
@@ -356,7 +394,19 @@ export const pathTestCases: PathTestCase[] = [
       }
     },
     pathString: '( Prop A )*',
-    referencedIds: new Set(['_:b1'])
+    referencedIds: new Set(['_:b1']),
+    htmlCounts: {
+      'mat-card': 1,
+      '.arrow-icon.inverse': 0,
+      '.arrow-icon.predicate': 1,
+      'app-add-path-node-hover-button.alt-button': 1,
+      'app-add-path-node-hover-button.seq-button': 2,
+      'fieldset.cardinality-container.zero-or-more': 1,
+      'fieldset.cardinality-container.one-or-more': 0,
+      'fieldset.cardinality-container.zero-or-one': 0,
+      'fieldset.alternative-list': 0,
+      '.alternative-separator': 0
+    }
   },
   {
     testName: 'multiple predicate path with special paths',
@@ -365,25 +415,25 @@ export const pathTestCases: PathTestCase[] = [
       '_:b1': {
         '@id': '_:b1',
         [`${RDF}first`]: [{
-          '@id': '_:b2'
+          '@id': '_:b3'
         }],
         [`${RDF}rest`]: [{
-          '@id': '_:b3'
+          '@id': '_:b2'
         }]
       },
       '_:b2': {
         '@id': '_:b2',
-        [`${SH}zeroOrMorePath`]: [{
-          '@id': 'http://www.test.com/test#PropA'
-        }]
-      },
-      '_:b3': {
-        '@id': '_:b3',
         [`${RDF}first`]: [{
           '@id': '_:b4'
         }],
         [`${RDF}rest`]: [{
           '@id': `${RDF}nil`
+        }]
+      },
+      '_:b3': {
+        '@id': '_:b3',
+        [`${SH}zeroOrMorePath`]: [{
+          '@id': 'http://www.test.com/test#PropA'
         }]
       },
       '_:b4': {
@@ -415,7 +465,19 @@ export const pathTestCases: PathTestCase[] = [
       ]
     },
     pathString: '( Prop A )* / ( Prop B )+',
-    referencedIds: new Set(['_:b1', '_:b2', '_:b3', '_:b4'])
+    referencedIds: new Set(['_:b1', '_:b2', '_:b3', '_:b4']),
+    htmlCounts: {
+      'mat-card': 2,
+      '.arrow-icon.inverse': 0,
+      '.arrow-icon.predicate': 2,
+      'app-add-path-node-hover-button.alt-button': 2,
+      'app-add-path-node-hover-button.seq-button': 3,
+      'fieldset.cardinality-container.zero-or-more': 1,
+      'fieldset.cardinality-container.one-or-more': 1,
+      'fieldset.cardinality-container.zero-or-one': 0,
+      'fieldset.alternative-list': 0,
+      '.alternative-separator': 0
+    }
   },
   {
     testName: 'multiple predicate path with one special path one not',
@@ -465,7 +527,19 @@ export const pathTestCases: PathTestCase[] = [
       ]
     },
     pathString: 'Prop A / ( Prop B )*',
-    referencedIds: new Set(['_:b1', '_:b2', '_:b3'])
+    referencedIds: new Set(['_:b1', '_:b2', '_:b3']),
+    htmlCounts: {
+      'mat-card': 2,
+      '.arrow-icon.inverse': 0,
+      '.arrow-icon.predicate': 2,
+      'app-add-path-node-hover-button.alt-button': 2,
+      'app-add-path-node-hover-button.seq-button': 2,
+      'fieldset.cardinality-container.zero-or-more': 1,
+      'fieldset.cardinality-container.one-or-more': 0,
+      'fieldset.cardinality-container.zero-or-one': 0,
+      'fieldset.alternative-list': 0,
+      '.alternative-separator': 0
+    }
   },
   // This chunk of tests focuses on inverse paths
   {
@@ -488,7 +562,19 @@ export const pathTestCases: PathTestCase[] = [
       }
     },
     pathString: '^( Prop A )',
-    referencedIds: new Set(['_:b1'])
+    referencedIds: new Set(['_:b1']),
+    htmlCounts: {
+      'mat-card': 1,
+      '.arrow-icon.inverse': 1,
+      '.arrow-icon.predicate': 0,
+      'app-add-path-node-hover-button.alt-button': 1,
+      'app-add-path-node-hover-button.seq-button': 1,
+      'fieldset.cardinality-container.zero-or-more': 0,
+      'fieldset.cardinality-container.one-or-more': 0,
+      'fieldset.cardinality-container.zero-or-one': 0,
+      'fieldset.alternative-list': 0,
+      '.alternative-separator': 0
+    }
   },
   {
     testName: 'multiple inverse path',
@@ -497,25 +583,25 @@ export const pathTestCases: PathTestCase[] = [
       '_:b1': {
         '@id': '_:b1',
         [`${RDF}first`]: [{
-          '@id': '_:b2'
+          '@id': '_:b3'
         }],
         [`${RDF}rest`]: [{
-          '@id': '_:b3'
+          '@id': '_:b2'
         }]
       },
       '_:b2': {
         '@id': '_:b2',
-        [`${SH}inversePath`]: [{
-          '@id': 'http://www.test.com/test#PropA'
-        }]
-      },
-      '_:b3': {
-        '@id': '_:b3',
         [`${RDF}first`]: [{
           '@id': '_:b4'
         }],
         [`${RDF}rest`]: [{
           '@id': `${RDF}nil`
+        }]
+      },
+      '_:b3': {
+        '@id': '_:b3',
+        [`${SH}inversePath`]: [{
+          '@id': 'http://www.test.com/test#PropA'
         }]
       },
       '_:b4': {
@@ -547,7 +633,19 @@ export const pathTestCases: PathTestCase[] = [
       ]
     },
     pathString: '^( Prop A ) / ^( Prop C )',
-    referencedIds: new Set(['_:b1', '_:b2', '_:b3', '_:b4'])
+    referencedIds: new Set(['_:b1', '_:b2', '_:b3', '_:b4']),
+    htmlCounts: {
+      'mat-card': 2,
+      '.arrow-icon.inverse': 2,
+      '.arrow-icon.predicate': 0,
+      'app-add-path-node-hover-button.alt-button': 2,
+      'app-add-path-node-hover-button.seq-button': 1,
+      'fieldset.cardinality-container.zero-or-more': 0,
+      'fieldset.cardinality-container.one-or-more': 0,
+      'fieldset.cardinality-container.zero-or-one': 0,
+      'fieldset.alternative-list': 0,
+      '.alternative-separator': 0
+    }
   },
   {
     testName: 'multiple inverse paths with special paths',
@@ -556,25 +654,25 @@ export const pathTestCases: PathTestCase[] = [
       '_:b1': {
         '@id': '_:b1',
         [`${RDF}first`]: [{
-          '@id': '_:b2'
+          '@id': '_:b3'
         }],
         [`${RDF}rest`]: [{
-          '@id': '_:b3'
+          '@id': '_:b2'
         }]
       },
       '_:b2': {
         '@id': '_:b2',
-        [`${SH}zeroOrMorePath`]: [{
-          '@id': '_:b4'
-        }]
-      },
-      '_:b3': {
-        '@id': '_:b3',
         [`${RDF}first`]: [{
           '@id': '_:b5'
         }],
         [`${RDF}rest`]: [{
           '@id': `${RDF}nil`
+        }]
+      },
+      '_:b3': {
+        '@id': '_:b3',
+        [`${SH}zeroOrMorePath`]: [{
+          '@id': '_:b4'
         }]
       },
       '_:b4': {
@@ -624,7 +722,19 @@ export const pathTestCases: PathTestCase[] = [
       ]
     },
     pathString: '( ^( Prop A ) )* / ( ^( Prop C ) )+',
-    referencedIds: new Set(['_:b1', '_:b2', '_:b3', '_:b4', '_:b5', '_:b6'])
+    referencedIds: new Set(['_:b1', '_:b2', '_:b3', '_:b4', '_:b5', '_:b6']),
+    htmlCounts: {
+      'mat-card': 2,
+      '.arrow-icon.inverse': 2,
+      '.arrow-icon.predicate': 0,
+      'app-add-path-node-hover-button.alt-button': 2,
+      'app-add-path-node-hover-button.seq-button': 3,
+      'fieldset.cardinality-container.zero-or-more': 1,
+      'fieldset.cardinality-container.one-or-more': 1,
+      'fieldset.cardinality-container.zero-or-one': 0,
+      'fieldset.alternative-list': 0,
+      '.alternative-separator': 0
+    }
   },
   {
     testName: 'multiple inverse path with one special path one not',
@@ -633,25 +743,25 @@ export const pathTestCases: PathTestCase[] = [
       '_:b1': {
         '@id': '_:b1',
         [`${RDF}first`]: [{
-          '@id': '_:b2'
+          '@id': '_:b3'
         }],
         [`${RDF}rest`]: [{
-          '@id': '_:b3'
+          '@id': '_:b2'
         }]
       },
       '_:b2': {
         '@id': '_:b2',
-        [`${SH}inversePath`]: [{
-          '@id': 'http://www.test.com/test#PropA'
-        }]
-      },
-      '_:b3': {
-        '@id': '_:b3',
         [`${RDF}first`]: [{
           '@id': '_:b4'
         }],
         [`${RDF}rest`]: [{
           '@id': `${RDF}nil`
+        }]
+      },
+      '_:b3': {
+        '@id': '_:b3',
+        [`${SH}inversePath`]: [{
+          '@id': 'http://www.test.com/test#PropA'
         }]
       },
       '_:b4': {
@@ -692,35 +802,47 @@ export const pathTestCases: PathTestCase[] = [
       ]
     },
     pathString: '^( Prop A ) / ( ^( Prop C ) )+',
-    referencedIds: new Set(['_:b1', '_:b2', '_:b3', '_:b4', '_:b5'])
+    referencedIds: new Set(['_:b1', '_:b2', '_:b3', '_:b4', '_:b5']),
+    htmlCounts: {
+      'mat-card': 2,
+      '.arrow-icon.inverse': 2,
+      '.arrow-icon.predicate': 0,
+      'app-add-path-node-hover-button.alt-button': 2,
+      'app-add-path-node-hover-button.seq-button': 2,
+      'fieldset.cardinality-container.zero-or-more': 0,
+      'fieldset.cardinality-container.one-or-more': 1,
+      'fieldset.cardinality-container.zero-or-one': 0,
+      'fieldset.alternative-list': 0,
+      '.alternative-separator': 0
+    }
   },
   // This chunk of tests focuses on alternate path
   {
     testName: 'one alternate path',
-    iri: '_:b1',
+    iri: '_:b3',
     jsonldMap: {
       '_:b1': {
         '@id': '_:b1',
-        [`${SH}alternativePath`]: [{
+        [`${RDF}first`]: [{
+          '@id': 'http://www.test.com/test#PropA'
+        }],
+        [`${RDF}rest`]: [{
           '@id': '_:b2'
         }]
       },
       '_:b2': {
         '@id': '_:b2',
         [`${RDF}first`]: [{
-          '@id': 'http://www.test.com/test#PropA'
-        }],
-        [`${RDF}rest`]: [{
-          '@id': '_:b3'
-        }]
-      },
-      '_:b3': {
-        '@id': '_:b3',
-        [`${RDF}first`]: [{
           '@id': 'http://www.test.com/test#PropB'
         }],
         [`${RDF}rest`]: [{
           '@id': `${RDF}nil`
+        }]
+      },
+      '_:b3': {
+        '@id': '_:b3',
+        [`${SH}alternativePath`]: [{
+          '@id': '_:b1'
         }]
       }
     },
@@ -740,7 +862,19 @@ export const pathTestCases: PathTestCase[] = [
       ]
     },
     pathString: 'Prop A | Prop B',
-    referencedIds: new Set(['_:b1', '_:b2', '_:b3'])
+    referencedIds: new Set(['_:b1', '_:b2', '_:b3']),
+    htmlCounts: {
+      'mat-card': 2,
+      '.arrow-icon.inverse': 0,
+      '.arrow-icon.predicate': 2,
+      'app-add-path-node-hover-button.alt-button': 1,
+      'app-add-path-node-hover-button.seq-button': 1,
+      'fieldset.cardinality-container.zero-or-more': 0,
+      'fieldset.cardinality-container.one-or-more': 0,
+      'fieldset.cardinality-container.zero-or-one': 0,
+      'fieldset.alternative-list': 1,
+      '.alternative-separator': 1
+    }
   },
   {
     testName: 'one alternate path with special path',
@@ -749,33 +883,33 @@ export const pathTestCases: PathTestCase[] = [
       '_:b1': {
         '@id': '_:b1',
         [`${SH}zeroOrMorePath`]: [{
-          '@id': '_:b2'
+          '@id': '_:b4'
         }]
       },
       '_:b2': {
         '@id': '_:b2',
-        [`${SH}alternativePath`]: [{
+        [`${RDF}first`]: [{
+          '@id': 'http://www.test.com/test#PropA'
+        }],
+        [`${RDF}rest`]: [{
           '@id': '_:b3'
         }]
       },
       '_:b3': {
         '@id': '_:b3',
         [`${RDF}first`]: [{
-          '@id': 'http://www.test.com/test#PropA'
-        }],
-        [`${RDF}rest`]: [{
-          '@id': '_:b4'
-        }]
-      },
-      '_:b4': {
-        '@id': '_:b4',
-        [`${RDF}first`]: [{
           '@id': 'http://www.test.com/test#PropB'
         }],
         [`${RDF}rest`]: [{
           '@id': `${RDF}nil`
         }]
-      }
+      },
+      '_:b4': {
+        '@id': '_:b4',
+        [`${SH}alternativePath`]: [{
+          '@id': '_:b2'
+        }]
+      },
     },
     structure: {
       type: 'ZeroOrMore',
@@ -796,7 +930,19 @@ export const pathTestCases: PathTestCase[] = [
       }
     },
     pathString: '( Prop A | Prop B )*',
-    referencedIds: new Set(['_:b1', '_:b2', '_:b3', '_:b4'])
+    referencedIds: new Set(['_:b1', '_:b2', '_:b3', '_:b4']),
+    htmlCounts: {
+      'mat-card': 2,
+      '.arrow-icon.inverse': 0,
+      '.arrow-icon.predicate': 2,
+      'app-add-path-node-hover-button.alt-button': 1,
+      'app-add-path-node-hover-button.seq-button': 2,
+      'fieldset.cardinality-container.zero-or-more': 1,
+      'fieldset.cardinality-container.one-or-more': 0,
+      'fieldset.cardinality-container.zero-or-one': 0,
+      'fieldset.alternative-list': 1,
+      '.alternative-separator': 1
+    }
   },
   {
     testName: 'multiple alternative paths',
@@ -805,44 +951,32 @@ export const pathTestCases: PathTestCase[] = [
       '_:b1': {
         '@id': '_:b1',
         [`${RDF}first`]: [{
-          '@id': '_:b2'
+          '@id': '_:b5'
         }],
         [`${RDF}rest`]: [{
-          '@id': '_:b3'
+          '@id': '_:b2'
         }]
       },
       '_:b2': {
         '@id': '_:b2',
-        [`${SH}alternativePath`]: [{
-          '@id': '_:b4'
-        }]
-      },
-      '_:b3': {
-        '@id': '_:b3',
         [`${RDF}first`]: [{
-          '@id': '_:b5'
+          '@id': '_:b8'
         }],
         [`${RDF}rest`]: [{
           '@id': `${RDF}nil`
         }]
       },
-      '_:b4': {
-        '@id': '_:b4',
+      '_:b3': {
+        '@id': '_:b3',
         [`${RDF}first`]: [{
           '@id': 'http://www.test.com/test#PropA'
         }],
         [`${RDF}rest`]: [{
-          '@id': '_:b6'
+          '@id': '_:b4'
         }]
       },
-      '_:b5': {
-        '@id': '_:b5',
-        [`${SH}alternativePath`]: [{
-          '@id': '_:b7'
-        }]
-      },
-      '_:b6': {
-        '@id': '_:b6',
+      '_:b4': {
+        '@id': '_:b4',
         [`${RDF}first`]: [{
           '@id': 'http://www.test.com/test#PropB'
         }],
@@ -850,22 +984,34 @@ export const pathTestCases: PathTestCase[] = [
           '@id': `${RDF}nil`
         }]
       },
-      '_:b7': {
-        '@id': '_:b7',
+      '_:b5': {
+        '@id': '_:b5',
+        [`${SH}alternativePath`]: [{
+          '@id': '_:b3'
+        }]
+      },
+      '_:b6': {
+        '@id': '_:b6',
         [`${RDF}first`]: [{
           '@id': 'http://www.test.com/test#PropC'
         }],
         [`${RDF}rest`]: [{
-          '@id': '_:b8'
+          '@id': '_:b7'
         }]
       },
-      '_:b8': {
-        '@id': '_:b8',
+      '_:b7': {
+        '@id': '_:b7',
         [`${RDF}first`]: [{
           '@id': 'http://www.test.com/test#PropD'
         }],
         [`${RDF}rest`]: [{
           '@id': `${RDF}nil`
+        }]
+      },
+      '_:b8': {
+        '@id': '_:b8',
+        [`${SH}alternativePath`]: [{
+          '@id': '_:b6'
         }]
       }
     },
@@ -905,7 +1051,19 @@ export const pathTestCases: PathTestCase[] = [
       ]
     },
     pathString: 'Prop A | Prop B / Prop C | Prop D',
-    referencedIds: new Set(['_:b1', '_:b2', '_:b3', '_:b4', '_:b5', '_:b6', '_:b7', '_:b8'])
+    referencedIds: new Set(['_:b1', '_:b2', '_:b3', '_:b4', '_:b5', '_:b6', '_:b7', '_:b8']),
+    htmlCounts: {
+      'mat-card': 4,
+      '.arrow-icon.inverse': 0,
+      '.arrow-icon.predicate': 4,
+      'app-add-path-node-hover-button.alt-button': 2,
+      'app-add-path-node-hover-button.seq-button': 1,
+      'fieldset.cardinality-container.zero-or-more': 0,
+      'fieldset.cardinality-container.one-or-more': 0,
+      'fieldset.cardinality-container.zero-or-one': 0,
+      'fieldset.alternative-list': 2,
+      '.alternative-separator': 2
+    }
   },
   {
     testName: 'multiple predicate path with alternate paths special paths',
@@ -914,56 +1072,38 @@ export const pathTestCases: PathTestCase[] = [
       '_:b1': {
         '@id': '_:b1',
         [`${RDF}first`]: [{
-          '@id': '_:b2'
+          '@id': '_:b3'
         }],
         [`${RDF}rest`]: [{
-          '@id': '_:b3'
+          '@id': '_:b2'
         }]
       },
       '_:b2': {
         '@id': '_:b2',
-        [`${SH}zeroOrMorePath`]: [{
-          '@id': '_:b4'
-        }]
-      },
-      '_:b3': {
-        '@id': '_:b3',
         [`${RDF}first`]: [{
-          '@id': '_:b5'
+          '@id': '_:b7'
         }],
         [`${RDF}rest`]: [{
           '@id': `${RDF}nil`
         }]
       },
-      '_:b4': {
-        '@id': '_:b4',
-        [`${SH}alternativePath`]: [{
+      '_:b3': {
+        '@id': '_:b3',
+        [`${SH}zeroOrOnePath`]: [{
           '@id': '_:b6'
         }]
       },
-      '_:b5': {
-        '@id': '_:b5',
-        [`${SH}oneOrMorePath`]: [{
-          '@id': '_:b7'
-        }]
-      },
-      '_:b6': {
-        '@id': '_:b6',
+      '_:b4': {
+        '@id': '_:b4',
         [`${RDF}first`]: [{
           '@id': 'http://www.test.com/test#PropA'
         }],
         [`${RDF}rest`]: [{
-          '@id': '_:b8'
+          '@id': '_:b5'
         }]
       },
-      '_:b7': {
-        '@id': '_:b7',
-        [`${SH}alternativePath`]: [{
-          '@id': '_:b9'
-        }]
-      },
-      '_:b8': {
-        '@id': '_:b8',
+      '_:b5': {
+        '@id': '_:b5',
         [`${RDF}first`]: [{
           '@id': 'http://www.test.com/test#PropB'
         }],
@@ -971,22 +1111,40 @@ export const pathTestCases: PathTestCase[] = [
           '@id': `${RDF}nil`
         }]
       },
-      '_:b9': {
-        '@id': '_:b9',
+      '_:b6': {
+        '@id': '_:b6',
+        [`${SH}alternativePath`]: [{
+          '@id': '_:b4'
+        }]
+      },
+      '_:b7': {
+        '@id': '_:b7',
+        [`${SH}oneOrMorePath`]: [{
+          '@id': '_:b10'
+        }]
+      },
+      '_:b8': {
+        '@id': '_:b8',
         [`${RDF}first`]: [{
           '@id': 'http://www.test.com/test#PropC'
         }],
         [`${RDF}rest`]: [{
-          '@id': '_:b10'
+          '@id': '_:b9'
         }]
       },
-      '_:b10': {
-        '@id': '_:b10',
+      '_:b9': {
+        '@id': '_:b9',
         [`${RDF}first`]: [{
           '@id': 'http://www.test.com/test#PropD'
         }],
         [`${RDF}rest`]: [{
           '@id': `${RDF}nil`
+        }]
+      },
+      '_:b10': {
+        '@id': '_:b10',
+        [`${SH}alternativePath`]: [{
+          '@id': '_:b8'
         }]
       }
     },
@@ -994,7 +1152,7 @@ export const pathTestCases: PathTestCase[] = [
       type: 'Sequence',
       items: [
         {
-          type: 'ZeroOrMore',
+          type: 'ZeroOrOne',
           path: {
             type: 'Alternative',
             items: [
@@ -1031,8 +1189,21 @@ export const pathTestCases: PathTestCase[] = [
         }
       ]
     },
-    pathString: '( Prop A | Prop B )* / ( Prop C | Prop D )+',
+    pathString: '( Prop A | Prop B )? / ( Prop C | Prop D )+',
     referencedIds: new Set(['_:b1', '_:b2', '_:b3', '_:b4', '_:b5', '_:b6', '_:b7', '_:b8', '_:b9', '_:b10'])
+    ,
+    htmlCounts: {
+      'mat-card': 4,
+      '.arrow-icon.inverse': 0,
+      '.arrow-icon.predicate': 4,
+      'app-add-path-node-hover-button.alt-button': 2,
+      'app-add-path-node-hover-button.seq-button': 3,
+      'fieldset.cardinality-container.zero-or-more': 0,
+      'fieldset.cardinality-container.one-or-more': 1,
+      'fieldset.cardinality-container.zero-or-one': 1,
+      'fieldset.alternative-list': 2,
+      '.alternative-separator': 2
+    }
   },
   {
     testName: 'one predicate path, one inverse path, both with alternates, predicate path with special path',
@@ -1041,65 +1212,53 @@ export const pathTestCases: PathTestCase[] = [
       '_:b1': {
         '@id': '_:b1',
         [`${RDF}first`]: [{
+          '@id': '_:b4'
+        }],
+        [`${RDF}rest`]: [{
           '@id': '_:b2'
+        }]
+      },
+      '_:b2': {
+        '@id': '_:b2',
+        [`${RDF}first`]: [{
+          '@id': '_:b8'
         }],
         [`${RDF}rest`]: [{
           '@id': '_:b3'
         }]
       },
-      '_:b2': {
-        '@id': '_:b2',
-        [`${SH}oneOrMorePath`]: [{
-          '@id': '_:b4'
-        }]
-      },
       '_:b3': {
         '@id': '_:b3',
         [`${RDF}first`]: [{
-          '@id': '_:b5'
-        }],
-        [`${RDF}rest`]: [{
-          '@id': '_:b6'
-        }]
-      },
-      '_:b4': {
-        '@id': '_:b4',
-        [`${SH}inversePath`]: [{
-          '@id': 'http://www.test.com/test#PropA'
-        }]
-      },
-      '_:b5': {
-        '@id': '_:b5',
-        [`${SH}alternativePath`]: [{
-          '@id': '_:b7'
-        }]
-      },
-      '_:b6': {
-        '@id': '_:b6',
-        [`${RDF}first`]: [{
-          '@id': '_:b8'
+          '@id': '_:b11'
         }],
         [`${RDF}rest`]: [{
           '@id': `${RDF}nil`
         }]
       },
-      '_:b7': {
-        '@id': '_:b7',
+      '_:b4': {
+        '@id': '_:b4',
+        [`${SH}oneOrMorePath`]: [{
+          '@id': '_:b5'
+        }]
+      },
+      '_:b5': {
+        '@id': '_:b5',
+        [`${SH}inversePath`]: [{
+          '@id': 'http://www.test.com/test#PropA'
+        }]
+      },
+      '_:b6': {
+        '@id': '_:b6',
         [`${RDF}first`]: [{
           '@id': 'http://www.test.com/test#PropB'
         }],
         [`${RDF}rest`]: [{
-          '@id': '_:b9'
+          '@id': '_:b7'
         }]
       },
-      '_:b8': {
-        '@id': '_:b8',
-        [`${SH}alternativePath`]: [{
-          '@id': '_:b10'
-        }]
-      },
-      '_:b9': {
-        '@id': '_:b9',
+      '_:b7': {
+        '@id': '_:b7',
         [`${RDF}first`]: [{
           '@id': 'http://www.test.com/test#PropC'
         }],
@@ -1107,22 +1266,34 @@ export const pathTestCases: PathTestCase[] = [
           '@id': `${RDF}nil`
         }]
       },
-      '_:b10': {
-        '@id': '_:b10',
+      '_:b8': {
+        '@id': '_:b8',
+        [`${SH}alternativePath`]: [{
+          '@id': '_:b6'
+        }]
+      },
+      '_:b9': {
+        '@id': '_:b9',
         [`${RDF}first`]: [{
           '@id': 'http://www.test.com/test#PropD'
         }],
         [`${RDF}rest`]: [{
-          '@id': '_:b11'
+          '@id': '_:b10'
         }]
       },
-      '_:b11': {
-        '@id': '_:b11',
+      '_:b10': {
+        '@id': '_:b10',
         [`${RDF}first`]: [{
           '@id': 'http://www.test.com/test#PropE'
         }],
         [`${RDF}rest`]: [{
           '@id': `${RDF}nil`
+        }]
+      },
+      '_:b11': {
+        '@id': '_:b11',
+        [`${SH}alternativePath`]: [{
+          '@id': '_:b9'
         }]
       }
     },
@@ -1173,7 +1344,19 @@ export const pathTestCases: PathTestCase[] = [
       ]
     },
     pathString: '( ^( Prop A ) )+ / Prop B | Prop C / Prop D | Prop E',
-    referencedIds: new Set(['_:b1', '_:b2', '_:b3', '_:b4', '_:b5', '_:b6', '_:b7', '_:b8', '_:b9', '_:b10', '_:b11'])
+    referencedIds: new Set(['_:b1', '_:b2', '_:b3', '_:b4', '_:b5', '_:b6', '_:b7', '_:b8', '_:b9', '_:b10', '_:b11']),
+    htmlCounts: {
+      'mat-card': 5,
+      '.arrow-icon.inverse': 1,
+      '.arrow-icon.predicate': 4,
+      'app-add-path-node-hover-button.alt-button': 3,
+      'app-add-path-node-hover-button.seq-button': 2,
+      'fieldset.cardinality-container.zero-or-more': 0,
+      'fieldset.cardinality-container.one-or-more': 1,
+      'fieldset.cardinality-container.zero-or-one': 0,
+      'fieldset.alternative-list': 2,
+      '.alternative-separator': 2
+    }
   },
   //  This chunk of tests focuses on mixed predicate and inverse paths
   {
@@ -1224,7 +1407,19 @@ export const pathTestCases: PathTestCase[] = [
       ]
     },
     pathString: 'Prop A / ^( Prop C )',
-    referencedIds: new Set(['_:b1', '_:b2', '_:b3'])
+    referencedIds: new Set(['_:b1', '_:b2', '_:b3']),
+    htmlCounts: {
+      'mat-card': 2,
+      '.arrow-icon.inverse': 1,
+      '.arrow-icon.predicate': 1,
+      'app-add-path-node-hover-button.alt-button': 2,
+      'app-add-path-node-hover-button.seq-button': 1,
+      'fieldset.cardinality-container.zero-or-more': 0,
+      'fieldset.cardinality-container.one-or-more': 0,
+      'fieldset.cardinality-container.zero-or-one': 0,
+      'fieldset.alternative-list': 0,
+      '.alternative-separator': 0
+    }
   },
   {
     testName: 'inverse path to predicate path',
@@ -1233,20 +1428,14 @@ export const pathTestCases: PathTestCase[] = [
       '_:b1': {
         '@id': '_:b1',
         [`${RDF}first`]: [{
-          '@id': '_:b2'
+          '@id': '_:b3'
         }],
         [`${RDF}rest`]: [{
-          '@id': '_:b3'
+          '@id': '_:b2'
         }]
       },
       '_:b2': {
         '@id': '_:b2',
-        [`${SH}inversePath`]: [{
-          '@id': 'http://www.test.com/test#PropB'
-        }]
-      },
-      '_:b3': {
-        '@id': '_:b3',
         [`${RDF}first`]: [{
           '@id': 'http://www.test.com/test#PropD'
         }],
@@ -1254,6 +1443,12 @@ export const pathTestCases: PathTestCase[] = [
           '@id': `${RDF}nil`
         }]
       },
+      '_:b3': {
+        '@id': '_:b3',
+        [`${SH}inversePath`]: [{
+          '@id': 'http://www.test.com/test#PropB'
+        }]
+      }
     },
     structure: {
       type: 'Sequence',
@@ -1274,7 +1469,19 @@ export const pathTestCases: PathTestCase[] = [
       ]
     },
     pathString: '^( Prop B ) / Prop D',
-    referencedIds: new Set(['_:b1', '_:b2', '_:b3'])
+    referencedIds: new Set(['_:b1', '_:b2', '_:b3']),
+    htmlCounts: {
+      'mat-card': 2,
+      '.arrow-icon.inverse': 1,
+      '.arrow-icon.predicate': 1,
+      'app-add-path-node-hover-button.alt-button': 2,
+      'app-add-path-node-hover-button.seq-button': 1,
+      'fieldset.cardinality-container.zero-or-more': 0,
+      'fieldset.cardinality-container.one-or-more': 0,
+      'fieldset.cardinality-container.zero-or-one': 0,
+      'fieldset.alternative-list': 0,
+      '.alternative-separator': 0
+    }
   },
   {
     testName: 'multiple predicate path with inverse and specialty paths',
@@ -1283,25 +1490,25 @@ export const pathTestCases: PathTestCase[] = [
       '_:b1': {
         '@id': '_:b1',
         [`${RDF}first`]: [{
-          '@id': '_:b2'
+          '@id': '_:b3'
         }],
         [`${RDF}rest`]: [{
-          '@id': '_:b3'
+          '@id': '_:b2'
         }]
       },
       '_:b2': {
         '@id': '_:b2',
-        [`${SH}zeroOrMorePath`]: [{
-          '@id': 'http://www.test.com/test#PropA'
-        }]
-      },
-      '_:b3': {
-        '@id': '_:b3',
         [`${RDF}first`]: [{
           '@id': '_:b4'
         }],
         [`${RDF}rest`]: [{
           '@id': `${RDF}nil`
+        }]
+      },
+      '_:b3': {
+        '@id': '_:b3',
+        [`${SH}zeroOrMorePath`]: [{
+          '@id': 'http://www.test.com/test#PropA'
         }]
       },
       '_:b4': {
@@ -1342,7 +1549,19 @@ export const pathTestCases: PathTestCase[] = [
       ]
     },
     pathString: '( Prop A )* / ( ^( Prop B ) )+',
-    referencedIds: new Set(['_:b1', '_:b2', '_:b3', '_:b4', '_:b5'])
+    referencedIds: new Set(['_:b1', '_:b2', '_:b3', '_:b4', '_:b5']),
+    htmlCounts: {
+      'mat-card': 2,
+      '.arrow-icon.inverse': 1,
+      '.arrow-icon.predicate': 1,
+      'app-add-path-node-hover-button.alt-button': 2,
+      'app-add-path-node-hover-button.seq-button': 3,
+      'fieldset.cardinality-container.zero-or-more': 1,
+      'fieldset.cardinality-container.one-or-more': 1,
+      'fieldset.cardinality-container.zero-or-one': 0,
+      'fieldset.alternative-list': 0,
+      '.alternative-separator': 0
+    }
   }
 ];
 
@@ -1352,7 +1571,8 @@ interface ConstraintTestCase {
   values: (JSONLDId|JSONLDValue)[],
   bnodes: JSONLDObject[],
   constraint: Constraint,
-  separate?: boolean
+  separate?: boolean,
+  control: FormControl
 }
 
 export const constraintTestCases: ConstraintTestCase[] = [
@@ -1367,7 +1587,8 @@ export const constraintTestCases: ConstraintTestCase[] = [
       constraintProp: `${SH}class`,
       constraintLabel: 'Class',
       value: [{ chosenValue: 'http://www.test.com/test#ClassA', label: 'Class A' }],
-    }
+    },
+    control: new FormControl({ label: 'Class A', value: 'http://www.test.com/test#ClassA' })
   },
   {
     testName: 'sh:datatype',
@@ -1380,7 +1601,8 @@ export const constraintTestCases: ConstraintTestCase[] = [
       constraintProp: `${SH}datatype`,
       constraintLabel: 'Datatype',
       value: [{ chosenValue: 'http://www.test.com/test#DatatypeA', label: 'Datatype A' }],
-    }
+    },
+    control: new FormControl({ label: 'Datatype A', value: 'http://www.test.com/test#DatatypeA' })
   },
   {
     testName: 'sh:nodeKind',
@@ -1393,137 +1615,148 @@ export const constraintTestCases: ConstraintTestCase[] = [
       constraintProp: `${SH}nodeKind`,
       constraintLabel: 'Node Kind',
       value: [{ chosenValue: `${SH}Literal`, label: 'Literal' }],
-    }
+    },
+    control: new FormControl({ label: 'Literal', value: `${SH}Literal` })
   },
   {
     testName: 'sh:minCount',
     key: `${SH}minCount`,
     values: [
-      { '@value': '1', '@type': `${XSD}nonNegativeInteger` }
+      { '@value': '1', '@type': `${XSD}integer` }
     ],
     bnodes: [],
     constraint: {
       constraintProp: `${SH}minCount`,
       constraintLabel: 'Min Count',
       value: [{ chosenValue: '1', label: '1' }],
-    }
+    },
+    control: new FormControl('1')
   },
   {
     testName: 'sh:maxCount',
     key: `${SH}maxCount`,
     values: [
-      { '@value': '5', '@type': `${XSD}nonNegativeInteger` }
+      { '@value': '5', '@type': `${XSD}integer` }
     ],
     bnodes: [],
     constraint: {
       constraintProp: `${SH}maxCount`,
       constraintLabel: 'Max Count',
       value: [{ chosenValue: '5', label: '5' }],
-    }
+    },
+    control: new FormControl('5')
   },
   {
     testName: 'sh:minExclusive',
     key: `${SH}minExclusive`,
     values: [
-      { '@value': '10', '@type': `${XSD}decimal` }
+      { '@value': '10.1', '@type': `${XSD}double` }
     ],
     bnodes: [],
     constraint: {
       constraintProp: `${SH}minExclusive`,
       constraintLabel: 'Min Exclusive',
-      value: [{ chosenValue: '10', label: '10' }],
-    }
+      value: [{ chosenValue: '10.1', label: '10.1' }],
+    },
+    control: new FormControl('10.1')
   },
   {
     testName: 'sh:minInclusive',
     key: `${SH}minInclusive`,
     values: [
-      { '@value': '10', '@type': `${XSD}decimal` }
+      { '@value': '10.1', '@type': `${XSD}double` }
     ],
     bnodes: [],
     constraint: {
       constraintProp: `${SH}minInclusive`,
       constraintLabel: 'Min Inclusive',
-      value: [{ chosenValue: '10', label: '10' }],
-    }
+      value: [{ chosenValue: '10.1', label: '10.1' }],
+    },
+    control: new FormControl('10.1')
   },
   {
     testName: 'sh:maxExclusive',
     key: `${SH}maxExclusive`,
     values: [
-      { '@value': '10', '@type': `${XSD}decimal` }
+      { '@value': '10.1', '@type': `${XSD}double` }
     ],
     bnodes: [],
     constraint: {
       constraintProp: `${SH}maxExclusive`,
       constraintLabel: 'Max Exclusive',
-      value: [{ chosenValue: '10', label: '10' }],
-    }
+      value: [{ chosenValue: '10.1', label: '10.1' }],
+    },
+    control: new FormControl('10.1')
   },
   {
     testName: 'sh:maxInclusive',
     key: `${SH}maxInclusive`,
     values: [
-      { '@value': '10', '@type': `${XSD}decimal` }
+      { '@value': '10.1', '@type': `${XSD}double` }
     ],
     bnodes: [],
     constraint: {
       constraintProp: `${SH}maxInclusive`,
       constraintLabel: 'Max Inclusive',
-      value: [{ chosenValue: '10', label: '10' }],
-    }
+      value: [{ chosenValue: '10.1', label: '10.1' }],
+    },
+    control: new FormControl('10.1')
   },
   {
     testName: 'sh:minLength',
     key: `${SH}minLength`,
     values: [
-      { '@value': '3', '@type': `${XSD}nonNegativeInteger` }
+      { '@value': '3', '@type': `${XSD}integer` }
     ],
     bnodes: [],
     constraint: {
       constraintProp: `${SH}minLength`,
       constraintLabel: 'Min Length',
       value: [{ chosenValue: '3', label: '3' }],
-    }
+    },
+    control: new FormControl('3')
   },
   {
     testName: 'sh:maxLength',
     key: `${SH}maxLength`,
     values: [
-      { '@value': '10', '@type': `${XSD}nonNegativeInteger` }
+      { '@value': '10', '@type': `${XSD}integer` }
     ],
     bnodes: [],
     constraint: {
       constraintProp: `${SH}maxLength`,
       constraintLabel: 'Max Length',
       value: [{ chosenValue: '10', label: '10' }],
-    }
+    },
+    control: new FormControl('10')
   },
   {
     testName: 'sh:pattern',
     key: `${SH}pattern`,
     values: [
-      { '@value': '^[a-zA-Z0-9]+$' }
+      { '@value': '^[a-zA-Z0-9]+$', '@type': `${XSD}string` }
     ],
     bnodes: [],
     constraint: {
       constraintProp: `${SH}pattern`,
       constraintLabel: 'Pattern',
       value: [{ chosenValue: '^[a-zA-Z0-9]+$', label: '^[a-zA-Z0-9]+$' }],
-    }
+    },
+    control: new FormControl('^[a-zA-Z0-9]+$')
   },
   {
     testName: 'sh:flags',
     key: `${SH}flags`,
     values: [
-      { '@value': 'i' }
+      { '@value': 'i', '@type': `${XSD}string` }
     ],
     bnodes: [],
     constraint: {
       constraintProp: `${SH}flags`,
       constraintLabel: 'Flags',
       value: [{ chosenValue: 'i', label: 'i' }],
-    }
+    },
+    control: new FormControl(['i'])
   },
   {
     testName: 'sh:languageIn',
@@ -1542,7 +1775,8 @@ export const constraintTestCases: ConstraintTestCase[] = [
         { chosenValue: 'en', label: 'en' },
         { chosenValue: 'fr', label: 'fr' }
       ],
-    }
+    },
+    control: new FormControl(['en', 'fr'])
   },
   {
     testName: 'sh:uniqueLang',
@@ -1555,7 +1789,8 @@ export const constraintTestCases: ConstraintTestCase[] = [
       constraintProp: `${SH}uniqueLang`,
       constraintLabel: 'Unique Lang',
       value: [{ chosenValue: 'true', label: 'true' }],
-    }
+    },
+    control: new FormControl('true')
   },
   {
     testName: 'sh:equals',
@@ -1568,7 +1803,8 @@ export const constraintTestCases: ConstraintTestCase[] = [
       constraintProp: `${SH}equals`,
       constraintLabel: 'Equals',
       value: [{ chosenValue: 'http://www.test.com/test#PropA', label: 'Prop A' }],
-    }
+    },
+    control: new FormControl([{ label: 'Prop A', value: 'http://www.test.com/test#PropA' }])
   },
   {
     testName: 'sh:disjoint',
@@ -1581,7 +1817,8 @@ export const constraintTestCases: ConstraintTestCase[] = [
       constraintProp: `${SH}disjoint`,
       constraintLabel: 'Disjoint',
       value: [{ chosenValue: 'http://www.test.com/test#PropA', label: 'Prop A' }],
-    }
+    },
+    control: new FormControl([{ label: 'Prop A', value: 'http://www.test.com/test#PropA' }])
   },
   {
     testName: 'sh:lessThan',
@@ -1594,7 +1831,8 @@ export const constraintTestCases: ConstraintTestCase[] = [
       constraintProp: `${SH}lessThan`,
       constraintLabel: 'Less Than',
       value: [{ chosenValue: 'http://www.test.com/test#PropA', label: 'Prop A' }],
-    }
+    },
+    control: new FormControl({ label: 'Prop A', value: 'http://www.test.com/test#PropA' })
   },
   {
     testName: 'sh:lessThanOrEquals',
@@ -1607,7 +1845,8 @@ export const constraintTestCases: ConstraintTestCase[] = [
       constraintProp: `${SH}lessThanOrEquals`,
       constraintLabel: 'Less Than Or Equals',
       value: [{ chosenValue: 'http://www.test.com/test#PropA', label: 'Prop A' }],
-    }
+    },
+    control: new FormControl({ label: 'Prop A', value: 'http://www.test.com/test#PropA' })
   },
   // These test cases have to be done separate as they reuse the same property
   {
@@ -1615,14 +1854,15 @@ export const constraintTestCases: ConstraintTestCase[] = [
     separate: true,
     key: `${SH}hasValue`,
     values: [
-      { '@value': '3.14', '@type': `${XSD}decimal` }
+      { '@value': '3.14', '@type': `${XSD}double` }
     ],
     bnodes: [],
     constraint: {
       constraintProp: `${SH}hasValue`,
       constraintLabel: 'Has Value',
       value: [{ chosenValue: '3.14', label: '3.14' }],
-    }
+    },
+    control: new FormControl('3.14')
   },
   {
     testName: 'sh:hasValue with IRI value',
@@ -1636,7 +1876,8 @@ export const constraintTestCases: ConstraintTestCase[] = [
       constraintProp: `${SH}hasValue`,
       constraintLabel: 'Has Value',
       value: [{ chosenValue: 'http://www.test.com/test#IndividualA', label: 'Individual A' }],
-    }
+    },
+    control: new FormControl({ label: 'Individual A', value: 'http://www.test.com/test#IndividualA' })
   },
   {
     testName: 'sh:in with data values',
@@ -1646,8 +1887,8 @@ export const constraintTestCases: ConstraintTestCase[] = [
       { '@id': '_:b1_in' }
     ],
     bnodes: [
-      { '@id': '_:b1_in', [`${RDF}first`]: [{ '@value': '3.14', '@type': `${XSD}decimal` }], [`${RDF}rest`]: [{ '@id': '_:b2_in' }] },
-      { '@id': '_:b2_in', [`${RDF}first`]: [{ '@value': '2.71', '@type': `${XSD}decimal` }], [`${RDF}rest`]: [{ '@id': `${RDF}nil` }] },
+      { '@id': '_:b1_in', [`${RDF}first`]: [{ '@value': '3.14', '@type': `${XSD}double` }], [`${RDF}rest`]: [{ '@id': '_:b2_in' }] },
+      { '@id': '_:b2_in', [`${RDF}first`]: [{ '@value': '2.71', '@type': `${XSD}double` }], [`${RDF}rest`]: [{ '@id': `${RDF}nil` }] },
     ],
     constraint: {
       constraintProp: `${SH}in`,
@@ -1656,7 +1897,8 @@ export const constraintTestCases: ConstraintTestCase[] = [
         { chosenValue: '3.14', label: '3.14' },
         { chosenValue: '2.71', label: '2.71' }
       ],
-    }
+    },
+    control: new FormControl(['3.14', '2.71'])
   },
   {
     testName: 'sh:in with IRI values',
@@ -1676,6 +1918,10 @@ export const constraintTestCases: ConstraintTestCase[] = [
         { chosenValue: 'http://www.test.com/test#IndividualA', label: 'Individual A' },
         { chosenValue: 'http://www.test.com/test#IndividualB', label: 'Individual B' },
       ],
-    }
+    },
+    control: new FormControl([
+      { label: 'Individual A', value: 'http://www.test.com/test#IndividualA' },
+      { label: 'Individual B', value: 'http://www.test.com/test#IndividualB' }
+    ])
   }
 ];

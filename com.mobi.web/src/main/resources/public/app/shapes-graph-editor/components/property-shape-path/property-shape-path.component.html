@@ -20,15 +20,11 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<mat-form-field class="w-100">
-  <mat-label>{{ label }}</mat-label>
-  <input type="text" matInput
-    [formControl]="nodeInputControl"
-    (blur)="onTouched()"/>
-  <mat-error *ngIf="nodeInputControl.hasError('required')">
-    This field is required.
-  </mat-error>
-  <mat-error *ngIf="nodeInputControl.hasError('pattern')">
-    Please enter a valid IRI
-  </mat-error>
-</mat-form-field>
+<div class="property-shape-path">
+  <mat-card class="target-card mb-1">
+    <mat-card-subtitle title="Representation of the Target of the Node Shape">Target</mat-card-subtitle>
+    <!-- Only show this hover button at the start -->
+    <app-add-path-node-hover-button *ngIf="!path" (onClick)="addFirstNode()"></app-add-path-node-hover-button>
+  </mat-card>
+  <app-path-node-display *ngIf="path" [pathNode]="path" (addNodeToParent)="addSubProperty($event)"></app-path-node-display>
+</div>

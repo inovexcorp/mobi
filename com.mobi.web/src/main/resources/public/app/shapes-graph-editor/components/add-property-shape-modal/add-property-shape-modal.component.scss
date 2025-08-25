@@ -20,16 +20,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-/**
- * Represents an option that can be used for selectable lists, dropdowns, 
- * radio buttons, or any other UI elements where a user picks a value.
- *
- * @property {string} label The human-readable text shown to the user.
- * @property {string} value The actual value submitted or stored when this option is selected.
- * @property {string} type An optional type string for the value
- */
-export interface ValueOption {
-  label: string;
-  value: string;
-  type?: string;
+.path-configuration {
+  text-align: center;
 }

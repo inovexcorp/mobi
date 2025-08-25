@@ -20,15 +20,11 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<mat-form-field class="w-100">
-  <mat-label>{{ label }}</mat-label>
-  <input type="text" matInput
-    [formControl]="nodeInputControl"
-    (blur)="onTouched()"/>
-  <mat-error *ngIf="nodeInputControl.hasError('required')">
-    This field is required.
-  </mat-error>
-  <mat-error *ngIf="nodeInputControl.hasError('pattern')">
-    Please enter a valid IRI
-  </mat-error>
-</mat-form-field>
+<div class="add-path-node-hover-button"
+  [ngClass]="onBottom ? 'card-bottom-hover-zone' : 'card-right-hover-zone'"
+  (mouseenter)="isPlusVisible = true"
+  (mouseleave)="isPlusVisible = false">
+  <button type="button" mat-icon-button class="add-circle-icon" [class.visible]="isPlusVisible" [title]="title" (click)="onClick.emit()">
+    <mat-icon>add_circle_outline</mat-icon>
+  </button>
+</div>

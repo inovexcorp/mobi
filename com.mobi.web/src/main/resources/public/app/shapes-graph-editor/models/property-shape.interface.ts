@@ -30,12 +30,55 @@ import { JSONLDObject } from '../../shared/models/JSONLDObject.interface';
 export interface PropertyShape {
   id: string,
   label: string,
+  message?: string;
   jsonld: JSONLDObject
   constraints: Constraint[],
-  path: PathNode ,
+  path: PathNode,
   pathString: string,
   pathHtmlString: string,
   referencedNodeIds: Set<string>
+}
+
+type PathNodeType = 'IRI' | 'Inverse' | 'Sequence' | 'Alternative' | 'ZeroOrMore' | 'OneOrMore' | 'ZeroOrOne';
+
+interface PathNodeBase {
+  type: PathNodeType
+}
+
+export interface IRIPathNode extends PathNodeBase {
+  type: 'IRI',
+  iri: string,
+  label: string
+}
+
+export interface InversePathNode extends PathNodeBase {
+  type: 'Inverse',
+  path: PathNode
+}
+
+export interface SequencePathNode extends PathNodeBase {
+  type: 'Sequence',
+  items: PathNode[]
+}
+
+export interface AlternativePathNode extends PathNodeBase {
+  type: 'Alternative',
+  items: PathNode[]
+}
+
+export interface ZeroOrMorePathNode extends PathNodeBase {
+  type: 'ZeroOrMore',
+  path: PathNode
+}
+
+export interface OneOrMorePathNode extends PathNodeBase {
+  type: 'OneOrMore',
+  path: PathNode
+}
+
+export interface ZeroOrOnePathNode extends PathNodeBase {
+  type: 'ZeroOrOne',
+  path: PathNode
 }
 
 /**
@@ -43,11 +86,11 @@ export interface PropertyShape {
  * with the different path types (Inverse, Sequence, Alternative, ZeroOrMore, OneOrMore, ZeroOrOne) combining the
  * properties in different ways.
  */
-export type PathNode =
-  | { type: 'IRI'; iri: string, label: string }
-  | { type: 'Inverse'; path: PathNode }
-  | { type: 'Sequence'; items: PathNode[] }
-  | { type: 'Alternative'; items: PathNode[] }
-  | { type: 'ZeroOrMore'; path: PathNode }
-  | { type: 'OneOrMore'; path: PathNode }
-  | { type: 'ZeroOrOne'; path: PathNode };
+export type PathNode = 
+  | IRIPathNode 
+  | InversePathNode
+  | SequencePathNode 
+  | AlternativePathNode
+  | ZeroOrMorePathNode
+  | OneOrMorePathNode
+  | ZeroOrOnePathNode;

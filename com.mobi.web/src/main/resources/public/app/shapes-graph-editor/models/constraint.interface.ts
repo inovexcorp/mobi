@@ -35,7 +35,6 @@ export interface Constraint {
  * Represents an individual value of a constraint with both the raw value and a label.
  */
 export interface ValueModel {
-    // TODO: Figure out if we want to capture the datatype in MP-3200
     chosenValue: string;
     label: string;
 }

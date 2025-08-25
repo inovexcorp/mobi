@@ -25,6 +25,7 @@ import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testin
 import { DebugElement } from '@angular/core';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatMenuModule } from '@angular/material/menu';
+import { MatIconModule } from '@angular/material/icon';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 
 import { MockComponent, MockProvider, MockPipe } from 'ng-mocks';
@@ -59,6 +60,7 @@ describe('Selected Details component', function () {
       imports: [
         NoopAnimationsModule,
         MatDialogModule,
+        MatIconModule,
         MatMenuModule
       ],
       declarations: [
