@@ -75,7 +75,9 @@ import {
   addLanguageToAnnotations,
   getShaclGeneratedData,
   getSubstringMatch,
-  getArrWithoutEntity
+  getArrWithoutEntity,
+  isInteger,
+  lowercaseFirstLetter
 } from './utility';
 
 describe('Utility method', () => {
@@ -659,6 +661,12 @@ describe('Utility method', () => {
       expect(toFormattedDateString(date)).toBe(moment(date).format('h:mm:ssA M/D/Y'));
     });
   });
+  it('lowercaseFirstLetter converts the first character to lowercase', () => {
+    expect(lowercaseFirstLetter('Test')).toBe('test');
+    expect(lowercaseFirstLetter('test')).toBe('test');
+    expect(lowercaseFirstLetter('7up')).toBe('7up');
+    expect(lowercaseFirstLetter('')).toBe('');
+  });
   describe('orNone function', () => {
     it('returns "(none)" for null value', () => {
       expect(orNone(null)).toBe('(none)');
@@ -670,6 +678,22 @@ describe('Utility method', () => {
     it('return the correct value when a non-null value is passed & a call back function is passed', () => {
       const id = '5d22e258-03d7-4289-87c0-49396a67929f';
       expect(orNone(id, condenseCommitId)).toBe(condenseCommitId(id));
+    });
+  });
+  describe('isInteger function', () => {
+    it('returns false for invalid values', () => {
+      expect(isInteger(null)).toBeFalse();
+      expect(isInteger(undefined)).toBeFalse();
+      expect(isInteger('')).toBeFalse();
+    });
+    it('returns false if string is not a number', () => {
+      expect(isInteger('test')).toBeFalse();
+    });
+    it('returns false if string has a double', () => {
+      expect(isInteger('1.1')).toBeFalse();
+    });
+    it('returns true if string has an integer', () => {
+      expect(isInteger('1')).toBeTrue();
     });
   });
   describe('getStatus function', () => {

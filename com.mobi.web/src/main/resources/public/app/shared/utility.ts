@@ -66,10 +66,12 @@ export const skolemizedNamespace = 'http://mobi.com/.well-known/genid/';
  *   `toFormattedDateString`
  *   `runningTime`
  *   `getStatus`
- * String Manipulation: Contains a function to find and extract a context-rich substring around a search term, including surrounding words and ellipses.
+ * String Manipulation: Contains functions to manipulate strings such as matching and case changes.
  *   `getSubstringMatch`
- * Generic Value Handling: A helper function to return a value or a default '(none)' if the value is falsy, with optional transformation.
+ *   `lowercaseFirstLetter`
+ * Generic Value Handling: Helper functions for general data values
  *   `orNone`
+ *   `isInteger`
  * 
  * == JSON-LD Utility Methods ==
  * Basic CRUD Operations: Functions to create a new JSON-LD object, and to get, set, check for existence (`has`), remove, replace, and update both literal (`@value`) and ID (`@id`) values for specific properties on a `JSONLDObject`.
@@ -272,6 +274,19 @@ export function getSubstringMatch(originalString: string, searchText: string): s
 }
 
 /**
+ * Given a string, will convert the first character to lower case.
+ * 
+ * @param {string} str The string to manipulate
+ * @returns {string} The input string with the first character in lowercase
+ */
+export function lowercaseFirstLetter(str: string): string {
+  if (str.length === 0) {
+    return '';
+  }
+  return str.charAt(0).toLowerCase() + str.slice(1);
+}
+
+/**
  * Returns '(none)' if the value is falsy.
  * If a function is provided and the value is truthy, it applies the function to the value.
  *
@@ -282,6 +297,24 @@ export function getSubstringMatch(originalString: string, searchText: string): s
 export function orNone(value, func = null): string {
   return value ? (func ? func(value) : value) : '(none)';
 }
+
+/**
+ * Determines whether the input string contains an integer. Returns false for null, undefined, empty string, or
+ * non-numeric inputs.
+ * 
+ * @param {string} value The string containing data to check
+ * @returns {boolean} True if the contents of the string are a valid integer, false otherwise
+ */
+export function isInteger(value: string): boolean {
+    if (value === null || value === undefined || value === '') {
+      return false;
+    }
+    const num = Number(value);
+    if (isNaN(num)) {
+      return false;
+    }
+    return Number.isInteger(num);
+  }
 
 // JSON-LD Utility Methods
 /**

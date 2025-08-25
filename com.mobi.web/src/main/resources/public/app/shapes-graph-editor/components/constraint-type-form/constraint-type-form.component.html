@@ -1,0 +1,85 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 - 2025 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="constraint-type-form" [formGroup]="parentForm">
+  <ng-container *ngFor="let controlObj of constraintOption?.controls">
+    <!-- The autocomplete component has its own mat-form-field element -->
+    <mat-form-field class="w-100" *ngIf="controlObj.type !== 'autocomplete'">
+      <mat-label>{{controlObj.label}}</mat-label>
+      
+      <ng-container [ngSwitch]="controlObj.type">
+        <input *ngSwitchCase="'text'" matInput 
+          [name]="controlObj.name" 
+          [type]="controlObj.type" 
+          [formControlName]="controlObj.name" 
+          [required]="isRequired(controlObj.name)" /> 
+          
+          <input *ngSwitchCase="'number'" matInput 
+            [name]="controlObj.name" 
+            [type]="controlObj.type" 
+            [min]="controlObj.min"
+            [step]="controlObj.step"
+            [formControlName]="controlObj.name" 
+            [required]="isRequired(controlObj.name)" />
+        
+          <mat-select *ngSwitchCase="'select'"
+              [formControlName]="controlObj.name"
+              [required]="isRequired(controlObj.name)" 
+              [multiple]="controlObj.multiple ? '' : null">
+            <mat-option *ngFor="let option of controlObj.options" [value]="option.value">{{option.label}}</mat-option>
+          </mat-select>
+
+          <mat-chip-list *ngSwitchCase="'chips'" #chipList aria-label="Values list">
+            <mat-chip *ngFor="let vals of controlObj.control.value" [selectable]="selectable" [removable]="true"
+                (removed)="removeChip(vals, controlObj)">
+              {{vals}}
+              <mat-icon matChipRemove>cancel</mat-icon>
+            </mat-chip>
+            <input type="text" class="chip-input" placeholder="Add values..."
+                [matChipInputFor]="chipList"
+                [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
+                [matChipInputAddOnBlur]="false"
+                (matChipInputTokenEnd)="addChip($event, controlObj)">
+          </mat-chip-list>
+      </ng-container>
+    
+      <mat-error *ngIf="requiredMessage(controlObj)">{{controlObj.label}} is required</mat-error>
+      <mat-error *ngIf="parentForm.controls[controlObj.name].errors?.validRegexRequirement">{{controlObj.label}} requires valid regex</mat-error>
+    </mat-form-field>
+
+    <app-shacl-single-suggestion-input *ngIf="controlObj.type === 'autocomplete' && !controlObj.multiple"
+      [pullClasses]="controlObj.pullClasses"
+      [propertyTypes]="controlObj.propertyTypes"
+      [label]="controlObj.label"
+      [formControlName]="controlObj.name"
+      [required]="isRequired(controlObj.name)">
+    </app-shacl-single-suggestion-input>   
+    
+    <app-shacl-chip-suggestions-input *ngIf="controlObj.type === 'autocomplete' && controlObj.multiple"
+      [pullClasses]="controlObj.pullClasses"
+      [propertyTypes]="controlObj.propertyTypes"
+      [label]="controlObj.label"
+      [formControlName]="controlObj.name"
+      [required]="isRequired(controlObj.name)">
+    </app-shacl-chip-suggestions-input>   
+  </ng-container>
+</div>

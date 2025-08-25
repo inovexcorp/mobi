@@ -1,0 +1,53 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 - 2025 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<h1 mat-dialog-title>Create Constraint(s)</h1>
+<form mat-dialog-content [formGroup]="constraintForm">
+  <error-display *ngIf="errorMessage">{{errorMessage}}</error-display>
+
+  <mat-form-field class="w-100">
+    <mat-label>Name</mat-label>
+    <input matInput type="text" formControlName="name"/>
+  </mat-form-field>
+  <mat-form-field class="w-100">
+    <mat-label>Message</mat-label>
+    <input matInput type="text" formControlName="message"/>
+  </mat-form-field>
+
+  <div class="path-configuration">
+    <app-property-shape-path [(path)]="path" (pathChange)="enableConstraints()"></app-property-shape-path>
+  </div>
+  
+  <div class="constraint-content">
+    <mat-form-field class="w-100">
+      <mat-label>Constraint Type</mat-label>
+      <mat-select name="constraintType" formControlName="constraintType" required multiple>
+        <mat-option *ngFor="let type of constraintTypes" [value]="type">{{type.label}}</mat-option>
+      </mat-select>
+    </mat-form-field>
+    <app-constraint-type-form *ngFor="let constraintOption of selectedConstraintTypes" [parentForm]="constraintForm" [constraintOption]="constraintOption"></app-constraint-type-form>
+  </div>
+</form>
+<div mat-dialog-actions>
+  <button mat-raised-button [mat-dialog-close]="">Cancel</button>
+  <button mat-raised-button color="primary" (click)="create()" [disabled]="!path || constraintForm.pristine || constraintForm.invalid">Submit</button>
+</div>

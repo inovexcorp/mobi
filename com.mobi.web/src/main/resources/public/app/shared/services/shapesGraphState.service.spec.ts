@@ -54,14 +54,14 @@ import { SettingManagerService } from './settingManager.service';
 import { SHAPES_STORE_TYPE } from '../../constants';
 import { ShapesGraphListItem } from '../models/shapesGraphListItem.class';
 import { ShapesGraphManagerService } from './shapesGraphManager.service';
-import { ShapesGraphStateService } from './shapesGraphState.service';
 import { SparqlManagerService } from './sparqlManager.service';
 import { SPARQLSelectResults } from '../models/sparqlSelectResults.interface';
 import { StateManagerService } from './stateManager.service';
-import { TARGET_CLASS, TARGET_OBJECTS_OF, TARGET_SUBJECTS_OF } from '../../shapes-graph-editor/models/constants';
+import { TARGET_CLASS } from '../../shapes-graph-editor/models/constants';
 import { ToastService } from './toast.service';
 import { UpdateRefsService } from './updateRefs.service';
 import { VersionedRdfUploadResponse } from '../models/versionedRdfUploadResponse.interface';
+import { ShapesGraphStateService } from './shapesGraphState.service';
 
 describe('Shapes Graph State service', function() {
   let service: ShapesGraphStateService;
@@ -1642,6 +1642,203 @@ describe('Shapes Graph State service', function() {
       expect(sparqlManagerStub.postQuery).toHaveBeenCalledWith(jasmine.any(String), recordId, SHAPES_STORE_TYPE, branchId, commitId, true, true);
     }));
   });
+  describe('getClassOptions', () => {
+    const query = 'SELECT * WHERE { ?s ?p ?o . }';
+    const iris = ['class1', 'class2'];
+    beforeEach(() => {
+      spyOn(service, 'getClassesQuery').and.returnValue(query);
+      spyOn(service as any, '_fetchIris').and.returnValue(of(iris));
+      spyOn(service, 'groupSuggestionsByOntologyIri').and.returnValue([{ label: 'group', suggestions: [] }] as GroupedSuggestion[]);
+    });
+    it('should fetch and group class options with no arguments', fakeAsync(() => {
+      service.getClassOptions().subscribe();
+      tick();
+      expect(service.getClassesQuery).toHaveBeenCalledWith('');
+      expect(service['_fetchIris']).toHaveBeenCalledWith(query, false);
+      expect(service.groupSuggestionsByOntologyIri).toHaveBeenCalledWith(iris);
+    }));
+    it('should fetch and group class options with search text and tracked elsewhere', fakeAsync(() => {
+      service.getClassOptions('test', true).subscribe();
+      tick();
+      expect(service.getClassesQuery).toHaveBeenCalledWith('test');
+      expect(service['_fetchIris']).toHaveBeenCalledWith(query, true);
+      expect(service.groupSuggestionsByOntologyIri).toHaveBeenCalledWith(iris);
+    }));
+  });
+  describe('getClassesQuery', () => {
+    it('should return correct query without filter', () => {
+      const query = service.getClassesQuery();
+      expect(query).toContain('PREFIX owl: <http://www.w3.org/2002/07/owl#>');
+      expect(query).toContain('SELECT DISTINCT ?iri WHERE');
+      expect(query).toContain('?iri a owl:Class .');
+      expect(query).not.toContain('FILTER(CONTAINS');
+    });
+    it('should include filter for searchText', () => {
+      const query = service.getClassesQuery('TestClass');
+      expect(query).toContain('FILTER(CONTAINS(LCASE(STR(?iri)), "testclass")');
+    });
+  });
+  describe('getPropertyOptions', () => {
+    const query = 'SELECT * WHERE { ?s ?p ?o . }';
+    const iris: { iri: string, type: string}[] = [
+      { iri: 'class1', type: `${OWL}ObjectProperty` },
+      { iri: 'class2', type: `${OWL}DatatypeProperty` }
+    ];
+    beforeEach(() => {
+      spyOn(service, 'getPropertiesByTypeQuery').and.returnValue(query);
+      spyOn(service as any, '_fetchIrisWithTypes').and.returnValue(of(iris));
+      spyOn(service, 'groupSuggestionsWithTypeByOntologyIri').and.returnValue([{ label: 'group', suggestions: [] }] as GroupedSuggestion[]);
+    });
+    it('should fetch and group class options with no arguments', fakeAsync(() => {
+      service.getPropertyOptions().subscribe();
+      tick();
+      expect(service.getPropertiesByTypeQuery).toHaveBeenCalledWith('', []);
+      expect(service['_fetchIrisWithTypes']).toHaveBeenCalledWith(query, false);
+      expect(service.groupSuggestionsWithTypeByOntologyIri).toHaveBeenCalledWith(iris);
+    }));
+    it('should fetch and group class options with search text and tracked elsewhere', fakeAsync(() => {
+      service.getPropertyOptions('test', ['ObjectProperty', 'DatatypeProperty'], true).subscribe();
+      tick();
+      expect(service.getPropertiesByTypeQuery).toHaveBeenCalledWith('test', ['ObjectProperty', 'DatatypeProperty']);
+      expect(service['_fetchIrisWithTypes']).toHaveBeenCalledWith(query, true);
+      expect(service.groupSuggestionsWithTypeByOntologyIri).toHaveBeenCalledWith(iris);
+    }));
+  });
+  describe('getPropertiesByTypeQuery', () => {
+    it('should return correct query without searchText or types', () => {
+      const query = service.getPropertiesByTypeQuery();
+      expect(query).toContain('VALUES ?type { owl:ObjectProperty owl:DatatypeProperty owl:AnnotationProperty }');
+      expect(query).toContain('SELECT DISTINCT ?iri ?type WHERE');
+      expect(query).not.toContain('FILTER(CONTAINS');
+    });
+    it('should include filter for searchText', () => {
+      const query = service.getPropertiesByTypeQuery('Prop');
+      expect(query).toContain('VALUES ?type { owl:ObjectProperty owl:DatatypeProperty owl:AnnotationProperty }');
+      expect(query).toContain('SELECT DISTINCT ?iri ?type WHERE');
+      expect(query).toContain('FILTER(CONTAINS(LCASE(STR(?iri)), "prop")');
+    });
+    it('should include filter for types', () => {
+      const query = service.getPropertiesByTypeQuery('', ['AnnotationProperty', 'DatatypeProperty']);
+      expect(query).toContain('VALUES ?type { owl:AnnotationProperty owl:DatatypeProperty }');
+      expect(query).toContain('SELECT DISTINCT ?iri ?type WHERE');
+      expect(query).not.toContain('FILTER(CONTAINS');
+    });
+  });
+  it('groupSuggestionsByOntologyIri should create grouped suggestions based off a list of iris', () => {
+    spyOn(service, 'getEntityName').and.callFake(iri => `entityName(${iri})`);
+    const iris = ['http://test.com#class2', 'http://test.com#class1', 'http://example.com#class3'];
+    const grouped = service.groupSuggestionsByOntologyIri(iris);
+    expect(grouped).toEqual([
+      { label: 'http://example.com', suggestions: [
+        { label: 'entityName(http://example.com#class3)', value: 'http://example.com#class3' },
+      ] },
+      { label: 'http://test.com', suggestions: [
+        { label: 'entityName(http://test.com#class1)', value: 'http://test.com#class1' },
+        { label: 'entityName(http://test.com#class2)', value: 'http://test.com#class2' },
+      ] },
+    ]);
+  });
+  it('groupSuggestionsWithTypeByOntologyIri should create grouped suggestions based off a list of iris', () => {
+    spyOn(service, 'getEntityName').and.callFake(iri => `entityName(${iri})`);
+    const iris = [
+      { iri: 'http://test.com#class2', type: `${OWL}AnnotationProperty` },
+      { iri: 'http://test.com#class1', type: `${OWL}DatatypeProperty` },
+      { iri: 'http://example.com#class3', type: `${OWL}ObjectProperty` }
+    ];
+    const grouped = service.groupSuggestionsWithTypeByOntologyIri(iris);
+    expect(grouped).toEqual([
+      { label: 'http://example.com', suggestions: [
+        { label: 'entityName(http://example.com#class3)', value: 'http://example.com#class3', type: `${OWL}ObjectProperty` },
+      ] },
+      { label: 'http://test.com', suggestions: [
+        { label: 'entityName(http://test.com#class1)', value: 'http://test.com#class1', type: `${OWL}DatatypeProperty` },
+        { label: 'entityName(http://test.com#class2)', value: 'http://test.com#class2', type: `${OWL}AnnotationProperty` },
+      ] },
+    ]);
+  });
+  describe('_fetchIris', () => {
+    beforeEach(() => {
+      service.listItem = listItem;
+    });
+    it('should return empty array if listItem has no versionedRdfRecord', fakeAsync(() => {
+      service.listItem.versionedRdfRecord = null;
+      (service['_fetchIris']('query') as Observable<string[]>).subscribe(result => {
+        expect(result).toEqual([]);
+      });
+      tick();
+    }));
+    it('should post a query and map the results to an array of IRIs', fakeAsync(() => {
+      const mockResponse: SPARQLSelectResults = {
+        head: {
+          vars: ['iri', 'B']
+        },
+        results: {
+          bindings: [
+            { iri: { value: 'iri1', type: `${XSD}string` } },
+            { iri: { value: 'iri2', type: `${XSD}string` } }
+          ]
+        }
+      };
+      sparqlManagerStub.postQuery.and.returnValue(of(mockResponse));
+      (service['_fetchIris']('query') as Observable<string[]>).subscribe(result => {
+        expect(result).toEqual(['iri1', 'iri2']);
+      });
+      tick();
+      expect(sparqlManagerStub.postQuery).toHaveBeenCalledWith(
+        'query', recordId, SHAPES_STORE_TYPE, branchId, commitId, true, true, 'application/json', false
+      );
+    }));
+    it('should handle empty response from postQuery', fakeAsync(() => {
+      sparqlManagerStub.postQuery.and.returnValue(of(null));
+      (service['_fetchIris']('query') as Observable<string[]>).subscribe(result => {
+        expect(result).toEqual([]);
+      });
+      tick();
+    }));
+  });
+  describe('_fetchIrisWithTypes', () => {
+    beforeEach(() => {
+      service.listItem = listItem;
+    });
+    it('should return empty array if listItem has no versionedRdfRecord', fakeAsync(() => {
+      service.listItem.versionedRdfRecord = null;
+      (service['_fetchIrisWithTypes']('query') as Observable<{ iri: string, type: string }[]>).subscribe(result => {
+        expect(result).toEqual([]);
+      });
+      tick();
+    }));
+    it('should post a query and map the results to an array of IRIs', fakeAsync(() => {
+      const mockResponse: SPARQLSelectResults = {
+        head: {
+          vars: ['iri', 'type']
+        },
+        results: {
+          bindings: [
+            { iri: { value: 'iri1', type: `${XSD}string` }, type: { value: `${OWL}DatatypeProperty`, type: `${XSD}string` } },
+            { iri: { value: 'iri2', type: `${XSD}string` }, type: { value: `${OWL}ObjectProperty`, type: `${XSD}string` } }
+          ]
+        }
+      };
+      sparqlManagerStub.postQuery.and.returnValue(of(mockResponse));
+      (service['_fetchIrisWithTypes']('query') as Observable<{ iri: string, type: string }[]>).subscribe(result => {
+        expect(result).toEqual([
+          { iri: 'iri1', type: `${OWL}DatatypeProperty` },
+          { iri: 'iri2', type: `${OWL}ObjectProperty` },
+        ]);
+      });
+      tick();
+      expect(sparqlManagerStub.postQuery).toHaveBeenCalledWith(
+        'query', recordId, SHAPES_STORE_TYPE, branchId, commitId, true, true, 'application/json', false
+      );
+    }));
+    it('should handle empty response from postQuery', fakeAsync(() => {
+      sparqlManagerStub.postQuery.and.returnValue(of(null));
+      (service['_fetchIrisWithTypes']('query') as Observable<{ iri: string, type: string }[]>).subscribe(result => {
+        expect(result).toEqual([]);
+      });
+      tick();
+    }));
+  });
   describe('should remove the provided PropertyShape', () => {
     const referencedNodeIds = new Set(['_:b2', '_:b3']);
     const nodeShapeId = 'urn:nodeShape';
@@ -1830,107 +2027,5 @@ describe('Shapes Graph State service', function() {
         expect(service.saveCurrentChanges).not.toHaveBeenCalled();
       }));
     });
-  });
-  it('getClassesQuery should return correct query without filter', () => {
-    const query = service.getClassesQuery();
-    expect(query).toContain('PREFIX owl: <http://www.w3.org/2002/07/owl#>');
-    expect(query).toContain('SELECT DISTINCT ?iri WHERE');
-    expect(query).toContain('?iri a owl:Class .');
-    expect(query).not.toContain('FILTER(CONTAINS');
-  });
-  it('getClassesQuery should include filter for searchText', () => {
-    const query = service.getClassesQuery('TestClass');
-    expect(query).toContain('FILTER(CONTAINS(LCASE(STR(?iri)), "testclass"))');
-  });
-  it('getObjectPropertiesQuery should return correct query without filter', () => {
-    const query = service.getObjectPropertiesQuery();
-    expect(query).toContain('PREFIX owl: <http://www.w3.org/2002/07/owl#>');
-    expect(query).toContain('SELECT DISTINCT ?iri WHERE');
-    expect(query).toContain('?iri a owl:ObjectProperty .');
-    expect(query).not.toContain('FILTER(CONTAINS');
-  });
-  it('getObjectPropertiesQuery should include filter for searchText', () => {
-    const query = service.getObjectPropertiesQuery('Test');
-    expect(query).toContain('FILTER(CONTAINS(LCASE(STR(?iri)), "test"))');
-  });
-  it('getPropertiesByTypeQuery should return correct query without filter', () => {
-    const query = service.getPropertiesByTypeQuery();
-    expect(query).toContain('VALUES ?type { owl:ObjectProperty owl:DatatypeProperty owl:AnnotationProperty }');
-    expect(query).toContain('SELECT DISTINCT ?iri ?type WHERE');
-    expect(query).not.toContain('FILTER(CONTAINS');
-  });
-  it('getPropertiesByTypeQuery should include filter for searchText', () => {
-    const query = service.getPropertiesByTypeQuery('Prop');
-    expect(query).toContain('FILTER(CONTAINS(LCASE(STR(?iri)), "prop"))');
-  });
-  describe('_fetchIris', () => {
-    beforeEach(() => {
-      service.listItem = listItem;
-    });
-    it('should return empty array if listItem has no versionedRdfRecord', fakeAsync(() => {
-      service.listItem.versionedRdfRecord = null;
-      (service['_fetchIris']('query') as Observable<string[]>).subscribe(result => {
-        expect(result).toEqual([]);
-      });
-      tick();
-    }));
-    it('should post a query and map the results to an array of IRIs', fakeAsync(() => {
-      const mockResponse: SPARQLSelectResults = {
-        head: {
-          vars: ['iri', 'B']
-        },
-        results: {
-          bindings: [
-            { iri: { value: 'iri1', type: `${XSD}string` } },
-            { iri: { value: 'iri2', type: `${XSD}string` } }
-          ]
-        }
-      };
-      sparqlManagerStub.postQuery.and.returnValue(of(mockResponse));
-      (service['_fetchIris']('query') as Observable<string[]>).subscribe(result => {
-        expect(result).toEqual(['iri1', 'iri2']);
-      });
-      tick();
-      expect(sparqlManagerStub.postQuery).toHaveBeenCalledWith(
-        'query', recordId, SHAPES_STORE_TYPE, branchId, commitId, true, true, 'application/json', false
-      );
-    }));
-    it('should handle empty response from postQuery', fakeAsync(() => {
-      sparqlManagerStub.postQuery.and.returnValue(of(null));
-      (service['_fetchIris']('query') as Observable<string[]>).subscribe(result => {
-        expect(result).toEqual([]);
-      });
-      tick();
-    }));
-  });
-  describe('getClassOptions', () => {
-    it('should fetch and group class options', fakeAsync(() => {
-      spyOn(service as any, '_fetchIris').and.returnValue(of(['class1', 'class2']));
-      spyOn(service, 'groupSuggestionsByOntologyIri').and.returnValue([{ label: 'group', suggestions: [] }] as GroupedSuggestion[]);
-      service.getClassOptions().subscribe();
-      tick();
-      expect(service['_fetchIris']).toHaveBeenCalled();
-      expect(service.groupSuggestionsByOntologyIri).toHaveBeenCalledWith(['class1', 'class2']);
-    }));
-  });
-  describe('getPropertiesOptions', () => {
-    it('should return an empty observable if targetType is invalid', fakeAsync(() => {
-      let result;
-      service.getPropertiesOptions('search', 'invalidType').subscribe(res => result = res);
-      tick();
-      expect(result).toEqual([]);
-    }));
-    it('should call getObjectPropertiesQuery for TARGET_OBJECTS_OF', fakeAsync(() => {
-      spyOn(service as any, '_fetchIris').and.returnValue(of([]));
-      service.getPropertiesOptions('search', TARGET_OBJECTS_OF).subscribe();
-      tick();
-      expect(service['_fetchIris']).toHaveBeenCalledWith(service.getObjectPropertiesQuery('search'), false);
-    }));
-    it('should call getPropertiesByTypeQuery for TARGET_SUBJECTS_OF', fakeAsync(() => {
-      spyOn(service as any, '_fetchIris').and.returnValue(of([]));
-      service.getPropertiesOptions('search', TARGET_SUBJECTS_OF).subscribe();
-      tick();
-      expect(service['_fetchIris']).toHaveBeenCalledWith(service.getPropertiesByTypeQuery('search'), false);
-    }));
   });
 });

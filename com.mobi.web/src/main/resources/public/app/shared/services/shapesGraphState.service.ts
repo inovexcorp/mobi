@@ -33,6 +33,7 @@ import {
   BRANCHID,
   COMMITID,
   GRAPHEDITOR,
+  OWL,
   SHAPESGRAPHEDITOR,
   SHAPESGRAPHSTATE,
   TAGID,
@@ -77,6 +78,8 @@ import { UpdateRefsService } from './updateRefs.service';
 import { VersionedRdfStateBase } from '../models/versionedRdfStateBase.interface';
 import { VersionedRdfUploadResponse } from '../models/versionedRdfUploadResponse.interface';
 import { XACMLRequest } from '../models/XACMLRequest.interface';
+
+export type PropertyType = 'ObjectProperty' | 'DatatypeProperty' | 'AnnotationProperty';
 
 /**
  * @class shared.ShapesGraphStateService
@@ -922,7 +925,8 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
    * import status and return its `imported` flag.
    *
    * @param {string} iri - The IRI of the entity to check.
-   * @param {ShapesGraphListItem} [listItem=this.listItem] - The list item to check against. Defaults to the current list item.
+   * @param {ShapesGraphListItem} [listItem=this.listItem] - The list item to check against. Defaults to the current
+   *    list item.
    * @returns {boolean} `true` if the IRI (or predicate) is considered imported; otherwise `false`.
    */
   isImported(iri: string, listItem: ShapesGraphListItem = this.listItem): boolean {
@@ -1009,30 +1013,6 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
   }
 
   /**
-   * Retrieves a list of OWL properties, grouped by their ontology IRI.
-   * The type of properties fetched depends on the `targetType` parameter.
-   *
-   * @param {string} [searchText=''] - An optional string to filter property IRIs. The search is case-insensitive and trimmed.
-   * @param {string} [targetType=''] - Specifies the type of properties to fetch.
-   * @param {boolean} [isTracked=false] - A flag to indicate if the API call should be tracked for progress indication.
-   * @returns {Observable<GroupedSuggestion[]>} An observable that emits an array of `GroupedSuggestion` objects,
-   *   where each group contains a list of property IRIs belonging to the same ontology, sorted by their labels.
-   */
-  getPropertiesOptions(searchText = '', targetType = '', isTracked = false): Observable<GroupedSuggestion[]> {
-    let query;
-    if (targetType === TARGET_OBJECTS_OF) {
-      query = this.getObjectPropertiesQuery(searchText);
-    } else if (targetType === TARGET_SUBJECTS_OF) {
-      query = this.getPropertiesByTypeQuery(searchText);
-    } else {
-      return of([]);
-    }
-    return this._fetchIris(query, isTracked).pipe(
-      map(iris => this.groupSuggestionsByOntologyIri(iris))
-    );
-  }
-
-  /**
    * Returns a SPARQL query string that selects all distinct OWL classes in the dataset.
    * 
    * @param searchText Optional search string to filter class IRIs
@@ -1040,12 +1020,30 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
    */
   getClassesQuery(searchText = ''): string {
     const normalizedSearch = searchText.toLowerCase().trim();
-    const filter = normalizedSearch ? `FILTER(CONTAINS(LCASE(STR(?iri)), "${normalizedSearch}"))` : '';
+    let filter = '';
+    if (normalizedSearch) {
+      const iriFilter = `CONTAINS(LCASE(STR(?iri)), "${normalizedSearch}")`;
+      const nameFilter = `CONTAINS(LCASE(COALESCE(?name, "")), "${normalizedSearch}")`;
+      const localNameFilter = `CONTAINS(LCASE(?localName), "${normalizedSearch}")`;
+      filter = `FILTER(${iriFilter} || ${nameFilter} || ${localNameFilter})`;
+    }
+    // const filter = normalizedSearch ? `FILTER(CONTAINS(LCASE(STR(?iri)), "${normalizedSearch}"))` : '';
     return `
+      PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+      PREFIX dc: <http://purl.org/dc/elements/1.1/>
+      PREFIX dct: <http://purl.org/dc/terms/>
       PREFIX owl: <http://www.w3.org/2002/07/owl#>
+      PREFIX skosxl: <http://www.w3.org/2008/05/skos-xl#>
+      PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+      PREFIX sh: <http://www.w3.org/ns/shacl#>
+      
       SELECT DISTINCT ?iri WHERE {
         ?iri a owl:Class .
         FILTER(isIRI(?iri))
+        OPTIONAL {
+          ?iri rdfs:label|dct:title|dc:title|skos:prefLabel|skos:altLabel|skos:literalForm|sh:name|skosxl:prefLabel/skosxl:literalForm|skosxl:altLabel/skosxl:literalForm ?name .
+        }
+        BIND(REPLACE(STR(?iri), "^.*?([_\\\\p{L}][-_\\\\p{L}\\\\p{N}]*)$", "$1") as ?localName)
         ${filter}
       }
       ORDER BY ?iri
@@ -1054,75 +1052,68 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
   }
 
   /**
-  * Returns a SPARQL query string that selects all distinct OWL object properties in the dataset.
-  * 
-  * @param searchText Optional search string to filter property IRIs
-  * @returns {string} SPARQL query for retrieving all owl:ObjectProperty IRIs.
-  */
-  getObjectPropertiesQuery(searchText = ''): string {
-    const normalizedSearch = searchText.toLowerCase().trim();
-    const filter = normalizedSearch ? `FILTER(CONTAINS(LCASE(STR(?iri)), "${normalizedSearch}"))` : '';
-    return `
-    PREFIX owl: <http://www.w3.org/2002/07/owl#>
-    SELECT DISTINCT ?iri WHERE {
-      ?iri a owl:ObjectProperty .
-      FILTER(isIRI(?iri))
-      ${filter}
-    }
-    ORDER BY ?iri
-    `;
+   * Retrieves a list of OWL properties, grouped by their ontology IRI. Which properties that are pulled is determined
+   * by the provided types.
+   * 
+   * @param {string} [searchText=''] - An optional string to filter property IRIs. The search is case-insensitive and
+   *    trimmed. 
+   * @param {PropertyType[]} types - An array of property types to filter by. Accepts ObjectProperty, DatatypeProperty,
+   *    and AnnotationProperty. If empty, retrieves all three types.
+   * @param {boolean} [isTracked=false] - A flag to indicate if the API call should be tracked for progress indication. 
+   * @returns {Observable<GroupedSuggestion[]>} An observable that emits an array of `GroupedSuggestion` objects,
+   *   where each group contains a list of property IRIs belonging to the same ontology, sorted by their labels.
+   */
+  getPropertyOptions(searchText = '', types: PropertyType[] = [], isTracked = false): Observable<GroupedSuggestion[]> {
+    return this._fetchIrisWithTypes(this.getPropertiesByTypeQuery(searchText, types), isTracked).pipe(
+      map(iris => this.groupSuggestionsWithTypeByOntologyIri(iris))
+    );
   }
 
   /**
    * Returns a SPARQL query string that selects all distinct OWL properties of specific types.
    * 
    * @param searchText Optional search string to filter property IRIs
+   * @param [types=[]] The type of properties to retrieve. Accepts ObjectProperty, DatatypeProperty, and 
+   *    AnnotationProperty
    * @returns {string} SPARQL query for retrieving all OWL property IRIs with their types.
    */
-  getPropertiesByTypeQuery(searchText = ''): string {
+  getPropertiesByTypeQuery(searchText = '', types: PropertyType[] = []): string {
     const normalizedSearch = searchText.toLowerCase().trim();
-    const filter = normalizedSearch ? `FILTER(CONTAINS(LCASE(STR(?iri)), "${normalizedSearch}"))` : '';
+    let filter = '';
+    if (normalizedSearch) {
+      const iriFilter = `CONTAINS(LCASE(STR(?iri)), "${normalizedSearch}")`;
+      const nameFilter = `CONTAINS(LCASE(COALESCE(?name, "")), "${normalizedSearch}")`;
+      const localNameFilter = `CONTAINS(LCASE(?localName), "${normalizedSearch}")`;
+      filter = `FILTER(${iriFilter} || ${nameFilter} || ${localNameFilter})`;
+    }
+    // const filter = searchText
+    //   ? `FILTER(CONTAINS(LCASE(STR(?iri)), "${normalizedSearch}"))`
+    //   : '';
+    const values = types.length
+      ? `VALUES ?type { ${types.map(type => `owl:${type}`).join(' ')} }`
+      : 'VALUES ?type { owl:ObjectProperty owl:DatatypeProperty owl:AnnotationProperty }';
     return `
-    PREFIX owl: <http://www.w3.org/2002/07/owl#>
-    SELECT DISTINCT ?iri ?type WHERE {
-      ?iri a ?type .
-      FILTER (isIRI(?iri))
-      VALUES ?type { owl:ObjectProperty owl:DatatypeProperty owl:AnnotationProperty }
-      ${filter}
-    }
-    ORDER BY ?iri
-    `;
-  }
-
-  /**
-   * Executes a SPARQL SELECT query to retrieve IRIs from the shapes graph's imports closure.
-   *
-   * @param query The SPARQL query string to execute.
-   * @returns {Observable<string[]>} An observable of string IRIs extracted from the query results.
-   */
-  private _fetchIris(query: string, isTracked = false): Observable<string[]> {
-    if (!this.listItem.versionedRdfRecord) {
-      return of([]);
-    }
-    return this.sparql.postQuery(query,
-      this.listItem.versionedRdfRecord.recordId,
-      SHAPES_STORE_TYPE,
-      this.listItem.versionedRdfRecord.branchId,
-      this.listItem.versionedRdfRecord.commitId,
-      true,
-      true,
-      'application/json',
-      isTracked
-    ).pipe(
-      map(response => {
-        if (!response) {
-          return [];
+      PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+      PREFIX dc: <http://purl.org/dc/elements/1.1/>
+      PREFIX dct: <http://purl.org/dc/terms/>
+      PREFIX owl: <http://www.w3.org/2002/07/owl#>
+      PREFIX skosxl: <http://www.w3.org/2008/05/skos-xl#>
+      PREFIX skos: <http://www.w3.org/2004/02/skos/core#>
+      PREFIX sh: <http://www.w3.org/ns/shacl#>
+      
+      SELECT DISTINCT ?iri ?type WHERE {
+        ?iri a ?type .
+        FILTER (isIRI(?iri))
+        OPTIONAL {
+          ?iri rdfs:label|dct:title|dc:title|skos:prefLabel|skos:altLabel|skos:literalForm|sh:name|skosxl:prefLabel/skosxl:literalForm|skosxl:altLabel/skosxl:literalForm ?name .
         }
-        return (response as SPARQLSelectResults).results.bindings.map(
-          binding => binding['iri'].value
-        );
-      })
-    );
+        BIND(REPLACE(STR(?iri), "^.*?([_\\\\p{L}][-_\\\\p{L}\\\\p{N}]*)$", "$1") as ?localName)
+        ${values}
+        ${filter}
+      }
+      ORDER BY ?iri
+      LIMIT 25
+    `;
   }
 
   /**
@@ -1156,9 +1147,43 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
   }
 
   /**
-   * Remove PropertyShape
-   * @param propertyShape 
-   * @returns Observable
+   * Groups IRIs with their types by their ontology IRI prefix (as returned by `splitIRI`), sorts the groups
+   * alphabetically by ontology IRI, and sorts the IRIs in each group by `label`.
+   *
+   * @param {{iri: string, type: string}[]} iris The list of IRIs with their types to group.
+   * @returns {GroupedSuggestion[]} A sorted array of groups, each with an `ontologyIri` and its corresponding sorted
+   *    IRIs.
+   */
+  groupSuggestionsWithTypeByOntologyIri(iris: {iri: string, type: string}[]): GroupedSuggestion[] {
+    const grouped = iris.reduce<Record<string, {iri: string, type: string}[]>>((acc, iri) => {
+      const ontologyIri = splitIRI(iri.iri).begin;
+      if (!acc[ontologyIri]) {
+        acc[ontologyIri] = [];
+      }
+      acc[ontologyIri].push(iri);
+      return acc;
+    }, {});
+    return Object.keys(grouped)
+      .sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()))
+      .map(ontologyIri => ({
+        label: ontologyIri,
+        suggestions: grouped[ontologyIri]
+          .map(iri => ({
+            label: this.getEntityName(iri.iri),
+            value: iri.iri,
+            type: iri.type
+          }))
+          .sort((a, b) => a.label.toLowerCase().localeCompare(b.label.toLowerCase()))
+      }));
+  }
+
+  /**
+   * Removes a PropertyShape from the currently selected NodeShape in the selected {@link ShapesGraphListItem}, along
+   * with all references to it in the shapes graph. Updates the InProgressCommit.
+   * 
+   * @param {PropertyShape} propertyShape The PropertyShape to remove
+   * @returns {Observable<void>} An observable that completes when the property shape and all its references have been
+   *    removed
    */
   removePropertyShape(propertyShape: PropertyShape): Observable<void> {
     // Add sh:property value deletion
@@ -1241,5 +1266,67 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
           return throwError('Could not retrieve number of unsupported predicates.');
         }
       }));
+  }
+
+  /**
+   * Executes a SPARQL SELECT query to retrieve IRIs from the shapes graph's imports closure.
+   *
+   * @param query The SPARQL query string to execute.
+   * @returns {Observable<string[]>} An observable of string IRIs extracted from the query results.
+   */
+  private _fetchIris(query: string, isTracked = false): Observable<string[]> {
+    if (!this.listItem.versionedRdfRecord) {
+      return of([]);
+    }
+    return this.sparql.postQuery(query,
+      this.listItem.versionedRdfRecord.recordId,
+      SHAPES_STORE_TYPE,
+      this.listItem.versionedRdfRecord.branchId,
+      this.listItem.versionedRdfRecord.commitId,
+      true,
+      true,
+      'application/json',
+      isTracked
+    ).pipe(
+      map(response => {
+        if (!response) {
+          return [];
+        }
+        return (response as SPARQLSelectResults).results.bindings.map(
+          binding => binding['iri'].value
+        );
+      })
+    );
+  }
+
+  /**
+   * Executes a SPARQL SELECT query to retrieve IRIs with their types from the shapes graph's imports closure.
+   *
+   * @param query The SPARQL query string to execute.
+   * @returns {Observable<string[]>} An observable of string IRIs extracted from the query results.
+   */
+  private _fetchIrisWithTypes(query: string, isTracked = false): Observable<{iri: string, type: string}[]> {
+    if (!this.listItem.versionedRdfRecord) {
+      return of([]);
+    }
+    return this.sparql.postQuery(query,
+      this.listItem.versionedRdfRecord.recordId,
+      SHAPES_STORE_TYPE,
+      this.listItem.versionedRdfRecord.branchId,
+      this.listItem.versionedRdfRecord.commitId,
+      true,
+      true,
+      'application/json',
+      isTracked
+    ).pipe(
+      map(response => {
+        if (!response) {
+          return [];
+        }
+        return (response as SPARQLSelectResults).results.bindings.map(
+          binding => ({ iri: binding['iri'].value, type: binding['type']?.value })
+        );
+      })
+    );
   }
 }

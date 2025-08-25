@@ -21,9 +21,9 @@
   #L%
   -->
 <mat-form-field class="w-100">
-  <span class="spinner-prefix" matPrefix #targetChipSpinner></span>
+  <span class="spinner-prefix" matPrefix #autocompleteSpinner></span>
   <mat-label>{{ label }}</mat-label>
-  <mat-chip-list #chipList aria-label="Target Values" [selectable]="!isDisabled">
+  <mat-chip-list #chipList [selectable]="!isDisabled">
     <mat-chip *ngFor="let chipValue of chipValues; let i = index" [selectable]="!isDisabled" [removable]="!isDisabled"
       (removed)="removeChip(i)" [disabled]="isDisabled" [title]="chipValue.value">
       {{ chipValue.label }}
@@ -37,12 +37,17 @@
       [matChipInputAddOnBlur]="false" 
       (matChipInputTokenEnd)="addChipFromInput($event)"
       (focus)="onInputFocus()"
-      (blur)="onTouched()" />
+      (blur)="onBlur()" />
   </mat-chip-list>
   <mat-autocomplete #auto="matAutocomplete" (optionSelected)="addChipFromSelection($event)" [displayWith]="displayFn">
+    <mat-optgroup *ngIf="inputControl.value && !inputControl.invalid && noMatches" label="Custom">
+      <mat-option class="custom-suggestion" [value]="customSuggestion" (mousedown)=$event.preventDefault()>
+        <span [title]="customSuggestion.value">{{customSuggestion.value}}</span>
+      </mat-option>
+    </mat-optgroup>
     <ng-container *ngFor="let group of suggestions$ | async; trackBy: trackByGroupLabel">
       <mat-optgroup [label]="group.label">
-        <mat-option *ngFor="let suggestion of group.suggestions; trackBy: trackBySuggestionValue" [value]="suggestion">
+        <mat-option *ngFor="let suggestion of group.suggestions; trackBy: trackBySuggestionValue" [value]="suggestion" (mousedown)=$event.preventDefault()>
           <span [title]="suggestion.value">{{ suggestion.label }}</span>
         </mat-option>
       </mat-optgroup>

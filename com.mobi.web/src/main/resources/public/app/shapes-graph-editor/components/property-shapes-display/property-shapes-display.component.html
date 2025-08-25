@@ -22,7 +22,9 @@
   -->
 <div class="property-shapes-display">
   <div class="section-header">
-    <h5>Constraints</h5><a class="float-right text-muted" [matMenuTriggerFor]="constraintInfo"><mat-icon>info</mat-icon></a>
+    <h5>Constraints</h5>
+    <a class="pl-1 text-muted" [matMenuTriggerFor]="constraintInfo"><mat-icon>info</mat-icon></a>
+    <a *ngIf="canModify" class="float-right fa fa-fw fa-plus" (click)="openAddOverlay()"></a>
   </div>
   <mat-card *ngFor="let propertyShape of propertyShapes" class="property-shape mb-2">
     <mat-card-title><h5 class="property-shape-label">{{propertyShape.label}}</h5></mat-card-title>
@@ -31,11 +33,15 @@
         <span class="label-header">Path: </span>
         <span [innerHTML]="propertyShape.pathHtmlString"></span>
       </div>
+      <div>
+        <span class="label-header">Message: </span>
+        <span>{{propertyShape.message || 'N/A'}}</span>
+      </div>
     </mat-card-subtitle>
     <mat-card-content>
       <div class="label-header">Constraint(s)</div>
       <div *ngFor="let constraint of propertyShape.constraints" class="constraint">
-        <span class="subheader">{{constraint.constraintLabel}}: </span><span *ngFor="let value of constraint.value; last as last">{{value.label}}<span *ngIf="!last">, </span></span>
+        <span class="subheader">{{constraint.constraintLabel}}: </span><span *ngFor="let value of constraint.value; last as last" [title]="value.chosenValue">{{value.label}}<span *ngIf="!last">, </span></span>
       </div>
     </mat-card-content>
     <mat-card-actions>

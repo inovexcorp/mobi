@@ -41,6 +41,7 @@
     <!-- Target Radio Buttons -->
     <app-shacl-target-selector formControlName="target" (selectionChange)="handleTargetChange($event)">
     </app-shacl-target-selector>
+    
     <!-- Target Value Field -->
     <ng-container *ngIf="targetOption" [ngSwitch]="targetOption.iri">
       <ng-container *ngSwitchCase="IMPLICIT_REFERENCE">
@@ -50,17 +51,18 @@
         formControlName="targetValue"
         [label]="targetOption.valueLabel">
       </app-shacl-target-node-input>
-      <app-shacl-target-class-input *ngSwitchCase="TARGET_CLASS"
+      <app-shacl-single-suggestion-input *ngSwitchCase="TARGET_CLASS"
         class="target-input"
         formControlName="targetValue"
         [label]="targetOption.valueLabel">
-      </app-shacl-target-class-input>
-      <app-shacl-target-chip-input *ngSwitchDefault
+      </app-shacl-single-suggestion-input>
+      <app-shacl-chip-suggestions-input *ngSwitchDefault
         class="target-input"
         formControlName="targetValues"
         [label]="targetOption.valueLabel"
-        [targetType]="targetOption.iri">
-      </app-shacl-target-chip-input>
+        [pullClasses]="false"
+        [propertyTypes]="targetOption.iri === TARGET_OBJECTS_OF ? ['ObjectProperty'] : []">
+      </app-shacl-chip-suggestions-input>
     </ng-container>
   </form>
 </div>

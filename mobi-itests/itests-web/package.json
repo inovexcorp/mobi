@@ -12,7 +12,7 @@
     "test-headless": "./node_modules/.bin/nightwatch --env headless"
   },
   "devDependencies": {
-    "chromedriver": "137.0.0",
+    "chromedriver": "139",
     "geckodriver": "^5.0.0",
     "nightwatch": "3.7.0"
   },

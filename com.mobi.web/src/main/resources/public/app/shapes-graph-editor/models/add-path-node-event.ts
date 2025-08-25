@@ -20,16 +20,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { PathNode } from './property-shape.interface';
+
 /**
- * Represents an option that can be used for selectable lists, dropdowns, 
- * radio buttons, or any other UI elements where a user picks a value.
- *
- * @property {string} label The human-readable text shown to the user.
- * @property {string} value The actual value submitted or stored when this option is selected.
- * @property {string} type An optional type string for the value
+ * Represents data needed when adding a new path node to a Property Shape's path.
  */
-export interface ValueOption {
-  label: string;
-  value: string;
-  type?: string;
+export interface AddPathNodeEvent {
+  parentNode: PathNode, // The parent node to add the new node to.
+  seqIdx: number, // The index of the current node in its parent sequence, if applicable.
+  sibling: PathNode, // The node immediately preceding the one to be added.
+  isSeq: boolean // Whether a Sequence should be added/updated
 }

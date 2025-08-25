@@ -51,31 +51,32 @@ import { ToastService } from '../../../shared/services/toast.service';
 import { VersionedRdfRecord } from '../../../shared/models/versionedRdfRecord.interface';
 import { PropertyManagerService } from '../../../shared/services/propertyManager.service';
 import { JSONLDId } from '../../../shared/models/JSONLDId.interface';
+import { ValueOption } from '../../models/value-option.interface';
 
 /**
  * Data model for the SHACL Target form.
  *
  * @property {string} target SHACL target type IRI.
- * @property {string} targetValue IRI value for single-value targets.
- * @property {string[]} targetValues Array of IRIs for multi-value targets.
+ * @property {ValueOption} targetValue Value for single-value targets.
+ * @property {ValueOption[]} targetValues Array of values for multi-value targets.
  */
 interface TargetFormModel {
   target: string;
-  targetValue: string;
-  targetValues: string[];
+  targetValue: ValueOption;
+  targetValues: ValueOption[];
 }
 
 /**
  * Interface defining the FormControl instances for the targetForm FormGroup.
  *
  * @property {FormControl<string>} target FormControl for the target type.
- * @property {FormControl<string>} targetValue FormControl for the targetValue (single IRI).
- * @property {FormControl<string[]>} targetValues FormControl for the targetValues (array of IRIs).
+ * @property {FormControl<ValueOption>} targetValue FormControl for the targetValue (single IRI).
+ * @property {FormControl<ValueOption[]>} targetValues FormControl for the targetValues (array of IRIs).
  */
 interface TargetFormControls {
   target: FormControl<string>;
-  targetValue: FormControl<string>;
-  targetValues: FormControl<string[]>;
+  targetValue: FormControl<ValueOption>;
+  targetValues: FormControl<ValueOption[]>;
 }
 
 /**
@@ -146,8 +147,8 @@ export class ShaclTargetComponent implements OnChanges, OnDestroy {
     this._targetDetector = new ShaclTargetDetector();
     this.targetForm = this._fb.group({
       target: ['', Validators.required],
-      targetValue: [''],
-      targetValues: [[] as string[]]
+      targetValue: [null],
+      targetValues: [[] as ValueOption[]]
     });
     this.targetForm.disable(this.SILENT_UPDATE_OPTION);
   }
@@ -255,10 +256,10 @@ export class ShaclTargetComponent implements OnChanges, OnDestroy {
     let isExplicitTarget = false;
     if (target === TARGET_NODE || target === TARGET_CLASS) {
       isExplicitTarget = true;
-      additionJson[target] = [{ '@id': formData.targetValue }];
+      additionJson[target] = [{ '@id': formData.targetValue.value }];
     } else if (target === TARGET_OBJECTS_OF || target === TARGET_SUBJECTS_OF) {
       isExplicitTarget = true;
-      additionJson[target] = formData.targetValues.map((iri: string) => ({ '@id': iri }));
+      additionJson[target] = formData.targetValues.map((option: ValueOption) => ({ '@id': option.value }));
     }
     if (target === IMPLICIT_REFERENCE) {
       let finalTypes = cloneDeep(nodeShape['@type'] || []);
@@ -326,7 +327,7 @@ export class ShaclTargetComponent implements OnChanges, OnDestroy {
    * Resets the 'targetValue' and 'targetValues' controls in the form.
    */
   clearFormValues(): void {
-    this.targetForm.patchValue({ targetValue: '', targetValues: [] }, this.SILENT_UPDATE_OPTION);
+    this.targetForm.patchValue({ targetValue: null, targetValues: [] }, this.SILENT_UPDATE_OPTION);
   }
 
   /**
@@ -449,13 +450,20 @@ export class ShaclTargetComponent implements OnChanges, OnDestroy {
     if (targetType) {
       formData.target = targetType.targetType;
       if (targetType.multiSelect) {
-        formData.targetValues = targetType.values as string[];
+        formData.targetValues = targetType.values.map(iri => ({
+          value: iri,
+          label: this.stateService.getEntityName(iri)
+        }));
       } else {
-        formData.targetValue = (targetType as SingleTargetTypeData).value;
+        const iri = (targetType as SingleTargetTypeData).value;
+        formData.targetValue = {
+          value: iri,
+          label: this.stateService.getEntityName(iri)
+        };
       }
     } else {
       formData.target = '';
-      formData.targetValue = '';
+      formData.targetValue = null;
       formData.targetValues = [];
     }
     if (formData) {

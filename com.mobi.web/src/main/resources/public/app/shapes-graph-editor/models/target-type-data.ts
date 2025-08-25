@@ -91,7 +91,7 @@ export class ShaclTargetDetector {
     {
       targetIri: TARGET_NODE,
       multiSelect: false,
-      getTargetValue: (nodeShape): SingleTargetPayload => ({
+      getTargetValue: (nodeShape: JSONLDObject): SingleTargetPayload => ({
         value:
           getPropertyId(nodeShape, TARGET_NODE) || getPropertyValue(nodeShape, TARGET_NODE) || ''
       })
@@ -99,28 +99,28 @@ export class ShaclTargetDetector {
     {
       targetIri: TARGET_CLASS,
       multiSelect: false,
-      getTargetValue: (nodeShape): SingleTargetPayload => ({
+      getTargetValue: (nodeShape: JSONLDObject): SingleTargetPayload => ({
         value: getPropertyId(nodeShape, TARGET_CLASS) || ''
       })
     },
     {
       targetIri: TARGET_OBJECTS_OF,
       multiSelect: true,
-      getTargetValue: (nodeShape): MultiTargetPayload => ({
+      getTargetValue: (nodeShape: JSONLDObject): MultiTargetPayload => ({
         values: this._getMultiTargetValues(nodeShape, TARGET_OBJECTS_OF)
       })
     },
     {
       targetIri: TARGET_SUBJECTS_OF,
       multiSelect: true,
-      getTargetValue: (nodeShape): MultiTargetPayload => ({
+      getTargetValue: (nodeShape: JSONLDObject): MultiTargetPayload => ({
         values: this._getMultiTargetValues(nodeShape, TARGET_SUBJECTS_OF)
       })
     },
     {
       targetIri: IMPLICIT_REFERENCE,
       multiSelect: false,
-      getTargetValue: (nodeShape): SingleTargetPayload => ({
+      getTargetValue: (nodeShape: JSONLDObject): SingleTargetPayload => ({
         value: nodeShape['@id'] || ''
       })
     }

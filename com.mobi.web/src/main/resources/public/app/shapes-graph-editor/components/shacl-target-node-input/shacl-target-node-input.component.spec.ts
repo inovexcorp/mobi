@@ -87,12 +87,12 @@ describe('ShaclTargetNodeInputComponent', () => {
     it('should register the onChange function', () => {
       const fn = () => {};
       component.registerOnChange(fn as any);
-      expect(component.onChange).toBe(fn);
+      expect(component.onChange).toEqual(fn);
     });
     it('should register the onTouched function', () => {
       const fn = () => {};
       component.registerOnTouched(fn);
-      expect(component.onTouched).toBe(fn);
+      expect(component.onTouched).toEqual(fn);
     });
   });
   describe('controlValueAccessor integration', () => {
@@ -101,17 +101,31 @@ describe('ShaclTargetNodeInputComponent', () => {
       input.value = 'https://example.org';
       input.dispatchEvent(new Event('input'));
       fixture.detectChanges();
-      expect(component.onChange).toHaveBeenCalledWith('https://example.org');
+      expect(component.onChange).toHaveBeenCalledWith({
+        value: 'https://example.org',
+        label: 'Example.org'
+      });
+      // expect(component.onChange).toHaveBeenCalledWith('https://example.org');
     });
     it('should call onTouched on blur', () => {
       const input = element.query(By.css('input[matInput]')).nativeElement;
       input.dispatchEvent(new Event('blur'));
       expect(component.onTouched).toHaveBeenCalledWith();
     });
-    it('should writeValue to the form control without emitting', () => {
-      component.writeValue('https://test');
-      fixture.detectChanges();
-      expect(component.nodeInputControl.value).toBe('https://test');
+    describe('should writeValue to the form control without emitting', () => {
+      it('if passed a string', () => {
+        component.writeValue('https://test');
+        fixture.detectChanges();
+        expect(component.nodeInputControl.value).toEqual('https://test');
+      });
+      it('if passed a ValueOption', () => {
+        component.writeValue({
+          value: 'https://test',
+          label: ''
+        });
+        fixture.detectChanges();
+        expect(component.nodeInputControl.value).toEqual('https://test');
+      });
     });
     it('should enable and disable via setDisabledState', () => {
       component.setDisabledState(true);
@@ -147,7 +161,7 @@ describe('ShaclTargetNodeInputComponent', () => {
       fixture.detectChanges();
       expect(component.nodeInputControl.valid).toBeTrue();
       const errors = element.queryAll(By.css('mat-error'));
-      expect(errors.length).toBe(0);
+      expect(errors.length).toEqual(0);
     });
   });
   describe('contains the correct html', () => {
@@ -194,7 +208,10 @@ describe('ShaclTargetNodeInputComponent', () => {
       hostInput.value = 'https://example.org/item';
       hostInput.dispatchEvent(new Event('input'));
       parentFixture.detectChanges();
-      expect(targetValueControl.value).toBe('https://example.org/item');
+      expect(targetValueControl.value).toEqual({
+        value: 'https://example.org/item',
+        label: 'Item'
+      });
       expect(parentForm.valid).toBeTrue();
     });
     it('should disable component when form control is disabled', () => {
@@ -208,7 +225,7 @@ describe('ShaclTargetNodeInputComponent', () => {
       parentFixture.detectChanges();
       const shaclInputDebugElement = parentFixture.debugElement.query(By.directive(ShaclTargetNodeInputComponent));
       const inputElement = shaclInputDebugElement.query(By.css('input[matInput]')).nativeElement;
-      expect(inputElement.value).toBe('https://example.org/123');
+      expect(inputElement.value).toEqual('https://example.org/123');
     });
     it('should propagate touched and dirty states', () => {
       expect(targetValueControl.touched).toBeFalse();

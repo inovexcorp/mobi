@@ -20,16 +20,30 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { ValidatorFn, AbstractControl, ValidationErrors } from '@angular/forms';
+
 /**
- * Represents an option that can be used for selectable lists, dropdowns, 
- * radio buttons, or any other UI elements where a user picks a value.
- *
- * @property {string} label The human-readable text shown to the user.
- * @property {string} value The actual value submitted or stored when this option is selected.
- * @property {string} type An optional type string for the value
+ * Validator that ensures the provided value is a valid Regex expression.
+ * 
+ * @param control The FormControl to apply this validator to
  */
-export interface ValueOption {
-  label: string;
-  value: string;
-  type?: string;
+export function regexValidator(): ValidatorFn {
+  return (control: AbstractControl): ValidationErrors | null => {
+
+    const value: string = control.value;
+
+    if (!value) {
+      return null;
+    }
+
+    let isValid: boolean;
+    try {
+      const regexValid = new RegExp(value);
+      isValid = true;
+    } catch (e) {
+      isValid = false;
+    }
+
+    return isValid ? null : {validRegexRequirement: true};
+  };
 }
