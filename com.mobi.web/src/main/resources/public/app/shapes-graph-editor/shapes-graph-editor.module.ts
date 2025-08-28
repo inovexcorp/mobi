@@ -32,6 +32,7 @@ import { AddPathNodeHoverButtonComponent } from './components/add-path-node-hove
 import { AddPathNodeModalComponent } from './components/add-path-node-modal/add-path-node-modal.component';
 import { AddPropertyShapeModalComponent } from './components/add-property-shape-modal/add-property-shape-modal.component';
 import { ConstraintTypeFormComponent } from './components/constraint-type-form/constraint-type-form.component';
+import { CreateNodeShapeModalComponent } from './components/create-node-shape-modal/create-node-shape-modal.component';
 import { NodeShapesDisplayComponent } from './components/node-shapes-display/node-shapes-display.component';
 import { NodeShapesItemComponent } from './components/node-shapes-item/node-shapes-item.component';
 import { NodeShapesListComponent } from './components/node-shapes-list/node-shapes-list.component';
@@ -39,15 +40,16 @@ import { NodeShapesTabComponent } from './components/node-shapes-tab/node-shapes
 import { PathNodeDisplayComponent } from './components/path-node-display/path-node-display.component';
 import { PropertyShapePathComponent } from './components/property-shape-path/property-shape-path.component';
 import { PropertyShapesDisplayComponent } from './components/property-shapes-display/property-shapes-display.component';
+import { ShaclChipSuggestionsInputComponent } from './components/shacl-chip-suggestions-input/shacl-chip-suggestions-input.component';
+import { ShaclSingleSuggestionInputComponent } from './components/shacl-single-suggestion-input/shacl-single-suggestion-input.component';
+import { ShaclTargetComponent } from './components/shacl-target/shacl-target.component';
+import { ShaclTargetNodeInputComponent } from './components/shacl-target-node-input/shacl-target-node-input.component';
+import { ShaclTargetSelectorComponent } from './components/shacl-target-selector/shacl-target-selector.component';
+import { ShapeButtonStackComponent } from './components/shape-button-stack/shape-button-stack.component';
 import { ShapesGraphEditorPageComponent } from './components/shapesGraphEditorPage/shapesGraphEditorPage.component';
 import { ShapesPreviewComponent } from './components/shapes-preview/shapes-preview.component';
 import { ShapesProjectTabComponent } from './components/shapes-project-tab/shapes-project-tab.component';
 import { ShapesTabsHolderComponent } from './components/shapes-tabs-holder/shapes-tabs-holder.component';
-import { ShaclTargetComponent } from './components/shacl-target/shacl-target.component';
-import { ShaclTargetSelectorComponent } from './components/shacl-target-selector/shacl-target-selector.component';
-import { ShaclTargetNodeInputComponent } from './components/shacl-target-node-input/shacl-target-node-input.component';
-import { ShaclSingleSuggestionInputComponent } from './components/shacl-single-suggestion-input/shacl-single-suggestion-input.component';
-import { ShaclChipSuggestionsInputComponent } from './components/shacl-chip-suggestions-input/shacl-chip-suggestions-input.component';
 
 /**
  * @namespace shapes-graph-editor
@@ -58,13 +60,14 @@ import { ShaclChipSuggestionsInputComponent } from './components/shacl-chip-sugg
    imports: [
      SharedModule,
      VersionedRdfRecordEditorModule,
-     ScrollingModule,
+     ScrollingModule
    ],
    declarations: [
-     AddPathNodeHoverButtonComponent,     
+     AddPathNodeHoverButtonComponent,
      AddPathNodeModalComponent,
      AddPropertyShapeModalComponent,
      ConstraintTypeFormComponent,
+     CreateNodeShapeModalComponent,
      NodeShapesDisplayComponent,
      NodeShapesItemComponent,
      NodeShapesListComponent,
@@ -72,15 +75,18 @@ import { ShaclChipSuggestionsInputComponent } from './components/shacl-chip-sugg
      PathNodeDisplayComponent,
      PropertyShapePathComponent,
      PropertyShapesDisplayComponent,
+     PropertyShapesDisplayComponent,
+     ShaclChipSuggestionsInputComponent,
+     ShaclSingleSuggestionInputComponent,
      ShaclTargetComponent,
+     ShaclTargetNodeInputComponent,
+     ShaclTargetNodeInputComponent,
      ShaclTargetSelectorComponent,
+     ShapeButtonStackComponent,
      ShapesGraphEditorPageComponent,
      ShapesPreviewComponent,
      ShapesProjectTabComponent,
-     ShapesTabsHolderComponent,
-     ShaclTargetNodeInputComponent,
-     ShaclSingleSuggestionInputComponent,
-     ShaclChipSuggestionsInputComponent
+     ShapesTabsHolderComponent
    ],
    providers: []
 })

@@ -31,7 +31,7 @@ var newUser = {
 var shapes_graph = path.resolve(__dirname + '/../../resources/rdf_files/semops_shapes.ttl');
 
 module.exports = {
-    '@tags': ['shapes-editor'],
+    '@tags': ['shapes-editor', 'shapes-editor-policy'],
 
     'Step 1: Initial Setup' : function(browser) {
         browser.globals.initial_steps(browser, browser.globals.adminUsername, browser.globals.adminPassword)

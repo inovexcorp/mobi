@@ -20,8 +20,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component, ViewChild } from '@angular/core';
-import { MatTabChangeEvent, MatTabGroup } from '@angular/material/tabs';
+import { Component, OnDestroy } from '@angular/core';
+import { MatTabChangeEvent } from '@angular/material/tabs';
 
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
 import { ShapesGraphListItem } from '../../../shared/models/shapesGraphListItem.class';
@@ -38,22 +38,27 @@ import { ShapesGraphListItem } from '../../../shared/models/shapesGraphListItem.
   templateUrl: './shapes-tabs-holder.component.html',
   styleUrls: ['./shapes-tabs-holder.component.scss']
 })
-export class ShapesTabsHolderComponent {
-  @ViewChild('tabsGroup') tabsGroup: MatTabGroup;
+export class ShapesTabsHolderComponent implements OnDestroy {
 
   constructor(public state: ShapesGraphStateService) {}
 
+  ngOnDestroy(): void {
+    this.state.closeSnackbar();
+  }
+
   onTabChanged(event: MatTabChangeEvent): void {
     switch (event.index) {
-      case ShapesGraphListItem.PROJECT_TAB:
-        this.state.setSelected(this.state.listItem.shapesGraphId, this.state.listItem).subscribe();
-        break;
-      case ShapesGraphListItem.NODE_SHAPES_TAB:
+      case ShapesGraphListItem.PROJECT_TAB_IDX:
         this.state.setSelected(
-            this.state.listItem.editorTabStates.nodeShapes.entityIRI,
+          this.state.listItem.shapesGraphId,
+          this.state.listItem
+        ).subscribe();
+        break;
+      case ShapesGraphListItem.NODE_SHAPES_TAB_IDX:
+        this.state.setSelected(
+            this.state.listItem.selectedNodeShapeIri,
             this.state.listItem
-          )
-          .subscribe();
+        ).subscribe();
         break;
       default:
     }

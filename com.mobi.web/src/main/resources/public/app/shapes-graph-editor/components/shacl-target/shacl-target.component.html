@@ -25,14 +25,25 @@
     <h5 class="m-0">Target</h5>
     <div class="header-actions d-flex align-items-center gap-2">
       <div *ngIf="canModify && !isImported" class="text-muted">
-        <button *ngIf="editMode === 'DISABLED'" class="edit-button" mat-icon-button color="primary" (click)="onEdit()">
-          <i class="fa fa-pencil"></i> <!-- <mat-icon>edit</mat-icon> for consistency ? -->
-        </button>
-        <button *ngIf="editMode === 'ENABLED'" 
-          class="save-button" mat-icon-button color="primary" title="Save Changes to Node Shape."
-          [disabled]="targetForm.invalid" (click)="onSave()">
-          <mat-icon>save</mat-icon>
-        </button>
+        <!-- Use ngSwitch to cleanly manage UI based on the component's state -->
+        <div class="action-buttons-container" [ngSwitch]="editMode">
+          <!-- Mode: DISABLED -->
+          <ng-container *ngSwitchCase="EditMode.Disabled">
+            <button mat-icon-button class="edit-button" color="primary" title="Edit SHACL Target" (click)="onEdit()">
+              <i class="fa fa-pencil"></i> <!-- Change for consistency? <mat-icon>edit</mat-icon> -->
+            </button>
+          </ng-container>
+          <!-- Mode: ENABLED -->
+          <ng-container *ngSwitchCase="EditMode.Enabled">
+            <button mat-icon-button class="reset-button" color="accent" title="Clear Value" (click)="onReset()">
+              <mat-icon>restart_alt</mat-icon>
+            </button>
+            <button mat-icon-button class="save-button" color="primary" title="Save Changes"
+              [disabled]="targetForm.invalid" (click)="onSave()">
+              <mat-icon>save</mat-icon>
+            </button>
+          </ng-container>
+        </div>
       </div>
       <a class="text-muted" [matMenuTriggerFor]="targetInfo"><mat-icon>info</mat-icon></a>
     </div>
@@ -46,9 +57,7 @@
     <ng-container *ngIf="targetOption" [ngSwitch]="targetOption.iri">
       <ng-container *ngSwitchCase="IMPLICIT_REFERENCE">
       </ng-container>
-      <app-shacl-target-node-input *ngSwitchCase="TARGET_NODE"
-        class="target-input"
-        formControlName="targetValue"
+      <app-shacl-target-node-input *ngSwitchCase="TARGET_NODE" class="target-input" formControlName="targetValue"
         [label]="targetOption.valueLabel">
       </app-shacl-target-node-input>
       <app-shacl-single-suggestion-input *ngSwitchCase="TARGET_CLASS"

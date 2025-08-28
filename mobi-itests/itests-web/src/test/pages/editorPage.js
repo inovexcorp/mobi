@@ -293,6 +293,8 @@ const editorCommands = {
   editIri: function(parentEl, newIriEnd, iriBegin = '') {
     this.useCss()
       .waitForElementVisible(parentEl)
+      .moveToElement(`${parentEl}`, 0, 0) // The 'Copy Iri' tooltip makes the click on edit button not work
+      .pause(200) // let DOM settle
       .useXpath()
       .waitForElementVisible(`//${parentEl}//static-iri//div[contains(@class, "static-ir")]//span//a//i[contains(@class, "fa-pencil")]`)
       .click(`//${parentEl}//static-iri//div[contains(@class, "static-ir")]//span//a//i[contains(@class, "fa-pencil")]`)

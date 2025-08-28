@@ -133,8 +133,7 @@ export abstract class VersionedRdfState<T extends VersionedRdfListItem> {
     'openSnackbar',
     'versionedRdfRecord',
     'merge',
-    'selectedCommit',
-    'nodes'
+    'selectedCommit'
   ];
 
   /**

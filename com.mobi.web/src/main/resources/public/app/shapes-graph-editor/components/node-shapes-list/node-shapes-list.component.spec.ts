@@ -34,14 +34,15 @@ import { of, throwError } from 'rxjs';
 //Mobi & Local imports
 import { cleanStylesFromDOM } from '../../../../test/ts/Shared';
 import { InfoMessageComponent } from '../../../shared/components/infoMessage/infoMessage.component';
-import { NodeShapeSummary } from '../../models/node-shape-summary.interface';
 import { NodeShapesItemComponent } from '../node-shapes-item/node-shapes-item.component';
+import { NodeShapeSummary } from '../../models/node-shape-summary.interface';
 import { SearchBarComponent } from '../../../shared/components/searchBar/searchBar.component';
 import { ShapesGraphListItem } from '../../../shared/models/shapesGraphListItem.class';
 import { ShapesGraphManagerService } from '../../../shared/services/shapesGraphManager.service';
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
 import { splitIRI } from '../../../shared/pipes/splitIRI.pipe';
 import { ToastService } from '../../../shared/services/toast.service';
+import { VersionedRdfRecord } from '../../../shared/models/versionedRdfRecord.interface';
 import { NodeShapesListComponent } from './node-shapes-list.component';
 
 describe('NodeShapesListComponent', () => {
@@ -51,7 +52,15 @@ describe('NodeShapesListComponent', () => {
   let shapesGraphStateStub: jasmine.SpyObj<ShapesGraphStateService>;
   let shapesGraphManagerStub: jasmine.SpyObj<ShapesGraphManagerService>;
   let toastStub: jasmine.SpyObj<ToastService>;
+  let changesObj: SimpleChanges;
 
+  const versionedRdfRecord: VersionedRdfRecord = {
+    title: 'Test Record',
+    recordId: 'recordId',
+    branchId: 'branchId',
+    commitId: 'commitId',
+    tagId: 'tagId'
+  };
   const nodeList: NodeShapeSummary[] = [
     {
       iri: 'http://www.example.com/Test1',
@@ -74,16 +83,6 @@ describe('NodeShapesListComponent', () => {
       sourceOntologyIRI: 'https://mobi.solutions/shapes-graphs/example'
     }
   ];
-  const changesObj: SimpleChanges = {
-    viewedRecord: {
-      previousValue: undefined,
-      currentValue: 'https://www.example.com/record1',
-      firstChange: true,
-      isFirstChange() {
-        return this.firstChange;
-      }
-    }
-  };
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -109,8 +108,8 @@ describe('NodeShapesListComponent', () => {
       '@id': 'https://mobi.solutions/shapes-graphs/example',
       '@type': ['http://www.w3.org/2002/07/owl#Ontology']
     };
+    shapesGraphStateStub.listItem.setSelectedNodeShapeIri('selectedEntityIRI');
     shapesGraphStateStub.listItem.editorTabStates.nodeShapes = {
-      entityIRI: 'selectedEntityIRI',
       sourceIRI: 'sourceIRI',
       nodes: []
     };
@@ -119,19 +118,40 @@ describe('NodeShapesListComponent', () => {
     shapesGraphManagerStub = TestBed.inject(ShapesGraphManagerService) as jasmine.SpyObj<ShapesGraphManagerService>;
     shapesGraphManagerStub.getNodeShapes.and.returnValue(of(nodeList));
 
+    changesObj = {
+      viewedRecord: {
+        previousValue: undefined,
+        currentValue: 'https://www.example.com/record1',
+        firstChange: true,
+        isFirstChange() {
+          return this.firstChange;
+        }
+      },
+      versionedRdfRecord: {
+        previousValue: undefined,
+        currentValue: versionedRdfRecord,
+        firstChange: true,
+        isFirstChange() {
+          return this.firstChange;
+        }
+      },
+      listItem: {
+        previousValue: undefined,
+        currentValue: shapesGraphStateStub.listItem,
+        firstChange: true,
+        isFirstChange() {
+          return this.firstChange;
+        }
+      }
+    };
+
     fixture = TestBed.createComponent(NodeShapesListComponent);
     component = fixture.componentInstance;
     element = fixture.debugElement;
 
-    component.versionedRdfRecord = {
-      title: 'Test Record',
-      recordId: 'recordId',
-      branchId: 'branchId',
-      commitId: 'commitId'
-    };
+    component.versionedRdfRecord = versionedRdfRecord;
     component.viewedRecord = 'https://mobi.solutions/shapes-graphs/example';
-
-    fixture.detectChanges();
+    component.listItem = shapesGraphStateStub.listItem;
   });
 
   afterEach(() => {
@@ -142,6 +162,7 @@ describe('NodeShapesListComponent', () => {
     shapesGraphStateStub = null;
     shapesGraphManagerStub = null;
     toastStub = null;
+    changesObj = null;
   });
 
   it('should create', () => {
@@ -149,7 +170,8 @@ describe('NodeShapesListComponent', () => {
   });
   describe('controller method', () => {
     it('onItemSelection should set listItem nodeTab', () => {
-      expect(shapesGraphStateStub.listItem.editorTabStates.nodeShapes.entityIRI).toEqual('selectedEntityIRI');
+      spyOn(shapesGraphStateStub.listItem, 'setSelectedNodeShapeIri').and.callThrough();
+      expect(shapesGraphStateStub.listItem.selectedNodeShapeIri).toEqual('selectedEntityIRI');
       expect(shapesGraphStateStub.listItem.editorTabStates.nodeShapes.sourceIRI).toEqual('sourceIRI');
       const nodeShapeInfo: NodeShapeSummary = {
         iri: 'iri',
@@ -160,40 +182,16 @@ describe('NodeShapesListComponent', () => {
         sourceOntologyIRI: 'urn:newSourceOntologyIRI'
       };
       component.onItemSelection(nodeShapeInfo);
-      expect(shapesGraphStateStub.listItem.editorTabStates.nodeShapes.entityIRI).toEqual('iri');
+      expect(shapesGraphStateStub.listItem.setSelectedNodeShapeIri).toHaveBeenCalledWith('iri');
+      expect(shapesGraphStateStub.listItem.selectedNodeShapeIri).toEqual('iri');
+      expect(shapesGraphStateStub.setSelected).toHaveBeenCalledWith('iri', shapesGraphStateStub.listItem);
       expect(shapesGraphStateStub.listItem.editorTabStates.nodeShapes.sourceIRI).toEqual('urn:newSourceOntologyIRI');
-      expect(shapesGraphStateStub.setSelected).toHaveBeenCalledWith(
-        shapesGraphStateStub.listItem.editorTabStates.nodeShapes.entityIRI,
-        shapesGraphStateStub.listItem
-      );
-    });
-  });
-  describe('should create the correct html', () => {
-    it('if there are no node shapes.', () => {
-      shapesGraphManagerStub.getNodeShapes.and.returnValue(of([]));
-      const infoMessage = element.queryAll(By.css('.no-match'));
-      expect(infoMessage.length).toEqual(1);
-      expect(infoMessage[0].nativeElement.innerHTML).toContain(
-        'No node shapes match your search criteria.'
-      );
-      expect(element.queryAll(By.css('app-node-shapes-item')).length).toEqual(0);
-    });
-    it('if there are node shapes.', async () => {
-      component.viewedRecord = 'https://mobi.solutions/shapes-graphs/example2';
-      component.ngOnChanges(changesObj);
-      await fixture.whenStable();
-      fixture.detectChanges();
-      const infoMessage = element.queryAll(By.css('.no-match'));
-      expect(infoMessage.length).toEqual(0);
-      expect(element.queryAll(By.css('cdk-virtual-scroll-viewport')).length).toEqual(1);
-      expect(element.queryAll(By.css('.nodeWrapper')).length).toEqual(2);
-      expect(element.queryAll(By.css('app-node-shapes-item')).length).toEqual(2);
     });
   });
   describe('should retrieve the correct node shapes upon component load or change', () => {
     it('unless there are errors.', () => {
       shapesGraphStateStub.listItem.editorTabStates.nodeShapes.nodes = [];
-      shapesGraphManagerStub.getNodeShapes.and.returnValue(throwError({errorMessage: 'Error Message'}));
+      shapesGraphManagerStub.getNodeShapes.and.returnValue(throwError({ errorMessage: 'Error Message' }));
       component.ngOnChanges(changesObj);
       fixture.detectChanges();
       expect(shapesGraphManagerStub.getNodeShapes).toHaveBeenCalledWith(
@@ -223,7 +221,7 @@ describe('NodeShapesListComponent', () => {
   describe('should retrieve the filtered list of node shapes upon search', () => {
     it('unless there are errors.', () => {
       component.searchText = 'test';
-      shapesGraphManagerStub.getNodeShapes.and.returnValue(throwError({errorMessage: 'Error Message'}));
+      shapesGraphManagerStub.getNodeShapes.and.returnValue(throwError({ errorMessage: 'Error Message' }));
       component.ngOnChanges(changesObj);
       fixture.detectChanges();
       expect(shapesGraphManagerStub.getNodeShapes).toHaveBeenCalledWith(
@@ -248,6 +246,36 @@ describe('NodeShapesListComponent', () => {
         'test'
       );
       expect(shapesGraphStateStub.listItem.editorTabStates.nodeShapes.nodes).toEqual(nodeList);
+    });
+  });
+  describe('contains the correct html', () => {
+    beforeEach(() => {
+      fixture.detectChanges();
+    });
+    it('if there are no node shapes.', () => {
+      shapesGraphManagerStub.getNodeShapes.and.returnValue(of([]));
+      const infoMessage = element.queryAll(By.css('.no-match'));
+      expect(infoMessage.length).toEqual(1);
+      expect(infoMessage[0].nativeElement.innerHTML).toContain(
+        'No node shapes match your search criteria.'
+      );
+      expect(element.queryAll(By.css('app-node-shapes-item')).length).toEqual(0);
+    });
+    it('if there are node shapes.', async () => {
+      component.listItem = shapesGraphStateStub.listItem;
+      component.viewedRecord = 'https://mobi.solutions/shapes-graphs/example2';
+      component.ngOnChanges(changesObj);
+      
+      fixture.detectChanges(); // Renders the component and the viewport shell
+      await fixture.whenStable();
+      fixture.detectChanges(); // Renders the items inside the viewport
+
+      expect(shapesGraphStateStub.listItem.editorTabStates.nodeShapes.nodes).toEqual(nodeList);
+      expect(component.nodeShapes).toEqual(nodeList);
+      const infoMessage = element.queryAll(By.css('.no-match'));
+      expect(infoMessage.length).toEqual(0);
+      expect(element.queryAll(By.css('cdk-virtual-scroll-viewport')).length).toEqual(1);
+      expect(element.queryAll(By.css('app-node-shapes-item')).length).toEqual(2);
     });
   });
 });

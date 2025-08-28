@@ -26,7 +26,7 @@ mvn clean install -DskipFunctional=false
 If you want to minimize overall run time, you can run the Maven build up until the phase right before the tests are actually run (so all the Maven variable injection is performed and files are prepped in the `target` dir) and then run the `test` script directly:
 
 1. Run `mvn clean pre-integration-test -DskipFunctional=false`
-2. Run `npm run test`
+2. Run `npm run test` or `npx nightwatch --tag {tag}`
 
 The test run report will be output to `target/nightwatch-reports` in several formats, the most useful of which is in HTML form under `nightwatch-html-report`. In the event of a test failure, a screenshot will be taken and output under `target/nightwatch-screenshots` and the rendered HTML, Karaf logs, and browser logs will be output under `target/test-logs`/
 

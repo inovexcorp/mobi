@@ -143,6 +143,8 @@ module.exports = {
     },
 
     'Step 13: Open Add Property Shape Modal and verify appearance': function(browser) {
+        browser.page.shapesEditorPage()
+            .selectNodeShape('Test Element node shape');
         browser.page.shapesEditorPage().openAddPropertyShapeModal();
     },
 
@@ -254,35 +256,9 @@ module.exports = {
 
     'Step 26: Edit Target': function(browser) {
         browser.page.shapesEditorPage()
-            .selectNodeShape('Test Element node shape');
-        // > Click on edit button
-        browser.page.shapesEditorPage()
-            .useCss()
-            .waitForElementVisible('@shaclTargetForm')
-            .waitForElementVisible('@shaclTargetEditButton')
-            .click('@shaclTargetEditButton');
-        // > Click on Specific Instance (edit node iri) radio button
-        browser.page.shapesEditorPage()
-            .useCss()
-            .waitForElementVisible('@shaclTargetForm')
-            .waitForElementVisible('@targetRadioGroup')
-            .useXpath()
-            .waitForElementVisible('//mat-radio-button[contains(., "Specific Instance")]')
-            .click('//mat-radio-button[contains(., "Specific Instance")]');
-        // > Select a Type Input - Type IRI 
-        browser.page.shapesEditorPage()
-            .useCss()
-            .waitForElementVisible('@targetValueInput')
-            .clearValue('@targetValueInput')
-            .setValue('@targetValueInput', 'urn:newTargetIri');
-        // > Click on Save button
-        browser.page.shapesEditorPage()
-            .useCss()
-            .waitForElementVisible('@shaclTargetSaveButton')
-            .assert.enabled('@shaclTargetSaveButton')
-            .click('@shaclTargetSaveButton');
-        // > Verify Changes
-        browser.page.shapesEditorPage().toggleChangesPage();
+            .selectNodeShape('Test Element node shape')
+            .editShaclTarget('Specific Instance', 'urn:newTargetIri')
+            .toggleChangesPage();
         browser.page.shapesEditorPage().verifyChangePageCommitNum(1);
     }
 }

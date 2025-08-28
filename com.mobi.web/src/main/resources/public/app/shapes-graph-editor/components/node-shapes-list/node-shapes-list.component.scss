@@ -20,6 +20,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+.node-shapes-list {
+  .shapes-scroll-viewport {
+    .node-shapes-item-wrapper:hover, .activeNode {
+      cursor: pointer;
+      background-color: var(--light);
+    }
+  }
+}
 .cdk-virtual-scroll-content-wrapper {
   width: 100% !important;
 }

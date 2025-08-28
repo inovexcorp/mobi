@@ -21,9 +21,10 @@
  * #L%
  */
 import { ElementRef } from '@angular/core';
-import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { HttpResponse } from '@angular/common/http';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { TestBed, fakeAsync, tick } from '@angular/core/testing';
 
 import { cloneDeep, concat, map } from 'lodash';
 import { MockPipe, MockProvider } from 'ng-mocks';
@@ -63,7 +64,7 @@ import { UpdateRefsService } from './updateRefs.service';
 import { VersionedRdfUploadResponse } from '../models/versionedRdfUploadResponse.interface';
 import { ShapesGraphStateService } from './shapesGraphState.service';
 
-describe('Shapes Graph State service', function() {
+describe('Shapes Graph State service', function () {
   let service: ShapesGraphStateService;
   let _catalogManagerActionSubject: Subject<EventWithPayload>;
   let _mergeRequestManagerActionSubject: Subject<EventWithPayload>;
@@ -75,13 +76,30 @@ describe('Shapes Graph State service', function() {
   let prefixationStub: jasmine.SpyObj<PrefixationPipe>;
   let progressSpinnerStub: jasmine.SpyObj<ProgressSpinnerService>;
   let propertyManagerStub: jasmine.SpyObj<PropertyManagerService>;
+  let snackBarStub: jasmine.SpyObj<MatSnackBar>;
   let settingManagerStub: jasmine.SpyObj<SettingManagerService>;
   let shapesGraphManagerStub: jasmine.SpyObj<ShapesGraphManagerService>;
   let sparqlManagerStub: jasmine.SpyObj<SparqlManagerService>;
   let toastStub: jasmine.SpyObj<ToastService>;
   let updateRefsStub: jasmine.SpyObj<UpdateRefsService>;
 
-  let exclusionList: string[] = [];
+  const exclusionList: string[] = [
+    'element',
+    'usagesElement',
+    'branches',
+    'tags',
+    'failedImports',
+    'openSnackbar',
+    'versionedRdfRecord',
+    'merge',
+    'selectedCommit',
+    'nodes',
+    '_selectedNodeShapeIri',
+    'selectedNodeShapeIri$',
+    'selectedNodeShapeIri',
+    'additions',
+    'deletions'
+  ];
 
   const catalogId = 'catalogId';
   const recordId = 'recordId';
@@ -108,6 +126,9 @@ describe('Shapes Graph State service', function() {
     '@type': [`${OWL}ShapeGraphRecord`]
   });
 
+  const onActionSpy = jasmine.createSpy('onAction').and.returnValue(of(null));
+  const afterDismissedSpy = jasmine.createSpy('afterDismissed').and.returnValue(of(null));
+
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [
@@ -127,6 +148,14 @@ describe('Shapes Graph State service', function() {
         MockProvider(SparqlManagerService),
         MockProvider(StateManagerService),
         MockProvider(ToastService),
+        {
+          provide: MatSnackBar, useFactory: () => jasmine.createSpyObj('MatSnackBar', {
+            open: {
+              onAction: onActionSpy,
+              afterDismissed: afterDismissedSpy
+            }
+          })
+        },
         { provide: PrefixationPipe, useClass: MockPipe(PrefixationPipe) },
         MockProvider(UpdateRefsService)
       ]
@@ -138,6 +167,7 @@ describe('Shapes Graph State service', function() {
     shapesGraphManagerStub.createShapesGraphRecord.and.returnValue(of(uploadResponse));
     manchesterConverterStub = TestBed.inject(ManchesterConverterService) as jasmine.SpyObj<ManchesterConverterService>;
     manchesterConverterStub.jsonldToManchester.and.callFake(a => a);
+    snackBarStub = TestBed.inject(MatSnackBar) as jasmine.SpyObj<MatSnackBar>;
     policyEnforcementStub = TestBed.inject(PolicyEnforcementService) as jasmine.SpyObj<PolicyEnforcementService>;
     policyEnforcementStub.permit = 'Permit';
     policyEnforcementStub.deny = 'Deny';
@@ -152,7 +182,7 @@ describe('Shapes Graph State service', function() {
 
     mergeRequestManagerServiceStub = TestBed.inject(MergeRequestManagerService) as jasmine.SpyObj<MergeRequestManagerService>;
     catalogManagerStub = TestBed.inject(CatalogManagerService) as jasmine.SpyObj<CatalogManagerService>;
-    catalogManagerStub.localCatalog = {'@id': catalogId, '@type': []};
+    catalogManagerStub.localCatalog = { '@id': catalogId, '@type': [] };
 
     _catalogManagerActionSubject = new Subject<EventWithPayload>();
     _mergeRequestManagerActionSubject = new Subject<EventWithPayload>();
@@ -182,22 +212,9 @@ describe('Shapes Graph State service', function() {
     );
     service = TestBed.inject(ShapesGraphStateService);
     service.initialize();
-
-    exclusionList = [
-      'element',
-      'usagesElement',
-      'branches',
-      'tags',
-      'failedImports',
-      'openSnackbar',
-      'versionedRdfRecord',
-      'merge',
-      'selectedCommit',
-      'nodes'
-    ];
   });
 
-  afterEach(function() {
+  afterEach(function () {
     cleanStylesFromDOM();
     service = null;
     _catalogManagerActionSubject = null;
@@ -215,18 +232,18 @@ describe('Shapes Graph State service', function() {
     updateRefsStub = null;
   });
 
-  it('initialize works properly', function() {
+  it('initialize works properly', function () {
     expect(service['catalogId']).toEqual(catalogId);
     expect(service.list).toEqual([]);
     expect(service.listItem).toBeUndefined();
   });
   describe('event handling from constructor', () => {
-    beforeEach(function() {
+    beforeEach(function () {
       service.listItem = listItem;
       service.list = [listItem];
     });
-    describe('when a branch removal event is received', function() {
-      it('should call deleteBranchState if the record exists in the list', fakeAsync(function() {
+    describe('when a branch removal event is received', function () {
+      it('should call deleteBranchState if the record exists in the list', fakeAsync(function () {
         spyOn(service, 'deleteBranchState').and.returnValue(of(null));
         const eventPayload: EventWithPayload = {
           eventType: EventTypeConstants.EVENT_BRANCH_REMOVAL,
@@ -236,7 +253,7 @@ describe('Shapes Graph State service', function() {
         tick();
         expect(service.deleteBranchState).toHaveBeenCalledWith(recordId, 'branch-to-delete');
       }));
-      it('should do nothing if the record does not exist in the list', fakeAsync(function() {
+      it('should do nothing if the record does not exist in the list', fakeAsync(function () {
         spyOn(service, 'deleteBranchState').and.returnValue(of(null));
         const eventPayload: EventWithPayload = {
           eventType: EventTypeConstants.EVENT_BRANCH_REMOVAL,
@@ -246,7 +263,7 @@ describe('Shapes Graph State service', function() {
         tick();
         expect(service.deleteBranchState).not.toHaveBeenCalled();
       }));
-      it('should log a warning if recordId or branchId is missing', fakeAsync(function() {
+      it('should log a warning if recordId or branchId is missing', fakeAsync(function () {
         spyOn(console, 'warn');
         spyOn(service, 'deleteBranchState').and.returnValue(of(null));
         const eventPayload: EventWithPayload = {
@@ -258,8 +275,8 @@ describe('Shapes Graph State service', function() {
         expect(console.warn).toHaveBeenCalledWith('EVENT_BRANCH_REMOVAL is missing recordIri or branchId');
       }));
     });
-    describe('when a merge request acceptance event is received', function() {
-      it('should mark the listItem as out-of-date and show a toast if the target branch is the current branch', fakeAsync(function() {
+    describe('when a merge request acceptance event is received', function () {
+      it('should mark the listItem as out-of-date and show a toast if the target branch is the current branch', fakeAsync(function () {
         service.listItem.versionedRdfRecord.branchId = 'main';
         service.listItem.merge.active = true;
         const eventPayload: EventWithPayload = {
@@ -271,7 +288,7 @@ describe('Shapes Graph State service', function() {
         expect(service.listItem.upToDate).toBeFalse();
         expect(toastStub.createWarningToast).toHaveBeenCalledWith(jasmine.any(String), { timeOut: 5000 });
       }));
-      it('should show a toast if a merge is active and its target is the affected branch', fakeAsync(function() {
+      it('should show a toast if a merge is active and its target is the affected branch', fakeAsync(function () {
         service.listItem.versionedRdfRecord.branchId = 'feature-branch';
         service.listItem.merge.active = true;
         service.listItem.merge.target = { '@id': 'main', '@type': [] };
@@ -284,7 +301,7 @@ describe('Shapes Graph State service', function() {
         expect(service.listItem.upToDate).toBeTrue();
         expect(toastStub.createWarningToast).toHaveBeenCalledTimes(1);
       }));
-      it('should do nothing if the affected record is not in the list', fakeAsync(function() {
+      it('should do nothing if the affected record is not in the list', fakeAsync(function () {
         const eventPayload: EventWithPayload = {
           eventType: EventTypeConstants.EVENT_MERGE_REQUEST_ACCEPTED,
           payload: { recordId: 'some-other-record', targetBranchId: 'main' }
@@ -295,8 +312,8 @@ describe('Shapes Graph State service', function() {
         expect(toastStub.createWarningToast).not.toHaveBeenCalled();
       }));
     });
-    describe('when an invalid event is received', function() {
-      it('should create an error toast if the event has no payload', fakeAsync(function() {
+    describe('when an invalid event is received', function () {
+      it('should create an error toast if the event has no payload', fakeAsync(function () {
         const eventPayload = {
           eventType: EventTypeConstants.EVENT_BRANCH_REMOVAL,
           payload: undefined
@@ -305,7 +322,7 @@ describe('Shapes Graph State service', function() {
         tick();
         expect(toastStub.createErrorToast).toHaveBeenCalledWith('Event type and payload is required');
       }));
-      it('should log a console warning for an unknown event type', fakeAsync(function() {
+      it('should log a console warning for an unknown event type', fakeAsync(function () {
         spyOn(console, 'warn');
         const unknownEvent = {
           eventType: 'unknown-event',
@@ -317,7 +334,7 @@ describe('Shapes Graph State service', function() {
       }));
     });
   });
-  it('getDefaultNamespace provides the default namespace to be used for new shapes graphs', fakeAsync(function() {
+  it('getDefaultNamespace provides the default namespace to be used for new shapes graphs', fakeAsync(function () {
     settingManagerStub.getDefaultNamespace.and.returnValue(of('shapes-graph'));
     service.getDefaultNamespace().subscribe(value => {
       expect(value).toEqual('shapes-graph');
@@ -325,7 +342,7 @@ describe('Shapes Graph State service', function() {
     tick();
     expect(settingManagerStub.getDefaultNamespace).toHaveBeenCalledWith(`${SHAPESGRAPHEDITOR}ShapesGraphRecord`);
   }));
-  it('should retrieve the name of an entity for shapes graphs', function() {
+  it('should retrieve the name of an entity for shapes graphs', function () {
     listItem.entityInfo = {
       'http://mobi.com/AnotherEntity': {
         label: 'Another',
@@ -361,8 +378,121 @@ describe('Shapes Graph State service', function() {
     });
   });
   describe('goTo', () => {
-    it('should throw an error indicating it is not supported', () => {
-      expect(() => service.goTo('some:iri')).toThrow(new Error('goTo functionality for ShapesGraphListItem not supported.'));
+    const projectEntityIri = 'urn:project-entity';
+    const nodeShapeIri = 'urn:node-shape';
+    beforeEach(() => {
+      service.listItem = cloneDeep(listItem);
+      service.listItem.editorTabStates.nodeShapes.nodes = [
+        { iri: nodeShapeIri, name: 'My Node Shape' } as NodeShapeSummary
+      ];
+      spyOn(service, 'setSelected').and.returnValue(of(null));
+      spyOn(service.listItem, 'setSelectedNodeShapeIri');
+    });
+    it('should do nothing if listItem is not set', () => {
+      service.listItem = null;
+      service.goTo(projectEntityIri);
+      expect(service.setSelected).not.toHaveBeenCalled();
+    });
+    it('should do nothing if iri is not provided', () => {
+      service.goTo(null);
+      expect(service.setSelected).not.toHaveBeenCalled();
+    });
+    it('should navigate to the project tab for a non-node-shape IRI', () => {
+      service.listItem.tabIndex = ShapesGraphListItem.NODE_SHAPES_TAB_IDX;
+      service.goTo(projectEntityIri);
+      expect(service.listItem.tabIndex).toBe(ShapesGraphListItem.PROJECT_TAB_IDX);
+      expect(service.getActivePage().entityIRI).toBe(projectEntityIri);
+      expect(service.listItem.setSelectedNodeShapeIri).not.toHaveBeenCalled();
+      expect(service.setSelected).toHaveBeenCalledWith(projectEntityIri);
+    });
+    it('should navigate to the node shapes tab for a known node shape IRI', () => {
+      service.listItem.tabIndex = ShapesGraphListItem.PROJECT_TAB_IDX;
+      service.goTo(nodeShapeIri);
+      expect(service.listItem.tabIndex).toBe(ShapesGraphListItem.NODE_SHAPES_TAB_IDX);
+      expect(service.listItem.setSelectedNodeShapeIri).toHaveBeenCalledWith(nodeShapeIri, true);
+      expect(service.setSelected).toHaveBeenCalledWith(nodeShapeIri);
+    });
+    it('should show an error toast if setSelected fails', fakeAsync(() => {
+      (service.setSelected as jasmine.Spy).and.returnValue(throwError('Failed to load'));
+      spyOn(service, 'getEntityName').and.returnValue('Entity Name');
+      service.goTo(projectEntityIri);
+      tick();
+      expect(toastStub.createErrorToast).toHaveBeenCalledWith('Failed to load entity: Entity Name');
+    }));
+  });
+  describe('addNodeShapeSummary', () => {
+    let nodeShape: JSONLDObject;
+    beforeEach(() => {
+      service.listItem = cloneDeep(listItem);
+      service.listItem.editorTabStates.nodeShapes.nodes = [];
+      spyOn(service, 'getEntityName').and.callFake(iri => {
+        return `entityName(${iri})`;
+      });
+      nodeShape = {
+        '@id': 'urn:my-shape',
+        '@type': [SH + 'NodeShape']
+      };
+      service.shaclTargetDetector = jasmine.createSpyObj('shaclTargetDetector', ['detect']);
+    });
+    it('should add a summary for a node shape with a single target', () => {
+      (service.shaclTargetDetector.detect as jasmine.Spy).and.returnValue({
+        targetType: `${SH}targetClass`,
+        value: 'urn:my-class',
+        multiSelect: false
+      });
+      service.addNodeShapeSummary(nodeShape);
+
+      const summaries = service.listItem.editorTabStates.nodeShapes.nodes;
+      expect(summaries.length).toBe(1);
+      const summary = summaries[0];
+      expect(summary.iri).toEqual('urn:my-shape');
+      expect(summary.name).toEqual('entityName(urn:my-shape)');
+      expect(summary.targetType).toEqual(`${SH}targetClass`);
+      expect(summary.targetTypeLabel).toEqual('Target Class');
+      expect(summary.targetValue).toEqual('urn:my-class');
+      expect(summary.targetValueLabel).toEqual('entityName(urn:my-class)');
+      expect(summary.imported).toBeFalse();
+      expect(summary.sourceOntologyIRI).toEqual(shapesGraphId);
+    });
+    it('should add a summary for a node shape with a multi-select target, using the first value', () => {
+      (service.shaclTargetDetector.detect as jasmine.Spy).and.returnValue({
+        targetType: `${SH}targetSubjectsOf`,
+        values: ['urn:my-class', 'urn:another-class'],
+        multiSelect: true
+      });
+      service.addNodeShapeSummary(nodeShape);
+
+      const summaries = service.listItem.editorTabStates.nodeShapes.nodes;
+      expect(summaries.length).toEqual(1);
+      const summary = summaries[0];
+      expect(summary.targetType).toEqual(`${SH}targetSubjectsOf`);
+      expect(summary.targetValue).toEqual('urn:my-class');
+      expect(summary.targetValueLabel).toEqual('entityName(urn:my-class)');
+    });
+    it('should handle a node shape with no target data by using default values', () => {
+      (service.shaclTargetDetector.detect as jasmine.Spy).and.returnValue(null);
+      service.addNodeShapeSummary(nodeShape);
+
+      const summaries = service.listItem.editorTabStates.nodeShapes.nodes;
+      expect(summaries.length).toEqual(1);
+      const summary = summaries[0];
+      expect(summary.targetType).toEqual('N/A');
+      expect(summary.targetTypeLabel).toEqual('N/A');
+      expect(summary.targetValue).toEqual('');
+      expect(summary.targetValueLabel).toEqual('entityName()');
+    });
+    it('should add the new summary and correctly sort the list by name', () => {
+      (service.shaclTargetDetector.detect as jasmine.Spy).and.returnValue(null);
+      service.listItem.editorTabStates.nodeShapes.nodes = [
+        { name: 'ZShape' } as NodeShapeSummary,
+        { name: 'AShape' } as NodeShapeSummary
+      ];
+      service.addNodeShapeSummary(nodeShape);
+
+      const summaries = service.listItem.editorTabStates.nodeShapes.nodes;
+      expect(summaries.length).toEqual(3);
+      const names = summaries.map(s => s.name);
+      expect(names).toEqual(['AShape', 'entityName(urn:my-shape)', 'ZShape']);
     });
   });
   describe('isLinkable', () => {
@@ -376,22 +506,22 @@ describe('Shapes Graph State service', function() {
       expect(service.canModifyEntityTypes(entity)).toBeFalse();
     });
   });
-  describe('getIdentifierIRI retrieves the shapes graph IRI of a ShapesGraphRecord', function() {
-    it('if provided JSON-LD', function() {
+  describe('getIdentifierIRI retrieves the shapes graph IRI of a ShapesGraphRecord', function () {
+    it('if provided JSON-LD', function () {
       expect(service.getIdentifierIRI({
         '@id': 'recordId',
         [`${CATALOG}trackedIdentifier`]: [{ '@id': 'shapesGraphIRI' }]
       })).toEqual('shapesGraphIRI');
     });
-    it('from the current listItem', function() {
+    it('from the current listItem', function () {
       service.listItem = listItem;
       service.listItem.shapesGraphId = 'shapesGraphIRI';
       expect(service.getIdentifierIRI()).toEqual('shapesGraphIRI');
     });
   });
-  describe('open should call the proper methods', function() {
-    describe('when getCatalogDetails resolves', function() {
-      beforeEach(function() {
+  describe('open should call the proper methods', function () {
+    describe('when getCatalogDetails resolves', function () {
+      beforeEach(function () {
         spyOn(service, 'getCatalogDetails').and.returnValue(of({
           recordId,
           branchId,
@@ -401,7 +531,7 @@ describe('Shapes Graph State service', function() {
           inProgressCommit: difference,
         }));
       });
-      it('and createListItem resolves', fakeAsync(function() {
+      it('and createListItem resolves', fakeAsync(function () {
         spyOn(service, 'createListItem').and.returnValue(of(listItem));
         spyOn(service, 'setSelected').and.returnValue(of(null));
         service.open({ recordId, title, identifierIRI: shapesGraphId })
@@ -411,7 +541,7 @@ describe('Shapes Graph State service', function() {
         expect(service.listItem).toEqual(listItem);
         expect(service.list).toContain(listItem);
       }));
-      it('and createListItem rejects', fakeAsync(function() {
+      it('and createListItem rejects', fakeAsync(function () {
         spyOn(service, 'createListItem').and.returnValue(throwError(error));
         service.open({ recordId, title, identifierIRI: shapesGraphId })
           .subscribe(() => fail('Observable should have rejected'), response => {
@@ -423,7 +553,7 @@ describe('Shapes Graph State service', function() {
         expect(service.list).toEqual([]);
       }));
     });
-    it('and getCatalogDetails rejects', fakeAsync(function() {
+    it('and getCatalogDetails rejects', fakeAsync(function () {
       spyOn(service, 'getCatalogDetails').and.returnValue(throwError(error));
       service.open({ recordId, title, identifierIRI: shapesGraphId })
         .subscribe(() => fail('Observable should have rejected'), response => {
@@ -432,15 +562,15 @@ describe('Shapes Graph State service', function() {
       tick();
     }));
   });
-  describe('create makes a new shapes graph record without opening it', function() {
-    it('unless no file or JSON-LD was provided', fakeAsync(function() {
+  describe('create makes a new shapes graph record without opening it', function () {
+    it('unless no file or JSON-LD was provided', fakeAsync(function () {
       service.create({ title: '' }).subscribe(() => fail('Observable should have failed'), error => {
         expect(error).toEqual('Creation requires a file or JSON-LD');
       });
       tick();
       expect(shapesGraphManagerStub.createShapesGraphRecord).not.toHaveBeenCalled();
     }));
-    it('if a file is provided', fakeAsync(function() {
+    it('if a file is provided', fakeAsync(function () {
       const uploadDetails: RdfUpload = { title: '', file };
       service.create(uploadDetails).subscribe(response => {
         expect(response).toEqual(uploadResponse);
@@ -448,7 +578,7 @@ describe('Shapes Graph State service', function() {
       tick();
       expect(shapesGraphManagerStub.createShapesGraphRecord).toHaveBeenCalledWith(uploadDetails, true);
     }));
-    it('if JSON-LD is provided', fakeAsync(function() {
+    it('if JSON-LD is provided', fakeAsync(function () {
       const uploadDetails: RdfUpload = { title: '', jsonld: [{ '@id': 'shapesGraph' }] };
       service.create(uploadDetails).subscribe(response => {
         expect(response).toEqual(uploadResponse);
@@ -457,26 +587,26 @@ describe('Shapes Graph State service', function() {
       expect(shapesGraphManagerStub.createShapesGraphRecord).toHaveBeenCalledWith(uploadDetails, true);
     }));
   });
-  describe('createAndOpen calls the correct methods', function() {
-    beforeEach(function() {
+  describe('createAndOpen calls the correct methods', function () {
+    beforeEach(function () {
       service.list = [];
     });
-    it('unless no file or JSON-LD was provided', fakeAsync(function() {
+    it('unless no file or JSON-LD was provided', fakeAsync(function () {
       service.createAndOpen({ title: '' }).subscribe(() => fail('Observable should have failed'), error => {
         expect(error).toEqual('Creation requires a file or JSON-LD');
       });
       tick();
       expect(shapesGraphManagerStub.createShapesGraphRecord).not.toHaveBeenCalled();
     }));
-    describe('if a file was provided', function() {
+    describe('if a file was provided', function () {
       const uploadDetails: RdfUpload = { title, description: 'description', keywords: ['A', 'B'], file };
-      describe('when uploadOntology succeeds', function() {
-        describe('and createListItem succeeds', function() {
-          beforeEach(function() {
+      describe('when uploadOntology succeeds', function () {
+        describe('and createListItem succeeds', function () {
+          beforeEach(function () {
             spyOn(service, 'setSelected').and.returnValue(of(null));
             spyOn(service, 'createListItem').and.returnValue(of(listItem));
           });
-          it('and createState resolves', fakeAsync(function() {
+          it('and createState resolves', fakeAsync(function () {
             spyOn(service, 'createState').and.returnValue(of(null));
             service.createAndOpen(uploadDetails)
               .subscribe(response => {
@@ -495,7 +625,7 @@ describe('Shapes Graph State service', function() {
             expect(service.list.length).toBe(1);
             expect(service.listItem).toEqual(listItem);
           }));
-          it('and createState rejects', fakeAsync(function() {
+          it('and createState rejects', fakeAsync(function () {
             spyOn(service, 'createState').and.returnValue(throwError(error));
             service.createAndOpen({ title, description: 'description', keywords: ['A', 'B'], file })
               .subscribe(() => fail('Observable should have rejected'), response => {
@@ -509,7 +639,7 @@ describe('Shapes Graph State service', function() {
             expect(service.listItem).toBeUndefined();
           }));
         });
-        it('when createListItem rejects', fakeAsync(function() {
+        it('when createListItem rejects', fakeAsync(function () {
           spyOn(service, 'createListItem').and.returnValue(throwError(error));
           spyOn(service, 'createState');
           service.createAndOpen(uploadDetails)
@@ -524,7 +654,7 @@ describe('Shapes Graph State service', function() {
           expect(service.listItem).toBeUndefined();
         }));
       });
-      it('when uploadOntology rejects', fakeAsync(function() {
+      it('when uploadOntology rejects', fakeAsync(function () {
         spyOn(service, 'createListItem');
         spyOn(service, 'createState');
         shapesGraphManagerStub.createShapesGraphRecord.and.returnValue(throwError(error));
@@ -540,13 +670,13 @@ describe('Shapes Graph State service', function() {
         expect(service.listItem).toBeUndefined();
       }));
     });
-    describe('if JSON-LD was provided', function() {
+    describe('if JSON-LD was provided', function () {
       const uploadDetails: RdfUpload = { title, description: 'description', keywords: ['A', 'B'], jsonld: [shapeGraphRecordObj] };
-      beforeEach(function() {
+      beforeEach(function () {
         spyOn(service, 'createListItem').and.returnValue(of(listItem));
       });
-      describe('when uploadOntology succeeds', function() {
-        it('and createState resolves', fakeAsync(function() {
+      describe('when uploadOntology succeeds', function () {
+        it('and createState resolves', fakeAsync(function () {
           spyOn(service, 'setSelected').and.returnValue(of(null));
           spyOn(service, 'createState').and.returnValue(of(null));
           service.createAndOpen(uploadDetails)
@@ -571,7 +701,7 @@ describe('Shapes Graph State service', function() {
           expect(service.listItem.userCanModify).toBeTrue();
           expect(service.listItem.userCanModifyMaster).toBeTrue();
         }));
-        it('and createState rejects', fakeAsync(function() {
+        it('and createState rejects', fakeAsync(function () {
           spyOn(service, 'createState').and.returnValue(throwError(error));
           service.createAndOpen(uploadDetails)
             .subscribe(() => fail('Observable should have rejected'), response => {
@@ -585,7 +715,7 @@ describe('Shapes Graph State service', function() {
           expect(service.listItem).toBeUndefined();
         }));
       });
-      it('when uploadOntology rejects', fakeAsync(function() {
+      it('when uploadOntology rejects', fakeAsync(function () {
         spyOn(service, 'createState');
         shapesGraphManagerStub.createShapesGraphRecord.and.returnValue(throwError(error));
         service.createAndOpen(uploadDetails)
@@ -601,13 +731,13 @@ describe('Shapes Graph State service', function() {
       }));
     });
   });
-  describe('delete deletes a shapes graph', function() {
-    beforeEach(function() {
+  describe('delete deletes a shapes graph', function () {
+    beforeEach(function () {
       this.deleteStateSpy = spyOn(service, 'deleteState').and.returnValue(of(null));
     });
-    describe('first deleting the state', function() {
-      describe('then deleting the record', function() {
-        it('successfully', function() {
+    describe('first deleting the state', function () {
+      describe('then deleting the record', function () {
+        it('successfully', function () {
           catalogManagerStub.deleteRecord.and.returnValue(of(null));
           service.delete('recordId')
             .subscribe(() => {
@@ -615,7 +745,7 @@ describe('Shapes Graph State service', function() {
           expect(this.deleteStateSpy).toHaveBeenCalledWith('recordId');
           expect(catalogManagerStub.deleteRecord).toHaveBeenCalledWith('recordId', catalogId);
         });
-        it('unless an error occurs', function() {
+        it('unless an error occurs', function () {
           catalogManagerStub.deleteRecord.and.returnValue(throwError(error));
           service.delete('recordId')
             .subscribe(() => {
@@ -627,7 +757,7 @@ describe('Shapes Graph State service', function() {
           expect(catalogManagerStub.deleteRecord).toHaveBeenCalledWith('recordId', catalogId);
         });
       });
-      it('unless an error occurs', function() {
+      it('unless an error occurs', function () {
         this.deleteStateSpy.and.returnValue(throwError(error));
         service.delete('recordId')
           .subscribe(() => {
@@ -640,29 +770,29 @@ describe('Shapes Graph State service', function() {
       });
     });
   });
-  it('download submits a download of a shapes graph record', function() {
+  it('download submits a download of a shapes graph record', function () {
     const rdfDownload: RdfDownload = {
       recordId: ''
     };
     service.download(rdfDownload);
     expect(shapesGraphManagerStub.downloadShapesGraph).toHaveBeenCalledWith(rdfDownload);
   });
-  describe('removeChanges should call the proper methods', function() {
-    beforeEach(function() {
+  describe('removeChanges should call the proper methods', function () {
+    beforeEach(function () {
       service.listItem = listItem;
     });
-    describe('when deleteInProgressCommit succeeds', function() {
-      beforeEach(function() {
+    describe('when deleteInProgressCommit succeeds', function () {
+      beforeEach(function () {
         catalogManagerStub.deleteInProgressCommit.and.returnValue(of(null));
       });
-      it('and changeVersion succeeds', fakeAsync(function() {
+      it('and changeVersion succeeds', fakeAsync(function () {
         spyOn(service, 'changeVersion').and.returnValue(of(null));
         service.removeChanges().subscribe(() => { }, () => fail('Observable should have resolved'));
         tick();
         expect(catalogManagerStub.deleteInProgressCommit).toHaveBeenCalledWith(recordId, catalogId);
         expect(service.changeVersion).toHaveBeenCalledWith(recordId, branchId, commitId, undefined, listItem.currentVersionTitle, listItem.upToDate, true, listItem.changesPageOpen);
       }));
-      it('and changeVersion rejects', fakeAsync(function() {
+      it('and changeVersion rejects', fakeAsync(function () {
         spyOn(service, 'changeVersion').and.returnValue(throwError(error));
         service.removeChanges().subscribe(() => fail('Observable should have rejected'), response => {
           expect(response).toEqual(error);
@@ -672,7 +802,7 @@ describe('Shapes Graph State service', function() {
         expect(service.changeVersion).toHaveBeenCalledWith(recordId, branchId, commitId, undefined, listItem.currentVersionTitle, listItem.upToDate, true, listItem.changesPageOpen);
       }));
     });
-    it('when deleteInProgressCommit rejects', fakeAsync(function() {
+    it('when deleteInProgressCommit rejects', fakeAsync(function () {
       spyOn(service, 'changeVersion');
       catalogManagerStub.deleteInProgressCommit.and.returnValue(throwError(error));
       service.removeChanges().subscribe(() => fail('Observable should have rejected'), response => {
@@ -683,15 +813,15 @@ describe('Shapes Graph State service', function() {
       expect(service.changeVersion).not.toHaveBeenCalled();
     }));
   });
-  describe('uploadChanges should call the proper methods', function() {
-    beforeEach(function() {
+  describe('uploadChanges should call the proper methods', function () {
+    beforeEach(function () {
       spyOn(service, 'getListItemByRecordId').and.returnValue(listItem);
     });
-    describe('when uploadChangesFile resolves', function() {
-      beforeEach(function() {
+    describe('when uploadChangesFile resolves', function () {
+      beforeEach(function () {
         shapesGraphManagerStub.uploadChanges.and.returnValue(of(null));
       });
-      it('and getInProgressCommit resolves', fakeAsync(function() {
+      it('and getInProgressCommit resolves', fakeAsync(function () {
         catalogManagerStub.getInProgressCommit.and.returnValue(of(difference));
         spyOn(service, 'changeVersion').and.returnValue(of(null));
         listItem.upToDate = true;
@@ -703,7 +833,7 @@ describe('Shapes Graph State service', function() {
         expect(listItem.inProgressCommit).toEqual(difference);
         expect(service.changeVersion).toHaveBeenCalledWith(recordId, branchId, commitId, undefined, listItem.currentVersionTitle, true, false, listItem.changesPageOpen);
       }));
-      it('and getInProgressCommit rejects', fakeAsync(function() {
+      it('and getInProgressCommit rejects', fakeAsync(function () {
         catalogManagerStub.getInProgressCommit.and.returnValue(throwError(error));
         spyOn(service, 'changeVersion');
         listItem.upToDate = true;
@@ -717,7 +847,7 @@ describe('Shapes Graph State service', function() {
         expect(service.changeVersion).not.toHaveBeenCalled();
       }));
     });
-    it('when uploadChangesFile rejects', fakeAsync(function() {
+    it('when uploadChangesFile rejects', fakeAsync(function () {
       shapesGraphManagerStub.uploadChanges.and.returnValue(throwError(error));
       spyOn(service, 'changeVersion');
       service.uploadChanges({ file, recordId, branchId, commitId }).subscribe(() => fail('Observable should have rejected'), response => {
@@ -730,22 +860,24 @@ describe('Shapes Graph State service', function() {
       expect(service.changeVersion).not.toHaveBeenCalled();
     }));
   });
-  describe('changeVersion should call the proper methods when', function() {
-    beforeEach(function() {
+  describe('changeVersion should call the proper methods when', function () {
+    beforeEach(function () {
       this.oldListItem = cloneDeep(listItem);
       this.oldListItem.tabIndex = 1;
       this.oldListItem.inProgressCommit = difference;
       spyOn(service, 'getListItemByRecordId').and.returnValue(this.oldListItem);
     });
-    describe('updateState resolves', function() {
-      beforeEach(function() {
+    describe('updateState resolves', function () {
+      beforeEach(function () {
         spyOn(service, 'updateState').and.returnValue(of(null));
       });
-      describe('and createListItem resolves', function() {
-        beforeEach(function() {
+      describe('and createListItem resolves', function () {
+        beforeEach(function () {
           spyOn(service, 'createListItem').and.returnValue(of(listItem));
+          spyOn(service, 'getActiveEntityIRI').and.returnValue('urn:testiri');
+          spyOn(service, 'setSelected').and.returnValue(of(null));
         });
-        it('and the in progress commit should be cleared with the same version title', fakeAsync(function() {
+        it('and the in progress commit should be cleared with the same version title', fakeAsync(function () {
           const versionTitle = this.oldListItem.currentVersionTitle;
           service.changeVersion(recordId, branchId, commitId, tagId, undefined, listItem.upToDate, true, true)
             .subscribe(() => { }, () => fail('Observable should have resolved'));
@@ -755,7 +887,7 @@ describe('Shapes Graph State service', function() {
           expect(this.oldListItem.changesPageOpen).toBeTrue();
           expect(this.oldListItem.currentVersionTitle).toEqual(versionTitle);
         }));
-        it('and the in progress commit should not be cleared with a new version title', fakeAsync(function() {
+        it('and the in progress commit should not be cleared with a new version title', fakeAsync(function () {
           service.changeVersion(recordId, branchId, commitId, tagId, 'New Title', listItem.upToDate, false, false)
             .subscribe(() => { }, () => fail('Observable should have resolved'));
           tick();
@@ -765,7 +897,7 @@ describe('Shapes Graph State service', function() {
           expect(this.oldListItem.currentVersionTitle).toEqual('New Title');
         }));
       });
-      it('and createListItem rejects', fakeAsync(function() {
+      it('and createListItem rejects', fakeAsync(function () {
         spyOn(service, 'createListItem').and.returnValue(throwError(error));
         service.changeVersion(recordId, branchId, commitId, tagId, undefined, listItem.upToDate, false, false)
           .subscribe(() => fail('Observable should have rejected'), response => {
@@ -776,7 +908,7 @@ describe('Shapes Graph State service', function() {
         expect(service.createListItem).toHaveBeenCalledWith(recordId, branchId, commitId, tagId, difference, listItem.upToDate, listItem.versionedRdfRecord.title);
       }));
     });
-    it('and updateState rejects', fakeAsync(function() {
+    it('and updateState rejects', fakeAsync(function () {
       this.oldListItem.ontologyId = 'old';
       spyOn(service, 'updateState').and.returnValue(throwError(error));
       spyOn(service, 'createListItem');
@@ -789,8 +921,8 @@ describe('Shapes Graph State service', function() {
       expect(service.createListItem).not.toHaveBeenCalled();
     }));
   });
-  describe('should merge shapes graph branches', function() {
-    beforeEach(function() {
+  describe('should merge shapes graph branches', function () {
+    beforeEach(function () {
       service.list = [listItem];
       service.listItem = listItem;
       service.listItem.versionedRdfRecord.recordId = 'recordId';
@@ -804,9 +936,9 @@ describe('Shapes Graph State service', function() {
       catalogManagerStub.deleteRecordBranch.and.returnValue(of(null));
       catalogManagerStub.mergeBranches.and.returnValue(of('commitId'));
     });
-    describe('and should change the shapes graph version to the target branch', function() {
-      describe('and handle if the checkbox is', function() {
-        it('checked', function() {
+    describe('and should change the shapes graph version to the target branch', function () {
+      describe('and handle if the checkbox is', function () {
+        it('checked', function () {
           service.listItem.merge.checkbox = true;
           service.merge()
             .subscribe(() => {
@@ -815,7 +947,7 @@ describe('Shapes Graph State service', function() {
               expect(catalogManagerStub.deleteRecordBranch).toHaveBeenCalledWith('recordId', 'sourceBranchId', catalogId);
             }, () => fail('Observable should have succeeded'));
         });
-        it('unchecked', function() {
+        it('unchecked', function () {
           service.listItem.merge.checkbox = false;
           service.merge()
             .subscribe(() => {
@@ -825,7 +957,7 @@ describe('Shapes Graph State service', function() {
             }, () => fail('Observable should have succeeded'));
         });
       });
-      it('unless an error occurs', function() {
+      it('unless an error occurs', function () {
         this.changeVersionSpy.and.returnValue(throwError('Error'));
         service.merge()
           .subscribe(() => {
@@ -838,7 +970,7 @@ describe('Shapes Graph State service', function() {
           });
       });
     });
-    it('unless an error occurs', function() {
+    it('unless an error occurs', function () {
       catalogManagerStub.mergeBranches.and.returnValue(throwError('Error'));
       service.merge()
         .subscribe(() => {
@@ -1081,8 +1213,8 @@ describe('Shapes Graph State service', function() {
       expect(service.setSelected).not.toHaveBeenCalled();
     }));
   });
-  describe('should check if the node shape graph contains excluded predicates', function() {
-    it('and return the number of excluded predicates if successful', function() {
+  describe('should check if the node shape graph contains excluded predicates', function () {
+    it('and return the number of excluded predicates if successful', function () {
       service.listItem = listItem;
       const sparqlResults: SPARQLSelectResults = {
         head: { vars: ['unsupportedNum'] },
@@ -1105,7 +1237,7 @@ describe('Shapes Graph State service', function() {
           'commitId', true, true, 'jsonld');
       });
     });
-    it('and throw an error if unsuccessful', function() {
+    it('and throw an error if unsuccessful', function () {
       service.listItem = listItem;
       const sparqlResults = 'invalid response type';
       sparqlManagerStub.postQuery.and.returnValue(of(sparqlResults));
@@ -1117,7 +1249,7 @@ describe('Shapes Graph State service', function() {
         });
     });
   });
-  describe('onIriEdit calls the appropriate manager methods', function() {
+  describe('onIriEdit calls the appropriate manager methods', function () {
     const iriBegin = 'www.example.com/test-record';
     const iriThen = '/';
     const iriEnd = 'shapes-test';
@@ -1126,7 +1258,7 @@ describe('Shapes Graph State service', function() {
       '@id': 'www.example.com/test-record/shapes',
       '@type': [`${OWL}Ontology`],
     });
-    beforeEach(function() {
+    beforeEach(function () {
       service.listItem = listItem;
       service.listItem.versionedRdfRecord.recordId = 'recordId';
       service.listItem.versionedRdfRecord.branchId = 'branchId';
@@ -1134,7 +1266,7 @@ describe('Shapes Graph State service', function() {
       service.listItem.selected = metadata;
       service.list.push(service.listItem);
     });
-    it('When there are already additions with the previous IRI', fakeAsync(function() {
+    it('When there are already additions with the previous IRI', fakeAsync(function () {
       service.listItem.additions = [{
         '@id': 'www.example.com/test-record/shapes',
         '@type': [`${OWL}Ontology`],
@@ -1151,7 +1283,7 @@ describe('Shapes Graph State service', function() {
       expect(updateRefsStub.update).toHaveBeenCalledWith(service.listItem, 'www.example.com/test-record/shapes',
         newIRI, exclusionList);
     }));
-    it('When no usages are found', fakeAsync(function() {
+    it('When no usages are found', fakeAsync(function () {
       sparqlManagerStub.postQuery.and.returnValue(of('[]'));
       service.onIriEdit(iriBegin, iriThen, iriEnd).subscribe();
       tick();
@@ -1163,7 +1295,7 @@ describe('Shapes Graph State service', function() {
       expect(updateRefsStub.update).toHaveBeenCalledWith(service.listItem, 'www.example.com/test-record/shapes',
         newIRI, exclusionList);
     }));
-    it('When retrieveUsages method throws an error', fakeAsync(function() {
+    it('When retrieveUsages method throws an error', fakeAsync(function () {
       spyOn(service, 'addToAdditions');
       spyOn(service, 'addToDeletions');
       sparqlManagerStub.postQuery.and.returnValue(throwError('Error'));
@@ -1178,7 +1310,7 @@ describe('Shapes Graph State service', function() {
       expect(updateRefsStub.update).toHaveBeenCalledWith(service.listItem, 'www.example.com/test-record/shapes',
         newIRI, exclusionList);
     }));
-    it('When retrieveUsages method resolves', fakeAsync(function() {
+    it('When retrieveUsages method resolves', fakeAsync(function () {
       const usages: JSONLDObject[] = [
         {
           '@id': '_:genid-f008989dbffa42c28d08087aacb415c738-464BF00DDBF1492E53EF0EBAD7F08536',
@@ -1210,11 +1342,11 @@ describe('Shapes Graph State service', function() {
         newIRI, exclusionList);
     }));
   });
-  describe('updateNodeShapeSummaries', function() {
+  describe('updateNodeShapeSummaries', function () {
     let oldEntity: JSONLDObject;
     let newNodeShape: JSONLDObject;
     let otherNodeShapeSummary: NodeShapeSummary;
-    beforeEach(function() {
+    beforeEach(function () {
       service.listItem = listItem;
       spyOn(service, 'updateEntityName');
       spyOn(service, 'getEntityName').and.callFake(iri => {
@@ -1264,7 +1396,7 @@ describe('Shapes Graph State service', function() {
         multiSelect: false
       });
     });
-    it('should update the correct node shape summary with new IRI, name, and target info', function() {
+    it('should update the correct node shape summary with new IRI, name, and target info', function () {
       service.updateNodeShapeSummaries(oldEntity, newNodeShape);
       const updatedNodes = service.listItem.editorTabStates.nodeShapes.nodes;
       const updatedSummary = updatedNodes.find(n => n.iri === 'new:shape');
@@ -1274,19 +1406,19 @@ describe('Shapes Graph State service', function() {
       expect(updatedSummary.targetValue).toEqual('new:targetClass');
       expect(updatedSummary.targetValueLabel).toEqual('New Target Class');
     });
-    it('should not modify other node shape summaries in the list', function() {
+    it('should not modify other node shape summaries in the list', function () {
       service.updateNodeShapeSummaries(oldEntity, newNodeShape);
       const updatedNodes = service.listItem.editorTabStates.nodeShapes.nodes;
       const unchagedSummary = updatedNodes.find(n => n.iri === 'other:shape');
       expect(unchagedSummary).toEqual(otherNodeShapeSummary);
     });
-    it('should re-sort the list of summaries by name after the update', function() {
+    it('should re-sort the list of summaries by name after the update', function () {
       service.updateNodeShapeSummaries(oldEntity, newNodeShape);
       const updatedNodes = service.listItem.editorTabStates.nodeShapes.nodes;
       expect(updatedNodes[0].name).toEqual('A New Shape');
       expect(updatedNodes[1].name).toEqual('Other Shape');
     });
-    it('should correctly handle a shape where the target is removed', function() {
+    it('should correctly handle a shape where the target is removed', function () {
       service.shaclTargetDetector.detect = jasmine.createSpy().and.returnValue(null);
       service.updateNodeShapeSummaries(oldEntity, newNodeShape);
       const updatedNodes = service.listItem.editorTabStates.nodeShapes.nodes;
@@ -1296,7 +1428,7 @@ describe('Shapes Graph State service', function() {
       expect(updatedSummary.targetValue).toEqual('');
       expect(updatedSummary.targetValueLabel).toEqual('');
     });
-    it('should call updateEntityName to keep the cache consistent', function() {
+    it('should call updateEntityName to keep the cache consistent', function () {
       service.updateNodeShapeSummaries(oldEntity, newNodeShape);
       expect(service.updateEntityName).toHaveBeenCalledWith(service.listItem.selected);
     });
@@ -1398,16 +1530,16 @@ describe('Shapes Graph State service', function() {
       service.listItem = listItem;
     });
     it('should return project for PROJECT_TAB', () => {
-      expect(service.getActiveKey(listItem, ShapesGraphListItem.PROJECT_TAB)).toBe('project');
+      expect(service.getActiveKey(listItem, ShapesGraphListItem.PROJECT_TAB_IDX)).toBe('project');
     });
     it('should return nodeShapes for NODE_SHAPES_TAB', () => {
-      expect(service.getActiveKey(listItem, ShapesGraphListItem.NODE_SHAPES_TAB)).toBe('nodeShapes');
+      expect(service.getActiveKey(listItem, ShapesGraphListItem.NODE_SHAPES_TAB_IDX)).toBe('nodeShapes');
     });
     it('should default to project', () => {
       expect(service.getActiveKey(listItem, 99)).toBe('project');
     });
     it('should use listItem tabIndex if no index is provided', () => {
-      listItem.tabIndex = ShapesGraphListItem.NODE_SHAPES_TAB;
+      listItem.tabIndex = ShapesGraphListItem.NODE_SHAPES_TAB_IDX;
       expect(service.getActiveKey(listItem)).toBe('nodeShapes');
     });
   });
@@ -1416,11 +1548,11 @@ describe('Shapes Graph State service', function() {
       service.listItem = listItem;
     });
     it('should return the project page state', () => {
-      listItem.tabIndex = ShapesGraphListItem.PROJECT_TAB;
+      listItem.tabIndex = ShapesGraphListItem.PROJECT_TAB_IDX;
       expect(service.getActivePage()).toBe(listItem.editorTabStates.project);
     });
     it('should return the node shapes page state', () => {
-      listItem.tabIndex = ShapesGraphListItem.NODE_SHAPES_TAB;
+      listItem.tabIndex = ShapesGraphListItem.NODE_SHAPES_TAB_IDX;
       expect(service.getActivePage()).toBe(listItem.editorTabStates.nodeShapes);
     });
   });
@@ -1429,16 +1561,16 @@ describe('Shapes Graph State service', function() {
       service.listItem = listItem;
     });
     it('should return the entityIRI from the active page', () => {
-      listItem.tabIndex = ShapesGraphListItem.PROJECT_TAB;
+      listItem.tabIndex = ShapesGraphListItem.PROJECT_TAB_IDX;
       listItem.editorTabStates.project.entityIRI = 'urn:project-entity';
       expect(service.getActiveEntityIRI()).toBe('urn:project-entity');
-      listItem.tabIndex = ShapesGraphListItem.NODE_SHAPES_TAB;
-      listItem.editorTabStates.nodeShapes.entityIRI = 'urn:nodeshape-entity';
+      listItem.tabIndex = ShapesGraphListItem.NODE_SHAPES_TAB_IDX;
+      listItem.setSelectedNodeShapeIri('urn:nodeshape-entity');
       expect(service.getActiveEntityIRI()).toBe('urn:nodeshape-entity');
     });
   });
-  describe('getPropValueDisplay gets the correct value for a property', function() {
-    beforeEach(function() {
+  describe('getPropValueDisplay gets the correct value for a property', function () {
+    beforeEach(function () {
       service.listItem = listItem;
       service.listItem.selected = {
         '@id': 'urn:test',
@@ -1446,24 +1578,24 @@ describe('Shapes Graph State service', function() {
         'urn:idProp': [{ '@id': 'urn:iri' }]
       };
     });
-    it('for a value property', function() {
+    it('for a value property', function () {
       const display = service.getPropValueDisplay('urn:valueProp', 0);
       expect(display).toEqual('Data Value');
     });
-    it('for an id property', function() {
+    it('for an id property', function () {
       const display = service.getPropValueDisplay('urn:idProp', 0);
       expect(display).toEqual('urn:iri');
     });
-    it('and returns undefined if not found', function() {
+    it('and returns undefined if not found', function () {
       const display = service.getPropValueDisplay('urn:nonExistentProp', 0);
       expect(display).toBeUndefined();
     });
   });
-  describe('removeProperty removes a property value', function() {
+  describe('removeProperty removes a property value', function () {
     const propertyKey = 'urn:prop';
     const valueToRemove = { '@value': 'Value 1' };
     const otherValue = { '@value': 'Value 2' };
-    beforeEach(function() {
+    beforeEach(function () {
       service.listItem = listItem;
       service.listItem.selected = {
         '@id': 'urn:entity',
@@ -1471,7 +1603,7 @@ describe('Shapes Graph State service', function() {
       };
       spyOn(service, 'addToDeletions');
     });
-    it('successfully', fakeAsync(function() {
+    it('successfully', fakeAsync(function () {
       spyOn(service, 'saveCurrentChanges').and.returnValue(of(null));
       service.removeProperty(propertyKey, 0).subscribe(removed => {
         expect(removed).toEqual(valueToRemove);
@@ -1485,7 +1617,7 @@ describe('Shapes Graph State service', function() {
       expect(propertyManagerStub.remove).toHaveBeenCalledWith(service.listItem.selected, propertyKey, 0);
       expect(service.saveCurrentChanges).toHaveBeenCalledWith();
     }));
-    it('unless saving changes fails', fakeAsync(function() {
+    it('unless saving changes fails', fakeAsync(function () {
       spyOn(service, 'saveCurrentChanges').and.returnValue(throwError(error));
       service.removeProperty(propertyKey, 0).subscribe(() => fail('Observable should have failed'), err => {
         expect(err).toEqual(error);
@@ -1496,8 +1628,25 @@ describe('Shapes Graph State service', function() {
       expect(service.saveCurrentChanges).toHaveBeenCalledWith();
     }));
   });
-  describe('isSelectedImported checks if the selected entity is imported', function() {
-    beforeEach(function() {
+  it('openSnackbar should open a snackbar for the provided entity IRI', () => {
+    spyOn(service, 'goTo');
+    spyOn(service, 'getEntityName').and.returnValue('Name');
+    service.listItem = new ShapesGraphListItem();
+    service.openSnackbar('iri');
+    expect(snackBarStub.open).toHaveBeenCalledWith('Name successfully created', 'Open', { duration: 5500 });
+    expect(onActionSpy).toHaveBeenCalledWith();
+    expect(afterDismissedSpy).toHaveBeenCalledWith();
+    expect(service.goTo).toHaveBeenCalledWith('iri');
+    expect(service.listItem.openSnackbar).toBeUndefined();
+  });
+  it('closeSnackbar should dismiss snackbar for the provided entity IRI', () => {
+    service.listItem = new ShapesGraphListItem();
+    service.listItem.openSnackbar = jasmine.createSpyObj('MatSnackBarRef', ['dismiss']);
+    service.closeSnackbar();
+    expect(service.listItem.openSnackbar.dismiss).toHaveBeenCalledWith();
+  });
+  describe('isSelectedImported checks if the selected entity is imported', function () {
+    beforeEach(function () {
       service.listItem = listItem;
       service.listItem.subjectImportMap = {
         'urn:importedOnly': { imported: true, alsoLocal: false, ontologyIds: ['a'] },
@@ -1505,29 +1654,29 @@ describe('Shapes Graph State service', function() {
         'urn:localOnly': { imported: false, alsoLocal: true, ontologyIds: [] }
       };
     });
-    it('and returns true if only imported', function() {
+    it('and returns true if only imported', function () {
       service.listItem.selected = { '@id': 'urn:importedOnly' };
       expect(service.isSelectedImported()).toBeTrue();
     });
-    it('and returns false if imported but also local', function() {
+    it('and returns false if imported but also local', function () {
       service.listItem.selected = { '@id': 'urn:importedAndLocal' };
       expect(service.isSelectedImported()).toBeFalse();
     });
-    it('and returns false if only local', function() {
+    it('and returns false if only local', function () {
       service.listItem.selected = { '@id': 'urn:localOnly' };
       expect(service.isSelectedImported()).toBeFalse();
     });
-    it('and returns true if entity not in map (default)', function() {
+    it('and returns true if entity not in map (default)', function () {
       service.listItem.selected = { '@id': 'urn:notInMap' };
       expect(service.isSelectedImported()).toBeTrue();
     });
-    it('and returns true if no entity is selected', function() {
+    it('and returns true if no entity is selected', function () {
       service.listItem.selected = undefined;
       expect(service.isSelectedImported()).toBeTrue();
     });
   });
-  describe('isImported checks if a given IRI is imported', function() {
-    beforeEach(function() {
+  describe('isImported checks if a given IRI is imported', function () {
+    beforeEach(function () {
       service.listItem = listItem;
       service.listItem.subjectImportMap = {
         'urn:importedOnly': { imported: true, alsoLocal: false, ontologyIds: ['a'] },
@@ -1535,24 +1684,24 @@ describe('Shapes Graph State service', function() {
         'urn:localOnly': { imported: false, alsoLocal: true, ontologyIds: [] }
       };
     });
-    it('and returns true if only imported', function() {
+    it('and returns true if only imported', function () {
       expect(service.isImported('urn:importedOnly')).toBeTrue();
     });
-    it('and returns false if imported but also local', function() {
+    it('and returns false if imported but also local', function () {
       expect(service.isImported('urn:importedAndLocal')).toBeFalse();
     });
-    it('and returns false if only local', function() {
+    it('and returns false if only local', function () {
       expect(service.isImported('urn:localOnly')).toBeFalse();
     });
-    it('and returns true if IRI not in map (default)', function() {
+    it('and returns true if IRI not in map (default)', function () {
       expect(service.isImported('urn:notInMap')).toBeTrue();
     });
-    it('and returns true if listItem is missing', function() {
+    it('and returns true if listItem is missing', function () {
       expect(service.isImported('urn:anything', null)).toBeTrue();
     });
   });
-  describe('checkIri checks if an IRI exists and is not the current entity', function() {
-    beforeEach(function() {
+  describe('checkIri checks if an IRI exists and is not the current entity', function () {
+    beforeEach(function () {
       service.listItem = listItem;
       service.listItem.selected = { '@id': 'urn:current' };
       service.listItem.subjectImportMap = {
@@ -1560,29 +1709,29 @@ describe('Shapes Graph State service', function() {
         'urn:exists': { imported: false, alsoLocal: true, ontologyIds: [] }
       };
     });
-    it('and returns false for the current IRI', function() {
+    it('and returns false for the current IRI', function () {
       expect(service.checkIri('urn:current')).toBeFalse();
     });
-    it('and returns true for an existing, different IRI', function() {
+    it('and returns true for an existing, different IRI', function () {
       expect(service.checkIri('urn:exists')).toBeTrue();
     });
-    it('and returns false for a non-existent IRI', function() {
+    it('and returns false for a non-existent IRI', function () {
       expect(service.checkIri('urn:doesNotExist')).toBeFalse();
     });
   });
-  describe('getImportedSource gets the source IRI for an import', function() {
-    beforeEach(function() {
+  describe('getImportedSource gets the source IRI for an import', function () {
+    beforeEach(function () {
       service.listItem = listItem;
     });
-    it('and returns the source IRI if it exists', function() {
+    it('and returns the source IRI if it exists', function () {
       service.listItem.editorTabStates.nodeShapes.sourceIRI = 'urn:source-shape';
       expect(service.getImportedSource()).toEqual('urn:source-shape');
     });
-    it('and returns an empty string if it does not exist', function() {
+    it('and returns an empty string if it does not exist', function () {
       service.listItem.editorTabStates.nodeShapes.sourceIRI = undefined;
       expect(service.getImportedSource()).toEqual('');
     });
-    it('and returns an empty string if the listItem is null', function() {
+    it('and returns an empty string if the listItem is null', function () {
       service.listItem = null;
       expect(service.getImportedSource()).toEqual('');
     });

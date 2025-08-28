@@ -22,7 +22,7 @@
  */
 import { By } from '@angular/platform-browser';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { DebugElement } from '@angular/core';
+import { DebugElement, SimpleChanges } from '@angular/core';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
@@ -36,13 +36,14 @@ import { MockComponent, MockProvider } from 'ng-mocks';
 
 import { cleanStylesFromDOM } from '../../../../test/ts/Shared';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
-import { 
+import {
   IMPLICIT_REFERENCE,
   TARGET_CLASS,
   TARGET_NODE,
   TARGET_OBJECTS_OF,
   TARGET_SUBJECTS_OF
 } from '../../models/constants';
+import { MultiTargetTypeData, SingleTargetTypeData } from '../../models/target-type-data';
 import { OWL, RDFS, SH } from '../../../prefixes';
 import { PropertyManagerService } from '../../../shared/services/propertyManager.service';
 import { ShaclChipSuggestionsInputComponent } from '../shacl-chip-suggestions-input/shacl-chip-suggestions-input.component';
@@ -54,7 +55,7 @@ import { ShapesGraphStateService } from '../../../shared/services/shapesGraphSta
 import { TARGET_SHAPES } from '../../models/shacl-test-data';
 import { ToastService } from '../../../shared/services/toast.service';
 import { VersionedRdfRecord } from '../../../shared/models/versionedRdfRecord.interface';
-import { ShaclTargetComponent } from './shacl-target.component';
+import { EditMode, ShaclTargetComponent } from './shacl-target.component';
 
 interface TargetChangeTestCase {
   description: string;
@@ -140,6 +141,7 @@ describe('ShaclTargetComponent', () => {
     }).compileComponents();
 
     stateService = TestBed.inject(ShapesGraphStateService) as jasmine.SpyObj<ShapesGraphStateService>;
+    stateService.getEntityName.and.callFake((iri: string) => `entityName(${iri})`);
     stateService.saveCurrentChanges.and.returnValue(of(null));
     stateService.listItem = new ShapesGraphListItem();
     stateService.listItem.selected = {
@@ -157,11 +159,9 @@ describe('ShaclTargetComponent', () => {
     component.canModify = true;
     component.isImported = false;
     component.targetOption = undefined;
-
-    fixture.detectChanges();
   });
 
-  afterEach(function() {
+  afterEach(function () {
     cleanStylesFromDOM();
     component = null;
     element = null;
@@ -173,12 +173,62 @@ describe('ShaclTargetComponent', () => {
   it('should create', () => {
     expect(component).toBeTruthy();
   });
-  it('should complete the _destroySub$ subject on ngOnDestroy', () => {
-    spyOn(component['_destroySub$'], 'next').and.callThrough();
-    spyOn(component['_destroySub$'], 'complete').and.callThrough();
-    component.ngOnDestroy();
-    expect(component['_destroySub$'].next).toHaveBeenCalledWith();
-    expect(component['_destroySub$'].complete).toHaveBeenCalledWith();
+  describe('ngOnInit', () => {
+    it('should set isLiveMode to false and editMode to Disabled if no parent is listening', () => {
+      component.ngOnInit();
+      expect(component.isLiveMode).toBeFalse();
+      expect(component.editMode).toBe(EditMode.Disabled);
+    });
+    it('should set isLiveMode to true and editMode to Live if parent is listening', () => {
+      const subscription = component.onValueChanges.subscribe();
+      component.ngOnInit();
+      expect(component.isLiveMode).toBeTrue();
+      expect(component.editMode).toBe(EditMode.Live);
+      subscription?.unsubscribe();
+    });
+  });
+  describe('ngOnChanges', () => {
+    it('should call updateForm and _initializeOperatingMode when nodeShape changes', () => {
+      const changes: SimpleChanges = {
+        nodeShape: {
+          currentValue: TARGET_SHAPES.edgeCases.NO_TARGET,
+          previousValue: null,
+          firstChange: true,
+          isFirstChange: () => true
+        }
+      };
+      spyOn(component, 'updateForm');
+      component['_initializeOperatingMode'] = jasmine.createSpy('_initializeOperatingMode');
+      component.ngOnChanges(changes);
+
+      expect(component.updateForm).toHaveBeenCalledWith(TARGET_SHAPES.edgeCases.NO_TARGET);
+      expect(component['_initializeOperatingMode']).toHaveBeenCalledWith();
+    });
+    it('should not call updateForm if nodeShape did not change', () => {
+      const changes: SimpleChanges = {
+        isImported: {
+          currentValue: true,
+          previousValue: false,
+          firstChange: false,
+          isFirstChange: () => false
+        }
+      };
+      spyOn(component, 'updateForm');
+      component['_initializeOperatingMode'] = jasmine.createSpy('_initializeOperatingMode');
+      component.ngOnChanges(changes);
+
+      expect(component.updateForm).not.toHaveBeenCalled();
+      expect(component['_initializeOperatingMode']).toHaveBeenCalledWith();
+    });
+  });
+  describe('ngOnDestroy', () => {
+    it('should complete the _destroySub$ subject', () => {
+      spyOn(component['_destroySub$'], 'next').and.callThrough();
+      spyOn(component['_destroySub$'], 'complete').and.callThrough();
+      component.ngOnDestroy();
+      expect(component['_destroySub$'].next).toHaveBeenCalledWith();
+      expect(component['_destroySub$'].complete).toHaveBeenCalledWith();
+    });
   });
   describe('controller methods', () => {
     describe('onEdit and onSave', () => {
@@ -194,7 +244,7 @@ describe('ShaclTargetComponent', () => {
         fixture.detectChanges();
       });
       it('should enter edit mode and enable form', () => {
-        component.editMode = 'DISABLED';
+        component.editMode = EditMode.Disabled;
         component.onEdit();
         expect(component.editMode).toEqual('ENABLED');
         expect(component.targetForm.enabled).toBeTrue();
@@ -206,21 +256,149 @@ describe('ShaclTargetComponent', () => {
         expect(stateService.saveCurrentChanges).not.toHaveBeenCalled();
       });
       it('should save changes and disable form on valid save', () => {
+        // Initial State Verification
+        expect(component.editMode).toEqual(EditMode.Disabled);
+        expect(component.targetForm.disabled).toEqual(true);
+        expect(component.targetForm.controls.target.disabled).toEqual(true);
+        expect(component.targetForm.controls.targetValue.disabled).toEqual(true);
+        expect(component.targetForm.controls.targetValues.disabled).toEqual(true);
+        // Enter Edit Mode
         component.onEdit();
         fixture.detectChanges();
-
-        component.targetOption = targetNodeOption;
-        component.targetForm.controls['target'].setValue(TARGET_NODE);
+        // Verify that the form is now enabled, specific value controls remain disabled until a target type is chosen.
+        expect(component.targetForm.disabled).toEqual(false);
+        expect(component.targetForm.controls.target.disabled).toEqual(false);
+        expect(component.targetForm.controls.targetValue.disabled).toEqual(true);
+        expect(component.targetForm.controls.targetValues.disabled).toEqual(true);
+        // Simulate the user selecting 'sh:targetNode' as the target type.
+        component.handleTargetChange(targetNodeOption);
+        // Verify that the control for single values ('targetValue') is now enabled,
+        expect(component.targetForm.disabled).toEqual(false);
+        expect(component.targetForm.controls.target.disabled).toEqual(false);
+        expect(component.targetForm.controls.target.value).toEqual(targetNodeOption.iri);
+        expect(component.targetForm.controls.targetValue.disabled).toEqual(false);
+        expect(component.targetForm.controls.targetValues.disabled).toEqual(true);
+        // Populate Form Data
         component.targetForm.controls['targetValue'].setValue({
           value: 'http://example.org/SomeNode',
           label: 'Some Node'
         });
-
+        fixture.detectChanges();
+        // Save Changes and Verify Outcome
         component.onSave();
-
+        // Verify that the save method was called, the component has returned to Disabled mode.
         expect(stateService.saveCurrentChanges).toHaveBeenCalledWith();
-        expect(component.editMode).toEqual('DISABLED');
+        expect(component.editMode).toEqual(EditMode.Disabled);
         expect(component.targetForm.disabled).toBeTrue();
+      });
+    });
+    describe('onReset', () => {
+      it('should emit a reset signal when in LIVE mode', () => {
+        const sub = component.onValueChanges.subscribe();
+        component.ngOnInit();
+        expect(component.editMode).toBe(EditMode.Live);
+        const emitSpy = spyOn(component.onValueChanges, 'emit');
+        spyOn(component, 'updateForm');
+
+        component.onReset();
+        expect(emitSpy).toHaveBeenCalledOnceWith({ value: null, isValid: true });
+        expect(component.updateForm).not.toHaveBeenCalled();
+        expect(component.editMode).toBe('LIVE');
+        expect(component.targetForm.enabled).toBeTrue();
+        sub?.unsubscribe();
+      });
+      it('should reset form to original state, disable it, and change mode when in ENABLED mode', () => {
+        component.ngOnInit();
+        component.onEdit();
+        expect(component.editMode).toBe('ENABLED');
+
+        const originalNodeShape = { '@id': 'shape1', [TARGET_CLASS]: [{ '@id': 'ex:Class1' }] };
+        component.nodeShape = originalNodeShape;
+        component.targetForm.get('target').setValue(TARGET_CLASS, component.SILENT_UPDATE_OPTION); // Sync form with nodeShape
+        component.targetForm.get('targetValues').setValue([{ value: 'ex:Class1', label: 'ex:Class1' }], component.SILENT_UPDATE_OPTION);
+
+        const updateFormSpy = spyOn(component, 'updateForm').and.callThrough();
+        const updateControlsSpy = spyOn<any>(component, '_updateControlStatesForTarget').and.callThrough();
+        const emitSpy = spyOn(component.onValueChanges, 'emit');
+
+        component.onReset();
+
+        expect(updateFormSpy).toHaveBeenCalledWith(originalNodeShape);
+        expect(component.targetForm.get('targetValues').value).toEqual([{ value: 'ex:Class1', label: 'ex:Class1' }]);
+        expect(component.editMode).toBe('DISABLED');
+        expect(component.targetForm.disabled).toBeTrue();
+        expect(updateControlsSpy).toHaveBeenCalledWith();
+        expect(emitSpy).not.toHaveBeenCalled();
+      });
+      it('should do nothing when in DISABLED mode', () => {
+        component.editMode = EditMode.Disabled;
+        const emitSpy = spyOn(component.onValueChanges, 'emit');
+        const updateFormSpy = spyOn(component, 'updateForm');
+
+        component.onReset();
+
+        expect(emitSpy).not.toHaveBeenCalled();
+        expect(updateFormSpy).not.toHaveBeenCalled();
+        expect(component.editMode).toBe('DISABLED');
+      });
+    });
+    describe('updateForm', () => {
+      it('should update form for single-value target', () => {
+        const nodeShape: JSONLDObject = { '@id': 'node1' };
+        const detected: SingleTargetTypeData = {
+          targetType: TARGET_NODE,
+          multiSelect: false,
+          value: 'http://example.com/singleValue'
+        };
+        spyOn(component['_targetDetector'], 'detect').and.returnValue(detected);
+        component.updateForm(nodeShape);
+
+        expect(component.targetForm.value.target).toBe(TARGET_NODE);
+        expect(component.targetForm.value.targetValue).toEqual({
+          value: 'http://example.com/singleValue', 
+          label: 'entityName(http://example.com/singleValue)'
+        });
+        expect(component.targetForm.value.targetValues).toEqual([]);
+      });
+      it('should update form for multi-value target', () => {
+        const nodeShape: JSONLDObject = { '@id': 'node2' };
+        const detected: MultiTargetTypeData = {
+          targetType: TARGET_CLASS,
+          multiSelect: true,
+          values: ['http://example.com/value1', 'http://example.com/value2']
+        };
+        spyOn(component['_targetDetector'], 'detect').and.returnValue(detected);
+
+        component.updateForm(nodeShape);
+
+        expect(component.targetForm.value.target).toBe(TARGET_CLASS);
+        expect(component.targetForm.value.targetValues).toEqual([
+          { value: 'http://example.com/value1', label: 'entityName(http://example.com/value1)' },
+          { value: 'http://example.com/value2', label: 'entityName(http://example.com/value2)' }
+        ]);
+        expect(component.targetForm.value.targetValue).toEqual(null);
+      });
+      it('should reset form and targetOption when detect returns null', () => {
+        const nodeShape: JSONLDObject = { '@id': 'node3' };
+        spyOn(component['_targetDetector'], 'detect').and.returnValue(null);
+
+        component.updateForm(nodeShape);
+
+        expect(component.targetOption).toBeNull();
+        expect(component.targetForm.value.target).toBe('');
+        expect(component.targetForm.value.targetValue).toEqual(null);
+        expect(component.targetForm.value.targetValues).toEqual([]);
+      });
+    });
+    describe('clearFormValues', () => {
+      it('should reset targetValue and targetValues', () => {
+        component.targetForm.patchValue({
+          targetValue: { value: 'iri', label: 'iri' },
+          targetValues: [{ value: 'iri1', label: 'iri1' }, { value: 'iri2', label: 'iri2' }]
+        });
+        component.clearFormValues();
+        expect(component.targetForm.value.targetValue).toEqual(null);
+        expect(component.targetForm.value.targetValues).toEqual([]);
       });
     });
     describe('updateInProgressCommit', () => {
@@ -572,7 +750,7 @@ describe('ShaclTargetComponent', () => {
             },
             additionJson: {
               '@id': 'ex:NodeShape_TargetSubjectsOfSingle',
-              '@type': [ `${OWL}Class`, `${RDFS}Class`]
+              '@type': [`${OWL}Class`, `${RDFS}Class`]
             }
           }
         },
@@ -782,7 +960,7 @@ describe('ShaclTargetComponent', () => {
           component.nodeShape = testCase.initialShape;
           component.targetOption = testCase.newOption;
           if (testCase.newNodeShape) {
-            component['_updateForm'](testCase.newNodeShape);
+            component.updateForm(testCase.newNodeShape);
           } else {
             component.clearFormValues();
           }
@@ -861,25 +1039,25 @@ describe('ShaclTargetComponent', () => {
       });
     });
     describe('handleTargetChange', () => {
+      beforeEach(() => {
+        component['_updateControlStatesForTarget'] = jasmine.createSpy('_updateControlStatesForTarget');
+      });
       it('should not update if the same target option is selected', () => {
         component.targetOption = targetNodeOption;
-        component['_updateControlStatesForTarget'] = jasmine.createSpy('_updateControlStatesForTarget');
-
         component.handleTargetChange(targetNodeOption);
 
-        expect((component as any)._updateControlStatesForTarget).not.toHaveBeenCalled();
+        expect(component['_updateControlStatesForTarget']).not.toHaveBeenCalledWith();
       });
       it('should update targetOption and control states when target changes', () => {
+        component.targetOption = undefined;
         const newTargetOption: TargetOption = {
           ...targetClassOption,
           isUserSelection: true
         };
-        component['_updateControlStatesForTarget'] = jasmine.createSpy('_updateControlStatesForTarget');
-
         component.handleTargetChange(newTargetOption);
 
         expect(component.targetOption).toEqual(newTargetOption);
-        expect((component as any)._updateControlStatesForTarget).toHaveBeenCalledWith(newTargetOption.iri);
+        expect(component['_updateControlStatesForTarget']).toHaveBeenCalledWith();
       });
       it('should clear targetValue and targetValues if isUserSelection is true', () => {
         component.targetOption = {
@@ -893,7 +1071,6 @@ describe('ShaclTargetComponent', () => {
           ...targetClassOption,
           isUserSelection: true
         };
-        component['_updateControlStatesForTarget'] = jasmine.createSpy('_updateControlStatesForTarget');
 
         component.handleTargetChange(newTargetOption);
 
@@ -903,35 +1080,39 @@ describe('ShaclTargetComponent', () => {
     });
     describe('_updateControlStatesForTarget', () => {
       it('should enable targetValue and disable targetValues for TARGET_NODE', () => {
-        component.editMode = 'ENABLED';
-        component['_updateControlStatesForTarget'](TARGET_NODE);
+        component.editMode = EditMode.Enabled;
+        component.targetForm.get('target').setValue(TARGET_NODE);
+        component['_updateControlStatesForTarget']();
         expect(component.targetForm.controls.targetValue.enabled).toBeTrue();
         expect(component.targetForm.controls.targetValues.disabled).toBeTrue();
       });
-
       it('should enable targetValues and disable targetValue for TARGET_OBJECTS_OF', () => {
-        component.editMode = 'ENABLED';
-        component['_updateControlStatesForTarget']('http://www.w3.org/ns/shacl#targetObjectsOf');
+        component.editMode = EditMode.Enabled;
+        component.targetForm.get('target').setValue(TARGET_OBJECTS_OF);
+        component['_updateControlStatesForTarget']();
         expect(component.targetForm.controls.targetValue.disabled).toBeTrue();
         expect(component.targetForm.controls.targetValues.enabled).toBeTrue();
       });
-
       it('should disable both targetValue and targetValues for IMPLICIT_REFERENCE', () => {
-        component.editMode = 'ENABLED';
-        component['_updateControlStatesForTarget'](IMPLICIT_REFERENCE);
+        component.editMode = EditMode.Enabled;
+        component.targetForm.get('target').setValue(IMPLICIT_REFERENCE);
+        component['_updateControlStatesForTarget']();
         expect(component.targetForm.controls.targetValue.disabled).toBeTrue();
         expect(component.targetForm.controls.targetValues.disabled).toBeTrue();
       });
-
       it('should disable all target controls when in DISABLED edit mode', () => {
-        component.editMode = 'DISABLED';
-        component['_updateControlStatesForTarget'](TARGET_NODE);
+        component.editMode = EditMode.Disabled;
+        component.targetForm.get('target').setValue(TARGET_NODE);
+        component['_updateControlStatesForTarget']();
         expect(component.targetForm.controls.targetValue.disabled).toBeTrue();
         expect(component.targetForm.controls.targetValues.disabled).toBeTrue();
       });
     });
   });
-  describe('contains the correct html', () => {
+  describe('contains the correct html and', () => {
+    beforeEach(() => {
+      fixture.detectChanges();
+    });
     it('should render the section header with info icon', () => {
       const header = element.query(By.css('.section-header'));
       expect(header).toBeTruthy();
@@ -942,7 +1123,7 @@ describe('ShaclTargetComponent', () => {
     it('should show the edit button when not in edit mode and user can modify', () => {
       component.canModify = true;
       component.isImported = false;
-      component.editMode = 'DISABLED';
+      component.editMode = EditMode.Disabled;
 
       fixture.detectChanges();
 
@@ -950,7 +1131,7 @@ describe('ShaclTargetComponent', () => {
       expect(editBtn).toBeTruthy();
     });
     it('should hide the edit button and show save button in edit mode', () => {
-      component.editMode = 'ENABLED';
+      component.editMode = EditMode.Enabled;
       fixture.detectChanges();
 
       const editBtn = element.query(By.css('button.edit-button'));
@@ -967,7 +1148,7 @@ describe('ShaclTargetComponent', () => {
       expect(saveBtn.nativeElement.disabled).toBeTrue();
     });
     it('should enable save button when form is valid', () => {
-      component.editMode = 'ENABLED';
+      component.editMode = EditMode.Enabled;
       component.targetForm.controls['target'].setValue(component.TARGET_NODE);
       component.targetForm.controls['targetValue'].setValue({ value: 'http://example.org/SomeNode', label: 'Some Node' });
       fixture.detectChanges();
