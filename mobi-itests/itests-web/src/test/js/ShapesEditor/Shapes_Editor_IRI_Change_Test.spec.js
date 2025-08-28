@@ -114,6 +114,7 @@ module.exports = {
         browser.globals.wait_for_no_spinners(browser);
         browser.globals.dismiss_toast(browser);
         browser.useXpath()
+        browser.page.shapesEditorPage().selectNodeShape('UHTC Material shapes graph');
         browser.page.shapesEditorPage().verifyStaticIriValue('http://schema.org/', 'shapes-graph-iri-test');
         browser.page.shapesEditorPage().verifyUncommittedChanges(false);
     },

@@ -20,15 +20,12 @@
 * along with this program.  If not, see <http://www.gnu.org/licenses/>.
 * #L%
 */
-//angular imports
 import { By } from '@angular/platform-browser';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
 
-//Third-Party imports
 import { MockComponent } from 'ng-mocks';
 
-//Mobi & Local imports
 import { NodeShapesDisplayComponent } from '../node-shapes-display/node-shapes-display.component';
 import { NodeShapesListComponent } from '../node-shapes-list/node-shapes-list.component';
 import { ShapesGraphListItem } from '../../../shared/models/shapesGraphListItem.class';
@@ -55,8 +52,8 @@ describe('NodeShapesTabComponent', () => {
       '@id': 'https://mobi.solutions/shapes-graphs/example',
       '@type': ['http://www.w3.org/2002/07/owl#Ontology']
     };
+    listItem.setSelectedNodeShapeIri('selectedEntityIRI');
     listItem.editorTabStates.nodeShapes = {
-      entityIRI: 'selectedEntityIRI',
       sourceIRI: 'sourceIRI',
       nodes: []
     };

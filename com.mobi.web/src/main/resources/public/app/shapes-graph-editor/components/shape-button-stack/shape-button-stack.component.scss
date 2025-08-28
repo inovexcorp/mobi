@@ -20,20 +20,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-.node-item-wrapper {
-  h4 {
-    margin-bottom: 0;
-  }
-  .metadata-identifier {
-    color: rgba(0, 0, 0, 0.54);
-  }
-  .shortened-text {
-    white-space: nowrap;
-    width: 100% !important;
-    text-overflow: ellipsis;
-    overflow: hidden;
-  }
-  small {
-    font-size: 1em;
+.shape-button-stack {
+  position: absolute;
+  bottom: 25px;
+  right: 25px;
+  z-index: 1000;
+
+  button:focus {
+    outline: none !important;
   }
 }

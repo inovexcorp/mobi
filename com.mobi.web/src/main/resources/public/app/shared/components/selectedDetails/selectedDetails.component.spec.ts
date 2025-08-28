@@ -24,8 +24,8 @@ import { By } from '@angular/platform-browser';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { MatMenuModule } from '@angular/material/menu';
 import { MatIconModule } from '@angular/material/icon';
+import { MatMenuModule } from '@angular/material/menu';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 
 import { MockComponent, MockProvider, MockPipe } from 'ng-mocks';
@@ -36,9 +36,9 @@ import { IndividualTypesModalComponent } from '../../../ontology-editor/componen
 import { ManchesterConverterService } from '../../services/manchesterConverter.service';
 import { OntologyStateService } from '../../services/ontologyState.service';
 import { PrefixationPipe } from '../../pipes/prefixation.pipe';
-import { SelectedDetailsComponent } from './selectedDetails.component';
 import { StaticIriComponent } from '../staticIri/staticIri.component';
 import { ToastService } from '../../services/toast.service';
+import { SelectedDetailsComponent } from './selectedDetails.component';
 
 describe('Selected Details component', function () {
   let component: SelectedDetailsComponent;

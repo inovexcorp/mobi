@@ -20,8 +20,8 @@
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="node-item-wrapper w-100" (click)="setSelected()" [ngClass]="{'activeNode': selected}">
-  <h4 class="node-title shortened-text" title="{{nodeShapeSummary.name | beautify}}">{{nodeShapeSummary.name | beautify}}</h4>
+<div class="node-item-wrapper w-100">
+  <h4 class="node-title shortened-text" title="{{nodeShapeSummary.name}}">{{nodeShapeSummary.name}}</h4>
   <div class="node-content shortened-text">
     <div class="prop-header d-flex align-items-baseline clearfix" title="{{nodeShapeSummary.iri}}">
       <p class="text text-truncate m-0">IRI: </p>

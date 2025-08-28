@@ -10,27 +10,35 @@
   it under the terms of the GNU Affero General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
-  
+
   This program is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
-  
+
   You should have received a copy of the GNU Affero General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
   -->
-<div class="node-shapes-list tree h-100 p-0 w-100 d-flex flex-column">
-    <div class="d-flex flex-row search pb-1">
+<div class="node-shapes-list d-flex flex-column h-100 w-100 p-0">
+    <div class="search-bar-container flex-shrink-0 pb-1">
         <search-bar class="flex-1 remove-min-width" [(bindModel)]="searchText" (submitEvent)="search()"></search-bar>
     </div>
-    <info-message *ngIf="sgs.listItem.editorTabStates.nodeShapes.nodes.length === 0" class="no-match">No node shapes match your search criteria.</info-message>
-    <cdk-virtual-scroll-viewport itemSize="26" #hierarchyVirtualScroll class="flex-1 repeater-container w-100 remove-min-height">
-        <div *cdkVirtualFor="let nodeShapeSummary of sgs.listItem.editorTabStates.nodeShapes.nodes" class="nodeWrapper">
-            <app-node-shapes-item [nodeShapeSummary]="nodeShapeSummary"
-                                  [selected]="sgs.listItem.editorTabStates.nodeShapes.entityIRI === nodeShapeSummary.iri"
-                                  (onItemSelect)="onItemSelection($event)">
-            </app-node-shapes-item>
-        </div>
-    </cdk-virtual-scroll-viewport>
+    <ng-container *ngIf="nodeShapes?.length > 0; else noResults">
+        <cdk-virtual-scroll-viewport #virtualScroll class="shapes-scroll-viewport flex-fill overflow-auto"
+            itemSize="116" role="listbox" aria-label="List of Node Shapes">
+            <div *cdkVirtualFor="let nodeShapeSummary of nodeShapes; let i = index"
+                class="node-shapes-item-wrapper d-flex align-items-center border-bottom px-3" role="option"
+                [id]="'node-option-' + i"
+                [class.activeNode]="sgs.listItem.selectedNodeShapeIri === nodeShapeSummary.iri"
+                [attr.aria-selected]="sgs.listItem.selectedNodeShapeIri === nodeShapeSummary.iri"
+                (click)="onItemSelection(nodeShapeSummary)">
+                <app-node-shapes-item class="w-100" [nodeShapeSummary]="nodeShapeSummary">
+                </app-node-shapes-item>
+            </div>
+        </cdk-virtual-scroll-viewport>
+    </ng-container>
+    <ng-template #noResults>
+        <info-message class="no-match flex-fill">No node shapes match your search criteria.</info-message>
+    </ng-template>
 </div>

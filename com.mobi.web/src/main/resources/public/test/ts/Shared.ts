@@ -28,7 +28,6 @@ import { GraphState, StateEdge, StateNode } from '../../app/ontology-visualizati
 import { ControlRecordI } from '../../app/ontology-visualization/classes/controlRecords';
 import { VersionedRdfState } from '../../app/shared/services/versionedRdfState.service';
 import { VersionedRdfListItem } from '../../app/shared/models/versionedRdfListItem.class';
-import { JSONLDObject } from '../../app/shared/models/JSONLDObject.interface';
 
 export const DATE_STR = '2023-01-01T00:00:00Z';
 export const SHORT_DATE_STR = formatDate(new Date(DATE_STR), 'short', 'en-US');

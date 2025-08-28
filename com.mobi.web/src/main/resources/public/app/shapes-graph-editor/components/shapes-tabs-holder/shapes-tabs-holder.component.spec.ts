@@ -34,6 +34,7 @@ import { of } from 'rxjs';
 //Mobi && Local imports
 import { cleanStylesFromDOM } from '../../../../test/ts/Shared';
 import { NodeShapesTabComponent } from '../node-shapes-tab/node-shapes-tab.component';
+import { ShapeButtonStackComponent } from '../shape-button-stack/shape-button-stack.component';
 import { ShapesGraphListItem } from '../../../shared/models/shapesGraphListItem.class';
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
 import { ShapesProjectTabComponent } from '../shapes-project-tab/shapes-project-tab.component';
@@ -56,7 +57,8 @@ describe('ShapesTabsHolderComponent', () => {
       declarations: [
         ShapesTabsHolderComponent,
         MockComponent(ShapesProjectTabComponent),
-        MockComponent(NodeShapesTabComponent)
+        MockComponent(NodeShapesTabComponent),
+        MockComponent(ShapeButtonStackComponent)
       ],
       providers: [
         MockProvider(ShapesGraphStateService)
@@ -71,7 +73,7 @@ describe('ShapesTabsHolderComponent', () => {
     stateSvcStub.listItem = new ShapesGraphListItem();
     stateSvcStub.listItem.versionedRdfRecord.recordId = recordId;
     stateSvcStub.listItem.shapesGraphId = 'shapesGraphId';
-    stateSvcStub.listItem.editorTabStates.nodeShapes.entityIRI = 'selectedEntityIRI';
+    stateSvcStub.listItem.setSelectedNodeShapeIri('selectedEntityIRI');
     stateSvcStub.setSelected.and.returnValue(of(null));
     fixture.detectChanges();
   });

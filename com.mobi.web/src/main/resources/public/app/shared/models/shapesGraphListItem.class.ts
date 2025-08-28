@@ -20,16 +20,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { BehaviorSubject } from 'rxjs';
+
 import { JSONLDObject } from './JSONLDObject.interface';
 import { NodeShapeSummary } from '../../shapes-graph-editor/models/node-shape-summary.interface';
 import { VersionedRdfListItem } from './versionedRdfListItem.class';
+import { MatSnackBarRef, SimpleSnackBar } from '@angular/material/snack-bar';
 
 export interface ShapeGraphEditorTabStates {
   project: {
     entityIRI: string;
   },
   nodeShapes: {
-    entityIRI: string;
     sourceIRI: string;
     nodes: NodeShapeSummary[];
   }
@@ -37,7 +39,23 @@ export interface ShapeGraphEditorTabStates {
 
 /** 
  * @ngdoc interface
- * @name shared.models:SubjectImportMap
+ * @name NodeShapeSelection
+ * 
+ * Represents the currently selected Node Shape in a Shapes Graph.
+ * This object is used to track which Node Shape IRI is active and whether the UI
+ * should scroll to it when selection changes.
+ *
+ * @property {string} iri The IRI of the selected Node Shape.
+ * @property {boolean} shouldScroll Flag indicating whether the UI should scroll to the selected Node Shape.
+ */
+export interface NodeShapeSelection {
+  iri: string;
+  shouldScroll: boolean;
+}
+
+/** 
+ * @ngdoc interface
+ * @name SubjectImportMap
  * 
  * A mapping of entityIRIs to their corresponding import status.
  * Each key represents an entity's IRI, and the value describes whether it was imported,
@@ -49,7 +67,7 @@ export interface SubjectImportMap {
 
 /** 
  * @ngdoc interface
- * @name shared.models:EntityImportStatus
+ * @name EntityImportStatus
  * 
  * Represents the import status of a single entity within an ontology.
  *
@@ -66,18 +84,20 @@ export interface EntityImportStatus {
 export class ShapesGraphListItem extends VersionedRdfListItem {
   //The variable keeping track of what format the preview is in is normally kept in editorTabStates in
   //OntologyListItem but keeping it high-level here as we may be re-working how tab state is stored.
-  previewFormat: string
+  previewFormat: string;
   shapesGraphId: string;
   changesPageOpen: boolean;
   currentVersionTitle: string;
   metadata: JSONLDObject;
   content: string;
   editorTabStates: ShapeGraphEditorTabStates;
-
+  openSnackbar: MatSnackBarRef<SimpleSnackBar>;
   subjectImportMap: SubjectImportMap;
 
-  static PROJECT_TAB = 0;
-  static NODE_SHAPES_TAB = 1;
+  static PROJECT_TAB = 'project';
+  static PROJECT_TAB_IDX = 0;
+  static NODE_SHAPES_TAB = 'nodeShapes';
+  static NODE_SHAPES_TAB_IDX = 1;
 
   constructor() {
     super();
@@ -87,17 +107,38 @@ export class ShapesGraphListItem extends VersionedRdfListItem {
     this.metadata = undefined;
     this.content = '';
     this.previewFormat = 'turtle';
-    this.tabIndex = ShapesGraphListItem.PROJECT_TAB;
+    this.tabIndex = ShapesGraphListItem.PROJECT_TAB_IDX;
     this.editorTabStates = {
       project: {
         entityIRI: ''
-      }, 
+      },
       nodeShapes: {
-        entityIRI: '',
         sourceIRI: '',
         nodes: []
       }
     };
     this.subjectImportMap = {};
+  }
+
+  // Manage the selected NodeShap IRI
+  private readonly _selectedNodeShapeIri = new BehaviorSubject<NodeShapeSelection | null>(null);
+  public readonly selectedNodeShapeIri$ = this._selectedNodeShapeIri.asObservable();
+
+  /**
+   * Synchronous getter for the current IRI value.
+   *
+   * @returns {string} The currently selected IRI
+   */
+  public get selectedNodeShapeIri(): string {
+    return this._selectedNodeShapeIri.getValue()?.iri || '';
+  }
+
+  /**
+   * Updates the selected IRI, emitting the new value to all subscribers.
+   * @param {string} iri The new IRI to set.
+   * @param {boolean} [shouldScroll=false] Whether the UI should scroll to the item.
+   */
+  public setSelectedNodeShapeIri(iri: string, shouldScroll = false): void {
+    this._selectedNodeShapeIri.next({ iri, shouldScroll });
   }
 }

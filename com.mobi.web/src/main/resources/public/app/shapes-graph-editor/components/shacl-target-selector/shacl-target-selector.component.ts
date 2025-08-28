@@ -146,7 +146,7 @@ export class ShaclTargetSelectorComponent implements ControlValueAccessor {
    */
   writeValue(value: string): void {
     this.value = value;
-    this._findAndEmitSelection(value, false); 
+    this._findAndEmitSelection(value, false);
   }
 
   /**
