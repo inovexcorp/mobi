@@ -69,8 +69,8 @@ public class RestoreWatcher {
     }
 
     private class AutoRestoreSupport implements Runnable, Closeable {
-        private Path restoreDir = Paths.get(System.getProperty("karaf.data"), "restore");
-        private Path restoreProcessedDir = Paths.get(System.getProperty("karaf.data"), "restoreProcessed");
+        private Path restoreDir = Paths.get(System.getProperty("karaf.home"), "restore");
+        private Path restoreProcessedDir = Paths.get(System.getProperty("karaf.home"), "restoreProcessed");
         private boolean running;
         private ExecutorService executor;
 

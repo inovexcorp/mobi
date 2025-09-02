@@ -75,7 +75,7 @@
                 <configuration>
                     <images>
                         <image>
-                            <name>inovexis/mobi</name>
+                            <name>inovexis/mobi:${project.version}</name>
                             <build>
                                 <dockerFile>${project.build.directory}/filtered-resources/docker/Dockerfile</dockerFile>
                                 <assembly>
