@@ -224,6 +224,22 @@ const nodeShapesTabCommands = {
       .waitForElementVisible(`//app-node-shapes-display//div[contains(@class, "selected-heading")]//span[text()[contains(.,"${nodeShapeTitle}")]]`);
   },
 
+  verifyPropertyDisplay: function(count, properties) {
+    return this.api.page.editorPage().verifyPropertyDisplay(parentEl, count, properties);
+  },
+
+  addNewProperty: function(property) {
+    return this.api.page.editorPage().addNewProperty(parentEl, property);
+  },
+
+  editProperty: function(propertyValue, newValue) {
+    return this.api.page.editorPage().editProperty(parentEl, propertyValue, newValue);
+  },
+
+  removeProperty: function(propertyValue) {
+    return this.api.page.editorPage().removeProperty(parentEl, propertyValue);
+  },
+
   verifyPropertyShapesNum: function(num) {
     return this.useCss()
       .waitForElementVisible(`${nodeShapesDisplay} app-property-shapes-display`)

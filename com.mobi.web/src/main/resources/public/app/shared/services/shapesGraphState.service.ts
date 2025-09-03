@@ -47,7 +47,10 @@ import { Difference } from '../models/difference.class';
 import { EntityImportStatus, ShapesGraphListItem, SubjectImportMap } from '../models/shapesGraphListItem.class';
 import { EntityNames } from '../models/entityNames.interface';
 import { EventPayload, EventTypeConstants, EventWithPayload } from '../models/eventWithPayload.interface';
-import { getArrWithoutEntity, getBeautifulIRI, getDctermsValue, getEntityName, getEntityNames, getPropertyId, isBlankNodeId } from '../utility';
+import {
+  entityNameProps,
+  getArrWithoutEntity, getBeautifulIRI, getDctermsValue, getEntityName, getEntityNames, getPropertyId, isBlankNodeId
+} from '../utility';
 import { GroupedSuggestion } from '../../shapes-graph-editor/models/grouped-suggestion';
 import { JSONLDId } from '../models/JSONLDId.interface';
 import { JSONLDObject } from '../models/JSONLDObject.interface';
@@ -872,6 +875,9 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
     this.propertyManager.remove(this.listItem.selected, key, index);
     return this.saveCurrentChanges()
       .pipe(map(() => {
+        if (entityNameProps.includes(key)) {
+          this.updateLabel();
+        }
         return axiomObject;
       }));
   }
@@ -1027,6 +1033,32 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
         nodeShapeSummary.targetValueLabel = this.getEntityName(nodeShapeSummary.targetValue);
         return nodeShapeSummary;
       }).sort((a, b) => {
+        return (a.name || '').localeCompare(b.name || '');
+      });
+    }
+  }
+
+  /**
+   * Calculates the new label for the current selected entity in the currently selected {@link ShapesGraphListItem} and
+   * updates all references to the entity name in the node list.
+   */
+  updateLabel():void {
+    super.updateLabel();
+    this.updateSummaryLabel(this.listItem.selected);
+  }
+
+  /**
+   * Updates the label of a node shape summary after a node shape has changed and re-sorts
+   *  the list of node shape summaries to ensure alphabetical order.
+   * @param {JSONLDObject} entity The json-ld representing the metadata of the entity being changed.
+   */
+  updateSummaryLabel(entity: JSONLDObject): void {
+    const entityIRI = entity['@id'];
+    const nodeSummaries: NodeShapeSummary[] = cloneDeep(this.listItem.editorTabStates?.nodeShapes?.nodes || []);
+    const nodeSummary: NodeShapeSummary = nodeSummaries?.find(summary => summary.iri === entityIRI);
+    if (nodeSummary) {
+      nodeSummary.name = this.getEntityName(entityIRI);
+      this.listItem.editorTabStates.nodeShapes.nodes = nodeSummaries.sort((a, b) => {
         return (a.name || '').localeCompare(b.name || '');
       });
     }

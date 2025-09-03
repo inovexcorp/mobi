@@ -42,7 +42,8 @@
         <mat-error *ngIf="propertyForm.get('value').errors?.pattern">The value provided is not a valid IRI</mat-error>
     </mat-form-field>
     <ng-template #notOntProp>
-        <mat-radio-group *ngIf="propertyForm.controls.property.value === deprecatedIri; else notDeprecated" formControlName="value" class="d-inline-flex flex-column">
+        <mat-radio-group *ngIf="propertyForm.controls.type.value === booleanType; else notDeprecated"
+                         formControlName="value" class="d-inline-flex flex-column">
             <mat-radio-button value="true">True</mat-radio-button>
             <mat-radio-button value="false">False</mat-radio-button>
         </mat-radio-group>

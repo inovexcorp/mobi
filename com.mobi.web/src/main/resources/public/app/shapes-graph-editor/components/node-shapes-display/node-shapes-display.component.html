@@ -36,8 +36,8 @@
       <div class="row py-2">
         <properties-block class="w-100"
           [stateService]="stateService"
-          [canModify]="false"
-          [ontology]="nodeShape"
+          [canModify]="canModify && !stateService.isSelectedImported()"
+          [entity]="nodeShape"
           [annotationIRIs]="nodeShapeProperties">
         </properties-block>
       </div>

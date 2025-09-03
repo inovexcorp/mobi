@@ -30,8 +30,7 @@ import { map, startWith } from 'rxjs/operators';
 
 import { createJson, entityNameProps, getIRINamespace } from '../../utility';
 import { datatype } from '../../validators/datatype.validator';
-import { OntologyManagerService } from '../../services/ontologyManager.service';
-import { OWL, RDF, XSD } from '../../../prefixes';
+import { OWL, RDF, SH, XSD } from '../../../prefixes';
 import { PropertyManagerService } from '../../services/propertyManager.service';
 import { PropertyOverlayDataOptions } from '../../models/propertyOverlayDataOptions.interface';
 import { REGEX } from '../../../constants';
@@ -75,9 +74,8 @@ interface PropertyOption {
 export class PropertyOverlayComponent implements OnInit {
   stateService: VersionedRdfState<VersionedRdfListItem>;
   dataPropertyRanges: { [key: string]: string } = {};
-  deprecatedIri = `${OWL}deprecated`;
+  booleanType = `${XSD}boolean`;
   iriPattern = REGEX.IRI;
-  annotations = [];
   properties = [];
   isOntologyProperty = false;
   type = `${XSD}string`;
@@ -92,18 +90,16 @@ export class PropertyOverlayComponent implements OnInit {
   filteredProperties: Observable<PropertyGroup[]>;
 
   constructor(
+    @Inject(MAT_DIALOG_DATA) public data: PropertyOverlayDataOptions,
     private _fb: UntypedFormBuilder,
     private _dialogRef: MatDialogRef<PropertyOverlayComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: PropertyOverlayDataOptions,
     private _pm: PropertyManagerService,
-    private _toast: ToastService,
-    private _om: OntologyManagerService) {
-    this.stateService = data.stateService;
-  }
+    private _toast: ToastService) {
+      this.stateService = data.stateService;
+    }
 
   ngOnInit(): void {
-    this.annotations = union(this._pm.defaultAnnotations, this._pm.owlAnnotations, this.data.annotationIRIs);
-    this.properties = union(this._pm.ontologyProperties, this.annotations);
+    this._determinePropertyList();
     this.filteredProperties = this.propertyForm.controls.property.valueChanges.pipe(
       startWith(''),
       map(value => this.filter(value || ''))
@@ -160,7 +156,7 @@ export class PropertyOverlayComponent implements OnInit {
       this.propertyForm.controls.language.setValue('');
     }
     this.propertyForm.controls.value.setValue('');
-    if (selectedProperty === `${OWL}deprecated`) {
+    if (selectedProperty === `${OWL}deprecated` || selectedProperty === `${SH}closed` || selectedProperty === `${SH}deactivated`) {
       this.propertyForm.controls.type.setValue(`${XSD}boolean`);
       this.propertyForm.controls.language.setValue('');
     }
@@ -229,5 +225,13 @@ export class PropertyOverlayComponent implements OnInit {
   private _createJson(value, type, language) {
     const valueObj = this.isOntologyProperty ? { '@id': value } : this._pm.createValueObj(value, type, language);
     return createJson(this.data.entity['@id'], this.propertyForm.controls.property.value, valueObj);
+  }
+  private _determinePropertyList(): void {
+    if (this.data.entity['@type'].includes(`${SH}NodeShape`)) {
+      this.properties = union(this._pm.defaultAnnotations, this.data.annotationIRIs, this._pm.shaclProperties);
+    } else {
+      this.properties = union(this._pm.ontologyProperties, this._pm.defaultAnnotations, this._pm.owlAnnotations,
+        this.data.annotationIRIs);
+    }
   }
 }
