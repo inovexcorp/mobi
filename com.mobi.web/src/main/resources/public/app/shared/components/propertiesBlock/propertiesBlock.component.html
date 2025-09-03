@@ -26,9 +26,9 @@
     </div>
     <property-values *ngFor="let property of propertiesFiltered"
       [stateService]="stateService"
-      [entity]="ontology"
+      [entity]="entity"
       [property]="property"
-      [isEntityImported]="stateService.isImported(ontology['@id'], stateService.listItem, property)"
+      [isEntityImported]="stateService.isImported(entity['@id'], stateService.listItem)"
       [canModify]="canModify"
       (remove)="openRemoveOverlay($event)"
       (edit)="editClicked($event)">

@@ -336,10 +336,10 @@ const editorCommands = {
     return this;
   },
 
-  verifyChangePageCommitNum: function(parentEl, number) {
+  verifyChangePageCommitNum: function(parentEl, count) {
     this.useCss()
       .waitForElementVisible(parentEl);
-    if (number === 0) {
+    if (count === 0) {
       return this.useCss()
         .assert.not.elementPresent('app-changes-page mat-expansion-panel')
         .assert.textContains('app-changes-page info-message p', 'No Changes to Display');
@@ -350,8 +350,77 @@ const editorCommands = {
         .expect.elements({
           selector: 'app-changes-page mat-expansion-panel',
           locateStrategy: 'css selector'
-        }).count.to.equal(number);
+        }).count.to.equal(count);
     }
+  },
+
+  verifyPropertyDisplay: function(parentEl, count, properties) {
+    this.useCss()
+      .waitForElementVisible(parentEl)
+      .expect.elements({
+        selector: `${parentEl} app-node-shapes-display properties-block property-values`,
+        locateStrategy: 'css selector'
+      }).count.to.equal(count);
+
+    properties.forEach(property => {
+      this.useXpath()
+        .assert.elementPresent(`//${parentEl}//app-node-shapes-display//properties-block//property-values//span[text()[contains(., "${property?.value}")]]`)
+        .assert.elementPresent(`//${parentEl}//app-node-shapes-display//properties-block//property-values//div//p[text()[contains(., "${property?.label}")]]`)
+    });
+    return this;
+  },
+
+  addNewProperty: function(parentEl, property) {
+    return this.useCss()
+      .waitForElementVisible(parentEl)
+      .waitForElementVisible(`${parentEl} properties-block property-values`)
+      .click(`${parentEl} properties-block div.section-header a.fa-plus`)
+      .waitForElementVisible('property-overlay form mat-form-field input[aria-label="Property"]')
+      .sendKeys('property-overlay form mat-form-field input[aria-label="Property"]', property.label)
+      .useXpath()
+      .waitForElementVisible(`//mat-optgroup//mat-option//span[text()[contains(., "${property.label}")]]`)
+      .pause(1000) //Needed to make sure options properly get added to dropdown
+      .click(`//mat-optgroup//mat-option//span[text()[contains(., "${property.label}")]]`)
+      .useCss()
+      .sendKeys('property-overlay form mat-form-field textarea[name="value"]', property.value)
+      .click('property-overlay button.mat-primary');
+  },
+
+  editProperty: function(parentEl, propertyValue, newValue) { //can extend this method in the future to support things like boolean values
+    const propValue = `//${parentEl}//app-node-shapes-display//properties-block//property-values//span[text()[contains(., "${propertyValue}")]]`
+    const editButton = `${propValue}/ancestor::value-display/ancestor::span/following-sibling::div/button[2]`
+    const textArea = 'property-overlay form mat-form-field textarea[name="value"]'
+
+    return this.useCss()
+      .waitForElementVisible(parentEl)
+      .waitForElementVisible(`${parentEl} properties-block property-values`)
+      .useXpath()
+      .moveToElement(propValue, 10, 10)
+      .waitForElementVisible(editButton)
+      .click(editButton)
+      .useCss()
+      .clearValue(textArea)
+      .sendKeys(textArea, newValue)
+      .click('property-overlay button.mat-primary')
+      .api.globals.wait_for_no_spinners(this);
+  },
+
+  removeProperty: function(parentEl, propertyLabel) {
+    const propLabel = `//${parentEl}//app-node-shapes-display//properties-block//property-values//span[text()[contains(., "${propertyLabel}")]]`
+    const deleteButton = `${propLabel}/ancestor::value-display/ancestor::span/following-sibling::div/button[1]`
+
+    return this.useCss()
+      .waitForElementVisible(parentEl)
+      .waitForElementVisible(`${parentEl} properties-block property-values`)
+      .useXpath()
+      .moveToElement(propLabel, 10, 10)
+      .waitForElementVisible(deleteButton)
+      .click(deleteButton)
+      .useCss()
+      .waitForElementVisible('confirm-modal')
+      .waitForElementVisible('confirm-modal button.mat-primary')
+      .click('confirm-modal button.mat-primary')
+      .api.globals.wait_for_no_spinners(this);
   }
 }
 

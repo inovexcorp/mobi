@@ -921,7 +921,7 @@ public class ShapesGraphRest {
 
     /**
      * Retrieves a paginated list of SHACL Node Shapes for the specified Shapes Graph, identified by the given
-     * record, branch, and commit. The response can be filtered using a search term, and optionally includes
+     * record, branch, and commit. The response can be filtered using a search term and optionally includes
      * changes from the in-progress commit for the requesting user.
      *
      * @param servletRequest            The HTTP servlet request context.

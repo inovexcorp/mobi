@@ -37,37 +37,35 @@ import { MockComponent, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 
 import { cleanStylesFromDOM } from '../../../../test/ts/Shared';
-import { DCTERMS, OWL, XSD } from '../../../prefixes';
+import { DCTERMS, OWL, SH, XSD } from '../../../prefixes';
 import { IriSelectComponent } from '../iriSelect/iriSelect.component';
 import { LanguageSelectComponent } from '../languageSelect/languageSelect.component';
 import { OntologyListItem } from '../../models/ontologyListItem.class';
 import { OntologyManagerService } from '../../services/ontologyManager.service';
 import { OntologyStateService } from '../../services/ontologyState.service';
 import { PropertyManagerService } from '../../services/propertyManager.service';
+import { PropertyOverlayComponent } from './propertyOverlay.component';
 import { PropertyOverlayDataOptions } from '../../models/propertyOverlayDataOptions.interface';
 import { ToastService } from '../../services/toast.service';
-import { PropertyOverlayComponent } from './propertyOverlay.component';
-import { JSONLDObject } from '../../models/JSONLDObject.interface';
 
 describe('Property Overlay component', () => {
   let component: PropertyOverlayComponent;
   let element: DebugElement;
   let fixture: ComponentFixture<PropertyOverlayComponent>;
   let matDialogRef: jasmine.SpyObj<MatDialogRef<PropertyOverlayComponent>>;
-  let ontologyManagerStub: jasmine.SpyObj<OntologyManagerService>;
   let ontologyStateStub: jasmine.SpyObj<OntologyStateService>;
   let propertyManagerStub: jasmine.SpyObj<PropertyManagerService>;
   let toastStub: jasmine.SpyObj<ToastService>;
 
   const property = 'property1';
   const entityIRI = 'entity';
-  const entity: JSONLDObject = {
-    '@id': entityIRI
-  };
 
   beforeEach(async () => {
     const dialogData: PropertyOverlayDataOptions = {
-        entity: entity,
+        entity: {
+          '@id': 'entity',
+          '@type': ['type1', 'type2']
+        },
         editing: false,
     };
     await TestBed.configureTestingModule({
@@ -97,13 +95,15 @@ describe('Property Overlay component', () => {
         { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close'])}
       ]
     }).compileComponents();
-    ontologyManagerStub = TestBed.inject(OntologyManagerService) as jasmine.SpyObj<OntologyManagerService>;
     ontologyStateStub = TestBed.inject(OntologyStateService) as jasmine.SpyObj<OntologyStateService>;
     matDialogRef = TestBed.inject(MatDialogRef) as jasmine.SpyObj<MatDialogRef<PropertyOverlayComponent>>;
     propertyManagerStub = TestBed.inject(PropertyManagerService) as jasmine.SpyObj<PropertyManagerService>;
     toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
     ontologyStateStub.listItem = new OntologyListItem();
-    ontologyStateStub.listItem.selected = {'@id': entityIRI};
+    ontologyStateStub.listItem.selected = {
+      '@id': entityIRI,
+      '@type': ['type1', 'type2']
+    };
     dialogData.stateService = ontologyStateStub;
     dialogData.annotationIRIs = [property];
     fixture = TestBed.createComponent(PropertyOverlayComponent);
@@ -117,58 +117,98 @@ describe('Property Overlay component', () => {
     element = null;
     fixture = null;
     matDialogRef = null;
-    ontologyManagerStub = null;
     ontologyStateStub = null;
     propertyManagerStub = null;
     toastStub = null;
   });
 
   describe('initializes with the correct data', () => {
-    beforeEach(() => {
-      ontologyStateStub.listItem.annotations.iris = {[property]: '', 'default2': '', 'owl2': ''};
-      propertyManagerStub.ontologyProperties = ['ont1', 'ont2'];
-      propertyManagerStub.defaultAnnotations = ['default1', 'default2'];
-      propertyManagerStub.owlAnnotations = ['owl1', 'owl2'];
+    describe('if the entity is an ontology and', () => {
+      beforeEach(() => {
+        ontologyStateStub.listItem.annotations.iris = {[property]: '', 'default2': '', 'owl2': ''};
+        propertyManagerStub.ontologyProperties = ['ont1', 'ont2'];
+        propertyManagerStub.defaultAnnotations = ['default1', 'default2'];
+        propertyManagerStub.owlAnnotations = ['owl1', 'owl2'];
+      });
+      it('if an property is being edited', () => {
+        component.data.editing = true;
+        component.data.property = property;
+        component.data.value = 'value';
+        component.data.type = 'type';
+        component.data.language = 'en';
+        component.ngOnInit();
+        expect(component.properties).toEqual(['ont1', 'ont2', 'default1', 'default2', 'owl1', 'owl2', property]);
+        expect(component.propertyForm.controls.property.value).toEqual(property);
+        expect(component.propertyForm.controls.property.disabled).toBeTrue();
+        expect(component.propertyForm.controls.value.value).toEqual('value');
+        expect(component.propertyForm.controls.type.value).toEqual('type');
+        expect(component.propertyForm.controls.language.value).toEqual('en');
+      });
+      it('if an property is being edited and input data type value is empty', () => {
+        component.data.editing = true;
+        component.data.property = property;
+        component.data.value = 'value';
+        component.data.type = '';
+        component.ngOnInit();
+        expect(component.properties).toEqual(['ont1', 'ont2', 'default1', 'default2', 'owl1', 'owl2', property]);
+        expect(component.propertyForm.controls.property.value).toEqual(property);
+        expect(component.propertyForm.controls.property.disabled).toBeTrue();
+        expect(component.propertyForm.controls.value.value).toEqual('value');
+        expect(component.propertyForm.controls.type.value).toEqual(`${XSD}string`);
+        expect(component.propertyForm.controls.language.value).toEqual(undefined);
+      });
+      it('if a new property is being added', () => {
+        component.data.editing = false;
+        component.ngOnInit();
+        expect(component.properties).toEqual(['ont1', 'ont2', 'default1', 'default2', 'owl1', 'owl2', property]);
+        expect(component.propertyForm.controls.property.value).toEqual('');
+        expect(component.propertyForm.controls.property.disabled).toBeFalse();
+        expect(component.propertyForm.controls.value.value).toEqual('');
+        expect(component.propertyForm.controls.type.value).toEqual(`${XSD}string`);
+        expect(component.propertyForm.controls.language.value).toEqual('');
+      });
     });
-    it('if an property is being edited', () => {
-      component.data.editing = true;
-      component.data.property = property;
-      component.data.value = 'value';
-      component.data.type = 'type';
-      component.data.language = 'en';
-      component.ngOnInit();
-      expect(component.annotations).toEqual(['default1', 'default2', 'owl1', 'owl2', property]);
-      expect(component.properties).toEqual(['ont1', 'ont2', 'default1', 'default2', 'owl1', 'owl2', property]);
-      expect(component.propertyForm.controls.property.value).toEqual(property);
-      expect(component.propertyForm.controls.property.disabled).toBeTrue();
-      expect(component.propertyForm.controls.value.value).toEqual('value');
-      expect(component.propertyForm.controls.type.value).toEqual('type');
-      expect(component.propertyForm.controls.language.value).toEqual('en');
-    });
-    it('if an property is being edited and input data type value is empty', () => {
-      component.data.editing = true;
-      component.data.property = property;
-      component.data.value = 'value';
-      component.data.type = '';
-      component.ngOnInit();
-      expect(component.annotations).toEqual(['default1', 'default2', 'owl1', 'owl2', property]);
-      expect(component.properties).toEqual(['ont1', 'ont2', 'default1', 'default2', 'owl1', 'owl2', property]);
-      expect(component.propertyForm.controls.property.value).toEqual(property);
-      expect(component.propertyForm.controls.property.disabled).toBeTrue();
-      expect(component.propertyForm.controls.value.value).toEqual('value');
-      expect(component.propertyForm.controls.type.value).toEqual(`${XSD}string`);
-      expect(component.propertyForm.controls.language.value).toEqual(undefined);
-    });
-    it('if a new property is being added', () => {
-      component.data.editing = false;
-      component.ngOnInit();
-      expect(component.annotations).toEqual(['default1', 'default2', 'owl1', 'owl2', property]);
-      expect(component.properties).toEqual(['ont1', 'ont2', 'default1', 'default2', 'owl1', 'owl2', property]);
-      expect(component.propertyForm.controls.property.value).toEqual('');
-      expect(component.propertyForm.controls.property.disabled).toBeFalse();
-      expect(component.propertyForm.controls.value.value).toEqual('');
-      expect(component.propertyForm.controls.type.value).toEqual(`${XSD}string`);
-      expect(component.propertyForm.controls.language.value).toEqual('');
+    describe('if the entity is a node shape', () => {
+      beforeEach(() => {
+        ontologyStateStub.listItem.annotations.iris = {[property]: '', 'default2': ''};
+        propertyManagerStub.defaultAnnotations = ['default1', 'default2'];
+        propertyManagerStub.shaclProperties = ['closed', 'deactivated', 'message'];
+        component.data.entity['@type'].push(`${SH}NodeShape`);
+        component.data.editing = true;
+        component.data.property = property;
+        component.data.value = 'value';
+        component.data.type = '';
+      });
+      it('if an property is being edited', () => {
+        component.data.type = 'type';
+        component.data.language = 'en';
+        component.ngOnInit();
+        expect(component.properties).toEqual(['default1', 'default2', 'property1', 'closed', 'deactivated', 'message']);
+        expect(component.propertyForm.controls.property.value).toEqual(property);
+        expect(component.propertyForm.controls.property.disabled).toBeTrue();
+        expect(component.propertyForm.controls.value.value).toEqual('value');
+        expect(component.propertyForm.controls.type.value).toEqual('type');
+        expect(component.propertyForm.controls.language.value).toEqual('en');
+      });
+      it('if an property is being edited and input data type value is empty', () => {
+        component.ngOnInit();
+        expect(component.properties).toEqual(['default1', 'default2', 'property1', 'closed', 'deactivated', 'message']);
+        expect(component.propertyForm.controls.property.value).toEqual(property);
+        expect(component.propertyForm.controls.property.disabled).toBeTrue();
+        expect(component.propertyForm.controls.value.value).toEqual('value');
+        expect(component.propertyForm.controls.type.value).toEqual(`${XSD}string`);
+        expect(component.propertyForm.controls.language.value).toEqual(undefined);
+      });
+      it('if a new property is being added', () => {
+        component.data.editing = false;
+        component.ngOnInit();
+        expect(component.properties).toEqual(['default1', 'default2', 'property1', 'closed', 'deactivated', 'message']);
+        expect(component.propertyForm.controls.property.value).toEqual('');
+        expect(component.propertyForm.controls.property.disabled).toBeFalse();
+        expect(component.propertyForm.controls.value.value).toEqual('');
+        expect(component.propertyForm.controls.type.value).toEqual(`${XSD}string`);
+        expect(component.propertyForm.controls.language.value).toEqual('');
+      });
     });
   });
   describe('contains the correct html', () => {
@@ -209,17 +249,40 @@ describe('Property Overlay component', () => {
         }
       });
     });
-    it('depending on whether owl:deprecated is selected', () => {
-      fixture.detectChanges();
-      expect(element.queryAll(By.css('textarea')).length).toEqual(1);
-      expect(element.queryAll(By.css('language-select')).length).toEqual(0);
-      expect(element.queryAll(By.css('mat-radio-group')).length).toEqual(0);
-      
-      component.propertyForm.controls.property.setValue(`${OWL}deprecated`);
-      fixture.detectChanges();
-      expect(element.queryAll(By.css('textarea')).length).toEqual(0);
-      expect(element.queryAll(By.css('language-select')).length).toEqual(0);
-      expect(element.queryAll(By.css('mat-radio-group')).length).toEqual(1);
+    describe('for a property with a boolean datatype when', () => {
+      it('owl:deprecated is selected', () => {
+        booleanExpectations(1, 0, 0);
+        const event: MatAutocompleteSelectedEvent = {
+          option: {
+            value: `${OWL}deprecated`
+          }
+        } as MatAutocompleteSelectedEvent;
+
+        component.selectProp(event);
+        booleanExpectations(0, 0, 1);
+      });
+      it('sh:closed is selected', () => {
+        booleanExpectations(1, 0, 0);
+        const event: MatAutocompleteSelectedEvent = {
+          option: {
+            value: `${SH}closed`
+          }
+        } as MatAutocompleteSelectedEvent;
+
+        component.selectProp(event);
+        booleanExpectations(0, 0, 1);
+      });
+      it('sh:deactivated is selected', () => {
+        booleanExpectations(1, 0, 0);
+        const event: MatAutocompleteSelectedEvent = {
+          option: {
+            value: `${SH}deactivated`
+          }
+        } as MatAutocompleteSelectedEvent;
+
+        component.selectProp(event);
+        booleanExpectations(0, 0, 1);
+      });
     });
     it('depending on whether it is an ontology property', () => {
       fixture.detectChanges();
@@ -543,4 +606,12 @@ describe('Property Overlay component', () => {
     fixture.detectChanges();
     expect(component.submit).toHaveBeenCalledWith();
   });
+
+  //helper function for de-duping code
+  function booleanExpectations(textAreaCount: number, languageSelectCount: number, radioGroupCount: number) {
+    fixture.detectChanges();
+    expect(element.queryAll(By.css('textarea')).length).toEqual(textAreaCount);
+    expect(element.queryAll(By.css('language-select')).length).toEqual(languageSelectCount);
+    expect(element.queryAll(By.css('mat-radio-group')).length).toEqual(radioGroupCount);
+  }
 });

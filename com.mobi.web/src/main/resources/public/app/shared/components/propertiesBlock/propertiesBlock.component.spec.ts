@@ -37,14 +37,17 @@ import { OntologyListItem } from '../../models/ontologyListItem.class';
 import { OntologyStateService } from '../../services/ontologyState.service';
 import { PropertyManagerService } from '../../services/propertyManager.service';
 import { PropertyOverlayComponent } from '../propertyOverlay/propertyOverlay.component';
-import { PropertyValuesComponent } from '../../../shared/components/propertyValues/propertyValues.component';
+import { PropertyValuesComponent } from '../propertyValues/propertyValues.component';
 import { PropertiesBlockComponent } from './propertiesBlock.component';
+import { SH } from '../../../prefixes';
+import { ShapesGraphStateService } from '../../services/shapesGraphState.service';
 
 describe('Properties Block component', function () {
   let component: PropertiesBlockComponent;
   let element: DebugElement;
   let fixture: ComponentFixture<PropertiesBlockComponent>;
   let ontologyStateStub: jasmine.SpyObj<OntologyStateService>;
+  let shapesStateStub: jasmine.SpyObj<ShapesGraphStateService>;
   let matDialog: jasmine.SpyObj<MatDialog>;
   let propertyManagerStub: jasmine.SpyObj<PropertyManagerService>;
 
@@ -66,6 +69,7 @@ describe('Properties Block component', function () {
       ],
       providers: [
         MockProvider(OntologyStateService),
+        MockProvider(ShapesGraphStateService),
         MockProvider(PropertyManagerService),
         {
           provide: MatDialog, useFactory: () => jasmine.createSpyObj('MatDialog', {
@@ -75,6 +79,7 @@ describe('Properties Block component', function () {
       ]
     }).compileComponents();
     ontologyStateStub = TestBed.inject(OntologyStateService) as jasmine.SpyObj<OntologyStateService>;
+    shapesStateStub = TestBed.inject(ShapesGraphStateService) as jasmine.SpyObj<ShapesGraphStateService>;
     propertyManagerStub = TestBed.inject(PropertyManagerService) as jasmine.SpyObj<PropertyManagerService>;
     matDialog = TestBed.inject(MatDialog) as jasmine.SpyObj<MatDialog>;
     ontologyStateStub.listItem = new OntologyListItem();
@@ -86,8 +91,9 @@ describe('Properties Block component', function () {
     component.stateService = ontologyStateStub;
     component.canModify = true;
     component.annotationIRIs = ['prop1'];
-    component.ontology = {
+    component.entity = {
       '@id': entityIRI,
+      '@type': [ 'type1', 'type2'],
       prop1: [{ '@id': 'value1' }],
       prop2: [{ '@value': 'value2', '@type': 'type', '@language': 'language' }]
     };
@@ -99,6 +105,7 @@ describe('Properties Block component', function () {
     element = null;
     fixture = null;
     ontologyStateStub = null;
+    shapesStateStub = null;
     propertyManagerStub = null;
     matDialog = null;
   });
@@ -131,15 +138,33 @@ describe('Properties Block component', function () {
     });
   });
   describe('controller methods', function () {
-    it('should update the filtered properties', function () {
-      ontologyStateStub.getEntityName.and.callFake(a => a);
-      component.annotationIRIs = ['annotation1', 'default2', 'owl2', 'prop2'];
-      propertyManagerStub.ontologyProperties = ['ont1', 'ont2'];
-      propertyManagerStub.defaultAnnotations = ['default1', 'default2', 'prop1'];
-      propertyManagerStub.owlAnnotations = ['owl1', 'owl2'];
-      component.updatePropertiesFiltered();
-      expect(component.properties).toEqual(['ont1', 'ont2', 'default1', 'default2', 'prop1', 'owl1', 'owl2', 'annotation1', 'prop2']);
-      expect(component.propertiesFiltered).toEqual(['prop1', 'prop2']);
+    describe('should update the filtered properties', function () {
+      it('when the entity is an ontology', function() {
+        //setup
+        ontologyStateStub.getEntityName.and.callFake(a => a);
+        component.annotationIRIs = ['annotation1', 'default2', 'owl2', 'prop2'];
+        propertyManagerStub.ontologyProperties = ['ont1', 'ont2'];
+        propertyManagerStub.defaultAnnotations = ['default1', 'default2', 'prop1'];
+        propertyManagerStub.owlAnnotations = ['owl1', 'owl2'];
+
+        //testing
+        component.updatePropertiesFiltered();
+        expect(component.properties).toEqual(['ont1', 'ont2', 'default1', 'default2', 'prop1', 'owl1', 'owl2', 'annotation1', 'prop2']);
+        expect(component.propertiesFiltered).toEqual(['prop1', 'prop2']);
+      });
+      it('when the entity is a node shape', function () {
+        //setup
+        shapesStateStub.getEntityName.and.callFake(a => a);
+        component.entity['@type'].push(`${SH}NodeShape`);
+        component.annotationIRIs = ['annotation1', 'default2', 'shacl1', 'prop2'];
+        propertyManagerStub.defaultAnnotations = ['default1', 'default2', 'prop1'];
+        propertyManagerStub.shaclProperties = ['shacl1', 'shacl2'];
+
+        //testing
+        component.updatePropertiesFiltered();
+        expect(component.properties).toEqual(['default1', 'default2', 'prop1', 'shacl1', 'shacl2', 'annotation1', 'prop2']);
+        expect(component.propertiesFiltered).toEqual(['prop1', 'prop2']);
+      });
     });
     it('should set the correct manager values when opening the Add Ontology Property Overlay', fakeAsync(function () {
       spyOn(component, 'updatePropertiesFiltered');
@@ -148,7 +173,7 @@ describe('Properties Block component', function () {
       expect(matDialog.open).toHaveBeenCalledWith(PropertyOverlayComponent, {
         data: {
           stateService: ontologyStateStub,
-          entity: component.ontology,
+          entity: component.entity,
           editing: false,
           annotationIRIs: ['prop1']
         }
@@ -174,7 +199,7 @@ describe('Properties Block component', function () {
       expect(matDialog.open).toHaveBeenCalledWith(PropertyOverlayComponent, {
         data: {
           stateService: ontologyStateStub,
-          entity: component.ontology,
+          entity: component.entity,
           editing: true,
           property: propertyIRI,
           value: 'value2',

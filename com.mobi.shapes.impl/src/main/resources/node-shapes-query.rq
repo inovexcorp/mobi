@@ -25,9 +25,9 @@ WHERE {
             ?iri a sh:NodeShape .
             FILTER(ISIRI(?iri))
             BIND(REPLACE(STR(?iri), "^.*?([_\\p{L}][-_\\p{L}\\p{N}]*)$", "$1") as ?nameOption)
-            BIND(9 as ?propertyOrder)
+            BIND(15 as ?propertyOrder)
           } UNION {
-            VALUES (?property ?propertyOrder) { (rdfs:label 2) (dct:title 4) (dc:title 6) (skos:prefLabel 8) (skos:altLabel 10) (skosxl:literalForm 12) (sh:name 18) }
+            VALUES (?property ?propertyOrder) { (rdfs:label 2) (dct:title 4) (dc:title 6) (skos:prefLabel 8) (skos:altLabel 10) (skosxl:literalForm 12) (sh:name 14) }
             ?iri a sh:NodeShape ;
             ?property ?nameOption .
             FILTER(ISIRI(?iri))

@@ -23,22 +23,22 @@
 import { Component, Input, OnChanges } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 import { union, sortBy, has, get } from 'lodash';
-import { RDF } from '../../../prefixes';
 
 import { ConfirmModalComponent } from '../confirmModal/confirmModal.component';
 import { JSONLDObject } from '../../models/JSONLDObject.interface';
 import { PropertyManagerService } from '../../services/propertyManager.service';
 import { PropertyOverlayComponent } from '../propertyOverlay/propertyOverlay.component';
+import { RDF, SH } from '../../../prefixes';
 import { VersionedRdfState } from '../../services/versionedRdfState.service';
 import { VersionedRdfListItem } from '../../models/versionedRdfListItem.class';
 
 /**
- * @class shared.PropertiesBlockComponent
+ * @class PropertiesBlockComponent
  *
  * A component that creates a section that displays the properties on the provided VersionedRDFRecord
- * using {@link shared.PropertyValuesComponent}. The section header contains a button for adding a property.
+ * using {@link PropertyValuesComponent}. The section header contains a button for adding a property.
  * The component houses the methods for opening the modal for
- * {@link shared.PropertyOverlayComponent editing, adding}, and removing owl:Ontology properties.
+ * {@link PropertyOverlayComponent} editing, adding, and removing owl:Ontology properties.
  * 
  * @param {JSONLDObject} ontology A JSON-LD object representing an ontology 
  */
@@ -48,7 +48,7 @@ import { VersionedRdfListItem } from '../../models/versionedRdfListItem.class';
 })
 export class PropertiesBlockComponent implements OnChanges {
   @Input() stateService: VersionedRdfState<VersionedRdfListItem>;
-  @Input() ontology: JSONLDObject; // TODO since this was moved to shared, ontology should be called entity
+  @Input() entity: JSONLDObject;
   @Input() canModify: boolean;
   @Input() annotationIRIs: string[];
 
@@ -64,14 +64,19 @@ export class PropertiesBlockComponent implements OnChanges {
     this.updatePropertiesFiltered();
   }
   updatePropertiesFiltered(): void {
-    this.properties = union(this.pm.ontologyProperties, this.pm.defaultAnnotations, this.pm.owlAnnotations, this.annotationIRIs);
-    this.propertiesFiltered = sortBy(this.properties.filter(prop => has(this.ontology, prop)), iri => this.stateService.getEntityName(iri));
+    if (this.entity['@type'].includes(`${SH}NodeShape`)) {
+      this.properties = union(this.pm.defaultAnnotations, this.pm.shaclProperties, this.annotationIRIs);
+    } else {
+      this.properties = union(this.pm.ontologyProperties, this.pm.defaultAnnotations, this.pm.owlAnnotations,
+        this.annotationIRIs);
+    }
+    this.propertiesFiltered = sortBy(this.properties.filter(prop => has(this.entity, prop)), iri => this.stateService.getEntityName(iri));
   }
   openAddOverlay(): void {
     this.dialog.open(PropertyOverlayComponent, {
       data: {
         stateService: this.stateService,
-        entity: this.ontology,
+        entity: this.entity,
         annotationIRIs: this.annotationIRIs,
         editing: false
       }
@@ -92,13 +97,13 @@ export class PropertiesBlockComponent implements OnChanges {
     });
   }
   editClicked(input: { property: string, index: number }): void {
-    const propertyObj = this.ontology[input.property][input.index];
+    const propertyObj = this.entity[input.property][input.index];
     const propertyType = get(propertyObj, '@type');
     const propertyLanguage = get(propertyObj, '@language');
     this.dialog.open(PropertyOverlayComponent, {
       data: {
         stateService: this.stateService,
-        entity: this.ontology,
+        entity: this.entity,
         annotationIRIs: this.annotationIRIs,
         editing: true,
         property: input.property,
@@ -106,7 +111,7 @@ export class PropertiesBlockComponent implements OnChanges {
         type: propertyType ? propertyType : (propertyLanguage ? `${RDF}langString` : ''),
         index: input.index,
         language: propertyLanguage,
-        isIRIProperty: !propertyObj['@value'] && propertyObj['@id'] ? true : false
+        isIRIProperty: !!(!propertyObj['@value'] && propertyObj['@id'])
       }
     }).afterClosed().subscribe(result => {
       if (result) {

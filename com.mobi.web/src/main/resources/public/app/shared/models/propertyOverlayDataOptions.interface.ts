@@ -21,9 +21,9 @@
  * #L%
  */
 
-import { VersionedRdfState } from "../services/versionedRdfState.service";
-import { JSONLDObject } from "./JSONLDObject.interface";
-import { VersionedRdfListItem } from "./versionedRdfListItem.class";
+import { JSONLDObject } from './JSONLDObject.interface';
+import { VersionedRdfListItem } from './versionedRdfListItem.class';
+import { VersionedRdfState } from '../services/versionedRdfState.service';
 
 export interface PropertyOverlayDataOptions {
     entity: JSONLDObject;
