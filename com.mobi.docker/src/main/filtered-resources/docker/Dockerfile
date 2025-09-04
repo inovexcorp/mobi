@@ -13,6 +13,7 @@ RUN mv ./mobi-distribution-$MOBI_VERSION ./mobi-distribution
 RUN mkdir -p ./mobi-distribution/docker
 ADD maven/docker-start.sh ./mobi-distribution/docker/docker-start.sh
 RUN cp -r ./mobi-distribution/etc ./mobi-etc-defaults
+ADD maven/com.mobi.workflows.impl.dagu.DaguWorkflowEngine.cfg ./mobi-etc-defaults/com.mobi.workflows.impl.dagu.DaguWorkflowEngine.cfg
 CMD chmod +x ./mobi-distribution/docker/docker-start.sh && ./mobi-distribution/docker/docker-start.sh
 
 EXPOSE 8443

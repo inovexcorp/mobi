@@ -47,7 +47,7 @@ import java.util.Optional;
 import javax.servlet.http.Cookie;
 
 /**
- * Dagu HttpClient works with Dagu Version 1.11.0. This client breaks with Dagu Versions >= 1.12.0.
+ * Dagu HttpClient works with Dagu Version 1.13.1. This client breaks with Dagu Versions >= 1.14.0.
  */
 public class DaguHttpClient {
     private static final ObjectMapper mapper = new ObjectMapper();

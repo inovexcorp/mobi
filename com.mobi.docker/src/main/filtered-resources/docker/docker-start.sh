@@ -29,6 +29,10 @@ ETC_DIR="/opt/mobi/mobi-distribution/etc"
 DATA_DIR="/opt/mobi/mobi-distribution/data"
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 
+if [ -z "$(ls -A /opt/mobi/mobi-distribution/etc)" ]; then
+   cp -r /opt/mobi/mobi-etc-defaults/* /opt/mobi/mobi-distribution/etc/
+fi
+
 # Check if MOBI_VERSION is set
 if [[ -z "$MOBI_VERSION" ]]; then
   echo "Error: MOBI_VERSION environment variable is not set."
@@ -76,5 +80,5 @@ else
   echo "Updating version file with new MOBI_VERSION: $MOBI_VERSION"
   echo "$MOBI_VERSION" > "$VERSION_FILE"
 fi
-echo "Running Karaf Server. To look at logs run tail -f /opt/mobi/mobi-distribution/data/log/karaf.log"
-/opt/mobi/mobi-distribution/bin/karaf server
+echo "Running Karaf Server..."
+/opt/mobi/mobi-distribution/bin/karaf run
