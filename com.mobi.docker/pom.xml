@@ -89,6 +89,10 @@
                                                 <source>${project.build.directory}/filtered-resources/docker/docker-start.sh</source>
                                                 <destName>docker-start.sh</destName>
                                             </file>
+                                            <file>
+                                                <source>${project.build.directory}/filtered-resources/docker/com.mobi.workflows.impl.dagu.DaguWorkflowEngine.cfg</source>
+                                                <destName>com.mobi.workflows.impl.dagu.DaguWorkflowEngine.cfg</destName>
+                                            </file>
                                         </files>
                                     </inline>
                                 </assembly>

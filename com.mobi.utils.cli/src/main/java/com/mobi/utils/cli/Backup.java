@@ -65,7 +65,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.InvalidPathException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
@@ -116,7 +118,8 @@ public class Backup implements Action {
         this.exportService = exportService;
     }
 
-    @Option(name = "-o", aliases = "--output-path", description = "The path to the output file")
+    @Option(name = "-o", aliases = "--output-path", description = "The path to the output file. Defaults to "
+            + "$karaf.home/backups/<ISODATE>.zip")
     @Completion(FileCompleter.class)
     protected String filePath = null;
 
@@ -272,7 +275,14 @@ public class Backup implements Action {
 
     private File getOutputFile(OffsetDateTime date) throws Exception {
         if (filePath == null) {
-            return File.createTempFile(date.format(DateTimeFormatter.BASIC_ISO_DATE), ".zip", getKarafHome());
+            Path backupDir = getKarafHome().toPath().resolve("backups");
+            if (!Files.exists(backupDir)) {
+                LOGGER.debug("Creating backups directory at " + backupDir);
+                Files.createDirectories(backupDir);
+            }
+            LOGGER.debug("Creating temporary backup file in " + backupDir);
+            return File.createTempFile(date.format(DateTimeFormatter.BASIC_ISO_DATE), ".zip",
+                    backupDir.toFile());
         } else {
             return new File(filePath);
         }

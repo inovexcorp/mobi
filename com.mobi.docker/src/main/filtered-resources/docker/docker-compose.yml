@@ -1,15 +1,20 @@
 name: mobi
 services:
   mobi:
-    container_name: Mobi
+    container_name: mobi
     image: inovexis/mobi:${project.version}
     ports:
       - "443:8443"
     command: bash -c '/opt/mobi/mobi-distribution/docker/docker-start.sh'
     volumes:
-      - data:/opt/mobi/mobi-distribution/data
-      - etc:/opt/mobi/mobi-distribution/etc
+      - ./data:/opt/mobi/mobi-distribution/data
+      - ./etc:/opt/mobi/mobi-distribution/etc
       - ./restore:/opt/mobi/mobi-distribution/restore
+      - ./backups:/opt/mobi/mobi-distribution/backups
+  dagu:
+    container_name: dagu
+    image: ghcr.io/dagu-org/dagu:1.13.1
+    command: sh -c "rm -f /home/dagu/.dagu/dags/hello_world.yaml && exec dagu start-all"
 volumes:
   data:
   etc:
