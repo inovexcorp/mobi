@@ -50,6 +50,8 @@ import org.mockito.MockitoAnnotations;
 
 import java.io.InputStream;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -86,7 +88,7 @@ public class DelimitedConverterImplTest extends OrmEnabledTestCase {
     private Model testOutputWithDatatypesAndInvalidValues;
     private Model testOutputLimitNoOffset;
     private Model testOutputLimitWithOffset;
-    private Model testOutputOffset ;
+    private Model testOutputOffset;
     private Model testOutputOffsetWithBlankRows;
     private Model testOutputPropertiesMissing;
     private Model testOutputNoPrefix;
@@ -141,8 +143,7 @@ public class DelimitedConverterImplTest extends OrmEnabledTestCase {
         // Setup
         SVConfig config = getSVConfigBuilder("testFile.csv", "newestMapping.ttl").containsHeaders(true).separator(',').build();
 
-        Model convertedModel = converter.convert(config);
-        assertEquals(convertedModel, testOutput);
+        testAndDeleteFile(config, testOutput);
     }
 
     @Test
@@ -150,8 +151,7 @@ public class DelimitedConverterImplTest extends OrmEnabledTestCase {
         // Setup
         SVConfig config = getSVConfigBuilder("testFileWithBlanks.csv", "newestMapping.ttl").containsHeaders(true).separator(',').build();
 
-        Model convertedModel = converter.convert(config);
-        assertEquals(convertedModel, testOutputWithBlanks);
+        testAndDeleteFile(config, testOutputWithBlanks);
     }
 
     @Test
@@ -159,8 +159,7 @@ public class DelimitedConverterImplTest extends OrmEnabledTestCase {
         // Setup
         SVConfig config = getSVConfigBuilder("testFile.csv", "mapping_multi-props-same-index.ttl").containsHeaders(true).separator(',').build();
 
-        Model convertedModel = converter.convert(config);
-        assertEquals(convertedModel, testOutputWithMultiIndexUsages);
+        testAndDeleteFile(config, testOutputWithMultiIndexUsages);
     }
 
     @Test
@@ -168,8 +167,7 @@ public class DelimitedConverterImplTest extends OrmEnabledTestCase {
         // Setup
         SVConfig config = getSVConfigBuilder("testFile.csv", "mappingAllDatatypes.ttl").containsHeaders(true).ontologies(Collections.singleton(ontology)).separator(',').build();
 
-        Model convertedModel = converter.convert(config);
-        assertEquals(convertedModel, testOutputWithDatatypes);
+        testAndDeleteFile(config, testOutputWithDatatypes);
     }
 
     @Test
@@ -178,8 +176,7 @@ public class DelimitedConverterImplTest extends OrmEnabledTestCase {
         when(om.retrieveOntology(any(), any(), any())).thenReturn(Optional.of(ontology));
         SVConfig config = getSVConfigBuilder("testFile.csv", "mappingWithSourceOntology.ttl").containsHeaders(true).separator(',').build();
 
-        Model convertedModel = converter.convert(config);
-        assertEquals(convertedModel, testOutputWithDatatypes);
+        testAndDeleteFile(config,  testOutputWithDatatypes);
     }
 
     @Test
@@ -188,8 +185,7 @@ public class DelimitedConverterImplTest extends OrmEnabledTestCase {
         when(om.retrieveOntology(any(), any(), any())).thenReturn(Optional.of(ontology));
         SVConfig config = getSVConfigBuilder("testFileWithInvalidValues.csv", "mappingWithSourceOntology.ttl").containsHeaders(true).separator(',').build();
 
-        Model convertedModel = converter.convert(config);
-        assertEquals(convertedModel, testOutputWithDatatypesAndInvalidValues);
+        testAndDeleteFile(config, testOutputWithDatatypesAndInvalidValues);
     }
 
     @Test
@@ -197,8 +193,7 @@ public class DelimitedConverterImplTest extends OrmEnabledTestCase {
         // Setup
         SVConfig config = getSVConfigBuilder("semicolonFile.csv", "newestMapping.ttl").containsHeaders(true).separator(';').build();
 
-        Model convertedModel = converter.convert(config);
-        assertEquals(convertedModel, testOutput);
+        testAndDeleteFile(config, testOutput);
     }
 
     @Test
@@ -206,8 +201,7 @@ public class DelimitedConverterImplTest extends OrmEnabledTestCase {
         // Setup
         SVConfig config = getSVConfigBuilder("tabFile.csv", "newestMapping.ttl").containsHeaders(true).separator('\t').build();
 
-        Model convertedModel = converter.convert(config);
-        assertEquals(convertedModel, testOutput);
+        testAndDeleteFile(config, testOutput);
     }
 
     @Test
@@ -215,8 +209,7 @@ public class DelimitedConverterImplTest extends OrmEnabledTestCase {
         // Setup
         SVConfig config = getSVConfigBuilder("tabFileWithBlanks.csv", "newestMapping.ttl").containsHeaders(true).separator('\t').build();
 
-        Model convertedModel = converter.convert(config);
-        assertEquals(convertedModel, testOutputWithBlanks);
+        testAndDeleteFile(config, testOutputWithBlanks);
     }
 
     @Test
@@ -224,8 +217,7 @@ public class DelimitedConverterImplTest extends OrmEnabledTestCase {
         // Setup
         SVConfig config = getSVConfigBuilder("testFile.csv", "mappingNoLocalName.ttl").containsHeaders(true).separator(',').build();
 
-        Model convertedModel = converter.convert(config);
-        assertEquals(convertedModel, testOutput);
+        testAndDeleteFile(config, testOutput);
     }
 
     @Test
@@ -233,8 +225,7 @@ public class DelimitedConverterImplTest extends OrmEnabledTestCase {
         // Setup
         SVConfig config = getSVConfigBuilder("testFileNoHeaders.csv", "newestMapping.ttl").containsHeaders(false).separator(',').build();
 
-        Model convertedModel = converter.convert(config);
-        assertEquals(convertedModel, testOutput);
+        testAndDeleteFile(config, testOutput);
     }
 
     @Test
@@ -242,8 +233,7 @@ public class DelimitedConverterImplTest extends OrmEnabledTestCase {
         // Setup
         ExcelConfig config = getExcelConfigBuilder("testFile.xlsx", "newestMapping.ttl").containsHeaders(true).build();
 
-        Model convertedModel = converter.convert(config);
-        assertEquals(convertedModel, testOutput);
+        testAndDeleteFile(config, testOutput);
     }
 
     @Test
@@ -251,8 +241,7 @@ public class DelimitedConverterImplTest extends OrmEnabledTestCase {
         // Setup
         ExcelConfig config = getExcelConfigBuilder("formulaData.xlsx", "formulaMapping.ttl").containsHeaders(true).build();
 
-        Model convertedModel = converter.convert(config);
-        assertEquals(convertedModel, testFormulaOutput);
+        testAndDeleteFile(config, testFormulaOutput);
     }
 
     @Test
@@ -260,8 +249,7 @@ public class DelimitedConverterImplTest extends OrmEnabledTestCase {
         // Setup
         ExcelConfig config = getExcelConfigBuilder("testFileWithBlanks.xlsx", "newestMapping.ttl").containsHeaders(true).build();
 
-        Model convertedModel = converter.convert(config);
-        assertEquals(convertedModel, testOutputWithBlanks);
+        testAndDeleteFile(config, testOutputWithBlanks);
     }
 
     @Test
@@ -270,9 +258,7 @@ public class DelimitedConverterImplTest extends OrmEnabledTestCase {
         ExcelConfig config = getExcelConfigBuilder("testFileWithFormattingAndBlanks.xlsx", "formattedExcelMapping.ttl").containsHeaders(true).build();
         when(converter.generateUuid()).thenReturn("abc", "bcd", "cdf", "dfg", "fgh", "ghi", "hij", "ijk", "jkl", "klm", "lmn", "mno", "nop", "opq", "pqr", "qrs", "rst", "stu", "tuv", "uvw", "vwx", "wxy", "xyz", "yza", "zab", "123", "234", "345", "456", "567", "678", "789", "890", "987", "876", "765", "654", "543", "432", "321");
 
-        Model convertedModel = converter.convert(config);
-        Rio.write(convertedModel, System.out, RDFFormat.TURTLE);
-        assertEquals(convertedModel, testOutputWithFormattingAndBlanks);
+        testAndDeleteFile(config, testOutputWithFormattingAndBlanks);
     }
 
     @Test
@@ -280,16 +266,15 @@ public class DelimitedConverterImplTest extends OrmEnabledTestCase {
         // Setup
         ExcelConfig config = getExcelConfigBuilder("testFile.xlsx", "mappingAllDatatypes.ttl").containsHeaders(true).ontologies(Collections.singleton(ontology)).build();
 
-        Model convertedModel = converter.convert(config);
-        assertEquals(convertedModel, testOutputWithDatatypes);
+        testAndDeleteFile(config, testOutputWithDatatypes);
     }
 
     @Test
     public void Convert_Excel_2007_File_with_Multiple_Object_per_Row_and_Object_and_Data_Properties_in_Source_Ontologies() throws Exception {
         // Setup
         when(om.retrieveOntology(any(), any(), any())).thenReturn(Optional.of(ontology));
-        ExcelConfig config = getExcelConfigBuilder("testFile.xlsx", "mappingWithSourceOntology.ttl").containsHeaders(true).build();Model convertedModel = converter.convert(config);
-        assertEquals(convertedModel, testOutputWithDatatypes);
+        ExcelConfig config = getExcelConfigBuilder("testFile.xlsx", "mappingWithSourceOntology.ttl").containsHeaders(true).build();
+        testAndDeleteFile(config, testOutputWithDatatypes);
     }
 
     @Test
@@ -298,8 +283,7 @@ public class DelimitedConverterImplTest extends OrmEnabledTestCase {
         when(om.retrieveOntology(any(), any(), any())).thenReturn(Optional.of(ontology));
         ExcelConfig config = getExcelConfigBuilder("testFileWithInvalidValues.xlsx", "mappingWithSourceOntology.ttl").containsHeaders(true).build();
 
-        Model convertedModel = converter.convert(config);
-        assertEquals(convertedModel, testOutputWithDatatypesAndInvalidValues);
+        testAndDeleteFile(config, testOutputWithDatatypesAndInvalidValues);
     }
 
     @Test
@@ -368,8 +352,7 @@ public class DelimitedConverterImplTest extends OrmEnabledTestCase {
         // Setup
         SVConfig config = getSVConfigBuilder("testFile.csv", "newestMapping.ttl").containsHeaders(true).separator(',').limit(2L).build();
 
-        Model convertedModel = converter.convert(config);
-        assertEquals(convertedModel, testOutputLimitNoOffset);
+        testAndDeleteFile(config, testOutputLimitNoOffset);
     }
 
     @Test
@@ -377,8 +360,7 @@ public class DelimitedConverterImplTest extends OrmEnabledTestCase {
         // Setup
         SVConfig config = getSVConfigBuilder("testFile.csv", "newestMapping.ttl").containsHeaders(true).separator(',').limit(2L).offset(1).build();
 
-        Model convertedModel = converter.convert(config);
-        assertEquals(convertedModel, testOutputLimitWithOffset);
+        testAndDeleteFile(config, testOutputLimitWithOffset);
     }
 
     @Test
@@ -386,8 +368,7 @@ public class DelimitedConverterImplTest extends OrmEnabledTestCase {
         // Setup
         SVConfig config = getSVConfigBuilder("testFile.csv", "newestMapping.ttl").containsHeaders(true).separator(',').offset(1).build();
 
-        Model convertedModel = converter.convert(config);
-        assertEquals(convertedModel, testOutputOffset);
+        testAndDeleteFile(config, testOutputOffset);
     }
 
     @Test
@@ -395,8 +376,7 @@ public class DelimitedConverterImplTest extends OrmEnabledTestCase {
         // Setup
         SVConfig config = getSVConfigBuilder("testFileWithBlanks.csv", "newestMapping.ttl").containsHeaders(true).separator(',').offset(2).build();
 
-        Model convertedModel = converter.convert(config);
-        assertEquals(convertedModel, testOutputOffsetWithBlankRows);
+        testAndDeleteFile(config, testOutputOffsetWithBlankRows);
     }
 
     @Test
@@ -404,8 +384,7 @@ public class DelimitedConverterImplTest extends OrmEnabledTestCase {
         // Setup
         ExcelConfig config = getExcelConfigBuilder("testFileWithBlanks.xlsx", "newestMapping.ttl").containsHeaders(true).offset(2).build();
 
-        Model convertedModel = converter.convert(config);
-        assertEquals(convertedModel, testOutputOffsetWithBlankRows);
+        testAndDeleteFile(config, testOutputOffsetWithBlankRows);
     }
 
     @Test
@@ -413,8 +392,7 @@ public class DelimitedConverterImplTest extends OrmEnabledTestCase {
         // Setup
         SVConfig config = getSVConfigBuilder("testFileNoHeaders.csv", "newestMapping.ttl").containsHeaders(false).separator(',').offset(1).build();
 
-        Model convertedModel = converter.convert(config);
-        assertEquals(convertedModel, testOutputOffset);
+        testAndDeleteFile(config, testOutputOffset);
     }
 
     @Test
@@ -422,8 +400,7 @@ public class DelimitedConverterImplTest extends OrmEnabledTestCase {
         // Setup
         SVConfig config = getSVConfigBuilder("testPropertiesMissing.csv", "newestMapping.ttl").containsHeaders(true).separator(',').build();
 
-        Model convertedModel = converter.convert(config);
-        assertEquals(convertedModel, testOutputPropertiesMissing);
+        testAndDeleteFile(config, testOutputPropertiesMissing);
     }
 
     @Test
@@ -432,8 +409,7 @@ public class DelimitedConverterImplTest extends OrmEnabledTestCase {
         when(converter.generateUuid()).thenReturn("abc", "bcd", "cdf", "dfg", "fgh", "ghi", "hij", "ijk", "jkl", "klm", "lmn", "nop", "pqr", "rst", "tuv", "vwx", "xyz", "123", "345");
         SVConfig config = getSVConfigBuilder("testFile.csv", "mapping_no-prefix.ttl").containsHeaders(true).separator(',').build();
 
-        Model convertedModel = converter.convert(config);
-        assertEquals(convertedModel, testOutputNoPrefix);
+        testAndDeleteFile(config, testOutputNoPrefix);
     }
 
     @Test(expected = MobiETLException.class)
@@ -470,5 +446,28 @@ public class DelimitedConverterImplTest extends OrmEnabledTestCase {
 
     private ExcelConfig.ExcelConfigBuilder getExcelConfigBuilder(String inputFilename, String mappingFilename) throws Exception {
         return new ExcelConfig.ExcelConfigBuilder(getInputStream(inputFilename), Charset.defaultCharset(), loadModel(mappingFilename));
+    }
+
+    private void testAndDeleteFile(SVConfig config, Model output) throws Exception {
+        Path path = converter.convert(config);
+        testAndDeleteFile(path, output);
+    }
+
+    private void testAndDeleteFile(ExcelConfig config, Model output) throws Exception {
+        Path path = converter.convert(config);
+        testAndDeleteFile(path, output);
+    }
+
+    private void testAndDeleteFile(Path path, Model output) throws Exception {
+        try (InputStream is = Files.newInputStream(path)) {
+            Model convertedModel = Rio.parse(is, RDFFormat.TURTLE);
+            assertEquals(convertedModel, output);
+        } finally {
+            try {
+                Files.delete(path);
+            } catch (Exception e) {
+                // Ignore
+            }
+        }
     }
 }

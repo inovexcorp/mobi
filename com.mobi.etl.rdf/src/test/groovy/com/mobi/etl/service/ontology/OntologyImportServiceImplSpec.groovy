@@ -26,7 +26,6 @@ import com.mobi.catalog.api.BranchManager
 import com.mobi.catalog.api.CommitManager
 import com.mobi.catalog.api.DifferenceManager
 import com.mobi.catalog.api.builder.Difference
-import com.mobi.catalog.api.ontologies.mcat.Branch
 import com.mobi.catalog.api.ontologies.mcat.MasterBranch
 import com.mobi.catalog.api.versioning.VersioningManager
 import com.mobi.catalog.config.CatalogConfigProvider
@@ -39,6 +38,8 @@ import org.eclipse.rdf4j.model.IRI
 import org.eclipse.rdf4j.model.impl.DynamicModelFactory
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory
 import org.eclipse.rdf4j.repository.RepositoryConnection
+import org.eclipse.rdf4j.rio.RDFFormat
+import org.eclipse.rdf4j.rio.Rio
 import spock.lang.Specification
 
 class OntologyImportServiceImplSpec extends Specification {
@@ -88,6 +89,10 @@ class OntologyImportServiceImplSpec extends Specification {
         setup:
         def mappedData = mf.createEmptyModel()
         mappedData.addAll([stmt1, stmt2])
+        File file = File.createTempFile("test", ".jsonld");
+        try (FileOutputStream fos = new FileOutputStream(file)) {
+            Rio.write(mappedData, fos, RDFFormat.JSONLD)
+        }
         def expectedCommit = mf.createEmptyModel()
         expectedCommit.addAll([stmt2])
         def returnModel = mf.createEmptyModel()
@@ -95,36 +100,46 @@ class OntologyImportServiceImplSpec extends Specification {
         ontologyManager.getOntologyModel(ontologyIRI, branchIRI) >> returnModel
 
         when:
-        def committedData = service.importOntology(ontologyIRI, branchIRI, false, mappedData, user, "")
+        def committedData = service.importOntology(ontologyIRI, branchIRI, false, file, user, "")
 
         then:
         committedData.getAdditions() as Set == expectedCommit as Set
         committedData.getDeletions() as Set == [] as Set
         1 * versioningManager.commit(_, ontologyIRI, branchIRI, user, "", connMock)
+        file.delete()
     }
 
     def "Service does not commit duplicate additions"() {
         setup:
         def mappedData = mf.createEmptyModel()
         mappedData.addAll([stmt1, stmt2])
+        File file = File.createTempFile("test", ".jsonld");
+        try (FileOutputStream fos = new FileOutputStream(file)) {
+            Rio.write(mappedData, fos, RDFFormat.JSONLD)
+        }
         def expectedCommit = mf.createEmptyModel()
         def returnModel = mf.createEmptyModel()
         returnModel.addAll([stmt1, stmt2])
         ontologyManager.getOntologyModel(ontologyIRI, branchIRI) >> returnModel
 
         when:
-        def committedData = service.importOntology(ontologyIRI, branchIRI, false, mappedData, user, "")
+        def committedData = service.importOntology(ontologyIRI, branchIRI, false, file, user, "")
 
         then:
         committedData.getAdditions() as Set == expectedCommit as Set
         committedData.getDeletions() as Set == [] as Set
         0 * versioningManager.commit(*_)
+        file.delete()
     }
 
     def "Service commits addition data to master branch"() {
         setup:
         def mappedData = mf.createEmptyModel()
         mappedData.addAll([stmt1, stmt2])
+        File file = File.createTempFile("test", ".jsonld");
+        try (FileOutputStream fos = new FileOutputStream(file)) {
+            Rio.write(mappedData, fos, RDFFormat.JSONLD)
+        }
         def expectedCommit = mf.createEmptyModel()
         expectedCommit.addAll([stmt2])
         branchManager.getMasterBranch(_, ontologyIRI, connMock) >> branch
@@ -134,18 +149,23 @@ class OntologyImportServiceImplSpec extends Specification {
         ontologyManager.getOntologyModel(ontologyIRI, branchIRI) >> returnModel
 
         when:
-        def committedData = service.importOntology(ontologyIRI, false, mappedData, user, "")
+        def committedData = service.importOntology(ontologyIRI, false, file, user, "")
 
         then:
         committedData.getAdditions() as Set == expectedCommit as Set
         committedData.getDeletions() as Set == [] as Set
         1 * versioningManager.commit(_, ontologyIRI, branchIRI, user, "", connMock)
+        file.delete()
     }
 
     def "Service commits update data"() {
         setup:
         def mappedData = mf.createEmptyModel()
         mappedData.addAll([stmt1, stmt2])
+        File file = File.createTempFile("test", ".jsonld");
+        try (FileOutputStream fos = new FileOutputStream(file)) {
+            Rio.write(mappedData, fos, RDFFormat.JSONLD)
+        }
         def existingData = mf.createEmptyModel()
         existingData.addAll([stmt1])
         def additions = mf.createEmptyModel()
@@ -158,18 +178,23 @@ class OntologyImportServiceImplSpec extends Specification {
                 .build()
 
         when:
-        def committedData = service.importOntology(ontologyIRI, branchIRI, true, mappedData, user, "")
+        def committedData = service.importOntology(ontologyIRI, branchIRI, true, file, user, "")
 
         then:
         committedData.getAdditions() as Set == additions as Set
         committedData.getDeletions() as Set == deletions as Set
         1 * versioningManager.commit(_, ontologyIRI, branchIRI, user, "", connMock)
+        file.delete()
     }
 
     def "Service does not commit duplicate updates"() {
         setup:
         def mappedData = mf.createEmptyModel()
         mappedData.addAll([stmt1, stmt2])
+        File file = File.createTempFile("test", ".jsonld");
+        try (FileOutputStream fos = new FileOutputStream(file)) {
+            Rio.write(mappedData, fos, RDFFormat.JSONLD)
+        }
         def existingData = mf.createEmptyModel()
         existingData.addAll([stmt1, stmt2])
         def additions = mf.createEmptyModel()
@@ -181,18 +206,23 @@ class OntologyImportServiceImplSpec extends Specification {
                 .build()
 
         when:
-        def committedData = service.importOntology(ontologyIRI, branchIRI, true, mappedData, user, "")
+        def committedData = service.importOntology(ontologyIRI, branchIRI, true, file, user, "")
 
         then:
         committedData.getAdditions() as Set == additions as Set
         committedData.getDeletions() as Set == deletions as Set
         0 * versioningManager.commit(*_)
+        file.delete()
     }
 
     def "Service commits update data with one ontology object"() {
         setup:
         def mappedData = mf.createEmptyModel()
         mappedData.addAll([stmt1, stmt2])
+        File file = File.createTempFile("test", ".jsonld");
+        try (FileOutputStream fos = new FileOutputStream(file)) {
+            Rio.write(mappedData, fos, RDFFormat.JSONLD)
+        }
         def existingData = mf.createEmptyModel()
         existingData.addAll([stmt1, ontStmt1])
         def additions = mf.createEmptyModel()
@@ -207,18 +237,23 @@ class OntologyImportServiceImplSpec extends Specification {
                 .build()
 
         when:
-        def committedData = service.importOntology(ontologyIRI, branchIRI, true, mappedData, user, "")
+        def committedData = service.importOntology(ontologyIRI, branchIRI, true, file, user, "")
 
         then:
         committedData.getAdditions() as Set == additions as Set
         committedData.getDeletions() as Set == deletions as Set
         1 * versioningManager.commit(_, ontologyIRI, branchIRI, user, "", connMock)
+        file.delete()
     }
 
     def "Service commits update data with two ontology objects"() {
         setup:
         def mappedData = mf.createEmptyModel()
         mappedData.addAll([stmt1, stmt2])
+        File file = File.createTempFile("test", ".jsonld");
+        try (FileOutputStream fos = new FileOutputStream(file)) {
+            Rio.write(mappedData, fos, RDFFormat.JSONLD)
+        }
         def existingData = mf.createEmptyModel()
         existingData.addAll([stmt1, ontStmt1, ontStmt2, stmt3])
         def additions = mf.createEmptyModel()
@@ -234,11 +269,12 @@ class OntologyImportServiceImplSpec extends Specification {
                 .build()
 
         when:
-        def committedData = service.importOntology(ontologyIRI, branchIRI, true, mappedData, user, "")
+        def committedData = service.importOntology(ontologyIRI, branchIRI, true, file, user, "")
 
         then:
         committedData.getAdditions() as Set == additions as Set
         committedData.getDeletions() as Set == deletions as Set
         1 * versioningManager.commit(_, ontologyIRI, branchIRI, user, "", connMock)
+        file.delete()
     }
 }

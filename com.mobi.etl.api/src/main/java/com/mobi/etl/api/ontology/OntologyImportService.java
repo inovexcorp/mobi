@@ -25,8 +25,9 @@ package com.mobi.etl.api.ontology;
 
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
+
+import java.io.File;
 
 public interface OntologyImportService {
 
@@ -45,7 +46,7 @@ public interface OntologyImportService {
      * @throws IllegalArgumentException If the Catalog could not be found, the OntologyRecord could not be found, or the
      *      Branch does not belong to the OntologyRecord
      */
-    Difference importOntology(Resource ontologyRecord, boolean update, Model ontologyData, User user, String commitMsg);
+    Difference importOntology(Resource ontologyRecord, boolean update, File ontologyData, User user, String commitMsg);
 
     /**
      * Commits provided data to the provided branch of an ontology without creating duplicate statements. If removal of
@@ -63,5 +64,6 @@ public interface OntologyImportService {
      * @throws IllegalArgumentException If the Catalog could not be found, the OntologyRecord could not be found, or the
      *      Branch does not belong to the OntologyRecord
      */
-    Difference importOntology(Resource ontologyRecord, Resource branch, boolean update, Model ontologyData, User user, String commitMsg);
+    Difference importOntology(Resource ontologyRecord, Resource branch, boolean update, File ontologyData, User user,
+                              String commitMsg);
 }

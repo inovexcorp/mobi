@@ -26,30 +26,30 @@ package com.mobi.etl.api.delimited;
 import com.mobi.etl.api.config.delimited.ExcelConfig;
 import com.mobi.etl.api.config.delimited.SVConfig;
 import com.mobi.exception.MobiException;
-import org.eclipse.rdf4j.model.Model;
 
 import java.io.IOException;
+import java.nio.file.Path;
 
 public interface DelimitedConverter {
     /**
-     * Converts a delimited SV file to RDF using a mapping. Column indexes for data
-     * mappings are zero-based. Returns the RDF data as a Model.
+     * Converts a delimited SV file to an RDF file using a mapping. Column indexes for data
+     * mappings are zero-based. Returns a Path to the RDF file.
      *
      * @param config Conversion configuration for the SV file
-     * @return A Model of RDF data converted from delimited data
+     * @return a Path to the RDF file
      * @throws IOException Thrown if there is a problem reading the file given
      * @throws MobiException Thrown if the file is not in a valid character set
      */
-    Model convert(SVConfig config) throws IOException, MobiException;
+    Path convert(SVConfig config) throws IOException, MobiException;
 
     /**
-     * Converts a Excel file to RDF using a mapping. Column indexes for data mappings
-     * are zero-based. Returns the RDF data as a Model.
+     * Converts a Excel file to an RDF file using a mapping. Column indexes for data mappings
+     * are zero-based. Returns a Path to the RDF file.
      *
      * @param config Conversion configuration for the Excel file
-     * @return A Model of RDF data converted from delimited data
+     * @return a Path to the RDF file
      * @throws IOException Thrown if there is a problem reading the file given
      * @throws MobiException Thrown if the file is not in a valid Excel format
      */
-    Model convert(ExcelConfig config) throws IOException, MobiException;
+    Path convert(ExcelConfig config) throws IOException, MobiException;
 }

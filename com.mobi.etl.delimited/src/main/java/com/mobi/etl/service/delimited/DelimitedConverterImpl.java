@@ -58,6 +58,10 @@ import org.eclipse.rdf4j.model.Value;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
+import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.Rio;
+import org.eclipse.rdf4j.rio.WriterConfig;
+import org.eclipse.rdf4j.rio.helpers.TurtleWriterSettings;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
@@ -67,6 +71,9 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -109,13 +116,16 @@ public class DelimitedConverterImpl implements DelimitedConverter {
     }
 
     @Override
-    public Model convert(SVConfig config) throws IOException, MobiException {
+    public Path convert(SVConfig config) throws IOException, MobiException {
         Mapping mapping = mappingFactory.getAllExisting(config.getMapping()).stream().findFirst().orElseThrow(() ->
                 new IllegalArgumentException("Missing mapping object"));
         Set<Ontology> sourceOntologies = config.getOntologies().isEmpty() ? getSourceOntologies(mapping) :
                 config.getOntologies();
 
-        Model convertedRDF = modelFactory.createEmptyModel();
+        RDFFormat format = config.getFormat();
+        Path path = Files.createTempFile(UUID.randomUUID().toString(), "." + format.getDefaultFileExtension());
+        OutputStream convertedOutput = Files.newOutputStream(path);
+
         ArrayList<ClassMapping> classMappings = parseClassMappings(config.getMapping());
         long offset = config.getOffset();
         boolean containsHeaders = config.getContainsHeaders();
@@ -144,12 +154,12 @@ public class DelimitedConverterImpl implements DelimitedConverter {
                 for (String cell : nextLine) {
                     if (!cell.isEmpty()) {
                         rowContainsValues = true;
-                        writeClassMappingsToModel(convertedRDF, nextLine, classMappings, sourceOntologies);
+                        writeClassMappingsToModel(convertedOutput, nextLine, classMappings, sourceOntologies, format);
                         break;
                     }
                 }
                 if (!rowContainsValues) {
-                    LOGGER.debug(String.format("Skipping empty row number: %d", index + 1));
+                    LOGGER.debug("Skipping empty row number: {}", index + 1);
                 }
                 index++;
             }
@@ -157,25 +167,27 @@ public class DelimitedConverterImpl implements DelimitedConverter {
             throw new IllegalStateException("Error reading csv.", e);
         }
 
-        return convertedRDF;
+        return path;
     }
 
     @Override
-    public Model convert(ExcelConfig config) throws IOException, MobiException {
+    public Path convert(ExcelConfig config) throws IOException, MobiException {
         Mapping mapping = mappingFactory.getAllExisting(config.getMapping()).stream().findFirst().orElseThrow(() ->
                 new IllegalArgumentException("Missing mapping object"));
         Set<Ontology> sourceOntologies = config.getOntologies().isEmpty() ? getSourceOntologies(mapping) :
                 config.getOntologies();
-        Model convertedRDF = modelFactory.createEmptyModel();
+        RDFFormat format = config.getFormat();
+        Path path = Files.createTempFile(UUID.randomUUID().toString(), "." + format.getDefaultFileExtension());
+        OutputStream convertedRDF = Files.newOutputStream(path);
         ArrayList<ClassMapping> classMappings = parseClassMappings(config.getMapping());
 
-        convertExcel(config, convertedRDF, sourceOntologies, classMappings);
+        convertExcel(config, convertedRDF, sourceOntologies, classMappings, format);
 
-        return convertedRDF;
+        return path;
     }
 
-    private void convertExcel(ExcelConfig config, Model convertedRDF, Set<Ontology> sourceOntologies,
-                              ArrayList<ClassMapping> classMappings) throws IOException {
+    private void convertExcel(ExcelConfig config, OutputStream convertedRDF, Set<Ontology> sourceOntologies,
+                              ArrayList<ClassMapping> classMappings, RDFFormat format) throws IOException {
         // Arguments will extract cell formatting and mark a cell as in error if it could not be parsed
         ReadingOptions readingOptions = new ReadingOptions(true, true);
         try (ReadableWorkbook wb = new ReadableWorkbook(config.getData(), readingOptions)) {
@@ -198,7 +210,7 @@ public class DelimitedConverterImpl implements DelimitedConverter {
                 }
                 // Logging the automatic skip of empty rows with no formatting
                 while (row.getRowNum() > lastRowNumber.get() + 1) {
-                    LOGGER.debug(String.format("Skipping empty row number: %d", lastRowNumber.get() + 1));
+                    LOGGER.debug("Skipping empty row number: {}", lastRowNumber.get() + 1);
                     lastRowNumber.getAndIncrement();
                 }
                 // getCellCount instead of getPhysicalCellCount so that blank values don't cause cells to shift
@@ -213,9 +225,9 @@ public class DelimitedConverterImpl implements DelimitedConverter {
                 }
                 // Skipping empty rows
                 if (rowContainsValues) {
-                    writeClassMappingsToModel(convertedRDF, cells, classMappings, sourceOntologies);
+                    writeClassMappingsToModel(convertedRDF, cells, classMappings, sourceOntologies, format);
                 } else {
-                    LOGGER.debug(String.format("Skipping empty row number: %d", row.getRowNum()));
+                    LOGGER.debug("Skipping empty row number: {}", row.getRowNum());
                 }
                 lastRowNumber.getAndIncrement();
             });
@@ -225,16 +237,19 @@ public class DelimitedConverterImpl implements DelimitedConverter {
     /**
      * Processes a row of data into RDF using class mappings and adds it to the given Model.
      *
-     * @param convertedRDF  the model to hold the converted data
+     * @param convertedOutput  the OutputStream to hold the converted data
      * @param line          the data to convert
      * @param classMappings the classMappings to use when converting the data
      */
-    private void writeClassMappingsToModel(Model convertedRDF, String[] line, List<ClassMapping> classMappings,
-                                           Set<Ontology> sourceOntologies) {
+    private void writeClassMappingsToModel(OutputStream convertedOutput, String[] line, List<ClassMapping> classMappings,
+                                           Set<Ontology> sourceOntologies, RDFFormat format) {
         // Map holds ClassMappings to instance IRIs. Modified by writeClassToModel().
         Map<Resource, IRI> mappedClasses = new HashMap<>();
+        WriterConfig writerConfig = new WriterConfig();
+        writerConfig.set(TurtleWriterSettings.ABBREVIATE_NUMBERS, false);
         for (ClassMapping cm : classMappings) {
-            convertedRDF.addAll(writeClassToModel(cm, line, mappedClasses, sourceOntologies));
+            Rio.write(writeClassToModel(cm, line, mappedClasses, sourceOntologies), convertedOutput, format,
+                    writerConfig);
         }
     }
 
@@ -332,9 +347,9 @@ public class DelimitedConverterImpl implements DelimitedConverter {
                                 literal = valueFactory.createLiteral(nextLine[columnIndex], datatype[0]);
                             }
                         } catch (IllegalArgumentException ex) {
-                            LOGGER.warn(String.format("Column value %s not valid for range type %s of %s: %s",
+                            LOGGER.warn("Column value {} not valid for range type {} of {}: {}",
                                     nextLine[columnIndex], datatype[0].stringValue(), classInstance.stringValue(),
-                                    prop.stringValue()));
+                                    prop.stringValue());
                         }
                     }
                     // Only add literal if valid with the datatype
@@ -343,8 +358,8 @@ public class DelimitedConverterImpl implements DelimitedConverter {
                     }
                 } // else don't create a stmt for blank values
             } else {
-                LOGGER.warn(String.format("Column %d missing for %s: %s",
-                        columnIndex, classInstance.stringValue(), prop.stringValue()));
+                LOGGER.warn("Column {} missing for {}: {}",
+                        columnIndex, classInstance.stringValue(), prop.stringValue());
             }
         });
 
@@ -409,12 +424,12 @@ public class DelimitedConverterImpl implements DelimitedConverter {
                     //remove whitespace
                     String replacement = whitespace().removeFrom(currentLine[colIndex]);
                     if (LOGGER.isDebugEnabled() && !replacement.equals(currentLine[colIndex])) {
-                        LOGGER.debug(String.format("Local name for IRI was converted from \"%s\" to \"%s\" in order to"
-                                + "remove whitespace.", currentLine[colIndex], replacement));
+                        LOGGER.debug("Local name for IRI was converted from \"{}\" to \"{}\" in order to"
+                                + "remove whitespace.", currentLine[colIndex], replacement);
                     }
                     mat.appendReplacement(result, replacement);
                 } else {
-                    LOGGER.warn(String.format("Missing data for local name from column %d", colIndex));
+                    LOGGER.warn("Missing data for local name from column {}", colIndex);
                     return Optional.empty();
                 }
             }

@@ -27,7 +27,6 @@ import static com.mobi.etl.api.delimited.ExcelUtils.getCellText;
 import static com.mobi.rest.util.RestUtils.checkStringParam;
 import static com.mobi.rest.util.RestUtils.getActiveUser;
 import static com.mobi.rest.util.RestUtils.getRDFFormat;
-import static com.mobi.rest.util.RestUtils.groupedModelToString;
 import static com.mobi.rest.util.RestUtils.jsonldToModel;
 import static java.nio.file.FileVisitResult.CONTINUE;
 import static javax.ws.rs.core.Response.Status.BAD_REQUEST;
@@ -56,7 +55,6 @@ import com.mobi.rest.security.annotations.ResourceId;
 import com.mobi.rest.security.annotations.ValueType;
 import com.mobi.rest.util.CharsetUtils;
 import com.mobi.rest.util.ErrorUtils;
-import com.mobi.rest.util.FileUpload;
 import com.mobi.rest.util.RestUtils;
 import com.opencsv.CSVParser;
 import com.opencsv.CSVParserBuilder;
@@ -70,14 +68,17 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.time.StopWatch;
 import org.dhatim.fastexcel.reader.ReadableWorkbook;
 import org.dhatim.fastexcel.reader.ReadingOptions;
+import org.dhatim.fastexcel.reader.Sheet;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.eclipse.rdf4j.repository.RepositoryException;
+import org.eclipse.rdf4j.rio.RDFFormat;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Deactivate;
@@ -86,8 +87,6 @@ import org.osgi.service.jaxrs.whiteboard.propertytypes.JaxrsResource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.BufferedWriter;
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -95,15 +94,12 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.io.Writer;
 import java.nio.charset.Charset;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
-import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.HashMap;
 import java.util.Map;
@@ -213,22 +209,18 @@ public class DelimitedRest {
     )
     public Response upload(@Context HttpServletRequest servletRequest) {
         try {
-            Map<String, Object> formData = RestUtils.getFormData(servletRequest, new HashMap<>());
-            FileUpload file = (FileUpload) formData.get("delimitedFile");
-            InputStream inputStream = file.getStream();
-            String filename = file.getFilename();
-
-            String uuid = generateUuid();
-            String extension = FilenameUtils.getExtension(filename);
-            Path filePath = Paths.get(TEMP_DIR + "/" + uuid + "." + extension);
-
-            saveStreamToFile(inputStream, filePath);
+            Path pathWithoutExt = Paths.get(TEMP_DIR + "/" + UUID.randomUUID());
+            Map<String, Object> formData = RestUtils.getFormData(servletRequest, new HashMap<>(), pathWithoutExt,
+                    true);
+            String filename = (String) formData.get("delimitedFile");
             try {
-                getCharset(filePath.toFile(), true);
+                Path pathWithExt = pathWithoutExt.resolveSibling(pathWithoutExt.getFileName() + "."
+                        + FilenameUtils.getExtension(filename));
+                getCharset(pathWithExt.toFile(), true);
+                return Response.status(201).entity(pathWithExt.getFileName().toString()).build();
             } catch (IOException ex) {
                 throw new IllegalStateException("Error occurred reading temporary file", ex);
             }
-            return Response.status(201).entity(filePath.getFileName().toString()).build();
         } catch (IllegalStateException | MobiException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), INTERNAL_SERVER_ERROR);
         } catch (IllegalArgumentException e) {
@@ -272,22 +264,16 @@ public class DelimitedRest {
                                    description = "Name of the uploaded file on the server to replace", required = true))
                            @PathParam("documentName") String fileName) {
         try {
-            Map<String, Object> formData = RestUtils.getFormData(servletRequest, new HashMap<>());
-            FileUpload file = (FileUpload) formData.get("delimitedFile");
-            InputStream inputStream = file.getStream();
-
-            ByteArrayOutputStream fileOutput;
+            Path path = Paths.get(TEMP_DIR + "/" + fileName);
+            Files.deleteIfExists(path);
+            RestUtils.getFormData(servletRequest, new HashMap<>(), path, false);
             try {
-                fileOutput = toByteArrayOutputStream(inputStream);
-            } catch (IOException e) {
-                throw ErrorUtils.sendError(PARSING_DELIMITED_ERROR, BAD_REQUEST);
+                getCharset(path.toFile(), true);
+                return Response.ok(path.getFileName().toString()).build();
+            } catch (IOException ex) {
+                throw new IllegalStateException("Error occurred reading temporary file", ex);
             }
-            getCharset(fileOutput.toByteArray());
-
-            Path filePath = Paths.get(TEMP_DIR + "/" + fileName);
-            saveStreamToFile(new ByteArrayInputStream(fileOutput.toByteArray()), filePath);
-            return Response.ok(fileName).build();
-        } catch (IllegalStateException | MobiException ex) {
+        } catch (IllegalStateException | IOException | MobiException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), INTERNAL_SERVER_ERROR);
         } catch (IllegalArgumentException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), BAD_REQUEST);
@@ -343,19 +329,29 @@ public class DelimitedRest {
             @Parameter(description = "Character the columns are separated by if it is a CSV")
             @DefaultValue(",") @QueryParam("separator") String separator) {
         checkStringParam(jsonld, "Must provide a JSON-LD string");
+        File data = null;
         try {
             // Convert the data
             StopWatch watch = new StopWatch();
             watch.start();
-            Model data = etlFileToModel(fileName, () -> jsonldToModel(jsonld), containsHeaders, separator, true);
+            data = etlFileToResult(fileName, () -> jsonldToModel(jsonld), containsHeaders, separator, true,
+                    getRDFFormat(format));
             watch.stop();
             logger.trace("ETL File took {}ms", watch.getNanoTime() / 1000000);
 
-            return Response.ok(groupedModelToString(data, format)).build();
-        } catch (IllegalStateException | MobiException ex) {
+            return Response.ok(Files.readString(data.toPath())).build();
+        } catch (IllegalStateException | MobiException | IOException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), INTERNAL_SERVER_ERROR);
         } catch (IllegalArgumentException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), BAD_REQUEST);
+        } finally {
+            if (data != null) {
+                try {
+                    Files.delete(data.toPath());
+                } catch (IOException e) {
+                    logger.warn("Failed to delete file {}", data.getAbsolutePath(), e);
+                }
+            }
         }
     }
 
@@ -365,7 +361,7 @@ public class DelimitedRest {
      * name. The file must be present in the data/tmp/ directory.
      *
      * @param fileName Name of the delimited document in the data/tmp/ directory
-     * @param mappingRecordIRI ID of  the MappingRecord
+     * @param mappingRecordIRI ID of the MappingRecord
      * @param format RDF serialization to use
      * @param containsHeaders Whether the delimited file has headers
      * @param separator Character the columns are separated by if it is a CSV
@@ -402,23 +398,29 @@ public class DelimitedRest {
             @Parameter(description = "Name for the downloaded file", required = true)
             @QueryParam("fileName") String downloadFileName) {
         checkStringParam(mappingRecordIRI, PROVIDE_IRI_MAPPING);
-
+        File data = null;
         try {
             // Convert the data
             StopWatch watch = new StopWatch();
             watch.start();
-            Model data = etlFileToModel(fileName, () -> getUploadedMapping(mappingRecordIRI), containsHeaders,
-                    separator, false);
+            data = etlFileToResult(fileName, () -> getUploadedMapping(mappingRecordIRI), containsHeaders,
+                    separator, false, getRDFFormat(format));
             watch.stop();
             logger.trace("ETL File took {}ms", watch.getNanoTime() / 1000000);
-            String result = groupedModelToString(data, format);
 
             // Write data into a stream
+            File finalData = data;
             StreamingOutput stream = os -> {
-                Writer writer = new BufferedWriter(new OutputStreamWriter(os));
-                writer.write(result);
-                writer.flush();
-                writer.close();
+                try (FileInputStream in = new FileInputStream(finalData)) {
+                    IOUtils.copy(in, os);
+                    try {
+                        Files.delete(finalData.toPath());
+                    } catch (IOException e) {
+                        logger.warn("Failed to delete file {}", finalData.getAbsolutePath(), e);
+                    }
+                } catch (IOException e) {
+                    throw new IllegalStateException("Error occurred writing to output stream", e);
+                }
             };
             String fileExtension = getRDFFormat(format).getDefaultFileExtension();
             String mimeType = getRDFFormat(format).getDefaultMIMEType();
@@ -431,6 +433,13 @@ public class DelimitedRest {
 
             return response;
         } catch (IllegalStateException | MobiException ex) {
+            if (data != null) {
+                try {
+                    Files.delete(data.toPath());
+                } catch (IOException e) {
+                    logger.warn("Failed to delete file {}", data.getAbsolutePath(), e);
+                }
+            }
             throw ErrorUtils.sendError(ex, ex.getMessage(), INTERNAL_SERVER_ERROR);
         }
     }
@@ -474,13 +483,13 @@ public class DelimitedRest {
             @DefaultValue(",") @QueryParam("separator") String separator) {
         checkStringParam(mappingRecordIRI, PROVIDE_IRI_MAPPING);
         checkStringParam(datasetRecordIRI, "Must provide the IRI of a dataset record");
-
+        File data = null;
         try {
             // Convert the data
             StopWatch watch = new StopWatch();
             watch.start();
-            Model data = etlFileToModel(fileName, () -> getUploadedMapping(mappingRecordIRI), containsHeaders,
-                    separator, false);
+            data = etlFileToResult(fileName, () -> getUploadedMapping(mappingRecordIRI), containsHeaders,
+                    separator, false, RDFFormat.TURTLE);
             watch.stop();
             logger.trace("ETL File took {}ms", watch.getNanoTime() / 1000000);
 
@@ -489,8 +498,8 @@ public class DelimitedRest {
                     .logOutput(true)
                     .build();
             try {
-                rdfImportService.importModel(config, data);
-            } catch (RepositoryException ex) {
+                rdfImportService.importFile(config, data);
+            } catch (RepositoryException | IOException ex) {
                 throw ErrorUtils.sendError("Error in repository connection", INTERNAL_SERVER_ERROR);
             }
 
@@ -502,6 +511,14 @@ public class DelimitedRest {
             throw ErrorUtils.sendError(ex, ex.getMessage(), INTERNAL_SERVER_ERROR);
         } catch (IllegalArgumentException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), BAD_REQUEST);
+        } finally {
+            if (data != null) {
+                try {
+                    Files.delete(data.toPath());
+                } catch (IOException e) {
+                    logger.warn("Failed to delete file {}", data.getAbsolutePath(), e);
+                }
+            }
         }
     }
 
@@ -559,13 +576,13 @@ public class DelimitedRest {
         checkStringParam(mappingRecordIRI, PROVIDE_IRI_MAPPING);
         checkStringParam(ontologyRecordIRI, "Must provide the IRI of an ontology record");
         checkStringParam(branchIRI, "Must provide the IRI of an ontology branch");
-
+        File mappingData = null;
         try {
             // Convert the data
             StopWatch watch = new StopWatch();
             watch.start();
-            Model mappingData = etlFileToModel(fileName, () -> getUploadedMapping(mappingRecordIRI), containsHeaders,
-                    separator, false);
+            mappingData = etlFileToResult(fileName, () -> getUploadedMapping(mappingRecordIRI), containsHeaders,
+                    separator, false, RDFFormat.TURTLE);
             watch.stop();
             logger.trace("ETL File took {}ms", watch.getNanoTime() / 1000000);
 
@@ -592,6 +609,10 @@ public class DelimitedRest {
             throw RestUtils.getErrorObjInternalServerError(ex);
         } catch (IllegalArgumentException e) {
             throw RestUtils.getErrorObjBadRequest(e);
+        } finally {
+            if (mappingData != null) {
+                mappingData.delete();
+            }
         }
     }
 
@@ -605,8 +626,8 @@ public class DelimitedRest {
      * @param separator Character the columns are separated by if it is a CSV
      * @return a Mobi Model with the resulting mapped RDF data
      */
-    private Model etlFileToModel(String fileName, SupplierWithException<Model> mappingSupplier,
-                          boolean containsHeaders, String separator, boolean limit) {
+    private File etlFileToResult(String fileName, SupplierWithException<Model> mappingSupplier,
+                                 boolean containsHeaders, String separator, boolean limit, RDFFormat format) {
         // Collect the delimited file and its extension
         File delimitedFile = getUploadedFile(fileName).orElseThrow(() ->
                 ErrorUtils.sendError("Document not found", BAD_REQUEST));
@@ -630,14 +651,15 @@ public class DelimitedRest {
 
         // Run the mapping against the delimited data
         try (InputStream data = getDocumentInputStream(delimitedFile)) {
-            Model result;
+            Path result;
             if (extension.equals("xlsx")) {
                 ExcelConfig.ExcelConfigBuilder config = new ExcelConfig.ExcelConfigBuilder(data, charset, mappingModel)
                         .containsHeaders(containsHeaders);
                 if (limit) {
                     config.limit(NUM_LINE_PREVIEW);
                 }
-                result = etlFileWithSupplier(() -> converter.convert(config.build()));
+                config.format(format);
+                result = converter.convert(config.build());
             } else {
                 SVConfig.SVConfigBuilder config = new SVConfig.SVConfigBuilder(data, charset, mappingModel)
                         .separator(separator.charAt(0))
@@ -645,28 +667,16 @@ public class DelimitedRest {
                 if (limit) {
                     config.limit(NUM_LINE_PREVIEW);
                 }
-                result = etlFileWithSupplier(() -> converter.convert(config.build()));
+                config.format(format);
+                result = converter.convert(config.build());
             }
             logger.info("File mapped: {}", delimitedFile.getPath());
-            return result;
+            return result.toFile();
         } catch (IOException e) {
             throw ErrorUtils.sendError(e, "Exception reading ETL file", BAD_REQUEST);
         }
     }
 
-    /**
-     * Converts delimited SV data in an InputStream into RDF.
-     *
-     * @param supplier the supplier for getting the result of running a conversion using a Config
-     * @return a Mobi Model with the delimited data converted into RDF
-     */
-    private Model etlFileWithSupplier(SupplierWithException<Model> supplier) {
-        try {
-            return supplier.get();
-        } catch (IOException | MobiException e) {
-            throw ErrorUtils.sendError(e, "Error converting delimited file", BAD_REQUEST);
-        }
-    }
 
     /**
      * Retrieves a preview of the first specified number of rows of an uploaded
@@ -749,24 +759,6 @@ public class DelimitedRest {
     }
 
     /**
-     * Saves the contents of the InputStream to the specified path.
-     *
-     * @param fileInputStream a file in an InputStream
-     * @param filePath the location to upload the file to
-     */
-    private void saveStreamToFile(InputStream fileInputStream, Path filePath) {
-        try {
-            Files.copy(fileInputStream, filePath, StandardCopyOption.REPLACE_EXISTING);
-            fileInputStream.close();
-        } catch (FileNotFoundException e) {
-            throw ErrorUtils.sendError(e, "Error writing delimited file", BAD_REQUEST);
-        } catch (IOException e) {
-            throw ErrorUtils.sendError(e, PARSING_DELIMITED_ERROR, BAD_REQUEST);
-        }
-        logger.info("File Uploaded: {}", filePath);
-    }
-
-    /**
      * Converts the specified number rows of a CSV file into JSON and returns
      * them as a String.
      *
@@ -806,7 +798,7 @@ public class DelimitedRest {
         ReadingOptions readingOptions = new ReadingOptions(true, true);
         try (InputStream is = new FileInputStream(input);
                 ReadableWorkbook wb = new ReadableWorkbook(is, readingOptions)) {
-            org.dhatim.fastexcel.reader.Sheet sheet = wb.getFirstSheet();
+            Sheet sheet = wb.getFirstSheet();
             ArrayNode rows = sheet.openStream()
                     .limit(numRows + 1)
                     .map(row -> {
@@ -874,15 +866,6 @@ public class DelimitedRest {
             }
             return charset;
         }
-    }
-
-    /**
-     * Creates a UUID string.
-     *
-     * @return a string with a UUID
-     */
-    public String generateUuid() {
-        return UUID.randomUUID().toString();
     }
 
     /**

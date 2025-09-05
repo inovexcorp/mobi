@@ -27,7 +27,6 @@ import com.mobi.catalog.api.builder.Difference;
 import com.mobi.etl.api.config.delimited.ExcelConfig;
 import com.mobi.etl.api.config.delimited.SVConfig;
 import com.mobi.etl.api.config.rdf.ImportServiceConfig;
-import com.mobi.etl.api.config.rdf.export.RDFExportConfig;
 import com.mobi.etl.api.delimited.DelimitedConverter;
 import com.mobi.etl.api.delimited.MappingManager;
 import com.mobi.etl.api.ontology.OntologyImportService;
@@ -62,6 +61,8 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 @Command(scope = "mobi", name = "transform", description = "Transforms CSV Files to RDF using a mapping file")
 @Service
@@ -176,6 +177,7 @@ public class CLITransform implements Action {
             return null;
         }
 
+        Path path = null;
         try {
             String extension = FilenameUtils.getExtension(newFile.getName());
 
@@ -188,16 +190,19 @@ public class CLITransform implements Action {
                 charset = CharsetUtils.getEncoding(data).orElse(Charset.defaultCharset());
             }
 
-            Model model;
             try (InputStream data = new FileInputStream(newFile)) {
+                RDFFormat outputFormat = outputFile == null ? RDFFormat.TURTLE :
+                        Rio.getParserFormatForFileName(outputFile).orElse(RDFFormat.TRIG);
                 if (extension.equals("xls") || extension.equals("xlsx")) {
                     ExcelConfig config = new ExcelConfig.ExcelConfigBuilder(data, charset, mapping)
+                            .format(outputFormat)
                             .containsHeaders(containsHeaders).build();
-                    model = converter.convert(config);
+                    path = converter.convert(config);
                 } else {
                     SVConfig config = new SVConfig.SVConfigBuilder(data, charset, mapping)
+                            .format(outputFormat)
                             .containsHeaders(containsHeaders).separator(separator.charAt(0)).build();
-                    model = converter.convert(config);
+                    path = converter.convert(config);
                 }
             }
 
@@ -206,14 +211,12 @@ public class CLITransform implements Action {
                         .printOutput(true)
                         .logOutput(true)
                         .build();
-                rdfImportService.importModel(config, model);
+                rdfImportService.importFile(config, path.toFile());
             }
 
             if (outputFile != null) {
-                try(OutputStream output = new FileOutputStream(outputFile)) {
-                    RDFFormat outputFormat = Rio.getParserFormatForFileName(outputFile).orElse(RDFFormat.TRIG);
-                    RDFExportConfig config = new RDFExportConfig.Builder(output, outputFormat).build();
-                    rdfExportService.export(config, model);
+                try (OutputStream output = new FileOutputStream(outputFile)) {
+                    Files.copy(path, output);
                 }
             }
 
@@ -225,11 +228,12 @@ public class CLITransform implements Action {
 
                 Difference difference;
                 if (StringUtils.isEmpty(branch)) {
-                    difference = ontologyImportService.importOntology(ontologyIri, update, model, adminUser, commitMsg);
+                    difference = ontologyImportService.importOntology(ontologyIri, update, path.toFile(), adminUser,
+                            commitMsg);
                 } else {
                     IRI branchIri = vf.createIRI(branch);
-                    difference = ontologyImportService.importOntology(ontologyIri, branchIri, update, model, adminUser,
-                            commitMsg);
+                    difference = ontologyImportService.importOntology(ontologyIri, branchIri, update, path.toFile(),
+                            adminUser, commitMsg);
                 }
 
                 if (difference.getAdditions().isEmpty() && difference.getDeletions().isEmpty()) {
@@ -244,6 +248,14 @@ public class CLITransform implements Action {
         } catch (Exception ex) {
             System.out.println(ex.getMessage());
             LOGGER.error("Unspecified error in transformation.", ex);
+        } finally {
+            if (path != null) {
+                try {
+                    Files.deleteIfExists(path);
+                } catch (Exception e) {
+                    // Do nothing
+                }
+            }
         }
 
         return null;

@@ -57,6 +57,7 @@ import org.apache.commons.fileupload.FileItemStream;
 import org.apache.commons.fileupload.FileUploadException;
 import org.apache.commons.fileupload.servlet.ServletFileUpload;
 import org.apache.commons.fileupload.util.Streams;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.rdf4j.model.BNode;
@@ -90,6 +91,10 @@ import java.io.StringWriter;
 import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -101,6 +106,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -1095,6 +1102,63 @@ public class RestUtils {
      */
     public static Map<String, Object> getFormData(HttpServletRequest servletRequest,
                                                   Map<String, List<Class<?>>> fields) {
+        BiFunction<InputStream, FileItemStream, Object> streamConsumer = (stream, item) -> {
+            try {
+                return new FileUpload(item.getName(), Models.toByteArrayInputStream(stream));
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        };
+        return getFormData(servletRequest, fields, streamConsumer);
+    }
+
+    /**
+     * Retrieves the multipart/form-data containing file information from the provided {@link HttpServletRequest}.
+     * Uses the provided map to determine the form data fields. The key in the fields map represents the field name to
+     * populate in the return map. The value in the fields map is a list containing the Class of the field. If more than
+     * one class is present in the list, the first will be used as the Collection and the second as the parameterized
+     * type for the Collection.
+     *
+     * @param servletRequest The {@link HttpServletRequest} used to retrieve form data from.
+     * @param fields         A {@link Map} of field name to the Class of the field.
+     * @param writeStreamPath Path to write file streams to.
+     * @param applyExtension Whether to apply the file extension to the written file.
+     * @return A map of the field name to the corresponding form data field Object.
+     */
+    public static Map<String, Object> getFormData(HttpServletRequest servletRequest,
+                                                  Map<String, List<Class<?>>> fields, Path writeStreamPath,
+                                                  boolean applyExtension) {
+        BiFunction<InputStream, FileItemStream, Object> streamConsumer = (stream, item) -> {
+            try {
+                Path path = writeStreamPath;
+                if (applyExtension) {
+                    path = writeStreamPath.resolveSibling(writeStreamPath.getFileName() + "."
+                            + FilenameUtils.getExtension(item.getName()));
+                }
+                Files.copy(stream, path, StandardCopyOption.REPLACE_EXISTING);
+                return item.getName();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        };
+        return getFormData(servletRequest, fields, streamConsumer);
+    }
+
+    /**
+     * Retrieves the multipart/form-data containing file information from the provided {@link HttpServletRequest}.
+     * Uses the provided map to determine the form data fields. The key in the fields map represents the field name to
+     * populate in the return map. The value in the fields map is a list containing the Class of the field. If more than
+     * one class is present in the list, the first will be used as the Collection and the second as the parameterized
+     * type for the Collection.
+     *
+     * @param servletRequest The {@link HttpServletRequest} used to retrieve form data from.
+     * @param fields         A {@link Map} of field name to the Class of the field.
+     * @param streamConsumer A {@link Function} to handle file streams.
+     * @return A map of the field name to the corresponding form data field Object.
+     */
+    public static Map<String, Object> getFormData(HttpServletRequest servletRequest,
+                                                  Map<String, List<Class<?>>> fields,
+                                                  BiFunction<InputStream, FileItemStream, Object> streamConsumer) {
         try {
             Map<String, Object> parsedValues = new HashMap<>();
             Set<String> fieldNames = fields.keySet();
@@ -1132,9 +1196,7 @@ public class RestUtils {
                             LOG.debug("Non default field '{}' provided.", name);
                         }
                     } else {
-                        // This is the file stream
-                        parsedValues.put(item.getFieldName(),
-                                new FileUpload(item.getName(), Models.toByteArrayInputStream(stream)));
+                        parsedValues.put(item.getFieldName(), streamConsumer.apply(stream, item));
                     }
                 }
             }
