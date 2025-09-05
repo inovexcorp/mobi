@@ -33,20 +33,26 @@ import com.mobi.etl.api.ontology.OntologyImportService;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.ontologies.owl.Ontology;
 import com.mobi.ontology.core.api.OntologyManager;
+import com.mobi.persistence.utils.Models;
+import org.apache.commons.io.FilenameUtils;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.ModelFactory;
 import org.eclipse.rdf4j.model.Resource;
+import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.ValueFactory;
 import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
+import org.eclipse.rdf4j.rio.helpers.StatementCollector;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
@@ -76,7 +82,7 @@ public class OntologyImportServiceImpl implements OntologyImportService {
 
 
     @Override
-    public Difference importOntology(Resource ontologyRecord, boolean update, Model ontologyData, User user,
+    public Difference importOntology(Resource ontologyRecord, boolean update, File ontologyData, User user,
                                      String commitMsg) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Resource masterBranch = branchManager.getMasterBranch(configProvider.getLocalCatalogIRI(), ontologyRecord,
@@ -86,13 +92,21 @@ public class OntologyImportServiceImpl implements OntologyImportService {
     }
 
     @Override
-    public Difference importOntology(Resource ontologyRecord, Resource branch, boolean update, Model ontologyData,
+    public Difference importOntology(Resource ontologyRecord, Resource branch, boolean update, File ontologyData,
                                      User user, String commitMsg) {
         Model newData = mf.createEmptyModel();
-        newData.addAll(ontologyData);
         Model existingData = ontologyManager.getOntologyModel(ontologyRecord, branch);
 
         if (update) {
+            // Should find a way to process updates (minus owl:Ontology triples) without loading into memory. The
+            // current approach will not scale for very large updates.
+            try (InputStream in = new FileInputStream(ontologyData)) {
+                RDFFormat format = Rio.getParserFormatForFileName(ontologyData.getName())
+                        .orElse(RDFFormat.TURTLE);
+                newData.addAll(Rio.parse(in, "", format));
+            } catch (IOException e) {
+                throw new IllegalStateException("Could not read ontology data file.");
+            }
             existingData.filter(null,
                     vf.createIRI(com.mobi.ontologies.rdfs.Resource.type_IRI), vf.createIRI(Ontology.TYPE))
                     .subjects()
@@ -111,7 +125,13 @@ public class OntologyImportServiceImpl implements OntologyImportService {
             }
             return diff;
         } else {
-            newData.removeAll(existingData);
+            try (InputStream in = new FileInputStream(ontologyData)) {
+                String ext = FilenameUtils.getExtension(ontologyData.getName());
+                StatementCollector collector = new FilteredStatementCollector(existingData);
+                newData.addAll(Models.createModel(ext, in, collector).getModel());
+            } catch (IOException e) {
+                throw new IllegalStateException("Could not read ontology data file.");
+            }
             if (!newData.isEmpty()) {
                 try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
                     commitManager.createInProgressCommit(configProvider.getLocalCatalogIRI(), ontologyRecord, user,
@@ -131,6 +151,22 @@ public class OntologyImportServiceImpl implements OntologyImportService {
             return tmpFile.toFile();
         } catch (IOException e) {
             throw new IllegalStateException("Could not write data to file.");
+        }
+    }
+
+    private class FilteredStatementCollector extends StatementCollector {
+        private Model excludedStatements;
+
+        public FilteredStatementCollector(Model excludedStatements) {
+            super();
+            this.excludedStatements = excludedStatements;
+        }
+
+        @Override
+        public void handleStatement(Statement st) {
+            if (!excludedStatements.contains(st)) {
+                super.handleStatement(st);
+            }
         }
     }
 }

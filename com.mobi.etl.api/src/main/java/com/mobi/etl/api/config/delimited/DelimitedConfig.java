@@ -26,6 +26,7 @@ package com.mobi.etl.api.config.delimited;
 
 import com.mobi.ontology.core.api.Ontology;
 import org.eclipse.rdf4j.model.Model;
+import org.eclipse.rdf4j.rio.RDFFormat;
 
 import java.io.InputStream;
 import java.nio.charset.Charset;
@@ -41,6 +42,7 @@ public class DelimitedConfig {
     private boolean containsHeaders = true;
     private Long limit;
     private long offset = 0;
+    private RDFFormat format;
 
     protected DelimitedConfig(Builder builder) {
         data = builder.data;
@@ -50,6 +52,7 @@ public class DelimitedConfig {
         containsHeaders = builder.containsHeaders;
         limit = builder.limit;
         offset = builder.offset;
+        format = builder.format;
     }
 
     public InputStream getData() {
@@ -80,6 +83,10 @@ public class DelimitedConfig {
         return offset;
     }
 
+    public RDFFormat getFormat() {
+        return format;
+    }
+
     public static class Builder<T extends Builder> {
         private final InputStream data;
         private final Charset charset;
@@ -88,6 +95,7 @@ public class DelimitedConfig {
         private boolean containsHeaders = true;
         private Long limit;
         private long offset = 0;
+        private RDFFormat format = RDFFormat.TURTLE;
 
         public Builder(InputStream data, Charset charset, Model mapping) {
             this.data = data;
@@ -112,6 +120,11 @@ public class DelimitedConfig {
 
         public T offset(long offset) {
             this.offset = offset;
+            return (T) this;
+        }
+
+        public T format(RDFFormat format) {
+            this.format = format;
             return (T) this;
         }
 

@@ -68,6 +68,8 @@ import org.eclipse.rdf4j.model.ModelFactory;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.Statement;
 import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.Rio;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -76,6 +78,8 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -100,6 +104,7 @@ public class DelimitedRestTest extends MobiRestTestCXF {
     private AutoCloseable closeable;
     private static final ObjectMapper mapper = new ObjectMapper();
     private User user;
+    private File file;
     private static final String MAPPING_RECORD_IRI = "http://test.org/mapping-record";
     private static final String DATASET_RECORD_IRI = "http://test.org/dataset-record";
     private static final String ONTOLOGY_RECORD_IRI = "http://test.org/ontology-record";
@@ -130,6 +135,9 @@ public class DelimitedRestTest extends MobiRestTestCXF {
 
     @Mock
     private Dataset dataset;
+
+    @Mock
+    private Path path;
 
     @BeforeClass
     public static void startServer() throws Exception {
@@ -181,12 +189,15 @@ public class DelimitedRestTest extends MobiRestTestCXF {
             }
         });
 
+        file = File.createTempFile(UUID.randomUUID().toString(), ".tmp");
+
         when(dataset.getResource()).thenReturn(vf.createIRI(DATASET_IRI));
         when(datasetRecord.getResource()).thenReturn(vf.createIRI(DATASET_RECORD_IRI));
         when(datasetRecord.getDataset_resource()).thenReturn(Optional.of(vf.createIRI(DATASET_IRI)));
         when(datasetRecord.getRepository()).thenReturn(Optional.of(REPOSITORY_ID));
-        when(converter.convert(any(SVConfig.class))).thenReturn(mf.createEmptyModel());
-        when(converter.convert(any(ExcelConfig.class))).thenReturn(mf.createEmptyModel());
+        when(converter.convert(any(SVConfig.class))).thenReturn(path);
+        when(converter.convert(any(ExcelConfig.class))).thenReturn(path);
+        when(path.toFile()).thenReturn(file);
         when(engineManager.retrieveUser(anyString())).thenReturn(Optional.of(user));
         when(ontologyRecord.getMasterBranch_resource()).thenReturn(Optional.of(vf.createIRI(MASTER_BRANCH_IRI)));
         when(ontologyRecord.getResource()).thenReturn(vf.createIRI(ONTOLOGY_RECORD_IRI));
@@ -194,6 +205,7 @@ public class DelimitedRestTest extends MobiRestTestCXF {
 
     @After
     public void resetMocks() throws Exception {
+        file.delete();
         closeable.close();
         reset(converter, mappingManager, mappingWrapper, ontologyRecord, engineManager, datasetRecord,
                 dataset, rdfImportService, ontologyImportService);
@@ -340,6 +352,11 @@ public class DelimitedRestTest extends MobiRestTestCXF {
     public void mapCsvWithDefaultsTest() throws Exception {
         String fileName = UUID.randomUUID() + ".csv";
         copyResourceToTemp("test.csv", fileName);
+
+        try (FileOutputStream fos = new FileOutputStream(file)) {
+            Rio.write(mf.createEmptyModel(), fos, RDFFormat.JSONLD);
+        }
+
         Response response = testMapDownload(fileName, MAPPING_RECORD_IRI, null);
         isJsonld(response.readEntity(String.class));
         String disposition = response.getStringHeaders().get("Content-Disposition").toString();
@@ -356,6 +373,10 @@ public class DelimitedRestTest extends MobiRestTestCXF {
         String fileName = UUID.randomUUID() + ".csv";
         copyResourceToTemp("test_tabs.csv", fileName);
 
+        try (FileOutputStream fos = new FileOutputStream(file)) {
+            Rio.write(mf.createEmptyModel(), fos, RDFFormat.TURTLE);
+        }
+
         Response response = testMapDownload(fileName, MAPPING_RECORD_IRI, params);
         isNotJsonld(response.readEntity(String.class));
         String disposition = response.getStringHeaders().get("Content-Disposition").toString();
@@ -366,6 +387,10 @@ public class DelimitedRestTest extends MobiRestTestCXF {
     public void mapExcelWithDefaultsTest() throws Exception {
         String fileName = UUID.randomUUID() + ".xls";
         copyResourceToTemp("test.xls", fileName);
+
+        try (FileOutputStream fos = new FileOutputStream(file)) {
+            Rio.write(mf.createEmptyModel(), fos, RDFFormat.JSONLD);
+        }
 
         Response response = testMapDownload(fileName, MAPPING_RECORD_IRI, null);
         isJsonld(response.readEntity(String.class));
@@ -426,6 +451,11 @@ public class DelimitedRestTest extends MobiRestTestCXF {
     public void mapPreviewCsvWithDefaultsTest() throws Exception {
         String fileName = UUID.randomUUID() + ".csv";
         copyResourceToTemp("test.csv", fileName);
+
+        try (FileOutputStream fos = new FileOutputStream(file)) {
+            Rio.write(mf.createEmptyModel(), fos, RDFFormat.JSONLD);
+        }
+
         Response response = testMapPreview(fileName, "[]", null);
         isJsonld(response.readEntity(String.class));
     }
@@ -448,6 +478,10 @@ public class DelimitedRestTest extends MobiRestTestCXF {
         String fileName = UUID.randomUUID() + ".xls";
         copyResourceToTemp("test.xls", fileName);
 
+        try (FileOutputStream fos = new FileOutputStream(file)) {
+            Rio.write(mf.createEmptyModel(), fos, RDFFormat.JSONLD);
+        }
+
         Response response = testMapPreview(fileName, "[]", null);
         isJsonld(response.readEntity(String.class));
     }
@@ -459,6 +493,10 @@ public class DelimitedRestTest extends MobiRestTestCXF {
         params.put("containsHeaders", true);
         String fileName = UUID.randomUUID() + ".xls";
         copyResourceToTemp("test.xls", fileName);
+
+        try (FileOutputStream fos = new FileOutputStream(file)) {
+            Rio.write(mf.createEmptyModel(), fos, RDFFormat.TURTLE);
+        }
 
         Response response = testMapPreview(fileName, "[]", params);
         isNotJsonld(response.readEntity(String.class));
@@ -527,7 +565,7 @@ public class DelimitedRestTest extends MobiRestTestCXF {
     @Test
     public void mapIntoDatasetWithDatasetOrRepoIssue() throws Exception {
         // Setup:
-        doThrow(new IllegalArgumentException("Dataset does not exist")).when(rdfImportService).importModel(any(), any());
+        doThrow(new IllegalArgumentException("Dataset does not exist")).when(rdfImportService).importFile(any(), any());
         String fileName = UUID.randomUUID() + ".csv";
         copyResourceToTemp("test.csv", fileName);
 
@@ -542,7 +580,6 @@ public class DelimitedRestTest extends MobiRestTestCXF {
         Statement data = vf.createStatement(vf.createIRI("http://test.org/class"), vf.createIRI("http://test.org/property"), vf.createLiteral(true));
         Model model = mf.createEmptyModel();
         model.add(data);
-        when(converter.convert(any(SVConfig.class))).thenReturn(model);
         String fileName = UUID.randomUUID() + ".csv";
         copyResourceToTemp("test.csv", fileName);
 
@@ -557,7 +594,6 @@ public class DelimitedRestTest extends MobiRestTestCXF {
         Statement data = vf.createStatement(vf.createIRI("http://test.org/class"), vf.createIRI("http://test.org/property"), vf.createLiteral(true));
         Model model = mf.createEmptyModel();
         model.add(data);
-        when(converter.convert(any(ExcelConfig.class))).thenReturn(model);
         String fileName = UUID.randomUUID() + ".xls";
         copyResourceToTemp("test.xls", fileName);
 
@@ -639,9 +675,8 @@ public class DelimitedRestTest extends MobiRestTestCXF {
         model.addAll(Stream.of(statement1, statement2).toList());
         Model committedModel = mf.createEmptyModel();
         committedModel.add(statement2);
-        when(converter.convert(any(SVConfig.class))).thenReturn(model);
         when(ontologyImportService.importOntology(eq(vf.createIRI(ONTOLOGY_RECORD_IRI)),
-                eq(vf.createIRI(ONTOLOGY_RECORD_BRANCH_IRI)), eq(false), eq(model), eq(user), anyString()))
+                eq(vf.createIRI(ONTOLOGY_RECORD_BRANCH_IRI)), eq(false), any(File.class), eq(user), anyString()))
                 .thenReturn(new Difference.Builder().additions(committedModel).build());
         String fileName = UUID.randomUUID() + ".csv";
         copyResourceToTemp("test.csv", fileName);
@@ -660,9 +695,8 @@ public class DelimitedRestTest extends MobiRestTestCXF {
 
         Model model = mf.createEmptyModel();
         model.addAll(Stream.of(statement1, statement2).toList());
-        when(converter.convert(any(SVConfig.class))).thenReturn(model);
         when(ontologyImportService.importOntology(eq(vf.createIRI(ONTOLOGY_RECORD_IRI)),
-                eq(vf.createIRI(ONTOLOGY_RECORD_BRANCH_IRI)), eq(false), eq(model), eq(user), anyString()))
+                eq(vf.createIRI(ONTOLOGY_RECORD_BRANCH_IRI)), eq(false), any(File.class), eq(user), anyString()))
                 .thenReturn(new Difference.Builder()
                         .additions(mf.createEmptyModel())
                         .deletions(mf.createEmptyModel())
@@ -686,9 +720,8 @@ public class DelimitedRestTest extends MobiRestTestCXF {
         model.addAll(Stream.of(statement1, statement2).toList());
         Model committedModel = mf.createEmptyModel();
         committedModel.add(statement2);
-        when(converter.convert(any(ExcelConfig.class))).thenReturn(model);
         when(ontologyImportService.importOntology(eq(vf.createIRI(ONTOLOGY_RECORD_IRI)),
-                eq(vf.createIRI(MASTER_BRANCH_IRI)), eq(false), eq(model), eq(user), anyString()))
+                eq(vf.createIRI(MASTER_BRANCH_IRI)), eq(false), any(File.class), eq(user), anyString()))
                 .thenReturn(new Difference.Builder().additions(committedModel).build());
         String fileName = UUID.randomUUID() + ".xlsx";
         copyResourceToTemp("test.xlsx", fileName);
