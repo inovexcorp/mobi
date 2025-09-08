@@ -87,7 +87,7 @@ public class CopyDataDirectory implements PreRestoreOperation {
                 FileUtils.deleteDirectory(policyDir); // Delete old policies
                 LOGGER.debug(String.format("Policy Directory Deleted: %s", policyDir));
                 FileUtils.forceMkdir(policyDir); // Make Policy Directory
-                FileUtils.copyDirectory(tmpPolicyDir, policyDir); // Copy Backup policies into policy directory
+                FileUtils.copyDirectory(tmpPolicyDir, policyDir, false); // Copy Backup policies into policy directory
                 LOGGER.debug(String.format("Copied Directory %s into: %s", tmpPolicyDir, policyDir));
             } catch (IOException e) {
                 throw new RuntimeException(e);
@@ -105,7 +105,7 @@ public class CopyDataDirectory implements PreRestoreOperation {
                 FileUtils.deleteDirectory(currentDataDir); // Delete old policies
                 LOGGER.debug(String.format("Data Directory Deleted: %s", currentDataDir));
                 FileUtils.forceMkdir(currentDataDir); // Make Policy Directory
-                FileUtils.copyDirectory(tmpDataDir, currentDataDir); // Copy Backup policies into policy directory
+                FileUtils.copyDirectory(tmpDataDir, currentDataDir, false); // Copy Backup policies into policy directory
                 LOGGER.debug(String.format("Copied Directory %s into: %s", tmpDataDir, currentDataDir));
             } catch (IOException e) {
                 throw new RuntimeException(e);
