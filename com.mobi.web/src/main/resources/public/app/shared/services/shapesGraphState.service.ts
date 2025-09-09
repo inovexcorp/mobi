@@ -57,7 +57,7 @@ import { JSONLDObject } from '../models/JSONLDObject.interface';
 import { JSONLDValue } from '../models/JSONLDValue.interface';
 import { ManchesterConverterService } from './manchesterConverter.service';
 import { MergeRequestManagerService } from './mergeRequestManager.service';
-import { MultiTargetTypeData, ShaclTargetDetector, SingleTargetTypeData } from '../../shapes-graph-editor/models/target-type-data';
+import { MultiTargetTypeData, ShaclTargetDetector, SingleTargetTypeData, TargetTypeData } from '../../shapes-graph-editor/models/target-type-data';
 import { NodeShapeSummary } from '../../shapes-graph-editor/models/node-shape-summary.interface';
 import { PolicyEnforcementService } from './policyEnforcement.service';
 import { PolicyManagerService } from './policyManager.service';
@@ -968,31 +968,19 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
    */
   addNodeShapeSummary(nodeShape: JSONLDObject): void {
     const nodeShapesInfos: NodeShapeSummary[] = this.listItem.editorTabStates?.nodeShapes?.nodes || [];
-    const targetTypeData = this.shaclTargetDetector.detect(nodeShape);
-    const targetType = targetTypeData?.targetType;
     const nodeShapeSummary: NodeShapeSummary = {
       iri: nodeShape['@id'],
       name: this.getEntityName(nodeShape['@id']),
-      targetType: targetType || 'N/A',
-      targetTypeLabel: targetType ? getBeautifulIRI(targetType) : 'N/A',
+      targetType: '',
+      targetTypeLabel: '',
       targetValue: '',
       targetValueLabel: '',
       imported: false,
       sourceOntologyIRI: this.listItem.shapesGraphId
     };
-    if (targetTypeData) {
-      if (targetTypeData.multiSelect) {
-        const targetValue = (targetTypeData as MultiTargetTypeData).values[0];
-        nodeShapeSummary.targetValue = targetValue;
-      } else {
-        const targetValue = (targetTypeData as SingleTargetTypeData).value;
-        nodeShapeSummary.targetValue = targetValue;
-      }
-    }
-    nodeShapeSummary.targetValueLabel = this.getEntityName(nodeShapeSummary.targetValue);
-    this.listItem.editorTabStates.nodeShapes.nodes = [...nodeShapesInfos, nodeShapeSummary].sort((a, b) => {
-      return (a.name || '').localeCompare(b.name || '');
-    });
+    const targetTypeData = this.shaclTargetDetector.detect(nodeShape);
+    this._setNodeShapeTargetDetails(nodeShapeSummary, targetTypeData);
+    this._setNodeShapesList([...nodeShapesInfos, nodeShapeSummary]);
   }
 
   /**
@@ -1011,7 +999,6 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
         }
         const targetTypeData = this.shaclTargetDetector.detect(newNodeShape);
         const targetType = targetTypeData?.targetType;
-
         const nodeShapeSummary: NodeShapeSummary = {
           ...currentNode,
           iri: newNodeShape['@id'],
@@ -1242,7 +1229,7 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
   /**
    * Returns a SPARQL query string that selects all distinct OWL classes in the dataset.
    * 
-   * @param searchText Optional search string to filter class IRIs
+   * @param {string} searchText Optional search string to filter class IRIs
    * @returns {string} SPARQL query for retrieving all owl:Class IRIs.
    */
   getClassesQuery(searchText = ''): string {
@@ -1254,7 +1241,6 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
       const localNameFilter = `CONTAINS(LCASE(?localName), "${normalizedSearch}")`;
       filter = `FILTER(${iriFilter} || ${nameFilter} || ${localNameFilter})`;
     }
-    // const filter = normalizedSearch ? `FILTER(CONTAINS(LCASE(STR(?iri)), "${normalizedSearch}"))` : '';
     return `
       PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
       PREFIX dc: <http://purl.org/dc/elements/1.1/>
@@ -1299,9 +1285,9 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
   /**
    * Returns a SPARQL query string that selects all distinct OWL properties of specific types.
    * 
-   * @param searchText Optional search string to filter property IRIs
-   * @param [types=[]] The type of properties to retrieve. Accepts ObjectProperty, DatatypeProperty, and 
-   *    AnnotationProperty
+   * @param {string} searchText Optional search string to filter property IRIs
+   * @param {PropertyType[]} [types=[]] The type of properties to retrieve. Accepts ObjectProperty, DatatypeProperty,
+   *    and AnnotationProperty
    * @returns {string} SPARQL query for retrieving all OWL property IRIs with their types.
    */
   getPropertiesByTypeQuery(searchText = '', types: PropertyType[] = []): string {
@@ -1313,9 +1299,6 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
       const localNameFilter = `CONTAINS(LCASE(?localName), "${normalizedSearch}")`;
       filter = `FILTER(${iriFilter} || ${nameFilter} || ${localNameFilter})`;
     }
-    // const filter = searchText
-    //   ? `FILTER(CONTAINS(LCASE(STR(?iri)), "${normalizedSearch}"))`
-    //   : '';
     const values = types.length
       ? `VALUES ?type { ${types.map(type => `owl:${type}`).join(' ')} }`
       : 'VALUES ?type { owl:ObjectProperty owl:DatatypeProperty owl:AnnotationProperty }';
@@ -1402,6 +1385,60 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
           }))
           .sort((a, b) => a.label.toLowerCase().localeCompare(b.label.toLowerCase()))
       }));
+  }
+
+  /**
+   * Deletes a Node Shape and all its referenced property shapes from the current `listItem`. Ensures that the property
+   * shapes themselves, all their referenced blank nodes, and any usages of the property shapes are included in the
+   * deletions. Also updates the `listItem` indexes and node shapes list as well as unselecting whatever is selected.
+   * 
+   * @param {JSONLDObject} nodeShape The JSON-LD RDF of the Node Shape to delete
+   * @param {PropertyShape[]} propertyShapes The list of PropertyShapes for the provided Node Shape
+   * @returns {Observable<null>} An Observable that resolves if the deletion was successful; otherwise rejects with an
+   *    error message
+   */
+  removeNodeShape(nodeShape: JSONLDObject, propertyShapes: PropertyShape[]): Observable<null> {
+    // Add node shape to deletions
+    this.addToDeletions(this.listItem.versionedRdfRecord.recordId, nodeShape);
+    const $obs: Observable<null>[] = [];
+    propertyShapes.forEach(propertyShape => {
+      // Add node shape to deletions
+      this.addToDeletions(this.listItem.versionedRdfRecord.recordId, propertyShape.jsonld);
+      // Add objects for all referenced ids to deletions
+      propertyShape.referencedNodeIds.forEach(id => {
+        const obj = this.listItem.selectedBlankNodes.find(obj => obj['@id'] === id);
+        if (obj) {
+          this.addToDeletions(this.listItem.versionedRdfRecord.recordId, obj);
+        }
+      });
+      // Fetch all usages of the property shape (if it is a blank node, there is most likely none)
+      if (!isBlankNodeId(propertyShape.id)) {
+        $obs.push(this._retrieveUsages(this.listItem, propertyShape.id).pipe(switchMap(response => {
+          if (typeof response === 'string') {
+            const statements = JSON.parse(response) as JSONLDObject[];
+            statements.forEach(statement => this.addToDeletions(this.listItem.versionedRdfRecord.recordId, statement));
+          } else {
+            return throwError('Associated usages were not updated due to an internal error.');
+          }
+          return of(null);
+        })));
+      }
+    });
+    // Remove from node summary list
+    const nodeSummaries: NodeShapeSummary[] = this.listItem.editorTabStates?.nodeShapes?.nodes || [];
+    if (this.listItem?.editorTabStates?.nodeShapes?.nodes) {
+      this.listItem.editorTabStates.nodeShapes.nodes = nodeSummaries.filter(summary => summary.iri !== nodeShape['@id']); 
+    }
+    return forkJoin($obs.length ? $obs : [of(null)]).pipe(
+      // Save current changes after all updates to the in progress commit
+      switchMap(() => this.saveCurrentChanges()),
+      switchMap(() => {
+        // Clear up listItem and reset list
+        this.removeEntity(nodeShape['@id'], this.listItem);
+        // Unselect
+        return this.setSelected(undefined, this.listItem);
+      })
+    );
   }
 
   /**
@@ -1555,5 +1592,39 @@ export class ShapesGraphStateService extends VersionedRdfState<ShapesGraphListIt
         );
       })
     );
+  }
+
+  /**
+   * Updates the provided {@link NodeShapeSummary} with the provided target details.
+   * 
+   * @param {NodeShapeSummary} nodeShapeSummary The Node Shape Summary to update
+   * @param {TargetTypeData} targetTypeData The potentially null target details to set on the Node Shape Summary
+   */
+  private _setNodeShapeTargetDetails(nodeShapeSummary: NodeShapeSummary, targetTypeData: TargetTypeData | null): void {
+    const targetType = targetTypeData?.targetType;
+    nodeShapeSummary.targetType = targetType || 'N/A';
+    nodeShapeSummary.targetTypeLabel = targetType ? getBeautifulIRI(targetType) : 'N/A';
+    nodeShapeSummary.targetValue = '';
+    nodeShapeSummary.targetValueLabel = '';
+    if (targetTypeData) {
+      if (targetTypeData.multiSelect) {
+        const targetValue = (targetTypeData as MultiTargetTypeData).values[0];
+        nodeShapeSummary.targetValue = targetValue;
+      } else {
+        const targetValue = (targetTypeData as SingleTargetTypeData).value;
+        nodeShapeSummary.targetValue = targetValue;
+      }
+    }
+    nodeShapeSummary.targetValueLabel = this.getEntityName(nodeShapeSummary.targetValue);
+  }
+
+  /**
+   * Updates the node shapes list on the Node Shapes tab of the current `listItem`, ensuring the items are sorted
+   * appropriately.
+   * 
+   * @param {NodeShapeSummary[]} list The new list of nodes to set.
+   */
+  private _setNodeShapesList(list: NodeShapeSummary[]): void {
+    this.listItem.editorTabStates.nodeShapes.nodes = list.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
   }
 }
