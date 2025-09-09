@@ -74,7 +74,7 @@ export class FileUploadFormComponent implements OnInit, OnDestroy {
   }
   upload(value: File): void {
     this.dm.fileObj = value;
-    this.isExcel = includes(get(this.dm.fileObj, 'name', ''), 'x');
+    this.isExcel = includes(get(this.dm.fileObj, 'name', ''), 'xls');
     if (this.dm.fileObj) {
       this.dm.upload(this.dm.fileObj).subscribe(data => {
         this.dm.fileName = data;
