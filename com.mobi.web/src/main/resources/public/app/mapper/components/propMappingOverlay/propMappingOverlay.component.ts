@@ -216,6 +216,7 @@ export class PropMappingOverlayComponent implements OnInit {
         this.propMappingForm.controls.language.clearValidators();
         this.propMappingForm.controls.datatype.setValue(this.selectedProp.ranges[0] || `${XSD}string`);
         this.propMappingForm.controls.language.setValue('');
+        this.propMappingForm.controls.datatype.markAsDirty();
         this.propMappingForm.updateValueAndValidity();
     }
     addProp(): void {
