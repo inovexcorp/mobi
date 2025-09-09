@@ -21,21 +21,25 @@
  * #L%
  */
 import { By } from '@angular/platform-browser';
-import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { DebugElement } from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
 
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 
 import { cleanStylesFromDOM } from '../../../../test/ts/Shared';
+import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { PropertiesBlockComponent } from '../../../shared/components/propertiesBlock/propertiesBlock.component';
+import { PropertyShape } from '../../models/property-shape.interface';
 import { PropertyShapesDisplayComponent } from '../property-shapes-display/property-shapes-display.component';
 import { SelectedDetailsComponent } from '../../../shared/components/selectedDetails/selectedDetails.component';
 import { SH } from '../../../prefixes';
 import { ShaclTargetComponent } from '../shacl-target/shacl-target.component';
 import { ShapesGraphListItem } from '../../../shared/models/shapesGraphListItem.class';
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { NodeShapesDisplayComponent } from './node-shapes-display.component';
 
 describe('NodeShapesDisplayComponent', () => {
@@ -43,6 +47,7 @@ describe('NodeShapesDisplayComponent', () => {
   let element: DebugElement;
   let fixture: ComponentFixture<NodeShapesDisplayComponent>;
   let shapesGraphStateStub: jasmine.SpyObj<ShapesGraphStateService>;
+  let matDialog: jasmine.SpyObj<MatDialog>;
 
   const selectedEntityIRI = 'http://stardog.com/tutorial/AlbumShape';
   const entityJSONLDObject: JSONLDObject = {
@@ -72,14 +77,22 @@ describe('NodeShapesDisplayComponent', () => {
         MockComponent(PropertiesBlockComponent),
         MockComponent(SelectedDetailsComponent),
         MockComponent(ShaclTargetComponent),
-        MockComponent(PropertyShapesDisplayComponent)
+        MockComponent(PropertyShapesDisplayComponent),
+        MockComponent(ConfirmModalComponent)
       ],
       providers: [
-        MockProvider(ShapesGraphStateService)
+        MockProvider(ShapesGraphStateService),
+        MockProvider(ToastService),
+        { provide: MatDialog, useFactory: () => jasmine.createSpyObj('MatDialog', {
+          open: { afterClosed: () => of(true)}
+        }) }
       ]
     }).compileComponents();
     shapesGraphStateStub = TestBed.inject(ShapesGraphStateService) as jasmine.SpyObj<ShapesGraphStateService>;
     shapesGraphStateStub.listItem = new ShapesGraphListItem();
+    shapesGraphStateStub.removeNodeShape.and.returnValue(of(null));
+    matDialog = TestBed.inject(MatDialog) as jasmine.SpyObj<MatDialog>;
+    
     fixture = TestBed.createComponent(NodeShapesDisplayComponent);
     element = fixture.debugElement;
     component = fixture.componentInstance;
@@ -96,6 +109,7 @@ describe('NodeShapesDisplayComponent', () => {
     element = null;
     fixture = null;
     shapesGraphStateStub = null;
+    matDialog = null;
   });
 
   it('should create', () => {
@@ -114,6 +128,28 @@ describe('NodeShapesDisplayComponent', () => {
       expect(component.nodeShape).toEqual(jasmine.objectContaining({ '@id': 'http://stardog.com/tutorial/AlbumShape' }));
       expect(component.nodeShapeProperties).toEqual([`${SH}node`]);
     });
+    it('should set property shapes properly', () => {
+      const list: PropertyShape[] = [
+        {
+          id: 'iri',
+          label: '',
+          jsonld: { '@id': 'iri'},
+          constraints: [],
+          path: undefined,
+          pathString: '',
+          pathHtmlString: '',
+          referencedNodeIds: new Set<string>()
+        }
+      ];
+      component.setPropertyShapes(list);
+      expect((component as any)._propertyShapes).toEqual(list);
+    });
+    it('should confirm deletion of the node shape', fakeAsync(() => {
+      component.showDeleteConfirmation();
+      tick();
+      expect(matDialog.open).toHaveBeenCalledWith(ConfirmModalComponent, {data: {content: jasmine.stringContaining('Are you sure you want to delete')}});
+      expect(shapesGraphStateStub.removeNodeShape).toHaveBeenCalledWith(component.nodeShape, []);
+    }));
   });
   it('should have the correct html', () => {
     component.ngOnChanges();

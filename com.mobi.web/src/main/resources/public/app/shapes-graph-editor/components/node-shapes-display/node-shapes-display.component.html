@@ -30,6 +30,9 @@
       [canModify]="canModify"
       [warningText]="predicateWarningText">
     </selected-details>
+    <div class="btn-container">
+      <button mat-raised-button *ngIf="canModify && !stateService.isSelectedImported()" color="warn" [disabled]="stateService.isSelectedImported()" (click)="showDeleteConfirmation()">Delete</button>
+    </div>
   </div>
   <div class="row flex-1 remove-min-height">
     <div class="col-6 vertical-scroll h-100">
@@ -51,7 +54,11 @@
       </div>
     </div>
     <div class="col-6 vertical-scroll h-100">
-      <app-property-shapes-display [nodeShape]="nodeShape" [canModify]="canModify" [isImported]="stateService.isSelectedImported()"></app-property-shapes-display>
+      <app-property-shapes-display [nodeShape]="nodeShape" 
+        [canModify]="canModify" 
+        [isImported]="stateService.isSelectedImported()" 
+        (receivePropertyShapes)="setPropertyShapes($event)">
+      </app-property-shapes-display>
     </div>
   </div>
 </div>

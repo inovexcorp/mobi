@@ -1988,6 +1988,101 @@ describe('Shapes Graph State service', function () {
       tick();
     }));
   });
+  describe('should remove the provided node shape', () => {
+    const nodeShape: JSONLDObject = { '@id': 'urn:nodeShape' };
+    beforeEach(() => {
+      service.listItem = listItem;
+      service.listItem.selected = nodeShape;
+      service.listItem.entityInfo[nodeShape['@id']] = { label: 'Label', names: [] };
+      service.listItem.selectedBlankNodes = [
+        { '@id': '_:b2' },
+        { '@id': '_:b3' },
+        { '@id': '_:b4' },
+      ];
+      spyOn(service, 'addToDeletions');
+      spyOn(service, 'removeEntity');
+      spyOn(service, 'setSelected').and.returnValue(of(null));
+    });
+    describe('if there are no property shapes', () => {
+      it('successfully', fakeAsync(() => {
+        spyOn(service, 'saveCurrentChanges').and.returnValue(of(null));
+        service.removeNodeShape(nodeShape, []).subscribe(() => {
+          expect(true).toBeTrue();
+        }), () => fail('Observable should have succeeded');
+        tick();
+        expect(service.addToDeletions).toHaveBeenCalledWith(recordId, nodeShape);
+        expect(service.saveCurrentChanges).toHaveBeenCalledWith();
+        expect(service.removeEntity).toHaveBeenCalledWith(nodeShape['@id'], service.listItem);
+        expect(service.setSelected).toHaveBeenCalledWith(undefined, service.listItem);
+      }));
+      it('unless an error occurs', fakeAsync(() => {
+        spyOn(service, 'saveCurrentChanges').and.returnValue(throwError(error));
+        service.removeNodeShape(nodeShape, []).subscribe(() => fail('Observable should have failed'), result => {
+          expect(result).toEqual(error);
+        });
+        tick();
+        expect(service.addToDeletions).toHaveBeenCalledWith(recordId, nodeShape);
+        expect(service.saveCurrentChanges).toHaveBeenCalledWith();
+        expect(service.removeEntity).not.toHaveBeenCalled();
+        expect(service.setSelected).not.toHaveBeenCalled();
+      }));
+    });
+    describe('if there are property shapes', () => {
+      const referencedNodeIds = new Set(['_:b2', '_:b3']);
+      const propertyShape: PropertyShape = {
+        id: 'urn:PropShape',
+        label: 'Prop Shape',
+        jsonld: {
+          '@id': 'urn:PropShape',
+          [`${SH}path`]: [{ '@id': '_:b2' }]
+        },
+        constraints: [],
+        path: undefined,
+        pathString: '',
+        pathHtmlString: '',
+        referencedNodeIds
+      };
+      beforeEach(() => {
+        spyOn(service, 'saveCurrentChanges').and.returnValue(of(null));
+      });
+      it('successfully', fakeAsync(() => {
+        const usages = [{ '@id': 'urn:somethingElse', 'urn:someProp': [{ '@id': propertyShape.id }] }];
+        sparqlManagerStub.postQuery.and.returnValue(of(JSON.stringify(usages)));
+        service.removeNodeShape(nodeShape, [propertyShape]).subscribe(() => {
+          expect(true).toBeTrue();
+        }), () => fail('Observable should have succeeded');
+        tick();
+        expect(service.addToDeletions).toHaveBeenCalledWith(recordId, nodeShape);
+        expect(service.addToDeletions).toHaveBeenCalledWith(recordId, propertyShape.jsonld);
+        [{ '@id': '_:b2' }, { '@id': '_:b3' }].forEach(bnode => {
+          expect(service.addToDeletions).toHaveBeenCalledWith(recordId, bnode);
+        });
+        usages.forEach(obj => {
+          expect(service.addToDeletions).toHaveBeenCalledWith(recordId, obj);
+        });
+        expect(sparqlManagerStub.postQuery).toHaveBeenCalledWith(jasmine.any(String), recordId, 'shapes-graph-record',
+          branchId, commitId, false, false, 'jsonld');
+        expect(service.saveCurrentChanges).toHaveBeenCalledWith();
+        expect(service.removeEntity).toHaveBeenCalledWith(nodeShape['@id'], service.listItem);
+        expect(service.setSelected).toHaveBeenCalledWith(undefined, service.listItem);
+      }));
+      it('unless an error occurs', fakeAsync(() => {
+        sparqlManagerStub.postQuery.and.returnValue(throwError(error));
+        service.removeNodeShape(nodeShape, [propertyShape]).subscribe(() => fail('Observable should have failed'), result => {
+          expect(result).toEqual(error);
+        });
+        tick();
+        expect(service.addToDeletions).toHaveBeenCalledWith(recordId, nodeShape);
+        expect(service.addToDeletions).toHaveBeenCalledWith(recordId, propertyShape.jsonld);
+        [{ '@id': '_:b2' }, { '@id': '_:b3' }].forEach(bnode => {
+          expect(service.addToDeletions).toHaveBeenCalledWith(recordId, bnode);
+        });
+        expect(service.saveCurrentChanges).not.toHaveBeenCalled();
+        expect(service.removeEntity).not.toHaveBeenCalled();
+        expect(service.setSelected).not.toHaveBeenCalled();
+      }));
+    });
+  });
   describe('should remove the provided PropertyShape', () => {
     const referencedNodeIds = new Set(['_:b2', '_:b3']);
     const nodeShapeId = 'urn:nodeShape';

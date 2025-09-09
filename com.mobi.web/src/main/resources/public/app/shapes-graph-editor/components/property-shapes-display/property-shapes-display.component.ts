@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component, Input, OnChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, Output } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 
 import { AddPropertyShapeModalComponent } from '../add-property-shape-modal/add-property-shape-modal.component';
@@ -89,6 +89,8 @@ export class PropertyShapesDisplayComponent implements OnChanges {
   @Input() nodeShape: JSONLDObject;
   @Input() canModify: boolean;
   @Input() isImported: boolean;
+
+  @Output() receivePropertyShapes = new EventEmitter<PropertyShape[]>();
   
   constructor(private _sgs: ShapesGraphStateService, private _dialog: MatDialog, private _toast: ToastService) {}
 
@@ -158,6 +160,7 @@ export class PropertyShapesDisplayComponent implements OnChanges {
       propertyShapes.push(propertyShapeObj);
     }
     this.propertyShapes = propertyShapes.sort((a, b) => a.id.localeCompare(b.id));
+    this.receivePropertyShapes.emit(this.propertyShapes);
   }
 
   /**

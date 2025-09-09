@@ -22,11 +22,15 @@
  */
 //Angular imports
 import { Component, Input, OnChanges } from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
 //Mobi + Local imports
+import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
 import { EXPLICIT_TARGETS } from '../../models/constants';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { PropertyShape } from '../../models/property-shape.interface';
 import { SH } from '../../../prefixes';
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
+import { ToastService } from '../../../shared/services/toast.service';
 
 /**
  * @class NodeShapesDisplayComponent
@@ -71,8 +75,12 @@ export class NodeShapesDisplayComponent implements OnChanges {
     ...this._logicalConstraintPredicates
   ];
 
+  private _propertyShapes: PropertyShape[] = [];
+
   constructor(
-    public stateService: ShapesGraphStateService
+    public stateService: ShapesGraphStateService,
+    private _dialog: MatDialog,
+    private _toast: ToastService
   ) { }
 
   ngOnChanges(): void {
@@ -84,6 +92,36 @@ export class NodeShapesDisplayComponent implements OnChanges {
           'target="_blank">docs</a> for more details.</p>';
       } else {
         this.predicateWarningText = undefined;
+      }
+    });
+  }
+
+  /**
+   * Receives the {@link PropertyShape} list from the inner {@link PropertyShapesDisplayComponent}. The variable is
+   * chiefly used for deleting the Node Shape.
+   * 
+   * @param {PropertyShape[]} value The latest list of Property Shapes for this selected Node Shape
+   */
+  setPropertyShapes(value: PropertyShape[]): void {
+    this._propertyShapes = value;
+  }
+
+  /**
+   * Opens a {@link ConfirmModalComponent} asking the user to confirm whether to delete the selected Node Shape. If
+   * confirmed, calls the appropriate {@link ShapesGraphStateService} method and displays an error toast if it failed.
+   */
+  showDeleteConfirmation(): void {
+    this._dialog.open(ConfirmModalComponent, {
+      data: {
+        content: `<p>Are you sure you want to delete <strong>${this.nodeShape['@id']}</strong>?</p>`
+      }
+    }).afterClosed().subscribe((result: boolean) => {
+      if (result) {
+        this.stateService.removeNodeShape(this.nodeShape, this._propertyShapes).subscribe({
+          error: error => {
+            this._toast.createErrorToast(`Error deleting node shape: ${error}`);
+          }
+        });
       }
     });
   }

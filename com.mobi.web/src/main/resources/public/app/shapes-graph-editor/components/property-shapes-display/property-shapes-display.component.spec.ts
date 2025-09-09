@@ -171,6 +171,7 @@ describe('PropertyShapesDisplayComponent', () => {
     component = fixture.componentInstance;
     component.nodeShape = nodeShape;
     component.canModify = true;
+    spyOn(component.receivePropertyShapes, 'emit');
     fixture.detectChanges();
   });
 
@@ -217,6 +218,7 @@ describe('PropertyShapesDisplayComponent', () => {
         expect(component.propertyShapes).toEqual([]);
         expect(component.resolvePath).not.toHaveBeenCalled();
         expect(component.setConstraints).not.toHaveBeenCalled();
+        expect(component.receivePropertyShapes.emit).toHaveBeenCalledWith([]);
       });
       it('unless the node shape points to a property shape that does not exist', () => {
         spyOn(component, 'setConstraints');
@@ -235,6 +237,7 @@ describe('PropertyShapesDisplayComponent', () => {
         expect(component.propertyShapes).toEqual([]);
         expect(component.resolvePath).not.toHaveBeenCalled();
         expect(component.setConstraints).not.toHaveBeenCalled();
+        expect(component.receivePropertyShapes.emit).toHaveBeenCalledWith([]);
       });
       it('unless one of the property shapes does not have a path', () => {
         spyOn(component, 'setConstraints');
@@ -264,6 +267,7 @@ describe('PropertyShapesDisplayComponent', () => {
         expect(component.propertyShapes).toEqual([]);
         expect(component.resolvePath).not.toHaveBeenCalled();
         expect(component.setConstraints).not.toHaveBeenCalled();
+        expect(component.receivePropertyShapes.emit).toHaveBeenCalledWith([]);
       });
       it('unless the property shape path could not be resolved', () => {
         spyOn(component, 'setConstraints');
@@ -274,6 +278,7 @@ describe('PropertyShapesDisplayComponent', () => {
         expect(component.propertyShapes).toEqual([]);
         expect(component.resolvePath).toHaveBeenCalledWith('http://matonto.org/ontologies/test#blank1', jasmine.anything(), entityNames);
         expect(component.setConstraints).not.toHaveBeenCalled();
+        expect(component.receivePropertyShapes.emit).toHaveBeenCalledWith([]);
       });
       it('successfully', () => {
         spyOn(component, 'setConstraints');
@@ -296,6 +301,7 @@ describe('PropertyShapesDisplayComponent', () => {
           expect(component.resolvePath).toHaveBeenCalledWith(paths[idx], jasmine.anything(), entityNames);
           expect(component.setConstraints).toHaveBeenCalledWith(ps, jasmine.anything(), entityNames);
         });
+        expect(component.receivePropertyShapes.emit).toHaveBeenCalledWith(component.propertyShapes);
       });
     });
     describe('should resolve a path', () => {
