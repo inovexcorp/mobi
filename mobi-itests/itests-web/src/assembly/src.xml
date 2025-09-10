@@ -21,7 +21,7 @@
   -->
 
 <assembly>
-    <id>sources</id>
+    <id>app-code</id>
     <formats>
         <format>jar</format>
     </formats>
