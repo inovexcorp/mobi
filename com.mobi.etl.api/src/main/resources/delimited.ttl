@@ -130,9 +130,9 @@
     rdfs:label "Data Mapping"@en ;
     rdfs:comment "An object used to relate a ClassMapping to a Datatype Property on the generated instance."@en .
 
-:datatypeSpec a owl:DatatypeProperty, owl:FunctionalProperty ;
+:datatypeSpec a owl:ObjectProperty, owl:FunctionalProperty ;
     rdfs:domain :DataMapping ;
-    rdfs:range rdf:datatype ;
+    rdfs:range rdfs:Datatype ;
     rdfs:label "datatype specification"@en ;
     rdfs:comment "A datatype specification indicating what datatype to assign to a data property." .
 

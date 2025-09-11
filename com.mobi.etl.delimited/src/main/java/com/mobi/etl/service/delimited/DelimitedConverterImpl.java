@@ -67,9 +67,7 @@ import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.file.Files;
@@ -91,7 +89,7 @@ import java.util.regex.Pattern;
 @Component(service = DelimitedConverter.class)
 public class DelimitedConverterImpl implements DelimitedConverter {
     private static final Logger LOGGER = LoggerFactory.getLogger(DelimitedConverterImpl.class);
-    private static final String LOCAL_NAME_PATTERN = "\\$\\{(\\d+|UUID)\\}";
+    private static final String LOCAL_NAME_PATTERN = "\\$\\{(\\d+|UUID)}";
     private static final String DEFAULT_PREFIX = "http://mobi.com/data/";
 
     private final ValueFactory valueFactory = new ValidatingValueFactory();
@@ -305,8 +303,8 @@ public class DelimitedConverterImpl implements DelimitedConverter {
 
         cm.getDataProperty().forEach(dataMapping -> {
             // Default datatype is xsd:string
-            final IRI[] datatype = {valueFactory.createIRI(XSD.STRING)};
-            Optional<Value> datatypeOpt = dataMapping.getDatatypeSpec();
+            final IRI[] datatype = {org.eclipse.rdf4j.model.vocabulary.XSD.STRING};
+            Optional<Resource> datatypeOpt = dataMapping.getDatatypeSpec_resource();
             Optional<Value> languageOpt = dataMapping.getLanguageSpec();
             int columnIndex = dataMapping.getColumnIndex().iterator().next();
             Resource prop = dataMapping.getHasProperty_resource().iterator().next();
@@ -322,7 +320,7 @@ public class DelimitedConverterImpl implements DelimitedConverter {
                         literal = valueFactory.createLiteral(nextLine[columnIndex], languageOpt.get().stringValue());
                     } else {
                         if (datatypeOpt.isPresent()) {
-                            datatype[0] = valueFactory.createIRI(datatypeOpt.get().stringValue());
+                            datatype[0] = (IRI) datatypeOpt.get();
                         } else {
                             sourceOntologies.stream()
                                     .filter(ontology -> ontology.getDataProperty((IRI) prop).isPresent())
@@ -458,23 +456,6 @@ public class DelimitedConverterImpl implements DelimitedConverter {
         return classMappings;
     }
 
-    /**
-     * Creates a ByteArrayOutputStream from an InputStream so it can be reused.
-     *
-     * @param in the InputStream to convert
-     * @return a ByteArrayOutputStream with the contents of the InputStream
-     * @throws IOException if a error occurs when accessing the InputStream contents
-     */
-    private ByteArrayOutputStream toByteArrayOutputStream(InputStream in) throws IOException {
-        ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        byte[] buffer = new byte[1024];
-        int read;
-        while ((read = in.read(buffer, 0, buffer.length)) != -1) {
-            baos.write(buffer, 0, read);
-            baos.flush();
-        }
-        return baos;
-    }
 
     private Set<Ontology> getSourceOntologies(Mapping mapping) {
         Optional<Resource> recordIRI = mapping.getSourceRecord_resource();

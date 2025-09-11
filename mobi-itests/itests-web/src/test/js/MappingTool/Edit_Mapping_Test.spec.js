@@ -138,7 +138,39 @@ module.exports = {
       .click(cdkOverlay + '//button//span[text()[contains(., "Submit")]]')
   },
 
-  'Step 14: Verify removed datatype' : function(browser) {
+  'Step 14: Verify removed datatype in list' : function(browser) {
+    browser.page.mapperPage().assert.valueEquals('@classMappingSelectInput', 'UHTC Material');
+    browser.page.mapperPage().assertPropertyMappingVisible('Density');
+    browser
+      .useXpath()
+      .assert.visible('//class-mapping-details//mat-list-item//span[text()="Datatype: "]/ancestor::div[text()="Double"]');
+  },
+
+  'Step 15: Save changes and reopen mapping' : function(browser) {
+    var saveButton = '//edit-mapping-tab//div[contains(@class, "button-container")]//mat-button-toggle//span[text()="Save"]';
+    var editButton = cdkOverlay + '//button[text()[contains(., "Edit")]]'
+
+    browser
+      .useXpath()
+      .waitForElementVisible(saveButton)
+      .click(saveButton)
+    browser.globals.wait_for_no_spinners(browser);
+    browser
+      .click('mapper-page mapping-select-page button mat-icon')
+      .useXpath()
+      .waitForElementVisible(editButton)
+      .click(editButton)
+    browser.globals.wait_for_no_spinners(browser);
+    browser.page.mapperPage().selectDataFile(OntoCSV);
+    browser.globals.wait_for_no_spinners(browser);
+  },
+
+  'Step 16: Verify datatype is still correct in list' : function(browser) {
+    browser
+      .waitForElementVisible('edit-mapping-tab class-mapping-select')
+      .click('edit-mapping-tab class-mapping-select')
+      .useXpath()
+      .click(cdkOverlay + '//mat-option//span[text()="UHTC Material"]')
     browser.page.mapperPage().assert.valueEquals('@classMappingSelectInput', 'UHTC Material');
     browser.page.mapperPage().assertPropertyMappingVisible('Density');
     browser

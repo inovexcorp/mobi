@@ -266,8 +266,12 @@ export class PropMappingOverlayComponent implements OnInit {
                 const originalDatatype = getPropertyId(this.selectedPropMapping, `${DELIM}datatypeSpec`);
                 if (this.propMappingForm.controls.datatype.value) { // Set the datatype override if present
                     const datatype = this.propMappingForm.controls.datatype.value;
+                    if (this.selectedPropMapping[`${DELIM}datatypeSpec`].length > 0) {
+                      this.selectedPropMapping[`${DELIM}datatypeSpec`] = [];
+                    }
                     updatePropertyId(this.selectedPropMapping, `${DELIM}datatypeSpec`, datatype);
-                    this.state.changeProp(this.selectedPropMapping['@id'], `${DELIM}datatypeSpec`, datatype, originalDatatype);
+                    this.state.changeProp(this.selectedPropMapping['@id'], `${DELIM}datatypeSpec`, datatype,
+                      originalDatatype, true);
                 } else { // Clear the datatype override if the input is cleared
                     removePropertyId(this.selectedPropMapping, `${DELIM}datatypeSpec`, originalDatatype);
                 }
