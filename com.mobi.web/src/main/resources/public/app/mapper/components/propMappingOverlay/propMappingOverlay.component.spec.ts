@@ -543,7 +543,7 @@ describe('Prop Mapping Overlay component', function() {
                         expect(component.selectedPropMapping[`${DELIM}columnIndex`]).toEqual([{'@value': '0'}]);
                         expect(mapperStateStub.changeProp).toHaveBeenCalledWith(propMappingId, `${DELIM}columnIndex`, '0', '10');
                         expect(component.selectedPropMapping[`${DELIM}datatypeSpec`]).toEqual([{'@id': `${XSD}string`}]);
-                        expect(mapperStateStub.changeProp).toHaveBeenCalledWith(propMappingId, `${DELIM}datatypeSpec`, `${XSD}string`, `${XSD}boolean`);
+                        expect(mapperStateStub.changeProp).toHaveBeenCalledWith(propMappingId, `${DELIM}datatypeSpec`, `${XSD}string`, `${XSD}boolean`, true);
                         expect(mapperStateStub.changeProp).not.toHaveBeenCalledWith(propMappingId, `${DELIM}languageSpec`, jasmine.anything(), jasmine.anything());
                         expect(mapperStateStub.invalidProps).toEqual([]);
                         expect(mapperStateStub.resetEdit).toHaveBeenCalledWith();
