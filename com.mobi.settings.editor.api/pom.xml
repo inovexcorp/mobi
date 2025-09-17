@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
   #%L
-  com.mobi.namespace.api
+  com.mobi.settings.editor.api
   $Id:$
   $HeadURL:$
   %%
@@ -67,7 +67,7 @@
                         <Bundle-Name>Mobi Namespace API</Bundle-Name>
                         <Bundle-Version>${project.version}</Bundle-Version>
                         <Export-Package>
-                            com.mobi.namespace.api*,
+                            com.mobi.settings.editor.api*,
                         </Export-Package>
                         <build>${maven.build.timestamp}</build>
                         <_snapshot>${maven.build.timestamp}</_snapshot>
@@ -89,9 +89,14 @@
                         <configuration>
                             <generates>
                                 <ontology>
-                                    <ontologyFile>${project.basedir}/src/main/resources/namespace.ttl</ontologyFile>
-                                    <outputPackage>com.mobi.namespace.api.ontologies</outputPackage>
+                                    <ontologyFile>${project.basedir}/src/main/resources/application_settings/namespace.ttl</ontologyFile>
+                                    <outputPackage>com.mobi.settings.editor.api.ontologies.namespace</outputPackage>
                                     <ontologyName>Namespace</ontologyName>
+                                </ontology>
+                                <ontology>
+                                    <ontologyFile>${project.basedir}/src/main/resources/user_preferences/editor_preferences.ttl</ontologyFile>
+                                    <outputPackage>com.mobi.settings.editor.api.ontologies.editor</outputPackage>
+                                    <ontologyName>Editor_Preferences</ontologyName>
                                 </ontology>
                             </generates>
                             <references>

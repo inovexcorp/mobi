@@ -28,7 +28,7 @@ import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.when;
 
 import com.mobi.exception.MobiException;
-import com.mobi.namespace.api.ontologies.DefaultOntologyNamespaceApplicationSetting;
+import com.mobi.settings.editor.api.ontologies.namespace.DefaultOntologyNamespaceApplicationSetting;
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.rdf.orm.test.OrmEnabledTestCase;
 import com.mobi.setting.api.SettingService;

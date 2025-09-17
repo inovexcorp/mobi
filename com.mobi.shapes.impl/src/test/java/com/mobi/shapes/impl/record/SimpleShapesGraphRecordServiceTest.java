@@ -64,7 +64,7 @@ import com.mobi.catalog.api.versioning.VersioningManager;
 import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.namespace.api.ontologies.DefaultShapesGraphNamespaceApplicationSetting;
+import com.mobi.settings.editor.api.ontologies.namespace.DefaultShapesGraphNamespaceApplicationSetting;
 import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.persistence.utils.ConnectionUtils;
 import com.mobi.prov.api.ontologies.mobiprov.CreateActivity;

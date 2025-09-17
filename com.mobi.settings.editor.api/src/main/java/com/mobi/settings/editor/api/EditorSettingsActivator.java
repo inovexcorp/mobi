@@ -1,8 +1,8 @@
-package com.mobi.namespace.api;
+package com.mobi.settings.editor.api;
 
 /*-
  * #%L
- * com.mobi.namespace.api
+ * com.mobi.settings.editor.api
  * $Id:$
  * $HeadURL:$
  * %%
@@ -35,22 +35,39 @@ import org.osgi.service.component.annotations.Reference;
 import java.io.IOException;
 import java.io.InputStream;
 
-@Component(name = NamespaceActivator.COMPONENT_NAME, immediate = true)
-public class NamespaceActivator {
-    static final String COMPONENT_NAME = "com.mobi.namespace.api.NamespaceActivator";
+@Component(name = EditorSettingsActivator.COMPONENT_NAME, immediate = true)
+public class EditorSettingsActivator {
+    static final String COMPONENT_NAME = "com.mobi.settings.editor.api.EditorSettingsActivator";
 
     private static final String NAMESPACE_ONTOLOGY_NAME = "http://mobi.com/ontologies/namespace";
     private static final String DEFAULT_NAMESPACE_IRI = "http://mobi.solutions/ontologies/namespace/DefaultOntologyNamespace/";
+    private static final String EDITOR_PREFERENCE_ONTOLOGY_NAME = "https://mobi.solutions/ontologies/editor";
+    private static final InputStream EDITOR_PREFERENCE_ONTOLOGY_STREAM;
+
     final ValueFactory vf = new ValidatingValueFactory();
 
     @Reference
     SettingUtilsService settingUtilsService;
 
+    static {
+        EDITOR_PREFERENCE_ONTOLOGY_STREAM = EditorSettingsActivator.class.getResourceAsStream("/user_preferences/editor_preferences.ttl");
+    }
+
     @Activate
     @Modified
     protected void start() throws IOException {
-        InputStream namespaceOntology = NamespaceActivator.class.getResourceAsStream("/namespace.ttl");
-        Model model = settingUtilsService.updateRepoWithSettingDefinitions(namespaceOntology, NAMESPACE_ONTOLOGY_NAME);
-        settingUtilsService.initializeApplicationSettingsWithDefaultValues(model, vf.createIRI(DEFAULT_NAMESPACE_IRI));
+        initializeSetting("/application_settings/namespace.ttl", NAMESPACE_ONTOLOGY_NAME, true, DEFAULT_NAMESPACE_IRI);
+        settingUtilsService.updateRepoWithSettingDefinitions(EDITOR_PREFERENCE_ONTOLOGY_STREAM,
+                EDITOR_PREFERENCE_ONTOLOGY_NAME);
+
+    }
+
+    private void initializeSetting(String fileName, String ontology, boolean hasDefaultValues, String defaultValue) {
+        InputStream settingOntology = EditorSettingsActivator.class.getResourceAsStream(fileName);
+        Model model = settingUtilsService.updateRepoWithSettingDefinitions(settingOntology, ontology);
+
+        if (hasDefaultValues) {
+            settingUtilsService.initializeApplicationSettingsWithDefaultValues(model, vf.createIRI(defaultValue));
+        }
     }
 }

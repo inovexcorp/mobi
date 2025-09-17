@@ -1,0 +1,40 @@
+@prefix owl: <http://www.w3.org/2002/07/owl#>.
+@prefix foaf: <http://xmlns.com/foaf/0.1/>.
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#>.
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#>.
+@prefix dct: <http://purl.org/dc/terms/>.
+@prefix sh: <http://www.w3.org/ns/shacl#>.
+@prefix setting: <http://mobi.com/ontologies/setting#>.
+@prefix mcat: <http://mobi.com/ontologies/catalog#> .
+@prefix webForm: <https://mobi.solutions/ontologies/form#> .
+@prefix : <https://mobi.solutions/ontologies/editor#>.
+@base <https://mobi.solutions/ontologies/editor>.
+
+<https://mobi.solutions/ontologies/editor> a owl:Ontology;
+   owl:versionIRI <https://mobi.solutions/ontologies/editor/1.0>;
+   owl:imports <http://www.w3.org/ns/shacl#>, <http://mobi.com/ontologies/preference>;
+   rdfs:label "Editor Preference Shape Ontology"@en;
+   rdfs:comment "The Editor Preference Shape Ontology provides the SHACL shapes relating to preferences within the Ontology & Shapes graph Editors."@en;
+   dct:creator [foaf:name "Khalil Savoy"];
+   foaf:maker [foaf:name "Mobi"; foaf:homepage <https://inovexcorp.github.io/mobi-docs/>];
+   dct:modified "2025-09-15"^^xsd:date.
+
+# Default Ontology Namespace
+:DefaultAnnotationPreference a owl:Class, sh:NodeShape;
+    rdfs:subClassOf setting:Preference;
+    dct:description "Default Annotation Preference";
+    rdfs:comment "A user preference within the Mobi framework that represents the default type of annotations to be used for created ontology & shapes graph entities."@en;
+    sh:property :DefaultAnnotationPreferencePropertyShape;
+    setting:inGroup :EditorPreferencesGroup .
+
+:DefaultAnnotationPreferencePropertyShape a sh:PropertyShape;
+     sh:path setting:hasDataValue;
+     sh:datatype xsd:string;
+     sh:minCount 1 ;
+     sh:maxCount 1 ;
+     sh:in ("DC Terms" "RDFS") ;
+     sh:defaultValue "DC Terms"@en ;
+     webForm:usesFormField webForm:RadioInput .
+
+:EditorPreferencesGroup a setting:PreferenceGroup ;
+     rdfs:label "Editor Preferences"@en .
