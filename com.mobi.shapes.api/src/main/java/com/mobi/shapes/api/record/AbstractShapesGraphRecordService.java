@@ -34,7 +34,7 @@ import com.mobi.catalog.api.record.statistic.Statistic;
 import com.mobi.catalog.api.record.statistic.StatisticDefinition;
 import com.mobi.exception.MobiException;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
-import com.mobi.namespace.api.ontologies.DefaultShapesGraphNamespaceApplicationSetting;
+import com.mobi.settings.editor.api.ontologies.namespace.DefaultShapesGraphNamespaceApplicationSetting;
 import com.mobi.ontology.utils.OntologyModels;
 import com.mobi.setting.api.SettingService;
 import com.mobi.setting.api.ontologies.setting.ApplicationSetting;

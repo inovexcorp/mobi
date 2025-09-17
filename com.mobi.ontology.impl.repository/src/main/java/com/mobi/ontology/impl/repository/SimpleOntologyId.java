@@ -24,7 +24,7 @@ package com.mobi.ontology.impl.repository;
  */
 
 import com.mobi.exception.MobiException;
-import com.mobi.namespace.api.ontologies.DefaultOntologyNamespaceApplicationSetting;
+import com.mobi.settings.editor.api.ontologies.namespace.DefaultOntologyNamespaceApplicationSetting;
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.utils.OntologyModels;
 import com.mobi.setting.api.SettingService;

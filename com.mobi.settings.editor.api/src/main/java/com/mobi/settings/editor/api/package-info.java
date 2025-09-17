@@ -1,10 +1,10 @@
-@Version("3.0.0.${build}")
+@Version("4.0.0.${build}")
 
-package com.mobi.namespace.api;
+package com.mobi.settings.editor.api;
 
 /*-
  * #%L
- * com.mobi.namespace.api
+ * com.mobi.settings.editor.api
  * $Id:$
  * $HeadURL:$
  * %%
