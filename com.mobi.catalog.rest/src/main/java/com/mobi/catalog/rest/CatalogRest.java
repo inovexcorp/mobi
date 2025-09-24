@@ -321,6 +321,8 @@ public class CatalogRest {
      * Search for existing definitions of an entity across all records.
      * An optional type parameter filters the returned Entities.  Parameters can be passed to control paging.
      *
+     * @param servletRequest The HTTP servlet request context.
+     * @param uriInfo The URI context for the request.
      * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
      * @param offset The offset for the page.
@@ -405,11 +407,14 @@ public class CatalogRest {
      * Retrieves a list of all the Records in the Catalog. An optional type parameter filters the returned Records.
      * Parameters can be passed to control paging.
      *
+     * @param servletRequest The HTTP servlet request context.
+     * @param uriInfo The URI context for the request.
      * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
      * @param sort IRI field with sort order specified.
-     * @param recordType Type of Records you want to get back (unversioned, versioned, ontology, mapping, or
-     *                   dataset).
+     * @param recordTypes A list of IRIs representing the types of Records to return.
+     * @param keywords Optional list of keywords to filter the Records.
+     * @param creators Optional list of creator IRIs to filter the Records.
      * @param offset The offset for the page.
      * @param limit The number of Records to return in one page.
      * @param asc Whether the list should be sorted ascending or descending.
@@ -704,6 +709,7 @@ public class CatalogRest {
      * Retrieves a list of all the Keywords in the Catalog.
      * Parameters can be passed to control paging.
      *
+     * @param uriInfo The URI context for the request.
      * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
      * @param searchText The String used to filter out Records.
@@ -1240,7 +1246,6 @@ public class CatalogRest {
             if (!commitManager.commitInRecord(recordIri, commitIri, conn)) {
                 throw new IllegalArgumentException(COMMIT + commitId + " is not in record " + recordId);
             }
-
             OrmFactory<Tag> factory = factoryRegistry.getFactoryOfType(Tag.class).orElseThrow(() ->
                     new IllegalStateException("Tag Factory not found"));
             OffsetDateTime now = OffsetDateTime.now();
@@ -1955,48 +1960,6 @@ public class CatalogRest {
     }
 
     /**
-     * Gets the master Branch of a VersionedRDFRecord identified by the provided IDs.
-     *
-     * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
-     *                  with "_:".
-     * @param recordId String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
-     *                 String begins with "_:".
-     * @return The master Branch for the identified VersionedRDFRecord.
-     */
-    @GET
-    @Path("{catalogId}/records/{recordId}/branches/master")
-    @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed("user")
-    @Operation(
-            tags = "catalogs",
-            summary = "Gets the master Branch of a VersionedRDFRecord identified by the provided IDs",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Master Branch for the identified VersionedRDFRecord"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId or recordId"
-                            + COULD_NOT_BE_FOUND),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
-    @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response getMasterBranch(
-            @Parameter(description = "String representing the Catalog ID", required = true)
-            @PathParam("catalogId") String catalogId,
-            @Parameter(description = "String representing the VersionedRDFRecord ID", required = true)
-            @PathParam("recordId") String recordId) {
-        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            Branch masterBranch = branchManager.getMasterBranch(vf.createIRI(catalogId), vf.createIRI(recordId), conn);
-            return Response.ok(thingToSkolemizedObjectNode(masterBranch, Branch.TYPE, bNodeService)
-                    .toString()).build();
-        } catch (IllegalArgumentException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
-        } catch (IllegalStateException | MobiException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    /**
      * Gets a specific Branch of a VersionedRDFRecord identified by the provided IDs.
      *
      * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
@@ -2029,11 +1992,16 @@ public class CatalogRest {
             @PathParam("catalogId") String catalogId,
             @Parameter(description = "String representing the VersionedRecord ID", required = true)
             @PathParam("recordId") String recordId,
-            @Parameter(description = "String representing the Branch ID", required = true)
+            @Parameter(description = "String representing the Branch ID. "
+                    + "Keyword 'master' (case-insensitive) may be used to resolve to the Master branch IRI.",
+                    required = true)
             @PathParam("branchId") String branchId) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            OrmFactory<Branch> branchOrmFactory = factoryRegistry.getFactoryOfType(Branch.class)
+                    .orElseThrow(() -> new MobiException("Branch factory not found"));
+            Resource branchIRI = vf.createIRI(checkBranchId(catalogId, recordId, branchId, conn));
             Branch branch = branchManager.getBranch(vf.createIRI(catalogId), vf.createIRI(recordId),
-                    vf.createIRI(branchId), factoryRegistry.getFactoryOfType(Branch.class).get(), conn);
+                    branchIRI, branchOrmFactory, conn);
             return Response.ok(thingToSkolemizedObjectNode(branch, Branch.TYPE, bNodeService)
                     .toString()).build();
         } catch (IllegalArgumentException ex) {
@@ -2080,12 +2048,13 @@ public class CatalogRest {
             @PathParam("catalogId") String catalogId,
             @Parameter(description = "String representing the VersionedRecord ID", required = true)
             @PathParam("recordId") String recordId,
-            @Parameter(description = "String representing the Branch ID", required = true)
+            @Parameter(description = "String representing the Branch ID. "
+                    + "Keyword 'master' (case-insensitive) may be used to resolve to the Master branch IRI.",
+                    required = true)
             @PathParam("branchId") String branchId) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            String deleteBranchId = checkBranchId(catalogId, recordId, branchId, conn);
-            branchManager.removeBranch(vf.createIRI(catalogId), vf.createIRI(recordId), vf.createIRI(deleteBranchId),
-                    conn);
+            Resource deleteBranchIRI = vf.createIRI(checkBranchId(catalogId, recordId, branchId, conn));
+            branchManager.removeBranch(vf.createIRI(catalogId), vf.createIRI(recordId), deleteBranchIRI, conn);
             return Response.ok().build();
         } catch (IllegalArgumentException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
@@ -2131,13 +2100,15 @@ public class CatalogRest {
             @PathParam("catalogId") String catalogId,
             @Parameter(description = "String representing the VersionedRecord ID", required = true)
             @PathParam("recordId") String recordId,
-            @Parameter(description = "String representing the VersionedRDFRecord ID", required = true)
+            @Parameter(description = "String representing the Branch ID. "
+                    + "Keyword 'master' (case-insensitive) may be used to resolve to the Master branch IRI.",
+                    required = true)
             @PathParam("branchId") String branchId,
-            @Parameter(description = "String representing the Branch ID", required = true)
-                    String newBranchJson) {
+            @Parameter(description = "String representing the Branch JSON", required = true)
+                String newBranchJson) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            branchId = checkBranchId(catalogId, recordId, branchId, conn);
-            Branch newBranch = getNewThing(newBranchJson, vf.createIRI(branchId),
+            Resource branchIRI = vf.createIRI(checkBranchId(catalogId, recordId, branchId, conn));
+            Branch newBranch = getNewThing(newBranchJson, branchIRI,
                     factoryRegistry.getFactoryOfType(Branch.class).get());
             branchManager.updateBranch(vf.createIRI(catalogId), vf.createIRI(recordId), newBranch, conn);
             return Response.ok().build();
@@ -2153,6 +2124,7 @@ public class CatalogRest {
      * chain for that Branch. If a limit is passed which is greater than zero, will paginate the results. If a
      * targetId is passed, then only commits between the HEAD commits of the branchId and targetId will be returned.
      *
+     * @param uriInfo The URI context for the request.
      * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
      *                  with "_:".
      * @param recordId String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
@@ -2194,9 +2166,13 @@ public class CatalogRest {
             @PathParam("catalogId") String catalogId,
             @Parameter(description = "String representing the VersionedRecord ID", required = true)
             @PathParam("recordId") String recordId,
-            @Parameter(description = "String representing the Branch ID", required = true)
+            @Parameter(description = "String representing the Branch ID. "
+                    + "Keyword 'master' (case-insensitive) may be used to resolve to the Master branch IRI.",
+                    required = true)
             @PathParam("branchId") String branchId,
-            @Parameter(description = "String representing the target Branch ID", required = true)
+            @Parameter(description = "String representing the target Branch ID. "
+                    + "Keyword 'master' (case-insensitive) may be used to resolve to the Master branch IRI.",
+                    required = true)
             @QueryParam("targetId") String targetId,
             @Parameter(description = "Optional offset for the results")
             @QueryParam("offset") int offset,
@@ -2273,7 +2249,9 @@ public class CatalogRest {
             @PathParam("catalogId") String catalogId,
             @Parameter(description = "String representing the VersionedRecord ID", required = true)
             @PathParam("recordId") String recordId,
-            @Parameter(description = "String representing the Branch ID", required = true)
+            @Parameter(description = "String representing the Branch ID. "
+                    + "Keyword 'master' (case-insensitive) may be used to resolve to the Master branch IRI.",
+                    required = true)
             @PathParam("branchId") String branchId,
             @Parameter(description = "Message for the new Commit", required = true)
             @QueryParam("message") String message) {
@@ -2281,69 +2259,15 @@ public class CatalogRest {
             checkStringParam(message, "Commit message is required");
             User activeUser = getActiveUser(servletRequest, engineManager);
             try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-                String resolvedBranchId = checkBranchId(catalogId, recordId, branchId, conn);
+                Resource resolvedBranchIRI = vf.createIRI(checkBranchId(catalogId, recordId, branchId, conn));
                 Resource newCommitId = versioningManager.commit(vf.createIRI(catalogId), vf.createIRI(recordId),
-                        vf.createIRI(resolvedBranchId), activeUser, message, conn);
+                        resolvedBranchIRI, activeUser, message, conn);
                 return Response.status(201).entity(newCommitId.stringValue()).build();
             }
         } catch (IllegalArgumentException ex) {
             throw RestUtils.getErrorObjBadRequest(ex);
         } catch (IllegalStateException | SailException | MobiException ex) {
             throw RestUtils.getErrorObjInternalServerError(ex);
-        }
-    }
-
-    /**
-     * Gets the HEAD Commit associated with a Branch.
-     *
-     * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
-     *                  with "_:".
-     * @param recordId String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
-     *                 String begins with "_:".
-     * @param branchId String representing the Branch ID. NOTE: Assumes ID represents an IRI unless String begins
-     *                 with "_:".
-     * @param format Desired RDF return format. NOTE: Optional param - defaults to "jsonld".
-     * @return Response with the Commit which is the HEAD of the identified Branch.
-     */
-    @GET
-    @Path("{catalogId}/records/{recordId}/branches/{branchId}/commits/head")
-    @Produces(MediaType.APPLICATION_JSON)
-    @RolesAllowed("user")
-    @Operation(
-            tags = "catalogs",
-            summary = "Gets the HEAD Commit for a specific Branch",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Response with the Commit which is the HEAD of the "
-                                   + "identified Branch"),
-                    @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId, recordId,"
-                            + " or branchId could not be found"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
-            }
-    )
-    @ResourceId(type = ValueType.PATH, value = "recordId")
-    public Response getHead(
-            @Parameter(description = "String representing the Catalog ID", required = true)
-            @PathParam("catalogId") String catalogId,
-            @Parameter(description = "String representing the VersionedRecord ID", required = true)
-            @PathParam("recordId") String recordId,
-            @Parameter(description = "String representing the Branch ID", required = true)
-            @PathParam("branchId") String branchId,
-            @Parameter(description = "Optional RDF return format")
-            @DefaultValue("jsonld") @QueryParam("format") String format) {
-        long start = System.currentTimeMillis();
-        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            Commit headCommit = commitManager.getHeadCommit(vf.createIRI(catalogId), vf.createIRI(recordId),
-                    vf.createIRI(branchId), conn);
-            return createCommitResponse(headCommit,
-                    differenceManager.getCommitDifference(headCommit.getResource(), conn), format, bNodeService);
-        } catch (IllegalArgumentException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
-        } catch (IllegalStateException | MobiException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
-        } finally {
-            LOG.trace("getHead took {}ms", System.currentTimeMillis() - start);
         }
     }
 
@@ -2384,17 +2308,24 @@ public class CatalogRest {
             @PathParam("catalogId") String catalogId,
             @Parameter(description = "String representing the VersionedRecord ID", required = true)
             @PathParam("recordId") String recordId,
-            @Parameter(description = "String representing the Branch ID", required = true)
+            @Parameter(description = "String representing the Branch ID. "
+                    + "Keyword 'master' (case-insensitive) may be used to resolve to the Master branch IRI.",
+                    required = true)
             @PathParam("branchId") String branchId,
-            @Parameter(description = "String representing the Commit ID", required = true)
+            @Parameter(description = "String representing the Commit ID. "
+                    + "Keyword 'head' (case-insensitive) may be used to resolve to the HEAD Commit IRI for the branch.",
+                    required = true)
             @PathParam("commitId") String commitId,
             @Parameter(description = "Optional RDF return format")
             @DefaultValue("jsonld") @QueryParam("format") String format) {
         long start = System.currentTimeMillis();
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
-            Commit commit = commitManager.getCommit(vf.createIRI(catalogId), vf.createIRI(recordId),
-                    vf.createIRI(branchId), vf.createIRI(commitId), conn).orElseThrow(() ->
-                    ErrorUtils.sendError(COMMIT + commitId + COULD_NOT_BE_FOUND, Response.Status.NOT_FOUND));
+            Resource catalogIRI = vf.createIRI(catalogId);
+            Resource recordIRI = vf.createIRI(recordId);
+            Resource branchIRI = vf.createIRI(checkBranchId(catalogId, recordId, branchId, conn));
+            Resource commitIRI = vf.createIRI(checkCommitId(catalogId, recordId, branchIRI.stringValue(), commitId, conn));
+            Commit commit = commitManager.getCommit(catalogIRI, recordIRI, branchIRI, commitIRI, conn).orElseThrow(() ->
+                    ErrorUtils.sendError(COMMIT + commitIRI.stringValue() + COULD_NOT_BE_FOUND, Response.Status.NOT_FOUND));
             return createCommitResponse(commit, differenceManager.getCommitDifference(commit.getResource(), conn),
                     format, bNodeService);
         } catch (IllegalArgumentException ex) {
@@ -2415,7 +2346,7 @@ public class CatalogRest {
      *                  with "_:".
      * @param recordId String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
      *                 String begins with "_:".
-     * @param branchId String representing the source Branch ID. NOTE: Assumes ID represents an IRI unless String
+     * @param sourceBranchId String representing the source Branch ID. NOTE: Assumes ID represents an IRI unless String
      *                 begins with "_:".
      * @param targetBranchId String representing the target Branch ID. NOTE: Assumes ID represents an IRI unless
      *                       String begins with "_:".
@@ -2447,9 +2378,13 @@ public class CatalogRest {
             @PathParam("catalogId") String catalogId,
             @Parameter(description = "String representing the VersionedRecord ID", required = true)
             @PathParam("recordId") String recordId,
-            @Parameter(description = "String representing the source Branch ID", required = true)
-            @PathParam("branchId") String branchId,
-            @Parameter(description = "String representing the target Branch ID", required = true)
+            @Parameter(description = "String representing the source Branch ID. "
+                    + "Keyword 'master' (case-insensitive) may be used to resolve to the Master branch IRI.",
+                    required = true)
+            @PathParam("branchId") String sourceBranchId,
+            @Parameter(description = "String representing the target Branch ID. "
+                    + "Keyword 'master' (case-insensitive) may be used to resolve to the Master branch IRI.",
+                    required = true)
             @QueryParam("targetId") String targetBranchId,
             @Parameter(description = "Optional RDF return format")
             @DefaultValue("jsonld") @QueryParam("format") String rdfFormat) {
@@ -2457,8 +2392,10 @@ public class CatalogRest {
             checkStringParam(targetBranchId, "Target branch is required");
             Resource catalogIRI = vf.createIRI(catalogId);
             Resource recordIRI = vf.createIRI(recordId);
-            Commit sourceHead = commitManager.getHeadCommit(catalogIRI, recordIRI, vf.createIRI(branchId), conn);
-            Commit targetHead = commitManager.getHeadCommit(catalogIRI, recordIRI, vf.createIRI(targetBranchId), conn);
+            Resource sourceBranchIRI = vf.createIRI(checkBranchId(catalogId, recordId, sourceBranchId, conn));
+            Resource targetBranchIRI = vf.createIRI(checkBranchId(catalogId, recordId, targetBranchId, conn));
+            Commit sourceHead = commitManager.getHeadCommit(catalogIRI, recordIRI, sourceBranchIRI, conn);
+            Commit targetHead = commitManager.getHeadCommit(catalogIRI, recordIRI, targetBranchIRI, conn);
             Difference diff = differenceManager.getDifference(sourceHead.getResource(), targetHead.getResource(), conn);
             return Response.ok(getDifferenceJsonString(diff, rdfFormat, bNodeService),
                     MediaType.APPLICATION_JSON).build();
@@ -2511,21 +2448,25 @@ public class CatalogRest {
             @PathParam("catalogId") String catalogId,
             @Parameter(description = "String representing the VersionedRecord ID", required = true)
             @PathParam("recordId") String recordId,
-            @Parameter(description = "String representing the VersionedRDFRecord ID", required = true)
+            @Parameter(description = "String representing the source Branch ID. "
+                    + "Keyword 'master' (case-insensitive) may be used to resolve to the Master branch IRI.",
+                    required = true)
             @PathParam("branchId") String branchId,
-            @Parameter(description = "String representing the target Branch ID", required = true)
+            @Parameter(description = "String representing the target Branch ID. "
+                    + "Keyword 'master' (case-insensitive) may be used to resolve to the Master branch IRI.",
+                    required = true)
             @QueryParam("targetId") String targetBranchId,
             @Parameter(description = "Optional RDF return format")
             @DefaultValue("jsonld") @QueryParam("format") String rdfFormat) {
         long start = System.currentTimeMillis();
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             checkStringParam(targetBranchId, "Target branch is required");
-            branchId = checkBranchId(catalogId, recordId, branchId, conn);
-            targetBranchId = checkBranchId(catalogId, recordId, targetBranchId, conn);
             Resource catalogIRI = vf.createIRI(catalogId);
             Resource recordIRI = vf.createIRI(recordId);
-            Commit sourceHead = commitManager.getHeadCommit(catalogIRI, recordIRI, vf.createIRI(branchId), conn);
-            Commit targetHead = commitManager.getHeadCommit(catalogIRI, recordIRI, vf.createIRI(targetBranchId), conn);
+            Resource sourceBranchIRI = vf.createIRI(checkBranchId(catalogId, recordId, branchId, conn));
+            Resource targetBranchIRI = vf.createIRI(checkBranchId(catalogId, recordId, targetBranchId, conn));
+            Commit sourceHead = commitManager.getHeadCommit(catalogIRI, recordIRI, sourceBranchIRI, conn);
+            Commit targetHead = commitManager.getHeadCommit(catalogIRI, recordIRI, targetBranchIRI, conn);
             Set<Conflict> conflicts = differenceManager.getConflicts(sourceHead.getResource(), targetHead.getResource(), conn);
             ArrayNode array = mapper.createArrayNode();
             conflicts.stream()
@@ -2590,9 +2531,13 @@ public class CatalogRest {
             @PathParam("catalogId") String catalogId,
             @Parameter(description = "VersionedRecord IRI", required = true)
             @PathParam("recordId") String recordId,
-            @Parameter(description = "Source Branch IRI", required = true)
+            @Parameter(description = "Source Branch IRI. "
+                    + "Keyword 'master' (case-insensitive) may be used to resolve to the Master branch IRI.",
+                    required = true)
             @PathParam("branchId") String sourceBranchId,
-            @Parameter(description = "Target Branch IRI", required = true)
+            @Parameter(description = "Target Branch IRI. "
+                    + "Keyword 'master' (case-insensitive) may be used to resolve to the Master branch IRI.",
+                    required = true)
             @QueryParam("targetId") String targetBranchId,
             @Parameter(schema = @Schema(type = "string",
                     description = "String of JSON-LD that corresponds to the statements that"
@@ -2607,11 +2552,13 @@ public class CatalogRest {
             @FormParam("conflicts") String conflictsJson) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             User activeUser = getActiveUser(servletRequest, engineManager);
+            Resource sourceBranchIRI = vf.createIRI(checkBranchId(catalogId, recordId, sourceBranchId, conn));
+            Resource targetBranchIRI = vf.createIRI(checkBranchId(catalogId, recordId, targetBranchId, conn));
             Model additions = StringUtils.isEmpty(additionsJson) ? null : convertJsonld(additionsJson);
             Model deletions = StringUtils.isEmpty(deletionsJson) ? null : convertJsonld(deletionsJson);
             Map<Resource, Conflict> conflicts = jsonToConflict(conflictsJson);
             Resource newCommitId = versioningManager.merge(vf.createIRI(catalogId), vf.createIRI(recordId),
-                    vf.createIRI(sourceBranchId), vf.createIRI(targetBranchId), activeUser, additions, deletions,
+                    sourceBranchIRI, targetBranchIRI, activeUser, additions, deletions,
                     conflicts, conn);
             return Response.ok(newCommitId.stringValue()).build();
         } catch (IllegalArgumentException ex) {
@@ -2663,9 +2610,12 @@ public class CatalogRest {
             @PathParam("catalogId") String catalogId,
             @Parameter(description = "String representing the VersionedRecord ID", required = true)
             @PathParam("recordId") String recordId,
-            @Parameter(description = "String representing the Branch ID")
+            @Parameter(description = "String representing the Branch ID. "
+                    + "Keyword 'master' (case-insensitive) may be used to resolve to the Master branch IRI.")
             @PathParam("branchId") String branchId,
-            @Parameter(description = "String representing the Commit ID", required = true)
+            @Parameter(description = "String representing the Commit ID. "
+                    + "Keyword 'head' (case-insensitive) may be used to resolve to the HEAD Commit IRI for the branch.",
+                    required = true)
             @PathParam("commitId") String commitId,
             @Parameter(description = "Optional RDF return format")
             @DefaultValue("jsonld") @QueryParam("format") String rdfFormat,
@@ -2677,11 +2627,16 @@ public class CatalogRest {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Resource catalogIRI = vf.createIRI(catalogId);
             Resource recordIRI = vf.createIRI(recordId);
-            Resource commitIRI = vf.createIRI(commitId);
+            final Resource commitIRI;
             if (StringUtils.isNotEmpty(branchId)) {
-                commitManager.getCommit(catalogIRI, recordIRI, vf.createIRI(branchId), commitIRI, conn);
+                Resource branchIRI = vf.createIRI(checkBranchId(catalogId, recordId, branchId, conn));
+                commitIRI = vf.createIRI(checkCommitId(catalogId, recordId, branchIRI.stringValue(), commitId, conn));
+                commitManager.getCommit(catalogIRI, recordIRI, branchIRI, commitIRI, conn).orElseThrow(() ->
+                        ErrorUtils.sendError(COMMIT + commitIRI.stringValue() + COULD_NOT_BE_FOUND, Response.Status.NOT_FOUND));
             } else {
-                commitManager.getCommit(commitIRI, conn);
+                commitIRI = vf.createIRI(commitId);
+                commitManager.getCommit(commitIRI, conn).orElseThrow(() ->
+                        ErrorUtils.sendError(COMMIT + commitIRI.stringValue() + COULD_NOT_BE_FOUND, Response.Status.NOT_FOUND));
             }
             Model resource = compiledResourceManager.getCompiledResource(commitIRI, conn);
             if (apply) {
@@ -2750,9 +2705,13 @@ public class CatalogRest {
             @PathParam("catalogId") String catalogId,
             @Parameter(description = "String representing the VersionedRecord ID", required = true)
             @PathParam("recordId") String recordId,
-            @Parameter(description = "String representing the Branch ID", required = true)
+            @Parameter(description = "String representing the Branch ID. "
+                    + "Keyword 'master' (case-insensitive) may be used to resolve to the Master branch IRI.",
+                    required = true)
             @PathParam("branchId") String branchId,
-            @Parameter(description = "String representing the Commit ID", required = true)
+            @Parameter(description = "String representing the Commit ID. "
+                    + "Keyword 'head' (case-insensitive) may be used to resolve to the HEAD Commit IRI for the branch.",
+                    required = true)
             @PathParam("commitId") String commitId,
             @Parameter(description = "Optional RDF return format")
             @DefaultValue("jsonld") @QueryParam("format") String rdfFormat,
@@ -2765,10 +2724,12 @@ public class CatalogRest {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             Resource catalogIRI = vf.createIRI(catalogId);
             Resource recordIRI = vf.createIRI(recordId);
-            Resource commitIRI = vf.createIRI(commitId);
-            commitManager.getCommit(catalogIRI, recordIRI, vf.createIRI(branchId), commitIRI, conn);
+            Resource branchIRI = vf.createIRI(checkBranchId(catalogId, recordId, branchId, conn));
+            Resource commitIRI = vf.createIRI(checkCommitId(catalogId, recordId, branchIRI.stringValue(), commitId, conn));
+            commitManager.getCommit(catalogIRI, recordIRI, branchIRI, commitIRI, conn).orElseThrow(() ->
+                    ErrorUtils.sendError(COMMIT + commitIRI.stringValue() + COULD_NOT_BE_FOUND, Response.Status.NOT_FOUND));
             Model resource;
-            Model temp = compiledResourceManager.getCompiledResource(vf.createIRI(commitId), conn);
+            Model temp = compiledResourceManager.getCompiledResource(commitIRI, conn);
             if (apply) {
                 User activeUser = getActiveUser(servletRequest, engineManager);
                 Optional<InProgressCommit> inProgressCommit = commitManager.getInProgressCommitOpt(catalogIRI, recordIRI,
@@ -2785,7 +2746,6 @@ public class CatalogRest {
                     writer.flush();
                 }
             };
-
             return Response.ok(stream).header("Content-Disposition", "attachment;filename=" + fileName
                     + "." + getRDFFormatFileExtension(rdfFormat))
                     .header("Content-Type", getRDFFormatMimeType(rdfFormat)).build();
@@ -3286,6 +3246,30 @@ public class CatalogRest {
             return branch.getResource().stringValue();
         } else {
             return branchId;
+        }
+    }
+
+    /**
+     * Checks for keyword HEAD in the provided commitID (case-insensitive) if present returns IRI to HEAD Commit for
+     * branch, otherwise, returns commitId string
+     *
+     * @param catalogId String representing the Catalog ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                  with "_:".
+     * @param recordId String representing the VersionedRDFRecord ID. NOTE: Assumes ID represents an IRI unless
+     *                 String begins with "_:".
+     * @param branchId String representing the Branch ID. NOTE: Assumes ID represents an IRI unless String begins
+     *                 with "_:".
+     * @param conn A repository connection
+     * @return A string of the appropriate commit
+     */
+    private String checkCommitId(String catalogId, String recordId, String branchId, String commitId,
+                                 RepositoryConnection conn) {
+        if ("head".equals(commitId.toLowerCase().trim())) {
+            Commit headCommit = commitManager.getHeadCommit(vf.createIRI(catalogId), vf.createIRI(recordId),
+                    vf.createIRI(branchId), conn);
+            return headCommit.getResource().stringValue();
+        } else {
+            return commitId;
         }
     }
 }
