@@ -158,6 +158,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
     private Version testVersion;
     private Tag testTag;
     private List<Commit> testCommits;
+    private Commit headCommit;
     private InProgressCommit testInProgressCommit;
     private Branch testBranch;
     private MasterBranch testMasterBranch;
@@ -180,12 +181,15 @@ public class CatalogRestTest extends MobiRestTestCXF {
             "http://mobi.com/commits/2"
     };
     private static final String BRANCH_IRI = "http://mobi.com/branches/test";
+    private static final String MASTER_BRANCH_IRI = "http://mobi.com/branches/master";
     private static final String USER_IRI = "http://mobi.com/users/tester";
     private static final String ACTIVITY_IRI = "http://mobi.com/activity/test";
     private static final String CONFLICT_IRI = "http://mobi.com/conflicts/test";
     private static final String CATALOG_URL_LOCAL = "catalogs/" + encode(LOCAL_IRI);
     private static final String CATALOG_URL_DISTRIBUTED = "catalogs/" + encode(DISTRIBUTED_IRI);
     private static final String MASTER = "MASTER";
+    private static final String HEAD = "HEAD";
+    private static final String HEAD_IRI = "http://mobi.com/commits/head";
 
     // Mock services used in server
     private static CatalogRest rest;
@@ -295,12 +299,13 @@ public class CatalogRestTest extends MobiRestTestCXF {
         testCommits = Arrays.stream(COMMIT_IRIS)
                 .map(s -> commitFactory.createNew(vf.createIRI(s)))
                 .collect(Collectors.toList());
+        headCommit = commitFactory.createNew(vf.createIRI(HEAD_IRI));
         testInProgressCommit = inProgressCommitFactory.createNew(vf.createIRI(COMMIT_IRIS[0]));
         testBranch = branchFactory.createNew(vf.createIRI(BRANCH_IRI));
         testBranch.setProperty(vf.createLiteral("Title"), vf.createIRI(DCTERMS.TITLE.stringValue()));
         testBranch.setProperty(vf.createLiteral(USER_IRI), vf.createIRI(DCTERMS.PUBLISHER.stringValue()));
         testBranch.setHead(testCommits.get(0));
-        testMasterBranch = masterBranchFactory.createNew(vf.createIRI(BRANCH_IRI));
+        testMasterBranch = masterBranchFactory.createNew(vf.createIRI(MASTER_BRANCH_IRI));
         testMasterBranch.setProperty(vf.createLiteral("Title"), vf.createIRI(DCTERMS.TITLE.stringValue()));
         testMasterBranch.setProperty(vf.createLiteral(USER_IRI), vf.createIRI(DCTERMS.PUBLISHER.stringValue()));
         testMasterBranch.setHead(testCommits.get(0));
@@ -383,14 +388,18 @@ public class CatalogRestTest extends MobiRestTestCXF {
         when(branchManager.getBranch(any(Resource.class), any(Resource.class), any(Resource.class), eq(branchFactory), any(RepositoryConnection.class))).thenReturn(testBranch);
         when(branchManager.getBranch(any(Resource.class), any(Resource.class), eq(testUserBranch.getResource()), eq(branchFactory), any(RepositoryConnection.class))).thenReturn(testUserBranch);
         when(branchManager.getBranch(any(Resource.class), any(Resource.class), any(Resource.class), eq(userBranchFactory), any(RepositoryConnection.class))).thenReturn(testUserBranch);
+        when(branchManager.getBranch(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), eq(vf.createIRI(MASTER_BRANCH_IRI)), eq(branchFactory), any(RepositoryConnection.class))).thenReturn(testMasterBranch);
         when(branchManager.getMasterBranch(any(Resource.class), any(Resource.class), any(RepositoryConnection.class))).thenReturn(testMasterBranch);
         when(branchManager.createBranch(anyString(), anyString(), eq(branchFactory))).thenReturn(testBranch);
         when(branchManager.createBranch(anyString(), anyString(), eq(userBranchFactory))).thenReturn(testUserBranch);
-        when(commitManager.getCommit(any(Resource.class), any(Resource.class), any(Resource.class), any(Resource.class), any(RepositoryConnection.class))).thenAnswer(i -> {
-            Resource iri = i.getArgument(3, Resource.class);
+        when(commitManager.getCommit(eq(vf.createIRI(LOCAL_IRI)), any(Resource.class), any(Resource.class), any(Resource.class), any(RepositoryConnection.class))).thenAnswer(i -> {
+            Resource commitId = i.getArgument(3, Resource.class);
+            if (commitId.stringValue().equals(HEAD_IRI)) {
+                return Optional.of(headCommit);
+            }
             Commit found = null;
             for (Commit commit : testCommits) {
-                if (iri.equals(commit.getResource())) {
+                if (commitId.equals(commit.getResource())) {
                     found = commit;
                 }
             }
@@ -412,7 +421,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
         when(commitManager.getCommitChain(any(Resource.class), any(Resource.class), any(Resource.class), any(RepositoryConnection.class))).thenReturn(testCommits);
         when(commitManager.getDifferenceChain(any(Resource.class), any(Resource.class), any(Resource.class), any(Resource.class), any(RepositoryConnection.class))).thenReturn(testCommits);
         when(commitManager.createCommit(any(InProgressCommit.class), anyString(), any(Commit.class), any(Commit.class), anyBoolean())).thenReturn(testCommits.get(0));
-        when(commitManager.getHeadCommit(any(Resource.class), any(Resource.class), any(Resource.class), any(RepositoryConnection.class))).thenReturn(testCommits.get(0));
+        when(commitManager.getHeadCommit(any(Resource.class), any(Resource.class), any(Resource.class), any(RepositoryConnection.class))).thenReturn(headCommit);
         when(compiledResourceManager.getCompiledResource(any(Resource.class), any(RepositoryConnection.class))).thenReturn(compiledResource);
         when(commitManager.getInProgressCommitOpt(any(Resource.class), any(Resource.class), any(User.class), any(RepositoryConnection.class))).thenReturn(Optional.of(testInProgressCommit));
         when(differenceManager.applyInProgressCommit(any(Resource.class), any(Model.class), any(RepositoryConnection.class))).thenReturn(compiledResourceWithChanges);
@@ -2498,12 +2507,12 @@ public class CatalogRestTest extends MobiRestTestCXF {
     // GET catalogs/{catalogId}/records/{recordId}/branches/master
 
     @Test
-    public void getMasterBranchTest() {
-        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/branches/master")
+    public void getBranchMasterWithIRITest() {
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI) + "/branches/" + encode(MASTER_BRANCH_IRI))
                 .request().get();
         assertEquals(200, response.getStatus());
-        verify(branchManager).getMasterBranch(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), any(RepositoryConnection.class));
-        assertResponseIsObjectWithId(response, BRANCH_IRI);
+        verify(branchManager).getBranch(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), eq(vf.createIRI(MASTER_BRANCH_IRI)), eq(branchFactory), any(RepositoryConnection.class));
+        assertResponseIsObjectWithId(response, MASTER_BRANCH_IRI);
     }
 
     @Test
@@ -2544,6 +2553,16 @@ public class CatalogRestTest extends MobiRestTestCXF {
     }
 
     @Test
+    public void getBranchMasterTest() {
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
+                        + "/branches/" + MASTER)
+                .request().get();
+        assertEquals(200, response.getStatus());
+        verify(branchManager).getBranch(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), eq(vf.createIRI(MASTER_BRANCH_IRI)), eq(branchFactory), any(RepositoryConnection.class));
+        assertResponseIsObjectWithId(response, MASTER_BRANCH_IRI);
+    }
+
+    @Test
     public void getMissingBranchTest() {
         // Setup:
         when(branchManager.getBranch(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), eq(vf.createIRI(ERROR_IRI)), eq(branchFactory), any(RepositoryConnection.class))).thenThrow(new IllegalArgumentException(""));
@@ -2578,6 +2597,15 @@ public class CatalogRestTest extends MobiRestTestCXF {
     // DELETE catalogs/{catalogId}/records/{recordId}/branches/{branchId}
 
     @Test
+    public void removeBranchMasterSuccessTest() {
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
+                        + "/branches/" + MASTER)
+                .request().delete();
+        assertEquals(200, response.getStatus());
+        verify(branchManager).removeBranch(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), eq(vf.createIRI(MASTER_BRANCH_IRI)), any(RepositoryConnection.class));
+    }
+
+    @Test
     public void removeBranchTest() {
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI))
@@ -2587,13 +2615,13 @@ public class CatalogRestTest extends MobiRestTestCXF {
     }
 
     @Test
-    public void removeBranchMASTERTest() {
+    public void removeBranchMasterTest() {
         doThrow(new IllegalArgumentException()).when(branchManager).removeBranch(any(Resource.class), any(Resource.class), any(), any(RepositoryConnection.class));
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
-                        + "/branches/" + encode(MASTER))
+                        + "/branches/" + MASTER)
                 .request().delete();
         assertEquals(400, response.getStatus());
-        verify(branchManager).removeBranch(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), eq(vf.createIRI(BRANCH_IRI)), any(RepositoryConnection.class));
+        verify(branchManager).removeBranch(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), eq(vf.createIRI(MASTER_BRANCH_IRI)), any(RepositoryConnection.class));
     }
 
     @Test
@@ -2635,14 +2663,14 @@ public class CatalogRestTest extends MobiRestTestCXF {
     }
 
     @Test
-    public void updateBranchMASTERTest() {
+    public void updateBranchMasterTest() {
         //Setup:
         doThrow(new IllegalArgumentException()).when(branchManager).updateBranch(any(Resource.class), any(Resource.class), any(), any(RepositoryConnection.class));
-        ObjectNode branch = mapper.createObjectNode().put("@id", BRANCH_IRI)
+        ObjectNode branch = mapper.createObjectNode().put("@id", MASTER_BRANCH_IRI)
                 .set("@type", mapper.createArrayNode().add(Branch.TYPE));
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
-                        + "/branches/" + encode(MASTER))
+                        + "/branches/" + MASTER)
                 .request().put(Entity.json(branch.toString()));
         assertEquals(400, response.getStatus());
         verify(branchManager).updateBranch(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), any(Branch.class), any(RepositoryConnection.class));
@@ -2717,12 +2745,12 @@ public class CatalogRestTest extends MobiRestTestCXF {
     }
 
     @Test
-    public void getCommitChainMASTERTest() {
+    public void getCommitChainMasterTest() {
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
-                        + "/branches/" + encode(MASTER) + "/commits")
+                        + "/branches/" + MASTER + "/commits")
                 .request().get();
         assertEquals(200, response.getStatus());
-        verify(commitManager).getCommitChain(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(BRANCH_IRI), conn);
+        verify(commitManager).getCommitChain(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(MASTER_BRANCH_IRI), conn);
         MultivaluedMap<String, Object> headers = response.getHeaders();
         assertEquals(String.valueOf(COMMIT_IRIS.length),  headers.get("X-Total-Count").get(0));
         assertEquals(0, response.getLinks().size());
@@ -2851,13 +2879,13 @@ public class CatalogRestTest extends MobiRestTestCXF {
     }
 
     @Test
-    public void createBranchCommitMASTERTest() {
+    public void createBranchCommitMasterTest() {
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
-                        + "/branches/" + encode(MASTER) + "/commits")
+                        + "/branches/" + MASTER + "/commits")
                 .queryParam("message", "Message").request().post(Entity.entity("", MediaType.TEXT_PLAIN));
         assertEquals(201, response.getStatus());
         assertEquals(COMMIT_IRIS[0], response.readEntity(String.class));
-        verify(versioningManager).commit(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), eq(vf.createIRI(BRANCH_IRI)), any(User.class), eq("Message"), any(RepositoryConnection.class));
+        verify(versioningManager).commit(eq(vf.createIRI(LOCAL_IRI)), eq(vf.createIRI(RECORD_IRI)), eq(vf.createIRI(MASTER_BRANCH_IRI)), any(User.class), eq("Message"), any(RepositoryConnection.class));
     }
 
     @Test
@@ -2902,6 +2930,26 @@ public class CatalogRestTest extends MobiRestTestCXF {
     // GET catalogs/{catalogId}/records/{recordId}/branches/{branchId}/commits/head
 
     @Test
+    public void getHeadMasterTest() {
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
+                        + "/branches/" + MASTER + "/commits/head")
+                .request().get();
+        assertEquals(200, response.getStatus());
+        verify(commitManager).getHeadCommit(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(MASTER_BRANCH_IRI), conn);
+        try {
+            ObjectNode result = mapper.readValue(response.readEntity(String.class), ObjectNode.class);
+            assertTrue(result.has("commit"));
+            assertTrue(result.has("additions"));
+            assertTrue(result.has("deletions"));
+            JsonNode commit = result.get("commit");
+            assertTrue(commit.has("@id"));
+            assertEquals(HEAD_IRI, commit.get("@id").asText());
+        } catch (Exception e) {
+            fail("Expected no exception, but got: " + e.getMessage());
+        }
+    }
+
+    @Test
     public void getHeadTest() {
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/commits/head")
@@ -2915,7 +2963,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
             assertTrue(result.has("deletions"));
             JsonNode commit = result.get("commit");
             assertTrue(commit.has("@id"));
-            assertEquals(COMMIT_IRIS[0], commit.get("@id").asText());
+            assertEquals(HEAD_IRI, commit.get("@id").asText());
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
@@ -2952,12 +3000,12 @@ public class CatalogRestTest extends MobiRestTestCXF {
     // GET catalogs/{catalogId}/records/{recordId}/branches/{branchId}/commits/{commitId}
 
     @Test
-    public void getBranchCommitTest() {
+    public void getBranchCommitMasterTest() {
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
-                + "/branches/" + encode(BRANCH_IRI) + "/commits/" + encode(COMMIT_IRIS[1]))
+                        + "/branches/" + MASTER + "/commits/" + encode(COMMIT_IRIS[1]))
                 .request().get();
         assertEquals(200, response.getStatus());
-        verify(commitManager).getCommit(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(BRANCH_IRI), vf.createIRI(COMMIT_IRIS[1]), conn);
+        verify(commitManager).getCommit(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(MASTER_BRANCH_IRI), vf.createIRI(COMMIT_IRIS[1]), conn);
         try {
             ObjectNode result = mapper.readValue(response.readEntity(String.class), ObjectNode.class);
             assertTrue(result.has("commit"));
@@ -3013,13 +3061,49 @@ public class CatalogRestTest extends MobiRestTestCXF {
     // GET catalogs/{catalogId}/records/{recordId}/branches/{branchId}/difference
 
     @Test
+    public void getDifferenceMasterTest() {
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
+                        + "/branches/" + MASTER + "/difference")
+                .queryParam("targetId", BRANCH_IRI).request().get();
+        assertEquals(200, response.getStatus());
+        verify(commitManager, times(1)).getHeadCommit(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(MASTER_BRANCH_IRI), conn);
+        verify(commitManager, times(1)).getHeadCommit(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(BRANCH_IRI), conn);
+        verify(differenceManager).getDifference(eq(vf.createIRI(HEAD_IRI)), eq(vf.createIRI(HEAD_IRI)), any(RepositoryConnection.class));
+        try {
+            ObjectNode result = mapper.readValue(response.readEntity(String.class), ObjectNode.class);
+            assertTrue(result.has("additions"));
+            assertTrue(result.has("deletions"));
+        } catch (Exception e) {
+            fail("Expected no exception, but got: " + e.getMessage());
+        }
+    }
+
+    @Test
+    public void getDifferenceMasterTargetTest() {
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
+                        + "/branches/" + encode(BRANCH_IRI) + "/difference")
+                .queryParam("targetId", MASTER).request().get();
+        assertEquals(200, response.getStatus());
+        verify(commitManager, times(1)).getHeadCommit(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(MASTER_BRANCH_IRI), conn);
+        verify(commitManager, times(1)).getHeadCommit(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(BRANCH_IRI), conn);
+        verify(differenceManager).getDifference(eq(vf.createIRI(HEAD_IRI)), eq(vf.createIRI(HEAD_IRI)), any(RepositoryConnection.class));
+        try {
+            ObjectNode result = mapper.readValue(response.readEntity(String.class), ObjectNode.class);
+            assertTrue(result.has("additions"));
+            assertTrue(result.has("deletions"));
+        } catch (Exception e) {
+            fail("Expected no exception, but got: " + e.getMessage());
+        }
+    }
+
+    @Test
     public void getDifferenceTest() {
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/difference")
                 .queryParam("targetId", BRANCH_IRI).request().get();
         assertEquals(200, response.getStatus());
         verify(commitManager, times(2)).getHeadCommit(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(BRANCH_IRI), conn);
-        verify(differenceManager).getDifference(eq(vf.createIRI(COMMIT_IRIS[0])), eq(vf.createIRI(COMMIT_IRIS[0])), any(RepositoryConnection.class));
+        verify(differenceManager).getDifference(eq(vf.createIRI(HEAD_IRI)), eq(vf.createIRI(HEAD_IRI)), any(RepositoryConnection.class));
         try {
             ObjectNode result = mapper.readValue(response.readEntity(String.class), ObjectNode.class);
             assertTrue(result.has("additions"));
@@ -3050,14 +3134,14 @@ public class CatalogRestTest extends MobiRestTestCXF {
     @Test
     public void getDifferenceWithErrorTest() {
         // Setup:
-        doThrow(new MobiException()).when(differenceManager).getDifference(eq(vf.createIRI(COMMIT_IRIS[0])), eq(vf.createIRI(COMMIT_IRIS[0])), any(RepositoryConnection.class));
+        doThrow(new MobiException()).when(differenceManager).getDifference(eq(vf.createIRI(HEAD_IRI)), eq(vf.createIRI(HEAD_IRI)), any(RepositoryConnection.class));
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/difference")
                 .queryParam("targetId", BRANCH_IRI).request().get();
         assertEquals(500, response.getStatus());
 
-        doThrow(new IllegalStateException()).when(differenceManager).getDifference(eq(vf.createIRI(COMMIT_IRIS[0])), eq(vf.createIRI(COMMIT_IRIS[0])), any(RepositoryConnection.class));
+        doThrow(new IllegalStateException()).when(differenceManager).getDifference(eq(vf.createIRI(HEAD_IRI)), eq(vf.createIRI(HEAD_IRI)), any(RepositoryConnection.class));
         response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/difference")
                 .queryParam("targetId", BRANCH_IRI).request().get();
@@ -3073,7 +3157,7 @@ public class CatalogRestTest extends MobiRestTestCXF {
                 .queryParam("targetId", BRANCH_IRI).request().get();
         assertEquals(200, response.getStatus());
         verify(commitManager, times(2)).getHeadCommit(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(BRANCH_IRI), conn);
-        verify(differenceManager).getConflicts(eq(vf.createIRI(COMMIT_IRIS[0])), eq(vf.createIRI(COMMIT_IRIS[0])), any(RepositoryConnection.class));
+        verify(differenceManager).getConflicts(eq(vf.createIRI(HEAD_IRI)), eq(vf.createIRI(HEAD_IRI)), any(RepositoryConnection.class));
         try {
             ArrayNode result = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
             assertEquals(1, result.size());
@@ -3092,13 +3176,40 @@ public class CatalogRestTest extends MobiRestTestCXF {
     }
 
     @Test
-    public void getConflictsMASTERTest() {
+    public void getConflictsMasterTest() {
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
-                        + "/branches/" + encode(MASTER) + "/conflicts")
+                        + "/branches/" + MASTER + "/conflicts")
                 .queryParam("targetId", BRANCH_IRI).request().get();
         assertEquals(200, response.getStatus());
-        verify(commitManager, times(2)).getHeadCommit(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(BRANCH_IRI), conn);
-        verify(differenceManager).getConflicts(eq(vf.createIRI(COMMIT_IRIS[0])), eq(vf.createIRI(COMMIT_IRIS[0])), any(RepositoryConnection.class));
+        verify(commitManager, times(1)).getHeadCommit(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(MASTER_BRANCH_IRI), conn);
+        verify(commitManager, times(1)).getHeadCommit(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(BRANCH_IRI), conn);
+        verify(differenceManager).getConflicts(eq(vf.createIRI(HEAD_IRI)), eq(vf.createIRI(HEAD_IRI)), any(RepositoryConnection.class));
+        try {
+            ArrayNode result = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
+            assertEquals(1, result.size());
+            JsonNode outcome = result.get(0);
+            assertTrue(outcome.has("left"));
+            assertTrue(outcome.has("right"));
+            JsonNode left = outcome.get("left");
+            JsonNode right = outcome.get("right");
+            assertTrue(left.has("additions"));
+            assertTrue(left.has("deletions"));
+            assertTrue(right.has("additions"));
+            assertTrue(right.has("deletions"));
+        } catch (Exception e) {
+            fail("Expected no exception, but got: " + e.getMessage());
+        }
+    }
+
+    @Test
+    public void getConflictsMasterTargetTest() {
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
+                        + "/branches/" + encode(BRANCH_IRI) + "/conflicts")
+                .queryParam("targetId", MASTER).request().get();
+        assertEquals(200, response.getStatus());
+        verify(commitManager, times(1)).getHeadCommit(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(MASTER_BRANCH_IRI), conn);
+        verify(commitManager, times(1)).getHeadCommit(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(BRANCH_IRI), conn);
+        verify(differenceManager).getConflicts(eq(vf.createIRI(HEAD_IRI)), eq(vf.createIRI(HEAD_IRI)), any(RepositoryConnection.class));
         try {
             ArrayNode result = mapper.readValue(response.readEntity(String.class), ArrayNode.class);
             assertEquals(1, result.size());
@@ -3137,14 +3248,14 @@ public class CatalogRestTest extends MobiRestTestCXF {
     @Test
     public void getConflictsWithErrorTest() {
         // Setup:
-        doThrow(new MobiException()).when(differenceManager).getConflicts(eq(vf.createIRI(COMMIT_IRIS[0])), eq(vf.createIRI(COMMIT_IRIS[0])), any(RepositoryConnection.class));
+        doThrow(new MobiException()).when(differenceManager).getConflicts(eq(vf.createIRI(HEAD_IRI)), eq(vf.createIRI(HEAD_IRI)), any(RepositoryConnection.class));
 
         Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/conflicts")
                 .queryParam("targetId", BRANCH_IRI).request().get();
         assertEquals(500, response.getStatus());
 
-        doThrow(new IllegalStateException()).when(differenceManager).getConflicts(eq(vf.createIRI(COMMIT_IRIS[0])), eq(vf.createIRI(COMMIT_IRIS[0])), any(RepositoryConnection.class));
+        doThrow(new IllegalStateException()).when(differenceManager).getConflicts(eq(vf.createIRI(HEAD_IRI)), eq(vf.createIRI(HEAD_IRI)), any(RepositoryConnection.class));
         response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
                 + "/branches/" + encode(BRANCH_IRI) + "/conflicts")
                 .queryParam("targetId", BRANCH_IRI).request().get();
@@ -3224,6 +3335,28 @@ public class CatalogRestTest extends MobiRestTestCXF {
     }
 
     // GET catalogs/{catalogId}/records/{recordId}/branches/{branchId}/commits/{commitId}/resource
+
+    @Test
+    public void getCompiledResourceAsJsonldMasterTest() {
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
+                        + "/branches/" + MASTER + "/commits/" + encode(COMMIT_IRIS[0]) + "/resource")
+                .queryParam("format", "jsonld").request().get();
+        assertEquals(200, response.getStatus());
+        verify(commitManager).getCommit(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(MASTER_BRANCH_IRI), vf.createIRI(COMMIT_IRIS[0]), conn);
+        verify(compiledResourceManager).getCompiledResource(vf.createIRI(COMMIT_IRIS[0]), conn);
+        isJsonld(response.readEntity(String.class));
+    }
+
+    @Test
+    public void getCompiledResourceAsJsonldHeadTest() {
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
+                        + "/branches/" + MASTER + "/commits/" + encode(HEAD) + "/resource")
+                .queryParam("format", "jsonld").request().get();
+        assertEquals(200, response.getStatus());
+        verify(commitManager).getCommit(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(MASTER_BRANCH_IRI), vf.createIRI(HEAD_IRI), conn);
+        verify(compiledResourceManager).getCompiledResource(vf.createIRI(HEAD_IRI), conn);
+        isJsonld(response.readEntity(String.class));
+    }
 
     @Test
     public void getCompiledResourceAsJsonldTest() {
@@ -3325,6 +3458,19 @@ public class CatalogRestTest extends MobiRestTestCXF {
     }
 
     // GET (download) catalogs/{catalogId}/records/{recordId}/branches/{branchId}/commits/{commitId}/resource
+
+    @Test
+    public void downloadCompiledResourceAsJsonldMasterTest() {
+        Response response = target().path(CATALOG_URL_LOCAL + "/records/" + encode(RECORD_IRI)
+                        + "/branches/" + MASTER + "/commits/" + encode(COMMIT_IRIS[0]) + "/resource")
+                .queryParam("format", "jsonld").queryParam("fileName", "fileName").request()
+                .accept(MediaType.APPLICATION_OCTET_STREAM).get();
+        assertEquals(200, response.getStatus());
+        verify(commitManager).getCommit(vf.createIRI(LOCAL_IRI), vf.createIRI(RECORD_IRI), vf.createIRI(MASTER_BRANCH_IRI), vf.createIRI(COMMIT_IRIS[0]), conn);
+        verify(compiledResourceManager).getCompiledResource(vf.createIRI(COMMIT_IRIS[0]), conn);
+        assertTrue(response.getHeaderString("Content-Disposition").contains("fileName"));
+        isJsonld(response.readEntity(String.class));
+    }
 
     @Test
     public void downloadCompiledResourceAsJsonldTest() {
