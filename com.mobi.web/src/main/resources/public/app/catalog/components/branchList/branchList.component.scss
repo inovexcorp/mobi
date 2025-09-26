@@ -22,10 +22,32 @@
  */
 
 .branch-list {
-    mat-accordion {
-        mat-panel-title {
-            flex: 1;
-            overflow: hidden;
-        }
+  mat-accordion {
+    mat-panel-title {
+        flex: 1;
+        overflow: hidden;
     }
+
+    button.mat-icon-button {
+      width: 20px;
+      height: 20px;
+      margin-top: -5px;
+      line-height: 24px;
+      vertical-align: text-top;
+
+      .mat-icon {
+        width: 17px !important;
+        height: 17px !important;
+        font-size: 15px !important;
+      }
+    }
+
+    #copyIcon:focus {
+      outline: none !important;
+    }
+
+    button.mat-icon-button:hover {
+      background-color: var(--light-dark);
+    }
+  }
 }

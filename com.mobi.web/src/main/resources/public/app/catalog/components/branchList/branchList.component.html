@@ -24,9 +24,23 @@
     <mat-accordion class="branches-list" *ngIf="branches.length">
         <mat-expansion-panel *ngFor="let branch of branches">
             <mat-expansion-panel-header>
-                <mat-panel-title><span class="text-truncate">{{branch.title}}</span></mat-panel-title>
+                <mat-panel-title>
+                    <span class="text-truncate">
+                        {{branch.title}}
+                        <button mat-icon-button
+                                class="small-icon"
+                                id="copyIcon"
+                                matTooltip="Copy Branch IRI"
+                                matTooltipPosition="above"
+                                [disableRipple]="true"
+                                (click)="copyIRI(branch); $event.stopPropagation()">
+                <mat-icon>content_copy</mat-icon>
+            </button>
+                    </span></mat-panel-title>
                 <mat-panel-description>
-                    <div class="small"><entity-publisher class="d-inline-block" [entity]="branch.branch"></entity-publisher> &#8226; Updated {{branch.date}}</div>
+                    <div class="small">
+                        <entity-publisher class="d-inline-block" [entity]="branch.branch"></entity-publisher> &#8226; Updated {{branch.date}}
+                    </div>
                 </mat-panel-description>
             </mat-expansion-panel-header>
             <ng-template matExpansionPanelContent>
@@ -37,7 +51,7 @@
                     [recordId]="record['@id']"
                     [branches]="branches"
                     [type]="cm.getType(record)"
-                    graph>
+                    [graph]="true">
                 </commit-history-table>
             </ng-template>
         </mat-expansion-panel>
