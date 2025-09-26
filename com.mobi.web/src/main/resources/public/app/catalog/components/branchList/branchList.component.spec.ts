@@ -20,22 +20,22 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { HttpHeaders, HttpResponse } from '@angular/common/http';
-import { DebugElement } from '@angular/core';
+import { By } from '@angular/platform-browser';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { DebugElement } from '@angular/core';
+import { HttpHeaders, HttpResponse } from '@angular/common/http';
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
-import { By } from '@angular/platform-browser';
 
-import { cleanStylesFromDOM } from '../../../../test/ts/Shared';
-import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
-import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
-import { SharedModule } from '../../../shared/shared.module';
-import { EntityPublisherComponent } from '../entityPublisher/entityPublisher.component';
-import { CATALOG, DCTERMS, SHAPESGRAPHEDITOR } from '../../../prefixes';
-import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
-import { ToastService } from '../../../shared/services/toast.service';
 import { BranchListComponent } from './branchList.component';
+import { CATALOG, DCTERMS, SHAPESGRAPHEDITOR } from '../../../prefixes';
+import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
+import { cleanStylesFromDOM } from '../../../../test/ts/Shared';
+import { EntityPublisherComponent } from '../entityPublisher/entityPublisher.component';
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
+import { SharedModule } from '../../../shared/shared.module';
+import { ToastService } from '../../../shared/services/toast.service';
 
 describe('Branch List component', function() {
     let component: BranchListComponent;
@@ -66,7 +66,7 @@ describe('Branch List component', function() {
 
     beforeEach(async () => {
         await TestBed.configureTestingModule({
-            imports: [ SharedModule ],
+            imports: [SharedModule],
             declarations: [
                 BranchListComponent,
                 MockComponent(EntityPublisherComponent)
@@ -181,6 +181,7 @@ describe('Branch List component', function() {
             fixture.detectChanges();
             expect(element.queryAll(By.css('.branches-list')).length).toEqual(1);
             expect(element.queryAll(By.css('.mat-expansion-panel')).length).toEqual(branches.length);
+            expect(element.queryAll(By.css('.branch-list mat-icon')).length).toEqual(1);
         });
         it('depending on whether there are more branches to load', function() {
             component.branches = [

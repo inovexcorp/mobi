@@ -20,17 +20,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { HttpResponse } from '@angular/common/http';
+import { Clipboard } from '@angular/cdk/clipboard';
 import { Component, Input } from '@angular/core';
+import { HttpResponse } from '@angular/common/http';
 import { isEmpty, find } from 'lodash';
 
 import { CATALOG, DCTERMS } from '../../../prefixes';
-import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
-import { PaginatedConfig } from '../../../shared/models/paginatedConfig.interface';
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
-import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
-import { ToastService } from '../../../shared/services/toast.service';
 import { getDate, getDctermsValue, getPropertyId } from '../../../shared/utility';
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { OntologyManagerService } from '../../../shared/services/ontologyManager.service';
+import { PaginatedConfig } from '../../../shared/models/paginatedConfig.interface';
+import { ToastService } from '../../../shared/services/toast.service';
 
 interface BranchDisplay {
     branch: JSONLDObject,
@@ -74,7 +75,8 @@ export class BranchListComponent {
     get record(): JSONLDObject {
         return this._record;
     }
-    constructor(public cm: CatalogManagerService, public om: OntologyManagerService, private toast: ToastService) {}
+    constructor(public cm: CatalogManagerService, public om: OntologyManagerService, private toast: ToastService,
+                private clipboard: Clipboard) {}
 
     loadMore(): void {
         this.limit += this.increment;
@@ -103,4 +105,17 @@ export class BranchListComponent {
                 }, error => this.toast.createErrorToast(error));
         }
     }
+  copyIRI(branch: BranchDisplay): void {
+    const branchId: string = branch?.branch['@id'];
+    if (branchId) {
+      const copied = this.clipboard.copy(branchId);
+      if (copied) {
+        this.toast.createSuccessToast('Copied', {timeOut: 2000});
+      } else {
+        this.toast.createErrorToast('Failed to copy IRI', {timeOut: 2000});
+      }
+    } else {
+      this.toast.createErrorToast('Issue retrieving IRI to copy', {timeOut: 2000});
+    }
+  }
 }

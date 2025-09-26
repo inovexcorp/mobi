@@ -20,11 +20,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { Clipboard } from '@angular/cdk/clipboard';
+import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 
-import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { getDctermsValue } from '../../../shared/utility';
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { ToastService } from '../../../shared/services/toast.service';
 
 /**
@@ -63,14 +63,12 @@ export class RecordCardComponent implements OnInit {
     handleClick(): void {
         this.viewRecord.emit(this.record);
     }
-    copyIRI(): string {
+    copyIRI(): void {
         const copied = this.clipboard.copy(this.record['@id']);
         if (copied) {
             this.toast.createSuccessToast('Copied', {timeOut: 2000});
-            return this.record['@id'];
         } else {
             this.toast.createErrorToast('Failed to copy IRI', {timeOut: 2000});
-            return undefined;
         }
     }
 }

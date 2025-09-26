@@ -38,17 +38,15 @@
 
     .title-text-container {
         .title-text {
-            width: fit-content;
-            overflow: hidden;
-            text-overflow: ellipsis;
+          width: fit-content;
+          overflow: hidden;
+          text-overflow: ellipsis;
         }
-
-        cursor: pointer !important;
     }
 
     button.mat-icon-button {
-        width: 25px;
-        height: 25px;
+        width: 35px;
+        height: 35px;
         margin-top: 2px;
         line-height: 24px;
         vertical-align: text-top;
@@ -66,6 +64,10 @@
 
     button.mat-icon-button:focus {
         background-color: var(--light);
+    }
+
+    button.mat-icon-button:hover {
+        background-color: var(--light-dark);
     }
 
     entity-publisher {
