@@ -1519,7 +1519,7 @@ describe('Catalog Manager service', function() {
       this.url = `${service.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/branches/${encodeURIComponent(branchId)}/commits/head`;
     });
     it('unless an error occurs', function() {
-      service.getBranchHeadCommit(branchId, recordId, catalogId, 'jsonld')
+      service.getBranchCommit('head', branchId, recordId, catalogId, 'jsonld')
         .subscribe(() => fail('Observable should have rejected'), response => {
           expect(response).toEqual(error);
         });
@@ -1528,7 +1528,7 @@ describe('Catalog Manager service', function() {
       request.flush('flush', { status: 400, statusText: error });
     });
     it('with a format', function() {
-      service.getBranchHeadCommit(branchId, recordId, catalogId, 'turtle')
+      service.getBranchCommit('head', branchId, recordId, catalogId, 'turtle')
         .subscribe(response => {
           expect(response).toEqual(commitDifference);
         }, () => fail('Observable should have resolved'));
@@ -1537,7 +1537,7 @@ describe('Catalog Manager service', function() {
       request.flush(commitDifference);
     });
     it('without a format', function() {
-      service.getBranchHeadCommit(branchId, recordId, catalogId)
+      service.getBranchCommit('head', branchId, recordId, catalogId)
         .subscribe(response => {
           expect(response).toEqual(commitDifference);
         }, () => fail('Observable should have resolved'));

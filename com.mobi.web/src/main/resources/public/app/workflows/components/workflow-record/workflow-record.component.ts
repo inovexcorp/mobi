@@ -272,7 +272,7 @@ export class WorkflowRecordComponent implements OnInit, OnDestroy {
    * Displays a warning toast if no changes are detected with the new upload.
    */
   uploadChangesModal(): void {
-    this.cm.getBranchHeadCommit(this.branch.branch['@id'] ,this.record.iri, this.catalogId).subscribe(response => {
+    this.cm.getBranchCommit('head', this.branch.branch['@id'] ,this.record.iri, this.catalogId).subscribe(response => {
       this._dialog.open(WorkflowUploadChangesModalComponent, {data: {recordId: this.record.iri, branchId: this.branch.branch['@id'], commitId: response.commit['@id'], catalogId: this.catalogId}})
       .afterClosed().subscribe((result) => {
         if (result && result.status === 200) {
