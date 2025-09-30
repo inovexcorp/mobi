@@ -107,7 +107,7 @@ describe('Editor Top Bar component', () => {
     catalogManagerStub.localCatalog = {'@id': catalogId};
     const commitDifference = new CommitDifference();
     commitDifference.commit = {'@id': 'commit3'};
-    catalogManagerStub.getBranchHeadCommit.and.returnValue(of(commitDifference));
+    catalogManagerStub.getBranchCommit.and.returnValue(of(commitDifference));
     toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
   });
 
@@ -153,12 +153,12 @@ describe('Editor Top Bar component', () => {
       expect(matDialog.open).toHaveBeenCalledWith(CommitModalComponent, { viewContainerRef: jasmine.anything() });
     });
     describe('should update the branch with the head', () => {
-      describe('when getBranchHeadCommit returns', () => {
+      describe('when getBranchCommit returns', () => {
         describe('and changeVersion returns', () => {
           it('successfully', fakeAsync(() => {
             component.update();
             tick();
-            expect(catalogManagerStub.getBranchHeadCommit).toHaveBeenCalledWith('branch1', 'record1', catalogId);
+            expect(catalogManagerStub.getBranchCommit).toHaveBeenCalledWith('head', 'branch1', 'record1', catalogId);
             expect(stateStub.changeVersion).toHaveBeenCalledWith('record1', 'branch1', 'commit3', undefined, 'title', true, false, false);
             expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.stringContaining('branch has been updated.'));
             expect(toastStub.createErrorToast).not.toHaveBeenCalled();
@@ -167,7 +167,7 @@ describe('Editor Top Bar component', () => {
             stateStub.changeVersion.and.returnValue(throwError('Error'));
             component.update();
             tick();
-            expect(catalogManagerStub.getBranchHeadCommit).toHaveBeenCalledWith('branch1', 'record1', catalogId);
+            expect(catalogManagerStub.getBranchCommit).toHaveBeenCalledWith('head', 'branch1', 'record1', catalogId);
             expect(stateStub.changeVersion).toHaveBeenCalledWith('record1', 'branch1', 'commit3', undefined, 'title', true, false, false);
             expect(toastStub.createSuccessToast).not.toHaveBeenCalled();
             expect(toastStub.createErrorToast).toHaveBeenCalledWith('Error');
@@ -175,10 +175,10 @@ describe('Editor Top Bar component', () => {
         });
       });
       it('unless an error occurs', fakeAsync(() => {
-        catalogManagerStub.getBranchHeadCommit.and.returnValue(throwError('Error'));
+        catalogManagerStub.getBranchCommit.and.returnValue(throwError('Error'));
         component.update();
         tick();
-        expect(catalogManagerStub.getBranchHeadCommit).toHaveBeenCalledWith('branch1', 'record1', catalogId);
+        expect(catalogManagerStub.getBranchCommit).toHaveBeenCalledWith('head', 'branch1', 'record1', catalogId);
         expect(stateStub.changeVersion).not.toHaveBeenCalled();
         expect(toastStub.createSuccessToast).not.toHaveBeenCalled();
         expect(toastStub.createErrorToast).toHaveBeenCalledWith('Error');

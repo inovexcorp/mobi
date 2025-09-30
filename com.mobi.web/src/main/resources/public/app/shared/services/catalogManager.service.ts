@@ -976,22 +976,6 @@ export class CatalogManagerService {
     }
 
     /**
-     * Calls the GET /mobirest/catalogs/{catalogId}/records/{recordId}/branches/{branchId}/commits/head endpoint
-     * and returns the matching Commit JSON object of the Branch's head Commit in the passed RDF format.
-     *
-     * @param {string} branchId The id of the Branch to retrieve the head Commit of
-     * @param {string} recordId The id of the Record with the specified Branch
-     * @param {string} catalogId The id of the Catalog the Record should be part of
-     * @param {string='jsonld'} format The RDF format to return the Commit additions and deletions in
-     * @returns {Observable} An Observable that resolves to the Commit if found or rejects with an error message
-     */
-    getBranchHeadCommit(branchId: string, recordId: string, catalogId: string, format = 'jsonld'): Observable<CommitDifference> {
-        const url = `${this.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/branches/${encodeURIComponent(branchId)}/commits/head`;
-        return this.spinnerSrv.track(this.http.get<CommitDifference>(url, {params: createHttpParams({ format })}))
-            .pipe(catchError(handleError));
-    }
-
-    /**
      * Calls the GET /mobirest/catalogs/{catalogId}/records/{recordId}/branches/{branchId}/commits/{commitId} endpoint
      * and returns the matching Commit JSON object in the passed RDF format.
      *

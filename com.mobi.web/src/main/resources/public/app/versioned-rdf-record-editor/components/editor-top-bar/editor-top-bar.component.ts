@@ -86,7 +86,7 @@ export class EditorTopBarComponent<TData extends VersionedRdfListItem> implement
     this.state.listItem.changesPageOpen = !this.state.listItem.changesPageOpen;
   }
   update(): void {
-    this._cm.getBranchHeadCommit(this.state.listItem.versionedRdfRecord.branchId, 
+    this._cm.getBranchCommit('head', this.state.listItem.versionedRdfRecord.branchId, 
     this.state.listItem.versionedRdfRecord.recordId, 
     get(this._cm.localCatalog, '@id', '')).pipe(
       switchMap(headCommit => {

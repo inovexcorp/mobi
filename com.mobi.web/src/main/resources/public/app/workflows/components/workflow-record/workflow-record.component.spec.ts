@@ -430,7 +430,7 @@ describe('WorkflowRecordComponent', () => {
       it('should open dialog and handle 200', () => {
         const response = new CommitDifference();
         response.commit = { '@id': 'commitId' } as JSONLDObject;
-        catalogManagerStub.getBranchHeadCommit.and.returnValue(of(response));
+        catalogManagerStub.getBranchCommit.and.returnValue(of(response));
         catalogManagerStub.getResource.and.returnValue(of([mockJSONLDObject]));
       
         component.uploadChangesModal();
@@ -450,7 +450,7 @@ describe('WorkflowRecordComponent', () => {
       it('should open dialog and handle 204', () => {
         const response = new CommitDifference();
         response.commit = { '@id': 'commitId' } as JSONLDObject;
-        catalogManagerStub.getBranchHeadCommit.and.returnValue(of(response));
+        catalogManagerStub.getBranchCommit.and.returnValue(of(response));
         catalogManagerStub.getResource.and.returnValue(of([mockJSONLDObject]));
         const dialogRefMock = {
           afterClosed: () => of({ status: 204 })
@@ -473,7 +473,7 @@ describe('WorkflowRecordComponent', () => {
       it('should fail to open the dialog',() => {
         const response = new CommitDifference();
         response.commit = { '@id': 'commitId' } as JSONLDObject;
-        catalogManagerStub.getBranchHeadCommit.and.returnValue(of(response));
+        catalogManagerStub.getBranchCommit.and.returnValue(of(response));
         catalogManagerStub.getResource.and.returnValue(throwError('Error'));
       
         component.uploadChangesModal();
