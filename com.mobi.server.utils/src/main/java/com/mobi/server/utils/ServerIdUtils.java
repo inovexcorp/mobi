@@ -1,8 +1,8 @@
-package com.mobi.server.impl;
+package com.mobi.server.utils;
 
 /*-
  * #%L
- * com.mobi.server.impl
+ * server.utils
  * $Id:$
  * $HeadURL:$
  * %%
@@ -23,9 +23,7 @@ package com.mobi.server.impl;
  * #L%
  */
 
-import org.osgi.service.component.annotations.Component;
 import com.mobi.exception.MobiException;
-import com.mobi.server.api.ServerUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -37,13 +35,36 @@ import java.nio.charset.StandardCharsets;
 import java.util.Enumeration;
 import java.util.UUID;
 
-@Component
-public class SimpleServerUtils implements ServerUtils {
+/**
+ * Utility class for generating a unique server identifier based on the system's network information.
+ */
+public class ServerIdUtils {
+    private static final Logger LOGGER = LoggerFactory.getLogger(ServerIdUtils.class);
 
-    private static final Logger LOGGER = LoggerFactory.getLogger(SimpleServerUtils.class);
+    /**
+     * Generates a unique server identifier based on the system's MAC address.
+     *
+     * @return a {@link UUID} representing the server's unique identifier
+     * @throws MobiException if there is an issue retrieving the MAC address
+     */
+    public static UUID getServerId() {
+        final byte[] macId = getMacId();
+        return UUID.nameUUIDFromBytes(macId);
+    }
 
-    @Override
-    public byte[] getMacId() {
+    /**
+     * Retrieves the MAC address of the server as a byte array.
+     * <p>
+     * This method attempts to identify the server's local network interface and obtain its hardware
+     * address (MAC address). If a MAC address cannot be determined, it falls back to generating
+     * a random UUID as a byte array.
+     * </p>
+     *
+     * @return a byte array representing the MAC address of the server, or a random UUID if the MAC
+     *         address cannot be determined
+     * @throws MobiException if there is a problem accessing the network interfaces
+     */
+    public static byte[] getMacId() {
         try {
             final InetAddress ip = getLocalhost();
             final NetworkInterface network = NetworkInterface.getByInetAddress(ip);
@@ -58,8 +79,18 @@ public class SimpleServerUtils implements ServerUtils {
         }
     }
 
-    @Override
-    public InetAddress getLocalhost() {
+    /**
+     * Attempts to determine the local host IP address of the server.
+     * <p>
+     * The method first iterates through all network interfaces and their associated IP addresses
+     * to find a non-loopback, non-link-local, site-local address. If none are found, it falls back
+     * to {@link InetAddress#getLocalHost()} as a last resort.
+     * </p>
+     *
+     * @return the {@link InetAddress} representing the local host address
+     * @throws MobiException if there is a problem accessing network interfaces or resolving localhost
+     */
+    private static InetAddress getLocalhost() {
         InetAddress ip = null;
         // Try and identify the local network interface to get the mac address from via network interfaces.
         try {
@@ -91,5 +122,10 @@ public class SimpleServerUtils implements ServerUtils {
         } catch (SocketException e) {
             throw new MobiException("Unable to get local host address.", e);
         }
+    }
+
+    public static void main(String[] args) {
+        LOGGER.info("Server identifier: {}", getServerId());
+        LOGGER.info("Server identifier Retrieved");
     }
 }

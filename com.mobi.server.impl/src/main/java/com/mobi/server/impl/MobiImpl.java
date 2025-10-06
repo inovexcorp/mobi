@@ -26,7 +26,7 @@ package com.mobi.server.impl;
 import com.mobi.exception.MobiException;
 import com.mobi.server.api.Mobi;
 import com.mobi.server.api.MobiConfig;
-import com.mobi.server.api.ServerUtils;
+import com.mobi.server.utils.ServerIdUtils;
 import com.mobi.service.config.ConfigUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.validator.routines.UrlValidator;
@@ -41,6 +41,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -56,29 +57,24 @@ import javax.ws.rs.core.Response;
         name = MobiImpl.SERVICE_NAME
 )
 public class MobiImpl implements Mobi {
-
     public static final String SERVICE_NAME = "com.mobi.platform.server";
-
     private static final Logger LOGGER = LoggerFactory.getLogger(MobiImpl.class);
 
     private UUID serverId;
     private String hostName;
-
     private static String PRODUCT_ID = "";
 
     static {
         try {
             PRODUCT_ID = IOUtils.toString(
-                    MobiImpl.class.getResourceAsStream("/product/prod_id.txt"),
+                    Objects.requireNonNull(MobiImpl.class.getResourceAsStream("/product/prod_id.txt")),
                     StandardCharsets.UTF_8
             ).trim();
+
         } catch (IOException | NullPointerException e) {
             LOGGER.debug("Product ID is not configured");
         }
     }
-
-    @Reference
-    ServerUtils utils;
 
     @Reference
     ConfigurationAdmin configurationAdmin;
@@ -87,9 +83,7 @@ public class MobiImpl implements Mobi {
     @Modified
     public void activate(final MobiConfig serviceConfig) {
         LOGGER.warn("Recalculating serverId UUID from the MAC ID of this machine at start up.");
-        final byte[] macId = utils.getMacId();
-        this.serverId = UUID.nameUUIDFromBytes(macId);
-
+        this.serverId = ServerIdUtils.getServerId();
         if (!this.serverId.toString().equals(serviceConfig.serverId())) {
             try {
                 Map<String, Object> data = ConfigUtils.getPropertiesMap(this.configurationAdmin.getConfiguration(SERVICE_NAME));
