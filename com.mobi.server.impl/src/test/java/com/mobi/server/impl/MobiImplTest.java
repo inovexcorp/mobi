@@ -12,12 +12,12 @@ package com.mobi.server.impl;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
@@ -31,7 +31,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import com.mobi.server.api.MobiConfig;
-import com.mobi.server.api.ServerUtils;
+import com.mobi.server.utils.ServerIdUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -51,7 +51,8 @@ public class MobiImplTest {
     private AutoCloseable closeable;
     private MobiImpl impl;
     private MockedStatic<UUID> uuidMock;
-    private UUID serverId = UUID.fromString("98ab4787-549d-3c82-8265-e593d7e944b5");
+    private MockedStatic<ServerIdUtils> serverIdUtilsMock;
+    private final UUID serverId = UUID.fromString("98ab4787-549d-3c82-8265-e593d7e944b5");
 
     @Mock
     MobiConfig mobiConfig;
@@ -62,9 +63,6 @@ public class MobiImplTest {
     @Mock
     private Configuration configuration;
 
-    @Mock
-    private ServerUtils utils;
-
     @Captor
     private ArgumentCaptor<Dictionary<String, Object>> captor;
 
@@ -72,14 +70,15 @@ public class MobiImplTest {
     public void setup() throws Exception {
         closeable = MockitoAnnotations.openMocks(this);
         uuidMock = mockStatic(UUID.class);
-        impl = new MobiImpl();
-        when(utils.getMacId()).thenReturn("serverId".getBytes());
+        serverIdUtilsMock = mockStatic(ServerIdUtils.class);
+
         when(configurationAdmin.getConfiguration(anyString())).thenReturn(configuration);
         when(configuration.getProperties()).thenReturn(new Hashtable<>());
         when(mobiConfig.serverId()).thenReturn(serverId.toString());
         uuidMock.when(() -> UUID.nameUUIDFromBytes(any())).thenReturn(serverId);
+        serverIdUtilsMock.when(ServerIdUtils::getServerId).thenReturn(serverId);
 
-        impl.utils = utils;
+        impl = new MobiImpl();
         impl.configurationAdmin = configurationAdmin;
     }
 
@@ -87,6 +86,7 @@ public class MobiImplTest {
     public void resetMocks() throws Exception {
         closeable.close();
         uuidMock.close();
+        serverIdUtilsMock.close();
     }
 
     @Test
@@ -94,7 +94,6 @@ public class MobiImplTest {
         when(mobiConfig.serverId()).thenReturn(null);
         impl.activate(mobiConfig);
         verify(configuration).update(captor.capture());
-        verify(utils).getMacId();
         assertEquals(impl.getServerIdentifier().toString(), captor.getValue().get("serverId"));
     }
 
@@ -103,7 +102,6 @@ public class MobiImplTest {
         when(mobiConfig.serverId()).thenReturn("different");
         impl.activate(mobiConfig);
         verify(configuration).update(captor.capture());
-        verify(utils).getMacId();
         assertEquals(impl.getServerIdentifier().toString(), captor.getValue().get("serverId"));
     }
 

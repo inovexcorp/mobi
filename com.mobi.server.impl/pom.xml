@@ -44,6 +44,11 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
+            <groupId>com.mobi</groupId>
+            <artifactId>server.utils</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
             <groupId>org.osgi</groupId>
             <artifactId>osgi.core</artifactId>
         </dependency>
@@ -55,7 +60,6 @@
             <groupId>org.osgi</groupId>
             <artifactId>org.osgi.service.component.annotations</artifactId>
         </dependency>
-
         <dependency>
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
@@ -87,7 +91,6 @@
             <artifactId>junit-vintage-engine</artifactId>
         </dependency>
     </dependencies>
-
     <build>
         <plugins>
             <plugin>

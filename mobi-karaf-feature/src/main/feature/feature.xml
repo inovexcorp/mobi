@@ -43,6 +43,7 @@
         <bundle>mvn:com.mobi/api/${project.version}</bundle>
         <bundle>mvn:com.mobi/server.api/${project.version}</bundle>
         <bundle>mvn:com.mobi/server.impl/${project.version}</bundle>
+        <bundle>mvn:com.mobi/server.utils/${project.version}</bundle>
     </feature>
     <feature name="mobi-aries-whiteboard" description="Aries JAX-RS Whiteboard" version="${project.version}">
         <feature dependency="true">mobi-cxf</feature>

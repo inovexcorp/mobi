@@ -84,6 +84,7 @@
         <module>com.mobi.platform.config.impl</module>
         <module>com.mobi.server.api</module>
         <module>com.mobi.server.impl</module>
+        <module>com.mobi.server.utils</module>
         <module>com.mobi.dataset.api</module>
         <module>com.mobi.dataset.impl</module>
         <module>com.mobi.dataset.rest</module>
