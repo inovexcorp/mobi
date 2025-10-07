@@ -75,7 +75,7 @@ export class WorkflowDownloadModalComponent {
   download(): void {
     this.data.workflows.forEach(workflow => {
       const workflowName = workflow.title;
-      this._cms.getRecordMasterBranch(workflow.iri, this.catalogId)
+      this._cms.getRecordBranch('master', workflow.iri, this.catalogId)
         .subscribe((jsonLDObject: JSONLDObject) => {
           if (!jsonLDObject || !jsonLDObject['@id'] || !jsonLDObject[this.catalogHead] || !jsonLDObject[this.catalogHead][0]['@id']) {
             this.toast.createErrorToast('Invalid JSON-LD object received for: ' + workflowName);

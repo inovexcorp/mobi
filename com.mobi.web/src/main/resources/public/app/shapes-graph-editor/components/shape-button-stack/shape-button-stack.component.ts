@@ -24,15 +24,12 @@ import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { MatDialog } from '@angular/material/dialog';
 
 import { CreateNodeShapeModalComponent } from '../create-node-shape-modal/create-node-shape-modal.component';
-import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
 
 /**
  * @class ShapeButtonStackComponent
  *
  * A component that displays a stack of buttons for creating new shape entities.
  * When activated, it opens the {@link CreateNodeShapeModalComponent}.
- * Its visibility is typically controlled by the state of the currently selected state service
- * via the {@link ShapesGraphStateService}.
  */
 @Component({
   selector: 'app-shape-button-stack',

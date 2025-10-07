@@ -29,9 +29,9 @@ import { Component } from '@angular/core';
  * {@link datasets.DatasetsListComponent} for navigating the Datasets module
  */
 @Component({
-    selector: 'datasets-page',
-    templateUrl: './datasetsPage.component.html'
+  selector: 'datasets-page',
+  templateUrl: './datasetsPage.component.html'
 })
 export class DatasetsPageComponent {
-    constructor() {}
+  constructor() { }
 }

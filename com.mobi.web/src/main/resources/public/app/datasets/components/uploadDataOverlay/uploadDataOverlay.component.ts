@@ -34,58 +34,58 @@ import { getDctermsValue } from '../../../shared/utility';
  * {@link shared.DatasetStateService selected dataset}. Meant to be used in conjunction with the `MatDialog` service.
  */
 @Component({
-    selector: 'upload-data-overlay',
-    templateUrl: './uploadDataOverlay.component.html',
-    styleUrls: ['./uploadDataOverlay.component.scss']
+  selector: 'upload-data-overlay',
+  templateUrl: './uploadDataOverlay.component.html',
+  styleUrls: ['./uploadDataOverlay.component.scss']
 })
 export class UploadDataOverlayComponent implements OnInit {
-    error = '';
-    fileObj: File = undefined;
-    datasetTitle = '';
-    importing = false;
+  error = '';
+  fileObj: File = undefined;
+  datasetTitle = '';
+  importing = false;
 
-    constructor(private dialogRef: MatDialogRef<UploadDataOverlayComponent>, public dm: DatasetManagerService,
-        public state: DatasetStateService, private toast: ToastService) {}
-    
-    ngOnInit(): void {
-        this.datasetTitle = getDctermsValue(this.state.selectedDataset.record, 'title');
-    }
-    /**
-     * Submits the RDF file for upload to the selected dataset.
-     * 
-     * This method initiates the file upload process using the `DatasetManagerService.uploadData` method. 
-     * It provides user feedback during the process and ensures the dialog closes appropriately once the 
-     * operation completes.
-     * 
-     * Flags:
-     * - `isDialogClosed`: Prevents the dialog from being closed multiple times.
-     * - `requestErrorFlag`: Tracks whether an error occurred during the upload.
-     */
-    submit(): void {
-        this.importing = true;
-        let isDialogClosed = false;
-        let requestErrorFlag = false;
-        this.dm.uploadData(this.state.selectedDataset.record['@id'], this.fileObj, true).subscribe({
-            next: () => {
-                this.importing = false;
-                this.toast.createSuccessToast(`Data successfully uploaded to ${this.datasetTitle}`);
-                this.dialogRef.close();
-                isDialogClosed = true;
-            }, 
-            error: (errorMessage) => {
-                this._onError(errorMessage);
-                requestErrorFlag = true;
-            },
-            complete: () => {
-                if (!isDialogClosed && !requestErrorFlag) {
-                    this.dialogRef.close();
-                    isDialogClosed = true;
-                }
-            }
-        });
-    }
-    private _onError(errorMessage: string): void {
+  constructor(private dialogRef: MatDialogRef<UploadDataOverlayComponent>, public dm: DatasetManagerService,
+    public state: DatasetStateService, private toast: ToastService) { }
+
+  ngOnInit(): void {
+    this.datasetTitle = getDctermsValue(this.state.selectedDataset.record, 'title');
+  }
+  /**
+   * Submits the RDF file for upload to the selected dataset.
+   * 
+   * This method initiates the file upload process using the `DatasetManagerService.uploadData` method. 
+   * It provides user feedback during the process and ensures the dialog closes appropriately once the 
+   * operation completes.
+   * 
+   * Flags:
+   * - `isDialogClosed`: Prevents the dialog from being closed multiple times.
+   * - `requestErrorFlag`: Tracks whether an error occurred during the upload.
+   */
+  submit(): void {
+    this.importing = true;
+    let isDialogClosed = false;
+    let requestErrorFlag = false;
+    this.dm.uploadData(this.state.selectedDataset.record['@id'], this.fileObj, true).subscribe({
+      next: () => {
         this.importing = false;
-        this.error = errorMessage;
-    }
+        this.toast.createSuccessToast(`Data successfully uploaded to ${this.datasetTitle}`);
+        this.dialogRef.close();
+        isDialogClosed = true;
+      },
+      error: (errorMessage) => {
+        this._onError(errorMessage);
+        requestErrorFlag = true;
+      },
+      complete: () => {
+        if (!isDialogClosed && !requestErrorFlag) {
+          this.dialogRef.close();
+          isDialogClosed = true;
+        }
+      }
+    });
+  }
+  private _onError(errorMessage: string): void {
+    this.importing = false;
+    this.error = errorMessage;
+  }
 }

@@ -696,7 +696,7 @@ export abstract class VersionedRdfState<T extends VersionedRdfListItem> {
     inProgressCommit: Difference;
   }> {
     let branchId, commitId: string;
-    return this.cm.getRecordMasterBranch(recordId, this.catalogId).pipe(
+    return this.cm.getRecordBranch('master', recordId, this.catalogId).pipe(
       switchMap((masterBranch) => {
         branchId = get(masterBranch, '@id', '');
         commitId = getPropertyId(masterBranch, `${CATALOG}head`);

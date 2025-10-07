@@ -89,13 +89,13 @@ describe('WorkflowDownloadModalComponent', () => {
   });
   describe('controller methods', function () {
     it('should download a workflow', function () {
-      catalogManagerStub.getRecordMasterBranch.and.returnValue(of(branch));
+      catalogManagerStub.getRecordBranch.and.returnValue(of(branch));
       component.download();
       expect(catalogManagerStub.downloadResource).toHaveBeenCalled();
       expect(matDialogRef.close).toHaveBeenCalledWith(true);
     });
     it('should download a workflow w/ in progress commit', function () {
-      catalogManagerStub.getRecordMasterBranch.and.returnValue(of(branch));
+      catalogManagerStub.getRecordBranch.and.returnValue(of(branch));
       component.data.applyInProgressCommit = true;
       component.download();
       expect(catalogManagerStub.downloadResource).toHaveBeenCalledWith('commitId', 'https://mobi.com/branches#5ce0a198-875a-4b3c-84f7-9dc2ca318197',
@@ -103,16 +103,14 @@ describe('WorkflowDownloadModalComponent', () => {
       expect(matDialogRef.close).toHaveBeenCalledWith(true);
     });
     it('should error if incorrect jsonld', function () {
-      catalogManagerStub.getRecordMasterBranch.and.returnValue(of(null));
+      catalogManagerStub.getRecordBranch.and.returnValue(of(null));
       component.download();
       expect(toastStub.createErrorToast).toHaveBeenCalledWith(`Invalid JSON-LD object received for: ${component.data.workflows[0].title}`);
       expect(toastStub.createErrorToast).toHaveBeenCalledWith(`Invalid JSON-LD object received for: ${component.data.workflows[1].title}`);
       expect(matDialogRef.close).toHaveBeenCalledWith(true);
     });
     it('should error if download fails', function () {
-      catalogManagerStub.getRecordMasterBranch.and.callFake((iri, catalogId) => {
-        return of(branch);
-      });
+      catalogManagerStub.getRecordBranch.and.returnValue(of(branch));
       catalogManagerStub.downloadResource.and.throwError('Fake download error');
       component.download();
       expect(toastStub.createErrorToast).toHaveBeenCalledWith(`Error downloading: ${component.data.workflows[0].title}`);

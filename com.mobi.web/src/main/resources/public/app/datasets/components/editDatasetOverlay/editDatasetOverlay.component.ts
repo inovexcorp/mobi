@@ -47,160 +47,161 @@ import { getDctermsValue, getPropertyId, getPropertyValue, getSkolemizedIRI, set
  * conjunction with the `MatDialog` service.
  */
 @Component({
-    selector: 'edit-dataset-overlay',
-    templateUrl: './editDatasetOverlay.component.html',
-    styleUrls: ['./editDatasetOverlay.component.scss']
+  selector: 'edit-dataset-overlay',
+  templateUrl: './editDatasetOverlay.component.html',
+  styleUrls: ['./editDatasetOverlay.component.scss']
 })
 export class EditDatasetOverlayComponent implements OnInit {
-    // If an error is detected, then emits event. Use to cancel inprogress requests in init phase
-    private _initErrorDetectionSub$ = new Subject<void>();
-    // Flag is used to let child components that component finished init phase
-    readyFlag = false;
-    catalogId = '';
-    error = '';
-    datasetIRI = '';
-    repositoryId = '';
-    repository: Repository;
-    keywords = [];
-    selectedOntologies: OntologyDetails[] = [];
-    editDatasetForm: UntypedFormGroup = this.fb.group({
-        title: ['', [ Validators.required]],
-        description: [''],
-        keywords: [[]]
+  // If an error is detected, then emits event. Use to cancel inprogress requests in init phase
+  private _initErrorDetectionSub$ = new Subject<void>();
+  // Flag is used to let child components that component finished init phase
+  readyFlag = false;
+  catalogId = '';
+  error = '';
+  datasetIRI = '';
+  repositoryId = '';
+  repository: Repository;
+  keywords = [];
+  selectedOntologies: OntologyDetails[] = [];
+  editDatasetForm: UntypedFormGroup = this.fb.group({
+    title: ['', [Validators.required]],
+    description: [''],
+    keywords: [[]]
+  });
+
+  constructor(private dialogRef: MatDialogRef<EditDatasetOverlayComponent>, private fb: UntypedFormBuilder,
+    public state: DatasetStateService, public dm: DatasetManagerService, public cm: CatalogManagerService,
+    private toast: ToastService, private rm: RepositoryManagerService) { }
+
+  ngOnInit(): void {
+    this.datasetIRI = getPropertyId(this.state.selectedDataset.record, `${DATASET}dataset`);
+    this.repositoryId = getPropertyValue(this.state.selectedDataset.record, `${DATASET}repository`);
+    this.catalogId = get(this.cm.localCatalog, '@id');
+    const keywords: string[] = map(this.state.selectedDataset.record[`${CATALOG}keyword`], '@value');
+    keywords.sort();
+
+    this.editDatasetForm.patchValue({
+      title: getDctermsValue(this.state.selectedDataset.record, 'title'),
+      description: getDctermsValue(this.state.selectedDataset.record, 'description'),
+      keywords: keywords
     });
 
-    constructor(private dialogRef: MatDialogRef<EditDatasetOverlayComponent>, private fb: UntypedFormBuilder,
-        public state: DatasetStateService, public dm: DatasetManagerService, public cm: CatalogManagerService, 
-        private toast: ToastService, private rm: RepositoryManagerService) {}
-
-    ngOnInit(): void {
-        this.datasetIRI = getPropertyId(this.state.selectedDataset.record, `${DATASET}dataset`);
-        this.repositoryId = getPropertyValue(this.state.selectedDataset.record, `${DATASET}repository`);
-        this.catalogId = get(this.cm.localCatalog, '@id');
-        const keywords: string[] = map(this.state.selectedDataset.record[`${CATALOG}keyword`], '@value');
-        keywords.sort();
-
-        this.editDatasetForm.patchValue({
-            title: getDctermsValue(this.state.selectedDataset.record, 'title'),
-            description: getDctermsValue(this.state.selectedDataset.record, 'description'),
-            keywords: keywords
-        });
-
-        let nextCalled = false;
-        let requestErrorFlag = false;
-        this.rm.getRepository(this.repositoryId).subscribe({
-            next: (repo: Repository) => {
-                nextCalled = true;
-                this.repository = repo;
-                this.readyFlag = true;
-            }, 
-            error: () => {
-                requestErrorFlag = true;
-                console.warn('Could not retrieve repository');
-            },
-            complete: () => {
-                if (!(nextCalled || requestErrorFlag)) {
-                    this.closeDialog(false);
-                    this._initErrorDetectionSub$.next();
-                    this._initErrorDetectionSub$.complete();
-                }
-            }}
-        );
-
-        const selectedOntologies = this.state.selectedDataset.identifiers
-            .map(identifier => getPropertyId(identifier, `${DATASET}linksToRecord`));
-        forkJoin(selectedOntologies.map(id => this.cm.getRecord(id, this.catalogId).pipe(
-            takeUntil(this._initErrorDetectionSub$),
-            catchError(error => of(error))
-        ))).subscribe((responses: (JSONLDObject[] | string)[]) => {
-            this.readyFlag = true;
-            const foundRecords = responses.filter((res):res is JSONLDObject[] => typeof res !== 'string');
-            const matchingRecords = foundRecords.map(response => find(response, mr => selectedOntologies.includes(mr['@id'])));
-            this.selectedOntologies = sortBy(matchingRecords.map(record => ({
-                recordId: record['@id'],
-                ontologyIRI: this.getOntologyIRI(record),
-                title: getDctermsValue(record, 'title'),
-                selected: true,
-                jsonld: record
-            })), 'title');
-        });
-    }
-    getOntologyIRI(record: JSONLDObject): string {
-        return getPropertyId(record, `${CATALOG}trackedIdentifier`);
-    }
-    update(): void {
-        const newRecord = cloneDeep(this.state.selectedDataset.record);
-        updateDctermsValue(newRecord, 'title', this.editDatasetForm.controls.title.value.trim());
-        updateDctermsValue(newRecord, 'description', this.editDatasetForm.controls.description.value.trim());
-        newRecord[`${CATALOG}keyword`] = [];
-        this.editDatasetForm.controls.keywords.value
-            .forEach(kw => setPropertyValue(newRecord, `${CATALOG}keyword`, kw.trim()));
-
-        const curOntologies = map(this.selectedOntologies, 'recordId');
-        const oldOntologies = this.state.selectedDataset.identifiers
-            .map(identifier => getPropertyId(identifier, `${DATASET}linksToRecord`));
-
-        const newIdentifiers = Object.assign([], this.state.selectedDataset.identifiers);
-        const added = difference(curOntologies, oldOntologies);
-        const deleted = remove(newIdentifiers, identifier => 
-                !includes(curOntologies, getPropertyId(identifier, `${DATASET}linksToRecord`)));
-
-        forEach(deleted, identifier => {
-            remove(newRecord[`${DATASET}ontology`], {'@id': identifier['@id']});
-        });
-
-        let update$: Observable<null>; 
-        if (added.length > 0) {
-            update$ = forkJoin(added.map(recordId => this.cm.getRecordMasterBranch(recordId, this.catalogId)))
-                .pipe(
-                    tap(responses => {
-                        responses.forEach((branch, idx) => {
-                            const id = getSkolemizedIRI();
-                            newIdentifiers.push(this._createBlankNode(id, added[idx], branch['@id'], 
-                                getPropertyId(branch, `${CATALOG}head`)));
-                            setPropertyId(newRecord, `${DATASET}ontology`, id);
-                        });
-                    }),
-                    switchMap(() => {
-                        setPropertyId(newRecord, `${DATASET}ontology`, newIdentifiers[0]['@id']);
-                        return this._triggerUpdate(newRecord, newIdentifiers);
-                    })
-                );
-        } else {
-            update$ = this._triggerUpdate(newRecord, newIdentifiers);
+    let nextCalled = false;
+    let requestErrorFlag = false;
+    this.rm.getRepository(this.repositoryId).subscribe({
+      next: (repo: Repository) => {
+        nextCalled = true;
+        this.repository = repo;
+        this.readyFlag = true;
+      },
+      error: () => {
+        requestErrorFlag = true;
+        console.warn('Could not retrieve repository');
+      },
+      complete: () => {
+        if (!(nextCalled || requestErrorFlag)) {
+          this.closeDialog(false);
+          this._initErrorDetectionSub$.next();
+          this._initErrorDetectionSub$.complete();
         }
-        update$.pipe(
-            tap(() => this.closeDialog(true)),
-            catchError(error => {
-                this.error = error;
-                return of(null);
-            })
-        ).subscribe();
+      }
     }
+    );
 
-    private _createBlankNode(id: string, recordId: string, branchId: string, commitId: string): JSONLDObject {
-        return {
-            '@id': id,
-            [`${DATASET}linksToRecord`]: [{ '@id': recordId }],
-            [`${DATASET}linksToBranch`]: [{ '@id': branchId }],
-            [`${DATASET}linksToCommit`]: [{ '@id': commitId }]
-        };
-    }
-    private _triggerUpdate(newRecord: JSONLDObject, newIdentifiers): Observable<null> {
-        const jsonld = concat(newIdentifiers, newRecord);
-        // Send unparsed object to the update endpoint.
-        return this.dm.updateDatasetRecord(newRecord['@id'], this.catalogId, jsonld).pipe(
-            tap(() => {
-                this.toast.createSuccessToast('Dataset successfully updated');
-                this.state.selectedDataset.identifiers = newIdentifiers;
-                this.state.selectedDataset.record = newRecord;
-           })
+    const selectedOntologies = this.state.selectedDataset.identifiers
+      .map(identifier => getPropertyId(identifier, `${DATASET}linksToRecord`));
+    forkJoin(selectedOntologies.map(id => this.cm.getRecord(id, this.catalogId).pipe(
+      takeUntil(this._initErrorDetectionSub$),
+      catchError(error => of(error))
+    ))).subscribe((responses: (JSONLDObject[] | string)[]) => {
+      this.readyFlag = true;
+      const foundRecords = responses.filter((res): res is JSONLDObject[] => typeof res !== 'string');
+      const matchingRecords = foundRecords.map(response => find(response, mr => selectedOntologies.includes(mr['@id'])));
+      this.selectedOntologies = sortBy(matchingRecords.map(record => ({
+        recordId: record['@id'],
+        ontologyIRI: this.getOntologyIRI(record),
+        title: getDctermsValue(record, 'title'),
+        selected: true,
+        jsonld: record
+      })), 'title');
+    });
+  }
+  getOntologyIRI(record: JSONLDObject): string {
+    return getPropertyId(record, `${CATALOG}trackedIdentifier`);
+  }
+  update(): void {
+    const newRecord = cloneDeep(this.state.selectedDataset.record);
+    updateDctermsValue(newRecord, 'title', this.editDatasetForm.controls.title.value.trim());
+    updateDctermsValue(newRecord, 'description', this.editDatasetForm.controls.description.value.trim());
+    newRecord[`${CATALOG}keyword`] = [];
+    this.editDatasetForm.controls.keywords.value
+      .forEach(kw => setPropertyValue(newRecord, `${CATALOG}keyword`, kw.trim()));
+
+    const curOntologies = map(this.selectedOntologies, 'recordId');
+    const oldOntologies = this.state.selectedDataset.identifiers
+      .map(identifier => getPropertyId(identifier, `${DATASET}linksToRecord`));
+
+    const newIdentifiers = Object.assign([], this.state.selectedDataset.identifiers);
+    const added = difference(curOntologies, oldOntologies);
+    const deleted = remove(newIdentifiers, identifier =>
+      !includes(curOntologies, getPropertyId(identifier, `${DATASET}linksToRecord`)));
+
+    forEach(deleted, identifier => {
+      remove(newRecord[`${DATASET}ontology`], { '@id': identifier['@id'] });
+    });
+
+    let update$: Observable<null>;
+    if (added.length > 0) {
+      update$ = forkJoin(added.map(recordId => this.cm.getRecordBranch('master', recordId, this.catalogId)))
+        .pipe(
+          tap(responses => {
+            responses.forEach((branch, idx) => {
+              const id = getSkolemizedIRI();
+              newIdentifiers.push(this._createBlankNode(id, added[idx], branch['@id'],
+                getPropertyId(branch, `${CATALOG}head`)));
+              setPropertyId(newRecord, `${DATASET}ontology`, id);
+            });
+          }),
+          switchMap(() => {
+            setPropertyId(newRecord, `${DATASET}ontology`, newIdentifiers[0]['@id']);
+            return this._triggerUpdate(newRecord, newIdentifiers);
+          })
         );
+    } else {
+      update$ = this._triggerUpdate(newRecord, newIdentifiers);
     }
-    closeDialog(closeFlag: boolean): void {
-        if (closeFlag) {
-            this.readyFlag = false;
-            this.dialogRef.close(closeFlag);
-        }
+    update$.pipe(
+      tap(() => this.closeDialog(true)),
+      catchError(error => {
+        this.error = error;
+        return of(null);
+      })
+    ).subscribe();
+  }
+
+  private _createBlankNode(id: string, recordId: string, branchId: string, commitId: string): JSONLDObject {
+    return {
+      '@id': id,
+      [`${DATASET}linksToRecord`]: [{ '@id': recordId }],
+      [`${DATASET}linksToBranch`]: [{ '@id': branchId }],
+      [`${DATASET}linksToCommit`]: [{ '@id': commitId }]
+    };
+  }
+  private _triggerUpdate(newRecord: JSONLDObject, newIdentifiers): Observable<null> {
+    const jsonld = concat(newIdentifiers, newRecord);
+    // Send unparsed object to the update endpoint.
+    return this.dm.updateDatasetRecord(newRecord['@id'], this.catalogId, jsonld).pipe(
+      tap(() => {
+        this.toast.createSuccessToast('Dataset successfully updated');
+        this.state.selectedDataset.identifiers = newIdentifiers;
+        this.state.selectedDataset.record = newRecord;
+      })
+    );
+  }
+  closeDialog(closeFlag: boolean): void {
+    if (closeFlag) {
+      this.readyFlag = false;
+      this.dialogRef.close(closeFlag);
     }
+  }
 }
