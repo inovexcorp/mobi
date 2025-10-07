@@ -371,8 +371,8 @@ public class SettingRest {
             User user = getActiveUser(servletRequest, engineManager);
             SettingService<? extends Setting> service = getSettingService(type);
             Setting setting = service.getSettingByType(vf.createIRI(settingType), user)
-                    .orElseThrow(() -> ErrorUtils.sendError("Setting with type " + settingType
-                            + " does not exist.", Response.Status.BAD_REQUEST));
+                    .orElseThrow(() -> RestUtils.getErrorObjNotFound(new IllegalArgumentException("Setting with " +
+                            "type " + settingType + " does not exist.")));
             JsonNode result = getSettingAsJsonNode(setting);
             return Response.ok(result.toString()).build();
         } catch (IllegalArgumentException ex) {

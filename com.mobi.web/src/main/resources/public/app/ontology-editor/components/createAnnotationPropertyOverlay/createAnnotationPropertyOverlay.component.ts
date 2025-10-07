@@ -20,98 +20,114 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { unset } from 'lodash';
 import { Component, OnInit } from '@angular/core';
-import { UntypedFormBuilder, Validators } from '@angular/forms';
 import { MatDialogRef } from '@angular/material/dialog';
+import { UntypedFormBuilder, Validators } from '@angular/forms';
 
-import { OntologyStateService } from '../../../shared/services/ontologyState.service';
-import { DCTERMS, OWL } from '../../../prefixes';
-import { CamelCasePipe } from '../../../shared/pipes/camelCase.pipe';
-import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
-import { REGEX } from '../../../constants';
-import { splitIRI } from '../../../shared/pipes/splitIRI.pipe';
+import { unset } from 'lodash';
+
 import { addLanguageToAnnotations } from '../../../shared/utility';
+import { CamelCasePipe } from '../../../shared/pipes/camelCase.pipe';
+import { DCTERMS, OWL, RDFS } from '../../../prefixes';
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import { REGEX } from '../../../constants';
+import { SettingManagerService } from '../../../shared/services/settingManager.service';
+import { splitIRI } from '../../../shared/pipes/splitIRI.pipe';
 
 /**
- * @class ontology-editor.CreateAnnotationPropertyOverlayComponent
+ * @class CreateAnnotationPropertyOverlayComponent
  *
  * A component that creates content for a modal that creates an annotation property in the current
- * {@link shared.OntologyStateService#listItem selected ontology}. The form in the modal contains a text input for the
- * property name (which populates the {@link ontology-editor.StaticIriComponent IRI}), a field for the property
- * description, and an {@link ontology-editor.AdvancedLanguageSelectComponent}. Meant to be used in conjunction with the
+ * {@link OntologyStateService#listItem} selected ontology. The form in the modal contains a text input for the
+ * property name (which populates the {@link StaticIriComponent} IRI), a field for the property
+ * description, and an {@link AdvancedLanguageSelectComponent}. Meant to be used in conjunction with the
  * `MatDialog` service.
  */
 @Component({
-    selector: 'create-annotation-property-overlay',
-    templateUrl: './createAnnotationPropertyOverlay.component.html'
+  selector: 'create-annotation-property-overlay',
+  templateUrl: './createAnnotationPropertyOverlay.component.html'
 })
 export class CreateAnnotationPropertyOverlayComponent implements OnInit {
-    iriHasChanged = false;
-    duplicateCheck = true;
-    iriPattern = REGEX.IRI;
+  iriHasChanged = false;
+  duplicateCheck = true;
+  iriPattern = REGEX.IRI;
 
-    createForm = this.fb.group({
-        iri: ['', [Validators.required, Validators.pattern(this.iriPattern)]], // has prefix
-        title: ['', [ Validators.required]], 
-        description: [''],
-        language: ['']
+  createForm = this.fb.group({
+    iri: ['', [Validators.required, Validators.pattern(this.iriPattern)]], // has prefix
+    title: ['', [Validators.required]],
+    description: [''],
+    language: ['']
+  });
+
+  annotationType = DCTERMS;
+
+  constructor(private fb: UntypedFormBuilder,
+              private dialogRef: MatDialogRef<CreateAnnotationPropertyOverlayComponent>,
+              public sm: SettingManagerService,
+              public os: OntologyStateService,
+              private camelCasePipe: CamelCasePipe) {
+  }
+
+  ngOnInit(): void {
+    this.createForm.controls.iri.setValue(this.os.getDefaultPrefix());
+    this.createForm.controls.title.valueChanges.subscribe(newVal => this.nameChanged(newVal));
+
+    this.sm.getAnnotationPreference().subscribe(preference => {
+      this.annotationType = preference === 'DC Terms' ? DCTERMS : RDFS;
+    }, error => {
+      this.annotationType = DCTERMS;
+      console.error(error);
     });
-    
-    constructor(private fb: UntypedFormBuilder,
-        private dialogRef: MatDialogRef<CreateAnnotationPropertyOverlayComponent>, 
-        public os: OntologyStateService,
-        private camelCasePipe: CamelCasePipe) {}
+  }
 
-    ngOnInit(): void {
-        this.createForm.controls.iri.setValue(this.os.getDefaultPrefix());
-        this.createForm.controls.title.valueChanges.subscribe(newVal => this.nameChanged(newVal));
+  nameChanged(newName: string): void {
+    if (!this.iriHasChanged) {
+      const split = splitIRI(this.createForm.controls.iri.value);
+      this.createForm.controls.iri.setValue(split.begin + split.then + this.camelCasePipe.transform(newName, 'property'));
     }
-    nameChanged(newName: string): void {
-        if (!this.iriHasChanged) {
-            const split = splitIRI(this.createForm.controls.iri.value);
-            this.createForm.controls.iri.setValue(split.begin + split.then + this.camelCasePipe.transform(newName, 'property'));
-        }
+  }
+
+  onEdit(iriBegin: string, iriThen: string, iriEnd: string): void {
+    this.iriHasChanged = true;
+    this.createForm.controls.iri.setValue(iriBegin + iriThen + iriEnd);
+    this.os.setCommonIriParts(iriBegin, iriThen);
+  }
+
+  get property(): JSONLDObject {
+    const labelIRI = this.annotationType === DCTERMS ? `${this.annotationType}title` : `${this.annotationType}label`;
+    const descIRI = this.annotationType === DCTERMS ? `${this.annotationType}description` : `${this.annotationType}comment`;
+    const property = {
+      '@id': this.createForm.controls.iri.value,
+      '@type': [`${OWL}AnnotationProperty`],
+      [labelIRI]: [{ '@value': this.createForm.controls.title.value }],
+      [descIRI]: [{ '@value': this.createForm.controls.description.value }]
+    };
+    if (property[descIRI][0]['@value'] === '') {
+      unset(property, descIRI);
     }
-    onEdit(iriBegin: string, iriThen: string, iriEnd: string): void  {
-        this.iriHasChanged = true;
-        this.createForm.controls.iri.setValue(iriBegin + iriThen + iriEnd);
-        this.os.setCommonIriParts(iriBegin, iriThen);
-    }
-    get property(): JSONLDObject{
-        const property = {
-            '@id': this.createForm.controls.iri.value,
-            '@type': [`${OWL}AnnotationProperty`],
-            [`${DCTERMS}title`]: [{
-                '@value': this.createForm.controls.title.value
-            }],
-            [`${DCTERMS}description`]: [{
-                '@value': this.createForm.controls.description.value
-            }]
-        };
-        if (property[`${DCTERMS}description`][0]['@value'] === '') {
-            unset(property, `${DCTERMS}description`);
-        }
-        addLanguageToAnnotations(property, this.createForm.controls.language.value);
-        return property;
-    }
-    create(): void {
-        this.duplicateCheck = false;
-        const property = this.property;
-        this.os.updatePropertyIcon(property);
-        // add the entity to the ontology
-        this.os.addEntity(property);
-        // update lists
-        this.os.listItem.annotations.iris[property['@id']] = this.os.listItem.ontologyId;
-        this.os.listItem.annotations.flat = this.os.flattenHierarchy(this.os.listItem.annotations);
-        // Update InProgressCommit
-        this.os.addToAdditions(this.os.listItem.versionedRdfRecord.recordId, property);
-        // Save the changes to the ontology
-        this.os.saveCurrentChanges().subscribe(() => {
-            // Open snackbar
-            this.os.openSnackbar(property['@id']);
-        }, () => {});
-        // hide the overlay
-        this.dialogRef.close();
-    }
+    addLanguageToAnnotations(property, this.createForm.controls.language.value);
+    return property;
+  }
+
+  create(): void {
+    this.duplicateCheck = false;
+    const property = this.property;
+    this.os.updatePropertyIcon(property);
+    // add the entity to the ontology
+    this.os.addEntity(property);
+    // update lists
+    this.os.listItem.annotations.iris[property['@id']] = this.os.listItem.ontologyId;
+    this.os.listItem.annotations.flat = this.os.flattenHierarchy(this.os.listItem.annotations);
+    // Update InProgressCommit
+    this.os.addToAdditions(this.os.listItem.versionedRdfRecord.recordId, property);
+    // Save the changes to the ontology
+    this.os.saveCurrentChanges().subscribe(() => {
+      // Open snackbar
+      this.os.openSnackbar(property['@id']);
+    }, () => {
+    });
+    // hide the overlay
+    this.dialogRef.close();
+  }
 }

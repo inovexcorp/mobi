@@ -39,7 +39,7 @@ describe('Setting Manager service', function() {
   let httpMock: HttpTestingController;
   let progressSpinnerStub: jasmine.SpyObj<ProgressSpinnerService>;
   let toastStub: jasmine.SpyObj<ToastService>;
-
+  let annotationDefinition: any;
   const error = 'error message';
   const errorObj: RESTError = { error: '', errorMessage: error, errorDetails: [] };
   const prefType = 'https://mobi.com/ontologies/setting#TestPreferenceType';
@@ -48,8 +48,8 @@ describe('Setting Manager service', function() {
   const appSettingGroup = 'https://mobi.com/ontologies/setting#TestApplicationSettingGroup';
   const defaultNamespace = 'urn:default-namespace/';
 
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({
+  beforeEach(() => {
+    TestBed.configureTestingModule({
       imports: [ HttpClientTestingModule ],
       providers: [
         SettingManagerService,
@@ -64,6 +64,23 @@ describe('Setting Manager service', function() {
     toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
 
     progressSpinnerStub.trackedRequest.and.callFake((ob) => ob);
+
+    annotationDefinition = [{
+      '@id': 'https://mobi.solutions/ontologies/editor#DefaultAnnotationPreference',
+      'http://mobi.com/ontologies/setting#inGroup': [{'@id': 'https://mobi.solutions/ontologies/editor#EditorPreferencesGroup'}],
+      'http://purl.org/dc/terms/description': [{'@value': 'Default Annotation Preference'}],
+      'http://www.w3.org/ns/shacl#property': [{'@id': 'https://mobi.solutions/ontologies/editor#DefaultAnnotationPreferencePropertyShape'}]
+    },
+      {
+        '@id': 'https://mobi.solutions/ontologies/editor#DefaultAnnotationPreferencePropertyShape',
+        'http://www.w3.org/ns/shacl#defaultValue': [
+          {
+            '@language': 'en',
+            '@value': 'RDFS'
+          }
+        ],
+      }
+    ];
   });
 
   afterEach(function() {
@@ -111,7 +128,7 @@ describe('Setting Manager service', function() {
         });
         tick();
         expect(service.getApplicationSettingByType).toHaveBeenCalledWith(service.defaultNamespaceMap[type].setting);
-        expect(toastStub.createErrorToast).toHaveBeenCalledWith(jasmine.stringContaining('No values found'));
+        expect(toastStub.createErrorToast).toHaveBeenCalledWith('Issue retrieving value for default namespace. Please contact support.');
         expect(service.getDefaultNamespaceFromSetting).toHaveBeenCalledWith(type);
       }));
       it('unless more than one setting definition was returned', fakeAsync(() => {
@@ -121,7 +138,7 @@ describe('Setting Manager service', function() {
         });
         tick();
         expect(service.getApplicationSettingByType).toHaveBeenCalledWith(service.defaultNamespaceMap[type].setting);
-        expect(toastStub.createErrorToast).toHaveBeenCalledWith(jasmine.stringContaining('Too many'));
+        expect(toastStub.createErrorToast).toHaveBeenCalledWith(jasmine.stringContaining('Issue retrieving value for default namespace'));
         expect(service.getDefaultNamespaceFromSetting).toHaveBeenCalledWith(type);
       }));
     });
@@ -154,7 +171,8 @@ describe('Setting Manager service', function() {
         });
         tick();
         expect(service.getApplicationSettingByType).toHaveBeenCalledWith(service.defaultNamespaceMap[type].setting);
-        expect(toastStub.createErrorToast).toHaveBeenCalledWith(jasmine.stringContaining('No values found'));
+        expect(toastStub.createErrorToast).toHaveBeenCalledWith('Issue retrieving value for default namespace. Please' +
+          ' contact support.');
         expect(service.getDefaultNamespaceFromSetting).toHaveBeenCalledWith(type);
       }));
       it('unless more than one setting definition was returned', fakeAsync(() => {
@@ -164,7 +182,7 @@ describe('Setting Manager service', function() {
         });
         tick();
         expect(service.getApplicationSettingByType).toHaveBeenCalledWith(service.defaultNamespaceMap[type].setting);
-        expect(toastStub.createErrorToast).toHaveBeenCalledWith(jasmine.stringContaining('Too many'));
+        expect(toastStub.createErrorToast).toHaveBeenCalledWith(jasmine.stringContaining('Issue retrieving value for default namespace'));
         expect(service.getDefaultNamespaceFromSetting).toHaveBeenCalledWith(type);
       }));
       it('unless an error occurs', fakeAsync(() => {
@@ -285,6 +303,89 @@ describe('Setting Manager service', function() {
       expect(service.getApplicationSettingDefinitions).not.toHaveBeenCalled();
       expect(toastStub.createErrorToast).not.toHaveBeenCalled();
     }));
+  });
+  describe('should retrieve the default annotation preference', () => {
+    const annotationIRI = 'https://mobi.solutions/ontologies/editor#DefaultAnnotationPreference';
+    const prefGroupIRI = 'https://mobi.solutions/ontologies/editor#EditorPreferencesGroup';
+    const errorMsg = 'Issue retrieving current value for Default Annotation preference. Utilizing default value.';
+    let annotationPreference: any;
+
+    beforeEach(() => {
+      annotationPreference = {
+        '@id': 'http://mobi.solutions/setting#test',
+        'http://mobi.com/ontologies/setting#forUser': [{'@id': 'http://mobi.com/users/test'}],
+        'http://mobi.com/ontologies/setting#hasDataValue': [{'@value': 'DC Terms'}]
+      };
+    });
+    it('successfully', fakeAsync(() => {
+      spyOn(service, 'getUserPreferenceByType').and.returnValue(of([annotationPreference]));
+      spyOn(service, 'getPreferenceDefinitions').and.returnValue(of([]));
+      service.getAnnotationPreference().subscribe(result => {
+        expect(result).toEqual('DC Terms');
+      }, () => fail('Observable should have resolved'));
+      tick();
+      expect(service.getUserPreferenceByType).toHaveBeenCalledWith(annotationIRI);
+      expect(service.getPreferenceDefinitions).not.toHaveBeenCalled();
+      expect(toastStub.createErrorToast).not.toHaveBeenCalled();
+    }));
+    it('unless more than one preference was returned', fakeAsync(() => {
+      spyOn(service, 'getUserPreferenceByType').and.returnValue(of([annotationPreference, annotationPreference]));
+      spyOn(service, 'getPreferenceDefinitions').and.returnValue(of(annotationDefinition));
+      service.getAnnotationPreference().subscribe(result => {
+        expect(result).toEqual('RDFS');
+      });
+      tick();
+      expect(service.getUserPreferenceByType).toHaveBeenCalledWith(annotationIRI);
+      expect(service.getPreferenceDefinitions).toHaveBeenCalledWith(prefGroupIRI);
+      expect(toastStub.createErrorToast).toHaveBeenCalledWith(errorMsg);
+    }));
+    it('unless a preference was not returned', fakeAsync(() => {
+      spyOn(service, 'getUserPreferenceByType').and.returnValue(of([]));
+      spyOn(service, 'getPreferenceDefinitions').and.returnValue(of(annotationDefinition));
+      service.getAnnotationPreference().subscribe(result => {
+        expect(result).toEqual('RDFS');
+      });
+      tick();
+      expect(service.getUserPreferenceByType).toHaveBeenCalledWith(annotationIRI);
+      expect(service.getPreferenceDefinitions).toHaveBeenCalledWith(prefGroupIRI);
+      expect(toastStub.createErrorToast).toHaveBeenCalledWith(errorMsg);
+    }));
+    describe('unless the preference does not have a data value', () => {
+      beforeEach(() => {
+        delete annotationPreference[`${SETTING}hasDataValue`];
+      });
+      it('and there is no default value in the preference definition', fakeAsync(() => {
+        annotationDefinition = [
+          {
+            '@id': 'https://mobi.solutions/ontologies/editor#DefaultAnnotationPreference',
+            'http://mobi.com/ontologies/setting#inGroup': [{'@id': 'https://mobi.solutions/ontologies/editor#EditorPreferencesGroup'}],
+            'http://purl.org/dc/terms/description': [{'@value': 'Default Annotation Preference'}],
+            'http://www.w3.org/ns/shacl#property': [{'@id': 'https://mobi.solutions/ontologies/editor#DefaultAnnotationPreferencePropertyShape'}]
+          },
+          { '@id': 'https://mobi.solutions/ontologies/editor#DefaultAnnotationPreferencePropertyShape' }
+        ];
+        spyOn(service, 'getUserPreferenceByType').and.returnValue(of([annotationPreference]));
+        spyOn(service, 'getPreferenceDefinitions').and.returnValue(of(annotationDefinition));
+        service.getAnnotationPreference().subscribe(() => fail('Observable should have rejected'), result => {
+          expect(result).toEqual('No preference definition found');
+        });
+        tick();
+        expect(service.getUserPreferenceByType).toHaveBeenCalledWith(annotationIRI);
+        expect(service.getPreferenceDefinitions).toHaveBeenCalledWith(prefGroupIRI);
+        expect(toastStub.createErrorToast).toHaveBeenCalledWith('Issue retrieving definition for preference');
+      }));
+      it('and there is a default value in the preference definition', fakeAsync(() => {
+        spyOn(service, 'getUserPreferenceByType').and.returnValue(of([annotationPreference]));
+        spyOn(service, 'getPreferenceDefinitions').and.returnValue(of(annotationDefinition));
+        service.getAnnotationPreference().subscribe(result => {
+          expect(result).toEqual('RDFS');
+        }, () => fail('Observable should have resolved'));
+        tick();
+        expect(service.getUserPreferenceByType).toHaveBeenCalledWith(annotationIRI);
+        expect(service.getPreferenceDefinitions).toHaveBeenCalledWith(prefGroupIRI);
+        expect(toastStub.createErrorToast).not.toHaveBeenCalled();
+      }));
+    });
   });
   describe('should retrieve a list of user preferences', function() {
     beforeEach(function() {
