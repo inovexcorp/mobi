@@ -26,41 +26,41 @@ import { By } from '@angular/platform-browser';
 import { MockComponent } from 'ng-mocks';
 
 import {
-    cleanStylesFromDOM
+  cleanStylesFromDOM
 } from '../../../../../public/test/ts/Shared';
 import { SharedModule } from '../../../shared/shared.module';
 import { DatasetsListComponent } from '../datasetsList/datasetsList.component';
 import { DatasetsPageComponent } from './datasetsPage.component';
 
-describe('Datasets Page component', function() {
-    let element: DebugElement;
-    let fixture: ComponentFixture<DatasetsPageComponent>;
+describe('Datasets Page component', function () {
+  let element: DebugElement;
+  let fixture: ComponentFixture<DatasetsPageComponent>;
 
-    beforeEach(async () => {
-        await TestBed.configureTestingModule({
-            imports: [ SharedModule ],
-            declarations: [
-                DatasetsPageComponent,
-                MockComponent(DatasetsListComponent)
-            ]
-        }).compileComponents();
-        
-        fixture = TestBed.createComponent(DatasetsPageComponent);
-        element = fixture.debugElement;
-    });
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [SharedModule],
+      declarations: [
+        DatasetsPageComponent,
+        MockComponent(DatasetsListComponent)
+      ]
+    }).compileComponents();
 
-    afterEach(function() {
-        cleanStylesFromDOM();
-        element = null;
-        fixture = null;
-    });
+    fixture = TestBed.createComponent(DatasetsPageComponent);
+    element = fixture.debugElement;
+  });
 
-    describe('contains the correct html', function() {
-        it('for wrapping containers', function() {
-            expect(element.queryAll(By.css('.datasets-page')).length).toEqual(1);
-        });
-        it('with a datasets-list', function() {
-            expect(element.queryAll(By.css('datasets-list')).length).toBe(1);
-        });
+  afterEach(function () {
+    cleanStylesFromDOM();
+    element = null;
+    fixture = null;
+  });
+
+  describe('contains the correct html', function () {
+    it('for wrapping containers', function () {
+      expect(element.queryAll(By.css('.datasets-page')).length).toEqual(1);
     });
+    it('with a datasets-list', function () {
+      expect(element.queryAll(By.css('datasets-list')).length).toBe(1);
+    });
+  });
 });

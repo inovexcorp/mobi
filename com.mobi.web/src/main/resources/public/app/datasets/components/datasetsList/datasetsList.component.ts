@@ -46,13 +46,13 @@ import { getDate, getDctermsValue, getPropertyId, getPropertyValue } from '../..
 import { XACMLRequest } from '../../../shared/models/XACMLRequest.interface';
 
 interface DatasetDisplayItem {
-    title: string,
-    datasetIRI: string,
-    description: string,
-    modified: string
-    ontologies: string[],
-    repositoryId: string,
-    dataset: Dataset
+  title: string,
+  datasetIRI: string,
+  description: string,
+  modified: string
+  ontologies: string[],
+  repositoryId: string,
+  dataset: Dataset
 }
 
 /**
@@ -63,221 +63,221 @@ interface DatasetDisplayItem {
  * title, dataset IRI, description, modified date, repository id, and attached ontologies.
  */
 @Component({
-    selector: 'datasets-list',
-    templateUrl: './datasetsList.component.html',
-    styleUrls: ['./datasetsList.component.scss']
+  selector: 'datasets-list',
+  templateUrl: './datasetsList.component.html',
+  styleUrls: ['./datasetsList.component.scss']
 })
 export class DatasetsListComponent implements OnInit {
-    catalogId = '';
-    errorMessage = '';
-    cachedOntologyTitles = {};
-    results: DatasetDisplayItem[] = [];
-    searchText = '';
-    repositoryMap: {[key: string]: Repository} = {};
-    canCreate = false;
+  catalogId = '';
+  errorMessage = '';
+  cachedOntologyTitles = {};
+  results: DatasetDisplayItem[] = [];
+  searchText = '';
+  repositoryMap: { [key: string]: Repository } = {};
+  canCreate = false;
 
-    @ViewChild('datasetsList', { static: true }) datasetsList: ElementRef;
-    
-    constructor(public dm: DatasetManagerService, public state: DatasetStateService, public cm: CatalogManagerService, 
-        private dialog: MatDialog, private spinnerSvc: ProgressSpinnerService, private pep: PolicyEnforcementService, 
-        private toast: ToastService, private rm: RepositoryManagerService) {}
-    
-    ngOnInit(): void {
-        this.catalogId = get(this.cm.localCatalog, '@id', '');
-        this.setResults();
-        this.searchText = this.state.paginationConfig.searchText;
-        this.state.submittedSearch = !!this.state.paginationConfig.searchText;
-        this.rm.getRepositories().subscribe(repos => {
-            repos.forEach(repo => {
-                this.repositoryMap[repo.id] = repo;
-            });
-        });
-        this._checkCreatePermission();
-    }
-    getIdentifiedOntologyIds(dataset: Dataset): string[] {
-        return map(dataset.identifiers, identifier => identifier[`${DATASET}linksToRecord`][0]['@id']);
-    }
-    getRecordTitle(record: JSONLDObject): string {
-        return getDctermsValue(record, 'title');
-    }
-    setCachedOntologyTitles(datasets: Dataset[]): Observable<null> {
-        const toRetrieve = [];
-        datasets.forEach((dataset: Dataset) => {
-            this.getIdentifiedOntologyIds(dataset).forEach(id => {
-                if (!(id in this.cachedOntologyTitles) && !toRetrieve.includes(id)) {
-                    toRetrieve.push(id);
-                }
-            });
-        });
-        if (toRetrieve.length) {
-            return forkJoin(map(toRetrieve, id => this.cm.getRecord(id, this.catalogId).pipe(catchError(error => of(error)))))
-                .pipe(switchMap((responses: (JSONLDObject[] | string)[]) => {
-                    responses.forEach((response, idx: number) => {
-                        if (typeof response === 'string') {
-                            this.cachedOntologyTitles[toRetrieve[idx]] = '(Ontology not found)';
-                        } else {
-                            const record = find(response, mr => toRetrieve.includes(mr['@id']));
-                            this.cachedOntologyTitles[record['@id']] = this.getRecordTitle(record);
-                        }
-                    });
-                    return of(null);
-                }));
-        } else {
-            return of(null);
+  @ViewChild('datasetsList', { static: true }) datasetsList: ElementRef;
+
+  constructor(public dm: DatasetManagerService, public state: DatasetStateService, public cm: CatalogManagerService,
+    private dialog: MatDialog, private spinnerSvc: ProgressSpinnerService, private pep: PolicyEnforcementService,
+    private toast: ToastService, private rm: RepositoryManagerService) { }
+
+  ngOnInit(): void {
+    this.catalogId = get(this.cm.localCatalog, '@id', '');
+    this.setResults();
+    this.searchText = this.state.paginationConfig.searchText;
+    this.state.submittedSearch = !!this.state.paginationConfig.searchText;
+    this.rm.getRepositories().subscribe(repos => {
+      repos.forEach(repo => {
+        this.repositoryMap[repo.id] = repo;
+      });
+    });
+    this._checkCreatePermission();
+  }
+  getIdentifiedOntologyIds(dataset: Dataset): string[] {
+    return map(dataset.identifiers, identifier => identifier[`${DATASET}linksToRecord`][0]['@id']);
+  }
+  getRecordTitle(record: JSONLDObject): string {
+    return getDctermsValue(record, 'title');
+  }
+  setCachedOntologyTitles(datasets: Dataset[]): Observable<null> {
+    const toRetrieve = [];
+    datasets.forEach((dataset: Dataset) => {
+      this.getIdentifiedOntologyIds(dataset).forEach(id => {
+        if (!(id in this.cachedOntologyTitles) && !toRetrieve.includes(id)) {
+          toRetrieve.push(id);
         }
-    }
-    getPage(pageEvent: PageEvent): void {
-        this.state.paginationConfig.pageIndex = pageEvent.pageIndex;
-        this.setResults();
-    }
-    delete(dataset: Dataset): void {
-        this.dm.deleteDatasetRecord(dataset.record['@id'])
-            .subscribe(() => {
-                this.toast.createSuccessToast('Dataset successfully deleted');
-                if (this.results.length === 1 && this.state.paginationConfig.pageIndex > 0) {
-                    this.state.paginationConfig.pageIndex -= 1;
-                }
-                this.setResults();
-                this.state.submittedSearch = !!this.state.paginationConfig.searchText;
-            }, error => this.toast.createErrorToast(error));
-    }
-    setResults(): void {
-        this.spinnerSvc.startLoadingForComponent(this.datasetsList);
-        this.state.setResults().subscribe(results => {
-            this.setCachedOntologyTitles(results).subscribe(() => {
-                this.results = results.map(dataset => ({
-                    title: getDctermsValue(dataset.record, 'title'),
-                    datasetIRI: getPropertyId(dataset.record, `${DATASET}dataset`),
-                    description: getDctermsValue(dataset.record, 'description') || '(No Description)',
-                    modified: getDate(getDctermsValue(dataset.record, 'modified'), 'short'),
-                    repositoryId: getPropertyValue(dataset.record, `${DATASET}repository`),
-                    ontologies: this.getIdentifiedOntologyIds(dataset).map(ontologyId => this.cachedOntologyTitles[ontologyId]),
-                    dataset
-                }));
-                this.spinnerSvc.finishLoadingForComponent(this.datasetsList);
-            });
-        });
-    }
-    clear(dataset: Dataset): void {
-        this.dm.clearDatasetRecord(dataset.record['@id'])
-            .subscribe(() => {
-                this.toast.createSuccessToast('Dataset successfully cleared');
-            }, error => this.toast.createErrorToast(error));
-    }
-    showUploadData(dataset: Dataset): void {
-        const request = {
-            resourceId: dataset.record['@id'],
-            actionId: `${CATALOG}Modify`
-        };
-        this.pep.evaluateRequest(request)
-            .subscribe(response => {
-                const hasPermission = response !== this.pep.deny;
-                if (hasPermission) {
-                    this.state.selectedDataset = dataset;
-                    this.dialog.open(UploadDataOverlayComponent);
-                } else {
-                    this.toast.createErrorToast('You do not have permission to modify dataset record');
-                }
-            }, () => {
-                this.toast.createErrorToast('Could not retrieve record permissions');
-            });
-    }
-    showEdit(dataset: Dataset): void {
-        const request = {
-            resourceId: dataset.record['@id'],
-            actionId: `${POLICY}Update`
-        };
-        this.pep.evaluateRequest(request)
-            .subscribe(response => {
-                const hasPermission = response !== this.pep.deny;
-                if (hasPermission) {
-                    this.state.selectedDataset = dataset;
-                    this.dialog.open(EditDatasetOverlayComponent).afterClosed().subscribe((result: boolean) => {
-                        if (result) {
-                            this.setResults();
-                        }
-                    });
-                } else {
-                    this.toast.createErrorToast('You do not have permission to update dataset record');
-                }
-            }, () => {
-                this.toast.createErrorToast('Could not retrieve record permissions');
-            });
-    }
-    showNew(): void {
-        this.dialog.open(NewDatasetOverlayComponent).afterClosed().subscribe((result: boolean) => {
-            if (result) {
-                this.setResults();
+      });
+    });
+    if (toRetrieve.length) {
+      return forkJoin(map(toRetrieve, id => this.cm.getRecord(id, this.catalogId).pipe(catchError(error => of(error)))))
+        .pipe(switchMap((responses: (JSONLDObject[] | string)[]) => {
+          responses.forEach((response, idx: number) => {
+            if (typeof response === 'string') {
+              this.cachedOntologyTitles[toRetrieve[idx]] = '(Ontology not found)';
+            } else {
+              const record = find(response, mr => toRetrieve.includes(mr['@id']));
+              this.cachedOntologyTitles[record['@id']] = this.getRecordTitle(record);
             }
-        });
+          });
+          return of(null);
+        }));
+    } else {
+      return of(null);
     }
-    showClear(dataset: Dataset): void {
-        const request = {
-            resourceId: dataset.record['@id'],
-            actionId: `${CATALOG}Modify`
-        };
-        this.pep.evaluateRequest(request)
-            .subscribe(response => {
-                const hasPermission = response !== this.pep.deny;
-                if (hasPermission) {
-                    this.dialog.open(ConfirmModalComponent, {
-                        data: {
-                            content: `Are you sure you want to clear <strong>${getDctermsValue(dataset.record, 'title')}</strong>?`
-                        }
-                    }).afterClosed().subscribe((result: boolean) => {
-                        if (result) {
-                            this.clear(dataset);
-                        }
-                    });
-                } else {
-                    this.toast.createErrorToast('Could not retrieve record permissions');
-                }
-            });
-    }
-    showDelete(dataset: Dataset): void {
-        const request = {
-            resourceId: dataset.record['@id'],
-            actionId: `${POLICY}Delete`
-        };
-        this.pep.evaluateRequest(request)
-            .subscribe(response => {
-                const hasPermission = response !== this.pep.deny;
-                if (hasPermission) {
-                    this.dialog.open(ConfirmModalComponent, {
-                        data: {
-                            content: `Are you sure you want to delete <strong>${getDctermsValue(dataset.record, 'title')}</strong>?`
-                        }
-                    }).afterClosed().subscribe((result: boolean) => {
-                        if (result) {
-                            this.delete(dataset);
-                        }
-                    });
-                } else {
-                    this.toast.createErrorToast('You do not have permission to delete dataset record');
-                }
-            }, () => {
-                this.toast.createErrorToast('Could not retrieve record permissions');
-            });
-    }
-    searchRecords(): void {
-        this.state.resetPagination();
-        this.state.paginationConfig.searchText = this.searchText;
+  }
+  getPage(pageEvent: PageEvent): void {
+    this.state.paginationConfig.pageIndex = pageEvent.pageIndex;
+    this.setResults();
+  }
+  delete(dataset: Dataset): void {
+    this.dm.deleteDatasetRecord(dataset.record['@id'])
+      .subscribe(() => {
+        this.toast.createSuccessToast('Dataset successfully deleted');
+        if (this.results.length === 1 && this.state.paginationConfig.pageIndex > 0) {
+          this.state.paginationConfig.pageIndex -= 1;
+        }
         this.setResults();
         this.state.submittedSearch = !!this.state.paginationConfig.searchText;
-    }
-    private _checkCreatePermission(): void {
-        const request = {
-            resourceId: `http://mobi.com/catalog-local`,
-            actionId: `${POLICY}Create`,
-            actionAttrs: {
-                [RDF + 'type']: `${DATASET}DatasetRecord`
+      }, error => this.toast.createErrorToast(error));
+  }
+  setResults(): void {
+    this.spinnerSvc.startLoadingForComponent(this.datasetsList);
+    this.state.setResults().subscribe(results => {
+      this.setCachedOntologyTitles(results).subscribe(() => {
+        this.results = results.map(dataset => ({
+          title: getDctermsValue(dataset.record, 'title'),
+          datasetIRI: getPropertyId(dataset.record, `${DATASET}dataset`),
+          description: getDctermsValue(dataset.record, 'description') || '(No Description)',
+          modified: getDate(getDctermsValue(dataset.record, 'modified'), 'short'),
+          repositoryId: getPropertyValue(dataset.record, `${DATASET}repository`),
+          ontologies: this.getIdentifiedOntologyIds(dataset).map(ontologyId => this.cachedOntologyTitles[ontologyId]),
+          dataset
+        }));
+        this.spinnerSvc.finishLoadingForComponent(this.datasetsList);
+      });
+    });
+  }
+  clear(dataset: Dataset): void {
+    this.dm.clearDatasetRecord(dataset.record['@id'])
+      .subscribe(() => {
+        this.toast.createSuccessToast('Dataset successfully cleared');
+      }, error => this.toast.createErrorToast(error));
+  }
+  showUploadData(dataset: Dataset): void {
+    const request = {
+      resourceId: dataset.record['@id'],
+      actionId: `${CATALOG}Modify`
+    };
+    this.pep.evaluateRequest(request)
+      .subscribe(response => {
+        const hasPermission = response !== this.pep.deny;
+        if (hasPermission) {
+          this.state.selectedDataset = dataset;
+          this.dialog.open(UploadDataOverlayComponent);
+        } else {
+          this.toast.createErrorToast('You do not have permission to modify dataset record');
+        }
+      }, () => {
+        this.toast.createErrorToast('Could not retrieve record permissions');
+      });
+  }
+  showEdit(dataset: Dataset): void {
+    const request = {
+      resourceId: dataset.record['@id'],
+      actionId: `${POLICY}Update`
+    };
+    this.pep.evaluateRequest(request)
+      .subscribe(response => {
+        const hasPermission = response !== this.pep.deny;
+        if (hasPermission) {
+          this.state.selectedDataset = dataset;
+          this.dialog.open(EditDatasetOverlayComponent).afterClosed().subscribe((result: boolean) => {
+            if (result) {
+              this.setResults();
             }
-        } as XACMLRequest;
-        this.pep.evaluateRequest(request)
-            .subscribe(response => {
-                this.canCreate = response === this.pep.permit;
-            }, () => {
-                this.toast.createErrorToast('Could not retrieve dataset creation permissions');
-            });
-    }
+          });
+        } else {
+          this.toast.createErrorToast('You do not have permission to update dataset record');
+        }
+      }, () => {
+        this.toast.createErrorToast('Could not retrieve record permissions');
+      });
+  }
+  showNew(): void {
+    this.dialog.open(NewDatasetOverlayComponent).afterClosed().subscribe((result: boolean) => {
+      if (result) {
+        this.setResults();
+      }
+    });
+  }
+  showClear(dataset: Dataset): void {
+    const request = {
+      resourceId: dataset.record['@id'],
+      actionId: `${CATALOG}Modify`
+    };
+    this.pep.evaluateRequest(request)
+      .subscribe(response => {
+        const hasPermission = response !== this.pep.deny;
+        if (hasPermission) {
+          this.dialog.open(ConfirmModalComponent, {
+            data: {
+              content: `Are you sure you want to clear <strong>${getDctermsValue(dataset.record, 'title')}</strong>?`
+            }
+          }).afterClosed().subscribe((result: boolean) => {
+            if (result) {
+              this.clear(dataset);
+            }
+          });
+        } else {
+          this.toast.createErrorToast('Could not retrieve record permissions');
+        }
+      });
+  }
+  showDelete(dataset: Dataset): void {
+    const request = {
+      resourceId: dataset.record['@id'],
+      actionId: `${POLICY}Delete`
+    };
+    this.pep.evaluateRequest(request)
+      .subscribe(response => {
+        const hasPermission = response !== this.pep.deny;
+        if (hasPermission) {
+          this.dialog.open(ConfirmModalComponent, {
+            data: {
+              content: `Are you sure you want to delete <strong>${getDctermsValue(dataset.record, 'title')}</strong>?`
+            }
+          }).afterClosed().subscribe((result: boolean) => {
+            if (result) {
+              this.delete(dataset);
+            }
+          });
+        } else {
+          this.toast.createErrorToast('You do not have permission to delete dataset record');
+        }
+      }, () => {
+        this.toast.createErrorToast('Could not retrieve record permissions');
+      });
+  }
+  searchRecords(): void {
+    this.state.resetPagination();
+    this.state.paginationConfig.searchText = this.searchText;
+    this.setResults();
+    this.state.submittedSearch = !!this.state.paginationConfig.searchText;
+  }
+  private _checkCreatePermission(): void {
+    const request = {
+      resourceId: `http://mobi.com/catalog-local`,
+      actionId: `${POLICY}Create`,
+      actionAttrs: {
+        [RDF + 'type']: `${DATASET}DatasetRecord`
+      }
+    } as XACMLRequest;
+    this.pep.evaluateRequest(request)
+      .subscribe(response => {
+        this.canCreate = response === this.pep.permit;
+      }, () => {
+        this.toast.createErrorToast('Could not retrieve dataset creation permissions');
+      });
+  }
 }

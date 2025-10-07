@@ -1555,9 +1555,9 @@ describe('Versioned RDF State service', function() {
     beforeEach(function() {
       this.createStateSpy = spyOn(service, 'createState');
     });
-    describe('if getRecordMasterBranch is resolved', function() {
+    describe('if getRecordBranch is resolved', function() {
       beforeEach(function() {
-        catalogManagerStub.getRecordMasterBranch.and.returnValue(of(branch));
+        catalogManagerStub.getRecordBranch.and.returnValue(of(branch));
       });
       it('and createState is resolved', async function() {
         this.createStateSpy.and.returnValue(of(null));
@@ -1574,7 +1574,7 @@ describe('Versioned RDF State service', function() {
           }, () => {
             fail('Observable should have succeeded');
           });
-        expect(catalogManagerStub.getRecordMasterBranch).toHaveBeenCalledWith(recordId, catalogId);
+        expect(catalogManagerStub.getRecordBranch).toHaveBeenCalledWith('master', recordId, catalogId);
         expect(service.createState).toHaveBeenCalledWith({recordId: recordId, commitId: commitId, branchId: branchId});
       });
       it('and createState is rejected', async function() {
@@ -1585,19 +1585,19 @@ describe('Versioned RDF State service', function() {
           }, response => {
             expect(response).toEqual(this.error);
           });
-        expect(catalogManagerStub.getRecordMasterBranch).toHaveBeenCalledWith(recordId, catalogId);
+        expect(catalogManagerStub.getRecordBranch).toHaveBeenCalledWith('master', recordId, catalogId);
         expect(service.createState).toHaveBeenCalledWith({recordId: recordId, commitId: commitId, branchId: branchId});
       });
     });
-    it('if getRecordMasterBranch is rejected', async function() {
-      catalogManagerStub.getRecordMasterBranch.and.returnValue(throwError(this.error));
+    it('if getRecordBranch is rejected', async function() {
+      catalogManagerStub.getRecordBranch.and.returnValue(throwError(this.error));
       await service.getLatestMaster(recordId)
         .subscribe(() => {
           fail('Observable should have errored');
         }, response => {
           expect(response).toEqual(this.error);
         });
-      expect(catalogManagerStub.getRecordMasterBranch).toHaveBeenCalledWith(recordId, catalogId);
+      expect(catalogManagerStub.getRecordBranch).toHaveBeenCalledWith('master', recordId, catalogId);
       expect(service.createState).not.toHaveBeenCalled();
     });
   });

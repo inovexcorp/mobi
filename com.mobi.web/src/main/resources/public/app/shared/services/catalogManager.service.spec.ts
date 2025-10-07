@@ -61,8 +61,8 @@ describe('Catalog Manager service', function() {
   const versionId = 'http://mobi.com/versions/test';
   const branchId = 'http://mobi.com/branches/test';
   const commitId = 'http://mobi.com/commits/1234567890';
-  const emptyObj: JSONLDObject = {'@id': '', '@type': []};
-  const sortOption: SortOption = {field: `${DCTERMS}title`, asc: false, label: 'title'};
+  const emptyObj: JSONLDObject = { '@id': '', '@type': [] };
+  const sortOption: SortOption = { field: `${DCTERMS}title`, asc: false, label: 'title' };
   const difference: Difference = new Difference();
   const commitDifference: CommitDifference = new CommitDifference();
   commitDifference.commit = emptyObj;
@@ -112,7 +112,7 @@ describe('Catalog Manager service', function() {
           expect(service.distributedCatalog).toBeUndefined();
           expect(service.sortOptions).toEqual([]);
         });
-      httpMock.expectOne({url: service.prefix, method: 'GET'});
+      httpMock.expectOne({ url: service.prefix, method: 'GET' });
       tick();
     }));
     it('unless an error occurs with the catalogs call', function() {
@@ -126,7 +126,7 @@ describe('Catalog Manager service', function() {
           expect(service.distributedCatalog).toBeUndefined();
           expect(service.sortOptions).toEqual([]);
         });
-      const request = httpMock.expectOne({url: service.prefix, method: 'GET'});
+      const request = httpMock.expectOne({ url: service.prefix, method: 'GET' });
       request.flush('flush', { status: 400, statusText: error });
     });
     describe('successfully', function() {
@@ -144,19 +144,19 @@ describe('Catalog Manager service', function() {
           .subscribe(() => fail('Observable should have rejected'), response => {
             expect(response).toContain('Could not find');
           });
-        const request = httpMock.expectOne({url: service.prefix, method: 'GET'});
+        const request = httpMock.expectOne({ url: service.prefix, method: 'GET' });
         request.flush([]);
       });
       it('with all important data', function() {
         const localCatalog = {
           '@id': '',
           '@type': [],
-          [`${DCTERMS}title`]: [{'@value': 'Mobi Catalog (Local)'}]
+          [`${DCTERMS}title`]: [{ '@value': 'Mobi Catalog (Local)' }]
         };
         const distributedCatalog = {
           '@id': '',
           '@type': [],
-          [`${DCTERMS}title`]: [{'@value': 'Mobi Catalog (Distributed)'}]
+          [`${DCTERMS}title`]: [{ '@value': 'Mobi Catalog (Distributed)' }]
         };
         service.initialize()
           .subscribe(() => {
@@ -165,11 +165,11 @@ describe('Catalog Manager service', function() {
             expect(service.distributedCatalog).toEqual(distributedCatalog);
             expect(service.sortOptions.length).toEqual(this.sortOptions.length * 2);
             this.sortOptions.forEach((option) => {
-              expect(find(service.sortOptions, {field: option, asc: true})).not.toBeUndefined();
-              expect(find(service.sortOptions, {field: option, asc: false})).not.toBeUndefined();
+              expect(find(service.sortOptions, { field: option, asc: true })).not.toBeUndefined();
+              expect(find(service.sortOptions, { field: option, asc: false })).not.toBeUndefined();
             });
           }, () => fail('Observable should have resolved'));
-        const request = httpMock.expectOne({url: service.prefix, method: 'GET'});
+        const request = httpMock.expectOne({ url: service.prefix, method: 'GET' });
         request.flush([localCatalog, distributedCatalog]);
       });
     });
@@ -179,7 +179,7 @@ describe('Catalog Manager service', function() {
       .subscribe(value => {
         expect(value).toEqual({});
       }, () => fail('Observable should have resolved'));
-    const request = httpMock.expectOne({url: `${service.prefix}/record-types`, method: 'GET'});
+    const request = httpMock.expectOne({ url: `${service.prefix}/record-types`, method: 'GET' });
     request.flush({});
   });
   it('should get the IRIs for all sort options', function() {
@@ -187,7 +187,7 @@ describe('Catalog Manager service', function() {
       .subscribe(value => {
         expect(value).toEqual([]);
       }, () => fail('Observable should have resolved'));
-    const request = httpMock.expectOne({url: `${service.prefix}/sort-options`, method: 'GET'});
+    const request = httpMock.expectOne({ url: `${service.prefix}/sort-options`, method: 'GET' });
     request.flush([]);
   });
   describe('should get a page of results based on the passed URL', function() {
@@ -199,7 +199,7 @@ describe('Catalog Manager service', function() {
         .subscribe(() => fail('Observable should have rejected'), response => {
           expect(response).toEqual(error);
         });
-      const request = httpMock.expectOne({url: this.url, method: 'GET'});
+      const request = httpMock.expectOne({ url: this.url, method: 'GET' });
       request.flush('flush', { status: 400, statusText: error });
     });
     it('successfully', function() {
@@ -207,13 +207,12 @@ describe('Catalog Manager service', function() {
         .subscribe(response => {
           expect(response.body).toEqual([]);
         }, () => fail('Observable should have resolved'));
-      const request = httpMock.expectOne({url: this.url, method: 'GET'});
+      const request = httpMock.expectOne({ url: this.url, method: 'GET' });
       request.flush([]);
     });
   });
   describe('should retrieve a list of Keyword', function() {
     beforeEach(function() {
-      this.promiseId = 'id';
       this.url = `${service.prefix}/${encodeURIComponent(catalogId)}/keywords`;
       this.config = {
         limit: 10,
@@ -287,7 +286,6 @@ describe('Catalog Manager service', function() {
   });
   describe('should retrieve a list of Records', function() {
     beforeEach(function() {
-      this.promiseId = 'id';
       this.url = `${service.prefix}/${encodeURIComponent(catalogId)}/records`;
       this.config = {
         limit: 10,
@@ -394,7 +392,7 @@ describe('Catalog Manager service', function() {
         .subscribe(() => fail('Observable should have rejected'), response => {
           expect(response).toEqual(error);
         });
-      const request = httpMock.expectOne({url: this.url, method: 'GET'});
+      const request = httpMock.expectOne({ url: this.url, method: 'GET' });
       request.flush('flush', { status: 400, statusText: error });
     });
     it('successfully', function() {
@@ -402,7 +400,7 @@ describe('Catalog Manager service', function() {
         .subscribe(response => {
           expect(response).toEqual([]);
         }, () => fail('Observable should have resolved'));
-      const request = httpMock.expectOne({url: this.url, method: 'GET'});
+      const request = httpMock.expectOne({ url: this.url, method: 'GET' });
       request.flush([]);
     });
   });
@@ -415,7 +413,7 @@ describe('Catalog Manager service', function() {
         .subscribe(() => fail('Observable should have rejected'), response => {
           expect(response).toEqual(error);
         });
-      const request = httpMock.expectOne({url: this.url, method: 'GET'});
+      const request = httpMock.expectOne({ url: this.url, method: 'GET' });
       request.flush('flush', { status: 400, statusText: error });
     });
     it('successfully', function() {
@@ -423,7 +421,7 @@ describe('Catalog Manager service', function() {
         .subscribe(response => {
           expect(response).toEqual([]);
         }, () => fail('Observable should have resolved'));
-      const request = httpMock.expectOne({url: this.url, method: 'GET'});
+      const request = httpMock.expectOne({ url: this.url, method: 'GET' });
       request.flush([]);
     });
   });
@@ -442,7 +440,7 @@ describe('Catalog Manager service', function() {
         .subscribe(() => fail('Observable should have rejected'), response => {
           expect(response).toEqual(error);
         });
-      const request = httpMock.expectOne({url: this.url, method: 'POST'});
+      const request = httpMock.expectOne({ url: this.url, method: 'POST' });
       expect(request.request.body instanceof FormData).toBeTruthy();
       request.flush('flush', { status: 400, statusText: error });
     });
@@ -451,7 +449,7 @@ describe('Catalog Manager service', function() {
         .subscribe(response => {
           expect(response).toEqual(recordId);
         }, () => fail('Observable should have resolved'));
-      const request = httpMock.expectOne({url: this.url, method: 'POST'});
+      const request = httpMock.expectOne({ url: this.url, method: 'POST' });
       expect(request.request.body instanceof FormData).toBeTruthy();
       expect((request.request.body as FormData).get('title').toString()).toEqual(this.recordConfig.title);
       expect((request.request.body as FormData).get('type').toString()).toEqual(this.recordConfig.type);
@@ -466,7 +464,7 @@ describe('Catalog Manager service', function() {
         .subscribe(response => {
           expect(response).toEqual(recordId);
         }, () => fail('Observable should have resolved'));
-      const request = httpMock.expectOne({url: this.url, method: 'POST'});
+      const request = httpMock.expectOne({ url: this.url, method: 'POST' });
       expect(request.request.body instanceof FormData).toBeTruthy();
       expect((request.request.body as FormData).get('title').toString()).toEqual(this.recordConfig.title);
       expect((request.request.body as FormData).get('type').toString()).toEqual(this.recordConfig.type);
@@ -484,7 +482,7 @@ describe('Catalog Manager service', function() {
         .subscribe(() => fail('Observable should have rejected'), response => {
           expect(response).toEqual(error);
         });
-      const request = httpMock.expectOne({url: this.url, method: 'PUT'});
+      const request = httpMock.expectOne({ url: this.url, method: 'PUT' });
       expect(request.request.body).toEqual([emptyObj]);
       request.flush('flush', { status: 400, statusText: error });
     });
@@ -493,7 +491,7 @@ describe('Catalog Manager service', function() {
         .subscribe(response => {
           expect(response).toEqual([emptyObj]);
         }, () => fail('Observable should have resolved'));
-      const request = httpMock.expectOne({url: this.url, method: 'PUT'});
+      const request = httpMock.expectOne({ url: this.url, method: 'PUT' });
       expect(request.request.body).toEqual([emptyObj]);
       request.flush([emptyObj]);
     });
@@ -507,7 +505,7 @@ describe('Catalog Manager service', function() {
         .subscribe(() => fail('Observable should have rejected'), response => {
           expect(response).toEqual(error);
         });
-      const request = httpMock.expectOne({url: this.url, method: 'DELETE'});
+      const request = httpMock.expectOne({ url: this.url, method: 'DELETE' });
       request.flush('flush', { status: 400, statusText: error });
     });
     it('successfully', function() {
@@ -515,7 +513,7 @@ describe('Catalog Manager service', function() {
         .subscribe(() => {
           expect(true).toBeTrue();
         }, () => fail('Observable should have resolved'));
-      const request = httpMock.expectOne({url: this.url, method: 'DELETE'});
+      const request = httpMock.expectOne({ url: this.url, method: 'DELETE' });
       request.flush(200);
     });
   });
@@ -574,7 +572,7 @@ describe('Catalog Manager service', function() {
         .subscribe(() => fail('Observable should have rejected'), response => {
           expect(response).toEqual(error);
         });
-      const request = httpMock.expectOne({url: this.url, method: 'GET'});
+      const request = httpMock.expectOne({ url: this.url, method: 'GET' });
       request.flush('flush', { status: 400, statusText: error });
     });
     it('successfully', function() {
@@ -582,7 +580,7 @@ describe('Catalog Manager service', function() {
         .subscribe(response => {
           expect(response).toEqual(emptyObj);
         }, () => fail('Observable should have resolved'));
-      const request = httpMock.expectOne({url: this.url, method: 'GET'});
+      const request = httpMock.expectOne({ url: this.url, method: 'GET' });
       request.flush(emptyObj);
     });
   });
@@ -602,7 +600,7 @@ describe('Catalog Manager service', function() {
         .subscribe(() => fail('Observable should have rejected'), response => {
           expect(response).toEqual(error);
         });
-      const request = httpMock.expectOne({url: this.url, method: 'POST'});
+      const request = httpMock.expectOne({ url: this.url, method: 'POST' });
       expect(request.request.body instanceof FormData).toBeTruthy();
       request.flush('flush', { status: 400, statusText: error });
     });
@@ -611,7 +609,7 @@ describe('Catalog Manager service', function() {
         .subscribe(response => {
           expect(response).toEqual(distributionId);
         }, () => fail('Observable should have resolved'));
-      const request = httpMock.expectOne({url: this.url, method: 'POST'});
+      const request = httpMock.expectOne({ url: this.url, method: 'POST' });
       expect(request.request.body instanceof FormData).toBeTruthy();
       expect((request.request.body as FormData).get('title').toString()).toEqual(this.distributionConfig.title);
       expect((request.request.body as FormData).get('description').toString()).toEqual(this.distributionConfig.description);
@@ -629,7 +627,7 @@ describe('Catalog Manager service', function() {
         .subscribe(response => {
           expect(response).toEqual(distributionId);
         }, () => fail('Observable should have resolved'));
-      const request = httpMock.expectOne({url: this.url, method: 'POST'});
+      const request = httpMock.expectOne({ url: this.url, method: 'POST' });
       expect(request.request.body instanceof FormData).toBeTruthy();
       expect((request.request.body as FormData).get('title').toString()).toEqual(this.distributionConfig.title);
       expect((request.request.body as FormData).get('description')).toBeNull();
@@ -648,7 +646,7 @@ describe('Catalog Manager service', function() {
         .subscribe(() => fail('Observable should have rejected'), response => {
           expect(response).toEqual(error);
         });
-      const request = httpMock.expectOne({url: this.url, method: 'PUT'});
+      const request = httpMock.expectOne({ url: this.url, method: 'PUT' });
       expect(request.request.body).toEqual(emptyObj);
       request.flush('flush', { status: 400, statusText: error });
     });
@@ -657,7 +655,7 @@ describe('Catalog Manager service', function() {
         .subscribe(response => {
           expect(response).toEqual(distributionId);
         }, () => fail('Observable should have resolved'));
-      const request = httpMock.expectOne({url: this.url, method: 'PUT'});
+      const request = httpMock.expectOne({ url: this.url, method: 'PUT' });
       expect(request.request.body).toEqual(emptyObj);
       request.flush(null);
     });
@@ -671,7 +669,7 @@ describe('Catalog Manager service', function() {
         .subscribe(() => fail('Observable should have rejected'), response => {
           expect(response).toEqual(error);
         });
-      const request = httpMock.expectOne({url: this.url, method: 'DELETE'});
+      const request = httpMock.expectOne({ url: this.url, method: 'DELETE' });
       request.flush('flush', { status: 400, statusText: error });
     });
     it('successfully', function() {
@@ -679,7 +677,7 @@ describe('Catalog Manager service', function() {
         .subscribe(() => {
           expect(true).toBeTrue();
         }, () => fail('Observable should have resolved'));
-      const request = httpMock.expectOne({url: this.url, method: 'DELETE'});
+      const request = httpMock.expectOne({ url: this.url, method: 'DELETE' });
       request.flush(200);
     });
   });
@@ -738,7 +736,7 @@ describe('Catalog Manager service', function() {
         .subscribe(() => fail('Observable should have rejected'), response => {
           expect(response).toEqual(error);
         });
-      const request = httpMock.expectOne({url: this.url, method: 'GET'});
+      const request = httpMock.expectOne({ url: this.url, method: 'GET' });
       request.flush('flush', { status: 400, statusText: error });
     });
     it('successfully', function() {
@@ -746,7 +744,7 @@ describe('Catalog Manager service', function() {
         .subscribe(response => {
           expect(response).toEqual(emptyObj);
         }, () => fail('Observable should have resolved'));
-      const request = httpMock.expectOne({url: this.url, method: 'GET'});
+      const request = httpMock.expectOne({ url: this.url, method: 'GET' });
       request.flush(emptyObj);
     });
   });
@@ -759,7 +757,7 @@ describe('Catalog Manager service', function() {
         .subscribe(() => fail('Observable should have rejected'), response => {
           expect(response).toEqual(error);
         });
-      const request = httpMock.expectOne({url: this.url, method: 'GET'});
+      const request = httpMock.expectOne({ url: this.url, method: 'GET' });
       request.flush('flush', { status: 400, statusText: error });
     });
     it('successfully', function() {
@@ -767,12 +765,12 @@ describe('Catalog Manager service', function() {
         .subscribe(response => {
           expect(response).toEqual(emptyObj);
         }, () => fail('Observable should have resolved'));
-      const request = httpMock.expectOne({url: this.url, method: 'GET'});
+      const request = httpMock.expectOne({ url: this.url, method: 'GET' });
       request.flush(emptyObj);
     });
   });
   describe('should create a new Version', function() {
-    beforeEach(function () {
+    beforeEach(function() {
       this.versionConfig = {
         title: 'Title',
         description: 'Description'
@@ -784,7 +782,7 @@ describe('Catalog Manager service', function() {
         .subscribe(() => fail('Observable should have rejected'), response => {
           expect(response).toEqual(error);
         });
-      const request = httpMock.expectOne({url: this.url, method: 'POST'});
+      const request = httpMock.expectOne({ url: this.url, method: 'POST' });
       expect(request.request.body instanceof FormData).toBeTruthy();
       request.flush('flush', { status: 400, statusText: error });
     });
@@ -793,7 +791,7 @@ describe('Catalog Manager service', function() {
         .subscribe(response => {
           expect(response).toEqual(versionId);
         }, () => fail('Observable should have resolved'));
-      const request = httpMock.expectOne({url: this.url, method: 'POST'});
+      const request = httpMock.expectOne({ url: this.url, method: 'POST' });
       expect(request.request.body instanceof FormData).toBeTruthy();
       expect((request.request.body as FormData).get('title').toString()).toEqual(this.versionConfig.title);
       expect((request.request.body as FormData).get('description').toString()).toEqual(this.versionConfig.description);
@@ -805,7 +803,7 @@ describe('Catalog Manager service', function() {
         .subscribe(response => {
           expect(response).toEqual(versionId);
         }, () => fail('Observable should have resolved'));
-      const request = httpMock.expectOne({url: this.url, method: 'POST'});
+      const request = httpMock.expectOne({ url: this.url, method: 'POST' });
       expect(request.request.body instanceof FormData).toBeTruthy();
       expect((request.request.body as FormData).get('title').toString()).toEqual(this.versionConfig.title);
       expect((request.request.body as FormData).get('description')).toBeNull();
@@ -827,7 +825,7 @@ describe('Catalog Manager service', function() {
         .subscribe(() => fail('Observable should have rejected'), response => {
           expect(response).toEqual(errorObj);
         });
-      const request = httpMock.expectOne({url: this.url, method: 'POST'});
+      const request = httpMock.expectOne({ url: this.url, method: 'POST' });
       expect(request.request.body instanceof FormData).toBeTruthy();
       request.flush(errorObj, { status: 400, statusText: error });
     });
@@ -836,7 +834,7 @@ describe('Catalog Manager service', function() {
         .subscribe(response => {
           expect(response).toEqual(versionId);
         }, () => fail('Observable should have resolved'));
-      const request = httpMock.expectOne({url: this.url, method: 'POST'});
+      const request = httpMock.expectOne({ url: this.url, method: 'POST' });
       expect(request.request.body instanceof FormData).toBeTruthy();
       expect((request.request.body as FormData).get('title').toString()).toEqual(this.tagConfig.title);
       expect((request.request.body as FormData).get('commit').toString()).toEqual(this.tagConfig.commitId);
@@ -850,7 +848,7 @@ describe('Catalog Manager service', function() {
         .subscribe(response => {
           expect(response).toEqual(versionId);
         }, () => fail('Observable should have resolved'));
-      const request = httpMock.expectOne({url: this.url, method: 'POST'});
+      const request = httpMock.expectOne({ url: this.url, method: 'POST' });
       expect(request.request.body instanceof FormData).toBeTruthy();
       expect((request.request.body as FormData).get('title').toString()).toEqual(this.tagConfig.title);
       expect((request.request.body as FormData).get('commit').toString()).toEqual(this.tagConfig.commitId);
@@ -868,7 +866,7 @@ describe('Catalog Manager service', function() {
         .subscribe(() => fail('Observable should have rejected'), response => {
           expect(response).toEqual(error);
         });
-      const request = httpMock.expectOne({url: this.url, method: 'PUT'});
+      const request = httpMock.expectOne({ url: this.url, method: 'PUT' });
       expect(request.request.body).toEqual(emptyObj);
       request.flush('flush', { status: 400, statusText: error });
     });
@@ -877,7 +875,7 @@ describe('Catalog Manager service', function() {
         .subscribe(response => {
           expect(response).toEqual(versionId);
         }, () => fail('Observable should have resolved'));
-      const request = httpMock.expectOne({url: this.url, method: 'PUT'});
+      const request = httpMock.expectOne({ url: this.url, method: 'PUT' });
       expect(request.request.body).toEqual(emptyObj);
       request.flush(null);
     });
@@ -891,7 +889,7 @@ describe('Catalog Manager service', function() {
         .subscribe(() => fail('Observable should have rejected'), response => {
           expect(response).toEqual(error);
         });
-      const request = httpMock.expectOne({url: this.url, method: 'DELETE'});
+      const request = httpMock.expectOne({ url: this.url, method: 'DELETE' });
       request.flush('flush', { status: 400, statusText: error });
     });
     it('successfully', function() {
@@ -899,7 +897,7 @@ describe('Catalog Manager service', function() {
         .subscribe(() => {
           expect(true).toBeTrue();
         }, () => fail('Observable should have resolved'));
-      const request = httpMock.expectOne({url: this.url, method: 'DELETE'});
+      const request = httpMock.expectOne({ url: this.url, method: 'DELETE' });
       request.flush(200);
     });
   });
@@ -990,7 +988,7 @@ describe('Catalog Manager service', function() {
         .subscribe(() => fail('Observable should have rejected'), response => {
           expect(response).toEqual(error);
         });
-      const request = httpMock.expectOne({url: this.url, method: 'GET'});
+      const request = httpMock.expectOne({ url: this.url, method: 'GET' });
       request.flush('flush', { status: 400, statusText: error });
     });
     it('successfully', function() {
@@ -998,12 +996,12 @@ describe('Catalog Manager service', function() {
         .subscribe(response => {
           expect(response).toEqual(emptyObj);
         }, () => fail('Observable should have resolved'));
-      const request = httpMock.expectOne({url: this.url, method: 'GET'});
+      const request = httpMock.expectOne({ url: this.url, method: 'GET' });
       request.flush(emptyObj);
     });
   });
   describe('should create a new Version Distribution', function() {
-    beforeEach(function () {
+    beforeEach(function() {
       this.distributionConfig = {
         title: 'Title',
         description: 'Description',
@@ -1018,7 +1016,7 @@ describe('Catalog Manager service', function() {
         .subscribe(() => fail('Observable should have rejected'), response => {
           expect(response).toEqual(error);
         });
-      const request = httpMock.expectOne({url: this.url, method: 'POST'});
+      const request = httpMock.expectOne({ url: this.url, method: 'POST' });
       expect(request.request.body instanceof FormData).toBeTruthy();
       request.flush('flush', { status: 400, statusText: error });
     });
@@ -1027,7 +1025,7 @@ describe('Catalog Manager service', function() {
         .subscribe(response => {
           expect(response).toEqual(distributionId);
         }, () => fail('Observable should have resolved'));
-      const request = httpMock.expectOne({url: this.url, method: 'POST'});
+      const request = httpMock.expectOne({ url: this.url, method: 'POST' });
       expect(request.request.body instanceof FormData).toBeTruthy();
       expect((request.request.body as FormData).get('title').toString()).toEqual(this.distributionConfig.title);
       expect((request.request.body as FormData).get('description').toString()).toEqual(this.distributionConfig.description);
@@ -1045,7 +1043,7 @@ describe('Catalog Manager service', function() {
         .subscribe(response => {
           expect(response).toEqual(distributionId);
         }, () => fail('Observable should have resolved'));
-      const request = httpMock.expectOne({url: this.url, method: 'POST'});
+      const request = httpMock.expectOne({ url: this.url, method: 'POST' });
       expect(request.request.body instanceof FormData).toBeTruthy();
       expect((request.request.body as FormData).get('title').toString()).toEqual(this.distributionConfig.title);
       expect((request.request.body as FormData).get('description')).toBeNull();
@@ -1064,7 +1062,7 @@ describe('Catalog Manager service', function() {
         .subscribe(() => fail('Observable should have rejected'), response => {
           expect(response).toEqual(error);
         });
-      const request = httpMock.expectOne({url: this.url, method: 'PUT'});
+      const request = httpMock.expectOne({ url: this.url, method: 'PUT' });
       expect(request.request.body).toEqual(emptyObj);
       request.flush('flush', { status: 400, statusText: error });
     });
@@ -1073,7 +1071,7 @@ describe('Catalog Manager service', function() {
         .subscribe(response => {
           expect(response).toEqual(distributionId);
         }, () => fail('Observable should have resolved'));
-      const request = httpMock.expectOne({url: this.url, method: 'PUT'});
+      const request = httpMock.expectOne({ url: this.url, method: 'PUT' });
       expect(request.request.body).toEqual(emptyObj);
       request.flush(null);
     });
@@ -1087,7 +1085,7 @@ describe('Catalog Manager service', function() {
         .subscribe(() => fail('Observable should have rejected'), response => {
           expect(response).toEqual(error);
         });
-      const request = httpMock.expectOne({url: this.url, method: 'DELETE'});
+      const request = httpMock.expectOne({ url: this.url, method: 'DELETE' });
       request.flush('flush', { status: 400, statusText: error });
     });
     it('successfully', function() {
@@ -1095,7 +1093,7 @@ describe('Catalog Manager service', function() {
         .subscribe(() => {
           expect(true).toBeTrue();
         }, () => fail('Observable should have resolved'));
-      const request = httpMock.expectOne({url: this.url, method: 'DELETE'});
+      const request = httpMock.expectOne({ url: this.url, method: 'DELETE' });
       request.flush(200);
     });
   });
@@ -1153,19 +1151,19 @@ describe('Catalog Manager service', function() {
       this.url = `${service.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/branches/master`;
     });
     it('unless an error occurs', function() {
-      service.getRecordMasterBranch(recordId, catalogId)
+      service.getRecordBranch('master', recordId, catalogId)
         .subscribe(() => fail('Observable should have rejected'), response => {
           expect(response).toEqual(error);
         });
-      const request = httpMock.expectOne({url: this.url, method: 'GET'});
+      const request = httpMock.expectOne({ url: this.url, method: 'GET' });
       request.flush('flush', { status: 400, statusText: error });
     });
     it('successfully', function() {
-      service.getRecordMasterBranch(recordId, catalogId)
+      service.getRecordBranch('master', recordId, catalogId)
         .subscribe(response => {
           expect(response).toEqual(emptyObj);
         }, () => fail('Observable should have resolved'));
-      const request = httpMock.expectOne({url: this.url, method: 'GET'});
+      const request = httpMock.expectOne({ url: this.url, method: 'GET' });
       request.flush(emptyObj);
     });
   });
@@ -1178,7 +1176,7 @@ describe('Catalog Manager service', function() {
         .subscribe(() => fail('Observable should have rejected'), response => {
           expect(response).toEqual(error);
         });
-      const request = httpMock.expectOne({url: this.url, method: 'GET'});
+      const request = httpMock.expectOne({ url: this.url, method: 'GET' });
       request.flush('flush', { status: 400, statusText: error });
     });
     it('successfully', function() {
@@ -1186,7 +1184,7 @@ describe('Catalog Manager service', function() {
         .subscribe(response => {
           expect(response).toEqual(emptyObj);
         }, () => fail('Observable should have resolved'));
-      const request = httpMock.expectOne({url: this.url, method: 'GET'});
+      const request = httpMock.expectOne({ url: this.url, method: 'GET' });
       request.flush(emptyObj);
     });
   });
@@ -1203,7 +1201,7 @@ describe('Catalog Manager service', function() {
         .subscribe(() => fail('Observable should have rejected'), response => {
           expect(response).toEqual(error);
         });
-      const request = httpMock.expectOne({url: this.url, method: 'POST'});
+      const request = httpMock.expectOne({ url: this.url, method: 'POST' });
       expect(request.request.body instanceof FormData).toBeTruthy();
       request.flush('flush', { status: 400, statusText: error });
     });
@@ -1212,7 +1210,7 @@ describe('Catalog Manager service', function() {
         .subscribe(response => {
           expect(response).toEqual(branchId);
         }, () => fail('Observable should have resolved'));
-      const request = httpMock.expectOne({url: this.url, method: 'POST'});
+      const request = httpMock.expectOne({ url: this.url, method: 'POST' });
       expect(request.request.body instanceof FormData).toBeTruthy();
       expect((request.request.body as FormData).get('title').toString()).toEqual(this.branchConfig.title);
       expect((request.request.body as FormData).get('type').toString()).toEqual(`${CATALOG}Branch`);
@@ -1226,7 +1224,7 @@ describe('Catalog Manager service', function() {
         .subscribe(response => {
           expect(response).toEqual(branchId);
         }, () => fail('Observable should have resolved'));
-      const request = httpMock.expectOne({url: this.url, method: 'POST'});
+      const request = httpMock.expectOne({ url: this.url, method: 'POST' });
       expect(request.request.body instanceof FormData).toBeTruthy();
       expect((request.request.body as FormData).get('title').toString()).toEqual(this.branchConfig.title);
       expect((request.request.body as FormData).get('type').toString()).toEqual(`${CATALOG}Branch`);
@@ -1242,8 +1240,8 @@ describe('Catalog Manager service', function() {
         description: 'Description'
       };
       this.url = `${service.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/branches`;
-      spyOn<any>(service, '_getRecordBranch').and.callFake(() => of(emptyObj));
-      spyOn(service, 'updateRecordBranch').and.callFake(() => of(branchId));
+      spyOn<any>(service, '_getRecordBranch').and.returnValue(of(emptyObj));
+      spyOn(service, 'updateRecordBranch').and.returnValue(of(branchId));
     });
     describe('unless an error occurs', function() {
       it('with the first create request', function() {
@@ -1253,34 +1251,34 @@ describe('Catalog Manager service', function() {
             expect((service as any)._getRecordBranch).not.toHaveBeenCalled();
             expect(service.updateRecordBranch).not.toHaveBeenCalled();
           });
-        const request = httpMock.expectOne({url: this.url, method: 'POST'});
+        const request = httpMock.expectOne({ url: this.url, method: 'POST' });
         expect(request.request.body instanceof FormData).toBeTruthy();
         request.flush('flush', { status: 400, statusText: error });
       });
       it('with another call in the chain', function() {
-        (service as any)._getRecordBranch.and.callFake(() => throwError(error));
+        (service as any)._getRecordBranch.and.returnValue(throwError(error));
         service.createRecordUserBranch(recordId, catalogId, this.branchConfig, commitId, branchId)
           .subscribe(() => fail('Observable should have rejected'), response => {
             expect(response).toEqual(error);
             expect((service as any)._getRecordBranch).toHaveBeenCalledWith(encodeURIComponent(branchId), recordId, catalogId);
             expect(service.updateRecordBranch).not.toHaveBeenCalled();
           });
-        const request = httpMock.expectOne({url: this.url, method: 'POST'});
+        const request = httpMock.expectOne({ url: this.url, method: 'POST' });
         expect(request.request.body instanceof FormData).toBeTruthy();
         request.flush(branchId);
       });
     });
     it('with a description', function() {
       const expectedBranch = Object.assign({}, emptyObj);
-      expectedBranch[`${CATALOG}head`] = [{'@id': commitId}];
-      expectedBranch[`${CATALOG}createdFrom`] = [{'@id': branchId}];
+      expectedBranch[`${CATALOG}head`] = [{ '@id': commitId }];
+      expectedBranch[`${CATALOG}createdFrom`] = [{ '@id': branchId }];
       service.createRecordUserBranch(recordId, catalogId, this.branchConfig, commitId, branchId)
         .subscribe(response => {
           expect(response).toEqual(branchId);
           expect((service as any)._getRecordBranch).toHaveBeenCalledWith(encodeURIComponent(branchId), recordId, catalogId);
           expect(service.updateRecordBranch).toHaveBeenCalledWith(emptyObj['@id'], recordId, catalogId, expectedBranch);
         }, () => fail('Observable should have resolved'));
-      const request = httpMock.expectOne({url: this.url, method: 'POST'});
+      const request = httpMock.expectOne({ url: this.url, method: 'POST' });
       expect(request.request.body instanceof FormData).toBeTruthy();
       expect((request.request.body as FormData).get('title').toString()).toEqual(this.branchConfig.title);
       expect((request.request.body as FormData).get('type').toString()).toEqual(`${CATALOG}UserBranch`);
@@ -1291,15 +1289,15 @@ describe('Catalog Manager service', function() {
     it('without a description', function() {
       delete this.branchConfig.description;
       const expectedBranch = Object.assign({}, emptyObj);
-      expectedBranch[`${CATALOG}head`] = [{'@id': commitId}];
-      expectedBranch[`${CATALOG}createdFrom`] = [{'@id': branchId}];
+      expectedBranch[`${CATALOG}head`] = [{ '@id': commitId }];
+      expectedBranch[`${CATALOG}createdFrom`] = [{ '@id': branchId }];
       service.createRecordUserBranch(recordId, catalogId, this.branchConfig, commitId, branchId)
         .subscribe(response => {
           expect(response).toEqual(branchId);
           expect((service as any)._getRecordBranch).toHaveBeenCalledWith(encodeURIComponent(branchId), recordId, catalogId);
           expect(service.updateRecordBranch).toHaveBeenCalledWith(emptyObj['@id'], recordId, catalogId, expectedBranch);
         }, () => fail('Observable should have resolved'));
-      const request = httpMock.expectOne({url: this.url, method: 'POST'});
+      const request = httpMock.expectOne({ url: this.url, method: 'POST' });
       expect(request.request.body instanceof FormData).toBeTruthy();
       expect((request.request.body as FormData).get('title').toString()).toEqual(this.branchConfig.title);
       expect((request.request.body as FormData).get('type').toString()).toEqual(`${CATALOG}UserBranch`);
@@ -1317,7 +1315,7 @@ describe('Catalog Manager service', function() {
         .subscribe(() => fail('Observable should have rejected'), response => {
           expect(response).toEqual(error);
         });
-      const request = httpMock.expectOne({url: this.url, method: 'PUT'});
+      const request = httpMock.expectOne({ url: this.url, method: 'PUT' });
       expect(request.request.body).toEqual(emptyObj);
       request.flush('flush', { status: 400, statusText: error });
     });
@@ -1326,7 +1324,7 @@ describe('Catalog Manager service', function() {
         .subscribe(response => {
           expect(response).toEqual(branchId);
         }, () => fail('Observable should have resolved'));
-      const request = httpMock.expectOne({url: this.url, method: 'PUT'});
+      const request = httpMock.expectOne({ url: this.url, method: 'PUT' });
       expect(request.request.body).toEqual(emptyObj);
       request.flush(null);
     });
@@ -1340,7 +1338,7 @@ describe('Catalog Manager service', function() {
         .subscribe(() => fail('Observable should have rejected'), response => {
           expect(response).toEqual(error);
         });
-      const request = httpMock.expectOne({url: this.url, method: 'DELETE'});
+      const request = httpMock.expectOne({ url: this.url, method: 'DELETE' });
       request.flush('flush', { status: 400, statusText: error });
     });
     it('successfully', function() {
@@ -1348,7 +1346,7 @@ describe('Catalog Manager service', function() {
         .subscribe(() => {
           expect(true).toBeTrue();
         }, () => fail('Observable should have resolved'));
-      const request = httpMock.expectOne({url: this.url, method: 'DELETE'});
+      const request = httpMock.expectOne({ url: this.url, method: 'DELETE' });
       request.flush(200);
     });
   });
@@ -1361,7 +1359,7 @@ describe('Catalog Manager service', function() {
         .subscribe(() => fail('Observable should have rejected'), response => {
           expect(response).toEqual(error);
         });
-      const request = httpMock.expectOne({url: this.url, method: 'GET'});
+      const request = httpMock.expectOne({ url: this.url, method: 'GET' });
       request.flush('flush', { status: 400, statusText: error });
     });
     it('successfully', function() {
@@ -1369,7 +1367,7 @@ describe('Catalog Manager service', function() {
         .subscribe(response => {
           expect(response).toEqual([]);
         }, () => fail('Observable should have resolved'));
-      const request = httpMock.expectOne({url: this.url, method: 'GET'});
+      const request = httpMock.expectOne({ url: this.url, method: 'GET' });
       request.flush([]);
     });
     it('successfully with target ID', function() {
@@ -1547,7 +1545,7 @@ describe('Catalog Manager service', function() {
     });
   });
   describe('should retrieve a Commit', function() {
-    beforeEach(function () {
+    beforeEach(function() {
       this.url = `${service.commitsPrefix}/${encodeURIComponent(commitId)}`;
     });
     it('unless an error occurs', function() {
@@ -1579,7 +1577,7 @@ describe('Catalog Manager service', function() {
     });
   });
   describe('should retrieve a Branch Commit', function() {
-    beforeEach(function () {
+    beforeEach(function() {
       this.url = `${service.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/branches/${encodeURIComponent(branchId)}/commits/` + encodeURIComponent(commitId);
     });
     it('unless an error occurs', function() {
@@ -1851,7 +1849,7 @@ describe('Catalog Manager service', function() {
       const request = httpMock.expectOne(req => req.url === this.url && req.method === 'GET');
       expect(request.request.params.get('format')).toEqual('jsonld');
       expect(request.request.params.get('applyInProgressCommit')).toEqual('false');
-      request.flush([emptyObj], {headers: {'Content-Type': 'application/json'}});
+      request.flush([emptyObj], { headers: { 'Content-Type': 'application/json' } });
     });
   });
   describe('should download the compiled resource from a Branch Commit', function() {
@@ -1895,7 +1893,7 @@ describe('Catalog Manager service', function() {
     });
   });
   describe('should create a new InProgressCommit for the logged-in User', function() {
-    beforeEach(function () {
+    beforeEach(function() {
       this.url = `${service.prefix}/${encodeURIComponent(catalogId)}/records/${encodeURIComponent(recordId)}/in-progress-commit`;
     });
     it('unless an error occurs', function() {
@@ -1903,7 +1901,7 @@ describe('Catalog Manager service', function() {
         .subscribe(() => fail('Observable should have rejected'), response => {
           expect(response).toEqual(error);
         });
-      const request = httpMock.expectOne({url: this.url, method: 'POST'});
+      const request = httpMock.expectOne({ url: this.url, method: 'POST' });
       request.flush('flush', { status: 400, statusText: error });
     });
     it('successfully', function() {
@@ -1911,7 +1909,7 @@ describe('Catalog Manager service', function() {
         .subscribe(() => {
           expect(true).toBeTrue();
         }, () => fail('Observable should have resolved'));
-      const request = httpMock.expectOne({url: this.url, method: 'POST'});
+      const request = httpMock.expectOne({ url: this.url, method: 'POST' });
       request.flush(200);
     });
   });
@@ -1924,7 +1922,7 @@ describe('Catalog Manager service', function() {
         .subscribe(() => fail('Observable should have rejected'), (response: HttpErrorResponse) => {
           expect(response.statusText).toEqual(error);
         });
-      const request = httpMock.expectOne({url: this.url, method: 'GET'});
+      const request = httpMock.expectOne({ url: this.url, method: 'GET' });
       request.flush('flush', { status: 400, statusText: error });
     });
     it('successfully', function() {
@@ -1932,7 +1930,7 @@ describe('Catalog Manager service', function() {
         .subscribe(response => {
           expect(response).toEqual(difference);
         }, () => fail('Observable should have resolved'));
-      const request = httpMock.expectOne({url: this.url, method: 'GET'});
+      const request = httpMock.expectOne({ url: this.url, method: 'GET' });
       request.flush(difference);
     });
   });
@@ -1945,7 +1943,7 @@ describe('Catalog Manager service', function() {
         .subscribe(() => fail('Observable should have rejected'), response => {
           expect(response).toEqual(error);
         });
-      const request = httpMock.expectOne({url: this.url, method: 'PUT'});
+      const request = httpMock.expectOne({ url: this.url, method: 'PUT' });
       expect(request.request.body instanceof FormData).toBeTruthy();
       request.flush('flush', { status: 400, statusText: error });
     });
@@ -1953,7 +1951,7 @@ describe('Catalog Manager service', function() {
       service.updateInProgressCommit(recordId, catalogId, difference)
         .subscribe(() => {
         }, () => fail('Observable should have resolved'));
-      const request = httpMock.expectOne({url: this.url, method: 'PUT'});
+      const request = httpMock.expectOne({ url: this.url, method: 'PUT' });
       expect((request.request.body as FormData).get('additions').toString()).toEqual('[]');
       expect((request.request.body as FormData).get('deletions').toString()).toEqual('[]');
       request.flush(200);
@@ -1968,7 +1966,7 @@ describe('Catalog Manager service', function() {
         .subscribe(() => fail('Observable should have rejected'), response => {
           expect(response).toEqual(error);
         });
-      const request = httpMock.expectOne({url: this.url, method: 'DELETE'});
+      const request = httpMock.expectOne({ url: this.url, method: 'DELETE' });
       request.flush('flush', { status: 400, statusText: error });
     });
     it('successfully', function() {
@@ -1976,7 +1974,7 @@ describe('Catalog Manager service', function() {
         .subscribe(() => {
           expect(true).toBeTrue();
         }, () => fail('Observable should have resolved'));
-      const request = httpMock.expectOne({url: this.url, method: 'DELETE'});
+      const request = httpMock.expectOne({ url: this.url, method: 'DELETE' });
       request.flush(200);
     });
   });
@@ -2159,7 +2157,7 @@ describe('Catalog Manager service', function() {
             expect(item.checked).toBeFalse();
           }
         });
-        
+
         const test1Item = recordTypeFilter.filterItems.find(item => item.value === 'urn:test1');
         const item = recordTypeFilter.filterItems.find(item => item.value === `${CATALOG}VersionedRDFRecord`);
         item.checked = true;

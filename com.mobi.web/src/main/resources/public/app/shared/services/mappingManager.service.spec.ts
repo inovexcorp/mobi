@@ -27,7 +27,7 @@ import { MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs';
 
 import {
-    cleanStylesFromDOM,
+  cleanStylesFromDOM,
 } from '../../../test/ts/Shared';
 import { CamelCasePipe } from '../pipes/camelCase.pipe';
 import { DELIM, MAPPINGS } from '../../prefixes';
@@ -37,219 +37,219 @@ import { PolicyEnforcementService } from './policyEnforcement.service';
 import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
 import { MappingManagerService } from './mappingManager.service';
 
-describe('Mapping Manager service', function() {
-    let service: MappingManagerService;
-    let progressSpinnerStub: jasmine.SpyObj<ProgressSpinnerService>;
-    let camelCaseStub: jasmine.SpyObj<CamelCasePipe>;
-    let httpMock: HttpTestingController;
-    let policyEnforcementStub: jasmine.SpyObj<PolicyEnforcementService>;
+describe('Mapping Manager service', function () {
+  let service: MappingManagerService;
+  let progressSpinnerStub: jasmine.SpyObj<ProgressSpinnerService>;
+  let camelCaseStub: jasmine.SpyObj<CamelCasePipe>;
+  let httpMock: HttpTestingController;
+  let policyEnforcementStub: jasmine.SpyObj<PolicyEnforcementService>;
 
-    const error = 'Error Message';
-    const recordId = 'http://mobi.com/records/test';
-    let mappingStub: jasmine.SpyObj<Mapping>;
-    const emptyObj: JSONLDObject = {'@id': 'test'};
-   
-    beforeEach(async () => {
-        await TestBed.configureTestingModule({
-            imports: [ HttpClientTestingModule ],
-            providers: [
-                MappingManagerService,
-                MockProvider(ProgressSpinnerService),
-                MockProvider(PolicyEnforcementService),
-                {provide: CamelCasePipe, useClass: MockPipe(CamelCasePipe)},
-            ]
-        });
+  const error = 'Error Message';
+  const recordId = 'http://mobi.com/records/test';
+  let mappingStub: jasmine.SpyObj<Mapping>;
+  const emptyObj: JSONLDObject = { '@id': 'test' };
 
-        service = TestBed.inject(MappingManagerService);
-        progressSpinnerStub = TestBed.inject(ProgressSpinnerService) as jasmine.SpyObj<ProgressSpinnerService>;
-        camelCaseStub = TestBed.inject(CamelCasePipe) as jasmine.SpyObj<CamelCasePipe>;
-        httpMock = TestBed.inject(HttpTestingController) as jasmine.SpyObj<HttpTestingController>;
-        policyEnforcementStub = TestBed.inject(PolicyEnforcementService) as jasmine.SpyObj<PolicyEnforcementService>;
-        policyEnforcementStub.deny = 'Deny';
-        policyEnforcementStub.permit = 'Permit';
-        policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.permit));
-
-        mappingStub = jasmine.createSpyObj('Mapping', [
-            'getJsonld',
-            'getMappingEntity',
-            'getAllClassMappings',
-            'getAllDataMappings',
-            'getAllObjectMappings',
-            'addClassMapping',
-            'getClassMapping',
-            'hasClassMapping',
-            'addDataPropMapping',
-            'addObjectPropMapping',
-            'getClassIdByMappingId'
-        ]);
-        
-        progressSpinnerStub.track.and.callFake(ob => ob);
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [HttpClientTestingModule],
+      providers: [
+        MappingManagerService,
+        MockProvider(ProgressSpinnerService),
+        MockProvider(PolicyEnforcementService),
+        { provide: CamelCasePipe, useClass: MockPipe(CamelCasePipe) },
+      ]
     });
 
-    afterEach(function() {
-        cleanStylesFromDOM();
-        service = null;
-        camelCaseStub = null;
-        httpMock = null;
-        mappingStub = null;
-        policyEnforcementStub = null;
-    });
+    service = TestBed.inject(MappingManagerService);
+    progressSpinnerStub = TestBed.inject(ProgressSpinnerService) as jasmine.SpyObj<ProgressSpinnerService>;
+    camelCaseStub = TestBed.inject(CamelCasePipe) as jasmine.SpyObj<CamelCasePipe>;
+    httpMock = TestBed.inject(HttpTestingController) as jasmine.SpyObj<HttpTestingController>;
+    policyEnforcementStub = TestBed.inject(PolicyEnforcementService) as jasmine.SpyObj<PolicyEnforcementService>;
+    policyEnforcementStub.deny = 'Deny';
+    policyEnforcementStub.permit = 'Permit';
+    policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.permit));
 
-    describe('should upload a mapping', function() {
-        beforeEach(function () {
-            this.url = service.prefix;
-            this.recordConfig = {
-                title: 'Title',
-                description: 'description',
-                keywords: ['A', 'B']
-            };
-        });
-        it('unless an error occurs', function() {
-            service.upload(this.recordConfig, [])
-                .subscribe(() => fail('Observable should have errored'), response => {
-                    expect(response).toBe(error);
-                });
-            const request = httpMock.expectOne({url: this.url, method: 'POST'});
-            expect(request.request.body instanceof FormData).toBeTrue();
-            request.flush('flush', { status: 400, statusText: error });
-        });
-        it('successfully', function() {
-            service.upload(this.recordConfig, [])
-                .subscribe(response => {
-                    expect(response).toEqual(recordId);
-                }, () => fail('Observable should have succeeded'));
-            const request = httpMock.expectOne({url: this.url, method: 'POST'});
-            expect(request.request.body instanceof FormData).toBeTrue();
-            expect((request.request.body as FormData).get('title').toString()).toEqual(this.recordConfig.title);
-            expect((request.request.body as FormData).get('description')).toEqual(this.recordConfig.description);
-            expect((request.request.body as FormData).getAll('keywords')).toEqual(this.recordConfig.keywords);
-            expect((request.request.body as FormData).get('jsonld')).toEqual('[]');
-            request.flush(recordId);
-        });
+    mappingStub = jasmine.createSpyObj('Mapping', [
+      'getJsonld',
+      'getMappingEntity',
+      'getAllClassMappings',
+      'getAllDataMappings',
+      'getAllObjectMappings',
+      'addClassMapping',
+      'getClassMapping',
+      'hasClassMapping',
+      'addDataPropMapping',
+      'addObjectPropMapping',
+      'getClassIdByMappingId'
+    ]);
+
+    progressSpinnerStub.track.and.callFake(ob => ob);
+  });
+
+  afterEach(function () {
+    cleanStylesFromDOM();
+    service = null;
+    camelCaseStub = null;
+    httpMock = null;
+    mappingStub = null;
+    policyEnforcementStub = null;
+  });
+
+  describe('should upload a mapping', function () {
+    beforeEach(function () {
+      this.url = service.prefix;
+      this.recordConfig = {
+        title: 'Title',
+        description: 'description',
+        keywords: ['A', 'B']
+      };
     });
-    describe('should retrieve a mapping by id', function() {
-        beforeEach(function() {
-            this.url = `${service.prefix}/${encodeURIComponent(recordId)}`;
+    it('unless an error occurs', function () {
+      service.upload(this.recordConfig, [])
+        .subscribe(() => fail('Observable should have errored'), response => {
+          expect(response).toBe(error);
         });
-        it('unless an error occurs', function() {
-            service.getMapping(recordId)
-                .subscribe(() => fail('Observable should have errored'), response => {
-                    expect(response).toBe(error);
-                });
-            const request = httpMock.expectOne({url: this.url, method: 'GET'});
-            request.flush('flush', { status: 400, statusText: error });
-        });
-        it('successfully', function() {
-            service.getMapping(recordId)
-                .subscribe(response => {
-                    expect(response).toEqual([]);
-                }, () => fail('Observable should have succeeded'));
-            const request = httpMock.expectOne({url: this.url, method: 'GET'});
-            request.flush([]);
-        });
+      const request = httpMock.expectOne({ url: this.url, method: 'POST' });
+      expect(request.request.body instanceof FormData).toBeTrue();
+      request.flush('flush', { status: 400, statusText: error });
     });
-    describe('should download a mapping by id with the', function() {
-        beforeEach(function() {
-            this.url = `${service.prefix}/${encodeURIComponent(recordId)}`;
-            spyOn(window, 'open');
-        });
-        it('provided format', function() {
-            const params = new HttpParams({
-                fromObject: {
-                    format: 'turtle',
-                }
-            });
-            service.downloadMapping(recordId, 'turtle');
-            expect(window.open).toHaveBeenCalledWith(`${this.url}?${params.toString()}`);
-        });
-        it('default format', function() {
-            const params = new HttpParams({
-                fromObject: {
-                    format: 'jsonld',
-                }
-            });
-            service.downloadMapping(recordId);
-            expect(window.open).toHaveBeenCalledWith(`${this.url}?${params.toString()}`);
-        });
+    it('successfully', function () {
+      service.upload(this.recordConfig, [])
+        .subscribe(response => {
+          expect(response).toEqual(recordId);
+        }, () => fail('Observable should have succeeded'));
+      const request = httpMock.expectOne({ url: this.url, method: 'POST' });
+      expect(request.request.body instanceof FormData).toBeTrue();
+      expect((request.request.body as FormData).get('title').toString()).toEqual(this.recordConfig.title);
+      expect((request.request.body as FormData).get('description')).toEqual(this.recordConfig.description);
+      expect((request.request.body as FormData).getAll('keywords')).toEqual(this.recordConfig.keywords);
+      expect((request.request.body as FormData).get('jsonld')).toEqual('[]');
+      request.flush(recordId);
     });
-    describe('should not download a mapping by id with the', function() {
-        beforeEach(function() {
-            policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.deny));
-            this.url = `${service.prefix}/${encodeURIComponent(recordId)}`;
-            spyOn(window, 'open');
-        });
-        it('provided format when permission denied', function() {
-            const params = new HttpParams({
-                fromObject: {
-                    format: 'turtle',
-                }
-            });
-            service.downloadMapping(recordId, 'turtle');
-            expect(window.open).not.toHaveBeenCalledWith(`${this.url}?${params.toString()}`);
-        });
-        it('default format when permission denied', function() {
-            const params = new HttpParams({
-                fromObject: {
-                    format: 'jsonld',
-                }
-            });
-            service.downloadMapping(recordId);
-            expect(window.open).not.toHaveBeenCalledWith(`${this.url}?${params.toString()}`);
-        });
+  });
+  describe('should retrieve a mapping by id', function () {
+    beforeEach(function () {
+      this.url = `${service.prefix}/${encodeURIComponent(recordId)}`;
     });
-    describe('should delete a mapping by id', function() {
-        beforeEach(function() {
-            this.url = `${service.prefix}/${encodeURIComponent(recordId)}`;
+    it('unless an error occurs', function () {
+      service.getMapping(recordId)
+        .subscribe(() => fail('Observable should have errored'), response => {
+          expect(response).toBe(error);
         });
-        it('unless an error occurs', function() {
-            service.deleteMapping(recordId)
-                .subscribe(() => fail('Observable should have errored'), response => {
-                    expect(response).toBe(error);
-                });
-            const request = httpMock.expectOne({url: this.url, method: 'DELETE'});
-            request.flush('flush', { status: 400, statusText: error });
+      const request = httpMock.expectOne({ url: this.url, method: 'GET' });
+      request.flush('flush', { status: 400, statusText: error });
+    });
+    it('successfully', function () {
+      service.getMapping(recordId)
+        .subscribe(response => {
+          expect(response).toEqual([]);
+        }, () => fail('Observable should have succeeded'));
+      const request = httpMock.expectOne({ url: this.url, method: 'GET' });
+      request.flush([]);
+    });
+  });
+  describe('should download a mapping by id with the', function () {
+    beforeEach(function () {
+      this.url = `${service.prefix}/${encodeURIComponent(recordId)}`;
+      spyOn(window, 'open');
+    });
+    it('provided format', function () {
+      const params = new HttpParams({
+        fromObject: {
+          format: 'turtle',
+        }
+      });
+      service.downloadMapping(recordId, 'turtle');
+      expect(window.open).toHaveBeenCalledWith(`${this.url}?${params.toString()}`);
+    });
+    it('default format', function () {
+      const params = new HttpParams({
+        fromObject: {
+          format: 'jsonld',
+        }
+      });
+      service.downloadMapping(recordId);
+      expect(window.open).toHaveBeenCalledWith(`${this.url}?${params.toString()}`);
+    });
+  });
+  describe('should not download a mapping by id with the', function () {
+    beforeEach(function () {
+      policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.deny));
+      this.url = `${service.prefix}/${encodeURIComponent(recordId)}`;
+      spyOn(window, 'open');
+    });
+    it('provided format when permission denied', function () {
+      const params = new HttpParams({
+        fromObject: {
+          format: 'turtle',
+        }
+      });
+      service.downloadMapping(recordId, 'turtle');
+      expect(window.open).not.toHaveBeenCalledWith(`${this.url}?${params.toString()}`);
+    });
+    it('default format when permission denied', function () {
+      const params = new HttpParams({
+        fromObject: {
+          format: 'jsonld',
+        }
+      });
+      service.downloadMapping(recordId);
+      expect(window.open).not.toHaveBeenCalledWith(`${this.url}?${params.toString()}`);
+    });
+  });
+  describe('should delete a mapping by id', function () {
+    beforeEach(function () {
+      this.url = `${service.prefix}/${encodeURIComponent(recordId)}`;
+    });
+    it('unless an error occurs', function () {
+      service.deleteMapping(recordId)
+        .subscribe(() => fail('Observable should have errored'), response => {
+          expect(response).toBe(error);
         });
-        it('successfully', function() {
-            service.deleteMapping(recordId)
-                .subscribe(() => {
-                    expect(true).toBeTrue();
-                }, () => fail('Observable should have succeeded'));
-            const request = httpMock.expectOne({url: this.url, method: 'DELETE'});
-            request.flush(200);
-        });
+      const request = httpMock.expectOne({ url: this.url, method: 'DELETE' });
+      request.flush('flush', { status: 400, statusText: error });
     });
-    it('should get the mapping IRI based on a title', function() {
-        camelCaseStub.transform.and.returnValue('title');
-        expect(service.getMappingId('title')).toEqual(`${MAPPINGS}title`);
-        expect(camelCaseStub.transform).toHaveBeenCalledWith('title', 'class');
+    it('successfully', function () {
+      service.deleteMapping(recordId)
+        .subscribe(() => {
+          expect(true).toBeTrue();
+        }, () => fail('Observable should have succeeded'));
+      const request = httpMock.expectOne({ url: this.url, method: 'DELETE' });
+      request.flush(200);
     });
-    describe('should set the IRI template of a class mapping', function() {
-        it('unless it does not exist in the mapping', function() {
-            service.editIriTemplate(mappingStub, 'classId', 'test/', '${0}');
-            expect(mappingStub.getClassMapping).toHaveBeenCalledWith('classId');
-        });
-        it('successfully', function() {
-            const classMapping = Object.assign({}, emptyObj);
-            mappingStub.getClassMapping.and.returnValue(classMapping);
-            service.editIriTemplate(mappingStub, 'classId', 'test/', '${0}');
-            expect(mappingStub.getClassMapping).toHaveBeenCalledWith('classId');
-            expect(classMapping[`${DELIM}hasPrefix`]).toEqual([{'@value': 'test/'}]);
-            expect(classMapping[`${DELIM}localName`]).toEqual([{'@value': '${0}'}]);
-        });
+  });
+  it('should get the mapping IRI based on a title', function () {
+    camelCaseStub.transform.and.returnValue('title');
+    expect(service.getMappingId('title')).toEqual(`${MAPPINGS}title`);
+    expect(camelCaseStub.transform).toHaveBeenCalledWith('title', 'class');
+  });
+  describe('should set the IRI template of a class mapping', function () {
+    it('unless it does not exist in the mapping', function () {
+      service.editIriTemplate(mappingStub, 'classId', 'test/', '${0}');
+      expect(mappingStub.getClassMapping).toHaveBeenCalledWith('classId');
     });
-    it('should test whether a mapping entity is a class mapping', function() {
-        expect(service.isClassMapping(emptyObj)).toBe(false);
-        expect(service.isClassMapping({'@id': '', '@type': [`${DELIM}ClassMapping`]})).toBe(true);
+    it('successfully', function () {
+      const classMapping = Object.assign({}, emptyObj);
+      mappingStub.getClassMapping.and.returnValue(classMapping);
+      service.editIriTemplate(mappingStub, 'classId', 'test/', '${0}');
+      expect(mappingStub.getClassMapping).toHaveBeenCalledWith('classId');
+      expect(classMapping[`${DELIM}hasPrefix`]).toEqual([{ '@value': 'test/' }]);
+      expect(classMapping[`${DELIM}localName`]).toEqual([{ '@value': '${0}' }]);
     });
-    it('should test whether a mapping entity is an object mapping', function() {
-        expect(service.isObjectMapping(emptyObj)).toBe(false);
-        expect(service.isObjectMapping({'@id': '', '@type': [`${DELIM}ObjectMapping`]})).toBe(true);
-    });
-    it('should test whether a mapping entity is a data mapping', function() {
-        expect(service.isDataMapping(emptyObj)).toBe(false);
-        expect(service.isDataMapping({'@id': '', '@type': [`${DELIM}DataMapping`]})).toBe(true);
-    });
-    it('should return the title of a property mapping', function() {
-        expect(service.getPropMappingTitle('class', 'prop')).toEqual('class: prop');
-    });
+  });
+  it('should test whether a mapping entity is a class mapping', function () {
+    expect(service.isClassMapping(emptyObj)).toBe(false);
+    expect(service.isClassMapping({ '@id': '', '@type': [`${DELIM}ClassMapping`] })).toBe(true);
+  });
+  it('should test whether a mapping entity is an object mapping', function () {
+    expect(service.isObjectMapping(emptyObj)).toBe(false);
+    expect(service.isObjectMapping({ '@id': '', '@type': [`${DELIM}ObjectMapping`] })).toBe(true);
+  });
+  it('should test whether a mapping entity is a data mapping', function () {
+    expect(service.isDataMapping(emptyObj)).toBe(false);
+    expect(service.isDataMapping({ '@id': '', '@type': [`${DELIM}DataMapping`] })).toBe(true);
+  });
+  it('should return the title of a property mapping', function () {
+    expect(service.getPropMappingTitle('class', 'prop')).toEqual('class: prop');
+  });
 });

@@ -145,7 +145,7 @@ describe('Open Record Button component', function () {
     ontologyStateStub.changeVersion.and.returnValue(of(null));
     shapesGraphStateStub.changeVersion.and.returnValue(of(null));
     catalogManagerStub.getRecord.and.returnValue(of([entityRecord]));
-    catalogManagerStub.getRecordMasterBranch.and.callFake(() => of(branch));
+    catalogManagerStub.getRecordBranch.and.returnValue(of(branch));
     policyEnforcementStub.permit = 'Permit';
     policyEnforcementStub.deny = 'Deny';
     policyEnforcementStub.evaluateRequest.and.returnValue(of(policyEnforcementStub.permit));

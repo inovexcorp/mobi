@@ -44,11 +44,11 @@ import { PolicyManagerService } from '../../../shared/services/policyManager.ser
 import { RecordSelectFiltered } from '../../../versioned-rdf-record-editor/models/record-select-filtered.interface';
 import { ShapesGraphListItem } from '../../../shared/models/shapesGraphListItem.class';
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
-import { ToastService } from '../../../shared/services/toast.service';
-import { WorkflowsStateService } from '../../../workflows/services/workflows-state.service';
 import { stateServiceToken } from '../../../shared/injection-token';
-import { VersionedRdfState } from '../../../shared/services/versionedRdfState.service';
+import { ToastService } from '../../../shared/services/toast.service';
 import { VersionedRdfListItem } from '../../../shared/models/versionedRdfListItem.class';
+import { VersionedRdfState } from '../../../shared/services/versionedRdfState.service';
+import { WorkflowsStateService } from '../../../workflows/services/workflows-state.service';
 
 /**
  * @class catalog.OpenRecordButtonComponent
@@ -380,7 +380,7 @@ export class OpenRecordButtonComponent <TData extends VersionedRdfListItem>{
   private _switchToMasterBranch(): void {
     const recordId = this.record['@id'];
     const masterBranch = this._getRecordMasterBranchIri();
-    this._cm.getRecordMasterBranch(this.record['@id'], this._getCatalogId()).pipe(
+    this._cm.getRecordBranch('master', this.record['@id'], this._getCatalogId()).pipe(
       switchMap((branch) => {
         return this._getService().changeVersion(
           recordId,

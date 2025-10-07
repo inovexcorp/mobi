@@ -38,7 +38,7 @@ import { MockComponent, MockDirective, MockPipe, MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 
 import {
-    cleanStylesFromDOM, DATE_STR, SHORT_DATE_STR,
+  cleanStylesFromDOM, DATE_STR, SHORT_DATE_STR,
 } from '../../../../../public/test/ts/Shared';
 import { CATALOG, DATASET, DCTERMS, POLICY } from '../../../prefixes';
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
@@ -60,460 +60,462 @@ import { NewDatasetOverlayComponent } from '../newDatasetOverlay/newDatasetOverl
 import { UploadDataOverlayComponent } from '../uploadDataOverlay/uploadDataOverlay.component';
 import { DatasetsListComponent } from './datasetsList.component';
 
-describe('Datasets List component', function() {
-    let component: DatasetsListComponent;
-    let element: DebugElement;
-    let fixture: ComponentFixture<DatasetsListComponent>;
-    let datasetManagerStub: jasmine.SpyObj<DatasetManagerService>;
-    let datasetStateStub: jasmine.SpyObj<DatasetStateService>;
-    let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
-    let policyEnforcementStub: jasmine.SpyObj<PolicyEnforcementService>;
-    let toastStub: jasmine.SpyObj<ToastService>;
-    let repositoryManagerStub: jasmine.SpyObj<RepositoryManagerService>;
-    let matDialog: jasmine.SpyObj<MatDialog>;
+describe('Datasets List component', function () {
+  let component: DatasetsListComponent;
+  let element: DebugElement;
+  let fixture: ComponentFixture<DatasetsListComponent>;
+  let datasetManagerStub: jasmine.SpyObj<DatasetManagerService>;
+  let datasetStateStub: jasmine.SpyObj<DatasetStateService>;
+  let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
+  let policyEnforcementStub: jasmine.SpyObj<PolicyEnforcementService>;
+  let toastStub: jasmine.SpyObj<ToastService>;
+  let repositoryManagerStub: jasmine.SpyObj<RepositoryManagerService>;
+  let matDialog: jasmine.SpyObj<MatDialog>;
 
-    const catalogId = 'catalogId';
-    const recordId = 'recordId';
-    const record: JSONLDObject = {
-      '@id': recordId,
-      [`${DCTERMS}title`]: [{ '@value': 'title' }],
-      [`${DCTERMS}description`]: [{ '@value': 'description' }],
-      [`${DCTERMS}modified`]: [{ '@value': DATE_STR }],
-      [`${DATASET}dataset`]: [{ '@id': 'datasetIRI' }],
-      [`${DATASET}repository`]: [{ '@value': 'repositoryId' }],
+  const catalogId = 'catalogId';
+  const recordId = 'recordId';
+  const record: JSONLDObject = {
+    '@id': recordId,
+    [`${DCTERMS}title`]: [{ '@value': 'title' }],
+    [`${DCTERMS}description`]: [{ '@value': 'description' }],
+    [`${DCTERMS}modified`]: [{ '@value': DATE_STR }],
+    [`${DATASET}dataset`]: [{ '@id': 'datasetIRI' }],
+    [`${DATASET}repository`]: [{ '@value': 'repositoryId' }],
+  };
+  const dataset = { record, identifiers: [] };
+  const displayItem = {
+    title: 'title',
+    datasetIRI: 'datasetIRI',
+    description: 'description',
+    modified: SHORT_DATE_STR,
+    ontologies: ['ont 1', 'ont2'],
+    repositoryId: 'repo',
+    dataset
+  };
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [
+        NoopAnimationsModule,
+        FormsModule,
+        ReactiveFormsModule,
+        MatButtonModule,
+        MatFormFieldModule,
+        MatInputModule,
+        MatTooltipModule,
+        MatMenuModule,
+        MatPaginatorModule,
+        MatDividerModule,
+        MatIconModule
+      ],
+      declarations: [
+        DatasetsListComponent,
+        MockComponent(DatasetsOntologyPickerComponent),
+        MockComponent(EditDatasetOverlayComponent),
+        MockComponent(UploadDataOverlayComponent),
+        MockComponent(NewDatasetOverlayComponent),
+        MockComponent(InfoMessageComponent),
+        MockComponent(SearchBarComponent),
+        MockDirective(CopyClipboardDirective),
+        MockPipe(HighlightTextPipe)
+      ],
+      providers: [
+        MockProvider(DatasetManagerService),
+        MockProvider(DatasetStateService),
+        MockProvider(CatalogManagerService),
+        MockProvider(ProgressSpinnerService),
+        MockProvider(PolicyEnforcementService),
+        MockProvider(ToastService),
+        MockProvider(RepositoryManagerService),
+        {
+          provide: MatDialog, useFactory: () => jasmine.createSpyObj('MatDialog', {
+            open: { afterClosed: () => of(true) }
+          })
+        }
+      ]
+    }).compileComponents();
+
+    repositoryManagerStub = TestBed.inject(RepositoryManagerService) as jasmine.SpyObj<RepositoryManagerService>;
+    repositoryManagerStub.getRepositories.and.returnValue(of([]));
+    fixture = TestBed.createComponent(DatasetsListComponent);
+    component = fixture.componentInstance;
+    element = fixture.debugElement;
+    datasetManagerStub = TestBed.inject(DatasetManagerService) as jasmine.SpyObj<DatasetManagerService>;
+    datasetStateStub = TestBed.inject(DatasetStateService) as jasmine.SpyObj<DatasetStateService>;
+    catalogManagerStub = TestBed.inject(CatalogManagerService) as jasmine.SpyObj<CatalogManagerService>;
+    policyEnforcementStub = TestBed.inject(PolicyEnforcementService) as jasmine.SpyObj<PolicyEnforcementService>;
+    toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
+    matDialog = TestBed.inject(MatDialog) as jasmine.SpyObj<MatDialog>;
+
+    catalogManagerStub.localCatalog = { '@id': catalogId };
+    datasetStateStub.paginationConfig = {
+      limit: 10,
+      pageIndex: 0,
+      searchText: '',
+      sortOption: {
+        field: `${DCTERMS}title`,
+        label: 'Title',
+        asc: true
+      }
     };
-    const dataset = {record, identifiers: []};
-    const displayItem = {
-        title: 'title',
-        datasetIRI: 'datasetIRI',
-        description: 'description',
-        modified: SHORT_DATE_STR,
-        ontologies: ['ont 1', 'ont2'],
-        repositoryId: 'repo',
-        dataset
-    };
+    policyEnforcementStub.evaluateRequest.and.returnValue(of('Permit'));
+  });
 
-    beforeEach(async () => {
-        await TestBed.configureTestingModule({
-            imports: [ 
-                NoopAnimationsModule,
-                FormsModule,
-                ReactiveFormsModule,
-                MatButtonModule,
-                MatFormFieldModule,
-                MatInputModule,
-                MatTooltipModule,
-                MatMenuModule,
-                MatPaginatorModule,
-                MatDividerModule,
-                MatIconModule
-             ],
-            declarations: [
-                DatasetsListComponent,
-                MockComponent(DatasetsOntologyPickerComponent),
-                MockComponent(EditDatasetOverlayComponent),
-                MockComponent(UploadDataOverlayComponent),
-                MockComponent(NewDatasetOverlayComponent),
-                MockComponent(InfoMessageComponent),
-                MockComponent(SearchBarComponent),
-                MockDirective(CopyClipboardDirective),
-                MockPipe(HighlightTextPipe)
-            ],
-            providers: [
-                MockProvider(DatasetManagerService),
-                MockProvider(DatasetStateService),
-                MockProvider(CatalogManagerService),
-                MockProvider(ProgressSpinnerService),
-                MockProvider(PolicyEnforcementService),
-                MockProvider(ToastService),
-                MockProvider(RepositoryManagerService),
-                { provide: MatDialog, useFactory: () => jasmine.createSpyObj('MatDialog', {
-                    open: { afterClosed: () => of(true)}
-                }) }
-            ]
-        }).compileComponents();
+  afterEach(function () {
+    cleanStylesFromDOM();
+    component = null;
+    element = null;
+    fixture = null;
+    datasetStateStub = null;
+    datasetManagerStub = null;
+    catalogManagerStub = null;
+    policyEnforcementStub = null;
+    toastStub = null;
+    matDialog = null;
+  });
 
-        repositoryManagerStub = TestBed.inject(RepositoryManagerService) as jasmine.SpyObj<RepositoryManagerService>;
-        repositoryManagerStub.getRepositories.and.returnValue(of([]));
-        fixture = TestBed.createComponent(DatasetsListComponent);
-        component = fixture.componentInstance;
-        element = fixture.debugElement;
-        datasetManagerStub = TestBed.inject(DatasetManagerService) as jasmine.SpyObj<DatasetManagerService>;
-        datasetStateStub = TestBed.inject(DatasetStateService) as jasmine.SpyObj<DatasetStateService>;
-        catalogManagerStub = TestBed.inject(CatalogManagerService) as jasmine.SpyObj<CatalogManagerService>;
-        policyEnforcementStub = TestBed.inject(PolicyEnforcementService) as jasmine.SpyObj<PolicyEnforcementService>;
-        toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
-        matDialog = TestBed.inject(MatDialog) as jasmine.SpyObj<MatDialog>;
-
-        catalogManagerStub.localCatalog = {'@id': catalogId};
-        datasetStateStub.paginationConfig = {
-            limit: 10,
-            pageIndex: 0,
-            searchText: '',
-            sortOption: {
-                field: `${DCTERMS}title`,
-                label: 'Title',
-                asc: true
-            }
-        };
-        policyEnforcementStub.evaluateRequest.and.returnValue(of('Permit'));
+  it('should initialize properly', function () {
+    datasetStateStub.paginationConfig.searchText = 'test';
+    spyOn(component, 'setResults');
+    component.ngOnInit();
+    expect(component.catalogId).toEqual(catalogId);
+    expect(component.setResults).toHaveBeenCalledWith();
+    expect(component.searchText).toEqual('test');
+    expect(datasetStateStub.submittedSearch).toBeTrue();
+  });
+  describe('controller methods', function () {
+    it('should initialize the component properly', function () {
+      datasetStateStub.paginationConfig.searchText = 'test';
+      spyOn(component, 'setResults');
+      component.ngOnInit();
+      expect(component.catalogId).toEqual(catalogId);
+      expect(component.setResults).toHaveBeenCalledWith();
+      expect(datasetStateStub.submittedSearch).toEqual(true);
     });
-
-    afterEach(function() {
-        cleanStylesFromDOM();
-        component = null;
-        element = null;
-        fixture = null;
-        datasetStateStub = null;
-        datasetManagerStub = null;
-        catalogManagerStub = null;
-        policyEnforcementStub = null;
-        toastStub = null;
-        matDialog = null;
+    it('should retrieve the list of identified ontologies for a dataset', function () {
+      const ontologyId = 'ontologyId';
+      const dataset = {
+        record,
+        identifiers: [{ '@id': 'bnode', [`${DATASET}linksToRecord`]: [{ '@id': ontologyId }] }]
+      };
+      expect(component.getIdentifiedOntologyIds(dataset)).toEqual([ontologyId]);
     });
-
-    it('should initialize properly', function() {
-        datasetStateStub.paginationConfig.searchText = 'test';
+    it('should get the title of a record', function () {
+      expect(component.getRecordTitle(record)).toEqual('title');
+    });
+    describe('should set cached ontology titles', function () {
+      it('unless there are no ontologies set on the datasets', fakeAsync(function () {
+        spyOn(component, 'getIdentifiedOntologyIds').and.returnValue([]);
+        component.setCachedOntologyTitles([dataset]).subscribe(() => {
+          expect(component.getIdentifiedOntologyIds).toHaveBeenCalledWith(dataset);
+          expect(component.cachedOntologyTitles).toEqual({});
+          expect(catalogManagerStub.getRecord).not.toHaveBeenCalled();
+        });
+        tick();
+      }));
+      it('unless all ontologies set on the datasets have already been cached', fakeAsync(function () {
+        spyOn(component, 'getIdentifiedOntologyIds').and.returnValue(['ontologyId']);
+        component.cachedOntologyTitles = { 'ontologyId': 'Ontology' };
+        component.setCachedOntologyTitles([dataset]).subscribe(() => {
+          expect(component.getIdentifiedOntologyIds).toHaveBeenCalledWith(dataset);
+          expect(component.cachedOntologyTitles).toEqual({ 'ontologyId': 'Ontology' });
+          expect(catalogManagerStub.getRecord).not.toHaveBeenCalled();
+        });
+        tick();
+      }));
+      it('even if some ontologies don\'t exist anymore', fakeAsync(function () {
+        const ontologyRecord = { '@id': 'ontologyId1' };
+        spyOn(component, 'getIdentifiedOntologyIds').and.returnValue(['ontologyId1', 'ontologyId2']);
+        catalogManagerStub.getRecord.and.callFake((id) => {
+          if (id === 'ontologyId1') {
+            return of([ontologyRecord]);
+          } else {
+            return throwError('Error');
+          }
+        });
+        spyOn(component, 'getRecordTitle').and.returnValue('Ontology');
+        component.catalogId = catalogId;
+        component.setCachedOntologyTitles([dataset]).subscribe(() => {
+          expect(component.getIdentifiedOntologyIds).toHaveBeenCalledWith(dataset);
+          expect(component.cachedOntologyTitles).toEqual({
+            'ontologyId1': 'Ontology',
+            'ontologyId2': '(Ontology not found)'
+          });
+          expect(catalogManagerStub.getRecord).toHaveBeenCalledWith('ontologyId1', catalogId);
+          expect(catalogManagerStub.getRecord).toHaveBeenCalledWith('ontologyId2', catalogId);
+          expect(component.getRecordTitle).toHaveBeenCalledWith(ontologyRecord);
+        });
+        tick();
+      }));
+    });
+    it('should get the specified page of dataset records', function () {
+      spyOn(component, 'setResults');
+      const event = new PageEvent();
+      event.pageIndex = 10;
+      component.getPage(event);
+      expect(datasetStateStub.paginationConfig.pageIndex).toBe(10);
+      expect(component.setResults).toHaveBeenCalledWith();
+    });
+    describe('should delete a dataset', function () {
+      beforeEach(function () {
         spyOn(component, 'setResults');
-        component.ngOnInit();
-        expect(component.catalogId).toEqual(catalogId);
-        expect(component.setResults).toHaveBeenCalledWith();
-        expect(component.searchText).toEqual('test');
-        expect(datasetStateStub.submittedSearch).toBeTrue();
+      });
+      it('unless an error occurs', fakeAsync(function () {
+        datasetManagerStub.deleteDatasetRecord.and.callFake(() => throwError('Error Message'));
+        component.delete(dataset);
+        tick();
+        expect(datasetManagerStub.deleteDatasetRecord).toHaveBeenCalledWith(recordId);
+        expect(toastStub.createSuccessToast).not.toHaveBeenCalled();
+        expect(datasetStateStub.resetPagination).not.toHaveBeenCalledWith();
+        expect(datasetStateStub.setResults).not.toHaveBeenCalledWith();
+        expect(toastStub.createErrorToast).toHaveBeenCalledWith('Error Message');
+      }));
+      describe('successfully', function () {
+        beforeEach(function () {
+          datasetStateStub.paginationConfig.pageIndex = 1;
+          datasetManagerStub.deleteDatasetRecord.and.returnValue(of(null));
+        });
+        it('if there is only one result on the current page', fakeAsync(function () {
+          component.results = [displayItem];
+          component.delete(dataset);
+          tick();
+          expect(datasetManagerStub.deleteDatasetRecord).toHaveBeenCalledWith(recordId);
+          expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
+          expect(datasetStateStub.paginationConfig.pageIndex).toBe(0);
+          expect(component.setResults).toHaveBeenCalledWith();
+          expect(datasetStateStub.submittedSearch).toEqual(!!datasetStateStub.paginationConfig.searchText);
+          expect(toastStub.createErrorToast).not.toHaveBeenCalled();
+        }));
+        it('if there is more than one result on the current page', fakeAsync(function () {
+          component.results = [displayItem, {
+            title: '',
+            description: '',
+            datasetIRI: '',
+            repositoryId: '',
+            ontologies: [],
+            modified: '',
+            dataset
+          }];
+          component.delete(dataset);
+          tick();
+          expect(datasetManagerStub.deleteDatasetRecord).toHaveBeenCalledWith(recordId);
+          expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
+          expect(datasetStateStub.paginationConfig.pageIndex).toBe(1);
+          expect(component.setResults).toHaveBeenCalledWith();
+          expect(datasetStateStub.submittedSearch).toEqual(!!datasetStateStub.paginationConfig.searchText);
+          expect(toastStub.createErrorToast).not.toHaveBeenCalled();
+        }));
+        it('if there are no results on the current page', fakeAsync(function () {
+          component.delete(dataset);
+          tick();
+          expect(datasetManagerStub.deleteDatasetRecord).toHaveBeenCalledWith(recordId);
+          expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
+          expect(datasetStateStub.paginationConfig.pageIndex).toBe(1);
+          expect(component.setResults).toHaveBeenCalledWith();
+          expect(datasetStateStub.submittedSearch).toEqual(!!datasetStateStub.paginationConfig.searchText);
+          expect(toastStub.createErrorToast).not.toHaveBeenCalled();
+        }));
+        it('if the current page is the first one', fakeAsync(function () {
+          datasetStateStub.paginationConfig.pageIndex = 0;
+          component.results = [displayItem];
+          component.delete(dataset);
+          tick();
+          expect(datasetManagerStub.deleteDatasetRecord).toHaveBeenCalledWith(recordId);
+          expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
+          expect(datasetStateStub.paginationConfig.pageIndex).toBe(0);
+          expect(component.setResults).toHaveBeenCalledWith();
+          expect(datasetStateStub.submittedSearch).toEqual(!!datasetStateStub.paginationConfig.searchText);
+          expect(toastStub.createErrorToast).not.toHaveBeenCalled();
+        }));
+      });
     });
-    describe('controller methods', function() {
-        it('should initialize the component properly', function() {
-            datasetStateStub.paginationConfig.searchText = 'test';
-            spyOn(component, 'setResults');
-            component.ngOnInit();
-            expect(component.catalogId).toEqual(catalogId);
-            expect(component.setResults).toHaveBeenCalledWith();
-            expect(datasetStateStub.submittedSearch).toEqual(true);
-        });
-        it('should retrieve the list of identified ontologies for a dataset', function() {
-            const ontologyId = 'ontologyId';
-            const dataset = {
-                record,
-                identifiers: [ {'@id': 'bnode', [`${DATASET}linksToRecord`]: [{'@id': ontologyId}]} ]
-            };
-            expect(component.getIdentifiedOntologyIds(dataset)).toEqual([ontologyId]);
-        });
-        it('should get the title of a record', function() {
-            expect(component.getRecordTitle(record)).toEqual('title');
-        });
-        describe('should set cached ontology titles', function() {
-            it('unless there are no ontologies set on the datasets', fakeAsync(function() {
-                spyOn(component, 'getIdentifiedOntologyIds').and.returnValue([]);
-                component.setCachedOntologyTitles([dataset]).subscribe(() => {
-                    expect(component.getIdentifiedOntologyIds).toHaveBeenCalledWith(dataset);
-                    expect(component.cachedOntologyTitles).toEqual({});
-                    expect(catalogManagerStub.getRecord).not.toHaveBeenCalled();
-                });
-                tick();
-            }));
-            it('unless all ontologies set on the datasets have already been cached', fakeAsync(function() {
-                spyOn(component, 'getIdentifiedOntologyIds').and.returnValue(['ontologyId']);
-                component.cachedOntologyTitles = {'ontologyId': 'Ontology'};
-                component.setCachedOntologyTitles([dataset]).subscribe(() => {
-                    expect(component.getIdentifiedOntologyIds).toHaveBeenCalledWith(dataset);
-                    expect(component.cachedOntologyTitles).toEqual({'ontologyId': 'Ontology'});
-                    expect(catalogManagerStub.getRecord).not.toHaveBeenCalled();
-                });
-                tick();
-            }));
-            it('even if some ontologies don\'t exist anymore', fakeAsync(function() {
-                const ontologyRecord = {'@id': 'ontologyId1'};
-                spyOn(component, 'getIdentifiedOntologyIds').and.returnValue(['ontologyId1', 'ontologyId2']);
-                catalogManagerStub.getRecord.and.callFake((id) => {
-                    if (id === 'ontologyId1') {
-                        return of([ontologyRecord]);
-                    } else {
-                        return throwError('Error');
-                    }
-                });
-                spyOn(component, 'getRecordTitle').and.returnValue('Ontology');
-                component.catalogId = catalogId;
-                component.setCachedOntologyTitles([dataset]).subscribe(() => {
-                    expect(component.getIdentifiedOntologyIds).toHaveBeenCalledWith(dataset);
-                    expect(component.cachedOntologyTitles).toEqual({
-                        'ontologyId1': 'Ontology',
-                        'ontologyId2': '(Ontology not found)'
-                    });
-                    expect(catalogManagerStub.getRecord).toHaveBeenCalledWith('ontologyId1', catalogId);
-                    expect(catalogManagerStub.getRecord).toHaveBeenCalledWith('ontologyId2', catalogId);
-                    expect(component.getRecordTitle).toHaveBeenCalledWith(ontologyRecord);
-                });
-                tick();
-            }));
-        });
-        it('should get the specified page of dataset records', function() {
-            spyOn(component, 'setResults');
-            const event = new PageEvent();
-            event.pageIndex = 10;
-            component.getPage(event);
-            expect(datasetStateStub.paginationConfig.pageIndex).toBe(10);
-            expect(component.setResults).toHaveBeenCalledWith();
-        });
-        describe('should delete a dataset', function() {
-            beforeEach(function() {
-                spyOn(component, 'setResults');
-            });
-            it('unless an error occurs', fakeAsync(function() {
-                datasetManagerStub.deleteDatasetRecord.and.callFake(() => throwError('Error Message'));
-                component.delete(dataset);
-                tick();
-                expect(datasetManagerStub.deleteDatasetRecord).toHaveBeenCalledWith(recordId);
-                expect(toastStub.createSuccessToast).not.toHaveBeenCalled();
-                expect(datasetStateStub.resetPagination).not.toHaveBeenCalledWith();
-                expect(datasetStateStub.setResults).not.toHaveBeenCalledWith();
-                expect(toastStub.createErrorToast).toHaveBeenCalledWith('Error Message');
-            }));
-            describe('successfully', function() {
-                beforeEach(function() {
-                    datasetStateStub.paginationConfig.pageIndex = 1;
-                    datasetManagerStub.deleteDatasetRecord.and.callFake(() => of(null));
-                });
-                it('if there is only one result on the current page', fakeAsync(function() {
-                    component.results = [displayItem];
-                    component.delete(dataset);
-                    tick();
-                    expect(datasetManagerStub.deleteDatasetRecord).toHaveBeenCalledWith(recordId);
-                    expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
-                    expect(datasetStateStub.paginationConfig.pageIndex).toBe(0);
-                    expect(component.setResults).toHaveBeenCalledWith();
-                    expect(datasetStateStub.submittedSearch).toEqual(!!datasetStateStub.paginationConfig.searchText);
-                    expect(toastStub.createErrorToast).not.toHaveBeenCalled();
-                }));
-                it('if there is more than one result on the current page', fakeAsync(function() {
-                    component.results = [displayItem, {
-                        title: '',
-                        description: '',
-                        datasetIRI: '',
-                        repositoryId: '',
-                        ontologies: [],
-                        modified: '',
-                        dataset
-                    }];
-                    component.delete(dataset);
-                    tick();
-                    expect(datasetManagerStub.deleteDatasetRecord).toHaveBeenCalledWith(recordId);
-                    expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
-                    expect(datasetStateStub.paginationConfig.pageIndex).toBe(1);
-                    expect(component.setResults).toHaveBeenCalledWith();
-                    expect(datasetStateStub.submittedSearch).toEqual(!!datasetStateStub.paginationConfig.searchText);
-                    expect(toastStub.createErrorToast).not.toHaveBeenCalled();
-                }));
-                it('if there are no results on the current page', fakeAsync(function() {
-                    component.delete(dataset);
-                    tick();
-                    expect(datasetManagerStub.deleteDatasetRecord).toHaveBeenCalledWith(recordId);
-                    expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
-                    expect(datasetStateStub.paginationConfig.pageIndex).toBe(1);
-                    expect(component.setResults).toHaveBeenCalledWith();
-                    expect(datasetStateStub.submittedSearch).toEqual(!!datasetStateStub.paginationConfig.searchText);
-                    expect(toastStub.createErrorToast).not.toHaveBeenCalled();
-                }));
-                it('if the current page is the first one', fakeAsync(function() {
-                    datasetStateStub.paginationConfig.pageIndex = 0;
-                    component.results = [displayItem];
-                    component.delete(dataset);
-                    tick();
-                    expect(datasetManagerStub.deleteDatasetRecord).toHaveBeenCalledWith(recordId);
-                    expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
-                    expect(datasetStateStub.paginationConfig.pageIndex).toBe(0);
-                    expect(component.setResults).toHaveBeenCalledWith();
-                    expect(datasetStateStub.submittedSearch).toEqual(!!datasetStateStub.paginationConfig.searchText);
-                    expect(toastStub.createErrorToast).not.toHaveBeenCalled();
-                }));
-            });
-        });
-        it('should set the dataset results', fakeAsync(function() {
-            spyOn(component, 'setCachedOntologyTitles').and.callFake(() => of(null));
-            spyOn(component, 'getIdentifiedOntologyIds').and.returnValue(['id']);
-            component.cachedOntologyTitles = {'id': 'Ontology'};
-            datasetStateStub.setResults.and.callFake(() => of([dataset]));
-            component.setResults();
-            tick();
-            expect(datasetStateStub.setResults).toHaveBeenCalledWith();
-            expect(component.setCachedOntologyTitles).toHaveBeenCalledWith([dataset]);
-            expect(component.results).toEqual([{
-                title: 'title',
-                description: 'description',
-                datasetIRI: 'datasetIRI',
-                modified: SHORT_DATE_STR,
-                repositoryId: 'repositoryId',
-                ontologies: ['Ontology'],
-                dataset
-            }]);
-        }));
-        describe('should clear a dataset', function() {
-            it('unless an error occurs', fakeAsync(function() {
-                datasetManagerStub.clearDatasetRecord.and.callFake(() => throwError('Error Message'));
-                component.clear(dataset);
-                tick();
-                expect(datasetManagerStub.clearDatasetRecord).toHaveBeenCalledWith(recordId);
-                expect(toastStub.createSuccessToast).not.toHaveBeenCalled();
-                expect(toastStub.createErrorToast).toHaveBeenCalledWith('Error Message');
-            }));
-            it('successfully', fakeAsync(function() {
-                datasetManagerStub.clearDatasetRecord.and.callFake(() => of(null));
-                component.clear(dataset);
-                tick();
-                expect(datasetManagerStub.clearDatasetRecord).toHaveBeenCalledWith(recordId);
-                expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
-                expect(toastStub.createErrorToast).not.toHaveBeenCalled();
-            }));
-        });
-        it('should show the newDatasetOverlay', fakeAsync(function() {
-            spyOn(component, 'setResults');
-            component.showNew();
-            tick();
-            expect(matDialog.open).toHaveBeenCalledWith(NewDatasetOverlayComponent);
-            expect(component.setResults).toHaveBeenCalledWith();
-        }));
-        it('should show the editDatasetOverlay', fakeAsync(function() {
-            spyOn(component, 'setResults');
-            component.showEdit(dataset);
-            tick();
-            expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({
-                resourceId: dataset.record['@id'],
-                actionId: `${POLICY}Update`
-            });
-            expect(datasetStateStub.selectedDataset).toEqual(dataset);
-            expect(matDialog.open).toHaveBeenCalledWith(EditDatasetOverlayComponent);
-            expect(component.setResults).toHaveBeenCalledWith();
-        }));
-        it('should show the uploadDataOverlay', fakeAsync(function() {
-            component.showUploadData(dataset);
-            tick();
-            expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({
-                resourceId: dataset.record['@id'],
-                actionId: `${CATALOG}Modify`
-            });
-            expect(datasetStateStub.selectedDataset).toEqual(dataset);
-            expect(matDialog.open).toHaveBeenCalledWith(UploadDataOverlayComponent);
-        }));
-        it('should confirm deleting a dataset', fakeAsync(function() {
-            spyOn(component, 'delete');
-            component.showDelete(dataset);
-            tick();
-            expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({
-                resourceId: dataset.record['@id'],
-                actionId: `${POLICY}Delete`
-            });
-            expect(matDialog.open).toHaveBeenCalledWith(ConfirmModalComponent, {data: {content: jasmine.stringMatching('Are you sure you want to delete')}});
-            expect(component.delete).toHaveBeenCalledWith(dataset);
-        }));
-        it('should confirm clearing a dataset', fakeAsync(function() {
-            spyOn(component, 'clear');
-            component.showClear(dataset);
-            tick();
-            expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({
-                resourceId: dataset.record['@id'],
-                actionId: `${CATALOG}Modify`
-            });
-            expect(matDialog.open).toHaveBeenCalledWith(ConfirmModalComponent, {data: {content: jasmine.stringMatching('Are you sure you want to clear')}});
-            expect(component.clear).toHaveBeenCalledWith(dataset);
-        }));
-        it('should execute a search on the records', function() {
-            component.searchText = 'test';
-            spyOn(component, 'setResults');
-            component.searchRecords();
-            expect(datasetStateStub.resetPagination).toHaveBeenCalledWith();
-            expect(datasetStateStub.paginationConfig.searchText).toEqual('test');
-            expect(component.setResults).toHaveBeenCalledWith();
-            expect(datasetStateStub.submittedSearch).toBeTrue();
-        });
+    it('should set the dataset results', fakeAsync(function () {
+      spyOn(component, 'setCachedOntologyTitles').and.returnValue(of(null));
+      spyOn(component, 'getIdentifiedOntologyIds').and.returnValue(['id']);
+      component.cachedOntologyTitles = { 'id': 'Ontology' };
+      datasetStateStub.setResults.and.returnValue(of([dataset]));
+      component.setResults();
+      tick();
+      expect(datasetStateStub.setResults).toHaveBeenCalledWith();
+      expect(component.setCachedOntologyTitles).toHaveBeenCalledWith([dataset]);
+      expect(component.results).toEqual([{
+        title: 'title',
+        description: 'description',
+        datasetIRI: 'datasetIRI',
+        modified: SHORT_DATE_STR,
+        repositoryId: 'repositoryId',
+        ontologies: ['Ontology'],
+        dataset
+      }]);
+    }));
+    describe('should clear a dataset', function () {
+      it('unless an error occurs', fakeAsync(function () {
+        datasetManagerStub.clearDatasetRecord.and.callFake(() => throwError('Error Message'));
+        component.clear(dataset);
+        tick();
+        expect(datasetManagerStub.clearDatasetRecord).toHaveBeenCalledWith(recordId);
+        expect(toastStub.createSuccessToast).not.toHaveBeenCalled();
+        expect(toastStub.createErrorToast).toHaveBeenCalledWith('Error Message');
+      }));
+      it('successfully', fakeAsync(function () {
+        datasetManagerStub.clearDatasetRecord.and.returnValue(of(null));
+        component.clear(dataset);
+        tick();
+        expect(datasetManagerStub.clearDatasetRecord).toHaveBeenCalledWith(recordId);
+        expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
+        expect(toastStub.createErrorToast).not.toHaveBeenCalled();
+      }));
     });
-    describe('replaces the element with the correct html', function() {
-        beforeEach(function() {
-            datasetStateStub.setResults.and.callFake(() => of([]));
-            spyOn(component, 'setCachedOntologyTitles').and.callFake(() => of(null));
-        });
-        it('for wrapping containers', function() {
-            expect(element.queryAll(By.css('.datasets-list')).length).toEqual(1);
-        });
-        ['search-bar', 'mat-paginator', 'button.new-button'].forEach(test => {
-            it('with a ' + test, function() {
-                expect(element.queryAll(By.css(test)).length).toBe(1);
-            });
-        });
-        it('depending on how many datasets there are', function() {
-            fixture.detectChanges();
-            expect(element.queryAll(By.css('.results-list info-message')).length).toBe(1);
-            expect(element.queryAll(By.css('.results-list .dataset')).length).toBe(0);
-            expect(element.queryAll(By.css('.results-list .menu-button')).length).toBe(0);
+    it('should show the newDatasetOverlay', fakeAsync(function () {
+      spyOn(component, 'setResults');
+      component.showNew();
+      tick();
+      expect(matDialog.open).toHaveBeenCalledWith(NewDatasetOverlayComponent);
+      expect(component.setResults).toHaveBeenCalledWith();
+    }));
+    it('should show the editDatasetOverlay', fakeAsync(function () {
+      spyOn(component, 'setResults');
+      component.showEdit(dataset);
+      tick();
+      expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({
+        resourceId: dataset.record['@id'],
+        actionId: `${POLICY}Update`
+      });
+      expect(datasetStateStub.selectedDataset).toEqual(dataset);
+      expect(matDialog.open).toHaveBeenCalledWith(EditDatasetOverlayComponent);
+      expect(component.setResults).toHaveBeenCalledWith();
+    }));
+    it('should show the uploadDataOverlay', fakeAsync(function () {
+      component.showUploadData(dataset);
+      tick();
+      expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({
+        resourceId: dataset.record['@id'],
+        actionId: `${CATALOG}Modify`
+      });
+      expect(datasetStateStub.selectedDataset).toEqual(dataset);
+      expect(matDialog.open).toHaveBeenCalledWith(UploadDataOverlayComponent);
+    }));
+    it('should confirm deleting a dataset', fakeAsync(function () {
+      spyOn(component, 'delete');
+      component.showDelete(dataset);
+      tick();
+      expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({
+        resourceId: dataset.record['@id'],
+        actionId: `${POLICY}Delete`
+      });
+      expect(matDialog.open).toHaveBeenCalledWith(ConfirmModalComponent, { data: { content: jasmine.stringMatching('Are you sure you want to delete') } });
+      expect(component.delete).toHaveBeenCalledWith(dataset);
+    }));
+    it('should confirm clearing a dataset', fakeAsync(function () {
+      spyOn(component, 'clear');
+      component.showClear(dataset);
+      tick();
+      expect(policyEnforcementStub.evaluateRequest).toHaveBeenCalledWith({
+        resourceId: dataset.record['@id'],
+        actionId: `${CATALOG}Modify`
+      });
+      expect(matDialog.open).toHaveBeenCalledWith(ConfirmModalComponent, { data: { content: jasmine.stringMatching('Are you sure you want to clear') } });
+      expect(component.clear).toHaveBeenCalledWith(dataset);
+    }));
+    it('should execute a search on the records', function () {
+      component.searchText = 'test';
+      spyOn(component, 'setResults');
+      component.searchRecords();
+      expect(datasetStateStub.resetPagination).toHaveBeenCalledWith();
+      expect(datasetStateStub.paginationConfig.searchText).toEqual('test');
+      expect(component.setResults).toHaveBeenCalledWith();
+      expect(datasetStateStub.submittedSearch).toBeTrue();
+    });
+  });
+  describe('replaces the element with the correct html', function () {
+    beforeEach(function () {
+      datasetStateStub.setResults.and.returnValue(of([]));
+      spyOn(component, 'setCachedOntologyTitles').and.returnValue(of(null));
+    });
+    it('for wrapping containers', function () {
+      expect(element.queryAll(By.css('.datasets-list')).length).toEqual(1);
+    });
+    ['search-bar', 'mat-paginator', 'button.new-button'].forEach(test => {
+      it('with a ' + test, function () {
+        expect(element.queryAll(By.css(test)).length).toBe(1);
+      });
+    });
+    it('depending on how many datasets there are', function () {
+      fixture.detectChanges();
+      expect(element.queryAll(By.css('.results-list info-message')).length).toBe(1);
+      expect(element.queryAll(By.css('.results-list .dataset')).length).toBe(0);
+      expect(element.queryAll(By.css('.results-list .menu-button')).length).toBe(0);
 
-            component.results = [displayItem];
-            fixture.detectChanges();
-            expect(element.queryAll(By.css('.results-list info-message')).length).toBe(0);
-            expect(element.queryAll(By.css('.results-list .dataset')).length).toBe(1);
-            expect(element.queryAll(By.css('.results-list .menu-button')).length).toBe(1);
-        });
-        it('depending on whether a search has been submitted', function() {
-            fixture.detectChanges();
-            expect(element.queryAll(By.css('.results-list info-message.no-results')).length).toBe(1);
-            expect(element.queryAll(By.css('.results-list info-message.no-match')).length).toBe(0);
+      component.results = [displayItem];
+      fixture.detectChanges();
+      expect(element.queryAll(By.css('.results-list info-message')).length).toBe(0);
+      expect(element.queryAll(By.css('.results-list .dataset')).length).toBe(1);
+      expect(element.queryAll(By.css('.results-list .menu-button')).length).toBe(1);
+    });
+    it('depending on whether a search has been submitted', function () {
+      fixture.detectChanges();
+      expect(element.queryAll(By.css('.results-list info-message.no-results')).length).toBe(1);
+      expect(element.queryAll(By.css('.results-list info-message.no-match')).length).toBe(0);
 
-            datasetStateStub.submittedSearch = true;
-            fixture.detectChanges();
-            expect(element.queryAll(By.css('.results-list info-message.no-results')).length).toBe(0);
-            expect(element.queryAll(By.css('.results-list info-message.no-match')).length).toBe(1);
-        });
-        describe('with button to create a new dataset', function() {
-            it('when user can create', function() {
-                const buttons = element.queryAll(By.css('.search-form button'));
-                expect(buttons.length).toEqual(1);
-                expect(buttons[0].nativeElement.disabled).toBeFalse();
-                expect(buttons[0].nativeElement.textContent.trim()).toEqual('New Dataset');
-            });
-            it('when user cannot create', function() {
-                component.canCreate = false;
-                fixture.detectChanges();
-                const buttons = element.queryAll(By.css('.search-form button'));
-                expect(buttons.length).toEqual(1);
-                expect(buttons[0].nativeElement.disabled).toBeTrue();
-                expect(buttons[0].nativeElement.textContent.trim()).toEqual('New Dataset');
-            });
-        });
+      datasetStateStub.submittedSearch = true;
+      fixture.detectChanges();
+      expect(element.queryAll(By.css('.results-list info-message.no-results')).length).toBe(0);
+      expect(element.queryAll(By.css('.results-list info-message.no-match')).length).toBe(1);
     });
-    it('should call showNew when the button is clicked', function() {
-        spyOn(component, 'showNew');
-        const button = element.queryAll(By.css('button.new-button'))[0];
-        button.triggerEventHandler('click', null);
-        expect(component.showNew).toHaveBeenCalledWith();
+    describe('with button to create a new dataset', function () {
+      it('when user can create', function () {
+        const buttons = element.queryAll(By.css('.search-form button'));
+        expect(buttons.length).toEqual(1);
+        expect(buttons[0].nativeElement.disabled).toBeFalse();
+        expect(buttons[0].nativeElement.textContent.trim()).toEqual('New Dataset');
+      });
+      it('when user cannot create', function () {
+        component.canCreate = false;
+        fixture.detectChanges();
+        const buttons = element.queryAll(By.css('.search-form button'));
+        expect(buttons.length).toEqual(1);
+        expect(buttons[0].nativeElement.disabled).toBeTrue();
+        expect(buttons[0].nativeElement.textContent.trim()).toEqual('New Dataset');
+      });
     });
-    describe('menu button', function() {
-        beforeEach(function() {
-            spyOn(component, 'setResults');
-            component.results = [displayItem];
-            fixture.detectChanges();
-            const menuButton = element.queryAll(By.css('button.menu-button'))[0];
-            menuButton.triggerEventHandler('click', null);
-        });
-        it('should call showUploadData', function() {
-            spyOn(component, 'showUploadData');
-            const button = element.queryAll(By.css('.mat-menu-panel button.upload-data'))[0];
-            button.triggerEventHandler('click', null);
-            expect(component.showUploadData).toHaveBeenCalledWith(dataset);
-        });
-        it('should call showDelete', function() {
-            spyOn(component, 'showDelete');
-            const button = element.queryAll(By.css('.mat-menu-panel button.delete-dataset'))[0];
-            button.triggerEventHandler('click', null);
-            expect(component.showDelete).toHaveBeenCalledWith(dataset);
-        });
-        it('should call showClear', function() {
-            spyOn(component, 'showClear');
-            const button = element.queryAll(By.css('.mat-menu-panel button.clear-dataset'))[0];
-            button.triggerEventHandler('click', null);
-            expect(component.showClear).toHaveBeenCalledWith(dataset);
-        });
-        it('should call showEdit', function() {
-            spyOn(component, 'showEdit');
-            const button = element.queryAll(By.css('.mat-menu-panel button.update-dataset'))[0];
-            button.triggerEventHandler('click', null);
-            expect(component.showEdit).toHaveBeenCalledWith(dataset);
-        });
+  });
+  it('should call showNew when the button is clicked', function () {
+    spyOn(component, 'showNew');
+    const button = element.queryAll(By.css('button.new-button'))[0];
+    button.triggerEventHandler('click', null);
+    expect(component.showNew).toHaveBeenCalledWith();
+  });
+  describe('menu button', function () {
+    beforeEach(function () {
+      spyOn(component, 'setResults');
+      component.results = [displayItem];
+      fixture.detectChanges();
+      const menuButton = element.queryAll(By.css('button.menu-button'))[0];
+      menuButton.triggerEventHandler('click', null);
     });
+    it('should call showUploadData', function () {
+      spyOn(component, 'showUploadData');
+      const button = element.queryAll(By.css('.mat-menu-panel button.upload-data'))[0];
+      button.triggerEventHandler('click', null);
+      expect(component.showUploadData).toHaveBeenCalledWith(dataset);
+    });
+    it('should call showDelete', function () {
+      spyOn(component, 'showDelete');
+      const button = element.queryAll(By.css('.mat-menu-panel button.delete-dataset'))[0];
+      button.triggerEventHandler('click', null);
+      expect(component.showDelete).toHaveBeenCalledWith(dataset);
+    });
+    it('should call showClear', function () {
+      spyOn(component, 'showClear');
+      const button = element.queryAll(By.css('.mat-menu-panel button.clear-dataset'))[0];
+      button.triggerEventHandler('click', null);
+      expect(component.showClear).toHaveBeenCalledWith(dataset);
+    });
+    it('should call showEdit', function () {
+      spyOn(component, 'showEdit');
+      const button = element.queryAll(By.css('.mat-menu-panel button.update-dataset'))[0];
+      button.triggerEventHandler('click', null);
+      expect(component.showEdit).toHaveBeenCalledWith(dataset);
+    });
+  });
 });

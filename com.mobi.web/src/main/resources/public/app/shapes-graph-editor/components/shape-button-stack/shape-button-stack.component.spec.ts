@@ -26,6 +26,7 @@ import { DebugElement, SimpleChange } from '@angular/core';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { MockComponent, MockProvider } from 'ng-mocks';
 
@@ -43,7 +44,8 @@ describe('Shape Button Stack component', function () {
     await TestBed.configureTestingModule({
       imports: [
         MatIconModule,
-        MatButtonModule
+        MatButtonModule,
+        MatTooltipModule
       ],
       declarations: [
         ShapeButtonStackComponent,
