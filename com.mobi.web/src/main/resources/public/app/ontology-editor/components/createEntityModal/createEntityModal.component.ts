@@ -23,66 +23,75 @@
 import { Component } from '@angular/core';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 
-import { OntologyStateService } from '../../../shared/services/ontologyState.service';
-import { CreateAnnotationPropertyOverlayComponent } from '../createAnnotationPropertyOverlay/createAnnotationPropertyOverlay.component';
+import { CreateAnnotationPropertyOverlayComponent }
+  from '../createAnnotationPropertyOverlay/createAnnotationPropertyOverlay.component';
 import { CreateClassOverlayComponent } from '../createClassOverlay/createClassOverlay.component';
 import { CreateConceptOverlayComponent } from '../createConceptOverlay/createConceptOverlay.component';
 import { CreateConceptSchemeOverlayComponent } from '../createConceptSchemeOverlay/createConceptSchemeOverlay.component';
 import { CreateDataPropertyOverlayComponent } from '../createDataPropertyOverlay/createDataPropertyOverlay.component';
 import { CreateIndividualOverlayComponent } from '../createIndividualOverlay/createIndividualOverlay.component';
-import { CreateObjectPropertyOverlayComponent } from '../createObjectPropertyOverlay/createObjectPropertyOverlay.component';
+import { CreateObjectPropertyOverlayComponent }
+  from '../createObjectPropertyOverlay/createObjectPropertyOverlay.component';
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 
 /**
- * @class ontology-editor.CreateEntityModalComponent
+ * @class CreateEntityModalComponent
  *
  * A component that creates content for a modal that provides buttons to create different types of entities in the
- * current {@link shared.OntologyStateService#listItem selected ontology}. The
- * options are {@link ontology-editor.CreateClassOverlayComponent classes},
- * {@link ontology-editor.CreateDataPropertyOverlayComponent data properties},
- * {@link ontology-editor.CreateObjectPropertyOverlayComponent object properties},
- * {@link ontology-editor.CreateAnnotationPropertyOverlayComponent annotations properties},
- * {@link ontology-editor.CreateIndividualOverlayComponent individuals}
- * {@link ontology-editor.CreateConceptOverlayComponent concepts} if ontology is a vocabulary, and
- * {@link ontology-editor.CreateConceptSchemeOverlayComponent concept schemes} if ontology is a
+ * current {@link OntologyStateService#listItem} selected ontology. The
+ * options are {@link CreateClassOverlayComponent} classes,
+ * {@link CreateDataPropertyOverlayComponent} data properties,
+ * {@link CreateObjectPropertyOverlayComponent} object properties,
+ * {@link CreateAnnotationPropertyOverlayComponent} annotation properties,
+ * {@link CreateIndividualOverlayComponent} individuals and,
+ * {@link CreateConceptOverlayComponent} concepts and
+ * {@link CreateConceptSchemeOverlayComponent} concept schemes if ontology is a
  * vocabulary. Meant to be used in conjunction with the `MatDialog` service.
  */
 @Component({
-    selector: 'create-entity-modal',
-    templateUrl: './createEntityModal.component.html',
-    styleUrls: ['./createEntityModal.component.scss']
+  selector: 'create-entity-modal',
+  templateUrl: './createEntityModal.component.html',
+  styleUrls: ['./createEntityModal.component.scss']
 })
 export class CreateEntityModalComponent {
 
-    constructor(private dialogRef: MatDialogRef<CreateEntityModalComponent>,
-        public os: OntologyStateService,
-        private dialog: MatDialog) {}
+  constructor(private dialogRef: MatDialogRef<CreateEntityModalComponent>,
+              public os: OntologyStateService,
+              private dialog: MatDialog) {
+  }
 
-    createClass(): void  {
-        this.dialogRef.close();
-        this.dialog.open(CreateClassOverlayComponent);
-    }
-    createDataProperty(): void  {
-        this.dialogRef.close();
-        this.dialog.open(CreateDataPropertyOverlayComponent); 
-    }
-    createObjectProperty(): void  {
-        this.dialogRef.close();
-        this.dialog.open(CreateObjectPropertyOverlayComponent); 
-    }
-    createAnnotationProperty(): void  {
-        this.dialogRef.close();
-        this.dialog.open(CreateAnnotationPropertyOverlayComponent); 
-    }
-    createIndividual(): void  {
-        this.dialogRef.close();
-        this.dialog.open(CreateIndividualOverlayComponent); 
-    }
-    createConcept(): void  {
-        this.dialogRef.close();
-        this.dialog.open(CreateConceptOverlayComponent);
-    }
-    createConceptScheme(): void  {
-        this.dialogRef.close();
-        this.dialog.open(CreateConceptSchemeOverlayComponent);
-    }
+  createClass(): void {
+    this.dialogRef.close();
+    this.dialog.open(CreateClassOverlayComponent);
+  }
+
+  createDataProperty(): void {
+    this.dialogRef.close();
+    this.dialog.open(CreateDataPropertyOverlayComponent);
+  }
+
+  createObjectProperty(): void {
+    this.dialogRef.close();
+    this.dialog.open(CreateObjectPropertyOverlayComponent);
+  }
+
+  createAnnotationProperty(): void {
+    this.dialogRef.close();
+    this.dialog.open(CreateAnnotationPropertyOverlayComponent);
+  }
+
+  createIndividual(): void {
+    this.dialogRef.close();
+    this.dialog.open(CreateIndividualOverlayComponent);
+  }
+
+  createConcept(): void {
+    this.dialogRef.close();
+    this.dialog.open(CreateConceptOverlayComponent);
+  }
+
+  createConceptScheme(): void {
+    this.dialogRef.close();
+    this.dialog.open(CreateConceptSchemeOverlayComponent);
+  }
 }

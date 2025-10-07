@@ -37,10 +37,10 @@ interface TabType {
 }
 
 /**
- * @class shared.SettingEditPageComponent
+ * @class SettingEditPageComponent
  *
- * A component that creates a Bootstrap `row` with a both a sidebar containing Setting Groups configured in the
- * application as well as another section displaying the various Setting forms contained within that Setting group.
+ * A component that creates a Bootstrap `row` with both a sidebar containing Setting Groups configured in the
+ * application and another section displaying the various Setting forms contained within that Setting group.
  */
 @Component({
     selector: 'setting-edit-page',

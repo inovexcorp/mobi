@@ -724,7 +724,7 @@ public class SettingRestTest extends MobiRestTestCXF {
         Response response = target().path("settings/types/" + encode(TestSimplePreference.TYPE))
                 .queryParam("type", Preference.TYPE)
                 .request().get();
-        assertEquals(400, response.getStatus());
+        assertEquals(404, response.getStatus());
     }
 
     @Test
@@ -768,7 +768,7 @@ public class SettingRestTest extends MobiRestTestCXF {
         Response response = target().path("settings/types/" + encode(TestSimpleApplicationSetting.TYPE))
                 .queryParam("type", ApplicationSetting.TYPE)
                 .request().get();
-        assertEquals(400, response.getStatus());
+        assertEquals(404, response.getStatus());
     }
 
     @Test

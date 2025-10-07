@@ -24,7 +24,7 @@
 import { Component, OnInit } from '@angular/core';
 import { UntypedFormBuilder, Validators } from '@angular/forms';
 import { MatDialogRef } from '@angular/material/dialog';
-import { unset, isEqual, map } from 'lodash';
+import { isEqual, map, unset } from 'lodash';
 
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { DCTERMS, OWL, RDFS } from '../../../prefixes';
@@ -35,102 +35,115 @@ import { splitIRI } from '../../../shared/pipes/splitIRI.pipe';
 import { JSONLDId } from '../../../shared/models/JSONLDId.interface';
 import { noWhitespaceValidator } from '../../../shared/validators/noWhitespace.validator';
 import { addLanguageToAnnotations } from '../../../shared/utility';
+import { SettingManagerService } from '../../../shared/services/settingManager.service';
 
 /**
- * @class ontology-editor.CreateClassOverlayComponent
+ * @class CreateClassOverlayComponent
  *
  * A component that creates content for a modal that creates a class in the current
- * {@link shared.OntologyStateService#listItem selected ontology}. The form in the modal contains a text input for the
- * class name (which populates the {@link ontology-editor.StaticIriComponent IRI}), a field for the class description,
- * an {@link ontology-editor.AdvancedLanguageSelectComponent}, and a {@link ontology-editor.SuperClassSelectComponent}.
+ * {@link OntologyStateService#listItem} selected ontology. The form in the modal contains a text input for the
+ * class name (which populates the {@link StaticIriComponent} IRI), a field for the class description,
+ * an {@link AdvancedLanguageSelectComponent}, and a {@link SuperClassSelectComponent}.
  * Meant to be used in conjunction with the `MatDialog` service.
  */
 @Component({
-    selector: 'create-class-overlay',
-    templateUrl: './createClassOverlay.component.html',
+  selector: 'create-class-overlay',
+  templateUrl: './createClassOverlay.component.html',
 })
 export class CreateClassOverlayComponent implements OnInit {
-    iriHasChanged = false;
-    duplicateCheck = true;
-    iriPattern = REGEX.IRI;
+  iriHasChanged = false;
+  duplicateCheck = true;
+  iriPattern = REGEX.IRI;
 
-    selectedClasses: JSONLDId[] = [];
-    
-    createForm = this.fb.group({
-        iri: ['', [Validators.required, Validators.pattern(this.iriPattern), this.os.getDuplicateValidator()]],
-        title: ['', [ Validators.required, noWhitespaceValidator()]],
-        description: [''],
-        language: ['']
+  selectedClasses: JSONLDId[] = [];
+
+  createForm = this.fb.group({
+    iri: ['', [Validators.required, Validators.pattern(this.iriPattern), this.os.getDuplicateValidator()]],
+    title: ['', [Validators.required, noWhitespaceValidator()]],
+    description: [''],
+    language: ['']
+  });
+
+  annotationType = DCTERMS;
+
+  constructor(private fb: UntypedFormBuilder,
+              private dialogRef: MatDialogRef<CreateClassOverlayComponent>,
+              public os: OntologyStateService,
+              public sm: SettingManagerService,
+              private camelCasePipe: CamelCasePipe) {}
+
+  ngOnInit(): void {
+    this.createForm.controls.iri.setValue(this.os.getDefaultPrefix());
+    this.createForm.controls.title.valueChanges.subscribe(newVal => this.nameChanged(newVal));
+
+    this.sm.getAnnotationPreference().subscribe(preference => {
+      this.annotationType = preference === 'DC Terms' ? DCTERMS : RDFS;
+    }, error => {
+      this.annotationType = DCTERMS;
+      console.error(error);
     });
+  }
 
-    constructor(private fb: UntypedFormBuilder,
-        private dialogRef: MatDialogRef<CreateClassOverlayComponent>, 
-        public os: OntologyStateService, 
-        private camelCasePipe: CamelCasePipe) {}
+  nameChanged(newName: string): void {
+    if (!this.iriHasChanged) {
+      const split = splitIRI(this.createForm.controls.iri.value);
+      this.createForm.controls.iri.setValue(split.begin + split.then + this.camelCasePipe.transform(newName, 'class'));
+    }
+  }
 
-    ngOnInit(): void {
-        this.createForm.controls.iri.setValue(this.os.getDefaultPrefix());
-        this.createForm.controls.title.valueChanges.subscribe(newVal => this.nameChanged(newVal));
-    }
-    nameChanged(newName: string): void {
-        if (!this.iriHasChanged) {
-            const split = splitIRI(this.createForm.controls.iri.value);
-            this.createForm.controls.iri.setValue(split.begin + split.then + this.camelCasePipe.transform(newName, 'class'));
-        }
-    }
-    onEdit(iriBegin: string, iriThen: string, iriEnd: string): void  {
-        this.iriHasChanged = true;
-        this.createForm.controls.iri.setValue(iriBegin + iriThen + iriEnd);
-        this.os.setCommonIriParts(iriBegin, iriThen);
-    }
-    get clazz(): JSONLDObject {
-        const clazz = {
-            '@id': this.createForm.controls.iri.value,
-            '@type': [`${OWL}Class`],
-            [`${DCTERMS}title`]: [{
-                '@value': this.createForm.controls.title.value
-            }],
-            [`${DCTERMS}description`]: [{
-                '@value': this.createForm.controls.description.value
-            }]
-        };
-        if (isEqual(clazz[`${DCTERMS}description`][0]['@value'], '')) {
-            unset(clazz, `${DCTERMS}description`);
-        }
-        if (this.selectedClasses.length) {
-            clazz[`${RDFS}subClassOf`] = this.selectedClasses;
-        }
-        addLanguageToAnnotations(clazz, this.createForm.controls.language.value);
-        return clazz;
-    }
-    create(): void  {
-        this.duplicateCheck = false;
-        const clazz = this.clazz;
-        // add the entity to the ontology
-        this.os.addEntity(clazz);
-        // update relevant lists
-        this.os.addToClassIRIs(this.os.listItem, clazz['@id']);
-        
-        if (clazz[`${RDFS}subClassOf`] && clazz[`${RDFS}subClassOf`].length) {
-            const superClassIds = map(clazz[`${RDFS}subClassOf`], '@id');
-            if (this.os.containsDerivedConcept(superClassIds)) {
-                this.os.listItem.derivedConcepts.push(clazz['@id']);
-            } else if (this.os.containsDerivedConceptScheme(superClassIds)) {
-                this.os.listItem.derivedConceptSchemes.push(clazz['@id']);
-            }
-            this.os.setSuperClasses(clazz['@id'], superClassIds);
-        } else {
-            this.os.listItem.classes.flat = this.os.flattenHierarchy(this.os.listItem.classes);
-        }
+  onEdit(iriBegin: string, iriThen: string, iriEnd: string): void {
+    this.iriHasChanged = true;
+    this.createForm.controls.iri.setValue(iriBegin + iriThen + iriEnd);
+    this.os.setCommonIriParts(iriBegin, iriThen);
+  }
 
-        this.os.listItem.flatEverythingTree = this.os.createFlatEverythingTree(this.os.listItem);
-        // Update InProgressCommit
-        this.os.addToAdditions(this.os.listItem.versionedRdfRecord.recordId, clazz);
-        // Save the changes to the ontology
-        this.os.saveCurrentChanges().subscribe(() => {
-            this.os.openSnackbar(clazz['@id']);
-        }, () => {});
-        // hide the overlay
-        this.dialogRef.close();
+  get clazz(): JSONLDObject {
+    const labelIRI = this.annotationType === DCTERMS ? `${this.annotationType}title` : `${this.annotationType}label`;
+    const descIRI = this.annotationType === DCTERMS ? `${this.annotationType}description` : `${this.annotationType}comment`;
+    const clazz = {
+      '@id': this.createForm.controls.iri.value,
+      '@type': [`${OWL}Class`],
+      [labelIRI]: [{ '@value': this.createForm.controls.title.value }],
+      [descIRI]: [{ '@value': this.createForm.controls.description.value }]
+    };
+    if (isEqual(clazz[descIRI][0]['@value'], '')) {
+      unset(clazz, descIRI);
     }
+    if (this.selectedClasses.length) {
+      clazz[`${RDFS}subClassOf`] = this.selectedClasses;
+    }
+    addLanguageToAnnotations(clazz, this.createForm.controls.language.value);
+    return clazz;
+  }
+
+  create(): void {
+    this.duplicateCheck = false;
+    const clazz = this.clazz;
+    // add the entity to the ontology
+    this.os.addEntity(clazz);
+    // update relevant lists
+    this.os.addToClassIRIs(this.os.listItem, clazz['@id']);
+
+    if (clazz[`${RDFS}subClassOf`] && clazz[`${RDFS}subClassOf`].length) {
+      const superClassIds = map(clazz[`${RDFS}subClassOf`], '@id');
+      if (this.os.containsDerivedConcept(superClassIds)) {
+        this.os.listItem.derivedConcepts.push(clazz['@id']);
+      } else if (this.os.containsDerivedConceptScheme(superClassIds)) {
+        this.os.listItem.derivedConceptSchemes.push(clazz['@id']);
+      }
+      this.os.setSuperClasses(clazz['@id'], superClassIds);
+    } else {
+      this.os.listItem.classes.flat = this.os.flattenHierarchy(this.os.listItem.classes);
+    }
+
+    this.os.listItem.flatEverythingTree = this.os.createFlatEverythingTree(this.os.listItem);
+    // Update InProgressCommit
+    this.os.addToAdditions(this.os.listItem.versionedRdfRecord.recordId, clazz);
+    // Save the changes to the ontology
+    this.os.saveCurrentChanges().subscribe(() => {
+      this.os.openSnackbar(clazz['@id']);
+    }, () => {});
+    // hide the overlay
+    this.dialogRef.close();
+  }
 }

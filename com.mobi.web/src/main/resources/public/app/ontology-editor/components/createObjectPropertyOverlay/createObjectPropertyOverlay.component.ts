@@ -21,9 +21,10 @@
  * #L%
  */
 import { Component, OnInit } from '@angular/core';
-import { UntypedFormBuilder, Validators } from '@angular/forms';
 import { MatDialogRef } from '@angular/material/dialog';
-import { unset, map } from 'lodash';
+import { UntypedFormBuilder, Validators } from '@angular/forms';
+
+import { map, unset } from 'lodash';
 
 import { addLanguageToAnnotations } from '../../../shared/utility';
 import { CamelCasePipe } from '../../../shared/pipes/camelCase.pipe';
@@ -34,154 +35,170 @@ import { noWhitespaceValidator } from '../../../shared/validators/noWhitespace.v
 import { OntologyStateService } from '../../../shared/services/ontologyState.service';
 import { REGEX } from '../../../constants';
 import { splitIRI } from '../../../shared/pipes/splitIRI.pipe';
+import { SettingManagerService } from '../../../shared/services/settingManager.service';
 
-interface CharacteristicI { 
-    typeIRI: string, 
-    displayText: string, 
+interface CharacteristicI {
+  typeIRI: string,
+  displayText: string,
 }
 
 /**
- * @class ontology-editor.CreateObjectPropertyOverlayComponent
+ * @class CreateObjectPropertyOverlayComponent
  *
  * A component that creates content for a modal that creates an object property in the current
- * {@link shared.OntologyStateService#listItem selected ontology}. The form in the modal contains a text input for the
- * property name (which populates the {@link ontology-editor.StaticIriComponent IRI}), a field for the property
- * description, {@link ontology-editor.AdvancedLanguageSelectComponent}, `mat-checkbox` elements for the property
- * characteristics, an {@link ontology-editor.IriSelectOntologyComponent} for the domain, an
- * {@link ontology-editor.IriSelectOntologyComponent} for the range, and a
- * {@link ontology-editor.SuperPropertySelectComponent}. Meant to be used in conjunction with the `MatDialog` service.
+ * {@link OntologyStateService#listItem} selected ontology. The form in the modal contains a text input for the
+ * property name (which populates the {@link StaticIriComponent} IRI), a field for the property
+ * description, {@link AdvancedLanguageSelectComponent}, `mat-checkbox` elements for the property
+ * characteristics, an {@link IriSelectOntologyComponent} for the domain, an
+ * {@link IriSelectOntologyComponent} for the range, and a
+ * {@link SuperPropertySelectComponent}. Meant to be used in conjunction with the `MatDialog` service.
  */
 @Component({
-    selector: 'create-object-property-overlay',
-    templateUrl: './createObjectPropertyOverlay.component.html'
+  selector: 'create-object-property-overlay',
+  templateUrl: './createObjectPropertyOverlay.component.html'
 })
 export class CreateObjectPropertyOverlayComponent implements OnInit {
-    characteristics: CharacteristicI[] = [
-        {
-            typeIRI: `${OWL}FunctionalProperty`,
-            displayText: 'Functional Property',
-        },
-        {
-            typeIRI: `${OWL}AsymmetricProperty`,
-            displayText: 'Asymmetric Property',
-        },
-        {
-            typeIRI: `${OWL}SymmetricProperty`,
-            displayText: 'Symmetric Property',
-        },
-        {
-            typeIRI: `${OWL}TransitiveProperty`,
-            displayText: 'Transitive Property',
-        },
-        {
-            typeIRI: `${OWL}ReflexiveProperty`,
-            displayText: 'Reflexive Property',
-        },
-        {
-            typeIRI: `${OWL}IrreflexiveProperty`,
-            displayText: 'Irreflexive Property',
-        }
-    ];
-    iriHasChanged = false;
-    duplicateCheck = true;
-    iriPattern = REGEX.IRI;
+  characteristics: CharacteristicI[] = [
+    {
+      typeIRI: `${OWL}FunctionalProperty`,
+      displayText: 'Functional Property',
+    },
+    {
+      typeIRI: `${OWL}AsymmetricProperty`,
+      displayText: 'Asymmetric Property',
+    },
+    {
+      typeIRI: `${OWL}SymmetricProperty`,
+      displayText: 'Symmetric Property',
+    },
+    {
+      typeIRI: `${OWL}TransitiveProperty`,
+      displayText: 'Transitive Property',
+    },
+    {
+      typeIRI: `${OWL}ReflexiveProperty`,
+      displayText: 'Reflexive Property',
+    },
+    {
+      typeIRI: `${OWL}IrreflexiveProperty`,
+      displayText: 'Irreflexive Property',
+    }
+  ];
+  iriHasChanged = false;
+  duplicateCheck = true;
+  iriPattern = REGEX.IRI;
 
-    classesIris: {[key: string]: string} = {};
-    selectedDomains: string[] = [];
-    selectedRanges: string[] = [];
-    selectedSubProperties: JSONLDId[] = [];
+  classesIris: { [key: string]: string } = {};
+  selectedDomains: string[] = [];
+  selectedRanges: string[] = [];
+  selectedSubProperties: JSONLDId[] = [];
 
-    createForm = this.fb.group({
-        iri: ['', [Validators.required, Validators.pattern(this.iriPattern), this.os.getDuplicateValidator()]],
-        name: ['', [ Validators.required, noWhitespaceValidator()]],
-        description: [''],
-        language: [''],
-        characteristics: this.fb.array(this.characteristics.map(() => false))
+  createForm = this.fb.group({
+    iri: ['', [Validators.required, Validators.pattern(this.iriPattern), this.os.getDuplicateValidator()]],
+    name: ['', [Validators.required, noWhitespaceValidator()]],
+    description: [''],
+    language: [''],
+    characteristics: this.fb.array(this.characteristics.map(() => false))
+  });
+
+  annotationType = DCTERMS;
+
+  constructor(private fb: UntypedFormBuilder,
+              private dialogRef: MatDialogRef<CreateObjectPropertyOverlayComponent>,
+              public sm: SettingManagerService,
+              public os: OntologyStateService,
+              private camelCasePipe: CamelCasePipe) {
+  }
+
+  ngOnInit(): void {
+    this.createForm.controls.iri.setValue(this.os.getDefaultPrefix());
+    this.createForm.controls.name.valueChanges.subscribe(newVal => this.nameChanged(newVal));
+    if (this.os.listItem?.classes?.iris) {
+      this.classesIris = this.os.listItem.classes.iris;
+    }
+
+    this.sm.getAnnotationPreference().subscribe(preference => {
+      this.annotationType = preference === 'DC Terms' ? DCTERMS : RDFS;
+    }, error => {
+      this.annotationType = DCTERMS;
+      console.error(error);
     });
-    
-    constructor(private fb: UntypedFormBuilder,
-        private dialogRef: MatDialogRef<CreateObjectPropertyOverlayComponent>, 
-        public os: OntologyStateService,
-        private camelCasePipe: CamelCasePipe) {}
+  }
 
-    ngOnInit(): void {
-        this.createForm.controls.iri.setValue(this.os.getDefaultPrefix());
-        this.createForm.controls.name.valueChanges.subscribe(newVal => this.nameChanged(newVal));
-        if (this.os.listItem?.classes?.iris) {
-            this.classesIris = this.os.listItem.classes.iris;
-        }
+  nameChanged(newName: string): void {
+    if (!this.iriHasChanged) {
+      const split = splitIRI(this.createForm.controls.iri.value);
+      this.createForm.controls.iri.setValue(split.begin + split.then + this.camelCasePipe.transform(newName, 'property'));
     }
-    nameChanged(newName: string): void {
-        if (!this.iriHasChanged) {
-            const split = splitIRI(this.createForm.controls.iri.value);
-            this.createForm.controls.iri.setValue(split.begin + split.then + this.camelCasePipe.transform(newName, 'property'));
-        }
+  }
+
+  onEdit(iriBegin: string, iriThen: string, iriEnd: string): void {
+    this.iriHasChanged = true;
+    this.createForm.controls.iri.setValue(iriBegin + iriThen + iriEnd);
+    this.os.setCommonIriParts(iriBegin, iriThen);
+  }
+
+  get property(): JSONLDObject {
+    const labelIRI = this.annotationType === DCTERMS ? `${this.annotationType}title` : `${this.annotationType}label`;
+    const descIRI = this.annotationType === DCTERMS ? `${this.annotationType}description` : `${this.annotationType}comment`;
+    const property = {
+      '@id': this.createForm.controls.iri.value,
+      '@type': [`${OWL}ObjectProperty`],
+      [labelIRI]: [{ '@value': this.createForm.controls.name.value }],
+      [descIRI]: [{ '@value': this.createForm.controls.description.value }]
+    };
+    if (property[descIRI][0]['@value'] === '') {
+      unset(property, descIRI);
     }
-    onEdit(iriBegin: string, iriThen: string, iriEnd: string): void  {
-        this.iriHasChanged = true;
-        this.createForm.controls.iri.setValue(iriBegin + iriThen + iriEnd);
-        this.os.setCommonIriParts(iriBegin, iriThen);
+    this.createForm.controls.characteristics.value.forEach((val, index) => {
+      if (val) {
+        property['@type'].push(this.characteristics[index].typeIRI);
+      }
+    });
+    addLanguageToAnnotations(property, this.createForm.controls.language.value);
+    if (this.selectedDomains.length) {
+      property[`${RDFS}domain`] = this.selectedDomains.map(iri => ({'@id': iri}));
     }
-    get property(): JSONLDObject {
-        const property = {
-            '@id': this.createForm.controls.iri.value,
-            '@type': [`${OWL}ObjectProperty`],
-            [`${DCTERMS}title`]: [{
-                '@value': this.createForm.controls.name.value
-            }],
-            [`${DCTERMS}description`]: [{
-                '@value': this.createForm.controls.description.value
-            }]
-        };
-        if (property[`${DCTERMS}description`][0]['@value'] === '') {
-            unset(property, `${DCTERMS}description`);
-        }
-        this.createForm.controls.characteristics.value.forEach((val, index) => {
-            if (val) {
-                property['@type'].push(this.characteristics[index].typeIRI);
-            }
-        });
-        addLanguageToAnnotations(property, this.createForm.controls.language.value);
-        if (this.selectedDomains.length) {
-            property[`${RDFS}domain`] = this.selectedDomains.map(iri => ({'@id': iri}));
-        }
-        if (this.selectedRanges.length) {
-            property[`${RDFS}range`] = this.selectedRanges.map(iri => ({'@id': iri}));
-        }
-        if (this.selectedSubProperties.length) {
-            property[`${RDFS}subPropertyOf`] = this.selectedSubProperties;
-        }
-        return property;
+    if (this.selectedRanges.length) {
+      property[`${RDFS}range`] = this.selectedRanges.map(iri => ({'@id': iri}));
     }
-    create(): void  {
-        this.duplicateCheck = false;
-        const property = this.property;
-        this.os.updatePropertyIcon(property);
-        this.os.handleNewProperty(property);
-        // add the entity to the ontology
-        this.os.addEntity(property);
-        // update lists
-        this.updateLists(property);
-        this.os.listItem.flatEverythingTree = this.os.createFlatEverythingTree(this.os.listItem);
-        // Update InProgressCommit
-        this.os.addToAdditions(this.os.listItem.versionedRdfRecord.recordId, property);
-        // Save the changes to the ontology
-        this.os.saveCurrentChanges().subscribe(() => {
-            // Open snackbar
-            this.os.openSnackbar(property['@id']);
-        }, () => {});
-        // hide the overlay
-        this.dialogRef.close();
+    if (this.selectedSubProperties.length) {
+      property[`${RDFS}subPropertyOf`] = this.selectedSubProperties;
     }
-    updateLists(property: JSONLDObject): void  {
-        this.os.listItem.objectProperties.iris[property['@id']] = this.os.listItem.ontologyId;
-        if (this.selectedSubProperties.length) {
-            this.os.setSuperProperties(property['@id'], map(this.selectedSubProperties, '@id'), 'objectProperties');
-            if (this.os.containsDerivedSemanticRelation(map(this.selectedSubProperties, '@id'))) {
-                this.os.listItem.derivedSemanticRelations.push(property['@id']);
-            }
-        } else {
-            this.os.listItem.objectProperties.flat = this.os.flattenHierarchy(this.os.listItem.objectProperties);
-        }
+    return property;
+  }
+
+  create(): void {
+    this.duplicateCheck = false;
+    const property = this.property;
+    this.os.updatePropertyIcon(property);
+    this.os.handleNewProperty(property);
+    // add the entity to the ontology
+    this.os.addEntity(property);
+    // update lists
+    this.updateLists(property);
+    this.os.listItem.flatEverythingTree = this.os.createFlatEverythingTree(this.os.listItem);
+    // Update InProgressCommit
+    this.os.addToAdditions(this.os.listItem.versionedRdfRecord.recordId, property);
+    // Save the changes to the ontology
+    this.os.saveCurrentChanges().subscribe(() => {
+      // Open snackbar
+      this.os.openSnackbar(property['@id']);
+    }, () => {
+    });
+    // hide the overlay
+    this.dialogRef.close();
+  }
+
+  updateLists(property: JSONLDObject): void {
+    this.os.listItem.objectProperties.iris[property['@id']] = this.os.listItem.ontologyId;
+    if (this.selectedSubProperties.length) {
+      this.os.setSuperProperties(property['@id'], map(this.selectedSubProperties, '@id'), 'objectProperties');
+      if (this.os.containsDerivedSemanticRelation(map(this.selectedSubProperties, '@id'))) {
+        this.os.listItem.derivedSemanticRelations.push(property['@id']);
+      }
+    } else {
+      this.os.listItem.objectProperties.flat = this.os.flattenHierarchy(this.os.listItem.objectProperties);
     }
+  }
 }
