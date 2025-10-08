@@ -37,10 +37,11 @@ import { of } from 'rxjs';
 
 import { CamelCasePipe } from '../../../shared/pipes/camelCase.pipe';
 import { cleanStylesFromDOM } from '../../../../test/ts/Shared';
-import { DCTERMS, SH } from '../../../prefixes';
+import { DCTERMS, RDFS, SH } from '../../../prefixes';
 import { EXPLICIT_TARGETS, TARGET_CLASS } from '../../models/constants';
 import { FormState, ShaclTargetComponent } from '../shacl-target/shacl-target.component';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { SettingManagerService } from '../../../shared/services/settingManager.service';
 import { ShapesGraphListItem } from '../../../shared/models/shapesGraphListItem.class';
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
 import { StaticIriComponent } from '../../../shared/components/staticIri/staticIri.component';
@@ -55,6 +56,7 @@ describe('CreateNodeShapeModalComponent', () => {
   let camelCasePipe: CamelCasePipe;
   let matDialogRef: jasmine.SpyObj<MatDialogRef<CreateNodeShapeModalComponent>>;
   let stateServiceStub: jasmine.SpyObj<ShapesGraphStateService>;
+  let settingManagerStub: jasmine.SpyObj<SettingManagerService>;
 
   const defaultPrefix = 'http://example.com/shapes#';
   const versionedRdfRecord: VersionedRdfRecord = {
@@ -85,6 +87,7 @@ describe('CreateNodeShapeModalComponent', () => {
       providers: [
         FormBuilder,
         CamelCasePipe,
+        MockProvider(SettingManagerService),
         MockProvider(MatDialog),
         MockProvider(ShapesGraphStateService),
         { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close']) }
@@ -99,13 +102,14 @@ describe('CreateNodeShapeModalComponent', () => {
     stateServiceStub.listItem = new ShapesGraphListItem();
     stateServiceStub.listItem.versionedRdfRecord = versionedRdfRecord;
     camelCasePipe = TestBed.inject(CamelCasePipe);
+    settingManagerStub = TestBed.inject(SettingManagerService) as jasmine.SpyObj<SettingManagerService>;
+    settingManagerStub.getAnnotationPreference.and.returnValue(of('DC Terms'));
 
     fixture = TestBed.createComponent(CreateNodeShapeModalComponent);
     element = fixture.debugElement;
     component = fixture.componentInstance;
     component.canModify = true;
     component.isImported = false;
-    fixture.detectChanges();
   });
 
   afterEach(function () {
@@ -115,6 +119,7 @@ describe('CreateNodeShapeModalComponent', () => {
     fixture = null;
     matDialogRef = null;
     stateServiceStub = null;
+    settingManagerStub = null;
   });
 
   it('should create', () => {
@@ -123,16 +128,19 @@ describe('CreateNodeShapeModalComponent', () => {
 
   describe('component initialization', () => {
     it('should initialize the form with default values', () => {
+      fixture.detectChanges();
       expect(component.createForm).toBeDefined();
       expect(component.createForm.controls.title.value).toBe('');
       expect(component.createForm.controls.description.value).toBe('');
       expect(component.createForm.controls.isTargetValid.value).toBe(false);
     });
     it('should set the default IRI on init', () => {
+      fixture.detectChanges();
       expect(stateServiceStub.getDefaultPrefix).toHaveBeenCalledWith('', '');
       expect(component.createForm.controls.iri.value).toBe(defaultPrefix);
     });
     it('should initialize currentNodeShape on init', () => {
+      fixture.detectChanges();
       expect(component.currentNodeShape).toEqual({
         '@id': defaultPrefix,
         '@type': [`${SH}NodeShape`],
@@ -140,11 +148,23 @@ describe('CreateNodeShapeModalComponent', () => {
       });
     });
     it('should setup a subscription to title changes', fakeAsync(() => {
+      fixture.detectChanges();
       const updateSpy = spyOn(component, 'updateIriBasedOnTitle');
       component.createForm.controls.title.setValue('New Title');
       tick(200); // over the debounceTime
       expect(updateSpy).toHaveBeenCalledWith('New Title');
     }));
+    it('should initialize annotationType on init for DCTERMS', () => {
+      fixture.detectChanges();
+      expect(component.annotationType).toEqual(DCTERMS);
+      expect(settingManagerStub.getAnnotationPreference).toHaveBeenCalledWith();
+    });
+    it('should initialize annotationType on init for RDFS', () => {
+      settingManagerStub.getAnnotationPreference.and.returnValue(of('RDFS'));
+      fixture.detectChanges();
+      expect(component.annotationType).toEqual(RDFS);
+      expect(settingManagerStub.getAnnotationPreference).toHaveBeenCalledWith();
+    });
   });
   it('should complete the _destroySub$ subject on ngOnDestroy', () => {
     spyOn(component['_destroySub$'], 'next').and.callThrough();
@@ -157,45 +177,93 @@ describe('CreateNodeShapeModalComponent', () => {
   });
   describe('controller method', () => {
     describe('generateNodeShape', () => {
-      it('should generate a basic Node Shape', () => {
-        component.createForm.controls.iri.setValue('http://id.com#Shape1');
-        component.createForm.controls.title.setValue('Shape 1');
+      describe('when annotationType is DCTERMS', () => {
+        it('should generate a basic Node Shape', () => {
+          component.createForm.controls.iri.setValue('http://id.com#Shape1');
+          component.createForm.controls.title.setValue('Shape 1');
 
-        const nodeShape = component.generateNodeShape();
-        expect(nodeShape).toEqual({
-          '@id': 'http://id.com#Shape1',
-          '@type': [`${SH}NodeShape`],
-          [`${DCTERMS}title`]: [{ '@value': 'Shape 1' }]
+          const nodeShape = component.generateNodeShape();
+          expect(nodeShape).toEqual({
+            '@id': 'http://id.com#Shape1',
+            '@type': [`${SH}NodeShape`],
+            [`${DCTERMS}title`]: [{ '@value': 'Shape 1' }]
+          });
+        });
+        it('should include description if provided', () => {
+          component.createForm.controls.iri.setValue('http://id.com#Shape1');
+          component.createForm.controls.title.setValue('Shape 1');
+          component.createForm.controls.description.setValue('A test description.');
+
+          const nodeShape = component.generateNodeShape();
+
+          expect(nodeShape).toEqual({
+            '@id': 'http://id.com#Shape1',
+            '@type': [`${SH}NodeShape`],
+            [`${DCTERMS}title`]: [{ '@value': 'Shape 1' }],
+            [`${DCTERMS}description`]: [{ '@value': 'A test description.' }]
+          });
+        });
+        it('should merge with targetJsonLd if it exists', () => {
+          component.createForm.controls.iri.setValue('http://id.com#Shape1');
+          component.createForm.controls.title.setValue('Shape 1');
+          component.targetJsonLd = {
+            '@id': '', // Gets merged with value from form
+            [TARGET_CLASS]: [{ '@id': 'ex:MyClass' }]
+          };
+          const nodeShape = component.generateNodeShape();
+
+          expect(nodeShape).toEqual({
+            '@id': 'http://id.com#Shape1',
+            '@type': [`${SH}NodeShape`],
+            [`${DCTERMS}title`]: [{ '@value': 'Shape 1' }],
+            [TARGET_CLASS]: [{ '@id': 'ex:MyClass' }]
+          });
         });
       });
-      it('should include description if provided', () => {
-        component.createForm.controls.iri.setValue('http://id.com#Shape1');
-        component.createForm.controls.title.setValue('Shape 1');
-        component.createForm.controls.description.setValue('A test description.');
-
-        const nodeShape = component.generateNodeShape();
-
-        expect(nodeShape).toEqual({
-          '@id': 'http://id.com#Shape1',
-          '@type': [`${SH}NodeShape`],
-          [`${DCTERMS}title`]: [{ '@value': 'Shape 1' }],
-          [`${DCTERMS}description`]: [{ '@value': 'A test description.' }]
+      describe('when annotationType is RDFS', () => {
+        beforeEach(() => {
+          component.annotationType = RDFS;
         });
-      });
-      it('should merge with targetJsonLd if it exists', () => {
-        component.createForm.controls.iri.setValue('http://id.com#Shape1');
-        component.createForm.controls.title.setValue('Shape 1');
-        component.targetJsonLd = {
-          '@id': '', // Gets merged with value from form
-          [TARGET_CLASS]: [{ '@id': 'ex:MyClass' }]
-        };
-        const nodeShape = component.generateNodeShape();
+        it('should generate a basic Node Shape', () => {
+          component.createForm.controls.iri.setValue('http://id.com#Shape1');
+          component.createForm.controls.title.setValue('Shape 1');
 
-        expect(nodeShape).toEqual({
-          '@id': 'http://id.com#Shape1',
-          '@type': [`${SH}NodeShape`],
-          [`${DCTERMS}title`]: [{ '@value': 'Shape 1' }],
-          [TARGET_CLASS]: [{ '@id': 'ex:MyClass' }]
+          const nodeShape = component.generateNodeShape();
+          expect(nodeShape).toEqual({
+            '@id': 'http://id.com#Shape1',
+            '@type': [`${SH}NodeShape`],
+            [`${RDFS}label`]: [{ '@value': 'Shape 1' }]
+          });
+        });
+        it('should include description if provided', () => {
+          component.createForm.controls.iri.setValue('http://id.com#Shape1');
+          component.createForm.controls.title.setValue('Shape 1');
+          component.createForm.controls.description.setValue('A test description.');
+
+          const nodeShape = component.generateNodeShape();
+
+          expect(nodeShape).toEqual({
+            '@id': 'http://id.com#Shape1',
+            '@type': [`${SH}NodeShape`],
+            [`${RDFS}label`]: [{ '@value': 'Shape 1' }],
+            [`${RDFS}comment`]: [{ '@value': 'A test description.' }]
+          });
+        });
+        it('should merge with targetJsonLd if it exists', () => {
+          component.createForm.controls.iri.setValue('http://id.com#Shape1');
+          component.createForm.controls.title.setValue('Shape 1');
+          component.targetJsonLd = {
+            '@id': '', // Gets merged with value from form
+            [TARGET_CLASS]: [{ '@id': 'ex:MyClass' }]
+          };
+          const nodeShape = component.generateNodeShape();
+
+          expect(nodeShape).toEqual({
+            '@id': 'http://id.com#Shape1',
+            '@type': [`${SH}NodeShape`],
+            [`${RDFS}label`]: [{ '@value': 'Shape 1' }],
+            [TARGET_CLASS]: [{ '@id': 'ex:MyClass' }]
+          });
         });
       });
     });
@@ -233,6 +301,7 @@ describe('CreateNodeShapeModalComponent', () => {
     });
     describe('updateIriBasedOnTitle', () => {
       it('should update IRI based on title if user has not edited it', () => {
+        fixture.detectChanges();
         component.iriHasChanged = false;
         const newTitle = 'My Test Shape';
         const expectedIri = defaultPrefix + camelCasePipe.transform(newTitle, 'class');
@@ -429,6 +498,9 @@ describe('CreateNodeShapeModalComponent', () => {
     });
   });
   describe('contains the correct html and', () => {
+    beforeEach(() => {
+      fixture.detectChanges();
+    });
     it('should display the correct dialog title', () => {
       const titleElement = element.query(By.css('h1[mat-dialog-title]'));
       expect(titleElement.nativeElement.textContent).toBe('Create Node Shape');
