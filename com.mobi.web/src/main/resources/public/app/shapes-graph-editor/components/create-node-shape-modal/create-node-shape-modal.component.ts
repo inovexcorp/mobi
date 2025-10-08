@@ -29,11 +29,12 @@ import { Subject } from 'rxjs';
 import { union, unionBy } from 'lodash';
 
 import { CamelCasePipe } from '../../../shared/pipes/camelCase.pipe';
-import { DCTERMS, SH } from '../../../prefixes';
+import { DCTERMS, RDFS, SH } from '../../../prefixes';
 import { EXPLICIT_TARGETS } from '../../models/constants';
 import { FormState } from '../shacl-target/shacl-target.component';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { REGEX } from '../../../constants';
+import { SettingManagerService } from '../../../shared/services/settingManager.service';
 import { ShapesGraphStateService } from '../../../shared/services/shapesGraphState.service';
 import { splitIRI } from '../../../shared/pipes/splitIRI.pipe';
 import { VersionedRdfRecord } from '../../../shared/models/versionedRdfRecord.interface';
@@ -80,13 +81,15 @@ export class CreateNodeShapeModalComponent implements OnInit, OnDestroy {
   isImported = true;
   canModify = false;
   versionedRdfRecord: VersionedRdfRecord;
-  
+  annotationType = DCTERMS;
+
   private _destroySub$ = new Subject<void>();
 
   constructor(
     private _camelCasePipe: CamelCasePipe,
     private _fb: FormBuilder,
     private _dialogRef: MatDialogRef<CreateNodeShapeModalComponent>,
+    public sm: SettingManagerService,
     public stateService: ShapesGraphStateService
   ) {
     const validators = [
@@ -118,6 +121,12 @@ export class CreateNodeShapeModalComponent implements OnInit, OnDestroy {
       ).subscribe((newTitle: string) => {
         this.updateIriBasedOnTitle(newTitle);
       });
+    this.sm.getAnnotationPreference().subscribe(preference => {
+      this.annotationType = preference === 'DC Terms' ? DCTERMS : RDFS;
+    }, error => {
+      this.annotationType = DCTERMS;
+      console.error(error);
+    });
   }
 
   /**
@@ -160,13 +169,15 @@ export class CreateNodeShapeModalComponent implements OnInit, OnDestroy {
    */
   generateNodeShape(): JSONLDObject {
     const { iri, title, description } = this.createForm.value;
+    const labelIRI = this.annotationType === DCTERMS ? `${this.annotationType}title` : `${this.annotationType}label`;
+    const descIRI = this.annotationType === DCTERMS ? `${this.annotationType}description` : `${this.annotationType}comment`;
     const nodeShapeJsonLd: JSONLDObject = {
       '@id': iri,
       '@type': [`${SH}NodeShape`],
-      [`${DCTERMS}title`]: [{ '@value': title }]
+      [labelIRI]: [{ '@value': title }]
     };
     if (description) {
-      nodeShapeJsonLd[`${DCTERMS}description`] = [{ '@value': description }];
+      nodeShapeJsonLd[descIRI] = [{ '@value': description }];
     }
     if (this.targetJsonLd) {
       return this.mergeTargetJsonLd(nodeShapeJsonLd, this.targetJsonLd);
