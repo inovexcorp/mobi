@@ -21,11 +21,12 @@
  * #L%
  */
 import { fakeAsync, TestBed, tick } from '@angular/core/testing';
+
 import { cloneDeep, has, merge } from 'lodash';
 import { MockProvider } from 'ng-mocks';
 import { of, throwError } from 'rxjs';
 
-import { CATALOG, DATA, DCTERMS, DELIM, OWL, XSD } from '../../prefixes';
+import { CATALOG, DATA, DCTERMS, DELIM, OWL, RDFS, XSD } from '../../prefixes';
 import { CatalogManagerService } from './catalogManager.service';
 import { cleanStylesFromDOM, } from '../../../test/ts/Shared';
 import { DelimitedManagerService } from './delimitedManager.service';
@@ -33,6 +34,7 @@ import { Difference } from '../models/difference.class';
 import { getDctermsValue } from '../utility';
 import { IriList } from '../models/iriList.interface';
 import { JSONLDObject } from '../models/JSONLDObject.interface';
+import { MapperStateService } from './mapperState.service';
 import { Mapping } from '../models/mapping.class';
 import { MappingClass } from '../models/mappingClass.interface';
 import { MappingManagerService } from './mappingManager.service';
@@ -41,9 +43,9 @@ import { MappingProperty } from '../models/mappingProperty.interface';
 import { MappingRecord } from '../models/mappingRecord.interface';
 import { ONTOLOGY_STORE_TYPE } from '../../constants';
 import { OntologyManagerService } from './ontologyManager.service';
+import { SettingManagerService } from './settingManager.service';
 import { SparqlManagerService } from './sparqlManager.service';
 import { SPARQLSelectResults } from '../models/sparqlSelectResults.interface';
-import { MapperStateService } from './mapperState.service';
 
 describe('Mapper State service', function() {
   let service: MapperStateService;
@@ -52,6 +54,7 @@ describe('Mapper State service', function() {
   let delimitedManagerStub: jasmine.SpyObj<DelimitedManagerService>;
   let ontologyManagerStub: jasmine.SpyObj<OntologyManagerService>;
   let sparqlManagerStub: jasmine.SpyObj<SparqlManagerService>;
+  let settingManagerStub: jasmine.SpyObj<SettingManagerService>;
   let mappingStub: jasmine.SpyObj<Mapping>;
   
   const error = 'Error message';
@@ -89,14 +92,15 @@ describe('Mapper State service', function() {
   };
 
   beforeEach(async () => {
-    await TestBed.configureTestingModule({
+    TestBed.configureTestingModule({
       providers: [
         MapperStateService,
         MockProvider(CatalogManagerService),
         MockProvider(MappingManagerService),
         MockProvider(DelimitedManagerService),
         MockProvider(OntologyManagerService),
-        MockProvider(SparqlManagerService)
+        MockProvider(SparqlManagerService),
+        MockProvider(SettingManagerService)
       ]
     });
 
@@ -106,6 +110,7 @@ describe('Mapper State service', function() {
     delimitedManagerStub = TestBed.inject(DelimitedManagerService) as jasmine.SpyObj<DelimitedManagerService>;
     ontologyManagerStub = TestBed.inject(OntologyManagerService) as jasmine.SpyObj<OntologyManagerService>;
     sparqlManagerStub = TestBed.inject(SparqlManagerService) as jasmine.SpyObj<SparqlManagerService>;
+    settingManagerStub = TestBed.inject(SettingManagerService) as jasmine.SpyObj<SettingManagerService>;
 
     catalogManagerStub.localCatalog = { '@id': catalogId };
     mappingStub = jasmine.createSpyObj('Mapping', [
@@ -133,6 +138,8 @@ describe('Mapper State service', function() {
       difference: new Difference(),
       mapping: mappingStub
     };
+
+    settingManagerStub.getAnnotationPreference.and.returnValue(of('DC Terms'));
   });
 
   afterEach(function() {
@@ -144,6 +151,7 @@ describe('Mapper State service', function() {
     catalogManagerStub = null;
     mappingStub = null;
     sparqlManagerStub = null;
+    settingManagerStub = null;
   });
 
   it('should initialize important variables', function() {
@@ -273,7 +281,7 @@ describe('Mapper State service', function() {
         it('and createBranchCommit resolves', fakeAsync(function() {
           catalogManagerStub.createBranchCommit.and.returnValue(of(null));
           const add1 = { '@id': 'add1', [`${DCTERMS}title`]: [{ '@value': 'Class' }] };
-          const add2 = { '@id': 'add2', [`${DCTERMS}title`]: [{ '@value': 'Prop 1' }] };
+          const add2 = { '@id': 'add2', [`${RDFS}label`]: [{ '@value': 'Prop 1' }] };
           const add3 = { '@id': 'add3' };
           const del1 = { '@id': 'del1', [`${DCTERMS}title`]: [{ '@value': 'Prop 2' }] };
           service.selected.difference.additions = [add1, add2, add3];
@@ -369,7 +377,7 @@ describe('Mapper State service', function() {
       mappingStub.getAllClassMappings.and.returnValue([classMapping]);
       mappingStub.getAllDataMappings.and.returnValue([dataPropMapping]);
       mappingStub.getAllObjectMappings.and.returnValue([objPropMapping]);
-      await service.findIncompatibleMappings(mappingStub).subscribe(result => {
+      service.findIncompatibleMappings(mappingStub).subscribe(result => {
         expect(result).toEqual([]);
       }, () => fail('Observable should have succeeded'));
       expect(service.retrieveSpecificClasses).toHaveBeenCalledWith(ontInfo, [classId]);
@@ -385,7 +393,7 @@ describe('Mapper State service', function() {
       mappingStub.getAllClassMappings.and.returnValue([classMapping]);
       mappingStub.getAllDataMappings.and.returnValue([dataPropMapping]);
       mappingStub.getAllObjectMappings.and.returnValue([objPropMapping]);
-      await service.findIncompatibleMappings(mappingStub).subscribe(result => {
+      service.findIncompatibleMappings(mappingStub).subscribe(result => {
         expect(result).toEqual([]);
       }, () => fail('Observable should have succeeded'));
       expect(service.retrieveSpecificClasses).toHaveBeenCalledWith(ontInfo, [classId]);
@@ -398,7 +406,7 @@ describe('Mapper State service', function() {
     it('unless there are no class or property mappings', async function() {
       spyOn(service, 'retrieveSpecificClasses');
       spyOn(service, 'retrieveSpecificProps');
-      await service.findIncompatibleMappings(mappingStub).subscribe(result => {
+      service.findIncompatibleMappings(mappingStub).subscribe(result => {
         expect(result).toEqual([]);
       }, () => fail('Observable should have succeeded'));
       expect(service.retrieveSpecificClasses).not.toHaveBeenCalled();
@@ -417,7 +425,7 @@ describe('Mapper State service', function() {
       spyOn(service, 'retrieveSpecificClasses').and.returnValue(of([mappingClass, deprecatedClass]));
       spyOn(service, 'retrieveSpecificProps');
       mappingStub.getAllClassMappings.and.returnValue([classMapping, deprecatedClassMapping, missingClassMapping]);
-      await service.findIncompatibleMappings(mappingStub).subscribe(result => {
+      service.findIncompatibleMappings(mappingStub).subscribe(result => {
         expect(result).toEqual([deprecatedClassMapping, missingClassMapping]);
       }, () => fail('Observable should have succeeded'));
       expect(service.retrieveSpecificClasses).toHaveBeenCalledWith(ontInfo, [classId, deprecatedClass.iri, 'error']);
@@ -442,7 +450,7 @@ describe('Mapper State service', function() {
       mappingStub.getAllDataMappings.and.returnValue([dataPropMapping, supportedAnnMapping, switchedDataPropMapping, deprecatedPropMapping, missingPropMapping]);
       spyOn(service, 'retrieveSpecificClasses');
       spyOn(service, 'retrieveSpecificProps').and.returnValue(of([mappingProperty, deprecatedProperty, objProp]));
-      await service.findIncompatibleMappings(mappingStub).subscribe(result => {
+      service.findIncompatibleMappings(mappingStub).subscribe(result => {
         expect(result).toEqual([switchedDataPropMapping, deprecatedPropMapping, missingPropMapping]);
       }, () => fail('Observable should have succeeded'));
       expect(service.retrieveSpecificClasses).not.toHaveBeenCalled();
@@ -533,7 +541,7 @@ describe('Mapper State service', function() {
       mappingStub.getAllObjectMappings.and.returnValue([objPropMapping, switchedObjPropMapping, deprecatedPropMapping, missingPropMapping, removedRangePropMapping, noRangePropMapping, incomRangePropMapping]);
       spyOn(service, 'retrieveSpecificClasses').and.returnValue(of([mappingClass, removedRangeClass, noRangeClass, incomClass]));
       spyOn(service, 'retrieveSpecificProps').and.returnValue(of([mappingProperty, deprecatedProperty, objProp, removedRangeProperty, noRangeProperty, incomRangeProperty]));
-      await service.findIncompatibleMappings(mappingStub).subscribe(result => {
+      service.findIncompatibleMappings(mappingStub).subscribe(result => {
         expect(result).toEqual([incomClassMapping, switchedObjPropMapping, deprecatedPropMapping, missingPropMapping, removedRangePropMapping, incomRangePropMapping]);
       }, () => fail('Observable should have succeeded'));
       expect(service.retrieveSpecificClasses).toHaveBeenCalledWith(ontInfo, [classId, removedRangeClass.iri, noRangeClass.iri, incomClass.iri]);
@@ -557,12 +565,12 @@ describe('Mapper State service', function() {
     };
     const validProp: JSONLDObject = {
       '@id': 'valid',
-      [`${DCTERMS}title`]: [{ '@value': 'Title' }],
+      [`${RDFS}label`]: [{ '@value': 'Title' }],
       [`${DELIM}columnIndex`]: [{ '@value': '0' }]
     };
     const classMapping: JSONLDObject = {
       '@id': 'classMapping',
-      [`${DCTERMS}title`]: [{ '@value': 'Title' }]
+      [`${RDFS}label`]: [{ '@value': 'Title' }]
     };
     mappingStub.getAllDataMappings.and.returnValue([invalidProp, validProp]);
     mappingStub.findClassWithDataMapping.and.returnValue(classMapping);
@@ -806,25 +814,25 @@ describe('Mapper State service', function() {
       it('with a missing number', function() {
         const originalMappings = [{ '@id': 'original1' }, { '@id': 'original2' }];
         originalMappings[0][`${DCTERMS}title`] = [{ '@value': `${mappingClass.name} (1)` }];
-        originalMappings[1][`${DCTERMS}title`] = [{ '@value': `${mappingClass.name} (3)` }];
+        originalMappings[1][`${RDFS}label`] = [{ '@value': `${mappingClass.name} (3)` }];
         mappingStub.getClassMappingsByClassId.and.returnValue(originalMappings);
         expect(service.addClassMapping(mappingClass)).toEqual(newClassMapping);
         expect(mappingStub.getClassMappingsByClassId).toHaveBeenCalledWith(mappingClass.iri);
         expect(mappingStub.addClassMapping).toHaveBeenCalledWith(mappingClass.iri, `${DATA}${ontologyId}/classid/`);
         expect(originalMappings[0][`${DCTERMS}title`][0]['@value']).toEqual(`${mappingClass.name} (1)`);
-        expect(originalMappings[1][`${DCTERMS}title`][0]['@value']).toEqual(`${mappingClass.name} (3)`);
+        expect(originalMappings[1][`${RDFS}label`][0]['@value']).toEqual(`${mappingClass.name} (3)`);
         expect(service.changeProp).not.toHaveBeenCalled();
         expect(service.selected.difference.additions).toContain(newClassMapping);
       });
       it('with no missing numbers', function() {
         const originalMappings = [{ '@id': 'original1' }, { '@id': 'original2' }];
-        originalMappings[0][`${DCTERMS}title`] = [{ '@value': `${mappingClass.name} (1)` }];
+        originalMappings[0][`${RDFS}label`] = [{ '@value': `${mappingClass.name} (1)` }];
         originalMappings[1][`${DCTERMS}title`] = [{ '@value': `${mappingClass.name} (2)` }];
         mappingStub.getClassMappingsByClassId.and.returnValue(originalMappings);
         expect(service.addClassMapping(mappingClass)).toEqual(newClassMapping);
         expect(mappingStub.getClassMappingsByClassId).toHaveBeenCalledWith(mappingClass.iri);
         expect(mappingStub.addClassMapping).toHaveBeenCalledWith(mappingClass.iri, `${DATA}${ontologyId}/classid/`);
-        expect(originalMappings[0][`${DCTERMS}title`][0]['@value']).toEqual(`${mappingClass.name} (1)`);
+        expect(originalMappings[0][`${RDFS}label`][0]['@value']).toEqual(`${mappingClass.name} (1)`);
         expect(originalMappings[1][`${DCTERMS}title`][0]['@value']).toEqual(`${mappingClass.name} (2)`);
         expect(service.changeProp).not.toHaveBeenCalled();
         expect(service.selected.difference.additions).toContain(newClassMapping);
@@ -1100,7 +1108,7 @@ describe('Mapper State service', function() {
     it('unless an error occurs with getIris', async function() {
       ontologyManagerStub.getIris.and.returnValue(throwError(error));
       ontologyManagerStub.getImportedIris.and.returnValue(of([importedIRIs]));
-      await service.setIriMap().subscribe(() => fail('Observable should have failed'), result => {
+      service.setIriMap().subscribe(() => fail('Observable should have failed'), result => {
         expect(result).toEqual(error);
       });
       expect(mappingStub.getSourceOntologyInfo).toHaveBeenCalledWith();
@@ -1115,7 +1123,7 @@ describe('Mapper State service', function() {
       };
       mappingStub.getSourceOntologyInfo.and.returnValue(ontInfo);
       ontologyManagerStub.getImportedIris.and.returnValue(of([importedIRIs]));
-      await service.setIriMap().subscribe(() => fail('Observable should have failed'), result => {
+      service.setIriMap().subscribe(() => fail('Observable should have failed'), result => {
         expect(result).toEqual('SourceOntologyInfo recordId, branchId, and commitId are empty');
       });
       expect(mappingStub.getSourceOntologyInfo).toHaveBeenCalledWith();
@@ -1124,7 +1132,7 @@ describe('Mapper State service', function() {
     });
     it('unless an error occurs with getImportedIris', async function() {
       ontologyManagerStub.getImportedIris.and.returnValue(throwError(error));
-      await service.setIriMap().subscribe(() => fail('Observable should have failed'), result => {
+      service.setIriMap().subscribe(() => fail('Observable should have failed'), result => {
         expect(result).toEqual(error);
       });
       expect(mappingStub.getSourceOntologyInfo).toHaveBeenCalledWith();
@@ -1134,7 +1142,7 @@ describe('Mapper State service', function() {
     describe('successfully', function() {
       it('with imported IRIs', async function() {
         ontologyManagerStub.getImportedIris.and.returnValue(of([importedIRIs]));
-        await service.setIriMap().subscribe(() => {
+        service.setIriMap().subscribe(() => {
           expect(service.iriMap).toEqual({
             classes: {
               classA: ontologyId,
@@ -1164,7 +1172,7 @@ describe('Mapper State service', function() {
       });
       it('without imported IRIs', async function() {
         ontologyManagerStub.getImportedIris.and.returnValue(of(null));
-        await service.setIriMap().subscribe(() => {
+        service.setIriMap().subscribe(() => {
           expect(service.iriMap).toEqual({
             classes: {
               classA: ontologyId,
@@ -1193,7 +1201,7 @@ describe('Mapper State service', function() {
   describe('should get the list of classes from the imports closure of a source ontology', function() {
     it('unless an error occurs', async function() {
       sparqlManagerStub.postQuery.and.returnValue(throwError(error));
-      await service.retrieveClasses(ontInfo, 'custom search')
+      service.retrieveClasses(ontInfo, 'custom search')
         .subscribe(() => fail('Observable should have failed'), response => {
           expect(response).toEqual(error);
         });
@@ -1220,7 +1228,7 @@ describe('Mapper State service', function() {
         }
       };
       sparqlManagerStub.postQuery.and.returnValue(of(results));
-      await service.retrieveClasses(ontInfo, 'custom search').subscribe(result => {
+      service.retrieveClasses(ontInfo, 'custom search').subscribe(result => {
         expect(result.length).toEqual(2);
         expect(result).toContain({
           iri: 'class1',
@@ -1242,7 +1250,7 @@ describe('Mapper State service', function() {
   describe('should retrieve specific classes from the imports closure of the selected Mapping', function() {
     it('unless an error occurs', async function() {
       sparqlManagerStub.postQuery.and.returnValue(throwError(error));
-      await service.retrieveSpecificClasses(ontInfo, [mappingClass.iri]).subscribe(() => fail('Observable should have failed'), result => {
+      service.retrieveSpecificClasses(ontInfo, [mappingClass.iri]).subscribe(() => fail('Observable should have failed'), result => {
         expect(result).toEqual(error);
       });
       expect(sparqlManagerStub.postQuery).toHaveBeenCalledWith(jasmine.stringContaining(mappingClass.iri),
@@ -1250,7 +1258,7 @@ describe('Mapper State service', function() {
     });
     it('unless no classes are found', async function() {
       sparqlManagerStub.postQuery.and.returnValue(of(null));
-      await service.retrieveSpecificClasses(ontInfo, [mappingClass.iri]).subscribe(result => {
+      service.retrieveSpecificClasses(ontInfo, [mappingClass.iri]).subscribe(result => {
         expect(result).toEqual([]);
       }, () => fail('Observable should have succeeded'));
       expect(sparqlManagerStub.postQuery).toHaveBeenCalledWith(jasmine.stringContaining(mappingClass.iri),
@@ -1268,7 +1276,7 @@ describe('Mapper State service', function() {
         }
       };
       sparqlManagerStub.postQuery.and.returnValue(of(results));
-      await service.retrieveSpecificClasses(ontInfo, [mappingClass.iri]).subscribe(result => {
+      service.retrieveSpecificClasses(ontInfo, [mappingClass.iri]).subscribe(result => {
         expect(result).toEqual([mappingClass]);
       }, () => fail('Observable should have succeeded'));
       expect(sparqlManagerStub.postQuery).toHaveBeenCalledWith(jasmine.stringContaining(mappingClass.iri),
@@ -1300,7 +1308,7 @@ describe('Mapper State service', function() {
         }
       };
       sparqlManagerStub.postQuery.and.returnValue(of(results));
-      await service.retrieveSpecificClasses(ontInfo, [mappingClass.iri, otherMappingClass.iri]).subscribe(result => {
+      service.retrieveSpecificClasses(ontInfo, [mappingClass.iri, otherMappingClass.iri]).subscribe(result => {
         expect(result).toEqual([mappingClass, otherMappingClass]);
       }, () => fail('Observable should have succeeded'));
       expect(sparqlManagerStub.postQuery).toHaveBeenCalledWith(jasmine.stringContaining(`<${mappingClass.iri}> <${otherMappingClass.iri}>`),
@@ -1310,7 +1318,7 @@ describe('Mapper State service', function() {
   describe('should get the list of properties for a class from the imports closure of a source ontology', function() {
     it('unless an error occurs', async function() {
       sparqlManagerStub.postQuery.and.returnValue(throwError(error));
-      await service.retrieveProps(ontInfo, classId, 'custom search')
+      service.retrieveProps(ontInfo, classId, 'custom search')
         .subscribe(() => fail('Observable should have failed'), response => {
           expect(response).toEqual(error);
         });
@@ -1340,7 +1348,7 @@ describe('Mapper State service', function() {
         }
       };
       sparqlManagerStub.postQuery.and.returnValue(of(results));
-      await service.retrieveProps(ontInfo, classId, 'custom search').subscribe(result => {
+      service.retrieveProps(ontInfo, classId, 'custom search').subscribe(result => {
         expect(result.length).toEqual(2);
         expect(result).toContain({
           iri: 'prop1',
@@ -1366,7 +1374,10 @@ describe('Mapper State service', function() {
   describe('should retrieve specific properties from the imports closure of the selected Mapping', function() {
     it('unless an error occurs', async function() {
       sparqlManagerStub.postQuery.and.returnValue(throwError(error));
-      await service.retrieveSpecificProps(ontInfo, [{ iri: mappingProperty.iri, type: mappingProperty.type }]).subscribe(() => fail('Observable should have failed'), result => {
+      service.retrieveSpecificProps(ontInfo, [{
+        iri: mappingProperty.iri,
+        type: mappingProperty.type
+      }]).subscribe(() => fail('Observable should have failed'), result => {
         expect(result).toEqual(error);
       });
       expect(sparqlManagerStub.postQuery).toHaveBeenCalledWith(jasmine.stringContaining(mappingProperty.iri),
@@ -1374,7 +1385,10 @@ describe('Mapper State service', function() {
     });
     it('unless no properties are found', async function() {
       sparqlManagerStub.postQuery.and.returnValue(of(null));
-      await service.retrieveSpecificProps(ontInfo, [{ iri: mappingProperty.iri, type: mappingProperty.type }]).subscribe(result => {
+      service.retrieveSpecificProps(ontInfo, [{
+        iri: mappingProperty.iri,
+        type: mappingProperty.type
+      }]).subscribe(result => {
         expect(result).toEqual([]);
       }, () => fail('Observable should have succeeded'));
       expect(sparqlManagerStub.postQuery).toHaveBeenCalledWith(jasmine.stringContaining(mappingProperty.iri),
@@ -1393,7 +1407,10 @@ describe('Mapper State service', function() {
         }
       };
       sparqlManagerStub.postQuery.and.returnValue(of(results));
-      await service.retrieveSpecificProps(ontInfo, [{ iri: mappingProperty.iri, type: mappingProperty.type }]).subscribe(result => {
+      service.retrieveSpecificProps(ontInfo, [{
+        iri: mappingProperty.iri,
+        type: mappingProperty.type
+      }]).subscribe(result => {
         expect(result).toEqual([mappingProperty]);
       }, () => fail('Observable should have succeeded'));
       expect(sparqlManagerStub.postQuery).toHaveBeenCalledWith(jasmine.stringContaining(mappingProperty.iri),
@@ -1430,7 +1447,10 @@ describe('Mapper State service', function() {
         }
       };
       sparqlManagerStub.postQuery.and.returnValue(of(results));
-      await service.retrieveSpecificProps(ontInfo, [{ iri: mappingProperty.iri, type: mappingProperty.type }, { iri: otherMappingProperty.iri, type: otherMappingProperty.type }]).subscribe(result => {
+      service.retrieveSpecificProps(ontInfo, [{
+        iri: mappingProperty.iri,
+        type: mappingProperty.type
+      }, {iri: otherMappingProperty.iri, type: otherMappingProperty.type}]).subscribe(result => {
         expect(result).toEqual([mappingProperty, otherMappingProperty]);
       }, () => fail('Observable should have succeeded'));
       expect(sparqlManagerStub.postQuery).toHaveBeenCalledWith(jasmine.stringContaining(`(<${mappingProperty.iri}> <${mappingProperty.type}>) (<${otherMappingProperty.iri}> <${otherMappingProperty.type}>)`),

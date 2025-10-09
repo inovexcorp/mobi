@@ -26,7 +26,7 @@ import { PageEvent } from '@angular/material/paginator';
 import { MatDialog } from '@angular/material/dialog';
 import { get } from 'lodash';
 import { Observable, of } from 'rxjs';
-import { finalize, switchMap, map } from 'rxjs/operators';
+import { finalize, map, switchMap } from 'rxjs/operators';
 
 import { CATALOG, DELIM, POLICY, RDF } from '../../../prefixes';
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
@@ -48,252 +48,266 @@ import { IncompatibleWarningModalComponent } from '../incompatible-warning-modal
 import { XACMLRequest } from '../../../shared/models/XACMLRequest.interface';
 
 /**
- * @class mapper.MappingSelectPageComponent
- * 
+ * @class MappingSelectPageComponent
+ *
  * A component that creates a searchable, paginated list of mapping records. Contains a
- * {@link shared.SearchBarComponent} and a `mat-paginator` for handling the list. Each mapping is displayed with its
+ * {@link SearchBarComponent} and a `mat-paginator` for handling the list. Each mapping is displayed with its
  * title, last modified date, and description and has a menu of actions including editing, running,
  * duplicating, and downloading the mapping. The component also contains a button to create a new mapping.
  */
 @Component({
-    selector: 'mapping-select-page',
-    templateUrl: './mappingSelectPage.component.html'
+  selector: 'mapping-select-page',
+  templateUrl: './mappingSelectPage.component.html'
 })
 export class MappingSelectPageComponent implements OnInit {
-    results: MappingRecord[] = [];
-    searchText = '';
-    submittedSearch = false;
-    canCreate = false;
+  results: MappingRecord[] = [];
+  searchText = '';
+  submittedSearch = false;
+  canCreate = false;
 
-    @ViewChild('mappingList', { static: true }) mappingList: ElementRef;
+  @ViewChild('mappingList', {static: true}) mappingList: ElementRef;
 
-    constructor(public state: MapperStateService, private mm: MappingManagerService, private cm: CatalogManagerService,
-        private dialog: MatDialog, private spinnerSvc: ProgressSpinnerService, private pep: PolicyEnforcementService,
-        private toast: ToastService) {}
-    
-    ngOnInit(): void {
-        this.searchText = this.state.paginationConfig.searchText;
-        this.setResults();
-        this.submittedSearch = !!this.searchText;
-        this._checkCreatePermission();
-    }
-    searchRecords(): void {
-        this.state.resetPagination();
-        this.state.paginationConfig.searchText = this.searchText;
-        this.setResults();
-        this.submittedSearch = !!this.searchText;
-    }
-    getPage(pageEvent: PageEvent): void {
-        this.state.paginationConfig.pageIndex = pageEvent.pageIndex;
-        this.setResults();
-    }
-    setResults(): void {
-        const catalogId = get(this.cm.localCatalog, '@id', '');
-        this.spinnerSvc.startLoadingForComponent(this.mappingList);
-        this.cm.getRecords(catalogId, this.state.paginationConfig, true)
-            .pipe(finalize(() => {
-                this.spinnerSvc.finishLoadingForComponent(this.mappingList);
-            }))
-            .subscribe((response: HttpResponse<JSONLDObject[]>) => {
-                this.results = response.body.map(record => ({
-                    id: record['@id'],
-                    title: getDctermsValue(record, 'title'),
-                    description: getDctermsValue(record, 'description'),
-                    keywords: get(record, `['${CATALOG}keyword']`, []).map(val => val['@value']),
-                    modified: getDate(getDctermsValue(record, 'modified'), 'short'),
-                    branch: getPropertyId(record, `${CATALOG}masterBranch`)
-                }));
-                this.state.totalSize = Number(response.headers.get('x-total-count')) || 0;
-            }, error => this.toast.createErrorToast(error));
-    }
-    view(mappingRecord: MappingRecord): void {
-        this.state.getMappingState(mappingRecord)
-            .subscribe((mappingState: MappingState) => {
-                this.dialog.open(ViewMappingModalComponent, {
-                    data: {
-                        state: mappingState
-                    }
-                });
-            }, error => this.toast.createErrorToast(error));
-    }
-    run(mappingRecord: MappingRecord): void {
-        this.setStateIfCompatible(mappingRecord)
-            .subscribe( (nextStep: string) => {
-                if (nextStep === 'default') {
-                    this.state.highlightIndexes = this.state.getMappedColumns();
-                    this.state.step = this.state.fileUploadStep;
-                } else if (nextStep === 'edit') {
-                    this.state.setIriMap().subscribe(() => {
-                        this.state.editMapping = true;
-                        this.state.step = this.state.fileUploadStep;
-                    });
-                }
-            }, error => error ? this.toast.createErrorToast(error) : undefined);
-    }
-    edit(mappingRecord: MappingRecord): void {
-        const request = {
-            resourceId: mappingRecord.id,
-            actionId: `${CATALOG}Modify`,
-            actionAttrs: {
-                [`${CATALOG}branch`]: mappingRecord.branch
-            }
-        };
-        this.pep.evaluateRequest(request)
-            .subscribe(response => {
-                const hasPermission = response !== this.pep.deny;
-                if (hasPermission) {
-                    this.setStateIfCompatible(mappingRecord).pipe(
-                        switchMap((nextStep:string) => {
-                            if (nextStep === 'edit' || nextStep === 'default') {
-                                return this.state.setIriMap();
-                            }
-                        })
-                    ).subscribe(() => {
-                        this.state.editMapping = true;
-                        this.state.step = this.state.fileUploadStep;
-                    }, error => error ? this.toast.createErrorToast(error) : undefined);
-                } else {
-                    this.toast.createErrorToast('You do not have permission to create mappings');
-                }
-            }, () => {
-                this.toast.createErrorToast('Could not retrieve record permissions');
-            });
-    }
-    showNew(): void {
-        const request = {
-            resourceId: get(this.cm.localCatalog, '@id', ''),
-            actionId: `${POLICY}Create`,
-            actionAttrs: {
-                [`${RDF}type`]: `${DELIM}MappingRecord`
-            }
-        };
-        this.pep.evaluateRequest(request)
-            .subscribe(response => {
-                const hasPermission = response !== this.pep.deny;
-                if (hasPermission) {
-                    this.state.startCreateMapping();
-                    this.state.selected = {
-                        mapping: undefined,
-                        difference: new Difference()
-                    };
-                    this.dialog.open(CreateMappingOverlayComponent);
-                } else {
-                    this.toast.createErrorToast('You do not have permission to create mappings');
-                }
-            }, () => {
-                this.toast.createErrorToast('Could not retrieve record permissions');
-            });
-    }
-    confirmDeleteMapping(mappingRecord: MappingRecord): void {
-        const request = {
-            resourceId: mappingRecord.id,
-            actionId: `${POLICY}Delete`
-        };
-        this.pep.evaluateRequest(request)
-            .subscribe(response => {
-                const hasPermission = response !== this.pep.deny;
-                if (hasPermission) {
-                    this.dialog.open(ConfirmModalComponent, {
-                        data: {
-                            content: `Are you sure you want to delete <strong>${mappingRecord.title}</strong>?`
-                        }
-                    }).afterClosed().subscribe((result: boolean) => {
-                        if (result) {
-                            this.deleteMapping(mappingRecord);
-                        }
-                    });
-                } else {
-                    this.toast.createErrorToast('You do not have permission to delete this mapping');
-                }
-            }, () => {
-                this.toast.createErrorToast('Could not retrieve record permissions');
-            });
-    }
-    download(mappingRecord: MappingRecord): void {
-        this.dialog.open(DownloadMappingOverlayComponent, {
-            data: {
-                record: mappingRecord
-            }
+  constructor(public state: MapperStateService, private mm: MappingManagerService, private cm: CatalogManagerService,
+              private dialog: MatDialog, private spinnerSvc: ProgressSpinnerService, private pep: PolicyEnforcementService,
+              private toast: ToastService) {
+  }
+
+  ngOnInit(): void {
+    this.searchText = this.state.paginationConfig.searchText;
+    this.setResults();
+    this.submittedSearch = !!this.searchText;
+    this._checkCreatePermission();
+  }
+
+  searchRecords(): void {
+    this.state.resetPagination();
+    this.state.paginationConfig.searchText = this.searchText;
+    this.setResults();
+    this.submittedSearch = !!this.searchText;
+  }
+
+  getPage(pageEvent: PageEvent): void {
+    this.state.paginationConfig.pageIndex = pageEvent.pageIndex;
+    this.setResults();
+  }
+
+  setResults(): void {
+    const catalogId = get(this.cm.localCatalog, '@id', '');
+    this.spinnerSvc.startLoadingForComponent(this.mappingList);
+    this.cm.getRecords(catalogId, this.state.paginationConfig, true)
+      .pipe(finalize(() => {
+        this.spinnerSvc.finishLoadingForComponent(this.mappingList);
+      }))
+      .subscribe((response: HttpResponse<JSONLDObject[]>) => {
+        this.results = response.body.map(record => ({
+          id: record['@id'],
+          title: getDctermsValue(record, 'title'),
+          description: getDctermsValue(record, 'description'),
+          keywords: get(record, `['${CATALOG}keyword']`, []).map(val => val['@value']),
+          modified: getDate(getDctermsValue(record, 'modified'), 'short'),
+          branch: getPropertyId(record, `${CATALOG}masterBranch`)
+        }));
+        this.state.totalSize = Number(response.headers.get('x-total-count')) || 0;
+      }, error => this.toast.createErrorToast(error));
+  }
+
+  view(mappingRecord: MappingRecord): void {
+    this.state.getMappingState(mappingRecord)
+      .subscribe((mappingState: MappingState) => {
+        this.dialog.open(ViewMappingModalComponent, {
+          data: {
+            state: mappingState
+          }
         });
-    }
-    duplicate(mappingRecord: MappingRecord): void {
-        const request = {
-            resourceId: get(this.cm.localCatalog, '@id', ''),
-            actionId: `${POLICY}Create`,
-            actionAttrs: {
-                [`${RDF}type`]: `${DELIM}MappingRecord`
-            }
-        };
-        this.pep.evaluateRequest(request)
-            .subscribe(response => {
-                const hasPermission = response !== this.pep.deny;
-                if (hasPermission) {
-                    this.setStateIfCompatible(mappingRecord).pipe(
-                        switchMap((nextStep: string) => {
-                            return this.state.setIriMap().pipe(
-                                map(() => {
-                                    return nextStep;
-                                })
-                            );
-                        })
-                    ).subscribe((step:string) => {
-                        if (step === 'default') {
-                            this.state.startCreateMapping();
-                            this.dialog.open(CreateMappingOverlayComponent);
-                        } else if (step === 'edit') {
-                            this.state.editMapping = true;
-                            this.state.step = this.state.fileUploadStep;
-                        }
-                    }, error => error ? this.toast.createErrorToast(error) : undefined);
-                } else {
-                    this.toast.createErrorToast('You do not have permission to create mappings');
-                }
-            }, () => {
-                this.toast.createErrorToast('Could not retrieve record permissions');
-            });
-    }
-    deleteMapping(mappingRecord: MappingRecord): void {
-        this.mm.deleteMapping(mappingRecord.id)
-            .subscribe(() => {
-                this.state.resetPagination();
-                this.setResults();
-            }, error => this.toast.createErrorToast(error));
-    }
-    setStateIfCompatible(mappingRecord: MappingRecord): Observable<string> {
-        let mapState = undefined;
-        return this.state.getMappingState(mappingRecord).pipe(
-            switchMap((mappingState: MappingState) => {
-                mapState = mappingState;
-                return this.state.findIncompatibleMappings(mappingState.mapping);
-            }),
-            switchMap(incomMappings => {
-                this.state.selected = mapState;
-                if (incomMappings.length) {
-                    return this.dialog.open(IncompatibleWarningModalComponent, {
-                        data: {
-                            mappingRecord,
-                            incomMappings
-                        }
-                    }).afterClosed();
-                } else {
-                    return of('default');
-                }
+      }, error => this.toast.createErrorToast(error));
+  }
+
+  run(mappingRecord: MappingRecord): void {
+    this.setStateIfCompatible(mappingRecord)
+      .subscribe((nextStep: string) => {
+        if (nextStep === 'default') {
+          this.state.highlightIndexes = this.state.getMappedColumns();
+          this.state.step = this.state.fileUploadStep;
+        } else if (nextStep === 'edit') {
+          this.state.setIriMap().subscribe(() => {
+            this.state.editMapping = true;
+            this.state.step = this.state.fileUploadStep;
+          });
+        }
+      }, error => error ? this.toast.createErrorToast(error) : undefined);
+  }
+
+  edit(mappingRecord: MappingRecord): void {
+    const request = {
+      resourceId: mappingRecord.id,
+      actionId: `${CATALOG}Modify`,
+      actionAttrs: {
+        [`${CATALOG}branch`]: mappingRecord.branch
+      }
+    };
+    this.pep.evaluateRequest(request)
+      .subscribe(response => {
+        const hasPermission = response !== this.pep.deny;
+        if (hasPermission) {
+          this.setStateIfCompatible(mappingRecord).pipe(
+            switchMap((nextStep: string) => {
+              if (nextStep === 'edit' || nextStep === 'default') {
+                return this.state.setIriMap();
+              }
             })
-        );
-    }
-    private _checkCreatePermission(): void {
-        const request = {
-            resourceId: `http://mobi.com/catalog-local`,
-            actionId: `${POLICY}Create`,
-            actionAttrs: {
-                [RDF + 'type']: `${DELIM}MappingRecord`
+          ).subscribe(() => {
+            this.state.editMapping = true;
+            this.state.step = this.state.fileUploadStep;
+          }, error => error ? this.toast.createErrorToast(error) : undefined);
+        } else {
+          this.toast.createErrorToast('You do not have permission to create mappings');
+        }
+      }, () => {
+        this.toast.createErrorToast('Could not retrieve record permissions');
+      });
+  }
+
+  showNew(): void {
+    const request = {
+      resourceId: get(this.cm.localCatalog, '@id', ''),
+      actionId: `${POLICY}Create`,
+      actionAttrs: {
+        [`${RDF}type`]: `${DELIM}MappingRecord`
+      }
+    };
+    this.pep.evaluateRequest(request)
+      .subscribe(response => {
+        const hasPermission = response !== this.pep.deny;
+        if (hasPermission) {
+          this.state.startCreateMapping();
+          this.state.selected = {
+            mapping: undefined,
+            difference: new Difference()
+          };
+          this.dialog.open(CreateMappingOverlayComponent);
+        } else {
+          this.toast.createErrorToast('You do not have permission to create mappings');
+        }
+      }, () => {
+        this.toast.createErrorToast('Could not retrieve record permissions');
+      });
+  }
+
+  confirmDeleteMapping(mappingRecord: MappingRecord): void {
+    const request = {
+      resourceId: mappingRecord.id,
+      actionId: `${POLICY}Delete`
+    };
+    this.pep.evaluateRequest(request)
+      .subscribe(response => {
+        const hasPermission = response !== this.pep.deny;
+        if (hasPermission) {
+          this.dialog.open(ConfirmModalComponent, {
+            data: {
+              content: `Are you sure you want to delete <strong>${mappingRecord.title}</strong>?`
             }
-        } as XACMLRequest;
-        this.pep.evaluateRequest(request)
-            .subscribe(response => {
-                this.canCreate = response === this.pep.permit;
-            }, () => {
-                this.toast.createErrorToast('Could not retrieve mapping creation permissions');
-            });
-    }
+          }).afterClosed().subscribe((result: boolean) => {
+            if (result) {
+              this.deleteMapping(mappingRecord);
+            }
+          });
+        } else {
+          this.toast.createErrorToast('You do not have permission to delete this mapping');
+        }
+      }, () => {
+        this.toast.createErrorToast('Could not retrieve record permissions');
+      });
+  }
+
+  download(mappingRecord: MappingRecord): void {
+    this.dialog.open(DownloadMappingOverlayComponent, {
+      data: {
+        record: mappingRecord
+      }
+    });
+  }
+
+  duplicate(mappingRecord: MappingRecord): void {
+    const request = {
+      resourceId: get(this.cm.localCatalog, '@id', ''),
+      actionId: `${POLICY}Create`,
+      actionAttrs: {
+        [`${RDF}type`]: `${DELIM}MappingRecord`
+      }
+    };
+    this.pep.evaluateRequest(request)
+      .subscribe(response => {
+        const hasPermission = response !== this.pep.deny;
+        if (hasPermission) {
+          this.setStateIfCompatible(mappingRecord).pipe(
+            switchMap((nextStep: string) => {
+              return this.state.setIriMap().pipe(
+                map(() => {
+                  return nextStep;
+                })
+              );
+            })
+          ).subscribe((step: string) => {
+            if (step === 'default') {
+              this.state.startCreateMapping();
+              this.dialog.open(CreateMappingOverlayComponent);
+            } else if (step === 'edit') {
+              this.state.editMapping = true;
+              this.state.step = this.state.fileUploadStep;
+            }
+          }, error => error ? this.toast.createErrorToast(error) : undefined);
+        } else {
+          this.toast.createErrorToast('You do not have permission to create mappings');
+        }
+      }, () => {
+        this.toast.createErrorToast('Could not retrieve record permissions');
+      });
+  }
+
+  deleteMapping(mappingRecord: MappingRecord): void {
+    this.mm.deleteMapping(mappingRecord.id)
+      .subscribe(() => {
+        this.state.resetPagination();
+        this.setResults();
+      }, error => this.toast.createErrorToast(error));
+  }
+
+  setStateIfCompatible(mappingRecord: MappingRecord): Observable<string> {
+    let mapState = undefined;
+    return this.state.getMappingState(mappingRecord).pipe(
+      switchMap((mappingState: MappingState) => {
+        mapState = mappingState;
+        return this.state.findIncompatibleMappings(mappingState.mapping);
+      }),
+      switchMap(incompatibleMappings => {
+        this.state.selected = mapState;
+        if (incompatibleMappings.length) {
+          return this.dialog.open(IncompatibleWarningModalComponent, {
+            data: {
+              mappingRecord,
+              incompatibleMappings
+            }
+          }).afterClosed();
+        } else {
+          return of('default');
+        }
+      })
+    );
+  }
+
+  private _checkCreatePermission(): void {
+    const request = {
+      resourceId: 'http://mobi.com/catalog-local',
+      actionId: `${POLICY}Create`,
+      actionAttrs: {
+        [RDF + 'type']: `${DELIM}MappingRecord`
+      }
+    } as XACMLRequest;
+    this.pep.evaluateRequest(request)
+      .subscribe(response => {
+        this.canCreate = response === this.pep.permit;
+      }, () => {
+        this.toast.createErrorToast('Could not retrieve mapping creation permissions');
+      });
+  }
 }

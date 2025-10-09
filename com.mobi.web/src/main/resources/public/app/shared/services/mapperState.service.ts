@@ -44,14 +44,12 @@ import { beautify } from '../pipes/beautify.pipe';
 import { CatalogManagerService } from './catalogManager.service';
 import { DelimitedManagerService } from './delimitedManager.service';
 import {
-  getBeautifulIRI,
-  getDctermsValue,
+  entityNameProps,
+  getEntityName,
   getPropertyId,
   getPropertyValue,
   hasPropertyId,
   removePropertyId,
-  setDctermsValue,
-  updateDctermsValue
 } from '../utility';
 import { JSONLDObject } from '../models/JSONLDObject.interface';
 import { Mapping } from '../models/mapping.class';
@@ -65,12 +63,13 @@ import { MappingState } from '../models/mappingState.interface';
 import { ONTOLOGY_STORE_TYPE } from '../../constants';
 import { OntologyManagerService } from './ontologyManager.service';
 import { PaginatedConfig } from '../models/paginatedConfig.interface';
+import { SettingManagerService } from './settingManager.service';
 import { SparqlManagerService } from './sparqlManager.service';
 import { SPARQLSelectResults } from '../models/sparqlSelectResults.interface';
 import { splitIRI } from '../pipes/splitIRI.pipe';
 
 /**
- * @class shared.MapperStateService
+ * @class MapperStateService
  *
  * A service which contains various variables to hold the state of the mapping tool page and utility functions to update
  * those variables.
@@ -78,7 +77,7 @@ import { splitIRI } from '../pipes/splitIRI.pipe';
 @Injectable()
 export class MapperStateService {
   constructor(private mm: MappingManagerService, private cm: CatalogManagerService, private dm: DelimitedManagerService,
-    private om: OntologyManagerService, private sm: SparqlManagerService) { }
+    private om: OntologyManagerService, private sm: SparqlManagerService, private sms: SettingManagerService) { }
 
   // Static step indexes
   selectMappingStep = 0;
@@ -416,8 +415,8 @@ export class MapperStateService {
 
   // State variables
   /**
-   * Controls whether the {@link mapper.EditMappingTabComponent} initializes with the
-   * {@link mapper.MappingConfigOverlayComponent} already open.
+   * Controls whether the {@link EditMappingTabComponent} initializes with the
+   * {@link MappingConfigOverlayComponent} already open.
    * @type {boolean}
    */
   startWithConfigModal = false;
@@ -438,7 +437,7 @@ export class MapperStateService {
     }
   };
   /**
-   * The total number of Mapping Records found in the {@link mapper.MappingSelectPageComponent}
+   * The total number of Mapping Records found in the {@link MappingSelectPageComponent}
    * @type {number}
    */
   totalSize = 0;
@@ -448,12 +447,12 @@ export class MapperStateService {
    */
   selected: MappingState = undefined;
   /**
-   * A boolean indicating whether or not the mapping page is editing a mapping
+   * A boolean indicating whether the mapping page is editing a mapping
    * @type {boolean}
    */
   editMapping = false;
   /**
-   * A boolean indicating whether or not the mapping page is creating a new mapping
+   * A boolean indicating whether the mapping page is creating a new mapping
    * @type {boolean}
    */
   newMapping = false;
@@ -463,14 +462,14 @@ export class MapperStateService {
    */
   step = 0;
   /**
-   * The index of the selected tab in the {@link mapper.EditMappingPageComponent}
+   * The index of the selected tab in the {@link EditMappingPageComponent}
    * @type {number}
    */
   editTabIndex = 0;
   /**
-   * An array of objects representing property mappings in the current {@link shared.MapperStateService#selected}
+   * An array of objects representing property mappings in the current {@link MapperStateService#selected}
    * that are mapped to non-existent column indexes in the currently loaded
-   * {@link shared.DelimitedManagerService#dataRows delimited data}.
+   * {@link DelimitedManagerService#dataRows} delimited data.
    * @type {MappingInvalidProp[]}
    */
   invalidProps: MappingInvalidProp[] = [];
@@ -485,13 +484,13 @@ export class MapperStateService {
    */
   selectedPropMappingId = '';
   /**
-   * A boolean indicating whether or not the a new property is being mapped
+   * A boolean indicating whether the a new property is being mapped
    * @type {boolean}
    */
   newProp = false;
   /**
    * An array of strings containing column indexes to highlight in the
-   * {@link mapper.PreviewDataGridComponent previewDataGrid}.
+   * {@link PreviewDataGridComponent} previewDataGrid.
    * @type {string[]}
    */
   highlightIndexes = [];
@@ -513,7 +512,7 @@ export class MapperStateService {
 
   /**
    * Sets the main state variables back to their default values and resets the values of
-   * {@link shared.MapperStateService#selected} and {@link shared.MapperStateService#iriMap}.
+   * {@link MapperStateService#selected} and {@link MapperStateService#iriMap}.
    */
   initialize(): void {
     this.editMapping = false;
@@ -612,7 +611,7 @@ export class MapperStateService {
   }
   /**
    * Retrieves and saves the master branch of the current mapping for use on the
-   * {@link mapper.MappingCommitsPageComponent}.
+   * {@link MappingCommitsTabComponent}.
    * 
    * @returns {Observable<null>} An Observable indicating the success of the operation.
    */
@@ -703,7 +702,7 @@ export class MapperStateService {
             incompatibleMappings = incompatibleMappings.concat(propIRIsToObjectMappings[propIRI]);
             return;
           }
-          // For each specific mapping
+          // For each mapping
           propIRIsToObjectMappings[propIRI].forEach(propMapping => {
             const rangeClassId = mapping.getClassIdByMappingId(getPropertyId(propMapping,
               `${DELIM}classMapping`));
@@ -728,9 +727,9 @@ export class MapperStateService {
     );
   }
   /**
-   * Validates the current {@link shared.MapperStateService#selected} against the currently loaded
-   * {@link shared.DelimitedManagerService delimited data} and sets
-   * {@link shared.MapperStateService#invalidProps} to the list of data properties in the mapping that link to
+   * Validates the current {@link MapperStateService#selected} against the currently loaded
+   * {@link DelimitedManagerService} delimited data and sets
+   * {@link MapperStateService#invalidProps} to the list of data properties in the mapping that link to
    * columns that don't exist in the delimited data.
    */
   setInvalidProps(): void {
@@ -740,18 +739,17 @@ export class MapperStateService {
         return {
           id: dataMapping['@id'],
           index: parseInt(getPropertyValue(dataMapping, `${DELIM}columnIndex`), 10),
-          dataPropName: this.mm.getPropMappingTitle(getDctermsValue(classMapping, 'title'),
-            getDctermsValue(dataMapping, 'title'))
+          dataPropName: this.mm.getPropMappingTitle(getEntityName(classMapping), getEntityName(dataMapping))
         } as MappingInvalidProp;
       })
       .filter(propObj => propObj.index > this.dm.dataRows[0].length - 1)
       .sort((a, b) => a.index - b.index);
   }
   /**
-   * Finds all of the column indexes that have been mapped to data mappings in the currently selected
-   * {@link shared.MapperStateService#selected}.
+   * Finds all the column indexes that have been mapped to data mappings in the currently selected
+   * {@link MapperStateService#selected}.
    *
-   * @returns {string[]} an array of strings of column indexes that have been mapped
+   * @returns {string[]} an array of strings representing column indexes that have been mapped
    */
   getMappedColumns(): string[] {
     return uniq(this.selected.mapping.getAllDataMappings()
@@ -819,12 +817,12 @@ export class MapperStateService {
     const classMapping = this.selected.mapping.addClassMapping(classDetails.iri,
       `${DATA}${ontologyDataName}/${splitIri.end.toLowerCase()}/`);
     if (!originalClassMappings.length) {
-      setDctermsValue(classMapping, 'title', classDetails.name);
+      this.setEntityName(classMapping, classDetails.name);
     } else {
       originalClassMappings.forEach(classMapping => {
-        if (getDctermsValue(classMapping, 'title') === classDetails.name) {
-          updateDctermsValue(classMapping, 'title', `${classDetails.name} (1)`);
-          this.changeProp(classMapping['@id'], `${DCTERMS}title`, `${classDetails.name} (1)`,
+        if (getEntityName(classMapping) === classDetails.name) {
+          this.updateEntityName(classMapping, `${classDetails.name} (1)`);
+          this.changeProp(classMapping['@id'], this.getEntityNameProp(classMapping), `${classDetails.name} (1)`,
             classDetails.name);
           return false;
         }
@@ -854,7 +852,7 @@ export class MapperStateService {
         || this.supportedAnnotations.includes(propDetails))) {
       const propMapping = this.selected.mapping.addDataPropMapping(propDetails.iri, columnIndex, classMappingId,
         datatypeSpec, languageSpec);
-      setDctermsValue(propMapping, 'title', propDetails.name);
+      this.setEntityName(propMapping, propDetails.name);
       (this.selected.difference.additions as JSONLDObject[]).push(Object.assign({}, propMapping));
       return propMapping;
     }
@@ -875,7 +873,7 @@ export class MapperStateService {
     if (this.selected.mapping.hasClassMapping(classMappingId) && rangeClassMapping && ontologyId
       && propDetails.type === `${OWL}ObjectProperty`) {
       const propMapping = this.selected.mapping.addObjectPropMapping(propDetails.iri, classMappingId, rangeClassMappingId);
-      setDctermsValue(propMapping, 'title', propDetails.name);
+      this.setEntityName(propMapping, propDetails.name);
       (this.selected.difference.additions as JSONLDObject[]).push(Object.assign({}, propMapping));
       return propMapping;
     }
@@ -923,10 +921,10 @@ export class MapperStateService {
     const classMappings = this.selected.mapping.getClassMappingsByClassId(classId);
     if (classMappings.length === 1) {
       const lastClassMapping = classMappings[0];
-      const originalTitle = getDctermsValue(lastClassMapping, 'title');
+      const originalTitle = getEntityName(lastClassMapping);
       const newTitle = originalTitle.replace(/ \((\d+)\)$/, '');
-      updateDctermsValue(lastClassMapping, 'title', newTitle);
-      this.changeProp(lastClassMapping['@id'], `${DCTERMS}title`, newTitle, originalTitle);
+      this.updateEntityName(lastClassMapping, newTitle);
+      this.changeProp(lastClassMapping['@id'], this.getEntityNameProp(lastClassMapping), newTitle, originalTitle);
     }
   }
   /**
@@ -963,12 +961,12 @@ export class MapperStateService {
         dataProperties: {}
       };
       ['classes', 'dataProperties', 'objectProperties', 'annotationProperties'].forEach(key => {
-        response[0][key].forEach(iri => {
+        response[0][key].forEach((iri: string) => {
           this.iriMap[key][iri] = ontIri;
         });
         if (response[1]) {
           response[1].forEach(iriList => {
-            iriList[key].forEach(iri => {
+            iriList[key].forEach((iri: string) => {
               this.iriMap[key][iri] = iriList.id;
             });
           });
@@ -1102,7 +1100,7 @@ export class MapperStateService {
       }));
   }
 
-  private _cleanUpDeletedProp(propMapping, parentClassMappingId) {
+  private _cleanUpDeletedProp(propMapping: JSONLDObject, parentClassMappingId: string) {
     this.deleteEntity(propMapping);
     const additionsObj = find(this.selected.difference.additions as JSONLDObject[], { '@id': parentClassMappingId });
     const prop = DELIM + (this.mm.isDataMapping(propMapping) ? 'dataProperty' : 'objectProperty');
@@ -1124,15 +1122,15 @@ export class MapperStateService {
     }
     remove(this.invalidProps, { id: propMapping['@id'] });
   }
-  private _getChangedEntityName(diffObj) {
+  private _getChangedEntityName(diffObj: JSONLDObject) {
     const entity = find(this.selected.mapping.getJsonld(), { '@id': diffObj['@id'] }) || diffObj;
-    return getDctermsValue(entity, 'title') || getBeautifulIRI(diffObj['@id']);
+    return getEntityName(entity);
   }
   private _setNewTitle(classMapping: JSONLDObject, className: string, existingClassMappings: JSONLDObject[]) {
     const regex = / \((\d+)\)$/;
     const sortedNums = existingClassMappings
       // Collect all titles that start with the name of the passed entity
-      .map(obj => getDctermsValue(obj, 'title'))
+      .map(obj => getEntityName(obj))
       .filter(title => startsWith(title, className))
       // Collect the index number based on the set string format
       .map(title => parseInt(nth(regex.exec(title), 1), 10))
@@ -1148,6 +1146,56 @@ export class MapperStateService {
         break;
       }
     }
-    setDctermsValue(classMapping, 'title', className + newIdx);
+    this.setEntityName(classMapping, className + newIdx);
+  }
+  private updateEntityName(entity: JSONLDObject, value: string): void {
+    // Check if any entityNameProps already exist in the entity
+    const existingProp = entityNameProps.find(prop => entity[prop]);
+
+    if (existingProp) {
+      // Update the existing property value
+      entity[existingProp] = [{ '@value': value }];
+      return;
+    }
+
+    // No existing property found, add based on preference
+    this.sms.getAnnotationPreference().subscribe(preference => {
+      const annotationType = preference === 'DC Terms' ? DCTERMS : RDFS;
+      const propertyIRI = annotationType === DCTERMS ? `${DCTERMS}title` : `${RDFS}label`;
+      entity[propertyIRI] = [{ '@value': value }];
+    }, error => {
+      // Default to DCTERMS if preference cannot be retrieved
+      entity[`${DCTERMS}title`] = [{ '@value': value }];
+      console.error(error);
+    });
+  }
+
+  private setEntityName(entity: JSONLDObject, name: string): void {
+    this.sms.getAnnotationPreference().subscribe(preference => {
+      const annotationType = preference === 'DC Terms' ? DCTERMS : RDFS;
+      const propertyIRI = annotationType === DCTERMS ? `${DCTERMS}title` : `${RDFS}label`;
+      entity[propertyIRI] = [{ '@value': name }];
+    }, error => {
+      // Default to DCTERMS if preference cannot be retrieved
+      entity[`${DCTERMS}title`] = [{ '@value': name }];
+      console.error(error);
+    });
+  }
+
+  private getEntityNameProp(entity: JSONLDObject): string {
+    const existingProp = entityNameProps.find(prop => entity[prop]) || `${DCTERMS}title`;
+    if (existingProp) {
+      return existingProp;
+    }
+
+    // No existing property found, add based on preference
+    this.sms.getAnnotationPreference().subscribe(preference => {
+      const annotationType = preference === 'DC Terms' ? DCTERMS : RDFS;
+      return annotationType === DCTERMS ? `${DCTERMS}title` : `${RDFS}label`;
+    }, error => {
+      // Default to DCTERMS if preference cannot be retrieved
+      console.error(error);
+      return `${DCTERMS}title`;
+    });
   }
 }

@@ -472,7 +472,10 @@ describe('Mapping Select Page component', function() {
                 component.setStateIfCompatible(mappingRecord)
                     .subscribe( response => {expect(response).toEqual('edit'); });
                 tick();
-                expect(matDialog.open).toHaveBeenCalledWith(IncompatibleWarningModalComponent, {data: {mappingRecord: mappingRecord, incomMappings: [{'@id': 'incomMapping'}]}});
+                expect(matDialog.open).toHaveBeenCalledWith(IncompatibleWarningModalComponent, {data:
+                    {
+                      mappingRecord: mappingRecord,
+                      incompatibleMappings: [{'@id': 'incomMapping'}]}});
                 expect(mapperStateStub.findIncompatibleMappings).toHaveBeenCalledWith(mappingState.mapping);
                 expect(mapperStateStub.selected).toEqual(mappingState);
             }));
