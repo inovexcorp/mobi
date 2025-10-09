@@ -141,7 +141,7 @@ export const skolemizedNamespace = 'http://mobi.com/.well-known/genid/';
 
 // General Utility Methods
 /**
- * Merges two arrays together using the Lodash isEqual function and returns the merged
+ * Merges two arrays using the Lodash isEqual function and returns the merged
  * array.
  *
  * @param {*[]} objValue An array to be merged into
@@ -351,7 +351,7 @@ export function getPropertyValue(entity: JSONLDObject, propertyIRI: string): str
 }
 
 /**
-* Sets the first or appends to the existing value of the specified property of the passed entity to the
+* Sets the first value or appends to the existing value of the specified property of the passed entity to the
 * passed value.
 *
 * @param {JSONLDObject} entity The entity to set the property value of
@@ -404,11 +404,11 @@ export function replacePropertyValue(entity: JSONLDObject, propertyIRI: string, 
 }
 
 /**
-* Removes the first value of the specified property and appends the provided value to the specified property of the 
+* Removes the first value of the specified property and appends the provided value to the specified property of the
 * passed entity.
 *
 * @param {JSONLDObject} entity The entity to update the property value of
-* @param {string} property The IRI of a property
+* @param {string} propertyIRI The IRI of a property
 * @param {string} value The new value for the property
 */
 export function updatePropertyValue(entity: JSONLDObject, propertyIRI: string, value: string): void {
@@ -466,7 +466,7 @@ export function setPropertyId(entity: JSONLDObject, propertyIRI: string, id: str
 }
 
 /**
-* Tests whether or not the passed entity contains the passed id value for the passed property.
+* Tests whether the passed entity contains the passed id value for the passed property.
 *
 * @param {JSONLDObject} entity The entity to look for the property id value in
 * @param {string} propertyIRI The IRI of a property
@@ -507,8 +507,8 @@ export function replacePropertyId(entity: JSONLDObject, propertyIRI: string, idT
 * the passed entity.
 *
 * @param {JSONLDObject} entity The entity to update the property value of
-* @param {string} property The IRI of a property
-* @param {string} value The new id value for the property
+* @param {string} propertyIRI The IRI of a property
+* @param {string} id The new id value for the property
 */
 export function updatePropertyId(entity: JSONLDObject, propertyIRI: string, id: string): void {
   const idValueToRemove = getPropertyId(entity, propertyIRI);
@@ -999,7 +999,7 @@ export function getInputType(typeIRI: string): string {
  * Gets the pattern type associated with the property in the properties list provided.
  *
  * @param {string} typeIRI The IRI of the type
- * @returns {RegEx} A Regular Expression identifying the acceptable values for the provided property.
+ * @returns {RegExp} A Regular Expression identifying the acceptable values for the provided property.
  */
 export function getPattern(typeIRI: string): RegExp {
   switch (replace(typeIRI, XSD, '')) {
@@ -1135,7 +1135,7 @@ function _getPrioritizedValue(entity: JSONLDObject, prop: string): string {
  * to property values. Assumes the sh:NodeShape for the associated object uses implicit class targeting.
  * 
  * @param {SHACLFormFieldConfig} config The form configuration of the property that points to the associated object
- * @param {{ {key: string}: string }} objectValue The values to use to populate the properties on the associated object
+ * @param {{ [key: string]: string }} objectValue The values to use to populate the properties on the associated object
  * @returns {JSONLDObject} The JSON-LD object of the generated associated object
  */
 function _createAssociatedObject(config: SHACLFormFieldConfig, objectValue: { [key: string]: string }): JSONLDObject {
@@ -1170,7 +1170,7 @@ function _isIRIValue(val: string) {
  * IRI value or a Literal value. Mutates the provided JSON-LD object.
  * 
  * @param {JSONLDObject} instance The JSON-LD object to set the property value on
- * @param {string} prop The IRI of the property to set
+ * @param {SHACLFormFieldConfig} config The saved configuration of the property that is being set
  * @param {string} value The property value to set
  */
 function _setJSONLDPropValue(instance: JSONLDObject, config: SHACLFormFieldConfig, value: string): void {

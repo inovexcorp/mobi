@@ -23,16 +23,16 @@
 import { Component, Inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 
-import { Mapping } from '../../../shared/models/mapping.class';
-import { DCTERMS, DELIM } from '../../../prefixes';
+import { DELIM } from '../../../prefixes';
+import { getEntityName } from '../../../shared/utility';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { Mapping } from '../../../shared/models/mapping.class';
 
 @Component({
   selector: 'app-mapping-warning-modal',
   templateUrl: './incompatible-warning-modal.component.html'
 })
 export class IncompatibleWarningModalComponent {
-  titleIRI = `${DCTERMS}title`;
   idIRI = `${DELIM}mapsTo`;
   propIRI = `${DELIM}hasProperty`;
   propertyIRI = `${DELIM}dataProperty`;
@@ -40,7 +40,7 @@ export class IncompatibleWarningModalComponent {
       ' and are no longer compatible. Incompatible mappings will be removed upon continuing.';
 
   constructor(private dialog: MatDialogRef<IncompatibleWarningModalComponent>,
-              @Inject(MAT_DIALOG_DATA) public data: { 'mappingRecord': JSONLDObject[], 'incomMappings': Mapping[]}) {}
+              @Inject(MAT_DIALOG_DATA) public data: { 'mappingRecord': JSONLDObject[], 'incompatibleMappings': Mapping[]}) {}
 
   confirm(): void {
     this.dialog.close('edit');
@@ -48,5 +48,26 @@ export class IncompatibleWarningModalComponent {
 
   cancel(): void {
     this.dialog.close('closed');
+  }
+
+  /**
+   * Retrieves the name associated with the provided mapping.
+   *
+   * @param {Mapping} mapping - The {@link Mapping} object from which the title is derived.
+   * @return {string} The name extracted from the mapping entity.
+   */
+  getName(mapping: Mapping): string {
+    return getEntityName(mapping.getJsonld()[0]);
+  }
+
+  /**
+   * Retrieves the IRI value from a given Mapping object based on the specified IRI key.
+   *
+   * @param {Mapping} mapping - The {@link Mapping} object containing the JSON-LD data.
+   * @param {string} iri - The key to look up in the Mapping object to retrieve the associated IRI value.
+   * @return {string} The IRI value associated with the specified key from the Mapping object.
+   */
+  getMappingIRI(mapping: Mapping, iri: string): string {
+    return mapping.getJsonld()[0][iri][0]['@id'];
   }
 }

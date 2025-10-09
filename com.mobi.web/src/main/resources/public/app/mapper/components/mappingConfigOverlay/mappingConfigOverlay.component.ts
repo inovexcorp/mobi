@@ -246,9 +246,9 @@ export class MappingConfigOverlayComponent implements OnInit {
     const originalOntologyInfo = this.state.selected.mapping.getSourceOntologyInfo();
     if (!isEqual(originalOntologyInfo, selectedOntologyInfo)) {
       this.state.selected.mapping.setSourceOntologyInfo(selectedOntologyInfo);
-      this.state.findIncompatibleMappings(this.state.selected.mapping).subscribe(incomMappings => {
+      this.state.findIncompatibleMappings(this.state.selected.mapping).subscribe((incompatibleMappings) => {
         const jsonld = this.state.selected.mapping.getJsonld();
-        incomMappings.forEach(entity => {
+        incompatibleMappings.forEach(entity => {
           if (find(jsonld, { '@id': entity['@id'] })) {
             const title = getDctermsValue(entity, 'title');
             if (this.mm.isPropertyMapping(entity)) {

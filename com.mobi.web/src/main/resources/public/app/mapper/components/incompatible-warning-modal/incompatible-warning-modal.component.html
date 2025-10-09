@@ -24,14 +24,14 @@
 <div mat-dialog-content>
     <info-message>{{infoMessage}}</info-message>
     <mat-list>
-        <mat-list-item *ngFor="let mapping of data.incomMappings">
-            <div class="col-10 remove-min-width text-truncate" title="{{mapping[titleIRI][0]['@value']}}">
-                <span>{{mapping[titleIRI][0]["@value"]}} </span>
-                <small *ngIf="mapping[idIRI]" class="ontology-iri text-muted"
-                       title="{{mapping[idIRI][0]['@id']}}">{{mapping[idIRI][0]['@id']}}
+        <mat-list-item *ngFor="let mapping of data.incompatibleMappings">
+            <div class="col-10 remove-min-width text-truncate" title="{{getName(mapping)}}">
+                <span>{{getName(mapping)}} </span>
+                <small *ngIf="mapping.getJsonld()[0][idIRI]" class="ontology-iri text-muted"
+                       title="{{getMappingIRI(mapping, idIRI)}}">{{getMappingIRI(mapping, idIRI)}}
                 </small>
-                <small *ngIf="mapping[propIRI]" class="ontology-iri text-muted"
-                       title="{{mapping[propIRI][0]['@id']}}">{{mapping[propIRI][0]['@id']}}
+                <small *ngIf="mapping.getJsonld()[0][this.propIRI]" class="ontology-iri text-muted"
+                       title="{{getMappingIRI(mapping, propIRI)}}">{{getMappingIRI(mapping, propIRI)}}
                 </small>
             </div>
         </mat-list-item>
