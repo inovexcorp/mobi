@@ -120,8 +120,9 @@ public class SimpleRecordManager implements RecordManager {
     private static final String SERVICE_FOR_FACTORY = "Service for factory ";
     private static final String UNAVAILABLE_OR_DOESNT_EXIST = " is unavailable or doesn't exist.";
     private static final String OFFSET_EXCEEDS = "Offset exceeds total size";
-    private static final String QUERY_STRING = "Query String:\n";
+    private static final String QUERY_STRING = "Query String:\n{}";
     private static final String MODIFIED = "modified";
+    private static final String QUERY_PLAN = "Query Plan:\n{}";
     public static final String SEPARATOR_DELIMITER = "�";
     public static final String PAIR_SEPARATOR_DELIMITER = "��";
 
@@ -410,7 +411,7 @@ public class SimpleRecordManager implements RecordManager {
         Function<String, String> queryFunc = querySuffix -> {
             String queryString = replaceRecordsFilter(new ArrayList<>(), replaceCreatorFilter(searchParams,
                     replaceKeywordFilter(searchParams, FIND_RECORDS_QUERY + querySuffix)));
-            log.debug(QUERY_STRING + queryString);
+            log.debug(QUERY_STRING, queryString);
             return queryString;
         };
 
@@ -433,7 +434,7 @@ public class SimpleRecordManager implements RecordManager {
                     replaceKeywordFilter(searchParams, FIND_RECORDS_QUERY + querySuffix));
             queryString = replaceCreatorFilter(searchParams, queryString);
             queryString = replaceRecordsFilter(viewableRecords, queryString);
-            log.debug(QUERY_STRING + queryString);
+            log.debug(QUERY_STRING, queryString);
             return queryString;
         };
 
@@ -459,13 +460,13 @@ public class SimpleRecordManager implements RecordManager {
         }
         String queryString = GET_KEYWORD_QUERY + "\nLIMIT " + limit + "\nOFFSET " + offset;
 
-        log.debug(QUERY_STRING + queryString);
+        log.debug(QUERY_STRING, queryString);
 
         TupleQuery query = conn.prepareTupleQuery(queryString);
         query.setBinding(CATALOG_BINDING, catalogId);
         searchParams.getSearchText().ifPresent(s -> query.setBinding(SEARCH_BINDING, vf.createLiteral(s)));
 
-        log.debug("Query Plan:\n" + query);
+        log.debug(QUERY_PLAN, query);
 
         // Get Results
         TupleQueryResult result = query.evaluate();
@@ -563,14 +564,14 @@ public class SimpleRecordManager implements RecordManager {
         String queryString = replaceRecordTypeFilter(searchParams, replaceRecordsFilter(new ArrayList<>(),
                 replaceCreatorFilter(searchParams, replaceKeywordFilter(searchParams, FIND_RECORDS_QUERY))));
 
-        log.debug(QUERY_STRING + queryString);
+        log.debug(QUERY_STRING, queryString);
 
         TupleQuery query = conn.prepareTupleQuery(queryString);
         query.setBinding(CATALOG_BINDING, catalogId);
         searchParams.getSearchText().ifPresent(searchText ->
                 query.setBinding(SEARCH_BINDING, vf.createLiteral(searchText)));
 
-        log.debug("Query Plan:\n" + query);
+        log.debug(QUERY_PLAN, query);
 
         // Get Results
         List<String> recordIRIs = new ArrayList<>();
