@@ -141,6 +141,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
+import javax.ws.rs.Encoded;
 import javax.ws.rs.FormParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
@@ -2938,11 +2939,11 @@ public class CatalogRest {
             @Parameter(schema = @Schema(type = "string",
                     description = "String of JSON-LD that corresponds to the statements that"
                     + " were added to the entity", required = true))
-            @FormParam("additions") String additionsJson,
+            @Encoded @FormParam("additions") String additionsJson,
             @Parameter(schema = @Schema(type = "string",
                     description = "String of JSON-LD that corresponds to the statements that"
                     + " were deleted in the entity", required = true))
-            @FormParam(DELETIONS) String deletionsJson) {
+            @Encoded @FormParam(DELETIONS) String deletionsJson) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
             User activeUser = getActiveUser(servletRequest, engineManager);
             Model additions = StringUtils.isEmpty(additionsJson) ? null : convertJsonld(additionsJson);

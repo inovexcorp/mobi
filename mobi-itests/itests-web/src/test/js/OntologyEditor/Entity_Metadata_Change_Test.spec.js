@@ -21,7 +21,7 @@
  * #L%
  */
 module.exports = {
-    '@tags': ['ontology-editor', 'sanity'],
+    '@tags': ['ontology-editor', 'sanity', 'entity-metadata-change'],
 
     'Step 1: Initial Setup' : function(browser) {
         browser.globals.initial_steps(browser, browser.globals.adminUsername, browser.globals.adminPassword)
@@ -133,5 +133,33 @@ module.exports = {
             .useXpath()
             .assert.visible('//value-display//div//span[text() = "A Edited"]//ancestor::property-values//p[text()[contains(.,"Title")]]')
             .assert.not.elementPresent('//value-display//div//span[text()[contains(.,"Class A")]]//ancestor::property-values//p[text()[contains(.,"Title")]]')
-    }
+    },
+
+    'Step 15: Set Comment Annotation' : function(browser) {
+        var addAnnotationButton = '.selected-class .annotation-block .section-header a';
+
+        browser
+            .useCss()
+            .waitForElementVisible(addAnnotationButton)
+            .click(addAnnotationButton)
+            .waitForElementVisible('annotation-overlay')
+            .waitForElementVisible('mat-optgroup mat-option')
+            .useXpath()
+            .waitForElementVisible('//mat-option//span[text()[contains(.,"Comment")]]')
+            .click('//mat-option//span[text()[contains(.,"Comment")]]')
+            .useCss()
+            .waitForElementNotPresent('mat-optgroup')
+            .assert.not.elementPresent('mat-optgroup') // ensure list is hidden
+            .clearValue('annotation-overlay textarea')
+            .setValue('annotation-overlay textarea', 'Test %')
+            .click('annotation-overlay div.mat-dialog-actions button.mat-primary')
+            .waitForElementNotPresent('annotation-overlay div.mat-dialog-actions button:not(.mat-primary)');
+    },
+
+    'Step 15: Verify Comment Annotation was Saved' : function(browser) {
+        browser.globals.wait_for_no_spinners(browser);
+        browser
+            .useXpath()
+            .assert.visible('//value-display//div//span[text() = "Test %"]//ancestor::property-values//p[text()[contains(.,"Comment")]]');
+    },
 }
