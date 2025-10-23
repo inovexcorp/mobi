@@ -21,28 +21,29 @@
  * #L%
  */
 import { Component, OnInit } from '@angular/core';
-import { UntypedFormBuilder, Validators } from '@angular/forms';
 import { MatDialogRef } from '@angular/material/dialog';
-import { trim, map as mapL, uniq } from 'lodash';
+import { UntypedFormBuilder, Validators } from '@angular/forms';
 
 import { catchError, map, switchMap } from 'rxjs/operators';
 import { EMPTY, forkJoin } from 'rxjs';
+import { map as mapL, trim, uniq } from 'lodash';
 
+import { CamelCasePipe } from '../../../shared/pipes/camelCase.pipe';
+import { DCTERMS, RDFS, WORKFLOWS } from '../../../prefixes';
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { REGEX } from '../../../constants';
 import { RESTError } from '../../../shared/models/RESTError.interface';
-import { CamelCasePipe } from '../../../shared/pipes/camelCase.pipe';
+import { SettingManagerService } from '../../../shared/services/settingManager.service';
 import { splitIRI } from '../../../shared/pipes/splitIRI.pipe';
-import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
-import { DCTERMS, WORKFLOWS } from '../../../prefixes';
 import { WorkflowsManagerService } from '../../services/workflows-manager.service';
 import { WorkflowRecordConfig } from '../../models/workflowRecordConfig.interface';
 import { WorkflowSchema } from '../../models/workflow-record.interface';
 
 /**
- * @class workflows.WorkflowCreationModalComponent
+ * @class WorkflowCreationModalComponent
  *
  * A component that creates content for a modal with a form containing fields for creating a new Workflow Record. The
- * fields are for the title, workflow IRI, description, and {@link shared.KeywordSelectComponent keywords}. Meant to be
+ * fields are for the title, workflow IRI, description, and {@link KeywordSelectComponent} keywords. Meant to be
  * used in conjunction with the `MatDialog` service.
  */
 @Component({
@@ -62,18 +63,25 @@ export class WorkflowCreationModalComponent implements OnInit {
     keywords: [[]]
   });
 
+  annotationType = 'DC Terms';
+
   constructor(private _fb: UntypedFormBuilder, private _camelCase: CamelCasePipe,
-    private _dialogRef: MatDialogRef<WorkflowCreationModalComponent>,
-    public wms: WorkflowsManagerService) { }
+              private _dialogRef: MatDialogRef<WorkflowCreationModalComponent>, private sms: SettingManagerService,
+              public wms: WorkflowsManagerService) {
+  }
 
   ngOnInit(): void {
     this.newWorkflowForm.controls.iri.setValue(this.defaultWorkflowNamespace);
     this.newWorkflowForm.controls.title.valueChanges.subscribe(newVal => this.nameChanged(newVal));
+
+    this.sms.getAnnotationPreference().subscribe(annotation => {
+      this.annotationType = annotation;
+    });
   }
 
   /**
-   * Updates the IRI of the workflow based on the new name, if the IRI has not been manually changed.
-   * 
+   * Updates the IRI of the workflow based on the new name. if the IRI has not been manually changed.
+   *
    * @param {string} newName - The new name of the workflow.
    */
   nameChanged(newName: string): void {
@@ -104,24 +112,27 @@ export class WorkflowCreationModalComponent implements OnInit {
     const newWorkflow: JSONLDObject = {
       '@id': newWorkflowIri,
       '@type': [`${WORKFLOWS}Workflow`],
-      [`${WORKFLOWS}hasAction`]: [{ '@id': actionId }],
+      [`${WORKFLOWS}hasAction`]: [{'@id': actionId}],
     };
+
     const newAction: JSONLDObject = {
       '@id': actionId,
       '@type': [`${WORKFLOWS}Action`, `${WORKFLOWS}TestAction`],
-      [`${WORKFLOWS}testMessage`]: [{ '@value': `This is a test message from ${actionId}` }]
+      [`${WORKFLOWS}testMessage`]: [{'@value': `This is a test message from ${actionId}`}]
     };
 
     if (this.newWorkflowForm.controls.description.value) {
-      newWorkflow[`${DCTERMS}description`] = [{ '@value': this.newWorkflowForm.controls.description.value }];
+      const descriptionType = this.annotationType === 'DC Terms' ? `${DCTERMS}description` : `${RDFS}comment`;
+      newWorkflow[descriptionType] = [{'@value': this.newWorkflowForm.controls.description.value}];
     }
-    
+
     const newWorkflowRecord: WorkflowRecordConfig = {
       title: this.newWorkflowForm.controls.title.value,
       description: this.newWorkflowForm.controls.description.value,
       keywords: uniq(mapL(this.newWorkflowForm.controls.keywords.value, trim)),
       jsonld: [newWorkflow, newAction]
     };
+
     this.wms.createWorkflowRecord(newWorkflowRecord).pipe(
       switchMap((result: string) => {
         const masterBranchId = result['branchId'];
@@ -146,6 +157,7 @@ export class WorkflowCreationModalComponent implements OnInit {
           canModifyMasterBranch: false,
           canDeleteWorkflow: false
         };
+
         return forkJoin({
           modifyPermission: this.wms.checkMasterBranchPermissions(masterBranchId, recordId),
           deletePermission: this.wms.checkMultiWorkflowDeletePermissions([newWorkflow])
@@ -166,12 +178,12 @@ export class WorkflowCreationModalComponent implements OnInit {
       })
     ).subscribe({
       next: (newWorkflow: WorkflowSchema) => {
-        this._dialogRef.close({ status: true, newWorkflow });
+        this._dialogRef.close({status: true, newWorkflow});
         isDialogClosed = true;
       },
       complete: () => {
         if (!isDialogClosed && !requestErrorFlag) {
-          this._dialogRef.close({ status: false });
+          this._dialogRef.close({status: false});
           isDialogClosed = true;
         }
       }

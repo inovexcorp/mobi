@@ -21,6 +21,7 @@
  * #L%
  */
 import { Injectable } from '@angular/core';
+
 import {
   startsWith,
   get,
@@ -37,15 +38,16 @@ import {
 } from 'lodash';
 import { Observable, forkJoin, of, throwError } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
-import { CATALOG, DATA, DCTERMS, DELIM, OWL, RDFS } from '../../prefixes';
-import { Difference } from '../models/difference.class';
 
 import { beautify } from '../pipes/beautify.pipe';
+import { CATALOG, DATA, DCTERMS, DELIM, OWL, RDFS } from '../../prefixes';
 import { CatalogManagerService } from './catalogManager.service';
+import { Difference } from '../models/difference.class';
 import { DelimitedManagerService } from './delimitedManager.service';
 import {
   entityNameProps,
   getEntityName,
+  getEntityNameProp,
   getPropertyId,
   getPropertyValue,
   hasPropertyId,
@@ -822,7 +824,7 @@ export class MapperStateService {
       originalClassMappings.forEach(classMapping => {
         if (getEntityName(classMapping) === classDetails.name) {
           this.updateEntityName(classMapping, `${classDetails.name} (1)`);
-          this.changeProp(classMapping['@id'], this.getEntityNameProp(classMapping), `${classDetails.name} (1)`,
+          this.changeProp(classMapping['@id'], getEntityNameProp(classMapping, this.sms), `${classDetails.name} (1)`,
             classDetails.name);
           return false;
         }
@@ -924,7 +926,7 @@ export class MapperStateService {
       const originalTitle = getEntityName(lastClassMapping);
       const newTitle = originalTitle.replace(/ \((\d+)\)$/, '');
       this.updateEntityName(lastClassMapping, newTitle);
-      this.changeProp(lastClassMapping['@id'], this.getEntityNameProp(lastClassMapping), newTitle, originalTitle);
+      this.changeProp(lastClassMapping['@id'], getEntityNameProp(lastClassMapping, this.sms), newTitle, originalTitle);
     }
   }
   /**
@@ -1179,23 +1181,6 @@ export class MapperStateService {
       // Default to DCTERMS if preference cannot be retrieved
       entity[`${DCTERMS}title`] = [{ '@value': name }];
       console.error(error);
-    });
-  }
-
-  private getEntityNameProp(entity: JSONLDObject): string {
-    const existingProp = entityNameProps.find(prop => entity[prop]) || `${DCTERMS}title`;
-    if (existingProp) {
-      return existingProp;
-    }
-
-    // No existing property found, add based on preference
-    this.sms.getAnnotationPreference().subscribe(preference => {
-      const annotationType = preference === 'DC Terms' ? DCTERMS : RDFS;
-      return annotationType === DCTERMS ? `${DCTERMS}title` : `${RDFS}label`;
-    }, error => {
-      // Default to DCTERMS if preference cannot be retrieved
-      console.error(error);
-      return `${DCTERMS}title`;
     });
   }
 }

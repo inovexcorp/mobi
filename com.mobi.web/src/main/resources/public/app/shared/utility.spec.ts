@@ -33,52 +33,55 @@ import { JSONLDObject } from './models/JSONLDObject.interface';
 import { SHACLFormFieldConfig } from '../shacl-forms/models/shacl-form-field-config';
 import { FormValues } from '../shacl-forms/models/form-values.interface';
 import {
+  addLanguageToAnnotations,
   condenseCommitId,
   createHttpParams,
   createJson,
+  getArrWithoutEntity,
   getBeautifulIRI,
   getDate,
   getDctermsId,
   getDctermsValue,
+  getEntityName,
+  getEntityNameProp,
   getErrorDataObject,
+  getInputType,
   getIRILocalName,
   getIRINamespace,
-  getInputType,
   getObjIrisFromDifference,
   getPattern,
   getPropertyId,
   getPropertyIds,
   getPropertyValue,
+  getShaclGeneratedData,
   getSkolemizedIRI,
+  getStatus,
+  getSubstringMatch,
   handleError,
   handleErrorObject,
   hasPropertyId,
   hasPropertyValue,
   isBlankNode,
   isBlankNodeId,
+  isInteger,
+  lowercaseFirstLetter,
   mergingArrays,
+  orNone,
   paginatedConfigToHttpParams,
   removeDctermsValue,
   removePropertyId,
   removePropertyValue,
   replacePropertyId,
   replacePropertyValue,
+  runningTime,
   setDctermsValue,
   setPropertyId,
   setPropertyValue,
-  updateDctermsValue,
-  runningTime,
   toFormattedDateString,
-  orNone,
-  getStatus,
-  getEntityName,
-  addLanguageToAnnotations,
-  getShaclGeneratedData,
-  getSubstringMatch,
-  getArrWithoutEntity,
-  isInteger,
-  lowercaseFirstLetter
+  updateDctermsValue
 } from './utility';
+import { of, throwError } from 'rxjs';
+import { SettingManagerService } from './services/settingManager.service';
 
 describe('Utility method', () => {
   const properties = [
@@ -111,22 +114,22 @@ describe('Utility method', () => {
   });
   describe('should get the specified date entity', () => {
     it('when provided', () => {
-        const date = '1/1/2000';
-        expect(getDate(date, 'short')).toBe(formatDate(new Date(date), 'short', 'en-US'));
+      const date = '1/1/2000';
+      expect(getDate(date, 'short')).toBe(formatDate(new Date(date), 'short', 'en-US'));
     });
     it('unless it is not provided', () => {
-        expect(getDate('', '')).toBe('(No Date Specified)');
+      expect(getDate('', '')).toBe('(No Date Specified)');
     });
   });
   // JSON-LD Utility Methods
   it('should create a JSON-LD object with the provided id and property value', () => {
     expect(createJson('urn:id', 'urn:prop', {'@value': 'value', '@type': `${XSD}string`})).toEqual({
       '@id': 'urn:id',
-      'urn:prop': [{ '@value': 'value', '@type': `${XSD}string` }]
+      'urn:prop': [{'@value': 'value', '@type': `${XSD}string`}]
     });
     expect(createJson('urn:id', 'urn:prop', {'@id': 'urn:other-id'})).toEqual({
       '@id': 'urn:id',
-      'urn:prop': [{ '@id': 'urn:other-id' }]
+      'urn:prop': [{'@id': 'urn:other-id'}]
     });
   });
   describe('getPropertyValue should get a property value from an entity', () => {
@@ -170,29 +173,29 @@ describe('Utility method', () => {
     });
   });
   it('should test whether an entity has a property value', () => {
-      const prop = 'property';
-      const value = {'@value': 'value'};
-      expect(hasPropertyValue({'@id': ''}, prop, value['@value'])).toEqual(false);
-      expect(hasPropertyValue({'@id': '', 'property': [value]}, prop, value['@value'])).toEqual(true);
+    const prop = 'property';
+    const value = {'@value': 'value'};
+    expect(hasPropertyValue({'@id': ''}, prop, value['@value'])).toEqual(false);
+    expect(hasPropertyValue({'@id': '', 'property': [value]}, prop, value['@value'])).toEqual(true);
   });
   it('should remove a property value from an entity', () => {
-      const prop = 'property';
-      const value = {'@value': 'value'};
-      const other = {'@value': 'other'};
-      const entity = {'@id': '', 'property': [value, other]};
-      removePropertyValue(entity, prop, value['@value']);
-      expect(entity[prop]).not.toContain(value);
-      removePropertyValue(entity, prop, other['@value']);
-      expect(prop in entity).toEqual(false);
+    const prop = 'property';
+    const value = {'@value': 'value'};
+    const other = {'@value': 'other'};
+    const entity = {'@id': '', 'property': [value, other]};
+    removePropertyValue(entity, prop, value['@value']);
+    expect(entity[prop]).not.toContain(value);
+    removePropertyValue(entity, prop, other['@value']);
+    expect(prop in entity).toEqual(false);
   });
   it('should replace a property value from an entity', () => {
-      const prop = 'property';
-      const value = {'@value': 'value'};
-      const other = {'@value': 'other'};
-      const entity = {'@id': '', 'property': [value]};
-      replacePropertyValue(entity, prop, value['@value'], other['@value']);
-      expect(entity[prop]).toContain(other);
-      expect(entity[prop]).not.toContain(value);
+    const prop = 'property';
+    const value = {'@value': 'value'};
+    const other = {'@value': 'other'};
+    const entity = {'@id': '', 'property': [value]};
+    replacePropertyValue(entity, prop, value['@value'], other['@value']);
+    expect(entity[prop]).toContain(other);
+    expect(entity[prop]).not.toContain(value);
   });
   describe('should get a property id value from an entity', () => {
     it('if it contains the property', () => {
@@ -208,14 +211,14 @@ describe('Utility method', () => {
       const entity: JSONLDObject = {
         '@id': 'http://example.com/entity',
         'http://example.com/property': [
-          { '@id': 'http://example.com/value1' },
-          { '@id': 'http://example.com/value2' },
-          { '@id': 'http://example.com/value3' }
+          {'@id': 'http://example.com/value1'},
+          {'@id': 'http://example.com/value2'},
+          {'@id': 'http://example.com/value3'}
         ]
       };
       const propertyIRI = 'http://example.com/property';
-        const result = getPropertyIds(entity, propertyIRI);
-  
+      const result = getPropertyIds(entity, propertyIRI);
+
       expect(result).toBeDefined();
       expect(result.size).toBe(3);
       expect(result.has('http://example.com/value1')).toBeTrue();
@@ -229,7 +232,7 @@ describe('Utility method', () => {
       };
       const propertyIRI = 'http://example.com/property';
       const result = getPropertyIds(entity, propertyIRI);
-  
+
       expect(result).toBeDefined();
       expect(result.size).toBe(0);
     });
@@ -239,7 +242,7 @@ describe('Utility method', () => {
       };
       const propertyIRI = 'http://example.com/property';
       const result = getPropertyIds(entity, propertyIRI);
-  
+
       expect(result).toBeDefined();
       expect(result.size).toBe(0);
     });
@@ -334,41 +337,41 @@ describe('Utility method', () => {
       expect(getDctermsId({'@id': ''}, 'prop')).toBe('');
     });
   });
-  describe('addLanguageToAnnotations should set the proper values', function() {
-    it('when language is undefined', function() {
+  describe('addLanguageToAnnotations should set the proper values', function () {
+    it('when language is undefined', function () {
       const entity = {'@id': ''};
       addLanguageToAnnotations(entity, undefined);
       expect(entity).toEqual({'@id': ''});
     });
-    describe('when language is provided', function() {
+    describe('when language is provided', function () {
       const language = 'en';
-      it('and it has a dcterms:title', function() {
+      it('and it has a dcterms:title', function () {
         const entity = {'@id': '', [`${DCTERMS}title`]: [{'@value': 'value'}]};
         const expected = {'@id': '', [`${DCTERMS}title`]: [{'@value': 'value', '@language': language}]};
         addLanguageToAnnotations(entity, language);
         expect(entity).toEqual(expected);
       });
-      it('and it has a dcterms:description', function() {
+      it('and it has a dcterms:description', function () {
         const entity = {'@id': '', [`${DCTERMS}description`]: [{'@value': 'value'}]};
         const expected = {'@id': '', [`${DCTERMS}description`]: [{'@value': 'value', '@language': language}]};
         addLanguageToAnnotations(entity, language);
         expect(entity).toEqual(expected);
       });
-      it('and it has both dcterms:title and dcterms:description', function() {
+      it('and it has both dcterms:title and dcterms:description', function () {
         const entity = {
-          '@id': '', 
+          '@id': '',
           [`${DCTERMS}description`]: [{'@value': 'description'}],
           [`${DCTERMS}title`]: [{'@value': 'title'}]
         };
         const expected = {
-          '@id': '', 
+          '@id': '',
           [`${DCTERMS}description`]: [{'@value': 'description', '@language': language}],
           [`${DCTERMS}title`]: [{'@value': 'title', '@language': language}]
         };
         addLanguageToAnnotations(entity, language);
         expect(entity).toEqual(expected);
       });
-      it('and it has a skos:prefLabel', function() {
+      it('and it has a skos:prefLabel', function () {
         const entity = {'@id': '', [`${SKOS}prefLabel`]: [{'@value': 'value'}]};
         const expected = {'@id': '', [`${SKOS}prefLabel`]: [{'@value': 'value', '@language': language}]};
         addLanguageToAnnotations(entity, language);
@@ -389,7 +392,7 @@ describe('Utility method', () => {
   });
   describe('should determine whether an entity is a blank node', () => {
     it('if the entity contains a blank node id', () => {
-      expect(isBlankNode({ '@id': '_:genid0' })).toBe(true);
+      expect(isBlankNode({'@id': '_:genid0'})).toBe(true);
     });
     it('if the entity does not contain a blank node id', () => {
       expect(isBlankNode({'@id': 'test'})).toBe(false);
@@ -403,8 +406,8 @@ describe('Utility method', () => {
         expect(getBeautifulIRI(iri)).toBe(uuid);
       });
       it('that is not a UUID', () => {
-          const iri = 'http://test.com#end';
-          expect(getBeautifulIRI(iri)).toBe('End');
+        const iri = 'http://test.com#end';
+        expect(getBeautifulIRI(iri)).toBe('End');
       });
     });
     it('if it does not have a local name', () => {
@@ -469,13 +472,17 @@ describe('Utility method', () => {
     });
   });
   it('should turn a paginated configuration object into HTTP query parameters', function () {
-    let params = paginatedConfigToHttpParams({sortOption: {field: 'test', asc: true, label: ''}, limit: 10, pageIndex: 1});
+    let params = paginatedConfigToHttpParams({
+      sortOption: {field: 'test', asc: true, label: ''},
+      limit: 10,
+      pageIndex: 1
+    });
     expect(params.get('sort')).toEqual('test');
     expect(params.get('ascending')).toEqual('true');
     expect(params.get('limit')).toEqual('10');
     expect(params.get('offset')).toEqual('10');
 
-    params = paginatedConfigToHttpParams({sortOption: {field: 'test', asc: false , label: ''}, limit: 10});
+    params = paginatedConfigToHttpParams({sortOption: {field: 'test', asc: false, label: ''}, limit: 10});
     expect(params.get('sort')).toEqual('test');
     expect(params.get('ascending')).toEqual('false');
     expect(params.get('limit')).toEqual('10');
@@ -502,7 +509,13 @@ describe('Utility method', () => {
       .toEqual({error: '', errorMessage: 'Something went wrong. Please try again later.', errorDetails: []});
     expect(getErrorDataObject(new HttpErrorResponse({error: {errorMessage: 'error'}})))
       .toEqual({error: '', errorMessage: 'error', errorDetails: []});
-    expect(getErrorDataObject(new HttpErrorResponse({error: {error: 'error', errorMessage: 'errorMessage', errorDetails: ['Line 1', 'Line 2']}})))
+    expect(getErrorDataObject(new HttpErrorResponse({
+      error: {
+        error: 'error',
+        errorMessage: 'errorMessage',
+        errorDetails: ['Line 1', 'Line 2']
+      }
+    })))
       .toEqual({error: 'error', errorMessage: 'errorMessage', errorDetails: ['Line 1', 'Line 2']});
     expect(getErrorDataObject(new HttpErrorResponse({error: ''})))
       .toEqual({error: '', errorMessage: 'Something went wrong. Please try again later.', errorDetails: []});
@@ -570,7 +583,11 @@ describe('Utility method', () => {
         .subscribe(() => {
           fail('Observable should have rejected.');
         }, error => {
-          expect(error).toEqual({error: '', errorMessage: 'Something went wrong. Please try again later.', errorDetails: []});
+          expect(error).toEqual({
+            error: '',
+            errorMessage: 'Something went wrong. Please try again later.',
+            errorDetails: []
+          });
         });
       tick();
     }));
@@ -578,11 +595,11 @@ describe('Utility method', () => {
   // Mobi Specific Utility Methods
   it('should get correct object IRIs for the provided addition or deletion', () => {
     const additions = [{
-        '@id': 'id',
-        prop1: 'value1',
-        prop2: [{'@id': 'iri1'}],
-        prop3: [{'@id': 'iri2'}, {'@id': 'iri3'}],
-        prop5: 'value5'
+      '@id': 'id',
+      prop1: 'value1',
+      prop2: [{'@id': 'iri1'}],
+      prop3: [{'@id': 'iri2'}, {'@id': 'iri3'}],
+      prop5: 'value5'
     }];
     const expected = ['iri1', 'iri2', 'iri3'];
     expect(getObjIrisFromDifference(additions)).toEqual(expected);
@@ -591,13 +608,13 @@ describe('Utility method', () => {
     expect(getArrWithoutEntity('B', undefined)).toEqual([]);
     expect(getArrWithoutEntity('B', [])).toEqual([]);
     const arr: JSONLDObject[] = [
-      { '@id': 'A' },
-      { '@id': 'B' },
-      { '@id': 'C' },
+      {'@id': 'A'},
+      {'@id': 'B'},
+      {'@id': 'C'},
     ];
     expect(getArrWithoutEntity('B', arr)).toEqual([
-      { '@id': 'A' },
-      { '@id': 'C' },
+      {'@id': 'A'},
+      {'@id': 'C'},
     ]);
   });
   it('getInputType should return the proper input type based on datatype', () => {
@@ -648,7 +665,7 @@ describe('Utility method', () => {
       const time2 = new Date(t2);
       const startTime = moment(t1);
       const endTime = moment(t2);
-      const running  = moment.duration(endTime.diff(startTime)).asSeconds();
+      const running = moment.duration(endTime.diff(startTime)).asSeconds();
       expect(runningTime(time1, time2)).toBe(`${running} sec`);
     });
   });
@@ -709,46 +726,55 @@ describe('Utility method', () => {
       expect(getStatus(status)).toBe(status);
     });
   });
-  describe('getEntityName should return', function() {
+  describe('getEntityName should return', function () {
     beforeEach(function () {
       this.entity = cloneDeep({'@id': 'test'});
     });
-    describe('returns the rdfs:label if present', function() {
-      it('and in english', function() {
+    describe('returns the rdfs:label if present', function () {
+      it('and in english', function () {
         this.entity[`${RDFS}label`] = [{'@value': 'hello', '@language': 'en'}, {'@value': 'hola', '@language': 'es'}];
         expect(getEntityName(this.entity)).toEqual('hello');
       });
-      it('and there is no english version', function() {
-        this.entity[`${RDFS}label`] = [{ '@value': 'title' }];
+      it('and there is no english version', function () {
+        this.entity[`${RDFS}label`] = [{'@value': 'title'}];
         expect(getEntityName(this.entity)).toEqual('title');
       });
     });
-    describe('returns the dcterms:title if present and no rdfs:label', function() {
-      it('and in english', function() {
-        this.entity[`${DCTERMS}title`] = [{'@value': 'hello', '@language': 'en'}, {'@value': 'hola', '@language': 'es'}];
+    describe('returns the dcterms:title if present and no rdfs:label', function () {
+      it('and in english', function () {
+        this.entity[`${DCTERMS}title`] = [{'@value': 'hello', '@language': 'en'}, {
+          '@value': 'hola',
+          '@language': 'es'
+        }];
         expect(getEntityName(this.entity)).toEqual('hello');
       });
-      it('and there is no english version', function() {
-        this.entity[`${DCTERMS}title`] = [{ '@value': 'title' }];
+      it('and there is no english version', function () {
+        this.entity[`${DCTERMS}title`] = [{'@value': 'title'}];
         expect(getEntityName(this.entity)).toEqual('title');
       });
-      describe('returns skos:prefLabel if present and no rdfs:label, dcterms:title, or dc:title', function() {
-        it('and in english', function() {
-          this.entity[`${SKOS}prefLabel`] = [{'@value': 'hello', '@language': 'en'}, {'@value': 'hola', '@language': 'es'}];
+      describe('returns skos:prefLabel if present and no rdfs:label, dcterms:title, or dc:title', function () {
+        it('and in english', function () {
+          this.entity[`${SKOS}prefLabel`] = [{'@value': 'hello', '@language': 'en'}, {
+            '@value': 'hola',
+            '@language': 'es'
+          }];
           expect(getEntityName(this.entity)).toEqual('hello');
         });
-        it('and there is no english version', function() {
-          this.entity[`${SKOS}prefLabel`] = [{ '@value': 'title' }];
+        it('and there is no english version', function () {
+          this.entity[`${SKOS}prefLabel`] = [{'@value': 'title'}];
           expect(getEntityName(this.entity)).toEqual('title');
         });
       });
-      describe('returns skos:altLabel if present and no rdfs:label, dcterms:title, dc:title, or skos:prefLabel', function() {
-        it('and in english', function() {
-          this.entity[`${SKOS}altLabel`] = [{'@value': 'hello', '@language': 'en'}, {'@value': 'hola', '@language': 'es'}];
+      describe('returns skos:altLabel if present and no rdfs:label, dcterms:title, dc:title, or skos:prefLabel', function () {
+        it('and in english', function () {
+          this.entity[`${SKOS}altLabel`] = [{'@value': 'hello', '@language': 'en'}, {
+            '@value': 'hola',
+            '@language': 'es'
+          }];
           expect(getEntityName(this.entity)).toEqual('hello');
         });
-        it('and there is no english version', function() {
-          this.entity[`${SKOS}altLabel`] = [{ '@value': 'title' }];
+        it('and there is no english version', function () {
+          this.entity[`${SKOS}altLabel`] = [{'@value': 'title'}];
           expect(getEntityName(this.entity)).toEqual('title');
         });
       });
@@ -779,23 +805,120 @@ describe('Utility method', () => {
         });
       });
     });
-    describe('returns the dc:title if present and no rdfs:label or dcterms:title', function() {
-      it('and in english', function() {
+    describe('returns the dc:title if present and no rdfs:label or dcterms:title', function () {
+      it('and in english', function () {
         this.entity[`${DC}title`] = [{'@value': 'hello', '@language': 'en'}, {'@value': 'hola', '@language': 'es'}];
         expect(getEntityName(this.entity)).toEqual('hello');
       });
-      it('and there is no english version', function() {
-        this.entity[`${DC}title`] = [{ '@value': 'title' }];
+      it('and there is no english version', function () {
+        this.entity[`${DC}title`] = [{'@value': 'title'}];
         expect(getEntityName(this.entity)).toEqual('title');
       });
     });
-    it('returns the @id if present and nothing else', function() {
+    it('returns the @id if present and nothing else', function () {
       this.entity['@id'] = 'http://test.com#ontology';
       expect(getEntityName(this.entity)).toEqual('Ontology');
     });
-    it('returns nothing if useBeautifulIRI is false', function() {
+    it('returns nothing if useBeautifulIRI is false', function () {
       this.entity['@id'] = 'http://test.com#ontology';
       expect(getEntityName(this.entity, false)).toEqual('');
+    });
+  });
+  describe('getEntityNameProp should return', function () {
+    let mockService: jasmine.SpyObj<SettingManagerService>;
+    beforeEach(function () {
+      mockService = jasmine.createSpyObj('SettingManagerService', ['getAnnotationPreference']);
+      this.entity = cloneDeep({'@id': 'test'});
+    });
+    describe('returns the rdfs:label IRI if present', function () {
+      it('and in english', function () {
+        this.entity[`${RDFS}label`] = [{'@value': 'hello', '@language': 'en'}, {'@value': 'hola', '@language': 'es'}];
+        expect(getEntityNameProp(this.entity, mockService)).toEqual(`${RDFS}label`);
+      });
+      it('and there is no english version', function () {
+        this.entity[`${RDFS}label`] = [{'@value': 'title'}];
+        expect(getEntityNameProp(this.entity, mockService)).toEqual(`${RDFS}label`);
+
+      });
+    });
+    describe('returns the dcterms:title IRI if present and no rdfs:label', function () {
+      it('and in english', function () {
+        this.entity[`${DCTERMS}title`] = [{'@value': 'hello', '@language': 'en'}, {
+          '@value': 'hola',
+          '@language': 'es'
+        }];
+        expect(getEntityNameProp(this.entity, mockService)).toEqual(`${DCTERMS}title`);
+      });
+      it('and there is no english version', function () {
+        this.entity[`${DCTERMS}title`] = [{'@value': 'title'}];
+        expect(getEntityNameProp(this.entity, mockService)).toEqual(`${DCTERMS}title`);
+      });
+    });
+    describe('returns skos:prefLabel if present and no rdfs:label, dcterms:title, or dc:title', function () {
+      it('and in english', function () {
+        this.entity[`${SKOS}prefLabel`] = [{'@value': 'hello', '@language': 'en'}, {
+          '@value': 'hola',
+          '@language': 'es'
+        }];
+        expect(getEntityNameProp(this.entity, mockService)).toEqual(`${SKOS}prefLabel`);
+      });
+      it('and there is no english version', function () {
+        this.entity[`${SKOS}prefLabel`] = [{'@value': 'title'}];
+        expect(getEntityNameProp(this.entity, mockService)).toEqual(`${SKOS}prefLabel`);
+      });
+    });
+    describe('returns skos:altLabel IRI if present and no rdfs:label, dcterms:title, dc:title, or skos:prefLabel', function () {
+      it('and in english', function () {
+        this.entity[`${SKOS}altLabel`] = [{'@value': 'hello', '@language': 'en'}, {
+          '@value': 'hola',
+          '@language': 'es'
+        }];
+        expect(getEntityNameProp(this.entity, mockService)).toEqual(`${SKOS}altLabel`);
+      });
+      it('and there is no english version', function () {
+        this.entity[`${SKOS}altLabel`] = [{'@value': 'title'}];
+        expect(getEntityNameProp(this.entity, mockService)).toEqual(`${SKOS}altLabel`);
+      });
+    });
+    describe('returns the skosxl:literalForm IRI, if present and no rdfs:label, dcterms:title, dc:title,' +
+      ' skos:prefLabel, or skos:altLabel', function () {
+      it('and in english', function () {
+        this.entity[`${SKOSXL}literalForm`] = [{'@value': 'hello', '@language': 'en'}, {
+          '@value': 'hola',
+          '@language': 'es'
+        }];
+        expect(getEntityNameProp(this.entity, mockService)).toEqual(`${SKOSXL}literalForm`);
+      });
+      it('and there is no english version', function () {
+        this.entity[`${SKOSXL}literalForm`] = [{'@value': 'Salutos', '@language': 'eo'}];
+        expect(getEntityNameProp(this.entity, mockService)).toEqual(`${SKOSXL}literalForm`);
+      });
+    });
+    describe('returns the sh:name IRI, if present and no rdfs:label, dcterms:title, dc:title, skos:prefLabel,' +
+      ' skos:altLabel, or skosxl:literalForm', function () {
+      it('and in english', function () {
+        this.entity[`${SH}name`] = [{'@value': 'hello', '@language': 'en'}, {
+          '@value': 'hola',
+          '@language': 'es'
+        }];
+        expect(getEntityNameProp(this.entity, mockService)).toEqual(`${SH}name`);
+      });
+      it('and there is no english version', function () {
+        this.entity[`${SH}name`] = [{'@value': 'Salutos', '@language': 'eo'}];
+        expect(getEntityNameProp(this.entity, mockService)).toEqual(`${SH}name`);
+      });
+    });
+    it('returns the dc:title IRI if no name property and Annotation Preference is DC Terms', function () {
+      mockService.getAnnotationPreference.and.returnValue(of('DC Terms'));
+      expect(getEntityNameProp(this.entity, mockService)).toEqual(`${DCTERMS}title`);
+    });
+    it('returns the rdfs:label IRI if no name property and Annotation Preference is RDFS', function () {
+      mockService.getAnnotationPreference.and.returnValue(of('RDFS'));
+      expect(getEntityNameProp(this.entity, mockService)).toEqual(`${RDFS}label`);
+    });
+    it('returns the dc:title IRI if no name property and annotation preference cannot be retrieved', function () {
+      mockService.getAnnotationPreference.and.returnValue(throwError('new Error'));
+      expect(getEntityNameProp(this.entity, mockService)).toEqual(`${DCTERMS}title`);
     });
   });
   it('getShaclGeneratedData should convert FormValues into JSON-LD', () => {
@@ -807,79 +930,79 @@ describe('Utility method', () => {
     const multiComplexProp = 'urn:multiComplexProp';
     const multiComplexPropA = 'urn:multiSubPropA';
     const multiComplexPropB = 'urn:multiSubPropB';
-    const nodeShape: JSONLDObject = { '@id': 'urn:Class', '@type': [`${SH}NodeShape`] };
+    const nodeShape: JSONLDObject = {'@id': 'urn:Class', '@type': [`${SH}NodeShape`]};
     const simpleTextPropertyShape: JSONLDObject = {
       '@id': 'urn:SimpleTextPropertyShape',
-      '@type': [ `${SH}PropertyShape` ],
-      [`${SHACL_FORM}usesFormField`]: [{ '@id': `${SHACL_FORM}TextInput` }],
-      [`${SH}path`]: [{ '@id': simpleTextProp }],
-      [`${SH}minCount`]: [{ '@value': '1' }],
-      [`${SH}maxCount`]: [{ '@value': '2' }],
-      [`${SH}datatype`]: [{ '@id': `${XSD}int` }],
+      '@type': [`${SH}PropertyShape`],
+      [`${SHACL_FORM}usesFormField`]: [{'@id': `${SHACL_FORM}TextInput`}],
+      [`${SH}path`]: [{'@id': simpleTextProp}],
+      [`${SH}minCount`]: [{'@value': '1'}],
+      [`${SH}maxCount`]: [{'@value': '2'}],
+      [`${SH}datatype`]: [{'@id': `${XSD}int`}],
     };
     const multiTextPropertyShape: JSONLDObject = {
       '@id': 'urn:MultiTextPropertyShape',
-      '@type': [ `${SH}PropertyShape` ],
-      [`${SHACL_FORM}usesFormField`]: [{ '@id': `${SHACL_FORM}TextInput` }],
-      [`${SH}path`]: [{ '@id': multiTextProp }],
-      [`${SH}minCount`]: [{ '@value': '1' }],
-      [`${SH}maxCount`]: [{ '@value': '2' }]
+      '@type': [`${SH}PropertyShape`],
+      [`${SHACL_FORM}usesFormField`]: [{'@id': `${SHACL_FORM}TextInput`}],
+      [`${SH}path`]: [{'@id': multiTextProp}],
+      [`${SH}minCount`]: [{'@value': '1'}],
+      [`${SH}maxCount`]: [{'@value': '2'}]
     };
     const missingPropertyShape: JSONLDObject = {
       '@id': 'urn:MissingPropertyShape',
-      '@type': [ `${SH}PropertyShape` ],
-      [`${SHACL_FORM}usesFormField`]: [{ '@id': `${SHACL_FORM}TextInput` }],
-      [`${SH}path`]: [{ '@id': missingProp }],
-      [`${SH}minCount`]: [{ '@value': '1' }],
-      [`${SH}maxCount`]: [{ '@value': '2' }]
+      '@type': [`${SH}PropertyShape`],
+      [`${SHACL_FORM}usesFormField`]: [{'@id': `${SHACL_FORM}TextInput`}],
+      [`${SH}path`]: [{'@id': missingProp}],
+      [`${SH}minCount`]: [{'@value': '1'}],
+      [`${SH}maxCount`]: [{'@value': '2'}]
     };
     const complexPropertyShape: JSONLDObject = {
       '@id': 'urn:ComplexPropertyShape',
-      '@type': [ `${SH}PropertyShape` ],
-      [`${SH}path`]: [{ '@id': complexProp }],
-      [`${SH}maxCount`]: [{ '@value': '1' }],
-      [`${SH}node`]: [{ '@id': 'urn:subNode1' }]
+      '@type': [`${SH}PropertyShape`],
+      [`${SH}path`]: [{'@id': complexProp}],
+      [`${SH}maxCount`]: [{'@value': '1'}],
+      [`${SH}node`]: [{'@id': 'urn:subNode1'}]
     };
     const subNodeShape1: JSONLDObject = {
       '@id': 'urn:subNode1',
       '@type': [`${SH}NodeShape`],
-      [`${SH}property`]: [{ '@id': 'urn:subPropertyShape1' }]
+      [`${SH}property`]: [{'@id': 'urn:subPropertyShape1'}]
     };
     const subPropertyShape1: JSONLDObject = {
       '@id': 'urn:subPropertyShape1',
       '@type': [`${SH}PropertyShape`],
-      [`${SH}path`]: [{ '@id': complexPropA }],
-      [`${SH}name`]: [{ '@value': 'Complex Prop A' }],
-      [`${SHACL_FORM}usesFormField`]: [{ '@id': `${SHACL_FORM}TextInput` }],
+      [`${SH}path`]: [{'@id': complexPropA}],
+      [`${SH}name`]: [{'@value': 'Complex Prop A'}],
+      [`${SHACL_FORM}usesFormField`]: [{'@id': `${SHACL_FORM}TextInput`}],
     };
     const multiComplexPropertyShape: JSONLDObject = {
       '@id': 'urn:multiComplexPropertyShape',
-      '@type': [ `${SH}PropertyShape` ],
-      [`${SH}path`]: [{ '@id': multiComplexProp }],
-      [`${SH}node`]: [{ '@id': 'urn:subNode2' }]
+      '@type': [`${SH}PropertyShape`],
+      [`${SH}path`]: [{'@id': multiComplexProp}],
+      [`${SH}node`]: [{'@id': 'urn:subNode2'}]
     };
     const subNodeShape2: JSONLDObject = {
       '@id': 'urn:subNode2',
       '@type': [`${SH}NodeShape`],
       [`${SH}property`]: [
-        { '@id': 'urn:subPropertyShape2' },
-        { '@id': 'urn:subPropertyShape3' },
+        {'@id': 'urn:subPropertyShape2'},
+        {'@id': 'urn:subPropertyShape3'},
       ]
     };
     const subPropertyShape2: JSONLDObject = {
       '@id': 'urn:subPropertyShape2',
       '@type': [`${SH}PropertyShape`],
-      [`${SH}path`]: [{ '@id': multiComplexPropA }],
-      [`${SH}name`]: [{ '@value': 'Multi Complex Prop A' }],
-      [`${SH}datatype`]: [{ '@id': `${XSD}string` }],
-      [`${SHACL_FORM}usesFormField`]: [{ '@id': `${SHACL_FORM}TextInput` }],
+      [`${SH}path`]: [{'@id': multiComplexPropA}],
+      [`${SH}name`]: [{'@value': 'Multi Complex Prop A'}],
+      [`${SH}datatype`]: [{'@id': `${XSD}string`}],
+      [`${SHACL_FORM}usesFormField`]: [{'@id': `${SHACL_FORM}TextInput`}],
     };
     const subPropertyShape3: JSONLDObject = {
       '@id': 'urn:subPropertyShape3',
       '@type': [`${SH}PropertyShape`],
-      [`${SH}path`]: [{ '@id': multiComplexPropB }],
-      [`${SH}name`]: [{ '@value': 'Multi Complex Prop B' }],
-      [`${SHACL_FORM}usesFormField`]: [{ '@id': `${SHACL_FORM}TextInput` }],
+      [`${SH}path`]: [{'@id': multiComplexPropB}],
+      [`${SH}name`]: [{'@value': 'Multi Complex Prop B'}],
+      [`${SHACL_FORM}usesFormField`]: [{'@id': `${SHACL_FORM}TextInput`}],
     };
     const fullRDF: JSONLDObject[] = [nodeShape, simpleTextPropertyShape, multiTextPropertyShape, missingPropertyShape, complexPropertyShape, subNodeShape1, subPropertyShape1, multiComplexPropertyShape, subNodeShape2, subPropertyShape2, subPropertyShape3];
     const simpleTextConfig: SHACLFormFieldConfig = new SHACLFormFieldConfig(nodeShape, simpleTextPropertyShape['@id'], fullRDF);
@@ -894,37 +1017,37 @@ describe('Utility method', () => {
         [complexPropA]: 'http://test.com'
       },
       [multiComplexProp]: [
-        { [multiComplexPropA]: 'http://example.com/1', [multiComplexPropB]: 'B' },
-        { [multiComplexPropA]: 'http://example.com/2', [multiComplexPropB]: 'Z' },
-        { [multiComplexPropA]: 'http://example.com/3', [multiComplexPropB]: '' },
+        {[multiComplexPropA]: 'http://example.com/1', [multiComplexPropB]: 'B'},
+        {[multiComplexPropA]: 'http://example.com/2', [multiComplexPropB]: 'Z'},
+        {[multiComplexPropA]: 'http://example.com/3', [multiComplexPropB]: ''},
       ]
     };
-    const instance: JSONLDObject = { '@id': 'test', '@type': [nodeShape['@id']] };
+    const instance: JSONLDObject = {'@id': 'test', '@type': [nodeShape['@id']]};
     const result = getShaclGeneratedData(instance, [simpleTextConfig, multiTextConfig, missingTextConfig, complexConfig, multiComplexConfig], formValues);
     expect(result.length).toEqual(5);
     expect(result[0]['@id']).toEqual(instance['@id']);
     expect(instance[simpleTextProp]).toEqual([{'@value': '10', '@type': `${XSD}int`}]);
-    expect(instance[multiTextProp]).toEqual([ { '@value': 'A' }, { '@value': 'B' } ]);
-    expect(instance[complexProp]).toEqual([ { '@id': jasmine.any(String) } ]);
+    expect(instance[multiTextProp]).toEqual([{'@value': 'A'}, {'@value': 'B'}]);
+    expect(instance[complexProp]).toEqual([{'@id': jasmine.any(String)}]);
     const complexNode: JSONLDObject = result.find(obj => obj['@id'] === instance[complexProp][0]['@id']);
     expect(complexNode).toBeTruthy();
     expect(complexNode['@type']).toEqual([subNodeShape1['@id']]);
-    expect(complexNode[complexPropA]).toEqual([ { '@id': 'http://test.com' } ]);
-    expect(instance[multiComplexProp]).toEqual([ { '@id': jasmine.any(String) }, { '@id': jasmine.any(String) }, { '@id': jasmine.any(String) } ]);
+    expect(complexNode[complexPropA]).toEqual([{'@id': 'http://test.com'}]);
+    expect(instance[multiComplexProp]).toEqual([{'@id': jasmine.any(String)}, {'@id': jasmine.any(String)}, {'@id': jasmine.any(String)}]);
     const multiComplexNode1 = result.find(obj => obj['@id'] === instance[multiComplexProp][0]['@id']);
     expect(multiComplexNode1).toBeTruthy();
     expect(multiComplexNode1['@type']).toEqual([subNodeShape2['@id']]);
-    expect(multiComplexNode1[multiComplexPropA]).toEqual([ { '@value': 'http://example.com/1' } ]);
-    expect(multiComplexNode1[multiComplexPropB]).toEqual([ { '@value': 'B' } ]);
+    expect(multiComplexNode1[multiComplexPropA]).toEqual([{'@value': 'http://example.com/1'}]);
+    expect(multiComplexNode1[multiComplexPropB]).toEqual([{'@value': 'B'}]);
     const multiComplexNode2 = result.find(obj => obj['@id'] === instance[multiComplexProp][1]['@id']);
     expect(multiComplexNode2).toBeTruthy();
     expect(multiComplexNode2['@type']).toEqual([subNodeShape2['@id']]);
-    expect(multiComplexNode2[multiComplexPropA]).toEqual([ { '@value': 'http://example.com/2' } ]);
-    expect(multiComplexNode2[multiComplexPropB]).toEqual([ { '@value': 'Z' } ]);
+    expect(multiComplexNode2[multiComplexPropA]).toEqual([{'@value': 'http://example.com/2'}]);
+    expect(multiComplexNode2[multiComplexPropB]).toEqual([{'@value': 'Z'}]);
     const multiComplexNode3 = result.find(obj => obj['@id'] === instance[multiComplexProp][2]['@id']);
     expect(multiComplexNode3).toBeTruthy();
     expect(multiComplexNode3['@type']).toEqual([subNodeShape2['@id']]);
-    expect(multiComplexNode3[multiComplexPropA]).toEqual([ { '@value': 'http://example.com/3' } ]);
+    expect(multiComplexNode3[multiComplexPropA]).toEqual([{'@value': 'http://example.com/3'}]);
     expect(multiComplexNode3[multiComplexPropB]).toBeUndefined();
   });
 

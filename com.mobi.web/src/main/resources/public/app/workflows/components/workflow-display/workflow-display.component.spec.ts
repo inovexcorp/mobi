@@ -20,32 +20,29 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { SimpleChange } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { MockComponent, MockProvider } from 'ng-mocks';
-// material
 import { MatDialog } from '@angular/material/dialog';
-// lodash
+import { MockComponent, MockProvider } from 'ng-mocks';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { SimpleChange } from '@angular/core';
+
 import { cloneDeep, isObject } from 'lodash';
-//rxjs
 import { of, throwError } from 'rxjs';
-// local
+
 import { actionSHACLDefinitions, triggerSHACLDefinitions, workflowRDF } from '../../models/mock_data/workflow-mocks';
 import { cleanStylesFromDOM } from '../../../../test/ts/Shared';
+import { DCTERMS, WORKFLOWS } from '../../../prefixes';
 import { Difference } from '../../../shared/models/difference.class';
 import { Element, EntityType } from '../../models/workflow-display.interface';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { ModalType } from '../../models/modal-config.interface';
+import { SettingManagerService } from '../../../shared/services/settingManager.service';
 import { ToastService } from '../../../shared/services/toast.service';
 import { WorkflowAddConfigurationComponent } from '../workflow-add-configuration/workflow-add-configuration.component';
-import {
-  WorkflowPropertyOverlayComponent
-} from '../workflow-property-overlay-component/workflow-property-overlay.component';
-import { DCTERMS, WORKFLOWS } from '../../../prefixes';
-import { WorkflowsManagerService } from '../../services/workflows-manager.service';
-import { WorkflowsStateService } from '../../services/workflows-state.service';
 import { WorkflowDisplayComponent } from './workflow-display.component';
+import { WorkflowsManagerService } from '../../services/workflows-manager.service';
+import { WorkflowPropertyOverlayComponent } from '../workflow-property-overlay-component/workflow-property-overlay.component';
+import { WorkflowsStateService } from '../../services/workflows-state.service';
 
 describe('WorkflowDisplayComponent', () => {
   let component: WorkflowDisplayComponent;
@@ -53,6 +50,7 @@ describe('WorkflowDisplayComponent', () => {
   let matDialog: jasmine.SpyObj<MatDialog>;
   let workflowsStateStub: jasmine.SpyObj<WorkflowsStateService>;
   let workflowsManagerStub: jasmine.SpyObj<WorkflowsManagerService>;
+  let settingManagerStub: jasmine.SpyObj<SettingManagerService>;
   let toastStub: jasmine.SpyObj<ToastService>;
 
   let cyChartSpy;
@@ -89,6 +87,7 @@ describe('WorkflowDisplayComponent', () => {
       providers: [
         MockProvider(WorkflowsStateService),
         MockProvider(WorkflowsManagerService),
+        MockProvider(SettingManagerService),
         MockProvider(ToastService),
         {
           provide: MatDialog, useFactory: () => jasmine.createSpyObj('MatDialog', {
@@ -101,21 +100,18 @@ describe('WorkflowDisplayComponent', () => {
     cyChartSpy = jasmine.createSpyObj('cyChart', {
       json: { elements: { nodes: [], edges: [] } },
       ready: undefined,
-      zoom: (zoomLevel: number) => {
-      },
-      animate: () => {
-      },
-      off: () => {
-      }
+      animate: () => {},
+      off: () => {},
+      zoom: (zoomLevel: number) => {}
     });
 
-    //DI
     matDialog = TestBed.inject(MatDialog) as jasmine.SpyObj<MatDialog>;
     workflowsStateStub = TestBed.inject(WorkflowsStateService) as jasmine.SpyObj<WorkflowsStateService>;
     workflowsManagerStub = TestBed.inject(WorkflowsManagerService) as jasmine.SpyObj<WorkflowsManagerService>;
+    settingManagerStub = TestBed.inject(SettingManagerService) as jasmine.SpyObj<SettingManagerService>;
     toastStub = TestBed.inject(ToastService) as jasmine.SpyObj<ToastService>;
-    //component
     fixture = TestBed.createComponent(WorkflowDisplayComponent);
+
     component = fixture.componentInstance;
     component.resource = workflowRDF;
     component.recordId = recordId;
@@ -124,6 +120,8 @@ describe('WorkflowDisplayComponent', () => {
       triggers: triggerSHACLDefinitions
     };
     component.cyChart = cyChartSpy;
+
+    settingManagerStub.getAnnotationPreference.and.returnValue(of('DC Terms'));
     fixture.detectChanges();
   });
 
@@ -135,6 +133,7 @@ describe('WorkflowDisplayComponent', () => {
     workflowsStateStub = null;
     workflowsManagerStub = null;
     toastStub = null;
+    settingManagerStub = null;
     cyChartSpy = null;
   });
 
