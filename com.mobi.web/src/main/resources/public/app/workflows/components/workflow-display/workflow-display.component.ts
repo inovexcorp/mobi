@@ -21,32 +21,34 @@
  * #L%
  */
 import { AfterContentChecked, Component, Input, OnChanges, SimpleChanges } from '@angular/core';
-// material
 import { MatDialog } from '@angular/material/dialog';
-// cytoscape
+
+import { cloneDeep, find, has, isArray, isEmpty, isEqual } from 'lodash';
+//TODO look into the issues with the cytoscape-cxtmenu and cytoscape-edgehandles extensions
+import cxtmenu from 'cytoscape-cxtmenu';
 import cytoscape from 'cytoscape/dist/cytoscape.esm.js';
 import dagre from 'cytoscape-dagre';
-import cxtmenu from 'cytoscape-cxtmenu';
 import edgehandles from 'cytoscape-edgehandles';
-// other libraries
-import { cloneDeep, find, has, isArray, isEmpty, isEqual } from 'lodash';
-import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
+import { Observable } from 'rxjs';
 import { v4 } from 'uuid';
-// local imports
-import { EdgeData, Element, EntityType, NodeData, NodeTypeStyle } from '../../models/workflow-display.interface';
-import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
-import { ModalConfig, ModalType } from '../../models/modal-config.interface';
-import { ToastService } from '../../../shared/services/toast.service';
-import { DCTERMS, WORKFLOWS } from '../../../prefixes';
-import { getBeautifulIRI, getEntityName } from '../../../shared/utility';
+
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
 import { Difference } from '../../../shared/models/difference.class';
-import { WorkflowAddConfigurationComponent } from '../workflow-add-configuration/workflow-add-configuration.component';
-import { WorkflowPropertyOverlayComponent } from '../workflow-property-overlay-component/workflow-property-overlay.component';
-import { WorkflowSHACLDefinitions } from '../../models/workflow-shacl-definitions.interface';
+import { EdgeData, Element, EntityType, NodeData, NodeTypeStyle } from '../../models/workflow-display.interface';
+import { entityNameProps, getBeautifulIRI, getEntityName, getEntityNameProp } from '../../../shared/utility';
 import { JSONLDId } from '../../../shared/models/JSONLDId.interface';
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { ModalConfig, ModalType } from '../../models/modal-config.interface';
+import { SettingManagerService } from '../../../shared/services/settingManager.service';
+import { ToastService } from '../../../shared/services/toast.service';
+import { WORKFLOWS } from '../../../prefixes';
+import { WorkflowAddConfigurationComponent } from '../workflow-add-configuration/workflow-add-configuration.component';
 import { WorkflowsManagerService } from '../../services/workflows-manager.service';
+import {
+  WorkflowPropertyOverlayComponent
+} from '../workflow-property-overlay-component/workflow-property-overlay.component';
+import { WorkflowSHACLDefinitions } from '../../models/workflow-shacl-definitions.interface';
 import { WorkflowsStateService } from '../../services/workflows-state.service';
 
 // Setup cytoscape extensions
@@ -84,24 +86,28 @@ interface MenuCommand {
    * @optional: css key:value pairs to set the command's css in js if you want
    */
   contentStyle?: { [key: string]: string };
+
   /**
    * @optional: a function to execute when the command is hovered
    */
   hover?(ele: cytoscape.ElementDefinition): void;
+
   /**
    * @optional: a function to execute when the command is selected
    */
   select?(ele: cytoscape.ElementDefinition): void;
+
   /**
    * @optional: whether the command is selectable
    */
   enabled?: boolean;
 }
+
 // Alias for the ctx-menu
 type MenuCommandArray = MenuCommand[] | (() => MenuCommand[]);
 
 /**
- * @class workflows.WorkflowDisplayComponent
+ * @class WorkflowDisplayComponent
  *
  * Represents a component for displaying workflow graphically. Can be set to "Edit" mode where the nodes have context
  * menus with different actions to perform. Houses the logic for determining the edited differences and updating the
@@ -118,7 +124,6 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
   public cyMenu: cxtmenu[] = [];
   public cyLayout: cytoscape.Layouts; // cytoscape layout
   public cyEdgehandles;
-  public cyChartSize = 1;
   public superTypes = {
     [EntityType.ACTION]: [this.buildWorkflowsIRI('Action')],
     [EntityType.TRIGGER]: [this.buildWorkflowsIRI('Trigger'), this.buildWorkflowsIRI('EventTrigger')]
@@ -153,8 +158,9 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
   // Appends a UUID to avoid conflicts with any existing data
   private readonly _TRIGGER_NODE_ID = `https://mobi.solutions/workflows/graph/trigger/${v4()}`;
 
-  constructor(private _dialog: MatDialog, private _workflowsState: WorkflowsStateService, 
-    private _wms: WorkflowsManagerService, private _toast: ToastService) {}
+  constructor(private _dialog: MatDialog, private _workflowsState: WorkflowsStateService, private _toast: ToastService,
+              private _wms: WorkflowsManagerService, private _sms: SettingManagerService) {
+  }
 
   /**
    * Executes on first and when the input properties of the component change.
@@ -172,15 +178,17 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
       this._handleEditMode();
     }
   }
+
   /**
    * Used when the canvas resizes to keep things from looking choppy and to make sure all elements are on screen.
    */
   ngAfterContentChecked(): void {
     this.cyChart.animate(
-        { duration: 150 },
-        { fit: { padding: 50 } }
+      {duration: 150},
+      {fit: {padding: 50}}
     );
   }
+
   /**
    * Retrieves workflow data.
    */
@@ -190,6 +198,7 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
       this.initGraph(elements);
     }
   }
+
   /**
    * Returns an array of elements that match the given node key type in the data array.
    *
@@ -203,7 +212,7 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
     if (entityType === EntityType.TRIGGER) {
       if (entities.length > 1) {
         console.error('More than one trigger node found unexpectedly');
-        return { nodes: [], edges: [] };
+        return {nodes: [], edges: []};
       } else if (!entities.length) {
         entities = [this.getDefaultTrigger()];
       }
@@ -219,12 +228,13 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
       edges = edges.concat(childEdges);
       return node;
     });
-    return { nodes, edges };
+    return {nodes, edges};
   }
+
   /**
    * Retrieves the IRIs of the "entry" Actions of the Workflow represented by the provided JSON-LD array. An "entry"
    * Action is one related directly to the w:Workflow object.
-   * 
+   *
    * @param {JSONLDObject[]} workflowData - The Workflow to retrieve "entry" actions from.
    * @returns {string[]} - An array of Action IRI strings.
    */
@@ -233,9 +243,10 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
     const nodeIRIs: JSONLDId[] = workflowObject[this.entityKeyMap[EntityType.TRIGGER].childKey[EntityType.ACTION]];
     return nodeIRIs ? nodeIRIs.map(obj => obj['@id']) : [];
   }
+
   /**
    * Retrieves the IRIs of all the child Actions of the provided Action JSON-LD.
-   * 
+   *
    * @param {JSONLDObject} action - The Action JSON-LD from which to retrieve child Actions.
    * @returns {string[]} - An array of Action IRI strings.
    */
@@ -243,6 +254,7 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
     const childActionIdObjs: JSONLDId[] = action[this.entityKeyMap[EntityType.ACTION].childKey[EntityType.ACTION]];
     return childActionIdObjs ? childActionIdObjs.map(obj => obj['@id']) : [];
   }
+
   /**
    * Builds an IRI by appending a given string to the constant WORKFLOWS namespace.
    *
@@ -252,6 +264,7 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
   buildWorkflowsIRI(key: string): string {
     return `${WORKFLOWS}${key}`;
   }
+
   /**
    * Initializes the Cytoscape graph instance.
    * @see {@link https://js.cytoscape.org/#layout.run}
@@ -269,10 +282,11 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
     this.cyChart.ready(this.bindNodes.bind(this));
     this.cyChart.center();
   }
+
   /**
    * Create Cytoscape Instance
    * @see {@link https://js.cytoscape.org/#core/initialisation}
-   * 
+   *
    * @returns cytoscape instance
    */
   createCytoscapeInstance(): cytoscape.Core {
@@ -286,18 +300,18 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
       minZoom: 0.05
     });
   }
+
   /**
    * Binds tap event on nodes in the cyChart to display properties of the clicked entity.
    */
   bindNodes(): void {
     this.cyChart.on('tap', 'node', ({target}) => {
       const node = target.data();
-      const entity = node.id === this._TRIGGER_NODE_ID ? 
-        this._getTriggerJSONLD(this.resource) : 
-        find(this.resource, {'@id': node.id});
+      const entity = node.id === this._TRIGGER_NODE_ID ? this._getTriggerJSONLD(this.resource) : find(this.resource, {'@id': node.id});
       this.displayProperty(entity);
     });
   }
+
   /**
    * Returns a JSONLDObject representing the default trigger.
    * This method sets the internal flag `_isDefaultTrigger` to true before returning the JSONLDObject.
@@ -314,6 +328,7 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
       ]
     };
   }
+
   /**
    * Displays the property overlay component for the given entity.
    *
@@ -324,14 +339,18 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
       return;
     }
     const allData = entity ? this._collectEntityAndReferencedObjects(entity, this.resource) : undefined;
-    this._dialog.open(WorkflowPropertyOverlayComponent, { panelClass: 'medium-dialog', data: {
+    this._dialog.open(WorkflowPropertyOverlayComponent, {
+      panelClass: 'medium-dialog',
+      data: {
         entityIRI: entity ? entity['@id'] : undefined,
         entity: allData
-      } });
+      }
+    });
   }
+
   /**
    * Creates a node type style object based on the provided entity type
-   * 
+   *
    * @param {string} entityType The string identifier for a type of node
    * @returns {NodeTypeStyle} A style object for the type of node requested.
    */
@@ -355,6 +374,7 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
       };
     }
   }
+
   /**
    * Handle the response from a modal dialog.
    *
@@ -375,6 +395,7 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
       this._workflowsState.hasChanges = true;
     }
   }
+
   /**
    * Creates a modal configuration object based on the provided element definition and mode.
    *
@@ -410,6 +431,7 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
 
     return objectConfig;
   }
+
   /**
    * Creates a Difference representing deleting an entity in a workflow based on the given ID and entity type string
    * and updates the InProgressCommit on the server.
@@ -427,6 +449,7 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
       map(() => diff)
     );
   }
+
   /**
    * Creates a Difference representing deleting an edge between workflow entities based on the ID of the source and
    * target of the edge and updates the InProgressCommit on the server.
@@ -442,6 +465,7 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
       map(() => diff)
     );
   }
+
   /**
    * Determines whether an edge can be drawn between two nodes in the chart. Logic ensures:
    *  - No direct loops
@@ -462,6 +486,7 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
       && !hasExistingEdge // no duplicate edges
       && !actionToTrigger; // no edges from action back to trigger
   }
+
   /**
    * Attempts to add a new triple between two entities represented by the sourceNode, targetNode, and cytoscape edge
    * that was added to the chart. Updates the stored InProgressCommit and the _editedResource with the new edge. If an
@@ -472,7 +497,7 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
    * @param {cytoscape.ElementDefinition} addedEdge An Element representing an edge between the source and target nodes
    */
   addNewEdge(sourceNode: cytoscape.ElementDefinition, targetNode: cytoscape.ElementDefinition,
-    addedEdge: cytoscape.ElementDefinition): void {
+             addedEdge: cytoscape.ElementDefinition): void {
     const newTriples = this._createJSONLDForEdge(sourceNode.data('id'), targetNode.data('id'));
     const diff = new Difference([newTriples]);
     this._wms.updateWorkflowConfiguration(diff, this.recordId).subscribe({
@@ -506,6 +531,7 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
       this._editedResource = [];
     }
   }
+
   /**
    * Construct the graph data for visualization.
    * @private
@@ -521,6 +547,7 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
       edges: [...triggers.edges, ...actions.edges]
     };
   }
+
   /**
    * Builds a unique edge ID.
    * @private
@@ -532,12 +559,13 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
   private _buildEdgeId(triggerId: string, actionId: string): string {
     return `${triggerId} => ${actionId}`;
   }
+
   /**
    * Create Layout Object
    * @see {@link https://js.cytoscape.org/#layouts/preset}
    * @private
    *
-   * @param {string} layoutName The name for the layout 
+   * @param {string} layoutName The name for the layout
    * @returns Layout Options Object
    */
   private _createLayoutOptions(layoutName: string): cytoscape.layout {
@@ -557,6 +585,7 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
       tick: () => {}
     };
   }
+
   /**
    * Set the style for nodes and edges in the chart.
    * @private
@@ -663,6 +692,7 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
       }
     ]);
   }
+
   /**
    * Creates a new node in the display from the provided JSON-LD.
    * @private
@@ -676,6 +706,7 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
       data: this._createNodeData(item)
     };
   }
+
   /**
    * Creates a NodeData object from the JSON-LD of an entity within a Workflow.
    * @private
@@ -684,7 +715,7 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
    * @returns {NodeData} - The created NodeData object.
    */
   private _createNodeData(entity: JSONLDObject): NodeData {
-    const { name, entityType } = this._getTypeInformation(entity['@type']);
+    const {name, entityType} = this._getTypeInformation(entity['@type']);
     const style = this.getNodeTypeStyle(entityType);
     const title = getEntityName(entity, false);
 
@@ -705,16 +736,18 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
 
     return nodeData;
   }
+
   /**
    * Sets styles on the provided Node Data for a default trigger.
    * @private
-   * 
+   *
    * @param {NodeData} nodeData The data attached to a node in the graph (assumed to be a trigger)
    */
   private _setDefaultTriggerStyles(nodeData: NodeData): void {
     nodeData.color = '#999999';
     nodeData.fontStyle = 'italic';
   }
+
   /**
    * Retrieves the type information from the types array from a JSONLDObject.
    * @private
@@ -744,6 +777,7 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
       name: type
     };
   }
+
   /**
    * Removes all the context menus from the graph nodes. Meant to be used when exiting edit mode.
    * @private
@@ -754,6 +788,7 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
     });
     this.cyMenu = [];
   }
+
   /**
    * Removes the edge
    */
@@ -765,6 +800,7 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
     this.cyEdgehandles = undefined;
     this.cyChart.off('ehcomplete');
   }
+
   /**
    * Creates the context menus for the nodes to be used when editing.
    * @private
@@ -776,6 +812,7 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
       });
     }
   }
+
   /**
    * Creates the edgehandles behavior for creating new edges in the chart.
    * @private
@@ -797,6 +834,7 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
       this.cyChart.on('ehcomplete', (_event, sourceNode, targetNode, addedEdge) => this.addNewEdge(sourceNode, targetNode, addedEdge));
     }
   }
+
   /**
    * Generates a JSON-LD object representing a triple from the entity with the sourceId to the entity with the targetId.
    * @private
@@ -815,12 +853,12 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
       id = sourceId;
       prop = this.entityKeyMap[EntityType.ACTION].childKey[EntityType.ACTION];
     }
-    const edgeObj: JSONLDObject = {
+    return {
       '@id': id,
-      [prop]: [{ '@id': targetId }]
+      [prop]: [{'@id': targetId}]
     };
-    return edgeObj;
   }
+
   /**
    * Retrieves the context menus for each node type.
    * @private
@@ -842,7 +880,7 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
     /**
      * Opens the edit dialog for the given element.
      * @private
-     * 
+     *
      * @param {Element} cytoscape.Node - The element to edit.
      */
     const editEntityFunc = function (elem: cytoscape.ElementDefinition): void {
@@ -880,7 +918,7 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
      *
      * @param {Element.Node} ele - the cytoscape node for the edge
      */
-    const deleteEdge = function(ele: cytoscape.ElementDefinition): void {
+    const deleteEdge = function (ele: cytoscape.ElementDefinition): void {
       this._dialog.open(ConfirmModalComponent, {
         data: {
           content: 'Are you sure you want to delete this edge?'
@@ -937,11 +975,12 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
       commands: [deleteEdgeCommand]
     }];
   }
+
   /**
    * Collects and returns an array of the provided workflow entity and all the other objects it references that it found
    * in the provided full resource JSON-LD array. Does not include referenced w:Trigger, w:Action, or w:Workflow objects.
    * @private
-   * 
+   *
    * @param {JSONLDObject} entity The starting JSON-LD object to search with
    * @param {JSONLDObject} resource The JSON-LD array to search for objects within
    * @returns {JSONLDObject[]} A JSON-LD array of the entity and the objects it references
@@ -968,12 +1007,13 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
     });
     return fullArray;
   }
+
   /**
    * Collects and returns an array of JSON-LD objects representing the triples that reference the provided JSON-LD
    * entity from the provided JSON-LD array of objects. Does not include the full JSON-LD of a referencing object, only
    * the property that referenced the target object.
    * @private
-   * 
+   *
    * @param {JSONLDObject} entity - The target entity to search for references to.
    * @param {JSONLDObject} resource - A JSON-LD array to search for references in.
    * @returns {JSONLDObject[]} - A JSON-LD array of objects representing triples.
@@ -990,21 +1030,22 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
           if (propVal['@id'] === entity['@id']) {
             tripleObj = tripleObj || triples.find(obj => obj['@id'] === obj['@id']);
             if (!tripleObj) {
-              tripleObj = { '@id': obj['@id'] };
+              tripleObj = {'@id': obj['@id']};
               triples.push(tripleObj);
             }
-            tripleObj[prop] = [{ '@id': entity['@id'] }];
+            tripleObj[prop] = [{'@id': entity['@id']}];
           }
         });
       });
     });
     return triples;
   }
+
   /**
    * Opens a dialog with the given data.
    * @private
    *
-   * @param {DataConfig} data - The data to pass to the dialog.
+   * @param {ModalConfig} data - The data to pass to the dialog.
    */
   private _openDialog(data: ModalConfig): void {
     this._dialog.open(WorkflowAddConfigurationComponent, {
@@ -1014,6 +1055,7 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
       this.handleModalResponse(changes, data.parentIRI);
     });
   }
+
   /**
    * Checks if the given element is an array.
    * @private
@@ -1024,11 +1066,12 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
   private _checkArray(element?: string | JSONLDObject[]): element is JSONLDObject[] {
     return isArray(element) && !isEmpty(element);
   }
+
   /**
    * Processes through the provided JSON-LD representing deleted statements and updates the internal _editedResource
    * with the changes. This method does not handle updating the graph nodes.
    * @private
-   * 
+   *
    * @param {JSONLDObject[]} deletions The JSON-LD of deleted statements
    */
   private _handleDeletedStatements(deletions: JSONLDObject[]): void {
@@ -1051,7 +1094,7 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
         if (Object.keys(workflowEntity).length === 1) {
           this._editedResource.splice(workflowEntityIdx, 1);
         }
-        if (deletedStmts[`${DCTERMS}title`]) {
+        if (this._checkForNameProp(deletedStmts)) {
           const typeInfo = this._getTypeInformation(workflowEntity['@type']);
           const potentialName = getEntityName(workflowEntity, false);
           typeInfo.name = potentialName ? potentialName : typeInfo.name;
@@ -1060,10 +1103,11 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
       }
     });
   }
+
   /**
    * Updates the provided JSON-LD entity with the additions triples on the provided JSON-LD object.
    * @private
-   * 
+   *
    * @param {JSONLDObject} deletions All the added statements for the entity
    * @param {JSONLDObject} entity The root entity to be updated
    */
@@ -1080,11 +1124,12 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
       }
     });
   }
+
   /**
    * Processes through the provided JSON-LD representing additions statements and updates the internal _editedResource
    * with the changes. This method also handles updating the graph nodes.
    * @private
-   * 
+   *
    * @param {JSONLDObject[]} additions The JSON-LD of added statements
    * @param {string} [parentIRI] The optional IRI of the parent entity when drawing new edges in the chart
    */
@@ -1107,9 +1152,9 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
         // Update graph node if root entity (trigger/action) and type was changed
         const isRootEntity = workflowEntity['@type'].includes(this.entityKeyMap.trigger.id)
           || workflowEntity['@type'].includes(this.entityKeyMap.action.id);
-        if (addedStmts['@type'] || addedStmts[`${DCTERMS}title`] && isRootEntity) {
+        if (addedStmts['@type'] || this._checkForNameProp(addedStmts) && isRootEntity) {
           const typeInfo = this._getTypeInformation(workflowEntity['@type']);
-          typeInfo.name = addedStmts[`${DCTERMS}title`] ? getEntityName(workflowEntity, false) : typeInfo.name;
+          typeInfo.name = this._checkForNameProp(addedStmts) ? getEntityName(workflowEntity, false) : typeInfo.name;
           this._updateNode(workflowEntity['@id'], typeInfo);
         }
       } else {
@@ -1120,7 +1165,7 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
         if (types.includes(this.entityKeyMap.trigger.id) || types.includes(this.entityKeyMap.action.id)) {
           const typeInfo = this._getTypeInformation(types);
           if (typeInfo.entityType === EntityType.TRIGGER) {
-            typeInfo.name = addedStmts[`${DCTERMS}title`] ? getEntityName(workflowEntity, false) : typeInfo.name;
+            typeInfo.name = this._checkForNameProp(addedStmts) ? getEntityName(workflowEntity, false) : typeInfo.name;
             this._updateNode(addedStmts['@id'], typeInfo);
           } else {
             this._addNodeToChart(addedStmts, parentIRI);
@@ -1129,10 +1174,11 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
       }
     });
   }
+
   /**
    * Updates the provided JSON-LD entity with the additions triples on the provided JSON-LD object.
    * @private
-   * 
+   *
    * @param {JSONLDObject} additions All the added statements for the entity
    * @param {JSONLDObject} entity The root entity to be updated
    */
@@ -1151,12 +1197,14 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
     });
 
     const fullEntity = this.resource.filter(obj => obj['@id'] === additions['@id'])[0];
-    if (fullEntity && fullEntity[`${DCTERMS}title`]) {
-      if (!entity[`${DCTERMS}title`] && !additions[`${DCTERMS}title`]) {
-        entity[`${DCTERMS}title`] = fullEntity[`${DCTERMS}title`];
+    if (fullEntity && this._checkForNameProp(fullEntity)) {
+      if (!this._checkForNameProp(entity) && !this._checkForNameProp(additions)) {
+        const entityNameProp = getEntityNameProp(fullEntity, this._sms);
+        entity[entityNameProp] = getEntityName(fullEntity);
       }
     }
   }
+
   /**
    * Updates a node in the chart.
    * @private
@@ -1189,6 +1237,7 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
       this.cyChart.style().update();
     }
   }
+
   /**
    * Returns the type(s) of a given definition.
    * @private
@@ -1197,17 +1246,19 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
    * @returns {Array|null} - An array of type(s) if '@type' property exists, otherwise null.
    */
   private _getDefinitionTypes(definition: JSONLDObject): Array<string> | null {
-   return has(definition,'@type') ? definition['@type'] : null;
+    return has(definition, '@type') ? definition['@type'] : null;
   }
+
   /**
    * Retrieves the triggers from the chart.
    * @private
-   * 
+   *
    * @return {Cy.Collection} The collection of nodes representing triggers in the chart.
    */
   private _getTriggerFromChart() {
     return this.cyChart.elements('node[entityType="trigger"]');
   }
+
   /**
    * Finds the JSON-LD Object in the given array that has either 'hasAction' or 'hasTrigger' property, representing
    * the definition of the Workflow itself.
@@ -1217,10 +1268,11 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
    * @return {JSONLDObject|undefined} - The Workflow JSON-LD object or undefined if not found.
    */
   private _findWorkflowObject(def: JSONLDObject[]): JSONLDObject {
-    return def.find(item => item['@type']?.includes(this.buildWorkflowsIRI('Workflow')) 
+    return def.find(item => item['@type']?.includes(this.buildWorkflowsIRI('Workflow'))
       || has(item, this.buildWorkflowsIRI('hasAction'))
       || has(item, this.buildWorkflowsIRI('hasTrigger')));
   }
+
   /**
    * Adds a new node to the chart based on the provided entity JSON-LD and optional parent IRI. If the parent IRI is the
    * workflow definition, draws the edge from the trigger node. Otherwise, draws the edge from the element with that id.
@@ -1245,6 +1297,7 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
     this.cyChart.add(edge);
     this.cyChart.layout(this.cyLayout).run();
   }
+
   /**
    * Builds node edges.
    * @private
@@ -1266,10 +1319,11 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
       data: edgeData
     };
   }
+
   /**
    * Deletes the provided node from the graph.
    * @private
-   * 
+   *
    * @param {cytoscape.node} elem - The node to be deleted.
    */
   private _deleteNode(elem: cytoscape.node): void {
@@ -1289,9 +1343,10 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
       elem.remove();
     }
   }
+
   /**
    * Retrieves the value of the definition from the edited JSON-LD based on the provided ID. If the IRI is the internal
-   * trigger identifier, retrieves the actual trigger entity from the edited JSON-LD. 
+   * trigger identifier, retrieves the actual trigger entity from the edited JSON-LD.
    * @private
    *
    * @param {string} id - The ID of the definition to retrieve the value of.
@@ -1303,14 +1358,25 @@ export class WorkflowDisplayComponent implements OnChanges, AfterContentChecked 
     }
     return find(this._editedResource, (object) => object['@id'] === id);
   }
+
   /**
    * Retrieves the JSON-LD object for the trigger of the workflow represented by the provided JSON-LD array based on
    * the object types.
-   * 
+   *
    * @param {JSONLDObject[]} resource The JSON-LD array of a Workflow
    * @returns {JSONLDObject} The Trigger JSON-LD object if found
    */
   private _getTriggerJSONLD(resource: JSONLDObject[]): JSONLDObject {
     return resource.find(obj => obj['@type'].includes(this.entityKeyMap.trigger.id));
+  }
+
+  /**
+   * Checks if the provided JSON-LD object contains a `name` property.
+   *
+   * @param {JSONLDObject} entity - The JSON-LD object to be checked for the existence of a `name` property.
+   * @return {boolean} Returns true if the `name` property exists, false otherwise.
+   */
+  private _checkForNameProp(entity: JSONLDObject): boolean {
+    return entityNameProps.some(nameProp => Object.prototype.hasOwnProperty.call(entity, nameProp));
   }
 }

@@ -9,8 +9,9 @@
       "module": "esnext",
       "skipLibCheck": true,
       "moduleResolution": "node",
+      "useDefineForClassFields": false,
       "lib": [ 
-        "es2018", 
+        "es2018",
         "dom" 
       ],
       "sourceMap": true,

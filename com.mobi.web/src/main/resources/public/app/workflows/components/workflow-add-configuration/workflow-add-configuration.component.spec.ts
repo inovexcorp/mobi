@@ -20,17 +20,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { DebugElement } from '@angular/core';
+import { By } from '@angular/platform-browser';
 import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
+import { DebugElement } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
-import { By } from '@angular/platform-browser';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatSelectModule } from '@angular/material/select';
-import { MatButtonModule } from '@angular/material/button';
-import { MatInputModule } from '@angular/material/input';
 import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { MatButtonModule } from '@angular/material/button';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 
 import { MockComponent, MockProvider } from 'ng-mocks';
 import { cloneDeep } from 'lodash';
@@ -38,17 +38,17 @@ import { of, throwError } from 'rxjs';
 
 import { actionSHACLDefinitions, testActionNodeShape, triggerSHACLDefinitions } from '../../models/mock_data/workflow-mocks';
 import { cleanStylesFromDOM } from '../../../../test/ts/Shared';
+import { DCTERMS, RDFS, WORKFLOWS } from '../../../prefixes';
 import { Difference } from '../../../shared/models/difference.class';
-import {
-  DownloadMappingOverlayComponent
-} from '../../../mapper/components/downloadMappingOverlay/downloadMappingOverlay.component';
+import { DownloadMappingOverlayComponent }
+  from '../../../mapper/components/downloadMappingOverlay/downloadMappingOverlay.component';
 import { EntityType } from '../../models/workflow-display.interface';
 import { FormValues } from '../../../shacl-forms/models/form-values.interface';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { ModalConfig, ModalType } from '../../models/modal-config.interface';
+import { SettingManagerService } from '../../../shared/services/settingManager.service';
 import { SHACLFormComponent } from '../../../shacl-forms/components/shacl-form/shacl-form.component';
 import { SHACLFormFieldComponent } from '../../../shacl-forms/components/shacl-form-field/shacl-form-field.component';
-import { DCTERMS, WORKFLOWS } from '../../../prefixes';
 import { SHACLFormManagerService } from '../../../shacl-forms/services/shaclFormManager.service';
 import { WorkflowsManagerService } from '../../services/workflows-manager.service';
 import { WorkflowAddConfigurationComponent } from './workflow-add-configuration.component';
@@ -58,6 +58,7 @@ describe('WorkflowAddConfigurationComponent', () => {
   let element: DebugElement;
   let fixture: ComponentFixture<WorkflowAddConfigurationComponent>;
   let workflowsManagerStub: jasmine.SpyObj<WorkflowsManagerService>;
+  let settingManagerStub: jasmine.SpyObj<SettingManagerService>;
   let matDialogRef: jasmine.SpyObj<MatDialogRef<DownloadMappingOverlayComponent>>;
 
   const actionTitle = 'A title to test things';
@@ -72,11 +73,6 @@ describe('WorkflowAddConfigurationComponent', () => {
         '@value': 'Original'
       }
     ],
-    [`${DCTERMS}title`]: [
-      {
-        '@value': actionTitle
-      }
-    ]
   };
   const trigger: JSONLDObject = {
     '@id': 'workflows:trigger',
@@ -106,8 +102,8 @@ describe('WorkflowAddConfigurationComponent', () => {
     parentProp: `${WORKFLOWS}hasAction`
   };
 
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({
+  beforeEach(() => {
+    TestBed.configureTestingModule({
       imports: [
         FormsModule,
         ReactiveFormsModule,
@@ -121,6 +117,7 @@ describe('WorkflowAddConfigurationComponent', () => {
       providers: [
         MockProvider(WorkflowsManagerService),
         MockProvider(SHACLFormManagerService),
+        MockProvider(SettingManagerService),
         {provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close'])},
         {provide: MAT_DIALOG_DATA, useValue: objectConfig},
       ],
@@ -136,15 +133,17 @@ describe('WorkflowAddConfigurationComponent', () => {
     component = fixture.componentInstance;
     element = fixture.debugElement;
     workflowsManagerStub = TestBed.inject(WorkflowsManagerService) as jasmine.SpyObj<WorkflowsManagerService>;
+    settingManagerStub = TestBed.inject(SettingManagerService) as jasmine.SpyObj<SettingManagerService>;
     matDialogRef = TestBed.inject(MatDialogRef) as jasmine.SpyObj<MatDialogRef<DownloadMappingOverlayComponent>>;
-    action[`${DCTERMS}title`] = [
-      {
-        '@value': actionTitle
-      }
-    ];
+
+    //Setup of mocked values
+    action[`${DCTERMS}title`] = [{'@value': actionTitle}];
     component.data.selectedConfigIRI = action['@id'];
     component.data.workflowEntity = [action];
     component.data.mode = ModalType.ADD;
+
+    settingManagerStub.getAnnotationPreference.and.returnValue(of('DC Terms'));
+    component.annotationType = DCTERMS;
   });
 
   afterEach(function () {
@@ -152,8 +151,11 @@ describe('WorkflowAddConfigurationComponent', () => {
     component = null;
     element = null;
     fixture = null;
+    settingManagerStub = null;
     matDialogRef = null;
-    matDialogRef = null;
+
+    delete action[`${DCTERMS}title`];
+    delete action[`${RDFS}label`];
   });
 
   it('should create', () => {
@@ -247,64 +249,76 @@ describe('WorkflowAddConfigurationComponent', () => {
         expect(matDialogRef.close).toHaveBeenCalledWith(undefined);
       });
       describe('if there are only changes to the title', () => {
-        it('and the title is not empty', fakeAsync(() => {
-          workflowsManagerStub.updateWorkflowConfiguration.and.returnValue(of(null));
-          setEditMode();
-          fixture.detectChanges();
-          component.configurationFormGroup.controls.configType.setValue(component.configurationList[0]);
-          component.shaclFormValid = true;
-          component.configurationFormGroup.controls.actionTitle.setValue('New Title');
-          component.configurationFormGroup.controls.actionTitle.markAsDirty();
-          component.submit();
+        describe('and the title is not empty', () => {
+          it('and the annotation preference is DC Terms', fakeAsync(() => {
+            const diff: Difference = setupTitleChanges(true, 'New Title');
+            expect((diff.additions as JSONLDObject[]).length).toEqual(1);
+            expect((diff.deletions as JSONLDObject[]).length).toEqual(1);
 
-          tick(); //needed to make sure observable returns
+            expect(diff.additions as JSONLDObject[]).toContain(
+              {
+                '@id': 'workflows:action',
+                [`${DCTERMS}title`]: [{'@value': 'New Title'}]
+              }
+            );
+            expect(diff.deletions as JSONLDObject[]).toContain(
+              {
+                '@id': 'workflows:action',
+                [`${DCTERMS}title`]: [{'@value': 'A title to test things'}]
+              }
+            );
+          }));
+          it('and the annotation preference is RDFS', fakeAsync(() => {
+            settingManagerStub.getAnnotationPreference.and.returnValue(of('RDFS'));
+            component.annotationType = RDFS;
+            const diff: Difference = setupTitleChanges(true, 'New Title');
+            expect((diff.additions as JSONLDObject[]).length).toEqual(1);
+            expect((diff.deletions as JSONLDObject[]).length).toEqual(1);
 
-          expect(component.errorMsg).toEqual('');
-          expect(workflowsManagerStub.updateWorkflowConfiguration).toHaveBeenCalledWith(jasmine.any(Difference), objectConfig.recordIRI);
-          const diff: Difference = workflowsManagerStub.updateWorkflowConfiguration.calls.mostRecent().args[0];
-          expect(matDialogRef.close).toHaveBeenCalledWith(diff);
-          expect((diff.additions as JSONLDObject[]).length).toEqual(1);
-          expect((diff.deletions as JSONLDObject[]).length).toEqual(1);
+            expect(diff.additions as JSONLDObject[]).toContain(
+              {
+                '@id': 'workflows:action',
+                [`${RDFS}label`]: [{'@value': 'New Title'}]
+              }
+            );
+            expect(diff.deletions as JSONLDObject[]).toContain(
+              {
+                '@id': 'workflows:action',
+                [`${DCTERMS}title`]: [{'@value': 'A title to test things'}]
+              }
+            );
+          }));
+        });
+        describe('and the title is empty', () => {
+          it('and the annotation preference is DC Terms', fakeAsync(() => {
+            const diff: Difference = setupTitleChanges(true);
+            expect(matDialogRef.close).toHaveBeenCalledWith(diff);
+            expect((diff.additions as JSONLDObject[]).length).toEqual(0);
+            expect((diff.deletions as JSONLDObject[]).length).toEqual(1);
 
-          expect(diff.additions as JSONLDObject[]).toContain(
-            {
-              '@id': 'workflows:action',
-              [`${DCTERMS}title`]: [{'@value': 'New Title'}]
-            }
-          );
-          expect(diff.deletions as JSONLDObject[]).toContain(
-            {
-              '@id': 'workflows:action',
-              [`${DCTERMS}title`]: [{'@value': 'A title to test things'}]
-            }
-          );
-        }));
-        it('and the title is empty', fakeAsync(() => {
-          workflowsManagerStub.updateWorkflowConfiguration.and.returnValue(of(null));
-          setEditMode();
-          fixture.detectChanges();
-          component.configurationFormGroup.controls.configType.setValue(component.configurationList[0]);
-          component.shaclFormValid = true;
-          component.configurationFormGroup.controls.actionTitle.setValue('');
-          component.configurationFormGroup.controls.actionTitle.markAsDirty();
-          component.submit();
+            expect(diff.deletions as JSONLDObject[]).toContain(
+              {
+                '@id': 'workflows:action',
+                [`${DCTERMS}title`]: [{'@value': 'A title to test things'}]
+              }
+            );
+          }));
+          it('and the annotation preference is RDFS', fakeAsync(() => {
+            delete action[`${DCTERMS}title`];
+            action[`${RDFS}label`] = [{'@value': actionTitle}];
+            settingManagerStub.getAnnotationPreference.and.returnValue(of('RDFS'));
+            const diff: Difference = setupTitleChanges(true);
+            expect((diff.additions as JSONLDObject[]).length).toEqual(0);
+            expect((diff.deletions as JSONLDObject[]).length).toEqual(1);
 
-          tick(); //needed to make sure observable returns
-
-          expect(component.errorMsg).toEqual('');
-          expect(workflowsManagerStub.updateWorkflowConfiguration).toHaveBeenCalledWith(jasmine.any(Difference), objectConfig.recordIRI);
-          const diff: Difference = workflowsManagerStub.updateWorkflowConfiguration.calls.mostRecent().args[0];
-          expect(matDialogRef.close).toHaveBeenCalledWith(diff);
-          expect((diff.additions as JSONLDObject[]).length).toEqual(0);
-          expect((diff.deletions as JSONLDObject[]).length).toEqual(1);
-
-          expect(diff.deletions as JSONLDObject[]).toContain(
-            {
-              '@id': 'workflows:action',
-              [`${DCTERMS}title`]: [{'@value': 'A title to test things'}]
-            }
-          );
-        }));
+            expect(diff.deletions as JSONLDObject[]).toContain(
+              {
+                '@id': 'workflows:action',
+                [`${RDFS}label`]: [{'@value': 'A title to test things'}]
+              }
+            );
+          }));
+        });
       });
       describe('if an action is being', () => {
         describe('added', () => {
@@ -338,29 +352,40 @@ describe('WorkflowAddConfigurationComponent', () => {
               expect((diff.deletions as JSONLDObject[]).length).toEqual(0);
               expect(matDialogRef.close).toHaveBeenCalledWith(jasmine.any(Difference));
             }));
-            it('succeeds when there are title changes', fakeAsync(() => {
-              workflowsManagerStub.updateWorkflowConfiguration.and.returnValue(of(null));
-              component.configurationFormGroup.controls.actionTitle.markAsDirty();
-              component.configurationFormGroup.controls.actionTitle.setValue('New Title');
-              component.submit();
-              tick();
-              expect(component.errorMsg).toEqual('');
-              expect(workflowsManagerStub.updateWorkflowConfiguration).toHaveBeenCalledWith(jasmine.any(Difference), objectConfig.recordIRI);
-              const diff = workflowsManagerStub.updateWorkflowConfiguration.calls.mostRecent().args[0];
-              expect((diff.additions as JSONLDObject[]).length).toEqual(2);
-              expect((diff.additions as JSONLDObject[])).toContain({
-                '@id': objectConfig.workflowIRI,
-                [`${WORKFLOWS}hasAction`]: [{'@id': jasmine.stringContaining(`${objectConfig.workflowIRI}/action`)}]
-              });
-              expect((diff.deletions as JSONLDObject[]).length).toEqual(0);
-              expect((diff.additions as JSONLDObject[])).toContain({
-                '@id': jasmine.stringContaining(`${objectConfig.workflowIRI}/action`),
-                '@type': [`${WORKFLOWS}TestAction`, `${WORKFLOWS}Action`],
-                [`${WORKFLOWS}testMessage`]: [{'@value': 'New'}],
-                [`${DCTERMS}title`]: [{'@value': 'New Title'}]
-              });
-              expect(matDialogRef.close).toHaveBeenCalledWith(jasmine.any(Difference));
-            }));
+            describe('succeeds when there are title changes', () => {
+              it('and the annotation preference is DC Terms', fakeAsync(() => {
+                const diff = setupTitleChanges(false, 'New Title');
+                expect((diff.additions as JSONLDObject[]).length).toEqual(2);
+                expect((diff.additions as JSONLDObject[])).toContain({
+                  '@id': objectConfig.workflowIRI,
+                  [`${WORKFLOWS}hasAction`]: [{'@id': jasmine.stringContaining(`${objectConfig.workflowIRI}/action`)}]
+                });
+                expect((diff.deletions as JSONLDObject[]).length).toEqual(0);
+                expect((diff.additions as JSONLDObject[])).toContain({
+                  '@id': jasmine.stringContaining(`${objectConfig.workflowIRI}/action`),
+                  '@type': [`${WORKFLOWS}TestAction`, `${WORKFLOWS}Action`],
+                  [`${WORKFLOWS}testMessage`]: [{'@value': 'New'}],
+                  [`${DCTERMS}title`]: [{'@value': 'New Title'}]
+                });
+              }));
+              it('and the annotation preference is RDFS', fakeAsync(() => {
+                component.annotationType = RDFS;
+                const diff = setupTitleChanges(false, 'New Title');
+                expect((diff.additions as JSONLDObject[]).length).toEqual(2);
+                expect((diff.additions as JSONLDObject[])).toContain({
+                  '@id': objectConfig.workflowIRI,
+                  [`${WORKFLOWS}hasAction`]: [{'@id': jasmine.stringContaining(`${objectConfig.workflowIRI}/action`)}]
+                });
+                expect((diff.deletions as JSONLDObject[]).length).toEqual(0);
+                expect((diff.additions as JSONLDObject[])).toContain({
+                  '@id': jasmine.stringContaining(`${objectConfig.workflowIRI}/action`),
+                  '@type': [`${WORKFLOWS}TestAction`, `${WORKFLOWS}Action`],
+                  [`${WORKFLOWS}testMessage`]: [{'@value': 'New'}],
+                  [`${RDFS}label`]: [{'@value': 'New Title'}]
+                });
+                expect(matDialogRef.close).toHaveBeenCalledWith(jasmine.any(Difference));
+              }));
+            });
             it('fails', fakeAsync(() => {
               workflowsManagerStub.updateWorkflowConfiguration.and.returnValue(throwError(new HttpErrorResponse({ status: 500 })));
               component.submit();
@@ -410,29 +435,39 @@ describe('WorkflowAddConfigurationComponent', () => {
               expect((diff.deletions as JSONLDObject[]).length).toEqual(0);
               expect(matDialogRef.close).toHaveBeenCalledWith(jasmine.any(Difference));
             }));
-            it('succeeds with title changes', fakeAsync(() => {
-              workflowsManagerStub.updateWorkflowConfiguration.and.returnValue(of(null));
-              component.configurationFormGroup.controls.actionTitle.markAsDirty();
-              component.configurationFormGroup.controls.actionTitle.setValue('New Title');
-              component.submit();
-              tick();
-              expect(component.errorMsg).toEqual('');
-              expect(workflowsManagerStub.updateWorkflowConfiguration).toHaveBeenCalledWith(jasmine.any(Difference), objectConfig.recordIRI);
-              const diff = workflowsManagerStub.updateWorkflowConfiguration.calls.mostRecent().args[0];
-              expect((diff.additions as JSONLDObject[]).length).toEqual(2);
-              expect((diff.additions as JSONLDObject[])).toContain({
-                '@id': parentIRI,
-                [`${WORKFLOWS}hasChildAction`]: [{ '@id': jasmine.stringContaining(`${objectConfig.workflowIRI}/action`)}]
-              });
-              expect((diff.deletions as JSONLDObject[]).length).toEqual(0);
-              expect((diff.additions as JSONLDObject[])).toContain({
-                '@id': jasmine.stringContaining(`${objectConfig.workflowIRI}/action`),
-                '@type': [`${WORKFLOWS}TestAction`, `${WORKFLOWS}Action`],
-                [`${WORKFLOWS}testMessage`]: [{ '@value': 'New' }],
-                [`${DCTERMS}title`]: [{'@value': 'New Title'}]
-              });
-              expect(matDialogRef.close).toHaveBeenCalledWith(jasmine.any(Difference));
-            }));
+            describe('succeeds with title changes', () => {
+              it('and the annotation preference is DC Terms', fakeAsync(() => {
+                const diff = setupTitleChanges(false, 'New Title');
+                expect((diff.additions as JSONLDObject[]).length).toEqual(2);
+                expect((diff.additions as JSONLDObject[])).toContain({
+                  '@id': parentIRI,
+                  [`${WORKFLOWS}hasChildAction`]: [{ '@id': jasmine.stringContaining(`${objectConfig.workflowIRI}/action`)}]
+                });
+                expect((diff.deletions as JSONLDObject[]).length).toEqual(0);
+                expect((diff.additions as JSONLDObject[])).toContain({
+                  '@id': jasmine.stringContaining(`${objectConfig.workflowIRI}/action`),
+                  '@type': [`${WORKFLOWS}TestAction`, `${WORKFLOWS}Action`],
+                  [`${WORKFLOWS}testMessage`]: [{ '@value': 'New' }],
+                  [`${DCTERMS}title`]: [{'@value': 'New Title'}]
+                });
+              }));
+              it('and the annotation preference is RDFS', fakeAsync(() => {
+                component.annotationType = RDFS;
+                const diff = setupTitleChanges(false, 'New Title');
+                expect((diff.additions as JSONLDObject[]).length).toEqual(2);
+                expect((diff.additions as JSONLDObject[])).toContain({
+                  '@id': parentIRI,
+                  [`${WORKFLOWS}hasChildAction`]: [{ '@id': jasmine.stringContaining(`${objectConfig.workflowIRI}/action`)}]
+                });
+                expect((diff.deletions as JSONLDObject[]).length).toEqual(0);
+                expect((diff.additions as JSONLDObject[])).toContain({
+                  '@id': jasmine.stringContaining(`${objectConfig.workflowIRI}/action`),
+                  '@type': [`${WORKFLOWS}TestAction`, `${WORKFLOWS}Action`],
+                  [`${WORKFLOWS}testMessage`]: [{ '@value': 'New' }],
+                  [`${RDFS}label`]: [{'@value': 'New Title'}]
+                });
+              }));
+            });
             it('fails', fakeAsync(() => {
               workflowsManagerStub.updateWorkflowConfiguration.and.returnValue(throwError(new HttpErrorResponse({ status: 500 })));
               component.submit();
@@ -503,38 +538,58 @@ describe('WorkflowAddConfigurationComponent', () => {
               });
               expect(matDialogRef.close).toHaveBeenCalledWith(jasmine.any(Difference));
             }));
-            it('succeeds with a title change', fakeAsync(() => {
-              workflowsManagerStub.updateWorkflowConfiguration.and.returnValue(of(null));
-              component.configurationFormGroup.controls.actionTitle.markAsDirty();
-              component.configurationFormGroup.controls.actionTitle.setValue('New Title');
-              component.submit();
-              tick(); //needed to make sure observable completes
-              expect(component.errorMsg).toEqual('');
-              expect(workflowsManagerStub.updateWorkflowConfiguration).toHaveBeenCalledWith(jasmine.any(Difference), objectConfig.recordIRI);
-              const diff = workflowsManagerStub.updateWorkflowConfiguration.calls.mostRecent().args[0];
-              expect((diff.additions as JSONLDObject[]).length).toEqual(2);
-              expect((diff.additions as JSONLDObject[])).toContain({
-                '@id': action['@id'],
-                '@type': [`${WORKFLOWS}HTTPRequestAction`],
-                [`${WORKFLOWS}hasHttpUrl`]: [{'@value': 'http://test.com'}],
-                [`${WORKFLOWS}hasHeader`]: [{'@id': jasmine.any(String)}],
-                [`${DCTERMS}title`]: [{'@value': 'New Title'}]
-              });
-              expect((diff.additions as JSONLDObject[])).toContain({
-                '@id': jasmine.any(String),
-                '@type': [`${WORKFLOWS}Header`],
-                [`${WORKFLOWS}hasHeaderName`]: [{'@value': 'X-Test'}],
-                [`${WORKFLOWS}hasHeaderValue`]: [{'@value': 'Test Value'}],
-              });
-              expect((diff.deletions as JSONLDObject[]).length).toEqual(1);
-              expect((diff.deletions as JSONLDObject[])).toContain({
-                '@id': action['@id'],
-                '@type': [`${WORKFLOWS}TestAction`],
-                [`${WORKFLOWS}testMessage`]: [{'@value': 'Original'}],
-                [`${DCTERMS}title`]: [{'@value': 'A title to test things'}]
-              });
-              expect(matDialogRef.close).toHaveBeenCalledWith(jasmine.any(Difference));
-            }));
+            describe('succeeds with a title change', () => {
+              it('and the annotation preference is DC Terms', fakeAsync(() => {
+                const diff = setupTitleChanges(false, 'New Title');
+                expect((diff.additions as JSONLDObject[]).length).toEqual(2);
+                expect((diff.additions as JSONLDObject[])).toContain({
+                  '@id': action['@id'],
+                  '@type': [`${WORKFLOWS}HTTPRequestAction`],
+                  [`${WORKFLOWS}hasHttpUrl`]: [{'@value': 'http://test.com'}],
+                  [`${WORKFLOWS}hasHeader`]: [{'@id': jasmine.any(String)}],
+                  [`${DCTERMS}title`]: [{'@value': 'New Title'}]
+                });
+                expect((diff.additions as JSONLDObject[])).toContain({
+                  '@id': jasmine.any(String),
+                  '@type': [`${WORKFLOWS}Header`],
+                  [`${WORKFLOWS}hasHeaderName`]: [{'@value': 'X-Test'}],
+                  [`${WORKFLOWS}hasHeaderValue`]: [{'@value': 'Test Value'}],
+                });
+                expect((diff.deletions as JSONLDObject[]).length).toEqual(1);
+                expect((diff.deletions as JSONLDObject[])).toContain({
+                  '@id': action['@id'],
+                  '@type': [`${WORKFLOWS}TestAction`],
+                  [`${WORKFLOWS}testMessage`]: [{'@value': 'Original'}],
+                  [`${DCTERMS}title`]: [{'@value': 'A title to test things'}]
+                });
+              }));
+              it('and the annotation preference is RDFS', fakeAsync(() => {
+                component.annotationType = RDFS;
+                const diff = setupTitleChanges(false, 'New Title');
+                expect((diff.additions as JSONLDObject[]).length).toEqual(2);
+                expect((diff.additions as JSONLDObject[])).toContain({
+                  '@id': action['@id'],
+                  '@type': [`${WORKFLOWS}HTTPRequestAction`],
+                  [`${WORKFLOWS}hasHttpUrl`]: [{'@value': 'http://test.com'}],
+                  [`${WORKFLOWS}hasHeader`]: [{'@id': jasmine.any(String)}],
+                  [`${RDFS}label`]: [{'@value': 'New Title'}]
+                });
+                expect((diff.additions as JSONLDObject[])).toContain({
+                  '@id': jasmine.any(String),
+                  '@type': [`${WORKFLOWS}Header`],
+                  [`${WORKFLOWS}hasHeaderName`]: [{'@value': 'X-Test'}],
+                  [`${WORKFLOWS}hasHeaderValue`]: [{'@value': 'Test Value'}],
+                });
+                expect((diff.deletions as JSONLDObject[]).length).toEqual(1);
+                expect((diff.deletions as JSONLDObject[])).toContain({
+                  '@id': action['@id'],
+                  '@type': [`${WORKFLOWS}TestAction`],
+                  [`${WORKFLOWS}testMessage`]: [{'@value': 'Original'}],
+                  [`${DCTERMS}title`]: [{'@value': 'A title to test things'}]
+                });
+                expect(matDialogRef.close).toHaveBeenCalledWith(jasmine.any(Difference));
+              }));
+            });
             it('succeeds with a title change with a language tag', fakeAsync(() => {
               workflowsManagerStub.updateWorkflowConfiguration.and.returnValue(of(null));
               component.entityBeingEdited[`${DCTERMS}title`] = [{'@value': actionTitle, '@language': 'en'}];
@@ -624,28 +679,39 @@ describe('WorkflowAddConfigurationComponent', () => {
               });
               expect(matDialogRef.close).toHaveBeenCalledWith(jasmine.any(Difference));
             }));
-            it('succeeds with a title change', fakeAsync(() => {
-              workflowsManagerStub.updateWorkflowConfiguration.and.returnValue(of(null));
-              component.configurationFormGroup.controls.actionTitle.markAsDirty();
-              component.configurationFormGroup.controls.actionTitle.setValue('New Title');
-              component.submit();
-              tick();
-              expect(component.errorMsg).toEqual('');
-              expect(workflowsManagerStub.updateWorkflowConfiguration).toHaveBeenCalledWith(jasmine.any(Difference), objectConfig.recordIRI);
-              const diff = workflowsManagerStub.updateWorkflowConfiguration.calls.mostRecent().args[0];
-              expect((diff.additions as JSONLDObject[]).length).toEqual(1);
-              expect((diff.additions as JSONLDObject[])).toContain({
-                '@id': action['@id'],
-                [`${WORKFLOWS}testMessage`]: [{'@value': 'New'}],
-                [`${DCTERMS}title`]: [{'@value': 'New Title'}]
-              });
-              expect((diff.deletions as JSONLDObject[]).length).toEqual(1);
-              expect((diff.deletions as JSONLDObject[])).toContain({
-                '@id': action['@id'],
-                [`${WORKFLOWS}testMessage`]: [{'@value': 'Original'}],
-                [`${DCTERMS}title`]: [{'@value': 'A title to test things'}]
-              });
-            }));
+            describe('succeeds with a title change', () => {
+              it('and the annotation preference is DC Terms', fakeAsync(() => {
+                const diff = setupTitleChanges(false, 'New Title');
+                expect((diff.additions as JSONLDObject[]).length).toEqual(1);
+                expect((diff.additions as JSONLDObject[])).toContain({
+                  '@id': action['@id'],
+                  [`${WORKFLOWS}testMessage`]: [{'@value': 'New'}],
+                  [`${DCTERMS}title`]: [{'@value': 'New Title'}]
+                });
+                expect((diff.deletions as JSONLDObject[]).length).toEqual(1);
+                expect((diff.deletions as JSONLDObject[])).toContain({
+                  '@id': action['@id'],
+                  [`${WORKFLOWS}testMessage`]: [{'@value': 'Original'}],
+                  [`${DCTERMS}title`]: [{'@value': 'A title to test things'}]
+                });
+              }));
+              it('and the annotation preference is RDFS', fakeAsync(() => {
+                component.annotationType = RDFS;
+                const diff = setupTitleChanges(false, 'New Title');
+                expect((diff.additions as JSONLDObject[]).length).toEqual(1);
+                expect((diff.additions as JSONLDObject[])).toContain({
+                  '@id': action['@id'],
+                  [`${WORKFLOWS}testMessage`]: [{'@value': 'New'}],
+                  [`${RDFS}label`]: [{'@value': 'New Title'}]
+                });
+                expect((diff.deletions as JSONLDObject[]).length).toEqual(1);
+                expect((diff.deletions as JSONLDObject[])).toContain({
+                  '@id': action['@id'],
+                  [`${WORKFLOWS}testMessage`]: [{'@value': 'Original'}],
+                  [`${DCTERMS}title`]: [{'@value': 'A title to test things'}]
+                });
+              }));
+            });
             it('succeeds with a title change that has a language tag', fakeAsync(() => {
               workflowsManagerStub.updateWorkflowConfiguration.and.returnValue(of(null));
               component.entityBeingEdited[`${DCTERMS}title`] = [{'@value': actionTitle, '@language': 'en'}];
@@ -949,6 +1015,8 @@ describe('WorkflowAddConfigurationComponent', () => {
       });
     });
   });
+
+  //private helper methods
   function setEditMode() {
     const configClone = cloneDeep(objectConfig);
     configClone.mode = ModalType.EDIT;
@@ -957,5 +1025,26 @@ describe('WorkflowAddConfigurationComponent', () => {
     delete configClone.parentIRI;
     delete configClone.parentProp;
     component.data = configClone;
+  }
+
+  function setupTitleChanges( isEditMode = false, title = ''): Difference {
+    workflowsManagerStub.updateWorkflowConfiguration.and.returnValue(of(null));
+    if (isEditMode) {
+      setEditMode();
+      fixture.detectChanges();
+      component.configurationFormGroup.controls.configType.setValue(component.configurationList[0]);
+      component.shaclFormValid = true;
+    }
+    component.configurationFormGroup.controls.actionTitle.setValue(title);
+    component.configurationFormGroup.controls.actionTitle.markAsDirty();
+    component.submit();
+
+    tick(); //needed to make sure observable returns
+
+    expect(component.errorMsg).toEqual('');
+    expect(workflowsManagerStub.updateWorkflowConfiguration).toHaveBeenCalledWith(jasmine.any(Difference), objectConfig.recordIRI);
+    const diff: Difference = workflowsManagerStub.updateWorkflowConfiguration.calls.mostRecent().args[0];
+    expect(matDialogRef.close).toHaveBeenCalledWith(diff);
+    return diff;
   }
 });

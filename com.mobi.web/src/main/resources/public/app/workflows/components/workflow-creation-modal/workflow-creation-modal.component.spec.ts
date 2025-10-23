@@ -20,33 +20,34 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { ComponentFixture, TestBed, fakeAsync, tick } from '@angular/core/testing';
-
-import { DebugElement } from '@angular/core';
-import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { MatInputModule } from '@angular/material/input';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { By } from '@angular/platform-browser';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { DebugElement } from '@angular/core';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { MAT_DIALOG_DATA, MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { MatButtonModule } from '@angular/material/button';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+
+import { map, trim, uniq } from 'lodash';
+import { MockComponent, MockPipe, MockProvider } from 'ng-mocks';
 import { of } from 'rxjs/internal/observable/of';
 import { throwError } from 'rxjs/internal/observable/throwError';
-import { map, trim, uniq } from 'lodash';
 
-import { KeywordSelectComponent } from '../../../shared/components/keywordSelect/keywordSelect.component';
-import { WorkflowsManagerService } from '../../services/workflows-manager.service';
-import { RESTError } from '../../../shared/models/RESTError.interface';
-import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
 import { CamelCasePipe } from '../../../shared/pipes/camelCase.pipe';
 import { cleanStylesFromDOM } from '../../../../test/ts/Shared';
-import { DCTERMS, WORKFLOWS } from '../../../prefixes';
+import { DCTERMS, RDFS, WORKFLOWS } from '../../../prefixes';
+import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
+import { KeywordSelectComponent } from '../../../shared/components/keywordSelect/keywordSelect.component';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { RESTError } from '../../../shared/models/RESTError.interface';
+import { SettingManagerService } from '../../../shared/services/settingManager.service';
+import { WorkflowCreationModalComponent } from './workflow-creation-modal.component';
+import { WorkflowsManagerService } from '../../services/workflows-manager.service';
 import { WorkflowRecordConfig } from '../../models/workflowRecordConfig.interface';
 import { XACMLDecision } from '../../../shared/models/XACMLDecision.interface';
-import { WorkflowCreationModalComponent } from './workflow-creation-modal.component';
 
 describe('WorkflowCreationModalComponent', () => {
   let component: WorkflowCreationModalComponent;
@@ -54,6 +55,7 @@ describe('WorkflowCreationModalComponent', () => {
   let fixture: ComponentFixture<WorkflowCreationModalComponent>;
   let matDialogRef: jasmine.SpyObj<MatDialogRef<WorkflowCreationModalComponent>>;
   let workflowManagerStub: jasmine.SpyObj<WorkflowsManagerService>;
+  let settingManagerStub: jasmine.SpyObj<SettingManagerService>;
   let camelCaseStub: jasmine.SpyObj<CamelCasePipe>;
 
   const error: RESTError = {
@@ -71,8 +73,8 @@ describe('WorkflowCreationModalComponent', () => {
     }
   ];
 
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({
+  beforeEach(() => {
+    TestBed.configureTestingModule({
       imports: [
         NoopAnimationsModule,
         ReactiveFormsModule,
@@ -90,6 +92,7 @@ describe('WorkflowCreationModalComponent', () => {
       ],
       providers: [
         MockProvider(WorkflowsManagerService),
+        MockProvider(SettingManagerService),
         { provide: CamelCasePipe, useClass: MockPipe(CamelCasePipe) },
         { provide: MAT_DIALOG_DATA, useValue: { defaultNamespace: namespace } },
         { provide: MatDialogRef, useFactory: () => jasmine.createSpyObj('MatDialogRef', ['close']) }
@@ -102,8 +105,11 @@ describe('WorkflowCreationModalComponent', () => {
     component = fixture.componentInstance;
     element = fixture.debugElement;
     workflowManagerStub = TestBed.inject(WorkflowsManagerService) as jasmine.SpyObj<WorkflowsManagerService>;
+    settingManagerStub = TestBed.inject(SettingManagerService) as jasmine.SpyObj<SettingManagerService>;
     matDialogRef = TestBed.inject(MatDialogRef) as jasmine.SpyObj<MatDialogRef<WorkflowCreationModalComponent>>;
     camelCaseStub = TestBed.inject(CamelCasePipe) as jasmine.SpyObj<CamelCasePipe>;
+
+    settingManagerStub.getAnnotationPreference.and.returnValue(of('DC Terms'));
   });
 
   afterEach(function () {
@@ -113,6 +119,7 @@ describe('WorkflowCreationModalComponent', () => {
     fixture = null;
     matDialogRef = null;
     workflowManagerStub = null;
+    settingManagerStub = null;
     camelCaseStub = null;
   });
   it('should initialize the form correctly', function () {
@@ -208,8 +215,7 @@ describe('WorkflowCreationModalComponent', () => {
         setupCommon();
         workflowManagerStub.createWorkflowRecord.and.returnValue(of(null));
 
-        const newWorkflowIri = component.newWorkflowForm.controls.iri.value;
-        const actionId = newWorkflowIri;
+        const actionId = component.newWorkflowForm.controls.iri.value;
         const newWorkflow: JSONLDObject = {
           '@id': `${actionId}`,
           '@type': [`${WORKFLOWS}Workflow`],
@@ -241,18 +247,32 @@ describe('WorkflowCreationModalComponent', () => {
         expect(component.error).toEqual(error);
       }));
       describe('successfully', function () {
-        it('with a description', fakeAsync(function () {
-          workflowManagerStub.createWorkflowRecord.and.returnValue(of(''));
-          workflowManagerStub.checkMasterBranchPermissions.and.returnValue(of(true));
-          workflowManagerStub.checkMultiWorkflowDeletePermissions.and.returnValue(of(fakePermissionPermit));
-          component.newWorkflowForm.controls.description.setValue('description');
-          newWorkflowRecord.description = 'description';
-          newWorkflowRecord.jsonld[0][`${DCTERMS}description`] = [{ '@value': 'description' }];
-          component.create();
-          tick();
-          expect(workflowManagerStub.createWorkflowRecord).toHaveBeenCalledWith(newWorkflowRecord);
-          expect(matDialogRef.close).toHaveBeenCalled();
-        }));
+        describe('with a description', function () {
+          const testAssertions = function (): void {
+            workflowManagerStub.createWorkflowRecord.and.returnValue(of(''));
+            workflowManagerStub.checkMasterBranchPermissions.and.returnValue(of(true));
+            workflowManagerStub.checkMultiWorkflowDeletePermissions.and.returnValue(of(fakePermissionPermit));
+            component.newWorkflowForm.controls.description.setValue('description');
+            newWorkflowRecord.description = 'description';
+          };
+          it('when the annotation preference is DC Terms', fakeAsync(function () {
+            testAssertions();
+            newWorkflowRecord.jsonld[0][`${DCTERMS}description`] = [{ '@value': 'description' }];
+            component.create();
+            tick();
+            expect(workflowManagerStub.createWorkflowRecord).toHaveBeenCalledWith(newWorkflowRecord);
+            expect(matDialogRef.close).toHaveBeenCalled();
+          }));
+          it('when the annotation preference is RDFS', fakeAsync(function () {
+            component.annotationType = 'RDFS';
+            testAssertions();
+            newWorkflowRecord.jsonld[0][`${RDFS}comment`] = [{ '@value': 'description' }];
+            component.create();
+            tick();
+            expect(workflowManagerStub.createWorkflowRecord).toHaveBeenCalledWith(newWorkflowRecord);
+            expect(matDialogRef.close).toHaveBeenCalled();
+          }));
+        });
         it('without description', fakeAsync(function () {
           workflowManagerStub.createWorkflowRecord.and.returnValue(of(''));
           workflowManagerStub.checkMasterBranchPermissions.and.returnValue(of(true));

@@ -22,24 +22,25 @@
  */
 import { formatDate } from '@angular/common';
 import { HttpErrorResponse, HttpParams } from '@angular/common/http';
+
 import { concat, find, forOwn, get, has, isArray, isEqual, isString, merge, reduce, remove, replace, set, some, unionWith, uniq } from 'lodash';
+import moment from 'moment/moment';
 import { Observable, throwError } from 'rxjs';
 import { v4 } from 'uuid';
-
-import moment from 'moment/moment';
 import * as sha1 from 'js-sha1';
 
-import { JSONLDObject } from './models/JSONLDObject.interface';
-import { JSONLDId } from './models/JSONLDId.interface';
-import { JSONLDValue } from './models/JSONLDValue.interface';
-import { DC, DCTERMS, RDF, RDFS, SH, SKOS, SKOSXL, XSD } from '../prefixes';
-import { PaginatedConfig } from './models/paginatedConfig.interface';
-import { RESTError } from './models/RESTError.interface';
-import { REGEX } from '../constants';
-import { splitIRI } from './pipes/splitIRI.pipe';
 import { beautify } from './pipes/beautify.pipe';
+import { DC, DCTERMS, RDF, RDFS, SH, SKOS, SKOSXL, XSD } from '../prefixes';
 import { FormValues } from '../shacl-forms/models/form-values.interface';
+import { JSONLDId } from './models/JSONLDId.interface';
+import { JSONLDObject } from './models/JSONLDObject.interface';
+import { JSONLDValue } from './models/JSONLDValue.interface';
+import { PaginatedConfig } from './models/paginatedConfig.interface';
+import { REGEX } from '../constants';
+import { RESTError } from './models/RESTError.interface';
+import { SettingManagerService } from './services/settingManager.service';
 import { SHACLFormFieldConfig } from '../shacl-forms/models/shacl-form-field-config';
+import { splitIRI } from './pipes/splitIRI.pipe';
 
 export const entityNameProps = [
   `${RDFS}label`, 
@@ -865,6 +866,34 @@ export function getEntityNames(entity: JSONLDObject): string[] {
     } 
   });
   return uniq(names);
+}
+
+/**
+ * Retrieves the iri of the property linked to the name of the given entity using predefined properties or based on user
+ * settings.
+ *
+ * @param {JSONLDObject} entity - The JSON-LD object from which the name property is to be determined.
+ * @param {SettingManagerService} settingManager - Service to manage and retrieve the annotation preference settings.
+ * @return {string} The determined entity name property, defaulting to DCTerms:title if not found or on error.
+ */
+export function getEntityNameProp(entity: JSONLDObject, settingManager: SettingManagerService): string {
+  const existingProp = entityNameProps.find(prop => entity[prop]);
+  if (existingProp) {
+    return existingProp;
+  }
+
+  // No existing property found, add based on preference
+  let nameProperty = `${DCTERMS}title`;
+  settingManager.getAnnotationPreference().subscribe(preference => {
+    const annotationType = preference === 'DC Terms' ? DCTERMS : RDFS;
+    nameProperty = annotationType === DCTERMS ? `${DCTERMS}title` : `${RDFS}label`;
+  }, error => {
+    // Default to DCTERMS if preference cannot be retrieved
+    console.error(error);
+    nameProperty = `${DCTERMS}title`;
+  });
+
+  return nameProperty;
 }
 
 // HTTP Utility Methods

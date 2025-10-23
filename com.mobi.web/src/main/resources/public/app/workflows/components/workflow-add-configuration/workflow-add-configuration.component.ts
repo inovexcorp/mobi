@@ -20,31 +20,27 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { AbstractControl, FormBuilder, FormGroup } from '@angular/forms';
 import { ChangeDetectorRef, Component, Inject, OnInit } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { AbstractControl, FormBuilder, FormGroup } from '@angular/forms';
 import { MatSelectChange } from '@angular/material/select';
 
 import { capitalize, cloneDeep, difference, get, isEqual } from 'lodash';
 import { v4 } from 'uuid';
 
-import { FormValues } from '../../../shacl-forms/models/form-values.interface';
-import { SHACLFormFieldConfig } from '../../../shacl-forms/models/shacl-form-field-config';
-import { DCTERMS, RDFS, SH, WORKFLOWS } from '../../../prefixes';
-import {
-  getPropertyId,
-  getPropertyValue,
-  getShaclGeneratedData,
-  getEntityName,
-  setDctermsValue
-} from '../../../shared/utility';
-import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
-import { WorkflowsManagerService } from '../../services/workflows-manager.service';
 import { Difference } from '../../../shared/models/difference.class';
-import { EntityTypeConfig, ModalConfig, ModalType } from '../../models/modal-config.interface';
-import { JSONLDId } from '../../../shared/models/JSONLDId.interface';
-import { JSONLDValue } from '../../../shared/models/JSONLDValue.interface';
 import { EntityType } from '../../models/workflow-display.interface';
+import { EntityTypeConfig, ModalConfig, ModalType } from '../../models/modal-config.interface';
+import { FormValues } from '../../../shacl-forms/models/form-values.interface';
+import { getEntityName, getEntityNameProp, getPropertyId, getPropertyValue, getShaclGeneratedData, setDctermsValue }
+  from '../../../shared/utility';
+import { JSONLDId } from '../../../shared/models/JSONLDId.interface';
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { JSONLDValue } from '../../../shared/models/JSONLDValue.interface';
+import { DCTERMS, RDFS, SH, WORKFLOWS } from '../../../prefixes';
+import { SettingManagerService } from '../../../shared/services/settingManager.service';
+import { SHACLFormFieldConfig } from '../../../shacl-forms/models/shacl-form-field-config';
+import { WorkflowsManagerService } from '../../services/workflows-manager.service';
 
 interface DistinctValues {
   base: (JSONLDId|JSONLDValue)[],
@@ -52,12 +48,12 @@ interface DistinctValues {
 }
 
 /**
- * @class workflows.WorkflowAddConfigurationComponent
+ * @class WorkflowAddConfigurationComponent
  * 
  * A component which creates content for a modal that can add or edit the configuration of an entity in a Workflow.
- * Generates a form with a selector of all the different types of entities that can be created in the context (actions
- * or triggers) and then creates a {@link shacl-forms.ShaclFormComponent} using the SHACL definitions of the selected
- * entity type. When submitted, returns the {@link shared.Difference} for the added or edited entity.
+ * Generates a form with a selector for all the different types of entities that can be created in the context (actions
+ * or triggers) and then creates a {@link SHACLFormComponent} using the SHACL definitions of the selected
+ * entity type. When submitted, returns the {@link Difference} for the added or edited entity.
  * 
  * @param {ModalConfig} data The configuration for the modal display. Includes details about the Workflow,
  * WorkflowRecord, entity type to add/edit, SHACL definitions for the different entity types, and any selected
@@ -140,10 +136,24 @@ export class WorkflowAddConfigurationComponent implements OnInit {
    */
   formValueChanged = false;
 
+  /**
+   * Represents the type of annotation used in a specific context or application.
+   * This could indicate the metadata terms or standards being applied,
+   * such as Dublin Core Terms (DC Terms).
+   *
+   * This variable is useful for identifying the annotation standard or schema in use,
+   * which can provide a consistent structure for describing resources.
+   *
+   * Possible usage includes labeling, organizing, or categorizing information
+   * according to a recognized metadata specification.
+   */
+  annotationType = DCTERMS;
+
   constructor(@Inject(MAT_DIALOG_DATA) public data: ModalConfig,
               private _fb: FormBuilder,
               private _dialogRef: MatDialogRef<WorkflowAddConfigurationComponent>,
               private _wms: WorkflowsManagerService,
+              private _sms: SettingManagerService,
               private _ref: ChangeDetectorRef
   ) {}
 
@@ -151,6 +161,13 @@ export class WorkflowAddConfigurationComponent implements OnInit {
     this.configurationTypeIris = Object.keys(this.data.shaclDefinitions);
     this._setConfigurationByType(this.configurationTypeIris);
     this._setTitle(capitalize(this.data.entityType));
+
+    this._sms.getAnnotationPreference().subscribe(preference => {
+      this.annotationType = preference === 'DC Terms' ? DCTERMS : RDFS;
+    }, error => {
+      this.annotationType = DCTERMS;
+      console.error(error);
+    });
 
     if (this.data.mode === ModalType.EDIT) {
       this.shaclFormValid = true;
@@ -283,12 +300,12 @@ export class WorkflowAddConfigurationComponent implements OnInit {
         }
       }
     }
-    if (baseKeys.length < changesKeys.length) {
-      const newProps = difference(changesKeys, baseKeys);
-      newProps.forEach(prop => {
-        addObject[prop] = changes[prop];
-      });
-    }
+
+    const newProps = difference(changesKeys, baseKeys);
+    newProps.forEach(prop => {
+      addObject[prop] = changes[prop];
+    });
+
     return new Difference(Object.keys(addObject).length > 1 ? [addObject] : [], 
       Object.keys(delObject).length > 1 ? [delObject] : []);
   }
@@ -525,7 +542,8 @@ export class WorkflowAddConfigurationComponent implements OnInit {
     const newTitleControl: AbstractControl<any, any> = this.configurationFormGroup.controls.actionTitle;
 
     if (newTitleControl.value.length > 0 && newTitleControl.dirty) {
-      newValues[0][`${DCTERMS}title`] = [{'@value': newTitleControl.value}];
+      const titleProperty = this.annotationType === DCTERMS ? `${this.annotationType}title` : `${this.annotationType}label`;
+      newValues[0][titleProperty] = [{'@value': newTitleControl.value}];
     }
 
     const parentChanges: JSONLDObject = {
@@ -542,8 +560,10 @@ export class WorkflowAddConfigurationComponent implements OnInit {
    * @param {Object} workflowEntity - The workflow entity containing title information to be processed.
    * @return {Difference} An object representing the changes to the title property, including additions and deletions.
    */
-  private _createTitleDiff(workflowEntity): Difference {
-    const titles = cloneDeep(workflowEntity[`${DCTERMS}title`]);
+  private _createTitleDiff(workflowEntity: JSONLDObject): Difference {
+    const titleProperty = getEntityNameProp(workflowEntity, this._sms);
+    const newTitleProperty = this.annotationType === DCTERMS ? `${this.annotationType}title` : `${this.annotationType}label`;
+    const titles = cloneDeep(workflowEntity[titleProperty]);
     const titleControl: AbstractControl = this.configurationFormGroup.controls.actionTitle;
     if (titles?.length > 0) {
       const changedTitleIndex = titles.findIndex(title => title['@value'] === this.previousTitleValue);
@@ -551,7 +571,7 @@ export class WorkflowAddConfigurationComponent implements OnInit {
 
       const delObj: JSONLDObject = {
         '@id': this.data.selectedConfigIRI,
-        [`${DCTERMS}title`]: [changedTitleObj]
+        [titleProperty]: [changedTitleObj]
       };
 
       if (titleControl.value) {
@@ -570,7 +590,7 @@ export class WorkflowAddConfigurationComponent implements OnInit {
 
         const addObj: JSONLDObject = {
           '@id': this.data.selectedConfigIRI,
-          [`${DCTERMS}title`]: newValue
+          [newTitleProperty]: newValue
         };
 
         return new Difference([addObj], [delObj]);
@@ -580,7 +600,7 @@ export class WorkflowAddConfigurationComponent implements OnInit {
     } else if ((titles?.length === 0 || titles === undefined) && titleControl.value) {
       const addObj: JSONLDObject = {
         '@id': this.data.selectedConfigIRI,
-        [`${DCTERMS}title`]: [{'@value': titleControl.value}]
+        [newTitleProperty]: [{'@value': titleControl.value}]
       };
 
       return new Difference([addObj], []);
@@ -596,19 +616,22 @@ export class WorkflowAddConfigurationComponent implements OnInit {
    */
   private _updateEntityTitle(entityBeingEdited: JSONLDObject, entityChanges: JSONLDObject): void {
     if (this.configurationFormGroup.controls.actionTitle.dirty) {
-      const titles = cloneDeep(entityBeingEdited[`${DCTERMS}title`]);
+      const titleProperty = getEntityNameProp(entityBeingEdited, this._sms);
+      const newTitleProperty = this.annotationType === DCTERMS ? `${this.annotationType}title` : `${this.annotationType}label`;
+      const titles = cloneDeep(entityBeingEdited[titleProperty]);
       if (titles?.length > 0) {
         const changedTitleIndex = titles.findIndex(title => title['@value'] === this.previousTitleValue);
         // const changedTitleObj = cloneDeep(titles[changedTitleIndex]);
         titles[changedTitleIndex]['@value'] = this.configurationFormGroup.controls.actionTitle.value;
-        entityChanges[`${DCTERMS}title`] = titles;
+        entityChanges[newTitleProperty] = titles;
       } else {
         if (this.configurationFormGroup.controls.actionTitle.value) {
           setDctermsValue(entityChanges, 'title', this.configurationFormGroup.controls.actionTitle.value);
         }
       }
     } else if (!this.configurationFormGroup.controls.actionTitle.dirty) {
-      delete entityBeingEdited[`${DCTERMS}title`];
+      const titleProperty = getEntityNameProp(entityBeingEdited, this._sms);
+      delete entityBeingEdited[titleProperty];
     }
   }
 
