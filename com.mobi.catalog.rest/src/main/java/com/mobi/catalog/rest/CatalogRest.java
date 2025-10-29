@@ -59,9 +59,6 @@ import com.mobi.catalog.api.builder.Conflict;
 import com.mobi.catalog.api.builder.Difference;
 import com.mobi.catalog.api.builder.DistributionConfig;
 import com.mobi.catalog.api.builder.KeywordCount;
-import com.mobi.catalog.api.ontologies.mcat.MasterBranch;
-import com.mobi.catalog.api.record.EntityMetadata;
-import com.mobi.catalog.api.record.statistic.Statistic;
 import com.mobi.catalog.api.ontologies.mcat.Branch;
 import com.mobi.catalog.api.ontologies.mcat.Catalog;
 import com.mobi.catalog.api.ontologies.mcat.Commit;
@@ -69,13 +66,16 @@ import com.mobi.catalog.api.ontologies.mcat.CommitFactory;
 import com.mobi.catalog.api.ontologies.mcat.Distribution;
 import com.mobi.catalog.api.ontologies.mcat.DistributionFactory;
 import com.mobi.catalog.api.ontologies.mcat.InProgressCommit;
+import com.mobi.catalog.api.ontologies.mcat.MasterBranch;
 import com.mobi.catalog.api.ontologies.mcat.Modify;
 import com.mobi.catalog.api.ontologies.mcat.Record;
 import com.mobi.catalog.api.ontologies.mcat.Tag;
 import com.mobi.catalog.api.ontologies.mcat.UserBranch;
 import com.mobi.catalog.api.ontologies.mcat.Version;
 import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
+import com.mobi.catalog.api.record.EntityMetadata;
 import com.mobi.catalog.api.record.RecordService;
+import com.mobi.catalog.api.record.statistic.Statistic;
 import com.mobi.catalog.api.versioning.VersioningManager;
 import com.mobi.catalog.config.CatalogConfigProvider;
 import com.mobi.dataset.api.DatasetConnection;
@@ -167,6 +167,7 @@ public class CatalogRest {
     private static final String COULD_NOT_BE_FOUND = " could not be found";
     private static final String COMMIT = "Commit ";
     private static final String DELETIONS = "deletions";
+    private static final String ADDITIONS = "additions";
 
     private final ValueFactory vf = new ValidatingValueFactory();
     private final ModelFactory mf = new DynamicModelFactory();
@@ -2543,11 +2544,11 @@ public class CatalogRest {
             @Parameter(schema = @Schema(type = "string",
                     description = "String of JSON-LD that corresponds to the statements that"
                     + "were added to the entity"))
-            @FormParam("additions") String additionsJson,
+            @Encoded @FormParam(ADDITIONS) String additionsJson,
             @Parameter(schema = @Schema(type = "string",
                     description = "String of JSON-LD that corresponds to the statements that "
                     + "were deleted in the entity"))
-            @FormParam(DELETIONS) String deletionsJson,
+            @Encoded @FormParam(DELETIONS) String deletionsJson,
             @Parameter(schema = @Schema(type = "string",
                     description = "String of JSON-LD array that corresponds to conflicts associated with the merge"))
             @FormParam("conflicts") String conflictsJson) {
@@ -2939,7 +2940,7 @@ public class CatalogRest {
             @Parameter(schema = @Schema(type = "string",
                     description = "String of JSON-LD that corresponds to the statements that"
                     + " were added to the entity", required = true))
-            @Encoded @FormParam("additions") String additionsJson,
+            @Encoded @FormParam(ADDITIONS) String additionsJson,
             @Parameter(schema = @Schema(type = "string",
                     description = "String of JSON-LD that corresponds to the statements that"
                     + " were deleted in the entity", required = true))
@@ -3058,12 +3059,12 @@ public class CatalogRest {
         try {
             ObjectNode differenceJson = mapper.createObjectNode();
             if (format.equals("jsonld")) {
-                differenceJson.set("additions", mapper.readTree(modelToSkolemizedString(difference.getAdditions(),
+                differenceJson.set(ADDITIONS, mapper.readTree(modelToSkolemizedString(difference.getAdditions(),
                         format, bNodeService)));
                 differenceJson.set(DELETIONS, mapper.readTree(modelToSkolemizedString(difference.getDeletions(),
                         format, bNodeService)));
             } else {
-                differenceJson.put("additions", modelToSkolemizedString(difference.getAdditions(),
+                differenceJson.put(ADDITIONS, modelToSkolemizedString(difference.getAdditions(),
                         format, bNodeService));
                 differenceJson.put(DELETIONS, modelToSkolemizedString(difference.getDeletions(),
                         format, bNodeService));
@@ -3172,7 +3173,7 @@ public class CatalogRest {
     }
 
     private Difference getDifference(JsonNode differenceNode) {
-        JsonNode additions = differenceNode.get("additions");
+        JsonNode additions = differenceNode.get(ADDITIONS);
         JsonNode deletions = differenceNode.get(DELETIONS);
         return new Difference.Builder()
                 .additions(convertJsonld(additions.toString()))
