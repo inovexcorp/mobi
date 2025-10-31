@@ -30,6 +30,7 @@ import com.mobi.repository.impl.sesame.RepositoryConfigHelper;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.rdf4j.common.transaction.QueryEvaluationMode;
 import org.eclipse.rdf4j.repository.Repository;
+import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.RepositoryException;
 import org.eclipse.rdf4j.repository.sail.SailRepository;
 import org.eclipse.rdf4j.sail.nativerdf.NativeStore;
@@ -41,8 +42,9 @@ import org.osgi.service.component.annotations.Modified;
 import org.osgi.service.metatype.annotations.Designate;
 
 import java.io.File;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 @Component(
         immediate = true,
@@ -75,7 +77,7 @@ public class NativeRepositoryWrapper extends OsgiRepositoryWrapper {
         File file = new File(config.dataDir());
         nativeStore.setDataDir(file);
 
-        List<String> indexes = Arrays.asList(config.tripleIndexes());
+        List<String> indexes = Collections.singletonList(config.tripleIndexes());
         String indexString = StringUtils.join(indexes, ",");
         nativeStore.setTripleIndexes(indexString);
 
@@ -110,4 +112,16 @@ public class NativeRepositoryWrapper extends OsgiRepositoryWrapper {
         return REPOSITORY_TYPE;
     }
 
+    @Override
+    public Optional<Long> getLimit() {
+        // Limit sourced from RDF4J documentation (https://rdf4j.org/about/#core-databases)
+        return Optional.of(100_000_000L);
+    }
+
+    @Override
+    public Optional<Long> getTripleCount() {
+        try (RepositoryConnection conn = this.getConnection()) {
+            return Optional.of(conn.size());
+        }
+    }
 }

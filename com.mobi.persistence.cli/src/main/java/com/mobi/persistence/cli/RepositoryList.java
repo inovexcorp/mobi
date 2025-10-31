@@ -51,12 +51,21 @@ public class RepositoryList implements Action {
         ShellTable table = new ShellTable();
         table.column("ID");
         table.column("Title");
+        table.column("Type");
+        table.column("Limit");
+        table.column("Triple Count");
         table.emptyTableText("No Repositories");
 
         if (repositoryManager != null) {
-            repositoryManager.getAllRepositories().forEach((repoID, repo) -> {
-                table.addRow().addContent(repo.getRepositoryID(), repo.getRepositoryTitle());
-            });
+            repositoryManager.getAllRepositories().forEach((repoID, repo) -> table.addRow()
+                    .addContent(
+                            repo.getRepositoryID(),
+                            repo.getRepositoryTitle(),
+                            repo.getRepositoryType(),
+                            repo.getLimit().orElse(null),
+                            repo.getTripleCount().orElse(null)
+                    )
+            );
         }
 
         table.print(System.out);

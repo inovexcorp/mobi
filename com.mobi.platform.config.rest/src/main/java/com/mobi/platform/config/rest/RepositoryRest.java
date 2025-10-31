@@ -74,11 +74,10 @@ public class RepositoryRest {
     )
     public Response getRepositories() {
         Map<String, OsgiRepository> repos = repositoryManager.getAllRepositories();
-        ArrayNode array = mapper.createArrayNode();
-        repos.forEach((key, value) -> {
-            ObjectNode repo = createRepoJson(value);
-            array.add(repo);
-        });
+        ArrayNode array = repos.values().stream()
+                .sorted((repo1, repo2) -> repo1.getRepositoryID().compareToIgnoreCase(repo2.getRepositoryID()))
+                .map(this::createRepoJson)
+                .collect(mapper::createArrayNode, ArrayNode::add, ArrayNode::add);
         return Response.ok(array.toString()).build();
     }
 
@@ -113,6 +112,8 @@ public class RepositoryRest {
         obj.put("id", repo.getRepositoryID());
         obj.put("title", repo.getRepositoryTitle());
         obj.put("type", repo.getRepositoryType());
+        repo.getLimit().ifPresent(limit -> obj.put("limit", limit));
+        repo.getTripleCount().ifPresent(tripleCount -> obj.put("tripleCount", tripleCount));
         return obj;
     }
 }

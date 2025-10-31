@@ -38,6 +38,7 @@ import org.osgi.service.component.annotations.Modified;
 import org.osgi.service.metatype.annotations.Designate;
 
 import java.io.File;
+import java.util.Optional;
 
 @Component(
         immediate = true,
@@ -97,6 +98,16 @@ public class MemoryRepositoryWrapper extends OsgiRepositoryWrapper {
     @Override
     public String getRepositoryType() {
         return REPOSITORY_TYPE;
+    }
+
+    @Override
+    public Optional<Long> getLimit() {
+        return Optional.empty();
+    }
+
+    @Override
+    public Optional<Long> getTripleCount() {
+        return Optional.empty();
     }
 
 }

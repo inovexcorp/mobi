@@ -1,0 +1,170 @@
+/*-
+ * #%L
+ * com.mobi.web
+ * $Id:$
+ * $HeadURL:$
+ * %%
+ * Copyright (C) 2016 - 2025 iNovex Information Systems, Inc.
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * #L%
+ */
+/* Core variables */
+@import "../../../css/variables";
+
+.repositories-page {
+  padding: 24px;
+  background: #f5f5f5;
+  min-height: 100vh;
+}
+
+.repo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.repo-card {
+  position: relative;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 12px !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1) !important;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15) !important;
+
+    .card-accent {
+      height: 6px;
+    }
+  }
+}
+
+.card-accent {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  transition: height 0.3s ease;
+}
+
+.type-native .card-accent { background: linear-gradient(90deg, #303f9f, #1a237e); }
+.type-memory .card-accent { background: linear-gradient(90deg, #9C27B0, #7B1FA2); }
+.type-sparql .card-accent { background: linear-gradient(90deg, #4CAF50, #388E3C); }
+.type-http .card-accent { background: linear-gradient(90deg, #FF9800, #F57C00); }
+
+mat-card-title {
+  margin-top: 0 !important;
+}
+
+mat-card-content {
+  padding: 20px !important;
+}
+
+.repo-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.repo-id {
+  font-size: 24px;
+  font-weight: 700;
+  color: #212121;
+  letter-spacing: -0.5px;
+  line-height: 1.2;
+}
+
+.type-chip {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  padding: 4px 10px;
+  height: 24px;
+  border-radius: 12px;
+  min-height: unset;
+}
+
+.chip-native { background: #E8EAF6 !important; color: #303f9f !important; }
+.chip-memory { background: #F3E5F5 !important; color: #7B1FA2 !important; }
+.chip-sparql { background: #E8F5E9 !important; color: #388E3C !important; }
+.chip-http { background: #FFF3E0 !important; color: #F57C00 !important; }
+
+.repo-title {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 16px;
+  line-height: 1.4;
+  min-height: 40px;
+}
+
+.repo-actions {
+  display: flex;
+  gap: 4px;
+  margin-top: auto;
+  padding-top: 8px;
+  border-top: 1px solid #e0e0e0;
+
+  button {
+    color: #757575;
+    transition: color 0.2s ease;
+
+    &:hover {
+      color: #303f9f;
+    }
+  }
+}
+
+.capacity-section {
+  margin-bottom: 16px;
+}
+
+.capacity-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.capacity-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: #757575;
+  letter-spacing: 0.5px;
+}
+
+.capacity-value {
+  font-size: 12px;
+  font-weight: 500;
+  color: #424242;
+}
+
+mat-progress-bar {
+  height: 8px;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+@media (max-width: 768px) {
+  .repo-grid {
+    grid-template-columns: 1fr;
+  }
+}
