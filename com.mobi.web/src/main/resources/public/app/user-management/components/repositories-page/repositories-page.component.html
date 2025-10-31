@@ -1,0 +1,67 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 - 2025 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="repositories-page">
+  <div class="repo-grid">
+    <mat-card 
+      *ngFor="let repo of repositories" 
+      class="repo-card"
+      [class.type-native]="repo.type === 'native'"
+      [class.type-memory]="repo.type === 'memory'"
+      [class.type-sparql]="repo.type === 'sparql'"
+      [class.type-http]="repo.type === 'http'">
+      
+      <div class="card-accent" [attr.data-type]="repo.type"></div>
+      
+      <mat-card-title>
+        <div class="repo-header">
+          <div class="repo-id">{{ repo.id }}</div>
+          <mat-chip class="type-chip" [class.chip-native]="repo.type === 'native'"
+            [class.chip-memory]="repo.type === 'memory'"
+            [class.chip-sparql]="repo.type === 'sparql'"
+            [class.chip-http]="repo.type === 'http'">
+            {{ repo.type | uppercase }}
+          </mat-chip>
+        </div>
+      </mat-card-title>
+      <mat-card-subtitle>
+        {{ repo.title }}
+      </mat-card-subtitle>
+
+      <mat-card-content>
+        <div class="capacity-section" *ngIf="repo.limit && repo.tripleCount !== undefined">
+          <div class="capacity-header">
+            <span class="capacity-label">Capacity</span>
+            <span class="capacity-value">{{ repo.tripleCount | number }} / {{ repo.limit | number }}</span>
+          </div>
+          <mat-progress-bar 
+            mode="determinate" 
+            [value]="repo.capacityPercentage"
+            [class.level-low]="repo.capacityPercentage < 60"
+            [class.level-medium]="repo.capacityPercentage >= 60 && repo.capacityPercentage < 85"
+            [class.level-high]="repo.capacityPercentage >= 85">
+          </mat-progress-bar>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

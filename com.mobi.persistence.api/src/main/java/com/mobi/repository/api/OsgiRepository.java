@@ -25,6 +25,8 @@ package com.mobi.repository.api;
 
 import org.eclipse.rdf4j.repository.Repository;
 
+import java.util.Optional;
+
 public interface OsgiRepository extends Repository {
 
     /**
@@ -55,4 +57,18 @@ public interface OsgiRepository extends Repository {
      */
     String getRepositoryType();
 
+    /**
+     * Returns the ideal limit of triples for the type of repository. Empty if there is no limit.
+     *
+     * @return An {@link Optional} of the triple limit for repository type .
+     */
+    Optional<Long> getLimit();
+
+    /**
+     * Returns the current count of triples of this repository if possible for this type of repository. Empty if this
+     * type of repository does not support counting triples.
+     *
+     * @return An {@link Optional} of the count of triples in this repository.
+     */
+    Optional<Long> getTripleCount();
 }

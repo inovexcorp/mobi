@@ -34,6 +34,7 @@ import { SettingManagerService } from '../../../shared/services/settingManager.s
 import { UserStateService } from '../../../shared/services/userState.service';
 import { GroupsPageComponent } from '../groupsPage/groupsPage.component';
 import { PermissionsPageComponent } from '../permissionsPage/permissionsPage.component';
+import { RepositoriesPageComponent } from '../repositories-page/repositories-page.component';
 import { UsersPageComponent } from '../usersPage/usersPage.component';
 import { UserManagementPageComponent } from './userManagementPage.component';
 
@@ -57,7 +58,8 @@ describe('User Management Page component', function() {
                 MockComponent(UsersPageComponent),
                 MockComponent(GroupsPageComponent),
                 MockComponent(PermissionsPageComponent),
-                MockComponent(SettingEditPageComponent)
+                MockComponent(SettingEditPageComponent),
+                MockComponent(RepositoriesPageComponent)
             ],
             providers: [
                 MockProvider(UserStateService),
@@ -89,7 +91,7 @@ describe('User Management Page component', function() {
         it('with tabs for each page', fakeAsync(function() {
             fixture.detectChanges();
             tick();
-            expect(element.queryAll(By.css('mat-tab-body')).length).toBe(4);
+            expect(element.queryAll(By.css('mat-tab-body')).length).toBe(5);
         }));
         it('with a tab for users-page', fakeAsync(function() {
             fixture.detectChanges();
@@ -113,6 +115,12 @@ describe('User Management Page component', function() {
             fixture.detectChanges();
             tick();
             expect(element.queryAll(By.css('setting-edit-page')).length).toBe(1);
+        }));
+        it('with a tab for repositories-page', fakeAsync(function() {
+            userStateStub.tabIndex = 4;
+            fixture.detectChanges();
+            tick();
+            expect(element.queryAll(By.css('app-repositories-page')).length).toBe(1);
         }));
     });
 });

@@ -21,7 +21,9 @@
  * #L%
  */
 export interface Repository {
-    id: string,
-    title: string,
-    type: string
+    id: string;
+    title: string;
+    type: string;
+    limit?: number;
+    tripleCount?: number;
 }

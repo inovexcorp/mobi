@@ -35,6 +35,8 @@ import org.osgi.service.component.annotations.Deactivate;
 import org.osgi.service.component.annotations.Modified;
 import org.osgi.service.metatype.annotations.Designate;
 
+import java.util.Optional;
+
 @Component(
         immediate = true,
         service = { OsgiRepository.class },
@@ -94,6 +96,16 @@ public class SPARQLRepositoryWrapper extends OsgiRepositoryWrapper {
     @Override
     public String getRepositoryType() {
         return REPOSITORY_TYPE;
+    }
+
+    @Override
+    public Optional<Long> getLimit() {
+        return Optional.empty();
+    }
+
+    @Override
+    public Optional<Long> getTripleCount() {
+        return Optional.empty();
     }
 
 }
