@@ -34,7 +34,7 @@
       
       <mat-card-title>
         <div class="repo-header">
-          <div class="repo-id">{{ repo.id }}</div>
+          <div class="repo-id" [title]="repo.id">{{ repo.id }}</div>
           <mat-chip class="type-chip" [class.chip-native]="repo.type === 'native'"
             [class.chip-memory]="repo.type === 'memory'"
             [class.chip-sparql]="repo.type === 'sparql'"

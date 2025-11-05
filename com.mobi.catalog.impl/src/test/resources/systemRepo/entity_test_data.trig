@@ -11,11 +11,11 @@
 
 @prefix catalogs: <http://mobi.com/test/catalogs#> .
 
-GRAPH catalogs:catalog-distributed {
+    GRAPH catalogs:catalog-distributed {
     catalogs:catalog-distributed a catalog:Catalog .
 }
 
-GRAPH catalogs:catalog-local {
+    GRAPH catalogs:catalog-local {
     catalogs:catalog-local a catalog:Catalog .
 }
 
@@ -35,7 +35,7 @@ GRAPH catalogs:catalog-local {
 }
 
 <http://example.org/branch1> {
-  <http://example.org/branch1> a catalog:MasterBranch ;
+    <http://example.org/branch1> a catalog:MasterBranch ;
     catalog:headGraph <http://example.org/headGraph1> .
 }
 
@@ -48,29 +48,33 @@ GRAPH catalogs:catalog-local {
     <http://example.org/predicate1> "Object 1" ;
     <http://example.org/predicate2> "Object 2" .
 
-  <http://example.org/entity1b> a <http://example.org/EntityType1> ;
-      rdfs:comment "This is a comment for entity 1b." ;
-      dct:description "This is a dct description for entity 1b." ;
-      rdfs:label "Entity 1b Label"@en ;
-      skos:prefLabel "Entity 1b Preferred Label"@en ;
-      <http://example.org/predicate1> "entity1b-1b" ;
-      <http://example.org/predicate2> "entity1b-2b" .
+<http://example.org/entity1b> a <http://example.org/EntityType1> ;
+                              rdfs:comment "This is a comment for entity 1b." ;
+                              dct:description "This is a dct description for entity 1b." ;
+                              rdfs:label "Entity 1b Label"@en ;
+                              skos:prefLabel "Entity 1b Preferred Label"@en ;
+                              <http://example.org/predicate1> "entity1b-1b" ;
+                              <http://example.org/predicate2> "entity1b-2b" .
 
-  <http://example.org/entity1c> a <http://example.org/EntityType1> ;
-      rdfs:comment "This is a comment for entity 1c." ;
-      dct:description "This is a dct description for entity 1c." ;
-      rdfs:label "Entity 1c Label"@en ;
-      skos:prefLabel "Entity 1c Preferred Label"@en ;
-      <http://example.org/predicate1> "entity1c-1c" ;
-      <http://example.org/predicate2> "entity1c-2c" .
+<http://example.org/entity1c> a <http://example.org/EntityType1> ;
+                              rdfs:comment "This is a comment for entity 1c." ;
+                              dct:description "This is a dct description for entity 1c." ;
+                              rdfs:label "Entity 1c Label"@en ;
+                              skos:prefLabel "Entity 1c Preferred Label"@en ;
+                              <http://example.org/predicate1> "entity1c-1c" ;
+                              <http://example.org/predicate2> "entity1c-2c" .
 
-  <http://example.org/entity1d> a <http://example.org/EntityType1> ;
-      rdfs:comment "This is a comment for entity 1d." ;
-      dct:description "This is a dct description for entity 1d." ;
-      rdfs:label "Entity 1d Label"@en ;
-      skos:prefLabel "Entity 1d Preferred Label"@en ;
-      <http://example.org/predicate1> "entity1c-1d" ;
-      <http://example.org/predicate2> "entity1c-2d" .
+<http://example.org/entity1d> a <http://example.org/EntityType1> ;
+                              rdfs:comment "This is a comment for entity 1d." ;
+                              dct:description "This is a dct description for entity 1d." ;
+                              rdfs:label "Entity 1d Label"@en ;
+                              skos:prefLabel "Entity 1d Preferred Label"@en ;
+                              <http://example.org/predicate1> "entity1c-1d" ;
+                              <http://example.org/predicate2> "entity1c-2d" .
+
+  # -- Entity 5: A blank node representing an anonymous class --
+  [] a owl:Class, <https://www.example.com/AnonymousType> ;
+     rdfs:label "Hidden Class" .
 }
 
 # Example Record 2
@@ -82,19 +86,19 @@ GRAPH catalogs:catalog-local {
     dcterms:description "Description" ;
     dcterms:issued "2016-01-02T00:00:00Z"^^xsd:dateTime ;
     dcterms:modified "2016-01-03T00:00:00Z"^^xsd:dateTime ;
-    catalog:keyword "keyword3" ;
+    catalog:keyword "keyword3" .
 }
 
 <http://example.org/branch2> {
-  <http://example.org/branch2> a catalog:MasterBranch ;
+    <http://example.org/branch2> a catalog:MasterBranch ;
     catalog:headGraph <http://example.org/headGraph2> .
 }
 
 <http://example.org/headGraph2> {
-  <http://example.org/entity2> a <http://example.org/EntityType2> ;
+    <http://example.org/entity2> a <http://example.org/EntityType2> ;
     dct:description "This is a description for entity 2." ;
     rdfs:label "Entity 2 Label"@en ;
     skos:prefLabel "Entity 2 Preferred Label"@en ;
     <http://example.org/predicate1> "Object A" ;
     <http://example.org/predicate2> "Object B" .
-}
+    }

@@ -62,6 +62,7 @@
   right: 0;
   height: 4px;
   transition: height 0.3s ease;
+  background: linear-gradient(90deg, #e0e0e0, #9e9e9e);
 }
 
 .type-native .card-accent { background: linear-gradient(90deg, #303f9f, #1a237e); }
@@ -90,6 +91,11 @@ mat-card-content {
   color: #212121;
   letter-spacing: -0.5px;
   line-height: 1.2;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+  flex: 1;
+  min-width: 0;
 }
 
 .type-chip {
