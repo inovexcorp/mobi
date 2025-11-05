@@ -50,6 +50,7 @@ WHERE {
     # SEARCH all Objects for search_text
     ?entityIri ?p ?o .
     FILTER(
+      !isBlank(?entityIri) &&
       !BOUND(?search_text) || isLiteral(?o) && CONTAINS(LCASE(?o), LCASE(?search_text))
     )
     # CONCAT Predicate and Object
@@ -69,7 +70,7 @@ WHERE {
       ?entityIri dc:description ?dcDescription .
     }
     BIND(
-      COALESCE(?comment, ?dctDescription, ?dcDescription) AS ?finalDescription
+      COALESCE(?comment, ?dctDescription, ?dcDescription, "") AS ?finalDescription
     )
     # Prioritize the entity name fields in order
     OPTIONAL {
@@ -138,37 +139,39 @@ WHERE {
        ?skosPrefLabelEn, ?skosPrefLabelNon,
        ?skosAltLabelEn, ?skosAltLabelNon,
        ?skosxlLiteralFormEn, ?skosxlLiteralFormNon,
-       ?shNameEn, ?shNameNon
+       ?shNameEn, ?shNameNon,
+       ""
      ) AS ?finalEntityName
     )
     BIND(
         COALESCE(
             REPLACE(STR(?entityIri), "^.*[#/](.*)$", "$1"),
-            STR(?entityIri)
+            STR(?entityIri),
+            ""
         ) AS ?postfix
     )
     # Insert space between lowercase & uppercase or fallback to ?value
     BIND(
       COALESCE(
-          REPLACE(?postfix, "([a-z])([A-Z])", "$1 $2"), ?postfix
+          REPLACE(?postfix, "([a-z])([A-Z])", "$1 $2"), ?postfix, ""
       ) AS ?step1
     )
     # Insert space after numbers or fallback to previous value
     BIND(
         COALESCE(
-            REPLACE(?step1, "([0-9]+)(?!$)", "$1 "), ?step1
+            REPLACE(?step1, "([0-9]+)(?!$)", "$1 "), ?step1, ""
         ) AS ?step2
     )
     # Insert space before numbers following letters
     BIND(
         COALESCE(
-            REPLACE(?step2, "([a-zA-Z])([0-9]+)", "$1 $2"), ?step2
+            REPLACE(?step2, "([a-zA-Z])([0-9]+)", "$1 $2"), ?step2, ""
         ) AS ?step3
     )
     # Space before last uppercase followed by lowercase
     BIND(
         COALESCE(
-            REPLACE(?step3, "\\b([A-Z]+)([A-Z])([a-z])", "$1 $2$3"), ?step3
+            REPLACE(?step3, "\\b([A-Z]+)([A-Z])([a-z])", "$1 $2$3"), ?step3, ""
         ) AS ?beautifiedValueStr
     )
     # Uppercase if first character is a letter, Leave it unchanged if it's not a letter
@@ -179,11 +182,12 @@ WHERE {
                 UCASE(SUBSTR(?beautifiedValueStr, 1, 1)),
                 SUBSTR(?beautifiedValueStr, 1, 1)
             ),
-            SUBSTR(?beautifiedValueStr, 2)
+            SUBSTR(?beautifiedValueStr, 2),
+            ""
         ) AS ?beautifiedValue
     )
     BIND(
-        COALESCE(?finalEntityName, ?beautifiedValue) AS ?finalEntityNamePostFix
+        COALESCE(?finalEntityName, ?beautifiedValue, "") AS ?finalEntityNamePostFix
     )
   }
 }
