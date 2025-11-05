@@ -1317,6 +1317,46 @@ public class SimpleRecordManagerTest extends OrmEnabledTestCase {
     }
 
     @Test
+    public void testFindEntitiesBlankNode() throws Exception {
+        String record1 = "http://example.org/record1";
+        String record2 = "http://example.org/record2";
+        mockFindEntities(record1, record2);
+
+        PaginatedSearchParams searchParams = new PaginatedSearchParams.Builder()
+                .searchText("hidden")
+                .limit(10)
+                .offset(0)
+                .sortBy("entityName")
+                .ascending(true)
+                .build();
+        try (RepositoryConnection conn = repo.getConnection()) {
+            PaginatedSearchResults<EntityMetadata> results = manager.findEntities(ManagerTestConstants.CATALOG_IRI,
+                    searchParams, user, conn);
+            assertEquals(10, results.pageSize());
+            assertEquals(1, results.totalSize());
+            assertEquals(1, results.pageNumber());
+            assertEquals(1, results.page().size());
+            // Get the first EntityMetadata from the results
+            EntityMetadata entityMetadata = results.page().get(0);
+            assertEquals("Hidden Class", entityMetadata.entityName());
+            assertEquals(2, entityMetadata.types().size());
+            assertEquals("http://www.w3.org/2002/07/owl#Class", entityMetadata.types().get(0));
+
+            assertNotNull(entityMetadata.sourceRecord());
+            assertEquals("http://example.org/record1", entityMetadata.sourceRecord().get("iri"));
+            assertEquals("Record 1 Title", entityMetadata.sourceRecord().get("title"));
+            assertEquals("http://mobi.com/ontologies/ontology-editor#OntologyRecord", entityMetadata.sourceRecord().get("type"));
+
+            assertEquals(2, entityMetadata.recordKeywords().size());
+            assertEquals("keyword1", entityMetadata.recordKeywords().get(0));
+            assertEquals("keyword2", entityMetadata.recordKeywords().get(1));
+
+            assertEquals(1, entityMetadata.matchingAnnotations().size());
+            assertEquals("Hidden Class", entityMetadata.matchingAnnotations().get(0).get("value"));
+        }
+    }
+
+    @Test
     public void testFindEntitiesSort() throws Exception {
         String record1 = "http://example.org/record1";
         String record2 = "http://example.org/record2";
