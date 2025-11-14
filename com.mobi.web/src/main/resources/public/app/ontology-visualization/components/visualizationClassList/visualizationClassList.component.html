@@ -27,7 +27,7 @@
                    (click)="recordSelected($event, record);"
                    (contextmenu)="onRightClickRecordSelect($event, record)"
                    [ngClass]="{'active': record?.id === (selectedRecord | async)?.nodeId}">
-        <div class="ontologyClass__info" >
+        <div class="ontologyClass__info" (dblclick)="this.os.goTo(record.id)">
             <span class="ontologyClass__name"
                   [title]="record.name"
                   aria-label="A label that displays a tooltip that can with the ontology class name">

@@ -23,90 +23,119 @@
 import { Component, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import { MatSliderChange } from '@angular/material/slider';
 
+import { Collection, Core } from 'cytoscape';
+
 @Component({
-    selector: 'visualization-menu',
-    templateUrl: './visualization-menu.component.html',
-    styleUrls: ['./visualization-menu.component.scss']
+  selector: 'visualization-menu',
+  templateUrl: './visualization-menu.component.html',
+  styleUrls: ['./visualization-menu.component.scss']
 })
 export class VisualizationMenuComponent implements OnInit, OnChanges {
-    @Input() cyChart: any ;
-    @Input() initialZoom: number ;
-    zoomLevel = 0;
-    lowerThanLimit = false;
-    higherThanLimit = false;
-    constructor() { }
+  @Input() cyChart: Core;
+  @Input() initialZoom: number;
+  zoomLevel = 0;
+  lowerThanLimit = false;
+  higherThanLimit = false;
 
-    ngOnInit(): void {
-        this.zoomLevel = this.initialZoom;
-        this.calculateLimits();
+  constructor() {
+  }
+
+  ngOnInit(): void {
+    this.zoomLevel = this.initialZoom;
+    this.calculateLimits();
+  }
+
+  public ngOnChanges(changes: SimpleChanges): void {
+    // handle changes to cyChart and initialZoom inputs
+    if (changes.cyChart || changes.initialZoom) {
+      this.zoomLevel = this.initialZoom;
+      this.calculateLimits();
+    }
+  }
+
+  /**
+   * Fits the graph within the available space.
+   * Updates the zoom level and calculates the limits.
+   *
+   * @function fitGraph
+   * @returns {void}
+   */
+  public fitGraph = (): void => {
+    this.cyChart.fit();
+    this.zoomLevel = this.cyChart.zoom();
+    this.calculateLimits();
+  };
+
+  /**
+   * Increases the zoom level by 0.1 and updates the chart accordingly.
+   *
+   * @function
+   * @name zoomIn
+   * @returns {void}
+   */
+  public zoomIn = (): void => {
+    this.zoomLevel = this.zoomLevel + .10;
+    const selectedNode = this.cyChart.elements('.focused');
+    if (selectedNode.length === 0) {
+      this.cyChart.zoom(this.zoomLevel);
+    } else {
+      this.cyChart.zoom({
+        level: this.zoomLevel,
+        position: selectedNode[0].position()
+      });
+    }
+    this.calculateLimits();
+  };
+
+  /**
+   * Decreases the zoom level by 0.1 and adjusts the chart accordingly.
+   *
+   * @function
+   * @name zoomOut
+   * @returns {void}
+   */
+  public zoomOut = (): void => {
+    this.zoomLevel = this.zoomLevel - .10;
+    const selectedNode: Collection = this.cyChart.elements('.focused');
+    if (selectedNode.length === 0) {
+      this.cyChart.zoom(this.zoomLevel);
+    } else {
+      this.cyChart.zoom({
+        level: this.zoomLevel,
+        position: selectedNode[0].position()
+      });
     }
 
-    public ngOnChanges(changes: SimpleChanges): void {
-      // handle changes to cyChart and initialZoom inputs
-        if (changes.cyChart || changes.initialZoom) {
-            this.zoomLevel = this.initialZoom;
-            this.calculateLimits();
-        }
-    }
+    this.calculateLimits();
+  };
 
-    /**
-    * Fits the graph within the available space.
-    * Updates the zoom level and calculates the limits.
-    *
-    * @function fitGraph
-    * @returns {void}
-    */
-    public fitGraph = (): void => {
-        this.cyChart.fit();
-        this.zoomLevel = this.cyChart.zoom();
-        this.calculateLimits();
+  /**
+   * Handles the change of a slider and performs necessary calculations.
+   *
+   * @param {MatSliderChange} event The change event object containing the new slider value.
+   * @returns {void}
+   */
+  calculateSlider = (event: MatSliderChange): void => {
+    this.zoomLevel = event.value;
+    const selectedNode = this.cyChart.elements('.focused');
+    if (selectedNode.length === 0) {
+      this.cyChart.zoom(this.zoomLevel);
+    } else {
+      this.cyChart.zoom({
+        level: this.zoomLevel,
+        position: selectedNode[0].position()
+      });
     }
+    this.calculateLimits();
+  };
 
-    /**
-    * Increases the zoom level by 0.1 and updates the chart accordingly.
-    *
-    * @function
-    * @name zoomIn
-    * @returns {void}
-    */
-    public zoomIn = (): void => {
-        this.zoomLevel = this.zoomLevel + .10;
-        this.cyChart.zoom(this.zoomLevel);
-        this.calculateLimits();
-    }
-
-    /**
-    * Decreases the zoom level by 0.1 and adjusts the chart accordingly.
-    *
-    * @function
-    * @name zoomOut
-    * @returns {void}
-    */
-    public zoomOut = (): void => {
-        this.zoomLevel = this.zoomLevel - .10;
-        this.cyChart.zoom(this.zoomLevel);
-        this.calculateLimits();
-    }
-
-    /**
-    * Handles the change of a slider and performs necessary calculations.
-    *
-    * @param {MatSliderChange} event The change event object containing the new slider value.
-    * @returns {void}
-    */
-    calculateSlider = (event: MatSliderChange): void => {
-        this.zoomLevel = event.value;
-        this.cyChart.zoom(this.zoomLevel);
-        this.calculateLimits();
-    }
-
-    /**
-    * Calculates whether the lower and higher limits have been met based on the current zoom level.
-    * @function calculateLimits
-    * @returns {void}
-    */
-    calculateLimits = (): void => {
-        this.lowerThanLimit = this.zoomLevel - .10 <= 0;
-        this.higherThanLimit = this.zoomLevel + .10 >= 4;
-    }
+  /**
+   * Calculates whether the lower and higher limits have been met based on the current zoom level.
+   * @function calculateLimits
+   * @returns {void}
+   */
+  calculateLimits = (): void => {
+    this.lowerThanLimit = this.zoomLevel - .10 <= 0;
+    this.higherThanLimit = this.zoomLevel + .10 >= 4;
+  };
 }
