@@ -6,3 +6,5 @@ target
 dist
 # don't lint nyc coverage output
 coverage
+# For random local build issues
+bin

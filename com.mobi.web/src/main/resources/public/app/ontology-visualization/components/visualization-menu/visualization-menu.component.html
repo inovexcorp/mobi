@@ -21,13 +21,14 @@
   #L%
   -->
 <div class="menu-container">
-    <button mat-button color="primary" class="minus" [disabled]="lowerThanLimit" (click)="zoomOut()" disableRipple>
+    <button mat-button color="primary" class="minus" [disabled]="lowerThanLimit" (click)="zoomOut()"
+            [disableRipple]="true">
         <mat-icon class="fa fa-minus"></mat-icon>
     </button>
     <mat-slider min="0" max="4" [step]=".5" (change)="calculateSlider($event)" [value]="zoomLevel"></mat-slider>
 
-    <button mat-button color="primary" class="plus" [disabled]="higherThanLimit" disableRipple (click)="zoomIn()">
+    <button mat-button color="primary" class="plus" [disabled]="higherThanLimit" [disableRipple]="true" (click)="zoomIn()">
         <mat-icon class="fa fa-plus"></mat-icon>
     </button>
-    <button mat-button color="primary" class="reset" (click)="fitGraph()" disableRipple>Reset</button>
+    <button mat-button color="primary" class="reset" (click)="fitGraph()" [disableRipple]="true">Reset</button>
 </div>
