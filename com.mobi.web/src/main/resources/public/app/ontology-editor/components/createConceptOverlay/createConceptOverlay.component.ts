@@ -24,14 +24,14 @@ import { Component, OnInit } from '@angular/core';
 import { UntypedFormBuilder, Validators } from '@angular/forms';
 import { MatDialogRef } from '@angular/material/dialog';
 
-import { OntologyStateService } from '../../../shared/services/ontologyState.service';
-import { OWL, SKOS } from '../../../prefixes';
+import { addLanguageToAnnotations } from '../../../shared/utility';
 import { CamelCasePipe } from '../../../shared/pipes/camelCase.pipe';
 import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { noWhitespaceValidator } from '../../../shared/validators/noWhitespace.validator';
+import { OntologyStateService } from '../../../shared/services/ontologyState.service';
+import { OWL, SKOS } from '../../../prefixes';
 import { REGEX } from '../../../constants';
 import { splitIRI } from '../../../shared/pipes/splitIRI.pipe';
-import { noWhitespaceValidator } from '../../../shared/validators/noWhitespace.validator';
-import { addLanguageToAnnotations } from '../../../shared/utility';
 
 /**
  * @class CreateConceptOverlayComponent
@@ -48,12 +48,16 @@ import { addLanguageToAnnotations } from '../../../shared/utility';
 })
 export class CreateConceptOverlayComponent implements OnInit {
   conceptSchemes: { [key: string]: string } = {};
+  concepts: { [key: string]: string } = {};
   iriHasChanged = false;
   duplicateCheck = true;
   iriPattern = REGEX.IRI;
 
   hasSchemes = false;
+  hasConcepts = false;
   selectedSchemes: string[] = [];
+  selectedBroaderConcepts: string[] = [];
+  selectedNarrowerConcepts: string[] = [];
 
   createForm = this.fb.group({
     iri: ['', [Validators.required, Validators.pattern(this.iriPattern), this.os.getDuplicateValidator()]],
@@ -70,9 +74,13 @@ export class CreateConceptOverlayComponent implements OnInit {
   ngOnInit(): void {
     this.createForm.controls.iri.setValue(this.os.getDefaultPrefix());
     this.createForm.controls.title.valueChanges.subscribe(newVal => this.nameChanged(newVal));
-    this.hasSchemes = !!Object.keys(this.os.listItem.conceptSchemes.iris).length;
+    this.hasSchemes = !!Object.keys(this.os.listItem?.conceptSchemes?.iris).length;
+    this.hasConcepts = !!Object.keys(this.os.listItem?.concepts?.iris).length;
     if (this.os.listItem?.conceptSchemes?.iris) {
       this.conceptSchemes = this.os.listItem.conceptSchemes.iris;
+    }
+    if (this.os.listItem?.concepts?.iris) {
+      this.concepts = this.os.listItem.concepts.iris;
     }
   }
 
@@ -96,7 +104,6 @@ export class CreateConceptOverlayComponent implements OnInit {
       [`${SKOS}prefLabel`]: [{
         '@value': this.createForm.controls.title.value
       }]
-
     };
     addLanguageToAnnotations(concept, this.createForm.controls.language.value);
     return concept;
@@ -105,6 +112,22 @@ export class CreateConceptOverlayComponent implements OnInit {
   create(): void {
     this.duplicateCheck = false;
     const concept = this.concept;
+    if (this.selectedBroaderConcepts.length) {
+      concept[`${SKOS}broader`] = this.selectedBroaderConcepts.map(iri => ({'@id': iri}));
+      // Must be done before addConcept as that's where the hierarchy is flattened
+      this.selectedBroaderConcepts.forEach(broaderConcept => {
+        this.os.addEntityToHierarchy(this.os.listItem.concepts, concept['@id'], broaderConcept);
+      });
+    }
+    if (this.selectedNarrowerConcepts.length) {
+      concept[`${SKOS}narrower`] = this.selectedNarrowerConcepts.map(iri => ({'@id': iri}));
+      //Has to be done in order for the hierarchy to update correctly
+      this.os.listItem.concepts.iris[concept['@id']] = this.os.listItem.ontologyId;
+      // Must be done before addConcept as that's where the hierarchy is flattened
+      this.selectedNarrowerConcepts.forEach(narrowerConcept => {
+        this.os.addEntityToHierarchy(this.os.listItem.concepts, narrowerConcept, concept['@id']);
+      });
+    }
     // add the entity to the ontology
     this.os.addEntity(concept);
     // update relevant lists
