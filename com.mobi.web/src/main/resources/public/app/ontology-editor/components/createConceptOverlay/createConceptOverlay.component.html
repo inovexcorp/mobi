@@ -36,6 +36,8 @@
     </mat-form-field>
     <advanced-language-select [parentForm]="createForm"></advanced-language-select>
     <iri-select-ontology *ngIf="hasSchemes" [(selected)]="selectedSchemes" [displayText]="'Top Concept of Scheme(s)'" [selectList]="conceptSchemes"></iri-select-ontology>
+    <iri-select-ontology *ngIf="hasConcepts" [(selected)]="selectedBroaderConcepts" [displayText]="'Broader Concept(s)'" [selectList]="concepts"></iri-select-ontology>
+    <iri-select-ontology *ngIf="hasConcepts" [(selected)]="selectedNarrowerConcepts" [displayText]="'Narrower Concept(s)'" [selectList]="concepts"></iri-select-ontology>
 </form>
 <div mat-dialog-actions>
     <button mat-raised-button [mat-dialog-close]="false">Cancel</button>
