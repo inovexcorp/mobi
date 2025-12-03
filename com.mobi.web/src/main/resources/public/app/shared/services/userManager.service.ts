@@ -54,7 +54,7 @@ export class UserManagerService {
      */
     groups: Group[] = [];
     /**
-     * `users` holds a list of objects representing the users in Mobi. 
+     * `users` holds a list of objects representing the users in Mobi.
      * @type {User[]}
      */
     users: User[] = [];
@@ -110,7 +110,7 @@ export class UserManagerService {
     }
     /**
      * Finds the username of the user associated with the passed IRI. If it has not been found before, calls the GET
-     * /mobirest/users/username endpoint and saves the result in the `users` list. If it has been found before,
+     * /mobirest/username endpoint and saves the result in the `users` list. If it has been found before,
      * grabs the username from the users list. Returns an observable that resolves with the username and rejects if the
      * endpoint fails.
      *
@@ -123,8 +123,8 @@ export class UserManagerService {
         if (user) {
             return of(user.username);
         } else {
-            return this.spinnerSvc.track(this.http.get(`${this.userPrefix}/username`, {
-              params: createHttpParams({ iri }), 
+            return this.spinnerSvc.track(this.http.get(`${REST_PREFIX}username`, {
+              params: createHttpParams({ iri }),
               responseType: 'text'
             })).pipe(
                 catchError(handleError),
@@ -247,7 +247,7 @@ export class UserManagerService {
             currentPassword: password,
             newPassword
         };
-        return this.spinnerSvc.track(this.http.post(`${this.userPrefix}/${encodeURIComponent(username)}/password`, null, 
+        return this.spinnerSvc.track(this.http.post(`${this.userPrefix}/${encodeURIComponent(username)}/password`, null,
           {params: createHttpParams(params)})).pipe(
             catchError(handleErrorObject),
             map(() => {})
@@ -264,7 +264,7 @@ export class UserManagerService {
      * otherwise
      */
     resetPassword(username: string, newPassword: string): Observable<void> {
-        return this.spinnerSvc.track(this.http.put(`${this.userPrefix}/${encodeURIComponent(username)}/password`, null, 
+        return this.spinnerSvc.track(this.http.put(`${this.userPrefix}/${encodeURIComponent(username)}/password`, null,
           {params: createHttpParams({ newPassword })})).pipe(
             catchError(handleError),
             map(() => {})
@@ -300,7 +300,7 @@ export class UserManagerService {
      * otherwise
      */
     addUserRoles(username: string, roles: string[]): Observable<void> {
-        return this.spinnerSvc.track(this.http.put(`${this.userPrefix}/${encodeURIComponent(username)}/roles`, null, 
+        return this.spinnerSvc.track(this.http.put(`${this.userPrefix}/${encodeURIComponent(username)}/roles`, null,
           { params: createHttpParams({ roles }) }))
             .pipe(
                 catchError(handleError),
@@ -327,7 +327,7 @@ export class UserManagerService {
      * otherwise
      */
     deleteUserRole(username: string, role: string): Observable<void> {
-        return this.spinnerSvc.track(this.http.delete(`${this.userPrefix}/${encodeURIComponent(username)}/roles`, 
+        return this.spinnerSvc.track(this.http.delete(`${this.userPrefix}/${encodeURIComponent(username)}/roles`,
           { params: createHttpParams({ role })}))
             .pipe(
                 catchError(handleError),
@@ -354,7 +354,7 @@ export class UserManagerService {
      * otherwise
      */
     addUserGroup(username: string, groupTitle: string): Observable<void> {
-        return this.spinnerSvc.track(this.http.put(`${this.userPrefix}/${encodeURIComponent(username)}/groups`, null, 
+        return this.spinnerSvc.track(this.http.put(`${this.userPrefix}/${encodeURIComponent(username)}/groups`, null,
           {params: createHttpParams({ group: groupTitle })}))
             .pipe(
                 catchError(handleError),
@@ -375,7 +375,7 @@ export class UserManagerService {
      * otherwise
      */
     deleteUserGroup(username: string, groupTitle: string): Observable<void> {
-        return this.spinnerSvc.track(this.http.delete(`${this.userPrefix}/${encodeURIComponent(username)}/groups`, 
+        return this.spinnerSvc.track(this.http.delete(`${this.userPrefix}/${encodeURIComponent(username)}/groups`,
           {params: createHttpParams({ group: groupTitle })}))
             .pipe(
                 catchError(handleError),
@@ -452,7 +452,7 @@ export class UserManagerService {
      * otherwise
      */
     updateGroup(groupTitle: string, newGroup: Group): Observable<void> {
-        return this.spinnerSvc.track(this.http.put(`${this.groupPrefix}/${encodeURIComponent(groupTitle)}`, 
+        return this.spinnerSvc.track(this.http.put(`${this.groupPrefix}/${encodeURIComponent(groupTitle)}`,
           newGroup.jsonld))
             .pipe(
                 catchError(handleError),
@@ -490,7 +490,7 @@ export class UserManagerService {
      * otherwise
      */
     addGroupRoles(groupTitle: string, roles: string[]): Observable<void> {
-        return this.spinnerSvc.track(this.http.put(`${this.groupPrefix}/${encodeURIComponent(groupTitle)}/roles`, null, 
+        return this.spinnerSvc.track(this.http.put(`${this.groupPrefix}/${encodeURIComponent(groupTitle)}/roles`, null,
           {params: createHttpParams({ roles })}))
             .pipe(
                 catchError(handleError),
@@ -511,7 +511,7 @@ export class UserManagerService {
      * otherwise
      */
     deleteGroupRole(groupTitle: string, role: string): Observable<void> {
-        return this.spinnerSvc.track(this.http.delete(`${this.groupPrefix}/${encodeURIComponent(groupTitle)}/roles`, 
+        return this.spinnerSvc.track(this.http.delete(`${this.groupPrefix}/${encodeURIComponent(groupTitle)}/roles`,
           {params: createHttpParams({ role })}))
             .pipe(
                 catchError(handleError),
@@ -544,7 +544,7 @@ export class UserManagerService {
      * otherwise
      */
     addGroupUsers(groupTitle: string, users: string[]): Observable<void> {
-        return this.spinnerSvc.track(this.http.put(`${this.groupPrefix}/${encodeURIComponent(groupTitle)}/users`, null, 
+        return this.spinnerSvc.track(this.http.put(`${this.groupPrefix}/${encodeURIComponent(groupTitle)}/users`, null,
           {params: createHttpParams({ users })}))
             .pipe(
                 catchError(handleError),
@@ -565,7 +565,7 @@ export class UserManagerService {
      * otherwise
      */
     deleteGroupUser(groupTitle: string, username: string): Observable<void> {
-        return this.spinnerSvc.track(this.http.delete(`${this.groupPrefix}/${encodeURIComponent(groupTitle)}/users`, 
+        return this.spinnerSvc.track(this.http.delete(`${this.groupPrefix}/${encodeURIComponent(groupTitle)}/users`,
           {params: createHttpParams({ user: username })}))
             .pipe(
                 catchError(handleError),
@@ -611,8 +611,8 @@ export class UserManagerService {
         return get(jsonld, '@type', []).includes(`${USER}ExternalGroup`);
     }
     /**
-     * Returns a group object from the provided JSON-LD. 
-     * 
+     * Returns a group object from the provided JSON-LD.
+     *
      * @param {JSONLDObject} jsonld The JSON-LD representation of a Group
      * @returns {Group} An object representing a group
      */
@@ -641,7 +641,7 @@ export class UserManagerService {
      *   user.firstName + " " + user.lastName
      *   user.lastName + " " + user.firstName
      *   user.lastName + ," " + user.firstName
-     * 
+     *
      * @param {User[]} users The list of Users to be filtered
      * @param {string} searchString The string to search for in the User list. Can be undefined
      * @returns {User[]} A filtered sorted list of Users
@@ -669,7 +669,7 @@ export class UserManagerService {
     /**
      * Filters the provided list of {@link Group Groups} by the provided search string and returns the filtered list.
      * Returned list is ordered by title.
-     * 
+     *
      * @param {Group[]} groups The list of Groups to be filtered
      * @param {string} searchString The string to search for in the Group list. Can be undefined
      * @returns {Group[]} A filtered sorted list of Groups

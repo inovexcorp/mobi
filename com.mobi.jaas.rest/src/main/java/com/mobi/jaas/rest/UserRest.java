@@ -743,36 +743,6 @@ public class UserRest {
         }
     }
 
-    /**
-     * Attempts to retrieve the username for the User associated with the passed User IRI. Returns a 404 if
-     * a User with the passed IRI cannot be found.
-     *
-     * @param userIri the IRI to search for
-     * @return a Response with the username of the User associated with the IRI
-     */
-    @GET
-    @Path("username")
-    @RolesAllowed("user")
-    @Produces(MediaType.TEXT_PLAIN)
-    @Operation(
-            tags = "users",
-            summary = "Retrieve a username based on the passed User IRI",
-            responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Response indicating the success or failure of the request"),
-            }
-    )
-    public Response getUsername(
-            @Parameter(description = "IRI to search for", required = true)
-            @QueryParam("iri") String userIri) {
-        try {
-            String username = engineManager.getUsername(vf.createIRI(userIri)).orElseThrow(() ->
-                    ErrorUtils.sendError("User not found", Response.Status.NOT_FOUND));
-            return Response.ok(username).build();
-        } catch (IllegalArgumentException ex) {
-            throw ErrorUtils.sendError(ex.getMessage(), Response.Status.BAD_REQUEST);
-        }
-    }
 
     /**
      * Checks if the user is authorized to make this request. The requesting user must be an admin or have a matching

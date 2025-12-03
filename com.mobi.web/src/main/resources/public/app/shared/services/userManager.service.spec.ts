@@ -186,7 +186,7 @@ describe('User Manager service', function() {
                     .subscribe(() => fail('Promise should have rejected'), response => {
                         expect(response).toEqual(error);
                     });
-                const request = httpMock.expectOne(req => req.url === `${service.userPrefix}/username` && req.method === 'GET');
+                const request = httpMock.expectOne(req => req.url === `/mobirest/username` && req.method === 'GET');
                 expect(request.request.params.get('iri')).toEqual('iri');
                 request.flush('flush', { status: 400, statusText: error });
                 expect(service.getUser).not.toHaveBeenCalled();
@@ -196,7 +196,7 @@ describe('User Manager service', function() {
                     .subscribe(response => {
                         expect(response).toEqual(user.username);
                     }, () => fail('Promise should have resolved'));
-                const request = httpMock.expectOne(req => req.url === `${service.userPrefix}/username` && req.method === 'GET');
+                const request = httpMock.expectOne(req => req.url === `/mobirest/username` && req.method === 'GET');
                 expect(request.request.params.get('iri')).toEqual('iri');
                 request.flush(user.username);
                 expect(service.getUser).toHaveBeenCalledWith(user.username);
