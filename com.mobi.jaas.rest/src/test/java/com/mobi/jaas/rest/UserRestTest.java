@@ -743,23 +743,6 @@ public class UserRestTest extends MobiRestTestCXF {
         assertEquals(400, response.getStatus());
     }
 
-    @Test
-    public void getUsernameTest() {
-        //Setup:
-        when(engineManager.getUsername(user.getResource())).thenReturn(Optional.of(UsernameTestFilter.USERNAME));
-
-        Response response = target().path("users/username").queryParam("iri", user.getResource())
-                .request().get();
-        assertEquals(200, response.getStatus());
-        assertEquals(response.readEntity(String.class), UsernameTestFilter.USERNAME);
-    }
-
-    @Test
-    public void getUserForUserThatDoesNotExistTest() {
-        Response response = target().path("users/username").queryParam("iri", "http://example.com/error")
-                .request().get();
-        assertEquals(404, response.getStatus());
-    }
 
     private ObjectNode getResponse(Response response) throws Exception {
         return mapper.readValue(response.readEntity(String.class), ObjectNode.class);

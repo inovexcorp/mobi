@@ -213,7 +213,7 @@ export class MockVersionedRdfState extends VersionedRdfState<VersionedRdfListIte
   getCurrentStateByRecordId = jasmine.createSpy('getCurrentStateByRecordId');
   getCurrentStateIdByRecordId = jasmine.createSpy('getCurrentStateIdByRecordId');
   getCurrentState = jasmine.createSpy('getCurrentState');
-  getCurrentStateId = jasmine.createSpy('getCurrentStateId');;
+  getCurrentStateId = jasmine.createSpy('getCurrentStateId');
   getCommitIdOfBranchState = jasmine.createSpy('getCommitIdOfBranchState');
   isStateTag = jasmine.createSpy('isStateTag');
   isStateBranch = jasmine.createSpy('isStateBranch');
