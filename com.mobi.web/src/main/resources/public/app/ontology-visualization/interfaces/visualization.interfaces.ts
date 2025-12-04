@@ -49,8 +49,8 @@ export interface inProgressCommitI {
 export interface EntityItemI {
     label: string;
     names: Array<string>;
-    imported: boolean;
-    ontologyId: string;
+    imported?: boolean;
+    ontologyId?: string;
 }
 
 export interface EntityInfoI {

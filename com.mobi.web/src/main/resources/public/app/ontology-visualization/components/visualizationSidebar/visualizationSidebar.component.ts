@@ -57,7 +57,8 @@ import { VisualizationSidebarSearch } from '../visualizationSidebarSearch/visual
   ]
 })
 export class VisualizationSidebar implements OnChanges {
-  @Input() commitId;
+  @Input() commitId: string;
+  @Input() inProgress;
   @ViewChild(VisualizationSidebarSearch) visualizationSidebarSearch: VisualizationSidebarSearch;
 
   constructor(private ovis: OntologyVisualizationService,
@@ -78,7 +79,7 @@ export class VisualizationSidebar implements OnChanges {
    * @param changes SimpleChanges
    */
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes?.commitId?.currentValue) {
+    if (changes?.commitId?.currentValue || changes?.inProgress?.currentValue) {
       this.graphState = this.ovis.getGraphState(this.commitId);
       this.sidebarState = this.ovis.getSidebarState(this.commitId);
     }
@@ -96,8 +97,8 @@ export class VisualizationSidebar implements OnChanges {
    * @param record ControlRecordI
    */
   onClickRecordSelect(record: ControlRecordI): void {
-    this.ovis.emitSelectAction({action: SidePanelAction.RECORD_SELECT, nodeId: record.id});
-    this.ovis.emitSidePanelAction({action: SidePanelAction.RECORD_SELECT, controlRecord: record});
+    this.ovis.emitSelectAction({action: SidePanelAction.CLASS_SELECT, nodeId: record.id});
+    this.ovis.emitSidePanelAction({action: SidePanelAction.CLASS_SELECT, controlRecord: record});
   }
 
   /**
@@ -106,7 +107,7 @@ export class VisualizationSidebar implements OnChanges {
    * @returns boolean
    */
   onRightClickRecordSelect(record: ControlRecordI): void {
-    this.ovis.emitSidePanelAction({action: SidePanelAction.RECORD_CENTER, controlRecord: record});
+    this.ovis.emitSidePanelAction({action: SidePanelAction.CLASS_CENTER, controlRecord: record});
   }
 
   /**
@@ -140,9 +141,9 @@ export class VisualizationSidebar implements OnChanges {
     currentOntologies.forEach((currentOntology: GroupedRecord) => currentOntology.updateCheckedAttr());
 
     if (checked) {
-      this.ovis.emitSidePanelAction({action: SidePanelAction.RECORD_CHECKED, controlRecord: record});
+      this.ovis.emitSidePanelAction({action: SidePanelAction.CLASS_CHECKED, controlRecord: record});
     } else {
-      this.ovis.emitSidePanelAction({action: SidePanelAction.RECORD_UNCHECKED, controlRecord: record});
+      this.ovis.emitSidePanelAction({action: SidePanelAction.CLASS_UNCHECKED, controlRecord: record});
     }
     this.cf.markForCheck();
     this.cf.detectChanges(); // needed so that in when there are many ontologies, checkbox will be updated for ontology

@@ -176,15 +176,15 @@ describe('Visualization sidebar component', () => {
         describe('onClickRecordSelect', () => {
             it('emits correctly', fakeAsync(() => {
                 component.onClickRecordSelect(controlRecords[0]);
-                expect(serviceStub.emitSidePanelAction).toHaveBeenCalledWith({action: SidePanelAction.RECORD_SELECT, controlRecord: controlRecords[0]});
-                expect(serviceStub.emitSelectAction).toHaveBeenCalledWith({ action: SidePanelAction.RECORD_SELECT, nodeId: controlRecords[0].id});
+                expect(serviceStub.emitSidePanelAction).toHaveBeenCalledWith({action: SidePanelAction.CLASS_SELECT, controlRecord: controlRecords[0]});
+                expect(serviceStub.emitSelectAction).toHaveBeenCalledWith({ action: SidePanelAction.CLASS_SELECT, nodeId: controlRecords[0].id});
             }));
         });
         describe('onRightClickRecordSelect', () => {
             it('emits correctly', fakeAsync(() => {
                 const event = jasmine.createSpyObj('event', ['preventDefault']);
                 component.onRightClickRecordSelect(controlRecords[0]);
-                expect(serviceStub.emitSidePanelAction).toHaveBeenCalledWith({action: SidePanelAction.RECORD_CENTER, controlRecord: controlRecords[0]});
+                expect(serviceStub.emitSidePanelAction).toHaveBeenCalledWith({action: SidePanelAction.CLASS_CENTER, controlRecord: controlRecords[0]});
             }));
         });
         describe('toggleClass', () => {

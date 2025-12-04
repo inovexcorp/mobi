@@ -31,7 +31,10 @@
                     </ontology-visualization>
                 </div>
             </div>
-            <visualization-sidebar [commitId]="os.listItem.versionedRdfRecord.commitId"></visualization-sidebar>
+            <visualization-sidebar
+                    [commitId]="os.listItem.versionedRdfRecord.commitId"
+                    [inProgress]="os.listItem.inProgressCommit">
+            </visualization-sidebar>
         </section>
     </div>
 </div>
