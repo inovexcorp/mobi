@@ -21,14 +21,14 @@
  * #L%
  */
 
-import { GroupedRecord } from './controlRecords';
 import { ControlRecordI } from './controlRecords';
+import { GroupedRecord } from './controlRecords';
 
 export enum SidePanelAction {
-    RECORD_SELECT,
-    RECORD_CENTER,
-    RECORD_CHECKED,
-    RECORD_UNCHECKED,
+    CLASS_SELECT,
+    CLASS_CENTER,
+    CLASS_CHECKED,
+    CLASS_UNCHECKED,
     ONTOLOGY_SELECT,
     ONTOLOGY_CHECKED,
     ONTOLOGY_UNCHECKED

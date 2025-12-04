@@ -23,6 +23,7 @@
 import { Injectable, } from '@angular/core';
 
 import { BehaviorSubject, Observable, of } from 'rxjs';
+import { isEqual } from 'lodash';
 import { map, shareReplay, switchMap, tap } from 'rxjs/operators';
 
 import { buildColorScale } from '../helpers/graphSettings';
@@ -31,7 +32,6 @@ import { getBeautifulIRI } from '../../shared/utility';
 import { GraphState, SidebarState } from '../classes';
 import { inProgressCommitI } from '../interfaces/visualization.interfaces';
 import { OntologyAction } from '../../shared/models/ontologyAction';
-import { OntologyListItem } from '../../shared/models/ontologyListItem.class';
 import { OntologyRecordActionI } from '../../shared/services/ontologyRecordAction.interface';
 import { OntologyStateService } from '../../shared/services/ontologyState.service';
 import { OntologyVisualizationDataService } from './ontologyVisualizationData.service';
@@ -47,15 +47,13 @@ import { SidePanelAction, SidePanelPayloadI } from '../classes/sidebarState';
 export class OntologyVisualizationService {
   private _graphStateCache = new Map<string, GraphState>(); // Used to store the graph state for a specific commitId
   private _sidebarCache = new Map<string, SidebarState>();
-  private _sidePanelActionSubject = new BehaviorSubject<SidePanelPayloadI>({action: SidePanelAction.RECORD_SELECT}); // Used for controlling graph outside OntologyVisualization component
+  private _sidePanelActionSubject = new BehaviorSubject<SidePanelPayloadI>({action: SidePanelAction.CLASS_SELECT}); // Used for controlling graph outside OntologyVisualization component
   private _ontologyClassSelectedSubject = new BehaviorSubject<string>('');
+
+  readonly DEFAULT_NODE_LIMIT = 500; // GLOBAL Node Limit for graph, each graphState will has it own
+
   sidePanelActionAction$ = this._sidePanelActionSubject.asObservable();
   ontologyClassSelectedAction$ = this._ontologyClassSelectedSubject.asObservable().pipe(shareReplay(1));
-
-  readonly ERROR_MESSAGE: string = 'Something went wrong. Please try again later.';
-  readonly IN_PROGRESS_COMMIT_MESSAGE: string = 'Uncommitted changes will not appear in the graph';
-  readonly spinnerId = 'ontology-visualization';
-  readonly DEFAULT_NODE_LIMIT = 500; // GLOBAL Node Limit for graph, each graphState will has it own
 
   constructor(
     private ds: OntologyVisualizationDataService,
@@ -102,12 +100,7 @@ export class OntologyVisualizationService {
    */
   init(commitId: string, inProgressCommit: inProgressCommitI): Observable<GraphState> {
     const self = this;
-    const ontologyListItem = new OntologyListItem();
-    if (inProgressCommit) {
-      ontologyListItem.inProgressCommit.additions = inProgressCommit?.additions;
-      ontologyListItem.inProgressCommit.deletions = inProgressCommit?.deletions;
-    }
-    const hasInProgressCommit: boolean = !!inProgressCommit && !!inProgressCommit?.additions.length && !!inProgressCommit?.deletions.length;
+    const hasInProgressCommit: boolean = !!inProgressCommit && (!!inProgressCommit?.additions.length || !!inProgressCommit?.deletions.length);
     return of(commitId).pipe(
       tap((commitId: string): void => {
         if (this.os.listItem.hasPendingRefresh) {
@@ -116,10 +109,11 @@ export class OntologyVisualizationService {
         }
       }),
       map((commitId: string): GraphState => {
-        if (self.graphStateCache.has(commitId)) {
+        if (self.graphStateCache.has(commitId) && isEqual(inProgressCommit, self.graphStateCache.get(commitId).inProgressCommit)) {
           return this.graphStateCache.get(commitId);
         } else {
           const commitGraphState: GraphState = new GraphState({
+            inProgressCommit: inProgressCommit,
             commitId: commitId,
             ontologyId: this.os.listItem.ontologyId,
             recordId: this.os.listItem.versionedRdfRecord.recordId,
@@ -151,7 +145,6 @@ export class OntologyVisualizationService {
         });
         commitGraphState.ontologiesClassMap = ontologiesClassMap;
 
-        commitGraphState.isOverLimit = commitGraphState.allGraphNodes?.length > commitGraphState.nodeLimit;
         const controlRecordSearch = this.controlRecordUtils.getControlRecordSearch(commitGraphState.searchForm, commitGraphState.nodeLimit);
         this.controlRecordUtils.emitGraphData(commitGraphState, controlRecordSearch);
       })
@@ -178,7 +171,7 @@ export class OntologyVisualizationService {
    * Returns Commit Graph State.
    * @returns { GraphState } An GraphStateI Object
    */
-  getGraphState(commitId: string, error = true): GraphState {
+  public getGraphState(commitId: string, error = true): GraphState {
     if (this.graphStateCache.has(commitId)) {
       return this.graphStateCache.get(commitId);
     }

@@ -243,6 +243,10 @@ describe('OntologyVisualization Data Service', () => {
       };
     
       const dataProperty = {
+        parentMap: null,
+        childMap: null,
+        circularMap: null,
+        flat: null,
         iris: {
           prop2: 'http://mobi.test.com/range/1',
           prop4: 'http://mobi.test.com/range/2'
@@ -271,13 +275,9 @@ describe('OntologyVisualization Data Service', () => {
       ]);
     });
     it('returns an empty array if classToChildProperties is null', () => {
-      const result = dataVisualizationStub.getPropertyRange(null, {}, {});
+      const result = dataVisualizationStub.getPropertyRange(null, null, {});
       expect(result).toEqual([]);
       });
-      
-    //  it('throws an error if propertyToRanges is null or undefined', () => {
-    //     // add code here
-    //  });
     });
 
   describe('getOntologyNetworkObservable', () => {

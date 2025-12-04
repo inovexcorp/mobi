@@ -33,7 +33,7 @@
  */
 export interface ImportedOntology {
   id: string;
-  ontologyId: string;
+  ontologyId?: string;
   iris?: string[];
 }
 
