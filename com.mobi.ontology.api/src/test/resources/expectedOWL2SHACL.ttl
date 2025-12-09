@@ -1,0 +1,351 @@
+# Test: owlSomeValuesFromIRI2dashHasValueWithClass
+<http://example.org/test#ContractWorker> a <http://www.w3.org/ns/shacl#NodeShape>,
+    <http://www.w3.org/2002/07/owl#Class>, <http://www.w3.org/2000/01/rdf-schema#Class>;
+  <http://www.w3.org/ns/shacl#property> <http://example.org/test#ContractWorker-memberOf> .
+
+<http://example.org/test#ContractWorker-memberOf> a <http://www.w3.org/ns/shacl#PropertyShape>;
+  <http://www.w3.org/ns/shacl#path> <http://example.org/test#memberOf>;
+  <http://www.w3.org/ns/shacl#minCount> 1;
+  <http://www.w3.org/ns/shacl#qualifiedMinCount> 1;
+  <http://www.w3.org/ns/shacl#qualifiedValueShape> _:36e38769f59fcce8 .
+
+_:36e38769f59fcce8 <http://www.w3.org/ns/shacl#class> <http://example.org/test#Team> .
+
+<http://example.org/test#Team> a <http://www.w3.org/ns/shacl#NodeShape>, <http://www.w3.org/2002/07/owl#Class>,
+    <http://www.w3.org/2000/01/rdf-schema#Class> .
+
+# Test: owlMinQualifiedCardinalityOnDataRange2shQualifiedMinCount
+<http://example.org/test#ReachablePerson> a <http://www.w3.org/ns/shacl#NodeShape>,
+    <http://www.w3.org/2002/07/owl#Class>, <http://www.w3.org/2000/01/rdf-schema#Class>;
+  <http://www.w3.org/ns/shacl#property> <http://example.org/test#ReachablePerson-hasEmail>,
+    _:3bcece2f510a9c2f .
+
+<http://example.org/test#ReachablePerson-hasEmail> a <http://www.w3.org/ns/shacl#PropertyShape>;
+  <http://www.w3.org/ns/shacl#path> <http://example.org/test#hasEmail> .
+
+_:3bcece2f510a9c2f a <http://www.w3.org/ns/shacl#PropertyShape>;
+  <http://www.w3.org/ns/shacl#path> <http://example.org/test#hasEmail>;
+  <http://www.w3.org/ns/shacl#qualifiedMinCount> 1;
+  <http://www.w3.org/ns/shacl#qualifiedValueShape> _:3bcece2f510a9c30 .
+
+_:3bcece2f510a9c30 <http://www.w3.org/ns/shacl#datatype> <http://www.w3.org/2001/XMLSchema#string> .
+
+<http://example.org/test#Department> a <http://www.w3.org/ns/shacl#NodeShape>, <http://www.w3.org/2002/07/owl#Class>,
+    <http://www.w3.org/2000/01/rdf-schema#Class> .
+
+# Test: owlMaxQualifiedCardinalityOnClass2shMaxCount
+<http://example.org/test#SmallTeamLead> a <http://www.w3.org/ns/shacl#NodeShape>,
+    <http://www.w3.org/2002/07/owl#Class>, <http://www.w3.org/2000/01/rdf-schema#Class>;
+  <http://www.w3.org/ns/shacl#property> <http://example.org/test#SmallTeamLead-manages> .
+
+<http://example.org/test#SmallTeamLead-manages> a <http://www.w3.org/ns/shacl#PropertyShape>;
+  <http://www.w3.org/ns/shacl#path> <http://example.org/test#manages>;
+  <http://www.w3.org/ns/shacl#class> <http://example.org/test#Employee>;
+  <http://www.w3.org/ns/shacl#maxCount> 5 .
+
+# Test: owlHasValue2shHasValue
+<http://example.org/test#Retiree> a <http://www.w3.org/ns/shacl#NodeShape>, <http://www.w3.org/2002/07/owl#Class>,
+    <http://www.w3.org/2000/01/rdf-schema#Class>;
+  <http://www.w3.org/ns/shacl#property> <http://example.org/test#Retiree-hasAge> .
+
+<http://example.org/test#Retiree-hasAge> a <http://www.w3.org/ns/shacl#PropertyShape>;
+  <http://www.w3.org/ns/shacl#path> <http://example.org/test#hasAge>;
+  <http://www.w3.org/ns/shacl#maxCount> 1 ;
+  <http://www.w3.org/ns/shacl#datatype> <http://www.w3.org/2001/XMLSchema#integer>;
+  <http://www.w3.org/ns/shacl#hasValue> 65 .
+
+# Test: owlSomeValuesFromAllValuesFrom2dashHasValueWithClass
+<http://example.org/test#ConstitutionalOwner> a <http://www.w3.org/ns/shacl#NodeShape>,
+    <http://www.w3.org/2002/07/owl#Class>, <http://www.w3.org/2000/01/rdf-schema#Class>;
+  <http://www.w3.org/ns/shacl#property> <http://example.org/test#ConstitutionalOwner-isPlayedBy>,
+    _:3e72967a4265e473 .
+
+<http://example.org/test#ConstitutionalOwner-isPlayedBy> a <http://www.w3.org/ns/shacl#PropertyShape>;
+  <http://www.w3.org/ns/shacl#path> <http://example.org/test#isPlayedBy>;
+  <http://www.w3.org/ns/shacl#minCount> 1 .
+
+_:3e72967a4265e473 a <http://www.w3.org/ns/shacl#PropertyShape>;
+  <http://www.w3.org/ns/shacl#qualifiedMinCount> 1;
+  <http://www.w3.org/ns/shacl#qualifiedValueShape> _:3e72967a4265e476;
+  <http://www.w3.org/ns/shacl#path> _:3e72967a4265e474 .
+
+_:3e72967a4265e476 <http://www.w3.org/ns/shacl#class> <http://example.org/test#StockholdersEquity> .
+
+_:3e72967a4265e474 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> <http://example.org/test#isPlayedBy>;
+  <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> _:3e72967a4265e475 .
+
+_:3e72967a4265e475 <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> <http://example.org/test#holdsEquityIn>;
+  <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> .
+
+<http://example.org/test#StockholdersEquity> a <http://www.w3.org/ns/shacl#NodeShape>,
+    <http://www.w3.org/2002/07/owl#Class>, <http://www.w3.org/2000/01/rdf-schema#Class> .
+
+# Test: owlSomeValuesFromUnion2dashHasValueWithClass adjusted to produce equal SHACL constraint according to https://datashapes.org/constraints.html#HasValueWithClassConstraintComponent
+<http://example.org/test#MultiSkilled> a <http://www.w3.org/ns/shacl#NodeShape>, <http://www.w3.org/2002/07/owl#Class>,
+    <http://www.w3.org/2000/01/rdf-schema#Class>;
+  <http://www.w3.org/ns/shacl#property> <http://example.org/test#MultiSkilled-hasSkill> .
+
+<http://example.org/test#MultiSkilled-hasSkill> a <http://www.w3.org/ns/shacl#PropertyShape>;
+  <http://www.w3.org/ns/shacl#path> <http://example.org/test#hasSkill>;
+  <http://www.w3.org/ns/shacl#minCount> 1;
+  <http://www.w3.org/ns/shacl#or> _:or-http3a2f2fexample2eorg2ftest23hasSkill-http3a2f2fexample2eorg2ftest23TechnicalSkill634304829,
+    _:or-http3a2f2fexample2eorg2ftest23hasSkill-http3a2f2fexample2eorg2ftest23ManagementSkill1417060322 .
+
+_:or-http3a2f2fexample2eorg2ftest23hasSkill-http3a2f2fexample2eorg2ftest23TechnicalSkill634304829
+  <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> _:shape-http3a2f2fexample2eorg2ftest23hasSkill-http3a2f2fexample2eorg2ftest23TechnicalSkill1071618424;
+  <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> _:or-http3a2f2fexample2eorg2ftest23hasSkill-http3a2f2fexample2eorg2ftest23ManagementSkill-59465191 .
+
+_:shape-http3a2f2fexample2eorg2ftest23hasSkill-http3a2f2fexample2eorg2ftest23TechnicalSkill1071618424
+  <http://www.w3.org/ns/shacl#qualifiedMinCount> 1;
+  <http://www.w3.org/ns/shacl#qualifiedValueShape> _:36e38769f59fcceb .
+
+_:36e38769f59fcceb <http://www.w3.org/ns/shacl#class> <http://example.org/test#TechnicalSkill> .
+
+_:or-http3a2f2fexample2eorg2ftest23hasSkill-http3a2f2fexample2eorg2ftest23ManagementSkill1417060322
+  <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> _:shape-http3a2f2fexample2eorg2ftest23hasSkill-http3a2f2fexample2eorg2ftest23ManagementSkill-192961218;
+  <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> .
+
+_:shape-http3a2f2fexample2eorg2ftest23hasSkill-http3a2f2fexample2eorg2ftest23ManagementSkill-192961218
+  <http://www.w3.org/ns/shacl#qualifiedMinCount> 1;
+  <http://www.w3.org/ns/shacl#qualifiedValueShape> _:36e38769f59fccec .
+
+_:36e38769f59fccec <http://www.w3.org/ns/shacl#class> <http://example.org/test#ManagementSkill> .
+
+<http://example.org/test#TechnicalSkill> a <http://www.w3.org/ns/shacl#NodeShape>,
+    <http://www.w3.org/2002/07/owl#Class>, <http://www.w3.org/2000/01/rdf-schema#Class> .
+
+<http://example.org/test#ManagementSkill> a <http://www.w3.org/ns/shacl#NodeShape>,
+    <http://www.w3.org/2002/07/owl#Class>, <http://www.w3.org/2000/01/rdf-schema#Class> .
+
+# Test: owlMinQualifiedCardinalityOnClass2shQualifiedMinCount (different from range)
+<http://example.org/test#SeniorManager> a <http://www.w3.org/ns/shacl#NodeShape>,
+    <http://www.w3.org/2002/07/owl#Class>, <http://www.w3.org/2000/01/rdf-schema#Class>;
+  <http://www.w3.org/ns/shacl#property> <http://example.org/test#SeniorManager-manages>,
+    _:36e38769f59fcced .
+
+<http://example.org/test#SeniorManager-manages> a <http://www.w3.org/ns/shacl#PropertyShape>;
+  <http://www.w3.org/ns/shacl#path> <http://example.org/test#manages>;
+  <http://www.w3.org/ns/shacl#class> <http://example.org/test#Employee> .
+
+_:36e38769f59fcced a <http://www.w3.org/ns/shacl#PropertyShape>;
+  <http://www.w3.org/ns/shacl#path> <http://example.org/test#manages>;
+  <http://www.w3.org/ns/shacl#qualifiedMinCount> 1;
+  <http://www.w3.org/ns/shacl#qualifiedValueShape> _:36e38769f59fccee .
+
+_:36e38769f59fccee <http://www.w3.org/ns/shacl#class> <http://example.org/test#Manager> .
+
+# Test: owlDisjointWith2NotClass
+<http://example.org/test#Adult> a <http://www.w3.org/ns/shacl#NodeShape>, <http://www.w3.org/2002/07/owl#Class>,
+    <http://www.w3.org/2000/01/rdf-schema#Class>;
+  <http://www.w3.org/ns/shacl#not> _:3bcece2f510a9c33 .
+
+_:3bcece2f510a9c33 <http://www.w3.org/ns/shacl#class> <http://example.org/test#Child> .
+
+<http://example.org/test#Child> a <http://www.w3.org/ns/shacl#NodeShape>, <http://www.w3.org/2002/07/owl#Class>,
+    <http://www.w3.org/2000/01/rdf-schema#Class> .
+
+# Test: owlAllValuesFromUnion2shClassOrDatatype
+<http://example.org/test#Organization> a <http://www.w3.org/ns/shacl#NodeShape>, <http://www.w3.org/2002/07/owl#Class>,
+    <http://www.w3.org/2000/01/rdf-schema#Class>;
+  <http://www.w3.org/ns/shacl#property> <http://example.org/test#Organization-hasPart> .
+
+<http://example.org/test#Organization-hasPart> a <http://www.w3.org/ns/shacl#PropertyShape>;
+  <http://www.w3.org/ns/shacl#path> <http://example.org/test#hasPart>;
+  <http://www.w3.org/ns/shacl#or> _:or-http3a2f2fexample2eorg2ftest23hasPart-http3a2f2fexample2eorg2ftest23Department396608696,
+    _:or-http3a2f2fexample2eorg2ftest23hasPart-http3a2f2fexample2eorg2ftest23Team1427931308 .
+
+_:or-http3a2f2fexample2eorg2ftest23hasPart-http3a2f2fexample2eorg2ftest23Department396608696
+  <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> _:shape-http3a2f2fexample2eorg2ftest23hasPart-http3a2f2fexample2eorg2ftest23Department1273338325;
+  <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> _:or-http3a2f2fexample2eorg2ftest23hasPart-http3a2f2fexample2eorg2ftest23Team329016066 .
+
+_:shape-http3a2f2fexample2eorg2ftest23hasPart-http3a2f2fexample2eorg2ftest23Department1273338325
+  <http://www.w3.org/ns/shacl#class> <http://example.org/test#Department> .
+
+_:or-http3a2f2fexample2eorg2ftest23hasPart-http3a2f2fexample2eorg2ftest23Team1427931308
+  <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> _:shape-http3a2f2fexample2eorg2ftest23hasPart-http3a2f2fexample2eorg2ftest23Team-946294859;
+  <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> .
+
+_:shape-http3a2f2fexample2eorg2ftest23hasPart-http3a2f2fexample2eorg2ftest23Team-946294859
+  <http://www.w3.org/ns/shacl#class> <http://example.org/test#Team> .
+
+# Test: owlCardinality (both min and max)
+<http://example.org/test#DualCitizen> a <http://www.w3.org/ns/shacl#NodeShape>, <http://www.w3.org/2002/07/owl#Class>,
+    <http://www.w3.org/2000/01/rdf-schema#Class>;
+  <http://www.w3.org/ns/shacl#property> <http://example.org/test#DualCitizen-hasCitizenship> .
+
+<http://example.org/test#DualCitizen-hasCitizenship> a <http://www.w3.org/ns/shacl#PropertyShape>;
+  <http://www.w3.org/ns/shacl#path> <http://example.org/test#hasCitizenship>;
+  <http://www.w3.org/ns/shacl#minCount> 2;
+  <http://www.w3.org/ns/shacl#maxCount> 2 .
+
+# Test: rdfsRange2shClassOrDatatype with datatype
+<http://example.org/test#RestrictedPerson> a <http://www.w3.org/ns/shacl#NodeShape>,
+    <http://www.w3.org/2002/07/owl#Class>, <http://www.w3.org/2000/01/rdf-schema#Class>;
+  <http://www.w3.org/ns/shacl#property> <http://example.org/test#RestrictedPerson-hasUsername> .
+
+<http://example.org/test#RestrictedPerson-hasUsername> a <http://www.w3.org/ns/shacl#PropertyShape>;
+  <http://www.w3.org/ns/shacl#path> <http://example.org/test#hasUsername>;
+  <http://www.w3.org/ns/shacl#datatype> <http://www.w3.org/2001/XMLSchema#string>;
+  <http://www.w3.org/ns/shacl#minLength> 5 .
+
+# Test: owlSomeValuesFrom2shMinCount1
+<http://example.org/test#Employee> a <http://www.w3.org/ns/shacl#NodeShape>, <http://www.w3.org/2002/07/owl#Class>,
+    <http://www.w3.org/2000/01/rdf-schema#Class>;
+  <http://www.w3.org/ns/shacl#property> <http://example.org/test#Employee-worksFor> .
+
+<http://example.org/test#Employee-worksFor> a <http://www.w3.org/ns/shacl#PropertyShape>;
+  <http://www.w3.org/ns/shacl#path> <http://example.org/test#worksFor>;
+  <http://www.w3.org/ns/shacl#minCount> 1;
+  <http://www.w3.org/ns/shacl#class> <http://example.org/test#Company> .
+
+# UNKNOWN
+<http://example.org/test#TypedPerson> a <http://www.w3.org/ns/shacl#NodeShape>, <http://www.w3.org/2002/07/owl#Class>,
+    <http://www.w3.org/2000/01/rdf-schema#Class> .
+
+# Test: owlMaxCardinality2shMaxCount and owlFunctionalProperty2shMaxCount1
+<http://example.org/test#SingleEmployer> a <http://www.w3.org/ns/shacl#NodeShape>,
+    <http://www.w3.org/2002/07/owl#Class>, <http://www.w3.org/2000/01/rdf-schema#Class>;
+  <http://www.w3.org/ns/shacl#property> <http://example.org/test#SingleEmployer-worksFor> .
+
+<http://example.org/test#SingleEmployer-worksFor> a <http://www.w3.org/ns/shacl#PropertyShape>;
+  <http://www.w3.org/ns/shacl#path> <http://example.org/test#worksFor>;
+  <http://www.w3.org/ns/shacl#class> <http://example.org/test#Company>;
+  <http://www.w3.org/ns/shacl#maxCount> 1 .
+
+# Test: owlMaxQualifiedCardinalityOnDataRange2shQualifiedMaxCount
+<http://example.org/test#LimitedContactPerson> a <http://www.w3.org/ns/shacl#NodeShape>,
+    <http://www.w3.org/2002/07/owl#Class>, <http://www.w3.org/2000/01/rdf-schema#Class>;
+  <http://www.w3.org/ns/shacl#property> <http://example.org/test#LimitedContactPerson-hasEmail>,
+    _:3bcece2f510a9c34 .
+
+<http://example.org/test#LimitedContactPerson-hasEmail> a <http://www.w3.org/ns/shacl#PropertyShape>;
+  <http://www.w3.org/ns/shacl#path> <http://example.org/test#hasEmail> .
+
+_:3bcece2f510a9c34 a <http://www.w3.org/ns/shacl#PropertyShape>;
+  <http://www.w3.org/ns/shacl#path> <http://example.org/test#hasEmail>;
+  <http://www.w3.org/ns/shacl#qualifiedMaxCount> 2;
+  <http://www.w3.org/ns/shacl#qualifiedValueShape> _:3bcece2f510a9c35 .
+
+_:3bcece2f510a9c35 <http://www.w3.org/ns/shacl#datatype> <http://www.w3.org/2001/XMLSchema#string> .
+
+# Test: owlUnionOfIRIs2rdfsSubClassOf
+<http://example.org/test#Stakeholder> a <http://www.w3.org/ns/shacl#NodeShape>, <http://www.w3.org/2002/07/owl#Class>,
+    <http://www.w3.org/2000/01/rdf-schema#Class>;
+    <http://www.w3.org/2000/01/rdf-schema#subClassOf> <http://example.org/test#Employee>,
+    <http://example.org/test#Customer>, <http://example.org/test#Shareholder> .
+
+<http://example.org/test#Shareholder> a <http://www.w3.org/ns/shacl#NodeShape>, <http://www.w3.org/2002/07/owl#Class>,
+    <http://www.w3.org/2000/01/rdf-schema#Class> .
+
+<http://example.org/test#Customer> a <http://www.w3.org/ns/shacl#NodeShape>, <http://www.w3.org/2002/07/owl#Class>,
+    <http://www.w3.org/2000/01/rdf-schema#Class> .
+
+# Test: owlAllValuesFrom2shClassOrDatatype
+<http://example.org/test#Company> a <http://www.w3.org/ns/shacl#NodeShape>, <http://www.w3.org/2002/07/owl#Class>,
+    <http://www.w3.org/2000/01/rdf-schema#Class>;
+  <http://www.w3.org/ns/shacl#property> <http://example.org/test#Company-hasPart> .
+
+<http://example.org/test#Company-hasPart> a <http://www.w3.org/ns/shacl#PropertyShape>;
+  <http://www.w3.org/ns/shacl#path> <http://example.org/test#hasPart>;
+  <http://www.w3.org/ns/shacl#class> <http://example.org/test#Department> .
+
+# Test: owlMinQualifiedCardinalityOnClass2shMinCount
+<http://example.org/test#TeamLead> a <http://www.w3.org/ns/shacl#NodeShape>, <http://www.w3.org/2002/07/owl#Class>,
+    <http://www.w3.org/2000/01/rdf-schema#Class>;
+  <http://www.w3.org/ns/shacl#property> <http://example.org/test#TeamLead-manages> .
+
+<http://example.org/test#TeamLead-manages> a <http://www.w3.org/ns/shacl#PropertyShape>;
+  <http://www.w3.org/ns/shacl#path> <http://example.org/test#manages>;
+  <http://www.w3.org/ns/shacl#class> <http://example.org/test#Employee>;
+  <http://www.w3.org/ns/shacl#minCount> 3 .
+
+# Test: owlQualifiedCardinalityOnDataRange2shQualifiedMinMaxCount
+<http://example.org/test#VerifiedPerson> a <http://www.w3.org/ns/shacl#NodeShape>,
+    <http://www.w3.org/2002/07/owl#Class>, <http://www.w3.org/2000/01/rdf-schema#Class>;
+  <http://www.w3.org/ns/shacl#property> <http://example.org/test#VerifiedPerson-hasEmail>,
+    _:3bcece2f510a9c36 .
+
+<http://example.org/test#VerifiedPerson-hasEmail> a <http://www.w3.org/ns/shacl#PropertyShape>;
+  <http://www.w3.org/ns/shacl#path> <http://example.org/test#hasEmail> .
+
+_:3bcece2f510a9c36 a <http://www.w3.org/ns/shacl#PropertyShape>;
+  <http://www.w3.org/ns/shacl#path> <http://example.org/test#hasEmail>;
+  <http://www.w3.org/ns/shacl#qualifiedMaxCount> 1;
+  <http://www.w3.org/ns/shacl#qualifiedMinCount> 1;
+  <http://www.w3.org/ns/shacl#qualifiedValueShape> _:3bcece2f510a9c37 .
+
+_:3bcece2f510a9c37 <http://www.w3.org/ns/shacl#datatype> <http://www.w3.org/2001/XMLSchema#string> .
+
+# Test: owlQualifiedCardinalityOnClass2shMinMaxCount
+<http://example.org/test#PairManager> a <http://www.w3.org/ns/shacl#NodeShape>, <http://www.w3.org/2002/07/owl#Class>,
+    <http://www.w3.org/2000/01/rdf-schema#Class>;
+  <http://www.w3.org/ns/shacl#property> <http://example.org/test#PairManager-manages> .
+
+<http://example.org/test#PairManager-manages> a <http://www.w3.org/ns/shacl#PropertyShape>;
+  <http://www.w3.org/ns/shacl#path> <http://example.org/test#manages>;
+  <http://www.w3.org/ns/shacl#class> <http://example.org/test#Employee>;
+  <http://www.w3.org/ns/shacl#maxCount> 2;
+  <http://www.w3.org/ns/shacl#minCount> 2 .
+
+# Test: FlattenIntersectionOf and CopyEquivalentIntersection
+<http://example.org/test#WorkingAdult> a <http://www.w3.org/ns/shacl#NodeShape>, <http://www.w3.org/2002/07/owl#Class>,
+    <http://www.w3.org/2000/01/rdf-schema#Class> .
+
+# Test: owlMinCardinality2shMinCount
+<http://example.org/test#Manager> a <http://www.w3.org/ns/shacl#NodeShape>, <http://www.w3.org/2002/07/owl#Class>,
+    <http://www.w3.org/2000/01/rdf-schema#Class>;
+  <http://www.w3.org/ns/shacl#property> <http://example.org/test#Manager-manages> .
+
+<http://example.org/test#Manager-manages> a <http://www.w3.org/ns/shacl#PropertyShape>;
+  <http://www.w3.org/ns/shacl#path> <http://example.org/test#manages>;
+  <http://www.w3.org/ns/shacl#minCount> 1;
+  <http://www.w3.org/ns/shacl#class> <http://example.org/test#Employee> .
+
+# Test: DATATYPE RESTRICTIONS
+<http://example.org/test#Person> a <http://www.w3.org/ns/shacl#NodeShape>, <http://www.w3.org/2002/07/owl#Class>,
+    <http://www.w3.org/2000/01/rdf-schema#Class>;
+  <http://www.w3.org/ns/shacl#property> <http://example.org/test#Person-hasName>, <http://example.org/test#Person-hasAge>,
+    <http://example.org/test#Person-hasEmail>, <http://example.org/test#Person-hasUsername>,
+    <http://example.org/test#Person-hasCode>, <http://example.org/test#Person-hasPhoneNumber>,
+    <http://example.org/test#Person-hasScore>, <http://example.org/test#Person-hasRating> .
+
+<http://example.org/test#Person-hasName> a <http://www.w3.org/ns/shacl#PropertyShape>;
+  <http://www.w3.org/ns/shacl#path> <http://example.org/test#hasName>;
+  <http://www.w3.org/ns/shacl#datatype> <http://www.w3.org/2001/XMLSchema#string> .
+
+<http://example.org/test#Person-hasAge> a <http://www.w3.org/ns/shacl#PropertyShape>;
+  <http://www.w3.org/ns/shacl#path> <http://example.org/test#hasAge>;
+  <http://www.w3.org/ns/shacl#maxCount> 1;
+  <http://www.w3.org/ns/shacl#datatype> <http://www.w3.org/2001/XMLSchema#integer> .
+
+<http://example.org/test#Person-hasEmail> a <http://www.w3.org/ns/shacl#PropertyShape>;
+  <http://www.w3.org/ns/shacl#path> <http://example.org/test#hasEmail> .
+
+<http://example.org/test#Person-hasUsername> a <http://www.w3.org/ns/shacl#PropertyShape>;
+  <http://www.w3.org/ns/shacl#path> <http://example.org/test#hasUsername>;
+  <http://www.w3.org/ns/shacl#datatype> <http://www.w3.org/2001/XMLSchema#string>;
+  <http://www.w3.org/ns/shacl#maxLength> 20;
+  <http://www.w3.org/ns/shacl#minLength> 3 .
+
+<http://example.org/test#Person-hasCode> a <http://www.w3.org/ns/shacl#PropertyShape>;
+  <http://www.w3.org/ns/shacl#path> <http://example.org/test#hasCode>;
+  <http://www.w3.org/ns/shacl#datatype> <http://www.w3.org/2001/XMLSchema#string>;
+  <http://www.w3.org/ns/shacl#minLength> 10;
+  <http://www.w3.org/ns/shacl#maxLength> 10 .
+
+<http://example.org/test#Person-hasPhoneNumber> a <http://www.w3.org/ns/shacl#PropertyShape>;
+  <http://www.w3.org/ns/shacl#path> <http://example.org/test#hasPhoneNumber>;
+  <http://www.w3.org/ns/shacl#datatype> <http://www.w3.org/2001/XMLSchema#string>;
+  <http://www.w3.org/ns/shacl#pattern> "\\d{3}-\\d{3}-\\d{4}" .
+
+<http://example.org/test#Person-hasScore> a <http://www.w3.org/ns/shacl#PropertyShape>;
+  <http://www.w3.org/ns/shacl#path> <http://example.org/test#hasScore>;
+  <http://www.w3.org/ns/shacl#datatype> <http://www.w3.org/2001/XMLSchema#integer>;
+  <http://www.w3.org/ns/shacl#maxInclusive> 100;
+  <http://www.w3.org/ns/shacl#minInclusive> 0 .
+
+<http://example.org/test#Person-hasRating> a <http://www.w3.org/ns/shacl#PropertyShape>;
+  <http://www.w3.org/ns/shacl#path> <http://example.org/test#hasRating>;
+  <http://www.w3.org/ns/shacl#datatype> <http://www.w3.org/2001/XMLSchema#decimal>;
+  <http://www.w3.org/ns/shacl#maxExclusive> 5.0;
+  <http://www.w3.org/ns/shacl#minExclusive> 0.0 .

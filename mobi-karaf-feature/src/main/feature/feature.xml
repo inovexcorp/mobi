@@ -256,6 +256,7 @@
         <bundle>mvn:com.mobi/sparql.cli/${project.version}</bundle>
         <bundle>mvn:com.mobi/document.translator.cli/${project.version}</bundle>
         <bundle>mvn:com.mobi/utils.cli/${project.version}</bundle>
+        <bundle>mvn:com.mobi/ontology.cli/${project.version}</bundle>
     </feature>
     <feature name="mobi-web-core" description="Mobi Web Bundles" version="${project.version}">
         <bundle>mvn:com.mobi/etl.rest/${project.version}</bundle>

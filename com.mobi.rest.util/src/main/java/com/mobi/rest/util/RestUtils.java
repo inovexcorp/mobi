@@ -93,7 +93,6 @@ import java.lang.management.ManagementFactory;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -107,7 +106,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiFunction;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -133,6 +131,7 @@ public class RestUtils {
     public static final String TURTLE_MIME_TYPE = "text/turtle";
     public static final String LDJSON_MIME_TYPE = "application/ld+json";
     public static final String RDFXML_MIME_TYPE = "application/rdf+xml";
+    public static final String TRIG_MIME_TYPE = "application/trig";
     private static final ValueFactory vf = new ValidatingValueFactory();
 
     /**

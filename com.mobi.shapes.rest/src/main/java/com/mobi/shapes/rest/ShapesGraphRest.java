@@ -23,6 +23,18 @@ package com.mobi.shapes.rest;
  * #L%
  */
 
+import static com.mobi.rest.util.RestUtils.LDJSON_MIME_TYPE;
+import static com.mobi.rest.util.RestUtils.RDFXML_MIME_TYPE;
+import static com.mobi.rest.util.RestUtils.TRIG_MIME_TYPE;
+import static com.mobi.rest.util.RestUtils.TURTLE_MIME_TYPE;
+import static com.mobi.rest.util.RestUtils.checkStringParam;
+import static com.mobi.rest.util.RestUtils.createPaginatedResponse;
+import static com.mobi.rest.util.RestUtils.getActiveUser;
+import static com.mobi.rest.util.RestUtils.getInProgressCommitIRI;
+import static com.mobi.rest.util.RestUtils.getRDFFormatFileExtension;
+import static com.mobi.rest.util.RestUtils.getRDFFormatMimeType;
+import static com.mobi.rest.util.RestUtils.modelToSkolemizedString;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -129,13 +141,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.StreamingOutput;
 import javax.ws.rs.core.UriInfo;
-
-import static com.mobi.rest.util.RestUtils.checkStringParam;
-import static com.mobi.rest.util.RestUtils.createPaginatedResponse;
-import static com.mobi.rest.util.RestUtils.getActiveUser;
-import static com.mobi.rest.util.RestUtils.getRDFFormatFileExtension;
-import static com.mobi.rest.util.RestUtils.getRDFFormatMimeType;
-import static com.mobi.rest.util.RestUtils.modelToSkolemizedString;
 
 @Path("/shapes-graphs")
 @Component(service = ShapesGraphRest.class, immediate = true)
@@ -543,7 +548,8 @@ public class ShapesGraphRest {
                 return Response.noContent().build();
             }
 
-            Resource inProgressCommitIRI = getInProgressCommitIRI(user, recordId, conn);
+            Resource inProgressCommitIRI = getInProgressCommitIRI(user, recordId, conn, commitManager,
+                    configProvider);
             commitManager.updateInProgressCommit(catalogIRI, recordId, inProgressCommitIRI,
                     BNodeUtils.restoreBNodes(diff.getAdditions(), uploadedBNodes, catalogBNodes, mf),
                     BNodeUtils.restoreBNodes(diff.getDeletions(), catalogBNodes, mf), conn);
@@ -600,7 +606,7 @@ public class ShapesGraphRest {
      */
     @GET
     @Path("{recordId}/entities/{entityId}")
-    @Produces({MediaType.APPLICATION_JSON, MediaType.TEXT_PLAIN})
+    @Produces({LDJSON_MIME_TYPE, TURTLE_MIME_TYPE, RDFXML_MIME_TYPE, TRIG_MIME_TYPE})
     @RolesAllowed("user")
     @Operation(
             tags = "shapes-graphs",
@@ -639,7 +645,8 @@ public class ShapesGraphRest {
                     servletRequest, conn);
 
             Model entity = shapesGraph.getEntity(vf.createIRI(entityIdStr), includeImports);
-            return Response.ok(modelToSkolemizedString(entity, format, bNodeService)).build();
+            return Response.ok(modelToSkolemizedString(entity, format, bNodeService))
+                    .header("Content-Type", getRDFFormatMimeType(format)).build();
         } catch (MobiNotFoundException ex) {
             throw RestUtils.getErrorObjNotFound(ex);
         } catch (IllegalArgumentException ex) {
@@ -998,28 +1005,6 @@ public class ShapesGraphRest {
             throw RestUtils.getErrorObjBadRequest(ex);
         } catch (MobiException | IllegalStateException ex) {
             throw RestUtils.getErrorObjInternalServerError(ex);
-        }
-    }
-
-    /**
-     * Gets the Resource for the InProgressCommit associated with the provided User and the Record identified by the
-     * provided Resource. If that User does not have an InProgressCommit, a new one will be created and that Resource
-     * will be returned.
-     *
-     * @param user     the User with the InProgressCommit
-     * @param recordId the Resource identifying the Record with the InProgressCommit
-     * @param conn     A RepositoryConnection to use for lookup
-     * @return a Resource which identifies the InProgressCommit associated with the User for the Record
-     */
-    private Resource getInProgressCommitIRI(User user, Resource recordId, RepositoryConnection conn) {
-        Optional<InProgressCommit> optional = commitManager.getInProgressCommitOpt(configProvider.getLocalCatalogIRI(),
-                recordId, user, conn);
-        if (optional.isPresent()) {
-            return optional.get().getResource();
-        } else {
-            InProgressCommit inProgressCommit = commitManager.createInProgressCommit(user);
-            commitManager.addInProgressCommit(configProvider.getLocalCatalogIRI(), recordId, inProgressCommit, conn);
-            return inProgressCommit.getResource();
         }
     }
 

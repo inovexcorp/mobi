@@ -42,7 +42,6 @@ import static com.mobi.security.policy.api.xacml.XACML.POLICY_PERMIT_OVERRIDES;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectReader;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mobi.catalog.api.BranchManager;
@@ -74,6 +73,7 @@ import com.mobi.ontology.core.api.Ontology;
 import com.mobi.ontology.core.api.OntologyId;
 import com.mobi.ontology.core.api.OntologyManager;
 import com.mobi.ontology.core.api.ontologies.ontologyeditor.OntologyRecord;
+import com.mobi.ontology.core.api.owl2shacl.OWL2SHACL;
 import com.mobi.ontology.rest.json.EntityNames;
 import com.mobi.ontology.utils.OntologyModels;
 import com.mobi.ontology.utils.OntologyUtils;
@@ -84,6 +84,7 @@ import com.mobi.persistence.utils.Bindings;
 import com.mobi.persistence.utils.JSONQueryResults;
 import com.mobi.persistence.utils.RDFFiles;
 import com.mobi.persistence.utils.api.BNodeService;
+import com.mobi.repository.api.RepositoryManager;
 import com.mobi.rest.security.annotations.ActionAttributes;
 import com.mobi.rest.security.annotations.ActionId;
 import com.mobi.rest.security.annotations.AttributeValue;
@@ -216,6 +217,9 @@ public class OntologyRest {
 
     @Reference
     protected ImportsResolver importsResolver;
+
+    @Reference
+    protected RepositoryManager repoManager;
 
     private static final Logger log = LoggerFactory.getLogger(OntologyRest.class);
     private static final ObjectMapper mapper = new ObjectMapper();
@@ -497,7 +501,7 @@ public class OntologyRest {
             @DefaultValue(JSONLD) @QueryParam("rdfFormat") String rdfFormat,
             @Parameter(description = "File name for the ontology file")
             @DefaultValue("ontology") @QueryParam("fileName") String fileName,
-            @Parameter(description = "")
+            @Parameter(description = "Whether to apply the in progress commit changes")
             @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit
     ) {
         try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
@@ -688,7 +692,7 @@ public class OntologyRest {
                 long startTimeF = System.currentTimeMillis();
                 Model temp = getCurrentModel(recordId, branchId, commitId, catalogBNodes, conn, bNodeService,
                         compiledResourceManager);
-                log.trace("currentModelFuture took " + (System.currentTimeMillis() - startTimeF));
+                log.trace("currentModelFuture took {}", System.currentTimeMillis() - startTimeF);
                 assert temp != null;
                 return temp;
             });
@@ -736,7 +740,7 @@ public class OntologyRest {
             throw RestUtils.getErrorObjInternalServerError(ex);
         } finally {
             IOUtils.closeQuietly(fileInputStream);
-            log.trace("uploadChangesToOntology took " + (System.currentTimeMillis() - totalTime));
+            log.trace("uploadChangesToOntology took {}", System.currentTimeMillis() - totalTime);
             log.trace("uploadChangesToOntology getGarbageCollectionTime {} ms", getGarbageCollectionTime());
         }
     }
@@ -858,7 +862,7 @@ public class OntologyRest {
             outputStream.write(irisToJsonArray(getConceptIRIs(ontology)).toString().getBytes());
 
             watch.stop();
-            log.trace("End concepts: " + watch.getTime() + "ms");
+            log.trace("End concepts: {}ms", watch.getTime());
             watch.reset();
             log.trace("Start conceptSchemes");
             watch.start();
@@ -867,7 +871,7 @@ public class OntologyRest {
             outputStream.write(irisToJsonArray(getConceptSchemeIRIs(ontology)).toString().getBytes());
 
             watch.stop();
-            log.trace("End conceptSchemes: " + watch.getTime() + "ms");
+            log.trace("End conceptSchemes: {}ms", watch.getTime());
             watch.reset();
             log.trace("Start importedIRIs");
             watch.start();
@@ -877,7 +881,7 @@ public class OntologyRest {
                     .getBytes());
 
             watch.stop();
-            log.trace("End importedIRIs: " + watch.getTime() + "ms");
+            log.trace("End importedIRIs: {}ms", watch.getTime());
             watch.reset();
             log.trace("Start derivedConcepts");
             watch.start();
@@ -886,7 +890,7 @@ public class OntologyRest {
             outputStream.write(getDerivedConceptTypeIRIArray(ontology).toString().getBytes());
 
             watch.stop();
-            log.trace("End derivedConcepts: " + watch.getTime() + "ms");
+            log.trace("End derivedConcepts: {}ms", watch.getTime());
             watch.reset();
             log.trace("Start derivedConceptSchemes");
             watch.start();
@@ -895,7 +899,7 @@ public class OntologyRest {
             outputStream.write(getDerivedConceptSchemeTypeIRIArray(ontology).toString().getBytes());
 
             watch.stop();
-            log.trace("End derivedConceptSchemes: " + watch.getTime() + "ms");
+            log.trace("End derivedConceptSchemes: {}ms", watch.getTime());
             watch.reset();
             log.trace("Start derivedSemanticRelations");
             watch.start();
@@ -904,7 +908,7 @@ public class OntologyRest {
             outputStream.write(getDerivedSemanticRelationIRIArray(ontology).toString().getBytes());
 
             watch.stop();
-            log.trace("End derivedSemanticRelations: " + watch.getTime() + "ms");
+            log.trace("End derivedSemanticRelations: {}ms", watch.getTime());
             watch.reset();
             log.trace("Start conceptHierarchy");
             watch.start();
@@ -913,7 +917,7 @@ public class OntologyRest {
             writeHierarchyToStream(ontology.getConceptRelationships(), outputStream);
 
             watch.stop();
-            log.trace("End conceptHierarchy: " + watch.getTime() + "ms");
+            log.trace("End conceptHierarchy: {}ms", watch.getTime());
             watch.reset();
             log.trace("Start conceptSchemeHierarchy");
             watch.start();
@@ -923,7 +927,7 @@ public class OntologyRest {
             outputStream.write("}".getBytes());
 
             watch.stop();
-            log.trace("End conceptSchemeHierarchy: " + watch.getTime() + "ms");
+            log.trace("End conceptSchemeHierarchy: {}ms", watch.getTime());
         };
     }
 
@@ -996,17 +1000,22 @@ public class OntologyRest {
         return outputStream -> {
             StopWatch watch = new StopWatch();
 
+            log.trace("Start ontologyIRI");
+            watch.start();
             OntologyId ontologyId = ontology.getOntologyId();
             outputStream.write("{ \"ontologyIRI\": ".getBytes());
             outputStream.write(ontologyId.getOntologyIRI().isPresent()
                     ? ("\"" + ontologyId.getOntologyIRI().get() + "\"").getBytes() : "".getBytes());
+            watch.stop();
+            log.trace("End ontologyIRI: {}ms", watch.getTime());
 
+            watch.reset();
             log.trace("Start iriList");
             watch.start();
             outputStream.write(", \"iriList\": ".getBytes());
             outputStream.write(getAllIRIs(ontology).toString().getBytes());
             watch.stop();
-            log.trace("End iriList: " + watch.getTime() + "ms");
+            log.trace("End iriList: {}ms", watch.getTime());
 
             watch.reset();
             log.trace("Start importedIRIs");
@@ -1015,7 +1024,7 @@ public class OntologyRest {
             outputStream.write(doWithOntologies(onlyImports, this::getAllIRIs).toString()
                     .getBytes());
             watch.stop();
-            log.trace("End importedIRIs: " + watch.getTime() + "ms");
+            log.trace("End importedIRIs: {}ms", watch.getTime());
 
             watch.reset();
             log.trace("Start importedOntologies");
@@ -1027,7 +1036,7 @@ public class OntologyRest {
                     .forEach(arr::add);
             outputStream.write(arr.toString().getBytes());
             watch.stop();
-            log.trace("End importedOntologies: " + watch.getTime() + "ms");
+            log.trace("End importedOntologies: {}ms", watch.getTime());
 
             watch.reset();
             log.trace("Start failedImports");
@@ -1035,7 +1044,7 @@ public class OntologyRest {
             outputStream.write(", \"failedImports\": ".getBytes());
             outputStream.write(mapper.valueToTree(getUnloadableImportIRIs(ontology)).toString().getBytes());
             watch.stop();
-            log.trace("End failedImports: " + watch.getTime() + "ms");
+            log.trace("End failedImports: {}ms", watch.getTime());
 
             watch.reset();
             log.trace("Start classHierarchy");
@@ -1043,7 +1052,7 @@ public class OntologyRest {
             outputStream.write(", \"classHierarchy\": ".getBytes());
             writeHierarchyToStream(ontology.getSubClassesOf(), outputStream);
             watch.stop();
-            log.trace("End classHierarchy: " + watch.getTime() + "ms");
+            log.trace("End classHierarchy: {}ms", watch.getTime());
 
             watch.reset();
             log.trace("Start individuals");
@@ -1053,7 +1062,7 @@ public class OntologyRest {
                     ontology.getClassesWithIndividuals().getParentMap());
             outputStream.write(classesWithIndividuals.toString().getBytes());
             watch.stop();
-            log.trace("End individuals: " + watch.getTime() + "ms");
+            log.trace("End individuals: {}ms", watch.getTime());
 
             watch.reset();
             log.trace("Start dataPropertyHierarchy");
@@ -1061,7 +1070,7 @@ public class OntologyRest {
             outputStream.write(", \"dataPropertyHierarchy\": ".getBytes());
             writeHierarchyToStream(ontology.getSubDatatypePropertiesOf(), outputStream);
             watch.stop();
-            log.trace("End dataPropertyHierarchy: " + watch.getTime() + "ms");
+            log.trace("End dataPropertyHierarchy: {}ms", watch.getTime());
 
             watch.reset();
             log.trace("Start objectPropertyHierarchy");
@@ -1069,7 +1078,7 @@ public class OntologyRest {
             outputStream.write(", \"objectPropertyHierarchy\": ".getBytes());
             writeHierarchyToStream(ontology.getSubObjectPropertiesOf(), outputStream);
             watch.stop();
-            log.trace("End objectPropertyHierarchy: " + watch.getTime() + "ms");
+            log.trace("End objectPropertyHierarchy: {}ms", watch.getTime());
 
             watch.reset();
             log.trace("Start annotationHierarchy");
@@ -1077,7 +1086,7 @@ public class OntologyRest {
             outputStream.write(", \"annotationHierarchy\": ".getBytes());
             writeHierarchyToStream(ontology.getSubAnnotationPropertiesOf(), outputStream);
             watch.stop();
-            log.trace("End annotationHierarchy: " + watch.getTime() + "ms");
+            log.trace("End annotationHierarchy: {}ms", watch.getTime());
 
             watch.reset();
             log.trace("Start conceptHierarchy");
@@ -1085,7 +1094,7 @@ public class OntologyRest {
             outputStream.write(", \"conceptHierarchy\": ".getBytes());
             writeHierarchyToStream(ontology.getConceptRelationships(), outputStream);
             watch.stop();
-            log.trace("End conceptHierarchy: " + watch.getTime() + "ms");
+            log.trace("End conceptHierarchy: {}ms", watch.getTime());
 
             watch.reset();
             log.trace("Start conceptSchemeHierarchy");
@@ -1093,7 +1102,7 @@ public class OntologyRest {
             outputStream.write(", \"conceptSchemeHierarchy\": ".getBytes());
             writeHierarchyToStream(ontology.getConceptSchemeRelationships(), outputStream);
             watch.stop();
-            log.trace("End conceptSchemeHierarchy: " + watch.getTime() + "ms");
+            log.trace("End conceptSchemeHierarchy: {}ms", watch.getTime());
 
             watch.reset();
             log.trace("Start propertyToRanges");
@@ -1101,7 +1110,7 @@ public class OntologyRest {
             outputStream.write(", \"propertyToRanges\": ".getBytes());
             writePropertyRangesToStream(ontology.getTupleQueryResults(GET_PROPERTY_RANGES, true), outputStream);
             watch.stop();
-            log.trace("End propertyToRanges: " + watch.getTime() + "ms");
+            log.trace("End propertyToRanges: {}ms", watch.getTime());
 
             watch.reset();
             log.trace("Start classToAssociatedProperties");
@@ -1109,7 +1118,7 @@ public class OntologyRest {
             outputStream.write(", \"classToAssociatedProperties\": ".getBytes());
             writeClassPropertiesToStream(ontology.getTupleQueryResults(GET_CLASS_PROPERTIES, true), outputStream);
             watch.stop();
-            log.trace("End classToAssociatedProperties: " + watch.getTime() + "ms");
+            log.trace("End classToAssociatedProperties: {}ms", watch.getTime());
 
             watch.reset();
             log.trace("Start noDomainProperties");
@@ -1118,7 +1127,7 @@ public class OntologyRest {
             writeNoDomainPropertiesToStream(ontology.getTupleQueryResults(GET_NO_DOMAIN_PROPERTIES, true),
                     outputStream);
             watch.stop();
-            log.trace("End noDomainProperties: " + watch.getTime() + "ms");
+            log.trace("End noDomainProperties: {}ms", watch.getTime());
 
             watch.reset();
             log.trace("Start entityNames");
@@ -1127,7 +1136,7 @@ public class OntologyRest {
             String queryString = GET_ENTITY_NAMES.replace(ENTITIES, "");
             writeEntityNamesToStream(ontology.getTupleQueryResults(queryString, true), outputStream);
             watch.stop();
-            log.trace("End entityNames: " + watch.getTime() + "ms");
+            log.trace("End entityNames: {}ms", watch.getTime());
 
             outputStream.write("}".getBytes());
         };
@@ -1201,7 +1210,7 @@ public class OntologyRest {
             outputStream.write("{ \"propertyToRanges\": ".getBytes());
             writePropertyRangesToStream(ontology.getTupleQueryResults(GET_PROPERTY_RANGES, true), outputStream);
             watch.stop();
-            log.trace("End propertyToRanges: " + watch.getTime() + "ms");
+            log.trace("End propertyToRanges: {}ms", watch.getTime());
             outputStream.write("}".getBytes());
         };
     }
@@ -2303,7 +2312,7 @@ public class OntologyRest {
             importedOntologies.stream()
                     .map(ontology -> getOntologyAsJsonObject(ontology, rdfFormat))
                     .forEach(arrayNode::add);
-            return arrayNode.size() == 0 ? Response.noContent().build() : Response.ok(arrayNode.toString()).build();
+            return arrayNode.isEmpty() ? Response.noContent().build() : Response.ok(arrayNode.toString()).build();
         } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
@@ -3167,7 +3176,7 @@ public class OntologyRest {
                     }
                 }
             });
-            return response.size() == 0 ? Response.noContent().build() :
+            return response.isEmpty() ? Response.noContent().build() :
                     Response.ok(mapper.valueToTree(response).toString())
                             .build();
         } catch (MobiException e) {
@@ -3375,7 +3384,7 @@ public class OntologyRest {
                 }
             }
 
-            String queryString = null;
+            String queryString;
             if (resources.isEmpty()) {
                 queryString = GET_ENTITY_NAMES.replace(ENTITIES, "");
             } else {
@@ -3386,20 +3395,98 @@ public class OntologyRest {
             Optional<Ontology> optionalOntology = optOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr,
                     applyInProgressCommit, conn);
             if (optionalOntology.isPresent()) {
-                String finalQueryString = queryString;
                 StreamingOutput output = outputStream -> {
-                    TupleQueryResult result = optionalOntology.get().getTupleQueryResults(finalQueryString,
+                    TupleQueryResult result = optionalOntology.get().getTupleQueryResults(queryString,
                             includeImports);
                     writeEntityNamesToStream(result, outputStream);
                 };
                 watch.stop();
-                log.trace("Entity names endpoint: " + watch.getTime() + "ms");
+                log.trace("Entity names endpoint: {}ms", watch.getTime());
                 return Response.ok(output).build();
             } else {
                 throw ErrorUtils.sendError(ONTOLOGY + recordIdStr + DOES_NOT_EXIST,
                         Response.Status.BAD_REQUEST);
             }
         } catch (MobiException | IOException e) {
+            throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Performs an OWL2SHACL conversion of the identified ontology by its OntologyRecord IRI, Branch IRI, and Commit IRI
+     * and returns the resulting SHACL shapes graph as RDF data in the response body. Can optionally include in progress
+     * changes and choose the output format. Does not include the original owl:Ontology definition or any of the
+     * original statements from the ontology as this is intended to be used with an automation for a corresponding
+     * Shapes Graph Record and thus those triples shouldn't be duplicated.
+     *
+     * @param servletRequest the HttpServletRequest.
+     * @param recordIdStr String representing the record Resource id. NOTE: Assumes id represents an IRI unless
+     *                    String begins with "_:".
+     * @param branchIdStr String representing the Branch Resource id. NOTE: Assumes id represents an IRI unless
+     *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the
+     *                    master Branch.
+     * @param commitIdStr String representing the Commit Resource id. NOTE: Assumes id represents an IRI unless
+     *                    String begins with "_:". NOTE: Optional param - if nothing is specified, it will get the head
+     *                    Commit. The provided commitId must be on the Branch identified by the provided branchId;
+     *                    otherwise, nothing will be returned.
+     * @param applyInProgressCommit Boolean indicating whether any in progress commits by user should be
+     *                              applied to the return value
+     * @param format     Optional string representing the desired output format of the shapes graph
+     * @return A Response with the RDF of the converted shapes graph in the response body
+     */
+    @GET
+    @Path("{recordId}/shacl")
+    @Produces({TURTLE_MIME_TYPE, LDJSON_MIME_TYPE, RDFXML_MIME_TYPE, MediaType.APPLICATION_OCTET_STREAM})
+    @RolesAllowed("user")
+    @Operation(
+            tags = "ontologies",
+            summary = "Converts the identified ontology into a SHACL shapes graph and returns the resulting data in"
+                    + " the response body. The returned data will not include any of the original triples from the"
+                    + "source ontology.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "The Ontology in the requested format",
+                            content = {
+                                    @Content(mediaType = "*/*"),
+                                    @Content(mediaType = TURTLE_MIME_TYPE),
+                                    @Content(mediaType = LDJSON_MIME_TYPE),
+                                    @Content(mediaType = RDFXML_MIME_TYPE),
+                                    @Content(mediaType = MediaType.APPLICATION_OCTET_STREAM),
+                            }
+                    ),
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
+            }
+    )
+    @ResourceId(type = ValueType.PATH, value = "recordId")
+    public Response convertToSHACL(
+            @Context HttpServletRequest servletRequest,
+            @Parameter(description = "String representing the Record Resource ID", required = true)
+            @PathParam("recordId") String recordIdStr,
+            @Parameter(description = "String representing the Branch Resource ID")
+            @QueryParam("branchId") String branchIdStr,
+            @Parameter(description = "String representing the Commit Resource ID")
+            @QueryParam("commitId") String commitIdStr,
+            @Parameter(description = "Boolean indicating whether any in progress commits by user should be "
+                    + "applied to the return value")
+            @DefaultValue("true") @QueryParam("applyInProgressCommit") boolean applyInProgressCommit,
+            @Parameter(description = "Desired RDF return format. Valid values include 'jsonld', 'turtle', and "
+                    + "'rdf/xml", schema = @Schema(allowableValues = {JSONLD, RDF_XML, TURTLE}))
+            @DefaultValue(JSONLD) @QueryParam("format") String format
+    ) {
+        try (RepositoryConnection conn = configProvider.getRepository().getConnection()) {
+            RDFFormat rdfFormat = getRdfFormat(format);
+            Optional<Ontology> optionalOntology = optOntology(servletRequest, recordIdStr, branchIdStr, commitIdStr,
+                    applyInProgressCommit, conn);
+            if (optionalOntology.isPresent()) {
+                StreamingOutput output = outputStream -> OWL2SHACL.convertOWLToSHACL(optionalOntology.get().asModel(),
+                        repoManager, outputStream, rdfFormat);
+                return Response.ok(output).header("Content-Type", getRDFFormatMimeType(format)).build();
+            } else {
+                throw ErrorUtils.sendError(ONTOLOGY + recordIdStr + DOES_NOT_EXIST,
+                        Response.Status.BAD_REQUEST);
+            }
+        } catch (MobiException e) {
             throw ErrorUtils.sendError(e, e.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
         }
     }
@@ -3467,7 +3554,7 @@ public class OntologyRest {
 
                     StreamingOutput output = outputStream ->
                             writeOntologyToStream(ontology, finalFormat, false, outputStream);
-                    return Response.ok(output).build();
+                    return Response.ok(output).header("Content-Type", getRDFFormatMimeType(finalFormat)).build();
                 } else {
                     throw ErrorUtils.sendError("User does not have permission to access ontology.",
                             Response.Status.FORBIDDEN);
@@ -4164,7 +4251,7 @@ public class OntologyRest {
     }
 
     private ObjectNode getOntologyIdentifiersAsJsonObject(Ontology ontology) {
-        log.trace("Start getOntologIdentifiersyAsJsonObject");
+        log.trace("Start getOntologyIdentifiersAsJsonObject");
         OntologyId ontologyId = ontology.getOntologyId();
         Optional<IRI> optIri = ontologyId.getOntologyIRI();
 
@@ -4268,7 +4355,7 @@ public class OntologyRest {
                 .filter(statement -> statement.getSubject().equals(entityId)
                         || statement.getPredicate().equals(entityId) || statement.getObject().equals(entityId))
                 .collect(Collectors.toSet()));
-        if (model.size() == 0) {
+        if (model.isEmpty()) {
             throw ErrorUtils.sendError(entityIdStr + " was not found within the ontology.",
                     Response.Status.BAD_REQUEST);
         }
@@ -4307,8 +4394,7 @@ public class OntologyRest {
 
             JsonNode jsonNode = json.get("@type");
             if (jsonNode.isArray()) {
-                ObjectReader reader = mapper.reader(new TypeReference<List<String>>() {});
-                List<String> values = reader.readValue(jsonNode);
+                List<String> values = mapper.readerFor(new TypeReference<List<String>>() {}).readValue(jsonNode);
                 if (!values.contains(type)) {
                     throw ErrorUtils.sendError("The JSON-LD does not contain the proper type: " + type + ".",
                             Response.Status.BAD_REQUEST);

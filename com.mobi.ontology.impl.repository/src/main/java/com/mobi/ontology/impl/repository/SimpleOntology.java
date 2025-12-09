@@ -501,42 +501,42 @@ public class SimpleOntology implements Ontology {
     }
 
     @Override
-    public OutputStream asTurtle() {
+    public ByteArrayOutputStream asTurtle() {
         return getOntologyOutputStream(false, true, RDFFormat.TURTLE);
     }
 
     @Override
-    public OutputStream asTurtle(OutputStream outputStream) {
+    public <T extends OutputStream> T asTurtle(T outputStream) {
         return getOntologyOutputStream(false, true, RDFFormat.TURTLE, outputStream);
     }
 
     @Override
-    public OutputStream asRdfXml() {
+    public ByteArrayOutputStream asRdfXml() {
         return getOntologyOutputStream(false, true, RDFFormat.RDFXML);
     }
 
     @Override
-    public OutputStream asRdfXml(OutputStream outputStream) {
+    public <T extends OutputStream> T asRdfXml(T outputStream) {
         return getOntologyOutputStream(false, true, RDFFormat.RDFXML, outputStream);
     }
 
     @Override
-    public OutputStream asOwlXml() {
+    public ByteArrayOutputStream asOwlXml() {
         throw new NotImplementedException("OWL/XML format is not yet implemented.");
     }
 
     @Override
-    public OutputStream asOwlXml(OutputStream outputStream) {
+    public <T extends OutputStream> T asOwlXml(T outputStream) {
         throw new NotImplementedException("OWL/XML format is not yet implemented.");
     }
 
     @Override
-    public OutputStream asJsonLD(boolean skolemize) {
+    public ByteArrayOutputStream asJsonLD(boolean skolemize) {
         return getOntologyOutputStream(skolemize, false, RDFFormat.JSONLD);
     }
 
     @Override
-    public OutputStream asJsonLD(boolean skolemize, OutputStream outputStream) {
+    public <T extends OutputStream> T asJsonLD(boolean skolemize, T outputStream) {
         return getOntologyOutputStream(skolemize, false, RDFFormat.JSONLD, outputStream);
     }
 
@@ -548,8 +548,8 @@ public class SimpleOntology implements Ontology {
      * @param format The {@link RDFFormat} to write to the OutputStream.
      * @return An {@link OutputStream} of the RDF data.
      */
-    private OutputStream getOntologyOutputStream(boolean skolemize, boolean prettyPrint, RDFFormat format) {
-        OutputStream outputStream = new ByteArrayOutputStream();
+    private ByteArrayOutputStream getOntologyOutputStream(boolean skolemize, boolean prettyPrint, RDFFormat format) {
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         return getOntologyOutputStream(skolemize, prettyPrint, format, outputStream);
     }
 
@@ -562,8 +562,8 @@ public class SimpleOntology implements Ontology {
      * @param outputStream The {@link OutputStream} to write to.
      * @return The modified {@link OutputStream}.
      */
-    private OutputStream getOntologyOutputStream(boolean skolemize, boolean prettyPrint, RDFFormat format,
-                                                 OutputStream outputStream) {
+    private <T extends OutputStream> T getOntologyOutputStream(boolean skolemize, boolean prettyPrint, RDFFormat format,
+                                                          T outputStream) {
         long startTime = getStartTime();
         try (DatasetConnection conn = getDatasetConnection()) {
             RepositoryResult<Statement> statements = conn.getStatements(null, null, null,

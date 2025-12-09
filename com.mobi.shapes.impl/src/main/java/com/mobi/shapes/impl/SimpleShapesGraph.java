@@ -42,6 +42,7 @@ import org.eclipse.rdf4j.query.TupleQueryResult;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.rio.RDFFormat;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
@@ -145,32 +146,32 @@ public class SimpleShapesGraph implements ShapesGraph {
     }
 
     @Override
-    public OutputStream asTurtle() {
+    public ByteArrayOutputStream asTurtle() {
         return this.ontology.asTurtle();
     }
 
     @Override
-    public OutputStream asTurtle(OutputStream outputStream) {
+    public <T extends OutputStream> T asTurtle(T outputStream) {
         return this.ontology.asTurtle(outputStream);
     }
 
     @Override
-    public OutputStream asRdfXml() {
+    public ByteArrayOutputStream asRdfXml() {
         return this.ontology.asRdfXml();
     }
 
     @Override
-    public OutputStream asRdfXml(OutputStream outputStream) {
+    public <T extends OutputStream> T asRdfXml(T outputStream) {
         return this.ontology.asRdfXml(outputStream);
     }
 
     @Override
-    public OutputStream asJsonLD(boolean skolemize) {
+    public ByteArrayOutputStream asJsonLD(boolean skolemize) {
         return this.ontology.asJsonLD(skolemize);
     }
 
     @Override
-    public OutputStream asJsonLD(boolean skolemize, OutputStream outputStream) {
+    public <T extends OutputStream> T asJsonLD(boolean skolemize, T outputStream) {
         return this.ontology.asJsonLD(skolemize, outputStream);
     }
 

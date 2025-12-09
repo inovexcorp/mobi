@@ -27,6 +27,7 @@ import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.query.TupleQueryResult;
 import org.eclipse.rdf4j.rio.RDFFormat;
 
+import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
 
 public interface QueryableVersionedRDF {
@@ -36,15 +37,7 @@ public interface QueryableVersionedRDF {
      * @return an OutputStream of TURTLE
      * @throws org.eclipse.rdf4j.rio.RDFHandlerException If an error occurs while parsing
      */
-    OutputStream asTurtle();
-
-    /**
-     * Returns the VersionedRdfRecord as RDF-XML in an OutputStream.
-     *
-     * @return an OutputStream of RDF-XML
-     * @throws org.eclipse.rdf4j.rio.RDFHandlerException If an error occurs while parsing
-     */
-    OutputStream asRdfXml();
+    ByteArrayOutputStream asTurtle();
 
     /**
      * Returns the VersionedRdfRecord as TURTLE written to the given OutputStream.
@@ -53,7 +46,15 @@ public interface QueryableVersionedRDF {
      * @return the OutputStream that was written to
      * @throws org.eclipse.rdf4j.rio.RDFHandlerException If an error occurs while parsing
      */
-    OutputStream asTurtle(OutputStream outputStream);
+    <T extends OutputStream> T asTurtle(T outputStream);
+
+    /**
+     * Returns the VersionedRdfRecord as RDF-XML in an OutputStream.
+     *
+     * @return an OutputStream of RDF-XML
+     * @throws org.eclipse.rdf4j.rio.RDFHandlerException If an error occurs while parsing
+     */
+    ByteArrayOutputStream asRdfXml();
 
     /**
      * Returns the VersionedRdfRecord as RDF-XML written to the given OutputStream.
@@ -63,7 +64,7 @@ public interface QueryableVersionedRDF {
      * @throws org.eclipse.rdf4j.rio.RDFHandlerException If an error occurs while parsing
      */
 
-    OutputStream asRdfXml(OutputStream outputStream);
+    <T extends OutputStream> T asRdfXml(T outputStream);
 
     /**
      * Returns the VersionedRdfRecord as JSON-LD in an OutputStream.
@@ -72,7 +73,7 @@ public interface QueryableVersionedRDF {
      * @return an OutputStream of JSON-LD
      * @throws org.eclipse.rdf4j.rio.RDFHandlerException If an error occurs while parsing
      */
-    OutputStream asJsonLD(boolean skolemize);
+    ByteArrayOutputStream asJsonLD(boolean skolemize);
 
     /**
      * Returns the VersionedRdfRecord as JSON-LD written to the given OutputStream.
@@ -82,7 +83,7 @@ public interface QueryableVersionedRDF {
      * @return the OutputStream that was written to
      * @throws org.eclipse.rdf4j.rio.RDFHandlerException If an error occurs while parsing
      */
-    OutputStream asJsonLD(boolean skolemize, OutputStream outputStream);
+    <T extends OutputStream> T asJsonLD(boolean skolemize, T outputStream);
 
     /**
      * Searches the VersionedRdfRecord & its import closures using the provided Sparql query.

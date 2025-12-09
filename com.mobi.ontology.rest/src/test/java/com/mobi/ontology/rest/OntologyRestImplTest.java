@@ -41,7 +41,6 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
-import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
@@ -225,9 +224,9 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
     private ObjectNode propertyToRanges;
     private ArrayNode importedOntologyResults;
     private ArrayNode importsClosureResults;
-    private OutputStream ontologyJsonLd;
-    private OutputStream ontologyTurtle;
-    private OutputStream importedOntologyJsonLd;
+    private ByteArrayOutputStream ontologyJsonLd;
+    private ByteArrayOutputStream ontologyTurtle;
+    private ByteArrayOutputStream importedOntologyJsonLd;
     private static OsgiRepositoryWrapper repo;
     private static final String INVALID_JSON = "{id: 'invalid";
     private static final String constructJsonLd = "[ {\n  \"@id\" : \"urn:test\",\n  \"urn:prop\" : [ {\n    \"@value\" : \"test\"\n  } ]\n} ]";
@@ -986,7 +985,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
 
         Response response = target().path("ontologies").request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
 
-        assertEquals(response.getStatus(), 500);
+        assertEquals(500, response.getStatus());
 
         ObjectNode responseObject = getResponse(response);
         assertEquals("MobiException", responseObject.get("error").asText());
@@ -1008,7 +1007,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
 
         Response response = target().path("ontologies").request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
 
         ObjectNode responseObject = getResponse(response);
         assertEquals("RDFParseException", responseObject.get("error").asText());
@@ -1030,7 +1029,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
 
         Response response = target().path("ontologies").request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
 
         ObjectNode responseObject = getResponse(response);
         assertEquals("IllegalArgumentException", responseObject.get("error").asText());
@@ -1048,7 +1047,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         fd.field("keywords", "keyword2");
 
         Response response = target().path("ontologies").request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     // Test upload ontology json
@@ -1092,7 +1091,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         fd.field("keywords", "keyword2");
 
         Response response = target().path("ontologies").request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -1105,7 +1104,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         fd.field("keywords", "keyword2");
 
         Response response = target().path("ontologies").request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -1121,7 +1120,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         fd.field("keywords", "keyword2");
 
         Response response = target().path("ontologies").request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     // Test get ontology
@@ -1132,7 +1131,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
                 .request().accept(MediaType.APPLICATION_OCTET_STREAM_TYPE).get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         assertGetOntology(true);
     }
 
@@ -1144,7 +1143,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
                 .request().accept(MediaType.APPLICATION_OCTET_STREAM_TYPE).get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         assertGetOntology(false);
     }
 
@@ -1154,7 +1153,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("commitId", commitId.stringValue()).queryParam("entityId", catalogId.stringValue())
                 .request().accept(MediaType.APPLICATION_OCTET_STREAM_TYPE).get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         assertGetOntology(true);
     }
 
@@ -1164,7 +1163,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).request()
                 .accept(MediaType.APPLICATION_OCTET_STREAM_TYPE).get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         assertGetOntology(true);
     }
 
@@ -1177,7 +1176,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
                 .request().accept(MediaType.APPLICATION_OCTET_STREAM_TYPE).get();
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     // Test download ontology file
@@ -1190,7 +1189,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
                 .queryParam("clearCache", true).request().accept(MediaType.APPLICATION_JSON_TYPE).get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         assertGetOntology(true);
         assertEquals(response.readEntity(String.class), ontologyJsonLd.toString());
         verify(ontologyCache).removeFromCache(recordId.stringValue(), commitId.stringValue());
@@ -1206,7 +1205,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
                 .request().accept(MediaType.APPLICATION_JSON_TYPE).get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         assertGetOntology(false);
         assertEquals(response.readEntity(String.class), ontologyJsonLd.toString());
         verify(ontologyCache, times(0)).removeFromCache(anyString(), anyString());
@@ -1218,7 +1217,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("applyInProgressCommit", false)
                 .request().accept(MediaType.APPLICATION_JSON_TYPE).get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         assertEquals(response.readEntity(String.class), ontologyJsonLd.toString());
         verify(engineManager, times(0)).retrieveUser(anyString());
         verify(commitManager, times(0)).getInProgressCommitOpt(any(Resource.class), any(Resource.class), any(User.class), any(RepositoryConnection.class));
@@ -1232,7 +1231,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("commitId", commitId.stringValue()).queryParam("entityId", catalogId.stringValue())
                 .request().accept(MediaType.APPLICATION_JSON_TYPE).get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         assertGetOntology(true);
         assertEquals(response.readEntity(String.class), ontologyJsonLd.toString());
         verify(ontologyCache, times(0)).removeFromCache(anyString(),  anyString());
@@ -1243,7 +1242,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()))
                 .queryParam("branchId", branchId.stringValue()).request().accept(MediaType.APPLICATION_JSON_TYPE).get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         assertGetOntology(true);
         assertEquals(response.readEntity(String.class), ontologyJsonLd.toString());
         verify(ontologyCache, times(0)).removeFromCache(anyString(),  anyString());
@@ -1258,7 +1257,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
                 .request().accept(MediaType.APPLICATION_JSON_TYPE).get();
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     // Test save changes to ontology
@@ -1271,7 +1270,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
                 .queryParam("entityId", catalogId.stringValue()).request().post(Entity.json(entity.toString()));
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(true);
         assertGetInProgressCommitIRI(true);
@@ -1288,7 +1287,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
                 .queryParam("entityId", catalogId.stringValue()).request().post(Entity.json(entity.toString()));
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(false);
         assertGetInProgressCommitIRI(false);
@@ -1306,7 +1305,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
                 .queryParam("entityId", catalogId.stringValue()).request().post(Entity.json(entity.toString()));
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(true);
         assertGetInProgressCommitIRI(true);
@@ -1321,7 +1320,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("commitId", commitId.stringValue()).queryParam("entityId", catalogId.stringValue())
                 .request().post(Entity.json(entity.toString()));
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntologyByCommit(recordId, commitId);
         assertGetOntology(true);
         assertGetInProgressCommitIRI(true);
@@ -1336,7 +1335,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("entityId", catalogId.stringValue())
                 .request().post(Entity.json(entity.toString()));
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId);
         assertGetOntology(true);
         assertGetInProgressCommitIRI(true);
@@ -1350,7 +1349,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()))
                 .queryParam("entityId", catalogId.stringValue()).request().post(Entity.json(entity.toString()));
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId);
         assertGetOntology(true);
         assertGetInProgressCommitIRI(true);
@@ -1368,7 +1367,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
                 .queryParam("entityId", catalogId.stringValue()).request().post(Entity.json(entity.toString()));
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     // Test get vocabulary stuff
@@ -1379,7 +1378,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(true);
         ObjectNode responseObject = getResponse(response);
@@ -1400,7 +1399,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(false);
         ObjectNode responseObject = getResponse(response);
@@ -1418,7 +1417,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/vocabulary-stuff")
                 .queryParam("commitId", commitId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntologyByCommit(recordId, commitId);
         assertGetOntology(true);
         ObjectNode responseObject = getResponse(response);
@@ -1437,7 +1436,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).request()
                 .get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId);
         assertGetOntology(true);
         ObjectNode responseObject = getResponse(response);
@@ -1455,7 +1454,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/vocabulary-stuff")
                 .request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId);
         assertGetOntology(true);
         ObjectNode responseObject = getResponse(response);
@@ -1477,7 +1476,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .get();
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     // Test get ontology stuff
@@ -1488,7 +1487,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(true);
         assertGetOntologyStuff(response);
@@ -1502,7 +1501,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(false);
         assertGetOntologyStuff(response);
@@ -1513,7 +1512,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/ontology-stuff")
                 .queryParam("commitId", commitId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntologyByCommit(recordId, commitId);
         assertGetOntology(true);
         assertGetOntologyStuff(response);
@@ -1525,7 +1524,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).request()
                 .get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId);
         assertGetOntology(true);
         assertGetOntologyStuff(response);
@@ -1536,7 +1535,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/ontology-stuff")
                 .request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId);
         assertGetOntology(true);
         assertGetOntologyStuff(response);
@@ -1551,7 +1550,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .get();
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -1570,7 +1569,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .get();
         ObjectNode responseObject = getResponse(response);
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(true);
         assertEquals(getObjectValue(responseObject, "propertyToRanges"), expectedResults);
@@ -1585,7 +1584,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .get();
         ObjectNode responseObject = getResponse(response);
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(true);
         assertTrue(responseObject.has("propertyToRanges"));
@@ -1608,7 +1607,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .get();
         ObjectNode responseObject = getResponse(response);
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(true);
         assertEquals(getObjectValue(responseObject, "classToAssociatedProperties"), expectedResults);
@@ -1623,7 +1622,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .get();
         ObjectNode responseObject = getResponse(response);
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(true);
         assertTrue(responseObject.has("classToAssociatedProperties"));
@@ -1646,7 +1645,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .get();
         ObjectNode responseObject = getResponse(response);
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(true);
 
@@ -1668,7 +1667,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .get();
         ObjectNode responseObject = getResponse(response);
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(true);
         assertTrue(responseObject.has("noDomainProperties"));
@@ -1683,7 +1682,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(true);
         assertEntityNames(response, true, Collections.emptySet());
@@ -1698,7 +1697,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .get();
         ObjectNode responseObject = getResponse(response);
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(true);
         assertTrue(responseObject.has("entityNames"));
@@ -1715,7 +1714,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .get();
         ObjectNode responseObject = getResponse(response);
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(true);
         assertTrue(responseObject.has("entityNames"));
@@ -1737,7 +1736,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(true);
         assertEquals(getResponse(response), propertyToRanges);
@@ -1756,7 +1755,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(false);
         assertEquals(getResponse(response), propertyToRanges);
@@ -1769,7 +1768,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(true);
         ObjectNode responseObject = getResponse(response);
@@ -1793,7 +1792,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(false);
         ObjectNode responseObject = getResponse(response);
@@ -1813,7 +1812,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/iris")
                 .queryParam("commitId", commitId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntologyByCommit(recordId, commitId);
         assertGetOntology(true);
         ObjectNode responseObject = getResponse(response);
@@ -1833,7 +1832,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/iris")
                 .queryParam("branchId", branchId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId);
         assertGetOntology(true);
         ObjectNode responseObject = getResponse(response);
@@ -1852,7 +1851,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
     public void testGetIRIsInOntologyMissingBranchIdAndMissingCommitId() {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/iris").request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId);
         assertGetOntology(true);
         ObjectNode responseObject = getResponse(response);
@@ -1876,7 +1875,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .get();
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     // Test get annotations in ontology
@@ -1887,7 +1886,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(true);
         assertAnnotations(getResponse(response), annotationProperties, annotations);
@@ -1901,7 +1900,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(false);
         assertAnnotations(getResponse(response), annotationProperties, annotations);
@@ -1912,7 +1911,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/annotations")
                 .queryParam("commitId", commitId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntologyByCommit(recordId, commitId);
         assertGetOntology(false);
         assertAnnotations(getResponse(response), annotationProperties, annotations);
@@ -1923,7 +1922,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/annotations")
                 .queryParam("branchId", branchId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId);
         assertGetOntology(false);
         assertAnnotations(getResponse(response), annotationProperties, annotations);
@@ -1934,7 +1933,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/annotations")
                 .request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId);
         assertGetOntology(false);
         assertAnnotations(getResponse(response), annotationProperties, annotations);
@@ -1949,7 +1948,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .get();
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -1961,7 +1960,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(true);
         assertAnnotations(getResponse(response), Collections.emptySet(), Collections.emptySet());
@@ -1989,7 +1988,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/annotations").request()
                 .post(Entity.json(entity.toString()));
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -1997,7 +1996,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/annotations").request()
                 .post(Entity.json(INVALID_JSON));
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -2022,7 +2021,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + encode(classId.stringValue())).queryParam("branchId", branchId.stringValue()).queryParam("commitId",
                 commitId.stringValue()).request().delete();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(true);
         assertDeletionsToInProgressCommit(true);
@@ -2036,7 +2035,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + encode(classId.stringValue())).queryParam("branchId", branchId.stringValue()).queryParam("commitId",
                 commitId.stringValue()).request().delete();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(false);
         assertDeletionsToInProgressCommit(false);
@@ -2047,7 +2046,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/annotations/"
                 + encode(classId.stringValue())).queryParam("commitId", commitId.stringValue()).request().delete();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntologyByCommit(recordId, commitId);
         assertGetOntology(true);
         assertDeletionsToInProgressCommit(true);
@@ -2058,7 +2057,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/annotations/"
                 + encode(classId.stringValue())).queryParam("branchId", branchId.stringValue()).request().delete();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId);
         assertGetOntology(true);
         assertDeletionsToInProgressCommit(true);
@@ -2069,7 +2068,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/annotations/"
                 + encode(classId.stringValue())).request().delete();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId);
         assertGetOntology(true);
         assertDeletionsToInProgressCommit(true);
@@ -2084,7 +2083,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + encode(classId.stringValue())).queryParam("branchId", branchId.stringValue()).queryParam("commitId",
                 commitId.stringValue()).request().delete();
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -2093,7 +2092,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + encode(missingIRI.stringValue())).queryParam("branchId", branchId.stringValue())
                 .queryParam("commitId", commitId.stringValue()).request().delete();
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     // Test get classes in ontology
@@ -2104,7 +2103,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(true);
         assertClasses(getResponseArray(response), classes);
@@ -2118,7 +2117,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(false);
         assertClasses(getResponseArray(response), classes);
@@ -2131,7 +2130,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("applyInProgressCommit", false)
                 .request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         assertClasses(getResponseArray(response), classes);
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         verify(engineManager, times(0)).retrieveUser(anyString());
@@ -2145,7 +2144,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/classes")
                 .queryParam("commitId", commitId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntologyByCommit(recordId, commitId);
         assertGetOntology(true);
         assertClasses(getResponseArray(response), classes);
@@ -2156,7 +2155,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/classes")
                 .queryParam("branchId", branchId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId);
         assertGetOntology(true);
         assertClasses(getResponseArray(response), classes);
@@ -2167,7 +2166,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/classes").request()
                 .get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId);
         assertGetOntology(true);
         assertClasses(getResponseArray(response), classes);
@@ -2182,7 +2181,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .get();
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -2193,7 +2192,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(true);
         assertClasses(getResponseArray(response), Collections.emptySet());
@@ -2221,7 +2220,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/classes").request()
                 .post(Entity.json(entity.toString()));
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -2229,7 +2228,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/classes").request()
                 .post(Entity.json(INVALID_JSON));
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -2254,7 +2253,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + encode(classId.stringValue())).queryParam("branchId", branchId.stringValue()).queryParam("commitId",
                 commitId.stringValue()).request().delete();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(true);
         assertDeletionsToInProgressCommit(true);
@@ -2268,7 +2267,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + encode(classId.stringValue())).queryParam("branchId", branchId.stringValue()).queryParam("commitId",
                 commitId.stringValue()).request().delete();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(false);
         assertDeletionsToInProgressCommit(false);
@@ -2279,7 +2278,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/classes/"
                 + encode(classId.stringValue())).queryParam("commitId", commitId.stringValue()).request().delete();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntologyByCommit(recordId, commitId);
         assertGetOntology(true);
         assertDeletionsToInProgressCommit(true);
@@ -2290,7 +2289,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/classes/"
                 + encode(classId.stringValue())).queryParam("branchId", branchId.stringValue()).request().delete();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId);
         assertGetOntology(true);
         assertDeletionsToInProgressCommit(true);
@@ -2301,7 +2300,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/classes/"
                 + encode(classId.stringValue())).request().delete();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId);
         assertGetOntology(true);
         assertDeletionsToInProgressCommit(true);
@@ -2316,7 +2315,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + encode(classId.stringValue())).queryParam("branchId", branchId.stringValue()).queryParam("commitId",
                 commitId.stringValue()).request().delete();
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -2325,7 +2324,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + encode(missingIRI.stringValue())).queryParam("branchId", branchId.stringValue())
                 .queryParam("commitId", commitId.stringValue()).request().delete();
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     // Test get datatypes in ontology
@@ -2336,7 +2335,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(true);
         assertDatatypes(getResponse(response), datatypes);
@@ -2350,7 +2349,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(false);
         assertDatatypes(getResponse(response), datatypes);
@@ -2361,7 +2360,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/datatypes")
                 .queryParam("commitId", commitId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntologyByCommit(recordId, commitId);
         assertGetOntology(true);
         assertDatatypes(getResponse(response), datatypes);
@@ -2372,7 +2371,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/datatypes")
                 .queryParam("branchId", branchId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId);
         assertGetOntology(true);
         assertDatatypes(getResponse(response), datatypes);
@@ -2383,7 +2382,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/datatypes").request()
                 .get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId);
         assertGetOntology(true);
         assertDatatypes(getResponse(response), datatypes);
@@ -2398,7 +2397,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .get();
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -2409,7 +2408,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(true);
         assertDatatypes(getResponse(response), Collections.emptySet());
@@ -2437,7 +2436,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/datatypes").request()
                 .post(Entity.json(entity.toString()));
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -2445,7 +2444,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/datatypes").request()
                 .post(Entity.json(INVALID_JSON));
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -2470,7 +2469,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + encode(datatypeIRI.stringValue())).queryParam("branchId", branchId.stringValue())
                 .queryParam("commitId", commitId.stringValue()).request().delete();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(true);
         assertDeletionsToInProgressCommit(true);
@@ -2484,7 +2483,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + encode(datatypeIRI.stringValue())).queryParam("branchId", branchId.stringValue())
                 .queryParam("commitId", commitId.stringValue()).request().delete();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(false);
         assertDeletionsToInProgressCommit(false);
@@ -2495,7 +2494,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/datatypes/"
                 + encode(datatypeIRI.stringValue())).queryParam("commitId", commitId.stringValue()).request().delete();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntologyByCommit(recordId, commitId);
         assertGetOntology(true);
         assertDeletionsToInProgressCommit(true);
@@ -2506,7 +2505,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/datatypes/"
                 + encode(datatypeIRI.stringValue())).queryParam("branchId", branchId.stringValue()).request().delete();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId);
         assertGetOntology(true);
         assertDeletionsToInProgressCommit(true);
@@ -2517,7 +2516,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/datatypes/"
                 + encode(datatypeIRI.stringValue())).request().delete();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId);
         assertGetOntology(true);
         assertDeletionsToInProgressCommit(true);
@@ -2532,7 +2531,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + encode(datatypeIRI.stringValue())).queryParam("branchId", branchId.stringValue())
                 .queryParam("commitId", commitId.stringValue()).request().delete();
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -2541,7 +2540,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + encode(missingIRI.stringValue())).queryParam("branchId", branchId.stringValue())
                 .queryParam("commitId", commitId.stringValue()).request().delete();
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     // Test get object properties in ontology
@@ -2552,7 +2551,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(true);
         assertObjectProperties(getResponseArray(response), objectProperties);
@@ -2566,7 +2565,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(false);
         assertObjectProperties(getResponseArray(response), objectProperties);
@@ -2577,7 +2576,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/object-properties")
                 .queryParam("commitId", commitId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntologyByCommit(recordId, commitId);
         assertGetOntology(true);
         assertObjectProperties(getResponseArray(response), objectProperties);
@@ -2588,7 +2587,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/object-properties")
                 .queryParam("branchId", branchId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId);
         assertGetOntology(true);
         assertObjectProperties(getResponseArray(response), objectProperties);
@@ -2599,7 +2598,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/object-properties")
                 .request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId);
         assertGetOntology(true);
         assertObjectProperties(getResponseArray(response), objectProperties);
@@ -2614,7 +2613,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId",
                         commitId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -2625,7 +2624,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(true);
         assertObjectProperties(getResponseArray(response), Collections.emptySet());
@@ -2653,7 +2652,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/object-properties")
                 .request().post(Entity.json(entity.toString()));
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -2661,7 +2660,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/object-properties")
                 .request().post(Entity.json(INVALID_JSON));
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -2686,7 +2685,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + encode(objectPropertyIRI.stringValue())).queryParam("branchId", branchId.stringValue())
                 .queryParam("commitId", commitId.stringValue()).request().delete();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(true);
         assertDeletionsToInProgressCommit(true);
@@ -2700,7 +2699,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + encode(objectPropertyIRI.stringValue())).queryParam("branchId", branchId.stringValue())
                 .queryParam("commitId", commitId.stringValue()).request().delete();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(false);
         assertDeletionsToInProgressCommit(false);
@@ -2712,7 +2711,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + encode(objectPropertyIRI.stringValue())).queryParam("commitId", commitId.stringValue()).request()
                 .delete();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntologyByCommit(recordId, commitId);
         assertGetOntology(true);
         assertDeletionsToInProgressCommit(true);
@@ -2724,7 +2723,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + encode(objectPropertyIRI.stringValue())).queryParam("branchId", branchId.stringValue()).request()
                 .delete();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId);
         assertGetOntology(true);
         assertDeletionsToInProgressCommit(true);
@@ -2735,7 +2734,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/object-properties/"
                 + encode(objectPropertyIRI.stringValue())).request().delete();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId);
         assertGetOntology(true);
         assertDeletionsToInProgressCommit(true);
@@ -2750,7 +2749,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + encode(objectPropertyIRI.stringValue())).queryParam("branchId", branchId.stringValue())
                 .queryParam("commitId", commitId.stringValue()).request().delete();
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -2759,7 +2758,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + encode(missingIRI.stringValue())).queryParam("branchId", branchId.stringValue())
                 .queryParam("commitId", commitId.stringValue()).request().delete();
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     // Test get data properties in ontology
@@ -2770,7 +2769,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(true);
         assertDataProperties(getResponseArray(response), dataProperties);
@@ -2782,7 +2781,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(false);
         assertDataProperties(getResponseArray(response), dataProperties);
@@ -2793,7 +2792,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/data-properties")
                 .queryParam("commitId", commitId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntologyByCommit(recordId, commitId);
         assertGetOntology(true);
         assertDataProperties(getResponseArray(response), dataProperties);
@@ -2804,7 +2803,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/data-properties")
                 .queryParam("branchId", branchId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId);
         assertGetOntology(true);
         assertDataProperties(getResponseArray(response), dataProperties);
@@ -2815,7 +2814,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/data-properties")
                 .request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId);
         assertGetOntology(true);
         assertDataProperties(getResponseArray(response), dataProperties);
@@ -2830,7 +2829,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId",
                         commitId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -2841,7 +2840,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(true);
         assertDataProperties(getResponseArray(response), Collections.emptySet());
@@ -2869,7 +2868,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/data-properties")
                 .request().post(Entity.json(entity.toString()));
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -2877,7 +2876,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/data-properties")
                 .request().post(Entity.json(INVALID_JSON));
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -2902,7 +2901,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + encode(dataPropertyIRI.stringValue())).queryParam("branchId", branchId.stringValue())
                 .queryParam("commitId", commitId.stringValue()).request().delete();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(true);
         assertDeletionsToInProgressCommit(true);
@@ -2916,7 +2915,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + encode(dataPropertyIRI.stringValue())).queryParam("branchId", branchId.stringValue())
                 .queryParam("commitId", commitId.stringValue()).request().delete();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(false);
         assertDeletionsToInProgressCommit(false);
@@ -2928,7 +2927,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + encode(dataPropertyIRI.stringValue())).queryParam("commitId", commitId.stringValue()).request()
                 .delete();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntologyByCommit(recordId, commitId);
         assertGetOntology(true);
         assertDeletionsToInProgressCommit(true);
@@ -2940,7 +2939,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + encode(dataPropertyIRI.stringValue())).queryParam("branchId", branchId.stringValue()).request()
                 .delete();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId);
         assertGetOntology(true);
         assertDeletionsToInProgressCommit(true);
@@ -2951,7 +2950,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/data-properties/"
                 + encode(dataPropertyIRI.stringValue())).request().delete();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId);
         assertGetOntology(true);
         assertDeletionsToInProgressCommit(true);
@@ -2966,7 +2965,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + encode(dataPropertyIRI.stringValue())).queryParam("branchId", branchId.stringValue())
                 .queryParam("commitId", commitId.stringValue()).request().delete();
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -2975,7 +2974,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + encode(missingIRI.stringValue())).queryParam("branchId", branchId.stringValue())
                 .queryParam("commitId", commitId.stringValue()).request().delete();
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     // Test get named individuals in ontology
@@ -2986,7 +2985,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(true);
         assertIndividuals(getResponse(response), namedIndividuals);
@@ -2998,7 +2997,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(false);
         assertIndividuals(getResponse(response), namedIndividuals);
@@ -3009,7 +3008,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/named-individuals")
                 .queryParam("commitId", commitId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntologyByCommit(recordId, commitId);
         assertGetOntology(true);
         assertIndividuals(getResponse(response), namedIndividuals);
@@ -3020,7 +3019,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/named-individuals")
                 .queryParam("branchId", branchId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId);
         assertGetOntology(true);
         assertIndividuals(getResponse(response), namedIndividuals);
@@ -3031,7 +3030,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/named-individuals")
                 .request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId);
         assertGetOntology(true);
         assertIndividuals(getResponse(response), namedIndividuals);
@@ -3046,7 +3045,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .get();
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -3057,7 +3056,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(true);
         assertIndividuals(getResponse(response), Collections.emptySet());
@@ -3085,7 +3084,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/named-individuals")
                 .request().post(Entity.json(entity.toString()));
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -3093,7 +3092,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/named-individuals")
                 .request().post(Entity.json(INVALID_JSON));
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -3120,7 +3119,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/data-properties")
                 .request().post(Entity.json(entity.toString()));
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     // Test delete named individual from ontology
@@ -3131,7 +3130,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + encode(individualIRI.stringValue())).queryParam("branchId", branchId.stringValue())
                 .queryParam("commitId", commitId.stringValue()).request().delete();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(true);
         assertDeletionsToInProgressCommit(true);
@@ -3145,7 +3144,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + encode(individualIRI.stringValue())).queryParam("branchId", branchId.stringValue())
                 .queryParam("commitId", commitId.stringValue()).request().delete();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(false);
         assertDeletionsToInProgressCommit(false);
@@ -3157,7 +3156,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + encode(individualIRI.stringValue())).queryParam("commitId", commitId.stringValue()).request()
                 .delete();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntologyByCommit(recordId, commitId);
         assertGetOntology(true);
         assertDeletionsToInProgressCommit(true);
@@ -3169,7 +3168,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + encode(individualIRI.stringValue())).queryParam("branchId", branchId.stringValue()).request()
                 .delete();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId);
         assertGetOntology(true);
         assertDeletionsToInProgressCommit(true);
@@ -3180,7 +3179,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/named-individuals/"
                 + encode(individualIRI.stringValue())).request().delete();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId);
         assertGetOntology(true);
         assertDeletionsToInProgressCommit(true);
@@ -3195,7 +3194,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + encode(individualIRI.stringValue())).queryParam("branchId", branchId.stringValue())
                 .queryParam("commitId", commitId.stringValue()).request().delete();
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -3204,7 +3203,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + encode(missingIRI.stringValue())).queryParam("branchId", branchId.stringValue())
                 .queryParam("commitId", commitId.stringValue()).request().delete();
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     // Test get IRIs in imported ontologies
@@ -3215,7 +3214,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(true);
         assertImportedOntologies(getResponseArray(response), (responseObject) -> {
@@ -3239,7 +3238,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(false);
         assertImportedOntologies(getResponseArray(response), (responseObject) -> {
@@ -3260,7 +3259,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/imported-iris")
                 .queryParam("commitId", commitId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntologyByCommit(recordId, commitId);
         assertGetOntology(true);
         assertImportedOntologies(getResponseArray(response), (responseObject) -> {
@@ -3281,7 +3280,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/imported-iris")
                 .queryParam("branchId", branchId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId);
         assertGetOntology(true);
         assertImportedOntologies(getResponseArray(response), (responseObject) -> {
@@ -3302,7 +3301,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/imported-iris")
                 .request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId);
         assertGetOntology(true);
         assertImportedOntologies(getResponseArray(response), (responseObject) -> {
@@ -3327,7 +3326,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId",
                         commitId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -3351,7 +3350,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
 
         ArrayNode responseArray = getResponseArray(response);
 
@@ -3368,7 +3367,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
 
         ArrayNode responseArray = getResponseArray(response);
 
@@ -3385,7 +3384,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
 
         ArrayNode responseArray = getResponseArray(response);
 
@@ -3408,7 +3407,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
     }
 
     // Test get imports closure
@@ -3419,7 +3418,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(true);
         assertEquals(getResponseArray(response), importsClosureResults);
@@ -3431,7 +3430,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
                 .queryParam("applyInProgressCommit", false).request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         verify(engineManager, times(0)).retrieveUser(anyString());
         verify(commitManager, times(0)).getInProgressCommitOpt(any(Resource.class), any(Resource.class), any(User.class), any(RepositoryConnection.class));
@@ -3448,7 +3447,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(false);
         assertEquals(getResponseArray(response), importsClosureResults);
@@ -3459,7 +3458,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/imported-ontologies")
                 .queryParam("commitId", commitId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntologyByCommit(recordId, commitId);
         assertGetOntology(true);
         assertEquals(getResponseArray(response), importsClosureResults);
@@ -3470,7 +3469,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/imported-ontologies")
                 .queryParam("branchId", branchId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId);
         assertGetOntology(true);
         assertEquals(getResponseArray(response), importsClosureResults);
@@ -3481,7 +3480,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/imported-ontologies")
                 .request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId);
         assertGetOntology(true);
         assertEquals(getResponseArray(response), importsClosureResults);
@@ -3496,7 +3495,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .get();
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -3518,7 +3517,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(true);
         assertImportedOntologies(getResponseArray(response), (responseObject) ->
@@ -3533,7 +3532,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(false);
         assertImportedOntologies(getResponseArray(response), (responseObject) ->
@@ -3545,7 +3544,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/imported-annotations")
                 .queryParam("commitId", commitId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntologyByCommit(recordId, commitId);
         assertGetOntology(true);
         assertImportedOntologies(getResponseArray(response), (responseObject) ->
@@ -3557,7 +3556,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/imported-annotations")
                 .queryParam("branchId", branchId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId);
         assertGetOntology(true);
         assertImportedOntologies(getResponseArray(response), (responseObject) ->
@@ -3569,7 +3568,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/imported-annotations")
                 .request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId);
         assertGetOntology(true);
         assertImportedOntologies(getResponseArray(response), (responseObject) ->
@@ -3585,7 +3584,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .get();
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -3607,7 +3606,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(true);
         assertImportedOntologies(getResponseArray(response), (responseObject) ->
@@ -3622,7 +3621,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(false);
         assertImportedOntologies(getResponseArray(response), (responseObject) ->
@@ -3634,7 +3633,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/imported-classes")
                 .queryParam("commitId", commitId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntologyByCommit(recordId, commitId);
         assertGetOntology(true);
         assertImportedOntologies(getResponseArray(response), (responseObject) ->
@@ -3646,7 +3645,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/imported-classes")
                 .queryParam("branchId", branchId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId);
         assertGetOntology(true);
         assertImportedOntologies(getResponseArray(response), (responseObject) ->
@@ -3658,7 +3657,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/imported-classes")
                 .request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId);
         assertGetOntology(true);
         assertImportedOntologies(getResponseArray(response), (responseObject) ->
@@ -3674,7 +3673,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .get();
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -3696,7 +3695,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(true);
         assertImportedOntologies(getResponseArray(response), (responseObject) ->
@@ -3711,7 +3710,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(false);
         assertImportedOntologies(getResponseArray(response), (responseObject) ->
@@ -3723,7 +3722,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/imported-datatypes")
                 .queryParam("commitId", commitId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntologyByCommit(recordId, commitId);
         assertGetOntology(true);
         assertImportedOntologies(getResponseArray(response), (responseObject) ->
@@ -3735,7 +3734,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/imported-datatypes")
                 .queryParam("branchId", branchId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId);
         assertGetOntology(true);
         assertImportedOntologies(getResponseArray(response), (responseObject) ->
@@ -3747,7 +3746,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/imported-datatypes")
                 .request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId);
         assertGetOntology(true);
         assertImportedOntologies(getResponseArray(response), (responseObject) ->
@@ -3763,7 +3762,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId",
                         commitId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -3785,7 +3784,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + "/imported-object-properties").queryParam("branchId", branchId.stringValue()).queryParam("commitId",
                 commitId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(true);
         assertImportedOntologies(getResponseArray(response), (responseObject) ->
@@ -3800,7 +3799,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + "/imported-object-properties").queryParam("branchId", branchId.stringValue()).queryParam("commitId",
                 commitId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(false);
         assertImportedOntologies(getResponseArray(response), (responseObject) ->
@@ -3812,7 +3811,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue())
                 + "/imported-object-properties").queryParam("commitId", commitId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntologyByCommit(recordId, commitId);
         assertGetOntology(true);
         assertImportedOntologies(getResponseArray(response), (responseObject) ->
@@ -3824,7 +3823,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue())
                 + "/imported-object-properties").queryParam("branchId", branchId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId);
         assertGetOntology(true);
         assertImportedOntologies(getResponseArray(response), (responseObject) ->
@@ -3836,7 +3835,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue())
                 + "/imported-object-properties").request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId);
         assertGetOntology(true);
         assertImportedOntologies(getResponseArray(response), (responseObject) ->
@@ -3852,7 +3851,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + "/imported-object-properties").queryParam("branchId", branchId.stringValue()).queryParam("commitId",
                 commitId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -3874,7 +3873,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + "/imported-data-properties").queryParam("branchId", branchId.stringValue()).queryParam("commitId",
                 commitId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(true);
         assertImportedOntologies(getResponseArray(response), (responseObject) ->
@@ -3889,7 +3888,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + "/imported-data-properties").queryParam("branchId", branchId.stringValue()).queryParam("commitId",
                 commitId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(false);
         assertImportedOntologies(getResponseArray(response), (responseObject) ->
@@ -3901,7 +3900,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue())
                 + "/imported-data-properties").queryParam("commitId", commitId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntologyByCommit(recordId, commitId);
         assertGetOntology(true);
         assertImportedOntologies(getResponseArray(response), (responseObject) ->
@@ -3913,7 +3912,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue())
                 + "/imported-data-properties").queryParam("branchId", branchId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId);
         assertGetOntology(true);
         assertImportedOntologies(getResponseArray(response), (responseObject) ->
@@ -3925,7 +3924,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue())
                 + "/imported-data-properties").request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId);
         assertGetOntology(true);
         assertImportedOntologies(getResponseArray(response), (responseObject) ->
@@ -3941,7 +3940,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + "/imported-data-properties").queryParam("branchId", branchId.stringValue()).queryParam("commitId",
                 commitId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -3963,7 +3962,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + "/imported-named-individuals").queryParam("branchId", branchId.stringValue()).queryParam("commitId",
                 commitId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(true);
         assertImportedOntologies(getResponseArray(response), (responseObject) ->
@@ -3978,7 +3977,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + "/imported-named-individuals").queryParam("branchId", branchId.stringValue()).queryParam("commitId",
                 commitId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(false);
         assertImportedOntologies(getResponseArray(response), (responseObject) ->
@@ -3990,7 +3989,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue())
                 + "/imported-named-individuals").queryParam("commitId", commitId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntologyByCommit(recordId, commitId);
         assertGetOntology(true);
         assertImportedOntologies(getResponseArray(response), (responseObject) ->
@@ -4002,7 +4001,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue())
                 + "/imported-named-individuals").queryParam("branchId", branchId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId);
         assertGetOntology(true);
         assertImportedOntologies(getResponseArray(response), (responseObject) ->
@@ -4014,7 +4013,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue())
                 + "/imported-named-individuals").request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId);
         assertGetOntology(true);
         assertImportedOntologies(getResponseArray(response), (responseObject) ->
@@ -4030,7 +4029,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + "/imported-named-individuals").queryParam("branchId", branchId.stringValue()).queryParam("commitId",
                 commitId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -4052,7 +4051,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         verify(ontology).getSubClassesOf();
         assertGetOntology(true);
@@ -4067,7 +4066,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         verify(ontology).getSubClassesOf();
         assertGetOntology(false);
@@ -4079,7 +4078,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/class-hierarchies")
                 .queryParam("commitId", commitId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntologyByCommit(recordId, commitId);
         verify(ontology).getSubClassesOf();
         assertGetOntology(true);
@@ -4091,7 +4090,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/class-hierarchies")
                 .queryParam("branchId", branchId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId);
         verify(ontology).getSubClassesOf();
         assertGetOntology(true);
@@ -4103,7 +4102,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/class-hierarchies")
                 .request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId);
         verify(ontology).getSubClassesOf();
         assertGetOntology(true);
@@ -4119,7 +4118,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .get();
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     // Test get ontology object property hierarchy
@@ -4130,7 +4129,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + "/object-property-hierarchies").queryParam("branchId", branchId.stringValue()).queryParam("commitId",
                 commitId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         verify(ontology).getSubObjectPropertiesOf();
         assertGetOntology(true);
@@ -4145,7 +4144,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + "/object-property-hierarchies").queryParam("branchId", branchId.stringValue()).queryParam("commitId",
                 commitId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         verify(ontology).getSubObjectPropertiesOf();
         assertGetOntology(false);
@@ -4157,7 +4156,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue())
                 + "/object-property-hierarchies").queryParam("commitId", commitId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntologyByCommit(recordId, commitId);
         verify(ontology).getSubObjectPropertiesOf();
         assertGetOntology(true);
@@ -4169,7 +4168,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue())
                 + "/object-property-hierarchies").queryParam("branchId", branchId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId);
         verify(ontology).getSubObjectPropertiesOf();
         assertGetOntology(true);
@@ -4181,7 +4180,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue())
                 + "/object-property-hierarchies").request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId);
         verify(ontology).getSubObjectPropertiesOf();
         assertGetOntology(true);
@@ -4197,7 +4196,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + "/object-property-hierarchies").queryParam("branchId", branchId.stringValue()).queryParam("commitId",
                 commitId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     // Test get ontology data property hierarchy
@@ -4208,7 +4207,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + "/data-property-hierarchies").queryParam("branchId", branchId.stringValue()).queryParam("commitId",
                 commitId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         verify(ontology).getSubDatatypePropertiesOf();
         assertGetOntology(true);
@@ -4223,7 +4222,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + "/data-property-hierarchies").queryParam("branchId", branchId.stringValue()).queryParam("commitId",
                 commitId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         verify(ontology).getSubDatatypePropertiesOf();
         assertGetOntology(false);
@@ -4235,7 +4234,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue())
                 + "/data-property-hierarchies").queryParam("commitId", commitId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntologyByCommit(recordId, commitId);
         verify(ontology).getSubDatatypePropertiesOf();
         assertGetOntology(true);
@@ -4247,7 +4246,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue())
                 + "/data-property-hierarchies").queryParam("branchId", branchId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId);
         verify(ontology).getSubDatatypePropertiesOf();
         assertGetOntology(true);
@@ -4259,7 +4258,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue())
                 + "/data-property-hierarchies").request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId);
         verify(ontology).getSubDatatypePropertiesOf();
         assertGetOntology(true);
@@ -4275,7 +4274,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + "/data-property-hierarchies").queryParam("branchId", branchId.stringValue()).queryParam("commitId",
                 commitId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     // Test get ontology annotation property hierarchy
@@ -4286,7 +4285,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + "/annotation-property-hierarchies").queryParam("branchId", branchId.stringValue()).queryParam("commitId",
                 commitId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         verify(ontology).getSubAnnotationPropertiesOf();
         assertGetOntology(true);
@@ -4301,7 +4300,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + "/annotation-property-hierarchies").queryParam("branchId", branchId.stringValue()).queryParam("commitId",
                 commitId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         verify(ontology).getSubAnnotationPropertiesOf();
         assertGetOntology(false);
@@ -4313,7 +4312,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue())
                 + "/annotation-property-hierarchies").queryParam("commitId", commitId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntologyByCommit(recordId, commitId);
         verify(ontology).getSubAnnotationPropertiesOf();
         assertGetOntology(true);
@@ -4325,7 +4324,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue())
                 + "/annotation-property-hierarchies").queryParam("branchId", branchId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId);
         verify(ontology).getSubAnnotationPropertiesOf();
         assertGetOntology(true);
@@ -4337,7 +4336,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue())
                 + "/annotation-property-hierarchies").request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId);
         verify(ontology).getSubAnnotationPropertiesOf();
         assertGetOntology(true);
@@ -4353,7 +4352,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + "/annotation-property-hierarchies").queryParam("branchId", branchId.stringValue()).queryParam("commitId",
                 commitId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     // Test get concept hierarchy
@@ -4364,7 +4363,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         verify(ontology).getConceptRelationships();
         assertGetOntology(true);
@@ -4379,7 +4378,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         verify(ontology).getConceptRelationships();
         assertGetOntology(false);
@@ -4391,7 +4390,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/concept-hierarchies")
                 .queryParam("commitId", commitId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntologyByCommit(recordId, commitId);
         verify(ontology).getConceptRelationships();
         assertGetOntology(true);
@@ -4403,7 +4402,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/concept-hierarchies")
                 .queryParam("branchId", branchId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId);
         verify(ontology).getConceptRelationships();
         assertGetOntology(true);
@@ -4415,7 +4414,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/concept-hierarchies")
                 .request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId);
         verify(ontology).getConceptRelationships();
         assertGetOntology(true);
@@ -4431,7 +4430,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .get();
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     // Test get concept scheme hierarchy
@@ -4442,7 +4441,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         verify(ontology).getConceptSchemeRelationships();
         assertGetOntology(true);
@@ -4457,7 +4456,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         verify(ontology).getConceptSchemeRelationships();
         assertGetOntology(false);
@@ -4469,7 +4468,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/concept-scheme-hierarchies")
                 .queryParam("commitId", commitId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntologyByCommit(recordId, commitId);
         verify(ontology).getConceptSchemeRelationships();
         assertGetOntology(true);
@@ -4481,7 +4480,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/concept-scheme-hierarchies")
                 .queryParam("branchId", branchId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId);
         verify(ontology).getConceptSchemeRelationships();
         assertGetOntology(true);
@@ -4493,7 +4492,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/concept-scheme-hierarchies")
                 .request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId);
         verify(ontology).getConceptSchemeRelationships();
         assertGetOntology(true);
@@ -4509,7 +4508,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .get();
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     // Test get classes with individuals
@@ -4520,7 +4519,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + "/classes-with-individuals").queryParam("branchId", branchId.stringValue()).queryParam("commitId",
                 commitId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(true);
         assertEquals(getResponse(response), individualsOfResult);
@@ -4534,7 +4533,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + "/classes-with-individuals").queryParam("branchId", branchId.stringValue()).queryParam("commitId",
                 commitId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(false);
         assertEquals(getResponse(response), individualsOfResult);
@@ -4545,7 +4544,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue())
                 + "/classes-with-individuals").queryParam("commitId", commitId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntologyByCommit(recordId, commitId);
         assertGetOntology(true);
         assertEquals(getResponse(response), individualsOfResult);
@@ -4555,7 +4554,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
     public void testGetClassesWithIndividualsMissingCommitId() {
         Response response = target().path("ontologies/" + encode(recordId.stringValue())
                 + "/classes-with-individuals").queryParam("branchId", branchId.stringValue()).request().get();
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId);
         assertGetOntology(true);
         assertEquals(getResponse(response), individualsOfResult);
@@ -4566,7 +4565,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue())
                 + "/classes-with-individuals").request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId);
         assertGetOntology(true);
         assertEquals(getResponse(response), individualsOfResult);
@@ -4581,7 +4580,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + "/classes-with-individuals").queryParam("branchId", branchId.stringValue()).queryParam("commitId",
                 commitId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     // Test get entity usages when queryType is "select"
@@ -4592,7 +4591,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + encode(classId.stringValue())).queryParam("branchId", branchId.stringValue()).queryParam("commitId",
                 commitId.stringValue()).queryParam("queryType", "select").request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         verify(ontology).getEntityUsages(classId);
         assertGetOntology(true);
@@ -4607,7 +4606,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + encode(classId.stringValue())).queryParam("branchId", branchId.stringValue()).queryParam("commitId",
                 commitId.stringValue()).queryParam("queryType", "select").request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         verify(ontology).getEntityUsages(classId);
         assertGetOntology(false);
@@ -4620,7 +4619,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + encode(classId.stringValue())).queryParam("commitId", commitId.stringValue())
                 .queryParam("queryType", "select").request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntologyByCommit(recordId, commitId);
         verify(ontology).getEntityUsages(classId);
         assertGetOntology(true);
@@ -4633,7 +4632,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + encode(classId.stringValue())).queryParam("branchId", branchId.stringValue())
                 .queryParam("queryType", "select").request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId);
         verify(ontology).getEntityUsages(classId);
         assertGetOntology(true);
@@ -4645,7 +4644,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/entity-usages/"
                 + encode(classId.stringValue())).queryParam("queryType", "select").request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId);
         verify(ontology).getEntityUsages(classId);
         assertGetOntology(true);
@@ -4661,7 +4660,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + encode(classId.stringValue())).queryParam("branchId", branchId.stringValue()).queryParam("commitId",
                 commitId.stringValue()).queryParam("queryType", "select").request().get();
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     // Test get entity usages when queryType is "construct"
@@ -4672,7 +4671,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + encode(classId.stringValue())).queryParam("branchId", branchId.stringValue()).queryParam("commitId",
                 commitId.stringValue()).queryParam("queryType", "construct").request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         verify(ontology).constructEntityUsages(classId);
         assertGetOntology(true);
@@ -4687,7 +4686,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + encode(classId.stringValue())).queryParam("branchId", branchId.stringValue()).queryParam("commitId",
                 commitId.stringValue()).queryParam("queryType", "construct").request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         verify(ontology).constructEntityUsages(classId);
         assertGetOntology(false);
@@ -4700,7 +4699,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + encode(classId.stringValue())).queryParam("commitId", commitId.stringValue())
                 .queryParam("queryType", "construct").request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntologyByCommit(recordId, commitId);
         verify(ontology).constructEntityUsages(classId);
         assertGetOntology(true);
@@ -4713,7 +4712,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + encode(classId.stringValue())).queryParam("branchId", branchId.stringValue())
                 .queryParam("queryType", "construct").request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId);
         verify(ontology).constructEntityUsages(classId);
         assertGetOntology(true);
@@ -4725,7 +4724,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/entity-usages/"
                 + encode(classId.stringValue())).queryParam("queryType", "construct").request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId);
         verify(ontology).constructEntityUsages(classId);
         assertGetOntology(true);
@@ -4741,7 +4740,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + encode(classId.stringValue())).queryParam("branchId", branchId.stringValue()).queryParam("commitId",
                 commitId.stringValue()).queryParam("queryType", "construct").request().get();
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     // Test get entity usages when queryType is "wrong"
@@ -4752,7 +4751,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 + encode(classId.stringValue())).queryParam("branchId", branchId.stringValue()).queryParam("commitId",
                 commitId.stringValue()).queryParam("queryType", "wrong").request().get();
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     // Test get search results
@@ -4763,7 +4762,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
                 .queryParam("searchText", "class").request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(true);
         assertEquals(getResponse(response), searchResults);
@@ -4777,7 +4776,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
                 .queryParam("searchText", "class").request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(false);
         assertEquals(getResponse(response), searchResults);
@@ -4803,7 +4802,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .get();
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -4811,7 +4810,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/search-results")
                 .queryParam("commitId", commitId.stringValue()).queryParam("searchText", "class").request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntologyByCommit(recordId, commitId);
         assertGetOntology(true);
         assertEquals(getResponse(response), searchResults);
@@ -4822,7 +4821,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/search-results")
                 .queryParam("branchId", branchId.stringValue()).queryParam("searchText", "class").request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId);
         assertGetOntology(true);
         assertEquals(getResponse(response), searchResults);
@@ -4833,7 +4832,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/search-results")
                 .queryParam("searchText", "class").request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId);
         assertGetOntology(true);
         assertEquals(getResponse(response), searchResults);
@@ -4848,7 +4847,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
                 .queryParam("searchText", "class").request().get();
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     // Test upload changes
@@ -5024,7 +5023,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
                 .request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         assertFailedImports(getResponseArray(response));
         assertGetOntology(true);
     }
@@ -5037,7 +5036,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
                 .request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         assertFailedImports(getResponseArray(response));
         assertGetOntology(false);
     }
@@ -5047,7 +5046,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/failed-imports")
                 .queryParam("commitId", commitId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         assertFailedImports(getResponseArray(response));
         assertGetOntology(true);
     }
@@ -5057,7 +5056,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/failed-imports")
                 .queryParam("branchId", branchId.stringValue()).request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         assertFailedImports(getResponseArray(response));
         assertGetOntology(true);
     }
@@ -5067,7 +5066,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/failed-imports")
                 .request().get();
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         assertFailedImports(getResponseArray(response));
         assertGetOntology(true);
     }
@@ -5081,7 +5080,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue())
                 .request().get();
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     // Test getEntity
@@ -5184,7 +5183,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .post(Entity.json(objectMapper.createObjectNode().toString()));
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(true);
         assertEntityNames(response, false, Collections.emptySet());
@@ -5198,7 +5197,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .post(Entity.json("{\"filterResources\": [\"http://test.com/Ontology1\", \"http://test.com/Ontology1#prop1\"]}"));
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(true);
         assertEntityNames(response, false, new HashSet<>(Arrays.asList("http://test.com/Ontology1", "http://test.com/Ontology1#prop1")));
@@ -5213,7 +5212,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .post(Entity.json(objectMapper.createObjectNode().toString()));
         ObjectNode responseObject = getResponse(response);
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(true);
         assertEquals(responseObject, expectedResults);
@@ -5229,7 +5228,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .post(Entity.json(objectMapper.createObjectNode().toString()));
         ObjectNode responseObject = getResponse(response);
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(true);
         assertEquals(responseObject, expectedResults);
@@ -5245,7 +5244,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .post(Entity.json(objectMapper.createObjectNode().toString()));
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(false);
         assertEntityNames(response, false, Collections.emptySet());
@@ -5261,7 +5260,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .post(Entity.json("{\"filterResources\": [\"http://test.com/Ontology1\", \"http://test.com/Ontology1#prop1\"]}"));
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(false);
         assertEntityNames(response, false, new HashSet<>(Arrays.asList("http://test.com/Ontology1", "http://test.com/Ontology1#prop1")));
@@ -5277,7 +5276,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .post(Entity.json(objectMapper.createObjectNode().toString()));
         ObjectNode responseObject = getResponse(response);
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(false);
         assertEquals(responseObject, expectedResults);
@@ -5294,7 +5293,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .post(Entity.json(objectMapper.createObjectNode().toString()));
         ObjectNode responseObject = getResponse(response);
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId, commitId);
         assertGetOntology(false);
         assertEquals(responseObject, expectedResults);
@@ -5307,7 +5306,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/entity-names")
                 .queryParam("commitId", commitId.stringValue()).request().post(Entity.json(objectMapper.createObjectNode().toString()));
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntologyByCommit(recordId, commitId);
         assertGetOntology(true);
         assertEntityNames(response, false, Collections.emptySet());
@@ -5321,7 +5320,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("commitId", commitId.stringValue()).request()
                 .post(Entity.json("{\"filterResources\": [\"http://test.com/Ontology1\", \"http://test.com/Ontology1#prop1\"]}"));
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntologyByCommit(recordId, commitId);
         assertGetOntology(true);
         assertEntityNames(response, false, new HashSet<>(Arrays.asList("http://test.com/Ontology1", "http://test.com/Ontology1#prop1")));
@@ -5335,7 +5334,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("commitId", commitId.stringValue()).request().post(Entity.json(objectMapper.createObjectNode().toString()));
         ObjectNode responseObject = getResponse(response);
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntologyByCommit(recordId, commitId);
         assertGetOntology(true);
         assertEquals(responseObject, expectedResults);
@@ -5350,7 +5349,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("commitId", commitId.stringValue()).request().post(Entity.json(objectMapper.createObjectNode().toString()));
         ObjectNode responseObject = getResponse(response);
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntologyByCommit(recordId, commitId);
         assertGetOntology(true);
         assertEquals(responseObject, expectedResults);
@@ -5364,7 +5363,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).request()
                 .post(Entity.json(objectMapper.createObjectNode().toString()));
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId);
         assertGetOntology(true);
         assertEntityNames(response, false, Collections.emptySet());
@@ -5378,7 +5377,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).request()
                 .post(Entity.json("{\"filterResources\": [\"http://test.com/Ontology1\", \"http://test.com/Ontology1#prop1\"]}"));
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId);
         assertGetOntology(true);
         assertEntityNames(response, false, new HashSet<>(Arrays.asList("http://test.com/Ontology1", "http://test.com/Ontology1#prop1")));
@@ -5393,7 +5392,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .post(Entity.json(objectMapper.createObjectNode().toString()));
         ObjectNode responseObject = getResponse(response);
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId);
         assertGetOntology(true);
         assertEquals(responseObject, expectedResults);
@@ -5409,7 +5408,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .post(Entity.json(objectMapper.createObjectNode().toString()));
         ObjectNode responseObject = getResponse(response);
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId, branchId);
         assertGetOntology(true);
         assertEquals(responseObject, expectedResults);
@@ -5422,7 +5421,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/entity-names")
                 .request().post(Entity.json(objectMapper.createObjectNode().toString()));
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId);
         assertGetOntology(true);
         assertEntityNames(response, false, Collections.emptySet());
@@ -5435,7 +5434,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/" + encode(recordId.stringValue()) + "/entity-names")
                 .request().post(Entity.json("{\"filterResources\": [\"http://test.com/Ontology1\", \"http://test.com/Ontology1#prop1\"]}"));
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId);
         assertGetOntology(true);
         assertEntityNames(response, false, new HashSet<>(Arrays.asList("http://test.com/Ontology1", "http://test.com/Ontology1#prop1")));
@@ -5449,7 +5448,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .request().post(Entity.json(objectMapper.createObjectNode().toString()));
         ObjectNode responseObject = getResponse(response);
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId);
         assertGetOntology(true);
         assertEquals(responseObject, expectedResults);
@@ -5464,7 +5463,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .request().post(Entity.json(objectMapper.createObjectNode().toString()));
         ObjectNode responseObject = getResponse(response);
 
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
         verify(ontologyManager).retrieveOntology(recordId);
         assertGetOntology(true);
         assertEquals(responseObject, expectedResults);
@@ -5478,7 +5477,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
                 .queryParam("branchId", branchId.stringValue()).queryParam("commitId", commitId.stringValue()).request()
                 .post(Entity.json(objectMapper.createObjectNode().toString()));
 
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -5490,7 +5489,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/ontology/" + encode(recordId.stringValue())).request()
                 .accept(MediaType.APPLICATION_OCTET_STREAM_TYPE).get();
         assertEquals(response.readEntity(String.class), ontologyTurtle.toString());
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
     }
 
     @Test
@@ -5502,7 +5501,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/ontology/" + encode(recordId.stringValue()))
                 .queryParam("format", "jsonld").request().get();
         assertEquals(response.readEntity(String.class), ontologyJsonLd.toString());
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
     }
 
     @Test
@@ -5514,7 +5513,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/ontology/" + encode(recordId.stringValue()) + ".jsonld")
                 .request().get();
         assertEquals(response.readEntity(String.class), ontologyJsonLd.toString());
-        assertEquals(response.getStatus(), 200);
+        assertEquals(200, response.getStatus());
     }
 
     @Test
@@ -5536,7 +5535,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/ontology/" + encode("https://www.non-exists.com")).request()
                 .accept(MediaType.APPLICATION_OCTET_STREAM_TYPE).get();
         assertEquals("", response.readEntity(String.class));
-        assertEquals(response.getStatus(), 400);
+        assertEquals(400, response.getStatus());
     }
 
     @Test
@@ -5547,7 +5546,7 @@ public class OntologyRestImplTest extends MobiRestTestCXF {
         Response response = target().path("ontologies/ontology/" + encode("www.non-exists.com")).request()
                 .accept(MediaType.APPLICATION_OCTET_STREAM_TYPE).get();
         assertEquals("", response.readEntity(String.class));
-        assertEquals(response.getStatus(), 500);
+        assertEquals(500, response.getStatus());
     }
 
     private void setupEntityNamesRepo() throws Exception {

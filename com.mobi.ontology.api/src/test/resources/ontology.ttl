@@ -1,0 +1,39 @@
+
+<https://mobi.solutions/ontologies/TestOntology> a <http://www.w3.org/2002/07/owl#Ontology>;
+  <http://purl.org/dc/terms/title> "Test Ontology";
+  <http://www.w3.org/2002/07/owl#imports> <http://www.w3.org/2004/02/skos/core> .
+
+<https://mobi.solutions/ontologies/TestOntology#A> a <http://www.w3.org/2002/07/owl#Class>;
+  <http://purl.org/dc/terms/title> "A" .
+
+<https://mobi.solutions/ontologies/TestOntology#B> a <http://www.w3.org/2002/07/owl#Class>;
+  <http://purl.org/dc/terms/title> "B" .
+
+<https://mobi.solutions/ontologies/TestOntology#C> a <http://www.w3.org/2002/07/owl#Class>;
+  <http://purl.org/dc/terms/title> "C";
+  <http://www.w3.org/2000/01/rdf-schema#subClassOf> _:7ef864c2-6556-4450-ada9-e70379e2a240 .
+
+_:7ef864c2-6556-4450-ada9-e70379e2a240 a <http://www.w3.org/2002/07/owl#Class>;
+  <http://www.w3.org/2002/07/owl#unionOf> _:77811bcb-7d0b-45c9-9572-3a5e87a1655f .
+
+<https://mobi.solutions/ontologies/TestOntology#name> a <http://www.w3.org/2002/07/owl#DatatypeProperty>;
+  <http://purl.org/dc/terms/title> "name";
+  <http://www.w3.org/2000/01/rdf-schema#domain> <https://mobi.solutions/ontologies/TestOntology#C>;
+  <http://www.w3.org/2000/01/rdf-schema#range> <http://www.w3.org/2001/XMLSchema#string> .
+
+_:77811bcb-7d0b-45c9-9572-3a5e87a1655f a <http://www.w3.org/1999/02/22-rdf-syntax-ns#List>;
+  <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> <https://mobi.solutions/ontologies/TestOntology#A>;
+  <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> _:ceb331f9-b313-4fd7-b7d9-ec3874861dbc .
+
+_:ceb331f9-b313-4fd7-b7d9-ec3874861dbc a <http://www.w3.org/1999/02/22-rdf-syntax-ns#List>;
+  <http://www.w3.org/1999/02/22-rdf-syntax-ns#first> <https://mobi.solutions/ontologies/TestOntology#B>;
+  <http://www.w3.org/1999/02/22-rdf-syntax-ns#rest> <http://www.w3.org/1999/02/22-rdf-syntax-ns#nil> .
+
+<https://mobi.solutions/ontologies/TestOntology#AnimalKingdom> a <http://www.w3.org/2004/02/skos/core#ConceptScheme>,
+    <http://www.w3.org/2002/07/owl#NamedIndividual>;
+  <http://purl.org/dc/terms/title> "Animal Kingdom";
+  <http://www.w3.org/2004/02/skos/core#hasTopConcept> <https://mobi.solutions/ontologies/TestOntology#Tiger> .
+
+<https://mobi.solutions/ontologies/TestOntology#Tiger> a <http://www.w3.org/2004/02/skos/core#Concept>,
+    <http://www.w3.org/2002/07/owl#NamedIndividual>;
+  <http://www.w3.org/2004/02/skos/core#prefLabel> "Tiger" .
