@@ -29,6 +29,7 @@ import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.query.TupleQueryResult;
 
+import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
 import java.util.Optional;
 import java.util.Set;
@@ -48,7 +49,7 @@ public interface Ontology extends QueryableVersionedRDF {
      * @return an OutputStream of OWL-XML
      * @throws org.eclipse.rdf4j.rio.RDFHandlerException If an error occurs while parsing
      */
-    OutputStream asOwlXml();
+    ByteArrayOutputStream asOwlXml();
 
     /**
      * Returns the Ontology as OWL-XML written to the given OutputStream.
@@ -57,7 +58,7 @@ public interface Ontology extends QueryableVersionedRDF {
      * @return the OutputStream that was written to
      * @throws org.eclipse.rdf4j.rio.RDFHandlerException If an error occurs while parsing
      */
-    OutputStream asOwlXml(OutputStream outputStream);
+    <T extends OutputStream> T asOwlXml(T outputStream);
 
     /**
      * Returns the OntologyID that describes the Ontology IRI, Version IRI,

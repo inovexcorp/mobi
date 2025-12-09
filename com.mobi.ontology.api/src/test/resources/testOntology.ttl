@@ -1,0 +1,487 @@
+# baseURI: http://example.org/test
+# prefix: test
+
+@prefix test: <http://example.org/test#> .
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix xsd: <http://www.w3.org/2001/XMLSchema#> .
+
+<http://example.org/test>
+  a owl:Ontology ;
+  rdfs:label "OWL to SHACL Test Ontology" ;
+  rdfs:comment "Comprehensive test ontology for all owl2shacl conversion rules" ;
+.
+
+# ========== PROPERTIES ==========
+
+test:hasName
+  a owl:DatatypeProperty ;
+  rdfs:domain test:Person ;
+  rdfs:range xsd:string ;
+  rdfs:label "has name" ;
+.
+
+test:hasAge
+  a owl:DatatypeProperty, owl:FunctionalProperty ;
+  rdfs:domain test:Person ;
+  rdfs:range xsd:integer ;
+  rdfs:label "has age" ;
+.
+
+test:hasEmail
+  a owl:DatatypeProperty ;
+  rdfs:domain test:Person ;
+  rdfs:label "has email" ;
+.
+
+test:worksFor
+  a owl:ObjectProperty ;
+  rdfs:domain test:Employee ;
+  rdfs:range test:Company ;
+  rdfs:label "works for" ;
+.
+
+test:manages
+  a owl:ObjectProperty ;
+  rdfs:domain test:Manager ;
+  rdfs:range test:Employee ;
+  rdfs:label "manages" ;
+.
+
+test:hasPart
+  a owl:ObjectProperty ;
+  rdfs:label "has part" ;
+.
+
+test:memberOf
+  a owl:ObjectProperty ;
+  rdfs:label "member of" ;
+.
+
+test:isPlayedBy
+  a owl:ObjectProperty ;
+  rdfs:label "is played by" ;
+.
+
+test:holdsEquityIn
+  a owl:ObjectProperty ;
+  rdfs:label "holds equity in" ;
+.
+
+test:hasSkill
+  a owl:ObjectProperty ;
+  rdfs:label "has skill" ;
+.
+
+# ========== CLASSES ==========
+
+# Test: AddTypeNodeShape - basic class
+test:Person
+  a owl:Class ;
+  rdfs:label "Person" ;
+.
+
+# Test: rdfsRange2shClassOrDatatype with datatype
+test:TypedPerson
+  a owl:Class ;
+  rdfs:subClassOf test:Person ;
+  rdfs:label "Typed Person" ;
+.
+
+# Test: owlDisjointWith2NotClass
+test:Adult
+  a owl:Class ;
+  rdfs:subClassOf test:Person ;
+  owl:disjointWith test:Child ;
+  rdfs:label "Adult" ;
+.
+
+test:Child
+  a owl:Class ;
+  rdfs:subClassOf test:Person ;
+  rdfs:label "Child" ;
+.
+
+# Test: FlattenIntersectionOf and CopyEquivalentIntersection
+test:WorkingAdult
+  a owl:Class ;
+  owl:equivalentClass [
+    a owl:Class ;
+    owl:intersectionOf (
+      test:Adult
+      test:Employee
+    )
+  ] ;
+  rdfs:label "Working Adult" ;
+.
+
+# Test: owlAllValuesFrom2shClassOrDatatype
+test:Company
+  a owl:Class ;
+  rdfs:subClassOf [
+    a owl:Restriction ;
+    owl:onProperty test:hasPart ;
+    owl:allValuesFrom test:Department ;
+  ] ;
+  rdfs:label "Company" ;
+.
+
+test:Department
+  a owl:Class ;
+  rdfs:label "Department" ;
+.
+
+# Test: owlAllValuesFromUnion2shClassOrDatatype
+test:Organization
+  a owl:Class ;
+  rdfs:subClassOf [
+    a owl:Restriction ;
+    owl:onProperty test:hasPart ;
+    owl:allValuesFrom [
+      a owl:Class ;
+      owl:unionOf (
+        test:Department
+        test:Team
+      )
+    ]
+  ] ;
+  rdfs:label "Organization" ;
+.
+
+test:Team
+  a owl:Class ;
+  rdfs:label "Team" ;
+.
+
+# Test: owlSomeValuesFrom2shMinCount1
+test:Employee
+  a owl:Class ;
+  rdfs:subClassOf test:Person ;
+  rdfs:subClassOf [
+    a owl:Restriction ;
+    owl:onProperty test:worksFor ;
+    owl:someValuesFrom test:Company ;
+  ] ;
+  rdfs:label "Employee" ;
+.
+
+# Test: owlSomeValuesFromIRI2dashHasValueWithClass
+test:ContractWorker
+  a owl:Class ;
+  rdfs:subClassOf test:Person ;
+  rdfs:subClassOf [
+    a owl:Restriction ;
+    owl:onProperty test:memberOf ;
+    owl:someValuesFrom test:Team ;
+  ] ;
+  rdfs:label "Contract Worker" ;
+.
+
+# Test: owlSomeValuesFromAllValuesFrom2dashHasValueWithClass
+test:ConstitutionalOwner
+  a owl:Class ;
+  rdfs:subClassOf [
+    a owl:Restriction ;
+    owl:onProperty test:isPlayedBy ;
+    owl:someValuesFrom [
+      a owl:Restriction ;
+      owl:allValuesFrom test:StockholdersEquity ;
+      owl:onProperty test:holdsEquityIn ;
+    ] ;
+  ] ;
+  rdfs:label "Constitutional Owner" ;
+.
+
+test:StockholdersEquity
+  a owl:Class ;
+  rdfs:label "Stockholders Equity" ;
+.
+
+# Test: owlSomeValuesFromUnion2dashHasValueWithClass adjusted to produce equal SHACL constraint according to https://datashapes.org/constraints.html#HasValueWithClassConstraintComponent
+test:MultiSkilled
+  a owl:Class ;
+  rdfs:subClassOf [
+    a owl:Restriction ;
+    owl:onProperty test:hasSkill ;
+    owl:someValuesFrom [
+      a owl:Class ;
+      owl:unionOf (
+        test:TechnicalSkill
+        test:ManagementSkill
+      )
+    ]
+  ] ;
+  rdfs:label "Multi-Skilled" ;
+.
+
+test:TechnicalSkill
+  a owl:Class ;
+  rdfs:label "Technical Skill" ;
+.
+
+test:ManagementSkill
+  a owl:Class ;
+  rdfs:label "Management Skill" ;
+.
+
+# Test: owlHasValue2shHasValue
+test:Retiree
+  a owl:Class ;
+  rdfs:subClassOf test:Person ;
+  rdfs:subClassOf [
+    a owl:Restriction ;
+    owl:onProperty test:hasAge ;
+    owl:hasValue 65 ;
+  ] ;
+  rdfs:label "Retiree" ;
+.
+
+# Test: owlMinCardinality2shMinCount
+test:Manager
+  a owl:Class ;
+  rdfs:subClassOf test:Employee ;
+  rdfs:subClassOf [
+    a owl:Restriction ;
+    owl:onProperty test:manages ;
+    owl:minCardinality "1"^^xsd:nonNegativeInteger ;
+  ] ;
+  rdfs:label "Manager" ;
+.
+
+# Test: owlMaxCardinality2shMaxCount and owlFunctionalProperty2shMaxCount1
+test:SingleEmployer
+  a owl:Class ;
+  rdfs:subClassOf test:Employee ;
+  rdfs:subClassOf [
+    a owl:Restriction ;
+    owl:onProperty test:worksFor ;
+    owl:maxCardinality "1"^^xsd:nonNegativeInteger ;
+  ] ;
+  rdfs:label "Single Employer" ;
+.
+
+# Test: owlCardinality (both min and max)
+test:DualCitizen
+  a owl:Class ;
+  rdfs:subClassOf test:Person ;
+  rdfs:subClassOf [
+    a owl:Restriction ;
+    owl:onProperty test:hasCitizenship ;
+    owl:cardinality "2"^^xsd:nonNegativeInteger ;
+  ] ;
+  rdfs:label "Dual Citizen" ;
+.
+
+test:hasCitizenship
+  a owl:ObjectProperty ;
+  rdfs:label "has citizenship" ;
+.
+
+# Test: owlMinQualifiedCardinalityOnClass2shMinCount
+test:TeamLead
+  a owl:Class ;
+  rdfs:subClassOf test:Manager ;
+  rdfs:subClassOf [
+    a owl:Restriction ;
+    owl:onProperty test:manages ;
+    owl:onClass test:Employee ;
+    owl:minQualifiedCardinality "3"^^xsd:nonNegativeInteger ;
+  ] ;
+  rdfs:label "Team Lead" ;
+.
+
+# Test: owlMaxQualifiedCardinalityOnClass2shMaxCount
+test:SmallTeamLead
+  a owl:Class ;
+  rdfs:subClassOf test:Manager ;
+  rdfs:subClassOf [
+    a owl:Restriction ;
+    owl:onProperty test:manages ;
+    owl:onClass test:Employee ;
+    owl:maxQualifiedCardinality "5"^^xsd:nonNegativeInteger ;
+  ] ;
+  rdfs:label "Small Team Lead" ;
+.
+
+# Test: owlQualifiedCardinalityOnClass2shMinMaxCount
+test:PairManager
+  a owl:Class ;
+  rdfs:subClassOf test:Manager ;
+  rdfs:subClassOf [
+    a owl:Restriction ;
+    owl:onProperty test:manages ;
+    owl:onClass test:Employee ;
+    owl:qualifiedCardinality "2"^^xsd:nonNegativeInteger ;
+  ] ;
+  rdfs:label "Pair Manager" ;
+.
+
+# Test: owlMinQualifiedCardinalityOnClass2shQualifiedMinCount (different from range)
+test:SeniorManager
+  a owl:Class ;
+  rdfs:subClassOf test:Manager ;
+  rdfs:subClassOf [
+    a owl:Restriction ;
+    owl:onProperty test:manages ;
+    owl:onClass test:Manager ;
+    owl:minQualifiedCardinality "1"^^xsd:nonNegativeInteger ;
+  ] ;
+  rdfs:label "Senior Manager" ;
+.
+
+# Test: owlMaxQualifiedCardinalityOnDataRange2shQualifiedMaxCount
+test:LimitedContactPerson
+  a owl:Class ;
+  rdfs:subClassOf test:Person ;
+  rdfs:subClassOf [
+    a owl:Restriction ;
+    owl:onProperty test:hasEmail ;
+    owl:onDataRange xsd:string ;
+    owl:maxQualifiedCardinality "2"^^xsd:nonNegativeInteger ;
+  ] ;
+  rdfs:label "Limited Contact Person" ;
+.
+
+# Test: owlMinQualifiedCardinalityOnDataRange2shQualifiedMinCount
+test:ReachablePerson
+  a owl:Class ;
+  rdfs:subClassOf test:Person ;
+  rdfs:subClassOf [
+    a owl:Restriction ;
+    owl:onProperty test:hasEmail ;
+    owl:onDataRange xsd:string ;
+    owl:minQualifiedCardinality "1"^^xsd:nonNegativeInteger ;
+  ] ;
+  rdfs:label "Reachable Person" ;
+.
+
+# Test: owlQualifiedCardinalityOnDataRange2shQualifiedMinMaxCount
+test:VerifiedPerson
+  a owl:Class ;
+  rdfs:subClassOf test:Person ;
+  rdfs:subClassOf [
+    a owl:Restriction ;
+    owl:onProperty test:hasEmail ;
+    owl:onDataRange xsd:string ;
+    owl:qualifiedCardinality "1"^^xsd:nonNegativeInteger ;
+  ] ;
+  rdfs:label "Verified Person" ;
+.
+
+# Test: owlUnionOfIRIs2rdfsSubClassOf
+test:Stakeholder
+  a owl:Class ;
+  rdfs:subClassOf [
+    a owl:Class ;
+    owl:unionOf (
+      test:Employee
+      test:Customer
+      test:Shareholder
+    )
+  ] ;
+  rdfs:label "Stakeholder" ;
+.
+
+test:Customer
+  a owl:Class ;
+  rdfs:label "Customer" ;
+.
+
+test:Shareholder
+  a owl:Class ;
+  rdfs:label "Shareholder" ;
+.
+
+# ========== DATATYPE RESTRICTIONS ==========
+
+# Test: xsdMinLength2shMinLength, xsdMaxLength2shMaxLength
+test:hasUsername
+  a owl:DatatypeProperty ;
+  rdfs:domain test:Person ;
+  rdfs:range [
+    a rdfs:Datatype ;
+    owl:onDatatype xsd:string ;
+    owl:withRestrictions (
+      [ xsd:minLength "3"^^xsd:integer ]
+      [ xsd:maxLength "20"^^xsd:integer ]
+    )
+  ] ;
+  rdfs:label "has username" ;
+.
+
+# Test: xsdLength2shMaxMinLength
+test:hasCode
+  a owl:DatatypeProperty ;
+  rdfs:domain test:Person ;
+  rdfs:range [
+    a rdfs:Datatype ;
+    owl:onDatatype xsd:string ;
+    owl:withRestrictions (
+      [ xsd:length "10"^^xsd:integer ]
+    )
+  ] ;
+  rdfs:label "has code" ;
+.
+
+# Test: xsdPattern2shPattern
+test:hasPhoneNumber
+  a owl:DatatypeProperty ;
+  rdfs:domain test:Person ;
+  rdfs:range [
+    a rdfs:Datatype ;
+    owl:onDatatype xsd:string ;
+    owl:withRestrictions (
+      [ xsd:pattern "\\d{3}-\\d{3}-\\d{4}" ]
+    )
+  ] ;
+  rdfs:label "has phone number" ;
+.
+
+# Test: xsdMinInclusive2shMinInclusive, xsdMaxInclusive2shMaxInclusive
+test:hasScore
+  a owl:DatatypeProperty ;
+  rdfs:domain test:Person ;
+  rdfs:range [
+    a rdfs:Datatype ;
+    owl:onDatatype xsd:integer ;
+    owl:withRestrictions (
+      [ xsd:minInclusive "0"^^xsd:integer ]
+      [ xsd:maxInclusive "100"^^xsd:integer ]
+    )
+  ] ;
+  rdfs:label "has score" ;
+.
+
+# Test: xsdMinExclusive2shMinExclusive, xsdMaxExclusive2shMaxExclusive
+test:hasRating
+  a owl:DatatypeProperty ;
+  rdfs:domain test:Person ;
+  rdfs:range [
+    a rdfs:Datatype ;
+    owl:onDatatype xsd:decimal ;
+    owl:withRestrictions (
+      [ xsd:minExclusive "0.0"^^xsd:decimal ]
+      [ xsd:maxExclusive "5.0"^^xsd:decimal ]
+    )
+  ] ;
+  rdfs:label "has rating" ;
+.
+
+# Test: rdfsRange2shClassOrDatatype with datatype
+test:RestrictedPerson
+  a owl:Class ;
+  rdfs:subClassOf test:Person ;
+  rdfs:subClassOf [
+    a owl:Restriction ;
+    owl:onProperty test:hasUsername ;
+    owl:allValuesFrom [
+      a rdfs:Datatype ;
+      owl:onDatatype xsd:string ;
+      owl:withRestrictions (
+        [ xsd:minLength "5"^^xsd:integer ]
+      )
+    ]
+  ] ;
+  rdfs:label "Restricted Person" ;
+.

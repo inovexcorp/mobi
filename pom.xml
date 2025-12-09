@@ -129,6 +129,7 @@
         <module>com.mobi.sse</module>
         <module>com.mobi.versionedrdf.api</module>
         <module>com.mobi.docker</module>
+        <module>com.mobi.ontology.cli</module>
     </modules>
 
     <properties>
