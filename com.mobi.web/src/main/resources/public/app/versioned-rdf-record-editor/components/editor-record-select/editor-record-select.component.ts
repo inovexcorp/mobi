@@ -20,36 +20,48 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import {
+  AfterViewInit,
+  Component,
+  ElementRef,
+  Inject,
+  Input,
+  OnChanges,
+  OnInit,
+  SimpleChanges,
+  ViewChild,
+  ViewContainerRef
+} from '@angular/core';
 import { HttpResponse } from '@angular/common/http';
-import { AfterViewInit, Component, ElementRef, Inject, Input, OnChanges, OnInit, SimpleChanges, ViewChild, ViewContainerRef } from '@angular/core';
-import { UntypedFormControl } from '@angular/forms';
-import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
+import { Location } from '@angular/common';
+import { MatAutocompleteSelectedEvent, MatAutocompleteTrigger } from '@angular/material/autocomplete';
 import { MatDialog } from '@angular/material/dialog';
-import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
-import { find, forEach, get, remove, isEmpty } from 'lodash';
-import { Observable, from, of, throwError } from 'rxjs';
-import { map, startWith, switchMap, catchError, finalize } from 'rxjs/operators';
+import { UntypedFormControl } from '@angular/forms';
 
-import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
-import { PaginatedConfig } from '../../../shared/models/paginatedConfig.interface';
-import { XACMLDecision } from '../../../shared/models/XACMLDecision.interface';
+import { catchError, finalize, map, startWith, switchMap } from 'rxjs/operators';
+import { find, forEach, get, isEmpty, remove } from 'lodash';
+import { from, Observable, of, throwError } from 'rxjs';
+
 import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
-import { RecordSelectFiltered } from '../../models/record-select-filtered.interface';
 import { ConfirmModalComponent } from '../../../shared/components/confirmModal/confirmModal.component';
-import { ProgressSpinnerService } from '../../../shared/components/progress-spinner/services/progressSpinner.service';
-import { DCTERMS, POLICY, RDF } from '../../../prefixes';
-import { PolicyManagerService } from '../../../shared/services/policyManager.service';
-import { PolicyEnforcementService } from '../../../shared/services/policyEnforcement.service';
-import { ToastService } from '../../../shared/services/toast.service';
-import { getBeautifulIRI, getDctermsValue } from '../../../shared/utility';
-import { XACMLRequest } from '../../../shared/models/XACMLRequest.interface';
-import { VersionedRdfListItem } from '../../../shared/models/versionedRdfListItem.class';
-import { stateServiceToken } from '../../../shared/injection-token';
-import { VersionedRdfState } from '../../../shared/services/versionedRdfState.service';
-import { splitIRI } from '../../../shared/pipes/splitIRI.pipe';
-import { NewRecordModalComponent } from '../new-record-modal/new-record-modal.component';
-import { UploadRecordModalComponent } from '../upload-record-modal/upload-record-modal.component';
+import { DCTERMS, ONTOLOGYEDITOR, POLICY, RDF } from '../../../prefixes';
 import { DownloadRecordModalComponent } from '../download-record-modal/download-record-modal.component';
+import { getBeautifulIRI, getDctermsValue } from '../../../shared/utility';
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { NewRecordModalComponent } from '../new-record-modal/new-record-modal.component';
+import { PaginatedConfig } from '../../../shared/models/paginatedConfig.interface';
+import { PolicyEnforcementService } from '../../../shared/services/policyEnforcement.service';
+import { PolicyManagerService } from '../../../shared/services/policyManager.service';
+import { ProgressSpinnerService } from '../../../shared/components/progress-spinner/services/progressSpinner.service';
+import { RecordSelectFiltered } from '../../models/record-select-filtered.interface';
+import { splitIRI } from '../../../shared/pipes/splitIRI.pipe';
+import { stateServiceToken } from '../../../shared/injection-token';
+import { ToastService } from '../../../shared/services/toast.service';
+import { UploadRecordModalComponent } from '../upload-record-modal/upload-record-modal.component';
+import { VersionedRdfListItem } from '../../../shared/models/versionedRdfListItem.class';
+import { VersionedRdfState } from '../../../shared/services/versionedRdfState.service';
+import { XACMLDecision } from '../../../shared/models/XACMLDecision.interface';
+import { XACMLRequest } from '../../../shared/models/XACMLRequest.interface';
 
 export interface OptionGroup {
   title: string,
@@ -57,11 +69,11 @@ export interface OptionGroup {
 }
 
 /**
- * @class versioned-rdf-record-editor.EditorRecordSelectComponent
+ * @class EditorRecordSelectComponent
  *
  * `editor-record-select` is a component which creates a `mat-autocomplete` with options to change which record is open,
  * create a record, close records, and search record.
- * 
+ *
  * @param {string} recordIri The IRI of the selected Record in the autocomplete
  */
 @Component({
@@ -85,29 +97,32 @@ export class EditorRecordSelectComponent<TData extends VersionedRdfListItem> imp
   unopened: RecordSelectFiltered[] = [];
 
   recordSearchConfig: PaginatedConfig = {
-    sortOption: find(this._cm.sortOptions, {field: `${DCTERMS}title`, asc: true}),
+    sortOption: find(this._cm.sortOptions, { field: `${DCTERMS}title`, asc: true }),
     type: [this._state.type]
   };
-  spinnerId = `${this.typeName}-editor-record-select`;
 
-  filteredOptions: Observable<OptionGroup[]>
+  filteredOptions: Observable<OptionGroup[]>;
   disabledFlag = false;
-  
+
   constructor(@Inject(stateServiceToken) private _state: VersionedRdfState<TData>,
-        private _dialog: MatDialog,
-        private _toast: ToastService,
-        private _spinnerSrv: ProgressSpinnerService,
-        private _cm: CatalogManagerService,
-        private _pm: PolicyManagerService,
-        protected pep: PolicyEnforcementService,
-        private _viewContainerRef: ViewContainerRef) {}
- 
+              private _dialog: MatDialog,
+              private _toast: ToastService,
+              private _spinnerSrv: ProgressSpinnerService,
+              private _cm: CatalogManagerService,
+              private _pm: PolicyManagerService,
+              private _viewContainerRef: ViewContainerRef,
+              private _location: Location,
+              protected pep: PolicyEnforcementService,
+  ) {
+  }
+
   ngOnInit(): void {
     this.retrieveRecords();
     this.setFilteredOptions();
     this.resetSearch();
     this.permissionCheck();
   }
+
   /**
    * If the selected record changes, resets the control value.
    */
@@ -116,6 +131,7 @@ export class EditorRecordSelectComponent<TData extends VersionedRdfListItem> imp
       this.resetSearch();
     }
   }
+
   /**
    * Sets up the handler to reset the control value when the focus moves off of the input.
    */
@@ -128,10 +144,11 @@ export class EditorRecordSelectComponent<TData extends VersionedRdfListItem> imp
       }
     });
   }
+
   /**
    * Returns the filtered list of options based on the provided search text. Search is done case insensitive and not
    * exact match. Will always return an "Open" group and an "Unopened" group.
-   * 
+   *
    * @param {string} val The text to search with
    * @returns {OptionGroup[]} An array of options to use in the control
    */
@@ -143,10 +160,11 @@ export class EditorRecordSelectComponent<TData extends VersionedRdfListItem> imp
       { title: 'Unopened', options: filteredUnopen }
     ];
   }
+
   /**
    * Starts the process of creating a new record. First closes the autocomplete panel, then fetches the appropriate
-   * default namespace for the type of record and opens the {@link versioned-rdf-record-editor.NewRecordModalComponent}.
-   * 
+   * default namespace for the type of record, and opens the {@link NewRecordModalComponent}.
+   *
    * @param {Event} event The button click event
    */
   create(event: Event): void {
@@ -154,17 +172,22 @@ export class EditorRecordSelectComponent<TData extends VersionedRdfListItem> imp
     event.stopPropagation();
     this.resetSearch();
     this._state.getDefaultNamespace().subscribe(namespace => {
-      this._dialog.open(NewRecordModalComponent, { 
+      this._dialog.open(NewRecordModalComponent, {
         viewContainerRef: this._viewContainerRef,
         data: { defaultNamespace: namespace },
         autoFocus: false
+      }).afterClosed().subscribe(recordIri => {
+        if (recordIri && this._state.type === `${ONTOLOGYEDITOR}OntologyRecord`) {
+          this._location.replaceState('/ontology-editor', `id=${encodeURIComponent(recordIri)}`);
+        }
       });
     });
   }
+
   /**
    * Starts the process of uploading a new record. First closes the autocomplete panel, then clicks the hidden file
    * input.
-   * 
+   *
    * @param {Event} event The button click event
    */
   upload(event: Event): void {
@@ -174,44 +197,54 @@ export class EditorRecordSelectComponent<TData extends VersionedRdfListItem> imp
     this.fileInput.nativeElement.value = null;
     this.fileInput.nativeElement.click();
   }
+
   /**
    * Handler for when the file input receives new selected files. Opens the
-   * {@link versioned-rdf-record-editor.UploadRecordModalComponent} with the provided Files.
-   * 
+   * {@link UploadRecordModalComponent} with the provided Files.
+   *
    * @param {FileList} files The list of selected files from the file input
    */
   updateFiles(files: FileList): void {
     if (files) {
       this._dialog.open(UploadRecordModalComponent, {
-          viewContainerRef: this._viewContainerRef,
-          data: { files: Array.from(files) }
+        viewContainerRef: this._viewContainerRef,
+        data: { files: Array.from(files) }
+      }).afterClosed().subscribe(recordIri => {
+        if (recordIri && this._state.type === `${ONTOLOGYEDITOR}OntologyRecord`) {
+          this._location.replaceState('/ontology-editor', `id=${encodeURIComponent(recordIri)}`);
+        }
       });
     }
   }
+
   /**
    * Handles selecting a record. If the record is already open, simply sets the State service `listItem`. Otherwise,
    * calls the State service `open` method. Updates the control value and closes the autocomplete panel.
-   * 
+   *
    * @param {MatAutocompleteSelectedEvent} event The event from the option selection
    */
   selectRecord(event: MatAutocompleteSelectedEvent): void {
     const record = event.option.value;
     const item = this._state.list.find(item => item.versionedRdfRecord.recordId === record.recordId);
-    let ob;
+    let ob: Observable<null>;
     if (item) {
       this._state.listItem = item;
+      if (this._state.type === `${ONTOLOGYEDITOR}OntologyRecord`) {
+        this._location.replaceState('/ontology-editor', `id=${encodeURIComponent(record.recordId)}`);
+      }
       ob = of(null);
     } else {
       ob = this._state.open(record);
     }
     ob.subscribe(() => {
       this.opened.push(record);
-      remove(this.unopened, {recordId: record.recordId});
+      remove(this.unopened, { recordId: record.recordId });
       this.textInput.nativeElement.blur();
       this.recordSearchControl.setValue(record.title);
       this.autocompleteTrigger.closePanel();
     }, error => this._toast.createErrorToast(error));
   }
+
   /**
    * Resets the control value based on whether a record has been selected in the State service.
    */
@@ -222,13 +255,14 @@ export class EditorRecordSelectComponent<TData extends VersionedRdfListItem> imp
       this.recordSearchControl.setValue('');
     }
   }
+
   /**
    * Fetches the list of records to be used as the starting point for all filtering in the autocomplete. Determines
    * which are already opened and fetches all necessary permissions for display. Checks whether the selected record in
    * the State Service has been deleted at the end.
    */
   retrieveRecords(): void {
-     // Clears out unopened list to avoid deleted records appearing for a few seconds due to slow network speeds
+    // Clears out unopened list to avoid deleted records appearing for a few seconds due to slow network speeds
     this.unopened = [];
     // Resets the form control, marking it pristine and untouched, and resetting the value.
     this.recordSearchControl.reset();
@@ -246,7 +280,7 @@ export class EditorRecordSelectComponent<TData extends VersionedRdfListItem> imp
               unopenedTmp.push(this.getRecordSelectFiltered(recordJsonld));
             }
           });
-          
+
           this.opened = openTmp;
           this.unopened = unopenedTmp;
           if (this.unopened.length !== 0) {
@@ -277,24 +311,29 @@ export class EditorRecordSelectComponent<TData extends VersionedRdfListItem> imp
         this.setFilteredOptions();
       });
   }
+
   /**
    * Closes a record that has been opened. If it if the selected record in the State service, unsets it.
-   * 
+   *
    * @param {string} recordIri The IRI of the record to close
    */
   closeRecord(recordIri: string): void {
-    const closed = remove(this.opened, {recordId: recordIri})[0];
-    this.unopened.push(<RecordSelectFiltered> closed);
+    const closed = remove(this.opened, { recordId: recordIri })[0];
+    this.unopened.push(<RecordSelectFiltered>closed);
     if (recordIri === this.recordIri) {
       this._state.listItem = undefined;
+      if (this._state.type === `${ONTOLOGYEDITOR}OntologyRecord`) {
+        this._location.replaceState('/ontology-editor');
+      }
     }
     this._state.close(recordIri);
     this.setFilteredOptions();
   }
+
   /**
-   * Opens the {@link versioned-rdf-record-editor.DownloadRecordModalComponent} for the provided record. Also closes the
+   * Opens the {@link DownloadRecordModalComponent} for the provided record. Also closes the
    * autocomplete panel.
-   * 
+   *
    * @param {RecordSelectFiltered} record A record option from the autocomplete to open
    * @param {Event} event The button click event
    */
@@ -309,12 +348,13 @@ export class EditorRecordSelectComponent<TData extends VersionedRdfListItem> imp
       }
     });
   }
+
   /**
    * Opens a confirmation modal for deleting the provided record. Also closes the autocomplete panel. If the
    * confirmation modal is accepted, deletes the record.
-   * 
+   *
    * @param {RecordSelectFiltered} record A record option from the autocomplete to open
-   * @param {Event} event The button click event 
+   * @param {Event} event The button click event
    */
   showDeleteConfirmationOverlay(record: RecordSelectFiltered, event: Event): void {
     this.autocompleteTrigger.closePanel();
@@ -329,9 +369,10 @@ export class EditorRecordSelectComponent<TData extends VersionedRdfListItem> imp
       }
     });
   }
+
   /**
    * Deletes the record identified by the provided IRI using the State service `delete` method.
-   * 
+   *
    * @param {string} recordIri The IRI of the record to delete
    */
   deleteRecord(recordIri: string): void {
@@ -340,19 +381,21 @@ export class EditorRecordSelectComponent<TData extends VersionedRdfListItem> imp
         this._toast.createSuccessToast(`${recordIri} deleted successfully!`);
       }, errorMessage => this._toast.createErrorToast(errorMessage));
   }
+
   /**
    * A method used to calculate the string to display for a selected option.
-   * 
+   *
    * @param {RecordSelectFiltered|string} option The option to calculate a display value for. Might also be the search
    *    text entered
    * @returns {string} The string to display in the control
    */
-  displayWith(option: RecordSelectFiltered|string): string {
+  displayWith(option: RecordSelectFiltered | string): string {
     return option ? typeof option === 'string' ? option : option.title : '';
   }
+
   /**
    * Determines whether the provided option from the select is the currently selected record in the State service.
-   * 
+   *
    * @param {RecordSelectFiltered} option The record to determine whether it is selected
    * @returns {boolean} True if the record is currently selected; false otherwise
    */
@@ -368,6 +411,7 @@ export class EditorRecordSelectComponent<TData extends VersionedRdfListItem> imp
       description: getDctermsValue(record, 'description')
     };
   }
+
   protected setFilteredOptions(): void {
     this.filteredOptions = this.recordSearchControl.valueChanges
       .pipe(
@@ -375,18 +419,20 @@ export class EditorRecordSelectComponent<TData extends VersionedRdfListItem> imp
         map(val => this.filter(val || ''))
       );
   }
+
   private checkRecordDeleted() {
     if (this?._state?.listItem?.versionedRdfRecord.recordId) {
-      const record = find([...this.opened, ...this.unopened], {recordId: this._state.listItem.versionedRdfRecord.recordId});
+      const record = find([...this.opened, ...this.unopened], { recordId: this._state.listItem.versionedRdfRecord.recordId });
       if (!record) {
         this._toast.createWarningToast(`Previously opened ${this.typeName} ${this._state.listItem.versionedRdfRecord.title} was removed.`);
         this._state.close(this._state.listItem.versionedRdfRecord.recordId);
-        remove(this.opened, {recordId: this._state.listItem.versionedRdfRecord.recordId});
+        remove(this.opened, { recordId: this._state.listItem.versionedRdfRecord.recordId });
         this._state.listItem = undefined;
         this.resetSearch();
       }
     }
   }
+
   private permissionCheck(): void {
     const pepRequest = this.createPepRequest();
     this._spinnerSrv.startLoadingForComponent(this.editorRecordSelectSpinner, 15);
@@ -402,6 +448,7 @@ export class EditorRecordSelectComponent<TData extends VersionedRdfListItem> imp
       this.disabledFlag = true;
     });
   }
+
   private createPepRequest() {
     return {
       resourceId: this.catalogId,

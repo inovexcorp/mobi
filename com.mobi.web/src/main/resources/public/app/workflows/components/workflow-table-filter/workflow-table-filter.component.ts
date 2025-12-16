@@ -153,8 +153,6 @@ export class WorkflowTableFilterComponent implements OnInit, OnChanges, OnDestro
   /**
    * Executes cleanup logic before the component is destroyed.
    * Unsubscribes from any active subscriptions.
-   *
-   * @return {void}
    */
   ngOnDestroy(): void {
     if (this.statusOptionSubscription !== null) {
@@ -178,7 +176,6 @@ export class WorkflowTableFilterComponent implements OnInit, OnChanges, OnDestro
   }
   /**
    * Initializes the subscriptions for status and time range options.
-   * @return {void} - Does not return any value.
    */
   initSubscriptions(): void {
     this.statusOptionSubscription = this.statusOption.valueChanges.subscribe((status) => {

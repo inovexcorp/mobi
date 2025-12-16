@@ -1,6 +1,7 @@
 {
   "name": "itests-web",
   "version": "1.0.0",
+  "type": "commonjs",
   "description": "The web integration test are a combination of using Docker and Nightwatch.js. In order to add a test, the /Test.spec.js/ file must be added to the js directory located under src/test/. When tests are run, docker spins up an instance of mobi based off of the dockerfile specified which then allows nightwatch to run tests against that image. As part of the post-integration phase of maven, the docker container is stopped and removed and individual JUNIT xml files are verified for whether the tests were successful or not.",
   "main": "index.js",
   "engines": {
@@ -9,11 +10,13 @@
   },
   "scripts": {
     "test": "./node_modules/.bin/nightwatch",
-    "test-headless": "./node_modules/.bin/nightwatch --env headless"
+    "test-headless": "./node_modules/.bin/nightwatch --env headless",
+    "lint": "jshint --config src/test/resources/jshint.conf.js src/test/js src/test/pages"
   },
   "devDependencies": {
-    "chromedriver": "141",
+    "chromedriver": "143",
     "geckodriver": "^5.0.0",
+    "jshint": "^2.13.6",
     "nightwatch": "3.7.0"
   },
   "author": "",

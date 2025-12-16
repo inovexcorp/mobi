@@ -1,12 +1,13 @@
 {
   // Options
+  "esversion": 11,
   "indent": true,
   "undef": true,
   "latedef": true,
   "nonew": true,
   "asi": true,
   "expr": true,
-  "multistr": true
+  "multistr": true,
   /*
    * Globals
    */
@@ -17,5 +18,7 @@
     "process": true,
     "__dirname": true,
     "console": true,
+    "browser": true,
+    "navigator": true
   }
 }

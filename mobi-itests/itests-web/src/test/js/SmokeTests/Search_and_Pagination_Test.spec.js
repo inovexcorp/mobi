@@ -21,7 +21,6 @@
  * #L%
  */
 
-/*jshint esnext: true */
 var path = require('path');
 
 var ontologies = [

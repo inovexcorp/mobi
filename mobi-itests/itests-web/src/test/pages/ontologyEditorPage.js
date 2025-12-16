@@ -42,7 +42,7 @@ const ontologyEditorCommands = {
     },
 
     uploadOntology: function(file) {
-        return this.api.page.editorPage().uploadRecord(parentEl, file);;
+        return this.api.page.editorPage().uploadRecord(parentEl, file);
     },
 
     searchForOntology: function(title) {

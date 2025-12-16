@@ -39,11 +39,11 @@ import { RdfUpload } from '../../../shared/models/rdfUpload.interface';
 import { ToastService } from '../../../shared/services/toast.service';
 
 /**
- * @class versioned-rdf-record-editor.NewRecordModalComponent
+ * @class NewRecordModalComponent
  *
  * A component that creates content for a modal that creates a new VersionedRDFRecord. The form in the modal contains a
  * field for the name, a field for the IRI, a field for the description, an
- * {@link ontology-editor.AdvancedLanguageSelectComponent}, and a {@link shared.KeywordSelectComponent}. The value
+ * {@link AdvancedLanguageSelectComponent}, and a {@link KeywordSelectComponent}. The value
  * of the name field will populate the IRI field unless the IRI value is manually changed. Meant to be used in
  * conjunction with the `MatDialog` service.
  * 
@@ -105,7 +105,7 @@ export class NewRecordModalComponent<TData extends VersionedRdfListItem> impleme
     this._state.createAndOpen(rdfUpload)
       .subscribe(response => {
         this._toast.createSuccessToast(`Record ${response.recordId} successfully created.`);
-        this._dialogRef.close();
+        this._dialogRef.close(response.recordId);
       }, error => {
         if (typeof error === 'string') {
           this.error = {

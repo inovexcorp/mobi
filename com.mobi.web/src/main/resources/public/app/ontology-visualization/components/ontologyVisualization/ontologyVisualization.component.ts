@@ -413,7 +413,6 @@ export class OntologyVisualization implements OnInit, OnDestroy, OnChanges {
    * @param {GraphState} commitGraphState - The current state of the graph, including elements, styles, and positioning.
    * @param {boolean} [init=false] - A flag indicating whether this is the initial graph setup.
    * @param {SimulationOptions} [simulationOptions] - Optional parameters for graph simulation.
-   * @return {void}
    */
   public updateCytoscapeGraph(commitGraphState: GraphState, init = false, simulationOptions?: SimulationOptions): void {
     if (!commitGraphState.positioned) {
@@ -474,7 +473,6 @@ export class OntologyVisualization implements OnInit, OnDestroy, OnChanges {
    *
    * @param {boolean} isOverLimit - Indicates whether the node limit has been exceeded.
    * @param {number} nodeLimit - The maximum number of nodes allowed.
-   * @return {void}
    */
   updateMessages(isOverLimit: boolean, nodeLimit: number): void {
     this.clearErrorToasts();
@@ -486,8 +484,6 @@ export class OntologyVisualization implements OnInit, OnDestroy, OnChanges {
 
   /**
    * Opens a help dialog displaying the VisualizationHelpModal component.
-   *
-   * @return {void}
    */
   openHelpDialog() {
     this.dialog.open(VisualizationHelpModal);
@@ -499,7 +495,6 @@ export class OntologyVisualization implements OnInit, OnDestroy, OnChanges {
    * state information.
    *
    * @param {string} reason - The reason for the initialization failure, used to display a warning message.
-   * @return {void}
    */
   private initFailed(reason: string): void {
     const commitGraphState = this.ovis.getGraphState(this.commitId);
