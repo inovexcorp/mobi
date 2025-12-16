@@ -179,13 +179,13 @@ describe('New Record Modal component', function() {
                   component.create();
                   tick();
                   expect(stateStub.createAndOpen).toHaveBeenCalledWith(newRdfUpload);
-                  expect(matDialogRef.close).toHaveBeenCalledWith();
+                  expect(matDialogRef.close).toHaveBeenCalledWith('recordId');
               }));
               it('without description', fakeAsync(function() {
                   component.create();
                   tick();
                   expect(stateStub.createAndOpen).toHaveBeenCalledWith(rdfUpload);
-                  expect(matDialogRef.close).toHaveBeenCalledWith();
+                  expect(matDialogRef.close).toHaveBeenCalledWith('recordId');
               }));
           });
       });

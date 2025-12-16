@@ -90,8 +90,6 @@ export class NodeShapesListComponent implements OnChanges, AfterViewInit, OnDest
   /**
    * Called whenever Angular detects changes to the input properties of the component.
    * This lifecycle hook is triggered before Angular's view or content projection is updated.
-   *
-   * @return {void} This method does not return any value.
    */
   ngOnChanges(changes: SimpleChanges): void {
     if (!changes.viewedRecord?.firstChange) {
@@ -170,7 +168,6 @@ export class NodeShapesListComponent implements OnChanges, AfterViewInit, OnDest
   /**
    * Initiates a search operation by retrieving a list of node shapes.
    *
-   * @return {void} Does not return any value.
    */
   search(): void {
     this._retrieveList();

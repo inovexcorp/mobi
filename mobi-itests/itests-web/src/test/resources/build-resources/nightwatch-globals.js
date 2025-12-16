@@ -235,6 +235,10 @@ module.exports = {
         browser.globals.switchToPage(browser, 'ontology-editor', 'ontology-editor-page');
     },
 
+    'baseUrl': function(browser) {
+      return `https://localhost:${httpsPort}/${distributionName}/index.html#`;
+    },
+
     'login': function (browser, username, password) {
         browser
             .useCss()

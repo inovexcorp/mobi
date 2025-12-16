@@ -208,6 +208,7 @@ export class OntologyVisualizationDataService {
    * @param {OntologyGraphData} ontologyData - The ontology data including class-parent mappings, child IRIs, entity information, and ranges.
    * @param {GraphState} commitGraphState - The current graph state to be updated, including all graph nodes and edges.
    * @param {Subscriber<GraphState>} observer - The observer to notify with the updated graph state or an error if the process fails.
+   *
    * @return {void} Returns nothing explicitly, but notifies the observer with the updated graph state or an error message.
    */
   graphDataFormat(ontologyData: OntologyGraphData, commitGraphState: GraphState, observer: Subscriber<GraphState>): void {

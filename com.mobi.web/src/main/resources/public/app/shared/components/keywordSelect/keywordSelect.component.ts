@@ -95,8 +95,6 @@ export class KeywordSelectComponent implements OnChanges {
      * @description
      * This method clears the value of the chip input field and the corresponding form control if the chip input
      * element and the clearInput option are both available.
-     *
-     * @return {void} This method does not return anything.
      */
     private _clearInput(): void {
         if (this.chipInput && this.clearInput > 0) {
@@ -109,8 +107,6 @@ export class KeywordSelectComponent implements OnChanges {
      * Updates the `keywords` value of the parentForm control and triggers validation.
      *
      * @param {any} value - The new value to update the control with.
-     *
-     * @return {void}
      */
     private _updateKeywordsValue(value: any): void {
         this.parentForm.controls.keywords.setValue(value);

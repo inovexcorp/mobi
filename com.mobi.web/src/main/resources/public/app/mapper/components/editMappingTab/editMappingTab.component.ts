@@ -79,7 +79,6 @@ export class EditMappingTabComponent implements OnInit, OnDestroy {
    * Opens the Class Mapping Overlay dialog. Once the dialog is closed, it checks the returned data
    * to update class mappings and set the selected class mapping ID if a new class mapping is provided.
    *
-   * @return {void} No return value.
    */
   openClassMappingOverlay(): void {
     this.dialog.open(ClassMappingOverlayComponent).afterClosed()
@@ -97,7 +96,6 @@ export class EditMappingTabComponent implements OnInit, OnDestroy {
    * sets class mappings, and modifies the state to indicate that the configuration modal
    * should not reopen automatically.
    *
-   * @return {void} Does not return a value.
    */
   openMappingConfig(): void {
     this.dialog.open(MappingConfigOverlayComponent).afterClosed().subscribe(() => {
@@ -111,7 +109,6 @@ export class EditMappingTabComponent implements OnInit, OnDestroy {
    * Deletes a class mapping based on the provided JSON-LD object and updates the state accordingly.
    *
    * @param {JSONLDObject} classMapping - The JSON-LD object representing the class mapping to delete.
-   * @return {void} This method does not return a value.
    */
   deleteClass(classMapping: JSONLDObject): void {
     this.state.deleteClass(classMapping['@id']);
@@ -126,8 +123,6 @@ export class EditMappingTabComponent implements OnInit, OnDestroy {
    * Updates the ontology title based on the currently selected ontology in the state.
    * If the ontology has a title specified, it sets the ontology title to that value.
    * If no ontology is selected or no title is specified, it defaults to '(None Specified)'.
-   *
-   * @return {void} Does not return a value.
    */
   setOntologyTitle(): void {
     if (this.state.selected?.ontology) {
@@ -164,8 +159,6 @@ export class EditMappingTabComponent implements OnInit, OnDestroy {
   /**
    * Saves the current state if there are changes in the mapping. If changes exist, it triggers the save operation
    * and handles success or error responses. If no changes are detected, it directly executes the success logic.
-   *
-   * @return {void} This method does not return any value.
    */
   save(): void {
     if (this.state.isMappingChanged()) {
@@ -179,8 +172,6 @@ export class EditMappingTabComponent implements OnInit, OnDestroy {
    * Cancels the current operation. If there are unsaved changes,
    * it prompts the user with a confirmation modal to confirm cancellation.
    * Executes the success callback upon confirmation or if there are no changes.
-   *
-   * @return {void} This method does not return a value.
    */
   cancel(): void {
     if (this.state.isMappingChanged()) {
@@ -202,8 +193,6 @@ export class EditMappingTabComponent implements OnInit, OnDestroy {
    * Checks for incompatible mappings in the current state and removes them if necessary.
    * This method evaluates both property mappings and class mappings for incompatibility
    * and removes them while notifying the user via warning messages.
-   *
-   * @return {void} This method does not return a value.
    */
   checkIncompatibleMappings(): void {
     this.state.findIncompatibleMappings(this.state.selected.mapping).subscribe(incompatibleMappings => {

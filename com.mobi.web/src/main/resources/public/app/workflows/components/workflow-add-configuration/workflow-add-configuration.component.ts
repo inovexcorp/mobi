@@ -226,8 +226,6 @@ export class WorkflowAddConfigurationComponent implements OnInit {
 
   /**
    * Updates the title value by performing necessary checks to ensure submission availability.
-   *
-   * @return {void} This method does not return a value.
    */
   updateTitleValue(): void {
     this._checkSubmissionAvailability();
@@ -638,8 +636,6 @@ export class WorkflowAddConfigurationComponent implements OnInit {
   /**
    * Checks the availability of the submission button based on form changes and validity.
    * Updates the `submitDisabled` property to enable or disable the submission button.
-   *
-   * @return {void} Does not return a value.
    */
   private _checkSubmissionAvailability(): void {
     //check to see if the form has been changed

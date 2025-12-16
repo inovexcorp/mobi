@@ -294,8 +294,8 @@ const addPropertyShapeCommands = {
 
   clickPathButton: function(propName, onBottom=true) {
     const hoverZoneClass = onBottom ? 'card-bottom-hover-zone' : 'card-right-hover-zone';
-    const hoverZoneSelector = `${pathConfigurationContainerXpath}//mat-card//mat-card-subtitle[text()[contains(., "${propName}")]]` 
-      + `//following-sibling::app-add-path-node-hover-button//div[contains(@class, "${hoverZoneClass}")]`;
+    const hoverZoneSelector = `${pathConfigurationContainerXpath}//mat-card//mat-card-subtitle[text()[contains(., "${propName}")]]` +
+      `//following-sibling::app-add-path-node-hover-button//div[contains(@class, "${hoverZoneClass}")]`;
     return this.useCss()
       .waitForElementVisible(pathConfigurationContainer)
       .useXpath()

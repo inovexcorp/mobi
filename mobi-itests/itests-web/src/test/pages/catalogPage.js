@@ -62,6 +62,15 @@ const catalogPageCommands = {
             .assert.textContains(`(//catalog-page//record-card//mat-card-title//span[contains(@class, "title-text")])[${index}]`, recordTitle)
     },
 
+    copyRecordIRI: function(recordTitle) {
+        return this.useXpath()
+          .click(`//catalog-page//record-card//mat-card-title//span[text()[contains(., "${recordTitle}")]]//ancestor::mat-card-title//button`)
+          .useCss()
+          .waitForElementVisible('.toast-success')
+          .getText('.toast-success', function(result) { this.assert.equal(result.value, 'Success\nCopied') })
+          .waitForElementNotPresent('.toast-success');
+    },
+
     clearCatalogSearchBar: function() {
         return this.useCss()
             .sendKeys(recordsViewSearchBarCssSelector,['', browser.Keys.ENTER], function(result) { this.assert.strictEqual(result.status, 0) })
