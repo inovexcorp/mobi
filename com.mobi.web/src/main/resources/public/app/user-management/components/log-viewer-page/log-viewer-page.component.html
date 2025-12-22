@@ -1,0 +1,212 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 - 2025 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="log-viewer-page" #targetedSpinner>
+  <div class="content-wrapper">
+    <!-- Error Display -->
+    <error-display *ngIf="error">{{ error }}</error-display>
+
+    <!-- Metadata Card -->
+    <mat-card class="metadata-card">
+      <mat-card-header class="align-items-baseline">
+        <mat-card-title>File Information</mat-card-title>
+        <div class="header-actions">
+          <button mat-icon-button
+                  (click)="downloadLogFile()"
+                  matTooltip="Download log file"
+                  aria-label="Download log file"
+                  [disabled]="!selectedFile">
+            <mat-icon>download</mat-icon>
+          </button>
+        </div>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="metadata-grid">
+          <div class="metadata-item justify-content-between file-trigger" [matMenuTriggerFor]="fileMenu" (click)="toggleFileMenu()">
+            <div class="metadata-details">
+              <span class="metadata-label">Filename</span>
+              <span class="metadata-value">{{ metadata?.fileName || '--' }}</span>
+            </div>
+            <div>
+              <mat-icon>arrow_drop_down</mat-icon>
+            </div>
+          </div>
+
+          <!-- Menu for selecting a file to view -->
+          <mat-menu #fileMenu="matMenu" (closed)="this.fileMenuOpened = false">
+            <button mat-menu-item class="file-option" [ngClass]="metadata?.fileName === file ? 'selected' : ''" *ngFor="let file of logFiles" (click)="onFileChange(file)">{{ file }}</button>
+          </mat-menu>
+
+          <div class="metadata-item file-size">
+            <mat-icon>storage</mat-icon>
+            <div class="metadata-details">
+              <span class="metadata-label">Size</span>
+              <span class="metadata-value">{{ metadata ? lv.formatFileSize(metadata.sizeBytes) : '--' }}</span>
+            </div>
+          </div>
+          <div class="metadata-item file-line-count">
+            <mat-icon>format_list_numbered</mat-icon>
+            <div class="metadata-details">
+              <span class="metadata-label">Entries</span>
+              <span *ngIf="metadata; else noMetadata" class="metadata-value">{{ metadata.lineCount | number }}</span>
+              <ng-template #noMetadata>
+                <span class="metadata-value">--</span>
+              </ng-template>
+            </div>
+          </div>
+          <div class="metadata-item file-last-modified">
+            <mat-icon>schedule</mat-icon>
+            <div class="metadata-details">
+              <span class="metadata-label">Last Modified</span>
+              <span class="metadata-value">{{ metadata ? lv.formatTimestamp(metadata.lastModified) : '--' }}</span>
+            </div>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Selected File Card -->
+    <mat-card *ngIf="selectedFile" class="selected-file-card">
+      <mat-card-content>
+        <!-- Controls Header with Search, View Mode, and Refresh Buttons -->
+        <div class="controls-header d-flex">
+          <!-- Search Bar -->
+          <div class="search-container flex-1 remove-min-width">
+            <search-bar class="flex-1 remove-min-width" [(bindModel)]="searchTerm" (submitEvent)="search()"></search-bar>
+            <button mat-button (click)="clearSearch()" [disabled]="!searchTerm">
+              <mat-icon>close</mat-icon>
+              Clear
+            </button>
+          </div>
+
+          <!-- View Mode Toggle -->
+          <div class="button-toggle-container">
+            <mat-button-toggle-group [(ngModel)]="viewMode" (ngModelChange)="setViewMode($event)" aria-label="View Mode">
+              <mat-button-toggle [value]="ViewMode.TAIL">Tail</mat-button-toggle>
+              <mat-button-toggle [value]="ViewMode.PAGINATED">Paginated</mat-button-toggle>
+            </mat-button-toggle-group>
+          </div>
+
+          <div class="refresh-button-container d-flex">
+            <!-- Auto-refresh Toggle (Tail View Only) -->
+            <button class="auto-refresh-button" mat-icon-button [disabled]="viewMode !== ViewMode.TAIL" (click)="toggleAutoRefresh()" [matTooltip]="autoRefresh ? 'Pause Refresh' : 'Auto Refresh'">
+              <mat-icon>{{autoRefresh ? 'pause' : 'play_arrow'}}</mat-icon>
+            </button>
+            <!-- Refresh Content Button -->
+            <button class="manual-refresh-button" mat-icon-button (click)="refresh()" [disabled]="loading" matTooltip="Refresh">
+              <mat-icon>refresh</mat-icon>
+            </button>
+          </div>
+        </div>
+
+        <!-- Tail View -->
+        <ng-container *ngIf="!loading && viewMode === ViewMode.TAIL">
+          <!-- Tail Status Text -->
+          <div class="status-text">
+            <ng-container *ngIf="autoRefresh; else pausedIndicator">
+              <span class="refresh-indicator">●</span>
+              Live - Refreshing every {{ refreshInterval / 1000 }}s
+            </ng-container>
+            <ng-template #pausedIndicator>
+              <span class="paused-indicator">■</span>
+              Paused - Last {{ tailLines.length }} entries
+            </ng-template>
+          </div>
+          <!-- Log Content -->
+          <div class="log-output">
+            <div *ngFor="let line of tailLines; let i = index" 
+                class="log-line"
+                [ngClass]="getLogLevelClass(line)">
+              <span class="line-number">{{ i + 1 }}</span>
+              <span class="line-content">{{ line }}</span>
+            </div>
+          </div>
+        </ng-container>
+
+        <!-- Paginated View -->
+        <ng-container *ngIf="!loading && viewMode === ViewMode.PAGINATED && logPage">
+          <!-- Log Content -->
+          <div class="log-output">
+            <div *ngFor="let line of logPage.lines; let i = index" 
+                class="log-line"
+                [ngClass]="getLogLevelClass(line)">
+              <span class="line-number">{{ (currentPage * pageSize) + i + 1 }}</span>
+              <span class="line-content">{{ line }}</span>
+            </div>
+          </div>
+          
+          <!-- Pagination Controls -->
+          <mat-paginator class="dark-theme"
+            [length]="logPage.totalLines"
+            [pageSize]="pageSize"
+            [pageSizeOptions]="pageSizeOptions"
+            [pageIndex]="currentPage"
+            (page)="onPageChange($event)"
+            showFirstLastButtons>
+          </mat-paginator>
+        </ng-container>
+
+        <!-- Search Results -->
+        <ng-container *ngIf="!loading && viewMode === ViewMode.SEARCH">
+          <!-- Search Status Text -->
+          <div class="status-text">
+            Found {{ searchResults.length }} matches for "{{ searchTerm }}"
+          </div>
+          
+          <div *ngIf="searchResults.length === 0; else searchResultsDisplay" class="empty-state">
+            <mat-icon>search_off</mat-icon>
+            <p>No matches found for your search term.</p>
+          </div>
+          <ng-template #searchResultsDisplay>
+            <mat-list class="search-results-list">
+              <mat-list-item *ngFor="let result of searchResults" class="search-result-item">
+                <div matListItemTitle class="result-header">
+                  <span class="result-line-number">Line {{ result.lineNumber }}</span>
+                </div>
+                <div matListItemLine class="result-content">
+                  <pre class="log-line" [ngClass]="getLogLevelClass(result.content)">{{ result.content }}</pre>
+                </div>
+              </mat-list-item>
+            </mat-list>
+          </ng-template>
+        </ng-container>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Empty State -->
+    <mat-card *ngIf="(!selectedFile || !logFiles.length) && !loading" class="empty-state-card">
+      <mat-card-content class="empty-state">
+        <mat-icon>description</mat-icon>
+        <div class="no-files-found" *ngIf="!logFiles.length; else noFileSelected">
+          <h3>No Log Files Found</h3>
+          <p>Please refresh the view. If no files are found still, contact your platform admin.</p>
+        </div>
+        <ng-template #noFileSelected>
+          <div class="no-file-selected">
+            <h3>No Log File Selected</h3>
+            <p>Please select a log file from the dropdown above to view its contents</p>
+          </div>
+        </ng-template>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

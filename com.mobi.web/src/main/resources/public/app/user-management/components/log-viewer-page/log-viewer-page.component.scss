@@ -1,0 +1,309 @@
+/*-
+ * #%L
+ * com.mobi.web
+ * $Id:$
+ * $HeadURL:$
+ * %%
+ * Copyright (C) 2016 - 2025 iNovex Information Systems, Inc.
+ * %%
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * 
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * 
+ * You should have received a copy of the GNU Affero General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ * #L%
+ */
+/* Core variables */
+@import "../../../css/variables";
+
+// Status Text
+.status-text {
+  margin-bottom: 1rem;
+}
+
+.refresh-indicator {
+  color: var(--success);
+}
+
+.paused-indicator {
+  color: var(--warning);
+}
+
+// File Selector
+.file-trigger:hover {
+  cursor: pointer;
+}
+
+.file-option.selected {
+  background-color: rgba(0, 0, 0, 0.04);
+}
+
+.log-viewer-page {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Content Wrapper */
+.content-wrapper {
+  padding: 24px;
+  flex: 1;
+  overflow-y: auto;
+  background-color: #fafafa;
+}
+
+/* Cards */
+mat-card {
+  margin-bottom: 16px;
+}
+
+/* Metadata Card */
+.metadata-card {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--info-light) 100%);
+  color: #ffffff;
+
+  mat-card-title {
+    color: #ffffff;
+  }
+  .mat-card-header-text {
+    margin-right: 0 !important;
+  }
+}
+
+.metadata-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+
+.metadata-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background-color: rgba(255, 255, 255, 0.1);
+  padding: 12px;
+  border-radius: 8px;
+  backdrop-filter: blur(10px);
+
+  mat-icon {
+    color: rgba(255, 255, 255, 0.9);
+  }
+}
+
+.metadata-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.metadata-label {
+  font-size: 12px;
+  opacity: 0.8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.metadata-value {
+  font-size: 16px;
+  font-weight: 500;
+}
+
+/* Controls Header */
+
+.search-container {
+  display: flex;
+  // gap: 12px;
+  // align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+/* Log Output */
+.log-output {
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  background-color: #1e1e1e;
+  color: #d4d4d4;
+  max-height: 600px;
+  overflow-y: auto;
+  overflow-x: auto;
+  padding: 16px;
+}
+
+.log-line {
+  display: flex;
+  padding: 2px 8px;
+  border-radius: 3px;
+  transition: background-color 0.15s;
+
+  &:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+  }
+}
+
+.line-number {
+  display: inline-block;
+  min-width: 60px;
+  margin-right: 16px;
+  color: #858585;
+  user-select: none;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.line-content {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  flex: 1;
+  font-family: inherit;
+}
+
+/* Log Level Colors */
+.log-error {
+  color: #f48771;
+  background-color: rgba(244, 135, 113, 0.1);
+  border-left: 3px solid #f48771;
+}
+
+.log-warn {
+  color: #dcdcaa;
+  background-color: rgba(220, 220, 170, 0.1);
+  border-left: 3px solid #dcdcaa;
+}
+
+.log-info {
+  color: #4fc1ff;
+  border-left: 3px solid transparent;
+}
+
+.log-debug {
+  color: #b5cea8;
+  border-left: 3px solid transparent;
+}
+
+.log-trace {
+  color: #808080;
+  border-left: 3px solid transparent;
+}
+
+/* Search Results List */
+.search-results-list {
+  padding: 0;
+}
+
+.search-result-item {
+  background-color: #2d2d30;
+  margin-bottom: 12px;
+  border-radius: 8px;
+  border-left: 4px solid #ffffff;
+  padding: 16px !important;
+  height: auto !important;
+
+  &:hover {
+    background-color: #3d3d40;
+  }
+}
+
+.result-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.result-line-number {
+  font-size: 12px;
+  color: #858585;
+  font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+  margin-right: 10px;
+}
+
+.result-content {
+  margin-top: 8px !important;
+  flex: 1;
+  min-width: 0;
+
+  pre {
+    margin: 0;
+    padding: 12px;
+    background-color: #1e1e1e;
+    border-radius: 4px;
+    overflow-x: auto;
+    white-space: pre-wrap;
+  }
+}
+
+/* Empty State */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+  color: #9e9e9e;
+
+  h3 {
+    margin: 16px 0 8px 0;
+    color: #757575;
+  }
+
+  p {
+    margin: 0;
+    max-width: 400px;
+  }
+}
+
+.empty-state-card {
+  min-height: 400px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  mat-icon {
+    font-size: 64px;
+    width: 64px;
+    height: 64px;
+    margin-bottom: 16px;
+    color: #bdbdbd;
+  }
+}
+
+/* Scrollbar Styling */
+.log-output::-webkit-scrollbar,
+.search-results-list::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.log-output::-webkit-scrollbar-track,
+.search-results-list::-webkit-scrollbar-track {
+  background: #2d2d30;
+}
+
+.log-output::-webkit-scrollbar-thumb,
+.search-results-list::-webkit-scrollbar-thumb {
+  background: #555;
+  border-radius: 5px;
+}
+
+.log-output::-webkit-scrollbar-thumb:hover,
+.search-results-list::-webkit-scrollbar-thumb:hover {
+  background: #666;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .content-wrapper {
+    padding: 16px 16px 0 16px;
+  }
+
+  .metadata-grid {
+    grid-template-columns: 1fr;
+  }
+}

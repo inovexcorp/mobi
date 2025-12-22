@@ -38,6 +38,7 @@ import { UsersListComponent } from './components/usersList/usersList.component';
 import { UsersPageComponent } from './components/usersPage/usersPage.component';
 import { AddMemberButtonComponent } from './components/addMemberButton/addMemberButton.component';
 import { RepositoriesPageComponent } from './components/repositories-page/repositories-page.component';
+import { LogViewerPageComponent } from './components/log-viewer-page/log-viewer-page.component';
 
 /**
  * @namespace user-management
@@ -63,7 +64,8 @@ import { RepositoriesPageComponent } from './components/repositories-page/reposi
         UserManagementPageComponent,
         UsersListComponent,
         UsersPageComponent,
-        RepositoriesPageComponent
+        RepositoriesPageComponent,
+        LogViewerPageComponent
     ]
 })
 export class UserManagementModule {}
