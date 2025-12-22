@@ -145,6 +145,11 @@
             <artifactId>workflows.rest</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.mobi</groupId>
+            <artifactId>server.rest</artifactId>
+            <version>${project.version}</version>
+        </dependency>
         <!-- Swagger Dependencies -->
         <dependency>
             <groupId>io.swagger.core.v3</groupId>

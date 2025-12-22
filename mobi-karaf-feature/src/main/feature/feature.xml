@@ -276,6 +276,7 @@
         <bundle>mvn:com.mobi/setting.rest/${project.version}</bundle>
         <bundle>mvn:com.mobi/document.translator.rest/${project.version}</bundle>
         <bundle>mvn:com.mobi/security.policy.rest/${project.version}</bundle>
+        <bundle>mvn:com.mobi/server.rest/${project.version}</bundle>
         <bundle>mvn:com.mobi/sse/${project.version}</bundle>
     </feature>
     <feature name="mobi-web" description="Mobi Web Bundles" version="${project.version}">

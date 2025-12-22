@@ -32,33 +32,20 @@ var newUser = {
 
 var newUserChanged = { 'firstName': 'fcTester', 'lastName': 'lcTester', 'email': 'testc@gmail.com', 'role': 'admin' };
 
-var selectors = {
-    'profileTabFirstName': '//settings-page//mat-tab-group//profile-tab//form//mat-form-field//input[@name="firstName"]',
-    'profileTabLastName': '//settings-page//mat-tab-group//profile-tab//form//mat-form-field//input[@name="lastName"]',
-    'profileTabEmail': '//settings-page//mat-tab-group//profile-tab//form//mat-form-field//input[@name="email"]',
-};
-
-var verifyProfileTab = function(browser, userObject){
-    browser.useXpath().waitForElementVisible(selectors.profileTabFirstName)
-    browser.assert.valueEquals(selectors.profileTabFirstName, userObject.firstName)
-    browser.assert.valueEquals(selectors.profileTabLastName, userObject.lastName)
-    browser.assert.valueEquals(selectors.profileTabEmail, userObject.email)
-};
-
 module.exports = {
-    '@tags': ['login', 'administration', 'sanity'],
+    '@tags': ['login', 'administration', 'sanity', 'new-user-creation'],
 
     'Step 1: Initial Setup' : function(browser) {
-        browser.globals.initial_steps(browser, browser.globals.adminUsername, browser.globals.adminPassword)
+        browser.globals.initial_steps(browser, browser.globals.adminUsername, browser.globals.adminPassword);
     },
 
     'Step 2: The user clicks on the Administration sidebar link' : function(browser) {
-        browser.globals.switchToPage(browser, 'user-management')
+        browser.globals.switchToPage(browser, 'user-management');
     },
 
     'Step 3: A new user is created' : function(browser) {
         browser.page.administrationPage().createUser(newUser);
-        browser.globals.wait_for_no_spinners(browser)
+        browser.globals.wait_for_no_spinners(browser);
     },
 
     'Step 4: The new user is displayed in users list' : function(browser) {
@@ -77,33 +64,27 @@ module.exports = {
         browser
             .useCss()
             .assert.visible('a.current-user-box div.user-title')
-            .assert.textContains('a.current-user-box div.user-title', newUser.firstName)
+            .assert.textContains('a.current-user-box div.user-title', newUser.firstName);
     },
 
     'Step 8: Go to profile tab and verify user info' : function(browser) {
         browser
             .useCss()
             .click('div.sidebar a.current-user-box')
-            .waitForElementVisible('div.settings-page div.profile-tab')
+            .waitForElementVisible('div.settings-page div.profile-tab');
 
-        verifyProfileTab(browser, newUser)
+        browser.page.myAccountPage().verifyProfileTab(newUser);
     },
 
     'Step 9: Edit User' : function(browser) {
+        browser.page.myAccountPage().editProfileTab(newUserChanged);
+        
         browser
-            .useXpath()
-            .clearValue(selectors.profileTabFirstName)
-            .setValue(selectors.profileTabFirstName, newUserChanged.firstName )
-            .clearValue(selectors.profileTabLastName)
-            .setValue(selectors.profileTabLastName, newUserChanged.lastName)
-            .clearValue(selectors.profileTabEmail)
-            .setValue(selectors.profileTabEmail, newUserChanged.email )
-            .click('//mat-tab-group//profile-tab//form//button[@type="submit"]')
             .useCss()
             .assert.visible('a.current-user-box div.user-title')
-            .assert.textContains('a.current-user-box div.user-title', newUserChanged.firstName)
+            .assert.textContains('a.current-user-box div.user-title', newUserChanged.firstName);
 
-        verifyProfileTab(browser, newUserChanged)
+        browser.page.myAccountPage().verifyProfileTab(newUserChanged);
     },
 
     'Step 10: The user successfully logs out' : function(browser) {
@@ -118,9 +99,9 @@ module.exports = {
         browser
             .useCss()
             .click('div.sidebar a.current-user-box')
-            .waitForElementVisible('div.settings-page div.profile-tab')
+            .waitForElementVisible('div.settings-page div.profile-tab');
 
-        verifyProfileTab(browser, newUserChanged)
+        browser.page.myAccountPage().verifyProfileTab(newUserChanged);
     },
 
     'Step 13: The new user can create an ontology' : function(browser) {

@@ -440,3 +440,33 @@ login-layout, main-layout {
 .repositories-page mat-progress-bar .mat-progress-bar-buffer {
   background-color: #e0e0e0;
 }
+
+// Dark Theme Mat-Paginator
+mat-paginator.dark-theme {
+  background-color: #2d2d30;
+  color: #ffffff;
+}
+
+mat-paginator.dark-theme .mat-mdc-paginator-container {
+  background-color: #2d2d30;
+}
+
+mat-paginator.dark-theme .mat-button-disabled {
+  color: #ffffffbc !important;
+}
+
+mat-paginator.dark-theme .mat-select-value,
+mat-paginator.dark-theme .mat-select-arrow,
+mat-paginator.dark-theme .mat-form-field.mat-focused.mat-primary .mat-select-arrow {
+  color: #ffffff;
+}
+
+mat-paginator.dark-theme .mat-form-field-underline,
+mat-paginator.dark-theme .mat-form-field.mat-focused .mat-form-field-ripple {
+  background-color: #ffffff;
+}
+
+mat-paginator.dark-theme .mat-mdc-paginator-page-size-label,
+mat-paginator.dark-theme .mat-mdc-paginator-range-label {
+  color: #b0b0b0;
+}
