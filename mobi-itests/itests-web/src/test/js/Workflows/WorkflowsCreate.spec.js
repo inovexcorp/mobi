@@ -33,7 +33,7 @@ var badWorkflowFile = path.resolve(__dirname + '/../../resources/rdf_files/inval
 var validWorkflowFile = path.resolve(__dirname + '/../../resources/rdf_files/test-workflow.ttl');
 
 module.exports = {
-    '@tags': ['sanity', 'workflows'],
+    '@tags': ['sanity', 'workflows', 'workflows-create'],
 
     'Step 1: Initial Setup' : function(browser) {
         browser.globals.initial_steps(browser, browser.globals.adminUsername, browser.globals.adminPassword);

@@ -438,14 +438,14 @@ export class SettingManagerService {
           return throwError('');
         }
       }),
-      catchError(() => this.getPreferenceFromDefinition(preferenceGroupIRI, annotationIRI))
+      catchError(() => this._getPreferenceFromDefinition(preferenceGroupIRI, annotationIRI))
     );
   }
 
-  private getPreferenceFromDefinition(preferenceGroupIRI: string, annotationIRI: string): Observable<string> {
+  private _getPreferenceFromDefinition(preferenceGroupIRI: string, annotationIRI: string): Observable<string> {
     return this.getPreferenceDefinitions(preferenceGroupIRI).pipe(
       switchMap(groupDefinitions => {
-        const defaultValue = this.getDefaultValueFromDefinition(groupDefinitions, annotationIRI);
+        const defaultValue = this._getDefaultValueFromDefinition(groupDefinitions, annotationIRI);
         if (defaultValue) {
           return of(defaultValue);
         } else {
@@ -460,7 +460,7 @@ export class SettingManagerService {
     );
   }
 
-  private getDefaultValueFromDefinition(groupDefinition: JSONLDObject[], settingIRI: string): string {
+  private _getDefaultValueFromDefinition(groupDefinition: JSONLDObject[], settingIRI: string): string {
     const propShapeIRI = `${SH}property`;
     const potentialPropertyShapes = groupDefinition.find(definition => definition['@id'] === settingIRI)[propShapeIRI];
 

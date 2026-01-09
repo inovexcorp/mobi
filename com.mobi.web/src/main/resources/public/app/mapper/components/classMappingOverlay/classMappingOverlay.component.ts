@@ -29,29 +29,30 @@ import { MapperStateService } from '../../../shared/services/mapperState.service
 import { MappingClass } from '../../../shared/models/mappingClass.interface';
 
 /**
- * @class mapper.ClassMappingOverlayComponent
+ * @class ClassMappingOverlayComponent
  *
- * A component that creates content for a modal with a {@link mapper.ClassSelectComponent} and a
- * {@link mapper.ClassPreviewComponent} to create a ClassMapping in the current
- * {@link shared.MapperStateService#selected mapping}. Meant to be used in conjunction with the `MatDialog` service.
+ * A component that creates content for a modal with a {@link ClassSelectComponent} and a
+ * {@link ClassPreviewComponent} to create a ClassMapping in the current
+ * {@link MapperStateService#selected mapping}. Meant to be used in conjunction with the `MatDialog` service.
  */
 @Component({
-    selector: 'class-mapping-overlay',
-    templateUrl: './classMappingOverlay.component.html',
-    styleUrls: ['./classMappingOverlay.component.scss']
+  selector: 'class-mapping-overlay',
+  templateUrl: './classMappingOverlay.component.html',
+  styleUrls: ['./classMappingOverlay.component.scss']
 })
 export class ClassMappingOverlayComponent {
-    selectedClassDetails: MappingClass;
-    classMappingForm = this.fb.group({
-        class: ['']
-    });
-    
-    constructor(private dialogRef: MatDialogRef<ClassMappingOverlayComponent>, private fb: UntypedFormBuilder,
-        private state: MapperStateService) {}
+  selectedClassDetails: MappingClass;
+  classMappingForm = this.fb.group({
+    class: ['']
+  });
+  
+  constructor(private dialogRef: MatDialogRef<ClassMappingOverlayComponent>, private fb: UntypedFormBuilder,
+    private state: MapperStateService) {}
 
-    addClass(): void {
-        const classMapping = this.state.addClassMapping(this.selectedClassDetails);
-        this.state.resetEdit();
-        this.dialogRef.close(classMapping);
-    }
+  addClass(): void {
+    this.state.addClassMapping(this.selectedClassDetails).subscribe(classMapping => {
+      this.state.resetEdit();
+      this.dialogRef.close(classMapping);
+    });
+  }
 }

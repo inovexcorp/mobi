@@ -27,8 +27,8 @@ import { MatDialogRef } from '@angular/material/dialog';
 import { UntypedFormBuilder, Validators } from '@angular/forms';
 
 import { find, get, has, invertBy, pick, remove } from 'lodash';
-import { map, startWith } from 'rxjs/operators';
-import { Observable, of } from 'rxjs';
+import { catchError, map, startWith, switchMap, take, tap } from 'rxjs/operators';
+import { defer, iif, Observable, of, throwError } from 'rxjs';
 
 import { datatypeValidator } from './datatypeValidator.function';
 import { DELIM, OWL, RDF, XSD } from '../../../prefixes';
@@ -240,89 +240,226 @@ export class PropMappingOverlayComponent implements OnInit {
     this.propMappingForm.updateValueAndValidity();
   }
 
-  addProp(): void {
-    if (this.state.newProp) { // If creating a new property mapping
-      const additionsObj = find(this.state.selected.difference.additions as JSONLDObject[], {'@id': this.state.selectedClassMappingId});
-      let propMap;
-      let prop;
-      if (this.selectedProp.type === `${OWL}ObjectProperty`) {
-        // Add range ClassMapping first
-        const classMappingId = this._getRangeClassMappingId();
-        if (!classMappingId) {
-          this.error = 'Error creating range class mapping';
-          return;
-        }
+  /**
+   * Adds a new property mapping or edits an existing one based off the inputs to the modal. The method is async to
+   * account for asynchronous processing around entity names.
+   */
+  // async addProp() {
+  //   // Final observable to be subscribed to before closing the modal to account for all async operations
+  //   let ob: Observable<void>;
+  //   if (this.state.newProp) { // If creating a new property mapping
+  //     const additionsObj = find(this.state.selected.difference.additions as JSONLDObject[], 
+  //       {'@id': this.state.selectedClassMappingId});
+  //     let propMapOb: Observable<JSONLDObject>;
+  //     let prop: string;
+  //     if (this.selectedProp.type === `${OWL}ObjectProperty`) {
+  //       // Add range ClassMapping first
+  //       const classMappingId = await this._getRangeClassMappingId().toPromise();
+  //       if (!classMappingId) {
+  //         this.error = 'Error creating range class mapping';
+  //         return;
+  //       }
 
-        // Add ObjectMapping pointing to new range class mapping
-        propMap = this.state.addObjectMapping(this.selectedProp, this.state.selectedClassMappingId, classMappingId);
-        prop = `${DELIM}objectProperty`;
+  //       // Add ObjectMapping pointing to new range class mapping
+  //       propMapOb = this.state.addObjectMapping(this.selectedProp, this.state.selectedClassMappingId, classMappingId);
+  //       prop = `${DELIM}objectProperty`;
+  //     } else {
+  //       // Add the DataMapping pointing to the selectedColumn
+  //       const selectedColumn = this.propMappingForm.controls.column.value;
+  //       const datatype = this.propMappingForm.controls.datatype.value || this.selectedProp.ranges[0] || `${XSD}string`;
+  //       const language = this.propMappingForm.controls.language.value;
+  //       propMapOb = this.state.addDataMapping(this.selectedProp, this.state.selectedClassMappingId, selectedColumn, 
+  //         datatype, language);
+  //       prop = `${DELIM}dataProperty`;
+  //     }
+
+  //     ob = propMapOb.pipe(map(propMap => {
+  //       if (additionsObj) {
+  //         // If the additionsObj for the parent ClassMapping exists, add the triple for the new PropertyMapping
+  //         if (!has(additionsObj, `['${prop}']`)) {
+  //           additionsObj[prop] = [];
+  //         }
+  //         additionsObj[prop].push({'@id': propMap['@id']});
+  //       } else {
+  //         // If the additionsObj for the parent ClassMapping does not exist, add it with the triple for the new PropertyMapping
+  //         (this.state.selected.difference.additions as JSONLDObject[]).push({
+  //           '@id': this.state.selectedClassMappingId,
+  //           [prop]: [{'@id': propMap['@id']}]
+  //         });
+  //       }
+  //       this.state.newProp = false;
+  //     }));
+  //   } else { // If editing an existing property
+  //     if (this.mm.isDataMapping(this.selectedPropMapping)) {
+  //       // Update the selected column
+  //       const originalIndex = getPropertyValue(this.selectedPropMapping, `${DELIM}columnIndex`);
+  //       const selectedColumn = this.propMappingForm.controls.column.value;
+  //       updatePropertyValue(this.selectedPropMapping, `${DELIM}columnIndex`, `${selectedColumn}`);
+  //       this.state.changeProp(this.selectedPropMapping['@id'], `${DELIM}columnIndex`, `${selectedColumn}`, originalIndex);
+
+  //       const originalDatatype = getPropertyId(this.selectedPropMapping, `${DELIM}datatypeSpec`);
+  //       if (this.propMappingForm.controls.datatype.value) { // Set the datatype override if present
+  //         const datatype = this.propMappingForm.controls.datatype.value;
+  //         if (this.selectedPropMapping[`${DELIM}datatypeSpec`].length > 0) {
+  //           this.selectedPropMapping[`${DELIM}datatypeSpec`] = [];
+  //         }
+  //         updatePropertyId(this.selectedPropMapping, `${DELIM}datatypeSpec`, datatype);
+  //         this.state.changeProp(this.selectedPropMapping['@id'], `${DELIM}datatypeSpec`, datatype,
+  //           originalDatatype, true);
+  //       } else { // Clear the datatype override if the input is cleared
+  //         removePropertyId(this.selectedPropMapping, `${DELIM}datatypeSpec`, originalDatatype);
+  //       }
+
+  //       const originalLanguage = getPropertyValue(this.selectedPropMapping, `${DELIM}languageSpec`);
+  //       if (this.propMappingForm.controls.language.value) { // Set the language tag if present
+  //         const language = this.propMappingForm.controls.language.value;
+  //         this.selectedPropMapping[`${DELIM}languageSpec`] = [{'@value': language}];
+  //         this.state.changeProp(this.selectedPropMapping['@id'], `${DELIM}languageSpec`, language, originalLanguage);
+  //       }
+  //       if (!this.langString) {
+  //         removePropertyValue(this.selectedPropMapping, `${DELIM}languageSpec`, originalLanguage);
+  //       }
+  //       remove(this.state.invalidProps, {id: this.state.selectedPropMappingId});
+  //     } else {
+  //       // Update range class mapping for object property mapping
+  //       const classMappingId = await this._getRangeClassMappingId().toPromise();
+  //       const originalClassMappingId = getPropertyId(this.selectedPropMapping, `${DELIM}classMapping`);
+  //       updatePropertyId(this.selectedPropMapping, `${DELIM}classMapping`, classMappingId);
+  //       this.state.changeProp(this.selectedPropMapping['@id'], `${DELIM}classMapping`, classMappingId, originalClassMappingId);
+  //     }
+  //     // No async operation here
+  //     ob = of(null);
+  //   }
+
+  //   ob.subscribe(() => {
+  //     const selectedClassMappingId = this.state.selectedClassMappingId;
+  //     this.state.resetEdit();
+  //     this.state.selectedClassMappingId = selectedClassMappingId;
+  //     this.dialogRef.close();
+  //   });
+  // }
+
+  addProp(): void {
+    // 1. Define flow for Creating a New Property
+    const createNewProp$ = defer(() => {
+      // Determine type inside defer so we read current state
+      const isObjectProp = this.selectedProp.type === `${OWL}ObjectProperty`;
+
+      if (isObjectProp) {
+        // Logic: Get Class ID -> Add Object Mapping -> Return result
+        return this._getRangeClassMappingId().pipe(
+          switchMap(classMappingId => {
+            if (!classMappingId) {
+              return throwError(() => new Error('Error creating range class mapping'));
+            }
+            const propType = `${DELIM}objectProperty`;
+            return this.state.addObjectMapping(this.selectedProp, this.state.selectedClassMappingId, classMappingId).pipe(
+              map(propMap => ({ propMap, propType }))
+            );
+          })
+        );
       } else {
-        // Add the DataMapping pointing to the selectedColumn
+        // Logic: Gather Form Data -> Add Data Mapping -> Return result
         const selectedColumn = this.propMappingForm.controls.column.value;
         const datatype = this.propMappingForm.controls.datatype.value || this.selectedProp.ranges[0] || `${XSD}string`;
         const language = this.propMappingForm.controls.language.value;
-        propMap = this.state.addDataMapping(this.selectedProp, this.state.selectedClassMappingId, selectedColumn, datatype, language);
-        prop = `${DELIM}dataProperty`;
-      }
+        const propType = `${DELIM}dataProperty`;
 
-      if (additionsObj) {
-        // If the additionsObj for the parent ClassMapping exists, add the triple for the new PropertyMapping
-        if (!has(additionsObj, `['${prop}']`)) {
-          additionsObj[prop] = [];
-        }
-        additionsObj[prop].push({'@id': propMap['@id']});
-      } else {
-        // If the additionsObj for the parent ClassMapping does not exist, add it with the triple for the new PropertyMapping
-        (this.state.selected.difference.additions as JSONLDObject[]).push({
-          '@id': this.state.selectedClassMappingId,
-          [prop]: [{'@id': propMap['@id']}]
-        });
+        return this.state.addDataMapping(this.selectedProp, this.state.selectedClassMappingId, selectedColumn, datatype, language).pipe(
+          map(propMap => ({ propMap, propType }))
+        );
       }
-      this.state.newProp = false;
-    } else { // If editing an existing property
-      if (this.mm.isDataMapping(this.selectedPropMapping)) {
-        // Update the selected column
-        const originalIndex = getPropertyValue(this.selectedPropMapping, `${DELIM}columnIndex`);
-        const selectedColumn = this.propMappingForm.controls.column.value;
-        updatePropertyValue(this.selectedPropMapping, `${DELIM}columnIndex`, `${selectedColumn}`);
-        this.state.changeProp(this.selectedPropMapping['@id'], `${DELIM}columnIndex`, `${selectedColumn}`, originalIndex);
+    }).pipe(
+      // Side Effect: Update the JSON-LD structure locally
+      tap(({ propMap, propType }) => {
+        const additionsObj = find(this.state.selected.difference.additions as JSONLDObject[], 
+          { '@id': this.state.selectedClassMappingId });
 
-        const originalDatatype = getPropertyId(this.selectedPropMapping, `${DELIM}datatypeSpec`);
-        if (this.propMappingForm.controls.datatype.value) { // Set the datatype override if present
-          const datatype = this.propMappingForm.controls.datatype.value;
-          if (this.selectedPropMapping[`${DELIM}datatypeSpec`].length > 0) {
-            this.selectedPropMapping[`${DELIM}datatypeSpec`] = [];
+        if (additionsObj) {
+          if (!has(additionsObj, `['${propType}']`)) {
+            additionsObj[propType] = [];
           }
-          updatePropertyId(this.selectedPropMapping, `${DELIM}datatypeSpec`, datatype);
-          this.state.changeProp(this.selectedPropMapping['@id'], `${DELIM}datatypeSpec`, datatype,
-            originalDatatype, true);
-        } else { // Clear the datatype override if the input is cleared
-          removePropertyId(this.selectedPropMapping, `${DELIM}datatypeSpec`, originalDatatype);
+          additionsObj[propType].push({ '@id': propMap['@id'] });
+        } else {
+          (this.state.selected.difference.additions as JSONLDObject[]).push({
+            '@id': this.state.selectedClassMappingId,
+            [propType]: [{ '@id': propMap['@id'] }]
+          });
         }
+        this.state.newProp = false;
+      })
+    );
 
-        const originalLanguage = getPropertyValue(this.selectedPropMapping, `${DELIM}languageSpec`);
-        if (this.propMappingForm.controls.language.value) { // Set the language tag if present
-          const language = this.propMappingForm.controls.language.value;
-          this.selectedPropMapping[`${DELIM}languageSpec`] = [{'@value': language}];
-          this.state.changeProp(this.selectedPropMapping['@id'], `${DELIM}languageSpec`, language, originalLanguage);
-        }
-        if (!this.langString) {
-          removePropertyValue(this.selectedPropMapping, `${DELIM}languageSpec`, originalLanguage);
-        }
-        remove(this.state.invalidProps, {id: this.state.selectedPropMappingId});
+    // 2. Define flow for Editing an Existing Property
+    const editProp$ = defer(() => {
+      if (this.mm.isDataMapping(this.selectedPropMapping)) {
+        // Logic: Update Data Mapping (Synchronous side effects wrapped in Observable)
+        return of(null).pipe(
+          tap(() => {
+            const originalIndex = getPropertyValue(this.selectedPropMapping, `${DELIM}columnIndex`);
+            const selectedColumn = this.propMappingForm.controls.column.value;
+            updatePropertyValue(this.selectedPropMapping, `${DELIM}columnIndex`, `${selectedColumn}`);
+            this.state.changeProp(this.selectedPropMapping['@id'], `${DELIM}columnIndex`, `${selectedColumn}`, originalIndex);
+
+            // Handle Datatype
+            const originalDatatype = getPropertyId(this.selectedPropMapping, `${DELIM}datatypeSpec`);
+            const newDatatype = this.propMappingForm.controls.datatype.value;
+            
+            if (newDatatype) {
+              if (this.selectedPropMapping[`${DELIM}datatypeSpec`]?.length > 0) {
+                this.selectedPropMapping[`${DELIM}datatypeSpec`] = [];
+              }
+              updatePropertyId(this.selectedPropMapping, `${DELIM}datatypeSpec`, newDatatype);
+              this.state.changeProp(this.selectedPropMapping['@id'], `${DELIM}datatypeSpec`, newDatatype, originalDatatype, true);
+            } else {
+              removePropertyId(this.selectedPropMapping, `${DELIM}datatypeSpec`, originalDatatype);
+            }
+
+            // Handle Language
+            const originalLanguage = getPropertyValue(this.selectedPropMapping, `${DELIM}languageSpec`);
+            const newLanguage = this.propMappingForm.controls.language.value;
+
+            if (newLanguage) {
+              this.selectedPropMapping[`${DELIM}languageSpec`] = [{ '@value': newLanguage }];
+              this.state.changeProp(this.selectedPropMapping['@id'], `${DELIM}languageSpec`, newLanguage, originalLanguage);
+            }
+            if (!this.langString) {
+              removePropertyValue(this.selectedPropMapping, `${DELIM}languageSpec`, originalLanguage);
+            }
+            remove(this.state.invalidProps, { id: this.state.selectedPropMappingId });
+          })
+        );
       } else {
-        // Update range class mapping for object property mapping
-        const classMappingId = this._getRangeClassMappingId();
-        const originalClassMappingId = getPropertyId(this.selectedPropMapping, `${DELIM}classMapping`);
-        updatePropertyId(this.selectedPropMapping, `${DELIM}classMapping`, classMappingId);
-        this.state.changeProp(this.selectedPropMapping['@id'], `${DELIM}classMapping`, classMappingId, originalClassMappingId);
+        // Logic: Update Object Mapping (Requires Async Class ID retrieval)
+        return this._getRangeClassMappingId().pipe(
+          tap(classMappingId => {
+            const originalClassMappingId = getPropertyId(this.selectedPropMapping, `${DELIM}classMapping`);
+            updatePropertyId(this.selectedPropMapping, `${DELIM}classMapping`, classMappingId);
+            this.state.changeProp(this.selectedPropMapping['@id'], `${DELIM}classMapping`, classMappingId, originalClassMappingId);
+          })
+        );
       }
-    }
+    });
 
-    const selectedClassMappingId = this.state.selectedClassMappingId;
-    this.state.resetEdit();
-    this.state.selectedClassMappingId = selectedClassMappingId;
-    this.dialogRef.close();
+    // 3. Main Execution
+    // iif checks the condition at subscription time
+    iif(() => this.state.newProp, createNewProp$, editProp$)
+      .pipe(
+        take(1), // Ensure stream completes after one emission
+        catchError(err => {
+          this.error = typeof err === 'string' ? err : err.message || 'An unknown error occurred';
+          return of(null); // Return observable to prevent crash, but don't close dialog
+        })
+      )
+      .subscribe(result => {
+        // Only close dialog if successful (result is not null/error flow handled above)
+        if (result !== null || !this.error) {
+          const selectedClassMappingId = this.state.selectedClassMappingId;
+          this.state.resetEdit();
+          this.state.selectedClassMappingId = selectedClassMappingId;
+          this.dialogRef.close();
+        }
+      });
   }
 
   setupEditProperty(): void {
@@ -369,12 +506,13 @@ export class PropMappingOverlayComponent implements OnInit {
     this.dialogRef.close();
   }
 
-  private _getRangeClassMappingId() {
+  private _getRangeClassMappingId(): Observable<string> {
     if (this.propMappingForm.controls.rangeClass.value.new) {
-      const classMapping = this.state.addClassMapping(this.propMappingForm.controls.rangeClass.value.mappingClass);
-      return classMapping ? classMapping['@id'] : '';
+      return this.state.addClassMapping(this.propMappingForm.controls.rangeClass.value.mappingClass).pipe(map(classMapping => {
+        return classMapping ? classMapping['@id'] : '';
+      }));
     } else {
-      return this.propMappingForm.controls.rangeClass.value.classMapping['@id'];
+      return of(this.propMappingForm.controls.rangeClass.value.classMapping['@id']);
     }
   }
 

@@ -211,7 +211,7 @@ module.exports = {
               htmlFile.end();
             });
             // Fetch Karaf logs
-            containerObj.getArchive({path: '/opt/mobi/mobi-distribution/data/log/karaf.log'}, (err, stream) => {
+            containerObj.getArchive({path: '/opt/mobi/${distribution}/data/log/karaf.log'}, (err, stream) => {
                 if (err) {
                     console.error('Error getting archive:', err);
                     done();
