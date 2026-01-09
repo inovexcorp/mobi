@@ -34,7 +34,6 @@ import { Difference } from '../models/difference.class';
 import { getDctermsValue } from '../utility';
 import { IriList } from '../models/iriList.interface';
 import { JSONLDObject } from '../models/JSONLDObject.interface';
-import { MapperStateService } from './mapperState.service';
 import { Mapping } from '../models/mapping.class';
 import { MappingClass } from '../models/mappingClass.interface';
 import { MappingManagerService } from './mappingManager.service';
@@ -46,8 +45,9 @@ import { OntologyManagerService } from './ontologyManager.service';
 import { SettingManagerService } from './settingManager.service';
 import { SparqlManagerService } from './sparqlManager.service';
 import { SPARQLSelectResults } from '../models/sparqlSelectResults.interface';
+import { MapperStateService } from './mapperState.service';
 
-describe('Mapper State service', function() {
+describe('Mapper State service', () => {
   let service: MapperStateService;
   let mappingManagerStub: jasmine.SpyObj<MappingManagerService>;
   let catalogManagerStub: jasmine.SpyObj<CatalogManagerService>;
@@ -142,7 +142,7 @@ describe('Mapper State service', function() {
     settingManagerStub.getAnnotationPreference.and.returnValue(of('DC Terms'));
   });
 
-  afterEach(function() {
+  afterEach(() => {
     cleanStylesFromDOM();
     service = null;
     ontologyManagerStub = null;
@@ -154,7 +154,7 @@ describe('Mapper State service', function() {
     settingManagerStub = null;
   });
 
-  it('should initialize important variables', function() {
+  it('should initialize important variables', () => {
     service.initialize();
     expect(service.editMapping).toBe(false);
     expect(service.newMapping).toBe(false);
@@ -164,27 +164,27 @@ describe('Mapper State service', function() {
     expect(service.iriMap).toBeUndefined();
     expect(service.selected).toBeUndefined();
   });
-  it('should reset edit related variables', function() {
+  it('should reset edit related variables', () => {
     service.resetEdit();
     expect(service.selectedClassMappingId).toBe('');
     expect(service.selectedPropMappingId).toBe('');
     expect(service.highlightIndexes).toEqual([]);
     expect(service.newProp).toBe(false);
   });
-  it('should reset pagination related variables', function() {
+  it('should reset pagination related variables', () => {
     service.resetPagination();
     expect(service.paginationConfig.pageIndex).toBe(0);
     expect(service.paginationConfig.searchText).toBe('');
     expect(service.totalSize).toBe(0);
   });
-  it('should set all variables for creating a new mapping', function() {
+  it('should set all variables for creating a new mapping', () => {
     spyOn(service, 'resetEdit');
     service.startCreateMapping();
     expect(service.editMapping).toBe(true);
     expect(service.newMapping).toBe(true);
     expect(service.resetEdit).toHaveBeenCalledWith();
   });
-  describe('should retrieve a MappingState for the provided record', function() {
+  describe('should retrieve a MappingState for the provided record', () => {
     const mappingEntity: JSONLDObject = {
       '@id': 'mapping',
       '@type': [`${DELIM}Mapping`],
@@ -192,7 +192,7 @@ describe('Mapper State service', function() {
       [`${DELIM}sourceBranch`]: [{ '@id': '' }],
       [`${DELIM}sourceCommit`]: [{ '@id': '' }],
     };
-    it('unless getMapping fails', fakeAsync(function() {
+    it('unless getMapping fails', fakeAsync(() => {
       mappingManagerStub.getMapping.and.returnValue(throwError(error));
       service.getMappingState(record)
         .subscribe(() => fail('Observable should have rejected'), response => {
@@ -201,7 +201,7 @@ describe('Mapper State service', function() {
         });
       tick();
     }));
-    it('unless getRecord fails', fakeAsync(function() {
+    it('unless getRecord fails', fakeAsync(() => {
       mappingManagerStub.getMapping.and.returnValue(of([mappingEntity]));
       catalogManagerStub.getRecord.and.returnValue(throwError(error));
       service.getMappingState(record)
@@ -212,7 +212,7 @@ describe('Mapper State service', function() {
         });
       tick();
     }));
-    it('successfully', fakeAsync(function() {
+    it('successfully', fakeAsync(() => {
       const ontology = { '@id': 'ontologyId' };
       mappingManagerStub.getMapping.and.returnValue(of([mappingEntity]));
       catalogManagerStub.getRecord.and.returnValue(of([ontology]));
@@ -228,7 +228,7 @@ describe('Mapper State service', function() {
       tick();
     }));
   });
-  it('should test whether the mapping has been changed', function() {
+  it('should test whether the mapping has been changed', () => {
     expect(service.isMappingChanged()).toEqual(false);
     service.selected.difference.additions = [{ '@id': '' }];
     expect(service.isMappingChanged()).toEqual(true);
@@ -237,18 +237,18 @@ describe('Mapper State service', function() {
     service.selected.difference.additions = [];
     expect(service.isMappingChanged()).toEqual(true);
   });
-  describe('should save the current mapping', function() {
-    beforeEach(function() {
+  describe('should save the current mapping', () => {
+    beforeEach(() => {
       mappingStub.getJsonld.and.returnValue([]);
     });
-    describe('if it is a new mapping', function() {
-      beforeEach(function() {
+    describe('if it is a new mapping', () => {
+      beforeEach(() => {
         service.newMapping = true;
         service.selected.config = {
           title: 'title'
         };
       });
-      it('unless an error occurs', fakeAsync(function() {
+      it('unless an error occurs', fakeAsync(() => {
         mappingManagerStub.upload.and.returnValue(throwError(error));
         service.saveMapping()
           .subscribe(() => fail('Observable should have rejected'), response => {
@@ -258,7 +258,7 @@ describe('Mapper State service', function() {
           });
         tick();
       }));
-      it('successfully', fakeAsync(function() {
+      it('successfully', fakeAsync(() => {
         mappingManagerStub.upload.and.returnValue(of('id'));
         service.saveMapping()
           .subscribe(response => {
@@ -269,16 +269,16 @@ describe('Mapper State service', function() {
         tick();
       }));
     });
-    describe('if it is an existing mapping', function() {
-      beforeEach(function() {
+    describe('if it is an existing mapping', () => {
+      beforeEach(() => {
         service.newMapping = false;
         service.selected.record = record;
       });
-      describe('and updateInProgressCommit resolves', function() {
-        beforeEach(function() {
+      describe('and updateInProgressCommit resolves', () => {
+        beforeEach(() => {
           catalogManagerStub.updateInProgressCommit.and.returnValue(of(null));
         });
-        it('and createBranchCommit resolves', fakeAsync(function() {
+        it('and createBranchCommit resolves', fakeAsync(() => {
           catalogManagerStub.createBranchCommit.and.returnValue(of(null));
           const add1 = { '@id': 'add1', [`${DCTERMS}title`]: [{ '@value': 'Class' }] };
           const add2 = { '@id': 'add2', [`${RDFS}label`]: [{ '@value': 'Prop 1' }] };
@@ -296,7 +296,7 @@ describe('Mapper State service', function() {
           expect(catalogManagerStub.updateInProgressCommit).toHaveBeenCalledWith(service.selected.record.id, catalogId, service.selected.difference);
           expect(catalogManagerStub.createBranchCommit).toHaveBeenCalledWith(service.selected.record.branch, service.selected.record.id, catalogId, 'Changed Class, Prop 1, Add 3, Prop 2');
         }));
-        it('and createBranchCommit rejects', fakeAsync(function() {
+        it('and createBranchCommit rejects', fakeAsync(() => {
           catalogManagerStub.createBranchCommit.and.returnValue(throwError(error));
           service.saveMapping()
             .subscribe(() => fail('Observable should have rejected'), response => {
@@ -308,7 +308,7 @@ describe('Mapper State service', function() {
           expect(catalogManagerStub.createBranchCommit).toHaveBeenCalledWith(service.selected.record.branch, service.selected.record.id, catalogId, jasmine.any(String));
         }));
       });
-      it('and updateInProgressCommit rejects', fakeAsync(function() {
+      it('and updateInProgressCommit rejects', fakeAsync(() => {
         catalogManagerStub.updateInProgressCommit.and.returnValue(throwError(error));
         service.saveMapping()
           .subscribe(() => fail('Observable should have rejected'), response => {
@@ -321,11 +321,11 @@ describe('Mapper State service', function() {
       }));
     });
   });
-  describe('should retrieve and set the master branch of the current mapping record', function() {
-    beforeEach(function() {
+  describe('should retrieve and set the master branch of the current mapping record', () => {
+    beforeEach(() => {
       service.selected.record = record;
     });
-    it('if getRecordBranch resolves', fakeAsync(function() {
+    it('if getRecordBranch resolves', fakeAsync(() => {
       const branch = { '@id': 'branchId' };
       catalogManagerStub.getRecordBranch.and.returnValue(of(branch));
       service.setMasterBranch().subscribe(response => {
@@ -334,7 +334,7 @@ describe('Mapper State service', function() {
       }, () => fail('Observable should have rejected'));
       tick();
     }));
-    it('unless getRecordBranch rejects', fakeAsync(function() {
+    it('unless getRecordBranch rejects', fakeAsync(() => {
       catalogManagerStub.getRecordBranch.and.returnValue(throwError(error));
       service.setMasterBranch().subscribe(() => fail('Observable should have rejected'), response => {
         expect(response).toEqual(error);
@@ -343,7 +343,7 @@ describe('Mapper State service', function() {
       tick();
     }));
   });
-  describe('should find incompatible mappings within a Mapping', function() {
+  describe('should find incompatible mappings within a Mapping', () => {
     const objPropId = 'objPropId';
     const classMapping: JSONLDObject = {
       '@id': 'classMapping',
@@ -366,12 +366,12 @@ describe('Mapper State service', function() {
     objProp.iri = objPropId;
     objProp.type = `${OWL}ObjectProperty`;
     objProp.ranges = [classId];
-    beforeEach(function() {
+    beforeEach(() => {
       mappingStub.getAllClassMappings.and.returnValue([]);
       mappingStub.getAllDataMappings.and.returnValue([]);
       mappingStub.getAllObjectMappings.and.returnValue([]);
     });
-    it('unless retrieveSpecificClasses fails', async function() {
+    it('unless retrieveSpecificClasses fails', async () => {
       spyOn(service, 'retrieveSpecificClasses').and.returnValue(throwError(error));
       spyOn(service, 'retrieveSpecificProps').and.returnValue(of([]));
       mappingStub.getAllClassMappings.and.returnValue([classMapping]);
@@ -387,7 +387,7 @@ describe('Mapper State service', function() {
         { iri: propId, type: `${OWL}AnnotationProperty` },
       ]);
     });
-    it('unless retrieveSpecificProps fails', async function() {
+    it('unless retrieveSpecificProps fails', async () => {
       spyOn(service, 'retrieveSpecificClasses').and.returnValue(of([]));
       spyOn(service, 'retrieveSpecificProps').and.returnValue(throwError(error));
       mappingStub.getAllClassMappings.and.returnValue([classMapping]);
@@ -403,7 +403,7 @@ describe('Mapper State service', function() {
         { iri: propId, type: `${OWL}AnnotationProperty` },
       ]);
     });
-    it('unless there are no class or property mappings', async function() {
+    it('unless there are no class or property mappings', async () => {
       spyOn(service, 'retrieveSpecificClasses');
       spyOn(service, 'retrieveSpecificProps');
       service.findIncompatibleMappings(mappingStub).subscribe(result => {
@@ -412,7 +412,7 @@ describe('Mapper State service', function() {
       expect(service.retrieveSpecificClasses).not.toHaveBeenCalled();
       expect(service.retrieveSpecificProps).not.toHaveBeenCalled();
     });
-    it('if there are incompatible classes', async function() {
+    it('if there are incompatible classes', async () => {
       const deprecatedClass: MappingClass = cloneDeep(mappingClass);
       deprecatedClass.iri = 'deprecatedClassId';
       deprecatedClass.deprecated = true;
@@ -431,7 +431,7 @@ describe('Mapper State service', function() {
       expect(service.retrieveSpecificClasses).toHaveBeenCalledWith(ontInfo, [classId, deprecatedClass.iri, 'error']);
       expect(service.retrieveSpecificProps).not.toHaveBeenCalled();
     });
-    it('if there are incompatible data properties', async function() {
+    it('if there are incompatible data properties', async () => {
       const supportedAnnMapping: JSONLDObject = cloneDeep(dataPropMapping);
       supportedAnnMapping[`${DELIM}hasProperty`] = [{ '@id': service.supportedAnnotations[0].iri }];
 
@@ -465,7 +465,7 @@ describe('Mapper State service', function() {
         { iri: 'error', type: `${OWL}AnnotationProperty` },
       ]);
     });
-    it('if there are incompatible object properties', async function() {
+    it('if there are incompatible object properties', async () => {
       // Switched the property IRI
       const switchedObjPropMapping: JSONLDObject = cloneDeep(objPropMapping);
       switchedObjPropMapping[`${DELIM}hasProperty`] = [{ '@id': propId }];
@@ -556,7 +556,7 @@ describe('Mapper State service', function() {
       ]);
     });
   });
-  it('should set the list of invalid property mappings', function() {
+  it('should set the list of invalid property mappings', () => {
     delimitedManagerStub.dataRows = [['']];
     const invalidProp: JSONLDObject = {
       '@id': 'invalid',
@@ -585,7 +585,7 @@ describe('Mapper State service', function() {
     expect(mappingStub.findClassWithDataMapping).toHaveBeenCalledWith(validProp['@id']);
     expect(mappingManagerStub.getPropMappingTitle).toHaveBeenCalledWith('Title', 'Title');
   });
-  it('should return a list of all the mapped column indexes', function() {
+  it('should return a list of all the mapped column indexes', () => {
     const dataMappings = [{ '@id': '', [`${DELIM}columnIndex`]: [{ '@value': '0' }] }];
     mappingStub.getAllDataMappings.and.returnValue(dataMappings);
     const results = service.getMappedColumns();
@@ -594,19 +594,19 @@ describe('Mapper State service', function() {
       expect(result).toBe('0');
     });
   });
-  describe('should reflect the change of a property value in the difference', function() {
+  describe('should reflect the change of a property value in the difference', () => {
     const entityId = 'entity';
     const newValue = 'new';
     const originalValue = 'original';
     const otherValue = 'other';
-    it('unless the new value is the same as the original', function() {
+    it('unless the new value is the same as the original', () => {
       service.changeProp(entityId, propId, newValue, newValue);
       expect(service.selected.difference.additions).toEqual([]);
       expect(service.selected.difference.deletions).toEqual([]);
     });
-    describe('if the new value is different', function() {
-      describe('and the property has a @id value', function() {
-        it('and the property was just set', function() {
+    describe('if the new value is different', () => {
+      describe('and the property has a @id value', () => {
+        it('and the property was just set', () => {
           const additionObj = { '@id': entityId };
           additionObj[propId] = [{ '@id': originalValue }];
           (service.selected.difference.additions as JSONLDObject[]).push(additionObj);
@@ -614,7 +614,7 @@ describe('Mapper State service', function() {
           expect(additionObj[propId]).toEqual([{ '@id': newValue }]);
           expect(service.selected.difference.deletions).toEqual([]);
         });
-        it('and the entity was just opened', function() {
+        it('and the entity was just opened', () => {
           const expectedAddition = { '@id': entityId };
           expectedAddition[propId] = [{ '@id': newValue }];
           const expectedDeletion = { '@id': entityId };
@@ -623,7 +623,7 @@ describe('Mapper State service', function() {
           expect(service.selected.difference.additions).toContain(expectedAddition);
           expect(service.selected.difference.deletions).toContain(expectedDeletion);
         });
-        it('and the entity was opened and the property already changed', function() {
+        it('and the entity was opened and the property already changed', () => {
           const additionObj = { '@id': entityId };
           additionObj[propId] = [{ '@id': originalValue }];
           (service.selected.difference.additions as JSONLDObject[]).push(additionObj);
@@ -634,14 +634,14 @@ describe('Mapper State service', function() {
           expect(additionObj[propId]).toEqual([{ '@id': newValue }]);
           expect(deletionObj[propId]).toEqual([{ '@id': otherValue }]);
         });
-        it('and nothing has been set on the entity', function() {
+        it('and nothing has been set on the entity', () => {
           const expectedAddition = { '@id': entityId };
           expectedAddition[propId] = [{ '@id': newValue }];
           service.changeProp(entityId, propId, newValue, '', true);
           expect(service.selected.difference.additions).toContain(expectedAddition);
           expect(service.selected.difference.deletions).toEqual([]);
         });
-        it('and the entity was opened and another property was altered', function() {
+        it('and the entity was opened and another property was altered', () => {
           const additionObj = { '@id': entityId };
           (service.selected.difference.additions as JSONLDObject[]).push(additionObj);
           const deletionObj = { '@id': entityId };
@@ -650,7 +650,7 @@ describe('Mapper State service', function() {
           expect(additionObj[propId]).toEqual([{ '@id': newValue }]);
           expect(deletionObj[propId]).toEqual([{ '@id': originalValue }]);
         });
-        it('and the property was not set and another property was changed', function() {
+        it('and the property was not set and another property was changed', () => {
           const additionObj = { '@id': entityId };
           (service.selected.difference.additions as JSONLDObject[]).push(additionObj);
           const deletionObj = { '@id': entityId };
@@ -659,14 +659,14 @@ describe('Mapper State service', function() {
           expect(additionObj[propId]).toEqual([{ '@id': newValue }]);
           expect(has(deletionObj, `['${propId}']`)).toEqual(false);
         });
-        it('and the property was not set and another property was added', function() {
+        it('and the property was not set and another property was added', () => {
           const additionObj = { '@id': entityId };
           (service.selected.difference.additions as JSONLDObject[]).push(additionObj);
           service.changeProp(entityId, propId, newValue, '', true);
           expect(additionObj[propId]).toEqual([{ '@id': newValue }]);
           expect(service.selected.difference.deletions).toEqual([]);
         });
-        it('and the property was changed back with no other changes', function() {
+        it('and the property was changed back with no other changes', () => {
           const additionObj = { '@id': entityId };
           additionObj[propId] = [{ '@id': originalValue }];
           (service.selected.difference.additions as JSONLDObject[]).push(additionObj);
@@ -677,7 +677,7 @@ describe('Mapper State service', function() {
           expect(service.selected.difference.additions).toEqual([]);
           expect(service.selected.difference.deletions).toEqual([]);
         });
-        it('and the property was changed back with other changes', function() {
+        it('and the property was changed back with other changes', () => {
           const expectedAddition = { '@id': entityId, test: true };
           const additionObj = Object.assign({}, expectedAddition);
           additionObj[propId] = [{ '@id': originalValue }];
@@ -691,8 +691,8 @@ describe('Mapper State service', function() {
           expect(service.selected.difference.deletions).toContain(expectedDeletion);
         });
       });
-      describe('and the property has a @value value', function() {
-        it('and the property was just set', function() {
+      describe('and the property has a @value value', () => {
+        it('and the property was just set', () => {
           const additionObj = { '@id': entityId };
           additionObj[propId] = [{ '@value': originalValue }];
           (service.selected.difference.additions as JSONLDObject[]).push(additionObj);
@@ -700,7 +700,7 @@ describe('Mapper State service', function() {
           expect(additionObj[propId]).toEqual([{ '@value': newValue }]);
           expect(service.selected.difference.deletions).toEqual([]);
         });
-        it('and the entity was just opened', function() {
+        it('and the entity was just opened', () => {
           const expectedAddition = { '@id': entityId };
           expectedAddition[propId] = [{ '@value': newValue }];
           const expectedDeletion = { '@id': entityId };
@@ -709,7 +709,7 @@ describe('Mapper State service', function() {
           expect(service.selected.difference.additions).toContain(expectedAddition);
           expect(service.selected.difference.deletions).toContain(expectedDeletion);
         });
-        it('and the entity was opened and the property already changed', function() {
+        it('and the entity was opened and the property already changed', () => {
           const additionObj = { '@id': entityId };
           additionObj[propId] = [{ '@value': originalValue }];
           (service.selected.difference.additions as JSONLDObject[]).push(additionObj);
@@ -720,14 +720,14 @@ describe('Mapper State service', function() {
           expect(additionObj[propId]).toEqual([{ '@value': newValue }]);
           expect(deletionObj[propId]).toEqual([{ '@value': otherValue }]);
         });
-        it('and nothing has been set on the entity', function() {
+        it('and nothing has been set on the entity', () => {
           const expectedAddition = { '@id': entityId };
           expectedAddition[propId] = [{ '@value': newValue }];
           service.changeProp(entityId, propId, newValue, '');
           expect(service.selected.difference.additions).toContain(expectedAddition);
           expect(service.selected.difference.deletions).toEqual([]);
         });
-        it('and the entity was opened and another property was altered', function() {
+        it('and the entity was opened and another property was altered', () => {
           const additionObj = { '@id': entityId };
           (service.selected.difference.additions as JSONLDObject[]).push(additionObj);
           const deletionObj = { '@id': entityId };
@@ -736,7 +736,7 @@ describe('Mapper State service', function() {
           expect(additionObj[propId]).toEqual([{ '@value': newValue }]);
           expect(deletionObj[propId]).toEqual([{ '@value': originalValue }]);
         });
-        it('and the property was not set and another property was changed', function() {
+        it('and the property was not set and another property was changed', () => {
           const additionObj = { '@id': entityId };
           (service.selected.difference.additions as JSONLDObject[]).push(additionObj);
           const deletionObj = { '@id': entityId };
@@ -745,14 +745,14 @@ describe('Mapper State service', function() {
           expect(additionObj[propId]).toEqual([{ '@value': newValue }]);
           expect(has(deletionObj, `['${propId}']`)).toEqual(false);
         });
-        it('and the property was not set and another property was added', function() {
+        it('and the property was not set and another property was added', () => {
           const additionObj = { '@id': entityId };
           (service.selected.difference.additions as JSONLDObject[]).push(additionObj);
           service.changeProp(entityId, propId, newValue, '');
           expect(additionObj[propId]).toEqual([{ '@value': newValue }]);
           expect(service.selected.difference.deletions).toEqual([]);
         });
-        it('and the property was changed back with no other changes', function() {
+        it('and the property was changed back with no other changes', () => {
           const additionObj = { '@id': entityId };
           additionObj[propId] = [{ '@value': originalValue }];
           (service.selected.difference.additions as JSONLDObject[]).push(additionObj);
@@ -763,7 +763,7 @@ describe('Mapper State service', function() {
           expect(service.selected.difference.additions).toEqual([]);
           expect(service.selected.difference.deletions).toEqual([]);
         });
-        it('and the property was changed back with other changes', function() {
+        it('and the property was changed back with other changes', () => {
           const expectedAddition = { '@id': entityId, test: true };
           const additionObj = Object.assign({}, expectedAddition);
           additionObj[propId] = [{ '@value': originalValue }];
@@ -779,9 +779,9 @@ describe('Mapper State service', function() {
       });
     });
   });
-  describe('should add a class mapping with the correct title if', function() {
+  describe('should add a class mapping with the correct title if', () => {
     const newClassMapping: JSONLDObject = { '@id': 'new' };
-    beforeEach(function() {
+    beforeEach(() => {
       mappingStub.addClassMapping.and.returnValue(newClassMapping);
       spyOn(service, 'changeProp');
       service.iriMap = {
@@ -791,109 +791,143 @@ describe('Mapper State service', function() {
         annotationProperties: {},
       };
     });
-    it('it is the first of the class', function() {
+    it('it is the first of the class', fakeAsync(() => {
       mappingStub.getClassMappingsByClassId.and.returnValue([]);
-      expect(service.addClassMapping(mappingClass)).toEqual(newClassMapping);
-      expect(mappingStub.getClassMappingsByClassId).toHaveBeenCalledWith(mappingClass.iri);
-      expect(mappingStub.addClassMapping).toHaveBeenCalledWith(mappingClass.iri, `${DATA}${ontologyId}/classid/`);
-      expect(service.changeProp).not.toHaveBeenCalled();
-      expect(service.selected.difference.additions).toContain(newClassMapping);
-    });
-    describe('the class has already been mapped', function() {
-      it('and it does not have an index', function() {
+      service.addClassMapping(mappingClass).subscribe(result => {
+        expect(result).toEqual(newClassMapping);
+        expect(mappingStub.getClassMappingsByClassId).toHaveBeenCalledWith(mappingClass.iri);
+        expect(mappingStub.addClassMapping).toHaveBeenCalledWith(mappingClass.iri, `${DATA}${ontologyId}/classid/`);
+        expect(service.changeProp).not.toHaveBeenCalled();
+        expect(service.selected.difference.additions).toContain(newClassMapping);
+      });
+      tick();
+    }));
+    describe('the class has already been mapped', () => {
+      it('and it does not have an index', fakeAsync(() => {
         const originalClassMapping = { '@id': 'original' };
         originalClassMapping[`${DCTERMS}title`] = [{ '@value': mappingClass.name }];
         mappingStub.getClassMappingsByClassId.and.returnValue([originalClassMapping]);
-        expect(service.addClassMapping(mappingClass)).toEqual(newClassMapping);
-        expect(mappingStub.getClassMappingsByClassId).toHaveBeenCalledWith(mappingClass.iri);
-        expect(mappingStub.addClassMapping).toHaveBeenCalledWith(mappingClass.iri, `${DATA}${ontologyId}/classid/`);
-        expect(originalClassMapping[`${DCTERMS}title`][0]['@value']).toEqual(`${mappingClass.name} (1)`);
-        expect(service.changeProp).toHaveBeenCalledWith(originalClassMapping['@id'], `${DCTERMS}title`, `${mappingClass.name} (1)`, mappingClass.name);
-        expect(service.selected.difference.additions).toContain(newClassMapping);
-      });
-      it('with a missing number', function() {
+        service.addClassMapping(mappingClass).subscribe(result => {
+          expect(result).toEqual(newClassMapping);
+          expect(mappingStub.getClassMappingsByClassId).toHaveBeenCalledWith(mappingClass.iri);
+          expect(mappingStub.addClassMapping).toHaveBeenCalledWith(mappingClass.iri, `${DATA}${ontologyId}/classid/`);
+          expect(originalClassMapping[`${DCTERMS}title`][0]['@value']).toEqual(`${mappingClass.name} (1)`);
+          expect(service.changeProp).toHaveBeenCalledWith(originalClassMapping['@id'], `${DCTERMS}title`, `${mappingClass.name} (1)`, mappingClass.name);
+          expect(service.selected.difference.additions).toContain(newClassMapping);
+        });
+        tick();
+      }));
+      it('with a missing number', fakeAsync(() => {
         const originalMappings = [{ '@id': 'original1' }, { '@id': 'original2' }];
         originalMappings[0][`${DCTERMS}title`] = [{ '@value': `${mappingClass.name} (1)` }];
         originalMappings[1][`${RDFS}label`] = [{ '@value': `${mappingClass.name} (3)` }];
         mappingStub.getClassMappingsByClassId.and.returnValue(originalMappings);
-        expect(service.addClassMapping(mappingClass)).toEqual(newClassMapping);
-        expect(mappingStub.getClassMappingsByClassId).toHaveBeenCalledWith(mappingClass.iri);
-        expect(mappingStub.addClassMapping).toHaveBeenCalledWith(mappingClass.iri, `${DATA}${ontologyId}/classid/`);
-        expect(originalMappings[0][`${DCTERMS}title`][0]['@value']).toEqual(`${mappingClass.name} (1)`);
-        expect(originalMappings[1][`${RDFS}label`][0]['@value']).toEqual(`${mappingClass.name} (3)`);
-        expect(service.changeProp).not.toHaveBeenCalled();
-        expect(service.selected.difference.additions).toContain(newClassMapping);
-      });
-      it('with no missing numbers', function() {
+        service.addClassMapping(mappingClass).subscribe(result => {
+          expect(result).toEqual(newClassMapping);
+          expect(mappingStub.getClassMappingsByClassId).toHaveBeenCalledWith(mappingClass.iri);
+          expect(mappingStub.addClassMapping).toHaveBeenCalledWith(mappingClass.iri, `${DATA}${ontologyId}/classid/`);
+          expect(originalMappings[0][`${DCTERMS}title`][0]['@value']).toEqual(`${mappingClass.name} (1)`);
+          expect(originalMappings[1][`${RDFS}label`][0]['@value']).toEqual(`${mappingClass.name} (3)`);
+          expect(service.changeProp).not.toHaveBeenCalled();
+          expect(service.selected.difference.additions).toContain(newClassMapping);
+        });
+        tick();
+      }));
+      it('with no missing numbers', fakeAsync(() => {
         const originalMappings = [{ '@id': 'original1' }, { '@id': 'original2' }];
         originalMappings[0][`${RDFS}label`] = [{ '@value': `${mappingClass.name} (1)` }];
         originalMappings[1][`${DCTERMS}title`] = [{ '@value': `${mappingClass.name} (2)` }];
         mappingStub.getClassMappingsByClassId.and.returnValue(originalMappings);
-        expect(service.addClassMapping(mappingClass)).toEqual(newClassMapping);
-        expect(mappingStub.getClassMappingsByClassId).toHaveBeenCalledWith(mappingClass.iri);
-        expect(mappingStub.addClassMapping).toHaveBeenCalledWith(mappingClass.iri, `${DATA}${ontologyId}/classid/`);
-        expect(originalMappings[0][`${RDFS}label`][0]['@value']).toEqual(`${mappingClass.name} (1)`);
-        expect(originalMappings[1][`${DCTERMS}title`][0]['@value']).toEqual(`${mappingClass.name} (2)`);
-        expect(service.changeProp).not.toHaveBeenCalled();
-        expect(service.selected.difference.additions).toContain(newClassMapping);
-      });
+        service.addClassMapping(mappingClass).subscribe(result => {
+          expect(result).toEqual(newClassMapping);
+          expect(mappingStub.getClassMappingsByClassId).toHaveBeenCalledWith(mappingClass.iri);
+          expect(mappingStub.addClassMapping).toHaveBeenCalledWith(mappingClass.iri, `${DATA}${ontologyId}/classid/`);
+          expect(originalMappings[0][`${RDFS}label`][0]['@value']).toEqual(`${mappingClass.name} (1)`);
+          expect(originalMappings[1][`${DCTERMS}title`][0]['@value']).toEqual(`${mappingClass.name} (2)`);
+          expect(service.changeProp).not.toHaveBeenCalled();
+          expect(service.selected.difference.additions).toContain(newClassMapping);
+        });
+        tick();
+      }));
     });
   });
-  describe('should add a data property mapping', function() {
+  describe('should add a data property mapping', () => {
     const classMappingId = 'classMappingId';
     const mappingAnnotation: MappingProperty = cloneDeep(mappingProperty);
     mappingAnnotation.iri = 'annotation';
     mappingAnnotation.name = 'Annotation';
-    beforeEach(function() {
+    beforeEach(() => {
       service.iriMap = {
         classes: {},
         dataProperties: { [mappingProperty.iri]: ontologyId },
         objectProperties: {},
         annotationProperties: { [mappingAnnotation.iri]: ontologyId },
       };
-      this.newPropMapping = { '@id': 'new' };
-      mappingStub.addDataPropMapping.and.returnValue(this.newPropMapping);
       mappingStub.hasClassMapping.and.callFake(id => id === classMappingId);
     });
-    it('unless the parent class mapping does not exist', function() {
-      expect(service.addDataMapping(mappingProperty, 'error', 0)).toBeUndefined();
-      expect(mappingStub.addDataPropMapping).not.toHaveBeenCalled();
-      expect(service.selected.difference.additions).toEqual([]);
-    });
-    it('unless the property does not exist in the imports closure, is not a Datatype or Annotation Property, and is not a supported annotation', function() {
+    it('unless the parent class mapping does not exist', fakeAsync(() => {
+      service.addDataMapping(mappingProperty, 'error', 0).subscribe(result => {
+        expect(result).toBeUndefined();
+        expect(mappingStub.addDataPropMapping).not.toHaveBeenCalled();
+        expect(service.selected.difference.additions).toEqual([]);
+      });
+      tick();
+    }));
+    it('unless the property does not exist in the imports closure, is not a Datatype or Annotation Property, and is not a supported annotation', fakeAsync(() => {
       const mappingPropertyClone = cloneDeep(mappingProperty);
       mappingPropertyClone.iri = 'error';
-      expect(service.addDataMapping(mappingPropertyClone, classMappingId, 0)).toBeUndefined();
-      expect(mappingStub.addDataPropMapping).not.toHaveBeenCalled();
-      expect(service.selected.difference.additions).toEqual([]);
-    });
-    it('unless the property is in the imports closure but is not a Datatype or Annotation Property', function() {
+      service.addDataMapping(mappingPropertyClone, classMappingId, 0).subscribe(result => {
+        expect(result).toBeUndefined();
+        expect(mappingStub.addDataPropMapping).not.toHaveBeenCalled();
+        expect(service.selected.difference.additions).toEqual([]);
+      });
+      tick();
+    }));
+    it('unless the property is in the imports closure but is not a Datatype or Annotation Property', fakeAsync(() => {
       const mappingPropertyClone = cloneDeep(mappingProperty);
       mappingPropertyClone.type = `${OWL}ObjectProperty`;
-      expect(service.addDataMapping(mappingPropertyClone, classMappingId, 0)).toBeUndefined();
-      expect(mappingStub.addDataPropMapping).not.toHaveBeenCalled();
-      expect(service.selected.difference.additions).toEqual([]);
-    });
-    it('if the property is a supported annotation', function() {
-      expect(service.addDataMapping(service.supportedAnnotations[0], classMappingId, 0)).toEqual(this.newPropMapping);
-      expect(mappingStub.addDataPropMapping).toHaveBeenCalledWith(service.supportedAnnotations[0].iri, 0, classMappingId, undefined, undefined);
-      expect(service.selected.difference.additions).toContain(this.newPropMapping);
-      expect(getDctermsValue(this.newPropMapping, 'title')).toEqual(service.supportedAnnotations[0].name);
-    });
-    it('if the property is an existing DatatypeProperty', function() {
-      expect(service.addDataMapping(mappingProperty, classMappingId, 0)).toEqual(this.newPropMapping);
-      expect(mappingStub.addDataPropMapping).toHaveBeenCalledWith(mappingProperty.iri, 0, classMappingId, undefined, undefined);
-      expect(service.selected.difference.additions).toContain(this.newPropMapping);
-      expect(getDctermsValue(this.newPropMapping, 'title')).toEqual(mappingProperty.name);
-    });
-    it('if the property is an existing AnnotationProperty', function() {
-      expect(service.addDataMapping(mappingAnnotation, classMappingId, 0)).toEqual(this.newPropMapping);
-      expect(mappingStub.addDataPropMapping).toHaveBeenCalledWith(mappingAnnotation.iri, 0, classMappingId, undefined, undefined);
-      expect(service.selected.difference.additions).toContain(this.newPropMapping);
-      expect(getDctermsValue(this.newPropMapping, 'title')).toEqual(mappingAnnotation.name);
-    });
+      service.addDataMapping(mappingPropertyClone, classMappingId, 0).subscribe(result => {
+        expect(result).toBeUndefined();
+        expect(mappingStub.addDataPropMapping).not.toHaveBeenCalled();
+        expect(service.selected.difference.additions).toEqual([]);
+      });
+      tick();
+    }));
+    it('if the property is a supported annotation', fakeAsync(() => {
+      const newPropMapping: JSONLDObject = { '@id': 'new' };
+      mappingStub.addDataPropMapping.and.returnValue(newPropMapping);
+      service.addDataMapping(service.supportedAnnotations[0], classMappingId, 0).subscribe(result => {
+        expect(result).toEqual(newPropMapping);
+        expect(mappingStub.addDataPropMapping).toHaveBeenCalledWith(service.supportedAnnotations[0].iri, 0, classMappingId, undefined, undefined);
+        expect(service.selected.difference.additions).toContain(newPropMapping);
+        expect(getDctermsValue(newPropMapping, 'title')).toEqual(service.supportedAnnotations[0].name);
+      });
+      tick();
+    }));
+    it('if the property is an existing DatatypeProperty', fakeAsync(() => {
+      const newPropMapping: JSONLDObject = { '@id': 'new' };
+      mappingStub.addDataPropMapping.and.returnValue(newPropMapping);
+      service.addDataMapping(mappingProperty, classMappingId, 0).subscribe(result => {
+        expect(result).toEqual(newPropMapping);
+        expect(mappingStub.addDataPropMapping).toHaveBeenCalledWith(mappingProperty.iri, 0, classMappingId, undefined, undefined);
+        expect(service.selected.difference.additions).toContain(newPropMapping);
+        expect(getDctermsValue(newPropMapping, 'title')).toEqual(mappingProperty.name);
+      });
+      tick();
+    }));
+    it('if the property is an existing AnnotationProperty', fakeAsync(() => {
+      const newPropMapping: JSONLDObject = { '@id': 'new' };
+      mappingStub.addDataPropMapping.and.returnValue(newPropMapping);
+      service.addDataMapping(mappingAnnotation, classMappingId, 0).subscribe(result => {
+        expect(result).toEqual(newPropMapping);
+        expect(mappingStub.addDataPropMapping).toHaveBeenCalledWith(mappingAnnotation.iri, 0, classMappingId, undefined, undefined);
+        expect(service.selected.difference.additions).toContain(newPropMapping);
+        expect(getDctermsValue(newPropMapping, 'title')).toEqual(mappingAnnotation.name);
+      });
+      tick();
+    }));
   });
-  describe('should add an object property mapping', function() {
+  describe('should add an object property mapping', () => {
     const classMappingId = 'classMappingId';
     const rangeClassId = 'rangeClassId';
     const rangeMappingId = 'rangeClassMappingId';
@@ -904,7 +938,7 @@ describe('Mapper State service', function() {
     const mappingObjProperty: MappingProperty = cloneDeep(mappingProperty);
     mappingObjProperty.type = `${OWL}ObjectProperty`;
     mappingObjProperty.ranges = [rangeClassId];
-    beforeEach(function() {
+    beforeEach(() => {
       service.iriMap = {
         classes: {},
         dataProperties: {},
@@ -913,55 +947,70 @@ describe('Mapper State service', function() {
       };
       mappingStub.hasClassMapping.and.callFake(id => id === classMappingId);
       mappingStub.getClassMapping.and.callFake(id => id === rangeMappingId ? rangeClassMapping : undefined);
-      this.newPropMapping = { '@id': 'new' };
-      mappingStub.addObjectPropMapping.and.returnValue(this.newPropMapping);
     });
-    it('unless the parent class mapping does not exist', function() {
-      expect(service.addObjectMapping(mappingObjProperty, 'error', rangeMappingId)).toBeUndefined();
-      expect(mappingStub.addObjectPropMapping).not.toHaveBeenCalled();
-      expect(service.selected.difference.additions).toEqual([]);
-    });
-    it('unless the range class mapping does not exist', function() {
-      expect(service.addObjectMapping(mappingObjProperty, classMappingId, 'error')).toBeUndefined();
-      expect(mappingStub.addObjectPropMapping).not.toHaveBeenCalled();
-      expect(service.selected.difference.additions).toEqual([]);
-    });
-    it('unless the property does not exist in the imports closure', function() {
+    it('unless the parent class mapping does not exist', fakeAsync(() => {
+      service.addObjectMapping(mappingObjProperty, 'error', rangeMappingId).subscribe(result => {
+        expect(result).toBeUndefined();
+        expect(mappingStub.addObjectPropMapping).not.toHaveBeenCalled();
+        expect(service.selected.difference.additions).toEqual([]);
+      });
+      tick();
+    }));
+    it('unless the range class mapping does not exist', fakeAsync(() => {
+      service.addObjectMapping(mappingObjProperty, classMappingId, 'error').subscribe(result => {
+        expect(result).toBeUndefined();
+        expect(mappingStub.addObjectPropMapping).not.toHaveBeenCalled();
+        expect(service.selected.difference.additions).toEqual([]);
+      });
+      tick();
+    }));
+    it('unless the property does not exist in the imports closure', fakeAsync(() => {
       const mappingObjPropertyClone = cloneDeep(mappingObjProperty);
       mappingObjPropertyClone.iri = 'error';
-      expect(service.addObjectMapping(mappingObjPropertyClone, classMappingId, rangeMappingId)).toBeUndefined();
-      expect(mappingStub.addObjectPropMapping).not.toHaveBeenCalled();
-      expect(service.selected.difference.additions).toEqual([]);
-    });
-    it('unless the property is in the imports closure but is not an ObjectProperty', function() {
+      service.addObjectMapping(mappingObjPropertyClone, classMappingId, rangeMappingId).subscribe(result => {
+        expect(result).toBeUndefined();
+        expect(mappingStub.addObjectPropMapping).not.toHaveBeenCalled();
+        expect(service.selected.difference.additions).toEqual([]);
+      });
+      tick();
+    }));
+    it('unless the property is in the imports closure but is not an ObjectProperty', fakeAsync(() => {
       const mappingObjPropertyClone = cloneDeep(mappingObjProperty);
       mappingObjPropertyClone.type = `${OWL}AnnotationProperty`;
-      expect(service.addObjectMapping(mappingObjPropertyClone, classMappingId, rangeMappingId)).toBeUndefined();
-      expect(mappingStub.addObjectPropMapping).not.toHaveBeenCalled();
-      expect(service.selected.difference.additions).toEqual([]);
-    });
-    it('successfully', function() {
-      expect(service.addObjectMapping(mappingObjProperty, classMappingId, rangeMappingId)).toEqual(this.newPropMapping);
-      expect(mappingStub.addObjectPropMapping).toHaveBeenCalledWith(mappingObjProperty.iri, classMappingId, rangeMappingId);
-      expect(service.selected.difference.additions).toContain(this.newPropMapping);
-      expect(getDctermsValue(this.newPropMapping, 'title')).toEqual(mappingObjProperty.name);
-    });
+      service.addObjectMapping(mappingObjPropertyClone, classMappingId, rangeMappingId).subscribe(result => {
+        expect(result).toBeUndefined();
+        expect(mappingStub.addObjectPropMapping).not.toHaveBeenCalled();
+        expect(service.selected.difference.additions).toEqual([]);
+      });
+      tick();
+    }));
+    it('successfully', fakeAsync(() => {
+      const newPropMapping: JSONLDObject = { '@id': 'new' };
+      mappingStub.addObjectPropMapping.and.returnValue(newPropMapping);
+      service.addObjectMapping(mappingObjProperty, classMappingId, rangeMappingId).subscribe(result => {
+        expect(result).toEqual(newPropMapping);
+        expect(mappingStub.addObjectPropMapping).toHaveBeenCalledWith(mappingObjProperty.iri, classMappingId, rangeMappingId);
+        expect(service.selected.difference.additions).toContain(newPropMapping);
+        expect(getDctermsValue(newPropMapping, 'title')).toEqual(mappingObjProperty.name);
+      });
+      tick();
+    }));
   });
-  describe('should reflect the deletion of entity in the difference', function() {
+  describe('should reflect the deletion of entity in the difference', () => {
     const entity = { '@id': 'entity', test: [false] };
-    it('if the entire entity was added originally', function() {
+    it('if the entire entity was added originally', () => {
       (service.selected.difference.additions as JSONLDObject[]).push(Object.assign({}, entity));
       service.deleteEntity(entity);
       expect(service.selected.difference.additions.length).toEqual(0);
       expect(service.selected.difference.deletions).toEqual([]);
     });
-    describe('if no part of the entity was added', function() {
-      it('or deleted', function() {
+    describe('if no part of the entity was added', () => {
+      it('or deleted', () => {
         service.deleteEntity(entity);
         expect(service.selected.difference.additions).toEqual([]);
         expect(service.selected.difference.deletions).toContain(entity);
       });
-      it('and a part was deleted', function() {
+      it('and a part was deleted', () => {
         const originalDeletionObj = { '@id': entity['@id'], test: [true] };
         const expected = merge({}, originalDeletionObj, entity);
         (service.selected.difference.deletions as JSONLDObject[]).push(originalDeletionObj);
@@ -971,13 +1020,13 @@ describe('Mapper State service', function() {
       });
     });
   });
-  describe('should delete a class mapping and update the difference', function() {
+  describe('should delete a class mapping and update the difference', () => {
     const classMapping: JSONLDObject = {
       '@id': 'classMapping',
       [`${DELIM}mapsTo`]: [{ '@id': classId }]
     };
     const propMapping: JSONLDObject = { '@id': 'propMapping' };
-    beforeEach(function() {
+    beforeEach(() => {
       service.invalidProps = [{ id: propMapping['@id'], index: 0 }];
       mappingStub.getPropsLinkingToClass.and.returnValue([]);
       mappingStub.getPropMappingsByClass.and.returnValue([propMapping]);
@@ -985,7 +1034,7 @@ describe('Mapper State service', function() {
       spyOn(service, 'deleteEntity');
       spyOn(service, 'changeProp');
     });
-    it('if it is the second to last of the specific class', function() {
+    it('if it is the second to last of the specific class', () => {
       const lastClassMapping = {
         '@id': 'leftover',
         [`${DCTERMS}title`]: [{ '@value': 'original (1)' }]
@@ -1001,7 +1050,7 @@ describe('Mapper State service', function() {
       expect(mappingStub.getClassMappingsByClassId).toHaveBeenCalledWith(classId);
       expect(service.changeProp).toHaveBeenCalledWith(lastClassMapping['@id'], `${DCTERMS}title`, 'original', 'original (1)');
     });
-    it('if it is not the second to last of the specific class', function() {
+    it('if it is not the second to last of the specific class', () => {
       mappingStub.getClassMappingsByClassId.and.returnValue([{ '@id': 'first' }, { '@id': 'second' }]);
       service.deleteClass(classMapping['@id']);
       expect(mappingStub.getPropsLinkingToClass).toHaveBeenCalledWith(classMapping['@id']);
@@ -1013,7 +1062,7 @@ describe('Mapper State service', function() {
       expect(mappingStub.getClassMappingsByClassId).toHaveBeenCalledWith(classId);
       expect(service.changeProp).not.toHaveBeenCalled();
     });
-    it('if it is the last of the specific class', function() {
+    it('if it is the last of the specific class', () => {
       mappingStub.getClassMappingsByClassId.and.returnValue([]);
       service.deleteClass(classMapping['@id']);
       expect(mappingStub.getPropsLinkingToClass).toHaveBeenCalledWith(classMapping['@id']);
@@ -1026,16 +1075,16 @@ describe('Mapper State service', function() {
       expect(service.changeProp).not.toHaveBeenCalled();
     });
   });
-  describe('should delete a property mapping and update the difference', function() {
+  describe('should delete a property mapping and update the difference', () => {
     const propMapping = { '@id': 'propMapping' };
     const classMappingId = 'classMapping';
-    beforeEach(function() {
+    beforeEach(() => {
       service.invalidProps = [{ id: propMapping['@id'], index: 0 }];
       mappingStub.removePropMapping.and.returnValue(propMapping);
       spyOn(service, 'deleteEntity');
       mappingManagerStub.isDataMapping.and.returnValue(true);
     });
-    it('if it was added originally', function() {
+    it('if it was added originally', () => {
       const additionObj = { '@id': classMappingId, [`${DELIM}dataProperty`]: [{ '@id': propMapping['@id'] }] };
       (service.selected.difference.additions as JSONLDObject[]).push(additionObj);
       service.deleteProp(propMapping['@id'], classMappingId);
@@ -1043,12 +1092,12 @@ describe('Mapper State service', function() {
       expect(service.selected.difference.deletions).toEqual([]);
       expect(service.invalidProps.length).toEqual(0);
     });
-    describe('if it was not added', function() {
-      beforeEach(function() {
-        this.additionObj = { '@id': classMappingId };
-        (service.selected.difference.additions as JSONLDObject[]).push(this.additionObj);
+    describe('if it was not added', () => {
+      beforeEach(() => {
+        const additionObj: JSONLDObject = { '@id': classMappingId };
+        (service.selected.difference.additions as JSONLDObject[]).push(additionObj);
       });
-      it('and the parent class mapping does not exist in deletions', function() {
+      it('and the parent class mapping does not exist in deletions', () => {
         const deletionObj = {
           '@id': classMappingId,
           [`${DELIM}dataProperty`]: [{ '@id': propMapping['@id'] }]
@@ -1058,7 +1107,7 @@ describe('Mapper State service', function() {
         expect(service.selected.difference.deletions).toContain(deletionObj);
         expect(service.invalidProps.length).toEqual(0);
       });
-      it('and the parent class mapping does exist in deletions', function() {
+      it('and the parent class mapping does exist in deletions', () => {
         const deletionObj = { '@id': classMappingId };
         (service.selected.difference.deletions as JSONLDObject[]).push(deletionObj);
         service.deleteProp(propMapping['@id'], classMappingId);
@@ -1068,7 +1117,7 @@ describe('Mapper State service', function() {
       });
     });
   });
-  describe('should set the IRI map of the current mapping', function() {
+  describe('should set the IRI map of the current mapping', () => {
     const iris: IriList = {
       annotationProperties: ['annPropA', 'annPropB'],
       deprecatedIris: [],
@@ -1098,14 +1147,14 @@ describe('Mapper State service', function() {
       derivedConceptSchemes: [],
       derivedSemanticRelations: []
     };
-    beforeEach(function() {
+    beforeEach(() => {
       service.selected.ontology = {
         '@id': ontInfo.recordId,
         [`${CATALOG}trackedIdentifier`]: [{ '@id': ontologyId }]
       };
       ontologyManagerStub.getIris.and.returnValue(of(iris));
     });
-    it('unless an error occurs with getIris', async function() {
+    it('unless an error occurs with getIris', async () => {
       ontologyManagerStub.getIris.and.returnValue(throwError(error));
       ontologyManagerStub.getImportedIris.and.returnValue(of([importedIRIs]));
       service.setIriMap().subscribe(() => fail('Observable should have failed'), result => {
@@ -1115,7 +1164,7 @@ describe('Mapper State service', function() {
       expect(ontologyManagerStub.getIris).toHaveBeenCalledWith(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId);
       expect(ontologyManagerStub.getImportedIris).toHaveBeenCalledWith(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId);
     });
-    it('unless an getSourceOntologyInfo return empty data ', async function() {
+    it('unless an getSourceOntologyInfo return empty data ', async () => {
       const ontInfo: MappingOntologyInfo = {
         recordId: '',
         branchId: '',
@@ -1130,7 +1179,7 @@ describe('Mapper State service', function() {
       expect(ontologyManagerStub.getIris).not.toHaveBeenCalledWith(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId);
       expect(ontologyManagerStub.getImportedIris).not.toHaveBeenCalledWith(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId);
     });
-    it('unless an error occurs with getImportedIris', async function() {
+    it('unless an error occurs with getImportedIris', async () => {
       ontologyManagerStub.getImportedIris.and.returnValue(throwError(error));
       service.setIriMap().subscribe(() => fail('Observable should have failed'), result => {
         expect(result).toEqual(error);
@@ -1139,8 +1188,8 @@ describe('Mapper State service', function() {
       expect(ontologyManagerStub.getIris).toHaveBeenCalledWith(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId);
       expect(ontologyManagerStub.getImportedIris).toHaveBeenCalledWith(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId);
     });
-    describe('successfully', function() {
-      it('with imported IRIs', async function() {
+    describe('successfully', () => {
+      it('with imported IRIs', async () => {
         ontologyManagerStub.getImportedIris.and.returnValue(of([importedIRIs]));
         service.setIriMap().subscribe(() => {
           expect(service.iriMap).toEqual({
@@ -1170,7 +1219,7 @@ describe('Mapper State service', function() {
         expect(ontologyManagerStub.getIris).toHaveBeenCalledWith(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId);
         expect(ontologyManagerStub.getImportedIris).toHaveBeenCalledWith(ontInfo.recordId, ontInfo.branchId, ontInfo.commitId);
       });
-      it('without imported IRIs', async function() {
+      it('without imported IRIs', async () => {
         ontologyManagerStub.getImportedIris.and.returnValue(of(null));
         service.setIriMap().subscribe(() => {
           expect(service.iriMap).toEqual({
@@ -1198,8 +1247,8 @@ describe('Mapper State service', function() {
       });
     });
   });
-  describe('should get the list of classes from the imports closure of a source ontology', function() {
-    it('unless an error occurs', async function() {
+  describe('should get the list of classes from the imports closure of a source ontology', () => {
+    it('unless an error occurs', async () => {
       sparqlManagerStub.postQuery.and.returnValue(throwError(error));
       service.retrieveClasses(ontInfo, 'custom search')
         .subscribe(() => fail('Observable should have failed'), response => {
@@ -1209,7 +1258,7 @@ describe('Mapper State service', function() {
         ontInfo.recordId, ONTOLOGY_STORE_TYPE, ontInfo.branchId, ontInfo.commitId, true, false,
         'application/json', false);
     });
-    it('successfully', async function() {
+    it('successfully', async () => {
       const results: SPARQLSelectResults = {
         head: { vars: [], link: [] },
         results: {
@@ -1247,8 +1296,8 @@ describe('Mapper State service', function() {
         ontInfo.recordId, ONTOLOGY_STORE_TYPE, ontInfo.branchId, ontInfo.commitId, true, false, 'application/json', false);
     });
   });
-  describe('should retrieve specific classes from the imports closure of the selected Mapping', function() {
-    it('unless an error occurs', async function() {
+  describe('should retrieve specific classes from the imports closure of the selected Mapping', () => {
+    it('unless an error occurs', async () => {
       sparqlManagerStub.postQuery.and.returnValue(throwError(error));
       service.retrieveSpecificClasses(ontInfo, [mappingClass.iri]).subscribe(() => fail('Observable should have failed'), result => {
         expect(result).toEqual(error);
@@ -1256,7 +1305,7 @@ describe('Mapper State service', function() {
       expect(sparqlManagerStub.postQuery).toHaveBeenCalledWith(jasmine.stringContaining(mappingClass.iri),
         ontInfo.recordId, ONTOLOGY_STORE_TYPE, ontInfo.branchId, ontInfo.commitId, true, false);
     });
-    it('unless no classes are found', async function() {
+    it('unless no classes are found', async () => {
       sparqlManagerStub.postQuery.and.returnValue(of(null));
       service.retrieveSpecificClasses(ontInfo, [mappingClass.iri]).subscribe(result => {
         expect(result).toEqual([]);
@@ -1264,7 +1313,7 @@ describe('Mapper State service', function() {
       expect(sparqlManagerStub.postQuery).toHaveBeenCalledWith(jasmine.stringContaining(mappingClass.iri),
         ontInfo.recordId, ONTOLOGY_STORE_TYPE, ontInfo.branchId, ontInfo.commitId, true, false);
     });
-    it('successfully with one IRI', async function() {
+    it('successfully with one IRI', async () => {
       const results: SPARQLSelectResults = {
         head: { vars: [], link: [] },
         results: {
@@ -1282,7 +1331,7 @@ describe('Mapper State service', function() {
       expect(sparqlManagerStub.postQuery).toHaveBeenCalledWith(jasmine.stringContaining(mappingClass.iri),
         ontInfo.recordId, ONTOLOGY_STORE_TYPE, ontInfo.branchId, ontInfo.commitId, true, false);
     });
-    it('successfully with multiple IRIs', async function() {
+    it('successfully with multiple IRIs', async () => {
       const otherMappingClass: MappingClass = {
         iri: 'otherClass',
         name: 'Other Class',
@@ -1315,8 +1364,8 @@ describe('Mapper State service', function() {
         ontInfo.recordId, ONTOLOGY_STORE_TYPE, ontInfo.branchId, ontInfo.commitId, true, false);
     });
   });
-  describe('should get the list of properties for a class from the imports closure of a source ontology', function() {
-    it('unless an error occurs', async function() {
+  describe('should get the list of properties for a class from the imports closure of a source ontology', () => {
+    it('unless an error occurs', async () => {
       sparqlManagerStub.postQuery.and.returnValue(throwError(error));
       service.retrieveProps(ontInfo, classId, 'custom search')
         .subscribe(() => fail('Observable should have failed'), response => {
@@ -1325,7 +1374,7 @@ describe('Mapper State service', function() {
       expect(sparqlManagerStub.postQuery).toHaveBeenCalledWith(jasmine.stringContaining('custom search'),
         ontInfo.recordId, ONTOLOGY_STORE_TYPE, ontInfo.branchId, ontInfo.commitId, true, false, 'application/json', false);
     });
-    it('successfully', async function() {
+    it('successfully', async () => {
       const results: SPARQLSelectResults = {
         head: { vars: [], link: [] },
         results: {
@@ -1371,8 +1420,8 @@ describe('Mapper State service', function() {
         ontInfo.recordId, ONTOLOGY_STORE_TYPE, ontInfo.branchId, ontInfo.commitId, true, false, 'application/json', false);
     });
   });
-  describe('should retrieve specific properties from the imports closure of the selected Mapping', function() {
-    it('unless an error occurs', async function() {
+  describe('should retrieve specific properties from the imports closure of the selected Mapping', () => {
+    it('unless an error occurs', async () => {
       sparqlManagerStub.postQuery.and.returnValue(throwError(error));
       service.retrieveSpecificProps(ontInfo, [{
         iri: mappingProperty.iri,
@@ -1383,7 +1432,7 @@ describe('Mapper State service', function() {
       expect(sparqlManagerStub.postQuery).toHaveBeenCalledWith(jasmine.stringContaining(mappingProperty.iri),
         ontInfo.recordId, ONTOLOGY_STORE_TYPE, ontInfo.branchId, ontInfo.commitId, true, false);
     });
-    it('unless no properties are found', async function() {
+    it('unless no properties are found', async () => {
       sparqlManagerStub.postQuery.and.returnValue(of(null));
       service.retrieveSpecificProps(ontInfo, [{
         iri: mappingProperty.iri,
@@ -1394,7 +1443,7 @@ describe('Mapper State service', function() {
       expect(sparqlManagerStub.postQuery).toHaveBeenCalledWith(jasmine.stringContaining(mappingProperty.iri),
         ontInfo.recordId, ONTOLOGY_STORE_TYPE, ontInfo.branchId, ontInfo.commitId, true, false);
     });
-    it('successfully with one IRI', async function() {
+    it('successfully with one IRI', async () => {
       const results: SPARQLSelectResults = {
         head: { vars: [], link: [] },
         results: {
@@ -1416,7 +1465,7 @@ describe('Mapper State service', function() {
       expect(sparqlManagerStub.postQuery).toHaveBeenCalledWith(jasmine.stringContaining(mappingProperty.iri),
         ontInfo.recordId, ONTOLOGY_STORE_TYPE, ontInfo.branchId, ontInfo.commitId, true, false);
     });
-    it('successfully with multiple IRIs', async function() {
+    it('successfully with multiple IRIs', async () => {
       const otherMappingProperty: MappingProperty = {
         iri: 'otherProp',
         type: `${OWL}ObjectProperty`,

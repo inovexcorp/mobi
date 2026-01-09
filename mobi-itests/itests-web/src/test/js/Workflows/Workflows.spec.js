@@ -27,7 +27,7 @@ var newUser = { 'username': 'test', 'password': 'test',
     'firstName': 'Johnny', 'lastName': 'Test', 'email': 'test@gmail.com', 'role': 'admin' };
 
 module.exports = {
-    '@tags': ['sanity', 'workflows'],
+    '@tags': ['sanity', 'workflows', 'workflows-smoke'],
 
     'Step 1: Initial Setup' : function(browser) {
         browser.globals.initial_steps(browser, browser.globals.adminUsername, browser.globals.adminPassword);

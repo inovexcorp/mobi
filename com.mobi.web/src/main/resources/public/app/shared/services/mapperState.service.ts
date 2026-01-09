@@ -803,12 +803,13 @@ export class MapperStateService {
   }
   /**
    * Adds a ClassMapping for the class identified by the passed class ID object and updates the additions
-   * and ClassMapping titles appropriately.
+   * and ClassMapping titles appropriately. Returns the ClassMapping within an Observable to account for annotation
+   * preference fetching.
    *
    * @param {MappingClass} classDetails A {@link MappingProperty} object representing a class in an ontology
-   * @returns {JSONLDObject} The ClassMapping JSON-LD that was added
+   * @returns {Observable<JSONLDObject>} The ClassMapping JSON-LD that was added
    */
-  addClassMapping(classDetails: MappingClass): JSONLDObject {
+  addClassMapping(classDetails: MappingClass): Observable<JSONLDObject> {
     const ontologyId = this.iriMap?.classes[classDetails.iri];
     if (!ontologyId) {
       return;
@@ -818,35 +819,39 @@ export class MapperStateService {
     const originalClassMappings = this.selected.mapping.getClassMappingsByClassId(classDetails.iri);
     const classMapping = this.selected.mapping.addClassMapping(classDetails.iri,
       `${DATA}${ontologyDataName}/${splitIri.end.toLowerCase()}/`);
+    let ob: Observable<void>;
     if (!originalClassMappings.length) {
-      this.setEntityName(classMapping, classDetails.name);
+      ob = this._setEntityName(classMapping, classDetails.name);
     } else {
       originalClassMappings.forEach(classMapping => {
         if (getEntityName(classMapping) === classDetails.name) {
-          this.updateEntityName(classMapping, `${classDetails.name} (1)`);
+          this._updateEntityName(classMapping, `${classDetails.name} (1)`);
           this.changeProp(classMapping['@id'], getEntityNameProp(classMapping, this.sms), `${classDetails.name} (1)`,
             classDetails.name);
           return false;
         }
       });
-      this._setNewTitle(classMapping, classDetails.name, originalClassMappings);
+      ob = this._setNewTitle(classMapping, classDetails.name, originalClassMappings);
     }
-    (this.selected.difference.additions as JSONLDObject[]).push(Object.assign({}, classMapping));
-    return classMapping;
+    return ob.pipe(map(() => {
+      (this.selected.difference.additions as JSONLDObject[]).push(Object.assign({}, classMapping));
+      return classMapping;
+    }));
   }
   /**
    * Adds a DataMapping for the data property identified by the passed property ID object and updates the
-   * additions and adds a title appropriately.
+   * additions and adds a title appropriately. Returns the DataMapping within an Observable to account for annotation
+   * preference fetching.
    *
    * @param {MappingProperty} propDetails A {@link MappingProperty} object representing a datatype property in an ontology
    * @param {string} classMappingId The ID of the ClassMapping the DataMapping should be added to
    * @param {string} columnIndex The column index the DataMapping should point to
    * @param {string} datatypeSpec The default datatype the DataMapping should use
    * @param {string} languageSpec The default language tag the DataMapping should use
-   * @returns {JSONLDObject} The DataMapping JSON-LD that was added
+   * @returns {Observable<JSONLDObject>} The DataMapping JSON-LD that was added
    */
   addDataMapping(propDetails: MappingProperty, classMappingId: string, columnIndex: number, datatypeSpec?: string,
-    languageSpec?: string): JSONLDObject {
+    languageSpec?: string): Observable<JSONLDObject> {
     const ontologyId = this.iriMap?.dataProperties[propDetails.iri]
       || this.iriMap?.annotationProperties[propDetails.iri];
     if (this.selected.mapping.hasClassMapping(classMappingId)
@@ -854,32 +859,36 @@ export class MapperStateService {
         || this.supportedAnnotations.includes(propDetails))) {
       const propMapping = this.selected.mapping.addDataPropMapping(propDetails.iri, columnIndex, classMappingId,
         datatypeSpec, languageSpec);
-      this.setEntityName(propMapping, propDetails.name);
-      (this.selected.difference.additions as JSONLDObject[]).push(Object.assign({}, propMapping));
-      return propMapping;
+      return this._setEntityName(propMapping, propDetails.name).pipe(map(() => {
+        (this.selected.difference.additions as JSONLDObject[]).push(Object.assign({}, propMapping));
+        return propMapping;
+      }));
     }
-    return;
+    return of(undefined);
   }
   /**
    * Adds a ObjectMapping for the data property identified by the passed property ID object and updates the
-   * additions and adds a title appropriately.
+   * additions and adds a title appropriately. Returns the ObjectMapping within an Observable to account for annotation
+   * preference fetching.
    *
    * @param {MappingProperty} propDetails A {@link MappingProperty} object representing an object property in an ontology
    * @param {string} classMappingId The ID of the ClassMapping the ObjectMapping should be added to
    * @param {string} rangeClassMappingId The ID of the ClassMapping the ObjectMapping should point to
-   * @returns {JSONLDObject} The ObjectMapping JSON-LD that was added
+   * @returns {Observable<JSONLDObject>} The ObjectMapping JSON-LD that was added
    */
-  addObjectMapping(propDetails: MappingProperty, classMappingId: string, rangeClassMappingId: string): JSONLDObject {
+  addObjectMapping(propDetails: MappingProperty, classMappingId: string, 
+      rangeClassMappingId: string): Observable<JSONLDObject> {
     const ontologyId = this.iriMap?.objectProperties[propDetails.iri];
     const rangeClassMapping = this.selected.mapping.getClassMapping(rangeClassMappingId);
     if (this.selected.mapping.hasClassMapping(classMappingId) && rangeClassMapping && ontologyId
       && propDetails.type === `${OWL}ObjectProperty`) {
       const propMapping = this.selected.mapping.addObjectPropMapping(propDetails.iri, classMappingId, rangeClassMappingId);
-      this.setEntityName(propMapping, propDetails.name);
-      (this.selected.difference.additions as JSONLDObject[]).push(Object.assign({}, propMapping));
-      return propMapping;
+      return this._setEntityName(propMapping, propDetails.name).pipe(map(() => {
+        (this.selected.difference.additions as JSONLDObject[]).push(Object.assign({}, propMapping));
+        return propMapping;
+      }));
     }
-    return;
+    return of(undefined);
   }
   /**
    * Updates the additions and deletions of the current mapping appropriately when an entity is deleted.
@@ -925,7 +934,7 @@ export class MapperStateService {
       const lastClassMapping = classMappings[0];
       const originalTitle = getEntityName(lastClassMapping);
       const newTitle = originalTitle.replace(/ \((\d+)\)$/, '');
-      this.updateEntityName(lastClassMapping, newTitle);
+      this._updateEntityName(lastClassMapping, newTitle);
       this.changeProp(lastClassMapping['@id'], getEntityNameProp(lastClassMapping, this.sms), newTitle, originalTitle);
     }
   }
@@ -1128,7 +1137,7 @@ export class MapperStateService {
     const entity = find(this.selected.mapping.getJsonld(), { '@id': diffObj['@id'] }) || diffObj;
     return getEntityName(entity);
   }
-  private _setNewTitle(classMapping: JSONLDObject, className: string, existingClassMappings: JSONLDObject[]) {
+  private _setNewTitle(classMapping: JSONLDObject, className: string, existingClassMappings: JSONLDObject[]): Observable<void> {
     const regex = / \((\d+)\)$/;
     const sortedNums = existingClassMappings
       // Collect all titles that start with the name of the passed entity
@@ -1148,9 +1157,9 @@ export class MapperStateService {
         break;
       }
     }
-    this.setEntityName(classMapping, className + newIdx);
+    return this._setEntityName(classMapping, className + newIdx);
   }
-  private updateEntityName(entity: JSONLDObject, value: string): void {
+  private _updateEntityName(entity: JSONLDObject, value: string): void {
     // Check if any entityNameProps already exist in the entity
     const existingProp = entityNameProps.find(prop => entity[prop]);
 
@@ -1171,16 +1180,18 @@ export class MapperStateService {
       console.error(error);
     });
   }
-
-  private setEntityName(entity: JSONLDObject, name: string): void {
-    this.sms.getAnnotationPreference().subscribe(preference => {
-      const annotationType = preference === 'DC Terms' ? DCTERMS : RDFS;
-      const propertyIRI = annotationType === DCTERMS ? `${DCTERMS}title` : `${RDFS}label`;
-      entity[propertyIRI] = [{ '@value': name }];
-    }, error => {
-      // Default to DCTERMS if preference cannot be retrieved
-      entity[`${DCTERMS}title`] = [{ '@value': name }];
-      console.error(error);
-    });
+  private _setEntityName(entity: JSONLDObject, name: string): Observable<void> {
+    return this.sms.getAnnotationPreference().pipe(
+      map(preference => {
+        const annotationType = preference === 'DC Terms' ? DCTERMS : RDFS;
+        const propertyIRI = annotationType === DCTERMS ? `${DCTERMS}title` : `${RDFS}label`;
+        entity[propertyIRI] = [{ '@value': name }];
+      }),
+      catchError(error => {
+        // Default to DCTERMS if preference cannot be retrieved
+        entity[`${DCTERMS}title`] = [{ '@value': name }];
+        console.error(error);
+        return of(null);
+      }));
   }
 }

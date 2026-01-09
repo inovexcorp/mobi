@@ -24,7 +24,7 @@ var path = require('path');
 var skosOnt = path.resolve(__dirname + '/../../resources/rdf_files/skos.rdf');
 
 module.exports = {
-    '@tags': ['ontology-editor', 'sanity'],
+    '@tags': ['ontology-editor', 'sanity', 'ontology-commit-graph'],
 
     'Step 1: Initial Setup' : function(browser) {
         browser.globals.initial_steps(browser, browser.globals.adminUsername, browser.globals.adminPassword)
