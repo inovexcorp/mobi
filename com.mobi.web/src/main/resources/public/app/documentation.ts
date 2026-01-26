@@ -22,3 +22,4 @@
  */
 export const DOC_SITE = 'https://inovexcorp.github.io/mobi-docs/'
 export const SERVICE_DESK = 'https://inovexirad.atlassian.net/servicedesk'
+export const API_DOCS = '/swagger-ui/index.html'
