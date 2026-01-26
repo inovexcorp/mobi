@@ -27,7 +27,7 @@ import { Router } from '@angular/router';
 import { LoginManagerService } from '../../services/loginManager.service';
 import { UserManagerService } from '../../services/userManager.service';
 import { PERSPECTIVES, RoutePerspective } from '../../models/routePerspective.interface';
-import { DOC_SITE, SERVICE_DESK } from '../../../documentation';
+import { DOC_SITE, SERVICE_DESK, API_DOCS } from '../../../documentation';
 
 /**
  * @class shared.SidebarComponent
@@ -49,6 +49,7 @@ export class SidebarComponent {
 
     docSite = DOC_SITE;
     serviceDesk = SERVICE_DESK;
+    apiDocs = API_DOCS;
 
     constructor(public router: Router, public lm: LoginManagerService, public um: UserManagerService, 
         @Inject(PERSPECTIVES) public perspectives: RoutePerspective[]) {}

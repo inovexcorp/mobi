@@ -48,6 +48,7 @@
                 <a class="nav-link" [matMenuTriggerFor]="helpMenu"><i class="fa fa-question-circle"></i><span class="collapsed-hide ml-1" *ngIf="!collapsedNav">Help</span></a>
                 <mat-menu #helpMenu="matMenu" [overlapTrigger]="false">
                     <a class="help-link" mat-menu-item href="{{docSite}}" target="_blank">Documentation</a>
+                    <a class="help-link" mat-menu-item href="{{apiDocs}}" target="_blank">API Docs</a>
                     <mat-divider></mat-divider>
                     <a class="help-link" mat-menu-item href="{{serviceDesk}}" target="_blank">Support</a>
                 </mat-menu>
