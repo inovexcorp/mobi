@@ -12,12 +12,12 @@ package com.mobi.platform.config.rest;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
@@ -36,6 +36,8 @@ import com.mobi.repository.api.OsgiRepository;
 import com.mobi.repository.api.RepositoryManager;
 import com.mobi.rest.test.util.MobiRestTestCXF;
 import com.mobi.rest.test.util.UsernameTestFilter;
+import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.BeforeClass;
@@ -79,6 +81,8 @@ public class RepositoryRestTest extends MobiRestTestCXF {
         when(repositoryManager.getAllRepositories()).thenReturn(Map.of(REPO_ID, repository));
         when(repositoryManager.getRepository(anyString())).thenReturn(Optional.empty());
         when(repositoryManager.getRepository(REPO_ID)).thenReturn(Optional.of(repository));
+        IRI iri = SimpleValueFactory.getInstance().createIRI("https://mobi.solutions/repos/" + REPO_ID);
+        when(repositoryManager.getRepositoryIRI(REPO_ID)).thenReturn(Optional.of(iri));
     }
 
     @After
@@ -101,6 +105,7 @@ public class RepositoryRestTest extends MobiRestTestCXF {
             assertEquals(REPO_ID, repoObj.get("id").asText());
             assertEquals(REPO_TITLE, repoObj.get("title").asText());
             assertEquals("native", repoObj.get("type").asText());
+            assertEquals("https://mobi.solutions/repos/" + REPO_ID, repoObj.get("iri").asText());
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }
@@ -117,6 +122,7 @@ public class RepositoryRestTest extends MobiRestTestCXF {
             assertEquals(REPO_ID, json.get("id").asText());
             assertEquals(REPO_TITLE, json.get("title").asText());
             assertEquals("native", json.get("type").asText());
+            assertEquals("https://mobi.solutions/repos/" + REPO_ID, json.get("iri").asText());
         } catch (Exception e) {
             fail("Expected no exception, but got: " + e.getMessage());
         }

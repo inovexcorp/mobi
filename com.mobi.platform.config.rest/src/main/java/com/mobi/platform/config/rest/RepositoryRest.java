@@ -12,12 +12,12 @@ package com.mobi.platform.config.rest;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
@@ -26,11 +26,17 @@ package com.mobi.platform.config.rest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.mobi.platform.config.rest.response.RepositoryResponse;
 import com.mobi.repository.api.OsgiRepository;
 import com.mobi.repository.api.RepositoryManager;
 import com.mobi.rest.util.ErrorUtils;
+import com.mobi.rest.util.swagger.ErrorObjectSchema;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.jaxrs.whiteboard.propertytypes.JaxrsResource;
@@ -49,6 +55,9 @@ import javax.ws.rs.core.Response;
 @Path("/repositories")
 public class RepositoryRest {
     private static final ObjectMapper mapper = new ObjectMapper();
+    private static final String SWAGGER_REPO = "repositories";
+    private static final String SWAGGER_REPO_DESC = "Operations related to Repositories";
+
 
     @Reference
     protected RepositoryManager repositoryManager;
@@ -62,14 +71,29 @@ public class RepositoryRest {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
+    @Tag(name = RepositoryRest.SWAGGER_REPO, description = RepositoryRest.SWAGGER_REPO_DESC)
     @Operation(
-            tags = "repositories",
             summary = "Retrieves all the configured repositories",
             responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Response indicating the success or failure of the request"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "The repository details",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    array = @ArraySchema(schema = @Schema(implementation = RepositoryResponse.class)
+                                    )
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "403",
+                            description = "Permission Denied",
+                            content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
+                    ),
+                    @ApiResponse(
+                            responseCode = "500",
+                            description = "INTERNAL SERVER ERROR",
+                            content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
+                    )
             }
     )
     public Response getRepositories() {
@@ -90,14 +114,28 @@ public class RepositoryRest {
     @Path("{repoId}")
     @Produces(MediaType.APPLICATION_JSON)
     @RolesAllowed("user")
+    @Tag(name = RepositoryRest.SWAGGER_REPO, description = RepositoryRest.SWAGGER_REPO_DESC)
     @Operation(
-            tags = "repositories",
             summary = "Retrieves a repository based on its id",
             responses = {
-                    @ApiResponse(responseCode = "200",
-                            description = "Response indicating the success or failure of the request"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "The repository details",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(implementation = RepositoryResponse.class)
+                            )
+                    ),
+                    @ApiResponse(
+                            responseCode = "403",
+                            description = "Permission Denied",
+                            content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
+                    ),
+                    @ApiResponse(
+                            responseCode = "500",
+                            description = "INTERNAL SERVER ERROR",
+                            content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))
+                    )
             }
     )
     public Response getRepository(@PathParam("repoId") String repoId) {
@@ -112,6 +150,8 @@ public class RepositoryRest {
         obj.put("id", repo.getRepositoryID());
         obj.put("title", repo.getRepositoryTitle());
         obj.put("type", repo.getRepositoryType());
+        repositoryManager.getRepositoryIRI(repo.getRepositoryID())
+                .ifPresent(iri -> obj.put("iri", iri.stringValue()));
         repo.getLimit().ifPresent(limit -> obj.put("limit", limit));
         repo.getTripleCount().ifPresent(tripleCount -> obj.put("tripleCount", tripleCount));
         return obj;
