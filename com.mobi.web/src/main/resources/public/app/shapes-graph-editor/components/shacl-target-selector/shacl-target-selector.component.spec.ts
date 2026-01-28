@@ -34,6 +34,7 @@ import { MatOptionModule } from '@angular/material/core';
 import { MatRadioModule } from '@angular/material/radio';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 
+import { cleanStylesFromDOM } from '../../../../test/ts/Shared';
 import { ShaclTargetSelectorComponent } from './shacl-target-selector.component';
 
 @Component({
@@ -78,6 +79,15 @@ describe('ShaclTargetSelectorComponent', () => {
     spyOn(component, 'onChange').and.callThrough();
     spyOn(component, 'onTouched').and.callThrough();
     fixture.detectChanges();
+  });
+
+  afterEach(() => {
+    cleanStylesFromDOM();
+    component = null;
+    element = null;
+    fixture = null;
+    parentComponent = null;
+    parentFixture = null;
   });
 
   it('should create', () => {

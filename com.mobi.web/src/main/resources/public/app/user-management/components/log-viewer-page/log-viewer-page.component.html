@@ -25,6 +25,22 @@
     <!-- Error Display -->
     <error-display *ngIf="error">{{ error }}</error-display>
 
+    <!-- System-Wide Configuration Section -->
+    <mat-expansion-panel class="system-config-panel" [(expanded)]="logLevelsExpanded">
+      <mat-expansion-panel-header>
+        <mat-panel-title>
+          <mat-icon>settings</mat-icon>
+          System Log Level Configuration
+        </mat-panel-title>
+        <mat-panel-description>
+          Configure log levels for the entire system. Changes apply globally across all log files.
+        </mat-panel-description>
+      </mat-expansion-panel-header>
+      <ng-template matExpansionPanelContent>
+        <app-log-level-manager></app-log-level-manager>
+      </ng-template>
+    </mat-expansion-panel>
+
     <!-- Metadata Card -->
     <mat-card class="metadata-card">
       <mat-card-header class="align-items-baseline">
@@ -108,18 +124,18 @@
 
           <div class="refresh-button-container d-flex">
             <!-- Auto-refresh Toggle (Tail View Only) -->
-            <button class="auto-refresh-button" mat-icon-button [disabled]="viewMode !== ViewMode.TAIL" (click)="toggleAutoRefresh()" [matTooltip]="autoRefresh ? 'Pause Refresh' : 'Auto Refresh'">
+            <button class="auto-refresh-button ml-1" mat-icon-button [disabled]="viewMode !== ViewMode.TAIL" (click)="toggleAutoRefresh()" [matTooltip]="autoRefresh ? 'Pause Refresh' : 'Auto Refresh'">
               <mat-icon>{{autoRefresh ? 'pause' : 'play_arrow'}}</mat-icon>
             </button>
             <!-- Refresh Content Button -->
-            <button class="manual-refresh-button" mat-icon-button (click)="refresh()" [disabled]="loading" matTooltip="Refresh">
+            <button class="manual-refresh-button ml-1" mat-icon-button (click)="refresh()" [disabled]="loading" matTooltip="Refresh">
               <mat-icon>refresh</mat-icon>
             </button>
           </div>
         </div>
 
         <!-- Tail View -->
-        <ng-container *ngIf="!loading && viewMode === ViewMode.TAIL">
+        <ng-container *ngIf="viewMode === ViewMode.TAIL">
           <!-- Tail Status Text -->
           <div class="status-text">
             <ng-container *ngIf="autoRefresh; else pausedIndicator">
@@ -135,22 +151,22 @@
           <div class="log-output">
             <div *ngFor="let line of tailLines; let i = index" 
                 class="log-line"
-                [ngClass]="getLogLevelClass(line)">
+                [ngClass]="line.levelClass">
               <span class="line-number">{{ i + 1 }}</span>
-              <span class="line-content">{{ line }}</span>
+              <span class="line-content">{{ line.content }}</span>
             </div>
           </div>
         </ng-container>
 
         <!-- Paginated View -->
-        <ng-container *ngIf="!loading && viewMode === ViewMode.PAGINATED && logPage">
+        <ng-container *ngIf="viewMode === ViewMode.PAGINATED && logPage">
           <!-- Log Content -->
           <div class="log-output">
-            <div *ngFor="let line of logPage.lines; let i = index" 
+            <div *ngFor="let line of logPage.linesWithClass; let i = index" 
                 class="log-line"
-                [ngClass]="getLogLevelClass(line)">
+                [ngClass]="line.levelClass">
               <span class="line-number">{{ (currentPage * pageSize) + i + 1 }}</span>
-              <span class="line-content">{{ line }}</span>
+              <span class="line-content">{{ line.content }}</span>
             </div>
           </div>
           
@@ -166,7 +182,7 @@
         </ng-container>
 
         <!-- Search Results -->
-        <ng-container *ngIf="!loading && viewMode === ViewMode.SEARCH">
+        <ng-container *ngIf="viewMode === ViewMode.SEARCH">
           <!-- Search Status Text -->
           <div class="status-text">
             Found {{ searchResults.length }} matches for "{{ searchTerm }}"
@@ -183,7 +199,7 @@
                   <span class="result-line-number">Line {{ result.lineNumber }}</span>
                 </div>
                 <div matListItemLine class="result-content">
-                  <pre class="log-line" [ngClass]="getLogLevelClass(result.content)">{{ result.content }}</pre>
+                  <pre class="log-line" [ngClass]="result.levelClass">{{ result.content }}</pre>
                 </div>
               </mat-list-item>
             </mat-list>

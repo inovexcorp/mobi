@@ -24,9 +24,10 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 
 import { Observable } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { catchError, map } from 'rxjs/operators';
 
 import { handleErrorObject } from '../utility';
+import { ProgressSpinnerService } from '../components/progress-spinner/services/progressSpinner.service';
 import { REST_PREFIX } from '../../constants';
 
 // TODO decide whether to move these out of here
@@ -65,6 +66,17 @@ export interface TailResponse {
   count: number;
 }
 
+export interface LoggerConfig {
+  loggerName: string;
+  level: string;
+}
+
+export interface LogLevelResponse {
+  loggerName: string;
+  level: string;
+  message?: string;
+}
+
 /**
  * @class LogViewerService
  * 
@@ -76,15 +88,16 @@ export interface TailResponse {
 export class LogsManagerService {
   readonly prefix = `${REST_PREFIX}logs`;
   
-  constructor(private _http: HttpClient) {}
+  constructor(private _http: HttpClient, private _spinnerSvc: ProgressSpinnerService) {}
   
   /**
    * Get list of available log files
    * 
+   * @param {boolean} [isTracked=false] Whether the request should be tracked by the {@link ProgressSpinnerService}
    * @returns {Observable<string[]>} An observable emitting an array of log file names
    */
-  getLogFiles(): Observable<string[]> {
-    return this._http.get<string[]>(`${this.prefix}/files`)
+  getLogFiles(isTracked = false): Observable<string[]> {
+    return this._spinnerSvc.trackedRequest(this._http.get<string[]>(`${this.prefix}/files`), isTracked)
       .pipe(catchError(handleErrorObject));
   }
 
@@ -92,11 +105,14 @@ export class LogsManagerService {
    * Get metadata for a specific log file
    * 
    * @param {string} fileName The name of the file to retrieve metadata for
+   * @param {boolean} [isTracked=false] Whether the request should be tracked by the {@link ProgressSpinnerService}
    * @returns {Observable<LogFileMetadata>} An observable emitting the metadata about the particular log file
    */
-  getLogFileMetadata(fileName: string): Observable<LogFileMetadata> {
-    return this._http.get<LogFileMetadata>(`${this.prefix}/files/${encodeURIComponent(fileName)}/metadata`)
-      .pipe(catchError(handleErrorObject));
+  getLogFileMetadata(fileName: string, isTracked = false): Observable<LogFileMetadata> {
+    return this._spinnerSvc.trackedRequest(
+      this._http.get<LogFileMetadata>(`${this.prefix}/files/${encodeURIComponent(fileName)}/metadata`), 
+      isTracked
+    ).pipe(catchError(handleErrorObject));
   }
 
   /**
@@ -105,15 +121,18 @@ export class LogsManagerService {
    * @param {string} fileName The name of the file to read
    * @param {number} [page=0] The page number to retrieve (0-based)
    * @param {number} [pageSize=0] The number of lines per page
+   * @param {boolean} [isTracked=false] Whether the request should be tracked by the {@link ProgressSpinnerService}
    * @returns {Observable<LogPage>} An observable emitting a page of log file lines
    */
-  readLogFile(fileName: string, page = 0, pageSize = 100): Observable<LogPage> {
+  readLogFile(fileName: string, page = 0, pageSize = 100, isTracked = false): Observable<LogPage> {
     const params = new HttpParams()
       .set('page', page.toString())
       .set('pageSize', pageSize.toString());
 
-    return this._http.get<LogPage>(`${this.prefix}/files/${encodeURIComponent(fileName)}`, { params })
-      .pipe(catchError(handleErrorObject));
+    return this._spinnerSvc.trackedRequest(
+      this._http.get<LogPage>(`${this.prefix}/files/${encodeURIComponent(fileName)}`, { params }),
+      isTracked
+    ).pipe(catchError(handleErrorObject));
   }
 
   /**
@@ -121,11 +140,15 @@ export class LogsManagerService {
    * 
    * @param {string} fileName The name of the file to read
    * @param {number} [lines=100] The number of lines to retrieve
+   * @param {boolean} [isTracked=false] Whether the request should be tracked by the {@link ProgressSpinnerService}
+   * @returns {Observable<TailResponse>} An observable emitting a representation of the tail of the log file
    */
-  tailLogFile(fileName: string, lines = 100): Observable<TailResponse> {
+  tailLogFile(fileName: string, lines = 100, isTracked = false): Observable<TailResponse> {
     const params = new HttpParams().set('lines', lines.toString());
-    return this._http.get<TailResponse>(`${this.prefix}/files/${encodeURIComponent(fileName)}/tail`, { params })
-      .pipe(catchError(handleErrorObject));
+    return this._spinnerSvc.trackedRequest(
+      this._http.get<TailResponse>(`${this.prefix}/files/${encodeURIComponent(fileName)}/tail`, { params }),
+      isTracked
+    ).pipe(catchError(handleErrorObject));
   }
 
   /**
@@ -134,15 +157,18 @@ export class LogsManagerService {
    * @param {string} fileName The name of the file to search
    * @param {string} searchTerm The term to search for
    * @param {number} [maxResults=100] The maximum number of results to return
+   * @param {boolean} [isTracked=false] Whether the request should be tracked by the {@link ProgressSpinnerService}
    * @returns {Observable<SearchResponse>} An observable emitting the search results
    */
-  searchLogFile(fileName: string, searchTerm: string, maxResults = 100): Observable<SearchResponse> {
+  searchLogFile(fileName: string, searchTerm: string, maxResults = 100, isTracked = false): Observable<SearchResponse> {
     const params = new HttpParams()
       .set('term', searchTerm)
       .set('maxResults', maxResults.toString());
 
-    return this._http.get<SearchResponse>(`${this.prefix}/files/${encodeURIComponent(fileName)}/search`, { params })
-      .pipe(catchError(handleErrorObject));
+    return this._spinnerSvc.trackedRequest(
+      this._http.get<SearchResponse>(`${this.prefix}/files/${encodeURIComponent(fileName)}/search`, { params }),
+      isTracked
+    ).pipe(catchError(handleErrorObject));
   }
 
   /**
@@ -154,6 +180,83 @@ export class LogsManagerService {
   downloadLogFile(fileName: string): void {
     const url = `${this.prefix}/files/${encodeURIComponent(fileName)}`;
     window.open(url);
+  }
+
+  /**
+   * Calls the GET /mobirest/logs/levels endpoint to retrieve all configured loggers.
+   * Returns a map of package names to their current log levels.
+   * 
+   * @param {boolean} [isTracked=false] Whether the request should be tracked by the {@link ProgressSpinnerService}
+   * @returns {Observable<{ [key: string]: string }>} An observable with a map of package names to log levels
+   */
+  getAllLoggers(isTracked = false): Observable<{ [key: string]: string }> {
+    return this._spinnerSvc.trackedRequest(
+      this._http.get<{ [key: string]: string }>(`${this.prefix}/levels`), 
+      isTracked
+    ).pipe(catchError(handleErrorObject));
+  }
+
+  /**
+   * Calls the GET /mobirest/logs/levels/{packageName} endpoint to retrieve the log level for a specific package.
+   * 
+   * @param {string} packageName The name of the package to retrieve the log level for
+   * @returns {Observable<LogLevelResponse>} An observable with the log level information
+   */
+  getLoggerLevel(packageName: string): Observable<LogLevelResponse> {
+    return this._http.get<LogLevelResponse>(`${this.prefix}/levels/${encodeURIComponent(packageName)}`)
+      .pipe(catchError(handleErrorObject));
+  }
+
+  /**
+   * Calls the PUT /mobirest/logs/levels/{packageName} endpoint to set the log level for a specific package.
+   * 
+   * @param {string} packageName The name of the package to set the level for
+   * @param {string} level The log level to set
+   * @returns {Observable<LogLevelResponse>} An observable with the updated log level information
+   */
+  setLoggerLevel(packageName: string, level: string): Observable<LogLevelResponse> {
+    return this._http.put<LogLevelResponse>(
+      `${this.prefix}/levels/${encodeURIComponent(packageName)}`,
+      { level }
+    ).pipe(catchError(handleErrorObject));
+  }
+
+  /**
+   * Calls the POST /mobirest/logs/levels endpoint to create a new logger configuration from a package name and a log 
+   * level.
+   * @param {string} packageName The name of the package
+   * @param {string} level The log level to set
+   * @returns {Observable<LogLevelResponse>} An observable with the created log level information
+   */
+  createLogger(packageName: string, level: string): Observable<LogLevelResponse> {
+    return this._http.post<LogLevelResponse>(`${this.prefix}/levels`, { loggerName: packageName, level })
+      .pipe(catchError(handleErrorObject));
+  }
+
+  /**
+   * Calls the DELETE /mobirest/logs/levels/{packageName} endpoint to delete a logger configuration based off the
+   * package name.
+   * 
+   * @param {string} packageName The name of the package to delete
+   * @returns {Observable<void>} An observable that completes when the deletion is done
+   */
+  deleteLogger(packageName: string): Observable<void> {
+    return this._http.delete(`${this.prefix}/levels/${encodeURIComponent(packageName)}`)
+      .pipe(
+        map(() => {}),
+        catchError(handleErrorObject)
+      );
+  }
+
+  /**
+   * Calls the GET /mobirest/logs/levels/available endpoint to retrieve all available log levels.
+   * 
+   * @param {boolean} [isTracked=false] Whether the request should be tracked by the {@link ProgressSpinnerService}
+   * @returns {Observable<string[]>} An observable with an array of available log levels
+   */
+  getAvailableLevels(isTracked = false): Observable<string[]> {
+    return this._spinnerSvc.trackedRequest(this._http.get<string[]>(`${this.prefix}/levels/available`), isTracked)
+      .pipe(catchError(handleErrorObject));
   }
 
   /**

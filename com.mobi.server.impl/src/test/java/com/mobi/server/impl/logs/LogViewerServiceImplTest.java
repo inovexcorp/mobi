@@ -26,11 +26,16 @@ package com.mobi.server.impl.logs;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import com.mobi.server.api.logs.LogEntry;
 import com.mobi.server.api.logs.LogFileMetadata;
@@ -40,16 +45,22 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.MockitoAnnotations;
+import org.osgi.service.cm.Configuration;
+import org.osgi.service.cm.ConfigurationAdmin;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Dictionary;
 import java.util.HashMap;
+import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 public class LogViewerServiceImplTest {
 
@@ -61,6 +72,13 @@ public class LogViewerServiceImplTest {
     private MockedStatic<LogEntryReader> mockedLogEntryReader;
     private AutoCloseable closeable;
 
+    // Add this field to the test class:
+    @Mock
+    private ConfigurationAdmin mockConfigAdmin;
+
+    @Mock
+    private Configuration mockConfiguration;
+
     @Before
     public void setUp() throws IOException {
         closeable = MockitoAnnotations.openMocks(this);
@@ -70,6 +88,15 @@ public class LogViewerServiceImplTest {
 
         // Initialize the service
         service = new LogViewerServiceImpl();
+
+        // Inject the mock ConfigurationAdmin using reflection
+        try {
+            java.lang.reflect.Field field = LogViewerServiceImpl.class.getDeclaredField("configAdmin");
+            field.setAccessible(true);
+            field.set(service, mockConfigAdmin);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to inject mock ConfigurationAdmin", e);
+        }
 
         // Activate with test log directory
         Map<String, Object> properties = new HashMap<>();
@@ -691,5 +718,507 @@ public class LogViewerServiceImplTest {
 
         assertEquals(content1, content2);
         assertEquals("Test content for multiple reads", content1);
+    }
+
+    // getAllLoggerLevels Tests
+
+    @Test
+    public void testGetAllLoggerLevels_ReturnsAllLoggers() throws Exception {
+        Dictionary<String, Object> props = new Hashtable<>();
+        props.put("log4j2.logger.mobi.name", "com.mobi");
+        props.put("log4j2.logger.mobi.level", "DEBUG");
+        props.put("log4j2.logger.karaf.name", "org.apache.karaf");
+        props.put("log4j2.logger.karaf.level", "INFO");
+        props.put("log4j2.rootLogger.level", "WARN");
+
+        when(mockConfigAdmin.getConfiguration("org.ops4j.pax.logging", null))
+                .thenReturn(mockConfiguration);
+        when(mockConfiguration.getProperties()).thenReturn(props);
+
+        Map<String, String> loggers = service.getAllLoggerLevels();
+
+        assertNotNull(loggers);
+        assertEquals(3, loggers.size());
+        assertEquals("DEBUG", loggers.get("com.mobi"));
+        assertEquals("INFO", loggers.get("org.apache.karaf"));
+        assertEquals("WARN", loggers.get("ROOT"));
+    }
+
+    @Test
+    public void testGetAllLoggerLevels_EmptyConfiguration() throws Exception {
+        Dictionary<String, Object> props = new Hashtable<>();
+        props.put("log4j2.rootLogger.level", "INFO");
+
+        when(mockConfigAdmin.getConfiguration("org.ops4j.pax.logging", null))
+                .thenReturn(mockConfiguration);
+        when(mockConfiguration.getProperties()).thenReturn(props);
+
+        Map<String, String> loggers = service.getAllLoggerLevels();
+
+        assertNotNull(loggers);
+        assertEquals(1, loggers.size());
+        assertEquals("INFO", loggers.get("ROOT"));
+    }
+
+    @Test
+    public void testGetAllLoggerLevels_NullProperties() throws Exception {
+        when(mockConfigAdmin.getConfiguration("org.ops4j.pax.logging", null))
+                .thenReturn(mockConfiguration);
+        when(mockConfiguration.getProperties()).thenReturn(null);
+
+        Map<String, String> loggers = service.getAllLoggerLevels();
+
+        assertNotNull(loggers);
+        assertEquals(1, loggers.size());
+        assertEquals("INFO", loggers.get("ROOT")); // Should have default root logger
+    }
+
+    @Test
+    public void testGetAllLoggerLevels_LoggerWithDots() throws Exception {
+        Dictionary<String, Object> props = new Hashtable<>();
+        props.put("log4j2.logger.mobi_server_impl.name", "com.mobi.server.impl");
+        props.put("log4j2.logger.mobi_server_impl.level", "TRACE");
+        props.put("log4j2.rootLogger.level", "INFO");
+
+        when(mockConfigAdmin.getConfiguration("org.ops4j.pax.logging", null))
+                .thenReturn(mockConfiguration);
+        when(mockConfiguration.getProperties()).thenReturn(props);
+
+        Map<String, String> loggers = service.getAllLoggerLevels();
+
+        assertNotNull(loggers);
+        assertEquals("TRACE", loggers.get("com.mobi.server.impl"));
+    }
+
+    @Test
+    public void testGetAllLoggerLevels_OnlyNameNoLevel() throws Exception {
+        Dictionary<String, Object> props = new Hashtable<>();
+        props.put("log4j2.logger.test.name", "com.test");
+        props.put("log4j2.rootLogger.level", "INFO");
+
+        when(mockConfigAdmin.getConfiguration("org.ops4j.pax.logging", null))
+                .thenReturn(mockConfiguration);
+        when(mockConfiguration.getProperties()).thenReturn(props);
+
+        Map<String, String> loggers = service.getAllLoggerLevels();
+
+        assertNotNull(loggers);
+        // Should only contain ROOT since name without level is incomplete
+        assertEquals(1, loggers.size());
+        assertTrue(loggers.containsKey("ROOT"));
+    }
+
+    @Test
+    public void testGetAllLoggerLevels_OnlyLevelNoName() throws Exception {
+        Dictionary<String, Object> props = new Hashtable<>();
+        props.put("log4j2.logger.test.level", "DEBUG");
+        props.put("log4j2.rootLogger.level", "INFO");
+
+        when(mockConfigAdmin.getConfiguration("org.ops4j.pax.logging", null))
+                .thenReturn(mockConfiguration);
+        when(mockConfiguration.getProperties()).thenReturn(props);
+
+        Map<String, String> loggers = service.getAllLoggerLevels();
+
+        assertNotNull(loggers);
+        // Should only contain ROOT since level without name is incomplete
+        assertEquals(1, loggers.size());
+        assertTrue(loggers.containsKey("ROOT"));
+    }
+
+    @Test
+    public void testGetAllLoggerLevels_IOExceptionHandled() throws Exception {
+        when(mockConfigAdmin.getConfiguration("org.ops4j.pax.logging", null))
+                .thenThrow(new IOException("Test exception"));
+
+        Map<String, String> loggers = service.getAllLoggerLevels();
+
+        assertNotNull(loggers);
+        assertTrue(loggers.isEmpty()); // Should return empty map on error
+    }
+
+    // getLoggerLevel Tests
+
+    @Test
+    public void testGetLoggerLevel_ExistingLogger() throws Exception {
+        Dictionary<String, Object> props = new Hashtable<>();
+        props.put("log4j2.logger.mobi.name", "com.mobi");
+        props.put("log4j2.logger.mobi.level", "DEBUG");
+
+        when(mockConfigAdmin.getConfiguration("org.ops4j.pax.logging", null))
+                .thenReturn(mockConfiguration);
+        when(mockConfiguration.getProperties()).thenReturn(props);
+
+        String level = service.getLoggerLevel("com.mobi");
+
+        assertEquals("DEBUG", level);
+    }
+
+    @Test
+    public void testGetLoggerLevel_NonExistentLogger() throws Exception {
+        Dictionary<String, Object> props = new Hashtable<>();
+        props.put("log4j2.logger.mobi.name", "com.mobi");
+        props.put("log4j2.logger.mobi.level", "DEBUG");
+
+        when(mockConfigAdmin.getConfiguration("org.ops4j.pax.logging", null))
+                .thenReturn(mockConfiguration);
+        when(mockConfiguration.getProperties()).thenReturn(props);
+
+        String level = service.getLoggerLevel("com.nonexistent");
+
+        assertNull(level);
+    }
+
+    @Test
+    public void testGetLoggerLevel_RootLogger() throws Exception {
+        Dictionary<String, Object> props = new Hashtable<>();
+        props.put("log4j2.rootLogger.level", "WARN");
+
+        when(mockConfigAdmin.getConfiguration("org.ops4j.pax.logging", null))
+                .thenReturn(mockConfiguration);
+        when(mockConfiguration.getProperties()).thenReturn(props);
+
+        String level = service.getLoggerLevel("ROOT");
+
+        assertEquals("WARN", level);
+    }
+
+    @Test
+    public void testGetLoggerLevel_NullProperties() throws Exception {
+        when(mockConfigAdmin.getConfiguration("org.ops4j.pax.logging", null))
+                .thenReturn(mockConfiguration);
+        when(mockConfiguration.getProperties()).thenReturn(null);
+
+        String level = service.getLoggerLevel("com.mobi");
+
+        assertNull(level);
+    }
+
+    @Test
+    public void testGetLoggerLevel_IOExceptionHandled() throws Exception {
+        when(mockConfigAdmin.getConfiguration("org.ops4j.pax.logging", null))
+                .thenThrow(new IOException("Test exception"));
+
+        String level = service.getLoggerLevel("com.mobi");
+
+        assertNull(level);
+    }
+
+    // setLoggerLevel Tests
+
+    @Test
+    public void testSetLoggerLevel_NewLogger() throws Exception {
+        Dictionary<String, Object> props = new Hashtable<>();
+
+        when(mockConfigAdmin.getConfiguration("org.ops4j.pax.logging", null))
+                .thenReturn(mockConfiguration);
+        when(mockConfiguration.getProperties()).thenReturn(props);
+
+        service.setLoggerLevel("com.mobi.new", "DEBUG");
+
+        verify(mockConfiguration, times(1)).update(any(Dictionary.class));
+        assertEquals("com.mobi.new", props.get("log4j2.logger.com_mobi_new.name"));
+        assertEquals("DEBUG", props.get("log4j2.logger.com_mobi_new.level"));
+    }
+
+    @Test
+    public void testSetLoggerLevel_ExistingLogger() throws Exception {
+        Dictionary<String, Object> props = new Hashtable<>();
+        props.put("log4j2.logger.mobi.name", "com.mobi");
+        props.put("log4j2.logger.mobi.level", "INFO");
+
+        when(mockConfigAdmin.getConfiguration("org.ops4j.pax.logging", null))
+                .thenReturn(mockConfiguration);
+        when(mockConfiguration.getProperties()).thenReturn(props);
+
+        service.setLoggerLevel("com.mobi", "DEBUG");
+
+        verify(mockConfiguration, times(1)).update(any(Dictionary.class));
+        assertEquals("com.mobi", props.get("log4j2.logger.mobi.name"));
+        assertEquals("DEBUG", props.get("log4j2.logger.mobi.level"));
+    }
+
+    @Test
+    public void testSetLoggerLevel_RootLogger() throws Exception {
+        Dictionary<String, Object> props = new Hashtable<>();
+        props.put("log4j2.rootLogger.level", "INFO");
+
+        when(mockConfigAdmin.getConfiguration("org.ops4j.pax.logging", null))
+                .thenReturn(mockConfiguration);
+        when(mockConfiguration.getProperties()).thenReturn(props);
+
+        service.setLoggerLevel("ROOT", "ERROR");
+
+        verify(mockConfiguration, times(1)).update(any(Dictionary.class));
+        assertEquals("ERROR", props.get("log4j2.rootLogger.level"));
+    }
+
+    @Test
+    public void testSetLoggerLevel_LowercaseLevel() throws Exception {
+        Dictionary<String, Object> props = new Hashtable<>();
+
+        when(mockConfigAdmin.getConfiguration("org.ops4j.pax.logging", null))
+                .thenReturn(mockConfiguration);
+        when(mockConfiguration.getProperties()).thenReturn(props);
+
+        service.setLoggerLevel("com.mobi", "debug");
+
+        verify(mockConfiguration, times(1)).update(any(Dictionary.class));
+        assertEquals("DEBUG", props.get("log4j2.logger.com_mobi.level")); // Should be uppercase
+    }
+
+    @Test
+    public void testSetLoggerLevel_NullProperties() throws Exception {
+        when(mockConfigAdmin.getConfiguration("org.ops4j.pax.logging", null))
+                .thenReturn(mockConfiguration);
+        when(mockConfiguration.getProperties()).thenReturn(null);
+
+        service.setLoggerLevel("com.mobi", "DEBUG");
+
+        verify(mockConfiguration, times(1)).update(any(Dictionary.class));
+    }
+
+    @Test
+    public void testSetLoggerLevel_IOExceptionHandled() throws Exception {
+        when(mockConfigAdmin.getConfiguration("org.ops4j.pax.logging", null))
+                .thenThrow(new IOException("Test exception"));
+
+        // Should not throw exception, just log error
+        service.setLoggerLevel("com.mobi", "DEBUG");
+
+        verify(mockConfiguration, times(0)).update(any(Dictionary.class));
+    }
+
+    @Test
+    public void testSetLoggerLevel_ComplexPackageName() throws Exception {
+        Dictionary<String, Object> props = new Hashtable<>();
+
+        when(mockConfigAdmin.getConfiguration("org.ops4j.pax.logging", null))
+                .thenReturn(mockConfiguration);
+        when(mockConfiguration.getProperties()).thenReturn(props);
+
+        service.setLoggerLevel("com.mobi.server.impl.logs", "TRACE");
+
+        verify(mockConfiguration, times(1)).update(any(Dictionary.class));
+        assertEquals("com.mobi.server.impl.logs",
+                props.get("log4j2.logger.com_mobi_server_impl_logs.name"));
+        assertEquals("TRACE", props.get("log4j2.logger.com_mobi_server_impl_logs.level"));
+    }
+
+    // deleteLogger Tests
+
+    @Test
+    public void testDeleteLogger_ExistingLogger() throws Exception {
+        Dictionary<String, Object> props = new Hashtable<>();
+        props.put("log4j2.logger.mobi.name", "com.mobi");
+        props.put("log4j2.logger.mobi.level", "DEBUG");
+
+        when(mockConfigAdmin.getConfiguration("org.ops4j.pax.logging", null))
+                .thenReturn(mockConfiguration);
+        when(mockConfiguration.getProperties()).thenReturn(props);
+
+        service.deleteLogger("com.mobi");
+
+        verify(mockConfiguration, times(1)).update(any(Dictionary.class));
+        assertFalse(props.keys().hasMoreElements() ||
+                !Objects.isNull(props.get("log4j2.logger.mobi.name")) ||
+                !Objects.isNull(props.get("log4j2.logger.mobi.level")));
+    }
+
+    @Test
+    public void testDeleteLogger_NonExistentLogger() throws Exception {
+        Dictionary<String, Object> props = new Hashtable<>();
+
+        when(mockConfigAdmin.getConfiguration("org.ops4j.pax.logging", null))
+                .thenReturn(mockConfiguration);
+        when(mockConfiguration.getProperties()).thenReturn(props);
+
+        service.deleteLogger("com.nonexistent");
+
+        verify(mockConfiguration, times(0)).update(any(Dictionary.class));
+    }
+
+    @Test
+    public void testDeleteLogger_RootLogger() throws Exception {
+        Dictionary<String, Object> props = new Hashtable<>();
+        props.put("log4j2.rootLogger.level", "INFO");
+
+        when(mockConfigAdmin.getConfiguration("org.ops4j.pax.logging", null))
+                .thenReturn(mockConfiguration);
+        when(mockConfiguration.getProperties()).thenReturn(props);
+
+        service.deleteLogger("ROOT");
+
+        // Should not delete ROOT logger
+        verify(mockConfiguration, times(0)).update(any(Dictionary.class));
+        assertFalse(Objects.isNull(props.get("log4j2.rootLogger.level")));
+    }
+
+    @Test
+    public void testDeleteLogger_NullProperties() throws Exception {
+        when(mockConfigAdmin.getConfiguration("org.ops4j.pax.logging", null))
+                .thenReturn(mockConfiguration);
+        when(mockConfiguration.getProperties()).thenReturn(null);
+
+        service.deleteLogger("com.mobi");
+
+        verify(mockConfiguration, times(0)).update(any(Dictionary.class));
+    }
+
+    @Test
+    public void testDeleteLogger_IOExceptionHandled() throws Exception {
+        when(mockConfigAdmin.getConfiguration("org.ops4j.pax.logging", null))
+                .thenThrow(new IOException("Test exception"));
+
+        // Should not throw exception, just log error
+        service.deleteLogger("com.mobi");
+
+        verify(mockConfiguration, times(0)).update(any(Dictionary.class));
+    }
+
+    @Test
+    public void testDeleteLogger_OnlyRemovesSpecifiedLogger() throws Exception {
+        Dictionary<String, Object> props = new Hashtable<>();
+        props.put("log4j2.logger.mobi.name", "com.mobi");
+        props.put("log4j2.logger.mobi.level", "DEBUG");
+        props.put("log4j2.logger.karaf.name", "org.apache.karaf");
+        props.put("log4j2.logger.karaf.level", "INFO");
+
+        when(mockConfigAdmin.getConfiguration("org.ops4j.pax.logging", null))
+                .thenReturn(mockConfiguration);
+        when(mockConfiguration.getProperties()).thenReturn(props);
+
+        service.deleteLogger("com.mobi");
+
+        verify(mockConfiguration, times(1)).update(any(Dictionary.class));
+        assertTrue(Objects.isNull(props.get("log4j2.logger.mobi.name")));
+        assertTrue(Objects.isNull(props.get("log4j2.logger.mobi.level")));
+        assertFalse(Objects.isNull(props.get("log4j2.logger.karaf.name")));
+        assertFalse(Objects.isNull(props.get("log4j2.logger.karaf.level")));
+    }
+
+    // getRootLoggerLevel Tests
+
+    @Test
+    public void testGetRootLoggerLevel_ExistingLevel() throws Exception {
+        Dictionary<String, Object> props = new Hashtable<>();
+        props.put("log4j2.rootLogger.level", "WARN");
+
+        when(mockConfigAdmin.getConfiguration("org.ops4j.pax.logging", null))
+                .thenReturn(mockConfiguration);
+        when(mockConfiguration.getProperties()).thenReturn(props);
+
+        String level = service.getRootLoggerLevel();
+
+        assertEquals("WARN", level);
+    }
+
+    @Test
+    public void testGetRootLoggerLevel_NullLevel() throws Exception {
+        Dictionary<String, Object> props = new Hashtable<>();
+
+        when(mockConfigAdmin.getConfiguration("org.ops4j.pax.logging", null))
+                .thenReturn(mockConfiguration);
+        when(mockConfiguration.getProperties()).thenReturn(props);
+
+        String level = service.getRootLoggerLevel();
+
+        assertEquals("INFO", level); // Should return default
+    }
+
+    @Test
+    public void testGetRootLoggerLevel_NullProperties() throws Exception {
+        when(mockConfigAdmin.getConfiguration("org.ops4j.pax.logging", null))
+                .thenReturn(mockConfiguration);
+        when(mockConfiguration.getProperties()).thenReturn(null);
+
+        String level = service.getRootLoggerLevel();
+
+        assertEquals("INFO", level); // Should return default
+    }
+
+    @Test
+    public void testGetRootLoggerLevel_IOExceptionHandled() throws Exception {
+        when(mockConfigAdmin.getConfiguration("org.ops4j.pax.logging", null))
+                .thenThrow(new IOException("Test exception"));
+
+        String level = service.getRootLoggerLevel();
+
+        assertEquals("INFO", level); // Should return default on error
+    }
+
+    // setRootLoggerLevel Tests
+
+    @Test
+    public void testSetRootLoggerLevel_Success() throws Exception {
+        Dictionary<String, Object> props = new Hashtable<>();
+        props.put("log4j2.rootLogger.level", "INFO");
+
+        when(mockConfigAdmin.getConfiguration("org.ops4j.pax.logging", null))
+                .thenReturn(mockConfiguration);
+        when(mockConfiguration.getProperties()).thenReturn(props);
+
+        service.setRootLoggerLevel("ERROR");
+
+        verify(mockConfiguration, times(1)).update(any(Dictionary.class));
+        assertEquals("ERROR", props.get("log4j2.rootLogger.level"));
+    }
+
+    @Test
+    public void testSetRootLoggerLevel_LowercaseLevel() throws Exception {
+        Dictionary<String, Object> props = new Hashtable<>();
+
+        when(mockConfigAdmin.getConfiguration("org.ops4j.pax.logging", null))
+                .thenReturn(mockConfiguration);
+        when(mockConfiguration.getProperties()).thenReturn(props);
+
+        service.setRootLoggerLevel("debug");
+
+        verify(mockConfiguration, times(1)).update(any(Dictionary.class));
+        assertEquals("DEBUG", props.get("log4j2.rootLogger.level")); // Should be uppercase
+    }
+
+    @Test
+    public void testSetRootLoggerLevel_NullProperties() throws Exception {
+        when(mockConfigAdmin.getConfiguration("org.ops4j.pax.logging", null))
+                .thenReturn(mockConfiguration);
+        when(mockConfiguration.getProperties()).thenReturn(null);
+
+        service.setRootLoggerLevel("WARN");
+
+        verify(mockConfiguration, times(1)).update(any(Dictionary.class));
+    }
+
+    @Test
+    public void testSetRootLoggerLevel_IOExceptionHandled() throws Exception {
+        when(mockConfigAdmin.getConfiguration("org.ops4j.pax.logging", null))
+                .thenThrow(new IOException("Test exception"));
+
+        // Should not throw exception, just log error
+        service.setRootLoggerLevel("ERROR");
+
+        verify(mockConfiguration, times(0)).update(any(Dictionary.class));
+    }
+
+    @Test
+    public void testSetRootLoggerLevel_AllLogLevels() throws Exception {
+        Dictionary<String, Object> props = new Hashtable<>();
+        when(mockConfigAdmin.getConfiguration("org.ops4j.pax.logging", null))
+                .thenReturn(mockConfiguration);
+        when(mockConfiguration.getProperties()).thenReturn(props);
+
+        String[] levels = {"TRACE", "DEBUG", "INFO", "WARN", "ERROR", "FATAL", "OFF"};
+
+        for (String level : levels) {
+            clearProps(props);
+            service.setRootLoggerLevel(level);
+            assertEquals(level, props.get("log4j2.rootLogger.level"));
+        }
+
+        verify(mockConfiguration, times(levels.length)).update(any(Dictionary.class));
+    }
+
+    private void clearProps(Dictionary<String, Object> props) {
+        props.keys().asIterator().forEachRemaining(props::remove);
     }
 }

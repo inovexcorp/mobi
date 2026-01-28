@@ -24,21 +24,25 @@ import { NgModule } from '@angular/core';
 
 import { SharedModule } from '../shared/shared.module';
 
+import { AddLoggerModalComponent } from './components/add-logger-modal/add-logger-modal.component';
+import { AddMemberButtonComponent } from './components/addMemberButton/addMemberButton.component';
 import { CreateGroupOverlayComponent } from './components/createGroupOverlay/createGroupOverlay.component';
 import { CreateUserOverlayComponent } from './components/createUserOverlay/createUserOverlay.component';
 import { EditGroupInfoOverlayComponent } from './components/editGroupInfoOverlay/editGroupInfoOverlay.component';
 import { EditUserProfileOverlayComponent } from './components/editUserProfileOverlay/editUserProfileOverlay.component';
 import { GroupsListComponent } from './components/groupsList/groupsList.component';
 import { GroupsPageComponent } from './components/groupsPage/groupsPage.component';
+import { LogLevelManagerComponent } from './components/log-level-manager/log-level-manager.component';
+import { LogLevelInfoModalComponent } from './components/log-level-info-modal/log-level-info-modal.component';
+import { LogViewerPageComponent } from './components/log-viewer-page/log-viewer-page.component';
 import { MemberTableComponent } from './components/memberTable/memberTable.component';
 import { PermissionsPageComponent } from './components/permissionsPage/permissionsPage.component';
+import { RepositoriesPageComponent } from './components/repositories-page/repositories-page.component';
 import { ResetPasswordOverlayComponent } from './components/resetPasswordOverlay/resetPasswordOverlay.component';
 import { UserManagementPageComponent } from './components/userManagementPage/userManagementPage.component';
 import { UsersListComponent } from './components/usersList/usersList.component';
 import { UsersPageComponent } from './components/usersPage/usersPage.component';
-import { AddMemberButtonComponent } from './components/addMemberButton/addMemberButton.component';
-import { RepositoriesPageComponent } from './components/repositories-page/repositories-page.component';
-import { LogViewerPageComponent } from './components/log-viewer-page/log-viewer-page.component';
+import { LogLevelSelectComponent } from './components/log-level-select/log-level-select.component';
 
 /**
  * @namespace user-management
@@ -47,25 +51,29 @@ import { LogViewerPageComponent } from './components/log-viewer-page/log-viewer-
  * groups, and overall permissions in the application.
  */
 @NgModule({
-    imports: [
-        SharedModule
-    ],
-    declarations: [
-        AddMemberButtonComponent,
-        CreateGroupOverlayComponent,
-        CreateUserOverlayComponent,
-        EditGroupInfoOverlayComponent,
-        EditUserProfileOverlayComponent,
-        GroupsListComponent,
-        GroupsPageComponent,
-        MemberTableComponent,
-        PermissionsPageComponent,
-        ResetPasswordOverlayComponent,
-        UserManagementPageComponent,
-        UsersListComponent,
-        UsersPageComponent,
-        RepositoriesPageComponent,
-        LogViewerPageComponent
-    ]
+  imports: [
+    SharedModule
+  ],
+  declarations: [
+    AddLoggerModalComponent,
+    AddMemberButtonComponent,
+    CreateGroupOverlayComponent,
+    CreateUserOverlayComponent,
+    EditGroupInfoOverlayComponent,
+    EditUserProfileOverlayComponent,
+    GroupsListComponent,
+    GroupsPageComponent,
+    LogLevelManagerComponent,
+    LogLevelInfoModalComponent,
+    LogViewerPageComponent,
+    MemberTableComponent,
+    PermissionsPageComponent,
+    ResetPasswordOverlayComponent,
+    UserManagementPageComponent,
+    UsersListComponent,
+    UsersPageComponent,
+    RepositoriesPageComponent,
+    LogLevelSelectComponent
+  ]
 })
 export class UserManagementModule {}
