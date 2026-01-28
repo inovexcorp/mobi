@@ -25,14 +25,22 @@ package com.mobi.server.rest;
 
 import static com.mobi.rest.util.RestUtils.checkStringParam;
 
+import com.mobi.exception.MobiException;
 import com.mobi.rest.util.RestUtils;
+import com.mobi.rest.util.swagger.ErrorObjectSchema;
 import com.mobi.server.api.logs.LogEntry;
 import com.mobi.server.api.logs.LogFileMetadata;
 import com.mobi.server.api.logs.LogPage;
 import com.mobi.server.api.logs.LogViewerService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.headers.Header;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.jaxrs.whiteboard.propertytypes.JaxrsResource;
@@ -45,8 +53,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.annotation.security.RolesAllowed;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -63,6 +75,8 @@ import javax.ws.rs.core.StreamingOutput;
 @JaxrsResource
 public class LogViewerRest {
     private static final Logger logger = LoggerFactory.getLogger(LogViewerRest.class);
+    public static final String SWAGGER_LOG = "Logs";
+    public static final String SWAGGER_LOG_DESC = "Operations related to application logs including log levels";
 
     @Reference
     LogViewerService logViewerService;
@@ -73,17 +87,28 @@ public class LogViewerRest {
     @GET
     @Path("/files")
     @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("admin")
+    @Tag(name = SWAGGER_LOG, description = SWAGGER_LOG_DESC)
     @Operation(
-            tags = "logs",
-            summary = "Retrieves the list of log file names as a string array",
+            summary = """
+                    Retrieves the list of log file names as a string array
+                    **Requires the 'admin' role.**""",
             responses = {
                     @ApiResponse(responseCode = "200",
-                            description = "An array of file names corresponding to the logs files for the application"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "Problem fetching log file names")
+                            description = "An array of file names corresponding to the log files for the application",
+                            content = @Content(
+                                    mediaType = MediaType.APPLICATION_JSON,
+                                    array = @ArraySchema(
+                                            schema = @Schema(implementation = String.class)
+                                    )
+                            )),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied: Authenticated user does not"
+                            + " have the admin role ",
+                            content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))),
+                    @ApiResponse(responseCode = "500", description = "Problem fetching log file names",
+                            content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class)))
             }
     )
-    @RolesAllowed("admin")
     public Response getLogFiles() {
         try {
             List<String> files = logViewerService.getAvailableLogFiles();
@@ -99,17 +124,23 @@ public class LogViewerRest {
     @GET
     @Path("/files/{fileName}/metadata")
     @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("admin")
+    @Tag(name = SWAGGER_LOG, description = SWAGGER_LOG_DESC)
     @Operation(
-            tags = "logs",
-            summary = "Retrieves metadata in JSON format about a specific log file referenced by name",
+            summary = """
+                    Retrieves metadata in JSON format about a specific log file referenced by name
+                    **Requires the 'admin' role.**""",
             responses = {
                     @ApiResponse(responseCode = "200",
-                            description = "A JSON object containing metadata about the specified log file"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "Problem fetching log file metadata")
+                            description = "A JSON object containing metadata about the specified log file",
+                            content = @Content(schema = @Schema(implementation = LogFileMetadata.class))),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied: Authenticated user does not"
+                            + " have the admin role ",
+                            content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))),
+                    @ApiResponse(responseCode = "500", description = "Problem fetching log file metadata",
+                            content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class)))
             }
     )
-    @RolesAllowed("admin")
     public Response getLogFileMetadata(
             @Parameter(description = "The filename of a log file", required = true)
             @PathParam("fileName") String fileName) {
@@ -127,18 +158,48 @@ public class LogViewerRest {
     @GET
     @Path("/files/{fileName}")
     @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("admin")
+    @Tag(name = SWAGGER_LOG, description = SWAGGER_LOG_DESC)
     @Operation(
-            tags = "logs",
-            summary = "Reads lines out of a specific log file in a paginated fashion and returns as a JSON object",
+            summary = """
+                    Fetches the contents of a log file as a JSON of paginated contents or a file download depending on 
+                    the Accept header.
+                    **Requires the 'admin' role.**""",
             responses = {
                     @ApiResponse(responseCode = "200",
                             description = "A JSON object containing the specified log lines from the specified log "
-                                    + "file"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "Problem fetching log file content")
+                                    + "file",
+                                    content = {
+                                            @Content(
+                                                    mediaType = MediaType.APPLICATION_JSON,
+                                                    schema = @Schema(implementation = LogPage.class)
+                                            ),
+                                            // Not showing up in Swagger UI, but unfortunately stuck with it
+                                            @Content(
+                                                    mediaType = MediaType.APPLICATION_OCTET_STREAM,
+                                                    schema = @Schema(type = "string", format = "binary")
+                                            )
+                                    },
+                                    headers = {
+                                            @Header(
+                                                    name = "Content-Disposition",
+                                                    description = "Attachment header for log file download",
+                                                    schema = @Schema(type = "string",
+                                                            example = "attachment; filename=\"karaf.log\"")
+                                            ),
+                                            @Header(
+                                                    name = "Content-Type",
+                                                    description = "The media type of the downloaded log file",
+                                                    schema = @Schema(type = "string")
+                                            )
+                                    }),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied: Authenticated user does not"
+                            + " have the admin role ",
+                            content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))),
+                    @ApiResponse(responseCode = "500", description = "Problem fetching log file content",
+                            content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class)))
             }
     )
-    @RolesAllowed("admin")
     public Response readLogFile(
             @Parameter(description = "The filename of a log file", required = true)
             @PathParam("fileName") String fileName,
@@ -149,7 +210,7 @@ public class LogViewerRest {
 
         try {
             LogPage logPage = logViewerService.readLogFile(fileName, page, pageSize);
-            return Response.ok(logPage).build();
+            return Response.ok(logPage).type(MediaType.APPLICATION_JSON).build();
         } catch (IOException ex) {
             throw RestUtils.getErrorObjBadRequest(ex);
         }
@@ -162,6 +223,8 @@ public class LogViewerRest {
     @Path("/files/{fileName}")
     @Produces({MediaType.APPLICATION_OCTET_STREAM, "text/*", "application/*"})
     @RolesAllowed("admin")
+    @Operation(hidden = true)  // Hide from Swagger docs since captured in annotations of other method
+    @Tag(name = SWAGGER_LOG, description = SWAGGER_LOG_DESC)
     public Response downloadLogFile(@PathParam("fileName") String fileName) {
         try {
             // Validate and get input stream
@@ -206,19 +269,24 @@ public class LogViewerRest {
     @GET
     @Path("/files/{fileName}/tail")
     @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("admin")
+    @Tag(name = SWAGGER_LOG, description = SWAGGER_LOG_DESC)
     @Operation(
-            tags = "logs",
-            summary = "Retrieves the last X lines from a specific log file like a tail function and returns as a JSON"
-                    + "object",
+            summary = """
+                    Retrieves the last X lines from a specific log file like a tail function and returns as a JSONobject
+                    **Requires the 'admin' role.**""",
             responses = {
                     @ApiResponse(responseCode = "200",
                             description = "A JSON object containing the specified log lines from the specified log "
-                                    + "file"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "Problem fetching log file content")
+                                    + "file",
+                            content = @Content(schema = @Schema(implementation = LogTailResponse.class))),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied: Authenticated user does not"
+                            + " have the admin role ",
+                            content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))),
+                    @ApiResponse(responseCode = "500", description = "Problem fetching log file content",
+                            content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class)))
             }
     )
-    @RolesAllowed("admin")
     public Response tailLogFile(
             @Parameter(description = "The filename of a log file", required = true)
             @PathParam("fileName") String fileName,
@@ -228,11 +296,7 @@ public class LogViewerRest {
         try {
             List<String> tailLines = logViewerService.tailLogFile(fileName, lines);
 
-            Map<String, Object> response = new HashMap<>();
-            response.put("fileName", fileName);
-            response.put("lines", tailLines);
-            response.put("count", tailLines.size());
-
+            LogTailResponse response = new LogTailResponse(fileName, tailLines, tailLines.size());
             return Response.ok(response).build();
         } catch (IOException ex) {
             throw RestUtils.getErrorObjBadRequest(ex);
@@ -245,17 +309,24 @@ public class LogViewerRest {
     @GET
     @Path("/files/{fileName}/search")
     @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("admin")
+    @Tag(name = SWAGGER_LOG, description = SWAGGER_LOG_DESC)
     @Operation(
-            tags = "logs",
-            summary = "Searches the specified log file for a search term and returns as a JSON object",
+            summary = """
+                    Searches the specified log file for a search term and returns as a JSON object
+                    **Requires the 'admin' role.**
+                    """,
             responses = {
                     @ApiResponse(responseCode = "200",
-                            description = "A JSON object containing the search results from the specified log file"),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied"),
-                    @ApiResponse(responseCode = "500", description = "Problem fetching log file content")
+                            description = "A JSON object containing the search results from the specified log file",
+                            content = @Content(schema = @Schema(implementation = LogSearchResponse.class))),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied: Authenticated user does not"
+                            + " have the admin role ",
+                            content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))),
+                    @ApiResponse(responseCode = "500", description = "Problem fetching log file content",
+                            content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class)))
             }
     )
-    @RolesAllowed("admin")
     public Response searchLogFile(
             @Parameter(description = "The filename of a log file", required = true)
             @PathParam("fileName") String fileName,
@@ -278,6 +349,469 @@ public class LogViewerRest {
             return Response.ok(response).build();
         } catch (IOException ex) {
             throw RestUtils.getErrorObjBadRequest(ex);
+        }
+    }
+
+    /**
+     * Get all configured loggers and their levels.
+     * GET /logs/levels
+     */
+    @GET
+    @Path("/levels")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("admin")
+    @Tag(name = SWAGGER_LOG, description = SWAGGER_LOG_DESC)
+    @Operation(
+            summary = """
+                    Returns all configured loggers as pairs of package names and log levels
+                    **Requires the 'admin' role.**
+                    """,
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "A JSON object with keys of package names and values of log levels",
+                            content = @Content(schema = @Schema(
+                                    type = "object",
+                                    description = "Map where keys are either 'ROOT' or Java package names "
+                                            + "(e.g., 'com.example.package')",
+                                    example = "{\"ROOT\": \"WARN\", \"com.example.package\": \"DEBUG\", "
+                                            + "\"org.another.package\": \"INFO\"}",
+                                    additionalProperties = Schema.AdditionalPropertiesValue.TRUE
+                            ))
+                    ),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied: Authenticated user does not"
+                            + " have the admin role ",
+                            content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))),
+                    @ApiResponse(responseCode = "500", description = "Problem fetching loggers",
+                            content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class)))
+            }
+    )
+    public Response getAllLoggers() {
+        try {
+            Map<String, String> loggers = logViewerService.getAllLoggerLevels();
+            return Response.ok(loggers).build();
+        } catch (Exception ex) {
+            logger.error("Error retrieving loggers", ex);
+            throw RestUtils.getErrorObjInternalServerError(ex);
+        }
+    }
+
+    /**
+     * Get log level for a specific logger.
+     * GET /logs/levels/{loggerName}
+     */
+    @GET
+    @Path("/levels/{loggerName}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("admin")
+    @Tag(name = SWAGGER_LOG, description = SWAGGER_LOG_DESC)
+    @Operation(
+            summary = """
+                    Retrieves the log level for a particular logger (aka package)
+                    **Requires the 'admin' role.**
+                    """,
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "A JSON object with the logger name and the log level",
+                            content = @Content(schema = @Schema(implementation = LoggerNameWithLevelResponse.class))
+                    ),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied: Authenticated user does not"
+                            + " have the admin role ",
+                            content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))),
+                    @ApiResponse(responseCode = "404", description = "The specified logger in the path could not be "
+                            + "found",
+                            content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))),
+                    @ApiResponse(responseCode = "500", description = "Problem fetching loggers",
+                            content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class)))
+            }
+    )
+    public Response getLoggerLevel(@PathParam("loggerName") String loggerName) {
+        try {
+            String level = logViewerService.getLoggerLevel(loggerName);
+
+            if (level == null) {
+                throw new MobiException("Logger not found: " + loggerName);
+            }
+
+            LoggerNameWithLevelResponse response = new LoggerNameWithLevelResponse(loggerName, level);
+
+            return Response.ok(response).build();
+        } catch (MobiException ex) {
+            throw RestUtils.getErrorObjNotFound(ex);
+        } catch (Exception ex) {
+            logger.error("Error retrieving logger level for: {}", loggerName, ex);
+            throw RestUtils.getErrorObjInternalServerError(ex);
+        }
+    }
+
+    /**
+     * Set log level for a logger.
+     * PUT /logs/levels/{loggerName}
+     * Body: { "level": "DEBUG" }
+     */
+    @PUT
+    @Path("/levels/{loggerName}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("admin")
+    @Tag(name = SWAGGER_LOG, description = SWAGGER_LOG_DESC)
+    @Operation(
+            summary = """
+                    Sets the log level for a particular logger (aka package)
+                    **Requires the 'admin' role.**
+                    """,
+            requestBody = @RequestBody(
+                    description = "Map of containing the loggerName and the level to set for the logger.",
+                    required = true,
+                    content = @Content(schema = @Schema(implementation = LoggerNameWithLevelResponse.class))
+            ),
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "A JSON object with the logger name, the log level, and a success message",
+                            content = @Content(schema =
+                                @Schema(implementation = LoggerNameWithLevelAndMessageResponse.class))
+                    ),
+                    @ApiResponse(responseCode = "400", description = "The request is missing required information",
+                            content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied: Authenticated user does not"
+                            + " have the admin role ",
+                            content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))),
+                    @ApiResponse(responseCode = "500", description = "Problem fetching loggers",
+                            content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class)))
+            }
+    )
+    public Response setLoggerLevel(
+            @PathParam("loggerName") String loggerName,
+            Map<String, String> request) {
+        try {
+            if (request == null) {
+                throw new MobiException("Request body is required");
+            }
+            String level = request.get("level");
+
+            if (level == null || level.trim().isEmpty()) {
+                throw new MobiException("Level is required");
+            }
+
+            // Validate level
+            if (isNotValidLogLevel(level)) {
+                throw new MobiException("Invalid log level: " + level
+                                + ". Valid levels are: OFF, ERROR, WARN, INFO, DEBUG, TRACE");
+            }
+
+            logViewerService.setLoggerLevel(loggerName, level.toUpperCase());
+
+            LoggerNameWithLevelAndMessageResponse response = new LoggerNameWithLevelAndMessageResponse(loggerName,
+                    "Logger level updated successfully", level.toUpperCase());
+
+            return Response.ok(response).build();
+
+        }  catch (MobiException ex) {
+            throw RestUtils.getErrorObjBadRequest(ex);
+        } catch (Exception ex) {
+            logger.error("Error setting logger level for: {}", loggerName, ex);
+            throw RestUtils.getErrorObjInternalServerError(ex);
+        }
+    }
+
+    /**
+     * Create a new logger configuration
+     * POST /logs/levels
+     * Body: { "loggerName": "org.apache.karaf", "level": "DEBUG" }
+     */
+    @POST
+    @Path("/levels")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("admin")
+    @Tag(name = SWAGGER_LOG, description = SWAGGER_LOG_DESC)
+    @Operation(
+            summary = """
+                    Creates a new logger with the provided package name and the log level
+                    **Requires the 'admin' role.**
+                    """,
+            requestBody = @RequestBody(
+                    description = "Map of containing the loggerName and the level to set for the logger.",
+                    required = true,
+                    content = @Content(schema = @Schema(implementation = LoggerNameWithLevelResponse.class))
+            ),
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "A JSON object with the logger name, the log level, and a success message",
+                            content = @Content(schema =
+                            @Schema(implementation = LoggerNameWithLevelAndMessageResponse.class))
+                    ),
+                    @ApiResponse(responseCode = "400", description = "The request is missing required information",
+                            content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied: Authenticated user does not"
+                            + " have the admin role ",
+                            content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))),
+                    @ApiResponse(responseCode = "500", description = "Problem fetching loggers",
+                            content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class)))
+            }
+    )
+    public Response createLogger(Map<String, String> request) {
+        try {
+            if (request == null) {
+                throw new MobiException("Request body is required");
+            }
+            String loggerName = request.get("loggerName");
+            String level = request.get("level");
+
+            if (loggerName == null || loggerName.trim().isEmpty()) {
+                throw new MobiException("Logger name is required");
+            }
+
+            if (level == null || level.trim().isEmpty()) {
+                throw new MobiException("Level is required");
+            }
+
+            if (isNotValidLogLevel(level)) {
+                throw new MobiException("Invalid log level: " + level);
+            }
+
+            logViewerService.setLoggerLevel(loggerName, level);
+
+            LoggerNameWithLevelAndMessageResponse response = new LoggerNameWithLevelAndMessageResponse(loggerName,
+                    "Logger created successfully", level.toUpperCase());
+
+            return Response.status(Response.Status.CREATED).entity(response).build();
+        } catch (MobiException ex) {
+            throw RestUtils.getErrorObjBadRequest(ex);
+        } catch (Exception ex) {
+            logger.error("Error creating logger", ex);
+            throw RestUtils.getErrorObjInternalServerError(ex);
+        }
+    }
+
+    /**
+     * Delete a logger configuration.
+     * DELETE /logs/levels/{loggerName}
+     */
+    @DELETE
+    @Path("/levels/{loggerName}")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("admin")
+    @Tag(name = SWAGGER_LOG, description = SWAGGER_LOG_DESC)
+    @Operation(
+            summary = """
+                    Removes the specified logger
+                    **Requires the 'admin' role.**
+                    """,
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "A JSON object with the logger name and a success message",
+                            content = @Content(schema = @Schema(implementation = LoggerNameWithMessageResponse.class))
+                    ),
+                    @ApiResponse(responseCode = "400", description = "Attempted to delete the ROOT logger",
+                            content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied: Authenticated user does not"
+                            + " have the admin role ",
+                            content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))),
+                    @ApiResponse(responseCode = "500", description = "Problem fetching loggers",
+                            content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class)))
+            }
+    )
+    public Response deleteLogger(@PathParam("loggerName") String loggerName) {
+        try {
+            if ("ROOT".equals(loggerName)) {
+                throw new MobiException("Cannot delete ROOT logger");
+            }
+
+            logViewerService.deleteLogger(loggerName);
+
+            Map<String, String> response = new HashMap<>();
+            response.put("loggerName", loggerName);
+            response.put("message", "Logger deleted successfully");
+
+            return Response.ok(response).build();
+        } catch (MobiException ex) {
+            throw RestUtils.getErrorObjBadRequest(ex);
+        } catch (Exception ex) {
+            logger.error("Error deleting logger: {}", loggerName, ex);
+            throw RestUtils.getErrorObjInternalServerError(ex);
+        }
+    }
+
+    /**
+     * Get available log levels.
+     * GET /logs/levels/available
+     */
+    @GET
+    @Path("/levels/available")
+    @Produces(MediaType.APPLICATION_JSON)
+    @RolesAllowed("admin")
+    @Tag(name = SWAGGER_LOG, description = SWAGGER_LOG_DESC)
+    @Operation(
+            summary = """
+                    Retrieves the list of supported log levels
+                    **Requires the 'admin' role.**
+                    """,
+            responses = {
+                    @ApiResponse(responseCode = "200",
+                            description = "An array of strings containing the supported log levels",
+                            content = @Content(
+                                mediaType = MediaType.APPLICATION_JSON,
+                                array = @ArraySchema(
+                                        schema = @Schema(implementation = String.class)
+                                )
+                        )
+                    ),
+                    @ApiResponse(responseCode = "403", description = "Permission Denied: Authenticated user does not"
+                            + " have the admin role ",
+                            content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class))),
+                    @ApiResponse(responseCode = "500", description = "Problem fetching loggers",
+                            content = @Content(schema = @Schema(implementation = ErrorObjectSchema.class)))
+            }
+    )
+    public Response getAvailableLevels() {
+        String[] levels = {"OFF", "ERROR", "WARN", "INFO", "DEBUG", "TRACE"};
+        return Response.ok(levels).build();
+    }
+
+    private boolean isNotValidLogLevel(String level) {
+        if (level == null) {
+            return true;
+        }
+        String upper = level.toUpperCase();
+        return !"OFF".equals(upper) && !"ERROR".equals(upper) && !"WARN".equals(upper)
+                && !"INFO".equals(upper) && !"DEBUG".equals(upper) && !"TRACE".equals(upper);
+    }
+
+    // Swagger Schemas
+    @Schema(description = "Response containing tailed log lines")
+    private static class LogTailResponse {
+
+        @Schema(description = "Name of the log file", example = "karaf.log")
+        private final String fileName;
+
+        @Schema(description = "List of log lines from the file")
+        private final List<String> lines;
+
+        @Schema(description = "Number of lines returned", example = "100")
+        private Integer count;
+
+        public LogTailResponse(String fileName, List<String> lines, Integer count) {
+            this.fileName = fileName;
+            this.lines = lines;
+            this.count = count;
+        }
+
+        public String getFileName() {
+            return fileName;
+        }
+
+        public List<String> getLines() {
+            return lines;
+        }
+
+        public Integer getCount() {
+            return count;
+        }
+    }
+
+    @Schema(description = "Response containing search results of a log file")
+    private static class LogSearchResponse {
+
+        @Schema(description = "Name of the log file", example = "karaf.log")
+        private final String fileName;
+
+        @Schema(description = "The search term that created the results")
+        private final String searchTerm;
+
+        @Schema(description = "List of log enties from the file matching the search term")
+        private final List<LogEntry> lines;
+
+        @Schema(description = "Number of log entries returned", example = "100")
+        private Integer count;
+
+        public LogSearchResponse(String fileName, String searchTerm, List<LogEntry> lines, Integer count) {
+            this.fileName = fileName;
+            this.searchTerm = searchTerm;
+            this.lines = lines;
+            this.count = count;
+        }
+
+        public String getFileName() {
+            return fileName;
+        }
+
+        public String getSearchTerm() {
+            return searchTerm;
+        }
+
+        public List<LogEntry> getLines() {
+            return lines;
+        }
+
+        public Integer getCount() {
+            return count;
+        }
+    }
+
+    @Schema(description = "Object with a logger name")
+    private static class LoggerNameResponse {
+        @Schema(description = "Name of the logger", example = "com.example.package")
+        protected final String loggerName;
+
+        private LoggerNameResponse() {
+            this.loggerName = "";
+        }
+        public LoggerNameResponse(String loggerName) {
+            this.loggerName  = loggerName;
+        }
+
+        public String getLoggerName() {
+            return loggerName;
+        }
+    }
+
+    @Schema(description = "Object with a logger name and a relevant message")
+    private static class LoggerNameWithMessageResponse extends LoggerNameResponse {
+        @Schema(description = "The message about the logger")
+        protected final String message;
+
+        private LoggerNameWithMessageResponse() {
+            super();
+            this.message = "";
+        }
+
+        public LoggerNameWithMessageResponse(String loggerName, String message) {
+            super(loggerName);
+            this.message = message;
+        }
+
+        public String getMessage() {
+            return message;
+        }
+    }
+
+    @Schema(description = "Object with a logger name and a log level")
+    private static class LoggerNameWithLevelResponse extends LoggerNameResponse {
+        @Schema(description = "The log level of the logger", example = "INFO")
+        protected final String level;
+
+        public LoggerNameWithLevelResponse(String loggerName, String level) {
+            super(loggerName);
+            this.level = level;
+        }
+
+        public String getLevel() {
+            return level;
+        }
+    }
+
+    @Schema(description = "Object with a logger name, a log level, and a relevant message")
+    private static class LoggerNameWithLevelAndMessageResponse extends LoggerNameWithMessageResponse {
+        @Schema(description = "The log level of the logger", example = "INFO")
+        protected final String level;
+
+        public LoggerNameWithLevelAndMessageResponse(String loggerName, String message, String level) {
+            super(loggerName, message);
+            this.level = level;
+        }
+
+        public String getLevel() {
+            return level;
         }
     }
 }

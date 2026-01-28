@@ -38,6 +38,19 @@ enum ViewMode {
   SEARCH = 2
 }
 
+interface LineWithClass {
+  content: string;
+  levelClass: string;
+}
+
+interface LogPageWithClass extends LogPage {
+  linesWithClass: LineWithClass[];
+}
+
+interface LogEntryWithClass extends LogEntry {
+  levelClass: string;
+}
+
 /**
  * @class LogViewerPageComponent
  * 
@@ -60,7 +73,7 @@ export class LogViewerPageComponent implements OnInit, OnDestroy {
 
   logFiles: string[] = [];
   selectedFile: string | null = null;
-  logPage: LogPage | null = null;
+  logPage: LogPageWithClass | null = null;
   metadata: LogFileMetadata | null = null;
   
   // Pagination
@@ -70,14 +83,14 @@ export class LogViewerPageComponent implements OnInit, OnDestroy {
   
   // Search
   searchTerm = '';
-  searchResults: LogEntry[] = [];
+  searchResults: LogEntryWithClass[] = [];
   isSearching = false;
   searchSubmitted = false;
   
   // View mode
   viewMode: ViewMode = ViewMode.TAIL;
-  tailLines: string[] = [];
-  
+  tailLines: LineWithClass[] = [];
+
   // Auto-refresh
   autoRefresh = false;
   refreshInterval = 5000; // 5 seconds
@@ -86,6 +99,9 @@ export class LogViewerPageComponent implements OnInit, OnDestroy {
   // UI state
   loading = false;
   error: string | null = null;
+
+  // Log Level
+  logLevelsExpanded = false;
 
   constructor(
     public lv: LogsManagerService,
@@ -110,7 +126,7 @@ export class LogViewerPageComponent implements OnInit, OnDestroy {
     this.error = null;
 
     this._spinner.startLoadingForComponent(this.targetedSpinner, 30);
-    this.lv.getLogFiles().pipe(
+    this.lv.getLogFiles(true).pipe(
       finalize(() => {
         this.loading = false;
         this._spinner.finishLoadingForComponent(this.targetedSpinner);
@@ -185,7 +201,7 @@ export class LogViewerPageComponent implements OnInit, OnDestroy {
     }
 
     this._spinner.startLoadingForComponent(this.targetedSpinner, 30);
-    this.lv.getLogFileMetadata(this.selectedFile).pipe(
+    this.lv.getLogFileMetadata(this.selectedFile, true).pipe(
       finalize(() => {
         this._spinner.finishLoadingForComponent(this.targetedSpinner);
       })
@@ -211,14 +227,20 @@ export class LogViewerPageComponent implements OnInit, OnDestroy {
     this.error = null;
 
     this._spinner.startLoadingForComponent(this.targetedSpinner, 30);
-    this.lv.readLogFile(this.selectedFile, this.currentPage, this.pageSize).pipe(
+    this.lv.readLogFile(this.selectedFile, this.currentPage, this.pageSize, true).pipe(
       finalize(() => {
         this.loading = false;
         this._spinner.finishLoadingForComponent(this.targetedSpinner);
       })
     ).subscribe({
       next: (page) => {
-        this.logPage = page;
+        this.logPage = {
+          ...page,
+          linesWithClass: page.lines.map(line => ({
+            content: line,
+            levelClass: this.getLogLevelClass(line)
+          }))
+        };
       },
       error: (err: RESTError) => {
         this.error = `Failed to load log page: ${err.errorMessage}`;
@@ -239,14 +261,17 @@ export class LogViewerPageComponent implements OnInit, OnDestroy {
     this.error = null;
 
     this._spinner.startLoadingForComponent(this.targetedSpinner, 30);
-    this.lv.tailLogFile(this.selectedFile, this.pageSize).pipe(
+    this.lv.tailLogFile(this.selectedFile, this.pageSize, true).pipe(
       finalize(() => {
         this.loading = false;
         this._spinner.finishLoadingForComponent(this.targetedSpinner);
       })
     ).subscribe({
       next: (response: TailResponse) => {
-        this.tailLines = response.lines;
+        this.tailLines = response.lines.map(line => ({
+          content: line,
+          levelClass: this.getLogLevelClass(line)
+        }));
       },
       error: (err: RESTError) => {
         this.error = `Failed to load tail: ${err.errorMessage}`;
@@ -272,14 +297,17 @@ export class LogViewerPageComponent implements OnInit, OnDestroy {
     this.error = null;
 
     this._spinner.startLoadingForComponent(this.targetedSpinner, 30);
-    this.lv.searchLogFile(this.selectedFile, this.searchTerm, 500).pipe(
+    this.lv.searchLogFile(this.selectedFile, this.searchTerm, 500, true).pipe(
       finalize(() => {
         this.isSearching = false;
         this._spinner.finishLoadingForComponent(this.targetedSpinner);
       })
     ).subscribe({
       next: (response: SearchResponse) => {
-        this.searchResults = response.results;
+        this.searchResults = response.results.map(entry => ({
+          ...entry,
+          levelClass: this.getLogLevelClass(entry.content)
+        }));
         this.setViewMode(ViewMode.SEARCH);
       },
       error: (err: RESTError) => {
@@ -407,14 +435,17 @@ export class LogViewerPageComponent implements OnInit, OnDestroy {
           takeUntil(this.destroy$),
           switchMap(() => {
             if (this.selectedFile) {
-              return this.lv.tailLogFile(this.selectedFile, this.pageSize);
+              return this.lv.tailLogFile(this.selectedFile, this.pageSize, true);
             }
             return [];
           })
         )
         .subscribe({
           next: (response: TailResponse) => {
-            this.tailLines = response.lines;
+            this.tailLines = response.lines.map(line => ({
+              content: line,
+              levelClass: this.getLogLevelClass(line)
+            }));
           },
           error: (err) => {
             console.error('Auto-refresh failed:', err);

@@ -27,9 +27,12 @@ import com.mobi.server.api.logs.LogEntry;
 import com.mobi.server.api.logs.LogFileMetadata;
 import com.mobi.server.api.logs.LogPage;
 import com.mobi.server.api.logs.LogViewerService;
+import org.osgi.service.cm.Configuration;
+import org.osgi.service.cm.ConfigurationAdmin;
 import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Modified;
+import org.osgi.service.component.annotations.Reference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,8 +46,14 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Dictionary;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.TreeMap;
 
 /**
  * Implementation of LogViewerService using OSGi Declarative Services.
@@ -56,8 +65,13 @@ import java.util.Map;
 public class LogViewerServiceImpl implements LogViewerService {
     private static final Logger logger = LoggerFactory.getLogger(LogViewerServiceImpl.class);
     private static final int MAX_LINE_LENGTH = 10000; // Prevent memory issues with extremely long lines
+    private static final String LOG_CONFIG_PID = "org.ops4j.pax.logging";
+    private static final String ROOT_LOGGER = "ROOT";
 
     private Path logDirectory;
+
+    @Reference
+    private ConfigurationAdmin configAdmin;
 
     @Activate
     @Modified
@@ -211,7 +225,230 @@ public class LogViewerServiceImpl implements LogViewerService {
         return Files.newInputStream(logFile);
     }
 
+    @Override
+    public Map<String, String> getAllLoggerLevels() {
+        Map<String, String> loggers = new TreeMap<>();
+
+        try {
+            Configuration config = configAdmin.getConfiguration(LOG_CONFIG_PID, null);
+            Dictionary<String, Object> props = config.getProperties();
+
+            if (props != null) {
+                // Helper maps to deal with split logger names and levels
+                Map<String, String> keyToLoggerMap = new HashMap<>();
+                Map<String, String> keyToLevelMap = new HashMap<>();
+
+                Enumeration<String> keys = props.keys();
+                while (keys.hasMoreElements()) {
+                    String key = keys.nextElement();
+                    // Logger levels are stored as two keys: log4j2.logger.<name>.name and log4j2.logger.<name>.level
+                    if (key.startsWith("log4j2.logger.")) {
+                        if (key.endsWith(".name")) {
+                            String loggerName = extractLoggerName(key);
+                            String logger = (String) props.get(key);
+                            keyToLoggerMap.put(loggerName, logger);
+                            if (keyToLevelMap.containsKey(loggerName)) {
+                                loggers.put(logger, keyToLevelMap.get(loggerName));
+                            }
+                        } else if (key.endsWith(".level")) {
+                            String loggerName = extractLoggerName(key);
+                            String level = (String) props.get(key);
+                            keyToLevelMap.put(loggerName, level);
+                            if (keyToLoggerMap.containsKey(loggerName)) {
+                                loggers.put(keyToLoggerMap.get(loggerName), level);
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Always include root logger
+            String rootLevel = getRootLoggerLevel();
+            if (rootLevel != null) {
+                loggers.put(ROOT_LOGGER, rootLevel);
+            }
+
+        } catch (IOException e) {
+            logger.error("Failed to retrieve logger levels", e);
+        }
+
+        return loggers;
+    }
+
+    @Override
+    public String getLoggerLevel(String packageName) {
+        if (ROOT_LOGGER.equals(packageName)) {
+            return getRootLoggerLevel();
+        }
+
+        try {
+            Configuration config = configAdmin.getConfiguration(LOG_CONFIG_PID, null);
+            Dictionary<String, Object> props = config.getProperties();
+
+            if (props != null) {
+                Optional<String> nameKey = retrieveLoggerNameKey(packageName, props);
+                if (nameKey.isEmpty()) {
+                    logger.debug("Could not find a logger configuration for {}", packageName);
+                    return null;
+                }
+                return (String) props.get(createLevelKey(nameKey.get()));
+            }
+        } catch (IOException e) {
+            logger.error("Failed to get logger level for: {}", packageName, e);
+        }
+
+        return null;
+    }
+
+    @Override
+    public void setLoggerLevel(String packageName, String level) {
+        if (ROOT_LOGGER.equals(packageName)) {
+            setRootLoggerLevel(level);
+            return;
+        }
+
+        try {
+            Configuration config = configAdmin.getConfiguration(LOG_CONFIG_PID, null);
+            Dictionary<String, Object> props = config.getProperties();
+
+            if (props == null) {
+                props = new Hashtable<>();
+            }
+
+            Optional<String> nameKeyOpt = retrieveLoggerNameKey(packageName, props);
+            String nameKey;
+            if (nameKeyOpt.isEmpty()) {
+                logger.debug("Could not find a logger configuration for {}. Generating new one", packageName);
+                nameKey = "log4j2.logger." + sanitizeLoggerName(packageName) + ".name";
+            } else {
+                nameKey = nameKeyOpt.get();
+            }
+            String levelKey = createLevelKey(nameKey);
+
+            props.put(nameKey, packageName);
+            props.put(levelKey, level.toUpperCase());
+
+            config.update(props);
+            logger.info("Set logger level: {} = {}", packageName, level);
+
+        } catch (IOException e) {
+            logger.error("Failed to set logger level for: {}", packageName, e);
+        }
+    }
+
+    @Override
+    public void deleteLogger(String packageName) {
+        if (ROOT_LOGGER.equals(packageName)) {
+            logger.warn("Cannot delete ROOT logger");
+            return;
+        }
+
+        try {
+            Configuration config = configAdmin.getConfiguration(LOG_CONFIG_PID, null);
+            Dictionary<String, Object> props = config.getProperties();
+
+            if (props != null) {
+                Optional<String> nameKeyOpt = retrieveLoggerNameKey(packageName, props);
+                if (nameKeyOpt.isEmpty()) {
+                    logger.debug("Could not find a logger configuration for {}", packageName);
+                    return;
+                }
+                String nameKey = nameKeyOpt.get();
+                String levelKey = createLevelKey(nameKey);
+
+                props.remove(nameKey);
+                props.remove(levelKey);
+
+                config.update(props);
+                logger.info("Deleted logger: {}", packageName);
+            }
+        } catch (IOException e) {
+            logger.error("Failed to delete logger: {}", packageName, e);
+        }
+    }
+
+    @Override
+    public String getRootLoggerLevel() {
+        try {
+            Configuration config = configAdmin.getConfiguration(LOG_CONFIG_PID, null);
+            Dictionary<String, Object> props = config.getProperties();
+
+            if (props != null) {
+                Object level = props.get("log4j2.rootLogger.level");
+                return level != null ? level.toString() : "INFO";
+            }
+        } catch (IOException e) {
+            logger.error("Failed to get root logger level", e);
+        }
+
+        return "INFO";
+    }
+
+    @Override
+    public void setRootLoggerLevel(String level) {
+        try {
+            Configuration config = configAdmin.getConfiguration(LOG_CONFIG_PID, null);
+            Dictionary<String, Object> props = config.getProperties();
+
+            if (props == null) {
+                props = new Hashtable<>();
+            }
+
+            props.put("log4j2.rootLogger.level", level.toUpperCase());
+            config.update(props);
+            logger.info("Set root logger level: {}", level);
+
+        } catch (IOException e) {
+            logger.error("Failed to set root logger level", e);
+        }
+    }
+
+    /**
+     * Extract logger name from configuration key
+     * Example: log4j2.logger.karaf.level -> karaf
+     */
+    private String extractLoggerName(String key) {
+        String[] parts = key.split("\\.");
+        if (parts.length >= 4) {
+            // Reconstruct logger name (may contain dots)
+            StringBuilder name = new StringBuilder();
+            for (int i = 2; i < parts.length - 1; i++) {
+                if (name.length() > 0) {
+                    name.append(".");
+                }
+                name.append(parts[i]);
+            }
+            return name.toString();
+        }
+        return key;
+    }
+
+
     // Helper methods
+
+    /**
+     * Sanitize logger name for use as configuration key. Replace dots with underscores to avoid key conflicts.
+     */
+    private String sanitizeLoggerName(String loggerName) {
+        return loggerName.replace(".", "_");
+    }
+
+    private Optional<String> retrieveLoggerNameKey(String loggerName, Dictionary<String, Object> props) {
+        String finalKey = null;
+        Enumeration<String> keys = props.keys();
+        while (keys.hasMoreElements()) {
+            String key = keys.nextElement();
+            if (key.endsWith(".name") && props.get(key).equals(loggerName)) {
+                finalKey = key;
+                break;
+            }
+        }
+        return Optional.ofNullable(finalKey);
+    }
+
+    private String createLevelKey(String nameKey) {
+        return nameKey.replace(".name", ".level");
+    }
 
     private void validateLogDirectory() throws IOException {
         if (!Files.exists(logDirectory)) {

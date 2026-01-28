@@ -26,11 +26,19 @@ package com.mobi.server.api.logs;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
+import java.util.Map;
 
 /**
  * OSGi service for viewing and managing log files.
  */
 public interface LogViewerService {
+
+    /**
+     * Available log levels in order of verbosity
+     */
+    enum LogLevel {
+        OFF, ERROR, WARN, INFO, DEBUG, TRACE;
+    }
 
     /**
      * Get list of available log files in the log directory.
@@ -83,4 +91,48 @@ public interface LogViewerService {
      * @return InputStream for reading the file
      */
     InputStream getLogFileInputStream(String fileName) throws IOException;
+
+    /**
+     * Get all configured package names and their levels.
+     *
+     * @return Map of package name to log level
+     */
+    Map<String, String> getAllLoggerLevels();
+
+    /**
+     * Get the log level for the logger of a specific package (or the ROOT logger).
+     *
+     * @param packageName Name of the package associated with a logger (e.g., "org.apache.karaf") or the ROOT logger
+     * @return Current log level, or null if not set
+     */
+    String getLoggerLevel(String packageName);
+
+    /**
+     * Set the log level for a specific package.
+     *
+     * @param packageName Name of the package to log (or the ROOT logger)
+     * @param level Log level to set
+     */
+    void setLoggerLevel(String packageName, String level);
+
+    /**
+     * Delete/unset a logger configuration for a specific package.
+     *
+     * @param packageName Name of the package associated with the logger to remove
+     */
+    void deleteLogger(String packageName);
+
+    /**
+     * Get the root logger level.
+     *
+     * @return Root logger level
+     */
+    String getRootLoggerLevel();
+
+    /**
+     * Set the root logger level.
+     *
+     * @param level Log level to set for root
+     */
+    void setRootLoggerLevel(String level);
 }

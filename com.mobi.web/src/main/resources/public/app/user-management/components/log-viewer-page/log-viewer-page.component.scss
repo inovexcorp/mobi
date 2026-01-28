@@ -118,8 +118,6 @@ mat-card {
 
 .search-container {
   display: flex;
-  // gap: 12px;
-  // align-items: flex-start;
   margin-bottom: 16px;
 }
 
@@ -306,4 +304,16 @@ mat-card {
   .metadata-grid {
     grid-template-columns: 1fr;
   }
+}
+
+/* System Configuration Panel */
+.system-config-panel {
+  margin-bottom: 24px;
+}
+
+.system-config-panel mat-panel-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 600;
 }

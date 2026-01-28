@@ -1,0 +1,85 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 - 2026 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+  
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+  -->
+<div class="log-level-manager">
+  <div class="table-header-section d-flex justify-content-between align-items-baseline">
+    <!-- Filter -->
+    <div>
+      <search-bar class="flex-1 remove-min-width" [(bindModel)]="filterValue" (submitEvent)="applyFilter()"></search-bar>
+    </div>
+    <!-- Actions -->
+    <div>
+      <button mat-raised-button class="add-logger-button" (click)="openAddModal()" color="primary">Add Logger</button>
+      <button mat-icon-button class="refresh-button ml-1" (click)="loadLoggers()"><mat-icon>refresh</mat-icon></button>
+      <button mat-icon-button class="info-button ml-1" (click)="openHelpModal()"><mat-icon>info</mat-icon></button>
+    </div>
+  </div>
+
+  <!-- Loggers Table -->
+  <div class="table-container" #tableContainer>
+    <table mat-table [dataSource]="dataSource" class="loggers-table">
+
+      <!-- Logger Name Column -->
+      <ng-container matColumnDef="name">
+        <th mat-header-cell *matHeaderCellDef>Logger Name</th>
+        <td mat-cell *matCellDef="let row" class="logger-name-cell">
+          <div class="logger-name-wrapper">
+            <mat-icon *ngIf="row.isRoot" class="root-icon">home</mat-icon>
+            <span [class.root-logger]="row.isRoot">{{ row.name }}</span>
+          </div>
+        </td>
+      </ng-container>
+
+      <!-- Log Level Column -->
+      <ng-container matColumnDef="level">
+        <th mat-header-cell *matHeaderCellDef>Log Level</th>
+        <td mat-cell *matCellDef="let row">
+          <app-log-level-select [availableLevels]="availableLevels" [(ngModel)]="row.level" (ngModelChange)="updateLoggerLevel(row.name, $event)"></app-log-level-select>
+        </td>
+      </ng-container>
+
+      <!-- Actions Column -->
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef>Actions</th>
+        <td mat-cell *matCellDef="let row">
+          <button mat-icon-button 
+                  class="delete-logger-button"
+                  color="warn"
+                  (click)="confirmDeleteLogger(row.name)"
+                  [disabled]="row.isRoot"
+                  [matTooltip]="row.isRoot ? 'Cannot delete ROOT logger' : 'Delete logger'">
+            <mat-icon>delete</mat-icon>
+          </button>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+    </table>
+
+    <!-- No Data State -->
+    <div *ngIf="!loading && dataSource.data.length === 0" class="no-data">
+      <mat-icon>inbox</mat-icon>
+      <p>No loggers configured</p>
+    </div>
+  </div>
+</div>

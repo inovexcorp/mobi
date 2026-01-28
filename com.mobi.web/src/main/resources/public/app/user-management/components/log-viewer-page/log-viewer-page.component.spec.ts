@@ -28,6 +28,7 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MatButtonModule } from '@angular/material/button';
 import { MatButtonToggleModule } from '@angular/material/button-toggle';
 import { MatCardModule } from '@angular/material/card';
+import { MatExpansionModule } from '@angular/material/expansion';
 import { MatIconModule } from '@angular/material/icon';
 import { MatListModule } from '@angular/material/list';
 import { MatMenuModule } from '@angular/material/menu';
@@ -71,6 +72,7 @@ describe('LogViewerPageComponent', () => {
         MatButtonModule,
         MatButtonToggleModule,
         MatCardModule,
+        MatExpansionModule,
         MatIconModule,
         MatListModule,
         MatMenuModule,
@@ -128,6 +130,7 @@ describe('LogViewerPageComponent', () => {
         logsManagerStub.getLogFiles.and.returnValue(of(logs));
         component.loadLogFiles();
         tick();
+        expect(logsManagerStub.getLogFiles).toHaveBeenCalledWith(true);
         expect(progressSpinnerStub.startLoadingForComponent).toHaveBeenCalledWith(component.targetedSpinner, 30);
         expect(progressSpinnerStub.finishLoadingForComponent).toHaveBeenCalledWith(component.targetedSpinner);
         expect(toastStub.createErrorToast).not.toHaveBeenCalled();
@@ -141,6 +144,7 @@ describe('LogViewerPageComponent', () => {
         logsManagerStub.getLogFiles.and.returnValue(of(logs));
         component.loadLogFiles();
         tick();
+        expect(logsManagerStub.getLogFiles).toHaveBeenCalledWith(true);
         expect(progressSpinnerStub.startLoadingForComponent).toHaveBeenCalledWith(component.targetedSpinner, 30);
         expect(progressSpinnerStub.finishLoadingForComponent).toHaveBeenCalledWith(component.targetedSpinner);
         expect(toastStub.createErrorToast).not.toHaveBeenCalled();
@@ -154,6 +158,7 @@ describe('LogViewerPageComponent', () => {
         logsManagerStub.getLogFiles.and.returnValue(of(logs));
         component.loadLogFiles();
         tick();
+        expect(logsManagerStub.getLogFiles).toHaveBeenCalledWith(true);
         expect(progressSpinnerStub.startLoadingForComponent).toHaveBeenCalledWith(component.targetedSpinner, 30);
         expect(progressSpinnerStub.finishLoadingForComponent).toHaveBeenCalledWith(component.targetedSpinner);
         expect(toastStub.createErrorToast).not.toHaveBeenCalled();
@@ -166,6 +171,7 @@ describe('LogViewerPageComponent', () => {
         logsManagerStub.getLogFiles.and.returnValue(throwError(errorObj));
         component.loadLogFiles();
         tick();
+        expect(logsManagerStub.getLogFiles).toHaveBeenCalledWith(true);
         expect(progressSpinnerStub.startLoadingForComponent).toHaveBeenCalledWith(component.targetedSpinner, 30);
         expect(progressSpinnerStub.finishLoadingForComponent).toHaveBeenCalledWith(component.targetedSpinner);
         expect(toastStub.createErrorToast).toHaveBeenCalledWith('Failed to load log files');
@@ -188,7 +194,8 @@ describe('LogViewerPageComponent', () => {
         component.searchResults = [{
           lineNumber: 1, 
           content: 'test',
-          level: ''
+          level: '',
+          levelClass: ''
         }];
         component.error = 'Previous error';
       });
@@ -251,7 +258,7 @@ describe('LogViewerPageComponent', () => {
         logsManagerStub.getLogFileMetadata.and.returnValue(of(metadata));
         component.loadMetadata();
         tick();
-        expect(logsManagerStub.getLogFileMetadata).toHaveBeenCalledWith(fileName);
+        expect(logsManagerStub.getLogFileMetadata).toHaveBeenCalledWith(fileName, true);
         expect(progressSpinnerStub.startLoadingForComponent).toHaveBeenCalledWith(component.targetedSpinner, 30);
         expect(progressSpinnerStub.finishLoadingForComponent).toHaveBeenCalledWith(component.targetedSpinner);
         expect(component.metadata).toEqual(metadata);
@@ -268,7 +275,7 @@ describe('LogViewerPageComponent', () => {
         logsManagerStub.getLogFileMetadata.and.returnValue(throwError(errorObj));
         component.loadMetadata();
         tick();
-        expect(logsManagerStub.getLogFileMetadata).toHaveBeenCalledWith(fileName);
+        expect(logsManagerStub.getLogFileMetadata).toHaveBeenCalledWith(fileName, true);
         expect(progressSpinnerStub.startLoadingForComponent).toHaveBeenCalledWith(component.targetedSpinner, 30);
         expect(progressSpinnerStub.finishLoadingForComponent).toHaveBeenCalledWith(component.targetedSpinner);
         expect(component.metadata).toBeNull();
@@ -292,10 +299,10 @@ describe('LogViewerPageComponent', () => {
         logsManagerStub.readLogFile.and.returnValue(of(page));
         component.loadPage();
         tick();
-        expect(logsManagerStub.readLogFile).toHaveBeenCalledWith(fileName, component.currentPage, component.pageSize);
+        expect(logsManagerStub.readLogFile).toHaveBeenCalledWith(fileName, component.currentPage, component.pageSize, true);
         expect(progressSpinnerStub.startLoadingForComponent).toHaveBeenCalledWith(component.targetedSpinner, 30);
         expect(progressSpinnerStub.finishLoadingForComponent).toHaveBeenCalledWith(component.targetedSpinner);
-        expect(component.logPage).toEqual(page);
+        expect(component.logPage).toEqual({ ...page, linesWithClass: [] });
         expect(component.error).toBeNull();
         expect(toastStub.createErrorToast).not.toHaveBeenCalled();
       }));
@@ -310,7 +317,7 @@ describe('LogViewerPageComponent', () => {
         logsManagerStub.readLogFile.and.returnValue(throwError(errorObj));
         component.loadPage();
         tick();
-        expect(logsManagerStub.readLogFile).toHaveBeenCalledWith(fileName, component.currentPage, component.pageSize);
+        expect(logsManagerStub.readLogFile).toHaveBeenCalledWith(fileName, component.currentPage, component.pageSize, true);
         expect(progressSpinnerStub.startLoadingForComponent).toHaveBeenCalledWith(component.targetedSpinner, 30);
         expect(progressSpinnerStub.finishLoadingForComponent).toHaveBeenCalledWith(component.targetedSpinner);
         expect(component.logPage).toBeNull();
@@ -333,10 +340,10 @@ describe('LogViewerPageComponent', () => {
         logsManagerStub.tailLogFile.and.returnValue(of(tail));
         component.loadTail();
         tick();
-        expect(logsManagerStub.tailLogFile).toHaveBeenCalledWith(fileName, component.pageSize);
+        expect(logsManagerStub.tailLogFile).toHaveBeenCalledWith(fileName, component.pageSize, true);
         expect(progressSpinnerStub.startLoadingForComponent).toHaveBeenCalledWith(component.targetedSpinner, 30);
         expect(progressSpinnerStub.finishLoadingForComponent).toHaveBeenCalledWith(component.targetedSpinner);
-        expect(component.tailLines).toEqual(tail.lines);
+        expect(component.tailLines).toEqual([]);
         expect(component.error).toBeNull();
         expect(toastStub.createErrorToast).not.toHaveBeenCalled();
       }));
@@ -351,7 +358,7 @@ describe('LogViewerPageComponent', () => {
         logsManagerStub.tailLogFile.and.returnValue(throwError(errorObj));
         component.loadTail();
         tick();
-        expect(logsManagerStub.tailLogFile).toHaveBeenCalledWith(fileName, component.pageSize);
+        expect(logsManagerStub.tailLogFile).toHaveBeenCalledWith(fileName, component.pageSize, true);
         expect(progressSpinnerStub.startLoadingForComponent).toHaveBeenCalledWith(component.targetedSpinner, 30);
         expect(progressSpinnerStub.finishLoadingForComponent).toHaveBeenCalledWith(component.targetedSpinner);
         expect(component.tailLines).toEqual([]);
@@ -379,10 +386,10 @@ describe('LogViewerPageComponent', () => {
         component.search();
         tick();
         expect(component.clearSearch).not.toHaveBeenCalled();
-        expect(logsManagerStub.searchLogFile).toHaveBeenCalledWith(fileName, component.searchTerm, 500);
+        expect(logsManagerStub.searchLogFile).toHaveBeenCalledWith(fileName, component.searchTerm, 500, true);
         expect(progressSpinnerStub.startLoadingForComponent).toHaveBeenCalledWith(component.targetedSpinner, 30);
         expect(progressSpinnerStub.finishLoadingForComponent).toHaveBeenCalledWith(component.targetedSpinner);
-        expect(component.searchResults).toEqual(search.results);
+        expect(component.searchResults).toEqual([]);
         expect(component.isSearching).toBeFalse();
         expect(component.setViewMode).toHaveBeenCalledWith(component.ViewMode.SEARCH);
         expect(component.error).toBeNull();
@@ -413,7 +420,7 @@ describe('LogViewerPageComponent', () => {
         component.search();
         tick();
         expect(component.clearSearch).not.toHaveBeenCalled();
-        expect(logsManagerStub.searchLogFile).toHaveBeenCalledWith(fileName, component.searchTerm, 500);
+        expect(logsManagerStub.searchLogFile).toHaveBeenCalledWith(fileName, component.searchTerm, 500, true);
         expect(progressSpinnerStub.startLoadingForComponent).toHaveBeenCalledWith(component.targetedSpinner, 30);
         expect(progressSpinnerStub.finishLoadingForComponent).toHaveBeenCalledWith(component.targetedSpinner);
         expect(component.searchResults).toEqual([]);
@@ -553,7 +560,8 @@ describe('LogViewerPageComponent', () => {
       component.searchResults = [{
         lineNumber: 1, 
         content: 'test',
-        level: ''
+        level: '',
+        levelClass: ''
       }];
       component.clearSearch();
       expect(component.searchSubmitted).toBeFalse();
@@ -631,7 +639,7 @@ describe('LogViewerPageComponent', () => {
         };
         beforeEach(() => {
           component.viewMode = component.ViewMode.TAIL;
-          component.tailLines = tail.lines;
+          component.tailLines = tail.lines.map(line => ({ content: line, levelClass: component.getLogLevelClass(line) }));
           fixture.detectChanges();
         });
         describe('with the appropriate auto refresh state', () => {
@@ -672,7 +680,10 @@ describe('LogViewerPageComponent', () => {
         };
         beforeEach(() => {
           component.viewMode = component.ViewMode.PAGINATED;
-          component.logPage = page;
+          component.logPage = {
+            ...page,
+            linesWithClass: page.lines.map(line => ({ content: line, levelClass: component.getLogLevelClass(line) }))
+          };
           fixture.detectChanges();
         });
         describe('with the appropriate auto refresh state', () => {
@@ -704,7 +715,10 @@ describe('LogViewerPageComponent', () => {
         beforeEach(() => {
           component.viewMode = component.ViewMode.SEARCH;
           component.searchTerm = search.searchTerm;
-          component.searchResults = search.results;
+          component.searchResults = search.results.map(result => ({
+            ...result,
+            levelClass: component.getLogLevelClass(result.content)
+          }));
           fixture.detectChanges();
         });
         describe('with the appropriate auto refresh state', () => {
