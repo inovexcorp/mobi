@@ -26,9 +26,22 @@ package com.mobi.catalog.api;
 public class CatalogTopics {
     private CatalogTopics() {}
 
-    public static final String TOPIC_NAME = "com/mobi/catalog/commit";
-    public static final String PROPERTY_RECORD = "record";
-    public static final String PROPERTY_COMMIT = "commit";
-    public static final String PROPERTY_BRANCH = "branch";
-    public static final String PROPERTY_USER = "user";
+    public interface CatalogTopic {
+        public static final String PROPERTY_RECORD = "record";
+        public static final String PROPERTY_COMMIT = "commit";
+        public static final String PROPERTY_USER = "user";
+    }
+
+    public static class CommitTopic implements CatalogTopic {
+        public static final String TOPIC_NAME = "com/mobi/catalog/commit";
+        public static final String PROPERTY_BRANCH = "branch";
+    }
+
+    public static class VersionTopic implements CatalogTopic {
+        public static final String TOPIC_NAME = "com/mobi/catalog/version";
+        public static final String TYPE_PROPERTY= "type";
+        public static final String VERSION_PROPERTY= "version";
+        public static final String VERSION_TITLE_PROPERTY= "versionTitle";
+
+    }
 }

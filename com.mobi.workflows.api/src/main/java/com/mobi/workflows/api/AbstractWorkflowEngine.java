@@ -76,7 +76,7 @@ public abstract class AbstractWorkflowEngine implements WorkflowEngine {
         executionActivity.setSucceeded(succeeded);
         executionActivity.addEndedAtTime(OffsetDateTime.now());
         provService.updateActivity(executionActivity);
-        // Notify of activity end
+        // Notify of an activity's end
         SSEUtils.postEvent(eventAdmin, WorkflowsTopics.TOPIC_ACTIVITY_END,
                 executionActivity.getModel().filter(executionActivity.getResource(), null, null));
     }

@@ -146,7 +146,7 @@ public class SimpleVersioningManagerTest extends OrmEnabledTestCase {
     /* commit(Resource, Resource, Resource, User, String) */
 
     @Test
-    public void commitWithInProgressCommitToVersionedRDFRecordTest() throws Exception {
+    public void commitWithInProgressCommitToVersionedRDFRecordTest() {
         MasterBranch masterBranch = masterBranchFactory.createNew(targetBranch.getResource());
         when(branchManager.getMasterBranch(eq(CATALOG_IRI), eq(record.getResource()), any(RepositoryConnection.class))).thenReturn(masterBranch);
         when(baseService.addMasterCommit(eq(record), eq(masterBranch), eq(user),  eq("Message"), any(RepositoryConnection.class))).thenReturn(commit.getResource());
@@ -160,7 +160,7 @@ public class SimpleVersioningManagerTest extends OrmEnabledTestCase {
     }
 
     @Test
-    public void commitWithInProgressCommitToOntologyRecordTest() throws Exception {
+    public void commitWithInProgressCommitToOntologyRecordTest() {
         MasterBranch masterBranch = masterBranchFactory.createNew(sourceBranch.getResource());
         when(branchManager.getMasterBranch(eq(CATALOG_IRI), eq(ontologyRecord.getResource()), any(RepositoryConnection.class))).thenReturn(masterBranch);
         when(ontologyService.addBranchCommit(eq(ontologyRecord), eq(targetBranch), eq(user),  eq("Message"), any(RepositoryConnection.class))).thenReturn(commit.getResource());
@@ -174,7 +174,7 @@ public class SimpleVersioningManagerTest extends OrmEnabledTestCase {
     }
 
     @Test
-    public void commitWithInProgressCommitToOntologyRecordWithoutServiceTest() throws Exception {
+    public void commitWithInProgressCommitToOntologyRecordWithoutServiceTest() {
         MasterBranch masterBranch = masterBranchFactory.createNew(targetBranch.getResource());
         when(branchManager.getMasterBranch(eq(CATALOG_IRI), eq(ontologyRecord.getResource()), any(RepositoryConnection.class))).thenReturn(masterBranch);
         when(baseService.addMasterCommit(eq(ontologyRecord), eq(masterBranch), eq(user),  eq("Message"), any(RepositoryConnection.class))).thenReturn(commit.getResource());
@@ -191,7 +191,7 @@ public class SimpleVersioningManagerTest extends OrmEnabledTestCase {
     /* merge(Resource, Resource, Resource, Resource, User, Model, Model) */
 
     @Test
-    public void mergeWithVersionedRDFRecordMergeIntoMasterTest() throws Exception {
+    public void mergeWithVersionedRDFRecordMergeIntoMasterTest() {
         Model additions = MODEL_FACTORY.createEmptyModel();
         Model deletions = MODEL_FACTORY.createEmptyModel();
 
@@ -208,7 +208,7 @@ public class SimpleVersioningManagerTest extends OrmEnabledTestCase {
     }
 
     @Test
-    public void mergeWithVersionedRDFRecordMergeIntoBranchTest() throws Exception {
+    public void mergeWithVersionedRDFRecordMergeIntoBranchTest() {
         Model additions = MODEL_FACTORY.createEmptyModel();
         Model deletions = MODEL_FACTORY.createEmptyModel();
 
@@ -225,7 +225,7 @@ public class SimpleVersioningManagerTest extends OrmEnabledTestCase {
     }
 
     @Test
-    public void mergeWithOntologyRecordMergeIntoMasterTest() throws Exception {
+    public void mergeWithOntologyRecordMergeIntoMasterTest() {
         Model additions = MODEL_FACTORY.createEmptyModel();
         Model deletions = MODEL_FACTORY.createEmptyModel();
 
@@ -242,7 +242,7 @@ public class SimpleVersioningManagerTest extends OrmEnabledTestCase {
     }
 
     @Test
-    public void mergeWithOntologyRecordMergeIntoBranchTest() throws Exception {
+    public void mergeWithOntologyRecordMergeIntoBranchTest() {
         Model additions = MODEL_FACTORY.createEmptyModel();
         Model deletions = MODEL_FACTORY.createEmptyModel();
 
@@ -259,7 +259,7 @@ public class SimpleVersioningManagerTest extends OrmEnabledTestCase {
     }
 
     @Test
-    public void mergeWithOntologyRecordWithoutServiceMergeIntoMasterTest() throws Exception {
+    public void mergeWithOntologyRecordWithoutServiceMergeIntoMasterTest() {
         Model additions = MODEL_FACTORY.createEmptyModel();
         Model deletions = MODEL_FACTORY.createEmptyModel();
 
@@ -278,7 +278,7 @@ public class SimpleVersioningManagerTest extends OrmEnabledTestCase {
     }
 
     @Test
-    public void mergeWithOntologyRecordWithoutServiceMergeIntoBranchTest() throws Exception {
+    public void mergeWithOntologyRecordWithoutServiceMergeIntoBranchTest() {
         Model additions = MODEL_FACTORY.createEmptyModel();
         Model deletions = MODEL_FACTORY.createEmptyModel();
 

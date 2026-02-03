@@ -50,6 +50,7 @@ public class SSEUtils {
      *             backend to initiate the event
      * @param model The RDF Model to serialize in the Server-Sent Event
      */
+    //TODO Need to come back during Webhook design and think about if this is how we want to continue to handle SSE Events
     public static void postEvent(EventAdmin eventAdmin, String type, Model model) {
         StringWriter sw = new StringWriter();
         RDFWriter writer = Rio.createWriter(RDFFormat.JSONLD, sw);

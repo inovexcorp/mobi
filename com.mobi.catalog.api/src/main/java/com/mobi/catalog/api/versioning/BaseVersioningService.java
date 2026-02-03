@@ -711,11 +711,11 @@ public abstract class BaseVersioningService<T extends VersionedRDFRecord> implem
     protected void sendCommitEvent(Resource record, Resource branch, Resource user, Resource newCommit) {
         if (eventAdmin != null) {
             Map<String, Object> eventProps = new HashMap<>();
-            eventProps.put(CatalogTopics.PROPERTY_COMMIT, newCommit);
-            eventProps.put(CatalogTopics.PROPERTY_USER, user);
-            eventProps.put(CatalogTopics.PROPERTY_BRANCH, branch);
-            eventProps.put(CatalogTopics.PROPERTY_RECORD, record);
-            Event event = new Event(CatalogTopics.TOPIC_NAME, eventProps);
+            eventProps.put(CatalogTopics.CommitTopic.PROPERTY_COMMIT, newCommit);
+            eventProps.put(CatalogTopics.CommitTopic.PROPERTY_USER, user);
+            eventProps.put(CatalogTopics.CommitTopic.PROPERTY_BRANCH, branch);
+            eventProps.put(CatalogTopics.CommitTopic.PROPERTY_RECORD, record);
+            Event event = new Event(CatalogTopics.CommitTopic.TOPIC_NAME, eventProps);
             eventAdmin.postEvent(event);
         }
     }
