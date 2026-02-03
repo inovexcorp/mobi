@@ -46,7 +46,7 @@ import java.util.Map;
         immediate = true,
         name = CommitToBranchTriggerService.NAME,
         service = { CommitToBranchTriggerService.class, TriggerService.class, EventHandler.class },
-        property = EventConstants.EVENT_TOPIC + "=" + CatalogTopics.TOPIC_NAME,
+        property = EventConstants.EVENT_TOPIC + "=" + CatalogTopics.CommitTopic.TOPIC_NAME,
         configurationPolicy = ConfigurationPolicy.REQUIRE)
 public class CommitToBranchTriggerService extends BaseEventTriggerService<CommitToBranchTrigger>
         implements TriggerService<CommitToBranchTrigger>, EventHandler {
@@ -67,7 +67,7 @@ public class CommitToBranchTriggerService extends BaseEventTriggerService<Commit
 
     @Override
     public void handleEvent(Event event) {
-        String firedBranch = event.getProperty(CatalogTopics.PROPERTY_BRANCH).toString();
+        String firedBranch = event.getProperty(CatalogTopics.CommitTopic.PROPERTY_BRANCH).toString();
         log.trace("Received event in CommitToBranchTriggerService for " + triggerId + " with Branch " + firedBranch);
         if (firedBranch.equals(branchIri.stringValue())) {
             log.trace("Posting event from CommitToBranchTriggerService for " + triggerId);

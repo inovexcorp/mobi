@@ -23,6 +23,7 @@ package com.mobi.catalog.impl;
  * #L%
  */
 
+import com.mobi.catalog.api.CatalogTopics;
 import com.mobi.catalog.api.Catalogs;
 import com.mobi.catalog.api.RecordManager;
 import com.mobi.catalog.api.ThingManager;
@@ -35,17 +36,26 @@ import com.mobi.exception.MobiException;
 import com.mobi.ontologies.dcterms._Thing;
 import com.mobi.persistence.utils.ConnectionUtils;
 import com.mobi.rdf.orm.OrmFactory;
+import com.mobi.sse.SSEUtils;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.rdf4j.model.IRI;
+import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.Resource;
 import org.eclipse.rdf4j.model.ValueFactory;
+import org.eclipse.rdf4j.model.impl.LinkedHashModel;
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
+import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
+import org.eclipse.rdf4j.model.vocabulary.RDF;
 import org.eclipse.rdf4j.query.Binding;
 import org.eclipse.rdf4j.query.TupleQuery;
 import org.eclipse.rdf4j.query.TupleQueryResult;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
+import org.osgi.framework.BundleContext;
+import org.osgi.framework.ServiceReference;
+import org.osgi.service.component.annotations.Activate;
 import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
+import org.osgi.service.event.EventAdmin;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -89,6 +99,16 @@ public class SimpleVersionManager implements VersionManager {
     @Reference
     VersionFactory versionFactory;
 
+    public EventAdmin eventAdmin;
+
+    @Activate
+    void start(BundleContext context) {
+        final ServiceReference<EventAdmin> ref = context.getServiceReference(EventAdmin.class);
+        if (ref != null) {
+            this.eventAdmin = context.getService(ref);
+        }
+    }
+
     @Override
     public <T extends Version> void addVersion(Resource catalogId, Resource versionedRecordId, T version,
                                                RepositoryConnection conn) {
@@ -104,6 +124,7 @@ public class SimpleVersionManager implements VersionManager {
         record.setVersion(versions);
         thingManager.updateObject(record, conn);
         thingManager.addObject(version, conn);
+        generateVersionEvent(version, versionedRecordId);
     }
 
     @Override
@@ -191,5 +212,43 @@ public class SimpleVersionManager implements VersionManager {
         if (!versionIRIs.contains(versionId)) {
             throw thingManager.throwDoesNotBelong(versionId, versionFactory, recordId, versionedRecordFactory);
         }
+    }
+
+    /**
+     * Generates a version-related event, capturing details about the version and its associated record.
+     * If an event administration service is available, the method constructs and prepares an event
+     * with relevant properties extracted from the provided version and record identifier.
+     *
+     * @param <T>      The specific type of {@link Version}.
+     * @param version  The version object containing data to be included in the event.
+     * @param recordId The identifier of the record associated with the version.
+     */
+    protected <T extends Version> void generateVersionEvent(T version, Resource recordId) {
+        if (eventAdmin != null) {
+            Model versionModel = version.getModel();
+            Model eventModel = new LinkedHashModel();
+
+            // TODO After webhooks design, can be removed or added back in depending on if we end up using event properties
+            // Map<String, Object> eventProps = new HashMap<>();
+            // eventProps.put(CatalogTopics.VersionTopic.PROPERTY_RECORD, recordId);
+            // eventProps.put(CatalogTopics.VersionTopic.TYPE_PROPERTY, Version.TYPE);
+            // eventProps.put(CatalogTopics.VersionTopic.VERSION_PROPERTY, version.getResource());
+
+            eventModel.add(version.getResource(), vf.createIRI(VersionedRecord.TYPE), recordId);
+            eventModel.add(version.getResource(), RDF.TYPE, vf.createIRI(Version.TYPE));
+
+            setPropertyValueFromModel(versionModel, eventModel, vf.createIRI("http://mobi.com/ontologies/catalog#commit"));
+            setPropertyValueFromModel(versionModel, eventModel, DCTERMS.PUBLISHER);
+            setPropertyValueFromModel(versionModel, eventModel, DCTERMS.TITLE);
+
+            SSEUtils.postEvent(eventAdmin, CatalogTopics.VersionTopic.TOPIC_NAME, eventModel);
+        }
+    }
+
+    private void setPropertyValueFromModel(Model versionModel, Model updatedModel, IRI predicate) {
+        versionModel.filter(null, predicate, null)
+                .stream()
+                .findFirst()
+                .ifPresent(updatedModel::add); //can additionally create eventProperties
     }
 }
