@@ -353,6 +353,7 @@ describe('Property Overlay component', () => {
         component.selectProp(event);
         expect(component.isOntologyProperty).toBeFalse();
         expect(component.propertyForm.controls.type.value).toEqual(`${XSD}boolean`);
+        expect(component.type).toEqual(`${XSD}boolean`);
         expect(component.propertyForm.controls.language.value).toEqual('');
       });
       it('not owl:deprecated and is an ontology property', () => {
@@ -365,7 +366,74 @@ describe('Property Overlay component', () => {
         component.selectProp(event);
         expect(component.isOntologyProperty).toBeTrue();
         expect(component.propertyForm.controls.type.value).toEqual(`${XSD}anyURI`);
+        expect(component.type).toEqual(`${XSD}anyURI`);
         expect(component.propertyForm.controls.language.value).toEqual('');
+      });
+      it('switching between ontology properties and owl:deprecated', () => {
+        //ontology property is selected initially
+        const event: MatAutocompleteSelectedEvent = {
+          option: {
+            value: 'test'
+          }
+        } as MatAutocompleteSelectedEvent;
+
+        propertyManagerStub.ontologyProperties = ['test'];
+        component.selectProp(event);
+        selectPropAssertions('https://www.example.com', `${XSD}anyURI`, true);
+
+        //owl:deprecated is selected next
+        const newEvent: MatAutocompleteSelectedEvent = {
+          option: {
+            value: `${OWL}deprecated`
+          }
+        } as MatAutocompleteSelectedEvent;
+
+        component.selectProp(newEvent);
+        selectPropAssertions('true', `${XSD}boolean`, false);
+      });
+      it('switching between owl:deprecated and ontology properties', () => {
+        //owl:deprecated is selected initially
+        const newEvent: MatAutocompleteSelectedEvent = {
+          option: {
+            value: `${OWL}deprecated`
+          }
+        } as MatAutocompleteSelectedEvent;
+
+        component.selectProp(newEvent);
+        selectPropAssertions('true', `${XSD}boolean`, false);
+
+        //switch to an ontology property
+        const event: MatAutocompleteSelectedEvent = {
+          option: {
+            value: 'test'
+          }
+        } as MatAutocompleteSelectedEvent;
+
+        propertyManagerStub.ontologyProperties = ['test'];
+        component.selectProp(event);
+        selectPropAssertions('https://www.example.com', `${XSD}anyURI`, true);
+      });
+      it('switching between owl:deprecated and string properties', () => {
+        //owl:deprecated is selected initially
+        const newEvent: MatAutocompleteSelectedEvent = {
+          option: {
+            value: `${OWL}deprecated`
+          }
+        } as MatAutocompleteSelectedEvent;
+
+        component.selectProp(newEvent);
+        selectPropAssertions('true', `${XSD}boolean`, false);
+
+        //switch to a string property
+        const event: MatAutocompleteSelectedEvent = {
+          option: {
+            value: 'test'
+          }
+        } as MatAutocompleteSelectedEvent;
+
+        propertyManagerStub.ontologyProperties = [];
+        component.selectProp(event);
+        selectPropAssertions('test value', `${XSD}string`, false);
       });
     });
     describe('addProperty calls the correct manager functions', () => {
@@ -613,5 +681,21 @@ describe('Property Overlay component', () => {
     expect(element.queryAll(By.css('textarea')).length).toEqual(textAreaCount);
     expect(element.queryAll(By.css('language-select')).length).toEqual(languageSelectCount);
     expect(element.queryAll(By.css('mat-radio-group')).length).toEqual(radioGroupCount);
+  }
+
+  function selectPropAssertions(propValue: string, propType: string, shouldBeOntologyProp: boolean): void {
+    component.propertyForm.controls.value.setValue(propValue);
+    component.propertyForm.controls.value.updateValueAndValidity();
+    fixture.detectChanges();
+
+    if (shouldBeOntologyProp) {
+      expect(component.isOntologyProperty).toBeTrue();
+    } else {
+      expect(component.isOntologyProperty).toBeFalse();
+    }
+    expect(component.propertyForm.controls.type.value).toEqual(propType);
+    expect(component.type).toEqual(propType);
+    expect(component.propertyForm.controls.language.value).toEqual('');
+    expect(component.propertyForm.controls.value.errors).toBeNull();
   }
 });

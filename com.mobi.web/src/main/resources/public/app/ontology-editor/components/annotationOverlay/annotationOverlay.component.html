@@ -42,7 +42,8 @@
         <mat-error *ngIf="annotationForm.get('value').errors?.pattern">The value provided is not a valid IRI</mat-error>
     </mat-form-field>
     <ng-template #notOntIriProp>
-        <mat-radio-group *ngIf="annotationForm.controls.annotation.value === deprecatedIri; else notDeprecated" formControlName="value">
+        <mat-radio-group *ngIf="annotationForm.controls.annotation.value === deprecatedIri; else notDeprecated"
+                         formControlName="value" class="d-inline-flex flex-column">
             <mat-radio-button value="true">True</mat-radio-button>
             <mat-radio-button value="false">False</mat-radio-button>
         </mat-radio-group>
@@ -53,7 +54,12 @@
                 <mat-error *ngIf="annotationForm.get('value').errors?.datatype">Value is invalid for the chosen datatype</mat-error>
             </mat-form-field>
             <!-- datatype -->
-            <iri-select-ontology [selected]="[annotationForm.controls.type.value]" (selectedChange)="validateValue($event)" [selectList]="dataPropertyRanges" displayText="Type" [singleSelect]="true"></iri-select-ontology>
+            <iri-select-ontology [selected]="[annotationForm.controls.type.value]"
+                                 (selectedChange)="validateValue($event)"
+                                 [selectList]="dataPropertyRanges"
+                                 displayText="Type"
+                                 [singleSelect]="true">
+            </iri-select-ontology>
             <!-- language -->
             <language-select *ngIf="isLangString()" [parentForm]="annotationForm" [disableClear]="true">></language-select>
         </ng-template>
