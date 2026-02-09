@@ -43,10 +43,10 @@
                         <span class="text-monospace px-1" *ngIf="item.del">--</span>
                     </div>
                     <div class="value-display px-4 flex-1 remove-min-width">
-                        <span *ngIf="item['@id']" class="value-display"><span>{{getDisplay(item['@id'])}}</span> <small *ngIf="!isBlankNodeId(item['@id'])"> &lt;<span>{{item['@id']}}</span>&gt;</small></span>
-                        <span *ngIf="item['@value']" class="value-display"><span>{{item['@value']}}</span>
-                            <small *ngIf="item['@type']" class="item-type type-display" [ngClass]="{'text-success': item.add, 'text-danger': item.del}"> [type: <span [innerHtml]="item['@type'] | prefixation"></span>]</small>
-                            <small *ngIf="item['@language']" class="item-language type-display" [ngClass]="{'text-success': item.add, 'text-danger': item.del}"> [language: <span [innerHtml]="item['@language'] | prefixation"></span>]</small>
+                        <span *ngIf="item['@id']" class="value-display"><span [innerHtml]="getDisplay(item['@id']) | safeHtml: 'html'"></span> <small *ngIf="!isBlankNodeId(item['@id'])"> &lt;<span>{{item['@id']}}</span>&gt;</small></span>
+                        <span *ngIf="item['@value']" class="value-display"><span [innerHtml]="item['@value'] | safeHtml: 'html'"></span>
+                            <small *ngIf="item['@type']" class="item-type type-display" [ngClass]="{'text-success': item.add, 'text-danger': item.del}"> [type: <span [innerHtml]="item['@type'] | prefixation | safeHtml: 'html'"></span>]</small>
+                            <small *ngIf="item['@language']" class="item-language type-display" [ngClass]="{'text-success': item.add, 'text-danger': item.del}"> [language: <span [innerHtml]="item['@language'] | prefixation | safeHtml: 'html'"></span>]</small>
                         </span>
                     </div>
                 </span>

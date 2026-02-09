@@ -30,6 +30,7 @@ import { cleanStylesFromDOM } from '../../../../test/ts/Shared';
 import { Difference } from '../../models/difference.class';
 import { InfoMessageComponent } from '../infoMessage/infoMessage.component';
 import { PrefixationPipe } from '../../pipes/prefixation.pipe';
+import { TrustedHtmlPipe } from '../../pipes/trustedHtml.pipe';
 import { CommitCompiledResourceComponent } from './commitCompiledResource.component';
 
 describe('Commit Compiled Resource component', function() {
@@ -44,7 +45,8 @@ describe('Commit Compiled Resource component', function() {
             declarations: [
                 CommitCompiledResourceComponent,
                 MockComponent(InfoMessageComponent),
-                MockPipe(PrefixationPipe)
+                MockPipe(PrefixationPipe),
+                MockPipe(TrustedHtmlPipe, (val) => val)
             ]
         }).compileComponents();
 
@@ -140,6 +142,14 @@ describe('Commit Compiled Resource component', function() {
             component.resource = undefined;
             fixture.detectChanges();
             expect(element.queryAll(By.css('info-message')).length).toBe(1);
+        });
+        it('should render HTML content in properties without escaping', function() {
+            const htmlContent = 'hasTopping <span class="manchester-rest">some</span> TomatoTopping';
+            component.resource = { 'http://example.org/prop': [{ '@value': htmlContent }] };
+            fixture.detectChanges();
+
+            const valueDisplay = element.query(By.css('.prop-value-container .value-display.px-4 .value-display span'));
+            expect(valueDisplay.nativeElement.innerHTML).toContain('<span class="manchester-rest">some</span>');
         });
     });
 });
