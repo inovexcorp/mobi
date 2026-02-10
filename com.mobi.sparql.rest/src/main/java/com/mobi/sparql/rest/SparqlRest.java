@@ -25,6 +25,7 @@ package com.mobi.sparql.rest;
 
 import static com.mobi.rest.util.RestUtils.CSV_MIME_TYPE;
 import static com.mobi.rest.util.RestUtils.JSON_MIME_TYPE;
+import static com.mobi.rest.util.RestUtils.SPARQL_JSON_MIME_TYPE;
 import static com.mobi.rest.util.RestUtils.LDJSON_MIME_TYPE;
 import static com.mobi.rest.util.RestUtils.RDFXML_MIME_TYPE;
 import static com.mobi.rest.util.RestUtils.TSV_MIME_TYPE;
@@ -199,7 +200,7 @@ public class SparqlRest {
      */
     @GET
     @Path("/{storeType}/{id}")
-    @Produces({XLSX_MIME_TYPE, CSV_MIME_TYPE, TSV_MIME_TYPE, JSON_MIME_TYPE, TURTLE_MIME_TYPE, LDJSON_MIME_TYPE,
+    @Produces({XLSX_MIME_TYPE, CSV_MIME_TYPE, TSV_MIME_TYPE, JSON_MIME_TYPE, SPARQL_JSON_MIME_TYPE, TURTLE_MIME_TYPE, LDJSON_MIME_TYPE,
             RDFXML_MIME_TYPE})
     @RolesAllowed("user")
     @Operation(
@@ -215,6 +216,7 @@ public class SparqlRest {
                                     @Content(mediaType = LDJSON_MIME_TYPE),
                                     @Content(mediaType = RDFXML_MIME_TYPE),
                                     @Content(mediaType = JSON_MIME_TYPE),
+                                    @Content(mediaType = SPARQL_JSON_MIME_TYPE),
                                     @Content(mediaType = XLSX_MIME_TYPE),
                                     @Content(mediaType = CSV_MIME_TYPE),
                                     @Content(mediaType = TSV_MIME_TYPE),
@@ -327,7 +329,7 @@ public class SparqlRest {
     @POST
     @Path("/{storeType}/{id}")
     @Consumes("application/sparql-query")
-    @Produces({XLSX_MIME_TYPE, CSV_MIME_TYPE, TSV_MIME_TYPE, JSON_MIME_TYPE, TURTLE_MIME_TYPE, LDJSON_MIME_TYPE,
+    @Produces({XLSX_MIME_TYPE, CSV_MIME_TYPE, TSV_MIME_TYPE, JSON_MIME_TYPE, SPARQL_JSON_MIME_TYPE, TURTLE_MIME_TYPE, LDJSON_MIME_TYPE,
             RDFXML_MIME_TYPE})
     @RolesAllowed("user")
     @ActionId(value = Read.TYPE)
@@ -416,7 +418,7 @@ public class SparqlRest {
     @POST
     @Path("/{storeType}/{id}")
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
-    @Produces({XLSX_MIME_TYPE, CSV_MIME_TYPE, TSV_MIME_TYPE, JSON_MIME_TYPE, TURTLE_MIME_TYPE, LDJSON_MIME_TYPE,
+    @Produces({XLSX_MIME_TYPE, CSV_MIME_TYPE, TSV_MIME_TYPE, JSON_MIME_TYPE, SPARQL_JSON_MIME_TYPE, TURTLE_MIME_TYPE, LDJSON_MIME_TYPE,
             RDFXML_MIME_TYPE})
     @RolesAllowed("user")
     @Operation(
@@ -432,6 +434,7 @@ public class SparqlRest {
                                     @Content(mediaType = LDJSON_MIME_TYPE),
                                     @Content(mediaType = RDFXML_MIME_TYPE),
                                     @Content(mediaType = JSON_MIME_TYPE),
+                                    @Content(mediaType = SPARQL_JSON_MIME_TYPE),
                                     @Content(mediaType = XLSX_MIME_TYPE),
                                     @Content(mediaType = CSV_MIME_TYPE),
                                     @Content(mediaType = TSV_MIME_TYPE),
@@ -570,7 +573,7 @@ public class SparqlRest {
      */
     @GET
     @Path("/{storeType}/{id}/limited-results")
-    @Produces({JSON_MIME_TYPE, TURTLE_MIME_TYPE, LDJSON_MIME_TYPE, RDFXML_MIME_TYPE})
+    @Produces({JSON_MIME_TYPE, SPARQL_JSON_MIME_TYPE,TURTLE_MIME_TYPE, LDJSON_MIME_TYPE, RDFXML_MIME_TYPE})
     @RolesAllowed("user")
     @Operation(
             tags = "sparql",
@@ -583,7 +586,8 @@ public class SparqlRest {
                                     @Content(mediaType = TURTLE_MIME_TYPE),
                                     @Content(mediaType = LDJSON_MIME_TYPE),
                                     @Content(mediaType = RDFXML_MIME_TYPE),
-                                    @Content(mediaType = JSON_MIME_TYPE)
+                                    @Content(mediaType = JSON_MIME_TYPE),
+                                    @Content(mediaType = SPARQL_JSON_MIME_TYPE)
                             }),
                     @ApiResponse(responseCode = "400", description = "BAD REQUEST", content = {
                             @Content(mediaType = MediaType.APPLICATION_JSON,
@@ -647,7 +651,7 @@ public class SparqlRest {
     @POST
     @Consumes("application/sparql-query")
     @Path("/{storeType}/{id}/limited-results")
-    @Produces({JSON_MIME_TYPE, TURTLE_MIME_TYPE, LDJSON_MIME_TYPE, RDFXML_MIME_TYPE})
+    @Produces({JSON_MIME_TYPE, SPARQL_JSON_MIME_TYPE,TURTLE_MIME_TYPE, LDJSON_MIME_TYPE, RDFXML_MIME_TYPE})
     @RolesAllowed("user")
     @ActionId(value = Read.TYPE)
     @ResourceAttributes(@AttributeValue(type = ValueType.PATH, id = "https://mobi.solutions/store-type",
@@ -689,7 +693,7 @@ public class SparqlRest {
     @POST
     @Consumes(MediaType.APPLICATION_FORM_URLENCODED)
     @Path("/{storeType}/{id}/limited-results")
-    @Produces({JSON_MIME_TYPE, TURTLE_MIME_TYPE, LDJSON_MIME_TYPE, RDFXML_MIME_TYPE})
+    @Produces({JSON_MIME_TYPE, SPARQL_JSON_MIME_TYPE,TURTLE_MIME_TYPE, LDJSON_MIME_TYPE, RDFXML_MIME_TYPE})
     @RolesAllowed("user")
     @Operation(
             tags = "sparql",
@@ -704,6 +708,7 @@ public class SparqlRest {
                                     @Content(mediaType = LDJSON_MIME_TYPE),
                                     @Content(mediaType = RDFXML_MIME_TYPE),
                                     @Content(mediaType = JSON_MIME_TYPE),
+                                    @Content(mediaType = SPARQL_JSON_MIME_TYPE),
                                     @Content(mediaType = XLSX_MIME_TYPE),
                                     @Content(mediaType = CSV_MIME_TYPE),
                                     @Content(mediaType = TSV_MIME_TYPE),
@@ -897,7 +902,7 @@ public class SparqlRest {
         }
 
         switch (mimeType) {
-            case JSON_MIME_TYPE -> {
+            case JSON_MIME_TYPE, SPARQL_JSON_MIME_TYPE -> {
                 fileExtension = "json";
                 stream = getSelectStream(queryString, resourceId, storeType, rdfRecordParams,
                         TupleQueryResultFormat.JSON);
@@ -919,7 +924,7 @@ public class SparqlRest {
             default -> {
                 fileExtension = "json";
                 String oldMimeType = mimeType;
-                mimeType = JSON_MIME_TYPE;
+                mimeType = SPARQL_JSON_MIME_TYPE;
                 logger.debug(String.format("Invalid mimeType [%s]: defaulted to [%s]", oldMimeType, mimeType));
                 stream = getSelectStream(queryString, resourceId, storeType, rdfRecordParams,
                         TupleQueryResultFormat.JSON);

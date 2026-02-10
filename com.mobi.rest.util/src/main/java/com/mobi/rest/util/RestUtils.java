@@ -128,6 +128,7 @@ public class RestUtils {
     public static final String CSV_MIME_TYPE = "text/csv";
     public static final String TSV_MIME_TYPE = "text/tab-separated-values";
     public static final String JSON_MIME_TYPE = "application/json";
+    public static final String SPARQL_JSON_MIME_TYPE = "application/sparql-results+json";
     public static final String TURTLE_MIME_TYPE = "text/turtle";
     public static final String LDJSON_MIME_TYPE = "application/ld+json";
     public static final String RDFXML_MIME_TYPE = "application/rdf+xml";
