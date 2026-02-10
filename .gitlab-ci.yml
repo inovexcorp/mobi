@@ -321,3 +321,37 @@ enterprise_tests:
     - cd mobi-enterprise
     - mvn install -Dmobi.version=$VERSION
   allow_failure: true #Allows for failure as this should not fail the release of mobi, but warn of needed changes to mobi-enterprise
+
+# Prepare the version by stripping 'v'
+prepare_rpm_version:
+  # Execute job as part of the post-deploy stage.
+  stage: post-deploy
+  # Don't fail the pipeline if the job fails :)
+  allow_failure: true
+  only:
+    - /v(\d+)\.(\d+)\.(\d+)/  #Release tags are in the form "vX.X.X"
+  # create CLEAN_VERSION in version.env
+  script:
+    - echo "CLEAN_VERSION=${CI_COMMIT_TAG#v}" > version.env
+    - cat version.env
+  # create CI/CD variables from .env
+  artifacts:
+    reports:
+      dotenv: version.env
+
+#triggers a pipeline for rpm automatically passing build type and version
+trigger_rpm_build:
+  # Execute job as part of the post-deploy stage.
+  stage: post-deploy
+  # Don't fail the pipeline if the job fails :)
+  allow_failure: true
+  only:
+    - /v(\d+)\.(\d+)\.(\d+)/  #Release tags are in the form "vX.X.X"
+  needs:
+    - prepare_rpm_version  # Wait for version prep and get $CLEAN_VERSION
+  trigger:
+    project: matonto/mobi-community-rpm  # Downstream project to trigger
+    branch: main                          # Branch in the downstream project
+  variables:
+    BUILD_TYPE: mobi-community  # Pass the build type to the downstream RPM pipeline
+    VERSION: $CLEAN_VERSION      # Pass the release version and strips "v" from tag
