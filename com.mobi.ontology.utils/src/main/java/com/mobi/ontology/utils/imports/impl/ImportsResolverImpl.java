@@ -75,6 +75,7 @@ public class ImportsResolverImpl implements ImportsResolver {
     private String userAgent;
     private int connectionTimeout;
     private int readTimeout;
+    private boolean disableWebImports;
     private String acceptHeaders;
     private final Set<String> contentTypes = new HashSet<>();
 
@@ -113,6 +114,7 @@ public class ImportsResolverImpl implements ImportsResolver {
 
     @Activate
     protected void activate(final ImportsResolverConfig config) {
+        log.debug("Activating ImportsResolver service");
         if (config.userAgent() == null) {
             userAgent = "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:64.0) Gecko/20100101 Firefox/64.0";
         } else {
@@ -120,6 +122,9 @@ public class ImportsResolverImpl implements ImportsResolver {
         }
         connectionTimeout = config.connectionTimeout();
         readTimeout = config.readTimeout();
+        disableWebImports = config.disableWebImports();
+        log.debug("Configuration Properties:\n  userAgent: {}\n  connectionTimeout: {}\n  readTimeout: {}\n"
+                + "  disableWebImports: {}", userAgent, connectionTimeout, readTimeout, disableWebImports);
 
         StringBuilder sb = new StringBuilder();
         RDFFiles.getFormats().forEach(format -> {
@@ -143,7 +148,8 @@ public class ImportsResolverImpl implements ImportsResolver {
      * @throws IOException if there is an error connecting to the online resource.
      */
     private HttpURLConnection getWebInputStream(String urlStr) throws IOException {
-        String actualUrlStr = urlStr.endsWith("/") ? urlStr.substring(0, urlStr.lastIndexOf("/")) : urlStr;
+        String actualUrlStr = urlStr.endsWith("/") ? 
+            urlStr.substring(0, urlStr.lastIndexOf("/")) : urlStr;
         URL url = new URL(actualUrlStr);
         HttpURLConnection conn = (HttpURLConnection) url.openConnection();
         conn.setRequestProperty("User-Agent", userAgent);
@@ -159,11 +165,11 @@ public class ImportsResolverImpl implements ImportsResolver {
                 || status == 307 || status == 308) {
             String originalProtocol = url.getProtocol();
             String location = conn.getHeaderField("Location");
-            log.trace(actualUrlStr + " redirected to " + location);
+            log.trace("{} redirected to {}", actualUrlStr, location);
             URL newURL = new URL(location);
             String newProtocol = newURL.getProtocol();
             if (!originalProtocol.equals(newProtocol)) {
-                log.trace("Protocol changed during redirect from " + originalProtocol + " to " + newProtocol);
+                log.trace("Protocol changed during redirect from {} to {}", originalProtocol, newProtocol);
             }
             conn = (HttpURLConnection) newURL.openConnection();
             conn.addRequestProperty("Accept", acceptHeaders);
@@ -176,7 +182,13 @@ public class ImportsResolverImpl implements ImportsResolver {
 
     @Override
     public Optional<File> retrieveOntologyFromWebFile(Resource resource) {
+        if (disableWebImports) {
+            log.debug("Web imports are disabled. Skipping attempt to resolve ontology from web for resource: {}", 
+                resource);
+            return Optional.empty();
+        }
         long startTime = getStartTime();
+        log.debug("Attempting to retrieve ontology from web for resource: {}", resource);
         try {
             String urlStr = resource.stringValue();
             try {
@@ -207,6 +219,7 @@ public class ImportsResolverImpl implements ImportsResolver {
     @Override
     public Optional<File> retrieveOntologyLocalFile(Resource ontologyIRI) {
         Long startTime = getStartTime();
+        log.debug("Attempting to retrieve ontology from local catalog for resource: {}", ontologyIRI);
         try {
             Optional<Resource> recordIRIOpt = getRecordIRIFromOntologyIRI(ontologyIRI);
             if (recordIRIOpt.isPresent()) {
@@ -220,6 +233,7 @@ public class ImportsResolverImpl implements ImportsResolver {
 
     @Override
     public Optional<File> retrieveOntologyLocalFileFromRecordIRI(Resource recordIRI) {
+        log.debug("Attempting to retrieve ontology local File from record IRI: {}", recordIRI);
         Optional<Resource> masterHead = getMasterBranchHead(recordIRI);
         if (masterHead.isPresent()) {
             File file = getCompiledResourceFile(masterHead.get());
@@ -230,11 +244,13 @@ public class ImportsResolverImpl implements ImportsResolver {
 
     @Override
     public File retrieveOntologyLocalFileFromCommitIRI(Resource commitIRI) {
+        log.debug("Attempting to retrieve ontology local File from commit IRI: {}", commitIRI);
         return getCompiledResourceFile(commitIRI);
     }
 
     @Override
     public Optional<Resource> getRecordIRIFromOntologyIRI(Resource ontologyIRI) {
+        log.debug("Attempting to find record IRI for ontology IRI: {}", ontologyIRI);
         try (RepositoryConnection conn = catalogConfigProvider.getRepository().getConnection()) {
             TupleQuery query = conn.prepareTupleQuery(FIND_RECORD);
             query.setBinding(ONTOLOGY_IRI, ontologyIRI);
@@ -255,7 +271,7 @@ public class ImportsResolverImpl implements ImportsResolver {
     }
 
     private void logDebug(String operationDescription, Long start) {
-        log.debug(operationDescription + " complete in " + (System.currentTimeMillis() - start) + " ms");
+        log.debug("{} complete in {}ms", operationDescription, System.currentTimeMillis() - start);
     }
 
     private File getCompiledResourceFile(Resource commitIRI) {
