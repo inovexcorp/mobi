@@ -92,7 +92,7 @@
     rdfs:label "object property"@en ;
     rdfs:comment "An object property mapping for a ClassMapping."@en .
 
-:hasPrefix a owl:DatatypeProperty ;
+:hasPrefix a owl:DatatypeProperty, owl:FunctionalProperty ;
     rdfs:domain :ClassMapping ;
     rdfs:range xsd:string ;
     rdfs:label "has prefix"@en ;
@@ -103,6 +103,12 @@
     rdfs:range xsd:string ;
     rdfs:label "local name"@en ;
     rdfs:comment "The pattern specifying the local name of the generated instance. A value of \"${UUID}\" results in the generation of random UUID. A digit value results in the value for the cell in that column being inserted into the IRI (e.g. ${2} would be the value for the third column in the row)"@en .
+
+:iriTemplate a owl:DatatypeProperty, owl:FunctionalProperty ;
+    rdfs:domain :ClassMapping ;
+    rdfs:range xsd:string ;
+    rdfs:label "IRI template"@en ;
+    rdfs:comment "The template specifying how IRIs should be created for generated instances. Expected to be valid IRI strings with 0 or more \"${}\" replacement patterns that contain either an integer (resulting in the value from that cell in the row) or \"UUID\" (resulting in the generation of random UUID)."@en .
 
 # PropertyMapping
 

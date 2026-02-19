@@ -74,8 +74,8 @@ class DelimitedOntologySpec extends Specification {
 
         expect:
         prefixes != null
-        prefixes.size() == 1
-        prefixes[0] == "http://mobi.com/data/uhtc/material/"
+        prefixes.isPresent() == true
+        prefixes.get() == "http://mobi.com/data/uhtc/material/"
     }
 
     def "ClassMapping has the correct DataProperties"() {

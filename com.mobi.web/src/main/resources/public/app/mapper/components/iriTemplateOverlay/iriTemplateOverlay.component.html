@@ -10,43 +10,39 @@
   it under the terms of the GNU Affero General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
-  
+
   This program is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
-  
+
   You should have received a copy of the GNU Affero General Public License
   along with this program.  If not, see <http://www.gnu.org/licenses/>.
   #L%
-  -->
+-->
 <h1 mat-dialog-title>Edit IRI Template</h1>
-<form mat-dialog-content [formGroup]="iriTemplateForm">
-    <mat-form-field class="w-100 template-begins-with">
-        <mat-label>Begins With</mat-label>
-        <input type="text" matInput name="beginsWith" formControlName="beginsWith" required focus/>
-        <mat-error *ngIf="iriTemplateForm.get('beginsWith').errors?.pattern">This value is invalid</mat-error>
-        <mat-error *ngIf="iriTemplateForm.get('beginsWith').errors?.required">This value is required</mat-error>
-    </mat-form-field>
-    <mat-form-field class="template-then w-100">
-        <mat-label>Then</mat-label>
-        <mat-select name="then" formControlName="then" required>
-            <mat-option class="then-option" value="/">/</mat-option>
-            <mat-option class="then-option" value="#">#</mat-option>
-            <mat-option class="then-option" value=":">:</mat-option>
-        </mat-select>
-    </mat-form-field>
-    <mat-form-field class="template-ends-with w-100">
-        <mat-label class="control-label" for="endsWith">Ends With</mat-label>
-        <mat-select name="endsWith" formControlName="endsWith" required>
-            <mat-option *ngFor="let localName of localNameOptions" [value]="localName.value">
-                {{localName.text}}
-            </mat-option>
-        </mat-select>
-        <mat-hint>Duplicate values will create a single individual with combined data.<br>Blank values will not be skipped. They will instead generate instances with no local names.<br>Any whitespace will be removed to create valid IRIs.</mat-hint>
-    </mat-form-field>
-</form>
+<div mat-dialog-content>
+  <p class="help-text">
+    Enter the IRI template. Type <code>&#36;&#123;</code> to insert column values or UUID.
+  </p>
+
+  <app-trigger-mention-input
+    [formControl]="templateControl"
+    [triggerConfig]="triggerConfig"
+    [suggestions]="columnSuggestions"
+    [patternValidator]="validatePattern"
+    [resolveValidator]="validateResolvedIri"
+    [required]="true"
+    label="IRI Template"
+    [placeholder]="'https://example.com/class/\${Column}'"
+    hint="Whitespace in values will be removed. Duplicate values create single individuals.">
+  </app-trigger-mention-input>
+
+  <div class="example-iri mt-2" *ngIf="exampleIri">
+    <strong>Example: </strong><span class="example-value">{{ exampleIri }}</span>
+  </div>
+</div>
 <div mat-dialog-actions>
-    <button mat-raised-button [mat-dialog-close]="">Cancel</button>
-    <button mat-raised-button color="primary" (click)="set()" [disabled]="iriTemplateForm.invalid">Submit</button>
+  <button mat-raised-button [mat-dialog-close]="">Cancel</button>
+  <button mat-raised-button color="primary" (click)="set()" [disabled]="!isValid">Submit</button>
 </div>

@@ -134,20 +134,21 @@ export class MappingManagerService {
     return MAPPINGS + this.camelCase.transform(mappingTitle, 'class');
   }
   /**
-   * Edits the IRI template of a class mapping specified by id in a mapping. Sets the `hasPrefix` and `localName`
-   * properties of the class mapping.
+   * Edits the IRI template of a class mapping specified by id in a mapping. Sets the `iriTemplate` property and clears
+   * the legacy `hasPrefix` and `localName` properties of the class mapping.
    *
    * @param {Mapping} mapping The mapping JSON-LD array
    * @param {string} classMappingId The id of the class mapping whose IRI template will be edited
    * @param {string} prefix The new end of the prefix
    * @param {string} localNamePattern The new local name pattern. Must be in the following format: `${index/UUID}`
    */
-  editIriTemplate(mapping: Mapping, classMappingId: string, prefix: string, localNamePattern: string): void {
+  editIriTemplate(mapping: Mapping, classMappingId: string, iriTemplate: string): void {
     // Check if class mapping exists in mapping
     const classMapping = mapping.getClassMapping(classMappingId);
     if (classMapping) {
-      classMapping[`${DELIM}hasPrefix`] = [{ '@value': prefix }];
-      classMapping[`${DELIM}localName`] = [{ '@value': localNamePattern }];
+      delete classMapping[`${DELIM}hasPrefix`];
+      delete classMapping[`${DELIM}localName`];
+      classMapping[`${DELIM}iriTemplate`] = [{ '@value': iriTemplate }];
     }
   }
 

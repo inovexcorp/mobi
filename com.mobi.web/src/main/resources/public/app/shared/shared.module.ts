@@ -109,6 +109,7 @@ import { SettingGroupComponent } from './components/settingGroup/settingGroup.co
 import { SidebarComponent } from './components/sidebar/sidebar.component';
 import { SpinnerComponent } from './components/progress-spinner/components/spinner/spinner.component';
 import { StaticIriComponent } from '../shared/components/staticIri/staticIri.component';
+import { TriggerMentionInputComponent } from './components/triggerMentionInput/triggerMentionInput.component';
 import { UnmaskPasswordComponent } from './components/unmaskPassword/unmaskPassword.component';
 import { UserAccessControlsComponent } from './components/userAccessControls/userAccessControls.component';
 import { ValueDisplayComponent } from './components/valueDisplay/valueDisplay.component';
@@ -264,6 +265,7 @@ import { MobiErrorStateMatcher } from './MobiErrorStateMatcher';
     SpinnerComponent,
     SplitIRIPipe,
     StaticIriComponent,
+    TriggerMentionInputComponent,
     TrustedHtmlPipe,
     UnmaskPasswordComponent,
     UserAccessControlsComponent,
@@ -358,6 +360,7 @@ import { MobiErrorStateMatcher } from './MobiErrorStateMatcher';
     SpinnerComponent,
     SplitIRIPipe,
     StaticIriComponent,
+    TriggerMentionInputComponent,
     TrustedHtmlPipe,
     UnmaskPasswordComponent,
     UserAccessControlsComponent,
