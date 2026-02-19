@@ -24,6 +24,7 @@ import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 import { MatIconModule } from '@angular/material/icon';
@@ -74,6 +75,8 @@ describe('LogLevelManagerComponent', () => {
     TestBed.configureTestingModule({
       imports: [
         NoopAnimationsModule,
+        FormsModule,
+        ReactiveFormsModule,
         MatButtonModule,
         MatIconModule,
         MatTableModule

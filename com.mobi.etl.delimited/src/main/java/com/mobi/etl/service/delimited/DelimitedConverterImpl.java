@@ -90,7 +90,7 @@ import java.util.regex.Pattern;
 public class DelimitedConverterImpl implements DelimitedConverter {
     private static final Logger LOGGER = LoggerFactory.getLogger(DelimitedConverterImpl.class);
     private static final String LOCAL_NAME_PATTERN = "\\$\\{(\\d+|UUID)}";
-    private static final String DEFAULT_PREFIX = "http://mobi.com/data/";
+    private static final String DEFAULT_PREFIX = "http://mobi.solutions/data/";
 
     private final ValueFactory valueFactory = new ValidatingValueFactory();
     private final ModelFactory modelFactory = new DynamicModelFactory();
@@ -277,16 +277,22 @@ public class DelimitedConverterImpl implements DelimitedConverter {
         if (mappedClasses.containsKey(cm.getResource())) {
             classInstance = mappedClasses.get(cm.getResource());
         } else {
-            Optional<String> nameOptional = generateLocalName(cm, nextLine);
-            if (nameOptional.isEmpty()) {
-                return convertedRDF;
-            }
+            if (cm.getIriTemplate().isPresent()) {
+                Optional<String> filledTemplate = fillIriTemplate(cm, nextLine);
+                if (filledTemplate.isEmpty()) {
+                    return convertedRDF;
+                }
+                classInstance = valueFactory.createIRI(filledTemplate.get());
+            } else if (cm.getHasPrefix().isPresent() || cm.getLocalName().isPresent()) {
+                Optional<String> nameOptional = generateLocalName(cm, nextLine);
+                if (nameOptional.isEmpty()) {
+                    return convertedRDF;
+                }
 
-            Iterator<String> prefixes = cm.getHasPrefix().iterator();
-            if (prefixes.hasNext()) {
-                classInstance = valueFactory.createIRI(prefixes.next() + nameOptional.get());
+                String prefix = cm.getHasPrefix().orElse(DEFAULT_PREFIX);
+                classInstance = valueFactory.createIRI(prefix + nameOptional.get());
             } else {
-                classInstance = valueFactory.createIRI(DEFAULT_PREFIX + nameOptional.get());
+                classInstance = valueFactory.createIRI(DEFAULT_PREFIX + generateUuid());
             }
         }
 
@@ -377,13 +383,24 @@ public class DelimitedConverterImpl implements DelimitedConverter {
             if (mappedClasses.containsKey(targetClassMapping.getResource())) {
                 targetIri = mappedClasses.get(targetClassMapping.getResource());
             } else {
-                Optional<String> targetNameOptional = generateLocalName(targetClassMapping, nextLine);
-                if (targetNameOptional.isEmpty()) {
-                    return;
+                if (targetClassMapping.getIriTemplate().isPresent()) {
+                    Optional<String> filledTemplate = fillIriTemplate(targetClassMapping, nextLine);
+                    if (filledTemplate.isEmpty()) {
+                        return;
+                    }
+                    targetIri = valueFactory.createIRI(filledTemplate.get());
+                } else if (targetClassMapping.getLocalName().isPresent()
+                        || targetClassMapping.getHasPrefix().isPresent()) {
+                    Optional<String> targetNameOptional = generateLocalName(targetClassMapping, nextLine);
+                    if (targetNameOptional.isEmpty()) {
+                        return;
+                    } else {
+                        String prefix = targetClassMapping.getHasPrefix().orElse(DEFAULT_PREFIX);
+                        targetIri = valueFactory.createIRI(prefix + targetNameOptional.get());
+                        mappedClasses.put(targetClassMapping.getResource(), targetIri);
+                    }
                 } else {
-                    targetIri = valueFactory.createIRI(targetClassMapping.getHasPrefix().iterator().next()
-                            + targetNameOptional.get());
-                    mappedClasses.put(targetClassMapping.getResource(), targetIri);
+                    return;
                 }
             }
 
@@ -391,6 +408,56 @@ public class DelimitedConverterImpl implements DelimitedConverter {
         });
 
         return convertedRDF;
+    }
+
+    Optional<String> fillIriTemplate(ClassMapping cm, String[] currentLine) {
+        Optional<String> templateOptional = cm.getIriTemplate();
+        if (templateOptional.isEmpty()) {
+            return Optional.of(DEFAULT_PREFIX + generateUuid());
+        }
+
+        String template = templateOptional.get();
+        Pattern pat = Pattern.compile(LOCAL_NAME_PATTERN);
+        Matcher mat = pat.matcher(template);
+
+        // If no patterns found, return the original string
+        if (!mat.find()) {
+            return Optional.of(template);
+        }
+
+        // Reset matcher to process from the beginning
+        mat.reset();
+
+        StringBuilder result = new StringBuilder();
+        boolean hasNonEmptyReplacement = false;
+
+        while (mat.find()) {
+            String capture = mat.group(1);
+            String replacement;
+
+            if ("UUID".equals(capture)) {
+                replacement = UUID.randomUUID().toString();
+                hasNonEmptyReplacement = true;
+            } else {
+                int index = Integer.parseInt(capture);
+                if (currentLine != null && index >= 0 && index < currentLine.length) {
+                    replacement = currentLine[index];
+                    if (!replacement.isEmpty()) {
+                        hasNonEmptyReplacement = true;
+                    }
+                } else {
+                    // Out of bounds - replace with empty string
+                    replacement = "";
+                }
+            }
+
+            mat.appendReplacement(result, Matcher.quoteReplacement(replacement));
+        }
+
+        mat.appendTail(result);
+
+        // If all replacements were empty strings, return empty Optional
+        return hasNonEmptyReplacement ? Optional.of(result.toString()) : Optional.empty();
     }
 
     /**

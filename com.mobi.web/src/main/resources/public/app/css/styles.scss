@@ -470,3 +470,20 @@ mat-paginator.dark-theme .mat-mdc-paginator-page-size-label,
 mat-paginator.dark-theme .mat-mdc-paginator-range-label {
   color: #b0b0b0;
 }
+
+// TriggerMentionComponent innerHTML styles
+.styled-overlay {
+  .pattern-valid {
+    background-color: rgba(25, 118, 210, 0.15);
+    border-radius: 3px;
+    color: #1976d2;
+    // Use text-shadow instead of font-weight to avoid character width shift
+    text-shadow: 0 0 0.5px currentColor, 0 0 0.5px currentColor;
+  }
+  
+  .pattern-invalid {
+    background-color: rgba(244, 67, 54, 0.15);
+    border-radius: 3px;
+    color: #f44336;
+  }
+}

@@ -130,11 +130,16 @@ export class ClassMappingDetailsComponent {
     }
   }
 
+  /**
+   * Sets the IRI template string for the selected class mapping based on its properties. Prioritizes the `iriTemplate`
+   * property, but falls back to the legacy `hasPrefix` and `localName` properties if `iriTemplate` is not set.
+   */
   setIriTemplate(): void {
     const classMapping = this.state.selected.mapping.getClassMapping(this.classMappingId);
+    const iriTemplate = getPropertyValue(classMapping, `${DELIM}iriTemplate`);
     const prefix = getPropertyValue(classMapping, `${DELIM}hasPrefix`);
     const localName = getPropertyValue(classMapping, `${DELIM}localName`);
-    this.iriTemplate = prefix + localName;
+    this.iriTemplate = iriTemplate || prefix + localName;
   }
 
   getPropValue(propMapping: JSONLDObject): string {

@@ -759,46 +759,100 @@ export class MapperStateService {
   }
   /**
    * Updates the additions and deletions of the current mapping appropriately when a single property
-   * value is changed.
+   * value is changed. Handles cases where the new value reverts to the original value, overwriting previous changes,
+   * adding new changes, and clearing the property.
    *
    * @param {string} entityId The ID of the entity in the mapping whose property value was changed
    * @param {string} propId The ID of the property that was changed
-   * @param {string} newValue The new value of the property
+   * @param {string} newValue The new value of the property (can be undefined or empty string)
    * @param {string} originalValue The original value of the property
    * @param {boolean} [isId=false] True if it has an '@id'
    */
   changeProp(entityId: string, propId: string, newValue: string, originalValue: string, isId = false): void {
-    if (newValue !== originalValue) {
-      const valueKey = isId ? '@id' : '@value';
-      let additionsObj = find(this.selected.difference.additions as JSONLDObject[], { '@id': entityId });
-      let deletionsObj = find(this.selected.difference.deletions as JSONLDObject[], { '@id': entityId });
-      if (additionsObj) {
-        const deletionsValue = isId ? getPropertyId(deletionsObj, propId)
-          : getPropertyValue(deletionsObj, propId);
-        if (deletionsValue === newValue) {
-          delete additionsObj[propId];
-          if (isEqual(additionsObj, { '@id': entityId })) {
-            remove(this.selected.difference.additions as JSONLDObject[], additionsObj);
-          }
-          delete deletionsObj[propId];
-          if (isEqual(deletionsObj, { '@id': entityId })) {
-            remove(this.selected.difference.deletions as JSONLDObject[], deletionsObj);
-          }
-        } else {
-          additionsObj[propId] = [{ [valueKey]: newValue }];
-          if (deletionsObj && originalValue && !has(deletionsObj, `['${propId}']`)) {
-            deletionsObj[propId] = [{ [valueKey]: originalValue }];
-          }
-        }
-      } else {
-        additionsObj = { '@id': entityId, [propId]: [{ [valueKey]: newValue }] };
-        (this.selected.difference.additions as JSONLDObject[]).push(additionsObj);
+    if (newValue === originalValue) {
+      return; // Early return for no change
+    }
 
-        if (originalValue) {
-          deletionsObj = { '@id': entityId, [propId]: [{ [valueKey]: originalValue }] };
-          (this.selected.difference.deletions as JSONLDObject[]).push(deletionsObj);
-        }
+    const valueKey = isId ? '@id' : '@value';
+    let additionsObj = find(this.selected.difference.additions as JSONLDObject[], { '@id': entityId });
+    const deletionsObj = find(this.selected.difference.deletions as JSONLDObject[], { '@id': entityId });
+
+    const deletionsValue = isId ? getPropertyId(deletionsObj, propId) : getPropertyValue(deletionsObj, propId);
+    const additionsValue = isId ? getPropertyId(additionsObj, propId) : getPropertyValue(additionsObj, propId);
+
+    // Check if reverting to original value OR clearing a newly added property
+    const isRevertingToOriginal = deletionsValue === newValue && deletionsValue;
+    const isClearingAddedProperty = !newValue && additionsValue && !originalValue;
+
+    if (isRevertingToOriginal || isClearingAddedProperty) {
+      // Remove from both additions and deletions
+      this._removePropFromDiff(additionsObj, propId, this.selected.difference.additions as JSONLDObject[]);
+      this._removePropFromDiff(deletionsObj, propId, this.selected.difference.deletions as JSONLDObject[]);
+      return;
+    }
+
+    // Handle additions
+    if (newValue) {
+      if (!additionsObj) {
+        additionsObj = { '@id': entityId };
+        (this.selected.difference.additions as JSONLDObject[]).push(additionsObj);
       }
+      additionsObj[propId] = [{ [valueKey]: newValue }];
+    } else if (additionsObj) {
+      // Clearing to empty - remove from additions if present
+      this._removePropFromDiff(additionsObj, propId, this.selected.difference.additions as JSONLDObject[]);
+    }
+
+    // Handle deletions - only add if there's an original value and we haven't just added it
+    if (originalValue && additionsValue !== originalValue) {
+      this._ensureDeletionsEntry(deletionsObj, entityId, propId, originalValue, valueKey);
+    }
+  }
+
+  /**
+   * Helper to ensure a property is added to deletions (creates objects as needed)
+   * 
+   * @param {JSONLDObject | undefined} deletionsObj The deletions object to add the property to
+   * @param {string} entityId The entity ID
+   * @param {string} propId The property ID
+   * @param {string} originalValue The original value to add to the deletions object
+   * @param {string} valueKey The key to use for the value ('@id' or '@value')
+   */
+  private _ensureDeletionsEntry(
+    deletionsObj: JSONLDObject | undefined, 
+    entityId: string, 
+    propId: string, 
+    originalValue: string, 
+    valueKey: string
+  ): void {
+    if (!deletionsObj) {
+      const newDeletionsObj = { '@id': entityId, [propId]: [{ [valueKey]: originalValue }] };
+      (this.selected.difference.deletions as JSONLDObject[]).push(newDeletionsObj);
+    } else if (!has(deletionsObj, `['${propId}']`)) {
+      deletionsObj[propId] = [{ [valueKey]: originalValue }];
+    }
+  }
+
+  /**
+   * Helper to remove a property from a diff object and clean up empty objects
+   * 
+   * @param {JSONLDObject | undefined} diffObj The object to remove the property from
+   * @param {string} propId The property ID to remove
+   * @param {JSONLDObject[]} diffArray The array the diff object is contained in
+   */
+  private _removePropFromDiff(
+    diffObj: JSONLDObject | undefined, 
+    propId: string, 
+    diffArray: JSONLDObject[]
+  ): void {
+    if (!diffObj) {
+      return;
+    }
+    
+    delete diffObj[propId];
+    
+    if (isEqual(diffObj, { '@id': diffObj['@id'] })) {
+      remove(diffArray, diffObj);
     }
   }
   /**

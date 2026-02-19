@@ -1,0 +1,68 @@
+<!--
+  #%L
+  com.mobi.web
+  $Id:$
+  $HeadURL:$
+  %%
+  Copyright (C) 2016 - 2026 iNovex Information Systems, Inc.
+  %%
+  This program is free software: you can redistribute it and/or modify
+  it under the terms of the GNU Affero General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+
+  This program is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+
+  You should have received a copy of the GNU Affero General Public License
+  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+  #L%
+-->
+<mat-form-field class="trigger-mention-field w-100">
+  <mat-label *ngIf="label">{{ label }}</mat-label>
+
+  <!-- Styled overlay for visual pattern highlighting - positioned inside mat-form-field-infix -->
+  <div class="styled-overlay"
+       [innerHTML]="styledValue | safeHtml: 'html'"
+       aria-hidden="true"></div>
+
+  <!-- Actual input with transparent text -->
+  <input matInput
+         #inputElement
+         #autoTrigger="matAutocompleteTrigger"
+         [formControl]="inputControl"
+         [placeholder]="placeholder"
+         [required]="required"
+         [matAutocomplete]="mentionAutocomplete"
+         (input)="onInput($event)"
+         (keydown)="onKeydown($event)"
+         (blur)="onBlur()"
+         (focus)="onFocus()"
+         class="transparent-input"
+         autocomplete="off"
+         spellcheck="false" />
+
+  <!-- Use mat-autocomplete for proper CDK Overlay positioning -->
+  <mat-autocomplete #mentionAutocomplete="matAutocomplete"
+                    (optionSelected)="onAutocompleteSelected($event)"
+                    (opened)="onPanelOpened()"
+                    (closed)="onPanelClosed()"
+                    [autoActiveFirstOption]="true"
+                    [displayWith]="displayFn"
+                    class="trigger-mention-autocomplete">
+    <mat-option *ngFor="let option of filteredSuggestions; let i = index"
+                [value]="option"
+                [class.highlighted]="i === highlightedIndex">
+      <span class="option-text">{{ option.displayText }}</span>
+      <span class="option-preview text-muted mr-1" *ngIf="option.metadata?.preview"> - {{ option.metadata.preview }}</span>
+    </mat-option>
+  </mat-autocomplete>
+
+  <mat-hint *ngIf="hint">{{ hint }}</mat-hint>
+  <mat-error *ngIf="inputControl.hasError('required')">This field is required</mat-error>
+  <mat-error *ngIf="inputControl.hasError('unclosedPattern')">Unclosed replacement pattern</mat-error>
+  <mat-error *ngIf="inputControl.hasError('invalidPattern')">Invalid column reference</mat-error>
+  <mat-error *ngIf="inputControl.hasError('invalidIri')">Invalid IRI when patterns are resolved</mat-error>
+</mat-form-field>

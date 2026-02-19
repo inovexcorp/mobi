@@ -225,16 +225,28 @@ describe('Mapping Manager service', function () {
   });
   describe('should set the IRI template of a class mapping', function () {
     it('unless it does not exist in the mapping', function () {
-      service.editIriTemplate(mappingStub, 'classId', 'test/', '${0}');
+      service.editIriTemplate(mappingStub, 'classId', 'test/${0}');
       expect(mappingStub.getClassMapping).toHaveBeenCalledWith('classId');
     });
-    it('successfully', function () {
-      const classMapping = Object.assign({}, emptyObj);
-      mappingStub.getClassMapping.and.returnValue(classMapping);
-      service.editIriTemplate(mappingStub, 'classId', 'test/', '${0}');
-      expect(mappingStub.getClassMapping).toHaveBeenCalledWith('classId');
-      expect(classMapping[`${DELIM}hasPrefix`]).toEqual([{ '@value': 'test/' }]);
-      expect(classMapping[`${DELIM}localName`]).toEqual([{ '@value': '${0}' }]);
+    describe('successfully', () => {
+      it('if hasPrefix and localName exists', () => {
+        const classMapping = Object.assign({}, emptyObj);
+        classMapping[`${DELIM}hasPrefix`] = [{ '@value': 'old/' }];
+        classMapping[`${DELIM}localName`] = [{ '@value': '${UUID}' }];
+        mappingStub.getClassMapping.and.returnValue(classMapping);
+        service.editIriTemplate(mappingStub, 'classId', 'test/${0}');
+        expect(mappingStub.getClassMapping).toHaveBeenCalledWith('classId');
+        expect(classMapping[`${DELIM}iriTemplate`]).toEqual([{ '@value': 'test/${0}' }]);
+        expect(classMapping[`${DELIM}hasPrefix`]).toBeUndefined();
+        expect(classMapping[`${DELIM}localName`]).toBeUndefined();
+      });
+      it('if hasPrefix and localName do not exist', () => {
+        const classMapping = Object.assign({}, emptyObj);
+        mappingStub.getClassMapping.and.returnValue(classMapping);
+        service.editIriTemplate(mappingStub, 'classId', 'test/${0}');
+        expect(mappingStub.getClassMapping).toHaveBeenCalledWith('classId');
+        expect(classMapping[`${DELIM}iriTemplate`]).toEqual([{ '@value': 'test/${0}' }]);
+      });
     });
   });
   it('should test whether a mapping entity is a class mapping', function () {

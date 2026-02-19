@@ -641,6 +641,27 @@ describe('Mapper State service', () => {
           expect(service.selected.difference.additions).toContain(expectedAddition);
           expect(service.selected.difference.deletions).toEqual([]);
         });
+        it('and the entity was opened and the property should be cleared', () => {
+          service.changeProp(entityId, propId, '', originalValue, true);
+          expect(service.selected.difference.additions).toEqual([]);
+          expect(service.selected.difference.deletions).toEqual([{'@id': entityId, [propId]: [{ '@id': originalValue }]}]);
+        });
+        it('and the property had been added and should now be cleared', () => {
+          const additionObj = { '@id': entityId, [propId]: [{ '@id': originalValue }] };
+          (service.selected.difference.additions as JSONLDObject[]).push(additionObj);
+          service.changeProp(entityId, propId, '', originalValue, true);
+          expect(service.selected.difference.additions).toEqual([]);
+          expect(service.selected.difference.deletions).toEqual([]);
+        });
+        it('and the property was edited and should now be cleared', () => {
+          const additionObj = { '@id': entityId, [propId]: [{ '@id': originalValue }] };
+          (service.selected.difference.additions as JSONLDObject[]).push(additionObj);
+          const deletionObj = { '@id': entityId, [propId]: [{ '@id': otherValue }] };
+          (service.selected.difference.deletions as JSONLDObject[]).push(deletionObj);
+          service.changeProp(entityId, propId, '', originalValue, true);
+          expect(service.selected.difference.additions).toEqual([]);
+          expect(service.selected.difference.deletions).toEqual([{'@id': entityId, [propId]: [{ '@id': otherValue }]}]);
+        });
         it('and the entity was opened and another property was altered', () => {
           const additionObj = { '@id': entityId };
           (service.selected.difference.additions as JSONLDObject[]).push(additionObj);

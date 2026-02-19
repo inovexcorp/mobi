@@ -346,8 +346,7 @@ export class Mapping {
       '@id': `${this.getMappingEntity()['@id']}/${uuidv4()}`,
       '@type': [`${DELIM}ClassMapping`],
       [`${DELIM}mapsTo`]: [{'@id': classId}],
-      [`${DELIM}hasPrefix`]: [{'@value': prefix}],
-      [`${DELIM}localName`]: [{'@value': '${UUID}'}]
+      [`${DELIM}iriTemplate`]: [{'@value': prefix + '${UUID}'}],
     };
     this.jsonld.push(classMapping);
     return classMapping;
