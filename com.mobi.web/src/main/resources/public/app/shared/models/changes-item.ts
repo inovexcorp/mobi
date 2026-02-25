@@ -33,5 +33,6 @@ export interface ChangesItem {
   disableAll: boolean,
   showFull: boolean,
   resource: JSONLDObject,
-  isBlankNode: boolean
+  isBlankNode: boolean,
+  deleted?: boolean
 }

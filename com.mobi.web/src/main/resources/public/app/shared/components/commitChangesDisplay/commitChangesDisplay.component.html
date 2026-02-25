@@ -29,7 +29,11 @@
                         <div class="text-truncate">{{changesItem.entityName}}</div>
                     </mat-panel-title>
                     <mat-panel-description class="remove-min-width text-truncate" title="{{changesItem.id}}">
-                        <small class="text-truncate">{{changesItem.id}}</small> 
+                        <small *ngIf="!goToEnabled || changesItem.isBlankNode || changesItem.deleted"
+                               class="text-truncate">{{changesItem.id}}</small>
+                        <a class="text-truncate"
+                           *ngIf="goToEnabled && !changesItem.isBlankNode && !changesItem.deleted"
+                           (click)="goToEntity($event, changesItem.id)">{{changesItem.id}}</a>
                     </mat-panel-description>
                 </mat-expansion-panel-header>
                 <ng-template matExpansionPanelContent>
@@ -40,7 +44,6 @@
         </mat-accordion>
         <div class="text-center">
             <button *ngIf="hasMoreResults" mat-stroked-button color="primary" (click)="loadMore()">Load More</button>
-            <!-- <a *ngIf="hasMoreResults" (click)="loadMore()"><i class="fa fa-fw fa-plus"></i><span>Load More</span></a> -->
         </div>
     </div>
 </div>
