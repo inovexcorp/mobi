@@ -40,7 +40,9 @@
             [entityNameFunc]="getEntityName.bind(this)"
             [hasMoreResults]="hasMoreResults"
             (showMoreResultsEmitter)="setResults($event?.limit, $event?.offset)"
-            [startIndex]="index"></commit-changes-display>
+            [startIndex]="index"
+            [goToEnabled]="isOntologyRecord">
+          </commit-changes-display>
         </div>
       </div>
       <div class="col d-flex remove-min-width horizontal-scroll">

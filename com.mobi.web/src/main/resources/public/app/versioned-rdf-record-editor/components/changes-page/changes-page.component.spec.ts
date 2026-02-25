@@ -20,33 +20,34 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { DebugElement } from '@angular/core';
-import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { By } from '@angular/platform-browser';
-import { MockComponent, MockProvider } from 'ng-mocks';
-import { range, map } from 'lodash';
-import { MatExpansionModule } from '@angular/material/expansion';
-import { MatTooltipModule } from '@angular/material/tooltip';
-import { of, throwError } from 'rxjs';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
+import { DebugElement } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { HttpResponse } from '@angular/common/http';
+import { MatExpansionModule } from '@angular/material/expansion';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 
-import { cleanStylesFromDOM, MockVersionedRdfState } from '../../../../test/ts/Shared';
-import { InfoMessageComponent } from '../../../shared/components/infoMessage/infoMessage.component';
-import { Difference } from '../../../shared/models/difference.class';
-import { CommitHistoryTableComponent } from '../../../shared/components/commitHistoryTable/commitHistoryTable.component';
-import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
+import { MockComponent, MockProvider } from 'ng-mocks';
+import { of, throwError } from 'rxjs';
+import { range, map } from 'lodash';
+
 import { CATALOG } from '../../../prefixes';
-import { ToastService } from '../../../shared/services/toast.service';
-import { CommitCompiledResourceComponent } from '../../../shared/components/commitCompiledResource/commitCompiledResource.component';
+import { CatalogManagerService } from '../../../shared/services/catalogManager.service';
+import { cleanStylesFromDOM, MockVersionedRdfState } from '../../../../test/ts/Shared';
 import { Commit } from '../../../shared/models/commit.interface';
-import { VersionedRdfListItem } from '../../../shared/models/versionedRdfListItem.class';
-import { stateServiceToken } from '../../../shared/injection-token';
-import { VersionedRdfState } from '../../../shared/services/versionedRdfState.service';
-import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
 import { CommitChangesDisplayComponent } from '../../../shared/components/commitChangesDisplay/commitChangesDisplay.component';
+import { CommitCompiledResourceComponent } from '../../../shared/components/commitCompiledResource/commitCompiledResource.component';
+import { CommitHistoryTableComponent } from '../../../shared/components/commitHistoryTable/commitHistoryTable.component';
+import { Difference } from '../../../shared/models/difference.class';
+import { InfoMessageComponent } from '../../../shared/components/infoMessage/infoMessage.component';
+import { JSONLDObject } from '../../../shared/models/JSONLDObject.interface';
+import { stateServiceToken } from '../../../shared/injection-token';
+import { ToastService } from '../../../shared/services/toast.service';
+import { VersionedRdfListItem } from '../../../shared/models/versionedRdfListItem.class';
+import { VersionedRdfState } from '../../../shared/services/versionedRdfState.service';
 import { ChangesPageComponent } from './changes-page.component';
 
 describe('Changes Page component', function() {
