@@ -12,12 +12,12 @@ package com.mobi.sparql.rest.impl;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
@@ -25,6 +25,7 @@ package com.mobi.sparql.rest.impl;
 
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getModelFactory;
 import static com.mobi.rdf.orm.test.OrmEnabledTestCase.getValueFactory;
+import static com.mobi.rest.util.RestUtils.SPARQL_JSON_MIME_TYPE;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNull;
@@ -1083,7 +1084,7 @@ public class SparqlRestTest extends MobiRestTestCXF {
             }
 
             assertEquals(200, response.getStatus());
-            assertEquals(MediaType.APPLICATION_JSON, response.getHeaderString("Content-Type"));
+            assertEquals(SPARQL_JSON_MIME_TYPE, response.getHeaderString("Content-Type"));
             assertNull(response.getHeaderString("X-LIMIT-EXCEEDED"));
 
             ObjectNode result = mapper.readValue(response.readEntity(String.class), ObjectNode.class);
@@ -1128,7 +1129,7 @@ public class SparqlRestTest extends MobiRestTestCXF {
             }
 
             assertEquals(200, response.getStatus());
-            assertEquals(MediaType.APPLICATION_JSON, response.getHeaderString("Content-Type"));
+            assertEquals(SPARQL_JSON_MIME_TYPE, response.getHeaderString("Content-Type"));
             assertNull(response.getHeaderString("X-LIMIT-EXCEEDED"));
 
             ObjectNode result = mapper.readValue(response.readEntity(String.class), ObjectNode.class);
@@ -1177,7 +1178,7 @@ public class SparqlRestTest extends MobiRestTestCXF {
             }
 
             assertEquals(200, response.getStatus());
-            assertEquals(MediaType.APPLICATION_JSON, response.getHeaderString("Content-Type"));
+            assertEquals(SPARQL_JSON_MIME_TYPE, response.getHeaderString("Content-Type"));
             assertNull(response.getHeaderString("X-LIMIT-EXCEEDED"));
 
             ObjectNode result = mapper.readValue(response.readEntity(String.class), ObjectNode.class);
@@ -1223,7 +1224,7 @@ public class SparqlRestTest extends MobiRestTestCXF {
             }
 
             assertEquals(200, response.getStatus());
-            assertEquals(MediaType.APPLICATION_JSON, response.getHeaderString("Content-Type"));
+            assertEquals(SPARQL_JSON_MIME_TYPE, response.getHeaderString("Content-Type"));
             assertEquals("500", response.getHeaderString("X-LIMIT-EXCEEDED"));
 
             ObjectNode result = mapper.readValue(response.readEntity(String.class), ObjectNode.class);

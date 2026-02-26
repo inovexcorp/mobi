@@ -967,11 +967,17 @@ public class SparqlRest {
     private Response handleSelectQueryEagerly(String queryString, Resource resourceId, String storeType,
                                               String mimeType, int limit,VersionedRDFRecordParams rdfRecordParams)
             throws IOException {
-        if (!JSON_MIME_TYPE.equals(mimeType)) {
-            logger.debug(String.format("Invalid mimeType [%s]: defaulted to [%s]", mimeType, JSON_MIME_TYPE));
+        //Null Case
+        if(mimeType == null){
+            mimeType = SPARQL_JSON_MIME_TYPE;
+        }
+
+        if (!JSON_MIME_TYPE.equals(mimeType) && !SPARQL_JSON_MIME_TYPE.equals(mimeType)) {
+            logger.debug(String.format("Invalid mimeType [%s]: defaulted to [%s]", mimeType, SPARQL_JSON_MIME_TYPE));
+            mimeType = SPARQL_JSON_MIME_TYPE;
         }
         return getSelectQueryResponseEagerly(queryString, resourceId, storeType,
-                TupleQueryResultFormat.JSON, JSON_MIME_TYPE, limit, rdfRecordParams);
+                TupleQueryResultFormat.JSON, mimeType, limit, rdfRecordParams);
     }
 
     /**
