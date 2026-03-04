@@ -813,6 +813,7 @@ public class CatalogRest {
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getUnversionedDistributions(
             @Context UriInfo uriInfo,
             @Parameter(description = "String representing the Catalog ID", required = true)
@@ -823,6 +824,7 @@ public class CatalogRest {
                     allowableValues = {"http://purl.org/dc/terms/modified", "http://purl.org/dc/terms/issued",
                             "http://purl.org/dc/terms/title"},
                     required = true))
+            @DefaultValue("http://purl.org/dc/terms/title")
             @QueryParam("sort") String sort,
             @Parameter(description = "Offset for the page")
             @DefaultValue("0") @QueryParam("offset") int offset,
@@ -877,6 +879,7 @@ public class CatalogRest {
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response createUnversionedDistribution(
             @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Catalog ID", required = true)
@@ -938,6 +941,7 @@ public class CatalogRest {
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR")
             }
     )
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getUnversionedDistribution(
             @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
@@ -984,6 +988,7 @@ public class CatalogRest {
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR")
             }
     )
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response deleteUnversionedDistribution(
             @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
@@ -1032,6 +1037,7 @@ public class CatalogRest {
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR")
             }
     )
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response updateUnversionedDistribution(
             @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
@@ -1092,6 +1098,7 @@ public class CatalogRest {
             @Parameter(description = "String representing the VersionedRecord ID", required = true)
             @PathParam("recordId") String recordId,
             @Parameter(description = "Field with sort order specified", required = true)
+            @DefaultValue("http://purl.org/dc/terms/title")
             @QueryParam("sort") String sort,
             @Parameter(description = "Offset for the page")
             @DefaultValue("0") @QueryParam("offset") int offset,
@@ -1295,6 +1302,7 @@ public class CatalogRest {
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getLatestVersion(
             @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
@@ -1496,6 +1504,7 @@ public class CatalogRest {
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getVersionedDistributions(
             @Context UriInfo uriInfo,
             @Parameter(description = "String representing the Catalog ID", required = true)
@@ -1505,6 +1514,7 @@ public class CatalogRest {
             @Parameter(description = "String representing the Version ID", required = true)
             @PathParam("versionId") String versionId,
             @Parameter(description = "Field with sort order specified", required = true)
+            @DefaultValue("http://purl.org/dc/terms/title")
             @QueryParam("sort") String sort,
             @Parameter(description = "Offset for the page")
             @DefaultValue("0") @QueryParam("offset") int offset,
@@ -1560,6 +1570,7 @@ public class CatalogRest {
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response createVersionedDistribution(
             @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Catalog ID", required = true)
@@ -1626,6 +1637,7 @@ public class CatalogRest {
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR")
             }
     )
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getVersionedDistribution(
             @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
@@ -1676,6 +1688,7 @@ public class CatalogRest {
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR")
             }
     )
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response deleteVersionedDistribution(
             @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
@@ -1728,6 +1741,7 @@ public class CatalogRest {
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR")
             }
     )
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response updateVersionedDistribution(
             @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
@@ -1778,6 +1792,7 @@ public class CatalogRest {
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getVersionCommit(
             @Parameter(description = "String representing the Catalog ID", required = true)
             @PathParam("catalogId") String catalogId,
@@ -2784,6 +2799,7 @@ public class CatalogRest {
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response createInProgressCommit(
             @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Catalog ID", required = true)
@@ -2830,6 +2846,8 @@ public class CatalogRest {
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
+    @ActionId(value = Modify.TYPE)
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response getInProgressCommit(
             @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Catalog ID", required = true)
@@ -2881,6 +2899,7 @@ public class CatalogRest {
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
             }
     )
+    @ResourceId(type = ValueType.PATH, value = "recordId")
     public Response deleteInProgressCommit(
             @Context HttpServletRequest servletRequest,
             @Parameter(description = "String representing the Catalog ID", required = true)
