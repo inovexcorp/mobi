@@ -31,6 +31,9 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+import static org.ops4j.pax.exam.CoreOptions.cleanCaches;
+import static org.ops4j.pax.exam.CoreOptions.systemProperty;
+import static org.ops4j.pax.exam.CoreOptions.systemTimeout;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -41,11 +44,15 @@ import com.mobi.catalog.api.ontologies.mcat.VersionedRDFRecord;
 import com.mobi.itests.rest.utils.RestITUtils;
 import com.mobi.persistence.utils.ConnectionUtils;
 import com.mobi.repository.api.OsgiRepository;
+
+import org.apache.commons.io.IOUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpStatus;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpDelete;
+import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.methods.HttpPut;
 import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
@@ -91,17 +98,18 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+
 import javax.inject.Inject;
 
 @RunWith(PaxExam.class)
 @ExamReactorStrategy(PerClass.class)
-public class OntologyRestIT extends KarafTestSupport {
+public class CatalogAndOntologyRestIT extends KarafTestSupport {
 
     private static Boolean setupComplete = false;
     private static final ObjectMapper mapper = new ObjectMapper();
 
     @Inject
-    protected static BundleContext thisBundleContext;
+    protected BundleContext thisBundleContext;
 
     private final HttpClientContext context = HttpClientContext.create();
 
@@ -120,7 +128,10 @@ public class OntologyRestIT extends KarafTestSupport {
                     KarafDistributionOption.replaceConfigurationFile("etc/org.ops4j.pax.logging.cfg",
                             Paths.get(Objects.requireNonNull(this.getClass().getResource("/etc/org.ops4j.pax.logging.cfg")).toURI()).toFile()),
                     KarafDistributionOption.editConfigurationFilePut("etc/com.mobi.security.api.EncryptionService.cfg", "enabled", "false"),
-                    CoreOptions.vmOptions("-Dcom.sun.xml.bind.v2.runtime.reflect.opt.OptimizedAccessorFactory.noOptimization=true")
+                    CoreOptions.vmOptions("-Dcom.sun.xml.bind.v2.runtime.reflect.opt.OptimizedAccessorFactory.noOptimization=true"),
+                    systemTimeout(120000),
+                    systemProperty("pax.exam.service.timeout").value("300000"),
+                    cleanCaches()
             ));
             return OptionUtils.combine(super.config(), options.toArray(new Option[0]));
         } catch (Exception e) {
@@ -142,10 +153,37 @@ public class OntologyRestIT extends KarafTestSupport {
         waitForService("(&(objectClass=com.mobi.ontology.impl.repository.SimpleOntologyManager))", 10000L);
         waitForService("(&(objectClass=com.mobi.jaas.rest.AuthRest))", 10000L);
         waitForService("(&(objectClass=com.mobi.ontology.rest.OntologyRest))", 10000L);
+        waitForService("(&(objectClass=com.mobi.catalog.rest.CatalogRest))", 10000L);
         waitForService("(&(objectClass=com.mobi.rdf.orm.impl.ThingFactory))", 10000L);
         waitForService("(&(objectClass=com.mobi.rdf.orm.conversion.ValueConverterRegistry))", 10000L);
 
         setupComplete = true;
+    }
+
+    @Test
+    public void testUpdateInProgressCommit() throws Exception {
+        String recordId;
+        HttpEntity entity = createUploadOntologyFormData("/BlankNodeRestrictionUpdate.ttl", "BlankNodeRestriction");
+
+        try (CloseableHttpClient client = createHttpClient(); CloseableHttpResponse response = uploadFile(client, entity)) {
+            assertEquals(HttpStatus.SC_CREATED, response.getStatusLine().getStatusCode());
+            String[] ids = parseAndValidateUploadResponse(response);
+            recordId = ids[0];
+        }
+
+        String additions = IOUtils.toString(thisBundleContext.getBundle().getEntry("/BlankNodeRestrictionUpdate-additions.jsonld").openStream(), StandardCharsets.UTF_8);
+        String deletions = IOUtils.toString(thisBundleContext.getBundle().getEntry("/BlankNodeRestrictionUpdate-deletions.jsonld").openStream(), StandardCharsets.UTF_8);
+        String result = IOUtils.toString(thisBundleContext.getBundle().getEntry("/BlankNodeRestrictionUpdate-inProgressCommit.jsonld").openStream(), StandardCharsets.UTF_8).replaceAll("\\s", "");;
+
+        HttpEntity inProgressCommitFormData = createUpdateInProgressCommitFormData(additions, deletions);
+        try (CloseableHttpClient client = createHttpClient(); CloseableHttpResponse response = updateInProgressCommit(client, inProgressCommitFormData, recordId)) {
+            assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
+        }
+
+        try (CloseableHttpClient client = createHttpClient(); CloseableHttpResponse response = getInProgressCommit(client, recordId)) {
+            assertEquals(HttpStatus.SC_OK, response.getStatusLine().getStatusCode());
+            assertEquals(result, EntityUtils.toString(response.getEntity()));
+        }
     }
 
     @Test
@@ -301,5 +339,45 @@ public class OntologyRestIT extends KarafTestSupport {
                     assertFalse(ConnectionUtils.contains(conn, null, null, null, graph)));
 
         }
+    }
+
+    private HttpEntity createUploadOntologyFormData(String filename, String title) throws IOException {
+        InputStream ontology = thisBundleContext.getBundle().getEntry(filename).openStream();
+        MultipartEntityBuilder mb = MultipartEntityBuilder.create();
+        mb.addBinaryBody("file", ontology, ContentType.APPLICATION_OCTET_STREAM, filename);
+        mb.addTextBody("title", title);
+        mb.addTextBody("description", "Test");
+        mb.addTextBody("keywords", "Test");
+        return mb.build();
+    }
+
+    
+
+    private HttpEntity createUpdateInProgressCommitFormData(String additions, String deletions) throws IOException {
+        MultipartEntityBuilder mb = MultipartEntityBuilder.create();
+        mb.addTextBody("additions", additions);
+        mb.addTextBody("deletions", deletions);
+        return mb.build();
+    }
+
+    private CloseableHttpResponse updateInProgressCommit(CloseableHttpClient client, HttpEntity entity, String recordId) throws IOException, GeneralSecurityException {
+        authenticateUser(context, RestITUtils.getHttpsPort(configurationAdmin));
+        String sb = getBaseUrl(RestITUtils.getHttpsPort(configurationAdmin)) +
+                "/catalogs/http%3A%2F%2Fmobi.com%2Fcatalog-local/records/" +
+                URLEncoder.encode(recordId, StandardCharsets.UTF_8) +
+                "/in-progress-commit";
+        HttpPut put = new HttpPut(sb);
+        put.setEntity(entity);
+        return client.execute(put, context);
+    }
+
+    private CloseableHttpResponse getInProgressCommit(CloseableHttpClient client, String recordId) throws IOException, GeneralSecurityException {
+        authenticateUser(context, RestITUtils.getHttpsPort(configurationAdmin));
+        String sb = getBaseUrl(RestITUtils.getHttpsPort(configurationAdmin)) +
+                "/catalogs/http%3A%2F%2Fmobi.com%2Fcatalog-local/records/" +
+                URLEncoder.encode(recordId, StandardCharsets.UTF_8) +
+                "/in-progress-commit";
+        HttpGet get = new HttpGet(sb);
+        return client.execute(get, context);
     }
 }

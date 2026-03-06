@@ -184,7 +184,7 @@ public class ExcelUtils {
         String dfStr = cell == null ? "" : Optional.ofNullable(cell.getDataFormatString()).orElse("");
         if (cell != null && cell.getType().equals(CellType.NUMBER)
                 && (cell.getDataFormatId() == null || !isADateFormat(cell.getDataFormatId(), dfStr))) {
-            if (!dfStr.isEmpty() && !dfStr.equals("@")) {
+            if (!dfStr.isEmpty() && !dfStr.equals("@") && !dfStr.equals("General")) {
                 boolean isExponential = false;
                 if (dfStr.contains("E+")) {
                     isExponential = true;

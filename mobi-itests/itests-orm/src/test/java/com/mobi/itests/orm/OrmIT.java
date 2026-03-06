@@ -23,6 +23,10 @@ package com.mobi.itests.orm;
  * #L%
  */
 
+import static org.ops4j.pax.exam.CoreOptions.cleanCaches;
+import static org.ops4j.pax.exam.CoreOptions.systemProperty;
+import static org.ops4j.pax.exam.CoreOptions.systemTimeout;
+
 import com.mobi.rdf.orm.Thing;
 import com.mobi.rdf.orm.conversion.ValueConverterRegistry;
 import com.mobi.rdf.orm.impl.ThingFactory;
@@ -83,7 +87,10 @@ public class OrmIT extends KarafTestSupport {
             List<Option> options = new ArrayList<>(Arrays.asList(
                     KarafDistributionOption.replaceConfigurationFile("etc/org.ops4j.pax.logging.cfg",
                             Paths.get(Objects.requireNonNull(this.getClass().getResource("/etc/org.ops4j.pax.logging.cfg")).toURI()).toFile()),
-                    KarafDistributionOption.editConfigurationFilePut("etc/com.mobi.security.api.EncryptionService.cfg", "enabled", "false")
+                    KarafDistributionOption.editConfigurationFilePut("etc/com.mobi.security.api.EncryptionService.cfg", "enabled", "false"),
+                    systemTimeout(120000),
+                    systemProperty("pax.exam.service.timeout").value("300000"),
+                    cleanCaches()
             ));
 
             try (Stream<Path> files = Files.list(getFileResource("/etc").toPath())) {

@@ -24,6 +24,9 @@ package com.mobi.itests.etl;
  */
 
 import static org.junit.Assert.assertTrue;
+import static org.ops4j.pax.exam.CoreOptions.cleanCaches;
+import static org.ops4j.pax.exam.CoreOptions.systemProperty;
+import static org.ops4j.pax.exam.CoreOptions.systemTimeout;
 
 import com.mobi.catalog.api.RecordManager;
 import com.mobi.catalog.api.record.config.OperationConfig;
@@ -76,7 +79,7 @@ public class EtlIT extends KarafTestSupport {
     private static File outputFile;
 
     @Inject
-    protected static BundleContext thisBundleContext;
+    protected BundleContext thisBundleContext;
 
     @Override
     public MavenArtifactUrlReference getKarafDistribution() {
@@ -90,7 +93,10 @@ public class EtlIT extends KarafTestSupport {
             List<Option> options = new ArrayList<>(Arrays.asList(
                     KarafDistributionOption.replaceConfigurationFile("etc/org.ops4j.pax.logging.cfg",
                             Paths.get(Objects.requireNonNull(this.getClass().getResource("/etc/org.ops4j.pax.logging.cfg")).toURI()).toFile()),
-                    KarafDistributionOption.editConfigurationFilePut("etc/com.mobi.security.api.EncryptionService.cfg", "enabled", "false")
+                    KarafDistributionOption.editConfigurationFilePut("etc/com.mobi.security.api.EncryptionService.cfg", "enabled", "false"),
+                    systemTimeout(120000),
+                    systemProperty("pax.exam.service.timeout").value("300000"),
+                    cleanCaches()
             ));
             return OptionUtils.combine(super.config(), options.toArray(new Option[0]));
         } catch (Exception e) {
