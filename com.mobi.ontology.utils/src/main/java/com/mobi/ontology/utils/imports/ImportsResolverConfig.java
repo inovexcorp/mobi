@@ -52,4 +52,12 @@ public @interface ImportsResolverConfig {
      */
     @AttributeDefinition(required = false, defaultValue = "10000")
     int readTimeout() default 10000;
+
+    /**
+     * Whether to disable web imports. If true, the resolver will not attempt to resolve imports from web URLs.
+     *
+     * @return True if web imports are disabled, false otherwise
+     */
+    @AttributeDefinition(required = false, defaultValue = "false")
+    boolean disableWebImports() default false;
 }
