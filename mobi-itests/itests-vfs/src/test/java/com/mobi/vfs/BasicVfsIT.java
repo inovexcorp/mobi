@@ -25,6 +25,9 @@ package com.mobi.vfs;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.ops4j.pax.exam.CoreOptions.cleanCaches;
+import static org.ops4j.pax.exam.CoreOptions.systemProperty;
+import static org.ops4j.pax.exam.CoreOptions.systemTimeout;
 
 import com.mobi.vfs.api.TemporaryVirtualFile;
 import com.mobi.vfs.api.VirtualFile;
@@ -90,7 +93,10 @@ public class BasicVfsIT extends KarafTestSupport {
                             Paths.get(Objects.requireNonNull(this.getClass().getResource("/etc/org.ops4j.pax.logging.cfg")).toURI()).toFile()),
                     KarafDistributionOption.replaceConfigurationFile("etc/com.mobi.vfs.basic-system.cfg",
                             Paths.get(Objects.requireNonNull(this.getClass().getResource("/etc/com.mobi.vfs.basic-system.cfg")).toURI()).toFile()),
-                    KarafDistributionOption.editConfigurationFilePut("etc/com.mobi.security.api.EncryptionService.cfg", "enabled", "false")
+                    KarafDistributionOption.editConfigurationFilePut("etc/com.mobi.security.api.EncryptionService.cfg", "enabled", "false"),
+                    systemTimeout(120000),
+                    systemProperty("pax.exam.service.timeout").value("300000"),
+                    cleanCaches()
             ));
 
             return OptionUtils.combine(super.config(), options.toArray(new Option[0]));

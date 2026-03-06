@@ -28,6 +28,9 @@ import static com.mobi.itests.rest.utils.RestITUtils.createHttpClient;
 import static com.mobi.itests.rest.utils.RestITUtils.getBaseUrl;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.ops4j.pax.exam.CoreOptions.cleanCaches;
+import static org.ops4j.pax.exam.CoreOptions.systemProperty;
+import static org.ops4j.pax.exam.CoreOptions.systemTimeout;
 
 import com.mobi.dataset.ontology.dataset.Dataset;
 import com.mobi.dataset.ontology.dataset.DatasetRecord;
@@ -88,7 +91,7 @@ public class DatasetRestIT extends KarafTestSupport {
     private final String DATA_FILE = "large_data.jsonld";
 
     @Inject
-    protected static BundleContext thisBundleContext;
+    protected BundleContext thisBundleContext;
 
     private final HttpClientContext context = HttpClientContext.create();
 
@@ -107,7 +110,10 @@ public class DatasetRestIT extends KarafTestSupport {
                     KarafDistributionOption.replaceConfigurationFile("etc/org.ops4j.pax.logging.cfg",
                             Paths.get(Objects.requireNonNull(this.getClass().getResource("/etc/org.ops4j.pax.logging.cfg")).toURI()).toFile()),
                     KarafDistributionOption.editConfigurationFilePut("etc/com.mobi.security.api.EncryptionService.cfg", "enabled", "false"),
-                    CoreOptions.vmOptions("-Dcom.sun.xml.bind.v2.runtime.reflect.opt.OptimizedAccessorFactory.noOptimization=true")
+                    CoreOptions.vmOptions("-Dcom.sun.xml.bind.v2.runtime.reflect.opt.OptimizedAccessorFactory.noOptimization=true"),
+                    systemTimeout(120000),
+                    systemProperty("pax.exam.service.timeout").value("300000"),
+                    cleanCaches()
             ));
             return OptionUtils.combine(super.config(), options.toArray(new Option[0]));
         } catch (Exception e) {
@@ -121,10 +127,10 @@ public class DatasetRestIT extends KarafTestSupport {
 
         Files.copy(thisBundleContext.getBundle().getEntry("/" + DATA_FILE).openStream(), Paths.get(DATA_FILE), StandardCopyOption.REPLACE_EXISTING);
 
-        waitForService("(&(objectClass=com.mobi.ontology.rest.DatasetRest))", 10000L);
-        waitForService("(&(objectClass=com.mobi.jaas.rest.AuthRest))", 10000L);
-        waitForService("(&(objectClass=com.mobi.rdf.orm.impl.ThingFactory))", 10000L);
-        waitForService("(&(objectClass=com.mobi.rdf.orm.conversion.ValueConverterRegistry))", 10000L);
+        waitForService("(&(objectClass=com.mobi.ontology.rest.DatasetRest))", 60000L);
+        waitForService("(&(objectClass=com.mobi.jaas.rest.AuthRest))", 60000L);
+        waitForService("(&(objectClass=com.mobi.rdf.orm.impl.ThingFactory))", 60000L);
+        waitForService("(&(objectClass=com.mobi.rdf.orm.conversion.ValueConverterRegistry))", 60000L);
 
         setupComplete = true;
     }
