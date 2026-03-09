@@ -21,7 +21,7 @@
   #L%
   -->
 <h1 mat-dialog-title>Commit</h1>
-<form mat-dialog-content [formGroup]="createCommitForm">
+<form mat-dialog-content [formGroup]="createCommitForm" style="min-width: 400px">
   <error-display *ngIf="errorMessage">{{errorMessage}}</error-display>
   <mat-form-field class="w-100">
     <mat-label>Comment</mat-label>
