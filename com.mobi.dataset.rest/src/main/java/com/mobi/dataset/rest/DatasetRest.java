@@ -49,6 +49,7 @@ import com.mobi.dataset.pagination.DatasetPaginatedSearchParams;
 import com.mobi.etl.api.config.rdf.ImportServiceConfig;
 import com.mobi.etl.api.rdf.RDFImportService;
 import com.mobi.exception.MobiException;
+import com.mobi.rest.util.MobiWebException;
 import com.mobi.jaas.api.engines.EngineManager;
 import com.mobi.jaas.api.ontologies.usermanagement.User;
 import com.mobi.persistence.utils.api.BNodeService;
@@ -62,6 +63,7 @@ import com.mobi.rest.util.FileUpload;
 import com.mobi.rest.util.LinksUtils;
 import com.mobi.rest.util.RestUtils;
 import com.mobi.rest.util.jaxb.Links;
+import com.mobi.rest.util.swagger.ErrorObjectSchema;
 import com.mobi.rest.util.swagger.JsonLdObject;
 import com.mobi.security.policy.api.ontologies.policy.Delete;
 import io.swagger.v3.oas.annotations.Operation;
@@ -73,6 +75,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.ModelFactory;
 import org.eclipse.rdf4j.model.Resource;
@@ -87,6 +90,7 @@ import org.osgi.service.component.annotations.Component;
 import org.osgi.service.component.annotations.Reference;
 import org.osgi.service.jaxrs.whiteboard.propertytypes.JaxrsResource;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -519,19 +523,21 @@ public class DatasetRest {
             summary = "Uploads the data within an RDF file to a specific DatasetRecord in the local Catalog",
             responses = {
                     @ApiResponse(responseCode = "200", description = "Success"),
-                    @ApiResponse(responseCode = "400", description = "Bad Request",
-                            headers = @Header(name = "HTTP Status",
-                                    description = "Reason Phrase contains error: 'Must provide a file' or 'File is not in a valid RDF format'",
-                                    schema = @Schema(type = "string"))),
-                    @ApiResponse(responseCode = "403", description = "Permission Denied",
+                    @ApiResponse(responseCode = "400", description = "BAD REQUEST", content = {
+                            @Content(mediaType = MediaType.APPLICATION_JSON,
+                                    schema = @Schema(implementation = ErrorObjectSchema.class)
+                            )
+                    }),
+                     @ApiResponse(responseCode = "403", description = "Permission Denied",
                             headers = @Header(
                                     name = "HTTP Status",
                                     description = "Reason Phrase contains error message",
                                     schema = @Schema(type = "string"))),
-                    @ApiResponse(responseCode = "500", description = "Internal Server Error",
-                            headers = @Header(name = "HTTP Status",
-                                    description = "Reason Phrase contains error message",
-                                    schema = @Schema(type = "string")))
+                    @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR", content = {
+                            @Content(mediaType = MediaType.APPLICATION_JSON,
+                                    schema = @Schema(implementation = ErrorObjectSchema.class)
+                            )
+                    })
             },
             requestBody = @RequestBody(
                     content = {
@@ -548,28 +554,34 @@ public class DatasetRest {
                                        schema = @Schema(type = "string", format = "uri",
                                                example = "http://mobi.com/dataset/2d4a4592-0b54-4057-a65f-f649261cd302"))
                                @PathParam("datasetRecordId") String datasetRecordId) {
+        // Stream directly from the HTTP multipart input to the RDF parser to avoid
+        // buffering the entire file in memory/disk via ResettableInputStream.
         try {
-            Map<String, Object> formData = RestUtils.getFormData(servletRequest, new HashMap<>());
-            FileUpload file = (FileUpload) formData.getOrDefault("file", new FileUpload());
-            InputStream inputStream = file.getStream();
-            String filename = file.getFilename();
-
-            if (inputStream == null) {
+            final IRI datasetRecordIri = vf.createIRI(datasetRecordId);
+            Map<String, Object> formData = RestUtils.getFormData(servletRequest, new HashMap<>(), (stream, item) -> {
+                String filename = item.getName();
+                RDFFormat format = Rio.getParserFormatForFileName(filename).orElseThrow(() ->
+                        new IllegalArgumentException("File is not in a valid RDF format"));
+                ImportServiceConfig config = new ImportServiceConfig.Builder()
+                        .dataset(datasetRecordIri)
+                        .format(format)
+                        .logOutput(true)
+                        .build();
+                try {
+                    importService.importInputStream(config, stream, true);
+                } catch (IOException e) {
+                    throw new MobiException("Error importing dataset data", e);
+                }
+                return filename;
+            });
+            if (formData.isEmpty()) {
                 throw new IllegalArgumentException("Must provide a file");
             }
-            RDFFormat format = Rio.getParserFormatForFileName(filename).orElseThrow(() ->
-                    new IllegalArgumentException("File is not in a valid RDF format"));
-
-            ImportServiceConfig.Builder builder = new ImportServiceConfig.Builder()
-                    .dataset(vf.createIRI(datasetRecordId))
-                    .format(format)
-                    .logOutput(true);
-            importService.importInputStream(builder.build(), inputStream, true);
             return Response.ok().build();
-        } catch (IllegalArgumentException | RDFParseException ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
+        } catch (IllegalArgumentException | RDFParseException | MobiException ex) {
+            throw RestUtils.getErrorObjBadRequest(ex);
         } catch (Exception ex) {
-            throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.INTERNAL_SERVER_ERROR);
+            throw RestUtils.getErrorObjInternalServerError(ex);
         }
     }
 

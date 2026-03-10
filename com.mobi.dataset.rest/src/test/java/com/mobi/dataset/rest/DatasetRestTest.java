@@ -40,8 +40,10 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.mobi.catalog.api.BranchManager;
 import com.mobi.catalog.api.CommitManager;
 import com.mobi.catalog.api.PaginatedSearchParams;
@@ -572,19 +574,24 @@ public class DatasetRestTest extends MobiRestTestCXF {
         Response response = target().path("datasets/" + encode(record1.getResource().stringValue()) + "/data")
                 .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(400, response.getStatus());
+        ObjectNode responseObject = getResponse(response);
+        assertEquals("IllegalArgumentException", responseObject.get("error").asText());
+        assertEquals("File is not in a valid RDF format", responseObject.get("errorMessage").asText());
         verify(importService, times(0)).importInputStream(any(ImportServiceConfig.class), any(InputStream.class), eq(true));
     }
 
     @Test
     public void uploadDataWithBadRequestTest() throws Exception {
         // Setup:
-        doThrow(new IllegalArgumentException()).when(importService).importInputStream(any(ImportServiceConfig.class), any(InputStream.class), eq(true));
+        doThrow(new IllegalArgumentException("Bad request")).when(importService).importInputStream(any(ImportServiceConfig.class), any(InputStream.class), eq(true));
         FormDataMultiPart fd = new FormDataMultiPart();
         fd.bodyPart("file", "test.ttl", getClass().getResourceAsStream("/test.ttl"));
 
         Response response = target().path("datasets/" + encode(record1.getResource().stringValue()) + "/data")
                 .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
         assertEquals(400, response.getStatus());
+        ObjectNode responseObject = getResponse(response);
+        assertEquals("IllegalArgumentException", responseObject.get("error").asText());
         verify(importService).importInputStream(any(ImportServiceConfig.class), any(InputStream.class), eq(true));
     }
 
@@ -597,7 +604,18 @@ public class DatasetRestTest extends MobiRestTestCXF {
 
         Response response = target().path("datasets/" + encode(record1.getResource().stringValue()) + "/data")
                 .request().post(Entity.entity(fd.body(), MediaType.MULTIPART_FORM_DATA));
-        assertEquals(500, response.getStatus());
+        assertEquals(400, response.getStatus());
+        ObjectNode responseObject = getResponse(response);
+        assertEquals("MobiException", responseObject.get("error").asText());
+        assertEquals("Error importing dataset data", responseObject.get("errorMessage").asText());
         verify(importService).importInputStream(any(ImportServiceConfig.class), any(InputStream.class), eq(true));
+    }
+
+    private ObjectNode getResponse(Response response) {
+        try {
+            return mapper.readValue(response.readEntity(String.class), ObjectNode.class);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException(e);
+        }
     }
 }

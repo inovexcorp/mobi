@@ -297,16 +297,16 @@ describe('Dataset Manager service', function() {
     });
     it('unless an error occurs', function() {
       service.uploadData(recordId, new File([''], ''))
-        .subscribe(() => fail('Observable should have errored'), response => {
-          expect(response).toEqual(error);
-        });
+        .subscribe({ error: response => {
+          expect(response).toEqual({error: '', errorMessage: error, errorDetails: []});
+        }});
       const request = httpMock.expectOne({ url: this.url, method: 'POST' });
       expect(request.request.body instanceof FormData).toBeTrue();
-      request.flush('flush', { status: 400, statusText: error });
+      request.flush(null, { status: 400, statusText: error });
     });
     it('successfully', function() {
       service.uploadData(recordId, new File([''], ''))
-        .subscribe(() => { }, () => fail('Observable should have succeeded'));
+        .subscribe({ error: () => fail('Observable should have succeeded') });
       const request = httpMock.expectOne({ url: this.url, method: 'POST' });
       expect(request.request.body instanceof FormData).toBeTrue();
       expect((request.request.body as FormData).get('file')).toBeDefined();

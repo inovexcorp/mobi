@@ -25,13 +25,12 @@
 
 upload-data-overlay {
     .importing-indicator {
-        position: relative;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
 
-        progress-spinner {
-            position: absolute;
-        }
         .text-muted {
-            padding-left: 20px;
+            font-size: 0.85em;
         }
     }
 }

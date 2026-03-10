@@ -1104,7 +1104,7 @@ public class RestUtils {
                                                   Map<String, List<Class<?>>> fields) {
         BiFunction<InputStream, FileItemStream, Object> streamConsumer = (stream, item) -> {
             try {
-                return new FileUpload(item.getName(), Models.toByteArrayInputStream(stream));
+                return new FileUpload(item.getName(), Models.toResettableInputStream(stream));
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }

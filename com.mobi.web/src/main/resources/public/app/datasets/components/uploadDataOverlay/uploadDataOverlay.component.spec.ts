@@ -20,10 +20,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
+import { HttpEventType, HttpResponse, HttpHeaderResponse } from '@angular/common/http';
 import { DebugElement } from '@angular/core';
 import { ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
 import { MatButtonModule } from '@angular/material/button';
 import { MatDialogModule, MatDialogRef } from '@angular/material/dialog';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { By } from '@angular/platform-browser';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { MockComponent, MockProvider } from 'ng-mocks';
@@ -35,7 +37,6 @@ import {
 } from '../../../../../public/test/ts/Shared';
 import { ErrorDisplayComponent } from '../../../shared/components/errorDisplay/errorDisplay.component';
 import { FileInputComponent } from '../../../shared/components/fileInput/fileInput.component';
-import { SpinnerComponent } from '../../../shared/components/progress-spinner/components/spinner/spinner.component';
 import { Dataset } from '../../../shared/models/dataset.interface';
 import { DatasetManagerService } from '../../../shared/services/datasetManager.service';
 import { DatasetStateService } from '../../../shared/services/datasetState.service';
@@ -64,13 +65,13 @@ describe('Upload Data Overlay component', function () {
       imports: [
         MatDialogModule,
         MatButtonModule,
+        MatProgressBarModule,
         NoopAnimationsModule
       ],
       declarations: [
         UploadDataOverlayComponent,
         MockComponent(ErrorDisplayComponent),
-        MockComponent(FileInputComponent),
-        MockComponent(SpinnerComponent)
+        MockComponent(FileInputComponent)
       ],
       providers: [
         MockProvider(DatasetManagerService),
@@ -104,33 +105,52 @@ describe('Upload Data Overlay component', function () {
   it('initializes with the correct values', function () {
     component.ngOnInit();
     expect(component.datasetTitle).toEqual('Test');
-    expect(component.importing).toEqual(false);
+    expect(component.uploadPhase).toEqual('idle');
+    expect(component.uploadProgress).toEqual(0);
   });
   describe('controller methods', function () {
     describe('should upload data to a dataset', function () {
       it('unless an error occurs', fakeAsync(function () {
-        datasetManagerStub.uploadData.and.callFake(() => throwError('Error Message'));
+        const errorObj = {error: 'Error', errorMessage: 'Error Message', errorDetails: []};
+        datasetManagerStub.uploadData.and.callFake(() => throwError(errorObj));
         component.submit();
-        tick(1); // next
-        tick(1); // complete
-        expect(datasetManagerStub.uploadData).toHaveBeenCalledWith(recordId, component.fileObj, true);
+        tick(1);
+        expect(datasetManagerStub.uploadData).toHaveBeenCalledWith(recordId, component.fileObj);
         expect(toastStub.createSuccessToast).not.toHaveBeenCalled();
         expect(matDialogRef.close).not.toHaveBeenCalled();
-        expect(component.importing).toEqual(false);
-        expect(component.error).toEqual('Error Message');
+        expect(component.uploadPhase).toEqual('idle');
+        expect(component.error).toEqual(errorObj);
       }));
-      it('successfully', fakeAsync(function () {
-        datasetManagerStub.uploadData.and.returnValue(of(null).pipe(delay(1)));
+      it('tracks upload progress', fakeAsync(function () {
+        const events = of(
+          { type: HttpEventType.UploadProgress, loaded: 50, total: 100 },
+          { type: HttpEventType.UploadProgress, loaded: 100, total: 100 },
+          new HttpHeaderResponse({ status: 200 }),
+          new HttpResponse({ body: 'ok' })
+        ).pipe(delay(1));
+        datasetManagerStub.uploadData.and.returnValue(events as any);
         component.fileObj = new File([''], '');
         component.submit();
-        expect(component.importing).toEqual(true);
-        tick(1); // next
-        tick(1); // complete
-        expect(datasetManagerStub.uploadData).toHaveBeenCalledWith(recordId, component.fileObj, true);
-        expect(component.importing).toEqual(false);
+        expect(component.uploadPhase).toEqual('uploading');
+        expect(component.uploadProgress).toEqual(0);
+        tick(1);
+        expect(datasetManagerStub.uploadData).toHaveBeenCalledWith(recordId, component.fileObj);
         expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
         expect(matDialogRef.close).toHaveBeenCalledWith();
-        expect(component.error).toEqual('');
+        expect(component.error).toBeUndefined();
+      }));
+      it('successfully with response event', fakeAsync(function () {
+        const events = of(
+          new HttpResponse({ body: 'ok' })
+        ).pipe(delay(1));
+        datasetManagerStub.uploadData.and.returnValue(events as any);
+        component.fileObj = new File([''], '');
+        component.submit();
+        expect(component.uploadPhase).toEqual('uploading');
+        tick(1);
+        expect(datasetManagerStub.uploadData).toHaveBeenCalledWith(recordId, component.fileObj);
+        expect(toastStub.createSuccessToast).toHaveBeenCalledWith(jasmine.any(String));
+        expect(matDialogRef.close).toHaveBeenCalledWith();
       }));
     });
   });
@@ -145,22 +165,28 @@ describe('Upload Data Overlay component', function () {
     });
     it('depending on whether there is an error', function () {
       expect(element.queryAll(By.css('error-display')).length).toEqual(0);
-      component.error = 'Error message';
+      component.error = {error: 'Error', errorMessage: 'Error message', errorDetails: []};
       fixture.detectChanges();
       expect(element.queryAll(By.css('error-display')).length).toEqual(1);
     });
-    it('depending on whether data is importing', function () {
+    it('depending on whether data is uploading', function () {
       fixture.detectChanges();
       const button = element.queryAll(By.css('div[mat-dialog-actions] button[color="primary"]'))[0];
       expect(element.queryAll(By.css('.importing-indicator')).length).toEqual(0);
       expect(button.properties['disabled']).toBeTruthy();
 
-      component.importing = true;
+      component.uploadPhase = 'uploading';
+      fixture.detectChanges();
+      expect(element.queryAll(By.css('.importing-indicator')).length).toEqual(1);
+      expect(element.queryAll(By.css('mat-progress-bar')).length).toEqual(1);
+      expect(button.properties['disabled']).toBeTruthy();
+
+      component.uploadPhase = 'processing';
       fixture.detectChanges();
       expect(element.queryAll(By.css('.importing-indicator')).length).toEqual(1);
       expect(button.properties['disabled']).toBeTruthy();
 
-      component.importing = false;
+      component.uploadPhase = 'idle';
       component.fileObj = new File([''], '');
       fixture.detectChanges();
       expect(element.queryAll(By.css('.importing-indicator')).length).toEqual(0);

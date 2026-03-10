@@ -22,13 +22,27 @@
   -->
 <h1 mat-dialog-title>Upload Data to {{datasetTitle}}</h1>
 <div mat-dialog-content class="pb-2">
-    <error-display *ngIf="error">{{error}}</error-display>
-    <file-input [displayText]="'RDF File'" [(files)]="fileObj" [accept]="['.ttl','.xml','.jsonld','.rdf','.trig','.json','.n3','.nq','.nt']" required></file-input>
-    <div *ngIf="importing" class="importing-indicator pt-2">
-        <progress-spinner [isLoading]="importing" [diameter]="18"></progress-spinner> <span class="text-muted">Importing Data</span>
-    </div>
+  <error-display *ngIf="error && error.errorMessage && error.errorDetails">
+    {{error.errorMessage}}
+    <ul>
+      <li class="text-danger m-0" *ngFor="let detailError of error.errorDetails">
+        {{ detailError }}
+      </li>
+    </ul>
+  </error-display>
+  <file-input [displayText]="'RDF File'" [(files)]="fileObj"
+    [accept]="['.ttl','.xml','.jsonld','.rdf','.trig','.json','.n3','.nq','.nt']" required></file-input>
+  <div *ngIf="uploadPhase === 'uploading'" class="importing-indicator pt-2">
+    <mat-progress-bar mode="determinate" [value]="uploadProgress"></mat-progress-bar>
+    <span class="text-muted">Uploading file... {{uploadProgress}}%</span>
+  </div>
+  <div *ngIf="uploadPhase === 'processing'" class="importing-indicator pt-2">
+    <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+    <span class="text-muted">Processing file...</span>
+  </div>
 </div>
 <div mat-dialog-actions>
-    <button mat-raised-button [mat-dialog-close]="">Cancel</button>
-    <button mat-raised-button color="primary" (click)="submit()" [disabled]="!fileObj || importing">Submit</button>
+  <button mat-raised-button [mat-dialog-close]="">Cancel</button>
+  <button mat-raised-button color="primary" (click)="submit()"
+    [disabled]="!fileObj || uploadPhase !== 'idle'">Submit</button>
 </div>
