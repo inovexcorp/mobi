@@ -75,6 +75,7 @@ import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.FileUpload;
 import com.mobi.rest.util.MobiNotFoundException;
 import com.mobi.rest.util.RestUtils;
+import com.mobi.rest.util.swagger.JsonLdObject;
 import com.mobi.security.policy.api.Decision;
 import com.mobi.security.policy.api.PDP;
 import com.mobi.security.policy.api.ontologies.policy.Read;
@@ -90,6 +91,7 @@ import com.mobi.workflows.api.ontologies.workflows.WorkflowRecordFactory;
 import com.mobi.workflows.exception.InvalidWorkflowException;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Encoding;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -109,6 +111,7 @@ import org.eclipse.rdf4j.model.impl.DynamicModelFactory;
 import org.eclipse.rdf4j.model.impl.ValidatingValueFactory;
 import org.eclipse.rdf4j.query.GraphQuery;
 import org.eclipse.rdf4j.query.QueryResults;
+import org.eclipse.rdf4j.query.algebra.Str;
 import org.eclipse.rdf4j.repository.RepositoryConnection;
 import org.eclipse.rdf4j.repository.RepositoryResult;
 import org.eclipse.rdf4j.rio.RDFFormat;
@@ -733,7 +736,8 @@ public class WorkflowsRest {
             responses = {
                     @ApiResponse(responseCode = "200", description = "The newly created Execution Activity "
                             + "created by the execution of the Workflow Record",
-                            content = @Content(schema = @Schema(ref = "#/components/schemas/JsonLdObject"))),
+                            content = @Content(schema = @Schema(implementation = String.class,
+                                    description = "Workflow ActivityIRI"))),
                     @ApiResponse(responseCode = "400", description = "An invalid argument has been passed"),
                     @ApiResponse(responseCode = "401", description = "Permission Denied"),
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
@@ -879,7 +883,8 @@ public class WorkflowsRest {
             responses = {
                     @ApiResponse(responseCode = "200", description = "The latest Execution Activity linked to the "
                             + "Workflow Record",
-                            content = @Content(schema = @Schema(ref = "#/components/schemas/JsonLdObject"))),
+                            content = @Content(schema = @Schema(implementation = JsonLdObject.class,
+                                    description = "JSON-LD Execution Activity Object"))),
                     @ApiResponse(responseCode = "204", description = "Execution Activity does not exist"),
                     @ApiResponse(responseCode = "400", description = "An invalid argument has been passed"),
                     @ApiResponse(responseCode = "401", description = "Permission Denied"),
@@ -933,9 +938,12 @@ public class WorkflowsRest {
             tags = "workflows",
             summary = "Retrieves the specified Execution Activity of the WorkflowRecord specified by the provided ID",
             responses = {
-                    @ApiResponse(responseCode = "200", description = "The Execution Activity linked to the Workflow "
-                            + "Record",
-                            content = @Content(schema = @Schema(ref = "#/components/schemas/JsonLdObject"))),
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "The Execution Activity linked to the Workflow Record",
+                            content = @Content(array = @ArraySchema(
+                                    schema = @Schema(implementation = JsonLdObject.class,
+                                        description = "A list of JSON-LD objects")))),
                     @ApiResponse(responseCode = "400", description = "An invalid argument has been passed"),
                     @ApiResponse(responseCode = "401", description = "Permission Denied"),
                     @ApiResponse(responseCode = "404", description = "Execution Activity does not exist"),
@@ -990,7 +998,9 @@ public class WorkflowsRest {
             responses = {
                     @ApiResponse(responseCode = "200", description = "The ActionExecutions linked to the Execution "
                             + "Activity linked to the Workflow Record",
-                            content = @Content(schema = @Schema(ref = "#/components/schemas/JsonLdObject"))),
+                            content = @Content(array = @ArraySchema(
+                                    schema = @Schema(implementation = JsonLdObject.class,
+                                    description = "ActionExecution JSON-LD object")))),
                     @ApiResponse(responseCode = "400", description = "An invalid argument has been passed"),
                     @ApiResponse(responseCode = "401", description = "Permission Denied"),
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),

@@ -97,8 +97,12 @@ import com.mobi.rest.security.annotations.ValueType;
 import com.mobi.rest.util.ErrorUtils;
 import com.mobi.rest.util.LinksUtils;
 import com.mobi.rest.util.RestUtils;
+import com.mobi.rest.util.swagger.CommitData;
+import com.mobi.rest.util.swagger.JsonLdObject;
+import com.mobi.rest.util.swagger.SearchEntity;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -246,7 +250,9 @@ public class CatalogRest {
             summary = "Retrieves the distributed and local Catalogs",
             responses = {
                     @ApiResponse(responseCode = "200", description = "List of Catalogs within the repository",
-                            content = @Content(schema = @Schema(ref = "#/components/schemas/JsonLdObjects"))),
+                            content = @Content(array = @ArraySchema(
+                                    schema = @Schema(implementation = JsonLdObject.class,
+                                    description = "A list of Catalog JSON-LD objects")))),
                     @ApiResponse(responseCode = "400", description = "BAD REQUEST. Could not retrieve catalogs"),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
@@ -294,7 +300,7 @@ public class CatalogRest {
             summary = "Retrieves the Catalog specified by the provided ID",
             responses = {
                     @ApiResponse(responseCode = "200", description = "Specific Catalog from the repository",
-                            content = @Content(schema = @Schema(ref = "#/components/schemas/JsonLdObject"))),
+                            content = @Content(schema = @Schema(implementation = JsonLdObject.class))),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
                     @ApiResponse(responseCode = "404", description = "Catalog does not exist"),
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
@@ -341,7 +347,9 @@ public class CatalogRest {
             summary = "Search for existing definitions of an entity across all records",
             responses = {
                     @ApiResponse(responseCode = "200", description = "List of Entities that match the search criteria",
-                            content = @Content(schema = @Schema(ref = "#/components/schemas/Entity"))),
+                            content = @Content(array = @ArraySchema(
+                                    schema = @Schema(implementation = SearchEntity.class,
+                                    description = "A list of Entity search result objects")))),
                     @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId could not"
                             + " be found"),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
@@ -432,7 +440,9 @@ public class CatalogRest {
             summary = "Retrieves the Records in the Catalog",
             responses = {
                     @ApiResponse(responseCode = "200", description = "List of Records that match the search criteria",
-                            content = @Content(schema = @Schema(ref = "#/components/schemas/JsonLdObjects"))),
+                            content = @Content(array = @ArraySchema(
+                                    schema = @Schema(implementation = JsonLdObject.class,
+                                    description = "A list of Record JSON-LD objects")))),
                     @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId could not"
                             + " be found"),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
@@ -1843,7 +1853,9 @@ public class CatalogRest {
             summary = "Gets a list of Branches associated with a VersionedRDFRecord identified by the provided IDs",
             responses = {
                     @ApiResponse(responseCode = "200", description = "List of Records that match the search criteria",
-                            content = @Content(schema = @Schema(ref = "#/components/schemas/JsonLdObjects"))),
+                            content = @Content(array = @ArraySchema(
+                                    schema = @Schema(implementation = JsonLdObject.class,
+                                    description = "A list of Branch JSON-LD objects")))),
                     @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId or recordId"
                             + COULD_NOT_BE_FOUND),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
@@ -2169,7 +2181,9 @@ public class CatalogRest {
                     @ApiResponse(responseCode = "200",
                             description = "List of Commits for the identified Branch which represents"
                                     + " the Commit chain",
-                            content = @Content(schema = @Schema(ref = "#/components/schemas/CommitDataArr"))),
+                            content = @Content(array = @ArraySchema(
+                                    schema = @Schema(implementation = CommitData.class,
+                                    description = "A chain of Commit data objects")))),
                     @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId, recordId,"
                             + " or branchId could not be found"),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
@@ -2311,7 +2325,8 @@ public class CatalogRest {
             summary = "Gets the Commit identified by the provided IDs",
             responses = {
                     @ApiResponse(responseCode = "200",
-                            description = "Response with the Commit identified by the provided IDs"),
+                            description = "Response with the Commit identified by the provided IDs",
+                            content = @Content(schema = @Schema(implementation = CommitData.class))),
                     @ApiResponse(responseCode = "400", description = "BAD REQUEST. The requested catalogId, recordId,"
                             + " branchId, or commitId could not be found"),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
@@ -2992,7 +3007,9 @@ public class CatalogRest {
             summary = "Retrieves all the available record types",
             responses = {
                     @ApiResponse(responseCode = "200", description = "All the available record types",
-                            content = @Content(schema = @Schema(ref = "#/components/schemas/IRIs"))),
+                            content = @Content(schema = @Schema(type = "object",
+                                    description = "Map of Record IRIs to a list of their parent type IRIs"
+                                    ))),
                     @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
@@ -3029,7 +3046,10 @@ public class CatalogRest {
             summary = "Retrieves all the available sorting options",
             responses = {
                     @ApiResponse(responseCode = "200", description = "All the available sorting options",
-                        content = @Content(schema = @Schema(ref = "#/components/schemas/IRIs"))),
+                        content = @Content(array = @ArraySchema(schema = @Schema(
+                                type = "string",
+                                format = "uri",
+                                description = "The IRI of a sorting property")))),
                     @ApiResponse(responseCode = "400", description = "BAD REQUEST"),
                     @ApiResponse(responseCode = "403", description = "Permission Denied"),
                     @ApiResponse(responseCode = "500", description = "INTERNAL SERVER ERROR"),
@@ -3037,7 +3057,7 @@ public class CatalogRest {
     )
     public Response getSortOptions() {
         try {
-            return Response.ok(mapper.valueToTree(SORT_RESOURCES).toString()).build();
+            return Response.ok(SORT_RESOURCES).build();
         } catch (IllegalStateException | MobiException ex) {
             throw ErrorUtils.sendError(ex, ex.getMessage(), Response.Status.BAD_REQUEST);
         }
