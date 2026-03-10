@@ -265,7 +265,7 @@ describe('User Access Controls component', function() {
         //     expect(component.setUsers).toHaveBeenCalled();
         //     expect(component.userSearchControl.value).toEqual('');
         //     expect(component.userTrigger.openPanel).toHaveBeenCalled();
-           
+
         // }));
         describe('should add a user to a policy', function() {
             beforeEach(function() {
@@ -540,5 +540,38 @@ describe('User Access Controls component', function() {
         const link = element.query(By.css('.row .selected-items .selected-item a'));
         link.triggerEventHandler('click', null);
         expect(component.removeGroup).toHaveBeenCalledWith(group);
+    });
+    describe('should display correctly based on HTML changes', function() {
+        beforeEach(function () {
+            component.item = policy;
+        });
+        it('should display a person icon for each selected user', function () {
+            policy.selectedUsers = [user]
+            fixture.detectChanges();
+            const icon = element.query(By.css('.user-select .selected-item mat-icon'));
+            expect(icon).toBeTruthy();
+            expect(icon.nativeElement.textContent).toEqual('person');
+        });
+        it('should display a group icon for each selected group', function () {
+            policy.selectedGroups = [group]
+            fixture.detectChanges();
+            const icon = element.query(By.css('.group-select .selected-item mat-icon'));
+            expect(icon).toBeTruthy();
+            expect(icon.nativeElement.textContent).toEqual('group');
+        });
+        it('should display the user form field before the selected users box', function() {
+            fixture.detectChanges();
+            const userCol = element.query(By.css('.user-select'));
+            const children = userCol.nativeElement.children;
+            expect(children[0].tagName.toLowerCase()).toEqual('mat-form-field');
+            expect(children[1].classList).toContain('selected-items');
+        });
+        it('should display the group form field before the selected groups box', function() {
+            fixture.detectChanges();
+            const groupCol = element.query(By.css('.group-select'));
+            const children = groupCol.nativeElement.children;
+            expect(children[0].tagName.toLowerCase()).toEqual('mat-form-field');
+            expect(children[1].classList).toContain('selected-items');
+        });
     });
 });
