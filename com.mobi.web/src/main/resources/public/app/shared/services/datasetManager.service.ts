@@ -20,7 +20,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
  */
-import { HttpClient, HttpResponse } from '@angular/common/http';
+import { HttpClient, HttpEvent, HttpResponse } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { has, get, forEach, find, map, remove, includes } from 'lodash';
 import { Observable, of } from 'rxjs';
@@ -35,7 +35,7 @@ import { JSONLDObject } from '../models/JSONLDObject.interface';
 import { PaginatedConfig } from '../models/paginatedConfig.interface';
 import { CatalogManagerService } from './catalogManager.service';
 import { DiscoverStateService } from './discoverState.service';
-import { createHttpParams, handleError, paginatedConfigToHttpParams } from '../utility';
+import { createHttpParams, handleError, handleErrorObject, paginatedConfigToHttpParams } from '../utility';
 
 /**
  * @class shared.DatasetManagerService
@@ -188,21 +188,22 @@ export class DatasetManagerService {
   }
   /**
    * Calls the POST /mobirest/datasets/{datasetRecordId}/data endpoint and uploads the data contained in the
-   * provided file to the Dataset associated with the identified DatasetRecord from Mobi. Returns a Promise
-   * indicating the success of the request.
+   * provided file to the Dataset associated with the identified DatasetRecord from Mobi.
+   * Returns an Observable of HttpEvents to allow callers to track upload progress.
    *
    * @param {string} datasetRecordIRI The IRI of the DatasetRecord whose Dataset will receive the data
    * @param {File} file The RDF File object to upload
-   * @param {boolean} isTracked Whether the request should be tracked by the {@link shared.ProgressSpinnerService}
-   * @return {Observable<null>} An Observable that resolves if the upload was successful; rejects with an error message 
-   * otherwise
+   * @return {Observable<HttpEvent<string>>} An Observable of HttpEvents for tracking upload progress
    */
-  uploadData(datasetRecordIRI: string, file: File, isTracked = false): Observable<null> {
+  uploadData(datasetRecordIRI: string, file: File): Observable<HttpEvent<string>> {
     const fd = new FormData();
     fd.append('file', file);
     const url = `${this.prefix}/${encodeURIComponent(datasetRecordIRI)}/data`;
-    return this._trackedRequest(this.http.post(url, fd, { responseType: 'text' }), isTracked)
-      .pipe(catchError(handleError));
+    return this.http.post(url, fd, {
+      responseType: 'text',
+      reportProgress: true,
+      observe: 'events'
+    }).pipe(catchError(handleErrorObject));
   }
   /**
    * Populates the 'datasetRecords' with results from the 'getDatasetRecords' method. If that method results

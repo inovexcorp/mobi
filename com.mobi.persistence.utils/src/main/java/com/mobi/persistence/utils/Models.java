@@ -12,12 +12,12 @@ package com.mobi.persistence.utils;
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU Affero General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  * #L%
@@ -99,13 +99,14 @@ public class Models {
         preferredExtensionParsers.put("nq", List.of(nQuadsParser));
     }
 
-    protected Models(){}
+    protected Models() {
+    }
 
     /**
      * Create a {@link ParsedModel} instance with Mobi Model from an InputStream.
      *
      * @param preferredExtension the preferred extension as a string
-     * @param inputStream the InputStream to parse
+     * @param inputStream        the InputStream to parse
      * @return {@link ParsedModel} with Mobi Model from the parsed InputStream
      * @throws IOException if a error occurs when accessing the InputStream contents
      */
@@ -118,25 +119,25 @@ public class Models {
      * Create a {@link ParsedModel} instance with Mobi Model from an InputStream.
      *
      * @param preferredExtension the preferred extension as a string
-     * @param inputStream the InputStream to parse
-     * @param collector the StatementCollector used to aggregate statements
+     * @param inputStream        the InputStream to parse
+     * @param collector          the StatementCollector used to aggregate statements
      * @return {@link ParsedModel} with Mobi Model from the parsed InputStream
      * @throws IOException if an error occurs when accessing the InputStream contents
      */
     public static ParsedModel createModel(String preferredExtension, InputStream inputStream,
                                           StatementCollector collector) throws IOException {
-        ByteArrayInputStream rdfData = toByteArrayInputStream(inputStream);
+        InputStream rdfData = toResettableInputStream(inputStream);
 
         if (preferredExtension.endsWith("gzip") || preferredExtension.endsWith("gz")) {
             preferredExtension = FilenameUtils.removeExtension(preferredExtension);
             try (BufferedInputStream bis = new BufferedInputStream(rdfData);
-                    GZIPInputStream gzis = new GZIPInputStream(bis)) {
-                rdfData = toByteArrayInputStream(gzis);
+                 GZIPInputStream gzis = new GZIPInputStream(bis)) {
+                rdfData = toResettableInputStream(gzis);
             }
         } else if (preferredExtension.endsWith("zip")) {
             preferredExtension = FilenameUtils.removeExtension(preferredExtension);
             try (BufferedInputStream bis = new BufferedInputStream(rdfData);
-                    ZipInputStream zis = new ZipInputStream(bis)) {
+                 ZipInputStream zis = new ZipInputStream(bis)) {
                 ZipEntry ze;
                 int counter = 0;
                 while ((ze = zis.getNextEntry()) != null) {
@@ -147,7 +148,7 @@ public class Models {
                             throw new MobiException("Compressed upload must only contain a single file.");
                         }
                         preferredExtension = FilenameUtils.getExtension(fileName);
-                        rdfData = toByteArrayInputStream(zis);
+                        rdfData = toResettableInputStream(zis);
                     }
                 }
             }
@@ -155,10 +156,10 @@ public class Models {
         return buildModel(preferredExtension, rdfData, collector);
     }
 
-    private static ParsedModel buildModel(String preferredExtension, ByteArrayInputStream rdfData,
+    private static ParsedModel buildModel(String preferredExtension, InputStream rdfData,
                                           StatementCollector collector) {
         assert preferredExtension != null;
-        List<String> triedRDFFormats =  new ArrayList<>();
+        List<String> triedRDFFormats = new ArrayList<>();
         ParsedModel parsedModel;
         try {
             rdfData.mark(0);
@@ -193,13 +194,14 @@ public class Models {
 
     /**
      * Parsing rdfData ByteArrayInputStream.
-     * @param rdfData InputStream to parse
-     * @param collector StatementCollector used to aggregate statements
+     *
+     * @param rdfData         InputStream to parse
+     * @param collector       StatementCollector used to aggregate statements
      * @param triedRDFFormats keeps track of all tried rdf formats
      * @param inputRDFParsers List of RDF parsers to try
      * @return {@link ParsedModel} results of the model building
      */
-    private static ParsedModel parseIteration(ByteArrayInputStream rdfData, StatementCollector collector,
+    private static ParsedModel parseIteration(InputStream rdfData, StatementCollector collector,
                                               List<String> triedRDFFormats, List<RDFParser> inputRDFParsers) {
         ParsedModel parsedModel = new ParsedModel();
 
@@ -213,15 +215,21 @@ public class Models {
                 triedRDFFormats.add(parserName);
                 parsedModel = new ParsedModel();
                 parsedModel.addFormatToError(parserName, e.getMessage());
-                rdfData.reset();
+                try {
+                    rdfData.reset();
+                } catch (IOException ignored) {
+                }
             } catch (Exception e) {
-                rdfData.reset();
+                try {
+                    rdfData.reset();
+                } catch (IOException ignored) {
+                }
             }
         }
         return parsedModel;
     }
 
-    private static Model parse(ByteArrayInputStream rdfData, RDFParser parser, StatementCollector collector)
+    private static Model parse(InputStream rdfData, RDFParser parser, StatementCollector collector)
             throws RDFParseException, IOException {
         parser.setRDFHandler(collector);
         parser.setParseErrorListener(new ParseErrorLogger());
@@ -239,7 +247,7 @@ public class Models {
      * Create a Mobi Model from an InputStream. Will attempt to parse the stream as different RDFFormats.
      *
      * @param inputStream the InputStream to parse
-     * @param parsers the array of additional parsers to use when parsing the InputStream
+     * @param parsers     the array of additional parsers to use when parsing the InputStream
      * @return a Mobi Model from the parsed InputStream
      * @throws IOException if a error occurs when accessing the InputStream contents
      */
@@ -253,17 +261,17 @@ public class Models {
      * preferred extension.
      *
      * @param preferredExtension the extension that will be used to determine which {@link RDFParser} to use
-     * @param inputStream the InputStream to parse
-     * @param modelFactory the {@link ModelFactory} help build the {@link StatementCollector}
-     * @param bNodeService the {@link BNodeService} used for skolemizing bnodes
-     * @param skolemizedBNodes map of BNodes to their corresponding deterministically skolemized IRI.
+     * @param inputStream        the InputStream to parse
+     * @param modelFactory       the {@link ModelFactory} help build the {@link StatementCollector}
+     * @param bNodeService       the {@link BNodeService} used for skolemizing bnodes
+     * @param skolemizedBNodes   map of BNodes to their corresponding deterministically skolemized IRI.
      * @return {@link ParsedModel} with Mobi Model from the parsed InputStream
      * @throws IOException if a error occurs when accessing the InputStream contents
      */
     public static ParsedModel createSkolemizedModel(String preferredExtension, InputStream inputStream,
-                                              ModelFactory modelFactory,
-                                              BNodeService bNodeService,
-                                              Map<BNode, IRI> skolemizedBNodes) throws IOException {
+                                                    ModelFactory modelFactory,
+                                                    BNodeService bNodeService,
+                                                    Map<BNode, IRI> skolemizedBNodes) throws IOException {
         StatementCollector stmtCollector = new SkolemizedStatementCollector(modelFactory, bNodeService,
                 skolemizedBNodes);
         return createModel(preferredExtension, inputStream, stmtCollector);
@@ -278,12 +286,12 @@ public class Models {
         List<RDFParser> allParsers = formats.stream().map(Rio::createParser).collect(Collectors.toList());
         allParsers.addAll(List.of(parsers));
 
-        ByteArrayInputStream rdfData = toByteArrayInputStream(inputStream);
+        InputStream rdfData = toByteArrayInputStream(inputStream);
 
         ParsedModel parsedModel;
         try {
             rdfData.mark(0);
-            parsedModel = parseIteration(rdfData, collector, triedRDFFormats , rdfParsers);
+            parsedModel = parseIteration(rdfData, collector, triedRDFFormats, rdfParsers);
 
             if (parsedModel.getRdfFormatName() == null) {
                 parsedModel = parseOWLXML(rdfData, collector, triedRDFFormats);
@@ -309,68 +317,80 @@ public class Models {
         return parsedModel;
     }
 
-    private static ParsedModel parseFunctional(ByteArrayInputStream rdfData, StatementCollector collector,
+    private static ParsedModel parseFunctional(InputStream rdfData, StatementCollector collector,
                                                List<String> triedRDFFormats) {
         ParsedModel parsedModel;
         try {
             Path tmpTurtleFile = OwlApiUtils.parseFunctional(rdfData);
-            parsedModel = getTurtleFromPath(tmpTurtleFile, collector,"OFN");
+            parsedModel = getTurtleFromPath(tmpTurtleFile, collector, "OFN");
             Files.delete(tmpTurtleFile);
         } catch (Exception e) {
             triedRDFFormats.add("OFN");
             parsedModel = new ParsedModel();
             parsedModel.addFormatToError("OFN", e.getMessage());
-            rdfData.reset();
-        }
-        return parsedModel;
-    }
-
-    private static ParsedModel parseManchester(ByteArrayInputStream rdfData, StatementCollector collector,
-                                               List<String> triedRDFFormats) {
-        ParsedModel parsedModel;
-        try {
-            Path tmpTurtleFile = OwlApiUtils.parseManchester(rdfData);
-            parsedModel = getTurtleFromPath(tmpTurtleFile, collector,"OMN");
-            Files.delete(tmpTurtleFile);
-        } catch (Exception e) {
-            triedRDFFormats.add("OMN");
-            parsedModel = new ParsedModel();
-            parsedModel.addFormatToError("OMN", e.getMessage());
-            rdfData.reset();
-        }
-        return parsedModel;
-    }
-
-    private static ParsedModel parseOWLXML(ByteArrayInputStream rdfData, StatementCollector collector,
-                                           List<String> triedRDFFormats) {
-        ParsedModel parsedModel = parseIteration(rdfData, collector, triedRDFFormats, List.of(new RDFXMLParser()));
-        if (parsedModel.getModel() == null) {
             try {
-                Path tmpTurtleFile = OwlApiUtils.parseOWLXML(rdfData);
-                parsedModel = getTurtleFromPath(tmpTurtleFile, collector,RDFFormat.RDFXML.getName());
-                Files.delete(tmpTurtleFile);
-            } catch (Exception e) {
-                triedRDFFormats.add(RDFFormat.RDFXML.getName());
-                parsedModel = new ParsedModel();
-                parsedModel.addFormatToError(RDFFormat.RDFXML.getName(), e.getMessage());
                 rdfData.reset();
+            } catch (IOException ignored) {
             }
         }
         return parsedModel;
     }
 
-    private static ParsedModel parseOBO(ByteArrayInputStream rdfData, StatementCollector collector,
+    private static ParsedModel parseManchester(InputStream rdfData, StatementCollector collector,
+                                               List<String> triedRDFFormats) {
+        ParsedModel parsedModel;
+        try {
+            Path tmpTurtleFile = OwlApiUtils.parseManchester(rdfData);
+            parsedModel = getTurtleFromPath(tmpTurtleFile, collector, "OMN");
+            Files.delete(tmpTurtleFile);
+        } catch (Exception e) {
+            triedRDFFormats.add("OMN");
+            parsedModel = new ParsedModel();
+            parsedModel.addFormatToError("OMN", e.getMessage());
+            try {
+                rdfData.reset();
+            } catch (IOException ignored) {
+            }
+        }
+        return parsedModel;
+    }
+
+    private static ParsedModel parseOWLXML(InputStream rdfData, StatementCollector collector,
+                                           List<String> triedRDFFormats) {
+        ParsedModel parsedModel = parseIteration(rdfData, collector, triedRDFFormats, List.of(new RDFXMLParser()));
+        if (parsedModel.getModel() == null) {
+            try {
+                Path tmpTurtleFile = OwlApiUtils.parseOWLXML(rdfData);
+                parsedModel = getTurtleFromPath(tmpTurtleFile, collector, RDFFormat.RDFXML.getName());
+                Files.delete(tmpTurtleFile);
+            } catch (Exception e) {
+                triedRDFFormats.add(RDFFormat.RDFXML.getName());
+                parsedModel = new ParsedModel();
+                parsedModel.addFormatToError(RDFFormat.RDFXML.getName(), e.getMessage());
+                try {
+                    rdfData.reset();
+                } catch (IOException ignored) {
+                }
+            }
+        }
+        return parsedModel;
+    }
+
+    private static ParsedModel parseOBO(InputStream rdfData, StatementCollector collector,
                                         List<String> triedRDFFormats) {
         ParsedModel parsedModel;
         try {
             Path tmpTurtleFile = OwlApiUtils.parseOBO(rdfData);
-            parsedModel = getTurtleFromPath(tmpTurtleFile, collector,"OBO");
+            parsedModel = getTurtleFromPath(tmpTurtleFile, collector, "OBO");
             Files.delete(tmpTurtleFile);
         } catch (Exception e) {
             triedRDFFormats.add("OBO");
             parsedModel = new ParsedModel();
             parsedModel.addFormatToError("OBO", e.getMessage());
-            rdfData.reset();
+            try {
+                rdfData.reset();
+            } catch (IOException ignored) {
+            }
         }
         return parsedModel;
     }
@@ -412,12 +432,26 @@ public class Models {
     }
 
     /**
+     * Reads the provided {@link InputStream} into a {@link ResettableInputStream}.
+     *
+     * @param inputStream the InputStream to convert
+     * @return a ResettableInputStream
+     */
+    public static InputStream toResettableInputStream(InputStream inputStream) throws IOException {
+        if (inputStream instanceof ResettableInputStream || inputStream instanceof ByteArrayInputStream) {
+            return inputStream;
+        }
+
+        return new ResettableInputStream(inputStream);
+    }
+
+    /**
      * Takes a list of values, and returns a model with linked values
-     * 
+     *
      * @param valueList the list to construct the model from
      * @return A model of linked values
      */
-    public static Model createList(List<Value> valueList){
+    public static Model createList(List<Value> valueList) {
         Model model = mf.createEmptyModel();
         Resource listHead = vf.createBNode();
         Resource current = listHead;
